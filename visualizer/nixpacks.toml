@@ -1,5 +1,6 @@
 [phases.install]
-cmds = ["python -m venv --copies /opt/venv && . /opt/venv/bin/activate && pip install --no-cache-dir -r requirements.txt"]
+cmds = ["python -m venv --copies /opt/venv && . /opt/venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt"]
+cacheDirectories = []
 
 [start]
 cmd = "gunicorn server:app --bind 0.0.0.0:$PORT"

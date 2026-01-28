@@ -291,51 +291,94 @@ class Playback {
   }
 
   // Get interpolated position for a unit at current time
+  // Uses speed-based movement: units move at a fixed speed toward their destination
+  // If interrupted by a new command, the new starting position is where they actually were
   getUnitPosition(unit) {
     const movements = unit.movements;
     if (!movements || movements.length === 0) {
       return { x: unit.x, y: unit.y };
     }
 
-    // Find the two movements we're between
-    let prevMovement = null;
-    let nextMovement = null;
+    // Unit movement speeds (tiles per second) - approximate AoE2 speeds
+    const UNIT_SPEEDS = {
+      villager: 0.8,
+      infantry: 0.9,
+      archer: 0.96,
+      cavalry: 1.35,
+      siege: 0.6,
+      monk: 0.7,
+      ship: 1.5,
+      king: 0.9,
+      military: 0.9,
+    };
 
+    const speed = UNIT_SPEEDS[unit.type] || 0.9;
+
+    // Find the movement command that applies at currentTime
+    let commandIndex = -1;
     for (let i = 0; i < movements.length; i++) {
       if (movements[i].time <= this.currentTime) {
-        prevMovement = movements[i];
-      }
-      if (movements[i].time > this.currentTime) {
-        nextMovement = movements[i];
+        commandIndex = i;
+      } else {
         break;
       }
     }
 
-    // Before first movement - use starting position or first movement
-    if (!prevMovement) {
+    // Before first movement - use starting position
+    if (commandIndex < 0) {
       if (unit.x !== null && unit.y !== null) {
         return { x: unit.x, y: unit.y };
       }
-      if (nextMovement) {
-        return { x: nextMovement.x, y: nextMovement.y };
+      if (movements.length > 0) {
+        return { x: movements[0].x, y: movements[0].y };
       }
       return { x: unit.x, y: unit.y };
     }
 
-    // After last movement or no next movement - stay at last position
-    if (!nextMovement) {
-      return { x: prevMovement.x, y: prevMovement.y };
+    // Calculate position by simulating movement through all commands up to now
+    let currentX = unit.x !== null ? unit.x : movements[0].x;
+    let currentY = unit.y !== null ? unit.y : movements[0].y;
+
+    // If no starting position, use first command destination
+    if (currentX === null || currentY === null) {
+      currentX = movements[0].x;
+      currentY = movements[0].y;
     }
 
-    // Interpolate between prev and next
-    const totalTime = nextMovement.time - prevMovement.time;
-    const elapsedTime = this.currentTime - prevMovement.time;
-    const t = Math.min(1, Math.max(0, elapsedTime / totalTime));
+    for (let i = 0; i <= commandIndex; i++) {
+      const command = movements[i];
+      const destX = command.x;
+      const destY = command.y;
 
-    return {
-      x: prevMovement.x + (nextMovement.x - prevMovement.x) * t,
-      y: prevMovement.y + (nextMovement.y - prevMovement.y) * t,
-    };
+      // Time available for this movement
+      const startTime = i === 0 ? movements[0].time - 10 : movements[i].time; // Assume unit existed 10s before first command
+      const endTime =
+        i < commandIndex ? movements[i + 1].time : this.currentTime;
+      const availableTime = endTime - startTime;
+
+      // Distance to destination
+      const dx = destX - currentX;
+      const dy = destY - currentY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance > 0) {
+        // Time needed to reach destination
+        const timeNeeded = distance / speed;
+
+        if (availableTime >= timeNeeded) {
+          // Unit reaches destination
+          currentX = destX;
+          currentY = destY;
+        } else {
+          // Unit is interrupted - calculate how far it got
+          const progress = (availableTime * speed) / distance;
+          currentX = currentX + dx * progress;
+          currentY = currentY + dy * progress;
+        }
+      }
+    }
+
+    return { x: currentX, y: currentY };
   }
 
   // Get current game state for rendering

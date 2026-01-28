@@ -137,7 +137,7 @@ class App {
     this.matchList.innerHTML = "";
 
     try {
-      await this.fetchMatches(this.currentPlayer.name);
+      await this.fetchMatches();
       this.renderMatchList();
     } catch (error) {
       console.error("Failed to fetch matches:", error);
@@ -172,17 +172,15 @@ class App {
     this.loadingOverlay.classList.add("hidden");
   }
 
-  async fetchMatches(playerName) {
-    const response = await fetch(
-      `/api/matches/${encodeURIComponent(playerName)}`,
-    );
+  async fetchMatches() {
+    const response = await fetch("/api/matches");
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || "Failed to fetch matches");
     }
 
     const data = await response.json();
-    this.currentPlayer = data.player;
+    this.players = data.players;
     this.matches = data.matches;
   }
 
@@ -210,15 +208,17 @@ class App {
       // Calculate duration
       const duration = this.formatMatchDuration(match.started, match.finished);
 
-      // Find target player's result
+      // Find if any of our tracked players are in this match and their result
       let targetWon = null;
+      const playerIds = new Set((this.players || []).map((p) => p.profileId));
       for (const team of match.teams || []) {
         for (const player of team.players || []) {
-          if (player.profileId === this.currentPlayer.profileId) {
+          if (playerIds.has(player.profileId)) {
             targetWon = player.won;
             break;
           }
         }
+        if (targetWon !== null) break;
       }
 
       // Get team summaries
@@ -269,17 +269,18 @@ class App {
     const duration = this.formatMatchDuration(match.started, match.finished);
 
     // Build teams HTML
+    const playerIds = new Set((this.players || []).map((p) => p.profileId));
     const teamsHtml = (match.teams || [])
       .map((team) => {
         const isWinner = team.players[0]?.won;
         const playersHtml = team.players
           .map((player) => {
-            const isTarget = player.profileId === this.currentPlayer.profileId;
+            const isTracked = playerIds.has(player.profileId);
             return `
             <div class="player-row">
               <img class="player-civ-icon" src="${player.civImageUrl || ""}" alt="${player.civName}" onerror="this.style.display='none'">
               <div class="player-info">
-                <div class="player-name ${isTarget ? "target" : ""}">${player.name}${isTarget ? " (you)" : ""}</div>
+                <div class="player-name ${isTracked ? "target" : ""}">${player.name}</div>
                 <div class="player-civ">${player.civName || "Unknown"}</div>
               </div>
               <div class="player-rating">${player.rating || "?"}</div>
@@ -324,13 +325,25 @@ class App {
     this.hideMatchDetailPanel();
     this.showLoadingOverlay("Downloading replay...");
 
+    // Find a tracked player in this match to use for download perspective
+    const playerIds = new Set((this.players || []).map((p) => p.profileId));
+    let profileIdForDownload = 612690; // Default to ddk220
+    for (const team of match.teams || []) {
+      for (const player of team.players || []) {
+        if (playerIds.has(player.profileId)) {
+          profileIdForDownload = player.profileId;
+          break;
+        }
+      }
+    }
+
     try {
       const response = await fetch("/api/load-match", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           matchId: match.matchId,
-          profileId: this.currentPlayer.profileId,
+          profileId: profileIdForDownload,
         }),
       });
 

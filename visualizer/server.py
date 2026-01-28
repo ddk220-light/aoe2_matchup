@@ -4,6 +4,7 @@ Flask server for AoE2 Replay Visualizer.
 Handles file uploads and processes replay files.
 """
 
+import csv
 import io
 import json
 import os
@@ -24,7 +25,27 @@ AOE2_COMPANION_API = "https://data.aoe2companion.com/api"
 AOE2_COMPANION_HEADERS = {"User-Agent": "https://github.com/aoe2record-visualizer"}
 REPLAY_DOWNLOAD_URL = "https://aoe.ms/replay"
 
+# Players list file
+PLAYERS_CSV_PATH = os.path.join(os.path.dirname(__file__), "players.csv")
+
 app = Flask(__name__, static_folder="public", static_url_path="")
+
+
+def load_players_from_csv():
+    """Load player list from CSV file."""
+    players = []
+    try:
+        with open(PLAYERS_CSV_PATH, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                players.append(
+                    {"name": row["name"], "profileId": int(row["profileId"])}
+                )
+    except FileNotFoundError:
+        app.logger.warning(f"Players CSV not found: {PLAYERS_CSV_PATH}")
+    return players
+
+
 CORS(app)
 
 # AoE2 standard player colors
@@ -578,9 +599,72 @@ def get_default_replay():
         return jsonify({"error": "No default replay data found"}), 404
 
 
+@app.route("/api/matches", methods=["GET"])
+def get_matches():
+    """Fetch recent Land Nomad matches from all players in the CSV."""
+    try:
+        # Load players from CSV
+        players = load_players_from_csv()
+        if not players:
+            return jsonify({"error": "No players found in players.csv"}), 404
+
+        # Get all profile IDs
+        profile_ids = [p["profileId"] for p in players]
+
+        # Fetch matches for all players (API accepts comma-separated profile_ids)
+        all_matches = {}
+        matches_url = f"{AOE2_COMPANION_API}/matches"
+
+        # Fetch in batches to avoid URL length limits
+        batch_size = 10
+        for i in range(0, len(profile_ids), batch_size):
+            batch_ids = profile_ids[i : i + batch_size]
+            matches_resp = requests.get(
+                matches_url,
+                params={"profile_ids": ",".join(map(str, batch_ids)), "perPage": 50},
+                headers=AOE2_COMPANION_HEADERS,
+                timeout=30,
+            )
+            matches_data = matches_resp.json()
+
+            # Deduplicate by match ID and filter for Land Nomad
+            for match in matches_data.get("matches", []):
+                match_id = match.get("matchId")
+                map_name = match.get("mapName", "").lower()
+
+                # Only include Land Nomad maps
+                if "land nomad" not in map_name:
+                    continue
+
+                if match_id and match_id not in all_matches:
+                    all_matches[match_id] = match
+
+        # Sort by start time (newest first) and take top 25
+        sorted_matches = sorted(
+            all_matches.values(),
+            key=lambda x: x.get("started", ""),
+            reverse=True,
+        )[:25]
+
+        return jsonify(
+            {
+                "players": players,
+                "matches": sorted_matches,
+            }
+        )
+
+    except requests.RequestException as e:
+        return jsonify({"error": f"Failed to fetch matches: {str(e)}"}), 500
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return jsonify({"error": f"Error: {str(e)}"}), 500
+
+
 @app.route("/api/matches/<player_name>", methods=["GET"])
-def get_matches(player_name):
-    """Fetch recent matches for a player from AoE2 Companion API."""
+def get_matches_for_player(player_name):
+    """Fetch recent matches for a specific player from AoE2 Companion API."""
     try:
         # First, search for the player to get their profile ID
         search_url = f"{AOE2_COMPANION_API}/profiles"

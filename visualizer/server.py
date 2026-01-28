@@ -32,6 +32,227 @@ PLAYER_COLORS = {
 
 DEATH_THRESHOLD = 5 * 60
 
+# Unit type classification
+INFANTRY_UNITS = {
+    "militia",
+    "manatarms",
+    "longswordsman",
+    "twohanded swordsman",
+    "champion",
+    "spearman",
+    "pikeman",
+    "halberdier",
+    "eaglescout",
+    "eaglewarrior",
+    "eliteeaglewarrior",
+    "condottiero",
+    "kamayuk",
+    "elitekamayuk",
+    "shotelwarrior",
+    "eliteshotelwarrior",
+    "gbeto",
+    "elitegbeto",
+    "supplywaggon",
+    "huskarl",
+    "elitehuskarl",
+    "teutonic knight",
+    "eliteteutonic knight",
+    "berserk",
+    "eliteberserk",
+    "jaguar warrior",
+    "elitejaguar warrior",
+    "woad raider",
+    "elitewoad raider",
+    "throwing axeman",
+    "elitethrowing axeman",
+    "samurai",
+    "elitesamurai",
+    "urumi swordsman",
+    "eliteurumi swordsman",
+    "obuch",
+    "eliteobuch",
+    "serjeant",
+    "eliteserjeant",
+    "flemish militia",
+    "warrior priest",
+}
+
+CAVALRY_UNITS = {
+    "scoutcavalry",
+    "lightcavalry",
+    "hussar",
+    "wingedhussar",
+    "knight",
+    "cavalier",
+    "paladin",
+    "camelrider",
+    "heavycamelrider",
+    "imperialcamelrider",
+    "battleelephant",
+    "elitebattleelephant",
+    "steppelancer",
+    "elitesteppelancer",
+    "cataphract",
+    "elitecataphract",
+    "boyar",
+    "eliteboyar",
+    "konnik",
+    "elitekonnik",
+    "leitis",
+    "eliteleitis",
+    "keshik",
+    "elitekeshik",
+    "magyar huszar",
+    "elitemagyar huszar",
+    "tarkan",
+    "elitetarkan",
+    "war elephant",
+    "elitewar elephant",
+    "mameluke",
+    "elitemameluke",
+    "shrivamsha rider",
+    "eliteshrivamsha rider",
+    "coustillier",
+    "elitecoustillier",
+    "monaspa",
+    "elitemonaspa",
+    "savar",
+}
+
+ARCHER_UNITS = {
+    "archer",
+    "crossbowman",
+    "arbalester",
+    "skirmisher",
+    "eliteskirmisher",
+    "imperialskirmisher",
+    "cavalryarcher",
+    "heavycavalryarcher",
+    "handcannoneer",
+    "slinger",
+    "longbowman",
+    "elitelongbowman",
+    "chukonou",
+    "elitechukonou",
+    "mangudai",
+    "elitemangudai",
+    "warwagon",
+    "elitewarwagon",
+    "plumedarchery",
+    "eliteplumedarchery",
+    "genitour",
+    "elitegenitour",
+    "camel archer",
+    "elitecamel archer",
+    "genoese crossbowman",
+    "elitegenoese crossbowman",
+    "elephant archer",
+    "eliteelephant archer",
+    "rattan archer",
+    "eliterattan archer",
+    "kipchak",
+    "elitekipchak",
+    "arambai",
+    "elitearambai",
+    "janissary",
+    "elitejanissary",
+    "conquistador",
+    "eliteconquistador",
+    "rattaarcher",
+    "eliterattaarcher",
+    "chakram thrower",
+    "elitechakram thrower",
+    "thirisadai",
+}
+
+SIEGE_UNITS = {
+    "batteringram",
+    "cappedram",
+    "siegeram",
+    "mangonel",
+    "onager",
+    "siegeonager",
+    "scorpion",
+    "heavyscorpion",
+    "bombardcannon",
+    "siegetower",
+    "trebuchet",
+    "organ gun",
+    "eliteorgan gun",
+    "houfnice",
+}
+
+MONK_UNITS = {
+    "monk",
+    "missionary",
+    "imam",
+    "warrior priest",
+}
+
+SHIP_UNITS = {
+    "galley",
+    "war galley",
+    "galleon",
+    "fire galley",
+    "fire ship",
+    "fast fire ship",
+    "demolition raft",
+    "demolition ship",
+    "heavy demolition ship",
+    "cannon galleon",
+    "elite cannon galleon",
+    "longboat",
+    "elitelongboat",
+    "turtle ship",
+    "eliteturtle ship",
+    "caravel",
+    "elitecaravel",
+    "dromon",
+    "transport ship",
+    "fishing ship",
+    "trade cog",
+}
+
+
+def classify_unit_type(unit_name):
+    """Classify a unit into a category based on its name."""
+    name_lower = unit_name.lower().replace("_", " ").replace("-", " ")
+
+    # Check each category
+    for infantry in INFANTRY_UNITS:
+        if infantry in name_lower:
+            return "infantry"
+
+    for cavalry in CAVALRY_UNITS:
+        if cavalry in name_lower:
+            return "cavalry"
+
+    for archer in ARCHER_UNITS:
+        if archer in name_lower:
+            return "archer"
+
+    for siege in SIEGE_UNITS:
+        if siege in name_lower:
+            return "siege"
+
+    for monk in MONK_UNITS:
+        if monk in name_lower:
+            return "monk"
+
+    for ship in SHIP_UNITS:
+        if ship in name_lower:
+            return "ship"
+
+    # Special cases
+    if "villager" in name_lower:
+        return "villager"
+    if "scout" in name_lower:
+        return "cavalry"  # Scout cavalry
+    if "king" in name_lower:
+        return "king"
+
+    return "military"  # Default
+
 
 def load_object_names():
     """Load object ID to name mappings."""
@@ -161,7 +382,8 @@ def process_replay(replay_file):
                 unit_name = unit_name_map.get(
                     obj.instance_id, f"unit_{obj.instance_id}"
                 )
-                unit_type = obj.name.lower().replace(" ", "") if obj.name else "unit"
+                raw_type = obj.name.lower().replace(" ", "") if obj.name else "unit"
+                unit_class = classify_unit_type(raw_type)
 
                 start_x, start_y = None, None
                 for action in match.actions:
@@ -179,7 +401,7 @@ def process_replay(replay_file):
                         "id": unit_name,
                         "instance_id": obj.instance_id,
                         "player": player.name,
-                        "type": "villager" if "villager" in unit_type else "military",
+                        "type": unit_class,
                         "x": start_x,
                         "y": start_y,
                     }

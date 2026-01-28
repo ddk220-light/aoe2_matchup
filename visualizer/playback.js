@@ -183,10 +183,7 @@ class Playback {
         const player = this.unitOwners.get(unitName) || "unknown";
 
         // Determine type from name
-        let type = "military";
-        if (unitName.startsWith("villager_")) {
-          type = "villager";
-        }
+        const type = this.classifyUnitType(unitName);
 
         this.units.set(unitName, {
           x: null, // Will be set when unit first appears
@@ -200,6 +197,97 @@ class Playback {
         });
       }
     }
+  }
+
+  // Classify unit type from unit name
+  classifyUnitType(unitName) {
+    const name = unitName.toLowerCase();
+
+    if (name.includes("villager")) return "villager";
+    if (name.includes("scout")) return "cavalry";
+    if (
+      name.includes("knight") ||
+      name.includes("cavalier") ||
+      name.includes("paladin") ||
+      name.includes("hussar") ||
+      name.includes("camel") ||
+      name.includes("elephant") ||
+      name.includes("cavalry") ||
+      name.includes("tarkan") ||
+      name.includes("boyar") ||
+      name.includes("konnik") ||
+      name.includes("leitis") ||
+      name.includes("keshik") ||
+      name.includes("cataphract") ||
+      name.includes("mameluke")
+    )
+      return "cavalry";
+    if (
+      name.includes("archer") ||
+      name.includes("crossbow") ||
+      name.includes("arbalest") ||
+      name.includes("skirmisher") ||
+      name.includes("longbow") ||
+      name.includes("mangudai") ||
+      name.includes("handcannoneer") ||
+      name.includes("janissary") ||
+      name.includes("conquistador") ||
+      name.includes("chukonou") ||
+      name.includes("plumed") ||
+      name.includes("genitour") ||
+      name.includes("kipchak") ||
+      name.includes("arambai") ||
+      name.includes("rattan")
+    )
+      return "archer";
+    if (
+      name.includes("militia") ||
+      name.includes("swordsman") ||
+      name.includes("champion") ||
+      name.includes("spearman") ||
+      name.includes("pikeman") ||
+      name.includes("halberdier") ||
+      name.includes("eagle") ||
+      name.includes("huskarl") ||
+      name.includes("berserk") ||
+      name.includes("samurai") ||
+      name.includes("jaguar") ||
+      name.includes("woad") ||
+      name.includes("teutonic") ||
+      name.includes("throwing") ||
+      name.includes("gbeto") ||
+      name.includes("kamayuk") ||
+      name.includes("shotel") ||
+      name.includes("serjeant") ||
+      name.includes("obuch") ||
+      name.includes("urumi")
+    )
+      return "infantry";
+    if (
+      name.includes("ram") ||
+      name.includes("mangonel") ||
+      name.includes("onager") ||
+      name.includes("scorpion") ||
+      name.includes("trebuchet") ||
+      name.includes("bombard") ||
+      name.includes("siege")
+    )
+      return "siege";
+    if (name.includes("monk") || name.includes("missionary")) return "monk";
+    if (
+      name.includes("galley") ||
+      name.includes("ship") ||
+      name.includes("boat") ||
+      name.includes("caravel") ||
+      name.includes("longboat") ||
+      name.includes("turtle") ||
+      name.includes("cannon galleon") ||
+      name.includes("dromon")
+    )
+      return "ship";
+    if (name.includes("king")) return "king";
+
+    return "military";
   }
 
   // Get interpolated position for a unit at current time

@@ -31,18 +31,23 @@ class Renderer {
 
     // Entity sizes
     this.sizes = {
-      villager: 6,
-      military: 8,
-      scout: 8,
+      villager: 5,
+      infantry: 6,
+      archer: 6,
+      cavalry: 8,
+      siege: 10,
+      monk: 5,
+      ship: 12,
+      king: 6,
+      military: 6,
       building_small: 12,
       building_large: 20,
-      towncenter: 24,
+      towncenter: 28,
+      castle: 32,
     };
 
     // Building types that are large
     this.largeBuildings = new Set([
-      "towncenter",
-      "castle",
       "monastery",
       "university",
       "siegeworkshop",
@@ -54,6 +59,8 @@ class Renderer {
       "mill",
       "lumbercamp",
       "miningcamp",
+      "dock",
+      "harbor",
     ]);
 
     this.setupCanvas();
@@ -251,79 +258,396 @@ class Renderer {
     ctx.stroke();
   }
 
-  // Draw a unit (villager or military)
+  // Draw a unit based on its type
   drawUnit(x, y, player, type, opacity = 1) {
     if (x === null || y === null) return;
 
     const pos = this.gameToCanvas(x, y);
     const color = this.playerColors[player] || "#ffffff";
-    const size =
-      (type === "villager" ? this.sizes.villager : this.sizes.military) *
-      this.zoom;
+    const size = (this.sizes[type] || this.sizes.military) * this.zoom;
 
     this.ctx.globalAlpha = opacity;
     this.ctx.fillStyle = color;
-    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
+    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
     this.ctx.lineWidth = 1;
 
-    if (type === "villager") {
-      // Circle for villagers
-      this.ctx.beginPath();
-      this.ctx.arc(pos.x, pos.y, size / 2, 0, Math.PI * 2);
-      this.ctx.fill();
-      this.ctx.stroke();
-    } else {
-      // Triangle for military (pointing up)
-      this.ctx.beginPath();
-      this.ctx.moveTo(pos.x, pos.y - size / 2);
-      this.ctx.lineTo(pos.x - size / 2, pos.y + size / 2);
-      this.ctx.lineTo(pos.x + size / 2, pos.y + size / 2);
-      this.ctx.closePath();
-      this.ctx.fill();
-      this.ctx.stroke();
+    switch (type) {
+      case "villager":
+        // Small circle for villagers
+        this.ctx.beginPath();
+        this.ctx.arc(pos.x, pos.y, size / 2, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.stroke();
+        break;
+
+      case "infantry":
+        // Shield shape (rounded rectangle) for infantry
+        this.drawShield(pos.x, pos.y, size);
+        break;
+
+      case "archer":
+        // Diamond/arrow shape for archers
+        this.drawArcher(pos.x, pos.y, size, color);
+        break;
+
+      case "cavalry":
+        // Horizontal oval/horse shape for cavalry
+        this.drawCavalry(pos.x, pos.y, size, color);
+        break;
+
+      case "siege":
+        // Square for siege units
+        this.ctx.fillRect(pos.x - size / 2, pos.y - size / 2, size, size);
+        this.ctx.strokeRect(pos.x - size / 2, pos.y - size / 2, size, size);
+        break;
+
+      case "monk":
+        // Cross shape for monks
+        this.drawMonk(pos.x, pos.y, size, color);
+        break;
+
+      case "ship":
+        // Boat shape for ships
+        this.drawShip(pos.x, pos.y, size, color);
+        break;
+
+      case "king":
+        // Star/crown for king
+        this.drawKing(pos.x, pos.y, size, color);
+        break;
+
+      default:
+        // Triangle for unknown military
+        this.ctx.beginPath();
+        this.ctx.moveTo(pos.x, pos.y - size / 2);
+        this.ctx.lineTo(pos.x - size / 2, pos.y + size / 2);
+        this.ctx.lineTo(pos.x + size / 2, pos.y + size / 2);
+        this.ctx.closePath();
+        this.ctx.fill();
+        this.ctx.stroke();
     }
 
     this.ctx.globalAlpha = 1;
   }
 
-  // Draw a building as an isometric diamond shape
+  // Shield shape for infantry
+  drawShield(x, y, size) {
+    const ctx = this.ctx;
+    const w = size * 0.8;
+    const h = size;
+
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2, y - h / 2);
+    ctx.lineTo(x + w / 2, y - h / 2);
+    ctx.lineTo(x + w / 2, y + h / 4);
+    ctx.lineTo(x, y + h / 2);
+    ctx.lineTo(x - w / 2, y + h / 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Arrow/diamond shape for archers
+  drawArcher(x, y, size, color) {
+    const ctx = this.ctx;
+
+    // Diamond body
+    ctx.beginPath();
+    ctx.moveTo(x, y - size / 2);
+    ctx.lineTo(x + size / 3, y);
+    ctx.lineTo(x, y + size / 2);
+    ctx.lineTo(x - size / 3, y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Arrow line
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2 * this.zoom;
+    ctx.beginPath();
+    ctx.moveTo(x, y - size / 2);
+    ctx.lineTo(x, y - size);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+    ctx.lineWidth = 1;
+  }
+
+  // Oval shape for cavalry
+  drawCavalry(x, y, size, color) {
+    const ctx = this.ctx;
+
+    // Horse body (horizontal ellipse)
+    ctx.beginPath();
+    ctx.ellipse(x, y, size / 2, size / 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Horse head (small circle)
+    ctx.beginPath();
+    ctx.arc(x + size / 3, y - size / 4, size / 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Cross shape for monks
+  drawMonk(x, y, size, color) {
+    const ctx = this.ctx;
+    const armWidth = size / 3;
+
+    // Vertical bar
+    ctx.fillRect(x - armWidth / 2, y - size / 2, armWidth, size);
+    // Horizontal bar
+    ctx.fillRect(x - size / 3, y - size / 4, (size * 2) / 3, armWidth);
+
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+    ctx.strokeRect(x - armWidth / 2, y - size / 2, armWidth, size);
+  }
+
+  // Boat shape for ships
+  drawShip(x, y, size, color) {
+    const ctx = this.ctx;
+
+    // Hull
+    ctx.beginPath();
+    ctx.moveTo(x - size / 2, y);
+    ctx.lineTo(x - size / 3, y + size / 3);
+    ctx.lineTo(x + size / 3, y + size / 3);
+    ctx.lineTo(x + size / 2, y);
+    ctx.lineTo(x + size / 3, y - size / 4);
+    ctx.lineTo(x - size / 3, y - size / 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Mast
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2 * this.zoom;
+    ctx.beginPath();
+    ctx.moveTo(x, y - size / 4);
+    ctx.lineTo(x, y - size / 2 - size / 4);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+    ctx.lineWidth = 1;
+  }
+
+  // Crown/star for king
+  drawKing(x, y, size, color) {
+    const ctx = this.ctx;
+
+    // Circle base
+    ctx.beginPath();
+    ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Crown points
+    ctx.fillStyle = "#FFD700"; // Gold
+    const crownSize = size / 3;
+    ctx.beginPath();
+    ctx.moveTo(x - crownSize, y - size / 3);
+    ctx.lineTo(x - crownSize / 2, y - size / 2 - crownSize / 2);
+    ctx.lineTo(x, y - size / 3);
+    ctx.lineTo(x + crownSize / 2, y - size / 2 - crownSize / 2);
+    ctx.lineTo(x + crownSize, y - size / 3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = color;
+  }
+
+  // Draw a building based on its type
   drawBuilding(x, y, player, buildingType, opacity = 1) {
     if (x === null || y === null) return;
 
     const pos = this.gameToCanvas(x, y);
     const color = this.playerColors[player] || "#ffffff";
-
-    // Determine building size
-    let size;
     const typeClean = buildingType.toLowerCase().replace(/\s/g, "");
-    if (typeClean.includes("towncenter") || typeClean.includes("castle")) {
-      size = this.sizes.towncenter;
-    } else if (this.largeBuildings.has(typeClean)) {
-      size = this.sizes.building_large;
-    } else {
-      size = this.sizes.building_small;
-    }
-    size *= this.zoom;
 
     this.ctx.globalAlpha = opacity;
     this.ctx.fillStyle = color;
-    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
+    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
     this.ctx.lineWidth = 1;
 
-    // Draw as isometric diamond
+    // Draw different building types
+    if (typeClean.includes("towncenter")) {
+      this.drawTownCenter(pos.x, pos.y, color);
+    } else if (typeClean.includes("castle")) {
+      this.drawCastle(pos.x, pos.y, color);
+    } else if (this.largeBuildings.has(typeClean)) {
+      this.drawLargeBuilding(
+        pos.x,
+        pos.y,
+        this.sizes.building_large * this.zoom,
+      );
+    } else {
+      this.drawSmallBuilding(
+        pos.x,
+        pos.y,
+        this.sizes.building_small * this.zoom,
+      );
+    }
+
+    this.ctx.globalAlpha = 1;
+  }
+
+  // Simple isometric diamond for small buildings
+  drawSmallBuilding(x, y, size) {
     const halfW = size / 2;
-    const halfH = size / 4; // Isometric height is half of width
+    const halfH = size / 4;
 
     this.ctx.beginPath();
-    this.ctx.moveTo(pos.x, pos.y - halfH); // Top
-    this.ctx.lineTo(pos.x + halfW, pos.y); // Right
-    this.ctx.lineTo(pos.x, pos.y + halfH); // Bottom
-    this.ctx.lineTo(pos.x - halfW, pos.y); // Left
+    this.ctx.moveTo(x, y - halfH);
+    this.ctx.lineTo(x + halfW, y);
+    this.ctx.lineTo(x, y + halfH);
+    this.ctx.lineTo(x - halfW, y);
+    this.ctx.closePath();
+    this.ctx.fill();
+    this.ctx.stroke();
+  }
+
+  // Larger isometric diamond for production buildings
+  drawLargeBuilding(x, y, size) {
+    const halfW = size / 2;
+    const halfH = size / 4;
+
+    this.ctx.beginPath();
+    this.ctx.moveTo(x, y - halfH);
+    this.ctx.lineTo(x + halfW, y);
+    this.ctx.lineTo(x, y + halfH);
+    this.ctx.lineTo(x - halfW, y);
     this.ctx.closePath();
     this.ctx.fill();
     this.ctx.stroke();
 
-    this.ctx.globalAlpha = 1;
+    // Inner detail
+    const innerSize = size * 0.5;
+    const innerHalfW = innerSize / 2;
+    const innerHalfH = innerSize / 4;
+    this.ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+    this.ctx.beginPath();
+    this.ctx.moveTo(x, y - innerHalfH);
+    this.ctx.lineTo(x + innerHalfW, y);
+    this.ctx.lineTo(x, y + innerHalfH);
+    this.ctx.lineTo(x - innerHalfW, y);
+    this.ctx.closePath();
+    this.ctx.stroke();
+    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+  }
+
+  // Town Center - large building with flag
+  drawTownCenter(x, y, color) {
+    const size = this.sizes.towncenter * this.zoom;
+    const halfW = size / 2;
+    const halfH = size / 4;
+
+    // Main building (isometric box shape)
+    this.ctx.beginPath();
+    this.ctx.moveTo(x, y - halfH);
+    this.ctx.lineTo(x + halfW, y);
+    this.ctx.lineTo(x, y + halfH);
+    this.ctx.lineTo(x - halfW, y);
+    this.ctx.closePath();
+    this.ctx.fill();
+    this.ctx.stroke();
+
+    // Roof (darker shade)
+    const roofHeight = size / 3;
+    this.ctx.fillStyle = this.darkenColor(color, 0.3);
+    this.ctx.beginPath();
+    this.ctx.moveTo(x, y - halfH - roofHeight);
+    this.ctx.lineTo(x + halfW * 0.8, y - halfH * 0.3);
+    this.ctx.lineTo(x, y - halfH + roofHeight * 0.5);
+    this.ctx.lineTo(x - halfW * 0.8, y - halfH * 0.3);
+    this.ctx.closePath();
+    this.ctx.fill();
+    this.ctx.stroke();
+
+    // Flag pole
+    this.ctx.strokeStyle = "#8B4513";
+    this.ctx.lineWidth = 2 * this.zoom;
+    this.ctx.beginPath();
+    this.ctx.moveTo(x, y - halfH - roofHeight);
+    this.ctx.lineTo(x, y - halfH - roofHeight - size / 3);
+    this.ctx.stroke();
+
+    // Flag
+    this.ctx.fillStyle = color;
+    this.ctx.beginPath();
+    this.ctx.moveTo(x, y - halfH - roofHeight - size / 3);
+    this.ctx.lineTo(x + size / 4, y - halfH - roofHeight - size / 4);
+    this.ctx.lineTo(x, y - halfH - roofHeight - size / 6);
+    this.ctx.closePath();
+    this.ctx.fill();
+
+    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+    this.ctx.lineWidth = 1;
+  }
+
+  // Castle - fortress with towers
+  drawCastle(x, y, color) {
+    const size = this.sizes.castle * this.zoom;
+    const halfW = size / 2;
+    const halfH = size / 4;
+
+    // Main keep (center)
+    this.ctx.beginPath();
+    this.ctx.moveTo(x, y - halfH);
+    this.ctx.lineTo(x + halfW, y);
+    this.ctx.lineTo(x, y + halfH);
+    this.ctx.lineTo(x - halfW, y);
+    this.ctx.closePath();
+    this.ctx.fill();
+    this.ctx.stroke();
+
+    // Tower positions (4 corners)
+    const towerSize = size / 4;
+    const towerHeight = size / 3;
+    const towers = [
+      { dx: -halfW * 0.7, dy: 0 }, // Left
+      { dx: halfW * 0.7, dy: 0 }, // Right
+      { dx: 0, dy: -halfH * 0.8 }, // Top
+      { dx: 0, dy: halfH * 0.8 }, // Bottom
+    ];
+
+    // Draw towers
+    this.ctx.fillStyle = this.darkenColor(color, 0.2);
+    for (const tower of towers) {
+      const tx = x + tower.dx;
+      const ty = y + tower.dy;
+
+      // Tower base
+      this.ctx.beginPath();
+      this.ctx.arc(tx, ty, towerSize / 2, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.stroke();
+
+      // Tower top (crenellations implied by darker top)
+      this.ctx.fillStyle = this.darkenColor(color, 0.4);
+      this.ctx.beginPath();
+      this.ctx.arc(tx, ty - towerHeight / 3, towerSize / 3, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.fillStyle = this.darkenColor(color, 0.2);
+    }
+
+    // Center tower (taller)
+    this.ctx.fillStyle = this.darkenColor(color, 0.3);
+    this.ctx.beginPath();
+    this.ctx.arc(x, y - towerHeight / 2, towerSize / 2, 0, Math.PI * 2);
+    this.ctx.fill();
+    this.ctx.stroke();
+
+    this.ctx.fillStyle = color;
+  }
+
+  // Helper to darken a color
+  darkenColor(color, amount) {
+    // Simple darkening for hex colors
+    if (color.startsWith("#")) {
+      const r = Math.max(0, parseInt(color.slice(1, 3), 16) * (1 - amount));
+      const g = Math.max(0, parseInt(color.slice(3, 5), 16) * (1 - amount));
+      const b = Math.max(0, parseInt(color.slice(5, 7), 16) * (1 - amount));
+      return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+    }
+    return color;
   }
 
   // Draw a movement or attack line

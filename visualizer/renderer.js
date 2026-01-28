@@ -62,26 +62,37 @@ class Renderer {
 
   setupCanvas() {
     const container = this.canvas.parentElement;
-    const size = Math.min(container.clientWidth, container.clientHeight);
-    this.canvas.width = size;
-    this.canvas.height = size;
+    this.canvas.width = container.clientWidth;
+    this.canvas.height = container.clientHeight;
 
     // Center the map initially
     this.centerMap();
   }
 
   centerMap() {
-    const canvasSize = this.canvas.width;
-    // Diamond spans from left corner (0,0) to right corner (maxX, maxY)
-    // Total width = mapSize * tileWidth (from left to right corner)
-    // Total height = mapSize * tileHeight (from top to bottom corner)
+    // Diamond dimensions in game units
+    // Width spans from left (0,0) to right (maxX, maxY): (maxX + maxY) * tileWidth/2
+    // Height spans from top (maxX, 0) to bottom (0, maxY): (maxX + maxY) * tileHeight/2
     const mapPixelWidth = this.mapSize * this.tileWidth * this.zoom;
     const mapPixelHeight = this.mapSize * this.tileHeight * this.zoom;
 
-    // Position so the left corner (0,0) starts at the left side of canvas
-    // and the map is vertically centered
-    this.panX = (canvasSize - mapPixelWidth) / 2;
-    this.panY = canvasSize / 2;
+    // Calculate zoom to fit the map in the canvas while maintaining aspect ratio
+    const scaleX = this.canvas.width / mapPixelWidth;
+    const scaleY = this.canvas.height / mapPixelHeight;
+    const fitScale = Math.min(scaleX, scaleY) * 0.9; // 90% to leave some margin
+
+    // Apply fit scale only on initial center (when zoom is 1)
+    if (this.zoom === 1) {
+      this.zoom = fitScale;
+    }
+
+    // Recalculate map dimensions with current zoom
+    const finalMapWidth = this.mapSize * this.tileWidth * this.zoom;
+    const finalMapHeight = this.mapSize * this.tileHeight * this.zoom;
+
+    // Center the map in the canvas
+    this.panX = (this.canvas.width - finalMapWidth) / 2;
+    this.panY = this.canvas.height / 2;
   }
 
   setupEventListeners() {

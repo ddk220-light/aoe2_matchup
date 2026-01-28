@@ -1,209 +1,203 @@
-# Claude's Notes on AoE2 Replay Analysis
+# AoE2 Replay Visualizer - Developer Guide
 
-This document captures lessons learned while building tools to analyze Age of Empires II: Definitive Edition replay files.
+This document describes the architecture and implementation of the AoE2 Replay Visualizer.
 
-## Parsing Library
+## Project Overview
 
-### mgz (aoc-mgz)
-- **Library**: `mgz` (https://github.com/happyleavesaoc/aoc-mgz)
-- **Install**: `pip install mgz`
-- **Version matters**: Newer AoE2 DE replays require mgz 1.8.46+. Earlier versions may fail with "could not read enough bytes" errors.
+A browser-based tool to visualize Age of Empires II: Definitive Edition replay files (`.aoe2record`). Users can upload replay files, watch unit movements on an isometric map, and control playback.
 
-### Basic Usage
-```python
-import mgz
-import mgz.model
+## Architecture
 
-with open("replay.aoe2record", "rb") as f:
-    match = mgz.model.parse_match(f)
+```
+visualizer/
+├── server.py          # Flask backend - handles file uploads and processing
+├── index.html         # Main HTML structure
+├── style.css          # Styling (full-screen map layout)
+├── app.js             # Main application controller
+├── renderer.js        # Canvas rendering (isometric projection)
+├── playback.js        # Game state and animation engine
+├── generate_data.py   # CLI tool to export replay to JSON
+└── replay_data.json   # Pre-generated replay data (optional)
 ```
 
-## Key Data Structures
+## Components
 
-### Match Object
-- `match.duration` - Total game duration (timedelta)
-- `match.map.name` - Map name (e.g., "Land Nomad")
-- `match.map.size` - Map size (e.g., "Large")
-- `match.players` - List of Player objects
-- `match.actions` - List of all actions in the game
+### Backend (server.py)
 
-### Player Object
-- `player.name` - Player name
-- `player.civilization` - Civilization name
-- `player.civilization_id` - Numeric civilization ID
-- `player.color_id` - Player color (0-7)
-- `player.winner` - Boolean, whether player won
-- `player.objects` - Starting units/buildings (list of objects with `instance_id`, `name`)
+Flask server that:
+- Serves static files (HTML, CSS, JS)
+- Handles file uploads at `/api/upload` (POST)
+- Processes `.aoe2record` files using mgz library
+- Returns JSON data for the frontend
 
-### Action Object
-- `action.timestamp` - When the action occurred (timedelta)
-- `action.type` - Action type enum (e.g., `Action.MOVE`, `Action.BUILD`)
-- `action.player` - Player who issued the action
-- `action.position` - Position object with `.x` and `.y` (may be None)
-- `action.payload` - Dictionary with action-specific data
+**Key endpoint:**
+```
+POST /api/upload
+- Accepts: multipart/form-data with 'file' field
+- Returns: JSON with match data, players, actions, units
+```
 
-## Coordinate System
+**Running the server:**
+```bash
+cd visualizer
+source ../venv/bin/activate
+python3 server.py
+# Opens at http://localhost:8000
+```
 
-### Game Coordinates
-- AoE2 uses a coordinate system where (0,0) is one corner of the map
-- For a "Large" map, coordinates range from 0 to ~220
-- X and Y increase in perpendicular directions
+### Frontend Components
 
-### Isometric Visualization
-The game displays the map as a diamond (isometric view). To convert game coordinates to screen coordinates:
+#### app.js - Application Controller
 
+Main orchestrator that:
+- Initializes Renderer and Playback instances
+- Handles file upload UI
+- Manages playback controls (play/pause, speed, timeline)
+- Sets up keyboard shortcuts
+- Manages player visibility toggles
+
+**Key methods:**
+- `init()` - Loads default replay or shows upload prompt
+- `uploadReplay(file)` - Sends file to server, reinitializes on success
+- `setupUI()` - Binds event listeners (only once via `controlsInitialized` flag)
+- `togglePlay()` - Play/pause control
+- `startRenderLoop()` - 60fps render loop using requestAnimationFrame
+
+#### renderer.js - Canvas Rendering
+
+Handles all drawing operations with isometric projection.
+
+**Coordinate System:**
 ```javascript
-// Diamond orientation: (0,0) at left, X goes to top, Y goes to bottom
-const isoX = (gameX + gameY) * (tileWidth / 2);
-const isoY = (gameY - gameX) * (tileHeight / 2);
+// Game coords (0,0) to (mapSize, mapSize) -> Isometric canvas coords
+gameToCanvas(gameX, gameY) {
+    const isoX = (gameX + gameY) * (tileWidth / 2) * zoom;
+    const isoY = (gameY - gameX) * (tileHeight / 2) * zoom;
+    return { x: panX + isoX, y: panY + isoY };
+}
 ```
 
-This places:
-- **(0, 0)** at the **left** corner of the diamond
-- **(maxX, 0)** at the **top** corner
-- **(0, maxY)** at the **bottom** corner
-- **(maxX, maxY)** at the **right** corner
+**Diamond orientation:**
+- (0, 0) = Left corner
+- (maxX, 0) = Top corner
+- (0, maxY) = Bottom corner
+- (maxX, maxY) = Right corner
 
-## Unit Identification
+**Key features:**
+- Auto-scales to fit container while maintaining aspect ratio
+- Mouse wheel zoom (centered on cursor)
+- Click-and-drag panning
+- Different shapes for unit types (circles=villagers, triangles=military)
+- Isometric diamonds for buildings
 
-### Instance IDs
-- Each unit has a unique `instance_id` that persists throughout the game
-- Starting units have their IDs in `player.objects`
-- New units get IDs when they're first commanded
+#### playback.js - Game State Engine
 
-### Unit Ownership
-Units belong to the **first player who commands them**, not necessarily who issued a specific action. Build a lookup map:
+Manages game state over time with smooth interpolation.
 
-```python
-unit_owner_map = {}
+**Key concepts:**
+- Pre-processes all actions into movement timelines per unit
+- Interpolates unit positions between commands for smooth movement
+- Tracks unit spawns, deaths, and deletions
+- Handles building construction timeline
 
-# Starting units belong to their player
-for player in match.players:
-    if player.objects:
-        for obj in player.objects:
-            unit_owner_map[obj.instance_id] = player.name
-
-# Other units belong to first player to command them
-for action in match.actions:
-    if action.player and action.payload:
-        for obj_id in action.payload.get("object_ids", []):
-            if obj_id not in unit_owner_map:
-                unit_owner_map[obj_id] = action.player.name
+**State structure:**
+```javascript
+{
+    units: Map<name, {x, y, player, type, alive, dying}>,
+    buildings: Map<key, {x, y, player, type}>,
+    currentTime: float
+}
 ```
 
-### Identifying Villagers
-Villagers are identified by checking if they ever issue a `BUILD` action:
+**Death detection:**
+- Military units idle for 5+ minutes before game end are marked as dead
+- Death time = last_command_time + 5 minutes
+- Dying units (within 30s of death) rendered at 50% opacity
 
-```python
-villager_ids = set()
-for action in match.actions:
-    if str(action.type) == "Action.BUILD":
-        for obj_id in action.payload.get("object_ids", []):
-            villager_ids.add(obj_id)
+### CSS Layout
+
+Full-screen layout with:
+- Header bar (title, match info, upload button)
+- Map container (flex: 1, fills available space)
+- Info panel (overlaid on map, top-left)
+- Controls panel (fixed at bottom)
+
+## Data Flow
+
+1. **Upload:** User selects `.aoe2record` file
+2. **Process:** Flask saves to temp file, parses with mgz, extracts data
+3. **Return:** JSON with match info, players, units, actions
+4. **Initialize:** Frontend creates Renderer and Playback with data
+5. **Render:** 60fps loop calls `playback.getState()` and `renderer.render(state)`
+6. **Animate:** Playback advances time, interpolates unit positions
+
+## Key Implementation Details
+
+### Event Listener Management
+
+To prevent duplicate listeners when uploading new replays:
+```javascript
+if (!this.controlsInitialized) {
+    this.controlsInitialized = true;
+    this.btnPlay.addEventListener("click", () => this.togglePlay());
+    // ... other listeners
+}
 ```
 
-### Identifying Unit Types
-For non-villager units, match them with training events based on timing:
+### Unit Position Interpolation
 
-```python
-training_events = []
-for action in match.actions:
-    if str(action.type) == "Action.DE_QUEUE":
-        training_events.append({
-            "time": action.timestamp.total_seconds(),
-            "player": action.player.name,
-            "unit_type": action.payload.get("unit", "unit"),
-        })
-
-# When a new unit appears, find the most recent training event
-# from the same player that occurred before the unit was first seen
+Units move smoothly between command positions:
+```javascript
+getUnitPosition(unit) {
+    // Find prev and next movement commands around currentTime
+    // Interpolate: pos = prev + (next - prev) * t
+    const t = (currentTime - prevTime) / (nextTime - prevTime);
+    return {
+        x: prevX + (nextX - prevX) * t,
+        y: prevY + (nextY - prevY) * t
+    };
+}
 ```
 
-## Common Action Types
+### Canvas Auto-Scaling
 
-| Action Type | Description | Key Payload Fields |
-|-------------|-------------|-------------------|
-| `MOVE` | Unit movement | `object_ids` |
-| `BUILD` | Construct building | `object_ids`, `building_id`, position |
-| `ORDER` | Attack/interact | `object_ids`, `target_id`, position |
-| `DE_QUEUE` | Train unit | `object_ids` (building), `unit`, `unit_id`, `amount` |
-| `RESEARCH` | Research tech | `object_ids` (building), `technology` |
-| `STANCE` | Change stance | `object_ids`, `stance` (0-3) |
-| `FORMATION` | Change formation | `object_ids`, `formation` |
-| `PATROL` | Set patrol | `object_ids`, position |
-| `GARRISON` | Enter building | `object_ids` |
-| `UNGARRISON` | Exit building | `object_ids` |
-| `DELETE` | Delete unit | `object_ids` |
-| `GAME` | Game commands | `command` (e.g., "Farm Autoqueue") |
-
-## Death Detection
-
-The replay doesn't explicitly record unit deaths. Estimate deaths by:
-
-1. Track the last time each unit was commanded
-2. If a military unit hasn't been commanded for 5+ minutes before the game ends, assume it died
-3. Estimated death time = last_command_time + 5 minutes
-
-```python
-DEATH_THRESHOLD = 5 * 60  # 5 minutes in seconds
-
-for unit_id, actions in unit_actions.items():
-    last_action_time = actions[-1]["timestamp_seconds"]
-    time_since_last = match_duration - last_action_time
+Map fits container while maintaining diamond aspect ratio:
+```javascript
+setupCanvas() {
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
     
-    if time_since_last > DEATH_THRESHOLD:
-        likely_died = True
-        estimated_death_time = last_action_time + DEATH_THRESHOLD
+    const scaleX = canvas.width / mapPixelWidth;
+    const scaleY = canvas.height / mapPixelHeight;
+    const fitScale = Math.min(scaleX, scaleY) * 0.9;
+    
+    if (zoom === 1) zoom = fitScale;
+}
 ```
 
-## Reference Data
+## Dependencies
 
-### Object Names (aocref)
-```python
-import aocref
-import os
-import json
+**Python:**
+- Flask, flask-cors - Web server
+- mgz - AoE2 replay parser
+- aocref - Object name lookups
 
-aocref_path = os.path.dirname(aocref.__file__)
-dataset_file = os.path.join(aocref_path, "data", "datasets", "100.json")
+**Frontend:**
+- Vanilla JavaScript (no frameworks)
+- HTML5 Canvas for rendering
 
-with open(dataset_file, "r") as f:
-    data = json.load(f)
-    object_names = data.get("objects", {})  # {id: name}
-```
+## Common Issues
 
-### Player Colors
-Standard AoE2 player colors:
-| color_id | Color |
-|----------|-------|
-| 0 | Blue (#0042FF) |
-| 1 | Red (#FF0000) |
-| 2 | Green (#00FF00) |
-| 3 | Yellow (#FFFF00) |
-| 4 | Cyan (#00FFFF) |
-| 5 | Purple (#FF00FF) |
-| 6 | Grey (#808080) |
-| 7 | Orange (#FFA500) |
+1. **Port 5000 blocked:** macOS AirPlay uses port 5000. Use port 8000 instead.
 
-## Unit Stats
+2. **File upload fails:** Ensure Flask server is running, not simple HTTP server.
 
-Unit stats can be fetched from the aoe2techtree repository:
-```
-https://raw.githubusercontent.com/SiegeEngineers/aoe2techtree/master/data/data.json
-```
+3. **Play button unresponsive:** Check browser console for errors. May be duplicate event listeners.
 
-Key stats: HP, Attack, MeleeArmor, PierceArmor, Speed, Range, TrainTime, Cost
+4. **Map squished:** Ensure `setupCanvas()` calculates proper fit scale.
 
-## Common Pitfalls
+## Related Files
 
-1. **Position can be None**: Always check `if action.position` before accessing `.x` and `.y`
-
-2. **Payload can be None**: Always use `action.payload or {}` 
-
-3. **Action type is an enum**: Convert with `str(action.type).replace("Action.", "")`
-
-4. **Unit IDs in actions may not exist yet**: Units created mid-game won't be in `player.objects`
-
-5. **Multiple units in one action**: `object_ids` is a list - many actions affect multiple units
-
-6. **Coordinate system varies**: Game coords vs screen coords vs isometric - keep track of which you're using
+- `aoe2recordinsight.md` - Details on parsing `.aoe2record` files with mgz
+- `README.md` - User-facing documentation
+- `analyzers/` - Additional Python scripts for data extraction

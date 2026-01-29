@@ -582,12 +582,13 @@ class App {
     for (const player of this.data.players) {
       this.playerVisibility[player.name] = true;
 
+      const civ = player.civilization ? ` (${player.civilization})` : "";
       const item = document.createElement("div");
       item.className = "player-item";
       item.innerHTML = `
                 <input type="checkbox" id="player-${player.color_id}" checked>
                 <div class="player-color" style="background-color: ${player.color_hex}"></div>
-                <label for="player-${player.color_id}">${player.name}</label>
+                <label for="player-${player.color_id}">${player.name}${civ}</label>
             `;
 
       const checkbox = item.querySelector("input");

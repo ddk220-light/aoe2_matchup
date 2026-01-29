@@ -422,7 +422,7 @@ class Renderer {
     }
   }
 
-  // Draw a sprite with player color indicator (glow effect)
+  // Draw a sprite with player color indicator (circle for units)
   drawSpriteWithPlayerColor(x, y, sprite, playerColor, size, opacity = 1) {
     const ctx = this.ctx;
     ctx.globalAlpha = opacity;
@@ -431,6 +431,41 @@ class Renderer {
     ctx.fillStyle = playerColor;
     ctx.beginPath();
     ctx.arc(x, y, size / 2 + 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw black outline
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Draw the sprite centered
+    ctx.drawImage(sprite, x - size / 2, y - size / 2, size, size);
+
+    ctx.globalAlpha = 1;
+  }
+
+  // Draw a building sprite with player color indicator (square/diamond shape)
+  drawBuildingSpriteWithPlayerColor(
+    x,
+    y,
+    sprite,
+    playerColor,
+    size,
+    opacity = 1,
+  ) {
+    const ctx = this.ctx;
+    ctx.globalAlpha = opacity * 0.7; // Reduced opacity for buildings
+
+    // Draw player color background as isometric diamond
+    const halfW = size / 2 + 2;
+    const halfH = size / 4 + 2;
+    ctx.fillStyle = playerColor;
+    ctx.beginPath();
+    ctx.moveTo(x, y - halfH);
+    ctx.lineTo(x + halfW, y);
+    ctx.lineTo(x, y + halfH);
+    ctx.lineTo(x - halfW, y);
+    ctx.closePath();
     ctx.fill();
 
     // Draw black outline
@@ -633,12 +668,12 @@ class Renderer {
     // Try to use sprite (exact match only)
     const sprite = this.getSprite(spriteType);
     if (sprite) {
-      this.drawSpriteWithPlayerColor(
+      this.drawBuildingSpriteWithPlayerColor(
         pos.x,
         pos.y,
         sprite,
         color,
-        size * 1.2,
+        size * 0.6,
         opacity,
       );
     } else {

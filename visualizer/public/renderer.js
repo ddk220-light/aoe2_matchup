@@ -973,9 +973,20 @@ class Renderer {
       this.drawWall(wall);
     }
 
-    // Draw buildings
+    // Draw buildings with age-based opacity
+    // 100% for first 30s, fade to 50% by 30s, then to 25% by 5 minutes
     for (const [name, building] of state.buildings) {
-      const opacity = 1;
+      const age = building.age || 0;
+      let opacity;
+      if (age < 30) {
+        opacity = 1; // Full opacity for first 30 seconds
+      } else if (age < 300) {
+        // Fade from 50% to 25% between 30s and 5 minutes
+        opacity = 0.5 - ((age - 30) / 270) * 0.25;
+      } else {
+        opacity = 0.25; // 25% after 5 minutes
+      }
+
       this.drawBuilding(
         building.x,
         building.y,
@@ -1011,14 +1022,25 @@ class Renderer {
     }
 
     // Helper function to draw unit groups with position offsets
-    const drawUnitGroup = (unitsByPosition, opacityModifier = 1) => {
+    const drawUnitGroup = (unitsByPosition, isIdleVillagerGroup = false) => {
       for (const [posKey, units] of unitsByPosition) {
         const count = units.length;
 
         for (let i = 0; i < count; i++) {
           const { name, unit } = units[i];
           let opacity = unit.dying ? 0.5 : 1;
-          opacity *= opacityModifier; // Apply opacity modifier for idle villagers
+
+          // Idle villagers: 50% opacity after 30s, fading to 25% by 5 minutes
+          if (isIdleVillagerGroup) {
+            const idleTime = unit.idleTime || 0;
+            if (idleTime < 300) {
+              // Fade from 50% to 25% between 30s and 5 minutes idle
+              opacity *= 0.5 - ((idleTime - 30) / 270) * 0.25;
+            } else {
+              // 25% after 5 minutes idle
+              opacity *= 0.25;
+            }
+          }
 
           // Calculate offset for multiple units at same position
           let offsetX = 0;
@@ -1065,10 +1087,65 @@ class Renderer {
     };
 
     // Draw idle villagers first (below layer) at 50% opacity
-    drawUnitGroup(idleVillagersByPosition, 0.5);
+    drawUnitGroup(idleVillagersByPosition, true);
 
     // Draw active units on top at full opacity
-    drawUnitGroup(activeUnitsByPosition, 1);
+    drawUnitGroup(activeUnitsByPosition, false);
+
+    // Draw attack arrows
+    for (const attack of state.attacks || []) {
+      this.drawAttackArrow(
+        attack.fromX,
+        attack.fromY,
+        attack.toX,
+        attack.toY,
+        attack.player,
+        attack.opacity,
+      );
+    }
+  }
+
+  // Draw an attack arrow from attacker to target
+  drawAttackArrow(fromX, fromY, toX, toY, player, opacity = 1) {
+    if (fromX === null || fromY === null || toX === null || toY === null)
+      return;
+
+    const from = this.gameToCanvas(fromX, fromY);
+    const to = this.gameToCanvas(toX, toY);
+    const color = this.playerColors[player] || "#ffffff";
+
+    this.ctx.save();
+    this.ctx.globalAlpha = opacity * 0.8;
+
+    // Draw the arrow line
+    this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = 2 * this.zoom;
+    this.ctx.lineCap = "round";
+
+    this.ctx.beginPath();
+    this.ctx.moveTo(from.x, from.y);
+    this.ctx.lineTo(to.x, to.y);
+    this.ctx.stroke();
+
+    // Draw arrowhead
+    const angle = Math.atan2(to.y - from.y, to.x - from.x);
+    const arrowSize = 10 * this.zoom;
+
+    this.ctx.fillStyle = color;
+    this.ctx.beginPath();
+    this.ctx.moveTo(to.x, to.y);
+    this.ctx.lineTo(
+      to.x - arrowSize * Math.cos(angle - Math.PI / 6),
+      to.y - arrowSize * Math.sin(angle - Math.PI / 6),
+    );
+    this.ctx.lineTo(
+      to.x - arrowSize * Math.cos(angle + Math.PI / 6),
+      to.y - arrowSize * Math.sin(angle + Math.PI / 6),
+    );
+    this.ctx.closePath();
+    this.ctx.fill();
+
+    this.ctx.restore();
   }
 
   // Draw a wall segment

@@ -517,6 +517,9 @@ def process_replay(replay_file):
             tech = payload.get("technology", payload.get("tech_id", ""))
             target_name = str(tech).lower().replace(" ", "")
 
+        # For ORDER actions, capture target_id for attack visualization
+        target_id = payload.get("target_id") if action_type == "ORDER" else None
+
         data["actions"].append(
             {
                 "id": action_id,
@@ -525,6 +528,7 @@ def process_replay(replay_file):
                 "type": action_type,
                 "subjects": subject_names,
                 "target": target_name,
+                "target_id": target_id,  # For ORDER (attack) actions
                 "x": pos.x if pos else None,
                 "y": pos.y if pos else None,
                 "amount": payload.get("amount"),

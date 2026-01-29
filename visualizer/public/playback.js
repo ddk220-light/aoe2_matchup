@@ -59,15 +59,35 @@ class Playback {
 
   // Pre-process all actions to build movement timelines for each unit
   preprocessMovements() {
-    this.unitMovements = new Map(); // unit_name -> [{time, x, y}, ...]
+    this.unitMovements = new Map(); // unit_name -> [{time, x, y, actionType}, ...]
     this.buildingEvents = []; // [{time, player, type, x, y}, ...]
     this.unitDeletions = new Map(); // unit_name -> deletion_time
     this.buildingDeletions = []; // [{time, x, y}, ...]
+    this.attackActions = []; // [{time, attackerNames, targetX, targetY, player}, ...]
+    this.targetPositions = new Map(); // target_id -> {x, y} for tracking attack targets
 
     const actions = this.data.actions;
 
     for (const action of actions) {
-      const { type, player, subjects, target, x, y, time } = action;
+      const { type, player, subjects, target, target_id, x, y, time } = action;
+
+      // Track ORDER (attack) actions with target positions
+      if (type === "ORDER" && target_id && x !== null && y !== null) {
+        // Store target position for this target_id
+        this.targetPositions.set(target_id, { x, y, time });
+
+        // Record attack action
+        if (subjects && subjects.length > 0) {
+          this.attackActions.push({
+            time: time,
+            attackerNames: subjects,
+            targetX: x,
+            targetY: y,
+            targetId: target_id,
+            player: player,
+          });
+        }
+      }
 
       // Track DELETE actions
       if (type === "DELETE") {
@@ -118,11 +138,18 @@ class Playback {
           if (!this.unitMovements.has(unitName)) {
             this.unitMovements.set(unitName, []);
           }
+
+          // For ORDER (attack) actions, check if this is a ranged unit
+          // Ranged units don't move all the way to the target
+          const isAttack = type === "ORDER" && target_id;
+
           this.unitMovements.get(unitName).push({
             time: time,
             x: x,
             y: y,
             actionType: type,
+            isAttack: isAttack,
+            targetId: isAttack ? target_id : null,
           });
         }
       }
@@ -345,10 +372,34 @@ class Playback {
       currentY = movements[0].y;
     }
 
+    // Ranged unit types that should stay at distance when attacking
+    const RANGED_TYPES = new Set(["archer", "siege"]);
+    const RANGED_ATTACK_DISTANCE = 5; // Tiles - ranged units stop this far from target
+    const isRangedUnit = RANGED_TYPES.has(unit.type);
+
     for (let i = 0; i <= commandIndex; i++) {
       const command = movements[i];
-      const destX = command.x;
-      const destY = command.y;
+      let destX = command.x;
+      let destY = command.y;
+
+      // For ranged units attacking, stop at a distance from the target
+      if (isRangedUnit && command.isAttack) {
+        const dx = destX - currentX;
+        const dy = destY - currentY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance > RANGED_ATTACK_DISTANCE) {
+          // Move to attack range, not all the way to target
+          const stopDistance = distance - RANGED_ATTACK_DISTANCE;
+          const ratio = stopDistance / distance;
+          destX = currentX + dx * ratio;
+          destY = currentY + dy * ratio;
+        } else {
+          // Already in range, don't move
+          destX = currentX;
+          destY = currentY;
+        }
+      }
 
       // Time available for this movement
       const startTime = i === 0 ? movements[0].time - 10 : movements[i].time; // Assume unit existed 10s before first command
@@ -455,10 +506,12 @@ class Playback {
       }
 
       // For villagers: check 30-second idle threshold for opacity reduction
+      let villagerIdleTime = 0;
       if (isVillager && alive && lastCommandTime !== null) {
         const timeSinceLastCommand = this.currentTime - lastCommandTime;
         if (timeSinceLastCommand > VILLAGER_IDLE_THRESHOLD) {
           idleVillager = true;
+          villagerIdleTime = timeSinceLastCommand;
         }
       }
 
@@ -492,10 +545,11 @@ class Playback {
         alive: alive,
         dying: dying,
         idleVillager: idleVillager, // New flag for idle villagers
+        idleTime: villagerIdleTime, // Time since last command (for opacity fade)
       });
     }
 
-    // Update buildings based on time
+    // Update buildings based on time, tracking age for opacity
     const currentBuildings = new Map();
     for (const event of this.buildingEvents) {
       if (event.time <= this.currentTime) {
@@ -519,12 +573,37 @@ class Playback {
 
         if (!deleted) {
           const key = `${event.type}_${event.player}_${roundedX}_${roundedY}`;
+          const buildingAge = this.currentTime - event.time;
           currentBuildings.set(key, {
             x: event.x,
             y: event.y,
             player: event.player,
             type: event.type,
+            age: buildingAge, // Time since building was placed
           });
+        }
+      }
+    }
+
+    // Get active attack actions (within last 3 seconds)
+    const ATTACK_DISPLAY_DURATION = 3; // Show attack arrows for 3 seconds
+    const activeAttacks = [];
+    for (const attack of this.attackActions) {
+      const timeSinceAttack = this.currentTime - attack.time;
+      if (timeSinceAttack >= 0 && timeSinceAttack <= ATTACK_DISPLAY_DURATION) {
+        // Get attacker positions
+        for (const attackerName of attack.attackerNames) {
+          const attackerUnit = interpolatedUnits.get(attackerName);
+          if (attackerUnit && attackerUnit.alive) {
+            activeAttacks.push({
+              fromX: attackerUnit.x,
+              fromY: attackerUnit.y,
+              toX: attack.targetX,
+              toY: attack.targetY,
+              player: attack.player,
+              opacity: 1 - timeSinceAttack / ATTACK_DISPLAY_DURATION, // Fade out
+            });
+          }
         }
       }
     }
@@ -549,7 +628,7 @@ class Playback {
       units: interpolatedUnits,
       buildings: currentBuildings,
       walls: currentWalls,
-      actionLines: [], // No more action lines
+      attacks: activeAttacks, // Attack arrows to draw
       currentTime: this.currentTime,
     };
   }

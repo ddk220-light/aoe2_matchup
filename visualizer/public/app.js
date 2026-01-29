@@ -23,7 +23,7 @@ class App {
     this.zoomLevel = document.getElementById("zoom-level");
     this.matchInfo = document.getElementById("match-info");
     this.playerLegend = document.getElementById("player-legend");
-    this.actionLog = document.getElementById("action-log");
+    this.playerTracker = document.getElementById("player-tracker");
     this.fileInput = document.getElementById("file-input");
 
     // Match browsing UI elements
@@ -48,8 +48,9 @@ class App {
     // Player visibility
     this.playerVisibility = {};
 
-    // Action log entries (keep last 50)
-    this.maxLogEntries = 50;
+    // Production tracking
+    this.productionData = {}; // player -> { villagers: [], military: [] } - arrays of creation times
+    this.lastTrackerUpdate = 0;
 
     // Track if controls have been set up
     this.controlsInitialized = false;
@@ -358,9 +359,6 @@ class App {
         cancelAnimationFrame(this.renderLoopId);
       }
 
-      // Clear action log
-      this.actionLog.innerHTML = "";
-
       // Reinitialize with new data
       this.initializeWithData();
       this.hideLoadingOverlay();
@@ -379,8 +377,9 @@ class App {
     // Initialize playback
     this.playback = new Playback(this.data);
     this.playback.onTimeUpdate = (time) => this.onTimeUpdate(time);
-    this.playback.onActionProcessed = (action) =>
-      this.onActionProcessed(action);
+
+    // Preprocess production data from DE_QUEUE actions
+    this.preprocessProductionData();
 
     // Setup UI
     this.setupUI();
@@ -391,6 +390,47 @@ class App {
 
     // Remove loading state
     document.querySelector(".loading")?.remove();
+  }
+
+  preprocessProductionData() {
+    // Reset production data
+    this.productionData = {};
+    for (const player of this.data.players) {
+      this.productionData[player.name] = {
+        villagers: [],
+        military: [],
+      };
+    }
+
+    // Villager unit types
+    const villagerTypes = new Set([
+      "villager",
+      "villagermale",
+      "villagerfemale",
+    ]);
+
+    // Process all DE_QUEUE actions
+    for (const action of this.data.actions) {
+      if (action.type === "DE_QUEUE" && action.target && action.player) {
+        const unitType = action.target.toLowerCase();
+        const playerData = this.productionData[action.player];
+
+        if (playerData) {
+          if (villagerTypes.has(unitType)) {
+            playerData.villagers.push(action.time);
+          } else {
+            // All non-villager units are military
+            playerData.military.push(action.time);
+          }
+        }
+      }
+    }
+
+    // Sort by time
+    for (const player of Object.keys(this.productionData)) {
+      this.productionData[player].villagers.sort((a, b) => a - b);
+      this.productionData[player].military.sort((a, b) => a - b);
+    }
   }
 
   setupFileUpload() {
@@ -421,9 +461,6 @@ class App {
       if (this.renderLoopId) {
         cancelAnimationFrame(this.renderLoopId);
       }
-
-      // Clear action log
-      this.actionLog.innerHTML = "";
 
       // Reinitialize with new data
       this.initializeWithData();
@@ -460,9 +497,6 @@ class App {
       if (this.renderLoopId) {
         cancelAnimationFrame(this.renderLoopId);
       }
-
-      // Clear action log
-      this.actionLog.innerHTML = "";
 
       // Reinitialize with new data
       this.initializeWithData();
@@ -627,38 +661,116 @@ class App {
   onTimeUpdate(time) {
     this.currentTimeDisplay.textContent = this.playback.formatTime(time);
     this.timeline.value = time;
+
+    // Update player tracker every second (avoid excessive updates)
+    if (Math.abs(time - this.lastTrackerUpdate) >= 1) {
+      this.lastTrackerUpdate = time;
+      this.updatePlayerTracker(time);
+    }
   }
 
-  onActionProcessed(action) {
-    // Add to action log
-    const entry = document.createElement("div");
-    entry.className = "action-log-entry";
+  calculateProductionRates(currentTime) {
+    // Calculate rates for the last minute (or from start if less than 1 min)
+    const windowStart = Math.max(0, currentTime - 60);
+    const windowDuration = currentTime - windowStart;
 
-    const player = this.data.players.find((p) => p.name === action.player);
-    const color = player ? player.color_hex : "#fff";
-
-    const timeStr = this.playback.formatTime(action.time);
-    const subjects =
-      action.subjects.length > 0 ? action.subjects.join(", ") : "";
-    const target = action.target ? ` -> ${action.target}` : "";
-
-    entry.innerHTML = `
-            <span class="time">[${timeStr}]</span>
-            <span class="player" style="color: ${color}">${action.player}</span>
-            <span class="action-type">${action.type}</span>
-            ${subjects ? `<span class="subject">${subjects}</span>` : ""}
-            ${target ? `<span class="target">${target}</span>` : ""}
-        `;
-
-    this.actionLog.appendChild(entry);
-
-    // Keep only last N entries
-    while (this.actionLog.children.length > this.maxLogEntries) {
-      this.actionLog.removeChild(this.actionLog.firstChild);
+    if (windowDuration < 1) {
+      // Not enough time elapsed
+      return this.data.players.map((p) => ({
+        name: p.name,
+        color: p.color_hex,
+        villagerRate: 0,
+        militaryRate: 0,
+      }));
     }
 
-    // Auto-scroll to bottom
-    this.actionLog.scrollTop = this.actionLog.scrollHeight;
+    const rates = [];
+    for (const player of this.data.players) {
+      const data = this.productionData[player.name];
+      if (!data) {
+        rates.push({
+          name: player.name,
+          color: player.color_hex,
+          villagerRate: 0,
+          militaryRate: 0,
+        });
+        continue;
+      }
+
+      // Count units created in the window
+      const villagerCount = data.villagers.filter(
+        (t) => t >= windowStart && t <= currentTime,
+      ).length;
+      const militaryCount = data.military.filter(
+        (t) => t >= windowStart && t <= currentTime,
+      ).length;
+
+      // Calculate rate per minute
+      const minutesFraction = windowDuration / 60;
+      rates.push({
+        name: player.name,
+        color: player.color_hex,
+        villagerRate: villagerCount / minutesFraction,
+        militaryRate: militaryCount / minutesFraction,
+      });
+    }
+
+    return rates;
+  }
+
+  updatePlayerTracker(currentTime) {
+    const rates = this.calculateProductionRates(currentTime);
+
+    // Sort to find rankings for color coding
+    const villagerRanked = [...rates].sort(
+      (a, b) => b.villagerRate - a.villagerRate,
+    );
+    const militaryRanked = [...rates].sort(
+      (a, b) => b.militaryRate - a.militaryRate,
+    );
+
+    // Build rank maps
+    const villagerRank = {};
+    const militaryRank = {};
+    villagerRanked.forEach((r, i) => (villagerRank[r.name] = i));
+    militaryRanked.forEach((r, i) => (militaryRank[r.name] = i));
+
+    const numPlayers = rates.length;
+
+    // Helper to get CSS class for rate
+    const getRateClass = (rank, total) => {
+      if (rank === 0) return "rate-top-1";
+      if (rank < 3) return "rate-top";
+      if (rank === total - 1) return "rate-bottom-1";
+      if (rank >= total - 3) return "rate-bottom";
+      return "";
+    };
+
+    // Build tracker HTML
+    let html = `
+      <div class="tracker-header">
+        <span>Player</span>
+        <span>Vill/min</span>
+        <span>Mil/min</span>
+      </div>
+    `;
+
+    for (const rate of rates) {
+      const vRank = villagerRank[rate.name];
+      const mRank = militaryRank[rate.name];
+      const vClass = getRateClass(vRank, numPlayers);
+      const mClass = getRateClass(mRank, numPlayers);
+
+      html += `
+        <div class="tracker-row">
+          <span class="tracker-player" style="color: ${rate.color}">${rate.name}</span>
+          <span class="tracker-rate ${vClass}">${rate.villagerRate.toFixed(1)}</span>
+          <span class="tracker-rate ${mClass}">${rate.militaryRate.toFixed(1)}</span>
+        </div>
+      `;
+    }
+
+    this.playerTracker.innerHTML = html;
   }
 
   startRenderLoop() {

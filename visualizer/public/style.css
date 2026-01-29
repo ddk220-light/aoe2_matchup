@@ -282,51 +282,78 @@ main {
     cursor: pointer;
 }
 
-/* Action Log - Collapsible overlay */
-.action-log-container {
+/* Player Tracker - Production rates panel */
+.player-tracker-container {
     background: rgba(37, 37, 56, 0.9);
     border-radius: 8px;
     padding: 12px;
-    max-height: 250px;
+    max-height: 350px;
     display: flex;
     flex-direction: column;
 }
 
-.action-log-container h3 {
+.player-tracker-container h3 {
     font-size: 0.85rem;
     color: #888;
     margin-bottom: 8px;
 }
 
-.action-log {
+.player-tracker {
     flex: 1;
     overflow-y: auto;
     font-family: monospace;
+    font-size: 0.75rem;
+}
+
+.tracker-header {
+    display: grid;
+    grid-template-columns: 1fr 70px 70px;
+    gap: 8px;
+    padding: 4px 8px;
+    border-bottom: 1px solid #555;
+    color: #888;
     font-size: 0.7rem;
 }
 
-.action-log-entry {
-    padding: 2px 4px;
+.tracker-row {
+    display: grid;
+    grid-template-columns: 1fr 70px 70px;
+    gap: 8px;
+    padding: 4px 8px;
     border-bottom: 1px solid #333;
-    white-space: nowrap;
+}
+
+.tracker-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tracker-player {
+    font-weight: bold;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.action-log-entry:hover {
-    background: rgba(255, 255, 255, 0.1);
+.tracker-rate {
+    text-align: right;
 }
 
-.action-log-entry .time {
-    color: #888;
+.rate-top {
+    color: #4ade80;
 }
 
-.action-log-entry .player {
+.rate-top-1 {
+    color: #22c55e;
     font-weight: bold;
 }
 
-.action-log-entry .action-type {
-    color: #aaa;
+.rate-bottom {
+    color: #f87171;
+}
+
+.rate-bottom-1 {
+    color: #ef4444;
+    font-weight: bold;
 }
 
 /* Loading overlay (old) */

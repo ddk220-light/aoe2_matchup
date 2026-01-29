@@ -210,7 +210,16 @@ _(To be filled after Phase 4 completion)_
 
 | Phase | Status | Commit | Date |
 |-------|--------|--------|------|
-| Phase 1: Text Labels | Not Started | - | - |
-| Phase 2: Download Sprites | Not Started | - | - |
+| Phase 1: Text Labels | Complete | 9e12a12 | 2026-01-28 |
+| Phase 2: Download Sprites | In Progress | - | - |
 | Phase 3: Test 3 Sprites | Not Started | - | - |
 | Phase 4: All Sprites + Deploy | Not Started | - | - |
+
+## Learnings Log
+
+### Phase 1 Learnings
+- Unit type detection was flawed - was matching wrong training events to units
+- Fixed by tracking training queue per player and matching unused events to new units
+- Units now correctly show types like `archer`, `scoutcavalry`, `knight` instead of `villager`
+- Some units still show as `unit` when no matching training event found
+- Labels work well at zoom > 0.5, hidden when zoomed out to reduce clutter

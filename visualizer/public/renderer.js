@@ -347,7 +347,7 @@ class Renderer {
         pos.y,
         sprite,
         color,
-        size * 1.8,
+        size * 1.35, // 75% of 1.8 = 1.35
         opacity,
       );
     } else {
@@ -444,7 +444,8 @@ class Renderer {
     ctx.globalAlpha = 1;
   }
 
-  // Draw a building sprite with player color indicator (square/diamond shape)
+  // Draw a building sprite with player color indicator (isometric diamond shape)
+  // Sprite is rotated and skewed to match isometric perspective
   drawBuildingSpriteWithPlayerColor(
     x,
     y,
@@ -473,9 +474,24 @@ class Renderer {
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Draw the sprite centered
-    ctx.drawImage(sprite, x - size / 2, y - size / 2, size, size);
+    // Draw the sprite with isometric transformation
+    // Transform the square sprite into an isometric diamond shape
+    ctx.save();
+    ctx.translate(x, y);
 
+    // Apply isometric transformation matrix:
+    // Scale horizontally, skew to create diamond effect
+    // The transform creates a 2:1 isometric projection
+    ctx.transform(1, 0.5, -1, 0.5, 0, 0);
+
+    // Scale to fit the desired size (accounting for transformation)
+    const scaleFactor = (size / sprite.width) * 0.7;
+    ctx.scale(scaleFactor, scaleFactor);
+
+    // Draw centered
+    ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
+
+    ctx.restore();
     ctx.globalAlpha = 1;
   }
 
@@ -969,69 +985,90 @@ class Renderer {
       );
     }
 
-    // Draw units - group by position to spread overlapping units
-    const unitsByPosition = new Map();
+    // Draw units - separate idle villagers (drawn first, below) from active units
+    // Group by position to spread overlapping units
+    const idleVillagersByPosition = new Map();
+    const activeUnitsByPosition = new Map();
+
     for (const [name, unit] of state.units) {
       if (!unit.alive) continue;
 
       // Round position to group nearby units
       const key = `${Math.round(unit.x * 2) / 2}_${Math.round(unit.y * 2) / 2}`;
-      if (!unitsByPosition.has(key)) {
-        unitsByPosition.set(key, []);
-      }
-      unitsByPosition.get(key).push({ name, unit });
-    }
 
-    // Draw each group with offsets
-    for (const [posKey, units] of unitsByPosition) {
-      const count = units.length;
-
-      for (let i = 0; i < count; i++) {
-        const { name, unit } = units[i];
-        const opacity = unit.dying ? 0.5 : 1;
-
-        // Calculate offset for multiple units at same position
-        let offsetX = 0;
-        let offsetY = 0;
-
-        if (count > 1) {
-          // Arrange units in a circle/grid pattern around the center
-          const spacing = 1.5; // Game units spacing
-          if (count <= 4) {
-            // Square pattern for 2-4 units
-            const offsets = [
-              [-0.5, -0.5],
-              [0.5, -0.5],
-              [-0.5, 0.5],
-              [0.5, 0.5],
-            ];
-            offsetX = offsets[i][0] * spacing;
-            offsetY = offsets[i][1] * spacing;
-          } else if (count <= 9) {
-            // 3x3 grid for 5-9 units
-            const row = Math.floor(i / 3);
-            const col = i % 3;
-            offsetX = (col - 1) * spacing;
-            offsetY = (row - 1) * spacing;
-          } else {
-            // Circle pattern for many units
-            const angle = (i / count) * Math.PI * 2;
-            const radius = Math.ceil(Math.sqrt(count)) * spacing * 0.5;
-            offsetX = Math.cos(angle) * radius;
-            offsetY = Math.sin(angle) * radius;
-          }
+      // Separate idle villagers from active units
+      if (unit.idleVillager) {
+        if (!idleVillagersByPosition.has(key)) {
+          idleVillagersByPosition.set(key, []);
         }
-
-        this.drawUnit(
-          unit.x + offsetX,
-          unit.y + offsetY,
-          unit.player,
-          unit.type,
-          opacity,
-          name,
-        );
+        idleVillagersByPosition.get(key).push({ name, unit });
+      } else {
+        if (!activeUnitsByPosition.has(key)) {
+          activeUnitsByPosition.set(key, []);
+        }
+        activeUnitsByPosition.get(key).push({ name, unit });
       }
     }
+
+    // Helper function to draw unit groups with position offsets
+    const drawUnitGroup = (unitsByPosition, opacityModifier = 1) => {
+      for (const [posKey, units] of unitsByPosition) {
+        const count = units.length;
+
+        for (let i = 0; i < count; i++) {
+          const { name, unit } = units[i];
+          let opacity = unit.dying ? 0.5 : 1;
+          opacity *= opacityModifier; // Apply opacity modifier for idle villagers
+
+          // Calculate offset for multiple units at same position
+          let offsetX = 0;
+          let offsetY = 0;
+
+          if (count > 1) {
+            // Arrange units in a circle/grid pattern around the center
+            const spacing = 1.5; // Game units spacing
+            if (count <= 4) {
+              // Square pattern for 2-4 units
+              const offsets = [
+                [-0.5, -0.5],
+                [0.5, -0.5],
+                [-0.5, 0.5],
+                [0.5, 0.5],
+              ];
+              offsetX = offsets[i][0] * spacing;
+              offsetY = offsets[i][1] * spacing;
+            } else if (count <= 9) {
+              // 3x3 grid for 5-9 units
+              const row = Math.floor(i / 3);
+              const col = i % 3;
+              offsetX = (col - 1) * spacing;
+              offsetY = (row - 1) * spacing;
+            } else {
+              // Circle pattern for many units
+              const angle = (i / count) * Math.PI * 2;
+              const radius = Math.ceil(Math.sqrt(count)) * spacing * 0.5;
+              offsetX = Math.cos(angle) * radius;
+              offsetY = Math.sin(angle) * radius;
+            }
+          }
+
+          this.drawUnit(
+            unit.x + offsetX,
+            unit.y + offsetY,
+            unit.player,
+            unit.type,
+            opacity,
+            name,
+          );
+        }
+      }
+    };
+
+    // Draw idle villagers first (below layer) at 50% opacity
+    drawUnitGroup(idleVillagersByPosition, 0.5);
+
+    // Draw active units on top at full opacity
+    drawUnitGroup(activeUnitsByPosition, 1);
   }
 
   // Draw a wall segment

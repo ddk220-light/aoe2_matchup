@@ -386,9 +386,15 @@ class Playback {
     // Update unit positions based on interpolation
     const interpolatedUnits = new Map();
 
+    // Constants for idle/death detection
+    const VILLAGER_IDLE_THRESHOLD = 30; // 30 seconds for villager idle detection
+    const END_GAME_BUFFER = 3 * 60; // Last 3 minutes of game - don't mark units as dead
+    const isEndGame = this.currentTime >= this.duration - END_GAME_BUFFER;
+
     for (const [name, unit] of this.units) {
       // Check if unit should be alive
       let alive = unit.alive;
+      const isVillager = unit.type === "villager";
 
       // Unit spawns when first movement occurs
       if (unit.spawnTime !== undefined) {
@@ -416,27 +422,56 @@ class Playback {
         alive = false;
       }
 
-      // Check for 5-minute inactivity (unit disappears if no commands for 5 min)
-      const INACTIVITY_THRESHOLD = 5 * 60; // 5 minutes in seconds
+      // Track last command time and idle state
       const movements = unit.movements || [];
+      let lastCommandTime = null;
+      let lastCommandInGame = null; // Last command ever for this unit
+
       if (movements.length > 0) {
+        // Find the last command ever (for non-villager death detection)
+        lastCommandInGame = movements[movements.length - 1].time;
+
         // Find the last command before or at current time
-        let lastCommandTime = null;
         for (const movement of movements) {
           if (movement.time <= this.currentTime) {
             lastCommandTime = movement.time;
           }
         }
+      }
 
-        if (lastCommandTime !== null) {
-          const timeSinceLastCommand = this.currentTime - lastCommandTime;
-          if (timeSinceLastCommand > INACTIVITY_THRESHOLD) {
-            // Unit hasn't been commanded in 5+ minutes, consider it dead
+      // For non-villagers: if they have no more actions after current time, they're dead
+      // Exception: don't apply this in the last 3 minutes of game
+      let idleVillager = false;
+
+      if (!isVillager && alive && lastCommandInGame !== null) {
+        // Check if unit has no future commands (last command is in the past)
+        if (lastCommandTime !== null && lastCommandTime === lastCommandInGame) {
+          // This unit has no more commands after this point
+          // Don't mark dead in end game (units may still be alive)
+          if (!isEndGame) {
             alive = false;
-            // Mark as dying if within 30 seconds of the threshold
-            if (timeSinceLastCommand <= INACTIVITY_THRESHOLD + 30) {
-              dying = true;
-            }
+          }
+        }
+      }
+
+      // For villagers: check 30-second idle threshold for opacity reduction
+      if (isVillager && alive && lastCommandTime !== null) {
+        const timeSinceLastCommand = this.currentTime - lastCommandTime;
+        if (timeSinceLastCommand > VILLAGER_IDLE_THRESHOLD) {
+          idleVillager = true;
+        }
+      }
+
+      // Legacy 5-minute inactivity check for villagers only (keep them visible but faded)
+      const INACTIVITY_THRESHOLD = 5 * 60; // 5 minutes in seconds
+      if (isVillager && movements.length > 0 && lastCommandTime !== null) {
+        const timeSinceLastCommand = this.currentTime - lastCommandTime;
+        if (timeSinceLastCommand > INACTIVITY_THRESHOLD) {
+          // Villager hasn't been commanded in 5+ minutes, consider it dead
+          alive = false;
+          // Mark as dying if within 30 seconds of the threshold
+          if (timeSinceLastCommand <= INACTIVITY_THRESHOLD + 30) {
+            dying = true;
           }
         }
       }
@@ -456,6 +491,7 @@ class Playback {
         type: unit.type,
         alive: alive,
         dying: dying,
+        idleVillager: idleVillager, // New flag for idle villagers
       });
     }
 

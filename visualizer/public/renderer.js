@@ -416,8 +416,8 @@ class Renderer {
       this.ctx.globalAlpha = 1;
     }
 
-    // Draw type label if debug mode is on (but not for units with sprites)
-    if (this.showTypeLabels && unitName && !sprite) {
+    // Draw type label if debug mode is on (but not for units with sprites or generic "unit" type)
+    if (this.showTypeLabels && unitName && !sprite && actualType !== "unit") {
       this.drawTypeLabel(pos.x, pos.y, actualType, size);
     }
   }
@@ -720,10 +720,7 @@ class Renderer {
       this.ctx.globalAlpha = 1;
     }
 
-    // Draw type label if debug mode is on (but not for buildings with sprites)
-    if (this.showTypeLabels && !sprite) {
-      this.drawTypeLabel(pos.x, pos.y, typeClean, size / 2);
-    }
+    // No labels for buildings - sprites or geometric shapes are sufficient
   }
 
   // Simple isometric diamond for small buildings

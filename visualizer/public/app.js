@@ -221,13 +221,11 @@ class App {
         if (targetWon !== null) break;
       }
 
-      // Get team summaries
+      // Get team summaries - show all players
       const teamSummaries = (match.teams || []).map((team) => {
-        const names = team.players.map((p) => p.name).slice(0, 2);
-        const suffix =
-          team.players.length > 2 ? ` +${team.players.length - 2}` : "";
+        const names = team.players.map((p) => p.name);
         const won = team.players[0]?.won;
-        return { names: names.join(", ") + suffix, won };
+        return { names: names.join(", "), won };
       });
 
       item.innerHTML = `

@@ -63,6 +63,9 @@ class Renderer {
       "harbor",
     ]);
 
+    // Debug mode: show type labels (for sprite verification)
+    this.showTypeLabels = true;
+
     this.setupCanvas();
     this.setupEventListeners();
   }
@@ -259,7 +262,8 @@ class Renderer {
   }
 
   // Draw a unit based on its type
-  drawUnit(x, y, player, type, opacity = 1) {
+  // unitName is the full name like "knight_Player1_1" for label display
+  drawUnit(x, y, player, type, opacity = 1, unitName = null) {
     if (x === null || y === null) return;
 
     const pos = this.gameToCanvas(x, y);
@@ -328,6 +332,53 @@ class Renderer {
     }
 
     this.ctx.globalAlpha = 1;
+
+    // Draw type label if debug mode is on
+    if (this.showTypeLabels && unitName) {
+      // Extract unit type from name (e.g., "knight" from "knight_PlayerName_1")
+      const actualType = this.extractUnitType(unitName);
+      this.drawTypeLabel(pos.x, pos.y, actualType, size);
+    }
+  }
+
+  // Extract the unit type from the full unit name
+  // e.g., "knight_PlayerName_1" -> "knight"
+  // e.g., "cavalryarcher_PlayerName_2" -> "cavalryarcher"
+  extractUnitType(unitName) {
+    if (!unitName) return "unknown";
+    // Unit names are formatted as: type_playerName_number
+    // Split by underscore and take the first part
+    const firstUnderscore = unitName.indexOf("_");
+    if (firstUnderscore === -1) return unitName;
+    return unitName.substring(0, firstUnderscore);
+  }
+
+  // Draw a text label below the unit/building
+  drawTypeLabel(x, y, label, size) {
+    const ctx = this.ctx;
+    const labelY = y + size + 8 * this.zoom;
+
+    // Only show labels when zoomed in enough to read them
+    if (this.zoom < 0.5) return;
+
+    const fontSize = Math.max(8, Math.min(12, 10 * this.zoom));
+    ctx.font = `bold ${fontSize}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+
+    // Draw background for readability
+    const textWidth = ctx.measureText(label).width;
+    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+    ctx.fillRect(
+      x - textWidth / 2 - 2,
+      labelY - 1,
+      textWidth + 4,
+      fontSize + 2,
+    );
+
+    // Draw text
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(label, x, labelY);
   }
 
   // Shield shape for infantry
@@ -467,17 +518,23 @@ class Renderer {
     this.ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
     this.ctx.lineWidth = 1;
 
+    // Determine building size for rendering
+    let size = this.sizes.building_small * this.zoom;
+
     // Draw different building types
     if (typeClean.includes("towncenter")) {
       this.drawTownCenter(pos.x, pos.y, color);
+      size = this.sizes.towncenter * this.zoom;
     } else if (typeClean.includes("castle")) {
       this.drawCastle(pos.x, pos.y, color);
+      size = this.sizes.castle * this.zoom;
     } else if (this.largeBuildings.has(typeClean)) {
       this.drawLargeBuilding(
         pos.x,
         pos.y,
         this.sizes.building_large * this.zoom,
       );
+      size = this.sizes.building_large * this.zoom;
     } else {
       this.drawSmallBuilding(
         pos.x,
@@ -487,6 +544,11 @@ class Renderer {
     }
 
     this.ctx.globalAlpha = 1;
+
+    // Draw type label if debug mode is on (show actual building type)
+    if (this.showTypeLabels) {
+      this.drawTypeLabel(pos.x, pos.y, typeClean, size / 2);
+    }
   }
 
   // Simple isometric diamond for small buildings
@@ -807,6 +869,7 @@ class Renderer {
           unit.player,
           unit.type,
           opacity,
+          name,
         );
       }
     }

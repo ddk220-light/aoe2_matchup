@@ -322,22 +322,26 @@ def process_replay(replay_file):
                 if obj_id not in unit_owner_map:
                     unit_owner_map[obj_id] = action.player.name
 
-    # Track actions per unit
+    # Track actions per unit with first seen time
     unit_actions = defaultdict(list)
+    unit_first_seen = {}  # obj_id -> first time seen
     for action in match.actions:
         if not action.player:
             continue
         payload = action.payload or {}
+        action_time = action.timestamp.total_seconds()
         if "object_ids" in payload:
             for obj_id in payload["object_ids"]:
                 unit_actions[obj_id].append(
                     {
-                        "time": action.timestamp.total_seconds(),
+                        "time": action_time,
                         "type": str(action.type).replace("Action.", ""),
                     }
                 )
+                if obj_id not in unit_first_seen:
+                    unit_first_seen[obj_id] = action_time
 
-    # Determine villagers
+    # Determine villagers by BUILD actions
     villager_ids = set()
     for obj_id, actions in unit_actions.items():
         if any(a["type"] == "BUILD" for a in actions):
@@ -347,26 +351,33 @@ def process_replay(replay_file):
     unit_name_map = {}
     unit_counters = defaultdict(lambda: defaultdict(int))
 
-    # Training events
-    training_events = []
+    # Collect training events with more detail
+    # Track training queue per player - list of (time, unit_type, used) tuples
+    training_queue = defaultdict(list)  # player -> [(time, unit_type, used), ...]
     for action in match.actions:
         if not action.player:
             continue
         action_type = str(action.type).replace("Action.", "")
         if action_type == "DE_QUEUE" and action.payload:
             unit_type_name = action.payload.get("unit", "unit")
-            training_events.append(
+            training_queue[action.player.name].append(
                 {
                     "time": action.timestamp.total_seconds(),
-                    "player": action.player.name,
                     "unit_type": unit_type_name.lower().replace(" ", ""),
+                    "used": False,
                 }
             )
 
-    # Name starting units
+    # Sort training queues by time
+    for player in training_queue:
+        training_queue[player].sort(key=lambda x: x["time"])
+
+    # Name starting units (these have obj.name from the replay)
+    starting_obj_ids = set()
     for player in match.players:
         if player.objects:
             for obj in player.objects:
+                starting_obj_ids.add(obj.instance_id)
                 unit_type = obj.name.lower().replace(" ", "") if obj.name else "unit"
                 unit_counters[player.name][unit_type] += 1
                 count = unit_counters[player.name][unit_type]
@@ -455,21 +466,38 @@ def process_replay(replay_file):
         for obj_id in unit_ids:
             if obj_id not in unit_name_map:
                 owner = unit_owner_map.get(obj_id, action.player.name)
+                first_seen = unit_first_seen.get(
+                    obj_id, action.timestamp.total_seconds()
+                )
 
+                # Determine unit type
                 if obj_id in villager_ids:
                     unit_type = "villager"
-                else:
-                    first_seen = None
-                    for a in unit_actions.get(obj_id, []):
-                        first_seen = a["time"]
-                        break
-
+                elif obj_id in starting_obj_ids:
+                    # This shouldn't happen as starting units are already named
                     unit_type = "unit"
-                    if first_seen:
-                        for te in reversed(training_events):
-                            if te["player"] == owner and te["time"] < first_seen:
-                                unit_type = te["unit_type"]
-                                break
+                else:
+                    # Find the best matching UNUSED training event for this player
+                    # Training takes time, so we look for events where:
+                    # queue_time < first_seen (unit was queued before it appeared)
+                    # We pick the most recent unused training event before first_seen
+                    unit_type = "unit"
+                    player_queue = training_queue.get(owner, [])
+                    best_match = None
+                    best_time = -1
+                    for te in player_queue:
+                        if te["used"]:
+                            continue
+                        # Training event must be before unit first appeared
+                        if te["time"] < first_seen:
+                            # Pick the most recent one (closest to first_seen)
+                            if te["time"] > best_time:
+                                best_time = te["time"]
+                                best_match = te
+
+                    if best_match:
+                        unit_type = best_match["unit_type"]
+                        best_match["used"] = True
 
                 unit_counters[owner][unit_type] += 1
                 count = unit_counters[owner][unit_type]

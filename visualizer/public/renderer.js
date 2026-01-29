@@ -406,8 +406,8 @@ class Renderer {
       this.ctx.globalAlpha = 1;
     }
 
-    // Draw type label if debug mode is on
-    if (this.showTypeLabels && unitName) {
+    // Draw type label if debug mode is on (but not for units with sprites)
+    if (this.showTypeLabels && unitName && !sprite) {
       this.drawTypeLabel(pos.x, pos.y, actualType, size);
     }
   }
@@ -659,8 +659,8 @@ class Renderer {
       this.ctx.globalAlpha = 1;
     }
 
-    // Draw type label if debug mode is on (show actual building type)
-    if (this.showTypeLabels) {
+    // Draw type label if debug mode is on (but not for buildings with sprites)
+    if (this.showTypeLabels && !sprite) {
       this.drawTypeLabel(pos.x, pos.y, typeClean, size / 2);
     }
   }

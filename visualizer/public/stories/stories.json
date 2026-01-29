@@ -1,0 +1,251 @@
+{
+  "config": {
+    "max_visible_captions": 3,
+    "caption_duration_ms": 5000,
+    "fade_duration_ms": 500
+  },
+  "stories": [
+    {
+      "id": "first_loom",
+      "name": "First Loom",
+      "description": "First player to research Loom",
+      "category": "early_game",
+      "trigger": {
+        "type": "first_player",
+        "event": "research",
+        "target": "loom"
+      },
+      "templates": [
+        "{player} gets Loom first at {time} - safety first!",
+        "{player} protecting those vills early! Loom at {time}",
+        "Loom secured! {player} likes their villagers alive at {time}"
+      ],
+      "priority": 2,
+      "enabled": true
+    },
+    {
+      "id": "last_loom",
+      "name": "Last Loom",
+      "description": "Last player to research Loom",
+      "category": "early_game",
+      "trigger": {
+        "type": "last_player",
+        "event": "research",
+        "target": "loom"
+      },
+      "templates": [
+        "{player} finally gets Loom at {time} - better late than never!",
+        "{player} remembered Loom exists at {time}... barely",
+        "Last one to Loom! {player} likes to live dangerously ({time})"
+      ],
+      "priority": 2,
+      "enabled": true
+    },
+    {
+      "id": "first_tc",
+      "name": "First TC Placed",
+      "description": "First player to place Town Center (Land Nomad)",
+      "category": "early_game",
+      "trigger": {
+        "type": "first_player",
+        "event": "build",
+        "target": "towncenter"
+      },
+      "templates": [
+        "{player} finds a spot first! TC down at {time}",
+        "{player} claims their land at {time} - TC planted!",
+        "Home sweet home! {player} drops TC at {time}"
+      ],
+      "priority": 3,
+      "enabled": true
+    },
+    {
+      "id": "last_tc",
+      "name": "Last TC Placed",
+      "description": "Last player to place Town Center",
+      "category": "early_game",
+      "trigger": {
+        "type": "last_player",
+        "event": "build",
+        "target": "towncenter"
+      },
+      "templates": [
+        "{player} still house hunting... TC finally at {time}",
+        "{player} takes the scenic route - TC at {time}",
+        "Lost villagers? {player} finds home at {time}"
+      ],
+      "priority": 2,
+      "enabled": true
+    },
+    {
+      "id": "first_feudal",
+      "name": "Speed Feudal",
+      "description": "First player to reach Feudal Age",
+      "category": "early_game",
+      "trigger": {
+        "type": "first_player",
+        "event": "research",
+        "target": "feudalage"
+      },
+      "templates": [
+        "{player} hits Feudal first at {time}! The race is on!",
+        "Feudal Age! {player} leads the pack at {time}",
+        "{player} clicks up first - Feudal at {time}!"
+      ],
+      "priority": 3,
+      "enabled": true
+    },
+    {
+      "id": "first_castle",
+      "name": "Fast Castle",
+      "description": "First player to reach Castle Age",
+      "category": "mid_game",
+      "trigger": {
+        "type": "first_player",
+        "event": "research",
+        "target": "castleage"
+      },
+      "templates": [
+        "{player} reaches Castle Age first at {time}! Knights incoming?",
+        "Castle Age! {player} means business at {time}",
+        "{player} hits Castle at {time} - the real game begins!"
+      ],
+      "priority": 3,
+      "enabled": true
+    },
+    {
+      "id": "first_imperial",
+      "name": "Imperial Race",
+      "description": "First player to reach Imperial Age",
+      "category": "late_game",
+      "trigger": {
+        "type": "first_player",
+        "event": "research",
+        "target": "imperialage"
+      },
+      "templates": [
+        "{player} goes Imperial at {time}! Trebs are coming!",
+        "Imperial Age! {player} flexing that eco at {time}",
+        "{player} clicks Imperial at {time} - endgame approaching!"
+      ],
+      "priority": 3,
+      "enabled": true
+    },
+    {
+      "id": "forgotten_wheelbarrow",
+      "name": "Forgotten Wheelbarrow",
+      "description": "Player hasn't researched Wheelbarrow by 25 minutes",
+      "category": "mid_game",
+      "trigger": {
+        "type": "absence",
+        "event": "research",
+        "target": "wheelbarrow",
+        "deadline": 1500,
+        "check_at": 1500
+      },
+      "templates": [
+        "{player} forgot Wheelbarrow exists! It's {time} already!",
+        "Someone tell {player} about Wheelbarrow... ({time})",
+        "{player}'s villagers still carrying one log at a time at {time}"
+      ],
+      "priority": 2,
+      "enabled": true
+    },
+    {
+      "id": "first_attack",
+      "name": "First Blood",
+      "description": "First attack command between enemy players",
+      "category": "mid_game",
+      "trigger": {
+        "type": "attack_event",
+        "condition": "first_attack",
+        "min_units": 3
+      },
+      "templates": [
+        "First blood! {player} attacks {player2} at {time}!",
+        "{player} sends it! Attacking {player2} at {time}",
+        "The fight begins! {player} vs {player2} at {time}"
+      ],
+      "priority": 4,
+      "enabled": true
+    },
+    {
+      "id": "military_lead",
+      "name": "Army Advantage",
+      "description": "One team has significantly more military",
+      "category": "mid_game",
+      "trigger": {
+        "type": "comparison",
+        "metric": "military_count",
+        "condition": "team_difference_exceeds",
+        "threshold": 20,
+        "check_interval": 60
+      },
+      "templates": [
+        "Team {team} is amassing an army! +{value} military advantage",
+        "Team {team} flexing with {value} more military units!",
+        "Army gap alert! Team {team} ahead by {value} units"
+      ],
+      "priority": 2,
+      "cooldown_seconds": 120,
+      "enabled": true
+    },
+    {
+      "id": "knight_rush",
+      "name": "Knight Rush Detected",
+      "description": "Player trains multiple knights early",
+      "category": "mid_game",
+      "trigger": {
+        "type": "milestone",
+        "event": "train",
+        "target": "knight",
+        "threshold": 5,
+        "before_time": 1200
+      },
+      "templates": [
+        "{player} going full knight rush! {value} knights by {time}",
+        "Knights! {player} has {value} ponies at {time}!",
+        "{player} really likes horses - {value} knights at {time}"
+      ],
+      "priority": 3,
+      "enabled": true
+    },
+    {
+      "id": "archer_mass",
+      "name": "Archer Mass",
+      "description": "Player amasses 20+ archers",
+      "category": "mid_game",
+      "trigger": {
+        "type": "milestone",
+        "event": "train_cumulative",
+        "target": ["archer", "crossbowman", "arbalester"],
+        "threshold": 20
+      },
+      "templates": [
+        "{player} is going full porcupine! {value} archers",
+        "Archers everywhere! {player} has {value} of them",
+        "{player} chose violence (from a distance) - {value} archers"
+      ],
+      "priority": 2,
+      "enabled": true
+    },
+    {
+      "id": "castle_built",
+      "name": "Castle Constructed",
+      "description": "Player builds a castle",
+      "category": "mid_game",
+      "trigger": {
+        "type": "player_event",
+        "event": "build",
+        "target": "castle"
+      },
+      "templates": [
+        "{player} drops a Castle at {time}! UU incoming?",
+        "Castle up! {player} fortifying at {time}",
+        "{player} builds a Castle at {time} - statement made!"
+      ],
+      "priority": 3,
+      "enabled": true
+    }
+  ]
+}

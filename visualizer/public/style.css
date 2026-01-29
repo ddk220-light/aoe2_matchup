@@ -498,6 +498,63 @@ main {
     color: #ffd54f;
 }
 
+/* Story Captions */
+.captions-container {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    z-index: 100;
+    pointer-events: none;
+    max-width: 80%;
+}
+
+.caption {
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    animation: captionFadeIn 0.3s ease-out;
+    max-width: 600px;
+}
+
+.caption.fading {
+    animation: captionFadeOut 0.5s ease-out forwards;
+}
+
+.caption .player-name {
+    font-weight: 600;
+}
+
+@keyframes captionFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes captionFadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
 /* Loading overlay (old) */
 .loading {
     position: fixed;

@@ -58,6 +58,19 @@ class App {
     this.techTracker = document.getElementById("tech-tracker");
     this.teams = []; // Cached team groupings
 
+    // Building tracking (for storyteller)
+    this.buildingData = {}; // player -> [{ time, building }]
+
+    // Attack tracking (for storyteller)
+    this.attackData = []; // [{ time, attacker, target, units }]
+
+    // Training tracking (for storyteller milestones)
+    this.trainingData = {}; // player -> { unitType: [times] }
+
+    // Storyteller
+    this.storyteller = null;
+    this.captionsContainer = document.getElementById("captions-container");
+
     // Track if controls have been set up
     this.controlsInitialized = false;
 
@@ -390,9 +403,17 @@ class App {
     // Preprocess research data for technology tracker
     this.preprocessResearchData();
 
-    // Setup UI
+    // Setup UI (this sets up this.teams)
     this.setupUI();
     this.setupKeyboardShortcuts();
+
+    // Preprocess building, attack, and training data for storyteller
+    this.preprocessBuildingData();
+    this.preprocessAttackData();
+    this.preprocessTrainingData();
+
+    // Initialize storyteller
+    this.initializeStoryteller();
 
     // Initial render
     this.startRenderLoop();
@@ -497,6 +518,151 @@ class App {
       this.researchData[player].sort((a, b) => a.time - b.time);
       this.playerAges[player].sort((a, b) => a.time - b.time);
     }
+  }
+
+  preprocessBuildingData() {
+    // Reset building data
+    this.buildingData = {};
+
+    for (const player of this.data.players) {
+      this.buildingData[player.name] = [];
+    }
+
+    // Process BUILD actions
+    for (const action of this.data.actions) {
+      if (action.type === "BUILD" && action.target && action.player) {
+        const playerData = this.buildingData[action.player];
+        if (playerData) {
+          playerData.push({
+            time: action.time,
+            building: action.target,
+          });
+        }
+      }
+    }
+
+    // Sort by time
+    for (const player of Object.keys(this.buildingData)) {
+      this.buildingData[player].sort((a, b) => a.time - b.time);
+    }
+  }
+
+  preprocessAttackData() {
+    // Reset attack data
+    this.attackData = [];
+
+    // Track unit ownership for attack detection
+    const unitOwner = {}; // unit_id -> player_name
+
+    // Build unit ownership from actions
+    for (const action of this.data.actions) {
+      if (action.subjects && action.player) {
+        for (const subject of action.subjects) {
+          if (!unitOwner[subject]) {
+            unitOwner[subject] = action.player;
+          }
+        }
+      }
+    }
+
+    // Process ORDER actions (attacks)
+    // Group attacks by time window to count units
+    const attackWindows = {}; // "attacker_target_timeWindow" -> { time, attacker, target, units: Set }
+
+    for (const action of this.data.actions) {
+      if (
+        action.type === "ORDER" &&
+        action.target_id &&
+        action.player &&
+        action.subjects
+      ) {
+        // Check if target belongs to a different player
+        const targetOwner = unitOwner[action.target_id];
+        if (targetOwner && targetOwner !== action.player) {
+          // This is an attack on an enemy
+          const timeWindow = Math.floor(action.time / 5) * 5; // 5-second windows
+          const key = `${action.player}_${targetOwner}_${timeWindow}`;
+
+          if (!attackWindows[key]) {
+            attackWindows[key] = {
+              time: action.time,
+              attacker: action.player,
+              target: targetOwner,
+              unitSet: new Set(),
+            };
+          }
+
+          // Add attacking units
+          for (const subject of action.subjects) {
+            attackWindows[key].unitSet.add(subject);
+          }
+        }
+      }
+    }
+
+    // Convert to array
+    for (const attack of Object.values(attackWindows)) {
+      this.attackData.push({
+        time: attack.time,
+        attacker: attack.attacker,
+        target: attack.target,
+        units: attack.unitSet.size,
+      });
+    }
+
+    // Sort by time
+    this.attackData.sort((a, b) => a.time - b.time);
+  }
+
+  preprocessTrainingData() {
+    // Reset training data
+    this.trainingData = {};
+
+    for (const player of this.data.players) {
+      this.trainingData[player.name] = {};
+    }
+
+    // Process DE_QUEUE actions for specific unit types
+    for (const action of this.data.actions) {
+      if (action.type === "DE_QUEUE" && action.target && action.player) {
+        const unitType = action.target.toLowerCase().replace(/[\s-_]/g, "");
+        const playerData = this.trainingData[action.player];
+
+        if (playerData) {
+          if (!playerData[unitType]) {
+            playerData[unitType] = [];
+          }
+          playerData[unitType].push(action.time);
+        }
+      }
+    }
+
+    // Sort by time
+    for (const player of Object.keys(this.trainingData)) {
+      for (const unit of Object.keys(this.trainingData[player])) {
+        this.trainingData[player][unit].sort((a, b) => a - b);
+      }
+    }
+  }
+
+  async initializeStoryteller() {
+    if (!this.captionsContainer) return;
+
+    this.storyteller = new Storyteller(this.captionsContainer);
+    await this.storyteller.loadStories();
+
+    // Set game data
+    this.storyteller.setGameData({
+      players: this.data.players,
+      teams: this.teams,
+      researchData: this.researchData,
+      buildingData: this.buildingData,
+      productionData: this.productionData,
+      attackData: this.attackData,
+    });
+
+    // Also pass training data
+    this.storyteller.trainingData = this.trainingData;
   }
 
   getPlayerAge(playerName, currentTime) {
@@ -944,6 +1110,11 @@ class App {
       this.updatePlayerTracker(time);
       this.updateTechTracker(time);
       this.updatePlayerAgesInLegend(time);
+    }
+
+    // Update storyteller (runs every frame for accurate timing)
+    if (this.storyteller) {
+      this.storyteller.update(time);
     }
   }
 

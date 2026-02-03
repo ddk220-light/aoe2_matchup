@@ -108,9 +108,16 @@ class UnitStats:
         return (
             round(self.hp), round(self.attack),
             round(self.melee_armor), round(self.pierce_armor),
-            round(self.speed, 2), round(self.cost_food), round(self.cost_wood),
+            round(self.speed, 2), round(self.reload_time, 3), round(self.range, 1),
+            round(self.cost_food), round(self.cost_wood),
             round(self.cost_gold), round(self.train_time), round(self.upgrade_cost)
         )
+
+    def attack_rate(self) -> float:
+        """Calculate attacks per second from reload time."""
+        if self.reload_time > 0:
+            return 1.0 / self.reload_time
+        return 0.0
 
 
 class UnitAnalyzer:
@@ -152,6 +159,24 @@ class UnitAnalyzer:
         # Build civ name to ID mapping dynamically
         self.civ_name_to_id = {c["name"]: c["id"] for c in self.civs}
         self.civ_id_to_name = {c["id"]: c["name"] for c in self.civs}
+
+        # Index unique techs (civ-specific techs with costs, excluding C-Bonus)
+        # These are Castle Age and Imperial Age unique techs
+        self.unique_techs = {}  # civ_id -> list of {tech_id, age}
+        for tech_id, tech in self.techs.items():
+            civ_id = tech.get("civ", -1)
+            if civ_id >= 0:
+                tech_name = tech.get("name", "")
+                tech_cost = tech.get("cost", {})
+                # Unique techs have costs and don't start with "C-Bonus"
+                if tech_cost and not tech_name.startswith("C-Bonus"):
+                    if civ_id not in self.unique_techs:
+                        self.unique_techs[civ_id] = []
+                    # Determine age based on cost (rough heuristic: higher cost = imperial)
+                    total_cost = sum(tech_cost.values())
+                    # Castle age UTs typically cost 400-750 total, Imperial 800+
+                    age = 3 if total_cost < 800 else 4
+                    self.unique_techs[civ_id].append({"tech_id": tech_id, "age": age})
 
     def get_unit(self, unit_id_or_name) -> Optional[dict]:
         """Get unit by ID or name."""
@@ -390,14 +415,24 @@ class UnitAnalyzer:
         return total, breakdown
 
     def is_unit_disabled(self, civ_name: str, unit_name: str) -> bool:
-        """Check if a unit is disabled for a civilization."""
+        """Check if a unit is disabled for a civilization.
+
+        Looks for techs like "Knight (make avail)" in disabled_techs.
+        Uses exact match on the unit name portion to avoid false positives
+        (e.g., "Archer" should not match "Elephant Archer (make avail)").
+        """
         civ_data = self.civ_tech_trees.get(civ_name, {})
         disabled = civ_data.get("disabled_techs", [])
+        unit_name_lower = unit_name.lower()
+
         for t in disabled:
             if isinstance(t, dict):
-                tech_name = t.get("name", "").lower()
-                if unit_name.lower() in tech_name and "make avail" in tech_name:
-                    return True
+                tech_name = t.get("name", "")
+                if "(make avail)" in tech_name.lower():
+                    # Extract unit name from "Unit Name (make avail)"
+                    tech_unit_name = tech_name.lower().replace("(make avail)", "").strip()
+                    if tech_unit_name == unit_name_lower:
+                        return True
         return False
 
     def effect_applies_to_unit(self, cmd: dict, unit_id: int, unit_class: int) -> bool:
@@ -529,6 +564,50 @@ class UnitAnalyzer:
 
         return relevant
 
+    def get_unique_techs_for_unit(self, civ_name: str, unit_id: int, unit_class: int, max_age: str) -> list:
+        """Get unique techs (Castle/Imperial UTs) for a civ that affect this unit.
+
+        Returns list of dicts with tech_id, tech_name, age, and cost.
+        """
+        civ_id = self.civ_name_to_id.get(civ_name, -1)
+        if civ_id < 0:
+            return []
+
+        max_age_num = 3 if max_age == "castle" else 4
+        relevant = []
+
+        unique_tech_list = self.unique_techs.get(civ_id, [])
+
+        for ut_info in unique_tech_list:
+            tech_id = ut_info["tech_id"]
+            tech_age = ut_info["age"]
+
+            # Skip if tech is for a later age
+            if tech_age > max_age_num:
+                continue
+
+            if tech_id not in self.tech_effect_map:
+                continue
+
+            te = self.tech_effect_map[tech_id]
+            tech_data = self.techs.get(tech_id, {})
+            tech_name = tech_data.get("name", f"Tech {tech_id}")
+            tech_cost = tech_data.get("cost", {})
+
+            # Check if this tech affects our unit
+            for cmd in te.get("commands", []):
+                if self.effect_applies_to_unit(cmd, unit_id, unit_class):
+                    relevant.append({
+                        "tech_id": tech_id,
+                        "tech_name": tech_name,
+                        "age": tech_age,
+                        "cost": tech_cost,
+                        "commands": te.get("commands", [])
+                    })
+                    break
+
+        return relevant
+
     def get_special_upgrade_civs(self, unit_id: int, max_age: str) -> dict:
         """Find civs that can research unit upgrades in earlier ages.
 
@@ -607,11 +686,28 @@ class UnitAnalyzer:
             applied_bonuses.append(f"{upgrade_name} in Castle Age")
 
         # 1. Apply civ-specific bonus techs (C-Bonus techs)
+        # Age requirement tech IDs: 101=Feudal, 102=Castle, 103=Imperial
+        max_age_num = 3 if max_age == "castle" else 4
+        age_tech_ids = {101: 2, 102: 3, 103: 4}  # tech_id -> age number
+
         civ_bonus_techs = self.get_civ_bonus_techs_for_unit(civ_name, unit_id, unit_class)
         for te in civ_bonus_techs:
             tech_name = te.get("tech_name", f"Tech {te['tech_id']}")
             tech_data = self.techs.get(te["tech_id"], {})
+
+            # Skip unique techs (have cost and don't start with C-Bonus)
             if tech_data.get("cost") and not tech_name.startswith("C-Bonus"):
+                continue
+
+            # Check age requirements for C-Bonus techs
+            required_techs = tech_data.get("required_techs", [])
+            bonus_age = 1  # Default to Dark Age (always available)
+            for req_tech in required_techs:
+                if req_tech in age_tech_ids:
+                    bonus_age = max(bonus_age, age_tech_ids[req_tech])
+
+            # Skip if bonus requires a later age
+            if bonus_age > max_age_num:
                 continue
 
             for cmd in te.get("commands", []):
@@ -661,6 +757,27 @@ class UnitAnalyzer:
                 if tech_applied:
                     applied_techs.append(tech_name)
 
+        # 2b. Apply unique techs (Castle/Imperial age UTs) that affect this unit
+        unique_techs = self.get_unique_techs_for_unit(civ_name, unit_id, unit_class, max_age)
+        unique_tech_cost = 0
+
+        for ut in unique_techs:
+            tech_id = ut["tech_id"]
+            tech_name = ut["tech_name"]
+            tech_cost = ut["cost"]
+            ut_label = f"{tech_name} (UT)"
+
+            # Apply the tech effects (only add to list once)
+            tech_applied = False
+            for cmd in ut["commands"]:
+                if self.apply_effect_command(cmd, stats, unit_id, unit_class):
+                    tech_applied = True
+
+            if tech_applied and ut_label not in applied_techs:
+                applied_techs.append(ut_label)
+                # Only add cost once per unique tech
+                unique_tech_cost += sum(tech_cost.values())
+
         # 3. Calculate upgrade cost
         relevant_upgrade_techs = self.find_techs_affecting_unit(unit_id, unit_class, max_age)
 
@@ -672,7 +789,8 @@ class UnitAnalyzer:
         upgrade_cost, upgrade_breakdown = self.calculate_upgrade_cost(
             civ_name, relevant_upgrade_techs, disabled_techs
         )
-        stats.upgrade_cost = upgrade_cost
+        # Add unique tech costs to upgrade total
+        stats.upgrade_cost = upgrade_cost + unique_tech_cost
 
         # Round values
         stats.hp = round(stats.hp)
@@ -719,6 +837,9 @@ class UnitAnalyzer:
         enabled = [r for r in results if not r.get("unit_disabled", False)]
         disabled = [r for r in results if r.get("unit_disabled", False)]
 
+        # Check if this is a ranged unit (has range > 0)
+        is_ranged = unit.get("range", 0) > 0
+
         # Group civs with identical stats
         stat_groups = defaultdict(list)
         for r in enabled:
@@ -740,9 +861,17 @@ class UnitAnalyzer:
 
         sorted_groups = sorted(stat_groups.keys(), key=power_score, reverse=True)
 
-        print("\n" + "=" * 145)
-        print(f"{'Civilization(s)':<40} {'HP':>4} {'Atk':>4} {'M.Arm':>5} {'P.Arm':>5} {'Speed':>5} {'Cost':>11} {'Train':>5} {'Upgr':>6} {'Civ Bonuses':<30}")
-        print("-" * 145)
+        # Build header based on unit type
+        if is_ranged:
+            header_width = 175
+            print("\n" + "=" * header_width)
+            print(f"{'Civilization(s)':<40} {'HP':>4} {'Atk':>4} {'Rng':>4} {'AtkSpd':>6} {'M.Arm':>5} {'P.Arm':>5} {'Speed':>5} {'Cost':>11} {'Train':>5} {'Upgr':>6} {'Civ Bonuses':<30}")
+            print("-" * header_width)
+        else:
+            header_width = 160
+            print("\n" + "=" * header_width)
+            print(f"{'Civilization(s)':<40} {'HP':>4} {'Atk':>4} {'AtkSpd':>6} {'M.Arm':>5} {'P.Arm':>5} {'Speed':>5} {'Cost':>11} {'Train':>5} {'Upgr':>6} {'Civ Bonuses':<30}")
+            print("-" * header_width)
 
         for stat_key in sorted_groups:
             group = stat_groups[stat_key]
@@ -777,13 +906,19 @@ class UnitAnalyzer:
             bonuses = group[0]["applied_bonuses"]
             bonus_str = ", ".join(b.replace("C-Bonus, ", "") for b in bonuses)[:30] if bonuses else "-"
 
-            print(f"{civ_str:<40} {s.hp:>4.0f} {s.attack:>4.0f} {s.melee_armor:>5.0f} {s.pierce_armor:>5.0f} {s.speed:>5.2f} {cost:>11} {s.train_time:>4.0f}s {s.upgrade_cost:>6.0f} {bonus_str:<30}")
+            # Calculate attack rate (attacks per second)
+            atk_spd = s.attack_rate()
+
+            if is_ranged:
+                print(f"{civ_str:<40} {s.hp:>4.0f} {s.attack:>4.0f} {s.range:>4.1f} {atk_spd:>6.2f} {s.melee_armor:>5.0f} {s.pierce_armor:>5.0f} {s.speed:>5.2f} {cost:>11} {s.train_time:>4.0f}s {s.upgrade_cost:>6.0f} {bonus_str:<30}")
+            else:
+                print(f"{civ_str:<40} {s.hp:>4.0f} {s.attack:>4.0f} {atk_spd:>6.2f} {s.melee_armor:>5.0f} {s.pierce_armor:>5.0f} {s.speed:>5.2f} {cost:>11} {s.train_time:>4.0f}s {s.upgrade_cost:>6.0f} {bonus_str:<30}")
 
         # Print disabled civs
         if disabled:
-            print("-" * 145)
+            print("-" * header_width)
             disabled_names = sorted([r["civ"] for r in disabled])
-            print(f"{'NO UNIT: ' + ', '.join(disabled_names):<145}")
+            print(f"{'NO UNIT: ' + ', '.join(disabled_names):<{header_width}}")
 
     def print_detailed(self, result: dict):
         """Print detailed breakdown for one civ."""

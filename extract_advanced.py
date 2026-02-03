@@ -80,13 +80,32 @@ UNIT_ATTRIBUTES = {
 
 # Civilization names
 CIV_NAMES = [
-    "Gaia", "Britons", "Franks", "Goths", "Teutons", "Japanese", "Chinese",
-    "Byzantines", "Persians", "Saracens", "Turks", "Vikings", "Mongols", "Celts",
-    "Spanish", "Aztecs", "Mayans", "Huns", "Koreans", "Italians", "Hindustanis",
+    "Gaia",        # 0
+    "Britons", "Franks", "Goths", "Teutons", "Japanese", "Chinese",
+    "Byzantines", "Persians", "Saracens", "Turks",       # 10
+    "Vikings", "Mongols", "Celts", "Spanish", "Aztecs", "Mayans", "Huns", "Koreans", "Italians",
+    "Indians",     # 20 (was Hindustanis)
     "Incas", "Magyars", "Slavs", "Portuguese", "Ethiopians", "Malians", "Berbers",
-    "Khmer", "Malay", "Burmese", "Vietnamese", "Bulgarians", "Tatars", "Cumans",
-    "Lithuanians", "Burgundians", "Sicilians", "Poles", "Bohemians", "Dravidians",
-    "Bengalis", "Gurjaras", "Romans", "Armenians", "Georgians"
+    "Khmer", "Malay",
+    "Burmese",     # 30
+    "Vietnamese", "Bulgarians", "Tatars", "Cumans", "Lithuanians", "Burgundians", "Sicilians", "Poles", "Bohemians",
+    "Dravidians",  # 40
+    "Bengalis", "Gurjaras", "Romans", "Armenians",
+    "Georgians",   # 45
+    # Chronicles DLC - Age of Antiquity (not in ranked play)
+    None,          # 46 Achaemenids - skip
+    None,          # 47 Athenians - skip
+    None,          # 48 Spartans - skip
+    # Three Kingdoms DLC (in ranked play)
+    "Shu",         # 49
+    "Wu",          # 50
+    "Wei",         # 51
+    "Jurchens",    # 52
+    "Khitans",     # 53
+    # Chronicles DLC - Alexander (not in ranked play)
+    None,          # 54 Macedonians - skip
+    None,          # 55 Thracians - skip
+    None,          # 56 Puru - skip
 ]
 
 
@@ -176,6 +195,8 @@ def extract_civ_tech_trees(df, effects, techs_by_id, units_by_id):
             continue
 
         civ_name = CIV_NAMES[civ_id]
+        if civ_name is None:
+            continue  # Skip non-ranked play civs
         tech_tree_id = civ.tech_tree_id
         team_bonus_id = civ.team_bonus_id
 

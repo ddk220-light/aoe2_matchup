@@ -198,6 +198,18 @@ class UnitAnalyzer:
         disabled = civ_data.get("disabled_techs", [])
         return set(t["id"] for t in disabled if isinstance(t, dict))
 
+    def is_unit_disabled(self, civ_name: str, unit_name: str) -> bool:
+        """Check if a unit is disabled for a civilization."""
+        civ_data = self.civ_tech_trees.get(civ_name, {})
+        disabled = civ_data.get("disabled_techs", [])
+        # Check for "(make avail)" techs which indicate unit is disabled
+        for t in disabled:
+            if isinstance(t, dict):
+                tech_name = t.get("name", "").lower()
+                if unit_name.lower() in tech_name and "make avail" in tech_name:
+                    return True
+        return False
+
     def effect_applies_to_unit(self, cmd: dict, unit_id: int, unit_class: int) -> bool:
         """Check if an effect command applies to a specific unit."""
         a = cmd.get("a", -999)
@@ -267,6 +279,8 @@ class UnitAnalyzer:
             stats.reload_time += value
         elif attr == ATTR_LOS:
             stats.los += value
+        elif attr == ATTR_TRAIN_TIME:
+            stats.train_time += value
         elif attr == ATTR_ATTACK:
             atk_class, amount = self._decode_armor_attack_value(value)
             if atk_class in stats.attacks:
@@ -293,6 +307,14 @@ class UnitAnalyzer:
             stats.reload_time *= value
         elif attr == ATTR_LOS:
             stats.los *= value
+        elif attr == ATTR_TRAIN_TIME:
+            stats.train_time *= value
+        elif attr == ATTR_COST:
+            # Multiply all costs
+            stats.cost_food *= value
+            stats.cost_wood *= value
+            stats.cost_gold *= value
+            stats.cost_stone *= value
 
     def get_civ_bonus_techs_for_unit(self, civ_name: str, unit_id: int, unit_class: int) -> list:
         """Get civ-specific bonus techs that affect this unit."""
@@ -319,6 +341,19 @@ class UnitAnalyzer:
         """Calculate unit stats for a specific civilization."""
         unit_id = unit["id"]
         unit_class = unit["class"]
+        unit_name = unit["name"]
+
+        # Check if this unit is disabled for this civ
+        unit_disabled = self.is_unit_disabled(civ_name, unit_name)
+        if unit_disabled:
+            return {
+                "civ": civ_name,
+                "stats": None,
+                "base_stats": None,
+                "applied_techs": [],
+                "applied_bonuses": [],
+                "unit_disabled": True,
+            }
 
         stats = self.get_base_stats(unit)
         base_stats = stats.copy()
@@ -368,6 +403,10 @@ class UnitAnalyzer:
         stats.attack = round(stats.attack)
         stats.melee_armor = round(stats.melee_armor)
         stats.pierce_armor = round(stats.pierce_armor)
+        stats.cost_food = round(stats.cost_food)
+        stats.cost_wood = round(stats.cost_wood)
+        stats.cost_gold = round(stats.cost_gold)
+        stats.train_time = round(stats.train_time)
 
         return {
             "civ": civ_name,
@@ -375,6 +414,7 @@ class UnitAnalyzer:
             "base_stats": base_stats,
             "applied_techs": applied_techs,
             "applied_bonuses": applied_bonuses,
+            "unit_disabled": False,
         }
 
     def compare_unit_across_civs(self, unit_id_or_name, max_age: str = "imperial"):
@@ -397,15 +437,21 @@ class UnitAnalyzer:
 
     def print_comparison(self, results: list, unit: dict):
         """Print formatted comparison table."""
+        # Separate enabled and disabled civs
+        enabled = [r for r in results if not r.get("unit_disabled", False)]
+        disabled = [r for r in results if r.get("unit_disabled", False)]
+
         def power_score(r):
             s = r["stats"]
+            if s is None:
+                return 0
             return s.hp * s.attack
 
-        results_sorted = sorted(results, key=power_score, reverse=True)
+        results_sorted = sorted(enabled, key=power_score, reverse=True)
 
-        print("\n" + "=" * 110)
-        print(f"{'Civ':<15} {'HP':>5} {'Atk':>5} {'M.Arm':>6} {'P.Arm':>6} {'Speed':>6} {'Cost':>12} {'Civ Bonuses':<35}")
-        print("-" * 110)
+        print("\n" + "=" * 130)
+        print(f"{'Civ':<15} {'HP':>5} {'Atk':>5} {'M.Arm':>6} {'P.Arm':>6} {'Speed':>6} {'Cost':>12} {'Train':>6} {'Civ Bonuses':<35}")
+        print("-" * 130)
 
         for r in results_sorted:
             s = r["stats"]
@@ -414,7 +460,13 @@ class UnitAnalyzer:
             bonuses = r["applied_bonuses"]
             bonus_str = ", ".join(b.replace("C-Bonus, ", "") for b in bonuses)[:35] if bonuses else "-"
 
-            print(f"{r['civ']:<15} {s.hp:>5.0f} {s.attack:>5.0f} {s.melee_armor:>6.0f} {s.pierce_armor:>6.0f} {s.speed:>6.2f} {cost:>12} {bonus_str:<35}")
+            print(f"{r['civ']:<15} {s.hp:>5.0f} {s.attack:>5.0f} {s.melee_armor:>6.0f} {s.pierce_armor:>6.0f} {s.speed:>6.2f} {cost:>12} {s.train_time:>5.0f}s {bonus_str:<35}")
+
+        # Print disabled civs at the bottom
+        if disabled:
+            print("-" * 130)
+            for r in sorted(disabled, key=lambda x: x["civ"]):
+                print(f"{r['civ']:<15} {'--NO UNIT--':^60}")
 
     def print_detailed(self, result: dict):
         """Print detailed breakdown for one civ."""

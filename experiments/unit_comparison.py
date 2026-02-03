@@ -96,6 +96,22 @@ CIV_ID_TO_NAME = {
 CIV_NAME_TO_ID = {v: k for k, v in CIV_ID_TO_NAME.items()}
 
 
+# Techs relevant to cavalry units (for upgrade cost calculation)
+CAVALRY_TECHS = {
+    67,   # Forging (+1 attack)
+    81,   # Scale Barding Armor (+1/+1)
+    82,   # Chain Barding Armor (+1/+1)
+    435,  # Bloodlines (+20 HP)
+    39,   # Husbandry (+10% speed)
+}
+
+# Resource type mapping for tech costs
+RESOURCE_FOOD = 0
+RESOURCE_WOOD = 1
+RESOURCE_STONE = 2
+RESOURCE_GOLD = 3
+
+
 @dataclass
 class UnitStats:
     """Mutable unit stats that can be modified by effects."""
@@ -113,6 +129,7 @@ class UnitStats:
     cost_gold: float = 0
     cost_stone: float = 0
     train_time: float = 0
+    upgrade_cost: float = 0  # Total upgrade cost (all resources)
     attacks: dict = field(default_factory=dict)
     armors: dict = field(default_factory=dict)
 
@@ -125,6 +142,7 @@ class UnitStats:
             los=self.los, cost_food=self.cost_food,
             cost_wood=self.cost_wood, cost_gold=self.cost_gold,
             cost_stone=self.cost_stone, train_time=self.train_time,
+            upgrade_cost=self.upgrade_cost,
             attacks=self.attacks.copy(), armors=self.armors.copy(),
         )
 
@@ -200,6 +218,102 @@ class UnitAnalyzer:
         civ_data = self.civ_tech_trees.get(civ_name, {})
         disabled = civ_data.get("disabled_techs", [])
         return set(t["id"] for t in disabled if isinstance(t, dict))
+
+    def get_tech_cost_modifiers(self, civ_name: str) -> dict:
+        """Get tech cost modifiers for a civilization.
+
+        Returns dict of {tech_id: {resource_type: modifier}} where modifier is
+        the value to SET (if positive/zero) or ADD (if negative).
+        """
+        civ_data = self.civ_tech_trees.get(civ_name, {})
+        effect_id = civ_data.get("tech_tree_effect_id")
+
+        modifiers = {}  # tech_id -> {resource_type -> value}
+
+        if effect_id and effect_id in self.effects:
+            effect = self.effects[effect_id]
+            for cmd in effect.get("commands", []):
+                # Type 101 = TECH_COST_SET
+                if cmd.get("type") == 101:
+                    tech_id = cmd.get("a")
+                    resource_type = cmd.get("b")  # 0=food, 1=wood, 2=stone, 3=gold
+                    value = cmd.get("d", 0)
+
+                    if tech_id not in modifiers:
+                        modifiers[tech_id] = {}
+                    modifiers[tech_id][resource_type] = value
+
+        return modifiers
+
+    def calculate_upgrade_cost(self, civ_name: str, relevant_techs: set, disabled_techs: set, max_age: str) -> tuple:
+        """Calculate total upgrade cost for relevant techs.
+
+        Returns (total_cost, cost_breakdown) where cost_breakdown is a dict of tech costs.
+        """
+        tech_cost_mods = self.get_tech_cost_modifiers(civ_name)
+
+        total_food = 0
+        total_wood = 0
+        total_gold = 0
+        total_stone = 0
+        breakdown = {}
+
+        for tech_id in relevant_techs:
+            if tech_id in disabled_techs:
+                breakdown[tech_id] = {"name": self.techs.get(tech_id, {}).get("name", f"Tech {tech_id}"), "cost": 0, "disabled": True}
+                continue
+
+            tech_data = self.techs.get(tech_id, {})
+            tech_name = tech_data.get("name", f"Tech {tech_id}")
+            base_cost = tech_data.get("cost", {})
+
+            # Get base costs
+            food = base_cost.get("food", 0)
+            wood = base_cost.get("wood", 0)
+            gold = base_cost.get("gold", 0)
+            stone = base_cost.get("stone", 0)
+
+            # Apply civ-specific modifiers
+            if tech_id in tech_cost_mods:
+                mods = tech_cost_mods[tech_id]
+                # Modifier value: 0 means free, negative means discount (add negative)
+                # The game uses 0 to mean "free" and negative to mean "reduce by amount"
+                if RESOURCE_FOOD in mods:
+                    mod_val = mods[RESOURCE_FOOD]
+                    if mod_val == 0:
+                        food = 0  # Free
+                    elif mod_val < 0:
+                        food = max(0, food + mod_val)  # Discount
+                    # positive values would set to that value, but not used in practice
+                if RESOURCE_WOOD in mods:
+                    mod_val = mods[RESOURCE_WOOD]
+                    if mod_val == 0:
+                        wood = 0
+                    elif mod_val < 0:
+                        wood = max(0, wood + mod_val)
+                if RESOURCE_GOLD in mods:
+                    mod_val = mods[RESOURCE_GOLD]
+                    if mod_val == 0:
+                        gold = 0
+                    elif mod_val < 0:
+                        gold = max(0, gold + mod_val)
+                if RESOURCE_STONE in mods:
+                    mod_val = mods[RESOURCE_STONE]
+                    if mod_val == 0:
+                        stone = 0
+                    elif mod_val < 0:
+                        stone = max(0, stone + mod_val)
+
+            tech_total = food + wood + gold + stone
+            breakdown[tech_id] = {"name": tech_name, "cost": tech_total, "food": food, "wood": wood, "gold": gold, "stone": stone, "disabled": False}
+
+            total_food += food
+            total_wood += wood
+            total_gold += gold
+            total_stone += stone
+
+        total = total_food + total_wood + total_gold + total_stone
+        return total, breakdown
 
     def is_unit_disabled(self, civ_name: str, unit_name: str) -> bool:
         """Check if a unit is disabled for a civilization."""
@@ -428,6 +542,17 @@ class UnitAnalyzer:
                 if tech_applied:
                     applied_techs.append(tech_name)
 
+        # 3. Calculate upgrade cost
+        # For cavalry, use CAVALRY_TECHS; filter by age
+        relevant_upgrade_techs = CAVALRY_TECHS if unit_class == 12 else set()
+        if max_age == "castle":
+            relevant_upgrade_techs = relevant_upgrade_techs & CASTLE_AGE_TECHS
+
+        upgrade_cost, upgrade_breakdown = self.calculate_upgrade_cost(
+            civ_name, relevant_upgrade_techs, disabled_techs, max_age
+        )
+        stats.upgrade_cost = upgrade_cost
+
         # Round values
         stats.hp = round(stats.hp)
         stats.speed = round(stats.speed, 2)
@@ -438,6 +563,7 @@ class UnitAnalyzer:
         stats.cost_wood = round(stats.cost_wood)
         stats.cost_gold = round(stats.cost_gold)
         stats.train_time = round(stats.train_time)
+        stats.upgrade_cost = round(stats.upgrade_cost)
 
         return {
             "civ": civ_name,
@@ -445,6 +571,7 @@ class UnitAnalyzer:
             "base_stats": base_stats,
             "applied_techs": applied_techs,
             "applied_bonuses": applied_bonuses,
+            "upgrade_breakdown": upgrade_breakdown,
             "unit_disabled": False,
         }
 
@@ -480,9 +607,9 @@ class UnitAnalyzer:
 
         results_sorted = sorted(enabled, key=power_score, reverse=True)
 
-        print("\n" + "=" * 130)
-        print(f"{'Civ':<15} {'HP':>5} {'Atk':>5} {'M.Arm':>6} {'P.Arm':>6} {'Speed':>6} {'Cost':>12} {'Train':>6} {'Civ Bonuses':<35}")
-        print("-" * 130)
+        print("\n" + "=" * 145)
+        print(f"{'Civ':<15} {'HP':>5} {'Atk':>5} {'M.Arm':>6} {'P.Arm':>6} {'Speed':>6} {'Cost':>12} {'Train':>6} {'Upgrades':>8} {'Civ Bonuses':<35}")
+        print("-" * 145)
 
         for r in results_sorted:
             s = r["stats"]
@@ -491,13 +618,13 @@ class UnitAnalyzer:
             bonuses = r["applied_bonuses"]
             bonus_str = ", ".join(b.replace("C-Bonus, ", "") for b in bonuses)[:35] if bonuses else "-"
 
-            print(f"{r['civ']:<15} {s.hp:>5.0f} {s.attack:>5.0f} {s.melee_armor:>6.0f} {s.pierce_armor:>6.0f} {s.speed:>6.2f} {cost:>12} {s.train_time:>5.0f}s {bonus_str:<35}")
+            print(f"{r['civ']:<15} {s.hp:>5.0f} {s.attack:>5.0f} {s.melee_armor:>6.0f} {s.pierce_armor:>6.0f} {s.speed:>6.2f} {cost:>12} {s.train_time:>5.0f}s {s.upgrade_cost:>8.0f} {bonus_str:<35}")
 
         # Print disabled civs at the bottom
         if disabled:
-            print("-" * 130)
+            print("-" * 145)
             for r in sorted(disabled, key=lambda x: x["civ"]):
-                print(f"{r['civ']:<15} {'--NO UNIT--':^60}")
+                print(f"{r['civ']:<15} {'--NO UNIT--':^70}")
 
     def print_detailed(self, result: dict):
         """Print detailed breakdown for one civ."""

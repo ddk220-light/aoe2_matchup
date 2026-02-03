@@ -75,7 +75,7 @@ CIV_BONUSES = {
         ("Knights +2 attack vs archers", {"bonus_vs_archers": 2}),
     ],
     "Burmese": [
-        ("+1/+2/+3 cavalry attack per age", {"attack": 2}),  # +2 in Castle Age
+        # +1/+2/+3 attack per age is for INFANTRY only, not cavalry
     ],
     "Bulgarians": [
         ("Blacksmith upgrades cost -50% food", {"blacksmith_discount": 0.50}),

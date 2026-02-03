@@ -1281,6 +1281,24 @@ def extract_tech_data(tech):
         "required_tech": getattr(tech, 'required_tech', -1),
     }
 
+    # Required techs array (up to 6 prerequisite techs)
+    if hasattr(tech, 'required_techs'):
+        required = [t for t in tech.required_techs if t >= 0]
+        if required:
+            data["required_techs"] = required
+
+    # Research location (building ID where this tech is researched)
+    if hasattr(tech, 'research_location') and tech.research_location >= 0:
+        data["research_location"] = tech.research_location
+
+    # Button ID (position in research menu)
+    if hasattr(tech, 'button_id') and tech.button_id >= 0:
+        data["button_id"] = tech.button_id
+
+    # Full tech mode - if 1, tech is always available once building exists
+    if hasattr(tech, 'full_tech_mode'):
+        data["full_tech_mode"] = tech.full_tech_mode
+
     # Cost
     cost = {}
     if hasattr(tech, 'resource_costs'):

@@ -129,6 +129,14 @@ class UnitAnalyzer:
         self.effects = {e["id"]: e for e in json.load(open(OUTPUT_DIR / "effects.json"))}
         self.tech_effects = json.load(open(OUTPUT_DIR / "tech_effects.json"))
 
+        # Load tech age data (maps tech_id -> {name, age, building})
+        tech_ages_file = OUTPUT_DIR / "tech_ages.json"
+        if tech_ages_file.exists():
+            tech_ages_data = json.load(open(tech_ages_file))
+            self.tech_ages = tech_ages_data.get("techs", {})
+        else:
+            self.tech_ages = {}
+
         # Index tech effects by tech_id
         self.tech_effect_map = {te["tech_id"]: te for te in self.tech_effects}
 
@@ -161,7 +169,7 @@ class UnitAnalyzer:
         """Dynamically find all standard techs that affect this unit.
 
         Excludes civ-specific techs (C-Bonus) and unique techs.
-        Only includes blacksmith, stable, archery range, university type techs.
+        Uses tech_ages.json to determine which techs are available in which age.
         """
         cache_key = (unit_id, unit_class, max_age)
         if cache_key in self._tech_cache:
@@ -169,27 +177,8 @@ class UnitAnalyzer:
 
         relevant_techs = set()
 
-        # Known standard tech categories (by tech ID ranges and names)
-        # These are techs that are universally available (if not disabled)
-        standard_tech_names = {
-            # Blacksmith attack
-            "forging", "iron casting", "blast furnace",
-            # Blacksmith cavalry armor
-            "scale barding armor", "chain barding armor", "plate barding armor",
-            # Blacksmith infantry armor
-            "scale mail armor", "chain mail armor", "plate mail armor",
-            # Blacksmith archer armor
-            "padded archer armor", "leather archer armor", "ring archer armor",
-            # Archery range
-            "fletching", "bodkin arrow", "bracer", "thumb ring",
-            # Stable
-            "bloodlines", "husbandry",
-            # Unit upgrades
-            "cavalier", "paladin", "elite skirmisher", "arbalester",
-            "heavy cavalry archer", "elite eagle warrior",
-            "long swordsman", "two-handed swordsman", "champion",
-            "pikeman", "halberdier", "elite battle elephant",
-        }
+        # Age mapping: castle = age 3, imperial = age 4
+        max_age_num = 3 if max_age == "castle" else 4
 
         for te in self.tech_effects:
             tech_id = te["tech_id"]
@@ -224,44 +213,24 @@ class UnitAnalyzer:
                         break
 
             if affects_unit:
-                # Filter to only standard techs (not unique techs)
-                # Standard techs either have a recognized name or no cost (auto-applied)
-                is_standard = False
+                # Check if tech is in our known standard techs (from tech_ages.json)
+                tech_id_str = str(tech_id)
+                if tech_id_str in self.tech_ages:
+                    tech_age_data = self.tech_ages[tech_id_str]
+                    tech_age = tech_age_data.get("age", 4)
 
-                # Check by name
-                for std_name in standard_tech_names:
-                    if std_name in tech_name:
-                        is_standard = True
-                        break
-
-                # Also include if it's a no-cost tech that affects stats (like age-up bonuses)
-                tech_cost = tech_data.get("cost", {})
-                total_cost = sum(tech_cost.values()) if tech_cost else 0
-
-                if is_standard or (total_cost > 0 and is_upgrade_tech):
-                    relevant_techs.add(tech_id)
-
-        # Filter by age using exact tech names
-        # Imperial-only techs (not available in Castle Age)
-        imperial_only_tech_names = {
-            "iron casting", "blast furnace",
-            "plate barding armor", "plate mail armor",
-            "ring archer armor", "bracer",
-            "paladin", "cavalier", "arbalest", "arbalester",
-            "champion", "halberdier", "two-handed swordsman",
-            "heavy cavalry archer",
-        }
-
-        if max_age == "castle":
-            filtered = set()
-            for tech_id in relevant_techs:
-                tech_name = self.techs.get(tech_id, {}).get("name", "").lower()
-                # Check exact match against imperial tech names
-                if tech_name not in imperial_only_tech_names:
-                    # Also check for "elite" prefix (elite unit upgrades are imperial)
-                    if not tech_name.startswith("elite "):
-                        filtered.add(tech_id)
-            relevant_techs = filtered
+                    # Only include if available in the max_age
+                    if tech_age <= max_age_num:
+                        relevant_techs.add(tech_id)
+                elif is_upgrade_tech:
+                    # For upgrade techs not in tech_ages.json, check by name
+                    # Most unit upgrades are imperial age
+                    tech_cost = tech_data.get("cost", {})
+                    total_cost = sum(tech_cost.values()) if tech_cost else 0
+                    if total_cost > 0:
+                        # Assume upgrade techs with costs are imperial unless explicitly listed
+                        if max_age == "imperial":
+                            relevant_techs.add(tech_id)
 
         self._tech_cache[cache_key] = relevant_techs
         return relevant_techs

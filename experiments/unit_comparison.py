@@ -55,17 +55,23 @@ ATTR_GOLD_COST = 105  # Gold cost specifically (Portuguese bonus)
 ATTR_FOOD_COST = 103  # Food cost specifically
 ATTR_WOOD_COST = 104  # Wood cost specifically
 
-# Standard blacksmith/stable techs by age
+# Standard blacksmith/stable/archery techs by age
 CASTLE_AGE_TECHS = {
+    # Cavalry
     67,   # Forging
     81,   # Scale Barding Armor
     82,   # Chain Barding Armor
     435,  # Bloodlines
     39,   # Husbandry
+    # Infantry
     74,   # Scale Mail
     76,   # Chain Mail
+    # Archer
+    199,  # Fletching
+    200,  # Bodkin Arrow
     211,  # Padded Archer Armor
     212,  # Leather Archer Armor
+    437,  # Thumb Ring
 }
 
 IMPERIAL_AGE_TECHS = {
@@ -104,6 +110,25 @@ CAVALRY_TECHS = {
     435,  # Bloodlines (+20 HP)
     39,   # Husbandry (+10% speed)
 }
+
+# Techs relevant to archer units
+ARCHER_TECHS = {
+    199,  # Fletching (+1 attack, +1 range)
+    200,  # Bodkin Arrow (+1 attack, +1 range)
+    211,  # Padded Archer Armor (+1/+1)
+    212,  # Leather Archer Armor (+1/+1)
+    437,  # Thumb Ring (accuracy, faster fire)
+}
+
+# Techs by unit class
+TECHS_BY_CLASS = {
+    12: CAVALRY_TECHS,   # Cavalry
+    0: ARCHER_TECHS,     # Archer
+}
+
+# Building IDs for production buildings
+STABLE_BUILDING_IDS = {101, 86, 153}  # Dark, Feudal, Castle+ age stables
+ARCHERY_RANGE_IDS = {87, 10}  # Archery Range IDs
 
 # Cavalier upgrade tech (normally Imperial Age, but Burgundians get it in Castle)
 CAVALIER_TECH = 209
@@ -532,21 +557,28 @@ class UnitAnalyzer:
         team_bonus_effect_id = civ_data.get("team_bonus_effect_id")
         if team_bonus_effect_id and team_bonus_effect_id in self.effects:
             effect = self.effects[team_bonus_effect_id]
-            # Check for building work rate bonuses (Stable = 101, 86, 153)
-            # Knight is trained at Stable - only apply once even if multiple stable IDs match
-            stable_ids = [101, 86, 153]  # Dark, Feudal, Castle+ age stables
-            stable_bonus_applied = False
+            # Determine which building IDs are relevant for this unit's class
+            relevant_building_ids = set()
+            building_name = ""
+            if unit_class == 12:  # Cavalry
+                relevant_building_ids = STABLE_BUILDING_IDS
+                building_name = "Stable"
+            elif unit_class == 0:  # Archer
+                relevant_building_ids = ARCHERY_RANGE_IDS
+                building_name = "Archery Range"
+
+            building_bonus_applied = False
             for cmd in effect.get("commands", []):
-                if cmd.get("a") in stable_ids and cmd.get("c") == ATTR_WORK_RATE and not stable_bonus_applied:
+                if cmd.get("a") in relevant_building_ids and cmd.get("c") == ATTR_WORK_RATE and not building_bonus_applied:
                     # Work rate multiplier affects train time inversely
                     # Higher work rate = faster training = lower train time
                     work_rate_mult = cmd.get("d", 1.0)
                     if work_rate_mult > 0:
                         stats.train_time = stats.train_time / work_rate_mult
-                        bonus_name = f"Team Bonus: Stable +{int((work_rate_mult-1)*100)}% work rate"
+                        bonus_name = f"Team Bonus: {building_name} +{int((work_rate_mult-1)*100)}% work rate"
                         if bonus_name not in applied_bonuses:
                             applied_bonuses.append(bonus_name)
-                        stable_bonus_applied = True
+                        building_bonus_applied = True
 
         # 2. Apply standard techs (blacksmith, stable)
         standard_techs = CASTLE_AGE_TECHS if max_age == "castle" else (CASTLE_AGE_TECHS | IMPERIAL_AGE_TECHS)
@@ -569,8 +601,8 @@ class UnitAnalyzer:
                     applied_techs.append(tech_name)
 
         # 3. Calculate upgrade cost
-        # For cavalry, use CAVALRY_TECHS; filter by age
-        relevant_upgrade_techs = CAVALRY_TECHS if unit_class == 12 else set()
+        # Get techs relevant to this unit's class
+        relevant_upgrade_techs = TECHS_BY_CLASS.get(unit_class, set())
         if max_age == "castle":
             relevant_upgrade_techs = relevant_upgrade_techs & CASTLE_AGE_TECHS
             # Burgundians can research Cavalier in Castle Age
@@ -642,7 +674,15 @@ class UnitAnalyzer:
 
         for r in results_sorted:
             s = r["stats"]
-            cost = f"{int(s.cost_food)}F/{int(s.cost_gold)}G"
+            # Build cost string based on which resources the unit costs
+            cost_parts = []
+            if s.cost_food > 0:
+                cost_parts.append(f"{int(s.cost_food)}F")
+            if s.cost_wood > 0:
+                cost_parts.append(f"{int(s.cost_wood)}W")
+            if s.cost_gold > 0:
+                cost_parts.append(f"{int(s.cost_gold)}G")
+            cost = "/".join(cost_parts) if cost_parts else "0"
 
             bonuses = r["applied_bonuses"]
             bonus_str = ", ".join(b.replace("C-Bonus, ", "") for b in bonuses)[:35] if bonuses else "-"

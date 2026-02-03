@@ -166,7 +166,20 @@ CIV_NAMES = [
     "Romans",
     "Armenians",
     "Georgians",   # 45
-    # Chronicles DLC civs (46-56) are not in ranked play - skip them
+    # Chronicles DLC - Age of Antiquity (not in ranked play)
+    None,          # 46 Achaemenids - skip
+    None,          # 47 Athenians - skip
+    None,          # 48 Spartans - skip
+    # Three Kingdoms DLC (in ranked play)
+    "Shu",         # 49
+    "Wu",          # 50
+    "Wei",         # 51
+    "Jurchens",    # 52
+    "Khitans",     # 53
+    # Chronicles DLC - Alexander (not in ranked play)
+    None,          # 54 Macedonians - skip
+    None,          # 55 Thracians - skip
+    None,          # 56 Puru - skip
 ]
 
 # Comprehensive unit ID to display name mappings
@@ -1515,9 +1528,13 @@ def main():
         if i >= len(CIV_NAMES):
             break
 
+        # Skip civs marked as None (not in ranked play)
+        if CIV_NAMES[i] is None:
+            continue
+
         civ_data = {
             "id": i,
-            "name": CIV_NAMES[i] if i < len(CIV_NAMES) else f"Civ_{i}",
+            "name": CIV_NAMES[i],
         }
 
         # Count available units

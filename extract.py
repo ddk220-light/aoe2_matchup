@@ -196,7 +196,7 @@ UNIT_NAMES = {
     185: "Slinger",
     39: "Cavalry Archer",
     474: "Heavy Cavalry Archer",
-    569: "Heavy Cavalry Archer",
+    569: "Paladin",
 
     # ===== Core Cavalry =====
     448: "Scout Cavalry",

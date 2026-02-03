@@ -105,6 +105,16 @@ CAVALRY_TECHS = {
     39,   # Husbandry (+10% speed)
 }
 
+# Cavalier upgrade tech (normally Imperial Age, but Burgundians get it in Castle)
+CAVALIER_TECH = 209
+
+# Civs that can research Cavalier in Castle Age
+CASTLE_AGE_CAVALIER_CIVS = {"Burgundians"}
+
+# Unit IDs
+KNIGHT_ID = 38
+CAVALIER_ID = 283
+
 # Resource type mapping for tech costs
 RESOURCE_FOOD = 0
 RESOURCE_WOOD = 1
@@ -466,6 +476,18 @@ class UnitAnalyzer:
         unit_class = unit["class"]
         unit_name = unit["name"]
 
+        # Special case: Burgundians can research Cavalier in Castle Age
+        # So for Knight analysis in Castle Age, use Cavalier as the effective unit
+        effective_unit = unit
+        uses_cavalier = False
+        if unit_id == KNIGHT_ID and civ_name in CASTLE_AGE_CAVALIER_CIVS and max_age == "castle":
+            cavalier = self.units.get(CAVALIER_ID)
+            if cavalier:
+                effective_unit = cavalier
+                unit_id = CAVALIER_ID
+                unit_name = "Cavalier"
+                uses_cavalier = True
+
         # Check if this unit is disabled for this civ
         unit_disabled = self.is_unit_disabled(civ_name, unit_name)
         if unit_disabled:
@@ -478,12 +500,16 @@ class UnitAnalyzer:
                 "unit_disabled": True,
             }
 
-        stats = self.get_base_stats(unit)
+        stats = self.get_base_stats(effective_unit)
         base_stats = stats.copy()
 
         disabled_techs = self.get_disabled_techs(civ_name)
         applied_techs = []
         applied_bonuses = []
+
+        # Note if using Cavalier instead of Knight
+        if uses_cavalier:
+            applied_bonuses.append("Cavalier in Castle Age")
 
         # 1. Apply civ-specific bonus techs (C-Bonus techs)
         civ_bonus_techs = self.get_civ_bonus_techs_for_unit(civ_name, unit_id, unit_class)
@@ -547,6 +573,9 @@ class UnitAnalyzer:
         relevant_upgrade_techs = CAVALRY_TECHS if unit_class == 12 else set()
         if max_age == "castle":
             relevant_upgrade_techs = relevant_upgrade_techs & CASTLE_AGE_TECHS
+            # Burgundians can research Cavalier in Castle Age
+            if civ_name in CASTLE_AGE_CAVALIER_CIVS and unit_class == 12:
+                relevant_upgrade_techs = relevant_upgrade_techs | {CAVALIER_TECH}
 
         upgrade_cost, upgrade_breakdown = self.calculate_upgrade_cost(
             civ_name, relevant_upgrade_techs, disabled_techs, max_age

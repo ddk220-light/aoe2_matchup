@@ -165,21 +165,8 @@ CIV_NAMES = [
     "Gurjaras",
     "Romans",
     "Armenians",
-    "Georgians",
-    # Chronicles DLC - Age of Antiquity
-    "Achaemenids",
-    "Athenians",
-    "Spartans",
-    # Chronicles DLC - Rise of Rome
-    "Shu",         # 49
-    "Wu",          # 50
-    "Wei",
-    "Jurchens",
-    "Khitans",
-    # Chronicles DLC - Alexander
-    "Macedonians",
-    "Thracians",
-    "Puru",
+    "Georgians",   # 45
+    # Chronicles DLC civs (46-56) are not in ranked play - skip them
 ]
 
 # Comprehensive unit ID to display name mappings

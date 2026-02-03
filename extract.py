@@ -1313,6 +1313,143 @@ def extract_tech_data(tech):
     return data
 
 
+def determine_tech_age(tech_data, techs_by_id):
+    """Determine the age a tech becomes available.
+
+    Age values: 1=Dark, 2=Feudal, 3=Castle, 4=Imperial
+
+    Logic:
+    1. Check required_techs for age-up techs (101=Feudal, 102=Castle, 103=Imperial)
+    2. Check research_location (building determines availability)
+    3. Check prerequisite tech chains
+    """
+    # Age-up tech IDs
+    FEUDAL_AGE = 101
+    CASTLE_AGE = 102
+    IMPERIAL_AGE = 103
+
+    required_techs = tech_data.get("required_techs", [])
+
+    # Direct age requirements
+    if IMPERIAL_AGE in required_techs:
+        return 4
+    if CASTLE_AGE in required_techs:
+        return 3
+    if FEUDAL_AGE in required_techs:
+        return 2
+
+    # Check prerequisite tech ages (recursive)
+    max_prereq_age = 1
+    for prereq_id in required_techs:
+        if prereq_id in techs_by_id:
+            prereq_data = techs_by_id[prereq_id]
+            prereq_age = prereq_data.get("_computed_age", 1)
+            max_prereq_age = max(max_prereq_age, prereq_age)
+
+    return max_prereq_age
+
+
+def generate_tech_ages(techs, df):
+    """Generate tech_ages.json with age data for standard techs."""
+    # Build lookup
+    techs_by_id = {t["id"]: t for t in techs}
+
+    # Building ID to name mapping
+    building_names = {
+        103: "Blacksmith",
+        101: "Stable", 86: "Stable", 153: "Stable",
+        87: "Archery Range", 10: "Archery Range",
+        12: "Barracks",
+        49: "Siege Workshop",
+        209: "University",
+        82: "Castle",
+        104: "Monastery",
+        84: "Market",
+        109: "Town Center",
+    }
+
+    # Standard tech patterns - techs that are universally researchable
+    standard_tech_patterns = [
+        # Blacksmith attack upgrades
+        "forging", "iron casting", "blast furnace",
+        # Blacksmith cavalry armor
+        "scale barding", "chain barding", "plate barding",
+        # Blacksmith infantry armor
+        "scale mail", "chain mail", "plate mail",
+        # Blacksmith archer armor/attack
+        "fletching", "bodkin", "bracer",
+        "padded archer", "leather archer", "ring archer",
+        # Stable techs
+        "bloodlines", "husbandry",
+        # Archery range
+        "thumb ring", "parthian",
+        # Barracks
+        "squires", "arson", "supplies", "gambesons",
+        # Unit upgrades (line upgrades)
+        "cavalier", "paladin", "arbalest",
+        "elite skirmisher", "heavy cavalry archer",
+        "long swordsman", "two-handed", "champion",
+        "pikeman", "halberdier",
+        "eagle warrior", "elite eagle",
+        "light cavalry", "hussar",
+        "heavy camel", "imperial camel",
+        "elite battle elephant",
+        "war galley", "galleon",
+        "heavy demo", "heavy scorpion",
+        "capped ram", "siege ram",
+        "onager", "siege onager",
+    ]
+
+    tech_ages = {
+        "_comment": "Tech ID to age mapping. Age: 1=Dark, 2=Feudal, 3=Castle, 4=Imperial. Auto-generated from dat file.",
+        "techs": {}
+    }
+
+    # First pass: compute ages based on required_techs
+    for tech in techs:
+        age = determine_tech_age(tech, techs_by_id)
+        techs_by_id[tech["id"]]["_computed_age"] = age
+
+    # Second pass: refine based on prerequisite chains
+    for _ in range(3):  # Multiple passes to resolve chains
+        for tech in techs:
+            age = determine_tech_age(tech, techs_by_id)
+            techs_by_id[tech["id"]]["_computed_age"] = age
+
+    # Filter to standard techs and build output
+    for tech in techs:
+        tech_name = tech.get("name", "").lower()
+
+        # Check if this is a standard tech
+        is_standard = False
+        for pattern in standard_tech_patterns:
+            if pattern in tech_name:
+                is_standard = True
+                break
+
+        if not is_standard:
+            continue
+
+        # Skip civ-specific techs
+        if tech.get("civ", -1) >= 0:
+            continue
+
+        tech_id = str(tech["id"])
+        age = tech.get("_computed_age", 1)
+
+        # Get building name
+        research_loc = tech.get("research_location", -1)
+        building = building_names.get(research_loc, "Unknown")
+
+        tech_ages["techs"][tech_id] = {
+            "name": tech["name"],
+            "age": age,
+            "building": building
+        }
+
+    return tech_ages
+
+
 def main():
     dat_path = Path(__file__).parent / "empires2_x2_p1.dat"
     output_dir = Path(__file__).parent / "output"
@@ -1358,6 +1495,15 @@ def main():
     with open(output_dir / "technologies.json", "w") as f:
         json.dump(techs, f, indent=2)
     print(f"  Saved to output/technologies.json")
+
+    # Generate tech ages mapping
+    print("\nGenerating tech ages...")
+    tech_ages = generate_tech_ages(techs, df)
+    print(f"  Found {len(tech_ages['techs'])} standard techs with age data")
+
+    with open(output_dir / "tech_ages.json", "w") as f:
+        json.dump(tech_ages, f, indent=2)
+    print(f"  Saved to output/tech_ages.json")
 
     # Extract civilizations
     print("\nExtracting civilizations...")
@@ -1432,8 +1578,9 @@ def main():
     print("EXTRACTION COMPLETE!")
     print("="*60)
     print(f"\nFiles created in {output_dir}/:")
-    print("  - units.json       ({} units)".format(len(units)))
+    print("  - units.json        ({} units)".format(len(units)))
     print("  - technologies.json ({} techs)".format(len(techs)))
+    print("  - tech_ages.json    ({} standard techs)".format(len(tech_ages['techs'])))
     print("  - civilizations.json ({} civs)".format(len(civs)))
     print("  - armor_classes.json")
 

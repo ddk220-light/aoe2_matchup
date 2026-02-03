@@ -130,7 +130,7 @@ CIV_NAMES = [
     "Byzantines",
     "Persians",
     "Saracens",
-    "Turks",
+    "Turks",       # 10
     "Vikings",
     "Mongols",
     "Celts",
@@ -140,7 +140,7 @@ CIV_NAMES = [
     "Huns",
     "Koreans",
     "Italians",
-    "Indians",
+    "Indians",     # 20
     "Incas",
     "Magyars",
     "Slavs",
@@ -150,7 +150,7 @@ CIV_NAMES = [
     "Berbers",
     "Khmer",
     "Malay",
-    "Burmese",
+    "Burmese",     # 30
     "Vietnamese",
     "Bulgarians",
     "Tatars",
@@ -160,12 +160,26 @@ CIV_NAMES = [
     "Sicilians",
     "Poles",
     "Bohemians",
-    "Dravidians",
+    "Dravidians",  # 40
     "Bengalis",
     "Gurjaras",
     "Romans",
     "Armenians",
     "Georgians",
+    # Chronicles DLC - Age of Antiquity
+    "Achaemenids",
+    "Athenians",
+    "Spartans",
+    # Chronicles DLC - Rise of Rome
+    "Shu",         # 49
+    "Wu",          # 50
+    "Wei",
+    "Jurchens",
+    "Khitans",
+    # Chronicles DLC - Alexander
+    "Macedonians",
+    "Thracians",
+    "Puru",
 ]
 
 # Comprehensive unit ID to display name mappings

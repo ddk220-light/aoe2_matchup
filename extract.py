@@ -140,7 +140,7 @@ CIV_NAMES = [
     "Huns",
     "Koreans",
     "Italians",
-    "Indians",     # 20
+    "Hindustanis",  # 20 (formerly Indians, renamed in 2022)
     "Incas",
     "Magyars",
     "Slavs",

@@ -386,6 +386,28 @@ class UnitAnalyzer:
                     if tech_name not in applied_bonuses:
                         applied_bonuses.append(tech_name)
 
+        # 1b. Apply team bonus (also applies to own civ)
+        # Team bonuses can affect building work rates which impact train time
+        civ_data = self.civ_tech_trees.get(civ_name, {})
+        team_bonus_effect_id = civ_data.get("team_bonus_effect_id")
+        if team_bonus_effect_id and team_bonus_effect_id in self.effects:
+            effect = self.effects[team_bonus_effect_id]
+            # Check for building work rate bonuses (Stable = 101, 86, 153)
+            # Knight is trained at Stable - only apply once even if multiple stable IDs match
+            stable_ids = [101, 86, 153]  # Dark, Feudal, Castle+ age stables
+            stable_bonus_applied = False
+            for cmd in effect.get("commands", []):
+                if cmd.get("a") in stable_ids and cmd.get("c") == ATTR_WORK_RATE and not stable_bonus_applied:
+                    # Work rate multiplier affects train time inversely
+                    # Higher work rate = faster training = lower train time
+                    work_rate_mult = cmd.get("d", 1.0)
+                    if work_rate_mult > 0:
+                        stats.train_time = stats.train_time / work_rate_mult
+                        bonus_name = f"Team Bonus: Stable +{int((work_rate_mult-1)*100)}% work rate"
+                        if bonus_name not in applied_bonuses:
+                            applied_bonuses.append(bonus_name)
+                        stable_bonus_applied = True
+
         # 2. Apply standard techs (blacksmith, stable)
         standard_techs = CASTLE_AGE_TECHS if max_age == "castle" else (CASTLE_AGE_TECHS | IMPERIAL_AGE_TECHS)
 

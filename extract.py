@@ -1276,6 +1276,9 @@ def extract_tech_data(tech):
         "id": getattr(tech, 'id', -1) if hasattr(tech, 'id') else -1,
         "name": name,
         "research_time": getattr(tech, 'research_time', 0),
+        "civ": getattr(tech, 'civ', -1),  # -1 means all civs, otherwise civ-specific
+        "effect_id": getattr(tech, 'effect_id', -1),
+        "required_tech": getattr(tech, 'required_tech', -1),
     }
 
     # Cost

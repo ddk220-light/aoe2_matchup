@@ -51,6 +51,9 @@ ATTR_BLAST_LEVEL = 33
 ATTR_HEALING_RATE = 37
 ATTR_TRAIN_TIME = 101
 ATTR_COST = 100
+ATTR_GOLD_COST = 105  # Gold cost specifically (Portuguese bonus)
+ATTR_FOOD_COST = 103  # Food cost specifically
+ATTR_WOOD_COST = 104  # Wood cost specifically
 
 # Standard blacksmith/stable techs by age
 CASTLE_AGE_TECHS = {
@@ -315,6 +318,12 @@ class UnitAnalyzer:
             stats.cost_wood *= value
             stats.cost_gold *= value
             stats.cost_stone *= value
+        elif attr == ATTR_GOLD_COST:
+            stats.cost_gold *= value
+        elif attr == ATTR_FOOD_COST:
+            stats.cost_food *= value
+        elif attr == ATTR_WOOD_COST:
+            stats.cost_wood *= value
 
     def get_civ_bonus_techs_for_unit(self, civ_name: str, unit_id: int, unit_class: int) -> list:
         """Get civ-specific bonus techs that affect this unit."""

@@ -1130,18 +1130,29 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     cooldown1 = [0.0] * count1
     cooldown2 = [0.0] * count2
 
-    # Simulate with larger time step for speed
-    dt = 0.1  # 100ms time step (was 0.05)
-    time = 0.0
-    max_time = 120.0  # 2 minute timeout (was 300)
+    # Simulate with tick limit for speed
+    dt = 0.1  # 100ms time step
+    max_ticks = 500
     melee_range = 0.5
+    ticks = 0
 
-    while time < max_time:
+    while ticks < max_ticks:
+        ticks += 1
         alive1 = [i for i, h in enumerate(hp1) if h > 0]
         alive2 = [i for i, h in enumerate(hp2) if h > 0]
 
         if not alive1 or not alive2:
             break
+
+        # Early termination: if one side lost >50% units and other has >60% left
+        alive1_pct = len(alive1) / count1
+        alive2_pct = len(alive2) / count2
+        if alive1_pct < 0.5 and alive2_pct > 0.6:
+            # Team 2 wins decisively
+            return (2, len(alive1), len(alive2))
+        if alive2_pct < 0.5 and alive1_pct > 0.6:
+            # Team 1 wins decisively
+            return (1, len(alive1), len(alive2))
 
         # Update cooldowns
         for i in alive1:
@@ -1203,10 +1214,10 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
             else:
                 hp2[target] -= damage
 
-        time += dt
-
     remaining1 = len([h for h in hp1 if h > 0])
     remaining2 = len([h for h in hp2 if h > 0])
+    total_hp1 = sum(max(0, h) for h in hp1)
+    total_hp2 = sum(max(0, h) for h in hp2)
 
     # Determine winner
     if remaining1 > 0 and remaining2 == 0:
@@ -1218,7 +1229,13 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     elif remaining2 > remaining1:
         return (2, remaining1, remaining2)
     else:
-        return (0, remaining1, remaining2)
+        # Tick limit reached or tie in units - use total HP to determine winner
+        if total_hp1 > total_hp2:
+            return (1, remaining1, remaining2)
+        elif total_hp2 > total_hp1:
+            return (2, remaining1, remaining2)
+        else:
+            return (0, remaining1, remaining2)
 
 
 if __name__ == "__main__":

@@ -149,8 +149,7 @@ def load_all_unit_templates() -> list[UnitTemplate]:
         JOIN units u ON us.unit_id = u.id
         WHERE us.has_unit = 1
         AND us.hp IS NOT NULL AND us.hp > 0
-        AND u.age_id = 4  -- Imperial age only for now
-        ORDER BY u.slug, c.name
+        ORDER BY u.age_id, u.slug, c.name
     """)
 
     templates = []

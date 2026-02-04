@@ -287,8 +287,7 @@
                     <a href="/" class="nav-link">By Unit</a>
                     <a href="/civ" class="nav-link">By Civilization</a>
                     <a href="/simulate" class="nav-link">Battle Sim</a>
-                    <a href="/simulation-notes" class="nav-link active">Sim Notes</a>
-                    <a href="/review" class="nav-link">Review Comments</a>
+                    <a href="/matchup" class="nav-link">1v1 Matchup</a>
                 </nav>
             </header>
 
@@ -331,21 +330,25 @@
         <script>
             let allNotes = [];
 
-            document.addEventListener('DOMContentLoaded', async () => {
+            document.addEventListener("DOMContentLoaded", async () => {
                 await loadNotes();
 
-                document.getElementById('civFilter').addEventListener('change', filterNotes);
-                document.getElementById('winnerFilter').addEventListener('change', filterNotes);
+                document
+                    .getElementById("civFilter")
+                    .addEventListener("change", filterNotes);
+                document
+                    .getElementById("winnerFilter")
+                    .addEventListener("change", filterNotes);
             });
 
             async function loadNotes() {
                 try {
-                    const response = await fetch('/api/simulation-comments');
+                    const response = await fetch("/api/simulation-comments");
                     allNotes = await response.json();
                     updateStats();
                     renderNotes(allNotes);
                 } catch (error) {
-                    document.getElementById('notesList').innerHTML = `
+                    document.getElementById("notesList").innerHTML = `
                         <div class="empty-state">
                             <h2>Error Loading Notes</h2>
                             <p>${error.message}</p>
@@ -355,29 +358,37 @@
             }
 
             function updateStats() {
-                document.getElementById('totalNotes').textContent = allNotes.length;
+                document.getElementById("totalNotes").textContent =
+                    allNotes.length;
 
-                const uniqueMatchups = new Set(allNotes.map(n =>
-                    `${n.team1_civ}-${n.team1_unit}-${n.team2_civ}-${n.team2_unit}`
-                ));
-                document.getElementById('uniqueMatchups').textContent = uniqueMatchups.size;
+                const uniqueMatchups = new Set(
+                    allNotes.map(
+                        (n) =>
+                            `${n.team1_civ}-${n.team1_unit}-${n.team2_civ}-${n.team2_unit}`,
+                    ),
+                );
+                document.getElementById("uniqueMatchups").textContent =
+                    uniqueMatchups.size;
             }
 
             function filterNotes() {
-                const civFilter = document.getElementById('civFilter').value;
-                const winnerFilter = document.getElementById('winnerFilter').value;
+                const civFilter = document.getElementById("civFilter").value;
+                const winnerFilter =
+                    document.getElementById("winnerFilter").value;
 
                 let filtered = allNotes;
 
                 if (civFilter) {
-                    filtered = filtered.filter(n =>
-                        n.team1_civ === civFilter || n.team2_civ === civFilter
+                    filtered = filtered.filter(
+                        (n) =>
+                            n.team1_civ === civFilter ||
+                            n.team2_civ === civFilter,
                     );
                 }
 
-                if (winnerFilter !== '') {
-                    filtered = filtered.filter(n =>
-                        n.winner === parseInt(winnerFilter)
+                if (winnerFilter !== "") {
+                    filtered = filtered.filter(
+                        (n) => n.winner === parseInt(winnerFilter),
                     );
                 }
 
@@ -385,7 +396,7 @@
             }
 
             function renderNotes(notes) {
-                const container = document.getElementById('notesList');
+                const container = document.getElementById("notesList");
 
                 if (notes.length === 0) {
                     container.innerHTML = `
@@ -397,19 +408,23 @@
                     return;
                 }
 
-                container.innerHTML = notes.map(note => {
-                    let winnerBadge = '';
-                    if (note.winner === 1) {
-                        winnerBadge = '<span class="winner-badge team1">Team 1 Won</span>';
-                    } else if (note.winner === 2) {
-                        winnerBadge = '<span class="winner-badge team2">Team 2 Won</span>';
-                    } else if (note.winner === 0) {
-                        winnerBadge = '<span class="winner-badge draw">Draw</span>';
-                    }
+                container.innerHTML = notes
+                    .map((note) => {
+                        let winnerBadge = "";
+                        if (note.winner === 1) {
+                            winnerBadge =
+                                '<span class="winner-badge team1">Team 1 Won</span>';
+                        } else if (note.winner === 2) {
+                            winnerBadge =
+                                '<span class="winner-badge team2">Team 2 Won</span>';
+                        } else if (note.winner === 0) {
+                            winnerBadge =
+                                '<span class="winner-badge draw">Draw</span>';
+                        }
 
-                    const date = new Date(note.created_at).toLocaleString();
+                        const date = new Date(note.created_at).toLocaleString();
 
-                    return `
+                        return `
                         <div class="note-card" data-id="${note.id}">
                             <div class="note-header">
                                 <div class="matchup-info">
@@ -428,32 +443,36 @@
                             </div>
                         </div>
                     `;
-                }).join('');
+                    })
+                    .join("");
             }
 
             function escapeHtml(text) {
-                const div = document.createElement('div');
+                const div = document.createElement("div");
                 div.textContent = text;
                 return div.innerHTML;
             }
 
             async function deleteNote(id) {
-                if (!confirm('Are you sure you want to delete this note?')) {
+                if (!confirm("Are you sure you want to delete this note?")) {
                     return;
                 }
 
                 try {
-                    const response = await fetch(`/api/simulation-comments/${id}`, {
-                        method: 'DELETE'
-                    });
+                    const response = await fetch(
+                        `/api/simulation-comments/${id}`,
+                        {
+                            method: "DELETE",
+                        },
+                    );
                     const result = await response.json();
 
                     if (result.success) {
-                        allNotes = allNotes.filter(n => n.id !== id);
+                        allNotes = allNotes.filter((n) => n.id !== id);
                         updateStats();
                         filterNotes();
                     } else {
-                        alert('Failed to delete note');
+                        alert("Failed to delete note");
                     }
                 } catch (error) {
                     alert(`Error: ${error.message}`);

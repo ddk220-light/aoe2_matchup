@@ -785,6 +785,323 @@ def simulation_notes():
     return render_template("simulation_notes.html", civs=civs)
 
 
+# ============== 1v1 Civ Matchup ==============
+
+
+@app.route("/matchup")
+def matchup():
+    """1v1 Civilization matchup page."""
+    civs = get_all_civs()
+    ages = {k: v["name"] for k, v in AGES.items()}
+    return render_template("matchup.html", civs=civs, ages=ages)
+
+
+@app.route("/api/matchup/<civ1>/<civ2>")
+def api_matchup(civ1, civ2):
+    """
+    Calculate best unit recommendations for a 1v1 matchup between two civs.
+
+    For each age, finds the best unit for each civ based on which unit wins
+    the most matchups against all of the opponent's units (using 1000 resources).
+    """
+    import json
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Verify both civs exist
+    cursor.execute("SELECT id FROM civilizations WHERE name = ?", (civ1,))
+    if not cursor.fetchone():
+        conn.close()
+        return jsonify({"error": f"Civilization '{civ1}' not found"}), 404
+
+    cursor.execute("SELECT id FROM civilizations WHERE name = ?", (civ2,))
+    if not cursor.fetchone():
+        conn.close()
+        return jsonify({"error": f"Civilization '{civ2}' not found"}), 404
+
+    results = {}
+
+    for age_slug, age_data in AGES.items():
+        age_id = age_data["id"]
+
+        # Get all units for civ1 in this age
+        cursor.execute(
+            """
+            SELECT u.slug, us.unit_name, us.hp, us.attack, us.attack_speed,
+                   us.melee_armor, us.pierce_armor, us.attacks_json, us.armors_json,
+                   us.cost_food, us.cost_wood, us.cost_gold
+            FROM unit_stats us
+            JOIN units u ON us.unit_id = u.id
+            JOIN civilizations c ON us.civ_id = c.id
+            WHERE c.name = ? AND u.age_id = ? AND us.has_unit = 1
+        """,
+            (civ1, age_id),
+        )
+        civ1_units = cursor.fetchall()
+
+        # Get all units for civ2 in this age
+        cursor.execute(
+            """
+            SELECT u.slug, us.unit_name, us.hp, us.attack, us.attack_speed,
+                   us.melee_armor, us.pierce_armor, us.attacks_json, us.armors_json,
+                   us.cost_food, us.cost_wood, us.cost_gold
+            FROM unit_stats us
+            JOIN units u ON us.unit_id = u.id
+            JOIN civilizations c ON us.civ_id = c.id
+            WHERE c.name = ? AND u.age_id = ? AND us.has_unit = 1
+        """,
+            (civ2, age_id),
+        )
+        civ2_units = cursor.fetchall()
+
+        if not civ1_units or not civ2_units:
+            results[age_slug] = {
+                "age_name": age_data["name"],
+                "civ1_best": None,
+                "civ2_best": None,
+                "matchups": [],
+            }
+            continue
+
+        # Calculate win rates for each civ1 unit against all civ2 units
+        civ1_scores = {}
+        civ2_scores = {}
+        all_matchups = []
+
+        for u1 in civ1_units:
+            u1_wins = 0
+            u1_total = 0
+            u1_cost = (
+                (u1["cost_food"] or 0) + (u1["cost_wood"] or 0) + (u1["cost_gold"] or 0)
+            )
+            if u1_cost == 0:
+                u1_cost = 100
+
+            for u2 in civ2_units:
+                u2_cost = (
+                    (u2["cost_food"] or 0)
+                    + (u2["cost_wood"] or 0)
+                    + (u2["cost_gold"] or 0)
+                )
+                if u2_cost == 0:
+                    u2_cost = 100
+
+                # Simulate battle with 1000 resources
+                winner, u1_remaining, u2_remaining = simulate_battle(
+                    u1, u1_cost, u2, u2_cost, 1000
+                )
+
+                u1_total += 1
+                if winner == 1:
+                    u1_wins += 1
+
+                # Track for civ2 scoring
+                u2_key = u2["slug"]
+                if u2_key not in civ2_scores:
+                    civ2_scores[u2_key] = {"wins": 0, "total": 0, "unit": u2}
+                civ2_scores[u2_key]["total"] += 1
+                if winner == 2:
+                    civ2_scores[u2_key]["wins"] += 1
+
+                all_matchups.append(
+                    {
+                        "civ1_unit": u1["unit_name"],
+                        "civ1_slug": u1["slug"],
+                        "civ2_unit": u2["unit_name"],
+                        "civ2_slug": u2["slug"],
+                        "winner": winner,
+                        "civ1_remaining": u1_remaining,
+                        "civ2_remaining": u2_remaining,
+                    }
+                )
+
+            civ1_scores[u1["slug"]] = {
+                "wins": u1_wins,
+                "total": u1_total,
+                "unit": u1,
+                "win_rate": u1_wins / u1_total if u1_total > 0 else 0,
+            }
+
+        # Calculate win rates for civ2
+        for key in civ2_scores:
+            s = civ2_scores[key]
+            s["win_rate"] = s["wins"] / s["total"] if s["total"] > 0 else 0
+
+        # Find best unit for each civ
+        civ1_best = (
+            max(civ1_scores.items(), key=lambda x: x[1]["win_rate"])
+            if civ1_scores
+            else None
+        )
+        civ2_best = (
+            max(civ2_scores.items(), key=lambda x: x[1]["win_rate"])
+            if civ2_scores
+            else None
+        )
+
+        results[age_slug] = {
+            "age_name": age_data["name"],
+            "civ1_best": {
+                "slug": civ1_best[0],
+                "name": civ1_best[1]["unit"]["unit_name"],
+                "wins": civ1_best[1]["wins"],
+                "total": civ1_best[1]["total"],
+                "win_rate": round(civ1_best[1]["win_rate"] * 100, 1),
+            }
+            if civ1_best
+            else None,
+            "civ2_best": {
+                "slug": civ2_best[0],
+                "name": civ2_best[1]["unit"]["unit_name"],
+                "wins": civ2_best[1]["wins"],
+                "total": civ2_best[1]["total"],
+                "win_rate": round(civ2_best[1]["win_rate"] * 100, 1),
+            }
+            if civ2_best
+            else None,
+            "civ1_all": [
+                {
+                    "slug": k,
+                    "name": v["unit"]["unit_name"],
+                    "wins": v["wins"],
+                    "total": v["total"],
+                    "win_rate": round(v["win_rate"] * 100, 1),
+                }
+                for k, v in sorted(civ1_scores.items(), key=lambda x: -x[1]["win_rate"])
+            ],
+            "civ2_all": [
+                {
+                    "slug": k,
+                    "name": v["unit"]["unit_name"],
+                    "wins": v["wins"],
+                    "total": v["total"],
+                    "win_rate": round(v["win_rate"] * 100, 1),
+                }
+                for k, v in sorted(civ2_scores.items(), key=lambda x: -x[1]["win_rate"])
+            ],
+        }
+
+    conn.close()
+    return jsonify({"civ1": civ1, "civ2": civ2, "ages": results})
+
+
+def simulate_battle(unit1, cost1, unit2, cost2, resources):
+    """
+    Simulate a battle between two unit types with given resources.
+    Uses simultaneous damage calculation.
+
+    Returns: (winner, unit1_remaining, unit2_remaining)
+        winner: 1 if unit1 wins, 2 if unit2 wins, 0 if draw
+    """
+    import json
+
+    # Calculate army sizes
+    count1 = max(1, resources // cost1)
+    count2 = max(1, resources // cost2)
+
+    # Parse attacks and armors
+    attacks1 = json.loads(unit1["attacks_json"]) if unit1["attacks_json"] else {}
+    armors1 = json.loads(unit1["armors_json"]) if unit1["armors_json"] else {}
+    attacks2 = json.loads(unit2["attacks_json"]) if unit2["attacks_json"] else {}
+    armors2 = json.loads(unit2["armors_json"]) if unit2["armors_json"] else {}
+
+    # Convert keys to int
+    attacks1 = {int(k): v for k, v in attacks1.items()}
+    armors1 = {int(k): v for k, v in armors1.items()}
+    attacks2 = {int(k): v for k, v in attacks2.items()}
+    armors2 = {int(k): v for k, v in armors2.items()}
+
+    # Calculate damage per hit
+    def calc_damage(
+        attacker_attacks, attacker_attack, defender_armors, defender_melee_armor
+    ):
+        base_damage = attacker_attacks.get(4, attacker_attack)
+        bonus_damage = 0
+        for armor_class, armor_value in defender_armors.items():
+            if armor_class in attacker_attacks and armor_class != 4:
+                attack_bonus = attacker_attacks[armor_class]
+                if attack_bonus > 0:
+                    effective_bonus = max(0, attack_bonus - armor_value)
+                    bonus_damage += effective_bonus
+        target_armor = defender_armors.get(4, defender_melee_armor)
+        return max(1, base_damage + bonus_damage - target_armor)
+
+    dmg1 = calc_damage(attacks1, unit1["attack"], armors2, unit2["melee_armor"])
+    dmg2 = calc_damage(attacks2, unit2["attack"], armors1, unit1["melee_armor"])
+
+    # Get attack speeds (reload time)
+    speed1 = unit1["attack_speed"] or 0.5
+    speed2 = unit2["attack_speed"] or 0.5
+    reload1 = 1.0 / speed1 if speed1 > 0 else 2.0
+    reload2 = 1.0 / speed2 if speed2 > 0 else 2.0
+
+    # Create armies
+    hp1 = [float(unit1["hp"])] * count1
+    hp2 = [float(unit2["hp"])] * count2
+    cooldown1 = [0.0] * count1
+    cooldown2 = [0.0] * count2
+
+    # Simulate
+    dt = 0.05
+    time = 0.0
+    max_time = 300.0
+
+    while time < max_time:
+        alive1 = [i for i, h in enumerate(hp1) if h > 0]
+        alive2 = [i for i, h in enumerate(hp2) if h > 0]
+
+        if not alive1 or not alive2:
+            break
+
+        # Collect attacks (simultaneous)
+        pending_damage = []
+
+        target_idx = 0
+        for i in alive1:
+            cooldown1[i] = max(0, cooldown1[i] - dt)
+            if cooldown1[i] <= 0 and alive2:
+                target = alive2[target_idx % len(alive2)]
+                pending_damage.append((2, target, dmg1))
+                cooldown1[i] = reload1
+                target_idx += 1
+
+        target_idx = 0
+        for i in alive2:
+            cooldown2[i] = max(0, cooldown2[i] - dt)
+            if cooldown2[i] <= 0 and alive1:
+                target = alive1[target_idx % len(alive1)]
+                pending_damage.append((1, target, dmg2))
+                cooldown2[i] = reload2
+                target_idx += 1
+
+        # Apply damage
+        for team, target, damage in pending_damage:
+            if team == 1:
+                hp1[target] -= damage
+            else:
+                hp2[target] -= damage
+
+        time += dt
+
+    remaining1 = len([h for h in hp1 if h > 0])
+    remaining2 = len([h for h in hp2 if h > 0])
+
+    # Determine winner
+    if remaining1 > 0 and remaining2 == 0:
+        winner = 1
+    elif remaining2 > 0 and remaining1 == 0:
+        winner = 2
+    elif remaining1 > remaining2:
+        winner = 1
+    elif remaining2 > remaining1:
+        winner = 2
+    else:
+        winner = 0
+
+    return winner, remaining1, remaining2
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)

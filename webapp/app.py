@@ -595,6 +595,58 @@ def api_combat_unit(civ_name, unit_slug):
     )
 
 
+@app.route("/api/armor-classes")
+def api_armor_classes():
+    """Get all armor class names."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name FROM armor_classes ORDER BY id")
+    classes = {str(row["id"]): row["name"] for row in cursor.fetchall()}
+    conn.close()
+    return jsonify(classes)
+
+
+@app.route("/api/civ-units/<civ_name>/<age_slug>")
+def api_civ_units(civ_name, age_slug):
+    """Get all units available for a civilization in a specific age."""
+    if age_slug not in AGES:
+        return jsonify({"error": "Invalid age"}), 404
+
+    age_id = AGES[age_slug]["id"]
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Get civ id
+    cursor.execute("SELECT id FROM civilizations WHERE name = ?", (civ_name,))
+    civ_row = cursor.fetchone()
+    if not civ_row:
+        conn.close()
+        return jsonify({"error": "Civilization not found"}), 404
+
+    civ_id = civ_row["id"]
+
+    # Get all units this civ has in this age (both standard and unique)
+    cursor.execute(
+        """
+        SELECT DISTINCT u.slug, us.unit_name, u.unit_type
+        FROM unit_stats us
+        JOIN units u ON us.unit_id = u.id
+        WHERE us.civ_id = ? AND u.age_id = ? AND us.has_unit = 1
+        ORDER BY u.unit_type DESC, us.unit_name
+    """,
+        (civ_id, age_id),
+    )
+
+    units = [
+        {"slug": row["slug"], "name": row["unit_name"], "type": row["unit_type"]}
+        for row in cursor.fetchall()
+    ]
+
+    conn.close()
+    return jsonify(units)
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)

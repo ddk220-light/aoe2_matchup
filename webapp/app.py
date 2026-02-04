@@ -1079,8 +1079,8 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
 
     # Siege units fire ground-targeted projectiles (mangonel, siege_onager)
     SIEGE_UNITS = {"mangonel", "siege_onager"}
-    slug1 = unit1.get("slug", "")
-    slug2 = unit2.get("slug", "")
+    slug1 = unit1["slug"] if "slug" in unit1.keys() else ""
+    slug2 = unit2["slug"] if "slug" in unit2.keys() else ""
     is_siege1 = slug1 in SIEGE_UNITS
     is_siege2 = slug2 in SIEGE_UNITS
 

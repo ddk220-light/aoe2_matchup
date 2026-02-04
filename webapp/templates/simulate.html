@@ -608,7 +608,7 @@
                     let bonusDamage = 0;
                     const breakdown = [];
 
-                    // Base melee damage
+                    // Base melee damage (class 4)
                     const targetBaseArmor = target.armors['4'] || target.meleeArmor;
                     const baseDmg = Math.max(0, baseAttack - targetBaseArmor);
                     breakdown.push({
@@ -616,32 +616,46 @@
                         className: armorClassNames['4'] || 'Base Melee',
                         attack: baseAttack,
                         armor: targetBaseArmor,
-                        damage: baseDmg
+                        damage: baseDmg,
+                        applies: true
                     });
 
                     // Bonus damage from other armor classes
+                    // IMPORTANT: Bonus only applies if the target HAS that armor class
                     for (const [armorClass, attackValue] of Object.entries(this.attacks)) {
-                        if (armorClass === '4') continue; // Skip base melee
+                        if (armorClass === '4') continue; // Skip base melee (handled above)
                         if (attackValue <= 0) continue; // Skip zero/negative attacks
 
-                        const targetArmor = target.armors[armorClass] || 0;
-                        // Only count if target has this armor class OR attack is positive
-                        if (target.armors.hasOwnProperty(armorClass) || attackValue > 0) {
+                        // Check if target has this armor class
+                        const targetHasClass = target.armors.hasOwnProperty(armorClass);
+                        const targetArmor = targetHasClass ? target.armors[armorClass] : 0;
+
+                        // Only apply bonus damage if target has this armor class
+                        if (targetHasClass) {
                             const effectiveBonus = Math.max(0, attackValue - targetArmor);
-                            if (effectiveBonus > 0 || detailed) {
-                                bonusDamage += effectiveBonus;
-                                breakdown.push({
-                                    classId: armorClass,
-                                    className: armorClassNames[armorClass] || `Class ${armorClass}`,
-                                    attack: attackValue,
-                                    armor: targetArmor,
-                                    damage: effectiveBonus
-                                });
-                            }
+                            bonusDamage += effectiveBonus;
+                            breakdown.push({
+                                classId: armorClass,
+                                className: armorClassNames[armorClass] || `Class ${armorClass}`,
+                                attack: attackValue,
+                                armor: targetArmor,
+                                damage: effectiveBonus,
+                                applies: true
+                            });
+                        } else if (detailed) {
+                            // Show in debug that this attack doesn't apply
+                            breakdown.push({
+                                classId: armorClass,
+                                className: armorClassNames[armorClass] || `Class ${armorClass}`,
+                                attack: attackValue,
+                                armor: '-',
+                                damage: 0,
+                                applies: false
+                            });
                         }
                     }
 
-                    const totalDamage = Math.max(1, baseAttack + bonusDamage - targetBaseArmor);
+                    const totalDamage = Math.max(1, baseDmg + bonusDamage);
 
                     if (detailed) {
                         return { total: totalDamage, breakdown };
@@ -1092,22 +1106,24 @@
 
                     // Damage: Team 1 -> Team 2
                     html += `<div class="debug-section">`;
-                    html += `<h4 style="color: var(--team1-color);">Team 1 -> Team 2 Damage</h4>`;
-                    html += `<div class="debug-row"><span class="debug-label">Total Damage:</span><span class="debug-value positive">${dmg1to2.total}</span></div>`;
+                    html += `<h4 style="color: var(--team1-color);">Team 1 → Team 2 Damage</h4>`;
+                    html += `<div class="debug-row"><span class="debug-label">Final Damage/Attack:</span><span class="debug-value positive" style="font-size:1.2rem;">${dmg1to2.total}</span></div>`;
                     html += `<div class="damage-breakdown">`;
-                    html += `<h5>Breakdown by Armor Class</h5>`;
+                    html += `<h5>Damage Breakdown</h5>`;
                     html += `<div class="armor-class-row" style="font-weight:bold;margin-bottom:6px;">`;
-                    html += `<span class="class-name">Class</span>`;
+                    html += `<span class="class-name">Armor Class</span>`;
                     html += `<span class="atk-val">Atk</span>`;
                     html += `<span class="armor-val">Arm</span>`;
                     html += `<span class="dmg-val">Dmg</span>`;
                     html += `</div>`;
                     for (const b of dmg1to2.breakdown) {
-                        html += `<div class="armor-class-row">`;
+                        const rowStyle = b.applies ? '' : 'opacity: 0.4; text-decoration: line-through;';
+                        const dmgDisplay = b.applies ? (b.damage > 0 ? '+' + b.damage : b.damage) : '—';
+                        html += `<div class="armor-class-row" style="${rowStyle}">`;
                         html += `<span class="class-name">${b.className}</span>`;
                         html += `<span class="atk-val">${b.attack}</span>`;
                         html += `<span class="armor-val">${b.armor}</span>`;
-                        html += `<span class="dmg-val">${b.damage > 0 ? '+' + b.damage : b.damage}</span>`;
+                        html += `<span class="dmg-val">${dmgDisplay}</span>`;
                         html += `</div>`;
                     }
                     html += `</div>`;
@@ -1115,22 +1131,24 @@
 
                     // Damage: Team 2 -> Team 1
                     html += `<div class="debug-section">`;
-                    html += `<h4 style="color: var(--team2-color);">Team 2 -> Team 1 Damage</h4>`;
-                    html += `<div class="debug-row"><span class="debug-label">Total Damage:</span><span class="debug-value positive">${dmg2to1.total}</span></div>`;
+                    html += `<h4 style="color: var(--team2-color);">Team 2 → Team 1 Damage</h4>`;
+                    html += `<div class="debug-row"><span class="debug-label">Final Damage/Attack:</span><span class="debug-value positive" style="font-size:1.2rem;">${dmg2to1.total}</span></div>`;
                     html += `<div class="damage-breakdown">`;
-                    html += `<h5>Breakdown by Armor Class</h5>`;
+                    html += `<h5>Damage Breakdown</h5>`;
                     html += `<div class="armor-class-row" style="font-weight:bold;margin-bottom:6px;">`;
-                    html += `<span class="class-name">Class</span>`;
+                    html += `<span class="class-name">Armor Class</span>`;
                     html += `<span class="atk-val">Atk</span>`;
                     html += `<span class="armor-val">Arm</span>`;
                     html += `<span class="dmg-val">Dmg</span>`;
                     html += `</div>`;
                     for (const b of dmg2to1.breakdown) {
-                        html += `<div class="armor-class-row">`;
+                        const rowStyle = b.applies ? '' : 'opacity: 0.4; text-decoration: line-through;';
+                        const dmgDisplay = b.applies ? (b.damage > 0 ? '+' + b.damage : b.damage) : '—';
+                        html += `<div class="armor-class-row" style="${rowStyle}">`;
                         html += `<span class="class-name">${b.className}</span>`;
                         html += `<span class="atk-val">${b.attack}</span>`;
                         html += `<span class="armor-val">${b.armor}</span>`;
-                        html += `<span class="dmg-val">${b.damage > 0 ? '+' + b.damage : b.damage}</span>`;
+                        html += `<span class="dmg-val">${dmgDisplay}</span>`;
                         html += `</div>`;
                     }
                     html += `</div>`;

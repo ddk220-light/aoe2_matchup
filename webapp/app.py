@@ -989,7 +989,7 @@ def api_matchup(civ1, civ2):
 def simulate_battle(unit1, cost1, unit2, cost2, resources):
     """
     Simulate a battle between two unit types with given resources.
-    Uses simultaneous damage calculation.
+    Uses simultaneous damage calculation with position-based movement and kiting.
 
     Returns: (winner, unit1_remaining, unit2_remaining)
         winner: 1 if unit1 wins, 2 if unit2 wins, 0 if draw
@@ -1012,23 +1012,58 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     attacks2 = {int(k): v for k, v in attacks2.items()}
     armors2 = {int(k): v for k, v in armors2.items()}
 
-    # Calculate damage per hit
+    # Get attack range (0 = melee) and movement speed
+    range1 = unit1["attack_range"] or 0.0
+    range2 = unit2["attack_range"] or 0.0
+    move_speed1 = unit1["movement_speed"] or 1.0
+    move_speed2 = unit2["movement_speed"] or 1.0
+
+    is_ranged1 = range1 >= 1.0
+    is_ranged2 = range2 >= 1.0
+
+    # Calculate damage per hit (use pierce for ranged, melee for melee)
     def calc_damage(
-        attacker_attacks, attacker_attack, defender_armors, defender_melee_armor
+        attacker_attacks,
+        attacker_attack,
+        defender_armors,
+        defender_melee_armor,
+        defender_pierce_armor,
+        is_ranged,
     ):
-        base_damage = attacker_attacks.get(4, attacker_attack)
+        if is_ranged:
+            base_damage = attacker_attacks.get(
+                3, attacker_attacks.get(4, attacker_attack)
+            )
+            target_armor = defender_armors.get(3, defender_pierce_armor)
+        else:
+            base_damage = attacker_attacks.get(4, attacker_attack)
+            target_armor = defender_armors.get(4, defender_melee_armor)
+
         bonus_damage = 0
         for armor_class, armor_value in defender_armors.items():
-            if armor_class in attacker_attacks and armor_class != 4:
+            if armor_class in attacker_attacks and armor_class not in (3, 4):
                 attack_bonus = attacker_attacks[armor_class]
                 if attack_bonus > 0:
                     effective_bonus = max(0, attack_bonus - armor_value)
                     bonus_damage += effective_bonus
-        target_armor = defender_armors.get(4, defender_melee_armor)
         return max(1, base_damage + bonus_damage - target_armor)
 
-    dmg1 = calc_damage(attacks1, unit1["attack"], armors2, unit2["melee_armor"])
-    dmg2 = calc_damage(attacks2, unit2["attack"], armors1, unit1["melee_armor"])
+    dmg1 = calc_damage(
+        attacks1,
+        unit1["attack"],
+        armors2,
+        unit2["melee_armor"],
+        unit2["pierce_armor"],
+        is_ranged1,
+    )
+    dmg2 = calc_damage(
+        attacks2,
+        unit2["attack"],
+        armors1,
+        unit1["melee_armor"],
+        unit1["pierce_armor"],
+        is_ranged2,
+    )
 
     # Get attack speeds (reload time)
     speed1 = unit1["attack_speed"] or 0.5
@@ -1036,9 +1071,12 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     reload1 = 1.0 / speed1 if speed1 > 0 else 2.0
     reload2 = 1.0 / speed2 if speed2 > 0 else 2.0
 
-    # Create armies
+    # Create armies with positions
+    # Team 1 starts at position 0 (left), Team 2 at position 100 (right)
     hp1 = [float(unit1["hp"])] * count1
     hp2 = [float(unit2["hp"])] * count2
+    pos1 = [i * 0.5 for i in range(count1)]  # Spread out slightly
+    pos2 = [100 - i * 0.5 for i in range(count2)]
     cooldown1 = [0.0] * count1
     cooldown2 = [0.0] * count2
 
@@ -1046,6 +1084,7 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     dt = 0.05
     time = 0.0
     max_time = 300.0
+    melee_range = 0.5
 
     while time < max_time:
         alive1 = [i for i, h in enumerate(hp1) if h > 0]
@@ -1054,26 +1093,68 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
         if not alive1 or not alive2:
             break
 
+        # Update cooldowns
+        for i in alive1:
+            cooldown1[i] = max(0, cooldown1[i] - dt)
+        for i in alive2:
+            cooldown2[i] = max(0, cooldown2[i] - dt)
+
         # Collect attacks (simultaneous)
         pending_damage = []
 
-        target_idx = 0
+        # Team 1 units (move right toward team 2)
         for i in alive1:
-            cooldown1[i] = max(0, cooldown1[i] - dt)
-            if cooldown1[i] <= 0 and alive2:
-                target = alive2[target_idx % len(alive2)]
-                pending_damage.append((2, target, dmg1))
-                cooldown1[i] = reload1
-                target_idx += 1
+            # Find closest enemy
+            closest = min(alive2, key=lambda j: abs(pos2[j] - pos1[i]))
+            distance = abs(pos2[closest] - pos1[i])
+            attack_range = range1 if is_ranged1 else melee_range
 
-        target_idx = 0
+            if is_ranged1:
+                # Ranged: kite (move back while reloading, attack when ready)
+                if cooldown1[i] <= 0 and distance <= attack_range:
+                    pending_damage.append((2, closest, dmg1))
+                    cooldown1[i] = reload1
+                elif cooldown1[i] > 0:
+                    # Reloading - move backward (kite left)
+                    pos1[i] -= move_speed1 * dt
+                elif distance > attack_range:
+                    # Move toward enemy
+                    pos1[i] += move_speed1 * dt
+            else:
+                # Melee: close distance and attack
+                if distance <= attack_range:
+                    if cooldown1[i] <= 0:
+                        pending_damage.append((2, closest, dmg1))
+                        cooldown1[i] = reload1
+                else:
+                    pos1[i] += move_speed1 * dt
+
+        # Team 2 units (move left toward team 1)
         for i in alive2:
-            cooldown2[i] = max(0, cooldown2[i] - dt)
-            if cooldown2[i] <= 0 and alive1:
-                target = alive1[target_idx % len(alive1)]
-                pending_damage.append((1, target, dmg2))
-                cooldown2[i] = reload2
-                target_idx += 1
+            # Find closest enemy
+            closest = min(alive1, key=lambda j: abs(pos1[j] - pos2[i]))
+            distance = abs(pos1[closest] - pos2[i])
+            attack_range = range2 if is_ranged2 else melee_range
+
+            if is_ranged2:
+                # Ranged: kite (move back while reloading, attack when ready)
+                if cooldown2[i] <= 0 and distance <= attack_range:
+                    pending_damage.append((1, closest, dmg2))
+                    cooldown2[i] = reload2
+                elif cooldown2[i] > 0:
+                    # Reloading - move backward (kite right)
+                    pos2[i] += move_speed2 * dt
+                elif distance > attack_range:
+                    # Move toward enemy
+                    pos2[i] -= move_speed2 * dt
+            else:
+                # Melee: close distance and attack
+                if distance <= attack_range:
+                    if cooldown2[i] <= 0:
+                        pending_damage.append((1, closest, dmg2))
+                        cooldown2[i] = reload2
+                else:
+                    pos2[i] -= move_speed2 * dt
 
         # Apply damage
         for team, target, damage in pending_damage:

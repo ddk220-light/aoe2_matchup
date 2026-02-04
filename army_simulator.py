@@ -39,35 +39,59 @@ class Unit:
     attacks: dict
     armors: dict
     cost: int
+    attack_range: float = 0.0  # 0 = melee
+    speed: float = 1.0  # movement speed
+    position: float = 0.0  # 1D position for simplified kiting
     target: Optional["Unit"] = None
     attack_cooldown: float = 0.0
     is_dead: bool = False
 
+    def is_ranged(self) -> bool:
+        """Check if this is a ranged unit."""
+        return self.attack_range >= 1.0
+
     def get_damage_against(self, target: "Unit") -> int:
         """Calculate damage dealt to a target unit."""
-        base_damage = self.attacks.get(4, self.attack)
-        bonus_damage = 0
+        # Use pierce attack (class 3) for ranged, melee (class 4) for melee
+        if self.is_ranged():
+            base_damage = self.attacks.get(3, self.attacks.get(4, self.attack))
+            target_armor = target.armors.get(3, target.pierce_armor)
+        else:
+            base_damage = self.attacks.get(4, self.attack)
+            target_armor = target.armors.get(4, target.melee_armor)
 
+        bonus_damage = 0
         for armor_class, armor_value in target.armors.items():
-            if armor_class in self.attacks and armor_class != 4:
+            if armor_class in self.attacks and armor_class not in (3, 4):
                 attack_bonus = self.attacks[armor_class]
                 if attack_bonus > 0:
                     effective_bonus = max(0, attack_bonus - armor_value)
                     bonus_damage += effective_bonus
 
-        target_armor = target.armors.get(4, target.melee_armor)
         total_damage = max(1, base_damage + bonus_damage - target_armor)
         return total_damage
 
     def find_target(self, enemies: list["Unit"]) -> Optional["Unit"]:
-        """Find closest living enemy (simplified - just pick first alive)."""
-        for enemy in enemies:
-            if not enemy.is_dead:
-                return enemy
-        return None
+        """Find closest living enemy."""
+        alive_enemies = [e for e in enemies if not e.is_dead]
+        if not alive_enemies:
+            return None
+        # Find closest by position
+        return min(alive_enemies, key=lambda e: abs(e.position - self.position))
 
-    def update(self, dt: float, enemies: list["Unit"]) -> tuple[Optional["Unit"], int]:
+    def get_distance_to(self, other: "Unit") -> float:
+        """Get distance to another unit."""
+        return abs(self.position - other.position)
+
+    def update(
+        self, dt: float, enemies: list["Unit"], team_direction: int
+    ) -> tuple[Optional["Unit"], int]:
         """Update unit state for one time step.
+
+        Args:
+            dt: Time delta
+            enemies: List of enemy units
+            team_direction: 1 for team moving right, -1 for team moving left
 
         Returns:
             Tuple of (target, damage) if an attack was made, (None, 0) otherwise.
@@ -86,13 +110,35 @@ class Unit:
         if self.target is None:
             return (None, 0)
 
-        # Attack if ready - calculate damage but don't apply yet
-        if self.attack_cooldown <= 0:
-            damage = self.get_damage_against(self.target)
-            self.attack_cooldown = self.reload_time
-            return (self.target, damage)
+        distance = self.get_distance_to(self.target)
 
-        return (None, 0)
+        # Ranged unit behavior: kite (move back while reloading, attack when ready)
+        if self.is_ranged():
+            if self.attack_cooldown <= 0 and distance <= self.attack_range:
+                # Ready to fire and in range - attack
+                damage = self.get_damage_against(self.target)
+                self.attack_cooldown = self.reload_time
+                return (self.target, damage)
+            elif self.attack_cooldown > 0:
+                # Reloading - move backward (kite)
+                self.position -= team_direction * self.speed * dt
+            elif distance > self.attack_range:
+                # Need to get in range - move toward enemy
+                self.position += team_direction * self.speed * dt
+            return (None, 0)
+        else:
+            # Melee unit behavior: close distance and attack
+            melee_range = 0.5  # Melee range
+            if distance <= melee_range:
+                # In melee range - attack if ready
+                if self.attack_cooldown <= 0:
+                    damage = self.get_damage_against(self.target)
+                    self.attack_cooldown = self.reload_time
+                    return (self.target, damage)
+            else:
+                # Move toward target
+                self.position += team_direction * self.speed * dt
+            return (None, 0)
 
 
 @dataclass
@@ -112,8 +158,10 @@ class UnitTemplate:
     cost: int
     unit_slug: str
     age_id: int
+    attack_range: float = 0.0  # 0 = melee
+    speed: float = 1.0  # movement speed
 
-    def create_unit(self) -> Unit:
+    def create_unit(self, position: float = 0.0) -> Unit:
         """Create a new unit instance from this template."""
         return Unit(
             id=self.id,
@@ -128,6 +176,9 @@ class UnitTemplate:
             attacks=self.attacks.copy(),
             armors=self.armors.copy(),
             cost=self.cost,
+            attack_range=self.attack_range,
+            speed=self.speed,
+            position=position,
         )
 
 
@@ -151,6 +202,7 @@ def load_all_unit_templates() -> list[UnitTemplate]:
     cursor.execute("""
         SELECT us.id, us.unit_name, c.name as civ_name, us.hp, us.attack,
                us.melee_armor, us.pierce_armor, us.attack_speed,
+               us.attack_range, us.movement_speed,
                us.attacks_json, us.armors_json,
                us.cost_food, us.cost_wood, us.cost_gold,
                u.slug, u.age_id, u.unit_type
@@ -187,6 +239,10 @@ def load_all_unit_templates() -> list[UnitTemplate]:
         if cost == 0:
             cost = 100  # Default cost if missing
 
+        # Get attack range (0 = melee) and movement speed
+        attack_range = row["attack_range"] or 0.0
+        movement_speed = row["movement_speed"] or 1.0
+
         templates.append(
             UnitTemplate(
                 id=row["id"],
@@ -202,6 +258,8 @@ def load_all_unit_templates() -> list[UnitTemplate]:
                 cost=cost,
                 unit_slug=row["slug"],
                 age_id=row["age_id"],
+                attack_range=attack_range,
+                speed=movement_speed,
             )
         )
 
@@ -232,9 +290,13 @@ def simulate_army_battle(
     team1_count = max(1, resources // team1_template.cost)
     team2_count = max(1, resources // team2_template.cost)
 
-    # Create armies
-    team1 = [team1_template.create_unit() for _ in range(team1_count)]
-    team2 = [team2_template.create_unit() for _ in range(team2_count)]
+    # Create armies with initial positions
+    # Team 1 starts at position 0 (left side), Team 2 at position 100 (right side)
+    # Units are spread out slightly within each team
+    team1 = [team1_template.create_unit(position=i * 0.5) for i in range(team1_count)]
+    team2 = [
+        team2_template.create_unit(position=100 - i * 0.5) for i in range(team2_count)
+    ]
 
     if verbose:
         print(
@@ -258,13 +320,14 @@ def simulate_army_battle(
         # Collect all attacks first (simultaneous combat)
         pending_damage = []  # List of (target, damage) tuples
 
+        # Team 1 moves right (direction=1), Team 2 moves left (direction=-1)
         for unit in team1_alive:
-            target, damage = unit.update(dt, team2)
+            target, damage = unit.update(dt, team2, team_direction=1)
             if target is not None:
                 pending_damage.append((target, damage))
 
         for unit in team2_alive:
-            target, damage = unit.update(dt, team1)
+            target, damage = unit.update(dt, team1, team_direction=-1)
             if target is not None:
                 pending_damage.append((target, damage))
 

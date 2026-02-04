@@ -208,9 +208,10 @@ def simulate_army_battle(
     Returns:
         dict with battle results
     """
-    # Calculate army sizes
-    team1_count = max(1, min(40, resources // team1_template.cost))
-    team2_count = max(1, min(40, resources // team2_template.cost))
+    # Calculate army sizes based on resource budget
+    # No artificial cap - let resources determine army size
+    team1_count = max(1, resources // team1_template.cost)
+    team2_count = max(1, resources // team2_template.cost)
 
     # Create armies
     team1 = [team1_template.create_unit() for _ in range(team1_count)]
@@ -249,16 +250,32 @@ def simulate_army_battle(
     team1_hp_left = sum(u.current_hp for u in team1 if not u.is_dead)
     team2_hp_left = sum(u.current_hp for u in team2 if not u.is_dead)
 
+    # Calculate starting HP for percentage comparison
+    team1_start_hp = team1_count * team1_template.hp
+    team2_start_hp = team2_count * team2_template.hp
+
     team1_res_spent = team1_count * team1_template.cost
     team2_res_spent = team2_count * team2_template.cost
     team1_res_lost = (team1_count - team1_remaining) * team1_template.cost
     team2_res_lost = (team2_count - team2_remaining) * team2_template.cost
 
     # Determine winner
+    # If winner has less than 5% HP remaining, consider it a draw (very close battle)
+    team1_hp_pct = team1_hp_left / team1_start_hp if team1_start_hp > 0 else 0
+    team2_hp_pct = team2_hp_left / team2_start_hp if team2_start_hp > 0 else 0
+
     if team1_remaining > 0 and team2_remaining == 0:
-        winner = 1
+        # Team 1 won, but check if it's a close battle
+        if team1_hp_pct < 0.05:
+            winner = 0  # Draw - pyrrhic victory
+        else:
+            winner = 1
     elif team2_remaining > 0 and team1_remaining == 0:
-        winner = 2
+        # Team 2 won, but check if it's a close battle
+        if team2_hp_pct < 0.05:
+            winner = 0  # Draw - pyrrhic victory
+        else:
+            winner = 2
     elif team1_remaining > team2_remaining:
         winner = 1
     elif team2_remaining > team1_remaining:

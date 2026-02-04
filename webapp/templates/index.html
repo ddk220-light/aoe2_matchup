@@ -1028,7 +1028,27 @@
                     }
                 }
 
-                let sortedRecords = [...uniqueCivRecords];
+                const unitName = document.querySelector('.unit-btn.active')?.textContent?.trim() || 'Unit';
+                const ageName = unitsByAge[age]?.name || age;
+
+                // Create generic row data if there are generic civs
+                let genericRowData = null;
+                if (genericCivs.length > 0) {
+                    const templateCiv = records.find(r => genericCivs.includes(r.Civilization));
+                    if (templateCiv) {
+                        genericRowData = {...templateCiv};
+                        genericRowData._isGeneric = true;
+                        genericRowData._genericCivs = genericCivs.sort();
+                    }
+                }
+
+                // Include generic row in sorting
+                let allRecords = [...uniqueCivRecords];
+                if (genericRowData) {
+                    allRecords.push(genericRowData);
+                }
+
+                let sortedRecords = allRecords;
                 if (sortColumn) {
                     sortedRecords.sort((a, b) => {
                         let aVal = a[sortColumn];
@@ -1048,19 +1068,6 @@
                         }
                         return bVal.localeCompare(aVal);
                     });
-                }
-
-                const unitName = document.querySelector('.unit-btn.active')?.textContent?.trim() || 'Unit';
-                const ageName = unitsByAge[age]?.name || age;
-
-                let genericRowData = null;
-                if (genericCivs.length > 0) {
-                    const templateCiv = records.find(r => genericCivs.includes(r.Civilization));
-                    if (templateCiv) {
-                        genericRowData = {...templateCiv};
-                        genericRowData._isGeneric = true;
-                        genericRowData._genericCivs = genericCivs.sort();
-                    }
                 }
 
                 let html = `
@@ -1085,8 +1092,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                ${genericRowData ? renderGenericRow(genericRowData, displayColumns) : ''}
-                                ${sortedRecords.map(row => renderRow(row, displayColumns, unique_stats)).join('')}
+                                ${sortedRecords.map(row => row._isGeneric ? renderGenericRow(row, displayColumns) : renderRow(row, displayColumns, unique_stats)).join('')}
                                 ${missing_civs && missing_civs.length > 0 ? renderMissingRow(missing_civs, displayColumns) : ''}
                             </tbody>
                         </table>
@@ -1269,6 +1275,12 @@
                 // Format Combat_Eff (normalized to 1.0 baseline)
                 if (col === 'Combat_Eff' && typeof value === 'number') {
                     displayValue = value.toFixed(2);
+                    // Mark values below 1.0 as worse (red)
+                    if (value < 1.0) {
+                        classes.push('unique-worse');
+                    } else if (value > 1.0) {
+                        classes.push('unique-better');
+                    }
                 }
 
                 const tooltipAttr = Object.keys(tooltipData).length > 0

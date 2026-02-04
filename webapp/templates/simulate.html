@@ -644,6 +644,70 @@
             .result-value.negative {
                 color: var(--team1-color);
             }
+
+            /* Formula-based debug display */
+            .formula-section {
+                margin-bottom: 12px;
+            }
+
+            .formula-label {
+                color: #888;
+                font-size: 0.8rem;
+                margin-bottom: 4px;
+            }
+
+            .formula-value {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .formula-value .attack-val {
+                color: #f39c12;
+                font-size: 1.3rem;
+                font-weight: bold;
+            }
+
+            .formula-value .armor-val {
+                color: #3498db;
+                font-size: 1.3rem;
+                font-weight: bold;
+            }
+
+            .formula-note {
+                color: #666;
+                font-size: 0.75rem;
+            }
+
+            .bonus-item {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                color: #2ecc71;
+                font-weight: 600;
+            }
+
+            .class-tag {
+                background: rgba(46, 204, 113, 0.2);
+                color: #2ecc71;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-size: 0.7rem;
+                font-weight: normal;
+            }
+
+            .formula-result {
+                margin-top: 15px;
+                padding-top: 12px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .formula-total {
+                color: var(--secondary-color);
+                font-size: 1.8rem;
+                font-weight: bold;
+            }
         </style>
     </head>
     <body>
@@ -1458,119 +1522,66 @@
                     const dmg1to2 = unit1.getDamageAgainst(unit2, true);
                     const dmg2to1 = unit2.getDamageAgainst(unit1, true);
 
-                    // Calculate DPS and time to kill
-                    const attackInterval1 = 1.0 / (this.team1Stats.attack_speed || 1);
-                    const attackInterval2 = 1.0 / (this.team2Stats.attack_speed || 1);
-                    const dps1to2 = dmg1to2.total * (this.team1Stats.attack_speed || 1);
-                    const dps2to1 = dmg2to1.total * (this.team2Stats.attack_speed || 1);
-                    const ttk1 = this.team2Stats.hp / dps1to2;  // Time for Team 1 to kill Team 2
-                    const ttk2 = this.team1Stats.hp / dps2to1;  // Time for Team 2 to kill Team 1
-                    const hitsToKill1 = Math.ceil(this.team2Stats.hp / dmg1to2.total);
-                    const hitsToKill2 = Math.ceil(this.team1Stats.hp / dmg2to1.total);
-
                     let html = '';
 
-                    // Team 1 Stats
-                    html += `<div class="debug-section team1">`;
-                    html += `<h4>Team 1: ${this.team1Stats.civ} ${this.team1Stats.name}</h4>`;
-                    html += `<div class="debug-row"><span class="debug-label">HP:</span><span class="debug-value">${this.team1Stats.hp}</span></div>`;
-                    html += `<div class="debug-row"><span class="debug-label">Base Attack:</span><span class="debug-value">${this.team1Stats.attack}</span></div>`;
-                    html += `<div class="debug-row"><span class="debug-label">Attack Interval:</span><span class="debug-value">${attackInterval1.toFixed(2)}s</span></div>`;
-                    html += `<div class="debug-row"><span class="debug-label">Melee Armor:</span><span class="debug-value">${this.team1Stats.melee_armor}</span></div>`;
-                    html += `<div class="debug-row"><span class="debug-label">Pierce Armor:</span><span class="debug-value">${this.team1Stats.pierce_armor}</span></div>`;
-                    html += `<div class="debug-row"><span class="debug-label">Unit Cost:</span><span class="debug-value">${this.team1Stats.total_cost || 'N/A'}</span></div>`;
-                    html += `</div>`;
+                    // Helper to build damage formula string
+                    const buildDamageFormula = (attacker, defender, dmgResult, attackerStats, defenderStats) => {
+                        let formula = '';
 
-                    // Team 2 Stats
-                    html += `<div class="debug-section team2">`;
-                    html += `<h4>Team 2: ${this.team2Stats.civ} ${this.team2Stats.name}</h4>`;
-                    html += `<div class="debug-row"><span class="debug-label">HP:</span><span class="debug-value">${this.team2Stats.hp}</span></div>`;
-                    html += `<div class="debug-row"><span class="debug-label">Base Attack:</span><span class="debug-value">${this.team2Stats.attack}</span></div>`;
-                    html += `<div class="debug-row"><span class="debug-label">Attack Interval:</span><span class="debug-value">${attackInterval2.toFixed(2)}s</span></div>`;
-                    html += `<div class="debug-row"><span class="debug-label">Melee Armor:</span><span class="debug-value">${this.team2Stats.melee_armor}</span></div>`;
-                    html += `<div class="debug-row"><span class="debug-label">Pierce Armor:</span><span class="debug-value">${this.team2Stats.pierce_armor}</span></div>`;
-                    html += `<div class="debug-row"><span class="debug-label">Unit Cost:</span><span class="debug-value">${this.team2Stats.total_cost || 'N/A'}</span></div>`;
-                    html += `</div>`;
+                        // Get base attack (class 4)
+                        const baseAttack = attacker.attacks['4'] || attackerStats.attack;
+                        const defenderBaseArmor = defender.armors['4'] || defenderStats.melee_armor;
 
-                    // Damage: Team 1 -> Team 2
+                        // Build attack portion: total attack (breakdown)
+                        formula += `<div class="formula-section">`;
+                        formula += `<div class="formula-label">Total Attack:</div>`;
+                        formula += `<div class="formula-value"><span class="attack-val">${baseAttack}</span>`;
+                        formula += `<span class="formula-note">(base + upgrades + civ bonuses)</span></div>`;
+                        formula += `</div>`;
+
+                        // Build bonus damage portion (only applicable ones)
+                        const applicableBonuses = dmgResult.breakdown.filter(b => b.applies && b.classId !== '4' && b.damage > 0);
+                        if (applicableBonuses.length > 0) {
+                            formula += `<div class="formula-section">`;
+                            formula += `<div class="formula-label">Bonus Damage:</div>`;
+                            formula += `<div class="formula-value">`;
+                            const bonusParts = applicableBonuses.map(b => {
+                                const netBonus = b.attack - (b.armor || 0);
+                                return `<span class="bonus-item">+${Math.max(0, netBonus)} <span class="class-tag">${b.className}</span></span>`;
+                            });
+                            formula += bonusParts.join(' ');
+                            formula += `</div>`;
+                            formula += `</div>`;
+                        }
+
+                        // Build defense portion
+                        formula += `<div class="formula-section">`;
+                        formula += `<div class="formula-label">Total Defense:</div>`;
+                        formula += `<div class="formula-value"><span class="armor-val">−${defenderBaseArmor}</span>`;
+                        formula += `<span class="formula-note">(base + upgrades + civ bonuses)</span></div>`;
+                        formula += `</div>`;
+
+                        // Final damage
+                        formula += `<div class="formula-result">`;
+                        formula += `<div class="formula-label">Damage per Attack:</div>`;
+                        formula += `<div class="formula-total">${dmgResult.total}</div>`;
+                        formula += `</div>`;
+
+                        return formula;
+                    };
+
+                    // Unit 1 -> Unit 2 Damage
                     html += `<div class="debug-section">`;
-                    html += `<h4 style="color: var(--team1-color);">Team 1 → Team 2 Damage</h4>`;
-                    html += `<div class="debug-row"><span class="debug-label">Damage per Hit:</span><span class="debug-value positive" style="font-size:1.1rem;">${dmg1to2.total}</span></div>`;
-                    html += `<div class="debug-row"><span class="debug-label">DPS:</span><span class="debug-value">${dps1to2.toFixed(1)}</span></div>`;
-                    html += `<div class="debug-row"><span class="debug-label">Hits to Kill:</span><span class="debug-value">${hitsToKill1}</span></div>`;
-                    html += `<div class="debug-row"><span class="debug-label">Time to Kill:</span><span class="debug-value">${ttk1.toFixed(1)}s</span></div>`;
-                    html += `<div class="damage-breakdown">`;
-                    html += `<h5>Damage Calculation</h5>`;
-                    html += `<div class="armor-class-row" style="font-weight:bold;margin-bottom:6px;">`;
-                    html += `<span class="class-name">Armor Class</span>`;
-                    html += `<span class="atk-val">Atk</span>`;
-                    html += `<span class="armor-val">Arm</span>`;
-                    html += `<span class="dmg-val">Dmg</span>`;
-                    html += `</div>`;
-                    for (const b of dmg1to2.breakdown) {
-                        const rowStyle = b.applies ? '' : 'opacity: 0.4; text-decoration: line-through;';
-                        const dmgDisplay = b.applies ? (b.damage > 0 ? '+' + b.damage : b.damage) : '—';
-                        html += `<div class="armor-class-row" style="${rowStyle}">`;
-                        html += `<span class="class-name">${b.className}</span>`;
-                        html += `<span class="atk-val">${b.attack}</span>`;
-                        html += `<span class="armor-val">${b.armor}</span>`;
-                        html += `<span class="dmg-val">${dmgDisplay}</span>`;
-                        html += `</div>`;
-                    }
-                    html += `<div style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1); font-size:0.75rem; color:#888;">`;
-                    html += `Total = sum of all Dmg values (min 1)`;
-                    html += `</div>`;
-                    html += `</div>`;
+                    html += `<h4 style="color: var(--team1-color);">${this.team1Stats.civ} ${this.team1Stats.name}</h4>`;
+                    html += `<h5 style="color: #888; margin-bottom: 10px;">→ attacking ${this.team2Stats.civ} ${this.team2Stats.name}</h5>`;
+                    html += buildDamageFormula(unit1, unit2, dmg1to2, this.team1Stats, this.team2Stats);
                     html += `</div>`;
 
-                    // Damage: Team 2 -> Team 1
+                    // Unit 2 -> Unit 1 Damage
                     html += `<div class="debug-section">`;
-                    html += `<h4 style="color: var(--team2-color);">Team 2 → Team 1 Damage</h4>`;
-                    html += `<div class="debug-row"><span class="debug-label">Damage per Hit:</span><span class="debug-value positive" style="font-size:1.1rem;">${dmg2to1.total}</span></div>`;
-                    html += `<div class="debug-row"><span class="debug-label">DPS:</span><span class="debug-value">${dps2to1.toFixed(1)}</span></div>`;
-                    html += `<div class="debug-row"><span class="debug-label">Hits to Kill:</span><span class="debug-value">${hitsToKill2}</span></div>`;
-                    html += `<div class="debug-row"><span class="debug-label">Time to Kill:</span><span class="debug-value">${ttk2.toFixed(1)}s</span></div>`;
-                    html += `<div class="damage-breakdown">`;
-                    html += `<h5>Damage Calculation</h5>`;
-                    html += `<div class="armor-class-row" style="font-weight:bold;margin-bottom:6px;">`;
-                    html += `<span class="class-name">Armor Class</span>`;
-                    html += `<span class="atk-val">Atk</span>`;
-                    html += `<span class="armor-val">Arm</span>`;
-                    html += `<span class="dmg-val">Dmg</span>`;
-                    html += `</div>`;
-                    for (const b of dmg2to1.breakdown) {
-                        const rowStyle = b.applies ? '' : 'opacity: 0.4; text-decoration: line-through;';
-                        const dmgDisplay = b.applies ? (b.damage > 0 ? '+' + b.damage : b.damage) : '—';
-                        html += `<div class="armor-class-row" style="${rowStyle}">`;
-                        html += `<span class="class-name">${b.className}</span>`;
-                        html += `<span class="atk-val">${b.attack}</span>`;
-                        html += `<span class="armor-val">${b.armor}</span>`;
-                        html += `<span class="dmg-val">${dmgDisplay}</span>`;
-                        html += `</div>`;
-                    }
-                    html += `<div style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1); font-size:0.75rem; color:#888;">`;
-                    html += `Total = sum of all Dmg values (min 1)`;
-                    html += `</div>`;
-                    html += `</div>`;
-                    html += `</div>`;
-
-                    // Defender's Armor Classes
-                    html += `<div class="debug-section">`;
-                    html += `<h4 style="color: #888;">All Armor Classes</h4>`;
-                    html += `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:0.75rem;">`;
-                    html += `<div><strong style="color:var(--team1-color);">Team 1 Armors:</strong>`;
-                    for (const [classId, armor] of Object.entries(unit1.armors)) {
-                        const className = armorClassNames[classId] || `Class ${classId}`;
-                        html += `<div style="color:#aaa;">${className}: ${armor}</div>`;
-                    }
-                    html += `</div>`;
-                    html += `<div><strong style="color:var(--team2-color);">Team 2 Armors:</strong>`;
-                    for (const [classId, armor] of Object.entries(unit2.armors)) {
-                        const className = armorClassNames[classId] || `Class ${classId}`;
-                        html += `<div style="color:#aaa;">${className}: ${armor}</div>`;
-                    }
-                    html += `</div>`;
-                    html += `</div>`;
+                    html += `<h4 style="color: var(--team2-color);">${this.team2Stats.civ} ${this.team2Stats.name}</h4>`;
+                    html += `<h5 style="color: #888; margin-bottom: 10px;">→ attacking ${this.team1Stats.civ} ${this.team1Stats.name}</h5>`;
+                    html += buildDamageFormula(unit2, unit1, dmg2to1, this.team2Stats, this.team1Stats);
                     html += `</div>`;
 
                     document.getElementById('debugContent').innerHTML = html;

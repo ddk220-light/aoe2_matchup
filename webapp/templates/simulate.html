@@ -503,6 +503,147 @@
             .matchup-label strong {
                 color: var(--text-color);
             }
+
+            /* Army Mode Section */
+            .army-mode-section {
+                background: var(--card-bg);
+                padding: 15px 20px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+                text-align: center;
+            }
+
+            .mode-toggle {
+                display: flex;
+                justify-content: center;
+                gap: 30px;
+                margin-bottom: 10px;
+            }
+
+            .mode-option {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                cursor: pointer;
+                color: var(--text-color);
+            }
+
+            .mode-option input[type="radio"] {
+                accent-color: var(--secondary-color);
+            }
+
+            .resource-input {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                margin-top: 10px;
+            }
+
+            .resource-input label {
+                color: #aaa;
+            }
+
+            .resource-input input {
+                width: 120px;
+                padding: 8px;
+                background: var(--bg-color);
+                border: 1px solid rgba(218, 165, 32, 0.3);
+                color: var(--text-color);
+                border-radius: 4px;
+                font-size: 14px;
+                text-align: center;
+            }
+
+            .resource-hint {
+                font-size: 0.8rem;
+                color: #666;
+            }
+
+            /* Battle Results */
+            .battle-results {
+                background: var(--card-bg);
+                border-radius: 8px;
+                padding: 20px;
+                margin-top: 20px;
+                display: none;
+            }
+
+            .battle-results.visible {
+                display: block;
+            }
+
+            .battle-results h3 {
+                font-family: "Cinzel", serif;
+                color: var(--secondary-color);
+                margin-bottom: 15px;
+                text-align: center;
+            }
+
+            .results-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+
+            .result-team {
+                padding: 15px;
+                border-radius: 8px;
+                background: rgba(0, 0, 0, 0.2);
+            }
+
+            .result-team.team1 {
+                border-left: 4px solid var(--team1-color);
+            }
+
+            .result-team.team2 {
+                border-left: 4px solid var(--team2-color);
+            }
+
+            .result-team.winner {
+                background: rgba(46, 204, 113, 0.1);
+            }
+
+            .result-team.loser {
+                background: rgba(231, 76, 60, 0.1);
+            }
+
+            .result-team h4 {
+                margin-bottom: 10px;
+                font-size: 1rem;
+            }
+
+            .result-team.team1 h4 {
+                color: var(--team1-color);
+            }
+
+            .result-team.team2 h4 {
+                color: var(--team2-color);
+            }
+
+            .result-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 5px;
+                font-size: 0.9rem;
+            }
+
+            .result-label {
+                color: #888;
+            }
+
+            .result-value {
+                color: var(--text-color);
+                font-weight: 600;
+            }
+
+            .result-value.positive {
+                color: var(--team2-color);
+            }
+
+            .result-value.negative {
+                color: var(--team1-color);
+            }
         </style>
     </head>
     <body>
@@ -549,7 +690,7 @@
                             id="team1Count"
                             value="5"
                             min="1"
-                            max="20"
+                            max="40"
                         />
                     </div>
                 </div>
@@ -581,9 +722,46 @@
                             id="team2Count"
                             value="5"
                             min="1"
-                            max="20"
+                            max="40"
                         />
                     </div>
+                </div>
+            </div>
+
+            <!-- Army Size Mode Selection -->
+            <div class="army-mode-section">
+                <div class="mode-toggle">
+                    <label class="mode-option">
+                        <input
+                            type="radio"
+                            name="armyMode"
+                            value="count"
+                            checked
+                        />
+                        <span>By Unit Count</span>
+                    </label>
+                    <label class="mode-option">
+                        <input type="radio" name="armyMode" value="resources" />
+                        <span>By Total Resources</span>
+                    </label>
+                </div>
+                <div
+                    class="resource-input"
+                    id="resourceInput"
+                    style="display: none"
+                >
+                    <label>Total Resources per Team:</label>
+                    <input
+                        type="number"
+                        id="totalResources"
+                        value="2000"
+                        min="100"
+                        max="20000"
+                        step="100"
+                    />
+                    <span class="resource-hint"
+                        >(Food + Wood + Gold combined)</span
+                    >
                 </div>
             </div>
 
@@ -622,6 +800,95 @@
                             <span class="alive-count" id="team2Alive"
                                 >0/0 alive</span
                             >
+                        </div>
+                    </div>
+
+                    <!-- Battle Results -->
+                    <div class="battle-results" id="battleResults">
+                        <h3>Battle Results</h3>
+                        <div class="results-grid">
+                            <div class="result-team team1" id="resultTeam1">
+                                <h4>Team 1 (Red)</h4>
+                                <div class="result-row">
+                                    <span class="result-label"
+                                        >Units Remaining:</span
+                                    >
+                                    <span
+                                        class="result-value"
+                                        id="team1Remaining"
+                                        >0</span
+                                    >
+                                </div>
+                                <div class="result-row">
+                                    <span class="result-label"
+                                        >Total HP Left:</span
+                                    >
+                                    <span class="result-value" id="team1HpLeft"
+                                        >0</span
+                                    >
+                                </div>
+                                <div class="result-row">
+                                    <span class="result-label"
+                                        >Starting Resources:</span
+                                    >
+                                    <span
+                                        class="result-value"
+                                        id="team1StartRes"
+                                        >0</span
+                                    >
+                                </div>
+                                <div class="result-row">
+                                    <span class="result-label"
+                                        >Resources Lost:</span
+                                    >
+                                    <span
+                                        class="result-value negative"
+                                        id="team1ResLost"
+                                        >0</span
+                                    >
+                                </div>
+                            </div>
+                            <div class="result-team team2" id="resultTeam2">
+                                <h4>Team 2 (Green)</h4>
+                                <div class="result-row">
+                                    <span class="result-label"
+                                        >Units Remaining:</span
+                                    >
+                                    <span
+                                        class="result-value"
+                                        id="team2Remaining"
+                                        >0</span
+                                    >
+                                </div>
+                                <div class="result-row">
+                                    <span class="result-label"
+                                        >Total HP Left:</span
+                                    >
+                                    <span class="result-value" id="team2HpLeft"
+                                        >0</span
+                                    >
+                                </div>
+                                <div class="result-row">
+                                    <span class="result-label"
+                                        >Starting Resources:</span
+                                    >
+                                    <span
+                                        class="result-value"
+                                        id="team2StartRes"
+                                        >0</span
+                                    >
+                                </div>
+                                <div class="result-row">
+                                    <span class="result-label"
+                                        >Resources Lost:</span
+                                    >
+                                    <span
+                                        class="result-value negative"
+                                        id="team2ResLost"
+                                        >0</span
+                                    >
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1328,6 +1595,21 @@
                 // Comment save handler
                 document.getElementById('saveCommentBtn').addEventListener('click', saveComment);
 
+                // Army mode toggle
+                document.querySelectorAll('input[name="armyMode"]').forEach(radio => {
+                    radio.addEventListener('change', (e) => {
+                        const resourceInput = document.getElementById('resourceInput');
+                        const countInputs = document.querySelectorAll('#team1Count, #team2Count');
+                        if (e.target.value === 'resources') {
+                            resourceInput.style.display = 'flex';
+                            countInputs.forEach(input => input.disabled = true);
+                        } else {
+                            resourceInput.style.display = 'none';
+                            countInputs.forEach(input => input.disabled = false);
+                        }
+                    });
+                });
+
                 simulation.render();
             });
 
@@ -1426,11 +1708,11 @@
             async function startBattle() {
                 const team1Civ = document.getElementById('team1Civ').value;
                 const team1Unit = document.getElementById('team1Unit').value;
-                const team1Count = parseInt(document.getElementById('team1Count').value) || 5;
+                let team1Count = parseInt(document.getElementById('team1Count').value) || 5;
 
                 const team2Civ = document.getElementById('team2Civ').value;
                 const team2Unit = document.getElementById('team2Unit').value;
-                const team2Count = parseInt(document.getElementById('team2Count').value) || 5;
+                let team2Count = parseInt(document.getElementById('team2Count').value) || 5;
 
                 if (!team1Unit || !team1Civ || !team2Unit || !team2Civ) {
                     alert('Please select civilization, age, and unit for both teams');
@@ -1441,20 +1723,60 @@
                     document.getElementById('startBtn').disabled = true;
                     document.getElementById('startBtn').textContent = 'Loading...';
 
+                    // Hide previous battle results
+                    document.getElementById('battleResults').classList.remove('visible');
+
+                    // Check if using resource mode
+                    const armyMode = document.querySelector('input[name="armyMode"]:checked').value;
+
+                    if (armyMode === 'resources') {
+                        const totalResources = parseInt(document.getElementById('totalResources').value) || 2000;
+
+                        // Fetch unit costs first
+                        const [stats1, stats2] = await Promise.all([
+                            fetch(`/api/combat-unit/${encodeURIComponent(team1Civ)}/${team1Unit}`).then(r => r.json()),
+                            fetch(`/api/combat-unit/${encodeURIComponent(team2Civ)}/${team2Unit}`).then(r => r.json())
+                        ]);
+
+                        if (stats1.error) throw new Error(stats1.error);
+                        if (stats2.error) throw new Error(stats2.error);
+
+                        // Calculate unit counts based on resources
+                        team1Count = Math.max(1, Math.floor(totalResources / stats1.total_cost));
+                        team2Count = Math.max(1, Math.floor(totalResources / stats2.total_cost));
+
+                        // Cap at reasonable max
+                        team1Count = Math.min(team1Count, 40);
+                        team2Count = Math.min(team2Count, 40);
+
+                        // Update the count inputs to show calculated values
+                        document.getElementById('team1Count').value = team1Count;
+                        document.getElementById('team2Count').value = team2Count;
+                    }
+
                     simulation.reset();
                     await simulation.setupTeam(1, team1Unit, team1Civ, team1Count);
                     await simulation.setupTeam(2, team2Unit, team2Civ, team2Count);
 
-                    // Store current battle info for comments
+                    // Store current battle info for comments and results
+                    const team1TotalCost = simulation.team1Stats.total_cost * team1Count;
+                    const team2TotalCost = simulation.team2Stats.total_cost * team2Count;
+
                     currentBattle = {
                         team1_civ: team1Civ,
                         team1_unit: team1Unit,
                         team1_unit_name: simulation.team1Stats?.name || team1Unit,
                         team1_count: team1Count,
+                        team1_total_cost: team1TotalCost,
+                        team1_unit_cost: simulation.team1Stats.total_cost,
+                        team1_max_hp: simulation.team1Stats.hp,
                         team2_civ: team2Civ,
                         team2_unit: team2Unit,
                         team2_unit_name: simulation.team2Stats?.name || team2Unit,
                         team2_count: team2Count,
+                        team2_total_cost: team2TotalCost,
+                        team2_unit_cost: simulation.team2Stats.total_cost,
+                        team2_max_hp: simulation.team2Stats.hp,
                         winner: null
                     };
 
@@ -1488,6 +1810,73 @@
                 if (currentBattle) {
                     currentBattle.winner = winner;
                 }
+
+                // Calculate and display battle results
+                showBattleResults(winner);
+            }
+
+            function showBattleResults(winner) {
+                if (!currentBattle || !simulation.team1 || !simulation.team2) return;
+
+                // Calculate surviving units and HP
+                const team1Alive = simulation.team1.filter(u => u.state !== 'dead');
+                const team2Alive = simulation.team2.filter(u => u.state !== 'dead');
+
+                const team1Remaining = team1Alive.length;
+                const team2Remaining = team2Alive.length;
+
+                const team1HpLeft = team1Alive.reduce((sum, u) => sum + u.hp, 0);
+                const team2HpLeft = team2Alive.reduce((sum, u) => sum + u.hp, 0);
+
+                // Calculate resources lost
+                // For dead units: full cost lost
+                // For alive units: cost lost proportional to HP lost
+                const team1DeadCount = currentBattle.team1_count - team1Remaining;
+                const team2DeadCount = currentBattle.team2_count - team2Remaining;
+
+                // HP-based resource calculation for surviving units
+                const team1MaxHpTotal = team1Remaining * currentBattle.team1_max_hp;
+                const team2MaxHpTotal = team2Remaining * currentBattle.team2_max_hp;
+
+                const team1HpLostPct = team1MaxHpTotal > 0 ? (team1MaxHpTotal - team1HpLeft) / team1MaxHpTotal : 0;
+                const team2HpLostPct = team2MaxHpTotal > 0 ? (team2MaxHpTotal - team2HpLeft) / team2MaxHpTotal : 0;
+
+                const team1SurvivorsResLost = Math.round(team1Remaining * currentBattle.team1_unit_cost * team1HpLostPct);
+                const team2SurvivorsResLost = Math.round(team2Remaining * currentBattle.team2_unit_cost * team2HpLostPct);
+
+                const team1ResLost = (team1DeadCount * currentBattle.team1_unit_cost) + team1SurvivorsResLost;
+                const team2ResLost = (team2DeadCount * currentBattle.team2_unit_cost) + team2SurvivorsResLost;
+
+                // Update the UI
+                document.getElementById('team1Remaining').textContent = `${team1Remaining} / ${currentBattle.team1_count}`;
+                document.getElementById('team2Remaining').textContent = `${team2Remaining} / ${currentBattle.team2_count}`;
+
+                document.getElementById('team1HpLeft').textContent = Math.round(team1HpLeft);
+                document.getElementById('team2HpLeft').textContent = Math.round(team2HpLeft);
+
+                document.getElementById('team1StartRes').textContent = currentBattle.team1_total_cost;
+                document.getElementById('team2StartRes').textContent = currentBattle.team2_total_cost;
+
+                document.getElementById('team1ResLost').textContent = team1ResLost;
+                document.getElementById('team2ResLost').textContent = team2ResLost;
+
+                // Add winner/loser styling
+                const resultTeam1 = document.getElementById('resultTeam1');
+                const resultTeam2 = document.getElementById('resultTeam2');
+
+                resultTeam1.classList.remove('winner', 'loser');
+                resultTeam2.classList.remove('winner', 'loser');
+
+                if (winner === 1) {
+                    resultTeam1.classList.add('winner');
+                    resultTeam2.classList.add('loser');
+                } else if (winner === 2) {
+                    resultTeam1.classList.add('loser');
+                    resultTeam2.classList.add('winner');
+                }
+
+                // Show the results panel
+                document.getElementById('battleResults').classList.add('visible');
             }
 
             async function saveComment() {

@@ -562,7 +562,8 @@ def api_combat_unit(civ_name, unit_slug):
             us.id, us.hp, us.attack, us.attack_range, us.attack_speed,
             us.melee_armor, us.pierce_armor, us.movement_speed,
             us.attacks_json, us.armors_json,
-            us.unit_name, c.name as civ_name
+            us.unit_name, c.name as civ_name,
+            us.cost_food, us.cost_wood, us.cost_gold
         FROM unit_stats us
         JOIN units u ON us.unit_id = u.id
         JOIN civilizations c ON us.civ_id = c.id
@@ -576,6 +577,11 @@ def api_combat_unit(civ_name, unit_slug):
 
     if not row:
         return jsonify({"error": "Unit not found"}), 404
+
+    cost_food = row["cost_food"] or 0
+    cost_wood = row["cost_wood"] or 0
+    cost_gold = row["cost_gold"] or 0
+    total_cost = cost_food + cost_wood + cost_gold
 
     return jsonify(
         {
@@ -591,6 +597,10 @@ def api_combat_unit(civ_name, unit_slug):
             "movement_speed": row["movement_speed"],
             "attacks_json": row["attacks_json"],
             "armors_json": row["armors_json"],
+            "cost_food": cost_food,
+            "cost_wood": cost_wood,
+            "cost_gold": cost_gold,
+            "total_cost": total_cost,
         }
     )
 

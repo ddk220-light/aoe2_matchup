@@ -582,12 +582,12 @@ UNIQUE_UNITS = {
     ],
     "Aztecs": [
         {
-            "base_id": 765,
+            "base_id": 725,
             "display_name": "Jaguar Warrior",
             "unit_class": 6,
-            "availability_tech": 432,
+            "availability_tech": 431,
             "elite_tech": 432,
-            "elite_id": 767,
+            "elite_id": 726,
             "elite_name": "Elite Jaguar Warrior",
         },
     ],
@@ -1276,6 +1276,50 @@ class UnitAnalyzer:
 
         return relevant
 
+    def get_unique_techs_for_unit(
+        self, civ_name: str, unit_id: int, unit_class: int, max_age: int = 4
+    ) -> list:
+        """Get civ-specific unique techs (Castle/Imperial Age) that affect this unit."""
+        civ_id = self.civ_name_to_id.get(civ_name, -1)
+        if civ_id < 0:
+            return []
+
+        relevant = []
+
+        # Find all techs for this civ that have a cost (unique techs)
+        for tech_id, tech_data in self.techs.items():
+            # Must be for this civ
+            if tech_data.get("civ", -1) != civ_id:
+                continue
+
+            # Must have a cost (unique techs have research cost)
+            if not tech_data.get("cost"):
+                continue
+
+            # Must not be a C-Bonus tech
+            tech_name = tech_data.get("name", "")
+            if tech_name.startswith("C-Bonus"):
+                continue
+
+            # Check age requirement
+            tech_age = self.get_tech_age_recursive(tech_id)
+            if tech_age > max_age:
+                continue
+
+            # Check if this tech affects our unit
+            if tech_id not in self.tech_effect_map:
+                continue
+
+            te = self.tech_effect_map[tech_id]
+            for cmd in te.get("commands", []):
+                if self.effect_applies_to_unit(cmd, unit_id, unit_class):
+                    te_with_name = dict(te)
+                    te_with_name["tech_name"] = tech_name
+                    relevant.append(te_with_name)
+                    break
+
+        return relevant
+
     def effect_applies_to_unit(self, cmd: dict, unit_id: int, unit_class: int) -> bool:
         """Check if an effect command applies to a specific unit."""
         a = cmd.get("a", -999)
@@ -1546,6 +1590,17 @@ class UnitAnalyzer:
                     if tech_name not in applied_bonuses:
                         applied_bonuses.append(tech_name)
 
+        # Apply unique techs (Castle/Imperial Age civ-specific techs like Garland Wars)
+        unique_techs = self.get_unique_techs_for_unit(
+            civ_name, final_unit_id, unit_class, max_age
+        )
+        for te in unique_techs:
+            tech_name = te.get("tech_name", f"Tech {te['tech_id']}")
+            for cmd in te.get("commands", []):
+                if self.apply_effect_command(cmd, stats, final_unit_id, unit_class):
+                    if tech_name not in applied_bonuses:
+                        applied_bonuses.append(tech_name)
+
         # Calculate upgrade cost
         upgrade_cost = self.calculate_upgrade_cost(
             civ_name, standard_techs, disabled_techs
@@ -1630,6 +1685,17 @@ class UnitAnalyzer:
             civ_name, unit_id, unit_class, max_age
         )
         for te in civ_bonus_techs:
+            tech_name = te.get("tech_name", f"Tech {te['tech_id']}")
+            for cmd in te.get("commands", []):
+                if self.apply_effect_command(cmd, stats, unit_id, unit_class):
+                    if tech_name not in applied_bonuses:
+                        applied_bonuses.append(tech_name)
+
+        # Apply unique techs (Castle/Imperial Age civ-specific techs like Garland Wars)
+        unique_techs = self.get_unique_techs_for_unit(
+            civ_name, unit_id, unit_class, max_age
+        )
+        for te in unique_techs:
             tech_name = te.get("tech_name", f"Tech {te['tech_id']}")
             for cmd in te.get("commands", []):
                 if self.apply_effect_command(cmd, stats, unit_id, unit_class):

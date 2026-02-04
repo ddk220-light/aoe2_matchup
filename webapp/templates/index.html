@@ -1114,7 +1114,15 @@
                 const modalInfo = document.getElementById('modalInfo');
                 const existingCommentsDiv = document.getElementById('existingComments');
 
-                modalInfo.innerHTML = `<strong>${commentInfo.civ}</strong> - ${formatColumnName(commentInfo.column)}: ${commentInfo.value}`;
+                // Get unit name from active button
+                const unitName = document.querySelector('.unit-btn.active')?.textContent?.trim() || currentUnit;
+                const ageName = unitsByAge[currentAge]?.name || currentAge;
+
+                modalInfo.innerHTML = `
+                    <div style="margin-bottom: 8px;"><strong>Unit:</strong> ${unitName} (${ageName})</div>
+                    <div style="margin-bottom: 8px;"><strong>Civilization:</strong> ${commentInfo.civ}</div>
+                    <div><strong>Stat:</strong> ${formatColumnName(commentInfo.column)} = ${commentInfo.value}</div>
+                `;
 
                 // Show existing comments for this cell
                 const commentKey = `${commentInfo.civ}:${commentInfo.column}`;

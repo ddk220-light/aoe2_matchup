@@ -134,10 +134,27 @@ def create_database():
             UNIQUE(civ_id, unit_id)
         );
 
+        -- Comments table for user feedback on specific cells
+        CREATE TABLE comments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            unit_id INTEGER NOT NULL,
+            civ_id INTEGER NOT NULL,
+            column_name TEXT NOT NULL,  -- e.g., "HP", "Attack", "Attack_Speed"
+            comment_text TEXT NOT NULL,
+            author_name TEXT,  -- optional author name
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            resolved INTEGER DEFAULT 0,  -- 0 = open, 1 = resolved
+            FOREIGN KEY (unit_id) REFERENCES units(id),
+            FOREIGN KEY (civ_id) REFERENCES civilizations(id)
+        );
+
         -- Create indexes for efficient queries
         CREATE INDEX idx_unit_stats_civ ON unit_stats(civ_id);
         CREATE INDEX idx_unit_stats_unit ON unit_stats(unit_id);
         CREATE INDEX idx_units_age ON units(age_id);
+        CREATE INDEX idx_comments_unit ON comments(unit_id);
+        CREATE INDEX idx_comments_civ ON comments(civ_id);
+        CREATE INDEX idx_comments_resolved ON comments(resolved);
     """)
 
     conn.commit()

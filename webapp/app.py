@@ -1,7 +1,8 @@
 import os
 import sqlite3
+from datetime import datetime
 
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
 
@@ -301,6 +302,217 @@ def api_civ_data(civ_name):
     if data is None:
         return jsonify({"error": "Civilization not found"}), 404
     return jsonify(data)
+
+
+# ============== Comment System ==============
+
+
+def get_unit_and_civ_ids(unit_slug, civ_name):
+    """Get unit_id and civ_id from their names."""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id FROM units WHERE slug = ?", (unit_slug,))
+    unit_row = cursor.fetchone()
+
+    cursor.execute("SELECT id FROM civilizations WHERE name = ?", (civ_name,))
+    civ_row = cursor.fetchone()
+
+    conn.close()
+
+    if not unit_row or not civ_row:
+        return None, None
+
+    return unit_row["id"], civ_row["id"]
+
+
+@app.route("/api/comments", methods=["POST"])
+def add_comment():
+    """Add a new comment to a specific cell."""
+    data = request.get_json()
+
+    unit_slug = data.get("unit_slug")
+    civ_name = data.get("civ_name")
+    column_name = data.get("column_name")
+    comment_text = data.get("comment_text")
+    author_name = data.get("author_name", "Anonymous")
+
+    if not all([unit_slug, civ_name, column_name, comment_text]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    unit_id, civ_id = get_unit_and_civ_ids(unit_slug, civ_name)
+    if not unit_id or not civ_id:
+        return jsonify({"error": "Invalid unit or civilization"}), 404
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO comments (unit_id, civ_id, column_name, comment_text, author_name)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (unit_id, civ_id, column_name, comment_text, author_name),
+    )
+
+    comment_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+
+    return jsonify({"success": True, "comment_id": comment_id})
+
+
+@app.route("/api/comments/<unit_slug>")
+def get_comments_for_unit(unit_slug):
+    """Get all comments for a specific unit."""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id FROM units WHERE slug = ?", (unit_slug,))
+    unit_row = cursor.fetchone()
+    if not unit_row:
+        conn.close()
+        return jsonify({"error": "Unit not found"}), 404
+
+    unit_id = unit_row["id"]
+
+    cursor.execute(
+        """
+        SELECT
+            cm.id,
+            c.name as civ_name,
+            cm.column_name,
+            cm.comment_text,
+            cm.author_name,
+            cm.created_at,
+            cm.resolved
+        FROM comments cm
+        JOIN civilizations c ON cm.civ_id = c.id
+        WHERE cm.unit_id = ?
+        ORDER BY cm.created_at DESC
+        """,
+        (unit_id,),
+    )
+
+    comments = []
+    for row in cursor.fetchall():
+        comments.append(
+            {
+                "id": row["id"],
+                "civ_name": row["civ_name"],
+                "column_name": row["column_name"],
+                "comment_text": row["comment_text"],
+                "author_name": row["author_name"],
+                "created_at": row["created_at"],
+                "resolved": row["resolved"] == 1,
+            }
+        )
+
+    conn.close()
+    return jsonify(comments)
+
+
+@app.route("/api/comments/all")
+def get_all_comments():
+    """Get all comments for review, optionally filtered by resolved status."""
+    resolved_filter = request.args.get("resolved")
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    query = """
+        SELECT
+            cm.id,
+            u.slug as unit_slug,
+            u.display_name as unit_name,
+            a.name as age_name,
+            c.name as civ_name,
+            cm.column_name,
+            cm.comment_text,
+            cm.author_name,
+            cm.created_at,
+            cm.resolved
+        FROM comments cm
+        JOIN units u ON cm.unit_id = u.id
+        JOIN ages a ON u.age_id = a.id
+        JOIN civilizations c ON cm.civ_id = c.id
+    """
+
+    params = []
+    if resolved_filter is not None:
+        query += " WHERE cm.resolved = ?"
+        params.append(1 if resolved_filter == "true" else 0)
+
+    query += " ORDER BY cm.created_at DESC"
+
+    cursor.execute(query, params)
+
+    comments = []
+    for row in cursor.fetchall():
+        comments.append(
+            {
+                "id": row["id"],
+                "unit_slug": row["unit_slug"],
+                "unit_name": row["unit_name"],
+                "age_name": row["age_name"],
+                "civ_name": row["civ_name"],
+                "column_name": row["column_name"],
+                "comment_text": row["comment_text"],
+                "author_name": row["author_name"],
+                "created_at": row["created_at"],
+                "resolved": row["resolved"] == 1,
+            }
+        )
+
+    conn.close()
+    return jsonify(comments)
+
+
+@app.route("/api/comments/<int:comment_id>/resolve", methods=["POST"])
+def resolve_comment(comment_id):
+    """Mark a comment as resolved."""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("UPDATE comments SET resolved = 1 WHERE id = ?", (comment_id,))
+
+    if cursor.rowcount == 0:
+        conn.close()
+        return jsonify({"error": "Comment not found"}), 404
+
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
+
+
+@app.route("/api/comments/<int:comment_id>", methods=["DELETE"])
+def delete_comment(comment_id):
+    """Delete a comment."""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM comments WHERE id = ?", (comment_id,))
+
+    if cursor.rowcount == 0:
+        conn.close()
+        return jsonify({"error": "Comment not found"}), 404
+
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
+
+
+@app.route("/review")
+def review_comments():
+    """Page to review all comments."""
+    return render_template("review.html")
+
+
+@app.route("/civ")
+def civ_view():
+    """Page to view units by civilization."""
+    civs = get_all_civs()
+    return render_template("civ_view.html", civs=civs)
 
 
 if __name__ == "__main__":

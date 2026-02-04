@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Units by Civilization - AoE2 Unit Analyzer</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Open+Sans:wght@400;600&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --primary-color: #8b4513;
+                --secondary-color: #daa520;
+                --bg-color: #1a1a2e;
+                --card-bg: #16213e;
+                --text-color: #e8e8e8;
+                --highlight-better: #2ecc71;
+                --highlight-worse: #e74c3c;
+                --feudal-color: #3498db;
+                --castle-color: #9b59b6;
+                --imperial-color: #e74c3c;
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: "Open Sans", sans-serif;
+                background: linear-gradient(135deg, var(--bg-color) 0%, #0f0f23 100%);
+                color: var(--text-color);
+                min-height: 100vh;
+                padding: 20px;
+            }
+
+            .container {
+                max-width: 1400px;
+                margin: 0 auto;
+            }
+
+            header {
+                text-align: center;
+                padding: 30px 0;
+                margin-bottom: 30px;
+            }
+
+            h1 {
+                font-family: "Cinzel", serif;
+                font-size: 2.5rem;
+                color: var(--secondary-color);
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                margin-bottom: 10px;
+            }
+
+            .subtitle {
+                font-size: 1.1rem;
+                color: #888;
+            }
+
+            .nav-links {
+                display: flex;
+                gap: 15px;
+                justify-content: center;
+                margin-top: 15px;
+            }
+
+            .nav-link {
+                color: var(--text-color);
+                text-decoration: none;
+                padding: 8px 16px;
+                border-radius: 5px;
+                background: rgba(255, 255, 255, 0.1);
+                transition: all 0.3s;
+            }
+
+            .nav-link:hover {
+                background: rgba(218, 165, 32, 0.3);
+            }
+
+            .nav-link.active {
+                background: var(--secondary-color);
+                color: #1a1a2e;
+                font-weight: 600;
+            }
+
+            .civ-selector {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                justify-content: center;
+                margin-bottom: 40px;
+                padding: 20px;
+                background: var(--card-bg);
+                border-radius: 15px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            }
+
+            .civ-btn {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+                background: linear-gradient(145deg, #2d2d5a, #1a1a3e);
+                color: var(--text-color);
+                border: 2px solid transparent;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .civ-btn:hover {
+                transform: translateY(-2px);
+                border-color: var(--secondary-color);
+                box-shadow: 0 5px 15px rgba(218, 165, 32, 0.3);
+            }
+
+            .civ-btn.active {
+                background: linear-gradient(145deg, var(--secondary-color), #b8860b);
+                color: #1a1a2e;
+                font-weight: 600;
+                border-color: var(--secondary-color);
+            }
+
+            .content {
+                display: flex;
+                flex-direction: column;
+                gap: 30px;
+            }
+
+            .age-section {
+                background: var(--card-bg);
+                border-radius: 15px;
+                padding: 25px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            }
+
+            .age-header {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                margin-bottom: 20px;
+                padding-bottom: 15px;
+                border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .age-title {
+                font-family: "Cinzel", serif;
+                font-size: 1.5rem;
+            }
+
+            .age-title.feudal { color: var(--feudal-color); }
+            .age-title.castle { color: var(--castle-color); }
+            .age-title.imperial { color: var(--imperial-color); }
+
+            .unit-count {
+                background: rgba(255, 255, 255, 0.1);
+                padding: 5px 12px;
+                border-radius: 15px;
+                font-size: 0.85rem;
+            }
+
+            .units-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 15px;
+            }
+
+            .unit-card {
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 10px;
+                padding: 15px;
+                transition: all 0.3s;
+            }
+
+            .unit-card:hover {
+                background: rgba(0, 0, 0, 0.3);
+                transform: translateY(-2px);
+            }
+
+            .unit-card.unavailable {
+                opacity: 0.4;
+            }
+
+            .unit-card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 12px;
+            }
+
+            .unit-name {
+                font-family: "Cinzel", serif;
+                font-size: 1.1rem;
+                color: var(--secondary-color);
+            }
+
+            .unit-actual {
+                font-size: 0.8rem;
+                color: #888;
+            }
+
+            .unavailable-badge {
+                background: rgba(231, 76, 60, 0.3);
+                color: var(--highlight-worse);
+                padding: 3px 8px;
+                border-radius: 10px;
+                font-size: 0.75rem;
+            }
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+
+            .stat-item {
+                background: rgba(0, 0, 0, 0.2);
+                padding: 8px;
+                border-radius: 6px;
+                text-align: center;
+            }
+
+            .stat-value {
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: var(--text-color);
+            }
+
+            .stat-label {
+                font-size: 0.7rem;
+                color: #888;
+                text-transform: uppercase;
+            }
+
+            .bonus-text {
+                margin-top: 12px;
+                padding: 10px;
+                background: rgba(218, 165, 32, 0.1);
+                border-radius: 6px;
+                font-size: 0.85rem;
+                color: var(--secondary-color);
+                border-left: 3px solid var(--secondary-color);
+            }
+
+            .no-civ {
+                text-align: center;
+                padding: 80px 20px;
+                color: #666;
+            }
+
+            .no-civ h2 {
+                font-family: "Cinzel", serif;
+                font-size: 1.5rem;
+                margin-bottom: 10px;
+                color: var(--secondary-color);
+            }
+
+            .loading {
+                text-align: center;
+                padding: 60px;
+                font-size: 1.2rem;
+                color: #888;
+            }
+
+            .civ-header {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+
+            .civ-header h2 {
+                font-family: "Cinzel", serif;
+                font-size: 2rem;
+                color: var(--secondary-color);
+            }
+
+            .civ-summary {
+                display: flex;
+                gap: 20px;
+                justify-content: center;
+                margin-top: 15px;
+            }
+
+            .summary-item {
+                background: rgba(255, 255, 255, 0.05);
+                padding: 10px 20px;
+                border-radius: 8px;
+            }
+
+            .summary-value {
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: var(--secondary-color);
+            }
+
+            .summary-label {
+                font-size: 0.8rem;
+                color: #888;
+            }
+
+            @media (max-width: 768px) {
+                h1 {
+                    font-size: 1.8rem;
+                }
+                .civ-btn {
+                    padding: 8px 14px;
+                    font-size: 0.85rem;
+                }
+                .units-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>Units by Civilization</h1>
+                <p class="subtitle">Select a civilization to see all available units</p>
+                <nav class="nav-links">
+                    <a href="/" class="nav-link">By Unit</a>
+                    <a href="/civ" class="nav-link active">By Civilization</a>
+                    <a href="/review" class="nav-link">Review Comments</a>
+                </nav>
+            </header>
+
+            <div class="civ-selector" id="civSelector">
+                {% for civ in civs %}
+                <button class="civ-btn" data-civ="{{ civ }}">{{ civ }}</button>
+                {% endfor %}
+            </div>
+
+            <div id="content">
+                <div class="no-civ">
+                    <h2>Select a Civilization</h2>
+                    <p>Click on a civilization above to see all their available units</p>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            let currentCiv = null;
+            let civData = null;
+
+            // Civ button handlers
+            document.querySelectorAll('.civ-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.civ-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentCiv = btn.dataset.civ;
+                    loadCivData(currentCiv);
+                });
+            });
+
+            async function loadCivData(civName) {
+                const content = document.getElementById('content');
+                content.innerHTML = '<div class="loading">Loading civilization data...</div>';
+
+                try {
+                    const response = await fetch(`/api/civ/${encodeURIComponent(civName)}`);
+                    civData = await response.json();
+                    renderCivData();
+                } catch (error) {
+                    console.error('Error loading civ data:', error);
+                    content.innerHTML = '<div class="no-civ"><h2>Error loading data</h2><p>Please try again</p></div>';
+                }
+            }
+
+            function renderCivData() {
+                if (!civData) return;
+
+                const { civilization, units_by_age } = civData;
+
+                // Count available units
+                let totalAvailable = 0;
+                let totalUnits = 0;
+                for (const age in units_by_age) {
+                    for (const unit of units_by_age[age]) {
+                        totalUnits++;
+                        if (unit.has_unit) totalAvailable++;
+                    }
+                }
+
+                const ageOrder = ['Feudal Age', 'Castle Age', 'Imperial Age'];
+                const ageClasses = {
+                    'Feudal Age': 'feudal',
+                    'Castle Age': 'castle',
+                    'Imperial Age': 'imperial'
+                };
+
+                let html = `
+                    <div class="civ-header">
+                        <h2>${civilization}</h2>
+                        <div class="civ-summary">
+                            <div class="summary-item">
+                                <div class="summary-value">${totalAvailable}</div>
+                                <div class="summary-label">Available Units</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-value">${totalUnits - totalAvailable}</div>
+                                <div class="summary-label">Missing Units</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="content">
+                `;
+
+                for (const age of ageOrder) {
+                    const units = units_by_age[age];
+                    if (!units) continue;
+
+                    const available = units.filter(u => u.has_unit);
+                    const unavailable = units.filter(u => !u.has_unit);
+                    const ageClass = ageClasses[age];
+
+                    html += `
+                        <div class="age-section">
+                            <div class="age-header">
+                                <h3 class="age-title ${ageClass}">${age}</h3>
+                                <span class="unit-count">${available.length}/${units.length} units available</span>
+                            </div>
+                            <div class="units-grid">
+                                ${available.map(unit => renderUnitCard(unit, ageClass)).join('')}
+                                ${unavailable.map(unit => renderUnitCard(unit, ageClass)).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                html += '</div>';
+                document.getElementById('content').innerHTML = html;
+            }
+
+            function renderUnitCard(unit, ageClass) {
+                const stats = unit.stats;
+
+                if (!unit.has_unit) {
+                    return `
+                        <div class="unit-card unavailable">
+                            <div class="unit-card-header">
+                                <div>
+                                    <div class="unit-name">${unit.unit_type}</div>
+                                </div>
+                                <span class="unavailable-badge">Not Available</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const showActualUnit = unit.actual_unit && unit.actual_unit !== unit.unit_type;
+
+                return `
+                    <div class="unit-card">
+                        <div class="unit-card-header">
+                            <div>
+                                <div class="unit-name">${unit.unit_type}</div>
+                                ${showActualUnit ? `<div class="unit-actual">${unit.actual_unit}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value">${stats.hp || '-'}</div>
+                                <div class="stat-label">HP</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${stats.attack || '-'}</div>
+                                <div class="stat-label">Attack</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${stats.range || '-'}</div>
+                                <div class="stat-label">Range</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${formatSpeed(stats.attack_speed)}</div>
+                                <div class="stat-label">Atk Spd</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${stats.melee_armor || 0}/${stats.pierce_armor || 0}</div>
+                                <div class="stat-label">Armor</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${formatSpeed(stats.movement_speed)}</div>
+                                <div class="stat-label">Speed</div>
+                            </div>
+                        </div>
+                        ${unit.civ_bonuses ? `<div class="bonus-text">${unit.civ_bonuses}</div>` : ''}
+                    </div>
+                `;
+            }
+
+            function formatSpeed(val) {
+                if (val == null) return '-';
+                return val.toFixed(2);
+            }
+        </script>
+    </body>
+</html>

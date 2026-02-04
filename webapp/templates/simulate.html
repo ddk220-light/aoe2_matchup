@@ -1350,15 +1350,19 @@
                 const ageSelect = document.getElementById(`${team}Age`);
                 const unitSelect = document.getElementById(`${team}Unit`);
 
+                // Reset age selection when civ changes
+                ageSelect.value = '';
+
+                // Reset unit selection
+                unitSelect.value = '';
+                unitSelect.disabled = true;
+                unitSelect.innerHTML = '<option value="">Select Unit</option>';
+
                 if (civSelect.value) {
                     ageSelect.disabled = false;
                 } else {
                     ageSelect.disabled = true;
-                    ageSelect.value = '';
                 }
-
-                unitSelect.disabled = true;
-                unitSelect.innerHTML = '<option value="">Select Unit</option>';
             }
 
             async function onAgeChange(team) {

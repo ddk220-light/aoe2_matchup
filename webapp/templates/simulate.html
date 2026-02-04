@@ -1,0 +1,1018 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Battle Simulation - AoE2 Unit Analyzer</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Open+Sans:wght@400;600&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --primary-color: #8b4513;
+                --secondary-color: #daa520;
+                --bg-color: #1a1a2e;
+                --card-bg: #16213e;
+                --text-color: #e8e8e8;
+                --team1-color: #e74c3c;
+                --team2-color: #2ecc71;
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: "Open Sans", sans-serif;
+                background: linear-gradient(135deg, var(--bg-color) 0%, #0f0f23 100%);
+                color: var(--text-color);
+                min-height: 100vh;
+                padding: 20px;
+            }
+
+            .container {
+                max-width: 1000px;
+                margin: 0 auto;
+            }
+
+            header {
+                text-align: center;
+                padding: 20px 0;
+                margin-bottom: 20px;
+            }
+
+            h1 {
+                font-family: "Cinzel", serif;
+                font-size: 2.5rem;
+                color: var(--secondary-color);
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                margin-bottom: 10px;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+                color: #888;
+            }
+
+            .nav-links {
+                display: flex;
+                gap: 15px;
+                justify-content: center;
+                margin-top: 15px;
+            }
+
+            .nav-link {
+                color: var(--text-color);
+                text-decoration: none;
+                padding: 8px 16px;
+                border-radius: 5px;
+                background: rgba(255, 255, 255, 0.1);
+                transition: all 0.3s;
+            }
+
+            .nav-link:hover {
+                background: rgba(218, 165, 32, 0.3);
+            }
+
+            .nav-link.active {
+                background: var(--secondary-color);
+                color: #1a1a2e;
+                font-weight: 600;
+            }
+
+            .config-panel {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 20px;
+                gap: 20px;
+            }
+
+            .team-config {
+                flex: 1;
+                background: var(--card-bg);
+                padding: 20px;
+                border-radius: 8px;
+                border: 2px solid transparent;
+            }
+
+            .team-config.team1 {
+                border-color: var(--team1-color);
+            }
+
+            .team-config.team2 {
+                border-color: var(--team2-color);
+            }
+
+            .team-config h3 {
+                font-family: "Cinzel", serif;
+                margin-bottom: 15px;
+            }
+
+            .team-config.team1 h3 {
+                color: var(--team1-color);
+            }
+
+            .team-config.team2 h3 {
+                color: var(--team2-color);
+            }
+
+            .form-group {
+                margin-bottom: 12px;
+            }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 5px;
+                font-size: 0.85rem;
+                color: #aaa;
+            }
+
+            .form-group select,
+            .form-group input[type="number"] {
+                width: 100%;
+                padding: 10px;
+                background: var(--bg-color);
+                border: 1px solid rgba(218, 165, 32, 0.3);
+                color: var(--text-color);
+                border-radius: 4px;
+                font-size: 14px;
+            }
+
+            .form-group select:focus,
+            .form-group input:focus {
+                outline: none;
+                border-color: var(--secondary-color);
+            }
+
+            .controls {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 15px;
+                margin-bottom: 20px;
+                flex-wrap: wrap;
+            }
+
+            .controls button {
+                padding: 12px 30px;
+                font-size: 16px;
+                font-family: "Cinzel", serif;
+                cursor: pointer;
+                border: none;
+                border-radius: 4px;
+                transition: all 0.3s;
+            }
+
+            #startBtn {
+                background: var(--team2-color);
+                color: white;
+            }
+
+            #pauseBtn {
+                background: var(--secondary-color);
+                color: var(--bg-color);
+            }
+
+            #resetBtn {
+                background: var(--team1-color);
+                color: white;
+            }
+
+            .controls button:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            .controls button:hover:not(:disabled) {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            }
+
+            .speed-control {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            #speedSlider {
+                width: 100px;
+            }
+
+            #speedLabel {
+                font-size: 0.9rem;
+                color: #aaa;
+                min-width: 60px;
+            }
+
+            #battleCanvas {
+                display: block;
+                margin: 0 auto 20px;
+                border: 3px solid var(--secondary-color);
+                border-radius: 8px;
+                background: var(--bg-color);
+            }
+
+            .stats-panel {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: var(--card-bg);
+                padding: 15px 30px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+            }
+
+            .team-stats h4 {
+                font-family: "Cinzel", serif;
+                margin-bottom: 5px;
+            }
+
+            .team-stats.team1 h4 {
+                color: var(--team1-color);
+            }
+
+            .team-stats.team2 h4 {
+                color: var(--team2-color);
+            }
+
+            .alive-count {
+                font-size: 1.1rem;
+            }
+
+            .battle-time {
+                font-size: 1.5rem;
+                font-family: "Cinzel", serif;
+                color: var(--secondary-color);
+            }
+
+            .unit-info {
+                background: var(--card-bg);
+                padding: 15px;
+                border-radius: 8px;
+                font-size: 0.85rem;
+                color: #aaa;
+            }
+
+            .unit-info h4 {
+                color: var(--secondary-color);
+                margin-bottom: 10px;
+                font-family: "Cinzel", serif;
+            }
+
+            .unit-info .stats-row {
+                display: flex;
+                justify-content: space-between;
+                gap: 20px;
+            }
+
+            .unit-info .stat {
+                flex: 1;
+            }
+
+            .unit-info .stat-label {
+                color: #666;
+            }
+
+            .unit-info .stat-value {
+                color: var(--text-color);
+                font-weight: 600;
+            }
+
+            @media (max-width: 768px) {
+                .config-panel {
+                    flex-direction: column;
+                }
+
+                #battleCanvas {
+                    width: 100%;
+                    height: auto;
+                }
+
+                .controls {
+                    flex-direction: column;
+                    gap: 10px;
+                }
+
+                .controls button {
+                    width: 100%;
+                }
+
+                .stats-panel {
+                    flex-direction: column;
+                    gap: 15px;
+                    text-align: center;
+                }
+
+                .nav-links {
+                    flex-wrap: wrap;
+                    gap: 8px;
+                }
+
+                h1 {
+                    font-size: 1.8rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>Battle Simulation</h1>
+                <p class="subtitle">Watch two teams of units fight to the death</p>
+                <nav class="nav-links">
+                    <a href="/" class="nav-link">By Unit</a>
+                    <a href="/civ" class="nav-link">By Civilization</a>
+                    <a href="/simulate" class="nav-link active">Battle Sim</a>
+                    <a href="/review" class="nav-link">Review Comments</a>
+                </nav>
+            </header>
+
+            <div class="config-panel">
+                <div class="team-config team1">
+                    <h3>Team 1 (Red)</h3>
+                    <div class="form-group">
+                        <label>Age</label>
+                        <select id="team1Age">
+                            <option value="">Select Age</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Unit Type</label>
+                        <select id="team1Unit">
+                            <option value="">Select Unit</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Civilization</label>
+                        <select id="team1Civ">
+                            <option value="">Select Civilization</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Unit Count</label>
+                        <input type="number" id="team1Count" value="5" min="1" max="20" />
+                    </div>
+                </div>
+
+                <div class="team-config team2">
+                    <h3>Team 2 (Green)</h3>
+                    <div class="form-group">
+                        <label>Age</label>
+                        <select id="team2Age">
+                            <option value="">Select Age</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Unit Type</label>
+                        <select id="team2Unit">
+                            <option value="">Select Unit</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Civilization</label>
+                        <select id="team2Civ">
+                            <option value="">Select Civilization</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Unit Count</label>
+                        <input type="number" id="team2Count" value="5" min="1" max="20" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="startBtn">Start Battle</button>
+                <button id="pauseBtn" disabled>Pause</button>
+                <button id="resetBtn" disabled>Reset</button>
+                <div class="speed-control">
+                    <label for="speedSlider">Speed:</label>
+                    <input type="range" id="speedSlider" min="0.5" max="3" step="0.5" value="1" />
+                    <span id="speedLabel">1x</span>
+                </div>
+            </div>
+
+            <canvas id="battleCanvas" width="800" height="500"></canvas>
+
+            <div class="stats-panel">
+                <div class="team-stats team1">
+                    <h4>Team 1</h4>
+                    <span class="alive-count" id="team1Alive">0/0 alive</span>
+                </div>
+                <div class="battle-time" id="battleTime">0.0s</div>
+                <div class="team-stats team2">
+                    <h4>Team 2</h4>
+                    <span class="alive-count" id="team2Alive">0/0 alive</span>
+                </div>
+            </div>
+
+            <div class="unit-info" id="unitInfo" style="display: none;">
+                <h4>Unit Stats</h4>
+                <div class="stats-row">
+                    <div class="stat">
+                        <span class="stat-label">Team 1:</span>
+                        <span class="stat-value" id="team1UnitName">-</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Team 2:</span>
+                        <span class="stat-value" id="team2UnitName">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Constants
+            const CANVAS_WIDTH = 800;
+            const CANVAS_HEIGHT = 500;
+            const TILE_SIZE = 30;
+            const UNIT_RADIUS = 15;
+            const MIN_ATTACK_RANGE = 5;
+
+            // Unit data from server
+            const unitsByAge = {{ units_by_age | tojson }};
+            const allCivs = {{ civs | tojson }};
+
+            // BattleUnit class
+            class BattleUnit {
+                constructor(id, team, stats) {
+                    this.id = id;
+                    this.team = team;
+
+                    // Stats from database
+                    this.maxHp = stats.hp;
+                    this.currentHp = stats.hp;
+                    this.attack = stats.attack;
+                    this.attackRange = ((stats.attack_range || 0) * TILE_SIZE) + MIN_ATTACK_RANGE;
+                    this.attackSpeed = stats.attack_speed || 0.5;
+                    this.reloadTime = 1.0 / this.attackSpeed;
+                    this.moveSpeed = (stats.movement_speed || 1) * TILE_SIZE;
+                    this.meleeArmor = stats.melee_armor || 0;
+                    this.pierceArmor = stats.pierce_armor || 0;
+                    this.attacks = stats.attacks_json ? JSON.parse(stats.attacks_json) : {};
+                    this.armors = stats.armors_json ? JSON.parse(stats.armors_json) : {};
+
+                    // Position
+                    this.x = 0;
+                    this.y = 0;
+                    this.radius = UNIT_RADIUS;
+
+                    // Combat state
+                    this.target = null;
+                    this.state = 'idle';
+                    this.attackCooldown = 0;
+
+                    // Visual effects
+                    this.attackAnimTimer = 0;
+                    this.damageNumbers = [];
+                }
+
+                getDamageAgainst(target) {
+                    const baseAttack = this.attacks['4'] || this.attack;
+                    let bonusDamage = 0;
+
+                    for (const [armorClass, armorValue] of Object.entries(target.armors)) {
+                        if (this.attacks[armorClass] && armorClass !== '4') {
+                            const attackBonus = this.attacks[armorClass];
+                            if (attackBonus > 0) {
+                                bonusDamage += Math.max(0, attackBonus - armorValue);
+                            }
+                        }
+                    }
+
+                    const targetArmor = target.armors['4'] || target.meleeArmor;
+                    return Math.max(1, baseAttack + bonusDamage - targetArmor);
+                }
+
+                findTarget(enemies) {
+                    let closest = null;
+                    let minDist = Infinity;
+
+                    for (const enemy of enemies) {
+                        if (enemy.state !== 'dead') {
+                            const dist = this.distanceTo(enemy);
+                            if (dist < minDist) {
+                                minDist = dist;
+                                closest = enemy;
+                            }
+                        }
+                    }
+
+                    this.target = closest;
+                    return closest;
+                }
+
+                distanceTo(other) {
+                    const dx = other.x - this.x;
+                    const dy = other.y - this.y;
+                    return Math.sqrt(dx * dx + dy * dy);
+                }
+
+                inRange() {
+                    if (!this.target) return false;
+                    const effectiveRange = this.attackRange + this.radius + this.target.radius;
+                    return this.distanceTo(this.target) <= effectiveRange;
+                }
+
+                update(dt, allUnits, enemies) {
+                    if (this.state === 'dead') return;
+
+                    this.attackCooldown = Math.max(0, this.attackCooldown - dt);
+                    this.attackAnimTimer = Math.max(0, this.attackAnimTimer - dt);
+
+                    // Update damage numbers
+                    this.damageNumbers = this.damageNumbers.filter(dn => {
+                        dn.y -= 40 * dt;
+                        dn.alpha -= dt * 1.5;
+                        return dn.alpha > 0;
+                    });
+
+                    // Find target
+                    if (!this.target || this.target.state === 'dead') {
+                        this.findTarget(enemies);
+                    }
+
+                    if (!this.target) {
+                        this.state = 'idle';
+                        return;
+                    }
+
+                    if (this.inRange()) {
+                        this.state = 'attacking';
+                        if (this.attackCooldown <= 0) {
+                            this.performAttack();
+                        }
+                    } else {
+                        this.state = 'moving';
+                        this.moveTowardTarget(dt, allUnits);
+                    }
+                }
+
+                performAttack() {
+                    if (!this.target || this.target.state === 'dead') return;
+
+                    const damage = this.getDamageAgainst(this.target);
+                    this.target.takeDamage(damage, this);
+
+                    this.attackCooldown = this.reloadTime;
+                    this.attackAnimTimer = 0.15;
+                }
+
+                takeDamage(amount, attacker) {
+                    this.currentHp -= amount;
+
+                    this.damageNumbers.push({
+                        value: amount,
+                        x: this.x,
+                        y: this.y - this.radius - 5,
+                        alpha: 1.0
+                    });
+
+                    if (this.currentHp <= 0) {
+                        this.currentHp = 0;
+                        this.state = 'dead';
+                        this.target = null;
+                    }
+                }
+
+                moveTowardTarget(dt, allUnits) {
+                    if (!this.target) return;
+
+                    let dx = this.target.x - this.x;
+                    let dy = this.target.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 1) return;
+
+                    dx /= dist;
+                    dy /= dist;
+
+                    // Collision avoidance
+                    const avoidance = this.calculateAvoidance(allUnits);
+                    dx += avoidance.x * 0.6;
+                    dy += avoidance.y * 0.6;
+
+                    const len = Math.sqrt(dx * dx + dy * dy);
+                    if (len > 0) {
+                        dx /= len;
+                        dy /= len;
+                    }
+
+                    const moveAmount = this.moveSpeed * dt;
+                    this.x += dx * moveAmount;
+                    this.y += dy * moveAmount;
+
+                    // Clamp to bounds
+                    this.x = Math.max(this.radius, Math.min(CANVAS_WIDTH - this.radius, this.x));
+                    this.y = Math.max(this.radius, Math.min(CANVAS_HEIGHT - this.radius, this.y));
+                }
+
+                calculateAvoidance(allUnits) {
+                    let avoidX = 0;
+                    let avoidY = 0;
+
+                    for (const other of allUnits) {
+                        if (other === this || other.state === 'dead') continue;
+
+                        const dx = this.x - other.x;
+                        const dy = this.y - other.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        const minDist = this.radius + other.radius + 3;
+
+                        if (dist < minDist && dist > 0) {
+                            const force = (minDist - dist) / minDist;
+                            avoidX += (dx / dist) * force * 2;
+                            avoidY += (dy / dist) * force * 2;
+                        }
+                    }
+
+                    return { x: avoidX, y: avoidY };
+                }
+
+                render(ctx) {
+                    if (this.state === 'dead') {
+                        ctx.globalAlpha = 0.3;
+                    }
+
+                    // Unit circle
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+
+                    let color = this.team === 1 ? '#e74c3c' : '#2ecc71';
+                    if (this.attackAnimTimer > 0) {
+                        color = '#ffffff';
+                    }
+                    ctx.fillStyle = color;
+                    ctx.fill();
+
+                    ctx.strokeStyle = this.team === 1 ? '#c0392b' : '#27ae60';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    ctx.globalAlpha = 1.0;
+
+                    // Health bar
+                    if (this.state !== 'dead') {
+                        const barWidth = this.radius * 2;
+                        const barHeight = 4;
+                        const barX = this.x - this.radius;
+                        const barY = this.y - this.radius - 8;
+
+                        ctx.fillStyle = '#333';
+                        ctx.fillRect(barX, barY, barWidth, barHeight);
+
+                        const hpPercent = this.currentHp / this.maxHp;
+                        ctx.fillStyle = hpPercent > 0.5 ? '#2ecc71' : hpPercent > 0.25 ? '#f39c12' : '#e74c3c';
+                        ctx.fillRect(barX, barY, barWidth * hpPercent, barHeight);
+                    }
+
+                    // Damage numbers
+                    for (const dn of this.damageNumbers) {
+                        ctx.globalAlpha = dn.alpha;
+                        ctx.fillStyle = '#ff0';
+                        ctx.font = 'bold 14px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(`-${dn.value}`, dn.x, dn.y);
+                    }
+                    ctx.globalAlpha = 1.0;
+                }
+            }
+
+            // BattleSimulation class
+            class BattleSimulation {
+                constructor(canvas) {
+                    this.canvas = canvas;
+                    this.ctx = canvas.getContext('2d');
+                    this.team1 = [];
+                    this.team2 = [];
+                    this.team1Stats = null;
+                    this.team2Stats = null;
+                    this.running = false;
+                    this.paused = false;
+                    this.battleTime = 0;
+                    this.speedMultiplier = 1.0;
+                    this.lastTimestamp = 0;
+                    this.winner = null;
+                }
+
+                async setupTeam(teamNum, unitSlug, civName, count) {
+                    const response = await fetch(`/api/combat-unit/${encodeURIComponent(civName)}/${unitSlug}`);
+                    if (!response.ok) {
+                        const err = await response.json();
+                        throw new Error(err.error || `Failed to load ${civName} ${unitSlug}`);
+                    }
+                    const stats = await response.json();
+
+                    const team = [];
+                    const startX = teamNum === 1 ? 60 : this.canvas.width - 60;
+                    const spacing = count > 1 ? (this.canvas.height - 100) / (count - 1) : 0;
+                    const startY = count > 1 ? 50 : this.canvas.height / 2;
+
+                    for (let i = 0; i < count; i++) {
+                        const unit = new BattleUnit(`${teamNum}-${i}`, teamNum, stats);
+                        unit.x = startX + (Math.random() - 0.5) * 20;
+                        unit.y = startY + i * spacing;
+                        team.push(unit);
+                    }
+
+                    if (teamNum === 1) {
+                        this.team1 = team;
+                        this.team1Stats = stats;
+                    } else {
+                        this.team2 = team;
+                        this.team2Stats = stats;
+                    }
+                }
+
+                start() {
+                    if (this.team1.length === 0 || this.team2.length === 0) {
+                        alert('Please configure both teams');
+                        return;
+                    }
+
+                    this.running = true;
+                    this.paused = false;
+                    this.battleTime = 0;
+                    this.winner = null;
+                    this.lastTimestamp = performance.now();
+                    this.updateStats();
+                    this.loop();
+                }
+
+                pause() {
+                    this.paused = !this.paused;
+                    if (!this.paused) {
+                        this.lastTimestamp = performance.now();
+                        this.loop();
+                    }
+                }
+
+                reset() {
+                    this.running = false;
+                    this.paused = false;
+                    this.battleTime = 0;
+                    this.winner = null;
+                    this.team1 = [];
+                    this.team2 = [];
+                    this.team1Stats = null;
+                    this.team2Stats = null;
+                    this.updateStats();
+                    this.render();
+                }
+
+                loop() {
+                    if (!this.running || this.paused) return;
+
+                    const now = performance.now();
+                    const dt = Math.min(((now - this.lastTimestamp) / 1000) * this.speedMultiplier, 0.1);
+                    this.lastTimestamp = now;
+
+                    this.update(dt);
+                    this.render();
+
+                    if (!this.winner) {
+                        requestAnimationFrame(() => this.loop());
+                    }
+                }
+
+                update(dt) {
+                    this.battleTime += dt;
+
+                    const allUnits = [...this.team1, ...this.team2];
+
+                    for (const unit of this.team1) {
+                        unit.update(dt, allUnits, this.team2);
+                    }
+                    for (const unit of this.team2) {
+                        unit.update(dt, allUnits, this.team1);
+                    }
+
+                    const team1Alive = this.team1.filter(u => u.state !== 'dead').length;
+                    const team2Alive = this.team2.filter(u => u.state !== 'dead').length;
+
+                    this.updateStats();
+
+                    if (team1Alive === 0 && team2Alive > 0) {
+                        this.winner = 2;
+                        this.running = false;
+                    } else if (team2Alive === 0 && team1Alive > 0) {
+                        this.winner = 1;
+                        this.running = false;
+                    } else if (team1Alive === 0 && team2Alive === 0) {
+                        this.winner = 0; // Draw
+                        this.running = false;
+                    }
+                }
+
+                render() {
+                    const ctx = this.ctx;
+
+                    // Clear
+                    ctx.fillStyle = '#1a1a2e';
+                    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                    // Grid
+                    this.drawGrid(ctx);
+
+                    // Units
+                    const allUnits = [...this.team1, ...this.team2];
+                    const dead = allUnits.filter(u => u.state === 'dead');
+                    const alive = allUnits.filter(u => u.state !== 'dead');
+
+                    for (const unit of dead) unit.render(ctx);
+                    for (const unit of alive) unit.render(ctx);
+
+                    // Attack lines
+                    this.drawAttackLines(ctx);
+
+                    // Winner overlay
+                    if (this.winner !== null) {
+                        this.drawWinner(ctx);
+                    }
+                }
+
+                drawGrid(ctx) {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                    ctx.lineWidth = 1;
+
+                    for (let x = 0; x <= this.canvas.width; x += 50) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, 0);
+                        ctx.lineTo(x, this.canvas.height);
+                        ctx.stroke();
+                    }
+
+                    for (let y = 0; y <= this.canvas.height; y += 50) {
+                        ctx.beginPath();
+                        ctx.moveTo(0, y);
+                        ctx.lineTo(this.canvas.width, y);
+                        ctx.stroke();
+                    }
+                }
+
+                drawAttackLines(ctx) {
+                    ctx.lineWidth = 2;
+
+                    for (const unit of [...this.team1, ...this.team2]) {
+                        if (unit.state === 'attacking' && unit.target && unit.attackAnimTimer > 0) {
+                            ctx.strokeStyle = unit.team === 1 ? 'rgba(231, 76, 60, 0.6)' : 'rgba(46, 204, 113, 0.6)';
+                            ctx.beginPath();
+                            ctx.moveTo(unit.x, unit.y);
+                            ctx.lineTo(unit.target.x, unit.target.y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                drawWinner(ctx) {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                    let text, color;
+                    if (this.winner === 1) {
+                        text = 'Team 1 (Red) Wins!';
+                        color = '#e74c3c';
+                    } else if (this.winner === 2) {
+                        text = 'Team 2 (Green) Wins!';
+                        color = '#2ecc71';
+                    } else {
+                        text = 'Draw!';
+                        color = '#daa520';
+                    }
+
+                    ctx.fillStyle = color;
+                    ctx.font = 'bold 42px Cinzel, serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(text, this.canvas.width / 2, this.canvas.height / 2);
+
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '20px Open Sans';
+                    ctx.fillText(`Battle time: ${this.battleTime.toFixed(1)}s`,
+                        this.canvas.width / 2, this.canvas.height / 2 + 45);
+                }
+
+                updateStats() {
+                    const team1Alive = this.team1.filter(u => u.state !== 'dead').length;
+                    const team2Alive = this.team2.filter(u => u.state !== 'dead').length;
+
+                    document.getElementById('team1Alive').textContent = `${team1Alive}/${this.team1.length} alive`;
+                    document.getElementById('team2Alive').textContent = `${team2Alive}/${this.team2.length} alive`;
+                    document.getElementById('battleTime').textContent = `${this.battleTime.toFixed(1)}s`;
+                }
+            }
+
+            // Initialize
+            let simulation = null;
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const canvas = document.getElementById('battleCanvas');
+                simulation = new BattleSimulation(canvas);
+
+                // Populate dropdowns
+                setupAgeDropdowns();
+                populateCivDropdowns();
+
+                // Event handlers
+                document.getElementById('team1Age').addEventListener('change', () => updateUnitDropdown('team1'));
+                document.getElementById('team2Age').addEventListener('change', () => updateUnitDropdown('team2'));
+
+                document.getElementById('startBtn').addEventListener('click', startBattle);
+                document.getElementById('pauseBtn').addEventListener('click', () => {
+                    simulation.pause();
+                    document.getElementById('pauseBtn').textContent = simulation.paused ? 'Resume' : 'Pause';
+                });
+                document.getElementById('resetBtn').addEventListener('click', () => {
+                    simulation.reset();
+                    document.getElementById('pauseBtn').disabled = true;
+                    document.getElementById('pauseBtn').textContent = 'Pause';
+                    document.getElementById('resetBtn').disabled = true;
+                    document.getElementById('startBtn').disabled = false;
+                    document.getElementById('unitInfo').style.display = 'none';
+                });
+
+                document.getElementById('speedSlider').addEventListener('input', (e) => {
+                    simulation.speedMultiplier = parseFloat(e.target.value);
+                    document.getElementById('speedLabel').textContent = `${e.target.value}x`;
+                });
+
+                // Initial render
+                simulation.render();
+            });
+
+            function setupAgeDropdowns() {
+                for (const team of ['team1', 'team2']) {
+                    const select = document.getElementById(`${team}Age`);
+                    select.innerHTML = '<option value="">Select Age</option>';
+                    for (const [ageSlug, ageData] of Object.entries(unitsByAge)) {
+                        select.innerHTML += `<option value="${ageSlug}">${ageData.name}</option>`;
+                    }
+                }
+            }
+
+            function updateUnitDropdown(team) {
+                const ageSelect = document.getElementById(`${team}Age`);
+                const unitSelect = document.getElementById(`${team}Unit`);
+                const age = ageSelect.value;
+
+                unitSelect.innerHTML = '<option value="">Select Unit</option>';
+
+                if (age && unitsByAge[age]) {
+                    for (const unit of unitsByAge[age].units) {
+                        unitSelect.innerHTML += `<option value="${unit.id}">${unit.name}</option>`;
+                    }
+                }
+            }
+
+            function populateCivDropdowns() {
+                const html = '<option value="">Select Civilization</option>' +
+                    allCivs.map(c => `<option value="${c}">${c}</option>`).join('');
+                document.getElementById('team1Civ').innerHTML = html;
+                document.getElementById('team2Civ').innerHTML = html;
+            }
+
+            async function startBattle() {
+                const team1Unit = document.getElementById('team1Unit').value;
+                const team1Civ = document.getElementById('team1Civ').value;
+                const team1Count = parseInt(document.getElementById('team1Count').value) || 5;
+
+                const team2Unit = document.getElementById('team2Unit').value;
+                const team2Civ = document.getElementById('team2Civ').value;
+                const team2Count = parseInt(document.getElementById('team2Count').value) || 5;
+
+                if (!team1Unit || !team1Civ || !team2Unit || !team2Civ) {
+                    alert('Please select units and civilizations for both teams');
+                    return;
+                }
+
+                try {
+                    document.getElementById('startBtn').disabled = true;
+                    document.getElementById('startBtn').textContent = 'Loading...';
+
+                    simulation.reset();
+                    await simulation.setupTeam(1, team1Unit, team1Civ, team1Count);
+                    await simulation.setupTeam(2, team2Unit, team2Civ, team2Count);
+
+                    // Show unit info
+                    document.getElementById('unitInfo').style.display = 'block';
+                    document.getElementById('team1UnitName').textContent =
+                        `${simulation.team1Stats.civ} ${simulation.team1Stats.name} (HP: ${simulation.team1Stats.hp}, Atk: ${simulation.team1Stats.attack})`;
+                    document.getElementById('team2UnitName').textContent =
+                        `${simulation.team2Stats.civ} ${simulation.team2Stats.name} (HP: ${simulation.team2Stats.hp}, Atk: ${simulation.team2Stats.attack})`;
+
+                    document.getElementById('startBtn').textContent = 'Start Battle';
+                    document.getElementById('pauseBtn').disabled = false;
+                    document.getElementById('resetBtn').disabled = false;
+
+                    simulation.start();
+                } catch (error) {
+                    alert(`Error: ${error.message}`);
+                    document.getElementById('startBtn').disabled = false;
+                    document.getElementById('startBtn').textContent = 'Start Battle';
+                }
+            }
+        </script>
+    </body>
+</html>

@@ -539,6 +539,62 @@ def civ_view():
     return render_template("civ_view.html", civs=civs)
 
 
+# ============== Battle Simulation ==============
+
+
+@app.route("/simulate")
+def simulate():
+    """Battle simulation page."""
+    units_by_age = get_units_by_age()
+    civs = get_all_civs()
+    return render_template("simulate.html", units_by_age=units_by_age, civs=civs)
+
+
+@app.route("/api/combat-unit/<civ_name>/<unit_slug>")
+def api_combat_unit(civ_name, unit_slug):
+    """Get combat stats for a specific civ/unit combination."""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            us.id, us.hp, us.attack, us.attack_range, us.attack_speed,
+            us.melee_armor, us.pierce_armor, us.movement_speed,
+            us.attacks_json, us.armors_json,
+            us.unit_name, c.name as civ_name
+        FROM unit_stats us
+        JOIN units u ON us.unit_id = u.id
+        JOIN civilizations c ON us.civ_id = c.id
+        WHERE c.name = ? AND u.slug = ? AND us.has_unit = 1
+    """,
+        (civ_name, unit_slug),
+    )
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return jsonify({"error": "Unit not found"}), 404
+
+    return jsonify(
+        {
+            "id": row["id"],
+            "name": row["unit_name"],
+            "civ": row["civ_name"],
+            "hp": row["hp"],
+            "attack": row["attack"],
+            "attack_range": row["attack_range"] or 0,
+            "attack_speed": row["attack_speed"],
+            "melee_armor": row["melee_armor"],
+            "pierce_armor": row["pierce_armor"],
+            "movement_speed": row["movement_speed"],
+            "attacks_json": row["attacks_json"],
+            "armors_json": row["armors_json"],
+        }
+    )
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)

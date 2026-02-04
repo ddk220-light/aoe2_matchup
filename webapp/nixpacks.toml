@@ -1,8 +1,2 @@
-[phases.setup]
-nixPkgs = ["python311"]
-
-[phases.build]
-cmds = ["cd .. && python3 generate_database.py"]
-
 [start]
 cmd = "gunicorn app:app --bind 0.0.0.0:$PORT"

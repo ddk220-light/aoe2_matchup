@@ -158,24 +158,86 @@ def _row_to_combat_unit(row) -> CombatUnit:
     )
 
 
-def simulate_combat(
-    unit1: CombatUnit, unit2: CombatUnit, verbose: bool = False
+def simulate_combat_one_direction(
+    unit1: CombatUnit, unit2: CombatUnit, first_attacker: int = 1
 ) -> dict:
     """
-    Simulate combat between two units.
+    Simulate combat between two units with a specific first attacker.
+
+    Args:
+        unit1, unit2: The two units fighting
+        first_attacker: 1 if unit1 attacks first, 2 if unit2 attacks first
 
     Returns dict with:
     - winner_id: unit_stats.id of winning unit (or None for draw)
     - winner_hp_remaining: HP left on winner
-    - time: total combat time in seconds
-    - hits_unit1: number of hits by unit1
-    - hits_unit2: number of hits by unit2
     """
     # Reset HP
     u1_hp = float(unit1.hp)
     u2_hp = float(unit2.hp)
 
     # Calculate damage per hit
+    u1_damage = unit1.get_damage_against(unit2)
+    u2_damage = unit2.get_damage_against(unit1)
+
+    # Simulate combat tick by tick
+    time = 0.0
+    # First attacker starts at time 0, second attacker starts after a tiny delay
+    if first_attacker == 1:
+        u1_next_attack = 0.0
+        u2_next_attack = 0.0001  # Tiny delay so unit1 hits first
+    else:
+        u1_next_attack = 0.0001  # Tiny delay so unit2 hits first
+        u2_next_attack = 0.0
+
+    dt = 0.001  # 1ms time step
+
+    while u1_hp > 0 and u2_hp > 0:
+        # Check if unit1 attacks
+        if time >= u1_next_attack and u2_hp > 0:
+            u2_hp -= u1_damage
+            u1_next_attack = time + unit1.reload_time
+
+        # Check if unit2 attacks
+        if time >= u2_next_attack and u1_hp > 0 and u2_hp > 0:
+            u1_hp -= u2_damage
+            u2_next_attack = time + unit2.reload_time
+
+        time += dt
+
+        # Safety check
+        if time > 300:
+            break
+
+    # Determine winner
+    if u1_hp > 0 and u2_hp <= 0:
+        return {"winner_id": unit1.id, "winner_hp_remaining": int(u1_hp)}
+    elif u2_hp > 0 and u1_hp <= 0:
+        return {"winner_id": unit2.id, "winner_hp_remaining": int(u2_hp)}
+    else:
+        return {"winner_id": None, "winner_hp_remaining": 0}
+
+
+def simulate_combat(
+    unit1: CombatUnit, unit2: CombatUnit, verbose: bool = False
+) -> dict:
+    """
+    Simulate combat between two units, running both directions.
+
+    Runs two simulations:
+    1. Unit1 attacks first
+    2. Unit2 attacks first
+
+    If the same unit wins both times, they're the winner.
+    If different units win depending on who starts, it's a draw.
+    If units are identical (same stats), it's a draw.
+
+    Returns dict with:
+    - winner_id: unit_stats.id of winning unit (or None for draw)
+    - is_draw: True if the result is a draw
+    - unit1_id, unit2_id: IDs of the two units
+    """
+    # Calculate damage per hit for verbose output
     u1_damage = unit1.get_damage_against(unit2)
     u2_damage = unit2.get_damage_against(unit1)
 
@@ -194,64 +256,57 @@ def simulate_combat(
         )
         print(f"  Reload time: {unit2.reload_time:.3f}s, Damage: {u2_damage}")
 
-    # Simulate combat tick by tick
-    time = 0.0
-    u1_next_attack = 0.0
-    u2_next_attack = 0.0
-    u1_hits = 0
-    u2_hits = 0
+    # Run simulation both ways
+    result1 = simulate_combat_one_direction(unit1, unit2, first_attacker=1)
+    result2 = simulate_combat_one_direction(unit1, unit2, first_attacker=2)
 
-    dt = 0.001  # 1ms time step
+    if verbose:
+        print(f"\n  When {unit1.civ} attacks first: ", end="")
+        if result1["winner_id"] == unit1.id:
+            print(f"{unit1.civ} wins ({result1['winner_hp_remaining']} HP left)")
+        elif result1["winner_id"] == unit2.id:
+            print(f"{unit2.civ} wins ({result1['winner_hp_remaining']} HP left)")
+        else:
+            print("Draw")
 
-    while u1_hp > 0 and u2_hp > 0:
-        # Check if unit1 attacks
-        if time >= u1_next_attack and u2_hp > 0:
-            u2_hp -= u1_damage
-            u1_hits += 1
-            u1_next_attack = time + unit1.reload_time
+        print(f"  When {unit2.civ} attacks first: ", end="")
+        if result2["winner_id"] == unit1.id:
+            print(f"{unit1.civ} wins ({result2['winner_hp_remaining']} HP left)")
+        elif result2["winner_id"] == unit2.id:
+            print(f"{unit2.civ} wins ({result2['winner_hp_remaining']} HP left)")
+        else:
+            print("Draw")
 
-        # Check if unit2 attacks
-        if time >= u2_next_attack and u1_hp > 0 and u2_hp > 0:
-            u1_hp -= u2_damage
-            u2_hits += 1
-            u2_next_attack = time + unit2.reload_time
-
-        time += dt
-
-        # Safety check
-        if time > 300:
-            break
-
-    # Determine winner
-    if u1_hp > 0 and u2_hp <= 0:
-        winner_id = unit1.id
-        winner_hp = int(u1_hp)
-    elif u2_hp > 0 and u1_hp <= 0:
-        winner_id = unit2.id
-        winner_hp = int(u2_hp)
+    # Determine final outcome
+    # If same winner in both directions, that unit wins
+    # Otherwise, it's a draw
+    if (
+        result1["winner_id"] == result2["winner_id"]
+        and result1["winner_id"] is not None
+    ):
+        winner_id = result1["winner_id"]
+        is_draw = False
+        winner_hp = (
+            result1["winner_hp_remaining"] + result2["winner_hp_remaining"]
+        ) // 2
     else:
-        # Draw (both died at same time or timeout)
+        # Different winners or both draws = draw
         winner_id = None
+        is_draw = True
         winner_hp = 0
 
     if verbose:
-        if winner_id == unit1.id:
-            print(
-                f"\n--- WINNER: {unit1.civ} {unit1.name} ({winner_hp} HP remaining) ---"
-            )
-        elif winner_id == unit2.id:
-            print(
-                f"\n--- WINNER: {unit2.civ} {unit2.name} ({winner_hp} HP remaining) ---"
-            )
+        if is_draw:
+            print(f"\n--- RESULT: DRAW ---")
+        elif winner_id == unit1.id:
+            print(f"\n--- RESULT: {unit1.civ} {unit1.name} WINS ---")
         else:
-            print(f"\n--- DRAW ---")
+            print(f"\n--- RESULT: {unit2.civ} {unit2.name} WINS ---")
 
     return {
         "winner_id": winner_id,
         "winner_hp_remaining": winner_hp,
-        "time": round(time, 3),
-        "hits_unit1": u1_hits,
-        "hits_unit2": u2_hits,
+        "is_draw": is_draw,
         "unit1_id": unit1.id,
         "unit2_id": unit2.id,
     }
@@ -270,7 +325,7 @@ def get_all_units_for_age(age_id: int) -> list:
         JOIN units u ON us.unit_id = u.id
         WHERE u.age_id = ? AND us.has_unit = 1 AND u.unit_type = 'standard'
         AND us.hp IS NOT NULL AND us.hp > 0
-        ORDER BY u.slug, c.name
+        ORDER BY us.unit_name, c.name
     """,
         (age_id,),
     )
@@ -315,26 +370,29 @@ def run_all_simulations():
             print("Not enough units to simulate")
             continue
 
-        # Group units by unit type (slug) for intra-unit comparisons
-        units_by_slug = {}
+        # Group units by actual unit name for intra-unit comparisons
+        # This ensures Paladins are only compared to Paladins, not Cavaliers
+        units_by_name = {}
         for unit in units:
-            if unit.unit_slug not in units_by_slug:
-                units_by_slug[unit.unit_slug] = []
-            units_by_slug[unit.unit_slug].append(unit)
+            if unit.name not in units_by_name:
+                units_by_name[unit.name] = []
+            units_by_name[unit.name].append(unit)
 
         # Run simulations within each unit type
         results = []
-        for slug, slug_units in units_by_slug.items():
-            if len(slug_units) < 2:
+        for unit_name, name_units in units_by_name.items():
+            if len(name_units) < 2:
                 continue
 
             print(
-                f"  Simulating {slug} ({len(slug_units)} civs)...", end=" ", flush=True
+                f"  Simulating {unit_name} ({len(name_units)} civs)...",
+                end=" ",
+                flush=True,
             )
             matchup_count = 0
 
-            for i, u1 in enumerate(slug_units):
-                for u2 in slug_units[i + 1 :]:
+            for i, u1 in enumerate(name_units):
+                for u2 in name_units[i + 1 :]:
                     result = simulate_combat(u1, u2)
                     results.append(result)
                     matchup_count += 1
@@ -352,14 +410,23 @@ def run_all_simulations():
                             result["unit2_id"],
                             result["winner_id"],
                             result["winner_hp_remaining"],
-                            result["time"],
-                            result["hits_unit1"],
-                            result["hits_unit2"],
+                            0,  # combat_time no longer tracked
+                            0,  # hits no longer tracked
+                            0,
                         ),
                     )
 
-                    # Update win/loss counts
-                    if result["winner_id"] == u1.id:
+                    # Update win/loss/draw counts
+                    if result["is_draw"]:
+                        cursor.execute(
+                            "UPDATE unit_stats SET combat_draws = combat_draws + 1 WHERE id = ?",
+                            (u1.id,),
+                        )
+                        cursor.execute(
+                            "UPDATE unit_stats SET combat_draws = combat_draws + 1 WHERE id = ?",
+                            (u2.id,),
+                        )
+                    elif result["winner_id"] == u1.id:
                         cursor.execute(
                             "UPDATE unit_stats SET combat_wins = combat_wins + 1 WHERE id = ?",
                             (u1.id,),
@@ -377,30 +444,99 @@ def run_all_simulations():
                             "UPDATE unit_stats SET combat_losses = combat_losses + 1 WHERE id = ?",
                             (u1.id,),
                         )
-                    else:
-                        cursor.execute(
-                            "UPDATE unit_stats SET combat_draws = combat_draws + 1 WHERE id = ?",
-                            (u1.id,),
-                        )
-                        cursor.execute(
-                            "UPDATE unit_stats SET combat_draws = combat_draws + 1 WHERE id = ?",
-                            (u2.id,),
-                        )
 
             print(f"{matchup_count} matchups")
 
         total_results.extend(results)
         conn.commit()
 
-    # Calculate combat score (win rate)
+    # Calculate raw combat score (wins count as 1, draws as 0.5, losses as 0)
+    # Score = (wins + 0.5 * draws) / total_matches
     cursor.execute("""
         UPDATE unit_stats
         SET combat_score = CASE
             WHEN (combat_wins + combat_losses + combat_draws) > 0
-            THEN CAST(combat_wins AS REAL) / (combat_wins + combat_losses + combat_draws) * 100
-            ELSE 0
+            THEN (CAST(combat_wins AS REAL) + 0.5 * combat_draws) / (combat_wins + combat_losses + combat_draws)
+            ELSE 0.5
         END
     """)
+    conn.commit()
+
+    # Normalize combat scores so generic civs (most common score) = 1.0
+    # For each actual unit name, find the baseline and normalize
+    for age_id in age_names.keys():
+        # Get all distinct unit names for this age
+        cursor.execute(
+            """
+            SELECT DISTINCT us.unit_name
+            FROM unit_stats us
+            JOIN units u ON us.unit_id = u.id
+            WHERE u.age_id = ? AND u.unit_type = 'standard' AND us.has_unit = 1
+            AND (us.combat_wins + us.combat_losses + us.combat_draws) > 0
+        """,
+            (age_id,),
+        )
+        unit_names = [row["unit_name"] for row in cursor.fetchall()]
+
+        for unit_name in unit_names:
+            # Get all scores for this actual unit
+            cursor.execute(
+                """
+                SELECT us.id, us.combat_score, us.civ_bonuses
+                FROM unit_stats us
+                JOIN units u ON us.unit_id = u.id
+                WHERE us.unit_name = ? AND u.age_id = ? AND us.has_unit = 1
+                AND (us.combat_wins + us.combat_losses + us.combat_draws) > 0
+            """,
+                (unit_name, age_id),
+            )
+            scores = cursor.fetchall()
+
+            if len(scores) < 2:
+                # Not enough units to normalize, set to 1.0
+                for row in scores:
+                    cursor.execute(
+                        "UPDATE unit_stats SET combat_score = 1.0 WHERE id = ?",
+                        (row["id"],),
+                    )
+                continue
+
+            # Find the baseline score (generic civs have no bonuses or '-')
+            generic_scores = [
+                row["combat_score"]
+                for row in scores
+                if not row["civ_bonuses"] or row["civ_bonuses"] == "-"
+            ]
+
+            if generic_scores:
+                # Use median of generic civ scores as baseline (most representative)
+                sorted_generic = sorted(generic_scores)
+                mid = len(sorted_generic) // 2
+                if len(sorted_generic) % 2 == 0:
+                    baseline = (sorted_generic[mid - 1] + sorted_generic[mid]) / 2
+                else:
+                    baseline = sorted_generic[mid]
+            else:
+                # Fallback: use median of all scores
+                all_scores = sorted([row["combat_score"] for row in scores])
+                baseline = all_scores[len(all_scores) // 2]
+
+            # Normalize all scores for this unit type (baseline = 1.0)
+            if baseline > 0:
+                for row in scores:
+                    normalized_score = row["combat_score"] / baseline
+                    cursor.execute(
+                        "UPDATE unit_stats SET combat_score = ? WHERE id = ?",
+                        (normalized_score, row["id"]),
+                    )
+            else:
+                # If baseline is 0, set all to 1.0
+                for row in scores:
+                    cursor.execute(
+                        "UPDATE unit_stats SET combat_score = 1.0 WHERE id = ?",
+                        (row["id"],),
+                    )
+
     conn.commit()
 
     print(f"\n{'=' * 60}")
@@ -412,24 +548,23 @@ def run_all_simulations():
     for age_id, age_name in age_names.items():
         cursor.execute(
             """
-            SELECT u.slug, c.name, us.unit_name, us.combat_wins, us.combat_losses, us.combat_score
+            SELECT u.slug, c.name, us.unit_name, us.combat_wins, us.combat_losses, us.combat_draws, us.combat_score
             FROM unit_stats us
             JOIN civilizations c ON us.civ_id = c.id
             JOIN units u ON us.unit_id = u.id
             WHERE u.age_id = ? AND us.has_unit = 1 AND u.unit_type = 'standard'
-            AND (us.combat_wins + us.combat_losses) > 0
+            AND (us.combat_wins + us.combat_losses + us.combat_draws) > 0
             ORDER BY us.combat_score DESC
             LIMIT 10
         """,
             (age_id,),
         )
 
-        print(f"\n{age_name} Age - Top 10 Units by Win Rate:")
-        print("-" * 50)
+        print(f"\n{age_name} Age - Top 10 Units by Combat Effectiveness:")
+        print("-" * 60)
         for row in cursor.fetchall():
-            total = row["combat_wins"] + row["combat_losses"]
             print(
-                f"  {row['name']:15} {row['unit_name']:20} {row['combat_wins']:2}W-{row['combat_losses']:2}L ({row['combat_score']:.1f}%)"
+                f"  {row['name']:15} {row['unit_name']:20} {row['combat_wins']:2}W-{row['combat_draws']:2}D-{row['combat_losses']:2}L (Eff: {row['combat_score']:.2f})"
             )
 
     conn.close()

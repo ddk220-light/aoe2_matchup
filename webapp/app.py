@@ -35,7 +35,7 @@ def get_units_by_age():
             """
             SELECT slug, display_name
             FROM units
-            WHERE age_id = ?
+            WHERE age_id = ? AND unit_type = 'standard'
             ORDER BY display_name
             """,
             (age_data["id"],),
@@ -83,16 +83,12 @@ def get_unit_data(age_id, unit_id):
             us.melee_armor as Melee_Armor,
             us.pierce_armor as Pierce_Armor,
             us.movement_speed as Movement_Speed,
-            us.cost_food as Cost_Food,
-            us.cost_wood as Cost_Wood,
-            us.cost_gold as Cost_Gold,
+            COALESCE(us.cost_food, 0) + COALESCE(us.cost_wood, 0) + COALESCE(us.cost_gold, 0) as Cost,
             us.creation_time as Creation_Time,
             us.upgrade_cost as Upgrade_Cost,
             us.civ_bonuses as Civ_Bonuses,
             us.has_unit as Has_Unit,
-            us.combat_wins as Wins,
-            us.combat_losses as Losses,
-            us.combat_score as Combat_Score
+            us.combat_score as Combat_Eff
         FROM unit_stats us
         JOIN civilizations c ON us.civ_id = c.id
         WHERE us.unit_id = ?
@@ -121,9 +117,7 @@ def get_unit_data(age_id, unit_id):
     columns = [
         "Civilization",
         "Unit",
-        "Combat_Score",
-        "Wins",
-        "Losses",
+        "Combat_Eff",
         "HP",
         "Attack",
         "Range",
@@ -131,9 +125,7 @@ def get_unit_data(age_id, unit_id):
         "Melee_Armor",
         "Pierce_Armor",
         "Movement_Speed",
-        "Cost_Food",
-        "Cost_Wood",
-        "Cost_Gold",
+        "Cost",
         "Creation_Time",
         "Upgrade_Cost",
         "Civ_Bonuses",
@@ -146,9 +138,7 @@ def get_unit_data(age_id, unit_id):
 
     # Identify numeric columns for uniqueness detection
     numeric_cols = [
-        "Combat_Score",
-        "Wins",
-        "Losses",
+        "Combat_Eff",
         "HP",
         "Attack",
         "Range",
@@ -156,9 +146,7 @@ def get_unit_data(age_id, unit_id):
         "Melee_Armor",
         "Pierce_Armor",
         "Movement_Speed",
-        "Cost_Food",
-        "Cost_Wood",
-        "Cost_Gold",
+        "Cost",
         "Creation_Time",
         "Upgrade_Cost",
     ]

@@ -628,6 +628,38 @@ class UnitAnalyzer:
         self._tech_cache[cache_key] = relevant_techs
         return relevant_techs
 
+    def get_tech_age_recursive(self, tech_id: int, visited: set = None) -> int:
+        """
+        Get the effective age when a tech becomes available,
+        considering the ages of required techs recursively.
+        """
+        if visited is None:
+            visited = set()
+
+        if tech_id in visited:
+            return 1  # Prevent infinite loops
+        visited.add(tech_id)
+
+        # First check if it's an age tech itself
+        if tech_id in AGE_TECH_IDS:
+            return AGE_TECH_IDS[tech_id]
+
+        # Check tech_ages.json
+        tech_id_str = str(tech_id)
+        if tech_id_str in self.tech_ages:
+            return self.tech_ages[tech_id_str].get("age", 1)
+
+        # Check required_techs and find the max age among them
+        tech_data = self.techs.get(tech_id, {})
+        required_techs = tech_data.get("required_techs", [])
+
+        max_age = 1  # Dark Age default
+        for req_tech in required_techs:
+            req_age = self.get_tech_age_recursive(req_tech, visited.copy())
+            max_age = max(max_age, req_age)
+
+        return max_age
+
     def get_civ_bonus_techs_for_unit(
         self, civ_name: str, unit_id: int, unit_class: int, max_age: int = 4
     ) -> list:
@@ -651,12 +683,57 @@ class UnitAnalyzer:
             if tech_data.get("cost") and not tech_name.startswith("C-Bonus"):
                 continue
 
-            # Check age requirements
+            # Skip relic-based bonuses (e.g., Lithuanian "Relic +1 cav attack")
+            # These require collecting relics in-game and shouldn't be auto-applied
+            if "Relic" in tech_name:
+                continue
+
+            # Check if all required techs are available to this civ
+            # This handles conditional bonuses like Mongol "+30% HP + BL" which requires Bloodlines
             required_techs = tech_data.get("required_techs", [])
-            bonus_age = 1
+            disabled_techs = self.get_disabled_techs(civ_name)
+            has_non_age_requirement = False
+            all_required_available = True
             for req_tech in required_techs:
+                # Skip age tech IDs (they're not researchable techs)
                 if req_tech in AGE_TECH_IDS:
-                    bonus_age = max(bonus_age, AGE_TECH_IDS[req_tech])
+                    continue
+                has_non_age_requirement = True
+                # Check if the required tech is disabled for this civ
+                if req_tech in disabled_techs:
+                    all_required_available = False
+                    break
+
+            if not all_required_available:
+                continue
+
+            # Skip non-conditional variants if civ has the conditional version available
+            # E.g., if Mongols have Bloodlines, use "+30% HP + BL" version, not "+30% HP"
+            # The "+BL" versions are designed to work WITH Bloodlines, non-BL versions are fallbacks
+            if not has_non_age_requirement and "+ BL" not in tech_name:
+                # This is a non-conditional version - check if a conditional version exists
+                base_bonus_pattern = tech_name.replace("C-Bonus, ", "")
+                skip_this = False
+                for other_tech_id in tech_ids:
+                    other_tech = self.techs.get(other_tech_id, {})
+                    other_name = other_tech.get("name", "")
+                    if "+ BL" in other_name and base_bonus_pattern in other_name:
+                        # Found a "+BL" version - check if it's available
+                        other_reqs = other_tech.get("required_techs", [])
+                        other_available = True
+                        for req in other_reqs:
+                            if req not in AGE_TECH_IDS and req in disabled_techs:
+                                other_available = False
+                                break
+                        if other_available:
+                            skip_this = True
+                            break
+                if skip_this:
+                    continue
+
+            # Check age requirements recursively
+            # This handles cases where a bonus requires another tech (e.g., Double Forging requires Forging)
+            bonus_age = self.get_tech_age_recursive(tech_id)
 
             if bonus_age > max_age:
                 continue
@@ -901,18 +978,7 @@ class UnitAnalyzer:
         stats = self.get_base_stats(unit)
         applied_bonuses = []
 
-        # Apply civ bonus techs
-        civ_bonus_techs = self.get_civ_bonus_techs_for_unit(
-            civ_name, final_unit_id, unit_class, max_age
-        )
-        for te in civ_bonus_techs:
-            tech_name = te.get("tech_name", f"Tech {te['tech_id']}")
-            for cmd in te.get("commands", []):
-                if self.apply_effect_command(cmd, stats, final_unit_id, unit_class):
-                    if tech_name not in applied_bonuses:
-                        applied_bonuses.append(tech_name)
-
-        # Apply standard techs for this age
+        # Apply standard techs FIRST (e.g., Bloodlines adds HP before civ bonuses multiply)
         standard_techs = self.find_techs_affecting_unit(
             final_unit_id, unit_class, max_age
         )
@@ -925,6 +991,19 @@ class UnitAnalyzer:
                 te = self.tech_effect_map[tech_id]
                 for cmd in te.get("commands", []):
                     self.apply_effect_command(cmd, stats, final_unit_id, unit_class)
+
+        # Apply civ bonus techs AFTER standard techs
+        # This ensures additive bonuses (like Bloodlines +20 HP) are applied before
+        # multiplicative civ bonuses
+        civ_bonus_techs = self.get_civ_bonus_techs_for_unit(
+            civ_name, final_unit_id, unit_class, max_age
+        )
+        for te in civ_bonus_techs:
+            tech_name = te.get("tech_name", f"Tech {te['tech_id']}")
+            for cmd in te.get("commands", []):
+                if self.apply_effect_command(cmd, stats, final_unit_id, unit_class):
+                    if tech_name not in applied_bonuses:
+                        applied_bonuses.append(tech_name)
 
         # Calculate upgrade cost
         upgrade_cost = self.calculate_upgrade_cost(

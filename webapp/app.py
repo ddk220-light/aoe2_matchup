@@ -829,6 +829,7 @@ def api_matchup(civ1, civ2):
         cursor.execute(
             """
             SELECT u.slug, us.unit_name, us.hp, us.attack, us.attack_speed,
+                   us.attack_range, us.movement_speed,
                    us.melee_armor, us.pierce_armor, us.attacks_json, us.armors_json,
                    us.cost_food, us.cost_wood, us.cost_gold
             FROM unit_stats us
@@ -844,6 +845,7 @@ def api_matchup(civ1, civ2):
         cursor.execute(
             """
             SELECT u.slug, us.unit_name, us.hp, us.attack, us.attack_speed,
+                   us.attack_range, us.movement_speed,
                    us.melee_armor, us.pierce_armor, us.attacks_json, us.armors_json,
                    us.cost_food, us.cost_wood, us.cost_gold
             FROM unit_stats us

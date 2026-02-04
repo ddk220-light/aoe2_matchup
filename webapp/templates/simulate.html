@@ -1020,7 +1020,8 @@
                     this.maxHp = stats.hp;
                     this.currentHp = stats.hp;
                     this.attack = stats.attack;
-                    this.attackRange = ((stats.attack_range || 0) * TILE_SIZE) + MIN_ATTACK_RANGE;
+                    this.rawAttackRange = stats.attack_range || 0;  // Store raw range for isRanged check
+                    this.attackRange = (this.rawAttackRange * TILE_SIZE) + MIN_ATTACK_RANGE;
                     this.attackSpeed = stats.attack_speed || 0.5;
                     this.reloadTime = 1.0 / this.attackSpeed;
                     this.moveSpeed = (stats.movement_speed || 1) * TILE_SIZE;
@@ -1034,11 +1035,16 @@
                     this.radius = UNIT_RADIUS;
 
                     this.target = null;
-                    this.state = 'idle';
+                    this.state = 'idle';  // idle, moving, attacking, kiting
                     this.attackCooldown = 0;
 
                     this.attackAnimTimer = 0;
                     this.damageNumbers = [];
+                }
+
+                isRanged() {
+                    // Unit is ranged if it has attack range >= 1 tile
+                    return this.rawAttackRange >= 1.0;
                 }
 
                 getDamageAgainst(target, detailed = false) {
@@ -1152,14 +1158,32 @@
                         return;
                     }
 
-                    if (this.inRange()) {
-                        this.state = 'attacking';
-                        if (this.attackCooldown <= 0) {
+                    // Ranged unit kiting behavior
+                    if (this.isRanged()) {
+                        if (this.inRange() && this.attackCooldown <= 0) {
+                            // In range and ready to fire - attack
+                            this.state = 'attacking';
                             this.performAttack();
+                        } else if (this.attackCooldown > 0) {
+                            // Reloading - kite (move away from target)
+                            this.state = 'kiting';
+                            this.moveAwayFromTarget(dt, allUnits);
+                        } else if (!this.inRange()) {
+                            // Out of range and ready to fire - move closer
+                            this.state = 'moving';
+                            this.moveTowardTarget(dt, allUnits);
                         }
                     } else {
-                        this.state = 'moving';
-                        this.moveTowardTarget(dt, allUnits);
+                        // Melee unit behavior - close distance and attack
+                        if (this.inRange()) {
+                            this.state = 'attacking';
+                            if (this.attackCooldown <= 0) {
+                                this.performAttack();
+                            }
+                        } else {
+                            this.state = 'moving';
+                            this.moveTowardTarget(dt, allUnits);
+                        }
                     }
                 }
 
@@ -1220,6 +1244,43 @@
                     this.y = Math.max(this.radius, Math.min(CANVAS_HEIGHT - this.radius, this.y));
                 }
 
+                moveAwayFromTarget(dt, allUnits) {
+                    // Kiting: move away from the target while reloading
+                    if (!this.target) return;
+
+                    let dx = this.x - this.target.x;  // Reversed: away from target
+                    let dy = this.y - this.target.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 1) {
+                        // If somehow on top of target, move in team's retreat direction
+                        dx = this.team === 1 ? -1 : 1;
+                        dy = 0;
+                    } else {
+                        dx /= dist;
+                        dy /= dist;
+                    }
+
+                    // Add avoidance to prevent units bunching up
+                    const avoidance = this.calculateAvoidance(allUnits);
+                    dx += avoidance.x * 0.6;
+                    dy += avoidance.y * 0.6;
+
+                    const len = Math.sqrt(dx * dx + dy * dy);
+                    if (len > 0) {
+                        dx /= len;
+                        dy /= len;
+                    }
+
+                    const moveAmount = this.moveSpeed * dt;
+                    this.x += dx * moveAmount;
+                    this.y += dy * moveAmount;
+
+                    // Clamp to canvas bounds
+                    this.x = Math.max(this.radius, Math.min(CANVAS_WIDTH - this.radius, this.x));
+                    this.y = Math.max(this.radius, Math.min(CANVAS_HEIGHT - this.radius, this.y));
+                }
+
                 calculateAvoidance(allUnits) {
                     let avoidX = 0;
                     let avoidY = 0;
@@ -1253,6 +1314,9 @@
                     let color = this.team === 1 ? '#e74c3c' : '#2ecc71';
                     if (this.attackAnimTimer > 0) {
                         color = '#ffffff';
+                    } else if (this.state === 'kiting') {
+                        // Blue tint when kiting (retreating while reloading)
+                        color = this.team === 1 ? '#9b59b6' : '#3498db';
                     }
                     ctx.fillStyle = color;
                     ctx.fill();

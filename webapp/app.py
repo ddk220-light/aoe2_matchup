@@ -290,7 +290,8 @@ def api_unit_data(age_id, unit_id):
 @app.route("/api/civs")
 def api_civs():
     """Get list of all civilizations."""
-    return jsonify(get_all_civs())
+    civs = get_all_civs()
+    return jsonify(civs)
 
 
 @app.route("/api/civ/<civ_name>")

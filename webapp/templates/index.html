@@ -627,23 +627,189 @@
             }
 
             @media (max-width: 768px) {
-                h1 {
-                    font-size: 2rem;
+                body {
+                    padding: 10px;
                 }
-                .unit-btn {
-                    padding: 10px 16px;
+
+                header {
+                    padding: 15px 0;
+                    margin-bottom: 15px;
+                }
+
+                h1 {
+                    font-size: 1.5rem;
+                }
+
+                .subtitle {
                     font-size: 0.9rem;
                 }
-                .age-tab {
-                    padding: 10px 20px;
-                    font-size: 1rem;
+
+                .nav-links {
+                    flex-wrap: wrap;
+                    gap: 8px;
                 }
-                table {
+
+                .nav-link {
+                    padding: 6px 12px;
+                    font-size: 0.85rem;
+                }
+
+                .age-tabs {
+                    flex-wrap: wrap;
+                    gap: 8px;
+                }
+
+                .age-tab {
+                    padding: 8px 16px;
+                    font-size: 0.9rem;
+                    flex: 1;
+                    min-width: 100px;
+                    text-align: center;
+                }
+
+                .unit-selector {
+                    padding: 12px;
+                    gap: 8px;
+                }
+
+                .unit-btn {
+                    padding: 8px 12px;
                     font-size: 0.8rem;
                 }
-                td,
-                th {
-                    padding: 8px;
+
+                .legend {
+                    gap: 10px;
+                    font-size: 0.75rem;
+                }
+
+                .legend-item {
+                    gap: 5px;
+                }
+
+                .legend-color {
+                    width: 15px;
+                    height: 15px;
+                }
+
+                .table-container {
+                    padding: 12px;
+                    border-radius: 10px;
+                }
+
+                .table-header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 8px;
+                }
+
+                .table-title {
+                    font-size: 1.2rem;
+                }
+
+                .table-info {
+                    width: 100%;
+                    justify-content: flex-start;
+                }
+
+                .civ-count,
+                .age-badge {
+                    padding: 5px 10px;
+                    font-size: 0.75rem;
+                }
+
+                table {
+                    font-size: 0.7rem;
+                    display: block;
+                    overflow-x: auto;
+                    white-space: nowrap;
+                }
+
+                thead th {
+                    padding: 8px 6px;
+                    font-size: 0.7rem;
+                }
+
+                td {
+                    padding: 6px 5px;
+                }
+
+                td.civ-name {
+                    position: sticky;
+                    left: 0;
+                    background: var(--card-bg);
+                    z-index: 1;
+                }
+
+                tr:nth-child(even) td.civ-name {
+                    background: #1a2a4a;
+                }
+
+                tr:hover td.civ-name {
+                    background: rgba(218, 165, 32, 0.2);
+                }
+
+                .modal {
+                    padding: 15px;
+                    width: 95%;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                }
+
+                .modal h3 {
+                    font-size: 1.1rem;
+                }
+
+                .modal-info {
+                    font-size: 0.85rem;
+                }
+
+                .modal textarea {
+                    min-height: 80px;
+                    font-size: 0.9rem;
+                }
+
+                .modal input[type="text"] {
+                    font-size: 0.9rem;
+                }
+
+                .modal-buttons {
+                    flex-direction: column;
+                }
+
+                .modal-btn {
+                    width: 100%;
+                    padding: 12px;
+                }
+
+                .tooltip {
+                    max-width: 250px;
+                    font-size: 0.8rem;
+                }
+            }
+
+            @media (max-width: 480px) {
+                h1 {
+                    font-size: 1.3rem;
+                }
+
+                .age-tab {
+                    padding: 6px 10px;
+                    font-size: 0.8rem;
+                    min-width: 80px;
+                }
+
+                .unit-btn {
+                    padding: 6px 10px;
+                    font-size: 0.75rem;
+                }
+
+                table {
+                    font-size: 0.65rem;
+                }
+
+                thead th,
+                td {
+                    padding: 5px 4px;
                 }
             }
         </style>

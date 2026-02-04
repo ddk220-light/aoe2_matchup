@@ -894,13 +894,13 @@ def api_matchup(civ1, civ2):
                 if u2_cost == 0:
                     u2_cost = 100
 
-                # Simulation 1: Resource-based (1000 resources per team)
+                # Simulation 1: Resource-based (300 resources per team for speed)
                 res_winner, u1_res_remaining, u2_res_remaining = simulate_battle(
-                    u1, u1_cost, u2, u2_cost, 1000
+                    u1, u1_cost, u2, u2_cost, 300
                 )
 
-                # Simulation 2: Count-based (30 units each, use unit cost * 30 as resources)
-                count_resources = max(u1_cost, u2_cost) * 30
+                # Simulation 2: Count-based (5 units each for speed)
+                count_resources = max(u1_cost, u2_cost) * 5
                 count_winner, u1_count_remaining, u2_count_remaining = simulate_battle(
                     u1, u1_cost, u2, u2_cost, count_resources
                 )
@@ -1038,14 +1038,13 @@ def api_matchup(civ1, civ2):
 
 def simulate_battle(unit1, cost1, unit2, cost2, resources):
     """
-    Fast analytical battle simulation for matchup comparisons.
-    Uses DPS-based calculations instead of tick-by-tick simulation.
+    Tick-based battle simulation with kiting support.
+    Uses smaller army sizes (300 res / 5 units) for faster execution.
 
     Returns: (winner, unit1_remaining, unit2_remaining)
         winner: 1 if unit1 wins, 2 if unit2 wins, 0 if draw
     """
     import json
-    import math
 
     # Calculate army sizes
     count1 = max(1, resources // cost1)
@@ -1066,6 +1065,8 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     # Get attack range (0 = melee) and movement speed
     range1 = unit1["attack_range"] or 0.0
     range2 = unit2["attack_range"] or 0.0
+    move_speed1 = unit1["movement_speed"] or 1.0
+    move_speed2 = unit2["movement_speed"] or 1.0
 
     is_ranged1 = range1 >= 1.0
     is_ranged2 = range2 >= 1.0
@@ -1114,66 +1115,110 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
         is_ranged2,
     )
 
-    # Get attack speeds
+    # Get attack speeds (reload time)
     speed1 = unit1["attack_speed"] or 0.5
     speed2 = unit2["attack_speed"] or 0.5
     reload1 = 1.0 / speed1 if speed1 > 0 else 2.0
     reload2 = 1.0 / speed2 if speed2 > 0 else 2.0
 
-    # Calculate DPS (damage per second)
-    dps1 = dmg1 / reload1  # Damage unit1 does to unit2 per second
-    dps2 = dmg2 / reload2  # Damage unit2 does to unit1 per second
+    # Create armies with positions
+    # Team 1 starts at position 0 (left), Team 2 at position 100 (right)
+    hp1 = [float(unit1["hp"])] * count1
+    hp2 = [float(unit2["hp"])] * count2
+    pos1 = [i * 0.5 for i in range(count1)]
+    pos2 = [100 - i * 0.5 for i in range(count2)]
+    cooldown1 = [0.0] * count1
+    cooldown2 = [0.0] * count2
 
-    # HP pools
-    hp1 = unit1["hp"]
-    hp2 = unit2["hp"]
+    # Simulate with larger time step for speed
+    dt = 0.1  # 100ms time step (was 0.05)
+    time = 0.0
+    max_time = 120.0  # 2 minute timeout (was 300)
+    melee_range = 0.5
 
-    # Total army HP
-    total_hp1 = hp1 * count1
-    total_hp2 = hp2 * count2
+    while time < max_time:
+        alive1 = [i for i, h in enumerate(hp1) if h > 0]
+        alive2 = [i for i, h in enumerate(hp2) if h > 0]
 
-    # Total army DPS (all units attacking)
-    total_dps1 = dps1 * count1
-    total_dps2 = dps2 * count2
+        if not alive1 or not alive2:
+            break
 
-    # Kiting advantage for ranged vs melee
-    # If ranged vs melee, ranged gets more effective attacks before melee closes
-    kiting_factor1 = 1.0
-    kiting_factor2 = 1.0
+        # Update cooldowns
+        for i in alive1:
+            cooldown1[i] = max(0, cooldown1[i] - dt)
+        for i in alive2:
+            cooldown2[i] = max(0, cooldown2[i] - dt)
 
-    if is_ranged1 and not is_ranged2:
-        # Unit1 is ranged, unit2 is melee - unit1 gets kiting advantage
-        # More range = more kiting time
-        kiting_factor1 = 1.0 + (range1 * 0.1)  # 10% bonus per range tile
-    elif is_ranged2 and not is_ranged1:
-        # Unit2 is ranged, unit1 is melee - unit2 gets kiting advantage
-        kiting_factor2 = 1.0 + (range2 * 0.1)
+        # Collect attacks (simultaneous)
+        pending_damage = []
 
-    # Adjusted DPS with kiting
-    effective_dps1 = total_dps1 * kiting_factor1
-    effective_dps2 = total_dps2 * kiting_factor2
+        # Team 1 units (move right toward team 2)
+        for i in alive1:
+            closest = min(alive2, key=lambda j: abs(pos2[j] - pos1[i]))
+            distance = abs(pos2[closest] - pos1[i])
+            attack_range = range1 if is_ranged1 else melee_range
 
-    # Time to kill each army
-    time_to_kill2 = total_hp2 / effective_dps1 if effective_dps1 > 0 else float("inf")
-    time_to_kill1 = total_hp1 / effective_dps2 if effective_dps2 > 0 else float("inf")
+            if is_ranged1:
+                if cooldown1[i] <= 0 and distance <= attack_range:
+                    pending_damage.append((2, closest, dmg1))
+                    cooldown1[i] = reload1
+                elif cooldown1[i] > 0:
+                    pos1[i] -= move_speed1 * dt  # Kite backward
+                elif distance > attack_range:
+                    pos1[i] += move_speed1 * dt
+            else:
+                if distance <= attack_range:
+                    if cooldown1[i] <= 0:
+                        pending_damage.append((2, closest, dmg1))
+                        cooldown1[i] = reload1
+                else:
+                    pos1[i] += move_speed1 * dt
 
-    # Determine winner based on who dies first
-    if time_to_kill2 < time_to_kill1:
-        # Team 1 kills team 2 first
-        # Calculate how much HP team 1 has left
-        damage_taken = effective_dps2 * time_to_kill2
-        hp_remaining = total_hp1 - damage_taken
-        units_remaining = max(1, math.ceil(hp_remaining / hp1))
-        return (1, min(units_remaining, count1), 0)
-    elif time_to_kill1 < time_to_kill2:
-        # Team 2 kills team 1 first
-        damage_taken = effective_dps1 * time_to_kill1
-        hp_remaining = total_hp2 - damage_taken
-        units_remaining = max(1, math.ceil(hp_remaining / hp2))
-        return (2, 0, min(units_remaining, count2))
+        # Team 2 units (move left toward team 1)
+        for i in alive2:
+            closest = min(alive1, key=lambda j: abs(pos1[j] - pos2[i]))
+            distance = abs(pos1[closest] - pos2[i])
+            attack_range = range2 if is_ranged2 else melee_range
+
+            if is_ranged2:
+                if cooldown2[i] <= 0 and distance <= attack_range:
+                    pending_damage.append((1, closest, dmg2))
+                    cooldown2[i] = reload2
+                elif cooldown2[i] > 0:
+                    pos2[i] += move_speed2 * dt  # Kite backward
+                elif distance > attack_range:
+                    pos2[i] -= move_speed2 * dt
+            else:
+                if distance <= attack_range:
+                    if cooldown2[i] <= 0:
+                        pending_damage.append((1, closest, dmg2))
+                        cooldown2[i] = reload2
+                else:
+                    pos2[i] -= move_speed2 * dt
+
+        # Apply damage
+        for team, target, damage in pending_damage:
+            if team == 1:
+                hp1[target] -= damage
+            else:
+                hp2[target] -= damage
+
+        time += dt
+
+    remaining1 = len([h for h in hp1 if h > 0])
+    remaining2 = len([h for h in hp2 if h > 0])
+
+    # Determine winner
+    if remaining1 > 0 and remaining2 == 0:
+        return (1, remaining1, 0)
+    elif remaining2 > 0 and remaining1 == 0:
+        return (2, 0, remaining2)
+    elif remaining1 > remaining2:
+        return (1, remaining1, remaining2)
+    elif remaining2 > remaining1:
+        return (2, remaining1, remaining2)
     else:
-        # Draw - both die at the same time
-        return (0, 0, 0)
+        return (0, remaining1, remaining2)
 
 
 if __name__ == "__main__":

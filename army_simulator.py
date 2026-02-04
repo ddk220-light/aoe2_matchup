@@ -336,6 +336,8 @@ def run_all_simulations(
     print("SAME-UNIT MATCHUPS (comparing civ bonuses)")
     print("=" * 70)
 
+    NUM_RUNS = 5  # Run each matchup 5 times
+
     for unit_slug, civs in sorted(units_by_slug.items()):
         if len(civs) < 2:
             continue
@@ -344,8 +346,43 @@ def run_all_simulations(
 
         for i, t1 in enumerate(civs):
             for t2 in civs[i + 1 :]:
-                result = simulate_army_battle(t1, t2, resources, verbose=verbose)
-                all_results.append(result)
+                # Run simulation NUM_RUNS times
+                team1_wins = 0
+                team2_wins = 0
+                draws = 0
+
+                for run in range(NUM_RUNS):
+                    result = simulate_army_battle(t1, t2, resources, verbose=verbose)
+                    if result["winner"] == 1:
+                        team1_wins += 1
+                    elif result["winner"] == 2:
+                        team2_wins += 1
+                    else:
+                        draws += 1
+
+                # Only count as win if ALL runs were won by the same side
+                # Otherwise it's a draw (civs are considered equal)
+                if team1_wins == NUM_RUNS:
+                    final_winner = 1
+                elif team2_wins == NUM_RUNS:
+                    final_winner = 2
+                else:
+                    final_winner = 0  # Draw - civs are equal
+
+                # Create aggregated result
+                final_result = {
+                    "team1_civ": t1.civ,
+                    "team1_unit": t1.name,
+                    "team1_slug": t1.unit_slug,
+                    "team2_civ": t2.civ,
+                    "team2_unit": t2.name,
+                    "team2_slug": t2.unit_slug,
+                    "winner": final_winner,
+                    "team1_wins": team1_wins,
+                    "team2_wins": team2_wins,
+                    "draws": draws,
+                }
+                all_results.append(final_result)
 
     # Calculate win rates for each civ/unit combination
     print("\n" + "=" * 70)
@@ -359,9 +396,9 @@ def run_all_simulations(
         key2 = (r["team2_civ"], r["team2_unit"], r["team2_slug"])
 
         if key1 not in stats:
-            stats[key1] = {"wins": 0, "losses": 0, "draws": 0, "res_efficiency": []}
+            stats[key1] = {"wins": 0, "losses": 0, "draws": 0}
         if key2 not in stats:
-            stats[key2] = {"wins": 0, "losses": 0, "draws": 0, "res_efficiency": []}
+            stats[key2] = {"wins": 0, "losses": 0, "draws": 0}
 
         if r["winner"] == 1:
             stats[key1]["wins"] += 1
@@ -373,16 +410,6 @@ def run_all_simulations(
             stats[key1]["draws"] += 1
             stats[key2]["draws"] += 1
 
-        # Resource efficiency: how much damage dealt vs resources lost
-        if r["team1_res_lost"] > 0:
-            stats[key1]["res_efficiency"].append(
-                r["team2_res_lost"] / r["team1_res_lost"]
-            )
-        if r["team2_res_lost"] > 0:
-            stats[key2]["res_efficiency"].append(
-                r["team1_res_lost"] / r["team2_res_lost"]
-            )
-
     # Print results grouped by unit type
     results_by_unit = {}
     for (civ, unit, slug), s in stats.items():
@@ -392,14 +419,8 @@ def run_all_simulations(
         total = s["wins"] + s["losses"] + s["draws"]
         if total > 0:
             win_rate = (s["wins"] + 0.5 * s["draws"]) / total
-            avg_eff = (
-                sum(s["res_efficiency"]) / len(s["res_efficiency"])
-                if s["res_efficiency"]
-                else 1.0
-            )
         else:
             win_rate = 0.5
-            avg_eff = 1.0
 
         results_by_unit[slug].append(
             {
@@ -409,7 +430,6 @@ def run_all_simulations(
                 "losses": s["losses"],
                 "draws": s["draws"],
                 "win_rate": win_rate,
-                "res_efficiency": avg_eff,
             }
         )
 
@@ -420,15 +440,13 @@ def run_all_simulations(
             continue
 
         print(f"\n{unit_results[0]['unit']}:")
-        print(
-            f"  {'Civilization':<20} {'W':>3} {'D':>3} {'L':>3} {'Win%':>7} {'ResEff':>7}"
-        )
-        print(f"  {'-' * 48}")
+        print(f"  {'Civilization':<20} {'W':>3} {'D':>3} {'L':>3} {'Win%':>7}")
+        print(f"  {'-' * 40}")
 
         for r in unit_results:
             print(
                 f"  {r['civ']:<20} {r['wins']:>3} {r['draws']:>3} {r['losses']:>3} "
-                f"{r['win_rate'] * 100:>6.1f}% {r['res_efficiency']:>6.2f}x"
+                f"{r['win_rate'] * 100:>6.1f}%"
             )
 
     # Write CSV output if requested
@@ -444,7 +462,6 @@ def run_all_simulations(
                     "Draws",
                     "Losses",
                     "Win Rate",
-                    "Resource Efficiency",
                 ]
             )
 
@@ -461,7 +478,6 @@ def run_all_simulations(
                             r["draws"],
                             r["losses"],
                             f"{r['win_rate']:.3f}",
-                            f"{r['res_efficiency']:.3f}",
                         ]
                     )
 
@@ -477,16 +493,12 @@ def run_all_simulations(
                 [
                     "Team1_Civ",
                     "Team1_Unit",
-                    "Team1_Count",
-                    "Team1_Remaining",
-                    "Team1_HP",
                     "Team2_Civ",
                     "Team2_Unit",
-                    "Team2_Count",
-                    "Team2_Remaining",
-                    "Team2_HP",
-                    "Winner",
-                    "Battle_Time",
+                    "Team1_Wins",
+                    "Team2_Wins",
+                    "Draws",
+                    "Final_Winner",
                 ]
             )
             for r in all_results:
@@ -495,16 +507,12 @@ def run_all_simulations(
                     [
                         r["team1_civ"],
                         r["team1_unit"],
-                        r["team1_count"],
-                        r["team1_remaining"],
-                        r["team1_hp_left"],
                         r["team2_civ"],
                         r["team2_unit"],
-                        r["team2_count"],
-                        r["team2_remaining"],
-                        r["team2_hp_left"],
+                        r["team1_wins"],
+                        r["team2_wins"],
+                        r["draws"],
                         winner_str,
-                        f"{r['battle_time']:.1f}",
                     ]
                 )
         print(f"Wrote {len(all_results)} matchup records")
@@ -637,8 +645,8 @@ def main():
         "--resources",
         "-r",
         type=int,
-        default=5000,
-        help="Resource budget per team (default: 5000)",
+        default=1000,
+        help="Resource budget per team (default: 1000)",
     )
     parser.add_argument(
         "--output", "-o", type=str, default=None, help="Output CSV file for results"

@@ -18,6 +18,9 @@
                 --highlight-better: #2ecc71;
                 --highlight-worse: #e74c3c;
                 --highlight-unique: #f39c12;
+                --feudal-color: #3498db;
+                --castle-color: #9b59b6;
+                --imperial-color: #e74c3c;
             }
 
             * {
@@ -60,6 +63,59 @@
             .subtitle {
                 font-size: 1.1rem;
                 color: #888;
+            }
+
+            /* Age tabs */
+            .age-tabs {
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+
+            .age-tab {
+                padding: 12px 30px;
+                font-size: 1.1rem;
+                font-family: "Cinzel", serif;
+                background: var(--card-bg);
+                color: var(--text-color);
+                border: 2px solid transparent;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .age-tab:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            }
+
+            .age-tab.active {
+                font-weight: 600;
+            }
+
+            .age-tab[data-age="feudal"] {
+                border-color: var(--feudal-color);
+            }
+            .age-tab[data-age="feudal"].active {
+                background: var(--feudal-color);
+                color: white;
+            }
+
+            .age-tab[data-age="castle"] {
+                border-color: var(--castle-color);
+            }
+            .age-tab[data-age="castle"].active {
+                background: var(--castle-color);
+                color: white;
+            }
+
+            .age-tab[data-age="imperial"] {
+                border-color: var(--imperial-color);
+            }
+            .age-tab[data-age="imperial"].active {
+                background: var(--imperial-color);
+                color: white;
             }
 
             .unit-selector {
@@ -150,6 +206,8 @@
                 justify-content: space-between;
                 align-items: center;
                 margin-bottom: 20px;
+                flex-wrap: wrap;
+                gap: 10px;
             }
 
             .table-title {
@@ -158,11 +216,34 @@
                 color: var(--secondary-color);
             }
 
+            .table-info {
+                display: flex;
+                gap: 15px;
+                align-items: center;
+            }
+
             .civ-count {
                 background: rgba(218, 165, 32, 0.2);
                 padding: 8px 16px;
                 border-radius: 20px;
                 font-size: 0.9rem;
+            }
+
+            .age-badge {
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 0.9rem;
+                font-weight: 600;
+            }
+
+            .age-badge.feudal {
+                background: var(--feudal-color);
+            }
+            .age-badge.castle {
+                background: var(--castle-color);
+            }
+            .age-badge.imperial {
+                background: var(--imperial-color);
             }
 
             table {
@@ -391,31 +472,6 @@
                 border-top: 1px solid rgba(255, 255, 255, 0.1);
             }
 
-            /* Filter input */
-            .filter-container {
-                margin-bottom: 15px;
-            }
-
-            .filter-input {
-                padding: 10px 15px;
-                font-size: 1rem;
-                background: rgba(255, 255, 255, 0.1);
-                border: 2px solid rgba(255, 255, 255, 0.2);
-                border-radius: 8px;
-                color: white;
-                width: 250px;
-                transition: border-color 0.2s;
-            }
-
-            .filter-input:focus {
-                outline: none;
-                border-color: var(--secondary-color);
-            }
-
-            .filter-input::placeholder {
-                color: #666;
-            }
-
             @media (max-width: 768px) {
                 h1 {
                     font-size: 2rem;
@@ -423,6 +479,10 @@
                 .unit-btn {
                     padding: 10px 16px;
                     font-size: 0.9rem;
+                }
+                .age-tab {
+                    padding: 10px 20px;
+                    font-size: 1rem;
                 }
                 table {
                     font-size: 0.8rem;
@@ -443,12 +503,18 @@
                 </p>
             </header>
 
-            <div class="unit-selector">
-                {% for unit in units %}
-                <button class="unit-btn" data-unit="{{ unit.id }}">
-                    {{ unit.name }}
+            <div class="age-tabs">
+                {% for age_id, age_data in units_by_age.items() %}
+                <button class="age-tab" data-age="{{ age_id }}">
+                    {{ age_data.name }}
                 </button>
                 {% endfor %}
+            </div>
+
+            <div class="unit-selector" id="unitSelector">
+                <p style="color: #888">
+                    Select an age above to see available units
+                </p>
             </div>
 
             <div class="legend">
@@ -464,10 +530,10 @@
 
             <div id="content">
                 <div class="no-unit">
-                    <h2>Select a unit type above to begin</h2>
+                    <h2>Select an age and unit type to begin</h2>
                     <p>
-                        Click on any unit button to see civilization-specific
-                        stats and bonuses
+                        Click on an age tab, then select a unit to see
+                        civilization-specific stats
                     </p>
                 </div>
             </div>
@@ -477,68 +543,85 @@
         </div>
 
         <script>
+            // Unit data from server
+            const unitsByAge = {{ units_by_age | tojson }};
+
+            let currentAge = null;
+            let currentUnit = null;
             let currentData = null;
             let sortColumn = null;
-            let sortDirection = "asc";
-            const tooltip = document.getElementById("tooltip");
+            let sortDirection = 'asc';
+            const tooltip = document.getElementById('tooltip');
 
             // Column info for determining better/worse
-            // Attack_Speed is attacks per second - higher = faster attacks = better
-            const higherIsBetter = [
-                "HP",
-                "Attack",
-                "Range",
-                "Attack_Speed",
-                "Melee_Armor",
-                "Pierce_Armor",
-                "Movement_Speed",
-            ];
-            const lowerIsBetter = [
-                "Cost_Food",
-                "Cost_Wood",
-                "Cost_Gold",
-                "Creation_Time",
-                "Upgrade_Cost",
-            ];
+            const higherIsBetter = ['HP', 'Attack', 'Range', 'Attack_Speed', 'Melee_Armor', 'Pierce_Armor', 'Movement_Speed'];
+            const lowerIsBetter = ['Cost_Food', 'Cost_Wood', 'Cost_Gold', 'Creation_Time', 'Upgrade_Cost'];
 
             // Columns to hide from display
-            const hiddenColumns = ["Civ_Bonuses", "Unit"];
+            const hiddenColumns = ['Civ_Bonuses', 'Unit'];
 
-            document.querySelectorAll(".unit-btn").forEach((btn) => {
-                btn.addEventListener("click", () => {
-                    document
-                        .querySelectorAll(".unit-btn")
-                        .forEach((b) => b.classList.remove("active"));
-                    btn.classList.add("active");
-                    loadUnitData(btn.dataset.unit);
+            // Age tab handlers
+            document.querySelectorAll('.age-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.age-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentAge = tab.dataset.age;
+                    currentUnit = null;
+                    renderUnitSelector();
+                    document.getElementById('content').innerHTML = `
+                        <div class="no-unit">
+                            <h2>Select a unit from ${unitsByAge[currentAge].name}</h2>
+                            <p>Click on a unit button above to see its stats across civilizations</p>
+                        </div>
+                    `;
                 });
             });
 
-            async function loadUnitData(unitId) {
-                const content = document.getElementById("content");
-                content.innerHTML =
-                    '<div class="loading">Loading unit data</div>';
+            function renderUnitSelector() {
+                const selector = document.getElementById('unitSelector');
+                if (!currentAge || !unitsByAge[currentAge]) {
+                    selector.innerHTML = '<p style="color: #888;">Select an age above to see available units</p>';
+                    return;
+                }
+
+                const units = unitsByAge[currentAge].units;
+                selector.innerHTML = units.map(unit => `
+                    <button class="unit-btn" data-unit="${unit.id}" data-age="${unit.age}">${unit.name}</button>
+                `).join('');
+
+                // Add click handlers
+                selector.querySelectorAll('.unit-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        selector.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        currentUnit = btn.dataset.unit;
+                        loadUnitData(currentAge, currentUnit);
+                    });
+                });
+            }
+
+            async function loadUnitData(age, unitId) {
+                const content = document.getElementById('content');
+                content.innerHTML = '<div class="loading">Loading unit data</div>';
 
                 try {
-                    const response = await fetch(`/api/unit/${unitId}`);
+                    const response = await fetch(`/api/unit/${age}/${unitId}`);
                     const data = await response.json();
                     currentData = data;
+                    currentData.age = age;
                     sortColumn = null;
                     renderTable();
                 } catch (error) {
-                    content.innerHTML =
-                        '<div class="no-unit"><h2>Error loading data</h2><p>Please try again</p></div>';
+                    content.innerHTML = '<div class="no-unit"><h2>Error loading data</h2><p>Please try again</p></div>';
                 }
             }
 
             function isGenericCiv(row, unique_stats) {
-                // A civ is "generic" if it has no unique stats (all baseline values) and no civ bonus
-                const civBonus = row["Civ_Bonuses"];
-                const hasBonus = civBonus && civBonus !== "-";
+                const civBonus = row['Civ_Bonuses'];
+                const hasBonus = civBonus && civBonus !== '-';
 
                 if (hasBonus) return false;
 
-                // Check if this civ has any unique stat values
                 for (const col in unique_stats) {
                     if (row.Civilization in unique_stats[col].unique_civs) {
                         return false;
@@ -550,20 +633,10 @@
             function renderTable() {
                 if (!currentData) return;
 
-                const {
-                    records,
-                    columns,
-                    unique_stats,
-                    total_civs,
-                    missing_civs,
-                } = currentData;
+                const { records, columns, unique_stats, total_civs, missing_civs, age } = currentData;
 
-                // Filter out hidden columns
-                const displayColumns = columns.filter(
-                    (col) => !hiddenColumns.includes(col),
-                );
+                const displayColumns = columns.filter(col => !hiddenColumns.includes(col));
 
-                // Separate generic civs from unique civs
                 const genericCivs = [];
                 const uniqueCivRecords = [];
 
@@ -575,114 +648,94 @@
                     }
                 }
 
-                // Sort unique records if needed
                 let sortedRecords = [...uniqueCivRecords];
                 if (sortColumn) {
                     sortedRecords.sort((a, b) => {
                         let aVal = a[sortColumn];
                         let bVal = b[sortColumn];
 
-                        // Handle null/undefined
                         if (aVal == null) return 1;
                         if (bVal == null) return -1;
 
-                        // Numeric comparison
-                        if (
-                            typeof aVal === "number" &&
-                            typeof bVal === "number"
-                        ) {
-                            return sortDirection === "asc"
-                                ? aVal - bVal
-                                : bVal - aVal;
+                        if (typeof aVal === 'number' && typeof bVal === 'number') {
+                            return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
                         }
 
-                        // String comparison
                         aVal = String(aVal).toLowerCase();
                         bVal = String(bVal).toLowerCase();
-                        if (sortDirection === "asc") {
+                        if (sortDirection === 'asc') {
                             return aVal.localeCompare(bVal);
                         }
                         return bVal.localeCompare(aVal);
                     });
                 }
 
-                const unitName =
-                    document
-                        .querySelector(".unit-btn.active")
-                        ?.textContent?.trim() || "Unit";
+                const unitName = document.querySelector('.unit-btn.active')?.textContent?.trim() || 'Unit';
+                const ageName = unitsByAge[age]?.name || age;
 
-                // Build the generic row data (use first generic civ's stats as template)
                 let genericRowData = null;
                 if (genericCivs.length > 0) {
-                    // Find a generic civ record to use as template
-                    const templateCiv = records.find((r) =>
-                        genericCivs.includes(r.Civilization),
-                    );
+                    const templateCiv = records.find(r => genericCivs.includes(r.Civilization));
                     if (templateCiv) {
-                        genericRowData = { ...templateCiv };
+                        genericRowData = {...templateCiv};
                         genericRowData._isGeneric = true;
                         genericRowData._genericCivs = genericCivs.sort();
                     }
                 }
 
                 let html = `
-                <div class="table-container">
-                    <div class="table-header">
-                        <h2 class="table-title">${unitName} Stats by Civilization</h2>
-                        <span class="civ-count">${total_civs} civilizations have this unit</span>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                ${displayColumns
-                                    .map((col) => {
-                                        let sortClass = "";
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h2 class="table-title">${unitName} Stats by Civilization</h2>
+                            <div class="table-info">
+                                <span class="age-badge ${age}">${ageName}</span>
+                                <span class="civ-count">${total_civs} civilizations</span>
+                            </div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    ${displayColumns.map(col => {
+                                        let sortClass = '';
                                         if (sortColumn === col) {
-                                            sortClass =
-                                                sortDirection === "asc"
-                                                    ? "sort-asc"
-                                                    : "sort-desc";
+                                            sortClass = sortDirection === 'asc' ? 'sort-asc' : 'sort-desc';
                                         }
                                         return `<th class="${sortClass}" data-column="${col}">${formatColumnName(col)}</th>`;
-                                    })
-                                    .join("")}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${genericRowData ? renderGenericRow(genericRowData, displayColumns) : ""}
-                            ${sortedRecords.map((row) => renderRow(row, displayColumns, unique_stats)).join("")}
-                            ${missing_civs && missing_civs.length > 0 ? renderMissingRow(missing_civs, displayColumns) : ""}
-                        </tbody>
-                    </table>
-                </div>
-            `;
+                                    }).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${genericRowData ? renderGenericRow(genericRowData, displayColumns) : ''}
+                                ${sortedRecords.map(row => renderRow(row, displayColumns, unique_stats)).join('')}
+                                ${missing_civs && missing_civs.length > 0 ? renderMissingRow(missing_civs, displayColumns) : ''}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
 
-                document.getElementById("content").innerHTML = html;
+                document.getElementById('content').innerHTML = html;
 
-                // Add sort handlers
-                document.querySelectorAll("thead th").forEach((th) => {
-                    th.addEventListener("click", () => {
+                document.querySelectorAll('thead th').forEach(th => {
+                    th.addEventListener('click', () => {
                         const col = th.dataset.column;
                         if (sortColumn === col) {
-                            sortDirection =
-                                sortDirection === "asc" ? "desc" : "asc";
+                            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
                         } else {
                             sortColumn = col;
-                            sortDirection = "asc";
+                            sortDirection = 'asc';
                         }
                         renderTable();
                     });
                 });
 
-                // Add tooltip handlers
                 setupTooltips();
             }
 
             function setupTooltips() {
-                document.querySelectorAll("td[data-tooltip]").forEach((td) => {
-                    td.addEventListener("mouseenter", showTooltip);
-                    td.addEventListener("mousemove", moveTooltip);
-                    td.addEventListener("mouseleave", hideTooltip);
+                document.querySelectorAll('td[data-tooltip]').forEach(td => {
+                    td.addEventListener('mouseenter', showTooltip);
+                    td.addEventListener('mousemove', moveTooltip);
+                    td.addEventListener('mouseleave', hideTooltip);
                 });
             }
 
@@ -690,14 +743,14 @@
                 const td = e.target;
                 const tooltipData = JSON.parse(td.dataset.tooltip);
 
-                let html = "";
+                let html = '';
                 if (tooltipData.title) {
                     html += `<div class="tooltip-title">${tooltipData.title}</div>`;
                 }
                 if (tooltipData.civList && tooltipData.civList.length > 0) {
-                    html += `<div class="tooltip-list">${tooltipData.civList.join(", ")}</div>`;
+                    html += `<div class="tooltip-list">${tooltipData.civList.join(', ')}</div>`;
                 }
-                if (tooltipData.bonus && tooltipData.bonus !== "-") {
+                if (tooltipData.bonus && tooltipData.bonus !== '-') {
                     html += `<div>${tooltipData.bonus}</div>`;
                 }
                 if (tooltipData.baseline !== undefined) {
@@ -706,7 +759,7 @@
 
                 if (html) {
                     tooltip.innerHTML = html;
-                    tooltip.style.display = "block";
+                    tooltip.style.display = 'block';
                     moveTooltip(e);
                 }
             }
@@ -715,121 +768,105 @@
                 const x = e.clientX + 15;
                 const y = e.clientY + 15;
 
-                // Keep tooltip on screen
                 const rect = tooltip.getBoundingClientRect();
                 const maxX = window.innerWidth - rect.width - 10;
                 const maxY = window.innerHeight - rect.height - 10;
 
-                tooltip.style.left = Math.min(x, maxX) + "px";
-                tooltip.style.top = Math.min(y, maxY) + "px";
+                tooltip.style.left = Math.min(x, maxX) + 'px';
+                tooltip.style.top = Math.min(y, maxY) + 'px';
             }
 
             function hideTooltip() {
-                tooltip.style.display = "none";
+                tooltip.style.display = 'none';
             }
 
             function formatColumnName(col) {
-                return col.replace(/_/g, " ");
+                return col.replace(/_/g, ' ');
             }
 
             function renderGenericRow(row, columns) {
                 const civCount = row._genericCivs.length;
                 const tooltipData = {
                     title: `Generic Civs (${civCount})`,
-                    civList: row._genericCivs,
+                    civList: row._genericCivs
                 };
 
                 return `<tr class="generic-row">
-                ${columns
-                    .map((col) => {
-                        if (col === "Civilization") {
+                    ${columns.map(col => {
+                        if (col === 'Civilization') {
                             return `<td class="civ-name" data-tooltip='${JSON.stringify(tooltipData)}'>Generic (${civCount} civs)</td>`;
                         }
                         const value = row[col];
-                        const displayValue =
-                            value == null || value === "" ? "-" : value;
+                        const displayValue = value == null || value === '' ? '-' : value;
                         return `<td>${displayValue}</td>`;
-                    })
-                    .join("")}
-            </tr>`;
+                    }).join('')}
+                </tr>`;
             }
 
             function renderMissingRow(missingCivs, columns) {
                 const tooltipData = {
                     title: `Missing Unit (${missingCivs.length} civs)`,
-                    civList: missingCivs,
+                    civList: missingCivs
                 };
 
                 return `<tr class="missing-row">
-                ${columns
-                    .map((col) => {
-                        if (col === "Civilization") {
+                    ${columns.map(col => {
+                        if (col === 'Civilization') {
                             return `<td class="civ-name" data-tooltip='${JSON.stringify(tooltipData)}'>Missing (${missingCivs.length} civs)</td>`;
                         }
                         return `<td>-</td>`;
-                    })
-                    .join("")}
-            </tr>`;
+                    }).join('')}
+                </tr>`;
             }
 
             function renderRow(row, columns, unique_stats) {
-                return `<tr>${columns.map((col) => renderCell(row, col, unique_stats)).join("")}</tr>`;
+                return `<tr>${columns.map(col => renderCell(row, col, unique_stats)).join('')}</tr>`;
             }
 
             function renderCell(row, col, unique_stats) {
                 const value = row[col];
-                const civBonus = row["Civ_Bonuses"];
+                const civBonus = row['Civ_Bonuses'];
                 let classes = [];
                 let tooltipData = {};
 
-                if (col === "Civilization") {
-                    classes.push("civ-name");
-                    if (civBonus && civBonus !== "-") {
-                        classes.push("has-bonus");
+                if (col === 'Civilization') {
+                    classes.push('civ-name');
+                    if (civBonus && civBonus !== '-') {
+                        classes.push('has-bonus');
                         tooltipData = {
-                            title: row.Civilization + " Bonuses",
-                            bonus: civBonus,
+                            title: row.Civilization + ' Bonuses',
+                            bonus: civBonus
                         };
                     }
-                } else if (
-                    unique_stats[col] &&
-                    row.Civilization in unique_stats[col].unique_civs
-                ) {
+                } else if (unique_stats[col] && row.Civilization in unique_stats[col].unique_civs) {
                     const baseline = unique_stats[col].baseline;
                     const isHigherBetter = higherIsBetter.includes(col);
                     const isLowerBetter = lowerIsBetter.includes(col);
 
                     if (isHigherBetter) {
-                        classes.push(
-                            value > baseline ? "unique-better" : "unique-worse",
-                        );
+                        classes.push(value > baseline ? 'unique-better' : 'unique-worse');
                     } else if (isLowerBetter) {
-                        classes.push(
-                            value < baseline ? "unique-better" : "unique-worse",
-                        );
+                        classes.push(value < baseline ? 'unique-better' : 'unique-worse');
                     } else {
-                        classes.push("unique-different");
+                        classes.push('unique-different');
                     }
 
                     tooltipData = {
                         title: `${row.Civilization} - ${formatColumnName(col)}`,
-                        baseline: baseline,
+                        baseline: baseline
                     };
 
-                    // Add civ bonus if this stat is affected by a bonus
-                    if (civBonus && civBonus !== "-") {
+                    if (civBonus && civBonus !== '-') {
                         tooltipData.bonus = civBonus;
                     }
                 }
 
-                const displayValue =
-                    value == null || value === "" ? "-" : value;
-                const tooltipAttr =
-                    Object.keys(tooltipData).length > 0
-                        ? `data-tooltip='${JSON.stringify(tooltipData)}'`
-                        : "";
+                const displayValue = value == null || value === '' ? '-' : value;
+                const tooltipAttr = Object.keys(tooltipData).length > 0
+                    ? `data-tooltip='${JSON.stringify(tooltipData)}'`
+                    : '';
 
-                return `<td class="${classes.join(" ")}" ${tooltipAttr}>${displayValue}</td>`;
+                return `<td class="${classes.join(' ')}" ${tooltipAttr}>${displayValue}</td>`;
             }
         </script>
     </body>

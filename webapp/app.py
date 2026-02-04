@@ -89,11 +89,14 @@ def get_unit_data(age_id, unit_id):
             us.creation_time as Creation_Time,
             us.upgrade_cost as Upgrade_Cost,
             us.civ_bonuses as Civ_Bonuses,
-            us.has_unit as Has_Unit
+            us.has_unit as Has_Unit,
+            us.combat_wins as Wins,
+            us.combat_losses as Losses,
+            us.combat_score as Combat_Score
         FROM unit_stats us
         JOIN civilizations c ON us.civ_id = c.id
         WHERE us.unit_id = ?
-        ORDER BY c.name
+        ORDER BY us.combat_score DESC, c.name
         """,
         (db_unit_id,),
     )
@@ -118,6 +121,9 @@ def get_unit_data(age_id, unit_id):
     columns = [
         "Civilization",
         "Unit",
+        "Combat_Score",
+        "Wins",
+        "Losses",
         "HP",
         "Attack",
         "Range",
@@ -140,6 +146,9 @@ def get_unit_data(age_id, unit_id):
 
     # Identify numeric columns for uniqueness detection
     numeric_cols = [
+        "Combat_Score",
+        "Wins",
+        "Losses",
         "HP",
         "Attack",
         "Range",

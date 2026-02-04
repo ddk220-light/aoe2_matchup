@@ -913,8 +913,8 @@
             const tooltip = document.getElementById('tooltip');
 
             // Column info for determining better/worse
-            const higherIsBetter = ['HP', 'Attack', 'Range', 'Attack_Speed', 'Melee_Armor', 'Pierce_Armor', 'Movement_Speed'];
-            const lowerIsBetter = ['Cost_Food', 'Cost_Wood', 'Cost_Gold', 'Creation_Time', 'Upgrade_Cost'];
+            const higherIsBetter = ['HP', 'Attack', 'Range', 'Attack_Speed', 'Melee_Armor', 'Pierce_Armor', 'Movement_Speed', 'Combat_Score', 'Wins'];
+            const lowerIsBetter = ['Cost_Food', 'Cost_Wood', 'Cost_Gold', 'Creation_Time', 'Upgrade_Cost', 'Losses'];
 
             // Columns to hide from display
             const hiddenColumns = ['Civ_Bonuses', 'Unit'];
@@ -1262,7 +1262,13 @@
                     }
                 }
 
-                const displayValue = value == null || value === '' ? '-' : value;
+                let displayValue = value == null || value === '' ? '-' : value;
+
+                // Format Combat_Score as percentage
+                if (col === 'Combat_Score' && typeof value === 'number') {
+                    displayValue = (value * 100).toFixed(1) + '%';
+                }
+
                 const tooltipAttr = Object.keys(tooltipData).length > 0
                     ? `data-tooltip='${JSON.stringify(tooltipData)}'`
                     : '';

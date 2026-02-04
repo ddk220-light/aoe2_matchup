@@ -53,6 +53,13 @@ CMD_ADD_ATTRIBUTE = 4
 CMD_MULTIPLY_ATTRIBUTE = 5
 
 # =============================================================================
+# SIMULATION CONFIGURATION
+# =============================================================================
+# Lithuanian relic count for cavalry attack bonus (0-4)
+# Each relic gives +1 attack to Knights, Cavaliers, Paladins, and Leitis
+LITHUANIAN_RELIC_COUNT = 2
+
+# =============================================================================
 # UNIT DEFINITIONS
 # =============================================================================
 # Format: (base_unit_id, display_name, unit_class, availability_tech, upgrade_techs)
@@ -424,6 +431,518 @@ AGE_NAMES = {
     IMPERIAL_AGE: "Imperial Age",
 }
 
+# =============================================================================
+# UNIQUE UNITS
+# =============================================================================
+# Format: civ_name -> list of unique unit configs
+# Each unique unit has: base_id, display_name, unit_class, availability_tech, elite_tech, elite_id
+UNIQUE_UNITS = {
+    "Britons": [
+        {
+            "base_id": 8,
+            "display_name": "Longbowman",
+            "unit_class": 0,
+            "availability_tech": 263,
+            "elite_tech": 360,
+            "elite_id": 545,
+            "elite_name": "Elite Longbowman",
+        },
+    ],
+    "Franks": [
+        {
+            "base_id": 1001,
+            "display_name": "Throwing Axeman",
+            "unit_class": 6,
+            "availability_tech": 275,
+            "elite_tech": 363,
+            "elite_id": 1003,
+            "elite_name": "Elite Throwing Axeman",
+        },
+    ],
+    "Goths": [
+        {
+            "base_id": 41,
+            "display_name": "Huskarl",
+            "unit_class": 6,
+            "availability_tech": 446,
+            "elite_tech": 365,
+            "elite_id": 554,
+            "elite_name": "Elite Huskarl",
+        },
+    ],
+    "Teutons": [
+        {
+            "base_id": 25,
+            "display_name": "Teutonic Knight",
+            "unit_class": 6,
+            "availability_tech": 276,
+            "elite_tech": 364,
+            "elite_id": 556,
+            "elite_name": "Elite Teutonic Knight",
+        },
+    ],
+    "Japanese": [
+        {
+            "base_id": 291,
+            "display_name": "Samurai",
+            "unit_class": 6,
+            "availability_tech": 262,
+            "elite_tech": 366,
+            "elite_id": 560,
+            "elite_name": "Elite Samurai",
+        },
+    ],
+    "Chinese": [
+        {
+            "base_id": 73,
+            "display_name": "Chu Ko Nu",
+            "unit_class": 0,
+            "availability_tech": 268,
+            "elite_tech": 362,
+            "elite_id": 559,
+            "elite_name": "Elite Chu Ko Nu",
+        },
+    ],
+    "Byzantines": [
+        {
+            "base_id": 40,
+            "display_name": "Cataphract",
+            "unit_class": 12,
+            "availability_tech": 267,
+            "elite_tech": 361,
+            "elite_id": 553,
+            "elite_name": "Elite Cataphract",
+        },
+    ],
+    "Persians": [
+        {
+            "base_id": 239,
+            "display_name": "War Elephant",
+            "unit_class": 12,
+            "availability_tech": 274,
+            "elite_tech": 367,
+            "elite_id": 558,
+            "elite_name": "Elite War Elephant",
+        },
+    ],
+    "Saracens": [
+        {
+            "base_id": 832,
+            "display_name": "Mameluke",
+            "unit_class": 12,
+            "availability_tech": 269,
+            "elite_tech": 368,
+            "elite_id": 831,
+            "elite_name": "Elite Mameluke",
+        },
+    ],
+    "Turks": [
+        {
+            "base_id": 46,
+            "display_name": "Janissary",
+            "unit_class": 44,
+            "availability_tech": 271,
+            "elite_tech": 369,
+            "elite_id": 557,
+            "elite_name": "Elite Janissary",
+        },
+    ],
+    "Mongols": [
+        {
+            "base_id": 11,
+            "display_name": "Mangudai",
+            "unit_class": 36,
+            "availability_tech": 273,
+            "elite_tech": 371,
+            "elite_id": 561,
+            "elite_name": "Elite Mangudai",
+        },
+    ],
+    "Celts": [
+        {
+            "base_id": 232,
+            "display_name": "Woad Raider",
+            "unit_class": 6,
+            "availability_tech": 277,
+            "elite_tech": 370,
+            "elite_id": 548,
+            "elite_name": "Elite Woad Raider",
+        },
+    ],
+    "Vikings": [
+        {
+            "base_id": 692,
+            "display_name": "Berserk",
+            "unit_class": 6,
+            "availability_tech": 398,
+            "elite_tech": 398,
+            "elite_id": 694,
+            "elite_name": "Elite Berserk",
+        },
+    ],
+    "Aztecs": [
+        {
+            "base_id": 765,
+            "display_name": "Jaguar Warrior",
+            "unit_class": 6,
+            "availability_tech": 432,
+            "elite_tech": 432,
+            "elite_id": 767,
+            "elite_name": "Elite Jaguar Warrior",
+        },
+    ],
+    "Mayans": [
+        {
+            "base_id": 763,
+            "display_name": "Plumed Archer",
+            "unit_class": 0,
+            "availability_tech": 26,
+            "elite_tech": 27,
+            "elite_id": 765,
+            "elite_name": "Elite Plumed Archer",
+        },
+    ],
+    "Huns": [
+        {
+            "base_id": 755,
+            "display_name": "Tarkan",
+            "unit_class": 12,
+            "availability_tech": 1,
+            "elite_tech": 2,
+            "elite_id": 757,
+            "elite_name": "Elite Tarkan",
+        },
+    ],
+    "Spanish": [
+        {
+            "base_id": 771,
+            "display_name": "Conquistador",
+            "unit_class": 36,
+            "availability_tech": 58,
+            "elite_tech": 60,
+            "elite_id": 773,
+            "elite_name": "Elite Conquistador",
+        },
+    ],
+    "Koreans": [
+        {
+            "base_id": 827,
+            "display_name": "War Wagon",
+            "unit_class": 36,
+            "availability_tech": 449,
+            "elite_tech": 450,
+            "elite_id": 829,
+            "elite_name": "Elite War Wagon",
+        },
+    ],
+    "Italians": [
+        {
+            "base_id": 1004,
+            "display_name": "Genoese Crossbowman",
+            "unit_class": 0,
+            "availability_tech": 467,
+            "elite_tech": 468,
+            "elite_id": 1006,
+            "elite_name": "Elite Genoese Crossbowman",
+        },
+    ],
+    "Magyars": [
+        {
+            "base_id": 869,
+            "display_name": "Magyar Huszar",
+            "unit_class": 12,
+            "availability_tech": 471,
+            "elite_tech": 472,
+            "elite_id": 871,
+            "elite_name": "Elite Magyar Huszar",
+        },
+    ],
+    "Slavs": [
+        {
+            "base_id": 876,
+            "display_name": "Boyar",
+            "unit_class": 12,
+            "availability_tech": 503,
+            "elite_tech": 504,
+            "elite_id": 878,
+            "elite_name": "Elite Boyar",
+        },
+    ],
+    "Incas": [
+        {
+            "base_id": 879,
+            "display_name": "Kamayuk",
+            "unit_class": 6,
+            "availability_tech": 508,
+            "elite_tech": 509,
+            "elite_id": 881,
+            "elite_name": "Elite Kamayuk",
+        },
+    ],
+    "Hindustanis": [
+        {
+            "base_id": 1747,
+            "display_name": "Ghulam",
+            "unit_class": 6,
+            "availability_tech": 885,
+            "elite_tech": 886,
+            "elite_id": 1749,
+            "elite_name": "Elite Ghulam",
+        },
+    ],
+    "Portuguese": [
+        {
+            "base_id": 1120,
+            "display_name": "Organ Gun",
+            "unit_class": 13,
+            "availability_tech": 562,
+            "elite_tech": 563,
+            "elite_id": 1122,
+            "elite_name": "Elite Organ Gun",
+        },
+    ],
+    "Berbers": [
+        {
+            "base_id": 1123,
+            "display_name": "Camel Archer",
+            "unit_class": 36,
+            "availability_tech": 564,
+            "elite_tech": 565,
+            "elite_id": 1125,
+            "elite_name": "Elite Camel Archer",
+        },
+    ],
+    "Malians": [
+        {
+            "base_id": 1013,
+            "display_name": "Gbeto",
+            "unit_class": 6,
+            "availability_tech": 566,
+            "elite_tech": 567,
+            "elite_id": 1015,
+            "elite_name": "Elite Gbeto",
+        },
+    ],
+    "Ethiopians": [
+        {
+            "base_id": 1016,
+            "display_name": "Shotel Warrior",
+            "unit_class": 6,
+            "availability_tech": 568,
+            "elite_tech": 569,
+            "elite_id": 1018,
+            "elite_name": "Elite Shotel Warrior",
+        },
+    ],
+    "Khmer": [
+        {
+            "base_id": 1225,
+            "display_name": "Ballista Elephant",
+            "unit_class": 55,
+            "availability_tech": 614,
+            "elite_tech": 615,
+            "elite_id": 1227,
+            "elite_name": "Elite Ballista Elephant",
+        },
+    ],
+    "Malay": [
+        {
+            "base_id": 1228,
+            "display_name": "Karambit Warrior",
+            "unit_class": 6,
+            "availability_tech": 616,
+            "elite_tech": 617,
+            "elite_id": 1230,
+            "elite_name": "Elite Karambit Warrior",
+        },
+    ],
+    "Burmese": [
+        {
+            "base_id": 1231,
+            "display_name": "Arambai",
+            "unit_class": 36,
+            "availability_tech": 618,
+            "elite_tech": 619,
+            "elite_id": 1233,
+            "elite_name": "Elite Arambai",
+        },
+    ],
+    "Vietnamese": [
+        {
+            "base_id": 1234,
+            "display_name": "Rattan Archer",
+            "unit_class": 0,
+            "availability_tech": 620,
+            "elite_tech": 621,
+            "elite_id": 1236,
+            "elite_name": "Elite Rattan Archer",
+        },
+    ],
+    "Bulgarians": [
+        {
+            "base_id": 1254,
+            "display_name": "Konnik",
+            "unit_class": 12,
+            "availability_tech": 677,
+            "elite_tech": 678,
+            "elite_id": 1256,
+            "elite_name": "Elite Konnik",
+        },
+    ],
+    "Tatars": [
+        {
+            "base_id": 1263,
+            "display_name": "Keshik",
+            "unit_class": 12,
+            "availability_tech": 679,
+            "elite_tech": 680,
+            "elite_id": 1265,
+            "elite_name": "Elite Keshik",
+        },
+    ],
+    "Cumans": [
+        {
+            "base_id": 1260,
+            "display_name": "Kipchak",
+            "unit_class": 36,
+            "availability_tech": 681,
+            "elite_tech": 682,
+            "elite_id": 1262,
+            "elite_name": "Elite Kipchak",
+        },
+    ],
+    "Lithuanians": [
+        {
+            "base_id": 1269,
+            "display_name": "Leitis",
+            "unit_class": 12,
+            "availability_tech": 683,
+            "elite_tech": 684,
+            "elite_id": 1271,
+            "elite_name": "Elite Leitis",
+        },
+    ],
+    "Burgundians": [
+        {
+            "base_id": 1655,
+            "display_name": "Coustillier",
+            "unit_class": 12,
+            "availability_tech": 754,
+            "elite_tech": 755,
+            "elite_id": 1657,
+            "elite_name": "Elite Coustillier",
+        },
+    ],
+    "Sicilians": [
+        {
+            "base_id": 1658,
+            "display_name": "Serjeant",
+            "unit_class": 6,
+            "availability_tech": 756,
+            "elite_tech": 757,
+            "elite_id": 1660,
+            "elite_name": "Elite Serjeant",
+        },
+    ],
+    "Poles": [
+        {
+            "base_id": 1699,
+            "display_name": "Obuch",
+            "unit_class": 6,
+            "availability_tech": 782,
+            "elite_tech": 783,
+            "elite_id": 1701,
+            "elite_name": "Elite Obuch",
+        },
+    ],
+    "Bohemians": [
+        {
+            "base_id": 1696,
+            "display_name": "Hussite Wagon",
+            "unit_class": 13,
+            "availability_tech": 780,
+            "elite_tech": 781,
+            "elite_id": 1698,
+            "elite_name": "Elite Hussite Wagon",
+        },
+    ],
+    "Dravidians": [
+        {
+            "base_id": 1735,
+            "display_name": "Urumi Swordsman",
+            "unit_class": 6,
+            "availability_tech": 825,
+            "elite_tech": 826,
+            "elite_id": 1737,
+            "elite_name": "Elite Urumi Swordsman",
+        },
+    ],
+    "Bengalis": [
+        {
+            "base_id": 1741,
+            "display_name": "Ratha",
+            "unit_class": 36,
+            "availability_tech": 831,
+            "elite_tech": 832,
+            "elite_id": 1743,
+            "elite_name": "Elite Ratha",
+        },
+    ],
+    "Gurjaras": [
+        {
+            "base_id": 1751,
+            "display_name": "Shrivamsha Rider",
+            "unit_class": 12,
+            "availability_tech": 889,
+            "elite_tech": 890,
+            "elite_id": 1753,
+            "elite_name": "Elite Shrivamsha Rider",
+        },
+        {
+            "base_id": 1755,
+            "display_name": "Chakram Thrower",
+            "unit_class": 6,
+            "availability_tech": 893,
+            "elite_tech": 894,
+            "elite_id": 1757,
+            "elite_name": "Elite Chakram Thrower",
+        },
+    ],
+    "Romans": [
+        {
+            "base_id": 1790,
+            "display_name": "Centurion",
+            "unit_class": 6,
+            "availability_tech": 935,
+            "elite_tech": 936,
+            "elite_id": 1792,
+            "elite_name": "Elite Centurion",
+        },
+    ],
+    "Armenians": [
+        {
+            "base_id": 1850,
+            "display_name": "Composite Bowman",
+            "unit_class": 0,
+            "availability_tech": 963,
+            "elite_tech": 964,
+            "elite_id": 1852,
+            "elite_name": "Elite Composite Bowman",
+        },
+    ],
+    "Georgians": [
+        {
+            "base_id": 1870,
+            "display_name": "Monaspa",
+            "unit_class": 12,
+            "availability_tech": 973,
+            "elite_tech": 974,
+            "elite_id": 1872,
+            "elite_name": "Elite Monaspa",
+        },
+    ],
+}
+
 
 @dataclass
 class UnitStats:
@@ -683,10 +1202,22 @@ class UnitAnalyzer:
             if tech_data.get("cost") and not tech_name.startswith("C-Bonus"):
                 continue
 
-            # Skip relic-based bonuses (e.g., Lithuanian "Relic +1 cav attack")
-            # These require collecting relics in-game and shouldn't be auto-applied
+            # Handle relic-based bonuses (e.g., Lithuanian "Relic +1 cav attack")
+            # Apply only the configured number of relic bonuses for Lithuanians
             if "Relic" in tech_name:
-                continue
+                if civ_name == "Lithuanians" and LITHUANIAN_RELIC_COUNT > 0:
+                    # Extract relic number from tech name (e.g., "Relic +1 cav attack 1" -> 1)
+                    relic_num = 0
+                    for part in tech_name.split():
+                        if part.isdigit():
+                            relic_num = int(part)
+                            break
+                    # Only apply if this relic number is within our configured count
+                    if relic_num > LITHUANIAN_RELIC_COUNT:
+                        continue
+                    # Fall through to apply this relic bonus
+                else:
+                    continue
 
             # Check if all required techs are available to this civ
             # This handles conditional bonuses like Mongol "+30% HP + BL" which requires Bloodlines
@@ -897,11 +1428,21 @@ class UnitAnalyzer:
 
         if use_alternate:
             base_id = alternate["base_id"]
-            base_name = alternate["display_name"]
+            base_unit = self.get_unit(base_id)
+            base_name = (
+                base_unit.get("name", alternate["display_name"])
+                if base_unit
+                else alternate["display_name"]
+            )
             upgrades = alternate.get("upgrades", [])
         else:
             base_id = unit_config["base_id"]
-            base_name = unit_config["display_name"]
+            base_unit = self.get_unit(base_id)
+            base_name = (
+                base_unit.get("name", unit_config["display_name"])
+                if base_unit
+                else unit_config["display_name"]
+            )
             upgrades = unit_config.get("upgrades", [])
 
             # Check for civ-specific upgrades (e.g., Burgundians Cavalier in Castle Age)
@@ -1032,6 +1573,88 @@ class UnitAnalyzer:
             "applied_bonuses": applied_bonuses,
         }
 
+    def calculate_unique_unit_stats(
+        self, civ_name: str, uu_config: dict, max_age: int, elite: bool = False
+    ) -> dict:
+        """
+        Calculate stats for a unique unit for its civilization.
+
+        Args:
+            civ_name: The civilization name
+            uu_config: Unique unit configuration dict
+            max_age: Maximum age (CASTLE_AGE or IMPERIAL_AGE)
+            elite: Whether to calculate elite version stats
+
+        Returns dict with:
+        - stats: UnitStats object
+        - has_unit: Whether the civ has this unit
+        - applied_bonuses: List of applied civ bonuses
+        """
+        # Get the unit ID based on elite status
+        if elite:
+            unit_id = uu_config.get("elite_id", uu_config["base_id"])
+            unit_name = uu_config.get(
+                "elite_name", f"Elite {uu_config['display_name']}"
+            )
+        else:
+            unit_id = uu_config["base_id"]
+            unit_name = uu_config["display_name"]
+
+        unit = self.get_unit(unit_id)
+        if not unit:
+            return {
+                "stats": None,
+                "has_unit": False,
+                "applied_bonuses": [],
+            }
+
+        unit_class = uu_config["unit_class"]
+        stats = self.get_base_stats(unit)
+        applied_bonuses = []
+
+        # Apply standard techs (blacksmith upgrades, etc.)
+        standard_techs = self.find_techs_affecting_unit(unit_id, unit_class, max_age)
+        disabled_techs = self.get_disabled_techs(civ_name)
+
+        for tech_id in sorted(standard_techs):
+            if tech_id in disabled_techs:
+                continue
+
+            if tech_id in self.tech_effect_map:
+                te = self.tech_effect_map[tech_id]
+                for cmd in te.get("commands", []):
+                    self.apply_effect_command(cmd, stats, unit_id, unit_class)
+
+        # Apply civ bonus techs
+        civ_bonus_techs = self.get_civ_bonus_techs_for_unit(
+            civ_name, unit_id, unit_class, max_age
+        )
+        for te in civ_bonus_techs:
+            tech_name = te.get("tech_name", f"Tech {te['tech_id']}")
+            for cmd in te.get("commands", []):
+                if self.apply_effect_command(cmd, stats, unit_id, unit_class):
+                    if tech_name not in applied_bonuses:
+                        applied_bonuses.append(tech_name)
+
+        # Round values
+        stats.hp = round(stats.hp)
+        stats.speed = round(stats.speed, 2)
+        stats.attack = round(stats.attack)
+        stats.melee_armor = round(stats.melee_armor)
+        stats.pierce_armor = round(stats.pierce_armor)
+        stats.cost_food = round(stats.cost_food)
+        stats.cost_wood = round(stats.cost_wood)
+        stats.cost_gold = round(stats.cost_gold)
+        stats.train_time = round(stats.train_time)
+        stats.reload_time = round(stats.reload_time, 3)
+        stats.range = round(stats.range, 1)
+
+        return {
+            "stats": stats,
+            "has_unit": True,
+            "applied_bonuses": applied_bonuses,
+        }
+
 
 def create_database():
     """Create the SQLite database with the schema."""
@@ -1065,7 +1688,10 @@ def create_database():
             slug TEXT UNIQUE NOT NULL,
             display_name TEXT NOT NULL,
             age_id INTEGER NOT NULL,
-            FOREIGN KEY (age_id) REFERENCES ages(id)
+            unit_type TEXT DEFAULT 'standard',
+            civ_id INTEGER,
+            FOREIGN KEY (age_id) REFERENCES ages(id),
+            FOREIGN KEY (civ_id) REFERENCES civilizations(id)
         );
 
         -- Unit stats table (stats for each civ/unit combination)
@@ -1088,9 +1714,36 @@ def create_database():
             upgrade_cost INTEGER,
             civ_bonuses TEXT,
             has_unit INTEGER NOT NULL,
+            attacks_json TEXT,
+            armors_json TEXT,
+            combat_wins INTEGER DEFAULT 0,
+            combat_losses INTEGER DEFAULT 0,
+            combat_draws INTEGER DEFAULT 0,
+            combat_score REAL DEFAULT 0,
             FOREIGN KEY (civ_id) REFERENCES civilizations(id),
             FOREIGN KEY (unit_id) REFERENCES units(id),
             UNIQUE(civ_id, unit_id)
+        );
+
+        -- Armor classes lookup table
+        CREATE TABLE armor_classes (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL
+        );
+
+        -- Combat simulation results table
+        CREATE TABLE combat_results (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            unit_stats_id_1 INTEGER NOT NULL,
+            unit_stats_id_2 INTEGER NOT NULL,
+            winner_id INTEGER,
+            winner_hp_remaining INTEGER,
+            combat_time REAL,
+            hits_by_unit1 INTEGER,
+            hits_by_unit2 INTEGER,
+            FOREIGN KEY (unit_stats_id_1) REFERENCES unit_stats(id),
+            FOREIGN KEY (unit_stats_id_2) REFERENCES unit_stats(id),
+            FOREIGN KEY (winner_id) REFERENCES unit_stats(id)
         );
 
         -- Comments table for user feedback
@@ -1137,6 +1790,25 @@ def populate_database(conn, analyzer: UnitAnalyzer):
     cursor.execute("SELECT id, name FROM civilizations")
     civ_id_map = {row[1]: row[0] for row in cursor.fetchall()}
 
+    # Populate armor classes from unit data
+    armor_class_names = {}
+    for unit in analyzer.units.values():
+        for atk in unit.get("attacks", []):
+            armor_class_names[atk["class"]] = atk.get(
+                "class_name", f"Class {atk['class']}"
+            )
+        for arm in unit.get("armors", []):
+            armor_class_names[arm["class"]] = arm.get(
+                "class_name", f"Class {arm['class']}"
+            )
+
+    for class_id, class_name in sorted(armor_class_names.items()):
+        cursor.execute(
+            "INSERT OR IGNORE INTO armor_classes (id, name) VALUES (?, ?)",
+            (class_id, class_name),
+        )
+    print(f"Populated {len(armor_class_names)} armor classes")
+
     # Populate units and stats
     for age_id, units in UNITS_BY_AGE.items():
         print(f"\nProcessing {AGE_NAMES[age_id]}...")
@@ -1145,10 +1817,10 @@ def populate_database(conn, analyzer: UnitAnalyzer):
             display_name = unit_config["display_name"]
             print(f"  {display_name}...")
 
-            # Insert unit
+            # Insert unit (standard type)
             cursor.execute(
-                "INSERT INTO units (slug, display_name, age_id) VALUES (?, ?, ?)",
-                (unit_slug, display_name, age_id),
+                "INSERT INTO units (slug, display_name, age_id, unit_type) VALUES (?, ?, ?, ?)",
+                (unit_slug, display_name, age_id, "standard"),
             )
             db_unit_id = cursor.lastrowid
 
@@ -1168,14 +1840,18 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                     bonuses_str = ", ".join(b.replace("C-Bonus, ", "") for b in bonuses)
 
                 if stats:
+                    # Convert attacks and armors to JSON
+                    attacks_json = json.dumps(stats.attacks) if stats.attacks else None
+                    armors_json = json.dumps(stats.armors) if stats.armors else None
+
                     cursor.execute(
                         """
                         INSERT INTO unit_stats (
                             civ_id, unit_id, unit_name, hp, attack, attack_range,
                             attack_speed, melee_armor, pierce_armor, movement_speed,
                             cost_food, cost_wood, cost_gold, creation_time, upgrade_cost,
-                            civ_bonuses, has_unit
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            civ_bonuses, has_unit, attacks_json, armors_json
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             civ_id_map[civ_name],
@@ -1195,6 +1871,8 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             int(stats.upgrade_cost),
                             bonuses_str,
                             has_unit,
+                            attacks_json,
+                            armors_json,
                         ),
                     )
                 else:
@@ -1204,8 +1882,8 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             civ_id, unit_id, unit_name, hp, attack, attack_range,
                             attack_speed, melee_armor, pierce_armor, movement_speed,
                             cost_food, cost_wood, cost_gold, creation_time, upgrade_cost,
-                            civ_bonuses, has_unit
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            civ_bonuses, has_unit, attacks_json, armors_json
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             civ_id_map[civ_name],
@@ -1225,6 +1903,109 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             None,
                             None,
                             has_unit,
+                            None,
+                            None,
+                        ),
+                    )
+
+    # Populate unique units
+    print("\nProcessing Unique Units...")
+    for civ_name, unique_units in UNIQUE_UNITS.items():
+        if civ_name not in civ_id_map:
+            continue
+
+        db_civ_id = civ_id_map[civ_name]
+
+        for uu_config in unique_units:
+            display_name = uu_config["display_name"]
+            elite_name = uu_config.get("elite_name", f"Elite {display_name}")
+            unit_slug = display_name.lower().replace(" ", "_").replace("-", "_")
+
+            print(f"  {civ_name}: {display_name}...")
+
+            # Insert unique unit (Castle Age - base version)
+            cursor.execute(
+                "INSERT INTO units (slug, display_name, age_id, unit_type, civ_id) VALUES (?, ?, ?, ?, ?)",
+                (
+                    f"{unit_slug}_{civ_name.lower()}",
+                    display_name,
+                    CASTLE_AGE,
+                    "unique",
+                    db_civ_id,
+                ),
+            )
+            db_unit_id_castle = cursor.lastrowid
+
+            # Insert elite version (Imperial Age)
+            cursor.execute(
+                "INSERT INTO units (slug, display_name, age_id, unit_type, civ_id) VALUES (?, ?, ?, ?, ?)",
+                (
+                    f"elite_{unit_slug}_{civ_name.lower()}",
+                    elite_name,
+                    IMPERIAL_AGE,
+                    "unique",
+                    db_civ_id,
+                ),
+            )
+            db_unit_id_imperial = cursor.lastrowid
+
+            # Calculate stats for the unique unit's civ only
+            # Castle Age (base unit)
+            result_castle = analyzer.calculate_unique_unit_stats(
+                civ_name, uu_config, CASTLE_AGE, elite=False
+            )
+
+            # Imperial Age (elite unit)
+            result_imperial = analyzer.calculate_unique_unit_stats(
+                civ_name, uu_config, IMPERIAL_AGE, elite=True
+            )
+
+            for db_unit_id, result, unit_name in [
+                (db_unit_id_castle, result_castle, display_name),
+                (db_unit_id_imperial, result_imperial, elite_name),
+            ]:
+                stats = result["stats"]
+                has_unit = 1 if result["has_unit"] else 0
+                bonuses = result.get("applied_bonuses", [])
+                bonuses_str = (
+                    ", ".join(b.replace("C-Bonus, ", "") for b in bonuses)
+                    if bonuses
+                    else None
+                )
+
+                if stats:
+                    attacks_json = json.dumps(stats.attacks) if stats.attacks else None
+                    armors_json = json.dumps(stats.armors) if stats.armors else None
+
+                    cursor.execute(
+                        """
+                        INSERT INTO unit_stats (
+                            civ_id, unit_id, unit_name, hp, attack, attack_range,
+                            attack_speed, melee_armor, pierce_armor, movement_speed,
+                            cost_food, cost_wood, cost_gold, creation_time, upgrade_cost,
+                            civ_bonuses, has_unit, attacks_json, armors_json
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            db_civ_id,
+                            db_unit_id,
+                            unit_name,
+                            int(stats.hp),
+                            int(stats.attack),
+                            float(stats.range) if stats.range > 0 else None,
+                            round(stats.attack_rate(), 3),
+                            int(stats.melee_armor),
+                            int(stats.pierce_armor),
+                            stats.speed,
+                            int(stats.cost_food),
+                            int(stats.cost_wood),
+                            int(stats.cost_gold),
+                            int(stats.train_time),
+                            int(stats.upgrade_cost) if stats.upgrade_cost else 0,
+                            bonuses_str,
+                            has_unit,
+                            attacks_json,
+                            armors_json,
                         ),
                     )
 

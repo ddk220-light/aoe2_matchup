@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
@@ -12,8 +12,9 @@
             }
 
             body {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-                    Roboto, Oxygen, Ubuntu, sans-serif;
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    Oxygen, Ubuntu, sans-serif;
                 background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
                 color: #e4e4e4;
                 min-height: 100vh;
@@ -126,7 +127,9 @@
                 font-size: 1.1rem;
                 font-weight: bold;
                 cursor: pointer;
-                transition: transform 0.2s, box-shadow 0.2s;
+                transition:
+                    transform 0.2s,
+                    box-shadow 0.2s;
             }
 
             .compare-btn:hover {
@@ -289,6 +292,91 @@
                 color: #4ecdc4;
             }
 
+            .unit-item.beats-best {
+                background: rgba(78, 205, 196, 0.15);
+                border-radius: 4px;
+                padding: 4px 6px;
+                margin: -4px -6px;
+            }
+
+            .unit-item.beats-best .name::after {
+                content: " ★";
+                color: #ffd700;
+            }
+
+            .score-breakdown {
+                display: flex;
+                gap: 15px;
+                margin-top: 8px;
+                font-size: 0.9rem;
+            }
+
+            .score-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .score-item .label {
+                font-size: 0.7rem;
+                color: #666;
+                text-transform: uppercase;
+            }
+
+            .score-item .value {
+                font-weight: bold;
+            }
+
+            .score-item .value.high {
+                color: #4ecdc4;
+            }
+
+            .score-item .value.low {
+                color: #ff6b6b;
+            }
+
+            .total-score {
+                font-size: 1.5rem;
+                font-weight: bold;
+                color: #ffd700;
+                margin-top: 10px;
+            }
+
+            .total-score .label {
+                font-size: 0.8rem;
+                color: #888;
+                font-weight: normal;
+            }
+
+            .beats-opponent-best {
+                display: inline-block;
+                background: rgba(78, 205, 196, 0.2);
+                color: #4ecdc4;
+                padding: 2px 8px;
+                border-radius: 10px;
+                font-size: 0.8rem;
+                margin-top: 8px;
+            }
+
+            .legend {
+                display: flex;
+                gap: 20px;
+                justify-content: center;
+                margin-top: 10px;
+                font-size: 0.8rem;
+                color: #888;
+            }
+
+            .legend-item {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .legend-star {
+                color: #ffd700;
+            }
+
             .no-units {
                 color: #666;
                 font-style: italic;
@@ -379,7 +467,20 @@
                         <span class="vs">vs</span>
                         <span class="civ2-name" id="headerCiv2"></span>
                     </h2>
-                    <p class="subtitle">Best unit recommendations per age (1000 resources)</p>
+                    <p class="subtitle">Best unit recommendations per age</p>
+                    <p
+                        class="subtitle"
+                        style="font-size: 0.9rem; margin-top: 5px"
+                    >
+                        Scoring: 3 pts for winning both resource (1000) &amp;
+                        count (30 units), 1 pt for winning one
+                    </p>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <span class="legend-star">★</span> Beats opponent's
+                            best unit
+                        </div>
+                    </div>
                 </div>
 
                 <div class="age-results" id="ageResults">
@@ -389,40 +490,44 @@
         </div>
 
         <script>
-            const civ1Select = document.getElementById('civ1Select');
-            const civ2Select = document.getElementById('civ2Select');
-            const compareBtn = document.getElementById('compareBtn');
-            const resultsContainer = document.getElementById('resultsContainer');
-            const ageResults = document.getElementById('ageResults');
-            const headerCiv1 = document.getElementById('headerCiv1');
-            const headerCiv2 = document.getElementById('headerCiv2');
+            const civ1Select = document.getElementById("civ1Select");
+            const civ2Select = document.getElementById("civ2Select");
+            const compareBtn = document.getElementById("compareBtn");
+            const resultsContainer =
+                document.getElementById("resultsContainer");
+            const ageResults = document.getElementById("ageResults");
+            const headerCiv1 = document.getElementById("headerCiv1");
+            const headerCiv2 = document.getElementById("headerCiv2");
 
             // Enable compare button when both civs selected
             function updateCompareButton() {
                 compareBtn.disabled = !civ1Select.value || !civ2Select.value;
             }
 
-            civ1Select.addEventListener('change', updateCompareButton);
-            civ2Select.addEventListener('change', updateCompareButton);
+            civ1Select.addEventListener("change", updateCompareButton);
+            civ2Select.addEventListener("change", updateCompareButton);
 
             // Compare civilizations
-            compareBtn.addEventListener('click', async () => {
+            compareBtn.addEventListener("click", async () => {
                 const civ1 = civ1Select.value;
                 const civ2 = civ2Select.value;
 
                 if (!civ1 || !civ2) return;
 
                 // Show loading
-                resultsContainer.classList.add('visible');
-                ageResults.innerHTML = '<div class="loading">Simulating battles...</div>';
+                resultsContainer.classList.add("visible");
+                ageResults.innerHTML =
+                    '<div class="loading">Simulating battles...</div>';
                 headerCiv1.textContent = civ1;
                 headerCiv2.textContent = civ2;
 
                 try {
-                    const response = await fetch(`/api/matchup/${encodeURIComponent(civ1)}/${encodeURIComponent(civ2)}`);
+                    const response = await fetch(
+                        `/api/matchup/${encodeURIComponent(civ1)}/${encodeURIComponent(civ2)}`,
+                    );
 
                     if (!response.ok) {
-                        throw new Error('Failed to fetch matchup data');
+                        throw new Error("Failed to fetch matchup data");
                     }
 
                     const data = await response.json();
@@ -433,8 +538,8 @@
             });
 
             function renderResults(data) {
-                const ageOrder = ['feudal', 'castle', 'imperial'];
-                let html = '';
+                const ageOrder = ["feudal", "castle", "imperial"];
+                let html = "";
 
                 for (const ageSlug of ageOrder) {
                     const ageData = data.ages[ageSlug];
@@ -444,8 +549,8 @@
                         <div class="age-card">
                             <h3>${ageData.age_name}</h3>
                             <div class="recommendations">
-                                ${renderCivRecommendation(data.civ1, ageData.civ1_best, ageData.civ1_all, 'civ1')}
-                                ${renderCivRecommendation(data.civ2, ageData.civ2_best, ageData.civ2_all, 'civ2')}
+                                ${renderCivRecommendation(data.civ1, ageData.civ1_best, ageData.civ1_all, "civ1")}
+                                ${renderCivRecommendation(data.civ2, ageData.civ2_best, ageData.civ2_all, "civ2")}
                             </div>
                         </div>
                     `;
@@ -454,7 +559,12 @@
                 ageResults.innerHTML = html;
             }
 
-            function renderCivRecommendation(civName, best, allUnits, civClass) {
+            function renderCivRecommendation(
+                civName,
+                best,
+                allUnits,
+                civClass,
+            ) {
                 if (!best) {
                     return `
                         <div class="recommendation-box ${civClass}">
@@ -464,20 +574,36 @@
                     `;
                 }
 
-                const winRateClass = best.win_rate < 50 ? 'low' : '';
+                const resWinClass = best.res_win_rate >= 50 ? "high" : "low";
+                const countWinClass =
+                    best.count_win_rate >= 50 ? "high" : "low";
 
-                let allUnitsHtml = '';
+                let beatsOpponentHtml = "";
+                if (best.beats_opponent_best) {
+                    beatsOpponentHtml =
+                        '<div class="beats-opponent-best">★ Beats opponent\'s best</div>';
+                }
+
+                let allUnitsHtml = "";
                 if (allUnits && allUnits.length > 1) {
                     allUnitsHtml = `
                         <div class="all-units">
-                            <h5>All Units (by win rate)</h5>
+                            <h5>All Units (by score)</h5>
                             <div class="unit-list">
-                                ${allUnits.map((u, i) => `
-                                    <div class="unit-item ${i === 0 ? 'best' : ''}">
-                                        <span class="name">${u.name}</span>
-                                        <span class="score">${u.win_rate}% (${u.wins}/${u.total})</span>
-                                    </div>
-                                `).join('')}
+                                ${allUnits
+                                    .map((u, i) => {
+                                        const classes = [];
+                                        if (i === 0) classes.push("best");
+                                        if (u.beats_opponent_best)
+                                            classes.push("beats-best");
+                                        return `
+                                            <div class="unit-item ${classes.join(" ")}">
+                                                <span class="name">${u.name}</span>
+                                                <span class="score">${u.score} pts (R:${u.res_win_rate}% C:${u.count_win_rate}%)</span>
+                                            </div>
+                                        `;
+                                    })
+                                    .join("")}
                             </div>
                         </div>
                     `;
@@ -487,9 +613,22 @@
                     <div class="recommendation-box ${civClass}">
                         <h4>${civName} - Best Unit</h4>
                         <div class="best-unit">${best.name}</div>
-                        <div class="win-rate ${winRateClass}">
-                            ${best.win_rate}% win rate (${best.wins}/${best.total} matchups)
+                        <div class="total-score">${best.score} <span class="label">points</span></div>
+                        <div class="score-breakdown">
+                            <div class="score-item">
+                                <span class="label">Resource</span>
+                                <span class="value ${resWinClass}">${best.res_win_rate}%</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="label">30 Units</span>
+                                <span class="value ${countWinClass}">${best.count_win_rate}%</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="label">Matchups</span>
+                                <span class="value">${best.total}</span>
+                            </div>
                         </div>
+                        ${beatsOpponentHtml}
                         ${allUnitsHtml}
                     </div>
                 `;

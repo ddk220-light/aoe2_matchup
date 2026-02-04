@@ -822,10 +822,13 @@ def api_matchup(civ1, civ2):
 
     results = {}
 
+    # Units to exclude from simulations (low accuracy units like Trebuchets)
+    EXCLUDED_UNITS = {"trebuchet", "packed-trebuchet"}
+
     for age_slug, age_data in AGES.items():
         age_id = age_data["id"]
 
-        # Get all units for civ1 in this age
+        # Get all units for civ1 in this age (excluding trebuchets)
         cursor.execute(
             """
             SELECT u.slug, us.unit_name, us.hp, us.attack, us.attack_speed,
@@ -839,9 +842,9 @@ def api_matchup(civ1, civ2):
         """,
             (civ1, age_id),
         )
-        civ1_units = cursor.fetchall()
+        civ1_units = [u for u in cursor.fetchall() if u["slug"] not in EXCLUDED_UNITS]
 
-        # Get all units for civ2 in this age
+        # Get all units for civ2 in this age (excluding trebuchets)
         cursor.execute(
             """
             SELECT u.slug, us.unit_name, us.hp, us.attack, us.attack_speed,
@@ -855,7 +858,7 @@ def api_matchup(civ1, civ2):
         """,
             (civ2, age_id),
         )
-        civ2_units = cursor.fetchall()
+        civ2_units = [u for u in cursor.fetchall() if u["slug"] not in EXCLUDED_UNITS]
 
         if not civ1_units or not civ2_units:
             results[age_slug] = {
@@ -867,12 +870,14 @@ def api_matchup(civ1, civ2):
             continue
 
         # Calculate win rates for each civ1 unit against all civ2 units
+        # Run TWO simulations: resource-based (1000 res) and count-based (30 units)
         civ1_scores = {}
         civ2_scores = {}
         all_matchups = []
 
         for u1 in civ1_units:
-            u1_wins = 0
+            u1_res_wins = 0
+            u1_count_wins = 0
             u1_total = 0
             u1_cost = (
                 (u1["cost_food"] or 0) + (u1["cost_wood"] or 0) + (u1["cost_gold"] or 0)
@@ -889,22 +894,37 @@ def api_matchup(civ1, civ2):
                 if u2_cost == 0:
                     u2_cost = 100
 
-                # Simulate battle with 1000 resources
-                winner, u1_remaining, u2_remaining = simulate_battle(
+                # Simulation 1: Resource-based (1000 resources per team)
+                res_winner, u1_res_remaining, u2_res_remaining = simulate_battle(
                     u1, u1_cost, u2, u2_cost, 1000
                 )
 
+                # Simulation 2: Count-based (30 units each, use unit cost * 30 as resources)
+                count_resources = max(u1_cost, u2_cost) * 30
+                count_winner, u1_count_remaining, u2_count_remaining = simulate_battle(
+                    u1, u1_cost, u2, u2_cost, count_resources
+                )
+
                 u1_total += 1
-                if winner == 1:
-                    u1_wins += 1
+                if res_winner == 1:
+                    u1_res_wins += 1
+                if count_winner == 1:
+                    u1_count_wins += 1
 
                 # Track for civ2 scoring
                 u2_key = u2["slug"]
                 if u2_key not in civ2_scores:
-                    civ2_scores[u2_key] = {"wins": 0, "total": 0, "unit": u2}
+                    civ2_scores[u2_key] = {
+                        "res_wins": 0,
+                        "count_wins": 0,
+                        "total": 0,
+                        "unit": u2,
+                    }
                 civ2_scores[u2_key]["total"] += 1
-                if winner == 2:
-                    civ2_scores[u2_key]["wins"] += 1
+                if res_winner == 2:
+                    civ2_scores[u2_key]["res_wins"] += 1
+                if count_winner == 2:
+                    civ2_scores[u2_key]["count_wins"] += 1
 
                 all_matchups.append(
                     {
@@ -912,75 +932,103 @@ def api_matchup(civ1, civ2):
                         "civ1_slug": u1["slug"],
                         "civ2_unit": u2["unit_name"],
                         "civ2_slug": u2["slug"],
-                        "winner": winner,
-                        "civ1_remaining": u1_remaining,
-                        "civ2_remaining": u2_remaining,
+                        "res_winner": res_winner,
+                        "count_winner": count_winner,
                     }
                 )
 
             civ1_scores[u1["slug"]] = {
-                "wins": u1_wins,
+                "res_wins": u1_res_wins,
+                "count_wins": u1_count_wins,
                 "total": u1_total,
                 "unit": u1,
-                "win_rate": u1_wins / u1_total if u1_total > 0 else 0,
             }
 
-        # Calculate win rates for civ2
+        # Calculate scores for each unit
+        # 3 points if win both resource and count, 1 point if win only one
+        def calc_score(res_wins, count_wins, total):
+            # For each matchup, determine points
+            # We need to look at individual matchups, but we only have aggregates
+            # So we approximate: if both win rates > 50%, likely winning both often
+            if total == 0:
+                return 0
+            res_rate = res_wins / total
+            count_rate = count_wins / total
+            # Score = 3 * (wins in both) + 1 * (wins in one only)
+            # Approximate: min of the two is "wins both", difference is "wins one"
+            both_wins = min(res_wins, count_wins)
+            only_res = res_wins - both_wins
+            only_count = count_wins - both_wins
+            return (both_wins * 3) + (only_res * 1) + (only_count * 1)
+
+        for key in civ1_scores:
+            s = civ1_scores[key]
+            s["score"] = calc_score(s["res_wins"], s["count_wins"], s["total"])
+            s["res_win_rate"] = s["res_wins"] / s["total"] if s["total"] > 0 else 0
+            s["count_win_rate"] = s["count_wins"] / s["total"] if s["total"] > 0 else 0
+
         for key in civ2_scores:
             s = civ2_scores[key]
-            s["win_rate"] = s["wins"] / s["total"] if s["total"] > 0 else 0
+            s["score"] = calc_score(s["res_wins"], s["count_wins"], s["total"])
+            s["res_win_rate"] = s["res_wins"] / s["total"] if s["total"] > 0 else 0
+            s["count_win_rate"] = s["count_wins"] / s["total"] if s["total"] > 0 else 0
 
-        # Find best unit for each civ
+        # Find best unit for each civ (by score)
         civ1_best = (
-            max(civ1_scores.items(), key=lambda x: x[1]["win_rate"])
+            max(civ1_scores.items(), key=lambda x: x[1]["score"])
             if civ1_scores
             else None
         )
         civ2_best = (
-            max(civ2_scores.items(), key=lambda x: x[1]["win_rate"])
+            max(civ2_scores.items(), key=lambda x: x[1]["score"])
             if civ2_scores
             else None
         )
 
+        # Find which civ1 units beat civ2's best unit (and vice versa)
+        civ1_beats_best = set()
+        civ2_beats_best = set()
+        if civ1_best and civ2_best:
+            civ2_best_slug = civ2_best[0]
+            civ1_best_slug = civ1_best[0]
+            for m in all_matchups:
+                # Check if civ1 unit beats civ2's best
+                if m["civ2_slug"] == civ2_best_slug:
+                    if m["res_winner"] == 1 or m["count_winner"] == 1:
+                        civ1_beats_best.add(m["civ1_slug"])
+                # Check if civ2 unit beats civ1's best
+                if m["civ1_slug"] == civ1_best_slug:
+                    if m["res_winner"] == 2 or m["count_winner"] == 2:
+                        civ2_beats_best.add(m["civ2_slug"])
+
+        def format_unit(slug, data, beats_opponent_best):
+            return {
+                "slug": slug,
+                "name": data["unit"]["unit_name"],
+                "score": data["score"],
+                "res_wins": data["res_wins"],
+                "count_wins": data["count_wins"],
+                "total": data["total"],
+                "res_win_rate": round(data["res_win_rate"] * 100, 1),
+                "count_win_rate": round(data["count_win_rate"] * 100, 1),
+                "beats_opponent_best": slug in beats_opponent_best,
+            }
+
         results[age_slug] = {
             "age_name": age_data["name"],
-            "civ1_best": {
-                "slug": civ1_best[0],
-                "name": civ1_best[1]["unit"]["unit_name"],
-                "wins": civ1_best[1]["wins"],
-                "total": civ1_best[1]["total"],
-                "win_rate": round(civ1_best[1]["win_rate"] * 100, 1),
-            }
+            "civ1_best": format_unit(civ1_best[0], civ1_best[1], civ1_beats_best)
             if civ1_best
             else None,
-            "civ2_best": {
-                "slug": civ2_best[0],
-                "name": civ2_best[1]["unit"]["unit_name"],
-                "wins": civ2_best[1]["wins"],
-                "total": civ2_best[1]["total"],
-                "win_rate": round(civ2_best[1]["win_rate"] * 100, 1),
-            }
+            "civ2_best": format_unit(civ2_best[0], civ2_best[1], civ2_beats_best)
             if civ2_best
             else None,
             "civ1_all": [
-                {
-                    "slug": k,
-                    "name": v["unit"]["unit_name"],
-                    "wins": v["wins"],
-                    "total": v["total"],
-                    "win_rate": round(v["win_rate"] * 100, 1),
-                }
-                for k, v in sorted(civ1_scores.items(), key=lambda x: -x[1]["win_rate"])
+                format_unit(k, v, civ1_beats_best)
+                for k, v in sorted(civ1_scores.items(), key=lambda x: -x[1]["score"])
             ],
             "civ2_all": [
-                {
-                    "slug": k,
-                    "name": v["unit"]["unit_name"],
-                    "wins": v["wins"],
-                    "total": v["total"],
-                    "win_rate": round(v["win_rate"] * 100, 1),
-                }
-                for k, v in sorted(civ2_scores.items(), key=lambda x: -x[1]["win_rate"])
+                format_unit(k, v, civ2_beats_best)
+                for k, v in sorted(civ2_scores.items(), key=lambda x: -x[1]["score"])
             ],
         }
 

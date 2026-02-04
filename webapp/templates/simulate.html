@@ -420,6 +420,89 @@
                     font-size: 1.8rem;
                 }
             }
+
+            /* Comment Section Styles */
+            .comment-section {
+                margin-top: 20px;
+                background: var(--card-bg);
+                border-radius: 8px;
+                padding: 20px;
+            }
+
+            .comment-section h3 {
+                font-family: "Cinzel", serif;
+                color: var(--secondary-color);
+                margin-bottom: 15px;
+                font-size: 1.1rem;
+            }
+
+            .comment-textarea {
+                width: 100%;
+                min-height: 100px;
+                padding: 12px;
+                background: var(--bg-color);
+                border: 1px solid rgba(218, 165, 32, 0.3);
+                color: var(--text-color);
+                border-radius: 4px;
+                font-family: "Open Sans", sans-serif;
+                font-size: 14px;
+                resize: vertical;
+                margin-bottom: 10px;
+            }
+
+            .comment-textarea:focus {
+                outline: none;
+                border-color: var(--secondary-color);
+            }
+
+            .comment-textarea::placeholder {
+                color: #666;
+            }
+
+            .save-comment-btn {
+                padding: 10px 25px;
+                background: var(--secondary-color);
+                color: var(--bg-color);
+                border: none;
+                border-radius: 4px;
+                font-family: "Cinzel", serif;
+                font-size: 14px;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+
+            .save-comment-btn:hover {
+                background: #f4d03f;
+            }
+
+            .save-comment-btn:disabled {
+                background: #555;
+                cursor: not-allowed;
+            }
+
+            .comment-status {
+                display: inline-block;
+                margin-left: 15px;
+                font-size: 0.9rem;
+            }
+
+            .comment-status.success {
+                color: var(--team2-color);
+            }
+
+            .comment-status.error {
+                color: var(--team1-color);
+            }
+
+            .matchup-label {
+                font-size: 0.85rem;
+                color: #888;
+                margin-bottom: 10px;
+            }
+
+            .matchup-label strong {
+                color: var(--text-color);
+            }
         </style>
     </head>
     <body>
@@ -433,6 +516,7 @@
                     <a href="/" class="nav-link">By Unit</a>
                     <a href="/civ" class="nav-link">By Civilization</a>
                     <a href="/simulate" class="nav-link active">Battle Sim</a>
+                    <a href="/simulation-notes" class="nav-link">Sim Notes</a>
                     <a href="/review" class="nav-link">Review Comments</a>
                 </nav>
             </header>
@@ -549,6 +633,30 @@
                             Start a battle to see combat stats
                         </p>
                     </div>
+                </div>
+            </div>
+
+            <!-- Comment Section -->
+            <div class="comment-section" id="commentSection">
+                <h3>Battle Notes</h3>
+                <div class="matchup-label" id="matchupLabel">
+                    Run a simulation to leave notes about the matchup
+                </div>
+                <textarea
+                    id="commentText"
+                    class="comment-textarea"
+                    placeholder="Add observations about this matchup... (e.g., 'Franks Paladins beat Teutons due to faster attack speed despite lower armor')"
+                    disabled
+                ></textarea>
+                <div>
+                    <button
+                        id="saveCommentBtn"
+                        class="save-comment-btn"
+                        disabled
+                    >
+                        Save Note
+                    </button>
+                    <span id="commentStatus" class="comment-status"></span>
                 </div>
             </div>
         </div>
@@ -969,12 +1077,15 @@
                     if (team1Alive === 0 && team2Alive > 0) {
                         this.winner = 2;
                         this.running = false;
+                        updateBattleWinner(2);
                     } else if (team2Alive === 0 && team1Alive > 0) {
                         this.winner = 1;
                         this.running = false;
+                        updateBattleWinner(1);
                     } else if (team1Alive === 0 && team2Alive === 0) {
                         this.winner = 0;
                         this.running = false;
+                        updateBattleWinner(0);
                     }
                 }
 
@@ -1214,6 +1325,9 @@
                     document.getElementById('speedLabel').textContent = `${e.target.value}x`;
                 });
 
+                // Comment save handler
+                document.getElementById('saveCommentBtn').addEventListener('click', saveComment);
+
                 simulation.render();
             });
 
@@ -1302,6 +1416,9 @@
                 }
             }
 
+            // Current battle state for comments
+            let currentBattle = null;
+
             async function startBattle() {
                 const team1Civ = document.getElementById('team1Civ').value;
                 const team1Unit = document.getElementById('team1Unit').value;
@@ -1324,6 +1441,22 @@
                     await simulation.setupTeam(1, team1Unit, team1Civ, team1Count);
                     await simulation.setupTeam(2, team2Unit, team2Civ, team2Count);
 
+                    // Store current battle info for comments
+                    currentBattle = {
+                        team1_civ: team1Civ,
+                        team1_unit: team1Unit,
+                        team1_unit_name: simulation.team1Stats?.name || team1Unit,
+                        team1_count: team1Count,
+                        team2_civ: team2Civ,
+                        team2_unit: team2Unit,
+                        team2_unit_name: simulation.team2Stats?.name || team2Unit,
+                        team2_count: team2Count,
+                        winner: null
+                    };
+
+                    // Update matchup label and enable comment area
+                    updateCommentSection();
+
                     document.getElementById('startBtn').textContent = 'Start Battle';
                     document.getElementById('pauseBtn').disabled = false;
                     document.getElementById('resetBtn').disabled = false;
@@ -1333,6 +1466,74 @@
                     alert(`Error: ${error.message}`);
                     document.getElementById('startBtn').disabled = false;
                     document.getElementById('startBtn').textContent = 'Start Battle';
+                }
+            }
+
+            function updateCommentSection() {
+                if (!currentBattle) return;
+
+                const label = document.getElementById('matchupLabel');
+                label.innerHTML = `Matchup: <strong>${currentBattle.team1_count}x ${currentBattle.team1_civ} ${currentBattle.team1_unit_name}</strong> vs <strong>${currentBattle.team2_count}x ${currentBattle.team2_civ} ${currentBattle.team2_unit_name}</strong>`;
+
+                document.getElementById('commentText').disabled = false;
+                document.getElementById('saveCommentBtn').disabled = false;
+                document.getElementById('commentStatus').textContent = '';
+            }
+
+            function updateBattleWinner(winner) {
+                if (currentBattle) {
+                    currentBattle.winner = winner;
+                }
+            }
+
+            async function saveComment() {
+                const commentText = document.getElementById('commentText').value.trim();
+                if (!commentText) {
+                    document.getElementById('commentStatus').textContent = 'Please enter a comment';
+                    document.getElementById('commentStatus').className = 'comment-status error';
+                    return;
+                }
+
+                if (!currentBattle) {
+                    document.getElementById('commentStatus').textContent = 'Run a simulation first';
+                    document.getElementById('commentStatus').className = 'comment-status error';
+                    return;
+                }
+
+                const saveBtn = document.getElementById('saveCommentBtn');
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Saving...';
+
+                try {
+                    const response = await fetch('/api/simulation-comments', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            team1_civ: currentBattle.team1_civ,
+                            team1_unit: currentBattle.team1_unit_name,
+                            team1_count: currentBattle.team1_count,
+                            team2_civ: currentBattle.team2_civ,
+                            team2_unit: currentBattle.team2_unit_name,
+                            team2_count: currentBattle.team2_count,
+                            winner: currentBattle.winner,
+                            comment: commentText
+                        })
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        document.getElementById('commentStatus').textContent = 'Note saved!';
+                        document.getElementById('commentStatus').className = 'comment-status success';
+                        document.getElementById('commentText').value = '';
+                    } else {
+                        throw new Error(result.error || 'Failed to save');
+                    }
+                } catch (error) {
+                    document.getElementById('commentStatus').textContent = `Error: ${error.message}`;
+                    document.getElementById('commentStatus').className = 'comment-status error';
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Save Note';
                 }
             }
         </script>

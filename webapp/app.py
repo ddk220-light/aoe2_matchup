@@ -647,6 +647,134 @@ def api_civ_units(civ_name, age_slug):
     return jsonify(units)
 
 
+def init_comments_table():
+    """Create simulation_comments table if it doesn't exist."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS simulation_comments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            team1_civ TEXT NOT NULL,
+            team1_unit TEXT NOT NULL,
+            team1_count INTEGER NOT NULL,
+            team2_civ TEXT NOT NULL,
+            team2_unit TEXT NOT NULL,
+            team2_count INTEGER NOT NULL,
+            winner INTEGER,
+            comment TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """
+    )
+    conn.commit()
+    conn.close()
+
+
+# Initialize comments table on startup
+init_comments_table()
+
+
+@app.route("/api/simulation-comments", methods=["POST"])
+def save_simulation_comment():
+    """Save a comment for a simulation."""
+    data = request.get_json()
+
+    required_fields = [
+        "team1_civ",
+        "team1_unit",
+        "team1_count",
+        "team2_civ",
+        "team2_unit",
+        "team2_count",
+        "comment",
+    ]
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"Missing field: {field}"}), 400
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO simulation_comments
+        (team1_civ, team1_unit, team1_count, team2_civ, team2_unit, team2_count, winner, comment)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """,
+        (
+            data["team1_civ"],
+            data["team1_unit"],
+            data["team1_count"],
+            data["team2_civ"],
+            data["team2_unit"],
+            data["team2_count"],
+            data.get("winner"),
+            data["comment"],
+        ),
+    )
+    conn.commit()
+    comment_id = cursor.lastrowid
+    conn.close()
+
+    return jsonify({"success": True, "id": comment_id})
+
+
+@app.route("/api/simulation-comments", methods=["GET"])
+def get_simulation_comments():
+    """Get all simulation comments."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT id, team1_civ, team1_unit, team1_count, team2_civ, team2_unit, team2_count,
+               winner, comment, created_at
+        FROM simulation_comments
+        ORDER BY created_at DESC
+    """
+    )
+    comments = [
+        {
+            "id": row["id"],
+            "team1_civ": row["team1_civ"],
+            "team1_unit": row["team1_unit"],
+            "team1_count": row["team1_count"],
+            "team2_civ": row["team2_civ"],
+            "team2_unit": row["team2_unit"],
+            "team2_count": row["team2_count"],
+            "winner": row["winner"],
+            "comment": row["comment"],
+            "created_at": row["created_at"],
+        }
+        for row in cursor.fetchall()
+    ]
+    conn.close()
+    return jsonify(comments)
+
+
+@app.route("/api/simulation-comments/<int:comment_id>", methods=["DELETE"])
+def delete_simulation_comment(comment_id):
+    """Delete a simulation comment."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM simulation_comments WHERE id = ?", (comment_id,))
+    conn.commit()
+    deleted = cursor.rowcount > 0
+    conn.close()
+    return jsonify({"success": deleted})
+
+
+@app.route("/simulation-notes")
+def simulation_notes():
+    """Page to review all simulation comments."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM civilizations ORDER BY name")
+    civs = [row["name"] for row in cursor.fetchall()]
+    conn.close()
+
+    return render_template("simulation_notes.html", civs=civs)
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)

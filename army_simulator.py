@@ -66,10 +66,16 @@ class Unit:
                 return enemy
         return None
 
-    def update(self, dt: float, enemies: list["Unit"]):
-        """Update unit state for one time step."""
+    def update(self, dt: float, enemies: list["Unit"]) -> tuple[Optional["Unit"], int]:
+        """Update unit state for one time step.
+
+        Returns:
+            Tuple of (target, damage) if an attack was made, (None, 0) otherwise.
+            Damage is calculated but NOT applied - caller must apply damage after
+            all units have calculated their attacks (for simultaneous combat).
+        """
         if self.is_dead:
-            return
+            return (None, 0)
 
         self.attack_cooldown = max(0, self.attack_cooldown - dt)
 
@@ -78,16 +84,15 @@ class Unit:
             self.target = self.find_target(enemies)
 
         if self.target is None:
-            return
+            return (None, 0)
 
-        # Attack if ready
+        # Attack if ready - calculate damage but don't apply yet
         if self.attack_cooldown <= 0:
             damage = self.get_damage_against(self.target)
-            self.target.current_hp -= damage
-            if self.target.current_hp <= 0:
-                self.target.is_dead = True
-                self.target = None
             self.attack_cooldown = self.reload_time
+            return (self.target, damage)
+
+        return (None, 0)
 
 
 @dataclass
@@ -134,10 +139,15 @@ def get_db():
 
 
 def load_all_unit_templates() -> list[UnitTemplate]:
-    """Load all available unit templates from database."""
+    """Load all available unit templates from database.
+
+    Deduplicates by (civ, slug) - keeps only one entry per unit type per civ.
+    When duplicates exist (same unit in multiple ages), keeps the one with highest age_id.
+    """
     conn = get_db()
     cursor = conn.cursor()
 
+    # Order by age_id DESC so we see highest age first for each (civ, slug) pair
     cursor.execute("""
         SELECT us.id, us.unit_name, c.name as civ_name, us.hp, us.attack,
                us.melee_armor, us.pierce_armor, us.attack_speed,
@@ -149,11 +159,20 @@ def load_all_unit_templates() -> list[UnitTemplate]:
         JOIN units u ON us.unit_id = u.id
         WHERE us.has_unit = 1
         AND us.hp IS NOT NULL AND us.hp > 0
-        ORDER BY u.age_id, u.slug, c.name
+        ORDER BY u.age_id DESC, u.slug, c.name
     """)
 
+    # Use dict to deduplicate by (civ, slug) - first seen wins (highest age due to ORDER BY)
+    seen = {}
     templates = []
+
     for row in cursor.fetchall():
+        key = (row["civ_name"], row["slug"])
+        if key in seen:
+            # Skip duplicate - we already have the higher age version
+            continue
+        seen[key] = True
+
         attacks = json.loads(row["attacks_json"]) if row["attacks_json"] else {}
         armors = json.loads(row["armors_json"]) if row["armors_json"] else {}
         attacks = {int(k): v for k, v in attacks.items()}
@@ -236,11 +255,24 @@ def simulate_army_battle(
         if len(team1_alive) == 0 or len(team2_alive) == 0:
             break
 
-        # Update all units
+        # Collect all attacks first (simultaneous combat)
+        pending_damage = []  # List of (target, damage) tuples
+
         for unit in team1_alive:
-            unit.update(dt, team2)
+            target, damage = unit.update(dt, team2)
+            if target is not None:
+                pending_damage.append((target, damage))
+
         for unit in team2_alive:
-            unit.update(dt, team1)
+            target, damage = unit.update(dt, team1)
+            if target is not None:
+                pending_damage.append((target, damage))
+
+        # Apply all damage simultaneously
+        for target, damage in pending_damage:
+            target.current_hp -= damage
+            if target.current_hp <= 0:
+                target.is_dead = True
 
         time += dt
 

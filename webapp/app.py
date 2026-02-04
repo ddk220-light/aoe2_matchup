@@ -894,13 +894,13 @@ def api_matchup(civ1, civ2):
                 if u2_cost == 0:
                     u2_cost = 100
 
-                # Simulation 1: Resource-based (300 resources per team for speed)
+                # Simulation 1: Resource-based (1000 resources per team)
                 res_winner, u1_res_remaining, u2_res_remaining = simulate_battle(
-                    u1, u1_cost, u2, u2_cost, 300
+                    u1, u1_cost, u2, u2_cost, 1000
                 )
 
-                # Simulation 2: Count-based (5 units each for speed)
-                count_resources = max(u1_cost, u2_cost) * 5
+                # Simulation 2: Count-based (20 units each)
+                count_resources = max(u1_cost, u2_cost) * 20
                 count_winner, u1_count_remaining, u2_count_remaining = simulate_battle(
                     u1, u1_cost, u2, u2_cost, count_resources
                 )
@@ -1132,9 +1132,11 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
 
     # Simulate with tick limit for speed
     dt = 0.1  # 100ms time step
-    max_ticks = 500
+    max_ticks = 300
     melee_range = 0.5
     ticks = 0
+    start_hp1 = sum(hp1)
+    start_hp2 = sum(hp2)
 
     while ticks < max_ticks:
         ticks += 1
@@ -1224,18 +1226,28 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
         return (1, remaining1, 0)
     elif remaining2 > 0 and remaining1 == 0:
         return (2, 0, remaining2)
-    elif remaining1 > remaining2:
-        return (1, remaining1, remaining2)
-    elif remaining2 > remaining1:
-        return (2, remaining1, remaining2)
     else:
-        # Tick limit reached or tie in units - use total HP to determine winner
-        if total_hp1 > total_hp2:
-            return (1, remaining1, remaining2)
-        elif total_hp2 > total_hp1:
+        # Compare units lost from start
+        lost1 = count1 - remaining1
+        lost2 = count2 - remaining2
+        if lost1 > lost2:
+            # Team 1 lost more units, Team 2 wins
             return (2, remaining1, remaining2)
+        elif lost2 > lost1:
+            # Team 2 lost more units, Team 1 wins
+            return (1, remaining1, remaining2)
         else:
-            return (0, remaining1, remaining2)
+            # Same units lost - compare HP percentage lost
+            hp_lost_pct1 = (start_hp1 - total_hp1) / start_hp1 if start_hp1 > 0 else 0
+            hp_lost_pct2 = (start_hp2 - total_hp2) / start_hp2 if start_hp2 > 0 else 0
+            if hp_lost_pct1 > hp_lost_pct2:
+                # Team 1 lost more HP %, Team 2 wins
+                return (2, remaining1, remaining2)
+            elif hp_lost_pct2 > hp_lost_pct1:
+                # Team 2 lost more HP %, Team 1 wins
+                return (1, remaining1, remaining2)
+            else:
+                return (0, remaining1, remaining2)
 
 
 if __name__ == "__main__":

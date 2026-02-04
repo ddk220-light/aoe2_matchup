@@ -825,7 +825,10 @@ def api_matchup(civ1, civ2):
     # Units to exclude from simulations (low accuracy units like Trebuchets)
     EXCLUDED_UNITS = {"trebuchet", "packed-trebuchet"}
 
-    for age_slug, age_data in AGES.items():
+    # Only compare Castle and Imperial ages (feudal units are not very useful)
+    MATCHUP_AGES = {k: v for k, v in AGES.items() if k != "feudal"}
+
+    for age_slug, age_data in MATCHUP_AGES.items():
         age_id = age_data["id"]
 
         # Get all units for civ1 in this age (excluding trebuchets)
@@ -1038,8 +1041,11 @@ def api_matchup(civ1, civ2):
 
 def simulate_battle(unit1, cost1, unit2, cost2, resources):
     """
-    Tick-based battle simulation with kiting support.
-    Uses smaller army sizes (300 res / 5 units) for faster execution.
+    Tick-based battle simulation with kiting support and siege projectile mechanics.
+
+    Siege units (mangonels, siege onagers) fire ground-targeted projectiles that
+    travel at light cavalry speed. They struggle against fast melee units but
+    do well against slower ranged units.
 
     Returns: (winner, unit1_remaining, unit2_remaining)
         winner: 1 if unit1 wins, 2 if unit2 wins, 0 if draw
@@ -1070,6 +1076,18 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
 
     is_ranged1 = range1 >= 1.0
     is_ranged2 = range2 >= 1.0
+
+    # Siege units fire ground-targeted projectiles (mangonel, siege_onager)
+    SIEGE_UNITS = {"mangonel", "siege_onager"}
+    slug1 = unit1.get("slug", "")
+    slug2 = unit2.get("slug", "")
+    is_siege1 = slug1 in SIEGE_UNITS
+    is_siege2 = slug2 in SIEGE_UNITS
+
+    # Projectile speed (light cavalry speed ~1.5 tiles/second)
+    PROJECTILE_SPEED = 1.5
+    # Hit radius - projectile hits if target is within this distance of impact point
+    HIT_RADIUS = 0.5
 
     # Calculate damage per hit (use pierce for ranged, melee for melee)
     def calc_damage(
@@ -1138,6 +1156,10 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     start_hp1 = sum(hp1)
     start_hp2 = sum(hp2)
 
+    # Track siege projectiles in flight
+    # Each projectile: (target_team, target_idx, target_pos_at_fire, current_pos, damage)
+    projectiles = []
+
     while ticks < max_ticks:
         ticks += 1
         alive1 = [i for i, h in enumerate(hp1) if h > 0]
@@ -1162,6 +1184,36 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
         for i in alive2:
             cooldown2[i] = max(0, cooldown2[i] - dt)
 
+        # Update siege projectiles in flight
+        new_projectiles = []
+        for proj in projectiles:
+            target_team, target_idx, target_pos_at_fire, proj_pos, damage = proj
+            # Move projectile toward target position
+            if proj_pos < target_pos_at_fire:
+                proj_pos += PROJECTILE_SPEED * dt
+                arrived = proj_pos >= target_pos_at_fire
+            else:
+                proj_pos -= PROJECTILE_SPEED * dt
+                arrived = proj_pos <= target_pos_at_fire
+
+            if arrived:
+                # Projectile arrived - check if target is still near
+                if target_team == 1:
+                    if hp1[target_idx] > 0:
+                        current_pos = pos1[target_idx]
+                        if abs(current_pos - target_pos_at_fire) <= HIT_RADIUS:
+                            hp1[target_idx] -= damage
+                else:
+                    if hp2[target_idx] > 0:
+                        current_pos = pos2[target_idx]
+                        if abs(current_pos - target_pos_at_fire) <= HIT_RADIUS:
+                            hp2[target_idx] -= damage
+            else:
+                new_projectiles.append(
+                    (target_team, target_idx, target_pos_at_fire, proj_pos, damage)
+                )
+        projectiles = new_projectiles
+
         # Collect attacks (simultaneous)
         pending_damage = []
 
@@ -1173,7 +1225,12 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
 
             if is_ranged1:
                 if cooldown1[i] <= 0 and distance <= attack_range:
-                    pending_damage.append((2, closest, dmg1))
+                    if is_siege1:
+                        # Siege unit fires ground-targeted projectile
+                        target_pos = pos2[closest]
+                        projectiles.append((2, closest, target_pos, pos1[i], dmg1))
+                    else:
+                        pending_damage.append((2, closest, dmg1))
                     cooldown1[i] = reload1
                 elif cooldown1[i] > 0:
                     pos1[i] -= move_speed1 * dt  # Kite backward
@@ -1195,7 +1252,12 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
 
             if is_ranged2:
                 if cooldown2[i] <= 0 and distance <= attack_range:
-                    pending_damage.append((1, closest, dmg2))
+                    if is_siege2:
+                        # Siege unit fires ground-targeted projectile
+                        target_pos = pos1[closest]
+                        projectiles.append((1, closest, target_pos, pos2[i], dmg2))
+                    else:
+                        pending_damage.append((1, closest, dmg2))
                     cooldown2[i] = reload2
                 elif cooldown2[i] > 0:
                     pos2[i] += move_speed2 * dt  # Kite backward

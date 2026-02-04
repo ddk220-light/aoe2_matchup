@@ -273,6 +273,33 @@ def index():
     return render_template("index.html", units_by_age=units_by_age, ages=ages)
 
 
+@app.route("/api/debug")
+def api_debug():
+    """Debug endpoint to check database state."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT c.name, us.hp
+        FROM unit_stats us
+        JOIN civilizations c ON us.civ_id = c.id
+        JOIN units u ON us.unit_id = u.id
+        WHERE u.slug = 'hussar' AND c.name = 'Mongols'
+    """)
+    row = cursor.fetchone()
+    conn.close()
+    import os
+
+    return jsonify(
+        {
+            "mongol_hussar_hp": row["hp"] if row else None,
+            "db_path": DB_PATH,
+            "db_exists": os.path.exists(DB_PATH),
+            "db_size": os.path.getsize(DB_PATH) if os.path.exists(DB_PATH) else 0,
+            "version": "2024-02-04-v2",
+        }
+    )
+
+
 @app.route("/api/units")
 def api_units():
     return jsonify(get_units_by_age())

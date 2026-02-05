@@ -1551,7 +1551,7 @@ def simulate_battle(
 
     # Simulate with tick limit for speed
     dt = 0.05  # 50ms time step
-    max_ticks = 1000
+    max_ticks = 5000  # 250 seconds max battle time
     melee_range = 0.5
     ticks = 0
     start_hp1 = sum(hp1)
@@ -1637,8 +1637,10 @@ def simulate_battle(
         # Ranged units kite (move away while reloading)
         # But only if they're faster than the enemy, or if enemy is also ranged
         # This prevents unrealistic perfect kiting where slower ranged beats faster melee
-        should_kite1 = is_ranged1 and (is_ranged2 or move_speed1 > move_speed2)
-        should_kite2 = is_ranged2 and (is_ranged1 or move_speed2 > move_speed1)
+        # Ranged units should always kite melee units, even if slower
+        # They should also kite other ranged units
+        should_kite1 = is_ranged1
+        should_kite2 = is_ranged2
 
         # Team 1 units (move right toward team 2)
         for i in alive1:

@@ -822,8 +822,8 @@ def api_matchup(civ1, civ2):
 
     results = {}
 
-    # Units to exclude from simulations (low accuracy units like Trebuchets)
-    EXCLUDED_UNITS = {"trebuchet", "packed-trebuchet"}
+    # Units to exclude from simulations (low accuracy units like Trebuchets and Rams)
+    EXCLUDED_UNITS = {"trebuchet", "packed-trebuchet", "ram", "siege_ram"}
 
     # Only compare Castle and Imperial ages (feudal units are not very useful)
     MATCHUP_AGES = {k: v for k, v in AGES.items() if k != "feudal"}

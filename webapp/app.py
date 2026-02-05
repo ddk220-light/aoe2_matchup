@@ -1101,7 +1101,7 @@ def api_matchup(civ1, civ2):
             )
 
         # Calculate scores for each unit
-        # Scoring: +1 for beating significant units only, -1 for losing to siege
+        # Scoring: +1 for beating significant units only (not trash, not siege)
         for key in civ1_scores:
             s = civ1_scores[key]
             s["win_rate"] = s["wins"] / s["total"] if s["total"] > 0 else 0
@@ -1115,10 +1115,6 @@ def api_matchup(civ1, civ2):
                     # Only score for beating significant units (not trash, not siege)
                     if not is_trash and not is_siege:
                         score += 1
-                else:
-                    # Penalty for losing to siege
-                    if is_siege:
-                        score -= 1
             s["score"] = score
 
         for key in civ2_scores:
@@ -1134,10 +1130,6 @@ def api_matchup(civ1, civ2):
                     # Only score for beating significant units (not trash, not siege)
                     if not is_trash and not is_siege:
                         score += 1
-                else:
-                    # Penalty for losing to siege
-                    if is_siege:
-                        score -= 1
             s["score"] = score
 
         # Get top 3 units for each civ (by base score) for addon scoring

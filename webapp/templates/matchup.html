@@ -618,9 +618,7 @@
                     `;
                 }
 
-                const resWinClass = best.res_win_rate >= 50 ? "high" : "low";
-                const countWinClass =
-                    best.count_win_rate >= 50 ? "high" : "low";
+                const winRateClass = best.win_rate >= 50 ? "high" : "low";
 
                 let counterBonusHtml = "";
                 if (best.beats_top1) {
@@ -631,7 +629,7 @@
                 if (allUnits && allUnits.length > 1) {
                     allUnitsHtml = `
                         <div class="all-units">
-                            <h5>All Units (by final score)</h5>
+                            <h5>All Units (by score)</h5>
                             <div class="unit-list">
                                 ${allUnits
                                     .map((u, i) => {
@@ -653,7 +651,7 @@
                                         return `
                                             <div class="unit-item ${classes.join(" ")}">
                                                 <span class="name">${u.name}${starStr}</span>
-                                                <span class="score">${u.score} pts R:${u.res_win_rate}%</span>
+                                                <span class="score">${u.wins}/${u.total} wins (${u.win_rate}%)</span>
                                                 <div class="matchup-tooltip">
                                                     <div class="tooltip-section wins">
                                                         <strong>Beats (${u.matchups.wins.length}):</strong> ${winsStr}
@@ -675,19 +673,11 @@
                     <div class="recommendation-box ${civClass}">
                         <h4>${civName} - Best Unit</h4>
                         <div class="best-unit">${best.name}</div>
-                        <div class="total-score">${best.final_score} <span class="label">points</span></div>
+                        <div class="total-score">${best.wins}/${best.total} <span class="label">wins</span></div>
                         <div class="score-breakdown">
                             <div class="score-item">
-                                <span class="label">Base Score</span>
-                                <span class="value">${best.score}</span>
-                            </div>
-                            <div class="score-item">
-                                <span class="label">Resource</span>
-                                <span class="value ${resWinClass}">${best.res_win_rate}%</span>
-                            </div>
-                            <div class="score-item">
-                                <span class="label">20 Units</span>
-                                <span class="value ${countWinClass}">${best.count_win_rate}%</span>
+                                <span class="label">Win Rate</span>
+                                <span class="value ${winRateClass}">${best.win_rate}%</span>
                             </div>
                         </div>
                         ${counterBonusHtml}

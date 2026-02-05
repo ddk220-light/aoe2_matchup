@@ -1048,16 +1048,23 @@
                 }
 
                 getDamageAgainst(target, detailed = false) {
-                    const baseAttack = this.attacks['4'] || this.attack;
+                    // Use pierce attack (class 3) for ranged, melee attack (class 4) for melee
+                    const isRanged = this.isRanged();
+                    const baseAttackClass = isRanged ? '3' : '4';
+                    const baseArmorClass = isRanged ? '3' : '4';
+                    const baseAttack = this.attacks[baseAttackClass] || this.attacks['4'] || this.attack;
+                    const targetBaseArmor = isRanged
+                        ? (target.armors['3'] || target.pierceArmor || 0)
+                        : (target.armors['4'] || target.meleeArmor || 0);
+
                     let bonusDamage = 0;
                     const breakdown = [];
 
-                    // Base melee damage (class 4)
-                    const targetBaseArmor = target.armors['4'] || target.meleeArmor;
+                    // Base damage (pierce for ranged, melee for melee)
                     const baseDmg = Math.max(0, baseAttack - targetBaseArmor);
                     breakdown.push({
-                        classId: '4',
-                        className: armorClassNames['4'] || 'Base Melee',
+                        classId: baseAttackClass,
+                        className: isRanged ? 'Base Pierce' : 'Base Melee',
                         attack: baseAttack,
                         armor: targetBaseArmor,
                         damage: baseDmg,
@@ -1067,7 +1074,7 @@
                     // Bonus damage from other armor classes
                     // IMPORTANT: Bonus only applies if the target HAS that armor class
                     for (const [armorClass, attackValue] of Object.entries(this.attacks)) {
-                        if (armorClass === '4') continue; // Skip base melee (handled above)
+                        if (armorClass === '3' || armorClass === '4') continue; // Skip base pierce/melee (handled above)
                         if (attackValue <= 0) continue; // Skip zero/negative attacks
 
                         // Check if target has this armor class

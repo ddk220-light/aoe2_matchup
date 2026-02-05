@@ -1954,13 +1954,13 @@
 
                         // Calculate resource cost based on age
                         // Castle age: 2*wood + 3*food + gold
-                        // Imperial age: wood + 2*food + 5*gold
+                        // Imperial age: wood + 2*food + 3*gold
                         function calcResourceCost(stats, age) {
                             const food = stats.cost_food || 0;
                             const wood = stats.cost_wood || 0;
                             const gold = stats.cost_gold || 0;
                             if (age === 'imperial') {
-                                return wood + 2 * food + 5 * gold;
+                                return wood + 2 * food + 3 * gold;
                             } else {
                                 // Castle age or earlier
                                 return 2 * wood + 3 * food + gold;

@@ -880,7 +880,7 @@ def api_matchup(civ1, civ2):
 
         # Resource cost formula varies by age
         # Castle age: 2*wood + 3*food + gold
-        # Imperial age: wood + 2*food + 5*gold
+        # Imperial age: wood + 2*food + 3*gold
         is_imperial = age_slug == "imperial"
 
         def calc_resource_cost(unit):
@@ -888,7 +888,7 @@ def api_matchup(civ1, civ2):
             wood = unit["cost_wood"] or 0
             gold = unit["cost_gold"] or 0
             if is_imperial:
-                cost = wood + 2 * food + 5 * gold
+                cost = wood + 2 * food + 3 * gold
             else:
                 cost = 2 * wood + 3 * food + gold
             return cost if cost > 0 else 100

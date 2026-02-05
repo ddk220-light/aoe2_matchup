@@ -1199,53 +1199,14 @@ def api_matchup(civ1, civ2):
                     score += matchup["score"]
             s["score"] = score
 
-        # Get top 3 units for each civ (by base score) for addon scoring
-        civ1_top3 = sorted(civ1_scores.keys(), key=lambda k: -civ1_scores[k]["score"])[
-            :3
-        ]
-        civ2_top3 = sorted(civ2_scores.keys(), key=lambda k: -civ2_scores[k]["score"])[
-            :3
-        ]
-
-        # Calculate add-on scores for civ1 units
-        # +1 for each of opponent's top 3 units beaten, +1 extra for beating #1
-        for slug in civ1_scores:
-            addon = 0
-            beats_top1 = False
-            for i, top_slug in enumerate(civ2_top3):
-                key = (slug, top_slug)
-                if key in matchup_results and matchup_results[key] == 1:
-                    addon += 1
-                    if i == 0:
-                        addon += 1
-                        beats_top1 = True
-            civ1_scores[slug]["addon_score"] = addon
-            civ1_scores[slug]["final_score"] = civ1_scores[slug]["score"] + addon
-            civ1_scores[slug]["beats_top1"] = beats_top1
-
-        # Calculate add-on scores for civ2 units
-        for slug in civ2_scores:
-            addon = 0
-            beats_top1 = False
-            for i, top_slug in enumerate(civ1_top3):
-                key = (top_slug, slug)
-                if key in matchup_results and matchup_results[key] == 2:
-                    addon += 1
-                    if i == 0:
-                        addon += 1
-                        beats_top1 = True
-            civ2_scores[slug]["addon_score"] = addon
-            civ2_scores[slug]["final_score"] = civ2_scores[slug]["score"] + addon
-            civ2_scores[slug]["beats_top1"] = beats_top1
-
-        # Find best unit for each civ (by final_score)
+        # Find best unit for each civ (by score)
         civ1_best = (
-            max(civ1_scores.items(), key=lambda x: x[1]["final_score"])
+            max(civ1_scores.items(), key=lambda x: x[1]["score"])
             if civ1_scores
             else None
         )
         civ2_best = (
-            max(civ2_scores.items(), key=lambda x: x[1]["final_score"])
+            max(civ2_scores.items(), key=lambda x: x[1]["score"])
             if civ2_scores
             else None
         )
@@ -1277,9 +1238,6 @@ def api_matchup(civ1, civ2):
                 "slug": slug,
                 "name": display_name,
                 "score": data["score"],
-                "addon_score": data["addon_score"],
-                "final_score": data["final_score"],
-                "beats_top1": data["beats_top1"],
                 "wins": data["wins"],
                 "total": data["total"],
                 "win_rate": round(data["win_rate"] * 100, 1),
@@ -1320,12 +1278,12 @@ def api_matchup(civ1, civ2):
 
         # Find best unit only among combat units
         civ1_combat_best = (
-            max(civ1_combat.items(), key=lambda x: x[1]["final_score"])
+            max(civ1_combat.items(), key=lambda x: x[1]["score"])
             if civ1_combat
             else None
         )
         civ2_combat_best = (
-            max(civ2_combat.items(), key=lambda x: x[1]["final_score"])
+            max(civ2_combat.items(), key=lambda x: x[1]["score"])
             if civ2_combat
             else None
         )
@@ -1350,15 +1308,11 @@ def api_matchup(civ1, civ2):
             else None,
             "civ1_all": [
                 format_unit(k, v, civ1_beats_best, civ1_matchup_details)
-                for k, v in sorted(
-                    civ1_combat.items(), key=lambda x: -x[1]["final_score"]
-                )
+                for k, v in sorted(civ1_combat.items(), key=lambda x: -x[1]["score"])
             ],
             "civ2_all": [
                 format_unit(k, v, civ2_beats_best, civ2_matchup_details)
-                for k, v in sorted(
-                    civ2_combat.items(), key=lambda x: -x[1]["final_score"]
-                )
+                for k, v in sorted(civ2_combat.items(), key=lambda x: -x[1]["score"])
             ],
             "civ1_trash": [
                 format_counter_unit(k, v, civ1_matchup_details)

@@ -563,7 +563,7 @@ def api_combat_unit(civ_name, unit_slug):
             us.melee_armor, us.pierce_armor, us.movement_speed,
             us.attacks_json, us.armors_json,
             us.unit_name, c.name as civ_name,
-            us.cost_food, us.cost_wood, us.cost_gold
+            us.cost_food, us.cost_wood, us.cost_gold, us.attack_delay
         FROM unit_stats us
         JOIN units u ON us.unit_id = u.id
         JOIN civilizations c ON us.civ_id = c.id
@@ -592,6 +592,7 @@ def api_combat_unit(civ_name, unit_slug):
             "attack": row["attack"],
             "attack_range": row["attack_range"] or 0,
             "attack_speed": row["attack_speed"],
+            "attack_delay": row["attack_delay"] or 0,
             "melee_armor": row["melee_armor"],
             "pierce_armor": row["pierce_armor"],
             "movement_speed": row["movement_speed"],

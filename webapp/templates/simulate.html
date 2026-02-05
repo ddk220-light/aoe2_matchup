@@ -1051,6 +1051,7 @@
                     this.attackRange = (this.rawAttackRange * TILE_SIZE) + MIN_ATTACK_RANGE;
                     this.attackSpeed = stats.attack_speed || 0.5;
                     this.reloadTime = 1.0 / this.attackSpeed;
+                    this.attackDelay = stats.attack_delay || 0;  // Time to wait before first attack after moving
                     this.moveSpeed = (stats.movement_speed || 1) * TILE_SIZE;
                     this.meleeArmor = stats.melee_armor || 0;
                     this.pierceArmor = stats.pierce_armor || 0;
@@ -1062,8 +1063,10 @@
                     this.radius = UNIT_RADIUS;
 
                     this.target = null;
-                    this.state = 'idle';  // idle, moving, attacking, kiting
+                    this.state = 'idle';  // idle, moving, attacking, kiting, committed
                     this.attackCooldown = 0;
+                    this.wasMoving = true;  // Track if unit was moving (for attack delay)
+                    this.committedAttack = null;  // For melee: {target, timeLeft} - guarantees hit
 
                     this.attackAnimTimer = 0;
                     this.damageNumbers = [];
@@ -1210,40 +1213,86 @@
                         return;
                     }
 
-                    // Ranged unit kiting behavior
+                    // Ranged unit behavior with attack delay
                     if (this.isRanged()) {
-                        if (this.inRange() && this.attackCooldown <= 0) {
-                            // In range and ready to fire - attack
-                            this.state = 'attacking';
-                            this.performAttack();
-                        } else if (this.attackCooldown > 0) {
-                            // Reloading - kite away from target
+                        if (this.inRange()) {
+                            if (this.wasMoving && this.attackCooldown <= 0) {
+                                // Just stopped moving - apply attack delay before first attack
+                                this.attackCooldown = this.attackDelay;
+                                this.wasMoving = false;
+                                this.state = 'attacking';
+                            } else if (this.attackCooldown <= 0) {
+                                // Attack delay done - fire!
+                                this.state = 'attacking';
+                                this.performAttack();
+                            } else {
+                                this.state = 'attacking';
+                            }
+                        } else if (this.attackCooldown > 0 && !this.target.isRanged()) {
+                            // Reloading and target is melee - kite away
                             this.state = 'kiting';
                             this.moveAwayFromTarget(dt, allUnits);
+                            this.wasMoving = true;
                         } else if (!this.inRange()) {
-                            // Out of range and ready to fire - move closer
+                            // Out of range - move closer
                             this.state = 'moving';
                             this.moveTowardTarget(dt, allUnits);
+                            this.wasMoving = true;
                         }
                     } else {
-                        // Melee unit behavior - close distance and attack
-                        if (this.inRange()) {
-                            this.state = 'attacking';
+                        // Melee unit behavior with committed attacks
+                        // Check if we have a committed attack in progress
+                        if (this.committedAttack) {
+                            this.committedAttack.timeLeft -= dt;
+                            this.state = 'committed';
+                            if (this.committedAttack.timeLeft <= 0) {
+                                // Attack completes - hit the target even if it moved
+                                const target = this.committedAttack.target;
+                                if (target.state !== 'dead') {
+                                    this.performAttackOn(target);
+                                }
+                                this.committedAttack = null;
+                                this.attackCooldown = this.reloadTime;
+                                this.wasMoving = false;
+                            }
+                        } else if (this.inRange()) {
                             if (this.attackCooldown <= 0) {
-                                this.performAttack();
+                                if (this.attackDelay > 0) {
+                                    // Start committed attack - will hit this target when delay completes
+                                    this.committedAttack = {
+                                        target: this.target,
+                                        timeLeft: this.attackDelay
+                                    };
+                                    this.state = 'committed';
+                                    this.wasMoving = false;
+                                } else {
+                                    // No attack delay - hit immediately
+                                    this.state = 'attacking';
+                                    this.performAttack();
+                                }
+                            } else {
+                                this.state = 'attacking';
                             }
                         } else {
                             this.state = 'moving';
                             this.moveTowardTarget(dt, allUnits);
+                            this.wasMoving = true;
                         }
                     }
                 }
 
                 performAttack() {
                     if (!this.target || this.target.state === 'dead') return;
+                    this.performAttackOn(this.target);
+                    this.attackCooldown = this.reloadTime;
+                }
 
-                    const damage = this.getDamageAgainst(this.target);
-                    this.target.takeDamage(damage, this);
+                // Attack a specific target (used for committed melee attacks)
+                performAttackOn(target) {
+                    if (!target || target.state === 'dead') return;
+
+                    const damage = this.getDamageAgainst(target);
+                    target.takeDamage(damage, this);
 
                     // Apply trample damage to nearby enemies (melee only)
                     if (!this.isRanged()) {
@@ -1253,7 +1302,7 @@
                             if (trampleDmg > 0) {
                                 const enemies = this.team === 1 ? simulation.team2 : simulation.team1;
                                 for (const enemy of enemies) {
-                                    if (enemy !== this.target && enemy.state !== 'dead') {
+                                    if (enemy !== target && enemy.state !== 'dead') {
                                         const dist = this.distanceTo(enemy);
                                         if (dist <= trampleInfo.radius + enemy.radius) {
                                             enemy.takeDamage(trampleDmg, this);
@@ -1264,7 +1313,6 @@
                         }
                     }
 
-                    this.attackCooldown = this.reloadTime;
                     this.attackAnimTimer = 0.15;
                 }
 

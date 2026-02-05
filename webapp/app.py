@@ -964,43 +964,80 @@ def api_matchup(civ1, civ2):
                 u1_won_any = False
                 u2_won_any = False
 
+                # Track best outcome across all mode combinations
+                # We want to find if any mode combo results in winning BOTH simulations
+                u1_won_both_any = False  # u1 won both sims in at least one mode combo
+                u2_won_both_any = False  # u2 won both sims in at least one mode combo
+                u1_won_any = False  # u1 won at least one sim in any mode combo
+                u2_won_any = False  # u2 won at least one sim in any mode combo
+
                 for u1_mode in u1_modes:
                     u1_mode_cost = calc_resource_cost(u1_mode)
                     for u2_mode in u2_modes:
                         u2_mode_cost = calc_resource_cost(u2_mode)
 
-                        # Run two simulations: 1500 resources (medium) and 5000 resources (large)
-                        winner_1500, _, _ = simulate_battle(
+                        # Run two simulations:
+                        # 1. Resource-based: 3000 resources
+                        # 2. Count-based: 30 units each
+                        winner_resources, _, _ = simulate_battle(
                             u1_mode,
                             u1_mode_cost,
                             u2_mode,
                             u2_mode_cost,
-                            1500,
+                            3000,
                             civ1,
                             civ2,
                         )
-                        winner_5000, _, _ = simulate_battle(
+                        winner_count, _, _ = simulate_battle(
                             u1_mode,
                             u1_mode_cost,
                             u2_mode,
                             u2_mode_cost,
-                            5000,
+                            0,  # resources ignored when fixed_count is set
                             civ1,
                             civ2,
+                            fixed_count=30,
                         )
 
-                        if winner_1500 == 1 or winner_5000 == 1:
+                        # Track if this mode combo won both simulations
+                        if winner_resources == 1 and winner_count == 1:
+                            u1_won_both_any = True
+                        if winner_resources == 2 and winner_count == 2:
+                            u2_won_both_any = True
+
+                        # Track if won at least one
+                        if winner_resources == 1 or winner_count == 1:
                             u1_won_any = True
-                        if winner_1500 == 2 or winner_5000 == 2:
+                        if winner_resources == 2 or winner_count == 2:
                             u2_won_any = True
 
-                # Determine overall winner: u1 wins if it won any mode combo, else u2 wins if it won any
-                if u1_won_any:
+                # Determine winner and score:
+                # - If a unit won BOTH simulations in any mode combo: 3 points (clear win)
+                # - If results are split (each won at least one): 1 point each (draw)
+                # - If neither won anything: 0 points (true draw, shouldn't happen often)
+                if u1_won_both_any and not u2_won_both_any:
                     winner = 1
-                elif u2_won_any:
+                    u1_score_add = 3
+                    u2_score_add = 0
+                elif u2_won_both_any and not u1_won_both_any:
                     winner = 2
+                    u1_score_add = 0
+                    u2_score_add = 3
+                elif u1_won_any and u2_won_any:
+                    # Split results - draw, 1 point each
+                    winner = 0
+                    u1_score_add = 1
+                    u2_score_add = 1
+                elif u1_won_both_any and u2_won_both_any:
+                    # Both have mode combos that won both - draw
+                    winner = 0
+                    u1_score_add = 1
+                    u2_score_add = 1
                 else:
-                    winner = 0  # Draw
+                    # True draw - neither won anything
+                    winner = 0
+                    u1_score_add = 1
+                    u2_score_add = 1
 
                 u1_total += 1
                 if winner == 1:
@@ -1032,6 +1069,8 @@ def api_matchup(civ1, civ2):
                         "civ2_unit": u2_display,
                         "civ2_slug": u2["slug"],
                         "winner": winner,
+                        "u1_score": u1_score_add,
+                        "u2_score": u2_score_add,
                     }
                 )
 
@@ -1085,6 +1124,7 @@ def api_matchup(civ1, civ2):
                     "opponent": m["civ2_unit"],
                     "opponent_slug": m["civ2_slug"],
                     "won": civ1_won,
+                    "score": m["u1_score"],
                 }
             )
 
@@ -1097,11 +1137,13 @@ def api_matchup(civ1, civ2):
                     "opponent": m["civ1_unit"],
                     "opponent_slug": m["civ1_slug"],
                     "won": civ2_won,
+                    "score": m["u2_score"],
                 }
             )
 
         # Calculate scores for each unit
-        # Scoring: +1 for beating significant units only (not trash, not siege)
+        # Scoring: 3 for winning both sims, 1 each for draw (split results)
+        # No score for beating trash or siege units
         for key in civ1_scores:
             s = civ1_scores[key]
             s["win_rate"] = s["wins"] / s["total"] if s["total"] > 0 else 0
@@ -1111,10 +1153,9 @@ def api_matchup(civ1, civ2):
                 opp_slug = matchup["opponent_slug"]
                 is_trash = opp_slug in TRASH_SLUGS
                 is_siege = opp_slug in SIEGE_SLUGS
-                if matchup["won"]:
-                    # Only score for beating significant units (not trash, not siege)
-                    if not is_trash and not is_siege:
-                        score += 1
+                # Only score for significant units (not trash, not siege)
+                if not is_trash and not is_siege:
+                    score += matchup["score"]
             s["score"] = score
 
         for key in civ2_scores:
@@ -1126,10 +1167,9 @@ def api_matchup(civ1, civ2):
                 opp_slug = matchup["opponent_slug"]
                 is_trash = opp_slug in TRASH_SLUGS
                 is_siege = opp_slug in SIEGE_SLUGS
-                if matchup["won"]:
-                    # Only score for beating significant units (not trash, not siege)
-                    if not is_trash and not is_siege:
-                        score += 1
+                # Only score for significant units (not trash, not siege)
+                if not is_trash and not is_siege:
+                    score += matchup["score"]
             s["score"] = score
 
         # Get top 3 units for each civ (by base score) for addon scoring
@@ -1254,7 +1294,14 @@ def api_matchup(civ1, civ2):
 
 
 def simulate_battle(
-    unit1, cost1, unit2, cost2, resources, civ1_name=None, civ2_name=None
+    unit1,
+    cost1,
+    unit2,
+    cost2,
+    resources,
+    civ1_name=None,
+    civ2_name=None,
+    fixed_count=None,
 ):
     """
     Tick-based battle simulation with kiting support and siege projectile mechanics.
@@ -1263,14 +1310,22 @@ def simulate_battle(
     travel at light cavalry speed. They struggle against fast melee units but
     do well against slower ranged units.
 
+    Args:
+        fixed_count: If provided, use this fixed unit count for both sides
+                     instead of calculating from resources.
+
     Returns: (winner, unit1_remaining, unit2_remaining)
         winner: 1 if unit1 wins, 2 if unit2 wins, 0 if draw
     """
     import json
 
     # Calculate army sizes
-    count1 = max(1, resources // cost1)
-    count2 = max(1, resources // cost2)
+    if fixed_count is not None:
+        count1 = fixed_count
+        count2 = fixed_count
+    else:
+        count1 = max(1, resources // cost1)
+        count2 = max(1, resources // cost2)
 
     # Parse attacks and armors
     attacks1 = json.loads(unit1["attacks_json"]) if unit1["attacks_json"] else {}

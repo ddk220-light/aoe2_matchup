@@ -1675,32 +1675,38 @@ def simulate_battle(
                 if is_skirmisher1 and distance < MIN_SKIRMISHER_RANGE:
                     too_close = True  # Too close, skirmisher can't fire
 
-                if in_range and not too_close and cooldown1[i] <= 0:
-                    if was_moving1[i]:
-                        # Just stopped moving, apply attack delay before first attack
-                        cooldown1[i] = attack_delay1
-                        was_moving1[i] = False
-                    else:
-                        # Attack delay done or not moving, fire!
-                        if is_siege1:
-                            # Siege unit fires ground-targeted projectile with splash
-                            target_pos = pos2[closest]
-                            enemy_positions = {idx: pos2[idx] for idx in alive2}
-                            projectiles.append(
-                                (2, target_pos, pos1[i], dmg1, enemy_positions)
-                            )
-                        else:
-                            pending_damage.append((2, closest, dmg1, i, pos1[i]))
-                        cooldown1[i] = reload1
+                if in_range and not too_close:
+                    # In range - prioritize attacking
+                    if cooldown1[i] <= 0:
+                        if was_moving1[i]:
+                            # Just stopped moving, apply attack delay before first attack
+                            cooldown1[i] = attack_delay1
+                            was_moving1[i] = False
+                        if cooldown1[i] <= 0:
+                            # Ready to fire!
+                            if is_siege1:
+                                # Siege unit fires ground-targeted projectile with splash
+                                target_pos = pos2[closest]
+                                enemy_positions = {idx: pos2[idx] for idx in alive2}
+                                projectiles.append(
+                                    (2, target_pos, pos1[i], dmg1, enemy_positions)
+                                )
+                            else:
+                                pending_damage.append((2, closest, dmg1, i, pos1[i]))
+                            cooldown1[i] = reload1
+                    elif should_kite1:
+                        # In range but reloading, target is melee - kite away
+                        pos1[i] = max(MAP_MIN, pos1[i] - move_speed1 * dt)
+                        was_moving1[i] = True
+                    # else: in range, waiting for cooldown (vs ranged), stay put
                 elif cooldown1[i] > 0 and should_kite1:
-                    # Kite (move away while reloading), respect map boundary
+                    # Out of range and reloading, target is melee - kite away
                     pos1[i] = max(MAP_MIN, pos1[i] - move_speed1 * dt)
                     was_moving1[i] = True
-                elif not in_range or too_close:
+                else:
                     # Out of range or too close - move toward target
                     pos1[i] += move_speed1 * dt
                     was_moving1[i] = True
-                # else: in range, waiting for cooldown (vs ranged), stay put
             else:
                 # Melee unit
                 # Check if this unit has a committed attack in progress
@@ -1747,32 +1753,38 @@ def simulate_battle(
                 if is_skirmisher2 and distance < MIN_SKIRMISHER_RANGE:
                     too_close = True  # Too close, skirmisher can't fire
 
-                if in_range and not too_close and cooldown2[i] <= 0:
-                    if was_moving2[i]:
-                        # Just stopped moving, apply attack delay before first attack
-                        cooldown2[i] = attack_delay2
-                        was_moving2[i] = False
-                    else:
-                        # Attack delay done or not moving, fire!
-                        if is_siege2:
-                            # Siege unit fires ground-targeted projectile with splash
-                            target_pos = pos1[closest]
-                            enemy_positions = {idx: pos1[idx] for idx in alive1}
-                            projectiles.append(
-                                (1, target_pos, pos2[i], dmg2, enemy_positions)
-                            )
-                        else:
-                            pending_damage.append((1, closest, dmg2, i, pos2[i]))
-                        cooldown2[i] = reload2
+                if in_range and not too_close:
+                    # In range - prioritize attacking
+                    if cooldown2[i] <= 0:
+                        if was_moving2[i]:
+                            # Just stopped moving, apply attack delay before first attack
+                            cooldown2[i] = attack_delay2
+                            was_moving2[i] = False
+                        if cooldown2[i] <= 0:
+                            # Ready to fire!
+                            if is_siege2:
+                                # Siege unit fires ground-targeted projectile with splash
+                                target_pos = pos1[closest]
+                                enemy_positions = {idx: pos1[idx] for idx in alive1}
+                                projectiles.append(
+                                    (1, target_pos, pos2[i], dmg2, enemy_positions)
+                                )
+                            else:
+                                pending_damage.append((1, closest, dmg2, i, pos2[i]))
+                            cooldown2[i] = reload2
+                    elif should_kite2:
+                        # In range but reloading, target is melee - kite away
+                        pos2[i] = min(MAP_MAX, pos2[i] + move_speed2 * dt)
+                        was_moving2[i] = True
+                    # else: in range, waiting for cooldown (vs ranged), stay put
                 elif cooldown2[i] > 0 and should_kite2:
-                    # Kite (move away while reloading), respect map boundary
+                    # Out of range and reloading, target is melee - kite away
                     pos2[i] = min(MAP_MAX, pos2[i] + move_speed2 * dt)
                     was_moving2[i] = True
-                elif not in_range or too_close:
+                else:
                     # Out of range or too close - move toward target
                     pos2[i] -= move_speed2 * dt
                     was_moving2[i] = True
-                # else: in range, waiting for cooldown (vs ranged), stay put
             else:
                 # Melee unit
                 # Check if this unit has a committed attack in progress

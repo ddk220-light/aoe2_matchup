@@ -331,15 +331,7 @@ IMPERIAL_UNITS = {
             (237, 492, "Arbalester"),
         ],
     },
-    "imp_skirm": {
-        "base_id": 6,  # Elite Skirmisher
-        "display_name": "Imperial Skirmisher",
-        "unit_class": 0,
-        "availability_tech": None,
-        "upgrades": [
-            (655, 1155, "Imperial Skirmisher"),
-        ],
-    },
+    # Imperial Skirmisher removed - requires Vietnamese team bonus (not standard)
     "heavy_cav_archer": {
         "base_id": 39,
         "display_name": "Heavy Cavalry Archer",

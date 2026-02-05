@@ -129,7 +129,7 @@ CASTLE_UNITS = {
         ],
     },
     "eagle_warrior": {
-        "base_id": 751,
+        "base_id": 753,  # Correct ID per AoE2ScenarioParser (751 is Eagle Scout)
         "display_name": "Eagle Warrior",
         "unit_class": 6,
         "availability_tech": 433,  # Eagle Warrior (make avail)
@@ -161,7 +161,7 @@ CASTLE_UNITS = {
         "upgrades": [],
     },
     "elephant": {
-        "base_id": 1252,
+        "base_id": 1132,  # Correct ID per AoE2ScenarioParser
         "display_name": "Battle Elephant",
         "unit_class": 12,
         "availability_tech": 630,  # Battle Elephant (make avail)
@@ -201,7 +201,7 @@ CASTLE_UNITS = {
         "upgrades": [],
     },
     "elephant_archer": {
-        "base_id": 1010,
+        "base_id": 873,  # Correct ID per AoE2ScenarioParser
         "display_name": "Elephant Archer",
         "unit_class": 36,
         "availability_tech": 480,  # Elephant Archer (make avail)
@@ -305,12 +305,12 @@ IMPERIAL_UNITS = {
         ],
     },
     "elite_elephant": {
-        "base_id": 1252,
+        "base_id": 1132,  # Correct ID per AoE2ScenarioParser
         "display_name": "Elite Battle Elephant",
         "unit_class": 12,
         "availability_tech": 630,
         "upgrades": [
-            (631, 1254, "Elite Battle Elephant"),
+            (631, 1134, "Elite Battle Elephant"),  # Correct elite ID: 1134
         ],
     },
     "elite_steppe": {
@@ -342,12 +342,12 @@ IMPERIAL_UNITS = {
         ],
     },
     "elite_ele_archer": {
-        "base_id": 1010,
+        "base_id": 873,  # Correct ID per AoE2ScenarioParser
         "display_name": "Elite Elephant Archer",
         "unit_class": 36,
         "availability_tech": 480,
         "upgrades": [
-            (481, 1012, "Elite Elephant Archer"),
+            (481, 875, "Elite Elephant Archer"),  # Correct elite ID: 875
         ],
     },
     "siege_ram": {
@@ -436,18 +436,18 @@ UNIQUE_UNITS = {
             "unit_class": 0,
             "availability_tech": 263,
             "elite_tech": 360,
-            "elite_id": 545,
+            "elite_id": 530,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Longbowman",
         },
     ],
     "Franks": [
         {
-            "base_id": 1001,
+            "base_id": 281,  # Correct ID per AoE2ScenarioParser
             "display_name": "Throwing Axeman",
             "unit_class": 6,
             "availability_tech": 275,
             "elite_tech": 363,
-            "elite_id": 1003,
+            "elite_id": 531,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Throwing Axeman",
         },
     ],
@@ -458,7 +458,7 @@ UNIQUE_UNITS = {
             "unit_class": 6,
             "availability_tech": 446,
             "elite_tech": 365,
-            "elite_id": 554,
+            "elite_id": 555,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Huskarl",
         },
     ],
@@ -469,7 +469,7 @@ UNIQUE_UNITS = {
             "unit_class": 6,
             "availability_tech": 276,
             "elite_tech": 364,
-            "elite_id": 556,
+            "elite_id": 554,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Teutonic Knight",
         },
     ],
@@ -519,12 +519,12 @@ UNIQUE_UNITS = {
     ],
     "Saracens": [
         {
-            "base_id": 832,
+            "base_id": 282,  # Correct ID per AoE2ScenarioParser
             "display_name": "Mameluke",
             "unit_class": 12,
             "availability_tech": 269,
             "elite_tech": 368,
-            "elite_id": 831,
+            "elite_id": 556,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Mameluke",
         },
     ],
@@ -557,7 +557,7 @@ UNIQUE_UNITS = {
             "unit_class": 6,
             "availability_tech": 277,
             "elite_tech": 370,
-            "elite_id": 548,
+            "elite_id": 534,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Woad Raider",
         },
     ],
@@ -629,12 +629,12 @@ UNIQUE_UNITS = {
     ],
     "Italians": [
         {
-            "base_id": 1004,
+            "base_id": 866,  # Correct ID per AoE2ScenarioParser
             "display_name": "Genoese Crossbowman",
             "unit_class": 0,
             "availability_tech": 467,
             "elite_tech": 468,
-            "elite_id": 1006,
+            "elite_id": 868,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Genoese Crossbowman",
         },
     ],
@@ -684,23 +684,23 @@ UNIQUE_UNITS = {
     ],
     "Portuguese": [
         {
-            "base_id": 1120,
+            "base_id": 1001,  # Correct ID per AoE2ScenarioParser
             "display_name": "Organ Gun",
             "unit_class": 13,
             "availability_tech": 562,
             "elite_tech": 563,
-            "elite_id": 1122,
+            "elite_id": 1003,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Organ Gun",
         },
     ],
     "Berbers": [
         {
-            "base_id": 1123,
+            "base_id": 1007,  # Correct ID per AoE2ScenarioParser
             "display_name": "Camel Archer",
             "unit_class": 36,
             "availability_tech": 564,
             "elite_tech": 565,
-            "elite_id": 1125,
+            "elite_id": 1009,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Camel Archer",
         },
     ],
@@ -728,89 +728,89 @@ UNIQUE_UNITS = {
     ],
     "Khmer": [
         {
-            "base_id": 1225,
+            "base_id": 1120,  # Correct ID per AoE2ScenarioParser
             "display_name": "Ballista Elephant",
             "unit_class": 55,
             "availability_tech": 614,
             "elite_tech": 615,
-            "elite_id": 1227,
+            "elite_id": 1122,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Ballista Elephant",
         },
     ],
     "Malay": [
         {
-            "base_id": 1228,
+            "base_id": 1123,  # Correct ID per AoE2ScenarioParser
             "display_name": "Karambit Warrior",
             "unit_class": 6,
             "availability_tech": 616,
             "elite_tech": 617,
-            "elite_id": 1230,
+            "elite_id": 1125,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Karambit Warrior",
         },
     ],
     "Burmese": [
         {
-            "base_id": 1231,
+            "base_id": 1126,  # Correct ID per AoE2ScenarioParser
             "display_name": "Arambai",
             "unit_class": 36,
             "availability_tech": 618,
             "elite_tech": 619,
-            "elite_id": 1233,
+            "elite_id": 1128,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Arambai",
         },
     ],
     "Vietnamese": [
         {
-            "base_id": 1234,
+            "base_id": 1129,  # Correct ID per AoE2ScenarioParser
             "display_name": "Rattan Archer",
             "unit_class": 0,
             "availability_tech": 620,
             "elite_tech": 621,
-            "elite_id": 1236,
+            "elite_id": 1131,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Rattan Archer",
         },
     ],
     "Bulgarians": [
         {
-            "base_id": 1254,
+            "base_id": 1225,  # Correct ID per AoE2ScenarioParser
             "display_name": "Konnik",
             "unit_class": 12,
             "availability_tech": 677,
             "elite_tech": 678,
-            "elite_id": 1256,
+            "elite_id": 1227,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Konnik",
         },
     ],
     "Tatars": [
         {
-            "base_id": 1263,
+            "base_id": 1228,  # Correct ID per AoE2ScenarioParser
             "display_name": "Keshik",
             "unit_class": 12,
             "availability_tech": 679,
             "elite_tech": 680,
-            "elite_id": 1265,
+            "elite_id": 1230,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Keshik",
         },
     ],
     "Cumans": [
         {
-            "base_id": 1260,
+            "base_id": 1231,  # Correct ID per AoE2ScenarioParser
             "display_name": "Kipchak",
             "unit_class": 36,
             "availability_tech": 681,
             "elite_tech": 682,
-            "elite_id": 1262,
+            "elite_id": 1233,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Kipchak",
         },
     ],
     "Lithuanians": [
         {
-            "base_id": 1269,
+            "base_id": 1234,  # Correct ID per AoE2ScenarioParser
             "display_name": "Leitis",
             "unit_class": 12,
             "availability_tech": 683,
             "elite_tech": 684,
-            "elite_id": 1271,
+            "elite_id": 1236,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Leitis",
         },
     ],
@@ -832,29 +832,29 @@ UNIQUE_UNITS = {
             "unit_class": 6,
             "availability_tech": 756,
             "elite_tech": 757,
-            "elite_id": 1660,
+            "elite_id": 1659,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Serjeant",
         },
     ],
     "Poles": [
         {
-            "base_id": 1699,
+            "base_id": 1701,  # Correct ID per AoE2ScenarioParser
             "display_name": "Obuch",
             "unit_class": 6,
             "availability_tech": 782,
             "elite_tech": 783,
-            "elite_id": 1701,
+            "elite_id": 1703,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Obuch",
         },
     ],
     "Bohemians": [
         {
-            "base_id": 1696,
+            "base_id": 1704,  # Correct ID per AoE2ScenarioParser
             "display_name": "Hussite Wagon",
             "unit_class": 13,
             "availability_tech": 780,
             "elite_tech": 781,
-            "elite_id": 1698,
+            "elite_id": 1706,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Hussite Wagon",
         },
     ],
@@ -900,12 +900,12 @@ UNIQUE_UNITS = {
             "elite_name": "Elite Shrivamsha Rider",
         },
         {
-            "base_id": 1755,
+            "base_id": 1741,  # Correct ID per AoE2ScenarioParser
             "display_name": "Chakram Thrower",
             "unit_class": 6,
             "availability_tech": 893,
             "elite_tech": 894,
-            "elite_id": 1757,
+            "elite_id": 1743,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Chakram Thrower",
         },
     ],

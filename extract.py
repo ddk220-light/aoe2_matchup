@@ -6,6 +6,7 @@ Extracts unit, technology, and civilization data from empires2_x2_p1.dat
 
 import json
 from pathlib import Path
+
 from genieutils.datfile import DatFile
 
 # Known armor/attack class names
@@ -130,7 +131,7 @@ CIV_NAMES = [
     "Byzantines",
     "Persians",
     "Saracens",
-    "Turks",       # 10
+    "Turks",  # 10
     "Vikings",
     "Mongols",
     "Celts",
@@ -150,7 +151,7 @@ CIV_NAMES = [
     "Berbers",
     "Khmer",
     "Malay",
-    "Burmese",     # 30
+    "Burmese",  # 30
     "Vietnamese",
     "Bulgarians",
     "Tatars",
@@ -165,21 +166,21 @@ CIV_NAMES = [
     "Gurjaras",
     "Romans",
     "Armenians",
-    "Georgians",   # 45
+    "Georgians",  # 45
     # Chronicles DLC - Age of Antiquity (not in ranked play)
-    None,          # 46 Achaemenids - skip
-    None,          # 47 Athenians - skip
-    None,          # 48 Spartans - skip
+    None,  # 46 Achaemenids - skip
+    None,  # 47 Athenians - skip
+    None,  # 48 Spartans - skip
     # Three Kingdoms DLC (in ranked play)
-    "Shu",         # 49
-    "Wu",          # 50
-    "Wei",         # 51
-    "Jurchens",    # 52
-    "Khitans",     # 53
+    "Shu",  # 49
+    "Wu",  # 50
+    "Wei",  # 51
+    "Jurchens",  # 52
+    "Khitans",  # 53
     # Chronicles DLC - Alexander (not in ranked play)
-    None,          # 54 Macedonians - skip
-    None,          # 55 Thracians - skip
-    None,          # 56 Puru - skip
+    None,  # 54 Macedonians - skip
+    None,  # 55 Thracians - skip
+    None,  # 56 Puru - skip
 ]
 
 # Comprehensive unit ID to display name mappings
@@ -198,7 +199,6 @@ UNIT_NAMES = {
     753: "Eagle Warrior",
     752: "Elite Eagle Warrior",
     1: "Legionary (AoE1)",
-
     # ===== Core Archers =====
     4: "Archer",
     24: "Crossbowman",
@@ -211,7 +211,6 @@ UNIT_NAMES = {
     39: "Cavalry Archer",
     474: "Heavy Cavalry Archer",
     569: "Paladin",
-
     # ===== Core Cavalry =====
     448: "Scout Cavalry",
     546: "Light Cavalry",
@@ -228,7 +227,6 @@ UNIT_NAMES = {
     1254: "Elite Battle Elephant",
     1258: "Steppe Lancer",
     1259: "Elite Steppe Lancer",
-
     # ===== Siege Weapons =====
     35: "Battering Ram",
     493: "Capped Ram",
@@ -245,14 +243,12 @@ UNIT_NAMES = {
     42: "Trebuchet",
     331: "Trebuchet (Packed)",
     188: "Siege Tower",
-
     # ===== Monks =====
     125: "Monk",
     286: "Monk with Relic",
     759: "Missionary",
     1749: "Warrior Priest",
     1751: "Elite Warrior Priest",
-
     # ===== Ships =====
     13: "Fishing Ship",
     17: "Trade Cog",
@@ -263,212 +259,175 @@ UNIT_NAMES = {
     1103: "Fire Galley",
     885: "Fire Ship",
     532: "Fast Fire Ship",
-    875: "Demolition Raft",
+    527: "Demolition Raft",
     886: "Demolition Ship",
     1104: "Heavy Demolition Ship",
     869: "Cannon Galleon",
-    873: "Elite Cannon Galleon",
+    420: "Elite Cannon Galleon",  # Note: correct ID to be verified
     1743: "Dromon",
     1702: "Thirisadai",
     250: "Longboat",
     533: "Elite Longboat",
-
+    # ===== Elephant Units (Regional) =====
+    # Battle Elephant line (available to SE Asian civs)
+    1132: "Battle Elephant",
+    1134: "Elite Battle Elephant",
+    # Elephant Archer line (available to South Asian civs)
+    873: "Elephant Archer",
+    875: "Elite Elephant Archer",
     # ===== Unique Units - Britons =====
     8: "Longbowman",
     545: "Elite Longbowman",
-
     # ===== Unique Units - Franks =====
     1001: "Throwing Axeman",
     1003: "Elite Throwing Axeman",
-
     # ===== Unique Units - Goths =====
     41: "Huskarl",
     554: "Elite Huskarl",
-
     # ===== Unique Units - Teutons =====
     25: "Teutonic Knight",
     556: "Elite Teutonic Knight",
-
     # ===== Unique Units - Japanese =====
     291: "Samurai",
     560: "Elite Samurai",
-
     # ===== Unique Units - Chinese =====
     73: "Chu Ko Nu",
     559: "Elite Chu Ko Nu",
-
     # ===== Unique Units - Byzantines =====
     40: "Cataphract",
     553: "Elite Cataphract",
-
     # ===== Unique Units - Persians =====
     422: "War Elephant",
     555: "Elite War Elephant",
-
     # ===== Unique Units - Saracens =====
     832: "Mameluke",
     831: "Elite Mameluke",
-
     # ===== Unique Units - Turks =====
     46: "Janissary",
     557: "Elite Janissary",
-
     # ===== Unique Units - Vikings =====
     866: "Berserk",
     775: "Elite Berserk",
     94: "Berserk",
-
     # ===== Unique Units - Mongols =====
     11: "Mangudai",
     561: "Elite Mangudai",
-
     # ===== Unique Units - Celts =====
     232: "Woad Raider",
     548: "Elite Woad Raider",
-
     # ===== Unique Units - Spanish =====
     771: "Conquistador",
     773: "Elite Conquistador",
-
     # ===== Unique Units - Aztecs =====
     765: "Jaguar Warrior",
     764: "Elite Jaguar Warrior",
-
     # ===== Unique Units - Mayans =====
     763: "Plumed Archer",
     756: "Elite Plumed Archer",
-
     # ===== Unique Units - Huns =====
     755: "Tarkan",
     757: "Elite Tarkan",
-
     # ===== Unique Units - Koreans =====
     827: "War Wagon",
     829: "Elite War Wagon",
     828: "Turtle Ship",
     830: "Elite Turtle Ship",
-
     # ===== Unique Units - Italians =====
     1004: "Genoese Crossbowman",
     1006: "Elite Genoese Crossbowman",
     866: "Condottiero",
-
     # ===== Unique Units - Indians/Hindustanis =====
-    1010: "Elephant Archer",
-    1012: "Elite Elephant Archer",
+    # Note: Elephant Archer IDs are 873/875, not 1010/1012
     1747: "Ghulam",
     1749: "Elite Ghulam",
-
     # ===== Unique Units - Incas =====
-    1016: "Kamayuk",
-    1018: "Elite Kamayuk",
-
+    879: "Kamayuk",
+    881: "Elite Kamayuk",
+    # ===== Unique Units - Ethiopians =====
+    1016: "Shotel Warrior",
+    1018: "Elite Shotel Warrior",
     # ===== Unique Units - Magyars =====
     1007: "Magyar Huszar",
     1009: "Elite Magyar Huszar",
-
     # ===== Unique Units - Slavs =====
-    1013: "Boyar",
-    1015: "Elite Boyar",
-
+    876: "Boyar",
+    878: "Elite Boyar",
     # ===== Unique Units - Portuguese =====
     1120: "Organ Gun",
     1122: "Elite Organ Gun",
     1123: "Caravel",
     1125: "Elite Caravel",
-
     # ===== Unique Units - Ethiopians =====
-    1132: "Shotel Warrior",
-    1134: "Elite Shotel Warrior",
-
+    # Note: Shotel Warrior IDs are 1016/1018, not 1132/1134
+    # 1132/1134 are Battle Elephant/Elite Battle Elephant
     # ===== Unique Units - Malians =====
-    1129: "Gbeto",
-    1131: "Elite Gbeto",
-
+    1013: "Gbeto",
+    1015: "Elite Gbeto",
     # ===== Unique Units - Berbers =====
     1123: "Camel Archer",
     1125: "Elite Camel Archer",
     1126: "Genitour",
     1128: "Elite Genitour",
-
     # ===== Unique Units - Khmer =====
     1225: "Ballista Elephant",
     1227: "Elite Ballista Elephant",
-
     # ===== Unique Units - Malay =====
     1228: "Karambit Warrior",
     1230: "Elite Karambit Warrior",
-
     # ===== Unique Units - Burmese =====
     1231: "Arambai",
     1233: "Elite Arambai",
-
     # ===== Unique Units - Vietnamese =====
     1234: "Rattan Archer",
     1236: "Elite Rattan Archer",
-
     # ===== Unique Units - Bulgarians =====
     1263: "Konnik",
     1265: "Elite Konnik",
     1275: "Konnik (Dismounted)",
     1277: "Elite Konnik (Dismounted)",
-
     # ===== Unique Units - Tatars =====
     1268: "Keshik",
     1270: "Elite Keshik",
-
     # ===== Unique Units - Cumans =====
     1271: "Kipchak",
     1273: "Elite Kipchak",
-
     # ===== Unique Units - Lithuanians =====
     1274: "Leitis",
     1276: "Elite Leitis",
-
     # ===== Unique Units - Burgundians =====
     1370: "Coustillier",
     1372: "Elite Coustillier",
     1374: "Flemish Militia",
-
     # ===== Unique Units - Sicilians =====
     1575: "Serjeant",
     1577: "Elite Serjeant",
-
     # ===== Unique Units - Poles =====
     1655: "Obuch",
     1657: "Elite Obuch",
-
     # ===== Unique Units - Bohemians =====
     1596: "Hussite Wagon",
     1598: "Elite Hussite Wagon",
-
     # ===== Unique Units - Dravidians =====
     1699: "Urumi Swordsman",
     1701: "Elite Urumi Swordsman",
-
     # ===== Unique Units - Bengalis =====
     1709: "Ratha",
     1707: "Elite Ratha",
-
     # ===== Unique Units - Gurjaras =====
     1705: "Chakram Thrower",
     1704: "Elite Chakram Thrower",
     1714: "Shrivamsha Rider",
     1713: "Elite Shrivamsha Rider",
-
     # ===== Unique Units - Romans =====
     1737: "Centurion",
     1739: "Elite Centurion",
     1741: "Legionary",
-
     # ===== Unique Units - Armenians =====
     1746: "Composite Bowman",
     1748: "Elite Composite Bowman",
-
     # ===== Unique Units - Georgians =====
     1752: "Monaspa",
     1754: "Elite Monaspa",
-
     # ===== Three Kingdoms DLC Units =====
     1949: "Tiger Cavalry",
     1951: "Elite Tiger Cavalry",
@@ -481,7 +440,6 @@ UNIT_NAMES = {
     1974: "Jian Swordsman",
     1976: "Jian Swordsman (Unique)",
     1980: "War Chariot (3K)",
-
     # ===== Three Kingdoms Heroes =====
     1954: "Cao Cao",
     1966: "Liu Bei",
@@ -503,7 +461,6 @@ UNIT_NAMES = {
     2052: "Cao Cao (Hero)",
     2053: "Liu Bei (Hero)",
     2054: "Sun Jian (Hero)",
-
     # ===== Antiquity Mode Units =====
     2101: "Immortal",
     2102: "Elite Immortal",
@@ -550,7 +507,6 @@ UNIT_NAMES = {
     2485: "Scythian Horse Archer",
     2486: "Elite Scythian Horse Archer",
     2487: "Sacred Band",
-
     # ===== Antiquity Ships =====
     2123: "Lembos",
     2124: "War Lembos",
@@ -573,7 +529,6 @@ UNIT_NAMES = {
     2149: "Merchant Ship",
     2171: "Oystering Ship",
     2356: "Fishing Ship (Antiquity)",
-
     # ===== Antiquity Heroes =====
     2308: "Artaphernes",
     2309: "Datis",
@@ -603,7 +558,6 @@ UNIT_NAMES = {
     2451: "Thracian Chieftain",
     2453: "Hill Tribesman",
     2525: "Bucephalus",
-
     # ===== Polemarch Units =====
     2162: "Polemarch I",
     2164: "Polemarch II",
@@ -615,7 +569,6 @@ UNIT_NAMES = {
     2270: "Polemarch IV (Ephorate)",
     2271: "Polemarch III (Morai)",
     2272: "Polemarch IV (Morai)",
-
     # ===== Alexander Campaign Units =====
     2459: "Alexander's Rhomphaia Warrior",
     2460: "Alexander's Peltast",
@@ -634,7 +587,6 @@ UNIT_NAMES = {
     2473: "Alexander's Longbowman",
     2474: "Alexander's Eastern Archer",
     2475: "Alexander's Sickle Warrior",
-
     # ===== Villagers =====
     83: "Villager (Male)",
     293: "Villager (Female)",
@@ -656,17 +608,13 @@ UNIT_NAMES = {
     206: "Villager (Male)",
     2333: "Villager (Male Gold Miner)",
     2334: "Villager (Female Gold Miner)",
-
     # ===== Trade Units =====
     128: "Trade Cart",
     204: "Trade Cart (Full)",
-
     # ===== Petard =====
     755: "Petard",
-
     # ===== King =====
     434: "King",
-
     # ===== Wild Animals =====
     48: "Wild Boar",
     810: "Javelina",
@@ -683,7 +631,6 @@ UNIT_NAMES = {
     2089: "Black Bear",
     2090: "Polar Bear",
     2091: "Arctic Wolf",
-
     # ===== Livestock =====
     594: "Sheep",
     705: "Cow",
@@ -691,12 +638,10 @@ UNIT_NAMES = {
     1142: "Goat",
     1963: "Llama",
     2381: "Goat (Antiquity)",
-
     # ===== Birds =====
     96: "Hawk",
     2490: "Owl",
     2537: "Peacock",
-
     # ===== Campaign Heroes =====
     106: "Harald Hardraade",
     114: "Erik the Red",
@@ -730,7 +675,6 @@ UNIT_NAMES = {
     230: "Bela IV",
     275: "Centurion (AoE1)",
     282: "Dervish",
-
     # ===== Miscellaneous =====
     184: "Condottiero (Placeholder)",
     239: "Siege Tower (Packed)",
@@ -744,84 +688,86 @@ UNIT_NAMES = {
 }
 
 # Additional unit ID mappings for heroes and special units
-UNIT_NAMES.update({
-    299: "Infiltrator",
-    307: "Cuauhtémoc",
-    309: "Monk with Relic",
-    354: "Villager (Female Forager)",
-    418: "Henry the Lion",
-    424: "Charles Martel",
-    425: "Ornlu the Wolf",
-    426: "Harun al-Rashid",
-    427: "Gonzalo Pizarro",
-    428: "Harald Hardrada",
-    429: "Barbarossa",
-    430: "Joan of Arc",
-    432: "William the Conqueror",
-    436: "Demolition Ship",
-    437: "Prithviraj",
-    438: "Bombard Ship",
-    439: "Sforza",
-    440: "Petard",
-    453: "Ataulf",
-    473: "Two-Handed Swordsman (Hero)",
-    486: "Brown Bear",
-    528: "Caravel",
-    531: "Throwing Axeman (Unique)",
-    534: "Woad Raider (Unique)",
-    535: "Boarding Galley",
-    536: "Boarding Galley",
-    542: "Ballista",
-    544: "Flying Dog",
-    558: "Siege Tower (Hero)",
-    571: "Raiding Archer",
-    573: "Raiding Swordsman",
-    575: "Raiding Cavalry",
-    577: "Raiding Cavalry Archer",
-    583: "Genitour",
-    590: "Villager (Female Shepherd)",
-    592: "Villager (Male Shepherd)",
-    596: "Elite Genitour",
-    629: "Joker",
-    632: "Forester",
-    634: "Metz",
-    636: "Bertrand",
-    638: "Alencon",
-    639: "Penguin",
-    640: "Hireling",
-    642: "Gravedigger",
-    646: "Richard",
-    648: "Josselin",
-    652: "Falstaff",
-    678: "Rey",
-    680: "Mot",
-    686: "Composite Archer",
-    691: "Cannon Boat",
-    692: "Berserk (Light)",
-    694: "Berserk (Unique Light)",
-    698: "Subotai",
-    700: "Hunting Wolf",
-    702: "Furious the Monkey Boy",
-    704: "Stormy Dog",
-    748: "Cobra Car",
-    758: "Elite Tarkan",
-    776: "Jarl",
-    807: "Ornlu the Wolf",
-    836: "Genghis Khan",
-    838: "Hunting Wolf",
-    844: "Elite Huskarl (Hero)",
-    1027: "Crocodile",
-    1029: "Komodo Dragon",
-    1031: "Lion",
-    1033: "Elephant",
-    1035: "Rhinoceros",
-    1048: "Box Turtles",
-    1060: "Alfred the Alpaca",
-    1137: "Tiger",
-    1222: "Sharkatzor",
-    1988: "Emperor's Litter",
-    1973: "Nessie",
-})
+UNIT_NAMES.update(
+    {
+        299: "Infiltrator",
+        307: "Cuauhtémoc",
+        309: "Monk with Relic",
+        354: "Villager (Female Forager)",
+        418: "Henry the Lion",
+        424: "Charles Martel",
+        425: "Ornlu the Wolf",
+        426: "Harun al-Rashid",
+        427: "Gonzalo Pizarro",
+        428: "Harald Hardrada",
+        429: "Barbarossa",
+        430: "Joan of Arc",
+        432: "William the Conqueror",
+        436: "Demolition Ship",
+        437: "Prithviraj",
+        438: "Bombard Ship",
+        439: "Sforza",
+        440: "Petard",
+        453: "Ataulf",
+        473: "Two-Handed Swordsman (Hero)",
+        486: "Brown Bear",
+        528: "Caravel",
+        531: "Throwing Axeman (Unique)",
+        534: "Woad Raider (Unique)",
+        535: "Boarding Galley",
+        536: "Boarding Galley",
+        542: "Ballista",
+        544: "Flying Dog",
+        558: "Siege Tower (Hero)",
+        571: "Raiding Archer",
+        573: "Raiding Swordsman",
+        575: "Raiding Cavalry",
+        577: "Raiding Cavalry Archer",
+        583: "Genitour",
+        590: "Villager (Female Shepherd)",
+        592: "Villager (Male Shepherd)",
+        596: "Elite Genitour",
+        629: "Joker",
+        632: "Forester",
+        634: "Metz",
+        636: "Bertrand",
+        638: "Alencon",
+        639: "Penguin",
+        640: "Hireling",
+        642: "Gravedigger",
+        646: "Richard",
+        648: "Josselin",
+        652: "Falstaff",
+        678: "Rey",
+        680: "Mot",
+        686: "Composite Archer",
+        691: "Cannon Boat",
+        692: "Berserk (Light)",
+        694: "Berserk (Unique Light)",
+        698: "Subotai",
+        700: "Hunting Wolf",
+        702: "Furious the Monkey Boy",
+        704: "Stormy Dog",
+        748: "Cobra Car",
+        758: "Elite Tarkan",
+        776: "Jarl",
+        807: "Ornlu the Wolf",
+        836: "Genghis Khan",
+        838: "Hunting Wolf",
+        844: "Elite Huskarl (Hero)",
+        1027: "Crocodile",
+        1029: "Komodo Dragon",
+        1031: "Lion",
+        1033: "Elephant",
+        1035: "Rhinoceros",
+        1048: "Box Turtles",
+        1060: "Alfred the Alpaca",
+        1137: "Tiger",
+        1222: "Sharkatzor",
+        1988: "Emperor's Litter",
+        1973: "Nessie",
+    }
+)
 
 # Internal name to display name fallback mapping
 INTERNAL_NAME_MAP = {
@@ -1180,7 +1126,7 @@ def get_display_name(unit_id, internal_name):
         return INTERNAL_NAME_MAP[internal_upper]
 
     # If name already looks readable (has spaces or mixed case), use it
-    if ' ' in internal_name or (internal_name and not internal_name.isupper()):
+    if " " in internal_name or (internal_name and not internal_name.isupper()):
         return internal_name
 
     # Otherwise return internal name as-is
@@ -1193,18 +1139,18 @@ def extract_unit_data(unit):
         return None
 
     # Only extract combat units (type 70 = Combatant, type 80 = Building)
-    if not hasattr(unit, 'type') or unit.type not in [70, 80]:
+    if not hasattr(unit, "type") or unit.type not in [70, 80]:
         return None
 
     # Skip units with no HP (usually decorative/dead units)
-    if not hasattr(unit, 'hit_points') or unit.hit_points <= 0:
+    if not hasattr(unit, "hit_points") or unit.hit_points <= 0:
         return None
 
     # Get the unit class from class_ attribute
-    unit_class = getattr(unit, 'class_', -1)
+    unit_class = getattr(unit, "class_", -1)
 
     # Get display name from our mapping, fallback to internal name
-    internal_name = getattr(unit, 'name', '').strip()
+    internal_name = getattr(unit, "name", "").strip()
     display_name = get_display_name(unit.id, internal_name)
 
     data = {
@@ -1214,23 +1160,23 @@ def extract_unit_data(unit):
         "type": unit.type,
         "class": unit_class,
         "class_name": UNIT_CLASSES.get(unit_class, "Unknown"),
-        "hit_points": int(getattr(unit, 'hit_points', 0)),
-        "speed": round(getattr(unit, 'speed', 0), 3),
-        "line_of_sight": round(getattr(unit, 'line_of_sight', 0), 1),
-        "garrison_capacity": getattr(unit, 'garrison_capacity', 0),
+        "hit_points": int(getattr(unit, "hit_points", 0)),
+        "speed": round(getattr(unit, "speed", 0), 3),
+        "line_of_sight": round(getattr(unit, "line_of_sight", 0), 1),
+        "garrison_capacity": getattr(unit, "garrison_capacity", 0),
     }
 
     # Cost from creatable
-    if hasattr(unit, 'creatable') and unit.creatable:
+    if hasattr(unit, "creatable") and unit.creatable:
         c = unit.creatable
         # Get train time from train_locations
-        if hasattr(c, 'train_locations') and c.train_locations:
+        if hasattr(c, "train_locations") and c.train_locations:
             data["train_time"] = c.train_locations[0].train_time
         else:
             data["train_time"] = 0
 
         cost = {}
-        if hasattr(c, 'resource_costs'):
+        if hasattr(c, "resource_costs"):
             for rc in c.resource_costs:
                 if rc.amount > 0:
                     resource_names = {0: "food", 1: "wood", 2: "stone", 3: "gold"}
@@ -1240,37 +1186,49 @@ def extract_unit_data(unit):
         data["cost"] = cost
 
     # Combat stats from type_50
-    if hasattr(unit, 'type_50') and unit.type_50:
+    if hasattr(unit, "type_50") and unit.type_50:
         t = unit.type_50
-        data["range"] = round(getattr(t, 'max_range', 0), 2)
-        data["min_range"] = round(getattr(t, 'min_range', 0), 2)
-        data["reload_time"] = round(getattr(t, 'reload_time', 0), 3)
-        data["accuracy"] = getattr(t, 'accuracy_percent', 100)
-        data["blast_width"] = round(getattr(t, 'blast_width', 0), 2)
-        data["displayed_attack"] = getattr(t, 'displayed_attack', 0)
-        data["displayed_melee_armor"] = getattr(t, 'displayed_melee_armour', 0)
-        data["displayed_pierce_armor"] = getattr(unit.creatable, 'displayed_pierce_armour', 0) if hasattr(unit, 'creatable') and unit.creatable else 0
+        data["range"] = round(getattr(t, "max_range", 0), 2)
+        data["min_range"] = round(getattr(t, "min_range", 0), 2)
+        data["reload_time"] = round(getattr(t, "reload_time", 0), 3)
+        data["accuracy"] = getattr(t, "accuracy_percent", 100)
+        data["blast_width"] = round(getattr(t, "blast_width", 0), 2)
+        data["displayed_attack"] = getattr(t, "displayed_attack", 0)
+        data["displayed_melee_armor"] = getattr(t, "displayed_melee_armour", 0)
+        data["displayed_pierce_armor"] = (
+            getattr(unit.creatable, "displayed_pierce_armour", 0)
+            if hasattr(unit, "creatable") and unit.creatable
+            else 0
+        )
 
         # Attacks
         attacks = []
-        if hasattr(t, 'attacks'):
+        if hasattr(t, "attacks"):
             for atk in t.attacks:
-                attacks.append({
-                    "class": atk.class_,
-                    "class_name": ARMOR_CLASSES.get(atk.class_, f"Class_{atk.class_}"),
-                    "amount": atk.amount
-                })
+                attacks.append(
+                    {
+                        "class": atk.class_,
+                        "class_name": ARMOR_CLASSES.get(
+                            atk.class_, f"Class_{atk.class_}"
+                        ),
+                        "amount": atk.amount,
+                    }
+                )
         data["attacks"] = sorted(attacks, key=lambda x: x["amount"], reverse=True)
 
         # Armors
         armors = []
-        if hasattr(t, 'armours'):
+        if hasattr(t, "armours"):
             for arm in t.armours:
-                armors.append({
-                    "class": arm.class_,
-                    "class_name": ARMOR_CLASSES.get(arm.class_, f"Class_{arm.class_}"),
-                    "amount": arm.amount
-                })
+                armors.append(
+                    {
+                        "class": arm.class_,
+                        "class_name": ARMOR_CLASSES.get(
+                            arm.class_, f"Class_{arm.class_}"
+                        ),
+                        "amount": arm.amount,
+                    }
+                )
         data["armors"] = armors
 
     return data
@@ -1282,40 +1240,40 @@ def extract_tech_data(tech):
         return None
 
     # Skip invalid techs
-    name = getattr(tech, 'name', '').strip() if hasattr(tech, 'name') else ''
-    if not name or name.startswith('YOURITEMHERE'):
+    name = getattr(tech, "name", "").strip() if hasattr(tech, "name") else ""
+    if not name or name.startswith("YOURITEMHERE"):
         return None
 
     data = {
-        "id": getattr(tech, 'id', -1) if hasattr(tech, 'id') else -1,
+        "id": getattr(tech, "id", -1) if hasattr(tech, "id") else -1,
         "name": name,
-        "research_time": getattr(tech, 'research_time', 0),
-        "civ": getattr(tech, 'civ', -1),  # -1 means all civs, otherwise civ-specific
-        "effect_id": getattr(tech, 'effect_id', -1),
-        "required_tech": getattr(tech, 'required_tech', -1),
+        "research_time": getattr(tech, "research_time", 0),
+        "civ": getattr(tech, "civ", -1),  # -1 means all civs, otherwise civ-specific
+        "effect_id": getattr(tech, "effect_id", -1),
+        "required_tech": getattr(tech, "required_tech", -1),
     }
 
     # Required techs array (up to 6 prerequisite techs)
-    if hasattr(tech, 'required_techs'):
+    if hasattr(tech, "required_techs"):
         required = [t for t in tech.required_techs if t >= 0]
         if required:
             data["required_techs"] = required
 
     # Research location (building ID where this tech is researched)
-    if hasattr(tech, 'research_location') and tech.research_location >= 0:
+    if hasattr(tech, "research_location") and tech.research_location >= 0:
         data["research_location"] = tech.research_location
 
     # Button ID (position in research menu)
-    if hasattr(tech, 'button_id') and tech.button_id >= 0:
+    if hasattr(tech, "button_id") and tech.button_id >= 0:
         data["button_id"] = tech.button_id
 
     # Full tech mode - if 1, tech is always available once building exists
-    if hasattr(tech, 'full_tech_mode'):
+    if hasattr(tech, "full_tech_mode"):
         data["full_tech_mode"] = tech.full_tech_mode
 
     # Cost
     cost = {}
-    if hasattr(tech, 'resource_costs'):
+    if hasattr(tech, "resource_costs"):
         for rc in tech.resource_costs:
             if rc.amount > 0:
                 resource_names = {0: "food", 1: "wood", 2: "stone", 3: "gold"}
@@ -1371,8 +1329,11 @@ def generate_tech_ages(techs, df):
     # Building ID to name mapping
     building_names = {
         103: "Blacksmith",
-        101: "Stable", 86: "Stable", 153: "Stable",
-        87: "Archery Range", 10: "Archery Range",
+        101: "Stable",
+        86: "Stable",
+        153: "Stable",
+        87: "Archery Range",
+        10: "Archery Range",
         12: "Barracks",
         49: "Siege Workshop",
         209: "University",
@@ -1385,38 +1346,66 @@ def generate_tech_ages(techs, df):
     # Standard tech patterns - techs that are universally researchable
     standard_tech_patterns = [
         # Blacksmith attack upgrades
-        "forging", "iron casting", "blast furnace",
+        "forging",
+        "iron casting",
+        "blast furnace",
         # Blacksmith cavalry armor
-        "scale barding", "chain barding", "plate barding",
+        "scale barding",
+        "chain barding",
+        "plate barding",
         # Blacksmith infantry armor
-        "scale mail", "chain mail", "plate mail",
+        "scale mail",
+        "chain mail",
+        "plate mail",
         # Blacksmith archer armor/attack
-        "fletching", "bodkin", "bracer",
-        "padded archer", "leather archer", "ring archer",
+        "fletching",
+        "bodkin",
+        "bracer",
+        "padded archer",
+        "leather archer",
+        "ring archer",
         # Stable techs
-        "bloodlines", "husbandry",
+        "bloodlines",
+        "husbandry",
         # Archery range
-        "thumb ring", "parthian",
+        "thumb ring",
+        "parthian",
         # Barracks
-        "squires", "arson", "supplies", "gambesons",
+        "squires",
+        "arson",
+        "supplies",
+        "gambesons",
         # Unit upgrades (line upgrades)
-        "cavalier", "paladin", "arbalest",
-        "elite skirmisher", "heavy cavalry archer",
-        "long swordsman", "two-handed", "champion",
-        "pikeman", "halberdier",
-        "eagle warrior", "elite eagle",
-        "light cavalry", "hussar",
-        "heavy camel", "imperial camel",
+        "cavalier",
+        "paladin",
+        "arbalest",
+        "elite skirmisher",
+        "heavy cavalry archer",
+        "long swordsman",
+        "two-handed",
+        "champion",
+        "pikeman",
+        "halberdier",
+        "eagle warrior",
+        "elite eagle",
+        "light cavalry",
+        "hussar",
+        "heavy camel",
+        "imperial camel",
         "elite battle elephant",
-        "war galley", "galleon",
-        "heavy demo", "heavy scorpion",
-        "capped ram", "siege ram",
-        "onager", "siege onager",
+        "war galley",
+        "galleon",
+        "heavy demo",
+        "heavy scorpion",
+        "capped ram",
+        "siege ram",
+        "onager",
+        "siege onager",
     ]
 
     tech_ages = {
         "_comment": "Tech ID to age mapping. Age: 1=Dark, 2=Feudal, 3=Castle, 4=Imperial. Auto-generated from dat file.",
-        "techs": {}
+        "techs": {},
     }
 
     # First pass: compute ages based on required_techs
@@ -1458,7 +1447,7 @@ def generate_tech_ages(techs, df):
         tech_ages["techs"][tech_id] = {
             "name": tech["name"],
             "age": age,
-            "building": building
+            "building": building,
         }
 
     return tech_ages
@@ -1495,7 +1484,7 @@ def main():
     # Extract technologies
     print("\nExtracting technologies...")
     techs = []
-    if hasattr(df, 'techs') and df.techs:
+    if hasattr(df, "techs") and df.techs:
         for i, tech in enumerate(df.techs):
             tech_data = extract_tech_data(tech)
             if tech_data:
@@ -1540,8 +1529,8 @@ def main():
         # Count available units
         available_units = []
         for unit in civ.units:
-            if unit is not None and hasattr(unit, 'hit_points') and unit.hit_points > 0:
-                if hasattr(unit, 'type') and unit.type in [70, 80]:
+            if unit is not None and hasattr(unit, "hit_points") and unit.hit_points > 0:
+                if hasattr(unit, "type") and unit.type in [70, 80]:
                     available_units.append(unit.id)
         civ_data["unit_count"] = len(available_units)
 
@@ -1561,9 +1550,9 @@ def main():
     print(f"  Saved to output/armor_classes.json")
 
     # Print sample data
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("SAMPLE DATA")
-    print("="*60)
+    print("=" * 60)
 
     # Find some interesting units by ID
     sample_ids = [4, 38, 77, 93, 125, 280, 550, 1968, 2110, 2398]
@@ -1581,7 +1570,9 @@ def main():
             if u.get("attacks"):
                 main_atk = u["attacks"][0] if u["attacks"] else None
                 if main_atk:
-                    print(f"    Attack: {main_atk['amount']} ({main_atk['class_name']})")
+                    print(
+                        f"    Attack: {main_atk['amount']} ({main_atk['class_name']})"
+                    )
             if u.get("range", 0) > 0:
                 print(f"    Range: {u['range']}")
             if u.get("armors"):
@@ -1592,13 +1583,13 @@ def main():
                     p_val = pierce["amount"] if pierce else 0
                     print(f"    Armor: {m_val}/{p_val} (melee/pierce)")
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("EXTRACTION COMPLETE!")
-    print("="*60)
+    print("=" * 60)
     print(f"\nFiles created in {output_dir}/:")
     print("  - units.json        ({} units)".format(len(units)))
     print("  - technologies.json ({} techs)".format(len(techs)))
-    print("  - tech_ages.json    ({} standard techs)".format(len(tech_ages['techs'])))
+    print("  - tech_ages.json    ({} standard techs)".format(len(tech_ages["techs"])))
     print("  - civilizations.json ({} civs)".format(len(civs)))
     print("  - armor_classes.json")
 

@@ -1540,6 +1540,10 @@ def simulate_battle(
     reload1 = 1.0 / speed1 if speed1 > 0 else 2.0
     reload2 = 1.0 / speed2 if speed2 > 0 else 2.0
 
+    # Get attack delay (time to fire after stopping)
+    attack_delay1 = unit1.get("attack_delay") or 0.0
+    attack_delay2 = unit2.get("attack_delay") or 0.0
+
     # Create armies with positions
     # Team 1 starts at position 0 (left), Team 2 at position 100 (right)
     hp1 = [float(unit1["hp"])] * count1
@@ -1548,6 +1552,9 @@ def simulate_battle(
     pos2 = [100 - i * 0.5 for i in range(count2)]
     cooldown1 = [0.0] * count1
     cooldown2 = [0.0] * count2
+    # Track if unit was moving last tick (for attack delay)
+    was_moving1 = [True] * count1  # Start as moving (approaching)
+    was_moving2 = [True] * count2
 
     # Simulate with tick limit for speed
     dt = 0.05  # 50ms time step
@@ -1655,31 +1662,43 @@ def simulate_battle(
                 if is_skirmisher1 and distance < MIN_SKIRMISHER_RANGE:
                     can_fire = False  # Too close, skirmisher can't fire
 
-                if cooldown1[i] <= 0 and can_fire:
-                    if is_siege1:
-                        # Siege unit fires ground-targeted projectile with splash
-                        # Store positions of all enemy units at fire time for dodge calculation
-                        target_pos = pos2[closest]
-                        enemy_positions = {idx: pos2[idx] for idx in alive2}
-                        projectiles.append(
-                            (2, target_pos, pos1[i], dmg1, enemy_positions)
-                        )
-                    else:
-                        pending_damage.append((2, closest, dmg1, i, pos1[i]))
-                    cooldown1[i] = reload1
+                if can_fire:
+                    if was_moving1[i] and cooldown1[i] <= 0:
+                        # Just stopped moving, apply attack delay before first attack
+                        cooldown1[i] = attack_delay1
+                        was_moving1[i] = False
+                    elif cooldown1[i] <= 0:
+                        # Attack delay done or not moving, fire!
+                        if is_siege1:
+                            # Siege unit fires ground-targeted projectile with splash
+                            target_pos = pos2[closest]
+                            enemy_positions = {idx: pos2[idx] for idx in alive2}
+                            projectiles.append(
+                                (2, target_pos, pos1[i], dmg1, enemy_positions)
+                            )
+                        else:
+                            pending_damage.append((2, closest, dmg1, i, pos1[i]))
+                        cooldown1[i] = reload1
                 elif cooldown1[i] > 0 and should_kite1:
                     # Kite (move away while reloading), respect map boundary
                     pos1[i] = max(MAP_MIN, pos1[i] - move_speed1 * dt)
+                    was_moving1[i] = True
                 elif distance > attack_range:
                     pos1[i] += move_speed1 * dt
+                    was_moving1[i] = True
                 # Siege units inside minimum range can't do anything - they're helpless
             else:
                 if distance <= attack_range:
-                    if cooldown1[i] <= 0:
+                    if was_moving1[i] and cooldown1[i] <= 0:
+                        # Just stopped moving, apply attack delay
+                        cooldown1[i] = attack_delay1
+                        was_moving1[i] = False
+                    elif cooldown1[i] <= 0:
                         pending_damage.append((2, closest, dmg1, i, pos1[i]))
                         cooldown1[i] = reload1
                 else:
                     pos1[i] += move_speed1 * dt
+                    was_moving1[i] = True
 
         # Team 2 units (move left toward team 1)
         for i in alive2:
@@ -1697,31 +1716,43 @@ def simulate_battle(
                 if is_skirmisher2 and distance < MIN_SKIRMISHER_RANGE:
                     can_fire = False  # Too close, skirmisher can't fire
 
-                if cooldown2[i] <= 0 and can_fire:
-                    if is_siege2:
-                        # Siege unit fires ground-targeted projectile with splash
-                        # Store positions of all enemy units at fire time for dodge calculation
-                        target_pos = pos1[closest]
-                        enemy_positions = {idx: pos1[idx] for idx in alive1}
-                        projectiles.append(
-                            (1, target_pos, pos2[i], dmg2, enemy_positions)
-                        )
-                    else:
-                        pending_damage.append((1, closest, dmg2, i, pos2[i]))
-                    cooldown2[i] = reload2
+                if can_fire:
+                    if was_moving2[i] and cooldown2[i] <= 0:
+                        # Just stopped moving, apply attack delay before first attack
+                        cooldown2[i] = attack_delay2
+                        was_moving2[i] = False
+                    elif cooldown2[i] <= 0:
+                        # Attack delay done or not moving, fire!
+                        if is_siege2:
+                            # Siege unit fires ground-targeted projectile with splash
+                            target_pos = pos1[closest]
+                            enemy_positions = {idx: pos1[idx] for idx in alive1}
+                            projectiles.append(
+                                (1, target_pos, pos2[i], dmg2, enemy_positions)
+                            )
+                        else:
+                            pending_damage.append((1, closest, dmg2, i, pos2[i]))
+                        cooldown2[i] = reload2
                 elif cooldown2[i] > 0 and should_kite2:
                     # Kite (move away while reloading), respect map boundary
                     pos2[i] = min(MAP_MAX, pos2[i] + move_speed2 * dt)
+                    was_moving2[i] = True
                 elif distance > attack_range:
                     pos2[i] -= move_speed2 * dt
+                    was_moving2[i] = True
                 # Siege units inside minimum range can't do anything - they're helpless
             else:
                 if distance <= attack_range:
-                    if cooldown2[i] <= 0:
+                    if was_moving2[i] and cooldown2[i] <= 0:
+                        # Just stopped moving, apply attack delay
+                        cooldown2[i] = attack_delay2
+                        was_moving2[i] = False
+                    elif cooldown2[i] <= 0:
                         pending_damage.append((1, closest, dmg2, i, pos2[i]))
                         cooldown2[i] = reload2
                 else:
                     pos2[i] -= move_speed2 * dt
+                    was_moving2[i] = True
 
         # Apply damage (including trample)
         for team, target, damage, attacker_idx, attacker_pos in pending_damage:

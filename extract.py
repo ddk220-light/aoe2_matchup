@@ -1191,6 +1191,9 @@ def extract_unit_data(unit):
         data["range"] = round(getattr(t, "max_range", 0), 2)
         data["min_range"] = round(getattr(t, "min_range", 0), 2)
         data["reload_time"] = round(getattr(t, "reload_time", 0), 3)
+        # Frame delay is in frames (game runs at ~60fps), convert to seconds
+        frame_delay = getattr(t, "frame_delay", 0)
+        data["attack_delay"] = round(frame_delay / 60.0, 3)
         data["accuracy"] = getattr(t, "accuracy_percent", 100)
         data["blast_width"] = round(getattr(t, "blast_width", 0), 2)
         data["displayed_attack"] = getattr(t, "displayed_attack", 0)

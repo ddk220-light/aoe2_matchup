@@ -971,6 +971,7 @@ class UnitStats:
     speed: float = 0
     range: float = 0
     reload_time: float = 0
+    attack_delay: float = 0
     accuracy: float = 0
     los: float = 0
     cost_food: float = 0
@@ -991,6 +992,7 @@ class UnitStats:
             speed=self.speed,
             range=self.range,
             reload_time=self.reload_time,
+            attack_delay=self.attack_delay,
             accuracy=self.accuracy,
             los=self.los,
             cost_food=self.cost_food,
@@ -1086,6 +1088,7 @@ class UnitAnalyzer:
         stats.speed = unit.get("speed", 0)
         stats.range = unit.get("range", 0)
         stats.reload_time = unit.get("reload_time", 0)
+        stats.attack_delay = unit.get("attack_delay", 0)
         stats.accuracy = unit.get("accuracy", 0)
         stats.los = unit.get("line_of_sight", 0)
         stats.train_time = unit.get("train_time", 0)
@@ -1797,6 +1800,7 @@ def create_database():
             attack INTEGER,
             attack_range REAL,
             attack_speed REAL,
+            attack_delay REAL,
             melee_armor INTEGER,
             pierce_armor INTEGER,
             movement_speed REAL,
@@ -1941,10 +1945,10 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                         """
                         INSERT INTO unit_stats (
                             civ_id, unit_id, unit_name, hp, attack, attack_range,
-                            attack_speed, melee_armor, pierce_armor, movement_speed,
+                            attack_speed, attack_delay, melee_armor, pierce_armor, movement_speed,
                             cost_food, cost_wood, cost_gold, creation_time, upgrade_cost,
                             civ_bonuses, has_unit, attacks_json, armors_json
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             civ_id_map[civ_name],
@@ -1954,6 +1958,7 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             int(stats.attack),
                             float(stats.range) if stats.range > 0 else None,
                             round(stats.attack_rate(), 3),
+                            round(stats.attack_delay, 3),
                             int(stats.melee_armor),
                             int(stats.pierce_armor),
                             stats.speed,
@@ -1973,15 +1978,16 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                         """
                         INSERT INTO unit_stats (
                             civ_id, unit_id, unit_name, hp, attack, attack_range,
-                            attack_speed, melee_armor, pierce_armor, movement_speed,
+                            attack_speed, attack_delay, melee_armor, pierce_armor, movement_speed,
                             cost_food, cost_wood, cost_gold, creation_time, upgrade_cost,
                             civ_bonuses, has_unit, attacks_json, armors_json
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             civ_id_map[civ_name],
                             db_unit_id,
                             result["unit_name"],
+                            None,
                             None,
                             None,
                             None,
@@ -2106,10 +2112,10 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                         """
                         INSERT INTO unit_stats (
                             civ_id, unit_id, unit_name, hp, attack, attack_range,
-                            attack_speed, melee_armor, pierce_armor, movement_speed,
+                            attack_speed, attack_delay, melee_armor, pierce_armor, movement_speed,
                             cost_food, cost_wood, cost_gold, creation_time, upgrade_cost,
                             civ_bonuses, has_unit, attacks_json, armors_json
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             db_civ_id,
@@ -2119,6 +2125,7 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             int(stats.attack),
                             float(stats.range) if stats.range > 0 else None,
                             round(stats.attack_rate(), 3),
+                            round(stats.attack_delay, 3),
                             int(stats.melee_armor),
                             int(stats.pierce_armor),
                             stats.speed,

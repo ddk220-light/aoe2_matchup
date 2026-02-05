@@ -1151,6 +1151,8 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     SIEGE_UNITS = {"mangonel", "siege_onager"}
     # Scorpions have minimum range but fire direct projectiles (no splash)
     SCORPION_UNITS = {"scorpion", "heavy_scorpion"}
+    # Skirmishers have minimum range of 1
+    SKIRMISHER_UNITS = {"skirm", "elite_skirm"}
     # Units that ignore armor (Composite Bowman ignores pierce, Leitis ignores melee)
     IGNORE_PIERCE_ARMOR = {"composite_bowman", "elite_composite_bowman"}
     IGNORE_MELEE_ARMOR = {"leitis", "elite_leitis"}
@@ -1160,6 +1162,8 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     is_siege2 = slug2 in SIEGE_UNITS
     is_scorpion1 = slug1 in SCORPION_UNITS
     is_scorpion2 = slug2 in SCORPION_UNITS
+    is_skirmisher1 = slug1 in SKIRMISHER_UNITS
+    is_skirmisher2 = slug2 in SKIRMISHER_UNITS
     # Check if units ignore armor (match base slug without civ suffix)
     slug1_base = slug1.rsplit("_", 1)[0] if "_" in slug1 else slug1
     slug2_base = slug2.rsplit("_", 1)[0] if "_" in slug2 else slug2
@@ -1177,8 +1181,10 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     SPLASH_RADIUS = 1.5
     # Minimum attack range for siege units - they can't fire at close range
     # In AoE2, mangonels have minimum range of 3, scorpions have minimum range of 2
+    # Skirmishers have minimum range of 1
     MIN_SIEGE_RANGE = 3.0
     MIN_SCORPION_RANGE = 2.0
+    MIN_SKIRMISHER_RANGE = 1.0
 
     # Calculate damage per hit (use pierce for ranged, melee for melee)
     def calc_damage(
@@ -1337,8 +1343,10 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
         pending_damage = []
 
         # Ranged units kite (move away while reloading)
-        should_kite1 = is_ranged1
-        should_kite2 = is_ranged2
+        # But only if they're faster than the enemy, or if enemy is also ranged
+        # This prevents unrealistic perfect kiting where slower ranged beats faster melee
+        should_kite1 = is_ranged1 and (is_ranged2 or move_speed1 > move_speed2)
+        should_kite2 = is_ranged2 and (is_ranged1 or move_speed2 > move_speed1)
 
         # Team 1 units (move right toward team 2)
         for i in alive1:
@@ -1353,6 +1361,8 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
                     can_fire = False  # Too close, siege can't fire
                 if is_scorpion1 and distance < MIN_SCORPION_RANGE:
                     can_fire = False  # Too close, scorpion can't fire
+                if is_skirmisher1 and distance < MIN_SKIRMISHER_RANGE:
+                    can_fire = False  # Too close, skirmisher can't fire
 
                 if cooldown1[i] <= 0 and can_fire:
                     if is_siege1:
@@ -1393,6 +1403,8 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
                     can_fire = False  # Too close, siege can't fire
                 if is_scorpion2 and distance < MIN_SCORPION_RANGE:
                     can_fire = False  # Too close, scorpion can't fire
+                if is_skirmisher2 and distance < MIN_SKIRMISHER_RANGE:
+                    can_fire = False  # Too close, skirmisher can't fire
 
                 if cooldown2[i] <= 0 and can_fire:
                     if is_siege2:

@@ -893,23 +893,99 @@ def api_matchup(civ1, civ2):
                 cost = wood + 2 * food + gold
             return cost if cost > 0 else 100
 
-        for u1 in civ1_units:
+        # Paired units: different modes of the same unit (e.g., Ratha melee/ranged)
+        # Group them together so we can test all modes and use the best result
+        PAIRED_UNIT_PATTERNS = [
+            ("ratha_(melee)", "ratha_(ranged)", "Ratha"),
+            ("elite_ratha_(melee)", "elite_ratha_(ranged)", "Elite Ratha"),
+        ]
+
+        def get_paired_unit(slug):
+            """Return the paired unit slug if this unit has a pair, else None."""
+            for mode1, mode2, _ in PAIRED_UNIT_PATTERNS:
+                if mode1 in slug:
+                    return slug.replace(mode1, mode2)
+                if mode2 in slug:
+                    return slug.replace(mode2, mode1)
+            return None
+
+        def get_display_name_for_paired(slug):
+            """Return display name for paired units."""
+            for mode1, mode2, display in PAIRED_UNIT_PATTERNS:
+                if mode1 in slug or mode2 in slug:
+                    return display
+            return None
+
+        # Build lookup dict for units by slug
+        civ1_unit_lookup = {u["slug"]: u for u in civ1_units}
+        civ2_unit_lookup = {u["slug"]: u for u in civ2_units}
+
+        # Filter out paired units - only keep one mode per pair (we'll test both in simulation)
+        def filter_paired_units(units):
+            """Keep only one representative per paired unit group."""
+            seen_pairs = set()
+            filtered = []
+            for u in units:
+                slug = u["slug"]
+                paired = get_paired_unit(slug)
+                if paired:
+                    # This is a paired unit - check if we already have its pair
+                    pair_key = tuple(sorted([slug, paired]))
+                    if pair_key not in seen_pairs:
+                        seen_pairs.add(pair_key)
+                        filtered.append(u)
+                else:
+                    filtered.append(u)
+            return filtered
+
+        civ1_units_filtered = filter_paired_units(civ1_units)
+        civ2_units_filtered = filter_paired_units(civ2_units)
+
+        for u1 in civ1_units_filtered:
             u1_wins = 0
             u1_total = 0
             u1_cost = calc_resource_cost(u1)
 
-            for u2 in civ2_units:
-                u2_cost = calc_resource_cost(u2)
+            # Get all modes for u1 (for paired units like Ratha)
+            u1_modes = [u1]
+            u1_paired_slug = get_paired_unit(u1["slug"])
+            if u1_paired_slug and u1_paired_slug in civ1_unit_lookup:
+                u1_modes.append(civ1_unit_lookup[u1_paired_slug])
 
-                # Run two simulations: 1500 resources (medium) and 5000 resources (large)
-                # Unit wins the matchup if it wins either simulation
-                winner_1500, _, _ = simulate_battle(u1, u1_cost, u2, u2_cost, 1500)
-                winner_5000, _, _ = simulate_battle(u1, u1_cost, u2, u2_cost, 5000)
+            for u2 in civ2_units_filtered:
+                # Get all modes for u2 (for paired units like Ratha)
+                u2_modes = [u2]
+                u2_paired_slug = get_paired_unit(u2["slug"])
+                if u2_paired_slug and u2_paired_slug in civ2_unit_lookup:
+                    u2_modes.append(civ2_unit_lookup[u2_paired_slug])
 
-                # Determine overall winner: win if you win either battle
-                if winner_1500 == 1 or winner_5000 == 1:
+                # Test all combinations of modes and find the best outcome for each side
+                # For paired units: unit wins if ANY of its modes wins against ANY of opponent's modes
+                u1_won_any = False
+                u2_won_any = False
+
+                for u1_mode in u1_modes:
+                    u1_mode_cost = calc_resource_cost(u1_mode)
+                    for u2_mode in u2_modes:
+                        u2_mode_cost = calc_resource_cost(u2_mode)
+
+                        # Run two simulations: 1500 resources (medium) and 5000 resources (large)
+                        winner_1500, _, _ = simulate_battle(
+                            u1_mode, u1_mode_cost, u2_mode, u2_mode_cost, 1500
+                        )
+                        winner_5000, _, _ = simulate_battle(
+                            u1_mode, u1_mode_cost, u2_mode, u2_mode_cost, 5000
+                        )
+
+                        if winner_1500 == 1 or winner_5000 == 1:
+                            u1_won_any = True
+                        if winner_1500 == 2 or winner_5000 == 2:
+                            u2_won_any = True
+
+                # Determine overall winner: u1 wins if it won any mode combo, else u2 wins if it won any
+                if u1_won_any:
                     winner = 1
-                elif winner_1500 == 2 or winner_5000 == 2:
+                elif u2_won_any:
                     winner = 2
                 else:
                     winner = 0  # Draw
@@ -918,32 +994,42 @@ def api_matchup(civ1, civ2):
                 if winner == 1:
                     u1_wins += 1
 
-                # Track for civ2 scoring
+                # Track for civ2 scoring - use primary slug for paired units
                 u2_key = u2["slug"]
                 if u2_key not in civ2_scores:
+                    # Use display name for paired units
+                    display_name = get_display_name_for_paired(u2["slug"])
                     civ2_scores[u2_key] = {
                         "wins": 0,
                         "total": 0,
                         "unit": u2,
+                        "display_name": display_name,
                     }
                 civ2_scores[u2_key]["total"] += 1
                 if winner == 2:
                     civ2_scores[u2_key]["wins"] += 1
 
+                # Use display name for paired units in matchup results
+                u1_display = get_display_name_for_paired(u1["slug"]) or u1["unit_name"]
+                u2_display = get_display_name_for_paired(u2["slug"]) or u2["unit_name"]
+
                 all_matchups.append(
                     {
-                        "civ1_unit": u1["unit_name"],
+                        "civ1_unit": u1_display,
                         "civ1_slug": u1["slug"],
-                        "civ2_unit": u2["unit_name"],
+                        "civ2_unit": u2_display,
                         "civ2_slug": u2["slug"],
                         "winner": winner,
                     }
                 )
 
+            # Use display name for paired units
+            u1_display_name = get_display_name_for_paired(u1["slug"])
             civ1_scores[u1["slug"]] = {
                 "wins": u1_wins,
                 "total": u1_total,
                 "unit": u1,
+                "display_name": u1_display_name,
             }
 
         # Calculate scores for each unit (score = number of matchups won)
@@ -1068,9 +1154,11 @@ def api_matchup(civ1, civ2):
             details = matchup_details.get(slug, [])
             wins = [d for d in details if d["won"]]
             losses = [d for d in details if not d["won"]]
+            # Use display_name for paired units (like Ratha), otherwise use unit_name
+            display_name = data.get("display_name") or data["unit"]["unit_name"]
             return {
                 "slug": slug,
-                "name": data["unit"]["unit_name"],
+                "name": display_name,
                 "score": data["score"],
                 "addon_score": data["addon_score"],
                 "final_score": data["final_score"],

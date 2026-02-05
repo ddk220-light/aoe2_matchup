@@ -871,13 +871,22 @@ UNIQUE_UNITS = {
     ],
     "Bengalis": [
         {
-            "base_id": 1741,
-            "display_name": "Ratha",
+            "base_id": 1738,
+            "display_name": "Ratha (Melee)",
             "unit_class": 36,
             "availability_tech": 831,
             "elite_tech": 832,
-            "elite_id": 1743,
-            "elite_name": "Elite Ratha",
+            "elite_id": 1740,
+            "elite_name": "Elite Ratha (Melee)",
+        },
+        {
+            "base_id": 1759,
+            "display_name": "Ratha (Ranged)",
+            "unit_class": 36,
+            "availability_tech": 831,
+            "elite_tech": 832,
+            "elite_id": 1761,
+            "elite_name": "Elite Ratha (Ranged)",
         },
     ],
     "Gurjaras": [

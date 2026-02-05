@@ -1267,6 +1267,10 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     start_hp1 = sum(hp1)
     start_hp2 = sum(hp2)
 
+    # Map boundaries - units can't kite forever
+    MAP_MIN = 0
+    MAP_MAX = 100
+
     # Track siege projectiles in flight
     # Each projectile: (target_team, target_idx, target_pos_at_fire, current_pos, damage)
     projectiles = []
@@ -1344,7 +1348,8 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
                         pending_damage.append((2, closest, dmg1))
                     cooldown1[i] = reload1
                 elif cooldown1[i] > 0:
-                    pos1[i] -= move_speed1 * dt  # Kite backward
+                    # Kite backward but respect map boundary
+                    pos1[i] = max(MAP_MIN, pos1[i] - move_speed1 * dt)
                 elif distance > attack_range:
                     pos1[i] += move_speed1 * dt
             else:
@@ -1371,7 +1376,8 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
                         pending_damage.append((1, closest, dmg2))
                     cooldown2[i] = reload2
                 elif cooldown2[i] > 0:
-                    pos2[i] += move_speed2 * dt  # Kite backward
+                    # Kite backward but respect map boundary
+                    pos2[i] = min(MAP_MAX, pos2[i] + move_speed2 * dt)
                 elif distance > attack_range:
                     pos2[i] -= move_speed2 * dt
             else:

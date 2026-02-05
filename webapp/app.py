@@ -879,7 +879,7 @@ def api_matchup(civ1, civ2):
         all_matchups = []
 
         # Resource cost formula varies by age
-        # Castle age: 2*wood + 4*food + gold
+        # Castle age: 2*wood + 3*food + gold
         # Imperial age: wood + 2*food + 5*gold
         is_imperial = age_slug == "imperial"
 
@@ -890,7 +890,7 @@ def api_matchup(civ1, civ2):
             if is_imperial:
                 cost = wood + 2 * food + 5 * gold
             else:
-                cost = 2 * wood + 4 * food + gold
+                cost = 2 * wood + 3 * food + gold
             return cost if cost > 0 else 100
 
         for u1 in civ1_units:
@@ -901,10 +901,18 @@ def api_matchup(civ1, civ2):
             for u2 in civ2_units:
                 u2_cost = calc_resource_cost(u2)
 
-                # Resource-based simulation (1000 resources per team)
-                winner, u1_remaining, u2_remaining = simulate_battle(
-                    u1, u1_cost, u2, u2_cost, 1000
-                )
+                # Run two simulations: 1500 resources (medium) and 5000 resources (large)
+                # Unit wins the matchup if it wins either simulation
+                winner_1500, _, _ = simulate_battle(u1, u1_cost, u2, u2_cost, 1500)
+                winner_5000, _, _ = simulate_battle(u1, u1_cost, u2, u2_cost, 5000)
+
+                # Determine overall winner: win if you win either battle
+                if winner_1500 == 1 or winner_5000 == 1:
+                    winner = 1
+                elif winner_1500 == 2 or winner_5000 == 2:
+                    winner = 2
+                else:
+                    winner = 0  # Draw
 
                 u1_total += 1
                 if winner == 1:

@@ -1602,8 +1602,8 @@ def simulate_battle(
     cooldown2 = [0.0] * count2
 
     # Simulate with tick limit for speed
-    dt = 0.2  # 200ms time step
-    max_ticks = 500
+    dt = 0.1  # 100ms time step
+    max_ticks = 1000
     melee_range = 0.5
     ticks = 0
     start_hp1 = sum(hp1)

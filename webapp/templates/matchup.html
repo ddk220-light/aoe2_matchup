@@ -292,14 +292,14 @@
                 color: #4ecdc4;
             }
 
-            .unit-item.beats-best {
+            .unit-item.has-counter-bonus {
                 background: rgba(78, 205, 196, 0.15);
                 border-radius: 4px;
                 padding: 4px 6px;
                 margin: -4px -6px;
             }
 
-            .unit-item.beats-best .name::after {
+            .unit-item.has-counter-bonus .name::after {
                 content: " ★";
                 color: #ffd700;
             }
@@ -348,14 +348,15 @@
                 font-weight: normal;
             }
 
-            .beats-opponent-best {
+            .counter-bonus {
                 display: inline-block;
-                background: rgba(78, 205, 196, 0.2);
-                color: #4ecdc4;
-                padding: 2px 8px;
+                background: rgba(255, 215, 0, 0.2);
+                color: #ffd700;
+                padding: 4px 10px;
                 border-radius: 10px;
-                font-size: 0.8rem;
-                margin-top: 8px;
+                font-size: 0.85rem;
+                margin-top: 10px;
+                border: 1px solid rgba(255, 215, 0, 0.3);
             }
 
             .legend {
@@ -578,28 +579,31 @@
                 const countWinClass =
                     best.count_win_rate >= 50 ? "high" : "low";
 
-                let beatsOpponentHtml = "";
-                if (best.beats_opponent_best) {
-                    beatsOpponentHtml =
-                        '<div class="beats-opponent-best">★ Beats opponent\'s best</div>';
+                let counterBonusHtml = "";
+                if (best.addon_score > 0) {
+                    counterBonusHtml = `<div class="counter-bonus">+${best.addon_score} counter bonus (beats ${best.beats_top5_count}/5 top units${best.beats_opponent_best ? " + #1" : ""})</div>`;
                 }
 
                 let allUnitsHtml = "";
                 if (allUnits && allUnits.length > 1) {
                     allUnitsHtml = `
                         <div class="all-units">
-                            <h5>All Units (by score)</h5>
+                            <h5>All Units (by final score)</h5>
                             <div class="unit-list">
                                 ${allUnits
                                     .map((u, i) => {
                                         const classes = [];
                                         if (i === 0) classes.push("best");
-                                        if (u.beats_opponent_best)
-                                            classes.push("beats-best");
+                                        if (u.addon_score > 0)
+                                            classes.push("has-counter-bonus");
+                                        const addonStr =
+                                            u.addon_score > 0
+                                                ? ` +${u.addon_score}`
+                                                : "";
                                         return `
                                             <div class="unit-item ${classes.join(" ")}">
                                                 <span class="name">${u.name}</span>
-                                                <span class="score">${u.score} pts (R:${u.res_win_rate}% C:${u.count_win_rate}%)</span>
+                                                <span class="score">${u.final_score} pts (${u.score}${addonStr}) R:${u.res_win_rate}%</span>
                                             </div>
                                         `;
                                     })
@@ -613,22 +617,22 @@
                     <div class="recommendation-box ${civClass}">
                         <h4>${civName} - Best Unit</h4>
                         <div class="best-unit">${best.name}</div>
-                        <div class="total-score">${best.score} <span class="label">points</span></div>
+                        <div class="total-score">${best.final_score} <span class="label">points</span></div>
                         <div class="score-breakdown">
+                            <div class="score-item">
+                                <span class="label">Base Score</span>
+                                <span class="value">${best.score}</span>
+                            </div>
                             <div class="score-item">
                                 <span class="label">Resource</span>
                                 <span class="value ${resWinClass}">${best.res_win_rate}%</span>
                             </div>
                             <div class="score-item">
-                                <span class="label">30 Units</span>
+                                <span class="label">20 Units</span>
                                 <span class="value ${countWinClass}">${best.count_win_rate}%</span>
                             </div>
-                            <div class="score-item">
-                                <span class="label">Matchups</span>
-                                <span class="value">${best.total}</span>
-                            </div>
                         </div>
-                        ${beatsOpponentHtml}
+                        ${counterBonusHtml}
                         ${allUnitsHtml}
                     </div>
                 `;

@@ -976,14 +976,77 @@ def api_matchup(civ1, civ2):
             s["res_win_rate"] = s["res_wins"] / s["total"] if s["total"] > 0 else 0
             s["count_win_rate"] = s["count_wins"] / s["total"] if s["total"] > 0 else 0
 
-        # Find best unit for each civ (by score)
+        # Get top 5 units for each civ (by base score)
+        civ1_top5 = sorted(civ1_scores.keys(), key=lambda k: -civ1_scores[k]["score"])[
+            :5
+        ]
+        civ2_top5 = sorted(civ2_scores.keys(), key=lambda k: -civ2_scores[k]["score"])[
+            :5
+        ]
+        civ1_top1 = civ1_top5[0] if civ1_top5 else None
+        civ2_top1 = civ2_top5[0] if civ2_top5 else None
+
+        # Build matchup lookup: (civ1_slug, civ2_slug) -> (res_winner, count_winner)
+        matchup_results = {}
+        for m in all_matchups:
+            key = (m["civ1_slug"], m["civ2_slug"])
+            matchup_results[key] = (m["res_winner"], m["count_winner"])
+
+        # Calculate add-on scores for civ1 units
+        # +1 for each of opponent's top 5 they beat, +1 extra for beating opponent's #1
+        for slug in civ1_scores:
+            addon = 0
+            beats_top5_count = 0
+            for opp_slug in civ2_top5:
+                key = (slug, opp_slug)
+                if key in matchup_results:
+                    res_w, count_w = matchup_results[key]
+                    # Unit beats opponent if it wins either simulation
+                    if res_w == 1 or count_w == 1:
+                        addon += 1
+                        beats_top5_count += 1
+            # Extra +1 for beating opponent's top unit
+            if civ2_top1:
+                key = (slug, civ2_top1)
+                if key in matchup_results:
+                    res_w, count_w = matchup_results[key]
+                    if res_w == 1 or count_w == 1:
+                        addon += 1
+            civ1_scores[slug]["addon_score"] = addon
+            civ1_scores[slug]["final_score"] = civ1_scores[slug]["score"] + addon
+            civ1_scores[slug]["beats_top5_count"] = beats_top5_count
+
+        # Calculate add-on scores for civ2 units
+        for slug in civ2_scores:
+            addon = 0
+            beats_top5_count = 0
+            for opp_slug in civ1_top5:
+                key = (opp_slug, slug)
+                if key in matchup_results:
+                    res_w, count_w = matchup_results[key]
+                    # Unit beats opponent if it wins either simulation
+                    if res_w == 2 or count_w == 2:
+                        addon += 1
+                        beats_top5_count += 1
+            # Extra +1 for beating opponent's top unit
+            if civ1_top1:
+                key = (civ1_top1, slug)
+                if key in matchup_results:
+                    res_w, count_w = matchup_results[key]
+                    if res_w == 2 or count_w == 2:
+                        addon += 1
+            civ2_scores[slug]["addon_score"] = addon
+            civ2_scores[slug]["final_score"] = civ2_scores[slug]["score"] + addon
+            civ2_scores[slug]["beats_top5_count"] = beats_top5_count
+
+        # Find best unit for each civ (by final_score)
         civ1_best = (
-            max(civ1_scores.items(), key=lambda x: x[1]["score"])
+            max(civ1_scores.items(), key=lambda x: x[1]["final_score"])
             if civ1_scores
             else None
         )
         civ2_best = (
-            max(civ2_scores.items(), key=lambda x: x[1]["score"])
+            max(civ2_scores.items(), key=lambda x: x[1]["final_score"])
             if civ2_scores
             else None
         )
@@ -1009,6 +1072,9 @@ def api_matchup(civ1, civ2):
                 "slug": slug,
                 "name": data["unit"]["unit_name"],
                 "score": data["score"],
+                "addon_score": data["addon_score"],
+                "final_score": data["final_score"],
+                "beats_top5_count": data["beats_top5_count"],
                 "res_wins": data["res_wins"],
                 "count_wins": data["count_wins"],
                 "total": data["total"],
@@ -1027,11 +1093,15 @@ def api_matchup(civ1, civ2):
             else None,
             "civ1_all": [
                 format_unit(k, v, civ1_beats_best)
-                for k, v in sorted(civ1_scores.items(), key=lambda x: -x[1]["score"])
+                for k, v in sorted(
+                    civ1_scores.items(), key=lambda x: -x[1]["final_score"]
+                )
             ],
             "civ2_all": [
                 format_unit(k, v, civ2_beats_best)
-                for k, v in sorted(civ2_scores.items(), key=lambda x: -x[1]["score"])
+                for k, v in sorted(
+                    civ2_scores.items(), key=lambda x: -x[1]["final_score"]
+                )
             ],
         }
 

@@ -355,6 +355,10 @@
                 color: #4ecdc4;
             }
 
+            .tooltip-section.draws strong {
+                color: #f9c74f;
+            }
+
             .tooltip-section.losses strong {
                 color: #ff6b6b;
             }
@@ -675,11 +679,23 @@
                                             u.matchups.wins.length > 0
                                                 ? u.matchups.wins.join(", ")
                                                 : "None";
+                                        const drawsStr =
+                                            u.matchups.draws &&
+                                            u.matchups.draws.length > 0
+                                                ? u.matchups.draws.join(", ")
+                                                : "None";
                                         const lossesStr =
                                             u.matchups.losses.length > 0
                                                 ? u.matchups.losses.join(", ")
                                                 : "None";
                                         const simUrl = buildSimUrl(u.slug);
+                                        const drawsSection =
+                                            u.matchups.draws &&
+                                            u.matchups.draws.length > 0
+                                                ? `<div class="tooltip-section draws">
+                                                   <strong>Draws (${u.matchups.draws.length}):</strong> ${drawsStr}
+                                               </div>`
+                                                : "";
                                         return `
                                             <div class="unit-item ${classes.join(" ")}">
                                                 <a href="${simUrl}" class="name sim-link" title="Open in Battle Simulator">${u.name}${starStr}</a>
@@ -688,6 +704,7 @@
                                                     <div class="tooltip-section wins">
                                                         <strong>Beats (${u.matchups.wins.length}):</strong> ${winsStr}
                                                     </div>
+                                                    ${drawsSection}
                                                     <div class="tooltip-section losses">
                                                         <strong>Loses to (${u.matchups.losses.length}):</strong> ${lossesStr}
                                                     </div>

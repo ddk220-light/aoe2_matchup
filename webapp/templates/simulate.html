@@ -1215,20 +1215,20 @@
 
                     // Ranged unit behavior with attack delay
                     if (this.isRanged()) {
-                        if (this.inRange()) {
-                            if (this.wasMoving && this.attackCooldown <= 0) {
+                        const shouldKite = !this.target.isRanged();  // Only kite melee units
+
+                        if (this.inRange() && this.attackCooldown <= 0) {
+                            if (this.wasMoving) {
                                 // Just stopped moving - apply attack delay before first attack
                                 this.attackCooldown = this.attackDelay;
                                 this.wasMoving = false;
                                 this.state = 'attacking';
-                            } else if (this.attackCooldown <= 0) {
+                            } else {
                                 // Attack delay done - fire!
                                 this.state = 'attacking';
                                 this.performAttack();
-                            } else {
-                                this.state = 'attacking';
                             }
-                        } else if (this.attackCooldown > 0 && !this.target.isRanged()) {
+                        } else if (this.attackCooldown > 0 && shouldKite) {
                             // Reloading and target is melee - kite away
                             this.state = 'kiting';
                             this.moveAwayFromTarget(dt, allUnits);
@@ -1238,6 +1238,9 @@
                             this.state = 'moving';
                             this.moveTowardTarget(dt, allUnits);
                             this.wasMoving = true;
+                        } else {
+                            // In range but waiting for cooldown (vs ranged target, don't kite)
+                            this.state = 'attacking';
                         }
                     } else {
                         // Melee unit behavior with committed attacks

@@ -1212,21 +1212,14 @@
 
                     // Ranged unit kiting behavior
                     if (this.isRanged()) {
-                        // Only kite if faster than target OR target is also ranged
-                        // This prevents unrealistic perfect kiting where slower ranged beats faster melee
-                        const canKite = this.target.isRanged() || this.moveSpeed > this.target.moveSpeed;
-
                         if (this.inRange() && this.attackCooldown <= 0) {
                             // In range and ready to fire - attack
                             this.state = 'attacking';
                             this.performAttack();
-                        } else if (this.attackCooldown > 0 && canKite) {
-                            // Reloading and can kite - move away from target
+                        } else if (this.attackCooldown > 0) {
+                            // Reloading - kite away from target
                             this.state = 'kiting';
                             this.moveAwayFromTarget(dt, allUnits);
-                        } else if (this.attackCooldown > 0 && !canKite) {
-                            // Reloading but can't kite (slower than melee target) - stand ground
-                            this.state = 'idle';
                         } else if (!this.inRange()) {
                             // Out of range and ready to fire - move closer
                             this.state = 'moving';

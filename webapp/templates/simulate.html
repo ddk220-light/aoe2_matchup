@@ -1219,26 +1219,24 @@
 
                         if (this.inRange()) {
                             // In range - prioritize attacking
-                            if (this.attackCooldown <= 0) {
-                                if (this.wasMoving) {
-                                    // Just stopped moving - apply attack delay before first attack
-                                    this.attackCooldown = this.attackDelay;
-                                    this.wasMoving = false;
-                                }
-                                if (this.attackCooldown <= 0) {
-                                    // Ready to fire!
-                                    this.state = 'attacking';
-                                    this.performAttack();
-                                } else {
-                                    this.state = 'attacking';
-                                }
+                            if (this.wasMoving && this.attackCooldown <= 0) {
+                                // Just stopped moving - apply attack delay before first attack
+                                this.attackCooldown = this.attackDelay;
+                                this.wasMoving = false;
+                                this.state = 'attacking';
+                            } else if (this.attackCooldown <= 0) {
+                                // Ready to fire!
+                                this.state = 'attacking';
+                                this.performAttack();
+                            } else if (!this.wasMoving) {
+                                // Waiting for attack delay or reload after attacking - stay put
+                                this.state = 'attacking';
                             } else if (shouldKite) {
-                                // In range but reloading, target is melee - kite away
+                                // Reloading while moving, target is melee - kite away
                                 this.state = 'kiting';
                                 this.moveAwayFromTarget(dt, allUnits);
-                                this.wasMoving = true;
                             } else {
-                                // In range but waiting for cooldown (vs ranged, don't kite)
+                                // Reloading vs ranged, don't kite
                                 this.state = 'attacking';
                             }
                         } else if (this.attackCooldown > 0 && shouldKite) {

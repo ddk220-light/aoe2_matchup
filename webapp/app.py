@@ -1555,6 +1555,10 @@ def simulate_battle(
     # Track if unit was moving last tick (for attack delay)
     was_moving1 = [True] * count1  # Start as moving (approaching)
     was_moving2 = [True] * count2
+    # Track committed melee attacks (attacker_idx -> (target_idx, time_remaining))
+    # Once a melee unit starts attack delay, it will hit the target when delay completes
+    committed_attack1 = {}  # Team 1 units committed to attacking team 2
+    committed_attack2 = {}  # Team 2 units committed to attacking team 1
 
     # Simulate with tick limit for speed
     dt = 0.05  # 50ms time step
@@ -1688,14 +1692,30 @@ def simulate_battle(
                     was_moving1[i] = True
                 # Siege units inside minimum range can't do anything - they're helpless
             else:
-                if distance <= attack_range:
-                    if was_moving1[i] and cooldown1[i] <= 0:
-                        # Just stopped moving, apply attack delay
-                        cooldown1[i] = attack_delay1
-                        was_moving1[i] = False
-                    elif cooldown1[i] <= 0:
-                        pending_damage.append((2, closest, dmg1, i, pos1[i]))
+                # Melee unit
+                # Check if this unit has a committed attack in progress
+                if i in committed_attack1:
+                    target_idx, time_left = committed_attack1[i]
+                    time_left -= dt
+                    if time_left <= 0:
+                        # Attack completes - hit the target (even if it moved)
+                        if hp2[target_idx] > 0:  # Target still alive
+                            pending_damage.append((2, target_idx, dmg1, i, pos1[i]))
+                        del committed_attack1[i]
                         cooldown1[i] = reload1
+                        was_moving1[i] = False
+                    else:
+                        committed_attack1[i] = (target_idx, time_left)
+                elif distance <= attack_range:
+                    if cooldown1[i] <= 0:
+                        if attack_delay1 > 0:
+                            # Start attack delay - commit to hitting this target
+                            committed_attack1[i] = (closest, attack_delay1)
+                            was_moving1[i] = False
+                        else:
+                            # No attack delay, hit immediately
+                            pending_damage.append((2, closest, dmg1, i, pos1[i]))
+                            cooldown1[i] = reload1
                 else:
                     pos1[i] += move_speed1 * dt
                     was_moving1[i] = True
@@ -1742,14 +1762,30 @@ def simulate_battle(
                     was_moving2[i] = True
                 # Siege units inside minimum range can't do anything - they're helpless
             else:
-                if distance <= attack_range:
-                    if was_moving2[i] and cooldown2[i] <= 0:
-                        # Just stopped moving, apply attack delay
-                        cooldown2[i] = attack_delay2
-                        was_moving2[i] = False
-                    elif cooldown2[i] <= 0:
-                        pending_damage.append((1, closest, dmg2, i, pos2[i]))
+                # Melee unit
+                # Check if this unit has a committed attack in progress
+                if i in committed_attack2:
+                    target_idx, time_left = committed_attack2[i]
+                    time_left -= dt
+                    if time_left <= 0:
+                        # Attack completes - hit the target (even if it moved)
+                        if hp1[target_idx] > 0:  # Target still alive
+                            pending_damage.append((1, target_idx, dmg2, i, pos2[i]))
+                        del committed_attack2[i]
                         cooldown2[i] = reload2
+                        was_moving2[i] = False
+                    else:
+                        committed_attack2[i] = (target_idx, time_left)
+                elif distance <= attack_range:
+                    if cooldown2[i] <= 0:
+                        if attack_delay2 > 0:
+                            # Start attack delay - commit to hitting this target
+                            committed_attack2[i] = (closest, attack_delay2)
+                            was_moving2[i] = False
+                        else:
+                            # No attack delay, hit immediately
+                            pending_damage.append((1, closest, dmg2, i, pos2[i]))
+                            cooldown2[i] = reload2
                 else:
                     pos2[i] -= move_speed2 * dt
                     was_moving2[i] = True

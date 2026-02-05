@@ -836,7 +836,7 @@ def api_matchup(civ1, civ2):
         cursor.execute(
             """
             SELECT u.slug, us.unit_name, us.hp, us.attack, us.attack_speed,
-                   us.attack_range, us.movement_speed,
+                   us.attack_range, us.attack_delay, us.movement_speed,
                    us.melee_armor, us.pierce_armor, us.attacks_json, us.armors_json,
                    us.cost_food, us.cost_wood, us.cost_gold
             FROM unit_stats us
@@ -852,7 +852,7 @@ def api_matchup(civ1, civ2):
         cursor.execute(
             """
             SELECT u.slug, us.unit_name, us.hp, us.attack, us.attack_speed,
-                   us.attack_range, us.movement_speed,
+                   us.attack_range, us.attack_delay, us.movement_speed,
                    us.melee_armor, us.pierce_armor, us.attacks_json, us.armors_json,
                    us.cost_food, us.cost_wood, us.cost_gold
             FROM unit_stats us
@@ -1542,8 +1542,15 @@ def simulate_battle(
     reload2 = 1.0 / speed2 if speed2 > 0 else 2.0
 
     # Get attack delay (time to fire after stopping)
-    attack_delay1 = unit1.get("attack_delay") or 0.0
-    attack_delay2 = unit2.get("attack_delay") or 0.0
+    # Use try/except since sqlite3.Row doesn't support .get()
+    try:
+        attack_delay1 = unit1["attack_delay"] or 0.0
+    except (KeyError, IndexError):
+        attack_delay1 = 0.0
+    try:
+        attack_delay2 = unit2["attack_delay"] or 0.0
+    except (KeyError, IndexError):
+        attack_delay2 = 0.0
 
     # Create armies with positions
     # Team 1 starts at position 0 (left), Team 2 at position 100 (right)

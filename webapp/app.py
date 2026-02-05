@@ -1666,20 +1666,21 @@ def simulate_battle(
 
             if is_ranged1:
                 # Check minimum range for siege units and scorpions
-                can_fire = distance <= attack_range
+                in_range = distance <= attack_range
+                too_close = False
                 if is_siege1 and distance < MIN_SIEGE_RANGE:
-                    can_fire = False  # Too close, siege can't fire
+                    too_close = True  # Too close, siege can't fire
                 if is_scorpion1 and distance < MIN_SCORPION_RANGE:
-                    can_fire = False  # Too close, scorpion can't fire
+                    too_close = True  # Too close, scorpion can't fire
                 if is_skirmisher1 and distance < MIN_SKIRMISHER_RANGE:
-                    can_fire = False  # Too close, skirmisher can't fire
+                    too_close = True  # Too close, skirmisher can't fire
 
-                if can_fire:
-                    if was_moving1[i] and cooldown1[i] <= 0:
+                if in_range and not too_close and cooldown1[i] <= 0:
+                    if was_moving1[i]:
                         # Just stopped moving, apply attack delay before first attack
                         cooldown1[i] = attack_delay1
                         was_moving1[i] = False
-                    elif cooldown1[i] <= 0:
+                    else:
                         # Attack delay done or not moving, fire!
                         if is_siege1:
                             # Siege unit fires ground-targeted projectile with splash
@@ -1695,10 +1696,11 @@ def simulate_battle(
                     # Kite (move away while reloading), respect map boundary
                     pos1[i] = max(MAP_MIN, pos1[i] - move_speed1 * dt)
                     was_moving1[i] = True
-                elif distance > attack_range:
+                elif not in_range or too_close:
+                    # Out of range or too close - move toward target
                     pos1[i] += move_speed1 * dt
                     was_moving1[i] = True
-                # Siege units inside minimum range can't do anything - they're helpless
+                # else: in range, waiting for cooldown (vs ranged), stay put
             else:
                 # Melee unit
                 # Check if this unit has a committed attack in progress
@@ -1736,20 +1738,21 @@ def simulate_battle(
 
             if is_ranged2:
                 # Check minimum range for siege units and scorpions
-                can_fire = distance <= attack_range
+                in_range = distance <= attack_range
+                too_close = False
                 if is_siege2 and distance < MIN_SIEGE_RANGE:
-                    can_fire = False  # Too close, siege can't fire
+                    too_close = True  # Too close, siege can't fire
                 if is_scorpion2 and distance < MIN_SCORPION_RANGE:
-                    can_fire = False  # Too close, scorpion can't fire
+                    too_close = True  # Too close, scorpion can't fire
                 if is_skirmisher2 and distance < MIN_SKIRMISHER_RANGE:
-                    can_fire = False  # Too close, skirmisher can't fire
+                    too_close = True  # Too close, skirmisher can't fire
 
-                if can_fire:
-                    if was_moving2[i] and cooldown2[i] <= 0:
+                if in_range and not too_close and cooldown2[i] <= 0:
+                    if was_moving2[i]:
                         # Just stopped moving, apply attack delay before first attack
                         cooldown2[i] = attack_delay2
                         was_moving2[i] = False
-                    elif cooldown2[i] <= 0:
+                    else:
                         # Attack delay done or not moving, fire!
                         if is_siege2:
                             # Siege unit fires ground-targeted projectile with splash
@@ -1765,10 +1768,11 @@ def simulate_battle(
                     # Kite (move away while reloading), respect map boundary
                     pos2[i] = min(MAP_MAX, pos2[i] + move_speed2 * dt)
                     was_moving2[i] = True
-                elif distance > attack_range:
+                elif not in_range or too_close:
+                    # Out of range or too close - move toward target
                     pos2[i] -= move_speed2 * dt
                     was_moving2[i] = True
-                # Siege units inside minimum range can't do anything - they're helpless
+                # else: in range, waiting for cooldown (vs ranged), stay put
             else:
                 # Melee unit
                 # Check if this unit has a committed attack in progress

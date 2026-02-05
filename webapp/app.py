@@ -1142,15 +1142,25 @@ def api_matchup(civ1, civ2):
             key = (m["civ1_slug"], m["civ2_slug"])
             matchup_results[key] = m["winner"]
 
+            # Determine result for each side: "win", "draw", or "loss"
+            if m["winner"] == 1:
+                civ1_result = "win"
+                civ2_result = "loss"
+            elif m["winner"] == 2:
+                civ1_result = "loss"
+                civ2_result = "win"
+            else:
+                civ1_result = "draw"
+                civ2_result = "draw"
+
             # Track details for civ1 unit
             if m["civ1_slug"] not in civ1_matchup_details:
                 civ1_matchup_details[m["civ1_slug"]] = []
-            civ1_won = m["winner"] == 1
             civ1_matchup_details[m["civ1_slug"]].append(
                 {
                     "opponent": m["civ2_unit"],
                     "opponent_slug": m["civ2_slug"],
-                    "won": civ1_won,
+                    "result": civ1_result,
                     "score": m["u1_score"],
                 }
             )
@@ -1158,12 +1168,11 @@ def api_matchup(civ1, civ2):
             # Track details for civ2 unit
             if m["civ2_slug"] not in civ2_matchup_details:
                 civ2_matchup_details[m["civ2_slug"]] = []
-            civ2_won = m["winner"] == 2
             civ2_matchup_details[m["civ2_slug"]].append(
                 {
                     "opponent": m["civ1_unit"],
                     "opponent_slug": m["civ1_slug"],
-                    "won": civ2_won,
+                    "result": civ2_result,
                     "score": m["u2_score"],
                 }
             )
@@ -1228,10 +1237,11 @@ def api_matchup(civ1, civ2):
                         civ2_beats_best.add(m["civ2_slug"])
 
         def format_unit(slug, data, beats_opponent_best, matchup_details):
-            # Sort matchups: wins first, then losses
+            # Sort matchups by result: wins, draws, losses
             details = matchup_details.get(slug, [])
-            wins = [d for d in details if d["won"]]
-            losses = [d for d in details if not d["won"]]
+            wins = [d for d in details if d["result"] == "win"]
+            draws = [d for d in details if d["result"] == "draw"]
+            losses = [d for d in details if d["result"] == "loss"]
             # Use display_name for paired units (like Ratha), otherwise use unit_name
             display_name = data.get("display_name") or data["unit"]["unit_name"]
             return {
@@ -1244,6 +1254,7 @@ def api_matchup(civ1, civ2):
                 "beats_opponent_best": slug in beats_opponent_best,
                 "matchups": {
                     "wins": [d["opponent"] for d in wins],
+                    "draws": [d["opponent"] for d in draws],
                     "losses": [d["opponent"] for d in losses],
                 },
             }
@@ -1251,12 +1262,14 @@ def api_matchup(civ1, civ2):
         def format_counter_unit(slug, data, matchup_details):
             """Format trash/siege unit showing only what it counters (no score)."""
             details = matchup_details.get(slug, [])
-            wins = [d for d in details if d["won"]]
+            wins = [d for d in details if d["result"] == "win"]
+            draws = [d for d in details if d["result"] == "draw"]
             display_name = data.get("display_name") or data["unit"]["unit_name"]
             return {
                 "slug": slug,
                 "name": display_name,
                 "counters": [d["opponent"] for d in wins],
+                "draws": [d["opponent"] for d in draws],
             }
 
         # Separate combat units from trash/siege

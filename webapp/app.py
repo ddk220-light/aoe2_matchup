@@ -903,9 +903,10 @@ def api_matchup(civ1, civ2):
                 )
 
                 # Simulation 2: Count-based (20 units each)
-                count_resources = max(u1_cost, u2_cost) * 20
+                # Use same cost for both so they get equal unit counts
+                equal_cost = 100  # Arbitrary value, gives 20 units for 2000 resources
                 count_winner, u1_count_remaining, u2_count_remaining = simulate_battle(
-                    u1, u1_cost, u2, u2_cost, count_resources
+                    u1, equal_cost, u2, equal_cost, 2000
                 )
 
                 u1_total += 1
@@ -1202,6 +1203,9 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     HIT_RADIUS = 1.0
     # Splash radius - siege projectiles deal damage to all units in this radius
     SPLASH_RADIUS = 1.5
+    # Minimum attack range for siege units - they can't fire at close range
+    # In AoE2, mangonels have minimum range of 3
+    MIN_SIEGE_RANGE = 3.0
 
     # Calculate damage per hit (use pierce for ranged, melee for melee)
     def calc_damage(
@@ -1358,7 +1362,12 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
             attack_range = range1 if is_ranged1 else melee_range
 
             if is_ranged1:
-                if cooldown1[i] <= 0 and distance <= attack_range:
+                # Check minimum range for siege units
+                can_fire = distance <= attack_range
+                if is_siege1 and distance < MIN_SIEGE_RANGE:
+                    can_fire = False  # Too close, siege can't fire
+
+                if cooldown1[i] <= 0 and can_fire:
                     if is_siege1:
                         # Siege unit fires ground-targeted projectile with splash
                         # Store positions of all enemy units at fire time for dodge calculation
@@ -1376,6 +1385,7 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
                 elif distance > attack_range:
                     pos1[i] += move_speed1 * dt
                 # If ranged vs ranged and reloading, just stand still
+                # Siege units inside minimum range can't do anything - they're helpless
             else:
                 if distance <= attack_range:
                     if cooldown1[i] <= 0:
@@ -1391,7 +1401,12 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
             attack_range = range2 if is_ranged2 else melee_range
 
             if is_ranged2:
-                if cooldown2[i] <= 0 and distance <= attack_range:
+                # Check minimum range for siege units
+                can_fire = distance <= attack_range
+                if is_siege2 and distance < MIN_SIEGE_RANGE:
+                    can_fire = False  # Too close, siege can't fire
+
+                if cooldown2[i] <= 0 and can_fire:
                     if is_siege2:
                         # Siege unit fires ground-targeted projectile with splash
                         # Store positions of all enemy units at fire time for dodge calculation
@@ -1409,6 +1424,7 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
                 elif distance > attack_range:
                     pos2[i] -= move_speed2 * dt
                 # If ranged vs ranged and reloading, just stand still
+                # Siege units inside minimum range can't do anything - they're helpless
             else:
                 if distance <= attack_range:
                     if cooldown2[i] <= 0:

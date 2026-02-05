@@ -241,6 +241,22 @@
                 margin-bottom: 8px;
             }
 
+            .sim-link {
+                color: inherit;
+                text-decoration: none;
+                cursor: pointer;
+                transition: color 0.2s;
+            }
+
+            .sim-link:hover {
+                color: var(--secondary-color);
+                text-decoration: underline;
+            }
+
+            .unit-item .sim-link {
+                display: inline;
+            }
+
             .win-rate {
                 font-size: 1.1rem;
                 color: #4ecdc4;
@@ -593,8 +609,8 @@
                         <div class="age-card">
                             <h3>${ageData.age_name}</h3>
                             <div class="recommendations">
-                                ${renderCivRecommendation(data.civ1, ageData.civ1_best, ageData.civ1_all, "civ1")}
-                                ${renderCivRecommendation(data.civ2, ageData.civ2_best, ageData.civ2_all, "civ2")}
+                                ${renderCivRecommendation(data.civ1, data.civ2, ageSlug, ageData.civ1_best, ageData.civ1_all, "civ1")}
+                                ${renderCivRecommendation(data.civ2, data.civ1, ageSlug, ageData.civ2_best, ageData.civ2_all, "civ2")}
                             </div>
                         </div>
                     `;
@@ -605,6 +621,8 @@
 
             function renderCivRecommendation(
                 civName,
+                opponentCiv,
+                ageSlug,
                 best,
                 allUnits,
                 civClass,
@@ -623,6 +641,19 @@
                 let counterBonusHtml = "";
                 if (best.beats_top1) {
                     counterBonusHtml = `<div class="counter-bonus">★ Beats opponent's #1 unit</div>`;
+                }
+
+                // Build simulator URL for this unit
+                function buildSimUrl(unitSlug) {
+                    const params = new URLSearchParams({
+                        civ1: civName,
+                        civ2: opponentCiv,
+                        age: ageSlug,
+                        unit1: unitSlug,
+                        mode: "resources",
+                        resources: "1000",
+                    });
+                    return `/simulate?${params.toString()}`;
                 }
 
                 let allUnitsHtml = "";
@@ -648,9 +679,10 @@
                                             u.matchups.losses.length > 0
                                                 ? u.matchups.losses.join(", ")
                                                 : "None";
+                                        const simUrl = buildSimUrl(u.slug);
                                         return `
                                             <div class="unit-item ${classes.join(" ")}">
-                                                <span class="name">${u.name}${starStr}</span>
+                                                <a href="${simUrl}" class="name sim-link" title="Open in Battle Simulator">${u.name}${starStr}</a>
                                                 <span class="score">${u.wins}/${u.total} wins (${u.win_rate}%)</span>
                                                 <div class="matchup-tooltip">
                                                     <div class="tooltip-section wins">
@@ -669,10 +701,12 @@
                     `;
                 }
 
+                const bestSimUrl = buildSimUrl(best.slug);
+
                 return `
                     <div class="recommendation-box ${civClass}">
                         <h4>${civName} - Best Unit</h4>
-                        <div class="best-unit">${best.name}</div>
+                        <a href="${bestSimUrl}" class="best-unit sim-link" title="Open in Battle Simulator">${best.name}</a>
                         <div class="total-score">${best.wins}/${best.total} <span class="label">wins</span></div>
                         <div class="score-breakdown">
                             <div class="score-item">

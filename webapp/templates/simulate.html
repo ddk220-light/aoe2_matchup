@@ -1672,6 +1672,10 @@
                 // Populate age dropdowns
                 populateAgeDropdowns();
 
+                // Parse URL parameters for pre-filling from matchup page
+                const urlParams = new URLSearchParams(window.location.search);
+                await handleUrlParams(urlParams);
+
                 // Event handlers for Civ -> Age -> Unit flow
                 document.getElementById('team1Civ').addEventListener('change', () => onCivChange('team1'));
                 document.getElementById('team2Civ').addEventListener('change', () => onCivChange('team2'));
@@ -1729,6 +1733,105 @@
                     Object.entries(ages).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
                 document.getElementById('team1Age').innerHTML = html;
                 document.getElementById('team2Age').innerHTML = html;
+            }
+
+            async function handleUrlParams(urlParams) {
+                // URL params: civ1, civ2, age, unit1, unit2, resources, mode
+                const civ1 = urlParams.get('civ1');
+                const civ2 = urlParams.get('civ2');
+                const age = urlParams.get('age');
+                const unit1 = urlParams.get('unit1');
+                const unit2 = urlParams.get('unit2');
+                const resources = urlParams.get('resources');
+                const mode = urlParams.get('mode');
+
+                // Set resource mode if specified
+                if (mode === 'resources') {
+                    document.querySelector('input[name="armyMode"][value="resources"]').checked = true;
+                    document.getElementById('resourceInput').style.display = 'flex';
+                    document.querySelectorAll('#team1Count, #team2Count').forEach(input => input.disabled = true);
+                }
+
+                // Set resources amount if specified
+                if (resources) {
+                    document.getElementById('totalResources').value = resources;
+                }
+
+                // Pre-fill Team 1
+                if (civ1) {
+                    document.getElementById('team1Civ').value = civ1;
+                    document.getElementById('team1Age').disabled = false;
+
+                    if (age) {
+                        document.getElementById('team1Age').value = age;
+                        // Load units for team 1
+                        await loadUnitsForTeam('team1', civ1, age);
+
+                        if (unit1) {
+                            document.getElementById('team1Unit').value = unit1;
+                        }
+                    }
+                }
+
+                // Pre-fill Team 2
+                if (civ2) {
+                    document.getElementById('team2Civ').value = civ2;
+                    document.getElementById('team2Age').disabled = false;
+
+                    if (age) {
+                        document.getElementById('team2Age').value = age;
+                        // Load units for team 2
+                        await loadUnitsForTeam('team2', civ2, age);
+
+                        if (unit2) {
+                            document.getElementById('team2Unit').value = unit2;
+                        }
+                    }
+                }
+            }
+
+            async function loadUnitsForTeam(team, civ, age) {
+                const unitSelect = document.getElementById(`${team}Unit`);
+
+                try {
+                    const resp = await fetch(`/api/civ-units/${encodeURIComponent(civ)}/${age}`);
+                    const units = await resp.json();
+
+                    if (units.length === 0) {
+                        unitSelect.innerHTML = '<option value="">No units available</option>';
+                        unitSelect.disabled = true;
+                        return;
+                    }
+
+                    // Group by type (unique first, then standard)
+                    const uniqueUnits = units.filter(u => u.type === 'unique');
+                    const standardUnits = units.filter(u => u.type === 'standard');
+
+                    let html = '<option value="">Select Unit</option>';
+
+                    if (uniqueUnits.length > 0) {
+                        html += '<optgroup label="Unique Units">';
+                        for (const u of uniqueUnits) {
+                            html += `<option value="${u.slug}">${u.name}</option>`;
+                        }
+                        html += '</optgroup>';
+                    }
+
+                    if (standardUnits.length > 0) {
+                        html += '<optgroup label="Standard Units">';
+                        for (const u of standardUnits) {
+                            html += `<option value="${u.slug}">${u.name}</option>`;
+                        }
+                        html += '</optgroup>';
+                    }
+
+                    unitSelect.innerHTML = html;
+                    unitSelect.disabled = false;
+                } catch (e) {
+                    console.error('Failed to load units:', e);
+                    unitSelect.innerHTML = '<option value="">Error loading units</option>';
+                    unitSelect.disabled = true;
+                }
             }
 
             function onCivChange(team) {
@@ -1845,9 +1948,31 @@
                         if (stats1.error) throw new Error(stats1.error);
                         if (stats2.error) throw new Error(stats2.error);
 
+                        // Get selected age for resource cost formula
+                        const team1Age = document.getElementById('team1Age').value;
+                        const team2Age = document.getElementById('team2Age').value;
+
+                        // Calculate resource cost based on age
+                        // Castle age: 2*wood + 4*food + gold
+                        // Imperial age: wood + 2*food + 5*gold
+                        function calcResourceCost(stats, age) {
+                            const food = stats.cost_food || 0;
+                            const wood = stats.cost_wood || 0;
+                            const gold = stats.cost_gold || 0;
+                            if (age === 'imperial') {
+                                return wood + 2 * food + 5 * gold;
+                            } else {
+                                // Castle age or earlier
+                                return 2 * wood + 4 * food + gold;
+                            }
+                        }
+
+                        const cost1 = calcResourceCost(stats1, team1Age) || stats1.total_cost;
+                        const cost2 = calcResourceCost(stats2, team2Age) || stats2.total_cost;
+
                         // Calculate unit counts based on resources
-                        team1Count = Math.max(1, Math.floor(totalResources / stats1.total_cost));
-                        team2Count = Math.max(1, Math.floor(totalResources / stats2.total_cost));
+                        team1Count = Math.max(1, Math.floor(totalResources / cost1));
+                        team2Count = Math.max(1, Math.floor(totalResources / cost2));
 
                         // Cap at reasonable max
                         team1Count = Math.min(team1Count, 40);

@@ -1044,35 +1044,34 @@ def api_matchup(civ1, civ2):
                 "display_name": u1_display_name,
             }
 
-        # Calculate scores for each unit (score = number of matchups won)
-        for key in civ1_scores:
-            s = civ1_scores[key]
-            s["score"] = s["wins"]
-            s["win_rate"] = s["wins"] / s["total"] if s["total"] > 0 else 0
+        # Define trash and siege units for scoring
+        # Trash units: no score for beating them
+        TRASH_SLUGS = {
+            "spearman",
+            "pikeman",
+            "halberdier",
+            "skirmisher",
+            "elite_skirm",
+            "scout",
+            "light_cav",
+            "hussar",
+        }
+        # Siege units: no score for beating, but -1 for losing to them
+        SIEGE_SLUGS = {
+            "ram",
+            "mangonel",
+            "scorpion",
+            "siege_ram",
+            "siege_onager",
+            "heavy_scorpion",
+            "bombard_cannon",
+            "trebuchet",
+        }
 
-        for key in civ2_scores:
-            s = civ2_scores[key]
-            s["score"] = s["wins"]
-            s["win_rate"] = s["wins"] / s["total"] if s["total"] > 0 else 0
-
-        # Get top 5 units for each civ (by base score)
-        civ1_top5 = sorted(civ1_scores.keys(), key=lambda k: -civ1_scores[k]["score"])[
-            :5
-        ]
-        civ2_top5 = sorted(civ2_scores.keys(), key=lambda k: -civ2_scores[k]["score"])[
-            :5
-        ]
-        civ1_top1 = civ1_top5[0] if civ1_top5 else None
-        civ2_top1 = civ2_top5[0] if civ2_top5 else None
-        # Get top 3 for bonus scoring
-        civ1_top3 = civ1_top5[:3]
-        civ2_top3 = civ2_top5[:3]
-
-        # Build matchup lookup: (civ1_slug, civ2_slug) -> winner
+        # Build matchup lookup and track details
         matchup_results = {}
-        # Also build per-unit matchup details for tooltips
-        civ1_matchup_details = {}  # slug -> list of {opponent, won}
-        civ2_matchup_details = {}  # slug -> list of {opponent, won}
+        civ1_matchup_details = {}
+        civ2_matchup_details = {}
         for m in all_matchups:
             key = (m["civ1_slug"], m["civ2_slug"])
             matchup_results[key] = m["winner"]
@@ -1084,6 +1083,7 @@ def api_matchup(civ1, civ2):
             civ1_matchup_details[m["civ1_slug"]].append(
                 {
                     "opponent": m["civ2_unit"],
+                    "opponent_slug": m["civ2_slug"],
                     "won": civ1_won,
                 }
             )
@@ -1095,39 +1095,85 @@ def api_matchup(civ1, civ2):
             civ2_matchup_details[m["civ2_slug"]].append(
                 {
                     "opponent": m["civ1_unit"],
+                    "opponent_slug": m["civ1_slug"],
                     "won": civ2_won,
                 }
             )
+
+        # Calculate scores for each unit
+        # Scoring: +1 for beating significant units only, -1 for losing to siege
+        for key in civ1_scores:
+            s = civ1_scores[key]
+            s["win_rate"] = s["wins"] / s["total"] if s["total"] > 0 else 0
+            # Calculate score based on matchup details
+            score = 0
+            for matchup in civ1_matchup_details.get(key, []):
+                opp_slug = matchup["opponent_slug"]
+                is_trash = opp_slug in TRASH_SLUGS
+                is_siege = opp_slug in SIEGE_SLUGS
+                if matchup["won"]:
+                    # Only score for beating significant units (not trash, not siege)
+                    if not is_trash and not is_siege:
+                        score += 1
+                else:
+                    # Penalty for losing to siege
+                    if is_siege:
+                        score -= 1
+            s["score"] = score
+
+        for key in civ2_scores:
+            s = civ2_scores[key]
+            s["win_rate"] = s["wins"] / s["total"] if s["total"] > 0 else 0
+            # Calculate score based on matchup details
+            score = 0
+            for matchup in civ2_matchup_details.get(key, []):
+                opp_slug = matchup["opponent_slug"]
+                is_trash = opp_slug in TRASH_SLUGS
+                is_siege = opp_slug in SIEGE_SLUGS
+                if matchup["won"]:
+                    # Only score for beating significant units (not trash, not siege)
+                    if not is_trash and not is_siege:
+                        score += 1
+                else:
+                    # Penalty for losing to siege
+                    if is_siege:
+                        score -= 1
+            s["score"] = score
+
+        # Get top 3 units for each civ (by base score) for addon scoring
+        civ1_top3 = sorted(civ1_scores.keys(), key=lambda k: -civ1_scores[k]["score"])[
+            :3
+        ]
+        civ2_top3 = sorted(civ2_scores.keys(), key=lambda k: -civ2_scores[k]["score"])[
+            :3
+        ]
 
         # Calculate add-on scores for civ1 units
         # +1 for each of opponent's top 3 units beaten, +1 extra for beating #1
         for slug in civ1_scores:
             addon = 0
             beats_top1 = False
-            # Check if this unit beats opponent's top 3 units
             for i, top_slug in enumerate(civ2_top3):
                 key = (slug, top_slug)
                 if key in matchup_results and matchup_results[key] == 1:
-                    addon += 1  # +1 for each top 3 unit beaten
-                    if i == 0:  # This is the #1 unit
-                        addon += 1  # +1 extra for beating #1
+                    addon += 1
+                    if i == 0:
+                        addon += 1
                         beats_top1 = True
             civ1_scores[slug]["addon_score"] = addon
             civ1_scores[slug]["final_score"] = civ1_scores[slug]["score"] + addon
             civ1_scores[slug]["beats_top1"] = beats_top1
 
         # Calculate add-on scores for civ2 units
-        # +1 for each of opponent's top 3 units beaten, +1 extra for beating #1
         for slug in civ2_scores:
             addon = 0
             beats_top1 = False
-            # Check if this unit beats opponent's top 3 units
             for i, top_slug in enumerate(civ1_top3):
                 key = (top_slug, slug)
                 if key in matchup_results and matchup_results[key] == 2:
-                    addon += 1  # +1 for each top 3 unit beaten
-                    if i == 0:  # This is the #1 unit
-                        addon += 1  # +1 extra for beating #1
+                    addon += 1
+                    if i == 0:
+                        addon += 1
                         beats_top1 = True
             civ2_scores[slug]["addon_score"] = addon
             civ2_scores[slug]["final_score"] = civ2_scores[slug]["score"] + addon

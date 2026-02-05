@@ -1194,9 +1194,9 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     is_siege1 = slug1 in SIEGE_UNITS
     is_siege2 = slug2 in SIEGE_UNITS
 
-    # Projectile speed for siege units (mangonel/onager projectiles travel ~7 tiles/sec in game)
-    # This is faster than unit movement but still allows dodging by fast units
-    PROJECTILE_SPEED = 7.0
+    # Projectile speed for siege units - roughly same as light cavalry (1.65 tiles/sec)
+    # This allows fast melee units to dodge by moving out of the impact zone
+    PROJECTILE_SPEED = 1.7
     # Hit radius - projectile hits if target is within this distance of impact point
     HIT_RADIUS = 1.0
     # Splash radius - siege projectiles deal damage to all units in this radius

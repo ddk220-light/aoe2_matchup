@@ -301,8 +301,14 @@ IMPERIAL_UNITS = {
         "availability_tech": 235,
         "upgrades": [
             (236, 330, "Heavy Camel Rider"),
-            (521, 207, "Imperial Camel Rider"),
         ],
+        # Imperial Camel Rider is Hindustanis-only
+        "civ_upgrades": {
+            "Hindustanis": [
+                (236, 330, "Heavy Camel Rider"),
+                (521, 207, "Imperial Camel Rider"),
+            ],
+        },
     },
     "elite_elephant": {
         "base_id": 1132,  # Correct ID per AoE2ScenarioParser

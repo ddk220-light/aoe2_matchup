@@ -1301,9 +1301,9 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
         # Collect attacks (simultaneous)
         pending_damage = []
 
-        # Only kite against melee opponents, not ranged vs ranged
-        should_kite1 = is_ranged1 and not is_ranged2  # Team 1 ranged vs Team 2 melee
-        should_kite2 = is_ranged2 and not is_ranged1  # Team 2 ranged vs Team 1 melee
+        # Ranged units kite (move away while reloading)
+        should_kite1 = is_ranged1
+        should_kite2 = is_ranged2
 
         # Team 1 units (move right toward team 2)
         for i in alive1:
@@ -1330,11 +1330,10 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
                         pending_damage.append((2, closest, dmg1))
                     cooldown1[i] = reload1
                 elif cooldown1[i] > 0 and should_kite1:
-                    # Only kite against melee opponents, respect map boundary
+                    # Kite (move away while reloading), respect map boundary
                     pos1[i] = max(MAP_MIN, pos1[i] - move_speed1 * dt)
                 elif distance > attack_range:
                     pos1[i] += move_speed1 * dt
-                # If ranged vs ranged and reloading, just stand still
                 # Siege units inside minimum range can't do anything - they're helpless
             else:
                 if distance <= attack_range:
@@ -1369,11 +1368,10 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
                         pending_damage.append((1, closest, dmg2))
                     cooldown2[i] = reload2
                 elif cooldown2[i] > 0 and should_kite2:
-                    # Only kite against melee opponents, respect map boundary
+                    # Kite (move away while reloading), respect map boundary
                     pos2[i] = min(MAP_MAX, pos2[i] + move_speed2 * dt)
                 elif distance > attack_range:
                     pos2[i] -= move_speed2 * dt
-                # If ranged vs ranged and reloading, just stand still
                 # Siege units inside minimum range can't do anything - they're helpless
             else:
                 if distance <= attack_range:

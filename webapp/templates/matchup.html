@@ -623,8 +623,8 @@
                     best.count_win_rate >= 50 ? "high" : "low";
 
                 let counterBonusHtml = "";
-                if (best.addon_score > 0) {
-                    counterBonusHtml = `<div class="counter-bonus">+${best.addon_score} counter bonus (beats ${best.beats_top5_count}/5 top units${best.beats_opponent_best ? " + #1" : ""})</div>`;
+                if (best.beats_top1) {
+                    counterBonusHtml = `<div class="counter-bonus">★ Beats opponent's #1 unit</div>`;
                 }
 
                 let allUnitsHtml = "";
@@ -637,12 +637,11 @@
                                     .map((u, i) => {
                                         const classes = [];
                                         if (i === 0) classes.push("best");
-                                        if (u.addon_score > 0)
+                                        if (u.beats_top1)
                                             classes.push("has-counter-bonus");
-                                        const addonStr =
-                                            u.addon_score > 0
-                                                ? ` +${u.addon_score}`
-                                                : "";
+                                        const starStr = u.beats_top1
+                                            ? " ★"
+                                            : "";
                                         const winsStr =
                                             u.matchups.wins.length > 0
                                                 ? u.matchups.wins.join(", ")
@@ -653,8 +652,8 @@
                                                 : "None";
                                         return `
                                             <div class="unit-item ${classes.join(" ")}">
-                                                <span class="name">${u.name}</span>
-                                                <span class="score">${u.final_score} pts (${u.score}${addonStr}) R:${u.res_win_rate}%</span>
+                                                <span class="name">${u.name}${starStr}</span>
+                                                <span class="score">${u.score} pts R:${u.res_win_rate}%</span>
                                                 <div class="matchup-tooltip">
                                                     <div class="tooltip-section wins">
                                                         <strong>Beats (${u.matchups.wins.length}):</strong> ${winsStr}

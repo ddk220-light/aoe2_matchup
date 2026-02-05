@@ -902,11 +902,23 @@ def api_matchup(civ1, civ2):
                     u1, u1_cost, u2, u2_cost, 1000
                 )
 
-                # Simulation 2: Count-based (20 units each)
+                # Simulation 2: Count-based (20 units each, but cap siege at 5)
                 # Use same cost for both so they get equal unit counts
-                equal_cost = 100  # Arbitrary value, gives 20 units for 2000 resources
+                # Siege units (mangonel, onager, siege_onager) are capped at 5
+                SIEGE_UNIT_SLUGS = {"mangonel", "onager", "siege_onager"}
+                u1_is_siege = u1["slug"] in SIEGE_UNIT_SLUGS
+                u2_is_siege = u2["slug"] in SIEGE_UNIT_SLUGS
+
+                if u1_is_siege or u2_is_siege:
+                    # Cap siege units at 5, give opponent 5 as well for fair comparison
+                    count_resources = 500
+                    equal_cost = 100
+                else:
+                    count_resources = 2000
+                    equal_cost = 100
+
                 count_winner, u1_count_remaining, u2_count_remaining = simulate_battle(
-                    u1, equal_cost, u2, equal_cost, 2000
+                    u1, equal_cost, u2, equal_cost, count_resources
                 )
 
                 u1_total += 1
@@ -1023,51 +1035,37 @@ def api_matchup(civ1, civ2):
             )
 
         # Calculate add-on scores for civ1 units
-        # +1 for each of opponent's top 5 they beat, +1 extra for beating opponent's #1
+        # +1 only for beating opponent's #1 unit (star indicator)
         for slug in civ1_scores:
             addon = 0
-            beats_top5_count = 0
-            for opp_slug in civ2_top5:
-                key = (slug, opp_slug)
-                if key in matchup_results:
-                    res_w, count_w = matchup_results[key]
-                    # Unit beats opponent if it wins either simulation
-                    if res_w == 1 or count_w == 1:
-                        addon += 1
-                        beats_top5_count += 1
-            # Extra +1 for beating opponent's top unit
+            beats_top1 = False
+            # Check if this unit beats opponent's top unit
             if civ2_top1:
                 key = (slug, civ2_top1)
                 if key in matchup_results:
                     res_w, count_w = matchup_results[key]
                     if res_w == 1 or count_w == 1:
-                        addon += 1
+                        addon = 1
+                        beats_top1 = True
             civ1_scores[slug]["addon_score"] = addon
             civ1_scores[slug]["final_score"] = civ1_scores[slug]["score"] + addon
-            civ1_scores[slug]["beats_top5_count"] = beats_top5_count
+            civ1_scores[slug]["beats_top1"] = beats_top1
 
         # Calculate add-on scores for civ2 units
         for slug in civ2_scores:
             addon = 0
-            beats_top5_count = 0
-            for opp_slug in civ1_top5:
-                key = (opp_slug, slug)
-                if key in matchup_results:
-                    res_w, count_w = matchup_results[key]
-                    # Unit beats opponent if it wins either simulation
-                    if res_w == 2 or count_w == 2:
-                        addon += 1
-                        beats_top5_count += 1
-            # Extra +1 for beating opponent's top unit
+            beats_top1 = False
+            # Check if this unit beats opponent's top unit
             if civ1_top1:
                 key = (civ1_top1, slug)
                 if key in matchup_results:
                     res_w, count_w = matchup_results[key]
                     if res_w == 2 or count_w == 2:
-                        addon += 1
+                        addon = 1
+                        beats_top1 = True
             civ2_scores[slug]["addon_score"] = addon
             civ2_scores[slug]["final_score"] = civ2_scores[slug]["score"] + addon
-            civ2_scores[slug]["beats_top5_count"] = beats_top5_count
+            civ2_scores[slug]["beats_top1"] = beats_top1
 
         # Find best unit for each civ (by final_score)
         civ1_best = (
@@ -1108,7 +1106,7 @@ def api_matchup(civ1, civ2):
                 "score": data["score"],
                 "addon_score": data["addon_score"],
                 "final_score": data["final_score"],
-                "beats_top5_count": data["beats_top5_count"],
+                "beats_top1": data["beats_top1"],
                 "res_wins": data["res_wins"],
                 "count_wins": data["count_wins"],
                 "total": data["total"],

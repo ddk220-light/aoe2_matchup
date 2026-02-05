@@ -1149,10 +1149,24 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
 
     # Siege units fire ground-targeted projectiles (mangonel, siege_onager)
     SIEGE_UNITS = {"mangonel", "siege_onager"}
+    # Scorpions have minimum range but fire direct projectiles (no splash)
+    SCORPION_UNITS = {"scorpion", "heavy_scorpion"}
+    # Units that ignore armor (Composite Bowman ignores pierce, Leitis ignores melee)
+    IGNORE_PIERCE_ARMOR = {"composite_bowman", "elite_composite_bowman"}
+    IGNORE_MELEE_ARMOR = {"leitis", "elite_leitis"}
     slug1 = unit1["slug"] if "slug" in unit1.keys() else ""
     slug2 = unit2["slug"] if "slug" in unit2.keys() else ""
     is_siege1 = slug1 in SIEGE_UNITS
     is_siege2 = slug2 in SIEGE_UNITS
+    is_scorpion1 = slug1 in SCORPION_UNITS
+    is_scorpion2 = slug2 in SCORPION_UNITS
+    # Check if units ignore armor (match base slug without civ suffix)
+    slug1_base = slug1.rsplit("_", 1)[0] if "_" in slug1 else slug1
+    slug2_base = slug2.rsplit("_", 1)[0] if "_" in slug2 else slug2
+    ignores_pierce1 = slug1_base in IGNORE_PIERCE_ARMOR
+    ignores_pierce2 = slug2_base in IGNORE_PIERCE_ARMOR
+    ignores_melee1 = slug1_base in IGNORE_MELEE_ARMOR
+    ignores_melee2 = slug2_base in IGNORE_MELEE_ARMOR
 
     # Projectile speed for siege units - roughly same as light cavalry (1.65 tiles/sec)
     # This allows fast melee units to dodge by moving out of the impact zone
@@ -1162,8 +1176,9 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     # Splash radius - siege projectiles deal damage to all units in this radius
     SPLASH_RADIUS = 1.5
     # Minimum attack range for siege units - they can't fire at close range
-    # In AoE2, mangonels have minimum range of 3
+    # In AoE2, mangonels have minimum range of 3, scorpions have minimum range of 2
     MIN_SIEGE_RANGE = 3.0
+    MIN_SCORPION_RANGE = 2.0
 
     # Calculate damage per hit (use pierce for ranged, melee for melee)
     def calc_damage(
@@ -1173,15 +1188,23 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
         defender_melee_armor,
         defender_pierce_armor,
         is_ranged,
+        ignores_pierce=False,
+        ignores_melee=False,
     ):
         if is_ranged:
             base_damage = attacker_attacks.get(
                 3, attacker_attacks.get(4, attacker_attack)
             )
-            target_armor = defender_armors.get(3, defender_pierce_armor)
+            # Composite Bowman ignores pierce armor
+            target_armor = (
+                0 if ignores_pierce else defender_armors.get(3, defender_pierce_armor)
+            )
         else:
             base_damage = attacker_attacks.get(4, attacker_attack)
-            target_armor = defender_armors.get(4, defender_melee_armor)
+            # Leitis ignores melee armor
+            target_armor = (
+                0 if ignores_melee else defender_armors.get(4, defender_melee_armor)
+            )
 
         bonus_damage = 0
         for armor_class, armor_value in defender_armors.items():
@@ -1199,6 +1222,8 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
         unit2["melee_armor"],
         unit2["pierce_armor"],
         is_ranged1,
+        ignores_pierce=ignores_pierce1,
+        ignores_melee=ignores_melee1,
     )
     dmg2 = calc_damage(
         attacks2,
@@ -1207,6 +1232,8 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
         unit1["melee_armor"],
         unit1["pierce_armor"],
         is_ranged2,
+        ignores_pierce=ignores_pierce2,
+        ignores_melee=ignores_melee2,
     )
 
     # Get attack speeds (reload time)
@@ -1320,10 +1347,12 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
             attack_range = range1 if is_ranged1 else melee_range
 
             if is_ranged1:
-                # Check minimum range for siege units
+                # Check minimum range for siege units and scorpions
                 can_fire = distance <= attack_range
                 if is_siege1 and distance < MIN_SIEGE_RANGE:
                     can_fire = False  # Too close, siege can't fire
+                if is_scorpion1 and distance < MIN_SCORPION_RANGE:
+                    can_fire = False  # Too close, scorpion can't fire
 
                 if cooldown1[i] <= 0 and can_fire:
                     if is_siege1:
@@ -1358,10 +1387,12 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
             attack_range = range2 if is_ranged2 else melee_range
 
             if is_ranged2:
-                # Check minimum range for siege units
+                # Check minimum range for siege units and scorpions
                 can_fire = distance <= attack_range
                 if is_siege2 and distance < MIN_SIEGE_RANGE:
                     can_fire = False  # Too close, siege can't fire
+                if is_scorpion2 and distance < MIN_SCORPION_RANGE:
+                    can_fire = False  # Too close, scorpion can't fire
 
                 if cooldown2[i] <= 0 and can_fire:
                     if is_siege2:

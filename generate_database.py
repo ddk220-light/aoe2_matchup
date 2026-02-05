@@ -921,23 +921,32 @@ UNIQUE_UNITS = {
     ],
     "Armenians": [
         {
-            "base_id": 1850,
+            "base_id": 1800,
             "display_name": "Composite Bowman",
             "unit_class": 0,
             "availability_tech": 963,
             "elite_tech": 964,
-            "elite_id": 1852,
+            "elite_id": 1802,
             "elite_name": "Elite Composite Bowman",
+        },
+        {
+            "base_id": 1811,
+            "display_name": "Warrior Priest",
+            "unit_class": 6,  # Infantry class (gets monk bonuses via unit-specific effects)
+            "availability_tech": 948,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
         },
     ],
     "Georgians": [
         {
-            "base_id": 1870,
+            "base_id": 1803,
             "display_name": "Monaspa",
             "unit_class": 12,
             "availability_tech": 973,
             "elite_tech": 974,
-            "elite_id": 1872,
+            "elite_id": 1805,
             "elite_name": "Elite Monaspa",
         },
     ],
@@ -1984,7 +1993,8 @@ def populate_database(conn, analyzer: UnitAnalyzer):
 
         for uu_config in unique_units:
             display_name = uu_config["display_name"]
-            elite_name = uu_config.get("elite_name", f"Elite {display_name}")
+            elite_name = uu_config.get("elite_name")
+            has_elite = uu_config.get("elite_id") is not None
             unit_slug = display_name.lower().replace(" ", "_").replace("-", "_")
 
             print(f"  {civ_name}: {display_name}...")
@@ -2002,18 +2012,20 @@ def populate_database(conn, analyzer: UnitAnalyzer):
             )
             db_unit_id_castle = cursor.lastrowid
 
-            # Insert elite version (Imperial Age)
-            cursor.execute(
-                "INSERT INTO units (slug, display_name, age_id, unit_type, civ_id) VALUES (?, ?, ?, ?, ?)",
-                (
-                    f"elite_{unit_slug}_{civ_name.lower()}",
-                    elite_name,
-                    IMPERIAL_AGE,
-                    "unique",
-                    db_civ_id,
-                ),
-            )
-            db_unit_id_imperial = cursor.lastrowid
+            db_unit_id_imperial = None
+            if has_elite:
+                # Insert elite version (Imperial Age)
+                cursor.execute(
+                    "INSERT INTO units (slug, display_name, age_id, unit_type, civ_id) VALUES (?, ?, ?, ?, ?)",
+                    (
+                        f"elite_{unit_slug}_{civ_name.lower()}",
+                        elite_name or f"Elite {display_name}",
+                        IMPERIAL_AGE,
+                        "unique",
+                        db_civ_id,
+                    ),
+                )
+                db_unit_id_imperial = cursor.lastrowid
 
             # Calculate stats for the unique unit's civ only
             # Castle Age (base unit)
@@ -2021,15 +2033,44 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                 civ_name, uu_config, CASTLE_AGE, elite=False
             )
 
-            # Imperial Age (elite unit)
-            result_imperial = analyzer.calculate_unique_unit_stats(
-                civ_name, uu_config, IMPERIAL_AGE, elite=True
-            )
+            # Build list of units to process
+            units_to_process = [(db_unit_id_castle, result_castle, display_name)]
 
-            for db_unit_id, result, unit_name in [
-                (db_unit_id_castle, result_castle, display_name),
-                (db_unit_id_imperial, result_imperial, elite_name),
-            ]:
+            if has_elite:
+                # Imperial Age (elite unit)
+                result_imperial = analyzer.calculate_unique_unit_stats(
+                    civ_name, uu_config, IMPERIAL_AGE, elite=True
+                )
+                units_to_process.append(
+                    (
+                        db_unit_id_imperial,
+                        result_imperial,
+                        elite_name or f"Elite {display_name}",
+                    )
+                )
+            else:
+                # For units without elite version, also calculate Imperial Age stats
+                # so they get Imperial Age unique techs (e.g., Warrior Priest + Fereters)
+                result_imperial = analyzer.calculate_unique_unit_stats(
+                    civ_name, uu_config, IMPERIAL_AGE, elite=False
+                )
+                # Insert Imperial Age version of the unit (with _imp suffix to avoid slug conflict)
+                cursor.execute(
+                    "INSERT INTO units (slug, display_name, age_id, unit_type, civ_id) VALUES (?, ?, ?, ?, ?)",
+                    (
+                        f"{unit_slug}_imp_{civ_name.lower()}",
+                        display_name,
+                        IMPERIAL_AGE,
+                        "unique",
+                        db_civ_id,
+                    ),
+                )
+                db_unit_id_imperial = cursor.lastrowid
+                units_to_process.append(
+                    (db_unit_id_imperial, result_imperial, display_name)
+                )
+
+            for db_unit_id, result, unit_name in units_to_process:
                 stats = result["stats"]
                 has_unit = 1 if result["has_unit"] else 0
                 bonuses = result.get("applied_bonuses", [])

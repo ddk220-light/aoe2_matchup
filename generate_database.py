@@ -1124,6 +1124,17 @@ class UnitAnalyzer:
             if tech_data.get("civ", -1) >= 0:
                 continue
 
+            # Skip DLC/campaign-specific techs (have non-standard requirements like Antiquity techs)
+            # These are identified by having required_techs with IDs > 1000 that aren't standard
+            required_techs = tech_data.get("required_techs", [])
+            has_dlc_requirement = any(
+                req > 1000 and req not in AGE_TECH_IDS
+                for req in required_techs
+                if req > 0
+            )
+            if has_dlc_requirement:
+                continue
+
             affects_unit = False
 
             for cmd in te.get("commands", []):

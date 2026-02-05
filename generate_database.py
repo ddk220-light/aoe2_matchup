@@ -161,7 +161,7 @@ CASTLE_UNITS = {
         "upgrades": [],
     },
     "elephant": {
-        "base_id": 1132,
+        "base_id": 1252,
         "display_name": "Battle Elephant",
         "unit_class": 12,
         "availability_tech": 630,  # Battle Elephant (make avail)
@@ -201,7 +201,7 @@ CASTLE_UNITS = {
         "upgrades": [],
     },
     "elephant_archer": {
-        "base_id": 873,
+        "base_id": 1010,
         "display_name": "Elephant Archer",
         "unit_class": 36,
         "availability_tech": 480,  # Elephant Archer (make avail)
@@ -305,12 +305,12 @@ IMPERIAL_UNITS = {
         ],
     },
     "elite_elephant": {
-        "base_id": 1132,
+        "base_id": 1252,
         "display_name": "Elite Battle Elephant",
         "unit_class": 12,
         "availability_tech": 630,
         "upgrades": [
-            (631, 1134, "Elite Battle Elephant"),
+            (631, 1254, "Elite Battle Elephant"),
         ],
     },
     "elite_steppe": {
@@ -342,12 +342,12 @@ IMPERIAL_UNITS = {
         ],
     },
     "elite_ele_archer": {
-        "base_id": 873,
+        "base_id": 1010,
         "display_name": "Elite Elephant Archer",
         "unit_class": 36,
         "availability_tech": 480,
         "upgrades": [
-            (481, 875, "Elite Elephant Archer"),
+            (481, 1012, "Elite Elephant Archer"),
         ],
     },
     "siege_ram": {

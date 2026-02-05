@@ -1341,6 +1341,30 @@ def simulate_battle(
     MIN_SCORPION_RANGE = 2.0
     MIN_SKIRMISHER_RANGE = 1.0
 
+    # Bengali civ bonus: elephant units take 25% less bonus damage
+    BENGALI_BONUS_REDUCTION = 0.25
+    BENGALI_ELEPHANT_SLUGS = {
+        "elephant",
+        "elite_elephant",
+        "elephant_archer",
+        "elite_ele_archer",
+        "ratha_(melee)",
+        "elite_ratha_(melee)",
+        "ratha_(ranged)",
+        "elite_ratha_(ranged)",
+    }
+
+    def is_bengali_elephant(slug, civ_name):
+        """Check if unit is a Bengali elephant unit that gets bonus damage reduction."""
+        if civ_name != "Bengalis":
+            return False
+        base_slug = (
+            slug.rsplit("_", 1)[0]
+            if "_" in slug and len(slug.rsplit("_", 1)[1]) > 3
+            else slug
+        )
+        return base_slug in BENGALI_ELEPHANT_SLUGS or slug in BENGALI_ELEPHANT_SLUGS
+
     # Calculate damage per hit (use pierce for ranged, melee for melee)
     def calc_damage(
         attacker_attacks,
@@ -1351,6 +1375,7 @@ def simulate_battle(
         is_ranged,
         ignores_pierce=False,
         ignores_melee=False,
+        bonus_damage_reduction=0,
     ):
         if is_ranged:
             base_damage = attacker_attacks.get(
@@ -1374,7 +1399,20 @@ def simulate_battle(
                 if attack_bonus > 0:
                     effective_bonus = max(0, attack_bonus - armor_value)
                     bonus_damage += effective_bonus
+
+        # Apply bonus damage reduction (e.g., Bengali elephants take 25% less)
+        if bonus_damage_reduction > 0:
+            bonus_damage = int(bonus_damage * (1 - bonus_damage_reduction))
+
         return max(1, base_damage + bonus_damage - target_armor)
+
+    # Check for Bengali elephant bonus damage reduction
+    bonus_reduction1 = (
+        BENGALI_BONUS_REDUCTION if is_bengali_elephant(slug1, civ1_name) else 0
+    )
+    bonus_reduction2 = (
+        BENGALI_BONUS_REDUCTION if is_bengali_elephant(slug2, civ2_name) else 0
+    )
 
     dmg1 = calc_damage(
         attacks1,
@@ -1385,6 +1423,7 @@ def simulate_battle(
         is_ranged1,
         ignores_pierce=ignores_pierce1,
         ignores_melee=ignores_melee1,
+        bonus_damage_reduction=bonus_reduction2,  # Defender's reduction
     )
     dmg2 = calc_damage(
         attacks2,
@@ -1395,6 +1434,7 @@ def simulate_battle(
         is_ranged2,
         ignores_pierce=ignores_pierce2,
         ignores_melee=ignores_melee2,
+        bonus_damage_reduction=bonus_reduction1,  # Defender's reduction
     )
 
     # Get attack speeds (reload time)

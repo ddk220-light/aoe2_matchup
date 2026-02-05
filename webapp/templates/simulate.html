@@ -1015,6 +1015,15 @@
             const DRUZHINA_INFANTRY = new Set(['champion', 'halberdier', 'swordsmen']);
             const DRUZHINA_TRAMPLE = { percent: 0, radius: TILE_SIZE * 0.5, flat: 5 };
 
+            // Bengali civ bonus: elephant units take 25% less bonus damage
+            const BENGALI_BONUS_REDUCTION = 0.25;
+            const BENGALI_ELEPHANT_SLUGS = new Set([
+                'elephant', 'elite_elephant',
+                'elephant_archer', 'elite_ele_archer',
+                'ratha_(melee)', 'elite_ratha_(melee)',
+                'ratha_(ranged)', 'elite_ratha_(ranged)',
+            ]);
+
             // Data from server
             const allCivs = {{ civs | tojson }};
             const ages = {
@@ -1124,12 +1133,30 @@
                         }
                     }
 
+                    // Apply Bengali bonus damage reduction if target is Bengali elephant
+                    if (target.isBengaliElephant()) {
+                        bonusDamage = Math.floor(bonusDamage * (1 - BENGALI_BONUS_REDUCTION));
+                    }
+
                     const totalDamage = Math.max(1, baseDmg + bonusDamage);
 
                     if (detailed) {
                         return { total: totalDamage, breakdown };
                     }
                     return totalDamage;
+                }
+
+                isBengaliElephant() {
+                    if (this.civName !== 'Bengalis') return false;
+                    // Get base slug (remove civ suffix)
+                    let baseSlug = this.slug;
+                    if (this.slug.includes('_')) {
+                        const parts = this.slug.split('_');
+                        if (parts.length > 1 && parts[parts.length - 1].length > 3) {
+                            baseSlug = parts.slice(0, -1).join('_');
+                        }
+                    }
+                    return BENGALI_ELEPHANT_SLUGS.has(baseSlug) || BENGALI_ELEPHANT_SLUGS.has(this.slug);
                 }
 
                 findTarget(enemies) {

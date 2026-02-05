@@ -1634,13 +1634,10 @@ def simulate_battle(
         # Collect attacks (simultaneous)
         pending_damage = []
 
-        # Ranged units kite (move away while reloading)
-        # But only if they're faster than the enemy, or if enemy is also ranged
-        # This prevents unrealistic perfect kiting where slower ranged beats faster melee
-        # Ranged units should always kite melee units, even if slower
-        # They should also kite other ranged units
-        should_kite1 = is_ranged1
-        should_kite2 = is_ranged2
+        # Ranged units kite melee units (move away while reloading)
+        # But don't kite other ranged units - they stand and trade
+        should_kite1 = is_ranged1 and not is_ranged2
+        should_kite2 = is_ranged2 and not is_ranged1
 
         # Team 1 units (move right toward team 2)
         for i in alive1:

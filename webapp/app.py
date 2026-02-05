@@ -1195,10 +1195,13 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     is_siege1 = slug1 in SIEGE_UNITS
     is_siege2 = slug2 in SIEGE_UNITS
 
-    # Projectile speed (light cavalry speed ~1.5 tiles/second)
-    PROJECTILE_SPEED = 1.5
+    # Projectile speed for siege units (mangonel/onager projectiles travel ~7 tiles/sec in game)
+    # This is faster than unit movement but still allows dodging by fast units
+    PROJECTILE_SPEED = 7.0
     # Hit radius - projectile hits if target is within this distance of impact point
-    HIT_RADIUS = 0.5
+    HIT_RADIUS = 1.0
+    # Splash radius - siege projectiles deal damage to all units in this radius
+    SPLASH_RADIUS = 1.5
 
     # Calculate damage per hit (use pierce for ranged, melee for melee)
     def calc_damage(
@@ -1272,7 +1275,8 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     MAP_MAX = 100
 
     # Track siege projectiles in flight
-    # Each projectile: (target_team, target_idx, target_pos_at_fire, current_pos, damage)
+    # Each projectile: (target_team, impact_pos, current_pos, damage, target_positions_at_fire)
+    # target_positions_at_fire is a dict of {unit_idx: position} for splash damage calculation
     projectiles = []
 
     while ticks < max_ticks:
@@ -1302,35 +1306,50 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
         # Update siege projectiles in flight
         new_projectiles = []
         for proj in projectiles:
-            target_team, target_idx, target_pos_at_fire, proj_pos, damage = proj
-            # Move projectile toward target position
-            if proj_pos < target_pos_at_fire:
+            target_team, impact_pos, proj_pos, damage, positions_at_fire = proj
+            # Move projectile toward impact position
+            if proj_pos < impact_pos:
                 proj_pos += PROJECTILE_SPEED * dt
-                arrived = proj_pos >= target_pos_at_fire
+                arrived = proj_pos >= impact_pos
             else:
                 proj_pos -= PROJECTILE_SPEED * dt
-                arrived = proj_pos <= target_pos_at_fire
+                arrived = proj_pos <= impact_pos
 
             if arrived:
-                # Projectile arrived - check if target is still near
+                # Projectile arrived - apply splash damage to units that were near impact
+                # AND haven't moved much (dodge check)
                 if target_team == 1:
-                    if hp1[target_idx] > 0:
-                        current_pos = pos1[target_idx]
-                        if abs(current_pos - target_pos_at_fire) <= HIT_RADIUS:
-                            hp1[target_idx] -= damage
+                    for idx in alive1:
+                        if idx in positions_at_fire:
+                            pos_at_fire = positions_at_fire[idx]
+                            # Was unit near impact point when fired?
+                            if abs(pos_at_fire - impact_pos) <= SPLASH_RADIUS:
+                                # Has unit moved significantly? (dodge check)
+                                dist_moved = abs(pos1[idx] - pos_at_fire)
+                                if dist_moved <= HIT_RADIUS:
+                                    hp1[idx] -= damage
                 else:
-                    if hp2[target_idx] > 0:
-                        current_pos = pos2[target_idx]
-                        if abs(current_pos - target_pos_at_fire) <= HIT_RADIUS:
-                            hp2[target_idx] -= damage
+                    for idx in alive2:
+                        if idx in positions_at_fire:
+                            pos_at_fire = positions_at_fire[idx]
+                            # Was unit near impact point when fired?
+                            if abs(pos_at_fire - impact_pos) <= SPLASH_RADIUS:
+                                # Has unit moved significantly? (dodge check)
+                                dist_moved = abs(pos2[idx] - pos_at_fire)
+                                if dist_moved <= HIT_RADIUS:
+                                    hp2[idx] -= damage
             else:
                 new_projectiles.append(
-                    (target_team, target_idx, target_pos_at_fire, proj_pos, damage)
+                    (target_team, impact_pos, proj_pos, damage, positions_at_fire)
                 )
         projectiles = new_projectiles
 
         # Collect attacks (simultaneous)
         pending_damage = []
+
+        # Only kite against melee opponents, not ranged vs ranged
+        should_kite1 = is_ranged1 and not is_ranged2  # Team 1 ranged vs Team 2 melee
+        should_kite2 = is_ranged2 and not is_ranged1  # Team 2 ranged vs Team 1 melee
 
         # Team 1 units (move right toward team 2)
         for i in alive1:
@@ -1341,17 +1360,22 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
             if is_ranged1:
                 if cooldown1[i] <= 0 and distance <= attack_range:
                     if is_siege1:
-                        # Siege unit fires ground-targeted projectile
+                        # Siege unit fires ground-targeted projectile with splash
+                        # Store positions of all enemy units at fire time for dodge calculation
                         target_pos = pos2[closest]
-                        projectiles.append((2, closest, target_pos, pos1[i], dmg1))
+                        enemy_positions = {idx: pos2[idx] for idx in alive2}
+                        projectiles.append(
+                            (2, target_pos, pos1[i], dmg1, enemy_positions)
+                        )
                     else:
                         pending_damage.append((2, closest, dmg1))
                     cooldown1[i] = reload1
-                elif cooldown1[i] > 0:
-                    # Kite backward but respect map boundary
+                elif cooldown1[i] > 0 and should_kite1:
+                    # Only kite against melee opponents, respect map boundary
                     pos1[i] = max(MAP_MIN, pos1[i] - move_speed1 * dt)
                 elif distance > attack_range:
                     pos1[i] += move_speed1 * dt
+                # If ranged vs ranged and reloading, just stand still
             else:
                 if distance <= attack_range:
                     if cooldown1[i] <= 0:
@@ -1369,17 +1393,22 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
             if is_ranged2:
                 if cooldown2[i] <= 0 and distance <= attack_range:
                     if is_siege2:
-                        # Siege unit fires ground-targeted projectile
+                        # Siege unit fires ground-targeted projectile with splash
+                        # Store positions of all enemy units at fire time for dodge calculation
                         target_pos = pos1[closest]
-                        projectiles.append((1, closest, target_pos, pos2[i], dmg2))
+                        enemy_positions = {idx: pos1[idx] for idx in alive1}
+                        projectiles.append(
+                            (1, target_pos, pos2[i], dmg2, enemy_positions)
+                        )
                     else:
                         pending_damage.append((1, closest, dmg2))
                     cooldown2[i] = reload2
-                elif cooldown2[i] > 0:
-                    # Kite backward but respect map boundary
+                elif cooldown2[i] > 0 and should_kite2:
+                    # Only kite against melee opponents, respect map boundary
                     pos2[i] = min(MAP_MAX, pos2[i] + move_speed2 * dt)
                 elif distance > attack_range:
                     pos2[i] -= move_speed2 * dt
+                # If ranged vs ranged and reloading, just stand still
             else:
                 if distance <= attack_range:
                     if cooldown2[i] <= 0:

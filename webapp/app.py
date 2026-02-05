@@ -1084,7 +1084,7 @@ def api_matchup(civ1, civ2):
             }
 
         # Define trash and siege units for scoring
-        # Trash units: no score for beating them
+        # Trash units: no score, just show counters
         TRASH_SLUGS = {
             "spearman",
             "pikeman",
@@ -1095,7 +1095,7 @@ def api_matchup(civ1, civ2):
             "light_cav",
             "hussar",
         }
-        # Siege units: no score for beating, but -1 for losing to them
+        # Siege units: no score, just show counters
         SIEGE_SLUGS = {
             "ram",
             "mangonel",
@@ -1106,6 +1106,33 @@ def api_matchup(civ1, civ2):
             "bombard_cannon",
             "trebuchet",
         }
+
+        def get_base_slug(slug):
+            """Remove civ suffix from slug to get base unit slug."""
+            # First check if the full slug is already a known unit type
+            if slug in TRASH_SLUGS or slug in SIEGE_SLUGS:
+                return slug
+            # Slugs are like 'elite_longbowman_britons' or 'siege_onager_britons'
+            # We need to remove the civ suffix (last part)
+            parts = slug.rsplit("_", 1)
+            if len(parts) == 2 and len(parts[1]) > 3:
+                # Likely a civ suffix (civ names are longer than 3 chars)
+                return parts[0]
+            return slug
+
+        def is_trash_or_siege(slug):
+            """Check if unit slug (with civ suffix) is trash or siege."""
+            base = get_base_slug(slug)
+            return base in TRASH_SLUGS or base in SIEGE_SLUGS
+
+        def get_unit_type(slug):
+            """Return 'trash', 'siege', or 'combat' for a unit slug."""
+            base = get_base_slug(slug)
+            if base in TRASH_SLUGS:
+                return "trash"
+            if base in SIEGE_SLUGS:
+                return "siege"
+            return "combat"
 
         # Build matchup lookup and track details
         matchup_results = {}
@@ -1263,29 +1290,91 @@ def api_matchup(civ1, civ2):
                 },
             }
 
+        def format_counter_unit(slug, data, matchup_details):
+            """Format trash/siege unit showing only what it counters (no score)."""
+            details = matchup_details.get(slug, [])
+            wins = [d for d in details if d["won"]]
+            display_name = data.get("display_name") or data["unit"]["unit_name"]
+            return {
+                "slug": slug,
+                "name": display_name,
+                "counters": [d["opponent"] for d in wins],
+            }
+
+        # Separate combat units from trash/siege
+        civ1_combat = {k: v for k, v in civ1_scores.items() if not is_trash_or_siege(k)}
+        civ1_trash = {
+            k: v for k, v in civ1_scores.items() if get_unit_type(k) == "trash"
+        }
+        civ1_siege = {
+            k: v for k, v in civ1_scores.items() if get_unit_type(k) == "siege"
+        }
+
+        civ2_combat = {k: v for k, v in civ2_scores.items() if not is_trash_or_siege(k)}
+        civ2_trash = {
+            k: v for k, v in civ2_scores.items() if get_unit_type(k) == "trash"
+        }
+        civ2_siege = {
+            k: v for k, v in civ2_scores.items() if get_unit_type(k) == "siege"
+        }
+
+        # Find best unit only among combat units
+        civ1_combat_best = (
+            max(civ1_combat.items(), key=lambda x: x[1]["final_score"])
+            if civ1_combat
+            else None
+        )
+        civ2_combat_best = (
+            max(civ2_combat.items(), key=lambda x: x[1]["final_score"])
+            if civ2_combat
+            else None
+        )
+
         results[age_slug] = {
             "age_name": age_data["name"],
             "civ1_best": format_unit(
-                civ1_best[0], civ1_best[1], civ1_beats_best, civ1_matchup_details
+                civ1_combat_best[0],
+                civ1_combat_best[1],
+                civ1_beats_best,
+                civ1_matchup_details,
             )
-            if civ1_best
+            if civ1_combat_best
             else None,
             "civ2_best": format_unit(
-                civ2_best[0], civ2_best[1], civ2_beats_best, civ2_matchup_details
+                civ2_combat_best[0],
+                civ2_combat_best[1],
+                civ2_beats_best,
+                civ2_matchup_details,
             )
-            if civ2_best
+            if civ2_combat_best
             else None,
             "civ1_all": [
                 format_unit(k, v, civ1_beats_best, civ1_matchup_details)
                 for k, v in sorted(
-                    civ1_scores.items(), key=lambda x: -x[1]["final_score"]
+                    civ1_combat.items(), key=lambda x: -x[1]["final_score"]
                 )
             ],
             "civ2_all": [
                 format_unit(k, v, civ2_beats_best, civ2_matchup_details)
                 for k, v in sorted(
-                    civ2_scores.items(), key=lambda x: -x[1]["final_score"]
+                    civ2_combat.items(), key=lambda x: -x[1]["final_score"]
                 )
+            ],
+            "civ1_trash": [
+                format_counter_unit(k, v, civ1_matchup_details)
+                for k, v in civ1_trash.items()
+            ],
+            "civ1_siege": [
+                format_counter_unit(k, v, civ1_matchup_details)
+                for k, v in civ1_siege.items()
+            ],
+            "civ2_trash": [
+                format_counter_unit(k, v, civ2_matchup_details)
+                for k, v in civ2_trash.items()
+            ],
+            "civ2_siege": [
+                format_counter_unit(k, v, civ2_matchup_details)
+                for k, v in civ2_siege.items()
             ],
         }
 

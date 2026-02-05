@@ -971,10 +971,22 @@ def api_matchup(civ1, civ2):
 
                         # Run two simulations: 1500 resources (medium) and 5000 resources (large)
                         winner_1500, _, _ = simulate_battle(
-                            u1_mode, u1_mode_cost, u2_mode, u2_mode_cost, 1500
+                            u1_mode,
+                            u1_mode_cost,
+                            u2_mode,
+                            u2_mode_cost,
+                            1500,
+                            civ1,
+                            civ2,
                         )
                         winner_5000, _, _ = simulate_battle(
-                            u1_mode, u1_mode_cost, u2_mode, u2_mode_cost, 5000
+                            u1_mode,
+                            u1_mode_cost,
+                            u2_mode,
+                            u2_mode_cost,
+                            5000,
+                            civ1,
+                            civ2,
                         )
 
                         if winner_1500 == 1 or winner_5000 == 1:
@@ -1203,7 +1215,9 @@ def api_matchup(civ1, civ2):
     return jsonify({"civ1": civ1, "civ2": civ2, "ages": results})
 
 
-def simulate_battle(unit1, cost1, unit2, cost2, resources):
+def simulate_battle(
+    unit1, cost1, unit2, cost2, resources, civ1_name=None, civ2_name=None
+):
     """
     Tick-based battle simulation with kiting support and siege projectile mechanics.
 
@@ -1250,6 +1264,49 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     # Units that ignore armor (Composite Bowman ignores pierce, Leitis ignores melee)
     IGNORE_PIERCE_ARMOR = {"composite_bowman", "elite_composite_bowman"}
     IGNORE_MELEE_ARMOR = {"leitis", "elite_leitis"}
+
+    # Units with trample damage (melee splash)
+    # Format: base_slug -> (trample_percent, trample_radius, flat_damage)
+    TRAMPLE_UNITS = {
+        "ratha_(melee)": (0.5, 0.5, 0),  # 50% damage, 0.5 tile radius
+        "elite_ratha_(melee)": (0.5, 0.5, 0),
+        "elephant": (0.5, 0.5, 0),  # Battle Elephant
+        "elite_elephant": (0.5, 0.5, 0),
+        "cataphract": (0.5, 0.5, 0),
+        "elite_cataphract": (0.5, 0.5, 0),
+        "war_elephant": (0.5, 0.5, 0),
+        "elite_war_elephant": (0.5, 0.5, 0),
+    }
+    # Slavic infantry with Druzhina - flat 5 damage trample
+    DRUZHINA_CIVS = {"Slavs"}
+    DRUZHINA_INFANTRY = {"champion", "halberdier", "swordsmen"}
+    DRUZHINA_TRAMPLE = (0, 0.5, 5)  # 0%, 0.5 radius, 5 flat damage
+
+    def get_trample_info(slug, civ_name):
+        """Return (trample_percent, radius, flat_damage) or None."""
+        # Check base slug (remove civ suffix like _bengalis, _byzantines)
+        base_slug = slug
+        # Try removing last part after underscore to get base slug
+        if "_" in slug:
+            parts = slug.rsplit("_", 1)
+            # Only remove if the last part looks like a civ name (not part of unit name)
+            if len(parts[1]) > 3:  # Civ names are longer than 3 chars
+                base_slug = parts[0]
+
+        # Check direct trample units
+        if base_slug in TRAMPLE_UNITS:
+            return TRAMPLE_UNITS[base_slug]
+
+        # Also check full slug in case base_slug stripping was wrong
+        if slug in TRAMPLE_UNITS:
+            return TRAMPLE_UNITS[slug]
+
+        # Check Druzhina for Slavic infantry (Imperial age only)
+        if civ_name in DRUZHINA_CIVS and base_slug in DRUZHINA_INFANTRY:
+            return DRUZHINA_TRAMPLE
+
+        return None
+
     slug1 = unit1["slug"] if "slug" in unit1.keys() else ""
     slug2 = unit2["slug"] if "slug" in unit2.keys() else ""
     is_siege1 = slug1 in SIEGE_UNITS
@@ -1265,6 +1322,10 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
     ignores_pierce2 = slug2_base in IGNORE_PIERCE_ARMOR
     ignores_melee1 = slug1_base in IGNORE_MELEE_ARMOR
     ignores_melee2 = slug2_base in IGNORE_MELEE_ARMOR
+
+    # Get trample info for both units
+    trample1 = get_trample_info(slug1, civ1_name)
+    trample2 = get_trample_info(slug2, civ2_name)
 
     # Projectile speed for siege units - roughly same as light cavalry (1.65 tiles/sec)
     # This allows fast melee units to dodge by moving out of the impact zone
@@ -1468,7 +1529,7 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
                             (2, target_pos, pos1[i], dmg1, enemy_positions)
                         )
                     else:
-                        pending_damage.append((2, closest, dmg1))
+                        pending_damage.append((2, closest, dmg1, i, pos1[i]))
                     cooldown1[i] = reload1
                 elif cooldown1[i] > 0 and should_kite1:
                     # Kite (move away while reloading), respect map boundary
@@ -1479,7 +1540,7 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
             else:
                 if distance <= attack_range:
                     if cooldown1[i] <= 0:
-                        pending_damage.append((2, closest, dmg1))
+                        pending_damage.append((2, closest, dmg1, i, pos1[i]))
                         cooldown1[i] = reload1
                 else:
                     pos1[i] += move_speed1 * dt
@@ -1510,7 +1571,7 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
                             (1, target_pos, pos2[i], dmg2, enemy_positions)
                         )
                     else:
-                        pending_damage.append((1, closest, dmg2))
+                        pending_damage.append((1, closest, dmg2, i, pos2[i]))
                     cooldown2[i] = reload2
                 elif cooldown2[i] > 0 and should_kite2:
                     # Kite (move away while reloading), respect map boundary
@@ -1521,17 +1582,37 @@ def simulate_battle(unit1, cost1, unit2, cost2, resources):
             else:
                 if distance <= attack_range:
                     if cooldown2[i] <= 0:
-                        pending_damage.append((1, closest, dmg2))
+                        pending_damage.append((1, closest, dmg2, i, pos2[i]))
                         cooldown2[i] = reload2
                 else:
                     pos2[i] -= move_speed2 * dt
 
-        # Apply damage
-        for team, target, damage in pending_damage:
+        # Apply damage (including trample)
+        for team, target, damage, attacker_idx, attacker_pos in pending_damage:
             if team == 1:
                 hp1[target] -= damage
+                # Apply trample damage from unit2 to nearby unit1s
+                if trample2 and not is_ranged2:
+                    trample_pct, trample_radius, flat_dmg = trample2
+                    trample_dmg = int(damage * trample_pct) + flat_dmg
+                    if trample_dmg > 0:
+                        for idx in alive1:
+                            if idx != target:  # Skip primary target
+                                dist = abs(pos1[idx] - attacker_pos)
+                                if dist <= trample_radius:
+                                    hp1[idx] -= trample_dmg
             else:
                 hp2[target] -= damage
+                # Apply trample damage from unit1 to nearby unit2s
+                if trample1 and not is_ranged1:
+                    trample_pct, trample_radius, flat_dmg = trample1
+                    trample_dmg = int(damage * trample_pct) + flat_dmg
+                    if trample_dmg > 0:
+                        for idx in alive2:
+                            if idx != target:  # Skip primary target
+                                dist = abs(pos2[idx] - attacker_pos)
+                                if dist <= trample_radius:
+                                    hp2[idx] -= trample_dmg
 
     remaining1 = len([h for h in hp1 if h > 0])
     remaining2 = len([h for h in hp2 if h > 0])

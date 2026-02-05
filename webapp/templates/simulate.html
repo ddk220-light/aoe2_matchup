@@ -999,6 +999,22 @@
             const UNIT_RADIUS = 15;
             const MIN_ATTACK_RANGE = 5;
 
+            // Trample damage configuration (melee splash)
+            // Format: slug -> { percent, radius (pixels), flat }
+            const TRAMPLE_UNITS = {
+                'ratha_(melee)': { percent: 0.5, radius: TILE_SIZE * 0.5, flat: 0 },
+                'elite_ratha_(melee)': { percent: 0.5, radius: TILE_SIZE * 0.5, flat: 0 },
+                'elephant': { percent: 0.5, radius: TILE_SIZE * 0.5, flat: 0 },
+                'elite_elephant': { percent: 0.5, radius: TILE_SIZE * 0.5, flat: 0 },
+                'cataphract': { percent: 0.5, radius: TILE_SIZE * 0.5, flat: 0 },
+                'elite_cataphract': { percent: 0.5, radius: TILE_SIZE * 0.5, flat: 0 },
+                'war_elephant': { percent: 0.5, radius: TILE_SIZE * 0.5, flat: 0 },
+                'elite_war_elephant': { percent: 0.5, radius: TILE_SIZE * 0.5, flat: 0 },
+            };
+            const DRUZHINA_CIVS = new Set(['Slavs']);
+            const DRUZHINA_INFANTRY = new Set(['champion', 'halberdier', 'swordsmen']);
+            const DRUZHINA_TRAMPLE = { percent: 0, radius: TILE_SIZE * 0.5, flat: 5 };
+
             // Data from server
             const allCivs = {{ civs | tojson }};
             const ages = {
@@ -1012,10 +1028,12 @@
 
             // BattleUnit class
             class BattleUnit {
-                constructor(id, team, stats) {
+                constructor(id, team, stats, slug = '', civName = '') {
                     this.id = id;
                     this.team = team;
                     this.stats = stats;
+                    this.slug = slug;
+                    this.civName = civName;
 
                     this.maxHp = stats.hp;
                     this.currentHp = stats.hp;
@@ -1207,8 +1225,54 @@
                     const damage = this.getDamageAgainst(this.target);
                     this.target.takeDamage(damage, this);
 
+                    // Apply trample damage to nearby enemies (melee only)
+                    if (!this.isRanged()) {
+                        const trampleInfo = this.getTrampleInfo();
+                        if (trampleInfo) {
+                            const trampleDmg = Math.floor(damage * trampleInfo.percent) + trampleInfo.flat;
+                            if (trampleDmg > 0) {
+                                const enemies = this.team === 1 ? simulation.team2 : simulation.team1;
+                                for (const enemy of enemies) {
+                                    if (enemy !== this.target && enemy.state !== 'dead') {
+                                        const dist = this.distanceTo(enemy);
+                                        if (dist <= trampleInfo.radius + enemy.radius) {
+                                            enemy.takeDamage(trampleDmg, this);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     this.attackCooldown = this.reloadTime;
                     this.attackAnimTimer = 0.15;
+                }
+
+                getTrampleInfo() {
+                    // Get base slug (remove civ suffix)
+                    let baseSlug = this.slug;
+                    if (this.slug.includes('_')) {
+                        const parts = this.slug.split('_');
+                        // Remove last part if it looks like a civ name (longer than 3 chars)
+                        if (parts.length > 1 && parts[parts.length - 1].length > 3) {
+                            baseSlug = parts.slice(0, -1).join('_');
+                        }
+                    }
+
+                    // Check direct trample units
+                    if (TRAMPLE_UNITS[baseSlug]) {
+                        return TRAMPLE_UNITS[baseSlug];
+                    }
+                    if (TRAMPLE_UNITS[this.slug]) {
+                        return TRAMPLE_UNITS[this.slug];
+                    }
+
+                    // Check Druzhina for Slavic infantry
+                    if (DRUZHINA_CIVS.has(this.civName) && DRUZHINA_INFANTRY.has(baseSlug)) {
+                        return DRUZHINA_TRAMPLE;
+                    }
+
+                    return null;
                 }
 
                 takeDamage(amount, attacker) {
@@ -1397,7 +1461,7 @@
                     const startY = count > 1 ? 50 : this.canvas.height / 2;
 
                     for (let i = 0; i < count; i++) {
-                        const unit = new BattleUnit(`${teamNum}-${i}`, teamNum, stats);
+                        const unit = new BattleUnit(`${teamNum}-${i}`, teamNum, stats, unitSlug, civName);
                         unit.x = startX + (Math.random() - 0.5) * 20;
                         unit.y = startY + i * spacing;
                         team.push(unit);

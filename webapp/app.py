@@ -920,6 +920,42 @@ def api_matchup(civ1, civ2):
         civ1_unit_lookup = {u["slug"]: u for u in civ1_units}
         civ2_unit_lookup = {u["slug"]: u for u in civ2_units}
 
+        # Define trash and siege units - skip these in simulations
+        TRASH_SLUGS = {
+            "spearman",
+            "pikeman",
+            "halberdier",
+            "skirmisher",
+            "elite_skirm",
+            "scout",
+            "light_cav",
+            "hussar",
+        }
+        SIEGE_SLUGS = {
+            "ram",
+            "mangonel",
+            "scorpion",
+            "siege_ram",
+            "siege_onager",
+            "heavy_scorpion",
+            "bombard_cannon",
+            "trebuchet",
+        }
+
+        def get_base_slug(slug):
+            """Remove civ suffix from slug to get base unit slug."""
+            if slug in TRASH_SLUGS or slug in SIEGE_SLUGS:
+                return slug
+            parts = slug.rsplit("_", 1)
+            if len(parts) == 2 and len(parts[1]) > 3:
+                return parts[0]
+            return slug
+
+        def is_trash_or_siege(slug):
+            """Check if unit slug (with civ suffix) is trash or siege."""
+            base = get_base_slug(slug)
+            return base in TRASH_SLUGS or base in SIEGE_SLUGS
+
         # Filter out paired units - only keep one mode per pair (we'll test both in simulation)
         def filter_paired_units(units):
             """Keep only one representative per paired unit group."""
@@ -938,8 +974,17 @@ def api_matchup(civ1, civ2):
                     filtered.append(u)
             return filtered
 
-        civ1_units_filtered = filter_paired_units(civ1_units)
-        civ2_units_filtered = filter_paired_units(civ2_units)
+        # Filter units: remove paired duplicates and trash/siege units
+        civ1_units_filtered = [
+            u
+            for u in filter_paired_units(civ1_units)
+            if not is_trash_or_siege(u["slug"])
+        ]
+        civ2_units_filtered = [
+            u
+            for u in filter_paired_units(civ2_units)
+            if not is_trash_or_siege(u["slug"])
+        ]
 
         for u1 in civ1_units_filtered:
             u1_wins = 0
@@ -1083,57 +1128,6 @@ def api_matchup(civ1, civ2):
                 "display_name": u1_display_name,
             }
 
-        # Define trash and siege units for scoring
-        # Trash units: no score, just show counters
-        TRASH_SLUGS = {
-            "spearman",
-            "pikeman",
-            "halberdier",
-            "skirmisher",
-            "elite_skirm",
-            "scout",
-            "light_cav",
-            "hussar",
-        }
-        # Siege units: no score, just show counters
-        SIEGE_SLUGS = {
-            "ram",
-            "mangonel",
-            "scorpion",
-            "siege_ram",
-            "siege_onager",
-            "heavy_scorpion",
-            "bombard_cannon",
-            "trebuchet",
-        }
-
-        def get_base_slug(slug):
-            """Remove civ suffix from slug to get base unit slug."""
-            # First check if the full slug is already a known unit type
-            if slug in TRASH_SLUGS or slug in SIEGE_SLUGS:
-                return slug
-            # Slugs are like 'elite_longbowman_britons' or 'siege_onager_britons'
-            # We need to remove the civ suffix (last part)
-            parts = slug.rsplit("_", 1)
-            if len(parts) == 2 and len(parts[1]) > 3:
-                # Likely a civ suffix (civ names are longer than 3 chars)
-                return parts[0]
-            return slug
-
-        def is_trash_or_siege(slug):
-            """Check if unit slug (with civ suffix) is trash or siege."""
-            base = get_base_slug(slug)
-            return base in TRASH_SLUGS or base in SIEGE_SLUGS
-
-        def get_unit_type(slug):
-            """Return 'trash', 'siege', or 'combat' for a unit slug."""
-            base = get_base_slug(slug)
-            if base in TRASH_SLUGS:
-                return "trash"
-            if base in SIEGE_SLUGS:
-                return "siege"
-            return "combat"
-
         # Build matchup lookup and track details
         matchup_results = {}
         civ1_matchup_details = {}
@@ -1259,89 +1253,43 @@ def api_matchup(civ1, civ2):
                 },
             }
 
-        def format_counter_unit(slug, data, matchup_details):
-            """Format trash/siege unit showing only what it counters (no score)."""
-            details = matchup_details.get(slug, [])
-            wins = [d for d in details if d["result"] == "win"]
-            draws = [d for d in details if d["result"] == "draw"]
-            display_name = data.get("display_name") or data["unit"]["unit_name"]
-            return {
-                "slug": slug,
-                "name": display_name,
-                "counters": [d["opponent"] for d in wins],
-                "draws": [d["opponent"] for d in draws],
-            }
-
-        # Separate combat units from trash/siege
-        civ1_combat = {k: v for k, v in civ1_scores.items() if not is_trash_or_siege(k)}
-        civ1_trash = {
-            k: v for k, v in civ1_scores.items() if get_unit_type(k) == "trash"
-        }
-        civ1_siege = {
-            k: v for k, v in civ1_scores.items() if get_unit_type(k) == "siege"
-        }
-
-        civ2_combat = {k: v for k, v in civ2_scores.items() if not is_trash_or_siege(k)}
-        civ2_trash = {
-            k: v for k, v in civ2_scores.items() if get_unit_type(k) == "trash"
-        }
-        civ2_siege = {
-            k: v for k, v in civ2_scores.items() if get_unit_type(k) == "siege"
-        }
-
-        # Find best unit only among combat units
-        civ1_combat_best = (
-            max(civ1_combat.items(), key=lambda x: x[1]["score"])
-            if civ1_combat
+        # Find best unit for each civ
+        civ1_best = (
+            max(civ1_scores.items(), key=lambda x: x[1]["score"])
+            if civ1_scores
             else None
         )
-        civ2_combat_best = (
-            max(civ2_combat.items(), key=lambda x: x[1]["score"])
-            if civ2_combat
+        civ2_best = (
+            max(civ2_scores.items(), key=lambda x: x[1]["score"])
+            if civ2_scores
             else None
         )
 
         results[age_slug] = {
             "age_name": age_data["name"],
             "civ1_best": format_unit(
-                civ1_combat_best[0],
-                civ1_combat_best[1],
+                civ1_best[0],
+                civ1_best[1],
                 civ1_beats_best,
                 civ1_matchup_details,
             )
-            if civ1_combat_best
+            if civ1_best
             else None,
             "civ2_best": format_unit(
-                civ2_combat_best[0],
-                civ2_combat_best[1],
+                civ2_best[0],
+                civ2_best[1],
                 civ2_beats_best,
                 civ2_matchup_details,
             )
-            if civ2_combat_best
+            if civ2_best
             else None,
             "civ1_all": [
                 format_unit(k, v, civ1_beats_best, civ1_matchup_details)
-                for k, v in sorted(civ1_combat.items(), key=lambda x: -x[1]["score"])
+                for k, v in sorted(civ1_scores.items(), key=lambda x: -x[1]["score"])
             ],
             "civ2_all": [
                 format_unit(k, v, civ2_beats_best, civ2_matchup_details)
-                for k, v in sorted(civ2_combat.items(), key=lambda x: -x[1]["score"])
-            ],
-            "civ1_trash": [
-                format_counter_unit(k, v, civ1_matchup_details)
-                for k, v in civ1_trash.items()
-            ],
-            "civ1_siege": [
-                format_counter_unit(k, v, civ1_matchup_details)
-                for k, v in civ1_siege.items()
-            ],
-            "civ2_trash": [
-                format_counter_unit(k, v, civ2_matchup_details)
-                for k, v in civ2_trash.items()
-            ],
-            "civ2_siege": [
-                format_counter_unit(k, v, civ2_matchup_details)
-                for k, v in civ2_siege.items()
+                for k, v in sorted(civ2_scores.items(), key=lambda x: -x[1]["score"])
             ],
         }
 
@@ -1602,7 +1550,7 @@ def simulate_battle(
     cooldown2 = [0.0] * count2
 
     # Simulate with tick limit for speed
-    dt = 0.1  # 100ms time step
+    dt = 0.05  # 50ms time step
     max_ticks = 1000
     melee_range = 0.5
     ticks = 0

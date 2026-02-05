@@ -988,9 +988,38 @@ def api_matchup(civ1, civ2):
 
         # Build matchup lookup: (civ1_slug, civ2_slug) -> (res_winner, count_winner)
         matchup_results = {}
+        # Also build per-unit matchup details for tooltips
+        civ1_matchup_details = {}  # slug -> list of {opponent, won}
+        civ2_matchup_details = {}  # slug -> list of {opponent, won}
         for m in all_matchups:
             key = (m["civ1_slug"], m["civ2_slug"])
             matchup_results[key] = (m["res_winner"], m["count_winner"])
+
+            # Track details for civ1 unit
+            if m["civ1_slug"] not in civ1_matchup_details:
+                civ1_matchup_details[m["civ1_slug"]] = []
+            civ1_won = m["res_winner"] == 1 or m["count_winner"] == 1
+            civ1_matchup_details[m["civ1_slug"]].append(
+                {
+                    "opponent": m["civ2_unit"],
+                    "won": civ1_won,
+                    "res_winner": m["res_winner"],
+                    "count_winner": m["count_winner"],
+                }
+            )
+
+            # Track details for civ2 unit
+            if m["civ2_slug"] not in civ2_matchup_details:
+                civ2_matchup_details[m["civ2_slug"]] = []
+            civ2_won = m["res_winner"] == 2 or m["count_winner"] == 2
+            civ2_matchup_details[m["civ2_slug"]].append(
+                {
+                    "opponent": m["civ1_unit"],
+                    "won": civ2_won,
+                    "res_winner": m["res_winner"],
+                    "count_winner": m["count_winner"],
+                }
+            )
 
         # Calculate add-on scores for civ1 units
         # +1 for each of opponent's top 5 they beat, +1 extra for beating opponent's #1
@@ -1067,7 +1096,11 @@ def api_matchup(civ1, civ2):
                     if m["res_winner"] == 2 or m["count_winner"] == 2:
                         civ2_beats_best.add(m["civ2_slug"])
 
-        def format_unit(slug, data, beats_opponent_best):
+        def format_unit(slug, data, beats_opponent_best, matchup_details):
+            # Sort matchups: wins first, then losses
+            details = matchup_details.get(slug, [])
+            wins = [d for d in details if d["won"]]
+            losses = [d for d in details if not d["won"]]
             return {
                 "slug": slug,
                 "name": data["unit"]["unit_name"],
@@ -1081,24 +1114,32 @@ def api_matchup(civ1, civ2):
                 "res_win_rate": round(data["res_win_rate"] * 100, 1),
                 "count_win_rate": round(data["count_win_rate"] * 100, 1),
                 "beats_opponent_best": slug in beats_opponent_best,
+                "matchups": {
+                    "wins": [d["opponent"] for d in wins],
+                    "losses": [d["opponent"] for d in losses],
+                },
             }
 
         results[age_slug] = {
             "age_name": age_data["name"],
-            "civ1_best": format_unit(civ1_best[0], civ1_best[1], civ1_beats_best)
+            "civ1_best": format_unit(
+                civ1_best[0], civ1_best[1], civ1_beats_best, civ1_matchup_details
+            )
             if civ1_best
             else None,
-            "civ2_best": format_unit(civ2_best[0], civ2_best[1], civ2_beats_best)
+            "civ2_best": format_unit(
+                civ2_best[0], civ2_best[1], civ2_beats_best, civ2_matchup_details
+            )
             if civ2_best
             else None,
             "civ1_all": [
-                format_unit(k, v, civ1_beats_best)
+                format_unit(k, v, civ1_beats_best, civ1_matchup_details)
                 for k, v in sorted(
                     civ1_scores.items(), key=lambda x: -x[1]["final_score"]
                 )
             ],
             "civ2_all": [
-                format_unit(k, v, civ2_beats_best)
+                format_unit(k, v, civ2_beats_best, civ2_matchup_details)
                 for k, v in sorted(
                     civ2_scores.items(), key=lambda x: -x[1]["final_score"]
                 )

@@ -273,6 +273,8 @@
                 justify-content: space-between;
                 font-size: 0.9rem;
                 padding: 4px 0;
+                position: relative;
+                cursor: pointer;
             }
 
             .unit-item .name {
@@ -302,6 +304,47 @@
             .unit-item.has-counter-bonus .name::after {
                 content: " ★";
                 color: #ffd700;
+            }
+
+            .matchup-tooltip {
+                display: none;
+                position: absolute;
+                left: 0;
+                top: 100%;
+                background: #1a1a2e;
+                border: 1px solid #333;
+                border-radius: 8px;
+                padding: 12px;
+                z-index: 100;
+                min-width: 280px;
+                max-width: 400px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+                font-size: 0.85rem;
+            }
+
+            .unit-item:hover .matchup-tooltip {
+                display: block;
+            }
+
+            .tooltip-section {
+                margin-bottom: 8px;
+                line-height: 1.4;
+            }
+
+            .tooltip-section:last-child {
+                margin-bottom: 0;
+            }
+
+            .tooltip-section.wins strong {
+                color: #4ecdc4;
+            }
+
+            .tooltip-section.losses strong {
+                color: #ff6b6b;
+            }
+
+            .tooltip-section {
+                color: #aaa;
             }
 
             .score-breakdown {
@@ -600,10 +643,26 @@
                                             u.addon_score > 0
                                                 ? ` +${u.addon_score}`
                                                 : "";
+                                        const winsStr =
+                                            u.matchups.wins.length > 0
+                                                ? u.matchups.wins.join(", ")
+                                                : "None";
+                                        const lossesStr =
+                                            u.matchups.losses.length > 0
+                                                ? u.matchups.losses.join(", ")
+                                                : "None";
                                         return `
                                             <div class="unit-item ${classes.join(" ")}">
                                                 <span class="name">${u.name}</span>
                                                 <span class="score">${u.final_score} pts (${u.score}${addonStr}) R:${u.res_win_rate}%</span>
+                                                <div class="matchup-tooltip">
+                                                    <div class="tooltip-section wins">
+                                                        <strong>Beats (${u.matchups.wins.length}):</strong> ${winsStr}
+                                                    </div>
+                                                    <div class="tooltip-section losses">
+                                                        <strong>Loses to (${u.matchups.losses.length}):</strong> ${lossesStr}
+                                                    </div>
+                                                </div>
                                             </div>
                                         `;
                                     })

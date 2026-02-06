@@ -2417,9 +2417,16 @@ def get_extracted_combat_properties(unit_id, units_data):
 
     # --- Fire Archer extra projectiles from charge_type=6 ---
     # Fire Archer: total_proj=1, max_proj=3, charge_type=6 → 2 extra projectiles
+    # Fire Lancer: total_proj=0 (melee), max_proj=3 → uses charge_projectile_count instead
     max_proj = unit.get("max_total_projectiles", 0)
     charge_type = unit.get("charge_type", 0)
-    if charge_type == 6 and max_proj and max_proj > 1:
+    if (
+        charge_type == 6
+        and max_proj
+        and max_proj > 1
+        and total_proj
+        and total_proj >= 1
+    ):
         props["extra_projectiles"] = int(max_proj) - 1
 
     # --- First attack extra projectiles (burst) ---
@@ -2448,8 +2455,10 @@ def get_extracted_combat_properties(unit_id, units_data):
     if charge_proj_speed:
         props["charge_projectile_speed"] = charge_proj_speed
     charge_proj_count = 0
-    if charge_type == 6 and max_proj and max_proj > 1:
-        charge_proj_count = int(max_proj) - 1
+    if charge_type == 6 and max_proj and max_proj > 0:
+        # Charge projectiles = max - base (melee units have total_proj=0)
+        base_proj = int(total_proj) if total_proj else 0
+        charge_proj_count = int(max_proj) - max(base_proj, 0)
     elif charge_type == 7 and max_proj and total_proj and max_proj > total_proj:
         charge_proj_count = int(max_proj) - int(total_proj)
     if charge_proj_count > 0:

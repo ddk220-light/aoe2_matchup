@@ -10,33 +10,34 @@ Extracts:
 
 import json
 from pathlib import Path
+
 from genieutils.datfile import DatFile
 
 # Effect command type definitions
 EFFECT_COMMAND_TYPES = {
-    0: "SET_ATTRIBUTE",           # Set unit attribute to value
-    1: "ADD_RESOURCE",            # Add to resource
-    2: "ENABLE_DISABLE_UNIT",     # Enable/disable unit
-    3: "UPGRADE_UNIT",            # Upgrade unit A to unit B
-    4: "ADD_ATTRIBUTE",           # Add value to unit attribute
-    5: "MULTIPLY_ATTRIBUTE",      # Multiply unit attribute by value
-    6: "MULTIPLY_RESOURCE",       # Multiply resource by value
-    7: "SPAWN_UNIT",              # Spawn unit at location
-    8: "RESEARCH_COST_MOD",       # Modify tech cost
-    10: "TEAM_ATTRIBUTE",         # Team-wide attribute modifier
-    12: "ENABLE_TECH",            # Enable tech
-    15: "TEAM_MULTIPLY_ATTR",     # Team multiply attribute
-    18: "TECH_COST_ABS",          # Set tech cost absolute
-    26: "MODIFY_TECH",            # Modify tech
-    40: "RENAME_UNIT",            # Rename unit
-    101: "TECH_COST_SET",         # Set technology cost
-    102: "DISABLE_TECH",          # Disable technology
-    103: "DISABLE_UNIT",          # Disable unit
-    200: "ADD_ATTACK",            # Add attack class
-    201: "ADD_ARMOR",             # Add armor class
-    202: "MODIFY_ARMOR",          # Modify armor value
-    204: "SET_ATTACK_ARMOR",      # Set attack/armor
-    255: "NO_EFFECT",             # No effect / placeholder
+    0: "SET_ATTRIBUTE",  # Set unit attribute to value
+    1: "ADD_RESOURCE",  # Add to resource
+    2: "ENABLE_DISABLE_UNIT",  # Enable/disable unit
+    3: "UPGRADE_UNIT",  # Upgrade unit A to unit B
+    4: "ADD_ATTRIBUTE",  # Add value to unit attribute
+    5: "MULTIPLY_ATTRIBUTE",  # Multiply unit attribute by value
+    6: "MULTIPLY_RESOURCE",  # Multiply resource by value
+    7: "SPAWN_UNIT",  # Spawn unit at location
+    8: "RESEARCH_COST_MOD",  # Modify tech cost
+    10: "TEAM_ATTRIBUTE",  # Team-wide attribute modifier
+    12: "ENABLE_TECH",  # Enable tech
+    15: "TEAM_MULTIPLY_ATTR",  # Team multiply attribute
+    18: "TECH_COST_ABS",  # Set tech cost absolute
+    26: "MODIFY_TECH",  # Modify tech
+    40: "RENAME_UNIT",  # Rename unit
+    101: "TECH_COST_SET",  # Set technology cost
+    102: "DISABLE_TECH",  # Disable technology
+    103: "DISABLE_UNIT",  # Disable unit
+    200: "ADD_ATTACK",  # Add attack class
+    201: "ADD_ARMOR",  # Add armor class
+    202: "MODIFY_ARMOR",  # Modify armor value
+    204: "SET_ATTACK_ARMOR",  # Set attack/armor
+    255: "NO_EFFECT",  # No effect / placeholder
 }
 
 # Unit attribute IDs
@@ -48,8 +49,8 @@ UNIT_ATTRIBUTES = {
     4: "unit_size_y",
     5: "movement_speed",
     6: "rotation_speed",
-    8: "armor",                   # Add to armor class
-    9: "attack",                  # Add to attack class
+    8: "armor",  # Add to armor class
+    9: "attack",  # Add to attack class
     10: "attack_reload_time",
     11: "accuracy_percent",
     12: "max_range",
@@ -80,32 +81,66 @@ UNIT_ATTRIBUTES = {
 
 # Civilization names
 CIV_NAMES = [
-    "Gaia",        # 0
-    "Britons", "Franks", "Goths", "Teutons", "Japanese", "Chinese",
-    "Byzantines", "Persians", "Saracens", "Turks",       # 10
-    "Vikings", "Mongols", "Celts", "Spanish", "Aztecs", "Mayans", "Huns", "Koreans", "Italians",
-    "Indians",     # 20 (was Hindustanis)
-    "Incas", "Magyars", "Slavs", "Portuguese", "Ethiopians", "Malians", "Berbers",
-    "Khmer", "Malay",
-    "Burmese",     # 30
-    "Vietnamese", "Bulgarians", "Tatars", "Cumans", "Lithuanians", "Burgundians", "Sicilians", "Poles", "Bohemians",
+    "Gaia",  # 0
+    "Britons",
+    "Franks",
+    "Goths",
+    "Teutons",
+    "Japanese",
+    "Chinese",
+    "Byzantines",
+    "Persians",
+    "Saracens",
+    "Turks",  # 10
+    "Vikings",
+    "Mongols",
+    "Celts",
+    "Spanish",
+    "Aztecs",
+    "Mayans",
+    "Huns",
+    "Koreans",
+    "Italians",
+    "Indians",  # 20 (was Hindustanis)
+    "Incas",
+    "Magyars",
+    "Slavs",
+    "Portuguese",
+    "Ethiopians",
+    "Malians",
+    "Berbers",
+    "Khmer",
+    "Malay",
+    "Burmese",  # 30
+    "Vietnamese",
+    "Bulgarians",
+    "Tatars",
+    "Cumans",
+    "Lithuanians",
+    "Burgundians",
+    "Sicilians",
+    "Poles",
+    "Bohemians",
     "Dravidians",  # 40
-    "Bengalis", "Gurjaras", "Romans", "Armenians",
-    "Georgians",   # 45
+    "Bengalis",
+    "Gurjaras",
+    "Romans",
+    "Armenians",
+    "Georgians",  # 45
     # Chronicles DLC - Age of Antiquity (not in ranked play)
-    None,          # 46 Achaemenids - skip
-    None,          # 47 Athenians - skip
-    None,          # 48 Spartans - skip
+    None,  # 46 Achaemenids - skip
+    None,  # 47 Athenians - skip
+    None,  # 48 Spartans - skip
     # Three Kingdoms DLC (in ranked play)
-    "Shu",         # 49
-    "Wu",          # 50
-    "Wei",         # 51
-    "Jurchens",    # 52
-    "Khitans",     # 53
+    "Shu",  # 49
+    "Wu",  # 50
+    "Wei",  # 51
+    "Jurchens",  # 52
+    "Khitans",  # 53
     # Chronicles DLC - Alexander (not in ranked play)
-    None,          # 54 Macedonians - skip
-    None,          # 55 Thracians - skip
-    None,          # 56 Puru - skip
+    None,  # 54 Macedonians - skip
+    None,  # 55 Thracians - skip
+    None,  # 56 Puru - skip
 ]
 
 
@@ -142,15 +177,22 @@ def parse_effect_command(cmd):
         result["attribute"] = UNIT_ATTRIBUTES.get(cmd.c, f"attr_{cmd.c}")
         result["amount"] = cmd.d
         # Decode the 'd' value for attack/armor
+        # Packing: d = class * 256 + amount (negative d means negative amount)
         if cmd.c in [8, 9]:  # armor or attack
-            armor_class = int(cmd.d) % 256 if cmd.d >= 256 else int(cmd.d)
-            armor_amount = int(cmd.d) // 256 if cmd.d >= 256 else 0
-            if cmd.d >= 256:
+            abs_d = abs(int(cmd.d))
+            sign = 1 if cmd.d >= 0 else -1
+            if abs_d >= 256:
+                armor_class = abs_d // 256
+                armor_amount = (abs_d % 256) * sign
                 result["armor_class"] = armor_class
                 result["armor_amount"] = armor_amount
-                result["description"] = f"Add {armor_amount} to unit {cmd.a} {'armor' if cmd.c == 8 else 'attack'} class {armor_class}"
+                result["description"] = (
+                    f"Add {armor_amount} to unit {cmd.a} {'armor' if cmd.c == 8 else 'attack'} class {armor_class}"
+                )
             else:
-                result["description"] = f"Add to unit {cmd.a} {result['attribute']}: {cmd.d}"
+                result["description"] = (
+                    f"Add to unit {cmd.a} {result['attribute']}: {cmd.d}"
+                )
         else:
             result["description"] = f"Add {cmd.d} to unit {cmd.a} {result['attribute']}"
     elif cmd.type == 5:  # MULTIPLY_ATTRIBUTE
@@ -158,7 +200,9 @@ def parse_effect_command(cmd):
         result["class_id"] = cmd.b
         result["attribute"] = UNIT_ATTRIBUTES.get(cmd.c, f"attr_{cmd.c}")
         result["multiplier"] = cmd.d
-        result["description"] = f"Multiply unit {cmd.a} {result['attribute']} by {cmd.d:.2f}"
+        result["description"] = (
+            f"Multiply unit {cmd.a} {result['attribute']} by {cmd.d:.2f}"
+        )
     elif cmd.type == 102:  # DISABLE_TECH
         result["tech_id"] = int(cmd.d)
         result["description"] = f"Disable tech {int(cmd.d)}"
@@ -179,7 +223,7 @@ def extract_effects(df):
         effect_data = {
             "id": i,
             "name": effect.name if effect.name else f"Effect_{i}",
-            "commands": [parse_effect_command(cmd) for cmd in effect.effect_commands]
+            "commands": [parse_effect_command(cmd) for cmd in effect.effect_commands],
         }
         effects.append(effect_data)
 
@@ -218,18 +262,16 @@ def extract_civ_tech_trees(df, effects, techs_by_id, units_by_id):
             for cmd in effect.effect_commands:
                 if cmd.type == 102:  # Disable tech
                     tech_id = int(cmd.d)
-                    tech_name = techs_by_id.get(tech_id, {}).get("name", f"Tech_{tech_id}")
-                    data["disabled_techs"].append({
-                        "id": tech_id,
-                        "name": tech_name
-                    })
+                    tech_name = techs_by_id.get(tech_id, {}).get(
+                        "name", f"Tech_{tech_id}"
+                    )
+                    data["disabled_techs"].append({"id": tech_id, "name": tech_name})
                 elif cmd.type == 103:  # Disable unit
                     unit_id = int(cmd.a)
-                    unit_name = units_by_id.get(unit_id, {}).get("name", f"Unit_{unit_id}")
-                    data["disabled_units"].append({
-                        "id": unit_id,
-                        "name": unit_name
-                    })
+                    unit_name = units_by_id.get(unit_id, {}).get(
+                        "name", f"Unit_{unit_id}"
+                    )
+                    data["disabled_units"].append({"id": unit_id, "name": unit_name})
 
         # Get team bonus
         if 0 <= team_bonus_id < len(df.effects):
@@ -237,7 +279,9 @@ def extract_civ_tech_trees(df, effects, techs_by_id, units_by_id):
             data["team_bonus"] = {
                 "effect_id": team_bonus_id,
                 "name": effect.name,
-                "commands": [parse_effect_command(cmd) for cmd in effect.effect_commands]
+                "commands": [
+                    parse_effect_command(cmd) for cmd in effect.effect_commands
+                ],
             }
 
         civ_data.append(data)
@@ -266,7 +310,7 @@ def extract_tech_effects(df, techs):
             "tech_name": tech["name"],
             "effect_id": effect_id,
             "effect_name": effect.name,
-            "commands": [parse_effect_command(cmd) for cmd in effect.effect_commands]
+            "commands": [parse_effect_command(cmd) for cmd in effect.effect_commands],
         }
         tech_effects.append(tech_effect)
 
@@ -289,11 +333,13 @@ def find_unit_affecting_effects(df, unit_id, units_by_id):
                 relevant_commands.append(parse_effect_command(cmd))
 
         if relevant_commands:
-            affecting_effects.append({
-                "effect_id": i,
-                "effect_name": effect.name,
-                "commands": relevant_commands
-            })
+            affecting_effects.append(
+                {
+                    "effect_id": i,
+                    "effect_name": effect.name,
+                    "commands": relevant_commands,
+                }
+            )
 
     return affecting_effects
 
@@ -342,16 +388,12 @@ def main():
     for i, tech in enumerate(df.techs):
         if tech is None:
             continue
-        name = getattr(tech, 'name', '').strip()
-        if not name or name.startswith('YOURITEMHERE'):
+        name = getattr(tech, "name", "").strip()
+        if not name or name.startswith("YOURITEMHERE"):
             continue
 
-        effect_id = getattr(tech, 'effect_id', -1)
-        techs_with_effects.append({
-            "id": i,
-            "name": name,
-            "effect_id": effect_id
-        })
+        effect_id = getattr(tech, "effect_id", -1)
+        techs_with_effects.append({"id": i, "name": name, "effect_id": effect_id})
 
     tech_effects = extract_tech_effects(df, techs_with_effects)
     print(f"  Extracted effects for {len(tech_effects)} technologies")
@@ -361,22 +403,22 @@ def main():
     print(f"  Saved to output/tech_effects.json")
 
     # Example: Find all effects affecting Knight (ID 38)
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("EXAMPLE: Effects affecting Knight (ID: 38)")
-    print("="*70)
+    print("=" * 70)
 
     knight_effects = find_unit_affecting_effects(df, 38, units_by_id)
     print(f"\nFound {len(knight_effects)} effects that modify Knight:")
     for eff in knight_effects[:15]:
         print(f"\n  {eff['effect_name']} (Effect ID: {eff['effect_id']}):")
-        for cmd in eff['commands'][:3]:
-            if 'description' in cmd:
+        for cmd in eff["commands"][:3]:
+            if "description" in cmd:
                 print(f"    - {cmd['description']}")
 
     # Summary of disabled units for meso civs
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DISABLED UNITS BY CIVILIZATION (sample)")
-    print("="*70)
+    print("=" * 70)
 
     for civ in civ_tech_trees:
         if civ["disabled_units"]:
@@ -384,9 +426,9 @@ def main():
             for unit in civ["disabled_units"][:10]:
                 print(f"  - {unit['name']} (ID: {unit['id']})")
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("EXTRACTION COMPLETE!")
-    print("="*70)
+    print("=" * 70)
     print(f"\nNew files created in {output_dir}/:")
     print(f"  - effects.json         ({len(effects)} effects)")
     print(f"  - civ_tech_trees.json  ({len(civ_tech_trees)} civilizations)")

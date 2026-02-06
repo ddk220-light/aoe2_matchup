@@ -579,16 +579,6 @@ def simulate_battle(
         if not alive1 or not alive2:
             break
 
-        # Early termination (only for melee vs melee; ranged can still
-        # shift the balance significantly with focus fire)
-        if not is_ranged1 and not is_ranged2:
-            a1_pct = len(alive1) / count1
-            a2_pct = len(alive2) / count2
-            if a1_pct < 0.3 and a2_pct > 0.6:
-                break
-            if a2_pct < 0.3 and a1_pct > 0.6:
-                break
-
         # Decrement cooldowns
         for i in alive1:
             cooldown1[i] = max(0.0, cooldown1[i] - DT)

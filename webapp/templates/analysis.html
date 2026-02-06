@@ -81,6 +81,40 @@
                 font-weight: 600;
             }
 
+            .dev-badge {
+                display: inline-block;
+                background: rgba(255, 165, 0, 0.2);
+                color: #ffa500;
+                font-family: "Open Sans", sans-serif;
+                font-size: 0.8rem;
+                font-weight: 600;
+                padding: 3px 10px;
+                border-radius: 10px;
+                border: 1px solid rgba(255, 165, 0, 0.4);
+                margin-left: 10px;
+                vertical-align: middle;
+            }
+            .dev-message {
+                text-align: center;
+                padding: 100px 20px;
+                margin-top: 60px;
+            }
+            .dev-message h2 {
+                font-family: "Cinzel", serif;
+                font-size: 2rem;
+                color: var(--secondary-color);
+                margin-bottom: 15px;
+            }
+            .dev-message p {
+                font-size: 1.1rem;
+                color: #888;
+                max-width: 500px;
+                margin: 0 auto;
+            }
+            .main-content {
+                display: none;
+            }
+
             .civ-selector {
                 display: flex;
                 flex-wrap: wrap;
@@ -371,43 +405,60 @@
     <body>
         <div class="container">
             <header>
-                <h1>Unit Analysis</h1>
-                <p class="subtitle">
-                    Review and verify unit stats for the 13 original
-                    civilizations
-                </p>
+                <h1>Unit Analysis <span class="dev-badge">Dev</span></h1>
+                <p class="subtitle">Internal development tool</p>
                 <nav class="nav-links">
                     <a href="/" class="nav-link">By Unit</a>
                     <a href="/civ" class="nav-link">By Civilization</a>
                     <a href="/simulate" class="nav-link">Battle Sim</a>
                     <a href="/matchup" class="nav-link">1v1 Matchup</a>
-                    <a href="/analysis" class="nav-link active">Analysis</a>
+                    <a href="/analysis" class="nav-link active"
+                        >Analysis (Dev)</a
+                    >
                 </nav>
             </header>
 
-            <div class="civ-selector" id="civSelector">
-                {% for civ in civs %}
-                <button class="civ-btn" data-civ="{{ civ }}">{{ civ }}</button>
-                {% endfor %}
+            <div class="dev-message">
+                <h2>Development Tool</h2>
+                <p>
+                    This page is an internal tool for verifying unit data. Not
+                    yet available publicly.
+                </p>
             </div>
 
-            <div class="progress-bar-container" id="progressBar">
-                <div class="progress-header">
-                    <h2 id="civTitle"></h2>
-                    <div class="progress-actions">
-                        <button class="btn btn-verify-all" id="btnVerifyCiv">
-                            Verify Civ
-                        </button>
+            <div class="main-content">
+                <div class="civ-selector" id="civSelector">
+                    {% for civ in civs %}
+                    <button class="civ-btn" data-civ="{{ civ }}">
+                        {{ civ }}
+                    </button>
+                    {% endfor %}
+                </div>
+
+                <div class="progress-bar-container" id="progressBar">
+                    <div class="progress-header">
+                        <h2 id="civTitle"></h2>
+                        <div class="progress-actions">
+                            <button
+                                class="btn btn-verify-all"
+                                id="btnVerifyCiv"
+                            >
+                                Verify Civ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="content">
+                    <div class="no-civ">
+                        <h2>Select a Civilization</h2>
+                        <p>
+                            Click on a civilization above to review unit stats
+                        </p>
                     </div>
                 </div>
             </div>
-
-            <div id="content">
-                <div class="no-civ">
-                    <h2>Select a Civilization</h2>
-                    <p>Click on a civilization above to review unit stats</p>
-                </div>
-            </div>
+            <!-- end main-content -->
         </div>
 
         <script>

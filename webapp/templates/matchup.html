@@ -71,6 +71,27 @@
                 background: rgba(255, 215, 0, 0.2);
             }
 
+            .under-construction {
+                text-align: center;
+                padding: 100px 20px;
+                margin-top: 60px;
+            }
+            .under-construction h2 {
+                font-family: "Cinzel", serif;
+                font-size: 2rem;
+                color: #ffd700;
+                margin-bottom: 15px;
+            }
+            .under-construction p {
+                font-size: 1.1rem;
+                color: #888;
+                max-width: 500px;
+                margin: 0 auto;
+            }
+            .main-content {
+                display: none;
+            }
+
             .civ-selector-panel {
                 display: flex;
                 justify-content: center;
@@ -495,63 +516,76 @@
                     <a href="/civ" class="nav-link">By Civilization</a>
                     <a href="/simulate" class="nav-link">Battle Sim</a>
                     <a href="/matchup" class="nav-link active">1v1 Matchup</a>
-                    <a href="/analysis" class="nav-link">Analysis</a>
+                    <a href="/analysis" class="nav-link">Analysis (Dev)</a>
                 </nav>
             </header>
 
-            <div class="civ-selector-panel">
-                <div class="civ-select-box civ1">
-                    <h3>Civilization 1</h3>
-                    <select id="civ1Select">
-                        <option value="">Select Civilization</option>
-                        {% for civ in civs %}
-                        <option value="{{ civ }}">{{ civ }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="civ-select-box civ2">
-                    <h3>Civilization 2</h3>
-                    <select id="civ2Select">
-                        <option value="">Select Civilization</option>
-                        {% for civ in civs %}
-                        <option value="{{ civ }}">{{ civ }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <div class="under-construction">
+                <h2>Under Construction</h2>
+                <p>
+                    This page is being updated with new data and features. Check
+                    back soon.
+                </p>
             </div>
 
-            <button class="compare-btn" id="compareBtn" disabled>
-                Compare Civilizations
-            </button>
+            <div class="main-content">
+                <div class="civ-selector-panel">
+                    <div class="civ-select-box civ1">
+                        <h3>Civilization 1</h3>
+                        <select id="civ1Select">
+                            <option value="">Select Civilization</option>
+                            {% for civ in civs %}
+                            <option value="{{ civ }}">{{ civ }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-            <div class="results-container" id="resultsContainer">
-                <div class="matchup-header">
-                    <h2>
-                        <span class="civ1-name" id="headerCiv1"></span>
-                        <span class="vs">vs</span>
-                        <span class="civ2-name" id="headerCiv2"></span>
-                    </h2>
-                    <p class="subtitle">Best unit recommendations per age</p>
-                    <p
-                        class="subtitle"
-                        style="font-size: 0.9rem; margin-top: 5px"
-                    >
-                        Scoring: 3 pts for winning both resource (1000) &amp;
-                        count (20 units), 1 pt for winning one
-                    </p>
-                    <div class="legend">
-                        <div class="legend-item">
-                            <span class="legend-star">★</span> Beats opponent's
-                            best unit
-                        </div>
+                    <div class="civ-select-box civ2">
+                        <h3>Civilization 2</h3>
+                        <select id="civ2Select">
+                            <option value="">Select Civilization</option>
+                            {% for civ in civs %}
+                            <option value="{{ civ }}">{{ civ }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
 
-                <div class="age-results" id="ageResults">
-                    <!-- Results will be populated by JavaScript -->
+                <button class="compare-btn" id="compareBtn" disabled>
+                    Compare Civilizations
+                </button>
+
+                <div class="results-container" id="resultsContainer">
+                    <div class="matchup-header">
+                        <h2>
+                            <span class="civ1-name" id="headerCiv1"></span>
+                            <span class="vs">vs</span>
+                            <span class="civ2-name" id="headerCiv2"></span>
+                        </h2>
+                        <p class="subtitle">
+                            Best unit recommendations per age
+                        </p>
+                        <p
+                            class="subtitle"
+                            style="font-size: 0.9rem; margin-top: 5px"
+                        >
+                            Scoring: 3 pts for winning both resource (1000)
+                            &amp; count (20 units), 1 pt for winning one
+                        </p>
+                        <div class="legend">
+                            <div class="legend-item">
+                                <span class="legend-star">★</span> Beats
+                                opponent's best unit
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="age-results" id="ageResults">
+                        <!-- Results will be populated by JavaScript -->
+                    </div>
                 </div>
             </div>
+            <!-- end main-content -->
         </div>
 
         <script>

@@ -87,6 +87,27 @@
                 font-weight: 600;
             }
 
+            .under-construction {
+                text-align: center;
+                padding: 100px 20px;
+                margin-top: 60px;
+            }
+            .under-construction h2 {
+                font-family: "Cinzel", serif;
+                font-size: 2rem;
+                color: var(--secondary-color);
+                margin-bottom: 15px;
+            }
+            .under-construction p {
+                font-size: 1.1rem;
+                color: #888;
+                max-width: 500px;
+                margin: 0 auto;
+            }
+            .main-content {
+                display: none;
+            }
+
             .main-layout {
                 display: flex;
                 gap: 20px;
@@ -722,274 +743,297 @@
                     <a href="/civ" class="nav-link">By Civilization</a>
                     <a href="/simulate" class="nav-link active">Battle Sim</a>
                     <a href="/matchup" class="nav-link">1v1 Matchup</a>
-                    <a href="/analysis" class="nav-link">Analysis</a>
+                    <a href="/analysis" class="nav-link">Analysis (Dev)</a>
                 </nav>
             </header>
 
-            <div class="config-panel">
-                <div class="team-config team1">
-                    <h3>Team 1 (Red)</h3>
-                    <div class="form-group">
-                        <label>Civilization</label>
-                        <select id="team1Civ">
-                            <option value="">Select Civilization</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Age</label>
-                        <select id="team1Age" disabled>
-                            <option value="">Select Age</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Unit Type</label>
-                        <select id="team1Unit" disabled>
-                            <option value="">Select Unit</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Unit Count</label>
-                        <input
-                            type="number"
-                            id="team1Count"
-                            value="5"
-                            min="1"
-                            max="40"
-                        />
-                    </div>
-                </div>
-
-                <div class="team-config team2">
-                    <h3>Team 2 (Green)</h3>
-                    <div class="form-group">
-                        <label>Civilization</label>
-                        <select id="team2Civ">
-                            <option value="">Select Civilization</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Age</label>
-                        <select id="team2Age" disabled>
-                            <option value="">Select Age</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Unit Type</label>
-                        <select id="team2Unit" disabled>
-                            <option value="">Select Unit</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Unit Count</label>
-                        <input
-                            type="number"
-                            id="team2Count"
-                            value="5"
-                            min="1"
-                            max="40"
-                        />
-                    </div>
-                </div>
+            <div class="under-construction">
+                <h2>Under Construction</h2>
+                <p>
+                    This page is being updated with new data and features. Check
+                    back soon.
+                </p>
             </div>
 
-            <!-- Army Size Mode Selection -->
-            <div class="army-mode-section">
-                <div class="mode-toggle">
-                    <label class="mode-option">
-                        <input
-                            type="radio"
-                            name="armyMode"
-                            value="count"
-                            checked
-                        />
-                        <span>By Unit Count</span>
-                    </label>
-                    <label class="mode-option">
-                        <input type="radio" name="armyMode" value="resources" />
-                        <span>By Total Resources</span>
-                    </label>
+            <div class="main-content">
+                <div class="config-panel">
+                    <div class="team-config team1">
+                        <h3>Team 1 (Red)</h3>
+                        <div class="form-group">
+                            <label>Civilization</label>
+                            <select id="team1Civ">
+                                <option value="">Select Civilization</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Age</label>
+                            <select id="team1Age" disabled>
+                                <option value="">Select Age</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Unit Type</label>
+                            <select id="team1Unit" disabled>
+                                <option value="">Select Unit</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Unit Count</label>
+                            <input
+                                type="number"
+                                id="team1Count"
+                                value="5"
+                                min="1"
+                                max="40"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="team-config team2">
+                        <h3>Team 2 (Green)</h3>
+                        <div class="form-group">
+                            <label>Civilization</label>
+                            <select id="team2Civ">
+                                <option value="">Select Civilization</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Age</label>
+                            <select id="team2Age" disabled>
+                                <option value="">Select Age</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Unit Type</label>
+                            <select id="team2Unit" disabled>
+                                <option value="">Select Unit</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Unit Count</label>
+                            <input
+                                type="number"
+                                id="team2Count"
+                                value="5"
+                                min="1"
+                                max="40"
+                            />
+                        </div>
+                    </div>
                 </div>
-                <div
-                    class="resource-input"
-                    id="resourceInput"
-                    style="display: none"
-                >
-                    <label>Total Resources per Team:</label>
-                    <input
-                        type="number"
-                        id="totalResources"
-                        value="2000"
-                        min="100"
-                        max="20000"
-                        step="100"
-                    />
-                    <span class="resource-hint"
-                        >(Food + Wood + Gold combined)</span
+
+                <!-- Army Size Mode Selection -->
+                <div class="army-mode-section">
+                    <div class="mode-toggle">
+                        <label class="mode-option">
+                            <input
+                                type="radio"
+                                name="armyMode"
+                                value="count"
+                                checked
+                            />
+                            <span>By Unit Count</span>
+                        </label>
+                        <label class="mode-option">
+                            <input
+                                type="radio"
+                                name="armyMode"
+                                value="resources"
+                            />
+                            <span>By Total Resources</span>
+                        </label>
+                    </div>
+                    <div
+                        class="resource-input"
+                        id="resourceInput"
+                        style="display: none"
                     >
-                </div>
-            </div>
-
-            <div class="controls">
-                <button id="startBtn">Start Battle</button>
-                <button id="pauseBtn" disabled>Pause</button>
-                <button id="resetBtn" disabled>Reset</button>
-                <div class="speed-control">
-                    <label for="speedSlider">Speed:</label>
-                    <input
-                        type="range"
-                        id="speedSlider"
-                        min="0.5"
-                        max="3"
-                        step="0.5"
-                        value="1"
-                    />
-                    <span id="speedLabel">1x</span>
-                </div>
-            </div>
-
-            <div class="main-layout">
-                <div class="left-panel">
-                    <canvas id="battleCanvas" width="800" height="500"></canvas>
-
-                    <div class="stats-panel">
-                        <div class="team-stats team1">
-                            <h4>Team 1</h4>
-                            <span class="alive-count" id="team1Alive"
-                                >0/0 alive</span
-                            >
-                        </div>
-                        <div class="battle-time" id="battleTime">0.0s</div>
-                        <div class="team-stats team2">
-                            <h4>Team 2</h4>
-                            <span class="alive-count" id="team2Alive"
-                                >0/0 alive</span
-                            >
-                        </div>
+                        <label>Total Resources per Team:</label>
+                        <input
+                            type="number"
+                            id="totalResources"
+                            value="2000"
+                            min="100"
+                            max="20000"
+                            step="100"
+                        />
+                        <span class="resource-hint"
+                            >(Food + Wood + Gold combined)</span
+                        >
                     </div>
+                </div>
 
-                    <!-- Battle Results -->
-                    <div class="battle-results" id="battleResults">
-                        <h3>Battle Results</h3>
-                        <div class="results-grid">
-                            <div class="result-team team1" id="resultTeam1">
-                                <h4>Team 1 (Red)</h4>
-                                <div class="result-row">
-                                    <span class="result-label"
-                                        >Units Remaining:</span
-                                    >
-                                    <span
-                                        class="result-value"
-                                        id="team1Remaining"
-                                        >0</span
-                                    >
-                                </div>
-                                <div class="result-row">
-                                    <span class="result-label"
-                                        >Total HP Left:</span
-                                    >
-                                    <span class="result-value" id="team1HpLeft"
-                                        >0</span
-                                    >
-                                </div>
-                                <div class="result-row">
-                                    <span class="result-label"
-                                        >Starting Resources:</span
-                                    >
-                                    <span
-                                        class="result-value"
-                                        id="team1StartRes"
-                                        >0</span
-                                    >
-                                </div>
-                                <div class="result-row">
-                                    <span class="result-label"
-                                        >Resources Lost:</span
-                                    >
-                                    <span
-                                        class="result-value negative"
-                                        id="team1ResLost"
-                                        >0</span
-                                    >
-                                </div>
+                <div class="controls">
+                    <button id="startBtn">Start Battle</button>
+                    <button id="pauseBtn" disabled>Pause</button>
+                    <button id="resetBtn" disabled>Reset</button>
+                    <div class="speed-control">
+                        <label for="speedSlider">Speed:</label>
+                        <input
+                            type="range"
+                            id="speedSlider"
+                            min="0.5"
+                            max="3"
+                            step="0.5"
+                            value="1"
+                        />
+                        <span id="speedLabel">1x</span>
+                    </div>
+                </div>
+
+                <div class="main-layout">
+                    <div class="left-panel">
+                        <canvas
+                            id="battleCanvas"
+                            width="800"
+                            height="500"
+                        ></canvas>
+
+                        <div class="stats-panel">
+                            <div class="team-stats team1">
+                                <h4>Team 1</h4>
+                                <span class="alive-count" id="team1Alive"
+                                    >0/0 alive</span
+                                >
                             </div>
-                            <div class="result-team team2" id="resultTeam2">
-                                <h4>Team 2 (Green)</h4>
-                                <div class="result-row">
-                                    <span class="result-label"
-                                        >Units Remaining:</span
-                                    >
-                                    <span
-                                        class="result-value"
-                                        id="team2Remaining"
-                                        >0</span
-                                    >
-                                </div>
-                                <div class="result-row">
-                                    <span class="result-label"
-                                        >Total HP Left:</span
-                                    >
-                                    <span class="result-value" id="team2HpLeft"
-                                        >0</span
-                                    >
-                                </div>
-                                <div class="result-row">
-                                    <span class="result-label"
-                                        >Starting Resources:</span
-                                    >
-                                    <span
-                                        class="result-value"
-                                        id="team2StartRes"
-                                        >0</span
-                                    >
-                                </div>
-                                <div class="result-row">
-                                    <span class="result-label"
-                                        >Resources Lost:</span
-                                    >
-                                    <span
-                                        class="result-value negative"
-                                        id="team2ResLost"
-                                        >0</span
-                                    >
-                                </div>
+                            <div class="battle-time" id="battleTime">0.0s</div>
+                            <div class="team-stats team2">
+                                <h4>Team 2</h4>
+                                <span class="alive-count" id="team2Alive"
+                                    >0/0 alive</span
+                                >
                             </div>
                         </div>
+
+                        <!-- Battle Results -->
+                        <div class="battle-results" id="battleResults">
+                            <h3>Battle Results</h3>
+                            <div class="results-grid">
+                                <div class="result-team team1" id="resultTeam1">
+                                    <h4>Team 1 (Red)</h4>
+                                    <div class="result-row">
+                                        <span class="result-label"
+                                            >Units Remaining:</span
+                                        >
+                                        <span
+                                            class="result-value"
+                                            id="team1Remaining"
+                                            >0</span
+                                        >
+                                    </div>
+                                    <div class="result-row">
+                                        <span class="result-label"
+                                            >Total HP Left:</span
+                                        >
+                                        <span
+                                            class="result-value"
+                                            id="team1HpLeft"
+                                            >0</span
+                                        >
+                                    </div>
+                                    <div class="result-row">
+                                        <span class="result-label"
+                                            >Starting Resources:</span
+                                        >
+                                        <span
+                                            class="result-value"
+                                            id="team1StartRes"
+                                            >0</span
+                                        >
+                                    </div>
+                                    <div class="result-row">
+                                        <span class="result-label"
+                                            >Resources Lost:</span
+                                        >
+                                        <span
+                                            class="result-value negative"
+                                            id="team1ResLost"
+                                            >0</span
+                                        >
+                                    </div>
+                                </div>
+                                <div class="result-team team2" id="resultTeam2">
+                                    <h4>Team 2 (Green)</h4>
+                                    <div class="result-row">
+                                        <span class="result-label"
+                                            >Units Remaining:</span
+                                        >
+                                        <span
+                                            class="result-value"
+                                            id="team2Remaining"
+                                            >0</span
+                                        >
+                                    </div>
+                                    <div class="result-row">
+                                        <span class="result-label"
+                                            >Total HP Left:</span
+                                        >
+                                        <span
+                                            class="result-value"
+                                            id="team2HpLeft"
+                                            >0</span
+                                        >
+                                    </div>
+                                    <div class="result-row">
+                                        <span class="result-label"
+                                            >Starting Resources:</span
+                                        >
+                                        <span
+                                            class="result-value"
+                                            id="team2StartRes"
+                                            >0</span
+                                        >
+                                    </div>
+                                    <div class="result-row">
+                                        <span class="result-label"
+                                            >Resources Lost:</span
+                                        >
+                                        <span
+                                            class="result-value negative"
+                                            id="team2ResLost"
+                                            >0</span
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="debug-panel" id="debugPanel">
+                        <h3>Combat Debug Info</h3>
+                        <div id="debugContent">
+                            <p style="color: #666">
+                                Start a battle to see combat stats
+                            </p>
+                        </div>
                     </div>
                 </div>
 
-                <div class="debug-panel" id="debugPanel">
-                    <h3>Combat Debug Info</h3>
-                    <div id="debugContent">
-                        <p style="color: #666">
-                            Start a battle to see combat stats
-                        </p>
+                <!-- Comment Section -->
+                <div class="comment-section" id="commentSection">
+                    <h3>Battle Notes</h3>
+                    <div class="matchup-label" id="matchupLabel">
+                        Run a simulation to leave notes about the matchup
                     </div>
-                </div>
-            </div>
-
-            <!-- Comment Section -->
-            <div class="comment-section" id="commentSection">
-                <h3>Battle Notes</h3>
-                <div class="matchup-label" id="matchupLabel">
-                    Run a simulation to leave notes about the matchup
-                </div>
-                <textarea
-                    id="commentText"
-                    class="comment-textarea"
-                    placeholder="Add observations about this matchup... (e.g., 'Franks Paladins beat Teutons due to faster attack speed despite lower armor')"
-                    disabled
-                ></textarea>
-                <div>
-                    <button
-                        id="saveCommentBtn"
-                        class="save-comment-btn"
+                    <textarea
+                        id="commentText"
+                        class="comment-textarea"
+                        placeholder="Add observations about this matchup... (e.g., 'Franks Paladins beat Teutons due to faster attack speed despite lower armor')"
                         disabled
-                    >
-                        Save Note
-                    </button>
-                    <span id="commentStatus" class="comment-status"></span>
+                    ></textarea>
+                    <div>
+                        <button
+                            id="saveCommentBtn"
+                            class="save-comment-btn"
+                            disabled
+                        >
+                            Save Note
+                        </button>
+                        <span id="commentStatus" class="comment-status"></span>
+                    </div>
                 </div>
             </div>
+            <!-- end main-content -->
         </div>
 
         <script>

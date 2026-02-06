@@ -499,6 +499,27 @@
                 font-weight: 600;
             }
 
+            .under-construction {
+                text-align: center;
+                padding: 100px 20px;
+                margin-top: 60px;
+            }
+            .under-construction h2 {
+                font-family: "Cinzel", serif;
+                font-size: 2rem;
+                color: var(--secondary-color);
+                margin-bottom: 15px;
+            }
+            .under-construction p {
+                font-size: 1.1rem;
+                color: #888;
+                max-width: 500px;
+                margin: 0 auto;
+            }
+            .main-content {
+                display: none;
+            }
+
             /* Comment indicator */
             td.has-comment {
                 position: relative;
@@ -826,79 +847,97 @@
                     <a href="/civ" class="nav-link">By Civilization</a>
                     <a href="/simulate" class="nav-link">Battle Sim</a>
                     <a href="/matchup" class="nav-link">1v1 Matchup</a>
-                    <a href="/analysis" class="nav-link">Analysis</a>
+                    <a href="/analysis" class="nav-link">Analysis (Dev)</a>
                 </nav>
             </header>
 
-            <div class="age-tabs">
-                {% for age_id, age_data in units_by_age.items() %}
-                <button class="age-tab" data-age="{{ age_id }}">
-                    {{ age_data.name }}
-                </button>
-                {% endfor %}
-            </div>
-
-            <div class="unit-selector" id="unitSelector">
-                <p style="color: #888">
-                    Select an age above to see available units
+            <div class="under-construction">
+                <h2>Under Construction</h2>
+                <p>
+                    This page is being updated with new data and features. Check
+                    back soon.
                 </p>
             </div>
 
-            <div class="legend">
-                <div class="legend-item">
-                    <div class="legend-color legend-better"></div>
-                    <span>Better than baseline (hover for bonus)</span>
+            <div class="main-content">
+                <div class="age-tabs">
+                    {% for age_id, age_data in units_by_age.items() %}
+                    <button class="age-tab" data-age="{{ age_id }}">
+                        {{ age_data.name }}
+                    </button>
+                    {% endfor %}
                 </div>
-                <div class="legend-item">
-                    <div class="legend-color legend-worse"></div>
-                    <span>Worse than baseline</span>
-                </div>
-            </div>
 
-            <div id="content">
-                <div class="no-unit">
-                    <h2>Select an age and unit type to begin</h2>
-                    <p>
-                        Click on an age tab, then select a unit to see
-                        civilization-specific stats
+                <div class="unit-selector" id="unitSelector">
+                    <p style="color: #888">
+                        Select an age above to see available units
                     </p>
                 </div>
-            </div>
 
-            <!-- Tooltip element -->
-            <div id="tooltip" class="tooltip" style="display: none"></div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color legend-better"></div>
+                        <span>Better than baseline (hover for bonus)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color legend-worse"></div>
+                        <span>Worse than baseline</span>
+                    </div>
+                </div>
 
-            <!-- Comment modal -->
-            <div id="commentModal" class="modal-overlay" style="display: none">
-                <div class="modal">
-                    <h3>Add Comment</h3>
-                    <div class="modal-info" id="modalInfo"></div>
-                    <div class="existing-comments" id="existingComments"></div>
-                    <input
-                        type="text"
-                        id="authorName"
-                        placeholder="Your name (optional)"
-                    />
-                    <textarea
-                        id="commentText"
-                        placeholder="What's wrong with this value? What should it be?"
-                    ></textarea>
-                    <div class="modal-buttons">
-                        <button
-                            class="modal-btn secondary"
-                            onclick="closeCommentModal()"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            class="modal-btn primary"
-                            onclick="submitComment()"
-                        >
-                            Submit
-                        </button>
+                <div id="content">
+                    <div class="no-unit">
+                        <h2>Select an age and unit type to begin</h2>
+                        <p>
+                            Click on an age tab, then select a unit to see
+                            civilization-specific stats
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Tooltip element -->
+                <div id="tooltip" class="tooltip" style="display: none"></div>
+
+                <!-- Comment modal -->
+                <div
+                    id="commentModal"
+                    class="modal-overlay"
+                    style="display: none"
+                >
+                    <div class="modal">
+                        <h3>Add Comment</h3>
+                        <div class="modal-info" id="modalInfo"></div>
+                        <div
+                            class="existing-comments"
+                            id="existingComments"
+                        ></div>
+                        <input
+                            type="text"
+                            id="authorName"
+                            placeholder="Your name (optional)"
+                        />
+                        <textarea
+                            id="commentText"
+                            placeholder="What's wrong with this value? What should it be?"
+                        ></textarea>
+                        <div class="modal-buttons">
+                            <button
+                                class="modal-btn secondary"
+                                onclick="closeCommentModal()"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                class="modal-btn primary"
+                                onclick="submitComment()"
+                            >
+                                Submit
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
+            <!-- end main-content -->
         </div>
 
         <script>

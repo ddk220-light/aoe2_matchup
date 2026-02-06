@@ -673,6 +673,16 @@ AGE_NAMES = {
     IMPERIAL_AGE: "Imperial Age",
 }
 
+# Build mapping: Castle-age final unit_id -> display name
+# Used to get correct names when an Imperial config's upgrades don't apply
+_CASTLE_FINAL_NAMES = {}
+for _cfg in CASTLE_UNITS.values():
+    if _cfg.get("upgrades"):
+        _last = _cfg["upgrades"][-1]
+        _CASTLE_FINAL_NAMES[_last[1]] = _last[2]
+    else:
+        _CASTLE_FINAL_NAMES[_cfg["base_id"]] = _cfg["display_name"]
+
 # =============================================================================
 # UNIQUE UNITS
 # =============================================================================
@@ -1943,6 +1953,11 @@ class UnitAnalyzer:
                     if tech_age <= max_age:
                         final_unit_id = upgraded_id
                         final_unit_name = upgraded_name
+
+        # If no upgrades were applied, use the Castle-age name for the base unit
+        # (e.g., "Pikeman" instead of config display_name "Halberdier")
+        if final_unit_id == base_id and base_id in _CASTLE_FINAL_NAMES:
+            final_unit_name = _CASTLE_FINAL_NAMES[base_id]
 
         # Get the unit data
         unit = self.get_unit(final_unit_id)
@@ -3937,10 +3952,6 @@ def generate_reference_database(analyzer):
             if not result["has_unit"]:
                 continue
             final_unit_id = result.get("unit_id", config["base_id"])
-            # If no upgrades were applied (final == base), the civ only has
-            # the Castle-age version which is already in CASTLE_UNITS — skip
-            if final_unit_id == config["base_id"]:
-                continue
             unit_data = analyzer.get_unit(final_unit_id)
             if not unit_data:
                 continue

@@ -127,6 +127,12 @@ CIV_COMBAT_PROPERTIES = {
     ("Bengalis", "ratha_(ranged)"): {"bonus_damage_reduction": 0.25},
     ("Bengalis", "elite_ratha_(melee)"): {"bonus_damage_reduction": 0.25},
     ("Bengalis", "elite_ratha_(ranged)"): {"bonus_damage_reduction": 0.25},
+    # Wootz Steel (Dravidian Imperial UT) - melee attacks ignore armor
+    ("Dravidians", "champion"): {"ignores_melee_armor": 1},
+    ("Dravidians", "halberdier"): {"ignores_melee_armor": 1},
+    ("Dravidians", "hussar"): {"ignores_melee_armor": 1},
+    ("Dravidians", "elite_elephant"): {"ignores_melee_armor": 1},
+    ("Dravidians", "elite_urumi_swordsman"): {"ignores_melee_armor": 1},
 }
 
 # Paired units mapping (for matchup mode switching)

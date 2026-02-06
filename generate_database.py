@@ -108,12 +108,12 @@ UNIQUE_COMBAT_PROPERTIES = {
     "elite_composite_bowman": {"ignores_pierce_armor": 1},
     "ratha_(melee)": {"trample_percent": 0.5, "trample_radius": 0.5},
     "elite_ratha_(melee)": {"trample_percent": 0.5, "trample_radius": 0.5},
-    "ballista_elephant": {"unit_category": "siege"},
-    "elite_ballista_elephant": {"unit_category": "siege"},
-    "organ_gun": {"unit_category": "siege"},
-    "elite_organ_gun": {"unit_category": "siege"},
-    "hussite_wagon": {"unit_category": "siege"},
-    "elite_hussite_wagon": {"unit_category": "siege"},
+    "ballista_elephant": {},
+    "elite_ballista_elephant": {},
+    "organ_gun": {},
+    "elite_organ_gun": {},
+    "hussite_wagon": {},
+    "elite_hussite_wagon": {},
 }
 
 # Civ-conditional properties (applied on top of base/unique properties)

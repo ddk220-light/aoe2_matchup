@@ -1325,8 +1325,8 @@ def extract_tech_data(tech):
             data["required_techs"] = required
 
     # Research location (building ID where this tech is researched)
-    if hasattr(tech, "research_location") and tech.research_location >= 0:
-        data["research_location"] = tech.research_location
+    if hasattr(tech, "research_locations") and tech.research_locations:
+        data["research_location"] = tech.research_locations[0].location_id
 
     # Button ID (position in research menu)
     if hasattr(tech, "button_id") and tech.button_id >= 0:

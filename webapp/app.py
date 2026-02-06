@@ -853,6 +853,13 @@ def api_ref_civ(civ_name):
         )
         special = [dict(s) for s in rc.fetchall()]
 
+        # Convert class IDs to names in attack/armor JSONs
+        def convert_classes(json_str):
+            if not json_str:
+                return {}
+            raw = json.loads(json_str)
+            return {ac_names.get(k, f"class_{k}"): v for k, v in raw.items()}
+
         # Get projectiles
         rc.execute(
             """SELECT projectile_type, projectile_count, projectile_speed,
@@ -860,14 +867,13 @@ def api_ref_civ(civ_name):
                FROM ref_projectiles WHERE ref_unit_id=?""",
             (uid,),
         )
-        projectiles = [dict(p) for p in rc.fetchall()]
-
-        # Convert class IDs to names in attack/armor JSONs
-        def convert_classes(json_str):
-            if not json_str:
-                return {}
-            raw = json.loads(json_str)
-            return {ac_names.get(k, f"class_{k}"): v for k, v in raw.items()}
+        projectiles_raw = rc.fetchall()
+        projectiles = []
+        for p in projectiles_raw:
+            pd = dict(p)
+            if pd.get("attacks_json"):
+                pd["attacks"] = convert_classes(pd["attacks_json"])
+            projectiles.append(pd)
 
         unit = {
             "id": uid,

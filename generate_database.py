@@ -111,7 +111,7 @@ UNIQUE_COMBAT_PROPERTIES = {
     "jaguar_warrior": {"attack_bonus_per_kill": 4},
     "elite_jaguar_warrior": {"attack_bonus_per_kill": 4},
     # HP transformation (ability flag, not in dat)
-    "jian_swordsman": {"hp_transform_threshold": 0.5},
+    "jian_swordsman": {"hp_transform_threshold": 0.5, "transform_unit_id": 1976},
 }
 
 # Civ-conditional properties (applied on top of base/unique properties)
@@ -2036,6 +2036,16 @@ def create_database():
             attack_bonus_per_kill REAL DEFAULT 0,
             first_attack_extra_projectiles INTEGER DEFAULT 0,
             hp_transform_threshold REAL DEFAULT 0,
+            -- HP transform alternate form (Jian Swordsman)
+            transform_hp INTEGER,
+            transform_attack INTEGER,
+            transform_melee_armor INTEGER,
+            transform_pierce_armor INTEGER,
+            transform_attack_speed REAL,
+            transform_attack_delay REAL,
+            transform_movement_speed REAL,
+            transform_attacks_json TEXT,
+            transform_armors_json TEXT,
             -- Dismount on death (Konnik)
             dismount_hp INTEGER,
             dismount_attack INTEGER,
@@ -2248,6 +2258,7 @@ def get_combat_properties(unit_slug, civ_name=None, unit_id=None, units_data=Non
         "attack_bonus_per_kill": 0,
         "first_attack_extra_projectiles": 0,
         "hp_transform_threshold": 0,
+        "transform_unit_id": 0,
         "dismount_unit_id": 0,
     }
 
@@ -2658,6 +2669,19 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                     uu_slug, civ_name, unit_id=game_unit_id, units_data=analyzer.units
                 )
 
+                # Compute transform stats if applicable (e.g., Jian Swordsman)
+                transform_id = combat_props.get("transform_unit_id", 0)
+                ts = (
+                    compute_dismount_stats(
+                        analyzer,
+                        transform_id,
+                        civ_name,
+                        CASTLE_AGE if idx == 0 else IMPERIAL_AGE,
+                    )
+                    if transform_id
+                    else None
+                )
+
                 # Compute dismount stats if applicable (e.g., Konnik)
                 dismount_id = combat_props.get("dismount_unit_id", 0)
                 ds = (
@@ -2692,6 +2716,10 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             bleed_dps, bleed_duration, block_first_melee,
                             attack_bonus_per_kill, first_attack_extra_projectiles,
                             hp_transform_threshold,
+                            transform_hp, transform_attack, transform_melee_armor,
+                            transform_pierce_armor, transform_attack_speed,
+                            transform_attack_delay, transform_movement_speed,
+                            transform_attacks_json, transform_armors_json,
                             dismount_hp, dismount_attack, dismount_melee_armor,
                             dismount_pierce_armor, dismount_attack_speed,
                             dismount_attack_delay, dismount_movement_speed,
@@ -2699,6 +2727,7 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                                  ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
@@ -2745,6 +2774,15 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             combat_props["attack_bonus_per_kill"],
                             combat_props["first_attack_extra_projectiles"],
                             combat_props["hp_transform_threshold"],
+                            ts["hp"] if ts else None,
+                            ts["attack"] if ts else None,
+                            ts["melee_armor"] if ts else None,
+                            ts["pierce_armor"] if ts else None,
+                            ts["attack_speed"] if ts else None,
+                            ts["attack_delay"] if ts else None,
+                            ts["movement_speed"] if ts else None,
+                            ts["attacks_json"] if ts else None,
+                            ts["armors_json"] if ts else None,
                             ds["hp"] if ds else None,
                             ds["attack"] if ds else None,
                             ds["melee_armor"] if ds else None,

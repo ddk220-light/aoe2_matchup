@@ -44,6 +44,34 @@ def _parse_dismount(row):
     }
 
 
+def _parse_transform(row):
+    """Parse HP-transform data from a DB row. Returns dict or None."""
+    keys = row.keys() if hasattr(row, "keys") else row
+    if "transform_hp" not in keys or not row["transform_hp"]:
+        return None
+    attacks = (
+        json.loads(row["transform_attacks_json"])
+        if row["transform_attacks_json"]
+        else {}
+    )
+    armors = (
+        json.loads(row["transform_armors_json"]) if row["transform_armors_json"] else {}
+    )
+    attacks = {int(k): v for k, v in attacks.items()}
+    armors = {int(k): v for k, v in armors.items()}
+    return {
+        "hp": row["transform_hp"],
+        "attack": row["transform_attack"],
+        "melee_armor": row["transform_melee_armor"],
+        "pierce_armor": row["transform_pierce_armor"],
+        "attack_speed": row["transform_attack_speed"],
+        "attack_delay": row["transform_attack_delay"] or 0,
+        "movement_speed": row["transform_movement_speed"] or 1.0,
+        "attacks": attacks,
+        "armors": armors,
+    }
+
+
 def prepare_combat_unit(row):
     """Convert a DB row (sqlite3.Row or dict) into a combat-ready unit dict.
 
@@ -113,6 +141,7 @@ def prepare_combat_unit(row):
         if "paired_unit_slug" in (row.keys() if hasattr(row, "keys") else row)
         else None,
         # Dismount on death (Konnik)
+        "transform": _parse_transform(row),
         "dismount": _parse_dismount(row),
     }
 
@@ -455,6 +484,59 @@ def simulate_battle(
         )
         delay2_dismount = dismount2["attack_delay"]
 
+    # HP transform (Jian Swordsman): pre-compute transformed damage
+    transform1 = unit1.get("transform")
+    transform2 = unit2.get("transform")
+
+    if transform1:
+        # Transformed team1 attacking team2
+        dmg1_transform = _calc_damage(
+            transform1["attacks"],
+            transform1["attack"],
+            unit2["armors"],
+            unit2["melee_armor"],
+            unit2["pierce_armor"],
+            is_ranged1,
+            ignores_pierce=unit1["ignores_pierce_armor"],
+            ignores_melee=unit1["ignores_melee_armor"],
+            bonus_damage_reduction=unit2["bonus_damage_reduction"],
+        )
+        # Team2 attacking transformed team1 (different armor!)
+        dmg2_vs_transform1 = _calc_damage(
+            unit2["attacks"],
+            unit2["attack"],
+            transform1["armors"],
+            transform1["melee_armor"],
+            transform1["pierce_armor"],
+            is_ranged2,
+            ignores_pierce=unit2["ignores_pierce_armor"],
+            ignores_melee=unit2["ignores_melee_armor"],
+            bonus_damage_reduction=unit1["bonus_damage_reduction"],
+        )
+    if transform2:
+        dmg2_transform = _calc_damage(
+            transform2["attacks"],
+            transform2["attack"],
+            unit1["armors"],
+            unit1["melee_armor"],
+            unit1["pierce_armor"],
+            is_ranged2,
+            ignores_pierce=unit2["ignores_pierce_armor"],
+            ignores_melee=unit2["ignores_melee_armor"],
+            bonus_damage_reduction=unit1["bonus_damage_reduction"],
+        )
+        dmg1_vs_transform2 = _calc_damage(
+            unit1["attacks"],
+            unit1["attack"],
+            transform2["armors"],
+            transform2["melee_armor"],
+            transform2["pierce_armor"],
+            is_ranged1,
+            ignores_pierce=unit1["ignores_pierce_armor"],
+            ignores_melee=unit1["ignores_melee_armor"],
+            bonus_damage_reduction=unit2["bonus_damage_reduction"],
+        )
+
     start_total_hp1 = float(unit1["hp"]) * count1
     start_total_hp2 = float(unit2["hp"]) * count2
 
@@ -750,6 +832,10 @@ def simulate_battle(
                 t_extra_proj_dmg = extra_proj_dmg1
                 t_dmg_vs_dismount = dmg1_vs_dismount2 if dismount2 else dmg1
                 t_enemy_dismounted = dismounted2
+                t_dmg_transform = dmg1_transform if transform1 else dmg1
+                t_dmg_vs_transform = dmg2_vs_transform1 if transform1 else dmg2
+                my_transformed = transformed1
+                t_enemy_transformed = transformed2
                 t_cant_attack = cant_attack_melee1
                 enemy_hp = hp2
                 enemy_alive = alive2
@@ -766,6 +852,10 @@ def simulate_battle(
                 t_extra_proj_dmg = extra_proj_dmg2
                 t_dmg_vs_dismount = dmg2_vs_dismount1 if dismount1 else dmg2
                 t_enemy_dismounted = dismounted1
+                t_dmg_transform = dmg2_transform if transform2 else dmg2
+                t_dmg_vs_transform = dmg1_vs_transform2 if transform2 else dmg1
+                my_transformed = transformed2
+                t_enemy_transformed = transformed1
                 t_cant_attack = cant_attack_melee2
                 enemy_hp = hp1
                 enemy_alive = alive1
@@ -785,8 +875,14 @@ def simulate_battle(
                         if enemy_hp[target_idx] > 0:
                             if i_dismounted:
                                 base = dmg1_dismount if team_id == 1 else dmg2_dismount
+                            elif my_transformed and my_transformed[i]:
+                                base = t_dmg_transform
                             elif t_enemy_dismounted and t_enemy_dismounted[target_idx]:
                                 base = t_dmg_vs_dismount
+                            elif (
+                                t_enemy_transformed and t_enemy_transformed[target_idx]
+                            ):
+                                base = t_dmg_vs_transform
                             else:
                                 base = t_dmg
                             hit_dmg = base + int(my_bonus_atk[i])
@@ -839,11 +935,12 @@ def simulate_battle(
                     if t_first_burst > 0 and not my_used_first[i]:
                         num_extra += t_first_burst
                         my_used_first[i] = True
-                    base = (
-                        t_dmg_vs_dismount
-                        if (t_enemy_dismounted and t_enemy_dismounted[target_idx])
-                        else t_dmg
-                    )
+                    if t_enemy_dismounted and t_enemy_dismounted[target_idx]:
+                        base = t_dmg_vs_dismount
+                    elif t_enemy_transformed and t_enemy_transformed[target_idx]:
+                        base = t_dmg_vs_transform
+                    else:
+                        base = t_dmg
                     # Main projectile (full damage)
                     hit_dmg = base + int(my_bonus_atk[i])
                     pending_damage.append((enemy_team, target_idx, hit_dmg, i, team_id))
@@ -861,11 +958,14 @@ def simulate_battle(
                     if t_delay > 0:
                         my_committed[i] = (target_idx, t_delay)
                     else:
-                        base = (
-                            t_dmg_vs_dismount
-                            if (t_enemy_dismounted and t_enemy_dismounted[target_idx])
-                            else t_dmg
-                        )
+                        if my_transformed and my_transformed[i]:
+                            base = t_dmg_transform
+                        elif t_enemy_dismounted and t_enemy_dismounted[target_idx]:
+                            base = t_dmg_vs_dismount
+                        elif t_enemy_transformed and t_enemy_transformed[target_idx]:
+                            base = t_dmg_vs_transform
+                        else:
+                            base = t_dmg
                         hit_dmg = base + int(my_bonus_atk[i])
                         pending_damage.append(
                             (enemy_team, target_idx, hit_dmg, i, team_id)
@@ -1016,19 +1116,17 @@ def simulate_battle(
             else:
                 del bleed_on2[idx]
 
-        # HP transform (e.g. Jian Swordsman)
+        # HP transform (e.g. Jian Swordsman — switch to unshielded form)
         if transform_thresh1 > 0:
             threshold_hp = unit1["hp"] * transform_thresh1
             for idx in alive1:
                 if not transformed1[idx] and hp1[idx] <= threshold_hp and hp1[idx] > 0:
                     transformed1[idx] = True
-                    bonus_atk1[idx] += 3
         if transform_thresh2 > 0:
             threshold_hp = unit2["hp"] * transform_thresh2
             for idx in alive2:
                 if not transformed2[idx] and hp2[idx] <= threshold_hp and hp2[idx] > 0:
                     transformed2[idx] = True
-                    bonus_atk2[idx] += 3
 
         # Dismount on death: respawn dead mounted units as dismounted
         if dismount1:

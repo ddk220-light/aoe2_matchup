@@ -446,7 +446,7 @@ def simulate_battle(
     opening1 = 0
     opening2 = 0
 
-    RETREAT_MAX = 5.0  # max tiles ranged retreats before standing to fight
+    RETREAT_MAX = 10.0  # max tiles ranged retreats before standing to fight
 
     if is_ranged1 and not is_ranged2:
         # Team 1 ranged vs team 2 melee

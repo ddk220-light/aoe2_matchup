@@ -252,6 +252,9 @@ UNIQUE_COMBAT_PROPERTIES = {
     # Fire Lancer charge: 3 projectiles, range 4, ignores armor (except siege/ships/buildings)
     "fire_lancer": {"charge_attack_range": 4, "charge_ignores_armor": 1},
     "elite_fire_lancer": {"charge_attack_range": 4, "charge_ignores_armor": 1},
+    # Berserk HP regen (base unit attribute 109, not extracted from dat)
+    "berserk": {"hp_regen": 20},  # 20 HP/min
+    "elite_berserk": {"hp_regen": 40},  # 40 HP/min
     # Organ Gun/Fire Archer extra projectiles are now data-driven
     # Bleed damage (ability flag + stat values not in dat)
     "liao_dao": {"bleed_dps": 2.0, "bleed_duration": 5.0},
@@ -3958,6 +3961,7 @@ def generate_reference_database(analyzer):
             ("charge_ignores_armor", "Charge attack ignores armor"),
             ("hp_transform_threshold", "HP threshold for form change"),
             ("dismount_unit_id", "Dismounts to unit on death"),
+            ("hp_regen", "HP regeneration per minute"),
         ]
         for prop_name, desc in special_props:
             val = combat_props.get(prop_name, 0)

@@ -657,6 +657,17 @@
         <td>${costUpg || "(none)"}</td>
         <td class="${costChanged ? "stat-changed" : ""}">${finalCost}</td>
     </tr>`;
+                // Upgrade cost row
+                const uc = unit.upgrade_cost || {};
+                const ucParts = [];
+                if (uc.food) ucParts.push(`${uc.food}F`);
+                if (uc.wood) ucParts.push(`${uc.wood}W`);
+                if (uc.gold) ucParts.push(`${uc.gold}G`);
+                const ucStr = ucParts.length ? ucParts.join(" ") : "None";
+                html += `<tr>
+        <td>Upgrade Cost</td>
+        <td colspan="3" class="stat-changed">${ucStr}</td>
+    </tr>`;
                 html += "</table>";
 
                 // Attack classes

@@ -923,6 +923,11 @@ def api_ref_civ(civ_name):
             "total_projectiles": row["total_projectiles"],
             "projectile_speed": row["projectile_speed"],
             "min_range": row["min_range"],
+            "upgrade_cost": {
+                "food": row["upgrade_cost_food"] or 0,
+                "wood": row["upgrade_cost_wood"] or 0,
+                "gold": row["upgrade_cost_gold"] or 0,
+            },
             "techs_applied": techs,
             "stat_chain": stat_chain,
             "special_effects": special,

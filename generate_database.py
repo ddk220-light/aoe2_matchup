@@ -167,6 +167,13 @@ BUILDING_WORK_RATE_TECHS = {
     ),
 }
 
+# Civ bonuses that discount technology costs (applied to self)
+# Format: civ_name → {age_name: discount_fraction, ...}
+# Chinese: -10% Feudal, -15% Castle, -20% Imperial
+CIV_TECH_COST_DISCOUNT = {
+    "Chinese": {"Feudal": 0.10, "Castle": 0.15, "Imperial": 0.20},
+}
+
 # Civ team bonuses that multiply building work_rate (applied to self)
 # Format: civ_name → {building_id: multiplier, ...}
 CIV_TEAM_BONUS_WORK_RATE = {
@@ -1823,14 +1830,20 @@ class UnitAnalyzer:
     def calculate_upgrade_cost(
         self, civ_name: str, relevant_techs: set, disabled_techs: set
     ) -> int:
-        """Calculate total upgrade cost for relevant techs."""
+        """Calculate total upgrade cost for relevant techs (with civ discount)."""
+        discount_map = CIV_TECH_COST_DISCOUNT.get(civ_name, {})
         total = 0
         for tech_id in relevant_techs:
             if tech_id in disabled_techs:
                 continue
             tech_data = self.techs.get(tech_id, {})
             base_cost = tech_data.get("cost", {})
-            total += sum(base_cost.values())
+            tech_age = self.get_tech_age_recursive(tech_id)
+            age_name = _tech_age_name(tech_age)
+            discount = discount_map.get(age_name, 0)
+            mult = 1.0 - discount
+            for val in base_cost.values():
+                total += round(val * mult)
         return total
 
     def calculate_unit_stats_for_civ(
@@ -3296,7 +3309,10 @@ def generate_reference_database(analyzer):
             final_attacks_json TEXT, final_armors_json TEXT,
             base_train_time REAL, final_train_time REAL,
             total_projectiles REAL, projectile_speed REAL, min_range REAL,
-            applied_bonuses_summary TEXT
+            applied_bonuses_summary TEXT,
+            upgrade_cost_food INTEGER DEFAULT 0,
+            upgrade_cost_wood INTEGER DEFAULT 0,
+            upgrade_cost_gold INTEGER DEFAULT 0
         );
         CREATE TABLE ref_techs_applied (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -3739,6 +3755,26 @@ def generate_reference_database(analyzer):
                 ", ".join(all_tech_names),
                 ref_unit_id,
             ),
+        )
+
+        # Compute total upgrade cost (sum of all tech costs, with civ discount)
+        tech_costs = cursor.execute(
+            """SELECT cost_food, cost_wood, cost_gold, age_available
+               FROM ref_techs_applied WHERE ref_unit_id=?""",
+            (ref_unit_id,),
+        ).fetchall()
+        discount_map = CIV_TECH_COST_DISCOUNT.get(civ_name, {})
+        total_food, total_wood, total_gold = 0, 0, 0
+        for tc_food, tc_wood, tc_gold, tc_age in tech_costs:
+            discount = discount_map.get(tc_age, 0)
+            mult = 1.0 - discount
+            total_food += round(tc_food * mult)
+            total_wood += round(tc_wood * mult)
+            total_gold += round(tc_gold * mult)
+        cursor.execute(
+            """UPDATE ref_units SET upgrade_cost_food=?, upgrade_cost_wood=?, upgrade_cost_gold=?
+               WHERE id=?""",
+            (total_food, total_wood, total_gold, ref_unit_id),
         )
 
         # Special effects (combat properties)

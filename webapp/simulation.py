@@ -84,6 +84,12 @@ def prepare_combat_unit(row):
         "bonus_damage_reduction": row["bonus_damage_reduction"] or 0,
         # Unique unit mechanics
         "extra_projectiles": row["extra_projectiles"] or 0,
+        "extra_projectile_attacks": {
+            int(k): v
+            for k, v in json.loads(row["extra_projectile_attacks_json"]).items()
+        }
+        if row["extra_projectile_attacks_json"]
+        else None,
         "splash_on_hit_radius": row["splash_on_hit_radius"] or 0,
         "dodge_shield_max": row["dodge_shield_max"] or 0,
         "dodge_shield_recharge": row["dodge_shield_recharge"] or 0,
@@ -310,6 +316,43 @@ def simulate_battle(
     first_burst1 = unit1["first_attack_extra_projectiles"]
     first_burst2 = unit2["first_attack_extra_projectiles"]
 
+    # Extra projectile damage (secondary projectile has different attacks)
+    # e.g. Chu Ko Nu extra arrows: 3 pierce only, vs main: 8 pierce + anti-spearman
+    extra_proj_attacks1 = unit1.get("extra_projectile_attacks")
+    extra_proj_attacks2 = unit2.get("extra_projectile_attacks")
+
+    if extra_proj_attacks1 and (extra_proj1 > 0 or first_burst1 > 0):
+        sec_base1 = extra_proj_attacks1.get(3, extra_proj_attacks1.get(4, 0))
+        extra_proj_dmg1 = _calc_damage(
+            extra_proj_attacks1,
+            sec_base1,
+            unit2["armors"],
+            unit2["melee_armor"],
+            unit2["pierce_armor"],
+            is_ranged1,
+            ignores_pierce=unit1["ignores_pierce_armor"],
+            ignores_melee=unit1["ignores_melee_armor"],
+            bonus_damage_reduction=unit2["bonus_damage_reduction"],
+        )
+    else:
+        extra_proj_dmg1 = dmg1  # No secondary attacks: extra proj same as main
+
+    if extra_proj_attacks2 and (extra_proj2 > 0 or first_burst2 > 0):
+        sec_base2 = extra_proj_attacks2.get(3, extra_proj_attacks2.get(4, 0))
+        extra_proj_dmg2 = _calc_damage(
+            extra_proj_attacks2,
+            sec_base2,
+            unit1["armors"],
+            unit1["melee_armor"],
+            unit1["pierce_armor"],
+            is_ranged2,
+            ignores_pierce=unit2["ignores_pierce_armor"],
+            ignores_melee=unit2["ignores_melee_armor"],
+            bonus_damage_reduction=unit1["bonus_damage_reduction"],
+        )
+    else:
+        extra_proj_dmg2 = dmg2
+
     # Unique mechanics
     dodge_max1 = unit1["dodge_shield_max"]
     dodge_max2 = unit2["dodge_shield_max"]
@@ -496,6 +539,7 @@ def simulate_battle(
         attacker_count,
         target_count,
         damage,
+        extra_proj_damage,
         a_extra_proj,
         a_first_burst,
         a_used_first_arr,
@@ -524,8 +568,10 @@ def simulate_battle(
                 if a_first_burst > 0 and not a_used_first_arr[a_idx]:
                     num_proj += a_first_burst
                     a_used_first_arr[a_idx] = True
-                for _ in range(num_proj):
-                    _apply_opening_hit(attacker_team, target, damage, a_idx)
+                # First projectile uses main damage, extras use secondary
+                _apply_opening_hit(attacker_team, target, damage, a_idx)
+                for _ in range(num_proj - 1):
+                    _apply_opening_hit(attacker_team, target, extra_proj_damage, a_idx)
 
     # Calculate opening shots for each side
     opening1 = 0
@@ -624,6 +670,7 @@ def simulate_battle(
             count1,
             count2,
             dmg1,
+            extra_proj_dmg1,
             extra_proj1,
             first_burst1,
             used_first1,
@@ -642,6 +689,7 @@ def simulate_battle(
             count2,
             count1,
             dmg2,
+            extra_proj_dmg2,
             extra_proj2,
             first_burst2,
             used_first2,
@@ -699,6 +747,7 @@ def simulate_battle(
                 t_reload, t_delay = reload1, delay1
                 t_extra_proj, t_first_burst = extra_proj1, first_burst1
                 t_dmg = dmg1
+                t_extra_proj_dmg = extra_proj_dmg1
                 t_dmg_vs_dismount = dmg1_vs_dismount2 if dismount2 else dmg1
                 t_enemy_dismounted = dismounted2
                 t_cant_attack = cant_attack_melee1
@@ -714,6 +763,7 @@ def simulate_battle(
                 t_reload, t_delay = reload2, delay2
                 t_extra_proj, t_first_burst = extra_proj2, first_burst2
                 t_dmg = dmg2
+                t_extra_proj_dmg = extra_proj_dmg2
                 t_dmg_vs_dismount = dmg2_vs_dismount1 if dismount1 else dmg2
                 t_enemy_dismounted = dismounted1
                 t_cant_attack = cant_attack_melee2
@@ -785,20 +835,26 @@ def simulate_battle(
                         my_cooldown[i] = i_reload
                 elif t_is_ranged:
                     # Ranged: fire instantly
-                    num_proj = 1 + t_extra_proj
+                    num_extra = t_extra_proj
                     if t_first_burst > 0 and not my_used_first[i]:
-                        num_proj += t_first_burst
+                        num_extra += t_first_burst
                         my_used_first[i] = True
                     base = (
                         t_dmg_vs_dismount
                         if (t_enemy_dismounted and t_enemy_dismounted[target_idx])
                         else t_dmg
                     )
+                    # Main projectile (full damage)
                     hit_dmg = base + int(my_bonus_atk[i])
-                    for _ in range(num_proj):
-                        pending_damage.append(
-                            (enemy_team, target_idx, hit_dmg, i, team_id)
-                        )
+                    pending_damage.append((enemy_team, target_idx, hit_dmg, i, team_id))
+                    # Extra projectiles (secondary projectile damage)
+                    if num_extra > 0:
+                        extra_base = t_extra_proj_dmg
+                        extra_hit = extra_base + int(my_bonus_atk[i])
+                        for _ in range(num_extra):
+                            pending_damage.append(
+                                (enemy_team, target_idx, extra_hit, i, team_id)
+                            )
                     my_cooldown[i] = t_reload
                 else:
                     # Melee: commit with delay or hit instantly

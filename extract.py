@@ -1133,8 +1133,14 @@ def get_display_name(unit_id, internal_name):
     return internal_name
 
 
-def extract_unit_data(unit):
-    """Extract relevant data from a unit object."""
+def extract_unit_data(unit, all_units=None):
+    """Extract relevant data from a unit object.
+
+    Args:
+        unit: The unit object to extract data from.
+        all_units: Dict of id->unit for all units (including type 60 projectiles),
+                   used to look up secondary projectile attack data.
+    """
     if unit is None:
         return None
 
@@ -1255,6 +1261,32 @@ def extract_unit_data(unit):
                     }
                 )
         data["armors"] = armors
+
+    # Extract secondary projectile attack data (for multi-projectile units)
+    # The secondary projectile unit (type 60) has its own attacks that differ from
+    # the main unit (e.g., Chu Ko Nu extra arrows do 3 pierce with no bonus damage)
+    sec_proj_id = data.get("secondary_projectile_unit", -1)
+    if all_units and sec_proj_id and sec_proj_id > 0 and sec_proj_id in all_units:
+        proj_unit = all_units[sec_proj_id]
+        if hasattr(proj_unit, "type_50") and proj_unit.type_50:
+            proj_t = proj_unit.type_50
+            proj_attacks = []
+            if hasattr(proj_t, "attacks"):
+                for atk in proj_t.attacks:
+                    if atk.amount != 0:
+                        proj_attacks.append(
+                            {
+                                "class": atk.class_,
+                                "class_name": ARMOR_CLASSES.get(
+                                    atk.class_, f"Class_{atk.class_}"
+                                ),
+                                "amount": atk.amount,
+                            }
+                        )
+            if proj_attacks:
+                data["secondary_projectile_attacks"] = sorted(
+                    proj_attacks, key=lambda x: x["amount"], reverse=True
+                )
 
     return data
 
@@ -1492,8 +1524,13 @@ def main():
     units = []
     if df.civs and len(df.civs) > 0:
         base_civ = df.civs[0]  # Gaia has all base units
+        # Build lookup of ALL units (including type 60 projectiles) for secondary projectile extraction
+        all_units_by_id = {}
         for unit in base_civ.units:
-            unit_data = extract_unit_data(unit)
+            if unit is not None and hasattr(unit, "id"):
+                all_units_by_id[unit.id] = unit
+        for unit in base_civ.units:
+            unit_data = extract_unit_data(unit, all_units=all_units_by_id)
             if unit_data:
                 units.append(unit_data)
 

@@ -2040,6 +2040,7 @@ def create_database():
             paired_unit_slug TEXT,
             -- Unique unit mechanics
             extra_projectiles INTEGER DEFAULT 0,
+            extra_projectile_attacks_json TEXT,
             splash_on_hit_radius REAL DEFAULT 0,
             dodge_shield_max INTEGER DEFAULT 0,
             dodge_shield_recharge REAL DEFAULT 0,
@@ -2147,6 +2148,18 @@ def get_extracted_combat_properties(unit_id, units_data):
         if charge_type == 7:
             props["first_attack_extra_projectiles"] = int(max_proj) - int(total_proj)
 
+    # --- Secondary projectile attacks (different damage for extra projectiles) ---
+    # Only relevant when unit actually fires extra projectiles (regular or burst)
+    sec_attacks = unit.get("secondary_projectile_attacks")
+    has_extra = (
+        props.get("extra_projectiles", 0) > 0
+        or props.get("first_attack_extra_projectiles", 0) > 0
+    )
+    if sec_attacks and has_extra:
+        # Convert list of {class, amount} to {class_id: amount} dict (same format as attacks_json)
+        attacks_dict = {str(a["class"]): a["amount"] for a in sec_attacks}
+        props["extra_projectile_attacks_json"] = json.dumps(attacks_dict)
+
     # --- Trample / splash from blast fields ---
     blast_width = unit.get("blast_width", 0) or 0
     blast_damage = unit.get("blast_damage", 0) or 0
@@ -2206,6 +2219,7 @@ def get_combat_properties(unit_slug, civ_name=None, unit_id=None, units_data=Non
         "unit_category": "military",
         "paired_unit_slug": None,
         "extra_projectiles": 0,
+        "extra_projectile_attacks_json": None,
         "splash_on_hit_radius": 0,
         "dodge_shield_max": 0,
         "dodge_shield_recharge": 0,
@@ -2420,14 +2434,15 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             ignores_pierce_armor, ignores_melee_armor, trample_percent,
                             trample_radius, trample_flat_damage, bonus_damage_reduction,
                             unit_category, paired_unit_slug,
-                            extra_projectiles, splash_on_hit_radius,
+                            extra_projectiles, extra_projectile_attacks_json,
+                            splash_on_hit_radius,
                             dodge_shield_max, dodge_shield_recharge,
                             bleed_dps, bleed_duration, block_first_melee,
                             attack_bonus_per_kill, first_attack_extra_projectiles,
                             hp_transform_threshold
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             civ_id_map[civ_name],
@@ -2463,6 +2478,7 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             combat_props["unit_category"],
                             combat_props["paired_unit_slug"],
                             combat_props["extra_projectiles"],
+                            combat_props["extra_projectile_attacks_json"],
                             combat_props["splash_on_hit_radius"],
                             combat_props["dodge_shield_max"],
                             combat_props["dodge_shield_recharge"],
@@ -2651,7 +2667,8 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             ignores_pierce_armor, ignores_melee_armor, trample_percent,
                             trample_radius, trample_flat_damage, bonus_damage_reduction,
                             unit_category, paired_unit_slug,
-                            extra_projectiles, splash_on_hit_radius,
+                            extra_projectiles, extra_projectile_attacks_json,
+                            splash_on_hit_radius,
                             dodge_shield_max, dodge_shield_recharge,
                             bleed_dps, bleed_duration, block_first_melee,
                             attack_bonus_per_kill, first_attack_extra_projectiles,
@@ -2662,7 +2679,7 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             dismount_attacks_json, dismount_armors_json
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
@@ -2699,6 +2716,7 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             combat_props["unit_category"],
                             combat_props["paired_unit_slug"],
                             combat_props["extra_projectiles"],
+                            combat_props["extra_projectile_attacks_json"],
                             combat_props["splash_on_hit_radius"],
                             combat_props["dodge_shield_max"],
                             combat_props["dodge_shield_recharge"],

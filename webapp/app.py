@@ -275,7 +275,12 @@ def get_all_civs():
 
 
 @app.route("/")
-def index():
+def home():
+    return render_template("home.html")
+
+
+@app.route("/units")
+def units():
     units_by_age = get_units_by_age()
     ages = {k: v["name"] for k, v in AGES.items()}
     return render_template("index.html", units_by_age=units_by_age, ages=ages)

@@ -110,10 +110,37 @@ UNIQUE_COMBAT_PROPERTIES = {
     "elite_ratha_(melee)": {"trample_percent": 0.5, "trample_radius": 0.5},
     "ballista_elephant": {},
     "elite_ballista_elephant": {},
-    "organ_gun": {},
-    "elite_organ_gun": {},
     "hussite_wagon": {},
     "elite_hussite_wagon": {},
+    # Multi-projectile units
+    "chu_ko_nu": {"extra_projectiles": 4},
+    "elite_chu_ko_nu": {"extra_projectiles": 4},
+    "organ_gun": {"extra_projectiles": 4},
+    "elite_organ_gun": {"extra_projectiles": 4},
+    "kipchak": {"extra_projectiles": 2},
+    "elite_kipchak": {"extra_projectiles": 3},
+    "fire_archer": {"extra_projectiles": 3},
+    "elite_fire_archer": {"extra_projectiles": 3},
+    # Splash on hit (AoE around target)
+    "grenadier": {"splash_on_hit_radius": 1.0},
+    # Dodge shield (blocks ranged attacks)
+    "shrivamsha_rider": {"dodge_shield_max": 3, "dodge_shield_recharge": 8.0},
+    "elite_shrivamsha_rider": {"dodge_shield_max": 5, "dodge_shield_recharge": 8.0},
+    # Bleed damage
+    "liao_dao": {"bleed_dps": 2.0, "bleed_duration": 5.0},
+    "elite_liao_dao": {"bleed_dps": 3.0, "bleed_duration": 5.0},
+    # Block first melee hit
+    "iron_pagoda": {"block_first_melee": 1},
+    "elite_iron_pagoda": {"block_first_melee": 1},
+    # Kill bonus attack
+    "tiger_cavalry": {"attack_bonus_per_kill": 4},
+    "elite_tiger_cavalry": {"attack_bonus_per_kill": 4},
+    "jaguar_warrior": {"attack_bonus_per_kill": 4},
+    "elite_jaguar_warrior": {"attack_bonus_per_kill": 4},
+    # First attack burst (extra projectiles on first attack only)
+    "xianbei_raider": {"first_attack_extra_projectiles": 2},
+    # HP transformation (below threshold, gains attack/speed, loses armor)
+    "jian_swordsman": {"hp_transform_threshold": 0.5},
 }
 
 # Civ-conditional properties (applied on top of base/unique properties)
@@ -371,6 +398,13 @@ IMPERIAL_UNITS = {
             "display_name": "Hei-Kuang Cavalry",
             "upgrades": [
                 (1033, 1946, "Heavy Hei-Kuang Cavalry"),
+            ],
+        },
+        # Savar replaces Paladin for Persians
+        "civ_upgrades": {
+            "Persians": [
+                (209, 283, "Cavalier"),
+                (526, 1813, "Savar"),
             ],
         },
     },
@@ -1035,6 +1069,106 @@ UNIQUE_UNITS = {
             "elite_tech": 974,
             "elite_id": 1805,
             "elite_name": "Elite Monaspa",
+        },
+    ],
+    "Jurchens": [
+        {
+            "base_id": 1908,
+            "display_name": "Iron Pagoda",
+            "unit_class": 12,
+            "availability_tech": 990,
+            "elite_tech": 991,
+            "elite_id": 1910,
+            "elite_name": "Elite Iron Pagoda",
+        },
+        {
+            "base_id": 1911,
+            "display_name": "Grenadier",
+            "unit_class": 44,
+            "availability_tech": 992,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+        },
+    ],
+    "Khitans": [
+        {
+            "base_id": 1920,
+            "display_name": "Liao Dao",
+            "unit_class": 6,
+            "availability_tech": 1001,
+            "elite_tech": 1002,
+            "elite_id": 1922,
+            "elite_name": "Elite Liao Dao",
+        },
+        {
+            "base_id": 1923,
+            "display_name": "Siege Camel",
+            "unit_class": 12,
+            "availability_tech": 1005,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+        },
+    ],
+    "Shu": [
+        {
+            "base_id": 1959,
+            "display_name": "White Feather Crossbowman",
+            "unit_class": 6,
+            "availability_tech": 1063,
+            "elite_tech": 1064,
+            "elite_id": 1961,
+            "elite_name": "Elite White Feather Crossbowman",
+        },
+        {
+            "base_id": 2150,
+            "display_name": "War Chariot",
+            "unit_class": 12,
+            "availability_tech": 1065,
+            "elite_tech": 1171,
+            "elite_id": 2151,
+            "elite_name": "Elite War Chariot",
+        },
+    ],
+    "Wei": [
+        {
+            "base_id": 1949,
+            "display_name": "Tiger Cavalry",
+            "unit_class": 12,
+            "availability_tech": 1035,
+            "elite_tech": 1036,
+            "elite_id": 1951,
+            "elite_name": "Elite Tiger Cavalry",
+        },
+        {
+            "base_id": 1952,
+            "display_name": "Xianbei Raider",
+            "unit_class": 36,
+            "availability_tech": 1037,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+        },
+    ],
+    "Wu": [
+        {
+            "base_id": 1968,
+            "display_name": "Fire Archer",
+            "unit_class": 0,
+            "availability_tech": 1073,
+            "elite_tech": 1074,
+            "elite_id": 1970,
+            "elite_name": "Elite Fire Archer",
+        },
+        {
+            "base_id": 1974,
+            "display_name": "Jian Swordsman",
+            "unit_class": 6,
+            "availability_tech": 1075,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
         },
     ],
 }
@@ -1910,6 +2044,17 @@ def create_database():
             bonus_damage_reduction REAL DEFAULT 0,
             unit_category TEXT DEFAULT 'military',
             paired_unit_slug TEXT,
+            -- Unique unit mechanics
+            extra_projectiles INTEGER DEFAULT 0,
+            splash_on_hit_radius REAL DEFAULT 0,
+            dodge_shield_max INTEGER DEFAULT 0,
+            dodge_shield_recharge REAL DEFAULT 0,
+            bleed_dps REAL DEFAULT 0,
+            bleed_duration REAL DEFAULT 0,
+            block_first_melee INTEGER DEFAULT 0,
+            attack_bonus_per_kill REAL DEFAULT 0,
+            first_attack_extra_projectiles INTEGER DEFAULT 0,
+            hp_transform_threshold REAL DEFAULT 0,
             FOREIGN KEY (civ_id) REFERENCES civilizations(id),
             FOREIGN KEY (unit_id) REFERENCES units(id),
             UNIQUE(civ_id, unit_id)
@@ -1982,6 +2127,16 @@ def get_combat_properties(unit_slug, civ_name=None):
         "bonus_damage_reduction": 0,
         "unit_category": "military",
         "paired_unit_slug": None,
+        "extra_projectiles": 0,
+        "splash_on_hit_radius": 0,
+        "dodge_shield_max": 0,
+        "dodge_shield_recharge": 0,
+        "bleed_dps": 0,
+        "bleed_duration": 0,
+        "block_first_melee": 0,
+        "attack_bonus_per_kill": 0,
+        "first_attack_extra_projectiles": 0,
+        "hp_transform_threshold": 0,
     }
 
     # Check standard combat properties (exact slug match)
@@ -2109,9 +2264,15 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             min_attack_range, is_siege_projectile, splash_radius, projectile_speed,
                             ignores_pierce_armor, ignores_melee_armor, trample_percent,
                             trample_radius, trample_flat_damage, bonus_damage_reduction,
-                            unit_category, paired_unit_slug
+                            unit_category, paired_unit_slug,
+                            extra_projectiles, splash_on_hit_radius,
+                            dodge_shield_max, dodge_shield_recharge,
+                            bleed_dps, bleed_duration, block_first_melee,
+                            attack_bonus_per_kill, first_attack_extra_projectiles,
+                            hp_transform_threshold
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             civ_id_map[civ_name],
@@ -2146,6 +2307,16 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             combat_props["bonus_damage_reduction"],
                             combat_props["unit_category"],
                             combat_props["paired_unit_slug"],
+                            combat_props["extra_projectiles"],
+                            combat_props["splash_on_hit_radius"],
+                            combat_props["dodge_shield_max"],
+                            combat_props["dodge_shield_recharge"],
+                            combat_props["bleed_dps"],
+                            combat_props["bleed_duration"],
+                            combat_props["block_first_melee"],
+                            combat_props["attack_bonus_per_kill"],
+                            combat_props["first_attack_extra_projectiles"],
+                            combat_props["hp_transform_threshold"],
                         ),
                     )
                 else:
@@ -2308,9 +2479,15 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             min_attack_range, is_siege_projectile, splash_radius, projectile_speed,
                             ignores_pierce_armor, ignores_melee_armor, trample_percent,
                             trample_radius, trample_flat_damage, bonus_damage_reduction,
-                            unit_category, paired_unit_slug
+                            unit_category, paired_unit_slug,
+                            extra_projectiles, splash_on_hit_radius,
+                            dodge_shield_max, dodge_shield_recharge,
+                            bleed_dps, bleed_duration, block_first_melee,
+                            attack_bonus_per_kill, first_attack_extra_projectiles,
+                            hp_transform_threshold
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             db_civ_id,
@@ -2345,6 +2522,16 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             combat_props["bonus_damage_reduction"],
                             combat_props["unit_category"],
                             combat_props["paired_unit_slug"],
+                            combat_props["extra_projectiles"],
+                            combat_props["splash_on_hit_radius"],
+                            combat_props["dodge_shield_max"],
+                            combat_props["dodge_shield_recharge"],
+                            combat_props["bleed_dps"],
+                            combat_props["bleed_duration"],
+                            combat_props["block_first_melee"],
+                            combat_props["attack_bonus_per_kill"],
+                            combat_props["first_attack_extra_projectiles"],
+                            combat_props["hp_transform_threshold"],
                         ),
                     )
 

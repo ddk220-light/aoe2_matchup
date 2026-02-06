@@ -1045,6 +1045,27 @@
                     this.trampleFlatDamage = stats.trample_flat_damage || 0;
                     this.bonusDamageReduction = stats.bonus_damage_reduction || 0;
 
+                    // Unique unit mechanics (data-driven from DB)
+                    this.extraProjectiles = stats.extra_projectiles || 0;
+                    this.splashOnHitRadius = (stats.splash_on_hit_radius || 0) * TILE_SIZE;
+                    this.dodgeShieldMax = stats.dodge_shield_max || 0;
+                    this.dodgeShieldRecharge = stats.dodge_shield_recharge || 0;
+                    this.bleedDps = stats.bleed_dps || 0;
+                    this.bleedDuration = stats.bleed_duration || 0;
+                    this.blockFirstMelee = stats.block_first_melee || 0;
+                    this.attackBonusPerKill = stats.attack_bonus_per_kill || 0;
+                    this.firstAttackExtraProjectiles = stats.first_attack_extra_projectiles || 0;
+                    this.hpTransformThreshold = stats.hp_transform_threshold || 0;
+
+                    // Unique mechanic state
+                    this.shieldCharges = this.dodgeShieldMax;
+                    this.shieldRechargeTimer = 0;
+                    this.hasBlockedFirstMelee = false;
+                    this.killBonusAttack = 0;
+                    this.hasUsedFirstAttack = false;
+                    this.isTransformed = false;
+                    this.bleedEffect = null;  // {dps, timeRemaining}
+
                     this.x = 0;
                     this.y = 0;
                     this.radius = UNIT_RADIUS;
@@ -1195,6 +1216,42 @@
                         return dn.alpha > 0;
                     });
 
+                    // Bleed damage tick
+                    if (this.bleedEffect) {
+                        this.currentHp -= this.bleedEffect.dps * dt;
+                        this.bleedEffect.timeRemaining -= dt;
+                        if (this.bleedEffect.timeRemaining <= 0) {
+                            this.bleedEffect = null;
+                        }
+                        if (this.currentHp <= 0) {
+                            this.currentHp = 0;
+                            this.state = 'dead';
+                            this.target = null;
+                            return;
+                        }
+                    }
+
+                    // Shield recharge
+                    if (this.shieldRechargeTimer > 0) {
+                        this.shieldRechargeTimer -= dt;
+                        if (this.shieldRechargeTimer <= 0) {
+                            this.shieldCharges = Math.min(this.shieldCharges + 1, this.dodgeShieldMax);
+                            if (this.shieldCharges < this.dodgeShieldMax) {
+                                this.shieldRechargeTimer = this.dodgeShieldRecharge;
+                            } else {
+                                this.shieldRechargeTimer = 0;
+                            }
+                        }
+                    }
+
+                    // HP transformation check (Jian Swordsman)
+                    if (this.hpTransformThreshold > 0 && !this.isTransformed) {
+                        if (this.currentHp <= this.maxHp * this.hpTransformThreshold && this.currentHp > 0) {
+                            this.isTransformed = true;
+                            this.killBonusAttack += 3;  // +3 attack
+                        }
+                    }
+
                     if (!this.target || this.target.state === 'dead') {
                         this.findTarget(enemies);
                     }
@@ -1283,7 +1340,16 @@
 
                 performAttack() {
                     if (!this.target || this.target.state === 'dead') return;
-                    this.performAttackOn(this.target);
+                    let numProjectiles = 1 + this.extraProjectiles;
+                    if (this.firstAttackExtraProjectiles > 0 && !this.hasUsedFirstAttack) {
+                        numProjectiles += this.firstAttackExtraProjectiles;
+                        this.hasUsedFirstAttack = true;
+                    }
+                    for (let p = 0; p < numProjectiles; p++) {
+                        if (this.target && this.target.state !== 'dead') {
+                            this.performAttackOn(this.target);
+                        }
+                    }
                     this.attackCooldown = this.reloadTime;
                 }
 
@@ -1291,8 +1357,14 @@
                 performAttackOn(target) {
                     if (!target || target.state === 'dead') return;
 
-                    const damage = this.getDamageAgainst(target);
+                    let damage = this.getDamageAgainst(target) + Math.floor(this.killBonusAttack);
+                    const targetWasAlive = target.state !== 'dead';
                     target.takeDamage(damage, this);
+
+                    // Kill bonus tracking
+                    if (this.attackBonusPerKill > 0 && targetWasAlive && target.state === 'dead') {
+                        this.killBonusAttack += this.attackBonusPerKill;
+                    }
 
                     // Apply trample damage to nearby enemies (melee only)
                     if (!this.isRanged()) {
@@ -1313,6 +1385,29 @@
                         }
                     }
 
+                    // Splash on hit (AoE centered on target, e.g. Grenadier)
+                    if (this.splashOnHitRadius > 0) {
+                        const enemies = this.team === 1 ? simulation.team2 : simulation.team1;
+                        for (const enemy of enemies) {
+                            if (enemy !== target && enemy.state !== 'dead') {
+                                const dx = enemy.x - target.x;
+                                const dy = enemy.y - target.y;
+                                const dist = Math.sqrt(dx * dx + dy * dy);
+                                if (dist <= this.splashOnHitRadius + enemy.radius) {
+                                    enemy.takeDamage(damage, this);
+                                }
+                            }
+                        }
+                    }
+
+                    // Bleed application
+                    if (this.bleedDps > 0 && targetWasAlive) {
+                        target.bleedEffect = {
+                            dps: this.bleedDps,
+                            timeRemaining: this.bleedDuration
+                        };
+                    }
+
                     this.attackAnimTimer = 0.15;
                 }
 
@@ -1328,6 +1423,31 @@
                 }
 
                 takeDamage(amount, attacker) {
+                    // Dodge shield: block ranged attacks
+                    if (this.dodgeShieldMax > 0 && attacker && attacker.isRanged() && this.shieldCharges > 0) {
+                        this.shieldCharges--;
+                        this.shieldRechargeTimer = this.dodgeShieldRecharge;
+                        this.damageNumbers.push({
+                            value: 'DODGE',
+                            x: this.x,
+                            y: this.y - this.radius - 5,
+                            alpha: 1.0
+                        });
+                        return;
+                    }
+
+                    // Block first melee hit
+                    if (this.blockFirstMelee && attacker && !attacker.isRanged() && !this.hasBlockedFirstMelee) {
+                        this.hasBlockedFirstMelee = true;
+                        this.damageNumbers.push({
+                            value: 'BLOCK',
+                            x: this.x,
+                            y: this.y - this.radius - 5,
+                            alpha: 1.0
+                        });
+                        return;
+                    }
+
                     this.currentHp -= amount;
 
                     this.damageNumbers.push({

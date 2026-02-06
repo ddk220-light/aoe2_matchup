@@ -570,7 +570,12 @@ def api_combat_unit(civ_name, unit_slug):
             us.min_attack_range, us.is_siege_projectile, us.splash_radius,
             us.projectile_speed, us.ignores_pierce_armor, us.ignores_melee_armor,
             us.trample_percent, us.trample_radius, us.trample_flat_damage,
-            us.bonus_damage_reduction, us.unit_category, us.paired_unit_slug
+            us.bonus_damage_reduction, us.unit_category, us.paired_unit_slug,
+            us.extra_projectiles, us.splash_on_hit_radius,
+            us.dodge_shield_max, us.dodge_shield_recharge,
+            us.bleed_dps, us.bleed_duration, us.block_first_melee,
+            us.attack_bonus_per_kill, us.first_attack_extra_projectiles,
+            us.hp_transform_threshold
         FROM unit_stats us
         JOIN units u ON us.unit_id = u.id
         JOIN civilizations c ON us.civ_id = c.id
@@ -623,6 +628,17 @@ def api_combat_unit(civ_name, unit_slug):
             "bonus_damage_reduction": row["bonus_damage_reduction"] or 0,
             "unit_category": row["unit_category"] or "military",
             "paired_unit_slug": row["paired_unit_slug"],
+            "extra_projectiles": row["extra_projectiles"] or 0,
+            "splash_on_hit_radius": row["splash_on_hit_radius"] or 0,
+            "dodge_shield_max": row["dodge_shield_max"] or 0,
+            "dodge_shield_recharge": row["dodge_shield_recharge"] or 0,
+            "bleed_dps": row["bleed_dps"] or 0,
+            "bleed_duration": row["bleed_duration"] or 0,
+            "block_first_melee": row["block_first_melee"] or 0,
+            "attack_bonus_per_kill": row["attack_bonus_per_kill"] or 0,
+            "first_attack_extra_projectiles": row["first_attack_extra_projectiles"]
+            or 0,
+            "hp_transform_threshold": row["hp_transform_threshold"] or 0,
         }
     )
 
@@ -857,7 +873,12 @@ def api_matchup(civ1, civ2):
                us.min_attack_range, us.is_siege_projectile, us.splash_radius,
                us.projectile_speed, us.ignores_pierce_armor, us.ignores_melee_armor,
                us.trample_percent, us.trample_radius, us.trample_flat_damage,
-               us.bonus_damage_reduction, us.unit_category, us.paired_unit_slug
+               us.bonus_damage_reduction, us.unit_category, us.paired_unit_slug,
+               us.extra_projectiles, us.splash_on_hit_radius,
+               us.dodge_shield_max, us.dodge_shield_recharge,
+               us.bleed_dps, us.bleed_duration, us.block_first_melee,
+               us.attack_bonus_per_kill, us.first_attack_extra_projectiles,
+               us.hp_transform_threshold
         FROM unit_stats us
         JOIN units u ON us.unit_id = u.id
         JOIN civilizations c ON us.civ_id = c.id

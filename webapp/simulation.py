@@ -126,6 +126,7 @@ def prepare_combat_unit(row):
         "block_first_melee": row["block_first_melee"] or 0,
         "attack_bonus_per_kill": row["attack_bonus_per_kill"] or 0,
         "first_attack_extra_projectiles": row["first_attack_extra_projectiles"] or 0,
+        "hp_regen": row["hp_regen"] or 0,
         "hp_transform_threshold": row["hp_transform_threshold"] or 0,
         # Metadata
         "slug": row["slug"]

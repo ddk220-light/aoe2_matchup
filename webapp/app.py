@@ -584,7 +584,7 @@ def api_combat_unit(civ_name, unit_slug):
             us.dodge_shield_max, us.dodge_shield_recharge,
             us.bleed_dps, us.bleed_duration, us.block_first_melee,
             us.attack_bonus_per_kill, us.first_attack_extra_projectiles,
-            us.hp_transform_threshold
+            us.hp_regen, us.hp_transform_threshold
         FROM unit_stats us
         JOIN units u ON us.unit_id = u.id
         JOIN civilizations c ON us.civ_id = c.id
@@ -647,6 +647,7 @@ def api_combat_unit(civ_name, unit_slug):
             "attack_bonus_per_kill": row["attack_bonus_per_kill"] or 0,
             "first_attack_extra_projectiles": row["first_attack_extra_projectiles"]
             or 0,
+            "hp_regen": row["hp_regen"] or 0,
             "hp_transform_threshold": row["hp_transform_threshold"] or 0,
         }
     )
@@ -1173,7 +1174,7 @@ def api_matchup(civ1, civ2):
                us.dodge_shield_max, us.dodge_shield_recharge,
                us.bleed_dps, us.bleed_duration, us.block_first_melee,
                us.attack_bonus_per_kill, us.first_attack_extra_projectiles,
-               us.hp_transform_threshold,
+               us.hp_regen, us.hp_transform_threshold,
                us.transform_hp, us.transform_attack, us.transform_melee_armor,
                us.transform_pierce_armor, us.transform_attack_speed,
                us.transform_attack_delay, us.transform_movement_speed,

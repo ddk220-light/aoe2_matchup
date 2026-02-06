@@ -252,9 +252,7 @@ UNIQUE_COMBAT_PROPERTIES = {
     # Fire Lancer charge: 3 projectiles, range 4, ignores armor (except siege/ships/buildings)
     "fire_lancer": {"charge_attack_range": 4, "charge_ignores_armor": 1},
     "elite_fire_lancer": {"charge_attack_range": 4, "charge_ignores_armor": 1},
-    # Berserk HP regen (base unit attribute 109, not extracted from dat)
-    "berserk": {"hp_regen": 20},  # 20 HP/min
-    "elite_berserk": {"hp_regen": 40},  # 40 HP/min
+    # Berserk HP regen is now data-driven from rear_attack_modifier in dat (40 HP/min)
     # Organ Gun/Fire Archer extra projectiles are now data-driven
     # Bleed damage (ability flag + stat values not in dat)
     "liao_dao": {"bleed_dps": 2.0, "bleed_duration": 5.0},
@@ -2380,6 +2378,7 @@ def create_database():
             block_first_melee INTEGER DEFAULT 0,
             attack_bonus_per_kill REAL DEFAULT 0,
             first_attack_extra_projectiles INTEGER DEFAULT 0,
+            hp_regen REAL DEFAULT 0,
             hp_transform_threshold REAL DEFAULT 0,
             -- HP transform alternate form (Jian Swordsman)
             transform_hp INTEGER,
@@ -2589,6 +2588,11 @@ def get_extracted_combat_properties(unit_id, units_data):
     if bonus_resist and bonus_resist > 0:
         props["bonus_damage_reduction"] = round(bonus_resist, 4)
 
+    # --- HP regeneration (attribute 109, stored as rear_attack_modifier in dat) ---
+    hp_regen = unit.get("hp_regen", 0)
+    if hp_regen and hp_regen > 0:
+        props["hp_regen"] = round(hp_regen, 1)
+
     return props
 
 
@@ -2635,6 +2639,7 @@ def get_combat_properties(unit_slug, civ_name=None, unit_id=None, units_data=Non
         "hp_transform_threshold": 0,
         "transform_unit_id": 0,
         "dismount_unit_id": 0,
+        "hp_regen": 0,
     }
 
     # Apply extracted data from dat file (data-driven stats)
@@ -2858,10 +2863,10 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             dodge_shield_max, dodge_shield_recharge,
                             bleed_dps, bleed_duration, block_first_melee,
                             attack_bonus_per_kill, first_attack_extra_projectiles,
-                            hp_transform_threshold
+                            hp_regen, hp_transform_threshold
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             civ_id_map[civ_name],
@@ -2911,6 +2916,7 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             combat_props["block_first_melee"],
                             combat_props["attack_bonus_per_kill"],
                             combat_props["first_attack_extra_projectiles"],
+                            combat_props["hp_regen"],
                             combat_props["hp_transform_threshold"],
                         ),
                     )
@@ -3112,7 +3118,7 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             dodge_shield_max, dodge_shield_recharge,
                             bleed_dps, bleed_duration, block_first_melee,
                             attack_bonus_per_kill, first_attack_extra_projectiles,
-                            hp_transform_threshold,
+                            hp_regen, hp_transform_threshold,
                             transform_hp, transform_attack, transform_melee_armor,
                             transform_pierce_armor, transform_attack_speed,
                             transform_attack_delay, transform_movement_speed,
@@ -3123,7 +3129,7 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             dismount_attacks_json, dismount_armors_json
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
@@ -3175,6 +3181,7 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             combat_props["block_first_melee"],
                             combat_props["attack_bonus_per_kill"],
                             combat_props["first_attack_extra_projectiles"],
+                            combat_props["hp_regen"],
                             combat_props["hp_transform_threshold"],
                             ts["hp"] if ts else None,
                             ts["attack"] if ts else None,

@@ -1212,6 +1212,12 @@ def extract_unit_data(unit, all_units=None):
         if charge_proj_id and charge_proj_id > 0:
             data["charge_projectile_unit"] = charge_proj_id
 
+        # HP regeneration rate (attribute 109, stored as rear_attack_modifier in dat)
+        # Berserk: 40 HP/min, Dire Wolf: 10 HP/min
+        hp_regen = getattr(c, "rear_attack_modifier", 0)
+        if hp_regen and hp_regen > 0:
+            data["hp_regen"] = round(hp_regen, 1)
+
     # Combat stats from type_50
     if hasattr(unit, "type_50") and unit.type_50:
         t = unit.type_50

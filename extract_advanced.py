@@ -77,6 +77,7 @@ UNIT_ATTRIBUTES = {
     103: "food_cost_abs",
     105: "gold_cost_abs",
     108: "garrison_heal_rate",
+    109: "hp_regen",  # HP regeneration rate (HP/minute)
 }
 
 # Civilization names

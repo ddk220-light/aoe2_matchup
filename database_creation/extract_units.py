@@ -35,86 +35,100 @@ UNIT_CLASSES = {
 # Unit IDs to extract and their display names
 UNIT_NAMES = {
     # ===== Core Infantry =====
-    74: "Spearman",
+    # Militia line: 77 → 74(MaA) → 75(LS) → 76(LS) → 473(2HS) → 567(Champ) → 360(Champ)
+    77: "Militia",
+    74: "Man-at-Arms",
     75: "Man-at-Arms",
     76: "Long Swordsman",
-    77: "Militia",
-    93: "Pikeman",
+    473: "Two-Handed Swordsman",
+    567: "Champion",
+    360: "Champion",
+    # Spearman line: 93 → 358(Pike) → 359(Halb)
+    93: "Spearman",
     358: "Pikeman",
     359: "Halberdier",
-    360: "Champion",
-    473: "Two-Handed Swordsman",
-    567: "Two-Handed Swordsman",
+    # Eagle line: 751(Scout) → 753(Warrior) → 752(Elite)
     751: "Eagle Scout",
     753: "Eagle Warrior",
     752: "Elite Eagle Warrior",
     # ===== Core Archers =====
+    # Archer line: 4 → 24(Xbow) → 492(Arb)
     4: "Archer",
     24: "Crossbowman",
     492: "Arbalester",
+    # Skirmisher line: 7 → 6(Elite) → 1155(Imperial)
     7: "Skirmisher",
     6: "Elite Skirmisher",
     1155: "Imperial Skirmisher",
     5: "Hand Cannoneer",
     185: "Slinger",
+    # Cav Archer line: 39 → 474(Heavy)
     39: "Cavalry Archer",
     474: "Heavy Cavalry Archer",
-    569: "Paladin",
     # ===== Core Cavalry =====
+    # Scout line: 448 → 546(Light) → 441(Hussar) → 1707(Winged)
     448: "Scout Cavalry",
     546: "Light Cavalry",
-    530: "Hussar",
-    1658: "Winged Hussar",
+    441: "Hussar",
+    1707: "Winged Hussar",
+    # Knight line: 38 → 283(Cav) → 569(Pal)
     38: "Knight",
     283: "Cavalier",
     529: "Paladin",
+    569: "Paladin",
     1813: "Savar",
+    # Camel line: 329 → 330(Heavy) → 207(Imperial)
     329: "Camel Rider",
-    207: "Camel Rider",
     330: "Heavy Camel Rider",
-    441: "Imperial Camel Rider",
+    207: "Imperial Camel Rider",
+    # Battle Elephant: 1132 → 1134, alternate 1252 → 1254
+    1132: "Battle Elephant",
+    1134: "Elite Battle Elephant",
     1252: "Battle Elephant",
     1254: "Elite Battle Elephant",
+    # Steppe Lancer: 1258 → 1259, config base 1370 → 1372
     1258: "Steppe Lancer",
     1259: "Elite Steppe Lancer",
+    1370: "Steppe Lancer",
+    1372: "Elite Steppe Lancer",
+    # Elephant Archer: 873 → 875
+    873: "Elephant Archer",
+    875: "Elite Elephant Archer",
     # ===== Siege Weapons =====
+    # Ram line: 35 → 422(Capped) → 548(Siege), alternates 493, 527
     35: "Battering Ram",
+    422: "Capped Ram",
     493: "Capped Ram",
     527: "Siege Ram",
+    548: "Siege Ram",
+    # Armored Elephant: 1733/1744 → 1746(Siege)
     1733: "Armored Elephant",
-    1735: "Siege Elephant",
     1744: "Armored Elephant",
+    1746: "Siege Elephant",
+    # Mangonel line: 280 → 550(Onager) → 588(Siege Onager)
     280: "Mangonel",
     550: "Onager",
     588: "Siege Onager",
+    # Scorpion line: 279 → 542(Heavy)
     279: "Scorpion",
-    281: "Heavy Scorpion",
     542: "Heavy Scorpion",
     36: "Bombard Cannon",
-    1660: "Houfnice",
     42: "Trebuchet",
     331: "Trebuchet (Packed)",
     188: "Siege Tower",
-    1749: "Warrior Priest",
-    1751: "Elite Warrior Priest",
-    # ===== Elephant Units (Regional) =====
-    1132: "Battle Elephant",
-    1134: "Elite Battle Elephant",
-    873: "Elephant Archer",
-    875: "Elite Elephant Archer",
     # ===== Unique Units - Britons =====
     8: "Longbowman",
+    530: "Elite Longbowman",
     545: "Elite Longbowman",
     # ===== Unique Units - Franks =====
+    281: "Throwing Axeman",
     531: "Elite Throwing Axeman",
-    1001: "Throwing Axeman",
-    1003: "Elite Throwing Axeman",
     # ===== Unique Units - Goths =====
     41: "Huskarl",
-    554: "Elite Huskarl",
+    555: "Elite Huskarl",
     # ===== Unique Units - Teutons =====
     25: "Teutonic Knight",
-    556: "Elite Teutonic Knight",
+    554: "Elite Teutonic Knight",
     # ===== Unique Units - Japanese =====
     291: "Samurai",
     560: "Elite Samurai",
@@ -126,41 +140,32 @@ UNIT_NAMES = {
     553: "Elite Cataphract",
     # ===== Unique Units - Persians =====
     239: "War Elephant",
-    422: "War Elephant",
-    555: "Elite War Elephant",
     558: "Elite War Elephant",
     # ===== Unique Units - Saracens =====
     282: "Mameluke",
     556: "Elite Mameluke",
-    832: "Mameluke",
-    831: "Elite Mameluke",
     # ===== Unique Units - Turks =====
     46: "Janissary",
     557: "Elite Janissary",
     # ===== Unique Units - Vikings =====
     692: "Berserk",
     694: "Elite Berserk",
-    866: "Berserk",
-    775: "Elite Berserk",
-    94: "Berserk",
     # ===== Unique Units - Mongols =====
     11: "Mangudai",
     561: "Elite Mangudai",
     # ===== Unique Units - Celts =====
     232: "Woad Raider",
     534: "Elite Woad Raider",
-    548: "Elite Woad Raider",
     # ===== Unique Units - Spanish =====
     771: "Conquistador",
     773: "Elite Conquistador",
     # ===== Unique Units - Aztecs =====
     725: "Jaguar Warrior",
     726: "Elite Jaguar Warrior",
-    765: "Jaguar Warrior",
-    764: "Elite Jaguar Warrior",
     # ===== Unique Units - Mayans =====
     763: "Plumed Archer",
     756: "Elite Plumed Archer",
+    765: "Elite Plumed Archer",
     # ===== Unique Units - Huns =====
     755: "Tarkan",
     757: "Elite Tarkan",
@@ -170,11 +175,11 @@ UNIT_NAMES = {
     828: "Turtle Ship",
     830: "Elite Turtle Ship",
     # ===== Unique Units - Italians =====
+    866: "Genoese Crossbowman",
     868: "Elite Genoese Crossbowman",
     1004: "Genoese Crossbowman",
     1006: "Elite Genoese Crossbowman",
-    866: "Condottiero",
-    # ===== Unique Units - Indians/Hindustanis =====
+    # ===== Unique Units - Hindustanis =====
     1747: "Ghulam",
     1749: "Elite Ghulam",
     # ===== Unique Units - Incas =====
@@ -186,125 +191,132 @@ UNIT_NAMES = {
     # ===== Unique Units - Magyars =====
     869: "Magyar Huszar",
     871: "Elite Magyar Huszar",
-    1007: "Magyar Huszar",
-    1009: "Elite Magyar Huszar",
     # ===== Unique Units - Slavs =====
     876: "Boyar",
     878: "Elite Boyar",
     # ===== Unique Units - Portuguese =====
-    1120: "Organ Gun",
-    1122: "Elite Organ Gun",
+    1001: "Organ Gun",
+    1003: "Elite Organ Gun",
     # ===== Unique Units - Malians =====
     1013: "Gbeto",
     1015: "Elite Gbeto",
     # ===== Unique Units - Berbers =====
-    1123: "Camel Archer",
-    1125: "Elite Camel Archer",
-    1126: "Genitour",
-    1128: "Elite Genitour",
+    1007: "Camel Archer",
+    1009: "Elite Camel Archer",
     # ===== Unique Units - Khmer =====
-    1225: "Ballista Elephant",
-    1227: "Elite Ballista Elephant",
+    1120: "Ballista Elephant",
+    1122: "Elite Ballista Elephant",
     # ===== Unique Units - Malay =====
-    1228: "Karambit Warrior",
-    1230: "Elite Karambit Warrior",
+    1123: "Karambit Warrior",
+    1125: "Elite Karambit Warrior",
     # ===== Unique Units - Burmese =====
-    1231: "Arambai",
-    1233: "Elite Arambai",
+    1126: "Arambai",
+    1128: "Elite Arambai",
     # ===== Unique Units - Vietnamese =====
     1129: "Rattan Archer",
     1131: "Elite Rattan Archer",
-    1234: "Rattan Archer",
-    1236: "Elite Rattan Archer",
     # ===== Unique Units - Bulgarians =====
+    1225: "Konnik",
+    1227: "Elite Konnik",
     1263: "Konnik",
     1265: "Elite Konnik",
-    1253: "Elite Konnik (Dismounted)",
     1275: "Konnik (Dismounted)",
+    1253: "Elite Konnik (Dismounted)",
     1277: "Elite Konnik (Dismounted)",
     # ===== Unique Units - Tatars =====
+    1228: "Keshik",
+    1230: "Elite Keshik",
     1268: "Keshik",
     1270: "Elite Keshik",
     # ===== Unique Units - Cumans =====
+    1231: "Kipchak",
+    1233: "Elite Kipchak",
     1271: "Kipchak",
     1273: "Elite Kipchak",
     # ===== Unique Units - Lithuanians =====
+    1234: "Leitis",
+    1236: "Elite Leitis",
     1274: "Leitis",
     1276: "Elite Leitis",
     # ===== Unique Units - Burgundians =====
-    1370: "Coustillier",
-    1372: "Elite Coustillier",
+    1655: "Coustillier",
+    1657: "Elite Coustillier",
     1374: "Flemish Militia",
     # ===== Unique Units - Sicilians =====
+    1658: "Serjeant",
+    1659: "Elite Serjeant",
     1575: "Serjeant",
     1577: "Elite Serjeant",
-    1659: "Elite Serjeant",
     # ===== Unique Units - Poles =====
-    1655: "Obuch",
-    1657: "Elite Obuch",
+    1701: "Obuch",
     1703: "Elite Obuch",
     # ===== Unique Units - Bohemians =====
+    1704: "Hussite Wagon",
+    1706: "Elite Hussite Wagon",
     1596: "Hussite Wagon",
     1598: "Elite Hussite Wagon",
-    1706: "Elite Hussite Wagon",
+    1660: "Houfnice",
     # ===== Unique Units - Dravidians =====
+    1735: "Urumi Swordsman",
+    1737: "Elite Urumi Swordsman",
     1699: "Urumi Swordsman",
-    1701: "Elite Urumi Swordsman",
     # ===== Unique Units - Bengalis =====
-    1709: "Ratha",
-    1707: "Elite Ratha",
     1738: "Ratha (Melee)",
     1740: "Elite Ratha (Melee)",
     1759: "Ratha (Ranged)",
     1761: "Elite Ratha (Ranged)",
+    1709: "Ratha",
     # ===== Unique Units - Gurjaras =====
-    1705: "Chakram Thrower",
-    1704: "Elite Chakram Thrower",
+    1741: "Chakram Thrower",
     1743: "Elite Chakram Thrower",
+    1705: "Chakram Thrower",
+    1751: "Shrivamsha Rider",
+    1753: "Elite Shrivamsha Rider",
     1714: "Shrivamsha Rider",
     1713: "Elite Shrivamsha Rider",
-    1753: "Elite Shrivamsha Rider",
     # ===== Unique Units - Romans =====
-    1737: "Centurion",
-    1739: "Elite Centurion",
-    1741: "Legionary",
     1790: "Centurion",
     1792: "Elite Centurion",
+    1739: "Elite Centurion",
     # ===== Unique Units - Armenians =====
-    1746: "Composite Bowman",
-    1748: "Elite Composite Bowman",
     1800: "Composite Bowman",
     1802: "Elite Composite Bowman",
+    1748: "Elite Composite Bowman",
     1811: "Warrior Priest",
     # ===== Unique Units - Georgians =====
-    1752: "Monaspa",
-    1754: "Elite Monaspa",
     1803: "Monaspa",
     1805: "Elite Monaspa",
-    # ===== Three Kingdoms DLC Units =====
-    1901: "Fire Lancer",
-    1903: "Elite Fire Lancer",
+    1752: "Monaspa",
+    1754: "Elite Monaspa",
+    # ===== Unique Units - Jurchens =====
     1908: "Iron Pagoda",
     1910: "Elite Iron Pagoda",
     1911: "Grenadier",
+    # ===== Unique Units - Khitans =====
     1920: "Liao Dao",
     1922: "Elite Liao Dao",
     1923: "Siege Camel",
-    1944: "Hei-Kuang Cavalry",
-    1946: "Heavy Hei-Kuang Cavalry",
+    # ===== Unique Units - Shu =====
+    1959: "White Feather Crossbowman",
+    1961: "Elite White Feather Crossbowman",
+    2150: "War Chariot",
+    2151: "Elite War Chariot",
+    1962: "War Chariot (3K)",
+    1980: "War Chariot (3K)",
+    # ===== Unique Units - Wei =====
     1949: "Tiger Cavalry",
     1951: "Elite Tiger Cavalry",
     1952: "Xianbei Raider",
-    1959: "White Feather Crossbowman",
-    1961: "Elite White Feather Crossbowman",
-    1962: "War Chariot (3K)",
+    # ===== Unique Units - Wu =====
     1968: "Fire Archer",
     1970: "Elite Fire Archer",
     1974: "Jian Swordsman",
-    1976: "Jian Swordsman (Unique)",
-    1980: "War Chariot (3K)",
-    2150: "War Chariot",
-    2151: "Elite War Chariot",
+    1976: "Jian Swordsman (Transformed)",
+    # ===== Fire Lancer (Castle/Imperial) =====
+    1901: "Fire Lancer",
+    1903: "Elite Fire Lancer",
+    1944: "Hei-Kuang Cavalry",
+    1946: "Heavy Hei-Kuang Cavalry",
 }
 
 

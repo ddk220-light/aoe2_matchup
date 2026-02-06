@@ -1207,6 +1207,11 @@ def extract_unit_data(unit, all_units=None):
             data["charge_event"] = charge_event
             data["charge_type"] = charge_type
 
+        # Charge projectile unit (Fire Lancer, Fire Archer, Xianbei Raider, etc.)
+        charge_proj_id = getattr(c, "charge_projectile_unit", -1)
+        if charge_proj_id and charge_proj_id > 0:
+            data["charge_projectile_unit"] = charge_proj_id
+
     # Combat stats from type_50
     if hasattr(unit, "type_50") and unit.type_50:
         t = unit.type_50
@@ -1293,6 +1298,39 @@ def extract_unit_data(unit, all_units=None):
                         )
             if proj_attacks:
                 data["secondary_projectile_attacks"] = sorted(
+                    proj_attacks, key=lambda x: x["amount"], reverse=True
+                )
+
+    # Extract charge projectile attack data (Fire Lancer, Fire Archer, etc.)
+    charge_proj_id = data.get("charge_projectile_unit", -1)
+    if (
+        all_units
+        and charge_proj_id
+        and charge_proj_id > 0
+        and charge_proj_id in all_units
+    ):
+        proj_unit = all_units[charge_proj_id]
+        # Speed
+        proj_speed = getattr(proj_unit, "speed", 0)
+        if proj_speed and proj_speed > 0:
+            data["charge_projectile_speed"] = round(proj_speed, 2)
+        # Attacks
+        if hasattr(proj_unit, "type_50") and proj_unit.type_50:
+            proj_t = proj_unit.type_50
+            proj_attacks = []
+            if hasattr(proj_t, "attacks"):
+                for atk in proj_t.attacks:
+                    proj_attacks.append(
+                        {
+                            "class": atk.class_,
+                            "class_name": ARMOR_CLASSES.get(
+                                atk.class_, f"Class_{atk.class_}"
+                            ),
+                            "amount": atk.amount,
+                        }
+                    )
+            if proj_attacks:
+                data["charge_projectile_attacks"] = sorted(
                     proj_attacks, key=lambda x: x["amount"], reverse=True
                 )
 

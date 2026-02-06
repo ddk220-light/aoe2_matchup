@@ -2245,6 +2245,9 @@ def create_database():
             -- Unique unit mechanics
             extra_projectiles INTEGER DEFAULT 0,
             extra_projectile_attacks_json TEXT,
+            charge_projectile_count INTEGER DEFAULT 0,
+            charge_projectile_attacks_json TEXT,
+            charge_projectile_speed REAL DEFAULT 0,
             splash_on_hit_radius REAL DEFAULT 0,
             dodge_shield_max INTEGER DEFAULT 0,
             dodge_shield_recharge REAL DEFAULT 0,
@@ -2411,6 +2414,22 @@ def get_extracted_combat_properties(unit_id, units_data):
         attacks_dict = {str(a["class"]): a["amount"] for a in sec_attacks}
         props["extra_projectile_attacks_json"] = json.dumps(attacks_dict)
 
+    # --- Charge projectile attacks (Fire Lancer, Fire Archer, etc.) ---
+    charge_proj_attacks = unit.get("charge_projectile_attacks")
+    if charge_proj_attacks:
+        attacks_dict = {str(a["class"]): a["amount"] for a in charge_proj_attacks}
+        props["charge_projectile_attacks_json"] = json.dumps(attacks_dict)
+    charge_proj_speed = unit.get("charge_projectile_speed", 0)
+    if charge_proj_speed:
+        props["charge_projectile_speed"] = charge_proj_speed
+    charge_proj_count = 0
+    if charge_type == 6 and max_proj and max_proj > 1:
+        charge_proj_count = int(max_proj) - 1
+    elif charge_type == 7 and max_proj and total_proj and max_proj > total_proj:
+        charge_proj_count = int(max_proj) - int(total_proj)
+    if charge_proj_count > 0:
+        props["charge_projectile_count"] = charge_proj_count
+
     # --- Trample / splash from blast fields ---
     if blast_width > 0:
         if blast_level == 2 and 0 < blast_damage < 1.0:
@@ -2467,6 +2486,9 @@ def get_combat_properties(unit_slug, civ_name=None, unit_id=None, units_data=Non
         "paired_unit_slug": None,
         "extra_projectiles": 0,
         "extra_projectile_attacks_json": None,
+        "charge_projectile_count": 0,
+        "charge_projectile_attacks_json": None,
+        "charge_projectile_speed": 0,
         "splash_on_hit_radius": 0,
         "dodge_shield_max": 0,
         "dodge_shield_recharge": 0,
@@ -2683,6 +2705,8 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             trample_radius, trample_flat_damage, bonus_damage_reduction,
                             unit_category, paired_unit_slug,
                             extra_projectiles, extra_projectile_attacks_json,
+                            charge_projectile_count, charge_projectile_attacks_json,
+                            charge_projectile_speed,
                             splash_on_hit_radius,
                             dodge_shield_max, dodge_shield_recharge,
                             bleed_dps, bleed_duration, block_first_melee,
@@ -2690,7 +2714,7 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             hp_transform_threshold
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             civ_id_map[civ_name],
@@ -2727,6 +2751,9 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             combat_props["paired_unit_slug"],
                             combat_props["extra_projectiles"],
                             combat_props["extra_projectile_attacks_json"],
+                            combat_props["charge_projectile_count"],
+                            combat_props["charge_projectile_attacks_json"],
+                            combat_props["charge_projectile_speed"],
                             combat_props["splash_on_hit_radius"],
                             combat_props["dodge_shield_max"],
                             combat_props["dodge_shield_recharge"],
@@ -2929,6 +2956,8 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             trample_radius, trample_flat_damage, bonus_damage_reduction,
                             unit_category, paired_unit_slug,
                             extra_projectiles, extra_projectile_attacks_json,
+                            charge_projectile_count, charge_projectile_attacks_json,
+                            charge_projectile_speed,
                             splash_on_hit_radius,
                             dodge_shield_max, dodge_shield_recharge,
                             bleed_dps, bleed_duration, block_first_melee,
@@ -2944,7 +2973,7 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             dismount_attacks_json, dismount_armors_json
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
@@ -2983,6 +3012,9 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             combat_props["paired_unit_slug"],
                             combat_props["extra_projectiles"],
                             combat_props["extra_projectile_attacks_json"],
+                            combat_props["charge_projectile_count"],
+                            combat_props["charge_projectile_attacks_json"],
+                            combat_props["charge_projectile_speed"],
                             combat_props["splash_on_hit_radius"],
                             combat_props["dodge_shield_max"],
                             combat_props["dodge_shield_recharge"],
@@ -3758,6 +3790,24 @@ def generate_reference_database(analyzer):
                 ),
             )
 
+        # Charge projectile data (Fire Lancer, Fire Archer, etc.)
+        charge_proj_count = combat_props.get("charge_projectile_count", 0)
+        charge_proj_atk_json = combat_props.get("charge_projectile_attacks_json")
+        charge_proj_speed = combat_props.get("charge_projectile_speed", 0)
+        if charge_proj_count > 0 and charge_proj_atk_json:
+            cursor.execute(
+                "INSERT INTO ref_projectiles (ref_unit_id, projectile_type, projectile_count, projectile_speed, attacks_json, blast_radius, is_siege_projectile) VALUES (?,?,?,?,?,?,?)",
+                (
+                    ref_unit_id,
+                    "charge",
+                    int(charge_proj_count),
+                    charge_proj_speed,
+                    charge_proj_atk_json,
+                    0,
+                    0,
+                ),
+            )
+
         return ref_unit_id
 
     # Process all units for all 13 civs
@@ -4074,7 +4124,17 @@ def print_reference_display(conn, armor_class_names):
                 if p_siege:
                     parts.append("siege=yes")
                 if p_atk_json:
-                    parts.append(f"attacks={p_atk_json}")
+                    # Show attack classes with names
+                    atk_dict = json.loads(p_atk_json)
+                    atk_parts = []
+                    for cls_id_str, amount in sorted(
+                        atk_dict.items(), key=lambda x: x[1], reverse=True
+                    ):
+                        cls_name = armor_class_names.get(
+                            int(cls_id_str), f"class {cls_id_str}"
+                        )
+                        atk_parts.append(f"{cls_name}={amount}")
+                    parts.append(f"attacks=[{', '.join(atk_parts)}]")
                 print(f"  Projectile: {', '.join(parts)}")
 
             # Train time

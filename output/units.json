@@ -32563,6 +32563,7 @@
     "charge_recharge_rate": 0.1667,
     "charge_event": 0,
     "charge_type": 7,
+    "charge_projectile_unit": 767,
     "range": 6.0,
     "min_range": 0.0,
     "reload_time": 2.0,
@@ -32660,7 +32661,30 @@
         "amount": 0
       }
     ],
-    "projectile_speed": 3.75
+    "projectile_speed": 3.75,
+    "charge_projectile_speed": 6.0,
+    "charge_projectile_attacks": [
+      {
+        "class": 4,
+        "class_name": "Base Melee",
+        "amount": 20
+      },
+      {
+        "class": 11,
+        "class_name": "All Buildings",
+        "amount": 7
+      },
+      {
+        "class": 26,
+        "class_name": "Castles",
+        "amount": 7
+      },
+      {
+        "class": 22,
+        "class_name": "Walls & Gates",
+        "amount": 6
+      }
+    ]
   },
   {
     "id": 832,
@@ -32685,6 +32709,7 @@
     "charge_recharge_rate": 0.1667,
     "charge_event": 0,
     "charge_type": 7,
+    "charge_projectile_unit": 767,
     "range": 7.0,
     "min_range": 0.0,
     "reload_time": 2.0,
@@ -32782,7 +32807,30 @@
         "amount": 0
       }
     ],
-    "projectile_speed": 3.75
+    "projectile_speed": 3.75,
+    "charge_projectile_speed": 6.0,
+    "charge_projectile_attacks": [
+      {
+        "class": 4,
+        "class_name": "Base Melee",
+        "amount": 20
+      },
+      {
+        "class": 11,
+        "class_name": "All Buildings",
+        "amount": 7
+      },
+      {
+        "class": 26,
+        "class_name": "Castles",
+        "amount": 7
+      },
+      {
+        "class": 22,
+        "class_name": "Walls & Gates",
+        "amount": 6
+      }
+    ]
   },
   {
     "id": 833,
@@ -33072,6 +33120,7 @@
     "charge_recharge_rate": 0.1667,
     "charge_event": 0,
     "charge_type": 6,
+    "charge_projectile_unit": 767,
     "range": 10.0,
     "min_range": 0.0,
     "reload_time": 1.0,
@@ -33159,7 +33208,30 @@
         "amount": 0
       }
     ],
-    "projectile_speed": 3.75
+    "projectile_speed": 3.75,
+    "charge_projectile_speed": 6.0,
+    "charge_projectile_attacks": [
+      {
+        "class": 4,
+        "class_name": "Base Melee",
+        "amount": 20
+      },
+      {
+        "class": 11,
+        "class_name": "All Buildings",
+        "amount": 7
+      },
+      {
+        "class": 26,
+        "class_name": "Castles",
+        "amount": 7
+      },
+      {
+        "class": 22,
+        "class_name": "Walls & Gates",
+        "amount": 6
+      }
+    ]
   },
   {
     "id": 845,
@@ -67080,6 +67152,7 @@
     "charge_recharge_rate": 0.0333,
     "charge_event": 4,
     "charge_type": 6,
+    "charge_projectile_unit": 1925,
     "range": 0.0,
     "min_range": 0.0,
     "reload_time": 2.0,
@@ -67171,6 +67244,34 @@
         "class_name": "Gunpowder Units",
         "amount": 0
       }
+    ],
+    "charge_projectile_speed": 7.5,
+    "charge_projectile_attacks": [
+      {
+        "class": 3,
+        "class_name": "Base Pierce",
+        "amount": 3
+      },
+      {
+        "class": 17,
+        "class_name": "Rams",
+        "amount": 2
+      },
+      {
+        "class": 27,
+        "class_name": "Spearmen",
+        "amount": 0
+      },
+      {
+        "class": 11,
+        "class_name": "All Buildings",
+        "amount": 0
+      },
+      {
+        "class": 1,
+        "class_name": "Infantry",
+        "amount": 0
+      }
     ]
   },
   {
@@ -67196,6 +67297,7 @@
     "charge_recharge_rate": 0.0333,
     "charge_event": 5,
     "charge_type": 6,
+    "charge_projectile_unit": 1925,
     "range": 0.0,
     "min_range": 0.0,
     "reload_time": 2.0,
@@ -67285,6 +67387,34 @@
       {
         "class": 23,
         "class_name": "Gunpowder Units",
+        "amount": 0
+      }
+    ],
+    "charge_projectile_speed": 7.5,
+    "charge_projectile_attacks": [
+      {
+        "class": 3,
+        "class_name": "Base Pierce",
+        "amount": 3
+      },
+      {
+        "class": 17,
+        "class_name": "Rams",
+        "amount": 2
+      },
+      {
+        "class": 27,
+        "class_name": "Spearmen",
+        "amount": 0
+      },
+      {
+        "class": 11,
+        "class_name": "All Buildings",
+        "amount": 0
+      },
+      {
+        "class": 1,
+        "class_name": "Infantry",
         "amount": 0
       }
     ]
@@ -68514,6 +68644,7 @@
     "charge_recharge_rate": 100000.0,
     "charge_event": -3,
     "charge_type": 6,
+    "charge_projectile_unit": 1936,
     "range": 13.0,
     "min_range": 3.0,
     "reload_time": 5.0,
@@ -68582,6 +68713,19 @@
         "class": 4,
         "class_name": "Base Melee",
         "amount": 10
+      }
+    ],
+    "charge_projectile_speed": 5.5,
+    "charge_projectile_attacks": [
+      {
+        "class": 3,
+        "class_name": "Base Pierce",
+        "amount": 5
+      },
+      {
+        "class": 16,
+        "class_name": "Ships & Saboteurs",
+        "amount": 5
       }
     ]
   },
@@ -68812,6 +68956,7 @@
     "charge_recharge_rate": 0.0333,
     "charge_event": 0,
     "charge_type": 7,
+    "charge_projectile_unit": 1982,
     "range": 4.0,
     "min_range": 0.0,
     "reload_time": 1.8,
@@ -68915,6 +69060,44 @@
         "class": 1,
         "class_name": "Infantry",
         "amount": 1
+      },
+      {
+        "class": 39,
+        "class_name": "Mounted Archers",
+        "amount": -3
+      }
+    ],
+    "charge_projectile_speed": 5.0,
+    "charge_projectile_attacks": [
+      {
+        "class": 3,
+        "class_name": "Base Pierce",
+        "amount": 5
+      },
+      {
+        "class": 27,
+        "class_name": "Spearmen",
+        "amount": 3
+      },
+      {
+        "class": 1,
+        "class_name": "Infantry",
+        "amount": 1
+      },
+      {
+        "class": 21,
+        "class_name": "Standard Buildings",
+        "amount": 0
+      },
+      {
+        "class": 17,
+        "class_name": "Rams",
+        "amount": 0
+      },
+      {
+        "class": 15,
+        "class_name": "Archers",
+        "amount": 0
       },
       {
         "class": 39,
@@ -69696,6 +69879,7 @@
     "charge_recharge_rate": 3.199999949781598e+18,
     "charge_event": -4,
     "charge_type": 6,
+    "charge_projectile_unit": 1971,
     "range": 9.0,
     "min_range": 0.0,
     "reload_time": 3.5,
@@ -69773,7 +69957,40 @@
         "amount": 0
       }
     ],
-    "projectile_speed": 7.0
+    "projectile_speed": 7.0,
+    "charge_projectile_speed": 7.0,
+    "charge_projectile_attacks": [
+      {
+        "class": 3,
+        "class_name": "Base Pierce",
+        "amount": 4
+      },
+      {
+        "class": 16,
+        "class_name": "Ships & Saboteurs",
+        "amount": 3
+      },
+      {
+        "class": 34,
+        "class_name": "Mamelukes",
+        "amount": 3
+      },
+      {
+        "class": 27,
+        "class_name": "Spearmen",
+        "amount": 2
+      },
+      {
+        "class": 20,
+        "class_name": "Siege Weapons",
+        "amount": 1
+      },
+      {
+        "class": 17,
+        "class_name": "Rams",
+        "amount": 0
+      }
+    ]
   },
   {
     "id": 1970,
@@ -69798,6 +70015,7 @@
     "charge_recharge_rate": 3.199999949781598e+18,
     "charge_event": -4,
     "charge_type": 6,
+    "charge_projectile_unit": 1971,
     "range": 10.0,
     "min_range": 0.0,
     "reload_time": 3.5,
@@ -69875,7 +70093,40 @@
         "amount": 0
       }
     ],
-    "projectile_speed": 7.0
+    "projectile_speed": 7.0,
+    "charge_projectile_speed": 7.0,
+    "charge_projectile_attacks": [
+      {
+        "class": 3,
+        "class_name": "Base Pierce",
+        "amount": 4
+      },
+      {
+        "class": 16,
+        "class_name": "Ships & Saboteurs",
+        "amount": 3
+      },
+      {
+        "class": 34,
+        "class_name": "Mamelukes",
+        "amount": 3
+      },
+      {
+        "class": 27,
+        "class_name": "Spearmen",
+        "amount": 2
+      },
+      {
+        "class": 20,
+        "class_name": "Siege Weapons",
+        "amount": 1
+      },
+      {
+        "class": 17,
+        "class_name": "Rams",
+        "amount": 0
+      }
+    ]
   },
   {
     "id": 1973,
@@ -71468,6 +71719,7 @@
     "charge_recharge_rate": 3.199999949781598e+18,
     "charge_event": -4,
     "charge_type": 6,
+    "charge_projectile_unit": 1931,
     "range": 11.0,
     "min_range": 0.0,
     "reload_time": 2.0,
@@ -71550,7 +71802,40 @@
         "amount": 0
       }
     ],
-    "projectile_speed": 7.0
+    "projectile_speed": 7.0,
+    "charge_projectile_speed": 7.0,
+    "charge_projectile_attacks": [
+      {
+        "class": 3,
+        "class_name": "Base Pierce",
+        "amount": 12
+      },
+      {
+        "class": 16,
+        "class_name": "Ships & Saboteurs",
+        "amount": 5
+      },
+      {
+        "class": 34,
+        "class_name": "Mamelukes",
+        "amount": 5
+      },
+      {
+        "class": 27,
+        "class_name": "Spearmen",
+        "amount": 0
+      },
+      {
+        "class": 17,
+        "class_name": "Rams",
+        "amount": 0
+      },
+      {
+        "class": 20,
+        "class_name": "Siege Weapons",
+        "amount": 0
+      }
+    ]
   },
   {
     "id": 2045,
@@ -71670,6 +71955,7 @@
     "charge_recharge_rate": 0.0333,
     "charge_event": 0,
     "charge_type": 6,
+    "charge_projectile_unit": 1982,
     "range": 5.0,
     "min_range": 0.0,
     "reload_time": 2.0,
@@ -71757,7 +72043,45 @@
         "amount": 0
       }
     ],
-    "projectile_speed": 7.0
+    "projectile_speed": 7.0,
+    "charge_projectile_speed": 5.0,
+    "charge_projectile_attacks": [
+      {
+        "class": 3,
+        "class_name": "Base Pierce",
+        "amount": 5
+      },
+      {
+        "class": 27,
+        "class_name": "Spearmen",
+        "amount": 3
+      },
+      {
+        "class": 1,
+        "class_name": "Infantry",
+        "amount": 1
+      },
+      {
+        "class": 21,
+        "class_name": "Standard Buildings",
+        "amount": 0
+      },
+      {
+        "class": 17,
+        "class_name": "Rams",
+        "amount": 0
+      },
+      {
+        "class": 15,
+        "class_name": "Archers",
+        "amount": 0
+      },
+      {
+        "class": 39,
+        "class_name": "Mounted Archers",
+        "amount": -3
+      }
+    ]
   },
   {
     "id": 2047,

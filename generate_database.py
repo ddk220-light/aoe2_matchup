@@ -111,6 +111,70 @@ ORIGINAL_13_CIVS = [
 LITHUANIAN_RELIC_COUNT = 2
 
 # =============================================================================
+# BUILDING WORK RATE (affects unit creation time)
+# =============================================================================
+# Unit class → primary creation building ID
+UNIT_CLASS_TO_BUILDING = {
+    6: 12,  # Infantry → Barracks
+    0: 87,  # Archer → Archery Range
+    12: 101,  # Cavalry → Stable
+    36: 87,  # Cavalry Archer → Archery Range
+    13: 49,  # Siege → Siege Workshop
+    44: 87,  # Gunpowder (Hand Cannoneer) → Archery Range
+    55: 49,  # Scorpion/Ballista → Siege Workshop
+    54: 82,  # Trebuchet → Castle
+}
+
+# Unique units are created at Castle (82) by default
+UNIQUE_UNIT_BUILDING = 82
+
+# Techs that multiply building work_rate (attribute 13)
+# Format: tech_id → (civ_id, {building_id: multiplier, ...})
+# civ_id=-1 means available to all civs
+BUILDING_WORK_RATE_TECHS = {
+    315: (
+        -1,
+        {  # Conscription (Imperial, all civs)
+            12: 1.33,
+            20: 1.33,  # Barracks variants
+            87: 1.33,
+            10: 1.33,
+            14: 1.33,  # Archery Range variants
+            101: 1.33,
+            86: 1.33,
+            153: 1.33,  # Stable variants
+            82: 1.33,  # Castle
+            49: 1.33,  # Siege Workshop
+            498: 1.33,
+            132: 1.33,  # Other military buildings
+            1251: 1.33,
+            1665: 1.33,  # Krepost, Donjon
+        },
+    ),
+    457: (
+        3,
+        {  # Perfusion (Goths Imperial UT, civ_id=3)
+            12: 2.0,  # Barracks only
+        },
+    ),
+    493: (
+        2,
+        {  # Chivalry (Franks Imperial UT, civ_id=2)
+            101: 1.4,
+            86: 1.4,
+            153: 1.4,  # Stable variants
+        },
+    ),
+}
+
+# Unique units that can also be created in Barracks (after specific tech)
+# Format: (civ_name, base_slug) → barracks_building_id
+UNIQUE_UNITS_IN_BARRACKS = {
+    ("Goths", "huskarl"): 12,  # After Anarchy tech
+    ("Goths", "elite_huskarl"): 12,
+}
+
+# =============================================================================
 # COMBAT PROPERTIES (stored in DB so simulation needs zero hardcoded slug lookups)
 # =============================================================================
 # Standard units — keyed by unit slug
@@ -1332,6 +1396,31 @@ class UnitAnalyzer:
         """Get set of disabled tech IDs for a civilization."""
         return self.civ_disabled_tech_ids.get(civ_name, set())
 
+    def get_building_work_rate(
+        self, civ_name: str, building_id: int, max_age: int
+    ) -> float:
+        """Get combined work rate multiplier for a building from all available techs."""
+        disabled_techs = self.get_disabled_techs(civ_name)
+        civ_id = self.civ_name_to_id.get(civ_name, -1)
+        multiplier = 1.0
+        for tech_id, (
+            tech_civ_id,
+            building_multipliers,
+        ) in BUILDING_WORK_RATE_TECHS.items():
+            if building_id not in building_multipliers:
+                continue
+            if tech_id in disabled_techs:
+                continue
+            # Check civ restriction (-1 = all civs)
+            if tech_civ_id != -1 and tech_civ_id != civ_id:
+                continue
+            # Check age requirement
+            tech_age = self.get_tech_age_recursive(tech_id)
+            if tech_age > max_age:
+                continue
+            multiplier *= building_multipliers[building_id]
+        return multiplier
+
     def has_tech(self, civ_name: str, tech_id: int) -> bool:
         """Check if a civ has access to a specific tech."""
         if tech_id is None:
@@ -1891,6 +1980,27 @@ class UnitAnalyzer:
         )
         stats.upgrade_cost = upgrade_cost
 
+        # Apply building work rate to creation time
+        building_id = UNIT_CLASS_TO_BUILDING.get(unit_class)
+        if building_id and stats.train_time > 0:
+            work_rate = self.get_building_work_rate(civ_name, building_id, max_age)
+            if work_rate > 1.0:
+                stats.train_time = stats.train_time / work_rate
+                civ_id = self.civ_name_to_id.get(civ_name, -1)
+                for tech_id, (
+                    tech_civ_id,
+                    bldg_mults,
+                ) in BUILDING_WORK_RATE_TECHS.items():
+                    if building_id in bldg_mults:
+                        if tech_id not in disabled_techs:
+                            if tech_civ_id == -1 or tech_civ_id == civ_id:
+                                tech_age = self.get_tech_age_recursive(tech_id)
+                                if tech_age <= max_age:
+                                    te = self.tech_effect_map.get(tech_id, {})
+                                    tname = te.get("tech_name", f"Tech {tech_id}")
+                                    if tname not in applied_bonuses:
+                                        applied_bonuses.append(tname)
+
         # Round values
         stats.hp = round(stats.hp)
         stats.speed = round(stats.speed, 2)
@@ -1987,6 +2097,51 @@ class UnitAnalyzer:
                 if self.apply_effect_command(cmd, stats, unit_id, unit_class):
                     if tech_name not in applied_bonuses:
                         applied_bonuses.append(tech_name)
+
+        # Apply building work rate to creation time
+        # Unique units default to Castle; some can also be created in Barracks
+        disabled_techs = self.get_disabled_techs(civ_name)
+        if stats.train_time > 0:
+            unit_slug = unit_name.lower().replace(" ", "_").replace("-", "_")
+            castle_rate = self.get_building_work_rate(
+                civ_name, UNIQUE_UNIT_BUILDING, max_age
+            )
+            # Check if this unit can also be created in Barracks
+            barracks_key = (civ_name, unit_slug)
+            if barracks_key in UNIQUE_UNITS_IN_BARRACKS:
+                barracks_id = UNIQUE_UNITS_IN_BARRACKS[barracks_key]
+                barracks_rate = self.get_building_work_rate(
+                    civ_name, barracks_id, max_age
+                )
+                best_rate = max(castle_rate, barracks_rate)
+            else:
+                best_rate = castle_rate
+
+            if best_rate > 1.0:
+                stats.train_time = stats.train_time / best_rate
+                # Determine which building gives best rate for bonus tracking
+                best_building = UNIQUE_UNIT_BUILDING
+                if barracks_key in UNIQUE_UNITS_IN_BARRACKS:
+                    barracks_id = UNIQUE_UNITS_IN_BARRACKS[barracks_key]
+                    if (
+                        self.get_building_work_rate(civ_name, barracks_id, max_age)
+                        > castle_rate
+                    ):
+                        best_building = barracks_id
+                civ_id = self.civ_name_to_id.get(civ_name, -1)
+                for tech_id, (
+                    tech_civ_id,
+                    bldg_mults,
+                ) in BUILDING_WORK_RATE_TECHS.items():
+                    if best_building in bldg_mults:
+                        if tech_id not in disabled_techs:
+                            if tech_civ_id == -1 or tech_civ_id == civ_id:
+                                tech_age = self.get_tech_age_recursive(tech_id)
+                                if tech_age <= max_age:
+                                    te = self.tech_effect_map.get(tech_id, {})
+                                    tname = te.get("tech_name", f"Tech {tech_id}")
+                                    if tname not in applied_bonuses:
+                                        applied_bonuses.append(tname)
 
         # Round values
         stats.hp = round(stats.hp)
@@ -3407,6 +3562,87 @@ def generate_reference_database(analyzer):
 
         # Final stats
         final_snap = _snapshot_stats(stats)
+
+        # Apply building work rate to creation time
+        if final_snap["train_time"] > 0:
+            if unit_type == "unique":
+                bld_id = UNIQUE_UNIT_BUILDING
+                # Strip civ suffix from slug for lookup (e.g. elite_huskarl_goths → elite_huskarl)
+                unit_slug_key = unit_slug
+                civ_suffix = "_" + civ_name.lower()
+                if unit_slug_key.endswith(civ_suffix):
+                    unit_slug_key = unit_slug_key[: -len(civ_suffix)]
+                barracks_key = (civ_name, unit_slug_key)
+                castle_rate = analyzer.get_building_work_rate(
+                    civ_name, UNIQUE_UNIT_BUILDING, max_age
+                )
+                if barracks_key in UNIQUE_UNITS_IN_BARRACKS:
+                    barracks_id = UNIQUE_UNITS_IN_BARRACKS[barracks_key]
+                    barracks_rate = analyzer.get_building_work_rate(
+                        civ_name, barracks_id, max_age
+                    )
+                    best_rate = max(castle_rate, barracks_rate)
+                    if barracks_rate > castle_rate:
+                        bld_id = barracks_id
+                else:
+                    best_rate = castle_rate
+            else:
+                bld_id = UNIT_CLASS_TO_BUILDING.get(unit_class)
+                best_rate = (
+                    analyzer.get_building_work_rate(civ_name, bld_id, max_age)
+                    if bld_id
+                    else 1.0
+                )
+
+            if best_rate > 1.0:
+                final_snap["train_time"] = final_snap["train_time"] / best_rate
+                # Add stat chain step and tech applied entries for work rate techs
+                disabled_techs = analyzer.get_disabled_techs(civ_name)
+                civ_id = analyzer.civ_name_to_id.get(civ_name, -1)
+                work_rate_techs = []
+                for tech_id, (
+                    tech_civ_id,
+                    bldg_mults,
+                ) in BUILDING_WORK_RATE_TECHS.items():
+                    if bld_id not in bldg_mults:
+                        continue
+                    if tech_id in disabled_techs:
+                        continue
+                    if tech_civ_id != -1 and tech_civ_id != civ_id:
+                        continue
+                    tech_age = analyzer.get_tech_age_recursive(tech_id)
+                    if tech_age > max_age:
+                        continue
+                    te = analyzer.tech_effect_map.get(tech_id, {})
+                    tname = te.get("tech_name", f"Tech {tech_id}")
+                    work_rate_techs.append(tname)
+                    # Add tech applied entry
+                    building = te.get("building", "")
+                    cost = te.get("cost", {})
+                    mult = bldg_mults[bld_id]
+                    effect_desc = f"Building work rate ×{mult} (train time ÷{mult})"
+                    _insert_tech_applied(
+                        ref_unit_id,
+                        tech_id,
+                        tname,
+                        "work_rate",
+                        building,
+                        _tech_age_name(tech_age),
+                        effect_desc,
+                        cost,
+                    )
+                    all_tech_names.append(tname)
+                # Add stat chain step showing the work rate effect
+                work_rate_snap = dict(final_snap)
+                _insert_stat_chain_row(
+                    ref_unit_id,
+                    step,
+                    "Building Work Rate (" + ", ".join(work_rate_techs) + ")",
+                    "work_rate",
+                    work_rate_snap,
+                )
+                step += 1
+
         cursor.execute(
             """UPDATE ref_units SET
                final_hp=?, final_attack=?, final_melee_armor=?, final_pierce_armor=?,

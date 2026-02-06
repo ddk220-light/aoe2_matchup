@@ -225,6 +225,9 @@ UNIQUE_COMBAT_PROPERTIES = {
     "elite_leitis": {"ignores_melee_armor": 1},
     "composite_bowman": {"ignores_pierce_armor": 1},
     "elite_composite_bowman": {"ignores_pierce_armor": 1},
+    # Fire Lancer charge: 3 projectiles, range 4, ignores armor (except siege/ships/buildings)
+    "fire_lancer": {"charge_attack_range": 4, "charge_ignores_armor": 1},
+    "elite_fire_lancer": {"charge_attack_range": 4, "charge_ignores_armor": 1},
     # Organ Gun/Fire Archer extra projectiles are now data-driven
     # Bleed damage (ability flag + stat values not in dat)
     "liao_dao": {"bleed_dps": 2.0, "bleed_duration": 5.0},
@@ -2273,6 +2276,8 @@ def create_database():
             charge_projectile_count INTEGER DEFAULT 0,
             charge_projectile_attacks_json TEXT,
             charge_projectile_speed REAL DEFAULT 0,
+            charge_attack_range REAL DEFAULT 0,
+            charge_ignores_armor INTEGER DEFAULT 0,
             splash_on_hit_radius REAL DEFAULT 0,
             dodge_shield_max INTEGER DEFAULT 0,
             dodge_shield_recharge REAL DEFAULT 0,
@@ -2523,6 +2528,8 @@ def get_combat_properties(unit_slug, civ_name=None, unit_id=None, units_data=Non
         "charge_projectile_count": 0,
         "charge_projectile_attacks_json": None,
         "charge_projectile_speed": 0,
+        "charge_attack_range": 0,
+        "charge_ignores_armor": 0,
         "splash_on_hit_radius": 0,
         "dodge_shield_max": 0,
         "dodge_shield_recharge": 0,
@@ -2741,6 +2748,7 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             extra_projectiles, extra_projectile_attacks_json,
                             charge_projectile_count, charge_projectile_attacks_json,
                             charge_projectile_speed,
+                            charge_attack_range, charge_ignores_armor,
                             splash_on_hit_radius,
                             dodge_shield_max, dodge_shield_recharge,
                             bleed_dps, bleed_duration, block_first_melee,
@@ -2748,7 +2756,7 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             hp_transform_threshold
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             civ_id_map[civ_name],
@@ -2788,6 +2796,8 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             combat_props["charge_projectile_count"],
                             combat_props["charge_projectile_attacks_json"],
                             combat_props["charge_projectile_speed"],
+                            combat_props["charge_attack_range"],
+                            combat_props["charge_ignores_armor"],
                             combat_props["splash_on_hit_radius"],
                             combat_props["dodge_shield_max"],
                             combat_props["dodge_shield_recharge"],
@@ -2992,6 +3002,7 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             extra_projectiles, extra_projectile_attacks_json,
                             charge_projectile_count, charge_projectile_attacks_json,
                             charge_projectile_speed,
+                            charge_attack_range, charge_ignores_armor,
                             splash_on_hit_radius,
                             dodge_shield_max, dodge_shield_recharge,
                             bleed_dps, bleed_duration, block_first_melee,
@@ -3007,7 +3018,7 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             dismount_attacks_json, dismount_armors_json
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
@@ -3049,6 +3060,8 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             combat_props["charge_projectile_count"],
                             combat_props["charge_projectile_attacks_json"],
                             combat_props["charge_projectile_speed"],
+                            combat_props["charge_attack_range"],
+                            combat_props["charge_ignores_armor"],
                             combat_props["splash_on_hit_radius"],
                             combat_props["dodge_shield_max"],
                             combat_props["dodge_shield_recharge"],
@@ -3805,6 +3818,8 @@ def generate_reference_database(analyzer):
             ("bleed_duration", "Bleed duration"),
             ("block_first_melee", "Blocks first melee hit"),
             ("attack_bonus_per_kill", "Attack bonus per kill"),
+            ("charge_attack_range", "Charge attack range"),
+            ("charge_ignores_armor", "Charge attack ignores armor"),
             ("hp_transform_threshold", "HP threshold for form change"),
             ("dismount_unit_id", "Dismounts to unit on death"),
         ]

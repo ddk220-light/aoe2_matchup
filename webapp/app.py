@@ -878,7 +878,11 @@ def api_matchup(civ1, civ2):
                us.dodge_shield_max, us.dodge_shield_recharge,
                us.bleed_dps, us.bleed_duration, us.block_first_melee,
                us.attack_bonus_per_kill, us.first_attack_extra_projectiles,
-               us.hp_transform_threshold
+               us.hp_transform_threshold,
+               us.dismount_hp, us.dismount_attack, us.dismount_melee_armor,
+               us.dismount_pierce_armor, us.dismount_attack_speed,
+               us.dismount_attack_delay, us.dismount_movement_speed,
+               us.dismount_attacks_json, us.dismount_armors_json
         FROM unit_stats us
         JOIN units u ON us.unit_id = u.id
         JOIN civilizations c ON us.civ_id = c.id

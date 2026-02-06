@@ -102,6 +102,8 @@ COMBAT_PROPERTIES = {
 
 # Unique units — keyed by base slug (without civ suffix)
 UNIQUE_COMBAT_PROPERTIES = {
+    "konnik": {"dismount_unit_id": 1252},
+    "elite_konnik": {"dismount_unit_id": 1253},
     "leitis": {"ignores_melee_armor": 1},
     "elite_leitis": {"ignores_melee_armor": 1},
     "composite_bowman": {"ignores_pierce_armor": 1},
@@ -2055,6 +2057,16 @@ def create_database():
             attack_bonus_per_kill REAL DEFAULT 0,
             first_attack_extra_projectiles INTEGER DEFAULT 0,
             hp_transform_threshold REAL DEFAULT 0,
+            -- Dismount on death (Konnik)
+            dismount_hp INTEGER,
+            dismount_attack INTEGER,
+            dismount_melee_armor INTEGER,
+            dismount_pierce_armor INTEGER,
+            dismount_attack_speed REAL,
+            dismount_attack_delay REAL,
+            dismount_movement_speed REAL,
+            dismount_attacks_json TEXT,
+            dismount_armors_json TEXT,
             FOREIGN KEY (civ_id) REFERENCES civilizations(id),
             FOREIGN KEY (unit_id) REFERENCES units(id),
             UNIQUE(civ_id, unit_id)
@@ -2137,6 +2149,7 @@ def get_combat_properties(unit_slug, civ_name=None):
         "attack_bonus_per_kill": 0,
         "first_attack_extra_projectiles": 0,
         "hp_transform_threshold": 0,
+        "dismount_unit_id": 0,
     }
 
     # Check standard combat properties (exact slug match)
@@ -2178,6 +2191,76 @@ def get_combat_properties(unit_slug, civ_name=None):
             break
 
     return props
+
+
+def compute_dismount_stats(analyzer, dismount_unit_id, civ_name, max_age):
+    """Compute stats for a dismounted unit (e.g., Konnik -> dismounted Konnik).
+
+    Looks up the dismounted unit's base stats and applies relevant techs.
+    Returns a dict with the dismounted unit's combat stats, or None.
+    """
+    if not dismount_unit_id:
+        return None
+
+    unit = analyzer.get_unit(dismount_unit_id)
+    if not unit:
+        return None
+
+    stats = analyzer.get_base_stats(unit)
+    unit_class = unit.get("class", 6)  # dismounted Konnik is infantry (class 6)
+
+    # Apply standard techs (blacksmith upgrades, etc.)
+    standard_techs = analyzer.find_techs_affecting_unit(
+        dismount_unit_id, unit_class, max_age
+    )
+    disabled_techs = analyzer.get_disabled_techs(civ_name)
+
+    for tech_id in sorted(standard_techs):
+        if tech_id in disabled_techs:
+            continue
+        if tech_id in analyzer.tech_effect_map:
+            te = analyzer.tech_effect_map[tech_id]
+            for cmd in te.get("commands", []):
+                analyzer.apply_effect_command(cmd, stats, dismount_unit_id, unit_class)
+
+    # Apply civ bonus techs
+    civ_bonus_techs = analyzer.get_civ_bonus_techs_for_unit(
+        civ_name, dismount_unit_id, unit_class, max_age
+    )
+    for te in civ_bonus_techs:
+        for cmd in te.get("commands", []):
+            analyzer.apply_effect_command(cmd, stats, dismount_unit_id, unit_class)
+
+    # Apply unique techs
+    unique_techs = analyzer.get_unique_techs_for_unit(
+        civ_name, dismount_unit_id, unit_class, max_age
+    )
+    for te in unique_techs:
+        for cmd in te.get("commands", []):
+            analyzer.apply_effect_command(cmd, stats, dismount_unit_id, unit_class)
+
+    # Round values
+    stats.hp = round(stats.hp)
+    stats.attack = round(stats.attack)
+    stats.melee_armor = round(stats.melee_armor)
+    stats.pierce_armor = round(stats.pierce_armor)
+    stats.speed = round(stats.speed, 2)
+    stats.reload_time = round(stats.reload_time, 3)
+    stats.attack_delay = round(stats.attack_delay, 3)
+
+    return {
+        "hp": int(stats.hp),
+        "attack": int(stats.attack),
+        "melee_armor": int(stats.melee_armor),
+        "pierce_armor": int(stats.pierce_armor),
+        "attack_speed": round(1.0 / stats.reload_time, 3)
+        if stats.reload_time > 0
+        else 0,
+        "attack_delay": stats.attack_delay,
+        "movement_speed": stats.speed,
+        "attacks_json": json.dumps(stats.attacks) if stats.attacks else None,
+        "armors_json": json.dumps(stats.armors) if stats.armors else None,
+    }
 
 
 def populate_database(conn, analyzer: UnitAnalyzer):
@@ -2465,6 +2548,19 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                 uu_slug = slugs_to_process[idx]
                 combat_props = get_combat_properties(uu_slug, civ_name)
 
+                # Compute dismount stats if applicable (e.g., Konnik)
+                dismount_id = combat_props.get("dismount_unit_id", 0)
+                ds = (
+                    compute_dismount_stats(
+                        analyzer,
+                        dismount_id,
+                        civ_name,
+                        CASTLE_AGE if idx == 0 else IMPERIAL_AGE,
+                    )
+                    if dismount_id
+                    else None
+                )
+
                 if stats:
                     attacks_json = json.dumps(stats.attacks) if stats.attacks else None
                     armors_json = json.dumps(stats.armors) if stats.armors else None
@@ -2484,10 +2580,15 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             dodge_shield_max, dodge_shield_recharge,
                             bleed_dps, bleed_duration, block_first_melee,
                             attack_bonus_per_kill, first_attack_extra_projectiles,
-                            hp_transform_threshold
+                            hp_transform_threshold,
+                            dismount_hp, dismount_attack, dismount_melee_armor,
+                            dismount_pierce_armor, dismount_attack_speed,
+                            dismount_attack_delay, dismount_movement_speed,
+                            dismount_attacks_json, dismount_armors_json
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                                  ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             db_civ_id,
@@ -2532,6 +2633,15 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             combat_props["attack_bonus_per_kill"],
                             combat_props["first_attack_extra_projectiles"],
                             combat_props["hp_transform_threshold"],
+                            ds["hp"] if ds else None,
+                            ds["attack"] if ds else None,
+                            ds["melee_armor"] if ds else None,
+                            ds["pierce_armor"] if ds else None,
+                            ds["attack_speed"] if ds else None,
+                            ds["attack_delay"] if ds else None,
+                            ds["movement_speed"] if ds else None,
+                            ds["attacks_json"] if ds else None,
+                            ds["armors_json"] if ds else None,
                         ),
                     )
 

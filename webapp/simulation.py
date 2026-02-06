@@ -18,6 +18,32 @@ MAP_SPACE = 22.0  # ~tiles of combat space (MAP_MAX - 2*start_offset)
 UNIT_SPACING = 0.75  # approximate unit spacing in melee clump
 
 
+def _parse_dismount(row):
+    """Parse dismount-on-death data from a DB row. Returns dict or None."""
+    keys = row.keys() if hasattr(row, "keys") else row
+    if "dismount_hp" not in keys or not row["dismount_hp"]:
+        return None
+    attacks = (
+        json.loads(row["dismount_attacks_json"]) if row["dismount_attacks_json"] else {}
+    )
+    armors = (
+        json.loads(row["dismount_armors_json"]) if row["dismount_armors_json"] else {}
+    )
+    attacks = {int(k): v for k, v in attacks.items()}
+    armors = {int(k): v for k, v in armors.items()}
+    return {
+        "hp": row["dismount_hp"],
+        "attack": row["dismount_attack"],
+        "melee_armor": row["dismount_melee_armor"],
+        "pierce_armor": row["dismount_pierce_armor"],
+        "attack_speed": row["dismount_attack_speed"],
+        "attack_delay": row["dismount_attack_delay"] or 0,
+        "movement_speed": row["dismount_movement_speed"] or 0.9,
+        "attacks": attacks,
+        "armors": armors,
+    }
+
+
 def prepare_combat_unit(row):
     """Convert a DB row (sqlite3.Row or dict) into a combat-ready unit dict.
 
@@ -80,6 +106,8 @@ def prepare_combat_unit(row):
         "paired_unit_slug": row["paired_unit_slug"]
         if "paired_unit_slug" in (row.keys() if hasattr(row, "keys") else row)
         else None,
+        # Dismount on death (Konnik)
+        "dismount": _parse_dismount(row),
     }
 
 
@@ -326,6 +354,63 @@ def simulate_battle(
     bleed_on2 = {}
     committed1 = {}  # idx -> (target, time_remaining)
     committed2 = {}
+
+    # Dismount on death (Konnik): pre-compute dismount damage
+    dismount1 = unit1.get("dismount")
+    dismount2 = unit2.get("dismount")
+    dismounted1 = [False] * count1 if dismount1 else None
+    dismounted2 = [False] * count2 if dismount2 else None
+
+    if dismount1:
+        # Dismounted team1 attacking team2
+        dmg1_dismount = _calc_damage(
+            dismount1["attacks"],
+            dismount1["attack"],
+            unit2["armors"],
+            unit2["melee_armor"],
+            unit2["pierce_armor"],
+            False,  # dismounted is always melee
+        )
+        # Team2 attacking dismounted team1 (different armor classes!)
+        dmg2_vs_dismount1 = _calc_damage(
+            unit2["attacks"],
+            unit2["attack"],
+            dismount1["armors"],
+            dismount1["melee_armor"],
+            dismount1["pierce_armor"],
+            is_ranged2,
+            ignores_pierce=unit2["ignores_pierce_armor"],
+            ignores_melee=unit2["ignores_melee_armor"],
+        )
+        reload1_dismount = (
+            1.0 / dismount1["attack_speed"] if dismount1["attack_speed"] > 0 else 2.0
+        )
+        delay1_dismount = dismount1["attack_delay"]
+    if dismount2:
+        # Dismounted team2 attacking team1
+        dmg2_dismount = _calc_damage(
+            dismount2["attacks"],
+            dismount2["attack"],
+            unit1["armors"],
+            unit1["melee_armor"],
+            unit1["pierce_armor"],
+            False,
+        )
+        # Team1 attacking dismounted team2 (different armor classes!)
+        dmg1_vs_dismount2 = _calc_damage(
+            unit1["attacks"],
+            unit1["attack"],
+            dismount2["armors"],
+            dismount2["melee_armor"],
+            dismount2["pierce_armor"],
+            is_ranged1,
+            ignores_pierce=unit1["ignores_pierce_armor"],
+            ignores_melee=unit1["ignores_melee_armor"],
+        )
+        reload2_dismount = (
+            1.0 / dismount2["attack_speed"] if dismount2["attack_speed"] > 0 else 2.0
+        )
+        delay2_dismount = dismount2["attack_delay"]
 
     start_total_hp1 = float(unit1["hp"]) * count1
     start_total_hp2 = float(unit2["hp"]) * count2
@@ -614,6 +699,8 @@ def simulate_battle(
                 t_reload, t_delay = reload1, delay1
                 t_extra_proj, t_first_burst = extra_proj1, first_burst1
                 t_dmg = dmg1
+                t_dmg_vs_dismount = dmg1_vs_dismount2 if dismount2 else dmg1
+                t_enemy_dismounted = dismounted2
                 t_cant_attack = cant_attack_melee1
                 enemy_hp = hp2
                 enemy_alive = alive2
@@ -627,24 +714,42 @@ def simulate_battle(
                 t_reload, t_delay = reload2, delay2
                 t_extra_proj, t_first_burst = extra_proj2, first_burst2
                 t_dmg = dmg2
+                t_dmg_vs_dismount = dmg2_vs_dismount1 if dismount1 else dmg2
+                t_enemy_dismounted = dismounted1
                 t_cant_attack = cant_attack_melee2
                 enemy_hp = hp1
                 enemy_alive = alive1
                 enemy_team = 1
 
             for i in my_alive:
+                # Check if this unit has dismounted (Konnik)
+                i_dismounted = (team_id == 1 and dismounted1 and dismounted1[i]) or (
+                    team_id == 2 and dismounted2 and dismounted2[i]
+                )
+
                 # Handle committed melee attacks
                 if i in my_committed:
                     target_idx, time_left = my_committed[i]
                     time_left -= DT
                     if time_left <= 0:
                         if enemy_hp[target_idx] > 0:
-                            hit_dmg = t_dmg + int(my_bonus_atk[i])
+                            if i_dismounted:
+                                base = dmg1_dismount if team_id == 1 else dmg2_dismount
+                            elif t_enemy_dismounted and t_enemy_dismounted[target_idx]:
+                                base = t_dmg_vs_dismount
+                            else:
+                                base = t_dmg
+                            hit_dmg = base + int(my_bonus_atk[i])
                             pending_damage.append(
                                 (enemy_team, target_idx, hit_dmg, i, team_id)
                             )
                         del my_committed[i]
-                        my_cooldown[i] = t_reload
+                        if i_dismounted:
+                            my_cooldown[i] = (
+                                reload1_dismount if team_id == 1 else reload2_dismount
+                            )
+                        else:
+                            my_cooldown[i] = t_reload
                     else:
                         my_committed[i] = (target_idx, time_left)
                     continue
@@ -664,13 +769,32 @@ def simulate_battle(
                 if target_idx < 0:
                     continue
 
-                if t_is_ranged:
+                if i_dismounted:
+                    # Dismounted: always melee, use dismount stats
+                    i_dmg = (dmg1_dismount if team_id == 1 else dmg2_dismount) + int(
+                        my_bonus_atk[i]
+                    )
+                    i_delay = delay1_dismount if team_id == 1 else delay2_dismount
+                    i_reload = reload1_dismount if team_id == 1 else reload2_dismount
+                    if i_delay > 0:
+                        my_committed[i] = (target_idx, i_delay)
+                    else:
+                        pending_damage.append(
+                            (enemy_team, target_idx, i_dmg, i, team_id)
+                        )
+                        my_cooldown[i] = i_reload
+                elif t_is_ranged:
                     # Ranged: fire instantly
                     num_proj = 1 + t_extra_proj
                     if t_first_burst > 0 and not my_used_first[i]:
                         num_proj += t_first_burst
                         my_used_first[i] = True
-                    hit_dmg = t_dmg + int(my_bonus_atk[i])
+                    base = (
+                        t_dmg_vs_dismount
+                        if (t_enemy_dismounted and t_enemy_dismounted[target_idx])
+                        else t_dmg
+                    )
+                    hit_dmg = base + int(my_bonus_atk[i])
                     for _ in range(num_proj):
                         pending_damage.append(
                             (enemy_team, target_idx, hit_dmg, i, team_id)
@@ -681,7 +805,12 @@ def simulate_battle(
                     if t_delay > 0:
                         my_committed[i] = (target_idx, t_delay)
                     else:
-                        hit_dmg = t_dmg + int(my_bonus_atk[i])
+                        base = (
+                            t_dmg_vs_dismount
+                            if (t_enemy_dismounted and t_enemy_dismounted[target_idx])
+                            else t_dmg
+                        )
+                        hit_dmg = base + int(my_bonus_atk[i])
                         pending_damage.append(
                             (enemy_team, target_idx, hit_dmg, i, team_id)
                         )
@@ -844,6 +973,24 @@ def simulate_battle(
                 if not transformed2[idx] and hp2[idx] <= threshold_hp and hp2[idx] > 0:
                     transformed2[idx] = True
                     bonus_atk2[idx] += 3
+
+        # Dismount on death: respawn dead mounted units as dismounted
+        if dismount1:
+            for idx in range(count1):
+                if hp1[idx] <= 0 and not dismounted1[idx]:
+                    dismounted1[idx] = True
+                    hp1[idx] = float(dismount1["hp"])
+                    cooldown1[idx] = reload1_dismount
+                    if idx in committed1:
+                        del committed1[idx]
+        if dismount2:
+            for idx in range(count2):
+                if hp2[idx] <= 0 and not dismounted2[idx]:
+                    dismounted2[idx] = True
+                    hp2[idx] = float(dismount2["hp"])
+                    cooldown2[idx] = reload2_dismount
+                    if idx in committed2:
+                        del committed2[idx]
 
     # =========================================================
     # PHASE 3: Winner determination

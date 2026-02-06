@@ -49,7 +49,7 @@ ARMOR_CLASSES = {
     35: "Heroes & Kings",
     36: "Hussite Wagons",
     37: "Unused",
-    38: "Elephants",
+    38: "Skirmishers",
     39: "Mounted Archers",
 }
 

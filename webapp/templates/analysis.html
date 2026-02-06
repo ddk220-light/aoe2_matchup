@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unit Analysis - AoE2 Unit Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --primary-color: #8b4513;
+            --secondary-color: #daa520;
+            --bg-color: #1a1a2e;
+            --card-bg: #16213e;
+            --text-color: #e8e8e8;
+            --highlight-better: #2ecc71;
+            --highlight-worse: #e74c3c;
+            --castle-color: #9b59b6;
+            --imperial-color: #e74c3c;
+            --verified-color: #2ecc71;
+            --verified-bg: rgba(46, 204, 113, 0.08);
+            --verified-border: rgba(46, 204, 113, 0.4);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Open Sans", sans-serif;
+            background: linear-gradient(135deg, var(--bg-color) 0%, #0f0f23 100%);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header { text-align: center; padding: 30px 0; margin-bottom: 30px; }
+        h1 {
+            font-family: "Cinzel", serif;
+            font-size: 2.5rem;
+            color: var(--secondary-color);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+        }
+        .subtitle { font-size: 1.1rem; color: #888; }
+        .nav-links { display: flex; gap: 15px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
+        .nav-link {
+            color: var(--text-color); text-decoration: none;
+            padding: 8px 16px; border-radius: 5px;
+            background: rgba(255,255,255,0.1); transition: all 0.3s;
+        }
+        .nav-link:hover { background: rgba(218,165,32,0.3); }
+        .nav-link.active { background: var(--secondary-color); color: #1a1a2e; font-weight: 600; }
+
+        .civ-selector {
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+            margin-bottom: 30px; padding: 20px;
+            background: var(--card-bg); border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .civ-btn {
+            padding: 10px 18px; font-size: 0.9rem;
+            background: linear-gradient(145deg, #2d2d5a, #1a1a3e);
+            color: var(--text-color); border: 2px solid transparent;
+            border-radius: 8px; cursor: pointer; transition: all 0.3s ease;
+        }
+        .civ-btn:hover { transform: translateY(-2px); border-color: var(--secondary-color); box-shadow: 0 5px 15px rgba(218,165,32,0.3); }
+        .civ-btn.active { background: linear-gradient(145deg, var(--secondary-color), #b8860b); color: #1a1a2e; font-weight: 600; border-color: var(--secondary-color); }
+
+        /* Progress bar */
+        .progress-bar-container {
+            background: var(--card-bg); border-radius: 15px; padding: 20px 25px;
+            margin-bottom: 25px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            display: none;
+        }
+        .progress-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px;
+        }
+        .progress-header h2 {
+            font-family: "Cinzel", serif; font-size: 1.5rem;
+            color: var(--secondary-color);
+        }
+        .progress-actions { display: flex; gap: 10px; }
+        .btn {
+            padding: 8px 18px; border-radius: 6px; border: none;
+            cursor: pointer; font-size: 0.85rem; font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-verify-all {
+            background: var(--verified-color); color: #1a1a2e;
+        }
+        .btn-verify-all:hover { background: #27ae60; }
+        .btn-unverify-all {
+            background: rgba(255,255,255,0.1); color: var(--text-color);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn-unverify-all:hover { background: rgba(255,255,255,0.2); }
+        .progress-text { font-size: 0.9rem; color: #aaa; margin-bottom: 8px; }
+        .progress-track {
+            width: 100%; height: 8px; background: rgba(255,255,255,0.1);
+            border-radius: 4px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; background: var(--verified-color);
+            border-radius: 4px; transition: width 0.4s ease;
+        }
+
+        /* Age sections */
+        .age-section {
+            background: var(--card-bg); border-radius: 15px; padding: 25px;
+            margin-bottom: 25px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .age-header {
+            display: flex; align-items: center; gap: 15px;
+            margin-bottom: 20px; padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+        .age-title { font-family: "Cinzel", serif; font-size: 1.5rem; }
+        .age-title.castle { color: var(--castle-color); }
+        .age-title.imperial { color: var(--imperial-color); }
+        .unit-count { background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 15px; font-size: 0.85rem; }
+
+        /* Unit cards */
+        .unit-card {
+            background: rgba(0,0,0,0.2); border-radius: 10px;
+            padding: 20px; margin-bottom: 15px;
+            border: 2px solid transparent; transition: all 0.3s;
+        }
+        .unit-card.verified {
+            border-color: var(--verified-border);
+            background: var(--verified-bg);
+        }
+        .unit-card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px;
+        }
+        .unit-title {
+            font-family: "Cinzel", serif; font-size: 1.2rem;
+            color: var(--secondary-color);
+        }
+        .unit-meta { font-size: 0.8rem; color: #888; margin-top: 3px; }
+        .verify-btn {
+            padding: 6px 16px; border-radius: 6px; border: 2px solid rgba(255,255,255,0.2);
+            background: transparent; color: var(--text-color);
+            cursor: pointer; font-size: 0.85rem; transition: all 0.3s;
+        }
+        .verify-btn:hover { border-color: var(--verified-color); color: var(--verified-color); }
+        .verify-btn.verified {
+            background: var(--verified-color); color: #1a1a2e;
+            border-color: var(--verified-color); font-weight: 600;
+        }
+
+        /* Stat table */
+        .stat-table {
+            width: 100%; border-collapse: collapse; margin-bottom: 15px;
+            font-size: 0.85rem;
+        }
+        .stat-table th {
+            text-align: left; padding: 6px 10px;
+            background: rgba(0,0,0,0.3); color: var(--secondary-color);
+            font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .stat-table td {
+            padding: 5px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .stat-table td:first-child { color: #aaa; white-space: nowrap; width: 100px; }
+        .stat-table td:nth-child(2), .stat-table td:nth-child(4) {
+            text-align: right; white-space: nowrap; width: 80px;
+        }
+        .stat-table td:nth-child(3) { color: #8bb8e8; font-size: 0.8rem; }
+        .stat-changed { color: var(--secondary-color); font-weight: 600; }
+
+        /* Sub-sections */
+        .sub-section {
+            margin-top: 10px; padding: 10px;
+            background: rgba(0,0,0,0.15); border-radius: 8px;
+        }
+        .sub-section-title {
+            font-size: 0.8rem; color: var(--secondary-color);
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 8px; font-weight: 600;
+        }
+        .class-grid {
+            display: flex; flex-wrap: wrap; gap: 6px;
+        }
+        .class-tag {
+            background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 4px;
+            font-size: 0.78rem;
+        }
+        .class-tag .class-name { color: #aaa; }
+        .class-tag .class-val { color: var(--text-color); font-weight: 600; }
+        .class-tag .class-changed { color: var(--secondary-color); }
+
+        .special-tag {
+            background: rgba(218,165,32,0.15); padding: 4px 10px; border-radius: 4px;
+            font-size: 0.8rem; color: var(--secondary-color);
+            border-left: 3px solid var(--secondary-color);
+        }
+
+        .techs-list {
+            display: flex; flex-wrap: wrap; gap: 5px;
+        }
+        .tech-tag {
+            padding: 3px 8px; border-radius: 4px; font-size: 0.75rem;
+        }
+        .tech-tag.standard { background: rgba(52,152,219,0.2); color: #6bb3e0; }
+        .tech-tag.civ_bonus { background: rgba(218,165,32,0.2); color: #daa520; }
+        .tech-tag.unique_tech { background: rgba(155,89,182,0.2); color: #c39bd3; }
+
+        .no-civ { text-align: center; padding: 80px 20px; color: #666; }
+        .no-civ h2 { font-family: "Cinzel", serif; font-size: 1.5rem; margin-bottom: 10px; color: var(--secondary-color); }
+        .loading { text-align: center; padding: 60px; font-size: 1.2rem; color: #888; }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            h1 { font-size: 1.5rem; }
+            .civ-btn { padding: 6px 10px; font-size: 0.75rem; }
+            .unit-card { padding: 12px; }
+            .stat-table { font-size: 0.78rem; }
+            .stat-table td:nth-child(3) { font-size: 0.72rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Unit Analysis</h1>
+            <p class="subtitle">Review and verify unit stats for the 13 original civilizations</p>
+            <nav class="nav-links">
+                <a href="/" class="nav-link">By Unit</a>
+                <a href="/civ" class="nav-link">By Civilization</a>
+                <a href="/simulate" class="nav-link">Battle Sim</a>
+                <a href="/matchup" class="nav-link">1v1 Matchup</a>
+                <a href="/analysis" class="nav-link active">Analysis</a>
+            </nav>
+        </header>
+
+        <div class="civ-selector" id="civSelector">
+            {% for civ in civs %}
+            <button class="civ-btn" data-civ="{{ civ }}">{{ civ }}</button>
+            {% endfor %}
+        </div>
+
+        <div class="progress-bar-container" id="progressBar">
+            <div class="progress-header">
+                <h2 id="civTitle"></h2>
+                <div class="progress-actions">
+                    <button class="btn btn-verify-all" id="btnVerifyAll">Mark All Verified</button>
+                    <button class="btn btn-unverify-all" id="btnUnverifyAll">Unmark All</button>
+                </div>
+            </div>
+            <div class="progress-text" id="progressText"></div>
+            <div class="progress-track">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div id="content">
+            <div class="no-civ">
+                <h2>Select a Civilization</h2>
+                <p>Click on a civilization above to review unit stats</p>
+            </div>
+        </div>
+    </div>
+
+<script>
+let currentCiv = null;
+let civData = null;
+
+// Civ buttons
+document.querySelectorAll('.civ-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.civ-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentCiv = btn.dataset.civ;
+        loadCivData(currentCiv);
+    });
+});
+
+// Mark all / Unmark all
+document.getElementById('btnVerifyAll').addEventListener('click', async () => {
+    if (!currentCiv) return;
+    await fetch(`/api/ref/verify-all/${encodeURIComponent(currentCiv)}`, {method:'POST'});
+    loadCivData(currentCiv);
+});
+document.getElementById('btnUnverifyAll').addEventListener('click', async () => {
+    if (!currentCiv) return;
+    await fetch(`/api/ref/verify-all/${encodeURIComponent(currentCiv)}`, {method:'DELETE'});
+    loadCivData(currentCiv);
+});
+
+async function loadCivData(civName) {
+    document.getElementById('content').innerHTML = '<div class="loading">Loading...</div>';
+    document.getElementById('progressBar').style.display = 'none';
+
+    try {
+        const resp = await fetch(`/api/ref/civ/${encodeURIComponent(civName)}`);
+        civData = await resp.json();
+        renderCivData();
+    } catch(e) {
+        console.error(e);
+        document.getElementById('content').innerHTML = '<div class="no-civ"><h2>Error loading data</h2></div>';
+    }
+}
+
+function updateProgress() {
+    if (!civData) return;
+    const total = civData.total_units;
+    const allUnits = [...(civData.units_by_age.Castle||[]), ...(civData.units_by_age.Imperial||[])];
+    const verified = allUnits.filter(u => u.verified).length;
+    const pct = total > 0 ? Math.round(verified/total*100) : 0;
+
+    document.getElementById('progressBar').style.display = 'block';
+    document.getElementById('civTitle').textContent = civData.civ_name;
+    document.getElementById('progressText').textContent = `${verified} / ${total} units verified (${pct}%)`;
+    document.getElementById('progressFill').style.width = `${pct}%`;
+}
+
+function renderCivData() {
+    if (!civData) return;
+    updateProgress();
+
+    const ages = [
+        {key:'Castle', cls:'castle', name:'Castle Age'},
+        {key:'Imperial', cls:'imperial', name:'Imperial Age'}
+    ];
+
+    let html = '';
+    for (const age of ages) {
+        const units = civData.units_by_age[age.key] || [];
+        if (!units.length) continue;
+        const verifiedCount = units.filter(u => u.verified).length;
+        html += `<div class="age-section">
+            <div class="age-header">
+                <h3 class="age-title ${age.cls}">${age.name}</h3>
+                <span class="unit-count">${verifiedCount}/${units.length} verified</span>
+            </div>
+            ${units.map(u => renderUnitCard(u)).join('')}
+        </div>`;
+    }
+
+    document.getElementById('content').innerHTML = html;
+
+    // Attach verify button handlers
+    document.querySelectorAll('.verify-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const uid = parseInt(btn.dataset.uid);
+            const isVerified = btn.classList.contains('verified');
+            if (isVerified) {
+                await fetch(`/api/ref/verify/${uid}`, {method:'DELETE'});
+            } else {
+                await fetch(`/api/ref/verify/${uid}`, {method:'POST'});
+            }
+            // Update local state
+            const allUnits = [...(civData.units_by_age.Castle||[]), ...(civData.units_by_age.Imperial||[])];
+            const unit = allUnits.find(u => u.id === uid);
+            if (unit) unit.verified = !isVerified;
+
+            // Update UI
+            const card = btn.closest('.unit-card');
+            if (isVerified) {
+                btn.classList.remove('verified');
+                btn.textContent = 'Verify';
+                card.classList.remove('verified');
+            } else {
+                btn.classList.add('verified');
+                btn.textContent = 'Verified';
+                card.classList.add('verified');
+            }
+            updateProgress();
+            // Update age section counts
+            document.querySelectorAll('.age-section').forEach(section => {
+                const cards = section.querySelectorAll('.unit-card');
+                const vCards = section.querySelectorAll('.unit-card.verified');
+                const countEl = section.querySelector('.unit-count');
+                if (countEl) countEl.textContent = `${vCards.length}/${cards.length} verified`;
+            });
+        });
+    });
+}
+
+function renderUnitCard(unit) {
+    const v = unit.verified;
+    const upgrades = buildUpgradeDescriptions(unit);
+
+    let html = `<div class="unit-card ${v ? 'verified' : ''}" data-uid="${unit.id}">
+        <div class="unit-card-header">
+            <div>
+                <div class="unit-title">${unit.unit_name}</div>
+                <div class="unit-meta">${unit.unit_class_name} (${unit.is_ranged ? 'Ranged' : 'Melee'})${unit.unit_type === 'unique' ? ' | Unique Unit' : ''}</div>
+            </div>
+            <button class="verify-btn ${v ? 'verified' : ''}" data-uid="${unit.id}">${v ? 'Verified' : 'Verify'}</button>
+        </div>`;
+
+    // Stat table
+    html += `<table class="stat-table">
+        <tr><th>Stat</th><th>Base</th><th>Upgrades</th><th>Final</th></tr>`;
+
+    const mainAtkClass = unit.is_ranged ? 'Base Pierce' : 'Base Melee';
+    const baseAtk = unit.base_attacks[mainAtkClass] ?? unit.base_stats.attack;
+    const finalAtk = unit.final_attacks[mainAtkClass] ?? unit.final_stats.attack;
+
+    const stats = [
+        {label:'HP', base:unit.base_stats.hp, final:unit.final_stats.hp, key:'hp'},
+        {label:`Attack (${mainAtkClass})`, base:baseAtk, final:finalAtk, key:'attack'},
+        {label:'Melee Armor', base:unit.base_stats.melee_armor, final:unit.final_stats.melee_armor, key:'melee_armor'},
+        {label:'Pierce Armor', base:unit.base_stats.pierce_armor, final:unit.final_stats.pierce_armor, key:'pierce_armor'},
+        {label:'Range', base:unit.base_stats.range, final:unit.final_stats.range, key:'range'},
+        {label:'Speed', base:unit.base_stats.speed, final:unit.final_stats.speed, key:'speed'},
+        {label:'Reload Time', base:unit.base_stats.reload_time, final:unit.final_stats.reload_time, key:'reload_time'},
+        {label:'Accuracy', base:unit.base_stats.accuracy, final:unit.final_stats.accuracy, key:'accuracy'},
+        {label:'LOS', base:unit.base_stats.los, final:unit.final_stats.los, key:'los'},
+        {label:'Atk Delay', base:unit.base_stats.attack_delay, final:unit.base_stats.attack_delay, key:'attack_delay'},
+        {label:'Train Time', base:unit.base_stats.train_time, final:unit.final_stats.train_time, key:'train_time'},
+    ];
+
+    for (const s of stats) {
+        const baseVal = fmtNum(s.base);
+        const finalVal = fmtNum(s.final);
+        const changed = Math.abs((s.final||0) - (s.base||0)) > 0.001;
+        const upg = upgrades[s.key] || '';
+        html += `<tr>
+            <td>${s.label}</td>
+            <td>${baseVal}</td>
+            <td>${upg || '(none)'}</td>
+            <td class="${changed ? 'stat-changed' : ''}">${finalVal}</td>
+        </tr>`;
+    }
+
+    // Cost row
+    const baseCost = fmtCost(unit.base_stats);
+    const finalCost = fmtCost(unit.final_stats);
+    const costUpg = upgrades['cost'] || '';
+    const costChanged = baseCost !== finalCost;
+    html += `<tr>
+        <td>Cost</td>
+        <td>${baseCost}</td>
+        <td>${costUpg || '(none)'}</td>
+        <td class="${costChanged ? 'stat-changed' : ''}">${finalCost}</td>
+    </tr>`;
+    html += '</table>';
+
+    // Attack classes
+    const atkClasses = Object.entries(unit.final_attacks).filter(([k,v]) => k !== mainAtkClass);
+    if (atkClasses.length > 0) {
+        html += `<div class="sub-section">
+            <div class="sub-section-title">Bonus Attack Classes</div>
+            <div class="class-grid">`;
+        for (const [cls, val] of atkClasses) {
+            const baseVal = unit.base_attacks[cls] ?? 0;
+            const changed = Math.abs(val - baseVal) > 0.001;
+            html += `<span class="class-tag">
+                <span class="class-name">${cls}:</span>
+                <span class="${changed ? 'class-changed' : 'class-val'}">${val}</span>
+                ${changed ? `<span style="color:#666;font-size:0.7rem"> (was ${baseVal})</span>` : ''}
+            </span>`;
+        }
+        html += '</div></div>';
+    }
+
+    // Armor classes
+    const armorClasses = Object.entries(unit.final_armors);
+    if (armorClasses.length > 0) {
+        html += `<div class="sub-section">
+            <div class="sub-section-title">Armor Classes</div>
+            <div class="class-grid">`;
+        for (const [cls, val] of armorClasses) {
+            const baseVal = unit.base_armors[cls] ?? 0;
+            const changed = Math.abs(val - baseVal) > 0.001;
+            html += `<span class="class-tag">
+                <span class="class-name">${cls}:</span>
+                <span class="${changed ? 'class-changed' : 'class-val'}">${val}</span>
+                ${changed ? `<span style="color:#666;font-size:0.7rem"> (was ${baseVal})</span>` : ''}
+            </span>`;
+        }
+        html += '</div></div>';
+    }
+
+    // Projectile info
+    if (unit.total_projectiles || unit.projectile_speed) {
+        const parts = [];
+        if (unit.total_projectiles) parts.push(`count: ${fmtNum(unit.total_projectiles)}`);
+        if (unit.projectile_speed) parts.push(`speed: ${fmtNum(unit.projectile_speed)}`);
+        if (unit.min_range) parts.push(`min range: ${fmtNum(unit.min_range)}`);
+        for (const p of (unit.projectiles||[])) {
+            if (p.blast_radius) parts.push(`blast: ${fmtNum(p.blast_radius)}`);
+            if (p.is_siege_projectile) parts.push('siege projectile');
+        }
+        if (parts.length) {
+            html += `<div class="sub-section">
+                <div class="sub-section-title">Projectile</div>
+                <span class="class-tag"><span class="class-val">${parts.join(' | ')}</span></span>
+            </div>`;
+        }
+    }
+
+    // Special effects
+    if (unit.special_effects && unit.special_effects.length > 0) {
+        html += `<div class="sub-section">
+            <div class="sub-section-title">Special Properties</div>
+            <div class="class-grid">`;
+        for (const se of unit.special_effects) {
+            html += `<span class="special-tag">${se.property_name}: ${se.property_value} (${se.source})</span>`;
+        }
+        html += '</div></div>';
+    }
+
+    // Techs applied
+    if (unit.techs_applied && unit.techs_applied.length > 0) {
+        html += `<div class="sub-section">
+            <div class="sub-section-title">Technologies Applied (${unit.techs_applied.length})</div>
+            <div class="techs-list">`;
+        for (const t of unit.techs_applied) {
+            const bldg = t.building && t.building !== 'N/A' ? ` (${t.building})` : '';
+            html += `<span class="tech-tag ${t.tech_type}" title="${t.effect_description || ''}">${t.tech_name}${bldg}</span>`;
+        }
+        html += '</div></div>';
+    }
+
+    html += '</div>';
+    return html;
+}
+
+function buildUpgradeDescriptions(unit) {
+    const chain = unit.stat_chain || [];
+    const techs = unit.techs_applied || [];
+    if (chain.length < 2) return {};
+
+    const result = {};
+    const mainAtkClass = unit.is_ranged ? 'Base Pierce' : 'Base Melee';
+
+    // Stat keys and their chain column names
+    const statMap = {
+        hp: 'hp', attack: 'attack', melee_armor: 'melee_armor',
+        pierce_armor: 'pierce_armor', range: 'range_val',
+        speed: 'speed', reload_time: 'reload_time',
+        accuracy: 'accuracy', los: 'los', train_time: 'train_time',
+    };
+    // Multiplicative stats (where we show ×X instead of +X)
+    const multStats = new Set(['reload_time', 'speed', 'hp', 'train_time']);
+
+    // For attack, we need to track from attacks_json
+    for (const [statKey, chainCol] of Object.entries(statMap)) {
+        const parts = [];
+        for (let i = 1; i < chain.length; i++) {
+            const prev = chain[i-1];
+            const curr = chain[i];
+            let prevVal, currVal;
+
+            if (statKey === 'attack') {
+                // Track main attack class from attacks_json
+                const prevAtks = prev.attacks_json ? JSON.parse(prev.attacks_json) : {};
+                const currAtks = curr.attacks_json ? JSON.parse(curr.attacks_json) : {};
+                const atkClassId = unit.is_ranged ? '3' : '4';
+                prevVal = prevAtks[atkClassId] ?? 0;
+                currVal = currAtks[atkClassId] ?? 0;
+            } else {
+                prevVal = prev[chainCol] ?? 0;
+                currVal = curr[chainCol] ?? 0;
+            }
+
+            const diff = currVal - prevVal;
+            if (Math.abs(diff) < 0.001) continue;
+
+            const techName = curr.tech_name || '?';
+            // Find matching tech for building info
+            const matchTech = techs[i-1]; // techs align with chain steps 1..N
+            const building = matchTech?.building || '';
+            const bldg = building && building !== 'N/A' ? `${building}` : '';
+
+            // Detect multiplicative change
+            if (multStats.has(statKey) && prevVal !== 0) {
+                const ratio = currVal / prevVal;
+                // If ratio is a clean multiplier (not close to 1+integer_diff/prevVal)
+                if (Math.abs(ratio - Math.round(ratio * 100)/100) < 0.01 && Math.abs(diff) !== Math.round(Math.abs(diff))) {
+                    const label = bldg ? `${bldg} (${techName})` : techName;
+                    parts.push(`x${ratio.toFixed(2)} ${label}`);
+                    continue;
+                }
+            }
+
+            const sign = diff > 0 ? '+' : '';
+            const label = bldg ? `${bldg} (${techName})` : techName;
+            parts.push(`${sign}${fmtNum(diff)} ${label}`);
+        }
+        if (parts.length > 0) {
+            result[statKey] = parts.join(', ');
+        }
+    }
+
+    // Cost upgrades
+    const costParts = [];
+    for (let i = 1; i < chain.length; i++) {
+        const prev = chain[i-1];
+        const curr = chain[i];
+        const prevTotal = (prev.cost_food||0) + (prev.cost_wood||0) + (prev.cost_gold||0);
+        const currTotal = (curr.cost_food||0) + (curr.cost_wood||0) + (curr.cost_gold||0);
+        if (Math.abs(currTotal - prevTotal) > 0.001) {
+            const techName = curr.tech_name || '?';
+            const matchTech = techs[i-1];
+            const building = matchTech?.building || '';
+            const bldg = building && building !== 'N/A' ? `${building}` : '';
+            const label = bldg ? `${bldg} (${techName})` : techName;
+            // Show individual resource changes
+            const diffs = [];
+            const df = (curr.cost_food||0) - (prev.cost_food||0);
+            const dw = (curr.cost_wood||0) - (prev.cost_wood||0);
+            const dg = (curr.cost_gold||0) - (prev.cost_gold||0);
+            if (Math.abs(df) > 0.001) diffs.push(`${df>0?'+':''}${fmtNum(df)}F`);
+            if (Math.abs(dw) > 0.001) diffs.push(`${dw>0?'+':''}${fmtNum(dw)}W`);
+            if (Math.abs(dg) > 0.001) diffs.push(`${dg>0?'+':''}${fmtNum(dg)}G`);
+            costParts.push(`${diffs.join(' ')} ${label}`);
+        }
+    }
+    if (costParts.length > 0) {
+        result['cost'] = costParts.join(', ');
+    }
+
+    return result;
+}
+
+function fmtNum(val) {
+    if (val == null) return '-';
+    if (Number.isInteger(val)) return val.toString();
+    // Round to avoid floating point noise
+    const rounded = Math.round(val * 1000) / 1000;
+    if (Number.isInteger(rounded)) return rounded.toString();
+    return rounded.toString();
+}
+
+function fmtCost(stats) {
+    const parts = [];
+    if (stats.cost_food) parts.push(`${fmtNum(stats.cost_food)}F`);
+    if (stats.cost_wood) parts.push(`${fmtNum(stats.cost_wood)}W`);
+    if (stats.cost_gold) parts.push(`${fmtNum(stats.cost_gold)}G`);
+    return parts.join(' ') || 'Free';
+}
+</script>
+</body>
+</html>

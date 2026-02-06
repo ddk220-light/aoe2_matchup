@@ -9,8 +9,9 @@ from simulation import prepare_combat_unit, simulate_battle
 
 app = Flask(__name__)
 
-# Database path
+# Database paths
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_units.db")
+REF_DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 
 # Age definitions
 AGES = {
@@ -23,6 +24,13 @@ AGES = {
 def get_db():
     """Get a database connection with row factory."""
     conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def get_ref_db():
+    """Get a connection to the reference/audit database."""
+    conn = sqlite3.connect(REF_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -722,6 +730,280 @@ def init_comments_table():
 
 # Initialize comments table on startup
 init_comments_table()
+
+
+def init_verifications_table():
+    """Create unit_verifications table if it doesn't exist."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS unit_verifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ref_unit_id INTEGER NOT NULL UNIQUE,
+            verified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """
+    )
+    conn.commit()
+    conn.close()
+
+
+init_verifications_table()
+
+ORIGINAL_13_CIVS = [
+    "Britons",
+    "Byzantines",
+    "Celts",
+    "Chinese",
+    "Franks",
+    "Goths",
+    "Japanese",
+    "Mongols",
+    "Persians",
+    "Saracens",
+    "Teutons",
+    "Turks",
+    "Vikings",
+]
+
+
+# ============== Unit Analysis ==============
+
+
+@app.route("/analysis")
+def analysis():
+    """Unit analysis/verification page."""
+    return render_template("analysis.html", civs=ORIGINAL_13_CIVS)
+
+
+@app.route("/api/ref/armor-classes")
+def api_ref_armor_classes():
+    """Get armor class ID→name mapping from reference DB."""
+    ref_conn = get_ref_db()
+    # Use the main DB's armor_classes table
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name FROM armor_classes ORDER BY id")
+    classes = {str(row["id"]): row["name"] for row in cursor.fetchall()}
+    conn.close()
+    ref_conn.close()
+    return jsonify(classes)
+
+
+@app.route("/api/ref/civ/<civ_name>")
+def api_ref_civ(civ_name):
+    """Get all reference data for a civilization."""
+    if civ_name not in ORIGINAL_13_CIVS:
+        return jsonify({"error": "Civilization not in original 13"}), 404
+
+    ref_conn = get_ref_db()
+    rc = ref_conn.cursor()
+
+    # Get all units for this civ
+    rc.execute(
+        "SELECT * FROM ref_units WHERE civ_name=? ORDER BY age DESC, unit_name",
+        (civ_name,),
+    )
+    units_rows = rc.fetchall()
+
+    # Get verifications
+    main_conn = get_db()
+    mc = main_conn.cursor()
+    mc.execute("SELECT ref_unit_id FROM unit_verifications")
+    verified_ids = {row["ref_unit_id"] for row in mc.fetchall()}
+    main_conn.close()
+
+    # Get armor class names
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name FROM armor_classes ORDER BY id")
+    ac_names = {str(row["id"]): row["name"] for row in cursor.fetchall()}
+    conn.close()
+
+    units = []
+    for row in units_rows:
+        uid = row["id"]
+
+        # Get techs applied
+        rc.execute(
+            """SELECT tech_name, tech_type, building, age_available, effect_description
+               FROM ref_techs_applied WHERE ref_unit_id=? ORDER BY id""",
+            (uid,),
+        )
+        techs = [dict(t) for t in rc.fetchall()]
+
+        # Get stat chain
+        rc.execute(
+            """SELECT step_order, tech_name, tech_type,
+                      hp, attack, melee_armor, pierce_armor,
+                      speed, range_val, reload_time, accuracy, los,
+                      train_time, cost_food, cost_wood, cost_gold,
+                      attacks_json, armors_json
+               FROM ref_stat_chain WHERE ref_unit_id=? ORDER BY step_order""",
+            (uid,),
+        )
+        stat_chain = [dict(s) for s in rc.fetchall()]
+
+        # Get special effects
+        rc.execute(
+            """SELECT property_name, property_value, source, description
+               FROM ref_special_effects WHERE ref_unit_id=?""",
+            (uid,),
+        )
+        special = [dict(s) for s in rc.fetchall()]
+
+        # Get projectiles
+        rc.execute(
+            """SELECT projectile_type, projectile_count, projectile_speed,
+                      attacks_json, blast_radius, is_siege_projectile
+               FROM ref_projectiles WHERE ref_unit_id=?""",
+            (uid,),
+        )
+        projectiles = [dict(p) for p in rc.fetchall()]
+
+        # Convert class IDs to names in attack/armor JSONs
+        def convert_classes(json_str):
+            if not json_str:
+                return {}
+            raw = json.loads(json_str)
+            return {ac_names.get(k, f"class_{k}"): v for k, v in raw.items()}
+
+        unit = {
+            "id": uid,
+            "unit_name": row["unit_name"],
+            "unit_slug": row["unit_slug"],
+            "unit_type": row["unit_type"],
+            "age": row["age"],
+            "unit_class_name": row["unit_class_name"],
+            "is_ranged": bool(row["is_ranged"]),
+            "verified": uid in verified_ids,
+            "base_stats": {
+                "hp": row["base_hp"],
+                "attack": row["base_attack"],
+                "melee_armor": row["base_melee_armor"],
+                "pierce_armor": row["base_pierce_armor"],
+                "range": row["base_range"],
+                "speed": row["base_speed"],
+                "reload_time": row["base_reload_time"],
+                "attack_delay": row["base_attack_delay"],
+                "accuracy": row["base_accuracy"],
+                "los": row["base_los"],
+                "cost_food": row["base_cost_food"],
+                "cost_wood": row["base_cost_wood"],
+                "cost_gold": row["base_cost_gold"],
+                "train_time": row["base_train_time"],
+            },
+            "final_stats": {
+                "hp": row["final_hp"],
+                "attack": row["final_attack"],
+                "melee_armor": row["final_melee_armor"],
+                "pierce_armor": row["final_pierce_armor"],
+                "range": row["final_range"],
+                "speed": row["final_speed"],
+                "reload_time": row["final_reload_time"],
+                "attack_delay": row["final_attack_delay"],
+                "accuracy": row["final_accuracy"],
+                "los": row["final_los"],
+                "cost_food": row["final_cost_food"],
+                "cost_wood": row["final_cost_wood"],
+                "cost_gold": row["final_cost_gold"],
+                "train_time": row["final_train_time"],
+            },
+            "base_attacks": convert_classes(row["base_attacks_json"]),
+            "final_attacks": convert_classes(row["final_attacks_json"]),
+            "base_armors": convert_classes(row["base_armors_json"]),
+            "final_armors": convert_classes(row["final_armors_json"]),
+            "total_projectiles": row["total_projectiles"],
+            "projectile_speed": row["projectile_speed"],
+            "min_range": row["min_range"],
+            "techs_applied": techs,
+            "stat_chain": stat_chain,
+            "special_effects": special,
+            "projectiles": projectiles,
+        }
+        units.append(unit)
+
+    ref_conn.close()
+
+    # Group by age
+    by_age = {"Castle": [], "Imperial": []}
+    for u in units:
+        if u["age"] in by_age:
+            by_age[u["age"]].append(u)
+
+    return jsonify(
+        {
+            "civ_name": civ_name,
+            "units_by_age": by_age,
+            "total_units": len(units),
+            "verified_count": sum(1 for u in units if u["verified"]),
+        }
+    )
+
+
+@app.route("/api/ref/verify/<int:ref_unit_id>", methods=["POST"])
+def verify_unit(ref_unit_id):
+    """Mark a unit as verified."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT OR IGNORE INTO unit_verifications (ref_unit_id) VALUES (?)",
+        (ref_unit_id,),
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
+
+
+@app.route("/api/ref/verify/<int:ref_unit_id>", methods=["DELETE"])
+def unverify_unit(ref_unit_id):
+    """Unmark a unit verification."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM unit_verifications WHERE ref_unit_id=?", (ref_unit_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
+
+
+@app.route("/api/ref/verify-all/<civ_name>", methods=["POST"])
+def verify_all_civ(civ_name):
+    """Mark all units for a civ as verified."""
+    ref_conn = get_ref_db()
+    rc = ref_conn.cursor()
+    rc.execute("SELECT id FROM ref_units WHERE civ_name=?", (civ_name,))
+    unit_ids = [row["id"] for row in rc.fetchall()]
+    ref_conn.close()
+
+    conn = get_db()
+    cursor = conn.cursor()
+    for uid in unit_ids:
+        cursor.execute(
+            "INSERT OR IGNORE INTO unit_verifications (ref_unit_id) VALUES (?)",
+            (uid,),
+        )
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True, "count": len(unit_ids)})
+
+
+@app.route("/api/ref/verify-all/<civ_name>", methods=["DELETE"])
+def unverify_all_civ(civ_name):
+    """Unmark all verifications for a civ."""
+    ref_conn = get_ref_db()
+    rc = ref_conn.cursor()
+    rc.execute("SELECT id FROM ref_units WHERE civ_name=?", (civ_name,))
+    unit_ids = [row["id"] for row in rc.fetchall()]
+    ref_conn.close()
+
+    conn = get_db()
+    cursor = conn.cursor()
+    for uid in unit_ids:
+        cursor.execute("DELETE FROM unit_verifications WHERE ref_unit_id=?", (uid,))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
 
 
 @app.route("/api/simulation-comments", methods=["POST"])

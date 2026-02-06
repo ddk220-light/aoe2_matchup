@@ -1,8 +1,11 @@
+import json
 import os
 import sqlite3
 from datetime import datetime
+from functools import lru_cache
 
 from flask import Flask, jsonify, render_template, request
+from simulation import prepare_combat_unit, simulate_battle
 
 app = Flask(__name__)
 
@@ -562,8 +565,12 @@ def api_combat_unit(civ_name, unit_slug):
             us.id, us.hp, us.attack, us.attack_range, us.attack_speed,
             us.melee_armor, us.pierce_armor, us.movement_speed,
             us.attacks_json, us.armors_json,
-            us.unit_name, c.name as civ_name,
-            us.cost_food, us.cost_wood, us.cost_gold, us.attack_delay
+            us.unit_name, c.name as civ_name, u.slug,
+            us.cost_food, us.cost_wood, us.cost_gold, us.attack_delay,
+            us.min_attack_range, us.is_siege_projectile, us.splash_radius,
+            us.projectile_speed, us.ignores_pierce_armor, us.ignores_melee_armor,
+            us.trample_percent, us.trample_radius, us.trample_flat_damage,
+            us.bonus_damage_reduction, us.unit_category, us.paired_unit_slug
         FROM unit_stats us
         JOIN units u ON us.unit_id = u.id
         JOIN civilizations c ON us.civ_id = c.id
@@ -588,6 +595,7 @@ def api_combat_unit(civ_name, unit_slug):
             "id": row["id"],
             "name": row["unit_name"],
             "civ": row["civ_name"],
+            "slug": row["slug"],
             "hp": row["hp"],
             "attack": row["attack"],
             "attack_range": row["attack_range"] or 0,
@@ -602,6 +610,19 @@ def api_combat_unit(civ_name, unit_slug):
             "cost_wood": cost_wood,
             "cost_gold": cost_gold,
             "total_cost": total_cost,
+            # Combat properties for data-driven simulation
+            "min_attack_range": row["min_attack_range"] or 0,
+            "is_siege_projectile": row["is_siege_projectile"] or 0,
+            "splash_radius": row["splash_radius"] or 0,
+            "projectile_speed": row["projectile_speed"] or 0,
+            "ignores_pierce_armor": row["ignores_pierce_armor"] or 0,
+            "ignores_melee_armor": row["ignores_melee_armor"] or 0,
+            "trample_percent": row["trample_percent"] or 0,
+            "trample_radius": row["trample_radius"] or 0,
+            "trample_flat_damage": row["trample_flat_damage"] or 0,
+            "bonus_damage_reduction": row["bonus_damage_reduction"] or 0,
+            "unit_category": row["unit_category"] or "military",
+            "paired_unit_slug": row["paired_unit_slug"],
         }
     )
 
@@ -803,10 +824,9 @@ def api_matchup(civ1, civ2):
     Calculate best unit recommendations for a 1v1 matchup between two civs.
 
     For each age, finds the best unit for each civ based on which unit wins
-    the most matchups against all of the opponent's units (using 1000 resources).
+    the most matchups against all of the opponent's units.
+    Uses data-driven simulation — no hardcoded slug lookups.
     """
-    import json
-
     conn = get_db()
     cursor = conn.cursor()
 
@@ -823,48 +843,37 @@ def api_matchup(civ1, civ2):
 
     results = {}
 
-    # Units to exclude from simulations (low accuracy units like Trebuchets and Rams)
+    # Units to exclude from simulations (low accuracy units)
     EXCLUDED_UNITS = {"trebuchet", "packed-trebuchet", "ram", "siege_ram"}
 
-    # Only compare Castle and Imperial ages (feudal units are not very useful)
+    # Only compare Castle and Imperial ages
     MATCHUP_AGES = {k: v for k, v in AGES.items() if k != "feudal"}
+
+    MATCHUP_QUERY = """
+        SELECT u.slug, us.unit_name, us.hp, us.attack, us.attack_speed,
+               us.attack_range, us.attack_delay, us.movement_speed,
+               us.melee_armor, us.pierce_armor, us.attacks_json, us.armors_json,
+               us.cost_food, us.cost_wood, us.cost_gold,
+               us.min_attack_range, us.is_siege_projectile, us.splash_radius,
+               us.projectile_speed, us.ignores_pierce_armor, us.ignores_melee_armor,
+               us.trample_percent, us.trample_radius, us.trample_flat_damage,
+               us.bonus_damage_reduction, us.unit_category, us.paired_unit_slug
+        FROM unit_stats us
+        JOIN units u ON us.unit_id = u.id
+        JOIN civilizations c ON us.civ_id = c.id
+        WHERE c.name = ? AND u.age_id = ? AND us.has_unit = 1
+    """
 
     for age_slug, age_data in MATCHUP_AGES.items():
         age_id = age_data["id"]
 
-        # Get all units for civ1 in this age (excluding trebuchets)
-        cursor.execute(
-            """
-            SELECT u.slug, us.unit_name, us.hp, us.attack, us.attack_speed,
-                   us.attack_range, us.attack_delay, us.movement_speed,
-                   us.melee_armor, us.pierce_armor, us.attacks_json, us.armors_json,
-                   us.cost_food, us.cost_wood, us.cost_gold
-            FROM unit_stats us
-            JOIN units u ON us.unit_id = u.id
-            JOIN civilizations c ON us.civ_id = c.id
-            WHERE c.name = ? AND u.age_id = ? AND us.has_unit = 1
-        """,
-            (civ1, age_id),
-        )
-        civ1_units = [u for u in cursor.fetchall() if u["slug"] not in EXCLUDED_UNITS]
+        cursor.execute(MATCHUP_QUERY, (civ1, age_id))
+        civ1_rows = [u for u in cursor.fetchall() if u["slug"] not in EXCLUDED_UNITS]
 
-        # Get all units for civ2 in this age (excluding trebuchets)
-        cursor.execute(
-            """
-            SELECT u.slug, us.unit_name, us.hp, us.attack, us.attack_speed,
-                   us.attack_range, us.attack_delay, us.movement_speed,
-                   us.melee_armor, us.pierce_armor, us.attacks_json, us.armors_json,
-                   us.cost_food, us.cost_wood, us.cost_gold
-            FROM unit_stats us
-            JOIN units u ON us.unit_id = u.id
-            JOIN civilizations c ON us.civ_id = c.id
-            WHERE c.name = ? AND u.age_id = ? AND us.has_unit = 1
-        """,
-            (civ2, age_id),
-        )
-        civ2_units = [u for u in cursor.fetchall() if u["slug"] not in EXCLUDED_UNITS]
+        cursor.execute(MATCHUP_QUERY, (civ2, age_id))
+        civ2_rows = [u for u in cursor.fetchall() if u["slug"] not in EXCLUDED_UNITS]
 
-        if not civ1_units or not civ2_units:
+        if not civ1_rows or not civ2_rows:
             results[age_slug] = {
                 "age_name": age_data["name"],
                 "civ1_best": None,
@@ -873,100 +882,30 @@ def api_matchup(civ1, civ2):
             }
             continue
 
-        # Calculate win rates for each civ1 unit against all civ2 units
-        # Run TWO simulations: resource-based (1000 res) and count-based (30 units)
-        civ1_scores = {}
-        civ2_scores = {}
-        all_matchups = []
+        # Pre-parse all units ONCE (not per simulation)
+        civ1_units = {u["slug"]: prepare_combat_unit(u) for u in civ1_rows}
+        civ2_units = {u["slug"]: prepare_combat_unit(u) for u in civ2_rows}
 
         # Resource cost formula varies by age
-        # Castle age: wood + 2*food + gold
-        # Imperial age: wood + 2*food + 2*gold
         is_imperial = age_slug == "imperial"
 
         def calc_resource_cost(unit):
-            food = unit["cost_food"] or 0
-            wood = unit["cost_wood"] or 0
-            gold = unit["cost_gold"] or 0
+            food = unit["cost_food"]
+            wood = unit["cost_wood"]
+            gold = unit["cost_gold"]
             if is_imperial:
                 cost = wood + 2 * food + 2 * gold
             else:
                 cost = wood + 2 * food + gold
             return cost if cost > 0 else 100
 
-        # Paired units: different modes of the same unit (e.g., Ratha melee/ranged)
-        # Group them together so we can test all modes and use the best result
-        PAIRED_UNIT_PATTERNS = [
-            ("ratha_(melee)", "ratha_(ranged)", "Ratha"),
-            ("elite_ratha_(melee)", "elite_ratha_(ranged)", "Elite Ratha"),
-        ]
-
-        def get_paired_unit(slug):
-            """Return the paired unit slug if this unit has a pair, else None."""
-            for mode1, mode2, _ in PAIRED_UNIT_PATTERNS:
-                if mode1 in slug:
-                    return slug.replace(mode1, mode2)
-                if mode2 in slug:
-                    return slug.replace(mode2, mode1)
-            return None
-
-        def get_display_name_for_paired(slug):
-            """Return display name for paired units."""
-            for mode1, mode2, display in PAIRED_UNIT_PATTERNS:
-                if mode1 in slug or mode2 in slug:
-                    return display
-            return None
-
-        # Build lookup dict for units by slug
-        civ1_unit_lookup = {u["slug"]: u for u in civ1_units}
-        civ2_unit_lookup = {u["slug"]: u for u in civ2_units}
-
-        # Define trash and siege units - skip these in simulations
-        TRASH_SLUGS = {
-            "spearman",
-            "pikeman",
-            "halberdier",
-            "skirmisher",
-            "elite_skirm",
-            "scout",
-            "light_cav",
-            "hussar",
-        }
-        SIEGE_SLUGS = {
-            "ram",
-            "mangonel",
-            "scorpion",
-            "siege_ram",
-            "siege_onager",
-            "heavy_scorpion",
-            "bombard_cannon",
-            "trebuchet",
-        }
-
-        def get_base_slug(slug):
-            """Remove civ suffix from slug to get base unit slug."""
-            if slug in TRASH_SLUGS or slug in SIEGE_SLUGS:
-                return slug
-            parts = slug.rsplit("_", 1)
-            if len(parts) == 2 and len(parts[1]) > 3:
-                return parts[0]
-            return slug
-
-        def is_trash_or_siege(slug):
-            """Check if unit slug (with civ suffix) is trash or siege."""
-            base = get_base_slug(slug)
-            return base in TRASH_SLUGS or base in SIEGE_SLUGS
-
-        # Filter out paired units - only keep one mode per pair (we'll test both in simulation)
-        def filter_paired_units(units):
-            """Keep only one representative per paired unit group."""
+        # Filter: remove paired duplicates (keep one mode per pair)
+        def filter_paired_units(units_dict):
             seen_pairs = set()
             filtered = []
-            for u in units:
-                slug = u["slug"]
-                paired = get_paired_unit(slug)
+            for slug, u in units_dict.items():
+                paired = u.get("paired_unit_slug")
                 if paired:
-                    # This is a paired unit - check if we already have its pair
                     pair_key = tuple(sorted([slug, paired]))
                     if pair_key not in seen_pairs:
                         seen_pairs.add(pair_key)
@@ -975,138 +914,106 @@ def api_matchup(civ1, civ2):
                     filtered.append(u)
             return filtered
 
-        # Filter units: remove paired duplicates and trash/siege units
-        civ1_units_filtered = [
+        def get_display_name_for_paired(unit):
+            """Return a clean display name for paired units (e.g., 'Ratha')."""
+            if unit.get("paired_unit_slug"):
+                name = unit["unit_name"]
+                # Strip mode suffix like " (Melee)" or " (Ranged)"
+                for suffix in [" (Melee)", " (Ranged)"]:
+                    name = name.replace(suffix, "")
+                # Strip "Elite " prefix check is not needed — keep as is
+                return name
+            return None
+
+        # Filter units: remove paired duplicates and trash/siege (using DB category)
+        civ1_filtered = [
             u
             for u in filter_paired_units(civ1_units)
-            if not is_trash_or_siege(u["slug"])
+            if u["unit_category"] == "military"
         ]
-        civ2_units_filtered = [
+        civ2_filtered = [
             u
             for u in filter_paired_units(civ2_units)
-            if not is_trash_or_siege(u["slug"])
+            if u["unit_category"] == "military"
         ]
 
-        for u1 in civ1_units_filtered:
+        civ1_scores = {}
+        civ2_scores = {}
+        all_matchups = []
+
+        for u1 in civ1_filtered:
             u1_wins = 0
             u1_total = 0
-            u1_cost = calc_resource_cost(u1)
 
             # Get all modes for u1 (for paired units like Ratha)
             u1_modes = [u1]
-            u1_paired_slug = get_paired_unit(u1["slug"])
-            if u1_paired_slug and u1_paired_slug in civ1_unit_lookup:
-                u1_modes.append(civ1_unit_lookup[u1_paired_slug])
+            u1_paired_slug = u1.get("paired_unit_slug")
+            if u1_paired_slug and u1_paired_slug in civ1_units:
+                u1_modes.append(civ1_units[u1_paired_slug])
 
-            for u2 in civ2_units_filtered:
-                # Get all modes for u2 (for paired units like Ratha)
+            for u2 in civ2_filtered:
                 u2_modes = [u2]
-                u2_paired_slug = get_paired_unit(u2["slug"])
-                if u2_paired_slug and u2_paired_slug in civ2_unit_lookup:
-                    u2_modes.append(civ2_unit_lookup[u2_paired_slug])
+                u2_paired_slug = u2.get("paired_unit_slug")
+                if u2_paired_slug and u2_paired_slug in civ2_units:
+                    u2_modes.append(civ2_units[u2_paired_slug])
 
-                # Test all combinations of modes and find the best outcome for each side
-                # For paired units: unit wins if ANY of its modes wins against ANY of opponent's modes
+                u1_won_both_any = False
+                u2_won_both_any = False
                 u1_won_any = False
                 u2_won_any = False
 
-                # Track best outcome across all mode combinations
-                # We want to find if any mode combo results in winning BOTH simulations
-                u1_won_both_any = False  # u1 won both sims in at least one mode combo
-                u2_won_both_any = False  # u2 won both sims in at least one mode combo
-                u1_won_any = False  # u1 won at least one sim in any mode combo
-                u2_won_any = False  # u2 won at least one sim in any mode combo
-
                 for u1_mode in u1_modes:
-                    u1_mode_cost = calc_resource_cost(u1_mode)
                     for u2_mode in u2_modes:
-                        u2_mode_cost = calc_resource_cost(u2_mode)
-
-                        # Run two simulations:
-                        # 1. Resource-based: 3000 resources
-                        # 2. Count-based: 30 units each
-                        winner_resources, _, _ = simulate_battle(
-                            u1_mode,
-                            u1_mode_cost,
-                            u2_mode,
-                            u2_mode_cost,
-                            3000,
-                            civ1,
-                            civ2,
-                        )
-                        winner_count, _, _ = simulate_battle(
-                            u1_mode,
-                            u1_mode_cost,
-                            u2_mode,
-                            u2_mode_cost,
-                            0,  # resources ignored when fixed_count is set
-                            civ1,
-                            civ2,
-                            fixed_count=30,
+                        # Run two simulations: resource-based and count-based
+                        winner_res, _, _ = simulate_battle(u1_mode, u2_mode, 3000)
+                        winner_cnt, _, _ = simulate_battle(
+                            u1_mode, u2_mode, 0, fixed_count=30
                         )
 
-                        # Track if this mode combo won both simulations
-                        if winner_resources == 1 and winner_count == 1:
+                        if winner_res == 1 and winner_cnt == 1:
                             u1_won_both_any = True
-                        if winner_resources == 2 and winner_count == 2:
+                        if winner_res == 2 and winner_cnt == 2:
                             u2_won_both_any = True
-
-                        # Track if won at least one
-                        if winner_resources == 1 or winner_count == 1:
+                        if winner_res == 1 or winner_cnt == 1:
                             u1_won_any = True
-                        if winner_resources == 2 or winner_count == 2:
+                        if winner_res == 2 or winner_cnt == 2:
                             u2_won_any = True
 
-                # Determine winner and score:
-                # - If a unit won BOTH simulations in any mode combo: 3 points (clear win)
-                # - If results are split (each won at least one): 1 point each (draw)
-                # - If neither won anything: 0 points (true draw, shouldn't happen often)
+                # Scoring
                 if u1_won_both_any and not u2_won_both_any:
                     winner = 1
-                    u1_score_add = 3
-                    u2_score_add = 0
+                    u1_score_add, u2_score_add = 3, 0
                 elif u2_won_both_any and not u1_won_both_any:
                     winner = 2
-                    u1_score_add = 0
-                    u2_score_add = 3
-                elif u1_won_any and u2_won_any:
-                    # Split results - draw, 1 point each
-                    winner = 0
-                    u1_score_add = 1
-                    u2_score_add = 1
+                    u1_score_add, u2_score_add = 0, 3
                 elif u1_won_both_any and u2_won_both_any:
-                    # Both have mode combos that won both - draw
                     winner = 0
-                    u1_score_add = 1
-                    u2_score_add = 1
+                    u1_score_add, u2_score_add = 1, 1
+                elif u1_won_any and u2_won_any:
+                    winner = 0
+                    u1_score_add, u2_score_add = 1, 1
                 else:
-                    # True draw - neither won anything
                     winner = 0
-                    u1_score_add = 1
-                    u2_score_add = 1
+                    u1_score_add, u2_score_add = 1, 1
 
                 u1_total += 1
                 if winner == 1:
                     u1_wins += 1
 
-                # Track for civ2 scoring - use primary slug for paired units
                 u2_key = u2["slug"]
                 if u2_key not in civ2_scores:
-                    # Use display name for paired units
-                    display_name = get_display_name_for_paired(u2["slug"])
                     civ2_scores[u2_key] = {
                         "wins": 0,
                         "total": 0,
                         "unit": u2,
-                        "display_name": display_name,
+                        "display_name": get_display_name_for_paired(u2),
                     }
                 civ2_scores[u2_key]["total"] += 1
                 if winner == 2:
                     civ2_scores[u2_key]["wins"] += 1
 
-                # Use display name for paired units in matchup results
-                u1_display = get_display_name_for_paired(u1["slug"]) or u1["unit_name"]
-                u2_display = get_display_name_for_paired(u2["slug"]) or u2["unit_name"]
+                u1_display = get_display_name_for_paired(u1) or u1["unit_name"]
+                u2_display = get_display_name_for_paired(u2) or u2["unit_name"]
 
                 all_matchups.append(
                     {
@@ -1120,90 +1027,63 @@ def api_matchup(civ1, civ2):
                     }
                 )
 
-            # Use display name for paired units
-            u1_display_name = get_display_name_for_paired(u1["slug"])
             civ1_scores[u1["slug"]] = {
                 "wins": u1_wins,
                 "total": u1_total,
                 "unit": u1,
-                "display_name": u1_display_name,
+                "display_name": get_display_name_for_paired(u1),
             }
 
-        # Build matchup lookup and track details
-        matchup_results = {}
+        # Build matchup details
         civ1_matchup_details = {}
         civ2_matchup_details = {}
         for m in all_matchups:
-            key = (m["civ1_slug"], m["civ2_slug"])
-            matchup_results[key] = m["winner"]
-
-            # Determine result for each side: "win", "draw", or "loss"
             if m["winner"] == 1:
-                civ1_result = "win"
-                civ2_result = "loss"
+                c1r, c2r = "win", "loss"
             elif m["winner"] == 2:
-                civ1_result = "loss"
-                civ2_result = "win"
+                c1r, c2r = "loss", "win"
             else:
-                civ1_result = "draw"
-                civ2_result = "draw"
+                c1r, c2r = "draw", "draw"
 
-            # Track details for civ1 unit
-            if m["civ1_slug"] not in civ1_matchup_details:
-                civ1_matchup_details[m["civ1_slug"]] = []
-            civ1_matchup_details[m["civ1_slug"]].append(
+            civ1_matchup_details.setdefault(m["civ1_slug"], []).append(
                 {
                     "opponent": m["civ2_unit"],
                     "opponent_slug": m["civ2_slug"],
-                    "result": civ1_result,
+                    "result": c1r,
                     "score": m["u1_score"],
                 }
             )
-
-            # Track details for civ2 unit
-            if m["civ2_slug"] not in civ2_matchup_details:
-                civ2_matchup_details[m["civ2_slug"]] = []
-            civ2_matchup_details[m["civ2_slug"]].append(
+            civ2_matchup_details.setdefault(m["civ2_slug"], []).append(
                 {
                     "opponent": m["civ1_unit"],
                     "opponent_slug": m["civ1_slug"],
-                    "result": civ2_result,
+                    "result": c2r,
                     "score": m["u2_score"],
                 }
             )
 
-        # Calculate scores for each unit
-        # Scoring: 3 for winning both sims, 1 each for draw (split results)
-        # No score for beating trash or siege units
+        # Calculate scores — only count points against military units (not trash/siege)
         for key in civ1_scores:
             s = civ1_scores[key]
             s["win_rate"] = s["wins"] / s["total"] if s["total"] > 0 else 0
-            # Calculate score based on matchup details
             score = 0
             for matchup in civ1_matchup_details.get(key, []):
-                opp_slug = matchup["opponent_slug"]
-                is_trash = opp_slug in TRASH_SLUGS
-                is_siege = opp_slug in SIEGE_SLUGS
-                # Only score for significant units (not trash, not siege)
-                if not is_trash and not is_siege:
+                opp = civ2_units.get(matchup["opponent_slug"])
+                if opp and opp["unit_category"] == "military":
                     score += matchup["score"]
             s["score"] = score
 
         for key in civ2_scores:
             s = civ2_scores[key]
             s["win_rate"] = s["wins"] / s["total"] if s["total"] > 0 else 0
-            # Calculate score based on matchup details
             score = 0
             for matchup in civ2_matchup_details.get(key, []):
-                opp_slug = matchup["opponent_slug"]
-                is_trash = opp_slug in TRASH_SLUGS
-                is_siege = opp_slug in SIEGE_SLUGS
-                # Only score for significant units (not trash, not siege)
-                if not is_trash and not is_siege:
+                opp = civ1_units.get(matchup["opponent_slug"])
+                if opp and opp["unit_category"] == "military":
                     score += matchup["score"]
             s["score"] = score
 
-        # Find best unit for each civ (by score)
+        # Find best unit for each civ
         civ1_best = (
             max(civ1_scores.items(), key=lambda x: x[1]["score"])
             if civ1_scores
@@ -1215,29 +1095,21 @@ def api_matchup(civ1, civ2):
             else None
         )
 
-        # Find which civ1 units beat civ2's best unit (and vice versa)
+        # Find which units beat the opponent's best
         civ1_beats_best = set()
         civ2_beats_best = set()
         if civ1_best and civ2_best:
-            civ2_best_slug = civ2_best[0]
-            civ1_best_slug = civ1_best[0]
             for m in all_matchups:
-                # Check if civ1 unit beats civ2's best
-                if m["civ2_slug"] == civ2_best_slug:
-                    if m["winner"] == 1:
-                        civ1_beats_best.add(m["civ1_slug"])
-                # Check if civ2 unit beats civ1's best
-                if m["civ1_slug"] == civ1_best_slug:
-                    if m["winner"] == 2:
-                        civ2_beats_best.add(m["civ2_slug"])
+                if m["civ2_slug"] == civ2_best[0] and m["winner"] == 1:
+                    civ1_beats_best.add(m["civ1_slug"])
+                if m["civ1_slug"] == civ1_best[0] and m["winner"] == 2:
+                    civ2_beats_best.add(m["civ2_slug"])
 
         def format_unit(slug, data, beats_opponent_best, matchup_details):
-            # Sort matchups by result: wins, draws, losses
             details = matchup_details.get(slug, [])
             wins = [d for d in details if d["result"] == "win"]
             draws = [d for d in details if d["result"] == "draw"]
             losses = [d for d in details if d["result"] == "loss"]
-            # Use display_name for paired units (like Ratha), otherwise use unit_name
             display_name = data.get("display_name") or data["unit"]["unit_name"]
             return {
                 "slug": slug,
@@ -1254,33 +1126,15 @@ def api_matchup(civ1, civ2):
                 },
             }
 
-        # Find best unit for each civ
-        civ1_best = (
-            max(civ1_scores.items(), key=lambda x: x[1]["score"])
-            if civ1_scores
-            else None
-        )
-        civ2_best = (
-            max(civ2_scores.items(), key=lambda x: x[1]["score"])
-            if civ2_scores
-            else None
-        )
-
         results[age_slug] = {
             "age_name": age_data["name"],
             "civ1_best": format_unit(
-                civ1_best[0],
-                civ1_best[1],
-                civ1_beats_best,
-                civ1_matchup_details,
+                civ1_best[0], civ1_best[1], civ1_beats_best, civ1_matchup_details
             )
             if civ1_best
             else None,
             "civ2_best": format_unit(
-                civ2_best[0],
-                civ2_best[1],
-                civ2_beats_best,
-                civ2_matchup_details,
+                civ2_best[0], civ2_best[1], civ2_beats_best, civ2_matchup_details
             )
             if civ2_best
             else None,
@@ -1296,585 +1150,6 @@ def api_matchup(civ1, civ2):
 
     conn.close()
     return jsonify({"civ1": civ1, "civ2": civ2, "ages": results})
-
-
-def simulate_battle(
-    unit1,
-    cost1,
-    unit2,
-    cost2,
-    resources,
-    civ1_name=None,
-    civ2_name=None,
-    fixed_count=None,
-):
-    """
-    Tick-based battle simulation with kiting support and siege projectile mechanics.
-
-    Siege units (mangonels, siege onagers) fire ground-targeted projectiles that
-    travel at light cavalry speed. They struggle against fast melee units but
-    do well against slower ranged units.
-
-    Args:
-        fixed_count: If provided, use this fixed unit count for both sides
-                     instead of calculating from resources.
-
-    Returns: (winner, unit1_remaining, unit2_remaining)
-        winner: 1 if unit1 wins, 2 if unit2 wins, 0 if draw
-    """
-    import json
-
-    # Calculate army sizes
-    if fixed_count is not None:
-        count1 = fixed_count
-        count2 = fixed_count
-    else:
-        count1 = max(1, resources // cost1)
-        count2 = max(1, resources // cost2)
-
-    # Parse attacks and armors
-    attacks1 = json.loads(unit1["attacks_json"]) if unit1["attacks_json"] else {}
-    armors1 = json.loads(unit1["armors_json"]) if unit1["armors_json"] else {}
-    attacks2 = json.loads(unit2["attacks_json"]) if unit2["attacks_json"] else {}
-    armors2 = json.loads(unit2["armors_json"]) if unit2["armors_json"] else {}
-
-    # Convert keys to int
-    attacks1 = {int(k): v for k, v in attacks1.items()}
-    armors1 = {int(k): v for k, v in armors1.items()}
-    attacks2 = {int(k): v for k, v in attacks2.items()}
-    armors2 = {int(k): v for k, v in armors2.items()}
-
-    # Get attack range (0 = melee) and movement speed
-    range1 = unit1["attack_range"] or 0.0
-    range2 = unit2["attack_range"] or 0.0
-    move_speed1 = unit1["movement_speed"] or 1.0
-    move_speed2 = unit2["movement_speed"] or 1.0
-
-    is_ranged1 = range1 >= 1.0
-    is_ranged2 = range2 >= 1.0
-
-    # Siege units fire ground-targeted projectiles (mangonel, siege_onager)
-    SIEGE_UNITS = {"mangonel", "siege_onager"}
-    # Scorpions have minimum range but fire direct projectiles (no splash)
-    SCORPION_UNITS = {"scorpion", "heavy_scorpion"}
-    # Skirmishers have minimum range of 1
-    SKIRMISHER_UNITS = {"skirm", "elite_skirm"}
-    # Units that ignore armor (Composite Bowman ignores pierce, Leitis ignores melee)
-    IGNORE_PIERCE_ARMOR = {"composite_bowman", "elite_composite_bowman"}
-    IGNORE_MELEE_ARMOR = {"leitis", "elite_leitis"}
-
-    # Units with trample damage (melee splash)
-    # Format: base_slug -> (trample_percent, trample_radius, flat_damage)
-    TRAMPLE_UNITS = {
-        "ratha_(melee)": (0.5, 0.5, 0),  # 50% damage, 0.5 tile radius
-        "elite_ratha_(melee)": (0.5, 0.5, 0),
-        "elephant": (0.5, 0.5, 0),  # Battle Elephant
-        "elite_elephant": (0.5, 0.5, 0),
-        "cataphract": (0.5, 0.5, 0),
-        "elite_cataphract": (0.5, 0.5, 0),
-        "war_elephant": (0.5, 0.5, 0),
-        "elite_war_elephant": (0.5, 0.5, 0),
-    }
-    # Slavic infantry with Druzhina - flat 5 damage trample
-    DRUZHINA_CIVS = {"Slavs"}
-    DRUZHINA_INFANTRY = {"champion", "halberdier", "swordsmen"}
-    DRUZHINA_TRAMPLE = (0, 0.5, 5)  # 0%, 0.5 radius, 5 flat damage
-
-    def get_trample_info(slug, civ_name):
-        """Return (trample_percent, radius, flat_damage) or None."""
-        # Check base slug (remove civ suffix like _bengalis, _byzantines)
-        base_slug = slug
-        # Try removing last part after underscore to get base slug
-        if "_" in slug:
-            parts = slug.rsplit("_", 1)
-            # Only remove if the last part looks like a civ name (not part of unit name)
-            if len(parts[1]) > 3:  # Civ names are longer than 3 chars
-                base_slug = parts[0]
-
-        # Check direct trample units
-        if base_slug in TRAMPLE_UNITS:
-            return TRAMPLE_UNITS[base_slug]
-
-        # Also check full slug in case base_slug stripping was wrong
-        if slug in TRAMPLE_UNITS:
-            return TRAMPLE_UNITS[slug]
-
-        # Check Druzhina for Slavic infantry (Imperial age only)
-        if civ_name in DRUZHINA_CIVS and base_slug in DRUZHINA_INFANTRY:
-            return DRUZHINA_TRAMPLE
-
-        return None
-
-    slug1 = unit1["slug"] if "slug" in unit1.keys() else ""
-    slug2 = unit2["slug"] if "slug" in unit2.keys() else ""
-    is_siege1 = slug1 in SIEGE_UNITS
-    is_siege2 = slug2 in SIEGE_UNITS
-    is_scorpion1 = slug1 in SCORPION_UNITS
-    is_scorpion2 = slug2 in SCORPION_UNITS
-    is_skirmisher1 = slug1 in SKIRMISHER_UNITS
-    is_skirmisher2 = slug2 in SKIRMISHER_UNITS
-    # Check if units ignore armor (match base slug without civ suffix)
-    slug1_base = slug1.rsplit("_", 1)[0] if "_" in slug1 else slug1
-    slug2_base = slug2.rsplit("_", 1)[0] if "_" in slug2 else slug2
-    ignores_pierce1 = slug1_base in IGNORE_PIERCE_ARMOR
-    ignores_pierce2 = slug2_base in IGNORE_PIERCE_ARMOR
-    ignores_melee1 = slug1_base in IGNORE_MELEE_ARMOR
-    ignores_melee2 = slug2_base in IGNORE_MELEE_ARMOR
-
-    # Get trample info for both units
-    trample1 = get_trample_info(slug1, civ1_name)
-    trample2 = get_trample_info(slug2, civ2_name)
-
-    # Projectile speed for siege units - roughly same as light cavalry (1.65 tiles/sec)
-    # This allows fast melee units to dodge by moving out of the impact zone
-    PROJECTILE_SPEED = 1.7
-    # Hit radius - projectile hits if target is within this distance of impact point
-    HIT_RADIUS = 1.0
-    # Splash radius - siege projectiles deal damage to all units in this radius
-    SPLASH_RADIUS = 1.5
-    # Minimum attack range for siege units - they can't fire at close range
-    # In AoE2, mangonels have minimum range of 3, scorpions have minimum range of 2
-    # Skirmishers have minimum range of 1
-    MIN_SIEGE_RANGE = 3.0
-    MIN_SCORPION_RANGE = 2.0
-    MIN_SKIRMISHER_RANGE = 1.0
-
-    # Bengali civ bonus: elephant units take 25% less bonus damage
-    BENGALI_BONUS_REDUCTION = 0.25
-    BENGALI_ELEPHANT_SLUGS = {
-        "elephant",
-        "elite_elephant",
-        "elephant_archer",
-        "elite_ele_archer",
-        "ratha_(melee)",
-        "elite_ratha_(melee)",
-        "ratha_(ranged)",
-        "elite_ratha_(ranged)",
-    }
-
-    def is_bengali_elephant(slug, civ_name):
-        """Check if unit is a Bengali elephant unit that gets bonus damage reduction."""
-        if civ_name != "Bengalis":
-            return False
-        base_slug = (
-            slug.rsplit("_", 1)[0]
-            if "_" in slug and len(slug.rsplit("_", 1)[1]) > 3
-            else slug
-        )
-        return base_slug in BENGALI_ELEPHANT_SLUGS or slug in BENGALI_ELEPHANT_SLUGS
-
-    # Calculate damage per hit (use pierce for ranged, melee for melee)
-    def calc_damage(
-        attacker_attacks,
-        attacker_attack,
-        defender_armors,
-        defender_melee_armor,
-        defender_pierce_armor,
-        is_ranged,
-        ignores_pierce=False,
-        ignores_melee=False,
-        bonus_damage_reduction=0,
-    ):
-        if is_ranged:
-            base_damage = attacker_attacks.get(
-                3, attacker_attacks.get(4, attacker_attack)
-            )
-            # Composite Bowman ignores pierce armor
-            target_armor = (
-                0 if ignores_pierce else defender_armors.get(3, defender_pierce_armor)
-            )
-        else:
-            base_damage = attacker_attacks.get(4, attacker_attack)
-            # Leitis ignores melee armor
-            target_armor = (
-                0 if ignores_melee else defender_armors.get(4, defender_melee_armor)
-            )
-
-        bonus_damage = 0
-        for armor_class, armor_value in defender_armors.items():
-            if armor_class in attacker_attacks and armor_class not in (3, 4):
-                attack_bonus = attacker_attacks[armor_class]
-                if attack_bonus > 0:
-                    effective_bonus = max(0, attack_bonus - armor_value)
-                    bonus_damage += effective_bonus
-
-        # Apply bonus damage reduction (e.g., Bengali elephants take 25% less)
-        if bonus_damage_reduction > 0:
-            bonus_damage = int(bonus_damage * (1 - bonus_damage_reduction))
-
-        return max(1, base_damage + bonus_damage - target_armor)
-
-    # Check for Bengali elephant bonus damage reduction
-    bonus_reduction1 = (
-        BENGALI_BONUS_REDUCTION if is_bengali_elephant(slug1, civ1_name) else 0
-    )
-    bonus_reduction2 = (
-        BENGALI_BONUS_REDUCTION if is_bengali_elephant(slug2, civ2_name) else 0
-    )
-
-    dmg1 = calc_damage(
-        attacks1,
-        unit1["attack"],
-        armors2,
-        unit2["melee_armor"],
-        unit2["pierce_armor"],
-        is_ranged1,
-        ignores_pierce=ignores_pierce1,
-        ignores_melee=ignores_melee1,
-        bonus_damage_reduction=bonus_reduction2,  # Defender's reduction
-    )
-    dmg2 = calc_damage(
-        attacks2,
-        unit2["attack"],
-        armors1,
-        unit1["melee_armor"],
-        unit1["pierce_armor"],
-        is_ranged2,
-        ignores_pierce=ignores_pierce2,
-        ignores_melee=ignores_melee2,
-        bonus_damage_reduction=bonus_reduction1,  # Defender's reduction
-    )
-
-    # Get attack speeds (reload time)
-    speed1 = unit1["attack_speed"] or 0.5
-    speed2 = unit2["attack_speed"] or 0.5
-    reload1 = 1.0 / speed1 if speed1 > 0 else 2.0
-    reload2 = 1.0 / speed2 if speed2 > 0 else 2.0
-
-    # Get attack delay (time to fire after stopping)
-    # Use try/except since sqlite3.Row doesn't support .get()
-    try:
-        attack_delay1 = unit1["attack_delay"] or 0.0
-    except (KeyError, IndexError):
-        attack_delay1 = 0.0
-    try:
-        attack_delay2 = unit2["attack_delay"] or 0.0
-    except (KeyError, IndexError):
-        attack_delay2 = 0.0
-
-    # Create armies with positions
-    # Team 1 starts at position 0 (left), Team 2 at position 100 (right)
-    hp1 = [float(unit1["hp"])] * count1
-    hp2 = [float(unit2["hp"])] * count2
-    pos1 = [i * 0.5 for i in range(count1)]
-    pos2 = [100 - i * 0.5 for i in range(count2)]
-    cooldown1 = [0.0] * count1
-    cooldown2 = [0.0] * count2
-    # Track if unit was moving last tick (for attack delay)
-    was_moving1 = [True] * count1  # Start as moving (approaching)
-    was_moving2 = [True] * count2
-    # Track committed melee attacks (attacker_idx -> (target_idx, time_remaining))
-    # Once a melee unit starts attack delay, it will hit the target when delay completes
-    committed_attack1 = {}  # Team 1 units committed to attacking team 2
-    committed_attack2 = {}  # Team 2 units committed to attacking team 1
-
-    # Simulate with tick limit for speed
-    dt = 0.05  # 50ms time step
-    max_ticks = 5000  # 250 seconds max battle time
-    melee_range = 0.5
-    ticks = 0
-    start_hp1 = sum(hp1)
-    start_hp2 = sum(hp2)
-
-    # Map boundaries - units can't kite forever
-    MAP_MIN = 0
-    MAP_MAX = 100
-
-    # Track siege projectiles in flight
-    # Each projectile: (target_team, impact_pos, current_pos, damage, target_positions_at_fire)
-    # target_positions_at_fire is a dict of {unit_idx: position} for splash damage calculation
-    projectiles = []
-
-    while ticks < max_ticks:
-        ticks += 1
-        alive1 = [i for i, h in enumerate(hp1) if h > 0]
-        alive2 = [i for i, h in enumerate(hp2) if h > 0]
-
-        if not alive1 or not alive2:
-            break
-
-        # Early termination: if one side lost >50% units and other has >60% left
-        alive1_pct = len(alive1) / count1
-        alive2_pct = len(alive2) / count2
-        if alive1_pct < 0.5 and alive2_pct > 0.6:
-            # Team 2 wins decisively
-            return (2, len(alive1), len(alive2))
-        if alive2_pct < 0.5 and alive1_pct > 0.6:
-            # Team 1 wins decisively
-            return (1, len(alive1), len(alive2))
-
-        # Update cooldowns
-        for i in alive1:
-            cooldown1[i] = max(0, cooldown1[i] - dt)
-        for i in alive2:
-            cooldown2[i] = max(0, cooldown2[i] - dt)
-
-        # Update siege projectiles in flight
-        new_projectiles = []
-        for proj in projectiles:
-            target_team, impact_pos, proj_pos, damage, positions_at_fire = proj
-            # Move projectile toward impact position
-            if proj_pos < impact_pos:
-                proj_pos += PROJECTILE_SPEED * dt
-                arrived = proj_pos >= impact_pos
-            else:
-                proj_pos -= PROJECTILE_SPEED * dt
-                arrived = proj_pos <= impact_pos
-
-            if arrived:
-                # Projectile arrived - apply splash damage to units that were near impact
-                # AND haven't moved much (dodge check)
-                if target_team == 1:
-                    for idx in alive1:
-                        if idx in positions_at_fire:
-                            pos_at_fire = positions_at_fire[idx]
-                            # Was unit near impact point when fired?
-                            if abs(pos_at_fire - impact_pos) <= SPLASH_RADIUS:
-                                # Has unit moved significantly? (dodge check)
-                                dist_moved = abs(pos1[idx] - pos_at_fire)
-                                if dist_moved <= HIT_RADIUS:
-                                    hp1[idx] -= damage
-                else:
-                    for idx in alive2:
-                        if idx in positions_at_fire:
-                            pos_at_fire = positions_at_fire[idx]
-                            # Was unit near impact point when fired?
-                            if abs(pos_at_fire - impact_pos) <= SPLASH_RADIUS:
-                                # Has unit moved significantly? (dodge check)
-                                dist_moved = abs(pos2[idx] - pos_at_fire)
-                                if dist_moved <= HIT_RADIUS:
-                                    hp2[idx] -= damage
-            else:
-                new_projectiles.append(
-                    (target_team, impact_pos, proj_pos, damage, positions_at_fire)
-                )
-        projectiles = new_projectiles
-
-        # Collect attacks (simultaneous)
-        pending_damage = []
-
-        # Ranged units kite melee units (move away while reloading)
-        # But don't kite other ranged units - they stand and trade
-        should_kite1 = is_ranged1 and not is_ranged2
-        should_kite2 = is_ranged2 and not is_ranged1
-
-        # Team 1 units (move right toward team 2)
-        for i in alive1:
-            closest = min(alive2, key=lambda j: abs(pos2[j] - pos1[i]))
-            distance = abs(pos2[closest] - pos1[i])
-            attack_range = range1 if is_ranged1 else melee_range
-
-            if is_ranged1:
-                # Check minimum range for siege units and scorpions
-                in_range = distance <= attack_range
-                too_close = False
-                if is_siege1 and distance < MIN_SIEGE_RANGE:
-                    too_close = True  # Too close, siege can't fire
-                if is_scorpion1 and distance < MIN_SCORPION_RANGE:
-                    too_close = True  # Too close, scorpion can't fire
-                if is_skirmisher1 and distance < MIN_SKIRMISHER_RANGE:
-                    too_close = True  # Too close, skirmisher can't fire
-
-                if in_range and not too_close:
-                    # In range - prioritize attacking
-                    if was_moving1[i] and cooldown1[i] <= 0:
-                        # Just stopped moving, apply attack delay before first attack
-                        cooldown1[i] = attack_delay1
-                        was_moving1[i] = False
-                    elif cooldown1[i] <= 0:
-                        # Ready to fire!
-                        if is_siege1:
-                            # Siege unit fires ground-targeted projectile with splash
-                            target_pos = pos2[closest]
-                            enemy_positions = {idx: pos2[idx] for idx in alive2}
-                            projectiles.append(
-                                (2, target_pos, pos1[i], dmg1, enemy_positions)
-                            )
-                        else:
-                            pending_damage.append((2, closest, dmg1, i, pos1[i]))
-                        cooldown1[i] = reload1
-                    elif not was_moving1[i]:
-                        # Waiting for attack delay or reload - stay put
-                        pass
-                    elif should_kite1:
-                        # Reloading while moving, target is melee - kite away
-                        pos1[i] = max(MAP_MIN, pos1[i] - move_speed1 * dt)
-                    # else: reloading vs ranged, stay put
-                elif cooldown1[i] > 0 and should_kite1:
-                    # Out of range and reloading, target is melee - kite away
-                    pos1[i] = max(MAP_MIN, pos1[i] - move_speed1 * dt)
-                    was_moving1[i] = True
-                else:
-                    # Out of range or too close - move toward target
-                    pos1[i] += move_speed1 * dt
-                    was_moving1[i] = True
-            else:
-                # Melee unit
-                # Check if this unit has a committed attack in progress
-                if i in committed_attack1:
-                    target_idx, time_left = committed_attack1[i]
-                    time_left -= dt
-                    if time_left <= 0:
-                        # Attack completes - hit the target (even if it moved)
-                        if hp2[target_idx] > 0:  # Target still alive
-                            pending_damage.append((2, target_idx, dmg1, i, pos1[i]))
-                        del committed_attack1[i]
-                        cooldown1[i] = reload1
-                        was_moving1[i] = False
-                    else:
-                        committed_attack1[i] = (target_idx, time_left)
-                elif distance <= attack_range:
-                    if cooldown1[i] <= 0:
-                        if attack_delay1 > 0:
-                            # Start attack delay - commit to hitting this target
-                            committed_attack1[i] = (closest, attack_delay1)
-                            was_moving1[i] = False
-                        else:
-                            # No attack delay, hit immediately
-                            pending_damage.append((2, closest, dmg1, i, pos1[i]))
-                            cooldown1[i] = reload1
-                else:
-                    pos1[i] += move_speed1 * dt
-                    was_moving1[i] = True
-
-        # Team 2 units (move left toward team 1)
-        for i in alive2:
-            closest = min(alive1, key=lambda j: abs(pos1[j] - pos2[i]))
-            distance = abs(pos1[closest] - pos2[i])
-            attack_range = range2 if is_ranged2 else melee_range
-
-            if is_ranged2:
-                # Check minimum range for siege units and scorpions
-                in_range = distance <= attack_range
-                too_close = False
-                if is_siege2 and distance < MIN_SIEGE_RANGE:
-                    too_close = True  # Too close, siege can't fire
-                if is_scorpion2 and distance < MIN_SCORPION_RANGE:
-                    too_close = True  # Too close, scorpion can't fire
-                if is_skirmisher2 and distance < MIN_SKIRMISHER_RANGE:
-                    too_close = True  # Too close, skirmisher can't fire
-
-                if in_range and not too_close:
-                    # In range - prioritize attacking
-                    if was_moving2[i] and cooldown2[i] <= 0:
-                        # Just stopped moving, apply attack delay before first attack
-                        cooldown2[i] = attack_delay2
-                        was_moving2[i] = False
-                    elif cooldown2[i] <= 0:
-                        # Ready to fire!
-                        if is_siege2:
-                            # Siege unit fires ground-targeted projectile with splash
-                            target_pos = pos1[closest]
-                            enemy_positions = {idx: pos1[idx] for idx in alive1}
-                            projectiles.append(
-                                (1, target_pos, pos2[i], dmg2, enemy_positions)
-                            )
-                        else:
-                            pending_damage.append((1, closest, dmg2, i, pos2[i]))
-                        cooldown2[i] = reload2
-                    elif not was_moving2[i]:
-                        # Waiting for attack delay or reload - stay put
-                        pass
-                    elif should_kite2:
-                        # Reloading while moving, target is melee - kite away
-                        pos2[i] = min(MAP_MAX, pos2[i] + move_speed2 * dt)
-                    # else: reloading vs ranged, stay put
-                elif cooldown2[i] > 0 and should_kite2:
-                    # Out of range and reloading, target is melee - kite away
-                    pos2[i] = min(MAP_MAX, pos2[i] + move_speed2 * dt)
-                    was_moving2[i] = True
-                else:
-                    # Out of range or too close - move toward target
-                    pos2[i] -= move_speed2 * dt
-                    was_moving2[i] = True
-            else:
-                # Melee unit
-                # Check if this unit has a committed attack in progress
-                if i in committed_attack2:
-                    target_idx, time_left = committed_attack2[i]
-                    time_left -= dt
-                    if time_left <= 0:
-                        # Attack completes - hit the target (even if it moved)
-                        if hp1[target_idx] > 0:  # Target still alive
-                            pending_damage.append((1, target_idx, dmg2, i, pos2[i]))
-                        del committed_attack2[i]
-                        cooldown2[i] = reload2
-                        was_moving2[i] = False
-                    else:
-                        committed_attack2[i] = (target_idx, time_left)
-                elif distance <= attack_range:
-                    if cooldown2[i] <= 0:
-                        if attack_delay2 > 0:
-                            # Start attack delay - commit to hitting this target
-                            committed_attack2[i] = (closest, attack_delay2)
-                            was_moving2[i] = False
-                        else:
-                            # No attack delay, hit immediately
-                            pending_damage.append((1, closest, dmg2, i, pos2[i]))
-                            cooldown2[i] = reload2
-                else:
-                    pos2[i] -= move_speed2 * dt
-                    was_moving2[i] = True
-
-        # Apply damage (including trample)
-        for team, target, damage, attacker_idx, attacker_pos in pending_damage:
-            if team == 1:
-                hp1[target] -= damage
-                # Apply trample damage from unit2 to nearby unit1s
-                if trample2 and not is_ranged2:
-                    trample_pct, trample_radius, flat_dmg = trample2
-                    trample_dmg = int(damage * trample_pct) + flat_dmg
-                    if trample_dmg > 0:
-                        for idx in alive1:
-                            if idx != target:  # Skip primary target
-                                dist = abs(pos1[idx] - attacker_pos)
-                                if dist <= trample_radius:
-                                    hp1[idx] -= trample_dmg
-            else:
-                hp2[target] -= damage
-                # Apply trample damage from unit1 to nearby unit2s
-                if trample1 and not is_ranged1:
-                    trample_pct, trample_radius, flat_dmg = trample1
-                    trample_dmg = int(damage * trample_pct) + flat_dmg
-                    if trample_dmg > 0:
-                        for idx in alive2:
-                            if idx != target:  # Skip primary target
-                                dist = abs(pos2[idx] - attacker_pos)
-                                if dist <= trample_radius:
-                                    hp2[idx] -= trample_dmg
-
-    remaining1 = len([h for h in hp1 if h > 0])
-    remaining2 = len([h for h in hp2 if h > 0])
-    total_hp1 = sum(max(0, h) for h in hp1)
-    total_hp2 = sum(max(0, h) for h in hp2)
-
-    # Determine winner
-    if remaining1 > 0 and remaining2 == 0:
-        return (1, remaining1, 0)
-    elif remaining2 > 0 and remaining1 == 0:
-        return (2, 0, remaining2)
-    else:
-        # Compare units lost from start
-        lost1 = count1 - remaining1
-        lost2 = count2 - remaining2
-        if lost1 > lost2:
-            # Team 1 lost more units, Team 2 wins
-            return (2, remaining1, remaining2)
-        elif lost2 > lost1:
-            # Team 2 lost more units, Team 1 wins
-            return (1, remaining1, remaining2)
-        else:
-            # Same units lost - compare HP percentage lost
-            hp_lost_pct1 = (start_hp1 - total_hp1) / start_hp1 if start_hp1 > 0 else 0
-            hp_lost_pct2 = (start_hp2 - total_hp2) / start_hp2 if start_hp2 > 0 else 0
-            if hp_lost_pct1 > hp_lost_pct2:
-                # Team 1 lost more HP %, Team 2 wins
-                return (2, remaining1, remaining2)
-            elif hp_lost_pct2 > hp_lost_pct1:
-                # Team 2 lost more HP %, Team 1 wins
-                return (1, remaining1, remaining2)
-            else:
-                return (0, remaining1, remaining2)
 
 
 if __name__ == "__main__":

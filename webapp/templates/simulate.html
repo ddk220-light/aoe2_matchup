@@ -997,32 +997,7 @@
             const CANVAS_HEIGHT = 500;
             const TILE_SIZE = 30;
             const UNIT_RADIUS = 15;
-            const MIN_ATTACK_RANGE = 5;
-
-            // Trample damage configuration (melee splash)
-            // Format: slug -> { percent, radius (pixels), flat }
-            const TRAMPLE_UNITS = {
-                'ratha_(melee)': { percent: 0.5, radius: TILE_SIZE * 0.5, flat: 0 },
-                'elite_ratha_(melee)': { percent: 0.5, radius: TILE_SIZE * 0.5, flat: 0 },
-                'elephant': { percent: 0.5, radius: TILE_SIZE * 0.5, flat: 0 },
-                'elite_elephant': { percent: 0.5, radius: TILE_SIZE * 0.5, flat: 0 },
-                'cataphract': { percent: 0.5, radius: TILE_SIZE * 0.5, flat: 0 },
-                'elite_cataphract': { percent: 0.5, radius: TILE_SIZE * 0.5, flat: 0 },
-                'war_elephant': { percent: 0.5, radius: TILE_SIZE * 0.5, flat: 0 },
-                'elite_war_elephant': { percent: 0.5, radius: TILE_SIZE * 0.5, flat: 0 },
-            };
-            const DRUZHINA_CIVS = new Set(['Slavs']);
-            const DRUZHINA_INFANTRY = new Set(['champion', 'halberdier', 'swordsmen']);
-            const DRUZHINA_TRAMPLE = { percent: 0, radius: TILE_SIZE * 0.5, flat: 5 };
-
-            // Bengali civ bonus: elephant units take 25% less bonus damage
-            const BENGALI_BONUS_REDUCTION = 0.25;
-            const BENGALI_ELEPHANT_SLUGS = new Set([
-                'elephant', 'elite_elephant',
-                'elephant_archer', 'elite_ele_archer',
-                'ratha_(melee)', 'elite_ratha_(melee)',
-                'ratha_(ranged)', 'elite_ratha_(ranged)',
-            ]);
+            const MELEE_RANGE_BUFFER = 5;  // Small pixel buffer so melee units can reach targets
 
             // Data from server
             const allCivs = {{ civs | tojson }};
@@ -1047,16 +1022,28 @@
                     this.maxHp = stats.hp;
                     this.currentHp = stats.hp;
                     this.attack = stats.attack;
-                    this.rawAttackRange = stats.attack_range || 0;  // Store raw range for isRanged check
-                    this.attackRange = (this.rawAttackRange * TILE_SIZE) + MIN_ATTACK_RANGE;
+                    this.rawAttackRange = stats.attack_range || 0;
+                    this.attackRange = (this.rawAttackRange * TILE_SIZE) + MELEE_RANGE_BUFFER;
                     this.attackSpeed = stats.attack_speed || 0.5;
                     this.reloadTime = 1.0 / this.attackSpeed;
-                    this.attackDelay = stats.attack_delay || 0;  // Time to wait before first attack after moving
+                    this.attackDelay = stats.attack_delay || 0;
                     this.moveSpeed = (stats.movement_speed || 1) * TILE_SIZE;
                     this.meleeArmor = stats.melee_armor || 0;
                     this.pierceArmor = stats.pierce_armor || 0;
                     this.attacks = stats.attacks_json ? JSON.parse(stats.attacks_json) : {};
                     this.armors = stats.armors_json ? JSON.parse(stats.armors_json) : {};
+
+                    // Combat properties from API (data-driven, no slug lookups)
+                    this.minAttackRange = (stats.min_attack_range || 0) * TILE_SIZE;
+                    this.isSiegeProjectile = stats.is_siege_projectile || 0;
+                    this.splashRadius = (stats.splash_radius || 0) * TILE_SIZE;
+                    this.projectileSpeed = (stats.projectile_speed || 0) * TILE_SIZE;
+                    this.ignoresPierceArmor = stats.ignores_pierce_armor || 0;
+                    this.ignoresMeleeArmor = stats.ignores_melee_armor || 0;
+                    this.tramplePercent = stats.trample_percent || 0;
+                    this.trampleRadius = (stats.trample_radius || 0) * TILE_SIZE;
+                    this.trampleFlatDamage = stats.trample_flat_damage || 0;
+                    this.bonusDamageReduction = stats.bonus_damage_reduction || 0;
 
                     this.x = 0;
                     this.y = 0;
@@ -1083,9 +1070,17 @@
                     const baseAttackClass = isRanged ? '3' : '4';
                     const baseArmorClass = isRanged ? '3' : '4';
                     const baseAttack = this.attacks[baseAttackClass] || this.attacks['4'] || this.attack;
-                    const targetBaseArmor = isRanged
-                        ? (target.armors['3'] || target.pierceArmor || 0)
-                        : (target.armors['4'] || target.meleeArmor || 0);
+                    // Leitis ignores melee armor, Composite Bowman ignores pierce armor
+                    let targetBaseArmor;
+                    if (isRanged && this.ignoresPierceArmor) {
+                        targetBaseArmor = 0;
+                    } else if (!isRanged && this.ignoresMeleeArmor) {
+                        targetBaseArmor = 0;
+                    } else {
+                        targetBaseArmor = isRanged
+                            ? (target.armors['3'] || target.pierceArmor || 0)
+                            : (target.armors['4'] || target.meleeArmor || 0);
+                    }
 
                     let bonusDamage = 0;
                     const breakdown = [];
@@ -1136,9 +1131,9 @@
                         }
                     }
 
-                    // Apply Bengali bonus damage reduction if target is Bengali elephant
-                    if (target.isBengaliElephant()) {
-                        bonusDamage = Math.floor(bonusDamage * (1 - BENGALI_BONUS_REDUCTION));
+                    // Apply bonus damage reduction (e.g. Bengali elephants take 25% less bonus damage)
+                    if (target.bonusDamageReduction > 0) {
+                        bonusDamage = Math.floor(bonusDamage * (1 - target.bonusDamageReduction));
                     }
 
                     const totalDamage = Math.max(1, baseDmg + bonusDamage);
@@ -1147,19 +1142,6 @@
                         return { total: totalDamage, breakdown };
                     }
                     return totalDamage;
-                }
-
-                isBengaliElephant() {
-                    if (this.civName !== 'Bengalis') return false;
-                    // Get base slug (remove civ suffix)
-                    let baseSlug = this.slug;
-                    if (this.slug.includes('_')) {
-                        const parts = this.slug.split('_');
-                        if (parts.length > 1 && parts[parts.length - 1].length > 3) {
-                            baseSlug = parts.slice(0, -1).join('_');
-                        }
-                    }
-                    return BENGALI_ELEPHANT_SLUGS.has(baseSlug) || BENGALI_ELEPHANT_SLUGS.has(this.slug);
                 }
 
                 findTarget(enemies) {
@@ -1188,8 +1170,17 @@
 
                 inRange() {
                     if (!this.target) return false;
+                    const dist = this.distanceTo(this.target);
                     const effectiveRange = this.attackRange + this.radius + this.target.radius;
-                    return this.distanceTo(this.target) <= effectiveRange;
+                    if (dist > effectiveRange) return false;
+                    // Min attack range check (mangonels, skirmishers can't fire at close targets)
+                    if (this.minAttackRange > 0 && dist < this.minAttackRange) return false;
+                    return true;
+                }
+
+                tooClose() {
+                    if (!this.target || this.minAttackRange <= 0) return false;
+                    return this.distanceTo(this.target) < this.minAttackRange;
                 }
 
                 update(dt, allUnits, enemies) {
@@ -1217,7 +1208,12 @@
                     if (this.isRanged()) {
                         const shouldKite = !this.target.isRanged();  // Only kite melee units
 
-                        if (this.inRange()) {
+                        if (this.tooClose()) {
+                            // Target is inside minimum attack range - must retreat
+                            this.state = 'kiting';
+                            this.moveAwayFromTarget(dt, allUnits);
+                            this.wasMoving = true;
+                        } else if (this.inRange()) {
                             // In range - prioritize attacking
                             if (this.wasMoving && this.attackCooldown <= 0) {
                                 // Just stopped moving - apply attack delay before first attack
@@ -1328,29 +1324,13 @@
                 }
 
                 getTrampleInfo() {
-                    // Get base slug (remove civ suffix)
-                    let baseSlug = this.slug;
-                    if (this.slug.includes('_')) {
-                        const parts = this.slug.split('_');
-                        // Remove last part if it looks like a civ name (longer than 3 chars)
-                        if (parts.length > 1 && parts[parts.length - 1].length > 3) {
-                            baseSlug = parts.slice(0, -1).join('_');
-                        }
+                    if (this.tramplePercent > 0 || this.trampleFlatDamage > 0) {
+                        return {
+                            percent: this.tramplePercent,
+                            radius: this.trampleRadius,
+                            flat: this.trampleFlatDamage
+                        };
                     }
-
-                    // Check direct trample units
-                    if (TRAMPLE_UNITS[baseSlug]) {
-                        return TRAMPLE_UNITS[baseSlug];
-                    }
-                    if (TRAMPLE_UNITS[this.slug]) {
-                        return TRAMPLE_UNITS[this.slug];
-                    }
-
-                    // Check Druzhina for Slavic infantry
-                    if (DRUZHINA_CIVS.has(this.civName) && DRUZHINA_INFANTRY.has(baseSlug)) {
-                        return DRUZHINA_TRAMPLE;
-                    }
-
                     return null;
                 }
 

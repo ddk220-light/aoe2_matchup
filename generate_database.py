@@ -60,6 +60,86 @@ CMD_MULTIPLY_ATTRIBUTE = 5
 LITHUANIAN_RELIC_COUNT = 2
 
 # =============================================================================
+# COMBAT PROPERTIES (stored in DB so simulation needs zero hardcoded slug lookups)
+# =============================================================================
+# Standard units — keyed by unit slug
+COMBAT_PROPERTIES = {
+    "mangonel": {
+        "min_attack_range": 3.0,
+        "is_siege_projectile": 1,
+        "splash_radius": 1.5,
+        "projectile_speed": 1.7,
+        "unit_category": "siege",
+    },
+    "siege_onager": {
+        "min_attack_range": 3.0,
+        "is_siege_projectile": 1,
+        "splash_radius": 1.5,
+        "projectile_speed": 1.7,
+        "unit_category": "siege",
+    },
+    "scorpion": {"min_attack_range": 2.0, "unit_category": "siege"},
+    "heavy_scorpion": {"min_attack_range": 2.0, "unit_category": "siege"},
+    "skirm": {"min_attack_range": 1.0, "unit_category": "trash"},
+    "elite_skirm": {"min_attack_range": 1.0, "unit_category": "trash"},
+    "spearman": {"unit_category": "trash"},
+    "pikeman": {"unit_category": "trash"},
+    "halberdier": {"unit_category": "trash"},
+    "scout": {"unit_category": "trash"},
+    "light_cav": {"unit_category": "trash"},
+    "hussar": {"unit_category": "trash"},
+    "elephant": {"trample_percent": 0.5, "trample_radius": 0.5},
+    "elite_elephant": {"trample_percent": 0.5, "trample_radius": 0.5},
+    "cataphract": {"trample_percent": 0.5, "trample_radius": 0.5},
+    "elite_cataphract": {"trample_percent": 0.5, "trample_radius": 0.5},
+    "war_elephant": {"trample_percent": 0.5, "trample_radius": 0.5},
+    "elite_war_elephant": {"trample_percent": 0.5, "trample_radius": 0.5},
+    "ram": {"unit_category": "siege"},
+    "siege_ram": {"unit_category": "siege"},
+    "trebuchet": {"unit_category": "siege"},
+    "bombard_cannon": {"unit_category": "siege"},
+}
+
+# Unique units — keyed by base slug (without civ suffix)
+UNIQUE_COMBAT_PROPERTIES = {
+    "leitis": {"ignores_melee_armor": 1},
+    "elite_leitis": {"ignores_melee_armor": 1},
+    "composite_bowman": {"ignores_pierce_armor": 1},
+    "elite_composite_bowman": {"ignores_pierce_armor": 1},
+    "ratha_(melee)": {"trample_percent": 0.5, "trample_radius": 0.5},
+    "elite_ratha_(melee)": {"trample_percent": 0.5, "trample_radius": 0.5},
+    "ballista_elephant": {"unit_category": "siege"},
+    "elite_ballista_elephant": {"unit_category": "siege"},
+    "organ_gun": {"unit_category": "siege"},
+    "elite_organ_gun": {"unit_category": "siege"},
+    "hussite_wagon": {"unit_category": "siege"},
+    "elite_hussite_wagon": {"unit_category": "siege"},
+}
+
+# Civ-conditional properties (applied on top of base/unique properties)
+CIV_COMBAT_PROPERTIES = {
+    ("Slavs", "champion"): {"trample_flat_damage": 5, "trample_radius": 0.5},
+    ("Slavs", "halberdier"): {"trample_flat_damage": 5, "trample_radius": 0.5},
+    ("Slavs", "swordsmen"): {"trample_flat_damage": 5, "trample_radius": 0.5},
+    ("Bengalis", "elephant"): {"bonus_damage_reduction": 0.25},
+    ("Bengalis", "elite_elephant"): {"bonus_damage_reduction": 0.25},
+    ("Bengalis", "elephant_archer"): {"bonus_damage_reduction": 0.25},
+    ("Bengalis", "elite_ele_archer"): {"bonus_damage_reduction": 0.25},
+    ("Bengalis", "ratha_(melee)"): {"bonus_damage_reduction": 0.25},
+    ("Bengalis", "ratha_(ranged)"): {"bonus_damage_reduction": 0.25},
+    ("Bengalis", "elite_ratha_(melee)"): {"bonus_damage_reduction": 0.25},
+    ("Bengalis", "elite_ratha_(ranged)"): {"bonus_damage_reduction": 0.25},
+}
+
+# Paired units mapping (for matchup mode switching)
+PAIRED_UNITS = {
+    "ratha_(melee)": "ratha_(ranged)",
+    "ratha_(ranged)": "ratha_(melee)",
+    "elite_ratha_(melee)": "elite_ratha_(ranged)",
+    "elite_ratha_(ranged)": "elite_ratha_(melee)",
+}
+
+# =============================================================================
 # UNIT DEFINITIONS
 # =============================================================================
 # Format: (base_unit_id, display_name, unit_class, availability_tech, upgrade_techs)
@@ -1817,6 +1897,19 @@ def create_database():
             combat_losses INTEGER DEFAULT 0,
             combat_draws INTEGER DEFAULT 0,
             combat_score REAL DEFAULT 0,
+            -- Combat properties (data-driven simulation, no hardcoded slug lookups)
+            min_attack_range REAL DEFAULT 0,
+            is_siege_projectile INTEGER DEFAULT 0,
+            splash_radius REAL DEFAULT 0,
+            projectile_speed REAL DEFAULT 0,
+            ignores_pierce_armor INTEGER DEFAULT 0,
+            ignores_melee_armor INTEGER DEFAULT 0,
+            trample_percent REAL DEFAULT 0,
+            trample_radius REAL DEFAULT 0,
+            trample_flat_damage INTEGER DEFAULT 0,
+            bonus_damage_reduction REAL DEFAULT 0,
+            unit_category TEXT DEFAULT 'military',
+            paired_unit_slug TEXT,
             FOREIGN KEY (civ_id) REFERENCES civilizations(id),
             FOREIGN KEY (unit_id) REFERENCES units(id),
             UNIQUE(civ_id, unit_id)
@@ -1868,6 +1961,68 @@ def create_database():
 
     conn.commit()
     return conn
+
+
+def get_combat_properties(unit_slug, civ_name=None):
+    """Look up combat properties for a unit slug, optionally with civ-specific overrides.
+
+    For unique units, the slug has a civ suffix (e.g., 'leitis_lithuanians').
+    We strip the suffix and look up in UNIQUE_COMBAT_PROPERTIES.
+    """
+    props = {
+        "min_attack_range": 0,
+        "is_siege_projectile": 0,
+        "splash_radius": 0,
+        "projectile_speed": 0,
+        "ignores_pierce_armor": 0,
+        "ignores_melee_armor": 0,
+        "trample_percent": 0,
+        "trample_radius": 0,
+        "trample_flat_damage": 0,
+        "bonus_damage_reduction": 0,
+        "unit_category": "military",
+        "paired_unit_slug": None,
+    }
+
+    # Check standard combat properties (exact slug match)
+    if unit_slug in COMBAT_PROPERTIES:
+        props.update(COMBAT_PROPERTIES[unit_slug])
+
+    # Check unique unit properties (strip civ suffix: e.g., 'leitis_lithuanians' -> 'leitis')
+    # Unique unit slugs are formatted as '{base_slug}_{civ_name_lower}'
+    # Try progressively shorter prefixes to find the base slug
+    for base_slug, unique_props in UNIQUE_COMBAT_PROPERTIES.items():
+        if unit_slug == base_slug or unit_slug.startswith(base_slug + "_"):
+            props.update(unique_props)
+            break
+
+    # Check civ-conditional properties (e.g., Slavs champion gets Druzhina trample)
+    if civ_name:
+        # For standard units, key is (civ_name, unit_slug)
+        civ_key = (civ_name, unit_slug)
+        if civ_key in CIV_COMBAT_PROPERTIES:
+            props.update(CIV_COMBAT_PROPERTIES[civ_key])
+
+        # For unique units, also try the base slug without civ suffix
+        for base_slug in UNIQUE_COMBAT_PROPERTIES:
+            if unit_slug == base_slug or unit_slug.startswith(base_slug + "_"):
+                civ_key_base = (civ_name, base_slug)
+                if civ_key_base in CIV_COMBAT_PROPERTIES:
+                    props.update(CIV_COMBAT_PROPERTIES[civ_key_base])
+                break
+
+    # Check paired units
+    for paired_slug, partner_slug in PAIRED_UNITS.items():
+        if unit_slug == paired_slug or unit_slug.startswith(paired_slug + "_"):
+            # Build the full partner slug with same civ suffix
+            if unit_slug.startswith(paired_slug + "_"):
+                suffix = unit_slug[len(paired_slug) :]
+                props["paired_unit_slug"] = partner_slug + suffix
+            else:
+                props["paired_unit_slug"] = partner_slug
+            break
+
+    return props
 
 
 def populate_database(conn, analyzer: UnitAnalyzer):
@@ -1936,6 +2091,9 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                 if bonuses:
                     bonuses_str = ", ".join(b.replace("C-Bonus, ", "") for b in bonuses)
 
+                # Look up combat properties
+                combat_props = get_combat_properties(unit_slug, civ_name)
+
                 if stats:
                     # Convert attacks and armors to JSON
                     attacks_json = json.dumps(stats.attacks) if stats.attacks else None
@@ -1947,8 +2105,13 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             civ_id, unit_id, unit_name, hp, attack, attack_range,
                             attack_speed, attack_delay, melee_armor, pierce_armor, movement_speed,
                             cost_food, cost_wood, cost_gold, creation_time, upgrade_cost,
-                            civ_bonuses, has_unit, attacks_json, armors_json
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            civ_bonuses, has_unit, attacks_json, armors_json,
+                            min_attack_range, is_siege_projectile, splash_radius, projectile_speed,
+                            ignores_pierce_armor, ignores_melee_armor, trample_percent,
+                            trample_radius, trample_flat_damage, bonus_damage_reduction,
+                            unit_category, paired_unit_slug
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             civ_id_map[civ_name],
@@ -1971,6 +2134,18 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             has_unit,
                             attacks_json,
                             armors_json,
+                            combat_props["min_attack_range"],
+                            combat_props["is_siege_projectile"],
+                            combat_props["splash_radius"],
+                            combat_props["projectile_speed"],
+                            combat_props["ignores_pierce_armor"],
+                            combat_props["ignores_melee_armor"],
+                            combat_props["trample_percent"],
+                            combat_props["trample_radius"],
+                            combat_props["trample_flat_damage"],
+                            combat_props["bonus_damage_reduction"],
+                            combat_props["unit_category"],
+                            combat_props["paired_unit_slug"],
                         ),
                     )
                 else:
@@ -1980,8 +2155,10 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             civ_id, unit_id, unit_name, hp, attack, attack_range,
                             attack_speed, attack_delay, melee_armor, pierce_armor, movement_speed,
                             cost_food, cost_wood, cost_gold, creation_time, upgrade_cost,
-                            civ_bonuses, has_unit, attacks_json, armors_json
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            civ_bonuses, has_unit, attacks_json, armors_json,
+                            unit_category
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                                  ?)
                         """,
                         (
                             civ_id_map[civ_name],
@@ -2004,6 +2181,7 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             has_unit,
                             None,
                             None,
+                            combat_props["unit_category"],
                         ),
                     )
 
@@ -2094,7 +2272,15 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                     (db_unit_id_imperial, result_imperial, display_name)
                 )
 
-            for db_unit_id, result, unit_name in units_to_process:
+            # Build slug list matching units_to_process order
+            castle_slug = f"{unit_slug}_{civ_name.lower()}"
+            if has_elite:
+                imperial_slug = f"elite_{unit_slug}_{civ_name.lower()}"
+            else:
+                imperial_slug = f"{unit_slug}_imp_{civ_name.lower()}"
+            slugs_to_process = [castle_slug, imperial_slug]
+
+            for idx, (db_unit_id, result, unit_name) in enumerate(units_to_process):
                 stats = result["stats"]
                 has_unit = 1 if result["has_unit"] else 0
                 bonuses = result.get("applied_bonuses", [])
@@ -2103,6 +2289,10 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                     if bonuses
                     else None
                 )
+
+                # Look up combat properties using the full slug
+                uu_slug = slugs_to_process[idx]
+                combat_props = get_combat_properties(uu_slug, civ_name)
 
                 if stats:
                     attacks_json = json.dumps(stats.attacks) if stats.attacks else None
@@ -2114,8 +2304,13 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             civ_id, unit_id, unit_name, hp, attack, attack_range,
                             attack_speed, attack_delay, melee_armor, pierce_armor, movement_speed,
                             cost_food, cost_wood, cost_gold, creation_time, upgrade_cost,
-                            civ_bonuses, has_unit, attacks_json, armors_json
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            civ_bonuses, has_unit, attacks_json, armors_json,
+                            min_attack_range, is_siege_projectile, splash_radius, projectile_speed,
+                            ignores_pierce_armor, ignores_melee_armor, trample_percent,
+                            trample_radius, trample_flat_damage, bonus_damage_reduction,
+                            unit_category, paired_unit_slug
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             db_civ_id,
@@ -2138,6 +2333,18 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                             has_unit,
                             attacks_json,
                             armors_json,
+                            combat_props["min_attack_range"],
+                            combat_props["is_siege_projectile"],
+                            combat_props["splash_radius"],
+                            combat_props["projectile_speed"],
+                            combat_props["ignores_pierce_armor"],
+                            combat_props["ignores_melee_armor"],
+                            combat_props["trample_percent"],
+                            combat_props["trample_radius"],
+                            combat_props["trample_flat_damage"],
+                            combat_props["bonus_damage_reduction"],
+                            combat_props["unit_category"],
+                            combat_props["paired_unit_slug"],
                         ),
                     )
 

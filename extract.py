@@ -1262,6 +1262,14 @@ def extract_unit_data(unit, all_units=None):
                 )
         data["armors"] = armors
 
+    # Extract projectile speed from the projectile unit (type 60)
+    proj_id = data.get("projectile_unit_id", -1)
+    if all_units and proj_id and proj_id > 0 and proj_id in all_units:
+        proj_unit = all_units[proj_id]
+        proj_speed = getattr(proj_unit, "speed", 0)
+        if proj_speed and proj_speed > 0:
+            data["projectile_speed"] = round(proj_speed, 2)
+
     # Extract secondary projectile attack data (for multi-projectile units)
     # The secondary projectile unit (type 60) has its own attacks that differ from
     # the main unit (e.g., Chu Ko Nu extra arrows do 3 pierce with no bonus damage)

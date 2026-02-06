@@ -64,31 +64,20 @@ LITHUANIAN_RELIC_COUNT = 2
 # =============================================================================
 # Standard units — keyed by unit slug
 COMBAT_PROPERTIES = {
-    "mangonel": {
-        "min_attack_range": 3.0,
-        "is_siege_projectile": 1,
-        "splash_radius": 1.5,
-        "projectile_speed": 1.7,
-        "unit_category": "siege",
-    },
-    "siege_onager": {
-        "min_attack_range": 3.0,
-        "is_siege_projectile": 1,
-        "splash_radius": 1.5,
-        "projectile_speed": 1.7,
-        "unit_category": "siege",
-    },
-    "scorpion": {"min_attack_range": 2.0, "unit_category": "siege"},
-    "heavy_scorpion": {"min_attack_range": 2.0, "unit_category": "siege"},
-    "skirm": {"min_attack_range": 1.0, "unit_category": "trash"},
-    "elite_skirm": {"min_attack_range": 1.0, "unit_category": "trash"},
+    # min_attack_range, is_siege_projectile, splash_radius, projectile_speed
+    # are now data-driven from get_extracted_combat_properties()
+    "mangonel": {"unit_category": "siege"},
+    "siege_onager": {"unit_category": "siege"},
+    "scorpion": {"unit_category": "siege"},
+    "heavy_scorpion": {"unit_category": "siege"},
+    "skirm": {"unit_category": "trash"},
+    "elite_skirm": {"unit_category": "trash"},
     "spearman": {"unit_category": "trash"},
     "pikeman": {"unit_category": "trash"},
     "halberdier": {"unit_category": "trash"},
     "scout": {"unit_category": "trash"},
     "light_cav": {"unit_category": "trash"},
     "hussar": {"unit_category": "trash"},
-    # Trample for elephants now data-driven from blast_width/blast_damage
     "ram": {"unit_category": "siege"},
     "siege_ram": {"unit_category": "siege"},
     "trebuchet": {"unit_category": "siege"},
@@ -106,19 +95,10 @@ UNIQUE_COMBAT_PROPERTIES = {
     "elite_leitis": {"ignores_melee_armor": 1},
     "composite_bowman": {"ignores_pierce_armor": 1},
     "elite_composite_bowman": {"ignores_pierce_armor": 1},
-    # Cataphract: blast_damage=-5.0 in dat (not standard trample), Logistica gives trample
+    # Cataphract trample from Logistica tech (not in base unit dat stats)
     "cataphract": {"trample_percent": 0.5, "trample_radius": 0.5},
     "elite_cataphract": {"trample_percent": 0.5, "trample_radius": 0.5},
-    "ballista_elephant": {},
-    "elite_ballista_elephant": {},
-    "hussite_wagon": {},
-    "elite_hussite_wagon": {},
-    # Organ Gun: extra projectiles come from secondary_projectile_unit, not total_projectiles
-    "organ_gun": {"extra_projectiles": 4},
-    "elite_organ_gun": {"extra_projectiles": 5},
-    # Fire Archer: charge_type=6 special mechanic, not standard multi-projectile
-    "fire_archer": {"extra_projectiles": 2},
-    "elite_fire_archer": {"extra_projectiles": 2},
+    # Organ Gun/Fire Archer extra projectiles are now data-driven
     # Bleed damage (ability flag + stat values not in dat)
     "liao_dao": {"bleed_dps": 2.0, "bleed_duration": 5.0},
     "elite_liao_dao": {"bleed_dps": 3.0, "bleed_duration": 5.0},
@@ -2117,9 +2097,14 @@ def get_extracted_combat_properties(unit_id, units_data):
     """Read combat properties from extracted dat file data for a given game unit ID.
 
     Maps extracted fields to simulation combat property columns:
-    - total_projectiles → extra_projectiles (for Chu Ko Nu, Kipchak)
-    - max_total_projectiles - total_projectiles → first_attack_extra_projectiles (Xianbei)
-    - blast_width + blast_damage (>0, level=2) → trample_radius + trample_percent
+    - min_range → min_attack_range
+    - projectile_speed (from projectile unit) → projectile_speed
+    - class=13 + blast_width>0 + blast_damage≥1 → is_siege_projectile + splash_radius
+    - total_projectiles → extra_projectiles (Chu Ko Nu, Kipchak, Organ Gun)
+    - charge_type=6 + max_total_projectiles → extra_projectiles (Fire Archer)
+    - charge_type=7 + max-total → first_attack_extra_projectiles (Xianbei)
+    - secondary_projectile_attacks → extra_projectile_attacks_json
+    - blast_width + blast_damage (0<dmg<1, level=2) → trample_percent + trample_radius
     - blast_width (level=11) → splash_on_hit_radius (Grenadier)
     - charge_type=4 → dodge_shield_max + dodge_shield_recharge (Shrivamsha)
     - bonus_damage_resistance → bonus_damage_reduction
@@ -2130,21 +2115,54 @@ def get_extracted_combat_properties(unit_id, units_data):
     unit = units_data[unit_id]
     props = {}
 
-    # --- Extra projectiles from total_projectiles ---
-    # Units like Chu Ko Nu (73/559) and Kipchak (1231/1233) have total_projectiles > 1
-    # on the main unit. Organ Gun uses secondary_projectile_unit instead (handled separately).
-    # Exclude siege class (13) which fires multiple stones, not extra arrow projectiles.
-    total_proj = unit.get("total_projectiles", 1)
+    # --- min_attack_range ---
+    min_range = unit.get("min_range", 0) or 0
+    if min_range > 0:
+        props["min_attack_range"] = round(min_range, 2)
+
+    # --- Projectile speed (from projectile unit's speed) ---
+    proj_speed = unit.get("projectile_speed", 0) or 0
+    if proj_speed > 0:
+        props["projectile_speed"] = round(proj_speed, 2)
+
+    # --- Siege projectile detection ---
+    # Ranged siege units (class 13) with blast_width > 0 and blast_damage = 1.0 fire splash
+    # projectiles (Mangonel, Siege Onager, Bombard Cannon).
+    # Excludes melee siege (Rams, Siege Towers) and Organ Gun (blast_width=0).
     unit_class = unit.get("class", 0)
-    if total_proj and total_proj > 1 and unit_class != 13:
+    blast_width = unit.get("blast_width", 0) or 0
+    blast_damage = unit.get("blast_damage", 0) or 0
+    blast_level = unit.get("blast_attack_level", 0) or 0
+    unit_range = unit.get("range", 0) or 0
+
+    if (
+        unit_class == 13
+        and blast_width > 0
+        and blast_damage >= 1.0
+        and unit_range >= 1.0
+    ):
+        props["is_siege_projectile"] = 1
+        props["splash_radius"] = round(blast_width, 2)
+
+    # --- Extra projectiles from total_projectiles ---
+    # Units with total_projectiles > 1 fire extra arrows per attack.
+    # Siege class (13) with blast_width > 0 fires stones (handled as splash above).
+    # Organ Gun (class 13, blast_width=0) fires real extra projectiles like archers.
+    total_proj = unit.get("total_projectiles", 1)
+    is_siege_splash = unit_class == 13 and blast_width > 0 and blast_damage >= 1.0
+    if total_proj and total_proj > 1 and not is_siege_splash:
         props["extra_projectiles"] = int(total_proj) - 1
+
+    # --- Fire Archer extra projectiles from charge_type=6 ---
+    # Fire Archer: total_proj=1, max_proj=3, charge_type=6 → 2 extra projectiles
+    max_proj = unit.get("max_total_projectiles", 0)
+    charge_type = unit.get("charge_type", 0)
+    if charge_type == 6 and max_proj and max_proj > 1:
+        props["extra_projectiles"] = int(max_proj) - 1
 
     # --- First attack extra projectiles (burst) ---
     # Xianbei Raider (1952): total=1, max=6 → 5 extra on first attack
-    max_proj = unit.get("max_total_projectiles", 0)
     if max_proj and total_proj and max_proj > total_proj:
-        # Only for charge_type=7 (burst projectile charge) to avoid false positives
-        charge_type = unit.get("charge_type", 0)
         if charge_type == 7:
             props["first_attack_extra_projectiles"] = int(max_proj) - int(total_proj)
 
@@ -2156,33 +2174,28 @@ def get_extracted_combat_properties(unit_id, units_data):
         or props.get("first_attack_extra_projectiles", 0) > 0
     )
     if sec_attacks and has_extra:
-        # Convert list of {class, amount} to {class_id: amount} dict (same format as attacks_json)
         attacks_dict = {str(a["class"]): a["amount"] for a in sec_attacks}
         props["extra_projectile_attacks_json"] = json.dumps(attacks_dict)
 
     # --- Trample / splash from blast fields ---
-    blast_width = unit.get("blast_width", 0) or 0
-    blast_damage = unit.get("blast_damage", 0) or 0
-    blast_level = unit.get("blast_attack_level", 0) or 0
-
     if blast_width > 0:
         if blast_level == 2 and 0 < blast_damage < 1.0:
             # Fractional trample: Battle Elephant (0.25), Ratha melee (0.2), War Elephant (0.5)
-            # Excludes siege units which have blast_damage=1.0 (full area damage)
             props["trample_percent"] = round(blast_damage, 4)
             props["trample_radius"] = round(blast_width, 2)
         elif blast_level == 11:
             # Grenadier splash on hit (AoE around target)
             props["splash_on_hit_radius"] = round(blast_width, 2)
 
+    # NOTE: blast_damage=-5.0 is standard for infantry/cavalry (means "no trample").
+    # Cataphract trample comes from Logistica tech, not base unit stats - stays hardcoded.
+
     # --- Dodge shield from charge_type=4 (Shrivamsha Rider) ---
-    charge_type = unit.get("charge_type", 0)
     charge_attack = unit.get("charge_attack", 0)
     charge_recharge = unit.get("charge_recharge_rate", 0)
 
     if charge_type == 4 and charge_attack and charge_recharge:
         props["dodge_shield_max"] = int(charge_attack)
-        # recharge_rate is charges/sec, recharge time = max_charges / rate
         props["dodge_shield_recharge"] = round(charge_attack / charge_recharge, 2)
 
     # --- Bonus damage reduction ---

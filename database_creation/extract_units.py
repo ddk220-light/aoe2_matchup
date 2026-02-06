@@ -1,57 +1,6 @@
-#!/usr/bin/env python3
-"""
-AoE2:DE Data Extractor
-Extracts unit, technology, and civilization data from empires2_x2_p1.dat
-"""
+"""Extract unit data from dat file into units.json."""
 
-import json
-from pathlib import Path
-
-from genieutils.datfile import DatFile
-
-# Known armor/attack class names
-ARMOR_CLASSES = {
-    0: "Unused",
-    1: "Infantry",
-    2: "Turtle Ships",
-    3: "Base Pierce",
-    4: "Base Melee",
-    5: "War Elephants",
-    6: "Unused",
-    7: "Unused",
-    8: "Cavalry",
-    9: "Unused",
-    10: "Unused",
-    11: "All Buildings",
-    12: "Unused",
-    13: "Stone Defense",
-    14: "Predator Animals",
-    15: "Archers",
-    16: "Ships & Saboteurs",
-    17: "Rams",
-    18: "Trees",
-    19: "Unique Units",
-    20: "Siege Weapons",
-    21: "Standard Buildings",
-    22: "Walls & Gates",
-    23: "Gunpowder Units",
-    24: "Boars",
-    25: "Monks",
-    26: "Castles",
-    27: "Spearmen",
-    28: "Cavalry Archers",
-    29: "Eagle Warriors",
-    30: "Camels",
-    31: "Leitis",
-    32: "Condottieri",
-    33: "Fishing Ships",
-    34: "Mamelukes",
-    35: "Heroes & Kings",
-    36: "Hussite Wagons",
-    37: "Unused",
-    38: "Skirmishers",
-    39: "Mounted Archers",
-}
+from .extract_constants import ARMOR_CLASSES
 
 # Unit class names (from class_ attribute)
 UNIT_CLASSES = {
@@ -118,70 +67,6 @@ UNIT_CLASSES = {
     60: "Miscellaneous",
     61: "Controlled Animal",
 }
-
-# Civilization names (order matters - matches civ IDs)
-CIV_NAMES = [
-    "Gaia",  # 0
-    "Britons",
-    "Franks",
-    "Goths",
-    "Teutons",
-    "Japanese",
-    "Chinese",
-    "Byzantines",
-    "Persians",
-    "Saracens",
-    "Turks",  # 10
-    "Vikings",
-    "Mongols",
-    "Celts",
-    "Spanish",
-    "Aztecs",
-    "Mayans",
-    "Huns",
-    "Koreans",
-    "Italians",
-    "Hindustanis",  # 20 (formerly Indians, renamed in 2022)
-    "Incas",
-    "Magyars",
-    "Slavs",
-    "Portuguese",
-    "Ethiopians",
-    "Malians",
-    "Berbers",
-    "Khmer",
-    "Malay",
-    "Burmese",  # 30
-    "Vietnamese",
-    "Bulgarians",
-    "Tatars",
-    "Cumans",
-    "Lithuanians",
-    "Burgundians",
-    "Sicilians",
-    "Poles",
-    "Bohemians",
-    "Dravidians",  # 40
-    "Bengalis",
-    "Gurjaras",
-    "Romans",
-    "Armenians",
-    "Georgians",  # 45
-    # Chronicles DLC - Age of Antiquity (not in ranked play)
-    None,  # 46 Achaemenids - skip
-    None,  # 47 Athenians - skip
-    None,  # 48 Spartans - skip
-    # Three Kingdoms DLC (in ranked play)
-    "Shu",  # 49
-    "Wu",  # 50
-    "Wei",  # 51
-    "Jurchens",  # 52
-    "Khitans",  # 53
-    # Chronicles DLC - Alexander (not in ranked play)
-    None,  # 54 Macedonians - skip
-    None,  # 55 Thracians - skip
-    None,  # 56 Puru - skip
-]
 
 # Comprehensive unit ID to display name mappings
 UNIT_NAMES = {
@@ -263,16 +148,14 @@ UNIT_NAMES = {
     886: "Demolition Ship",
     1104: "Heavy Demolition Ship",
     869: "Cannon Galleon",
-    420: "Elite Cannon Galleon",  # Note: correct ID to be verified
+    420: "Elite Cannon Galleon",
     1743: "Dromon",
     1702: "Thirisadai",
     250: "Longboat",
     533: "Elite Longboat",
     # ===== Elephant Units (Regional) =====
-    # Battle Elephant line (available to SE Asian civs)
     1132: "Battle Elephant",
     1134: "Elite Battle Elephant",
-    # Elephant Archer line (available to South Asian civs)
     873: "Elephant Archer",
     875: "Elite Elephant Archer",
     # ===== Unique Units - Britons =====
@@ -337,7 +220,6 @@ UNIT_NAMES = {
     1006: "Elite Genoese Crossbowman",
     866: "Condottiero",
     # ===== Unique Units - Indians/Hindustanis =====
-    # Note: Elephant Archer IDs are 873/875, not 1010/1012
     1747: "Ghulam",
     1749: "Elite Ghulam",
     # ===== Unique Units - Incas =====
@@ -357,9 +239,6 @@ UNIT_NAMES = {
     1122: "Elite Organ Gun",
     1123: "Caravel",
     1125: "Elite Caravel",
-    # ===== Unique Units - Ethiopians =====
-    # Note: Shotel Warrior IDs are 1016/1018, not 1132/1134
-    # 1132/1134 are Battle Elephant/Elite Battle Elephant
     # ===== Unique Units - Malians =====
     1013: "Gbeto",
     1015: "Elite Gbeto",
@@ -1116,30 +995,28 @@ INTERNAL_NAME_MAP = {
 
 def get_display_name(unit_id, internal_name):
     """Get the display name for a unit, using ID mapping first, then internal name fallback."""
-    # First check ID mapping
     if unit_id in UNIT_NAMES:
         return UNIT_NAMES[unit_id]
 
-    # Then check internal name mapping
     internal_upper = internal_name.upper().strip()
     if internal_upper in INTERNAL_NAME_MAP:
         return INTERNAL_NAME_MAP[internal_upper]
 
-    # If name already looks readable (has spaces or mixed case), use it
     if " " in internal_name or (internal_name and not internal_name.isupper()):
         return internal_name
 
-    # Otherwise return internal name as-is
     return internal_name
 
 
 def extract_unit_data(unit, all_units=None):
-    """Extract relevant data from a unit object.
+    """Extract relevant data from a genieutils unit object.
 
     Args:
-        unit: The unit object to extract data from.
+        unit: The genieutils unit object.
         all_units: Dict of id->unit for all units (including type 60 projectiles),
                    used to look up secondary projectile attack data.
+    Returns:
+        Dict of unit data, or None if unit should be skipped.
     """
     if unit is None:
         return None
@@ -1152,10 +1029,7 @@ def extract_unit_data(unit, all_units=None):
     if not hasattr(unit, "hit_points") or unit.hit_points <= 0:
         return None
 
-    # Get the unit class from class_ attribute
     unit_class = getattr(unit, "class_", -1)
-
-    # Get display name from our mapping, fallback to internal name
     internal_name = getattr(unit, "name", "").strip()
     display_name = get_display_name(unit.id, internal_name)
 
@@ -1175,7 +1049,6 @@ def extract_unit_data(unit, all_units=None):
     # Cost from creatable
     if hasattr(unit, "creatable") and unit.creatable:
         c = unit.creatable
-        # Get train time from train_locations
         if hasattr(c, "train_locations") and c.train_locations:
             data["train_time"] = c.train_locations[0].train_time
         else:
@@ -1213,7 +1086,6 @@ def extract_unit_data(unit, all_units=None):
             data["charge_projectile_unit"] = charge_proj_id
 
         # HP regeneration rate (attribute 109, stored as rear_attack_modifier in dat)
-        # Berserk: 40 HP/min, Dire Wolf: 10 HP/min
         hp_regen = getattr(c, "rear_attack_modifier", 0)
         if hp_regen and hp_regen > 0:
             data["hp_regen"] = round(hp_regen, 1)
@@ -1224,7 +1096,6 @@ def extract_unit_data(unit, all_units=None):
         data["range"] = round(getattr(t, "max_range", 0), 2)
         data["min_range"] = round(getattr(t, "min_range", 0), 2)
         data["reload_time"] = round(getattr(t, "reload_time", 0), 3)
-        # Frame delay is in frames (game runs at ~60fps), convert to seconds
         frame_delay = getattr(t, "frame_delay", 0)
         data["attack_delay"] = round(frame_delay / 60.0, 3)
         data["accuracy"] = getattr(t, "accuracy_percent", 100)
@@ -1282,8 +1153,6 @@ def extract_unit_data(unit, all_units=None):
             data["projectile_speed"] = round(proj_speed, 2)
 
     # Extract secondary projectile attack data (for multi-projectile units)
-    # The secondary projectile unit (type 60) has its own attacks that differ from
-    # the main unit (e.g., Chu Ko Nu extra arrows do 3 pierce with no bonus damage)
     sec_proj_id = data.get("secondary_projectile_unit", -1)
     if all_units and sec_proj_id and sec_proj_id > 0 and sec_proj_id in all_units:
         proj_unit = all_units[sec_proj_id]
@@ -1316,11 +1185,9 @@ def extract_unit_data(unit, all_units=None):
         and charge_proj_id in all_units
     ):
         proj_unit = all_units[charge_proj_id]
-        # Speed
         proj_speed = getattr(proj_unit, "speed", 0)
         if proj_speed and proj_speed > 0:
             data["charge_projectile_speed"] = round(proj_speed, 2)
-        # Attacks
         if hasattr(proj_unit, "type_50") and proj_unit.type_50:
             proj_t = proj_unit.type_50
             proj_attacks = []
@@ -1343,240 +1210,18 @@ def extract_unit_data(unit, all_units=None):
     return data
 
 
-def extract_tech_data(tech):
-    """Extract relevant data from a technology object."""
-    if tech is None:
-        return None
+def extract_units(df):
+    """Extract all combat units from the dat file.
 
-    # Skip invalid techs
-    name = getattr(tech, "name", "").strip() if hasattr(tech, "name") else ""
-    if not name or name.startswith("YOURITEMHERE"):
-        return None
-
-    data = {
-        "id": getattr(tech, "id", -1) if hasattr(tech, "id") else -1,
-        "name": name,
-        "research_time": getattr(tech, "research_time", 0),
-        "civ": getattr(tech, "civ", -1),  # -1 means all civs, otherwise civ-specific
-        "effect_id": getattr(tech, "effect_id", -1),
-        "required_tech": getattr(tech, "required_tech", -1),
-    }
-
-    # Required techs array (up to 6 prerequisite techs)
-    if hasattr(tech, "required_techs"):
-        required = [t for t in tech.required_techs if t >= 0]
-        if required:
-            data["required_techs"] = required
-
-    # Research location (building ID where this tech is researched)
-    if hasattr(tech, "research_locations") and tech.research_locations:
-        data["research_location"] = tech.research_locations[0].location_id
-
-    # Button ID (position in research menu)
-    if hasattr(tech, "button_id") and tech.button_id >= 0:
-        data["button_id"] = tech.button_id
-
-    # Full tech mode - if 1, tech is always available once building exists
-    if hasattr(tech, "full_tech_mode"):
-        data["full_tech_mode"] = tech.full_tech_mode
-
-    # Cost
-    cost = {}
-    if hasattr(tech, "resource_costs"):
-        for rc in tech.resource_costs:
-            if rc.amount > 0:
-                resource_names = {0: "food", 1: "wood", 2: "stone", 3: "gold"}
-                res_name = resource_names.get(rc.type, None)
-                if res_name:
-                    cost[res_name] = int(rc.amount)
-    data["cost"] = cost
-
-    return data
-
-
-def determine_tech_age(tech_data, techs_by_id):
-    """Determine the age a tech becomes available.
-
-    Age values: 1=Dark, 2=Feudal, 3=Castle, 4=Imperial
-
-    Logic:
-    1. Check required_techs for age-up techs (101=Feudal, 102=Castle, 103=Imperial)
-    2. Check research_location (building determines availability)
-    3. Check prerequisite tech chains
+    Args:
+        df: Parsed DatFile object.
+    Returns:
+        List of unit data dicts, sorted by ID.
     """
-    # Age-up tech IDs
-    FEUDAL_AGE = 101
-    CASTLE_AGE = 102
-    IMPERIAL_AGE = 103
-
-    required_techs = tech_data.get("required_techs", [])
-
-    # Direct age requirements
-    if IMPERIAL_AGE in required_techs:
-        return 4
-    if CASTLE_AGE in required_techs:
-        return 3
-    if FEUDAL_AGE in required_techs:
-        return 2
-
-    # Check prerequisite tech ages (recursive)
-    max_prereq_age = 1
-    for prereq_id in required_techs:
-        if prereq_id in techs_by_id:
-            prereq_data = techs_by_id[prereq_id]
-            prereq_age = prereq_data.get("_computed_age", 1)
-            max_prereq_age = max(max_prereq_age, prereq_age)
-
-    return max_prereq_age
-
-
-def generate_tech_ages(techs, df):
-    """Generate tech_ages.json with age data for standard techs."""
-    # Build lookup
-    techs_by_id = {t["id"]: t for t in techs}
-
-    # Building ID to name mapping
-    building_names = {
-        103: "Blacksmith",
-        101: "Stable",
-        86: "Stable",
-        153: "Stable",
-        87: "Archery Range",
-        10: "Archery Range",
-        12: "Barracks",
-        49: "Siege Workshop",
-        209: "University",
-        82: "Castle",
-        104: "Monastery",
-        84: "Market",
-        109: "Town Center",
-    }
-
-    # Standard tech patterns - techs that are universally researchable
-    standard_tech_patterns = [
-        # Blacksmith attack upgrades
-        "forging",
-        "iron casting",
-        "blast furnace",
-        # Blacksmith cavalry armor
-        "scale barding",
-        "chain barding",
-        "plate barding",
-        # Blacksmith infantry armor
-        "scale mail",
-        "chain mail",
-        "plate mail",
-        # Blacksmith archer armor/attack
-        "fletching",
-        "bodkin",
-        "bracer",
-        "padded archer",
-        "leather archer",
-        "ring archer",
-        # Stable techs
-        "bloodlines",
-        "husbandry",
-        # Archery range
-        "thumb ring",
-        "parthian",
-        # Barracks
-        "squires",
-        "arson",
-        "supplies",
-        "gambesons",
-        # Unit upgrades (line upgrades)
-        "cavalier",
-        "paladin",
-        "arbalest",
-        "elite skirmisher",
-        "heavy cavalry archer",
-        "long swordsman",
-        "two-handed",
-        "champion",
-        "pikeman",
-        "halberdier",
-        "eagle warrior",
-        "elite eagle",
-        "light cavalry",
-        "hussar",
-        "heavy camel",
-        "imperial camel",
-        "elite battle elephant",
-        "war galley",
-        "galleon",
-        "heavy demo",
-        "heavy scorpion",
-        "capped ram",
-        "siege ram",
-        "onager",
-        "siege onager",
-    ]
-
-    tech_ages = {
-        "_comment": "Tech ID to age mapping. Age: 1=Dark, 2=Feudal, 3=Castle, 4=Imperial. Auto-generated from dat file.",
-        "techs": {},
-    }
-
-    # First pass: compute ages based on required_techs
-    for tech in techs:
-        age = determine_tech_age(tech, techs_by_id)
-        techs_by_id[tech["id"]]["_computed_age"] = age
-
-    # Second pass: refine based on prerequisite chains
-    for _ in range(3):  # Multiple passes to resolve chains
-        for tech in techs:
-            age = determine_tech_age(tech, techs_by_id)
-            techs_by_id[tech["id"]]["_computed_age"] = age
-
-    # Filter to standard techs and build output
-    for tech in techs:
-        tech_name = tech.get("name", "").lower()
-
-        # Check if this is a standard tech
-        is_standard = False
-        for pattern in standard_tech_patterns:
-            if pattern in tech_name:
-                is_standard = True
-                break
-
-        if not is_standard:
-            continue
-
-        # Skip civ-specific techs
-        if tech.get("civ", -1) >= 0:
-            continue
-
-        tech_id = str(tech["id"])
-        age = tech.get("_computed_age", 1)
-
-        # Get building name
-        research_loc = tech.get("research_location", -1)
-        building = building_names.get(research_loc, "Unknown")
-
-        tech_ages["techs"][tech_id] = {
-            "name": tech["name"],
-            "age": age,
-            "building": building,
-        }
-
-    return tech_ages
-
-
-def main():
-    dat_path = Path(__file__).parent / "empires2_x2_p1.dat"
-    output_dir = Path(__file__).parent / "output"
-    output_dir.mkdir(exist_ok=True)
-
-    print(f"Loading {dat_path}...")
-    df = DatFile.parse(dat_path)
-    print(f"Loaded successfully!")
-
-    # Extract units from first civ (base units - Gaia has all units)
-    print("\nExtracting units...")
     units = []
     if df.civs and len(df.civs) > 0:
         base_civ = df.civs[0]  # Gaia has all base units
-        # Build lookup of ALL units (including type 60 projectiles) for secondary projectile extraction
+        # Build lookup of ALL units (including type 60 projectiles)
         all_units_by_id = {}
         for unit in base_civ.units:
             if unit is not None and hasattr(unit, "id"):
@@ -1586,127 +1231,5 @@ def main():
             if unit_data:
                 units.append(unit_data)
 
-    # Sort by ID
     units.sort(key=lambda x: x["id"])
-    print(f"  Extracted {len(units)} units")
-
-    # Save units
-    with open(output_dir / "units.json", "w") as f:
-        json.dump(units, f, indent=2)
-    print(f"  Saved to output/units.json")
-
-    # Extract technologies
-    print("\nExtracting technologies...")
-    techs = []
-    if hasattr(df, "techs") and df.techs:
-        for i, tech in enumerate(df.techs):
-            tech_data = extract_tech_data(tech)
-            if tech_data:
-                if tech_data["id"] == -1:
-                    tech_data["id"] = i
-                techs.append(tech_data)
-
-    techs.sort(key=lambda x: x["id"])
-    print(f"  Extracted {len(techs)} technologies")
-
-    with open(output_dir / "technologies.json", "w") as f:
-        json.dump(techs, f, indent=2)
-    print(f"  Saved to output/technologies.json")
-
-    # Generate tech ages mapping
-    print("\nGenerating tech ages...")
-    tech_ages = generate_tech_ages(techs, df)
-    print(f"  Found {len(tech_ages['techs'])} standard techs with age data")
-
-    with open(output_dir / "tech_ages.json", "w") as f:
-        json.dump(tech_ages, f, indent=2)
-    print(f"  Saved to output/tech_ages.json")
-
-    # Extract civilizations
-    print("\nExtracting civilizations...")
-    civs = []
-    for i, civ in enumerate(df.civs):
-        if i == 0:
-            continue  # Skip Gaia
-        if i >= len(CIV_NAMES):
-            break
-
-        # Skip civs marked as None (not in ranked play)
-        if CIV_NAMES[i] is None:
-            continue
-
-        civ_data = {
-            "id": i,
-            "name": CIV_NAMES[i],
-        }
-
-        # Count available units
-        available_units = []
-        for unit in civ.units:
-            if unit is not None and hasattr(unit, "hit_points") and unit.hit_points > 0:
-                if hasattr(unit, "type") and unit.type in [70, 80]:
-                    available_units.append(unit.id)
-        civ_data["unit_count"] = len(available_units)
-
-        civs.append(civ_data)
-
-    print(f"  Extracted {len(civs)} civilizations")
-
-    with open(output_dir / "civilizations.json", "w") as f:
-        json.dump(civs, f, indent=2)
-    print(f"  Saved to output/civilizations.json")
-
-    # Save armor classes
-    print("\nSaving armor classes...")
-    armor_classes = [{"id": k, "name": v} for k, v in sorted(ARMOR_CLASSES.items())]
-    with open(output_dir / "armor_classes.json", "w") as f:
-        json.dump(armor_classes, f, indent=2)
-    print(f"  Saved to output/armor_classes.json")
-
-    # Print sample data
-    print("\n" + "=" * 60)
-    print("SAMPLE DATA")
-    print("=" * 60)
-
-    # Find some interesting units by ID
-    sample_ids = [4, 38, 77, 93, 125, 280, 550, 1968, 2110, 2398]
-    units_by_id = {u["id"]: u for u in units}
-
-    print("\nSample Units:")
-    for uid in sample_ids:
-        if uid in units_by_id:
-            u = units_by_id[uid]
-            print(f"\n  {u['name']} (ID: {u['id']}, Class: {u['class_name']}):")
-            print(f"    HP: {u['hit_points']}, Speed: {u['speed']}")
-            if u.get("cost"):
-                cost_str = ", ".join(f"{v} {k}" for k, v in u["cost"].items())
-                print(f"    Cost: {cost_str}")
-            if u.get("attacks"):
-                main_atk = u["attacks"][0] if u["attacks"] else None
-                if main_atk:
-                    print(
-                        f"    Attack: {main_atk['amount']} ({main_atk['class_name']})"
-                    )
-            if u.get("range", 0) > 0:
-                print(f"    Range: {u['range']}")
-            if u.get("armors"):
-                melee = next((a for a in u["armors"] if a["class"] == 4), None)
-                pierce = next((a for a in u["armors"] if a["class"] == 3), None)
-                if melee or pierce:
-                    m_val = melee["amount"] if melee else 0
-                    p_val = pierce["amount"] if pierce else 0
-                    print(f"    Armor: {m_val}/{p_val} (melee/pierce)")
-
-    print("\n" + "=" * 60)
-    print("EXTRACTION COMPLETE!")
-    print("=" * 60)
-    print(f"\nFiles created in {output_dir}/:")
-    print("  - units.json        ({} units)".format(len(units)))
-    print("  - technologies.json ({} techs)".format(len(techs)))
-    print("  - tech_ages.json    ({} standard techs)".format(len(tech_ages["techs"])))
-    print("  - civilizations.json ({} civs)".format(len(civs)))
-    print("  - armor_classes.json")
-
-
-if __name__ == "__main__":
-    main()
+    return units

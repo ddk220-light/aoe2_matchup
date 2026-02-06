@@ -146,9 +146,6 @@ UNIQUE_COMBAT_PROPERTIES = {
     "elite_leitis": {"ignores_melee_armor": 1},
     "composite_bowman": {"ignores_pierce_armor": 1},
     "elite_composite_bowman": {"ignores_pierce_armor": 1},
-    # Cataphract trample from Logistica tech (not in base unit dat stats)
-    "cataphract": {"trample_percent": 0.5, "trample_radius": 0.5},
-    "elite_cataphract": {"trample_percent": 0.5, "trample_radius": 0.5},
     # Organ Gun/Fire Archer extra projectiles are now data-driven
     # Bleed damage (ability flag + stat values not in dat)
     "liao_dao": {"bleed_dps": 2.0, "bleed_duration": 5.0},
@@ -167,6 +164,13 @@ UNIQUE_COMBAT_PROPERTIES = {
 
 # Civ-conditional properties (applied on top of base/unique properties)
 CIV_COMBAT_PROPERTIES = {
+    # Logistica (Byzantine Castle UT) - Cataphracts deal 5 trample damage
+    ("Byzantines", "cataphract"): {"trample_flat_damage": 5, "trample_radius": 0.5},
+    ("Byzantines", "elite_cataphract"): {
+        "trample_flat_damage": 5,
+        "trample_radius": 0.5,
+    },
+    # Druzhina (Slavs Imperial UT) - infantry deal 5 trample damage
     ("Slavs", "champion"): {"trample_flat_damage": 5, "trample_radius": 0.5},
     ("Slavs", "halberdier"): {"trample_flat_damage": 5, "trample_radius": 0.5},
     ("Slavs", "swordsmen"): {"trample_flat_damage": 5, "trample_radius": 0.5},
@@ -369,6 +373,13 @@ CASTLE_UNITS = {
         "availability_tech": None,
         "upgrades": [],
     },
+    "fire_lancer": {
+        "base_id": 1901,
+        "display_name": "Fire Lancer",
+        "unit_class": 6,
+        "availability_tech": 981,  # Fire Lancer (make avail)
+        "upgrades": [],
+    },
 }
 
 IMPERIAL_UNITS = {
@@ -398,6 +409,15 @@ IMPERIAL_UNITS = {
         "availability_tech": 433,
         "upgrades": [
             (384, 752, "Elite Eagle Warrior"),
+        ],
+    },
+    "elite_fire_lancer": {
+        "base_id": 1901,  # Fire Lancer
+        "display_name": "Elite Fire Lancer",
+        "unit_class": 6,
+        "availability_tech": 981,  # Fire Lancer (make avail)
+        "upgrades": [
+            (982, 1903, "Elite Fire Lancer"),
         ],
     },
     "hussar": {
@@ -1745,20 +1765,12 @@ class UnitAnalyzer:
         if use_alternate:
             base_id = alternate["base_id"]
             base_unit = self.get_unit(base_id)
-            base_name = (
-                base_unit.get("name", alternate["display_name"])
-                if base_unit
-                else alternate["display_name"]
-            )
+            base_name = alternate["display_name"]
             upgrades = alternate.get("upgrades", [])
         else:
             base_id = unit_config["base_id"]
             base_unit = self.get_unit(base_id)
-            base_name = (
-                base_unit.get("name", unit_config["display_name"])
-                if base_unit
-                else unit_config["display_name"]
-            )
+            base_name = unit_config["display_name"]
             upgrades = unit_config.get("upgrades", [])
 
             # Check for civ-specific upgrades (e.g., Burgundians Cavalier in Castle Age)
@@ -2255,7 +2267,7 @@ def get_extracted_combat_properties(unit_id, units_data):
             props["splash_on_hit_radius"] = round(blast_width, 2)
 
     # NOTE: blast_damage=-5.0 is standard for infantry/cavalry (means "no trample").
-    # Cataphract trample comes from Logistica tech, not base unit stats - stays hardcoded.
+    # Cataphract trample comes from Logistica tech, not base unit stats - in CIV_COMBAT_PROPERTIES.
 
     # --- Dodge shield from charge_type=4 (Shrivamsha Rider) ---
     charge_attack = unit.get("charge_attack", 0)
@@ -3469,6 +3481,15 @@ def generate_reference_database(analyzer):
                     and prop_name in CIV_COMBAT_PROPERTIES[civ_key]
                 ):
                     source = "CIV_COMBAT_PROPERTIES"
+                else:
+                    # For unique units with civ suffix, try base slug matching
+                    for civ, civ_base_slug in CIV_COMBAT_PROPERTIES:
+                        if civ == civ_name and unit_slug.startswith(
+                            civ_base_slug + "_"
+                        ):
+                            if prop_name in CIV_COMBAT_PROPERTIES[(civ, civ_base_slug)]:
+                                source = "CIV_COMBAT_PROPERTIES"
+                            break
                 cursor.execute(
                     "INSERT INTO ref_special_effects (ref_unit_id, property_name, property_value, source, description) VALUES (?,?,?,?,?)",
                     (ref_unit_id, prop_name, str(val), source, desc),

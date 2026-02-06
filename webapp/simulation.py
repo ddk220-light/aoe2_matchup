@@ -445,6 +445,8 @@ def simulate_battle(
     # Calculate opening shots for each side
     opening1 = 0
     opening2 = 0
+    closing_time1 = 0.0  # actual closing time for team2 melee reaching team1 ranged
+    closing_time2 = 0.0  # actual closing time for team1 melee reaching team2 ranged
 
     RETREAT_MAX = 10.0  # max tiles ranged retreats before standing to fight
 
@@ -477,6 +479,7 @@ def simulate_battle(
             # Melee also has frame delay on first hit after arriving
             stand_time = remaining_dist / speed2 if remaining_dist > 0 else 0
             closing_time = retreat_time + stand_time + delay2
+            closing_time1 = closing_time
             if closing_time > delay1:
                 opening1 = 1 + int((closing_time - delay1) / reload1)
         # Kiting bonus: if ranged is faster than melee (even accounting for
@@ -510,6 +513,7 @@ def simulate_battle(
                 remaining_dist = fire_dist
             stand_time = remaining_dist / speed1 if remaining_dist > 0 else 0
             closing_time = retreat_time + stand_time + delay1
+            closing_time2 = closing_time
             if closing_time > delay2:
                 opening2 = 1 + int((closing_time - delay2) / reload2)
         eff_spd2 = eff_retreat_speed2 if fire_dist > 0 and speed1 > 0 else speed2
@@ -541,11 +545,9 @@ def simulate_battle(
             hp2,
         )
         # Set cooldowns to reflect time elapsed since last opening shot
-        if is_ranged1 and not is_ranged2 and speed2 > 0:
-            fire_dist = range1 - max(min_range1, MELEE_RANGE)
-            closing = fire_dist / speed2 if fire_dist > 0 else 0
+        if is_ranged1 and not is_ranged2 and closing_time1 > 0:
             last_shot_t = delay1 + (opening1 - 1) * reload1
-            remaining_cd = max(0.0, reload1 - (closing - last_shot_t))
+            remaining_cd = max(0.0, reload1 - (closing_time1 - last_shot_t))
             for i in range(count1):
                 cooldown1[i] = remaining_cd
     if opening2 > 0:
@@ -560,11 +562,9 @@ def simulate_battle(
             used_first2,
             hp1,
         )
-        if is_ranged2 and not is_ranged1 and speed1 > 0:
-            fire_dist = range2 - max(min_range2, MELEE_RANGE)
-            closing = fire_dist / speed1 if fire_dist > 0 else 0
+        if is_ranged2 and not is_ranged1 and closing_time2 > 0:
             last_shot_t = delay2 + (opening2 - 1) * reload2
-            remaining_cd = max(0.0, reload2 - (closing - last_shot_t))
+            remaining_cd = max(0.0, reload2 - (closing_time2 - last_shot_t))
             for i in range(count2):
                 cooldown2[i] = remaining_cd
 
@@ -579,13 +579,15 @@ def simulate_battle(
         if not alive1 or not alive2:
             break
 
-        # Early termination
-        a1_pct = len(alive1) / count1
-        a2_pct = len(alive2) / count2
-        if a1_pct < 0.4 and a2_pct > 0.55:
-            break
-        if a2_pct < 0.4 and a1_pct > 0.55:
-            break
+        # Early termination (only for melee vs melee; ranged can still
+        # shift the balance significantly with focus fire)
+        if not is_ranged1 and not is_ranged2:
+            a1_pct = len(alive1) / count1
+            a2_pct = len(alive2) / count2
+            if a1_pct < 0.3 and a2_pct > 0.6:
+                break
+            if a2_pct < 0.3 and a1_pct > 0.6:
+                break
 
         # Decrement cooldowns
         for i in alive1:

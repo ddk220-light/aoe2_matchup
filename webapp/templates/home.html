@@ -1,500 +1,737 @@
 <!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AoE2 Unit Matchup Analyzer</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&display=swap"
-        rel="stylesheet"
-    />
-    <style>
-        :root {
-            --primary: #8b4513;
-            --gold: #daa520;
-            --gold-light: #f0d060;
-            --gold-dark: #b8860b;
-            --bg: #1a1a2e;
-            --bg-deep: #0f0f23;
-            --card-bg: #16213e;
-            --card-border: #1e3054;
-            --text: #e8e8e8;
-            --text-muted: #8899aa;
-        }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>AoE2 Unit Matchup Analyzer</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --gold: #c9a84c;
+                --gold-light: #dbb960;
+                --gold-dark: #a07830;
+                --red-accent: #7a1a1a;
+                --red-deep: #4a0e0e;
+                --bg: #2c1e10;
+                --bg-deep: #1a1008;
+                --bg-warm: #342214;
+                --card-bg: #3a2a18;
+                --card-border: #5a4228;
+                --text: #e8dcc8;
+                --text-muted: #a89878;
+                --parchment: #d4c4a0;
+            }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
 
-        body {
-            font-family: "Inter", sans-serif;
-            background: linear-gradient(135deg, var(--bg) 0%, var(--bg-deep) 100%);
-            color: var(--text);
-            min-height: 100vh;
-            line-height: 1.6;
-        }
+            body {
+                font-family: "Inter", sans-serif;
+                background: var(--bg-deep);
+                color: var(--text);
+                min-height: 100vh;
+                line-height: 1.6;
+            }
 
-        /* ===== Nav ===== */
-        nav {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            padding: 16px 20px;
-            background: rgba(22, 33, 62, 0.9);
-            border-bottom: 1px solid var(--card-border);
-            flex-wrap: wrap;
-        }
-
-        .nav-link {
-            font-family: "Cinzel", serif;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            text-decoration: none;
-            padding: 8px 18px;
-            border-radius: 6px;
-            transition: all 0.25s ease;
-        }
-
-        .nav-link:hover {
-            color: var(--gold);
-            background: rgba(218, 165, 32, 0.1);
-        }
-
-        .nav-link.active {
-            color: var(--gold);
-            background: rgba(218, 165, 32, 0.15);
-            border: 1px solid rgba(218, 165, 32, 0.3);
-        }
-
-        /* ===== Hero ===== */
-        .hero {
-            position: relative;
-            text-align: center;
-            padding: 80px 20px 70px;
-            overflow: hidden;
-        }
-
-        .hero::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background:
-                repeating-linear-gradient(
-                    45deg,
-                    transparent,
-                    transparent 40px,
-                    rgba(218, 165, 32, 0.03) 40px,
-                    rgba(218, 165, 32, 0.03) 41px
-                ),
-                repeating-linear-gradient(
-                    -45deg,
-                    transparent,
-                    transparent 40px,
-                    rgba(218, 165, 32, 0.03) 40px,
-                    rgba(218, 165, 32, 0.03) 41px
-                );
-            pointer-events: none;
-        }
-
-        .hero-border {
-            position: absolute;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, var(--gold-dark), var(--gold), var(--gold-dark), transparent);
-        }
-
-        .hero-border.top { top: 0; }
-        .hero-border.bottom { bottom: 0; }
-
-        .hero-icon {
-            margin-bottom: 24px;
-        }
-
-        .hero h1 {
-            font-family: "Cinzel Decorative", "Cinzel", serif;
-            font-size: 3rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 24px;
-            letter-spacing: 1px;
-        }
-
-        .hero-description {
-            max-width: 720px;
-            margin: 0 auto;
-            font-size: 1.1rem;
-            color: var(--text-muted);
-            line-height: 1.8;
-        }
-
-        .hero-description strong {
-            color: var(--text);
-        }
-
-        /* ===== Features ===== */
-        .features {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 60px 20px 80px;
-        }
-
-        .features-heading {
-            text-align: center;
-            font-family: "Cinzel", serif;
-            font-size: 1.6rem;
-            color: var(--gold);
-            margin-bottom: 40px;
-            letter-spacing: 1px;
-        }
-
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 12px;
-            padding: 36px 32px;
-            text-decoration: none;
-            color: var(--text);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, var(--gold-dark), transparent);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(218, 165, 32, 0.3);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(218, 165, 32, 0.1);
-        }
-
-        .card:hover::before {
-            opacity: 1;
-        }
-
-        .card-icon {
-            margin-bottom: 16px;
-        }
-
-        .card h3 {
-            font-family: "Cinzel", serif;
-            font-size: 1.2rem;
-            color: var(--gold);
-            margin-bottom: 12px;
-        }
-
-        .card p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            line-height: 1.7;
-        }
-
-        .badge {
-            display: inline-block;
-            margin-top: 16px;
-            padding: 4px 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--gold);
-            border: 1px solid rgba(218, 165, 32, 0.3);
-            border-radius: 20px;
-            background: rgba(218, 165, 32, 0.08);
-        }
-
-        /* ===== Footer ===== */
-        footer {
-            background: rgba(15, 15, 35, 0.8);
-            border-top: 1px solid var(--card-border);
-            padding: 60px 20px 40px;
-        }
-
-        .footer-content {
-            max-width: 1100px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 60px;
-        }
-
-        .footer-info h3 {
-            font-family: "Cinzel", serif;
-            font-size: 1.1rem;
-            color: var(--gold);
-            margin-bottom: 16px;
-        }
-
-        .footer-info p {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            line-height: 1.7;
-            margin-bottom: 20px;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 20px;
-        }
-
-        .footer-links a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: color 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .footer-links a:hover {
-            color: var(--gold);
-        }
-
-        .footer-contact h3 {
-            font-family: "Cinzel", serif;
-            font-size: 1.1rem;
-            color: var(--gold);
-            margin-bottom: 16px;
-        }
-
-        .contact-form {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .contact-form input,
-        .contact-form textarea {
-            font-family: "Inter", sans-serif;
-            font-size: 0.9rem;
-            padding: 10px 14px;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 8px;
-            color: var(--text);
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .contact-form input:focus,
-        .contact-form textarea:focus {
-            border-color: rgba(218, 165, 32, 0.5);
-        }
-
-        .contact-form textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        .contact-form button {
-            font-family: "Cinzel", serif;
-            font-size: 0.9rem;
-            padding: 10px 24px;
-            background: linear-gradient(135deg, var(--gold-dark), var(--gold));
-            color: #1a1a2e;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-            align-self: flex-start;
-        }
-
-        .contact-form button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(218, 165, 32, 0.3);
-        }
-
-        .footer-bottom {
-            max-width: 1100px;
-            margin: 40px auto 0;
-            padding-top: 20px;
-            border-top: 1px solid var(--card-border);
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.8rem;
-        }
-
-        /* ===== Responsive ===== */
-        @media (max-width: 768px) {
+            /* ===== Hero ===== */
             .hero {
-                padding: 50px 16px 40px;
+                position: relative;
+                text-align: center;
+                padding: 100px 20px 80px;
+                overflow: hidden;
+                background: linear-gradient(
+                    180deg,
+                    var(--red-deep) 0%,
+                    var(--bg) 50%,
+                    var(--bg-deep) 100%
+                );
+            }
+
+            .hero::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background:
+                    repeating-linear-gradient(
+                        45deg,
+                        transparent,
+                        transparent 50px,
+                        rgba(201, 168, 76, 0.04) 50px,
+                        rgba(201, 168, 76, 0.04) 51px
+                    ),
+                    repeating-linear-gradient(
+                        -45deg,
+                        transparent,
+                        transparent 50px,
+                        rgba(201, 168, 76, 0.04) 50px,
+                        rgba(201, 168, 76, 0.04) 51px
+                    );
+                pointer-events: none;
+            }
+
+            .hero-border {
+                position: absolute;
+                left: 0;
+                right: 0;
+                height: 4px;
+            }
+
+            .hero-border.top {
+                top: 0;
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    var(--gold-dark),
+                    var(--gold),
+                    var(--gold-dark),
+                    transparent
+                );
+            }
+
+            .hero-border.bottom {
+                bottom: 0;
+                background: linear-gradient(
+                    90deg,
+                    transparent 5%,
+                    var(--gold-dark) 30%,
+                    var(--gold) 50%,
+                    var(--gold-dark) 70%,
+                    transparent 95%
+                );
+            }
+
+            .hero-icon {
+                margin-bottom: 28px;
             }
 
             .hero h1 {
-                font-size: 1.8rem;
+                font-family: "Cinzel Decorative", "Cinzel", serif;
+                font-size: 3rem;
+                font-weight: 700;
+                background: linear-gradient(
+                    135deg,
+                    var(--gold-light),
+                    var(--gold),
+                    var(--gold-dark)
+                );
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                margin-bottom: 28px;
+                letter-spacing: 1px;
             }
 
             .hero-description {
-                font-size: 1rem;
+                max-width: 720px;
+                margin: 0 auto;
+                font-size: 1.1rem;
+                color: var(--text-muted);
+                line-height: 1.8;
+            }
+
+            .hero-description strong {
+                color: var(--parchment);
+            }
+
+            /* ===== Features ===== */
+            .features {
+                max-width: 1100px;
+                margin: 0 auto;
+                padding: 60px 20px 80px;
+            }
+
+            .features-heading {
+                text-align: center;
+                font-family: "Cinzel", serif;
+                font-size: 1.6rem;
+                color: var(--gold);
+                margin-bottom: 40px;
+                letter-spacing: 1px;
             }
 
             .cards {
-                grid-template-columns: 1fr;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 24px;
+            }
+
+            .card {
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                border-radius: 10px;
+                padding: 36px 32px;
+                text-decoration: none;
+                color: var(--text);
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    var(--gold-dark),
+                    transparent
+                );
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+
+            .card:hover {
+                transform: translateY(-4px);
+                border-color: var(--gold-dark);
+                box-shadow:
+                    0 8px 32px rgba(0, 0, 0, 0.4),
+                    0 0 0 1px rgba(201, 168, 76, 0.15);
+            }
+
+            .card:hover::before {
+                opacity: 1;
+            }
+
+            .card-icon {
+                margin-bottom: 16px;
+            }
+
+            .card h3 {
+                font-family: "Cinzel", serif;
+                font-size: 1.2rem;
+                color: var(--gold);
+                margin-bottom: 12px;
+            }
+
+            .card p {
+                color: var(--text-muted);
+                font-size: 0.95rem;
+                line-height: 1.7;
+            }
+
+            .badge {
+                display: inline-block;
+                margin-top: 16px;
+                padding: 4px 12px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                color: var(--gold);
+                border: 1px solid rgba(201, 168, 76, 0.3);
+                border-radius: 20px;
+                background: rgba(201, 168, 76, 0.08);
+            }
+
+            /* ===== Footer ===== */
+            footer {
+                background: var(--bg-deep);
+                border-top: 1px solid var(--card-border);
+                padding: 60px 20px 40px;
             }
 
             .footer-content {
-                grid-template-columns: 1fr;
-                gap: 40px;
+                max-width: 1100px;
+                margin: 0 auto;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 60px;
             }
 
-            nav {
-                gap: 4px;
-                padding: 12px 10px;
+            .footer-info h3 {
+                font-family: "Cinzel", serif;
+                font-size: 1.1rem;
+                color: var(--gold);
+                margin-bottom: 16px;
             }
 
-            .nav-link {
+            .footer-info p {
+                color: var(--text-muted);
+                font-size: 0.9rem;
+                line-height: 1.7;
+                margin-bottom: 20px;
+            }
+
+            .footer-links {
+                display: flex;
+                gap: 20px;
+            }
+
+            .footer-links a {
+                color: var(--text-muted);
+                text-decoration: none;
+                font-size: 0.9rem;
+                transition: color 0.2s;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .footer-links a:hover {
+                color: var(--gold);
+            }
+
+            .footer-contact h3 {
+                font-family: "Cinzel", serif;
+                font-size: 1.1rem;
+                color: var(--gold);
+                margin-bottom: 16px;
+            }
+
+            .contact-form {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .contact-form input,
+            .contact-form textarea {
+                font-family: "Inter", sans-serif;
+                font-size: 0.9rem;
+                padding: 10px 14px;
+                background: var(--bg);
+                border: 1px solid var(--card-border);
+                border-radius: 8px;
+                color: var(--text);
+                outline: none;
+                transition: border-color 0.2s;
+            }
+
+            .contact-form input:focus,
+            .contact-form textarea:focus {
+                border-color: var(--gold-dark);
+            }
+
+            .contact-form textarea {
+                resize: vertical;
+                min-height: 80px;
+            }
+
+            .contact-form button {
+                font-family: "Cinzel", serif;
+                font-size: 0.9rem;
+                padding: 10px 24px;
+                background: linear-gradient(
+                    135deg,
+                    var(--gold-dark),
+                    var(--gold)
+                );
+                color: var(--bg-deep);
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+                transition: all 0.2s;
+                align-self: flex-start;
+            }
+
+            .contact-form button:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 16px rgba(201, 168, 76, 0.3);
+            }
+
+            .footer-bottom {
+                max-width: 1100px;
+                margin: 40px auto 0;
+                padding-top: 20px;
+                border-top: 1px solid var(--card-border);
+                text-align: center;
+                color: var(--text-muted);
                 font-size: 0.8rem;
-                padding: 6px 12px;
             }
-        }
-    </style>
-</head>
-<body>
-    <nav>
-        <a href="/" class="nav-link active">Home</a>
-        <a href="/units" class="nav-link">By Unit</a>
-        <a href="/civ" class="nav-link">By Civilization</a>
-        <a href="/simulate" class="nav-link">Battle Sim</a>
-        <a href="/matchup" class="nav-link">1v1 Matchup</a>
-    </nav>
 
-    <section class="hero">
-        <div class="hero-border top"></div>
+            /* ===== Responsive ===== */
+            @media (max-width: 768px) {
+                .hero {
+                    padding: 60px 16px 50px;
+                }
 
-        <svg class="hero-icon" width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M32 4L8 20v24l24 16 24-16V20L32 4z" stroke="#daa520" stroke-width="2" fill="none"/>
-            <path d="M32 14L16 24v16l16 10 16-10V24L32 14z" stroke="#b8860b" stroke-width="1.5" fill="none"/>
-            <path d="M26 30l6-8 6 8-6 12-6-12z" stroke="#daa520" stroke-width="1.5" fill="rgba(218,165,32,0.15)"/>
-        </svg>
+                .hero h1 {
+                    font-size: 1.8rem;
+                }
 
-        <h1>AoE2 Unit Matchup Analyzer</h1>
+                .hero-description {
+                    font-size: 1rem;
+                }
 
-        <p class="hero-description">
-            Dive deep into <strong>Age of Empires II</strong> unit statistics, run combat simulations,
-            and discover the best unit matchups for every civilization. Understand
-            <strong>hidden effects</strong>, unique mechanics, bonus damage interactions,
-            and find out which units truly counter your opponent's army.
-        </p>
+                .cards {
+                    grid-template-columns: 1fr;
+                }
 
-        <div class="hero-border bottom"></div>
-    </section>
+                .footer-content {
+                    grid-template-columns: 1fr;
+                    gap: 40px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <section class="hero">
+            <div class="hero-border top"></div>
 
-    <section class="features">
-        <h2 class="features-heading">Explore the Tools</h2>
+            <!-- Shield / castle gate icon -->
+            <svg
+                class="hero-icon"
+                width="72"
+                height="72"
+                viewBox="0 0 72 72"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <path
+                    d="M36 6L10 22v20c0 12 10 20 26 24 16-4 26-12 26-24V22L36 6z"
+                    stroke="#c9a84c"
+                    stroke-width="2"
+                    fill="rgba(122,26,26,0.3)"
+                />
+                <path
+                    d="M36 16L18 28v14c0 8 7 14 18 17 11-3 18-9 18-17V28L36 16z"
+                    stroke="#a07830"
+                    stroke-width="1.5"
+                    fill="none"
+                />
+                <path
+                    d="M30 38h12v14h-12z"
+                    stroke="#c9a84c"
+                    stroke-width="1.5"
+                    fill="rgba(201,168,76,0.1)"
+                />
+                <path
+                    d="M36 38v14"
+                    stroke="#c9a84c"
+                    stroke-width="1"
+                    opacity="0.5"
+                />
+                <path
+                    d="M30 45h12"
+                    stroke="#c9a84c"
+                    stroke-width="1"
+                    opacity="0.5"
+                />
+                <path
+                    d="M24 24h4v5h-4zM32 24h4v5h-4zM40 24h4v5h-4z"
+                    fill="rgba(201,168,76,0.25)"
+                    stroke="#a07830"
+                    stroke-width="1"
+                />
+            </svg>
 
-        <div class="cards">
-            <a href="#" class="card">
-                <svg class="card-icon" width="44" height="44" viewBox="0 0 44 44" fill="none">
-                    <rect x="4" y="8" width="36" height="28" rx="3" stroke="#daa520" stroke-width="1.5"/>
-                    <path d="M4 16h36" stroke="#daa520" stroke-width="1.5"/>
-                    <path d="M16 16v20M28 16v20" stroke="#b8860b" stroke-width="1" opacity="0.5"/>
-                    <path d="M10 12h4M20 12h4M30 12h4" stroke="#daa520" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-                <h3>Unit Details by Civ</h3>
-                <p>Browse detailed unit stats for every civilization. See base stats, upgrades, civ bonuses, and how unique technologies modify each unit from Feudal through Imperial Age.</p>
-                <span class="badge">Coming Soon</span>
-            </a>
+            <h1>AoE2 Unit Matchup Analyzer</h1>
 
-            <a href="#" class="card">
-                <svg class="card-icon" width="44" height="44" viewBox="0 0 44 44" fill="none">
-                    <path d="M8 36V20" stroke="#daa520" stroke-width="2.5" stroke-linecap="round"/>
-                    <path d="M18 36V14" stroke="#daa520" stroke-width="2.5" stroke-linecap="round"/>
-                    <path d="M28 36V8" stroke="#daa520" stroke-width="2.5" stroke-linecap="round"/>
-                    <path d="M38 36V22" stroke="#b8860b" stroke-width="2.5" stroke-linecap="round"/>
-                    <path d="M4 36h38" stroke="#daa520" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-                <h3>Unit Rankings</h3>
-                <p>Compare and rank units across all 50 civilizations. Find which civ has the strongest version of any unit type, sorted by attack, HP, speed, or cost efficiency.</p>
-                <span class="badge">Coming Soon</span>
-            </a>
+            <p class="hero-description">
+                Dive deep into <strong>Age of Empires II</strong> unit
+                statistics, run combat simulations, and discover the best unit
+                matchups for every civilization. Understand
+                <strong>hidden effects</strong>, unique mechanics, bonus damage
+                interactions, and find out which units truly counter your
+                opponent's army.
+            </p>
 
-            <a href="#" class="card">
-                <svg class="card-icon" width="44" height="44" viewBox="0 0 44 44" fill="none">
-                    <path d="M12 8L28 22" stroke="#daa520" stroke-width="2" stroke-linecap="round"/>
-                    <path d="M32 8L16 22" stroke="#daa520" stroke-width="2" stroke-linecap="round"/>
-                    <path d="M10 6l2 2-2 2" stroke="#daa520" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M34 6l-2 2 2 2" stroke="#daa520" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <rect x="14" y="26" width="16" height="12" rx="2" stroke="#b8860b" stroke-width="1.5"/>
-                    <path d="M22 26v12" stroke="#b8860b" stroke-width="1" opacity="0.5"/>
-                </svg>
-                <h3>1v1 Matchup</h3>
-                <p>Analyze civilization matchups unit by unit. Find your best counters, identify which units win head-to-head, and build the optimal army composition against any opponent.</p>
-                <span class="badge">Coming Soon</span>
-            </a>
+            <div class="hero-border bottom"></div>
+        </section>
 
-            <a href="#" class="card">
-                <svg class="card-icon" width="44" height="44" viewBox="0 0 44 44" fill="none">
-                    <circle cx="22" cy="20" r="14" stroke="#daa520" stroke-width="1.5"/>
-                    <path d="M22 10v10l7 4" stroke="#daa520" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M14 36h16" stroke="#b8860b" stroke-width="1.5" stroke-linecap="round"/>
-                    <path d="M18 36v4M26 36v4" stroke="#b8860b" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-                <h3>Battle Simulation</h3>
-                <p>Run tick-based combat simulations with full mechanics. Test any unit vs unit fight including bonus damage, armor classes, reload time, projectiles, and special abilities like trample or charge attacks.</p>
-                <span class="badge">Coming Soon</span>
-            </a>
-        </div>
-    </section>
+        <section class="features">
+            <h2 class="features-heading">Explore the Tools</h2>
 
-    <footer>
-        <div class="footer-content">
-            <div class="footer-info">
-                <h3>AoE2 Unit Matchup Analyzer</h3>
-                <p>
-                    An open-source tool for Age of Empires II players who want to understand
-                    unit stats, mechanics, and matchups at a deeper level. Built with data
-                    extracted directly from the game files.
-                </p>
-                <div class="footer-links">
-                    <a href="https://github.com/anthropics/aoe2unitanalyzer" target="_blank" rel="noopener noreferrer">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                        GitHub
-                    </a>
-                    <a href="mailto:deepakdhanavel@gmail.com">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4L12 13 2 4"/></svg>
-                        Email
-                    </a>
+            <div class="cards">
+                <a href="#" class="card">
+                    <svg
+                        class="card-icon"
+                        width="44"
+                        height="44"
+                        viewBox="0 0 44 44"
+                        fill="none"
+                    >
+                        <rect
+                            x="4"
+                            y="8"
+                            width="36"
+                            height="28"
+                            rx="3"
+                            stroke="#c9a84c"
+                            stroke-width="1.5"
+                        />
+                        <path
+                            d="M4 16h36"
+                            stroke="#c9a84c"
+                            stroke-width="1.5"
+                        />
+                        <path
+                            d="M16 16v20M28 16v20"
+                            stroke="#a07830"
+                            stroke-width="1"
+                            opacity="0.5"
+                        />
+                        <path
+                            d="M10 12h4M20 12h4M30 12h4"
+                            stroke="#c9a84c"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                        />
+                    </svg>
+                    <h3>Unit Details by Civ</h3>
+                    <p>
+                        Browse detailed unit stats for every civilization. See
+                        base stats, upgrades, civ bonuses, and how unique
+                        technologies modify each unit from Feudal through
+                        Imperial Age.
+                    </p>
+                    <span class="badge">Coming Soon</span>
+                </a>
+
+                <a href="#" class="card">
+                    <svg
+                        class="card-icon"
+                        width="44"
+                        height="44"
+                        viewBox="0 0 44 44"
+                        fill="none"
+                    >
+                        <path
+                            d="M8 36V20"
+                            stroke="#c9a84c"
+                            stroke-width="2.5"
+                            stroke-linecap="round"
+                        />
+                        <path
+                            d="M18 36V14"
+                            stroke="#c9a84c"
+                            stroke-width="2.5"
+                            stroke-linecap="round"
+                        />
+                        <path
+                            d="M28 36V8"
+                            stroke="#c9a84c"
+                            stroke-width="2.5"
+                            stroke-linecap="round"
+                        />
+                        <path
+                            d="M38 36V22"
+                            stroke="#a07830"
+                            stroke-width="2.5"
+                            stroke-linecap="round"
+                        />
+                        <path
+                            d="M4 36h38"
+                            stroke="#c9a84c"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                        />
+                    </svg>
+                    <h3>Unit Rankings</h3>
+                    <p>
+                        Compare and rank units across all 50 civilizations. Find
+                        which civ has the strongest version of any unit type,
+                        sorted by attack, HP, speed, or cost efficiency.
+                    </p>
+                    <span class="badge">Coming Soon</span>
+                </a>
+
+                <a href="#" class="card">
+                    <svg
+                        class="card-icon"
+                        width="44"
+                        height="44"
+                        viewBox="0 0 44 44"
+                        fill="none"
+                    >
+                        <path
+                            d="M12 8L28 22"
+                            stroke="#c9a84c"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                        />
+                        <path
+                            d="M32 8L16 22"
+                            stroke="#c9a84c"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                        />
+                        <path
+                            d="M10 6l2 2-2 2"
+                            stroke="#c9a84c"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                        <path
+                            d="M34 6l-2 2 2 2"
+                            stroke="#c9a84c"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                        <rect
+                            x="14"
+                            y="26"
+                            width="16"
+                            height="12"
+                            rx="2"
+                            stroke="#a07830"
+                            stroke-width="1.5"
+                        />
+                        <path
+                            d="M22 26v12"
+                            stroke="#a07830"
+                            stroke-width="1"
+                            opacity="0.5"
+                        />
+                    </svg>
+                    <h3>1v1 Matchup</h3>
+                    <p>
+                        Analyze civilization matchups unit by unit. Find your
+                        best counters, identify which units win head-to-head,
+                        and build the optimal army composition against any
+                        opponent.
+                    </p>
+                    <span class="badge">Coming Soon</span>
+                </a>
+
+                <a href="#" class="card">
+                    <svg
+                        class="card-icon"
+                        width="44"
+                        height="44"
+                        viewBox="0 0 44 44"
+                        fill="none"
+                    >
+                        <circle
+                            cx="22"
+                            cy="20"
+                            r="14"
+                            stroke="#c9a84c"
+                            stroke-width="1.5"
+                        />
+                        <path
+                            d="M22 10v10l7 4"
+                            stroke="#c9a84c"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                        <path
+                            d="M14 36h16"
+                            stroke="#a07830"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                        />
+                        <path
+                            d="M18 36v4M26 36v4"
+                            stroke="#a07830"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                        />
+                    </svg>
+                    <h3>Battle Simulation</h3>
+                    <p>
+                        Run tick-based combat simulations with full mechanics.
+                        Test any unit vs unit fight including bonus damage,
+                        armor classes, reload time, projectiles, and special
+                        abilities like trample or charge attacks.
+                    </p>
+                    <span class="badge">Coming Soon</span>
+                </a>
+            </div>
+        </section>
+
+        <footer>
+            <div class="footer-content">
+                <div class="footer-info">
+                    <h3>AoE2 Unit Matchup Analyzer</h3>
+                    <p>
+                        An open-source tool for Age of Empires II players who
+                        want to understand unit stats, mechanics, and matchups
+                        at a deeper level. Built with data extracted directly
+                        from the game files.
+                    </p>
+                    <div class="footer-links">
+                        <a
+                            href="https://github.com/ddk220-light/aoe2-unit-analyzer"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                            >
+                                <path
+                                    d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
+                                />
+                            </svg>
+                            GitHub
+                        </a>
+                        <a href="mailto:deepakdhanavel@gmail.com">
+                            <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <rect
+                                    x="2"
+                                    y="4"
+                                    width="20"
+                                    height="16"
+                                    rx="2"
+                                />
+                                <path d="M22 4L12 13 2 4" />
+                            </svg>
+                            Email
+                        </a>
+                    </div>
+                </div>
+
+                <div class="footer-contact">
+                    <h3>Contact Us</h3>
+                    <form
+                        class="contact-form"
+                        action="https://formspree.io/f/PLACEHOLDER"
+                        method="POST"
+                    >
+                        <input
+                            type="text"
+                            name="name"
+                            placeholder="Your name"
+                            required
+                        />
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="Your email"
+                            required
+                        />
+                        <textarea
+                            name="message"
+                            placeholder="Your message"
+                            rows="4"
+                            required
+                        ></textarea>
+                        <button type="submit">Send Message</button>
+                    </form>
                 </div>
             </div>
 
-            <div class="footer-contact">
-                <h3>Contact Us</h3>
-                <form class="contact-form" action="https://formspree.io/f/PLACEHOLDER" method="POST">
-                    <input type="text" name="name" placeholder="Your name" required />
-                    <input type="email" name="email" placeholder="Your email" required />
-                    <textarea name="message" placeholder="Your message" rows="4" required></textarea>
-                    <button type="submit">Send Message</button>
-                </form>
+            <div class="footer-bottom">
+                AoE2 Unit Matchup Analyzer &mdash; Not affiliated with Microsoft
+                or Xbox Game Studios. Age of Empires II is a trademark of
+                Microsoft Corporation.
             </div>
-        </div>
-
-        <div class="footer-bottom">
-            AoE2 Unit Matchup Analyzer &mdash; Not affiliated with Microsoft or Xbox Game Studios.
-            Age of Empires II is a trademark of Microsoft Corporation.
-        </div>
-    </footer>
-</body>
+        </footer>
+    </body>
 </html>

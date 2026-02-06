@@ -1185,14 +1185,20 @@ def extract_unit_data(unit):
                         cost[res_name] = int(rc.amount)
         data["cost"] = cost
 
-        # Charge attack (Coustillier, Urumi, etc.)
+        # Projectile counts (extra projectiles for Chu Ko Nu, etc.)
+        data["total_projectiles"] = round(getattr(c, "total_projectiles", 1), 1)
+        data["max_total_projectiles"] = getattr(c, "max_total_projectiles", 1)
+        data["secondary_projectile_unit"] = getattr(c, "secondary_projectile_unit", -1)
+
+        # Charge attack (Coustillier, Urumi, Shrivamsha dodge, etc.)
         max_charge = getattr(c, "max_charge", 0)
         recharge_rate = getattr(c, "recharge_rate", 0)
         charge_event = getattr(c, "charge_event", 0)
         charge_type = getattr(c, "charge_type", 0)
-        if max_charge > 0 and charge_event > 0:
+        if max_charge > 0:
             data["charge_attack"] = round(max_charge, 1)
             data["charge_recharge_rate"] = round(recharge_rate, 4)
+            data["charge_event"] = charge_event
             data["charge_type"] = charge_type
 
     # Combat stats from type_50
@@ -1206,6 +1212,12 @@ def extract_unit_data(unit):
         data["attack_delay"] = round(frame_delay / 60.0, 3)
         data["accuracy"] = getattr(t, "accuracy_percent", 100)
         data["blast_width"] = round(getattr(t, "blast_width", 0), 2)
+        data["blast_attack_level"] = getattr(t, "blast_attack_level", 0)
+        data["blast_damage"] = round(getattr(t, "blast_damage", 0), 4)
+        data["bonus_damage_resistance"] = round(
+            getattr(t, "bonus_damage_resistance", 0), 4
+        )
+        data["projectile_unit_id"] = getattr(t, "projectile_unit_id", -1)
         data["displayed_attack"] = getattr(t, "displayed_attack", 0)
         data["displayed_melee_armor"] = getattr(t, "displayed_melee_armour", 0)
         data["displayed_pierce_armor"] = (

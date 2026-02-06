@@ -88,12 +88,7 @@ COMBAT_PROPERTIES = {
     "scout": {"unit_category": "trash"},
     "light_cav": {"unit_category": "trash"},
     "hussar": {"unit_category": "trash"},
-    "elephant": {"trample_percent": 0.5, "trample_radius": 0.5},
-    "elite_elephant": {"trample_percent": 0.5, "trample_radius": 0.5},
-    "cataphract": {"trample_percent": 0.5, "trample_radius": 0.5},
-    "elite_cataphract": {"trample_percent": 0.5, "trample_radius": 0.5},
-    "war_elephant": {"trample_percent": 0.5, "trample_radius": 0.5},
-    "elite_war_elephant": {"trample_percent": 0.5, "trample_radius": 0.5},
+    # Trample for elephants now data-driven from blast_width/blast_damage
     "ram": {"unit_category": "siege"},
     "siege_ram": {"unit_category": "siege"},
     "trebuchet": {"unit_category": "siege"},
@@ -101,6 +96,9 @@ COMBAT_PROPERTIES = {
 }
 
 # Unique units — keyed by base slug (without civ suffix)
+# Only ability flags and values NOT extractable from dat file belong here.
+# Stats like extra_projectiles, trample, dodge shield are now data-driven
+# via get_extracted_combat_properties().
 UNIQUE_COMBAT_PROPERTIES = {
     "konnik": {"dismount_unit_id": 1252},
     "elite_konnik": {"dismount_unit_id": 1253},
@@ -108,40 +106,31 @@ UNIQUE_COMBAT_PROPERTIES = {
     "elite_leitis": {"ignores_melee_armor": 1},
     "composite_bowman": {"ignores_pierce_armor": 1},
     "elite_composite_bowman": {"ignores_pierce_armor": 1},
-    "ratha_(melee)": {"trample_percent": 0.5, "trample_radius": 0.5},
-    "elite_ratha_(melee)": {"trample_percent": 0.5, "trample_radius": 0.5},
+    # Cataphract: blast_damage=-5.0 in dat (not standard trample), Logistica gives trample
+    "cataphract": {"trample_percent": 0.5, "trample_radius": 0.5},
+    "elite_cataphract": {"trample_percent": 0.5, "trample_radius": 0.5},
     "ballista_elephant": {},
     "elite_ballista_elephant": {},
     "hussite_wagon": {},
     "elite_hussite_wagon": {},
-    # Multi-projectile units
-    "chu_ko_nu": {"extra_projectiles": 4},
-    "elite_chu_ko_nu": {"extra_projectiles": 4},
+    # Organ Gun: extra projectiles come from secondary_projectile_unit, not total_projectiles
     "organ_gun": {"extra_projectiles": 4},
-    "elite_organ_gun": {"extra_projectiles": 4},
-    "kipchak": {"extra_projectiles": 2},
-    "elite_kipchak": {"extra_projectiles": 3},
-    "fire_archer": {"extra_projectiles": 3},
-    "elite_fire_archer": {"extra_projectiles": 3},
-    # Splash on hit (AoE around target)
-    "grenadier": {"splash_on_hit_radius": 1.0},
-    # Dodge shield (blocks ranged attacks)
-    "shrivamsha_rider": {"dodge_shield_max": 3, "dodge_shield_recharge": 8.0},
-    "elite_shrivamsha_rider": {"dodge_shield_max": 5, "dodge_shield_recharge": 8.0},
-    # Bleed damage
+    "elite_organ_gun": {"extra_projectiles": 5},
+    # Fire Archer: charge_type=6 special mechanic, not standard multi-projectile
+    "fire_archer": {"extra_projectiles": 2},
+    "elite_fire_archer": {"extra_projectiles": 2},
+    # Bleed damage (ability flag + stat values not in dat)
     "liao_dao": {"bleed_dps": 2.0, "bleed_duration": 5.0},
     "elite_liao_dao": {"bleed_dps": 3.0, "bleed_duration": 5.0},
-    # Block first melee hit
+    # Block first melee hit (ability flag, not in dat)
     "iron_pagoda": {"block_first_melee": 1},
     "elite_iron_pagoda": {"block_first_melee": 1},
-    # Kill bonus attack
+    # Kill bonus attack (ability flag, not in dat)
     "tiger_cavalry": {"attack_bonus_per_kill": 4},
     "elite_tiger_cavalry": {"attack_bonus_per_kill": 4},
     "jaguar_warrior": {"attack_bonus_per_kill": 4},
     "elite_jaguar_warrior": {"attack_bonus_per_kill": 4},
-    # First attack burst (extra projectiles on first attack only)
-    "xianbei_raider": {"first_attack_extra_projectiles": 2},
-    # HP transformation (below threshold, gains attack/speed, loses armor)
+    # HP transformation (ability flag, not in dat)
     "jian_swordsman": {"hp_transform_threshold": 0.5},
 }
 
@@ -1869,6 +1858,7 @@ class UnitAnalyzer:
 
         return {
             "unit_name": final_unit_name,
+            "unit_id": final_unit_id,
             "stats": stats,
             "has_unit": True,
             "applied_bonuses": applied_bonuses,
@@ -1904,6 +1894,7 @@ class UnitAnalyzer:
         unit = self.get_unit(unit_id)
         if not unit:
             return {
+                "unit_id": unit_id,
                 "stats": None,
                 "has_unit": False,
                 "applied_bonuses": [],
@@ -1962,6 +1953,7 @@ class UnitAnalyzer:
         stats.range = round(stats.range, 1)
 
         return {
+            "unit_id": unit_id,
             "stats": stats,
             "has_unit": True,
             "applied_bonuses": applied_bonuses,
@@ -2120,11 +2112,85 @@ def create_database():
     return conn
 
 
-def get_combat_properties(unit_slug, civ_name=None):
+def get_extracted_combat_properties(unit_id, units_data):
+    """Read combat properties from extracted dat file data for a given game unit ID.
+
+    Maps extracted fields to simulation combat property columns:
+    - total_projectiles → extra_projectiles (for Chu Ko Nu, Kipchak)
+    - max_total_projectiles - total_projectiles → first_attack_extra_projectiles (Xianbei)
+    - blast_width + blast_damage (>0, level=2) → trample_radius + trample_percent
+    - blast_width (level=11) → splash_on_hit_radius (Grenadier)
+    - charge_type=4 → dodge_shield_max + dodge_shield_recharge (Shrivamsha)
+    - bonus_damage_resistance → bonus_damage_reduction
+    """
+    if not unit_id or unit_id not in units_data:
+        return {}
+
+    unit = units_data[unit_id]
+    props = {}
+
+    # --- Extra projectiles from total_projectiles ---
+    # Units like Chu Ko Nu (73/559) and Kipchak (1231/1233) have total_projectiles > 1
+    # on the main unit. Organ Gun uses secondary_projectile_unit instead (handled separately).
+    # Exclude siege class (13) which fires multiple stones, not extra arrow projectiles.
+    total_proj = unit.get("total_projectiles", 1)
+    unit_class = unit.get("class", 0)
+    if total_proj and total_proj > 1 and unit_class != 13:
+        props["extra_projectiles"] = int(total_proj) - 1
+
+    # --- First attack extra projectiles (burst) ---
+    # Xianbei Raider (1952): total=1, max=6 → 5 extra on first attack
+    max_proj = unit.get("max_total_projectiles", 0)
+    if max_proj and total_proj and max_proj > total_proj:
+        # Only for charge_type=7 (burst projectile charge) to avoid false positives
+        charge_type = unit.get("charge_type", 0)
+        if charge_type == 7:
+            props["first_attack_extra_projectiles"] = int(max_proj) - int(total_proj)
+
+    # --- Trample / splash from blast fields ---
+    blast_width = unit.get("blast_width", 0) or 0
+    blast_damage = unit.get("blast_damage", 0) or 0
+    blast_level = unit.get("blast_attack_level", 0) or 0
+
+    if blast_width > 0:
+        if blast_level == 2 and 0 < blast_damage < 1.0:
+            # Fractional trample: Battle Elephant (0.25), Ratha melee (0.2), War Elephant (0.5)
+            # Excludes siege units which have blast_damage=1.0 (full area damage)
+            props["trample_percent"] = round(blast_damage, 4)
+            props["trample_radius"] = round(blast_width, 2)
+        elif blast_level == 11:
+            # Grenadier splash on hit (AoE around target)
+            props["splash_on_hit_radius"] = round(blast_width, 2)
+
+    # --- Dodge shield from charge_type=4 (Shrivamsha Rider) ---
+    charge_type = unit.get("charge_type", 0)
+    charge_attack = unit.get("charge_attack", 0)
+    charge_recharge = unit.get("charge_recharge_rate", 0)
+
+    if charge_type == 4 and charge_attack and charge_recharge:
+        props["dodge_shield_max"] = int(charge_attack)
+        # recharge_rate is charges/sec, recharge time = max_charges / rate
+        props["dodge_shield_recharge"] = round(charge_attack / charge_recharge, 2)
+
+    # --- Bonus damage reduction ---
+    bonus_resist = unit.get("bonus_damage_resistance", 0)
+    if bonus_resist and bonus_resist > 0:
+        props["bonus_damage_reduction"] = round(bonus_resist, 4)
+
+    return props
+
+
+def get_combat_properties(unit_slug, civ_name=None, unit_id=None, units_data=None):
     """Look up combat properties for a unit slug, optionally with civ-specific overrides.
 
     For unique units, the slug has a civ suffix (e.g., 'leitis_lithuanians').
     We strip the suffix and look up in UNIQUE_COMBAT_PROPERTIES.
+
+    Priority order (later overrides earlier):
+    1. Defaults (all zeros)
+    2. Extracted dat file data (data-driven stats like trample, extra projectiles)
+    3. Hardcoded COMBAT_PROPERTIES / UNIQUE_COMBAT_PROPERTIES (ability flags, special cases)
+    4. Civ-conditional CIV_COMBAT_PROPERTIES
     """
     props = {
         "min_attack_range": 0,
@@ -2152,32 +2218,35 @@ def get_combat_properties(unit_slug, civ_name=None):
         "dismount_unit_id": 0,
     }
 
-    # Check standard combat properties (exact slug match)
+    # Apply extracted data from dat file (data-driven stats)
+    if unit_id and units_data:
+        extracted = get_extracted_combat_properties(unit_id, units_data)
+        props.update(extracted)
+
+    # Hardcoded overrides: standard combat properties (exact slug match)
     if unit_slug in COMBAT_PROPERTIES:
         props.update(COMBAT_PROPERTIES[unit_slug])
 
-    # Check unique unit properties (strip civ suffix: e.g., 'leitis_lithuanians' -> 'leitis')
-    # Unique unit slugs are formatted as '{base_slug}_{civ_name_lower}'
-    # Try progressively shorter prefixes to find the base slug
+    # Hardcoded overrides: unique unit properties (strip civ suffix)
     for base_slug, unique_props in UNIQUE_COMBAT_PROPERTIES.items():
         if unit_slug == base_slug or unit_slug.startswith(base_slug + "_"):
             props.update(unique_props)
             break
 
-    # Check civ-conditional properties (e.g., Slavs champion gets Druzhina trample)
+    # Civ-conditional properties (e.g., Slavs champion gets Druzhina trample)
     if civ_name:
         # For standard units, key is (civ_name, unit_slug)
         civ_key = (civ_name, unit_slug)
         if civ_key in CIV_COMBAT_PROPERTIES:
             props.update(CIV_COMBAT_PROPERTIES[civ_key])
 
-        # For unique units, also try the base slug without civ suffix
-        for base_slug in UNIQUE_COMBAT_PROPERTIES:
-            if unit_slug == base_slug or unit_slug.startswith(base_slug + "_"):
-                civ_key_base = (civ_name, base_slug)
-                if civ_key_base in CIV_COMBAT_PROPERTIES:
-                    props.update(CIV_COMBAT_PROPERTIES[civ_key_base])
-                break
+        # For unique units, try base slug (strip civ suffix) against CIV_COMBAT_PROPERTIES
+        # Check all CIV_COMBAT_PROPERTIES keys for base slug matches
+        for civ, base_slug in CIV_COMBAT_PROPERTIES:
+            if civ == civ_name and base_slug != unit_slug:
+                if unit_slug.startswith(base_slug + "_"):
+                    props.update(CIV_COMBAT_PROPERTIES[(civ, base_slug)])
+                    break
 
     # Check paired units
     for paired_slug, partner_slug in PAIRED_UNITS.items():
@@ -2329,8 +2398,11 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                 if bonuses:
                     bonuses_str = ", ".join(b.replace("C-Bonus, ", "") for b in bonuses)
 
-                # Look up combat properties
-                combat_props = get_combat_properties(unit_slug, civ_name)
+                # Look up combat properties (extracted data + hardcoded overrides)
+                game_unit_id = result.get("unit_id")
+                combat_props = get_combat_properties(
+                    unit_slug, civ_name, unit_id=game_unit_id, units_data=analyzer.units
+                )
 
                 if stats:
                     # Convert attacks and armors to JSON
@@ -2544,9 +2616,12 @@ def populate_database(conn, analyzer: UnitAnalyzer):
                     else None
                 )
 
-                # Look up combat properties using the full slug
+                # Look up combat properties (extracted data + hardcoded overrides)
                 uu_slug = slugs_to_process[idx]
-                combat_props = get_combat_properties(uu_slug, civ_name)
+                game_unit_id = result.get("unit_id")
+                combat_props = get_combat_properties(
+                    uu_slug, civ_name, unit_id=game_unit_id, units_data=analyzer.units
+                )
 
                 # Compute dismount stats if applicable (e.g., Konnik)
                 dismount_id = combat_props.get("dismount_unit_id", 0)

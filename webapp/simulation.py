@@ -202,8 +202,8 @@ def simulate_battle(
     else:
         cost1 = cost1_override or (unit1["cost"] if unit1["cost"] > 0 else 100)
         cost2 = cost2_override or (unit2["cost"] if unit2["cost"] > 0 else 100)
-        count1 = max(1, resources // cost1)
-        count2 = max(1, resources // cost2)
+        count1 = int(max(1, resources // cost1))
+        count2 = int(max(1, resources // cost2))
 
     # --- Unit properties ---
     range1 = unit1["attack_range"]
@@ -416,7 +416,7 @@ def simulate_battle(
         a_used_first_arr,
         target_hp_arr,
     ):
-        """Apply num_shots opening shots from attacker_team, distributed round-robin."""
+        """Apply num_shots opening shots from attacker_team using focus fire."""
         if num_shots <= 0:
             return
         a_alive = list(range(attacker_count))
@@ -424,11 +424,17 @@ def simulate_battle(
             t_alive = [i for i in range(target_count) if target_hp_arr[i] > 0]
             if not t_alive:
                 break
+            # Use focus-fire targeting: concentrate fire to get kills
+            targets = _assign_targets_focus(
+                a_alive, t_alive, target_hp_arr, damage, 1 + a_extra_proj
+            )
             for a_idx in a_alive:
-                t_alive = [i for i in range(target_count) if target_hp_arr[i] > 0]
-                if not t_alive:
+                t_alive_now = [i for i in range(target_count) if target_hp_arr[i] > 0]
+                if not t_alive_now:
                     break
-                target = t_alive[a_idx % len(t_alive)]
+                target = targets.get(a_idx, t_alive_now[0])
+                if target_hp_arr[target] <= 0:
+                    target = t_alive_now[0]
                 num_proj = 1 + a_extra_proj
                 if a_first_burst > 0 and not a_used_first_arr[a_idx]:
                     num_proj += a_first_burst

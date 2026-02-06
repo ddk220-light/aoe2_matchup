@@ -131,7 +131,7 @@ def _get_alive_targets(hp_arr, count):
     return [i for i in range(count) if hp_arr[i] > 0]
 
 
-def _assign_targets(my_alive, enemy_alive):
+def _assign_targets_spread(my_alive, enemy_alive):
     """Assign each alive attacker to an alive enemy, distributing evenly."""
     if not enemy_alive:
         return {}
@@ -140,6 +140,29 @@ def _assign_targets(my_alive, enemy_alive):
     n_en = len(enemy_alive)
     for li, i in enumerate(my_alive):
         assignments[i] = enemy_alive[li * n_en // n_my]
+    return assignments
+
+
+def _assign_targets_focus(my_alive, enemy_alive, enemy_hp, dmg_per_hit, num_proj):
+    """Focus-fire targeting: group just enough attackers to kill each enemy.
+
+    Assigns attackers to the first enemy until enough are assigned to kill it
+    (based on current HP and damage per hit), then moves to the next enemy.
+    """
+    if not enemy_alive:
+        return {}
+    assignments = {}
+    e_idx = 0  # current enemy target index
+    assigned_dmg = 0.0  # damage assigned to current target so far
+    for i in my_alive:
+        if e_idx >= len(enemy_alive):
+            e_idx = 0  # wrap around if more attackers than needed
+            assigned_dmg = 0.0
+        assignments[i] = enemy_alive[e_idx]
+        assigned_dmg += dmg_per_hit * num_proj
+        if assigned_dmg >= enemy_hp[enemy_alive[e_idx]]:
+            e_idx += 1
+            assigned_dmg = 0.0
     return assignments
 
 
@@ -419,24 +442,29 @@ def simulate_battle(
 
     if is_ranged1 and not is_ranged2:
         # Team 1 ranged vs team 2 melee
+        # Opening: ranged fires while melee closes distance
         fire_dist = range1 - max(min_range1, MELEE_RANGE)
         if fire_dist > 0 and speed2 > 0:
             closing_time = fire_dist / speed2
-            opening1 = max(0, int((closing_time - delay1) / reload1))
-        # Kiting bonus: if ranged is faster
+            if closing_time > delay1:
+                opening1 = 1 + int((closing_time - delay1) / reload1)
+        # Kiting bonus: if ranged is faster, they can maintain distance
         if speed1 > speed2 and speed2 > 0:
-            speed_adv = (speed1 - speed2) / speed2
-            kite_time = MAP_SPACE * 0.3 * speed_adv
+            speed_diff = speed1 - speed2
+            kite_dist = MAP_SPACE * 0.4
+            kite_time = kite_dist / speed_diff if speed_diff > 0 else 0
             opening1 += max(0, int(kite_time / reload1))
     elif not is_ranged1 and is_ranged2:
         # Team 2 ranged vs team 1 melee
         fire_dist = range2 - max(min_range2, MELEE_RANGE)
         if fire_dist > 0 and speed1 > 0:
             closing_time = fire_dist / speed1
-            opening2 = max(0, int((closing_time - delay2) / reload2))
+            if closing_time > delay2:
+                opening2 = 1 + int((closing_time - delay2) / reload2)
         if speed2 > speed1 and speed1 > 0:
-            speed_adv = (speed2 - speed1) / speed1
-            kite_time = MAP_SPACE * 0.3 * speed_adv
+            speed_diff = speed2 - speed1
+            kite_dist = MAP_SPACE * 0.4
+            kite_time = kite_dist / speed_diff if speed_diff > 0 else 0
             opening2 += max(0, int(kite_time / reload2))
     elif is_ranged1 and is_ranged2:
         # Both ranged: side with more range gets bonus shots
@@ -446,7 +474,7 @@ def simulate_battle(
         elif range_diff < 0:
             opening2 = max(0, int(-range_diff / 2))
 
-    # Apply opening volleys
+    # Apply opening volleys and set post-opening cooldowns
     if opening1 > 0:
         _do_opening_volley(
             1,
@@ -459,6 +487,14 @@ def simulate_battle(
             used_first1,
             hp2,
         )
+        # Set cooldowns to reflect time elapsed since last opening shot
+        if is_ranged1 and not is_ranged2 and speed2 > 0:
+            fire_dist = range1 - max(min_range1, MELEE_RANGE)
+            closing = fire_dist / speed2 if fire_dist > 0 else 0
+            last_shot_t = delay1 + (opening1 - 1) * reload1
+            remaining_cd = max(0.0, reload1 - (closing - last_shot_t))
+            for i in range(count1):
+                cooldown1[i] = remaining_cd
     if opening2 > 0:
         _do_opening_volley(
             2,
@@ -471,6 +507,13 @@ def simulate_battle(
             used_first2,
             hp1,
         )
+        if is_ranged2 and not is_ranged1 and speed1 > 0:
+            fire_dist = range2 - max(min_range2, MELEE_RANGE)
+            closing = fire_dist / speed1 if fire_dist > 0 else 0
+            last_shot_t = delay2 + (opening2 - 1) * reload2
+            remaining_cd = max(0.0, reload2 - (closing - last_shot_t))
+            for i in range(count2):
+                cooldown2[i] = remaining_cd
 
     # =========================================================
     # PHASE 2: Tick-based combat loop
@@ -497,9 +540,15 @@ def simulate_battle(
         for i in alive2:
             cooldown2[i] = max(0.0, cooldown2[i] - DT)
 
-        # Assign targets (even distribution)
-        targets1 = _assign_targets(alive1, alive2)  # team1 -> team2
-        targets2 = _assign_targets(alive2, alive1)  # team2 -> team1
+        # Assign targets: ranged use focus fire, melee spread evenly
+        if is_ranged1:
+            targets1 = _assign_targets_focus(alive1, alive2, hp2, dmg1, 1 + extra_proj1)
+        else:
+            targets1 = _assign_targets_spread(alive1, alive2)
+        if is_ranged2:
+            targets2 = _assign_targets_focus(alive2, alive1, hp1, dmg2, 1 + extra_proj2)
+        else:
+            targets2 = _assign_targets_spread(alive2, alive1)
 
         # Collect pending damage: (target_team, target_idx, damage, attacker_idx)
         pending_damage = []

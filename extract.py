@@ -1185,6 +1185,16 @@ def extract_unit_data(unit):
                         cost[res_name] = int(rc.amount)
         data["cost"] = cost
 
+        # Charge attack (Coustillier, Urumi, etc.)
+        max_charge = getattr(c, "max_charge", 0)
+        recharge_rate = getattr(c, "recharge_rate", 0)
+        charge_event = getattr(c, "charge_event", 0)
+        charge_type = getattr(c, "charge_type", 0)
+        if max_charge > 0 and charge_event > 0:
+            data["charge_attack"] = round(max_charge, 1)
+            data["charge_recharge_rate"] = round(recharge_rate, 4)
+            data["charge_type"] = charge_type
+
     # Combat stats from type_50
     if hasattr(unit, "type_50") and unit.type_50:
         t = unit.type_50

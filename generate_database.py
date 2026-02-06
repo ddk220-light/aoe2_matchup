@@ -182,6 +182,23 @@ CIV_TEAM_BONUS_WORK_RATE = {
     "Celts": {49: 1.20, 150: 1.20},  # Siege Workshops work 20% faster
 }
 
+# Civ team bonuses that add attack vs armor class (applied to self)
+# Format: civ_name → [(unit_id, attack_class, amount), ...]
+# unit_id=-1 means class-based (uses class_id from command)
+CIV_TEAM_BONUS_ATTACK = {
+    # Knights +2 attack vs Archers (class 15)
+    "Persians": [
+        (38, 15, 2),  # Knight
+        (283, 15, 2),  # Cavalier
+        (569, 15, 2),  # Paladin
+        (1813, 15, 2),  # Savar
+    ],
+    # Foot archers +3 attack vs Standard Buildings (class 21)
+    "Saracens": [
+        (-1, 21, 3, 0),  # class_id=0 (Archer class), -1 = all units of class
+    ],
+}
+
 # Unique units that can also be created in Barracks (after specific tech)
 # Format: (civ_name, base_slug) → barracks_building_id
 UNIQUE_UNITS_IN_BARRACKS = {
@@ -2006,6 +2023,26 @@ class UnitAnalyzer:
                     if tech_name not in applied_bonuses:
                         applied_bonuses.append(tech_name)
 
+        # Apply team bonus attack bonuses (e.g., Persians Knights +2 vs Archers)
+        team_atk_bonuses = CIV_TEAM_BONUS_ATTACK.get(civ_name, [])
+        for bonus in team_atk_bonuses:
+            if len(bonus) == 3:
+                b_unit_id, atk_class, amount = bonus
+                if b_unit_id == final_unit_id:
+                    if atk_class in stats.attacks:
+                        stats.attacks[atk_class] += amount
+                    else:
+                        stats.attacks[atk_class] = amount
+                    applied_bonuses.append(f"{civ_name} Team Bonus")
+            elif len(bonus) == 4:
+                b_unit_id, atk_class, amount, b_class_id = bonus
+                if b_unit_id == -1 and b_class_id == unit_class:
+                    if atk_class in stats.attacks:
+                        stats.attacks[atk_class] += amount
+                    else:
+                        stats.attacks[atk_class] = amount
+                    applied_bonuses.append(f"{civ_name} Team Bonus")
+
         # Apply unique techs (Castle/Imperial Age civ-specific techs like Garland Wars)
         unique_techs = self.get_unique_techs_for_unit(
             civ_name, final_unit_id, unit_class, max_age
@@ -2129,6 +2166,26 @@ class UnitAnalyzer:
                 if self.apply_effect_command(cmd, stats, unit_id, unit_class):
                     if tech_name not in applied_bonuses:
                         applied_bonuses.append(tech_name)
+
+        # Apply team bonus attack bonuses
+        team_atk_bonuses = CIV_TEAM_BONUS_ATTACK.get(civ_name, [])
+        for bonus in team_atk_bonuses:
+            if len(bonus) == 3:
+                b_unit_id, atk_class, amount = bonus
+                if b_unit_id == unit_id:
+                    if atk_class in stats.attacks:
+                        stats.attacks[atk_class] += amount
+                    else:
+                        stats.attacks[atk_class] = amount
+                    applied_bonuses.append(f"{civ_name} Team Bonus")
+            elif len(bonus) == 4:
+                b_unit_id, atk_class, amount, b_class_id = bonus
+                if b_unit_id == -1 and b_class_id == unit_class:
+                    if atk_class in stats.attacks:
+                        stats.attacks[atk_class] += amount
+                    else:
+                        stats.attacks[atk_class] = amount
+                    applied_bonuses.append(f"{civ_name} Team Bonus")
 
         # Apply unique techs (Castle/Imperial Age civ-specific techs like Garland Wars)
         unique_techs = self.get_unique_techs_for_unit(
@@ -2639,6 +2696,17 @@ def compute_dismount_stats(analyzer, dismount_unit_id, civ_name, max_age):
     for te in civ_bonus_techs:
         for cmd in te.get("commands", []):
             analyzer.apply_effect_command(cmd, stats, dismount_unit_id, unit_class)
+
+    # Apply team bonus attack bonuses
+    for bonus in CIV_TEAM_BONUS_ATTACK.get(civ_name, []):
+        if len(bonus) == 3:
+            b_uid, atk_cls, amt = bonus
+            if b_uid == dismount_unit_id:
+                stats.attacks[atk_cls] = stats.attacks.get(atk_cls, 0) + amt
+        elif len(bonus) == 4:
+            b_uid, atk_cls, amt, b_cls = bonus
+            if b_uid == -1 and b_cls == unit_class:
+                stats.attacks[atk_cls] = stats.attacks.get(atk_cls, 0) + amt
 
     # Apply unique techs
     unique_techs = analyzer.get_unique_techs_for_unit(
@@ -3617,6 +3685,40 @@ def generate_reference_database(analyzer):
                 _insert_stat_chain_row(ref_unit_id, step, tech_name, "civ_bonus", after)
                 step += 1
                 all_tech_names.append(tech_name)
+
+        # Phase 2b: Team bonus attack bonuses
+        team_atk_bonuses = CIV_TEAM_BONUS_ATTACK.get(civ_name, [])
+        for bonus in team_atk_bonuses:
+            matched = False
+            if len(bonus) == 3:
+                b_unit_id, atk_class, amount = bonus
+                matched = b_unit_id == unit_id
+            elif len(bonus) == 4:
+                b_unit_id, atk_class, amount, b_class_id = bonus
+                matched = b_unit_id == -1 and b_class_id == unit_class
+            if matched:
+                before = _snapshot_stats(stats)
+                if atk_class in stats.attacks:
+                    stats.attacks[atk_class] += amount
+                else:
+                    stats.attacks[atk_class] = amount
+                after = _snapshot_stats(stats)
+                tb_name = f"{civ_name} Team Bonus"
+                cls_name = armor_class_names.get(atk_class, f"Class {atk_class}")
+                effect_desc = f"+{amount} attack ({cls_name})"
+                _insert_tech_applied(
+                    ref_unit_id,
+                    0,
+                    tb_name,
+                    "civ_bonus",
+                    "N/A",
+                    "N/A",
+                    effect_desc,
+                    {},
+                )
+                _insert_stat_chain_row(ref_unit_id, step, tb_name, "civ_bonus", after)
+                step += 1
+                all_tech_names.append(tb_name)
 
         # Phase 3: Unique techs
         unique_techs = analyzer.get_unique_techs_for_unit(

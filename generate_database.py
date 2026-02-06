@@ -3937,6 +3937,10 @@ def generate_reference_database(analyzer):
             if not result["has_unit"]:
                 continue
             final_unit_id = result.get("unit_id", config["base_id"])
+            # If no upgrades were applied (final == base), the civ only has
+            # the Castle-age version which is already in CASTLE_UNITS — skip
+            if final_unit_id == config["base_id"]:
+                continue
             unit_data = analyzer.get_unit(final_unit_id)
             if not unit_data:
                 continue

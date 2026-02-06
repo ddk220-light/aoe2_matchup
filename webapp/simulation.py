@@ -1,24 +1,21 @@
 """
-Data-driven battle simulation engine.
+Data-driven battle simulation engine (damage-only, no positions).
 
 All unit-specific behaviors (siege projectiles, trample, armor-ignoring, etc.)
 are read from unit dict fields populated from the database — no hardcoded slug lookups.
 
-Used by both the matchup API (headless, many simulations) and can serve as the
-reference implementation for the frontend JS simulator.
+Uses a tick-based damage loop with pre-calculated opening volleys for
+range/kiting advantages. No XY positions or unit movement.
 """
 
 import json
 
-import numpy as np
-
 # Simulation constants
-DT = 0.05  # 50ms time step
-MAX_TICKS = 5000  # 250 seconds max battle time
+DT = 0.1  # 100ms time step
+MAX_TICKS = 2500  # 250 seconds max battle time
 MELEE_RANGE = 0.5
-MAP_MIN = 0.0
-MAP_MAX = 26.67  # Match frontend: CANVAS_WIDTH(800) / TILE_SIZE(30)
-HIT_RADIUS = 1.0  # Projectile dodge check radius
+MAP_SPACE = 22.0  # ~tiles of combat space (MAP_MAX - 2*start_offset)
+UNIT_SPACING = 0.75  # approximate unit spacing in melee clump
 
 
 def prepare_combat_unit(row):
@@ -122,25 +119,60 @@ def _calc_damage(
     return max(1, base_damage + bonus_damage - target_armor)
 
 
+def _splash_targets(radius):
+    """How many extra targets a splash/trample hits (no positions)."""
+    if radius <= 0:
+        return 0
+    return max(1, int(radius / UNIT_SPACING))
+
+
+def _get_alive_targets(hp_arr, count):
+    """Return list of alive unit indices."""
+    return [i for i in range(count) if hp_arr[i] > 0]
+
+
+def _assign_targets(my_alive, enemy_alive):
+    """Assign each alive attacker to an alive enemy, distributing evenly."""
+    if not enemy_alive:
+        return {}
+    assignments = {}
+    n_my = len(my_alive)
+    n_en = len(enemy_alive)
+    for li, i in enumerate(my_alive):
+        assignments[i] = enemy_alive[li * n_en // n_my]
+    return assignments
+
+
+def _find_alive_target(target_idx, enemy_hp, enemy_alive):
+    """If assigned target is dead, find nearest alive enemy."""
+    if enemy_hp[target_idx] > 0:
+        return target_idx
+    for idx in enemy_alive:
+        if enemy_hp[idx] > 0:
+            return idx
+    return -1
+
+
 def simulate_battle(
     unit1, unit2, resources, fixed_count=None, cost1_override=None, cost2_override=None
 ):
     """
-    Tick-based battle simulation with kiting, siege projectiles, and trample.
+    Tick-based battle simulation with no positions/movement.
 
-    All unit-specific behaviors are read from unit dict fields — no slug lookups.
+    Phase 1: Opening volley (range/kiting advantage shots)
+    Phase 2: Tick-based combat loop with all mechanics
+    Phase 3: Winner determination
 
     Args:
-        unit1/unit2: dicts from prepare_combat_unit() with pre-parsed attacks/armors
-            and combat properties (min_attack_range, is_siege_projectile, etc.)
-        resources: total resource pool for army sizing (ignored if fixed_count set)
+        unit1/unit2: dicts from prepare_combat_unit()
+        resources: total resource pool for army sizing
         fixed_count: if set, both sides get this many units
-        cost1_override/cost2_override: if set, use these costs instead of unit flat cost
+        cost1_override/cost2_override: override unit costs for army sizing
 
     Returns: (winner, unit1_remaining, unit2_remaining)
         winner: 1 if unit1 wins, 2 if unit2 wins, 0 if draw
     """
-    # Army sizes
+    # --- Army sizes ---
     if fixed_count is not None:
         count1 = fixed_count
         count2 = fixed_count
@@ -150,45 +182,29 @@ def simulate_battle(
         count1 = max(1, resources // cost1)
         count2 = max(1, resources // cost2)
 
-    # Pre-parsed attacks/armors (already dicts with int keys from prepare_combat_unit)
-    attacks1 = unit1["attacks"]
-    armors1 = unit1["armors"]
-    attacks2 = unit2["attacks"]
-    armors2 = unit2["armors"]
-
-    # Unit properties
+    # --- Unit properties ---
     range1 = unit1["attack_range"]
     range2 = unit2["attack_range"]
-    move_speed1 = unit1["movement_speed"]
-    move_speed2 = unit2["movement_speed"]
     is_ranged1 = range1 >= 1.0
     is_ranged2 = range2 >= 1.0
+    speed1 = unit1["movement_speed"]
+    speed2 = unit2["movement_speed"]
 
-    # Data-driven combat properties (from DB, no slug lookups)
+    # Attack timing
+    aspeed1 = unit1["attack_speed"] or 0.5
+    aspeed2 = unit2["attack_speed"] or 0.5
+    reload1 = 1.0 / aspeed1 if aspeed1 > 0 else 2.0
+    reload2 = 1.0 / aspeed2 if aspeed2 > 0 else 2.0
+    delay1 = unit1["attack_delay"]
+    delay2 = unit2["attack_delay"]
     min_range1 = unit1["min_attack_range"]
     min_range2 = unit2["min_attack_range"]
-    is_siege1 = unit1["is_siege_projectile"] == 1
-    is_siege2 = unit2["is_siege_projectile"] == 1
-    splash_radius1 = unit1["splash_radius"]
-    splash_radius2 = unit2["splash_radius"]
-    proj_speed1 = unit1["projectile_speed"]
-    proj_speed2 = unit2["projectile_speed"]
 
-    # Trample info
-    tp1 = unit1["trample_percent"]
-    tr1 = unit1["trample_radius"]
-    tf1 = unit1["trample_flat_damage"]
-    has_trample1 = (tp1 > 0 or tf1 > 0) and not is_ranged1
-    tp2 = unit2["trample_percent"]
-    tr2 = unit2["trample_radius"]
-    tf2 = unit2["trample_flat_damage"]
-    has_trample2 = (tp2 > 0 or tf2 > 0) and not is_ranged2
-
-    # Pre-compute damage (deterministic, no RNG)
+    # Pre-compute damage
     dmg1 = _calc_damage(
-        attacks1,
+        unit1["attacks"],
         unit1["attack"],
-        armors2,
+        unit2["armors"],
         unit2["melee_armor"],
         unit2["pierce_armor"],
         is_ranged1,
@@ -197,9 +213,9 @@ def simulate_battle(
         bonus_damage_reduction=unit2["bonus_damage_reduction"],
     )
     dmg2 = _calc_damage(
-        attacks2,
+        unit2["attacks"],
         unit2["attack"],
-        armors1,
+        unit1["armors"],
         unit1["melee_armor"],
         unit1["pierce_armor"],
         is_ranged2,
@@ -208,356 +224,496 @@ def simulate_battle(
         bonus_damage_reduction=unit1["bonus_damage_reduction"],
     )
 
-    # Pre-compute trample damage
-    trample_dmg1 = int(dmg1 * tp1) + tf1 if has_trample1 else 0
-    trample_dmg2 = int(dmg2 * tp2) + tf2 if has_trample2 else 0
+    # Trample (melee only)
+    tp1, tr1, tf1 = (
+        unit1["trample_percent"],
+        unit1["trample_radius"],
+        unit1["trample_flat_damage"],
+    )
+    has_trample1 = (tp1 > 0 or tf1 > 0) and not is_ranged1
+    trample_dmg1 = (int(dmg1 * tp1) + tf1) if has_trample1 else 0
+    trample_extra1 = _splash_targets(tr1) if has_trample1 else 0
 
-    # Attack timing
-    speed1 = unit1["attack_speed"] or 0.5
-    speed2 = unit2["attack_speed"] or 0.5
-    reload1 = 1.0 / speed1 if speed1 > 0 else 2.0
-    reload2 = 1.0 / speed2 if speed2 > 0 else 2.0
-    attack_delay1 = unit1["attack_delay"]
-    attack_delay2 = unit2["attack_delay"]
+    tp2, tr2, tf2 = (
+        unit2["trample_percent"],
+        unit2["trample_radius"],
+        unit2["trample_flat_damage"],
+    )
+    has_trample2 = (tp2 > 0 or tf2 > 0) and not is_ranged2
+    trample_dmg2 = (int(dmg2 * tp2) + tf2) if has_trample2 else 0
+    trample_extra2 = _splash_targets(tr2) if has_trample2 else 0
+
+    # Siege splash
+    is_siege1 = unit1["is_siege_projectile"] == 1
+    is_siege2 = unit2["is_siege_projectile"] == 1
+    siege_splash1 = _splash_targets(unit1["splash_radius"]) if is_siege1 else 0
+    siege_splash2 = _splash_targets(unit2["splash_radius"]) if is_siege2 else 0
+
+    # Splash on hit
+    splash_hit1 = _splash_targets(unit1["splash_on_hit_radius"])
+    splash_hit2 = _splash_targets(unit2["splash_on_hit_radius"])
+
+    # Extra projectiles
+    extra_proj1 = unit1["extra_projectiles"]
+    extra_proj2 = unit2["extra_projectiles"]
+    first_burst1 = unit1["first_attack_extra_projectiles"]
+    first_burst2 = unit2["first_attack_extra_projectiles"]
+
+    # Unique mechanics
+    dodge_max1 = unit1["dodge_shield_max"]
+    dodge_max2 = unit2["dodge_shield_max"]
+    dodge_recharge1 = unit1["dodge_shield_recharge"]
+    dodge_recharge2 = unit2["dodge_shield_recharge"]
+    bleed_dps1, bleed_dur1 = unit1["bleed_dps"], unit1["bleed_duration"]
+    bleed_dps2, bleed_dur2 = unit2["bleed_dps"], unit2["bleed_duration"]
+    block_melee1 = unit1["block_first_melee"]
+    block_melee2 = unit2["block_first_melee"]
+    kill_bonus1 = unit1["attack_bonus_per_kill"]
+    kill_bonus2 = unit2["attack_bonus_per_kill"]
+    transform_thresh1 = unit1["hp_transform_threshold"]
+    transform_thresh2 = unit2["hp_transform_threshold"]
 
     # Kiting: ranged vs melee only
     should_kite1 = is_ranged1 and not is_ranged2
     should_kite2 = is_ranged2 and not is_ranged1
 
-    # Unique mechanic properties
-    extra_proj1 = unit1["extra_projectiles"]
-    extra_proj2 = unit2["extra_projectiles"]
-    splash_hit_r1 = unit1["splash_on_hit_radius"]
-    splash_hit_r2 = unit2["splash_on_hit_radius"]
-    dodge_max1 = unit1["dodge_shield_max"]
-    dodge_max2 = unit2["dodge_shield_max"]
-    dodge_recharge1 = unit1["dodge_shield_recharge"]
-    dodge_recharge2 = unit2["dodge_shield_recharge"]
-    bleed_dps1 = unit1["bleed_dps"]
-    bleed_dur1 = unit1["bleed_duration"]
-    bleed_dps2 = unit2["bleed_dps"]
-    bleed_dur2 = unit2["bleed_duration"]
-    block_melee1 = unit1["block_first_melee"]
-    block_melee2 = unit2["block_first_melee"]
-    kill_bonus1 = unit1["attack_bonus_per_kill"]
-    kill_bonus2 = unit2["attack_bonus_per_kill"]
-    first_burst1 = unit1["first_attack_extra_projectiles"]
-    first_burst2 = unit2["first_attack_extra_projectiles"]
-    transform_thresh1 = unit1["hp_transform_threshold"]
-    transform_thresh2 = unit2["hp_transform_threshold"]
+    # Min range: units with high min_range can't attack in melee phase
+    # (e.g. mangonels min_range=3, can't hit units at melee range)
+    cant_attack_melee1 = is_ranged1 and min_range1 >= 2.0 and not is_ranged2
+    cant_attack_melee2 = is_ranged2 and min_range2 >= 2.0 and not is_ranged1
 
-    # Army state — numpy arrays for speed
-    hp1 = np.full(count1, float(unit1["hp"]))
-    hp2 = np.full(count2, float(unit2["hp"]))
-    pos1 = 2.0 + np.arange(count1, dtype=np.float64) * 0.5  # Start ~2 tiles in
-    pos2 = (MAP_MAX - 2.0) - np.arange(
-        count2, dtype=np.float64
-    ) * 0.5  # Start ~2 tiles from right
-    cooldown1 = np.zeros(count1)
-    cooldown2 = np.zeros(count2)
-    was_moving1 = np.ones(count1, dtype=bool)
-    was_moving2 = np.ones(count2, dtype=bool)
-
-    # Committed melee attacks (sparse, use dicts)
-    committed1 = {}  # attacker_idx -> (target_idx, time_remaining)
+    # --- Per-unit state (plain Python lists) ---
+    hp1 = [float(unit1["hp"])] * count1
+    hp2 = [float(unit2["hp"])] * count2
+    cooldown1 = [0.0] * count1
+    cooldown2 = [0.0] * count2
+    bonus_atk1 = [0.0] * count1
+    bonus_atk2 = [0.0] * count2
+    used_first1 = [False] * count1
+    used_first2 = [False] * count2
+    transformed1 = [False] * count1
+    transformed2 = [False] * count2
+    shield1 = [float(dodge_max1)] * count1
+    shield2 = [float(dodge_max2)] * count2
+    shield_timer1 = [0.0] * count1
+    shield_timer2 = [0.0] * count2
+    has_blocked1 = [False] * count1
+    has_blocked2 = [False] * count2
+    bleed_on1 = {}  # idx -> (dps, remaining)
+    bleed_on2 = {}
+    committed1 = {}  # idx -> (target, time_remaining)
     committed2 = {}
 
-    # Unique mechanic state arrays
-    # Dodge shield
-    shield1 = np.full(count1, float(dodge_max1))
-    shield2 = np.full(count2, float(dodge_max2))
-    shield_timer1 = np.zeros(count1)
-    shield_timer2 = np.zeros(count2)
-    # Block first melee
-    has_blocked1 = np.zeros(count1, dtype=bool)
-    has_blocked2 = np.zeros(count2, dtype=bool)
-    # Kill bonus
-    bonus_atk1 = np.zeros(count1)
-    bonus_atk2 = np.zeros(count2)
-    # First attack burst
-    used_first1 = np.zeros(count1, dtype=bool)
-    used_first2 = np.zeros(count2, dtype=bool)
-    # HP transform (Jian Swordsman)
-    transformed1 = np.zeros(count1, dtype=bool)
-    transformed2 = np.zeros(count2, dtype=bool)
-    # Bleed effects (sparse: target_idx -> (dps, remaining_time))
-    bleed_on1 = {}  # bleeds on team 1 units (applied by team 2)
-    bleed_on2 = {}  # bleeds on team 2 units (applied by team 1)
+    start_total_hp1 = float(unit1["hp"]) * count1
+    start_total_hp2 = float(unit2["hp"]) * count2
 
-    start_hp1 = float(hp1.sum())
-    start_hp2 = float(hp2.sum())
+    # =========================================================
+    # PHASE 1: Opening volley (range/kiting advantage)
+    # =========================================================
 
-    # Siege projectiles in flight
-    projectiles = []
+    def _apply_opening_hit(attacker_team, target_idx, damage, attacker_idx):
+        """Apply a single opening hit with all mechanics."""
+        if attacker_team == 1:
+            t_hp, t_shield, t_shield_timer = hp2, shield2, shield_timer2
+            t_blocked, t_bleed = has_blocked2, bleed_on2
+            a_bonus, a_used_first = bonus_atk1, used_first1
+            a_is_ranged = is_ranged1
+            d_dodge_max, d_recharge = dodge_max2, dodge_recharge2
+            d_block = block_melee2
+            a_kill_bonus = kill_bonus1
+            a_bleed_dps, a_bleed_dur = bleed_dps1, bleed_dur1
+            a_splash_hit = splash_hit1
+            a_siege_splash = siege_splash1
+            a_is_siege = is_siege1
+            t_alive_fn = lambda: _get_alive_targets(hp2, count2)
+        else:
+            t_hp, t_shield, t_shield_timer = hp1, shield1, shield_timer1
+            t_blocked, t_bleed = has_blocked1, bleed_on1
+            a_bonus, a_used_first = bonus_atk2, used_first2
+            a_is_ranged = is_ranged2
+            d_dodge_max, d_recharge = dodge_max1, dodge_recharge1
+            d_block = block_melee1
+            a_kill_bonus = kill_bonus2
+            a_bleed_dps, a_bleed_dur = bleed_dps2, bleed_dur2
+            a_splash_hit = splash_hit2
+            a_siege_splash = siege_splash2
+            a_is_siege = is_siege2
+            t_alive_fn = lambda: _get_alive_targets(hp1, count1)
+
+        if t_hp[target_idx] <= 0:
+            return
+
+        # Dodge shield (ranged only)
+        if d_dodge_max > 0 and a_is_ranged and t_shield[target_idx] > 0:
+            t_shield[target_idx] -= 1
+            t_shield_timer[target_idx] = d_recharge
+            return
+
+        # Block first melee
+        if d_block and not a_is_ranged and not t_blocked[target_idx]:
+            t_blocked[target_idx] = True
+            return
+
+        hit_dmg = damage + int(a_bonus[attacker_idx])
+        was_alive = t_hp[target_idx] > 0
+        t_hp[target_idx] -= hit_dmg
+
+        if a_kill_bonus > 0 and was_alive and t_hp[target_idx] <= 0:
+            a_bonus[attacker_idx] += a_kill_bonus
+
+        # Siege splash: hit extra targets
+        if a_is_siege and a_siege_splash > 0:
+            alive = t_alive_fn()
+            splashed = 0
+            for idx in alive:
+                if idx != target_idx and splashed < a_siege_splash:
+                    t_hp[idx] -= hit_dmg
+                    splashed += 1
+
+        # Splash on hit: hit extra targets near the target
+        if a_splash_hit > 0:
+            alive = t_alive_fn()
+            splashed = 0
+            for idx in alive:
+                if idx != target_idx and splashed < a_splash_hit:
+                    t_hp[idx] -= hit_dmg
+                    splashed += 1
+
+        if a_bleed_dps > 0 and was_alive:
+            t_bleed[target_idx] = (a_bleed_dps, a_bleed_dur)
+
+    def _do_opening_volley(
+        attacker_team,
+        num_shots,
+        attacker_count,
+        target_count,
+        damage,
+        a_extra_proj,
+        a_first_burst,
+        a_used_first_arr,
+        target_hp_arr,
+    ):
+        """Apply num_shots opening shots from attacker_team, distributed round-robin."""
+        if num_shots <= 0:
+            return
+        a_alive = list(range(attacker_count))
+        for shot_round in range(num_shots):
+            t_alive = [i for i in range(target_count) if target_hp_arr[i] > 0]
+            if not t_alive:
+                break
+            for a_idx in a_alive:
+                t_alive = [i for i in range(target_count) if target_hp_arr[i] > 0]
+                if not t_alive:
+                    break
+                target = t_alive[a_idx % len(t_alive)]
+                num_proj = 1 + a_extra_proj
+                if a_first_burst > 0 and not a_used_first_arr[a_idx]:
+                    num_proj += a_first_burst
+                    a_used_first_arr[a_idx] = True
+                for _ in range(num_proj):
+                    _apply_opening_hit(attacker_team, target, damage, a_idx)
+
+    # Calculate opening shots for each side
+    opening1 = 0
+    opening2 = 0
+
+    if is_ranged1 and not is_ranged2:
+        # Team 1 ranged vs team 2 melee
+        fire_dist = range1 - max(min_range1, MELEE_RANGE)
+        if fire_dist > 0 and speed2 > 0:
+            closing_time = fire_dist / speed2
+            opening1 = max(0, int((closing_time - delay1) / reload1))
+        # Kiting bonus: if ranged is faster
+        if speed1 > speed2 and speed2 > 0:
+            speed_adv = (speed1 - speed2) / speed2
+            kite_time = MAP_SPACE * 0.3 * speed_adv
+            opening1 += max(0, int(kite_time / reload1))
+    elif not is_ranged1 and is_ranged2:
+        # Team 2 ranged vs team 1 melee
+        fire_dist = range2 - max(min_range2, MELEE_RANGE)
+        if fire_dist > 0 and speed1 > 0:
+            closing_time = fire_dist / speed1
+            opening2 = max(0, int((closing_time - delay2) / reload2))
+        if speed2 > speed1 and speed1 > 0:
+            speed_adv = (speed2 - speed1) / speed1
+            kite_time = MAP_SPACE * 0.3 * speed_adv
+            opening2 += max(0, int(kite_time / reload2))
+    elif is_ranged1 and is_ranged2:
+        # Both ranged: side with more range gets bonus shots
+        range_diff = range1 - range2
+        if range_diff > 0:
+            opening1 = max(0, int(range_diff / 2))
+        elif range_diff < 0:
+            opening2 = max(0, int(-range_diff / 2))
+
+    # Apply opening volleys
+    if opening1 > 0:
+        _do_opening_volley(
+            1,
+            opening1,
+            count1,
+            count2,
+            dmg1,
+            extra_proj1,
+            first_burst1,
+            used_first1,
+            hp2,
+        )
+    if opening2 > 0:
+        _do_opening_volley(
+            2,
+            opening2,
+            count2,
+            count1,
+            dmg2,
+            extra_proj2,
+            first_burst2,
+            used_first2,
+            hp1,
+        )
+
+    # =========================================================
+    # PHASE 2: Tick-based combat loop
+    # =========================================================
 
     for tick in range(MAX_TICKS):
-        alive1 = np.where(hp1 > 0)[0]
-        alive2 = np.where(hp2 > 0)[0]
+        alive1 = _get_alive_targets(hp1, count1)
+        alive2 = _get_alive_targets(hp2, count2)
 
-        if len(alive1) == 0 or len(alive2) == 0:
+        if not alive1 or not alive2:
             break
 
         # Early termination
         a1_pct = len(alive1) / count1
         a2_pct = len(alive2) / count2
-        if a1_pct < 0.5 and a2_pct > 0.6:
-            return (2, int(len(alive1)), int(len(alive2)))
-        if a2_pct < 0.5 and a1_pct > 0.6:
-            return (1, int(len(alive1)), int(len(alive2)))
+        if a1_pct < 0.4 and a2_pct > 0.55:
+            break
+        if a2_pct < 0.4 and a1_pct > 0.55:
+            break
 
-        # Update cooldowns (vectorized)
-        cooldown1[alive1] = np.maximum(0, cooldown1[alive1] - DT)
-        cooldown2[alive2] = np.maximum(0, cooldown2[alive2] - DT)
+        # Decrement cooldowns
+        for i in alive1:
+            cooldown1[i] = max(0.0, cooldown1[i] - DT)
+        for i in alive2:
+            cooldown2[i] = max(0.0, cooldown2[i] - DT)
 
-        # Update siege projectiles
-        new_projectiles = []
-        for proj in projectiles:
-            target_team, impact_pos, proj_pos, damage, splash_r, positions_at_fire = (
-                proj
-            )
-            if proj_pos < impact_pos:
-                proj_pos += proj_speed1 * DT if target_team == 2 else proj_speed2 * DT
-                arrived = proj_pos >= impact_pos
-            else:
-                proj_pos -= proj_speed1 * DT if target_team == 2 else proj_speed2 * DT
-                arrived = proj_pos <= impact_pos
+        # Assign targets (even distribution)
+        targets1 = _assign_targets(alive1, alive2)  # team1 -> team2
+        targets2 = _assign_targets(alive2, alive1)  # team2 -> team1
 
-            if arrived:
-                if target_team == 1:
-                    for idx in alive1:
-                        if idx in positions_at_fire:
-                            pos_at_fire = positions_at_fire[idx]
-                            if abs(pos_at_fire - impact_pos) <= splash_r:
-                                if abs(pos1[idx] - pos_at_fire) <= HIT_RADIUS:
-                                    hp1[idx] -= damage
-                else:
-                    for idx in alive2:
-                        if idx in positions_at_fire:
-                            pos_at_fire = positions_at_fire[idx]
-                            if abs(pos_at_fire - impact_pos) <= splash_r:
-                                if abs(pos2[idx] - pos_at_fire) <= HIT_RADIUS:
-                                    hp2[idx] -= damage
-            else:
-                new_projectiles.append(
-                    (
-                        target_team,
-                        impact_pos,
-                        proj_pos,
-                        damage,
-                        splash_r,
-                        positions_at_fire,
-                    )
-                )
-        projectiles = new_projectiles
-
-        # Collect pending damage
+        # Collect pending damage: (target_team, target_idx, damage, attacker_idx)
         pending_damage = []
 
-        # --- Team 1 actions ---
-        pos2_alive = pos2[alive2]
-        for i in alive1:
-            # Find closest enemy
-            dists = np.abs(pos2_alive - pos1[i])
-            closest_local = np.argmin(dists)
-            closest = alive2[closest_local]
-            distance = dists[closest_local]
-            attack_range = range1 if is_ranged1 else MELEE_RANGE
+        # Alternate which team acts first
+        if tick % 2 == 0:
+            team_order = [1, 2]
+        else:
+            team_order = [2, 1]
 
-            if is_ranged1:
-                in_range = distance <= attack_range
-                too_close = min_range1 > 0 and distance < min_range1
-
-                if too_close:
-                    # Inside min range - retreat
-                    pos1[i] = max(MAP_MIN, pos1[i] - move_speed1 * DT)
-                    was_moving1[i] = True
-                elif not was_moving1[i] and cooldown1[i] <= 0:
-                    # Stopped and delay elapsed - fire!
-                    num_proj = 1 + extra_proj1
-                    if first_burst1 > 0 and not used_first1[i]:
-                        num_proj += first_burst1
-                        used_first1[i] = True
-                    if is_siege1:
-                        enemy_positions = {int(idx): float(pos2[idx]) for idx in alive2}
-                        projectiles.append(
-                            (
-                                2,
-                                float(pos2[closest]),
-                                float(pos1[i]),
-                                dmg1,
-                                splash_radius1,
-                                enemy_positions,
-                            )
-                        )
-                    else:
-                        hit_dmg = dmg1 + int(bonus_atk1[i])
-                        for _ in range(num_proj):
-                            pending_damage.append(
-                                (2, int(closest), hit_dmg, int(i), float(pos1[i]))
-                            )
-                    cooldown1[i] = reload1
-                    was_moving1[i] = True  # Start kiting next tick
-                elif not was_moving1[i]:
-                    # Stopped, waiting for attack delay - hold position
-                    pass
-                elif cooldown1[i] > 0 and should_kite1:
-                    # On cooldown vs melee - kite away
-                    pos1[i] = max(MAP_MIN, pos1[i] - move_speed1 * DT)
-                elif cooldown1[i] > 0:
-                    # On cooldown vs ranged - stand
-                    pass
-                elif in_range:
-                    # In range, ready to fire, was moving - stop and apply delay
-                    cooldown1[i] = attack_delay1
-                    was_moving1[i] = False
-                else:
-                    # Ready to fire, not in range - move toward target
-                    pos1[i] += move_speed1 * DT
+        for team_id in team_order:
+            if team_id == 1:
+                my_alive = alive1
+                my_targets = targets1
+                my_cooldown, my_committed = cooldown1, committed1
+                my_bonus_atk, my_used_first = bonus_atk1, used_first1
+                t_is_ranged, t_is_siege = is_ranged1, is_siege1
+                t_reload, t_delay = reload1, delay1
+                t_extra_proj, t_first_burst = extra_proj1, first_burst1
+                t_dmg = dmg1
+                t_cant_attack = cant_attack_melee1
+                enemy_hp = hp2
+                enemy_alive = alive2
+                enemy_team = 2
             else:
-                # Melee
-                if i in committed1:
-                    target_idx, time_left = committed1[i]
+                my_alive = alive2
+                my_targets = targets2
+                my_cooldown, my_committed = cooldown2, committed2
+                my_bonus_atk, my_used_first = bonus_atk2, used_first2
+                t_is_ranged, t_is_siege = is_ranged2, is_siege2
+                t_reload, t_delay = reload2, delay2
+                t_extra_proj, t_first_burst = extra_proj2, first_burst2
+                t_dmg = dmg2
+                t_cant_attack = cant_attack_melee2
+                enemy_hp = hp1
+                enemy_alive = alive1
+                enemy_team = 1
+
+            for i in my_alive:
+                # Handle committed melee attacks
+                if i in my_committed:
+                    target_idx, time_left = my_committed[i]
                     time_left -= DT
                     if time_left <= 0:
-                        if hp2[target_idx] > 0:
-                            hit_dmg = dmg1 + int(bonus_atk1[i])
+                        if enemy_hp[target_idx] > 0:
+                            hit_dmg = t_dmg + int(my_bonus_atk[i])
                             pending_damage.append(
-                                (2, target_idx, hit_dmg, int(i), float(pos1[i]))
+                                (enemy_team, target_idx, hit_dmg, i, team_id)
                             )
-                        del committed1[i]
-                        cooldown1[i] = reload1
-                        was_moving1[i] = False
+                        del my_committed[i]
+                        my_cooldown[i] = t_reload
                     else:
-                        committed1[i] = (target_idx, time_left)
-                elif distance <= attack_range:
-                    if cooldown1[i] <= 0:
-                        if attack_delay1 > 0:
-                            committed1[i] = (int(closest), attack_delay1)
-                            was_moving1[i] = False
-                        else:
-                            hit_dmg = dmg1 + int(bonus_atk1[i])
-                            pending_damage.append(
-                                (2, int(closest), hit_dmg, int(i), float(pos1[i]))
-                            )
-                            cooldown1[i] = reload1
-                else:
-                    pos1[i] += move_speed1 * DT
-                    was_moving1[i] = True
+                        my_committed[i] = (target_idx, time_left)
+                    continue
 
-        # --- Team 2 actions ---
-        pos1_alive = pos1[alive1]
-        for i in alive2:
-            dists = np.abs(pos1_alive - pos2[i])
-            closest_local = np.argmin(dists)
-            closest = alive1[closest_local]
-            distance = dists[closest_local]
-            attack_range = range2 if is_ranged2 else MELEE_RANGE
+                if my_cooldown[i] > 0:
+                    continue
 
-            if is_ranged2:
-                in_range = distance <= attack_range
-                too_close = min_range2 > 0 and distance < min_range2
+                # Can't attack if min_range prevents it in melee phase
+                if t_cant_attack:
+                    continue
 
-                if too_close:
-                    # Inside min range - retreat
-                    pos2[i] = min(MAP_MAX, pos2[i] + move_speed2 * DT)
-                    was_moving2[i] = True
-                elif not was_moving2[i] and cooldown2[i] <= 0:
-                    # Stopped and delay elapsed - fire!
-                    num_proj = 1 + extra_proj2
-                    if first_burst2 > 0 and not used_first2[i]:
-                        num_proj += first_burst2
-                        used_first2[i] = True
-                    if is_siege2:
-                        enemy_positions = {int(idx): float(pos1[idx]) for idx in alive1}
-                        projectiles.append(
-                            (
-                                1,
-                                float(pos1[closest]),
-                                float(pos2[i]),
-                                dmg2,
-                                splash_radius2,
-                                enemy_positions,
-                            )
+                # Find target
+                target_idx = my_targets.get(i, -1)
+                if target_idx < 0:
+                    continue
+                target_idx = _find_alive_target(target_idx, enemy_hp, enemy_alive)
+                if target_idx < 0:
+                    continue
+
+                if t_is_ranged:
+                    # Ranged: fire instantly
+                    num_proj = 1 + t_extra_proj
+                    if t_first_burst > 0 and not my_used_first[i]:
+                        num_proj += t_first_burst
+                        my_used_first[i] = True
+                    hit_dmg = t_dmg + int(my_bonus_atk[i])
+                    for _ in range(num_proj):
+                        pending_damage.append(
+                            (enemy_team, target_idx, hit_dmg, i, team_id)
                         )
-                    else:
-                        hit_dmg = dmg2 + int(bonus_atk2[i])
-                        for _ in range(num_proj):
-                            pending_damage.append(
-                                (1, int(closest), hit_dmg, int(i), float(pos2[i]))
-                            )
-                    cooldown2[i] = reload2
-                    was_moving2[i] = True  # Start kiting next tick
-                elif not was_moving2[i]:
-                    # Stopped, waiting for attack delay - hold position
-                    pass
-                elif cooldown2[i] > 0 and should_kite2:
-                    # On cooldown vs melee - kite away
-                    pos2[i] = min(MAP_MAX, pos2[i] + move_speed2 * DT)
-                elif cooldown2[i] > 0:
-                    # On cooldown vs ranged - stand
-                    pass
-                elif in_range:
-                    # In range, ready to fire, was moving - stop and apply delay
-                    cooldown2[i] = attack_delay2
-                    was_moving2[i] = False
+                    my_cooldown[i] = t_reload
                 else:
-                    # Ready to fire, not in range - move toward target
-                    pos2[i] -= move_speed2 * DT
-            else:
-                if i in committed2:
-                    target_idx, time_left = committed2[i]
-                    time_left -= DT
-                    if time_left <= 0:
-                        if hp1[target_idx] > 0:
-                            hit_dmg = dmg2 + int(bonus_atk2[i])
-                            pending_damage.append(
-                                (1, target_idx, hit_dmg, int(i), float(pos2[i]))
-                            )
-                        del committed2[i]
-                        cooldown2[i] = reload2
-                        was_moving2[i] = False
+                    # Melee: commit with delay or hit instantly
+                    if t_delay > 0:
+                        my_committed[i] = (target_idx, t_delay)
                     else:
-                        committed2[i] = (target_idx, time_left)
-                elif distance <= attack_range:
-                    if cooldown2[i] <= 0:
-                        if attack_delay2 > 0:
-                            committed2[i] = (int(closest), attack_delay2)
-                            was_moving2[i] = False
-                        else:
-                            hit_dmg = dmg2 + int(bonus_atk2[i])
-                            pending_damage.append(
-                                (1, int(closest), hit_dmg, int(i), float(pos2[i]))
-                            )
-                            cooldown2[i] = reload2
-                else:
-                    pos2[i] -= move_speed2 * DT
-                    was_moving2[i] = True
+                        hit_dmg = t_dmg + int(my_bonus_atk[i])
+                        pending_damage.append(
+                            (enemy_team, target_idx, hit_dmg, i, team_id)
+                        )
+                        my_cooldown[i] = t_reload
 
-        # Update dodge shield recharge timers
+        # --- Apply all pending damage atomically ---
+        for (
+            target_team,
+            target_idx,
+            damage,
+            attacker_idx,
+            attacker_team,
+        ) in pending_damage:
+            if target_team == 1:
+                t_hp = hp1
+                t_shield, t_shield_timer = shield1, shield_timer1
+                t_blocked, t_bleed = has_blocked1, bleed_on1
+                a_bonus = bonus_atk2
+                a_is_ranged = is_ranged2
+                d_dodge_max, d_recharge = dodge_max1, dodge_recharge1
+                d_block = block_melee1
+                a_kill_bonus = kill_bonus2
+                a_bleed_dps, a_bleed_dur = bleed_dps2, bleed_dur2
+                a_trample_dmg, a_trample_extra = trample_dmg2, trample_extra2
+                a_splash_hit = splash_hit2
+                a_siege_splash = siege_splash2
+                a_is_siege = is_siege2
+                all_alive = alive1
+            else:
+                t_hp = hp2
+                t_shield, t_shield_timer = shield2, shield_timer2
+                t_blocked, t_bleed = has_blocked2, bleed_on2
+                a_bonus = bonus_atk1
+                a_is_ranged = is_ranged1
+                d_dodge_max, d_recharge = dodge_max2, dodge_recharge2
+                d_block = block_melee2
+                a_kill_bonus = kill_bonus1
+                a_bleed_dps, a_bleed_dur = bleed_dps1, bleed_dur1
+                a_trample_dmg, a_trample_extra = trample_dmg1, trample_extra1
+                a_splash_hit = splash_hit1
+                a_siege_splash = siege_splash1
+                a_is_siege = is_siege1
+                all_alive = alive2
+
+            if t_hp[target_idx] <= 0:
+                continue
+
+            # Dodge shield (ranged attacks only)
+            if d_dodge_max > 0 and a_is_ranged and t_shield[target_idx] > 0:
+                t_shield[target_idx] -= 1
+                t_shield_timer[target_idx] = d_recharge
+                continue
+
+            # Block first melee
+            if d_block and not a_is_ranged and not t_blocked[target_idx]:
+                t_blocked[target_idx] = True
+                continue
+
+            was_alive = t_hp[target_idx] > 0
+            t_hp[target_idx] -= damage
+
+            # Kill bonus
+            if a_kill_bonus > 0 and was_alive and t_hp[target_idx] <= 0:
+                a_bonus[attacker_idx] += a_kill_bonus
+
+            # Trample: damage extra nearby alive enemies
+            if a_trample_dmg > 0 and a_trample_extra > 0:
+                splashed = 0
+                for idx in all_alive:
+                    if (
+                        idx != target_idx
+                        and t_hp[idx] > 0
+                        and splashed < a_trample_extra
+                    ):
+                        t_hp[idx] -= a_trample_dmg
+                        splashed += 1
+
+            # Siege splash: extra targets
+            if a_is_siege and a_siege_splash > 0:
+                splashed = 0
+                for idx in all_alive:
+                    if (
+                        idx != target_idx
+                        and t_hp[idx] > 0
+                        and splashed < a_siege_splash
+                    ):
+                        t_hp[idx] -= damage
+                        splashed += 1
+
+            # Splash on hit: extra targets near the target
+            if a_splash_hit > 0:
+                splashed = 0
+                for idx in all_alive:
+                    if idx != target_idx and t_hp[idx] > 0 and splashed < a_splash_hit:
+                        t_hp[idx] -= damage
+                        splashed += 1
+
+            # Bleed
+            if a_bleed_dps > 0 and was_alive:
+                t_bleed[target_idx] = (a_bleed_dps, a_bleed_dur)
+
+        # --- Tick-based effects ---
+
+        # Dodge shield recharge
         if dodge_max1 > 0:
-            recharging1 = shield_timer1[alive1] > 0
-            shield_timer1[alive1[recharging1]] -= DT
-            recharged = alive1[recharging1][shield_timer1[alive1[recharging1]] <= 0]
-            for idx in recharged:
-                if shield1[idx] < dodge_max1:
-                    shield1[idx] += 1
-                    if shield1[idx] < dodge_max1:
-                        shield_timer1[idx] = dodge_recharge1
-                    else:
-                        shield_timer1[idx] = 0
+            for i in alive1:
+                if shield_timer1[i] > 0:
+                    shield_timer1[i] -= DT
+                    if shield_timer1[i] <= 0 and shield1[i] < dodge_max1:
+                        shield1[i] += 1
+                        if shield1[i] < dodge_max1:
+                            shield_timer1[i] = dodge_recharge1
+                        else:
+                            shield_timer1[i] = 0.0
         if dodge_max2 > 0:
-            recharging2 = shield_timer2[alive2] > 0
-            shield_timer2[alive2[recharging2]] -= DT
-            recharged = alive2[recharging2][shield_timer2[alive2[recharging2]] <= 0]
-            for idx in recharged:
-                if shield2[idx] < dodge_max2:
-                    shield2[idx] += 1
-                    if shield2[idx] < dodge_max2:
-                        shield_timer2[idx] = dodge_recharge2
-                    else:
-                        shield_timer2[idx] = 0
+            for i in alive2:
+                if shield_timer2[i] > 0:
+                    shield_timer2[i] -= DT
+                    if shield_timer2[i] <= 0 and shield2[i] < dodge_max2:
+                        shield2[i] += 1
+                        if shield2[i] < dodge_max2:
+                            shield_timer2[i] = dodge_recharge2
+                        else:
+                            shield_timer2[i] = 0.0
 
-        # Apply bleed damage
+        # Bleed damage
         for idx in list(bleed_on1):
             if hp1[idx] > 0:
                 dps, remaining = bleed_on1[idx]
@@ -581,83 +737,12 @@ def simulate_battle(
             else:
                 del bleed_on2[idx]
 
-        # Apply damage (including trample, dodge shield, block, splash, bleed, kill bonus)
-        for team, target, damage, attacker_idx, attacker_pos in pending_damage:
-            if team == 1:
-                # Attacker is team 2, target is team 1
-                # Dodge shield check (team 1 unit dodging team 2 ranged attack)
-                if dodge_max1 > 0 and is_ranged2 and shield1[target] > 0:
-                    shield1[target] -= 1
-                    shield_timer1[target] = dodge_recharge1
-                    continue
-                # Block first melee check
-                if block_melee1 and not is_ranged2 and not has_blocked1[target]:
-                    has_blocked1[target] = True
-                    continue
-                target_was_alive = hp1[target] > 0
-                hp1[target] -= damage
-                # Kill bonus for attacker (team 2)
-                if kill_bonus2 > 0 and target_was_alive and hp1[target] <= 0:
-                    bonus_atk2[attacker_idx] += kill_bonus2
-                # Trample
-                if trample_dmg2 > 0:
-                    for idx in alive1:
-                        if idx != target and abs(pos1[idx] - attacker_pos) <= tr2:
-                            hp1[idx] -= trample_dmg2
-                # Splash on hit (centered on target, not attacker)
-                if splash_hit_r2 > 0:
-                    for idx in alive1:
-                        if (
-                            idx != target
-                            and abs(pos1[idx] - pos1[target]) <= splash_hit_r2
-                        ):
-                            hp1[idx] -= damage
-                # Bleed application
-                if bleed_dps2 > 0 and target_was_alive:
-                    bleed_on1[target] = (bleed_dps2, bleed_dur2)
-            else:
-                # Attacker is team 1, target is team 2
-                # Dodge shield check (team 2 unit dodging team 1 ranged attack)
-                if dodge_max2 > 0 and is_ranged1 and shield2[target] > 0:
-                    shield2[target] -= 1
-                    shield_timer2[target] = dodge_recharge2
-                    continue
-                # Block first melee check
-                if block_melee2 and not is_ranged1 and not has_blocked2[target]:
-                    has_blocked2[target] = True
-                    continue
-                target_was_alive = hp2[target] > 0
-                hp2[target] -= damage
-                # Kill bonus for attacker (team 1)
-                if kill_bonus1 > 0 and target_was_alive and hp2[target] <= 0:
-                    bonus_atk1[attacker_idx] += kill_bonus1
-                # Trample
-                if trample_dmg1 > 0:
-                    for idx in alive2:
-                        if idx != target and abs(pos2[idx] - attacker_pos) <= tr1:
-                            hp2[idx] -= trample_dmg1
-                # Splash on hit (centered on target, not attacker)
-                if splash_hit_r1 > 0:
-                    for idx in alive2:
-                        if (
-                            idx != target
-                            and abs(pos2[idx] - pos2[target]) <= splash_hit_r1
-                        ):
-                            hp2[idx] -= damage
-                # Bleed application
-                if bleed_dps1 > 0 and target_was_alive:
-                    bleed_on2[target] = (bleed_dps1, bleed_dur1)
-
-        # HP transformation check (Jian Swordsman)
+        # HP transform (e.g. Jian Swordsman)
         if transform_thresh1 > 0:
             threshold_hp = unit1["hp"] * transform_thresh1
             for idx in alive1:
                 if not transformed1[idx] and hp1[idx] <= threshold_hp and hp1[idx] > 0:
                     transformed1[idx] = True
-                    # Jian Swordsman: +3 attack, +0.15 speed, -2 melee armor
-                    # Applied as permanent bonus_atk increase; speed/armor
-                    # changes are hard to apply per-unit in this model,
-                    # so we approximate with attack bonus only
                     bonus_atk1[idx] += 3
         if transform_thresh2 > 0:
             threshold_hp = unit2["hp"] * transform_thresh2
@@ -666,9 +751,12 @@ def simulate_battle(
                     transformed2[idx] = True
                     bonus_atk2[idx] += 3
 
-    # Determine winner
-    remaining1 = int(np.sum(hp1 > 0))
-    remaining2 = int(np.sum(hp2 > 0))
+    # =========================================================
+    # PHASE 3: Winner determination
+    # =========================================================
+
+    remaining1 = sum(1 for h in hp1 if h > 0)
+    remaining2 = sum(1 for h in hp2 if h > 0)
 
     if remaining1 > 0 and remaining2 == 0:
         return (1, remaining1, 0)
@@ -682,10 +770,18 @@ def simulate_battle(
         elif lost2 > lost1:
             return (1, remaining1, remaining2)
         else:
-            total_hp1 = float(np.sum(np.maximum(0, hp1)))
-            total_hp2 = float(np.sum(np.maximum(0, hp2)))
-            hp_lost_pct1 = (start_hp1 - total_hp1) / start_hp1 if start_hp1 > 0 else 0
-            hp_lost_pct2 = (start_hp2 - total_hp2) / start_hp2 if start_hp2 > 0 else 0
+            total_hp1 = sum(max(0, h) for h in hp1)
+            total_hp2 = sum(max(0, h) for h in hp2)
+            hp_lost_pct1 = (
+                (start_total_hp1 - total_hp1) / start_total_hp1
+                if start_total_hp1 > 0
+                else 0
+            )
+            hp_lost_pct2 = (
+                (start_total_hp2 - total_hp2) / start_total_hp2
+                if start_total_hp2 > 0
+                else 0
+            )
             if hp_lost_pct1 > hp_lost_pct2:
                 return (2, remaining1, remaining2)
             elif hp_lost_pct2 > hp_lost_pct1:

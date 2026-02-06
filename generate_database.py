@@ -167,6 +167,14 @@ BUILDING_WORK_RATE_TECHS = {
     ),
 }
 
+# Civ team bonuses that multiply building work_rate (applied to self)
+# Format: civ_name → {building_id: multiplier, ...}
+CIV_TEAM_BONUS_WORK_RATE = {
+    "Britons": {87: 1.10, 10: 1.10, 14: 1.10},  # Archery Ranges work 10% faster
+    "Goths": {12: 1.20, 498: 1.20, 132: 1.20, 20: 1.20},  # Barracks work 20% faster
+    "Celts": {49: 1.20, 150: 1.20},  # Siege Workshops work 20% faster
+}
+
 # Unique units that can also be created in Barracks (after specific tech)
 # Format: (civ_name, base_slug) → barracks_building_id
 UNIQUE_UNITS_IN_BARRACKS = {
@@ -1419,6 +1427,10 @@ class UnitAnalyzer:
             if tech_age > max_age:
                 continue
             multiplier *= building_multipliers[building_id]
+        # Apply civ team bonus work rate (civs apply their own team bonus)
+        team_bonus = CIV_TEAM_BONUS_WORK_RATE.get(civ_name, {})
+        if building_id in team_bonus:
+            multiplier *= team_bonus[building_id]
         return multiplier
 
     def has_tech(self, civ_name: str, tech_id: int) -> bool:
@@ -3664,6 +3676,26 @@ def generate_reference_database(analyzer):
                         cost,
                     )
                     all_tech_names.append(tname)
+                # Add team bonus work rate if applicable
+                team_bonus = CIV_TEAM_BONUS_WORK_RATE.get(civ_name, {})
+                if bld_id in team_bonus:
+                    tb_mult = team_bonus[bld_id]
+                    tb_name = f"{civ_name} Team Bonus"
+                    work_rate_techs.append(tb_name)
+                    effect_desc = (
+                        f"Building work rate ×{tb_mult} (train time ÷{tb_mult})"
+                    )
+                    _insert_tech_applied(
+                        ref_unit_id,
+                        -1,
+                        tb_name,
+                        "civ_bonus",
+                        "N/A",
+                        "Dark",
+                        effect_desc,
+                        {},
+                    )
+                    all_tech_names.append(tb_name)
                 # Add stat chain step showing the work rate effect
                 work_rate_snap = dict(final_snap)
                 _insert_stat_chain_row(

@@ -225,6 +225,7 @@ COMBAT_PROPERTIES = {
     "heavy_scorpion": {"unit_category": "siege"},
     "skirm": {"unit_category": "trash"},
     "elite_skirm": {"unit_category": "trash"},
+    "imp_elite_skirm": {"unit_category": "trash"},
     "spearman": {"unit_category": "trash"},
     "pikeman": {"unit_category": "trash"},
     "halberdier": {"unit_category": "trash"},
@@ -432,7 +433,6 @@ CASTLE_UNITS = {
         "display_name": "Elite Skirmisher",
         "unit_class": 0,
         "availability_tech": None,
-        "required_upgrade": 98,  # Elite Skirmisher tech required
         "upgrades": [
             (98, 6, "Elite Skirmisher"),  # Elite Skirmisher upgrade
         ],
@@ -489,21 +489,23 @@ CASTLE_UNITS = {
 
 IMPERIAL_UNITS = {
     "champion": {
-        "base_id": 77,  # Long Swordsman
+        "base_id": 75,  # Man-at-Arms
         "display_name": "Champion",
         "unit_class": 6,
         "availability_tech": None,
         "upgrades": [
+            (207, 77, "Long Swordsman"),
             (217, 473, "Two-Handed Swordsman"),
             (264, 567, "Champion"),
         ],
     },
     "halberdier": {
-        "base_id": 358,  # Pikeman
+        "base_id": 93,  # Spearman
         "display_name": "Halberdier",
         "unit_class": 6,
         "availability_tech": None,
         "upgrades": [
+            (197, 358, "Pikeman"),
             (429, 359, "Halberdier"),
         ],
     },
@@ -596,12 +598,22 @@ IMPERIAL_UNITS = {
         ],
     },
     "arbalester": {
-        "base_id": 24,  # Crossbowman
+        "base_id": 4,  # Archer
         "display_name": "Arbalester",
         "unit_class": 0,
         "availability_tech": None,
         "upgrades": [
+            (212, 24, "Crossbowman"),
             (237, 492, "Arbalester"),
+        ],
+    },
+    "imp_elite_skirm": {
+        "base_id": 7,  # Skirmisher
+        "display_name": "Elite Skirmisher",
+        "unit_class": 0,
+        "availability_tech": None,
+        "upgrades": [
+            (98, 6, "Elite Skirmisher"),
         ],
     },
     # Imperial Skirmisher removed - requires Vietnamese team bonus (not standard)
@@ -696,15 +708,22 @@ AGE_NAMES = {
     IMPERIAL_AGE: "Imperial Age",
 }
 
-# Build mapping: Castle-age final unit_id -> display name
-# Used to get correct names when an Imperial config's upgrades don't apply
-_CASTLE_FINAL_NAMES = {}
+# Build mapping: unit_id -> display name from previous age configs
+# Used to get correct names when a config's upgrades don't apply
+# (e.g., "Pikeman" config falls back to "Spearman" for Turks)
+_PREVIOUS_AGE_NAMES = {}
+for _cfg in FEUDAL_UNITS.values():
+    if _cfg.get("upgrades"):
+        _last = _cfg["upgrades"][-1]
+        _PREVIOUS_AGE_NAMES[_last[1]] = _last[2]
+    else:
+        _PREVIOUS_AGE_NAMES[_cfg["base_id"]] = _cfg["display_name"]
 for _cfg in CASTLE_UNITS.values():
     if _cfg.get("upgrades"):
         _last = _cfg["upgrades"][-1]
-        _CASTLE_FINAL_NAMES[_last[1]] = _last[2]
+        _PREVIOUS_AGE_NAMES[_last[1]] = _last[2]
     else:
-        _CASTLE_FINAL_NAMES[_cfg["base_id"]] = _cfg["display_name"]
+        _PREVIOUS_AGE_NAMES[_cfg["base_id"]] = _cfg["display_name"]
 
 # =============================================================================
 # UNIQUE UNITS
@@ -1954,16 +1973,6 @@ class UnitAnalyzer:
                     "applied_bonuses": [],
                 }
 
-        # Check required upgrade (e.g., Elite Skirmisher requires tech 98)
-        required_upgrade = unit_config.get("required_upgrade")
-        if required_upgrade and required_upgrade in disabled_techs:
-            return {
-                "unit_name": base_name,
-                "stats": None,
-                "has_unit": False,
-                "applied_bonuses": [],
-            }
-
         # Find highest available upgrade
         final_unit_id = base_id
         final_unit_name = base_name
@@ -1983,8 +1992,8 @@ class UnitAnalyzer:
 
         # If no upgrades were applied, use the Castle-age name for the base unit
         # (e.g., "Pikeman" instead of config display_name "Halberdier")
-        if final_unit_id == base_id and base_id in _CASTLE_FINAL_NAMES:
-            final_unit_name = _CASTLE_FINAL_NAMES[base_id]
+        if final_unit_id == base_id and base_id in _PREVIOUS_AGE_NAMES:
+            final_unit_name = _PREVIOUS_AGE_NAMES[base_id]
 
         # Get the unit data
         unit = self.get_unit(final_unit_id)

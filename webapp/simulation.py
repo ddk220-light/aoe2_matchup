@@ -307,11 +307,18 @@ def simulate_battle(unit1, unit2, resources, fixed_count=None):
                 in_range = distance <= attack_range
                 too_close = min_range1 > 0 and distance < min_range1
 
-                if in_range and not too_close:
-                    if was_moving1[i] and cooldown1[i] <= 0:
+                if too_close:
+                    # Inside min range - retreat
+                    pos1[i] = max(MAP_MIN, pos1[i] - move_speed1 * DT)
+                    was_moving1[i] = True
+                elif in_range and cooldown1[i] <= 0:
+                    # In range and ready to fire
+                    if was_moving1[i]:
+                        # Just arrived - apply attack delay
                         cooldown1[i] = attack_delay1
                         was_moving1[i] = False
-                    elif cooldown1[i] <= 0:
+                    else:
+                        # Delay elapsed - fire!
                         if is_siege1:
                             enemy_positions = {
                                 int(idx): float(pos2[idx]) for idx in alive2
@@ -331,14 +338,13 @@ def simulate_battle(unit1, unit2, resources, fixed_count=None):
                                 (2, int(closest), dmg1, int(i), float(pos1[i]))
                             )
                         cooldown1[i] = reload1
-                    elif not was_moving1[i]:
-                        pass  # Waiting
-                    elif should_kite1:
-                        pos1[i] = max(MAP_MIN, pos1[i] - move_speed1 * DT)
+                        was_moving1[i] = True  # Start kiting next tick
                 elif cooldown1[i] > 0 and should_kite1:
+                    # On cooldown vs melee - kite away
                     pos1[i] = max(MAP_MIN, pos1[i] - move_speed1 * DT)
                     was_moving1[i] = True
-                else:
+                elif cooldown1[i] <= 0:
+                    # Ready to fire, not in range - move toward target
                     pos1[i] += move_speed1 * DT
                     was_moving1[i] = True
             else:
@@ -383,11 +389,18 @@ def simulate_battle(unit1, unit2, resources, fixed_count=None):
                 in_range = distance <= attack_range
                 too_close = min_range2 > 0 and distance < min_range2
 
-                if in_range and not too_close:
-                    if was_moving2[i] and cooldown2[i] <= 0:
+                if too_close:
+                    # Inside min range - retreat
+                    pos2[i] = min(MAP_MAX, pos2[i] + move_speed2 * DT)
+                    was_moving2[i] = True
+                elif in_range and cooldown2[i] <= 0:
+                    # In range and ready to fire
+                    if was_moving2[i]:
+                        # Just arrived - apply attack delay
                         cooldown2[i] = attack_delay2
                         was_moving2[i] = False
-                    elif cooldown2[i] <= 0:
+                    else:
+                        # Delay elapsed - fire!
                         if is_siege2:
                             enemy_positions = {
                                 int(idx): float(pos1[idx]) for idx in alive1
@@ -407,14 +420,13 @@ def simulate_battle(unit1, unit2, resources, fixed_count=None):
                                 (1, int(closest), dmg2, int(i), float(pos2[i]))
                             )
                         cooldown2[i] = reload2
-                    elif not was_moving2[i]:
-                        pass
-                    elif should_kite2:
-                        pos2[i] = min(MAP_MAX, pos2[i] + move_speed2 * DT)
+                        was_moving2[i] = True  # Start kiting next tick
                 elif cooldown2[i] > 0 and should_kite2:
+                    # On cooldown vs melee - kite away
                     pos2[i] = min(MAP_MAX, pos2[i] + move_speed2 * DT)
                     was_moving2[i] = True
-                else:
+                elif cooldown2[i] <= 0:
+                    # Ready to fire, not in range - move toward target
                     pos2[i] -= move_speed2 * DT
                     was_moving2[i] = True
             else:

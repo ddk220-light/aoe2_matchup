@@ -311,42 +311,42 @@ def simulate_battle(unit1, unit2, resources, fixed_count=None):
                     # Inside min range - retreat
                     pos1[i] = max(MAP_MIN, pos1[i] - move_speed1 * DT)
                     was_moving1[i] = True
-                elif in_range and cooldown1[i] <= 0:
-                    # In range and ready to fire
-                    if was_moving1[i]:
-                        # Just arrived - apply attack delay
-                        cooldown1[i] = attack_delay1
-                        was_moving1[i] = False
+                elif not was_moving1[i] and cooldown1[i] <= 0:
+                    # Stopped and delay elapsed - fire!
+                    if is_siege1:
+                        enemy_positions = {int(idx): float(pos2[idx]) for idx in alive2}
+                        projectiles.append(
+                            (
+                                2,
+                                float(pos2[closest]),
+                                float(pos1[i]),
+                                dmg1,
+                                splash_radius1,
+                                enemy_positions,
+                            )
+                        )
                     else:
-                        # Delay elapsed - fire!
-                        if is_siege1:
-                            enemy_positions = {
-                                int(idx): float(pos2[idx]) for idx in alive2
-                            }
-                            projectiles.append(
-                                (
-                                    2,
-                                    float(pos2[closest]),
-                                    float(pos1[i]),
-                                    dmg1,
-                                    splash_radius1,
-                                    enemy_positions,
-                                )
-                            )
-                        else:
-                            pending_damage.append(
-                                (2, int(closest), dmg1, int(i), float(pos1[i]))
-                            )
-                        cooldown1[i] = reload1
-                        was_moving1[i] = True  # Start kiting next tick
+                        pending_damage.append(
+                            (2, int(closest), dmg1, int(i), float(pos1[i]))
+                        )
+                    cooldown1[i] = reload1
+                    was_moving1[i] = True  # Start kiting next tick
+                elif not was_moving1[i]:
+                    # Stopped, waiting for attack delay - hold position
+                    pass
                 elif cooldown1[i] > 0 and should_kite1:
                     # On cooldown vs melee - kite away
                     pos1[i] = max(MAP_MIN, pos1[i] - move_speed1 * DT)
-                    was_moving1[i] = True
-                elif cooldown1[i] <= 0:
+                elif cooldown1[i] > 0:
+                    # On cooldown vs ranged - stand
+                    pass
+                elif in_range:
+                    # In range, ready to fire, was moving - stop and apply delay
+                    cooldown1[i] = attack_delay1
+                    was_moving1[i] = False
+                else:
                     # Ready to fire, not in range - move toward target
                     pos1[i] += move_speed1 * DT
-                    was_moving1[i] = True
             else:
                 # Melee
                 if i in committed1:
@@ -393,42 +393,42 @@ def simulate_battle(unit1, unit2, resources, fixed_count=None):
                     # Inside min range - retreat
                     pos2[i] = min(MAP_MAX, pos2[i] + move_speed2 * DT)
                     was_moving2[i] = True
-                elif in_range and cooldown2[i] <= 0:
-                    # In range and ready to fire
-                    if was_moving2[i]:
-                        # Just arrived - apply attack delay
-                        cooldown2[i] = attack_delay2
-                        was_moving2[i] = False
+                elif not was_moving2[i] and cooldown2[i] <= 0:
+                    # Stopped and delay elapsed - fire!
+                    if is_siege2:
+                        enemy_positions = {int(idx): float(pos1[idx]) for idx in alive1}
+                        projectiles.append(
+                            (
+                                1,
+                                float(pos1[closest]),
+                                float(pos2[i]),
+                                dmg2,
+                                splash_radius2,
+                                enemy_positions,
+                            )
+                        )
                     else:
-                        # Delay elapsed - fire!
-                        if is_siege2:
-                            enemy_positions = {
-                                int(idx): float(pos1[idx]) for idx in alive1
-                            }
-                            projectiles.append(
-                                (
-                                    1,
-                                    float(pos1[closest]),
-                                    float(pos2[i]),
-                                    dmg2,
-                                    splash_radius2,
-                                    enemy_positions,
-                                )
-                            )
-                        else:
-                            pending_damage.append(
-                                (1, int(closest), dmg2, int(i), float(pos2[i]))
-                            )
-                        cooldown2[i] = reload2
-                        was_moving2[i] = True  # Start kiting next tick
+                        pending_damage.append(
+                            (1, int(closest), dmg2, int(i), float(pos2[i]))
+                        )
+                    cooldown2[i] = reload2
+                    was_moving2[i] = True  # Start kiting next tick
+                elif not was_moving2[i]:
+                    # Stopped, waiting for attack delay - hold position
+                    pass
                 elif cooldown2[i] > 0 and should_kite2:
                     # On cooldown vs melee - kite away
                     pos2[i] = min(MAP_MAX, pos2[i] + move_speed2 * DT)
-                    was_moving2[i] = True
-                elif cooldown2[i] <= 0:
+                elif cooldown2[i] > 0:
+                    # On cooldown vs ranged - stand
+                    pass
+                elif in_range:
+                    # In range, ready to fire, was moving - stop and apply delay
+                    cooldown2[i] = attack_delay2
+                    was_moving2[i] = False
+                else:
                     # Ready to fire, not in range - move toward target
                     pos2[i] -= move_speed2 * DT
-                    was_moving2[i] = True
             else:
                 if i in committed2:
                     target_idx, time_left = committed2[i]

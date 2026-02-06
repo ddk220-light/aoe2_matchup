@@ -1213,33 +1213,31 @@
                             this.state = 'kiting';
                             this.moveAwayFromTarget(dt, allUnits);
                             this.wasMoving = true;
-                        } else if (this.inRange() && this.attackCooldown <= 0) {
-                            // In range and ready to fire
-                            if (this.wasMoving) {
-                                // Just arrived - apply attack delay before first shot
-                                this.attackCooldown = this.attackDelay;
-                                this.wasMoving = false;
-                                this.state = 'attacking';
-                            } else {
-                                // Standing still, delay elapsed - fire!
-                                this.state = 'attacking';
-                                this.performAttack();
-                                // After firing, immediately start kiting next frame
-                                this.wasMoving = true;
-                            }
+                        } else if (!this.wasMoving && this.attackCooldown <= 0) {
+                            // Stopped and delay elapsed - fire!
+                            this.state = 'attacking';
+                            this.performAttack();
+                            // After firing, start kiting next frame
+                            this.wasMoving = true;
+                        } else if (!this.wasMoving) {
+                            // Stopped, waiting for attack delay to elapse - hold position
+                            this.state = 'attacking';
                         } else if (this.attackCooldown > 0 && shouldKite) {
-                            // On cooldown vs melee - always kite away
+                            // On cooldown vs melee - kite away
                             this.state = 'kiting';
                             this.moveAwayFromTarget(dt, allUnits);
-                            this.wasMoving = true;
                         } else if (this.attackCooldown > 0) {
                             // On cooldown vs ranged - stand and wait
                             this.state = 'attacking';
+                        } else if (this.inRange()) {
+                            // In range, ready to fire, was moving - stop and apply attack delay
+                            this.attackCooldown = this.attackDelay;
+                            this.wasMoving = false;
+                            this.state = 'attacking';
                         } else {
-                            // Cooldown done, not in range - move toward target
+                            // Ready to fire, not in range - move toward target
                             this.state = 'moving';
                             this.moveTowardTarget(dt, allUnits);
-                            this.wasMoving = true;
                         }
                     } else {
                         // Melee unit behavior with committed attacks

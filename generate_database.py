@@ -206,6 +206,12 @@ UNIQUE_UNITS_IN_BARRACKS = {
     ("Goths", "elite_huskarl"): 12,
 }
 
+# Techs that exist in the dat file but have been removed/replaced in-game
+# These are skipped during unique tech and civ bonus application
+REMOVED_TECHS = {
+    9,  # Saracen Zealotry (replaced by Bimaristan + Counterweights)
+}
+
 # =============================================================================
 # COMBAT PROPERTIES (stored in DB so simulation needs zero hardcoded slug lookups)
 # =============================================================================
@@ -1621,6 +1627,8 @@ class UnitAnalyzer:
         tech_ids = self.civ_bonus_techs.get(civ_id, [])
 
         for tech_id in tech_ids:
+            if tech_id in REMOVED_TECHS:
+                continue
             if tech_id not in self.tech_effect_map:
                 continue
 
@@ -1718,6 +1726,8 @@ class UnitAnalyzer:
 
         # Find all techs for this civ that have a cost (unique techs)
         for tech_id, tech_data in self.techs.items():
+            if tech_id in REMOVED_TECHS:
+                continue
             # Must be for this civ
             if tech_data.get("civ", -1) != civ_id:
                 continue

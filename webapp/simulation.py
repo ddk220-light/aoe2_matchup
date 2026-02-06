@@ -444,34 +444,41 @@ def simulate_battle(
 
     if is_ranged1 and not is_ranged2:
         # Team 1 ranged vs team 2 melee
-        # Ranged retreats while melee chases: effective closing speed is
-        # melee_speed - ranged_speed. Ranged retreats up to RETREAT_MAX tiles.
+        # Ranged retreats while melee chases. During each attack cycle,
+        # ranged pauses for attack_delay (frame delay) then moves for the rest.
+        # Effective retreat speed is reduced by the fraction spent animating.
         fire_dist = range1 - max(min_range1, MELEE_RANGE)
         if fire_dist > 0 and speed2 > 0:
-            # Phase 1: ranged retreating (up to RETREAT_MAX tiles)
-            net_speed = speed2 - speed1  # closing speed while ranged retreats
+            # Ranged effective retreat speed: stationary during attack_delay,
+            # moving during (reload - attack_delay) of each reload cycle
+            move_frac1 = max(0.0, 1.0 - delay1 / reload1) if reload1 > 0 else 1.0
+            eff_retreat_speed1 = speed1 * move_frac1
+            net_speed = speed2 - eff_retreat_speed1
             if net_speed > 0:
                 retreat_time = (
-                    min(RETREAT_MAX / speed1, fire_dist / net_speed)
-                    if speed1 > 0
+                    min(RETREAT_MAX / eff_retreat_speed1, fire_dist / net_speed)
+                    if eff_retreat_speed1 > 0
                     else fire_dist / net_speed
                 )
                 retreat_dist_closed = net_speed * retreat_time
                 remaining_dist = fire_dist - retreat_dist_closed
             else:
-                # Ranged is faster or equal — melee never closes while ranged retreats
-                retreat_time = RETREAT_MAX / speed1 if speed1 > 0 else 0
-                remaining_dist = fire_dist  # no ground closed during retreat
+                retreat_time = (
+                    RETREAT_MAX / eff_retreat_speed1 if eff_retreat_speed1 > 0 else 0
+                )
+                remaining_dist = fire_dist
             # Phase 2: ranged stopped, melee closes remaining distance
+            # Melee also has frame delay on first hit after arriving
             stand_time = remaining_dist / speed2 if remaining_dist > 0 else 0
-            closing_time = retreat_time + stand_time
+            closing_time = retreat_time + stand_time + delay2
             if closing_time > delay1:
                 opening1 = 1 + int((closing_time - delay1) / reload1)
-        # Kiting bonus: if ranged is faster, they can keep distance indefinitely
-        # after retreat phase (extra shots beyond the retreat)
-        if speed1 > speed2 and speed2 > 0:
-            speed_diff = speed1 - speed2
-            kite_dist = MAP_SPACE * 0.4 - RETREAT_MAX  # remaining map space
+        # Kiting bonus: if ranged is faster than melee (even accounting for
+        # frame delay pauses), they can keep distance after retreat
+        eff_spd1 = eff_retreat_speed1 if fire_dist > 0 and speed2 > 0 else speed1
+        if eff_spd1 > speed2 and speed2 > 0:
+            speed_diff = eff_spd1 - speed2
+            kite_dist = MAP_SPACE * 0.4 - RETREAT_MAX
             if kite_dist > 0:
                 kite_time = kite_dist / speed_diff
                 opening1 += max(0, int(kite_time / reload1))
@@ -479,24 +486,29 @@ def simulate_battle(
         # Team 2 ranged vs team 1 melee (mirror logic)
         fire_dist = range2 - max(min_range2, MELEE_RANGE)
         if fire_dist > 0 and speed1 > 0:
-            net_speed = speed1 - speed2
+            move_frac2 = max(0.0, 1.0 - delay2 / reload2) if reload2 > 0 else 1.0
+            eff_retreat_speed2 = speed2 * move_frac2
+            net_speed = speed1 - eff_retreat_speed2
             if net_speed > 0:
                 retreat_time = (
-                    min(RETREAT_MAX / speed2, fire_dist / net_speed)
-                    if speed2 > 0
+                    min(RETREAT_MAX / eff_retreat_speed2, fire_dist / net_speed)
+                    if eff_retreat_speed2 > 0
                     else fire_dist / net_speed
                 )
                 retreat_dist_closed = net_speed * retreat_time
                 remaining_dist = fire_dist - retreat_dist_closed
             else:
-                retreat_time = RETREAT_MAX / speed2 if speed2 > 0 else 0
+                retreat_time = (
+                    RETREAT_MAX / eff_retreat_speed2 if eff_retreat_speed2 > 0 else 0
+                )
                 remaining_dist = fire_dist
             stand_time = remaining_dist / speed1 if remaining_dist > 0 else 0
-            closing_time = retreat_time + stand_time
+            closing_time = retreat_time + stand_time + delay1
             if closing_time > delay2:
                 opening2 = 1 + int((closing_time - delay2) / reload2)
-        if speed2 > speed1 and speed1 > 0:
-            speed_diff = speed2 - speed1
+        eff_spd2 = eff_retreat_speed2 if fire_dist > 0 and speed1 > 0 else speed2
+        if eff_spd2 > speed1 and speed1 > 0:
+            speed_diff = eff_spd2 - speed1
             kite_dist = MAP_SPACE * 0.4 - RETREAT_MAX
             if kite_dist > 0:
                 kite_time = kite_dist / speed_diff

@@ -440,32 +440,67 @@ def simulate_battle(
     opening1 = 0
     opening2 = 0
 
+    RETREAT_MAX = 5.0  # max tiles ranged retreats before standing to fight
+
     if is_ranged1 and not is_ranged2:
         # Team 1 ranged vs team 2 melee
-        # Opening: ranged fires while melee closes distance
+        # Ranged retreats while melee chases: effective closing speed is
+        # melee_speed - ranged_speed. Ranged retreats up to RETREAT_MAX tiles.
         fire_dist = range1 - max(min_range1, MELEE_RANGE)
         if fire_dist > 0 and speed2 > 0:
-            closing_time = fire_dist / speed2
+            # Phase 1: ranged retreating (up to RETREAT_MAX tiles)
+            net_speed = speed2 - speed1  # closing speed while ranged retreats
+            if net_speed > 0:
+                retreat_time = (
+                    min(RETREAT_MAX / speed1, fire_dist / net_speed)
+                    if speed1 > 0
+                    else fire_dist / net_speed
+                )
+                retreat_dist_closed = net_speed * retreat_time
+                remaining_dist = fire_dist - retreat_dist_closed
+            else:
+                # Ranged is faster or equal — melee never closes while ranged retreats
+                retreat_time = RETREAT_MAX / speed1 if speed1 > 0 else 0
+                remaining_dist = fire_dist  # no ground closed during retreat
+            # Phase 2: ranged stopped, melee closes remaining distance
+            stand_time = remaining_dist / speed2 if remaining_dist > 0 else 0
+            closing_time = retreat_time + stand_time
             if closing_time > delay1:
                 opening1 = 1 + int((closing_time - delay1) / reload1)
-        # Kiting bonus: if ranged is faster, they can maintain distance
+        # Kiting bonus: if ranged is faster, they can keep distance indefinitely
+        # after retreat phase (extra shots beyond the retreat)
         if speed1 > speed2 and speed2 > 0:
             speed_diff = speed1 - speed2
-            kite_dist = MAP_SPACE * 0.4
-            kite_time = kite_dist / speed_diff if speed_diff > 0 else 0
-            opening1 += max(0, int(kite_time / reload1))
+            kite_dist = MAP_SPACE * 0.4 - RETREAT_MAX  # remaining map space
+            if kite_dist > 0:
+                kite_time = kite_dist / speed_diff
+                opening1 += max(0, int(kite_time / reload1))
     elif not is_ranged1 and is_ranged2:
-        # Team 2 ranged vs team 1 melee
+        # Team 2 ranged vs team 1 melee (mirror logic)
         fire_dist = range2 - max(min_range2, MELEE_RANGE)
         if fire_dist > 0 and speed1 > 0:
-            closing_time = fire_dist / speed1
+            net_speed = speed1 - speed2
+            if net_speed > 0:
+                retreat_time = (
+                    min(RETREAT_MAX / speed2, fire_dist / net_speed)
+                    if speed2 > 0
+                    else fire_dist / net_speed
+                )
+                retreat_dist_closed = net_speed * retreat_time
+                remaining_dist = fire_dist - retreat_dist_closed
+            else:
+                retreat_time = RETREAT_MAX / speed2 if speed2 > 0 else 0
+                remaining_dist = fire_dist
+            stand_time = remaining_dist / speed1 if remaining_dist > 0 else 0
+            closing_time = retreat_time + stand_time
             if closing_time > delay2:
                 opening2 = 1 + int((closing_time - delay2) / reload2)
         if speed2 > speed1 and speed1 > 0:
             speed_diff = speed2 - speed1
-            kite_dist = MAP_SPACE * 0.4
-            kite_time = kite_dist / speed_diff if speed_diff > 0 else 0
-            opening2 += max(0, int(kite_time / reload2))
+            kite_dist = MAP_SPACE * 0.4 - RETREAT_MAX
+            if kite_dist > 0:
+                kite_time = kite_dist / speed_diff
+                opening2 += max(0, int(kite_time / reload2))
     elif is_ranged1 and is_ranged2:
         # Both ranged: side with more range gets bonus shots
         range_diff = range1 - range2

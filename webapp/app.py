@@ -915,10 +915,12 @@ def api_matchup(civ1, civ2):
             wood = unit["cost_wood"]
             gold = unit["cost_gold"]
             if is_imperial:
-                cost = wood + 2 * food + 2 * gold
+                # Imperial: 1x wood, 1x food, 1x gold
+                cost = wood + food + gold
             else:
-                cost = wood + 2 * food + gold
-            return cost if cost > 0 else 100
+                # Castle: 1x wood, 1.5x food, 1x gold
+                cost = wood + 1.5 * food + gold
+            return int(cost) if cost > 0 else 100
 
         # Filter: remove paired duplicates (keep one mode per pair)
         def filter_paired_units(units_dict):
@@ -986,7 +988,11 @@ def api_matchup(civ1, civ2):
                 for u1_mode in u1_modes:
                     for u2_mode in u2_modes:
                         # Run two simulations: resource-based and count-based
-                        winner_res, _, _ = simulate_battle(u1_mode, u2_mode, 3000)
+                        c1 = calc_resource_cost(u1_mode)
+                        c2 = calc_resource_cost(u2_mode)
+                        winner_res, _, _ = simulate_battle(
+                            u1_mode, u2_mode, 3000, cost1_override=c1, cost2_override=c2
+                        )
                         winner_cnt, _, _ = simulate_battle(
                             u1_mode, u2_mode, 0, fixed_count=30
                         )

@@ -2203,17 +2203,17 @@
                         const team2Age = document.getElementById('team2Age').value;
 
                         // Calculate resource cost based on age
-                        // Castle age: wood + 2*food + gold
-                        // Imperial age: wood + 2*food + 3*gold
+                        // Castle age: 1x wood + 1.5x food + 1x gold
+                        // Imperial age: 1x wood + 1x food + 1x gold
                         function calcResourceCost(stats, age) {
                             const food = stats.cost_food || 0;
                             const wood = stats.cost_wood || 0;
                             const gold = stats.cost_gold || 0;
                             if (age === 'imperial') {
-                                return wood + 2 * food + 3 * gold;
+                                return wood + food + gold;
                             } else {
                                 // Castle age or earlier
-                                return wood + 2 * food + gold;
+                                return Math.floor(wood + 1.5 * food + gold);
                             }
                         }
 

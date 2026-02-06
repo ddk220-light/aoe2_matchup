@@ -17,7 +17,7 @@ DT = 0.05  # 50ms time step
 MAX_TICKS = 5000  # 250 seconds max battle time
 MELEE_RANGE = 0.5
 MAP_MIN = 0.0
-MAP_MAX = 100.0
+MAP_MAX = 26.67  # Match frontend: CANVAS_WIDTH(800) / TILE_SIZE(30)
 HIT_RADIUS = 1.0  # Projectile dodge check radius
 
 
@@ -122,7 +122,9 @@ def _calc_damage(
     return max(1, base_damage + bonus_damage - target_armor)
 
 
-def simulate_battle(unit1, unit2, resources, fixed_count=None):
+def simulate_battle(
+    unit1, unit2, resources, fixed_count=None, cost1_override=None, cost2_override=None
+):
     """
     Tick-based battle simulation with kiting, siege projectiles, and trample.
 
@@ -133,6 +135,7 @@ def simulate_battle(unit1, unit2, resources, fixed_count=None):
             and combat properties (min_attack_range, is_siege_projectile, etc.)
         resources: total resource pool for army sizing (ignored if fixed_count set)
         fixed_count: if set, both sides get this many units
+        cost1_override/cost2_override: if set, use these costs instead of unit flat cost
 
     Returns: (winner, unit1_remaining, unit2_remaining)
         winner: 1 if unit1 wins, 2 if unit2 wins, 0 if draw
@@ -142,8 +145,8 @@ def simulate_battle(unit1, unit2, resources, fixed_count=None):
         count1 = fixed_count
         count2 = fixed_count
     else:
-        cost1 = unit1["cost"] if unit1["cost"] > 0 else 100
-        cost2 = unit2["cost"] if unit2["cost"] > 0 else 100
+        cost1 = cost1_override or (unit1["cost"] if unit1["cost"] > 0 else 100)
+        cost2 = cost2_override or (unit2["cost"] if unit2["cost"] > 0 else 100)
         count1 = max(1, resources // cost1)
         count2 = max(1, resources // cost2)
 
@@ -246,8 +249,10 @@ def simulate_battle(unit1, unit2, resources, fixed_count=None):
     # Army state — numpy arrays for speed
     hp1 = np.full(count1, float(unit1["hp"]))
     hp2 = np.full(count2, float(unit2["hp"]))
-    pos1 = np.arange(count1, dtype=np.float64) * 0.5
-    pos2 = MAP_MAX - np.arange(count2, dtype=np.float64) * 0.5
+    pos1 = 2.0 + np.arange(count1, dtype=np.float64) * 0.5  # Start ~2 tiles in
+    pos2 = (MAP_MAX - 2.0) - np.arange(
+        count2, dtype=np.float64
+    ) * 0.5  # Start ~2 tiles from right
     cooldown1 = np.zeros(count1)
     cooldown2 = np.zeros(count2)
     was_moving1 = np.ones(count1, dtype=bool)

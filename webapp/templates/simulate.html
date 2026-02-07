@@ -1797,8 +1797,18 @@
                     dx /= dist;
                     dy /= dist;
                     const avoidance = this.calculateAvoidance(allUnits);
-                    dx += avoidance.x * 0.6;
-                    dy += avoidance.y * 0.6;
+                    const avoidMag = Math.sqrt(
+                        avoidance.x * avoidance.x + avoidance.y * avoidance.y,
+                    );
+                    // If avoidance is strong (units very close), let it dominate
+                    if (avoidMag > 2) {
+                        // Mostly avoid, slight pull toward target
+                        dx = avoidance.x + dx * 0.2;
+                        dy = avoidance.y + dy * 0.2;
+                    } else {
+                        dx += avoidance.x;
+                        dy += avoidance.y;
+                    }
                     const len = Math.sqrt(dx * dx + dy * dy);
                     if (len > 0) {
                         dx /= len;
@@ -1830,8 +1840,8 @@
                         dy /= dist;
                     }
                     const avoidance = this.calculateAvoidance(allUnits);
-                    dx += avoidance.x * 0.6;
-                    dy += avoidance.y * 0.6;
+                    dx += avoidance.x;
+                    dy += avoidance.y;
                     const len = Math.sqrt(dx * dx + dy * dy);
                     if (len > 0) {
                         dx /= len;
@@ -1858,11 +1868,14 @@
                         const dx = this.x - other.x;
                         const dy = this.y - other.y;
                         const dist = Math.sqrt(dx * dx + dy * dy);
-                        const minDist = this.radius + other.radius + 3;
-                        if (dist < minDist && dist > 0) {
-                            const force = (minDist - dist) / minDist;
-                            avoidX += (dx / dist) * force * 2;
-                            avoidY += (dy / dist) * force * 2;
+                        const minDist = this.radius + other.radius + 2;
+                        if (dist < minDist * 1.5 && dist > 0) {
+                            const overlap =
+                                Math.max(0, minDist - dist) / minDist;
+                            // Strong force when overlapping, moderate when close
+                            const force = overlap > 0 ? 3 + overlap * 5 : 0.5;
+                            avoidX += (dx / dist) * force;
+                            avoidY += (dy / dist) * force;
                         }
                     }
                     return { x: avoidX, y: avoidY };
@@ -2089,6 +2102,9 @@
                     for (const unit of this.team2)
                         unit.update(dt, allUnits, this.team1);
 
+                    // Hard collision resolution — push overlapping units apart
+                    this.resolveCollisions(allUnits);
+
                     // Update projectiles
                     for (const p of this.projectiles) p.update(dt);
                     this.projectiles = this.projectiles.filter((p) => !p.done);
@@ -2117,6 +2133,48 @@
                         this.winner = 0;
                         this.running = false;
                         updateBattleWinner(0);
+                    }
+                }
+
+                resolveCollisions(allUnits) {
+                    const alive = allUnits.filter((u) => u.state !== "dead");
+                    const n = alive.length;
+                    // Run multiple passes to resolve cascading overlaps
+                    for (let pass = 0; pass < 3; pass++) {
+                        for (let i = 0; i < n; i++) {
+                            for (let j = i + 1; j < n; j++) {
+                                const a = alive[i],
+                                    b = alive[j];
+                                const dx = b.x - a.x;
+                                const dy = b.y - a.y;
+                                const dist = Math.sqrt(dx * dx + dy * dy);
+                                const minDist = a.radius + b.radius + 1;
+                                if (dist < minDist && dist > 0.01) {
+                                    const overlap = (minDist - dist) / 2;
+                                    const nx = dx / dist;
+                                    const ny = dy / dist;
+                                    a.x -= nx * overlap;
+                                    a.y -= ny * overlap;
+                                    b.x += nx * overlap;
+                                    b.y += ny * overlap;
+                                } else if (dist <= 0.01) {
+                                    // Exactly on top — nudge apart
+                                    a.x -= 2;
+                                    b.x += 2;
+                                }
+                            }
+                        }
+                    }
+                    // Clamp to canvas bounds
+                    for (const u of alive) {
+                        u.x = Math.max(
+                            u.radius,
+                            Math.min(CANVAS_WIDTH - u.radius, u.x),
+                        );
+                        u.y = Math.max(
+                            u.radius,
+                            Math.min(CANVAS_HEIGHT - u.radius, u.y),
+                        );
                     }
                 }
 

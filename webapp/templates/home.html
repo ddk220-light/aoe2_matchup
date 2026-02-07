@@ -43,7 +43,7 @@
             .hero {
                 position: relative;
                 text-align: center;
-                padding: 100px 20px 80px;
+                padding: 50px 20px 40px;
                 overflow: hidden;
                 background: linear-gradient(
                     180deg,
@@ -107,12 +107,12 @@
             }
 
             .hero-icon {
-                margin-bottom: 28px;
+                margin-bottom: 16px;
             }
 
             .hero h1 {
                 font-family: "Cinzel Decorative", "Cinzel", serif;
-                font-size: 3rem;
+                font-size: 2.4rem;
                 font-weight: 700;
                 background: linear-gradient(
                     135deg,
@@ -123,16 +123,16 @@
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 background-clip: text;
-                margin-bottom: 28px;
+                margin-bottom: 16px;
                 letter-spacing: 1px;
             }
 
             .hero-description {
                 max-width: 720px;
                 margin: 0 auto;
-                font-size: 1.1rem;
+                font-size: 1rem;
                 color: var(--text-muted);
-                line-height: 1.8;
+                line-height: 1.6;
             }
 
             .hero-description strong {
@@ -143,29 +143,29 @@
             .features {
                 max-width: 1100px;
                 margin: 0 auto;
-                padding: 60px 20px 80px;
+                padding: 30px 20px 40px;
             }
 
             .features-heading {
                 text-align: center;
                 font-family: "Cinzel", serif;
-                font-size: 1.6rem;
+                font-size: 1.3rem;
                 color: var(--gold);
-                margin-bottom: 40px;
+                margin-bottom: 24px;
                 letter-spacing: 1px;
             }
 
             .cards {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
-                gap: 24px;
+                gap: 18px;
             }
 
             .card {
                 background: var(--card-bg);
                 border: 1px solid var(--card-border);
                 border-radius: 10px;
-                padding: 36px 32px;
+                padding: 24px 24px;
                 text-decoration: none;
                 color: var(--text);
                 transition: all 0.3s ease;
@@ -203,25 +203,25 @@
             }
 
             .card-icon {
-                margin-bottom: 16px;
+                margin-bottom: 10px;
             }
 
             .card h3 {
                 font-family: "Cinzel", serif;
-                font-size: 1.2rem;
+                font-size: 1.05rem;
                 color: var(--gold);
-                margin-bottom: 12px;
+                margin-bottom: 8px;
             }
 
             .card p {
                 color: var(--text-muted);
-                font-size: 0.95rem;
-                line-height: 1.7;
+                font-size: 0.85rem;
+                line-height: 1.6;
             }
 
             .badge {
                 display: inline-block;
-                margin-top: 16px;
+                margin-top: 10px;
                 padding: 4px 12px;
                 font-size: 0.75rem;
                 font-weight: 600;
@@ -237,7 +237,7 @@
             footer {
                 background: var(--bg-deep);
                 border-top: 1px solid var(--card-border);
-                padding: 60px 20px 40px;
+                padding: 40px 20px 30px;
             }
 
             .footer-content {
@@ -353,24 +353,58 @@
             /* ===== Responsive ===== */
             @media (max-width: 768px) {
                 .hero {
-                    padding: 60px 16px 50px;
+                    padding: 30px 16px 24px;
+                }
+
+                .hero-icon {
+                    display: none;
                 }
 
                 .hero h1 {
-                    font-size: 1.8rem;
+                    font-size: 1.5rem;
+                    margin-bottom: 10px;
                 }
 
                 .hero-description {
-                    font-size: 1rem;
+                    font-size: 0.9rem;
+                }
+
+                .features {
+                    padding: 20px 16px 30px;
+                }
+
+                .features-heading {
+                    font-size: 1.1rem;
+                    margin-bottom: 16px;
                 }
 
                 .cards {
                     grid-template-columns: 1fr;
+                    gap: 12px;
+                }
+
+                .card {
+                    padding: 16px 18px;
+                }
+
+                .card-icon {
+                    display: none;
+                }
+
+                .card h3 {
+                    font-size: 0.95rem;
+                }
+                .card p {
+                    font-size: 0.8rem;
+                }
+
+                footer {
+                    padding: 24px 16px 20px;
                 }
 
                 .footer-content {
                     grid-template-columns: 1fr;
-                    gap: 40px;
+                    gap: 24px;
                 }
             }
         </style>
@@ -382,8 +416,8 @@
             <!-- Shield / castle gate icon -->
             <svg
                 class="hero-icon"
-                width="72"
-                height="72"
+                width="52"
+                height="52"
                 viewBox="0 0 72 72"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -447,8 +481,8 @@
                 <a href="/civ" class="card">
                     <svg
                         class="card-icon"
-                        width="44"
-                        height="44"
+                        width="32"
+                        height="32"
                         viewBox="0 0 44 44"
                         fill="none"
                     >
@@ -486,14 +520,13 @@
                         technologies modify each unit from Feudal through
                         Imperial Age.
                     </p>
-                    <span class="badge">Coming Soon</span>
                 </a>
 
                 <a href="#" class="card">
                     <svg
                         class="card-icon"
-                        width="44"
-                        height="44"
+                        width="32"
+                        height="32"
                         viewBox="0 0 44 44"
                         fill="none"
                     >
@@ -540,8 +573,8 @@
                 <a href="#" class="card">
                     <svg
                         class="card-icon"
-                        width="44"
-                        height="44"
+                        width="32"
+                        height="32"
                         viewBox="0 0 44 44"
                         fill="none"
                     >
@@ -600,8 +633,8 @@
                 <a href="#" class="card">
                     <svg
                         class="card-icon"
-                        width="44"
-                        height="44"
+                        width="32"
+                        height="32"
                         viewBox="0 0 44 44"
                         fill="none"
                     >

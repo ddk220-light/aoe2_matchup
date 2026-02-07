@@ -1,435 +1,543 @@
 <!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Unit Details by Civilization — AoE2 Analyzer</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&display=swap"
-        rel="stylesheet"
-    />
-    <style>
-        :root {
-            --gold: #c9a84c;
-            --gold-light: #dbb960;
-            --gold-dark: #a07830;
-            --red-accent: #7a1a1a;
-            --red-deep: #4a0e0e;
-            --bg: #2c1e10;
-            --bg-deep: #1a1008;
-            --card-bg: #3a2a18;
-            --card-border: #5a4228;
-            --text: #e8dcc8;
-            --text-muted: #a89878;
-            --parchment: #d4c4a0;
-        }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Unit Details by Civilization — AoE2 Analyzer</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --gold: #c9a84c;
+                --gold-light: #dbb960;
+                --gold-dark: #a07830;
+                --red-accent: #7a1a1a;
+                --red-deep: #4a0e0e;
+                --bg: #2c1e10;
+                --bg-deep: #1a1008;
+                --card-bg: #3a2a18;
+                --card-border: #5a4228;
+                --text: #e8dcc8;
+                --text-muted: #a89878;
+                --parchment: #d4c4a0;
+            }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
 
-        body {
-            font-family: "Inter", sans-serif;
-            background: var(--bg-deep);
-            color: var(--text);
-            min-height: 100vh;
-            line-height: 1.6;
-        }
+            body {
+                font-family: "Inter", sans-serif;
+                background: var(--bg-deep);
+                color: var(--text);
+                min-height: 100vh;
+                line-height: 1.6;
+            }
 
-        .page-header {
-            text-align: center;
-            padding: 50px 20px 30px;
-            background: linear-gradient(180deg, var(--red-deep) 0%, var(--bg) 100%);
-            border-bottom: 3px solid;
-            border-image: linear-gradient(90deg, transparent 5%, var(--gold-dark) 30%, var(--gold) 50%, var(--gold-dark) 70%, transparent 95%) 1;
-        }
+            .page-header {
+                text-align: center;
+                padding: 24px 20px 18px;
+                background: linear-gradient(
+                    180deg,
+                    var(--red-deep) 0%,
+                    var(--bg) 100%
+                );
+                border-bottom: 3px solid;
+                border-image: linear-gradient(
+                        90deg,
+                        transparent 5%,
+                        var(--gold-dark) 30%,
+                        var(--gold) 50%,
+                        var(--gold-dark) 70%,
+                        transparent 95%
+                    )
+                    1;
+            }
 
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: color 0.2s;
-        }
+            .back-link {
+                display: inline-block;
+                margin-bottom: 10px;
+                color: var(--text-muted);
+                text-decoration: none;
+                font-size: 0.85rem;
+                transition: color 0.2s;
+            }
 
-        .back-link:hover { color: var(--gold); }
+            .back-link:hover {
+                color: var(--gold);
+            }
 
-        .page-header h1 {
-            font-family: "Cinzel Decorative", "Cinzel", serif;
-            font-size: 2.2rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: 1px;
-        }
+            .page-header h1 {
+                font-family: "Cinzel Decorative", "Cinzel", serif;
+                font-size: 1.6rem;
+                font-weight: 700;
+                background: linear-gradient(
+                    135deg,
+                    var(--gold-light),
+                    var(--gold),
+                    var(--gold-dark)
+                );
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                letter-spacing: 1px;
+            }
 
-        .page-header p {
-            color: var(--text-muted);
-            margin-top: 10px;
-            font-size: 1rem;
-        }
+            .page-header p {
+                color: var(--text-muted);
+                margin-top: 6px;
+                font-size: 0.9rem;
+            }
 
-        /* Expansion sections */
-        .expansions {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 40px 20px 80px;
-        }
+            /* Expansion sections */
+            .expansions {
+                max-width: 1100px;
+                margin: 0 auto;
+                padding: 20px 20px 40px;
+            }
 
-        .expansion {
-            margin-bottom: 40px;
-        }
+            .expansion {
+                margin-bottom: 20px;
+            }
 
-        .expansion-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--card-border);
-            flex-wrap: wrap;
-        }
+            .expansion-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 10px;
+                padding-bottom: 6px;
+                border-bottom: 1px solid var(--card-border);
+                flex-wrap: wrap;
+            }
 
-        .expansion-header h2 {
-            font-family: "Cinzel", serif;
-            font-size: 1.2rem;
-            color: var(--gold);
-            font-weight: 600;
-        }
+            .expansion-header h2 {
+                font-family: "Cinzel", serif;
+                font-size: 1rem;
+                color: var(--gold);
+                font-weight: 600;
+            }
 
-        .expansion-header .year {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
+            .expansion-header .year {
+                color: var(--text-muted);
+                font-size: 0.85rem;
+            }
 
-        .expansion-header .count {
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            margin-left: auto;
-        }
+            .expansion-header .count {
+                color: var(--text-muted);
+                font-size: 0.8rem;
+                margin-left: auto;
+            }
 
-        .badge-ready {
-            display: inline-block;
-            padding: 2px 10px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #4a2;
-            border: 1px solid rgba(68, 170, 34, 0.3);
-            border-radius: 12px;
-            background: rgba(68, 170, 34, 0.1);
-        }
+            .badge-ready {
+                display: inline-block;
+                padding: 2px 10px;
+                font-size: 0.7rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                color: #4a2;
+                border: 1px solid rgba(68, 170, 34, 0.3);
+                border-radius: 12px;
+                background: rgba(68, 170, 34, 0.1);
+            }
 
-        .badge-soon {
-            display: inline-block;
-            padding: 2px 10px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--gold);
-            border: 1px solid rgba(201, 168, 76, 0.3);
-            border-radius: 12px;
-            background: rgba(201, 168, 76, 0.08);
-        }
+            .badge-soon {
+                display: inline-block;
+                padding: 2px 10px;
+                font-size: 0.7rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                color: var(--gold);
+                border: 1px solid rgba(201, 168, 76, 0.3);
+                border-radius: 12px;
+                background: rgba(201, 168, 76, 0.08);
+            }
 
-        /* Civ grid */
-        .civ-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 16px;
-        }
-
-        .civ-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px 10px 16px;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 10px;
-            text-decoration: none;
-            color: var(--text);
-            transition: all 0.25s ease;
-        }
-
-        .civ-card.ready:hover {
-            transform: translateY(-3px);
-            border-color: var(--gold-dark);
-            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(201, 168, 76, 0.15);
-        }
-
-        .civ-card.soon {
-            opacity: 0.45;
-            pointer-events: none;
-        }
-
-        .civ-emblem {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            border: 2px solid var(--gold-dark);
-            object-fit: cover;
-            background: var(--bg);
-            margin-bottom: 10px;
-        }
-
-        .civ-emblem-placeholder {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            border: 2px solid var(--gold-dark);
-            background: var(--bg);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .civ-name {
-            font-size: 0.85rem;
-            text-align: center;
-            line-height: 1.3;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .page-header h1 { font-size: 1.6rem; }
-            .page-header { padding: 30px 16px 20px; }
+            /* Civ grid */
             .civ-grid {
-                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-                gap: 12px;
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+                gap: 10px;
             }
-            .civ-emblem, .civ-emblem-placeholder {
-                width: 52px;
-                height: 52px;
+
+            .civ-card {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 12px 6px 10px;
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                border-radius: 8px;
+                text-decoration: none;
+                color: var(--text);
+                transition: all 0.25s ease;
             }
-            .expansion-header .count { margin-left: 0; }
-        }
-    </style>
-</head>
-<body>
-    <div class="page-header">
-        <a href="/" class="back-link">&#8592; Back to Home</a>
-        <h1>Unit Details by Civilization</h1>
-        <p>Select a civilization to view detailed unit stats, upgrades, and bonuses</p>
-    </div>
 
-    <div class="expansions">
+            .civ-card.ready:hover {
+                transform: translateY(-3px);
+                border-color: var(--gold-dark);
+                box-shadow:
+                    0 6px 24px rgba(0, 0, 0, 0.4),
+                    0 0 0 1px rgba(201, 168, 76, 0.15);
+            }
 
-        <!-- The Age of Kings (1999) -->
-        <div class="expansion">
-            <div class="expansion-header">
-                <h2>The Age of Kings</h2>
-                <span class="year">1999</span>
-                <span class="badge-ready">Available</span>
-                <span class="count">13 civilizations</span>
+            .civ-card.soon {
+                opacity: 0.45;
+                pointer-events: none;
+            }
+
+            .civ-emblem {
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                border: 2px solid var(--gold-dark);
+                object-fit: cover;
+                background: var(--bg);
+                margin-bottom: 6px;
+            }
+
+            .civ-emblem-placeholder {
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                border: 2px solid var(--gold-dark);
+                background: var(--bg);
+                margin-bottom: 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .civ-name {
+                font-size: 0.75rem;
+                text-align: center;
+                line-height: 1.2;
+            }
+
+            /* Responsive */
+            @media (max-width: 768px) {
+                .page-header {
+                    padding: 16px 16px 12px;
+                }
+                .page-header h1 {
+                    font-size: 1.2rem;
+                }
+                .page-header p {
+                    font-size: 0.8rem;
+                }
+                .back-link {
+                    margin-bottom: 6px;
+                    font-size: 0.8rem;
+                }
+                .expansions {
+                    padding: 12px 12px 24px;
+                }
+                .expansion {
+                    margin-bottom: 14px;
+                }
+                .expansion-header {
+                    gap: 6px;
+                    margin-bottom: 8px;
+                }
+                .expansion-header h2 {
+                    font-size: 0.85rem;
+                }
+                .expansion-header .year,
+                .expansion-header .count {
+                    font-size: 0.7rem;
+                }
+                .expansion-header .count {
+                    margin-left: 0;
+                }
+                .civ-grid {
+                    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+                    gap: 8px;
+                }
+                .civ-card {
+                    padding: 8px 4px 8px;
+                }
+                .civ-emblem,
+                .civ-emblem-placeholder {
+                    width: 36px;
+                    height: 36px;
+                    margin-bottom: 4px;
+                }
+                .civ-name {
+                    font-size: 0.65rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="page-header">
+            <a href="/" class="back-link">&#8592; Back to Home</a>
+            <h1>Unit Details by Civilization</h1>
+            <p>
+                Select a civilization to view detailed unit stats, upgrades, and
+                bonuses
+            </p>
+        </div>
+
+        <div class="expansions">
+            <!-- The Age of Kings (1999) -->
+            <div class="expansion">
+                <div class="expansion-header">
+                    <h2>The Age of Kings</h2>
+                    <span class="year">1999</span>
+                    <span class="badge-ready">Available</span>
+                    <span class="count">13 civilizations</span>
+                </div>
+                <div class="civ-grid" id="aok-grid"></div>
             </div>
-            <div class="civ-grid" id="aok-grid">
+
+            <!-- The Conquerors (2000) -->
+            <div class="expansion">
+                <div class="expansion-header">
+                    <h2>The Conquerors</h2>
+                    <span class="year">2000</span>
+                    <span class="badge-soon">Coming Soon</span>
+                    <span class="count">5 civilizations</span>
+                </div>
+                <div class="civ-grid" id="conquerors-grid"></div>
+            </div>
+
+            <!-- The Forgotten (2013) -->
+            <div class="expansion">
+                <div class="expansion-header">
+                    <h2>The Forgotten</h2>
+                    <span class="year">2013</span>
+                    <span class="badge-soon">Coming Soon</span>
+                    <span class="count">4 civilizations</span>
+                </div>
+                <div class="civ-grid" id="forgotten-grid"></div>
+            </div>
+
+            <!-- The African Kingdoms (2015) -->
+            <div class="expansion">
+                <div class="expansion-header">
+                    <h2>The African Kingdoms</h2>
+                    <span class="year">2015</span>
+                    <span class="badge-soon">Coming Soon</span>
+                    <span class="count">4 civilizations</span>
+                </div>
+                <div class="civ-grid" id="african-grid"></div>
+            </div>
+
+            <!-- Rise of the Rajas (2016) -->
+            <div class="expansion">
+                <div class="expansion-header">
+                    <h2>Rise of the Rajas</h2>
+                    <span class="year">2016</span>
+                    <span class="badge-soon">Coming Soon</span>
+                    <span class="count">4 civilizations</span>
+                </div>
+                <div class="civ-grid" id="rajas-grid"></div>
+            </div>
+
+            <!-- The Last Khans (2019) -->
+            <div class="expansion">
+                <div class="expansion-header">
+                    <h2>The Last Khans</h2>
+                    <span class="year">2019</span>
+                    <span class="badge-soon">Coming Soon</span>
+                    <span class="count">4 civilizations</span>
+                </div>
+                <div class="civ-grid" id="khans-grid"></div>
+            </div>
+
+            <!-- Lords of the West (2021) -->
+            <div class="expansion">
+                <div class="expansion-header">
+                    <h2>Lords of the West</h2>
+                    <span class="year">2021</span>
+                    <span class="badge-soon">Coming Soon</span>
+                    <span class="count">2 civilizations</span>
+                </div>
+                <div class="civ-grid" id="lotw-grid"></div>
+            </div>
+
+            <!-- Dawn of the Dukes (2021) -->
+            <div class="expansion">
+                <div class="expansion-header">
+                    <h2>Dawn of the Dukes</h2>
+                    <span class="year">2021</span>
+                    <span class="badge-soon">Coming Soon</span>
+                    <span class="count">2 civilizations</span>
+                </div>
+                <div class="civ-grid" id="dotd-grid"></div>
+            </div>
+
+            <!-- Dynasties of India (2022) -->
+            <div class="expansion">
+                <div class="expansion-header">
+                    <h2>Dynasties of India</h2>
+                    <span class="year">2022</span>
+                    <span class="badge-soon">Coming Soon</span>
+                    <span class="count">4 civilizations</span>
+                </div>
+                <div class="civ-grid" id="doi-grid"></div>
+            </div>
+
+            <!-- Return of Rome (2023) -->
+            <div class="expansion">
+                <div class="expansion-header">
+                    <h2>Return of Rome</h2>
+                    <span class="year">2023</span>
+                    <span class="badge-soon">Coming Soon</span>
+                    <span class="count">1 civilization</span>
+                </div>
+                <div class="civ-grid" id="ror-grid"></div>
+            </div>
+
+            <!-- The Mountain Royals (2023) -->
+            <div class="expansion">
+                <div class="expansion-header">
+                    <h2>The Mountain Royals</h2>
+                    <span class="year">2023</span>
+                    <span class="badge-soon">Coming Soon</span>
+                    <span class="count">2 civilizations</span>
+                </div>
+                <div class="civ-grid" id="tmr-grid"></div>
+            </div>
+
+            <!-- The Three Kingdoms (2025) -->
+            <div class="expansion">
+                <div class="expansion-header">
+                    <h2>The Three Kingdoms</h2>
+                    <span class="year">2025</span>
+                    <span class="badge-soon">Coming Soon</span>
+                    <span class="count">5 civilizations</span>
+                </div>
+                <div class="civ-grid" id="ttk-grid"></div>
+            </div>
+
+            <!-- The Last Chieftains (2026) -->
+            <div class="expansion">
+                <div class="expansion-header">
+                    <h2>The Last Chieftains</h2>
+                    <span class="year">Feb 2026</span>
+                    <span class="badge-soon">Coming Soon</span>
+                    <span class="count">3 civilizations</span>
+                </div>
+                <div class="civ-grid" id="tlc-grid"></div>
             </div>
         </div>
 
-        <!-- The Conquerors (2000) -->
-        <div class="expansion">
-            <div class="expansion-header">
-                <h2>The Conquerors</h2>
-                <span class="year">2000</span>
-                <span class="badge-soon">Coming Soon</span>
-                <span class="count">5 civilizations</span>
-            </div>
-            <div class="civ-grid" id="conquerors-grid">
-            </div>
-        </div>
+        <script>
+            const CDN =
+                "https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/";
 
-        <!-- The Forgotten (2013) -->
-        <div class="expansion">
-            <div class="expansion-header">
-                <h2>The Forgotten</h2>
-                <span class="year">2013</span>
-                <span class="badge-soon">Coming Soon</span>
-                <span class="count">4 civilizations</span>
-            </div>
-            <div class="civ-grid" id="forgotten-grid">
-            </div>
-        </div>
+            const EXPANSIONS = [
+                {
+                    id: "aok-grid",
+                    ready: true,
+                    civs: [
+                        "Britons",
+                        "Byzantines",
+                        "Celts",
+                        "Chinese",
+                        "Franks",
+                        "Goths",
+                        "Japanese",
+                        "Mongols",
+                        "Persians",
+                        "Saracens",
+                        "Teutons",
+                        "Turks",
+                        "Vikings",
+                    ],
+                },
+                {
+                    id: "conquerors-grid",
+                    ready: false,
+                    civs: ["Aztecs", "Huns", "Koreans", "Mayans", "Spanish"],
+                },
+                {
+                    id: "forgotten-grid",
+                    ready: false,
+                    civs: ["Incas", "Italians", "Magyars", "Slavs"],
+                },
+                {
+                    id: "african-grid",
+                    ready: false,
+                    civs: ["Berbers", "Ethiopians", "Malians", "Portuguese"],
+                },
+                {
+                    id: "rajas-grid",
+                    ready: false,
+                    civs: ["Burmese", "Khmer", "Malay", "Vietnamese"],
+                },
+                {
+                    id: "khans-grid",
+                    ready: false,
+                    civs: ["Bulgarians", "Cumans", "Lithuanians", "Tatars"],
+                },
+                {
+                    id: "lotw-grid",
+                    ready: false,
+                    civs: ["Burgundians", "Sicilians"],
+                },
+                { id: "dotd-grid", ready: false, civs: ["Bohemians", "Poles"] },
+                {
+                    id: "doi-grid",
+                    ready: false,
+                    civs: ["Bengalis", "Dravidians", "Gurjaras", "Hindustanis"],
+                },
+                { id: "ror-grid", ready: false, civs: ["Romans"] },
+                {
+                    id: "tmr-grid",
+                    ready: false,
+                    civs: ["Armenians", "Georgians"],
+                },
+                {
+                    id: "ttk-grid",
+                    ready: false,
+                    civs: ["Jurchens", "Khitans", "Shu", "Wei", "Wu"],
+                },
+                {
+                    id: "tlc-grid",
+                    ready: false,
+                    civs: ["Mapuche", "Muisca", "Tupi"],
+                },
+            ];
 
-        <!-- The African Kingdoms (2015) -->
-        <div class="expansion">
-            <div class="expansion-header">
-                <h2>The African Kingdoms</h2>
-                <span class="year">2015</span>
-                <span class="badge-soon">Coming Soon</span>
-                <span class="count">4 civilizations</span>
-            </div>
-            <div class="civ-grid" id="african-grid">
-            </div>
-        </div>
+            const PLACEHOLDER_SVG = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="30" stroke="#5a4228" stroke-width="2" fill="#2c1e10"/><path d="M32 12L18 24v16l14 12 14-12V24L32 12z" stroke="#5a4228" stroke-width="1.5" fill="none"/></svg>')}`;
 
-        <!-- Rise of the Rajas (2016) -->
-        <div class="expansion">
-            <div class="expansion-header">
-                <h2>Rise of the Rajas</h2>
-                <span class="year">2016</span>
-                <span class="badge-soon">Coming Soon</span>
-                <span class="count">4 civilizations</span>
-            </div>
-            <div class="civ-grid" id="rajas-grid">
-            </div>
-        </div>
+            function createCivCard(name, ready) {
+                const slug = name.toLowerCase();
+                const card = document.createElement(ready ? "a" : "div");
+                card.className = "civ-card " + (ready ? "ready" : "soon");
+                if (ready) card.href = "#";
 
-        <!-- The Last Khans (2019) -->
-        <div class="expansion">
-            <div class="expansion-header">
-                <h2>The Last Khans</h2>
-                <span class="year">2019</span>
-                <span class="badge-soon">Coming Soon</span>
-                <span class="count">4 civilizations</span>
-            </div>
-            <div class="civ-grid" id="khans-grid">
-            </div>
-        </div>
+                const img = document.createElement("img");
+                img.className = "civ-emblem";
+                img.src = CDN + slug + ".png";
+                img.alt = name;
+                img.loading = "lazy";
+                img.onerror = function () {
+                    this.src = PLACEHOLDER_SVG;
+                };
 
-        <!-- Lords of the West (2021) -->
-        <div class="expansion">
-            <div class="expansion-header">
-                <h2>Lords of the West</h2>
-                <span class="year">2021</span>
-                <span class="badge-soon">Coming Soon</span>
-                <span class="count">2 civilizations</span>
-            </div>
-            <div class="civ-grid" id="lotw-grid">
-            </div>
-        </div>
+                const label = document.createElement("span");
+                label.className = "civ-name";
+                label.textContent = name;
 
-        <!-- Dawn of the Dukes (2021) -->
-        <div class="expansion">
-            <div class="expansion-header">
-                <h2>Dawn of the Dukes</h2>
-                <span class="year">2021</span>
-                <span class="badge-soon">Coming Soon</span>
-                <span class="count">2 civilizations</span>
-            </div>
-            <div class="civ-grid" id="dotd-grid">
-            </div>
-        </div>
+                card.appendChild(img);
+                card.appendChild(label);
+                return card;
+            }
 
-        <!-- Dynasties of India (2022) -->
-        <div class="expansion">
-            <div class="expansion-header">
-                <h2>Dynasties of India</h2>
-                <span class="year">2022</span>
-                <span class="badge-soon">Coming Soon</span>
-                <span class="count">4 civilizations</span>
-            </div>
-            <div class="civ-grid" id="doi-grid">
-            </div>
-        </div>
-
-        <!-- Return of Rome (2023) -->
-        <div class="expansion">
-            <div class="expansion-header">
-                <h2>Return of Rome</h2>
-                <span class="year">2023</span>
-                <span class="badge-soon">Coming Soon</span>
-                <span class="count">1 civilization</span>
-            </div>
-            <div class="civ-grid" id="ror-grid">
-            </div>
-        </div>
-
-        <!-- The Mountain Royals (2023) -->
-        <div class="expansion">
-            <div class="expansion-header">
-                <h2>The Mountain Royals</h2>
-                <span class="year">2023</span>
-                <span class="badge-soon">Coming Soon</span>
-                <span class="count">2 civilizations</span>
-            </div>
-            <div class="civ-grid" id="tmr-grid">
-            </div>
-        </div>
-
-        <!-- The Three Kingdoms (2025) -->
-        <div class="expansion">
-            <div class="expansion-header">
-                <h2>The Three Kingdoms</h2>
-                <span class="year">2025</span>
-                <span class="badge-soon">Coming Soon</span>
-                <span class="count">5 civilizations</span>
-            </div>
-            <div class="civ-grid" id="ttk-grid">
-            </div>
-        </div>
-
-        <!-- The Last Chieftains (2026) -->
-        <div class="expansion">
-            <div class="expansion-header">
-                <h2>The Last Chieftains</h2>
-                <span class="year">Feb 2026</span>
-                <span class="badge-soon">Coming Soon</span>
-                <span class="count">3 civilizations</span>
-            </div>
-            <div class="civ-grid" id="tlc-grid">
-            </div>
-        </div>
-
-    </div>
-
-    <script>
-        const CDN = "https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/";
-
-        const EXPANSIONS = [
-            {
-                id: "aok-grid",
-                ready: true,
-                civs: ["Britons","Byzantines","Celts","Chinese","Franks","Goths","Japanese","Mongols","Persians","Saracens","Teutons","Turks","Vikings"]
-            },
-            { id: "conquerors-grid", ready: false, civs: ["Aztecs","Huns","Koreans","Mayans","Spanish"] },
-            { id: "forgotten-grid", ready: false, civs: ["Incas","Italians","Magyars","Slavs"] },
-            { id: "african-grid", ready: false, civs: ["Berbers","Ethiopians","Malians","Portuguese"] },
-            { id: "rajas-grid", ready: false, civs: ["Burmese","Khmer","Malay","Vietnamese"] },
-            { id: "khans-grid", ready: false, civs: ["Bulgarians","Cumans","Lithuanians","Tatars"] },
-            { id: "lotw-grid", ready: false, civs: ["Burgundians","Sicilians"] },
-            { id: "dotd-grid", ready: false, civs: ["Bohemians","Poles"] },
-            { id: "doi-grid", ready: false, civs: ["Bengalis","Dravidians","Gurjaras","Hindustanis"] },
-            { id: "ror-grid", ready: false, civs: ["Romans"] },
-            { id: "tmr-grid", ready: false, civs: ["Armenians","Georgians"] },
-            { id: "ttk-grid", ready: false, civs: ["Jurchens","Khitans","Shu","Wei","Wu"] },
-            { id: "tlc-grid", ready: false, civs: ["Mapuche","Muisca","Tupi"] },
-        ];
-
-        const PLACEHOLDER_SVG = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="30" stroke="#5a4228" stroke-width="2" fill="#2c1e10"/><path d="M32 12L18 24v16l14 12 14-12V24L32 12z" stroke="#5a4228" stroke-width="1.5" fill="none"/></svg>')}`;
-
-        function createCivCard(name, ready) {
-            const slug = name.toLowerCase();
-            const card = document.createElement(ready ? "a" : "div");
-            card.className = "civ-card " + (ready ? "ready" : "soon");
-            if (ready) card.href = "#";
-
-            const img = document.createElement("img");
-            img.className = "civ-emblem";
-            img.src = CDN + slug + ".png";
-            img.alt = name;
-            img.loading = "lazy";
-            img.onerror = function() { this.src = PLACEHOLDER_SVG; };
-
-            const label = document.createElement("span");
-            label.className = "civ-name";
-            label.textContent = name;
-
-            card.appendChild(img);
-            card.appendChild(label);
-            return card;
-        }
-
-        EXPANSIONS.forEach(exp => {
-            const grid = document.getElementById(exp.id);
-            exp.civs.forEach(civ => {
-                grid.appendChild(createCivCard(civ, exp.ready));
+            EXPANSIONS.forEach((exp) => {
+                const grid = document.getElementById(exp.id);
+                exp.civs.forEach((civ) => {
+                    grid.appendChild(createCivCard(civ, exp.ready));
+                });
             });
-        });
-    </script>
-</body>
+        </script>
+    </body>
 </html>

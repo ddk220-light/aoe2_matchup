@@ -1315,6 +1315,14 @@
                     this.attackAnimTimer = 0;
                     this.damageNumbers = [];
 
+                    // Movement smoothing — prevents vibration
+                    this.vx = 0;
+                    this.vy = 0;
+                    // Stuck detection — switch targets when blocked
+                    this.stuckTimer = 0;
+                    this.lastDistToTarget = Infinity;
+                    this.blockedTargets = new Set();
+
                     // Sprite image ref (set externally)
                     this.spriteImg = null;
                 }
@@ -1408,18 +1416,33 @@
 
                 findTarget(enemies) {
                     let closest = null;
-                    let minDist = Infinity;
+                    let closestDist = Infinity;
+                    let fallback = null;
+                    let fallbackDist = Infinity;
                     for (const enemy of enemies) {
-                        if (enemy.state !== "dead") {
-                            const dist = this.distanceTo(enemy);
-                            if (dist < minDist) {
-                                minDist = dist;
+                        if (enemy.state === "dead") continue;
+                        const dist = this.distanceTo(enemy);
+                        // Prefer targets not in blockedTargets
+                        if (!this.blockedTargets.has(enemy)) {
+                            if (dist < closestDist) {
+                                closestDist = dist;
                                 closest = enemy;
                             }
                         }
+                        // Track overall closest as fallback
+                        if (dist < fallbackDist) {
+                            fallbackDist = dist;
+                            fallback = enemy;
+                        }
                     }
-                    this.target = closest;
-                    return closest;
+                    // Use unblocked target if available, else fall back to closest
+                    this.target = closest || fallback;
+                    // Reset stuck tracking for new target
+                    this.stuckTimer = 0;
+                    this.lastDistToTarget = this.target
+                        ? this.distanceTo(this.target)
+                        : Infinity;
+                    return this.target;
                 }
 
                 distanceTo(other) {
@@ -1512,6 +1535,19 @@
                             this.isTransformed = true;
                             this.killBonusAttack += 3;
                         }
+                    }
+
+                    // Clean up blockedTargets: remove dead enemies
+                    for (const bt of this.blockedTargets) {
+                        if (bt.state === "dead") this.blockedTargets.delete(bt);
+                    }
+                    // If all alive enemies are blocked, clear and retry
+                    if (
+                        this.blockedTargets.size > 0 &&
+                        this.blockedTargets.size >=
+                            enemies.filter((e) => e.state !== "dead").length
+                    ) {
+                        this.blockedTargets.clear();
                     }
 
                     if (!this.target || this.target.state === "dead") {
@@ -1954,7 +1990,6 @@
                     );
                     // If avoidance is strong (units very close), let it dominate
                     if (avoidMag > 2) {
-                        // Mostly avoid, slight pull toward target
                         dx = avoidance.x + dx * 0.2;
                         dy = avoidance.y + dy * 0.2;
                     } else {
@@ -1966,9 +2001,22 @@
                         dx /= len;
                         dy /= len;
                     }
+
+                    // Smooth velocity — blend desired direction with previous velocity
+                    const smoothing = 0.3; // 0=instant snap, 1=no change
+                    this.vx = this.vx * smoothing + dx * (1 - smoothing);
+                    this.vy = this.vy * smoothing + dy * (1 - smoothing);
+                    const vLen = Math.sqrt(
+                        this.vx * this.vx + this.vy * this.vy,
+                    );
+                    if (vLen > 0) {
+                        this.vx /= vLen;
+                        this.vy /= vLen;
+                    }
+
                     const moveAmount = this.moveSpeed * dt;
-                    this.x += dx * moveAmount;
-                    this.y += dy * moveAmount;
+                    this.x += this.vx * moveAmount;
+                    this.y += this.vy * moveAmount;
                     this.x = Math.max(
                         this.radius,
                         Math.min(CANVAS_WIDTH - this.radius, this.x),
@@ -1977,6 +2025,20 @@
                         this.radius,
                         Math.min(CANVAS_HEIGHT - this.radius, this.y),
                     );
+
+                    // Stuck detection: if not making progress, mark target as blocked
+                    const newDist = this.distanceTo(this.target);
+                    if (newDist >= this.lastDistToTarget - 0.5) {
+                        this.stuckTimer += dt;
+                    } else {
+                        this.stuckTimer = Math.max(0, this.stuckTimer - dt * 2);
+                    }
+                    this.lastDistToTarget = newDist;
+                    if (this.stuckTimer > 0.8) {
+                        this.blockedTargets.add(this.target);
+                        this.target = null; // force re-target next frame
+                        this.stuckTimer = 0;
+                    }
                 }
 
                 moveAwayFromTarget(dt, allUnits) {
@@ -1999,9 +2061,20 @@
                         dx /= len;
                         dy /= len;
                     }
+                    // Smooth velocity for kiting too
+                    const smoothing = 0.3;
+                    this.vx = this.vx * smoothing + dx * (1 - smoothing);
+                    this.vy = this.vy * smoothing + dy * (1 - smoothing);
+                    const vLen = Math.sqrt(
+                        this.vx * this.vx + this.vy * this.vy,
+                    );
+                    if (vLen > 0) {
+                        this.vx /= vLen;
+                        this.vy /= vLen;
+                    }
                     const moveAmount = this.moveSpeed * dt;
-                    this.x += dx * moveAmount;
-                    this.y += dy * moveAmount;
+                    this.x += this.vx * moveAmount;
+                    this.y += this.vy * moveAmount;
                     this.x = Math.max(
                         this.radius,
                         Math.min(CANVAS_WIDTH - this.radius, this.x),

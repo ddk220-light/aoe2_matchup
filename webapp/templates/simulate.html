@@ -1162,11 +1162,12 @@
             }
 
             class MeleeEffect {
-                constructor(x, y, team) {
+                constructor(x, y, team, splashRadius) {
                     this.x = x;
                     this.y = y;
                     this.team = team;
-                    this.lifetime = 0.2;
+                    this.splashRadius = splashRadius || 0;
+                    this.lifetime = this.splashRadius > 0 ? 0.4 : 0.2;
                     this.age = 0;
                     this.done = false;
                 }
@@ -1179,21 +1180,38 @@
                 render(ctx) {
                     if (this.done) return;
                     const progress = this.age / this.lifetime;
-                    const radius = 8 + progress * 16;
                     const alpha = 1.0 - progress;
 
-                    ctx.globalAlpha = alpha * 0.7;
-                    ctx.beginPath();
-                    ctx.arc(
-                        this.x,
-                        this.y,
-                        radius,
-                        -Math.PI * 0.3,
-                        Math.PI * 0.3,
-                    );
-                    ctx.strokeStyle = this.team === 1 ? "#fca5a5" : "#93c5fd";
-                    ctx.lineWidth = 3;
-                    ctx.stroke();
+                    if (this.splashRadius > 0) {
+                        // Siege splash: expanding filled circle
+                        const radius =
+                            this.splashRadius * (0.3 + 0.7 * progress);
+                        ctx.globalAlpha = alpha * 0.35;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+                        ctx.fillStyle = "#ff6600";
+                        ctx.fill();
+                        ctx.globalAlpha = alpha * 0.6;
+                        ctx.strokeStyle = "#ff9900";
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    } else {
+                        // Melee hit: small arc
+                        const radius = 8 + progress * 16;
+                        ctx.globalAlpha = alpha * 0.7;
+                        ctx.beginPath();
+                        ctx.arc(
+                            this.x,
+                            this.y,
+                            radius,
+                            -Math.PI * 0.3,
+                            Math.PI * 0.3,
+                        );
+                        ctx.strokeStyle =
+                            this.team === 1 ? "#fca5a5" : "#93c5fd";
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                    }
                     ctx.globalAlpha = 1.0;
                 }
             }
@@ -1630,6 +1648,13 @@
                             ? this.projectileSpeed
                             : 7 * TILE_SIZE;
                     const attacker = this;
+                    // Siege splash: scale up radius so mangonel/onager can hit clusters
+                    const splashR =
+                        attacker.splashRadius > 0
+                            ? Math.max(attacker.splashRadius, 2.5 * TILE_SIZE)
+                            : 0;
+                    const impactX = target.x;
+                    const impactY = target.y;
                     const proj = new Projectile(
                         this.x,
                         this.y,
@@ -1639,9 +1664,10 @@
                         this.team,
                         this.isSiegeProjectile,
                         () => {
-                            if (target.state === "dead") return;
                             const targetWasAlive = target.state !== "dead";
-                            target.takeDamage(damage, attacker);
+                            if (target.state !== "dead") {
+                                target.takeDamage(damage, attacker);
+                            }
 
                             if (
                                 attacker.attackBonusPerKill > 0 &&
@@ -1652,8 +1678,51 @@
                                     attacker.attackBonusPerKill;
                             }
 
-                            // Splash on hit
-                            if (attacker.splashOnHitRadius > 0) {
+                            // Siege area splash damage with distance falloff
+                            if (splashR > 0) {
+                                const enemies =
+                                    attacker.team === 1
+                                        ? simulation.team2
+                                        : simulation.team1;
+                                for (const enemy of enemies) {
+                                    if (
+                                        enemy === target ||
+                                        enemy.state === "dead"
+                                    )
+                                        continue;
+                                    const dx = enemy.x - impactX;
+                                    const dy = enemy.y - impactY;
+                                    const dist = Math.sqrt(dx * dx + dy * dy);
+                                    if (dist <= splashR + enemy.radius) {
+                                        // Damage falls off linearly from 100% at center to 25% at edge
+                                        const distRatio = Math.min(
+                                            1,
+                                            dist / splashR,
+                                        );
+                                        const falloff = 1.0 - 0.75 * distRatio;
+                                        const splashDmg = Math.max(
+                                            1,
+                                            Math.round(damage * falloff),
+                                        );
+                                        enemy.takeDamage(splashDmg, attacker);
+                                    }
+                                }
+                                // Visual: add a splash effect
+                                simulation.effects.push(
+                                    new MeleeEffect(
+                                        impactX,
+                                        impactY,
+                                        attacker.team,
+                                        splashR,
+                                    ),
+                                );
+                            }
+
+                            // Splash on hit (non-siege, e.g. scorpion pass-through)
+                            if (
+                                attacker.splashOnHitRadius > 0 &&
+                                splashR === 0
+                            ) {
                                 const enemies =
                                     attacker.team === 1
                                         ? simulation.team2
@@ -1663,8 +1732,8 @@
                                         enemy !== target &&
                                         enemy.state !== "dead"
                                     ) {
-                                        const dx = enemy.x - target.x;
-                                        const dy = enemy.y - target.y;
+                                        const dx = enemy.x - impactX;
+                                        const dy = enemy.y - impactY;
                                         const dist = Math.sqrt(
                                             dx * dx + dy * dy,
                                         );

@@ -416,39 +416,74 @@
                 margin: 0 auto 12px;
                 border: 2px solid var(--gold-dark);
                 border-radius: 8px;
-                background: var(--bg);
+                background: #2a3a1a;
                 width: 100%;
                 max-width: 800px;
             }
 
-            /* Stats bar */
-            .stats-panel {
+            /* Live battle progress (left sidebar) */
+            .battle-progress {
                 display: flex;
-                justify-content: space-between;
-                align-items: center;
-                background: var(--card-bg);
-                padding: 10px 20px;
-                border-radius: 8px;
+                flex-direction: column;
+                gap: 8px;
                 margin-bottom: 12px;
             }
-            .team-stats h4 {
-                font-family: "Cinzel", serif;
-                font-size: 0.9rem;
-                margin-bottom: 2px;
+            .progress-card {
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                border-radius: 8px;
+                padding: 10px 12px;
             }
-            .team-stats.team1 h4 {
+            .progress-card.team1 {
+                border-left: 3px solid var(--team1);
+            }
+            .progress-card.team2 {
+                border-left: 3px solid var(--team2);
+            }
+            .progress-header {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 6px;
+            }
+            .progress-header img {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                object-fit: cover;
+            }
+            .progress-header .prog-name {
+                font-family: "Cinzel", serif;
+                font-size: 0.8rem;
+                font-weight: 600;
+            }
+            .progress-header.team1 .prog-name {
                 color: var(--team1);
             }
-            .team-stats.team2 h4 {
+            .progress-header.team2 .prog-name {
                 color: var(--team2);
             }
-            .alive-count {
-                font-size: 0.9rem;
+            .progress-row {
+                display: flex;
+                justify-content: space-between;
+                font-size: 0.75rem;
+                margin-bottom: 2px;
             }
-            .battle-time {
-                font-size: 1.3rem;
+            .progress-row .prog-label {
+                color: var(--text-muted);
+            }
+            .progress-row .prog-value {
+                font-weight: 600;
+            }
+            .battle-timer {
+                text-align: center;
                 font-family: "Cinzel", serif;
+                font-size: 1.1rem;
                 color: var(--gold);
+                padding: 6px;
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                border-radius: 8px;
             }
 
             /* Debug panel */
@@ -539,69 +574,6 @@
                 font-weight: bold;
             }
 
-            /* Battle results */
-            .battle-results {
-                background: var(--card-bg);
-                border: 1px solid var(--card-border);
-                border-radius: 8px;
-                padding: 16px;
-                margin-top: 12px;
-                display: none;
-            }
-            .battle-results.visible {
-                display: block;
-            }
-            .battle-results h3 {
-                font-family: "Cinzel", serif;
-                color: var(--gold);
-                margin-bottom: 10px;
-                text-align: center;
-            }
-            .results-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 12px;
-            }
-            .result-team {
-                padding: 12px;
-                border-radius: 8px;
-                background: rgba(0, 0, 0, 0.2);
-            }
-            .result-team.team1 {
-                border-left: 3px solid var(--team1);
-            }
-            .result-team.team2 {
-                border-left: 3px solid var(--team2);
-            }
-            .result-team.winner {
-                background: rgba(90, 154, 58, 0.1);
-            }
-            .result-team.loser {
-                background: rgba(168, 48, 48, 0.1);
-            }
-            .result-team h4 {
-                margin-bottom: 6px;
-                font-size: 0.9rem;
-            }
-            .result-team.team1 h4 {
-                color: var(--team1);
-            }
-            .result-team.team2 h4 {
-                color: var(--team2);
-            }
-            .result-row {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 3px;
-                font-size: 0.8rem;
-            }
-            .result-label {
-                color: var(--text-muted);
-            }
-            .result-value {
-                font-weight: 600;
-            }
-
             /* Responsive */
             @media (max-width: 1100px) {
                 .main-layout {
@@ -624,14 +596,6 @@
                 }
                 .controls button {
                     width: 100%;
-                }
-                .stats-panel {
-                    flex-direction: column;
-                    gap: 8px;
-                    text-align: center;
-                }
-                .results-grid {
-                    grid-template-columns: 1fr;
                 }
                 .civ-grid {
                     grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
@@ -741,99 +705,80 @@
             <div class="main-layout">
                 <div class="left-panel">
                     <canvas id="battleCanvas" width="800" height="500"></canvas>
-                    <div class="stats-panel">
-                        <div class="team-stats team1">
-                            <h4>Team 1</h4>
-                            <span class="alive-count" id="team1Alive"
-                                >0/0 alive</span
-                            >
-                        </div>
-                        <div class="battle-time" id="battleTime">0.0s</div>
-                        <div class="team-stats team2">
-                            <h4>Team 2</h4>
-                            <span class="alive-count" id="team2Alive"
-                                >0/0 alive</span
-                            >
-                        </div>
-                    </div>
 
-                    <!-- Battle Results -->
-                    <div class="battle-results" id="battleResults">
-                        <h3>Battle Results</h3>
-                        <div class="results-grid">
-                            <div class="result-team team1" id="resultTeam1">
-                                <h4>Team 1 (Red)</h4>
-                                <div class="result-row">
-                                    <span class="result-label"
-                                        >Units Remaining:</span
-                                    ><span
-                                        class="result-value"
-                                        id="team1Remaining"
-                                        >0</span
-                                    >
-                                </div>
-                                <div class="result-row">
-                                    <span class="result-label"
-                                        >Total HP Left:</span
-                                    ><span class="result-value" id="team1HpLeft"
-                                        >0</span
-                                    >
-                                </div>
-                                <div class="result-row">
-                                    <span class="result-label"
-                                        >Starting Resources:</span
-                                    ><span
-                                        class="result-value"
-                                        id="team1StartRes"
-                                        >0</span
-                                    >
-                                </div>
-                                <div class="result-row">
-                                    <span class="result-label"
-                                        >Resources Lost:</span
-                                    ><span
-                                        class="result-value"
-                                        id="team1ResLost"
-                                        >0</span
-                                    >
-                                </div>
+                    <!-- Live Battle Progress -->
+                    <div class="battle-progress" id="battleProgress">
+                        <div class="battle-timer" id="battleTimer">0.0s</div>
+                        <div class="progress-card team1">
+                            <div class="progress-header team1">
+                                <img
+                                    id="prog1Icon"
+                                    src=""
+                                    alt=""
+                                    style="display: none"
+                                />
+                                <span class="prog-name" id="prog1Name"
+                                    >Team 1 (Red)</span
+                                >
                             </div>
-                            <div class="result-team team2" id="resultTeam2">
-                                <h4>Team 2 (Blue)</h4>
-                                <div class="result-row">
-                                    <span class="result-label"
-                                        >Units Remaining:</span
-                                    ><span
-                                        class="result-value"
-                                        id="team2Remaining"
-                                        >0</span
-                                    >
-                                </div>
-                                <div class="result-row">
-                                    <span class="result-label"
-                                        >Total HP Left:</span
-                                    ><span class="result-value" id="team2HpLeft"
-                                        >0</span
-                                    >
-                                </div>
-                                <div class="result-row">
-                                    <span class="result-label"
-                                        >Starting Resources:</span
-                                    ><span
-                                        class="result-value"
-                                        id="team2StartRes"
-                                        >0</span
-                                    >
-                                </div>
-                                <div class="result-row">
-                                    <span class="result-label"
-                                        >Resources Lost:</span
-                                    ><span
-                                        class="result-value"
-                                        id="team2ResLost"
-                                        >0</span
-                                    >
-                                </div>
+                            <div class="progress-row">
+                                <span class="prog-label">Units</span
+                                ><span class="prog-value" id="prog1Units"
+                                    >—</span
+                                >
+                            </div>
+                            <div class="progress-row">
+                                <span class="prog-label">HP</span
+                                ><span class="prog-value" id="prog1Hp">—</span>
+                            </div>
+                            <div class="progress-row">
+                                <span class="prog-label">Resources</span
+                                ><span class="prog-value" id="prog1Res">—</span>
+                            </div>
+                            <div class="progress-row">
+                                <span class="prog-label">Res Lost</span
+                                ><span
+                                    class="prog-value"
+                                    id="prog1Lost"
+                                    style="color: var(--red)"
+                                    >—</span
+                                >
+                            </div>
+                        </div>
+                        <div class="progress-card team2">
+                            <div class="progress-header team2">
+                                <img
+                                    id="prog2Icon"
+                                    src=""
+                                    alt=""
+                                    style="display: none"
+                                />
+                                <span class="prog-name" id="prog2Name"
+                                    >Team 2 (Blue)</span
+                                >
+                            </div>
+                            <div class="progress-row">
+                                <span class="prog-label">Units</span
+                                ><span class="prog-value" id="prog2Units"
+                                    >—</span
+                                >
+                            </div>
+                            <div class="progress-row">
+                                <span class="prog-label">HP</span
+                                ><span class="prog-value" id="prog2Hp">—</span>
+                            </div>
+                            <div class="progress-row">
+                                <span class="prog-label">Resources</span
+                                ><span class="prog-value" id="prog2Res">—</span>
+                            </div>
+                            <div class="progress-row">
+                                <span class="prog-label">Res Lost</span
+                                ><span
+                                    class="prog-value"
+                                    id="prog2Lost"
+                                    style="color: var(--red)"
+                                    >—</span
+                                >
                             </div>
                         </div>
                     </div>
@@ -841,10 +786,10 @@
 
                 <div class="right-panel">
                     <div class="debug-panel" id="debugPanel">
-                        <h3>Combat Debug Info</h3>
+                        <h3>Damage Breakdown</h3>
                         <div id="debugContent">
                             <p style="color: var(--text-muted)">
-                                Start a battle to see combat stats
+                                Start a battle to see damage breakdown
                             </p>
                         </div>
                     </div>
@@ -2156,7 +2101,7 @@
 
                 render() {
                     const ctx = this.ctx;
-                    ctx.fillStyle = "#2c1e10";
+                    ctx.fillStyle = "#2a3a1a";
                     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
                     this.drawGrid(ctx);
 
@@ -2175,7 +2120,7 @@
                 }
 
                 drawGrid(ctx) {
-                    ctx.strokeStyle = "rgba(201,168,76,0.05)";
+                    ctx.strokeStyle = "rgba(255,255,255,0.04)";
                     ctx.lineWidth = 1;
                     for (let x = 0; x <= this.canvas.width; x += 50) {
                         ctx.beginPath();
@@ -2194,47 +2139,110 @@
                 drawWinner(ctx) {
                     ctx.fillStyle = "rgba(0,0,0,0.7)";
                     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-                    let text, color;
+                    let text, subtext, color;
                     if (this.winner === 1) {
-                        text = "Team 1 (Red) Wins!";
+                        const civ = currentBattle?.team1_civ || "Team 1";
+                        const unit = currentBattle?.team1_unit_name || "";
+                        text = `${civ} ${unit}`;
+                        subtext = "Victory!";
                         color = "#e74c3c";
                     } else if (this.winner === 2) {
-                        text = "Team 2 (Blue) Wins!";
+                        const civ = currentBattle?.team2_civ || "Team 2";
+                        const unit = currentBattle?.team2_unit_name || "";
+                        text = `${civ} ${unit}`;
+                        subtext = "Victory!";
                         color = "#3498db";
                     } else {
                         text = "Draw!";
+                        subtext = "";
                         color = "#c9a84c";
                     }
                     ctx.fillStyle = color;
-                    ctx.font = "bold 38px Cinzel, serif";
+                    ctx.font = "bold 34px Cinzel, serif";
                     ctx.textAlign = "center";
                     ctx.fillText(
                         text,
                         this.canvas.width / 2,
-                        this.canvas.height / 2,
+                        this.canvas.height / 2 - 10,
                     );
+                    if (subtext) {
+                        ctx.fillStyle = "#c9a84c";
+                        ctx.font = "bold 22px Cinzel, serif";
+                        ctx.fillText(
+                            subtext,
+                            this.canvas.width / 2,
+                            this.canvas.height / 2 + 22,
+                        );
+                    }
                     ctx.fillStyle = "#e8dcc8";
-                    ctx.font = "18px Inter";
+                    ctx.font = "16px Inter";
                     ctx.fillText(
                         `Battle time: ${this.battleTime.toFixed(1)}s`,
                         this.canvas.width / 2,
-                        this.canvas.height / 2 + 40,
+                        this.canvas.height / 2 + 50,
                     );
                 }
 
                 updateStats() {
-                    const team1Alive = this.team1.filter(
+                    const t1Alive = this.team1.filter(
                         (u) => u.state !== "dead",
-                    ).length;
-                    const team2Alive = this.team2.filter(
+                    );
+                    const t2Alive = this.team2.filter(
                         (u) => u.state !== "dead",
-                    ).length;
-                    document.getElementById("team1Alive").textContent =
-                        `${team1Alive}/${this.team1.length} alive`;
-                    document.getElementById("team2Alive").textContent =
-                        `${team2Alive}/${this.team2.length} alive`;
-                    document.getElementById("battleTime").textContent =
+                    );
+                    const t1Hp = t1Alive.reduce((s, u) => s + u.currentHp, 0);
+                    const t2Hp = t2Alive.reduce((s, u) => s + u.currentHp, 0);
+
+                    document.getElementById("battleTimer").textContent =
                         `${this.battleTime.toFixed(1)}s`;
+
+                    // Team 1 progress
+                    document.getElementById("prog1Units").textContent =
+                        `${t1Alive.length} / ${this.team1.length}`;
+                    document.getElementById("prog1Hp").textContent =
+                        `${Math.round(t1Hp)} / ${Math.round(this.team1.length * (this.team1Stats?.hp || 0))}`;
+                    if (currentBattle) {
+                        document.getElementById("prog1Res").textContent =
+                            currentBattle.team1_total_cost;
+                        const t1Dead = this.team1.length - t1Alive.length;
+                        const t1MaxHp =
+                            t1Alive.length * currentBattle.team1_max_hp;
+                        const t1HpLostPct =
+                            t1MaxHp > 0 ? (t1MaxHp - t1Hp) / t1MaxHp : 0;
+                        const t1Lost =
+                            t1Dead * currentBattle.team1_unit_cost +
+                            Math.round(
+                                t1Alive.length *
+                                    currentBattle.team1_unit_cost *
+                                    t1HpLostPct,
+                            );
+                        document.getElementById("prog1Lost").textContent =
+                            t1Lost;
+                    }
+
+                    // Team 2 progress
+                    document.getElementById("prog2Units").textContent =
+                        `${t2Alive.length} / ${this.team2.length}`;
+                    document.getElementById("prog2Hp").textContent =
+                        `${Math.round(t2Hp)} / ${Math.round(this.team2.length * (this.team2Stats?.hp || 0))}`;
+                    if (currentBattle) {
+                        document.getElementById("prog2Res").textContent =
+                            currentBattle.team2_total_cost;
+                        const t2Dead = this.team2.length - t2Alive.length;
+                        const t2MaxHp =
+                            t2Alive.length * currentBattle.team2_max_hp;
+                        const t2HpLostPct =
+                            t2MaxHp > 0 ? (t2MaxHp - t2Hp) / t2MaxHp : 0;
+                        const t2Lost =
+                            t2Dead * currentBattle.team2_unit_cost +
+                            Math.round(
+                                t2Alive.length *
+                                    currentBattle.team2_unit_cost *
+                                    t2HpLostPct,
+                            );
+                        document.getElementById("prog2Lost").textContent =
+                            t2Lost;
+                    }
                 }
 
                 updateDebugPanel() {
@@ -2250,24 +2258,92 @@
                     const dmg1to2 = unit1.getDamageAgainst(unit2, true);
                     const dmg2to1 = unit2.getDamageAgainst(unit1, true);
 
+                    // Build upgrade chain from stat_chain data
+                    const buildUpgradeChain = (chain, classId) => {
+                        if (!chain || chain.length === 0) return [];
+                        const steps = [];
+                        let prevVal = null;
+                        for (const step of chain) {
+                            const attacks = step.attacks_json
+                                ? JSON.parse(step.attacks_json)
+                                : {};
+                            const armors = step.armors_json
+                                ? JSON.parse(step.armors_json)
+                                : {};
+                            const atkVal = attacks[classId] ?? null;
+                            const armorVal = armors[classId] ?? null;
+                            if (prevVal === null) {
+                                // Base stats
+                                steps.push({
+                                    tech: step.tech,
+                                    atk: atkVal,
+                                    armor: armorVal,
+                                    type: step.type,
+                                });
+                            } else {
+                                // Only record if the value changed
+                                if (
+                                    atkVal !== prevVal.atk ||
+                                    armorVal !== prevVal.armor
+                                ) {
+                                    steps.push({
+                                        tech: step.tech,
+                                        atk: atkVal,
+                                        armor: armorVal,
+                                        type: step.type,
+                                    });
+                                }
+                            }
+                            prevVal = { atk: atkVal, armor: armorVal };
+                        }
+                        return steps;
+                    };
+
                     const buildFormula = (
                         attacker,
                         defender,
                         dmgResult,
-                        stats,
+                        atkStats,
+                        defStats,
                     ) => {
                         const isRanged = attacker.isRanged();
                         const baseClass = isRanged ? "3" : "4";
                         const baseAtk =
-                            attacker.attacks[baseClass] || stats.attack;
+                            attacker.attacks[baseClass] || atkStats.attack;
+                        const defArmorClass = isRanged ? "3" : "4";
                         const defArmor = isRanged
-                            ? defender.armors["3"] || defender.pierceArmor || 0
-                            : defender.armors["4"] || defender.meleeArmor || 0;
+                            ? (defender.armors["3"] ??
+                              defender.pierceArmor ??
+                              0)
+                            : (defender.armors["4"] ??
+                              defender.meleeArmor ??
+                              0);
 
-                        let html = `<div class="formula-section"><div class="formula-label">Total Attack:</div>`;
-                        html += `<div class="formula-value"><span class="attack-val">${baseAtk}</span>`;
-                        html += `<span class="formula-note">(${isRanged ? "pierce" : "melee"})</span></div></div>`;
+                        let html = "";
 
+                        // === ATTACK SECTION ===
+                        html += `<div class="formula-section"><div class="formula-label">Total Attack (${isRanged ? "Pierce" : "Melee"}):</div>`;
+                        html += `<div class="formula-value"><span class="attack-val">${baseAtk}</span></div>`;
+                        // Show attack upgrade chain
+                        const atkChain = buildUpgradeChain(
+                            atkStats.stat_chain,
+                            baseClass,
+                        );
+                        if (atkChain.length > 0) {
+                            html += `<div style="margin-top:4px;padding-left:8px;">`;
+                            for (const step of atkChain) {
+                                const val = step.atk ?? 0;
+                                const label =
+                                    step.type === "base"
+                                        ? step.tech
+                                        : step.tech;
+                                html += `<div style="font-size:0.65rem;color:var(--text-muted);">${label}: <span style="color:#f39c12">${val}</span></div>`;
+                            }
+                            html += `</div>`;
+                        }
+                        html += `</div>`;
+
+                        // === BONUS ATTACK SECTION ===
                         const bonuses = dmgResult.breakdown.filter(
                             (b) =>
                                 b.applies &&
@@ -2276,20 +2352,52 @@
                                 b.damage > 0,
                         );
                         if (bonuses.length > 0) {
-                            html += `<div class="formula-section"><div class="formula-label">Bonus Damage:</div><div class="formula-value">`;
-                            html += bonuses
-                                .map(
-                                    (b) =>
-                                        `<span class="bonus-item">+${Math.max(0, b.attack - (b.armor || 0))} <span class="class-tag">${b.className}</span></span>`,
-                                )
-                                .join(" ");
+                            html += `<div class="formula-section"><div class="formula-label">+ Bonus Attack:</div><div class="formula-value" style="flex-direction:column;align-items:flex-start;gap:2px;">`;
+                            for (const b of bonuses) {
+                                html += `<div class="bonus-item">+${b.attack}`;
+                                if (b.armor && b.armor > 0)
+                                    html += ` <span style="color:var(--team2);font-size:0.7rem">&minus;${b.armor}</span>`;
+                                html += ` = <span style="color:#fff">${b.damage}</span> <span class="class-tag">${b.className}</span></div>`;
+                            }
                             html += `</div></div>`;
                         }
 
-                        html += `<div class="formula-section"><div class="formula-label">Target Defense:</div>`;
-                        html += `<div class="formula-value"><span class="armor-val">&minus;${defArmor}</span>`;
-                        html += `<span class="formula-note">(${isRanged ? "pierce" : "melee"} armor)</span></div></div>`;
+                        // === DEFENSE SECTION ===
+                        html += `<div class="formula-section"><div class="formula-label">&minus; Total Defense (${isRanged ? "Pierce" : "Melee"} Armor):</div>`;
+                        html += `<div class="formula-value"><span class="armor-val">${defArmor}</span></div>`;
+                        // Show defense upgrade chain
+                        const defChain = buildUpgradeChain(
+                            defStats.stat_chain,
+                            defArmorClass,
+                        );
+                        if (defChain.length > 0) {
+                            html += `<div style="margin-top:4px;padding-left:8px;">`;
+                            for (const step of defChain) {
+                                const val = step.armor ?? 0;
+                                html += `<div style="font-size:0.65rem;color:var(--text-muted);">${step.tech}: <span style="color:var(--team2)">${val}</span></div>`;
+                            }
+                            html += `</div>`;
+                        }
+                        html += `</div>`;
 
+                        // === BONUS ARMOR SECTION ===
+                        const defBonuses = dmgResult.breakdown.filter(
+                            (b) =>
+                                b.applies &&
+                                b.classId !== "3" &&
+                                b.classId !== "4" &&
+                                b.armor > 0 &&
+                                b.damage < b.attack,
+                        );
+                        if (defBonuses.length > 0) {
+                            html += `<div class="formula-section"><div class="formula-label">&minus; Bonus Armor:</div><div class="formula-value" style="flex-direction:column;align-items:flex-start;gap:2px;">`;
+                            for (const b of defBonuses) {
+                                html += `<div><span style="color:var(--team2)">${b.armor}</span> <span class="class-tag">${b.className}</span></div>`;
+                            }
+                            html += `</div></div>`;
+                        }
+
+                        // === TOTAL ===
                         html += `<div class="formula-result"><div class="formula-label">Damage per Hit:</div>`;
                         html += `<div class="formula-total">${dmgResult.total}</div></div>`;
                         return html;
@@ -2299,14 +2407,24 @@
                     html += `<div class="debug-section team1"><h4>${this.team1Stats.civ} ${this.team1Stats.name}</h4>`;
                     html += `<h5 style="color:var(--text-muted);margin-bottom:8px;font-size:0.7rem">&rarr; vs ${this.team2Stats.civ} ${this.team2Stats.name}</h5>`;
                     html +=
-                        buildFormula(unit1, unit2, dmg1to2, this.team1Stats) +
-                        `</div>`;
+                        buildFormula(
+                            unit1,
+                            unit2,
+                            dmg1to2,
+                            this.team1Stats,
+                            this.team2Stats,
+                        ) + `</div>`;
 
                     html += `<div class="debug-section team2"><h4>${this.team2Stats.civ} ${this.team2Stats.name}</h4>`;
                     html += `<h5 style="color:var(--text-muted);margin-bottom:8px;font-size:0.7rem">&rarr; vs ${this.team1Stats.civ} ${this.team1Stats.name}</h5>`;
                     html +=
-                        buildFormula(unit2, unit1, dmg2to1, this.team2Stats) +
-                        `</div>`;
+                        buildFormula(
+                            unit2,
+                            unit1,
+                            dmg2to1,
+                            this.team2Stats,
+                            this.team1Stats,
+                        ) + `</div>`;
 
                     document.getElementById("debugContent").innerHTML = html;
                 }
@@ -2352,9 +2470,6 @@
                             "Pause";
                         document.getElementById("resetBtn").disabled = true;
                         document.getElementById("startBtn").disabled = false;
-                        document
-                            .getElementById("battleResults")
-                            .classList.remove("visible");
                     });
                 document
                     .getElementById("speedSlider")
@@ -2404,9 +2519,6 @@
                     document.getElementById("startBtn").disabled = true;
                     document.getElementById("startBtn").textContent =
                         "Loading...";
-                    document
-                        .getElementById("battleResults")
-                        .classList.remove("visible");
 
                     const armyMode = document.querySelector(
                         'input[name="armyMode"]:checked',
@@ -2498,6 +2610,22 @@
                         winner: null,
                     };
 
+                    // Populate progress headers
+                    document.getElementById("prog1Name").textContent =
+                        `${s1.civ} ${currentBattle.team1_unit_name}`;
+                    document.getElementById("prog2Name").textContent =
+                        `${s2.civ} ${currentBattle.team2_unit_name}`;
+                    const icon1 = document.getElementById("prog1Icon");
+                    const icon2 = document.getElementById("prog2Icon");
+                    if (unitImages[1]?.src) {
+                        icon1.src = unitImages[1].src;
+                        icon1.style.display = "";
+                    }
+                    if (unitImages[2]?.src) {
+                        icon2.src = unitImages[2].src;
+                        icon2.style.display = "";
+                    }
+
                     document.getElementById("startBtn").textContent =
                         "Start Battle";
                     document.getElementById("pauseBtn").disabled = false;
@@ -2513,75 +2641,6 @@
 
             function updateBattleWinner(winner) {
                 if (currentBattle) currentBattle.winner = winner;
-                showBattleResults(winner);
-            }
-
-            function showBattleResults(winner) {
-                if (!currentBattle || !simulation.team1 || !simulation.team2)
-                    return;
-
-                const team1Alive = simulation.team1.filter(
-                    (u) => u.state !== "dead",
-                );
-                const team2Alive = simulation.team2.filter(
-                    (u) => u.state !== "dead",
-                );
-                const team1Rem = team1Alive.length,
-                    team2Rem = team2Alive.length;
-                const team1Hp = team1Alive.reduce((s, u) => s + u.currentHp, 0);
-                const team2Hp = team2Alive.reduce((s, u) => s + u.currentHp, 0);
-
-                const team1Dead = currentBattle.team1_count - team1Rem;
-                const team2Dead = currentBattle.team2_count - team2Rem;
-                const t1MaxHp = team1Rem * currentBattle.team1_max_hp;
-                const t2MaxHp = team2Rem * currentBattle.team2_max_hp;
-                const t1HpLostPct =
-                    t1MaxHp > 0 ? (t1MaxHp - team1Hp) / t1MaxHp : 0;
-                const t2HpLostPct =
-                    t2MaxHp > 0 ? (t2MaxHp - team2Hp) / t2MaxHp : 0;
-                const team1ResLost =
-                    team1Dead * currentBattle.team1_unit_cost +
-                    Math.round(
-                        team1Rem * currentBattle.team1_unit_cost * t1HpLostPct,
-                    );
-                const team2ResLost =
-                    team2Dead * currentBattle.team2_unit_cost +
-                    Math.round(
-                        team2Rem * currentBattle.team2_unit_cost * t2HpLostPct,
-                    );
-
-                document.getElementById("team1Remaining").textContent =
-                    `${team1Rem} / ${currentBattle.team1_count}`;
-                document.getElementById("team2Remaining").textContent =
-                    `${team2Rem} / ${currentBattle.team2_count}`;
-                document.getElementById("team1HpLeft").textContent =
-                    Math.round(team1Hp);
-                document.getElementById("team2HpLeft").textContent =
-                    Math.round(team2Hp);
-                document.getElementById("team1StartRes").textContent =
-                    currentBattle.team1_total_cost;
-                document.getElementById("team2StartRes").textContent =
-                    currentBattle.team2_total_cost;
-                document.getElementById("team1ResLost").textContent =
-                    team1ResLost;
-                document.getElementById("team2ResLost").textContent =
-                    team2ResLost;
-
-                const r1 = document.getElementById("resultTeam1");
-                const r2 = document.getElementById("resultTeam2");
-                r1.classList.remove("winner", "loser");
-                r2.classList.remove("winner", "loser");
-                if (winner === 1) {
-                    r1.classList.add("winner");
-                    r2.classList.add("loser");
-                } else if (winner === 2) {
-                    r1.classList.add("loser");
-                    r2.classList.add("winner");
-                }
-
-                document
-                    .getElementById("battleResults")
-                    .classList.add("visible");
             }
 
             document.addEventListener("keydown", (e) => {

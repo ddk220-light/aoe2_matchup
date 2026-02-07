@@ -1013,6 +1013,25 @@ def api_ref_combat_unit(civ_name, unit_slug):
         elif p["projectile_type"] == "extra":
             extra_proj = dict(p)
 
+    # Get stat chain for upgrade breakdown (attack/armor progression)
+    rc.execute(
+        """SELECT step_order, tech_name, tech_type, attack, melee_armor, pierce_armor,
+                  attacks_json, armors_json
+           FROM ref_stat_chain WHERE ref_unit_id=? ORDER BY step_order""",
+        (uid,),
+    )
+    stat_chain = []
+    for sc in rc.fetchall():
+        stat_chain.append(
+            {
+                "step": sc["step_order"],
+                "tech": sc["tech_name"],
+                "type": sc["tech_type"],
+                "attacks_json": sc["attacks_json"],
+                "armors_json": sc["armors_json"],
+            }
+        )
+
     ref_conn.close()
 
     # Build combat-ready response matching BattleUnit constructor shape
@@ -1073,6 +1092,8 @@ def api_ref_combat_unit(civ_name, unit_slug):
         "attack_bonus_per_kill": 0,
         "first_attack_extra_projectiles": 0,
         "hp_transform_threshold": 0,
+        # Upgrade chain for debug breakdown
+        "stat_chain": stat_chain,
     }
 
     return jsonify(result)

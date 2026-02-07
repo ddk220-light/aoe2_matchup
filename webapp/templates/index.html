@@ -724,23 +724,42 @@
                 }
 
                 // Compute derived fields
-                const enriched = rows.map((r) => ({
-                    ...r,
-                    dps:
+                const enriched = rows.map((r) => {
+                    const dps =
                         r.final_reload_time > 0
                             ? Math.round(
                                   (r.final_attack / r.final_reload_time) * 10,
                               ) / 10
-                            : 0,
-                    total_cost:
+                            : 0;
+                    const totalCost =
                         (r.final_cost_food || 0) +
                         (r.final_cost_wood || 0) +
-                        (r.final_cost_gold || 0),
-                    total_upgrade_cost:
-                        (r.upgrade_cost_food || 0) +
-                        (r.upgrade_cost_wood || 0) +
-                        (r.upgrade_cost_gold || 0),
-                }));
+                        (r.final_cost_gold || 0);
+                    const totalArmor =
+                        1 +
+                        (r.final_melee_armor || 0) +
+                        (r.final_pierce_armor || 0);
+                    return {
+                        ...r,
+                        dps,
+                        total_cost: totalCost,
+                        total_upgrade_cost:
+                            (r.upgrade_cost_food || 0) +
+                            (r.upgrade_cost_wood || 0) +
+                            (r.upgrade_cost_gold || 0),
+                        dps_per_cost:
+                            totalCost > 0
+                                ? Math.round((dps / totalCost) * 1000) / 1000
+                                : 0,
+                        ehp_per_cost:
+                            totalCost > 0
+                                ? Math.round(
+                                      ((r.final_hp * totalArmor) / totalCost) *
+                                          10,
+                                  ) / 10
+                                : 0,
+                    };
+                });
 
                 // Sort
                 enriched.sort((a, b) => {
@@ -758,9 +777,11 @@
 
                 // Compute medians for color coding (exclude unique units for baseline)
                 const statCols = [
+                    "dps_per_cost",
+                    "ehp_per_cost",
+                    "dps",
                     "final_hp",
                     "final_attack",
-                    "dps",
                     "final_melee_armor",
                     "final_pierce_armor",
                     "final_speed",
@@ -778,9 +799,11 @@
 
                 // Higher is better for these columns
                 const higherIsBetter = {
+                    dps_per_cost: true,
+                    ehp_per_cost: true,
+                    dps: true,
                     final_hp: true,
                     final_attack: true,
-                    dps: true,
                     final_melee_armor: true,
                     final_pierce_armor: true,
                     final_speed: true,
@@ -798,9 +821,11 @@
                 const columns = [
                     { key: "civ_name", label: "Civ" },
                     { key: "unit_name", label: "Unit" },
+                    { key: "dps_per_cost", label: "DPS/Cost" },
+                    { key: "ehp_per_cost", label: "EHP/Cost" },
+                    { key: "dps", label: "DPS" },
                     { key: "final_hp", label: "HP" },
                     { key: "final_attack", label: "Atk" },
-                    { key: "dps", label: "DPS" },
                     { key: "final_melee_armor", label: "M.Arm" },
                     { key: "final_pierce_armor", label: "P.Arm" },
                     { key: "final_speed", label: "Speed" },
@@ -855,9 +880,11 @@
                         ${bonuses ? `<div class="tooltip">${bonuses}</div>` : ""}
                     </div></td>`;
                     // Stats
+                    html += `<td class="${valClass("dps_per_cost", row.dps_per_cost)}">${row.dps_per_cost.toFixed(3)}</td>`;
+                    html += `<td class="${valClass("ehp_per_cost", row.ehp_per_cost)}">${row.ehp_per_cost.toFixed(1)}</td>`;
+                    html += `<td class="${valClass("dps", row.dps)}">${row.dps.toFixed(1)}</td>`;
                     html += `<td class="${valClass("final_hp", row.final_hp)}">${Math.round(row.final_hp)}</td>`;
                     html += `<td class="${valClass("final_attack", row.final_attack)}">${Math.round(row.final_attack)}</td>`;
-                    html += `<td class="${valClass("dps", row.dps)}">${row.dps.toFixed(1)}</td>`;
                     html += `<td class="${valClass("final_melee_armor", row.final_melee_armor)}">${Math.round(row.final_melee_armor)}</td>`;
                     html += `<td class="${valClass("final_pierce_armor", row.final_pierce_armor)}">${Math.round(row.final_pierce_armor)}</td>`;
                     html += `<td class="${valClass("final_speed", row.final_speed)}">${row.final_speed.toFixed(2)}</td>`;

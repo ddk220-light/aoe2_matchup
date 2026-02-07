@@ -3,1431 +3,889 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>AoE2 Unit Analyzer</title>
+        <title>Unit Rankings — AoE2 Unit Analyzer</title>
         <link
-            href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Open+Sans:wght@400;600&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&display=swap"
             rel="stylesheet"
         />
         <style>
             :root {
-                --primary-color: #8b4513;
-                --secondary-color: #daa520;
-                --bg-color: #1a1a2e;
-                --card-bg: #16213e;
-                --text-color: #e8e8e8;
-                --highlight-better: #2ecc71;
-                --highlight-worse: #e74c3c;
-                --highlight-unique: #f39c12;
-                --feudal-color: #3498db;
-                --castle-color: #9b59b6;
-                --imperial-color: #e74c3c;
+                --gold: #c9a84c;
+                --gold-light: #dbb960;
+                --gold-dark: #a07830;
+                --red-accent: #7a1a1a;
+                --red-deep: #4a0e0e;
+                --bg: #2c1e10;
+                --bg-deep: #1a1008;
+                --card-bg: #3a2a18;
+                --card-border: #5a4228;
+                --text: #e8dcc8;
+                --text-muted: #a89878;
+                --parchment: #d4c4a0;
+                --green: #5a9a3a;
+                --red: #a83030;
+                --team1: #e74c3c;
+                --team2: #3498db;
             }
-
             * {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
             }
-
             body {
-                font-family: "Open Sans", sans-serif;
-                background: linear-gradient(
-                    135deg,
-                    var(--bg-color) 0%,
-                    #0f0f23 100%
-                );
-                color: var(--text-color);
+                font-family: "Inter", sans-serif;
+                background: var(--bg-deep);
+                color: var(--text);
                 min-height: 100vh;
-                padding: 20px;
+                line-height: 1.5;
+            }
+
+            .page-header {
+                padding: 16px 20px;
+                background: linear-gradient(
+                    180deg,
+                    var(--red-deep) 0%,
+                    var(--bg) 100%
+                );
+                border-bottom: 3px solid;
+                border-image: linear-gradient(
+                        90deg,
+                        transparent 5%,
+                        var(--gold-dark) 30%,
+                        var(--gold) 50%,
+                        var(--gold-dark) 70%,
+                        transparent 95%
+                    )
+                    1;
+                text-align: center;
+            }
+            .page-header h1 {
+                font-family: "Cinzel", serif;
+                font-size: 1.6rem;
+                color: var(--gold);
+                margin-bottom: 4px;
+            }
+            .page-header .subtitle {
+                font-size: 0.85rem;
+                color: var(--text-muted);
+            }
+            .nav-links {
+                display: flex;
+                gap: 10px;
+                justify-content: center;
+                margin-top: 10px;
+            }
+            .nav-link {
+                color: var(--text);
+                text-decoration: none;
+                padding: 6px 14px;
+                border-radius: 5px;
+                background: rgba(255, 255, 255, 0.05);
+                font-size: 0.8rem;
+                transition: all 0.2s;
+            }
+            .nav-link:hover {
+                background: rgba(201, 168, 76, 0.2);
+            }
+            .nav-link.active {
+                background: var(--gold-dark);
+                color: var(--bg-deep);
+                font-weight: 600;
             }
 
             .container {
-                max-width: 1600px;
+                max-width: 1400px;
                 margin: 0 auto;
+                padding: 16px 20px;
             }
 
-            header {
-                text-align: center;
-                padding: 30px 0;
-                margin-bottom: 30px;
-            }
-
-            h1 {
-                font-family: "Cinzel", serif;
-                font-size: 3rem;
-                color: var(--secondary-color);
-                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-                margin-bottom: 10px;
-            }
-
-            .subtitle {
-                font-size: 1.1rem;
-                color: #888;
-            }
-
-            /* Age tabs */
-            .age-tabs {
+            /* Age toggle */
+            .age-toggle {
                 display: flex;
+                gap: 8px;
                 justify-content: center;
-                gap: 10px;
-                margin-bottom: 20px;
+                margin-bottom: 16px;
             }
-
-            .age-tab {
-                padding: 12px 30px;
-                font-size: 1.1rem;
+            .age-btn {
                 font-family: "Cinzel", serif;
+                font-size: 0.85rem;
+                padding: 8px 24px;
+                border: 1px solid var(--card-border);
+                border-radius: 6px;
                 background: var(--card-bg);
-                color: var(--text-color);
-                border: 2px solid transparent;
-                border-radius: 8px;
+                color: var(--text-muted);
                 cursor: pointer;
-                transition: all 0.3s ease;
+                transition: all 0.2s;
             }
-
-            .age-tab:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            .age-btn:hover {
+                border-color: var(--gold-dark);
+                color: var(--text);
             }
-
-            .age-tab.active {
+            .age-btn.active {
+                background: var(--gold-dark);
+                color: var(--bg-deep);
+                border-color: var(--gold);
                 font-weight: 600;
             }
 
-            .age-tab[data-age="feudal"] {
-                border-color: var(--feudal-color);
+            /* Building sections */
+            .building-section {
+                margin-bottom: 16px;
             }
-            .age-tab[data-age="feudal"].active {
-                background: var(--feudal-color);
-                color: white;
-            }
-
-            .age-tab[data-age="castle"] {
-                border-color: var(--castle-color);
-            }
-            .age-tab[data-age="castle"].active {
-                background: var(--castle-color);
-                color: white;
-            }
-
-            .age-tab[data-age="imperial"] {
-                border-color: var(--imperial-color);
-            }
-            .age-tab[data-age="imperial"].active {
-                background: var(--imperial-color);
-                color: white;
-            }
-
-            .unit-selector {
+            .building-header {
                 display: flex;
-                flex-wrap: wrap;
-                gap: 12px;
-                justify-content: center;
-                margin-bottom: 40px;
-                padding: 20px;
-                background: var(--card-bg);
-                border-radius: 15px;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            }
-
-            .unit-btn {
-                padding: 12px 24px;
-                font-size: 1rem;
-                font-family: "Cinzel", serif;
-                background: linear-gradient(145deg, #2d2d5a, #1a1a3e);
-                color: var(--text-color);
-                border: 2px solid transparent;
-                border-radius: 8px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                position: relative;
-                overflow: hidden;
-            }
-
-            .unit-btn:hover {
-                transform: translateY(-2px);
-                border-color: var(--secondary-color);
-                box-shadow: 0 5px 15px rgba(218, 165, 32, 0.3);
-            }
-
-            .unit-btn.active {
-                background: linear-gradient(
-                    145deg,
-                    var(--secondary-color),
-                    #b8860b
-                );
-                color: #1a1a2e;
-                font-weight: 600;
-                border-color: var(--secondary-color);
-            }
-
-            .unit-btn::before {
-                content: "";
-                position: absolute;
-                top: 0;
-                left: -100%;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(
-                    90deg,
-                    transparent,
-                    rgba(255, 255, 255, 0.1),
-                    transparent
-                );
-                transition: left 0.5s;
-            }
-
-            .unit-btn:hover::before {
-                left: 100%;
-            }
-
-            .table-container {
-                background: var(--card-bg);
-                border-radius: 15px;
-                padding: 25px;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-                overflow-x: auto;
-                animation: fadeIn 0.5s ease;
-            }
-
-            @keyframes fadeIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(20px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            .table-header {
-                display: flex;
-                justify-content: space-between;
                 align-items: center;
-                margin-bottom: 20px;
-                flex-wrap: wrap;
-                gap: 10px;
+                gap: 8px;
+                margin-bottom: 8px;
+            }
+            .building-header img {
+                width: 24px;
+                height: 24px;
+                border-radius: 4px;
+            }
+            .building-header h3 {
+                font-family: "Cinzel", serif;
+                font-size: 0.95rem;
+                color: var(--gold);
             }
 
+            /* Unit line cards */
+            .line-grid {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-bottom: 8px;
+            }
+            .line-card {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 14px;
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.2s;
+                min-width: 140px;
+            }
+            .line-card:hover {
+                border-color: var(--gold-dark);
+                background: rgba(201, 168, 76, 0.1);
+            }
+            .line-card.active {
+                border-color: var(--gold);
+                background: rgba(201, 168, 76, 0.15);
+                box-shadow: 0 0 8px rgba(201, 168, 76, 0.2);
+            }
+            .line-card img {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                border: 2px solid var(--card-border);
+                object-fit: cover;
+                background: var(--bg);
+            }
+            .line-card .line-name {
+                font-size: 0.8rem;
+                font-weight: 500;
+            }
+            .line-card .line-unique {
+                color: var(--gold);
+                font-size: 0.65rem;
+            }
+            .line-card.unavailable {
+                opacity: 0.35;
+                pointer-events: none;
+            }
+
+            /* Table container */
+            .table-container {
+                margin-top: 20px;
+                overflow-x: auto;
+            }
             .table-title {
                 font-family: "Cinzel", serif;
-                font-size: 1.8rem;
-                color: var(--secondary-color);
-            }
-
-            .table-info {
+                font-size: 1.1rem;
+                color: var(--gold);
+                margin-bottom: 10px;
                 display: flex;
-                gap: 15px;
                 align-items: center;
+                gap: 8px;
+            }
+            .table-title img {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
             }
 
-            .civ-count {
-                background: rgba(218, 165, 32, 0.2);
-                padding: 8px 16px;
-                border-radius: 20px;
-                font-size: 0.9rem;
-            }
-
-            .age-badge {
-                padding: 8px 16px;
-                border-radius: 20px;
-                font-size: 0.9rem;
-                font-weight: 600;
-            }
-
-            .age-badge.feudal {
-                background: var(--feudal-color);
-            }
-            .age-badge.castle {
-                background: var(--castle-color);
-            }
-            .age-badge.imperial {
-                background: var(--imperial-color);
-            }
-
-            table {
+            /* Stats table */
+            .stats-table {
                 width: 100%;
-                border-collapse: separate;
-                border-spacing: 0;
-                font-size: 0.9rem;
+                border-collapse: collapse;
+                font-size: 0.8rem;
+                min-width: 900px;
             }
-
-            thead th {
-                background: linear-gradient(145deg, #3d3d7a, #2a2a5e);
-                padding: 15px 12px;
+            .stats-table th {
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                padding: 8px 10px;
                 text-align: left;
-                font-weight: 600;
-                color: var(--secondary-color);
+                font-family: "Cinzel", serif;
+                font-size: 0.75rem;
+                color: var(--gold);
                 cursor: pointer;
                 user-select: none;
                 white-space: nowrap;
                 position: sticky;
                 top: 0;
-                transition: background 0.2s;
+                z-index: 1;
             }
-
-            thead th:hover {
-                background: linear-gradient(145deg, #4d4d8a, #3a3a6e);
+            .stats-table th:hover {
+                background: rgba(201, 168, 76, 0.15);
             }
-
-            thead th::after {
-                content: "";
-                margin-left: 8px;
-                opacity: 0.5;
+            .stats-table th .sort-arrow {
+                font-size: 0.65rem;
+                margin-left: 4px;
+                opacity: 0.4;
             }
-
-            thead th.sort-asc::after {
-                content: "▲";
+            .stats-table th.sorted .sort-arrow {
                 opacity: 1;
+                color: var(--gold-light);
+            }
+            .stats-table td {
+                border: 1px solid var(--card-border);
+                padding: 6px 10px;
+                white-space: nowrap;
+            }
+            .stats-table tr {
+                background: var(--bg-deep);
+                transition: background 0.15s;
+            }
+            .stats-table tr:hover {
+                background: rgba(201, 168, 76, 0.08);
+            }
+            .stats-table tr.unique-row {
+                border-left: 3px solid var(--gold);
+                background: rgba(201, 168, 76, 0.05);
+            }
+            .stats-table tr.unique-row td:first-child {
+                padding-left: 20px;
+            }
+            .stats-table tr.missing-row {
+                opacity: 0.35;
             }
 
-            thead th.sort-desc::after {
-                content: "▼";
-                opacity: 1;
+            /* Cell coloring */
+            .val-high {
+                color: #6fbf6f;
+            }
+            .val-low {
+                color: #bf6f6f;
             }
 
-            thead th:first-child {
-                border-top-left-radius: 10px;
-            }
-
-            thead th:last-child {
-                border-top-right-radius: 10px;
-            }
-
-            tbody tr {
-                transition: background 0.2s;
-            }
-
-            tbody tr:nth-child(even) {
-                background: rgba(255, 255, 255, 0.03);
-            }
-
-            tbody tr:hover {
-                background: rgba(218, 165, 32, 0.1);
-            }
-
-            td {
-                padding: 12px;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                position: relative;
-            }
-
-            td.civ-name {
-                font-weight: 600;
-                color: var(--secondary-color);
-                cursor: help;
-            }
-
-            td.civ-name.has-bonus {
-                text-decoration: underline dotted;
-                text-underline-offset: 3px;
-            }
-
-            td.unique-better {
-                background: rgba(46, 204, 113, 0.2);
-                color: var(--highlight-better);
-                font-weight: 600;
-                cursor: help;
-            }
-
-            td.unique-worse {
-                background: rgba(231, 76, 60, 0.2);
-                color: var(--highlight-worse);
-                font-weight: 600;
-                cursor: help;
-            }
-
-            td.unique-different {
-                background: rgba(243, 156, 18, 0.2);
-                color: var(--highlight-unique);
-                font-weight: 600;
-            }
-
-            /* Generic/grouped row styles */
-            tr.generic-row {
-                background: rgba(100, 100, 150, 0.1);
-            }
-
-            tr.generic-row td.civ-name {
-                color: #aaa;
-                font-style: italic;
-            }
-
-            /* Missing civs row styles */
-            tr.missing-row {
-                background: rgba(80, 80, 80, 0.2);
-            }
-
-            tr.missing-row td {
-                color: #666;
-                font-style: italic;
-            }
-
-            tr.missing-row td.civ-name {
-                color: #888;
-                cursor: help;
-            }
-
-            .legend {
-                display: flex;
-                gap: 20px;
-                justify-content: center;
-                margin-bottom: 20px;
-                flex-wrap: wrap;
-            }
-
-            .legend-item {
+            /* Civ cell */
+            .civ-cell {
                 display: flex;
                 align-items: center;
-                gap: 8px;
-                font-size: 0.85rem;
+                gap: 6px;
             }
-
-            .legend-color {
-                width: 20px;
-                height: 20px;
-                border-radius: 4px;
-            }
-
-            .legend-better {
-                background: rgba(46, 204, 113, 0.5);
-            }
-            .legend-worse {
-                background: rgba(231, 76, 60, 0.5);
-            }
-
-            .loading {
-                text-align: center;
-                padding: 60px;
-                font-size: 1.2rem;
-                color: #888;
-            }
-
-            .loading::after {
-                content: "";
-                animation: dots 1.5s infinite;
-            }
-
-            @keyframes dots {
-                0%,
-                20% {
-                    content: ".";
-                }
-                40% {
-                    content: "..";
-                }
-                60%,
-                100% {
-                    content: "...";
-                }
-            }
-
-            .no-unit {
-                text-align: center;
-                padding: 80px 20px;
-                color: #666;
-            }
-
-            .no-unit h2 {
-                font-family: "Cinzel", serif;
-                font-size: 1.5rem;
-                margin-bottom: 10px;
-            }
-
-            /* Tooltip styles */
-            .tooltip {
-                position: fixed;
-                background: linear-gradient(145deg, #2a2a4a, #1a1a3a);
-                border: 1px solid var(--secondary-color);
-                color: white;
-                padding: 10px 14px;
-                border-radius: 8px;
-                font-size: 0.85rem;
-                max-width: 350px;
-                z-index: 1000;
-                pointer-events: none;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-                line-height: 1.4;
-            }
-
-            .tooltip-title {
-                color: var(--secondary-color);
-                font-weight: 600;
-                margin-bottom: 5px;
-                font-size: 0.9rem;
-            }
-
-            .tooltip-list {
-                max-height: 200px;
-                overflow-y: auto;
-                margin-top: 5px;
-            }
-
-            .tooltip-baseline {
-                color: #aaa;
-                font-size: 0.8rem;
-                margin-top: 5px;
-                padding-top: 5px;
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
-            }
-
-            /* Navigation links */
-            .nav-links {
-                display: flex;
-                gap: 15px;
-                justify-content: center;
-                margin-top: 15px;
-            }
-
-            .nav-link {
-                color: var(--text-color);
-                text-decoration: none;
-                padding: 8px 16px;
-                border-radius: 5px;
-                background: rgba(255, 255, 255, 0.1);
-                transition: all 0.3s;
-            }
-
-            .nav-link:hover {
-                background: rgba(218, 165, 32, 0.3);
-            }
-
-            .nav-link.active {
-                background: var(--secondary-color);
-                color: #1a1a2e;
-                font-weight: 600;
-            }
-
-            .under-construction {
-                text-align: center;
-                padding: 100px 20px;
-                margin-top: 60px;
-            }
-            .under-construction h2 {
-                font-family: "Cinzel", serif;
-                font-size: 2rem;
-                color: var(--secondary-color);
-                margin-bottom: 15px;
-            }
-            .under-construction p {
-                font-size: 1.1rem;
-                color: #888;
-                max-width: 500px;
-                margin: 0 auto;
-            }
-            .main-content {
-                display: none;
-            }
-
-            /* Comment indicator */
-            td.has-comment {
-                position: relative;
-            }
-
-            td.has-comment::after {
-                content: "";
-                position: absolute;
-                top: 4px;
-                right: 4px;
-                width: 8px;
-                height: 8px;
-                background: #f39c12;
+            .civ-cell img {
+                width: 22px;
+                height: 22px;
                 border-radius: 50%;
+                object-fit: cover;
             }
 
-            /* Comment modal */
-            .modal-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.7);
+            /* Unit cell */
+            .unit-cell {
                 display: flex;
                 align-items: center;
-                justify-content: center;
-                z-index: 2000;
+                gap: 6px;
+                position: relative;
+            }
+            .unit-cell img {
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                border: 1px solid var(--card-border);
+                object-fit: cover;
+                background: var(--bg);
             }
 
-            .modal {
-                background: var(--card-bg);
-                border-radius: 15px;
-                padding: 25px;
-                max-width: 500px;
-                width: 90%;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            /* Tooltip */
+            .unit-cell .tooltip {
+                display: none;
+                position: absolute;
+                bottom: 100%;
+                left: 0;
+                background: var(--bg);
+                border: 1px solid var(--gold-dark);
+                border-radius: 6px;
+                padding: 6px 10px;
+                font-size: 0.7rem;
+                color: var(--text-muted);
+                white-space: normal;
+                max-width: 300px;
+                z-index: 10;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
             }
-
-            .modal h3 {
-                font-family: "Cinzel", serif;
-                color: var(--secondary-color);
-                margin-bottom: 15px;
-            }
-
-            .modal-info {
-                color: #aaa;
-                font-size: 0.9rem;
-                margin-bottom: 15px;
-            }
-
-            .modal textarea {
-                width: 100%;
-                padding: 12px;
-                border-radius: 8px;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                background: rgba(0, 0, 0, 0.3);
-                color: var(--text-color);
-                font-family: inherit;
-                font-size: 0.95rem;
-                resize: vertical;
-                min-height: 100px;
-            }
-
-            .modal input[type="text"] {
-                width: 100%;
-                padding: 10px 12px;
-                border-radius: 8px;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                background: rgba(0, 0, 0, 0.3);
-                color: var(--text-color);
-                font-family: inherit;
-                font-size: 0.95rem;
-                margin-bottom: 15px;
-            }
-
-            .modal-buttons {
-                display: flex;
-                gap: 10px;
-                justify-content: flex-end;
-                margin-top: 15px;
-            }
-
-            .modal-btn {
-                padding: 10px 20px;
-                border-radius: 8px;
-                border: none;
-                cursor: pointer;
-                font-size: 0.95rem;
-                transition: all 0.3s;
-            }
-
-            .modal-btn.primary {
-                background: var(--secondary-color);
-                color: #1a1a2e;
-            }
-
-            .modal-btn.secondary {
-                background: rgba(255, 255, 255, 0.1);
-                color: var(--text-color);
-            }
-
-            .modal-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            }
-
-            .existing-comments {
-                margin-bottom: 20px;
-                max-height: 200px;
-                overflow-y: auto;
-            }
-
-            .existing-comment {
-                background: rgba(0, 0, 0, 0.2);
-                padding: 10px;
-                border-radius: 8px;
-                margin-bottom: 8px;
-                font-size: 0.9rem;
-            }
-
-            .existing-comment .comment-meta {
-                color: #888;
-                font-size: 0.8rem;
-                margin-top: 5px;
+            .unit-cell:hover .tooltip {
+                display: block;
             }
 
             @media (max-width: 768px) {
-                body {
-                    padding: 10px;
-                }
-
-                header {
-                    padding: 15px 0;
-                    margin-bottom: 15px;
-                }
-
-                h1 {
-                    font-size: 1.5rem;
-                }
-
-                .subtitle {
-                    font-size: 0.9rem;
-                }
-
-                .nav-links {
-                    flex-wrap: wrap;
-                    gap: 8px;
-                }
-
-                .nav-link {
-                    padding: 6px 12px;
-                    font-size: 0.85rem;
-                }
-
-                .age-tabs {
-                    flex-wrap: wrap;
-                    gap: 8px;
-                }
-
-                .age-tab {
-                    padding: 8px 16px;
-                    font-size: 0.9rem;
-                    flex: 1;
-                    min-width: 100px;
-                    text-align: center;
-                }
-
-                .unit-selector {
-                    padding: 12px;
-                    gap: 8px;
-                }
-
-                .unit-btn {
-                    padding: 8px 12px;
-                    font-size: 0.8rem;
-                }
-
-                .legend {
-                    gap: 10px;
-                    font-size: 0.75rem;
-                }
-
-                .legend-item {
-                    gap: 5px;
-                }
-
-                .legend-color {
-                    width: 15px;
-                    height: 15px;
-                }
-
-                .table-container {
-                    padding: 12px;
-                    border-radius: 10px;
-                }
-
-                .table-header {
-                    flex-direction: column;
-                    align-items: flex-start;
-                    gap: 8px;
-                }
-
-                .table-title {
+                .page-header h1 {
                     font-size: 1.2rem;
                 }
-
-                .table-info {
-                    width: 100%;
-                    justify-content: flex-start;
+                .line-grid {
+                    gap: 6px;
                 }
-
-                .civ-count,
-                .age-badge {
-                    padding: 5px 10px;
-                    font-size: 0.75rem;
-                }
-
-                table {
-                    font-size: 0.7rem;
-                    display: block;
-                    overflow-x: auto;
-                    white-space: nowrap;
-                }
-
-                thead th {
-                    padding: 8px 6px;
-                    font-size: 0.7rem;
-                }
-
-                td {
-                    padding: 6px 5px;
-                }
-
-                td.civ-name {
-                    position: sticky;
-                    left: 0;
-                    background: var(--card-bg);
-                    z-index: 1;
-                }
-
-                tr:nth-child(even) td.civ-name {
-                    background: #1a2a4a;
-                }
-
-                tr:hover td.civ-name {
-                    background: rgba(218, 165, 32, 0.2);
-                }
-
-                .modal {
-                    padding: 15px;
-                    width: 95%;
-                    max-height: 90vh;
-                    overflow-y: auto;
-                }
-
-                .modal h3 {
-                    font-size: 1.1rem;
-                }
-
-                .modal-info {
-                    font-size: 0.85rem;
-                }
-
-                .modal textarea {
-                    min-height: 80px;
-                    font-size: 0.9rem;
-                }
-
-                .modal input[type="text"] {
-                    font-size: 0.9rem;
-                }
-
-                .modal-buttons {
-                    flex-direction: column;
-                }
-
-                .modal-btn {
-                    width: 100%;
-                    padding: 12px;
-                }
-
-                .tooltip {
-                    max-width: 250px;
-                    font-size: 0.8rem;
-                }
-            }
-
-            @media (max-width: 480px) {
-                h1 {
-                    font-size: 1.3rem;
-                }
-
-                .age-tab {
+                .line-card {
+                    min-width: 120px;
                     padding: 6px 10px;
-                    font-size: 0.8rem;
-                    min-width: 80px;
                 }
-
-                .unit-btn {
-                    padding: 6px 10px;
-                    font-size: 0.75rem;
+                .line-card img {
+                    width: 24px;
+                    height: 24px;
                 }
-
-                table {
-                    font-size: 0.65rem;
-                }
-
-                thead th,
-                td {
-                    padding: 5px 4px;
+                .line-card .line-name {
+                    font-size: 0.7rem;
                 }
             }
         </style>
     </head>
     <body>
+        <header class="page-header">
+            <h1>Unit Rankings</h1>
+            <p class="subtitle">Compare unit stats across civilizations</p>
+            <nav class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/units" class="nav-link active">By Unit</a>
+                <a href="/civ" class="nav-link">By Civ</a>
+                <a href="/simulate" class="nav-link">Battle Sim</a>
+            </nav>
+        </header>
+
         <div class="container">
-            <header>
-                <h1>Age of Empires II Unit Analyzer</h1>
-                <p class="subtitle">
-                    Compare unit stats across civilizations - hover for details
-                </p>
-                <nav class="nav-links">
-                    <a href="/" class="nav-link">Home</a>
-                    <a href="/units" class="nav-link active">By Unit</a>
-                    <a href="/civ" class="nav-link">By Civilization</a>
-                    <a href="/simulate" class="nav-link">Battle Sim</a>
-                    <a href="/matchup" class="nav-link">1v1 Matchup</a>
-                </nav>
-            </header>
-
-            <div class="under-construction">
-                <h2>Under Construction</h2>
-                <p>
-                    This page is being updated with new data and features. Check
-                    back soon.
-                </p>
+            <div class="age-toggle">
+                <button class="age-btn" onclick="setAge('Castle')">
+                    Castle Age
+                </button>
+                <button class="age-btn active" onclick="setAge('Imperial')">
+                    Imperial Age
+                </button>
             </div>
 
-            <div class="main-content">
-                <div class="age-tabs">
-                    {% for age_id, age_data in units_by_age.items() %}
-                    <button class="age-tab" data-age="{{ age_id }}">
-                        {{ age_data.name }}
-                    </button>
-                    {% endfor %}
-                </div>
+            <div id="lineSelector"></div>
 
-                <div class="unit-selector" id="unitSelector">
-                    <p style="color: #888">
-                        Select an age above to see available units
-                    </p>
-                </div>
-
-                <div class="legend">
-                    <div class="legend-item">
-                        <div class="legend-color legend-better"></div>
-                        <span>Better than baseline (hover for bonus)</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color legend-worse"></div>
-                        <span>Worse than baseline</span>
-                    </div>
-                </div>
-
-                <div id="content">
-                    <div class="no-unit">
-                        <h2>Select an age and unit type to begin</h2>
-                        <p>
-                            Click on an age tab, then select a unit to see
-                            civilization-specific stats
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Tooltip element -->
-                <div id="tooltip" class="tooltip" style="display: none"></div>
-
-                <!-- Comment modal -->
-                <div
-                    id="commentModal"
-                    class="modal-overlay"
-                    style="display: none"
-                >
-                    <div class="modal">
-                        <h3>Add Comment</h3>
-                        <div class="modal-info" id="modalInfo"></div>
-                        <div
-                            class="existing-comments"
-                            id="existingComments"
-                        ></div>
-                        <input
-                            type="text"
-                            id="authorName"
-                            placeholder="Your name (optional)"
-                        />
-                        <textarea
-                            id="commentText"
-                            placeholder="What's wrong with this value? What should it be?"
-                        ></textarea>
-                        <div class="modal-buttons">
-                            <button
-                                class="modal-btn secondary"
-                                onclick="closeCommentModal()"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                class="modal-btn primary"
-                                onclick="submitComment()"
-                            >
-                                Submit
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- end main-content -->
+            <div class="table-container" id="tableContainer"></div>
         </div>
 
         <script>
-            // Unit data from server
-            const unitsByAge = {{ units_by_age | tojson }};
+            // ===== CONSTANTS =====
+            const ORIGINAL_13_CIVS = [
+                "Britons",
+                "Byzantines",
+                "Celts",
+                "Chinese",
+                "Franks",
+                "Goths",
+                "Japanese",
+                "Mongols",
+                "Persians",
+                "Saracens",
+                "Teutons",
+                "Turks",
+                "Vikings",
+            ];
 
-            let currentAge = null;
-            let currentUnit = null;
+            const CIV_EMBLEM_URL =
+                "https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/";
+            const ICON_BASE =
+                "https://raw.githubusercontent.com/qwyt/aoe2-icon-resources/master/objects/";
+
+            const NAME_TO_ICON = {
+                Spearman: 93,
+                Pikeman: 358,
+                Halberdier: 359,
+                "Man-at-Arms": 75,
+                "Long Swordsman": 77,
+                "Two-Handed Swordsman": 473,
+                Champion: 567,
+                Archer: 4,
+                Crossbowman: 24,
+                Arbalester: 492,
+                Skirmisher: 7,
+                "Elite Skirmisher": 6,
+                "Cavalry Archer": 39,
+                "Heavy Cavalry Archer": 474,
+                "Hand Cannoneer": 5,
+                "Scout Cavalry": 448,
+                "Light Cavalry": 546,
+                Hussar: 441,
+                Knight: 38,
+                Cavalier: 283,
+                Paladin: 569,
+                Savar: 569,
+                "Camel Rider": 329,
+                "Heavy Camel Rider": 330,
+                "Battering Ram": 35,
+                "Capped Ram": 422,
+                "Siege Ram": 548,
+                Mangonel: 280,
+                Onager: 550,
+                "Siege Onager": 588,
+                Scorpion: 279,
+                "Heavy Scorpion": 542,
+                "Bombard Cannon": 36,
+                Trebuchet: 42,
+                "Steppe Lancer": 1370,
+                "Elite Steppe Lancer": 1370,
+                "Fire Lancer": 1901,
+                "Elite Fire Lancer": 1903,
+                Longbowman: 8,
+                "Elite Longbowman": 8,
+                Cataphract: 40,
+                "Elite Cataphract": 40,
+                "Woad Raider": 232,
+                "Elite Woad Raider": 232,
+                "Chu Ko Nu": 73,
+                "Elite Chu Ko Nu": 73,
+                "Throwing Axeman": 281,
+                "Elite Throwing Axeman": 281,
+                Huskarl: 41,
+                "Elite Huskarl": 41,
+                Samurai: 291,
+                "Elite Samurai": 291,
+                Mangudai: 11,
+                "Elite Mangudai": 11,
+                "War Elephant": 239,
+                "Elite War Elephant": 239,
+                Mameluke: 282,
+                "Elite Mameluke": 282,
+                "Teutonic Knight": 25,
+                "Elite Teutonic Knight": 25,
+                Janissary: 46,
+                "Elite Janissary": 46,
+                Berserk: 692,
+                "Elite Berserk": 692,
+            };
+
+            const JPG_ICONS = new Set([
+                279, 422, 542, 548, 529, 532, 831, 13, 17, 250, 1004, 1103,
+                1396, 1397, 1398, 1399,
+            ]);
+
+            const BUILDING_ORDER = [
+                "Barracks",
+                "Archery Range",
+                "Stable",
+                "Siege Workshop",
+            ];
+            const BUILDING_ICONS = {
+                Barracks: 12,
+                "Archery Range": 87,
+                Stable: 101,
+                "Siege Workshop": 49,
+            };
+
+            // Unit lines definition (mirrors backend UNIT_LINES)
+            const UNIT_LINES = {
+                militia: {
+                    name: "Militia Line",
+                    building: "Barracks",
+                    castle: "Long Swordsman",
+                    imperial: "Champion",
+                    hasUnique: true,
+                },
+                spear: {
+                    name: "Spear Line",
+                    building: "Barracks",
+                    castle: "Pikeman",
+                    imperial: "Halberdier",
+                    hasUnique: false,
+                },
+                shock_infantry: {
+                    name: "Shock Infantry",
+                    building: "Barracks",
+                    castle: "Fire Lancer",
+                    imperial: "Elite Fire Lancer",
+                    hasUnique: false,
+                },
+                archer: {
+                    name: "Archer Line",
+                    building: "Archery Range",
+                    castle: "Crossbowman",
+                    imperial: "Arbalester",
+                    hasUnique: true,
+                },
+                skirmisher: {
+                    name: "Skirmisher Line",
+                    building: "Archery Range",
+                    castle: "Elite Skirmisher",
+                    imperial: "Elite Skirmisher",
+                    hasUnique: false,
+                },
+                cav_archer: {
+                    name: "Cav Archer Line",
+                    building: "Archery Range",
+                    castle: "Cavalry Archer",
+                    imperial: "Heavy Cavalry Archer",
+                    hasUnique: true,
+                },
+                hand_cannoneer: {
+                    name: "Hand Cannoneer",
+                    building: "Archery Range",
+                    castle: null,
+                    imperial: "Hand Cannoneer",
+                    hasUnique: true,
+                },
+                knight: {
+                    name: "Knight Line",
+                    building: "Stable",
+                    castle: "Knight",
+                    imperial: "Paladin",
+                    hasUnique: true,
+                },
+                light_cav: {
+                    name: "Light Cav Line",
+                    building: "Stable",
+                    castle: "Light Cavalry",
+                    imperial: "Hussar",
+                    hasUnique: false,
+                },
+                camel: {
+                    name: "Camel Line",
+                    building: "Stable",
+                    castle: "Camel Rider",
+                    imperial: "Heavy Camel Rider",
+                    hasUnique: false,
+                },
+                steppe_lancer: {
+                    name: "Steppe Lancer",
+                    building: "Stable",
+                    castle: "Steppe Lancer",
+                    imperial: "Elite Steppe Lancer",
+                    hasUnique: false,
+                },
+                elephant: {
+                    name: "Elephant Line",
+                    building: "Stable",
+                    castle: "War Elephant",
+                    imperial: "Elite War Elephant",
+                    hasUnique: true,
+                },
+                ram: {
+                    name: "Ram Line",
+                    building: "Siege Workshop",
+                    castle: "Battering Ram",
+                    imperial: "Siege Ram",
+                    hasUnique: false,
+                },
+                mangonel: {
+                    name: "Mangonel Line",
+                    building: "Siege Workshop",
+                    castle: "Mangonel",
+                    imperial: "Siege Onager",
+                    hasUnique: false,
+                },
+                scorpion: {
+                    name: "Scorpion Line",
+                    building: "Siege Workshop",
+                    castle: "Scorpion",
+                    imperial: "Heavy Scorpion",
+                    hasUnique: false,
+                },
+                trebuchet: {
+                    name: "Trebuchet",
+                    building: "Siege Workshop",
+                    castle: null,
+                    imperial: "Trebuchet",
+                    hasUnique: false,
+                },
+                bombard_cannon: {
+                    name: "Bombard Cannon",
+                    building: "Siege Workshop",
+                    castle: null,
+                    imperial: "Bombard Cannon",
+                    hasUnique: false,
+                },
+            };
+
+            function iconUrl(id) {
+                return (
+                    ICON_BASE + id + "." + (JPG_ICONS.has(id) ? "jpg" : "png")
+                );
+            }
+            function unitIconUrl(name) {
+                const id = NAME_TO_ICON[name];
+                return id ? iconUrl(id) : "";
+            }
+
+            // ===== STATE =====
+            let currentAge = "Imperial";
+            let currentLine = null;
             let currentData = null;
-            let sortColumn = null;
-            let sortDirection = 'asc';
-            let currentComments = {};  // Comments for current unit
-            let commentModalData = null;  // Data for current comment being added
-            const tooltip = document.getElementById('tooltip');
+            let sortColumn = "civ_name";
+            let sortDir = "asc";
 
-            // Column info for determining better/worse
-            const higherIsBetter = ['HP', 'Attack', 'Range', 'Attack_Speed', 'Melee_Armor', 'Pierce_Armor', 'Movement_Speed', 'Combat_Eff'];
-            const lowerIsBetter = ['Cost', 'Creation_Time', 'Upgrade_Cost'];
+            // ===== RENDERING =====
+            function setAge(age) {
+                currentAge = age;
+                document.querySelectorAll(".age-btn").forEach((btn) => {
+                    btn.classList.toggle(
+                        "active",
+                        btn.textContent.includes(age),
+                    );
+                });
+                renderLineSelector();
+                if (currentData) renderTable();
+            }
 
-            // Columns to hide from display
-            const hiddenColumns = ['Civ_Bonuses', 'Unit'];
+            function renderLineSelector() {
+                const container = document.getElementById("lineSelector");
+                let html = "";
+                const groups = {};
+                for (const [slug, line] of Object.entries(UNIT_LINES)) {
+                    const bldg = line.building;
+                    if (!groups[bldg]) groups[bldg] = [];
+                    groups[bldg].push({ slug, ...line });
+                }
 
-            // Age tab handlers
-            document.querySelectorAll('.age-tab').forEach(tab => {
-                tab.addEventListener('click', () => {
-                    document.querySelectorAll('.age-tab').forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    currentAge = tab.dataset.age;
-                    currentUnit = null;
-                    renderUnitSelector();
-                    document.getElementById('content').innerHTML = `
-                        <div class="no-unit">
-                            <h2>Select a unit from ${unitsByAge[currentAge].name}</h2>
-                            <p>Click on a unit button above to see its stats across civilizations</p>
+                for (const bldg of BUILDING_ORDER) {
+                    const lines = groups[bldg];
+                    if (!lines) continue;
+                    const bIconId = BUILDING_ICONS[bldg];
+                    html += `<div class="building-section">
+                        <div class="building-header">
+                            <img src="${iconUrl(bIconId)}" alt="${bldg}" onerror="this.style.display='none'" />
+                            <h3>${bldg}</h3>
                         </div>
-                    `;
-                });
-            });
+                        <div class="line-grid">`;
 
-            function renderUnitSelector() {
-                const selector = document.getElementById('unitSelector');
-                if (!currentAge || !unitsByAge[currentAge]) {
-                    selector.innerHTML = '<p style="color: #888;">Select an age above to see available units</p>';
-                    return;
+                    for (const line of lines) {
+                        const displayName =
+                            currentAge === "Castle"
+                                ? line.castle
+                                : line.imperial;
+                        const hasCastle = line.castle !== null;
+                        const unavailable =
+                            currentAge === "Castle" && !hasCastle;
+                        const iUrl = unitIconUrl(displayName || line.imperial);
+                        const activeClass =
+                            currentLine === line.slug ? " active" : "";
+                        const unavailClass = unavailable ? " unavailable" : "";
+
+                        html += `<div class="line-card${activeClass}${unavailClass}" onclick="selectLine('${line.slug}')">
+                            <img src="${iUrl}" alt="${line.name}" onerror="this.style.display='none'" />
+                            <div>
+                                <div class="line-name">${line.name}</div>
+                                ${line.hasUnique ? '<div class="line-unique">+ unique units</div>' : ""}
+                            </div>
+                        </div>`;
+                    }
+                    html += "</div></div>";
                 }
-
-                const units = unitsByAge[currentAge].units;
-                selector.innerHTML = units.map(unit => `
-                    <button class="unit-btn" data-unit="${unit.id}" data-age="${unit.age}">${unit.name}</button>
-                `).join('');
-
-                // Add click handlers
-                selector.querySelectorAll('.unit-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        selector.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        currentUnit = btn.dataset.unit;
-                        loadUnitData(currentAge, currentUnit);
-                    });
-                });
+                container.innerHTML = html;
             }
 
-            async function loadUnitData(age, unitId) {
-                const content = document.getElementById('content');
-                content.innerHTML = '<div class="loading">Loading unit data</div>';
+            async function selectLine(slug) {
+                currentLine = slug;
+                // Highlight active card
+                document
+                    .querySelectorAll(".line-card")
+                    .forEach((c) => c.classList.remove("active"));
+                const cards = document.querySelectorAll(".line-card");
+                cards.forEach((c) => {
+                    if (c.getAttribute("onclick")?.includes(`'${slug}'`))
+                        c.classList.add("active");
+                });
 
-                try {
-                    const [unitResponse, commentsResponse] = await Promise.all([
-                        fetch(`/api/unit/${age}/${unitId}`),
-                        fetch(`/api/comments/${unitId}`)
-                    ]);
-                    const data = await unitResponse.json();
-                    const comments = await commentsResponse.json();
-
-                    currentData = data;
-                    currentData.age = age;
-                    sortColumn = null;
-
-                    // Index comments by civ+column for quick lookup
-                    currentComments = {};
-                    if (Array.isArray(comments)) {
-                        for (const comment of comments) {
-                            const key = `${comment.civ_name}:${comment.column_name}`;
-                            if (!currentComments[key]) {
-                                currentComments[key] = [];
-                            }
-                            currentComments[key].push(comment);
-                        }
-                    }
-
-                    renderTable();
-                } catch (error) {
-                    console.error('Error loading data:', error);
-                    content.innerHTML = '<div class="no-unit"><h2>Error loading data</h2><p>Please try again</p></div>';
-                }
-            }
-
-            function isGenericCiv(row, unique_stats) {
-                const civBonus = row['Civ_Bonuses'];
-                const hasBonus = civBonus && civBonus !== '-';
-
-                if (hasBonus) return false;
-
-                for (const col in unique_stats) {
-                    if (row.Civilization in unique_stats[col].unique_civs) {
-                        return false;
-                    }
-                }
-                return true;
+                const resp = await fetch(`/api/ref/unit-line/${slug}`);
+                currentData = await resp.json();
+                sortColumn = "civ_name";
+                sortDir = "asc";
+                renderTable();
             }
 
             function renderTable() {
-                if (!currentData) return;
-
-                const { records, columns, unique_stats, total_civs, missing_civs, age } = currentData;
-
-                const displayColumns = columns.filter(col => !hiddenColumns.includes(col));
-
-                const genericCivs = [];
-                const uniqueCivRecords = [];
-
-                for (const row of records) {
-                    if (isGenericCiv(row, unique_stats)) {
-                        genericCivs.push(row.Civilization);
-                    } else {
-                        uniqueCivRecords.push(row);
-                    }
-                }
-
-                const unitName = document.querySelector('.unit-btn.active')?.textContent?.trim() || 'Unit';
-                const ageName = unitsByAge[age]?.name || age;
-
-                // Create generic row data if there are generic civs
-                let genericRowData = null;
-                if (genericCivs.length > 0) {
-                    const templateCiv = records.find(r => genericCivs.includes(r.Civilization));
-                    if (templateCiv) {
-                        genericRowData = {...templateCiv};
-                        genericRowData._isGeneric = true;
-                        genericRowData._genericCivs = genericCivs.sort();
-                    }
-                }
-
-                // Include generic row in sorting
-                let allRecords = [...uniqueCivRecords];
-                if (genericRowData) {
-                    allRecords.push(genericRowData);
-                }
-
-                let sortedRecords = allRecords;
-                if (sortColumn) {
-                    sortedRecords.sort((a, b) => {
-                        let aVal = a[sortColumn];
-                        let bVal = b[sortColumn];
-
-                        if (aVal == null) return 1;
-                        if (bVal == null) return -1;
-
-                        if (typeof aVal === 'number' && typeof bVal === 'number') {
-                            return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-                        }
-
-                        aVal = String(aVal).toLowerCase();
-                        bVal = String(bVal).toLowerCase();
-                        if (sortDirection === 'asc') {
-                            return aVal.localeCompare(bVal);
-                        }
-                        return bVal.localeCompare(aVal);
-                    });
-                }
-
-                let html = `
-                    <div class="table-container">
-                        <div class="table-header">
-                            <h2 class="table-title">${unitName} Stats by Civilization</h2>
-                            <div class="table-info">
-                                <span class="age-badge ${age}">${ageName}</span>
-                                <span class="civ-count">${total_civs} civilizations</span>
-                            </div>
-                        </div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    ${displayColumns.map(col => {
-                                        let sortClass = '';
-                                        if (sortColumn === col) {
-                                            sortClass = sortDirection === 'asc' ? 'sort-asc' : 'sort-desc';
-                                        }
-                                        return `<th class="${sortClass}" data-column="${col}">${formatColumnName(col)}</th>`;
-                                    }).join('')}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${sortedRecords.map(row => row._isGeneric ? renderGenericRow(row, displayColumns) : renderRow(row, displayColumns, unique_stats)).join('')}
-                                ${missing_civs && missing_civs.length > 0 ? renderMissingRow(missing_civs, displayColumns) : ''}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-
-                document.getElementById('content').innerHTML = html;
-
-                document.querySelectorAll('thead th').forEach(th => {
-                    th.addEventListener('click', () => {
-                        const col = th.dataset.column;
-                        if (sortColumn === col) {
-                            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-                        } else {
-                            sortColumn = col;
-                            sortDirection = 'asc';
-                        }
-                        renderTable();
-                    });
-                });
-
-                setupTooltips();
-            }
-
-            function setupTooltips() {
-                document.querySelectorAll('td[data-tooltip]').forEach(td => {
-                    td.addEventListener('mouseenter', showTooltip);
-                    td.addEventListener('mousemove', moveTooltip);
-                    td.addEventListener('mouseleave', hideTooltip);
-                });
-
-                // Setup click handlers for adding comments (on data cells, not civ name)
-                document.querySelectorAll('td[data-comment-info]').forEach(td => {
-                    td.addEventListener('click', openCommentModal);
-                    td.style.cursor = 'pointer';
-                });
-            }
-
-            function showTooltip(e) {
-                const td = e.target;
-                const tooltipData = JSON.parse(td.dataset.tooltip);
-
-                let html = '';
-                if (tooltipData.title) {
-                    html += `<div class="tooltip-title">${tooltipData.title}</div>`;
-                }
-                if (tooltipData.civList && tooltipData.civList.length > 0) {
-                    html += `<div class="tooltip-list">${tooltipData.civList.join(', ')}</div>`;
-                }
-                if (tooltipData.bonus && tooltipData.bonus !== '-') {
-                    html += `<div>${tooltipData.bonus}</div>`;
-                }
-                if (tooltipData.baseline !== undefined) {
-                    html += `<div class="tooltip-baseline">Baseline: ${tooltipData.baseline}</div>`;
-                }
-
-                if (html) {
-                    tooltip.innerHTML = html;
-                    tooltip.style.display = 'block';
-                    moveTooltip(e);
-                }
-            }
-
-            function moveTooltip(e) {
-                const x = e.clientX + 15;
-                const y = e.clientY + 15;
-
-                const rect = tooltip.getBoundingClientRect();
-                const maxX = window.innerWidth - rect.width - 10;
-                const maxY = window.innerHeight - rect.height - 10;
-
-                tooltip.style.left = Math.min(x, maxX) + 'px';
-                tooltip.style.top = Math.min(y, maxY) + 'px';
-            }
-
-            function hideTooltip() {
-                tooltip.style.display = 'none';
-            }
-
-            function formatColumnName(col) {
-                return col.replace(/_/g, ' ');
-            }
-
-            function renderGenericRow(row, columns) {
-                const civCount = row._genericCivs.length;
-                const tooltipData = {
-                    title: `Generic Civs (${civCount})`,
-                    civList: row._genericCivs
-                };
-
-                return `<tr class="generic-row">
-                    ${columns.map(col => {
-                        if (col === 'Civilization') {
-                            return `<td class="civ-name" data-tooltip='${JSON.stringify(tooltipData)}'>Generic (${civCount} civs)</td>`;
-                        }
-                        const value = row[col];
-                        const displayValue = value == null || value === '' ? '-' : value;
-                        return `<td>${displayValue}</td>`;
-                    }).join('')}
-                </tr>`;
-            }
-
-            function renderMissingRow(missingCivs, columns) {
-                const tooltipData = {
-                    title: `Missing Unit (${missingCivs.length} civs)`,
-                    civList: missingCivs
-                };
-
-                return `<tr class="missing-row">
-                    ${columns.map(col => {
-                        if (col === 'Civilization') {
-                            return `<td class="civ-name" data-tooltip='${JSON.stringify(tooltipData)}'>Missing (${missingCivs.length} civs)</td>`;
-                        }
-                        return `<td>-</td>`;
-                    }).join('')}
-                </tr>`;
-            }
-
-            function renderRow(row, columns, unique_stats) {
-                return `<tr>${columns.map(col => renderCell(row, col, unique_stats)).join('')}</tr>`;
-            }
-
-            function renderCell(row, col, unique_stats) {
-                const value = row[col];
-                const civBonus = row['Civ_Bonuses'];
-                let classes = [];
-                let tooltipData = {};
-                let commentInfoAttr = '';
-
-                if (col === 'Civilization') {
-                    classes.push('civ-name');
-                    if (civBonus && civBonus !== '-') {
-                        classes.push('has-bonus');
-                        tooltipData = {
-                            title: row.Civilization + ' Bonuses',
-                            bonus: civBonus
-                        };
-                    }
-                } else {
-                    // Add comment info for non-civ columns
-                    const commentKey = `${row.Civilization}:${col}`;
-                    const cellComments = currentComments[commentKey];
-                    if (cellComments && cellComments.length > 0) {
-                        classes.push('has-comment');
-                    }
-
-                    const commentInfo = {
-                        civ: row.Civilization,
-                        column: col,
-                        value: value
-                    };
-                    commentInfoAttr = `data-comment-info='${JSON.stringify(commentInfo)}'`;
-
-                    if (unique_stats[col] && row.Civilization in unique_stats[col].unique_civs) {
-                        const baseline = unique_stats[col].baseline;
-                        const isHigherBetter = higherIsBetter.includes(col);
-                        const isLowerBetter = lowerIsBetter.includes(col);
-
-                        if (isHigherBetter) {
-                            classes.push(value > baseline ? 'unique-better' : 'unique-worse');
-                        } else if (isLowerBetter) {
-                            classes.push(value < baseline ? 'unique-better' : 'unique-worse');
-                        } else {
-                            classes.push('unique-different');
-                        }
-
-                        tooltipData = {
-                            title: `${row.Civilization} - ${formatColumnName(col)}`,
-                            baseline: baseline
-                        };
-
-                        if (civBonus && civBonus !== '-') {
-                            tooltipData.bonus = civBonus;
-                        }
-                    }
-                }
-
-                let displayValue = value == null || value === '' ? '-' : value;
-
-                // Format Combat_Eff (normalized to 1.0 baseline)
-                if (col === 'Combat_Eff' && typeof value === 'number') {
-                    displayValue = value.toFixed(2);
-                    // Mark values below 1.0 as worse (red)
-                    if (value < 1.0) {
-                        classes.push('unique-worse');
-                    } else if (value > 1.0) {
-                        classes.push('unique-better');
-                    }
-                }
-
-                const tooltipAttr = Object.keys(tooltipData).length > 0
-                    ? `data-tooltip='${JSON.stringify(tooltipData)}'`
-                    : '';
-
-                return `<td class="${classes.join(' ')}" ${tooltipAttr} ${commentInfoAttr}>${displayValue}</td>`;
-            }
-
-            // Comment modal functions
-            function openCommentModal(e) {
-                const td = e.target;
-                const commentInfo = JSON.parse(td.dataset.commentInfo);
-                commentModalData = commentInfo;
-
-                const modal = document.getElementById('commentModal');
-                const modalInfo = document.getElementById('modalInfo');
-                const existingCommentsDiv = document.getElementById('existingComments');
-
-                // Get unit name from active button
-                const unitName = document.querySelector('.unit-btn.active')?.textContent?.trim() || currentUnit;
-                const ageName = unitsByAge[currentAge]?.name || currentAge;
-
-                modalInfo.innerHTML = `
-                    <div style="margin-bottom: 8px;"><strong>Unit:</strong> ${unitName} (${ageName})</div>
-                    <div style="margin-bottom: 8px;"><strong>Civilization:</strong> ${commentInfo.civ}</div>
-                    <div><strong>Stat:</strong> ${formatColumnName(commentInfo.column)} = ${commentInfo.value}</div>
-                `;
-
-                // Show existing comments for this cell
-                const commentKey = `${commentInfo.civ}:${commentInfo.column}`;
-                const cellComments = currentComments[commentKey] || [];
-
-                if (cellComments.length > 0) {
-                    existingCommentsDiv.innerHTML = `
-                        <div style="color: var(--secondary-color); margin-bottom: 8px; font-weight: 600;">Existing Comments:</div>
-                        ${cellComments.map(c => `
-                            <div class="existing-comment">
-                                <div>${c.comment_text}</div>
-                                <div class="comment-meta">By ${c.author_name || 'Anonymous'} - ${new Date(c.created_at).toLocaleDateString()}</div>
-                            </div>
-                        `).join('')}
-                    `;
-                    existingCommentsDiv.style.display = 'block';
-                } else {
-                    existingCommentsDiv.innerHTML = '';
-                    existingCommentsDiv.style.display = 'none';
-                }
-
-                document.getElementById('commentText').value = '';
-                modal.style.display = 'flex';
-            }
-
-            function closeCommentModal() {
-                document.getElementById('commentModal').style.display = 'none';
-                commentModalData = null;
-            }
-
-            async function submitComment() {
-                const commentText = document.getElementById('commentText').value.trim();
-                const authorName = document.getElementById('authorName').value.trim() || 'Anonymous';
-
-                if (!commentText) {
-                    alert('Please enter a comment');
+                const container = document.getElementById("tableContainer");
+                if (!currentData) {
+                    container.innerHTML = "";
                     return;
                 }
 
-                if (!commentModalData || !currentUnit) {
-                    alert('Error: No cell selected');
+                const ageKey = currentAge === "Castle" ? "castle" : "imperial";
+                const rows = currentData[ageKey] || [];
+
+                if (rows.length === 0) {
+                    container.innerHTML = `<p style="color:var(--text-muted);text-align:center;padding:20px;">No units available in ${currentAge} Age for this line.</p>`;
                     return;
                 }
 
-                try {
-                    const response = await fetch('/api/comments', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            unit_slug: currentUnit,
-                            civ_name: commentModalData.civ,
-                            column_name: commentModalData.column,
-                            comment_text: commentText,
-                            author_name: authorName
-                        })
-                    });
+                // Compute derived fields
+                const enriched = rows.map((r) => ({
+                    ...r,
+                    dps:
+                        r.final_reload_time > 0
+                            ? Math.round(
+                                  (r.final_attack / r.final_reload_time) * 10,
+                              ) / 10
+                            : 0,
+                    total_cost:
+                        (r.final_cost_food || 0) +
+                        (r.final_cost_wood || 0) +
+                        (r.final_cost_gold || 0),
+                    total_upgrade_cost:
+                        (r.upgrade_cost_food || 0) +
+                        (r.upgrade_cost_wood || 0) +
+                        (r.upgrade_cost_gold || 0),
+                }));
 
-                    const result = await response.json();
+                // Sort
+                enriched.sort((a, b) => {
+                    let va = a[sortColumn],
+                        vb = b[sortColumn];
+                    if (typeof va === "string") va = va.toLowerCase();
+                    if (typeof vb === "string") vb = vb.toLowerCase();
+                    if (va < vb) return sortDir === "asc" ? -1 : 1;
+                    if (va > vb) return sortDir === "asc" ? 1 : -1;
+                    // Secondary sort: standard before unique
+                    if (a.is_unique !== b.is_unique)
+                        return a.is_unique ? 1 : -1;
+                    return 0;
+                });
 
-                    if (result.success) {
-                        closeCommentModal();
-                        // Reload data to show new comment indicator
-                        loadUnitData(currentAge, currentUnit);
-                    } else {
-                        alert('Error saving comment: ' + (result.error || 'Unknown error'));
-                    }
-                } catch (error) {
-                    console.error('Error submitting comment:', error);
-                    alert('Error saving comment. Please try again.');
+                // Compute medians for color coding (exclude unique units for baseline)
+                const statCols = [
+                    "final_hp",
+                    "final_attack",
+                    "dps",
+                    "final_melee_armor",
+                    "final_pierce_armor",
+                    "final_speed",
+                    "final_range",
+                ];
+                const medians = {};
+                for (const col of statCols) {
+                    const vals = enriched
+                        .filter((r) => !r.is_unique)
+                        .map((r) => r[col])
+                        .sort((a, b) => a - b);
+                    medians[col] =
+                        vals.length > 0 ? vals[Math.floor(vals.length / 2)] : 0;
                 }
+
+                // Higher is better for these columns
+                const higherIsBetter = {
+                    final_hp: true,
+                    final_attack: true,
+                    dps: true,
+                    final_melee_armor: true,
+                    final_pierce_armor: true,
+                    final_speed: true,
+                    final_range: true,
+                };
+
+                function valClass(col, val) {
+                    const med = medians[col];
+                    if (med === undefined || val === med) return "";
+                    if (higherIsBetter[col])
+                        return val > med ? "val-high" : "val-low";
+                    return val < med ? "val-high" : "val-low";
+                }
+
+                const columns = [
+                    { key: "civ_name", label: "Civ" },
+                    { key: "unit_name", label: "Unit" },
+                    { key: "final_hp", label: "HP" },
+                    { key: "final_attack", label: "Atk" },
+                    { key: "dps", label: "DPS" },
+                    { key: "final_melee_armor", label: "M.Arm" },
+                    { key: "final_pierce_armor", label: "P.Arm" },
+                    { key: "final_speed", label: "Speed" },
+                    { key: "final_range", label: "Range" },
+                    { key: "total_cost", label: "Cost" },
+                    { key: "total_upgrade_cost", label: "Upg Cost" },
+                ];
+
+                const lineInfo = UNIT_LINES[currentLine];
+                const titleIcon = unitIconUrl(
+                    currentAge === "Castle"
+                        ? lineInfo?.castle || lineInfo?.imperial
+                        : lineInfo?.imperial,
+                );
+
+                let html = `<div class="table-title">
+                    <img src="${titleIcon}" alt="" onerror="this.style.display='none'" />
+                    ${currentData.line_name} — ${currentAge} Age
+                </div>`;
+
+                html += '<table class="stats-table"><thead><tr>';
+                for (const col of columns) {
+                    const isSorted = sortColumn === col.key;
+                    const arrow = isSorted
+                        ? sortDir === "asc"
+                            ? "\u25B2"
+                            : "\u25BC"
+                        : "\u25B4";
+                    html += `<th class="${isSorted ? "sorted" : ""}" onclick="sortBy('${col.key}')">
+                        ${col.label}<span class="sort-arrow">${arrow}</span>
+                    </th>`;
+                }
+                html += "</tr></thead><tbody>";
+
+                for (const row of enriched) {
+                    const isUnique = row.is_unique;
+                    const rowClass = isUnique ? "unique-row" : "";
+                    const civImg = `${CIV_EMBLEM_URL}${row.civ_name.toLowerCase()}.png`;
+                    const unitImg = unitIconUrl(row.unit_name);
+                    const bonuses = row.applied_bonuses_summary || "";
+
+                    html += `<tr class="${rowClass}">`;
+                    // Civ
+                    html += `<td><div class="civ-cell">
+                        <img src="${civImg}" alt="${row.civ_name}" onerror="this.style.display='none'" />
+                        ${row.civ_name}
+                    </div></td>`;
+                    // Unit name with tooltip
+                    html += `<td><div class="unit-cell">
+                        <img src="${unitImg}" alt="${row.unit_name}" onerror="this.style.display='none'" />
+                        ${row.unit_name}${isUnique ? " *" : ""}
+                        ${bonuses ? `<div class="tooltip">${bonuses}</div>` : ""}
+                    </div></td>`;
+                    // Stats
+                    html += `<td class="${valClass("final_hp", row.final_hp)}">${Math.round(row.final_hp)}</td>`;
+                    html += `<td class="${valClass("final_attack", row.final_attack)}">${Math.round(row.final_attack)}</td>`;
+                    html += `<td class="${valClass("dps", row.dps)}">${row.dps.toFixed(1)}</td>`;
+                    html += `<td class="${valClass("final_melee_armor", row.final_melee_armor)}">${Math.round(row.final_melee_armor)}</td>`;
+                    html += `<td class="${valClass("final_pierce_armor", row.final_pierce_armor)}">${Math.round(row.final_pierce_armor)}</td>`;
+                    html += `<td class="${valClass("final_speed", row.final_speed)}">${row.final_speed.toFixed(2)}</td>`;
+                    html += `<td class="${valClass("final_range", row.final_range)}">${row.final_range}</td>`;
+                    html += `<td>${Math.round(row.total_cost)}</td>`;
+                    html += `<td>${Math.round(row.total_upgrade_cost)}</td>`;
+                    html += "</tr>";
+                }
+
+                html += "</tbody></table>";
+                container.innerHTML = html;
             }
 
-            // Close modal when clicking outside
-            document.getElementById('commentModal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeCommentModal();
+            function sortBy(column) {
+                if (sortColumn === column) {
+                    sortDir = sortDir === "asc" ? "desc" : "asc";
+                } else {
+                    sortColumn = column;
+                    sortDir =
+                        column === "civ_name" || column === "unit_name"
+                            ? "asc"
+                            : "desc";
                 }
-            });
+                renderTable();
+            }
+
+            // ===== INIT =====
+            renderLineSelector();
         </script>
     </body>
 </html>

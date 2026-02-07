@@ -1118,6 +1118,209 @@ def api_ref_combat_unit(civ_name, unit_slug):
     return jsonify(result)
 
 
+# ===== Unit Lines config for rankings page =====
+UNIT_LINES = {
+    "militia": {
+        "name": "Militia Line",
+        "building": "Barracks",
+        "castle_slug": "swordsmen",
+        "imperial_slug": "champion",
+        "unique_units": {
+            "Goths": ("huskarl_goths", "elite_huskarl_goths"),
+            "Celts": ("woad_raider_celts", "elite_woad_raider_celts"),
+            "Vikings": ("berserk_vikings", "elite_berserk_vikings"),
+            "Japanese": ("samurai_japanese", "elite_samurai_japanese"),
+            "Teutons": ("teutonic_knight_teutons", "elite_teutonic_knight_teutons"),
+        },
+    },
+    "spear": {
+        "name": "Spear Line",
+        "building": "Barracks",
+        "castle_slug": "pikeman",
+        "imperial_slug": "halberdier",
+        "unique_units": {},
+    },
+    "shock_infantry": {
+        "name": "Shock Infantry",
+        "building": "Barracks",
+        "castle_slug": "fire_lancer",
+        "imperial_slug": "elite_fire_lancer",
+        "unique_units": {},
+    },
+    "archer": {
+        "name": "Archer Line",
+        "building": "Archery Range",
+        "castle_slug": "crossbow",
+        "imperial_slug": "arbalester",
+        "unique_units": {
+            "Britons": ("longbowman_britons", "elite_longbowman_britons"),
+            "Chinese": ("chu_ko_nu_chinese", "elite_chu_ko_nu_chinese"),
+        },
+    },
+    "skirmisher": {
+        "name": "Skirmisher Line",
+        "building": "Archery Range",
+        "castle_slug": "elite_skirm",
+        "imperial_slug": "imp_elite_skirm",
+        "unique_units": {},
+    },
+    "cav_archer": {
+        "name": "Cavalry Archer Line",
+        "building": "Archery Range",
+        "castle_slug": "cav_archer",
+        "imperial_slug": "heavy_cav_archer",
+        "unique_units": {
+            "Mongols": ("mangudai_mongols", "elite_mangudai_mongols"),
+            "Saracens": ("mameluke_saracens", "elite_mameluke_saracens"),
+        },
+    },
+    "hand_cannoneer": {
+        "name": "Hand Cannoneer",
+        "building": "Archery Range",
+        "castle_slug": None,
+        "imperial_slug": "hand_cannoneer",
+        "unique_units": {
+            "Turks": ("janissary_turks", "elite_janissary_turks"),
+            "Franks": ("throwing_axeman_franks", "elite_throwing_axeman_franks"),
+        },
+    },
+    "knight": {
+        "name": "Knight Line",
+        "building": "Stable",
+        "castle_slug": "knight",
+        "imperial_slug": "paladin",
+        "unique_units": {
+            "Byzantines": ("cataphract_byzantines", "elite_cataphract_byzantines"),
+        },
+    },
+    "light_cav": {
+        "name": "Light Cavalry Line",
+        "building": "Stable",
+        "castle_slug": "light_cav",
+        "imperial_slug": "hussar",
+        "unique_units": {},
+    },
+    "camel": {
+        "name": "Camel Line",
+        "building": "Stable",
+        "castle_slug": "camel",
+        "imperial_slug": "heavy_camel",
+        "unique_units": {},
+    },
+    "steppe_lancer": {
+        "name": "Steppe Lancer",
+        "building": "Stable",
+        "castle_slug": "steppe_lancer",
+        "imperial_slug": "elite_steppe",
+        "unique_units": {},
+    },
+    "elephant": {
+        "name": "Elephant Line",
+        "building": "Stable",
+        "castle_slug": None,
+        "imperial_slug": None,
+        "unique_units": {
+            "Persians": ("war_elephant_persians", "elite_war_elephant_persians"),
+        },
+    },
+    "ram": {
+        "name": "Ram Line",
+        "building": "Siege Workshop",
+        "castle_slug": "ram",
+        "imperial_slug": "siege_ram",
+        "unique_units": {},
+    },
+    "mangonel": {
+        "name": "Mangonel Line",
+        "building": "Siege Workshop",
+        "castle_slug": "mangonel",
+        "imperial_slug": "siege_onager",
+        "unique_units": {},
+    },
+    "scorpion": {
+        "name": "Scorpion Line",
+        "building": "Siege Workshop",
+        "castle_slug": "scorpion",
+        "imperial_slug": "heavy_scorpion",
+        "unique_units": {},
+    },
+    "trebuchet": {
+        "name": "Trebuchet",
+        "building": "Siege Workshop",
+        "castle_slug": None,
+        "imperial_slug": "trebuchet",
+        "unique_units": {},
+    },
+    "bombard_cannon": {
+        "name": "Bombard Cannon",
+        "building": "Siege Workshop",
+        "castle_slug": None,
+        "imperial_slug": "bombard_cannon",
+        "unique_units": {},
+    },
+}
+
+
+@app.route("/api/ref/unit-line/<line_slug>")
+def api_ref_unit_line(line_slug):
+    """Get comparison data for a unit line across all civs."""
+    if line_slug not in UNIT_LINES:
+        return jsonify({"error": "Unknown unit line"}), 404
+
+    line = UNIT_LINES[line_slug]
+    ref_conn = get_ref_db()
+    rc = ref_conn.cursor()
+
+    stat_cols = """civ_name, unit_name, unit_slug, unit_type, age,
+        final_hp, final_attack, final_melee_armor, final_pierce_armor,
+        final_speed, final_range, final_reload_time,
+        final_cost_food, final_cost_wood, final_cost_gold,
+        upgrade_cost_food, upgrade_cost_wood, upgrade_cost_gold,
+        applied_bonuses_summary"""
+
+    result = {
+        "line_name": line["name"],
+        "building": line["building"],
+        "castle": [],
+        "imperial": [],
+    }
+
+    # Fetch standard units for each age
+    for age_key, slug_key, db_age in [
+        ("castle", "castle_slug", "Castle"),
+        ("imperial", "imperial_slug", "Imperial"),
+    ]:
+        slug = line[slug_key]
+        if not slug:
+            continue
+        rc.execute(
+            f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND age=? ORDER BY civ_name",
+            (slug, db_age),
+        )
+        for row in rc.fetchall():
+            entry = dict(row)
+            entry["is_unique"] = False
+            result[age_key].append(entry)
+
+    # Fetch unique units
+    for civ_name, (castle_uu, imperial_uu) in line.get("unique_units", {}).items():
+        for uu_slug, age_key in [(castle_uu, "castle"), (imperial_uu, "imperial")]:
+            if not uu_slug:
+                continue
+            rc.execute(
+                f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND civ_name=?",
+                (uu_slug, civ_name),
+            )
+            row = rc.fetchone()
+            if row:
+                entry = dict(row)
+                entry["is_unique"] = True
+                result[age_key].append(entry)
+
+    ref_conn.close()
+    return jsonify(result)
+
+
 @app.route("/api/ref/verify/<int:ref_unit_id>", methods=["POST"])
 def verify_unit(ref_unit_id):
     """Mark a unit as verified."""

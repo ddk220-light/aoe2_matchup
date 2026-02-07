@@ -328,9 +328,10 @@
                 display: flex;
                 align-items: baseline;
                 gap: 6px;
-                padding: 3px 0;
+                padding: 4px 0;
                 font-size: 0.8rem;
                 flex-wrap: wrap;
+                border-bottom: 1px solid rgba(90, 66, 40, 0.15);
             }
             .stat-label {
                 width: 100px;
@@ -338,29 +339,36 @@
                 color: var(--text-muted);
                 font-size: 0.75rem;
             }
-            .stat-base {
-                color: var(--text-muted);
-                font-size: 0.75rem;
+            .stat-final-val {
+                font-weight: 700;
+                font-size: 0.9rem;
+                color: var(--text);
+                min-width: 32px;
             }
-            .stat-step {
+            .stat-final-val.improved {
+                color: var(--green);
+            }
+            .stat-chain {
                 font-size: 0.7rem;
                 color: var(--text-muted);
-                opacity: 0.8;
             }
-            .stat-step.positive {
+            .stat-chain .base-val {
+                color: var(--text-muted);
+            }
+            .stat-chain .step {
+                color: var(--text-muted);
+                opacity: 0.85;
+            }
+            .stat-chain .step.positive {
                 color: var(--green);
             }
-            .stat-step.negative {
+            .stat-chain .step.negative {
                 color: var(--red);
             }
-            .stat-final {
-                font-weight: 600;
-                color: var(--text);
-                margin-left: auto;
-                font-size: 0.85rem;
-            }
-            .stat-final.improved {
-                color: var(--green);
+            .stat-chain .step .tech-name {
+                color: var(--text-muted);
+                opacity: 0.7;
+                font-size: 0.65rem;
             }
 
             /* Cost row */
@@ -587,33 +595,12 @@
             const ICON_BASE =
                 "https://raw.githubusercontent.com/qwyt/aoe2-icon-resources/master/objects/";
 
-            // Unit slug → icon ID mapping
-            const UNIT_ICONS = {
-                // Standard - Imperial
-                champion: 75,
-                halberdier: 93,
-                arbalester: 4,
-                imp_elite_skirm: 7,
-                heavy_cav_archer: 39,
-                hand_cannoneer: 5,
-                hussar: 546,
-                paladin: 38,
-                heavy_camel: 329,
-                siege_ram: 35,
-                siege_onager: 280,
-                heavy_scorpion: 279,
-                trebuchet: 42,
-                bombard_cannon: 36,
-                elite_eagle: 185,
-                elite_steppe: 1370,
-                elite_elephant: 239,
-                elite_ele_archer: 873,
-                elite_fire_lancer: 1901,
-                // Standard - Castle
-                swordsmen: 75,
-                pikeman: 93,
-                crossbow: 4,
-                elite_skirm: 7,
+            // Unit slug → game unit ID, keyed by age for correct icons
+            const UNIT_ICONS_CASTLE = {
+                swordsmen: 77,
+                pikeman: 358,
+                crossbow: 24,
+                elite_skirm: 6,
                 cav_archer: 39,
                 knight: 38,
                 light_cav: 546,
@@ -621,37 +608,59 @@
                 ram: 35,
                 mangonel: 280,
                 scorpion: 279,
-                eagle_warrior: 185,
-                steppe_lancer: 1370,
-                elephant: 239,
-                elephant_archer: 873,
                 fire_lancer: 1901,
-                // Unique units (base IDs work for both base and elite)
+                eagle_warrior: 753,
+                steppe_lancer: 1370,
+                elephant: 1132,
+                elephant_archer: 873,
+                // Unique units - base IDs
                 longbowman_britons: 8,
-                elite_longbowman_britons: 8,
                 cataphract_byzantines: 40,
-                elite_cataphract_byzantines: 40,
                 woad_raider_celts: 232,
-                elite_woad_raider_celts: 232,
                 chu_ko_nu_chinese: 73,
-                elite_chu_ko_nu_chinese: 73,
                 throwing_axeman_franks: 281,
-                elite_throwing_axeman_franks: 281,
                 huskarl_goths: 41,
-                elite_huskarl_goths: 41,
                 samurai_japanese: 291,
-                elite_samurai_japanese: 291,
                 mangudai_mongols: 11,
-                elite_mangudai_mongols: 11,
                 war_elephant_persians: 239,
-                elite_war_elephant_persians: 239,
                 mameluke_saracens: 282,
-                elite_mameluke_saracens: 282,
                 teutonic_knight_teutons: 25,
-                elite_teutonic_knight_teutons: 25,
                 janissary_turks: 46,
-                elite_janissary_turks: 46,
                 berserk_vikings: 692,
+            };
+            const UNIT_ICONS_IMPERIAL = {
+                champion: 567,
+                halberdier: 359,
+                arbalester: 492,
+                imp_elite_skirm: 6,
+                heavy_cav_archer: 474,
+                hand_cannoneer: 5,
+                hussar: 441,
+                paladin: 569,
+                heavy_camel: 330,
+                siege_ram: 548,
+                siege_onager: 588,
+                heavy_scorpion: 542,
+                trebuchet: 42,
+                bombard_cannon: 36,
+                elite_eagle: 752,
+                elite_steppe: 1372,
+                elite_elephant: 1134,
+                elite_ele_archer: 875,
+                elite_fire_lancer: 1903,
+                // Elite unique - use base IDs (elite icons don't exist in repo)
+                elite_longbowman_britons: 8,
+                elite_cataphract_byzantines: 40,
+                elite_woad_raider_celts: 232,
+                elite_chu_ko_nu_chinese: 73,
+                elite_throwing_axeman_franks: 281,
+                elite_huskarl_goths: 41,
+                elite_samurai_japanese: 291,
+                elite_mangudai_mongols: 11,
+                elite_war_elephant_persians: 239,
+                elite_mameluke_saracens: 282,
+                elite_teutonic_knight_teutons: 25,
+                elite_janissary_turks: 46,
                 elite_berserk_vikings: 692,
             };
 
@@ -661,13 +670,26 @@
                 1396, 1397, 1398, 1399,
             ]);
 
+            const PLACEHOLDER_ICON =
+                "data:image/svg+xml," +
+                encodeURIComponent(
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" stroke="#5a4228" stroke-width="2" fill="#2c1e10"/></svg>',
+                );
+
             function iconUrl(id) {
                 const ext = JPG_ICONS.has(id) ? "jpg" : "png";
                 return ICON_BASE + id + "." + ext;
             }
 
             function unitIconUrl(slug) {
-                const id = UNIT_ICONS[slug];
+                const map =
+                    currentAge === "Castle"
+                        ? UNIT_ICONS_CASTLE
+                        : UNIT_ICONS_IMPERIAL;
+                const id =
+                    map[slug] ||
+                    UNIT_ICONS_CASTLE[slug] ||
+                    UNIT_ICONS_IMPERIAL[slug];
                 if (!id) return "";
                 return iconUrl(id);
             }
@@ -725,17 +747,17 @@
 
             function setAge(age) {
                 currentAge = age;
-                document.querySelectorAll(".age-btn").forEach((b) => {
-                    b.classList.toggle("active", b.dataset.age === age);
-                });
+                document
+                    .querySelectorAll(".age-btn")
+                    .forEach((b) =>
+                        b.classList.toggle("active", b.dataset.age === age),
+                    );
                 render();
             }
 
             function render() {
                 const units = civData.units_by_age[currentAge] || [];
                 const container = document.getElementById("units-container");
-
-                // Group by building
                 const groups = {};
                 for (const u of units) {
                     let building =
@@ -744,7 +766,6 @@
                     if (!groups[building]) groups[building] = [];
                     groups[building].push(u);
                 }
-
                 let html = "";
                 for (const bldg of BUILDING_ORDER) {
                     const bUnits = groups[bldg];
@@ -756,21 +777,17 @@
                     <h2>${bldg}</h2>
                 </div>
                 <div class="units-row">`;
-                    for (const u of bUnits) {
-                        html += renderUnitCard(u);
-                    }
+                    for (const u of bUnits) html += renderUnitCard(u);
                     html += `</div></div>`;
                 }
                 container.innerHTML = html;
             }
 
             function getMainAttack(u) {
-                // For display: use final_attacks to get the actual damage value
                 const fa = u.final_attacks || {};
-                if (u.is_ranged) {
-                    return fa["Base Pierce"] ?? u.final_stats.attack ?? 0;
-                }
-                return fa["Base Melee"] ?? u.final_stats.attack ?? 0;
+                return u.is_ranged
+                    ? (fa["Base Pierce"] ?? u.final_stats.attack ?? 0)
+                    : (fa["Base Melee"] ?? u.final_stats.attack ?? 0);
             }
 
             function renderUnitCard(u) {
@@ -778,20 +795,35 @@
                 const iUrl = unitIconUrl(u.unit_slug);
                 const hasBonus =
                     u.special_effects && u.special_effects.length > 0;
-                const isRanged = u.is_ranged;
                 const mainAtk = getMainAttack(u);
-
                 return `<div class="unit-card" onclick='openModal(${JSON.stringify(u.unit_slug)})'>
             ${hasBonus ? '<span class="civ-star" title="Has special properties">&#9733;</span>' : ""}
-            <img class="unit-icon" src="${iUrl}" alt="${u.unit_name}" onerror="this.src='data:image/svg+xml,${encodeURIComponent('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"40\" height=\"40\" viewBox=\"0 0 40 40\"><circle cx=\"20\" cy=\"20\" r=\"18\" stroke=\"%235a4228\" stroke-width=\"2\" fill=\"%232c1e10\"/></svg>')}'"/>
+            <img class="unit-icon" src="${iUrl}" alt="${u.unit_name}" onerror="this.src='${PLACEHOLDER_ICON}'"/>
             <div class="unit-name">${u.unit_name}</div>
             <div class="unit-stats-mini">
                 <div class="stat-mini">${ICONS.hp}<span>${Math.round(fs.hp)}</span></div>
                 <div class="stat-mini">${ICONS.atk}<span>${Math.round(mainAtk)}</span></div>
                 <div class="stat-mini">${ICONS.armor}<span>${Math.round(fs.melee_armor)}/${Math.round(fs.pierce_armor)}</span></div>
-                ${isRanged ? `<div class="stat-mini">${ICONS.range}<span>${Math.round(fs.range)}</span></div>` : `<div class="stat-mini">${ICONS.speed}<span>${fs.speed.toFixed(2)}</span></div>`}
+                ${u.is_ranged ? `<div class="stat-mini">${ICONS.range}<span>${Math.round(fs.range)}</span></div>` : `<div class="stat-mini">${ICONS.speed}<span>${fs.speed.toFixed(2)}</span></div>`}
             </div>
         </div>`;
+            }
+
+            // Get the primary attack class key for a unit (melee or pierce)
+            function getPrimaryAtkClass(u) {
+                return u.is_ranged ? "3" : "4"; // 3=Base Pierce, 4=Base Melee
+            }
+
+            function getMainAtkFromJson(attacksJson, primaryClass) {
+                if (!attacksJson) return 0;
+                const parsed =
+                    typeof attacksJson === "string"
+                        ? JSON.parse(attacksJson)
+                        : attacksJson;
+                return (
+                    parsed[primaryClass] ??
+                    Math.max(...Object.values(parsed), 0)
+                );
             }
 
             function openModal(slug) {
@@ -802,6 +834,7 @@
                 const iUrl = unitIconUrl(u.unit_slug);
                 const bs = u.base_stats;
                 const fs = u.final_stats;
+                const primaryAtkClass = getPrimaryAtkClass(u);
 
                 let html = `<div class="modal-unit-header">
             <img class="modal-unit-icon" src="${iUrl}" alt="${u.unit_name}" onerror="this.style.display='none'" />
@@ -811,13 +844,13 @@
             </div>
         </div>`;
 
-                // Get main attack from attacks_json for accurate display
+                // Get base/final main attack from attacks data
                 const baseMainAtk = u.is_ranged
                     ? (u.base_attacks["Base Pierce"] ?? bs.attack ?? 0)
                     : (u.base_attacks["Base Melee"] ?? bs.attack ?? 0);
                 const finalMainAtk = getMainAttack(u);
 
-                // Stat breakdown
+                // Stat breakdown: "Final (base +X (tech) +Y (tech) ...)"
                 html += `<div class="stat-section"><h4>Stats Breakdown</h4>`;
                 const statDefs = [
                     { key: "hp", label: "HP", chainCol: "hp" },
@@ -827,6 +860,7 @@
                         chainCol: "attack",
                         baseOverride: baseMainAtk,
                         finalOverride: finalMainAtk,
+                        useAtkJson: true,
                     },
                     {
                         key: "melee_armor",
@@ -844,6 +878,7 @@
                         key: "reload_time",
                         label: "Reload Time",
                         chainCol: "reload_time",
+                        lowerIsBetter: true,
                     },
                 ];
                 for (const sd of statDefs) {
@@ -856,33 +891,66 @@
                         sd.key !== "pierce_armor"
                     )
                         continue;
-                    const steps = buildStatSteps(
+                    const changed = Math.abs(finalVal - baseVal) > 0.01;
+                    const chainStr = buildStatChain(
                         u.stat_chain,
                         sd.chainCol,
                         sd.key,
+                        sd.useAtkJson ? primaryAtkClass : null,
+                        sd.lowerIsBetter,
                     );
-                    const improved =
-                        Math.abs(finalVal - baseVal) > 0.01 &&
-                        finalVal > baseVal;
-                    const decreased = finalVal < baseVal - 0.01;
                     html += `<div class="stat-row">
                 <span class="stat-label">${sd.label}</span>
-                <span class="stat-base">${fmtStat(baseVal)}</span>
-                ${steps}
-                <span class="stat-final${improved ? " improved" : ""}">${fmtStat(finalVal)}</span>
+                <span class="stat-final-val${changed ? " improved" : ""}">${fmtStat(finalVal)}</span>
+                ${chainStr ? `<span class="stat-chain">(${chainStr})</span>` : ""}
             </div>`;
                 }
                 html += `</div>`;
 
-                // Cost
-                html += `<div class="stat-section"><h4>Cost</h4>
-            <div class="cost-row">
-                ${fs.cost_food ? `<span class="cost-item cost-food">&#9679; ${Math.round(fs.cost_food)} Food</span>` : ""}
-                ${fs.cost_wood ? `<span class="cost-item cost-wood">&#9679; ${Math.round(fs.cost_wood)} Wood</span>` : ""}
-                ${fs.cost_gold ? `<span class="cost-item cost-gold">&#9679; ${Math.round(fs.cost_gold)} Gold</span>` : ""}
-            </div>
-            <div style="font-size:0.7rem;color:var(--text-muted)">Train time: ${fmtStat(fs.train_time)}s</div>
-        </div>`;
+                // Cost with chain
+                html += `<div class="stat-section"><h4>Cost</h4>`;
+                const costDefs = [
+                    { key: "cost_food", label: "Food", cls: "cost-food" },
+                    { key: "cost_wood", label: "Wood", cls: "cost-wood" },
+                    { key: "cost_gold", label: "Gold", cls: "cost-gold" },
+                ];
+                for (const cd of costDefs) {
+                    const baseVal = bs[cd.key] ?? 0;
+                    const finalVal = fs[cd.key] ?? 0;
+                    if (baseVal === 0 && finalVal === 0) continue;
+                    const costChain = buildStatChain(
+                        u.stat_chain,
+                        cd.key,
+                        cd.key,
+                        null,
+                        true,
+                    );
+                    const changed = Math.abs(finalVal - baseVal) > 0.01;
+                    html += `<div class="stat-row">
+                <span class="stat-label">${cd.label}</span>
+                <span class="stat-final-val${changed ? " improved" : ""}">${Math.round(finalVal)}</span>
+                ${costChain ? `<span class="stat-chain">(${costChain})</span>` : ""}
+            </div>`;
+                }
+                // Train time with chain
+                const baseTT = bs.train_time ?? 0;
+                const finalTT = fs.train_time ?? 0;
+                if (baseTT > 0 || finalTT > 0) {
+                    const ttChain = buildStatChain(
+                        u.stat_chain,
+                        "train_time",
+                        "train_time",
+                        null,
+                        true,
+                    );
+                    const ttChanged = Math.abs(finalTT - baseTT) > 0.01;
+                    html += `<div class="stat-row">
+                <span class="stat-label">Train Time</span>
+                <span class="stat-final-val${ttChanged ? " improved" : ""}">${fmtStat(finalTT)}s</span>
+                ${ttChain ? `<span class="stat-chain">(${ttChain})</span>` : ""}
+            </div>`;
+                }
+                html += `</div>`;
 
                 // Attack & Armor classes side by side
                 html += `<div class="classes-grid">`;
@@ -956,26 +1024,41 @@
                 document.body.style.overflow = "";
             }
 
-            function buildStatSteps(chain, chainCol, statKey) {
-                if (!chain || chain.length < 2) return "";
-                let parts = [];
+            // Build inline stat chain: "base +X (Tech1) +Y (Tech2) ..."
+            function buildStatChain(
+                chain,
+                chainCol,
+                statKey,
+                atkClass,
+                lowerIsBetter,
+            ) {
+                if (!chain || chain.length < 1) return "";
+                // Get base value
+                const first = chain[0];
+                let baseVal;
+                if (atkClass) {
+                    baseVal = getMainAtkFromJson(first.attacks_json, atkClass);
+                } else {
+                    baseVal = first[chainCol] ?? 0;
+                }
+
+                let parts = [fmtStat(baseVal)];
+                let anyChange = false;
+
                 for (let i = 1; i < chain.length; i++) {
                     const prev = chain[i - 1];
                     const curr = chain[i];
                     let prevVal, currVal;
 
-                    if (statKey === "attack") {
-                        // Use main attack from attacks_json
-                        const prevA = prev.attacks_json
-                            ? JSON.parse(prev.attacks_json)
-                            : {};
-                        const currA = curr.attacks_json
-                            ? JSON.parse(curr.attacks_json)
-                            : {};
-                        // Find primary attack class (highest value)
-                        const getMain = (a) => Math.max(...Object.values(a), 0);
-                        prevVal = getMain(prevA);
-                        currVal = getMain(currA);
+                    if (atkClass) {
+                        prevVal = getMainAtkFromJson(
+                            prev.attacks_json,
+                            atkClass,
+                        );
+                        currVal = getMainAtkFromJson(
+                            curr.attacks_json,
+                            atkClass,
+                        );
                     } else {
                         prevVal = prev[chainCol] ?? 0;
                         currVal = curr[chainCol] ?? 0;
@@ -983,12 +1066,20 @@
 
                     const diff = currVal - prevVal;
                     if (Math.abs(diff) < 0.01) continue;
+                    anyChange = true;
                     const sign = diff > 0 ? "+" : "";
-                    const cls = diff > 0 ? "positive" : "negative";
+                    // For lowerIsBetter stats (reload, cost, train time), decrease is good
+                    const isGood = lowerIsBetter ? diff < 0 : diff > 0;
+                    const cls = isGood ? "positive" : "negative";
+                    const techName = curr.tech_name || "";
+                    const shortName = techName
+                        .replace(/^C-Bonus, /, "")
+                        .replace(/^Building Work Rate.*/, "Conscription");
                     parts.push(
-                        `<span class="stat-step ${cls}" title="${curr.tech_name}">${sign}${fmtStat(diff)}</span>`,
+                        `<span class="step ${cls}">${sign}${fmtStat(diff)}</span> <span class="step"><span class="tech-name">${shortName}</span></span>`,
                     );
                 }
+                if (!anyChange) return "";
                 return parts.join(" ");
             }
 
@@ -1017,12 +1108,9 @@
                 return html;
             }
 
-            // Keyboard close
             document.addEventListener("keydown", (e) => {
                 if (e.key === "Escape") closeModal();
             });
-
-            // Load on ready
             loadData();
         </script>
     </body>

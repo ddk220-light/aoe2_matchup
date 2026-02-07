@@ -1058,6 +1058,9 @@ def api_ref_combat_unit(civ_name, unit_slug):
         "total_cost": (row["final_cost_food"] or 0)
         + (row["final_cost_wood"] or 0)
         + (row["final_cost_gold"] or 0),
+        "upgrade_cost_food": row["upgrade_cost_food"] or 0,
+        "upgrade_cost_wood": row["upgrade_cost_wood"] or 0,
+        "upgrade_cost_gold": row["upgrade_cost_gold"] or 0,
         "attacks_json": row["final_attacks_json"],
         "armors_json": row["final_armors_json"],
         "min_attack_range": row["min_range"] or 0,

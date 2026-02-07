@@ -630,6 +630,20 @@
 
             <!-- Army Size Config -->
             <div class="army-config">
+                <div
+                    class="formula-note"
+                    style="
+                        text-align: center;
+                        margin-bottom: 8px;
+                        font-size: 0.75rem;
+                    "
+                >
+                    Resource cost per unit:
+                    <strong style="color: var(--gold)">Castle</strong> = Wood +
+                    1.5 &times; Food + Gold &nbsp;|&nbsp;
+                    <strong style="color: var(--gold)">Imperial</strong> = Wood
+                    + Food + Gold
+                </div>
                 <div class="mode-toggle">
                     <label class="mode-option">
                         <input
@@ -638,11 +652,19 @@
                             value="count"
                             checked
                         />
-                        <span>By Unit Count</span>
+                        <span>30 vs 30</span>
                     </label>
                     <label class="mode-option">
                         <input type="radio" name="armyMode" value="resources" />
-                        <span>By Total Resources</span>
+                        <span>3,000 Resources</span>
+                    </label>
+                    <label class="mode-option">
+                        <input
+                            type="radio"
+                            name="armyMode"
+                            value="resources_upgrades"
+                        />
+                        <span>5,000 incl. Upgrades</span>
                     </label>
                 </div>
                 <div class="count-inputs" id="countInputs">
@@ -651,9 +673,9 @@
                         <input
                             type="number"
                             id="team1Count"
-                            value="10"
+                            value="30"
                             min="1"
-                            max="40"
+                            max="60"
                         />
                     </div>
                     <div>
@@ -661,9 +683,9 @@
                         <input
                             type="number"
                             id="team2Count"
-                            value="10"
+                            value="30"
                             min="1"
-                            max="40"
+                            max="60"
                         />
                     </div>
                 </div>
@@ -2790,20 +2812,34 @@
                     .querySelectorAll('input[name="armyMode"]')
                     .forEach((radio) => {
                         radio.addEventListener("change", (e) => {
-                            if (e.target.value === "resources") {
+                            const mode = e.target.value;
+                            if (mode === "count") {
+                                document.getElementById(
+                                    "countInputs",
+                                ).style.display = "flex";
+                                document.getElementById(
+                                    "resourceInput",
+                                ).style.display = "none";
+                            } else if (mode === "resources") {
+                                document.getElementById(
+                                    "countInputs",
+                                ).style.display = "none";
                                 document.getElementById(
                                     "resourceInput",
                                 ).style.display = "flex";
                                 document.getElementById(
+                                    "totalResources",
+                                ).value = "3000";
+                            } else if (mode === "resources_upgrades") {
+                                document.getElementById(
                                     "countInputs",
                                 ).style.display = "none";
-                            } else {
                                 document.getElementById(
                                     "resourceInput",
-                                ).style.display = "none";
-                                document.getElementById(
-                                    "countInputs",
                                 ).style.display = "flex";
+                                document.getElementById(
+                                    "totalResources",
+                                ).value = "5000";
                             }
                         });
                     });
@@ -2831,7 +2867,23 @@
                     ).value;
                     let team1Count, team2Count;
 
-                    if (armyMode === "resources") {
+                    function calcUnitCost(s, isImp) {
+                        const f = s.cost_food || 0,
+                            w = s.cost_wood || 0,
+                            g = s.cost_gold || 0;
+                        return isImp ? w + f + g : Math.floor(w + 1.5 * f + g);
+                    }
+                    function calcUpgradeCost(s, isImp) {
+                        const f = s.upgrade_cost_food || 0,
+                            w = s.upgrade_cost_wood || 0,
+                            g = s.upgrade_cost_gold || 0;
+                        return isImp ? w + f + g : Math.floor(w + 1.5 * f + g);
+                    }
+
+                    if (
+                        armyMode === "resources" ||
+                        armyMode === "resources_upgrades"
+                    ) {
                         const totalResources =
                             parseInt(
                                 document.getElementById("totalResources").value,
@@ -2849,35 +2901,37 @@
 
                         const isImp1 = s1.age === "Imperial",
                             isImp2 = s2.age === "Imperial";
-                        function calcCost(s, isImp) {
-                            const f = s.cost_food || 0,
-                                w = s.cost_wood || 0,
-                                g = s.cost_gold || 0;
-                            return isImp
-                                ? w + f + g
-                                : Math.floor(w + 1.5 * f + g);
+                        const unitCost1 =
+                            calcUnitCost(stats1, isImp1) || stats1.total_cost;
+                        const unitCost2 =
+                            calcUnitCost(stats2, isImp2) || stats2.total_cost;
+
+                        let budget1 = totalResources,
+                            budget2 = totalResources;
+                        if (armyMode === "resources_upgrades") {
+                            budget1 -= calcUpgradeCost(stats1, isImp1);
+                            budget2 -= calcUpgradeCost(stats2, isImp2);
+                            budget1 = Math.max(budget1, unitCost1); // at least 1 unit
+                            budget2 = Math.max(budget2, unitCost2);
                         }
-                        const cost1 =
-                            calcCost(stats1, isImp1) || stats1.total_cost;
-                        const cost2 =
-                            calcCost(stats2, isImp2) || stats2.total_cost;
+
                         team1Count = Math.min(
-                            40,
-                            Math.max(1, Math.floor(totalResources / cost1)),
+                            60,
+                            Math.max(1, Math.floor(budget1 / unitCost1)),
                         );
                         team2Count = Math.min(
-                            40,
-                            Math.max(1, Math.floor(totalResources / cost2)),
+                            60,
+                            Math.max(1, Math.floor(budget2 / unitCost2)),
                         );
                     } else {
                         team1Count =
                             parseInt(
                                 document.getElementById("team1Count").value,
-                            ) || 10;
+                            ) || 30;
                         team2Count =
                             parseInt(
                                 document.getElementById("team2Count").value,
-                            ) || 10;
+                            ) || 30;
                     }
 
                     simulation.reset();

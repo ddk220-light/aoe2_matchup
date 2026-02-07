@@ -96,15 +96,19 @@
 
             /* Main layout */
             .container {
-                max-width: 1400px;
+                max-width: 1600px;
                 margin: 0 auto;
                 padding: 16px 20px;
             }
             .main-layout {
                 display: flex;
-                gap: 16px;
+                gap: 12px;
             }
-            .left-panel {
+            .stats-panel {
+                width: 200px;
+                flex-shrink: 0;
+            }
+            .center-panel {
                 flex: 1;
                 min-width: 0;
             }
@@ -413,12 +417,10 @@
             /* Canvas */
             #battleCanvas {
                 display: block;
-                margin: 0 auto 12px;
                 border: 2px solid var(--gold-dark);
                 border-radius: 8px;
                 background: #2a3a1a;
                 width: 100%;
-                max-width: 800px;
             }
 
             /* Live battle progress (left sidebar) */
@@ -426,13 +428,12 @@
                 display: flex;
                 flex-direction: column;
                 gap: 8px;
-                margin-bottom: 12px;
             }
             .progress-card {
                 background: var(--card-bg);
                 border: 1px solid var(--card-border);
                 border-radius: 8px;
-                padding: 10px 12px;
+                padding: 8px 10px;
             }
             .progress-card.team1 {
                 border-left: 3px solid var(--team1);
@@ -703,10 +704,7 @@
             </div>
 
             <div class="main-layout">
-                <div class="left-panel">
-                    <canvas id="battleCanvas" width="800" height="500"></canvas>
-
-                    <!-- Live Battle Progress -->
+                <div class="stats-panel">
                     <div class="battle-progress" id="battleProgress">
                         <div class="battle-timer" id="battleTimer">0.0s</div>
                         <div class="progress-card team1">
@@ -784,6 +782,10 @@
                     </div>
                 </div>
 
+                <div class="center-panel">
+                    <canvas id="battleCanvas" width="900" height="600"></canvas>
+                </div>
+
                 <div class="right-panel">
                     <div class="debug-panel" id="debugPanel">
                         <h3>Damage Breakdown</h3>
@@ -799,8 +801,8 @@
 
         <script>
             // ===== CONSTANTS =====
-            const CANVAS_WIDTH = 800;
-            const CANVAS_HEIGHT = 500;
+            const CANVAS_WIDTH = 900;
+            const CANVAS_HEIGHT = 600;
             const TILE_SIZE = 30;
             const MELEE_RANGE_BUFFER = 5;
 

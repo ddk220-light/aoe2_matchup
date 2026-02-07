@@ -176,8 +176,8 @@
                 gap: 8px;
             }
             .unit-card {
-                width: 120px;
-                padding: 10px 6px 8px;
+                width: 100px;
+                padding: 8px 6px;
                 background: var(--card-bg);
                 border: 1px solid var(--card-border);
                 border-radius: 8px;
@@ -192,8 +192,8 @@
                 box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
             }
             .unit-icon {
-                width: 56px;
-                height: 56px;
+                width: 72px;
+                height: 72px;
                 border-radius: 50%;
                 border: 2px solid var(--gold-dark);
                 object-fit: cover;
@@ -205,34 +205,14 @@
                 font-size: 0.7rem;
                 font-weight: 600;
                 color: var(--text);
-                margin-bottom: 6px;
                 line-height: 1.2;
-                min-height: 1.4em;
-            }
-            .unit-stats-mini {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 2px 4px;
-                font-size: 0.6rem;
-                color: var(--text-muted);
-            }
-            .stat-mini {
-                display: flex;
-                align-items: center;
-                gap: 2px;
-            }
-            .stat-mini svg {
-                flex-shrink: 0;
-            }
-            .stat-mini span {
-                white-space: nowrap;
             }
             .civ-star {
                 position: absolute;
-                top: 4px;
-                right: 4px;
+                top: 3px;
+                right: 3px;
                 color: var(--gold);
-                font-size: 0.75rem;
+                font-size: 0.8rem;
             }
 
             /* Modal Overlay */
@@ -463,11 +443,11 @@
                     grid-template-columns: 1fr;
                 }
                 .unit-card {
-                    width: 100px;
+                    width: 88px;
                 }
                 .unit-icon {
-                    width: 48px;
-                    height: 48px;
+                    width: 60px;
+                    height: 60px;
                 }
                 .classes-grid {
                     grid-template-columns: 1fr;
@@ -609,73 +589,79 @@
             const ICON_BASE =
                 "https://raw.githubusercontent.com/qwyt/aoe2-icon-resources/master/objects/";
 
-            // Unit slug → game unit ID, keyed by age for correct icons
-            const UNIT_ICONS_CASTLE = {
-                swordsmen: 77,
-                pikeman: 358,
-                crossbow: 24,
-                elite_skirm: 6,
-                cav_archer: 39,
-                knight: 38,
-                light_cav: 546,
-                camel: 329,
-                ram: 35,
-                mangonel: 280,
-                scorpion: 279,
-                fire_lancer: 1901,
-                eagle_warrior: 753,
-                steppe_lancer: 1370,
-                elephant: 1132,
-                elephant_archer: 873,
-                // Unique units - base IDs
-                longbowman_britons: 8,
-                cataphract_byzantines: 40,
-                woad_raider_celts: 232,
-                chu_ko_nu_chinese: 73,
-                throwing_axeman_franks: 281,
-                huskarl_goths: 41,
-                samurai_japanese: 291,
-                mangudai_mongols: 11,
-                war_elephant_persians: 239,
-                mameluke_saracens: 282,
-                teutonic_knight_teutons: 25,
-                janissary_turks: 46,
-                berserk_vikings: 692,
-            };
-            const UNIT_ICONS_IMPERIAL = {
-                champion: 567,
-                halberdier: 359,
-                arbalester: 492,
-                imp_elite_skirm: 6,
-                heavy_cav_archer: 474,
-                hand_cannoneer: 5,
-                hussar: 441,
-                paladin: 569,
-                heavy_camel: 330,
-                siege_ram: 548,
-                siege_onager: 588,
-                heavy_scorpion: 542,
-                trebuchet: 42,
-                bombard_cannon: 36,
-                elite_eagle: 752,
-                elite_steppe: 1372,
-                elite_elephant: 1134,
-                elite_ele_archer: 875,
-                elite_fire_lancer: 1903,
-                // Elite unique - use base IDs (elite icons don't exist in repo)
-                elite_longbowman_britons: 8,
-                elite_cataphract_byzantines: 40,
-                elite_woad_raider_celts: 232,
-                elite_chu_ko_nu_chinese: 73,
-                elite_throwing_axeman_franks: 281,
-                elite_huskarl_goths: 41,
-                elite_samurai_japanese: 291,
-                elite_mangudai_mongols: 11,
-                elite_war_elephant_persians: 239,
-                elite_mameluke_saracens: 282,
-                elite_teutonic_knight_teutons: 25,
-                elite_janissary_turks: 46,
-                elite_berserk_vikings: 692,
+            // Unit name → game icon ID (name-based for accuracy across civs)
+            const NAME_TO_ICON = {
+                // Infantry
+                Spearman: 93,
+                Pikeman: 358,
+                Halberdier: 359,
+                "Man-at-Arms": 75,
+                "Long Swordsman": 77,
+                "Two-Handed Swordsman": 473,
+                Champion: 567,
+                // Archers
+                Archer: 4,
+                Crossbowman: 24,
+                Arbalester: 492,
+                Skirmisher: 7,
+                "Elite Skirmisher": 6,
+                "Cavalry Archer": 39,
+                "Heavy Cavalry Archer": 474,
+                "Hand Cannoneer": 5,
+                // Cavalry
+                "Scout Cavalry": 448,
+                "Light Cavalry": 546,
+                Hussar: 441,
+                Knight: 38,
+                Cavalier: 283,
+                Paladin: 569,
+                Savar: 569,
+                "Camel Rider": 329,
+                "Heavy Camel Rider": 330,
+                "Steppe Lancer": 1370,
+                "Elite Steppe Lancer": 1372,
+                "Battle Elephant": 1132,
+                "Elite Battle Elephant": 1134,
+                // Siege
+                "Battering Ram": 35,
+                "Capped Ram": 422,
+                "Siege Ram": 548,
+                Mangonel: 280,
+                Onager: 550,
+                "Siege Onager": 588,
+                Scorpion: 279,
+                "Heavy Scorpion": 542,
+                "Bombard Cannon": 36,
+                Trebuchet: 42,
+                // Unique units (base ID for both base and elite)
+                Longbowman: 8,
+                "Elite Longbowman": 8,
+                Cataphract: 40,
+                "Elite Cataphract": 40,
+                "Woad Raider": 232,
+                "Elite Woad Raider": 232,
+                "Chu Ko Nu": 73,
+                "Elite Chu Ko Nu": 73,
+                "Throwing Axeman": 281,
+                "Elite Throwing Axeman": 281,
+                Huskarl: 41,
+                "Elite Huskarl": 41,
+                Samurai: 291,
+                "Elite Samurai": 291,
+                Mangudai: 11,
+                "Elite Mangudai": 11,
+                "War Elephant": 239,
+                "Elite War Elephant": 239,
+                Mameluke: 282,
+                "Elite Mameluke": 282,
+                "Teutonic Knight": 25,
+                "Elite Teutonic Knight": 25,
+                Janissary: 46,
+                "Elite Janissary": 46,
+                Berserk: 692,
+                "Elite Berserk": 692,
+                "Fire Lancer": 1901,
+                "Elite Fire Lancer": 1903,
             };
 
             // JPG icon IDs (most are PNG, these few are JPG)
@@ -695,15 +681,8 @@
                 return ICON_BASE + id + "." + ext;
             }
 
-            function unitIconUrl(slug) {
-                const map =
-                    currentAge === "Castle"
-                        ? UNIT_ICONS_CASTLE
-                        : UNIT_ICONS_IMPERIAL;
-                const id =
-                    map[slug] ||
-                    UNIT_ICONS_CASTLE[slug] ||
-                    UNIT_ICONS_IMPERIAL[slug];
+            function unitIconUrl(name) {
+                const id = NAME_TO_ICON[name];
                 if (!id) return "";
                 return iconUrl(id);
             }
@@ -817,20 +796,12 @@
             }
 
             function renderUnitCard(u) {
-                const fs = u.final_stats;
-                const iUrl = unitIconUrl(u.unit_slug);
+                const iUrl = unitIconUrl(u.unit_name);
                 const civBonus = hasCivBonus(u);
-                const mainAtk = getMainAttack(u);
                 return `<div class="unit-card" onclick='openModal(${JSON.stringify(u.unit_slug)})'>
             ${civBonus ? '<span class="civ-star" title="Has civ bonus">&#9733;</span>' : ""}
             <img class="unit-icon" src="${iUrl}" alt="${u.unit_name}" onerror="this.src='${PLACEHOLDER_ICON}'"/>
             <div class="unit-name">${u.unit_name}</div>
-            <div class="unit-stats-mini">
-                <div class="stat-mini">${ICONS.hp}<span>${Math.round(fs.hp)}</span></div>
-                <div class="stat-mini">${ICONS.atk}<span>${Math.round(mainAtk)}</span></div>
-                <div class="stat-mini">${ICONS.armor}<span>${Math.round(fs.melee_armor)}/${Math.round(fs.pierce_armor)}</span></div>
-                ${u.is_ranged ? `<div class="stat-mini">${ICONS.range}<span>${Math.round(fs.range)}</span></div>` : `<div class="stat-mini">${ICONS.speed}<span>${fs.speed.toFixed(2)}</span></div>`}
-            </div>
         </div>`;
             }
 
@@ -856,7 +827,7 @@
                 const u = units.find((x) => x.unit_slug === slug);
                 if (!u) return;
 
-                const iUrl = unitIconUrl(u.unit_slug);
+                const iUrl = unitIconUrl(u.unit_name);
                 const bs = u.base_stats;
                 const fs = u.final_stats;
                 const primaryAtkClass = getPrimaryAtkClass(u);

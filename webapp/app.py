@@ -964,25 +964,19 @@ def api_ref_civ(civ_name):
     )
 
 
-@app.route("/api/ref/combat-unit/<civ_name>/<unit_slug>")
-def api_ref_combat_unit(civ_name, unit_slug):
-    """Get combat-ready stats for a unit from reference DB (for battle simulator)."""
-    if civ_name not in ORIGINAL_13_CIVS:
-        return jsonify({"error": "Civilization not in original 13"}), 404
+# ===== Combat unit building from reference DB =====
 
-    ref_conn = get_ref_db()
-    rc = ref_conn.cursor()
 
-    # Find the unit
-    rc.execute(
-        "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=?",
-        (civ_name, unit_slug),
-    )
-    row = rc.fetchone()
-    if not row:
-        ref_conn.close()
-        return jsonify({"error": f"Unit {unit_slug} not found for {civ_name}"}), 404
+def _build_combat_dict_from_ref(rc, row):
+    """Build a dict from a ref_units row + related tables, compatible with prepare_combat_unit().
 
+    Args:
+        rc: sqlite3 cursor on the reference DB
+        row: sqlite3.Row from ref_units table
+
+    Returns:
+        dict with fields matching prepare_combat_unit() expectations
+    """
     uid = row["id"]
 
     # Get special effects as flat dict
@@ -1004,11 +998,10 @@ def api_ref_combat_unit(civ_name, unit_slug):
            FROM ref_projectiles WHERE ref_unit_id=?""",
         (uid,),
     )
-    proj_rows = rc.fetchall()
     primary_proj = None
     extra_proj = None
     charge_proj = None
-    for p in proj_rows:
+    for p in rc.fetchall():
         if p["projectile_type"] == "primary":
             primary_proj = dict(p)
         elif p["projectile_type"] == "extra":
@@ -1016,34 +1009,14 @@ def api_ref_combat_unit(civ_name, unit_slug):
         elif p["projectile_type"] == "charge":
             charge_proj = dict(p)
 
-    # Get stat chain for upgrade breakdown (attack/armor progression)
-    rc.execute(
-        """SELECT step_order, tech_name, tech_type, attack, melee_armor, pierce_armor,
-                  attacks_json, armors_json
-           FROM ref_stat_chain WHERE ref_unit_id=? ORDER BY step_order""",
-        (uid,),
-    )
-    stat_chain = []
-    for sc in rc.fetchall():
-        stat_chain.append(
-            {
-                "step": sc["step_order"],
-                "tech": sc["tech_name"],
-                "type": sc["tech_type"],
-                "attacks_json": sc["attacks_json"],
-                "armors_json": sc["armors_json"],
-            }
-        )
-
-    ref_conn.close()
-
-    # Build combat-ready response matching BattleUnit constructor shape
     reload_time = row["final_reload_time"] or 2.0
     attack_speed = 1.0 / reload_time if reload_time > 0 else 0.5
 
-    result = {
-        "name": row["unit_name"],
-        "civ": civ_name,
+    return {
+        "slug": row["unit_slug"],
+        "unit_name": row["unit_name"],
+        "unit_category": "military",
+        "paired_unit_slug": None,
         "hp": row["final_hp"],
         "attack": row["final_attack"],
         "attack_range": row["final_range"],
@@ -1055,16 +1028,12 @@ def api_ref_combat_unit(civ_name, unit_slug):
         "cost_food": row["final_cost_food"] or 0,
         "cost_wood": row["final_cost_wood"] or 0,
         "cost_gold": row["final_cost_gold"] or 0,
-        "total_cost": (row["final_cost_food"] or 0)
-        + (row["final_cost_wood"] or 0)
-        + (row["final_cost_gold"] or 0),
         "upgrade_cost_food": row["upgrade_cost_food"] or 0,
         "upgrade_cost_wood": row["upgrade_cost_wood"] or 0,
         "upgrade_cost_gold": row["upgrade_cost_gold"] or 0,
         "attacks_json": row["final_attacks_json"],
         "armors_json": row["final_armors_json"],
         "min_attack_range": row["min_range"] or 0,
-        "outline_size": row["outline_size_x"] or 0.2,
         # From projectiles
         "projectile_speed": (
             primary_proj["projectile_speed"]
@@ -1075,18 +1044,14 @@ def api_ref_combat_unit(civ_name, unit_slug):
             primary_proj["is_siege_projectile"] if primary_proj else 0
         ),
         "splash_radius": special.get("splash_radius", 0),
-        # Extra projectiles
         "extra_projectiles": extra_proj["projectile_count"] if extra_proj else 0,
         "extra_projectile_attacks_json": (
             extra_proj["attacks_json"] if extra_proj else None
         ),
-        # Trample
         "trample_percent": special.get("trample_percent", 0),
         "trample_radius": special.get("trample_radius", 0),
         "trample_flat_damage": special.get("trample_flat_damage", 0),
-        # HP regen
         "hp_regen": special.get("hp_regen", 0),
-        # Charge projectiles (Fire Lancer etc.)
         "charge_projectile_count": charge_proj["projectile_count"]
         if charge_proj
         else 0,
@@ -1110,11 +1075,79 @@ def api_ref_combat_unit(civ_name, unit_slug):
         "block_first_melee": 0,
         "attack_bonus_per_kill": 0,
         "first_attack_extra_projectiles": 0,
+        "hp_regen": special.get("hp_regen", 0),
         "hp_transform_threshold": 0,
-        # Upgrade chain for debug breakdown
-        "stat_chain": stat_chain,
+        # No dismount/transform in original 13 ref DB
+        "dismount_hp": None,
+        "dismount_attack": None,
+        "dismount_melee_armor": None,
+        "dismount_pierce_armor": None,
+        "dismount_attack_speed": None,
+        "dismount_attack_delay": None,
+        "dismount_movement_speed": None,
+        "dismount_attacks_json": None,
+        "dismount_armors_json": None,
+        "transform_hp": None,
+        "transform_attack": None,
+        "transform_melee_armor": None,
+        "transform_pierce_armor": None,
+        "transform_attack_speed": None,
+        "transform_attack_delay": None,
+        "transform_movement_speed": None,
+        "transform_attacks_json": None,
+        "transform_armors_json": None,
     }
 
+
+@app.route("/api/ref/combat-unit/<civ_name>/<unit_slug>")
+def api_ref_combat_unit(civ_name, unit_slug):
+    """Get combat-ready stats for a unit from reference DB (for battle simulator)."""
+    if civ_name not in ORIGINAL_13_CIVS:
+        return jsonify({"error": "Civilization not in original 13"}), 404
+
+    ref_conn = get_ref_db()
+    rc = ref_conn.cursor()
+
+    rc.execute(
+        "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=?",
+        (civ_name, unit_slug),
+    )
+    row = rc.fetchone()
+    if not row:
+        ref_conn.close()
+        return jsonify({"error": f"Unit {unit_slug} not found for {civ_name}"}), 404
+
+    result = _build_combat_dict_from_ref(rc, row)
+
+    # Add stat chain for debug breakdown (HTTP endpoint only)
+    rc.execute(
+        """SELECT step_order, tech_name, tech_type, attack, melee_armor, pierce_armor,
+                  attacks_json, armors_json
+           FROM ref_stat_chain WHERE ref_unit_id=? ORDER BY step_order""",
+        (row["id"],),
+    )
+    result["stat_chain"] = [
+        {
+            "step": sc["step_order"],
+            "tech": sc["tech_name"],
+            "type": sc["tech_type"],
+            "attacks_json": sc["attacks_json"],
+            "armors_json": sc["armors_json"],
+        }
+        for sc in rc.fetchall()
+    ]
+
+    # Extra fields for HTTP response
+    result["name"] = row["unit_name"]
+    result["civ"] = civ_name
+    result["total_cost"] = (
+        (row["final_cost_food"] or 0)
+        + (row["final_cost_wood"] or 0)
+        + (row["final_cost_gold"] or 0)
+    )
+    result["outline_size"] = row["outline_size_x"] or 0.2
+
+    ref_conn.close()
     return jsonify(result)
 
 
@@ -1261,6 +1294,197 @@ UNIT_LINES = {
 }
 
 
+# ===== Battle ranking simulation infrastructure =====
+
+
+def _calc_weighted_cost(food, wood, gold, is_imperial):
+    """Weighted resource cost. Castle: wood + 1.5*food + gold. Imperial: wood + food + gold."""
+    if is_imperial:
+        cost = (wood or 0) + (food or 0) + (gold or 0)
+    else:
+        cost = (wood or 0) + 1.5 * (food or 0) + (gold or 0)
+    return int(cost) if cost > 0 else 100
+
+
+def _build_line_combat_units(line_slug, age):
+    """Build combat-ready units for all civs in a unit line + age.
+
+    Returns list of dicts: {'civ_name', 'unit_slug', 'is_unique', 'combat_unit'}
+    """
+    line = UNIT_LINES[line_slug]
+    is_castle = age == "castle"
+    std_slug = line["castle_slug"] if is_castle else line["imperial_slug"]
+    db_age = "Castle" if is_castle else "Imperial"
+    unique_units = line.get("unique_units", {})
+
+    ref_conn = get_ref_db()
+    rc = ref_conn.cursor()
+
+    units = []
+
+    # Standard units
+    if std_slug:
+        rc.execute(
+            "SELECT * FROM ref_units WHERE unit_slug=? AND age=?", (std_slug, db_age)
+        )
+        for row in rc.fetchall():
+            combat_dict = _build_combat_dict_from_ref(rc, row)
+            combat_unit = prepare_combat_unit(combat_dict)
+            # Attach upgrade costs to combat_unit for 5K scenario
+            combat_unit["upgrade_cost_food"] = row["upgrade_cost_food"] or 0
+            combat_unit["upgrade_cost_wood"] = row["upgrade_cost_wood"] or 0
+            combat_unit["upgrade_cost_gold"] = row["upgrade_cost_gold"] or 0
+            units.append(
+                {
+                    "civ_name": row["civ_name"],
+                    "unit_slug": row["unit_slug"],
+                    "is_unique": False,
+                    "combat_unit": combat_unit,
+                }
+            )
+
+    # Unique units
+    for civ_name, (castle_uu, imperial_uu) in unique_units.items():
+        uu_slug = castle_uu if is_castle else imperial_uu
+        if not uu_slug:
+            continue
+        rc.execute(
+            "SELECT * FROM ref_units WHERE unit_slug=? AND civ_name=?",
+            (uu_slug, civ_name),
+        )
+        row = rc.fetchone()
+        if row:
+            combat_dict = _build_combat_dict_from_ref(rc, row)
+            combat_unit = prepare_combat_unit(combat_dict)
+            combat_unit["upgrade_cost_food"] = row["upgrade_cost_food"] or 0
+            combat_unit["upgrade_cost_wood"] = row["upgrade_cost_wood"] or 0
+            combat_unit["upgrade_cost_gold"] = row["upgrade_cost_gold"] or 0
+            units.append(
+                {
+                    "civ_name": civ_name,
+                    "unit_slug": uu_slug,
+                    "is_unique": True,
+                    "combat_unit": combat_unit,
+                }
+            )
+
+    ref_conn.close()
+    return units
+
+
+def _compute_battle_scores(line_slug, age):
+    """Run round-robin battles for all units in a line+age.
+
+    Returns: {(civ_name, unit_slug): {'score_30v30': float, 'score_3k': float, 'score_5k': float}}
+    Scores are 0-100 (win rate percentage).
+    """
+    is_imperial = age == "imperial"
+    units = _build_line_combat_units(line_slug, age)
+    n = len(units)
+
+    if n < 2:
+        return {}
+
+    # Initialize counters
+    keys = [(u["civ_name"], u["unit_slug"]) for u in units]
+    wins = {k: [0, 0, 0] for k in keys}  # [30v30, 3k, 5k]
+    draws = {k: [0, 0, 0] for k in keys}
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            ui = units[i]["combat_unit"]
+            uj = units[j]["combat_unit"]
+            ki = keys[i]
+            kj = keys[j]
+
+            # Scenario 1: 30v30
+            w1, _, _ = simulate_battle(ui, uj, 0, fixed_count=30)
+
+            # Scenario 2: 3000 resources
+            ci = _calc_weighted_cost(
+                ui["cost_food"], ui["cost_wood"], ui["cost_gold"], is_imperial
+            )
+            cj = _calc_weighted_cost(
+                uj["cost_food"], uj["cost_wood"], uj["cost_gold"], is_imperial
+            )
+            w2, _, _ = simulate_battle(
+                ui, uj, 3000, cost1_override=ci, cost2_override=cj
+            )
+
+            # Scenario 3: 5000 resources including upgrades
+            upg_i = _calc_weighted_cost(
+                ui["upgrade_cost_food"],
+                ui["upgrade_cost_wood"],
+                ui["upgrade_cost_gold"],
+                is_imperial,
+            )
+            upg_j = _calc_weighted_cost(
+                uj["upgrade_cost_food"],
+                uj["upgrade_cost_wood"],
+                uj["upgrade_cost_gold"],
+                is_imperial,
+            )
+            budget_i = max(ci, 5000 - upg_i)
+            budget_j = max(cj, 5000 - upg_j)
+            # Asymmetric budget trick: use budget_i as resources, adjust cost2 so
+            # count_j = budget_j // cj
+            adj_cj = max(1, int(budget_i * cj / budget_j)) if budget_j > 0 else cj
+            w3, _, _ = simulate_battle(
+                ui, uj, budget_i, cost1_override=ci, cost2_override=adj_cj
+            )
+
+            # Record results for all 3 scenarios
+            for scenario_idx, w in enumerate([w1, w2, w3]):
+                if w == 1:
+                    wins[ki][scenario_idx] += 1
+                elif w == 2:
+                    wins[kj][scenario_idx] += 1
+                else:
+                    draws[ki][scenario_idx] += 1
+                    draws[kj][scenario_idx] += 1
+
+    # Convert to 0-100 scores
+    opponents = n - 1
+    scores = {}
+    for k in keys:
+        scores[k] = {
+            "score_30v30": round((wins[k][0] + 0.5 * draws[k][0]) / opponents * 100, 1),
+            "score_3k": round((wins[k][1] + 0.5 * draws[k][1]) / opponents * 100, 1),
+            "score_5k": round((wins[k][2] + 0.5 * draws[k][2]) / opponents * 100, 1),
+        }
+
+    return scores
+
+
+# Pre-computed battle scores: {(line_slug, age_key): {(civ_name, unit_slug): scores_dict}}
+BATTLE_SCORES = {}
+
+
+def precompute_all_battle_scores():
+    """Run all round-robin simulations for all unit lines. Called once at startup."""
+    import time
+
+    start = time.time()
+    total_lines = 0
+
+    for line_slug, config in UNIT_LINES.items():
+        for age_key in ["castle", "imperial"]:
+            slug = config.get(f"{age_key}_slug")
+            has_unique = bool(config.get("unique_units"))
+            if not slug and not has_unique:
+                continue
+            scores = _compute_battle_scores(line_slug, age_key)
+            if scores:
+                BATTLE_SCORES[(line_slug, age_key)] = scores
+                total_lines += 1
+
+    elapsed = time.time() - start
+    print(f"Battle scores pre-computed: {total_lines} line-ages in {elapsed:.1f}s")
+
+
+precompute_all_battle_scores()
+
+
 @app.route("/api/ref/unit-line/<line_slug>")
 def api_ref_unit_line(line_slug):
     """Get comparison data for a unit line across all civs."""
@@ -1285,6 +1509,14 @@ def api_ref_unit_line(line_slug):
         "imperial": [],
     }
 
+    def _attach_scores(entry, age_key):
+        """Attach battle scores to an entry dict."""
+        scores = BATTLE_SCORES.get((line_slug, age_key), {})
+        unit_scores = scores.get((entry["civ_name"], entry["unit_slug"]), {})
+        entry["score_30v30"] = unit_scores.get("score_30v30", -1)
+        entry["score_3k"] = unit_scores.get("score_3k", -1)
+        entry["score_5k"] = unit_scores.get("score_5k", -1)
+
     # Fetch standard units for each age
     for age_key, slug_key, db_age in [
         ("castle", "castle_slug", "Castle"),
@@ -1300,6 +1532,7 @@ def api_ref_unit_line(line_slug):
         for row in rc.fetchall():
             entry = dict(row)
             entry["is_unique"] = False
+            _attach_scores(entry, age_key)
             result[age_key].append(entry)
 
     # Fetch unique units
@@ -1315,6 +1548,7 @@ def api_ref_unit_line(line_slug):
             if row:
                 entry = dict(row)
                 entry["is_unique"] = True
+                _attach_scores(entry, age_key)
                 result[age_key].append(entry)
 
     ref_conn.close()

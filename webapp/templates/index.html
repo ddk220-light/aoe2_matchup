@@ -703,8 +703,8 @@
 
                 const resp = await fetch(`/api/ref/unit-line/${slug}`);
                 currentData = await resp.json();
-                sortColumn = "civ_name";
-                sortDir = "asc";
+                sortColumn = "score_30v30";
+                sortDir = "desc";
                 renderTable();
             }
 
@@ -777,6 +777,9 @@
 
                 // Compute medians for color coding (exclude unique units for baseline)
                 const statCols = [
+                    "score_30v30",
+                    "score_3k",
+                    "score_5k",
                     "dps_per_cost",
                     "ehp_per_cost",
                     "dps",
@@ -790,7 +793,7 @@
                 const medians = {};
                 for (const col of statCols) {
                     const vals = enriched
-                        .filter((r) => !r.is_unique)
+                        .filter((r) => !r.is_unique && r[col] >= 0)
                         .map((r) => r[col])
                         .sort((a, b) => a - b);
                     medians[col] =
@@ -799,6 +802,9 @@
 
                 // Higher is better for these columns
                 const higherIsBetter = {
+                    score_30v30: true,
+                    score_3k: true,
+                    score_5k: true,
                     dps_per_cost: true,
                     ehp_per_cost: true,
                     dps: true,
@@ -821,6 +827,9 @@
                 const columns = [
                     { key: "civ_name", label: "Civ" },
                     { key: "unit_name", label: "Unit" },
+                    { key: "score_30v30", label: "30v30" },
+                    { key: "score_3k", label: "3K Res" },
+                    { key: "score_5k", label: "5K+Upg" },
                     { key: "dps_per_cost", label: "DPS/Cost" },
                     { key: "ehp_per_cost", label: "EHP/Cost" },
                     { key: "dps", label: "DPS" },
@@ -879,6 +888,13 @@
                         ${row.unit_name}${isUnique ? " *" : ""}
                         ${bonuses ? `<div class="tooltip">${bonuses}</div>` : ""}
                     </div></td>`;
+                    // Battle scores
+                    const s30 = row.score_30v30;
+                    const s3k = row.score_3k;
+                    const s5k = row.score_5k;
+                    html += `<td class="${s30 >= 0 ? valClass("score_30v30", s30) : ""}">${s30 >= 0 ? s30.toFixed(1) : "—"}</td>`;
+                    html += `<td class="${s3k >= 0 ? valClass("score_3k", s3k) : ""}">${s3k >= 0 ? s3k.toFixed(1) : "—"}</td>`;
+                    html += `<td class="${s5k >= 0 ? valClass("score_5k", s5k) : ""}">${s5k >= 0 ? s5k.toFixed(1) : "—"}</td>`;
                     // Stats
                     html += `<td class="${valClass("dps_per_cost", row.dps_per_cost)}">${row.dps_per_cost.toFixed(3)}</td>`;
                     html += `<td class="${valClass("ehp_per_cost", row.ehp_per_cost)}">${row.ehp_per_cost.toFixed(1)}</td>`;

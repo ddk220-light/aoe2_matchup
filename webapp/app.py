@@ -1007,11 +1007,14 @@ def api_ref_combat_unit(civ_name, unit_slug):
     proj_rows = rc.fetchall()
     primary_proj = None
     extra_proj = None
+    charge_proj = None
     for p in proj_rows:
         if p["projectile_type"] == "primary":
             primary_proj = dict(p)
         elif p["projectile_type"] == "extra":
             extra_proj = dict(p)
+        elif p["projectile_type"] == "charge":
+            charge_proj = dict(p)
 
     # Get stat chain for upgrade breakdown (attack/armor progression)
     rc.execute(
@@ -1080,6 +1083,18 @@ def api_ref_combat_unit(civ_name, unit_slug):
         "trample_flat_damage": special.get("trample_flat_damage", 0),
         # HP regen
         "hp_regen": special.get("hp_regen", 0),
+        # Charge projectiles (Fire Lancer etc.)
+        "charge_projectile_count": charge_proj["projectile_count"]
+        if charge_proj
+        else 0,
+        "charge_projectile_speed": charge_proj["projectile_speed"]
+        if charge_proj
+        else 0,
+        "charge_projectile_attacks_json": charge_proj["attacks_json"]
+        if charge_proj
+        else None,
+        "charge_attack_range": float(special.get("charge_attack_range", 0)),
+        "charge_ignores_armor": int(special.get("charge_ignores_armor", 0)),
         # Defaults for properties not in ref DB (not needed for original 13)
         "ignores_pierce_armor": 0,
         "ignores_melee_armor": 0,

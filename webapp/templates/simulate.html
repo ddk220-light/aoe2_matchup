@@ -1258,6 +1258,19 @@
                         stats.hp_transform_threshold || 0;
                     this.hpRegen = stats.hp_regen || 0;
 
+                    // Charge projectiles (Fire Lancer)
+                    this.chargeProjectileCount =
+                        stats.charge_projectile_count || 0;
+                    this.chargeProjectileSpeed =
+                        (stats.charge_projectile_speed || 0) * TILE_SIZE;
+                    this.chargeAttackRange =
+                        (stats.charge_attack_range || 0) * TILE_SIZE;
+                    this.chargeIgnoresArmor = stats.charge_ignores_armor || 0;
+                    this.chargeProjectileAttacks =
+                        stats.charge_projectile_attacks_json
+                            ? JSON.parse(stats.charge_projectile_attacks_json)
+                            : null;
+
                     // State
                     this.shieldCharges = this.dodgeShieldMax;
                     this.shieldRechargeTimer = 0;
@@ -1266,6 +1279,7 @@
                     this.hasUsedFirstAttack = false;
                     this.isTransformed = false;
                     this.bleedEffect = null;
+                    this.hasUsedCharge = false;
 
                     this.x = 0;
                     this.y = 0;
@@ -1519,7 +1533,37 @@
                             this.moveTowardTarget(dt, allUnits);
                         }
                     } else {
-                        if (this.committedAttack) {
+                        // Charge projectile attack (Fire Lancer): fire at range before melee
+                        if (
+                            this.chargeProjectileCount > 0 &&
+                            !this.hasUsedCharge &&
+                            this.target
+                        ) {
+                            const distToTarget = this.distanceTo(this.target);
+                            const chargeRange =
+                                this.chargeAttackRange +
+                                this.radius +
+                                this.target.radius;
+                            if (distToTarget <= chargeRange) {
+                                // In charge range — fire charge projectiles
+                                this.hasUsedCharge = true;
+                                this.state = "attacking";
+                                this.attackAnimTimer = 0.3;
+                                for (
+                                    let cp = 0;
+                                    cp < this.chargeProjectileCount;
+                                    cp++
+                                ) {
+                                    this.fireChargeProjectile(this.target);
+                                }
+                                this.attackCooldown = this.reloadTime;
+                            } else {
+                                // Move toward target to get in charge range
+                                this.state = "moving";
+                                this.moveTowardTarget(dt, allUnits);
+                                this.wasMoving = true;
+                            }
+                        } else if (this.committedAttack) {
                             this.committedAttack.timeLeft -= dt;
                             this.state = "committed";
                             if (this.committedAttack.timeLeft <= 0) {
@@ -1646,6 +1690,45 @@
                     );
                     simulation.projectiles.push(proj);
                     this.attackAnimTimer = 0.15;
+                }
+
+                fireChargeProjectile(target) {
+                    if (!target || target.state === "dead") return;
+                    // Calculate charge projectile damage using charge attacks
+                    let chargeDmg = 0;
+                    if (this.chargeProjectileAttacks) {
+                        for (const [cls, atkVal] of Object.entries(
+                            this.chargeProjectileAttacks,
+                        )) {
+                            if (atkVal <= 0) continue;
+                            if (this.chargeIgnoresArmor) {
+                                chargeDmg += atkVal;
+                            } else {
+                                const armor = target.armors[cls] || 0;
+                                chargeDmg += Math.max(0, atkVal - armor);
+                            }
+                        }
+                    }
+                    chargeDmg = Math.max(1, chargeDmg);
+                    const speed =
+                        this.chargeProjectileSpeed > 0
+                            ? this.chargeProjectileSpeed
+                            : 7 * TILE_SIZE;
+                    const proj = new Projectile(
+                        this.x,
+                        this.y,
+                        target.x,
+                        target.y,
+                        speed,
+                        this.team,
+                        false,
+                        () => {
+                            if (target.state === "dead") return;
+                            target.takeDamage(chargeDmg, this);
+                        },
+                    );
+                    simulation.projectiles.push(proj);
+                    this.attackAnimTimer = 0.3;
                 }
 
                 performAttackOn(target) {

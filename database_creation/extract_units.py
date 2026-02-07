@@ -357,6 +357,7 @@ def extract_unit_data(unit, all_units=None):
         "speed": round(getattr(unit, "speed", 0), 3),
         "line_of_sight": round(getattr(unit, "line_of_sight", 0), 1),
         "garrison_capacity": getattr(unit, "garrison_capacity", 0),
+        "outline_size_x": round(getattr(unit, "outline_size_x", 0.2), 2),
     }
 
     # Cost from creatable

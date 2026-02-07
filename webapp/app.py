@@ -1058,6 +1058,7 @@ def api_ref_combat_unit(civ_name, unit_slug):
         "attacks_json": row["final_attacks_json"],
         "armors_json": row["final_armors_json"],
         "min_attack_range": row["min_range"] or 0,
+        "outline_size": row["outline_size_x"] or 0.2,
         # From projectiles
         "projectile_speed": (
             primary_proj["projectile_speed"]

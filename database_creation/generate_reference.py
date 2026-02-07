@@ -238,6 +238,7 @@ def generate_reference_database(analyzer):
             final_attacks_json TEXT, final_armors_json TEXT,
             base_train_time REAL, final_train_time REAL,
             total_projectiles REAL, projectile_speed REAL, min_range REAL,
+            outline_size_x REAL DEFAULT 0.2,
             applied_bonuses_summary TEXT,
             upgrade_cost_food INTEGER DEFAULT 0,
             upgrade_cost_wood INTEGER DEFAULT 0,
@@ -388,8 +389,9 @@ def generate_reference_database(analyzer):
                 base_cost_food, base_cost_wood, base_cost_gold,
                 base_attacks_json, base_armors_json,
                 base_train_time,
-                total_projectiles, projectile_speed, min_range)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                total_projectiles, projectile_speed, min_range,
+                outline_size_x)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (
                 civ_name,
                 unit_name,
@@ -418,6 +420,7 @@ def generate_reference_database(analyzer):
                 unit_data.get("total_projectiles", 1),
                 unit_data.get("projectile_speed", 0),
                 unit_data.get("min_range", 0),
+                unit_data.get("outline_size_x", 0.2),
             ),
         )
         ref_unit_id = cursor.lastrowid

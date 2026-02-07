@@ -802,7 +802,6 @@
             const CANVAS_WIDTH = 800;
             const CANVAS_HEIGHT = 500;
             const TILE_SIZE = 30;
-            const UNIT_RADIUS = 15;
             const MELEE_RANGE_BUFFER = 5;
 
             const ORIGINAL_13_CIVS = [
@@ -1270,7 +1269,12 @@
 
                     this.x = 0;
                     this.y = 0;
-                    this.radius = UNIT_RADIUS;
+                    // Scale radius based on unit outline_size
+                    // infantry(0.2)→14, cavalry(0.4)→18, paladin(0.5)→20, mangonel(0.5)→20, ram(0.8)→26, treb(1.0)→30
+                    const outlineSize = stats.outline_size || 0.2;
+                    this.radius = Math.round(
+                        10 + Math.min(outlineSize, 1.0) * 20,
+                    );
                     this.target = null;
                     this.state = "idle";
                     this.attackCooldown = 0;
@@ -1973,12 +1977,29 @@
                     const stats = await response.json();
 
                     const team = [];
-                    const startX = teamNum === 1 ? 60 : this.canvas.width - 60;
-                    const spacing =
+                    const outlineSize = stats.outline_size || 0.2;
+                    const unitRadius = Math.round(
+                        10 + Math.min(outlineSize, 1.0) * 20,
+                    );
+                    const startX =
+                        teamNum === 1
+                            ? 30 + unitRadius
+                            : this.canvas.width - 30 - unitRadius;
+                    const minSpacing = unitRadius * 2.2;
+                    const naturalSpacing =
                         count > 1
-                            ? (this.canvas.height - 100) / (count - 1)
+                            ? (this.canvas.height - 2 * unitRadius) /
+                              (count - 1)
                             : 0;
-                    const startY = count > 1 ? 50 : this.canvas.height / 2;
+                    const spacing = Math.max(naturalSpacing, minSpacing);
+                    const totalHeight = (count - 1) * spacing;
+                    const startY =
+                        count > 1
+                            ? Math.max(
+                                  unitRadius,
+                                  (this.canvas.height - totalHeight) / 2,
+                              )
+                            : this.canvas.height / 2;
 
                     for (let i = 0; i < count; i++) {
                         const unit = new BattleUnit(
@@ -1988,7 +2009,7 @@
                             unitSlug,
                             civName,
                         );
-                        unit.x = startX + (Math.random() - 0.5) * 20;
+                        unit.x = startX + (Math.random() - 0.5) * 10;
                         unit.y = startY + i * spacing;
                         // Assign preloaded sprite image
                         unit.spriteImg = unitImages[teamNum];

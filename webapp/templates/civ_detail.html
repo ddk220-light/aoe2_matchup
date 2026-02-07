@@ -128,32 +128,43 @@
 
             /* Content */
             .content {
-                max-width: 1100px;
+                max-width: 1400px;
                 margin: 0 auto;
-                padding: 20px 20px 60px;
+                padding: 16px 20px 60px;
+            }
+
+            /* Buildings grid - multi-column */
+            .buildings-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 16px;
+                align-items: start;
             }
 
             /* Building Group */
             .building-group {
-                margin-bottom: 24px;
+                background: rgba(58, 42, 24, 0.3);
+                border: 1px solid var(--card-border);
+                border-radius: 10px;
+                padding: 12px;
             }
             .building-header {
                 display: flex;
                 align-items: center;
-                gap: 10px;
+                gap: 8px;
                 padding-bottom: 8px;
-                margin-bottom: 12px;
+                margin-bottom: 10px;
                 border-bottom: 1px solid var(--card-border);
             }
             .building-icon {
-                width: 32px;
-                height: 32px;
+                width: 28px;
+                height: 28px;
                 border-radius: 4px;
                 object-fit: cover;
             }
             .building-header h2 {
                 font-family: "Cinzel", serif;
-                font-size: 1rem;
+                font-size: 0.9rem;
                 color: var(--gold);
                 font-weight: 600;
             }
@@ -162,10 +173,10 @@
             .units-row {
                 display: flex;
                 flex-wrap: wrap;
-                gap: 10px;
+                gap: 8px;
             }
             .unit-card {
-                width: 110px;
+                width: 120px;
                 padding: 10px 6px 8px;
                 background: var(--card-bg);
                 border: 1px solid var(--card-border);
@@ -180,13 +191,9 @@
                 transform: translateY(-2px);
                 box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
             }
-            .unit-card.unavailable {
-                opacity: 0.3;
-                pointer-events: none;
-            }
             .unit-icon {
-                width: 40px;
-                height: 40px;
+                width: 56px;
+                height: 56px;
                 border-radius: 50%;
                 border: 2px solid var(--gold-dark);
                 object-fit: cover;
@@ -225,7 +232,7 @@
                 top: 4px;
                 right: 4px;
                 color: var(--gold);
-                font-size: 0.7rem;
+                font-size: 0.75rem;
             }
 
             /* Modal Overlay */
@@ -278,19 +285,19 @@
                 color: var(--text);
             }
             .modal-body {
-                padding: 24px;
+                padding: 28px;
             }
 
             /* Modal Header */
             .modal-unit-header {
                 display: flex;
                 align-items: center;
-                gap: 14px;
-                margin-bottom: 20px;
+                gap: 16px;
+                margin-bottom: 22px;
             }
             .modal-unit-icon {
-                width: 56px;
-                height: 56px;
+                width: 64px;
+                height: 64px;
                 border-radius: 50%;
                 border: 2px solid var(--gold-dark);
                 object-fit: cover;
@@ -298,27 +305,27 @@
             }
             .modal-unit-info h3 {
                 font-family: "Cinzel", serif;
-                font-size: 1.2rem;
+                font-size: 1.4rem;
                 color: var(--gold);
             }
             .modal-unit-info .class-badge {
-                font-size: 0.7rem;
+                font-size: 0.8rem;
                 color: var(--text-muted);
                 background: rgba(201, 168, 76, 0.1);
                 border: 1px solid rgba(201, 168, 76, 0.2);
                 border-radius: 10px;
-                padding: 1px 8px;
+                padding: 2px 10px;
                 display: inline-block;
                 margin-top: 4px;
             }
 
             /* Stat Breakdown */
             .stat-section {
-                margin-bottom: 16px;
+                margin-bottom: 18px;
             }
             .stat-section h4 {
                 font-family: "Cinzel", serif;
-                font-size: 0.85rem;
+                font-size: 0.95rem;
                 color: var(--gold);
                 margin-bottom: 8px;
                 padding-bottom: 4px;
@@ -327,29 +334,29 @@
             .stat-row {
                 display: flex;
                 align-items: baseline;
-                gap: 6px;
-                padding: 4px 0;
-                font-size: 0.8rem;
+                gap: 8px;
+                padding: 5px 0;
+                font-size: 0.9rem;
                 flex-wrap: wrap;
                 border-bottom: 1px solid rgba(90, 66, 40, 0.15);
             }
             .stat-label {
-                width: 100px;
+                width: 110px;
                 flex-shrink: 0;
                 color: var(--text-muted);
-                font-size: 0.75rem;
+                font-size: 0.85rem;
             }
             .stat-final-val {
                 font-weight: 700;
-                font-size: 0.9rem;
+                font-size: 1rem;
                 color: var(--text);
-                min-width: 32px;
+                min-width: 36px;
             }
             .stat-final-val.improved {
                 color: var(--green);
             }
             .stat-chain {
-                font-size: 0.7rem;
+                font-size: 0.8rem;
                 color: var(--text-muted);
             }
             .stat-chain .base-val {
@@ -368,7 +375,7 @@
             .stat-chain .step .tech-name {
                 color: var(--text-muted);
                 opacity: 0.7;
-                font-size: 0.65rem;
+                font-size: 0.75rem;
             }
 
             /* Cost row */
@@ -396,18 +403,18 @@
             /* Attack/Armor tables */
             .class-table {
                 width: 100%;
-                font-size: 0.75rem;
+                font-size: 0.85rem;
                 border-collapse: collapse;
             }
             .class-table th {
                 text-align: left;
-                padding: 3px 8px;
+                padding: 4px 8px;
                 color: var(--text-muted);
                 border-bottom: 1px solid var(--card-border);
                 font-weight: 500;
             }
             .class-table td {
-                padding: 2px 8px;
+                padding: 3px 8px;
             }
             .class-table tr:nth-child(even) td {
                 background: rgba(0, 0, 0, 0.1);
@@ -419,8 +426,8 @@
 
             /* Special effects */
             .special-item {
-                font-size: 0.75rem;
-                padding: 4px 0;
+                font-size: 0.85rem;
+                padding: 5px 0;
                 border-bottom: 1px solid rgba(90, 66, 40, 0.3);
             }
             .special-name {
@@ -452,8 +459,15 @@
                     flex: 1;
                     text-align: center;
                 }
+                .buildings-grid {
+                    grid-template-columns: 1fr;
+                }
                 .unit-card {
-                    width: 90px;
+                    width: 100px;
+                }
+                .unit-icon {
+                    width: 48px;
+                    height: 48px;
                 }
                 .classes-grid {
                     grid-template-columns: 1fr;
@@ -755,6 +769,17 @@
                 render();
             }
 
+            function hasCivBonus(u) {
+                // Check if unit has civ-specific bonuses (unique tech, civ bonus, team bonus)
+                if (!u.stat_chain) return false;
+                return u.stat_chain.some(
+                    (s) =>
+                        s.tech_type === "civ_bonus" ||
+                        s.tech_type === "unique_tech" ||
+                        s.tech_type === "team_bonus",
+                );
+            }
+
             function render() {
                 const units = civData.units_by_age[currentAge] || [];
                 const container = document.getElementById("units-container");
@@ -766,7 +791,7 @@
                     if (!groups[building]) groups[building] = [];
                     groups[building].push(u);
                 }
-                let html = "";
+                let html = '<div class="buildings-grid">';
                 for (const bldg of BUILDING_ORDER) {
                     const bUnits = groups[bldg];
                     if (!bUnits || bUnits.length === 0) continue;
@@ -780,6 +805,7 @@
                     for (const u of bUnits) html += renderUnitCard(u);
                     html += `</div></div>`;
                 }
+                html += "</div>";
                 container.innerHTML = html;
             }
 
@@ -793,11 +819,10 @@
             function renderUnitCard(u) {
                 const fs = u.final_stats;
                 const iUrl = unitIconUrl(u.unit_slug);
-                const hasBonus =
-                    u.special_effects && u.special_effects.length > 0;
+                const civBonus = hasCivBonus(u);
                 const mainAtk = getMainAttack(u);
                 return `<div class="unit-card" onclick='openModal(${JSON.stringify(u.unit_slug)})'>
-            ${hasBonus ? '<span class="civ-star" title="Has special properties">&#9733;</span>' : ""}
+            ${civBonus ? '<span class="civ-star" title="Has civ bonus">&#9733;</span>' : ""}
             <img class="unit-icon" src="${iUrl}" alt="${u.unit_name}" onerror="this.src='${PLACEHOLDER_ICON}'"/>
             <div class="unit-name">${u.unit_name}</div>
             <div class="unit-stats-mini">
@@ -1005,7 +1030,7 @@
                         t.building && t.building !== "N/A"
                             ? `<span style="color:var(--text-muted)">[${t.building}]</span> `
                             : "";
-                    html += `<div style="font-size:0.7rem;padding:2px 0">
+                    html += `<div style="font-size:0.8rem;padding:3px 0">
                 ${bldg}<span style="color:var(--parchment)">${t.tech_name}</span>
                 <span class="special-desc"> — ${t.effect_description}</span>
             </div>`;

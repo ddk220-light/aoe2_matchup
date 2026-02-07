@@ -780,6 +780,9 @@
                     "score_30v30",
                     "score_3k",
                     "score_5k",
+                    "vs_champ",
+                    "vs_paladin",
+                    "vs_arb",
                     "dps_per_cost",
                     "ehp_per_cost",
                     "dps",
@@ -805,6 +808,9 @@
                     score_30v30: true,
                     score_3k: true,
                     score_5k: true,
+                    vs_champ: true,
+                    vs_paladin: true,
+                    vs_arb: true,
                     dps_per_cost: true,
                     ehp_per_cost: true,
                     dps: true,
@@ -830,6 +836,9 @@
                     { key: "score_30v30", label: "30v30" },
                     { key: "score_3k", label: "3K Res" },
                     { key: "score_5k", label: "5K+Upg" },
+                    { key: "vs_champ", label: "vChamp" },
+                    { key: "vs_paladin", label: "vPala" },
+                    { key: "vs_arb", label: "vArb" },
                     { key: "dps_per_cost", label: "DPS/Cost" },
                     { key: "ehp_per_cost", label: "EHP/Cost" },
                     { key: "dps", label: "DPS" },
@@ -895,6 +904,13 @@
                     html += `<td class="${s30 >= 0 ? valClass("score_30v30", s30) : ""}">${s30 >= 0 ? s30.toFixed(1) : "—"}</td>`;
                     html += `<td class="${s3k >= 0 ? valClass("score_3k", s3k) : ""}">${s3k >= 0 ? s3k.toFixed(1) : "—"}</td>`;
                     html += `<td class="${s5k >= 0 ? valClass("score_5k", s5k) : ""}">${s5k >= 0 ? s5k.toFixed(1) : "—"}</td>`;
+                    // Benchmark scores
+                    const vc = row.vs_champ;
+                    const vp = row.vs_paladin;
+                    const va = row.vs_arb;
+                    html += `<td class="${vc >= 0 ? valClass("vs_champ", vc) : ""}">${vc >= 0 ? vc.toFixed(1) : "—"}</td>`;
+                    html += `<td class="${vp >= 0 ? valClass("vs_paladin", vp) : ""}">${vp >= 0 ? vp.toFixed(1) : "—"}</td>`;
+                    html += `<td class="${va >= 0 ? valClass("vs_arb", va) : ""}">${va >= 0 ? va.toFixed(1) : "—"}</td>`;
                     // Stats
                     html += `<td class="${valClass("dps_per_cost", row.dps_per_cost)}">${row.dps_per_cost.toFixed(3)}</td>`;
                     html += `<td class="${valClass("ehp_per_cost", row.ehp_per_cost)}">${row.ehp_per_cost.toFixed(1)}</td>`;

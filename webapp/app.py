@@ -1485,6 +1485,100 @@ def precompute_all_battle_scores():
 precompute_all_battle_scores()
 
 
+# ===== Benchmark battle scenarios =====
+# Pit each unit against 3 reference opponents with 3000 resources.
+# Score = surviving unit count / starting count * 100 (0-100, higher = more survivors).
+
+BENCHMARKS = [
+    ("vs_champ", "Chinese", "champion", "Imperial"),
+    ("vs_paladin", "Franks", "paladin", "Imperial"),
+    ("vs_arb", "Chinese", "arbalester", "Imperial"),
+]
+
+# {(line_slug, age_key): {(civ_name, unit_slug): {'vs_champ': float, 'vs_paladin': float, 'vs_arb': float}}}
+BENCHMARK_SCORES = {}
+
+
+def _build_benchmark_units():
+    """Build combat-ready benchmark units once."""
+    ref_conn = get_ref_db()
+    rc = ref_conn.cursor()
+    result = {}
+    for key, civ, slug, age in BENCHMARKS:
+        rc.execute(
+            "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=? AND age=?",
+            (civ, slug, age),
+        )
+        row = rc.fetchone()
+        if row:
+            combat_dict = _build_combat_dict_from_ref(rc, row)
+            cu = prepare_combat_unit(combat_dict)
+            result[key] = cu
+    ref_conn.close()
+    return result
+
+
+def precompute_benchmark_scores():
+    """Pit every unit in every line against 3 benchmark opponents."""
+    import time
+
+    start = time.time()
+    bench_units = _build_benchmark_units()
+    total = 0
+
+    for line_slug, config in UNIT_LINES.items():
+        for age_key in ["castle", "imperial"]:
+            std_slug = config.get(f"{age_key}_slug")
+            has_unique = bool(config.get("unique_units"))
+            if not std_slug and not has_unique:
+                continue
+
+            units = _build_line_combat_units(line_slug, age_key)
+            if not units:
+                continue
+
+            is_imperial = age_key == "imperial"
+            line_scores = {}
+
+            for u in units:
+                cu = u["combat_unit"]
+                k = (u["civ_name"], u["unit_slug"])
+                unit_cost = _calc_weighted_cost(
+                    cu["cost_food"], cu["cost_wood"], cu["cost_gold"], is_imperial
+                )
+                count_u = max(1, int(3000 // unit_cost))
+                scores = {}
+
+                for bkey, bciv, bslug, bage in BENCHMARKS:
+                    if bkey not in bench_units:
+                        scores[bkey] = -1
+                        continue
+                    bu = bench_units[bkey]
+                    bench_cost = _calc_weighted_cost(
+                        bu["cost_food"], bu["cost_wood"], bu["cost_gold"], True
+                    )
+                    winner, rem1, rem2 = simulate_battle(
+                        cu,
+                        bu,
+                        3000,
+                        cost1_override=unit_cost,
+                        cost2_override=bench_cost,
+                    )
+                    # Survival rate: what % of the unit's army survived
+                    scores[bkey] = round(rem1 / count_u * 100, 1) if count_u > 0 else 0
+
+                line_scores[k] = scores
+                total += 3
+
+            BENCHMARK_SCORES[(line_slug, age_key)] = line_scores
+
+    elapsed = time.time() - start
+    print(f"Benchmark scores pre-computed: {total} sims in {elapsed:.1f}s")
+
+
+precompute_benchmark_scores()
+
+
 @app.route("/api/ref/unit-line/<line_slug>")
 def api_ref_unit_line(line_slug):
     """Get comparison data for a unit line across all civs."""
@@ -1510,12 +1604,18 @@ def api_ref_unit_line(line_slug):
     }
 
     def _attach_scores(entry, age_key):
-        """Attach battle scores to an entry dict."""
+        """Attach battle scores and benchmark scores to an entry dict."""
         scores = BATTLE_SCORES.get((line_slug, age_key), {})
         unit_scores = scores.get((entry["civ_name"], entry["unit_slug"]), {})
         entry["score_30v30"] = unit_scores.get("score_30v30", -1)
         entry["score_3k"] = unit_scores.get("score_3k", -1)
         entry["score_5k"] = unit_scores.get("score_5k", -1)
+        # Benchmark scores
+        bench = BENCHMARK_SCORES.get((line_slug, age_key), {})
+        bench_scores = bench.get((entry["civ_name"], entry["unit_slug"]), {})
+        entry["vs_champ"] = bench_scores.get("vs_champ", -1)
+        entry["vs_paladin"] = bench_scores.get("vs_paladin", -1)
+        entry["vs_arb"] = bench_scores.get("vs_arb", -1)
 
     # Fetch standard units for each age
     for age_key, slug_key, db_age in [

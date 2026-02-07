@@ -568,9 +568,7 @@ def civ_detail(civ_name):
 @app.route("/simulate")
 def simulate():
     """Battle simulation page."""
-    units_by_age = get_units_by_age()
-    civs = get_all_civs()
-    return render_template("simulate.html", units_by_age=units_by_age, civs=civs)
+    return render_template("simulate.html")
 
 
 @app.route("/api/combat-unit/<civ_name>/<unit_slug>")
@@ -964,6 +962,120 @@ def api_ref_civ(civ_name):
             "verified_count": sum(1 for u in units if u["verified"]),
         }
     )
+
+
+@app.route("/api/ref/combat-unit/<civ_name>/<unit_slug>")
+def api_ref_combat_unit(civ_name, unit_slug):
+    """Get combat-ready stats for a unit from reference DB (for battle simulator)."""
+    if civ_name not in ORIGINAL_13_CIVS:
+        return jsonify({"error": "Civilization not in original 13"}), 404
+
+    ref_conn = get_ref_db()
+    rc = ref_conn.cursor()
+
+    # Find the unit
+    rc.execute(
+        "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=?",
+        (civ_name, unit_slug),
+    )
+    row = rc.fetchone()
+    if not row:
+        ref_conn.close()
+        return jsonify({"error": f"Unit {unit_slug} not found for {civ_name}"}), 404
+
+    uid = row["id"]
+
+    # Get special effects as flat dict
+    rc.execute(
+        "SELECT property_name, property_value FROM ref_special_effects WHERE ref_unit_id=?",
+        (uid,),
+    )
+    special = {}
+    for s in rc.fetchall():
+        try:
+            special[s["property_name"]] = float(s["property_value"])
+        except (ValueError, TypeError):
+            special[s["property_name"]] = s["property_value"]
+
+    # Get projectile data
+    rc.execute(
+        """SELECT projectile_type, projectile_count, projectile_speed,
+                  attacks_json, blast_radius, is_siege_projectile
+           FROM ref_projectiles WHERE ref_unit_id=?""",
+        (uid,),
+    )
+    proj_rows = rc.fetchall()
+    primary_proj = None
+    extra_proj = None
+    for p in proj_rows:
+        if p["projectile_type"] == "primary":
+            primary_proj = dict(p)
+        elif p["projectile_type"] == "extra":
+            extra_proj = dict(p)
+
+    ref_conn.close()
+
+    # Build combat-ready response matching BattleUnit constructor shape
+    reload_time = row["final_reload_time"] or 2.0
+    attack_speed = 1.0 / reload_time if reload_time > 0 else 0.5
+
+    result = {
+        "name": row["unit_name"],
+        "civ": civ_name,
+        "hp": row["final_hp"],
+        "attack": row["final_attack"],
+        "attack_range": row["final_range"],
+        "attack_speed": attack_speed,
+        "attack_delay": row["final_attack_delay"] or 0,
+        "melee_armor": row["final_melee_armor"],
+        "pierce_armor": row["final_pierce_armor"],
+        "movement_speed": row["final_speed"],
+        "cost_food": row["final_cost_food"] or 0,
+        "cost_wood": row["final_cost_wood"] or 0,
+        "cost_gold": row["final_cost_gold"] or 0,
+        "total_cost": (row["final_cost_food"] or 0)
+        + (row["final_cost_wood"] or 0)
+        + (row["final_cost_gold"] or 0),
+        "attacks_json": row["final_attacks_json"],
+        "armors_json": row["final_armors_json"],
+        "min_attack_range": row["min_range"] or 0,
+        # From projectiles
+        "projectile_speed": (
+            primary_proj["projectile_speed"]
+            if primary_proj and primary_proj["projectile_speed"]
+            else row["projectile_speed"] or 0
+        ),
+        "is_siege_projectile": (
+            primary_proj["is_siege_projectile"] if primary_proj else 0
+        ),
+        "splash_radius": special.get("splash_radius", 0),
+        # Extra projectiles
+        "extra_projectiles": extra_proj["projectile_count"] if extra_proj else 0,
+        "extra_projectile_attacks_json": (
+            extra_proj["attacks_json"] if extra_proj else None
+        ),
+        # Trample
+        "trample_percent": special.get("trample_percent", 0),
+        "trample_radius": special.get("trample_radius", 0),
+        "trample_flat_damage": special.get("trample_flat_damage", 0),
+        # HP regen
+        "hp_regen": special.get("hp_regen", 0),
+        # Defaults for properties not in ref DB (not needed for original 13)
+        "ignores_pierce_armor": 0,
+        "ignores_melee_armor": 0,
+        "bonus_damage_reduction": 0,
+        "splash_on_hit_radius": 0,
+        "dodge_shield_max": 0,
+        "dodge_shield_recharge": 0,
+        "bleed_dps": 0,
+        "bleed_duration": 0,
+        "block_first_melee": 0,
+        "attack_bonus_per_kill": 0,
+        "first_attack_extra_projectiles": 0,
+        "hp_transform_threshold": 0,
+    }
+
+    return jsonify(result)
 
 
 @app.route("/api/ref/verify/<int:ref_unit_id>", methods=["POST"])

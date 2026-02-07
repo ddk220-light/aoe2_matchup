@@ -550,9 +550,8 @@ def review_comments():
 
 @app.route("/civ")
 def civ_view():
-    """Page to view units by civilization."""
-    civs = get_all_civs()
-    return render_template("civ_view.html", civs=civs)
+    """Civilization selection grid."""
+    return render_template("civ_select.html")
 
 
 # ============== Battle Simulation ==============

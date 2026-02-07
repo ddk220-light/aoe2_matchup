@@ -1,0 +1,1029 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{ civ_name }} — AoE2 Unit Details</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --gold: #c9a84c;
+                --gold-light: #dbb960;
+                --gold-dark: #a07830;
+                --red-accent: #7a1a1a;
+                --red-deep: #4a0e0e;
+                --bg: #2c1e10;
+                --bg-deep: #1a1008;
+                --card-bg: #3a2a18;
+                --card-border: #5a4228;
+                --text: #e8dcc8;
+                --text-muted: #a89878;
+                --parchment: #d4c4a0;
+                --green: #5a9a3a;
+                --red: #a83030;
+            }
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            body {
+                font-family: "Inter", sans-serif;
+                background: var(--bg-deep);
+                color: var(--text);
+                min-height: 100vh;
+                line-height: 1.5;
+            }
+
+            /* Header */
+            .page-header {
+                padding: 20px 20px 16px;
+                background: linear-gradient(
+                    180deg,
+                    var(--red-deep) 0%,
+                    var(--bg) 100%
+                );
+                border-bottom: 3px solid;
+                border-image: linear-gradient(
+                        90deg,
+                        transparent 5%,
+                        var(--gold-dark) 30%,
+                        var(--gold) 50%,
+                        var(--gold-dark) 70%,
+                        transparent 95%
+                    )
+                    1;
+            }
+            .header-top {
+                max-width: 1100px;
+                margin: 0 auto;
+            }
+            .back-link {
+                color: var(--text-muted);
+                text-decoration: none;
+                font-size: 0.8rem;
+                transition: color 0.2s;
+            }
+            .back-link:hover {
+                color: var(--gold);
+            }
+            .header-main {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                margin-top: 12px;
+            }
+            .civ-emblem {
+                width: 48px;
+                height: 48px;
+                border-radius: 50%;
+                border: 2px solid var(--gold-dark);
+                object-fit: cover;
+                background: var(--bg);
+            }
+            .header-main h1 {
+                font-family: "Cinzel", serif;
+                font-size: 1.5rem;
+                color: var(--gold);
+            }
+
+            /* Age Toggle */
+            .age-toggle {
+                display: flex;
+                gap: 6px;
+                margin-left: auto;
+            }
+            .age-btn {
+                font-family: "Cinzel", serif;
+                font-size: 0.8rem;
+                padding: 6px 16px;
+                border: 1px solid var(--card-border);
+                border-radius: 6px;
+                background: var(--card-bg);
+                color: var(--text-muted);
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .age-btn:hover {
+                border-color: var(--gold-dark);
+                color: var(--text);
+            }
+            .age-btn.active {
+                background: var(--gold-dark);
+                color: var(--bg-deep);
+                border-color: var(--gold);
+                font-weight: 600;
+            }
+
+            /* Loading */
+            .loading {
+                text-align: center;
+                padding: 60px 20px;
+                color: var(--text-muted);
+                font-size: 1rem;
+            }
+
+            /* Content */
+            .content {
+                max-width: 1100px;
+                margin: 0 auto;
+                padding: 20px 20px 60px;
+            }
+
+            /* Building Group */
+            .building-group {
+                margin-bottom: 24px;
+            }
+            .building-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding-bottom: 8px;
+                margin-bottom: 12px;
+                border-bottom: 1px solid var(--card-border);
+            }
+            .building-icon {
+                width: 32px;
+                height: 32px;
+                border-radius: 4px;
+                object-fit: cover;
+            }
+            .building-header h2 {
+                font-family: "Cinzel", serif;
+                font-size: 1rem;
+                color: var(--gold);
+                font-weight: 600;
+            }
+
+            /* Unit Cards Grid */
+            .units-row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .unit-card {
+                width: 110px;
+                padding: 10px 6px 8px;
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                border-radius: 8px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.2s;
+                position: relative;
+            }
+            .unit-card:hover {
+                border-color: var(--gold-dark);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            }
+            .unit-card.unavailable {
+                opacity: 0.3;
+                pointer-events: none;
+            }
+            .unit-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                border: 2px solid var(--gold-dark);
+                object-fit: cover;
+                background: var(--bg);
+                margin: 0 auto 6px;
+                display: block;
+            }
+            .unit-name {
+                font-size: 0.7rem;
+                font-weight: 600;
+                color: var(--text);
+                margin-bottom: 6px;
+                line-height: 1.2;
+                min-height: 1.4em;
+            }
+            .unit-stats-mini {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 2px 4px;
+                font-size: 0.6rem;
+                color: var(--text-muted);
+            }
+            .stat-mini {
+                display: flex;
+                align-items: center;
+                gap: 2px;
+            }
+            .stat-mini svg {
+                flex-shrink: 0;
+            }
+            .stat-mini span {
+                white-space: nowrap;
+            }
+            .civ-star {
+                position: absolute;
+                top: 4px;
+                right: 4px;
+                color: var(--gold);
+                font-size: 0.7rem;
+            }
+
+            /* Modal Overlay */
+            .modal-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 1000;
+                overflow-y: auto;
+                padding: 40px 20px;
+            }
+            .modal-overlay.open {
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+            }
+            .modal {
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                border-radius: 12px;
+                max-width: 640px;
+                width: 100%;
+                position: relative;
+                overflow: hidden;
+            }
+            .modal-gold-bar {
+                height: 3px;
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    var(--gold-dark),
+                    var(--gold),
+                    var(--gold-dark),
+                    transparent
+                );
+            }
+            .modal-close {
+                position: absolute;
+                top: 12px;
+                right: 14px;
+                background: none;
+                border: none;
+                color: var(--text-muted);
+                font-size: 1.3rem;
+                cursor: pointer;
+                z-index: 1;
+            }
+            .modal-close:hover {
+                color: var(--text);
+            }
+            .modal-body {
+                padding: 24px;
+            }
+
+            /* Modal Header */
+            .modal-unit-header {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                margin-bottom: 20px;
+            }
+            .modal-unit-icon {
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                border: 2px solid var(--gold-dark);
+                object-fit: cover;
+                background: var(--bg);
+            }
+            .modal-unit-info h3 {
+                font-family: "Cinzel", serif;
+                font-size: 1.2rem;
+                color: var(--gold);
+            }
+            .modal-unit-info .class-badge {
+                font-size: 0.7rem;
+                color: var(--text-muted);
+                background: rgba(201, 168, 76, 0.1);
+                border: 1px solid rgba(201, 168, 76, 0.2);
+                border-radius: 10px;
+                padding: 1px 8px;
+                display: inline-block;
+                margin-top: 4px;
+            }
+
+            /* Stat Breakdown */
+            .stat-section {
+                margin-bottom: 16px;
+            }
+            .stat-section h4 {
+                font-family: "Cinzel", serif;
+                font-size: 0.85rem;
+                color: var(--gold);
+                margin-bottom: 8px;
+                padding-bottom: 4px;
+                border-bottom: 1px solid var(--card-border);
+            }
+            .stat-row {
+                display: flex;
+                align-items: baseline;
+                gap: 6px;
+                padding: 3px 0;
+                font-size: 0.8rem;
+                flex-wrap: wrap;
+            }
+            .stat-label {
+                width: 100px;
+                flex-shrink: 0;
+                color: var(--text-muted);
+                font-size: 0.75rem;
+            }
+            .stat-base {
+                color: var(--text-muted);
+                font-size: 0.75rem;
+            }
+            .stat-step {
+                font-size: 0.7rem;
+                color: var(--text-muted);
+                opacity: 0.8;
+            }
+            .stat-step.positive {
+                color: var(--green);
+            }
+            .stat-step.negative {
+                color: var(--red);
+            }
+            .stat-final {
+                font-weight: 600;
+                color: var(--text);
+                margin-left: auto;
+                font-size: 0.85rem;
+            }
+            .stat-final.improved {
+                color: var(--green);
+            }
+
+            /* Cost row */
+            .cost-row {
+                display: flex;
+                gap: 12px;
+                font-size: 0.8rem;
+                margin-bottom: 4px;
+            }
+            .cost-item {
+                display: flex;
+                align-items: center;
+                gap: 3px;
+            }
+            .cost-food {
+                color: #d44;
+            }
+            .cost-wood {
+                color: #a86;
+            }
+            .cost-gold {
+                color: var(--gold);
+            }
+
+            /* Attack/Armor tables */
+            .class-table {
+                width: 100%;
+                font-size: 0.75rem;
+                border-collapse: collapse;
+            }
+            .class-table th {
+                text-align: left;
+                padding: 3px 8px;
+                color: var(--text-muted);
+                border-bottom: 1px solid var(--card-border);
+                font-weight: 500;
+            }
+            .class-table td {
+                padding: 2px 8px;
+            }
+            .class-table tr:nth-child(even) td {
+                background: rgba(0, 0, 0, 0.1);
+            }
+            .class-table .val {
+                text-align: right;
+                font-weight: 600;
+            }
+
+            /* Special effects */
+            .special-item {
+                font-size: 0.75rem;
+                padding: 4px 0;
+                border-bottom: 1px solid rgba(90, 66, 40, 0.3);
+            }
+            .special-name {
+                color: var(--gold);
+                font-weight: 600;
+            }
+            .special-desc {
+                color: var(--text-muted);
+            }
+
+            /* Two column layout for attacks/armors */
+            .classes-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+            }
+
+            /* Responsive */
+            @media (max-width: 768px) {
+                .header-main {
+                    flex-wrap: wrap;
+                }
+                .age-toggle {
+                    margin-left: 0;
+                    width: 100%;
+                    margin-top: 8px;
+                }
+                .age-btn {
+                    flex: 1;
+                    text-align: center;
+                }
+                .unit-card {
+                    width: 90px;
+                }
+                .classes-grid {
+                    grid-template-columns: 1fr;
+                }
+                .modal {
+                    margin: 10px;
+                }
+                .modal-body {
+                    padding: 16px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="page-header">
+            <div class="header-top">
+                <a href="/civ" class="back-link"
+                    >&#8592; Back to Civilizations</a
+                >
+                <div class="header-main">
+                    <img
+                        class="civ-emblem"
+                        src="https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/{{ civ_name|lower }}.png"
+                        alt="{{ civ_name }}"
+                    />
+                    <h1>{{ civ_name }}</h1>
+                    <div class="age-toggle">
+                        <button
+                            class="age-btn"
+                            data-age="Castle"
+                            onclick="setAge('Castle')"
+                        >
+                            <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 14 14"
+                                fill="none"
+                                style="vertical-align: -2px; margin-right: 2px"
+                            >
+                                <rect
+                                    x="4"
+                                    y="2"
+                                    width="6"
+                                    height="10"
+                                    rx="1"
+                                    stroke="currentColor"
+                                    stroke-width="1.2"
+                                    fill="none"
+                                />
+                                <rect
+                                    x="1"
+                                    y="5"
+                                    width="3"
+                                    height="7"
+                                    rx="0.5"
+                                    stroke="currentColor"
+                                    stroke-width="1"
+                                    fill="none"
+                                />
+                                <rect
+                                    x="10"
+                                    y="5"
+                                    width="3"
+                                    height="7"
+                                    rx="0.5"
+                                    stroke="currentColor"
+                                    stroke-width="1"
+                                    fill="none"
+                                />
+                            </svg>
+                            Castle
+                        </button>
+                        <button
+                            class="age-btn active"
+                            data-age="Imperial"
+                            onclick="setAge('Imperial')"
+                        >
+                            <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 14 14"
+                                fill="none"
+                                style="vertical-align: -2px; margin-right: 2px"
+                            >
+                                <path
+                                    d="M7 1L1 5v2h12V5L7 1z"
+                                    stroke="currentColor"
+                                    stroke-width="1.2"
+                                    fill="none"
+                                />
+                                <rect
+                                    x="2"
+                                    y="7"
+                                    width="10"
+                                    height="5"
+                                    stroke="currentColor"
+                                    stroke-width="1"
+                                    fill="none"
+                                />
+                                <rect
+                                    x="5"
+                                    y="9"
+                                    width="4"
+                                    height="3"
+                                    stroke="currentColor"
+                                    stroke-width="0.8"
+                                    fill="none"
+                                />
+                            </svg>
+                            Imperial
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="loading" id="loading">Loading unit data...</div>
+            <div id="units-container"></div>
+        </div>
+
+        <!-- Modal -->
+        <div
+            class="modal-overlay"
+            id="modal-overlay"
+            onclick="if (event.target === this) closeModal();"
+        >
+            <div class="modal">
+                <div class="modal-gold-bar"></div>
+                <button class="modal-close" onclick="closeModal()">
+                    &times;
+                </button>
+                <div class="modal-body" id="modal-body"></div>
+            </div>
+        </div>
+
+        <script>
+            const CIV_NAME = "{{ civ_name }}";
+            const ICON_BASE =
+                "https://raw.githubusercontent.com/qwyt/aoe2-icon-resources/master/objects/";
+
+            // Unit slug → icon ID mapping
+            const UNIT_ICONS = {
+                // Standard - Imperial
+                champion: 75,
+                halberdier: 93,
+                arbalester: 4,
+                imp_elite_skirm: 7,
+                heavy_cav_archer: 39,
+                hand_cannoneer: 5,
+                hussar: 546,
+                paladin: 38,
+                heavy_camel: 329,
+                siege_ram: 35,
+                siege_onager: 280,
+                heavy_scorpion: 279,
+                trebuchet: 42,
+                bombard_cannon: 36,
+                elite_eagle: 185,
+                elite_steppe: 1370,
+                elite_elephant: 239,
+                elite_ele_archer: 873,
+                elite_fire_lancer: 1901,
+                // Standard - Castle
+                swordsmen: 75,
+                pikeman: 93,
+                crossbow: 4,
+                elite_skirm: 7,
+                cav_archer: 39,
+                knight: 38,
+                light_cav: 546,
+                camel: 329,
+                ram: 35,
+                mangonel: 280,
+                scorpion: 279,
+                eagle_warrior: 185,
+                steppe_lancer: 1370,
+                elephant: 239,
+                elephant_archer: 873,
+                fire_lancer: 1901,
+                // Unique units (base IDs work for both base and elite)
+                longbowman_britons: 8,
+                elite_longbowman_britons: 8,
+                cataphract_byzantines: 40,
+                elite_cataphract_byzantines: 40,
+                woad_raider_celts: 232,
+                elite_woad_raider_celts: 232,
+                chu_ko_nu_chinese: 73,
+                elite_chu_ko_nu_chinese: 73,
+                throwing_axeman_franks: 281,
+                elite_throwing_axeman_franks: 281,
+                huskarl_goths: 41,
+                elite_huskarl_goths: 41,
+                samurai_japanese: 291,
+                elite_samurai_japanese: 291,
+                mangudai_mongols: 11,
+                elite_mangudai_mongols: 11,
+                war_elephant_persians: 239,
+                elite_war_elephant_persians: 239,
+                mameluke_saracens: 282,
+                elite_mameluke_saracens: 282,
+                teutonic_knight_teutons: 25,
+                elite_teutonic_knight_teutons: 25,
+                janissary_turks: 46,
+                elite_janissary_turks: 46,
+                berserk_vikings: 692,
+                elite_berserk_vikings: 692,
+            };
+
+            // JPG icon IDs (most are PNG, these few are JPG)
+            const JPG_ICONS = new Set([
+                279, 422, 542, 548, 529, 532, 831, 13, 17, 250, 1004, 1103,
+                1396, 1397, 1398, 1399,
+            ]);
+
+            function iconUrl(id) {
+                const ext = JPG_ICONS.has(id) ? "jpg" : "png";
+                return ICON_BASE + id + "." + ext;
+            }
+
+            function unitIconUrl(slug) {
+                const id = UNIT_ICONS[slug];
+                if (!id) return "";
+                return iconUrl(id);
+            }
+
+            // Building config
+            const BUILDING_ORDER = [
+                "Barracks",
+                "Archery Range",
+                "Stable",
+                "Castle",
+                "Siege Workshop",
+            ];
+            const BUILDING_ICONS = {
+                Barracks: 12,
+                "Archery Range": 87,
+                Stable: 101,
+                "Siege Workshop": 49,
+                Castle: 82,
+            };
+            const CLASS_TO_BUILDING = {
+                Infantry: "Barracks",
+                Archer: "Archery Range",
+                "Hand Cannoneer": "Archery Range",
+                "Cavalry Archer": "Archery Range",
+                Cavalry: "Stable",
+                "Siege Weapon": "Siege Workshop",
+                Ballista: "Siege Workshop",
+                "Unpacked Siege Unit": "Castle",
+            };
+
+            // SVG stat icons (tiny inline)
+            const ICONS = {
+                hp: '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 9L1.5 5.5C0 4 0 2 1.5 1.5S4 1 5 3C6 1 7.5 0 8.5 1.5S10 4 8.5 5.5L5 9z" fill="#c44"/></svg>',
+                atk: '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 8L8 2M6 1h3v3" stroke="#c9a84c" stroke-width="1.2" fill="none"/></svg>',
+                armor: '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 1L1 3v3c0 2 2 3 4 3s4-1 4-3V3L5 1z" stroke="#8a8" stroke-width="1" fill="none"/></svg>',
+                range: '<svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="3.5" stroke="#8ac" stroke-width="1" fill="none"/><circle cx="5" cy="5" r="1" fill="#8ac"/></svg>',
+                speed: '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M3 2L7 5L3 8" stroke="#a8a" stroke-width="1.2" fill="none"/></svg>',
+            };
+
+            let civData = null;
+            let currentAge = "Imperial";
+
+            async function loadData() {
+                try {
+                    const resp = await fetch(`/api/ref/civ/${CIV_NAME}`);
+                    if (!resp.ok) throw new Error("Failed to load");
+                    civData = await resp.json();
+                    document.getElementById("loading").style.display = "none";
+                    render();
+                } catch (e) {
+                    document.getElementById("loading").textContent =
+                        "Error loading data: " + e.message;
+                }
+            }
+
+            function setAge(age) {
+                currentAge = age;
+                document.querySelectorAll(".age-btn").forEach((b) => {
+                    b.classList.toggle("active", b.dataset.age === age);
+                });
+                render();
+            }
+
+            function render() {
+                const units = civData.units_by_age[currentAge] || [];
+                const container = document.getElementById("units-container");
+
+                // Group by building
+                const groups = {};
+                for (const u of units) {
+                    let building =
+                        CLASS_TO_BUILDING[u.unit_class_name] || "Castle";
+                    if (u.unit_type === "unique") building = "Castle";
+                    if (!groups[building]) groups[building] = [];
+                    groups[building].push(u);
+                }
+
+                let html = "";
+                for (const bldg of BUILDING_ORDER) {
+                    const bUnits = groups[bldg];
+                    if (!bUnits || bUnits.length === 0) continue;
+                    const bIconId = BUILDING_ICONS[bldg];
+                    html += `<div class="building-group">
+                <div class="building-header">
+                    <img class="building-icon" src="${iconUrl(bIconId)}" alt="${bldg}" onerror="this.style.display='none'" />
+                    <h2>${bldg}</h2>
+                </div>
+                <div class="units-row">`;
+                    for (const u of bUnits) {
+                        html += renderUnitCard(u);
+                    }
+                    html += `</div></div>`;
+                }
+                container.innerHTML = html;
+            }
+
+            function getMainAttack(u) {
+                // For display: use final_attacks to get the actual damage value
+                const fa = u.final_attacks || {};
+                if (u.is_ranged) {
+                    return fa["Base Pierce"] ?? u.final_stats.attack ?? 0;
+                }
+                return fa["Base Melee"] ?? u.final_stats.attack ?? 0;
+            }
+
+            function renderUnitCard(u) {
+                const fs = u.final_stats;
+                const iUrl = unitIconUrl(u.unit_slug);
+                const hasBonus =
+                    u.special_effects && u.special_effects.length > 0;
+                const isRanged = u.is_ranged;
+                const mainAtk = getMainAttack(u);
+
+                return `<div class="unit-card" onclick='openModal(${JSON.stringify(u.unit_slug)})'>
+            ${hasBonus ? '<span class="civ-star" title="Has special properties">&#9733;</span>' : ""}
+            <img class="unit-icon" src="${iUrl}" alt="${u.unit_name}" onerror="this.src='data:image/svg+xml,${encodeURIComponent('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"40\" height=\"40\" viewBox=\"0 0 40 40\"><circle cx=\"20\" cy=\"20\" r=\"18\" stroke=\"%235a4228\" stroke-width=\"2\" fill=\"%232c1e10\"/></svg>')}'"/>
+            <div class="unit-name">${u.unit_name}</div>
+            <div class="unit-stats-mini">
+                <div class="stat-mini">${ICONS.hp}<span>${Math.round(fs.hp)}</span></div>
+                <div class="stat-mini">${ICONS.atk}<span>${Math.round(mainAtk)}</span></div>
+                <div class="stat-mini">${ICONS.armor}<span>${Math.round(fs.melee_armor)}/${Math.round(fs.pierce_armor)}</span></div>
+                ${isRanged ? `<div class="stat-mini">${ICONS.range}<span>${Math.round(fs.range)}</span></div>` : `<div class="stat-mini">${ICONS.speed}<span>${fs.speed.toFixed(2)}</span></div>`}
+            </div>
+        </div>`;
+            }
+
+            function openModal(slug) {
+                const units = civData.units_by_age[currentAge] || [];
+                const u = units.find((x) => x.unit_slug === slug);
+                if (!u) return;
+
+                const iUrl = unitIconUrl(u.unit_slug);
+                const bs = u.base_stats;
+                const fs = u.final_stats;
+
+                let html = `<div class="modal-unit-header">
+            <img class="modal-unit-icon" src="${iUrl}" alt="${u.unit_name}" onerror="this.style.display='none'" />
+            <div class="modal-unit-info">
+                <h3>${u.unit_name}</h3>
+                <span class="class-badge">${u.unit_class_name}${u.unit_type === "unique" ? " — Unique" : ""}</span>
+            </div>
+        </div>`;
+
+                // Get main attack from attacks_json for accurate display
+                const baseMainAtk = u.is_ranged
+                    ? (u.base_attacks["Base Pierce"] ?? bs.attack ?? 0)
+                    : (u.base_attacks["Base Melee"] ?? bs.attack ?? 0);
+                const finalMainAtk = getMainAttack(u);
+
+                // Stat breakdown
+                html += `<div class="stat-section"><h4>Stats Breakdown</h4>`;
+                const statDefs = [
+                    { key: "hp", label: "HP", chainCol: "hp" },
+                    {
+                        key: "attack",
+                        label: "Attack",
+                        chainCol: "attack",
+                        baseOverride: baseMainAtk,
+                        finalOverride: finalMainAtk,
+                    },
+                    {
+                        key: "melee_armor",
+                        label: "Melee Armor",
+                        chainCol: "melee_armor",
+                    },
+                    {
+                        key: "pierce_armor",
+                        label: "Pierce Armor",
+                        chainCol: "pierce_armor",
+                    },
+                    { key: "range", label: "Range", chainCol: "range_val" },
+                    { key: "speed", label: "Speed", chainCol: "speed" },
+                    {
+                        key: "reload_time",
+                        label: "Reload Time",
+                        chainCol: "reload_time",
+                    },
+                ];
+                for (const sd of statDefs) {
+                    const baseVal = sd.baseOverride ?? bs[sd.key] ?? 0;
+                    const finalVal = sd.finalOverride ?? fs[sd.key] ?? 0;
+                    if (
+                        baseVal === 0 &&
+                        finalVal === 0 &&
+                        sd.key !== "melee_armor" &&
+                        sd.key !== "pierce_armor"
+                    )
+                        continue;
+                    const steps = buildStatSteps(
+                        u.stat_chain,
+                        sd.chainCol,
+                        sd.key,
+                    );
+                    const improved =
+                        Math.abs(finalVal - baseVal) > 0.01 &&
+                        finalVal > baseVal;
+                    const decreased = finalVal < baseVal - 0.01;
+                    html += `<div class="stat-row">
+                <span class="stat-label">${sd.label}</span>
+                <span class="stat-base">${fmtStat(baseVal)}</span>
+                ${steps}
+                <span class="stat-final${improved ? " improved" : ""}">${fmtStat(finalVal)}</span>
+            </div>`;
+                }
+                html += `</div>`;
+
+                // Cost
+                html += `<div class="stat-section"><h4>Cost</h4>
+            <div class="cost-row">
+                ${fs.cost_food ? `<span class="cost-item cost-food">&#9679; ${Math.round(fs.cost_food)} Food</span>` : ""}
+                ${fs.cost_wood ? `<span class="cost-item cost-wood">&#9679; ${Math.round(fs.cost_wood)} Wood</span>` : ""}
+                ${fs.cost_gold ? `<span class="cost-item cost-gold">&#9679; ${Math.round(fs.cost_gold)} Gold</span>` : ""}
+            </div>
+            <div style="font-size:0.7rem;color:var(--text-muted)">Train time: ${fmtStat(fs.train_time)}s</div>
+        </div>`;
+
+                // Attack & Armor classes side by side
+                html += `<div class="classes-grid">`;
+                html += renderClassTable(
+                    "Attack Classes",
+                    u.final_attacks,
+                    u.base_attacks,
+                );
+                html += renderClassTable(
+                    "Armor Classes",
+                    u.final_armors,
+                    u.base_armors,
+                );
+                html += `</div>`;
+
+                // Special effects
+                if (u.special_effects && u.special_effects.length > 0) {
+                    html += `<div class="stat-section"><h4>Special Properties</h4>`;
+                    for (const se of u.special_effects) {
+                        html += `<div class="special-item">
+                    <span class="special-name">${se.property_name}</span>: ${se.property_value}
+                    <span class="special-desc">${se.description ? " — " + se.description : ""}</span>
+                </div>`;
+                    }
+                    html += `</div>`;
+                }
+
+                // Projectiles
+                if (u.projectiles && u.projectiles.length > 0) {
+                    html += `<div class="stat-section"><h4>Projectiles</h4>`;
+                    for (const p of u.projectiles) {
+                        const atkStr = p.attacks_json
+                            ? Object.entries(p.attacks_json)
+                                  .map(([k, v]) => `${k}: ${v}`)
+                                  .join(", ")
+                            : "";
+                        html += `<div class="special-item">
+                    <span class="special-name">${p.projectile_type}</span>
+                    — Count: ${p.projectile_count}, Speed: ${p.projectile_speed}
+                    ${p.blast_radius ? `, Blast: ${p.blast_radius}` : ""}
+                    ${p.is_siege_projectile ? " (Siege)" : ""}
+                    ${atkStr ? `<br><span class="special-desc">Attacks: ${atkStr}</span>` : ""}
+                </div>`;
+                    }
+                    html += `</div>`;
+                }
+
+                // Techs applied
+                html += `<div class="stat-section"><h4>Technologies Applied</h4>`;
+                for (const t of u.techs_applied) {
+                    const bldg =
+                        t.building && t.building !== "N/A"
+                            ? `<span style="color:var(--text-muted)">[${t.building}]</span> `
+                            : "";
+                    html += `<div style="font-size:0.7rem;padding:2px 0">
+                ${bldg}<span style="color:var(--parchment)">${t.tech_name}</span>
+                <span class="special-desc"> — ${t.effect_description}</span>
+            </div>`;
+                }
+                html += `</div>`;
+
+                document.getElementById("modal-body").innerHTML = html;
+                document.getElementById("modal-overlay").classList.add("open");
+                document.body.style.overflow = "hidden";
+            }
+
+            function closeModal() {
+                document
+                    .getElementById("modal-overlay")
+                    .classList.remove("open");
+                document.body.style.overflow = "";
+            }
+
+            function buildStatSteps(chain, chainCol, statKey) {
+                if (!chain || chain.length < 2) return "";
+                let parts = [];
+                for (let i = 1; i < chain.length; i++) {
+                    const prev = chain[i - 1];
+                    const curr = chain[i];
+                    let prevVal, currVal;
+
+                    if (statKey === "attack") {
+                        // Use main attack from attacks_json
+                        const prevA = prev.attacks_json
+                            ? JSON.parse(prev.attacks_json)
+                            : {};
+                        const currA = curr.attacks_json
+                            ? JSON.parse(curr.attacks_json)
+                            : {};
+                        // Find primary attack class (highest value)
+                        const getMain = (a) => Math.max(...Object.values(a), 0);
+                        prevVal = getMain(prevA);
+                        currVal = getMain(currA);
+                    } else {
+                        prevVal = prev[chainCol] ?? 0;
+                        currVal = curr[chainCol] ?? 0;
+                    }
+
+                    const diff = currVal - prevVal;
+                    if (Math.abs(diff) < 0.01) continue;
+                    const sign = diff > 0 ? "+" : "";
+                    const cls = diff > 0 ? "positive" : "negative";
+                    parts.push(
+                        `<span class="stat-step ${cls}" title="${curr.tech_name}">${sign}${fmtStat(diff)}</span>`,
+                    );
+                }
+                return parts.join(" ");
+            }
+
+            function fmtStat(v) {
+                if (v === null || v === undefined) return "0";
+                const n = Number(v);
+                return Number.isInteger(n)
+                    ? n.toString()
+                    : n.toFixed(2).replace(/\.?0+$/, "");
+            }
+
+            function renderClassTable(title, finalClasses, baseClasses) {
+                const entries = Object.entries(finalClasses || {}).filter(
+                    ([k, v]) =>
+                        v !== 0 || (baseClasses && baseClasses[k] !== 0),
+                );
+                if (entries.length === 0) return "";
+                let html = `<div class="stat-section"><h4>${title}</h4>
+            <table class="class-table"><tr><th>Class</th><th style="text-align:right">Value</th></tr>`;
+                for (const [cls, val] of entries.sort(
+                    (a, b) => Math.abs(b[1]) - Math.abs(a[1]),
+                )) {
+                    html += `<tr><td>${cls}</td><td class="val">${val}</td></tr>`;
+                }
+                html += `</table></div>`;
+                return html;
+            }
+
+            // Keyboard close
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") closeModal();
+            });
+
+            // Load on ready
+            loadData();
+        </script>
+    </body>
+</html>

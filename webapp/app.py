@@ -4,7 +4,7 @@ import sqlite3
 from datetime import datetime
 from functools import lru_cache
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, redirect, render_template, request
 from simulation import prepare_combat_unit, simulate_battle
 
 app = Flask(__name__)
@@ -552,6 +552,14 @@ def review_comments():
 def civ_view():
     """Civilization selection grid."""
     return render_template("civ_select.html")
+
+
+@app.route("/civ/<civ_name>")
+def civ_detail(civ_name):
+    """Civilization unit detail page."""
+    if civ_name not in ORIGINAL_13_CIVS:
+        return redirect("/civ")
+    return render_template("civ_detail.html", civ_name=civ_name)
 
 
 # ============== Battle Simulation ==============

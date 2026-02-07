@@ -512,7 +512,7 @@
                 const slug = name.toLowerCase();
                 const card = document.createElement(ready ? "a" : "div");
                 card.className = "civ-card " + (ready ? "ready" : "soon");
-                if (ready) card.href = "#";
+                if (ready) card.href = "/civ/" + name;
 
                 const img = document.createElement("img");
                 img.className = "civ-emblem";

@@ -71,25 +71,8 @@
                 background: rgba(255, 215, 0, 0.2);
             }
 
-            .under-construction {
-                text-align: center;
-                padding: 100px 20px;
-                margin-top: 60px;
-            }
-            .under-construction h2 {
-                font-family: "Cinzel", serif;
-                font-size: 2rem;
-                color: #ffd700;
-                margin-bottom: 15px;
-            }
-            .under-construction p {
-                font-size: 1.1rem;
-                color: #888;
-                max-width: 500px;
-                margin: 0 auto;
-            }
             .main-content {
-                display: none;
+                display: block;
             }
 
             .civ-selector-panel {
@@ -520,14 +503,6 @@
                 </nav>
             </header>
 
-            <div class="under-construction">
-                <h2>Under Construction</h2>
-                <p>
-                    This page is being updated with new data and features. Check
-                    back soon.
-                </p>
-            </div>
-
             <div class="main-content">
                 <div class="civ-selector-panel">
                     <div class="civ-select-box civ1">
@@ -569,8 +544,8 @@
                             class="subtitle"
                             style="font-size: 0.9rem; margin-top: 5px"
                         >
-                            Scoring: 3 pts for winning both resource (1000)
-                            &amp; count (20 units), 1 pt for winning one
+                            Scoring: 3 pts for winning both resource (3000)
+                            &amp; count (30 units), 1 pt for winning one
                         </p>
                         <div class="legend">
                             <div class="legend-item">
@@ -678,7 +653,7 @@
                 const winRateClass = best.win_rate >= 50 ? "high" : "low";
 
                 let counterBonusHtml = "";
-                if (best.beats_top1) {
+                if (best.beats_opponent_best) {
                     counterBonusHtml = `<div class="counter-bonus">★ Beats opponent's #1 unit</div>`;
                 }
 
@@ -705,9 +680,9 @@
                                     .map((u, i) => {
                                         const classes = [];
                                         if (i === 0) classes.push("best");
-                                        if (u.beats_top1)
+                                        if (u.beats_opponent_best)
                                             classes.push("has-counter-bonus");
-                                        const starStr = u.beats_top1
+                                        const starStr = u.beats_opponent_best
                                             ? " ★"
                                             : "";
                                         const winsStr =

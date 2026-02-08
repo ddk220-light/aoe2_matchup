@@ -455,14 +455,21 @@ def compute_benchmarks(bench_units):
                     bench_cost = calc_weighted_cost(
                         bu["cost_food"], bu["cost_wood"], bu["cost_gold"], True
                     )
-                    _, rem1, _ = simulate_battle(
+                    winner, _, _, hp_pct1, hp_pct2 = simulate_battle(
                         cu,
                         bu,
                         3000,
                         cost1_override=unit_cost,
                         cost2_override=bench_cost,
+                        return_hp=True,
                     )
-                    scores[bkey] = round(rem1 / count_u * 100, 1) if count_u > 0 else 0
+                    # Scale: +100 (unit won, lost 0% HP) to -100 (benchmark won, lost 0% HP)
+                    if winner == 1:
+                        scores[bkey] = round(hp_pct1 * 100, 1)
+                    elif winner == 2:
+                        scores[bkey] = round(-hp_pct2 * 100, 1)
+                    else:
+                        scores[bkey] = 0.0
 
                 sk = f"{u['civ_name']}|{u['unit_slug']}"
                 line_scores[sk] = scores

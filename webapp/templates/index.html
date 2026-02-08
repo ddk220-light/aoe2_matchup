@@ -740,23 +740,24 @@
                         (r.final_melee_armor || 0) +
                         (r.final_pierce_armor || 0);
                     // Combined battle score: average of all valid scenario scores
-                    const scores = [
-                        r.score_30v30,
-                        r.score_3k,
-                        r.score_5k,
+                    // Round-robin (0-100) mapped to -100..+100; benchmarks already -100..+100
+                    const rrScores = [r.score_30v30, r.score_3k, r.score_5k]
+                        .filter((s) => s > -1)
+                        .map((s) => s * 2 - 100);
+                    const bmScores = [
                         r.vs_champ,
                         r.vs_paladin,
                         r.vs_arb,
-                    ];
-                    const valid = scores.filter((s) => s >= 0);
+                    ].filter((s) => s > -1);
+                    const allScores = [...rrScores, ...bmScores];
                     const battle_score =
-                        valid.length > 0
+                        allScores.length > 0
                             ? Math.round(
-                                  (valid.reduce((a, b) => a + b, 0) /
-                                      valid.length) *
+                                  (allScores.reduce((a, b) => a + b, 0) /
+                                      allScores.length) *
                                       10,
                               ) / 10
-                            : -1;
+                            : -999;
 
                     return {
                         ...r,
@@ -815,9 +816,12 @@
                     "final_range",
                 ];
                 const medians = {};
+                // Sentinel values: battle_score uses -999, others use -1
+                const noDataThreshold = { battle_score: -999 };
                 for (const col of statCols) {
+                    const sentinel = noDataThreshold[col] ?? -1;
                     const vals = enriched
-                        .filter((r) => !r.is_unique && r[col] >= 0)
+                        .filter((r) => !r.is_unique && r[col] > sentinel)
                         .map((r) => r[col])
                         .sort((a, b) => a - b);
                     medians[col] =
@@ -920,23 +924,23 @@
                         ${row.unit_name}${isUnique ? " *" : ""}
                         ${bonuses ? `<div class="tooltip">${bonuses}</div>` : ""}
                     </div></td>`;
-                    // Combined battle score
+                    // Combined battle score (-999 = no data)
                     const bs = row.battle_score;
-                    html += `<td class="${bs >= 0 ? valClass("battle_score", bs) : ""}">${bs >= 0 ? bs.toFixed(1) : "—"}</td>`;
-                    // Battle scores
+                    html += `<td class="${bs > -999 ? valClass("battle_score", bs) : ""}">${bs > -999 ? bs.toFixed(1) : "—"}</td>`;
+                    // Round-robin scores (-1 = no data, 0-100 valid)
                     const s30 = row.score_30v30;
                     const s3k = row.score_3k;
                     const s5k = row.score_5k;
-                    html += `<td class="${s30 >= 0 ? valClass("score_30v30", s30) : ""}">${s30 >= 0 ? s30.toFixed(1) : "—"}</td>`;
-                    html += `<td class="${s3k >= 0 ? valClass("score_3k", s3k) : ""}">${s3k >= 0 ? s3k.toFixed(1) : "—"}</td>`;
-                    html += `<td class="${s5k >= 0 ? valClass("score_5k", s5k) : ""}">${s5k >= 0 ? s5k.toFixed(1) : "—"}</td>`;
-                    // Benchmark scores
+                    html += `<td class="${s30 > -1 ? valClass("score_30v30", s30) : ""}">${s30 > -1 ? s30.toFixed(1) : "—"}</td>`;
+                    html += `<td class="${s3k > -1 ? valClass("score_3k", s3k) : ""}">${s3k > -1 ? s3k.toFixed(1) : "—"}</td>`;
+                    html += `<td class="${s5k > -1 ? valClass("score_5k", s5k) : ""}">${s5k > -1 ? s5k.toFixed(1) : "—"}</td>`;
+                    // Benchmark scores (-1 = no data, -100 to +100 valid)
                     const vc = row.vs_champ;
                     const vp = row.vs_paladin;
                     const va = row.vs_arb;
-                    html += `<td class="${vc >= 0 ? valClass("vs_champ", vc) : ""}">${vc >= 0 ? vc.toFixed(1) : "—"}</td>`;
-                    html += `<td class="${vp >= 0 ? valClass("vs_paladin", vp) : ""}">${vp >= 0 ? vp.toFixed(1) : "—"}</td>`;
-                    html += `<td class="${va >= 0 ? valClass("vs_arb", va) : ""}">${va >= 0 ? va.toFixed(1) : "—"}</td>`;
+                    html += `<td class="${vc > -1 ? valClass("vs_champ", vc) : ""}">${vc > -1 ? vc.toFixed(1) : "—"}</td>`;
+                    html += `<td class="${vp > -1 ? valClass("vs_paladin", vp) : ""}">${vp > -1 ? vp.toFixed(1) : "—"}</td>`;
+                    html += `<td class="${va > -1 ? valClass("vs_arb", va) : ""}">${va > -1 ? va.toFixed(1) : "—"}</td>`;
                     // Stats
                     html += `<td class="${valClass("dps_per_cost", row.dps_per_cost)}">${row.dps_per_cost.toFixed(3)}</td>`;
                     html += `<td class="${valClass("ehp_per_cost", row.ehp_per_cost)}">${row.ehp_per_cost.toFixed(1)}</td>`;

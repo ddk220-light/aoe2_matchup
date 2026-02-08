@@ -241,7 +241,13 @@ def _find_alive_target(target_idx, enemy_hp, enemy_alive):
 
 
 def simulate_battle(
-    unit1, unit2, resources, fixed_count=None, cost1_override=None, cost2_override=None
+    unit1,
+    unit2,
+    resources,
+    fixed_count=None,
+    cost1_override=None,
+    cost2_override=None,
+    return_hp=False,
 ):
     """
     Tick-based battle simulation with no positions/movement.
@@ -255,9 +261,12 @@ def simulate_battle(
         resources: total resource pool for army sizing
         fixed_count: if set, both sides get this many units
         cost1_override/cost2_override: override unit costs for army sizing
+        return_hp: if True, returns 5-tuple with HP totals
 
-    Returns: (winner, unit1_remaining, unit2_remaining)
+    Returns: (winner, unit1_remaining, unit2_remaining) or
+             (winner, unit1_remaining, unit2_remaining, hp_pct1, hp_pct2) if return_hp
         winner: 1 if unit1 wins, 2 if unit2 wins, 0 if draw
+        hp_pct1/hp_pct2: remaining HP as fraction of starting total (0.0-1.0)
     """
     # --- Army sizes ---
     if fixed_count is not None:
@@ -1153,34 +1162,31 @@ def simulate_battle(
 
     remaining1 = sum(1 for h in hp1 if h > 0)
     remaining2 = sum(1 for h in hp2 if h > 0)
+    total_hp1 = sum(max(0, h) for h in hp1)
+    total_hp2 = sum(max(0, h) for h in hp2)
+    hp_pct1 = total_hp1 / start_total_hp1 if start_total_hp1 > 0 else 0.0
+    hp_pct2 = total_hp2 / start_total_hp2 if start_total_hp2 > 0 else 0.0
+
+    def _result(winner):
+        if return_hp:
+            return (winner, remaining1, remaining2, hp_pct1, hp_pct2)
+        return (winner, remaining1, remaining2)
 
     if remaining1 > 0 and remaining2 == 0:
-        return (1, remaining1, 0)
+        return _result(1)
     elif remaining2 > 0 and remaining1 == 0:
-        return (2, 0, remaining2)
+        return _result(2)
     else:
         lost1 = count1 - remaining1
         lost2 = count2 - remaining2
         if lost1 > lost2:
-            return (2, remaining1, remaining2)
+            return _result(2)
         elif lost2 > lost1:
-            return (1, remaining1, remaining2)
+            return _result(1)
         else:
-            total_hp1 = sum(max(0, h) for h in hp1)
-            total_hp2 = sum(max(0, h) for h in hp2)
-            hp_lost_pct1 = (
-                (start_total_hp1 - total_hp1) / start_total_hp1
-                if start_total_hp1 > 0
-                else 0
-            )
-            hp_lost_pct2 = (
-                (start_total_hp2 - total_hp2) / start_total_hp2
-                if start_total_hp2 > 0
-                else 0
-            )
-            if hp_lost_pct1 > hp_lost_pct2:
-                return (2, remaining1, remaining2)
-            elif hp_lost_pct2 > hp_lost_pct1:
-                return (1, remaining1, remaining2)
+            if hp_pct1 < hp_pct2:
+                return _result(2)
+            elif hp_pct2 < hp_pct1:
+                return _result(1)
             else:
-                return (0, remaining1, remaining2)
+                return _result(0)

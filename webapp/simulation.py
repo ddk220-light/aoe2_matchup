@@ -399,6 +399,11 @@ def simulate_battle(
     dodge_recharge2 = unit2["dodge_shield_recharge"]
     bleed_dps1, bleed_dur1 = unit1["bleed_dps"], unit1["bleed_duration"]
     bleed_dps2, bleed_dur2 = unit2["bleed_dps"], unit2["bleed_duration"]
+    # HP regen: stored as HP/minute, convert to HP/tick
+    regen_per_tick1 = unit1["hp_regen"] / 60.0 * DT if unit1["hp_regen"] > 0 else 0.0
+    regen_per_tick2 = unit2["hp_regen"] / 60.0 * DT if unit2["hp_regen"] > 0 else 0.0
+    max_hp1 = float(unit1["hp"])
+    max_hp2 = float(unit2["hp"])
     block_melee1 = unit1["block_first_melee"]
     block_melee2 = unit2["block_first_melee"]
     kill_bonus1 = unit1["attack_bonus_per_kill"]
@@ -1125,6 +1130,16 @@ def simulate_battle(
                     del bleed_on2[idx]
             else:
                 del bleed_on2[idx]
+
+        # HP regeneration
+        if regen_per_tick1 > 0:
+            for idx in alive1:
+                if hp1[idx] < max_hp1:
+                    hp1[idx] = min(max_hp1, hp1[idx] + regen_per_tick1)
+        if regen_per_tick2 > 0:
+            for idx in alive2:
+                if hp2[idx] < max_hp2:
+                    hp2[idx] = min(max_hp2, hp2[idx] + regen_per_tick2)
 
         # HP transform (e.g. Jian Swordsman — switch to unshielded form)
         if transform_thresh1 > 0:

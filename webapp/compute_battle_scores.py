@@ -350,8 +350,19 @@ def build_line_units(line_slug, age):
     return units
 
 
+def _hp_score(winner, hp_pct1, hp_pct2):
+    """Convert battle result to -100..+100 HP score for unit 1.
+    +100 = unit1 won with 100% HP; -100 = unit2 won with 100% HP; 0 = draw."""
+    if winner == 1:
+        return hp_pct1 * 100
+    elif winner == 2:
+        return -hp_pct2 * 100
+    return 0.0
+
+
 def compute_round_robin(line_slug, age):
-    """Round-robin battles. Returns {civ_name|unit_slug: {score_30v30, score_3k, score_5k}}."""
+    """Round-robin battles. Returns {civ_name|unit_slug: {score_30v30, score_3k, score_5k}}.
+    Scores are -100..+100 (average HP% across all opponents)."""
     is_imperial = age == "imperial"
     units = build_line_units(line_slug, age)
     n = len(units)
@@ -359,8 +370,8 @@ def compute_round_robin(line_slug, age):
         return {}
 
     keys = [(u["civ_name"], u["unit_slug"]) for u in units]
-    wins = {k: [0, 0, 0] for k in keys}
-    draws = {k: [0, 0, 0] for k in keys}
+    # Accumulate HP scores per unit per scenario
+    hp_totals = {k: [0.0, 0.0, 0.0] for k in keys}
 
     for i in range(n):
         for j in range(i + 1, n):
@@ -368,18 +379,24 @@ def compute_round_robin(line_slug, age):
             uj = units[j]["combat_unit"]
             ki, kj = keys[i], keys[j]
 
-            w1, _, _ = simulate_battle(ui, uj, 0, fixed_count=30)
-
             ci = calc_weighted_cost(
                 ui["cost_food"], ui["cost_wood"], ui["cost_gold"], is_imperial
             )
             cj = calc_weighted_cost(
                 uj["cost_food"], uj["cost_wood"], uj["cost_gold"], is_imperial
             )
-            w2, _, _ = simulate_battle(
-                ui, uj, 3000, cost1_override=ci, cost2_override=cj
+
+            # Scenario 1: 30v30
+            w1, _, _, hp1_1, hp2_1 = simulate_battle(
+                ui, uj, 0, fixed_count=30, return_hp=True
             )
 
+            # Scenario 2: 3000 resources
+            w2, _, _, hp1_2, hp2_2 = simulate_battle(
+                ui, uj, 3000, cost1_override=ci, cost2_override=cj, return_hp=True
+            )
+
+            # Scenario 3: 5000 resources with upgrades
             upg_i = calc_weighted_cost(
                 ui["upgrade_cost_food"],
                 ui["upgrade_cost_wood"],
@@ -395,27 +412,30 @@ def compute_round_robin(line_slug, age):
             budget_i = max(ci, 5000 - upg_i)
             budget_j = max(cj, 5000 - upg_j)
             adj_cj = max(1, int(budget_i * cj / budget_j)) if budget_j > 0 else cj
-            w3, _, _ = simulate_battle(
-                ui, uj, budget_i, cost1_override=ci, cost2_override=adj_cj
+            w3, _, _, hp1_3, hp2_3 = simulate_battle(
+                ui,
+                uj,
+                budget_i,
+                cost1_override=ci,
+                cost2_override=adj_cj,
+                return_hp=True,
             )
 
-            for idx, w in enumerate([w1, w2, w3]):
-                if w == 1:
-                    wins[ki][idx] += 1
-                elif w == 2:
-                    wins[kj][idx] += 1
-                else:
-                    draws[ki][idx] += 1
-                    draws[kj][idx] += 1
+            for idx, (w, h1, h2) in enumerate(
+                [(w1, hp1_1, hp2_1), (w2, hp1_2, hp2_2), (w3, hp1_3, hp2_3)]
+            ):
+                s = _hp_score(w, h1, h2)
+                hp_totals[ki][idx] += s
+                hp_totals[kj][idx] -= s  # opposite sign for opponent
 
     opponents = n - 1
     scores = {}
     for k in keys:
         sk = f"{k[0]}|{k[1]}"
         scores[sk] = {
-            "score_30v30": round((wins[k][0] + 0.5 * draws[k][0]) / opponents * 100, 1),
-            "score_3k": round((wins[k][1] + 0.5 * draws[k][1]) / opponents * 100, 1),
-            "score_5k": round((wins[k][2] + 0.5 * draws[k][2]) / opponents * 100, 1),
+            "score_30v30": round(hp_totals[k][0] / opponents, 1),
+            "score_3k": round(hp_totals[k][1] / opponents, 1),
+            "score_5k": round(hp_totals[k][2] / opponents, 1),
         }
     return scores
 

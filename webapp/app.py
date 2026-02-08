@@ -1345,13 +1345,13 @@ def api_ref_unit_line(line_slug):
         line_key = f"{line_slug}|{age_key}"
         unit_key = f"{entry['civ_name']}|{entry['unit_slug']}"
         rr = _ROUND_ROBIN.get(line_key, {}).get(unit_key, {})
-        entry["score_30v30"] = rr.get("score_30v30", -1)
-        entry["score_3k"] = rr.get("score_3k", -1)
-        entry["score_5k"] = rr.get("score_5k", -1)
+        entry["score_30v30"] = rr.get("score_30v30", -999)
+        entry["score_3k"] = rr.get("score_3k", -999)
+        entry["score_5k"] = rr.get("score_5k", -999)
         bm = _BENCHMARKS.get(line_key, {}).get(unit_key, {})
-        entry["vs_champ"] = bm.get("vs_champ", -1)
-        entry["vs_paladin"] = bm.get("vs_paladin", -1)
-        entry["vs_arb"] = bm.get("vs_arb", -1)
+        entry["vs_champ"] = bm.get("vs_champ", -999)
+        entry["vs_paladin"] = bm.get("vs_paladin", -999)
+        entry["vs_arb"] = bm.get("vs_arb", -999)
 
     # Fetch standard units for each age
     for age_key, slug_key, db_age in [
@@ -1555,7 +1555,6 @@ def simulation_notes():
     return render_template("simulation_notes.html", civs=civs)
 
 
-
 # ============== 1v1 Civ Matchup ==============
 
 # Units to exclude from matchup simulations
@@ -1669,7 +1668,9 @@ def api_matchup(civ1, civ2):
                 c2 = calc_cost(u2)
 
                 # Resource-based (3000) and count-based (30v30)
-                w_res, _, _ = simulate_battle(u1, u2, 3000, cost1_override=c1, cost2_override=c2)
+                w_res, _, _ = simulate_battle(
+                    u1, u2, 3000, cost1_override=c1, cost2_override=c2
+                )
                 w_cnt, _, _ = simulate_battle(u1, u2, 0, fixed_count=30)
 
                 u1_won_both = w_res == 1 and w_cnt == 1
@@ -1698,15 +1699,17 @@ def api_matchup(civ1, civ2):
                 if winner == 2:
                     civ2_scores[u2_slug]["wins"] += 1
 
-                all_matchups.append({
-                    "civ1_slug": u1_slug,
-                    "civ1_unit": u1["_display_name"],
-                    "civ2_slug": u2_slug,
-                    "civ2_unit": u2["_display_name"],
-                    "winner": winner,
-                    "u1_score": u1_add,
-                    "u2_score": u2_add,
-                })
+                all_matchups.append(
+                    {
+                        "civ1_slug": u1_slug,
+                        "civ1_unit": u1["_display_name"],
+                        "civ2_slug": u2_slug,
+                        "civ2_unit": u2["_display_name"],
+                        "winner": winner,
+                        "u1_score": u1_add,
+                        "u2_score": u2_add,
+                    }
+                )
 
             civ1_scores[u1_slug] = {"wins": u1_wins, "total": u1_total, "unit": u1}
 
@@ -1714,16 +1717,28 @@ def api_matchup(civ1, civ2):
         civ1_details = {}
         civ2_details = {}
         for m in all_matchups:
-            c1r = "win" if m["winner"] == 1 else ("loss" if m["winner"] == 2 else "draw")
-            c2r = "win" if m["winner"] == 2 else ("loss" if m["winner"] == 1 else "draw")
-            civ1_details.setdefault(m["civ1_slug"], []).append({
-                "opponent": m["civ2_unit"], "opponent_slug": m["civ2_slug"],
-                "result": c1r, "score": m["u1_score"],
-            })
-            civ2_details.setdefault(m["civ2_slug"], []).append({
-                "opponent": m["civ1_unit"], "opponent_slug": m["civ1_slug"],
-                "result": c2r, "score": m["u2_score"],
-            })
+            c1r = (
+                "win" if m["winner"] == 1 else ("loss" if m["winner"] == 2 else "draw")
+            )
+            c2r = (
+                "win" if m["winner"] == 2 else ("loss" if m["winner"] == 1 else "draw")
+            )
+            civ1_details.setdefault(m["civ1_slug"], []).append(
+                {
+                    "opponent": m["civ2_unit"],
+                    "opponent_slug": m["civ2_slug"],
+                    "result": c1r,
+                    "score": m["u1_score"],
+                }
+            )
+            civ2_details.setdefault(m["civ2_slug"], []).append(
+                {
+                    "opponent": m["civ1_unit"],
+                    "opponent_slug": m["civ1_slug"],
+                    "result": c2r,
+                    "score": m["u2_score"],
+                }
+            )
 
         # Calculate final scores (sum of points)
         for key, s in civ1_scores.items():
@@ -1734,8 +1749,16 @@ def api_matchup(civ1, civ2):
             s["score"] = sum(d["score"] for d in civ2_details.get(key, []))
 
         # Find best unit for each civ
-        civ1_best = max(civ1_scores.items(), key=lambda x: x[1]["score"]) if civ1_scores else None
-        civ2_best = max(civ2_scores.items(), key=lambda x: x[1]["score"]) if civ2_scores else None
+        civ1_best = (
+            max(civ1_scores.items(), key=lambda x: x[1]["score"])
+            if civ1_scores
+            else None
+        )
+        civ2_best = (
+            max(civ2_scores.items(), key=lambda x: x[1]["score"])
+            if civ2_scores
+            else None
+        )
 
         # Find which units beat the opponent's best
         civ1_beats_best = set()
@@ -1769,8 +1792,16 @@ def api_matchup(civ1, civ2):
 
         results[age_slug] = {
             "age_name": age_data["name"],
-            "civ1_best": format_unit(civ1_best[0], civ1_best[1], civ1_beats_best, civ1_details) if civ1_best else None,
-            "civ2_best": format_unit(civ2_best[0], civ2_best[1], civ2_beats_best, civ2_details) if civ2_best else None,
+            "civ1_best": format_unit(
+                civ1_best[0], civ1_best[1], civ1_beats_best, civ1_details
+            )
+            if civ1_best
+            else None,
+            "civ2_best": format_unit(
+                civ2_best[0], civ2_best[1], civ2_beats_best, civ2_details
+            )
+            if civ2_best
+            else None,
             "civ1_all": [
                 format_unit(k, v, civ1_beats_best, civ1_details)
                 for k, v in sorted(civ1_scores.items(), key=lambda x: -x[1]["score"])

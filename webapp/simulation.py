@@ -15,6 +15,7 @@ DT = 0.1  # 100ms time step
 MAX_TICKS = 2500  # 250 seconds max battle time
 MELEE_RANGE = 0.5
 MAP_SPACE = 22.0  # ~tiles of combat space (MAP_MAX - 2*start_offset)
+RETARGET_DIST = 1.5  # tiles to walk when switching to a new melee target
 UNIT_SPACING = 0.75  # approximate unit spacing in melee clump
 
 
@@ -441,6 +442,8 @@ def simulate_battle(
     bleed_on2 = {}
     committed1 = {}  # idx -> (target, time_remaining)
     committed2 = {}
+    prev_target1 = [-1] * count1  # last attacked target per unit (for retarget delay)
+    prev_target2 = [-1] * count2
 
     # Dismount on death (Konnik): pre-compute dismount damage
     dismount1 = unit1.get("dismount")
@@ -841,6 +844,7 @@ def simulate_battle(
                 my_cooldown, my_committed = cooldown1, committed1
                 my_bonus_atk, my_used_first = bonus_atk1, used_first1
                 t_is_ranged, t_is_siege = is_ranged1, is_siege1
+                t_speed = speed1
                 t_reload, t_delay = reload1, delay1
                 t_extra_proj, t_first_burst = extra_proj1, first_burst1
                 t_dmg = dmg1
@@ -852,6 +856,7 @@ def simulate_battle(
                 my_transformed = transformed1
                 t_enemy_transformed = transformed2
                 t_cant_attack = cant_attack_melee1
+                my_prev_target = prev_target1
                 enemy_hp = hp2
                 enemy_alive = alive2
                 enemy_team = 2
@@ -861,6 +866,7 @@ def simulate_battle(
                 my_cooldown, my_committed = cooldown2, committed2
                 my_bonus_atk, my_used_first = bonus_atk2, used_first2
                 t_is_ranged, t_is_siege = is_ranged2, is_siege2
+                t_speed = speed2
                 t_reload, t_delay = reload2, delay2
                 t_extra_proj, t_first_burst = extra_proj2, first_burst2
                 t_dmg = dmg2
@@ -872,6 +878,7 @@ def simulate_battle(
                 my_transformed = transformed2
                 t_enemy_transformed = transformed1
                 t_cant_attack = cant_attack_melee2
+                my_prev_target = prev_target2
                 enemy_hp = hp1
                 enemy_alive = alive1
                 enemy_team = 1
@@ -929,6 +936,14 @@ def simulate_battle(
                 target_idx = _find_alive_target(target_idx, enemy_hp, enemy_alive)
                 if target_idx < 0:
                     continue
+                # Retarget delay: melee units need time to walk to new target
+                prev = my_prev_target[i]
+                if prev >= 0 and target_idx != prev and not t_is_ranged:
+                    retarget_time = RETARGET_DIST / t_speed if t_speed > 0 else 2.0
+                    my_cooldown[i] = retarget_time
+                    my_prev_target[i] = target_idx
+                    continue
+                my_prev_target[i] = target_idx
 
                 if i_dismounted:
                     # Dismounted: always melee, use dismount stats

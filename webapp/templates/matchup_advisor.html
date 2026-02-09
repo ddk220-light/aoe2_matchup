@@ -867,7 +867,7 @@
                     html += unitBadge(p1.dominant_unit.name);
                     const hasBothMobile = p1.civ1_units.length > 0 && p1.civ2_units.length > 0;
                     if (!hasBothMobile) {
-                        html += `<div class="col-detail">${weakerName} has no mobile units (speed &gt; 1.4)</div>`;
+                        html += `<div class="col-detail">${weakerName} has no mobile units (speed &gt; 1.3)</div>`;
                     } else {
                         html += `<div class="col-detail">Wins/draws all mobile matchups</div>`;
                     }
@@ -876,16 +876,30 @@
                 }
                 html += `</div>`;
 
-                // Column 2: Best Ranged
+                // Column 2: Ranged Power (show both civs' best ranged, highlight winner)
                 html += `<div class="analysis-col">`;
                 html += `<div class="col-header">Ranged Power</div>`;
-                if (p2.advantage_unit) {
-                    html += `<div class="col-civ ${weakerColor}">${weakerName}</div>`;
-                    html += unitBadge(p2.advantage_unit.name);
-                    if (p2.has_clear_advantage) {
-                        html += `<div class="col-detail">Clear ranged advantage &mdash; beats all opponent ranged</div>`;
+                const rw = p2.ranged_winner;
+                const c1r = p2.civ1_best_ranged;
+                const c2r = p2.civ2_best_ranged;
+                if (rw) {
+                    const rangedWinnerName = rw === "civ1" ? data.civ1 : data.civ2;
+                    const rangedWinnerColor = rw === "civ1" ? "civ1-color" : "civ2-color";
+                    const rangedUnit = rw === "civ1" ? c1r : c2r;
+                    html += `<div class="col-civ ${rangedWinnerColor}">${rangedWinnerName}</div>`;
+                    if (rangedUnit) html += unitBadge(rangedUnit.name);
+                    if (rw === domCiv) {
+                        html += `<div class="col-detail">${rangedWinnerName} dominates both mobile and ranged &mdash; ${weakerName} should focus on melee + siege</div>`;
                     } else {
-                        html += `<div class="col-detail">Best ranged option (no clear advantage)</div>`;
+                        html += `<div class="col-detail">Clear ranged advantage &mdash; beats all opponent ranged</div>`;
+                    }
+                } else if (c1r || c2r) {
+                    html += `<div class="col-detail">Ranged is contested</div>`;
+                    if (c1r) {
+                        html += `<div style="margin-top:6px"><span class="civ1-color">${data.civ1}:</span> ${unitBadge(c1r.name, "sm")}</div>`;
+                    }
+                    if (c2r) {
+                        html += `<div style="margin-top:4px"><span class="civ2-color">${data.civ2}:</span> ${unitBadge(c2r.name, "sm")}</div>`;
                     }
                 } else {
                     html += `<div class="no-unit">No ranged gold units available</div>`;

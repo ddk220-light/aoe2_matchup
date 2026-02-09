@@ -1178,6 +1178,7 @@ UNIT_LINES = {
             "Japanese": ("samurai_japanese", "elite_samurai_japanese"),
             "Teutons": ("teutonic_knight_teutons", "elite_teutonic_knight_teutons"),
             "Aztecs": ("jaguar_warrior_aztecs", "elite_jaguar_warrior_aztecs"),
+            "Incas": ("kamayuk_incas", "elite_kamayuk_incas"),
         },
     },
     "eagle": {
@@ -1210,6 +1211,10 @@ UNIT_LINES = {
             "Britons": ("longbowman_britons", "elite_longbowman_britons"),
             "Chinese": ("chu_ko_nu_chinese", "elite_chu_ko_nu_chinese"),
             "Mayans": ("plumed_archer_mayans", "elite_plumed_archer_mayans"),
+            "Italians": (
+                "genoese_crossbowman_italians",
+                "elite_genoese_crossbowman_italians",
+            ),
         },
     },
     "skirmisher": {
@@ -1249,6 +1254,7 @@ UNIT_LINES = {
         "unique_units": {
             "Byzantines": ("cataphract_byzantines", "elite_cataphract_byzantines"),
             "Huns": ("tarkan_huns", "elite_tarkan_huns"),
+            "Slavs": ("boyar_slavs", "elite_boyar_slavs"),
         },
     },
     "light_cav": {
@@ -1256,7 +1262,9 @@ UNIT_LINES = {
         "building": "Stable",
         "castle_slug": "light_cav",
         "imperial_slug": "hussar",
-        "unique_units": {},
+        "unique_units": {
+            "Magyars": ("magyar_huszar_magyars", "elite_magyar_huszar_magyars"),
+        },
     },
     "camel": {
         "name": "Camel Line",

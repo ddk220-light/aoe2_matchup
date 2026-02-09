@@ -1035,6 +1035,7 @@ def _build_combat_dict_from_ref(rc, row):
         "armors_json": row["final_armors_json"],
         "min_attack_range": row["min_range"] or 0,
         # From projectiles
+        "accuracy": row["final_accuracy"] or 100,
         "projectile_speed": (
             primary_proj["projectile_speed"]
             if primary_proj and primary_proj["projectile_speed"]

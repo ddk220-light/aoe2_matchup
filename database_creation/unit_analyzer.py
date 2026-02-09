@@ -4,19 +4,37 @@ import json
 from dataclasses import dataclass, field
 
 from .config import (
-    OUTPUT_DIR,
-    AGE_TECH_IDS,
-    ATTR_HP, ATTR_LOS, ATTR_SPEED, ATTR_ARMOR, ATTR_ATTACK,
-    ATTR_RELOAD_TIME, ATTR_ACCURACY, ATTR_RANGE, ATTR_TRAIN_TIME,
-    ATTR_COST, ATTR_FOOD_COST, ATTR_WOOD_COST, ATTR_GOLD_COST,
-    CMD_SET_ATTRIBUTE, CMD_ADD_ATTRIBUTE, CMD_MULTIPLY_ATTRIBUTE,
-    BUILDING_WORK_RATE_TECHS, CIV_TECH_COST_DISCOUNT,
-    CIV_TEAM_BONUS_WORK_RATE, CIV_TEAM_BONUS_ATTACK,
-    UNIQUE_UNITS_IN_BARRACKS, REMOVED_TECHS, LITHUANIAN_RELIC_COUNT,
-    UNIT_CLASS_TO_BUILDING, UNIQUE_UNIT_BUILDING,
     _PREVIOUS_AGE_NAMES,
+    AGE_TECH_IDS,
+    ATTR_ACCURACY,
+    ATTR_ARMOR,
+    ATTR_ATTACK,
+    ATTR_COST,
+    ATTR_FOOD_COST,
+    ATTR_GOLD_COST,
+    ATTR_HP,
+    ATTR_LOS,
+    ATTR_RANGE,
+    ATTR_RELOAD_TIME,
+    ATTR_SPEED,
+    ATTR_TRAIN_TIME,
+    ATTR_WOOD_COST,
+    BUILDING_WORK_RATE_TECHS,
+    CIV_TEAM_BONUS_ATTACK,
+    CIV_TEAM_BONUS_WORK_RATE,
+    CIV_TECH_COST_DISCOUNT,
+    CMD_ADD_ATTRIBUTE,
+    CMD_MULTIPLY_ATTRIBUTE,
+    CMD_SET_ATTRIBUTE,
+    LITHUANIAN_RELIC_COUNT,
+    OUTPUT_DIR,
+    REMOVED_TECHS,
+    UNIQUE_UNIT_BUILDING,
+    UNIQUE_UNITS_IN_BARRACKS,
+    UNIT_CLASS_TO_BUILDING,
     _tech_age_name,
 )
+
 
 @dataclass
 class UnitStats:
@@ -494,6 +512,8 @@ class UnitAnalyzer:
             stats.range = value
         elif attr == ATTR_RELOAD_TIME:
             stats.reload_time = value
+        elif attr == ATTR_ACCURACY:
+            stats.accuracy = value
 
     def _add_attribute(self, stats: UnitStats, attr: int, value: float):
         if attr == ATTR_HP:
@@ -943,5 +963,3 @@ class UnitAnalyzer:
             "has_unit": True,
             "applied_bonuses": applied_bonuses,
         }
-
-

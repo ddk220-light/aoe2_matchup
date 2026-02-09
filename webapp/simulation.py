@@ -9,6 +9,7 @@ range/kiting advantages. No XY positions or unit movement.
 """
 
 import json
+import random
 
 # Simulation constants
 DT = 0.1  # 100ms time step
@@ -105,6 +106,7 @@ def prepare_combat_unit(row):
         "is_siege_projectile": row["is_siege_projectile"] or 0,
         "splash_radius": row["splash_radius"] or 0,
         "projectile_speed": row["projectile_speed"] or 0,
+        "accuracy": row.get("accuracy", 100) if hasattr(row, "get") else 100,
         "ignores_pierce_armor": row["ignores_pierce_armor"] or 0,
         "ignores_melee_armor": row["ignores_melee_armor"] or 0,
         "trample_percent": row["trample_percent"] or 0,
@@ -286,6 +288,10 @@ def simulate_battle(
     is_ranged2 = range2 >= 1.0
     speed1 = unit1["movement_speed"]
     speed2 = unit2["movement_speed"]
+    # Accuracy: main projectile hit chance (0-100). Extra projectiles use ~50% (scatter).
+    accuracy1 = unit1.get("accuracy", 100) / 100.0  # fraction 0.0-1.0
+    accuracy2 = unit2.get("accuracy", 100) / 100.0
+    EXTRA_PROJ_ACCURACY = 0.5  # secondary projectiles scatter significantly
 
     # Attack timing
     aspeed1 = unit1["attack_speed"] or 0.5
@@ -644,6 +650,7 @@ def simulate_battle(
         a_first_burst,
         a_used_first_arr,
         target_hp_arr,
+        a_accuracy=1.0,
     ):
         """Apply num_shots opening shots from attacker_team using focus fire."""
         if num_shots <= 0:
@@ -668,10 +675,15 @@ def simulate_battle(
                 if a_first_burst > 0 and not a_used_first_arr[a_idx]:
                     num_proj += a_first_burst
                     a_used_first_arr[a_idx] = True
-                # First projectile uses main damage, extras use secondary
-                _apply_opening_hit(attacker_team, target, damage, a_idx)
+                # Main projectile: hit chance = unit accuracy
+                if a_accuracy >= 1.0 or random.random() < a_accuracy:
+                    _apply_opening_hit(attacker_team, target, damage, a_idx)
+                # Extra projectiles: low accuracy (~50%), they scatter
                 for _ in range(num_proj - 1):
-                    _apply_opening_hit(attacker_team, target, extra_proj_damage, a_idx)
+                    if random.random() < EXTRA_PROJ_ACCURACY:
+                        _apply_opening_hit(
+                            attacker_team, target, extra_proj_damage, a_idx
+                        )
 
     # Calculate opening shots for each side
     opening1 = 0
@@ -775,6 +787,7 @@ def simulate_battle(
             first_burst1,
             used_first1,
             hp2,
+            a_accuracy=accuracy1,
         )
         # Set cooldowns to reflect time elapsed since last opening shot
         if is_ranged1 and not is_ranged2 and closing_time1 > 0:
@@ -794,6 +807,7 @@ def simulate_battle(
             first_burst2,
             used_first2,
             hp1,
+            a_accuracy=accuracy2,
         )
         if is_ranged2 and not is_ranged1 and closing_time2 > 0:
             last_shot_t = delay2 + (opening2 - 1) * reload2
@@ -845,6 +859,7 @@ def simulate_battle(
                 my_bonus_atk, my_used_first = bonus_atk1, used_first1
                 t_is_ranged, t_is_siege = is_ranged1, is_siege1
                 t_speed = speed1
+                t_accuracy = accuracy1
                 t_reload, t_delay = reload1, delay1
                 t_extra_proj, t_first_burst = extra_proj1, first_burst1
                 t_dmg = dmg1
@@ -867,6 +882,7 @@ def simulate_battle(
                 my_bonus_atk, my_used_first = bonus_atk2, used_first2
                 t_is_ranged, t_is_siege = is_ranged2, is_siege2
                 t_speed = speed2
+                t_accuracy = accuracy2
                 t_reload, t_delay = reload2, delay2
                 t_extra_proj, t_first_burst = extra_proj2, first_burst2
                 t_dmg = dmg2
@@ -960,7 +976,7 @@ def simulate_battle(
                         )
                         my_cooldown[i] = i_reload
                 elif t_is_ranged:
-                    # Ranged: fire instantly
+                    # Ranged: fire instantly, apply accuracy
                     num_extra = t_extra_proj
                     if t_first_burst > 0 and not my_used_first[i]:
                         num_extra += t_first_burst
@@ -971,17 +987,21 @@ def simulate_battle(
                         base = t_dmg_vs_transform
                     else:
                         base = t_dmg
-                    # Main projectile (full damage)
-                    hit_dmg = base + int(my_bonus_atk[i])
-                    pending_damage.append((enemy_team, target_idx, hit_dmg, i, team_id))
-                    # Extra projectiles (secondary projectile damage)
+                    # Main projectile: hit chance = unit accuracy
+                    if t_accuracy >= 1.0 or random.random() < t_accuracy:
+                        hit_dmg = base + int(my_bonus_atk[i])
+                        pending_damage.append(
+                            (enemy_team, target_idx, hit_dmg, i, team_id)
+                        )
+                    # Extra projectiles: low accuracy (~50%), they scatter
                     if num_extra > 0:
                         extra_base = t_extra_proj_dmg
                         extra_hit = extra_base + int(my_bonus_atk[i])
                         for _ in range(num_extra):
-                            pending_damage.append(
-                                (enemy_team, target_idx, extra_hit, i, team_id)
-                            )
+                            if random.random() < EXTRA_PROJ_ACCURACY:
+                                pending_damage.append(
+                                    (enemy_team, target_idx, extra_hit, i, team_id)
+                                )
                     my_cooldown[i] = t_reload
                 else:
                     # Melee: commit with delay or hit instantly

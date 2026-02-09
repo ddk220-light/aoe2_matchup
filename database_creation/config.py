@@ -368,11 +368,13 @@ CASTLE_UNITS = {
         "upgrades": [],
     },
     "light_cav": {
-        "base_id": 546,
+        "base_id": 448,  # Scout Cavalry (upgrades to Light Cav)
         "display_name": "Light Cavalry",
         "unit_class": 12,
-        "availability_tech": 254,  # Light Cavalry upgrade tech
-        "upgrades": [],
+        "availability_tech": None,  # All civs get scouts
+        "upgrades": [
+            (254, 546, "Light Cavalry"),  # Light Cavalry upgrade
+        ],
     },
     "knight": {
         "base_id": 38,
@@ -515,11 +517,12 @@ IMPERIAL_UNITS = {
         ],
     },
     "hussar": {
-        "base_id": 546,  # Light Cavalry
+        "base_id": 448,  # Scout Cavalry (upgrades through Light Cav → Hussar)
         "display_name": "Hussar",
         "unit_class": 12,
-        "availability_tech": 254,
+        "availability_tech": None,  # All civs get scouts
         "upgrades": [
+            (254, 546, "Light Cavalry"),
             (428, 441, "Hussar"),
             (786, 1707, "Winged Hussar"),
         ],

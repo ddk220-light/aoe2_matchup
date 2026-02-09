@@ -1572,7 +1572,7 @@ def _get_ref_civs():
 
 # ============== Matchup Advisor ==============
 
-_MOBILE_SPEED_THRESHOLD = 1.4
+_MOBILE_SPEED_THRESHOLD = 1.3
 _SIEGE_CLASSES = {"Siege Weapon", "Ballista", "Unpacked Siege Unit"}
 _ADVISOR_EXCLUDED = {"trebuchet", "ram", "siege_ram"}
 VOTES_FILE = os.path.join(os.path.dirname(__file__), "matchup_votes.jsonl")

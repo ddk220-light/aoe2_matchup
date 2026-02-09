@@ -1776,23 +1776,19 @@ def _build_combos_for_civ(
             # Dominant civ wins BOTH mobile and ranged: pair them
             _add(dom, ranged_slug, "Best mobile + best ranged")
 
-            # Alt: dominant + best melee support
-            melee_support, _ = _find_best_counter(
-                {
-                    s: cu
-                    for s, cu in all_units.items()
-                    if cu["attack_range"] <= 1.0 and s != dom
-                },
+            # Alt: dominant + 2nd-best ranged (vary the ranged unit)
+            second_ranged, _ = _find_best_counter(
+                ranged_gold,
                 opp_cats["all"],
                 calc_cost,
                 is_imperial,
                 exclude={dom, ranged_slug},
                 cache=cache,
             )
-            if melee_support:
-                _add(dom, melee_support, "Best mobile + melee support")
+            if second_ranged:
+                _add(dom, second_ranged, "Best mobile + alt ranged")
 
-            # Alt: different mobile + ranged (vary primary)
+            # Alt: different mobile + best ranged (vary primary)
             second_mobile = None
             best_score = -1
             for s, cu in mobile.items():
@@ -1812,17 +1808,21 @@ def _build_combos_for_civ(
             if second_mobile:
                 _add(second_mobile, ranged_slug, "Alt mobile + best ranged")
 
-            # Alt: ranged lead + trash counter
-            trash, _ = _find_best_counter(
-                {s: cu for s, cu in all_units.items() if cu["cost_gold"] == 0},
-                opp_mobile if opp_mobile else opp_cats["all"],
+            # Alt: dominant + best melee support
+            melee_support, _ = _find_best_counter(
+                {
+                    s: cu
+                    for s, cu in all_units.items()
+                    if cu["attack_range"] <= 1.0 and s != dom
+                },
+                opp_cats["all"],
                 calc_cost,
                 is_imperial,
                 exclude={dom, ranged_slug},
                 cache=cache,
             )
-            if trash:
-                _add(ranged_slug, trash, "Ranged lead + trash support")
+            if melee_support:
+                _add(dom, melee_support, "Best mobile + melee support")
         else:
             # Dominant civ: mobile dominant but ranged contested
             # Combo 1: dominant + best support

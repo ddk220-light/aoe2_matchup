@@ -14,7 +14,11 @@ empires2_x2_p1.dat  ──►  extracted_data/*.json  ──►  webapp/aoe2_ref
 
 **Single command:** `python3 -m database_creation.run`
 
-**Scope:** 13 original civilizations (Britons through Vikings), Castle and Imperial age units, including unique units. 326 total unit entries.
+**Scope:** 13 original civilizations (Britons through Vikings), Castle and Imperial age units, including unique units. 328 total unit entries.
+
+**Related documents:**
+- [ARCHITECTURE.md](ARCHITECTURE.md) — System diagram, product features, API reference
+- [ADDING_CIVS.md](ADDING_CIVS.md) — Guide for adding new civilizations, effects, and stats
 
 ---
 
@@ -151,6 +155,8 @@ Britons, Byzantines, Celts, Chinese, Franks, Goths, Japanese, Mongols, Persians,
 ```
 
 The `upgrades` list defines the unit line evolution. Each tuple `(tech_id, unit_id, name)` is a line upgrade that transforms the unit. `calculate_unit_stats_for_civ()` applies these in order, checking if the civ has access to each tech.
+
+**Scout Cavalry fallback:** The `light_cav` and `hussar` entries start from Scout Cavalry (base_id=448) with `availability_tech=None`, and Light Cavalry (tech 254, unit 546) as the first upgrade in the chain. Civs with tech 254 disabled (e.g., Teutons) stay at Scout Cavalry instead of being excluded entirely.
 
 **`UNIQUE_UNITS`**: Dict keyed by civ name. Each civ has a list of unique unit entries:
 ```python

@@ -739,23 +739,27 @@
                         1 +
                         (r.final_melee_armor || 0) +
                         (r.final_pierce_armor || 0);
-                    // Combined battle score: average of all valid scenario scores
-                    // All scores are -100..+100; sentinel -999 means no data
-                    const allScores = [
-                        r.score_30v30,
-                        r.score_3k,
-                        r.score_5k,
-                        r.vs_champ,
-                        r.vs_paladin,
-                        r.vs_arb,
-                    ].filter((s) => s > -999);
+                    // Weighted battle score: -100..+100; sentinel -999 means no data
+                    // Weights: vChamp 0.2, vPala 0.2, vArb 0.2, 30v30 0.15, 3K 0.15, 5K 0.1
+                    const scoreWeights = [
+                        [r.score_30v30, 0.15],
+                        [r.score_3k, 0.15],
+                        [r.score_5k, 0.1],
+                        [r.vs_champ, 0.2],
+                        [r.vs_paladin, 0.2],
+                        [r.vs_arb, 0.2],
+                    ];
+                    let wSum = 0,
+                        wTotal = 0;
+                    for (const [s, w] of scoreWeights) {
+                        if (s > -999) {
+                            wSum += s * w;
+                            wTotal += w;
+                        }
+                    }
                     const battle_score =
-                        allScores.length > 0
-                            ? Math.round(
-                                  (allScores.reduce((a, b) => a + b, 0) /
-                                      allScores.length) *
-                                      10,
-                              ) / 10
+                        wTotal > 0
+                            ? Math.round((wSum / wTotal) * 10) / 10
                             : -999;
 
                     return {

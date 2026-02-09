@@ -74,16 +74,21 @@ ATTR_DISPLAY_NAMES = {
 
 # Original 13 civilizations
 ORIGINAL_13_CIVS = [
+    "Aztecs",
     "Britons",
     "Byzantines",
     "Celts",
     "Chinese",
     "Franks",
     "Goths",
+    "Huns",
     "Japanese",
+    "Koreans",
+    "Mayans",
     "Mongols",
     "Persians",
     "Saracens",
+    "Spanish",
     "Teutons",
     "Turks",
     "Vikings",

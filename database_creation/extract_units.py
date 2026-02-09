@@ -109,6 +109,9 @@ UNIT_NAMES = {
     280: "Mangonel",
     550: "Onager",
     588: "Siege Onager",
+    # Rocket Cart (replaces Mangonel for Chinese/Koreans): 1904 → 1907(Heavy)
+    1904: "Rocket Cart",
+    1907: "Heavy Rocket Cart",
     # Scorpion line: 279 → 542(Heavy)
     279: "Scorpion",
     542: "Heavy Scorpion",

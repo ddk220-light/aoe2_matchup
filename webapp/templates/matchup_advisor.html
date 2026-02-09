@@ -652,20 +652,23 @@
 
         <script>
             /* ---- Icon system ---- */
-            const ICON_BASE = "https://raw.githubusercontent.com/qwyt/aoe2-icon-resources/master/objects/";
+            const ICON_BASE = "https://aoe2techtree.net/img/Units/";
+            const ICON_BASE_FALLBACK = "https://raw.githubusercontent.com/qwyt/aoe2-icon-resources/master/objects/";
             const NAME_TO_ICON = {
                 "Spearman":93,"Pikeman":358,"Halberdier":359,
                 "Man-at-Arms":75,"Long Swordsman":77,"Two-Handed Swordsman":473,"Champion":567,
+                "Eagle Scout":751,"Eagle Warrior":753,"Elite Eagle Warrior":752,
                 "Archer":4,"Crossbowman":24,"Arbalester":492,
                 "Skirmisher":7,"Elite Skirmisher":6,
                 "Cavalry Archer":39,"Heavy Cavalry Archer":474,"Hand Cannoneer":5,
-                "Scout Cavalry":448,"Light Cavalry":546,"Hussar":441,
+                "Scout Cavalry":448,"Light Cavalry":546,"Hussar":441,"Winged Hussar":1707,
                 "Knight":38,"Cavalier":283,"Paladin":569,"Savar":569,
                 "Camel Rider":329,"Heavy Camel Rider":330,
                 "Steppe Lancer":1370,"Elite Steppe Lancer":1372,
-                "Battering Ram":35,"Capped Ram":422,"Siege Ram":548,
+                "Battering Ram":1258,"Capped Ram":422,"Siege Ram":548,
                 "Mangonel":280,"Onager":550,"Siege Onager":588,
-                "Scorpion":279,"Heavy Scorpion":542,"Bombard Cannon":36,"Trebuchet":42,
+                "Rocket Cart":1904,"Heavy Rocket Cart":1907,
+                "Scorpion":279,"Heavy Scorpion":542,"Bombard Cannon":36,"Trebuchet":331,
                 "Longbowman":8,"Elite Longbowman":8,
                 "Cataphract":40,"Elite Cataphract":40,
                 "Woad Raider":232,"Elite Woad Raider":232,
@@ -680,9 +683,13 @@
                 "Janissary":46,"Elite Janissary":46,
                 "Berserk":692,"Elite Berserk":692,
                 "Fire Lancer":1901,"Elite Fire Lancer":1903,
+                "Jaguar Warrior":725,"Elite Jaguar Warrior":726,
+                "Plumed Archer":763,"Elite Plumed Archer":765,
+                "Tarkan":755,"Elite Tarkan":757,
+                "War Wagon":827,"Elite War Wagon":829,
+                "Conquistador":771,"Elite Conquistador":773,
             };
-            const JPG_ICONS = new Set([279,422,542,548,529,532,831,13,17,250,1004,1103,1396,1397,1398,1399]);
-            function iconUrl(id) { return ICON_BASE + id + "." + (JPG_ICONS.has(id) ? "jpg" : "png"); }
+            function iconUrl(id) { return ICON_BASE + id + ".png"; }
             function unitIconUrl(name) { const id = NAME_TO_ICON[name]; return id ? iconUrl(id) : ""; }
 
             function unitBadge(name, size) {

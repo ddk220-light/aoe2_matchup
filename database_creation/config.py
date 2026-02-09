@@ -376,7 +376,7 @@ CASTLE_UNITS = {
         "base_id": 448,  # Scout Cavalry (upgrades to Light Cav)
         "display_name": "Light Cavalry",
         "unit_class": 12,
-        "availability_tech": None,  # All civs get scouts
+        "availability_tech": 204,  # Scout (make avail) - Aztecs/Mayans don't have this
         "upgrades": [
             (254, 546, "Light Cavalry"),  # Light Cavalry upgrade
         ],
@@ -464,6 +464,13 @@ CASTLE_UNITS = {
         "unit_class": 13,
         "availability_tech": None,
         "upgrades": [],
+        # Rocket Cart replaces Mangonel for Chinese/Koreans
+        "civ_upgrades": {
+            "Chinese": [(979, 1904, "Rocket Cart")],
+            "Koreans": [(979, 1904, "Rocket Cart")],
+            "Jurchens": [(979, 1904, "Rocket Cart")],
+            "Khitans": [(979, 1904, "Rocket Cart")],
+        },
     },
     "scorpion": {
         "base_id": 279,
@@ -525,7 +532,7 @@ IMPERIAL_UNITS = {
         "base_id": 448,  # Scout Cavalry (upgrades through Light Cav → Hussar)
         "display_name": "Hussar",
         "unit_class": 12,
-        "availability_tech": None,  # All civs get scouts
+        "availability_tech": 204,  # Scout (make avail) - Aztecs/Mayans don't have this
         "upgrades": [
             (254, 546, "Light Cavalry"),
             (428, 441, "Hussar"),
@@ -657,6 +664,25 @@ IMPERIAL_UNITS = {
             (257, 550, "Onager"),
             (320, 588, "Siege Onager"),
         ],
+        # Heavy Rocket Cart replaces Onager/Siege Onager for Chinese/Koreans
+        "civ_upgrades": {
+            "Chinese": [
+                (979, 1904, "Rocket Cart"),
+                (980, 1907, "Heavy Rocket Cart"),
+            ],
+            "Koreans": [
+                (979, 1904, "Rocket Cart"),
+                (980, 1907, "Heavy Rocket Cart"),
+            ],
+            "Jurchens": [
+                (979, 1904, "Rocket Cart"),
+                (980, 1907, "Heavy Rocket Cart"),
+            ],
+            "Khitans": [
+                (979, 1904, "Rocket Cart"),
+                (980, 1907, "Heavy Rocket Cart"),
+            ],
+        },
     },
     "heavy_scorpion": {
         "base_id": 279,

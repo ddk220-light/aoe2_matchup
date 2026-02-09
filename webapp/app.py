@@ -1173,7 +1173,15 @@ UNIT_LINES = {
             "Vikings": ("berserk_vikings", "elite_berserk_vikings"),
             "Japanese": ("samurai_japanese", "elite_samurai_japanese"),
             "Teutons": ("teutonic_knight_teutons", "elite_teutonic_knight_teutons"),
+            "Aztecs": ("jaguar_warrior_aztecs", "elite_jaguar_warrior_aztecs"),
         },
+    },
+    "eagle": {
+        "name": "Eagle Warrior Line",
+        "building": "Barracks",
+        "castle_slug": "eagle_warrior",
+        "imperial_slug": "elite_eagle",
+        "unique_units": {},
     },
     "spear": {
         "name": "Spear Line",
@@ -1197,6 +1205,7 @@ UNIT_LINES = {
         "unique_units": {
             "Britons": ("longbowman_britons", "elite_longbowman_britons"),
             "Chinese": ("chu_ko_nu_chinese", "elite_chu_ko_nu_chinese"),
+            "Mayans": ("plumed_archer_mayans", "elite_plumed_archer_mayans"),
         },
     },
     "skirmisher": {
@@ -1214,6 +1223,7 @@ UNIT_LINES = {
         "unique_units": {
             "Mongols": ("mangudai_mongols", "elite_mangudai_mongols"),
             "Saracens": ("mameluke_saracens", "elite_mameluke_saracens"),
+            "Koreans": ("war_wagon_koreans", "elite_war_wagon_koreans"),
         },
     },
     "hand_cannoneer": {
@@ -1224,6 +1234,7 @@ UNIT_LINES = {
         "unique_units": {
             "Turks": ("janissary_turks", "elite_janissary_turks"),
             "Franks": ("throwing_axeman_franks", "elite_throwing_axeman_franks"),
+            "Spanish": ("conquistador_spanish", "elite_conquistador_spanish"),
         },
     },
     "knight": {
@@ -1233,6 +1244,7 @@ UNIT_LINES = {
         "imperial_slug": "paladin",
         "unique_units": {
             "Byzantines": ("cataphract_byzantines", "elite_cataphract_byzantines"),
+            "Huns": ("tarkan_huns", "elite_tarkan_huns"),
         },
     },
     "light_cav": {

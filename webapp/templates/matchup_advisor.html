@@ -52,7 +52,6 @@
                 margin-top: 20px;
                 flex-wrap: wrap;
             }
-
             .nav-link {
                 color: #888;
                 text-decoration: none;
@@ -60,7 +59,6 @@
                 border-radius: 20px;
                 transition: all 0.3s;
             }
-
             .nav-link:hover {
                 color: #ffd700;
                 background: rgba(255, 215, 0, 0.1);
@@ -70,29 +68,27 @@
                 background: rgba(255, 215, 0, 0.2);
             }
 
+            /* --- Civ Selector --- */
             .civ-selector {
                 text-align: center;
                 margin-bottom: 20px;
             }
-
             .civ-selector h3 {
                 margin-bottom: 12px;
                 font-size: 1.1rem;
             }
-
-            .civ-selector .step-label {
+            .step-label {
                 display: inline-block;
                 padding: 4px 14px;
                 border-radius: 12px;
                 font-size: 0.85rem;
                 margin-bottom: 10px;
             }
-
-            .civ-selector .step-civ1 {
+            .step-civ1 {
                 background: rgba(255, 107, 107, 0.15);
                 color: #ff6b6b;
             }
-            .civ-selector .step-civ2 {
+            .step-civ2 {
                 background: rgba(78, 205, 196, 0.15);
                 color: #4ecdc4;
             }
@@ -104,7 +100,6 @@
                 max-width: 900px;
                 margin: 0 auto;
             }
-
             .civ-card {
                 display: flex;
                 flex-direction: column;
@@ -115,33 +110,27 @@
                 border-radius: 8px;
                 cursor: pointer;
                 transition: all 0.25s ease;
-                text-decoration: none;
                 color: #e4e4e4;
             }
-
             .civ-card:hover {
                 transform: translateY(-2px);
                 border-color: rgba(255, 215, 0, 0.3);
                 box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
             }
-
             .civ-card.selected-civ1 {
                 border-color: #ff6b6b;
                 background: rgba(255, 107, 107, 0.15);
                 box-shadow: 0 0 12px rgba(255, 107, 107, 0.3);
             }
-
             .civ-card.selected-civ2 {
                 border-color: #4ecdc4;
                 background: rgba(78, 205, 196, 0.15);
                 box-shadow: 0 0 12px rgba(78, 205, 196, 0.3);
             }
-
             .civ-card.disabled {
                 opacity: 0.35;
                 pointer-events: none;
             }
-
             .civ-emblem {
                 width: 44px;
                 height: 44px;
@@ -151,7 +140,6 @@
                 background: rgba(0, 0, 0, 0.3);
                 margin-bottom: 5px;
             }
-
             .civ-card-name {
                 font-size: 0.75rem;
                 text-align: center;
@@ -167,7 +155,6 @@
                 font-size: 1.1rem;
                 min-height: 40px;
             }
-
             .selected-display .civ1-pick {
                 color: #ff6b6b;
                 font-weight: 600;
@@ -178,22 +165,6 @@
             }
             .selected-display .vs-text {
                 color: #666;
-            }
-
-            select {
-                width: 100%;
-                padding: 12px;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 8px;
-                background: rgba(0, 0, 0, 0.3);
-                color: #e4e4e4;
-                font-size: 1rem;
-                cursor: pointer;
-            }
-
-            select:focus {
-                outline: none;
-                border-color: #ffd700;
             }
 
             .compare-btn {
@@ -211,7 +182,6 @@
                     transform 0.2s,
                     box-shadow 0.2s;
             }
-
             .compare-btn:hover {
                 transform: translateY(-2px);
                 box-shadow: 0 5px 20px rgba(255, 215, 0, 0.3);
@@ -236,6 +206,7 @@
                 }
             }
 
+            /* --- Results --- */
             .results-container {
                 display: none;
             }
@@ -250,40 +221,15 @@
                 background: rgba(255, 255, 255, 0.05);
                 border-radius: 12px;
             }
-
             .matchup-header h2 {
                 font-size: 1.8rem;
                 margin-bottom: 10px;
             }
-            .matchup-header .civ1-name {
+            .civ1-color {
                 color: #ff6b6b;
             }
-            .matchup-header .civ2-name {
+            .civ2-color {
                 color: #4ecdc4;
-            }
-
-            .loading {
-                text-align: center;
-                padding: 60px;
-                color: #888;
-                font-size: 1.2rem;
-            }
-
-            .loading .spinner {
-                display: inline-block;
-                width: 40px;
-                height: 40px;
-                border: 3px solid rgba(255, 215, 0, 0.2);
-                border-top-color: #ffd700;
-                border-radius: 50%;
-                animation: spin 0.8s linear infinite;
-                margin-bottom: 15px;
-            }
-
-            @keyframes spin {
-                to {
-                    transform: rotate(360deg);
-                }
             }
 
             .age-tab-bar {
@@ -292,7 +238,6 @@
                 gap: 10px;
                 margin-bottom: 25px;
             }
-
             .age-tab {
                 padding: 10px 24px;
                 border-radius: 20px;
@@ -303,18 +248,15 @@
                 transition: all 0.3s;
                 font-size: 1rem;
             }
-
             .age-tab:hover {
                 color: #ffd700;
                 background: rgba(255, 215, 0, 0.1);
             }
-
             .age-tab.active {
                 color: #ffd700;
                 background: rgba(255, 215, 0, 0.15);
                 border-color: rgba(255, 215, 0, 0.3);
             }
-
             .age-content {
                 display: none;
             }
@@ -322,236 +264,272 @@
                 display: block;
             }
 
-            .phase-card {
-                background: rgba(255, 255, 255, 0.05);
-                border-radius: 12px;
-                padding: 20px;
-                margin-bottom: 20px;
-            }
-
-            .phase-card h3 {
-                color: #ffd700;
-                margin-bottom: 15px;
-                font-size: 1.2rem;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-
-            .phase-num {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                width: 28px;
-                height: 28px;
-                border-radius: 50%;
-                background: rgba(255, 215, 0, 0.2);
-                color: #ffd700;
-                font-size: 0.85rem;
-                font-weight: bold;
-                flex-shrink: 0;
-            }
-
-            .callout {
-                padding: 12px 16px;
-                border-radius: 8px;
-                margin-top: 12px;
-                font-weight: 500;
-            }
-
-            .callout.civ1 {
-                background: rgba(255, 107, 107, 0.15);
-                border-left: 3px solid #ff6b6b;
-                color: #ff9999;
-            }
-
-            .callout.civ2 {
-                background: rgba(78, 205, 196, 0.15);
-                border-left: 3px solid #4ecdc4;
-                color: #8ee8e2;
-            }
-
-            .callout.neutral {
-                background: rgba(255, 215, 0, 0.1);
-                border-left: 3px solid #ffd700;
-                color: #ffe066;
-            }
-
-            /* Mobile grid */
-            .mobile-grid {
+            /* --- 3-Column Analysis --- */
+            .analysis-columns {
                 display: grid;
-                gap: 3px;
-                margin-top: 12px;
-                overflow-x: auto;
-            }
-
-            .grid-cell {
-                padding: 6px 8px;
-                text-align: center;
-                font-size: 0.8rem;
-                border-radius: 4px;
-                white-space: nowrap;
-            }
-
-            .grid-cell.header {
-                background: rgba(255, 255, 255, 0.08);
-                color: #aaa;
-                font-weight: 600;
-            }
-            .grid-cell.win {
-                background: rgba(76, 175, 80, 0.3);
-                color: #81c784;
-            }
-            .grid-cell.loss {
-                background: rgba(244, 67, 54, 0.3);
-                color: #ef9a9a;
-            }
-            .grid-cell.draw {
-                background: rgba(158, 158, 158, 0.2);
-                color: #bdbdbd;
-            }
-
-            /* Combo selection */
-            .combo-section {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 1fr 1fr 1fr;
                 gap: 20px;
-                margin-top: 15px;
+                margin-bottom: 24px;
             }
-
             @media (max-width: 768px) {
-                .combo-section {
+                .analysis-columns {
                     grid-template-columns: 1fr;
                 }
             }
 
-            .combo-box {
-                background: rgba(0, 0, 0, 0.2);
-                border-radius: 8px;
-                padding: 15px;
+            .analysis-col {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 12px;
+                padding: 20px;
+                text-align: center;
+                min-height: 180px;
+            }
+            .analysis-col .col-header {
+                font-size: 0.8rem;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                color: #ffd700;
+                margin-bottom: 14px;
+                font-weight: 600;
+            }
+            .analysis-col .col-civ {
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin-bottom: 10px;
+            }
+            .analysis-col .col-detail {
+                font-size: 0.85rem;
+                color: #999;
+                margin-top: 8px;
+                line-height: 1.4;
+            }
+            .analysis-col .no-unit {
+                color: #666;
+                font-style: italic;
+                margin-top: 20px;
             }
 
-            .combo-box.civ1-box {
+            /* --- Unit badge --- */
+            .unit-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                margin: 6px 0;
+            }
+            .unit-icon {
+                width: 48px;
+                height: 48px;
+                border-radius: 6px;
+                border: 2px solid rgba(255, 215, 0, 0.3);
+                background: rgba(0, 0, 0, 0.3);
+                object-fit: cover;
+            }
+            .unit-icon.sm {
+                width: 28px;
+                height: 28px;
+                border-radius: 4px;
+                border-width: 1px;
+            }
+            .unit-name {
+                font-weight: 500;
+                font-size: 1rem;
+            }
+            .unit-name.sm {
+                font-size: 0.85rem;
+            }
+
+            /* --- Combo Section --- */
+            .combo-section-header {
+                font-size: 1.2rem;
+                color: #ffd700;
+                margin-bottom: 16px;
+                text-align: center;
+                font-weight: 600;
+            }
+            .combo-cards {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+                margin-bottom: 16px;
+            }
+            @media (max-width: 768px) {
+                .combo-cards {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            .combo-card {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                padding: 16px;
+                border-radius: 10px;
+                background: rgba(0, 0, 0, 0.2);
+            }
+            .combo-card.civ1-card {
                 border-left: 4px solid #ff6b6b;
             }
-            .combo-box.civ2-box {
+            .combo-card.civ2-card {
                 border-left: 4px solid #4ecdc4;
             }
-
-            .combo-box h4 {
-                margin-bottom: 12px;
-                font-size: 1.05rem;
+            .combo-card .combo-civ-name {
+                font-size: 0.85rem;
+                font-weight: 600;
+                margin-bottom: 6px;
             }
-            .combo-box.civ1-box h4 {
-                color: #ff6b6b;
-            }
-            .combo-box.civ2-box h4 {
-                color: #4ecdc4;
-            }
-
-            .combo-option {
+            .combo-card .combo-units-row {
                 display: flex;
                 align-items: center;
                 gap: 10px;
-                padding: 8px 10px;
-                border-radius: 6px;
-                margin-bottom: 6px;
-                cursor: pointer;
-                transition: background 0.2s;
-            }
-
-            .combo-option:hover {
-                background: rgba(255, 255, 255, 0.05);
-            }
-
-            .combo-option input[type="radio"] {
-                accent-color: #ffd700;
-                width: 16px;
-                height: 16px;
-                flex-shrink: 0;
-            }
-
-            .combo-option .combo-label {
-                flex: 1;
-            }
-
-            .combo-option .combo-units {
-                font-weight: 500;
-            }
-
-            .combo-option .combo-reasoning {
-                font-size: 0.8rem;
-                color: #888;
-                margin-top: 2px;
-            }
-
-            .combo-option .combo-score {
-                font-size: 0.85rem;
-                color: #ffd700;
-                font-weight: 600;
-                white-space: nowrap;
-            }
-
-            .combo-option.recommended {
-                background: rgba(255, 215, 0, 0.08);
-                border: 1px solid rgba(255, 215, 0, 0.2);
-            }
-
-            .custom-combo {
-                display: flex;
                 flex-wrap: wrap;
-                gap: 8px;
-                align-items: center;
-                padding: 8px 10px;
-                margin-bottom: 10px;
             }
-
-            .custom-combo select {
-                width: auto;
-                min-width: 140px;
-                padding: 8px;
-                font-size: 0.85rem;
-            }
-
-            .custom-combo .plus {
-                color: #888;
+            .combo-card .combo-plus {
+                color: #666;
+                font-size: 1.2rem;
                 font-weight: bold;
             }
+            .combo-card .combo-reasoning {
+                font-size: 0.8rem;
+                color: #888;
+                margin-top: 6px;
+            }
 
-            .submit-btn {
-                display: block;
-                width: 100%;
-                padding: 10px;
-                background: rgba(255, 215, 0, 0.2);
-                border: 1px solid rgba(255, 215, 0, 0.3);
-                border-radius: 8px;
-                color: #ffd700;
-                font-size: 0.95rem;
-                cursor: pointer;
-                transition: all 0.2s;
+            .alt-combos-section {
                 margin-top: 8px;
             }
-
-            .submit-btn:hover {
-                background: rgba(255, 215, 0, 0.3);
+            .alt-combos-header {
+                font-size: 0.9rem;
+                color: #888;
+                margin-bottom: 8px;
+                text-align: center;
+            }
+            .alt-combos-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            @media (max-width: 768px) {
+                .alt-combos-grid {
+                    grid-template-columns: 1fr;
+                }
             }
 
-            .submit-btn:disabled {
-                opacity: 0.5;
-                cursor: not-allowed;
+            .alt-combo-row {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 10px;
+                border-radius: 6px;
+                background: rgba(255, 255, 255, 0.03);
+                font-size: 0.85rem;
+            }
+            .alt-combo-row.civ1-alt {
+                border-left: 2px solid rgba(255, 107, 107, 0.4);
+            }
+            .alt-combo-row.civ2-alt {
+                border-left: 2px solid rgba(78, 205, 196, 0.4);
+            }
+            .alt-combo-row .alt-label {
+                color: #666;
+                font-size: 0.75rem;
+                margin-right: 4px;
             }
 
-            .submit-btn.submitted {
-                background: rgba(76, 175, 80, 0.2);
-                border-color: rgba(76, 175, 80, 0.3);
-                color: #81c784;
+            /* --- Army Section --- */
+            .army-section {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 12px;
+                padding: 20px;
+                margin-top: 24px;
+            }
+            .army-section-header {
+                font-size: 1.2rem;
+                color: #ffd700;
+                margin-bottom: 16px;
+                font-weight: 600;
+            }
+            .army-explanation {
+                background: rgba(255, 215, 0, 0.06);
+                border: 1px solid rgba(255, 215, 0, 0.15);
+                border-radius: 8px;
+                padding: 14px;
+                font-size: 0.85rem;
+                color: #bbb;
+                margin-bottom: 20px;
+                line-height: 1.5;
+            }
+            .army-best-results {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+                margin-bottom: 20px;
+            }
+            @media (max-width: 768px) {
+                .army-best-results {
+                    grid-template-columns: 1fr;
+                }
             }
 
-            /* Phase 4 army results */
-            .army-results {
-                margin-top: 15px;
+            .army-best-card {
+                padding: 16px;
+                border-radius: 10px;
+                background: rgba(0, 0, 0, 0.2);
+            }
+            .army-best-card.civ1-card {
+                border-left: 4px solid #ff6b6b;
+            }
+            .army-best-card.civ2-card {
+                border-left: 4px solid #4ecdc4;
+            }
+            .army-best-card .best-civ-name {
+                font-weight: 600;
+                margin-bottom: 8px;
+            }
+            .army-best-card .best-combo-detail {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                flex-wrap: wrap;
+                margin-bottom: 6px;
+            }
+            .army-best-card .best-record {
+                font-size: 0.85rem;
+                color: #aaa;
+                margin-bottom: 4px;
+            }
+            .army-best-card .best-split {
+                font-size: 0.8rem;
+                color: #888;
+            }
+            .army-best-card .best-countered {
+                font-size: 0.8rem;
+                color: #e88;
+                margin-top: 8px;
+                padding-top: 8px;
+                border-top: 1px solid rgba(255, 255, 255, 0.06);
             }
 
+            .army-grid-toggle {
+                display: block;
+                width: 100%;
+                padding: 8px;
+                text-align: center;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 6px;
+                color: #888;
+                cursor: pointer;
+                font-size: 0.85rem;
+                transition: all 0.2s;
+            }
+            .army-grid-toggle:hover {
+                color: #ffd700;
+                border-color: rgba(255, 215, 0, 0.3);
+            }
+
+            .army-full-grid {
+                margin-top: 12px;
+            }
             .army-result-row {
                 display: flex;
                 justify-content: space-between;
@@ -560,26 +538,17 @@
                 border-radius: 6px;
                 margin-bottom: 4px;
                 background: rgba(0, 0, 0, 0.15);
+                font-size: 0.85rem;
             }
-
             .army-result-row .combo-desc {
-                font-size: 0.9rem;
                 flex: 1;
             }
-            .army-result-row .combo-desc .c1 {
-                color: #ff9999;
-            }
-            .army-result-row .combo-desc .c2 {
-                color: #8ee8e2;
-            }
-
             .army-winner {
-                font-size: 0.85rem;
+                font-size: 0.8rem;
                 font-weight: 600;
                 padding: 3px 10px;
                 border-radius: 12px;
             }
-
             .army-winner.civ1-win {
                 background: rgba(255, 107, 107, 0.2);
                 color: #ff9999;
@@ -591,6 +560,52 @@
             .army-winner.draw-result {
                 background: rgba(158, 158, 158, 0.2);
                 color: #bdbdbd;
+            }
+
+            /* --- Skeleton / Loading --- */
+            .skeleton-block {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 8px;
+                height: 20px;
+                margin: 8px 0;
+                animation: pulse 1.5s ease-in-out infinite;
+            }
+            .skeleton-block.tall {
+                height: 120px;
+            }
+            .skeleton-block.med {
+                height: 60px;
+            }
+            @keyframes pulse {
+                0%,
+                100% {
+                    opacity: 0.3;
+                }
+                50% {
+                    opacity: 0.7;
+                }
+            }
+
+            .loading-spinner {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 30px;
+                color: #888;
+            }
+            .loading-spinner .spinner {
+                width: 32px;
+                height: 32px;
+                border: 3px solid rgba(255, 215, 0, 0.2);
+                border-top-color: #ffd700;
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+                margin-bottom: 10px;
+            }
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
             }
 
             .no-data {
@@ -622,9 +637,9 @@
                 </div>
                 <div class="civ-grid" id="civ-grid"></div>
                 <div class="selected-display" id="selected-display">
-                    <span class="civ1-pick" id="pick-civ1">—</span>
+                    <span class="civ1-pick" id="pick-civ1">&mdash;</span>
                     <span class="vs-text">vs</span>
-                    <span class="civ2-pick" id="pick-civ2">—</span>
+                    <span class="civ2-pick" id="pick-civ2">&mdash;</span>
                 </div>
             </div>
 
@@ -632,94 +647,102 @@
                 Analyze Matchup
             </button>
 
-            <div id="loading" class="loading" style="display: none">
-                <div class="spinner"></div>
-                <div>
-                    Analyzing matchup... Running simulations across 4 phases
-                </div>
-            </div>
-
-            <div id="results" class="results-container">
-                <div class="matchup-header">
-                    <h2>
-                        <span class="civ1-name" id="result-civ1"></span>
-                        <span style="color: #888"> vs </span>
-                        <span class="civ2-name" id="result-civ2"></span>
-                    </h2>
-                </div>
-
-                <div class="age-tab-bar" id="age-tabs"></div>
-                <div id="age-contents"></div>
-            </div>
+            <div id="results" class="results-container"></div>
         </div>
 
         <script>
+            /* ---- Icon system ---- */
+            const ICON_BASE = "https://raw.githubusercontent.com/qwyt/aoe2-icon-resources/master/objects/";
+            const NAME_TO_ICON = {
+                "Spearman":93,"Pikeman":358,"Halberdier":359,
+                "Man-at-Arms":75,"Long Swordsman":77,"Two-Handed Swordsman":473,"Champion":567,
+                "Archer":4,"Crossbowman":24,"Arbalester":492,
+                "Skirmisher":7,"Elite Skirmisher":6,
+                "Cavalry Archer":39,"Heavy Cavalry Archer":474,"Hand Cannoneer":5,
+                "Scout Cavalry":448,"Light Cavalry":546,"Hussar":441,
+                "Knight":38,"Cavalier":283,"Paladin":569,"Savar":569,
+                "Camel Rider":329,"Heavy Camel Rider":330,
+                "Steppe Lancer":1370,"Elite Steppe Lancer":1372,
+                "Battering Ram":35,"Capped Ram":422,"Siege Ram":548,
+                "Mangonel":280,"Onager":550,"Siege Onager":588,
+                "Scorpion":279,"Heavy Scorpion":542,"Bombard Cannon":36,"Trebuchet":42,
+                "Longbowman":8,"Elite Longbowman":8,
+                "Cataphract":40,"Elite Cataphract":40,
+                "Woad Raider":232,"Elite Woad Raider":232,
+                "Chu Ko Nu":73,"Elite Chu Ko Nu":73,
+                "Throwing Axeman":281,"Elite Throwing Axeman":281,
+                "Huskarl":41,"Elite Huskarl":41,
+                "Samurai":291,"Elite Samurai":291,
+                "Mangudai":11,"Elite Mangudai":11,
+                "War Elephant":239,"Elite War Elephant":239,
+                "Mameluke":282,"Elite Mameluke":282,
+                "Teutonic Knight":25,"Elite Teutonic Knight":25,
+                "Janissary":46,"Elite Janissary":46,
+                "Berserk":692,"Elite Berserk":692,
+                "Fire Lancer":1901,"Elite Fire Lancer":1903,
+            };
+            const JPG_ICONS = new Set([279,422,542,548,529,532,831,13,17,250,1004,1103,1396,1397,1398,1399]);
+            function iconUrl(id) { return ICON_BASE + id + "." + (JPG_ICONS.has(id) ? "jpg" : "png"); }
+            function unitIconUrl(name) { const id = NAME_TO_ICON[name]; return id ? iconUrl(id) : ""; }
+
+            function unitBadge(name, size) {
+                size = size || "normal";
+                const url = unitIconUrl(name);
+                const cls = size === "sm" ? "sm" : "";
+                const px = size === "sm" ? 28 : 48;
+                const img = url
+                    ? `<img src="${url}" class="unit-icon ${cls}" width="${px}" height="${px}" alt="${name}" onerror="this.style.display='none'">`
+                    : '';
+                return `<span class="unit-badge">${img}<span class="unit-name ${cls}">${name}</span></span>`;
+            }
+
+            /* ---- Civ selector ---- */
             const CDN = "https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/";
             const CIVS = {{ civs | tojson }};
-
             const analyzeBtn = document.getElementById("analyze-btn");
-            const loadingEl = document.getElementById("loading");
-            const resultsEl = document.getElementById("results");
             const stepLabel = document.getElementById("step-label");
             const pickCiv1 = document.getElementById("pick-civ1");
             const pickCiv2 = document.getElementById("pick-civ2");
             const civGrid = document.getElementById("civ-grid");
+            const resultsEl = document.getElementById("results");
 
-            let selectedCiv1 = null;
-            let selectedCiv2 = null;
-            let currentData = null;
+            let selectedCiv1 = null, selectedCiv2 = null;
 
-            // Build civ grid
             CIVS.forEach(name => {
                 const slug = name.toLowerCase();
                 const card = document.createElement("div");
                 card.className = "civ-card";
                 card.dataset.civ = name;
-
                 const img = document.createElement("img");
-                img.className = "civ-emblem";
-                img.src = CDN + slug + ".png";
-                img.alt = name;
-                img.loading = "lazy";
-
+                img.className = "civ-emblem"; img.src = CDN + slug + ".png"; img.alt = name; img.loading = "lazy";
                 const label = document.createElement("span");
-                label.className = "civ-card-name";
-                label.textContent = name;
-
-                card.appendChild(img);
-                card.appendChild(label);
+                label.className = "civ-card-name"; label.textContent = name;
+                card.appendChild(img); card.appendChild(label);
                 card.addEventListener("click", () => onCivClick(name));
                 civGrid.appendChild(card);
             });
 
             function onCivClick(name) {
                 if (!selectedCiv1) {
-                    selectedCiv1 = name;
-                    pickCiv1.textContent = name;
+                    selectedCiv1 = name; pickCiv1.textContent = name;
                     stepLabel.textContent = "Click a civilization to select Civ 2";
                     stepLabel.className = "step-label step-civ2";
                 } else if (!selectedCiv2) {
-                    if (name === selectedCiv1) return; // can't pick same
-                    selectedCiv2 = name;
-                    pickCiv2.textContent = name;
+                    if (name === selectedCiv1) return;
+                    selectedCiv2 = name; pickCiv2.textContent = name;
                     stepLabel.textContent = "Click a selected civ to deselect";
                     stepLabel.className = "step-label step-civ1";
                 } else {
-                    // Both selected — clicking a selected civ deselects it
                     if (name === selectedCiv1) {
-                        selectedCiv1 = selectedCiv2;
-                        selectedCiv2 = null;
-                        pickCiv1.textContent = selectedCiv1;
-                        pickCiv2.textContent = "—";
+                        selectedCiv1 = selectedCiv2; selectedCiv2 = null;
+                        pickCiv1.textContent = selectedCiv1; pickCiv2.textContent = "\u2014";
                         stepLabel.textContent = "Click a civilization to select Civ 2";
                         stepLabel.className = "step-label step-civ2";
                     } else if (name === selectedCiv2) {
-                        selectedCiv2 = null;
-                        pickCiv2.textContent = "—";
+                        selectedCiv2 = null; pickCiv2.textContent = "\u2014";
                         stepLabel.textContent = "Click a civilization to select Civ 2";
                         stepLabel.className = "step-label step-civ2";
                     }
-                    // clicking an unselected civ when both are selected does nothing
                 }
                 updateGrid();
             }
@@ -728,488 +751,350 @@
                 civGrid.querySelectorAll(".civ-card").forEach(card => {
                     const name = card.dataset.civ;
                     card.classList.remove("selected-civ1", "selected-civ2", "disabled");
-                    if (name === selectedCiv1) {
-                        card.classList.add("selected-civ1");
-                    } else if (name === selectedCiv2) {
-                        card.classList.add("selected-civ2");
-                    } else if (selectedCiv1 && selectedCiv2) {
-                        card.classList.add("disabled");
-                    }
+                    if (name === selectedCiv1) card.classList.add("selected-civ1");
+                    else if (name === selectedCiv2) card.classList.add("selected-civ2");
+                    else if (selectedCiv1 && selectedCiv2) card.classList.add("disabled");
                 });
                 analyzeBtn.disabled = !selectedCiv1 || !selectedCiv2;
             }
 
+            /* ---- Analysis flow ---- */
             analyzeBtn.addEventListener("click", async () => {
                 const c1 = selectedCiv1, c2 = selectedCiv2;
                 if (!c1 || !c2 || c1 === c2) return;
-
                 analyzeBtn.disabled = true;
-                loadingEl.style.display = "block";
-                resultsEl.classList.remove("visible");
+
+                // Show skeleton immediately
+                showSkeleton(c1, c2);
 
                 try {
-                    const resp = await fetch(
-                        `/api/matchup-advisor/${encodeURIComponent(c1)}/${encodeURIComponent(c2)}`,
-                    );
-                    if (!resp.ok) throw new Error(await resp.text());
-                    currentData = await resp.json();
-                    renderResults(currentData);
+                    // Fast call: phases 1-3
+                    const analysis = await fetch(
+                        `/api/matchup-advisor/analysis/${encodeURIComponent(c1)}/${encodeURIComponent(c2)}`
+                    ).then(r => { if (!r.ok) throw new Error("Analysis failed"); return r.json(); });
+
+                    renderAnalysis(analysis);
+
+                    // Slow call: phase 4 army (don't block)
+                    fetch(`/api/matchup-advisor/army/${encodeURIComponent(c1)}/${encodeURIComponent(c2)}`)
+                        .then(r => r.json())
+                        .then(army => renderArmy(army, analysis))
+                        .catch(e => {
+                            document.querySelectorAll(".army-loading").forEach(el => {
+                                el.innerHTML = `<div class="no-data">Army simulation failed: ${e.message}</div>`;
+                            });
+                        });
                 } catch (e) {
-                    alert("Error: " + e.message);
+                    resultsEl.innerHTML = `<div class="no-data">Error: ${e.message}</div>`;
                 } finally {
-                    loadingEl.style.display = "none";
                     analyzeBtn.disabled = false;
                 }
             });
 
-            function slugToName(slug) {
-                return slug
-                    .replace(/_/g, " ")
-                    .replace(/\b\w/g, (c) => c.toUpperCase());
+            /* ---- Skeleton ---- */
+            function showSkeleton(c1, c2) {
+                resultsEl.className = "results-container visible";
+                resultsEl.innerHTML = `
+                    <div class="matchup-header">
+                        <h2><span class="civ1-color">${c1}</span> <span style="color:#888">vs</span> <span class="civ2-color">${c2}</span></h2>
+                    </div>
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <div>Running strategic analysis...</div>
+                    </div>`;
             }
 
-            function renderResults(data) {
-                document.getElementById("result-civ1").textContent = data.civ1;
-                document.getElementById("result-civ2").textContent = data.civ2;
-
-                const tabBar = document.getElementById("age-tabs");
-                const contents = document.getElementById("age-contents");
-                tabBar.innerHTML = "";
-                contents.innerHTML = "";
-
+            /* ---- Render phases 1-3 ---- */
+            function renderAnalysis(data) {
                 const ages = Object.keys(data.ages);
+                let tabsHtml = '';
+                let contentsHtml = '';
+
                 ages.forEach((ageKey, idx) => {
                     const age = data.ages[ageKey];
-
-                    const tab = document.createElement("div");
-                    tab.className = "age-tab" + (idx === 0 ? " active" : "");
-                    tab.textContent = age.age_name;
-                    tab.onclick = () => {
-                        document
-                            .querySelectorAll(".age-tab")
-                            .forEach((t) => t.classList.remove("active"));
-                        document
-                            .querySelectorAll(".age-content")
-                            .forEach((c) => c.classList.remove("active"));
-                        tab.classList.add("active");
-                        document
-                            .getElementById("age-" + ageKey)
-                            .classList.add("active");
-                    };
-                    tabBar.appendChild(tab);
-
-                    const content = document.createElement("div");
-                    content.id = "age-" + ageKey;
-                    content.className =
-                        "age-content" + (idx === 0 ? " active" : "");
+                    const active = idx === 0 ? " active" : "";
+                    tabsHtml += `<div class="age-tab${active}" onclick="switchAge('${ageKey}')">${age.age_name}</div>`;
+                    contentsHtml += `<div id="age-${ageKey}" class="age-content${active}">`;
 
                     if (age.error) {
-                        content.innerHTML = `<div class="no-data">${age.error}</div>`;
+                        contentsHtml += `<div class="no-data">${age.error}</div>`;
                     } else {
-                        content.innerHTML = renderAge(data, ageKey, age);
+                        contentsHtml += renderAgeAnalysis(data, ageKey, age);
                     }
-                    contents.appendChild(content);
+                    contentsHtml += `</div>`;
                 });
 
-                resultsEl.classList.add("visible");
+                resultsEl.innerHTML = `
+                    <div class="matchup-header">
+                        <h2><span class="civ1-color">${data.civ1}</span> <span style="color:#888">vs</span> <span class="civ2-color">${data.civ2}</span></h2>
+                    </div>
+                    <div class="age-tab-bar">${tabsHtml}</div>
+                    ${contentsHtml}`;
             }
 
-            function renderAge(data, ageKey, age) {
-                let html = "";
+            function switchAge(ageKey) {
+                document.querySelectorAll(".age-tab").forEach((t, i) => {
+                    t.classList.toggle("active", t.textContent.toLowerCase().includes(ageKey));
+                });
+                document.querySelectorAll(".age-content").forEach(c => {
+                    c.classList.toggle("active", c.id === "age-" + ageKey);
+                });
+            }
 
-                // Phase 1: Mobile Dominance
+            function renderAgeAnalysis(data, ageKey, age) {
+                let html = '';
+
+                // --- 3-column analysis ---
                 const p1 = age.phase1_mobile;
-                html += `<div class="phase-card">
-                    <h3><span class="phase-num">1</span> Mobile Dominance</h3>`;
+                const p2 = age.phase2_ranged;
+                const bm = age.best_mobile;
+                const bMelee = age.best_melee;
 
-                if (!p1.civ1_units.length && !p1.civ2_units.length) {
-                    html += `<div class="no-data">Neither civilization has mobile units (speed > 1.4)</div>`;
+                const domCiv = p1.dominant_civ;
+                const weakerCiv = domCiv === "civ1" ? "civ2" : "civ1";
+                const domName = domCiv === "civ1" ? data.civ1 : data.civ2;
+                const weakerName = weakerCiv === "civ1" ? data.civ1 : data.civ2;
+                const domColor = domCiv === "civ1" ? "civ1-color" : "civ2-color";
+                const weakerColor = weakerCiv === "civ1" ? "civ1-color" : "civ2-color";
+
+                html += `<div class="analysis-columns">`;
+
+                // Column 1: Mobile Dominance
+                html += `<div class="analysis-col">`;
+                html += `<div class="col-header">Mobile Control</div>`;
+                if (domCiv && p1.dominant_unit) {
+                    html += `<div class="col-civ ${domColor}">${domName}</div>`;
+                    html += unitBadge(p1.dominant_unit.name);
+                    const hasBothMobile = p1.civ1_units.length > 0 && p1.civ2_units.length > 0;
+                    if (!hasBothMobile) {
+                        html += `<div class="col-detail">${weakerName} has no mobile units (speed &gt; 1.4)</div>`;
+                    } else {
+                        html += `<div class="col-detail">Wins/draws all mobile matchups</div>`;
+                    }
                 } else {
-                    if (p1.dominant_civ && p1.dominant_unit) {
-                        const civName =
-                            p1.dominant_civ === "civ1" ? data.civ1 : data.civ2;
-                        const civClass = p1.dominant_civ;
-                        html += `<div class="callout ${civClass}">
-                            <strong>${civName}</strong> dominates mobile with <strong>${p1.dominant_unit.name}</strong>
+                    html += `<div class="no-unit">Neither civ has clear mobile advantage</div>`;
+                }
+                html += `</div>`;
+
+                // Column 2: Best Ranged
+                html += `<div class="analysis-col">`;
+                html += `<div class="col-header">Ranged Power</div>`;
+                if (p2.advantage_unit) {
+                    html += `<div class="col-civ ${weakerColor}">${weakerName}</div>`;
+                    html += unitBadge(p2.advantage_unit.name);
+                    if (p2.has_clear_advantage) {
+                        html += `<div class="col-detail">Clear ranged advantage &mdash; beats all opponent ranged</div>`;
+                    } else {
+                        html += `<div class="col-detail">Best ranged option (no clear advantage)</div>`;
+                    }
+                } else {
+                    html += `<div class="no-unit">No ranged gold units available</div>`;
+                }
+                html += `</div>`;
+
+                // Column 3: Best Melee
+                html += `<div class="analysis-col">`;
+                html += `<div class="col-header">Melee Anchor</div>`;
+                // Show the weaker civ's best melee (for combo building), or if both useful show both
+                const weakerMelee = bMelee[weakerCiv];
+                const domMelee = bMelee[domCiv];
+                if (weakerMelee) {
+                    html += `<div class="col-civ ${weakerColor}">${weakerName}</div>`;
+                    html += unitBadge(weakerMelee.name);
+                    html += `<div class="col-detail">Highest score against all ${domName} units</div>`;
+                } else if (domMelee) {
+                    html += `<div class="col-civ ${domColor}">${domName}</div>`;
+                    html += unitBadge(domMelee.name);
+                    html += `<div class="col-detail">Best melee option for army combo</div>`;
+                } else {
+                    html += `<div class="no-unit">No melee units available</div>`;
+                }
+                html += `</div>`;
+
+                html += `</div>`; // end analysis-columns
+
+                // --- Recommended Combos ---
+                const p3 = age.phase3_combos;
+                const c1rec = p3.civ1.length > 0 ? p3.civ1[0] : null;
+                const c2rec = p3.civ2.length > 0 ? p3.civ2[0] : null;
+
+                html += `<div class="combo-section-header">Recommended Army Combos</div>`;
+                html += `<div class="combo-cards">`;
+
+                if (c1rec) {
+                    html += `<div class="combo-card civ1-card">
+                        <div>
+                            <div class="combo-civ-name civ1-color">${data.civ1}</div>
+                            <div class="combo-units-row">
+                                ${unitBadge(c1rec.primary.name, "sm")}
+                                <span class="combo-plus">+</span>
+                                ${unitBadge(c1rec.secondary.name, "sm")}
+                            </div>
+                            <div class="combo-reasoning">${c1rec.reasoning}</div>
+                        </div>
+                    </div>`;
+                }
+                if (c2rec) {
+                    html += `<div class="combo-card civ2-card">
+                        <div>
+                            <div class="combo-civ-name civ2-color">${data.civ2}</div>
+                            <div class="combo-units-row">
+                                ${unitBadge(c2rec.primary.name, "sm")}
+                                <span class="combo-plus">+</span>
+                                ${unitBadge(c2rec.secondary.name, "sm")}
+                            </div>
+                            <div class="combo-reasoning">${c2rec.reasoning}</div>
+                        </div>
+                    </div>`;
+                }
+                html += `</div>`; // end combo-cards
+
+                // Alternate combos
+                const c1alts = p3.civ1.slice(1);
+                const c2alts = p3.civ2.slice(1);
+                if (c1alts.length || c2alts.length) {
+                    html += `<div class="alt-combos-section">`;
+                    html += `<div class="alt-combos-header">Alternate Combos</div>`;
+                    html += `<div class="alt-combos-grid">`;
+
+                    // Civ1 alts
+                    html += `<div>`;
+                    for (const c of c1alts) {
+                        html += `<div class="alt-combo-row civ1-alt">
+                            <span class="alt-label civ1-color">${data.civ1}:</span>
+                            ${unitBadge(c.primary.name, "sm")}
+                            <span class="combo-plus" style="font-size:0.85rem">+</span>
+                            ${unitBadge(c.secondary.name, "sm")}
                         </div>`;
                     }
+                    html += `</div>`;
 
-                    if (p1.civ1_units.length && p1.civ2_units.length) {
-                        // Unit lists
-                        html += `<div style="display:flex;gap:20px;margin-top:12px;flex-wrap:wrap">`;
-                        html += `<div><strong style="color:#ff6b6b">${data.civ1} Mobile</strong><ul style="list-style:none;margin-top:6px">`;
-                        for (const u of p1.civ1_units) {
-                            html += `<li style="padding:2px 0;font-size:0.9rem">${u.name} <span style="color:#888">(${u.speed.toFixed(2)})</span> <span style="color:#ffd700">${u.total_score}pts</span></li>`;
-                        }
-                        html += `</ul></div>`;
-                        html += `<div><strong style="color:#4ecdc4">${data.civ2} Mobile</strong><ul style="list-style:none;margin-top:6px">`;
-                        for (const u of p1.civ2_units) {
-                            html += `<li style="padding:2px 0;font-size:0.9rem">${u.name} <span style="color:#888">(${u.speed.toFixed(2)})</span> <span style="color:#ffd700">${u.total_score}pts</span></li>`;
-                        }
-                        html += `</ul></div></div>`;
-
-                        // Grid
-                        if (p1.grid.length) {
-                            html += renderGrid(
-                                p1.grid,
-                                p1.civ1_units,
-                                p1.civ2_units,
-                                data,
-                            );
-                        }
-                    } else {
-                        const hasMobile = p1.civ1_units.length
-                            ? data.civ1
-                            : data.civ2;
-                        const noMobile = p1.civ1_units.length
-                            ? data.civ2
-                            : data.civ1;
-                        html += `<div class="callout neutral">${noMobile} has no mobile units (speed > 1.4). ${hasMobile} wins mobile by default.</div>`;
-                    }
-                }
-                html += `</div>`;
-
-                // Phase 2: Ranged Advantage
-                const p2 = age.phase2_ranged;
-                html += `<div class="phase-card">
-                    <h3><span class="phase-num">2</span> Ranged Advantage</h3>`;
-
-                const weakerName =
-                    p2.analyzed_for === "civ1" ? data.civ1 : data.civ2;
-                const weakerClass = p2.analyzed_for;
-                if (p2.advantage_unit) {
-                    const clearText = p2.has_clear_advantage
-                        ? "clear ranged advantage"
-                        : "best ranged option";
-                    html += `<div class="callout ${weakerClass}">
-                        <strong>${weakerName}</strong> ${clearText}: <strong>${p2.advantage_unit.name}</strong>
-                    </div>`;
-                } else {
-                    html += `<div class="no-data">No ranged gold units to compare</div>`;
-                }
-
-                if (p2.grid.length) {
-                    html += renderPhase2Grid(p2.grid, data, p2.analyzed_for);
-                }
-                html += `</div>`;
-
-                // Phase 3: Recommended Combos
-                const p3 = age.phase3_combos;
-                html += `<div class="phase-card">
-                    <h3><span class="phase-num">3</span> Recommended Army Combos</h3>
-                    <p style="color:#888;font-size:0.9rem;margin-bottom:12px">Select your preferred combo for each civ, or choose a custom pair.</p>
-                    <div class="combo-section">`;
-
-                html += renderComboBox(
-                    p3.civ1,
-                    data.civ1,
-                    "civ1",
-                    ageKey,
-                    data,
-                );
-                html += renderComboBox(
-                    p3.civ2,
-                    data.civ2,
-                    "civ2",
-                    ageKey,
-                    data,
-                );
-                html += `</div></div>`;
-
-                // Phase 4: Army Simulation
-                const p4 = age.phase4_army;
-                html += `<div class="phase-card">
-                    <h3><span class="phase-num">4</span> Army Simulation (5000 resources)</h3>`;
-
-                if (p4.combo_grid.length) {
-                    html += `<div class="army-results">`;
-                    // Show recommended vs recommended first
-                    const recVsRec = p4.combo_grid.find(
-                        (g) => g.civ1_combo_id === 0 && g.civ2_combo_id === 0,
-                    );
-                    if (recVsRec) {
-                        html += renderArmyResult(recVsRec, p3, data, true);
-                    }
-                    // Show other notable results
-                    for (const g of p4.combo_grid) {
-                        if (g.civ1_combo_id === 0 && g.civ2_combo_id === 0)
-                            continue;
-                        html += renderArmyResult(g, p3, data, false);
+                    // Civ2 alts
+                    html += `<div>`;
+                    for (const c of c2alts) {
+                        html += `<div class="alt-combo-row civ2-alt">
+                            <span class="alt-label civ2-color">${data.civ2}:</span>
+                            ${unitBadge(c.primary.name, "sm")}
+                            <span class="combo-plus" style="font-size:0.85rem">+</span>
+                            ${unitBadge(c.secondary.name, "sm")}
+                        </div>`;
                     }
                     html += `</div>`;
-                } else {
-                    html += `<div class="no-data">No army simulations available</div>`;
+
+                    html += `</div></div>`; // end alt-combos-grid, alt-combos-section
                 }
-                html += `</div>`;
+
+                // --- Army section placeholder ---
+                html += `<div class="army-section" id="army-${ageKey}">
+                    <div class="army-section-header">Army Battle Simulation</div>
+                    <div class="army-loading">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                            <div>Running army simulations (5000 resources, testing splits)...</div>
+                        </div>
+                    </div>
+                </div>`;
 
                 return html;
             }
 
-            function renderGrid(grid, civ1Units, civ2Units, data) {
-                const c1Slugs = [...new Set(grid.map((g) => g.my_slug))];
-                const c2Slugs = [...new Set(grid.map((g) => g.opp_slug))];
-                const c1Names = {};
-                const c2Names = {};
-                for (const u of civ1Units) c1Names[u.slug] = u.name;
-                for (const u of civ2Units) c2Names[u.slug] = u.name;
+            /* ---- Render phase 4 (army) ---- */
+            function renderArmy(armyData, analysisData) {
+                for (const ageKey of Object.keys(armyData.ages)) {
+                    const container = document.getElementById("army-" + ageKey);
+                    if (!container) continue;
 
-                const cols = c2Slugs.length + 1;
-                let html = `<div class="mobile-grid" style="grid-template-columns: auto repeat(${c2Slugs.length}, 1fr); margin-top:12px">`;
-                html += `<div class="grid-cell header"></div>`;
-                for (const s of c2Slugs) {
-                    html += `<div class="grid-cell header" style="color:#8ee8e2">${c2Names[s] || slugToName(s)}</div>`;
-                }
-                for (const c1s of c1Slugs) {
-                    html += `<div class="grid-cell header" style="color:#ff9999">${c1Names[c1s] || slugToName(c1s)}</div>`;
-                    for (const c2s of c2Slugs) {
-                        const m = grid.find(
-                            (g) => g.my_slug === c1s && g.opp_slug === c2s,
-                        );
-                        if (m) {
-                            const cls =
-                                m.winner === 1
-                                    ? "win"
-                                    : m.winner === 2
-                                      ? "loss"
-                                      : "draw";
-                            const label =
-                                m.winner === 1
-                                    ? "W"
-                                    : m.winner === 2
-                                      ? "L"
-                                      : "D";
-                            html += `<div class="grid-cell ${cls}" title="${c1Names[c1s]} vs ${c2Names[c2s]}: ${m.s1}-${m.s2}">${label} ${m.s1}-${m.s2}</div>`;
-                        } else {
-                            html += `<div class="grid-cell">-</div>`;
-                        }
+                    const age = armyData.ages[ageKey];
+                    if (age.error) {
+                        container.innerHTML = `<div class="army-section-header">Army Battle Simulation</div><div class="no-data">${age.error}</div>`;
+                        continue;
                     }
-                }
-                html += `</div>`;
-                return html;
-            }
 
-            function renderPhase2Grid(grid, data, analyzedFor) {
-                const mySlugs = [...new Set(grid.map((g) => g.my_slug))];
-                const oppSlugs = [...new Set(grid.map((g) => g.opp_slug))];
-                if (!mySlugs.length || !oppSlugs.length) return "";
+                    const combos = age.combos;
+                    const best = age.best_combo;
+                    const counters = age.counters;
+                    const grid = age.combo_grid;
 
-                const myColor = analyzedFor === "civ1" ? "#ff9999" : "#8ee8e2";
-                const oppColor = analyzedFor === "civ1" ? "#8ee8e2" : "#ff9999";
+                    let html = `<div class="army-section-header">Army Battle Simulation</div>`;
 
-                let html = `<div class="mobile-grid" style="grid-template-columns: auto repeat(${oppSlugs.length}, 1fr); margin-top:12px">`;
-                html += `<div class="grid-cell header"></div>`;
-                for (const s of oppSlugs)
-                    html += `<div class="grid-cell header" style="color:${oppColor}">${slugToName(s)}</div>`;
-                for (const ms of mySlugs) {
-                    html += `<div class="grid-cell header" style="color:${myColor}">${slugToName(ms)}</div>`;
-                    for (const os of oppSlugs) {
-                        const m = grid.find(
-                            (g) => g.my_slug === ms && g.opp_slug === os,
-                        );
-                        if (m) {
-                            const cls =
-                                m.winner === 1
-                                    ? "win"
-                                    : m.winner === 2
-                                      ? "loss"
-                                      : "draw";
-                            const label =
-                                m.winner === 1
-                                    ? "W"
-                                    : m.winner === 2
-                                      ? "L"
-                                      : "D";
-                            html += `<div class="grid-cell ${cls}">${label} ${m.s1}-${m.s2}</div>`;
-                        } else {
-                            html += `<div class="grid-cell">-</div>`;
-                        }
-                    }
-                }
-                html += `</div>`;
-                return html;
-            }
+                    // Explanation
+                    html += `<div class="army-explanation">
+                        Each side gets <strong>5000 resources</strong> to build a mixed army of their 2-unit combo.
+                        We test 5 resource splits (70/30 to 30/70) for each side and simulate the battle.
+                        The best split for each combo is the one that wins or survives with the most HP across all opponent splits.
+                        Each combo pair is tested at 25 split combinations to find the optimal ratio.
+                    </div>`;
 
-            function renderComboBox(combos, civName, civKey, ageKey, data) {
-                const boxClass = civKey === "civ1" ? "civ1-box" : "civ2-box";
-                const radioName = `combo-${civKey}-${ageKey}`;
-                const allUnits = data.all_units[civKey].filter(
-                    (u) => u.age === ageKey,
-                );
+                    // Best combo cards
+                    html += `<div class="army-best-results">`;
 
-                let html = `<div class="combo-box ${boxClass}">
-                    <h4>${civName}</h4>`;
-
-                if (!combos.length) {
-                    html += `<div class="no-data">No combos generated</div>`;
-                } else {
-                    for (const c of combos) {
-                        const recClass = c.is_recommended ? " recommended" : "";
-                        const scoreLabel =
-                            c.army_score !== 0 ? c.army_score.toFixed(2) : "--";
-                        html += `<label class="combo-option${recClass}">
-                            <input type="radio" name="${radioName}" value="${c.id}" ${c.is_recommended ? "checked" : ""}>
-                            <div class="combo-label">
-                                <div class="combo-units">${c.primary.name} + ${c.secondary.name}</div>
-                                <div class="combo-reasoning">${c.reasoning}${c.is_recommended ? " (Recommended)" : ""}</div>
+                    // Civ1 best
+                    const c1best = combos.civ1[best.civ1.combo_id];
+                    if (c1best) {
+                        html += `<div class="army-best-card civ1-card">
+                            <div class="best-civ-name civ1-color">${armyData.civ1} &mdash; Best Combo</div>
+                            <div class="best-combo-detail">
+                                ${unitBadge(c1best.primary.name, "sm")}
+                                <span class="combo-plus">+</span>
+                                ${unitBadge(c1best.secondary.name, "sm")}
                             </div>
-                            <span class="combo-score">${scoreLabel}</span>
-                        </label>`;
+                            <div class="best-record">Record: ${best.civ1.wins}W ${best.civ1.losses}L ${best.civ1.draws}D across all opponent combos</div>
+                            <div class="best-split">Best split: ${Math.round(c1best.best_split[0]*100)}/${Math.round(c1best.best_split[1]*100)} resources</div>`;
+                        if (counters.civ1_countered_by) {
+                            const cb = counters.civ1_countered_by;
+                            html += `<div class="best-countered">Countered by: ${unitBadge(cb.primary, "sm")} + ${unitBadge(cb.secondary, "sm")}</div>`;
+                        }
+                        html += `</div>`;
                     }
-                }
 
-                // Custom option
-                html += `<label class="combo-option">
-                    <input type="radio" name="${radioName}" value="custom">
-                    <div class="combo-label">
-                        <div class="combo-units">Custom combo</div>
-                    </div>
-                </label>
-                <div class="custom-combo" id="custom-${civKey}-${ageKey}" style="display:none">
-                    <select id="custom1-${civKey}-${ageKey}">
-                        <option value="">Unit 1...</option>
-                        ${allUnits.map((u) => `<option value="${u.slug}">${u.name}</option>`).join("")}
-                    </select>
-                    <span class="plus">+</span>
-                    <select id="custom2-${civKey}-${ageKey}">
-                        <option value="">Unit 2...</option>
-                        ${allUnits.map((u) => `<option value="${u.slug}">${u.name}</option>`).join("")}
-                    </select>
-                </div>`;
-
-                html += `<button class="submit-btn" id="submit-${civKey}-${ageKey}" onclick="submitVote('${civKey}','${ageKey}')">Submit Choice</button>`;
-                html += `</div>`;
-
-                // Wire up custom radio toggle after render
-                setTimeout(() => {
-                    const radios = document.querySelectorAll(
-                        `input[name="${radioName}"]`,
-                    );
-                    const customDiv = document.getElementById(
-                        `custom-${civKey}-${ageKey}`,
-                    );
-                    if (customDiv) {
-                        radios.forEach((r) => {
-                            r.addEventListener("change", () => {
-                                customDiv.style.display =
-                                    r.value === "custom" && r.checked
-                                        ? "flex"
-                                        : "none";
-                            });
-                        });
+                    // Civ2 best
+                    const c2best = combos.civ2[best.civ2.combo_id];
+                    if (c2best) {
+                        html += `<div class="army-best-card civ2-card">
+                            <div class="best-civ-name civ2-color">${armyData.civ2} &mdash; Best Combo</div>
+                            <div class="best-combo-detail">
+                                ${unitBadge(c2best.primary.name, "sm")}
+                                <span class="combo-plus">+</span>
+                                ${unitBadge(c2best.secondary.name, "sm")}
+                            </div>
+                            <div class="best-record">Record: ${best.civ2.wins}W ${best.civ2.losses}L ${best.civ2.draws}D across all opponent combos</div>
+                            <div class="best-split">Best split: ${Math.round(c2best.best_split[0]*100)}/${Math.round(c2best.best_split[1]*100)} resources</div>`;
+                        if (counters.civ2_countered_by) {
+                            const cb = counters.civ2_countered_by;
+                            html += `<div class="best-countered">Countered by: ${unitBadge(cb.primary, "sm")} + ${unitBadge(cb.secondary, "sm")}</div>`;
+                        }
+                        html += `</div>`;
                     }
-                }, 0);
 
-                return html;
-            }
+                    html += `</div>`; // end army-best-results
 
-            function renderArmyResult(g, p3, data, isHighlighted) {
-                const c1combo = p3.civ1[g.civ1_combo_id];
-                const c2combo = p3.civ2[g.civ2_combo_id];
-                if (!c1combo || !c2combo) return "";
-
-                const bgStyle = isHighlighted
-                    ? "background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.15)"
-                    : "";
-                const winnerClass =
-                    g.winner === "civ1"
-                        ? "civ1-win"
-                        : g.winner === "civ2"
-                          ? "civ2-win"
-                          : "draw-result";
-                const winnerLabel =
-                    g.winner === "civ1"
-                        ? data.civ1
-                        : g.winner === "civ2"
-                          ? data.civ2
-                          : "Draw";
-
-                return `<div class="army-result-row" style="${bgStyle}">
-                    <div class="combo-desc">
-                        <span class="c1">${c1combo.primary.name} + ${c1combo.secondary.name}</span>
-                        <span style="color:#666"> vs </span>
-                        <span class="c2">${c2combo.primary.name} + ${c2combo.secondary.name}</span>
-                        <span style="color:#555;font-size:0.8rem"> (${g.counts_civ1[0]}+${g.counts_civ1[1]} vs ${g.counts_civ2[0]}+${g.counts_civ2[1]})</span>
-                    </div>
-                    <span class="army-winner ${winnerClass}">${winnerLabel}</span>
-                </div>`;
-            }
-
-            async function submitVote(civKey, ageKey) {
-                const btn = document.getElementById(
-                    `submit-${civKey}-${ageKey}`,
-                );
-                if (btn.disabled) return;
-
-                const radioName = `combo-${civKey}-${ageKey}`;
-                const selected = document.querySelector(
-                    `input[name="${radioName}"]:checked`,
-                );
-                if (!selected) return;
-
-                let selType = "preset";
-                let comboId = parseInt(selected.value);
-                let primary = "",
-                    secondary = "";
-
-                if (selected.value === "custom") {
-                    selType = "custom";
-                    comboId = null;
-                    primary = document.getElementById(
-                        `custom1-${civKey}-${ageKey}`,
-                    ).value;
-                    secondary = document.getElementById(
-                        `custom2-${civKey}-${ageKey}`,
-                    ).value;
-                    if (!primary || !secondary) {
-                        alert("Please select both units for custom combo");
-                        return;
+                    // Full grid (collapsible)
+                    if (grid.length > 0) {
+                        const gridId = "army-grid-" + ageKey;
+                        html += `<button class="army-grid-toggle" onclick="document.getElementById('${gridId}').style.display = document.getElementById('${gridId}').style.display === 'none' ? 'block' : 'none'">
+                            Show/Hide All ${grid.length} Matchup Results
+                        </button>`;
+                        html += `<div class="army-full-grid" id="${gridId}" style="display:none">`;
+                        for (const g of grid) {
+                            const c1c = combos.civ1[g.civ1_combo_id];
+                            const c2c = combos.civ2[g.civ2_combo_id];
+                            if (!c1c || !c2c) continue;
+                            const winCls = g.winner === "civ1" ? "civ1-win" : g.winner === "civ2" ? "civ2-win" : "draw-result";
+                            const winLabel = g.winner === "civ1" ? armyData.civ1 : g.winner === "civ2" ? armyData.civ2 : "Draw";
+                            html += `<div class="army-result-row">
+                                <div class="combo-desc">
+                                    <span class="civ1-color">${c1c.primary.name}+${c1c.secondary.name}</span>
+                                    <span style="color:#666"> (${g.counts_civ1[0]}+${g.counts_civ1[1]}) vs </span>
+                                    <span class="civ2-color">${c2c.primary.name}+${c2c.secondary.name}</span>
+                                    <span style="color:#666"> (${g.counts_civ2[0]}+${g.counts_civ2[1]})</span>
+                                </div>
+                                <span class="army-winner ${winCls}">${winLabel}</span>
+                            </div>`;
+                        }
+                        html += `</div>`;
                     }
-                } else {
-                    const age = currentData.ages[ageKey];
-                    const combos = age.phase3_combos[civKey];
-                    const combo = combos[comboId];
-                    if (combo) {
-                        primary = combo.primary.slug;
-                        secondary = combo.secondary.slug;
-                    }
-                }
 
-                // Get recommended combo info
-                const age = currentData.ages[ageKey];
-                const combos = age.phase3_combos[civKey];
-                const recommended = combos.find((c) => c.is_recommended);
-
-                const vote = {
-                    civ1: currentData.civ1,
-                    civ2: currentData.civ2,
-                    age: ageKey,
-                    selected_for: civKey,
-                    selection_type: selType,
-                    combo_id: comboId,
-                    combo_primary: primary,
-                    combo_secondary: secondary,
-                    recommended_combo_id: recommended ? recommended.id : null,
-                    recommended_primary: recommended
-                        ? recommended.primary.slug
-                        : null,
-                    recommended_secondary: recommended
-                        ? recommended.secondary.slug
-                        : null,
-                };
-
-                try {
-                    const resp = await fetch("/api/matchup-advisor/vote", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(vote),
-                    });
-                    if (resp.ok) {
-                        btn.textContent = "Choice recorded";
-                        btn.classList.add("submitted");
-                        btn.disabled = true;
-                    }
-                } catch (e) {
-                    console.error("Vote failed:", e);
+                    container.innerHTML = html;
                 }
             }
         </script>

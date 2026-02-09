@@ -828,17 +828,22 @@
             const TILE_SIZE = 30;
             const MELEE_RANGE_BUFFER = 5;
 
-            const ORIGINAL_13_CIVS = [
+            const ENABLED_CIVS = [
+                "Aztecs",
                 "Britons",
                 "Byzantines",
                 "Celts",
                 "Chinese",
                 "Franks",
                 "Goths",
+                "Huns",
                 "Japanese",
+                "Koreans",
+                "Mayans",
                 "Mongols",
                 "Persians",
                 "Saracens",
+                "Spanish",
                 "Teutons",
                 "Turks",
                 "Vikings",
@@ -997,7 +1002,7 @@
                 if (!state.civ) {
                     // Show civ grid
                     let html = '<div class="civ-grid">';
-                    for (const civ of ORIGINAL_13_CIVS) {
+                    for (const civ of ENABLED_CIVS) {
                         html += `<div class="civ-card" onclick="selectCiv(${teamNum},'${civ}')">
                         <img src="${CIV_EMBLEM_URL}${civ.toLowerCase()}.png" alt="${civ}" />
                         <span>${civ}</span>

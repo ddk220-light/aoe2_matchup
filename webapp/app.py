@@ -1619,10 +1619,11 @@ def _run_pair(u1, u2, calc_cost, is_imperial, cache=None):
     3 pts for winning both, 1 each for split, 0 for losing both.
     On split, higher DPS unit gets 2 pts vs 1.
     cache: optional dict keyed by (slug1, slug2) to avoid re-running same pair."""
-    s1_slug = u1.get("_slug", id(u1))
-    s2_slug = u2.get("_slug", id(u2))
+    # Use object id to distinguish same-slug units from different civs
+    key1 = id(u1)
+    key2 = id(u2)
     if cache is not None:
-        key = (s1_slug, s2_slug)
+        key = (key1, key2)
         if key in cache:
             return cache[key]
 

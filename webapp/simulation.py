@@ -1475,9 +1475,10 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
 
     def _calc_opening_shots(attacker_tmpl, defender_templates, a_count):
         """Calculate number of free opening shots for one ranged attacker type
-        vs the enemy team. Returns int."""
+        vs the enemy team. Returns (shots, infinite_kite).
+        infinite_kite=True means ranged can kite forever and never be caught."""
         if not attacker_tmpl["is_ranged"]:
-            return 0
+            return 0, False
 
         a_range = attacker_tmpl["range"]
         a_speed = attacker_tmpl["speed"]
@@ -1505,32 +1506,44 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                 move_frac = max(0.0, 1.0 - a_delay / a_reload) if a_reload > 0 else 1.0
                 eff_retreat = a_speed * move_frac
                 net_speed = fastest_melee_speed - eff_retreat
-                if net_speed > 0:
-                    retreat_time = (
-                        min(RETREAT_MAX / eff_retreat, fire_dist / net_speed)
-                        if eff_retreat > 0
-                        else fire_dist / net_speed
-                    )
-                    remaining_dist = fire_dist - net_speed * retreat_time
-                else:
-                    retreat_time = RETREAT_MAX / eff_retreat if eff_retreat > 0 else 0
-                    remaining_dist = fire_dist
+                # Infinite kite: ranged effective retreat speed >= melee speed
+                if net_speed <= 0:
+                    return 0, True
+                retreat_time = (
+                    min(RETREAT_MAX / eff_retreat, fire_dist / net_speed)
+                    if eff_retreat > 0
+                    else fire_dist / net_speed
+                )
+                remaining_dist = fire_dist - net_speed * retreat_time
                 stand_time = (
                     remaining_dist / fastest_melee_speed if remaining_dist > 0 else 0
                 )
                 closing_time = retreat_time + stand_time + fastest_melee_delay
                 if closing_time > a_delay:
                     shots = 1 + int((closing_time - a_delay) / a_reload)
+                # Kiting bonus: after initial retreat, ranged can keep distance
+                if eff_retreat > 0 and fastest_melee_speed > eff_retreat:
+                    speed_diff = fastest_melee_speed - eff_retreat
+                    kite_dist = MAP_SPACE * 0.4 - RETREAT_MAX
+                    if kite_dist > 0:
+                        kite_time = kite_dist / speed_diff
+                        shots += max(0, int(kite_time / a_reload))
         elif has_ranged_enemy:
             # Both ranged: range difference gives bonus shots
             max_enemy_range = max(
                 dt["range"] for dt in defender_templates if dt["is_ranged"]
             )
+            max_enemy_speed = max(
+                dt["speed"] for dt in defender_templates if dt["is_ranged"]
+            )
             range_diff = a_range - max_enemy_range
             if range_diff > 0:
                 shots = max(0, int(range_diff / 2))
+                # If we also have more speed, we kite forever
+                if a_speed > max_enemy_speed:
+                    return shots, True
 
-        return shots
+        return shots, False
 
     def _calc_mixed_opening_dmg(
         a_tmpl_idx, shots, a_team, d_team, dmg_matrix, a_used_first
@@ -1609,16 +1622,45 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
     # Calculate opening volleys for both teams simultaneously, then apply
     opening_dmg_vs_t2 = []
     opening_dmg_vs_t1 = []
+    t1_infinite_kite = False
+    t2_infinite_kite = False
     for ti in range(n_types1):
-        shots = _calc_opening_shots(t1["templates"][ti], t2["templates"], count1)
+        shots, inf_kite = _calc_opening_shots(
+            t1["templates"][ti], t2["templates"], count1
+        )
+        if inf_kite:
+            t1_infinite_kite = True
         opening_dmg_vs_t2.extend(
             _calc_mixed_opening_dmg(ti, shots, t1, t2, dmg_1v2, used_first1)
         )
     for ti in range(n_types2):
-        shots = _calc_opening_shots(t2["templates"][ti], t1["templates"], count2)
+        shots, inf_kite = _calc_opening_shots(
+            t2["templates"][ti], t1["templates"], count2
+        )
+        if inf_kite:
+            t2_infinite_kite = True
         opening_dmg_vs_t1.extend(
             _calc_mixed_opening_dmg(ti, shots, t2, t1, dmg_2v1, used_first2)
         )
+
+    # Infinite kite: if one side can kite forever and the other can't,
+    # the kiting side wins without needing full simulation
+    if t1_infinite_kite and not t2_infinite_kite:
+
+        def _result(winner):
+            if return_hp:
+                return (winner, count1, 0, 1.0, 0.0)
+            return (winner, count1, 0)
+
+        return _result(1)
+    if t2_infinite_kite and not t1_infinite_kite:
+
+        def _result(winner):
+            if return_hp:
+                return (winner, 0, count2, 0.0, 1.0)
+            return (winner, 0, count2)
+
+        return _result(2)
 
     # Apply opening damage atomically (both teams fire simultaneously)
     for target_idx, damage in opening_dmg_vs_t2:

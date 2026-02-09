@@ -8,6 +8,7 @@ from flask import Flask, jsonify, redirect, render_template, request
 from simulation import prepare_combat_unit, simulate_battle, simulate_mixed_battle
 
 app = Flask(__name__)
+app.json.sort_keys = False
 
 # Database paths
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_units.db")
@@ -1852,9 +1853,19 @@ def _categorize_units(units_dict):
     }
 
 
+def _unit_dps(u):
+    """Estimate effective DPS for tiebreaking."""
+    attack = u.get("attack", 0)
+    accuracy = u.get("accuracy", 100) / 100.0
+    attack_speed = u.get("attack_speed", 0.5)
+    reload_time = 1.0 / attack_speed if attack_speed > 0 else 2.0
+    return attack * accuracy / reload_time
+
+
 def _run_pair(u1, u2, calc_cost, is_imperial):
     """Run 30v30 + 3000-resource sim. Returns (winner, score1, score2).
-    3 pts for winning both, 1 each for split, 0 for losing both."""
+    3 pts for winning both, 1 each for split, 0 for losing both.
+    On split, higher DPS unit gets 2 pts vs 1."""
     c1 = calc_cost(u1)
     c2 = calc_cost(u2)
     w_res, _, _ = simulate_battle(u1, u2, 3000, cost1_override=c1, cost2_override=c2)
@@ -1868,6 +1879,13 @@ def _run_pair(u1, u2, calc_cost, is_imperial):
     elif u2_won_both and not u1_won_both:
         return (2, 0, 3)
     else:
+        # Split: use DPS as tiebreaker
+        dps1 = _unit_dps(u1)
+        dps2 = _unit_dps(u2)
+        if dps1 > dps2:
+            return (1, 2, 1)
+        elif dps2 > dps1:
+            return (2, 1, 2)
         return (0, 1, 1)
 
 
@@ -2195,7 +2213,7 @@ def api_matchup_advisor(civ1, civ2):
             ref_conn.close()
             return jsonify({"error": f"Civilization '{civ}' not found"}), 404
 
-    MATCHUP_AGES = {"castle": AGES["castle"], "imperial": AGES["imperial"]}
+    MATCHUP_AGES = {"imperial": AGES["imperial"], "castle": AGES["castle"]}
     results = {}
 
     for age_slug, age_data in MATCHUP_AGES.items():

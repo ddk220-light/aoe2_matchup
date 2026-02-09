@@ -913,76 +913,44 @@
 
                 html += `</div>`; // end analysis-columns
 
-                // --- Recommended Combos ---
+                // --- Best combo placeholder (filled by renderArmy after sims) ---
+                html += `<div id="best-combo-${ageKey}">
+                    <div class="combo-section-header">Best Army Combo</div>
+                    <div class="loading-spinner" style="padding:16px">
+                        <div class="spinner"></div>
+                        <div>Simulating army battles to find the best combo...</div>
+                    </div>
+                </div>`;
+
+                // --- Combos under consideration ---
                 const p3 = age.phase3_combos;
-                const c1rec = p3.civ1.length > 0 ? p3.civ1[0] : null;
-                const c2rec = p3.civ2.length > 0 ? p3.civ2[0] : null;
+                html += `<div class="combo-section-header" style="font-size:1rem;color:#aaa;margin-top:20px">Combos Under Consideration</div>`;
+                html += `<div class="alt-combos-grid">`;
 
-                html += `<div class="combo-section-header">Recommended Army Combos</div>`;
-                html += `<div class="combo-cards">`;
-
-                if (c1rec) {
-                    html += `<div class="combo-card civ1-card">
-                        <div>
-                            <div class="combo-civ-name civ1-color">${data.civ1}</div>
-                            <div class="combo-units-row">
-                                ${unitBadge(c1rec.primary.name, "sm")}
-                                <span class="combo-plus">+</span>
-                                ${unitBadge(c1rec.secondary.name, "sm")}
-                            </div>
-                            <div class="combo-reasoning">${c1rec.reasoning}</div>
-                        </div>
+                // Civ1 combos
+                html += `<div>`;
+                for (const c of p3.civ1) {
+                    html += `<div class="alt-combo-row civ1-alt">
+                        <span class="alt-label civ1-color">${data.civ1}:</span>
+                        ${unitBadge(c.primary.name, "sm")}
+                        <span class="combo-plus" style="font-size:0.85rem">+</span>
+                        ${unitBadge(c.secondary.name, "sm")}
                     </div>`;
                 }
-                if (c2rec) {
-                    html += `<div class="combo-card civ2-card">
-                        <div>
-                            <div class="combo-civ-name civ2-color">${data.civ2}</div>
-                            <div class="combo-units-row">
-                                ${unitBadge(c2rec.primary.name, "sm")}
-                                <span class="combo-plus">+</span>
-                                ${unitBadge(c2rec.secondary.name, "sm")}
-                            </div>
-                            <div class="combo-reasoning">${c2rec.reasoning}</div>
-                        </div>
+                html += `</div>`;
+
+                // Civ2 combos
+                html += `<div>`;
+                for (const c of p3.civ2) {
+                    html += `<div class="alt-combo-row civ2-alt">
+                        <span class="alt-label civ2-color">${data.civ2}:</span>
+                        ${unitBadge(c.primary.name, "sm")}
+                        <span class="combo-plus" style="font-size:0.85rem">+</span>
+                        ${unitBadge(c.secondary.name, "sm")}
                     </div>`;
                 }
-                html += `</div>`; // end combo-cards
-
-                // Alternate combos
-                const c1alts = p3.civ1.slice(1);
-                const c2alts = p3.civ2.slice(1);
-                if (c1alts.length || c2alts.length) {
-                    html += `<div class="alt-combos-section">`;
-                    html += `<div class="alt-combos-header">Alternate Combos</div>`;
-                    html += `<div class="alt-combos-grid">`;
-
-                    // Civ1 alts
-                    html += `<div>`;
-                    for (const c of c1alts) {
-                        html += `<div class="alt-combo-row civ1-alt">
-                            <span class="alt-label civ1-color">${data.civ1}:</span>
-                            ${unitBadge(c.primary.name, "sm")}
-                            <span class="combo-plus" style="font-size:0.85rem">+</span>
-                            ${unitBadge(c.secondary.name, "sm")}
-                        </div>`;
-                    }
-                    html += `</div>`;
-
-                    // Civ2 alts
-                    html += `<div>`;
-                    for (const c of c2alts) {
-                        html += `<div class="alt-combo-row civ2-alt">
-                            <span class="alt-label civ2-color">${data.civ2}:</span>
-                            ${unitBadge(c.primary.name, "sm")}
-                            <span class="combo-plus" style="font-size:0.85rem">+</span>
-                            ${unitBadge(c.secondary.name, "sm")}
-                        </div>`;
-                    }
-                    html += `</div>`;
-
-                    html += `</div></div>`; // end alt-combos-grid, alt-combos-section
-                }
+                html += `</div>`;
+                html += `</div>`; // end alt-combos-grid
 
                 // --- Army section placeholder ---
                 html += `<div class="army-section" id="army-${ageKey}">
@@ -1001,12 +969,12 @@
             /* ---- Render phase 4 (army) ---- */
             function renderArmy(armyData, analysisData) {
                 for (const ageKey of Object.keys(armyData.ages)) {
-                    const container = document.getElementById("army-" + ageKey);
-                    if (!container) continue;
-
                     const age = armyData.ages[ageKey];
                     if (age.error) {
-                        container.innerHTML = `<div class="army-section-header">Army Battle Simulation</div><div class="no-data">${age.error}</div>`;
+                        const bc = document.getElementById("best-combo-" + ageKey);
+                        if (bc) bc.innerHTML = `<div class="combo-section-header">Best Army Combo</div><div class="no-data">${age.error}</div>`;
+                        const ac = document.getElementById("army-" + ageKey);
+                        if (ac) ac.innerHTML = `<div class="army-section-header">Army Battle Simulation</div><div class="no-data">${age.error}</div>`;
                         continue;
                     }
 
@@ -1014,6 +982,50 @@
                     const best = age.best_combo;
                     const counters = age.counters;
                     const grid = age.combo_grid;
+
+                    // --- Fill best combo placeholder ---
+                    const bestComboEl = document.getElementById("best-combo-" + ageKey);
+                    if (bestComboEl) {
+                        let bhtml = `<div class="combo-section-header">Best Army Combo</div>`;
+                        bhtml += `<div class="combo-cards">`;
+
+                        const c1best = combos.civ1[best.civ1.combo_id];
+                        if (c1best) {
+                            bhtml += `<div class="combo-card civ1-card">
+                                <div>
+                                    <div class="combo-civ-name civ1-color">${armyData.civ1}</div>
+                                    <div class="combo-units-row">
+                                        ${unitBadge(c1best.primary.name, "sm")}
+                                        <span class="combo-plus">+</span>
+                                        ${unitBadge(c1best.secondary.name, "sm")}
+                                    </div>
+                                    <div class="combo-reasoning">${best.civ1.wins}W ${best.civ1.losses}L ${best.civ1.draws}D &mdash; ${Math.round(c1best.best_split[0]*100)}/${Math.round(c1best.best_split[1]*100)} split</div>
+                                </div>
+                            </div>`;
+                        }
+
+                        const c2best = combos.civ2[best.civ2.combo_id];
+                        if (c2best) {
+                            bhtml += `<div class="combo-card civ2-card">
+                                <div>
+                                    <div class="combo-civ-name civ2-color">${armyData.civ2}</div>
+                                    <div class="combo-units-row">
+                                        ${unitBadge(c2best.primary.name, "sm")}
+                                        <span class="combo-plus">+</span>
+                                        ${unitBadge(c2best.secondary.name, "sm")}
+                                    </div>
+                                    <div class="combo-reasoning">${best.civ2.wins}W ${best.civ2.losses}L ${best.civ2.draws}D &mdash; ${Math.round(c2best.best_split[0]*100)}/${Math.round(c2best.best_split[1]*100)} split</div>
+                                </div>
+                            </div>`;
+                        }
+
+                        bhtml += `</div>`;
+                        bestComboEl.innerHTML = bhtml;
+                    }
+
+                    // --- Fill army section ---
+                    const container = document.getElementById("army-" + ageKey);
+                    if (!container) continue;
 
                     let html = `<div class="army-section-header">Army Battle Simulation</div>`;
 
@@ -1025,14 +1037,13 @@
                         Each combo pair is tested at 25 split combinations to find the optimal ratio.
                     </div>`;
 
-                    // Best combo cards
+                    // Per-civ best combo detail cards
                     html += `<div class="army-best-results">`;
 
-                    // Civ1 best
                     const c1best = combos.civ1[best.civ1.combo_id];
                     if (c1best) {
                         html += `<div class="army-best-card civ1-card">
-                            <div class="best-civ-name civ1-color">${armyData.civ1} &mdash; Best Combo</div>
+                            <div class="best-civ-name civ1-color">${armyData.civ1}</div>
                             <div class="best-combo-detail">
                                 ${unitBadge(c1best.primary.name, "sm")}
                                 <span class="combo-plus">+</span>
@@ -1047,11 +1058,10 @@
                         html += `</div>`;
                     }
 
-                    // Civ2 best
                     const c2best = combos.civ2[best.civ2.combo_id];
                     if (c2best) {
                         html += `<div class="army-best-card civ2-card">
-                            <div class="best-civ-name civ2-color">${armyData.civ2} &mdash; Best Combo</div>
+                            <div class="best-civ-name civ2-color">${armyData.civ2}</div>
                             <div class="best-combo-detail">
                                 ${unitBadge(c2best.primary.name, "sm")}
                                 <span class="combo-plus">+</span>

@@ -1714,6 +1714,7 @@ def _build_combos_for_civ(
     calc_cost,
     is_imperial,
     civ_units,
+    has_clear_ranged_advantage=False,
 ):
     """Build up to 4 combo options for a civ. Each combo = (primary, secondary, reasoning)."""
     combos = []
@@ -1792,68 +1793,101 @@ def _build_combos_for_civ(
             _add(dom, trash, f"Dominant mobile + trash (eco-friendly)")
 
     else:
-        # Weaker mobile civ: lead with ranged, pair with melee counter
+        # Weaker mobile civ
         rng = ranged_slug
         melee_units = {s: cu for s, cu in all_units.items() if cu["attack_range"] < 1.0}
-        if rng and opp_mobile:
-            # Combo 1: ranged + best melee trash counter to opponent's mobile
+        ranged_or_siege = {
+            s: cu
+            for s, cu in all_units.items()
+            if cu["attack_range"] >= 1.0
+            or cu.get("_unit_class_name", "") in _SIEGE_CLASSES
+        }
+
+        if has_clear_ranged_advantage and rng and opp_mobile:
+            # Path A: Clear ranged advantage — lead with ranged unit
             trash_counter, _ = _find_best_counter(
                 {s: cu for s, cu in melee_units.items() if cu["cost_gold"] == 0},
                 opp_mobile,
                 calc_cost,
                 is_imperial,
-                exclude={rng} if rng else set(),
+                exclude={rng},
             )
             if trash_counter:
-                _add(rng, trash_counter, f"Ranged advantage + trash counter")
+                _add(rng, trash_counter, "Ranged advantage + trash counter")
 
-            # Combo 2: ranged + best melee gold counter
             gold_counter, _ = _find_best_counter(
                 {s: cu for s, cu in melee_units.items() if cu["cost_gold"] > 0},
                 opp_mobile,
                 calc_cost,
                 is_imperial,
-                exclude={rng} if rng else set(),
+                exclude={rng},
             )
             if gold_counter:
-                _add(rng, gold_counter, f"Ranged advantage + gold counter")
+                _add(rng, gold_counter, "Ranged advantage + gold counter")
 
-        # Combo 3: best ranged + best melee counter
-        if ranged_gold:
-            alt_ranged = max(
-                ranged_gold.keys(),
-                key=lambda s: sum(
-                    _run_pair(ranged_gold[s], opp, calc_cost, is_imperial)[1]
-                    for _, opp in opp_cats["all"].items()
-                ),
-                default=None,
+            # Also offer melee-first alternatives
+            best_melee, _ = _find_best_counter(
+                melee_units,
+                opp_cats["all"],
+                calc_cost,
+                is_imperial,
             )
-            if alt_ranged:
-                counter, _ = _find_best_counter(
-                    melee_units,
-                    opp_mobile if opp_mobile else opp_cats["all"],
+            if best_melee:
+                best_support, _ = _find_best_counter(
+                    ranged_or_siege,
+                    opp_cats["all"],
                     calc_cost,
                     is_imperial,
-                    exclude={alt_ranged},
+                    exclude={best_melee},
                 )
-                if counter:
-                    _add(alt_ranged, counter, f"Best ranged + melee counter")
-
-        # Combo 4: best siege + melee counter
-        if siege:
-            best_siege = max(
-                siege.keys(), key=lambda s: siege[s].get("attack", 0), default=None
+                if best_support:
+                    _add(best_melee, best_support, "Best melee + ranged/siege support")
+        else:
+            # Path B: No clear ranged advantage — lead with best melee,
+            # pair with best ranged/siege support
+            best_melee, _ = _find_best_counter(
+                melee_units,
+                opp_cats["all"],
+                calc_cost,
+                is_imperial,
             )
-            if best_siege:
-                counter, _ = _find_best_counter(
-                    melee_units,
-                    opp_mobile if opp_mobile else opp_cats["all"],
+            if best_melee:
+                # Try each ranged/siege as support, pick best
+                best_support, _ = _find_best_counter(
+                    ranged_or_siege,
+                    opp_cats["all"],
                     calc_cost,
                     is_imperial,
-                    exclude={best_siege},
+                    exclude={best_melee},
                 )
-                if counter:
-                    _add(best_siege, counter, f"Siege + melee counter")
+                if best_support:
+                    _add(best_melee, best_support, "Best melee + ranged/siege support")
+
+                # Also try specific support types
+                for support_pool, label in [
+                    ({s: cu for s, cu in ranged_gold.items()}, "ranged"),
+                    ({s: cu for s, cu in siege.items()}, "siege"),
+                ]:
+                    sup, _ = _find_best_counter(
+                        support_pool,
+                        opp_cats["all"],
+                        calc_cost,
+                        is_imperial,
+                        exclude={best_melee},
+                    )
+                    if sup:
+                        _add(best_melee, sup, f"Best melee + {label} support")
+
+                # Second-best melee + best support
+                second_melee, _ = _find_best_counter(
+                    melee_units,
+                    opp_cats["all"],
+                    calc_cost,
+                    is_imperial,
+                    exclude={best_melee},
+                )
+                if second_melee and best_support:
+                    _add(second_melee, best_support, "Alt melee + ranged/siege support")
 
     # Fill remaining slots with fallback combos
     if len(combos) < 4 and all_units:
@@ -2187,6 +2221,7 @@ def api_matchup_advisor(civ1, civ2):
         )
 
         # Determine which civ is dominant and weaker
+        has_clear_ranged = phase2["has_clear_advantage"]
         if phase1["dominant_civ"] == "civ1":
             c1_combos = _build_combos_for_civ(
                 civ1_cats,
@@ -2207,6 +2242,7 @@ def api_matchup_advisor(civ1, civ2):
                 calc_cost,
                 is_imperial,
                 civ2_units,
+                has_clear_ranged_advantage=has_clear_ranged,
             )
         else:
             c1_combos = _build_combos_for_civ(
@@ -2218,6 +2254,7 @@ def api_matchup_advisor(civ1, civ2):
                 calc_cost,
                 is_imperial,
                 civ1_units,
+                has_clear_ranged_advantage=has_clear_ranged,
             )
             c2_combos = _build_combos_for_civ(
                 civ2_cats,

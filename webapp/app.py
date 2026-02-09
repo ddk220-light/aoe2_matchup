@@ -1954,11 +1954,18 @@ def _build_combos_for_civ(
     siege = civ_cats["siege"]
     opp_mobile = opp_cats["mobile"]
 
+    def _is_ranged(slug):
+        cu = all_units.get(slug)
+        return cu and cu["attack_range"] >= 1.0
+
     def _add(primary_slug, secondary_slug, reasoning):
         key = (primary_slug, secondary_slug)
         if key in used or primary_slug == secondary_slug:
             return False
         if primary_slug not in all_units or secondary_slug not in all_units:
+            return False
+        # Enforce: max one ranged unit per combo (ranged+melee or melee+melee)
+        if _is_ranged(primary_slug) and _is_ranged(secondary_slug):
             return False
         used.add(key)
         combos.append(
@@ -2015,12 +2022,13 @@ def _build_combos_for_civ(
             _add(dom, trash, f"Dominant mobile + trash (eco-friendly)")
 
     else:
-        # Weaker mobile civ: lead with ranged, support with counter
+        # Weaker mobile civ: lead with ranged, pair with melee counter
         rng = ranged_slug
+        melee_units = {s: cu for s, cu in all_units.items() if cu["attack_range"] < 1.0}
         if rng and opp_mobile:
-            # Combo 1: ranged + best trash counter to opponent's mobile
+            # Combo 1: ranged + best melee trash counter to opponent's mobile
             trash_counter, _ = _find_best_counter(
-                {s: cu for s, cu in all_units.items() if cu["cost_gold"] == 0},
+                {s: cu for s, cu in melee_units.items() if cu["cost_gold"] == 0},
                 opp_mobile,
                 calc_cost,
                 is_imperial,
@@ -2029,9 +2037,9 @@ def _build_combos_for_civ(
             if trash_counter:
                 _add(rng, trash_counter, f"Ranged advantage + trash counter")
 
-            # Combo 2: ranged + best gold counter
+            # Combo 2: ranged + best melee gold counter
             gold_counter, _ = _find_best_counter(
-                {s: cu for s, cu in all_units.items() if cu["cost_gold"] > 0},
+                {s: cu for s, cu in melee_units.items() if cu["cost_gold"] > 0},
                 opp_mobile,
                 calc_cost,
                 is_imperial,
@@ -2040,7 +2048,7 @@ def _build_combos_for_civ(
             if gold_counter:
                 _add(rng, gold_counter, f"Ranged advantage + gold counter")
 
-        # Combo 3: best ranged (may differ) + best counter
+        # Combo 3: best ranged + best melee counter
         if ranged_gold:
             alt_ranged = max(
                 ranged_gold.keys(),
@@ -2052,30 +2060,30 @@ def _build_combos_for_civ(
             )
             if alt_ranged:
                 counter, _ = _find_best_counter(
-                    all_units,
+                    melee_units,
                     opp_mobile if opp_mobile else opp_cats["all"],
                     calc_cost,
                     is_imperial,
                     exclude={alt_ranged},
                 )
                 if counter:
-                    _add(alt_ranged, counter, f"Best ranged + counter")
+                    _add(alt_ranged, counter, f"Best ranged + melee counter")
 
-        # Combo 4: best siege + counter
+        # Combo 4: best siege + melee counter
         if siege:
             best_siege = max(
                 siege.keys(), key=lambda s: siege[s].get("attack", 0), default=None
             )
             if best_siege:
                 counter, _ = _find_best_counter(
-                    all_units,
+                    melee_units,
                     opp_mobile if opp_mobile else opp_cats["all"],
                     calc_cost,
                     is_imperial,
                     exclude={best_siege},
                 )
                 if counter:
-                    _add(best_siege, counter, f"Siege + counter")
+                    _add(best_siege, counter, f"Siege + melee counter")
 
     # Fill remaining slots with fallback combos
     if len(combos) < 4 and all_units:

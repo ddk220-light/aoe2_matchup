@@ -1642,25 +1642,66 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
         for i in alive2:
             cooldown2[i] = max(0.0, cooldown2[i] - DT)
 
-        # Assign targets per unit
-        # Ranged units: focus fire (group by type for damage lookup)
-        # Melee units: spread evenly
-        def _assign_mixed(my_alive, my_team, enemy_alive, enemy_hp, dmg_matrix):
+        # Assign targets per unit:
+        # - Melee: engage enemy melee first (spread, up to 2:1), overflow to enemy ranged
+        # - Ranged: target enemy melee first (focus fire), then enemy ranged
+        def _assign_mixed(my_alive, my_team, enemy_alive, enemy_hp, enemy_team):
             targets = {}
-            for i in my_alive:
-                if my_team["is_ranged"][i]:
-                    # Focus fire: pick lowest HP alive enemy
-                    if enemy_alive:
-                        targets[i] = min(enemy_alive, key=lambda e: enemy_hp[e])
-                else:
-                    # Spread: distribute evenly
-                    if enemy_alive:
-                        li = my_alive.index(i)
-                        targets[i] = enemy_alive[li * len(enemy_alive) // len(my_alive)]
+            if not enemy_alive:
+                return targets
+
+            # Split enemies into melee and ranged
+            enemy_melee = [e for e in enemy_alive if not enemy_team["is_ranged"][e]]
+            enemy_ranged = [e for e in enemy_alive if enemy_team["is_ranged"][e]]
+
+            # Split my units into melee and ranged
+            my_melee = [i for i in my_alive if not my_team["is_ranged"][i]]
+            my_ranged = [i for i in my_alive if my_team["is_ranged"][i]]
+
+            # Melee targeting: engage enemy melee first (2 per enemy melee), overflow to ranged
+            melee_capacity = (
+                len(enemy_melee) * 2
+            )  # each enemy melee can be engaged by up to 2
+            melee_on_melee = my_melee[:melee_capacity]
+            melee_overflow = my_melee[melee_capacity:]
+
+            # Assign melee-on-melee (spread evenly among enemy melee)
+            if enemy_melee and melee_on_melee:
+                for li, i in enumerate(melee_on_melee):
+                    targets[i] = enemy_melee[
+                        li * len(enemy_melee) // len(melee_on_melee)
+                    ]
+
+            # Overflow melee engage enemy ranged (spread evenly)
+            if enemy_ranged and melee_overflow:
+                for li, i in enumerate(melee_overflow):
+                    targets[i] = enemy_ranged[
+                        li * len(enemy_ranged) // len(melee_overflow)
+                    ]
+            elif melee_overflow and enemy_melee:
+                # No enemy ranged, put overflow on enemy melee
+                for li, i in enumerate(melee_overflow):
+                    targets[i] = enemy_melee[
+                        li * len(enemy_melee) // len(melee_overflow)
+                    ]
+
+            # Ranged targeting: focus fire enemy melee first, then enemy ranged
+            if my_ranged:
+                if enemy_melee:
+                    # Focus fire lowest HP enemy melee
+                    best = min(enemy_melee, key=lambda e: enemy_hp[e])
+                    for i in my_ranged:
+                        targets[i] = best
+                elif enemy_ranged:
+                    # Focus fire lowest HP enemy ranged
+                    best = min(enemy_ranged, key=lambda e: enemy_hp[e])
+                    for i in my_ranged:
+                        targets[i] = best
+
             return targets
 
-        targets1 = _assign_mixed(alive1, t1, alive2, hp2, dmg_1v2)
-        targets2 = _assign_mixed(alive2, t2, alive1, hp1, dmg_2v1)
+        targets1 = _assign_mixed(alive1, t1, alive2, hp2, t2)
+        targets2 = _assign_mixed(alive2, t2, alive1, hp1, t1)
 
         pending_damage = []
 

@@ -1,11 +1,11 @@
 import json
 import os
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import lru_cache
 
 from flask import Flask, jsonify, redirect, render_template, request
-from simulation import prepare_combat_unit, simulate_battle
+from simulation import prepare_combat_unit, simulate_battle, simulate_mixed_battle
 
 app = Flask(__name__)
 
@@ -1815,6 +1815,762 @@ def api_matchup(civ1, civ2):
 
     ref_conn.close()
     return jsonify({"civ1": civ1, "civ2": civ2, "ages": results})
+
+
+# ============== Matchup Advisor ==============
+
+_MOBILE_SPEED_THRESHOLD = 1.4
+_SIEGE_CLASSES = {"Siege Weapon", "Ballista", "Unpacked Siege Unit"}
+_ADVISOR_EXCLUDED = {"trebuchet", "ram", "siege_ram"}
+VOTES_FILE = os.path.join(os.path.dirname(__file__), "matchup_votes.jsonl")
+
+
+def _categorize_units(units_dict):
+    """Split {slug: combat_unit} into strategic groups.
+    A unit can appear in multiple categories."""
+    mobile = {}
+    ranged_gold = {}
+    siege = {}
+    for slug, cu in units_dict.items():
+        cls = cu.get("_unit_class_name", "")
+        speed = cu["movement_speed"]
+        rng = cu["attack_range"]
+        gold = cu["cost_gold"]
+
+        if speed > _MOBILE_SPEED_THRESHOLD:
+            mobile[slug] = cu
+        if rng >= 1.0 and gold > 0 and cls not in _SIEGE_CLASSES:
+            ranged_gold[slug] = cu
+        if cls in _SIEGE_CLASSES:
+            siege[slug] = cu
+
+    return {
+        "mobile": mobile,
+        "ranged_gold": ranged_gold,
+        "siege": siege,
+        "all": units_dict,
+    }
+
+
+def _run_pair(u1, u2, calc_cost, is_imperial):
+    """Run 30v30 + 3000-resource sim. Returns (winner, score1, score2).
+    3 pts for winning both, 1 each for split, 0 for losing both."""
+    c1 = calc_cost(u1)
+    c2 = calc_cost(u2)
+    w_res, _, _ = simulate_battle(u1, u2, 3000, cost1_override=c1, cost2_override=c2)
+    w_cnt, _, _ = simulate_battle(u1, u2, 0, fixed_count=30)
+
+    u1_won_both = w_res == 1 and w_cnt == 1
+    u2_won_both = w_res == 2 and w_cnt == 2
+
+    if u1_won_both and not u2_won_both:
+        return (1, 3, 0)
+    elif u2_won_both and not u1_won_both:
+        return (2, 0, 3)
+    else:
+        return (0, 1, 1)
+
+
+def _find_clear_winner_and_scores(my_units, opp_units, calc_cost, is_imperial):
+    """Run all pairs between my_units and opp_units.
+    Returns (clear_winner_slug_or_None, scores_dict, grid).
+    A clear winner wins or draws ALL opponents."""
+    scores = {}
+    grid = []
+    for my_slug, my_cu in my_units.items():
+        total_score = 0
+        all_win_or_draw = True
+        for opp_slug, opp_cu in opp_units.items():
+            winner, s1, s2 = _run_pair(my_cu, opp_cu, calc_cost, is_imperial)
+            total_score += s1
+            if winner == 2:
+                all_win_or_draw = False
+            grid.append(
+                {
+                    "my_slug": my_slug,
+                    "opp_slug": opp_slug,
+                    "winner": winner,
+                    "s1": s1,
+                    "s2": s2,
+                }
+            )
+        scores[my_slug] = {
+            "total_score": total_score,
+            "all_win_or_draw": all_win_or_draw,
+        }
+
+    # Find clear winner (wins/draws all)
+    clear = None
+    best_slug = None
+    best_score = -1
+    for slug, s in scores.items():
+        if s["total_score"] > best_score:
+            best_score = s["total_score"]
+            best_slug = slug
+        if s["all_win_or_draw"] and s["total_score"] > (
+            scores.get(clear, {}).get("total_score", -1) if clear else -1
+        ):
+            clear = slug
+
+    return clear, best_slug, scores, grid
+
+
+def _find_best_counter(
+    counter_pool, target_units, calc_cost, is_imperial, exclude=None
+):
+    """Find the unit from counter_pool that scores best against target_units.
+    Returns (best_slug, best_score)."""
+    best_slug = None
+    best_score = -1
+    for slug, cu in counter_pool.items():
+        if exclude and slug in exclude:
+            continue
+        total = 0
+        for _, opp_cu in target_units.items():
+            _, s1, _ = _run_pair(cu, opp_cu, calc_cost, is_imperial)
+            total += s1
+        if total > best_score:
+            best_score = total
+            best_slug = slug
+    return best_slug, best_score
+
+
+def _build_combos_for_civ(
+    civ_cats,
+    opp_cats,
+    is_mobile_dominant,
+    dominant_slug,
+    ranged_slug,
+    calc_cost,
+    is_imperial,
+    civ_units,
+):
+    """Build up to 4 combo options for a civ. Each combo = (primary, secondary, reasoning)."""
+    combos = []
+    used = set()
+    all_units = civ_cats["all"]
+    mobile = civ_cats["mobile"]
+    ranged_gold = civ_cats["ranged_gold"]
+    siege = civ_cats["siege"]
+    opp_mobile = opp_cats["mobile"]
+
+    def _add(primary_slug, secondary_slug, reasoning):
+        key = (primary_slug, secondary_slug)
+        if key in used or primary_slug == secondary_slug:
+            return False
+        if primary_slug not in all_units or secondary_slug not in all_units:
+            return False
+        used.add(key)
+        combos.append(
+            {
+                "primary": primary_slug,
+                "secondary": secondary_slug,
+                "reasoning": reasoning,
+            }
+        )
+        return True
+
+    if is_mobile_dominant and dominant_slug:
+        # Mobile dominant civ: pair dominant unit with support
+        dom = dominant_slug
+        # Combo 1: dominant + best support vs opponent's counter to dominant
+        support, _ = _find_best_counter(
+            all_units, opp_cats["all"], calc_cost, is_imperial, exclude={dom}
+        )
+        if support:
+            _add(dom, support, f"Dominant mobile + best support")
+
+        # Combo 2: dominant + best ranged support
+        ranged_support, _ = _find_best_counter(
+            ranged_gold, opp_cats["all"], calc_cost, is_imperial, exclude={dom}
+        )
+        if ranged_support:
+            _add(dom, ranged_support, f"Dominant mobile + ranged support")
+
+        # Combo 3: second-best mobile + best support
+        second_mobile = None
+        best_score = -1
+        for s, cu in mobile.items():
+            if s == dom:
+                continue
+            total = 0
+            for _, opp in opp_mobile.items():
+                _, s1, _ = _run_pair(cu, opp, calc_cost, is_imperial)
+                total += s1
+            if total > best_score:
+                best_score = total
+                second_mobile = s
+        if second_mobile and support:
+            _add(second_mobile, support, f"Alt mobile + best support")
+
+        # Combo 4: dominant + trash (no gold cost)
+        trash, _ = _find_best_counter(
+            {s: cu for s, cu in all_units.items() if cu["cost_gold"] == 0},
+            opp_mobile if opp_mobile else opp_cats["all"],
+            calc_cost,
+            is_imperial,
+            exclude={dom},
+        )
+        if trash:
+            _add(dom, trash, f"Dominant mobile + trash (eco-friendly)")
+
+    else:
+        # Weaker mobile civ: lead with ranged, support with counter
+        rng = ranged_slug
+        if rng and opp_mobile:
+            # Combo 1: ranged + best trash counter to opponent's mobile
+            trash_counter, _ = _find_best_counter(
+                {s: cu for s, cu in all_units.items() if cu["cost_gold"] == 0},
+                opp_mobile,
+                calc_cost,
+                is_imperial,
+                exclude={rng} if rng else set(),
+            )
+            if trash_counter:
+                _add(rng, trash_counter, f"Ranged advantage + trash counter")
+
+            # Combo 2: ranged + best gold counter
+            gold_counter, _ = _find_best_counter(
+                {s: cu for s, cu in all_units.items() if cu["cost_gold"] > 0},
+                opp_mobile,
+                calc_cost,
+                is_imperial,
+                exclude={rng} if rng else set(),
+            )
+            if gold_counter:
+                _add(rng, gold_counter, f"Ranged advantage + gold counter")
+
+        # Combo 3: best ranged (may differ) + best counter
+        if ranged_gold:
+            alt_ranged = max(
+                ranged_gold.keys(),
+                key=lambda s: sum(
+                    _run_pair(ranged_gold[s], opp, calc_cost, is_imperial)[1]
+                    for _, opp in opp_cats["all"].items()
+                ),
+                default=None,
+            )
+            if alt_ranged:
+                counter, _ = _find_best_counter(
+                    all_units,
+                    opp_mobile if opp_mobile else opp_cats["all"],
+                    calc_cost,
+                    is_imperial,
+                    exclude={alt_ranged},
+                )
+                if counter:
+                    _add(alt_ranged, counter, f"Best ranged + counter")
+
+        # Combo 4: best siege + counter
+        if siege:
+            best_siege = max(
+                siege.keys(), key=lambda s: siege[s].get("attack", 0), default=None
+            )
+            if best_siege:
+                counter, _ = _find_best_counter(
+                    all_units,
+                    opp_mobile if opp_mobile else opp_cats["all"],
+                    calc_cost,
+                    is_imperial,
+                    exclude={best_siege},
+                )
+                if counter:
+                    _add(best_siege, counter, f"Siege + counter")
+
+    # Fill remaining slots with fallback combos
+    if len(combos) < 4 and all_units:
+        sorted_units = sorted(
+            all_units.keys(),
+            key=lambda s: sum(
+                _run_pair(all_units[s], opp, calc_cost, is_imperial)[1]
+                for _, opp in opp_cats["all"].items()
+            ),
+            reverse=True,
+        )
+        for i, s1 in enumerate(sorted_units[:3]):
+            for s2 in sorted_units[i + 1 :]:
+                if len(combos) >= 4:
+                    break
+                _add(s1, s2, "Top scoring units")
+
+    return combos[:4]
+
+
+def _run_army_sims(
+    combos1,
+    combos2,
+    civ1_units,
+    civ2_units,
+    calc_cost,
+    is_imperial,
+    total_resources=5000,
+):
+    """Run mixed army sims for all combo pairs with various splits.
+    Returns combo_grid with results."""
+    SPLITS = [0.7, 0.6, 0.5, 0.4, 0.3]
+    combo_grid = []
+
+    for c1_idx, c1 in enumerate(combos1):
+        u1a = civ1_units[c1["primary"]]
+        u1b = civ1_units[c1["secondary"]]
+        cost1a = calc_cost(u1a)
+        cost1b = calc_cost(u1b)
+
+        for c2_idx, c2 in enumerate(combos2):
+            u2a = civ2_units[c2["primary"]]
+            u2b = civ2_units[c2["secondary"]]
+            cost2a = calc_cost(u2a)
+            cost2b = calc_cost(u2b)
+
+            best_result = None
+            best_margin = -999
+
+            for s1 in SPLITS:
+                res1a = total_resources * s1
+                res1b = total_resources * (1 - s1)
+                cnt1a = max(1, int(res1a // cost1a))
+                cnt1b = max(1, int(res1b // cost1b))
+
+                for s2 in SPLITS:
+                    res2a = total_resources * s2
+                    res2b = total_resources * (1 - s2)
+                    cnt2a = max(1, int(res2a // cost2a))
+                    cnt2b = max(1, int(res2b // cost2b))
+
+                    w, _, _, hp1, hp2 = simulate_mixed_battle(
+                        [(u1a, cnt1a), (u1b, cnt1b)],
+                        [(u2a, cnt2a), (u2b, cnt2b)],
+                        return_hp=True,
+                    )
+                    margin = hp1 - hp2
+                    if margin > best_margin:
+                        best_margin = margin
+                        best_result = {
+                            "civ1_combo_id": c1_idx,
+                            "civ2_combo_id": c2_idx,
+                            "winner": "civ1"
+                            if w == 1
+                            else ("civ2" if w == 2 else "draw"),
+                            "margin": round(best_margin, 3),
+                            "best_split_civ1": [s1, round(1 - s1, 1)],
+                            "best_split_civ2": [s2, round(1 - s2, 1)],
+                            "counts_civ1": [cnt1a, cnt1b],
+                            "counts_civ2": [cnt2a, cnt2b],
+                        }
+
+            if best_result:
+                combo_grid.append(best_result)
+
+    return combo_grid
+
+
+@app.route("/matchup-advisor")
+def matchup_advisor():
+    """Matchup Advisor page."""
+    civs = _get_ref_civs()
+    return render_template("matchup_advisor.html", civs=civs)
+
+
+@app.route("/api/matchup-advisor/<civ1>/<civ2>")
+def api_matchup_advisor(civ1, civ2):
+    """Strategic army composition analysis for two civs."""
+    if civ1 == civ2:
+        return jsonify({"error": "Please select two different civilizations"}), 400
+
+    ref_conn = get_ref_db()
+    rc = ref_conn.cursor()
+
+    # Verify civs
+    for civ in (civ1, civ2):
+        rc.execute("SELECT DISTINCT civ_name FROM ref_units WHERE civ_name=?", (civ,))
+        if not rc.fetchone():
+            ref_conn.close()
+            return jsonify({"error": f"Civilization '{civ}' not found"}), 404
+
+    MATCHUP_AGES = {"castle": AGES["castle"], "imperial": AGES["imperial"]}
+    results = {}
+
+    for age_slug, age_data in MATCHUP_AGES.items():
+        db_age = "Castle" if age_slug == "castle" else "Imperial"
+        is_imperial = age_slug == "imperial"
+
+        def fetch_advisor_units(civ_name):
+            rc.execute(
+                "SELECT * FROM ref_units WHERE civ_name=? AND age=?",
+                (civ_name, db_age),
+            )
+            units = {}
+            for row in rc.fetchall():
+                slug = row["unit_slug"]
+                if slug in _ADVISOR_EXCLUDED:
+                    continue
+                combat_dict = _build_combat_dict_from_ref(rc, row)
+                cu = prepare_combat_unit(combat_dict)
+                cu["_display_name"] = row["unit_name"]
+                cu["_slug"] = slug
+                cu["_unit_type"] = row["unit_type"]
+                cu["_unit_class_name"] = row["unit_class_name"] or ""
+                units[slug] = cu
+            return units
+
+        civ1_units = fetch_advisor_units(civ1)
+        civ2_units = fetch_advisor_units(civ2)
+
+        if not civ1_units or not civ2_units:
+            results[age_slug] = {
+                "age_name": age_data["name"],
+                "error": "No units found",
+            }
+            continue
+
+        def calc_cost(unit):
+            food = unit["cost_food"]
+            wood = unit["cost_wood"]
+            gold = unit["cost_gold"]
+            if is_imperial:
+                cost = wood + food + gold
+            else:
+                cost = wood + 1.5 * food + gold
+            return int(cost) if cost > 0 else 100
+
+        civ1_cats = _categorize_units(civ1_units)
+        civ2_cats = _categorize_units(civ2_units)
+
+        # --- Phase 1: Mobile Dominance ---
+        c1_mobile = civ1_cats["mobile"]
+        c2_mobile = civ2_cats["mobile"]
+
+        phase1 = {
+            "civ1_units": [],
+            "civ2_units": [],
+            "dominant_civ": None,
+            "dominant_unit": None,
+            "grid": [],
+        }
+
+        c1_clear, c1_best_mob, c1_mob_scores, c1_grid = None, None, {}, []
+        c2_clear, c2_best_mob, c2_mob_scores, c2_grid = None, None, {}, []
+
+        if c1_mobile and c2_mobile:
+            c1_clear, c1_best_mob, c1_mob_scores, c1_grid = (
+                _find_clear_winner_and_scores(
+                    c1_mobile, c2_mobile, calc_cost, is_imperial
+                )
+            )
+            c2_clear, c2_best_mob, c2_mob_scores, c2_grid = (
+                _find_clear_winner_and_scores(
+                    c2_mobile, c1_mobile, calc_cost, is_imperial
+                )
+            )
+
+            # Determine dominant civ
+            if c1_clear and not c2_clear:
+                phase1["dominant_civ"] = "civ1"
+                phase1["dominant_unit"] = {
+                    "slug": c1_clear,
+                    "name": civ1_units[c1_clear]["_display_name"],
+                }
+            elif c2_clear and not c1_clear:
+                phase1["dominant_civ"] = "civ2"
+                phase1["dominant_unit"] = {
+                    "slug": c2_clear,
+                    "name": civ2_units[c2_clear]["_display_name"],
+                }
+            else:
+                # Compare aggregate scores
+                c1_total = sum(s["total_score"] for s in c1_mob_scores.values())
+                c2_total = sum(s["total_score"] for s in c2_mob_scores.values())
+                if c1_total > c2_total:
+                    phase1["dominant_civ"] = "civ1"
+                    phase1["dominant_unit"] = {
+                        "slug": c1_best_mob,
+                        "name": civ1_units[c1_best_mob]["_display_name"],
+                    }
+                elif c2_total > c1_total:
+                    phase1["dominant_civ"] = "civ2"
+                    phase1["dominant_unit"] = {
+                        "slug": c2_best_mob,
+                        "name": civ2_units[c2_best_mob]["_display_name"],
+                    }
+                else:
+                    phase1["dominant_civ"] = "civ1"
+                    phase1["dominant_unit"] = {
+                        "slug": c1_best_mob,
+                        "name": civ1_units[c1_best_mob]["_display_name"],
+                    }
+
+            phase1["civ1_units"] = [
+                {
+                    "slug": s,
+                    "name": civ1_units[s]["_display_name"],
+                    "speed": civ1_units[s]["movement_speed"],
+                    "total_score": c1_mob_scores.get(s, {}).get("total_score", 0),
+                }
+                for s in c1_mobile
+            ]
+            phase1["civ2_units"] = [
+                {
+                    "slug": s,
+                    "name": civ2_units[s]["_display_name"],
+                    "speed": civ2_units[s]["movement_speed"],
+                    "total_score": c2_mob_scores.get(s, {}).get("total_score", 0),
+                }
+                for s in c2_mobile
+            ]
+            # Merge grids (c1 attacking c2)
+            phase1["grid"] = c1_grid
+
+        elif c1_mobile and not c2_mobile:
+            phase1["dominant_civ"] = "civ1"
+            best = max(c1_mobile.keys(), key=lambda s: c1_mobile[s]["movement_speed"])
+            phase1["dominant_unit"] = {
+                "slug": best,
+                "name": civ1_units[best]["_display_name"],
+            }
+            phase1["civ1_units"] = [
+                {
+                    "slug": s,
+                    "name": civ1_units[s]["_display_name"],
+                    "speed": civ1_units[s]["movement_speed"],
+                    "total_score": 0,
+                }
+                for s in c1_mobile
+            ]
+        elif c2_mobile and not c1_mobile:
+            phase1["dominant_civ"] = "civ2"
+            best = max(c2_mobile.keys(), key=lambda s: c2_mobile[s]["movement_speed"])
+            phase1["dominant_unit"] = {
+                "slug": best,
+                "name": civ2_units[best]["_display_name"],
+            }
+            phase1["civ2_units"] = [
+                {
+                    "slug": s,
+                    "name": civ2_units[s]["_display_name"],
+                    "speed": civ2_units[s]["movement_speed"],
+                    "total_score": 0,
+                }
+                for s in c2_mobile
+            ]
+
+        # --- Phase 2: Ranged Advantage (for weaker mobile civ) ---
+        weaker_civ = "civ2" if phase1["dominant_civ"] == "civ1" else "civ1"
+        phase2 = {
+            "analyzed_for": weaker_civ,
+            "advantage_unit": None,
+            "has_clear_advantage": False,
+            "grid": [],
+        }
+
+        weaker_ranged = (
+            civ1_cats["ranged_gold"]
+            if weaker_civ == "civ1"
+            else civ2_cats["ranged_gold"]
+        )
+        dom_ranged = (
+            civ2_cats["ranged_gold"]
+            if weaker_civ == "civ1"
+            else civ1_cats["ranged_gold"]
+        )
+
+        ranged_advantage_slug = None
+        if weaker_ranged and dom_ranged:
+            r_clear, r_best, r_scores, r_grid = _find_clear_winner_and_scores(
+                weaker_ranged, dom_ranged, calc_cost, is_imperial
+            )
+            phase2["grid"] = r_grid
+            if r_clear:
+                phase2["has_clear_advantage"] = True
+                ranged_advantage_slug = r_clear
+            else:
+                ranged_advantage_slug = r_best
+            weaker_units = civ1_units if weaker_civ == "civ1" else civ2_units
+            if ranged_advantage_slug and ranged_advantage_slug in weaker_units:
+                phase2["advantage_unit"] = {
+                    "slug": ranged_advantage_slug,
+                    "name": weaker_units[ranged_advantage_slug]["_display_name"],
+                }
+        elif weaker_ranged:
+            ranged_advantage_slug = max(
+                weaker_ranged.keys(),
+                key=lambda s: weaker_ranged[s].get("attack", 0),
+                default=None,
+            )
+            weaker_units = civ1_units if weaker_civ == "civ1" else civ2_units
+            if ranged_advantage_slug:
+                phase2["advantage_unit"] = {
+                    "slug": ranged_advantage_slug,
+                    "name": weaker_units[ranged_advantage_slug]["_display_name"],
+                }
+
+        # --- Phase 3: Build Combos ---
+        dominant_slug = (
+            phase1["dominant_unit"]["slug"] if phase1["dominant_unit"] else None
+        )
+
+        # Determine which civ is dominant and weaker
+        if phase1["dominant_civ"] == "civ1":
+            c1_combos = _build_combos_for_civ(
+                civ1_cats,
+                civ2_cats,
+                True,
+                dominant_slug,
+                None,
+                calc_cost,
+                is_imperial,
+                civ1_units,
+            )
+            c2_combos = _build_combos_for_civ(
+                civ2_cats,
+                civ1_cats,
+                False,
+                None,
+                ranged_advantage_slug,
+                calc_cost,
+                is_imperial,
+                civ2_units,
+            )
+        else:
+            c1_combos = _build_combos_for_civ(
+                civ1_cats,
+                civ2_cats,
+                False,
+                None,
+                ranged_advantage_slug,
+                calc_cost,
+                is_imperial,
+                civ1_units,
+            )
+            c2_combos = _build_combos_for_civ(
+                civ2_cats,
+                civ1_cats,
+                True,
+                dominant_slug,
+                None,
+                calc_cost,
+                is_imperial,
+                civ2_units,
+            )
+
+        def _format_combos(combo_list, units_dict):
+            out = []
+            for i, c in enumerate(combo_list):
+                out.append(
+                    {
+                        "id": i,
+                        "primary": {
+                            "slug": c["primary"],
+                            "name": units_dict[c["primary"]]["_display_name"],
+                        },
+                        "secondary": {
+                            "slug": c["secondary"],
+                            "name": units_dict[c["secondary"]]["_display_name"],
+                        },
+                        "reasoning": c["reasoning"],
+                        "is_recommended": i == 0,
+                        "army_score": 0,
+                        "best_split": [0.5, 0.5],
+                    }
+                )
+            return out
+
+        phase3_civ1 = _format_combos(c1_combos, civ1_units)
+        phase3_civ2 = _format_combos(c2_combos, civ2_units)
+
+        # --- Phase 4: Army Combo Simulation ---
+        combo_grid = []
+        if c1_combos and c2_combos:
+            combo_grid = _run_army_sims(
+                c1_combos, c2_combos, civ1_units, civ2_units, calc_cost, is_imperial
+            )
+
+            # Update army scores on combos: best margin for each combo across all opponents
+            for entry in combo_grid:
+                c1_id = entry["civ1_combo_id"]
+                c2_id = entry["civ2_combo_id"]
+                margin = entry["margin"]
+                if c1_id < len(phase3_civ1):
+                    if margin > phase3_civ1[c1_id]["army_score"]:
+                        phase3_civ1[c1_id]["army_score"] = round(margin, 3)
+                        phase3_civ1[c1_id]["best_split"] = entry["best_split_civ1"]
+                if c2_id < len(phase3_civ2):
+                    neg_margin = -margin
+                    if neg_margin > phase3_civ2[c2_id]["army_score"]:
+                        phase3_civ2[c2_id]["army_score"] = round(neg_margin, 3)
+                        phase3_civ2[c2_id]["best_split"] = entry["best_split_civ2"]
+
+        results[age_slug] = {
+            "age_name": age_data["name"],
+            "phase1_mobile": phase1,
+            "phase2_ranged": phase2,
+            "phase3_combos": {
+                "civ1": phase3_civ1,
+                "civ2": phase3_civ2,
+            },
+            "phase4_army": {
+                "combo_grid": combo_grid,
+            },
+        }
+
+    # Build all_units list for custom combo dropdowns
+    all_units_out = {"civ1": [], "civ2": []}
+    for age_slug in ("castle", "imperial"):
+        db_age = "Castle" if age_slug == "castle" else "Imperial"
+        for civ_key, civ_name in (("civ1", civ1), ("civ2", civ2)):
+            rc.execute(
+                "SELECT unit_slug, unit_name FROM ref_units WHERE civ_name=? AND age=? ORDER BY unit_name",
+                (civ_name, db_age),
+            )
+            for row in rc.fetchall():
+                if row["unit_slug"] not in _ADVISOR_EXCLUDED:
+                    all_units_out[civ_key].append(
+                        {
+                            "slug": row["unit_slug"],
+                            "name": row["unit_name"],
+                            "age": age_slug,
+                        }
+                    )
+
+    ref_conn.close()
+    return jsonify(
+        {
+            "civ1": civ1,
+            "civ2": civ2,
+            "all_units": all_units_out,
+            "ages": results,
+        }
+    )
+
+
+@app.route("/api/matchup-advisor/vote", methods=["POST"])
+def api_matchup_advisor_vote():
+    """Record user's combo selection for later analysis."""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    vote = {
+        "civ1": data.get("civ1"),
+        "civ2": data.get("civ2"),
+        "age": data.get("age"),
+        "selected_for": data.get("selected_for"),
+        "selection_type": data.get("selection_type", "preset"),
+        "combo_id": data.get("combo_id"),
+        "combo_primary": data.get("combo_primary"),
+        "combo_secondary": data.get("combo_secondary"),
+        "recommended_combo_id": data.get("recommended_combo_id"),
+        "recommended_primary": data.get("recommended_primary"),
+        "recommended_secondary": data.get("recommended_secondary"),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
+    try:
+        with open(VOTES_FILE, "a") as f:
+            f.write(json.dumps(vote) + "\n")
+    except OSError:
+        return jsonify({"error": "Failed to record vote"}), 500
+
+    return jsonify({"status": "ok"})
 
 
 if __name__ == "__main__":

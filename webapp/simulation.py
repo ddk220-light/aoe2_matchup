@@ -18,6 +18,7 @@ MELEE_RANGE = 0.5
 MAP_SPACE = 22.0  # ~tiles of combat space (MAP_MAX - 2*start_offset)
 RETARGET_DIST = 1.5  # tiles to walk when switching to a new melee target
 UNIT_SPACING = 0.75  # approximate unit spacing in melee clump
+RETREAT_MAX = 10.0  # max tiles ranged retreats before standing to fight
 
 
 def _parse_dismount(row):
@@ -691,8 +692,6 @@ def simulate_battle(
     closing_time1 = 0.0  # actual closing time for team2 melee reaching team1 ranged
     closing_time2 = 0.0  # actual closing time for team1 melee reaching team2 ranged
 
-    RETREAT_MAX = 10.0  # max tiles ranged retreats before standing to fight
-
     if is_ranged1 and not is_ranged2:
         # Team 1 ranged vs team 2 melee
         # Ranged retreats while melee chases. During each attack cycle,
@@ -1210,6 +1209,639 @@ def simulate_battle(
     # PHASE 3: Winner determination
     # =========================================================
 
+    remaining1 = sum(1 for h in hp1 if h > 0)
+    remaining2 = sum(1 for h in hp2 if h > 0)
+    total_hp1 = sum(max(0, h) for h in hp1)
+    total_hp2 = sum(max(0, h) for h in hp2)
+    hp_pct1 = total_hp1 / start_total_hp1 if start_total_hp1 > 0 else 0.0
+    hp_pct2 = total_hp2 / start_total_hp2 if start_total_hp2 > 0 else 0.0
+
+    def _result(winner):
+        if return_hp:
+            return (winner, remaining1, remaining2, hp_pct1, hp_pct2)
+        return (winner, remaining1, remaining2)
+
+    if remaining1 > 0 and remaining2 == 0:
+        return _result(1)
+    elif remaining2 > 0 and remaining1 == 0:
+        return _result(2)
+    else:
+        lost1 = count1 - remaining1
+        lost2 = count2 - remaining2
+        if lost1 > lost2:
+            return _result(2)
+        elif lost2 > lost1:
+            return _result(1)
+        else:
+            if hp_pct1 < hp_pct2:
+                return _result(2)
+            elif hp_pct2 < hp_pct1:
+                return _result(1)
+            else:
+                return _result(0)
+
+
+def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
+    """Simulate a battle with 2 unit types per side (mixed army).
+
+    Simplified vs simulate_battle(): no dismount, no transform, no dodge shield,
+    no block first melee, no bleed, no kill bonus. Covers core mechanics:
+    damage, armor, bonus damage, accuracy, reload, speed, trample, siege splash,
+    extra projectiles, HP regen, opening volley, retarget delay.
+
+    Args:
+        units_team1: list of (combat_unit, count) tuples, e.g. [(knight, 15), (hussar, 10)]
+        units_team2: list of (combat_unit, count) tuples
+        return_hp: if True, returns 5-tuple with HP totals
+
+    Returns: (winner, team1_remaining, team2_remaining) or
+             (winner, team1_remaining, team2_remaining, hp_pct1, hp_pct2) if return_hp
+    """
+
+    # --- Flatten teams into per-unit arrays ---
+    # Each unit gets a type_idx (0 or 1) within its team
+    def _flatten_team(unit_list):
+        """Build per-unit arrays from [(combat_unit, count), ...]."""
+        total = sum(c for _, c in unit_list)
+        if total == 0:
+            return None
+        hp = [0.0] * total
+        max_hp = [0.0] * total
+        reload_arr = [0.0] * total
+        delay_arr = [0.0] * total
+        speed_arr = [0.0] * total
+        accuracy_arr = [0.0] * total
+        is_ranged_arr = [False] * total
+        type_idx_arr = [0] * total
+        extra_proj_arr = [0] * total
+        first_burst_arr = [0] * total
+        regen_arr = [0.0] * total
+        min_range_arr = [0.0] * total
+
+        idx = 0
+        templates = []
+        for ti, (cu, count) in enumerate(unit_list):
+            rng = cu["attack_range"]
+            is_rng = rng >= 1.0
+            aspd = cu["attack_speed"] or 0.5
+            rl = 1.0 / aspd if aspd > 0 else 2.0
+            acc = cu.get("accuracy", 100) / 100.0
+            spd = cu["movement_speed"]
+            regen = cu["hp_regen"] / 60.0 * DT if cu["hp_regen"] > 0 else 0.0
+
+            templates.append(
+                {
+                    "cu": cu,
+                    "is_ranged": is_rng,
+                    "range": rng,
+                    "reload": rl,
+                    "delay": cu["attack_delay"],
+                    "speed": spd,
+                    "accuracy": acc,
+                    "extra_proj": cu["extra_projectiles"],
+                    "first_burst": cu["first_attack_extra_projectiles"],
+                    "is_siege": cu["is_siege_projectile"] == 1,
+                    "siege_splash": _splash_targets(cu["splash_radius"])
+                    if cu["is_siege_projectile"] == 1
+                    else 0,
+                    "splash_hit": _splash_targets(cu["splash_on_hit_radius"]),
+                    "has_trample": (
+                        cu["trample_percent"] > 0 or cu["trample_flat_damage"] > 0
+                    )
+                    and not is_rng,
+                    "trample_radius": cu["trample_radius"],
+                    "min_range": cu["min_attack_range"],
+                    "regen_per_tick": regen,
+                }
+            )
+
+            for j in range(count):
+                hp[idx] = float(cu["hp"])
+                max_hp[idx] = float(cu["hp"])
+                reload_arr[idx] = rl
+                delay_arr[idx] = cu["attack_delay"]
+                speed_arr[idx] = spd
+                accuracy_arr[idx] = acc
+                is_ranged_arr[idx] = is_rng
+                type_idx_arr[idx] = ti
+                extra_proj_arr[idx] = cu["extra_projectiles"]
+                first_burst_arr[idx] = cu["first_attack_extra_projectiles"]
+                regen_arr[idx] = regen
+                min_range_arr[idx] = cu["min_attack_range"]
+                idx += 1
+
+        return {
+            "total": total,
+            "hp": hp,
+            "max_hp": max_hp,
+            "reload": reload_arr,
+            "delay": delay_arr,
+            "speed": speed_arr,
+            "accuracy": accuracy_arr,
+            "is_ranged": is_ranged_arr,
+            "type_idx": type_idx_arr,
+            "extra_proj": extra_proj_arr,
+            "first_burst": first_burst_arr,
+            "regen": regen_arr,
+            "min_range": min_range_arr,
+            "templates": templates,
+            "units": unit_list,
+        }
+
+    t1 = _flatten_team(units_team1)
+    t2 = _flatten_team(units_team2)
+    if not t1 or not t2:
+        if return_hp:
+            return (0, 0, 0, 0.0, 0.0)
+        return (0, 0, 0)
+
+    count1, count2 = t1["total"], t2["total"]
+    EXTRA_PROJ_ACCURACY = 0.5
+
+    # --- Pre-compute damage matrix ---
+    # dmg[attacker_type][defender_type] = (main_dmg, extra_proj_dmg, trample_dmg, trample_extra)
+    n_types1 = len(t1["templates"])
+    n_types2 = len(t2["templates"])
+
+    # Team1 attacking team2
+    dmg_1v2 = {}
+    for ati in range(n_types1):
+        a = t1["templates"][ati]["cu"]
+        a_ranged = t1["templates"][ati]["is_ranged"]
+        for dti in range(n_types2):
+            d = t2["templates"][dti]["cu"]
+            main = _calc_damage(
+                a["attacks"],
+                a["attack"],
+                d["armors"],
+                d["melee_armor"],
+                d["pierce_armor"],
+                a_ranged,
+                ignores_pierce=a["ignores_pierce_armor"],
+                ignores_melee=a["ignores_melee_armor"],
+                bonus_damage_reduction=d["bonus_damage_reduction"],
+            )
+            # Extra projectile damage
+            epa = a.get("extra_projectile_attacks")
+            if epa and (
+                a["extra_projectiles"] > 0 or a["first_attack_extra_projectiles"] > 0
+            ):
+                sec_base = epa.get(3, epa.get(4, 0))
+                extra = _calc_damage(
+                    epa,
+                    sec_base,
+                    d["armors"],
+                    d["melee_armor"],
+                    d["pierce_armor"],
+                    a_ranged,
+                    ignores_pierce=a["ignores_pierce_armor"],
+                    ignores_melee=a["ignores_melee_armor"],
+                    bonus_damage_reduction=d["bonus_damage_reduction"],
+                )
+            else:
+                extra = main
+            # Trample
+            tmpl = t1["templates"][ati]
+            if tmpl["has_trample"]:
+                t_dmg = int(main * a["trample_percent"]) + a["trample_flat_damage"]
+                t_extra = _splash_targets(a["trample_radius"])
+            else:
+                t_dmg, t_extra = 0, 0
+            dmg_1v2[(ati, dti)] = (main, extra, t_dmg, t_extra)
+
+    # Team2 attacking team1
+    dmg_2v1 = {}
+    for ati in range(n_types2):
+        a = t2["templates"][ati]["cu"]
+        a_ranged = t2["templates"][ati]["is_ranged"]
+        for dti in range(n_types1):
+            d = t1["templates"][dti]["cu"]
+            main = _calc_damage(
+                a["attacks"],
+                a["attack"],
+                d["armors"],
+                d["melee_armor"],
+                d["pierce_armor"],
+                a_ranged,
+                ignores_pierce=a["ignores_pierce_armor"],
+                ignores_melee=a["ignores_melee_armor"],
+                bonus_damage_reduction=d["bonus_damage_reduction"],
+            )
+            epa = a.get("extra_projectile_attacks")
+            if epa and (
+                a["extra_projectiles"] > 0 or a["first_attack_extra_projectiles"] > 0
+            ):
+                sec_base = epa.get(3, epa.get(4, 0))
+                extra = _calc_damage(
+                    epa,
+                    sec_base,
+                    d["armors"],
+                    d["melee_armor"],
+                    d["pierce_armor"],
+                    a_ranged,
+                    ignores_pierce=a["ignores_pierce_armor"],
+                    ignores_melee=a["ignores_melee_armor"],
+                    bonus_damage_reduction=d["bonus_damage_reduction"],
+                )
+            else:
+                extra = main
+            tmpl = t2["templates"][ati]
+            if tmpl["has_trample"]:
+                t_dmg = int(main * a["trample_percent"]) + a["trample_flat_damage"]
+                t_extra = _splash_targets(a["trample_radius"])
+            else:
+                t_dmg, t_extra = 0, 0
+            dmg_2v1[(ati, dti)] = (main, extra, t_dmg, t_extra)
+
+    # --- Per-unit state ---
+    cooldown1 = [0.0] * count1
+    cooldown2 = [0.0] * count2
+    used_first1 = [False] * count1
+    used_first2 = [False] * count2
+    prev_target1 = [-1] * count1
+    prev_target2 = [-1] * count2
+
+    start_total_hp1 = sum(t1["hp"])
+    start_total_hp2 = sum(t2["hp"])
+
+    hp1 = t1["hp"]
+    hp2 = t2["hp"]
+
+    # =========================================================
+    # PHASE 1: Opening volley
+    # =========================================================
+    # Group attackers by type, calculate opening shots per type.
+    # Only ranged types get opening shots.
+
+    def _calc_opening_shots(attacker_tmpl, defender_templates, a_count):
+        """Calculate number of free opening shots for one ranged attacker type
+        vs the enemy team. Returns int."""
+        if not attacker_tmpl["is_ranged"]:
+            return 0
+
+        a_range = attacker_tmpl["range"]
+        a_speed = attacker_tmpl["speed"]
+        a_reload = attacker_tmpl["reload"]
+        a_delay = attacker_tmpl["delay"]
+        a_min_range = attacker_tmpl["min_range"]
+
+        # Check if any defender is melee (ranged vs melee = free shots)
+        has_melee_enemy = any(not dt["is_ranged"] for dt in defender_templates)
+        has_ranged_enemy = any(dt["is_ranged"] for dt in defender_templates)
+
+        shots = 0
+        if has_melee_enemy:
+            # Use fastest melee enemy for closing time calc
+            fastest_melee_speed = max(
+                (dt["speed"] for dt in defender_templates if not dt["is_ranged"]),
+                default=1.0,
+            )
+            fastest_melee_delay = min(
+                (dt["delay"] for dt in defender_templates if not dt["is_ranged"]),
+                default=0.0,
+            )
+            fire_dist = a_range - max(a_min_range, MELEE_RANGE)
+            if fire_dist > 0 and fastest_melee_speed > 0:
+                move_frac = max(0.0, 1.0 - a_delay / a_reload) if a_reload > 0 else 1.0
+                eff_retreat = a_speed * move_frac
+                net_speed = fastest_melee_speed - eff_retreat
+                if net_speed > 0:
+                    retreat_time = (
+                        min(RETREAT_MAX / eff_retreat, fire_dist / net_speed)
+                        if eff_retreat > 0
+                        else fire_dist / net_speed
+                    )
+                    remaining_dist = fire_dist - net_speed * retreat_time
+                else:
+                    retreat_time = RETREAT_MAX / eff_retreat if eff_retreat > 0 else 0
+                    remaining_dist = fire_dist
+                stand_time = (
+                    remaining_dist / fastest_melee_speed if remaining_dist > 0 else 0
+                )
+                closing_time = retreat_time + stand_time + fastest_melee_delay
+                if closing_time > a_delay:
+                    shots = 1 + int((closing_time - a_delay) / a_reload)
+        elif has_ranged_enemy:
+            # Both ranged: range difference gives bonus shots
+            max_enemy_range = max(
+                dt["range"] for dt in defender_templates if dt["is_ranged"]
+            )
+            range_diff = a_range - max_enemy_range
+            if range_diff > 0:
+                shots = max(0, int(range_diff / 2))
+
+        return shots
+
+    def _calc_mixed_opening_dmg(
+        a_tmpl_idx, shots, a_team, d_team, dmg_matrix, a_used_first
+    ):
+        """Calculate opening volley damage into a pending list (not applied yet).
+        Uses a simulated HP copy for focus-fire targeting.
+        Returns list of (target_idx, damage) tuples."""
+        if shots <= 0:
+            return []
+        tmpl = a_team["templates"][a_tmpl_idx]
+        a_indices = [
+            i for i in range(a_team["total"]) if a_team["type_idx"][i] == a_tmpl_idx
+        ]
+        if not a_indices:
+            return []
+
+        pending = []
+        sim_hp = list(d_team["hp"])
+
+        for _ in range(shots):
+            d_alive = [i for i in range(d_team["total"]) if sim_hp[i] > 0]
+            if not d_alive:
+                break
+
+            for a_idx in a_indices:
+                d_alive_now = [i for i in range(d_team["total"]) if sim_hp[i] > 0]
+                if not d_alive_now:
+                    break
+
+                target = min(d_alive_now, key=lambda i: sim_hp[i])
+                d_type = d_team["type_idx"][target]
+
+                main_dmg, extra_dmg, _, _ = dmg_matrix[(a_tmpl_idx, d_type)]
+                num_extra = tmpl["extra_proj"]
+                if tmpl["first_burst"] > 0 and not a_used_first[a_idx]:
+                    num_extra += tmpl["first_burst"]
+                    a_used_first[a_idx] = True
+
+                # Main projectile
+                if tmpl["accuracy"] >= 1.0 or random.random() < tmpl["accuracy"]:
+                    pending.append((target, main_dmg))
+                    sim_hp[target] -= main_dmg
+                    # Siege splash
+                    if tmpl["is_siege"] and tmpl["siege_splash"] > 0:
+                        splashed = 0
+                        for idx in d_alive_now:
+                            if (
+                                idx != target
+                                and sim_hp[idx] > 0
+                                and splashed < tmpl["siege_splash"]
+                            ):
+                                pending.append((idx, main_dmg))
+                                sim_hp[idx] -= main_dmg
+                                splashed += 1
+                    # Splash on hit
+                    if tmpl["splash_hit"] > 0:
+                        splashed = 0
+                        for idx in d_alive_now:
+                            if (
+                                idx != target
+                                and sim_hp[idx] > 0
+                                and splashed < tmpl["splash_hit"]
+                            ):
+                                pending.append((idx, main_dmg))
+                                sim_hp[idx] -= main_dmg
+                                splashed += 1
+
+                # Extra projectiles (scatter)
+                for _ in range(num_extra):
+                    if random.random() < EXTRA_PROJ_ACCURACY:
+                        pending.append((target, extra_dmg))
+                        sim_hp[target] -= extra_dmg
+
+        return pending
+
+    # Calculate opening volleys for both teams simultaneously, then apply
+    opening_dmg_vs_t2 = []
+    opening_dmg_vs_t1 = []
+    for ti in range(n_types1):
+        shots = _calc_opening_shots(t1["templates"][ti], t2["templates"], count1)
+        opening_dmg_vs_t2.extend(
+            _calc_mixed_opening_dmg(ti, shots, t1, t2, dmg_1v2, used_first1)
+        )
+    for ti in range(n_types2):
+        shots = _calc_opening_shots(t2["templates"][ti], t1["templates"], count2)
+        opening_dmg_vs_t1.extend(
+            _calc_mixed_opening_dmg(ti, shots, t2, t1, dmg_2v1, used_first2)
+        )
+
+    # Apply opening damage atomically (both teams fire simultaneously)
+    for target_idx, damage in opening_dmg_vs_t2:
+        hp2[target_idx] -= damage
+    for target_idx, damage in opening_dmg_vs_t1:
+        hp1[target_idx] -= damage
+
+    # =========================================================
+    # PHASE 2: Tick-based combat loop
+    # =========================================================
+
+    for tick in range(MAX_TICKS):
+        alive1 = _get_alive_targets(hp1, count1)
+        alive2 = _get_alive_targets(hp2, count2)
+        if not alive1 or not alive2:
+            break
+
+        # Decrement cooldowns
+        for i in alive1:
+            cooldown1[i] = max(0.0, cooldown1[i] - DT)
+        for i in alive2:
+            cooldown2[i] = max(0.0, cooldown2[i] - DT)
+
+        # Assign targets per unit
+        # Ranged units: focus fire (group by type for damage lookup)
+        # Melee units: spread evenly
+        def _assign_mixed(my_alive, my_team, enemy_alive, enemy_hp, dmg_matrix):
+            targets = {}
+            for i in my_alive:
+                if my_team["is_ranged"][i]:
+                    # Focus fire: pick lowest HP alive enemy
+                    if enemy_alive:
+                        targets[i] = min(enemy_alive, key=lambda e: enemy_hp[e])
+                else:
+                    # Spread: distribute evenly
+                    if enemy_alive:
+                        li = my_alive.index(i)
+                        targets[i] = enemy_alive[li * len(enemy_alive) // len(my_alive)]
+            return targets
+
+        targets1 = _assign_mixed(alive1, t1, alive2, hp2, dmg_1v2)
+        targets2 = _assign_mixed(alive2, t2, alive1, hp1, dmg_2v1)
+
+        pending_damage = []
+
+        if tick % 2 == 0:
+            team_order = [1, 2]
+        else:
+            team_order = [2, 1]
+
+        for team_id in team_order:
+            if team_id == 1:
+                my_alive, my_team, my_targets = alive1, t1, targets1
+                my_cooldown, my_used_first = cooldown1, used_first1
+                my_prev_target = prev_target1
+                enemy_hp, enemy_alive, enemy_team_data = hp2, alive2, t2
+                dmg_matrix = dmg_1v2
+                enemy_team_id = 2
+            else:
+                my_alive, my_team, my_targets = alive2, t2, targets2
+                my_cooldown, my_used_first = cooldown2, used_first2
+                my_prev_target = prev_target2
+                enemy_hp, enemy_alive, enemy_team_data = hp1, alive1, t1
+                dmg_matrix = dmg_2v1
+                enemy_team_id = 1
+
+            for i in my_alive:
+                if my_cooldown[i] > 0:
+                    continue
+
+                my_ti = my_team["type_idx"][i]
+                tmpl = my_team["templates"][my_ti]
+
+                # Min range check: siege can't attack at melee range
+                if tmpl["is_ranged"] and tmpl["min_range"] >= 2.0:
+                    # Check if any enemy is melee (already closed in)
+                    has_melee_enemy = any(
+                        not enemy_team_data["is_ranged"][e] for e in enemy_alive
+                    )
+                    if has_melee_enemy:
+                        continue
+
+                target_idx = my_targets.get(i, -1)
+                if target_idx < 0:
+                    continue
+                target_idx = _find_alive_target(target_idx, enemy_hp, enemy_alive)
+                if target_idx < 0:
+                    continue
+
+                # Retarget delay for melee
+                prev = my_prev_target[i]
+                if prev >= 0 and target_idx != prev and not tmpl["is_ranged"]:
+                    retarget_time = (
+                        RETARGET_DIST / tmpl["speed"] if tmpl["speed"] > 0 else 2.0
+                    )
+                    my_cooldown[i] = retarget_time
+                    my_prev_target[i] = target_idx
+                    continue
+                my_prev_target[i] = target_idx
+
+                d_ti = enemy_team_data["type_idx"][target_idx]
+                main_dmg, extra_dmg, trample_dmg, trample_extra = dmg_matrix[
+                    (my_ti, d_ti)
+                ]
+
+                if tmpl["is_ranged"]:
+                    num_extra = tmpl["extra_proj"]
+                    if tmpl["first_burst"] > 0 and not my_used_first[i]:
+                        num_extra += tmpl["first_burst"]
+                        my_used_first[i] = True
+                    # Main projectile with accuracy
+                    if tmpl["accuracy"] >= 1.0 or random.random() < tmpl["accuracy"]:
+                        pending_damage.append(
+                            (enemy_team_id, target_idx, main_dmg, i, team_id)
+                        )
+                    # Extra projectiles
+                    for _ in range(num_extra):
+                        if random.random() < EXTRA_PROJ_ACCURACY:
+                            pending_damage.append(
+                                (enemy_team_id, target_idx, extra_dmg, i, team_id)
+                            )
+                    my_cooldown[i] = tmpl["reload"]
+                else:
+                    # Melee with delay
+                    if tmpl["delay"] > 0:
+                        # Simplified: add delay to cooldown, damage next cycle
+                        my_cooldown[i] = tmpl["delay"]
+                        # Queue damage at delay time (approximate: apply immediately)
+                        pending_damage.append(
+                            (enemy_team_id, target_idx, main_dmg, i, team_id)
+                        )
+                        my_cooldown[i] = tmpl["reload"]
+                    else:
+                        pending_damage.append(
+                            (enemy_team_id, target_idx, main_dmg, i, team_id)
+                        )
+                        my_cooldown[i] = tmpl["reload"]
+
+        # --- Apply pending damage ---
+        for (
+            target_team,
+            target_idx,
+            damage,
+            attacker_idx,
+            attacker_team,
+        ) in pending_damage:
+            if target_team == 1:
+                t_hp = hp1
+                all_alive = alive1
+            else:
+                t_hp = hp2
+                all_alive = alive2
+
+            if t_hp[target_idx] <= 0:
+                continue
+
+            t_hp[target_idx] -= damage
+
+            # Get attacker info for splash/trample
+            if attacker_team == 1:
+                a_ti = t1["type_idx"][attacker_idx]
+                a_tmpl = t1["templates"][a_ti]
+                d_ti_lookup = (
+                    t2["type_idx"][target_idx]
+                    if target_team == 2
+                    else t1["type_idx"][target_idx]
+                )
+                matrix = dmg_1v2
+            else:
+                a_ti = t2["type_idx"][attacker_idx]
+                a_tmpl = t2["templates"][a_ti]
+                d_ti_lookup = (
+                    t1["type_idx"][target_idx]
+                    if target_team == 1
+                    else t2["type_idx"][target_idx]
+                )
+                matrix = dmg_2v1
+
+            _, _, trample_dmg, trample_extra = matrix[(a_ti, d_ti_lookup)]
+
+            # Trample
+            if trample_dmg > 0 and trample_extra > 0:
+                splashed = 0
+                for idx in all_alive:
+                    if idx != target_idx and t_hp[idx] > 0 and splashed < trample_extra:
+                        t_hp[idx] -= trample_dmg
+                        splashed += 1
+
+            # Siege splash
+            if a_tmpl["is_siege"] and a_tmpl["siege_splash"] > 0:
+                splashed = 0
+                for idx in all_alive:
+                    if (
+                        idx != target_idx
+                        and t_hp[idx] > 0
+                        and splashed < a_tmpl["siege_splash"]
+                    ):
+                        t_hp[idx] -= damage
+                        splashed += 1
+
+            # Splash on hit
+            if a_tmpl["splash_hit"] > 0:
+                splashed = 0
+                for idx in all_alive:
+                    if (
+                        idx != target_idx
+                        and t_hp[idx] > 0
+                        and splashed < a_tmpl["splash_hit"]
+                    ):
+                        t_hp[idx] -= damage
+                        splashed += 1
+
+        # --- HP regeneration ---
+        for i in alive1:
+            if t1["regen"][i] > 0 and hp1[i] < t1["max_hp"][i]:
+                hp1[i] = min(t1["max_hp"][i], hp1[i] + t1["regen"][i])
+        for i in alive2:
+            if t2["regen"][i] > 0 and hp2[i] < t2["max_hp"][i]:
+                hp2[i] = min(t2["max_hp"][i], hp2[i] + t2["regen"][i])
+
+    # =========================================================
+    # PHASE 3: Winner determination
+    # =========================================================
     remaining1 = sum(1 for h in hp1 if h > 0)
     remaining2 = sum(1 for h in hp2 if h > 0)
     total_hp1 = sum(max(0, h) for h in hp1)

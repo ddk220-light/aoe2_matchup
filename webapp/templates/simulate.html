@@ -947,6 +947,8 @@
                 "Elite Magyar Huszar": 869,
                 Boyar: 876,
                 "Elite Boyar": 876,
+                Condottiero: 882,
+                Slinger: 185,
             };
 
             const CLASS_TO_BUILDING = {
@@ -1327,6 +1329,7 @@
                     this.hpTransformThreshold =
                         stats.hp_transform_threshold || 0;
                     this.hpRegen = stats.hp_regen || 0;
+                    this.passThroughPercent = stats.pass_through_percent || 0;
 
                     // Charge projectiles (Fire Lancer)
                     this.chargeProjectileCount =
@@ -1836,6 +1839,40 @@
                                 }
                             }
 
+                            // Pass-through: 1 unit behind target takes fraction of damage
+                            if (attacker.passThroughPercent > 0) {
+                                const ptDmg = Math.max(
+                                    1,
+                                    Math.floor(
+                                        damage * attacker.passThroughPercent,
+                                    ),
+                                );
+                                const enemies =
+                                    attacker.team === 1
+                                        ? simulation.team2
+                                        : simulation.team1;
+                                // Find closest alive enemy behind target (not the target itself)
+                                let best = null;
+                                let bestDist = Infinity;
+                                for (const enemy of enemies) {
+                                    if (
+                                        enemy !== target &&
+                                        enemy.state !== "dead"
+                                    ) {
+                                        const dx = enemy.x - target.x;
+                                        const dy = enemy.y - target.y;
+                                        const d = Math.sqrt(dx * dx + dy * dy);
+                                        if (d < bestDist) {
+                                            bestDist = d;
+                                            best = enemy;
+                                        }
+                                    }
+                                }
+                                if (best) {
+                                    best.takeDamage(ptDmg, attacker);
+                                }
+                            }
+
                             // Bleed
                             if (attacker.bleedDps > 0 && targetWasAlive) {
                                 target.bleedEffect = {
@@ -1952,6 +1989,34 @@
                                     enemy.takeDamage(damage, this);
                                 }
                             }
+                        }
+                    }
+
+                    // Pass-through (melee path, if applicable)
+                    if (this.passThroughPercent > 0) {
+                        const ptDmg = Math.max(
+                            1,
+                            Math.floor(damage * this.passThroughPercent),
+                        );
+                        const enemies =
+                            this.team === 1
+                                ? simulation.team2
+                                : simulation.team1;
+                        let best = null;
+                        let bestDist = Infinity;
+                        for (const enemy of enemies) {
+                            if (enemy !== target && enemy.state !== "dead") {
+                                const dx = enemy.x - target.x;
+                                const dy = enemy.y - target.y;
+                                const d = Math.sqrt(dx * dx + dy * dy);
+                                if (d < bestDist) {
+                                    bestDist = d;
+                                    best = enemy;
+                                }
+                            }
+                        }
+                        if (best) {
+                            best.takeDamage(ptDmg, this);
                         }
                     }
 
@@ -2756,6 +2821,62 @@
                         // === TOTAL ===
                         html += `<div class="formula-result"><div class="formula-label">Damage per Hit:</div>`;
                         html += `<div class="formula-total">${dmgResult.total}</div></div>`;
+
+                        // === SPECIAL MECHANICS ===
+                        const mechanics = [];
+                        if (attacker.passThroughPercent > 0)
+                            mechanics.push(
+                                `Pass-through: ${Math.round(attacker.passThroughPercent * 100)}% damage to 1 unit behind target`,
+                            );
+                        if (
+                            attacker.tramplePercent > 0 ||
+                            attacker.trampleFlatDamage > 0
+                        ) {
+                            const parts = [];
+                            if (attacker.tramplePercent > 0)
+                                parts.push(
+                                    `${Math.round(attacker.tramplePercent * 100)}%`,
+                                );
+                            if (attacker.trampleFlatDamage > 0)
+                                parts.push(
+                                    `+${attacker.trampleFlatDamage} flat`,
+                                );
+                            mechanics.push(
+                                `Trample: ${parts.join(" ")} to nearby units`,
+                            );
+                        }
+                        if (attacker.extraProjectiles > 0)
+                            mechanics.push(
+                                `+${attacker.extraProjectiles} extra projectile${attacker.extraProjectiles > 1 ? "s" : ""}`,
+                            );
+                        if (attacker.ignoresPierceArmor)
+                            mechanics.push("Ignores pierce armor");
+                        if (attacker.ignoresMeleeArmor)
+                            mechanics.push("Ignores melee armor");
+                        if (attacker.bleedDps > 0)
+                            mechanics.push(
+                                `Bleed: ${attacker.bleedDps} DPS for ${attacker.bleedDuration}s`,
+                            );
+                        if (attacker.hpRegen > 0)
+                            mechanics.push(
+                                `HP Regen: ${attacker.hpRegen} HP/min`,
+                            );
+                        if (attacker.dodgeShieldMax > 0)
+                            mechanics.push(
+                                `Dodge Shield: ${attacker.dodgeShieldMax} charges`,
+                            );
+                        if (defender.bonusDamageReduction > 0)
+                            mechanics.push(
+                                `Target resists ${Math.round(defender.bonusDamageReduction * 100)}% bonus damage`,
+                            );
+                        if (mechanics.length > 0) {
+                            html += `<div style="margin-top:6px;padding:4px 6px;border-left:2px solid var(--gold);font-size:0.65rem;color:var(--text-muted)">`;
+                            for (const m of mechanics) {
+                                html += `<div>${m}</div>`;
+                            }
+                            html += `</div>`;
+                        }
+
                         return html;
                     };
 

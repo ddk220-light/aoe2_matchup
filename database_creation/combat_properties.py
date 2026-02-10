@@ -3,9 +3,14 @@
 import json
 
 from .config import (
-    COMBAT_PROPERTIES, UNIQUE_COMBAT_PROPERTIES, CIV_COMBAT_PROPERTIES,
-    PAIRED_UNITS, CIV_TEAM_BONUS_ATTACK, UNIQUE_UNIT_BUILDING,
+    CIV_COMBAT_PROPERTIES,
+    CIV_TEAM_BONUS_ATTACK,
+    COMBAT_PROPERTIES,
+    PAIRED_UNITS,
+    UNIQUE_COMBAT_PROPERTIES,
+    UNIQUE_UNIT_BUILDING,
 )
+
 
 def get_extracted_combat_properties(unit_id, units_data):
     """Read combat properties from extracted dat file data for a given game unit ID.
@@ -137,6 +142,25 @@ def get_extracted_combat_properties(unit_id, units_data):
         props["dodge_shield_max"] = int(charge_attack)
         props["dodge_shield_recharge"] = round(charge_attack / charge_recharge, 2)
 
+    # --- Pass-through damage (Scorpion bolts) ---
+    # Scorpions have blast_attack_level=3 AND secondary_projectile_attacks with
+    # multiple attack classes (pierce + bonus vs infantry/elephants/buildings).
+    # Regular archers also have blast_level=3 + secondary attacks but only a
+    # single Base Pierce entry — those are NOT pass-through.
+    if blast_level == 3 and sec_attacks and not has_extra and len(sec_attacks) > 1:
+        primary_pierce = 0
+        secondary_pierce = 0
+        for a in unit.get("attacks", []):
+            if a["class"] == 3:  # Base Pierce
+                primary_pierce = a["amount"]
+                break
+        for a in sec_attacks:
+            if a["class"] == 3:  # Base Pierce
+                secondary_pierce = a["amount"]
+                break
+        if primary_pierce > 0 and secondary_pierce > 0:
+            props["pass_through_percent"] = round(secondary_pierce / primary_pierce, 4)
+
     # --- Bonus damage reduction ---
     bonus_resist = unit.get("bonus_damage_resistance", 0)
     if bonus_resist and bonus_resist > 0:
@@ -194,6 +218,7 @@ def get_combat_properties(unit_slug, civ_name=None, unit_id=None, units_data=Non
         "transform_unit_id": 0,
         "dismount_unit_id": 0,
         "hp_regen": 0,
+        "pass_through_percent": 0,
     }
 
     # Apply extracted data from dat file (data-driven stats)
@@ -319,4 +344,3 @@ def compute_dismount_stats(analyzer, dismount_unit_id, civ_name, max_age):
         "attacks_json": json.dumps(stats.attacks) if stats.attacks else None,
         "armors_json": json.dumps(stats.armors) if stats.armors else None,
     }
-

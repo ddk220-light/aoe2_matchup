@@ -32,6 +32,7 @@ UNIT_LINES = {
             "Teutons": ("teutonic_knight_teutons", "elite_teutonic_knight_teutons"),
             "Aztecs": ("jaguar_warrior_aztecs", "elite_jaguar_warrior_aztecs"),
             "Incas": ("kamayuk_incas", "elite_kamayuk_incas"),
+            "Italians": ("condottiero_italians", None),
         },
     },
     "spear": {
@@ -278,6 +279,7 @@ def build_combat_dict(rc, row):
         "block_first_melee": 0,
         "attack_bonus_per_kill": 0,
         "first_attack_extra_projectiles": 0,
+        "pass_through_percent": special.get("pass_through_percent", 0),
         "hp_transform_threshold": 0,
         "dismount_hp": None,
         "dismount_attack": None,

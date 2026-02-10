@@ -167,6 +167,7 @@ def build_combat_dict_from_ref(rc, row):
             special.get("first_attack_extra_projectiles", 0)
         ),
         "hp_transform_threshold": special.get("hp_transform_threshold", 0),
+        "pass_through_percent": special.get("pass_through_percent", 0),
     }
 
 
@@ -340,6 +341,7 @@ def generate_main_database():
             attack_bonus_per_kill REAL DEFAULT 0,
             first_attack_extra_projectiles INTEGER DEFAULT 0,
             hp_regen REAL DEFAULT 0,
+            pass_through_percent REAL DEFAULT 0,
             hp_transform_threshold REAL DEFAULT 0,
             transform_hp INTEGER DEFAULT NULL,
             transform_attack INTEGER DEFAULT NULL,
@@ -557,7 +559,7 @@ def generate_main_database():
                         dodge_shield_max, dodge_shield_recharge,
                         bleed_dps, bleed_duration, block_first_melee,
                         attack_bonus_per_kill, first_attack_extra_projectiles,
-                        hp_regen, hp_transform_threshold,
+                        hp_regen, pass_through_percent, hp_transform_threshold,
                         transform_hp, transform_attack, transform_melee_armor,
                         transform_pierce_armor, transform_attack_speed,
                         transform_attack_delay, transform_movement_speed,
@@ -585,7 +587,7 @@ def generate_main_database():
                         ?, ?,
                         ?, ?, ?,
                         ?, ?,
-                        ?, ?,
+                        ?, ?, ?,
                         NULL, NULL, NULL,
                         NULL, NULL,
                         NULL, NULL,
@@ -649,6 +651,7 @@ def generate_main_database():
                         combat["attack_bonus_per_kill"],
                         combat["first_attack_extra_projectiles"],
                         combat["hp_regen"],
+                        combat["pass_through_percent"],
                         combat["hp_transform_threshold"],
                     ),
                 )

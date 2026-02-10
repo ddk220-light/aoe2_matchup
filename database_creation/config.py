@@ -290,6 +290,8 @@ CIV_COMBAT_PROPERTIES = {
     ("Dravidians", "hussar"): {"ignores_melee_armor": 1},
     ("Dravidians", "elite_elephant"): {"ignores_melee_armor": 1},
     ("Dravidians", "elite_urumi_swordsman"): {"ignores_melee_armor": 1},
+    # Pirotecnia (Italian Imperial UT) - gunpowder units get 15% pass-through damage
+    ("Italians", "hand_cannoneer"): {"pass_through_percent": 0.15},
 }
 
 # Paired units mapping (for matchup mode switching)
@@ -970,6 +972,15 @@ UNIQUE_UNITS = {
             "elite_tech": 468,
             "elite_id": 868,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Genoese Crossbowman",
+        },
+        {
+            "base_id": 882,
+            "display_name": "Condottiero",
+            "unit_class": 6,  # Infantry
+            "availability_tech": 522,  # Condottiero (make avail)
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
         },
     ],
     "Magyars": [

@@ -182,6 +182,7 @@ UNIT_NAMES = {
     868: "Elite Genoese Crossbowman",
     1004: "Genoese Crossbowman",
     1006: "Elite Genoese Crossbowman",
+    882: "Condottiero",
     # ===== Unique Units - Hindustanis =====
     1747: "Ghulam",
     1749: "Elite Ghulam",

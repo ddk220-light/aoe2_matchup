@@ -595,7 +595,7 @@ def api_combat_unit(civ_name, unit_slug):
             us.dodge_shield_max, us.dodge_shield_recharge,
             us.bleed_dps, us.bleed_duration, us.block_first_melee,
             us.attack_bonus_per_kill, us.first_attack_extra_projectiles,
-            us.hp_regen, us.hp_transform_threshold
+            us.hp_regen, us.pass_through_percent, us.hp_transform_threshold
         FROM unit_stats us
         JOIN units u ON us.unit_id = u.id
         JOIN civilizations c ON us.civ_id = c.id
@@ -659,6 +659,7 @@ def api_combat_unit(civ_name, unit_slug):
             "first_attack_extra_projectiles": row["first_attack_extra_projectiles"]
             or 0,
             "hp_regen": row["hp_regen"] or 0,
+            "pass_through_percent": row["pass_through_percent"] or 0,
             "hp_transform_threshold": row["hp_transform_threshold"] or 0,
         }
     )
@@ -1089,6 +1090,7 @@ def _build_combat_dict_from_ref(rc, row):
             special.get("first_attack_extra_projectiles", 0)
         ),
         "hp_regen": special.get("hp_regen", 0),
+        "pass_through_percent": special.get("pass_through_percent", 0),
         "hp_transform_threshold": special.get("hp_transform_threshold", 0),
         # No dismount/transform in original 13 ref DB
         "dismount_hp": None,
@@ -1179,6 +1181,7 @@ UNIT_LINES = {
             "Teutons": ("teutonic_knight_teutons", "elite_teutonic_knight_teutons"),
             "Aztecs": ("jaguar_warrior_aztecs", "elite_jaguar_warrior_aztecs"),
             "Incas": ("kamayuk_incas", "elite_kamayuk_incas"),
+            "Italians": ("condottiero_italians", None),
         },
     },
     "spear": {

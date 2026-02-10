@@ -152,6 +152,19 @@ def prepare_combat_unit(row):
     }
 
 
+def _does_melee_damage(attacks):
+    """True if unit's primary damage type is melee (class 4), not pierce (class 3).
+    Units like Mameluke, Throwing Axeman, Kamayuk do melee damage at range."""
+    has_pierce = attacks.get(3, 0) > 0
+    has_melee = attacks.get(4, 0) > 0
+    if has_melee and not has_pierce:
+        return True
+    if has_pierce and not has_melee:
+        return False
+    # Both or neither: default to melee
+    return True
+
+
 def _calc_damage(
     attacker_attacks,
     attacker_attack,
@@ -162,9 +175,11 @@ def _calc_damage(
     ignores_pierce=False,
     ignores_melee=False,
     bonus_damage_reduction=0,
+    melee_damage=False,
 ):
-    """Calculate damage per hit between two unit types."""
-    if is_ranged:
+    """Calculate damage per hit between two unit types.
+    melee_damage=True means attacker does melee damage (use melee armor) even at range."""
+    if is_ranged and not melee_damage:
         base_damage = attacker_attacks.get(3, attacker_attacks.get(4, attacker_attack))
         target_armor = (
             0 if ignores_pierce else defender_armors.get(3, defender_pierce_armor)
@@ -286,8 +301,11 @@ def simulate_battle(
     # --- Unit properties ---
     range1 = unit1["attack_range"]
     range2 = unit2["attack_range"]
-    is_ranged1 = range1 >= 1.0
-    is_ranged2 = range2 >= 1.0
+    melee_dmg1 = _does_melee_damage(unit1["attacks"])
+    melee_dmg2 = _does_melee_damage(unit2["attacks"])
+    # Melee-at-range units with short range (Steppe Lancer, Kamayuk) are treated as melee
+    is_ranged1 = range1 >= 1.0 and not (melee_dmg1 and range1 < 2.0)
+    is_ranged2 = range2 >= 1.0 and not (melee_dmg2 and range2 < 2.0)
     speed1 = unit1["movement_speed"]
     speed2 = unit2["movement_speed"]
     # Accuracy: main projectile hit chance (0-100). Extra projectiles use ~50% (scatter).
@@ -316,6 +334,7 @@ def simulate_battle(
         ignores_pierce=unit1["ignores_pierce_armor"],
         ignores_melee=unit1["ignores_melee_armor"],
         bonus_damage_reduction=unit2["bonus_damage_reduction"],
+        melee_damage=melee_dmg1,
     )
     dmg2 = _calc_damage(
         unit2["attacks"],
@@ -327,6 +346,7 @@ def simulate_battle(
         ignores_pierce=unit2["ignores_pierce_armor"],
         ignores_melee=unit2["ignores_melee_armor"],
         bonus_damage_reduction=unit1["bonus_damage_reduction"],
+        melee_damage=melee_dmg2,
     )
 
     # Trample (melee only)
@@ -385,6 +405,7 @@ def simulate_battle(
             ignores_pierce=unit1["ignores_pierce_armor"],
             ignores_melee=unit1["ignores_melee_armor"],
             bonus_damage_reduction=unit2["bonus_damage_reduction"],
+            melee_damage=_does_melee_damage(extra_proj_attacks1),
         )
     else:
         extra_proj_dmg1 = dmg1  # No secondary attacks: extra proj same as main
@@ -401,6 +422,7 @@ def simulate_battle(
             ignores_pierce=unit2["ignores_pierce_armor"],
             ignores_melee=unit2["ignores_melee_armor"],
             bonus_damage_reduction=unit1["bonus_damage_reduction"],
+            melee_damage=_does_melee_damage(extra_proj_attacks2),
         )
     else:
         extra_proj_dmg2 = dmg2
@@ -483,6 +505,7 @@ def simulate_battle(
             is_ranged2,
             ignores_pierce=unit2["ignores_pierce_armor"],
             ignores_melee=unit2["ignores_melee_armor"],
+            melee_damage=melee_dmg2,
         )
         reload1_dismount = (
             1.0 / dismount1["attack_speed"] if dismount1["attack_speed"] > 0 else 2.0
@@ -508,6 +531,7 @@ def simulate_battle(
             is_ranged1,
             ignores_pierce=unit1["ignores_pierce_armor"],
             ignores_melee=unit1["ignores_melee_armor"],
+            melee_damage=melee_dmg1,
         )
         reload2_dismount = (
             1.0 / dismount2["attack_speed"] if dismount2["attack_speed"] > 0 else 2.0
@@ -530,6 +554,7 @@ def simulate_battle(
             ignores_pierce=unit1["ignores_pierce_armor"],
             ignores_melee=unit1["ignores_melee_armor"],
             bonus_damage_reduction=unit2["bonus_damage_reduction"],
+            melee_damage=_does_melee_damage(transform1["attacks"]),
         )
         # Team2 attacking transformed team1 (different armor!)
         dmg2_vs_transform1 = _calc_damage(
@@ -542,6 +567,7 @@ def simulate_battle(
             ignores_pierce=unit2["ignores_pierce_armor"],
             ignores_melee=unit2["ignores_melee_armor"],
             bonus_damage_reduction=unit1["bonus_damage_reduction"],
+            melee_damage=melee_dmg2,
         )
     if transform2:
         dmg2_transform = _calc_damage(
@@ -554,6 +580,7 @@ def simulate_battle(
             ignores_pierce=unit2["ignores_pierce_armor"],
             ignores_melee=unit2["ignores_melee_armor"],
             bonus_damage_reduction=unit1["bonus_damage_reduction"],
+            melee_damage=_does_melee_damage(transform2["attacks"]),
         )
         dmg1_vs_transform2 = _calc_damage(
             unit1["attacks"],
@@ -565,6 +592,7 @@ def simulate_battle(
             ignores_pierce=unit1["ignores_pierce_armor"],
             ignores_melee=unit1["ignores_melee_armor"],
             bonus_damage_reduction=unit2["bonus_damage_reduction"],
+            melee_damage=melee_dmg1,
         )
 
     start_total_hp1 = float(unit1["hp"]) * count1
@@ -1308,7 +1336,8 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
         templates = []
         for ti, (cu, count) in enumerate(unit_list):
             rng = cu["attack_range"]
-            is_rng = rng >= 1.0
+            m_dmg = _does_melee_damage(cu["attacks"])
+            is_rng = rng >= 1.0 and not (m_dmg and rng < 2.0)
             aspd = cu["attack_speed"] or 0.5
             rl = 1.0 / aspd if aspd > 0 else 2.0
             acc = cu.get("accuracy", 100) / 100.0
@@ -1319,6 +1348,7 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                 {
                     "cu": cu,
                     "is_ranged": is_rng,
+                    "melee_damage": m_dmg,
                     "range": rng,
                     "reload": rl,
                     "delay": cu["attack_delay"],
@@ -1395,6 +1425,7 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
     for ati in range(n_types1):
         a = t1["templates"][ati]["cu"]
         a_ranged = t1["templates"][ati]["is_ranged"]
+        a_melee_dmg = t1["templates"][ati]["melee_damage"]
         for dti in range(n_types2):
             d = t2["templates"][dti]["cu"]
             main = _calc_damage(
@@ -1407,6 +1438,7 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                 ignores_pierce=a["ignores_pierce_armor"],
                 ignores_melee=a["ignores_melee_armor"],
                 bonus_damage_reduction=d["bonus_damage_reduction"],
+                melee_damage=a_melee_dmg,
             )
             # Extra projectile damage
             epa = a.get("extra_projectile_attacks")
@@ -1424,6 +1456,7 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                     ignores_pierce=a["ignores_pierce_armor"],
                     ignores_melee=a["ignores_melee_armor"],
                     bonus_damage_reduction=d["bonus_damage_reduction"],
+                    melee_damage=_does_melee_damage(epa),
                 )
             else:
                 extra = main
@@ -1441,6 +1474,7 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
     for ati in range(n_types2):
         a = t2["templates"][ati]["cu"]
         a_ranged = t2["templates"][ati]["is_ranged"]
+        a_melee_dmg = t2["templates"][ati]["melee_damage"]
         for dti in range(n_types1):
             d = t1["templates"][dti]["cu"]
             main = _calc_damage(
@@ -1453,6 +1487,7 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                 ignores_pierce=a["ignores_pierce_armor"],
                 ignores_melee=a["ignores_melee_armor"],
                 bonus_damage_reduction=d["bonus_damage_reduction"],
+                melee_damage=a_melee_dmg,
             )
             epa = a.get("extra_projectile_attacks")
             if epa and (
@@ -1469,6 +1504,7 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                     ignores_pierce=a["ignores_pierce_armor"],
                     ignores_melee=a["ignores_melee_armor"],
                     bonus_damage_reduction=d["bonus_damage_reduction"],
+                    melee_damage=_does_melee_damage(epa),
                 )
             else:
                 extra = main

@@ -5,9 +5,13 @@ Run this after regenerating aoe2_reference.db to produce battle_scores.json.
 The Flask server loads this file at startup (no simulations at serve time).
 
 Usage:
-    cd webapp && python3 compute_battle_scores.py
+    cd webapp && python3 compute_battle_scores.py            # incremental (cached)
+    cd webapp && python3 compute_battle_scores.py --full      # force full recompute
 """
 
+import argparse
+import copy
+import hashlib
 import json
 import os
 import sqlite3
@@ -16,6 +20,8 @@ import time
 from simulation import prepare_combat_unit, simulate_battle
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
+CACHE_PATH = os.path.join(os.path.dirname(__file__), "battle_cache.json")
+CACHE_VERSION = 1
 
 # Unit lines config (must match app.py UNIT_LINES)
 UNIT_LINES = {
@@ -214,11 +220,156 @@ BENCHMARKS = [
     ("vs_arb", "Chinese", "arbalester", "Imperial"),
 ]
 
+# Fields excluded from fingerprint (display-only, not affecting simulation)
+_DISPLAY_FIELDS = {"slug", "unit_name", "unit_category", "paired_unit_slug"}
+
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+# ---------------------------------------------------------------------------
+# Cache helpers
+# ---------------------------------------------------------------------------
+
+
+def _unit_fingerprint(combat_unit):
+    """MD5 hash of simulation-relevant fields in a combat_unit dict. 12 hex chars."""
+    d = {k: v for k, v in combat_unit.items() if k not in _DISPLAY_FIELDS}
+    raw = json.dumps(d, sort_keys=True, default=str)
+    return hashlib.md5(raw.encode()).hexdigest()[:12]
+
+
+def _sim_engine_hash():
+    """MD5 hash of simulation.py file contents. 12 hex chars."""
+    sim_path = os.path.join(os.path.dirname(__file__), "simulation.py")
+    with open(sim_path, "rb") as f:
+        return hashlib.md5(f.read()).hexdigest()[:12]
+
+
+def load_cache():
+    """Load battle_cache.json. Returns None if missing, corrupt, or version mismatch."""
+    if not os.path.exists(CACHE_PATH):
+        return None
+    try:
+        with open(CACHE_PATH, "r") as f:
+            cache = json.load(f)
+        if cache.get("version") != CACHE_VERSION:
+            return None
+        return cache
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def save_cache(cache, current_fps):
+    """Write cache with garbage collection (only keep entries referencing live fingerprints)."""
+    live_fps = set(current_fps.values())
+
+    # GC pairwise: keep only entries where both hashes are still live
+    clean_pairwise = {}
+    for key, val in cache.get("pairwise", {}).items():
+        parts = key.split(":")
+        if len(parts) == 3 and parts[0] in live_fps and parts[1] in live_fps:
+            clean_pairwise[key] = val
+    cache["pairwise"] = clean_pairwise
+
+    # GC benchmarks: keep only entries where unit hash is still live
+    clean_bench = {}
+    for key, val in cache.get("benchmarks", {}).items():
+        parts = key.split(":")
+        if len(parts) >= 2 and parts[0] in live_fps:
+            clean_bench[key] = val
+    cache["benchmarks"] = clean_bench
+
+    cache["unit_hashes"] = current_fps
+    with open(CACHE_PATH, "w") as f:
+        json.dump(cache, f, separators=(",", ":"))
+
+
+# ---------------------------------------------------------------------------
+# Simulation helpers (extracted from round-robin/benchmark loops)
+# ---------------------------------------------------------------------------
+
+
+def _simulate_pair(unit_i, unit_j, is_imperial):
+    """Run 3-scenario battle between two units. Returns [score_30v30, score_3k, score_5k]
+    from unit_i's perspective (-100..+100)."""
+    ci = calc_weighted_cost(
+        unit_i["cost_food"], unit_i["cost_wood"], unit_i["cost_gold"], is_imperial
+    )
+    cj = calc_weighted_cost(
+        unit_j["cost_food"], unit_j["cost_wood"], unit_j["cost_gold"], is_imperial
+    )
+
+    # Scenario 1: 30v30
+    w1, _, _, hp1_1, hp2_1 = simulate_battle(
+        unit_i, unit_j, 0, fixed_count=30, return_hp=True
+    )
+
+    # Scenario 2: 3000 resources
+    w2, _, _, hp1_2, hp2_2 = simulate_battle(
+        unit_i, unit_j, 3000, cost1_override=ci, cost2_override=cj, return_hp=True
+    )
+
+    # Scenario 3: 5000 resources with upgrades
+    upg_i = calc_weighted_cost(
+        unit_i["upgrade_cost_food"],
+        unit_i["upgrade_cost_wood"],
+        unit_i["upgrade_cost_gold"],
+        is_imperial,
+    )
+    upg_j = calc_weighted_cost(
+        unit_j["upgrade_cost_food"],
+        unit_j["upgrade_cost_wood"],
+        unit_j["upgrade_cost_gold"],
+        is_imperial,
+    )
+    budget_i = max(ci, 5000 - upg_i)
+    budget_j = max(cj, 5000 - upg_j)
+    adj_cj = max(1, int(budget_i * cj / budget_j)) if budget_j > 0 else cj
+    w3, _, _, hp1_3, hp2_3 = simulate_battle(
+        unit_i,
+        unit_j,
+        budget_i,
+        cost1_override=ci,
+        cost2_override=adj_cj,
+        return_hp=True,
+    )
+
+    scores = []
+    for w, h1, h2 in [(w1, hp1_1, hp2_1), (w2, hp1_2, hp2_2), (w3, hp1_3, hp2_3)]:
+        scores.append(_hp_score(w, h1, h2))
+    return scores
+
+
+def _simulate_benchmark(unit, bench_unit, is_imperial):
+    """Run one benchmark battle. Returns float score (-100..+100) from unit's perspective."""
+    unit_cost = calc_weighted_cost(
+        unit["cost_food"], unit["cost_wood"], unit["cost_gold"], is_imperial
+    )
+    bench_cost = calc_weighted_cost(
+        bench_unit["cost_food"], bench_unit["cost_wood"], bench_unit["cost_gold"], True
+    )
+    winner, _, _, hp_pct1, hp_pct2 = simulate_battle(
+        unit,
+        bench_unit,
+        3000,
+        cost1_override=unit_cost,
+        cost2_override=bench_cost,
+        return_hp=True,
+    )
+    if winner == 1:
+        return round(hp_pct1 * 100, 1)
+    elif winner == 2:
+        return round(-hp_pct2 * 100, 1)
+    return 0.0
+
+
+# ---------------------------------------------------------------------------
+# DB / combat dict building
+# ---------------------------------------------------------------------------
 
 
 def build_combat_dict(rc, row):
@@ -440,73 +591,52 @@ def _hp_score(winner, hp_pct1, hp_pct2):
     return 0.0
 
 
-def compute_round_robin(line_slug, age):
-    """Round-robin battles. Returns {civ_name|unit_slug: {score_30v30, score_3k, score_5k}}.
+def compute_round_robin(line_slug, age, pairwise_cache, unit_fps):
+    """Round-robin battles with caching. Returns (scores_dict, hits, misses).
     Scores are -100..+100 (average HP% across all opponents)."""
     is_imperial = age == "imperial"
     units = build_line_units(line_slug, age)
     n = len(units)
     if n < 2:
-        return {}
+        return {}, 0, 0
 
     keys = [(u["civ_name"], u["unit_slug"]) for u in units]
-    # Accumulate HP scores per unit per scenario
+    fps = []
+    for u in units:
+        fp_key = f"{u['civ_name']}|{u['unit_slug']}|{age}"
+        fps.append(unit_fps.get(fp_key, "unknown"))
+
     hp_totals = {k: [0.0, 0.0, 0.0] for k in keys}
+    hits = 0
+    misses = 0
 
     for i in range(n):
         for j in range(i + 1, n):
-            ui = units[i]["combat_unit"]
-            uj = units[j]["combat_unit"]
-            ki, kj = keys[i], keys[j]
+            fp_i, fp_j = fps[i], fps[j]
+            # Build sorted cache key so A:B == B:A
+            if fp_i <= fp_j:
+                cache_key = f"{fp_i}:{fp_j}:{age}"
+                swapped = False
+            else:
+                cache_key = f"{fp_j}:{fp_i}:{age}"
+                swapped = True
 
-            ci = calc_weighted_cost(
-                ui["cost_food"], ui["cost_wood"], ui["cost_gold"], is_imperial
-            )
-            cj = calc_weighted_cost(
-                uj["cost_food"], uj["cost_wood"], uj["cost_gold"], is_imperial
-            )
+            if cache_key in pairwise_cache:
+                pair_scores = pairwise_cache[cache_key]
+                hits += 1
+            else:
+                pair_scores = _simulate_pair(
+                    units[i]["combat_unit"], units[j]["combat_unit"], is_imperial
+                )
+                pairwise_cache[cache_key] = pair_scores
+                misses += 1
 
-            # Scenario 1: 30v30
-            w1, _, _, hp1_1, hp2_1 = simulate_battle(
-                ui, uj, 0, fixed_count=30, return_hp=True
-            )
-
-            # Scenario 2: 3000 resources
-            w2, _, _, hp1_2, hp2_2 = simulate_battle(
-                ui, uj, 3000, cost1_override=ci, cost2_override=cj, return_hp=True
-            )
-
-            # Scenario 3: 5000 resources with upgrades
-            upg_i = calc_weighted_cost(
-                ui["upgrade_cost_food"],
-                ui["upgrade_cost_wood"],
-                ui["upgrade_cost_gold"],
-                is_imperial,
-            )
-            upg_j = calc_weighted_cost(
-                uj["upgrade_cost_food"],
-                uj["upgrade_cost_wood"],
-                uj["upgrade_cost_gold"],
-                is_imperial,
-            )
-            budget_i = max(ci, 5000 - upg_i)
-            budget_j = max(cj, 5000 - upg_j)
-            adj_cj = max(1, int(budget_i * cj / budget_j)) if budget_j > 0 else cj
-            w3, _, _, hp1_3, hp2_3 = simulate_battle(
-                ui,
-                uj,
-                budget_i,
-                cost1_override=ci,
-                cost2_override=adj_cj,
-                return_hp=True,
-            )
-
-            for idx, (w, h1, h2) in enumerate(
-                [(w1, hp1_1, hp2_1), (w2, hp1_2, hp2_2), (w3, hp1_3, hp2_3)]
-            ):
-                s = _hp_score(w, h1, h2)
-                hp_totals[ki][idx] += s
-                hp_totals[kj][idx] -= s  # opposite sign for opponent
+            for idx in range(3):
+                s = pair_scores[idx]
+                if swapped:
+                    s = -s
+                hp_totals[keys[i]][idx] += s
+                hp_totals[keys[j]][idx] -= s
 
     opponents = n - 1
     scores = {}
@@ -517,12 +647,15 @@ def compute_round_robin(line_slug, age):
             "score_3k": round(hp_totals[k][1] / opponents, 1),
             "score_5k": round(hp_totals[k][2] / opponents, 1),
         }
-    return scores
+    return scores, hits, misses
 
 
-def compute_benchmarks(bench_units):
-    """Pit every unit against benchmark opponents. Returns nested dict."""
+def compute_benchmarks(bench_units, bench_fps, benchmark_cache, unit_fps):
+    """Pit every unit against benchmark opponents with caching.
+    Returns (all_scores, hits, misses)."""
     all_scores = {}
+    total_hits = 0
+    total_misses = 0
 
     for line_slug, config in UNIT_LINES.items():
         for age_key in ["castle", "imperial"]:
@@ -542,70 +675,108 @@ def compute_benchmarks(bench_units):
 
             for u in units:
                 cu = u["combat_unit"]
-                unit_cost = calc_weighted_cost(
-                    cu["cost_food"], cu["cost_wood"], cu["cost_gold"], is_imperial
-                )
-                count_u = max(1, int(3000 // unit_cost))
+                fp_key = f"{u['civ_name']}|{u['unit_slug']}|{age_key}"
+                u_fp = unit_fps.get(fp_key, "unknown")
                 scores = {}
 
                 for bkey, bciv, bslug, bage in BENCHMARKS:
                     if bkey not in bench_units:
                         scores[bkey] = -1
                         continue
-                    bu = bench_units[bkey]
-                    bench_cost = calc_weighted_cost(
-                        bu["cost_food"], bu["cost_wood"], bu["cost_gold"], True
-                    )
-                    winner, _, _, hp_pct1, hp_pct2 = simulate_battle(
-                        cu,
-                        bu,
-                        3000,
-                        cost1_override=unit_cost,
-                        cost2_override=bench_cost,
-                        return_hp=True,
-                    )
-                    # Scale: +100 (unit won, lost 0% HP) to -100 (benchmark won, lost 0% HP)
-                    if winner == 1:
-                        scores[bkey] = round(hp_pct1 * 100, 1)
-                    elif winner == 2:
-                        scores[bkey] = round(-hp_pct2 * 100, 1)
+
+                    b_fp = bench_fps.get(bkey, "unknown")
+                    cache_key = f"{u_fp}:{b_fp}:{bkey}:{age_key}"
+
+                    if cache_key in benchmark_cache:
+                        scores[bkey] = benchmark_cache[cache_key]
+                        total_hits += 1
                     else:
-                        scores[bkey] = 0.0
+                        val = _simulate_benchmark(cu, bench_units[bkey], is_imperial)
+                        scores[bkey] = val
+                        benchmark_cache[cache_key] = val
+                        total_misses += 1
 
                 sk = f"{u['civ_name']}|{u['unit_slug']}"
                 line_scores[sk] = scores
 
             all_scores[line_key] = line_scores
 
-    return all_scores
+    return all_scores, total_hits, total_misses
 
 
 def main():
-    start = time.time()
-    output = {"round_robin": {}, "benchmarks": {}}
+    parser = argparse.ArgumentParser(description="Compute battle ranking scores")
+    parser.add_argument(
+        "--full", action="store_true", help="Force full recomputation (ignore cache)"
+    )
+    args = parser.parse_args()
 
-    # Round-robin scores
-    rr_count = 0
+    start = time.time()
+
+    # Compute simulation engine hash
+    engine_hash = _sim_engine_hash()
+
+    # Load cache (if not --full)
+    cache = None if args.full else load_cache()
+    if cache and cache.get("sim_engine_hash") != engine_hash:
+        print("Simulation engine changed — full recompute")
+        cache = None
+    if cache is None:
+        cache = {
+            "version": CACHE_VERSION,
+            "sim_engine_hash": engine_hash,
+            "unit_hashes": {},
+            "benchmark_hashes": {},
+            "pairwise": {},
+            "benchmarks": {},
+        }
+        if args.full:
+            print("Full recompute requested")
+    else:
+        print("Loaded cache")
+
+    old_fps = cache.get("unit_hashes", {})
+    old_bench_fps = cache.get("benchmark_hashes", {})
+    pairwise_cache = cache.get("pairwise", {})
+    benchmark_cache = cache.get("benchmarks", {})
+
+    # Build all units and compute fingerprints
+    current_fps = {}
     for line_slug, config in UNIT_LINES.items():
         for age_key in ["castle", "imperial"]:
-            slug = config.get(f"{age_key}_slug")
+            std_slug = config.get(f"{age_key}_slug")
             multi_slugs = config.get(f"{age_key}_slugs", [])
             has_unique = bool(config.get("unique_units"))
-            if not slug and not multi_slugs and not has_unique:
+            if not std_slug and not multi_slugs and not has_unique:
                 continue
-            scores = compute_round_robin(line_slug, age_key)
-            if scores:
-                output["round_robin"][f"{line_slug}|{age_key}"] = scores
-                rr_count += 1
+            units = build_line_units(line_slug, age_key)
+            for u in units:
+                fp_key = f"{u['civ_name']}|{u['unit_slug']}|{age_key}"
+                current_fps[fp_key] = _unit_fingerprint(u["combat_unit"])
 
-    rr_time = time.time() - start
-    print(f"Round-robin: {rr_count} line-ages in {rr_time:.1f}s")
+    # Detect changed units — invalidate their cached pairwise entries
+    changed_fps = set()
+    for fp_key, fp_val in current_fps.items():
+        if old_fps.get(fp_key) != fp_val:
+            changed_fps.add(fp_val)
 
-    # Benchmark scores
-    bench_start = time.time()
+    # If any units changed, remove pairwise entries involving changed fingerprints
+    if changed_fps:
+        before = len(pairwise_cache)
+        pairwise_cache = {
+            k: v
+            for k, v in pairwise_cache.items()
+            if not any(part in changed_fps for part in k.split(":")[:2])
+        }
+        evicted = before - len(pairwise_cache)
+        if evicted:
+            print(f"Evicted {evicted} stale pairwise entries")
+
+    # Benchmark units and fingerprints
     conn = get_db()
     rc = conn.cursor()
     bench_units = {}
+    bench_fps = {}
     for key, civ, slug, age in BENCHMARKS:
         rc.execute(
             "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=? AND age=?",
@@ -614,17 +785,85 @@ def main():
         row = rc.fetchone()
         if row:
             cd = build_combat_dict(rc, row)
-            bench_units[key] = prepare_combat_unit(cd)
+            cu = prepare_combat_unit(cd)
+            bench_units[key] = cu
+            bench_fps[key] = _unit_fingerprint(cu)
     conn.close()
 
-    output["benchmarks"] = compute_benchmarks(bench_units)
+    # Invalidate benchmark cache if benchmark units changed
+    bench_changed = set()
+    for bkey, bfp in bench_fps.items():
+        if old_bench_fps.get(bkey) != bfp:
+            bench_changed.add(bkey)
+    if bench_changed:
+        before = len(benchmark_cache)
+        benchmark_cache = {
+            k: v
+            for k, v in benchmark_cache.items()
+            if not any(bk in k for bk in bench_changed)
+        }
+        evicted = before - len(benchmark_cache)
+        if evicted:
+            print(f"Evicted {evicted} stale benchmark entries")
+    if changed_fps:
+        # Also invalidate benchmarks for changed units
+        before = len(benchmark_cache)
+        benchmark_cache = {
+            k: v
+            for k, v in benchmark_cache.items()
+            if k.split(":")[0] not in changed_fps
+        }
+        evicted_u = before - len(benchmark_cache)
+        if evicted_u:
+            print(f"Evicted {evicted_u} benchmark entries for changed units")
+
+    # Round-robin scores
+    output = {"round_robin": {}, "benchmarks": {}}
+    rr_count = 0
+    rr_hits_total = 0
+    rr_misses_total = 0
+
+    for line_slug, config in UNIT_LINES.items():
+        for age_key in ["castle", "imperial"]:
+            slug = config.get(f"{age_key}_slug")
+            multi_slugs = config.get(f"{age_key}_slugs", [])
+            has_unique = bool(config.get("unique_units"))
+            if not slug and not multi_slugs and not has_unique:
+                continue
+            scores, hits, misses = compute_round_robin(
+                line_slug, age_key, pairwise_cache, current_fps
+            )
+            if scores:
+                output["round_robin"][f"{line_slug}|{age_key}"] = scores
+                rr_count += 1
+                rr_hits_total += hits
+                rr_misses_total += misses
+
+    rr_time = time.time() - start
+    print(
+        f"Round-robin: {rr_count} line-ages in {rr_time:.1f}s "
+        f"({rr_misses_total} simulated, {rr_hits_total} cached)"
+    )
+
+    # Benchmark scores
+    bench_start = time.time()
+    output["benchmarks"], b_hits, b_misses = compute_benchmarks(
+        bench_units, bench_fps, benchmark_cache, current_fps
+    )
     bench_time = time.time() - bench_start
-    print(f"Benchmarks: {bench_time:.1f}s")
+    print(f"Benchmarks: {bench_time:.1f}s ({b_misses} simulated, {b_hits} cached)")
 
     # Write output
     out_path = os.path.join(os.path.dirname(__file__), "battle_scores.json")
     with open(out_path, "w") as f:
         json.dump(output, f, separators=(",", ":"))
+
+    # Save cache
+    cache["sim_engine_hash"] = engine_hash
+    cache["benchmark_hashes"] = bench_fps
+    cache["pairwise"] = pairwise_cache
+    cache["benchmarks"] = benchmark_cache
+    save_cache(cache, current_fps)
 
     total = time.time() - start
     print(f"Total: {total:.1f}s -> {out_path}")

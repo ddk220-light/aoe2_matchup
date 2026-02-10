@@ -490,6 +490,13 @@ CASTLE_UNITS = {
         "availability_tech": 981,  # Fire Lancer (make avail)
         "upgrades": [],
     },
+    "slinger": {
+        "base_id": 185,
+        "display_name": "Slinger",
+        "unit_class": 0,  # Archer class (Archery Range)
+        "availability_tech": 528,  # Slinger (make avail) - Incas only
+        "upgrades": [],
+    },
 }
 
 IMPERIAL_UNITS = {

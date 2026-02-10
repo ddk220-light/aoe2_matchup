@@ -410,9 +410,9 @@
 
             const CIV_EMBLEM_URL =
                 "https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/";
-            const ICON_BASE = "https://aoe2techtree.net/img/Units/";
-            const ICON_BASE_FALLBACK =
+            const ICON_BASE =
                 "https://raw.githubusercontent.com/qwyt/aoe2-icon-resources/master/objects/";
+            const ICON_BASE_FALLBACK = "https://aoe2techtree.net/img/Units/";
 
             const NAME_TO_ICON = {
                 Spearman: 93,
@@ -486,24 +486,24 @@
                 Berserk: 692,
                 "Elite Berserk": 692,
                 "Jaguar Warrior": 725,
-                "Elite Jaguar Warrior": 726,
+                "Elite Jaguar Warrior": 725,
                 "Plumed Archer": 763,
-                "Elite Plumed Archer": 765,
+                "Elite Plumed Archer": 763,
                 Tarkan: 755,
-                "Elite Tarkan": 757,
+                "Elite Tarkan": 755,
                 "War Wagon": 827,
-                "Elite War Wagon": 829,
+                "Elite War Wagon": 827,
                 Conquistador: 771,
-                "Elite Conquistador": 773,
+                "Elite Conquistador": 771,
                 // Unique units - The Forgotten
                 Kamayuk: 879,
-                "Elite Kamayuk": 881,
+                "Elite Kamayuk": 879,
                 "Genoese Crossbowman": 866,
-                "Elite Genoese Crossbowman": 868,
+                "Elite Genoese Crossbowman": 866,
                 "Magyar Huszar": 869,
-                "Elite Magyar Huszar": 871,
+                "Elite Magyar Huszar": 869,
                 Boyar: 876,
-                "Elite Boyar": 878,
+                "Elite Boyar": 876,
             };
 
             const BUILDING_ORDER = [
@@ -705,7 +705,7 @@
                         const unavailClass = unavailable ? " unavailable" : "";
 
                         html += `<div class="line-card${activeClass}${unavailClass}" onclick="selectLine('${line.slug}')">
-                            <img src="${iUrl}" alt="${line.name}" onerror="this.style.display='none'" />
+                            <img src="${iUrl}" alt="${line.name}" onerror="if(!this.dataset.tried){this.dataset.tried='1';const id=NAME_TO_ICON[this.alt];if(id)this.src=ICON_BASE_FALLBACK+id+'.png';else this.style.display='none'}else{this.style.display='none'}" />
                             <div>
                                 <div class="line-name">${line.name}</div>
                                 ${line.hasUnique ? '<div class="line-unique">+ unique units</div>' : ""}
@@ -948,7 +948,7 @@
                     </div></td>`;
                     // Unit name with tooltip
                     html += `<td><div class="unit-cell">
-                        <img src="${unitImg}" alt="${row.unit_name}" onerror="this.style.display='none'" />
+                        <img src="${unitImg}" alt="${row.unit_name}" onerror="if(!this.dataset.tried){this.dataset.tried='1';const id=NAME_TO_ICON[this.alt];if(id)this.src=ICON_BASE_FALLBACK+id+'.png';else this.style.display='none'}else{this.style.display='none'}" />
                         ${row.unit_name}${isUnique ? " *" : ""}
                         ${bonuses ? `<div class="tooltip">${bonuses}</div>` : ""}
                     </div></td>`;

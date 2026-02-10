@@ -636,24 +636,47 @@ class UnitAnalyzer:
 
         # Check if civ has access to this unit
         avail_tech = unit_config.get("availability_tech")
-        if not use_alternate and avail_tech and avail_tech in disabled_techs:
-            return {
-                "unit_name": base_name,
-                "stats": None,
-                "has_unit": False,
-                "applied_bonuses": [],
-            }
-
-        # For alternate units, check if they have access
-        if use_alternate:
-            alt_avail_tech = alternate.get("availability_tech")
-            if alt_avail_tech and alt_avail_tech in disabled_techs:
+        if not use_alternate and avail_tech:
+            if avail_tech in disabled_techs:
                 return {
                     "unit_name": base_name,
                     "stats": None,
                     "has_unit": False,
                     "applied_bonuses": [],
                 }
+            # Check if the tech is civ-specific (civ != -1)
+            tech_civ = self.techs.get(avail_tech, {}).get("civ", -1)
+            if tech_civ != -1:
+                civ_id = self.civ_name_to_id.get(civ_name, -1)
+                if tech_civ != civ_id:
+                    return {
+                        "unit_name": base_name,
+                        "stats": None,
+                        "has_unit": False,
+                        "applied_bonuses": [],
+                    }
+
+        # For alternate units, check if they have access
+        if use_alternate:
+            alt_avail_tech = alternate.get("availability_tech")
+            if alt_avail_tech:
+                if alt_avail_tech in disabled_techs:
+                    return {
+                        "unit_name": base_name,
+                        "stats": None,
+                        "has_unit": False,
+                        "applied_bonuses": [],
+                    }
+                tech_civ = self.techs.get(alt_avail_tech, {}).get("civ", -1)
+                if tech_civ != -1:
+                    civ_id = self.civ_name_to_id.get(civ_name, -1)
+                    if tech_civ != civ_id:
+                        return {
+                            "unit_name": base_name,
+                            "stats": None,
+                            "has_unit": False,
+                            "applied_bonuses": [],
+                        }
 
         # Find highest available upgrade
         final_unit_id = base_id

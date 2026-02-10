@@ -162,13 +162,6 @@ BUILDING_WORK_RATE_TECHS = {
     ),
 }
 
-# Civ bonuses that discount technology costs (applied to self)
-# Format: civ_name → {age_name: discount_fraction, ...}
-# Chinese: -10% Feudal, -15% Castle, -20% Imperial
-CIV_TECH_COST_DISCOUNT = {
-    "Chinese": {"Feudal": 0.10, "Castle": 0.15, "Imperial": 0.20},
-}
-
 # Civ team bonuses that multiply building work_rate (applied to self)
 # Format: civ_name → {building_id: multiplier, ...}
 CIV_TEAM_BONUS_WORK_RATE = {

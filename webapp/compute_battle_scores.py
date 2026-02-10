@@ -169,6 +169,43 @@ UNIT_LINES = {
         "imperial_slug": "bombard_cannon",
         "unique_units": {},
     },
+    "all_cavalry": {
+        "name": "All Cavalry (Gold)",
+        "building": "Stable",
+        "castle_slug": None,
+        "imperial_slug": None,
+        "castle_slugs": ["knight", "camel", "steppe_lancer"],
+        "imperial_slugs": ["paladin", "heavy_camel", "elite_steppe"],
+        "unique_units": {
+            "Byzantines": ("cataphract_byzantines", "elite_cataphract_byzantines"),
+            "Huns": ("tarkan_huns", "elite_tarkan_huns"),
+            "Slavs": ("boyar_slavs", "elite_boyar_slavs"),
+        },
+    },
+    "all_ranged": {
+        "name": "All Ranged (Gold)",
+        "building": "Archery Range",
+        "castle_slug": None,
+        "imperial_slug": None,
+        "castle_slugs": ["crossbow", "cav_archer"],
+        "imperial_slugs": ["arbalester", "heavy_cav_archer", "hand_cannoneer"],
+        "unique_units": {
+            "Britons": ("longbowman_britons", "elite_longbowman_britons"),
+            "Chinese": ("chu_ko_nu_chinese", "elite_chu_ko_nu_chinese"),
+            "Mayans": ("plumed_archer_mayans", "elite_plumed_archer_mayans"),
+            "Italians": (
+                "genoese_crossbowman_italians",
+                "elite_genoese_crossbowman_italians",
+            ),
+            "Turks": ("janissary_turks", "elite_janissary_turks"),
+            "Franks": ("throwing_axeman_franks", "elite_throwing_axeman_franks"),
+            "Incas": ("slinger", "imp_slinger"),
+            "Mongols": ("mangudai_mongols", "elite_mangudai_mongols"),
+            "Saracens": ("mameluke_saracens", "elite_mameluke_saracens"),
+            "Koreans": ("war_wagon_koreans", "elite_war_wagon_koreans"),
+            "Spanish": ("conquistador_spanish", "elite_conquistador_spanish"),
+        },
+    },
 }
 
 BENCHMARKS = [
@@ -315,14 +352,23 @@ def build_line_units(line_slug, age):
     """Build combat-ready units for a line + age."""
     line = UNIT_LINES[line_slug]
     is_castle = age == "castle"
-    std_slug = line["castle_slug"] if is_castle else line["imperial_slug"]
     db_age = "Castle" if is_castle else "Imperial"
+
+    # Support multi-slug lines (castle_slugs/imperial_slugs) or single slug
+    if is_castle:
+        std_slugs = line.get(
+            "castle_slugs", [line["castle_slug"]] if line["castle_slug"] else []
+        )
+    else:
+        std_slugs = line.get(
+            "imperial_slugs", [line["imperial_slug"]] if line["imperial_slug"] else []
+        )
 
     conn = get_db()
     rc = conn.cursor()
     units = []
 
-    if std_slug:
+    for std_slug in std_slugs:
         rc.execute(
             "SELECT * FROM ref_units WHERE unit_slug=? AND age=?", (std_slug, db_age)
         )
@@ -481,8 +527,9 @@ def compute_benchmarks(bench_units):
     for line_slug, config in UNIT_LINES.items():
         for age_key in ["castle", "imperial"]:
             std_slug = config.get(f"{age_key}_slug")
+            multi_slugs = config.get(f"{age_key}_slugs", [])
             has_unique = bool(config.get("unique_units"))
-            if not std_slug and not has_unique:
+            if not std_slug and not multi_slugs and not has_unique:
                 continue
 
             units = build_line_units(line_slug, age_key)
@@ -542,8 +589,9 @@ def main():
     for line_slug, config in UNIT_LINES.items():
         for age_key in ["castle", "imperial"]:
             slug = config.get(f"{age_key}_slug")
+            multi_slugs = config.get(f"{age_key}_slugs", [])
             has_unique = bool(config.get("unique_units"))
-            if not slug and not has_unique:
+            if not slug and not multi_slugs and not has_unique:
                 continue
             scores = compute_round_robin(line_slug, age_key)
             if scores:

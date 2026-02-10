@@ -1318,6 +1318,43 @@ UNIT_LINES = {
         "imperial_slug": "bombard_cannon",
         "unique_units": {},
     },
+    "all_cavalry": {
+        "name": "All Cavalry (Gold)",
+        "building": "Stable",
+        "castle_slug": None,
+        "imperial_slug": None,
+        "castle_slugs": ["knight", "camel", "steppe_lancer"],
+        "imperial_slugs": ["paladin", "heavy_camel", "elite_steppe"],
+        "unique_units": {
+            "Byzantines": ("cataphract_byzantines", "elite_cataphract_byzantines"),
+            "Huns": ("tarkan_huns", "elite_tarkan_huns"),
+            "Slavs": ("boyar_slavs", "elite_boyar_slavs"),
+        },
+    },
+    "all_ranged": {
+        "name": "All Ranged (Gold)",
+        "building": "Archery Range",
+        "castle_slug": None,
+        "imperial_slug": None,
+        "castle_slugs": ["crossbow", "cav_archer"],
+        "imperial_slugs": ["arbalester", "heavy_cav_archer", "hand_cannoneer"],
+        "unique_units": {
+            "Britons": ("longbowman_britons", "elite_longbowman_britons"),
+            "Chinese": ("chu_ko_nu_chinese", "elite_chu_ko_nu_chinese"),
+            "Mayans": ("plumed_archer_mayans", "elite_plumed_archer_mayans"),
+            "Italians": (
+                "genoese_crossbowman_italians",
+                "elite_genoese_crossbowman_italians",
+            ),
+            "Turks": ("janissary_turks", "elite_janissary_turks"),
+            "Franks": ("throwing_axeman_franks", "elite_throwing_axeman_franks"),
+            "Incas": ("slinger", "imp_slinger"),
+            "Mongols": ("mangudai_mongols", "elite_mangudai_mongols"),
+            "Saracens": ("mameluke_saracens", "elite_mameluke_saracens"),
+            "Koreans": ("war_wagon_koreans", "elite_war_wagon_koreans"),
+            "Spanish": ("conquistador_spanish", "elite_conquistador_spanish"),
+        },
+    },
 }
 
 
@@ -1380,23 +1417,22 @@ def api_ref_unit_line(line_slug):
         entry["vs_paladin"] = bm.get("vs_paladin", -999)
         entry["vs_arb"] = bm.get("vs_arb", -999)
 
-    # Fetch standard units for each age
-    for age_key, slug_key, db_age in [
-        ("castle", "castle_slug", "Castle"),
-        ("imperial", "imperial_slug", "Imperial"),
+    # Fetch standard units for each age (supports multi-slug lines)
+    for age_key, slug_key, slugs_key, db_age in [
+        ("castle", "castle_slug", "castle_slugs", "Castle"),
+        ("imperial", "imperial_slug", "imperial_slugs", "Imperial"),
     ]:
-        slug = line[slug_key]
-        if not slug:
-            continue
-        rc.execute(
-            f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND age=? ORDER BY civ_name",
-            (slug, db_age),
-        )
-        for row in rc.fetchall():
-            entry = dict(row)
-            entry["is_unique"] = False
-            _attach_scores(entry, age_key)
-            result[age_key].append(entry)
+        slugs = line.get(slugs_key, [line[slug_key]] if line[slug_key] else [])
+        for slug in slugs:
+            rc.execute(
+                f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND age=? ORDER BY civ_name",
+                (slug, db_age),
+            )
+            for row in rc.fetchall():
+                entry = dict(row)
+                entry["is_unique"] = False
+                _attach_scores(entry, age_key)
+                result[age_key].append(entry)
 
     # Fetch extra standard units (e.g. Hand Cannoneer in archer line)
     for extra_slug in line.get("extra_imperial_slugs", []):

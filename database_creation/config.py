@@ -434,7 +434,7 @@ CASTLE_UNITS = {
         "unit_class": 0,
         "availability_tech": None,
         "upgrades": [
-            (212, 24, "Crossbowman"),  # Crossbowman upgrade
+            (100, 24, "Crossbowman"),  # Crossbow tech (researched at Archery Range)
         ],
     },
     "elite_skirm": {
@@ -627,7 +627,7 @@ IMPERIAL_UNITS = {
         "unit_class": 0,
         "availability_tech": None,
         "upgrades": [
-            (212, 24, "Crossbowman"),
+            (100, 24, "Crossbowman"),
             (237, 492, "Arbalester"),
         ],
     },

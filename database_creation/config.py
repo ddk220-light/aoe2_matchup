@@ -290,6 +290,15 @@ CIV_COMBAT_PROPERTIES = {
     ("Dravidians", "hussar"): {"ignores_melee_armor": 1},
     ("Dravidians", "elite_elephant"): {"ignores_melee_armor": 1},
     ("Dravidians", "elite_urumi_swordsman"): {"ignores_melee_armor": 1},
+    # Hul'che Javelineers (Mayan Castle UT) - skirmishers fire extra projectile
+    ("Mayans", "elite_skirm"): {
+        "extra_projectiles": 1,
+        "extra_projectile_attacks_json": '{"3": 1}',
+    },
+    ("Mayans", "imp_elite_skirm"): {
+        "extra_projectiles": 1,
+        "extra_projectile_attacks_json": '{"3": 1}',
+    },
     # Pirotecnia (Italian Imperial UT) - gunpowder units get 15% pass-through damage
     ("Italians", "hand_cannoneer"): {"pass_through_percent": 0.15},
 }

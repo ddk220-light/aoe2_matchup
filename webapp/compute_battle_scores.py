@@ -21,7 +21,7 @@ from simulation import prepare_combat_unit, simulate_battle
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 CACHE_PATH = os.path.join(os.path.dirname(__file__), "battle_cache.json")
-CACHE_VERSION = 2
+CACHE_VERSION = 3
 
 # Unit lines config (must match app.py UNIT_LINES)
 UNIT_LINES = {
@@ -641,9 +641,16 @@ def compute_round_robin(line_slug, age, pairwise_cache, unit_fps):
                 pair_scores = _simulate_pair(
                     units[i]["combat_unit"], units[j]["combat_unit"], is_imperial
                 )
+                # Cache stores scores from fp_first's perspective.
+                # Simulation returns scores from units[i]'s perspective.
+                # If swapped (fp_j < fp_i), negate before caching.
+                if swapped:
+                    pair_scores = [-s for s in pair_scores]
                 pairwise_cache[cache_key] = pair_scores
                 misses += 1
 
+            # pair_scores are from fp_first's perspective.
+            # If swapped, fp_first is fp_j (= units[j]), so negate for units[i].
             for idx in range(3):
                 s = pair_scores[idx]
                 if swapped:

@@ -19,6 +19,7 @@ MAP_SPACE = 22.0  # ~tiles of combat space (MAP_MAX - 2*start_offset)
 RETARGET_DIST = 1.5  # tiles to walk when switching to a new melee target
 UNIT_SPACING = 0.75  # approximate unit spacing in melee clump
 RETREAT_MAX = 10.0  # max tiles ranged retreats before standing to fight
+TRAMPLE_HIT_CHANCE = 0.25  # fraction of trample attacks that hit a nearby unit
 
 
 def _parse_dismount(row):
@@ -192,7 +193,8 @@ def _calc_damage(
 
     bonus_damage = 0
     for armor_class, armor_value in defender_armors.items():
-        if armor_class in attacker_attacks and armor_class not in (3, 4):
+        # Skip base damage classes (3=pierce, 4=melee) and blast/trample class (1)
+        if armor_class in attacker_attacks and armor_class not in (1, 3, 4):
             attack_bonus = attacker_attacks[armor_class]
             if attack_bonus > 0:
                 bonus_damage += max(0, attack_bonus - armor_value)
@@ -1127,8 +1129,12 @@ def simulate_battle(
             if a_kill_bonus > 0 and was_alive and t_hp[target_idx] <= 0:
                 a_bonus[attacker_idx] += a_kill_bonus
 
-            # Trample: damage extra nearby alive enemies
-            if a_trample_dmg > 0 and a_trample_extra > 0:
+            # Trample: 25% chance to damage a nearby alive enemy
+            if (
+                a_trample_dmg > 0
+                and a_trample_extra > 0
+                and random.random() < TRAMPLE_HIT_CHANCE
+            ):
                 splashed = 0
                 for idx in all_alive:
                     if (
@@ -1953,8 +1959,12 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
 
             _, _, trample_dmg, trample_extra = matrix[(a_ti, d_ti_lookup)]
 
-            # Trample
-            if trample_dmg > 0 and trample_extra > 0:
+            # Trample: 25% chance to damage a nearby alive enemy
+            if (
+                trample_dmg > 0
+                and trample_extra > 0
+                and random.random() < TRAMPLE_HIT_CHANCE
+            ):
                 splashed = 0
                 for idx in all_alive:
                     if idx != target_idx and t_hp[idx] > 0 and splashed < trample_extra:

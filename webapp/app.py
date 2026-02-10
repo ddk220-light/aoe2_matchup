@@ -1416,6 +1416,9 @@ def api_ref_unit_line(line_slug):
         entry["vs_champ"] = bm.get("vs_champ", -999)
         entry["vs_paladin"] = bm.get("vs_paladin", -999)
         entry["vs_arb"] = bm.get("vs_arb", -999)
+        entry["pop_vs_champ"] = bm.get("pop_vs_champ", -999)
+        entry["pop_vs_paladin"] = bm.get("pop_vs_paladin", -999)
+        entry["pop_vs_arb"] = bm.get("pop_vs_arb", -999)
 
     # Fetch standard units for each age (supports multi-slug lines)
     for age_key, slug_key, slugs_key, db_age in [

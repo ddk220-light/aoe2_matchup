@@ -21,7 +21,7 @@ from simulation import prepare_combat_unit, simulate_battle
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 CACHE_PATH = os.path.join(os.path.dirname(__file__), "battle_cache.json")
-CACHE_VERSION = 1
+CACHE_VERSION = 2
 
 # Unit lines config (must match app.py UNIT_LINES)
 UNIT_LINES = {
@@ -215,9 +215,14 @@ UNIT_LINES = {
 }
 
 BENCHMARKS = [
+    # Resource-based (3000 res) — used for RES
     ("vs_champ", "Chinese", "champion", "Imperial"),
     ("vs_paladin", "Franks", "paladin", "Imperial"),
     ("vs_arb", "Chinese", "arbalester", "Imperial"),
+    # Pop-based (30v30 fixed count) — used for PES
+    ("pop_vs_champ", "Chinese", "champion", "Imperial"),
+    ("pop_vs_paladin", "Franks", "paladin", "Imperial"),
+    ("pop_vs_arb", "Chinese", "arbalester", "Imperial"),
 ]
 
 # Fields excluded from fingerprint (display-only, not affecting simulation)
@@ -365,6 +370,14 @@ def _simulate_benchmark(unit, bench_unit, is_imperial):
     elif winner == 2:
         return round(-hp_pct2 * 100, 1)
     return 0.0
+
+
+def _simulate_pop_benchmark(unit, bench_unit, is_imperial):
+    """Run one 30v30 fixed-count benchmark battle. Returns -100..+100 from unit's perspective."""
+    winner, _, _, hp_pct1, hp_pct2 = simulate_battle(
+        unit, bench_unit, 0, fixed_count=30, return_hp=True
+    )
+    return round(_hp_score(winner, hp_pct1, hp_pct2), 1)
 
 
 # ---------------------------------------------------------------------------
@@ -691,7 +704,14 @@ def compute_benchmarks(bench_units, bench_fps, benchmark_cache, unit_fps):
                         scores[bkey] = benchmark_cache[cache_key]
                         total_hits += 1
                     else:
-                        val = _simulate_benchmark(cu, bench_units[bkey], is_imperial)
+                        if bkey.startswith("pop_"):
+                            val = _simulate_pop_benchmark(
+                                cu, bench_units[bkey], is_imperial
+                            )
+                        else:
+                            val = _simulate_benchmark(
+                                cu, bench_units[bkey], is_imperial
+                            )
                         scores[bkey] = val
                         benchmark_cache[cache_key] = val
                         total_misses += 1

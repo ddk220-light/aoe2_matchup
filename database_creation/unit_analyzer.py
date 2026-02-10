@@ -22,7 +22,6 @@ from .config import (
     BUILDING_WORK_RATE_TECHS,
     CIV_TEAM_BONUS_ATTACK,
     CIV_TEAM_BONUS_WORK_RATE,
-    CIV_TECH_COST_DISCOUNT,
     CMD_ADD_ATTRIBUTE,
     CMD_MULTIPLY_ATTRIBUTE,
     CMD_SET_ATTRIBUTE,
@@ -141,6 +140,94 @@ class UnitAnalyzer:
                 if isinstance(t, dict):
                     disabled.add(t["id"])
             self.civ_disabled_tech_ids[civ_name] = disabled
+
+        # Build per-civ tech cost overrides from tech tree effects and civ bonus techs
+        # TECH_COST_SET (type 101): a=target_tech, b=resource(-1=all,0=food,1=wood,3=gold),
+        #   c=mode(0=set,1=add,2=multiply), d=value
+        self.civ_tech_cost_overrides = {}  # {civ_name: {tech_id: [(resource, mode, value)]}}
+        for civ_name, civ_data in self.civ_tech_trees.items():
+            eff_id = civ_data.get("tech_tree_effect_id")
+            eff = self.effects.get(eff_id) if eff_id else None
+            if not eff:
+                continue
+            overrides = {}
+            for cmd in eff.get("commands", []):
+                if cmd["type"] != 101:
+                    continue
+                target_tech = cmd["a"]
+                resource = cmd["b"]  # -1=all, 0=food, 1=wood, 3=gold
+                mode = cmd["c"]  # 0=set, 1=add, 2=multiply
+                value = cmd["d"]
+                if target_tech not in overrides:
+                    overrides[target_tech] = []
+                overrides[target_tech].append((resource, mode, value))
+            if overrides:
+                self.civ_tech_cost_overrides[civ_name] = overrides
+
+        # Also collect TECH_COST_SET from civ bonus techs (separate from tech tree effect)
+        for te in self.tech_effects:
+            tech_id = te["tech_id"]
+            tech = self.techs.get(tech_id, {})
+            civ_id = tech.get("civ", -1)
+            if civ_id < 0:
+                continue
+            # Find civ name
+            civ_name = None
+            for cn, cid in self.civ_name_to_id.items():
+                if cid == civ_id:
+                    civ_name = cn
+                    break
+            if not civ_name:
+                continue
+            for cmd in te.get("commands", []):
+                if cmd["type"] != 101:
+                    continue
+                target_tech = cmd["a"]
+                resource = cmd["b"]
+                mode = cmd["c"]
+                value = cmd["d"]
+                if civ_name not in self.civ_tech_cost_overrides:
+                    self.civ_tech_cost_overrides[civ_name] = {}
+                ovr = self.civ_tech_cost_overrides[civ_name]
+                if target_tech not in ovr:
+                    ovr[target_tech] = []
+                ovr[target_tech].append((resource, mode, value))
+
+    def get_modified_tech_cost(self, civ_name, tech_id):
+        """Get the modified cost of a tech for a civ, applying TECH_COST_SET overrides.
+        Returns (food, wood, gold) after applying all overrides, or None if no overrides."""
+        overrides = self.civ_tech_cost_overrides.get(civ_name, {}).get(tech_id)
+        if not overrides:
+            return None
+        tech = self.techs.get(tech_id, {})
+        base_cost = tech.get("cost", {})
+        food = base_cost.get("food", 0)
+        wood = base_cost.get("wood", 0)
+        gold = base_cost.get("gold", 0)
+
+        res_map = {0: "food", 1: "wood", 3: "gold"}
+        for resource, mode, value in overrides:
+            targets = (
+                [res_map[resource]] if resource in res_map else ["food", "wood", "gold"]
+            )
+            for res_name in targets:
+                cur = {"food": food, "wood": wood, "gold": gold}[res_name]
+                if mode == 0:  # set
+                    new_val = value
+                elif mode == 1:  # add
+                    new_val = cur + value
+                elif mode == 2:  # multiply
+                    new_val = cur * value
+                else:
+                    continue
+                if res_name == "food":
+                    food = round(new_val)
+                elif res_name == "wood":
+                    wood = round(new_val)
+                elif res_name == "gold":
+                    gold = round(new_val)
+
+        return (max(0, food), max(0, wood), max(0, gold))
 
     def get_disabled_techs(self, civ_name: str) -> set:
         """Get set of disabled tech IDs for a civilization."""
@@ -571,20 +658,19 @@ class UnitAnalyzer:
     def calculate_upgrade_cost(
         self, civ_name: str, relevant_techs: set, disabled_techs: set
     ) -> int:
-        """Calculate total upgrade cost for relevant techs (with civ discount)."""
-        discount_map = CIV_TECH_COST_DISCOUNT.get(civ_name, {})
+        """Calculate total upgrade cost for relevant techs (with data-driven cost overrides)."""
         total = 0
         for tech_id in relevant_techs:
             if tech_id in disabled_techs:
                 continue
-            tech_data = self.techs.get(tech_id, {})
-            base_cost = tech_data.get("cost", {})
-            tech_age = self.get_tech_age_recursive(tech_id)
-            age_name = _tech_age_name(tech_age)
-            discount = discount_map.get(age_name, 0)
-            mult = 1.0 - discount
-            for val in base_cost.values():
-                total += round(val * mult)
+            modified = self.get_modified_tech_cost(civ_name, tech_id)
+            if modified is not None:
+                total += modified[0] + modified[1] + modified[2]
+            else:
+                tech_data = self.techs.get(tech_id, {})
+                base_cost = tech_data.get("cost", {})
+                for val in base_cost.values():
+                    total += round(val)
         return total
 
     def calculate_unit_stats_for_civ(

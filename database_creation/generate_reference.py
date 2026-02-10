@@ -24,7 +24,6 @@ from .config import (
     CIV_COMBAT_PROPERTIES,
     CIV_TEAM_BONUS_ATTACK,
     CIV_TEAM_BONUS_WORK_RATE,
-    CIV_TECH_COST_DISCOUNT,
     CMD_ADD_ATTRIBUTE,
     CMD_MULTIPLY_ATTRIBUTE,
     CMD_SET_ATTRIBUTE,
@@ -723,20 +722,20 @@ def generate_reference_database(analyzer):
             ),
         )
 
-        # Compute total upgrade cost (sum of all tech costs, with civ discount)
+        # Compute total upgrade cost (sum of all tech costs, with data-driven overrides)
         tech_costs = cursor.execute(
-            """SELECT cost_food, cost_wood, cost_gold, age_available
+            """SELECT tech_id, cost_food, cost_wood, cost_gold
                FROM ref_techs_applied WHERE ref_unit_id=?""",
             (ref_unit_id,),
         ).fetchall()
-        discount_map = CIV_TECH_COST_DISCOUNT.get(civ_name, {})
         total_food, total_wood, total_gold = 0, 0, 0
-        for tc_food, tc_wood, tc_gold, tc_age in tech_costs:
-            discount = discount_map.get(tc_age, 0)
-            mult = 1.0 - discount
-            total_food += round(tc_food * mult)
-            total_wood += round(tc_wood * mult)
-            total_gold += round(tc_gold * mult)
+        for tc_tech_id, tc_food, tc_wood, tc_gold in tech_costs:
+            modified = analyzer.get_modified_tech_cost(civ_name, tc_tech_id)
+            if modified is not None:
+                tc_food, tc_wood, tc_gold = modified
+            total_food += tc_food
+            total_wood += tc_wood
+            total_gold += tc_gold
         cursor.execute(
             """UPDATE ref_units SET upgrade_cost_food=?, upgrade_cost_wood=?, upgrade_cost_gold=?
                WHERE id=?""",

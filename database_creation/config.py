@@ -312,6 +312,17 @@ PAIRED_UNITS = {
 }
 
 # =============================================================================
+# ALLY (TEAM) UNITS
+# =============================================================================
+# Units that become available to ALL civs when a specific civ is on the team.
+# Key: source civ name. Value: list of unit slugs from CASTLE_UNITS/IMPERIAL_UNITS.
+# These units must have "civ_only" set in their unit config to restrict solo generation.
+# Not yet used in any feature — reserved for future team game support.
+ALLY_UNITS = {
+    "Italians": ["condottiero"],
+}
+
+# =============================================================================
 # UNIT DEFINITIONS
 # =============================================================================
 # Format: (base_unit_id, display_name, unit_class, availability_tech, upgrade_techs)
@@ -740,8 +751,11 @@ IMPERIAL_UNITS = {
         "base_id": 882,
         "display_name": "Condottiero",
         "unit_class": 6,  # Infantry
-        "availability_tech": 522,  # Condottiero (make avail) - Italians only
+        "availability_tech": 522,  # Condottiero (make avail)
         "upgrades": [],
+        "civ_only": [
+            "Italians"
+        ],  # Team unit: all civs can train with Italian ally, but restrict to owner for now
     },
     "imp_slinger": {
         "base_id": 185,

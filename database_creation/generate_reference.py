@@ -856,6 +856,8 @@ def generate_reference_database(analyzer):
 
         # Castle Age units
         for slug, config in CASTLE_UNITS.items():
+            if civ_name not in config.get("civ_only", [civ_name]):
+                continue
             result = analyzer.calculate_unit_stats_for_civ(civ_name, config, CASTLE_AGE)
             if not result["has_unit"]:
                 continue
@@ -877,6 +879,8 @@ def generate_reference_database(analyzer):
 
         # Imperial Age units
         for slug, config in IMPERIAL_UNITS.items():
+            if civ_name not in config.get("civ_only", [civ_name]):
+                continue
             result = analyzer.calculate_unit_stats_for_civ(
                 civ_name, config, IMPERIAL_AGE
             )

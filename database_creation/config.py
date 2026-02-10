@@ -736,6 +736,20 @@ IMPERIAL_UNITS = {
         "availability_tech": None,
         "upgrades": [],
     },
+    "condottiero": {
+        "base_id": 882,
+        "display_name": "Condottiero",
+        "unit_class": 6,  # Infantry
+        "availability_tech": 522,  # Condottiero (make avail) - Italians only
+        "upgrades": [],
+    },
+    "imp_slinger": {
+        "base_id": 185,
+        "display_name": "Slinger",
+        "unit_class": 0,  # Archer class
+        "availability_tech": 528,  # Slinger (make avail) - Incas only
+        "upgrades": [],
+    },
 }
 
 # All units by age
@@ -981,15 +995,6 @@ UNIQUE_UNITS = {
             "elite_tech": 468,
             "elite_id": 868,  # Correct ID per AoE2ScenarioParser
             "elite_name": "Elite Genoese Crossbowman",
-        },
-        {
-            "base_id": 882,
-            "display_name": "Condottiero",
-            "unit_class": 6,  # Infantry
-            "availability_tech": 522,  # Condottiero (make avail)
-            "elite_tech": None,
-            "elite_id": None,
-            "elite_name": None,
         },
     ],
     "Magyars": [

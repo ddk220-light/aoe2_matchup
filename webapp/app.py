@@ -1181,7 +1181,7 @@ UNIT_LINES = {
             "Teutons": ("teutonic_knight_teutons", "elite_teutonic_knight_teutons"),
             "Aztecs": ("jaguar_warrior_aztecs", "elite_jaguar_warrior_aztecs"),
             "Incas": ("kamayuk_incas", "elite_kamayuk_incas"),
-            "Italians": ("condottiero_italians", None),
+            "Italians": (None, "condottiero"),
         },
     },
     "spear": {
@@ -1203,10 +1203,11 @@ UNIT_LINES = {
         },
     },
     "archer": {
-        "name": "Archer Line",
+        "name": "Archers & Gunpowder",
         "building": "Archery Range",
         "castle_slug": "crossbow",
         "imperial_slug": "arbalester",
+        "extra_imperial_slugs": ["hand_cannoneer"],
         "unique_units": {
             "Britons": ("longbowman_britons", "elite_longbowman_britons"),
             "Chinese": ("chu_ko_nu_chinese", "elite_chu_ko_nu_chinese"),
@@ -1217,7 +1218,7 @@ UNIT_LINES = {
             ),
             "Turks": ("janissary_turks", "elite_janissary_turks"),
             "Franks": ("throwing_axeman_franks", "elite_throwing_axeman_franks"),
-            "Incas": ("slinger", None),
+            "Incas": ("slinger", "imp_slinger"),
         },
     },
     "skirmisher": {
@@ -1396,6 +1397,18 @@ def api_ref_unit_line(line_slug):
             entry["is_unique"] = False
             _attach_scores(entry, age_key)
             result[age_key].append(entry)
+
+    # Fetch extra standard units (e.g. Hand Cannoneer in archer line)
+    for extra_slug in line.get("extra_imperial_slugs", []):
+        rc.execute(
+            f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND age=? ORDER BY civ_name",
+            (extra_slug, "Imperial"),
+        )
+        for row in rc.fetchall():
+            entry = dict(row)
+            entry["is_unique"] = False
+            _attach_scores(entry, "imperial")
+            result["imperial"].append(entry)
 
     # Fetch unique units
     for civ_name, (castle_uu, imperial_uu) in line.get("unique_units", {}).items():

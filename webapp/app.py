@@ -1181,13 +1181,6 @@ UNIT_LINES = {
             "Incas": ("kamayuk_incas", "elite_kamayuk_incas"),
         },
     },
-    "eagle": {
-        "name": "Eagle Warrior Line",
-        "building": "Barracks",
-        "castle_slug": "eagle_warrior",
-        "imperial_slug": "elite_eagle",
-        "unique_units": {},
-    },
     "spear": {
         "name": "Spear Line",
         "building": "Barracks",
@@ -1200,7 +1193,11 @@ UNIT_LINES = {
         "building": "Barracks",
         "castle_slug": "fire_lancer",
         "imperial_slug": "elite_fire_lancer",
-        "unique_units": {},
+        "unique_units": {
+            "Aztecs": ("eagle_warrior", "elite_eagle"),
+            "Incas": ("eagle_warrior", "elite_eagle"),
+            "Mayans": ("eagle_warrior", "elite_eagle"),
+        },
     },
     "archer": {
         "name": "Archer Line",
@@ -1215,6 +1212,9 @@ UNIT_LINES = {
                 "genoese_crossbowman_italians",
                 "elite_genoese_crossbowman_italians",
             ),
+            "Turks": ("janissary_turks", "elite_janissary_turks"),
+            "Franks": ("throwing_axeman_franks", "elite_throwing_axeman_franks"),
+            "Incas": ("slinger", None),
         },
     },
     "skirmisher": {
@@ -1233,16 +1233,6 @@ UNIT_LINES = {
             "Mongols": ("mangudai_mongols", "elite_mangudai_mongols"),
             "Saracens": ("mameluke_saracens", "elite_mameluke_saracens"),
             "Koreans": ("war_wagon_koreans", "elite_war_wagon_koreans"),
-        },
-    },
-    "hand_cannoneer": {
-        "name": "Hand Cannoneer",
-        "building": "Archery Range",
-        "castle_slug": None,
-        "imperial_slug": "hand_cannoneer",
-        "unique_units": {
-            "Turks": ("janissary_turks", "elite_janissary_turks"),
-            "Franks": ("throwing_axeman_franks", "elite_throwing_axeman_franks"),
             "Spanish": ("conquistador_spanish", "elite_conquistador_spanish"),
         },
     },

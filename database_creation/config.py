@@ -321,9 +321,9 @@ UNIQUE_COMBAT_PROPERTIES = {
     # blast_damage=1.0 in dat = pass-through, not splash
     "chakram_thrower": {"pass_through_percent": 1.0},
     "elite_chakram_thrower": {"pass_through_percent": 1.0},
-    # Ghulam splash on hit (dat: blast_damage=0.5, blast_width=1.0)
-    "ghulam": {"splash_on_hit_radius": 1.0},
-    "elite_ghulam": {"splash_on_hit_radius": 1.0},
+    # Ghulam splash on hit (dat: blast_damage=0.5, blast_width=1.0) — 50% damage to secondary targets
+    "ghulam": {"splash_on_hit_radius": 1.0, "splash_on_hit_fraction": 0.5},
+    "elite_ghulam": {"splash_on_hit_radius": 1.0, "splash_on_hit_fraction": 0.5},
     # Monaspa nearby ally attack bonus (+2 per nearby cavalry, max 4 nearby)
     "monaspa": {"attack_bonus_nearby": 2, "nearby_bonus_count": 4},
     "elite_monaspa": {"attack_bonus_nearby": 2, "nearby_bonus_count": 4},

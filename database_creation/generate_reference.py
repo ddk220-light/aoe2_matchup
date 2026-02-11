@@ -768,6 +768,7 @@ def generate_reference_database(analyzer):
             ("bonus_damage_reduction", "Reduces bonus damage taken"),
             ("splash_radius", "Splash damage radius"),
             ("splash_on_hit_radius", "Splash on hit radius"),
+            ("splash_on_hit_fraction", "Splash on hit damage fraction"),
             ("dodge_shield_max", "Dodge shield charges"),
             ("dodge_shield_recharge", "Dodge shield recharge time"),
             ("bleed_dps", "Bleed damage per second"),

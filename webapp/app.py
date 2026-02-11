@@ -591,7 +591,7 @@ def api_combat_unit(civ_name, unit_slug):
             us.trample_percent, us.trample_radius, us.trample_flat_damage,
             us.bonus_damage_reduction, us.unit_category, us.paired_unit_slug,
             us.extra_projectiles, us.extra_projectile_attacks_json,
-            us.splash_on_hit_radius,
+            us.splash_on_hit_radius, us.splash_on_hit_fraction,
             us.dodge_shield_max, us.dodge_shield_recharge,
             us.bleed_dps, us.bleed_duration, us.block_first_melee,
             us.attack_bonus_per_kill, us.first_attack_extra_projectiles,
@@ -656,6 +656,9 @@ def api_combat_unit(civ_name, unit_slug):
             "paired_unit_slug": row["paired_unit_slug"],
             "extra_projectiles": row["extra_projectiles"] or 0,
             "splash_on_hit_radius": row["splash_on_hit_radius"] or 0,
+            "splash_on_hit_fraction": row["splash_on_hit_fraction"]
+            if row["splash_on_hit_fraction"] is not None
+            else 1.0,
             "dodge_shield_max": row["dodge_shield_max"] or 0,
             "dodge_shield_recharge": row["dodge_shield_recharge"] or 0,
             "bleed_dps": row["bleed_dps"] or 0,
@@ -1122,6 +1125,7 @@ def _build_combat_dict_from_ref(rc, row):
         "ignores_melee_armor": int(special.get("ignores_melee_armor", 0)),
         "bonus_damage_reduction": special.get("bonus_damage_reduction", 0),
         "splash_on_hit_radius": special.get("splash_on_hit_radius", 0),
+        "splash_on_hit_fraction": special.get("splash_on_hit_fraction", 1.0),
         "dodge_shield_max": int(special.get("dodge_shield_max", 0)),
         "dodge_shield_recharge": special.get("dodge_shield_recharge", 0),
         "bleed_dps": special.get("bleed_dps", 0),

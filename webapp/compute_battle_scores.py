@@ -604,6 +604,7 @@ def build_combat_dict(rc, row):
         "ignores_melee_armor": int(special.get("ignores_melee_armor", 0)),
         "bonus_damage_reduction": special.get("bonus_damage_reduction", 0),
         "splash_on_hit_radius": special.get("splash_on_hit_radius", 0),
+        "splash_on_hit_fraction": special.get("splash_on_hit_fraction", 1.0),
         "dodge_shield_max": int(special.get("dodge_shield_max", 0)),
         "dodge_shield_recharge": special.get("dodge_shield_recharge", 0),
         "bleed_dps": special.get("bleed_dps", 0),

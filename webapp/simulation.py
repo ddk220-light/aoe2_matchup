@@ -124,6 +124,7 @@ def prepare_combat_unit(row):
         if row["extra_projectile_attacks_json"]
         else None,
         "splash_on_hit_radius": row["splash_on_hit_radius"] or 0,
+        "splash_on_hit_fraction": row.get("splash_on_hit_fraction") or 1.0,
         "dodge_shield_max": row["dodge_shield_max"] or 0,
         "dodge_shield_recharge": row["dodge_shield_recharge"] or 0,
         "bleed_dps": row["bleed_dps"] or 0,
@@ -401,6 +402,8 @@ def simulate_battle(
     # Splash on hit
     splash_hit1 = _splash_targets(unit1["splash_on_hit_radius"])
     splash_hit2 = _splash_targets(unit2["splash_on_hit_radius"])
+    splash_hit_frac1 = unit1["splash_on_hit_fraction"]
+    splash_hit_frac2 = unit2["splash_on_hit_fraction"]
 
     # Pass-through damage (Scorpion bolts, Pirotecnia)
     pass_through1 = unit1["pass_through_percent"]
@@ -660,6 +663,7 @@ def simulate_battle(
             a_kill_bonus = kill_bonus1
             a_bleed_dps, a_bleed_dur = bleed_dps1, bleed_dur1
             a_splash_hit = splash_hit1
+            a_splash_hit_frac = splash_hit_frac1
             a_siege_splash = siege_splash1
             a_is_siege = is_siege1
             a_pass_through = pass_through1
@@ -674,6 +678,7 @@ def simulate_battle(
             a_kill_bonus = kill_bonus2
             a_bleed_dps, a_bleed_dur = bleed_dps2, bleed_dur2
             a_splash_hit = splash_hit2
+            a_splash_hit_frac = splash_hit_frac2
             a_siege_splash = siege_splash2
             a_is_siege = is_siege2
             a_pass_through = pass_through2
@@ -712,10 +717,11 @@ def simulate_battle(
         # Splash on hit: hit extra targets near the target
         if a_splash_hit > 0:
             alive = t_alive_fn()
+            splash_dmg = max(1, hit_dmg * a_splash_hit_frac)
             splashed = 0
             for idx in alive:
                 if idx != target_idx and splashed < a_splash_hit:
-                    t_hp[idx] -= hit_dmg
+                    t_hp[idx] -= splash_dmg
                     splashed += 1
 
         # Pass-through: 1 additional unit takes a fraction of the damage
@@ -1165,6 +1171,7 @@ def simulate_battle(
                 a_bleed_dps, a_bleed_dur = bleed_dps2, bleed_dur2
                 a_trample_dmg, a_trample_extra = trample_dmg2, trample_extra2
                 a_splash_hit = splash_hit2
+                a_splash_hit_frac = splash_hit_frac2
                 a_siege_splash = siege_splash2
                 a_is_siege = is_siege2
                 a_pass_through = pass_through2
@@ -1183,6 +1190,7 @@ def simulate_battle(
                 a_bleed_dps, a_bleed_dur = bleed_dps1, bleed_dur1
                 a_trample_dmg, a_trample_extra = trample_dmg1, trample_extra1
                 a_splash_hit = splash_hit1
+                a_splash_hit_frac = splash_hit_frac1
                 a_siege_splash = siege_splash1
                 a_is_siege = is_siege1
                 a_pass_through = pass_through1
@@ -1271,10 +1279,11 @@ def simulate_battle(
 
             # Splash on hit: extra targets near the target
             if a_splash_hit > 0:
+                splash_dmg = max(1, damage * a_splash_hit_frac)
                 splashed = 0
                 for idx in all_alive:
                     if idx != target_idx and t_hp[idx] > 0 and splashed < a_splash_hit:
-                        t_hp[idx] -= damage
+                        t_hp[idx] -= splash_dmg
                         splashed += 1
 
             # Pass-through: 1 additional unit takes a fraction of the damage
@@ -1493,6 +1502,7 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                     if cu["is_siege_projectile"] == 1
                     else 0,
                     "splash_hit": _splash_targets(cu["splash_on_hit_radius"]),
+                    "splash_hit_frac": cu["splash_on_hit_fraction"],
                     "has_trample": (
                         cu["trample_percent"] > 0 or cu["trample_flat_damage"] > 0
                     )
@@ -1796,6 +1806,7 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                                 splashed += 1
                     # Splash on hit
                     if tmpl["splash_hit"] > 0:
+                        s_dmg = max(1, main_dmg * tmpl["splash_hit_frac"])
                         splashed = 0
                         for idx in d_alive_now:
                             if (
@@ -1803,8 +1814,8 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                                 and sim_hp[idx] > 0
                                 and splashed < tmpl["splash_hit"]
                             ):
-                                pending.append((idx, main_dmg))
-                                sim_hp[idx] -= main_dmg
+                                pending.append((idx, s_dmg))
+                                sim_hp[idx] -= s_dmg
                                 splashed += 1
                     # Pass-through
                     if tmpl["pass_through"] > 0:
@@ -2127,6 +2138,7 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
 
             # Splash on hit
             if a_tmpl["splash_hit"] > 0:
+                s_dmg = max(1, damage * a_tmpl["splash_hit_frac"])
                 splashed = 0
                 for idx in all_alive:
                     if (
@@ -2134,7 +2146,7 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                         and t_hp[idx] > 0
                         and splashed < a_tmpl["splash_hit"]
                     ):
-                        t_hp[idx] -= damage
+                        t_hp[idx] -= s_dmg
                         splashed += 1
 
             # Pass-through: 1 additional unit takes a fraction of the damage

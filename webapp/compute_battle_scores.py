@@ -85,7 +85,7 @@ UNIT_LINES = {
                 "elite_shotel_warrior_ethiopians",
             ),
             "Malay": ("karambit_warrior_malay", "elite_karambit_warrior_malay"),
-            "Burgundians": ("flemish_militia_burgundians", None),
+            "Burgundians": (None, "flemish_militia"),
             "Sicilians": ("serjeant_sicilians", "elite_serjeant_sicilians"),
             "Poles": ("obuch_poles", "elite_obuch_poles"),
             "Dravidians": (

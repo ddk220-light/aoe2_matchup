@@ -24,7 +24,7 @@ CACHE_PATH = os.path.join(os.path.dirname(__file__), "battle_cache.json")
 EXTRACTED_UNITS_PATH = os.path.join(
     os.path.dirname(__file__), "..", "database_creation", "extracted_data", "units.json"
 )
-CACHE_VERSION = 8
+CACHE_VERSION = 9
 
 # Load extracted units data for dismount resolution
 _EXTRACTED_UNITS = {}
@@ -88,6 +88,16 @@ UNIT_LINES = {
             "Burgundians": ("flemish_militia_burgundians", None),
             "Sicilians": ("serjeant_sicilians", "elite_serjeant_sicilians"),
             "Poles": ("obuch_poles", "elite_obuch_poles"),
+            "Dravidians": (
+                "urumi_swordsman_dravidians",
+                "elite_urumi_swordsman_dravidians",
+            ),
+            "Hindustanis": ("ghulam_hindustanis", "elite_ghulam_hindustanis"),
+            "Gurjaras": (
+                "chakram_thrower_gurjaras",
+                "elite_chakram_thrower_gurjaras",
+            ),
+            "Armenians": ("warrior_priest_armenians", "warrior_priest_armenians"),
         },
     },
     "spear": {
@@ -130,6 +140,10 @@ UNIT_LINES = {
                 "elite_rattan_archer_vietnamese",
             ),
             "Malians": ("gbeto_malians", "elite_gbeto_malians"),
+            "Armenians": (
+                "composite_bowman_armenians",
+                "elite_composite_bowman_armenians",
+            ),
         },
     },
     "skirmisher": {
@@ -154,6 +168,10 @@ UNIT_LINES = {
             "Berbers": ("camel_archer_berbers", "elite_camel_archer_berbers"),
             "Burmese": ("arambai_burmese", "elite_arambai_burmese"),
             "Cumans": ("kipchak_cumans", "elite_kipchak_cumans"),
+            "Bengalis": (
+                "ratha_(ranged)_bengalis",
+                "elite_ratha_(ranged)_bengalis",
+            ),
         },
     },
     "knight": {
@@ -169,6 +187,16 @@ UNIT_LINES = {
             "Lithuanians": ("leitis_lithuanians", "elite_leitis_lithuanians"),
             "Tatars": ("keshik_tatars", "elite_keshik_tatars"),
             "Burgundians": ("coustillier_burgundians", "elite_coustillier_burgundians"),
+            "Bengalis": (
+                "ratha_(melee)_bengalis",
+                "elite_ratha_(melee)_bengalis",
+            ),
+            "Gurjaras": (
+                "shrivamsha_rider_gurjaras",
+                "elite_shrivamsha_rider_gurjaras",
+            ),
+            "Romans": ("centurion_romans", "elite_centurion_romans"),
+            "Georgians": ("monaspa_georgians", "elite_monaspa_georgians"),
         },
     },
     "light_cav": {
@@ -259,6 +287,16 @@ UNIT_LINES = {
             "Lithuanians": ("leitis_lithuanians", "elite_leitis_lithuanians"),
             "Tatars": ("keshik_tatars", "elite_keshik_tatars"),
             "Burgundians": ("coustillier_burgundians", "elite_coustillier_burgundians"),
+            "Bengalis": (
+                "ratha_(melee)_bengalis",
+                "elite_ratha_(melee)_bengalis",
+            ),
+            "Gurjaras": (
+                "shrivamsha_rider_gurjaras",
+                "elite_shrivamsha_rider_gurjaras",
+            ),
+            "Romans": ("centurion_romans", "elite_centurion_romans"),
+            "Georgians": ("monaspa_georgians", "elite_monaspa_georgians"),
         },
     },
     "all_ranged": {
@@ -291,6 +329,14 @@ UNIT_LINES = {
             ),
             "Malians": ("gbeto_malians", "elite_gbeto_malians"),
             "Cumans": ("kipchak_cumans", "elite_kipchak_cumans"),
+            "Bengalis": (
+                "ratha_(ranged)_bengalis",
+                "elite_ratha_(ranged)_bengalis",
+            ),
+            "Armenians": (
+                "composite_bowman_armenians",
+                "elite_composite_bowman_armenians",
+            ),
         },
     },
 }
@@ -571,6 +617,8 @@ def build_combat_dict(rc, row):
         "armor_strip_per_hit": int(special.get("armor_strip_per_hit", 0)),
         "charge_attack_melee": int(special.get("charge_attack_melee", 0)),
         "charge_recharge_time": special.get("charge_recharge_time", 0),
+        "attack_bonus_nearby": int(special.get("attack_bonus_nearby", 0)),
+        "nearby_bonus_count": int(special.get("nearby_bonus_count", 0)),
         # Dismount on death (Konnik): from hardcoded config via special effects
         "dismount_hp": (
             int(special["dismount_hp"]) if "dismount_hp" in special else None

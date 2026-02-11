@@ -138,6 +138,8 @@ def prepare_combat_unit(row):
         "armor_strip_per_hit": row.get("armor_strip_per_hit", 0) or 0,
         "charge_attack_melee": row.get("charge_attack_melee", 0) or 0,
         "charge_recharge_time": row.get("charge_recharge_time", 0) or 0,
+        "attack_bonus_nearby": row.get("attack_bonus_nearby", 0) or 0,
+        "nearby_bonus_count": row.get("nearby_bonus_count", 0) or 0,
         # Metadata
         "slug": row["slug"]
         if "slug" in (row.keys() if hasattr(row, "keys") else row)
@@ -357,6 +359,19 @@ def simulate_battle(
         bonus_damage_reduction=unit1["bonus_damage_reduction"],
         melee_damage=melee_dmg2,
     )
+
+    # Nearby ally attack bonus (Monaspa): pre-compute as flat damage addition
+    nearby_bonus1 = unit1.get("attack_bonus_nearby", 0)
+    if nearby_bonus1 > 0:
+        max_nearby1 = unit1.get("nearby_bonus_count", 4)
+        effective_nearby1 = min(max_nearby1, count1 - 1)
+        dmg1 += nearby_bonus1 * effective_nearby1
+
+    nearby_bonus2 = unit2.get("attack_bonus_nearby", 0)
+    if nearby_bonus2 > 0:
+        max_nearby2 = unit2.get("nearby_bonus_count", 4)
+        effective_nearby2 = min(max_nearby2, count2 - 1)
+        dmg2 += nearby_bonus2 * effective_nearby2
 
     # Trample (melee only)
     tp1, tr1, tf1 = (

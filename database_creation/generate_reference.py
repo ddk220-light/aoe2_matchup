@@ -791,6 +791,8 @@ def generate_reference_database(analyzer):
             ("dismount_attack_speed", "Dismounted unit attack speed"),
             ("dismount_attack_delay", "Dismounted unit attack delay"),
             ("dismount_movement_speed", "Dismounted unit movement speed"),
+            ("attack_bonus_nearby", "Attack bonus per nearby ally"),
+            ("nearby_bonus_count", "Max nearby allies for bonus"),
         ]
         # Also store JSON-valued properties (attacks/armors for dismount)
         for json_prop in ("dismount_attacks_json", "dismount_armors_json"):

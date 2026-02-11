@@ -74,35 +74,42 @@ ATTR_DISPLAY_NAMES = {
 
 # Original 13 civilizations
 ORIGINAL_13_CIVS = [
+    "Armenians",
     "Aztecs",
+    "Bengalis",
     "Berbers",
+    "Bohemians",
     "Britons",
+    "Bulgarians",
+    "Burgundians",
     "Burmese",
     "Byzantines",
     "Celts",
     "Chinese",
+    "Cumans",
+    "Dravidians",
     "Ethiopians",
     "Franks",
+    "Georgians",
     "Goths",
+    "Gurjaras",
+    "Hindustanis",
     "Huns",
     "Incas",
     "Italians",
     "Japanese",
     "Khmer",
     "Koreans",
+    "Lithuanians",
     "Magyars",
     "Malay",
     "Malians",
     "Mayans",
     "Mongols",
     "Persians",
-    "Portuguese",
-    "Bohemians",
-    "Bulgarians",
-    "Burgundians",
-    "Cumans",
-    "Lithuanians",
     "Poles",
+    "Portuguese",
+    "Romans",
     "Saracens",
     "Sicilians",
     "Slavs",
@@ -245,6 +252,9 @@ COMBAT_PROPERTIES = {
     "elite_organ_gun": {"unit_category": "siege"},
     "hussite_wagon": {"unit_category": "siege"},
     "elite_hussite_wagon": {"unit_category": "siege"},
+    "chakram_thrower": {"unit_category": "infantry"},
+    "elite_chakram_thrower": {"unit_category": "infantry"},
+    "warrior_priest": {"unit_category": "infantry"},
 }
 
 # Unique units — keyed by base slug (without civ suffix)
@@ -307,6 +317,16 @@ UNIQUE_COMBAT_PROPERTIES = {
     # Coustillier melee charge attack (charge_type=1 in dat, data-driven fields extracted)
     "coustillier": {"charge_attack_melee": 20, "charge_recharge_time": 40.0},
     "elite_coustillier": {"charge_attack_melee": 25, "charge_recharge_time": 40.0},
+    # Chakram Thrower pass-through (chakrams hit multiple units in a line)
+    # blast_damage=1.0 in dat = pass-through, not splash
+    "chakram_thrower": {"pass_through_percent": 1.0},
+    "elite_chakram_thrower": {"pass_through_percent": 1.0},
+    # Ghulam splash on hit (dat: blast_damage=0.5, blast_width=1.0)
+    "ghulam": {"splash_on_hit_radius": 1.0},
+    "elite_ghulam": {"splash_on_hit_radius": 1.0},
+    # Monaspa nearby ally attack bonus (+2 per nearby cavalry, max 4 nearby)
+    "monaspa": {"attack_bonus_nearby": 2, "nearby_bonus_count": 4},
+    "elite_monaspa": {"attack_bonus_nearby": 2, "nearby_bonus_count": 4},
 }
 
 # Civ-conditional properties (applied on top of base/unique properties)
@@ -370,6 +390,15 @@ CIV_COMBAT_PROPERTIES = {
     # Lechitic Legacy (Poles Imperial UT) - light cavalry get 50% trample
     ("Poles", "hussar"): {"trample_percent": 0.5, "trample_radius": 0.5},
     ("Poles", "winged_hussar"): {"trample_percent": 0.5, "trample_radius": 0.5},
+    # Comitatenses (Romans Imperial UT, Tech 884) - charge attack for knights, militia, centurion
+    # charge_recharge_rate=0.25 in dat → recharge_time = 1/0.25 = 4.0 seconds
+    ("Romans", "champion"): {"charge_attack_melee": 5, "charge_recharge_time": 4.0},
+    ("Romans", "paladin"): {"charge_attack_melee": 5, "charge_recharge_time": 4.0},
+    ("Romans", "centurion"): {"charge_attack_melee": 5, "charge_recharge_time": 4.0},
+    ("Romans", "elite_centurion"): {
+        "charge_attack_melee": 5,
+        "charge_recharge_time": 4.0,
+    },
 }
 
 # Paired units mapping (for matchup mode switching)
@@ -1426,7 +1455,8 @@ UNIQUE_UNITS = {
         {
             "base_id": 1811,
             "display_name": "Warrior Priest",
-            "unit_class": 6,  # Infantry class (gets monk bonuses via unit-specific effects)
+            "unit_class": 6,  # Infantry class
+            "extra_unit_classes": [18],  # Also gets Monastery techs (Sanctity, etc.)
             "availability_tech": 948,
             "elite_tech": None,
             "elite_id": None,

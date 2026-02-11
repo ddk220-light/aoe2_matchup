@@ -1073,7 +1073,7 @@ def _build_combat_dict_from_ref(rc, row):
     reload_time = row["final_reload_time"] or 2.0
     attack_speed = 1.0 / reload_time if reload_time > 0 else 0.5
 
-    return {
+    result = {
         "slug": row["unit_slug"],
         "unit_name": row["unit_name"],
         "unit_category": "military",
@@ -1152,7 +1152,7 @@ def _build_combat_dict_from_ref(rc, row):
         "damage_reflect_percent": special.get("damage_reflect_percent", 0),
         "bonus_hp_nearby": int(special.get("bonus_hp_nearby", 0)),
         "nearby_hp_bonus_count": int(special.get("nearby_hp_bonus_count", 0)),
-        # Dismount/transform: look up from main DB if available
+        # Dismount/transform: enriched from main DB below
         "dismount_hp": None,
         "dismount_attack": None,
         "dismount_melee_armor": None,

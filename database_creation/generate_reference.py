@@ -780,6 +780,7 @@ def generate_reference_database(analyzer):
             ("dismount_unit_id", "Dismounts to unit on death"),
             ("hp_regen", "HP regeneration per minute"),
             ("pass_through_percent", "Pass-through damage percent"),
+            ("pop_space", "Population space per unit"),
         ]
         for prop_name, desc in special_props:
             val = combat_props.get(prop_name, 0)

@@ -1246,6 +1246,7 @@ UNIT_LINES = {
         "imperial_slug": "imp_elite_skirm",
         "unique_units": {
             "Berbers": ("genitour", "elite_genitour"),
+            "Vietnamese": (None, "imperial_skirmisher"),
         },
     },
     "cav_archer": {

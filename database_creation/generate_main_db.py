@@ -168,6 +168,7 @@ def build_combat_dict_from_ref(rc, row):
         ),
         "hp_transform_threshold": special.get("hp_transform_threshold", 0),
         "pass_through_percent": special.get("pass_through_percent", 0),
+        "pop_space": special.get("pop_space", 1.0),
     }
 
 
@@ -343,6 +344,7 @@ def generate_main_database():
             hp_regen REAL DEFAULT 0,
             pass_through_percent REAL DEFAULT 0,
             hp_transform_threshold REAL DEFAULT 0,
+            pop_space REAL DEFAULT 1.0,
             transform_hp INTEGER DEFAULT NULL,
             transform_attack INTEGER DEFAULT NULL,
             transform_melee_armor INTEGER DEFAULT NULL,
@@ -560,6 +562,7 @@ def generate_main_database():
                         bleed_dps, bleed_duration, block_first_melee,
                         attack_bonus_per_kill, first_attack_extra_projectiles,
                         hp_regen, pass_through_percent, hp_transform_threshold,
+                        pop_space,
                         transform_hp, transform_attack, transform_melee_armor,
                         transform_pierce_armor, transform_attack_speed,
                         transform_attack_delay, transform_movement_speed,
@@ -588,6 +591,7 @@ def generate_main_database():
                         ?, ?, ?,
                         ?, ?,
                         ?, ?, ?,
+                        ?,
                         NULL, NULL, NULL,
                         NULL, NULL,
                         NULL, NULL,
@@ -653,6 +657,7 @@ def generate_main_database():
                         combat["hp_regen"],
                         combat["pass_through_percent"],
                         combat["hp_transform_threshold"],
+                        combat["pop_space"],
                     ),
                 )
                 has_unit_count += 1

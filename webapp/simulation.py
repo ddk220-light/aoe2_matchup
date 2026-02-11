@@ -134,6 +134,7 @@ def prepare_combat_unit(row):
         "hp_regen": row["hp_regen"] or 0,
         "pass_through_percent": row["pass_through_percent"] or 0,
         "hp_transform_threshold": row["hp_transform_threshold"] or 0,
+        "pop_space": row["pop_space"] if row["pop_space"] else 1.0,
         # Metadata
         "slug": row["slug"]
         if "slug" in (row.keys() if hasattr(row, "keys") else row)
@@ -292,8 +293,11 @@ def simulate_battle(
     """
     # --- Army sizes ---
     if fixed_count is not None:
-        count1 = fixed_count
-        count2 = fixed_count
+        # Adjust for pop_space (e.g. Karambit Warrior = 0.5 pop → 60 units in 30v30)
+        pop1 = unit1.get("pop_space", 1.0)
+        pop2 = unit2.get("pop_space", 1.0)
+        count1 = int(fixed_count / pop1)
+        count2 = int(fixed_count / pop2)
     else:
         cost1 = cost1_override or (unit1["cost"] if unit1["cost"] > 0 else 100)
         cost2 = cost2_override or (unit2["cost"] if unit2["cost"] > 0 else 100)

@@ -21,7 +21,7 @@ from simulation import prepare_combat_unit, simulate_battle
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 CACHE_PATH = os.path.join(os.path.dirname(__file__), "battle_cache.json")
-CACHE_VERSION = 4
+CACHE_VERSION = 5
 
 # Unit lines config (must match app.py UNIT_LINES)
 UNIT_LINES = {
@@ -95,6 +95,7 @@ UNIT_LINES = {
         "imperial_slug": "imp_elite_skirm",
         "unique_units": {
             "Berbers": ("genitour", "elite_genitour"),
+            "Vietnamese": (None, "imperial_skirmisher"),
         },
     },
     "cav_archer": {
@@ -508,6 +509,7 @@ def build_combat_dict(rc, row):
         "first_attack_extra_projectiles": 0,
         "pass_through_percent": special.get("pass_through_percent", 0),
         "hp_transform_threshold": 0,
+        "pop_space": special.get("pop_space", 1.0),
         "dismount_hp": None,
         "dismount_attack": None,
         "dismount_melee_armor": None,

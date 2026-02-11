@@ -222,6 +222,7 @@ COMBAT_PROPERTIES = {
     "skirm": {"unit_category": "trash"},
     "elite_skirm": {"unit_category": "trash"},
     "imp_elite_skirm": {"unit_category": "trash"},
+    "imperial_skirmisher": {"unit_category": "trash"},
     "spearman": {"unit_category": "trash"},
     "pikeman": {"unit_category": "trash"},
     "halberdier": {"unit_category": "trash"},
@@ -265,6 +266,9 @@ UNIQUE_COMBAT_PROPERTIES = {
     "elite_jaguar_warrior": {"attack_bonus_per_kill": 4},
     # HP transformation (ability flag, not in dat)
     "jian_swordsman": {"hp_transform_threshold": 0.5, "transform_unit_id": 1976},
+    # Karambit Warrior takes 0.5 pop space (Malay unique tech Forced Levy is separate)
+    "karambit_warrior": {"pop_space": 0.5},
+    "elite_karambit_warrior": {"pop_space": 0.5},
 }
 
 # Civ-conditional properties (applied on top of base/unique properties)
@@ -324,6 +328,7 @@ PAIRED_UNITS = {
 ALLY_UNITS = {
     "Italians": ["condottiero"],
     "Berbers": ["genitour", "elite_genitour"],
+    "Vietnamese": ["imperial_skirmisher"],
 }
 
 # =============================================================================
@@ -665,7 +670,17 @@ IMPERIAL_UNITS = {
             (98, 6, "Elite Skirmisher"),
         ],
     },
-    # Imperial Skirmisher removed - requires Vietnamese team bonus (not standard)
+    "imperial_skirmisher": {
+        "base_id": 7,  # Skirmisher
+        "display_name": "Imperial Skirmisher",
+        "unit_class": 0,
+        "availability_tech": None,
+        "upgrades": [
+            (98, 6, "Elite Skirmisher"),
+            (655, 1155, "Imperial Skirmisher"),
+        ],
+        "civ_only": ["Vietnamese"],
+    },
     "heavy_cav_archer": {
         "base_id": 39,
         "display_name": "Heavy Cavalry Archer",

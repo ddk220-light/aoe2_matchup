@@ -1427,6 +1427,8 @@ UNIT_LINES = {
         "building": "Stable",
         "castle_slug": "elephant",
         "imperial_slug": "elite_elephant",
+        "extra_castle_slugs": ["elephant_archer"],
+        "extra_imperial_slugs": ["elite_ele_archer"],
         "unique_units": {
             "Persians": ("war_elephant_persians", "elite_war_elephant_persians"),
         },
@@ -1621,7 +1623,18 @@ def api_ref_unit_line(line_slug):
                 _attach_scores(entry, age_key)
                 result[age_key].append(entry)
 
-    # Fetch extra standard units (e.g. Hand Cannoneer in archer line)
+    # Fetch extra standard units (e.g. Elephant Archer in elephant line, Hand Cannoneer in archer line)
+    for extra_slug in line.get("extra_castle_slugs", []):
+        rc.execute(
+            f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND age=? ORDER BY civ_name",
+            (extra_slug, "Castle"),
+        )
+        for row in rc.fetchall():
+            entry = dict(row)
+            entry["is_unique"] = False
+            _attach_scores(entry, "castle")
+            result["castle"].append(entry)
+
     for extra_slug in line.get("extra_imperial_slugs", []):
         rc.execute(
             f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND age=? ORDER BY civ_name",

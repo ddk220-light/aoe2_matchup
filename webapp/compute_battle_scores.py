@@ -24,7 +24,7 @@ CACHE_PATH = os.path.join(os.path.dirname(__file__), "battle_cache.json")
 EXTRACTED_UNITS_PATH = os.path.join(
     os.path.dirname(__file__), "..", "database_creation", "extracted_data", "units.json"
 )
-CACHE_VERSION = 9
+CACHE_VERSION = 10
 
 # Load extracted units data for dismount resolution
 _EXTRACTED_UNITS = {}
@@ -227,6 +227,8 @@ UNIT_LINES = {
         "building": "Stable",
         "castle_slug": "elephant",
         "imperial_slug": "elite_elephant",
+        "extra_castle_slugs": ["elephant_archer"],
+        "extra_imperial_slugs": ["elite_ele_archer"],
         "unique_units": {
             "Persians": ("war_elephant_persians", "elite_war_elephant_persians"),
         },
@@ -690,8 +692,27 @@ def build_line_units(line_slug, age):
                 }
             )
 
-    # Fetch extra standard units (e.g. Hand Cannoneer in archer line)
-    if not is_castle:
+    # Fetch extra standard units (e.g. Elephant Archer in elephant line, Hand Cannoneer in archer line)
+    if is_castle:
+        for extra_slug in line.get("extra_castle_slugs", []):
+            rc.execute(
+                "SELECT * FROM ref_units WHERE unit_slug=? AND age=?",
+                (extra_slug, "Castle"),
+            )
+            for row in rc.fetchall():
+                cd = build_combat_dict(rc, row)
+                cu = prepare_combat_unit(cd)
+                cu["upgrade_cost_food"] = row["upgrade_cost_food"] or 0
+                cu["upgrade_cost_wood"] = row["upgrade_cost_wood"] or 0
+                cu["upgrade_cost_gold"] = row["upgrade_cost_gold"] or 0
+                units.append(
+                    {
+                        "civ_name": row["civ_name"],
+                        "unit_slug": row["unit_slug"],
+                        "combat_unit": cu,
+                    }
+                )
+    else:
         for extra_slug in line.get("extra_imperial_slugs", []):
             rc.execute(
                 "SELECT * FROM ref_units WHERE unit_slug=? AND age=?",

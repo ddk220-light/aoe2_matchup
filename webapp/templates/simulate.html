@@ -1186,12 +1186,18 @@
             function selectUnit(teamNum, slug, name) {
                 teamState[teamNum].unitSlug = slug;
                 teamState[teamNum].unitName = name;
-                // Preload image for canvas
-                const iUrl = unitIconUrl(name);
-                if (iUrl) {
+                // Preload image for canvas with fallback
+                const iconId = NAME_TO_ICON[name];
+                if (iconId) {
                     const img = new Image();
                     img.crossOrigin = "anonymous";
-                    img.src = iUrl;
+                    img.onerror = function () {
+                        if (!this.dataset.tried) {
+                            this.dataset.tried = "1";
+                            this.src = ICON_BASE_FALLBACK + iconId + ".png";
+                        }
+                    };
+                    img.src = ICON_BASE + iconId + ".png";
                     unitImages[teamNum] = img;
                 }
                 renderSelection(teamNum);

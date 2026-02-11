@@ -419,6 +419,7 @@ CIV_COMBAT_PROPERTIES = {
     # Comitatenses (Romans Imperial UT, Tech 884) - charge attack for knights, militia, centurion
     # charge_recharge_rate=0.25 in dat → recharge_time = 1/0.25 = 4.0 seconds
     ("Romans", "champion"): {"charge_attack_melee": 5, "charge_recharge_time": 4.0},
+    ("Romans", "legionary"): {"charge_attack_melee": 5, "charge_recharge_time": 4.0},
     ("Romans", "paladin"): {"charge_attack_melee": 5, "charge_recharge_time": 4.0},
     ("Romans", "centurion"): {"charge_attack_melee": 5, "charge_recharge_time": 4.0},
     ("Romans", "elite_centurion"): {
@@ -715,6 +716,14 @@ IMPERIAL_UNITS = {
             (217, 473, "Two-Handed Swordsman"),
             (264, 567, "Champion"),
         ],
+        # Legionary replaces Champion for Romans
+        "civ_upgrades": {
+            "Romans": [
+                (207, 77, "Long Swordsman"),
+                (217, 473, "Two-Handed Swordsman"),
+                (885, 1793, "Legionary"),
+            ],
+        },
     },
     "halberdier": {
         "base_id": 93,  # Spearman

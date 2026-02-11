@@ -285,6 +285,7 @@ UNIT_NAMES = {
     1790: "Centurion",
     1792: "Elite Centurion",
     1739: "Elite Centurion",
+    1793: "Legionary",
     # ===== Unique Units - Armenians =====
     1800: "Composite Bowman",
     1802: "Elite Composite Bowman",

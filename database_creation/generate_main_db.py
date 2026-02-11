@@ -18,6 +18,9 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent
 REF_DB_PATH = PROJECT_ROOT / "webapp" / "aoe2_reference.db"
 MAIN_DB_PATH = PROJECT_ROOT / "webapp" / "aoe2_units.db"
+EXTRACTED_UNITS_PATH = (
+    PROJECT_ROOT / "database_creation" / "extracted_data" / "units.json"
+)
 
 # Import config for COMBAT_PROPERTIES, PAIRED_UNITS, etc.
 # When run as module, use relative import; when run as script, add parent to path
@@ -26,6 +29,13 @@ try:
 except ImportError:
     sys.path.insert(0, str(Path(__file__).parent.parent))
     from database_creation.config import COMBAT_PROPERTIES, PAIRED_UNITS
+
+# Load extracted units data for dismount resolution
+_EXTRACTED_UNITS = {}
+if EXTRACTED_UNITS_PATH.exists():
+    with open(EXTRACTED_UNITS_PATH) as f:
+        for u in json.load(f):
+            _EXTRACTED_UNITS[u["id"]] = u
 
 # Age mapping: ref DB uses "Castle"/"Imperial" strings, main DB uses integer IDs
 AGE_MAP = {
@@ -75,6 +85,37 @@ def _get_paired_unit_slug(unit_slug):
                 return partner_slug + suffix
             return partner_slug
     return None
+
+
+def _resolve_dismount(unit_id):
+    """Look up dismount unit stats from extracted data. Returns dict or None."""
+    u = _EXTRACTED_UNITS.get(int(unit_id))
+    if not u:
+        return None
+    creatable = u.get("creatable", {})
+    attacks = {}
+    armors = {}
+    for entry in creatable.get("attacks", []):
+        attacks[entry["class"]] = entry["amount"]
+    for entry in creatable.get("armours", []):
+        armors[entry["class"]] = entry["amount"]
+    return {
+        "hp": int(u.get("hit_points", 0)),
+        "attack": int(creatable.get("displayed_attack", 0)),
+        "melee_armor": int(creatable.get("displayed_melee_armour", 0)),
+        "pierce_armor": int(creatable.get("displayed_range_armour", 0)),
+        "attack_speed": round(1.0 / creatable.get("reload_time", 2.0), 3)
+        if creatable.get("reload_time")
+        else 0.5,
+        "attack_delay": creatable.get("frame_delay", 0)
+        * creatable.get("reload_time", 2.0)
+        / max(1, creatable.get("max_frame", 10))
+        if creatable.get("frame_delay")
+        else 0,
+        "movement_speed": u.get("speed", 0.9),
+        "attacks_json": json.dumps(attacks) if attacks else None,
+        "armors_json": json.dumps(armors) if armors else None,
+    }
 
 
 def build_combat_dict_from_ref(rc, row):
@@ -169,6 +210,27 @@ def build_combat_dict_from_ref(rc, row):
         "hp_transform_threshold": special.get("hp_transform_threshold", 0),
         "pass_through_percent": special.get("pass_through_percent", 0),
         "pop_space": special.get("pop_space", 1.0),
+        "armor_strip_per_hit": int(special.get("armor_strip_per_hit", 0)),
+        "charge_attack_melee": int(special.get("charge_attack_melee", 0)),
+        "charge_recharge_time": special.get("charge_recharge_time", 0),
+        # Dismount on death (Konnik): from hardcoded config via special effects
+        "dismount_hp": int(special["dismount_hp"])
+        if "dismount_hp" in special
+        else None,
+        "dismount_attack": int(special["dismount_attack"])
+        if "dismount_attack" in special
+        else None,
+        "dismount_melee_armor": int(special["dismount_melee_armor"])
+        if "dismount_melee_armor" in special
+        else None,
+        "dismount_pierce_armor": int(special["dismount_pierce_armor"])
+        if "dismount_pierce_armor" in special
+        else None,
+        "dismount_attack_speed": special.get("dismount_attack_speed"),
+        "dismount_attack_delay": special.get("dismount_attack_delay"),
+        "dismount_movement_speed": special.get("dismount_movement_speed"),
+        "dismount_attacks_json": special.get("dismount_attacks_json"),
+        "dismount_armors_json": special.get("dismount_armors_json"),
     }
 
 
@@ -345,6 +407,9 @@ def generate_main_database():
             pass_through_percent REAL DEFAULT 0,
             hp_transform_threshold REAL DEFAULT 0,
             pop_space REAL DEFAULT 1.0,
+            armor_strip_per_hit INTEGER DEFAULT 0,
+            charge_attack_melee INTEGER DEFAULT 0,
+            charge_recharge_time REAL DEFAULT 0,
             transform_hp INTEGER DEFAULT NULL,
             transform_attack INTEGER DEFAULT NULL,
             transform_melee_armor INTEGER DEFAULT NULL,
@@ -563,6 +628,7 @@ def generate_main_database():
                         attack_bonus_per_kill, first_attack_extra_projectiles,
                         hp_regen, pass_through_percent, hp_transform_threshold,
                         pop_space,
+                        armor_strip_per_hit, charge_attack_melee, charge_recharge_time,
                         transform_hp, transform_attack, transform_melee_armor,
                         transform_pierce_armor, transform_attack_speed,
                         transform_attack_delay, transform_movement_speed,
@@ -592,14 +658,15 @@ def generate_main_database():
                         ?, ?,
                         ?, ?, ?,
                         ?,
+                        ?, ?, ?,
                         NULL, NULL, NULL,
                         NULL, NULL,
                         NULL, NULL,
                         NULL, NULL,
-                        NULL, NULL, NULL,
-                        NULL, NULL,
-                        NULL, NULL,
-                        NULL, NULL
+                        ?, ?, ?,
+                        ?, ?,
+                        ?, ?,
+                        ?, ?
                     )""",
                     (
                         db_civ_id,
@@ -658,6 +725,19 @@ def generate_main_database():
                         combat["pass_through_percent"],
                         combat["hp_transform_threshold"],
                         combat["pop_space"],
+                        combat["armor_strip_per_hit"],
+                        combat["charge_attack_melee"],
+                        combat["charge_recharge_time"],
+                        # Dismount on death
+                        combat["dismount_hp"],
+                        combat["dismount_attack"],
+                        combat["dismount_melee_armor"],
+                        combat["dismount_pierce_armor"],
+                        combat["dismount_attack_speed"],
+                        combat["dismount_attack_delay"],
+                        combat["dismount_movement_speed"],
+                        combat["dismount_attacks_json"],
+                        combat["dismount_armors_json"],
                     ),
                 )
                 has_unit_count += 1

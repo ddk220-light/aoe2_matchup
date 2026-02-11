@@ -781,7 +781,27 @@ def generate_reference_database(analyzer):
             ("hp_regen", "HP regeneration per minute"),
             ("pass_through_percent", "Pass-through damage percent"),
             ("pop_space", "Population space per unit"),
+            ("armor_strip_per_hit", "Armor stripped per hit"),
+            ("charge_attack_melee", "Melee charge bonus damage"),
+            ("charge_recharge_time", "Charge recharge time in seconds"),
+            ("dismount_hp", "Dismounted unit HP"),
+            ("dismount_attack", "Dismounted unit attack"),
+            ("dismount_melee_armor", "Dismounted unit melee armor"),
+            ("dismount_pierce_armor", "Dismounted unit pierce armor"),
+            ("dismount_attack_speed", "Dismounted unit attack speed"),
+            ("dismount_attack_delay", "Dismounted unit attack delay"),
+            ("dismount_movement_speed", "Dismounted unit movement speed"),
         ]
+        # Also store JSON-valued properties (attacks/armors for dismount)
+        for json_prop in ("dismount_attacks_json", "dismount_armors_json"):
+            val = combat_props.get(json_prop)
+            if val:
+                cursor.execute(
+                    """INSERT INTO ref_special_effects
+                       (ref_unit_id, property_name, property_value)
+                       VALUES (?, ?, ?)""",
+                    (ref_unit_id, json_prop, val),
+                )
         for prop_name, desc in special_props:
             val = combat_props.get(prop_name, 0)
             if val and val != 0:

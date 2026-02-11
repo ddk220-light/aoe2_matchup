@@ -21,7 +21,48 @@ from simulation import prepare_combat_unit, simulate_battle
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 CACHE_PATH = os.path.join(os.path.dirname(__file__), "battle_cache.json")
-CACHE_VERSION = 7
+EXTRACTED_UNITS_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "database_creation", "extracted_data", "units.json"
+)
+CACHE_VERSION = 8
+
+# Load extracted units data for dismount resolution
+_EXTRACTED_UNITS = {}
+if os.path.exists(EXTRACTED_UNITS_PATH):
+    with open(EXTRACTED_UNITS_PATH) as f:
+        for u in json.load(f):
+            _EXTRACTED_UNITS[u["id"]] = u
+
+
+def _resolve_dismount(unit_id):
+    """Look up dismount unit stats from extracted data. Returns dict or None."""
+    u = _EXTRACTED_UNITS.get(int(unit_id))
+    if not u:
+        return None
+    creatable = u.get("creatable", {})
+    attacks = {}
+    armors = {}
+    for entry in creatable.get("attacks", []):
+        attacks[str(entry["class"])] = entry["amount"]
+    for entry in creatable.get("armours", []):
+        armors[str(entry["class"])] = entry["amount"]
+    reload_time = creatable.get("reload_time", 2.0)
+    attack_speed = round(1.0 / reload_time, 3) if reload_time else 0.5
+    frame_delay = creatable.get("frame_delay", 0)
+    max_frame = max(1, creatable.get("max_frame", 10))
+    attack_delay = frame_delay * reload_time / max_frame if frame_delay else 0
+    return {
+        "hp": int(u.get("hit_points", 0)),
+        "attack": int(creatable.get("displayed_attack", 0)),
+        "melee_armor": int(creatable.get("displayed_melee_armour", 0)),
+        "pierce_armor": int(creatable.get("displayed_range_armour", 0)),
+        "attack_speed": attack_speed,
+        "attack_delay": attack_delay,
+        "movement_speed": u.get("speed", 0.9),
+        "attacks_json": json.dumps(attacks) if attacks else None,
+        "armors_json": json.dumps(armors) if armors else None,
+    }
+
 
 # Unit lines config (must match app.py UNIT_LINES)
 UNIT_LINES = {
@@ -44,6 +85,9 @@ UNIT_LINES = {
                 "elite_shotel_warrior_ethiopians",
             ),
             "Malay": ("karambit_warrior_malay", "elite_karambit_warrior_malay"),
+            "Burgundians": ("flemish_militia_burgundians", None),
+            "Sicilians": ("serjeant_sicilians", "elite_serjeant_sicilians"),
+            "Poles": ("obuch_poles", "elite_obuch_poles"),
         },
     },
     "spear": {
@@ -109,6 +153,7 @@ UNIT_LINES = {
             "Spanish": ("conquistador_spanish", "elite_conquistador_spanish"),
             "Berbers": ("camel_archer_berbers", "elite_camel_archer_berbers"),
             "Burmese": ("arambai_burmese", "elite_arambai_burmese"),
+            "Cumans": ("kipchak_cumans", "elite_kipchak_cumans"),
         },
     },
     "knight": {
@@ -120,6 +165,10 @@ UNIT_LINES = {
             "Byzantines": ("cataphract_byzantines", "elite_cataphract_byzantines"),
             "Huns": ("tarkan_huns", "elite_tarkan_huns"),
             "Slavs": ("boyar_slavs", "elite_boyar_slavs"),
+            "Bulgarians": ("konnik_bulgarians", "elite_konnik_bulgarians"),
+            "Lithuanians": ("leitis_lithuanians", "elite_leitis_lithuanians"),
+            "Tatars": ("keshik_tatars", "elite_keshik_tatars"),
+            "Burgundians": ("coustillier_burgundians", "elite_coustillier_burgundians"),
         },
     },
     "light_cav": {
@@ -168,6 +217,7 @@ UNIT_LINES = {
         "imperial_slug": "siege_onager",
         "unique_units": {
             "Portuguese": ("organ_gun_portuguese", "elite_organ_gun_portuguese"),
+            "Bohemians": ("hussite_wagon_bohemians", "elite_hussite_wagon_bohemians"),
         },
     },
     "scorpion": {
@@ -205,6 +255,10 @@ UNIT_LINES = {
             "Huns": ("tarkan_huns", "elite_tarkan_huns"),
             "Slavs": ("boyar_slavs", "elite_boyar_slavs"),
             "Persians": ("war_elephant_persians", "elite_war_elephant_persians"),
+            "Bulgarians": ("konnik_bulgarians", "elite_konnik_bulgarians"),
+            "Lithuanians": ("leitis_lithuanians", "elite_leitis_lithuanians"),
+            "Tatars": ("keshik_tatars", "elite_keshik_tatars"),
+            "Burgundians": ("coustillier_burgundians", "elite_coustillier_burgundians"),
         },
     },
     "all_ranged": {
@@ -236,6 +290,7 @@ UNIT_LINES = {
                 "elite_rattan_archer_vietnamese",
             ),
             "Malians": ("gbeto_malians", "elite_gbeto_malians"),
+            "Cumans": ("kipchak_cumans", "elite_kipchak_cumans"),
         },
     },
 }
@@ -497,39 +552,61 @@ def build_combat_dict(rc, row):
         ),
         "charge_attack_range": float(special.get("charge_attack_range", 0)),
         "charge_ignores_armor": int(special.get("charge_ignores_armor", 0)),
-        "ignores_pierce_armor": 0,
-        "ignores_melee_armor": 0,
-        "bonus_damage_reduction": 0,
-        "splash_on_hit_radius": 0,
-        "dodge_shield_max": 0,
-        "dodge_shield_recharge": 0,
-        "bleed_dps": 0,
-        "bleed_duration": 0,
-        "block_first_melee": 0,
-        "attack_bonus_per_kill": 0,
-        "first_attack_extra_projectiles": 0,
+        "ignores_pierce_armor": int(special.get("ignores_pierce_armor", 0)),
+        "ignores_melee_armor": int(special.get("ignores_melee_armor", 0)),
+        "bonus_damage_reduction": special.get("bonus_damage_reduction", 0),
+        "splash_on_hit_radius": special.get("splash_on_hit_radius", 0),
+        "dodge_shield_max": int(special.get("dodge_shield_max", 0)),
+        "dodge_shield_recharge": special.get("dodge_shield_recharge", 0),
+        "bleed_dps": special.get("bleed_dps", 0),
+        "bleed_duration": special.get("bleed_duration", 0),
+        "block_first_melee": int(special.get("block_first_melee", 0)),
+        "attack_bonus_per_kill": int(special.get("attack_bonus_per_kill", 0)),
+        "first_attack_extra_projectiles": int(
+            special.get("first_attack_extra_projectiles", 0)
+        ),
         "pass_through_percent": special.get("pass_through_percent", 0),
-        "hp_transform_threshold": 0,
+        "hp_transform_threshold": special.get("hp_transform_threshold", 0),
         "pop_space": special.get("pop_space", 1.0),
-        "dismount_hp": None,
-        "dismount_attack": None,
-        "dismount_melee_armor": None,
-        "dismount_pierce_armor": None,
-        "dismount_attack_speed": None,
-        "dismount_attack_delay": None,
-        "dismount_movement_speed": None,
-        "dismount_attacks_json": None,
-        "dismount_armors_json": None,
-        "transform_hp": None,
-        "transform_attack": None,
-        "transform_melee_armor": None,
-        "transform_pierce_armor": None,
-        "transform_attack_speed": None,
-        "transform_attack_delay": None,
-        "transform_movement_speed": None,
-        "transform_attacks_json": None,
-        "transform_armors_json": None,
+        "armor_strip_per_hit": int(special.get("armor_strip_per_hit", 0)),
+        "charge_attack_melee": int(special.get("charge_attack_melee", 0)),
+        "charge_recharge_time": special.get("charge_recharge_time", 0),
     }
+
+    # Dismount on death (Konnik): from hardcoded config via special effects
+    result["dismount_hp"] = (
+        int(special["dismount_hp"]) if "dismount_hp" in special else None
+    )
+    result["dismount_attack"] = (
+        int(special["dismount_attack"]) if "dismount_attack" in special else None
+    )
+    result["dismount_melee_armor"] = (
+        int(special["dismount_melee_armor"])
+        if "dismount_melee_armor" in special
+        else None
+    )
+    result["dismount_pierce_armor"] = (
+        int(special["dismount_pierce_armor"])
+        if "dismount_pierce_armor" in special
+        else None
+    )
+    result["dismount_attack_speed"] = special.get("dismount_attack_speed")
+    result["dismount_attack_delay"] = special.get("dismount_attack_delay")
+    result["dismount_movement_speed"] = special.get("dismount_movement_speed")
+    result["dismount_attacks_json"] = special.get("dismount_attacks_json")
+    result["dismount_armors_json"] = special.get("dismount_armors_json")
+
+    result["transform_hp"] = None
+    result["transform_attack"] = None
+    result["transform_melee_armor"] = None
+    result["transform_pierce_armor"] = None
+    result["transform_attack_speed"] = None
+    result["transform_attack_delay"] = None
+    result["transform_movement_speed"] = None
+    result["transform_attacks_json"] = None
+    result["transform_armors_json"] = None
+
+    return result
 
 
 def calc_weighted_cost(food, wood, gold, is_imperial):

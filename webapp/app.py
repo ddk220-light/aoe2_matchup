@@ -595,7 +595,13 @@ def api_combat_unit(civ_name, unit_slug):
             us.dodge_shield_max, us.dodge_shield_recharge,
             us.bleed_dps, us.bleed_duration, us.block_first_melee,
             us.attack_bonus_per_kill, us.first_attack_extra_projectiles,
-            us.hp_regen, us.pass_through_percent, us.hp_transform_threshold
+            us.hp_regen, us.pass_through_percent, us.hp_transform_threshold,
+            us.armor_strip_per_hit, us.charge_attack_melee, us.charge_recharge_time,
+            us.dismount_hp, us.dismount_attack, us.dismount_melee_armor,
+            us.dismount_pierce_armor, us.dismount_attack_speed,
+            us.dismount_attack_delay, us.dismount_movement_speed,
+            us.dismount_attacks_json, us.dismount_armors_json,
+            us.pop_space
         FROM unit_stats us
         JOIN units u ON us.unit_id = u.id
         JOIN civilizations c ON us.civ_id = c.id
@@ -661,6 +667,19 @@ def api_combat_unit(civ_name, unit_slug):
             "hp_regen": row["hp_regen"] or 0,
             "pass_through_percent": row["pass_through_percent"] or 0,
             "hp_transform_threshold": row["hp_transform_threshold"] or 0,
+            "armor_strip_per_hit": row["armor_strip_per_hit"] or 0,
+            "charge_attack_melee": row["charge_attack_melee"] or 0,
+            "charge_recharge_time": row["charge_recharge_time"] or 0,
+            "dismount_hp": row["dismount_hp"],
+            "dismount_attack": row["dismount_attack"],
+            "dismount_melee_armor": row["dismount_melee_armor"],
+            "dismount_pierce_armor": row["dismount_pierce_armor"],
+            "dismount_attack_speed": row["dismount_attack_speed"],
+            "dismount_attack_delay": row["dismount_attack_delay"],
+            "dismount_movement_speed": row["dismount_movement_speed"],
+            "dismount_attacks_json": row["dismount_attacks_json"],
+            "dismount_armors_json": row["dismount_armors_json"],
+            "pop_space": row["pop_space"] or 1,
         }
     )
 
@@ -767,11 +786,15 @@ init_verifications_table()
 ORIGINAL_13_CIVS = [
     "Aztecs",
     "Berbers",
+    "Bohemians",
     "Britons",
+    "Bulgarians",
+    "Burgundians",
     "Burmese",
     "Byzantines",
     "Celts",
     "Chinese",
+    "Cumans",
     "Ethiopians",
     "Franks",
     "Goths",
@@ -781,16 +804,20 @@ ORIGINAL_13_CIVS = [
     "Japanese",
     "Khmer",
     "Koreans",
+    "Lithuanians",
     "Magyars",
     "Malay",
     "Malians",
     "Mayans",
     "Mongols",
     "Persians",
+    "Poles",
     "Portuguese",
     "Saracens",
+    "Sicilians",
     "Slavs",
     "Spanish",
+    "Tatars",
     "Teutons",
     "Turks",
     "Vietnamese",
@@ -1101,7 +1128,10 @@ def _build_combat_dict_from_ref(rc, row):
         "pass_through_percent": special.get("pass_through_percent", 0),
         "hp_transform_threshold": special.get("hp_transform_threshold", 0),
         "pop_space": special.get("pop_space", 1.0),
-        # No dismount/transform in original 13 ref DB
+        "armor_strip_per_hit": int(special.get("armor_strip_per_hit", 0)),
+        "charge_attack_melee": int(special.get("charge_attack_melee", 0)),
+        "charge_recharge_time": special.get("charge_recharge_time", 0),
+        # Dismount/transform: look up from main DB if available
         "dismount_hp": None,
         "dismount_attack": None,
         "dismount_melee_armor": None,
@@ -1121,6 +1151,56 @@ def _build_combat_dict_from_ref(rc, row):
         "transform_attacks_json": None,
         "transform_armors_json": None,
     }
+
+    # Enrich with dismount/transform from main DB if available
+    if "dismount_unit_id" in special or result["hp_transform_threshold"]:
+        try:
+            main_conn = get_db()
+            mc = main_conn.cursor()
+            mc.execute(
+                """SELECT dismount_hp, dismount_attack, dismount_melee_armor,
+                          dismount_pierce_armor, dismount_attack_speed,
+                          dismount_attack_delay, dismount_movement_speed,
+                          dismount_attacks_json, dismount_armors_json,
+                          transform_hp, transform_attack, transform_melee_armor,
+                          transform_pierce_armor, transform_attack_speed,
+                          transform_attack_delay, transform_movement_speed,
+                          transform_attacks_json, transform_armors_json
+                   FROM unit_stats us
+                   JOIN units u ON us.unit_id = u.id
+                   WHERE u.slug=? AND us.has_unit=1
+                   LIMIT 1""",
+                (row["unit_slug"],),
+            )
+            mrow = mc.fetchone()
+            if mrow:
+                for col in [
+                    "dismount_hp",
+                    "dismount_attack",
+                    "dismount_melee_armor",
+                    "dismount_pierce_armor",
+                    "dismount_attack_speed",
+                    "dismount_attack_delay",
+                    "dismount_movement_speed",
+                    "dismount_attacks_json",
+                    "dismount_armors_json",
+                    "transform_hp",
+                    "transform_attack",
+                    "transform_melee_armor",
+                    "transform_pierce_armor",
+                    "transform_attack_speed",
+                    "transform_attack_delay",
+                    "transform_movement_speed",
+                    "transform_attacks_json",
+                    "transform_armors_json",
+                ]:
+                    if mrow[col] is not None:
+                        result[col] = mrow[col]
+            main_conn.close()
+        except Exception:
+            pass
+
+    return result
 
 
 @app.route("/api/ref/combat-unit/<civ_name>/<unit_slug>")
@@ -1196,6 +1276,9 @@ UNIT_LINES = {
                 "elite_shotel_warrior_ethiopians",
             ),
             "Malay": ("karambit_warrior_malay", "elite_karambit_warrior_malay"),
+            "Burgundians": ("flemish_militia_burgundians", None),
+            "Sicilians": ("serjeant_sicilians", "elite_serjeant_sicilians"),
+            "Poles": ("obuch_poles", "elite_obuch_poles"),
         },
     },
     "spear": {
@@ -1261,6 +1344,7 @@ UNIT_LINES = {
             "Spanish": ("conquistador_spanish", "elite_conquistador_spanish"),
             "Berbers": ("camel_archer_berbers", "elite_camel_archer_berbers"),
             "Burmese": ("arambai_burmese", "elite_arambai_burmese"),
+            "Cumans": ("kipchak_cumans", "elite_kipchak_cumans"),
         },
     },
     "knight": {
@@ -1272,6 +1356,10 @@ UNIT_LINES = {
             "Byzantines": ("cataphract_byzantines", "elite_cataphract_byzantines"),
             "Huns": ("tarkan_huns", "elite_tarkan_huns"),
             "Slavs": ("boyar_slavs", "elite_boyar_slavs"),
+            "Bulgarians": ("konnik_bulgarians", "elite_konnik_bulgarians"),
+            "Lithuanians": ("leitis_lithuanians", "elite_leitis_lithuanians"),
+            "Tatars": ("keshik_tatars", "elite_keshik_tatars"),
+            "Burgundians": ("coustillier_burgundians", "elite_coustillier_burgundians"),
         },
     },
     "light_cav": {
@@ -1320,6 +1408,7 @@ UNIT_LINES = {
         "imperial_slug": "siege_onager",
         "unique_units": {
             "Portuguese": ("organ_gun_portuguese", "elite_organ_gun_portuguese"),
+            "Bohemians": ("hussite_wagon_bohemians", "elite_hussite_wagon_bohemians"),
         },
     },
     "scorpion": {
@@ -1357,6 +1446,10 @@ UNIT_LINES = {
             "Huns": ("tarkan_huns", "elite_tarkan_huns"),
             "Slavs": ("boyar_slavs", "elite_boyar_slavs"),
             "Persians": ("war_elephant_persians", "elite_war_elephant_persians"),
+            "Bulgarians": ("konnik_bulgarians", "elite_konnik_bulgarians"),
+            "Lithuanians": ("leitis_lithuanians", "elite_leitis_lithuanians"),
+            "Tatars": ("keshik_tatars", "elite_keshik_tatars"),
+            "Burgundians": ("coustillier_burgundians", "elite_coustillier_burgundians"),
         },
     },
     "all_ranged": {
@@ -1388,6 +1481,7 @@ UNIT_LINES = {
                 "elite_rattan_archer_vietnamese",
             ),
             "Malians": ("gbeto_malians", "elite_gbeto_malians"),
+            "Cumans": ("kipchak_cumans", "elite_kipchak_cumans"),
         },
     },
 }

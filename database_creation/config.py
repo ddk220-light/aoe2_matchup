@@ -97,9 +97,17 @@ ORIGINAL_13_CIVS = [
     "Mongols",
     "Persians",
     "Portuguese",
+    "Bohemians",
+    "Bulgarians",
+    "Burgundians",
+    "Cumans",
+    "Lithuanians",
+    "Poles",
     "Saracens",
+    "Sicilians",
     "Slavs",
     "Spanish",
+    "Tatars",
     "Teutons",
     "Turks",
     "Vietnamese",
@@ -111,7 +119,7 @@ ORIGINAL_13_CIVS = [
 # =============================================================================
 # Lithuanian relic count for cavalry attack bonus (0-4)
 # Each relic gives +1 attack to Knights, Cavaliers, Paladins, and Leitis
-LITHUANIAN_RELIC_COUNT = 2
+LITHUANIAN_RELIC_COUNT = 4
 
 # =============================================================================
 # BUILDING WORK RATE (affects unit creation time)
@@ -228,12 +236,15 @@ COMBAT_PROPERTIES = {
     "scout": {"unit_category": "trash"},
     "light_cav": {"unit_category": "trash"},
     "hussar": {"unit_category": "trash"},
+    "winged_hussar": {"unit_category": "trash"},
     "ram": {"unit_category": "siege"},
     "siege_ram": {"unit_category": "siege"},
     "trebuchet": {"unit_category": "siege"},
     "bombard_cannon": {"unit_category": "siege"},
     "organ_gun": {"unit_category": "siege"},
     "elite_organ_gun": {"unit_category": "siege"},
+    "hussite_wagon": {"unit_category": "siege"},
+    "elite_hussite_wagon": {"unit_category": "siege"},
 }
 
 # Unique units — keyed by base slug (without civ suffix)
@@ -241,8 +252,30 @@ COMBAT_PROPERTIES = {
 # Stats like extra_projectiles, trample, dodge shield are now data-driven
 # via get_extracted_combat_properties().
 UNIQUE_COMBAT_PROPERTIES = {
-    "konnik": {"dismount_unit_id": 1252},
-    "elite_konnik": {"dismount_unit_id": 1253},
+    "konnik": {
+        "dismount_unit_id": 1252,
+        "dismount_hp": 45,
+        "dismount_attack": 12,
+        "dismount_melee_armor": 1,
+        "dismount_pierce_armor": 1,
+        "dismount_attack_speed": 2.4,
+        "dismount_attack_delay": 0,
+        "dismount_movement_speed": 0.9,
+        "dismount_attacks_json": '{"4": 12, "1": 0, "19": 0, "31": 0}',
+        "dismount_armors_json": '{"1": 0, "3": 1, "4": 1, "19": 0, "31": 0}',
+    },
+    "elite_konnik": {
+        "dismount_unit_id": 1253,
+        "dismount_hp": 50,
+        "dismount_attack": 13,
+        "dismount_melee_armor": 2,
+        "dismount_pierce_armor": 2,
+        "dismount_attack_speed": 2.4,
+        "dismount_attack_delay": 0,
+        "dismount_movement_speed": 0.9,
+        "dismount_attacks_json": '{"4": 13, "1": 0, "19": 0, "31": 0}',
+        "dismount_armors_json": '{"1": 0, "3": 2, "4": 2, "19": 0, "31": 0}',
+    },
     "leitis": {"ignores_melee_armor": 1},
     "elite_leitis": {"ignores_melee_armor": 1},
     "composite_bowman": {"ignores_pierce_armor": 1},
@@ -268,6 +301,12 @@ UNIQUE_COMBAT_PROPERTIES = {
     # Karambit Warrior takes 0.5 pop space (Malay unique tech Forced Levy is separate)
     "karambit_warrior": {"pop_space": 0.5},
     "elite_karambit_warrior": {"pop_space": 0.5},
+    # Obuch strips 1 melee + 1 pierce armor per hit (not in dat)
+    "obuch": {"armor_strip_per_hit": 1},
+    "elite_obuch": {"armor_strip_per_hit": 1},
+    # Coustillier melee charge attack (charge_type=1 in dat, data-driven fields extracted)
+    "coustillier": {"charge_attack_melee": 20, "charge_recharge_time": 40.0},
+    "elite_coustillier": {"charge_attack_melee": 25, "charge_recharge_time": 40.0},
 }
 
 # Civ-conditional properties (applied on top of base/unique properties)
@@ -307,6 +346,30 @@ CIV_COMBAT_PROPERTIES = {
     },
     # Pirotecnia (Italian Imperial UT) - gunpowder units get 15% pass-through damage
     ("Italians", "hand_cannoneer"): {"pass_through_percent": 0.15},
+    # Sicilian civ bonus - all military units receive 40% less bonus damage
+    ("Sicilians", "swordsmen"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "champion"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "pikeman"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "halberdier"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "knight"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "paladin"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "light_cav"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "hussar"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "crossbow"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "arbalester"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "cav_archer"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "heavy_cav_archer"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "elite_skirm"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "imp_elite_skirm"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "heavy_camel"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "hand_cannoneer"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "serjeant"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "elite_serjeant"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "scorpion"): {"bonus_damage_reduction": 0.4},
+    ("Sicilians", "heavy_scorpion"): {"bonus_damage_reduction": 0.4},
+    # Lechitic Legacy (Poles Imperial UT) - light cavalry get 50% trample
+    ("Poles", "hussar"): {"trample_percent": 0.5, "trample_radius": 0.5},
+    ("Poles", "winged_hussar"): {"trample_percent": 0.5, "trample_radius": 0.5},
 }
 
 # Paired units mapping (for matchup mode switching)
@@ -327,6 +390,7 @@ PAIRED_UNITS = {
 ALLY_UNITS = {
     "Italians": ["condottiero"],
     "Berbers": ["genitour", "elite_genitour"],
+    "Vietnamese": ["imperial_skirmisher"],
 }
 
 # =============================================================================
@@ -586,8 +650,18 @@ IMPERIAL_UNITS = {
         "upgrades": [
             (254, 546, "Light Cavalry"),
             (428, 441, "Hussar"),
-            (786, 1707, "Winged Hussar"),
         ],
+        # Winged Hussar replaces Hussar for Lithuanians and Poles
+        "civ_upgrades": {
+            "Lithuanians": [
+                (254, 546, "Light Cavalry"),
+                (786, 1707, "Winged Hussar"),
+            ],
+            "Poles": [
+                (254, 546, "Light Cavalry"),
+                (786, 1707, "Winged Hussar"),
+            ],
+        },
     },
     "paladin": {
         "base_id": 38,  # Knight
@@ -798,6 +872,14 @@ IMPERIAL_UNITS = {
         "civ_only": [
             "Berbers"
         ],  # Team unit: all civs can train with Berber ally, but restrict to owner
+    },
+    "flemish_militia": {
+        "base_id": 1699,
+        "display_name": "Flemish Militia",
+        "unit_class": 6,  # Infantry
+        "availability_tech": 773,  # Flemish Militia (make avail)
+        "upgrades": [],
+        "civ_only": ["Burgundians"],
     },
 }
 
@@ -1230,8 +1312,8 @@ UNIQUE_UNITS = {
             "base_id": 1655,
             "display_name": "Coustillier",
             "unit_class": 12,
-            "availability_tech": 754,
-            "elite_tech": 755,
+            "availability_tech": 750,
+            "elite_tech": 751,
             "elite_id": 1657,
             "elite_name": "Elite Coustillier",
         },
@@ -1241,20 +1323,20 @@ UNIQUE_UNITS = {
             "base_id": 1658,
             "display_name": "Serjeant",
             "unit_class": 6,
-            "availability_tech": 756,
-            "elite_tech": 757,
-            "elite_id": 1659,  # Correct ID per AoE2ScenarioParser
+            "availability_tech": 752,
+            "elite_tech": 753,
+            "elite_id": 1659,
             "elite_name": "Elite Serjeant",
         },
     ],
     "Poles": [
         {
-            "base_id": 1701,  # Correct ID per AoE2ScenarioParser
+            "base_id": 1701,
             "display_name": "Obuch",
             "unit_class": 6,
-            "availability_tech": 782,
-            "elite_tech": 783,
-            "elite_id": 1703,  # Correct ID per AoE2ScenarioParser
+            "availability_tech": 778,
+            "elite_tech": 779,
+            "elite_id": 1703,
             "elite_name": "Elite Obuch",
         },
     ],

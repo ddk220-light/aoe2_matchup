@@ -135,6 +135,9 @@ def prepare_combat_unit(row):
         "pass_through_percent": row["pass_through_percent"] or 0,
         "hp_transform_threshold": row["hp_transform_threshold"] or 0,
         "pop_space": row["pop_space"] if row["pop_space"] else 1.0,
+        "armor_strip_per_hit": row.get("armor_strip_per_hit", 0) or 0,
+        "charge_attack_melee": row.get("charge_attack_melee", 0) or 0,
+        "charge_recharge_time": row.get("charge_recharge_time", 0) or 0,
         # Metadata
         "slug": row["slug"]
         if "slug" in (row.keys() if hasattr(row, "keys") else row)
@@ -601,6 +604,28 @@ def simulate_battle(
             melee_damage=melee_dmg1,
         )
 
+    # Charge attack (Coustillier): extra melee damage on first hit, then recharges
+    charge_melee1 = unit1.get("charge_attack_melee", 0) or 0
+    charge_melee2 = unit2.get("charge_attack_melee", 0) or 0
+    charge_recharge1 = unit1.get("charge_recharge_time", 0) or 0
+    charge_recharge2 = unit2.get("charge_recharge_time", 0) or 0
+    charge_ready1 = [True] * count1 if charge_melee1 > 0 else None
+    charge_ready2 = [True] * count2 if charge_melee2 > 0 else None
+    charge_timer1 = [0.0] * count1 if charge_melee1 > 0 else None
+    charge_timer2 = [0.0] * count2 if charge_melee2 > 0 else None
+
+    # Armor stripping (Obuch): each hit reduces enemy melee + pierce armor by N
+    armor_strip1 = unit1.get("armor_strip_per_hit", 0) or 0
+    armor_strip2 = unit2.get("armor_strip_per_hit", 0) or 0
+    # Per-unit armor tracking when armor stripping is in play
+    if armor_strip1 or armor_strip2:
+        current_ma2 = [unit2["melee_armor"]] * count2
+        current_pa2 = [unit2["pierce_armor"]] * count2
+        current_ma1 = [unit1["melee_armor"]] * count1
+        current_pa1 = [unit1["pierce_armor"]] * count1
+    else:
+        current_ma1 = current_pa1 = current_ma2 = current_pa2 = None
+
     start_total_hp1 = float(unit1["hp"]) * count1
     start_total_hp2 = float(unit2["hp"]) * count2
 
@@ -928,6 +953,10 @@ def simulate_battle(
                 t_enemy_transformed = transformed2
                 t_cant_attack = cant_attack_melee1
                 my_prev_target = prev_target1
+                my_charge_ready = charge_ready1
+                my_charge_timer = charge_timer1
+                t_charge_melee = charge_melee1
+                t_charge_recharge = charge_recharge1
                 enemy_hp = hp2
                 enemy_alive = alive2
                 enemy_team = 2
@@ -951,6 +980,10 @@ def simulate_battle(
                 t_enemy_transformed = transformed1
                 t_cant_attack = cant_attack_melee2
                 my_prev_target = prev_target2
+                my_charge_ready = charge_ready2
+                my_charge_timer = charge_timer2
+                t_charge_melee = charge_melee2
+                t_charge_recharge = charge_recharge2
                 enemy_hp = hp1
                 enemy_alive = alive1
                 enemy_team = 1
@@ -980,6 +1013,11 @@ def simulate_battle(
                             else:
                                 base = t_dmg
                             hit_dmg = base + int(my_bonus_atk[i])
+                            # Charge attack bonus (Coustillier)
+                            if my_charge_ready and my_charge_ready[i]:
+                                hit_dmg += t_charge_melee
+                                my_charge_ready[i] = False
+                                my_charge_timer[i] = t_charge_recharge
                             pending_damage.append(
                                 (enemy_team, target_idx, hit_dmg, i, team_id)
                             )
@@ -1082,6 +1120,11 @@ def simulate_battle(
                         else:
                             base = t_dmg
                         hit_dmg = base + int(my_bonus_atk[i])
+                        # Charge attack bonus (Coustillier)
+                        if my_charge_ready and my_charge_ready[i]:
+                            hit_dmg += t_charge_melee
+                            my_charge_ready[i] = False
+                            my_charge_timer[i] = t_charge_recharge
                         pending_damage.append(
                             (enemy_team, target_idx, hit_dmg, i, team_id)
                         )
@@ -1110,6 +1153,8 @@ def simulate_battle(
                 a_siege_splash = siege_splash2
                 a_is_siege = is_siege2
                 a_pass_through = pass_through2
+                a_armor_strip = armor_strip2
+                t_current_ma, t_current_pa = current_ma1, current_pa1
                 all_alive = alive1
             else:
                 t_hp = hp2
@@ -1126,6 +1171,8 @@ def simulate_battle(
                 a_siege_splash = siege_splash1
                 a_is_siege = is_siege1
                 a_pass_through = pass_through1
+                a_armor_strip = armor_strip1
+                t_current_ma, t_current_pa = current_ma2, current_pa2
                 all_alive = alive2
 
             if t_hp[target_idx] <= 0:
@@ -1143,7 +1190,37 @@ def simulate_battle(
                 continue
 
             was_alive = t_hp[target_idx] > 0
+
+            # Armor stripping (Obuch): adjust damage for stripped armor on target
+            if t_current_ma is not None:
+                if a_is_ranged:
+                    orig_armor = (
+                        unit1["pierce_armor"]
+                        if target_team == 1
+                        else unit2["pierce_armor"]
+                    )
+                    cur_armor = t_current_pa[target_idx]
+                else:
+                    orig_armor = (
+                        unit1["melee_armor"]
+                        if target_team == 1
+                        else unit2["melee_armor"]
+                    )
+                    cur_armor = t_current_ma[target_idx]
+                armor_lost = orig_armor - cur_armor
+                if armor_lost > 0:
+                    damage += armor_lost
+
             t_hp[target_idx] -= damage
+
+            # Armor stripping (Obuch): reduce target armor after hit
+            if a_armor_strip > 0 and t_current_ma is not None:
+                t_current_ma[target_idx] = max(
+                    -99, t_current_ma[target_idx] - a_armor_strip
+                )
+                t_current_pa[target_idx] = max(
+                    -99, t_current_pa[target_idx] - a_armor_strip
+                )
 
             # Kill bonus
             if a_kill_bonus > 0 and was_alive and t_hp[target_idx] <= 0:
@@ -1220,6 +1297,20 @@ def simulate_battle(
                             shield_timer2[i] = dodge_recharge2
                         else:
                             shield_timer2[i] = 0.0
+
+        # Charge attack recharge (Coustillier)
+        if charge_timer1 is not None:
+            for i in alive1:
+                if not charge_ready1[i] and charge_timer1[i] > 0:
+                    charge_timer1[i] -= DT
+                    if charge_timer1[i] <= 0:
+                        charge_ready1[i] = True
+        if charge_timer2 is not None:
+            for i in alive2:
+                if not charge_ready2[i] and charge_timer2[i] > 0:
+                    charge_timer2[i] -= DT
+                    if charge_timer2[i] <= 0:
+                        charge_ready2[i] = True
 
         # Bleed damage
         for idx in list(bleed_on1):

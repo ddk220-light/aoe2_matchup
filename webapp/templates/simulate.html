@@ -1168,7 +1168,6 @@
                             let bldg =
                                 CLASS_TO_BUILDING[u.unit_class_name] ||
                                 "Castle";
-                            if (u.unit_type === "unique") bldg = "Castle";
                             if (!groups[bldg]) groups[bldg] = [];
                             groups[bldg].push(u);
                         }

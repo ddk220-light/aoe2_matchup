@@ -1164,10 +1164,17 @@
                         const units =
                             state.civData.units_by_age[state.age] || [];
                         const groups = {};
+                        const UNIQUE_BUILDING = {
+                            "Jian Swordsman": "Barracks",
+                            "Xianbei Raider": "Archery Range",
+                            Grenadier: "Archery Range",
+                        };
                         for (const u of units) {
                             let bldg =
                                 CLASS_TO_BUILDING[u.unit_class_name] ||
                                 "Castle";
+                            if (u.unit_type === "unique")
+                                bldg = UNIQUE_BUILDING[u.unit_name] || "Castle";
                             if (!groups[bldg]) groups[bldg] = [];
                             groups[bldg].push(u);
                         }

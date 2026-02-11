@@ -21,7 +21,7 @@ from simulation import prepare_combat_unit, simulate_battle
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 CACHE_PATH = os.path.join(os.path.dirname(__file__), "battle_cache.json")
-CACHE_VERSION = 6
+CACHE_VERSION = 7
 
 # Unit lines config (must match app.py UNIT_LINES)
 UNIT_LINES = {
@@ -467,6 +467,7 @@ def build_combat_dict(rc, row):
         "upgrade_cost_gold": row["upgrade_cost_gold"] or 0,
         "attacks_json": row["final_attacks_json"],
         "armors_json": row["final_armors_json"],
+        "accuracy": row["final_accuracy"] or 100,
         "min_attack_range": row["min_range"] or 0,
         "projectile_speed": (
             primary_proj["projectile_speed"]

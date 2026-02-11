@@ -357,9 +357,17 @@ class UnitAnalyzer:
                     CMD_ADD_ATTRIBUTE,
                     CMD_MULTIPLY_ATTRIBUTE,
                 ):
-                    if a == unit_id or (a == -1 and b == unit_class):
+                    if a == unit_id:
                         affects_unit = True
                         break
+                    if a == -1:
+                        if isinstance(unit_class, (list, tuple)):
+                            if b in unit_class:
+                                affects_unit = True
+                                break
+                        elif b == unit_class:
+                            affects_unit = True
+                            break
 
             if affects_unit:
                 tech_age = self.get_tech_age(tech_id)
@@ -546,14 +554,20 @@ class UnitAnalyzer:
 
         return relevant
 
-    def effect_applies_to_unit(self, cmd: dict, unit_id: int, unit_class: int) -> bool:
-        """Check if an effect command applies to a specific unit."""
+    def effect_applies_to_unit(self, cmd: dict, unit_id: int, unit_class) -> bool:
+        """Check if an effect command applies to a specific unit.
+
+        unit_class can be an int or a tuple of ints (for dual-class units like
+        Ballista Elephant which is both Scorpion class 55 and Cavalry class 12).
+        """
         a = cmd.get("a", -999)
         b = cmd.get("b", -999)
         if a == unit_id:
             return True
-        if a == -1 and b == unit_class:
-            return True
+        if a == -1:
+            if isinstance(unit_class, (list, tuple)):
+                return b in unit_class
+            return b == unit_class
         return False
 
     def apply_effect_command(
@@ -615,6 +629,12 @@ class UnitAnalyzer:
             stats.los += value
         elif attr == ATTR_TRAIN_TIME:
             stats.train_time += value
+        elif attr == ATTR_FOOD_COST:
+            stats.cost_food += value
+        elif attr == ATTR_WOOD_COST:
+            stats.cost_wood += value
+        elif attr == ATTR_GOLD_COST:
+            stats.cost_gold += value
         elif attr == ATTR_ATTACK:
             atk_class, amount = self._decode_armor_attack_value(value)
             if atk_class in stats.attacks:

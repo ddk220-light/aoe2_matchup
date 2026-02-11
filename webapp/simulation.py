@@ -725,6 +725,13 @@ def simulate_battle(
                 # Main projectile: hit chance = unit accuracy
                 if a_accuracy >= 1.0 or random.random() < a_accuracy:
                     _apply_opening_hit(attacker_team, target, damage, a_idx)
+                else:
+                    # Missed shot — may hit random enemy in formation
+                    alive = [i for i in range(target_count) if target_hp_arr[i] > 0]
+                    stray_chance = min(0.5, len(alive) * 0.05)
+                    if alive and random.random() < stray_chance:
+                        stray = random.choice(alive)
+                        _apply_opening_hit(attacker_team, stray, damage, a_idx)
                 # Extra projectiles: low accuracy (~50%), they scatter
                 for _ in range(num_proj - 1):
                     if random.random() < EXTRA_PROJ_ACCURACY:
@@ -1038,6 +1045,15 @@ def simulate_battle(
                         pending_damage.append(
                             (enemy_team, target_idx, hit_dmg, i, team_id)
                         )
+                    else:
+                        # Missed shot — may hit random enemy in formation
+                        stray_chance = min(0.5, len(enemy_alive) * 0.05)
+                        if enemy_alive and random.random() < stray_chance:
+                            stray = random.choice(enemy_alive)
+                            hit_dmg = base + int(my_bonus_atk[i])
+                            pending_damage.append(
+                                (enemy_team, stray, hit_dmg, i, team_id)
+                            )
                     # Extra projectiles: low accuracy (~50%), they scatter
                     if num_extra > 0:
                         extra_base = t_extra_proj_dmg
@@ -1652,7 +1668,8 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                     a_used_first[a_idx] = True
 
                 # Main projectile
-                if tmpl["accuracy"] >= 1.0 or random.random() < tmpl["accuracy"]:
+                main_hit = tmpl["accuracy"] >= 1.0 or random.random() < tmpl["accuracy"]
+                if main_hit:
                     pending.append((target, main_dmg))
                     sim_hp[target] -= main_dmg
                     # Siege splash
@@ -1687,6 +1704,13 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                                 pending.append((idx, pt_dmg))
                                 sim_hp[idx] -= pt_dmg
                                 break
+                elif d_alive_now:
+                    # Missed shot — may hit random enemy in formation
+                    stray_chance = min(0.5, len(d_alive_now) * 0.05)
+                    if random.random() < stray_chance:
+                        stray = random.choice(d_alive_now)
+                        pending.append((stray, main_dmg))
+                        sim_hp[stray] -= main_dmg
 
                 # Extra projectiles (scatter)
                 for _ in range(num_extra):
@@ -1894,6 +1918,14 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                         pending_damage.append(
                             (enemy_team_id, target_idx, main_dmg, i, team_id)
                         )
+                    else:
+                        # Missed shot — may hit random enemy in formation
+                        stray_chance = min(0.5, len(enemy_alive) * 0.05)
+                        if enemy_alive and random.random() < stray_chance:
+                            stray = random.choice(enemy_alive)
+                            pending_damage.append(
+                                (enemy_team_id, stray, main_dmg, i, team_id)
+                            )
                     # Extra projectiles
                     for _ in range(num_extra):
                         if random.random() < EXTRA_PROJ_ACCURACY:

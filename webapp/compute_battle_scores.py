@@ -21,7 +21,7 @@ from simulation import prepare_combat_unit, simulate_battle
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 CACHE_PATH = os.path.join(os.path.dirname(__file__), "battle_cache.json")
-CACHE_VERSION = 3
+CACHE_VERSION = 4
 
 # Unit lines config (must match app.py UNIT_LINES)
 UNIT_LINES = {
@@ -39,6 +39,11 @@ UNIT_LINES = {
             "Aztecs": ("jaguar_warrior_aztecs", "elite_jaguar_warrior_aztecs"),
             "Incas": ("kamayuk_incas", "elite_kamayuk_incas"),
             "Italians": (None, "condottiero"),
+            "Ethiopians": (
+                "shotel_warrior_ethiopians",
+                "elite_shotel_warrior_ethiopians",
+            ),
+            "Malay": ("karambit_warrior_malay", "elite_karambit_warrior_malay"),
         },
     },
     "spear": {
@@ -76,6 +81,11 @@ UNIT_LINES = {
             "Turks": ("janissary_turks", "elite_janissary_turks"),
             "Franks": ("throwing_axeman_franks", "elite_throwing_axeman_franks"),
             "Incas": ("slinger", "imp_slinger"),
+            "Vietnamese": (
+                "rattan_archer_vietnamese",
+                "elite_rattan_archer_vietnamese",
+            ),
+            "Malians": ("gbeto_malians", "elite_gbeto_malians"),
         },
     },
     "skirmisher": {
@@ -95,6 +105,8 @@ UNIT_LINES = {
             "Saracens": ("mameluke_saracens", "elite_mameluke_saracens"),
             "Koreans": ("war_wagon_koreans", "elite_war_wagon_koreans"),
             "Spanish": ("conquistador_spanish", "elite_conquistador_spanish"),
+            "Berbers": ("camel_archer_berbers", "elite_camel_archer_berbers"),
+            "Burmese": ("arambai_burmese", "elite_arambai_burmese"),
         },
     },
     "knight": {
@@ -152,14 +164,18 @@ UNIT_LINES = {
         "building": "Siege Workshop",
         "castle_slug": "mangonel",
         "imperial_slug": "siege_onager",
-        "unique_units": {},
+        "unique_units": {
+            "Portuguese": ("organ_gun_portuguese", "elite_organ_gun_portuguese"),
+        },
     },
     "scorpion": {
         "name": "Scorpion Line",
         "building": "Siege Workshop",
         "castle_slug": "scorpion",
         "imperial_slug": "heavy_scorpion",
-        "unique_units": {},
+        "unique_units": {
+            "Khmer": ("ballista_elephant_khmer", "elite_ballista_elephant_khmer"),
+        },
     },
     "trebuchet": {
         "name": "Trebuchet",
@@ -210,6 +226,13 @@ UNIT_LINES = {
             "Saracens": ("mameluke_saracens", "elite_mameluke_saracens"),
             "Koreans": ("war_wagon_koreans", "elite_war_wagon_koreans"),
             "Spanish": ("conquistador_spanish", "elite_conquistador_spanish"),
+            "Berbers": ("camel_archer_berbers", "elite_camel_archer_berbers"),
+            "Burmese": ("arambai_burmese", "elite_arambai_burmese"),
+            "Vietnamese": (
+                "rattan_archer_vietnamese",
+                "elite_rattan_archer_vietnamese",
+            ),
+            "Malians": ("gbeto_malians", "elite_gbeto_malians"),
         },
     },
 }

@@ -372,10 +372,20 @@ def generate_reference_database(analyzer):
         max_age,
         unit_data,
     ):
-        """Process one unit with full audit trail. Returns ref_unit_id or None."""
+        """Process one unit with full audit trail. Returns ref_unit_id or None.
+
+        unit_class can be an int or tuple of ints (for dual-class units).
+        The primary class (first element) is stored in DB; the full value
+        is used for tech filtering.
+        """
         stats = analyzer.get_base_stats(unit_data)
         base_snap = _snapshot_stats(stats)
         is_ranged = 1 if unit_data.get("range", 0) > 1 else 0
+
+        # For DB storage, use primary class only
+        db_class = (
+            unit_class[0] if isinstance(unit_class, (list, tuple)) else unit_class
+        )
 
         # Insert ref_units row (will fill final stats later)
         cursor.execute(
@@ -397,8 +407,8 @@ def generate_reference_database(analyzer):
                 unit_slug,
                 unit_type,
                 age_label,
-                unit_class,
-                class_names.get(unit_class, ""),
+                db_class,
+                class_names.get(db_class, ""),
                 is_ranged,
                 base_snap["hp"],
                 base_snap["attack"],
@@ -521,7 +531,10 @@ def generate_reference_database(analyzer):
                 matched = b_unit_id == unit_id
             elif len(bonus) == 4:
                 b_unit_id, atk_class, amount, b_class_id = bonus
-                matched = b_unit_id == -1 and b_class_id == unit_class
+                if isinstance(unit_class, (list, tuple)):
+                    matched = b_unit_id == -1 and b_class_id in unit_class
+                else:
+                    matched = b_unit_id == -1 and b_class_id == unit_class
             if matched:
                 before = _snapshot_stats(stats)
                 if atk_class in stats.attacks:
@@ -612,7 +625,7 @@ def generate_reference_database(analyzer):
                 else:
                     best_rate = castle_rate
             else:
-                bld_id = UNIT_CLASS_TO_BUILDING.get(unit_class)
+                bld_id = UNIT_CLASS_TO_BUILDING.get(db_class)
                 best_rate = (
                     analyzer.get_building_work_rate(civ_name, bld_id, max_age)
                     if bld_id
@@ -904,6 +917,11 @@ def generate_reference_database(analyzer):
         # Unique units
         if civ_name in UNIQUE_UNITS:
             for uu_config in UNIQUE_UNITS[civ_name]:
+                # Build effective unit_class (tuple if extra_unit_classes present)
+                uc = uu_config["unit_class"]
+                extra = uu_config.get("extra_unit_classes", [])
+                effective_class = (uc, *extra) if extra else uc
+
                 # Castle Age (base version)
                 base_id = uu_config["base_id"]
                 unit_data = analyzer.get_unit(base_id)
@@ -917,7 +935,7 @@ def generate_reference_database(analyzer):
                     process_unit_audited(
                         civ_name,
                         base_id,
-                        uu_config["unit_class"],
+                        effective_class,
                         uu_config["display_name"],
                         f"{slug}_{civ_name.lower()}",
                         "unique",
@@ -938,7 +956,7 @@ def generate_reference_database(analyzer):
                         process_unit_audited(
                             civ_name,
                             elite_id,
-                            uu_config["unit_class"],
+                            effective_class,
                             elite_name,
                             elite_slug,
                             "unique",

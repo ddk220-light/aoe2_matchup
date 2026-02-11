@@ -75,26 +75,34 @@ ATTR_DISPLAY_NAMES = {
 # Original 13 civilizations
 ORIGINAL_13_CIVS = [
     "Aztecs",
+    "Berbers",
     "Britons",
+    "Burmese",
     "Byzantines",
     "Celts",
     "Chinese",
+    "Ethiopians",
     "Franks",
     "Goths",
     "Huns",
     "Incas",
     "Italians",
     "Japanese",
+    "Khmer",
     "Koreans",
     "Magyars",
+    "Malay",
+    "Malians",
     "Mayans",
     "Mongols",
     "Persians",
+    "Portuguese",
     "Saracens",
     "Slavs",
     "Spanish",
     "Teutons",
     "Turks",
+    "Vietnamese",
     "Vikings",
 ]
 
@@ -224,6 +232,8 @@ COMBAT_PROPERTIES = {
     "siege_ram": {"unit_category": "siege"},
     "trebuchet": {"unit_category": "siege"},
     "bombard_cannon": {"unit_category": "siege"},
+    "organ_gun": {"unit_category": "siege"},
+    "elite_organ_gun": {"unit_category": "siege"},
 }
 
 # Unique units — keyed by base slug (without civ suffix)
@@ -1097,6 +1107,9 @@ UNIQUE_UNITS = {
             "base_id": 1120,  # Correct ID per AoE2ScenarioParser
             "display_name": "Ballista Elephant",
             "unit_class": 55,
+            "extra_unit_classes": [
+                12
+            ],  # Also gets cavalry techs (Husbandry, Bloodlines, etc.)
             "availability_tech": 614,
             "elite_tech": 615,
             "elite_id": 1122,  # Correct ID per AoE2ScenarioParser

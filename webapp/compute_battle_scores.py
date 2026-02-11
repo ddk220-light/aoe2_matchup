@@ -571,42 +571,29 @@ def build_combat_dict(rc, row):
         "armor_strip_per_hit": int(special.get("armor_strip_per_hit", 0)),
         "charge_attack_melee": int(special.get("charge_attack_melee", 0)),
         "charge_recharge_time": special.get("charge_recharge_time", 0),
+        # Dismount on death (Konnik): from hardcoded config via special effects
+        "dismount_hp": (
+            int(special["dismount_hp"]) if "dismount_hp" in special else None
+        ),
+        "dismount_attack": (
+            int(special["dismount_attack"]) if "dismount_attack" in special else None
+        ),
+        "dismount_melee_armor": (
+            int(special["dismount_melee_armor"])
+            if "dismount_melee_armor" in special
+            else None
+        ),
+        "dismount_pierce_armor": (
+            int(special["dismount_pierce_armor"])
+            if "dismount_pierce_armor" in special
+            else None
+        ),
+        "dismount_attack_speed": special.get("dismount_attack_speed"),
+        "dismount_attack_delay": special.get("dismount_attack_delay"),
+        "dismount_movement_speed": special.get("dismount_movement_speed"),
+        "dismount_attacks_json": special.get("dismount_attacks_json"),
+        "dismount_armors_json": special.get("dismount_armors_json"),
     }
-
-    # Dismount on death (Konnik): from hardcoded config via special effects
-    result["dismount_hp"] = (
-        int(special["dismount_hp"]) if "dismount_hp" in special else None
-    )
-    result["dismount_attack"] = (
-        int(special["dismount_attack"]) if "dismount_attack" in special else None
-    )
-    result["dismount_melee_armor"] = (
-        int(special["dismount_melee_armor"])
-        if "dismount_melee_armor" in special
-        else None
-    )
-    result["dismount_pierce_armor"] = (
-        int(special["dismount_pierce_armor"])
-        if "dismount_pierce_armor" in special
-        else None
-    )
-    result["dismount_attack_speed"] = special.get("dismount_attack_speed")
-    result["dismount_attack_delay"] = special.get("dismount_attack_delay")
-    result["dismount_movement_speed"] = special.get("dismount_movement_speed")
-    result["dismount_attacks_json"] = special.get("dismount_attacks_json")
-    result["dismount_armors_json"] = special.get("dismount_armors_json")
-
-    result["transform_hp"] = None
-    result["transform_attack"] = None
-    result["transform_melee_armor"] = None
-    result["transform_pierce_armor"] = None
-    result["transform_attack_speed"] = None
-    result["transform_attack_delay"] = None
-    result["transform_movement_speed"] = None
-    result["transform_attacks_json"] = None
-    result["transform_armors_json"] = None
-
-    return result
 
 
 def calc_weighted_cost(food, wood, gold, is_imperial):

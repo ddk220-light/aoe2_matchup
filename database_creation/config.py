@@ -323,6 +323,7 @@ PAIRED_UNITS = {
 # Not yet used in any feature — reserved for future team game support.
 ALLY_UNITS = {
     "Italians": ["condottiero"],
+    "Berbers": ["genitour", "elite_genitour"],
 }
 
 # =============================================================================
@@ -521,6 +522,16 @@ CASTLE_UNITS = {
         "unit_class": 0,  # Archer class (Archery Range)
         "availability_tech": 528,  # Slinger (make avail) - Incas only
         "upgrades": [],
+    },
+    "genitour": {
+        "base_id": 1010,
+        "display_name": "Genitour",
+        "unit_class": 36,  # Cavalry Archer
+        "availability_tech": 427,  # Genitour (make avail)
+        "upgrades": [],
+        "civ_only": [
+            "Berbers"
+        ],  # Team unit: all civs can train with Berber ally, but restrict to owner
     },
 }
 
@@ -766,6 +777,18 @@ IMPERIAL_UNITS = {
         "unit_class": 0,  # Archer class
         "availability_tech": 528,  # Slinger (make avail) - Incas only
         "upgrades": [],
+    },
+    "elite_genitour": {
+        "base_id": 1010,
+        "display_name": "Elite Genitour",
+        "unit_class": 36,  # Cavalry Archer
+        "availability_tech": 427,  # Genitour (make avail)
+        "upgrades": [
+            (430, 1012, "Elite Genitour"),
+        ],
+        "civ_only": [
+            "Berbers"
+        ],  # Team unit: all civs can train with Berber ally, but restrict to owner
     },
 }
 

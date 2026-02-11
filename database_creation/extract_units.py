@@ -207,6 +207,9 @@ UNIT_NAMES = {
     # ===== Unique Units - Berbers =====
     1007: "Camel Archer",
     1009: "Elite Camel Archer",
+    # Genitour (Berbers team unit, trained at Archery Range)
+    1010: "Genitour",
+    1012: "Elite Genitour",
     # ===== Unique Units - Khmer =====
     1120: "Ballista Elephant",
     1122: "Elite Ballista Elephant",

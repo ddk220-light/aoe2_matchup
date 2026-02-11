@@ -93,7 +93,9 @@ UNIT_LINES = {
         "building": "Archery Range",
         "castle_slug": "elite_skirm",
         "imperial_slug": "imp_elite_skirm",
-        "unique_units": {},
+        "unique_units": {
+            "Berbers": ("genitour", "elite_genitour"),
+        },
     },
     "cav_archer": {
         "name": "Cavalry Archer Line",

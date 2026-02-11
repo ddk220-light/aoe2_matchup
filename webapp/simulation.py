@@ -280,6 +280,7 @@ def simulate_battle(
     cost1_override=None,
     cost2_override=None,
     return_hp=False,
+    return_ticks=False,
 ):
     """
     Tick-based battle simulation with no positions/movement.
@@ -294,11 +295,14 @@ def simulate_battle(
         fixed_count: if set, both sides get this many units
         cost1_override/cost2_override: override unit costs for army sizing
         return_hp: if True, returns 5-tuple with HP totals
+        return_ticks: if True, returns 6-tuple with HP totals + elapsed ticks
 
     Returns: (winner, unit1_remaining, unit2_remaining) or
              (winner, unit1_remaining, unit2_remaining, hp_pct1, hp_pct2) if return_hp
+             (winner, remaining1, remaining2, hp_pct1, hp_pct2, elapsed_ticks) if return_ticks
         winner: 1 if unit1 wins, 2 if unit2 wins, 0 if draw
         hp_pct1/hp_pct2: remaining HP as fraction of starting total (0.0-1.0)
+        elapsed_ticks: number of ticks the battle lasted (multiply by DT for seconds)
     """
     # --- Army sizes ---
     if fixed_count is not None:
@@ -1442,8 +1446,11 @@ def simulate_battle(
     total_hp2 = sum(max(0, h) for h in hp2)
     hp_pct1 = total_hp1 / start_total_hp1 if start_total_hp1 > 0 else 0.0
     hp_pct2 = total_hp2 / start_total_hp2 if start_total_hp2 > 0 else 0.0
+    elapsed_ticks = tick + 1  # tick is 0-indexed from the for loop
 
     def _result(winner):
+        if return_ticks:
+            return (winner, remaining1, remaining2, hp_pct1, hp_pct2, elapsed_ticks)
         if return_hp:
             return (winner, remaining1, remaining2, hp_pct1, hp_pct2)
         return (winner, remaining1, remaining2)

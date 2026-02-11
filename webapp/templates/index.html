@@ -252,6 +252,16 @@
                 opacity: 1;
                 color: var(--gold-light);
             }
+            .info-icon {
+                font-size: 0.65rem;
+                margin-left: 3px;
+                opacity: 0.6;
+                cursor: help;
+                vertical-align: super;
+            }
+            .info-icon:hover {
+                opacity: 1;
+            }
             .stats-table td {
                 border: 1px solid var(--card-border);
                 padding: 6px 10px;
@@ -861,7 +871,7 @@
 
                 const resp = await fetch(`/api/ref/unit-line/${slug}`);
                 currentData = await resp.json();
-                sortColumn = "pes";
+                sortColumn = slug === "militia" ? "militia_value" : "pes";
                 sortDir = "desc";
                 renderTable();
             }
@@ -977,7 +987,9 @@
                 });
 
                 // Compute medians for color coding (exclude unique units for baseline)
-                const statCols = [
+                const isMilitia = currentLine === "militia";
+
+                const defaultStatCols = [
                     "pes",
                     "res",
                     "score_30v30",
@@ -999,49 +1011,44 @@
                     "final_speed",
                     "final_range",
                 ];
+                const militiaStatCols = [
+                    "militia_value",
+                    "anti_trash",
+                    "meat_shield",
+                    "raid",
+                    "anti_cav",
+                    "dps",
+                    "final_hp",
+                    "final_attack",
+                    "final_melee_armor",
+                    "final_pierce_armor",
+                    "final_speed",
+                ];
+                const statCols = isMilitia ? militiaStatCols : defaultStatCols;
+
                 const medians = {};
                 for (const col of statCols) {
                     const vals = enriched
-                        .filter((r) => !r.is_unique && r[col] > -999)
+                        .filter(
+                            (r) =>
+                                !r.is_unique &&
+                                r[col] !== undefined &&
+                                r[col] > -999,
+                        )
                         .map((r) => r[col])
                         .sort((a, b) => a - b);
                     medians[col] =
                         vals.length > 0 ? vals[Math.floor(vals.length / 2)] : 0;
                 }
 
-                // Higher is better for these columns
-                const higherIsBetter = {
-                    pes: true,
-                    res: true,
-                    score_30v30: true,
-                    pop_vs_champ: true,
-                    pop_vs_paladin: true,
-                    pop_vs_arb: true,
-                    score_3k: true,
-                    score_5k: true,
-                    vs_champ: true,
-                    vs_paladin: true,
-                    vs_arb: true,
-                    dps_per_cost: true,
-                    ehp_per_cost: true,
-                    dps: true,
-                    final_hp: true,
-                    final_attack: true,
-                    final_melee_armor: true,
-                    final_pierce_armor: true,
-                    final_speed: true,
-                    final_range: true,
-                };
-
                 function valClass(col, val) {
                     const med = medians[col];
                     if (med === undefined || val === med) return "";
-                    if (higherIsBetter[col])
-                        return val > med ? "val-high" : "val-low";
-                    return val < med ? "val-high" : "val-low";
+                    // All stat columns are higher-is-better
+                    return val > med ? "val-high" : "val-low";
                 }
 
-                const columns = [
+                const defaultColumns = [
                     { key: "civ_name", label: "Civ" },
                     { key: "unit_name", label: "Unit" },
                     { key: "pes", label: "PES" },
@@ -1067,6 +1074,45 @@
                     { key: "total_cost", label: "Cost" },
                     { key: "total_upgrade_cost", label: "Upg Cost" },
                 ];
+                const militiaColumns = [
+                    { key: "civ_name", label: "Civ" },
+                    { key: "unit_name", label: "Unit" },
+                    {
+                        key: "militia_value",
+                        label: "Score",
+                        info: "Weighted aggregate: 35% Anti-Trash + 30% Tankiness + 20% Raid + 15% Anti-Cav",
+                    },
+                    {
+                        key: "anti_trash",
+                        label: "Anti-Trash",
+                        info: "Avg HP% remaining after 3k resource fights vs Spanish Elite Skirm, Halberdier, and Hussar",
+                    },
+                    {
+                        key: "meat_shield",
+                        label: "Tankiness",
+                        info: "How long the unit survives in a 30v30 fight vs Spanish Paladins (0\u2013100, 100 = survived full 250s or won)",
+                    },
+                    {
+                        key: "raid",
+                        label: "Raid",
+                        info: "HP% remaining after 30 militia vs 15 Chinese Arbalesters (simulates pushing into defended positions)",
+                    },
+                    {
+                        key: "anti_cav",
+                        label: "Anti-Cav",
+                        info: "Avg HP% remaining after 3k resource fights vs Spanish Paladin and Hussar",
+                    },
+                    { key: "dps", label: "DPS" },
+                    { key: "final_hp", label: "HP" },
+                    { key: "final_attack", label: "Atk" },
+                    { key: "final_melee_armor", label: "M.Arm" },
+                    { key: "final_pierce_armor", label: "P.Arm" },
+                    { key: "final_speed", label: "Speed" },
+                    { key: "total_cost", label: "Cost" },
+                    { key: "total_upgrade_cost", label: "Upg Cost" },
+                    { key: "special_abilities", label: "Special" },
+                ];
+                const columns = isMilitia ? militiaColumns : defaultColumns;
 
                 const lineInfo = UNIT_LINES[currentLine];
                 const titleIcon = unitIconUrl(
@@ -1088,61 +1134,73 @@
                             ? "\u25B2"
                             : "\u25BC"
                         : "\u25B4";
+                    const infoHtml = col.info
+                        ? `<span class="info-icon" title="${col.info}">\u24D8</span>`
+                        : "";
                     html += `<th class="${isSorted ? "sorted" : ""}" onclick="sortBy('${col.key}')">
-                        ${col.label}<span class="sort-arrow">${arrow}</span>
+                        ${col.label}${infoHtml}<span class="sort-arrow">${arrow}</span>
                     </th>`;
                 }
                 html += "</tr></thead><tbody>";
 
-                for (const row of enriched) {
-                    const isUnique = row.is_unique;
-                    const rowClass = isUnique ? "unique-row" : "";
-                    const civImg = `${CIV_EMBLEM_URL}${row.civ_name.toLowerCase()}.png`;
-                    const unitImg = unitIconUrl(row.unit_name);
-                    const bonuses = row.applied_bonuses_summary || "";
-
-                    html += `<tr class="${rowClass}">`;
-                    // Civ
-                    html += `<td><div class="civ-cell">
-                        <img src="${civImg}" alt="${row.civ_name}" onerror="this.style.display='none'" />
-                        ${row.civ_name}
-                    </div></td>`;
-                    // Unit name with tooltip
-                    html += `<td><div class="unit-cell">
-                        <img src="${unitImg}" alt="${row.unit_name}" onerror="if(!this.dataset.tried){this.dataset.tried='1';const id=NAME_TO_ICON[this.alt];if(id)this.src=ICON_BASE_FALLBACK+id+'.png';else this.style.display='none'}else{this.style.display='none'}" />
-                        ${row.unit_name}${isUnique ? " *" : ""}
-                        ${bonuses ? `<div class="tooltip">${bonuses}</div>` : ""}
-                    </div></td>`;
-                    // PES and RES scores (-999 = no data)
-                    const scoreCols = [
-                        "pes",
-                        "res",
-                        "score_30v30",
-                        "pop_vs_champ",
-                        "pop_vs_paladin",
-                        "pop_vs_arb",
-                        "score_3k",
-                        "score_5k",
-                        "vs_champ",
-                        "vs_paladin",
-                        "vs_arb",
-                    ];
-                    for (const sc of scoreCols) {
-                        const sv = row[sc];
-                        html += `<td class="${sv > -999 ? valClass(sc, sv) : ""}">${sv > -999 ? sv.toFixed(1) : "—"}</td>`;
+                // Format helpers
+                function fmtCell(col, row) {
+                    const k = col.key;
+                    const v = row[k];
+                    if (k === "civ_name") {
+                        const civImg = `${CIV_EMBLEM_URL}${v.toLowerCase()}.png`;
+                        return `<td><div class="civ-cell">
+                            <img src="${civImg}" alt="${v}" onerror="this.style.display='none'" />
+                            ${v}
+                        </div></td>`;
                     }
-                    // Stats
-                    html += `<td class="${valClass("dps_per_cost", row.dps_per_cost)}">${row.dps_per_cost.toFixed(3)}</td>`;
-                    html += `<td class="${valClass("ehp_per_cost", row.ehp_per_cost)}">${row.ehp_per_cost.toFixed(1)}</td>`;
-                    html += `<td class="${valClass("dps", row.dps)}">${row.dps.toFixed(1)}</td>`;
-                    html += `<td class="${valClass("final_hp", row.final_hp)}">${Math.round(row.final_hp)}</td>`;
-                    html += `<td class="${valClass("final_attack", row.final_attack)}">${Math.round(row.final_attack)}</td>`;
-                    html += `<td class="${valClass("final_melee_armor", row.final_melee_armor)}">${Math.round(row.final_melee_armor)}</td>`;
-                    html += `<td class="${valClass("final_pierce_armor", row.final_pierce_armor)}">${Math.round(row.final_pierce_armor)}</td>`;
-                    html += `<td class="${valClass("final_speed", row.final_speed)}">${row.final_speed.toFixed(2)}</td>`;
-                    html += `<td class="${valClass("final_range", row.final_range)}">${row.final_range}</td>`;
-                    html += `<td>${Math.round(row.total_cost)}</td>`;
-                    html += `<td>${Math.round(row.total_upgrade_cost)}</td>`;
+                    if (k === "unit_name") {
+                        const unitImg = unitIconUrl(v);
+                        const bonuses = row.applied_bonuses_summary || "";
+                        return `<td><div class="unit-cell">
+                            <img src="${unitImg}" alt="${v}" onerror="if(!this.dataset.tried){this.dataset.tried='1';const id=NAME_TO_ICON[this.alt];if(id)this.src=ICON_BASE_FALLBACK+id+'.png';else this.style.display='none'}else{this.style.display='none'}" />
+                            ${v}${row.is_unique ? " *" : ""}
+                            ${bonuses ? `<div class="tooltip">${bonuses}</div>` : ""}
+                        </div></td>`;
+                    }
+                    if (k === "special_abilities") {
+                        return `<td style="white-space:normal;max-width:200px;font-size:0.7rem">${v || "\u2014"}</td>`;
+                    }
+                    if (k === "total_cost" || k === "total_upgrade_cost") {
+                        return `<td>${Math.round(v)}</td>`;
+                    }
+                    // Numeric columns with color coding
+                    if (v === undefined || v === null || v <= -999) {
+                        return `<td>\u2014</td>`;
+                    }
+                    const cls = valClass(k, v);
+                    if (k === "dps_per_cost")
+                        return `<td class="${cls}">${v.toFixed(3)}</td>`;
+                    if (k === "final_speed")
+                        return `<td class="${cls}">${v.toFixed(2)}</td>`;
+                    if (
+                        k === "dps" ||
+                        k === "ehp_per_cost" ||
+                        k === "militia_value" ||
+                        k === "anti_trash" ||
+                        k === "meat_shield" ||
+                        k === "raid" ||
+                        k === "anti_cav"
+                    ) {
+                        return `<td class="${cls}">${v.toFixed(1)}</td>`;
+                    }
+                    if (typeof v === "number" && v === Math.floor(v)) {
+                        return `<td class="${cls}">${Math.round(v)}</td>`;
+                    }
+                    return `<td class="${cls}">${typeof v === "number" ? v.toFixed(1) : v}</td>`;
+                }
+
+                for (const row of enriched) {
+                    const rowClass = row.is_unique ? "unique-row" : "";
+                    html += `<tr class="${rowClass}">`;
+                    for (const col of columns) {
+                        html += fmtCell(col, row);
+                    }
                     html += "</tr>";
                 }
 

@@ -1584,12 +1584,14 @@ BATTLE_SCORES_PATH = os.path.join(os.path.dirname(__file__), "battle_scores.json
 
 _ROUND_ROBIN = {}
 _BENCHMARKS = {}
+_ROLE_SCORES = {}
 
 if os.path.exists(BATTLE_SCORES_PATH):
     with open(BATTLE_SCORES_PATH) as _f:
         _scores_data = json.load(_f)
         _ROUND_ROBIN = _scores_data.get("round_robin", {})
         _BENCHMARKS = _scores_data.get("benchmarks", {})
+        _ROLE_SCORES = _scores_data.get("role_scores", {})
     print(
         f"Battle scores loaded: {len(_ROUND_ROBIN)} round-robin, {len(_BENCHMARKS)} benchmark line-ages"
     )
@@ -1609,7 +1611,7 @@ def api_ref_unit_line(line_slug):
     ref_conn = get_ref_db()
     rc = ref_conn.cursor()
 
-    stat_cols = """civ_name, unit_name, unit_slug, unit_type, age,
+    stat_cols = """id, civ_name, unit_name, unit_slug, unit_type, age,
         final_hp, final_attack, final_melee_armor, final_pierce_armor,
         final_speed, final_range, final_reload_time,
         final_cost_food, final_cost_wood, final_cost_gold,
@@ -1638,6 +1640,53 @@ def api_ref_unit_line(line_slug):
         entry["pop_vs_champ"] = bm.get("pop_vs_champ", -999)
         entry["pop_vs_paladin"] = bm.get("pop_vs_paladin", -999)
         entry["pop_vs_arb"] = bm.get("pop_vs_arb", -999)
+        # Role-based scores (militia line etc.)
+        rs = _ROLE_SCORES.get(line_key, {}).get(unit_key, {})
+        if rs:
+            for rk, rv in rs.items():
+                entry[rk] = rv
+
+    _ABILITY_LABELS = {
+        "ignores_melee_armor": "Ignores melee armor",
+        "ignores_pierce_armor": "Ignores pierce armor",
+        "trample_percent": "Trample {v:.0%}",
+        "trample_flat_damage": "Trample +{v:.0f} dmg",
+        "trample_radius": None,
+        "bonus_damage_reduction": "{v:.0%} bonus dmg reduction",
+        "damage_reflect_percent": "Reflects {v:.0%} melee dmg",
+        "hp_regen": "{v:.0f} HP/min regen",
+        "attack_bonus_per_kill": "+{v:.0f} atk per kill",
+        "pop_space": "{v} pop space",
+        "armor_strip_per_hit": "Strips {v:.0f} armor/hit",
+        "bleed_dps": "Bleed {v:.0f} dps",
+        "bleed_duration": None,
+        "pass_through_percent": "Pass-through dmg",
+        "charge_attack_melee": "Charge +{v:.0f} melee",
+        "charge_recharge_time": None,
+        "block_first_melee": "Blocks first melee hit",
+        "hp_transform_threshold": "Transforms at {v:.0%} HP",
+        "dodge_shield_max": "Dodge shield ({v:.0f} charges)",
+        "dodge_shield_recharge": None,
+    }
+
+    def _attach_special(entry):
+        rc.execute(
+            "SELECT property_name, property_value FROM ref_special_effects WHERE ref_unit_id=?",
+            (entry["id"],),
+        )
+        parts = []
+        for pname, pval in rc.fetchall():
+            label = _ABILITY_LABELS.get(pname)
+            if label is None:
+                continue
+            try:
+                v = float(pval)
+            except (ValueError, TypeError):
+                continue
+            if v == 0:
+                continue
+            parts.append(label.format(v=v))
+        entry["special_abilities"] = "; ".join(parts) if parts else ""
 
     # Fetch standard units for each age (supports multi-slug lines)
     for age_key, slug_key, slugs_key, db_age in [
@@ -1654,6 +1703,7 @@ def api_ref_unit_line(line_slug):
                 entry = dict(row)
                 entry["is_unique"] = False
                 _attach_scores(entry, age_key)
+                _attach_special(entry)
                 result[age_key].append(entry)
 
     # Fetch extra standard units (e.g. Elephant Archer in elephant line, Hand Cannoneer in archer line)
@@ -1666,6 +1716,7 @@ def api_ref_unit_line(line_slug):
             entry = dict(row)
             entry["is_unique"] = False
             _attach_scores(entry, "castle")
+            _attach_special(entry)
             result["castle"].append(entry)
 
     for extra_slug in line.get("extra_imperial_slugs", []):
@@ -1677,6 +1728,7 @@ def api_ref_unit_line(line_slug):
             entry = dict(row)
             entry["is_unique"] = False
             _attach_scores(entry, "imperial")
+            _attach_special(entry)
             result["imperial"].append(entry)
 
     # Fetch unique units
@@ -1696,6 +1748,7 @@ def api_ref_unit_line(line_slug):
                 entry = dict(row)
                 entry["is_unique"] = True
                 _attach_scores(entry, age_key)
+                _attach_special(entry)
                 result[age_key].append(entry)
 
     ref_conn.close()

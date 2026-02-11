@@ -321,9 +321,11 @@ UNIQUE_COMBAT_PROPERTIES = {
     # blast_damage=1.0 in dat = pass-through, not splash
     "chakram_thrower": {"pass_through_percent": 1.0},
     "elite_chakram_thrower": {"pass_through_percent": 1.0},
-    # Ghulam splash on hit (dat: blast_damage=0.5, blast_width=1.0) — 50% damage to secondary targets
-    "ghulam": {"splash_on_hit_radius": 1.0, "splash_on_hit_fraction": 0.5},
-    "elite_ghulam": {"splash_on_hit_radius": 1.0, "splash_on_hit_fraction": 0.5},
+    # Ghulam pass-through (blast_attack_level=138 = directional line pass-through, 50% to unit behind)
+    # Not modeled in sim: melee pass-through requires positional alignment that rarely occurs consistently.
+    # Ghulam's strength (anti-archer, high pierce armor, fast) is captured by base stats.
+    # "ghulam": {"pass_through_percent": 0.5},
+    # "elite_ghulam": {"pass_through_percent": 0.5},
     # Monaspa nearby ally attack bonus (+2 per nearby cavalry, max 4 nearby)
     "monaspa": {"attack_bonus_nearby": 2, "nearby_bonus_count": 4},
     "elite_monaspa": {"attack_bonus_nearby": 2, "nearby_bonus_count": 4},

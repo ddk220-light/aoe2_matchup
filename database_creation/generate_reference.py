@@ -794,9 +794,24 @@ def generate_reference_database(analyzer):
             ("dismount_movement_speed", "Dismounted unit movement speed"),
             ("attack_bonus_nearby", "Attack bonus per nearby ally"),
             ("nearby_bonus_count", "Max nearby allies for bonus"),
+            ("damage_reflect_percent", "Reflects percentage of melee damage"),
+            ("bonus_hp_nearby", "HP bonus per nearby ally"),
+            ("nearby_hp_bonus_count", "Max nearby allies for HP bonus"),
+            ("transform_hp", "Transformed unit HP"),
+            ("transform_attack", "Transformed unit attack"),
+            ("transform_melee_armor", "Transformed unit melee armor"),
+            ("transform_pierce_armor", "Transformed unit pierce armor"),
+            ("transform_attack_speed", "Transformed unit attack speed"),
+            ("transform_attack_delay", "Transformed unit attack delay"),
+            ("transform_movement_speed", "Transformed unit movement speed"),
         ]
-        # Also store JSON-valued properties (attacks/armors for dismount)
-        for json_prop in ("dismount_attacks_json", "dismount_armors_json"):
+        # Also store JSON-valued properties (attacks/armors for dismount/transform)
+        for json_prop in (
+            "dismount_attacks_json",
+            "dismount_armors_json",
+            "transform_attacks_json",
+            "transform_armors_json",
+        ):
             val = combat_props.get(json_prop)
             if val:
                 cursor.execute(

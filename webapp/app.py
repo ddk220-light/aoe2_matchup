@@ -811,6 +811,8 @@ ORIGINAL_13_CIVS = [
     "Incas",
     "Italians",
     "Japanese",
+    "Jurchens",
+    "Khitans",
     "Khmer",
     "Koreans",
     "Lithuanians",
@@ -824,6 +826,7 @@ ORIGINAL_13_CIVS = [
     "Portuguese",
     "Romans",
     "Saracens",
+    "Shu",
     "Sicilians",
     "Slavs",
     "Spanish",
@@ -832,6 +835,8 @@ ORIGINAL_13_CIVS = [
     "Turks",
     "Vietnamese",
     "Vikings",
+    "Wei",
+    "Wu",
 ]
 
 
@@ -1144,6 +1149,9 @@ def _build_combat_dict_from_ref(rc, row):
         "charge_recharge_time": special.get("charge_recharge_time", 0),
         "attack_bonus_nearby": int(special.get("attack_bonus_nearby", 0)),
         "nearby_bonus_count": int(special.get("nearby_bonus_count", 0)),
+        "damage_reflect_percent": special.get("damage_reflect_percent", 0),
+        "bonus_hp_nearby": int(special.get("bonus_hp_nearby", 0)),
+        "nearby_hp_bonus_count": int(special.get("nearby_hp_bonus_count", 0)),
         # Dismount/transform: look up from main DB if available
         "dismount_hp": None,
         "dismount_attack": None,
@@ -1302,6 +1310,8 @@ UNIT_LINES = {
                 "elite_chakram_thrower_gurjaras",
             ),
             "Armenians": ("warrior_priest_armenians", "warrior_priest_armenians"),
+            "Khitans": ("liao_dao_khitans", "elite_liao_dao_khitans"),
+            "Wu": ("jian_swordsman_wu", "jian_swordsman_wu"),
         },
     },
     "spear": {
@@ -1348,6 +1358,11 @@ UNIT_LINES = {
                 "composite_bowman_armenians",
                 "elite_composite_bowman_armenians",
             ),
+            "Wu": ("fire_archer_wu", "elite_fire_archer_wu"),
+            "Shu": (
+                "white_feather_crossbowman_shu",
+                "elite_white_feather_crossbowman_shu",
+            ),
         },
     },
     "skirmisher": {
@@ -1376,6 +1391,7 @@ UNIT_LINES = {
                 "ratha_(ranged)_bengalis",
                 "elite_ratha_(ranged)_bengalis",
             ),
+            "Wei": ("xianbei_raider_wei", "xianbei_raider_wei"),
         },
     },
     "knight": {
@@ -1401,6 +1417,8 @@ UNIT_LINES = {
             ),
             "Romans": ("centurion_romans", "elite_centurion_romans"),
             "Georgians": ("monaspa_georgians", "elite_monaspa_georgians"),
+            "Jurchens": ("iron_pagoda_jurchens", "elite_iron_pagoda_jurchens"),
+            "Wei": ("tiger_cavalry_wei", "elite_tiger_cavalry_wei"),
         },
     },
     "light_cav": {
@@ -1417,7 +1435,9 @@ UNIT_LINES = {
         "building": "Stable",
         "castle_slug": "camel",
         "imperial_slug": "heavy_camel",
-        "unique_units": {},
+        "unique_units": {
+            "Khitans": ("siege_camel_khitans", "siege_camel_khitans"),
+        },
     },
     "steppe_lancer": {
         "name": "Steppe Lancer",
@@ -1452,6 +1472,7 @@ UNIT_LINES = {
         "unique_units": {
             "Portuguese": ("organ_gun_portuguese", "elite_organ_gun_portuguese"),
             "Bohemians": ("hussite_wagon_bohemians", "elite_hussite_wagon_bohemians"),
+            "Jurchens": (None, "grenadier_jurchens"),
         },
     },
     "scorpion": {
@@ -1461,6 +1482,7 @@ UNIT_LINES = {
         "imperial_slug": "heavy_scorpion",
         "unique_units": {
             "Khmer": ("ballista_elephant_khmer", "elite_ballista_elephant_khmer"),
+            "Shu": ("war_chariot_shu", "elite_war_chariot_shu"),
         },
     },
     "trebuchet": {
@@ -1503,6 +1525,8 @@ UNIT_LINES = {
             ),
             "Romans": ("centurion_romans", "elite_centurion_romans"),
             "Georgians": ("monaspa_georgians", "elite_monaspa_georgians"),
+            "Jurchens": ("iron_pagoda_jurchens", "elite_iron_pagoda_jurchens"),
+            "Wei": ("tiger_cavalry_wei", "elite_tiger_cavalry_wei"),
         },
     },
     "all_ranged": {
@@ -1543,6 +1567,12 @@ UNIT_LINES = {
                 "composite_bowman_armenians",
                 "elite_composite_bowman_armenians",
             ),
+            "Wu": ("fire_archer_wu", "elite_fire_archer_wu"),
+            "Shu": (
+                "white_feather_crossbowman_shu",
+                "elite_white_feather_crossbowman_shu",
+            ),
+            "Wei": ("xianbei_raider_wei", "xianbei_raider_wei"),
         },
     },
 }

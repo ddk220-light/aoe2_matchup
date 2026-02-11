@@ -98,6 +98,8 @@ ORIGINAL_13_CIVS = [
     "Incas",
     "Italians",
     "Japanese",
+    "Jurchens",
+    "Khitans",
     "Khmer",
     "Koreans",
     "Lithuanians",
@@ -111,6 +113,7 @@ ORIGINAL_13_CIVS = [
     "Portuguese",
     "Romans",
     "Saracens",
+    "Shu",
     "Sicilians",
     "Slavs",
     "Spanish",
@@ -119,6 +122,8 @@ ORIGINAL_13_CIVS = [
     "Turks",
     "Vietnamese",
     "Vikings",
+    "Wei",
+    "Wu",
 ]
 
 # =============================================================================
@@ -255,6 +260,11 @@ COMBAT_PROPERTIES = {
     "chakram_thrower": {"unit_category": "infantry"},
     "elite_chakram_thrower": {"unit_category": "infantry"},
     "warrior_priest": {"unit_category": "infantry"},
+    "grenadier": {"unit_category": "siege"},
+    "war_chariot": {"unit_category": "siege"},
+    "elite_war_chariot": {"unit_category": "siege"},
+    "siege_camel": {"unit_category": "cavalry"},
+    "jian_swordsman": {"unit_category": "infantry"},
 }
 
 # Unique units — keyed by base slug (without civ suffix)
@@ -301,13 +311,27 @@ UNIQUE_COMBAT_PROPERTIES = {
     # Block first melee hit (ability flag, not in dat)
     "iron_pagoda": {"block_first_melee": 1},
     "elite_iron_pagoda": {"block_first_melee": 1},
+    # Grenadier splash (blast_level=11 in dat, fallback if not data-driven)
+    "grenadier": {"splash_on_hit_radius": 1.0},
     # Kill bonus attack (ability flag, not in dat)
     "tiger_cavalry": {"attack_bonus_per_kill": 4},
     "elite_tiger_cavalry": {"attack_bonus_per_kill": 4},
     "jaguar_warrior": {"attack_bonus_per_kill": 4},
     "elite_jaguar_warrior": {"attack_bonus_per_kill": 4},
     # HP transformation (ability flag, not in dat)
-    "jian_swordsman": {"hp_transform_threshold": 0.5, "transform_unit_id": 1976},
+    "jian_swordsman": {
+        "hp_transform_threshold": 0.5,
+        "transform_unit_id": 1976,
+        "transform_hp": 70,
+        "transform_attack": 11,
+        "transform_melee_armor": 0,
+        "transform_pierce_armor": 2,
+        "transform_attack_speed": 0.5,
+        "transform_attack_delay": 0.0,
+        "transform_movement_speed": 1.1,
+        "transform_attacks_json": '{"4": 11, "15": 4, "21": 2, "8": 0, "30": 0}',
+        "transform_armors_json": '{"1": 0, "4": 0, "3": 2, "31": 0, "29": 0, "19": 0}',
+    },
     # Karambit Warrior takes 0.5 pop space (Malay unique tech Forced Levy is separate)
     "karambit_warrior": {"pop_space": 0.5},
     "elite_karambit_warrior": {"pop_space": 0.5},
@@ -401,6 +425,53 @@ CIV_COMBAT_PROPERTIES = {
         "charge_attack_melee": 5,
         "charge_recharge_time": 4.0,
     },
+    # Khitan Lamellar Armor (Imp UT) — infantry + skirmishers reflect 25% melee damage
+    ("Khitans", "champion"): {"damage_reflect_percent": 0.25},
+    ("Khitans", "halberdier"): {"damage_reflect_percent": 0.25},
+    ("Khitans", "pikeman"): {"damage_reflect_percent": 0.25},
+    ("Khitans", "swordsmen"): {"damage_reflect_percent": 0.25},
+    ("Khitans", "elite_skirm"): {"damage_reflect_percent": 0.25},
+    ("Khitans", "imp_elite_skirm"): {"damage_reflect_percent": 0.25},
+    ("Khitans", "liao_dao"): {"damage_reflect_percent": 0.25},
+    ("Khitans", "elite_liao_dao"): {"damage_reflect_percent": 0.25},
+    # Khitan Ordo Cavalry — cavalry HP regen in combat (20 HP/min)
+    ("Khitans", "heavy_cav_archer"): {"hp_regen": 20},
+    ("Khitans", "cav_archer"): {"hp_regen": 20},
+    ("Khitans", "hussar"): {"hp_regen": 20},
+    ("Khitans", "light_cav"): {"hp_regen": 20},
+    ("Khitans", "steppe_lancer"): {"hp_regen": 20},
+    ("Khitans", "elite_steppe"): {"hp_regen": 20},
+    ("Khitans", "camel"): {"hp_regen": 20},
+    ("Khitans", "heavy_camel"): {"hp_regen": 20},
+    ("Khitans", "fire_lancer"): {"hp_regen": 20},
+    ("Khitans", "elite_fire_lancer"): {"hp_regen": 20},
+    ("Khitans", "siege_camel"): {"hp_regen": 20},
+    # Shu Coiled Serpent Array (Castle UT) — spear-line + White Feather gain HP near each other
+    ("Shu", "halberdier"): {"bonus_hp_nearby": 5, "nearby_hp_bonus_count": 4},
+    ("Shu", "pikeman"): {"bonus_hp_nearby": 5, "nearby_hp_bonus_count": 4},
+    ("Shu", "white_feather_crossbowman"): {
+        "bonus_hp_nearby": 5,
+        "nearby_hp_bonus_count": 4,
+    },
+    ("Shu", "elite_white_feather_crossbowman"): {
+        "bonus_hp_nearby": 5,
+        "nearby_hp_bonus_count": 4,
+    },
+    # Shu Bolt Magazine (Imp UT) — archer-line + War Chariots fire additional projectiles
+    ("Shu", "arbalester"): {
+        "extra_projectiles": 1,
+        "extra_projectile_attacks_json": '{"3": 1}',
+    },
+    ("Shu", "crossbow"): {
+        "extra_projectiles": 1,
+        "extra_projectile_attacks_json": '{"3": 1}',
+    },
+    ("Shu", "elite_war_chariot"): {"extra_projectiles": 1},
+    ("Shu", "war_chariot"): {"extra_projectiles": 1},
+    # Jurchens Thunderclap Bombs (Imp UT) — additional projectiles for Rocket Carts, Grenadiers
+    ("Jurchens", "mangonel"): {"extra_projectiles": 1},
+    ("Jurchens", "siege_onager"): {"extra_projectiles": 1},
+    ("Jurchens", "grenadier"): {"extra_projectiles": 1},
 }
 
 # Paired units mapping (for matchup mode switching)

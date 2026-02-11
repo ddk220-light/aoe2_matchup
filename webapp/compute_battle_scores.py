@@ -24,7 +24,7 @@ CACHE_PATH = os.path.join(os.path.dirname(__file__), "battle_cache.json")
 EXTRACTED_UNITS_PATH = os.path.join(
     os.path.dirname(__file__), "..", "database_creation", "extracted_data", "units.json"
 )
-CACHE_VERSION = 10
+CACHE_VERSION = 11
 
 # Load extracted units data for dismount resolution
 _EXTRACTED_UNITS = {}
@@ -98,6 +98,8 @@ UNIT_LINES = {
                 "elite_chakram_thrower_gurjaras",
             ),
             "Armenians": ("warrior_priest_armenians", "warrior_priest_armenians"),
+            "Khitans": ("liao_dao_khitans", "elite_liao_dao_khitans"),
+            "Wu": ("jian_swordsman_wu", "jian_swordsman_wu"),
         },
     },
     "spear": {
@@ -144,6 +146,11 @@ UNIT_LINES = {
                 "composite_bowman_armenians",
                 "elite_composite_bowman_armenians",
             ),
+            "Wu": ("fire_archer_wu", "elite_fire_archer_wu"),
+            "Shu": (
+                "white_feather_crossbowman_shu",
+                "elite_white_feather_crossbowman_shu",
+            ),
         },
     },
     "skirmisher": {
@@ -172,6 +179,7 @@ UNIT_LINES = {
                 "ratha_(ranged)_bengalis",
                 "elite_ratha_(ranged)_bengalis",
             ),
+            "Wei": ("xianbei_raider_wei", "xianbei_raider_wei"),
         },
     },
     "knight": {
@@ -197,6 +205,8 @@ UNIT_LINES = {
             ),
             "Romans": ("centurion_romans", "elite_centurion_romans"),
             "Georgians": ("monaspa_georgians", "elite_monaspa_georgians"),
+            "Jurchens": ("iron_pagoda_jurchens", "elite_iron_pagoda_jurchens"),
+            "Wei": ("tiger_cavalry_wei", "elite_tiger_cavalry_wei"),
         },
     },
     "light_cav": {
@@ -213,7 +223,9 @@ UNIT_LINES = {
         "building": "Stable",
         "castle_slug": "camel",
         "imperial_slug": "heavy_camel",
-        "unique_units": {},
+        "unique_units": {
+            "Khitans": ("siege_camel_khitans", "siege_camel_khitans"),
+        },
     },
     "steppe_lancer": {
         "name": "Steppe Lancer",
@@ -248,6 +260,7 @@ UNIT_LINES = {
         "unique_units": {
             "Portuguese": ("organ_gun_portuguese", "elite_organ_gun_portuguese"),
             "Bohemians": ("hussite_wagon_bohemians", "elite_hussite_wagon_bohemians"),
+            "Jurchens": (None, "grenadier_jurchens"),
         },
     },
     "scorpion": {
@@ -257,6 +270,7 @@ UNIT_LINES = {
         "imperial_slug": "heavy_scorpion",
         "unique_units": {
             "Khmer": ("ballista_elephant_khmer", "elite_ballista_elephant_khmer"),
+            "Shu": ("war_chariot_shu", "elite_war_chariot_shu"),
         },
     },
     "trebuchet": {
@@ -299,6 +313,8 @@ UNIT_LINES = {
             ),
             "Romans": ("centurion_romans", "elite_centurion_romans"),
             "Georgians": ("monaspa_georgians", "elite_monaspa_georgians"),
+            "Jurchens": ("iron_pagoda_jurchens", "elite_iron_pagoda_jurchens"),
+            "Wei": ("tiger_cavalry_wei", "elite_tiger_cavalry_wei"),
         },
     },
     "all_ranged": {
@@ -339,6 +355,12 @@ UNIT_LINES = {
                 "composite_bowman_armenians",
                 "elite_composite_bowman_armenians",
             ),
+            "Wu": ("fire_archer_wu", "elite_fire_archer_wu"),
+            "Shu": (
+                "white_feather_crossbowman_shu",
+                "elite_white_feather_crossbowman_shu",
+            ),
+            "Wei": ("xianbei_raider_wei", "xianbei_raider_wei"),
         },
     },
 }
@@ -622,6 +644,9 @@ def build_combat_dict(rc, row):
         "charge_recharge_time": special.get("charge_recharge_time", 0),
         "attack_bonus_nearby": int(special.get("attack_bonus_nearby", 0)),
         "nearby_bonus_count": int(special.get("nearby_bonus_count", 0)),
+        "damage_reflect_percent": special.get("damage_reflect_percent", 0),
+        "bonus_hp_nearby": int(special.get("bonus_hp_nearby", 0)),
+        "nearby_hp_bonus_count": int(special.get("nearby_hp_bonus_count", 0)),
         # Dismount on death (Konnik): from hardcoded config via special effects
         "dismount_hp": (
             int(special["dismount_hp"]) if "dismount_hp" in special else None
@@ -644,6 +669,30 @@ def build_combat_dict(rc, row):
         "dismount_movement_speed": special.get("dismount_movement_speed"),
         "dismount_attacks_json": special.get("dismount_attacks_json"),
         "dismount_armors_json": special.get("dismount_armors_json"),
+        # Transform on HP threshold (Jian Swordsman)
+        "transform_hp": int(special["transform_hp"])
+        if "transform_hp" in special
+        else None,
+        "transform_attack": int(special.get("transform_attack", 0))
+        if "transform_hp" in special
+        else None,
+        "transform_melee_armor": int(special.get("transform_melee_armor", 0))
+        if "transform_hp" in special
+        else None,
+        "transform_pierce_armor": int(special.get("transform_pierce_armor", 0))
+        if "transform_hp" in special
+        else None,
+        "transform_attack_speed": special.get("transform_attack_speed", 0)
+        if "transform_hp" in special
+        else None,
+        "transform_attack_delay": special.get("transform_attack_delay", 0)
+        if "transform_hp" in special
+        else None,
+        "transform_movement_speed": special.get("transform_movement_speed")
+        if "transform_hp" in special
+        else None,
+        "transform_attacks_json": special.get("transform_attacks_json"),
+        "transform_armors_json": special.get("transform_armors_json"),
     }
 
 

@@ -232,6 +232,31 @@ def build_combat_dict_from_ref(rc, row):
         "dismount_movement_speed": special.get("dismount_movement_speed"),
         "dismount_attacks_json": special.get("dismount_attacks_json"),
         "dismount_armors_json": special.get("dismount_armors_json"),
+        # Transform on HP threshold (Jian Swordsman)
+        # If transform_hp is present, unit has a transform form — default missing stats to 0
+        "transform_hp": int(special["transform_hp"])
+        if "transform_hp" in special
+        else None,
+        "transform_attack": int(special.get("transform_attack", 0))
+        if "transform_hp" in special
+        else None,
+        "transform_melee_armor": int(special.get("transform_melee_armor", 0))
+        if "transform_hp" in special
+        else None,
+        "transform_pierce_armor": int(special.get("transform_pierce_armor", 0))
+        if "transform_hp" in special
+        else None,
+        "transform_attack_speed": special.get("transform_attack_speed", 0)
+        if "transform_hp" in special
+        else None,
+        "transform_attack_delay": special.get("transform_attack_delay", 0)
+        if "transform_hp" in special
+        else None,
+        "transform_movement_speed": special.get("transform_movement_speed")
+        if "transform_hp" in special
+        else None,
+        "transform_attacks_json": special.get("transform_attacks_json"),
+        "transform_armors_json": special.get("transform_armors_json"),
     }
 
 
@@ -661,10 +686,10 @@ def generate_main_database():
                         ?, ?, ?,
                         ?,
                         ?, ?, ?,
-                        NULL, NULL, NULL,
-                        NULL, NULL,
-                        NULL, NULL,
-                        NULL, NULL,
+                        ?, ?, ?,
+                        ?, ?,
+                        ?, ?,
+                        ?, ?,
                         ?, ?, ?,
                         ?, ?,
                         ?, ?,
@@ -731,6 +756,16 @@ def generate_main_database():
                         combat["armor_strip_per_hit"],
                         combat["charge_attack_melee"],
                         combat["charge_recharge_time"],
+                        # Transform on HP threshold (Jian Swordsman)
+                        combat["transform_hp"],
+                        combat["transform_attack"],
+                        combat["transform_melee_armor"],
+                        combat["transform_pierce_armor"],
+                        combat["transform_attack_speed"],
+                        combat["transform_attack_delay"],
+                        combat["transform_movement_speed"],
+                        combat["transform_attacks_json"],
+                        combat["transform_armors_json"],
                         # Dismount on death
                         combat["dismount_hp"],
                         combat["dismount_attack"],

@@ -141,6 +141,9 @@ def prepare_combat_unit(row):
         "charge_recharge_time": row.get("charge_recharge_time", 0) or 0,
         "attack_bonus_nearby": row.get("attack_bonus_nearby", 0) or 0,
         "nearby_bonus_count": row.get("nearby_bonus_count", 0) or 0,
+        "damage_reflect_percent": row.get("damage_reflect_percent", 0) or 0,
+        "bonus_hp_nearby": row.get("bonus_hp_nearby", 0) or 0,
+        "nearby_hp_bonus_count": row.get("nearby_hp_bonus_count", 0) or 0,
         # Metadata
         "slug": row["slug"]
         if "slug" in (row.keys() if hasattr(row, "keys") else row)
@@ -485,6 +488,23 @@ def simulate_battle(
     # --- Per-unit state (plain Python lists) ---
     hp1 = [float(unit1["hp"])] * count1
     hp2 = [float(unit2["hp"])] * count2
+
+    # Bonus HP from nearby allies (Shu Coiled Serpent Array)
+    hp_nearby1 = unit1.get("bonus_hp_nearby", 0)
+    if hp_nearby1 > 0:
+        max_n1 = unit1.get("nearby_hp_bonus_count", 4)
+        eff1 = min(max_n1, count1 - 1)
+        hp_bonus1 = hp_nearby1 * eff1
+        for i in range(count1):
+            hp1[i] += hp_bonus1
+    hp_nearby2 = unit2.get("bonus_hp_nearby", 0)
+    if hp_nearby2 > 0:
+        max_n2 = unit2.get("nearby_hp_bonus_count", 4)
+        eff2 = min(max_n2, count2 - 1)
+        hp_bonus2 = hp_nearby2 * eff2
+        for i in range(count2):
+            hp2[i] += hp_bonus2
+
     cooldown1 = [0.0] * count1
     cooldown2 = [0.0] * count2
     bonus_atk1 = [0.0] * count1
@@ -643,6 +663,10 @@ def simulate_battle(
         current_pa1 = [unit1["pierce_armor"]] * count1
     else:
         current_ma1 = current_pa1 = current_ma2 = current_pa2 = None
+
+    # Damage reflection (Khitan Lamellar Armor): melee attackers take % damage back
+    reflect1 = unit1.get("damage_reflect_percent", 0) or 0
+    reflect2 = unit2.get("damage_reflect_percent", 0) or 0
 
     start_total_hp1 = float(unit1["hp"]) * count1
     start_total_hp2 = float(unit2["hp"]) * count2
@@ -1236,6 +1260,14 @@ def simulate_battle(
 
             t_hp[target_idx] -= damage
 
+            # Damage reflection (Khitan Lamellar Armor): melee attackers take % back
+            if not a_is_ranged:
+                t_reflect = reflect1 if target_team == 1 else reflect2
+                if t_reflect > 0:
+                    reflect_dmg = max(1, int(damage * t_reflect))
+                    a_hp = hp2 if target_team == 1 else hp1
+                    a_hp[attacker_idx] -= reflect_dmg
+
             # Armor stripping (Obuch): reduce target armor after hit
             if a_armor_strip > 0 and t_current_ma is not None:
                 t_current_ma[target_idx] = max(
@@ -1511,6 +1543,7 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                     "pass_through": cu["pass_through_percent"],
                     "min_range": cu["min_attack_range"],
                     "regen_per_tick": regen,
+                    "damage_reflect": cu.get("damage_reflect_percent", 0) or 0,
                 }
             )
 
@@ -1555,6 +1588,21 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
         return (0, 0, 0)
 
     count1, count2 = t1["total"], t2["total"]
+    hp1, hp2 = t1["hp"], t2["hp"]
+
+    # Bonus HP from nearby allies (Shu Coiled Serpent Array)
+    for team, count in [(t1, count1), (t2, count2)]:
+        for tmpl in team["templates"]:
+            hp_near = tmpl["cu"].get("bonus_hp_nearby", 0) or 0
+            if hp_near > 0:
+                max_n = tmpl["cu"].get("nearby_hp_bonus_count", 4) or 4
+                eff = min(max_n, count - 1)
+                bonus = hp_near * eff
+                for i in range(count):
+                    if team["type_idx"][i] == team["templates"].index(tmpl):
+                        team["hp"][i] += bonus
+                        team["max_hp"][i] += bonus
+
     EXTRA_PROJ_ACCURACY = 0.5
 
     # --- Pre-compute damage matrix ---
@@ -2109,6 +2157,21 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                     else t2["type_idx"][target_idx]
                 )
                 matrix = dmg_2v1
+
+            # Damage reflection (Khitan Lamellar Armor): melee attackers take % back
+            if not a_tmpl["is_ranged"]:
+                d_ti = (
+                    t1["type_idx"][target_idx]
+                    if target_team == 1
+                    else t2["type_idx"][target_idx]
+                )
+                d_tmpl = (
+                    t1["templates"][d_ti] if target_team == 1 else t2["templates"][d_ti]
+                )
+                if d_tmpl["damage_reflect"] > 0:
+                    reflect_dmg = max(1, int(damage * d_tmpl["damage_reflect"]))
+                    a_hp = hp1 if attacker_team == 1 else hp2
+                    a_hp[attacker_idx] -= reflect_dmg
 
             _, _, trample_dmg, trample_extra = matrix[(a_ti, d_ti_lookup)]
 

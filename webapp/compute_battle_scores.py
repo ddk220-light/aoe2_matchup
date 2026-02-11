@@ -260,7 +260,7 @@ UNIT_LINES = {
         "unique_units": {
             "Portuguese": ("organ_gun_portuguese", "elite_organ_gun_portuguese"),
             "Bohemians": ("hussite_wagon_bohemians", "elite_hussite_wagon_bohemians"),
-            "Jurchens": (None, "grenadier_jurchens"),
+            "Jurchens": ("grenadier_jurchens", "grenadier_jurchens"),
         },
     },
     "scorpion": {
@@ -787,8 +787,8 @@ def build_line_units(line_slug, age):
         if not uu_slug:
             continue
         rc.execute(
-            "SELECT * FROM ref_units WHERE unit_slug=? AND civ_name=?",
-            (uu_slug, civ_name),
+            "SELECT * FROM ref_units WHERE unit_slug=? AND civ_name=? AND age=?",
+            (uu_slug, civ_name, db_age),
         )
         row = rc.fetchone()
         if row:

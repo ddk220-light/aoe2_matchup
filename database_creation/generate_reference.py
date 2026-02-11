@@ -983,7 +983,7 @@ def generate_reference_database(analyzer):
                         unit_data,
                     )
 
-                # Imperial Age (elite version)
+                # Imperial Age (elite version, or same base unit with Imp techs)
                 elite_id = uu_config.get("elite_id")
                 if elite_id:
                     elite_data = analyzer.get_unit(elite_id)
@@ -1003,6 +1003,19 @@ def generate_reference_database(analyzer):
                             IMPERIAL_AGE,
                             elite_data,
                         )
+                elif unit_data:
+                    # No elite version — show base unit in Imperial with Imp techs
+                    process_unit_audited(
+                        civ_name,
+                        base_id,
+                        effective_class,
+                        uu_config["display_name"],
+                        f"{slug}_{civ_name.lower()}",
+                        "unique",
+                        "Imperial",
+                        IMPERIAL_AGE,
+                        unit_data,
+                    )
 
     conn.commit()
 

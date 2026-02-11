@@ -1472,7 +1472,7 @@ UNIT_LINES = {
         "unique_units": {
             "Portuguese": ("organ_gun_portuguese", "elite_organ_gun_portuguese"),
             "Bohemians": ("hussite_wagon_bohemians", "elite_hussite_wagon_bohemians"),
-            "Jurchens": (None, "grenadier_jurchens"),
+            "Jurchens": ("grenadier_jurchens", "grenadier_jurchens"),
         },
     },
     "scorpion": {
@@ -1682,12 +1682,15 @@ def api_ref_unit_line(line_slug):
 
     # Fetch unique units
     for civ_name, (castle_uu, imperial_uu) in line.get("unique_units", {}).items():
-        for uu_slug, age_key in [(castle_uu, "castle"), (imperial_uu, "imperial")]:
+        for uu_slug, age_key, db_age in [
+            (castle_uu, "castle", "Castle"),
+            (imperial_uu, "imperial", "Imperial"),
+        ]:
             if not uu_slug:
                 continue
             rc.execute(
-                f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND civ_name=?",
-                (uu_slug, civ_name),
+                f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND civ_name=? AND age=?",
+                (uu_slug, civ_name, db_age),
             )
             row = rc.fetchone()
             if row:

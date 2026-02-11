@@ -222,7 +222,6 @@ COMBAT_PROPERTIES = {
     "skirm": {"unit_category": "trash"},
     "elite_skirm": {"unit_category": "trash"},
     "imp_elite_skirm": {"unit_category": "trash"},
-    "imperial_skirmisher": {"unit_category": "trash"},
     "spearman": {"unit_category": "trash"},
     "pikeman": {"unit_category": "trash"},
     "halberdier": {"unit_category": "trash"},
@@ -328,7 +327,6 @@ PAIRED_UNITS = {
 ALLY_UNITS = {
     "Italians": ["condottiero"],
     "Berbers": ["genitour", "elite_genitour"],
-    "Vietnamese": ["imperial_skirmisher"],
 }
 
 # =============================================================================
@@ -669,17 +667,13 @@ IMPERIAL_UNITS = {
         "upgrades": [
             (98, 6, "Elite Skirmisher"),
         ],
-    },
-    "imperial_skirmisher": {
-        "base_id": 7,  # Skirmisher
-        "display_name": "Imperial Skirmisher",
-        "unit_class": 0,
-        "availability_tech": None,
-        "upgrades": [
-            (98, 6, "Elite Skirmisher"),
-            (655, 1155, "Imperial Skirmisher"),
-        ],
-        "civ_only": ["Vietnamese"],
+        # Imperial Skirmisher replaces Elite Skirmisher for Vietnamese (+ allies)
+        "civ_upgrades": {
+            "Vietnamese": [
+                (98, 6, "Elite Skirmisher"),
+                (655, 1155, "Imperial Skirmisher"),
+            ],
+        },
     },
     "heavy_cav_archer": {
         "base_id": 39,

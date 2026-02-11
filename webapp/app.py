@@ -1435,9 +1435,7 @@ UNIT_LINES = {
         "building": "Stable",
         "castle_slug": "camel",
         "imperial_slug": "heavy_camel",
-        "unique_units": {
-            "Khitans": ("siege_camel_khitans", "siege_camel_khitans"),
-        },
+        "unique_units": {},
     },
     "steppe_lancer": {
         "name": "Steppe Lancer",
@@ -1483,6 +1481,7 @@ UNIT_LINES = {
         "unique_units": {
             "Khmer": ("ballista_elephant_khmer", "elite_ballista_elephant_khmer"),
             "Shu": ("war_chariot_shu", "elite_war_chariot_shu"),
+            "Khitans": ("mounted_trebuchet_khitans", "mounted_trebuchet_khitans"),
         },
     },
     "trebuchet": {

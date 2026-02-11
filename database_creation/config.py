@@ -263,7 +263,7 @@ COMBAT_PROPERTIES = {
     "grenadier": {"unit_category": "siege"},
     "war_chariot": {"unit_category": "siege"},
     "elite_war_chariot": {"unit_category": "siege"},
-    "siege_camel": {"unit_category": "cavalry"},
+    "mounted_trebuchet": {"unit_category": "siege"},
     "jian_swordsman": {"unit_category": "infantry"},
 }
 
@@ -446,7 +446,7 @@ CIV_COMBAT_PROPERTIES = {
     ("Khitans", "heavy_camel"): {"hp_regen": 20},
     ("Khitans", "fire_lancer"): {"hp_regen": 20},
     ("Khitans", "elite_fire_lancer"): {"hp_regen": 20},
-    ("Khitans", "siege_camel"): {"hp_regen": 20},
+    ("Khitans", "mounted_trebuchet"): {"hp_regen": 20},
     # Shu Coiled Serpent Array (Castle UT) — spear-line + White Feather gain HP near each other
     ("Shu", "halberdier"): {"bonus_hp_nearby": 5, "nearby_hp_bonus_count": 4},
     ("Shu", "pikeman"): {"bonus_hp_nearby": 5, "nearby_hp_bonus_count": 4},
@@ -1588,7 +1588,7 @@ UNIQUE_UNITS = {
         },
         {
             "base_id": 1923,
-            "display_name": "Siege Camel",
+            "display_name": "Mounted Trebuchet",
             "unit_class": 12,
             "availability_tech": 1005,
             "elite_tech": None,

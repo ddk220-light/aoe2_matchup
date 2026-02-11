@@ -303,7 +303,7 @@ UNIT_NAMES = {
     # ===== Unique Units - Khitans =====
     1920: "Liao Dao",
     1922: "Elite Liao Dao",
-    1923: "Siege Camel",
+    1923: "Mounted Trebuchet",
     # ===== Unique Units - Shu =====
     1959: "White Feather Crossbowman",
     1961: "Elite White Feather Crossbowman",

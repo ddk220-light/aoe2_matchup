@@ -1299,8 +1299,8 @@ UNIT_LINES = {
     "elephant": {
         "name": "Elephant Line",
         "building": "Stable",
-        "castle_slug": None,
-        "imperial_slug": None,
+        "castle_slug": "elephant",
+        "imperial_slug": "elite_elephant",
         "unique_units": {
             "Persians": ("war_elephant_persians", "elite_war_elephant_persians"),
         },
@@ -1349,12 +1349,13 @@ UNIT_LINES = {
         "building": "Stable",
         "castle_slug": None,
         "imperial_slug": None,
-        "castle_slugs": ["knight", "camel", "steppe_lancer"],
-        "imperial_slugs": ["paladin", "heavy_camel", "elite_steppe"],
+        "castle_slugs": ["knight", "camel", "steppe_lancer", "elephant"],
+        "imperial_slugs": ["paladin", "heavy_camel", "elite_steppe", "elite_elephant"],
         "unique_units": {
             "Byzantines": ("cataphract_byzantines", "elite_cataphract_byzantines"),
             "Huns": ("tarkan_huns", "elite_tarkan_huns"),
             "Slavs": ("boyar_slavs", "elite_boyar_slavs"),
+            "Persians": ("war_elephant_persians", "elite_war_elephant_persians"),
         },
     },
     "all_ranged": {

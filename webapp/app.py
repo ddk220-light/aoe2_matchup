@@ -1100,6 +1100,7 @@ def _build_combat_dict_from_ref(rc, row):
         "hp_regen": special.get("hp_regen", 0),
         "pass_through_percent": special.get("pass_through_percent", 0),
         "hp_transform_threshold": special.get("hp_transform_threshold", 0),
+        "pop_space": special.get("pop_space", 1.0),
         # No dismount/transform in original 13 ref DB
         "dismount_hp": None,
         "dismount_attack": None,

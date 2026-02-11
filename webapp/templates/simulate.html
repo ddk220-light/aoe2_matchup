@@ -675,7 +675,7 @@
                             id="team1Count"
                             value="30"
                             min="1"
-                            max="60"
+                            max="200"
                         />
                     </div>
                     <div>
@@ -685,7 +685,7 @@
                             id="team2Count"
                             value="30"
                             min="1"
-                            max="60"
+                            max="200"
                         />
                     </div>
                 </div>
@@ -3099,13 +3099,13 @@
                             budget2 = Math.max(budget2, unitCost2);
                         }
 
-                        team1Count = Math.min(
-                            60,
-                            Math.max(1, Math.floor(budget1 / unitCost1)),
+                        team1Count = Math.max(
+                            1,
+                            Math.floor(budget1 / unitCost1),
                         );
-                        team2Count = Math.min(
-                            60,
-                            Math.max(1, Math.floor(budget2 / unitCost2)),
+                        team2Count = Math.max(
+                            1,
+                            Math.floor(budget2 / unitCost2),
                         );
                     } else {
                         team1Count =

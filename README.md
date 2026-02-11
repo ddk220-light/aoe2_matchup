@@ -1,10 +1,13 @@
 # AoE2 Unit Analyzer
 
-Extract and analyze unit data from Age of Empires II: Definitive Edition game files.
+Extract and analyze unit data from Age of Empires II: Definitive Edition game files, with a full-featured web application for browsing, comparing, and simulating unit battles.
 
 ## Features
 
 - **Data Extraction**: Parse the game's `.dat` file to extract unit stats, technologies, and civilizations
+- **Web Application**: Flask-based webapp with unit browser, civ browser, battle simulator, matchup advisor, and unit line rankings
+- **50 Civilizations**: Full coverage including Three Kingdoms DLC (Jurchens, Khitans, Shu, Wei, Wu)
+- **Battle Simulation**: Tick-based combat simulator with 20 mechanics (trample, charge, bleed, dodge, etc.)
 - **Unit Explorer**: Interactive CLI tool to search, compare, and analyze units
 - **JSON Export**: All data exported to easily accessible JSON files
 - **Comprehensive Coverage**: 1,182 units including all DLC content (Three Kingdoms, Battle for Greece, etc.)
@@ -63,7 +66,35 @@ python explore.py compare 38 93
 python explore.py counters 38
 ```
 
-## Usage Examples
+## Web Application
+
+The main product is a Flask web application with several features:
+
+- **Unit Browser** (`/units`) — Compare any unit type across all 50 civilizations
+- **Civilization Browser** (`/civ`) — Browse all units available to each civ
+- **Battle Simulator** (`/simulate`) — Interactive 2D canvas battle visualization
+- **Matchup Advisor** (`/matchup-advisor`) — AI-powered civ matchup analysis with army composition suggestions
+- **Unit Line Rankings** — Pre-computed round-robin battle scores for every unit line
+
+### Running the Web App
+
+```bash
+# Generate databases (requires dat file)
+source venv/bin/activate
+python3 -m database_creation.run
+
+# Pre-compute battle scores
+cd webapp && python3 compute_battle_scores.py
+
+# Start the server
+PORT=5002 python3 webapp/app.py
+```
+
+Visit `http://localhost:5002` in your browser.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for full API reference and feature documentation.
+
+## CLI Usage Examples
 
 ### Search for units
 ```bash
@@ -152,21 +183,20 @@ Knight is countered by:
 }
 ```
 
-## Included Content
+## Included Civilizations (50)
 
-- **Base Game**: All original units and civilizations
-- **The Conquerors**: Spanish, Aztecs, Mayans, Huns, Koreans
-- **The Forgotten**: Italians, Indians, Incas, Magyars, Slavs
-- **African Kingdoms**: Portuguese, Ethiopians, Malians, Berbers
-- **Rise of the Rajas**: Khmer, Malay, Burmese, Vietnamese
-- **Last Khans**: Bulgarians, Tatars, Cumans, Lithuanians
+- **Base Game**: Britons, Byzantines, Celts, Chinese, Franks, Goths, Japanese, Mongols, Persians, Saracens, Teutons, Turks, Vikings
+- **The Conquerors**: Aztecs, Huns, Koreans, Mayans, Spanish
+- **The Forgotten**: Incas, Italians, Magyars, Slavs
+- **African Kingdoms**: Berbers, Ethiopians, Malians, Portuguese
+- **Rise of the Rajas**: Burmese, Khmer, Malay, Vietnamese
+- **Last Khans**: Bulgarians, Cumans, Lithuanians, Tatars
 - **Lords of the West**: Burgundians, Sicilians
-- **Dawn of the Dukes**: Poles, Bohemians
-- **Dynasties of India**: Dravidians, Bengalis, Gurjaras
-- **Return of Rome**: Romans (ranked mode units)
+- **Dawn of the Dukes**: Bohemians, Poles
+- **Dynasties of India**: Bengalis, Dravidians, Gurjaras, Hindustanis
+- **Return of Rome**: Romans
 - **The Mountain Royals**: Armenians, Georgians
-- **Chronicles: Three Kingdoms**: Fire Archer, Tiger Cavalry, Jian Swordsman, etc.
-- **Chronicles: Battle for Greece**: Hoplite, Strategos, Hippeus, Alexander, etc.
+- **Chronicles: Three Kingdoms**: Jurchens, Khitans, Shu, Wei, Wu
 
 ## Requirements
 
@@ -179,24 +209,53 @@ Knight is countered by:
 ```
 aoe2-unit-analyzer/
 ├── README.md
+├── DESIGN.md                    # Database pipeline design doc
+├── ARCHITECTURE.md              # System architecture & product features
+├── ADDING_CIVS.md               # Guide for adding new civilizations
 ├── requirements.txt
-├── extract.py          # Main extraction script
-├── explore.py          # Interactive data explorer
-├── output/             # Generated JSON files
-│   ├── units.json
-│   ├── technologies.json
-│   ├── civilizations.json
-│   └── armor_classes.json
-└── empires2_x2_p1.dat  # Game data (not included, copy from game)
+├── extract.py                   # Standalone extraction script
+├── explore.py                   # Interactive data explorer (CLI)
+│
+├── database_creation/           # Data pipeline package
+│   ├── run.py                   # Entry point (extract + generate)
+│   ├── config.py                # Unit definitions, combat properties
+│   ├── extract_units.py         # dat → units.json
+│   ├── extract_techs.py         # dat → technologies.json, tech_ages.json
+│   ├── extract_effects.py       # dat → effects.json, civ_tech_trees.json
+│   ├── unit_analyzer.py         # Stat computation engine
+│   ├── combat_properties.py     # Combat property extraction + layering
+│   ├── generate_reference.py    # Builds reference DB (5 tables)
+│   └── generate_main_db.py      # Builds main DB (flat unit_stats)
+│
+├── webapp/                      # Flask web application
+│   ├── app.py                   # Flask app + API endpoints
+│   ├── simulation.py            # Tick-based battle simulator
+│   ├── compute_battle_scores.py # Pre-compute round-robin rankings
+│   ├── aoe2_units.db            # Main database (gitignored)
+│   ├── aoe2_reference.db        # Reference database (gitignored)
+│   ├── battle_scores.json       # Pre-computed rankings (gitignored)
+│   ├── Procfile                 # Railway deployment
+│   └── templates/               # HTML templates
+│       ├── home.html            # Landing page
+│       ├── index.html           # Unit browser
+│       ├── civ_select.html      # Civilization grid
+│       ├── civ_detail.html      # Civ detail page
+│       ├── simulate.html        # Battle simulator (2D canvas)
+│       ├── matchup_advisor.html # Matchup advisor
+│       └── analysis.html        # Audit/verification tool
+│
+└── output/                      # Standalone extraction output
+    ├── units.json
+    ├── technologies.json
+    ├── civilizations.json
+    └── armor_classes.json
 ```
 
-## Future Plans
+## Documentation
 
-See [aoe2-data-project-plan.md](aoe2-data-project-plan.md) for the full roadmap:
-- REST API (Cloudflare Workers)
-- MCP Server for Claude integration
-- Unit combat simulation (Modal)
-- Army composition optimizer
+- [DESIGN.md](DESIGN.md) — Database pipeline engineering design
+- [ARCHITECTURE.md](ARCHITECTURE.md) — System architecture, product features, API reference
+- [ADDING_CIVS.md](ADDING_CIVS.md) — Guide for adding new civilizations and combat mechanics
 
 ## License
 

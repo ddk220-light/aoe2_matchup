@@ -84,7 +84,7 @@ See [DESIGN.md](DESIGN.md) for full schema documentation.
 | `webapp/matchup_votes.jsonl` | User combo votes (append-only log) | Matchup advisor vote endpoint |
 
 `battle_scores.json` is loaded into memory at Flask startup. It contains:
-- **Round-robin scores**: For each unit line × age, every civ's unit is simulated against every other civ's unit (30v30 + 3000-resource). Results: score_30v30, score_3k, score_5k.
+- **Round-robin scores**: For each unit line × age, every civ's unit (across 50 civs) is simulated against every other civ's unit (30v30 + 3000-resource). Results: score_30v30, score_3k, score_5k.
 - **Benchmark scores**: Each unit simulated against reference opponents (Champion, Paladin, Arbalester).
 
 ---
@@ -109,7 +109,7 @@ Browse unit types across all civilizations. Select an age (Feudal/Castle/Imperia
 
 **Templates:** `civ_select.html`, `civ_detail.html` | **API:** `/api/civ/<name>`
 
-Grid of 13 civilization cards. Click a civ to see all its available units organized by age, with stats and civ bonuses.
+Grid of 50 civilization cards. Click a civ to see all its available units organized by age, with stats and civ bonuses.
 
 **Data flow:**
 1. `/civ` shows grid of all civs
@@ -249,7 +249,7 @@ The backend simulation is a tick-based damage calculator with no positions or mo
 4. Winner = side with survivors (or draw if timeout)
 ```
 
-### 18 Combat Mechanics (all data-driven)
+### 20 Combat Mechanics (all data-driven)
 
 | Mechanic | Field | Example |
 |----------|-------|---------|
@@ -260,17 +260,19 @@ The backend simulation is a tick-based damage calculator with no positions or mo
 | Ignore pierce armor | `ignores_pierce_armor` | Leitis |
 | Extra projectiles | `extra_projectiles`, `extra_projectile_attacks_json` | Chu Ko Nu (2-4 extra) |
 | Charge projectiles | `charge_projectile_count/speed/attacks_json` | Fire Lancer |
-| First-attack extra | `first_attack_extra_projectiles` | (reserved) |
-| Splash on hit | `splash_on_hit_radius` | (reserved) |
+| First-attack extra | `first_attack_extra_projectiles` | Xianbei Raider (burst) |
+| Splash on hit | `splash_on_hit_radius` | Grenadier |
 | Dodge shield | `dodge_shield_max`, `dodge_shield_recharge` | Shrivamsha Rider |
-| Bleed | `bleed_dps`, `bleed_duration` | (reserved) |
-| Block first melee | `block_first_melee` | (reserved) |
-| Attack bonus per kill | `attack_bonus_per_kill` | (reserved) |
-| HP regeneration | `hp_regen` | Berserk (40 HP/min) |
-| HP transform | `hp_transform_threshold` | (reserved) |
+| Bleed | `bleed_dps`, `bleed_duration` | Liao Dao |
+| Block first melee | `block_first_melee` | Iron Pagoda |
+| Attack bonus per kill | `attack_bonus_per_kill` | Tiger Cavalry |
+| HP regeneration | `hp_regen` | Berserk (40 HP/min), Ordo Cavalry |
+| HP transform | `hp_transform_threshold` | Jian Swordsman |
 | Dismount on death | `dismount_*` fields | Konnik |
 | Bonus damage reduction | `bonus_damage_reduction` | Sicilian units |
 | Accuracy | `accuracy` | Cavalry Archer (50-100%) |
+| Damage reflection | `damage_reflect_percent` | Khitan Lamellar Armor (25%) |
+| Bonus HP nearby | `bonus_hp_nearby`, `nearby_hp_bonus_count` | Shu Coiled Serpent Array |
 
 ### Performance
 
@@ -314,6 +316,9 @@ The backend simulation is a tick-based damage calculator with no positions or mo
 | Ignores armor (Leitis) | `UNIQUE_COMBAT_PROPERTIES` | No dat file source |
 | Wootz Steel (Dravidians) | `CIV_COMBAT_PROPERTIES` | Attribute 63 is multi-purpose |
 | Logistica trample (Cataphract) | `CIV_COMBAT_PROPERTIES` | blast_damage=-5.0 in dat (no trample) |
+| Lamellar Armor (Khitans) | `CIV_COMBAT_PROPERTIES` | damage_reflect_percent for infantry/skirm |
+| Coiled Serpent Array (Shu) | `CIV_COMBAT_PROPERTIES` | bonus_hp_nearby for spear-line + White Feather |
+| Comitatenses (Romans) | `CIV_COMBAT_PROPERTIES` | charge_attack_melee for Legionary |
 | Siege projectile flag | `COMBAT_PROPERTIES` | Supplemental to extracted data |
 | Unit line definitions | `CASTLE_UNITS`, `IMPERIAL_UNITS`, `UNIQUE_UNITS` | Game structure not in dat |
 
@@ -395,7 +400,7 @@ The backend simulation is a tick-based damage calculator with no positions or mo
 
 1. **Two databases**: Main DB for fast flat queries (unit browser, simulator), Reference DB for audit trail (tech chains, stat progression). Separation keeps the main DB simple while reference DB supports deep inspection.
 
-2. **Pre-computed battle scores**: The rankings page would be too slow to compute on the fly (~1.3ms × 13 civs × 13 civs × 16 unit lines = minutes). `compute_battle_scores.py` runs once after DB regeneration and saves results to JSON.
+2. **Pre-computed battle scores**: The rankings page would be too slow to compute on the fly (~1.3ms × 50 civs × 50 civs × 16 unit lines). `compute_battle_scores.py` runs once after DB regeneration and saves results to JSON.
 
 3. **Backend simulation has no positions**: Positions would make simulations 100x slower and add complexity without improving accuracy for ranking purposes. The frontend simulation has full 2D positions for visual appeal.
 

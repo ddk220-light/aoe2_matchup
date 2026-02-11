@@ -149,8 +149,78 @@ Common civ-conditional properties:
 | `trample_flat_damage` + `trample_radius` | Logistica (Byzantines): 5 dmg, 0.5 radius |
 | `ignores_melee_armor` | Wootz Steel (Dravidians) |
 | `bonus_damage_reduction` | Paiks (Bengalis): 25% |
+| `damage_reflect_percent` | Lamellar Armor (Khitans): 25% melee reflect |
+| `bonus_hp_nearby` + `nearby_hp_bonus_count` | Coiled Serpent Array (Shu): +5 HP per nearby, max 4 |
+| `hp_regen` | Ordo Cavalry (Khitans): 20 HP/min for cavalry |
+| `charge_attack_melee` + `charge_recharge_time` | Comitatenses (Romans): 5 charge damage |
 
-### 5. Add unit line config for rankings (if applicable)
+### 5. Handle non-elite unique units
+
+Some unique units have no elite upgrade (e.g., Warrior Priest, Jian Swordsman, Grenadier, Xianbei Raider, Mounted Trebuchet). Set `elite_id` and `elite_tech` to `None`:
+
+```python
+"Jurchens": [
+    {
+        "base_id": 1908,
+        "display_name": "Iron Pagoda",
+        "unit_class": 12,
+        "availability_tech": 1006,
+        "elite_tech": 1007,
+        "elite_id": 1910,
+        "elite_name": "Elite Iron Pagoda",
+    },
+    {
+        "base_id": 1911,
+        "display_name": "Grenadier",
+        "unit_class": 44,              # Gunpowder
+        "availability_tech": 1008,
+        "elite_tech": None,            # No elite upgrade
+        "elite_id": None,
+    },
+],
+```
+
+The pipeline will create both Castle and Imperial Age entries for these units. The Imperial entry uses the same base unit with Imperial age techs applied (Blacksmith upgrades, unique techs, etc.).
+
+In the `UNIT_LINES` config, use the same slug for both ages:
+```python
+"unique_units": {
+    "Jurchens": ("grenadier_jurchens", "grenadier_jurchens"),  # Same slug both ages
+}
+```
+
+### 6. Handle unique building placement
+
+By default, unique units are shown under the Castle in the frontend. If a unique unit is trained in a different building, add it to the `UNIQUE_BUILDING` mapping in both `simulate.html` and `civ_detail.html`:
+
+```javascript
+const UNIQUE_BUILDING = {
+    "Jian Swordsman": "Barracks",
+    "Xianbei Raider": "Archery Range",
+    "Grenadier": "Archery Range",
+    "Warrior Priest": "Barracks",
+    "Shrivamsha Rider": "Stable",
+    "Elite Shrivamsha Rider": "Stable",
+    "Mounted Trebuchet": "Siege Workshop",
+};
+```
+
+### 7. Add unit icons to templates
+
+Unit icons must be added to `NAME_TO_ICON` in **4 template files**:
+- `webapp/templates/index.html`
+- `webapp/templates/simulate.html`
+- `webapp/templates/civ_detail.html`
+- `webapp/templates/matchup_advisor.html`
+
+```javascript
+"Iron Pagoda": 1908,
+"Elite Iron Pagoda": 1910,
+```
+
+The icon ID maps to the unit's game ID. Icons are loaded from two CDN sources (primary GitHub, fallback aoe2techtree.net).
+
+### 8. Add unit line config for rankings (if applicable)
 
 If the civ has a unique unit that should appear in unit line rankings:
 
@@ -173,7 +243,7 @@ UNIT_LINES = {
 
 Also update the matching config in `webapp/compute_battle_scores.py` (it duplicates `UNIT_LINES`).
 
-### 6. Regenerate databases
+### 9. Regenerate databases
 
 ```bash
 # Full pipeline: extract from dat + generate both databases
@@ -184,7 +254,7 @@ python3 -m database_creation.generate_reference
 python3 generate_database.py
 ```
 
-### 7. Recompute battle scores
+### 10. Recompute battle scores
 
 ```bash
 cd webapp && python3 compute_battle_scores.py
@@ -192,7 +262,7 @@ cd webapp && python3 compute_battle_scores.py
 
 This runs round-robin simulations for all unit lines and saves results to `battle_scores.json`. Takes a few minutes.
 
-### 8. Verify the new civ
+### 11. Verify the new civ
 
 1. Start the server: `PORT=5002 python3 webapp/app.py`
 2. Visit `/analysis` and select the new civ
@@ -351,7 +421,7 @@ When a new stat or mechanic is added, these features may need updates:
 
 ## Common Pitfalls
 
-1. **Scrambled unit names**: Newer units in the dat file have incorrect `name` fields. Always use `internal_name` or numeric `id` for identification. The `display_name` in config overrides the dat name.
+1. **Scrambled unit names**: Newer units in the dat file have incorrect `name` fields (e.g., "FLNCER" for Fire Lancer, "SIEGECAMEL" for Mounted Trebuchet). Always use `internal_name` or numeric `id` for identification. The `display_name` in config overrides the dat name.
 
 2. **Unit slugs for unique units**: In the database, unique unit slugs include the civ suffix (e.g., `longbowman_britons`). In `UNIQUE_COMBAT_PROPERTIES`, keys use the base name only (e.g., `longbowman`). In `CIV_COMBAT_PROPERTIES`, keys use `(civ_name, base_name)`.
 
@@ -363,6 +433,16 @@ When a new stat or mechanic is added, these features may need updates:
 
 6. **UNIT_LINES duplication**: `webapp/app.py` and `webapp/compute_battle_scores.py` both define `UNIT_LINES`. Keep them in sync when adding unit lines.
 
-7. **Port 5000**: macOS uses port 5000 for AirPlay Receiver. Use `PORT=5002 python3 webapp/app.py` for local testing.
+7. **NAME_TO_ICON duplication**: Icon mappings are duplicated across 4 templates (`index.html`, `simulate.html`, `civ_detail.html`, `matchup_advisor.html`). Update all 4 when adding new units.
 
-8. **Pair cache keys**: The matchup advisor caches simulation results by Python `id()` of unit dicts, not by slug. This correctly handles same-slug units from different civs.
+8. **Non-elite unique units need age-filtered queries**: When the same slug exists in both Castle and Imperial ages (non-elite unique units), queries must include `AND age=?` to avoid returning Castle data for Imperial lookups. Both `app.py` and `compute_battle_scores.py` filter by age.
+
+9. **Civ upgrade replacements (civ_upgrades)**: When a standard unit is replaced for a civ (e.g., Persians' Savar, Romans' Legionary), the slug stays the same in the database (e.g., `champion`) but `unit_name` changes. The replacement unit must exist in `extracted_data/units.json` — add it to `UNIT_NAMES` in `extract_units.py` if missing.
+
+10. **Misleading internal names**: Unit 1923 has internal name SIEGECAMEL but is actually the Mounted Trebuchet (ranged siege, range 10, Siege Workshop). Always verify unit stats before trusting the name.
+
+11. **Port 5000**: macOS uses port 5000 for AirPlay Receiver. Use `PORT=5002 python3 webapp/app.py` for local testing.
+
+12. **Pair cache keys**: The matchup advisor caches simulation results by Python `id()` of unit dicts, not by slug. This correctly handles same-slug units from different civs.
+
+13. **Three Kingdoms civ tech trees**: 3K civs use `disabled_techs` arrays in `civ_tech_trees.json` (same as other civs). They are NOT "empty" trees — the pipeline handles them correctly.

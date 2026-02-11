@@ -14,7 +14,7 @@ empires2_x2_p1.dat  ──►  extracted_data/*.json  ──►  webapp/aoe2_ref
 
 **Single command:** `python3 -m database_creation.run`
 
-**Scope:** 13 original civilizations (Britons through Vikings), Castle and Imperial age units, including unique units. 328 total unit entries.
+**Scope:** 50 civilizations (including Three Kingdoms DLC: Jurchens, Khitans, Shu, Wei, Wu), Castle and Imperial age units, including unique units. 1247 total unit entries.
 
 **Related documents:**
 - [ARCHITECTURE.md](ARCHITECTURE.md) — System diagram, product features, API reference
@@ -135,8 +135,8 @@ generate_reference.py (orchestrates per-civ, per-unit processing → SQLite)
 
 ### config.py — Unit Definitions
 
-**`ORIGINAL_13_CIVS`**: The 13 civs currently covered:
-Britons, Byzantines, Celts, Chinese, Franks, Goths, Japanese, Mongols, Persians, Saracens, Teutons, Turks, Vikings.
+**`ORIGINAL_13_CIVS`**: The 50 civs currently covered (name is historical — originally 13, now expanded):
+Armenians, Aztecs, Bengalis, Berbers, Bohemians, Britons, Bulgarians, Burgundians, Burmese, Byzantines, Celts, Chinese, Cumans, Dravidians, Ethiopians, Franks, Georgians, Goths, Gurjaras, Hindustanis, Huns, Incas, Italians, Japanese, Jurchens, Khitans, Khmer, Koreans, Lithuanians, Magyars, Malay, Malians, Mayans, Mongols, Persians, Poles, Portuguese, Romans, Saracens, Shu, Sicilians, Slavs, Spanish, Tatars, Teutons, Turks, Vietnamese, Vikings, Wei, Wu.
 
 **`CASTLE_UNITS`** and **`IMPERIAL_UNITS`**: Dicts keyed by slug (e.g., `"swordsmen"`, `"arbalester"`, `"cavalier"`). Each entry defines:
 ```python
@@ -260,7 +260,7 @@ It then calls `print_reference_display()` to output a human-readable summary.
 
 ## Database Schema
 
-### `ref_units` (326 rows)
+### `ref_units` (~1247 rows)
 The main table. One row per (civ, unit, age) combination.
 
 | Column | Type | Description |
@@ -310,7 +310,7 @@ Snapshot of unit stats after each tech is applied, in order. Step 0 is always "B
 | `hp`, `attack`, `melee_armor`, ... | REAL | Full stat snapshot after this step |
 | `attacks_json`, `armors_json` | TEXT | Full attack/armor class breakdown as JSON |
 
-### `ref_special_effects` (47 rows)
+### `ref_special_effects`
 Special combat properties that don't fit in standard stat columns.
 
 | Column | Type | Description |
@@ -320,7 +320,7 @@ Special combat properties that don't fit in standard stat columns.
 | `property_value` | TEXT | Value as string |
 | `source` | TEXT | "extracted_data", "CIV_COMBAT_PROPERTIES", or "UNIQUE_COMBAT_PROPERTIES" |
 
-### `ref_projectiles` (327 rows)
+### `ref_projectiles`
 Projectile data for ranged/siege units.
 
 | Column | Type | Description |
@@ -534,3 +534,11 @@ python3 -m database_creation.generate_reference
 - **`blast_damage` interpretation**: Fractional values (0.2–0.5) = trample percent; 1.0 = full siege area damage; -5.0 = standard unit (no trample).
 
 - **`hp_regen`**: Stored as `rear_attack_modifier` on the creatable object in genieutils, NOT `resource_decay` (which is corpse decay time = 25.0 for all combat units).
+
+- **Non-elite unique units**: Units like Warrior Priest, Jian Swordsman, Grenadier, Xianbei Raider, and Mounted Trebuchet have no elite upgrade (`elite_id=None`). The pipeline creates both Castle and Imperial Age entries using the same base unit with Imperial techs applied.
+
+- **Civ upgrade replacements**: Some standard units are replaced for specific civs via `civ_upgrades` (e.g., Persians get Savar instead of Paladin, Romans get Legionary instead of Champion). The slug stays the same (e.g., `champion`) but `unit_name` changes.
+
+- **Mounted Trebuchet (Khitans)**: Internal name is SIEGECAMEL (unit 1923), but it's actually a ranged siege unit (range 10, trained at Siege Workshop). Classified as siege, placed in scorpion line.
+
+- **Three Kingdoms unit building placement**: Some 3K unique units are trained in non-Castle buildings. The frontend `UNIQUE_BUILDING` mapping overrides the default Castle assignment: Jian Swordsman → Barracks, Xianbei Raider → Archery Range, Grenadier → Archery Range, Mounted Trebuchet → Siege Workshop.

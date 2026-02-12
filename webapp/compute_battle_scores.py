@@ -1069,6 +1069,9 @@ def compute_infantry_role_scores():
     # Compute anti-cav ranking scores (uses _combat_unit refs)
     compute_anti_cav_scores(all_scores, sk_to_line)
 
+    # Compute raiding ranking scores (uses _combat_unit refs)
+    compute_raiding_scores(all_scores, sk_to_line)
+
     # Clean up temp combat unit refs
     for s in all_scores.values():
         s.pop("_combat_unit", None)
@@ -1110,6 +1113,13 @@ INFANTRY_ROLE_SCORE_TYPES = [
     "ac_vs_elephant",
     "ac_vs_halb",
     "ac_vs_arb",
+    # Raiding ranking scores
+    "raid_speed",
+    "raid_vill_kill",
+    "raid_building",
+    "raiding_value",
+    "raid_vs_tc_dps",
+    "raid_vs_castle_dps",
 ]
 
 
@@ -1182,6 +1192,108 @@ def compute_anti_cav_scores(all_scores, sk_to_line):
     for sk, scores in all_scores.items():
         scores["anti_cav_value"] = round(
             0.90 * scores["anti_cav_total"] + 0.10 * scores["frontline"],
+            1,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Raiding ranking
+# ---------------------------------------------------------------------------
+
+# Imperial Age building stats (hardcoded)
+BUILDING_TARGETS = {
+    "tc": {"name": "Town Center", "hp": 2400, "melee_armor": 3, "pierce_armor": 9},
+    "castle": {"name": "Castle", "hp": 4800, "melee_armor": 8, "pierce_armor": 11},
+}
+
+
+def compute_raiding_scores(all_scores, sk_to_line):
+    """Compute raiding ranking scores for all infantry units (in-place).
+
+    Adds raid_speed, raid_vill_kill, raid_building, raiding_value and raw sub-scores.
+    Uses _combat_unit refs from all_scores.
+    """
+    # Load Jurchen Man-at-Arms as villager proxy
+    vill_proxy = _load_benchmark_unit("Jurchens", "swordsmen", "Castle")
+    if vill_proxy is None:
+        print(
+            "  WARNING: Jurchen swordsmen (villager proxy) not found, skipping raiding scores"
+        )
+        return
+
+    # 1. Movement speed
+    for sk, scores in all_scores.items():
+        cu = scores["_combat_unit"]
+        scores["raid_speed"] = cu["movement_speed"]
+
+    # 2. Villager killing speed (30v30 vs Jurchen MaA, fewer ticks = better)
+    for sk, scores in all_scores.items():
+        cu = scores["_combat_unit"]
+        winner, _, _, hp1, hp2, ticks = simulate_battle(
+            cu,
+            vill_proxy,
+            0,
+            fixed_count=30,
+            return_ticks=True,
+        )
+        # Lower ticks = faster kill = better score.
+        # Store raw ticks; we'll invert during normalization.
+        scores["raid_vill_kill_ticks"] = ticks
+
+    # 3. Anti-building DPS calculation
+    # cu["attacks"] is {int_class: value} after prepare_combat_unit()
+    for sk, scores in all_scores.items():
+        cu = scores["_combat_unit"]
+        attacks = cu.get("attacks", {})
+        base_melee = attacks.get(4, 0)  # class 4 = melee
+        bonus_vs_buildings = attacks.get(21, 0)  # class 21 = Standard Buildings
+        reload_time = 1.0 / cu["attack_speed"] if cu["attack_speed"] > 0 else 2.0
+
+        for bkey, bstats in BUILDING_TARGETS.items():
+            total_attack = base_melee + bonus_vs_buildings
+            damage = max(1, total_attack - bstats["melee_armor"])
+            dps = damage / reload_time if reload_time > 0 else 0
+            scores[f"raid_vs_{bkey}_dps"] = round(dps, 2)
+
+    # Normalize movement speed 0–100 (higher = better)
+    speed_vals = [s["raid_speed"] for s in all_scores.values()]
+    lo, hi = min(speed_vals), max(speed_vals)
+    span = hi - lo if hi != lo else 1
+    for s in all_scores.values():
+        s["raid_speed"] = round((s["raid_speed"] - lo) / span * 100, 1)
+
+    # Normalize vill kill: invert ticks (fewer = better → higher score)
+    tick_vals = [s["raid_vill_kill_ticks"] for s in all_scores.values()]
+    lo_t, hi_t = min(tick_vals), max(tick_vals)
+    span_t = hi_t - lo_t if hi_t != lo_t else 1
+    for s in all_scores.values():
+        # Invert: lowest ticks → 100, highest ticks → 0
+        s["raid_vill_kill"] = round(
+            (hi_t - s["raid_vill_kill_ticks"]) / span_t * 100, 1
+        )
+        del s["raid_vill_kill_ticks"]  # clean up raw ticks
+
+    # Normalize each building DPS sub-score 0–100
+    for bkey in BUILDING_TARGETS:
+        dps_key = f"raid_vs_{bkey}_dps"
+        vals = [s[dps_key] for s in all_scores.values()]
+        lo, hi = min(vals), max(vals)
+        span = hi - lo if hi != lo else 1
+        for s in all_scores.values():
+            s[dps_key] = round((s[dps_key] - lo) / span * 100, 1)
+
+    # Compute building composite (average of TC and Castle DPS scores)
+    for sk, scores in all_scores.items():
+        scores["raid_building"] = round(
+            (scores["raid_vs_tc_dps"] + scores["raid_vs_castle_dps"]) / 2, 1
+        )
+
+    # Compute weighted composite
+    for sk, scores in all_scores.items():
+        scores["raiding_value"] = round(
+            0.30 * scores["raid_speed"]
+            + 0.30 * scores["raid_vill_kill"]
+            + 0.40 * scores["raid_building"],
             1,
         )
 

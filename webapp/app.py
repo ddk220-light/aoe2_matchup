@@ -1515,6 +1515,11 @@ UNIT_LINES = {
         "building": "Barracks",
         "sub_lines": ["militia", "spear", "shock_infantry"],
     },
+    "raiding_infantry": {
+        "name": "Infantry Raiding",
+        "building": "Barracks",
+        "sub_lines": ["militia", "spear", "shock_infantry"],
+    },
 }
 
 INFANTRY_LINE_SLUGS = {"militia", "spear", "shock_infantry"}

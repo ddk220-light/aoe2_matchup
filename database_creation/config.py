@@ -1540,8 +1540,9 @@ UNIQUE_UNITS = {
             "unit_class": 6,  # Infantry class
             "extra_unit_classes": [18],  # Also gets Monastery techs (Sanctity, etc.)
             "excluded_tech_ids": [
-                233
-            ],  # Illumination: +1.4 reload is monk recovery, not attack speed
+                230,  # Block Printing: +3 range is monk conversion range, not attack range
+                233,  # Illumination: +1.4 reload is monk recovery, not attack speed
+            ],
             "availability_tech": 948,
             "elite_tech": None,
             "elite_id": None,

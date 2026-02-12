@@ -1045,7 +1045,7 @@ def _build_combat_dict_from_ref(rc, row):
         "paired_unit_slug": None,
         "hp": row["final_hp"],
         "attack": row["final_attack"],
-        "attack_range": row["final_range"],
+        "attack_range": row["final_range"] if row["is_ranged"] else 0,
         "attack_speed": attack_speed,
         "attack_delay": row["final_attack_delay"] or 0,
         "melee_armor": row["final_melee_armor"],

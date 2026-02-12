@@ -448,6 +448,7 @@ def generate_reference_database(analyzer):
         age_label,
         max_age,
         unit_data,
+        excluded_tech_ids=None,
     ):
         """Process one unit with full audit trail. Returns ref_unit_id or None.
 
@@ -517,6 +518,7 @@ def generate_reference_database(analyzer):
         step += 1
 
         disabled_techs = analyzer.get_disabled_techs(civ_name)
+        _excluded = set(excluded_tech_ids or [])
         all_tech_names = []
 
         # Phase 1: Standard techs
@@ -524,7 +526,7 @@ def generate_reference_database(analyzer):
             unit_id, unit_class, max_age
         )
         for tech_id in sorted(standard_techs):
-            if tech_id in disabled_techs:
+            if tech_id in disabled_techs or tech_id in _excluded:
                 continue
             if tech_id not in analyzer.tech_effect_map:
                 continue
@@ -1183,6 +1185,7 @@ def generate_reference_database(analyzer):
                         .replace(" ", "_")
                         .replace("-", "_")
                     )
+                    excluded = uu_config.get("excluded_tech_ids")
                     process_unit_audited(
                         civ_name,
                         base_id,
@@ -1193,6 +1196,7 @@ def generate_reference_database(analyzer):
                         "Castle",
                         CASTLE_AGE,
                         unit_data,
+                        excluded_tech_ids=excluded,
                     )
 
                 # Imperial Age (elite version, or same base unit with Imp techs)
@@ -1214,6 +1218,7 @@ def generate_reference_database(analyzer):
                             "Imperial",
                             IMPERIAL_AGE,
                             elite_data,
+                            excluded_tech_ids=excluded,
                         )
                 elif unit_data:
                     # No elite version — show base unit in Imperial with Imp techs
@@ -1227,6 +1232,7 @@ def generate_reference_database(analyzer):
                         "Imperial",
                         IMPERIAL_AGE,
                         unit_data,
+                        excluded_tech_ids=excluded,
                     )
 
     conn.commit()

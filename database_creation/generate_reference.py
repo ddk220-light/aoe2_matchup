@@ -805,6 +805,7 @@ def generate_reference_database(analyzer):
                final_cost_food=?, final_cost_wood=?, final_cost_gold=?,
                final_attacks_json=?, final_armors_json=?,
                final_train_time=?,
+               hp_regen=?,
                applied_bonuses_summary=?
                WHERE id=?""",
             (
@@ -826,6 +827,7 @@ def generate_reference_database(analyzer):
                 ),
                 json.dumps({str(k): round(v) for k, v in final_snap["armors"].items()}),
                 round(final_snap["train_time"]),
+                round(stats.hp_regen, 1),
                 ", ".join(all_tech_names),
                 ref_unit_id,
             ),
@@ -855,6 +857,10 @@ def generate_reference_database(analyzer):
         combat_props = get_combat_properties(
             unit_slug, civ_name=civ_name, unit_id=unit_id, units_data=analyzer.units
         )
+        # Merge hp_regen from tech effects (e.g. Wu infantry regen civ bonus)
+        # The analyzer tracks attr 109 additions; use the higher value
+        if stats.hp_regen > combat_props.get("hp_regen", 0):
+            combat_props["hp_regen"] = round(stats.hp_regen, 1)
         special_props = [
             ("ignores_melee_armor", "Unit ignores melee armor"),
             ("ignores_pierce_armor", "Unit ignores pierce armor"),

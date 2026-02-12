@@ -13,6 +13,7 @@ from .config import (
     ATTR_FOOD_COST,
     ATTR_GOLD_COST,
     ATTR_HP,
+    ATTR_HP_REGEN,
     ATTR_LOS,
     ATTR_RANGE,
     ATTR_RELOAD_TIME,
@@ -57,6 +58,7 @@ class UnitStats:
     upgrade_cost: float = 0
     attacks: dict = field(default_factory=dict)
     armors: dict = field(default_factory=dict)
+    hp_regen: float = 0
 
     def copy(self):
         return UnitStats(
@@ -78,6 +80,7 @@ class UnitStats:
             upgrade_cost=self.upgrade_cost,
             attacks=self.attacks.copy(),
             armors=self.armors.copy(),
+            hp_regen=self.hp_regen,
         )
 
     def attack_rate(self) -> float:
@@ -615,6 +618,8 @@ class UnitAnalyzer:
             stats.reload_time = value
         elif attr == ATTR_ACCURACY:
             stats.accuracy = value
+        elif attr == ATTR_HP_REGEN:
+            stats.hp_regen = value
 
     def _add_attribute(self, stats: UnitStats, attr: int, value: float):
         if attr == ATTR_HP:
@@ -641,6 +646,8 @@ class UnitAnalyzer:
                 stats.attacks[atk_class] += amount
             if atk_class == 4:
                 stats.attack += amount
+        elif attr == ATTR_HP_REGEN:
+            stats.hp_regen += value
         elif attr == ATTR_ARMOR:
             arm_class, amount = self._decode_armor_attack_value(value)
             if arm_class in stats.armors:
@@ -938,6 +945,7 @@ class UnitAnalyzer:
         stats.upgrade_cost = round(stats.upgrade_cost)
         stats.reload_time = round(stats.reload_time, 3)
         stats.range = round(stats.range, 1)
+        stats.hp_regen = round(stats.hp_regen, 1)
 
         return {
             "unit_name": final_unit_name,

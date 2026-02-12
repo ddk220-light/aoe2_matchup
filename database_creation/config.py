@@ -30,6 +30,7 @@ ATTR_COST = 100
 ATTR_FOOD_COST = 103
 ATTR_WOOD_COST = 104
 ATTR_GOLD_COST = 105
+ATTR_HP_REGEN = 109
 
 # Effect command types
 CMD_SET_ATTRIBUTE = 0
@@ -70,6 +71,7 @@ ATTR_DISPLAY_NAMES = {
     ATTR_FOOD_COST: "Cost (food)",
     ATTR_WOOD_COST: "Cost (wood)",
     ATTR_GOLD_COST: "Cost (gold)",
+    ATTR_HP_REGEN: "HP Regen",
 }
 
 # Original 13 civilizations

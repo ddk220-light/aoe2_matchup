@@ -1025,25 +1025,30 @@ def compute_infantry_role_scores():
                         elapsed = max_loser
                     s[tk] = round(elapsed / MAX_BATTLE_TIME * 100, 1)
 
-        # Compute derived scores
+        # Compute raw derived scores (before normalization)
         for sk, scores in role_scores.items():
-            scores["melee_power"] = round(
-                (
-                    scores["vs_skirm"]
-                    + scores["vs_halb"]
-                    + scores["vs_hussar"]
-                    + scores["vs_champ"]
-                )
-                / 4,
-                1,
-            )
-            scores["meat_shield"] = round(
-                (scores["vs_paladin_tank"] + scores["vs_champ_tank"]) / 2, 1
-            )
+            scores["melee_power"] = (
+                scores["vs_skirm"]
+                + scores["vs_halb"]
+                + scores["vs_hussar"]
+                + scores["vs_champ"]
+            ) / 4
+            scores["meat_shield"] = (
+                scores["vs_paladin_tank"] + scores["vs_champ_tank"]
+            ) / 2
             scores["raid"] = scores["vs_arb_raid"]
-            scores["anti_cav"] = round(
-                (scores["vs_paladin"] + scores["vs_hussar_cav"]) / 2, 1
-            )
+            scores["anti_cav"] = (scores["vs_paladin"] + scores["vs_hussar_cav"]) / 2
+
+        # Normalize each derived score to 0–100 (best=100, worst=0)
+        for key in ["melee_power", "meat_shield", "raid", "anti_cav"]:
+            vals = [s[key] for s in role_scores.values()]
+            lo, hi = min(vals), max(vals)
+            span = hi - lo if hi != lo else 1
+            for s in role_scores.values():
+                s[key] = round((s[key] - lo) / span * 100, 1)
+
+        # Compute militia_value from normalized scores
+        for sk, scores in role_scores.items():
             scores["militia_value"] = round(
                 0.50 * scores["melee_power"]
                 + 0.30 * scores["meat_shield"]

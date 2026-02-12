@@ -1026,6 +1026,52 @@ def compute_militia_role_scores():
     return {"militia|imperial": role_scores}
 
 
+MILITIA_ROLE_SCORE_TYPES = [
+    "anti_trash",
+    "meat_shield",
+    "raid",
+    "anti_cav",
+    "militia_value",
+]
+
+
+def write_role_scores_to_db(role_scores_dict):
+    """Write role scores into the battle_scores table in aoe2_reference.db.
+
+    Only writes the 5 derived militia scores (not the raw vs_* matchup scores).
+    Clears existing militia scores before inserting.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("DELETE FROM battle_scores WHERE line_slug='militia'")
+
+    rows = []
+    for line_age_key, unit_scores in role_scores_dict.items():
+        line_slug, age = line_age_key.split("|")
+        for unit_key, scores in unit_scores.items():
+            civ_name, unit_slug = unit_key.split("|")
+            for score_type in MILITIA_ROLE_SCORE_TYPES:
+                if score_type in scores:
+                    rows.append(
+                        (
+                            line_slug,
+                            age,
+                            civ_name,
+                            unit_slug,
+                            score_type,
+                            scores[score_type],
+                        )
+                    )
+
+    c.executemany(
+        "INSERT INTO battle_scores (line_slug, age, civ_name, unit_slug, score_type, score_value) VALUES (?, ?, ?, ?, ?, ?)",
+        rows,
+    )
+    conn.commit()
+    conn.close()
+    print(f"  Wrote {len(rows)} battle_scores rows to DB")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Compute battle ranking scores")
     parser.add_argument(
@@ -1045,6 +1091,7 @@ def main():
         with open(out_path) as f:
             output = json.load(f)
         output["role_scores"] = compute_militia_role_scores()
+        write_role_scores_to_db(output["role_scores"])
         with open(out_path, "w") as f:
             json.dump(output, f, separators=(",", ":"))
         militia_count = len(output["role_scores"].get("militia|imperial", {}))
@@ -1194,6 +1241,7 @@ def main():
     # Militia role scores
     role_start = time.time()
     output["role_scores"] = compute_militia_role_scores()
+    write_role_scores_to_db(output["role_scores"])
     role_time = time.time() - role_start
     militia_count = len(output["role_scores"].get("militia|imperial", {}))
     print(f"Militia roles: {militia_count} units in {role_time:.1f}s")

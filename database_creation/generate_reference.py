@@ -354,6 +354,21 @@ def generate_reference_database(analyzer):
     for ac in armor_class_names.items():
         cursor.execute("INSERT INTO armor_classes (id, name) VALUES (?, ?)", ac)
 
+    cursor.execute("""
+        CREATE TABLE battle_scores (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            line_slug TEXT NOT NULL,
+            age TEXT NOT NULL,
+            civ_name TEXT NOT NULL,
+            unit_slug TEXT NOT NULL,
+            score_type TEXT NOT NULL,
+            score_value REAL NOT NULL
+        );
+    """)
+    cursor.execute(
+        "CREATE INDEX idx_battle_scores_line_age ON battle_scores (line_slug, age);"
+    )
+
     # Class names from unit data
     class_names = {}
     for uid, u in analyzer.units.items():

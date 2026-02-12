@@ -1522,8 +1522,21 @@ def api_ref_unit_line(line_slug):
         "imperial": [],
     }
 
+    # Load militia role scores from DB (keyed by "civ_name|unit_slug")
+    _db_role_scores = {}
+    if line_slug == "militia":
+        rc.execute(
+            "SELECT civ_name, unit_slug, score_type, score_value FROM battle_scores WHERE line_slug=?",
+            (line_slug,),
+        )
+        for bs_row in rc.fetchall():
+            uk = f"{bs_row['civ_name']}|{bs_row['unit_slug']}"
+            _db_role_scores.setdefault(uk, {})[bs_row["score_type"]] = bs_row[
+                "score_value"
+            ]
+
     def _attach_scores(entry, age_key):
-        """Attach battle scores and benchmark scores from pre-computed JSON."""
+        """Attach battle scores and benchmark scores."""
         line_key = f"{line_slug}|{age_key}"
         unit_key = f"{entry['civ_name']}|{entry['unit_slug']}"
         rr = _ROUND_ROBIN.get(line_key, {}).get(unit_key, {})
@@ -1537,8 +1550,10 @@ def api_ref_unit_line(line_slug):
         entry["pop_vs_champ"] = bm.get("pop_vs_champ", -999)
         entry["pop_vs_paladin"] = bm.get("pop_vs_paladin", -999)
         entry["pop_vs_arb"] = bm.get("pop_vs_arb", -999)
-        # Role-based scores (militia line etc.)
-        rs = _ROLE_SCORES.get(line_key, {}).get(unit_key, {})
+        # Role-based scores from DB (militia) or JSON fallback (other lines)
+        rs = _db_role_scores.get(unit_key) if _db_role_scores else None
+        if rs is None:
+            rs = _ROLE_SCORES.get(line_key, {}).get(unit_key, {})
         if rs:
             for rk, rv in rs.items():
                 entry[rk] = rv

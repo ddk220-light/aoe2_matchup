@@ -322,7 +322,7 @@ UNIQUE_COMBAT_PROPERTIES = {
     "elite_jaguar_warrior": {"attack_bonus_per_kill": 4},
     # HP transformation (ability flag, not in dat)
     "jian_swordsman": {
-        "hp_transform_threshold": 0.5,
+        "hp_transform_threshold": 45.0 / 70.0,
         "transform_unit_id": 1976,
         "transform_hp": 70,
         "transform_attack": 11,

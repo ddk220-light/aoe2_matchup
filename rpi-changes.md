@@ -89,3 +89,68 @@ Wu lacks Blast Furnace, so base attack is lower than most civs).
 
 **Spear line** — Wu Halberdier ranks **#6** out of 19 (regen is more impactful
 on spear units due to longer fights; Wu also gets full spear upgrades).
+
+## 2026-02-12: Fix Jian Swordsman HP Transform Mechanic
+
+### Bug
+
+The Jian Swordsman (Wu unique unit) has an HP-transform mechanic: when HP drops
+below 45, it switches to an unshielded form with +3 attack, -2 melee armor,
+-3 pierce armor, and +10% speed. Three bugs existed:
+
+1. **Transform stats were un-upgraded base values** — the DB stored raw base stats
+   (ATK=11, MA=0, PA=2) instead of fully upgraded stats. The pipeline never applied
+   tech upgrades (Forging/Iron Casting/Blast Furnace, Scale/Chain/Plate armor) to
+   the transform fields.
+
+2. **HP threshold was wrong** — config had `0.5` (35 HP) but the game uses 45 HP
+   (45/70 = 0.6429).
+
+3. **No revert mechanic** — the simulation only transformed one-way; the game
+   reverts stats when HP heals back above the threshold (e.g. via Wu's 30 HP/min
+   infantry regen).
+
+### Root Cause
+
+`config.py` stores the Jian Swordsman's transform stats as hardcoded base values
+from the dat file. `generate_reference.py` wrote these raw values directly into the
+DB without applying the tech upgrade deltas that the normal form receives.
+
+The simulation in `simulation.py` only checked for the forward transform (HP drops
+below threshold) but never checked for the revert condition (HP heals above threshold).
+
+### Fix
+
+**Files changed:**
+
+1. `database_creation/config.py`
+   - Changed `hp_transform_threshold` from `0.5` to `45.0 / 70.0` (~0.6429)
+
+2. `database_creation/generate_reference.py`
+   - After computing `final_snap` (fully upgraded normal stats) and before writing
+     special props, apply tech deltas to transform stats:
+     `transform_final = normal_final + (transform_base - normal_base)`
+   - This upgrades `transform_attack`, `transform_melee_armor`,
+     `transform_pierce_armor`, `transform_movement_speed`, `transform_attacks_json`,
+     and `transform_armors_json`
+
+3. `webapp/simulation.py`
+   - Added revert mechanic: when a transformed unit's HP heals back above the
+     threshold, `transformed[idx]` is set back to `False`, restoring normal form stats
+
+### Expected Values (Imperial, Wu)
+
+| Stat | Normal | Transform (base, old) | Transform (upgraded, fixed) |
+|------|--------|-----------------------|-----------------------------|
+| ATK  | 14     | 11                    | 17                          |
+| MA   | 5      | 0                     | 3                           |
+| PA   | 9      | 2                     | 6                           |
+| SPD  | 1.10   | 1.10                  | 1.21                        |
+
+### Impact
+
+- Transform stats now properly reflect full Imperial age upgrades
+- HP threshold matches the in-game 45 HP value
+- Units with regen (Wu infantry) can now oscillate between forms as HP fluctuates
+  around the threshold, matching in-game behavior
+- DB rebuild (`python3 -m database_creation.run`) required for pipeline fix to take effect

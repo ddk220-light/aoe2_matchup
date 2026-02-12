@@ -861,6 +861,48 @@ def generate_reference_database(analyzer):
         # The analyzer tracks attr 109 additions; use the higher value
         if stats.hp_regen > combat_props.get("hp_regen", 0):
             combat_props["hp_regen"] = round(stats.hp_regen, 1)
+
+        # Upgrade transform stats: apply same tech deltas as normal form
+        # delta = transform_base - normal_base; transform_final = normal_final + delta
+        if combat_props.get("hp_transform_threshold") and combat_props.get("transform_attack") is not None:
+            t_base_atk = combat_props["transform_attack"]
+            t_base_ma = combat_props["transform_melee_armor"]
+            t_base_pa = combat_props["transform_pierce_armor"]
+            t_base_spd = combat_props.get("transform_movement_speed", 1.0)
+
+            n_base_atk = base_snap["attack"]
+            n_base_ma = base_snap["melee_armor"]
+            n_base_pa = base_snap["pierce_armor"]
+            n_base_spd = base_snap["speed"]
+
+            combat_props["transform_attack"] = round(final_snap["attack"] + (t_base_atk - n_base_atk))
+            combat_props["transform_melee_armor"] = max(0, round(final_snap["melee_armor"] + (t_base_ma - n_base_ma)))
+            combat_props["transform_pierce_armor"] = max(0, round(final_snap["pierce_armor"] + (t_base_pa - n_base_pa)))
+            speed_ratio = t_base_spd / n_base_spd if n_base_spd > 0 else 1.0
+            combat_props["transform_movement_speed"] = round(final_snap["speed"] * speed_ratio, 2)
+
+            # Upgrade attacks_json: per-class deltas
+            t_attacks = json.loads(combat_props.get("transform_attacks_json", "{}"))
+            b_attacks = {int(k): v for k, v in base_snap["attacks"].items()}
+            f_attacks = {int(k): v for k, v in final_snap["attacks"].items()}
+            upgraded_attacks = {}
+            for cls in set(list(t_attacks.keys()) + list(f_attacks.keys())):
+                cls_int = int(cls)
+                delta = int(t_attacks.get(cls_int, t_attacks.get(str(cls_int), 0))) - b_attacks.get(cls_int, 0)
+                upgraded_attacks[str(cls_int)] = round(f_attacks.get(cls_int, 0) + delta)
+            combat_props["transform_attacks_json"] = json.dumps(upgraded_attacks)
+
+            # Upgrade armors_json: per-class deltas
+            t_armors = json.loads(combat_props.get("transform_armors_json", "{}"))
+            b_armors = {int(k): v for k, v in base_snap["armors"].items()}
+            f_armors = {int(k): v for k, v in final_snap["armors"].items()}
+            upgraded_armors = {}
+            for cls in set(list(t_armors.keys()) + list(f_armors.keys())):
+                cls_int = int(cls)
+                delta = int(t_armors.get(cls_int, t_armors.get(str(cls_int), 0))) - b_armors.get(cls_int, 0)
+                upgraded_armors[str(cls_int)] = max(0, round(f_armors.get(cls_int, 0) + delta))
+            combat_props["transform_armors_json"] = json.dumps(upgraded_armors)
+
         special_props = [
             ("ignores_melee_armor", "Unit ignores melee armor"),
             ("ignores_pierce_armor", "Unit ignores pierce armor"),

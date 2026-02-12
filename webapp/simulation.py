@@ -1406,17 +1406,21 @@ def simulate_battle(
                 if hp2[idx] < max_hp2:
                     hp2[idx] = min(max_hp2, hp2[idx] + regen_per_tick2)
 
-        # HP transform (e.g. Jian Swordsman — switch to unshielded form)
+        # HP transform (e.g. Jian Swordsman — switch to unshielded form, revert when healed)
         if transform_thresh1 > 0:
             threshold_hp = unit1["hp"] * transform_thresh1
             for idx in alive1:
                 if not transformed1[idx] and hp1[idx] <= threshold_hp and hp1[idx] > 0:
                     transformed1[idx] = True
+                elif transformed1[idx] and hp1[idx] >= threshold_hp:
+                    transformed1[idx] = False
         if transform_thresh2 > 0:
             threshold_hp = unit2["hp"] * transform_thresh2
             for idx in alive2:
                 if not transformed2[idx] and hp2[idx] <= threshold_hp and hp2[idx] > 0:
                     transformed2[idx] = True
+                elif transformed2[idx] and hp2[idx] >= threshold_hp:
+                    transformed2[idx] = False
 
         # Dismount on death: respawn dead mounted units as dismounted
         if dismount1:

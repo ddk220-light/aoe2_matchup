@@ -821,6 +821,8 @@ def compute_benchmarks(bench_units, bench_fps, benchmark_cache, unit_fps):
     total_misses = 0
 
     for line_slug, config in UNIT_LINES.items():
+        if line_slug == "militia":
+            continue  # militia uses role-based scores from battle_scores table
         for age_key in ["castle", "imperial"]:
             std_slug = config.get(f"{age_key}_slug")
             multi_slugs = config.get(f"{age_key}_slugs", [])
@@ -1087,14 +1089,9 @@ def main():
     start = time.time()
 
     if args.roles_only:
-        out_path = os.path.join(os.path.dirname(__file__), "battle_scores.json")
-        with open(out_path) as f:
-            output = json.load(f)
-        output["role_scores"] = compute_militia_role_scores()
-        write_role_scores_to_db(output["role_scores"])
-        with open(out_path, "w") as f:
-            json.dump(output, f, separators=(",", ":"))
-        militia_count = len(output["role_scores"].get("militia|imperial", {}))
+        role_scores = compute_militia_role_scores()
+        write_role_scores_to_db(role_scores)
+        militia_count = len(role_scores.get("militia|imperial", {}))
         print(f"Militia roles: {militia_count} units in {time.time() - start:.1f}s")
         return
 
@@ -1125,9 +1122,11 @@ def main():
     pairwise_cache = cache.get("pairwise", {})
     benchmark_cache = cache.get("benchmarks", {})
 
-    # Build all units and compute fingerprints
+    # Build all units and compute fingerprints (militia excluded — uses DB scores)
     current_fps = {}
     for line_slug, config in UNIT_LINES.items():
+        if line_slug == "militia":
+            continue
         for age_key in ["castle", "imperial"]:
             std_slug = config.get(f"{age_key}_slug")
             multi_slugs = config.get(f"{age_key}_slugs", [])
@@ -1209,6 +1208,8 @@ def main():
     rr_misses_total = 0
 
     for line_slug, config in UNIT_LINES.items():
+        if line_slug == "militia":
+            continue  # militia uses role-based scores from battle_scores table
         for age_key in ["castle", "imperial"]:
             slug = config.get(f"{age_key}_slug")
             multi_slugs = config.get(f"{age_key}_slugs", [])
@@ -1238,15 +1239,15 @@ def main():
     bench_time = time.time() - bench_start
     print(f"Benchmarks: {bench_time:.1f}s ({b_misses} simulated, {b_hits} cached)")
 
-    # Militia role scores
+    # Militia role scores (written to DB only, not JSON)
     role_start = time.time()
-    output["role_scores"] = compute_militia_role_scores()
-    write_role_scores_to_db(output["role_scores"])
+    role_scores = compute_militia_role_scores()
+    write_role_scores_to_db(role_scores)
     role_time = time.time() - role_start
-    militia_count = len(output["role_scores"].get("militia|imperial", {}))
+    militia_count = len(role_scores.get("militia|imperial", {}))
     print(f"Militia roles: {militia_count} units in {role_time:.1f}s")
 
-    # Write output
+    # Write output (round-robin + benchmarks only, no militia)
     out_path = os.path.join(os.path.dirname(__file__), "battle_scores.json")
     with open(out_path, "w") as f:
         json.dump(output, f, separators=(",", ":"))

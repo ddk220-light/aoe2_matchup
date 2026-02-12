@@ -1506,7 +1506,12 @@ UNIT_LINES = {
         },
     },
     "infantry": {
-        "name": "General Infantry Effectiveness",
+        "name": "Infantry Effectiveness",
+        "building": "Barracks",
+        "sub_lines": ["militia", "spear", "shock_infantry"],
+    },
+    "anti_cav_infantry": {
+        "name": "Infantry Anti-Cav",
         "building": "Barracks",
         "sub_lines": ["militia", "spear", "shock_infantry"],
     },

@@ -734,25 +734,18 @@
 
             // Unit lines definition (mirrors backend UNIT_LINES)
             const UNIT_LINES = {
-                militia: {
-                    name: "Militia Line",
+                infantry: {
+                    name: "Infantry Effectiveness",
                     building: "Barracks",
                     castle: "Long Swordsman",
                     imperial: "Champion",
                     hasUnique: true,
                 },
-                spear: {
-                    name: "Spear Line",
+                anti_cav_infantry: {
+                    name: "Infantry Anti-Cav",
                     building: "Barracks",
                     castle: "Pikeman",
                     imperial: "Halberdier",
-                    hasUnique: false,
-                },
-                shock_infantry: {
-                    name: "Shock Infantry",
-                    building: "Barracks",
-                    castle: "Fire Lancer",
-                    imperial: "Elite Fire Lancer",
                     hasUnique: true,
                 },
                 archer: {
@@ -859,13 +852,6 @@
                     building: "Archery Range",
                     castle: "Crossbowman",
                     imperial: "Arbalester",
-                    hasUnique: true,
-                },
-                infantry: {
-                    name: "General Infantry Effectiveness",
-                    building: "Barracks",
-                    castle: "Long Swordsman",
-                    imperial: "Champion",
                     hasUnique: true,
                 },
             };
@@ -987,6 +973,66 @@
                         },
                     ],
                 },
+                anti_cav_total: {
+                    title: "Anti-Cav Total",
+                    formula: "Average of 4 matchups (3K resources each)",
+                    subs: [
+                        {
+                            key: "ac_vs_paladin",
+                            label: "vs Paladin",
+                            civ: "Spanish",
+                            slug: "paladin",
+                            mode: "resources",
+                            res: 3000,
+                        },
+                        {
+                            key: "ac_vs_hussar",
+                            label: "vs Hussar",
+                            civ: "Spanish",
+                            slug: "hussar",
+                            mode: "resources",
+                            res: 3000,
+                        },
+                        {
+                            key: "ac_vs_heavy_camel",
+                            label: "vs Heavy Camel",
+                            civ: "Persians",
+                            slug: "heavy_camel",
+                            mode: "resources",
+                            res: 3000,
+                        },
+                        {
+                            key: "ac_vs_elephant",
+                            label: "vs Battle Elephant",
+                            civ: "Vietnamese",
+                            slug: "elite_elephant",
+                            mode: "resources",
+                            res: 3000,
+                        },
+                    ],
+                },
+                frontline: {
+                    title: "Frontline Score",
+                    formula: "Average of 2 matchups (3K resources each)",
+                    subs: [
+                        {
+                            key: "ac_vs_halb",
+                            label: "vs Halberdier",
+                            civ: "Spanish",
+                            slug: "halberdier",
+                            mode: "resources",
+                            res: 3000,
+                        },
+                        {
+                            key: "ac_vs_arb",
+                            label: "vs Arbalester",
+                            civ: "Chinese",
+                            slug: "arbalester",
+                            mode: "resources",
+                            res: 3000,
+                        },
+                    ],
+                },
             };
 
             const SCORE_KEYS = new Set([
@@ -995,6 +1041,9 @@
                 "raid",
                 "anti_cav",
                 "militia_value",
+                "anti_cav_total",
+                "frontline",
+                "anti_cav_value",
             ]);
             const STAT_KEYS = new Set([
                 "final_hp",
@@ -1106,28 +1155,50 @@
             function buildScoreHoverHtml(row, scoreKey) {
                 const info = SCORE_BREAKDOWN[scoreKey];
                 if (!info) {
-                    if (scoreKey === "militia_value") {
-                        const parts = [
-                            {
-                                key: "melee_power",
-                                label: "Melee Power",
-                                weight: "50%",
-                            },
-                            {
-                                key: "meat_shield",
-                                label: "Tankiness",
-                                weight: "30%",
-                            },
-                            { key: "raid", label: "Raid", weight: "10%" },
-                            {
-                                key: "anti_cav",
-                                label: "Anti-Cav",
-                                weight: "10%",
-                            },
-                        ];
-                        let html = `<div class="hc-title">Overall Score</div>`;
-                        html += `<div class="hc-formula">Weighted: ${parts.map((p) => p.weight + " " + p.label).join(" + ")}</div>`;
-                        for (const p of parts) {
+                    // Composite score hover cards
+                    const composites = {
+                        militia_value: {
+                            title: "Overall Score",
+                            parts: [
+                                {
+                                    key: "melee_power",
+                                    label: "Melee Power",
+                                    weight: "50%",
+                                },
+                                {
+                                    key: "meat_shield",
+                                    label: "Tankiness",
+                                    weight: "30%",
+                                },
+                                { key: "raid", label: "Raid", weight: "10%" },
+                                {
+                                    key: "anti_cav",
+                                    label: "Anti-Cav",
+                                    weight: "10%",
+                                },
+                            ],
+                        },
+                        anti_cav_value: {
+                            title: "Anti-Cav Score",
+                            parts: [
+                                {
+                                    key: "anti_cav_total",
+                                    label: "Anti-Cav Total",
+                                    weight: "70%",
+                                },
+                                {
+                                    key: "frontline",
+                                    label: "Frontline",
+                                    weight: "30%",
+                                },
+                            ],
+                        },
+                    };
+                    const comp = composites[scoreKey];
+                    if (comp) {
+                        let html = `<div class="hc-title">${comp.title}</div>`;
+                        html += `<div class="hc-formula">Weighted: ${comp.parts.map((p) => p.weight + " " + p.label).join(" + ")}</div>`;
+                        for (const p of comp.parts) {
                             const v = row[p.key];
                             const vs =
                                 v !== undefined && v > -999
@@ -1135,7 +1206,7 @@
                                     : "\u2014";
                             html += `<div class="hc-row"><span>${p.label} (\u00d7${p.weight})</span><span style="color:${scoreColor(v)}">${vs}</span></div>`;
                         }
-                        const total = row.militia_value;
+                        const total = row[scoreKey];
                         html += `<div class="hc-row total"><span>Score</span><span style="color:${scoreColor(total)}">${total !== undefined ? total.toFixed(1) : "\u2014"}</span></div>`;
                         return html;
                     }
@@ -1409,6 +1480,7 @@
                 "spear",
                 "shock_infantry",
                 "infantry",
+                "anti_cav_infantry",
             ]);
 
             async function selectLine(slug) {
@@ -1426,7 +1498,12 @@
 
                 const resp = await fetch(`/api/ref/unit-line/${slug}`);
                 currentData = await resp.json();
-                sortColumn = INFANTRY_SLUGS.has(slug) ? "militia_value" : "pes";
+                sortColumn =
+                    slug === "anti_cav_infantry"
+                        ? "anti_cav_value"
+                        : INFANTRY_SLUGS.has(slug)
+                          ? "militia_value"
+                          : "pes";
                 sortDir = "desc";
                 renderTable();
             }
@@ -1599,9 +1676,23 @@
                     "final_pierce_armor",
                     "final_speed",
                 ];
-                const statCols = isInfantry
-                    ? infantryStatCols
-                    : defaultStatCols;
+                const antiCavStatCols = [
+                    "anti_cav_value",
+                    "anti_cav_total",
+                    "frontline",
+                    "dps",
+                    "final_hp",
+                    "final_attack",
+                    "final_melee_armor",
+                    "final_pierce_armor",
+                    "final_speed",
+                ];
+                const statCols =
+                    currentLine === "anti_cav_infantry"
+                        ? antiCavStatCols
+                        : isInfantry
+                          ? infantryStatCols
+                          : defaultStatCols;
 
                 const medians = {};
                 for (const col of statCols) {
@@ -1692,7 +1783,41 @@
                     { key: "total_upgrade_cost", label: "Upg Cost" },
                     { key: "special_abilities", label: "Special" },
                 ];
-                const columns = isInfantry ? infantryColumns : defaultColumns;
+                const antiCavColumns = [
+                    { key: "civ_name", label: "Civ" },
+                    { key: "unit_name", label: "Unit" },
+                    { key: "line_slug", label: "Line" },
+                    {
+                        key: "anti_cav_value",
+                        label: "Score",
+                        info: "Weighted aggregate: 70% Anti-Cav Total + 30% Frontline",
+                    },
+                    {
+                        key: "anti_cav_total",
+                        label: "Anti-Cav Total",
+                        info: "Avg HP% after 3k resource fights vs Spanish Paladin, Spanish Hussar, Persian Heavy Camel, Vietnamese Battle Elephant",
+                    },
+                    {
+                        key: "frontline",
+                        label: "Frontline",
+                        info: "Avg HP% after 3k resource fights vs Spanish Halberdier and Chinese Arbalester",
+                    },
+                    { key: "dps", label: "DPS" },
+                    { key: "final_hp", label: "HP" },
+                    { key: "final_attack", label: "Atk" },
+                    { key: "final_melee_armor", label: "M.Arm" },
+                    { key: "final_pierce_armor", label: "P.Arm" },
+                    { key: "final_speed", label: "Speed" },
+                    { key: "total_cost", label: "Cost" },
+                    { key: "total_upgrade_cost", label: "Upg Cost" },
+                    { key: "special_abilities", label: "Special" },
+                ];
+                const columns =
+                    currentLine === "anti_cav_infantry"
+                        ? antiCavColumns
+                        : isInfantry
+                          ? infantryColumns
+                          : defaultColumns;
 
                 const lineInfo = UNIT_LINES[currentLine];
                 const titleIcon = unitIconUrl(
@@ -1771,7 +1896,10 @@
                         k === "melee_power" ||
                         k === "meat_shield" ||
                         k === "raid" ||
-                        k === "anti_cav"
+                        k === "anti_cav" ||
+                        k === "anti_cav_value" ||
+                        k === "anti_cav_total" ||
+                        k === "frontline"
                     )
                         formatted = v.toFixed(1);
                     else if (k === "total_cost" || k === "total_upgrade_cost")

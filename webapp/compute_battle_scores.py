@@ -894,6 +894,16 @@ MILITIA_ROLE_BENCHMARKS = [
     ("vs_hussar_cav", "Spanish", "hussar", "Imperial", "res", 3000),
 ]
 
+ANTI_CAV_BENCHMARKS = [
+    # (key, civ, slug, age, mode, param)
+    ("ac_vs_paladin", "Spanish", "paladin", "Imperial", "res", 3000),
+    ("ac_vs_hussar", "Spanish", "hussar", "Imperial", "res", 3000),
+    ("ac_vs_heavy_camel", "Persians", "heavy_camel", "Imperial", "res", 3000),
+    ("ac_vs_elephant", "Vietnamese", "elite_elephant", "Imperial", "res", 3000),
+    ("ac_vs_halb", "Spanish", "halberdier", "Imperial", "res", 3000),
+    ("ac_vs_arb", "Chinese", "arbalester", "Imperial", "res", 3000),
+]
+
 DT = 0.1  # must match simulation.py DT
 MAX_BATTLE_TIME = 250.0  # MAX_TICKS * DT
 
@@ -1004,6 +1014,7 @@ def compute_infantry_role_scores():
                     else:
                         scores[key] = 0.0
 
+            scores["_combat_unit"] = cu  # temp ref for anti-cav scoring
             all_scores[sk] = scores
             sk_to_line[sk] = line_slug
 
@@ -1055,6 +1066,13 @@ def compute_infantry_role_scores():
             1,
         )
 
+    # Compute anti-cav ranking scores (uses _combat_unit refs)
+    compute_anti_cav_scores(all_scores, sk_to_line)
+
+    # Clean up temp combat unit refs
+    for s in all_scores.values():
+        s.pop("_combat_unit", None)
+
     # Regroup by line for DB storage
     all_role_scores = {}
     for sk, scores in all_scores.items():
@@ -1082,13 +1100,96 @@ INFANTRY_ROLE_SCORE_TYPES = [
     "vs_arb_raid",
     "vs_paladin",
     "vs_hussar_cav",
+    # Anti-cav ranking scores
+    "anti_cav_total",
+    "frontline",
+    "anti_cav_value",
+    "ac_vs_paladin",
+    "ac_vs_hussar",
+    "ac_vs_heavy_camel",
+    "ac_vs_elephant",
+    "ac_vs_halb",
+    "ac_vs_arb",
 ]
+
+
+def compute_anti_cav_scores(all_scores, sk_to_line):
+    """Compute anti-cav ranking scores for all infantry units (in-place).
+
+    Uses the same pooled all_scores dict from compute_infantry_role_scores.
+    Adds anti_cav_total, frontline, anti_cav_value and raw sub-scores.
+    """
+    # Load benchmark opponents
+    bench_cache = {}
+    for key, civ, slug, age, mode, param in ANTI_CAV_BENCHMARKS:
+        cache_key = (civ, slug, age)
+        if cache_key not in bench_cache:
+            bench_cache[cache_key] = _load_benchmark_unit(civ, slug, age)
+            if bench_cache[cache_key] is None:
+                print(f"  WARNING: anti-cav benchmark {civ}/{slug}/{age} not found")
+
+    # Simulate each infantry unit vs each anti-cav benchmark
+    for sk, scores in all_scores.items():
+        cu = scores["_combat_unit"]
+        unit_cost = calc_weighted_cost(
+            cu["cost_food"], cu["cost_wood"], cu["cost_gold"], True
+        )
+
+        for key, civ, slug, age, mode, param in ANTI_CAV_BENCHMARKS:
+            bench = bench_cache.get((civ, slug, age))
+            if bench is None:
+                scores[key] = 0.0
+                continue
+
+            bench_cost = calc_weighted_cost(
+                bench["cost_food"], bench["cost_wood"], bench["cost_gold"], True
+            )
+
+            winner, _, _, hp1, hp2 = simulate_battle(
+                cu,
+                bench,
+                param,
+                cost1_override=unit_cost,
+                cost2_override=bench_cost,
+                return_hp=True,
+            )
+            if winner == 1:
+                scores[key] = round(hp1 * 100, 1)
+            elif winner == 2:
+                scores[key] = round(-hp2 * 100, 1)
+            else:
+                scores[key] = 0.0
+
+    # Compute raw derived scores
+    for sk, scores in all_scores.items():
+        scores["anti_cav_total"] = (
+            scores["ac_vs_paladin"]
+            + scores["ac_vs_hussar"]
+            + scores["ac_vs_heavy_camel"]
+            + scores["ac_vs_elephant"]
+        ) / 4
+        scores["frontline"] = (scores["ac_vs_halb"] + scores["ac_vs_arb"]) / 2
+
+    # Normalize to 0–100 across all infantry
+    for key in ["anti_cav_total", "frontline"]:
+        vals = [s[key] for s in all_scores.values()]
+        lo, hi = min(vals), max(vals)
+        span = hi - lo if hi != lo else 1
+        for s in all_scores.values():
+            s[key] = round((s[key] - lo) / span * 100, 1)
+
+    # Compute weighted composite
+    for sk, scores in all_scores.items():
+        scores["anti_cav_value"] = round(
+            0.70 * scores["anti_cav_total"] + 0.30 * scores["frontline"],
+            1,
+        )
 
 
 def write_role_scores_to_db(role_scores_dict):
     """Write role scores into the battle_scores table in aoe2_reference.db.
 
-    Writes all 12 score types (5 derived + 7 raw sub-scores) for all infantry lines.
+    Writes all score types for all infantry lines.
     Clears existing infantry scores before inserting.
     """
     conn = sqlite3.connect(DB_PATH)

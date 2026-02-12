@@ -821,8 +821,8 @@ def compute_benchmarks(bench_units, bench_fps, benchmark_cache, unit_fps):
     total_misses = 0
 
     for line_slug, config in UNIT_LINES.items():
-        if line_slug == "militia":
-            continue  # militia uses role-based scores from battle_scores table
+        if line_slug in INFANTRY_LINE_SLUGS:
+            continue  # infantry uses role-based scores from battle_scores table
         for age_key in ["castle", "imperial"]:
             std_slug = config.get(f"{age_key}_slug")
             multi_slugs = config.get(f"{age_key}_slugs", [])
@@ -914,16 +914,14 @@ def _load_benchmark_unit(civ, slug, age):
     return cu
 
 
-def compute_militia_role_scores():
-    """Compute role-based scores for all Imperial militia line units.
-    Returns dict: {"militia|imperial": {"Civ|slug": {scores...}}}"""
+INFANTRY_LINE_SLUGS = ["militia", "spear", "shock_infantry"]
 
-    # Load all militia line units
-    units = build_line_units("militia", "imperial")
-    if not units:
-        return {}
 
-    # Load benchmark opponents (once each, deduplicated by civ+slug)
+def compute_infantry_role_scores():
+    """Compute role-based scores for all Imperial infantry units.
+    Returns dict: {"militia|imperial": {...}, "spear|imperial": {...}, ...}"""
+
+    # Load benchmark opponents (once, shared across all lines)
     bench_cache = {}
     for key, civ, slug, age, mode, param in MILITIA_ROLE_BENCHMARKS:
         cache_key = (civ, slug, age)
@@ -932,127 +930,137 @@ def compute_militia_role_scores():
         if bench_cache[cache_key] is None:
             print(f"  WARNING: benchmark {civ}/{slug}/{age} not found")
 
-    role_scores = {}
+    all_role_scores = {}
 
-    for u in units:
-        cu = u["combat_unit"]
-        unit_cost = calc_weighted_cost(
-            cu["cost_food"], cu["cost_wood"], cu["cost_gold"], True
-        )
-        sk = f"{u['civ_name']}|{u['unit_slug']}"
-        scores = {}
+    for line_slug in INFANTRY_LINE_SLUGS:
+        units = build_line_units(line_slug, "imperial")
+        if not units:
+            continue
 
-        for key, civ, slug, age, mode, param in MILITIA_ROLE_BENCHMARKS:
-            bench = bench_cache[(civ, slug, age)]
-            if bench is None:
-                scores[key] = 0.0
-                continue
+        role_scores = {}
 
-            bench_cost = calc_weighted_cost(
-                bench["cost_food"], bench["cost_wood"], bench["cost_gold"], True
+        for u in units:
+            cu = u["combat_unit"]
+            unit_cost = calc_weighted_cost(
+                cu["cost_food"], cu["cost_wood"], cu["cost_gold"], True
+            )
+            sk = f"{u['civ_name']}|{u['unit_slug']}"
+            scores = {}
+
+            for key, civ, slug, age, mode, param in MILITIA_ROLE_BENCHMARKS:
+                bench = bench_cache[(civ, slug, age)]
+                if bench is None:
+                    scores[key] = 0.0
+                    continue
+
+                bench_cost = calc_weighted_cost(
+                    bench["cost_food"], bench["cost_wood"], bench["cost_gold"], True
+                )
+
+                if mode == "res":
+                    winner, _, _, hp1, hp2 = simulate_battle(
+                        cu,
+                        bench,
+                        param,
+                        cost1_override=unit_cost,
+                        cost2_override=bench_cost,
+                        return_hp=True,
+                    )
+                    if winner == 1:
+                        scores[key] = round(hp1 * 100, 1)
+                    elif winner == 2:
+                        scores[key] = round(-hp2 * 100, 1)
+                    else:
+                        scores[key] = 0.0
+
+                elif mode == "tank":
+                    winner, _, _, hp1, hp2, ticks = simulate_battle(
+                        cu,
+                        bench,
+                        0,
+                        fixed_count=param,
+                        return_ticks=True,
+                    )
+                    elapsed = ticks * DT
+                    if winner == 1:
+                        elapsed = MAX_BATTLE_TIME
+                    scores[key] = round(elapsed / MAX_BATTLE_TIME * 100, 1)
+
+                elif mode == "fixed":
+                    m_count, o_count = param
+                    fake_res = m_count * o_count
+                    winner, _, _, hp1, hp2 = simulate_battle(
+                        cu,
+                        bench,
+                        fake_res,
+                        cost1_override=fake_res // m_count,
+                        cost2_override=fake_res // o_count,
+                        return_hp=True,
+                    )
+                    if winner == 1:
+                        scores[key] = round(hp1 * 100, 1)
+                    elif winner == 2:
+                        scores[key] = round(-hp2 * 100, 1)
+                    else:
+                        scores[key] = 0.0
+
+            # Derived scores
+            scores["anti_trash"] = round(
+                (scores["vs_skirm"] + scores["vs_halb"] + scores["vs_hussar"]) / 3, 1
+            )
+            scores["meat_shield"] = scores["vs_paladin_tank"]
+            scores["raid"] = scores["vs_arb_raid"]
+            scores["anti_cav"] = round(
+                (scores["vs_paladin"] + scores["vs_hussar_cav"]) / 2, 1
+            )
+            scores["militia_value"] = round(
+                0.35 * scores["anti_trash"]
+                + 0.30 * scores["meat_shield"]
+                + 0.20 * scores["raid"]
+                + 0.15 * scores["anti_cav"],
+                1,
             )
 
-            if mode == "res":
-                # Resource-based: 3k resources each side
-                winner, _, _, hp1, hp2 = simulate_battle(
-                    cu,
-                    bench,
-                    param,
-                    cost1_override=unit_cost,
-                    cost2_override=bench_cost,
-                    return_hp=True,
-                )
-                if winner == 1:
-                    scores[key] = round(hp1 * 100, 1)
-                elif winner == 2:
-                    scores[key] = round(-hp2 * 100, 1)
-                else:
-                    scores[key] = 0.0
+            role_scores[sk] = scores
 
-            elif mode == "tank":
-                # Tankiness: 30v30 fixed count, measure elapsed time
-                winner, _, _, hp1, hp2, ticks = simulate_battle(
-                    cu,
-                    bench,
-                    0,
-                    fixed_count=param,
-                    return_ticks=True,
-                )
-                elapsed = ticks * DT
-                if winner == 1:
-                    # Militia won — max tankiness
-                    elapsed = MAX_BATTLE_TIME
-                scores[key] = round(elapsed / MAX_BATTLE_TIME * 100, 1)
+        all_role_scores[f"{line_slug}|imperial"] = role_scores
 
-            elif mode == "fixed":
-                # Asymmetric fixed count: (militia_count, opp_count)
-                m_count, o_count = param
-                # Use cost overrides to force desired counts:
-                # resources / cost = count, so cost = resources / count
-                # Set resources = m_count * o_count (LCM-friendly)
-                fake_res = m_count * o_count
-                winner, _, _, hp1, hp2 = simulate_battle(
-                    cu,
-                    bench,
-                    fake_res,
-                    cost1_override=fake_res // m_count,
-                    cost2_override=fake_res // o_count,
-                    return_hp=True,
-                )
-                if winner == 1:
-                    scores[key] = round(hp1 * 100, 1)
-                elif winner == 2:
-                    scores[key] = round(-hp2 * 100, 1)
-                else:
-                    scores[key] = 0.0
-
-        # Derived scores
-        scores["anti_trash"] = round(
-            (scores["vs_skirm"] + scores["vs_halb"] + scores["vs_hussar"]) / 3, 1
-        )
-        scores["meat_shield"] = scores["vs_paladin_tank"]
-        scores["raid"] = scores["vs_arb_raid"]
-        scores["anti_cav"] = round(
-            (scores["vs_paladin"] + scores["vs_hussar_cav"]) / 2, 1
-        )
-        scores["militia_value"] = round(
-            0.35 * scores["anti_trash"]
-            + 0.30 * scores["meat_shield"]
-            + 0.20 * scores["raid"]
-            + 0.15 * scores["anti_cav"],
-            1,
-        )
-
-        role_scores[sk] = scores
-
-    return {"militia|imperial": role_scores}
+    return all_role_scores
 
 
-MILITIA_ROLE_SCORE_TYPES = [
+INFANTRY_ROLE_SCORE_TYPES = [
     "anti_trash",
     "meat_shield",
     "raid",
     "anti_cav",
     "militia_value",
+    "vs_skirm",
+    "vs_halb",
+    "vs_hussar",
+    "vs_paladin_tank",
+    "vs_arb_raid",
+    "vs_paladin",
+    "vs_hussar_cav",
 ]
 
 
 def write_role_scores_to_db(role_scores_dict):
     """Write role scores into the battle_scores table in aoe2_reference.db.
 
-    Only writes the 5 derived militia scores (not the raw vs_* matchup scores).
-    Clears existing militia scores before inserting.
+    Writes all 12 score types (5 derived + 7 raw sub-scores) for all infantry lines.
+    Clears existing infantry scores before inserting.
     """
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute("DELETE FROM battle_scores WHERE line_slug='militia'")
+    for slug in INFANTRY_LINE_SLUGS:
+        c.execute("DELETE FROM battle_scores WHERE line_slug=?", (slug,))
 
     rows = []
     for line_age_key, unit_scores in role_scores_dict.items():
         line_slug, age = line_age_key.split("|")
         for unit_key, scores in unit_scores.items():
             civ_name, unit_slug = unit_key.split("|")
-            for score_type in MILITIA_ROLE_SCORE_TYPES:
+            for score_type in INFANTRY_ROLE_SCORE_TYPES:
                 if score_type in scores:
                     rows.append(
                         (
@@ -1089,10 +1097,12 @@ def main():
     start = time.time()
 
     if args.roles_only:
-        role_scores = compute_militia_role_scores()
+        role_scores = compute_infantry_role_scores()
         write_role_scores_to_db(role_scores)
-        militia_count = len(role_scores.get("militia|imperial", {}))
-        print(f"Militia roles: {militia_count} units in {time.time() - start:.1f}s")
+        total = sum(len(v) for v in role_scores.values())
+        print(
+            f"Infantry roles: {total} units across {len(role_scores)} lines in {time.time() - start:.1f}s"
+        )
         return
 
     # Compute simulation engine hash
@@ -1122,10 +1132,10 @@ def main():
     pairwise_cache = cache.get("pairwise", {})
     benchmark_cache = cache.get("benchmarks", {})
 
-    # Build all units and compute fingerprints (militia excluded — uses DB scores)
+    # Build all units and compute fingerprints (infantry excluded — uses DB scores)
     current_fps = {}
     for line_slug, config in UNIT_LINES.items():
-        if line_slug == "militia":
+        if line_slug in INFANTRY_LINE_SLUGS:
             continue
         for age_key in ["castle", "imperial"]:
             std_slug = config.get(f"{age_key}_slug")
@@ -1208,8 +1218,8 @@ def main():
     rr_misses_total = 0
 
     for line_slug, config in UNIT_LINES.items():
-        if line_slug == "militia":
-            continue  # militia uses role-based scores from battle_scores table
+        if line_slug in INFANTRY_LINE_SLUGS:
+            continue  # infantry uses role-based scores from battle_scores table
         for age_key in ["castle", "imperial"]:
             slug = config.get(f"{age_key}_slug")
             multi_slugs = config.get(f"{age_key}_slugs", [])
@@ -1239,13 +1249,15 @@ def main():
     bench_time = time.time() - bench_start
     print(f"Benchmarks: {bench_time:.1f}s ({b_misses} simulated, {b_hits} cached)")
 
-    # Militia role scores (written to DB only, not JSON)
+    # Infantry role scores (written to DB only, not JSON)
     role_start = time.time()
-    role_scores = compute_militia_role_scores()
+    role_scores = compute_infantry_role_scores()
     write_role_scores_to_db(role_scores)
     role_time = time.time() - role_start
-    militia_count = len(role_scores.get("militia|imperial", {}))
-    print(f"Militia roles: {militia_count} units in {role_time:.1f}s")
+    total_infantry = sum(len(v) for v in role_scores.values())
+    print(
+        f"Infantry roles: {total_infantry} units across {len(role_scores)} lines in {role_time:.1f}s"
+    )
 
     # Write output (round-robin + benchmarks only, no militia)
     out_path = os.path.join(os.path.dirname(__file__), "battle_scores.json")

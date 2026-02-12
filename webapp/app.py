@@ -1121,6 +1121,31 @@ def _build_combat_dict_from_ref(rc, row):
     }
 
 
+@app.route("/api/ref/stat-chain/<int:ref_unit_id>")
+def api_ref_stat_chain(ref_unit_id):
+    """Get stat chain and techs applied for a single ref unit (for hover cards)."""
+    ref_conn = get_ref_db()
+    rc = ref_conn.cursor()
+    rc.execute(
+        """SELECT step_order, tech_name, tech_type,
+                  hp, attack, melee_armor, pierce_armor,
+                  speed, range_val, reload_time,
+                  cost_food, cost_wood, cost_gold
+           FROM ref_stat_chain WHERE ref_unit_id=? ORDER BY step_order""",
+        (ref_unit_id,),
+    )
+    chain = [dict(row) for row in rc.fetchall()]
+    rc.execute(
+        """SELECT tech_name, tech_type, building, age_available,
+                  effect_description
+           FROM ref_techs_applied WHERE ref_unit_id=? ORDER BY id""",
+        (ref_unit_id,),
+    )
+    techs = [dict(row) for row in rc.fetchall()]
+    ref_conn.close()
+    return jsonify({"stat_chain": chain, "techs_applied": techs})
+
+
 @app.route("/api/ref/combat-unit/<civ_name>/<unit_slug>")
 def api_ref_combat_unit(civ_name, unit_slug):
     """Get combat-ready stats for a unit from reference DB (for battle simulator)."""
@@ -1471,7 +1496,14 @@ UNIT_LINES = {
             "Wei": ("xianbei_raider_wei", "xianbei_raider_wei"),
         },
     },
+    "infantry": {
+        "name": "General Infantry Effectiveness",
+        "building": "Barracks",
+        "sub_lines": ["militia", "spear", "shock_infantry"],
+    },
 }
+
+INFANTRY_LINE_SLUGS = {"militia", "spear", "shock_infantry"}
 
 
 # ===== Pre-computed battle scores (loaded from battle_scores.json) =====
@@ -1514,6 +1546,9 @@ def api_ref_unit_line(line_slug):
         upgrade_cost_food, upgrade_cost_wood, upgrade_cost_gold,
         applied_bonuses_summary"""
 
+    # Determine which sub-lines to fetch (virtual "infantry" or single line)
+    sub_lines = line.get("sub_lines", [line_slug])
+
     result = {
         "line_name": line["name"],
         "building": line["building"],
@@ -1521,12 +1556,14 @@ def api_ref_unit_line(line_slug):
         "imperial": [],
     }
 
-    # Load militia role scores from DB (keyed by "civ_name|unit_slug")
+    # Load infantry role scores from DB (keyed by "civ_name|unit_slug")
     _db_role_scores = {}
-    if line_slug == "militia":
+    _score_line_slugs = [s for s in sub_lines if s in INFANTRY_LINE_SLUGS]
+    if _score_line_slugs:
+        placeholders = ",".join("?" for _ in _score_line_slugs)
         rc.execute(
-            "SELECT civ_name, unit_slug, score_type, score_value FROM battle_scores WHERE line_slug=?",
-            (line_slug,),
+            f"SELECT civ_name, unit_slug, score_type, score_value FROM battle_scores WHERE line_slug IN ({placeholders})",
+            _score_line_slugs,
         )
         for bs_row in rc.fetchall():
             uk = f"{bs_row['civ_name']}|{bs_row['unit_slug']}"
@@ -1534,17 +1571,16 @@ def api_ref_unit_line(line_slug):
                 "score_value"
             ]
 
-    def _attach_scores(entry, age_key):
-        """Attach battle scores: DB role scores for militia, JSON for other lines."""
+    def _attach_scores(entry, age_key, sub_slug):
+        """Attach battle scores: DB role scores for infantry, JSON for other lines."""
         unit_key = f"{entry['civ_name']}|{entry['unit_slug']}"
-        if _db_role_scores:
-            # Militia: role scores from DB, no round-robin/benchmark
+        if sub_slug in INFANTRY_LINE_SLUGS and _db_role_scores:
             rs = _db_role_scores.get(unit_key, {})
             for rk, rv in rs.items():
                 entry[rk] = rv
         else:
             # Other lines: round-robin + benchmark from JSON
-            line_key = f"{line_slug}|{age_key}"
+            line_key = f"{sub_slug}|{age_key}"
             rr = _ROUND_ROBIN.get(line_key, {}).get(unit_key, {})
             entry["score_30v30"] = rr.get("score_30v30", -999)
             entry["score_3k"] = rr.get("score_3k", -999)
@@ -1599,68 +1635,80 @@ def api_ref_unit_line(line_slug):
             parts.append(label.format(v=v))
         entry["special_abilities"] = "; ".join(parts) if parts else ""
 
-    # Fetch standard units for each age (supports multi-slug lines)
-    for age_key, slug_key, slugs_key, db_age in [
-        ("castle", "castle_slug", "castle_slugs", "Castle"),
-        ("imperial", "imperial_slug", "imperial_slugs", "Imperial"),
-    ]:
-        slugs = line.get(slugs_key, [line[slug_key]] if line[slug_key] else [])
-        for slug in slugs:
+    # Fetch units for each sub-line
+    for sub_slug in sub_lines:
+        sub_line = UNIT_LINES[sub_slug]
+
+        # Standard units for each age
+        for age_key, slug_key, slugs_key, db_age in [
+            ("castle", "castle_slug", "castle_slugs", "Castle"),
+            ("imperial", "imperial_slug", "imperial_slugs", "Imperial"),
+        ]:
+            slugs = sub_line.get(
+                slugs_key, [sub_line.get(slug_key)] if sub_line.get(slug_key) else []
+            )
+            for slug in slugs:
+                rc.execute(
+                    f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND age=? ORDER BY civ_name",
+                    (slug, db_age),
+                )
+                for row in rc.fetchall():
+                    entry = dict(row)
+                    entry["is_unique"] = False
+                    entry["line_slug"] = sub_slug
+                    _attach_scores(entry, age_key, sub_slug)
+                    _attach_special(entry)
+                    result[age_key].append(entry)
+
+        # Extra standard units
+        for extra_slug in sub_line.get("extra_castle_slugs", []):
             rc.execute(
                 f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND age=? ORDER BY civ_name",
-                (slug, db_age),
+                (extra_slug, "Castle"),
             )
             for row in rc.fetchall():
                 entry = dict(row)
                 entry["is_unique"] = False
-                _attach_scores(entry, age_key)
+                entry["line_slug"] = sub_slug
+                _attach_scores(entry, "castle", sub_slug)
                 _attach_special(entry)
-                result[age_key].append(entry)
+                result["castle"].append(entry)
 
-    # Fetch extra standard units (e.g. Elephant Archer in elephant line, Hand Cannoneer in archer line)
-    for extra_slug in line.get("extra_castle_slugs", []):
-        rc.execute(
-            f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND age=? ORDER BY civ_name",
-            (extra_slug, "Castle"),
-        )
-        for row in rc.fetchall():
-            entry = dict(row)
-            entry["is_unique"] = False
-            _attach_scores(entry, "castle")
-            _attach_special(entry)
-            result["castle"].append(entry)
-
-    for extra_slug in line.get("extra_imperial_slugs", []):
-        rc.execute(
-            f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND age=? ORDER BY civ_name",
-            (extra_slug, "Imperial"),
-        )
-        for row in rc.fetchall():
-            entry = dict(row)
-            entry["is_unique"] = False
-            _attach_scores(entry, "imperial")
-            _attach_special(entry)
-            result["imperial"].append(entry)
-
-    # Fetch unique units
-    for civ_name, (castle_uu, imperial_uu) in line.get("unique_units", {}).items():
-        for uu_slug, age_key, db_age in [
-            (castle_uu, "castle", "Castle"),
-            (imperial_uu, "imperial", "Imperial"),
-        ]:
-            if not uu_slug:
-                continue
+        for extra_slug in sub_line.get("extra_imperial_slugs", []):
             rc.execute(
-                f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND civ_name=? AND age=?",
-                (uu_slug, civ_name, db_age),
+                f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND age=? ORDER BY civ_name",
+                (extra_slug, "Imperial"),
             )
-            row = rc.fetchone()
-            if row:
+            for row in rc.fetchall():
                 entry = dict(row)
-                entry["is_unique"] = True
-                _attach_scores(entry, age_key)
+                entry["is_unique"] = False
+                entry["line_slug"] = sub_slug
+                _attach_scores(entry, "imperial", sub_slug)
                 _attach_special(entry)
-                result[age_key].append(entry)
+                result["imperial"].append(entry)
+
+        # Unique units
+        for civ_name, (castle_uu, imperial_uu) in sub_line.get(
+            "unique_units", {}
+        ).items():
+            for uu_slug, age_key, db_age in [
+                (castle_uu, "castle", "Castle"),
+                (imperial_uu, "imperial", "Imperial"),
+            ]:
+                if not uu_slug:
+                    continue
+                rc.execute(
+                    f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND civ_name=? AND age=?",
+                    (uu_slug, civ_name, db_age),
+                )
+                row = rc.fetchone()
+                if row:
+                    entry = dict(row)
+                    entry["is_unique"] = True
+                    entry["line_slug"] = sub_slug
+                    _attach_scores(entry, age_key, sub_slug)
+                    _attach_special(entry)
+                    result[age_key].append(entry)
 
     ref_conn.close()
     return jsonify(result)

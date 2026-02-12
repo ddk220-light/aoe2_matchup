@@ -3131,6 +3131,56 @@
                     });
 
                 simulation.render();
+
+                // Handle URL params for deep-linking from ranking hover cards
+                const params = new URLSearchParams(window.location.search);
+                if (params.has("civ1") && params.has("unit1")) {
+                    const civ1 = params.get("civ1");
+                    const unit1 = params.get("unit1");
+                    await selectCiv(1, civ1);
+                    // Find unit in civ data by slug
+                    if (teamState[1].civData) {
+                        const age = teamState[1].age;
+                        const units = teamState[1].civData[age] || [];
+                        const found = units.find((u) => u.unit_slug === unit1);
+                        if (found)
+                            selectUnit(1, found.unit_slug, found.unit_name);
+                    }
+                }
+                if (params.has("civ2") && params.has("unit2")) {
+                    const civ2 = params.get("civ2");
+                    const unit2 = params.get("unit2");
+                    await selectCiv(2, civ2);
+                    if (teamState[2].civData) {
+                        const age = teamState[2].age;
+                        const units = teamState[2].civData[age] || [];
+                        const found = units.find((u) => u.unit_slug === unit2);
+                        if (found)
+                            selectUnit(2, found.unit_slug, found.unit_name);
+                    }
+                }
+                if (params.has("mode")) {
+                    const mode = params.get("mode");
+                    const radio = document.querySelector(
+                        `input[name="armyMode"][value="${mode}"]`,
+                    );
+                    if (radio) {
+                        radio.checked = true;
+                        radio.dispatchEvent(new Event("change"));
+                    }
+                    if (params.has("resources")) {
+                        const resEl = document.getElementById("totalResources");
+                        if (resEl) resEl.value = params.get("resources");
+                    }
+                    if (params.has("count1")) {
+                        const c1 = document.getElementById("team1Count");
+                        if (c1) c1.value = params.get("count1");
+                    }
+                    if (params.has("count2")) {
+                        const c2 = document.getElementById("team2Count");
+                        if (c2) c2.value = params.get("count2");
+                    }
+                }
             });
 
             async function startBattle() {

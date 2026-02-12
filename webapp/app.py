@@ -13,6 +13,7 @@ app.json.sort_keys = False
 # Database paths
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_units.db")
 REF_DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
+APP_DB_PATH = os.path.join(os.path.dirname(__file__), "app_data.db")
 
 # Age definitions
 AGES = {
@@ -23,8 +24,15 @@ AGES = {
 
 
 def get_db():
-    """Get a database connection with row factory."""
+    """Get a database connection with row factory (legacy, for non-migrated endpoints)."""
     conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def get_app_db():
+    """Get a connection to the app data database (comments, verifications)."""
+    conn = sqlite3.connect(APP_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -690,7 +698,7 @@ def api_combat_unit(civ_name, unit_slug):
 @app.route("/api/armor-classes")
 def api_armor_classes():
     """Get all armor class names."""
-    conn = get_db()
+    conn = get_ref_db()
     cursor = conn.cursor()
     cursor.execute("SELECT id, name FROM armor_classes ORDER BY id")
     classes = {str(row["id"]): row["name"] for row in cursor.fetchall()}
@@ -852,14 +860,11 @@ def analysis():
 @app.route("/api/ref/armor-classes")
 def api_ref_armor_classes():
     """Get armor class ID→name mapping from reference DB."""
-    ref_conn = get_ref_db()
-    # Use the main DB's armor_classes table
-    conn = get_db()
+    conn = get_ref_db()
     cursor = conn.cursor()
     cursor.execute("SELECT id, name FROM armor_classes ORDER BY id")
     classes = {str(row["id"]): row["name"] for row in cursor.fetchall()}
     conn.close()
-    ref_conn.close()
     return jsonify(classes)
 
 
@@ -887,11 +892,8 @@ def api_ref_civ(civ_name):
     main_conn.close()
 
     # Get armor class names
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, name FROM armor_classes ORDER BY id")
-    ac_names = {str(row["id"]): row["name"] for row in cursor.fetchall()}
-    conn.close()
+    rc.execute("SELECT id, name FROM armor_classes ORDER BY id")
+    ac_names = {str(row["id"]): row["name"] for row in rc.fetchall()}
 
     units = []
     for row in units_rows:
@@ -1029,51 +1031,14 @@ def api_ref_civ(civ_name):
 
 
 def _build_combat_dict_from_ref(rc, row):
-    """Build a dict from a ref_units row + related tables, compatible with prepare_combat_unit().
+    """Build a dict from a ref_units row, compatible with prepare_combat_unit().
 
-    Args:
-        rc: sqlite3 cursor on the reference DB
-        row: sqlite3.Row from ref_units table
-
-    Returns:
-        dict with fields matching prepare_combat_unit() expectations
+    All combat properties are now inline on ref_units — no extra queries needed.
     """
-    uid = row["id"]
-
-    # Get special effects as flat dict
-    rc.execute(
-        "SELECT property_name, property_value FROM ref_special_effects WHERE ref_unit_id=?",
-        (uid,),
-    )
-    special = {}
-    for s in rc.fetchall():
-        try:
-            special[s["property_name"]] = float(s["property_value"])
-        except (ValueError, TypeError):
-            special[s["property_name"]] = s["property_value"]
-
-    # Get projectile data
-    rc.execute(
-        """SELECT projectile_type, projectile_count, projectile_speed,
-                  attacks_json, blast_radius, is_siege_projectile
-           FROM ref_projectiles WHERE ref_unit_id=?""",
-        (uid,),
-    )
-    primary_proj = None
-    extra_proj = None
-    charge_proj = None
-    for p in rc.fetchall():
-        if p["projectile_type"] == "primary":
-            primary_proj = dict(p)
-        elif p["projectile_type"] == "extra":
-            extra_proj = dict(p)
-        elif p["projectile_type"] == "charge":
-            charge_proj = dict(p)
-
     reload_time = row["final_reload_time"] or 2.0
     attack_speed = 1.0 / reload_time if reload_time > 0 else 0.5
 
-    result = {
+    return {
         "slug": row["unit_slug"],
         "unit_name": row["unit_name"],
         "unit_category": "military",
@@ -1094,134 +1059,66 @@ def _build_combat_dict_from_ref(rc, row):
         "upgrade_cost_gold": row["upgrade_cost_gold"] or 0,
         "attacks_json": row["final_attacks_json"],
         "armors_json": row["final_armors_json"],
-        "min_attack_range": row["min_range"] or 0,
-        # From projectiles
         "accuracy": row["final_accuracy"] or 100,
-        "projectile_speed": (
-            primary_proj["projectile_speed"]
-            if primary_proj and primary_proj["projectile_speed"]
-            else row["projectile_speed"] or 0
-        ),
-        "is_siege_projectile": (
-            primary_proj["is_siege_projectile"] if primary_proj else 0
-        ),
-        "splash_radius": special.get("splash_radius", 0),
-        "extra_projectiles": extra_proj["projectile_count"] if extra_proj else 0,
-        "extra_projectile_attacks_json": (
-            extra_proj["attacks_json"] if extra_proj else None
-        ),
-        "trample_percent": special.get("trample_percent", 0),
-        "trample_radius": special.get("trample_radius", 0),
-        "trample_flat_damage": special.get("trample_flat_damage", 0),
-        "hp_regen": special.get("hp_regen", 0),
-        "charge_projectile_count": charge_proj["projectile_count"]
-        if charge_proj
-        else 0,
-        "charge_projectile_speed": charge_proj["projectile_speed"]
-        if charge_proj
-        else 0,
-        "charge_projectile_attacks_json": charge_proj["attacks_json"]
-        if charge_proj
-        else None,
-        "charge_attack_range": float(special.get("charge_attack_range", 0)),
-        "charge_ignores_armor": int(special.get("charge_ignores_armor", 0)),
-        # Special combat properties (from ref_special_effects or defaults)
-        "ignores_pierce_armor": int(special.get("ignores_pierce_armor", 0)),
-        "ignores_melee_armor": int(special.get("ignores_melee_armor", 0)),
-        "bonus_damage_reduction": special.get("bonus_damage_reduction", 0),
-        "splash_on_hit_radius": special.get("splash_on_hit_radius", 0),
-        "splash_on_hit_fraction": special.get("splash_on_hit_fraction", 1.0),
-        "dodge_shield_max": int(special.get("dodge_shield_max", 0)),
-        "dodge_shield_recharge": special.get("dodge_shield_recharge", 0),
-        "bleed_dps": special.get("bleed_dps", 0),
-        "bleed_duration": special.get("bleed_duration", 0),
-        "block_first_melee": int(special.get("block_first_melee", 0)),
-        "attack_bonus_per_kill": int(special.get("attack_bonus_per_kill", 0)),
+        "min_attack_range": row["min_range"] or 0,
+        "projectile_speed": row["projectile_speed"] or 0,
+        "is_siege_projectile": row["is_siege_projectile"] or 0,
+        "splash_radius": row["splash_radius"] or 0,
+        "extra_projectiles": row["extra_projectiles"] or 0,
+        "extra_projectile_attacks_json": row["extra_projectile_attacks_json"],
+        "trample_percent": row["trample_percent"] or 0,
+        "trample_radius": row["trample_radius"] or 0,
+        "trample_flat_damage": row["trample_flat_damage"] or 0,
+        "hp_regen": row["hp_regen"] or 0,
+        "charge_projectile_count": row["charge_projectile_count"] or 0,
+        "charge_projectile_speed": row["charge_projectile_speed"] or 0,
+        "charge_projectile_attacks_json": row["charge_projectile_attacks_json"],
+        "charge_attack_range": float(row["charge_attack_range"] or 0),
+        "charge_ignores_armor": int(row["charge_ignores_armor"] or 0),
+        "ignores_pierce_armor": int(row["ignores_pierce_armor"] or 0),
+        "ignores_melee_armor": int(row["ignores_melee_armor"] or 0),
+        "bonus_damage_reduction": row["bonus_damage_reduction"] or 0,
+        "splash_on_hit_radius": row["splash_on_hit_radius"] or 0,
+        "splash_on_hit_fraction": row["splash_on_hit_fraction"] or 1.0,
+        "dodge_shield_max": int(row["dodge_shield_max"] or 0),
+        "dodge_shield_recharge": row["dodge_shield_recharge"] or 0,
+        "bleed_dps": row["bleed_dps"] or 0,
+        "bleed_duration": row["bleed_duration"] or 0,
+        "block_first_melee": int(row["block_first_melee"] or 0),
+        "attack_bonus_per_kill": int(row["attack_bonus_per_kill"] or 0),
         "first_attack_extra_projectiles": int(
-            special.get("first_attack_extra_projectiles", 0)
+            row["first_attack_extra_projectiles"] or 0
         ),
-        "hp_regen": special.get("hp_regen", 0),
-        "pass_through_percent": special.get("pass_through_percent", 0),
-        "hp_transform_threshold": special.get("hp_transform_threshold", 0),
-        "pop_space": special.get("pop_space", 1.0),
-        "armor_strip_per_hit": int(special.get("armor_strip_per_hit", 0)),
-        "charge_attack_melee": int(special.get("charge_attack_melee", 0)),
-        "charge_recharge_time": special.get("charge_recharge_time", 0),
-        "attack_bonus_nearby": int(special.get("attack_bonus_nearby", 0)),
-        "nearby_bonus_count": int(special.get("nearby_bonus_count", 0)),
-        "damage_reflect_percent": special.get("damage_reflect_percent", 0),
-        "bonus_hp_nearby": int(special.get("bonus_hp_nearby", 0)),
-        "nearby_hp_bonus_count": int(special.get("nearby_hp_bonus_count", 0)),
-        # Dismount/transform: enriched from main DB below
-        "dismount_hp": None,
-        "dismount_attack": None,
-        "dismount_melee_armor": None,
-        "dismount_pierce_armor": None,
-        "dismount_attack_speed": None,
-        "dismount_attack_delay": None,
-        "dismount_movement_speed": None,
-        "dismount_attacks_json": None,
-        "dismount_armors_json": None,
-        "transform_hp": None,
-        "transform_attack": None,
-        "transform_melee_armor": None,
-        "transform_pierce_armor": None,
-        "transform_attack_speed": None,
-        "transform_attack_delay": None,
-        "transform_movement_speed": None,
-        "transform_attacks_json": None,
-        "transform_armors_json": None,
+        "pass_through_percent": row["pass_through_percent"] or 0,
+        "hp_transform_threshold": row["hp_transform_threshold"] or 0,
+        "pop_space": row["pop_space"] or 1.0,
+        "armor_strip_per_hit": int(row["armor_strip_per_hit"] or 0),
+        "charge_attack_melee": int(row["charge_attack_melee"] or 0),
+        "charge_recharge_time": row["charge_recharge_time"] or 0,
+        "attack_bonus_nearby": 0,
+        "nearby_bonus_count": 0,
+        "damage_reflect_percent": row["damage_reflect_percent"] or 0,
+        "bonus_hp_nearby": 0,
+        "nearby_hp_bonus_count": 0,
+        "dismount_hp": row["dismount_hp"],
+        "dismount_attack": row["dismount_attack"],
+        "dismount_melee_armor": row["dismount_melee_armor"],
+        "dismount_pierce_armor": row["dismount_pierce_armor"],
+        "dismount_attack_speed": row["dismount_attack_speed"],
+        "dismount_attack_delay": row["dismount_attack_delay"],
+        "dismount_movement_speed": row["dismount_movement_speed"],
+        "dismount_attacks_json": row["dismount_attacks_json"],
+        "dismount_armors_json": row["dismount_armors_json"],
+        "transform_hp": row["transform_hp"],
+        "transform_attack": row["transform_attack"],
+        "transform_melee_armor": row["transform_melee_armor"],
+        "transform_pierce_armor": row["transform_pierce_armor"],
+        "transform_attack_speed": row["transform_attack_speed"],
+        "transform_attack_delay": row["transform_attack_delay"],
+        "transform_movement_speed": row["transform_movement_speed"],
+        "transform_attacks_json": row["transform_attacks_json"],
+        "transform_armors_json": row["transform_armors_json"],
     }
-
-    # Enrich with dismount/transform from main DB if available
-    if "dismount_unit_id" in special or result["hp_transform_threshold"]:
-        try:
-            main_conn = get_db()
-            mc = main_conn.cursor()
-            mc.execute(
-                """SELECT dismount_hp, dismount_attack, dismount_melee_armor,
-                          dismount_pierce_armor, dismount_attack_speed,
-                          dismount_attack_delay, dismount_movement_speed,
-                          dismount_attacks_json, dismount_armors_json,
-                          transform_hp, transform_attack, transform_melee_armor,
-                          transform_pierce_armor, transform_attack_speed,
-                          transform_attack_delay, transform_movement_speed,
-                          transform_attacks_json, transform_armors_json
-                   FROM unit_stats us
-                   JOIN units u ON us.unit_id = u.id
-                   WHERE u.slug=? AND us.has_unit=1
-                   LIMIT 1""",
-                (row["unit_slug"],),
-            )
-            mrow = mc.fetchone()
-            if mrow:
-                for col in [
-                    "dismount_hp",
-                    "dismount_attack",
-                    "dismount_melee_armor",
-                    "dismount_pierce_armor",
-                    "dismount_attack_speed",
-                    "dismount_attack_delay",
-                    "dismount_movement_speed",
-                    "dismount_attacks_json",
-                    "dismount_armors_json",
-                    "transform_hp",
-                    "transform_attack",
-                    "transform_melee_armor",
-                    "transform_pierce_armor",
-                    "transform_attack_speed",
-                    "transform_attack_delay",
-                    "transform_movement_speed",
-                    "transform_attacks_json",
-                    "transform_armors_json",
-                ]:
-                    if mrow[col] is not None:
-                        result[col] = mrow[col]
-            main_conn.close()
-        except Exception:
-            pass
-
-    return result
 
 
 @app.route("/api/ref/combat-unit/<civ_name>/<unit_slug>")

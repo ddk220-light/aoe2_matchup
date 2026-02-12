@@ -536,37 +536,10 @@ def _simulate_pop_benchmark(unit, bench_unit, is_imperial):
 
 
 def build_combat_dict(rc, row):
-    """Build a dict from a ref_units row, compatible with prepare_combat_unit()."""
-    uid = row["id"]
+    """Build a dict from a ref_units row, compatible with prepare_combat_unit().
 
-    rc.execute(
-        "SELECT property_name, property_value FROM ref_special_effects WHERE ref_unit_id=?",
-        (uid,),
-    )
-    special = {}
-    for s in rc.fetchall():
-        try:
-            special[s["property_name"]] = float(s["property_value"])
-        except (ValueError, TypeError):
-            special[s["property_name"]] = s["property_value"]
-
-    rc.execute(
-        """SELECT projectile_type, projectile_count, projectile_speed,
-                  attacks_json, blast_radius, is_siege_projectile
-           FROM ref_projectiles WHERE ref_unit_id=?""",
-        (uid,),
-    )
-    primary_proj = None
-    extra_proj = None
-    charge_proj = None
-    for p in rc.fetchall():
-        if p["projectile_type"] == "primary":
-            primary_proj = dict(p)
-        elif p["projectile_type"] == "extra":
-            extra_proj = dict(p)
-        elif p["projectile_type"] == "charge":
-            charge_proj = dict(p)
-
+    All combat properties are now inline on ref_units — no extra queries needed.
+    """
     reload_time = row["final_reload_time"] or 2.0
     attack_speed = 1.0 / reload_time if reload_time > 0 else 0.5
 
@@ -593,105 +566,65 @@ def build_combat_dict(rc, row):
         "armors_json": row["final_armors_json"],
         "accuracy": row["final_accuracy"] or 100,
         "min_attack_range": row["min_range"] or 0,
-        "projectile_speed": (
-            primary_proj["projectile_speed"]
-            if primary_proj and primary_proj["projectile_speed"]
-            else row["projectile_speed"] or 0
-        ),
-        "is_siege_projectile": (
-            primary_proj["is_siege_projectile"] if primary_proj else 0
-        ),
-        "splash_radius": special.get("splash_radius", 0),
-        "extra_projectiles": extra_proj["projectile_count"] if extra_proj else 0,
-        "extra_projectile_attacks_json": (
-            extra_proj["attacks_json"] if extra_proj else None
-        ),
-        "trample_percent": special.get("trample_percent", 0),
-        "trample_radius": special.get("trample_radius", 0),
-        "trample_flat_damage": special.get("trample_flat_damage", 0),
-        "hp_regen": special.get("hp_regen", 0),
-        "charge_projectile_count": (
-            charge_proj["projectile_count"] if charge_proj else 0
-        ),
-        "charge_projectile_speed": (
-            charge_proj["projectile_speed"] if charge_proj else 0
-        ),
-        "charge_projectile_attacks_json": (
-            charge_proj["attacks_json"] if charge_proj else None
-        ),
-        "charge_attack_range": float(special.get("charge_attack_range", 0)),
-        "charge_ignores_armor": int(special.get("charge_ignores_armor", 0)),
-        "ignores_pierce_armor": int(special.get("ignores_pierce_armor", 0)),
-        "ignores_melee_armor": int(special.get("ignores_melee_armor", 0)),
-        "bonus_damage_reduction": special.get("bonus_damage_reduction", 0),
-        "splash_on_hit_radius": special.get("splash_on_hit_radius", 0),
-        "splash_on_hit_fraction": special.get("splash_on_hit_fraction", 1.0),
-        "dodge_shield_max": int(special.get("dodge_shield_max", 0)),
-        "dodge_shield_recharge": special.get("dodge_shield_recharge", 0),
-        "bleed_dps": special.get("bleed_dps", 0),
-        "bleed_duration": special.get("bleed_duration", 0),
-        "block_first_melee": int(special.get("block_first_melee", 0)),
-        "attack_bonus_per_kill": int(special.get("attack_bonus_per_kill", 0)),
+        "projectile_speed": row["projectile_speed"] or 0,
+        "is_siege_projectile": row["is_siege_projectile"] or 0,
+        "splash_radius": row["splash_radius"] or 0,
+        "extra_projectiles": row["extra_projectiles"] or 0,
+        "extra_projectile_attacks_json": row["extra_projectile_attacks_json"],
+        "trample_percent": row["trample_percent"] or 0,
+        "trample_radius": row["trample_radius"] or 0,
+        "trample_flat_damage": row["trample_flat_damage"] or 0,
+        "hp_regen": row["hp_regen"] or 0,
+        "charge_projectile_count": row["charge_projectile_count"] or 0,
+        "charge_projectile_speed": row["charge_projectile_speed"] or 0,
+        "charge_projectile_attacks_json": row["charge_projectile_attacks_json"],
+        "charge_attack_range": float(row["charge_attack_range"] or 0),
+        "charge_ignores_armor": int(row["charge_ignores_armor"] or 0),
+        "ignores_pierce_armor": int(row["ignores_pierce_armor"] or 0),
+        "ignores_melee_armor": int(row["ignores_melee_armor"] or 0),
+        "bonus_damage_reduction": row["bonus_damage_reduction"] or 0,
+        "splash_on_hit_radius": row["splash_on_hit_radius"] or 0,
+        "splash_on_hit_fraction": row["splash_on_hit_fraction"] or 1.0,
+        "dodge_shield_max": int(row["dodge_shield_max"] or 0),
+        "dodge_shield_recharge": row["dodge_shield_recharge"] or 0,
+        "bleed_dps": row["bleed_dps"] or 0,
+        "bleed_duration": row["bleed_duration"] or 0,
+        "block_first_melee": int(row["block_first_melee"] or 0),
+        "attack_bonus_per_kill": int(row["attack_bonus_per_kill"] or 0),
         "first_attack_extra_projectiles": int(
-            special.get("first_attack_extra_projectiles", 0)
+            row["first_attack_extra_projectiles"] or 0
         ),
-        "pass_through_percent": special.get("pass_through_percent", 0),
-        "hp_transform_threshold": special.get("hp_transform_threshold", 0),
-        "pop_space": special.get("pop_space", 1.0),
-        "armor_strip_per_hit": int(special.get("armor_strip_per_hit", 0)),
-        "charge_attack_melee": int(special.get("charge_attack_melee", 0)),
-        "charge_recharge_time": special.get("charge_recharge_time", 0),
-        "attack_bonus_nearby": int(special.get("attack_bonus_nearby", 0)),
-        "nearby_bonus_count": int(special.get("nearby_bonus_count", 0)),
-        "damage_reflect_percent": special.get("damage_reflect_percent", 0),
-        "bonus_hp_nearby": int(special.get("bonus_hp_nearby", 0)),
-        "nearby_hp_bonus_count": int(special.get("nearby_hp_bonus_count", 0)),
-        # Dismount on death (Konnik): from hardcoded config via special effects
-        "dismount_hp": (
-            int(special["dismount_hp"]) if "dismount_hp" in special else None
-        ),
-        "dismount_attack": (
-            int(special["dismount_attack"]) if "dismount_attack" in special else None
-        ),
-        "dismount_melee_armor": (
-            int(special["dismount_melee_armor"])
-            if "dismount_melee_armor" in special
-            else None
-        ),
-        "dismount_pierce_armor": (
-            int(special["dismount_pierce_armor"])
-            if "dismount_pierce_armor" in special
-            else None
-        ),
-        "dismount_attack_speed": special.get("dismount_attack_speed"),
-        "dismount_attack_delay": special.get("dismount_attack_delay"),
-        "dismount_movement_speed": special.get("dismount_movement_speed"),
-        "dismount_attacks_json": special.get("dismount_attacks_json"),
-        "dismount_armors_json": special.get("dismount_armors_json"),
+        "pass_through_percent": row["pass_through_percent"] or 0,
+        "hp_transform_threshold": row["hp_transform_threshold"] or 0,
+        "pop_space": row["pop_space"] or 1.0,
+        "armor_strip_per_hit": int(row["armor_strip_per_hit"] or 0),
+        "charge_attack_melee": int(row["charge_attack_melee"] or 0),
+        "charge_recharge_time": row["charge_recharge_time"] or 0,
+        "attack_bonus_nearby": 0,  # TODO: add to ref_units if needed
+        "nearby_bonus_count": 0,
+        "damage_reflect_percent": row["damage_reflect_percent"] or 0,
+        "bonus_hp_nearby": 0,
+        "nearby_hp_bonus_count": 0,
+        # Dismount on death (Konnik)
+        "dismount_hp": row["dismount_hp"],
+        "dismount_attack": row["dismount_attack"],
+        "dismount_melee_armor": row["dismount_melee_armor"],
+        "dismount_pierce_armor": row["dismount_pierce_armor"],
+        "dismount_attack_speed": row["dismount_attack_speed"],
+        "dismount_attack_delay": row["dismount_attack_delay"],
+        "dismount_movement_speed": row["dismount_movement_speed"],
+        "dismount_attacks_json": row["dismount_attacks_json"],
+        "dismount_armors_json": row["dismount_armors_json"],
         # Transform on HP threshold (Jian Swordsman)
-        "transform_hp": int(special["transform_hp"])
-        if "transform_hp" in special
-        else None,
-        "transform_attack": int(special.get("transform_attack", 0))
-        if "transform_hp" in special
-        else None,
-        "transform_melee_armor": int(special.get("transform_melee_armor", 0))
-        if "transform_hp" in special
-        else None,
-        "transform_pierce_armor": int(special.get("transform_pierce_armor", 0))
-        if "transform_hp" in special
-        else None,
-        "transform_attack_speed": special.get("transform_attack_speed", 0)
-        if "transform_hp" in special
-        else None,
-        "transform_attack_delay": special.get("transform_attack_delay", 0)
-        if "transform_hp" in special
-        else None,
-        "transform_movement_speed": special.get("transform_movement_speed")
-        if "transform_hp" in special
-        else None,
-        "transform_attacks_json": special.get("transform_attacks_json"),
-        "transform_armors_json": special.get("transform_armors_json"),
+        "transform_hp": row["transform_hp"],
+        "transform_attack": row["transform_attack"],
+        "transform_melee_armor": row["transform_melee_armor"],
+        "transform_pierce_armor": row["transform_pierce_armor"],
+        "transform_attack_speed": row["transform_attack_speed"],
+        "transform_attack_delay": row["transform_attack_delay"],
+        "transform_movement_speed": row["transform_movement_speed"],
+        "transform_attacks_json": row["transform_attacks_json"],
+        "transform_armors_json": row["transform_armors_json"],
     }
 
 

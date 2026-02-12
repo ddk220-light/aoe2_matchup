@@ -241,7 +241,61 @@ def generate_reference_database(analyzer):
             applied_bonuses_summary TEXT,
             upgrade_cost_food INTEGER DEFAULT 0,
             upgrade_cost_wood INTEGER DEFAULT 0,
-            upgrade_cost_gold INTEGER DEFAULT 0
+            upgrade_cost_gold INTEGER DEFAULT 0,
+            -- Combat properties (inline for direct sim access)
+            extra_projectiles INTEGER DEFAULT 0,
+            extra_projectile_attacks_json TEXT,
+            first_attack_extra_projectiles INTEGER DEFAULT 0,
+            charge_projectile_count INTEGER DEFAULT 0,
+            charge_projectile_attacks_json TEXT,
+            charge_projectile_speed REAL DEFAULT 0,
+            charge_attack_range REAL DEFAULT 0,
+            charge_ignores_armor INTEGER DEFAULT 0,
+            ignores_melee_armor INTEGER DEFAULT 0,
+            ignores_pierce_armor INTEGER DEFAULT 0,
+            trample_percent REAL DEFAULT 0,
+            trample_radius REAL DEFAULT 0,
+            trample_flat_damage INTEGER DEFAULT 0,
+            bonus_damage_reduction REAL DEFAULT 0,
+            splash_on_hit_radius REAL DEFAULT 0,
+            splash_on_hit_fraction REAL DEFAULT 1.0,
+            dodge_shield_max INTEGER DEFAULT 0,
+            dodge_shield_recharge REAL DEFAULT 0,
+            bleed_dps REAL DEFAULT 0,
+            bleed_duration REAL DEFAULT 0,
+            block_first_melee INTEGER DEFAULT 0,
+            attack_bonus_per_kill REAL DEFAULT 0,
+            hp_transform_threshold REAL DEFAULT 0,
+            hp_regen REAL DEFAULT 0,
+            pass_through_percent REAL DEFAULT 0,
+            pop_space REAL DEFAULT 1.0,
+            armor_strip_per_hit INTEGER DEFAULT 0,
+            charge_attack_melee INTEGER DEFAULT 0,
+            charge_recharge_time REAL DEFAULT 0,
+            damage_reflect_percent REAL DEFAULT 0,
+            splash_radius REAL DEFAULT 0,
+            is_siege_projectile INTEGER DEFAULT 0,
+            -- Dismount on death (Konnik etc.)
+            dismount_unit_id INTEGER DEFAULT 0,
+            dismount_hp INTEGER,
+            dismount_attack INTEGER,
+            dismount_melee_armor INTEGER,
+            dismount_pierce_armor INTEGER,
+            dismount_attack_speed REAL,
+            dismount_attack_delay REAL,
+            dismount_movement_speed REAL,
+            dismount_attacks_json TEXT,
+            dismount_armors_json TEXT,
+            -- Transform on HP threshold (Jian Swordsman etc.)
+            transform_hp INTEGER,
+            transform_attack INTEGER,
+            transform_melee_armor INTEGER,
+            transform_pierce_armor INTEGER,
+            transform_attack_speed REAL,
+            transform_attack_delay REAL,
+            transform_movement_speed REAL,
+            transform_attacks_json TEXT,
+            transform_armors_json TEXT
         );
         CREATE TABLE ref_techs_applied (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -290,7 +344,15 @@ def generate_reference_database(analyzer):
             is_siege_projectile INTEGER DEFAULT 0,
             FOREIGN KEY (ref_unit_id) REFERENCES ref_units(id)
         );
+        CREATE TABLE armor_classes (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL
+        );
     """)
+
+    # Populate armor_classes from extracted data
+    for ac in armor_class_names.items():
+        cursor.execute("INSERT INTO armor_classes (id, name) VALUES (?, ?)", ac)
 
     # Class names from unit data
     class_names = {}
@@ -913,6 +975,124 @@ def generate_reference_database(analyzer):
                     0,
                 ),
             )
+
+        # Update ref_units with combat properties (inline columns for direct sim access)
+        _has_transform = combat_props.get("transform_hp") or combat_props.get(
+            "hp_transform_threshold"
+        )
+        cursor.execute(
+            """UPDATE ref_units SET
+               extra_projectiles=?, extra_projectile_attacks_json=?,
+               first_attack_extra_projectiles=?,
+               charge_projectile_count=?, charge_projectile_attacks_json=?,
+               charge_projectile_speed=?, charge_attack_range=?, charge_ignores_armor=?,
+               ignores_melee_armor=?, ignores_pierce_armor=?,
+               trample_percent=?, trample_radius=?, trample_flat_damage=?,
+               bonus_damage_reduction=?,
+               splash_on_hit_radius=?, splash_on_hit_fraction=?,
+               dodge_shield_max=?, dodge_shield_recharge=?,
+               bleed_dps=?, bleed_duration=?,
+               block_first_melee=?, attack_bonus_per_kill=?,
+               hp_transform_threshold=?, hp_regen=?, pass_through_percent=?,
+               pop_space=?, armor_strip_per_hit=?,
+               charge_attack_melee=?, charge_recharge_time=?,
+               damage_reflect_percent=?,
+               splash_radius=?, is_siege_projectile=?,
+               dismount_unit_id=?,
+               dismount_hp=?, dismount_attack=?,
+               dismount_melee_armor=?, dismount_pierce_armor=?,
+               dismount_attack_speed=?, dismount_attack_delay=?,
+               dismount_movement_speed=?,
+               dismount_attacks_json=?, dismount_armors_json=?,
+               transform_hp=?, transform_attack=?,
+               transform_melee_armor=?, transform_pierce_armor=?,
+               transform_attack_speed=?, transform_attack_delay=?,
+               transform_movement_speed=?,
+               transform_attacks_json=?, transform_armors_json=?
+               WHERE id=?""",
+            (
+                combat_props.get("extra_projectiles", 0),
+                combat_props.get("extra_projectile_attacks_json"),
+                combat_props.get("first_attack_extra_projectiles", 0),
+                combat_props.get("charge_projectile_count", 0),
+                combat_props.get("charge_projectile_attacks_json"),
+                combat_props.get("charge_projectile_speed", 0),
+                combat_props.get("charge_attack_range", 0),
+                combat_props.get("charge_ignores_armor", 0),
+                combat_props.get("ignores_melee_armor", 0),
+                combat_props.get("ignores_pierce_armor", 0),
+                combat_props.get("trample_percent", 0),
+                combat_props.get("trample_radius", 0),
+                combat_props.get("trample_flat_damage", 0),
+                combat_props.get("bonus_damage_reduction", 0),
+                combat_props.get("splash_on_hit_radius", 0),
+                combat_props.get("splash_on_hit_fraction", 1.0),
+                combat_props.get("dodge_shield_max", 0),
+                combat_props.get("dodge_shield_recharge", 0),
+                combat_props.get("bleed_dps", 0),
+                combat_props.get("bleed_duration", 0),
+                combat_props.get("block_first_melee", 0),
+                combat_props.get("attack_bonus_per_kill", 0),
+                combat_props.get("hp_transform_threshold", 0),
+                combat_props.get("hp_regen", 0),
+                combat_props.get("pass_through_percent", 0),
+                combat_props.get("pop_space", 1.0),
+                combat_props.get("armor_strip_per_hit", 0),
+                combat_props.get("charge_attack_melee", 0),
+                combat_props.get("charge_recharge_time", 0),
+                combat_props.get("damage_reflect_percent", 0),
+                combat_props.get("splash_radius", 0),
+                combat_props.get("is_siege_projectile", 0),
+                combat_props.get("dismount_unit_id", 0),
+                int(combat_props["dismount_hp"])
+                if combat_props.get("dismount_hp")
+                else None,
+                int(combat_props["dismount_attack"])
+                if combat_props.get("dismount_hp")
+                else None,
+                int(combat_props.get("dismount_melee_armor", 0))
+                if combat_props.get("dismount_hp")
+                else None,
+                int(combat_props.get("dismount_pierce_armor", 0))
+                if combat_props.get("dismount_hp")
+                else None,
+                combat_props.get("dismount_attack_speed")
+                if combat_props.get("dismount_hp")
+                else None,
+                combat_props.get("dismount_attack_delay")
+                if combat_props.get("dismount_hp")
+                else None,
+                combat_props.get("dismount_movement_speed")
+                if combat_props.get("dismount_hp")
+                else None,
+                combat_props.get("dismount_attacks_json"),
+                combat_props.get("dismount_armors_json"),
+                int(combat_props["transform_hp"])
+                if _has_transform and combat_props.get("transform_hp")
+                else None,
+                int(combat_props.get("transform_attack", 0))
+                if _has_transform and combat_props.get("transform_hp")
+                else None,
+                int(combat_props.get("transform_melee_armor", 0))
+                if _has_transform and combat_props.get("transform_hp")
+                else None,
+                int(combat_props.get("transform_pierce_armor", 0))
+                if _has_transform and combat_props.get("transform_hp")
+                else None,
+                combat_props.get("transform_attack_speed")
+                if _has_transform and combat_props.get("transform_hp")
+                else None,
+                combat_props.get("transform_attack_delay")
+                if _has_transform and combat_props.get("transform_hp")
+                else None,
+                combat_props.get("transform_movement_speed")
+                if _has_transform and combat_props.get("transform_hp")
+                else None,
+                combat_props.get("transform_attacks_json"),
+                combat_props.get("transform_armors_json"),
+                ref_unit_id,
+            ),
+        )
 
         return ref_unit_id
 

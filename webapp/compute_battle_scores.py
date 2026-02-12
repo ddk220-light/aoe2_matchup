@@ -1181,7 +1181,7 @@ def compute_anti_cav_scores(all_scores, sk_to_line):
     # Compute weighted composite
     for sk, scores in all_scores.items():
         scores["anti_cav_value"] = round(
-            0.70 * scores["anti_cav_total"] + 0.30 * scores["frontline"],
+            0.90 * scores["anti_cav_total"] + 0.10 * scores["frontline"],
             1,
         )
 

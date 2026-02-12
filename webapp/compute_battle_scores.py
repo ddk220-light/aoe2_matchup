@@ -932,14 +932,14 @@ def compute_infantry_role_scores():
         if bench_cache[cache_key] is None:
             print(f"  WARNING: benchmark {civ}/{slug}/{age} not found")
 
-    all_role_scores = {}
+    # Pool all infantry units across all lines, simulate benchmarks
+    all_scores = {}  # sk -> scores dict
+    sk_to_line = {}  # sk -> line_slug
 
     for line_slug in INFANTRY_LINE_SLUGS:
         units = build_line_units(line_slug, "imperial")
         if not units:
             continue
-
-        role_scores = {}
 
         for u in units:
             cu = u["combat_unit"]
@@ -984,7 +984,6 @@ def compute_infantry_role_scores():
                         return_ticks=True,
                     )
                     elapsed = ticks * DT
-                    # Store (elapsed, won?) — winners capped in post-processing
                     scores[key] = (elapsed, winner == 1)
 
                 elif mode == "fixed":
@@ -1005,59 +1004,65 @@ def compute_infantry_role_scores():
                     else:
                         scores[key] = 0.0
 
-            role_scores[sk] = scores
+            all_scores[sk] = scores
+            sk_to_line[sk] = line_slug
 
-        # Post-process tank scores: cap winners at highest loser score
-        tank_keys = [k for k, _, _, _, m, _ in MILITIA_ROLE_BENCHMARKS if m == "tank"]
-        for tk in tank_keys:
-            # Find max elapsed among losers (won=False)
-            loser_times = [
-                s[tk][0]
-                for s in role_scores.values()
-                if isinstance(s.get(tk), tuple) and not s[tk][1]
-            ]
-            max_loser = max(loser_times) if loser_times else MAX_BATTLE_TIME
-            # Convert all to final scores
-            for s in role_scores.values():
-                if isinstance(s.get(tk), tuple):
-                    elapsed, won = s[tk]
-                    if won:
-                        elapsed = max_loser
-                    s[tk] = round(elapsed / MAX_BATTLE_TIME * 100, 1)
+    # Post-process tank scores across ALL infantry units
+    tank_keys = [k for k, _, _, _, m, _ in MILITIA_ROLE_BENCHMARKS if m == "tank"]
+    for tk in tank_keys:
+        loser_times = [
+            s[tk][0]
+            for s in all_scores.values()
+            if isinstance(s.get(tk), tuple) and not s[tk][1]
+        ]
+        max_loser = max(loser_times) if loser_times else MAX_BATTLE_TIME
+        for s in all_scores.values():
+            if isinstance(s.get(tk), tuple):
+                elapsed, won = s[tk]
+                if won:
+                    elapsed = max_loser
+                s[tk] = round(elapsed / MAX_BATTLE_TIME * 100, 1)
 
-        # Compute raw derived scores (before normalization)
-        for sk, scores in role_scores.items():
-            scores["melee_power"] = (
-                scores["vs_skirm"]
-                + scores["vs_halb"]
-                + scores["vs_hussar"]
-                + scores["vs_champ"]
-            ) / 4
-            scores["meat_shield"] = (
-                scores["vs_paladin_tank"] + scores["vs_champ_tank"]
-            ) / 2
-            scores["raid"] = scores["vs_arb_raid"]
-            scores["anti_cav"] = (scores["vs_paladin"] + scores["vs_hussar_cav"]) / 2
+    # Compute raw derived scores
+    for sk, scores in all_scores.items():
+        scores["melee_power"] = (
+            scores["vs_skirm"]
+            + scores["vs_halb"]
+            + scores["vs_hussar"]
+            + scores["vs_champ"]
+        ) / 4
+        scores["meat_shield"] = (
+            scores["vs_paladin_tank"] + scores["vs_champ_tank"]
+        ) / 2
+        scores["raid"] = scores["vs_arb_raid"]
+        scores["anti_cav"] = (scores["vs_paladin"] + scores["vs_hussar_cav"]) / 2
 
-        # Normalize each derived score to 0–100 (best=100, worst=0)
-        for key in ["melee_power", "meat_shield", "raid", "anti_cav"]:
-            vals = [s[key] for s in role_scores.values()]
-            lo, hi = min(vals), max(vals)
-            span = hi - lo if hi != lo else 1
-            for s in role_scores.values():
-                s[key] = round((s[key] - lo) / span * 100, 1)
+    # Normalize each derived score to 0–100 across ALL infantry units
+    for key in ["melee_power", "meat_shield", "raid", "anti_cav"]:
+        vals = [s[key] for s in all_scores.values()]
+        lo, hi = min(vals), max(vals)
+        span = hi - lo if hi != lo else 1
+        for s in all_scores.values():
+            s[key] = round((s[key] - lo) / span * 100, 1)
 
-        # Compute militia_value from normalized scores
-        for sk, scores in role_scores.items():
-            scores["militia_value"] = round(
-                0.50 * scores["melee_power"]
-                + 0.30 * scores["meat_shield"]
-                + 0.10 * scores["raid"]
-                + 0.10 * scores["anti_cav"],
-                1,
-            )
+    # Compute militia_value from normalized scores
+    for sk, scores in all_scores.items():
+        scores["militia_value"] = round(
+            0.50 * scores["melee_power"]
+            + 0.30 * scores["meat_shield"]
+            + 0.10 * scores["raid"]
+            + 0.10 * scores["anti_cav"],
+            1,
+        )
 
-        all_role_scores[f"{line_slug}|imperial"] = role_scores
+    # Regroup by line for DB storage
+    all_role_scores = {}
+    for sk, scores in all_scores.items():
+        line_slug = sk_to_line[sk]
+        line_key = f"{line_slug}|imperial"
+        if line_key not in all_role_scores:
+            all_role_scores[line_key] = {}
+        all_role_scores[line_key][sk] = scores
 
     return all_role_scores
 

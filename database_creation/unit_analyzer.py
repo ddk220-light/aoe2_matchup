@@ -837,8 +837,17 @@ class UnitAnalyzer:
 
             if tech_id in self.tech_effect_map:
                 te = self.tech_effect_map[tech_id]
+                applied_attrs = set()
                 for cmd in te.get("commands", []):
-                    self.apply_effect_command(cmd, stats, final_unit_id, unit_class)
+                    # Deduplicate: a tech may have redundant commands targeting
+                    # the same attribute via both class and unit_id (e.g. monk HP
+                    # techs target class 18 AND unit 1811 for Warrior Priest).
+                    # Only apply the first matching command per (type, attribute).
+                    attr_key = (cmd.get("type", 0), cmd.get("c", 0), cmd.get("d", 0))
+                    if attr_key in applied_attrs:
+                        continue
+                    if self.apply_effect_command(cmd, stats, final_unit_id, unit_class):
+                        applied_attrs.add(attr_key)
 
         # Apply civ bonus techs AFTER standard techs
         # This ensures additive bonuses (like Bloodlines +20 HP) are applied before
@@ -848,8 +857,13 @@ class UnitAnalyzer:
         )
         for te in civ_bonus_techs:
             tech_name = te.get("tech_name", f"Tech {te['tech_id']}")
+            applied_attrs = set()
             for cmd in te.get("commands", []):
+                attr_key = (cmd.get("type", 0), cmd.get("c", 0), cmd.get("d", 0))
+                if attr_key in applied_attrs:
+                    continue
                 if self.apply_effect_command(cmd, stats, final_unit_id, unit_class):
+                    applied_attrs.add(attr_key)
                     if tech_name not in applied_bonuses:
                         applied_bonuses.append(tech_name)
 

@@ -462,9 +462,16 @@ def generate_reference_database(analyzer):
             before = _snapshot_stats(stats)
             applied = False
             effects = []
+            applied_attrs = set()
             for cmd in te.get("commands", []):
+                # Deduplicate: skip if same (type, attr, value) already applied
+                # in this tech (e.g. monk HP techs target class AND unit_id)
+                attr_key = (cmd.get("type", 0), cmd.get("c", 0), cmd.get("d", 0))
+                if attr_key in applied_attrs:
+                    continue
                 if analyzer.apply_effect_command(cmd, stats, unit_id, unit_class):
                     applied = True
+                    applied_attrs.add(attr_key)
                     effects.append(_describe_effect_cmd(cmd, armor_class_names))
 
             if applied:
@@ -500,9 +507,14 @@ def generate_reference_database(analyzer):
             before = _snapshot_stats(stats)
             applied = False
             effects = []
+            applied_attrs = set()
             for cmd in te.get("commands", []):
+                attr_key = (cmd.get("type", 0), cmd.get("c", 0), cmd.get("d", 0))
+                if attr_key in applied_attrs:
+                    continue
                 if analyzer.apply_effect_command(cmd, stats, unit_id, unit_class):
                     applied = True
+                    applied_attrs.add(attr_key)
                     effects.append(_describe_effect_cmd(cmd, armor_class_names))
 
             if applied:
@@ -574,9 +586,14 @@ def generate_reference_database(analyzer):
             before = _snapshot_stats(stats)
             applied = False
             effects = []
+            applied_attrs = set()
             for cmd in te.get("commands", []):
+                attr_key = (cmd.get("type", 0), cmd.get("c", 0), cmd.get("d", 0))
+                if attr_key in applied_attrs:
+                    continue
                 if analyzer.apply_effect_command(cmd, stats, unit_id, unit_class):
                     applied = True
+                    applied_attrs.add(attr_key)
                     effects.append(_describe_effect_cmd(cmd, armor_class_names))
 
             if applied:

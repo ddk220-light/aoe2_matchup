@@ -2455,9 +2455,12 @@
                     this.effects = [];
                 }
 
-                async setupTeam(teamNum, unitSlug, civName, count) {
+                async setupTeam(teamNum, unitSlug, civName, count, age) {
+                    const ageParam = age
+                        ? `?age=${encodeURIComponent(age)}`
+                        : "";
                     const response = await fetch(
-                        `/api/ref/combat-unit/${encodeURIComponent(civName)}/${unitSlug}`,
+                        `/api/ref/combat-unit/${encodeURIComponent(civName)}/${unitSlug}${ageParam}`,
                     );
                     if (!response.ok) {
                         const err = await response.json();
@@ -3230,10 +3233,10 @@
                             ) || 3000;
                         const [stats1, stats2] = await Promise.all([
                             fetch(
-                                `/api/ref/combat-unit/${encodeURIComponent(s1.civ)}/${s1.unitSlug}`,
+                                `/api/ref/combat-unit/${encodeURIComponent(s1.civ)}/${s1.unitSlug}?age=${encodeURIComponent(s1.age)}`,
                             ).then((r) => r.json()),
                             fetch(
-                                `/api/ref/combat-unit/${encodeURIComponent(s2.civ)}/${s2.unitSlug}`,
+                                `/api/ref/combat-unit/${encodeURIComponent(s2.civ)}/${s2.unitSlug}?age=${encodeURIComponent(s2.age)}`,
                             ).then((r) => r.json()),
                         ]);
                         if (stats1.error) throw new Error(stats1.error);
@@ -3280,12 +3283,14 @@
                         s1.unitSlug,
                         s1.civ,
                         team1Count,
+                        s1.age,
                     );
                     await simulation.setupTeam(
                         2,
                         s2.unitSlug,
                         s2.civ,
                         team2Count,
+                        s2.age,
                     );
 
                     currentBattle = {

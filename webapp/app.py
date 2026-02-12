@@ -1152,14 +1152,23 @@ def api_ref_combat_unit(civ_name, unit_slug):
     if civ_name not in ORIGINAL_13_CIVS:
         return jsonify({"error": "Civilization not in original 13"}), 404
 
+    age = request.args.get("age", "Imperial")
+
     ref_conn = get_ref_db()
     rc = ref_conn.cursor()
 
+    # Prefer requested age; fall back to any age if not found
     rc.execute(
-        "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=?",
-        (civ_name, unit_slug),
+        "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=? AND age=?",
+        (civ_name, unit_slug, age),
     )
     row = rc.fetchone()
+    if not row:
+        rc.execute(
+            "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=?",
+            (civ_name, unit_slug),
+        )
+        row = rc.fetchone()
     if not row:
         ref_conn.close()
         return jsonify({"error": f"Unit {unit_slug} not found for {civ_name}"}), 404

@@ -3140,8 +3140,10 @@
                     await selectCiv(1, civ1);
                     // Find unit in civ data by slug
                     if (teamState[1].civData) {
-                        const age = teamState[1].age;
-                        const units = teamState[1].civData[age] || [];
+                        const units =
+                            teamState[1].civData.units_by_age[
+                                teamState[1].age
+                            ] || [];
                         const found = units.find((u) => u.unit_slug === unit1);
                         if (found)
                             selectUnit(1, found.unit_slug, found.unit_name);
@@ -3152,8 +3154,10 @@
                     const unit2 = params.get("unit2");
                     await selectCiv(2, civ2);
                     if (teamState[2].civData) {
-                        const age = teamState[2].age;
-                        const units = teamState[2].civData[age] || [];
+                        const units =
+                            teamState[2].civData.units_by_age[
+                                teamState[2].age
+                            ] || [];
                         const found = units.find((u) => u.unit_slug === unit2);
                         if (found)
                             selectUnit(2, found.unit_slug, found.unit_name);

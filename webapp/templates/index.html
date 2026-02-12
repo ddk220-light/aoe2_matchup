@@ -890,9 +890,9 @@
 
             // ===== SCORE BREAKDOWN CONFIG =====
             const SCORE_BREAKDOWN = {
-                anti_trash: {
-                    title: "Anti-Trash Breakdown",
-                    formula: "Average of 3 matchups (3K resources each)",
+                melee_power: {
+                    title: "Melee Power Breakdown",
+                    formula: "Average of 4 matchups (3K resources each)",
                     subs: [
                         {
                             key: "vs_skirm",
@@ -918,12 +918,20 @@
                             mode: "resources",
                             res: 3000,
                         },
+                        {
+                            key: "vs_champ",
+                            label: "vs Champion",
+                            civ: "Spanish",
+                            slug: "champion",
+                            mode: "resources",
+                            res: 3000,
+                        },
                     ],
                 },
                 meat_shield: {
                     title: "Tankiness",
                     formula:
-                        "Survival time in 30v30 vs Spanish Paladins (0\u2013100)",
+                        "Avg survival time in 30v30 vs Spanish Paladins & Champions (0\u2013100)",
                     subs: [
                         {
                             key: "vs_paladin_tank",
@@ -933,15 +941,23 @@
                             mode: "count",
                             count: 30,
                         },
+                        {
+                            key: "vs_champ_tank",
+                            label: "vs Champion (30v30)",
+                            civ: "Spanish",
+                            slug: "champion",
+                            mode: "count",
+                            count: 30,
+                        },
                     ],
                 },
                 raid: {
                     title: "Raid Effectiveness",
-                    formula: "30 infantry vs 15 Chinese Arbalesters",
+                    formula: "30 infantry vs 40 Chinese Arbalesters",
                     subs: [
                         {
                             key: "vs_arb_raid",
-                            label: "vs Arbalester (30v15)",
+                            label: "vs Arbalester (30v40)",
                             civ: "Chinese",
                             slug: "arbalester",
                             mode: "count",
@@ -974,7 +990,7 @@
             };
 
             const SCORE_KEYS = new Set([
-                "anti_trash",
+                "melee_power",
                 "meat_shield",
                 "raid",
                 "anti_cav",
@@ -1093,20 +1109,20 @@
                     if (scoreKey === "militia_value") {
                         const parts = [
                             {
-                                key: "anti_trash",
-                                label: "Anti-Trash",
-                                weight: "35%",
+                                key: "melee_power",
+                                label: "Melee Power",
+                                weight: "50%",
                             },
                             {
                                 key: "meat_shield",
                                 label: "Tankiness",
                                 weight: "30%",
                             },
-                            { key: "raid", label: "Raid", weight: "20%" },
+                            { key: "raid", label: "Raid", weight: "10%" },
                             {
                                 key: "anti_cav",
                                 label: "Anti-Cav",
-                                weight: "15%",
+                                weight: "10%",
                             },
                         ];
                         let html = `<div class="hc-title">Overall Score</div>`;
@@ -1572,7 +1588,7 @@
                 ];
                 const infantryStatCols = [
                     "militia_value",
-                    "anti_trash",
+                    "melee_power",
                     "meat_shield",
                     "raid",
                     "anti_cav",
@@ -1644,22 +1660,22 @@
                     {
                         key: "militia_value",
                         label: "Score",
-                        info: "Weighted aggregate: 35% Anti-Trash + 30% Tankiness + 20% Raid + 15% Anti-Cav",
+                        info: "Weighted aggregate: 50% Melee Power + 30% Tankiness + 10% Raid + 10% Anti-Cav",
                     },
                     {
-                        key: "anti_trash",
-                        label: "Anti-Trash",
-                        info: "Avg HP% remaining after 3k resource fights vs Spanish Elite Skirm, Halberdier, and Hussar",
+                        key: "melee_power",
+                        label: "Melee Power",
+                        info: "Avg HP% remaining after 3k resource fights vs Spanish Elite Skirm, Halberdier, Hussar, and Champion",
                     },
                     {
                         key: "meat_shield",
                         label: "Tankiness",
-                        info: "How long the unit survives in a 30v30 fight vs Spanish Paladins (0\u2013100, 100 = survived full 250s or won)",
+                        info: "Avg survival time in 30v30 vs Spanish Paladins and Champions (0\u2013100, capped at best loser)",
                     },
                     {
                         key: "raid",
                         label: "Raid",
-                        info: "HP% remaining after 30 militia vs 15 Chinese Arbalesters (simulates pushing into defended positions)",
+                        info: "HP% remaining after 30 infantry vs 40 Chinese Arbalesters",
                     },
                     {
                         key: "anti_cav",
@@ -1752,7 +1768,7 @@
                         k === "dps" ||
                         k === "ehp_per_cost" ||
                         k === "militia_value" ||
-                        k === "anti_trash" ||
+                        k === "melee_power" ||
                         k === "meat_shield" ||
                         k === "raid" ||
                         k === "anti_cav"

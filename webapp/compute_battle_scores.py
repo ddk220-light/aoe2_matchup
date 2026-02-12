@@ -886,8 +886,10 @@ MILITIA_ROLE_BENCHMARKS = [
     ("vs_skirm", "Spanish", "imp_elite_skirm", "Imperial", "res", 3000),
     ("vs_halb", "Spanish", "halberdier", "Imperial", "res", 3000),
     ("vs_hussar", "Spanish", "hussar", "Imperial", "res", 3000),
+    ("vs_champ", "Spanish", "champion", "Imperial", "res", 3000),
     ("vs_paladin_tank", "Spanish", "paladin", "Imperial", "tank", 30),
-    ("vs_arb_raid", "Chinese", "arbalester", "Imperial", "fixed", (30, 15)),
+    ("vs_champ_tank", "Spanish", "champion", "Imperial", "tank", 30),
+    ("vs_arb_raid", "Chinese", "arbalester", "Imperial", "fixed", (30, 40)),
     ("vs_paladin", "Spanish", "paladin", "Imperial", "res", 3000),
     ("vs_hussar_cav", "Spanish", "hussar", "Imperial", "res", 3000),
 ]
@@ -982,9 +984,8 @@ def compute_infantry_role_scores():
                         return_ticks=True,
                     )
                     elapsed = ticks * DT
-                    if winner == 1:
-                        elapsed = MAX_BATTLE_TIME
-                    scores[key] = round(elapsed / MAX_BATTLE_TIME * 100, 1)
+                    # Store (elapsed, won?) — winners capped in post-processing
+                    scores[key] = (elapsed, winner == 1)
 
                 elif mode == "fixed":
                     m_count, o_count = param
@@ -1004,24 +1005,52 @@ def compute_infantry_role_scores():
                     else:
                         scores[key] = 0.0
 
-            # Derived scores
-            scores["anti_trash"] = round(
-                (scores["vs_skirm"] + scores["vs_halb"] + scores["vs_hussar"]) / 3, 1
+            role_scores[sk] = scores
+
+        # Post-process tank scores: cap winners at highest loser score
+        tank_keys = [k for k, _, _, _, m, _ in MILITIA_ROLE_BENCHMARKS if m == "tank"]
+        for tk in tank_keys:
+            # Find max elapsed among losers (won=False)
+            loser_times = [
+                s[tk][0]
+                for s in role_scores.values()
+                if isinstance(s.get(tk), tuple) and not s[tk][1]
+            ]
+            max_loser = max(loser_times) if loser_times else MAX_BATTLE_TIME
+            # Convert all to final scores
+            for s in role_scores.values():
+                if isinstance(s.get(tk), tuple):
+                    elapsed, won = s[tk]
+                    if won:
+                        elapsed = max_loser
+                    s[tk] = round(elapsed / MAX_BATTLE_TIME * 100, 1)
+
+        # Compute derived scores
+        for sk, scores in role_scores.items():
+            scores["melee_power"] = round(
+                (
+                    scores["vs_skirm"]
+                    + scores["vs_halb"]
+                    + scores["vs_hussar"]
+                    + scores["vs_champ"]
+                )
+                / 4,
+                1,
             )
-            scores["meat_shield"] = scores["vs_paladin_tank"]
+            scores["meat_shield"] = round(
+                (scores["vs_paladin_tank"] + scores["vs_champ_tank"]) / 2, 1
+            )
             scores["raid"] = scores["vs_arb_raid"]
             scores["anti_cav"] = round(
                 (scores["vs_paladin"] + scores["vs_hussar_cav"]) / 2, 1
             )
             scores["militia_value"] = round(
-                0.35 * scores["anti_trash"]
+                0.50 * scores["melee_power"]
                 + 0.30 * scores["meat_shield"]
-                + 0.20 * scores["raid"]
-                + 0.15 * scores["anti_cav"],
+                + 0.10 * scores["raid"]
+                + 0.10 * scores["anti_cav"],
                 1,
             )
-
-            role_scores[sk] = scores
 
         all_role_scores[f"{line_slug}|imperial"] = role_scores
 
@@ -1029,7 +1058,7 @@ def compute_infantry_role_scores():
 
 
 INFANTRY_ROLE_SCORE_TYPES = [
-    "anti_trash",
+    "melee_power",
     "meat_shield",
     "raid",
     "anti_cav",
@@ -1037,7 +1066,9 @@ INFANTRY_ROLE_SCORE_TYPES = [
     "vs_skirm",
     "vs_halb",
     "vs_hussar",
+    "vs_champ",
     "vs_paladin_tank",
+    "vs_champ_tank",
     "vs_arb_raid",
     "vs_paladin",
     "vs_hussar_cav",

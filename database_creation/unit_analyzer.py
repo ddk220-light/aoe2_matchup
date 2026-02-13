@@ -29,6 +29,7 @@ from .config import (
     LITHUANIAN_RELIC_COUNT,
     OUTPUT_DIR,
     REMOVED_TECHS,
+    UNIT_STAT_OVERRIDES,
     UNIQUE_UNIT_BUILDING,
     UNIQUE_UNITS_IN_BARRACKS,
     UNIT_CLASS_TO_BUILDING,
@@ -335,6 +336,11 @@ class UnitAnalyzer:
 
             # Skip civ-specific techs (handled separately)
             if tech_data.get("civ", -1) >= 0:
+                continue
+
+            # Skip shadow/hero techs that aren't researchable (research_location == -1)
+            # These include Hero Shadow Tech (1088) which incorrectly adds HP to normal units
+            if tech_data.get("research_location", -1) == -1:
                 continue
 
             # Skip DLC/campaign-specific techs (have non-standard requirements like Antiquity techs)
@@ -832,6 +838,13 @@ class UnitAnalyzer:
         unit_class = unit_config["unit_class"]
         stats = self.get_base_stats(unit)
         applied_bonuses = []
+
+        # Apply base stat overrides for units with known dat file errors
+        if final_unit_id in UNIT_STAT_OVERRIDES:
+            overrides = UNIT_STAT_OVERRIDES[final_unit_id]
+            for attr, value in overrides.items():
+                if hasattr(stats, attr):
+                    setattr(stats, attr, value)
 
         # Apply standard techs FIRST (e.g., Bloodlines adds HP before civ bonuses multiply)
         standard_techs = self.find_techs_affecting_unit(

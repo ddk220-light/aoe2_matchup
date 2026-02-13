@@ -219,6 +219,9 @@ def get_combat_properties(unit_slug, civ_name=None, unit_id=None, units_data=Non
         "dismount_unit_id": 0,
         "hp_regen": 0,
         "pass_through_percent": 0,
+        "miss_damage_percent": 0,
+        "hp_per_kill": 0,
+        "hp_per_kill_max": 0,
     }
 
     # Apply extracted data from dat file (data-driven stats)

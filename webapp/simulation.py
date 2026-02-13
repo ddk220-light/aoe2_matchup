@@ -139,6 +139,9 @@ def prepare_combat_unit(row):
         "first_attack_extra_projectiles": row["first_attack_extra_projectiles"] or 0,
         "hp_regen": row["hp_regen"] or 0,
         "pass_through_percent": row["pass_through_percent"] or 0,
+        "miss_damage_percent": row.get("miss_damage_percent", 0) or 0,
+        "hp_per_kill": row.get("hp_per_kill", 0) or 0,
+        "hp_per_kill_max": row.get("hp_per_kill_max", 0) or 0,
         "hp_transform_threshold": row["hp_transform_threshold"] or 0,
         "pop_space": row["pop_space"] if row["pop_space"] else 1.0,
         "armor_strip_per_hit": row.get("armor_strip_per_hit", 0) or 0,
@@ -552,6 +555,12 @@ def simulate_battle(
     block_melee2 = unit2["block_first_melee"]
     kill_bonus1 = unit1["attack_bonus_per_kill"]
     kill_bonus2 = unit2["attack_bonus_per_kill"]
+    hp_per_kill1 = unit1.get("hp_per_kill", 0)
+    hp_per_kill2 = unit2.get("hp_per_kill", 0)
+    hp_per_kill_max1 = unit1.get("hp_per_kill_max", 0)
+    hp_per_kill_max2 = unit2.get("hp_per_kill_max", 0)
+    miss_dmg_pct1 = unit1.get("miss_damage_percent", 0)
+    miss_dmg_pct2 = unit2.get("miss_damage_percent", 0)
     transform_thresh1 = unit1["hp_transform_threshold"]
     transform_thresh2 = unit2["hp_transform_threshold"]
 
@@ -588,6 +597,8 @@ def simulate_battle(
     cooldown2 = [0.0] * count2
     bonus_atk1 = [0.0] * count1
     bonus_atk2 = [0.0] * count2
+    hp_gained1 = [0] * count1  # Track cumulative HP gained from kills (for cap)
+    hp_gained2 = [0] * count2
     used_first1 = [False] * count1
     used_first2 = [False] * count2
     transformed1 = [False] * count1
@@ -764,6 +775,9 @@ def simulate_battle(
             d_dodge_max, d_recharge = dodge_max2, dodge_recharge2
             d_block = block_melee2
             a_kill_bonus = kill_bonus1
+            a_hp_per_kill, a_hp_per_kill_max = hp_per_kill1, hp_per_kill_max1
+            a_hp_gained, a_hp_arr = hp_gained1, hp1
+            a_max_hp = max_hp1
             a_bleed_dps, a_bleed_dur = bleed_dps1, bleed_dur1
             a_splash_hit = splash_hit1
             a_splash_hit_frac = splash_hit_frac1
@@ -779,6 +793,9 @@ def simulate_battle(
             d_dodge_max, d_recharge = dodge_max1, dodge_recharge1
             d_block = block_melee1
             a_kill_bonus = kill_bonus2
+            a_hp_per_kill, a_hp_per_kill_max = hp_per_kill2, hp_per_kill_max2
+            a_hp_gained, a_hp_arr = hp_gained2, hp2
+            a_max_hp = max_hp2
             a_bleed_dps, a_bleed_dur = bleed_dps2, bleed_dur2
             a_splash_hit = splash_hit2
             a_splash_hit_frac = splash_hit_frac2
@@ -805,8 +822,13 @@ def simulate_battle(
         was_alive = t_hp[target_idx] > 0
         t_hp[target_idx] -= hit_dmg
 
-        if a_kill_bonus > 0 and was_alive and t_hp[target_idx] <= 0:
-            a_bonus[attacker_idx] += a_kill_bonus
+        if was_alive and t_hp[target_idx] <= 0:
+            if a_kill_bonus > 0:
+                a_bonus[attacker_idx] += a_kill_bonus
+            if a_hp_per_kill > 0 and a_hp_gained[attacker_idx] < a_hp_per_kill_max:
+                heal = min(a_hp_per_kill, a_hp_per_kill_max - a_hp_gained[attacker_idx])
+                a_hp_arr[attacker_idx] = min(a_hp_arr[attacker_idx] + heal, a_max_hp + a_hp_per_kill_max)
+                a_hp_gained[attacker_idx] += heal
 
         # Siege splash: hit extra targets
         if a_is_siege and a_siege_splash > 0:
@@ -851,6 +873,7 @@ def simulate_battle(
         a_used_first_arr,
         target_hp_arr,
         a_accuracy=1.0,
+        a_miss_dmg_pct=0,
     ):
         """Apply num_shots opening shots from attacker_team using focus fire."""
         if num_shots <= 0:
@@ -881,7 +904,10 @@ def simulate_battle(
                 else:
                     # Missed shot — may hit random enemy in formation
                     alive = [i for i in range(target_count) if target_hp_arr[i] > 0]
-                    stray_chance = min(0.5, len(alive) * 0.05)
+                    if a_miss_dmg_pct > 0:
+                        stray_chance = a_miss_dmg_pct
+                    else:
+                        stray_chance = min(0.5, len(alive) * 0.05)
                     if alive and random.random() < stray_chance:
                         stray = random.choice(alive)
                         _apply_opening_hit(attacker_team, stray, damage, a_idx)
@@ -993,6 +1019,7 @@ def simulate_battle(
             used_first1,
             hp2,
             a_accuracy=accuracy1,
+            a_miss_dmg_pct=miss_dmg_pct1,
         )
         # Set cooldowns to reflect time elapsed since last opening shot
         if is_ranged1 and not is_ranged2 and closing_time1 > 0:
@@ -1013,6 +1040,7 @@ def simulate_battle(
             used_first2,
             hp1,
             a_accuracy=accuracy2,
+            a_miss_dmg_pct=miss_dmg_pct2,
         )
         if is_ranged2 and not is_ranged1 and closing_time2 > 0:
             last_shot_t = delay2 + (opening2 - 1) * reload2
@@ -1069,6 +1097,7 @@ def simulate_battle(
                 t_is_ranged, t_is_siege = is_ranged1, is_siege1
                 t_speed = speed1
                 t_accuracy = accuracy1
+                t_miss_dmg_pct = miss_dmg_pct1
                 t_reload, t_delay = reload1, delay1
                 t_extra_proj, t_first_burst = extra_proj1, first_burst1
                 t_dmg = dmg1
@@ -1096,6 +1125,7 @@ def simulate_battle(
                 t_is_ranged, t_is_siege = is_ranged2, is_siege2
                 t_speed = speed2
                 t_accuracy = accuracy2
+                t_miss_dmg_pct = miss_dmg_pct2
                 t_reload, t_delay = reload2, delay2
                 t_extra_proj, t_first_burst = extra_proj2, first_burst2
                 t_dmg = dmg2
@@ -1217,7 +1247,10 @@ def simulate_battle(
                         )
                     else:
                         # Missed shot — may hit random enemy in formation
-                        stray_chance = min(0.5, len(enemy_alive) * 0.05)
+                        if t_miss_dmg_pct > 0:
+                            stray_chance = t_miss_dmg_pct
+                        else:
+                            stray_chance = min(0.5, len(enemy_alive) * 0.05)
                         if enemy_alive and random.random() < stray_chance:
                             stray = random.choice(enemy_alive)
                             hit_dmg = base + int(my_bonus_atk[i])
@@ -1275,6 +1308,9 @@ def simulate_battle(
                 d_dodge_max, d_recharge = dodge_max1, dodge_recharge1
                 d_block = block_melee1
                 a_kill_bonus = kill_bonus2
+                a_hp_per_kill, a_hp_per_kill_max = hp_per_kill2, hp_per_kill_max2
+                a_hp_gained, a_hp_arr = hp_gained2, hp2
+                a_max_hp = max_hp2
                 a_bleed_dps, a_bleed_dur = bleed_dps2, bleed_dur2
                 a_trample_dmg, a_trample_extra = trample_dmg2, trample_extra2
                 a_splash_hit = splash_hit2
@@ -1294,6 +1330,9 @@ def simulate_battle(
                 d_dodge_max, d_recharge = dodge_max2, dodge_recharge2
                 d_block = block_melee2
                 a_kill_bonus = kill_bonus1
+                a_hp_per_kill, a_hp_per_kill_max = hp_per_kill1, hp_per_kill_max1
+                a_hp_gained, a_hp_arr = hp_gained1, hp1
+                a_max_hp = max_hp1
                 a_bleed_dps, a_bleed_dur = bleed_dps1, bleed_dur1
                 a_trample_dmg, a_trample_extra = trample_dmg1, trample_extra1
                 a_splash_hit = splash_hit1
@@ -1360,9 +1399,14 @@ def simulate_battle(
                     -99, t_current_pa[target_idx] - a_armor_strip
                 )
 
-            # Kill bonus
-            if a_kill_bonus > 0 and was_alive and t_hp[target_idx] <= 0:
-                a_bonus[attacker_idx] += a_kill_bonus
+            # Kill bonus (attack + HP)
+            if was_alive and t_hp[target_idx] <= 0:
+                if a_kill_bonus > 0:
+                    a_bonus[attacker_idx] += a_kill_bonus
+                if a_hp_per_kill > 0 and a_hp_gained[attacker_idx] < a_hp_per_kill_max:
+                    heal = min(a_hp_per_kill, a_hp_per_kill_max - a_hp_gained[attacker_idx])
+                    a_hp_arr[attacker_idx] = min(a_hp_arr[attacker_idx] + heal, a_max_hp + a_hp_per_kill_max)
+                    a_hp_gained[attacker_idx] += heal
 
             # Trample: 25% chance to damage a nearby alive enemy
             if (
@@ -2188,7 +2232,10 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                         )
                     else:
                         # Missed shot — may hit random enemy in formation
-                        stray_chance = min(0.5, len(enemy_alive) * 0.05)
+                        if t_miss_dmg_pct > 0:
+                            stray_chance = t_miss_dmg_pct
+                        else:
+                            stray_chance = min(0.5, len(enemy_alive) * 0.05)
                         if enemy_alive and random.random() < stray_chance:
                             stray = random.choice(enemy_alive)
                             pending_damage.append(

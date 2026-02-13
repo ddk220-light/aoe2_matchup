@@ -269,6 +269,14 @@ COMBAT_PROPERTIES = {
     "jian_swordsman": {"unit_category": "infantry"},
 }
 
+# Base stat overrides for units where the dat file has incorrect values.
+# Keyed by unit ID. Applied after get_base_stats() before tech calculations.
+UNIT_STAT_OVERRIDES = {
+    # Elite Woad Raider: dat file has speed=1.17 (same as base), but elite should
+    # be faster. 1.4 (wiki final speed) / 1.15 (Celts infantry speed bonus) ≈ 1.217
+    534: {"speed": 1.2174},
+}
+
 # Unique units — keyed by base slug (without civ suffix)
 # Only ability flags and values NOT extractable from dat file belong here.
 # Stats like extra_projectiles, trample, dodge shield are now data-driven
@@ -313,11 +321,11 @@ UNIQUE_COMBAT_PROPERTIES = {
     # Block first melee hit (ability flag, not in dat)
     "iron_pagoda": {"block_first_melee": 1},
     "elite_iron_pagoda": {"block_first_melee": 1},
-    # Grenadier splash (blast_level=11 in dat, fallback if not data-driven)
-    "grenadier": {"splash_on_hit_radius": 1.0},
-    # Kill bonus attack (ability flag, not in dat)
-    "tiger_cavalry": {"attack_bonus_per_kill": 4},
-    "elite_tiger_cavalry": {"attack_bonus_per_kill": 4},
+    # Grenadier splash: data-driven from dat (blast_level=11, blast_width=0.65)
+    # Kill bonus attack + HP regen per kill (ability flags, not in dat)
+    # Tiger Cavalry: +4 attack and +10 HP per kill, max +40 HP gained
+    "tiger_cavalry": {"attack_bonus_per_kill": 4, "hp_per_kill": 10, "hp_per_kill_max": 40},
+    "elite_tiger_cavalry": {"attack_bonus_per_kill": 4, "hp_per_kill": 10, "hp_per_kill_max": 40},
     "jaguar_warrior": {"attack_bonus_per_kill": 4},
     "elite_jaguar_warrior": {"attack_bonus_per_kill": 4},
     # HP transformation (ability flag, not in dat)
@@ -347,11 +355,15 @@ UNIQUE_COMBAT_PROPERTIES = {
     # blast_damage=1.0 in dat = pass-through, not splash
     "chakram_thrower": {"pass_through_percent": 1.0},
     "elite_chakram_thrower": {"pass_through_percent": 1.0},
-    # Ghulam pass-through (blast_attack_level=138 = directional line pass-through, 50% to unit behind)
-    # Not modeled in sim: melee pass-through requires positional alignment that rarely occurs consistently.
-    # Ghulam's strength (anti-archer, high pierce armor, fast) is captured by base stats.
-    # "ghulam": {"pass_through_percent": 0.5},
-    # "elite_ghulam": {"pass_through_percent": 0.5},
+    # Ghulam pass-through (blast_attack_level=130, blast_damage=0.5 in dat)
+    # Thrusting attack penetrates to unit behind target for 50% damage.
+    # In group fights (which sim always models), there's usually a unit behind the target.
+    "ghulam": {"pass_through_percent": 0.5},
+    "elite_ghulam": {"pass_through_percent": 0.5},
+    # Arambai: missed shots deal full damage to random nearby enemy.
+    # With 20/30% accuracy, most shots miss but hit other units in group fights.
+    "arambai": {"miss_damage_percent": 1.0},
+    "elite_arambai": {"miss_damage_percent": 1.0},
     # Monaspa nearby ally attack bonus (+2 per nearby cavalry, max 4 nearby)
     "monaspa": {"attack_bonus_nearby": 2, "nearby_bonus_count": 4},
     "elite_monaspa": {"attack_bonus_nearby": 2, "nearby_bonus_count": 4},
@@ -1481,7 +1493,7 @@ UNIQUE_UNITS = {
             "display_name": "Ratha (Melee)",
             "unit_class": 36,
             "availability_tech": 831,
-            "elite_tech": 832,
+            "elite_tech": 828,
             "elite_id": 1740,
             "elite_name": "Elite Ratha (Melee)",
         },
@@ -1490,7 +1502,7 @@ UNIQUE_UNITS = {
             "display_name": "Ratha (Ranged)",
             "unit_class": 36,
             "availability_tech": 831,
-            "elite_tech": 832,
+            "elite_tech": 828,
             "elite_id": 1761,
             "elite_name": "Elite Ratha (Ranged)",
         },

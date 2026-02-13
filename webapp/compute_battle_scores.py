@@ -595,6 +595,9 @@ def build_combat_dict(rc, row):
             row["first_attack_extra_projectiles"] or 0
         ),
         "pass_through_percent": row["pass_through_percent"] or 0,
+        "miss_damage_percent": row["miss_damage_percent"] or 0,
+        "hp_per_kill": int(row["hp_per_kill"] or 0),
+        "hp_per_kill_max": int(row["hp_per_kill_max"] or 0),
         "hp_transform_threshold": row["hp_transform_threshold"] or 0,
         "pop_space": row["pop_space"] or 1.0,
         "armor_strip_per_hit": int(row["armor_strip_per_hit"] or 0),

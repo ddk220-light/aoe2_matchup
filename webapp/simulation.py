@@ -252,7 +252,8 @@ def _assign_targets_melee_capped(my_alive, enemy_alive, tick):
       (10%) each attack round (~2 seconds), capping at 100%
     - Each engageable target gets exactly MELEE_MAX_PER_TARGET attacker
     - Surplus melee units get no target (they idle that tick)
-    - The engageable pool rotates each tick so different enemies are targeted
+    - Melee units lock onto targets until they die; no rotation needed.
+      As enemies die, new ones naturally enter the engageable pool.
     """
     if not enemy_alive:
         return {}
@@ -261,11 +262,9 @@ def _assign_targets_melee_capped(my_alive, enemy_alive, tick):
     attack_round = tick // MELEE_ENGAGE_ROUND_TICKS
     engage_ratio = min(1.0, MELEE_ENGAGE_START + attack_round * MELEE_ENGAGE_STEP)
     engageable_count = max(1, int(n_enemy * engage_ratio))
-    # Rotate which enemies are engageable each tick
-    start = tick % n_enemy
-    engageable = []
-    for i in range(engageable_count):
-        engageable.append(enemy_alive[(start + i) % n_enemy])
+    # Always target the first N enemies in the alive list (no rotation).
+    # When targets die they leave alive list, naturally exposing new targets.
+    engageable = enemy_alive[:engageable_count]
     # Assign 1 melee per engageable target, up to MELEE_MAX_PER_TARGET
     assignments = {}
     slots_used = {}
@@ -2088,8 +2087,7 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                 attack_round = tick // MELEE_ENGAGE_ROUND_TICKS
                 engage_ratio = min(1.0, MELEE_ENGAGE_START + attack_round * MELEE_ENGAGE_STEP)
                 engageable_count = max(1, int(len(enemy_ranged) * engage_ratio))
-                start = tick % len(enemy_ranged) if len(enemy_ranged) > 0 else 0
-                engageable = [enemy_ranged[(start + j) % len(enemy_ranged)] for j in range(engageable_count)]
+                engageable = enemy_ranged[:engageable_count]
                 for li, i in enumerate(melee_overflow):
                     if li >= len(engageable):
                         break  # surplus idles

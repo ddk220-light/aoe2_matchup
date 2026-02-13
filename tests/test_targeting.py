@@ -67,13 +67,16 @@ def test_melee_capped_surplus_idles():
     assert len(idle) == 30 - expected
 
 
-def test_melee_capped_rotation():
-    """Different ticks target different enemies (rotation)."""
+def test_melee_capped_stable_targets():
+    """Targets are stable across ticks — melee locks onto targets until they die."""
     my_alive = list(range(10))
     enemy_alive = list(range(10))
-    targets_tick0 = set(_assign_targets_melee_capped(my_alive, enemy_alive, tick=0).values())
-    targets_tick1 = set(_assign_targets_melee_capped(my_alive, enemy_alive, tick=1).values())
-    assert targets_tick0 != targets_tick1
+    # Same targets at tick 0 and tick 1 (no rotation)
+    targets_tick0 = _assign_targets_melee_capped(my_alive, enemy_alive, tick=0)
+    targets_tick1 = _assign_targets_melee_capped(my_alive, enemy_alive, tick=1)
+    assert targets_tick0 == targets_tick1
+    # Targets are always the first N in the alive list
+    assert set(targets_tick0.values()) == set(enemy_alive[:len(targets_tick0)])
 
 
 def test_melee_capped_ramp_up():

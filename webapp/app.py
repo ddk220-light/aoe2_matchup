@@ -2461,10 +2461,7 @@ def _run_matchup_analysis(civ1, civ2):
             food = unit["cost_food"]
             wood = unit["cost_wood"]
             gold = unit["cost_gold"]
-            if is_imperial:
-                cost = wood + food + gold
-            else:
-                cost = wood + 1.5 * food + gold
+            cost = 0.8 * wood + food + 1.5 * gold
             return int(cost) if cost > 0 else 100
 
         civ1_cats = _categorize_units(civ1_units)

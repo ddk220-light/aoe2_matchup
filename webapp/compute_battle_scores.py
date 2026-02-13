@@ -125,7 +125,8 @@ UNIT_LINES = {
         "building": "Archery Range",
         "castle_slug": "crossbow",
         "imperial_slug": "arbalester",
-        "extra_imperial_slugs": ["hand_cannoneer"],
+        "extra_castle_slugs": ["elephant_archer"],
+        "extra_imperial_slugs": ["hand_cannoneer", "elite_ele_archer"],
         "unique_units": {
             "Britons": ("longbowman_britons", "elite_longbowman_britons"),
             "Chinese": ("chu_ko_nu_chinese", "elite_chu_ko_nu_chinese"),
@@ -586,10 +587,7 @@ def build_combat_dict(rc, row):
 
 
 def calc_weighted_cost(food, wood, gold, is_imperial):
-    if is_imperial:
-        cost = (wood or 0) + (food or 0) + (gold or 0)
-    else:
-        cost = (wood or 0) + 1.5 * (food or 0) + (gold or 0)
+    cost = 0.8 * (wood or 0) + (food or 0) + 1.5 * (gold or 0)
     return int(cost) if cost > 0 else 100
 
 
@@ -888,24 +886,32 @@ INFANTRY_LINE_SLUGS = ["militia", "spear", "shock_infantry"]
 ARCHERY_LINE_SLUGS = ["archer", "skirmisher", "cav_archer"]
 
 ARCHERY_ROLE_BENCHMARKS = [
-    # DPS benchmarks (3K resources each)
-    ("ar_vs_champ", "Chinese", "champion", "Imperial", "res", 3000),
-    ("ar_vs_paladin", "Spanish", "paladin", "Imperial", "res", 3000),
-    ("ar_vs_arb", "Chinese", "arbalester", "Imperial", "res", 3000),
+    # Eco DPS benchmarks (3K resources each)
+    ("eco_vs_champ", "Chinese", "champion", "Imperial", "res", 3000),
+    ("eco_vs_paladin", "Spanish", "paladin", "Imperial", "res", 3000),
+    ("eco_vs_arb", "Chinese", "arbalester", "Imperial", "res", 3000),
+    # Raw DPS benchmarks (60 archers vs 30 opponents, tick-based)
+    ("raw_vs_champ", "Chinese", "champion", "Imperial", "fixed", (60, 30)),
+    ("raw_vs_paladin", "Spanish", "paladin", "Imperial", "fixed", (60, 30)),
+    ("raw_vs_arb", "Chinese", "arbalester", "Imperial", "fixed", (60, 30)),
     # Survivability benchmarks (3K resources each)
-    ("ar_vs_skirm", "Spanish", "imp_elite_skirm", "Imperial", "res", 3000),
-    ("ar_vs_cav_archer", "Chinese", "heavy_cav_archer", "Imperial", "res", 3000),
+    ("surv_vs_skirm", "Spanish", "imp_elite_skirm", "Imperial", "res", 3000),
+    ("surv_vs_cav_archer", "Chinese", "heavy_cav_archer", "Imperial", "res", 3000),
 ]
 
 ARCHERY_ROLE_SCORE_TYPES = [
     "ranged_power",
-    "dps_score",
+    "raw_dps_score",
+    "eco_dps_score",
     "survivability_score",
-    "ar_vs_champ",
-    "ar_vs_paladin",
-    "ar_vs_arb",
-    "ar_vs_skirm",
-    "ar_vs_cav_archer",
+    "eco_vs_champ",
+    "eco_vs_paladin",
+    "eco_vs_arb",
+    "raw_vs_champ",
+    "raw_vs_paladin",
+    "raw_vs_arb",
+    "surv_vs_skirm",
+    "surv_vs_cav_archer",
 ]
 
 

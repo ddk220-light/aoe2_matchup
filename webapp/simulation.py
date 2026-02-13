@@ -275,6 +275,40 @@ def _assign_targets_melee_capped(my_alive, enemy_alive, tick):
     return assignments
 
 
+def _assign_targets_spread_capped(my_alive, enemy_alive):
+    """Assign melee attackers spread across enemies with a per-target cap.
+
+    Same as _assign_targets_spread but limits each enemy to MELEE_VS_MELEE_MAX
+    attackers. Surplus melee units beyond the total cap get no target.
+    """
+    if not enemy_alive:
+        return {}
+    assignments = {}
+    slots_used = {}
+    total_slots = len(enemy_alive) * MELEE_VS_MELEE_MAX
+    n_en = len(enemy_alive)
+    assigned = 0
+    for li, i in enumerate(my_alive):
+        if assigned >= total_slots:
+            break
+        target_pos = li % n_en
+        target = enemy_alive[target_pos]
+        if slots_used.get(target, 0) >= MELEE_VS_MELEE_MAX:
+            found = False
+            for offset in range(1, n_en):
+                alt = enemy_alive[(target_pos + offset) % n_en]
+                if slots_used.get(alt, 0) < MELEE_VS_MELEE_MAX:
+                    target = alt
+                    found = True
+                    break
+            if not found:
+                break
+        assignments[i] = target
+        slots_used[target] = slots_used.get(target, 0) + 1
+        assigned += 1
+    return assignments
+
+
 def _assign_targets_focus(my_alive, enemy_alive, enemy_hp, dmg_per_hit, num_proj):
     """Focus-fire targeting: group just enough attackers to kill each enemy.
 

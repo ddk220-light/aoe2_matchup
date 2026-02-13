@@ -20,6 +20,9 @@ RETARGET_DIST = 1.5  # tiles to walk when switching to a new melee target
 UNIT_SPACING = 0.75  # approximate unit spacing in melee clump
 RETREAT_MAX = 10.0  # max tiles ranged retreats before standing to fight
 TRAMPLE_HIT_CHANCE = 0.25  # fraction of trample attacks that hit a nearby unit
+MELEE_ENGAGE_RATIO = 0.5   # fraction of ranged units engageable by melee at once
+MELEE_MAX_PER_TARGET = 1   # max melee attackers per ranged target
+MELEE_VS_MELEE_MAX = 2     # soft cap for melee-vs-melee targeting
 
 
 def _parse_dismount(row):
@@ -236,6 +239,39 @@ def _assign_targets_spread(my_alive, enemy_alive):
     n_en = len(enemy_alive)
     for li, i in enumerate(my_alive):
         assignments[i] = enemy_alive[li * n_en // n_my]
+    return assignments
+
+
+def _assign_targets_melee_capped(my_alive, enemy_alive, tick):
+    """Assign melee attackers to ranged targets with engagement limits.
+
+    Rules:
+    - At most MELEE_ENGAGE_RATIO of enemy alive are targetable (the "engageable pool")
+    - Each engageable target gets exactly MELEE_MAX_PER_TARGET attacker
+    - Surplus melee units get no target (they idle that tick)
+    - The engageable pool rotates each tick so different enemies are targeted
+    """
+    if not enemy_alive:
+        return {}
+    n_enemy = len(enemy_alive)
+    engageable_count = max(1, int(n_enemy * MELEE_ENGAGE_RATIO))
+    # Rotate which enemies are engageable each tick
+    start = tick % n_enemy
+    engageable = []
+    for i in range(engageable_count):
+        engageable.append(enemy_alive[(start + i) % n_enemy])
+    # Assign 1 melee per engageable target, up to MELEE_MAX_PER_TARGET
+    assignments = {}
+    slots_used = {}
+    slot_idx = 0
+    for i in my_alive:
+        if slot_idx >= len(engageable):
+            break
+        target = engageable[slot_idx]
+        assignments[i] = target
+        slots_used[target] = slots_used.get(target, 0) + 1
+        if slots_used[target] >= MELEE_MAX_PER_TARGET:
+            slot_idx += 1
     return assignments
 
 

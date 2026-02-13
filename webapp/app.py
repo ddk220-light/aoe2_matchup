@@ -1275,7 +1275,8 @@ UNIT_LINES = {
         "building": "Archery Range",
         "castle_slug": "crossbow",
         "imperial_slug": "arbalester",
-        "extra_imperial_slugs": ["hand_cannoneer"],
+        "extra_castle_slugs": ["elephant_archer"],
+        "extra_imperial_slugs": ["hand_cannoneer", "elite_ele_archer"],
         "unique_units": {
             "Britons": ("longbowman_britons", "elite_longbowman_britons"),
             "Chinese": ("chu_ko_nu_chinese", "elite_chu_ko_nu_chinese"),

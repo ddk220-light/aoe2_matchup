@@ -1067,12 +1067,42 @@
                     ],
                 },
                 // Archery score breakdowns
-                dps_score: {
-                    title: "DPS Score Breakdown",
+                raw_dps_score: {
+                    title: "Raw DPS Score",
+                    formula: "60 archers vs 30 opponents. Faster win = higher score. Loss = 0.",
+                    subs: [
+                        {
+                            key: "raw_vs_champ",
+                            label: "vs Champion (60v30)",
+                            civ: "Chinese",
+                            slug: "champion",
+                            mode: "count",
+                            count: 60,
+                        },
+                        {
+                            key: "raw_vs_paladin",
+                            label: "vs Paladin (60v30)",
+                            civ: "Spanish",
+                            slug: "paladin",
+                            mode: "count",
+                            count: 60,
+                        },
+                        {
+                            key: "raw_vs_arb",
+                            label: "vs Arbalester (60v30)",
+                            civ: "Chinese",
+                            slug: "arbalester",
+                            mode: "count",
+                            count: 60,
+                        },
+                    ],
+                },
+                eco_dps_score: {
+                    title: "Eco DPS Score",
                     formula: "Average of 3 matchups (3K resources each)",
                     subs: [
                         {
-                            key: "ar_vs_champ",
+                            key: "eco_vs_champ",
                             label: "vs Champion",
                             civ: "Chinese",
                             slug: "champion",
@@ -1080,7 +1110,7 @@
                             res: 3000,
                         },
                         {
-                            key: "ar_vs_paladin",
+                            key: "eco_vs_paladin",
                             label: "vs Paladin",
                             civ: "Spanish",
                             slug: "paladin",
@@ -1088,7 +1118,7 @@
                             res: 3000,
                         },
                         {
-                            key: "ar_vs_arb",
+                            key: "eco_vs_arb",
                             label: "vs Arbalester",
                             civ: "Chinese",
                             slug: "arbalester",
@@ -1102,7 +1132,7 @@
                     formula: "Average of 2 matchups (3K resources each)",
                     subs: [
                         {
-                            key: "ar_vs_skirm",
+                            key: "surv_vs_skirm",
                             label: "vs Elite Skirm",
                             civ: "Spanish",
                             slug: "imp_elite_skirm",
@@ -1110,7 +1140,7 @@
                             res: 3000,
                         },
                         {
-                            key: "ar_vs_cav_archer",
+                            key: "surv_vs_cav_archer",
                             label: "vs Heavy Cav Archer",
                             civ: "Chinese",
                             slug: "heavy_cav_archer",
@@ -1138,13 +1168,17 @@
                 "raid_vs_castle_dps",
                 // Archery scores
                 "ranged_power",
-                "dps_score",
+                "raw_dps_score",
+                "eco_dps_score",
                 "survivability_score",
-                "ar_vs_champ",
-                "ar_vs_paladin",
-                "ar_vs_arb",
-                "ar_vs_skirm",
-                "ar_vs_cav_archer",
+                "eco_vs_champ",
+                "eco_vs_paladin",
+                "eco_vs_arb",
+                "raw_vs_champ",
+                "raw_vs_paladin",
+                "raw_vs_arb",
+                "surv_vs_skirm",
+                "surv_vs_cav_archer",
             ]);
             const STAT_KEYS = new Set([
                 "final_hp",
@@ -1827,7 +1861,8 @@
                 ];
                 const archeryStatCols = [
                     "ranged_power",
-                    "dps_score",
+                    "raw_dps_score",
+                    "eco_dps_score",
                     "survivability_score",
                     "dps",
                     "final_hp",
@@ -2007,11 +2042,16 @@
                     {
                         key: "ranged_power",
                         label: "Score",
-                        info: "Weighted aggregate: 90% DPS Score + 10% Survivability",
+                        info: "Weighted aggregate: 60% Raw DPS + 30% Eco DPS + 10% Survivability",
                     },
                     {
-                        key: "dps_score",
-                        label: "DPS Score",
+                        key: "raw_dps_score",
+                        label: "Raw DPS",
+                        info: "60 archers vs 30 opponents (Chinese Champion, Spanish Paladin, Chinese Arbalester). Faster win = higher score, loss = 0.",
+                    },
+                    {
+                        key: "eco_dps_score",
+                        label: "Eco DPS",
                         info: "Avg HP% remaining after 3K resource fights vs Chinese Champion, Spanish Paladin, Chinese Arbalester",
                     },
                     {

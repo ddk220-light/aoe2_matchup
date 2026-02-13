@@ -1078,6 +1078,8 @@ def compute_archery_role_scores():
     """Compute role-based scores for all Imperial archery units.
     Returns dict: {"archer|imperial": {...}, "cav_archer|imperial": {...}, ...}"""
 
+    max_ticks = int(MAX_BATTLE_TIME / DT)
+
     bench_cache = {}
     for key, civ, slug, age, mode, param in ARCHERY_ROLE_BENCHMARKS:
         cache_key = (civ, slug, age)
@@ -1108,40 +1110,67 @@ def compute_archery_role_scores():
                     scores[key] = 0.0
                     continue
 
-                bench_cost = calc_weighted_cost(
-                    bench["cost_food"], bench["cost_wood"], bench["cost_gold"], True
-                )
+                if mode == "res":
+                    bench_cost = calc_weighted_cost(
+                        bench["cost_food"],
+                        bench["cost_wood"],
+                        bench["cost_gold"],
+                        True,
+                    )
+                    winner, _, _, hp1, hp2 = simulate_battle(
+                        cu,
+                        bench,
+                        param,
+                        cost1_override=unit_cost,
+                        cost2_override=bench_cost,
+                        return_hp=True,
+                    )
+                    if winner == 1:
+                        scores[key] = round(hp1 * 100, 1)
+                    elif winner == 2:
+                        scores[key] = round(-hp2 * 100, 1)
+                    else:
+                        scores[key] = 0.0
 
-                winner, _, _, hp1, hp2 = simulate_battle(
-                    cu,
-                    bench,
-                    param,
-                    cost1_override=unit_cost,
-                    cost2_override=bench_cost,
-                    return_hp=True,
-                )
-                if winner == 1:
-                    scores[key] = round(hp1 * 100, 1)
-                elif winner == 2:
-                    scores[key] = round(-hp2 * 100, 1)
-                else:
-                    scores[key] = 0.0
+                elif mode == "fixed":
+                    m_count, o_count = param
+                    fake_res = m_count * o_count
+                    winner, _, _, hp1, hp2, ticks = simulate_battle(
+                        cu,
+                        bench,
+                        fake_res,
+                        cost1_override=fake_res // m_count,
+                        cost2_override=fake_res // o_count,
+                        return_ticks=True,
+                    )
+                    if winner == 1:
+                        scores[key] = round((1 - ticks / max_ticks) * 100, 1)
+                    else:
+                        scores[key] = 0.0
 
             all_scores[sk] = scores
             sk_to_line[sk] = line_slug
 
-    # Compute derived scores (raw HP% averages, no normalization)
+    # Compute derived scores
     for sk, scores in all_scores.items():
-        scores["dps_score"] = round(
-            (scores["ar_vs_champ"] + scores["ar_vs_paladin"] + scores["ar_vs_arb"]) / 3,
+        scores["eco_dps_score"] = round(
+            (scores["eco_vs_champ"] + scores["eco_vs_paladin"] + scores["eco_vs_arb"])
+            / 3,
+            1,
+        )
+        scores["raw_dps_score"] = round(
+            (scores["raw_vs_champ"] + scores["raw_vs_paladin"] + scores["raw_vs_arb"])
+            / 3,
             1,
         )
         scores["survivability_score"] = round(
-            (scores["ar_vs_skirm"] + scores["ar_vs_cav_archer"]) / 2,
+            (scores["surv_vs_skirm"] + scores["surv_vs_cav_archer"]) / 2,
             1,
         )
         scores["ranged_power"] = round(
-            0.90 * scores["dps_score"] + 0.10 * scores["survivability_score"],
+            0.60 * scores["raw_dps_score"]
+            + 0.30 * scores["eco_dps_score"]
+            + 0.10 * scores["survivability_score"],
             1,
         )
 

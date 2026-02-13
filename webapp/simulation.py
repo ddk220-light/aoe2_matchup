@@ -2055,32 +2055,40 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
             my_melee = [i for i in my_alive if not my_team["is_ranged"][i]]
             my_ranged = [i for i in my_alive if my_team["is_ranged"][i]]
 
-            # Melee targeting: engage enemy melee first (2 per enemy melee), overflow to ranged
-            melee_capacity = (
-                len(enemy_melee) * 2
-            )  # each enemy melee can be engaged by up to 2
+            # Melee targeting: engage enemy melee first (capped 2:1), overflow to ranged (capped)
+            melee_capacity = len(enemy_melee) * MELEE_VS_MELEE_MAX
             melee_on_melee = my_melee[:melee_capacity]
             melee_overflow = my_melee[melee_capacity:]
 
-            # Assign melee-on-melee (spread evenly among enemy melee)
+            # Assign melee-on-melee (spread, capped at MELEE_VS_MELEE_MAX)
             if enemy_melee and melee_on_melee:
+                slots_used = {}
                 for li, i in enumerate(melee_on_melee):
-                    targets[i] = enemy_melee[
-                        li * len(enemy_melee) // len(melee_on_melee)
-                    ]
+                    t_pos = li % len(enemy_melee)
+                    t = enemy_melee[t_pos]
+                    if slots_used.get(t, 0) < MELEE_VS_MELEE_MAX:
+                        targets[i] = t
+                        slots_used[t] = slots_used.get(t, 0) + 1
+                    else:
+                        for offset in range(1, len(enemy_melee)):
+                            alt = enemy_melee[(t_pos + offset) % len(enemy_melee)]
+                            if slots_used.get(alt, 0) < MELEE_VS_MELEE_MAX:
+                                targets[i] = alt
+                                slots_used[alt] = slots_used.get(alt, 0) + 1
+                                break
 
-            # Overflow melee engage enemy ranged (spread evenly)
+            # Overflow melee engage enemy ranged (capped: 50% engageable, 1:1)
             if enemy_ranged and melee_overflow:
+                engageable_count = max(1, int(len(enemy_ranged) * MELEE_ENGAGE_RATIO))
+                start = tick % len(enemy_ranged) if len(enemy_ranged) > 0 else 0
+                engageable = [enemy_ranged[(start + j) % len(enemy_ranged)] for j in range(engageable_count)]
                 for li, i in enumerate(melee_overflow):
-                    targets[i] = enemy_ranged[
-                        li * len(enemy_ranged) // len(melee_overflow)
-                    ]
+                    if li >= len(engageable):
+                        break  # surplus idles
+                    targets[i] = engageable[li]
             elif melee_overflow and enemy_melee:
-                # No enemy ranged, put overflow on enemy melee
-                for li, i in enumerate(melee_overflow):
-                    targets[i] = enemy_melee[
-                        li * len(enemy_melee) // len(melee_overflow)
-                    ]
+                # No enemy ranged, remaining melee idle (enemy melee already at cap)
+                pass
 
             # Ranged targeting: focus fire enemy melee first, then enemy ranged
             if my_ranged:

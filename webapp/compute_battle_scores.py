@@ -316,52 +316,6 @@ UNIT_LINES = {
             "Wei": ("tiger_cavalry_wei", "elite_tiger_cavalry_wei"),
         },
     },
-    "all_ranged": {
-        "name": "All Ranged (Gold)",
-        "building": "Archery Range",
-        "castle_slug": None,
-        "imperial_slug": None,
-        "castle_slugs": ["crossbow", "cav_archer"],
-        "imperial_slugs": ["arbalester", "heavy_cav_archer", "hand_cannoneer"],
-        "unique_units": {
-            "Britons": ("longbowman_britons", "elite_longbowman_britons"),
-            "Chinese": ("chu_ko_nu_chinese", "elite_chu_ko_nu_chinese"),
-            "Mayans": ("plumed_archer_mayans", "elite_plumed_archer_mayans"),
-            "Italians": (
-                "genoese_crossbowman_italians",
-                "elite_genoese_crossbowman_italians",
-            ),
-            "Turks": ("janissary_turks", "elite_janissary_turks"),
-            "Franks": ("throwing_axeman_franks", "elite_throwing_axeman_franks"),
-            "Incas": ("slinger", "imp_slinger"),
-            "Mongols": ("mangudai_mongols", "elite_mangudai_mongols"),
-            "Saracens": ("mameluke_saracens", "elite_mameluke_saracens"),
-            "Koreans": ("war_wagon_koreans", "elite_war_wagon_koreans"),
-            "Spanish": ("conquistador_spanish", "elite_conquistador_spanish"),
-            "Berbers": ("camel_archer_berbers", "elite_camel_archer_berbers"),
-            "Burmese": ("arambai_burmese", "elite_arambai_burmese"),
-            "Vietnamese": (
-                "rattan_archer_vietnamese",
-                "elite_rattan_archer_vietnamese",
-            ),
-            "Malians": ("gbeto_malians", "elite_gbeto_malians"),
-            "Cumans": ("kipchak_cumans", "elite_kipchak_cumans"),
-            "Bengalis": (
-                "ratha_(ranged)_bengalis",
-                "elite_ratha_(ranged)_bengalis",
-            ),
-            "Armenians": (
-                "composite_bowman_armenians",
-                "elite_composite_bowman_armenians",
-            ),
-            "Wu": ("fire_archer_wu", "elite_fire_archer_wu"),
-            "Shu": (
-                "white_feather_crossbowman_shu",
-                "elite_white_feather_crossbowman_shu",
-            ),
-            "Wei": ("xianbei_raider_wei", "xianbei_raider_wei"),
-        },
-    },
 }
 
 BENCHMARKS = [

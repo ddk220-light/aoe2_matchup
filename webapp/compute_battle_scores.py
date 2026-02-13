@@ -824,8 +824,8 @@ def compute_benchmarks(bench_units, bench_fps, benchmark_cache, unit_fps):
     total_misses = 0
 
     for line_slug, config in UNIT_LINES.items():
-        if line_slug in INFANTRY_LINE_SLUGS:
-            continue  # infantry uses role-based scores from battle_scores table
+        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS:
+            continue  # infantry/archery uses role-based scores from battle_scores table
         for age_key in ["castle", "imperial"]:
             std_slug = config.get(f"{age_key}_slug")
             multi_slugs = config.get(f"{age_key}_slugs", [])
@@ -930,6 +930,29 @@ def _load_benchmark_unit(civ, slug, age):
 
 
 INFANTRY_LINE_SLUGS = ["militia", "spear", "shock_infantry"]
+
+ARCHERY_LINE_SLUGS = ["archer", "skirmisher", "cav_archer"]
+
+ARCHERY_ROLE_BENCHMARKS = [
+    # DPS benchmarks (3K resources each)
+    ("ar_vs_champ", "Chinese", "champion", "Imperial", "res", 3000),
+    ("ar_vs_paladin", "Spanish", "paladin", "Imperial", "res", 3000),
+    ("ar_vs_arb", "Chinese", "arbalester", "Imperial", "res", 3000),
+    # Survivability benchmarks (3K resources each)
+    ("ar_vs_skirm", "Spanish", "imp_elite_skirm", "Imperial", "res", 3000),
+    ("ar_vs_cav_archer", "Chinese", "heavy_cav_archer", "Imperial", "res", 3000),
+]
+
+ARCHERY_ROLE_SCORE_TYPES = [
+    "ranged_power",
+    "dps_score",
+    "survivability_score",
+    "ar_vs_champ",
+    "ar_vs_paladin",
+    "ar_vs_arb",
+    "ar_vs_skirm",
+    "ar_vs_cav_archer",
+]
 
 
 def compute_infantry_role_scores():
@@ -1078,6 +1101,89 @@ def compute_infantry_role_scores():
     # Clean up temp combat unit refs
     for s in all_scores.values():
         s.pop("_combat_unit", None)
+
+    # Regroup by line for DB storage
+    all_role_scores = {}
+    for sk, scores in all_scores.items():
+        line_slug = sk_to_line[sk]
+        line_key = f"{line_slug}|imperial"
+        if line_key not in all_role_scores:
+            all_role_scores[line_key] = {}
+        all_role_scores[line_key][sk] = scores
+
+    return all_role_scores
+
+
+def compute_archery_role_scores():
+    """Compute role-based scores for all Imperial archery units.
+    Returns dict: {"archer|imperial": {...}, "cav_archer|imperial": {...}, ...}"""
+
+    bench_cache = {}
+    for key, civ, slug, age, mode, param in ARCHERY_ROLE_BENCHMARKS:
+        cache_key = (civ, slug, age)
+        if cache_key not in bench_cache:
+            bench_cache[cache_key] = _load_benchmark_unit(civ, slug, age)
+        if bench_cache[cache_key] is None:
+            print(f"  WARNING: archery benchmark {civ}/{slug}/{age} not found")
+
+    all_scores = {}
+    sk_to_line = {}
+
+    for line_slug in ARCHERY_LINE_SLUGS:
+        units = build_line_units(line_slug, "imperial")
+        if not units:
+            continue
+
+        for u in units:
+            cu = u["combat_unit"]
+            unit_cost = calc_weighted_cost(
+                cu["cost_food"], cu["cost_wood"], cu["cost_gold"], True
+            )
+            sk = f"{u['civ_name']}|{u['unit_slug']}"
+            scores = {}
+
+            for key, civ, slug, age, mode, param in ARCHERY_ROLE_BENCHMARKS:
+                bench = bench_cache[(civ, slug, age)]
+                if bench is None:
+                    scores[key] = 0.0
+                    continue
+
+                bench_cost = calc_weighted_cost(
+                    bench["cost_food"], bench["cost_wood"], bench["cost_gold"], True
+                )
+
+                winner, _, _, hp1, hp2 = simulate_battle(
+                    cu,
+                    bench,
+                    param,
+                    cost1_override=unit_cost,
+                    cost2_override=bench_cost,
+                    return_hp=True,
+                )
+                if winner == 1:
+                    scores[key] = round(hp1 * 100, 1)
+                elif winner == 2:
+                    scores[key] = round(-hp2 * 100, 1)
+                else:
+                    scores[key] = 0.0
+
+            all_scores[sk] = scores
+            sk_to_line[sk] = line_slug
+
+    # Compute derived scores (raw HP% averages, no normalization)
+    for sk, scores in all_scores.items():
+        scores["dps_score"] = round(
+            (scores["ar_vs_champ"] + scores["ar_vs_paladin"] + scores["ar_vs_arb"]) / 3,
+            1,
+        )
+        scores["survivability_score"] = round(
+            (scores["ar_vs_skirm"] + scores["ar_vs_cav_archer"]) / 2,
+            1,
+        )
+        scores["ranged_power"] = round(
+            0.70 * scores["dps_score"] + 0.30 * scores["survivability_score"],
+            1,
+        )
 
     # Regroup by line for DB storage
     all_role_scores = {}
@@ -1301,15 +1407,15 @@ def compute_raiding_scores(all_scores, sk_to_line):
         )
 
 
-def write_role_scores_to_db(role_scores_dict):
+def write_role_scores_to_db(role_scores_dict, line_slugs, score_types):
     """Write role scores into the battle_scores table in aoe2_reference.db.
 
-    Writes all score types for all infantry lines.
-    Clears existing infantry scores before inserting.
+    Writes all score types for the given lines.
+    Clears existing scores for those lines before inserting.
     """
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    for slug in INFANTRY_LINE_SLUGS:
+    for slug in line_slugs:
         c.execute("DELETE FROM battle_scores WHERE line_slug=?", (slug,))
 
     rows = []
@@ -1317,7 +1423,7 @@ def write_role_scores_to_db(role_scores_dict):
         line_slug, age = line_age_key.split("|")
         for unit_key, scores in unit_scores.items():
             civ_name, unit_slug = unit_key.split("|")
-            for score_type in INFANTRY_ROLE_SCORE_TYPES:
+            for score_type in score_types:
                 if score_type in scores:
                     rows.append(
                         (
@@ -1355,10 +1461,18 @@ def main():
 
     if args.roles_only:
         role_scores = compute_infantry_role_scores()
-        write_role_scores_to_db(role_scores)
+        write_role_scores_to_db(role_scores, INFANTRY_LINE_SLUGS, INFANTRY_ROLE_SCORE_TYPES)
         total = sum(len(v) for v in role_scores.values())
         print(
             f"Infantry roles: {total} units across {len(role_scores)} lines in {time.time() - start:.1f}s"
+        )
+
+        archery_start = time.time()
+        archery_scores = compute_archery_role_scores()
+        write_role_scores_to_db(archery_scores, ARCHERY_LINE_SLUGS, ARCHERY_ROLE_SCORE_TYPES)
+        total_archery = sum(len(v) for v in archery_scores.values())
+        print(
+            f"Archery roles: {total_archery} units across {len(archery_scores)} lines in {time.time() - archery_start:.1f}s"
         )
         return
 
@@ -1389,10 +1503,10 @@ def main():
     pairwise_cache = cache.get("pairwise", {})
     benchmark_cache = cache.get("benchmarks", {})
 
-    # Build all units and compute fingerprints (infantry excluded — uses DB scores)
+    # Build all units and compute fingerprints (infantry/archery excluded — uses DB scores)
     current_fps = {}
     for line_slug, config in UNIT_LINES.items():
-        if line_slug in INFANTRY_LINE_SLUGS:
+        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS:
             continue
         for age_key in ["castle", "imperial"]:
             std_slug = config.get(f"{age_key}_slug")
@@ -1475,8 +1589,8 @@ def main():
     rr_misses_total = 0
 
     for line_slug, config in UNIT_LINES.items():
-        if line_slug in INFANTRY_LINE_SLUGS:
-            continue  # infantry uses role-based scores from battle_scores table
+        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS:
+            continue  # infantry/archery uses role-based scores from battle_scores table
         for age_key in ["castle", "imperial"]:
             slug = config.get(f"{age_key}_slug")
             multi_slugs = config.get(f"{age_key}_slugs", [])
@@ -1509,11 +1623,21 @@ def main():
     # Infantry role scores (written to DB only, not JSON)
     role_start = time.time()
     role_scores = compute_infantry_role_scores()
-    write_role_scores_to_db(role_scores)
+    write_role_scores_to_db(role_scores, INFANTRY_LINE_SLUGS, INFANTRY_ROLE_SCORE_TYPES)
     role_time = time.time() - role_start
     total_infantry = sum(len(v) for v in role_scores.values())
     print(
         f"Infantry roles: {total_infantry} units across {len(role_scores)} lines in {role_time:.1f}s"
+    )
+
+    # Archery role scores (written to DB, not JSON)
+    archery_start = time.time()
+    archery_scores = compute_archery_role_scores()
+    write_role_scores_to_db(archery_scores, ARCHERY_LINE_SLUGS, ARCHERY_ROLE_SCORE_TYPES)
+    archery_time = time.time() - archery_start
+    total_archery = sum(len(v) for v in archery_scores.values())
+    print(
+        f"Archery roles: {total_archery} units across {len(archery_scores)} lines in {archery_time:.1f}s"
     )
 
     # Write output (round-robin + benchmarks only, no militia)

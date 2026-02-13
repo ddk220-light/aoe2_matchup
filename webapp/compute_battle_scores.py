@@ -1135,7 +1135,7 @@ def compute_archery_role_scores():
             1,
         )
         scores["ranged_power"] = round(
-            0.70 * scores["dps_score"] + 0.30 * scores["survivability_score"],
+            0.90 * scores["dps_score"] + 0.10 * scores["survivability_score"],
             1,
         )
 

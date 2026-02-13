@@ -20,7 +20,9 @@ RETARGET_DIST = 1.5  # tiles to walk when switching to a new melee target
 UNIT_SPACING = 0.75  # approximate unit spacing in melee clump
 RETREAT_MAX = 10.0  # max tiles ranged retreats before standing to fight
 TRAMPLE_HIT_CHANCE = 0.25  # fraction of trample attacks that hit a nearby unit
-MELEE_ENGAGE_RATIO = 0.5   # fraction of ranged units engageable by melee at once
+MELEE_ENGAGE_START = 0.3    # initial fraction of ranged engageable when melee arrives
+MELEE_ENGAGE_STEP = 0.1    # increase per attack round (every ~2 seconds)
+MELEE_ENGAGE_ROUND_TICKS = 20  # ticks per "attack round" for ramp (~2 seconds)
 MELEE_MAX_PER_TARGET = 1   # max melee attackers per ranged target
 MELEE_VS_MELEE_MAX = 2     # soft cap for melee-vs-melee targeting
 
@@ -243,10 +245,11 @@ def _assign_targets_spread(my_alive, enemy_alive):
 
 
 def _assign_targets_melee_capped(my_alive, enemy_alive, tick):
-    """Assign melee attackers to ranged targets with engagement limits.
+    """Assign melee attackers to ranged targets with rolling engagement limits.
 
     Rules:
-    - At most MELEE_ENGAGE_RATIO of enemy alive are targetable (the "engageable pool")
+    - Engagement ratio ramps from MELEE_ENGAGE_START (30%) up by MELEE_ENGAGE_STEP
+      (10%) each attack round (~2 seconds), capping at 100%
     - Each engageable target gets exactly MELEE_MAX_PER_TARGET attacker
     - Surplus melee units get no target (they idle that tick)
     - The engageable pool rotates each tick so different enemies are targeted
@@ -254,7 +257,10 @@ def _assign_targets_melee_capped(my_alive, enemy_alive, tick):
     if not enemy_alive:
         return {}
     n_enemy = len(enemy_alive)
-    engageable_count = max(1, int(n_enemy * MELEE_ENGAGE_RATIO))
+    # Rolling engagement ratio: starts at 30%, increases 10% every ~2 seconds
+    attack_round = tick // MELEE_ENGAGE_ROUND_TICKS
+    engage_ratio = min(1.0, MELEE_ENGAGE_START + attack_round * MELEE_ENGAGE_STEP)
+    engageable_count = max(1, int(n_enemy * engage_ratio))
     # Rotate which enemies are engageable each tick
     start = tick % n_enemy
     engageable = []
@@ -2077,9 +2083,11 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                                 slots_used[alt] = slots_used.get(alt, 0) + 1
                                 break
 
-            # Overflow melee engage enemy ranged (capped: 50% engageable, 1:1)
+            # Overflow melee engage enemy ranged (rolling ramp, 1:1)
             if enemy_ranged and melee_overflow:
-                engageable_count = max(1, int(len(enemy_ranged) * MELEE_ENGAGE_RATIO))
+                attack_round = tick // MELEE_ENGAGE_ROUND_TICKS
+                engage_ratio = min(1.0, MELEE_ENGAGE_START + attack_round * MELEE_ENGAGE_STEP)
+                engageable_count = max(1, int(len(enemy_ranged) * engage_ratio))
                 start = tick % len(enemy_ranged) if len(enemy_ranged) > 0 else 0
                 engageable = [enemy_ranged[(start + j) % len(enemy_ranged)] for j in range(engageable_count)]
                 for li, i in enumerate(melee_overflow):

@@ -12,7 +12,9 @@ from simulation import (
     _assign_targets_spread_capped,
     simulate_battle,
     prepare_combat_unit,
-    MELEE_ENGAGE_RATIO,
+    MELEE_ENGAGE_START,
+    MELEE_ENGAGE_STEP,
+    MELEE_ENGAGE_ROUND_TICKS,
     MELEE_VS_MELEE_MAX,
 )
 
@@ -28,12 +30,14 @@ def test_spread_unchanged():
         assert result[attacker] in enemy_alive
 
 
-def test_melee_capped_50pct_cap():
-    """At most 50% of ranged targets are engageable."""
+def test_melee_capped_initial_ratio():
+    """At tick=0, engagement starts at MELEE_ENGAGE_START (30%)."""
     my_alive = list(range(30))
     enemy_alive = list(range(30))
     result = _assign_targets_melee_capped(my_alive, enemy_alive, tick=0)
-    assert len(result) == 15
+    # 30 * 0.3 = 9 engageable at tick 0
+    expected = max(1, int(30 * MELEE_ENGAGE_START))
+    assert len(result) == expected
 
     targets = list(result.values())
     assert len(set(targets)) == len(targets)
@@ -44,7 +48,9 @@ def test_melee_capped_1to1_strict():
     my_alive = list(range(20))
     enemy_alive = list(range(10))
     result = _assign_targets_melee_capped(my_alive, enemy_alive, tick=0)
-    assert len(result) == 5
+    # 10 * 0.3 = 3 engageable at tick 0
+    expected = max(1, int(10 * MELEE_ENGAGE_START))
+    assert len(result) == expected
     targets = list(result.values())
     assert len(set(targets)) == len(targets)
 
@@ -54,9 +60,11 @@ def test_melee_capped_surplus_idles():
     my_alive = list(range(30))
     enemy_alive = list(range(10))
     result = _assign_targets_melee_capped(my_alive, enemy_alive, tick=0)
-    assert len(result) == 5
+    # 10 * 0.3 = 3 engageable at tick 0, so 27 idle
+    expected = max(1, int(10 * MELEE_ENGAGE_START))
+    assert len(result) == expected
     idle = [i for i in my_alive if i not in result]
-    assert len(idle) == 25
+    assert len(idle) == 30 - expected
 
 
 def test_melee_capped_rotation():
@@ -66,6 +74,21 @@ def test_melee_capped_rotation():
     targets_tick0 = set(_assign_targets_melee_capped(my_alive, enemy_alive, tick=0).values())
     targets_tick1 = set(_assign_targets_melee_capped(my_alive, enemy_alive, tick=1).values())
     assert targets_tick0 != targets_tick1
+
+
+def test_melee_capped_ramp_up():
+    """Engagement ratio increases over time: 30% -> 40% -> 50% -> ... -> 100%."""
+    my_alive = list(range(30))
+    enemy_alive = list(range(30))
+    # tick 0: 30% = 9 engageable
+    r0 = _assign_targets_melee_capped(my_alive, enemy_alive, tick=0)
+    assert len(r0) == max(1, int(30 * MELEE_ENGAGE_START))
+    # After 1 attack round (20 ticks): 40%
+    r1 = _assign_targets_melee_capped(my_alive, enemy_alive, tick=MELEE_ENGAGE_ROUND_TICKS)
+    assert len(r1) == max(1, int(30 * (MELEE_ENGAGE_START + MELEE_ENGAGE_STEP)))
+    # After 7 attack rounds (140 ticks): 100%
+    r7 = _assign_targets_melee_capped(my_alive, enemy_alive, tick=MELEE_ENGAGE_ROUND_TICKS * 7)
+    assert len(r7) == 30  # 100% = all engageable, 1:1 with 30 melee vs 30 ranged
 
 
 def test_melee_capped_small_army():

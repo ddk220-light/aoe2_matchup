@@ -1032,15 +1032,19 @@ def simulate_battle(
         for i in alive2:
             cooldown2[i] = max(0.0, cooldown2[i] - DT)
 
-        # Assign targets: ranged use focus fire, melee spread evenly
+        # Assign targets: ranged focus fire, melee capped vs ranged, spread capped vs melee
         if is_ranged1:
             targets1 = _assign_targets_focus(alive1, alive2, hp2, dmg1, 1 + extra_proj1)
+        elif is_ranged2:
+            targets1 = _assign_targets_melee_capped(alive1, alive2, tick)
         else:
-            targets1 = _assign_targets_spread(alive1, alive2)
+            targets1 = _assign_targets_spread_capped(alive1, alive2)
         if is_ranged2:
             targets2 = _assign_targets_focus(alive2, alive1, hp1, dmg2, 1 + extra_proj2)
+        elif is_ranged1:
+            targets2 = _assign_targets_melee_capped(alive2, alive1, tick)
         else:
-            targets2 = _assign_targets_spread(alive2, alive1)
+            targets2 = _assign_targets_spread_capped(alive2, alive1)
 
         # Collect pending damage: (target_team, target_idx, damage, attacker_idx)
         pending_damage = []

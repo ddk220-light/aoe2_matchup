@@ -1466,51 +1466,10 @@ UNIT_LINES = {
             "Wei": ("tiger_cavalry_wei", "elite_tiger_cavalry_wei"),
         },
     },
-    "all_ranged": {
-        "name": "All Ranged (Gold)",
+    "archery": {
+        "name": "Ranged Power Rankings",
         "building": "Archery Range",
-        "castle_slug": None,
-        "imperial_slug": None,
-        "castle_slugs": ["crossbow", "cav_archer"],
-        "imperial_slugs": ["arbalester", "heavy_cav_archer", "hand_cannoneer"],
-        "unique_units": {
-            "Britons": ("longbowman_britons", "elite_longbowman_britons"),
-            "Chinese": ("chu_ko_nu_chinese", "elite_chu_ko_nu_chinese"),
-            "Mayans": ("plumed_archer_mayans", "elite_plumed_archer_mayans"),
-            "Italians": (
-                "genoese_crossbowman_italians",
-                "elite_genoese_crossbowman_italians",
-            ),
-            "Turks": ("janissary_turks", "elite_janissary_turks"),
-            "Franks": ("throwing_axeman_franks", "elite_throwing_axeman_franks"),
-            "Incas": ("slinger", "imp_slinger"),
-            "Mongols": ("mangudai_mongols", "elite_mangudai_mongols"),
-            "Saracens": ("mameluke_saracens", "elite_mameluke_saracens"),
-            "Koreans": ("war_wagon_koreans", "elite_war_wagon_koreans"),
-            "Spanish": ("conquistador_spanish", "elite_conquistador_spanish"),
-            "Berbers": ("camel_archer_berbers", "elite_camel_archer_berbers"),
-            "Burmese": ("arambai_burmese", "elite_arambai_burmese"),
-            "Vietnamese": (
-                "rattan_archer_vietnamese",
-                "elite_rattan_archer_vietnamese",
-            ),
-            "Malians": ("gbeto_malians", "elite_gbeto_malians"),
-            "Cumans": ("kipchak_cumans", "elite_kipchak_cumans"),
-            "Bengalis": (
-                "ratha_(ranged)_bengalis",
-                "elite_ratha_(ranged)_bengalis",
-            ),
-            "Armenians": (
-                "composite_bowman_armenians",
-                "elite_composite_bowman_armenians",
-            ),
-            "Wu": ("fire_archer_wu", "elite_fire_archer_wu"),
-            "Shu": (
-                "white_feather_crossbowman_shu",
-                "elite_white_feather_crossbowman_shu",
-            ),
-            "Wei": ("xianbei_raider_wei", "xianbei_raider_wei"),
-        },
+        "sub_lines": ["archer", "cav_archer", "skirmisher"],
     },
     "infantry": {
         "name": "Infantry Effectiveness",
@@ -1530,6 +1489,7 @@ UNIT_LINES = {
 }
 
 INFANTRY_LINE_SLUGS = {"militia", "spear", "shock_infantry"}
+ARCHERY_LINE_SLUGS = {"archer", "skirmisher", "cav_archer"}
 
 
 # ===== Pre-computed battle scores (loaded from battle_scores.json) =====
@@ -1584,7 +1544,7 @@ def api_ref_unit_line(line_slug):
 
     # Load infantry role scores from DB (keyed by "civ_name|unit_slug")
     _db_role_scores = {}
-    _score_line_slugs = [s for s in sub_lines if s in INFANTRY_LINE_SLUGS]
+    _score_line_slugs = [s for s in sub_lines if s in INFANTRY_LINE_SLUGS or s in ARCHERY_LINE_SLUGS]
     if _score_line_slugs:
         placeholders = ",".join("?" for _ in _score_line_slugs)
         rc.execute(
@@ -1600,7 +1560,7 @@ def api_ref_unit_line(line_slug):
     def _attach_scores(entry, age_key, sub_slug):
         """Attach battle scores: DB role scores for infantry, JSON for other lines."""
         unit_key = f"{entry['civ_name']}|{entry['unit_slug']}"
-        if sub_slug in INFANTRY_LINE_SLUGS and _db_role_scores:
+        if (sub_slug in INFANTRY_LINE_SLUGS or sub_slug in ARCHERY_LINE_SLUGS) and _db_role_scores:
             rs = _db_role_scores.get(unit_key, {})
             for rk, rv in rs.items():
                 entry[rk] = rv

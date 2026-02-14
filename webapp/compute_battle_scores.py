@@ -1717,20 +1717,35 @@ def compute_raiding_scores(all_scores, sk_to_line):
         # Store raw ticks; we'll invert during normalization.
         scores["raid_vill_kill_ticks"] = ticks
 
-    # 3. Anti-building DPS calculation
-    # cu["attacks"] is {int_class: value} after prepare_combat_unit()
+    # 3. Anti-building N_min calculation (attrition model with focus fire)
+    # Each arrow individually does max(1, arrow_attack - pierce_armor) damage.
+    # Building focus-fires one unit at a time; army DPS drops as units die.
+    # N_min = ceil((-1 + sqrt(1 + 4*C)) / 2) where C = 2*B*f / (d*h)
     for sk, scores in all_scores.items():
         cu = scores["_combat_unit"]
         attacks = cu.get("attacks", {})
         base_melee = attacks.get(4, 0)  # class 4 = melee
         bonus_vs_buildings = attacks.get(21, 0)  # class 21 = Standard Buildings
         reload_time = 1.0 / cu["attack_speed"] if cu["attack_speed"] > 0 else 2.0
+        unit_hp = cu["hp"]
+        unit_pierce_armor = cu["pierce_armor"]
 
         for bkey, bstats in BUILDING_TARGETS.items():
-            total_attack = base_melee + bonus_vs_buildings
-            damage = max(1, total_attack - bstats["melee_armor"])
-            dps = damage / reload_time if reload_time > 0 else 0
-            scores[f"raid_vs_{bkey}_dps"] = round(dps, 2)
+            # Unit DPS vs building (separate armor classes)
+            melee_dmg = base_melee - bstats["melee_armor"]
+            building_dmg = bonus_vs_buildings - bstats["building_armor"]
+            damage_per_hit = max(1, melee_dmg + building_dmg)
+            d = damage_per_hit / reload_time  # unit anti-building DPS
+
+            # Building DPS vs unit (each arrow reduced by pierce armor individually)
+            dmg_per_arrow = max(1, bstats["arrow_attack"] - unit_pierce_armor)
+            f = bstats["arrows"] * dmg_per_arrow / bstats["reload"]  # building DPS
+
+            # Attrition formula: N*(N+1) >= 2*B*f / (d*h)
+            B = bstats["hp"]
+            C = 2.0 * B * f / (d * unit_hp)
+            n_min = math.ceil((-1.0 + math.sqrt(1.0 + 4.0 * C)) / 2.0)
+            scores[f"raid_vs_{bkey}_nmin"] = n_min
 
     # Normalize movement speed 0–100 (higher = better)
     speed_vals = [s["raid_speed"] for s in all_scores.values()]

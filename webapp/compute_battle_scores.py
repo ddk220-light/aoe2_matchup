@@ -747,7 +747,7 @@ def compute_benchmarks(bench_units, bench_fps, benchmark_cache, unit_fps):
 
     for line_slug, config in UNIT_LINES.items():
         if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS or line_slug in STABLE_LINE_SLUGS:
-            continue  # infantry/archery uses role-based scores from battle_scores table
+            continue  # infantry/archery/stable uses role-based scores from battle_scores table
         for age_key in ["castle", "imperial"]:
             std_slug = config.get(f"{age_key}_slug")
             multi_slugs = config.get(f"{age_key}_slugs", [])
@@ -1422,6 +1422,9 @@ def compute_stable_role_scores():
         units = build_line_units(line_slug, "imperial")
         all_units.extend(units)
 
+    # Exclude Elephant Archers (ranged units already scored in archery rankings)
+    all_units = [u for u in all_units if "ele_archer" not in u["unit_slug"]]
+
     if not all_units:
         return {}
 
@@ -1933,7 +1936,7 @@ def main():
 
     for line_slug, config in UNIT_LINES.items():
         if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS or line_slug in STABLE_LINE_SLUGS:
-            continue  # infantry/archery uses role-based scores from battle_scores table
+            continue  # infantry/archery/stable uses role-based scores from battle_scores table
         for age_key in ["castle", "imperial"]:
             slug = config.get(f"{age_key}_slug")
             multi_slugs = config.get(f"{age_key}_slugs", [])

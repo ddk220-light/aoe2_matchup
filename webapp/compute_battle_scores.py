@@ -558,11 +558,11 @@ def build_combat_dict(rc, row):
         "armor_strip_per_hit": int(row["armor_strip_per_hit"] or 0),
         "charge_attack_melee": int(row["charge_attack_melee"] or 0),
         "charge_recharge_time": row["charge_recharge_time"] or 0,
-        "attack_bonus_nearby": 0,  # TODO: add to ref_units if needed
-        "nearby_bonus_count": 0,
+        "attack_bonus_nearby": row["attack_bonus_nearby"] or 0,
+        "nearby_bonus_count": int(row["nearby_bonus_count"] or 0),
         "damage_reflect_percent": row["damage_reflect_percent"] or 0,
-        "bonus_hp_nearby": 0,
-        "nearby_hp_bonus_count": 0,
+        "bonus_hp_nearby": row["bonus_hp_nearby"] or 0,
+        "nearby_hp_bonus_count": int(row["nearby_hp_bonus_count"] or 0),
         # Dismount on death (Konnik)
         "dismount_hp": row["dismount_hp"],
         "dismount_attack": row["dismount_attack"],
@@ -897,6 +897,7 @@ ARCHERY_ROLE_BENCHMARKS = [
     # Survivability benchmarks (30v30 fixed count, HP-remaining scoring)
     ("surv_vs_skirm", "Spanish", "imp_elite_skirm", "Imperial", "fixed_hp", (30, 30)),
     ("surv_vs_cav_archer", "Chinese", "heavy_cav_archer", "Imperial", "fixed_hp", (30, 30)),
+    ("surv_vs_halb", "Spanish", "halberdier", "Imperial", "fixed_hp", (30, 30)),
 ]
 
 ARCHERY_ROLE_SCORE_TYPES = [
@@ -912,6 +913,7 @@ ARCHERY_ROLE_SCORE_TYPES = [
     "raw_vs_arb",
     "surv_vs_skirm",
     "surv_vs_cav_archer",
+    "surv_vs_halb",
 ]
 
 
@@ -1182,7 +1184,7 @@ def compute_archery_role_scores():
             1,
         )
         scores["survivability_score"] = round(
-            (scores["surv_vs_skirm"] + scores["surv_vs_cav_archer"]) / 2,
+            (scores["surv_vs_skirm"] + scores["surv_vs_cav_archer"] + scores["surv_vs_halb"]) / 3,
             1,
         )
         scores["ranged_power"] = round(

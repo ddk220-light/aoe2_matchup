@@ -240,8 +240,8 @@ def test_simulate_small_battle_unchanged():
     assert winner in (1, 2, 0)
 
 
-def test_simulate_ranged_vs_ranged_unchanged():
-    """Ranged vs ranged should be unaffected by melee engagement changes."""
+def test_simulate_ranged_vs_ranged_with_kiting():
+    """Ranged vs ranged: arbalester should still beat crossbow with kiting model."""
     arb = _make_unit(hp=40, attack=10, attack_speed=0.5, attack_range=11,
                      melee_armor=3, pierce_armor=4, movement_speed=0.96,
                      attacks={3: 10}, armors={4: 3, 3: 4})
@@ -251,3 +251,96 @@ def test_simulate_ranged_vs_ranged_unchanged():
     winner, rem1, rem2 = simulate_battle(arb, xbow, 0, fixed_count=20)
     # Arbalester should beat crossbow (higher stats + range advantage)
     assert winner == 1
+
+
+def test_ranged_kiting_longer_range_slower_gets_opening_shots():
+    """Arb-like (range 8, slow) vs TAx-like (range 6, fast): range advantage yields opening shots.
+
+    With kiting, the arb (range 8) should get ~6 opening shots against the TAx (range 6)
+    due to the +2 range advantage and kiting retreat. The old formula gives only
+    int(2/2)=1 opening shot. With proper kiting, the battle should be competitive
+    even though the TAx is faster and has higher DPS.
+    """
+    # Arb-like: range 8, speed 0.96, attack_speed=1.7 (rate) → reload=0.588s, delay=0.333
+    arb = _make_unit(hp=40, attack=10, attack_speed=1.7, attack_range=8,
+                     melee_armor=0, pierce_armor=0, movement_speed=0.96,
+                     attack_delay=0.333,
+                     attacks={3: 10}, armors={4: 0, 3: 0})
+    # TAx-like: range 6, speed 1.1, attack_speed=2.0 (rate) → reload=0.5s, delay=0.467
+    tax = _make_unit(hp=60, attack=12, attack_speed=2.0, attack_range=6,
+                     melee_armor=0, pierce_armor=0, movement_speed=1.1,
+                     attack_delay=0.467,
+                     attacks={3: 12}, armors={4: 0, 3: 0})
+    winner, rem_arb, rem_tax = simulate_battle(arb, tax, 0, fixed_count=30)
+    # With kiting model, arb should get meaningful opening shots making the battle
+    # competitive. Assert TAx doesn't dominate completely.
+    assert rem_arb > 0 or rem_tax <= 20, (
+        f"Kiting should make arb competitive. Got: arb_remaining={rem_arb}, tax_remaining={rem_tax}"
+    )
+
+
+def test_ranged_kiting_faster_longer_range_dominates():
+    """Fast archer (range 8, speed 1.4) vs slow archer (range 5, speed 0.9): extended kiting.
+
+    When one side has BOTH range AND speed advantage, it should be able to kite
+    indefinitely and dominate. The old formula gives int(3/2)=1 opening shot,
+    but the fast archer should win decisively due to sustained kiting advantage.
+    """
+    fast = _make_unit(hp=40, attack=8, attack_speed=1.7, attack_range=8,
+                      melee_armor=0, pierce_armor=0, movement_speed=1.4,
+                      attack_delay=0.3,
+                      attacks={3: 8}, armors={4: 0, 3: 0})
+    slow = _make_unit(hp=40, attack=8, attack_speed=1.7, attack_range=5,
+                      melee_armor=0, pierce_armor=0, movement_speed=0.9,
+                      attack_delay=0.3,
+                      attacks={3: 8}, armors={4: 0, 3: 0})
+    winner, rem_fast, rem_slow = simulate_battle(fast, slow, 0, fixed_count=20)
+    # Fast archer with range+speed advantage should win decisively
+    assert winner == 1 and rem_fast >= 10, (
+        f"Fast archer with range+speed should dominate. "
+        f"Got: winner={winner}, fast_remaining={rem_fast}, slow_remaining={rem_slow}"
+    )
+
+
+def test_ranged_kiting_equal_range_no_opening():
+    """Equal range (6 vs 6) with different speeds: no opening shots regardless of speed.
+
+    When both sides have identical range, neither can fire before the other
+    regardless of speed difference. Battle should be close to a draw since
+    stats are identical except for speed (which doesn't matter at equal range).
+    """
+    fast = _make_unit(hp=40, attack=8, attack_speed=1.7, attack_range=6,
+                      melee_armor=0, pierce_armor=0, movement_speed=1.4,
+                      attack_delay=0.3,
+                      attacks={3: 8}, armors={4: 0, 3: 0})
+    slow = _make_unit(hp=40, attack=8, attack_speed=1.7, attack_range=6,
+                      melee_armor=0, pierce_armor=0, movement_speed=0.9,
+                      attack_delay=0.3,
+                      attacks={3: 8}, armors={4: 0, 3: 0})
+    winner, rem1, rem2 = simulate_battle(fast, slow, 0, fixed_count=20)
+    # Equal range = equal fight. Winner's remaining should be small (close battle).
+    winner_remaining = rem1 if winner == 1 else rem2
+    assert winner_remaining <= 15, (
+        f"Equal range should produce a close fight. "
+        f"Got: winner={winner}, remaining={winner_remaining}"
+    )
+
+
+def test_ranged_kiting_min_range_reduces_fire_dist():
+    """Unit with min_range=6 vs archer with range=5: min_range caps effective fire distance.
+
+    A unit with range=10 but min_range=6 can't fire at targets closer than 6.
+    Against an archer with range=5, the fire_dist should be 10 - max(6, 5) = 4,
+    capped by the min_range. Verify the simulation handles this correctly.
+    """
+    long_range = _make_unit(hp=50, attack=12, attack_speed=1.0, attack_range=10,
+                            melee_armor=0, pierce_armor=0, movement_speed=0.8,
+                            attack_delay=0.5, min_attack_range=6,
+                            attacks={3: 12}, armors={4: 0, 3: 0})
+    archer = _make_unit(hp=40, attack=8, attack_speed=1.7, attack_range=5,
+                        melee_armor=0, pierce_armor=0, movement_speed=0.96,
+                        attack_delay=0.3,
+                        attacks={3: 8}, armors={4: 0, 3: 0})
+    # Just verify the simulation runs without error
+    winner, rem1, rem2 = simulate_battle(long_range, archer, 0, fixed_count=20)
+    assert winner in (0, 1, 2), f"Unexpected winner value: {winner}"

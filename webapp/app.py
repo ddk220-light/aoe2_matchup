@@ -1480,6 +1480,11 @@ UNIT_LINES = {
         "building": "Archery Range",
         "sub_lines": ["archer", "cav_archer", "skirmisher"],
     },
+    "mobility": {
+        "name": "Mobility Rankings",
+        "building": "Archery Range",
+        "sub_lines": ["archer", "cav_archer", "skirmisher"],
+    },
     "infantry": {
         "name": "Infantry Effectiveness",
         "building": "Barracks",
@@ -1494,6 +1499,11 @@ UNIT_LINES = {
         "name": "Infantry Raiding",
         "building": "Barracks",
         "sub_lines": ["militia", "spear", "shock_infantry"],
+    },
+    "anti_archer": {
+        "name": "Anti Archer Rankings",
+        "building": "Archery Range",
+        "sub_lines": ["archer", "cav_archer", "skirmisher"],
     },
 }
 

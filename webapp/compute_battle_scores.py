@@ -914,6 +914,40 @@ ARCHERY_ROLE_SCORE_TYPES = [
     "surv_vs_skirm",
     "surv_vs_cav_archer",
     "surv_vs_halb",
+    # Mobility ranking scores
+    "mobility_score",
+    "mobility_speed_dps",
+    "mobility_pierce_armor",
+    "mobility_hp",
+]
+
+ANTI_ARCHER_BENCHMARKS = [
+    # Eco benchmarks (3K resources each) — vs archer-class units
+    ("aa_eco_vs_arb", "Chinese", "arbalester", "Imperial", "res", 3000),
+    ("aa_eco_vs_ca", "Chinese", "heavy_cav_archer", "Imperial", "res", 3000),
+    ("aa_eco_vs_hc", "Spanish", "hand_cannoneer", "Imperial", "res", 3000),
+    # Pop benchmarks (30v30 fixed count) — vs archer-class units
+    ("aa_pop_vs_arb", "Chinese", "arbalester", "Imperial", "fixed_hp", (30, 30)),
+    ("aa_pop_vs_ca", "Chinese", "heavy_cav_archer", "Imperial", "fixed_hp", (30, 30)),
+    ("aa_pop_vs_hc", "Spanish", "hand_cannoneer", "Imperial", "fixed_hp", (30, 30)),
+    # Power benchmarks (3K resources) — vs non-archer threats
+    ("aa_power_vs_hussar", "Spanish", "hussar", "Imperial", "res", 3000),
+    ("aa_power_vs_champ", "Chinese", "champion", "Imperial", "res", 3000),
+]
+
+ANTI_ARCHER_SCORE_TYPES = [
+    "anti_archer",
+    "aa_eco_score",
+    "aa_pop_score",
+    "aa_power",
+    "aa_eco_vs_arb",
+    "aa_eco_vs_ca",
+    "aa_eco_vs_hc",
+    "aa_pop_vs_arb",
+    "aa_pop_vs_ca",
+    "aa_pop_vs_hc",
+    "aa_power_vs_hussar",
+    "aa_power_vs_champ",
 ]
 
 
@@ -1191,6 +1225,158 @@ def compute_archery_role_scores():
             0.70 * scores["raw_dps_score"]
             + 0.15 * scores["eco_dps_score"]
             + 0.15 * scores["survivability_score"],
+            1,
+        )
+
+    # Compute mobility ranking scores
+    # Step 1: Collect raw values from combat units
+    mobility_raw = {}
+    for line_slug in ARCHERY_LINE_SLUGS:
+        units = build_line_units(line_slug, "imperial")
+        for u in units:
+            cu = u["combat_unit"]
+            sk = f"{u['civ_name']}|{u['unit_slug']}"
+            if sk not in all_scores:
+                continue
+            attack = cu["attack"]
+            attack_speed = cu["attack_speed"]  # already 1/reload from prepare_combat_unit
+            reload_time = 1.0 / attack_speed if attack_speed > 0 else 2.0
+            dps = attack / reload_time
+            mobility_raw[sk] = {
+                "speed_dps": cu["movement_speed"] * dps,
+                "pierce_armor": cu["pierce_armor"],
+                "hp": cu["hp"],
+            }
+
+    # Step 2: Normalize each component 0-100
+    if mobility_raw:
+        for component in ["speed_dps", "pierce_armor", "hp"]:
+            vals = [r[component] for r in mobility_raw.values()]
+            lo, hi = min(vals), max(vals)
+            span = hi - lo if hi != lo else 1
+            for r in mobility_raw.values():
+                r[f"norm_{component}"] = round((r[component] - lo) / span * 100, 1)
+
+        # Step 3: Compute composite and store
+        for sk, raw in mobility_raw.items():
+            scores = all_scores[sk]
+            scores["mobility_speed_dps"] = raw["norm_speed_dps"]
+            scores["mobility_pierce_armor"] = raw["norm_pierce_armor"]
+            scores["mobility_hp"] = raw["norm_hp"]
+            scores["mobility_score"] = round(
+                (raw["norm_speed_dps"] + raw["norm_pierce_armor"] + raw["norm_hp"]) / 3,
+                1,
+            )
+
+    # Regroup by line for DB storage
+    all_role_scores = {}
+    for sk, scores in all_scores.items():
+        line_slug = sk_to_line[sk]
+        line_key = f"{line_slug}|imperial"
+        if line_key not in all_role_scores:
+            all_role_scores[line_key] = {}
+        all_role_scores[line_key][sk] = scores
+
+    return all_role_scores
+
+
+def compute_anti_archer_scores():
+    """Compute anti-archer role scores for all Imperial archery units.
+    Returns dict: {"archer|imperial": {...}, "cav_archer|imperial": {...}, ...}"""
+
+    bench_cache = {}
+    for key, civ, slug, age, mode, param in ANTI_ARCHER_BENCHMARKS:
+        cache_key = (civ, slug, age)
+        if cache_key not in bench_cache:
+            bench_cache[cache_key] = _load_benchmark_unit(civ, slug, age)
+        if bench_cache[cache_key] is None:
+            print(f"  WARNING: anti-archer benchmark {civ}/{slug}/{age} not found")
+
+    all_scores = {}
+    sk_to_line = {}
+
+    for line_slug in ARCHERY_LINE_SLUGS:
+        units = build_line_units(line_slug, "imperial")
+        if not units:
+            continue
+
+        for u in units:
+            cu = u["combat_unit"]
+            unit_cost = calc_weighted_cost(
+                cu["cost_food"], cu["cost_wood"], cu["cost_gold"], True
+            )
+            sk = f"{u['civ_name']}|{u['unit_slug']}"
+            scores = {}
+
+            for key, civ, slug, age, mode, param in ANTI_ARCHER_BENCHMARKS:
+                bench = bench_cache[(civ, slug, age)]
+                if bench is None:
+                    scores[key] = 0.0
+                    continue
+
+                if mode == "res":
+                    bench_cost = calc_weighted_cost(
+                        bench["cost_food"],
+                        bench["cost_wood"],
+                        bench["cost_gold"],
+                        True,
+                    )
+                    winner, _, _, hp1, hp2 = simulate_battle(
+                        cu,
+                        bench,
+                        param,
+                        cost1_override=unit_cost,
+                        cost2_override=bench_cost,
+                        return_hp=True,
+                    )
+                    if winner == 1:
+                        scores[key] = round(hp1 * 100, 1)
+                    elif winner == 2:
+                        scores[key] = round(-hp2 * 100, 1)
+                    else:
+                        scores[key] = 0.0
+
+                elif mode == "fixed_hp":
+                    m_count, o_count = param
+                    fake_res = m_count * o_count
+                    winner, _, _, hp1, hp2 = simulate_battle(
+                        cu,
+                        bench,
+                        fake_res,
+                        cost1_override=fake_res // m_count,
+                        cost2_override=fake_res // o_count,
+                        return_hp=True,
+                    )
+                    if winner == 1:
+                        scores[key] = round(hp1 * 100, 1)
+                    elif winner == 2:
+                        scores[key] = round(-hp2 * 100, 1)
+                    else:
+                        scores[key] = 0.0
+
+            all_scores[sk] = scores
+            sk_to_line[sk] = line_slug
+
+    # Compute derived scores
+    for sk, scores in all_scores.items():
+        scores["aa_eco_score"] = round(
+            (scores["aa_eco_vs_arb"] + scores["aa_eco_vs_ca"] + scores["aa_eco_vs_hc"])
+            / 3,
+            1,
+        )
+        scores["aa_pop_score"] = round(
+            (scores["aa_pop_vs_arb"] + scores["aa_pop_vs_ca"] + scores["aa_pop_vs_hc"])
+            / 3,
+            1,
+        )
+        scores["aa_power"] = round(
+            (scores["aa_power_vs_hussar"] + scores["aa_power_vs_champ"]) / 2,
+            1,
+        )
+        scores["anti_archer"] = round(
+            0.50 * scores["aa_eco_score"]
+            + 0.30 * scores["aa_pop_score"]
+            + 0.20 * scores["aa_power"],
             1,
         )
 
@@ -1478,10 +1664,16 @@ def main():
 
         archery_start = time.time()
         archery_scores = compute_archery_role_scores()
-        write_role_scores_to_db(archery_scores, ARCHERY_LINE_SLUGS, ARCHERY_ROLE_SCORE_TYPES)
+        aa_scores = compute_anti_archer_scores()
+        # Merge anti-archer scores into archery scores (same line keys, same unit keys)
+        for line_key, unit_scores in aa_scores.items():
+            for uk, scores in unit_scores.items():
+                archery_scores.setdefault(line_key, {}).setdefault(uk, {}).update(scores)
+        combined_types = ARCHERY_ROLE_SCORE_TYPES + ANTI_ARCHER_SCORE_TYPES
+        write_role_scores_to_db(archery_scores, ARCHERY_LINE_SLUGS, combined_types)
         total_archery = sum(len(v) for v in archery_scores.values())
         print(
-            f"Archery roles: {total_archery} units across {len(archery_scores)} lines in {time.time() - archery_start:.1f}s"
+            f"Archery roles (incl. anti-archer): {total_archery} units across {len(archery_scores)} lines in {time.time() - archery_start:.1f}s"
         )
         return
 
@@ -1639,14 +1831,20 @@ def main():
         f"Infantry roles: {total_infantry} units across {len(role_scores)} lines in {role_time:.1f}s"
     )
 
-    # Archery role scores (written to DB, not JSON)
+    # Archery role scores + anti-archer scores (written to DB, not JSON)
     archery_start = time.time()
     archery_scores = compute_archery_role_scores()
-    write_role_scores_to_db(archery_scores, ARCHERY_LINE_SLUGS, ARCHERY_ROLE_SCORE_TYPES)
+    aa_scores = compute_anti_archer_scores()
+    # Merge anti-archer scores into archery scores (same line keys, same unit keys)
+    for line_key, unit_scores in aa_scores.items():
+        for uk, scores in unit_scores.items():
+            archery_scores.setdefault(line_key, {}).setdefault(uk, {}).update(scores)
+    combined_types = ARCHERY_ROLE_SCORE_TYPES + ANTI_ARCHER_SCORE_TYPES
+    write_role_scores_to_db(archery_scores, ARCHERY_LINE_SLUGS, combined_types)
     archery_time = time.time() - archery_start
     total_archery = sum(len(v) for v in archery_scores.values())
     print(
-        f"Archery roles: {total_archery} units across {len(archery_scores)} lines in {archery_time:.1f}s"
+        f"Archery roles (incl. anti-archer): {total_archery} units across {len(archery_scores)} lines in {archery_time:.1f}s"
     )
 
     # Write output (round-robin + benchmarks only, no militia)

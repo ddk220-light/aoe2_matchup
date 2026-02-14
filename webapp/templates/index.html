@@ -777,39 +777,11 @@
                     hasUnique: true,
                 },
 
-                knight: {
-                    name: "Knight Line",
+                stable: {
+                    name: "Stable Units",
                     building: "Stable",
-                    castle: "Knight",
+                    castle: null,
                     imperial: "Paladin",
-                    hasUnique: true,
-                },
-                light_cav: {
-                    name: "Light Cav Line",
-                    building: "Stable",
-                    castle: "Light Cavalry",
-                    imperial: "Hussar",
-                    hasUnique: true,
-                },
-                camel: {
-                    name: "Camel Line",
-                    building: "Stable",
-                    castle: "Camel Rider",
-                    imperial: "Heavy Camel Rider",
-                    hasUnique: true,
-                },
-                steppe_lancer: {
-                    name: "Steppe Lancer",
-                    building: "Stable",
-                    castle: "Steppe Lancer",
-                    imperial: "Elite Steppe Lancer",
-                    hasUnique: false,
-                },
-                elephant: {
-                    name: "Elephant Line",
-                    building: "Stable",
-                    castle: "Battle Elephant",
-                    imperial: "Elite Battle Elephant",
                     hasUnique: true,
                 },
                 ram: {
@@ -846,13 +818,6 @@
                     castle: null,
                     imperial: "Bombard Cannon",
                     hasUnique: false,
-                },
-                all_cavalry: {
-                    name: "All Cavalry (Gold)",
-                    building: "Stable",
-                    castle: "Knight",
-                    imperial: "Paladin",
-                    hasUnique: true,
                 },
             };
 
@@ -1225,6 +1190,36 @@
                         },
                     ],
                 },
+                // Stable score breakdowns
+                attack_power: {
+                    title: "Attack Power Breakdown",
+                    formula: "Average of 6 matchups (3 \u00d7 30v30 + 3 \u00d7 3K res), shifted to 0\u2013100",
+                    subs: [
+                        { key: "atk_30v30_vs_paladin", label: "vs Paladin (30v30)", civ: "Spanish", slug: "paladin", mode: "count", count: 30 },
+                        { key: "atk_30v30_vs_arb", label: "vs Arbalester (30v30)", civ: "Chinese", slug: "arbalester", mode: "count", count: 30 },
+                        { key: "atk_30v30_vs_champ", label: "vs Champion (30v30)", civ: "Chinese", slug: "champion", mode: "count", count: 30 },
+                        { key: "atk_3k_vs_paladin", label: "vs Paladin (3K res)", civ: "Spanish", slug: "paladin", mode: "resources", res: 3000 },
+                        { key: "atk_3k_vs_arb", label: "vs Arbalester (3K res)", civ: "Chinese", slug: "arbalester", mode: "resources", res: 3000 },
+                        { key: "atk_3k_vs_champ", label: "vs Champion (3K res)", civ: "Chinese", slug: "champion", mode: "resources", res: 3000 },
+                    ],
+                },
+                survivability_stable: {
+                    title: "Survivability Breakdown",
+                    formula: "Average of 6 matchups (3 \u00d7 30v30 + 3 \u00d7 3K res), shifted to 0\u2013100",
+                    subs: [
+                        { key: "surv_30v30_vs_halb", label: "vs Halberdier (30v30)", civ: "Chinese", slug: "halberdier", mode: "count", count: 30 },
+                        { key: "surv_30v30_vs_camel", label: "vs Heavy Camel (30v30)", civ: "Turks", slug: "heavy_camel", mode: "count", count: 30 },
+                        { key: "surv_30v30_vs_ca", label: "vs Camel Archer (30v30)", civ: "Berbers", slug: "elite_camel_archer_berbers", mode: "count", count: 30 },
+                        { key: "surv_3k_vs_halb", label: "vs Halberdier (3K res)", civ: "Chinese", slug: "halberdier", mode: "resources", res: 3000 },
+                        { key: "surv_3k_vs_camel", label: "vs Heavy Camel (3K res)", civ: "Turks", slug: "heavy_camel", mode: "resources", res: 3000 },
+                        { key: "surv_3k_vs_ca", label: "vs Camel Archer (3K res)", civ: "Berbers", slug: "elite_camel_archer_berbers", mode: "resources", res: 3000 },
+                    ],
+                },
+                movement_speed_stable: {
+                    title: "Movement Speed",
+                    formula: "Min-max normalized within stable units (0\u2013100)",
+                    subs: [],
+                },
             };
 
             const SCORE_KEYS = new Set([
@@ -1273,6 +1268,23 @@
                 "mobility_speed_dps",
                 "mobility_pierce_armor",
                 "mobility_hp",
+                // Stable scores
+                "stable_power",
+                "attack_power",
+                "movement_speed_score",
+                // survivability_score already in archery scores above
+                "atk_30v30_vs_paladin",
+                "atk_30v30_vs_arb",
+                "atk_30v30_vs_champ",
+                "atk_3k_vs_paladin",
+                "atk_3k_vs_arb",
+                "atk_3k_vs_champ",
+                "surv_30v30_vs_halb",
+                "surv_30v30_vs_camel",
+                "surv_30v30_vs_ca",
+                "surv_3k_vs_halb",
+                "surv_3k_vs_camel",
+                "surv_3k_vs_ca",
             ]);
             const STAT_KEYS = new Set([
                 "final_hp",
@@ -1381,7 +1393,8 @@
                 return url;
             }
 
-            function buildScoreHoverHtml(row, scoreKey) {
+            function buildScoreHoverHtml(row, scoreKey, dataKey) {
+                dataKey = dataKey || scoreKey;
                 const info = SCORE_BREAKDOWN[scoreKey];
                 if (!info) {
                     // Composite score hover cards
@@ -1502,6 +1515,26 @@
                                 },
                             ],
                         },
+                        stable_power: {
+                            title: "Stable Power Score",
+                            parts: [
+                                {
+                                    key: "attack_power",
+                                    label: "Attack Power",
+                                    weight: "60%",
+                                },
+                                {
+                                    key: "movement_speed_score",
+                                    label: "Movement Speed",
+                                    weight: "20%",
+                                },
+                                {
+                                    key: "survivability_score",
+                                    label: "Survivability",
+                                    weight: "20%",
+                                },
+                            ],
+                        },
                     };
                     const comp = composites[scoreKey];
                     if (comp) {
@@ -1515,7 +1548,7 @@
                                     : "\u2014";
                             html += `<div class="hc-row"><span>${p.label} (\u00d7${p.weight})</span><span style="color:${scoreColor(v)}">${vs}</span></div>`;
                         }
-                        const total = row[scoreKey];
+                        const total = row[dataKey];
                         html += `<div class="hc-row total"><span>Score</span><span style="color:${scoreColor(total)}">${total !== undefined ? total.toFixed(1) : "\u2014"}</span></div>`;
                         return html;
                     }
@@ -1541,7 +1574,7 @@
                         html += `<a class="hc-sim-link" href="${simUrl}" target="_blank">Run in Battle Sim \u2192</a>`;
                     }
                 }
-                const total = row[scoreKey];
+                const total = row[dataKey];
                 html += `<div class="hc-row total"><span>Result</span><span style="color:${scoreColor(total)}">${total !== undefined ? total.toFixed(1) : "\u2014"}</span></div>`;
                 return html;
             }
@@ -1673,10 +1706,16 @@
             }
 
             // ===== HOVER HANDLERS =====
+            function resolveBreakdownKey(key) {
+                if (currentLine === "stable" && key === "survivability_score") return "survivability_stable";
+                if (currentLine === "stable" && key === "movement_speed_score") return "movement_speed_stable";
+                return key;
+            }
+
             function onScoreCellEnter(e, rowIdx, key) {
                 const row = currentEnriched[rowIdx];
                 if (!row) return;
-                showHoverCard(e.currentTarget, buildScoreHoverHtml(row, key));
+                showHoverCard(e.currentTarget, buildScoreHoverHtml(row, resolveBreakdownKey(key), key));
             }
 
             function onScoreCellLeave() {
@@ -1686,7 +1725,7 @@
             function onScoreCellClick(e, rowIdx, key) {
                 const row = currentEnriched[rowIdx];
                 if (!row) return;
-                pinHoverCard(e.currentTarget, buildScoreHoverHtml(row, key));
+                pinHoverCard(e.currentTarget, buildScoreHoverHtml(row, resolveBreakdownKey(key), key));
             }
 
             async function onStatCellEnter(e, rowIdx, key) {
@@ -1728,6 +1767,8 @@
 
             // ===== RENDERING =====
             function setAge(age) {
+                // Stable is Imperial-only
+                if (currentLine === "stable" && age === "Castle") return;
                 currentAge = age;
                 document.querySelectorAll(".age-btn").forEach((btn) => {
                     btn.classList.toggle(
@@ -1807,6 +1848,18 @@
             async function selectLine(slug) {
                 currentLine = slug;
                 unpinHoverCard();
+
+                // Force Imperial age for stable (no Castle age data)
+                if (slug === "stable") {
+                    currentAge = "Imperial";
+                    document.querySelectorAll(".age-btn").forEach((btn) => {
+                        btn.classList.toggle(
+                            "active",
+                            btn.textContent.includes("Imperial"),
+                        );
+                    });
+                }
+
                 // Highlight active card
                 document
                     .querySelectorAll(".line-card")
@@ -1828,11 +1881,13 @@
                             ? "anti_archer"
                             : slug === "mobility"
                               ? "mobility_score"
-                              : INFANTRY_SLUGS.has(slug)
-                                ? "militia_value"
-                                : ARCHERY_SLUGS.has(slug)
-                                  ? "ranged_power"
-                                  : "pes";
+                              : slug === "stable"
+                                ? "stable_power"
+                                : INFANTRY_SLUGS.has(slug)
+                                  ? "militia_value"
+                                  : ARCHERY_SLUGS.has(slug)
+                                    ? "ranged_power"
+                                    : "pes";
                 sortDir = "desc";
                 renderTable();
             }
@@ -1844,6 +1899,11 @@
                 archer: "Archer",
                 skirmisher: "Skirm",
                 cav_archer: "Cav Archer",
+                knight: "Knight",
+                light_cav: "Light Cav",
+                camel: "Camel",
+                steppe_lancer: "Steppe",
+                elephant: "Elephant",
             };
 
             function renderTable() {
@@ -2056,6 +2116,18 @@
                     "final_speed",
                     "final_range",
                 ];
+                const stableStatCols = [
+                    "stable_power",
+                    "attack_power",
+                    "movement_speed_score",
+                    "survivability_score",
+                    "dps",
+                    "final_hp",
+                    "final_attack",
+                    "final_melee_armor",
+                    "final_pierce_armor",
+                    "final_speed",
+                ];
                 const isArchery = ARCHERY_SLUGS.has(currentLine);
                 const statCols =
                     currentLine === "anti_cav_infantry"
@@ -2064,11 +2136,13 @@
                           ? antiArcherStatCols
                           : currentLine === "mobility"
                             ? mobilityStatCols
-                            : isInfantry
-                              ? infantryStatCols
-                              : isArchery
-                                ? archeryStatCols
-                                : defaultStatCols;
+                            : currentLine === "stable"
+                              ? stableStatCols
+                              : isInfantry
+                                ? infantryStatCols
+                                : isArchery
+                                  ? archeryStatCols
+                                  : defaultStatCols;
 
                 const medians = {};
                 for (const col of statCols) {
@@ -2325,6 +2399,40 @@
                     { key: "total_cost", label: "Cost" },
                     { key: "special_abilities", label: "Special" },
                 ];
+                const stableColumns = [
+                    { key: "civ_name", label: "Civ" },
+                    { key: "unit_name", label: "Unit" },
+                    { key: "line_slug", label: "Line" },
+                    {
+                        key: "stable_power",
+                        label: "Score",
+                        info: "Weighted aggregate: 60% Attack Power + 20% Movement Speed + 20% Survivability",
+                    },
+                    {
+                        key: "attack_power",
+                        label: "Attack",
+                        info: "Avg of 6 benchmarks (30v30 + 3K res vs Spanish Paladin, Chinese Arb, Chinese Champion), shifted to 0\u2013100",
+                    },
+                    {
+                        key: "movement_speed_score",
+                        label: "Speed",
+                        info: "Movement speed, min-max normalized 0\u2013100 within stable units",
+                    },
+                    {
+                        key: "survivability_score",
+                        label: "Survivability",
+                        info: "Avg of 6 benchmarks (30v30 + 3K res vs Chinese Halb, Turks Camel, Berbers Camel Archer), shifted to 0\u2013100",
+                    },
+                    { key: "dps", label: "DPS" },
+                    { key: "final_hp", label: "HP" },
+                    { key: "final_attack", label: "Atk" },
+                    { key: "final_melee_armor", label: "M.Arm" },
+                    { key: "final_pierce_armor", label: "P.Arm" },
+                    { key: "final_speed", label: "Speed (raw)" },
+                    { key: "total_cost", label: "Cost" },
+                    { key: "total_upgrade_cost", label: "Upg Cost" },
+                    { key: "special_abilities", label: "Special" },
+                ];
                 const columns =
                     currentLine === "anti_cav_infantry"
                         ? antiCavColumns
@@ -2334,11 +2442,13 @@
                             ? antiArcherColumns
                             : currentLine === "mobility"
                               ? mobilityColumns
-                              : isInfantry
-                                ? infantryColumns
-                                : isArchery
-                                  ? archeryColumns
-                                  : defaultColumns;
+                              : currentLine === "stable"
+                                ? stableColumns
+                                : isInfantry
+                                  ? infantryColumns
+                                  : isArchery
+                                    ? archeryColumns
+                                    : defaultColumns;
 
                 const lineInfo = UNIT_LINES[currentLine];
                 const titleIcon = unitIconUrl(
@@ -2430,7 +2540,23 @@
                         k === "mobility_score" ||
                         k === "mobility_speed_dps" ||
                         k === "mobility_pierce_armor" ||
-                        k === "mobility_hp"
+                        k === "mobility_hp" ||
+                        k === "stable_power" ||
+                        k === "attack_power" ||
+                        k === "movement_speed_score" ||
+                        k === "survivability_score" ||
+                        k === "atk_30v30_vs_paladin" ||
+                        k === "atk_30v30_vs_arb" ||
+                        k === "atk_30v30_vs_champ" ||
+                        k === "atk_3k_vs_paladin" ||
+                        k === "atk_3k_vs_arb" ||
+                        k === "atk_3k_vs_champ" ||
+                        k === "surv_30v30_vs_halb" ||
+                        k === "surv_30v30_vs_camel" ||
+                        k === "surv_30v30_vs_ca" ||
+                        k === "surv_3k_vs_halb" ||
+                        k === "surv_3k_vs_camel" ||
+                        k === "surv_3k_vs_ca"
                     )
                         formatted = v.toFixed(1);
                     else if (k === "total_cost" || k === "total_upgrade_cost")

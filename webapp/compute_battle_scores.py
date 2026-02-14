@@ -13,6 +13,7 @@ import argparse
 import copy
 import hashlib
 import json
+import math
 import os
 import sqlite3
 import time
@@ -1641,10 +1642,45 @@ def compute_anti_cav_scores(all_scores, sk_to_line):
 # Raiding ranking
 # ---------------------------------------------------------------------------
 
-# Imperial Age building stats (hardcoded)
+# Fully upgraded Spanish buildings (Fletching/Bodkin/Bracer/Chemistry always applied).
+# Two variants per building: with and without Masonry+Architecture.
 BUILDING_TARGETS = {
-    "tc": {"name": "Town Center", "hp": 2400, "melee_armor": 3, "pierce_armor": 9},
-    "castle": {"name": "Castle", "hp": 4800, "melee_armor": 8, "pierce_armor": 11},
+    "castle_uni": {
+        "name": "Castle (Masonry+Arch)",
+        "hp": 7028,           # 4800 * 1.1 * 1.1 * 1.21 (Hoardings)
+        "melee_armor": 10,    # 8 + 1 + 1
+        "building_armor": 6,  # 0 + 3 + 3
+        "arrows": 5,          # base (no garrison)
+        "arrow_attack": 15,   # 11 + 1 + 1 + 1 + 1 (Chemistry)
+        "reload": 2.0,
+    },
+    "castle_no_uni": {
+        "name": "Castle (no uni)",
+        "hp": 5808,           # 4800 * 1.21 (Hoardings only)
+        "melee_armor": 8,
+        "building_armor": 0,
+        "arrows": 5,
+        "arrow_attack": 15,
+        "reload": 2.0,
+    },
+    "tc_uni": {
+        "name": "TC (Masonry+Arch, 15 vills)",
+        "hp": 2904,           # 2400 * 1.1 * 1.1
+        "melee_armor": 5,     # 3 + 1 + 1
+        "building_armor": 6,  # 0 + 3 + 3
+        "arrows": 15,         # 1 per garrisoned villager
+        "arrow_attack": 9,    # 5 + 1 + 1 + 1 + 1
+        "reload": 2.0,
+    },
+    "tc_no_uni": {
+        "name": "TC (no uni, 15 vills)",
+        "hp": 2400,
+        "melee_armor": 3,
+        "building_armor": 0,
+        "arrows": 15,
+        "arrow_attack": 9,
+        "reload": 2.0,
+    },
 }
 
 

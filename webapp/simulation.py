@@ -150,8 +150,8 @@ def prepare_combat_unit(row):
         "attack_bonus_nearby": row.get("attack_bonus_nearby", 0) or 0,
         "nearby_bonus_count": row.get("nearby_bonus_count", 0) or 0,
         "damage_reflect_percent": row.get("damage_reflect_percent", 0) or 0,
-        "bonus_hp_nearby": row.get("bonus_hp_nearby", 0) or 0,
-        "nearby_hp_bonus_count": row.get("nearby_hp_bonus_count", 0) or 0,
+        "hp_nearby_percent_per_unit": row.get("hp_nearby_percent_per_unit", 0) or 0,
+        "hp_nearby_max_units": row.get("hp_nearby_max_units", 0) or 0,
         # Metadata
         "slug": row["slug"]
         if "slug" in (row.keys() if hasattr(row, "keys") else row)
@@ -577,21 +577,22 @@ def simulate_battle(
     hp1 = [float(unit1["hp"])] * count1
     hp2 = [float(unit2["hp"])] * count2
 
-    # Bonus HP from nearby allies (Shu Coiled Serpent Array)
-    hp_nearby1 = unit1.get("bonus_hp_nearby", 0)
-    if hp_nearby1 > 0:
-        max_n1 = unit1.get("nearby_hp_bonus_count", 4)
+    # Percentage-based HP bonus from nearby allies (Shu Coiled Serpent Array)
+    # +X% HP per nearby qualifying unit, capped at max_units
+    pct1 = unit1.get("hp_nearby_percent_per_unit", 0)
+    if pct1 > 0:
+        max_n1 = unit1.get("hp_nearby_max_units", 30)
         eff1 = min(max_n1, count1 - 1)
-        hp_bonus1 = hp_nearby1 * eff1
+        hp_mult1 = 1.0 + (pct1 * eff1 / 100.0)
         for i in range(count1):
-            hp1[i] += hp_bonus1
-    hp_nearby2 = unit2.get("bonus_hp_nearby", 0)
-    if hp_nearby2 > 0:
-        max_n2 = unit2.get("nearby_hp_bonus_count", 4)
+            hp1[i] = hp1[i] * hp_mult1
+    pct2 = unit2.get("hp_nearby_percent_per_unit", 0)
+    if pct2 > 0:
+        max_n2 = unit2.get("hp_nearby_max_units", 30)
         eff2 = min(max_n2, count2 - 1)
-        hp_bonus2 = hp_nearby2 * eff2
+        hp_mult2 = 1.0 + (pct2 * eff2 / 100.0)
         for i in range(count2):
-            hp2[i] += hp_bonus2
+            hp2[i] = hp2[i] * hp_mult2
 
     cooldown1 = [0.0] * count1
     cooldown2 = [0.0] * count2
@@ -1724,18 +1725,18 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
     count1, count2 = t1["total"], t2["total"]
     hp1, hp2 = t1["hp"], t2["hp"]
 
-    # Bonus HP from nearby allies (Shu Coiled Serpent Array)
+    # Percentage-based HP bonus from nearby allies (Shu Coiled Serpent Array)
     for team, count in [(t1, count1), (t2, count2)]:
         for tmpl in team["templates"]:
-            hp_near = tmpl["cu"].get("bonus_hp_nearby", 0) or 0
-            if hp_near > 0:
-                max_n = tmpl["cu"].get("nearby_hp_bonus_count", 4) or 4
+            pct = tmpl["cu"].get("hp_nearby_percent_per_unit", 0) or 0
+            if pct > 0:
+                max_n = tmpl["cu"].get("hp_nearby_max_units", 30) or 30
                 eff = min(max_n, count - 1)
-                bonus = hp_near * eff
+                hp_mult = 1.0 + (pct * eff / 100.0)
                 for i in range(count):
                     if team["type_idx"][i] == team["templates"].index(tmpl):
-                        team["hp"][i] += bonus
-                        team["max_hp"][i] += bonus
+                        team["hp"][i] *= hp_mult
+                        team["max_hp"][i] *= hp_mult
 
     EXTRA_PROJ_ACCURACY = 0.5
 

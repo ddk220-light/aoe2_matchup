@@ -470,16 +470,17 @@ CIV_COMBAT_PROPERTIES = {
     ("Khitans", "fire_lancer"): {"hp_regen": 20},
     ("Khitans", "elite_fire_lancer"): {"hp_regen": 20},
     ("Khitans", "mounted_trebuchet"): {"hp_regen": 20},
-    # Shu Coiled Serpent Array (Castle UT) — spear-line + White Feather gain HP near each other
-    ("Shu", "halberdier"): {"bonus_hp_nearby": 5, "nearby_hp_bonus_count": 4},
-    ("Shu", "pikeman"): {"bonus_hp_nearby": 5, "nearby_hp_bonus_count": 4},
+    # Shu Coiled Serpent Array (Castle UT) — spear-line + White Feather gain %HP near each other
+    # +0.5% HP per nearby qualifying unit, capped at 30 units = +15% HP max
+    ("Shu", "halberdier"): {"hp_nearby_percent_per_unit": 0.5, "hp_nearby_max_units": 30},
+    ("Shu", "pikeman"): {"hp_nearby_percent_per_unit": 0.5, "hp_nearby_max_units": 30},
     ("Shu", "white_feather_crossbowman"): {
-        "bonus_hp_nearby": 5,
-        "nearby_hp_bonus_count": 4,
+        "hp_nearby_percent_per_unit": 0.5,
+        "hp_nearby_max_units": 30,
     },
     ("Shu", "elite_white_feather_crossbowman"): {
-        "bonus_hp_nearby": 5,
-        "nearby_hp_bonus_count": 4,
+        "hp_nearby_percent_per_unit": 0.5,
+        "hp_nearby_max_units": 30,
     },
     # Shu Bolt Magazine (Imp UT) — archer-line + War Chariots fire additional projectiles
     ("Shu", "arbalester"): {

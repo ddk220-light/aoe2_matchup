@@ -1556,7 +1556,7 @@ def api_ref_unit_line(line_slug):
             ]
 
     def _attach_scores(entry, age_key, sub_slug):
-        """Attach battle scores: DB role scores for infantry, JSON for other lines."""
+        """Attach battle scores: DB role scores for infantry/archery/stable, JSON for other lines."""
         unit_key = f"{entry['civ_name']}|{entry['unit_slug']}"
         if (sub_slug in INFANTRY_LINE_SLUGS or sub_slug in ARCHERY_LINE_SLUGS or sub_slug in STABLE_LINE_SLUGS) and _db_role_scores:
             rs = _db_role_scores.get(unit_key, {})

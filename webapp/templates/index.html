@@ -1010,16 +1010,16 @@
                     subs: [],
                 },
                 raid_building: {
-                    title: "Anti-Building DPS",
+                    title: "Building Destruction",
                     formula:
-                        "Average of melee DPS vs Imperial Town Center and Castle (normalized 0\u2013100)",
+                        "Min units to destroy building (attrition model, building fights back). Avg of upgraded/non-upgraded variants. Lower N = higher score.",
                     subs: [
                         {
-                            key: "raid_vs_tc_dps",
+                            key: "raid_vs_tc_nmin",
                             label: "vs Town Center",
                         },
                         {
-                            key: "raid_vs_castle_dps",
+                            key: "raid_vs_castle_nmin",
                             label: "vs Castle",
                         },
                     ],
@@ -1235,8 +1235,8 @@
                 "raid_vill_kill",
                 "raid_building",
                 "raiding_value",
-                "raid_vs_tc_dps",
-                "raid_vs_castle_dps",
+                "raid_vs_tc_nmin",
+                "raid_vs_castle_nmin",
                 // Archery scores
                 "ranged_power",
                 "raw_dps_score",
@@ -2535,8 +2535,8 @@
                         k === "raid_speed" ||
                         k === "raid_vill_kill" ||
                         k === "raid_building" ||
-                        k === "raid_vs_tc_dps" ||
-                        k === "raid_vs_castle_dps" ||
+                        k === "raid_vs_tc_nmin" ||
+                        k === "raid_vs_castle_nmin" ||
                         k === "mobility_score" ||
                         k === "mobility_speed_dps" ||
                         k === "mobility_pierce_armor" ||

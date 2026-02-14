@@ -1560,8 +1560,8 @@ INFANTRY_ROLE_SCORE_TYPES = [
     "raid_vill_kill",
     "raid_building",
     "raiding_value",
-    "raid_vs_tc_dps",
-    "raid_vs_castle_dps",
+    "raid_vs_tc_nmin",
+    "raid_vs_castle_nmin",
 ]
 
 

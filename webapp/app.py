@@ -1445,36 +1445,6 @@ UNIT_LINES = {
         "imperial_slug": "bombard_cannon",
         "unique_units": {},
     },
-    "all_cavalry": {
-        "name": "All Cavalry (Gold)",
-        "building": "Stable",
-        "castle_slug": None,
-        "imperial_slug": None,
-        "castle_slugs": ["knight", "camel", "steppe_lancer", "elephant"],
-        "imperial_slugs": ["paladin", "heavy_camel", "elite_steppe", "elite_elephant"],
-        "unique_units": {
-            "Byzantines": ("cataphract_byzantines", "elite_cataphract_byzantines"),
-            "Huns": ("tarkan_huns", "elite_tarkan_huns"),
-            "Slavs": ("boyar_slavs", "elite_boyar_slavs"),
-            "Persians": ("war_elephant_persians", "elite_war_elephant_persians"),
-            "Bulgarians": ("konnik_bulgarians", "elite_konnik_bulgarians"),
-            "Lithuanians": ("leitis_lithuanians", "elite_leitis_lithuanians"),
-            "Tatars": ("keshik_tatars", "elite_keshik_tatars"),
-            "Burgundians": ("coustillier_burgundians", "elite_coustillier_burgundians"),
-            "Bengalis": (
-                "ratha_(melee)_bengalis",
-                "elite_ratha_(melee)_bengalis",
-            ),
-            "Gurjaras": (
-                "shrivamsha_rider_gurjaras",
-                "elite_shrivamsha_rider_gurjaras",
-            ),
-            "Romans": ("centurion_romans", "elite_centurion_romans"),
-            "Georgians": ("monaspa_georgians", "elite_monaspa_georgians"),
-            "Jurchens": ("iron_pagoda_jurchens", "elite_iron_pagoda_jurchens"),
-            "Wei": ("tiger_cavalry_wei", "elite_tiger_cavalry_wei"),
-        },
-    },
     "archery": {
         "name": "Ranged Power Rankings",
         "building": "Archery Range",
@@ -1505,10 +1475,16 @@ UNIT_LINES = {
         "building": "Archery Range",
         "sub_lines": ["archer", "cav_archer", "skirmisher"],
     },
+    "stable": {
+        "name": "Stable Units",
+        "building": "Stable",
+        "sub_lines": ["knight", "light_cav", "camel", "steppe_lancer", "elephant"],
+    },
 }
 
 INFANTRY_LINE_SLUGS = {"militia", "spear", "shock_infantry"}
 ARCHERY_LINE_SLUGS = {"archer", "skirmisher", "cav_archer"}
+STABLE_LINE_SLUGS = {"knight", "light_cav", "camel", "steppe_lancer", "elephant"}
 
 
 # ===== Pre-computed battle scores (loaded from battle_scores.json) =====
@@ -1564,6 +1540,9 @@ def api_ref_unit_line(line_slug):
     # Load infantry role scores from DB (keyed by "civ_name|unit_slug")
     _db_role_scores = {}
     _score_line_slugs = [s for s in sub_lines if s in INFANTRY_LINE_SLUGS or s in ARCHERY_LINE_SLUGS]
+    # For stable virtual line, scores are stored under "stable" line_slug in DB
+    if line_slug == "stable":
+        _score_line_slugs = ["stable"]
     if _score_line_slugs:
         placeholders = ",".join("?" for _ in _score_line_slugs)
         rc.execute(
@@ -1579,7 +1558,7 @@ def api_ref_unit_line(line_slug):
     def _attach_scores(entry, age_key, sub_slug):
         """Attach battle scores: DB role scores for infantry, JSON for other lines."""
         unit_key = f"{entry['civ_name']}|{entry['unit_slug']}"
-        if (sub_slug in INFANTRY_LINE_SLUGS or sub_slug in ARCHERY_LINE_SLUGS) and _db_role_scores:
+        if (sub_slug in INFANTRY_LINE_SLUGS or sub_slug in ARCHERY_LINE_SLUGS or sub_slug in STABLE_LINE_SLUGS) and _db_role_scores:
             rs = _db_role_scores.get(unit_key, {})
             for rk, rv in rs.items():
                 entry[rk] = rv
@@ -1717,6 +1696,11 @@ def api_ref_unit_line(line_slug):
                     _attach_scores(entry, age_key, sub_slug)
                     _attach_special(entry)
                     result[age_key].append(entry)
+
+    # Stable line is Imperial-only; exclude Elephant Archers (ranged, already in archery rankings)
+    if line_slug == "stable":
+        result["castle"] = []
+        result["imperial"] = [u for u in result["imperial"] if "ele_archer" not in u["unit_slug"]]
 
     ref_conn.close()
     return jsonify(result)

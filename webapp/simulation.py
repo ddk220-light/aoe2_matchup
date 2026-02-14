@@ -999,12 +999,75 @@ def simulate_battle(
                 kite_time = kite_dist / speed_diff
                 opening2 += max(0, int(kite_time / reload2))
     elif is_ranged1 and is_ranged2:
-        # Both ranged: side with more range gets bonus shots
+        # Both ranged: longer-ranged unit retreats while firing.
+        # Shorter-ranged unit closes the gap at full speed (can't fire yet).
+        # Same physics model as ranged-vs-melee kiting.
         range_diff = range1 - range2
         if range_diff > 0:
-            opening1 = max(0, int(range_diff / 2))
+            # Unit 1 has longer range — retreats while firing
+            fire_dist = range1 - max(min_range1, range2)
+            if fire_dist > 0 and speed2 > 0:
+                move_frac1 = max(0.0, 1.0 - delay1 / reload1) if reload1 > 0 else 1.0
+                eff_retreat_speed1 = speed1 * move_frac1
+                net_speed = speed2 - eff_retreat_speed1
+                if net_speed > 0:
+                    retreat_time = (
+                        min(RETREAT_MAX / eff_retreat_speed1, fire_dist / net_speed)
+                        if eff_retreat_speed1 > 0
+                        else fire_dist / net_speed
+                    )
+                    retreat_dist_closed = net_speed * retreat_time
+                    remaining_dist = fire_dist - retreat_dist_closed
+                else:
+                    retreat_time = (
+                        RETREAT_MAX / eff_retreat_speed1 if eff_retreat_speed1 > 0 else 0
+                    )
+                    remaining_dist = fire_dist
+                stand_time = remaining_dist / speed2 if remaining_dist > 0 else 0
+                closing_time = retreat_time + stand_time + delay2
+                closing_time1 = closing_time
+                if closing_time > delay1:
+                    opening1 = 1 + int((closing_time - delay1) / reload1)
+            # Kiting bonus: if unit 1 effective retreat > unit 2 speed
+            eff_spd1 = eff_retreat_speed1 if fire_dist > 0 and speed2 > 0 else speed1
+            if eff_spd1 > speed2 and speed2 > 0:
+                speed_diff = eff_spd1 - speed2
+                kite_dist = MAP_SPACE * 0.4 - RETREAT_MAX
+                if kite_dist > 0:
+                    kite_time = kite_dist / speed_diff
+                    opening1 += max(0, int(kite_time / reload1))
         elif range_diff < 0:
-            opening2 = max(0, int(-range_diff / 2))
+            # Unit 2 has longer range — retreats while firing (mirror)
+            fire_dist = range2 - max(min_range2, range1)
+            if fire_dist > 0 and speed1 > 0:
+                move_frac2 = max(0.0, 1.0 - delay2 / reload2) if reload2 > 0 else 1.0
+                eff_retreat_speed2 = speed2 * move_frac2
+                net_speed = speed1 - eff_retreat_speed2
+                if net_speed > 0:
+                    retreat_time = (
+                        min(RETREAT_MAX / eff_retreat_speed2, fire_dist / net_speed)
+                        if eff_retreat_speed2 > 0
+                        else fire_dist / net_speed
+                    )
+                    retreat_dist_closed = net_speed * retreat_time
+                    remaining_dist = fire_dist - retreat_dist_closed
+                else:
+                    retreat_time = (
+                        RETREAT_MAX / eff_retreat_speed2 if eff_retreat_speed2 > 0 else 0
+                    )
+                    remaining_dist = fire_dist
+                stand_time = remaining_dist / speed1 if remaining_dist > 0 else 0
+                closing_time = retreat_time + stand_time + delay1
+                closing_time2 = closing_time
+                if closing_time > delay2:
+                    opening2 = 1 + int((closing_time - delay2) / reload2)
+            eff_spd2 = eff_retreat_speed2 if fire_dist > 0 and speed1 > 0 else speed2
+            if eff_spd2 > speed1 and speed1 > 0:
+                speed_diff = eff_spd2 - speed1
+                kite_dist = MAP_SPACE * 0.4 - RETREAT_MAX
+                if kite_dist > 0:
+                    kite_time = kite_dist / speed_diff
+                    opening2 += max(0, int(kite_time / reload2))
 
     # Apply opening volleys and set post-opening cooldowns
     if opening1 > 0:
@@ -1023,7 +1086,7 @@ def simulate_battle(
             a_miss_dmg_pct=miss_dmg_pct1,
         )
         # Set cooldowns to reflect time elapsed since last opening shot
-        if is_ranged1 and not is_ranged2 and closing_time1 > 0:
+        if is_ranged1 and closing_time1 > 0:
             last_shot_t = delay1 + (opening1 - 1) * reload1
             remaining_cd = max(0.0, reload1 - (closing_time1 - last_shot_t))
             for i in range(count1):
@@ -1043,7 +1106,7 @@ def simulate_battle(
             a_accuracy=accuracy2,
             a_miss_dmg_pct=miss_dmg_pct2,
         )
-        if is_ranged2 and not is_ranged1 and closing_time2 > 0:
+        if is_ranged2 and closing_time2 > 0:
             last_shot_t = delay2 + (opening2 - 1) * reload2
             remaining_cd = max(0.0, reload2 - (closing_time2 - last_shot_t))
             for i in range(count2):

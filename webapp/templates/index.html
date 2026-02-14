@@ -776,27 +776,6 @@
                     imperial: "Arbalester",
                     hasUnique: true,
                 },
-                archer: {
-                    name: "Archers & Gunpowder",
-                    building: "Archery Range",
-                    castle: "Crossbowman",
-                    imperial: "Arbalester",
-                    hasUnique: true,
-                },
-                skirmisher: {
-                    name: "Skirmisher Line",
-                    building: "Archery Range",
-                    castle: "Elite Skirmisher",
-                    imperial: "Elite Skirmisher",
-                    hasUnique: false,
-                },
-                cav_archer: {
-                    name: "Cav Archer Line",
-                    building: "Archery Range",
-                    castle: "Cavalry Archer",
-                    imperial: "Heavy Cavalry Archer",
-                    hasUnique: true,
-                },
 
                 knight: {
                     name: "Knight Line",
@@ -1163,6 +1142,89 @@
                         },
                     ],
                 },
+                // Anti-archer score breakdowns
+                aa_eco_score: {
+                    title: "Anti-Archer Eco Score",
+                    formula: "Average of 3 matchups (3K resources each)",
+                    subs: [
+                        {
+                            key: "aa_eco_vs_arb",
+                            label: "vs Arbalester",
+                            civ: "Chinese",
+                            slug: "arbalester",
+                            mode: "resources",
+                            res: 3000,
+                        },
+                        {
+                            key: "aa_eco_vs_ca",
+                            label: "vs Heavy Cav Archer",
+                            civ: "Chinese",
+                            slug: "heavy_cav_archer",
+                            mode: "resources",
+                            res: 3000,
+                        },
+                        {
+                            key: "aa_eco_vs_hc",
+                            label: "vs Hand Cannoneer",
+                            civ: "Spanish",
+                            slug: "hand_cannoneer",
+                            mode: "resources",
+                            res: 3000,
+                        },
+                    ],
+                },
+                aa_pop_score: {
+                    title: "Anti-Archer Pop Score",
+                    formula: "Average of 3 matchups (30v30 each)",
+                    subs: [
+                        {
+                            key: "aa_pop_vs_arb",
+                            label: "vs Arbalester (30v30)",
+                            civ: "Chinese",
+                            slug: "arbalester",
+                            mode: "count",
+                            count: 30,
+                        },
+                        {
+                            key: "aa_pop_vs_ca",
+                            label: "vs Heavy Cav Archer (30v30)",
+                            civ: "Chinese",
+                            slug: "heavy_cav_archer",
+                            mode: "count",
+                            count: 30,
+                        },
+                        {
+                            key: "aa_pop_vs_hc",
+                            label: "vs Hand Cannoneer (30v30)",
+                            civ: "Spanish",
+                            slug: "hand_cannoneer",
+                            mode: "count",
+                            count: 30,
+                        },
+                    ],
+                },
+                aa_power: {
+                    title: "Anti-Archer Power Score",
+                    formula: "Average of 2 matchups (3K resources each)",
+                    subs: [
+                        {
+                            key: "aa_power_vs_hussar",
+                            label: "vs Hussar",
+                            civ: "Spanish",
+                            slug: "hussar",
+                            mode: "resources",
+                            res: 3000,
+                        },
+                        {
+                            key: "aa_power_vs_champ",
+                            label: "vs Champion",
+                            civ: "Chinese",
+                            slug: "champion",
+                            mode: "resources",
+                            res: 3000,
+                        },
+                    ],
+                },
             };
 
             const SCORE_KEYS = new Set([
@@ -1193,6 +1255,19 @@
                 "raw_vs_arb",
                 "surv_vs_skirm",
                 "surv_vs_cav_archer",
+                // Anti-archer scores
+                "anti_archer",
+                "aa_eco_score",
+                "aa_pop_score",
+                "aa_power",
+                "aa_eco_vs_arb",
+                "aa_eco_vs_ca",
+                "aa_eco_vs_hc",
+                "aa_pop_vs_arb",
+                "aa_pop_vs_ca",
+                "aa_pop_vs_hc",
+                "aa_power_vs_hussar",
+                "aa_power_vs_champ",
                 // Mobility scores
                 "mobility_score",
                 "mobility_speed_dps",
@@ -1384,6 +1459,26 @@
                                     key: "survivability_score",
                                     label: "Survivability",
                                     weight: "15%",
+                                },
+                            ],
+                        },
+                        anti_archer: {
+                            title: "Anti Archer Score",
+                            parts: [
+                                {
+                                    key: "aa_eco_score",
+                                    label: "Eco",
+                                    weight: "50%",
+                                },
+                                {
+                                    key: "aa_pop_score",
+                                    label: "Pop",
+                                    weight: "30%",
+                                },
+                                {
+                                    key: "aa_power",
+                                    label: "Power",
+                                    weight: "20%",
                                 },
                             ],
                         },

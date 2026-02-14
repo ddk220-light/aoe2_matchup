@@ -188,7 +188,7 @@ def _make_unit(hp, attack, attack_speed, attack_range, melee_armor, pierce_armor
         "armor_strip_per_hit": 0, "charge_attack_melee": 0,
         "charge_recharge_time": 0, "attack_bonus_nearby": 0,
         "nearby_bonus_count": 0, "damage_reflect_percent": 0,
-        "bonus_hp_nearby": 0, "nearby_hp_bonus_count": 0,
+        "hp_nearby_percent_per_unit": 0, "hp_nearby_max_units": 0,
         "slug": "test_unit", "unit_name": "Test Unit",
         "unit_category": "military", "paired_unit_slug": None,
         "dismount_hp": None,

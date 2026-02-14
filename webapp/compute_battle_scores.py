@@ -287,36 +287,6 @@ UNIT_LINES = {
         "imperial_slug": "bombard_cannon",
         "unique_units": {},
     },
-    "all_cavalry": {
-        "name": "All Cavalry (Gold)",
-        "building": "Stable",
-        "castle_slug": None,
-        "imperial_slug": None,
-        "castle_slugs": ["knight", "camel", "steppe_lancer", "elephant"],
-        "imperial_slugs": ["paladin", "heavy_camel", "elite_steppe", "elite_elephant"],
-        "unique_units": {
-            "Byzantines": ("cataphract_byzantines", "elite_cataphract_byzantines"),
-            "Huns": ("tarkan_huns", "elite_tarkan_huns"),
-            "Slavs": ("boyar_slavs", "elite_boyar_slavs"),
-            "Persians": ("war_elephant_persians", "elite_war_elephant_persians"),
-            "Bulgarians": ("konnik_bulgarians", "elite_konnik_bulgarians"),
-            "Lithuanians": ("leitis_lithuanians", "elite_leitis_lithuanians"),
-            "Tatars": ("keshik_tatars", "elite_keshik_tatars"),
-            "Burgundians": ("coustillier_burgundians", "elite_coustillier_burgundians"),
-            "Bengalis": (
-                "ratha_(melee)_bengalis",
-                "elite_ratha_(melee)_bengalis",
-            ),
-            "Gurjaras": (
-                "shrivamsha_rider_gurjaras",
-                "elite_shrivamsha_rider_gurjaras",
-            ),
-            "Romans": ("centurion_romans", "elite_centurion_romans"),
-            "Georgians": ("monaspa_georgians", "elite_monaspa_georgians"),
-            "Jurchens": ("iron_pagoda_jurchens", "elite_iron_pagoda_jurchens"),
-            "Wei": ("tiger_cavalry_wei", "elite_tiger_cavalry_wei"),
-        },
-    },
 }
 
 BENCHMARKS = [
@@ -776,7 +746,7 @@ def compute_benchmarks(bench_units, bench_fps, benchmark_cache, unit_fps):
     total_misses = 0
 
     for line_slug, config in UNIT_LINES.items():
-        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS:
+        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS or line_slug in STABLE_LINE_SLUGS:
             continue  # infantry/archery uses role-based scores from battle_scores table
         for age_key in ["castle", "imperial"]:
             std_slug = config.get(f"{age_key}_slug")
@@ -948,6 +918,47 @@ ANTI_ARCHER_SCORE_TYPES = [
     "aa_pop_vs_hc",
     "aa_power_vs_hussar",
     "aa_power_vs_champ",
+]
+
+# ===== Stable unit scoring =====
+STABLE_LINE_SLUGS = ["knight", "light_cav", "camel", "steppe_lancer", "elephant"]
+
+STABLE_BENCHMARKS = [
+    # Attack Power — 30v30 fixed count (HP% scoring)
+    ("atk_30v30_vs_paladin", "Spanish", "paladin", "Imperial", "fixed_hp", (30, 30)),
+    ("atk_30v30_vs_arb", "Chinese", "arbalester", "Imperial", "fixed_hp", (30, 30)),
+    ("atk_30v30_vs_champ", "Chinese", "champion", "Imperial", "fixed_hp", (30, 30)),
+    # Attack Power — 3K resource (HP% scoring)
+    ("atk_3k_vs_paladin", "Spanish", "paladin", "Imperial", "res", 3000),
+    ("atk_3k_vs_arb", "Chinese", "arbalester", "Imperial", "res", 3000),
+    ("atk_3k_vs_champ", "Chinese", "champion", "Imperial", "res", 3000),
+    # Survivability — 30v30 fixed count (HP% scoring)
+    ("surv_30v30_vs_halb", "Chinese", "halberdier", "Imperial", "fixed_hp", (30, 30)),
+    ("surv_30v30_vs_camel", "Turks", "heavy_camel", "Imperial", "fixed_hp", (30, 30)),
+    ("surv_30v30_vs_ca", "Berbers", "elite_camel_archer_berbers", "Imperial", "fixed_hp", (30, 30)),
+    # Survivability — 3K resource (HP% scoring)
+    ("surv_3k_vs_halb", "Chinese", "halberdier", "Imperial", "res", 3000),
+    ("surv_3k_vs_camel", "Turks", "heavy_camel", "Imperial", "res", 3000),
+    ("surv_3k_vs_ca", "Berbers", "elite_camel_archer_berbers", "Imperial", "res", 3000),
+]
+
+STABLE_SCORE_TYPES = [
+    "stable_power",
+    "attack_power",
+    "movement_speed_score",
+    "survivability_score",
+    "atk_30v30_vs_paladin",
+    "atk_30v30_vs_arb",
+    "atk_30v30_vs_champ",
+    "atk_3k_vs_paladin",
+    "atk_3k_vs_arb",
+    "atk_3k_vs_champ",
+    "surv_30v30_vs_halb",
+    "surv_30v30_vs_camel",
+    "surv_30v30_vs_ca",
+    "surv_3k_vs_halb",
+    "surv_3k_vs_camel",
+    "surv_3k_vs_ca",
 ]
 
 
@@ -1392,6 +1403,129 @@ def compute_anti_archer_scores():
     return all_role_scores
 
 
+def compute_stable_role_scores():
+    """Compute benchmark-based scores for all Imperial stable units.
+    Returns dict: {"stable|Imperial": {civ|slug: {score_type: value, ...}, ...}}"""
+
+    # Load benchmark units
+    bench_cache = {}
+    for key, civ, slug, age, mode, param in STABLE_BENCHMARKS:
+        cache_key = (civ, slug, age)
+        if cache_key not in bench_cache:
+            bench_cache[cache_key] = _load_benchmark_unit(civ, slug, age)
+        if bench_cache[cache_key] is None:
+            print(f"  WARNING: stable benchmark {civ}/{slug}/{age} not found")
+
+    # Collect all Imperial stable units from all source lines
+    all_units = []
+    for line_slug in STABLE_LINE_SLUGS:
+        units = build_line_units(line_slug, "imperial")
+        all_units.extend(units)
+
+    if not all_units:
+        return {}
+
+    all_scores = {}
+
+    # Run each unit against all benchmarks
+    for u in all_units:
+        cu = u["combat_unit"]
+        unit_cost = calc_weighted_cost(
+            cu["cost_food"], cu["cost_wood"], cu["cost_gold"], True
+        )
+        sk = f"{u['civ_name']}|{u['unit_slug']}"
+        scores = {}
+
+        for key, civ, slug, age, mode, param in STABLE_BENCHMARKS:
+            bench = bench_cache[(civ, slug, age)]
+            if bench is None:
+                scores[key] = 0.0
+                continue
+
+            if mode == "res":
+                bench_cost = calc_weighted_cost(
+                    bench["cost_food"],
+                    bench["cost_wood"],
+                    bench["cost_gold"],
+                    True,
+                )
+                winner, _, _, hp1, hp2 = simulate_battle(
+                    cu,
+                    bench,
+                    param,
+                    cost1_override=unit_cost,
+                    cost2_override=bench_cost,
+                    return_hp=True,
+                )
+                if winner == 1:
+                    scores[key] = round(hp1 * 100, 1)
+                elif winner == 2:
+                    scores[key] = round(-hp2 * 100, 1)
+                else:
+                    scores[key] = 0.0
+
+            elif mode == "fixed_hp":
+                m_count, o_count = param
+                fake_res = m_count * o_count
+                winner, _, _, hp1, hp2 = simulate_battle(
+                    cu,
+                    bench,
+                    fake_res,
+                    cost1_override=fake_res // m_count,
+                    cost2_override=fake_res // o_count,
+                    return_hp=True,
+                )
+                if winner == 1:
+                    scores[key] = round(hp1 * 100, 1)
+                elif winner == 2:
+                    scores[key] = round(-hp2 * 100, 1)
+                else:
+                    scores[key] = 0.0
+
+        all_scores[sk] = scores
+
+    # Compute attack_power and survivability_score (shifted to 0-100)
+    atk_keys = [k for k, *_ in STABLE_BENCHMARKS if k.startswith("atk_")]
+    surv_keys = [k for k, *_ in STABLE_BENCHMARKS if k.startswith("surv_")]
+
+    for sk, scores in all_scores.items():
+        # Shift each sim score from -100..+100 to 0..100, then average
+        atk_shifted = [(scores.get(k, 0.0) + 100) / 2 for k in atk_keys]
+        surv_shifted = [(scores.get(k, 0.0) + 100) / 2 for k in surv_keys]
+
+        scores["attack_power"] = round(sum(atk_shifted) / len(atk_shifted), 1)
+        scores["survivability_score"] = round(sum(surv_shifted) / len(surv_shifted), 1)
+
+    # Compute movement_speed_score (min-max normalized 0-100)
+    speed_map = {}
+    for u in all_units:
+        sk = f"{u['civ_name']}|{u['unit_slug']}"
+        speed_map[sk] = u["combat_unit"]["movement_speed"]
+
+    speeds = list(speed_map.values())
+    min_speed = min(speeds)
+    max_speed = max(speeds)
+    speed_range = max_speed - min_speed if max_speed != min_speed else 1
+
+    for sk, scores in all_scores.items():
+        raw_speed = speed_map.get(sk, min_speed)
+        scores["movement_speed_score"] = round(
+            (raw_speed - min_speed) / speed_range * 100, 1
+        )
+
+    # Compute composite stable_power
+    for sk, scores in all_scores.items():
+        scores["stable_power"] = round(
+            0.6 * scores["attack_power"]
+            + 0.2 * scores["movement_speed_score"]
+            + 0.2 * scores["survivability_score"],
+            1,
+        )
+
+    # Return in the format write_role_scores_to_db expects: {line_age_key: {unit_key: scores}}
+    return {"stable|Imperial": all_scores}
+
+
 INFANTRY_ROLE_SCORE_TYPES = [
     "melee_power",
     "meat_shield",
@@ -1675,6 +1809,14 @@ def main():
         print(
             f"Archery roles (incl. anti-archer): {total_archery} units across {len(archery_scores)} lines in {time.time() - archery_start:.1f}s"
         )
+
+        stable_start = time.time()
+        stable_scores = compute_stable_role_scores()
+        write_role_scores_to_db(stable_scores, ["stable"], STABLE_SCORE_TYPES)
+        total_stable = sum(len(v) for v in stable_scores.values())
+        print(
+            f"Stable roles: {total_stable} units in {time.time() - stable_start:.1f}s"
+        )
         return
 
     # Compute simulation engine hash
@@ -1707,7 +1849,7 @@ def main():
     # Build all units and compute fingerprints (infantry/archery excluded — uses DB scores)
     current_fps = {}
     for line_slug, config in UNIT_LINES.items():
-        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS:
+        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS or line_slug in STABLE_LINE_SLUGS:
             continue
         for age_key in ["castle", "imperial"]:
             std_slug = config.get(f"{age_key}_slug")
@@ -1790,7 +1932,7 @@ def main():
     rr_misses_total = 0
 
     for line_slug, config in UNIT_LINES.items():
-        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS:
+        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS or line_slug in STABLE_LINE_SLUGS:
             continue  # infantry/archery uses role-based scores from battle_scores table
         for age_key in ["castle", "imperial"]:
             slug = config.get(f"{age_key}_slug")
@@ -1845,6 +1987,16 @@ def main():
     total_archery = sum(len(v) for v in archery_scores.values())
     print(
         f"Archery roles (incl. anti-archer): {total_archery} units across {len(archery_scores)} lines in {archery_time:.1f}s"
+    )
+
+    # Stable role scores (written to DB, not JSON)
+    stable_start = time.time()
+    stable_scores = compute_stable_role_scores()
+    write_role_scores_to_db(stable_scores, ["stable"], STABLE_SCORE_TYPES)
+    stable_time = time.time() - stable_start
+    total_stable = sum(len(v) for v in stable_scores.values())
+    print(
+        f"Stable roles: {total_stable} units in {stable_time:.1f}s"
     )
 
     # Write output (round-robin + benchmarks only, no militia)

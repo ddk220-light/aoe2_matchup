@@ -136,6 +136,15 @@ ORIGINAL_13_CIVS = [
 LITHUANIAN_RELIC_COUNT = 4
 
 # =============================================================================
+# ALLOWED SHADOW TECHS — shadow techs (research_location=-1) that should NOT be
+# filtered out. These are age-based stat upgrade techs for specific units.
+# =============================================================================
+ALLOWED_SHADOW_TECHS = {
+    774,  # Flemish Militia Age3: +10 HP, +3 attack, +anti-cav bonuses
+    797,  # Flemish Militia Age4: +5 HP, +3 attack, +anti-cav bonuses
+}
+
+# =============================================================================
 # BUILDING WORK RATE (affects unit creation time)
 # =============================================================================
 # Unit class → primary creation building ID

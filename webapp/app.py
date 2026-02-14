@@ -1250,6 +1250,10 @@ UNIT_LINES = {
             "Armenians": ("warrior_priest_armenians", "warrior_priest_armenians"),
             "Khitans": ("liao_dao_khitans", "elite_liao_dao_khitans"),
             "Wu": ("jian_swordsman_wu", "jian_swordsman_wu"),
+            "Shu": (
+                "white_feather_crossbowman_shu",
+                "elite_white_feather_crossbowman_shu",
+            ),
         },
     },
     "spear": {
@@ -1298,10 +1302,6 @@ UNIT_LINES = {
                 "elite_composite_bowman_armenians",
             ),
             "Wu": ("fire_archer_wu", "elite_fire_archer_wu"),
-            "Shu": (
-                "white_feather_crossbowman_shu",
-                "elite_white_feather_crossbowman_shu",
-            ),
         },
     },
     "skirmisher": {

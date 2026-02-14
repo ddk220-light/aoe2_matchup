@@ -100,6 +100,10 @@ UNIT_LINES = {
             "Armenians": ("warrior_priest_armenians", "warrior_priest_armenians"),
             "Khitans": ("liao_dao_khitans", "elite_liao_dao_khitans"),
             "Wu": ("jian_swordsman_wu", "jian_swordsman_wu"),
+            "Shu": (
+                "white_feather_crossbowman_shu",
+                "elite_white_feather_crossbowman_shu",
+            ),
         },
     },
     "spear": {
@@ -148,10 +152,6 @@ UNIT_LINES = {
                 "elite_composite_bowman_armenians",
             ),
             "Wu": ("fire_archer_wu", "elite_fire_archer_wu"),
-            "Shu": (
-                "white_feather_crossbowman_shu",
-                "elite_white_feather_crossbowman_shu",
-            ),
         },
     },
     "skirmisher": {
@@ -894,9 +894,9 @@ ARCHERY_ROLE_BENCHMARKS = [
     ("raw_vs_champ", "Chinese", "champion", "Imperial", "fixed", (60, 30)),
     ("raw_vs_paladin", "Spanish", "paladin", "Imperial", "fixed", (60, 30)),
     ("raw_vs_arb", "Chinese", "arbalester", "Imperial", "fixed", (60, 30)),
-    # Survivability benchmarks (3K resources each)
-    ("surv_vs_skirm", "Spanish", "imp_elite_skirm", "Imperial", "res", 3000),
-    ("surv_vs_cav_archer", "Chinese", "heavy_cav_archer", "Imperial", "res", 3000),
+    # Survivability benchmarks (30v30 fixed count, HP-remaining scoring)
+    ("surv_vs_skirm", "Spanish", "imp_elite_skirm", "Imperial", "fixed_hp", (30, 30)),
+    ("surv_vs_cav_archer", "Chinese", "heavy_cav_archer", "Imperial", "fixed_hp", (30, 30)),
 ]
 
 ARCHERY_ROLE_SCORE_TYPES = [
@@ -1148,6 +1148,24 @@ def compute_archery_role_scores():
                     else:
                         scores[key] = 0.0
 
+                elif mode == "fixed_hp":
+                    m_count, o_count = param
+                    fake_res = m_count * o_count
+                    winner, _, _, hp1, hp2 = simulate_battle(
+                        cu,
+                        bench,
+                        fake_res,
+                        cost1_override=fake_res // m_count,
+                        cost2_override=fake_res // o_count,
+                        return_hp=True,
+                    )
+                    if winner == 1:
+                        scores[key] = round(hp1 * 100, 1)
+                    elif winner == 2:
+                        scores[key] = round(-hp2 * 100, 1)
+                    else:
+                        scores[key] = 0.0
+
             all_scores[sk] = scores
             sk_to_line[sk] = line_slug
 
@@ -1168,9 +1186,9 @@ def compute_archery_role_scores():
             1,
         )
         scores["ranged_power"] = round(
-            0.60 * scores["raw_dps_score"]
-            + 0.30 * scores["eco_dps_score"]
-            + 0.10 * scores["survivability_score"],
+            0.70 * scores["raw_dps_score"]
+            + 0.15 * scores["eco_dps_score"]
+            + 0.15 * scores["survivability_score"],
             1,
         )
 

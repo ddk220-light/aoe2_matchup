@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from .config import (
     _PREVIOUS_AGE_NAMES,
     AGE_TECH_IDS,
+    ALLOWED_SHADOW_TECHS,
     ATTR_ACCURACY,
     ATTR_ARMOR,
     ATTR_ATTACK,
@@ -340,7 +341,8 @@ class UnitAnalyzer:
 
             # Skip shadow/hero techs that aren't researchable (research_location == -1)
             # These include Hero Shadow Tech (1088) which incorrectly adds HP to normal units
-            if tech_data.get("research_location", -1) == -1:
+            # Exception: age-based stat upgrade techs for specific units (e.g. Flemish Militia)
+            if tech_data.get("research_location", -1) == -1 and tech_id not in ALLOWED_SHADOW_TECHS:
                 continue
 
             # Skip DLC/campaign-specific techs (have non-standard requirements like Antiquity techs)

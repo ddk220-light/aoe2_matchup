@@ -1129,23 +1129,23 @@
                 },
                 survivability_score: {
                     title: "Survivability Breakdown",
-                    formula: "Average of 2 matchups (3K resources each)",
+                    formula: "Average of 2 matchups (30v30 each)",
                     subs: [
                         {
                             key: "surv_vs_skirm",
-                            label: "vs Elite Skirm",
+                            label: "vs Elite Skirm (30v30)",
                             civ: "Spanish",
                             slug: "imp_elite_skirm",
-                            mode: "resources",
-                            res: 3000,
+                            mode: "count",
+                            count: 30,
                         },
                         {
                             key: "surv_vs_cav_archer",
-                            label: "vs Heavy Cav Archer",
+                            label: "vs Heavy Cav Archer (30v30)",
                             civ: "Chinese",
                             slug: "heavy_cav_archer",
-                            mode: "resources",
-                            res: 3000,
+                            mode: "count",
+                            count: 30,
                         },
                     ],
                 },
@@ -1345,6 +1345,26 @@
                                     key: "raid_building",
                                     label: "Anti-Building",
                                     weight: "40%",
+                                },
+                            ],
+                        },
+                        ranged_power: {
+                            title: "Ranged Power Score",
+                            parts: [
+                                {
+                                    key: "raw_dps_score",
+                                    label: "Raw DPS",
+                                    weight: "70%",
+                                },
+                                {
+                                    key: "eco_dps_score",
+                                    label: "Eco DPS",
+                                    weight: "15%",
+                                },
+                                {
+                                    key: "survivability_score",
+                                    label: "Survivability",
+                                    weight: "15%",
                                 },
                             ],
                         },
@@ -2042,7 +2062,7 @@
                     {
                         key: "ranged_power",
                         label: "Score",
-                        info: "Weighted aggregate: 60% Raw DPS + 30% Eco DPS + 10% Survivability",
+                        info: "Weighted aggregate: 70% Raw DPS + 15% Eco DPS + 15% Survivability",
                     },
                     {
                         key: "raw_dps_score",
@@ -2057,7 +2077,7 @@
                     {
                         key: "survivability_score",
                         label: "Survivability",
-                        info: "Avg HP% remaining after 3K resource fights vs Spanish Elite Skirm and Chinese Heavy Cav Archer",
+                        info: "Avg HP% remaining after 30v30 fights vs Spanish Elite Skirm and Chinese Heavy Cav Archer",
                     },
                     { key: "dps", label: "DPS" },
                     { key: "final_hp", label: "HP" },

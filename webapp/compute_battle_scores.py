@@ -1765,27 +1765,37 @@ def compute_raiding_scores(all_scores, sk_to_line):
         )
         del s["raid_vill_kill_ticks"]  # clean up raw ticks
 
-    # Normalize each building DPS sub-score 0–100
-    for bkey in BUILDING_TARGETS:
-        dps_key = f"raid_vs_{bkey}_dps"
-        vals = [s[dps_key] for s in all_scores.values()]
+    # Normalize N_min sub-scores: average the two variants per building type
+    # Then normalize 0-100 (inverted: lower N = higher score)
+    for sk, scores in all_scores.items():
+        scores["raid_vs_castle_nmin"] = (
+            scores.pop("raid_vs_castle_uni_nmin") + scores.pop("raid_vs_castle_no_uni_nmin")
+        ) / 2.0
+        scores["raid_vs_tc_nmin"] = (
+            scores.pop("raid_vs_tc_uni_nmin") + scores.pop("raid_vs_tc_no_uni_nmin")
+        ) / 2.0
+
+    for bkey in ("castle", "tc"):
+        nmin_key = f"raid_vs_{bkey}_nmin"
+        vals = [s[nmin_key] for s in all_scores.values()]
         lo, hi = min(vals), max(vals)
         span = hi - lo if hi != lo else 1
         for s in all_scores.values():
-            s[dps_key] = round((s[dps_key] - lo) / span * 100, 1)
+            # Invert: lowest N_min → 100 (best raider), highest → 0
+            s[nmin_key] = round((hi - s[nmin_key]) / span * 100, 1)
 
-    # Compute building composite (average of TC and Castle DPS scores)
+    # Compute building composite (average of TC and Castle N_min scores)
     for sk, scores in all_scores.items():
         scores["raid_building"] = round(
-            (scores["raid_vs_tc_dps"] + scores["raid_vs_castle_dps"]) / 2, 1
+            (scores["raid_vs_tc_nmin"] + scores["raid_vs_castle_nmin"]) / 2, 1
         )
 
-    # Compute weighted composite
+    # Compute weighted composite (25% speed, 25% vill kill, 50% building)
     for sk, scores in all_scores.items():
         scores["raiding_value"] = round(
-            0.30 * scores["raid_speed"]
-            + 0.30 * scores["raid_vill_kill"]
-            + 0.40 * scores["raid_building"],
+            0.25 * scores["raid_speed"]
+            + 0.25 * scores["raid_vill_kill"]
+            + 0.50 * scores["raid_building"],
             1,
         )
 

@@ -378,8 +378,8 @@ UNIQUE_COMBAT_PROPERTIES = {
     "elite_coustillier": {"charge_attack_melee": 25, "charge_recharge_time": 40.0},
     # Chakram Thrower pass-through (chakrams hit multiple units in a line)
     # blast_damage=1.0 in dat = pass-through, not splash
-    "chakram_thrower": {"pass_through_percent": 1.0},
-    "elite_chakram_thrower": {"pass_through_percent": 1.0},
+    "chakram_thrower": {"pass_through_percent": 1.0, "pass_through_count": 3},
+    "elite_chakram_thrower": {"pass_through_percent": 1.0, "pass_through_count": 3},
     # Ghulam pass-through (blast_attack_level=130, blast_damage=0.5 in dat)
     # Thrusting attack penetrates to unit behind target for 50% damage.
     # In group fights (which sim always models), there's usually a unit behind the target.

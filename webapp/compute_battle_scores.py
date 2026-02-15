@@ -94,10 +94,6 @@ UNIT_LINES = {
                 "elite_urumi_swordsman_dravidians",
             ),
             "Hindustanis": ("ghulam_hindustanis", "elite_ghulam_hindustanis"),
-            "Gurjaras": (
-                "chakram_thrower_gurjaras",
-                "elite_chakram_thrower_gurjaras",
-            ),
             "Armenians": ("warrior_priest_armenians", "warrior_priest_armenians"),
             "Khitans": ("liao_dao_khitans", "elite_liao_dao_khitans"),
             "Wu": ("jian_swordsman_wu", "jian_swordsman_wu"),
@@ -140,12 +136,10 @@ UNIT_LINES = {
                 "genoese_crossbowman_italians",
                 "elite_genoese_crossbowman_italians",
             ),
-            "Franks": ("throwing_axeman_franks", "elite_throwing_axeman_franks"),
             "Vietnamese": (
                 "rattan_archer_vietnamese",
                 "elite_rattan_archer_vietnamese",
             ),
-            "Malians": ("gbeto_malians", "elite_gbeto_malians"),
             "Armenians": (
                 "composite_bowman_armenians",
                 "elite_composite_bowman_armenians",
@@ -266,6 +260,12 @@ UNIT_LINES = {
             "Portuguese": ("organ_gun_portuguese", "elite_organ_gun_portuguese"),
             "Jurchens": ("grenadier_jurchens", "grenadier_jurchens"),
             "Incas": ("slinger", "imp_slinger"),
+            "Franks": ("throwing_axeman_franks", "elite_throwing_axeman_franks"),
+            "Malians": ("gbeto_malians", "elite_gbeto_malians"),
+            "Gurjaras": (
+                "chakram_thrower_gurjaras",
+                "elite_chakram_thrower_gurjaras",
+            ),
         },
     },
     "scorpion": {

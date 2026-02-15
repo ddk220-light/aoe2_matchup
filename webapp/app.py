@@ -1288,7 +1288,7 @@ UNIT_LINES = {
         "castle_slug": "crossbow",
         "imperial_slug": "arbalester",
         "extra_castle_slugs": ["elephant_archer"],
-        "extra_imperial_slugs": ["hand_cannoneer", "elite_ele_archer"],
+        "extra_imperial_slugs": ["elite_ele_archer"],
         "unique_units": {
             "Britons": ("longbowman_britons", "elite_longbowman_britons"),
             "Chinese": ("chu_ko_nu_chinese", "elite_chu_ko_nu_chinese"),
@@ -1297,9 +1297,7 @@ UNIT_LINES = {
                 "genoese_crossbowman_italians",
                 "elite_genoese_crossbowman_italians",
             ),
-            "Turks": ("janissary_turks", "elite_janissary_turks"),
             "Franks": ("throwing_axeman_franks", "elite_throwing_axeman_franks"),
-            "Incas": ("slinger", "imp_slinger"),
             "Vietnamese": (
                 "rattan_archer_vietnamese",
                 "elite_rattan_archer_vietnamese",
@@ -1329,8 +1327,6 @@ UNIT_LINES = {
         "unique_units": {
             "Mongols": ("mangudai_mongols", "elite_mangudai_mongols"),
             "Saracens": ("mameluke_saracens", "elite_mameluke_saracens"),
-            "Koreans": ("war_wagon_koreans", "elite_war_wagon_koreans"),
-            "Spanish": ("conquistador_spanish", "elite_conquistador_spanish"),
             "Berbers": ("camel_archer_berbers", "elite_camel_archer_berbers"),
             "Burmese": ("arambai_burmese", "elite_arambai_burmese"),
             "Cumans": ("kipchak_cumans", "elite_kipchak_cumans"),
@@ -1416,15 +1412,17 @@ UNIT_LINES = {
         "imperial_slug": "siege_onager",
         "unique_units": {},
     },
-    "ranged_siege": {
-        "name": "Ranged Siege",
-        "building": "Siege Workshop",
+    "gunpowder": {
+        "name": "Gunpowder",
+        "building": "Archery Range",
         "castle_slug": None,
-        "imperial_slug": None,
+        "imperial_slug": "hand_cannoneer",
         "unique_units": {
+            "Turks": ("janissary_turks", "elite_janissary_turks"),
+            "Spanish": ("conquistador_spanish", "elite_conquistador_spanish"),
             "Portuguese": ("organ_gun_portuguese", "elite_organ_gun_portuguese"),
-            "Bohemians": ("hussite_wagon_bohemians", "elite_hussite_wagon_bohemians"),
             "Jurchens": ("grenadier_jurchens", "grenadier_jurchens"),
+            "Incas": ("slinger", "imp_slinger"),
         },
     },
     "scorpion": {
@@ -1436,6 +1434,8 @@ UNIT_LINES = {
             "Khmer": ("ballista_elephant_khmer", "elite_ballista_elephant_khmer"),
             "Shu": ("war_chariot_shu", "elite_war_chariot_shu"),
             "Khitans": ("mounted_trebuchet_khitans", "mounted_trebuchet_khitans"),
+            "Koreans": ("war_wagon_koreans", "elite_war_wagon_koreans"),
+            "Bohemians": ("hussite_wagon_bohemians", "elite_hussite_wagon_bohemians"),
         },
     },
     "trebuchet": {
@@ -1455,7 +1455,7 @@ UNIT_LINES = {
     "archery": {
         "name": "Ranged Effectiveness",
         "building": "Archery Range",
-        "sub_lines": ["archer", "cav_archer", "skirmisher", "scorpion", "ranged_siege"],
+        "sub_lines": ["archer", "cav_archer", "skirmisher", "scorpion", "gunpowder"],
     },
     "infantry": {
         "name": "Infantry Effectiveness",
@@ -1475,7 +1475,7 @@ UNIT_LINES = {
 }
 
 INFANTRY_LINE_SLUGS = {"militia", "spear", "shock_infantry"}
-ARCHERY_LINE_SLUGS = {"archer", "skirmisher", "cav_archer", "scorpion", "ranged_siege"}
+ARCHERY_LINE_SLUGS = {"archer", "skirmisher", "cav_archer", "scorpion", "gunpowder"}
 STABLE_LINE_SLUGS = {"knight", "light_cav", "camel", "steppe_lancer", "elephant"}
 SIEGE_LINE_SLUGS = {"ram", "mangonel", "trebuchet", "bombard_cannon"}
 

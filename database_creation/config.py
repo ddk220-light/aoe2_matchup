@@ -142,6 +142,7 @@ LITHUANIAN_RELIC_COUNT = 4
 ALLOWED_SHADOW_TECHS = {
     774,  # Flemish Militia Age3: +10 HP, +3 attack, +anti-cav bonuses
     797,  # Flemish Militia Age4: +5 HP, +3 attack, +anti-cav bonuses
+    1025,  # Traction Trebuchet (make avail): enables unit 1942 at Imperial Age
 }
 
 # =============================================================================
@@ -264,6 +265,7 @@ COMBAT_PROPERTIES = {
     "siege_ram": {"unit_category": "siege"},
     "trebuchet": {"unit_category": "siege"},
     "bombard_cannon": {"unit_category": "siege"},
+    "traction_trebuchet": {"unit_category": "siege"},
     "organ_gun": {"unit_category": "siege"},
     "elite_organ_gun": {"unit_category": "siege"},
     "hussite_wagon": {"unit_category": "siege"},
@@ -1008,6 +1010,14 @@ IMPERIAL_UNITS = {
         "unit_class": 54,
         "availability_tech": None,
         "upgrades": [],
+    },
+    "traction_trebuchet": {
+        "base_id": 1942,
+        "display_name": "Traction Trebuchet",
+        "unit_class": 13,
+        "availability_tech": 1025,  # Shadow tech, auto-researches at Imperial Age
+        "upgrades": [],
+        "civ_only": ["Shu", "Wu", "Wei"],
     },
     "condottiero": {
         "base_id": 882,

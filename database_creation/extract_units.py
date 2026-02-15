@@ -325,6 +325,8 @@ UNIT_NAMES = {
     1903: "Elite Fire Lancer",
     1944: "Hei-Kuang Cavalry",
     1946: "Heavy Hei-Kuang Cavalry",
+    # ===== Traction Trebuchet (Castle Age trebuchet variant) =====
+    1942: "Traction Trebuchet",
 }
 
 

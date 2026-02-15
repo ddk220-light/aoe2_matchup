@@ -1455,7 +1455,10 @@ UNIT_LINES = {
         "building": "Siege Workshop",
         "castle_slug": None,
         "imperial_slug": "bombard_cannon",
-        "unique_units": {},
+        "extra_imperial_slugs": ["traction_trebuchet"],
+        "unique_units": {
+            "Wu": (None, "elite_fire_archer_wu"),
+        },
     },
     "archery": {
         "name": "Ranged Effectiveness",

@@ -293,7 +293,10 @@ UNIT_LINES = {
         "building": "Siege Workshop",
         "castle_slug": None,
         "imperial_slug": "bombard_cannon",
-        "unique_units": {},
+        "extra_imperial_slugs": ["traction_trebuchet"],
+        "unique_units": {
+            "Wu": (None, "elite_fire_archer_wu"),
+        },
     },
 }
 
@@ -1347,6 +1350,7 @@ SIEGE_CASTLE_TARGET = {
         3: 13,            # pierce: 11 + 1 + 1
         4: 10,            # melee: 8 + 1 + 1
         11: 6,            # standard building: 0 + 3 + 3
+        21: 0,            # standard buildings class (no bonus armor)
     },
     "arrows": 5,          # base arrows (no garrison)
     "arrow_attack": 15,   # 11 + 1 + 1 + 1 + 1 (Fletching/Bodkin/Bracer/Chemistry)

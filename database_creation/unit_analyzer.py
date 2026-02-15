@@ -837,7 +837,11 @@ class UnitAnalyzer:
             }
 
         # Calculate stats
-        unit_class = unit_config["unit_class"]
+        # Use alternate unit_class if available (e.g., Siege Elephant is class 12, not 13 like rams)
+        if use_alternate and "unit_class" in alternate:
+            unit_class = alternate["unit_class"]
+        else:
+            unit_class = unit_config["unit_class"]
         stats = self.get_base_stats(unit)
         applied_bonuses = []
 
@@ -965,6 +969,7 @@ class UnitAnalyzer:
         return {
             "unit_name": final_unit_name,
             "unit_id": final_unit_id,
+            "unit_class": unit_class,
             "stats": stats,
             "has_unit": True,
             "applied_bonuses": applied_bonuses,

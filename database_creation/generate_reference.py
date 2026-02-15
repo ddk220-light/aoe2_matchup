@@ -1242,7 +1242,7 @@ def generate_reference_database(analyzer):
             process_unit_audited(
                 civ_name,
                 final_unit_id,
-                config["unit_class"],
+                result.get("unit_class", config["unit_class"]),
                 result["unit_name"],
                 slug,
                 "standard",
@@ -1267,7 +1267,7 @@ def generate_reference_database(analyzer):
             process_unit_audited(
                 civ_name,
                 final_unit_id,
-                config["unit_class"],
+                result.get("unit_class", config["unit_class"]),
                 result["unit_name"],
                 slug,
                 "standard",

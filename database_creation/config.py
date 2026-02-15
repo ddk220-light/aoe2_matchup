@@ -708,6 +708,7 @@ CASTLE_UNITS = {
             "availability_tech": 837,  # Armored Elephant (make avail)
             "base_id": 1744,  # Correct ID for Armored Elephant
             "display_name": "Armored Elephant",
+            "unit_class": 12,  # Cavalry/elephant class — gets blacksmith barding, Bloodlines, Husbandry
         },
     },
     "mangonel": {
@@ -943,6 +944,7 @@ IMPERIAL_UNITS = {
             "availability_tech": 837,
             "base_id": 1744,  # Armored Elephant
             "display_name": "Siege Elephant",
+            "unit_class": 12,  # Cavalry/elephant class — gets blacksmith barding, Bloodlines, Husbandry
             "upgrades": [
                 (838, 1746, "Siege Elephant"),  # Correct ID for Siege Elephant
             ],

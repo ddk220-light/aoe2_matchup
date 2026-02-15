@@ -38,6 +38,7 @@ from .config import (
     UNIQUE_UNITS,
     UNIQUE_UNITS_IN_BARRACKS,
     UNIT_CLASS_TO_BUILDING,
+    UNIT_STAT_OVERRIDES,
     _tech_age_name,
 )
 from .unit_analyzer import UnitAnalyzer
@@ -268,6 +269,8 @@ def generate_reference_database(analyzer):
             hp_transform_threshold REAL DEFAULT 0,
             hp_regen REAL DEFAULT 0,
             pass_through_percent REAL DEFAULT 0,
+            pass_through_count INTEGER DEFAULT 1,
+            extra_proj_scatter INTEGER DEFAULT 0,
             miss_damage_percent REAL DEFAULT 0,
             hp_per_kill INTEGER DEFAULT 0,
             hp_per_kill_max INTEGER DEFAULT 0,
@@ -464,8 +467,15 @@ def generate_reference_database(analyzer):
         is used for tech filtering.
         """
         stats = analyzer.get_base_stats(unit_data)
+
+        # Apply base stat overrides (e.g. War Chariot dat extracts wrong stats)
+        if unit_id in UNIT_STAT_OVERRIDES:
+            for attr, value in UNIT_STAT_OVERRIDES[unit_id].items():
+                if hasattr(stats, attr):
+                    setattr(stats, attr, value)
+
         base_snap = _snapshot_stats(stats)
-        is_ranged = 1 if unit_data.get("range", 0) > 1 else 0
+        is_ranged = 1 if stats.range > 1 else 0
 
         # For DB storage, use primary class only
         db_class = (
@@ -956,6 +966,8 @@ def generate_reference_database(analyzer):
             ("dismount_unit_id", "Dismounts to unit on death"),
             ("hp_regen", "HP regeneration per minute"),
             ("pass_through_percent", "Pass-through damage percent"),
+            ("pass_through_count", "Number of pass-through targets"),
+            ("extra_proj_scatter", "Extra projectiles scatter to different targets"),
             ("miss_damage_percent", "Missed shot damage to random enemy"),
             ("hp_per_kill", "HP restored per kill"),
             ("hp_per_kill_max", "Max total HP gained from kills"),
@@ -1081,6 +1093,7 @@ def generate_reference_database(analyzer):
         )
         cursor.execute(
             """UPDATE ref_units SET
+               min_range=?,
                extra_projectiles=?, extra_projectile_attacks_json=?,
                first_attack_extra_projectiles=?,
                charge_projectile_count=?, charge_projectile_attacks_json=?,
@@ -1093,6 +1106,7 @@ def generate_reference_database(analyzer):
                bleed_dps=?, bleed_duration=?,
                block_first_melee=?, attack_bonus_per_kill=?,
                hp_transform_threshold=?, hp_regen=?, pass_through_percent=?,
+               pass_through_count=?, extra_proj_scatter=?,
                miss_damage_percent=?, hp_per_kill=?, hp_per_kill_max=?,
                pop_space=?, armor_strip_per_hit=?,
                charge_attack_melee=?, charge_recharge_time=?,
@@ -1113,6 +1127,7 @@ def generate_reference_database(analyzer):
                transform_attacks_json=?, transform_armors_json=?
                WHERE id=?""",
             (
+                combat_props.get("min_attack_range", 0),
                 combat_props.get("extra_projectiles", 0),
                 combat_props.get("extra_projectile_attacks_json"),
                 combat_props.get("first_attack_extra_projectiles", 0),
@@ -1138,6 +1153,8 @@ def generate_reference_database(analyzer):
                 combat_props.get("hp_transform_threshold", 0),
                 combat_props.get("hp_regen", 0),
                 combat_props.get("pass_through_percent", 0),
+                combat_props.get("pass_through_count", 1),
+                combat_props.get("extra_proj_scatter", 0),
                 combat_props.get("miss_damage_percent", 0),
                 combat_props.get("hp_per_kill", 0),
                 combat_props.get("hp_per_kill_max", 0),

@@ -248,8 +248,8 @@ COMBAT_PROPERTIES = {
     # are now data-driven from get_extracted_combat_properties()
     "mangonel": {"unit_category": "siege"},
     "siege_onager": {"unit_category": "siege"},
-    "scorpion": {"unit_category": "siege"},
-    "heavy_scorpion": {"unit_category": "siege"},
+    "scorpion": {"unit_category": "siege", "pass_through_count": 3},
+    "heavy_scorpion": {"unit_category": "siege", "pass_through_count": 3},
     "skirm": {"unit_category": "trash"},
     "elite_skirm": {"unit_category": "trash"},
     "imp_elite_skirm": {"unit_category": "trash"},
@@ -273,7 +273,6 @@ COMBAT_PROPERTIES = {
     "warrior_priest": {"unit_category": "infantry"},
     "grenadier": {"unit_category": "siege"},
     "war_chariot": {"unit_category": "siege"},
-    "elite_war_chariot": {"unit_category": "siege"},
     "mounted_trebuchet": {"unit_category": "siege"},
     "jian_swordsman": {"unit_category": "infantry"},
 }
@@ -284,6 +283,23 @@ UNIT_STAT_OVERRIDES = {
     # Elite Woad Raider: dat file has speed=1.17 (same as base), but elite should
     # be faster. 1.4 (wiki final speed) / 1.15 (Celts infantry speed bonus) ≈ 1.217
     534: {"speed": 1.2174},
+    # War Chariot (2150): dat extracts as melee, but is actually ranged siege unit
+    # with scorpion-like pass-through bolts. Override base stats to match game data.
+    2150: {
+        "hp": 65,
+        "attack": 8,
+        "range": 6,
+        "reload_time": 7.5,
+        "accuracy": 100,
+        "melee_armor": 0,
+        "pierce_armor": 5,
+        "speed": 0.9,
+        "cost_food": 65,
+        "cost_wood": 0,
+        "cost_gold": 90,
+        "los": 8,
+        "attacks": {3: 8, 1: 2},  # Pierce 8, +2 buildings
+    },
 }
 
 # Unique units — keyed by base slug (without civ suffix)
@@ -369,6 +385,19 @@ UNIQUE_COMBAT_PROPERTIES = {
     # In group fights (which sim always models), there's usually a unit behind the target.
     "ghulam": {"pass_through_percent": 0.5},
     "elite_ghulam": {"pass_through_percent": 0.5},
+    # Ballista Elephant bolts pass through 3 additional enemies (like scorpions)
+    "ballista_elephant": {"pass_through_count": 3},
+    "elite_ballista_elephant": {"pass_through_count": 3},
+    # Organ Gun fires 5/6 projectiles that scatter to different targets
+    "organ_gun": {"extra_proj_scatter": 1},
+    "elite_organ_gun": {"extra_proj_scatter": 1},
+    # War Chariot: ranged pass-through (like scorpion), 5 total projectiles in focus fire
+    "war_chariot": {
+        "pass_through_percent": 0.5,
+        "pass_through_count": 3,
+        "extra_projectiles": 4,
+        "min_attack_range": 1,
+    },
     # Arambai: missed shots deal full damage to random nearby enemy.
     # With 20/30% accuracy, most shots miss but hit other units in group fights.
     "arambai": {"miss_damage_percent": 1.0},
@@ -491,8 +520,7 @@ CIV_COMBAT_PROPERTIES = {
         "extra_projectiles": 1,
         "extra_projectile_attacks_json": '{"3": 1}',
     },
-    ("Shu", "elite_war_chariot"): {"extra_projectiles": 1},
-    ("Shu", "war_chariot"): {"extra_projectiles": 1},
+    ("Shu", "war_chariot"): {"extra_projectiles": 6},
     # Jurchens Thunderclap Bombs (Imp UT) — additional projectiles for Rocket Carts, Grenadiers
     ("Jurchens", "mangonel"): {"extra_projectiles": 1},
     ("Jurchens", "siege_onager"): {"extra_projectiles": 1},
@@ -1639,9 +1667,9 @@ UNIQUE_UNITS = {
             "display_name": "War Chariot",
             "unit_class": 12,
             "availability_tech": 1065,
-            "elite_tech": 1171,
-            "elite_id": 2151,
-            "elite_name": "Elite War Chariot",
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
         },
     ],
     "Wei": [

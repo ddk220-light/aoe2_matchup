@@ -139,6 +139,8 @@ def prepare_combat_unit(row):
         "first_attack_extra_projectiles": row["first_attack_extra_projectiles"] or 0,
         "hp_regen": row["hp_regen"] or 0,
         "pass_through_percent": row["pass_through_percent"] or 0,
+        "pass_through_count": row.get("pass_through_count", 1) or 1,
+        "extra_proj_scatter": row.get("extra_proj_scatter", 0) or 0,
         "miss_damage_percent": row.get("miss_damage_percent", 0) or 0,
         "hp_per_kill": row.get("hp_per_kill", 0) or 0,
         "hp_per_kill_max": row.get("hp_per_kill_max", 0) or 0,
@@ -493,6 +495,12 @@ def simulate_battle(
     # Pass-through damage (Scorpion bolts, Pirotecnia)
     pass_through1 = unit1["pass_through_percent"]
     pass_through2 = unit2["pass_through_percent"]
+    pass_through_count1 = unit1["pass_through_count"]
+    pass_through_count2 = unit2["pass_through_count"]
+
+    # Extra projectile scatter (Organ Gun)
+    extra_proj_scatter1 = unit1["extra_proj_scatter"]
+    extra_proj_scatter2 = unit2["extra_proj_scatter"]
 
     # Extra projectiles
     extra_proj1 = unit1["extra_projectiles"]
@@ -785,6 +793,7 @@ def simulate_battle(
             a_siege_splash = siege_splash1
             a_is_siege = is_siege1
             a_pass_through = pass_through1
+            a_pass_through_count = pass_through_count1
             t_alive_fn = lambda: _get_alive_targets(hp2, count2)
         else:
             t_hp, t_shield, t_shield_timer = hp1, shield1, shield_timer1
@@ -803,6 +812,7 @@ def simulate_battle(
             a_siege_splash = siege_splash2
             a_is_siege = is_siege2
             a_pass_through = pass_through2
+            a_pass_through_count = pass_through_count2
             t_alive_fn = lambda: _get_alive_targets(hp1, count1)
 
         if t_hp[target_idx] <= 0:
@@ -850,14 +860,17 @@ def simulate_battle(
                     t_hp[idx] -= splash_dmg
                     splashed += 1
 
-        # Pass-through: 1 additional unit takes a fraction of the damage
+        # Pass-through: up to N additional units take a fraction of the damage
         if a_pass_through > 0:
             alive = t_alive_fn()
             pt_dmg = max(1, int(hit_dmg * a_pass_through))
+            pt_hit = 0
             for idx in alive:
                 if idx != target_idx:
                     t_hp[idx] -= pt_dmg
-                    break
+                    pt_hit += 1
+                    if pt_hit >= a_pass_through_count:
+                        break
 
         if a_bleed_dps > 0 and was_alive:
             t_bleed[target_idx] = (a_bleed_dps, a_bleed_dur)
@@ -875,6 +888,7 @@ def simulate_battle(
         target_hp_arr,
         a_accuracy=1.0,
         a_miss_dmg_pct=0,
+        a_scatter=0,
     ):
         """Apply num_shots opening shots from attacker_team using focus fire."""
         if num_shots <= 0:
@@ -915,9 +929,15 @@ def simulate_battle(
                 # Extra projectiles: low accuracy (~50%), they scatter
                 for _ in range(num_proj - 1):
                     if random.random() < EXTRA_PROJ_ACCURACY:
-                        _apply_opening_hit(
-                            attacker_team, target, extra_proj_damage, a_idx
-                        )
+                        if a_scatter:
+                            t_alive_scat = [i for i in range(target_count) if target_hp_arr[i] > 0]
+                            if t_alive_scat:
+                                scat_target = random.choice(t_alive_scat)
+                                _apply_opening_hit(attacker_team, scat_target, extra_proj_damage, a_idx)
+                        else:
+                            _apply_opening_hit(
+                                attacker_team, target, extra_proj_damage, a_idx
+                            )
 
     # Calculate opening shots for each side
     opening1 = 0
@@ -1084,6 +1104,7 @@ def simulate_battle(
             hp2,
             a_accuracy=accuracy1,
             a_miss_dmg_pct=miss_dmg_pct1,
+            a_scatter=extra_proj_scatter1,
         )
         # Set cooldowns to reflect time elapsed since last opening shot
         if is_ranged1 and closing_time1 > 0:
@@ -1105,6 +1126,7 @@ def simulate_battle(
             hp1,
             a_accuracy=accuracy2,
             a_miss_dmg_pct=miss_dmg_pct2,
+            a_scatter=extra_proj_scatter2,
         )
         if is_ranged2 and closing_time2 > 0:
             last_shot_t = delay2 + (opening2 - 1) * reload2
@@ -1164,6 +1186,7 @@ def simulate_battle(
                 t_miss_dmg_pct = miss_dmg_pct1
                 t_reload, t_delay = reload1, delay1
                 t_extra_proj, t_first_burst = extra_proj1, first_burst1
+                t_scatter = extra_proj_scatter1
                 t_dmg = dmg1
                 t_extra_proj_dmg = extra_proj_dmg1
                 t_dmg_vs_dismount = dmg1_vs_dismount2 if dismount2 else dmg1
@@ -1192,6 +1215,7 @@ def simulate_battle(
                 t_miss_dmg_pct = miss_dmg_pct2
                 t_reload, t_delay = reload2, delay2
                 t_extra_proj, t_first_burst = extra_proj2, first_burst2
+                t_scatter = extra_proj_scatter2
                 t_dmg = dmg2
                 t_extra_proj_dmg = extra_proj_dmg2
                 t_dmg_vs_dismount = dmg2_vs_dismount1 if dismount1 else dmg2
@@ -1327,9 +1351,15 @@ def simulate_battle(
                         extra_hit = extra_base + int(my_bonus_atk[i])
                         for _ in range(num_extra):
                             if random.random() < EXTRA_PROJ_ACCURACY:
-                                pending_damage.append(
-                                    (enemy_team, target_idx, extra_hit, i, team_id)
-                                )
+                                if t_scatter and enemy_alive:
+                                    scat_target = random.choice(enemy_alive)
+                                    pending_damage.append(
+                                        (enemy_team, scat_target, extra_hit, i, team_id)
+                                    )
+                                else:
+                                    pending_damage.append(
+                                        (enemy_team, target_idx, extra_hit, i, team_id)
+                                    )
                     my_cooldown[i] = t_reload
                 else:
                     # Melee: commit with delay or hit instantly
@@ -1382,6 +1412,7 @@ def simulate_battle(
                 a_siege_splash = siege_splash2
                 a_is_siege = is_siege2
                 a_pass_through = pass_through2
+                a_pass_through_count = pass_through_count2
                 a_armor_strip = armor_strip2
                 t_current_ma, t_current_pa = current_ma1, current_pa1
                 all_alive = alive1
@@ -1404,6 +1435,7 @@ def simulate_battle(
                 a_siege_splash = siege_splash1
                 a_is_siege = is_siege1
                 a_pass_through = pass_through1
+                a_pass_through_count = pass_through_count1
                 a_armor_strip = armor_strip1
                 t_current_ma, t_current_pa = current_ma2, current_pa2
                 all_alive = alive2
@@ -1509,13 +1541,16 @@ def simulate_battle(
                         t_hp[idx] -= splash_dmg
                         splashed += 1
 
-            # Pass-through: 1 additional unit takes a fraction of the damage
+            # Pass-through: up to N additional units take a fraction of the damage
             if a_pass_through > 0:
                 pt_dmg = max(1, int(damage * a_pass_through))
+                pt_hit = 0
                 for idx in all_alive:
                     if idx != target_idx and t_hp[idx] > 0:
                         t_hp[idx] -= pt_dmg
-                        break
+                        pt_hit += 1
+                        if pt_hit >= a_pass_through_count:
+                            break
 
             # Bleed
             if a_bleed_dps > 0 and was_alive:
@@ -1739,6 +1774,8 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                     and not is_rng,
                     "trample_radius": cu["trample_radius"],
                     "pass_through": cu["pass_through_percent"],
+                    "pass_through_count": cu["pass_through_count"],
+                    "scatter": cu["extra_proj_scatter"],
                     "min_range": cu["min_attack_range"],
                     "regen_per_tick": regen,
                     "damage_reflect": cu.get("damage_reflect_percent", 0) or 0,
@@ -2063,14 +2100,18 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                                 pending.append((idx, s_dmg))
                                 sim_hp[idx] -= s_dmg
                                 splashed += 1
-                    # Pass-through
+                    # Pass-through: up to N additional targets
                     if tmpl["pass_through"] > 0:
                         pt_dmg = max(1, int(main_dmg * tmpl["pass_through"]))
+                        pt_hit = 0
+                        pt_max = tmpl["pass_through_count"]
                         for idx in d_alive_now:
                             if idx != target and sim_hp[idx] > 0:
                                 pending.append((idx, pt_dmg))
                                 sim_hp[idx] -= pt_dmg
-                                break
+                                pt_hit += 1
+                                if pt_hit >= pt_max:
+                                    break
                 elif d_alive_now:
                     # Missed shot — may hit random enemy in formation
                     stray_chance = min(0.5, len(d_alive_now) * 0.05)
@@ -2079,11 +2120,16 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                         pending.append((stray, main_dmg))
                         sim_hp[stray] -= main_dmg
 
-                # Extra projectiles (scatter)
+                # Extra projectiles
                 for _ in range(num_extra):
                     if random.random() < EXTRA_PROJ_ACCURACY:
-                        pending.append((target, extra_dmg))
-                        sim_hp[target] -= extra_dmg
+                        if tmpl["scatter"] and d_alive_now:
+                            scat_target = random.choice(d_alive_now)
+                            pending.append((scat_target, extra_dmg))
+                            sim_hp[scat_target] -= extra_dmg
+                        else:
+                            pending.append((target, extra_dmg))
+                            sim_hp[target] -= extra_dmg
 
         return pending
 
@@ -2308,9 +2354,15 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                     # Extra projectiles
                     for _ in range(num_extra):
                         if random.random() < EXTRA_PROJ_ACCURACY:
-                            pending_damage.append(
-                                (enemy_team_id, target_idx, extra_dmg, i, team_id)
-                            )
+                            if tmpl["scatter"] and enemy_alive:
+                                scat_target = random.choice(enemy_alive)
+                                pending_damage.append(
+                                    (enemy_team_id, scat_target, extra_dmg, i, team_id)
+                                )
+                            else:
+                                pending_damage.append(
+                                    (enemy_team_id, target_idx, extra_dmg, i, team_id)
+                                )
                     my_cooldown[i] = tmpl["reload"]
                 else:
                     # Melee with delay
@@ -2422,13 +2474,17 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                         t_hp[idx] -= s_dmg
                         splashed += 1
 
-            # Pass-through: 1 additional unit takes a fraction of the damage
+            # Pass-through: up to N additional units take a fraction of the damage
             if a_tmpl["pass_through"] > 0:
                 pt_dmg = max(1, int(damage * a_tmpl["pass_through"]))
+                pt_hit = 0
+                pt_max = a_tmpl["pass_through_count"]
                 for idx in all_alive:
                     if idx != target_idx and t_hp[idx] > 0:
                         t_hp[idx] -= pt_dmg
-                        break
+                        pt_hit += 1
+                        if pt_hit >= pt_max:
+                            break
 
         # --- HP regeneration ---
         for i in alive1:

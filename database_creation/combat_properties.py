@@ -219,6 +219,8 @@ def get_combat_properties(unit_slug, civ_name=None, unit_id=None, units_data=Non
         "dismount_unit_id": 0,
         "hp_regen": 0,
         "pass_through_percent": 0,
+        "pass_through_count": 1,
+        "extra_proj_scatter": 0,
         "miss_damage_percent": 0,
         "hp_per_kill": 0,
         "hp_per_kill_max": 0,

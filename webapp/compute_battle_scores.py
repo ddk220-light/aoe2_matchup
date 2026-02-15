@@ -528,6 +528,8 @@ def build_combat_dict(rc, row):
             row["first_attack_extra_projectiles"] or 0
         ),
         "pass_through_percent": row["pass_through_percent"] or 0,
+        "pass_through_count": row["pass_through_count"] or 1,
+        "extra_proj_scatter": row["extra_proj_scatter"] or 0,
         "miss_damage_percent": row["miss_damage_percent"] or 0,
         "hp_per_kill": int(row["hp_per_kill"] or 0),
         "hp_per_kill_max": int(row["hp_per_kill_max"] or 0),

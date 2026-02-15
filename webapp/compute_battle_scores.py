@@ -102,8 +102,8 @@ UNIT_LINES = {
             "Khitans": ("liao_dao_khitans", "elite_liao_dao_khitans"),
             "Wu": ("jian_swordsman_wu", "jian_swordsman_wu"),
             "Shu": (
-                "white_feather_crossbowman_shu",
-                "elite_white_feather_crossbowman_shu",
+                "white_feather_guard_shu",
+                "elite_white_feather_guard_shu",
             ),
         },
     },

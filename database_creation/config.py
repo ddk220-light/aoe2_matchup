@@ -474,11 +474,11 @@ CIV_COMBAT_PROPERTIES = {
     # +0.5% HP per nearby qualifying unit, capped at 30 units = +15% HP max
     ("Shu", "halberdier"): {"hp_nearby_percent_per_unit": 0.5, "hp_nearby_max_units": 30},
     ("Shu", "pikeman"): {"hp_nearby_percent_per_unit": 0.5, "hp_nearby_max_units": 30},
-    ("Shu", "white_feather_crossbowman"): {
+    ("Shu", "white_feather_guard"): {
         "hp_nearby_percent_per_unit": 0.5,
         "hp_nearby_max_units": 30,
     },
-    ("Shu", "elite_white_feather_crossbowman"): {
+    ("Shu", "elite_white_feather_guard"): {
         "hp_nearby_percent_per_unit": 0.5,
         "hp_nearby_max_units": 30,
     },
@@ -1627,12 +1627,12 @@ UNIQUE_UNITS = {
     "Shu": [
         {
             "base_id": 1959,
-            "display_name": "White Feather Crossbowman",
+            "display_name": "White Feather Guard",
             "unit_class": 6,
             "availability_tech": 1063,
             "elite_tech": 1064,
             "elite_id": 1961,
-            "elite_name": "Elite White Feather Crossbowman",
+            "elite_name": "Elite White Feather Guard",
         },
         {
             "base_id": 2150,

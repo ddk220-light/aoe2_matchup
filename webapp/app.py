@@ -1414,6 +1414,13 @@ UNIT_LINES = {
         "building": "Siege Workshop",
         "castle_slug": "mangonel",
         "imperial_slug": "siege_onager",
+        "unique_units": {},
+    },
+    "ranged_siege": {
+        "name": "Ranged Siege",
+        "building": "Siege Workshop",
+        "castle_slug": None,
+        "imperial_slug": None,
         "unique_units": {
             "Portuguese": ("organ_gun_portuguese", "elite_organ_gun_portuguese"),
             "Bohemians": ("hussite_wagon_bohemians", "elite_hussite_wagon_bohemians"),
@@ -1446,45 +1453,31 @@ UNIT_LINES = {
         "unique_units": {},
     },
     "archery": {
-        "name": "Ranged Power Rankings",
+        "name": "Ranged Effectiveness",
         "building": "Archery Range",
-        "sub_lines": ["archer", "cav_archer", "skirmisher"],
-    },
-    "mobility": {
-        "name": "Mobility Rankings",
-        "building": "Archery Range",
-        "sub_lines": ["archer", "cav_archer", "skirmisher"],
+        "sub_lines": ["archer", "cav_archer", "skirmisher", "scorpion", "ranged_siege"],
     },
     "infantry": {
         "name": "Infantry Effectiveness",
         "building": "Barracks",
         "sub_lines": ["militia", "spear", "shock_infantry"],
     },
-    "anti_cav_infantry": {
-        "name": "Infantry Anti-Cav",
-        "building": "Barracks",
-        "sub_lines": ["militia", "spear", "shock_infantry"],
-    },
-    "raiding_infantry": {
-        "name": "Infantry Raiding",
-        "building": "Barracks",
-        "sub_lines": ["militia", "spear", "shock_infantry"],
-    },
-    "anti_archer": {
-        "name": "Anti Archer Rankings",
-        "building": "Archery Range",
-        "sub_lines": ["archer", "cav_archer", "skirmisher"],
-    },
     "stable": {
         "name": "Stable Units",
         "building": "Stable",
         "sub_lines": ["knight", "light_cav", "camel", "steppe_lancer", "elephant"],
     },
+    "siege": {
+        "name": "Anti-Building Effectiveness",
+        "building": "Siege Workshop",
+        "sub_lines": ["ram", "trebuchet", "bombard_cannon"],
+    },
 }
 
 INFANTRY_LINE_SLUGS = {"militia", "spear", "shock_infantry"}
-ARCHERY_LINE_SLUGS = {"archer", "skirmisher", "cav_archer"}
+ARCHERY_LINE_SLUGS = {"archer", "skirmisher", "cav_archer", "scorpion", "ranged_siege"}
 STABLE_LINE_SLUGS = {"knight", "light_cav", "camel", "steppe_lancer", "elephant"}
+SIEGE_LINE_SLUGS = {"ram", "mangonel", "trebuchet", "bombard_cannon"}
 
 
 # ===== Pre-computed battle scores (loaded from battle_scores.json) =====
@@ -1537,12 +1530,14 @@ def api_ref_unit_line(line_slug):
         "imperial": [],
     }
 
-    # Load infantry role scores from DB (keyed by "civ_name|unit_slug")
+    # Load role scores from DB (keyed by "civ_name|unit_slug")
     _db_role_scores = {}
     _score_line_slugs = [s for s in sub_lines if s in INFANTRY_LINE_SLUGS or s in ARCHERY_LINE_SLUGS]
-    # For stable virtual line, scores are stored under "stable" line_slug in DB
+    # For stable/siege virtual lines, scores are stored under the virtual line_slug in DB
     if line_slug == "stable":
         _score_line_slugs = ["stable"]
+    elif line_slug == "siege":
+        _score_line_slugs = ["siege"]
     if _score_line_slugs:
         placeholders = ",".join("?" for _ in _score_line_slugs)
         rc.execute(
@@ -1556,9 +1551,9 @@ def api_ref_unit_line(line_slug):
             ]
 
     def _attach_scores(entry, age_key, sub_slug):
-        """Attach battle scores: DB role scores for infantry/archery/stable, JSON for other lines."""
+        """Attach battle scores: DB role scores for infantry/archery/stable/siege, JSON for other lines."""
         unit_key = f"{entry['civ_name']}|{entry['unit_slug']}"
-        if (sub_slug in INFANTRY_LINE_SLUGS or sub_slug in ARCHERY_LINE_SLUGS or sub_slug in STABLE_LINE_SLUGS) and _db_role_scores:
+        if (sub_slug in INFANTRY_LINE_SLUGS or sub_slug in ARCHERY_LINE_SLUGS or sub_slug in STABLE_LINE_SLUGS or sub_slug in SIEGE_LINE_SLUGS) and _db_role_scores:
             rs = _db_role_scores.get(unit_key, {})
             for rk, rv in rs.items():
                 entry[rk] = rv

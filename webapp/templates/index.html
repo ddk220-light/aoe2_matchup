@@ -128,74 +128,58 @@
                 font-weight: 600;
             }
 
-            /* Building sections */
-            .building-section {
+            /* Tab bar */
+            .tab-bar {
+                display: flex;
+                gap: 0;
+                border-bottom: 2px solid var(--card-border);
                 margin-bottom: 16px;
+                overflow-x: auto;
+                scrollbar-width: thin;
             }
-            .building-header {
+            .unit-tab {
                 display: flex;
                 align-items: center;
-                gap: 8px;
-                margin-bottom: 8px;
+                gap: 7px;
+                padding: 10px 18px;
+                background: transparent;
+                border: none;
+                border-bottom: 3px solid transparent;
+                color: var(--text-muted);
+                cursor: pointer;
+                font-family: "Inter", sans-serif;
+                font-size: 0.8rem;
+                font-weight: 500;
+                white-space: nowrap;
+                transition: all 0.2s;
+                margin-bottom: -2px;
             }
-            .building-header img {
+            .unit-tab:hover {
+                color: var(--text);
+                background: rgba(201, 168, 76, 0.05);
+            }
+            .unit-tab.active {
+                color: var(--gold);
+                border-bottom-color: var(--gold);
+                font-weight: 600;
+            }
+            .unit-tab.unavailable {
+                opacity: 0.35;
+                pointer-events: none;
+            }
+            .unit-tab img {
                 width: 24px;
                 height: 24px;
-                border-radius: 4px;
-            }
-            .building-header h3 {
-                font-family: "Cinzel", serif;
-                font-size: 0.95rem;
-                color: var(--gold);
-            }
-
-            /* Unit line cards */
-            .line-grid {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px;
-                margin-bottom: 8px;
-            }
-            .line-card {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                padding: 8px 14px;
-                background: var(--card-bg);
-                border: 1px solid var(--card-border);
-                border-radius: 8px;
-                cursor: pointer;
-                transition: all 0.2s;
-                min-width: 140px;
-            }
-            .line-card:hover {
-                border-color: var(--gold-dark);
-                background: rgba(201, 168, 76, 0.1);
-            }
-            .line-card.active {
-                border-color: var(--gold);
-                background: rgba(201, 168, 76, 0.15);
-                box-shadow: 0 0 8px rgba(201, 168, 76, 0.2);
-            }
-            .line-card img {
-                width: 32px;
-                height: 32px;
                 border-radius: 50%;
-                border: 2px solid var(--card-border);
+                border: 1px solid var(--card-border);
                 object-fit: cover;
                 background: var(--bg);
             }
-            .line-card .line-name {
-                font-size: 0.8rem;
-                font-weight: 500;
-            }
-            .line-card .line-unique {
-                color: var(--gold);
-                font-size: 0.65rem;
-            }
-            .line-card.unavailable {
-                opacity: 0.35;
-                pointer-events: none;
+            .tab-separator {
+                width: 1px;
+                background: var(--card-border);
+                margin: 6px 0;
+                flex-shrink: 0;
             }
 
             /* Table container */
@@ -409,9 +393,13 @@
 
             /* Civ filter */
             .civ-filter-wrap {
+                display: flex;
+                align-items: center;
+                gap: 16px;
                 margin-bottom: 10px;
+                flex-wrap: wrap;
             }
-            .civ-filter-wrap input {
+            .civ-filter-wrap input[type="text"] {
                 width: 240px;
                 padding: 6px 12px;
                 background: var(--bg);
@@ -420,27 +408,50 @@
                 border-radius: 6px;
                 font-size: 0.8rem;
             }
-            .civ-filter-wrap input::placeholder {
+            .civ-filter-wrap input[type="text"]::placeholder {
                 color: var(--text-muted);
+            }
+            .line-filters {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .line-filters-label {
+                font-size: 0.75rem;
+                color: var(--text-muted);
+                font-weight: 500;
+            }
+            .line-checkbox {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 0.78rem;
+                color: var(--text-muted);
+                cursor: pointer;
+                user-select: none;
+                transition: color 0.15s;
+            }
+            .line-checkbox:hover {
+                color: var(--text);
+            }
+            .line-checkbox input[type="checkbox"] {
+                accent-color: var(--gold);
+                cursor: pointer;
+                width: 14px;
+                height: 14px;
             }
 
             @media (max-width: 768px) {
                 .page-header h1 {
                     font-size: 1.2rem;
                 }
-                .line-grid {
-                    gap: 6px;
+                .unit-tab {
+                    padding: 8px 12px;
+                    font-size: 0.75rem;
                 }
-                .line-card {
-                    min-width: 120px;
-                    padding: 6px 10px;
-                }
-                .line-card img {
-                    width: 24px;
-                    height: 24px;
-                }
-                .line-card .line-name {
-                    font-size: 0.7rem;
+                .unit-tab img {
+                    width: 20px;
+                    height: 20px;
                 }
             }
         </style>
@@ -719,19 +730,6 @@
                 "Heavy Hei-Kuang Cavalry": 1946,
             };
 
-            const BUILDING_ORDER = [
-                "Barracks",
-                "Archery Range",
-                "Stable",
-                "Siege Workshop",
-            ];
-            const BUILDING_ICONS = {
-                Barracks: 12,
-                "Archery Range": 87,
-                Stable: 101,
-                "Siege Workshop": 49,
-            };
-
             // Unit lines definition (mirrors backend UNIT_LINES)
             const UNIT_LINES = {
                 infantry: {
@@ -740,84 +738,31 @@
                     castle: "Long Swordsman",
                     imperial: "Champion",
                     hasUnique: true,
-                },
-                anti_cav_infantry: {
-                    name: "Infantry Anti-Cav",
-                    building: "Barracks",
-                    castle: "Pikeman",
-                    imperial: "Halberdier",
-                    hasUnique: true,
-                },
-                raiding_infantry: {
-                    name: "Infantry Raiding",
-                    building: "Barracks",
-                    castle: "Long Swordsman",
-                    imperial: "Champion",
-                    hasUnique: true,
+                    subLines: ["militia", "spear", "shock_infantry"],
                 },
                 archery: {
-                    name: "Ranged Power Rankings",
+                    name: "Ranged Effectiveness",
                     building: "Archery Range",
                     castle: "Crossbowman",
                     imperial: "Arbalester",
                     hasUnique: true,
+                    subLines: ["archer", "skirmisher", "cav_archer", "scorpion", "ranged_siege"],
                 },
-                anti_archer: {
-                    name: "Anti Archer Rankings",
-                    building: "Archery Range",
-                    castle: "Crossbowman",
-                    imperial: "Arbalester",
-                    hasUnique: true,
-                },
-                mobility: {
-                    name: "Mobility Rankings",
-                    building: "Archery Range",
-                    castle: "Crossbowman",
-                    imperial: "Arbalester",
-                    hasUnique: true,
-                },
-
                 stable: {
-                    name: "Stable Units",
+                    name: "Stable Effectiveness",
                     building: "Stable",
                     castle: null,
                     imperial: "Paladin",
                     hasUnique: true,
+                    subLines: ["knight", "light_cav", "camel", "steppe_lancer", "elephant"],
                 },
-                ram: {
-                    name: "Ram Line",
+                siege: {
+                    name: "Anti-Building Effectiveness",
                     building: "Siege Workshop",
                     castle: "Battering Ram",
-                    imperial: "Siege Ram",
-                    hasUnique: false,
-                },
-                mangonel: {
-                    name: "Mangonel Line",
-                    building: "Siege Workshop",
-                    castle: "Mangonel",
-                    imperial: "Siege Onager",
-                    hasUnique: true,
-                },
-                scorpion: {
-                    name: "Scorpion Line",
-                    building: "Siege Workshop",
-                    castle: "Scorpion",
-                    imperial: "Heavy Scorpion",
-                    hasUnique: true,
-                },
-                trebuchet: {
-                    name: "Trebuchet",
-                    building: "Siege Workshop",
-                    castle: null,
                     imperial: "Trebuchet",
-                    hasUnique: false,
-                },
-                bombard_cannon: {
-                    name: "Bombard Cannon",
-                    building: "Siege Workshop",
-                    castle: null,
-                    imperial: "Bombard Cannon",
-                    hasUnique: false,
+                    hasUnique: true,
+                    subLines: ["ram", "trebuchet", "bombard_cannon"],
                 },
             };
 
@@ -834,6 +779,7 @@
             let currentLine = null;
             let currentData = null;
             let sortColumn = "civ_name";
+            let enabledLines = new Set();
             let sortDir = "asc";
             let currentEnriched = [];
             let pinnedCell = null;
@@ -841,87 +787,42 @@
 
             // ===== SCORE BREAKDOWN CONFIG =====
             const SCORE_BREAKDOWN = {
-                melee_power: {
-                    title: "Melee Power Breakdown",
-                    formula: "Average of 4 matchups (3K resources each)",
+                general_combat: {
+                    title: "General Combat",
+                    formula: "Average of 3 normalized matchups (3K resources each)",
                     subs: [
                         {
-                            key: "vs_skirm",
-                            label: "vs Elite Skirm",
-                            civ: "Spanish",
-                            slug: "imp_elite_skirm",
-                            mode: "resources",
-                            res: 3000,
-                        },
-                        {
-                            key: "vs_halb",
-                            label: "vs Halberdier",
-                            civ: "Spanish",
-                            slug: "halberdier",
-                            mode: "resources",
-                            res: 3000,
-                        },
-                        {
-                            key: "vs_hussar",
-                            label: "vs Hussar",
-                            civ: "Spanish",
-                            slug: "hussar",
-                            mode: "resources",
-                            res: 3000,
-                        },
-                        {
-                            key: "vs_champ",
-                            label: "vs Champion",
-                            civ: "Spanish",
-                            slug: "champion",
-                            mode: "resources",
-                            res: 3000,
-                        },
-                    ],
-                },
-                meat_shield: {
-                    title: "Tankiness",
-                    formula:
-                        "Avg survival time in 30v30 vs Spanish Paladins & Champions (0\u2013100)",
-                    subs: [
-                        {
-                            key: "vs_paladin_tank",
-                            label: "vs Paladin (30v30)",
+                            key: "gc_vs_paladin",
+                            label: "vs Paladin",
                             civ: "Spanish",
                             slug: "paladin",
-                            mode: "count",
-                            count: 30,
+                            mode: "resources",
+                            res: 3000,
                         },
                         {
-                            key: "vs_champ_tank",
-                            label: "vs Champion (30v30)",
-                            civ: "Spanish",
-                            slug: "champion",
-                            mode: "count",
-                            count: 30,
-                        },
-                    ],
-                },
-                raid: {
-                    title: "Raid Effectiveness",
-                    formula: "30 infantry vs 40 Chinese Arbalesters",
-                    subs: [
-                        {
-                            key: "vs_arb_raid",
-                            label: "vs Arbalester (30v40)",
+                            key: "gc_vs_arb",
+                            label: "vs Arbalester",
                             civ: "Chinese",
                             slug: "arbalester",
-                            mode: "count",
-                            count: 30,
+                            mode: "resources",
+                            res: 3000,
+                        },
+                        {
+                            key: "gc_vs_champ",
+                            label: "vs Champion",
+                            civ: "Chinese",
+                            slug: "champion",
+                            mode: "resources",
+                            res: 3000,
                         },
                     ],
                 },
                 anti_cav: {
-                    title: "Anti-Cav Breakdown",
-                    formula: "Average of 2 matchups (3K resources each)",
+                    title: "Anti-Cav",
+                    formula: "Average of 3 normalized matchups (3K resources each)",
                     subs: [
                         {
-                            key: "vs_paladin",
+                            key: "gc_vs_paladin",
                             label: "vs Paladin",
                             civ: "Spanish",
                             slug: "paladin",
@@ -929,24 +830,10 @@
                             res: 3000,
                         },
                         {
-                            key: "vs_hussar_cav",
-                            label: "vs Hussar",
-                            civ: "Spanish",
-                            slug: "hussar",
-                            mode: "resources",
-                            res: 3000,
-                        },
-                    ],
-                },
-                anti_cav_total: {
-                    title: "Anti-Cav Total",
-                    formula: "Average of 4 matchups (3K resources each)",
-                    subs: [
-                        {
-                            key: "ac_vs_paladin",
-                            label: "vs Paladin",
-                            civ: "Spanish",
-                            slug: "paladin",
+                            key: "ac_vs_elephant",
+                            label: "vs War Elephant",
+                            civ: "Persians",
+                            slug: "elite_war_elephant_persians",
                             mode: "resources",
                             res: 3000,
                         },
@@ -958,333 +845,114 @@
                             mode: "resources",
                             res: 3000,
                         },
-                        {
-                            key: "ac_vs_heavy_camel",
-                            label: "vs Heavy Camel",
-                            civ: "Persians",
-                            slug: "heavy_camel",
-                            mode: "resources",
-                            res: 3000,
-                        },
-                        {
-                            key: "ac_vs_elephant",
-                            label: "vs Battle Elephant",
-                            civ: "Vietnamese",
-                            slug: "elite_elephant",
-                            mode: "resources",
-                            res: 3000,
-                        },
                     ],
-                },
-                frontline: {
-                    title: "Frontline Score",
-                    formula: "Average of 2 matchups (3K resources each)",
-                    subs: [
-                        {
-                            key: "ac_vs_halb",
-                            label: "vs Halberdier",
-                            civ: "Spanish",
-                            slug: "halberdier",
-                            mode: "resources",
-                            res: 3000,
-                        },
-                        {
-                            key: "ac_vs_arb",
-                            label: "vs Arbalester",
-                            civ: "Chinese",
-                            slug: "arbalester",
-                            mode: "resources",
-                            res: 3000,
-                        },
-                    ],
-                },
-                raid_speed: {
-                    title: "Movement Speed",
-                    formula: "Unit movement speed normalized 0\u2013100",
-                    subs: [],
-                },
-                raid_vill_kill: {
-                    title: "Villager Killing Speed",
-                    formula:
-                        "30v30 vs Jurchen Man-at-Arms (villager proxy). Fewer ticks = higher score.",
-                    subs: [],
                 },
                 raid_building: {
-                    title: "Building Destruction",
-                    formula:
-                        "Min units to destroy building (attrition model, building fights back). Avg of upgraded/non-upgraded variants. Lower N = higher score.",
+                    title: "Anti-Building",
+                    formula: "Avg N_min to destroy TC and Castle (normalized, inverted)",
                     subs: [
                         {
                             key: "raid_vs_tc_nmin",
                             label: "vs Town Center",
+                            mode: "nmin",
                         },
                         {
                             key: "raid_vs_castle_nmin",
                             label: "vs Castle",
+                            mode: "nmin",
                         },
                     ],
                 },
                 // Archery score breakdowns
-                raw_dps_score: {
-                    title: "Raw DPS Score",
-                    formula: "60 archers vs 30 opponents. Faster win = higher score. Loss = 0.",
+                general_combat: {
+                    title: "General Combat Score",
+                    formula: "Normalized avg of 6 matchups (3 × 30v30 + 3 × 3K res)",
                     subs: [
-                        {
-                            key: "raw_vs_champ",
-                            label: "vs Champion (60v30)",
-                            civ: "Chinese",
-                            slug: "champion",
-                            mode: "count",
-                            count: 60,
-                        },
-                        {
-                            key: "raw_vs_paladin",
-                            label: "vs Paladin (60v30)",
-                            civ: "Spanish",
-                            slug: "paladin",
-                            mode: "count",
-                            count: 60,
-                        },
-                        {
-                            key: "raw_vs_arb",
-                            label: "vs Arbalester (60v30)",
-                            civ: "Chinese",
-                            slug: "arbalester",
-                            mode: "count",
-                            count: 60,
-                        },
+                        { key: "gc_30v30_vs_paladin", label: "vs Paladin (30v30)", civ: "Spanish", slug: "paladin", mode: "count", count: 30 },
+                        { key: "gc_30v30_vs_arb", label: "vs Arbalester (30v30)", civ: "Chinese", slug: "arbalester", mode: "count", count: 30 },
+                        { key: "gc_30v30_vs_champ", label: "vs Champion (30v30)", civ: "Chinese", slug: "champion", mode: "count", count: 30 },
+                        { key: "gc_3k_vs_paladin", label: "vs Paladin (3K res)", civ: "Spanish", slug: "paladin", mode: "resources", res: 3000 },
+                        { key: "gc_3k_vs_arb", label: "vs Arbalester (3K res)", civ: "Chinese", slug: "arbalester", mode: "resources", res: 3000 },
+                        { key: "gc_3k_vs_champ", label: "vs Champion (3K res)", civ: "Chinese", slug: "champion", mode: "resources", res: 3000 },
                     ],
                 },
-                eco_dps_score: {
-                    title: "Eco DPS Score",
-                    formula: "Average of 3 matchups (3K resources each)",
+                anti_archer: {
+                    title: "Anti-Archer Score",
+                    formula: "Normalized avg of 6 matchups (3 × 30v30 + 3 × 3K res)",
                     subs: [
-                        {
-                            key: "eco_vs_champ",
-                            label: "vs Champion",
-                            civ: "Chinese",
-                            slug: "champion",
-                            mode: "resources",
-                            res: 3000,
-                        },
-                        {
-                            key: "eco_vs_paladin",
-                            label: "vs Paladin",
-                            civ: "Spanish",
-                            slug: "paladin",
-                            mode: "resources",
-                            res: 3000,
-                        },
-                        {
-                            key: "eco_vs_arb",
-                            label: "vs Arbalester",
-                            civ: "Chinese",
-                            slug: "arbalester",
-                            mode: "resources",
-                            res: 3000,
-                        },
-                    ],
-                },
-                survivability_score: {
-                    title: "Survivability Breakdown",
-                    formula: "Average of 2 matchups (30v30 each)",
-                    subs: [
-                        {
-                            key: "surv_vs_skirm",
-                            label: "vs Elite Skirm (30v30)",
-                            civ: "Spanish",
-                            slug: "imp_elite_skirm",
-                            mode: "count",
-                            count: 30,
-                        },
-                        {
-                            key: "surv_vs_cav_archer",
-                            label: "vs Heavy Cav Archer (30v30)",
-                            civ: "Chinese",
-                            slug: "heavy_cav_archer",
-                            mode: "count",
-                            count: 30,
-                        },
-                    ],
-                },
-                // Anti-archer score breakdowns
-                aa_eco_score: {
-                    title: "Anti-Archer Eco Score",
-                    formula: "Average of 3 matchups (3K resources each)",
-                    subs: [
-                        {
-                            key: "aa_eco_vs_arb",
-                            label: "vs Arbalester",
-                            civ: "Chinese",
-                            slug: "arbalester",
-                            mode: "resources",
-                            res: 3000,
-                        },
-                        {
-                            key: "aa_eco_vs_ca",
-                            label: "vs Heavy Cav Archer",
-                            civ: "Chinese",
-                            slug: "heavy_cav_archer",
-                            mode: "resources",
-                            res: 3000,
-                        },
-                        {
-                            key: "aa_eco_vs_hc",
-                            label: "vs Hand Cannoneer",
-                            civ: "Spanish",
-                            slug: "hand_cannoneer",
-                            mode: "resources",
-                            res: 3000,
-                        },
-                    ],
-                },
-                aa_pop_score: {
-                    title: "Anti-Archer Pop Score",
-                    formula: "Average of 3 matchups (30v30 each)",
-                    subs: [
-                        {
-                            key: "aa_pop_vs_arb",
-                            label: "vs Arbalester (30v30)",
-                            civ: "Chinese",
-                            slug: "arbalester",
-                            mode: "count",
-                            count: 30,
-                        },
-                        {
-                            key: "aa_pop_vs_ca",
-                            label: "vs Heavy Cav Archer (30v30)",
-                            civ: "Chinese",
-                            slug: "heavy_cav_archer",
-                            mode: "count",
-                            count: 30,
-                        },
-                        {
-                            key: "aa_pop_vs_hc",
-                            label: "vs Hand Cannoneer (30v30)",
-                            civ: "Spanish",
-                            slug: "hand_cannoneer",
-                            mode: "count",
-                            count: 30,
-                        },
-                    ],
-                },
-                aa_power: {
-                    title: "Anti-Archer Power Score",
-                    formula: "Average of 2 matchups (3K resources each)",
-                    subs: [
-                        {
-                            key: "aa_power_vs_hussar",
-                            label: "vs Hussar",
-                            civ: "Spanish",
-                            slug: "hussar",
-                            mode: "resources",
-                            res: 3000,
-                        },
-                        {
-                            key: "aa_power_vs_champ",
-                            label: "vs Champion",
-                            civ: "Chinese",
-                            slug: "champion",
-                            mode: "resources",
-                            res: 3000,
-                        },
+                        { key: "aa_30v30_vs_arb", label: "vs Arbalester (30v30)", civ: "Chinese", slug: "arbalester", mode: "count", count: 30 },
+                        { key: "aa_30v30_vs_ca", label: "vs Cav Archer (30v30)", civ: "Chinese", slug: "heavy_cav_archer", mode: "count", count: 30 },
+                        { key: "aa_30v30_vs_ele_archer", label: "vs Ele Archer (30v30)", civ: "Gurjaras", slug: "elite_ele_archer", mode: "count", count: 30 },
+                        { key: "aa_3k_vs_arb", label: "vs Arbalester (3K res)", civ: "Chinese", slug: "arbalester", mode: "resources", res: 3000 },
+                        { key: "aa_3k_vs_ca", label: "vs Cav Archer (3K res)", civ: "Chinese", slug: "heavy_cav_archer", mode: "resources", res: 3000 },
+                        { key: "aa_3k_vs_ele_archer", label: "vs Ele Archer (3K res)", civ: "Gurjaras", slug: "elite_ele_archer", mode: "resources", res: 3000 },
                     ],
                 },
                 // Stable score breakdowns
-                attack_power: {
-                    title: "Attack Power Breakdown",
-                    formula: "Average of 6 matchups (3 \u00d7 30v30 + 3 \u00d7 3K res), shifted to 0\u2013100",
+                general_combat_stable: {
+                    title: "General Combat",
+                    formula: "Average of 6 normalized matchups (30v30 + 3K res each)",
                     subs: [
-                        { key: "atk_30v30_vs_paladin", label: "vs Paladin (30v30)", civ: "Spanish", slug: "paladin", mode: "count", count: 30 },
-                        { key: "atk_30v30_vs_arb", label: "vs Arbalester (30v30)", civ: "Chinese", slug: "arbalester", mode: "count", count: 30 },
-                        { key: "atk_30v30_vs_champ", label: "vs Champion (30v30)", civ: "Chinese", slug: "champion", mode: "count", count: 30 },
-                        { key: "atk_3k_vs_paladin", label: "vs Paladin (3K res)", civ: "Spanish", slug: "paladin", mode: "resources", res: 3000 },
-                        { key: "atk_3k_vs_arb", label: "vs Arbalester (3K res)", civ: "Chinese", slug: "arbalester", mode: "resources", res: 3000 },
-                        { key: "atk_3k_vs_champ", label: "vs Champion (3K res)", civ: "Chinese", slug: "champion", mode: "resources", res: 3000 },
+                        { key: "gc_30v30_vs_paladin", label: "vs Paladin (30v30)", civ: "Spanish", slug: "paladin", mode: "count", count: 30 },
+                        { key: "gc_30v30_vs_arb", label: "vs Arbalester (30v30)", civ: "Chinese", slug: "arbalester", mode: "count", count: 30 },
+                        { key: "gc_30v30_vs_champ", label: "vs Champion (30v30)", civ: "Chinese", slug: "champion", mode: "count", count: 30 },
+                        { key: "gc_3k_vs_paladin", label: "vs Paladin (3K res)", civ: "Spanish", slug: "paladin", mode: "resources", res: 3000 },
+                        { key: "gc_3k_vs_arb", label: "vs Arbalester (3K res)", civ: "Chinese", slug: "arbalester", mode: "resources", res: 3000 },
+                        { key: "gc_3k_vs_champ", label: "vs Champion (3K res)", civ: "Chinese", slug: "champion", mode: "resources", res: 3000 },
                     ],
                 },
-                survivability_stable: {
-                    title: "Survivability Breakdown",
-                    formula: "Average of 6 matchups (3 \u00d7 30v30 + 3 \u00d7 3K res), shifted to 0\u2013100",
+                anti_cav_stable: {
+                    title: "Anti-Cav",
+                    formula: "Average of 6 normalized matchups (30v30 + 3K res each)",
                     subs: [
-                        { key: "surv_30v30_vs_halb", label: "vs Halberdier (30v30)", civ: "Chinese", slug: "halberdier", mode: "count", count: 30 },
-                        { key: "surv_30v30_vs_camel", label: "vs Heavy Camel (30v30)", civ: "Turks", slug: "heavy_camel", mode: "count", count: 30 },
-                        { key: "surv_30v30_vs_ca", label: "vs Camel Archer (30v30)", civ: "Berbers", slug: "elite_camel_archer_berbers", mode: "count", count: 30 },
-                        { key: "surv_3k_vs_halb", label: "vs Halberdier (3K res)", civ: "Chinese", slug: "halberdier", mode: "resources", res: 3000 },
-                        { key: "surv_3k_vs_camel", label: "vs Heavy Camel (3K res)", civ: "Turks", slug: "heavy_camel", mode: "resources", res: 3000 },
-                        { key: "surv_3k_vs_ca", label: "vs Camel Archer (3K res)", civ: "Berbers", slug: "elite_camel_archer_berbers", mode: "resources", res: 3000 },
+                        { key: "gc_30v30_vs_paladin", label: "vs Paladin (30v30)", civ: "Spanish", slug: "paladin", mode: "count", count: 30 },
+                        { key: "gc_3k_vs_paladin", label: "vs Paladin (3K res)", civ: "Spanish", slug: "paladin", mode: "resources", res: 3000 },
+                        { key: "ac_30v30_vs_heavy_camel", label: "vs Heavy Camel (30v30)", civ: "Turks", slug: "heavy_camel", mode: "count", count: 30 },
+                        { key: "ac_30v30_vs_elephant", label: "vs Battle Elephant (30v30)", civ: "Vietnamese", slug: "elite_elephant", mode: "count", count: 30 },
+                        { key: "ac_3k_vs_heavy_camel", label: "vs Heavy Camel (3K res)", civ: "Turks", slug: "heavy_camel", mode: "resources", res: 3000 },
+                        { key: "ac_3k_vs_elephant", label: "vs Battle Elephant (3K res)", civ: "Vietnamese", slug: "elite_elephant", mode: "resources", res: 3000 },
                     ],
-                },
-                movement_speed_stable: {
-                    title: "Movement Speed",
-                    formula: "Min-max normalized within stable units (0\u2013100)",
-                    subs: [],
                 },
             };
 
             const SCORE_KEYS = new Set([
-                "melee_power",
-                "meat_shield",
-                "raid",
-                "anti_cav",
                 "militia_value",
-                "anti_cav_total",
-                "frontline",
-                "anti_cav_value",
-                "raid_speed",
-                "raid_vill_kill",
+                "general_combat",
+                "anti_cav",
+                "gc_vs_paladin",
+                "gc_vs_arb",
+                "gc_vs_champ",
+                "ac_vs_elephant",
+                "ac_vs_hussar",
                 "raid_building",
-                "raiding_value",
-                "raid_vs_tc_nmin",
-                "raid_vs_castle_nmin",
                 // Archery scores
-                "ranged_power",
-                "raw_dps_score",
-                "eco_dps_score",
-                "survivability_score",
-                "eco_vs_champ",
-                "eco_vs_paladin",
-                "eco_vs_arb",
-                "raw_vs_champ",
-                "raw_vs_paladin",
-                "raw_vs_arb",
-                "surv_vs_skirm",
-                "surv_vs_cav_archer",
-                // Anti-archer scores
+                "ranged_effectiveness",
                 "anti_archer",
-                "aa_eco_score",
-                "aa_pop_score",
-                "aa_power",
-                "aa_eco_vs_arb",
-                "aa_eco_vs_ca",
-                "aa_eco_vs_hc",
-                "aa_pop_vs_arb",
-                "aa_pop_vs_ca",
-                "aa_pop_vs_hc",
-                "aa_power_vs_hussar",
-                "aa_power_vs_champ",
-                // Mobility scores
-                "mobility_score",
-                "mobility_speed_dps",
-                "mobility_pierce_armor",
-                "mobility_hp",
+                "gc_30v30_vs_paladin",
+                "gc_30v30_vs_arb",
+                "gc_30v30_vs_champ",
+                "gc_3k_vs_paladin",
+                "gc_3k_vs_arb",
+                "gc_3k_vs_champ",
+                "aa_30v30_vs_arb",
+                "aa_30v30_vs_ca",
+                "aa_30v30_vs_ele_archer",
+                "aa_3k_vs_arb",
+                "aa_3k_vs_ca",
+                "aa_3k_vs_ele_archer",
                 // Stable scores
-                "stable_power",
-                "attack_power",
-                "movement_speed_score",
-                // survivability_score already in archery scores above
-                "atk_30v30_vs_paladin",
-                "atk_30v30_vs_arb",
-                "atk_30v30_vs_champ",
-                "atk_3k_vs_paladin",
-                "atk_3k_vs_arb",
-                "atk_3k_vs_champ",
-                "surv_30v30_vs_halb",
-                "surv_30v30_vs_camel",
-                "surv_30v30_vs_ca",
-                "surv_3k_vs_halb",
-                "surv_3k_vs_camel",
-                "surv_3k_vs_ca",
+                "stable_effectiveness",
+                // general_combat and anti_cav already in infantry scores above
+                "gc_30v30_vs_paladin",
+                "gc_30v30_vs_arb",
+                "gc_30v30_vs_champ",
+                "gc_3k_vs_paladin",
+                "gc_3k_vs_arb",
+                "gc_3k_vs_champ",
+                "ac_30v30_vs_heavy_camel",
+                "ac_30v30_vs_elephant",
+                "ac_3k_vs_heavy_camel",
+                "ac_3k_vs_elephant",
             ]);
             const STAT_KEYS = new Set([
                 "final_hp",
@@ -1403,135 +1071,49 @@
                             title: "Overall Score",
                             parts: [
                                 {
-                                    key: "melee_power",
-                                    label: "Melee Power",
+                                    key: "general_combat",
+                                    label: "General Combat",
                                     weight: "50%",
                                 },
                                 {
-                                    key: "meat_shield",
-                                    label: "Tankiness",
-                                    weight: "30%",
-                                },
-                                { key: "raid", label: "Raid", weight: "10%" },
-                                {
                                     key: "anti_cav",
                                     label: "Anti-Cav",
-                                    weight: "10%",
-                                },
-                            ],
-                        },
-                        anti_cav_value: {
-                            title: "Anti-Cav Score",
-                            parts: [
-                                {
-                                    key: "anti_cav_total",
-                                    label: "Anti-Cav Total",
-                                    weight: "90%",
-                                },
-                                {
-                                    key: "frontline",
-                                    label: "Frontline",
-                                    weight: "10%",
-                                },
-                            ],
-                        },
-                        raiding_value: {
-                            title: "Raiding Score",
-                            parts: [
-                                {
-                                    key: "raid_speed",
-                                    label: "Speed",
-                                    weight: "30%",
-                                },
-                                {
-                                    key: "raid_vill_kill",
-                                    label: "Vill Kill",
                                     weight: "30%",
                                 },
                                 {
                                     key: "raid_building",
                                     label: "Anti-Building",
-                                    weight: "40%",
+                                    weight: "20%",
                                 },
                             ],
                         },
-                        ranged_power: {
-                            title: "Ranged Power Score",
+                        ranged_effectiveness: {
+                            title: "Ranged Effectiveness Score",
                             parts: [
                                 {
-                                    key: "raw_dps_score",
-                                    label: "Raw DPS",
+                                    key: "general_combat",
+                                    label: "General Combat",
                                     weight: "70%",
                                 },
                                 {
-                                    key: "eco_dps_score",
-                                    label: "Eco DPS",
-                                    weight: "15%",
-                                },
-                                {
-                                    key: "survivability_score",
-                                    label: "Survivability",
-                                    weight: "15%",
-                                },
-                            ],
-                        },
-                        anti_archer: {
-                            title: "Anti Archer Score",
-                            parts: [
-                                {
-                                    key: "aa_eco_score",
-                                    label: "Eco",
-                                    weight: "50%",
-                                },
-                                {
-                                    key: "aa_pop_score",
-                                    label: "Pop",
+                                    key: "anti_archer",
+                                    label: "Anti-Archer",
                                     weight: "30%",
                                 },
-                                {
-                                    key: "aa_power",
-                                    label: "Power",
-                                    weight: "20%",
-                                },
                             ],
                         },
-                        mobility_score: {
-                            title: "Mobility Score",
+                        stable_effectiveness: {
+                            title: "Stable Effectiveness",
                             parts: [
                                 {
-                                    key: "mobility_speed_dps",
-                                    label: "Speed \u00d7 DPS",
-                                    weight: "33%",
+                                    key: "general_combat",
+                                    label: "General Combat",
+                                    weight: "70%",
                                 },
                                 {
-                                    key: "mobility_pierce_armor",
-                                    label: "Pierce Armor",
-                                    weight: "33%",
-                                },
-                                {
-                                    key: "mobility_hp",
-                                    label: "HP",
-                                    weight: "33%",
-                                },
-                            ],
-                        },
-                        stable_power: {
-                            title: "Stable Power Score",
-                            parts: [
-                                {
-                                    key: "attack_power",
-                                    label: "Attack Power",
-                                    weight: "60%",
-                                },
-                                {
-                                    key: "movement_speed_score",
-                                    label: "Movement Speed",
-                                    weight: "20%",
-                                },
-                                {
-                                    key: "survivability_score",
-                                    label: "Survivability",
-                                    weight: "20%",
+                                    key: "anti_cav",
+                                    label: "Anti-Cav",
+                                    weight: "30%",
                                 },
                             ],
                         },
@@ -1707,8 +1289,8 @@
 
             // ===== HOVER HANDLERS =====
             function resolveBreakdownKey(key) {
-                if (currentLine === "stable" && key === "survivability_score") return "survivability_stable";
-                if (currentLine === "stable" && key === "movement_speed_score") return "movement_speed_stable";
+                if (currentLine === "stable" && key === "general_combat") return "general_combat_stable";
+                if (currentLine === "stable" && key === "anti_cav") return "anti_cav_stable";
                 return key;
             }
 
@@ -1766,6 +1348,15 @@
             }
 
             // ===== RENDERING =====
+            function toggleLine(slug) {
+                if (enabledLines.has(slug)) {
+                    enabledLines.delete(slug);
+                } else {
+                    enabledLines.add(slug);
+                }
+                renderTable();
+            }
+
             function setAge(age) {
                 // Stable is Imperial-only
                 if (currentLine === "stable" && age === "Castle") return;
@@ -1782,48 +1373,35 @@
 
             function renderLineSelector() {
                 const container = document.getElementById("lineSelector");
-                let html = "";
-                const groups = {};
-                for (const [slug, line] of Object.entries(UNIT_LINES)) {
-                    const bldg = line.building;
-                    if (!groups[bldg]) groups[bldg] = [];
-                    groups[bldg].push({ slug, ...line });
-                }
+                let html = '<div class="tab-bar">';
+                const entries = Object.entries(UNIT_LINES);
+                let lastBuilding = null;
 
-                for (const bldg of BUILDING_ORDER) {
-                    const lines = groups[bldg];
-                    if (!lines) continue;
-                    const bIconId = BUILDING_ICONS[bldg];
-                    html += `<div class="building-section">
-                        <div class="building-header">
-                            <img src="${iconUrl(bIconId)}" alt="${bldg}" onerror="this.style.display='none'" />
-                            <h3>${bldg}</h3>
-                        </div>
-                        <div class="line-grid">`;
-
-                    for (const line of lines) {
-                        const displayName =
-                            currentAge === "Castle"
-                                ? line.castle
-                                : line.imperial;
-                        const hasCastle = line.castle !== null;
-                        const unavailable =
-                            currentAge === "Castle" && !hasCastle;
-                        const iUrl = unitIconUrl(displayName || line.imperial);
-                        const activeClass =
-                            currentLine === line.slug ? " active" : "";
-                        const unavailClass = unavailable ? " unavailable" : "";
-
-                        html += `<div class="line-card${activeClass}${unavailClass}" onclick="selectLine('${line.slug}')">
-                            <img src="${iUrl}" alt="${line.name}" onerror="if(!this.dataset.tried){this.dataset.tried='1';const id=NAME_TO_ICON[this.alt];if(id)this.src=ICON_BASE_FALLBACK+id+'.png';else this.style.display='none'}else{this.style.display='none'}" />
-                            <div>
-                                <div class="line-name">${line.name}</div>
-                                ${line.hasUnique ? '<div class="line-unique">+ unique units</div>' : ""}
-                            </div>
-                        </div>`;
+                for (const [slug, line] of entries) {
+                    // Add separator between different buildings
+                    if (lastBuilding && line.building !== lastBuilding) {
+                        html += '<div class="tab-separator"></div>';
                     }
-                    html += "</div></div>";
+                    lastBuilding = line.building;
+
+                    const displayName =
+                        currentAge === "Castle"
+                            ? line.castle
+                            : line.imperial;
+                    const hasCastle = line.castle !== null;
+                    const unavailable =
+                        currentAge === "Castle" && !hasCastle;
+                    const iUrl = unitIconUrl(displayName || line.imperial);
+                    const activeClass =
+                        currentLine === slug ? " active" : "";
+                    const unavailClass = unavailable ? " unavailable" : "";
+
+                    html += `<button class="unit-tab${activeClass}${unavailClass}" onclick="selectLine('${slug}')">
+                        <img src="${iUrl}" alt="${line.name}" onerror="if(!this.dataset.tried){this.dataset.tried='1';const id=NAME_TO_ICON[this.alt];if(id)this.src=ICON_BASE_FALLBACK+id+'.png';else this.style.display='none'}else{this.style.display='none'}" />
+                        ${line.name}
+                    </button>`;
                 }
+                html += '</div>';
                 container.innerHTML = html;
             }
 
@@ -1832,17 +1410,19 @@
                 "spear",
                 "shock_infantry",
                 "infantry",
-                "anti_cav_infantry",
-                "raiding_infantry",
             ]);
 
             const ARCHERY_SLUGS = new Set([
                 "archer",
                 "skirmisher",
                 "cav_archer",
+                "scorpion",
+                "ranged_siege",
                 "archery",
-                "anti_archer",
-                "mobility",
+            ]);
+
+            const SIEGE_SLUGS = new Set([
+                "siege",
             ]);
 
             async function selectLine(slug) {
@@ -1860,33 +1440,30 @@
                     });
                 }
 
-                // Highlight active card
+                // Highlight active tab
                 document
-                    .querySelectorAll(".line-card")
+                    .querySelectorAll(".unit-tab")
                     .forEach((c) => c.classList.remove("active"));
-                const cards = document.querySelectorAll(".line-card");
-                cards.forEach((c) => {
+                const tabs = document.querySelectorAll(".unit-tab");
+                tabs.forEach((c) => {
                     if (c.getAttribute("onclick")?.includes(`'${slug}'`))
                         c.classList.add("active");
                 });
 
                 const resp = await fetch(`/api/ref/unit-line/${slug}`);
                 currentData = await resp.json();
+                // Enable all sub-lines by default
+                const lineInfo = UNIT_LINES[slug];
+                enabledLines = new Set(lineInfo?.subLines || []);
                 sortColumn =
-                    slug === "anti_cav_infantry"
-                        ? "anti_cav_value"
-                        : slug === "raiding_infantry"
-                          ? "raiding_value"
-                          : slug === "anti_archer"
-                            ? "anti_archer"
-                            : slug === "mobility"
-                              ? "mobility_score"
-                              : slug === "stable"
-                                ? "stable_power"
-                                : INFANTRY_SLUGS.has(slug)
-                                  ? "militia_value"
-                                  : ARCHERY_SLUGS.has(slug)
-                                    ? "ranged_power"
+                    slug === "stable"
+                        ? "stable_effectiveness"
+                        : INFANTRY_SLUGS.has(slug)
+                            ? "militia_value"
+                            : ARCHERY_SLUGS.has(slug)
+                                ? "ranged_effectiveness"
+                                : SIEGE_SLUGS.has(slug)
+                                    ? "anti_building_score"
                                     : "pes";
                 sortDir = "desc";
                 renderTable();
@@ -1904,6 +1481,12 @@
                 camel: "Camel",
                 steppe_lancer: "Steppe",
                 elephant: "Elephant",
+                ram: "Ram",
+                mangonel: "Mangonel",
+                scorpion: "Scorpion",
+                ranged_siege: "Ranged Siege",
+                trebuchet: "Trebuchet",
+                bombard_cannon: "Bombard Cannon",
             };
 
             function renderTable() {
@@ -2007,11 +1590,17 @@
                     document
                         .getElementById("civFilterInput")
                         ?.value?.toLowerCase() || "";
-                const filtered = civFilter
+                let filtered = civFilter
                     ? enriched.filter((r) =>
                           r.civ_name.toLowerCase().includes(civFilter),
                       )
                     : enriched;
+                // Filter by enabled sub-lines
+                if (enabledLines.size > 0) {
+                    filtered = filtered.filter((r) =>
+                        !r.line_slug || enabledLines.has(r.line_slug),
+                    );
+                }
 
                 // Sort
                 filtered.sort((a, b) => {
@@ -2057,21 +1646,9 @@
                 ];
                 const infantryStatCols = [
                     "militia_value",
-                    "melee_power",
-                    "meat_shield",
-                    "raid",
+                    "general_combat",
                     "anti_cav",
-                    "dps",
-                    "final_hp",
-                    "final_attack",
-                    "final_melee_armor",
-                    "final_pierce_armor",
-                    "final_speed",
-                ];
-                const antiCavStatCols = [
-                    "anti_cav_value",
-                    "anti_cav_total",
-                    "frontline",
+                    "raid_building",
                     "dps",
                     "final_hp",
                     "final_attack",
@@ -2080,23 +1657,9 @@
                     "final_speed",
                 ];
                 const archeryStatCols = [
-                    "ranged_power",
-                    "raw_dps_score",
-                    "eco_dps_score",
-                    "survivability_score",
-                    "dps",
-                    "final_hp",
-                    "final_attack",
-                    "final_melee_armor",
-                    "final_pierce_armor",
-                    "final_speed",
-                    "final_range",
-                ];
-                const antiArcherStatCols = [
+                    "ranged_effectiveness",
+                    "general_combat",
                     "anti_archer",
-                    "aa_eco_score",
-                    "aa_pop_score",
-                    "aa_power",
                     "dps",
                     "final_hp",
                     "final_attack",
@@ -2105,22 +1668,21 @@
                     "final_speed",
                     "final_range",
                 ];
-                const mobilityStatCols = [
-                    "mobility_score",
-                    "mobility_speed_dps",
-                    "mobility_pierce_armor",
-                    "mobility_hp",
+                const siegeStatCols = [
+                    "anti_building_score",
+                    "time_to_kill",
                     "dps",
                     "final_hp",
+                    "final_attack",
+                    "final_melee_armor",
                     "final_pierce_armor",
                     "final_speed",
                     "final_range",
                 ];
                 const stableStatCols = [
-                    "stable_power",
-                    "attack_power",
-                    "movement_speed_score",
-                    "survivability_score",
+                    "stable_effectiveness",
+                    "general_combat",
+                    "anti_cav",
                     "dps",
                     "final_hp",
                     "final_attack",
@@ -2129,20 +1691,17 @@
                     "final_speed",
                 ];
                 const isArchery = ARCHERY_SLUGS.has(currentLine);
+                const isSiege = SIEGE_SLUGS.has(currentLine);
                 const statCols =
-                    currentLine === "anti_cav_infantry"
-                        ? antiCavStatCols
-                        : currentLine === "anti_archer"
-                          ? antiArcherStatCols
-                          : currentLine === "mobility"
-                            ? mobilityStatCols
-                            : currentLine === "stable"
-                              ? stableStatCols
-                              : isInfantry
+                    currentLine === "stable"
+                        ? stableStatCols
+                        : isSiege
+                            ? siegeStatCols
+                            : isInfantry
                                 ? infantryStatCols
                                 : isArchery
-                                  ? archeryStatCols
-                                  : defaultStatCols;
+                                    ? archeryStatCols
+                                    : defaultStatCols;
 
                 const medians = {};
                 for (const col of statCols) {
@@ -2159,10 +1718,13 @@
                         vals.length > 0 ? vals[Math.floor(vals.length / 2)] : 0;
                 }
 
+                const LOWER_IS_BETTER = new Set(["time_to_kill"]);
                 function valClass(col, val) {
                     const med = medians[col];
                     if (med === undefined || val === med) return "";
-                    // All stat columns are higher-is-better
+                    if (LOWER_IS_BETTER.has(col)) {
+                        return val < med ? "val-high" : "val-low";
+                    }
                     return val > med ? "val-high" : "val-low";
                 }
 
@@ -2201,98 +1763,31 @@
                     {
                         key: "militia_value",
                         label: "Score",
-                        info: "Weighted aggregate: 50% Melee Power + 30% Tankiness + 10% Raid + 10% Anti-Cav",
+                        info: "50% General Combat + 30% Anti-Cav + 20% Anti-Building",
                     },
                     {
-                        key: "melee_power",
-                        label: "Melee Power",
-                        info: "Avg HP% remaining after 3k resource fights vs Spanish Elite Skirm, Halberdier, Hussar, and Champion",
-                    },
-                    {
-                        key: "meat_shield",
-                        label: "Tankiness",
-                        info: "Avg survival time in 30v30 vs Spanish Paladins and Champions (0\u2013100, capped at best loser)",
-                    },
-                    {
-                        key: "raid",
-                        label: "Raid",
-                        info: "HP% remaining after 30 infantry vs 40 Chinese Arbalesters",
+                        key: "general_combat",
+                        label: "General Combat",
+                        info: "Avg of 3 normalized matchups (3K res): vs Spanish Paladin, Chinese Arbalester, Chinese Champion",
                     },
                     {
                         key: "anti_cav",
                         label: "Anti-Cav",
-                        info: "Avg HP% remaining after 3k resource fights vs Spanish Paladin and Hussar",
-                    },
-                    { key: "dps", label: "DPS" },
-                    { key: "final_hp", label: "HP" },
-                    { key: "final_attack", label: "Atk" },
-                    { key: "final_melee_armor", label: "M.Arm" },
-                    { key: "final_pierce_armor", label: "P.Arm" },
-                    { key: "final_speed", label: "Speed" },
-                    { key: "total_cost", label: "Cost" },
-                    { key: "total_upgrade_cost", label: "Upg Cost" },
-                    { key: "special_abilities", label: "Special" },
-                ];
-                const antiCavColumns = [
-                    { key: "civ_name", label: "Civ" },
-                    { key: "unit_name", label: "Unit" },
-                    { key: "line_slug", label: "Line" },
-                    {
-                        key: "anti_cav_value",
-                        label: "Score",
-                        info: "Weighted aggregate: 90% Anti-Cav Total + 10% Frontline",
-                    },
-                    {
-                        key: "anti_cav_total",
-                        label: "Anti-Cav Total",
-                        info: "Avg HP% after 3k resource fights vs Spanish Paladin, Spanish Hussar, Persian Heavy Camel, Vietnamese Battle Elephant",
-                    },
-                    {
-                        key: "frontline",
-                        label: "Frontline",
-                        info: "Avg HP% after 3k resource fights vs Spanish Halberdier and Chinese Arbalester",
-                    },
-                    { key: "dps", label: "DPS" },
-                    { key: "final_hp", label: "HP" },
-                    { key: "final_attack", label: "Atk" },
-                    { key: "final_melee_armor", label: "M.Arm" },
-                    { key: "final_pierce_armor", label: "P.Arm" },
-                    { key: "final_speed", label: "Speed" },
-                    { key: "total_cost", label: "Cost" },
-                    { key: "total_upgrade_cost", label: "Upg Cost" },
-                    { key: "special_abilities", label: "Special" },
-                ];
-                const raidingColumns = [
-                    { key: "civ_name", label: "Civ" },
-                    { key: "unit_name", label: "Unit" },
-                    { key: "line_slug", label: "Line" },
-                    {
-                        key: "raiding_value",
-                        label: "Score",
-                        info: "Weighted: 30% Speed + 30% Vill Kill + 40% Anti-Building",
-                    },
-                    {
-                        key: "raid_speed",
-                        label: "Speed",
-                        info: "Movement speed normalized 0\u2013100",
-                    },
-                    {
-                        key: "raid_vill_kill",
-                        label: "Vill Kill",
-                        info: "30v30 kill speed vs Jurchen MaA (villager proxy). Higher = faster kill.",
+                        info: "Avg of 3 normalized matchups (3K res): vs Spanish Paladin, Persian War Elephant, Spanish Hussar",
                     },
                     {
                         key: "raid_building",
                         label: "Anti-Building",
-                        info: "Avg melee DPS vs Imperial Town Center and Castle (normalized 0\u2013100)",
+                        info: "Avg N_min to destroy Town Center and Castle (normalized 0\u2013100, inverted)",
                     },
                     { key: "dps", label: "DPS" },
                     { key: "final_hp", label: "HP" },
                     { key: "final_attack", label: "Atk" },
                     { key: "final_melee_armor", label: "M.Arm" },
                     { key: "final_pierce_armor", label: "P.Arm" },
-                    { key: "final_speed", label: "Speed (raw)" },
+                    { key: "final_speed", label: "Speed" },
                     { key: "total_cost", label: "Cost" },
+                    { key: "total_upgrade_cost", label: "Upg Cost" },
                     { key: "special_abilities", label: "Special" },
                 ];
                 const archeryColumns = [
@@ -2302,59 +1797,19 @@
                         ? [{ key: "line_slug", label: "Line" }]
                         : []),
                     {
-                        key: "ranged_power",
+                        key: "ranged_effectiveness",
                         label: "Score",
-                        info: "Weighted aggregate: 70% Raw DPS + 15% Eco DPS + 15% Survivability",
+                        info: "Weighted aggregate: 70% General Combat + 30% Anti-Archer",
                     },
                     {
-                        key: "raw_dps_score",
-                        label: "Raw DPS",
-                        info: "60 archers vs 30 opponents (Chinese Champion, Spanish Paladin, Chinese Arbalester). Faster win = higher score, loss = 0.",
+                        key: "general_combat",
+                        label: "General",
+                        info: "Normalized avg of 30v30 and 3K res fights vs Spanish Paladin, Chinese Arbalester, Chinese Champion",
                     },
-                    {
-                        key: "eco_dps_score",
-                        label: "Eco DPS",
-                        info: "Avg HP% remaining after 3K resource fights vs Chinese Champion, Spanish Paladin, Chinese Arbalester",
-                    },
-                    {
-                        key: "survivability_score",
-                        label: "Survivability",
-                        info: "Avg HP% remaining after 30v30 fights vs Spanish Elite Skirm and Chinese Heavy Cav Archer",
-                    },
-                    { key: "dps", label: "DPS" },
-                    { key: "final_hp", label: "HP" },
-                    { key: "final_attack", label: "Atk" },
-                    { key: "final_melee_armor", label: "M.Arm" },
-                    { key: "final_pierce_armor", label: "P.Arm" },
-                    { key: "final_speed", label: "Speed" },
-                    { key: "final_range", label: "Range" },
-                    { key: "total_cost", label: "Cost" },
-                    { key: "total_upgrade_cost", label: "Upg Cost" },
-                    { key: "special_abilities", label: "Special" },
-                ];
-                const antiArcherColumns = [
-                    { key: "civ_name", label: "Civ" },
-                    { key: "unit_name", label: "Unit" },
-                    { key: "line_slug", label: "Line" },
                     {
                         key: "anti_archer",
-                        label: "Score",
-                        info: "Weighted aggregate: 50% Eco + 30% Pop + 20% Power",
-                    },
-                    {
-                        key: "aa_eco_score",
-                        label: "Eco",
-                        info: "Avg HP% remaining after 3K resource fights vs Chinese Arb, Chinese Cav Archer, Spanish Hand Cannoneer",
-                    },
-                    {
-                        key: "aa_pop_score",
-                        label: "Pop",
-                        info: "Avg HP% remaining after 30v30 fights vs Chinese Arb, Chinese Cav Archer, Spanish Hand Cannoneer",
-                    },
-                    {
-                        key: "aa_power",
-                        label: "Power",
-                        info: "Avg HP% remaining after 3K resource fights vs Spanish Hussar, Chinese Champion",
+                        label: "Anti-Archer",
+                        info: "Normalized avg of 30v30 and 3K res fights vs Chinese Arb, Chinese Cav Archer, Gurjaras Elephant Archer",
                     },
                     { key: "dps", label: "DPS" },
                     { key: "final_hp", label: "HP" },
@@ -2367,36 +1822,29 @@
                     { key: "total_upgrade_cost", label: "Upg Cost" },
                     { key: "special_abilities", label: "Special" },
                 ];
-                const mobilityColumns = [
+                const siegeColumns = [
                     { key: "civ_name", label: "Civ" },
                     { key: "unit_name", label: "Unit" },
                     { key: "line_slug", label: "Line" },
                     {
-                        key: "mobility_score",
+                        key: "anti_building_score",
                         label: "Score",
-                        info: "Equal average of normalized Speed\u00d7DPS + Pierce Armor + HP (each 0\u2013100)",
+                        info: "1K resources vs fully upgraded Spanish Castle. Higher = kills faster (normalized 0\u2013100)",
                     },
                     {
-                        key: "mobility_speed_dps",
-                        label: "Spd\u00d7DPS",
-                        info: "Movement speed \u00d7 DPS, normalized 0\u2013100 across all ranged units",
+                        key: "time_to_kill",
+                        label: "TTK (s)",
+                        info: "Time in seconds to destroy a fully upgraded Spanish Castle with 1K weighted resources of units",
                     },
-                    {
-                        key: "mobility_pierce_armor",
-                        label: "P.Arm",
-                        info: "Pierce armor, normalized 0\u2013100 across all ranged units",
-                    },
-                    {
-                        key: "mobility_hp",
-                        label: "HP",
-                        info: "Hit points, normalized 0\u2013100 across all ranged units",
-                    },
-                    { key: "dps", label: "DPS (raw)" },
-                    { key: "final_hp", label: "HP (raw)" },
-                    { key: "final_pierce_armor", label: "P.Arm (raw)" },
-                    { key: "final_speed", label: "Speed (raw)" },
+                    { key: "dps", label: "DPS" },
+                    { key: "final_hp", label: "HP" },
+                    { key: "final_attack", label: "Atk" },
+                    { key: "final_melee_armor", label: "M.Arm" },
+                    { key: "final_pierce_armor", label: "P.Arm" },
+                    { key: "final_speed", label: "Speed" },
                     { key: "final_range", label: "Range" },
                     { key: "total_cost", label: "Cost" },
+                    { key: "total_upgrade_cost", label: "Upg Cost" },
                     { key: "special_abilities", label: "Special" },
                 ];
                 const stableColumns = [
@@ -2404,24 +1852,19 @@
                     { key: "unit_name", label: "Unit" },
                     { key: "line_slug", label: "Line" },
                     {
-                        key: "stable_power",
+                        key: "stable_effectiveness",
                         label: "Score",
-                        info: "Weighted aggregate: 60% Attack Power + 20% Movement Speed + 20% Survivability",
+                        info: "70% General Combat + 30% Anti-Cav (normalized benchmarks)",
                     },
                     {
-                        key: "attack_power",
-                        label: "Attack",
-                        info: "Avg of 6 benchmarks (30v30 + 3K res vs Spanish Paladin, Chinese Arb, Chinese Champion), shifted to 0\u2013100",
+                        key: "general_combat",
+                        label: "General Combat",
+                        info: "Avg of 6 normalized matchups (30v30 + 3K res vs Spanish Paladin, Chinese Arb, Chinese Champion)",
                     },
                     {
-                        key: "movement_speed_score",
-                        label: "Speed",
-                        info: "Movement speed, min-max normalized 0\u2013100 within stable units",
-                    },
-                    {
-                        key: "survivability_score",
-                        label: "Survivability",
-                        info: "Avg of 6 benchmarks (30v30 + 3K res vs Chinese Halb, Turks Camel, Berbers Camel Archer), shifted to 0\u2013100",
+                        key: "anti_cav",
+                        label: "Anti-Cav",
+                        info: "Avg of 6 normalized matchups (30v30 + 3K res vs Spanish Paladin, Turks Heavy Camel, Vietnamese Battle Elephant)",
                     },
                     { key: "dps", label: "DPS" },
                     { key: "final_hp", label: "HP" },
@@ -2434,19 +1877,13 @@
                     { key: "special_abilities", label: "Special" },
                 ];
                 const columns =
-                    currentLine === "anti_cav_infantry"
-                        ? antiCavColumns
-                        : currentLine === "raiding_infantry"
-                          ? raidingColumns
-                          : currentLine === "anti_archer"
-                            ? antiArcherColumns
-                            : currentLine === "mobility"
-                              ? mobilityColumns
-                              : currentLine === "stable"
-                                ? stableColumns
-                                : isInfantry
-                                  ? infantryColumns
-                                  : isArchery
+                    currentLine === "stable"
+                        ? stableColumns
+                        : isSiege
+                            ? siegeColumns
+                            : isInfantry
+                                ? infantryColumns
+                                : isArchery
                                     ? archeryColumns
                                     : defaultColumns;
 
@@ -2458,8 +1895,17 @@
                 );
 
                 let html = `<div class="civ-filter-wrap">
-                    <input type="text" id="civFilterInput" placeholder="Filter by civilization..." value="${civFilter}" oninput="renderTable()" />
-                </div>`;
+                    <input type="text" id="civFilterInput" placeholder="Filter by civilization..." value="${civFilter}" oninput="renderTable()" />`;
+                if (lineInfo?.subLines && lineInfo.subLines.length > 1) {
+                    html += `<div class="line-filters"><span class="line-filters-label">Lines:</span>`;
+                    for (const sl of lineInfo.subLines) {
+                        const checked = enabledLines.has(sl) ? "checked" : "";
+                        const label = LINE_LABELS[sl] || sl;
+                        html += `<label class="line-checkbox"><input type="checkbox" ${checked} onchange="toggleLine('${sl}')">${label}</label>`;
+                    }
+                    html += `</div>`;
+                }
+                html += `</div>`;
 
                 html += `<div class="table-title">
                     <img src="${titleIcon}" alt="" onerror="this.style.display='none'" />
@@ -2524,39 +1970,32 @@
                         k === "dps" ||
                         k === "ehp_per_cost" ||
                         k === "militia_value" ||
-                        k === "melee_power" ||
-                        k === "meat_shield" ||
-                        k === "raid" ||
+                        k === "general_combat" ||
                         k === "anti_cav" ||
-                        k === "anti_cav_value" ||
-                        k === "anti_cav_total" ||
-                        k === "frontline" ||
-                        k === "raiding_value" ||
-                        k === "raid_speed" ||
-                        k === "raid_vill_kill" ||
-                        k === "raid_building" ||
-                        k === "raid_vs_tc_nmin" ||
-                        k === "raid_vs_castle_nmin" ||
-                        k === "mobility_score" ||
-                        k === "mobility_speed_dps" ||
-                        k === "mobility_pierce_armor" ||
-                        k === "mobility_hp" ||
-                        k === "stable_power" ||
-                        k === "attack_power" ||
-                        k === "movement_speed_score" ||
-                        k === "survivability_score" ||
-                        k === "atk_30v30_vs_paladin" ||
-                        k === "atk_30v30_vs_arb" ||
-                        k === "atk_30v30_vs_champ" ||
-                        k === "atk_3k_vs_paladin" ||
-                        k === "atk_3k_vs_arb" ||
-                        k === "atk_3k_vs_champ" ||
-                        k === "surv_30v30_vs_halb" ||
-                        k === "surv_30v30_vs_camel" ||
-                        k === "surv_30v30_vs_ca" ||
-                        k === "surv_3k_vs_halb" ||
-                        k === "surv_3k_vs_camel" ||
-                        k === "surv_3k_vs_ca"
+                        k === "gc_vs_paladin" ||
+                        k === "gc_vs_arb" ||
+                        k === "gc_vs_champ" ||
+                        k === "ac_vs_elephant" ||
+                        k === "ac_vs_hussar" ||
+                        k === "stable_effectiveness" ||
+                        k === "gc_30v30_vs_paladin" ||
+                        k === "gc_30v30_vs_arb" ||
+                        k === "gc_30v30_vs_champ" ||
+                        k === "gc_3k_vs_paladin" ||
+                        k === "gc_3k_vs_arb" ||
+                        k === "gc_3k_vs_champ" ||
+                        k === "ac_30v30_vs_heavy_camel" ||
+                        k === "ac_30v30_vs_elephant" ||
+                        k === "ac_3k_vs_heavy_camel" ||
+                        k === "ac_3k_vs_elephant" ||
+                        k === "ranged_effectiveness" ||
+                        k === "anti_archer" ||
+                        k === "aa_30v30_vs_arb" ||
+                        k === "aa_30v30_vs_ca" ||
+                        k === "aa_30v30_vs_ele_archer" ||
+                        k === "aa_3k_vs_arb" ||
+                        k === "aa_3k_vs_ca" ||
+                        k === "aa_3k_vs_ele_archer"
                     )
                         formatted = v.toFixed(1);
                     else if (k === "total_cost" || k === "total_upgrade_cost")
@@ -2613,6 +2052,7 @@
 
             // ===== INIT =====
             renderLineSelector();
+            selectLine("infantry");
         </script>
     </body>
 </html>

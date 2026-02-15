@@ -257,6 +257,13 @@ UNIT_LINES = {
         "building": "Siege Workshop",
         "castle_slug": "mangonel",
         "imperial_slug": "siege_onager",
+        "unique_units": {},
+    },
+    "ranged_siege": {
+        "name": "Ranged Siege",
+        "building": "Siege Workshop",
+        "castle_slug": None,
+        "imperial_slug": None,
         "unique_units": {
             "Portuguese": ("organ_gun_portuguese", "elite_organ_gun_portuguese"),
             "Bohemians": ("hussite_wagon_bohemians", "elite_hussite_wagon_bohemians"),
@@ -747,7 +754,7 @@ def compute_benchmarks(bench_units, bench_fps, benchmark_cache, unit_fps):
     total_misses = 0
 
     for line_slug, config in UNIT_LINES.items():
-        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS or line_slug in STABLE_LINE_SLUGS:
+        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS or line_slug in STABLE_LINE_SLUGS or line_slug in SIEGE_LINE_SLUGS or line_slug in HIDDEN_LINE_SLUGS:
             continue  # infantry/archery/stable uses role-based scores from battle_scores table
         for age_key in ["castle", "imperial"]:
             std_slug = config.get(f"{age_key}_slug")
@@ -808,16 +815,13 @@ def compute_benchmarks(bench_units, bench_fps, benchmark_cache, unit_fps):
 
 MILITIA_ROLE_BENCHMARKS = [
     # (key, civ, slug, age, mode, param)
-    # mode "res": resources=param; mode "fixed": (count1, count2); mode "tank": fixed_count
-    ("vs_skirm", "Spanish", "imp_elite_skirm", "Imperial", "res", 3000),
-    ("vs_halb", "Spanish", "halberdier", "Imperial", "res", 3000),
-    ("vs_hussar", "Spanish", "hussar", "Imperial", "res", 3000),
-    ("vs_champ", "Spanish", "champion", "Imperial", "res", 3000),
-    ("vs_paladin_tank", "Spanish", "paladin", "Imperial", "tank", 30),
-    ("vs_champ_tank", "Spanish", "champion", "Imperial", "tank", 30),
-    ("vs_arb_raid", "Chinese", "arbalester", "Imperial", "fixed", (30, 40)),
-    ("vs_paladin", "Spanish", "paladin", "Imperial", "res", 3000),
-    ("vs_hussar_cav", "Spanish", "hussar", "Imperial", "res", 3000),
+    # General Combat (3K resources each)
+    ("gc_vs_paladin", "Spanish", "paladin", "Imperial", "res", 3000),
+    ("gc_vs_arb", "Chinese", "arbalester", "Imperial", "res", 3000),
+    ("gc_vs_champ", "Chinese", "champion", "Imperial", "res", 3000),
+    # Anti-Cav (3K resources each) — gc_vs_paladin reused from above
+    ("ac_vs_elephant", "Persians", "elite_war_elephant_persians", "Imperial", "res", 3000),
+    ("ac_vs_hussar", "Spanish", "hussar", "Imperial", "res", 3000),
 ]
 
 ANTI_CAV_BENCHMARKS = [
@@ -854,37 +858,43 @@ def _load_benchmark_unit(civ, slug, age):
 
 INFANTRY_LINE_SLUGS = ["militia", "spear", "shock_infantry"]
 
-ARCHERY_LINE_SLUGS = ["archer", "skirmisher", "cav_archer"]
+ARCHERY_LINE_SLUGS = ["archer", "skirmisher", "cav_archer", "scorpion", "ranged_siege"]
 
 ARCHERY_ROLE_BENCHMARKS = [
-    # Eco DPS benchmarks (3K resources each)
-    ("eco_vs_champ", "Chinese", "champion", "Imperial", "res", 3000),
-    ("eco_vs_paladin", "Spanish", "paladin", "Imperial", "res", 3000),
-    ("eco_vs_arb", "Chinese", "arbalester", "Imperial", "res", 3000),
-    # Raw DPS benchmarks (60 archers vs 30 opponents, tick-based)
-    ("raw_vs_champ", "Chinese", "champion", "Imperial", "fixed", (60, 30)),
-    ("raw_vs_paladin", "Spanish", "paladin", "Imperial", "fixed", (60, 30)),
-    ("raw_vs_arb", "Chinese", "arbalester", "Imperial", "fixed", (60, 30)),
-    # Survivability benchmarks (30v30 fixed count, HP-remaining scoring)
-    ("surv_vs_skirm", "Spanish", "imp_elite_skirm", "Imperial", "fixed_hp", (30, 30)),
-    ("surv_vs_cav_archer", "Chinese", "heavy_cav_archer", "Imperial", "fixed_hp", (30, 30)),
-    ("surv_vs_halb", "Spanish", "halberdier", "Imperial", "fixed_hp", (30, 30)),
+    # General Combat — 30v30 fixed count (HP% scoring)
+    ("gc_30v30_vs_paladin", "Spanish", "paladin", "Imperial", "fixed_hp", (30, 30)),
+    ("gc_30v30_vs_arb", "Chinese", "arbalester", "Imperial", "fixed_hp", (30, 30)),
+    ("gc_30v30_vs_champ", "Chinese", "champion", "Imperial", "fixed_hp", (30, 30)),
+    # General Combat — 3K resource (HP% scoring)
+    ("gc_3k_vs_paladin", "Spanish", "paladin", "Imperial", "res", 3000),
+    ("gc_3k_vs_arb", "Chinese", "arbalester", "Imperial", "res", 3000),
+    ("gc_3k_vs_champ", "Chinese", "champion", "Imperial", "res", 3000),
+    # Anti-Archer — 30v30 fixed count (HP% scoring)
+    ("aa_30v30_vs_arb", "Chinese", "arbalester", "Imperial", "fixed_hp", (30, 30)),
+    ("aa_30v30_vs_ca", "Chinese", "heavy_cav_archer", "Imperial", "fixed_hp", (30, 30)),
+    ("aa_30v30_vs_ele_archer", "Gurjaras", "elite_ele_archer", "Imperial", "fixed_hp", (30, 30)),
+    # Anti-Archer — 3K resource (HP% scoring)
+    ("aa_3k_vs_arb", "Chinese", "arbalester", "Imperial", "res", 3000),
+    ("aa_3k_vs_ca", "Chinese", "heavy_cav_archer", "Imperial", "res", 3000),
+    ("aa_3k_vs_ele_archer", "Gurjaras", "elite_ele_archer", "Imperial", "res", 3000),
 ]
 
 ARCHERY_ROLE_SCORE_TYPES = [
-    "ranged_power",
-    "raw_dps_score",
-    "eco_dps_score",
-    "survivability_score",
-    "eco_vs_champ",
-    "eco_vs_paladin",
-    "eco_vs_arb",
-    "raw_vs_champ",
-    "raw_vs_paladin",
-    "raw_vs_arb",
-    "surv_vs_skirm",
-    "surv_vs_cav_archer",
-    "surv_vs_halb",
+    "ranged_effectiveness",
+    "general_combat",
+    "anti_archer",
+    "gc_30v30_vs_paladin",
+    "gc_30v30_vs_arb",
+    "gc_30v30_vs_champ",
+    "gc_3k_vs_paladin",
+    "gc_3k_vs_arb",
+    "gc_3k_vs_champ",
+    "aa_30v30_vs_arb",
+    "aa_30v30_vs_ca",
+    "aa_30v30_vs_ele_archer",
+    "aa_3k_vs_arb",
+    "aa_3k_vs_ca",
+    "aa_3k_vs_ele_archer",
     # Mobility ranking scores
     "mobility_score",
     "mobility_speed_dps",
@@ -892,74 +902,45 @@ ARCHERY_ROLE_SCORE_TYPES = [
     "mobility_hp",
 ]
 
-ANTI_ARCHER_BENCHMARKS = [
-    # Eco benchmarks (3K resources each) — vs archer-class units
-    ("aa_eco_vs_arb", "Chinese", "arbalester", "Imperial", "res", 3000),
-    ("aa_eco_vs_ca", "Chinese", "heavy_cav_archer", "Imperial", "res", 3000),
-    ("aa_eco_vs_hc", "Spanish", "hand_cannoneer", "Imperial", "res", 3000),
-    # Pop benchmarks (30v30 fixed count) — vs archer-class units
-    ("aa_pop_vs_arb", "Chinese", "arbalester", "Imperial", "fixed_hp", (30, 30)),
-    ("aa_pop_vs_ca", "Chinese", "heavy_cav_archer", "Imperial", "fixed_hp", (30, 30)),
-    ("aa_pop_vs_hc", "Spanish", "hand_cannoneer", "Imperial", "fixed_hp", (30, 30)),
-    # Power benchmarks (3K resources) — vs non-archer threats
-    ("aa_power_vs_hussar", "Spanish", "hussar", "Imperial", "res", 3000),
-    ("aa_power_vs_champ", "Chinese", "champion", "Imperial", "res", 3000),
-]
-
-ANTI_ARCHER_SCORE_TYPES = [
-    "anti_archer",
-    "aa_eco_score",
-    "aa_pop_score",
-    "aa_power",
-    "aa_eco_vs_arb",
-    "aa_eco_vs_ca",
-    "aa_eco_vs_hc",
-    "aa_pop_vs_arb",
-    "aa_pop_vs_ca",
-    "aa_pop_vs_hc",
-    "aa_power_vs_hussar",
-    "aa_power_vs_champ",
-]
-
 # ===== Stable unit scoring =====
 STABLE_LINE_SLUGS = ["knight", "light_cav", "camel", "steppe_lancer", "elephant"]
 
+SIEGE_LINE_SLUGS = ["ram", "trebuchet", "bombard_cannon"]
+
+# Lines not displayed in any ranking category (skipped from all computation)
+HIDDEN_LINE_SLUGS = ["mangonel"]
+
 STABLE_BENCHMARKS = [
-    # Attack Power — 30v30 fixed count (HP% scoring)
-    ("atk_30v30_vs_paladin", "Spanish", "paladin", "Imperial", "fixed_hp", (30, 30)),
-    ("atk_30v30_vs_arb", "Chinese", "arbalester", "Imperial", "fixed_hp", (30, 30)),
-    ("atk_30v30_vs_champ", "Chinese", "champion", "Imperial", "fixed_hp", (30, 30)),
-    # Attack Power — 3K resource (HP% scoring)
-    ("atk_3k_vs_paladin", "Spanish", "paladin", "Imperial", "res", 3000),
-    ("atk_3k_vs_arb", "Chinese", "arbalester", "Imperial", "res", 3000),
-    ("atk_3k_vs_champ", "Chinese", "champion", "Imperial", "res", 3000),
-    # Survivability — 30v30 fixed count (HP% scoring)
-    ("surv_30v30_vs_halb", "Chinese", "halberdier", "Imperial", "fixed_hp", (30, 30)),
-    ("surv_30v30_vs_camel", "Turks", "heavy_camel", "Imperial", "fixed_hp", (30, 30)),
-    ("surv_30v30_vs_ca", "Berbers", "elite_camel_archer_berbers", "Imperial", "fixed_hp", (30, 30)),
-    # Survivability — 3K resource (HP% scoring)
-    ("surv_3k_vs_halb", "Chinese", "halberdier", "Imperial", "res", 3000),
-    ("surv_3k_vs_camel", "Turks", "heavy_camel", "Imperial", "res", 3000),
-    ("surv_3k_vs_ca", "Berbers", "elite_camel_archer_berbers", "Imperial", "res", 3000),
+    # General Combat — 30v30 fixed count (HP% scoring)
+    ("gc_30v30_vs_paladin", "Spanish", "paladin", "Imperial", "fixed_hp", (30, 30)),
+    ("gc_30v30_vs_arb", "Chinese", "arbalester", "Imperial", "fixed_hp", (30, 30)),
+    ("gc_30v30_vs_champ", "Chinese", "champion", "Imperial", "fixed_hp", (30, 30)),
+    # General Combat — 3K resource (HP% scoring)
+    ("gc_3k_vs_paladin", "Spanish", "paladin", "Imperial", "res", 3000),
+    ("gc_3k_vs_arb", "Chinese", "arbalester", "Imperial", "res", 3000),
+    ("gc_3k_vs_champ", "Chinese", "champion", "Imperial", "res", 3000),
+    # Anti-Cav — 30v30 fixed count (HP% scoring) — gc_vs_paladin reused from above
+    ("ac_30v30_vs_heavy_camel", "Turks", "heavy_camel", "Imperial", "fixed_hp", (30, 30)),
+    ("ac_30v30_vs_elephant", "Vietnamese", "elite_elephant", "Imperial", "fixed_hp", (30, 30)),
+    # Anti-Cav — 3K resource (HP% scoring)
+    ("ac_3k_vs_heavy_camel", "Turks", "heavy_camel", "Imperial", "res", 3000),
+    ("ac_3k_vs_elephant", "Vietnamese", "elite_elephant", "Imperial", "res", 3000),
 ]
 
 STABLE_SCORE_TYPES = [
-    "stable_power",
-    "attack_power",
-    "movement_speed_score",
-    "survivability_score",
-    "atk_30v30_vs_paladin",
-    "atk_30v30_vs_arb",
-    "atk_30v30_vs_champ",
-    "atk_3k_vs_paladin",
-    "atk_3k_vs_arb",
-    "atk_3k_vs_champ",
-    "surv_30v30_vs_halb",
-    "surv_30v30_vs_camel",
-    "surv_30v30_vs_ca",
-    "surv_3k_vs_halb",
-    "surv_3k_vs_camel",
-    "surv_3k_vs_ca",
+    "stable_effectiveness",
+    "general_combat",
+    "anti_cav",
+    "gc_30v30_vs_paladin",
+    "gc_30v30_vs_arb",
+    "gc_30v30_vs_champ",
+    "gc_3k_vs_paladin",
+    "gc_3k_vs_arb",
+    "gc_3k_vs_champ",
+    "ac_30v30_vs_heavy_camel",
+    "ac_30v30_vs_elephant",
+    "ac_3k_vs_heavy_camel",
+    "ac_3k_vs_elephant",
 ]
 
 
@@ -1003,100 +984,42 @@ def compute_infantry_role_scores():
                     bench["cost_food"], bench["cost_wood"], bench["cost_gold"], True
                 )
 
-                if mode == "res":
-                    winner, _, _, hp1, hp2 = simulate_battle(
-                        cu,
-                        bench,
-                        param,
-                        cost1_override=unit_cost,
-                        cost2_override=bench_cost,
-                        return_hp=True,
-                    )
-                    if winner == 1:
-                        scores[key] = round(hp1 * 100, 1)
-                    elif winner == 2:
-                        scores[key] = round(-hp2 * 100, 1)
-                    else:
-                        scores[key] = 0.0
-
-                elif mode == "tank":
-                    winner, _, _, hp1, hp2, ticks = simulate_battle(
-                        cu,
-                        bench,
-                        0,
-                        fixed_count=param,
-                        return_ticks=True,
-                    )
-                    elapsed = ticks * DT
-                    scores[key] = (elapsed, winner == 1)
-
-                elif mode == "fixed":
-                    m_count, o_count = param
-                    fake_res = m_count * o_count
-                    winner, _, _, hp1, hp2 = simulate_battle(
-                        cu,
-                        bench,
-                        fake_res,
-                        cost1_override=fake_res // m_count,
-                        cost2_override=fake_res // o_count,
-                        return_hp=True,
-                    )
-                    if winner == 1:
-                        scores[key] = round(hp1 * 100, 1)
-                    elif winner == 2:
-                        scores[key] = round(-hp2 * 100, 1)
-                    else:
-                        scores[key] = 0.0
+                winner, _, _, hp1, hp2 = simulate_battle(
+                    cu,
+                    bench,
+                    param,
+                    cost1_override=unit_cost,
+                    cost2_override=bench_cost,
+                    return_hp=True,
+                )
+                if winner == 1:
+                    scores[key] = round(hp1 * 100, 1)
+                elif winner == 2:
+                    scores[key] = round(-hp2 * 100, 1)
+                else:
+                    scores[key] = 0.0
 
             scores["_combat_unit"] = cu  # temp ref for anti-cav scoring
             all_scores[sk] = scores
             sk_to_line[sk] = line_slug
 
-    # Post-process tank scores across ALL infantry units
-    tank_keys = [k for k, _, _, _, m, _ in MILITIA_ROLE_BENCHMARKS if m == "tank"]
-    for tk in tank_keys:
-        loser_times = [
-            s[tk][0]
-            for s in all_scores.values()
-            if isinstance(s.get(tk), tuple) and not s[tk][1]
-        ]
-        max_loser = max(loser_times) if loser_times else MAX_BATTLE_TIME
-        for s in all_scores.values():
-            if isinstance(s.get(tk), tuple):
-                elapsed, won = s[tk]
-                if won:
-                    elapsed = max_loser
-                s[tk] = round(elapsed / MAX_BATTLE_TIME * 100, 1)
-
-    # Compute raw derived scores
-    for sk, scores in all_scores.items():
-        scores["melee_power"] = (
-            scores["vs_skirm"]
-            + scores["vs_halb"]
-            + scores["vs_hussar"]
-            + scores["vs_champ"]
-        ) / 4
-        scores["meat_shield"] = (
-            scores["vs_paladin_tank"] + scores["vs_champ_tank"]
-        ) / 2
-        scores["raid"] = scores["vs_arb_raid"]
-        scores["anti_cav"] = (scores["vs_paladin"] + scores["vs_hussar_cav"]) / 2
-
-    # Normalize each derived score to 0–100 across ALL infantry units
-    for key in ["melee_power", "meat_shield", "raid", "anti_cav"]:
+    # Normalize each benchmark score to 0–100 across ALL infantry units
+    bench_keys = [k for k, _, _, _, _, _ in MILITIA_ROLE_BENCHMARKS]
+    for key in bench_keys:
         vals = [s[key] for s in all_scores.values()]
         lo, hi = min(vals), max(vals)
         span = hi - lo if hi != lo else 1
         for s in all_scores.values():
             s[key] = round((s[key] - lo) / span * 100, 1)
 
-    # Compute militia_value from normalized scores
+    # Compute general_combat and anti_cav composites from normalized scores
     for sk, scores in all_scores.items():
-        scores["militia_value"] = round(
-            0.50 * scores["melee_power"]
-            + 0.30 * scores["meat_shield"]
-            + 0.10 * scores["raid"]
-            + 0.10 * scores["anti_cav"],
+        scores["general_combat"] = round(
+            (scores["gc_vs_paladin"] + scores["gc_vs_arb"] + scores["gc_vs_champ"]) / 3,
+            1,
+        )
+        scores["anti_cav"] = round(
+            (scores["gc_vs_paladin"] + scores["ac_vs_elephant"] + scores["ac_vs_hussar"]) / 3,
             1,
         )
 
@@ -1105,6 +1028,15 @@ def compute_infantry_role_scores():
 
     # Compute raiding ranking scores (uses _combat_unit refs)
     compute_raiding_scores(all_scores, sk_to_line)
+
+    # Compute militia_value from general_combat, anti_cav, and raid_building
+    for sk, scores in all_scores.items():
+        scores["militia_value"] = round(
+            0.50 * scores["general_combat"]
+            + 0.30 * scores["anti_cav"]
+            + 0.20 * scores["raid_building"],
+            1,
+        )
 
     # Clean up temp combat unit refs
     for s in all_scores.values():
@@ -1124,9 +1056,14 @@ def compute_infantry_role_scores():
 
 def compute_archery_role_scores():
     """Compute role-based scores for all Imperial archery units.
-    Returns dict: {"archer|imperial": {...}, "cav_archer|imperial": {...}, ...}"""
 
-    max_ticks = int(MAX_BATTLE_TIME / DT)
+    Uses a unified set of benchmarks for both general combat and anti-archer.
+    Each raw benchmark score (-100 to +100) is min-max normalized across all
+    archery units (0-100) before averaging into sub-scores.
+
+    Final: ranged_effectiveness = 0.7 * general_combat + 0.3 * anti_archer
+
+    Returns dict: {"archer|imperial": {...}, "cav_archer|imperial": {...}, ...}"""
 
     bench_cache = {}
     for key, civ, slug, age, mode, param in ARCHERY_ROLE_BENCHMARKS:
@@ -1180,22 +1117,6 @@ def compute_archery_role_scores():
                     else:
                         scores[key] = 0.0
 
-                elif mode == "fixed":
-                    m_count, o_count = param
-                    fake_res = m_count * o_count
-                    winner, _, _, hp1, hp2, ticks = simulate_battle(
-                        cu,
-                        bench,
-                        fake_res,
-                        cost1_override=fake_res // m_count,
-                        cost2_override=fake_res // o_count,
-                        return_ticks=True,
-                    )
-                    if winner == 1:
-                        scores[key] = round((1 - ticks / max_ticks) * 100, 1)
-                    else:
-                        scores[key] = 0.0
-
                 elif mode == "fixed_hp":
                     m_count, o_count = param
                     fake_res = m_count * o_count
@@ -1217,26 +1138,28 @@ def compute_archery_role_scores():
             all_scores[sk] = scores
             sk_to_line[sk] = line_slug
 
-    # Compute derived scores
+    # Min-max normalize each benchmark score across all archery units (0-100)
+    gc_keys = [k for k, *_ in ARCHERY_ROLE_BENCHMARKS if k.startswith("gc_")]
+    aa_keys = [k for k, *_ in ARCHERY_ROLE_BENCHMARKS if k.startswith("aa_")]
+    all_bench_keys = gc_keys + aa_keys
+
+    for bk in all_bench_keys:
+        vals = [s[bk] for s in all_scores.values()]
+        lo, hi = min(vals), max(vals)
+        span = hi - lo if hi != lo else 1
+        for s in all_scores.values():
+            s[bk] = round((s[bk] - lo) / span * 100, 1)
+
+    # Compute derived scores from normalized values
     for sk, scores in all_scores.items():
-        scores["eco_dps_score"] = round(
-            (scores["eco_vs_champ"] + scores["eco_vs_paladin"] + scores["eco_vs_arb"])
-            / 3,
-            1,
+        scores["general_combat"] = round(
+            sum(scores[k] for k in gc_keys) / len(gc_keys), 1
         )
-        scores["raw_dps_score"] = round(
-            (scores["raw_vs_champ"] + scores["raw_vs_paladin"] + scores["raw_vs_arb"])
-            / 3,
-            1,
+        scores["anti_archer"] = round(
+            sum(scores[k] for k in aa_keys) / len(aa_keys), 1
         )
-        scores["survivability_score"] = round(
-            (scores["surv_vs_skirm"] + scores["surv_vs_cav_archer"] + scores["surv_vs_halb"]) / 3,
-            1,
-        )
-        scores["ranged_power"] = round(
-            0.70 * scores["raw_dps_score"]
-            + 0.15 * scores["eco_dps_score"]
-            + 0.15 * scores["survivability_score"],
+        scores["ranged_effectiveness"] = round(
+            0.70 * scores["general_combat"] + 0.30 * scores["anti_archer"],
             1,
         )
 
@@ -1292,120 +1215,14 @@ def compute_archery_role_scores():
     return all_role_scores
 
 
-def compute_anti_archer_scores():
-    """Compute anti-archer role scores for all Imperial archery units.
-    Returns dict: {"archer|imperial": {...}, "cav_archer|imperial": {...}, ...}"""
-
-    bench_cache = {}
-    for key, civ, slug, age, mode, param in ANTI_ARCHER_BENCHMARKS:
-        cache_key = (civ, slug, age)
-        if cache_key not in bench_cache:
-            bench_cache[cache_key] = _load_benchmark_unit(civ, slug, age)
-        if bench_cache[cache_key] is None:
-            print(f"  WARNING: anti-archer benchmark {civ}/{slug}/{age} not found")
-
-    all_scores = {}
-    sk_to_line = {}
-
-    for line_slug in ARCHERY_LINE_SLUGS:
-        units = build_line_units(line_slug, "imperial")
-        if not units:
-            continue
-
-        for u in units:
-            cu = u["combat_unit"]
-            unit_cost = calc_weighted_cost(
-                cu["cost_food"], cu["cost_wood"], cu["cost_gold"], True
-            )
-            sk = f"{u['civ_name']}|{u['unit_slug']}"
-            scores = {}
-
-            for key, civ, slug, age, mode, param in ANTI_ARCHER_BENCHMARKS:
-                bench = bench_cache[(civ, slug, age)]
-                if bench is None:
-                    scores[key] = 0.0
-                    continue
-
-                if mode == "res":
-                    bench_cost = calc_weighted_cost(
-                        bench["cost_food"],
-                        bench["cost_wood"],
-                        bench["cost_gold"],
-                        True,
-                    )
-                    winner, _, _, hp1, hp2 = simulate_battle(
-                        cu,
-                        bench,
-                        param,
-                        cost1_override=unit_cost,
-                        cost2_override=bench_cost,
-                        return_hp=True,
-                    )
-                    if winner == 1:
-                        scores[key] = round(hp1 * 100, 1)
-                    elif winner == 2:
-                        scores[key] = round(-hp2 * 100, 1)
-                    else:
-                        scores[key] = 0.0
-
-                elif mode == "fixed_hp":
-                    m_count, o_count = param
-                    fake_res = m_count * o_count
-                    winner, _, _, hp1, hp2 = simulate_battle(
-                        cu,
-                        bench,
-                        fake_res,
-                        cost1_override=fake_res // m_count,
-                        cost2_override=fake_res // o_count,
-                        return_hp=True,
-                    )
-                    if winner == 1:
-                        scores[key] = round(hp1 * 100, 1)
-                    elif winner == 2:
-                        scores[key] = round(-hp2 * 100, 1)
-                    else:
-                        scores[key] = 0.0
-
-            all_scores[sk] = scores
-            sk_to_line[sk] = line_slug
-
-    # Compute derived scores
-    for sk, scores in all_scores.items():
-        scores["aa_eco_score"] = round(
-            (scores["aa_eco_vs_arb"] + scores["aa_eco_vs_ca"] + scores["aa_eco_vs_hc"])
-            / 3,
-            1,
-        )
-        scores["aa_pop_score"] = round(
-            (scores["aa_pop_vs_arb"] + scores["aa_pop_vs_ca"] + scores["aa_pop_vs_hc"])
-            / 3,
-            1,
-        )
-        scores["aa_power"] = round(
-            (scores["aa_power_vs_hussar"] + scores["aa_power_vs_champ"]) / 2,
-            1,
-        )
-        scores["anti_archer"] = round(
-            0.50 * scores["aa_eco_score"]
-            + 0.30 * scores["aa_pop_score"]
-            + 0.20 * scores["aa_power"],
-            1,
-        )
-
-    # Regroup by line for DB storage
-    all_role_scores = {}
-    for sk, scores in all_scores.items():
-        line_slug = sk_to_line[sk]
-        line_key = f"{line_slug}|imperial"
-        if line_key not in all_role_scores:
-            all_role_scores[line_key] = {}
-        all_role_scores[line_key][sk] = scores
-
-    return all_role_scores
-
-
 def compute_stable_role_scores():
     """Compute benchmark-based scores for all Imperial stable units.
+
+    Uses the same pattern as archery: simulate benchmarks, min-max normalize
+    each one 0-100 across all stable units, then average into composites.
+
+    Final: stable_effectiveness = 0.7 * general_combat + 0.3 * anti_cav
+
     Returns dict: {"stable|Imperial": {civ|slug: {score_type: value, ...}, ...}}"""
 
     # Load benchmark units
@@ -1488,41 +1305,30 @@ def compute_stable_role_scores():
 
         all_scores[sk] = scores
 
-    # Compute attack_power and survivability_score (shifted to 0-100)
-    atk_keys = [k for k, *_ in STABLE_BENCHMARKS if k.startswith("atk_")]
-    surv_keys = [k for k, *_ in STABLE_BENCHMARKS if k.startswith("surv_")]
+    # Min-max normalize each benchmark score across all stable units (0-100)
+    gc_keys = [k for k, *_ in STABLE_BENCHMARKS if k.startswith("gc_")]
+    ac_only_keys = [k for k, *_ in STABLE_BENCHMARKS if k.startswith("ac_")]
+    all_bench_keys = gc_keys + ac_only_keys
 
+    for bk in all_bench_keys:
+        vals = [s[bk] for s in all_scores.values()]
+        lo, hi = min(vals), max(vals)
+        span = hi - lo if hi != lo else 1
+        for s in all_scores.values():
+            s[bk] = round((s[bk] - lo) / span * 100, 1)
+
+    # Compute derived scores from normalized values
+    # Anti-cav reuses gc paladin benchmarks (30v30 + 3K)
+    ac_keys = ["gc_30v30_vs_paladin", "gc_3k_vs_paladin"] + ac_only_keys
     for sk, scores in all_scores.items():
-        # Shift each sim score from -100..+100 to 0..100, then average
-        atk_shifted = [(scores.get(k, 0.0) + 100) / 2 for k in atk_keys]
-        surv_shifted = [(scores.get(k, 0.0) + 100) / 2 for k in surv_keys]
-
-        scores["attack_power"] = round(sum(atk_shifted) / len(atk_shifted), 1)
-        scores["survivability_score"] = round(sum(surv_shifted) / len(surv_shifted), 1)
-
-    # Compute movement_speed_score (min-max normalized 0-100)
-    speed_map = {}
-    for u in all_units:
-        sk = f"{u['civ_name']}|{u['unit_slug']}"
-        speed_map[sk] = u["combat_unit"]["movement_speed"]
-
-    speeds = list(speed_map.values())
-    min_speed = min(speeds)
-    max_speed = max(speeds)
-    speed_range = max_speed - min_speed if max_speed != min_speed else 1
-
-    for sk, scores in all_scores.items():
-        raw_speed = speed_map.get(sk, min_speed)
-        scores["movement_speed_score"] = round(
-            (raw_speed - min_speed) / speed_range * 100, 1
+        scores["general_combat"] = round(
+            sum(scores[k] for k in gc_keys) / len(gc_keys), 1
         )
-
-    # Compute composite stable_power
-    for sk, scores in all_scores.items():
-        scores["stable_power"] = round(
-            0.6 * scores["attack_power"]
-            + 0.2 * scores["movement_speed_score"]
-            + 0.2 * scores["survivability_score"],
+        scores["anti_cav"] = round(
+            sum(scores[k] for k in ac_keys) / len(ac_keys), 1
+        )
+        scores["stable_effectiveness"] = round(
+            0.70 * scores["general_combat"] + 0.30 * scores["anti_cav"],
             1,
         )
 
@@ -1530,21 +1336,166 @@ def compute_stable_role_scores():
     return {"stable|Imperial": all_scores}
 
 
+# ===== Siege anti-building scoring =====
+
+# Fully upgraded Spanish Castle (Masonry + Architecture + Hoardings + all arrow techs)
+SIEGE_CASTLE_TARGET = {
+    "hp": 7028,           # 4800 * 1.1 * 1.1 * 1.21
+    "armor": {
+        3: 13,            # pierce: 11 + 1 + 1
+        4: 10,            # melee: 8 + 1 + 1
+        11: 6,            # standard building: 0 + 3 + 3
+    },
+    "arrows": 5,          # base arrows (no garrison)
+    "arrow_attack": 15,   # 11 + 1 + 1 + 1 + 1 (Fletching/Bodkin/Bracer/Chemistry)
+    "arrow_range": 11,    # 8 + 1 + 1 + 1
+    "reload": 2.0,
+}
+
+SIEGE_SCORE_TYPES = [
+    "anti_building_score",
+    "time_to_kill",
+]
+
+
+def _calc_building_damage(attacks, castle_armor):
+    """Calculate per-hit damage of a unit against a building.
+
+    Only counts attack classes that match known building armor classes (3=pierce,
+    4=melee, 11=standard buildings). Other attack classes (anti-cavalry, anti-ship,
+    etc.) are ignored because buildings have very high hidden armor for those.
+    """
+    total = 0
+    for ac, dv in castle_armor.items():
+        av = attacks.get(ac, 0)
+        total += max(0, av - dv)
+    return max(1, total)
+
+
+def _simulate_siege_vs_castle(n_units, unit_hp, unit_dps, castle_hp,
+                               castle_dps, unit_speed, unit_range, castle_range):
+    """Tick-based attrition sim: units attack a castle that fires back.
+
+    Returns time in seconds to destroy the castle, or MAX_TIME if it survives.
+    Castle focus-fires one unit at a time. Melee units need closing time.
+    """
+    DT = 0.1
+    MAX_TIME = 600.0
+
+    remaining_hp = float(castle_hp)
+    units_alive = n_units
+    focused_unit_hp = float(unit_hp)
+    time = 0.0
+
+    # Closing time for units that need to walk into range
+    if unit_range < castle_range:
+        closing_distance = castle_range - unit_range
+        closing_time = closing_distance / unit_speed if unit_speed > 0 else MAX_TIME
+
+        # During approach: castle fires but units can't attack yet
+        while time < closing_time and units_alive > 0:
+            focused_unit_hp -= castle_dps * DT
+            if focused_unit_hp <= 0:
+                units_alive -= 1
+                if units_alive > 0:
+                    focused_unit_hp = float(unit_hp)
+            time += DT
+
+    # Combat phase: units attack castle, castle fires back
+    while remaining_hp > 0 and units_alive > 0 and time < MAX_TIME:
+        focused_unit_hp -= castle_dps * DT
+        if focused_unit_hp <= 0:
+            units_alive -= 1
+            if units_alive > 0:
+                focused_unit_hp = float(unit_hp)
+
+        remaining_hp -= units_alive * unit_dps * DT
+        time += DT
+
+    return time if remaining_hp <= 0 else MAX_TIME
+
+
+def compute_siege_antibuilding_scores():
+    """Compute anti-building scores for all siege units (Castle + Imperial).
+
+    Each unit gets 1000 weighted resources. They attack a fully upgraded
+    Spanish Castle. Ranked by time to destroy (faster = higher score).
+
+    Returns dict in write_role_scores_to_db format.
+    """
+    castle = SIEGE_CASTLE_TARGET
+    all_scores = {}  # age -> {sk: scores}
+
+    for age in ["castle", "imperial"]:
+        is_imperial = age == "imperial"
+
+        for line_slug in SIEGE_LINE_SLUGS:
+            units = build_line_units(line_slug, age)
+            if not units:
+                continue
+
+            for u in units:
+                cu = u["combat_unit"]
+                unit_cost = calc_weighted_cost(
+                    cu["cost_food"], cu["cost_wood"], cu["cost_gold"], is_imperial
+                )
+                n_units = max(1, 1000 // unit_cost)
+
+                # Damage per hit vs castle (full AoE2 damage model)
+                attacks = cu.get("attacks", {})
+                damage_per_hit = _calc_building_damage(attacks, castle["armor"])
+                reload_time = 1.0 / cu["attack_speed"] if cu["attack_speed"] > 0 else 2.0
+                unit_dps = damage_per_hit / reload_time
+
+                # Does the unit outrange the castle?
+                outranges = cu["attack_range"] > castle["arrow_range"]
+
+                if outranges:
+                    # No attrition — pure DPS
+                    total_dps = n_units * unit_dps
+                    ttk = castle["hp"] / total_dps if total_dps > 0 else 600.0
+                else:
+                    # Attrition: castle fires at units
+                    dmg_per_arrow = max(1, castle["arrow_attack"] - cu["pierce_armor"])
+                    castle_dps = castle["arrows"] * dmg_per_arrow / castle["reload"]
+
+                    ttk = _simulate_siege_vs_castle(
+                        n_units, cu["hp"], unit_dps, castle["hp"], castle_dps,
+                        cu["movement_speed"], cu["attack_range"], castle["arrow_range"],
+                    )
+
+                sk = f"{u['civ_name']}|{u['unit_slug']}"
+                all_scores.setdefault(age, {})[sk] = {
+                    "time_to_kill": round(min(ttk, 600.0), 1),
+                }
+
+    # Normalize per age: faster = higher score (0-100, inverted)
+    for age in ["castle", "imperial"]:
+        if age not in all_scores:
+            continue
+        scores = all_scores[age]
+        ttk_vals = [s["time_to_kill"] for s in scores.values()]
+        lo, hi = min(ttk_vals), max(ttk_vals)
+        span = hi - lo if hi != lo else 1
+        for s in scores.values():
+            s["anti_building_score"] = round((hi - s["time_to_kill"]) / span * 100, 1)
+
+    # Format for write_role_scores_to_db
+    result = {}
+    for age, scores in all_scores.items():
+        result[f"siege|{age}"] = scores
+    return result
+
+
 INFANTRY_ROLE_SCORE_TYPES = [
-    "melee_power",
-    "meat_shield",
-    "raid",
-    "anti_cav",
     "militia_value",
-    "vs_skirm",
-    "vs_halb",
-    "vs_hussar",
-    "vs_champ",
-    "vs_paladin_tank",
-    "vs_champ_tank",
-    "vs_arb_raid",
-    "vs_paladin",
-    "vs_hussar_cav",
+    "general_combat",
+    "anti_cav",
+    "gc_vs_paladin",
+    "gc_vs_arb",
+    "gc_vs_champ",
+    "ac_vs_elephant",
+    "ac_vs_hussar",
     # Anti-cav ranking scores
     "anti_cav_total",
     "frontline",
@@ -1862,16 +1813,10 @@ def main():
 
         archery_start = time.time()
         archery_scores = compute_archery_role_scores()
-        aa_scores = compute_anti_archer_scores()
-        # Merge anti-archer scores into archery scores (same line keys, same unit keys)
-        for line_key, unit_scores in aa_scores.items():
-            for uk, scores in unit_scores.items():
-                archery_scores.setdefault(line_key, {}).setdefault(uk, {}).update(scores)
-        combined_types = ARCHERY_ROLE_SCORE_TYPES + ANTI_ARCHER_SCORE_TYPES
-        write_role_scores_to_db(archery_scores, ARCHERY_LINE_SLUGS, combined_types)
+        write_role_scores_to_db(archery_scores, ARCHERY_LINE_SLUGS, ARCHERY_ROLE_SCORE_TYPES)
         total_archery = sum(len(v) for v in archery_scores.values())
         print(
-            f"Archery roles (incl. anti-archer): {total_archery} units across {len(archery_scores)} lines in {time.time() - archery_start:.1f}s"
+            f"Archery roles: {total_archery} units across {len(archery_scores)} lines in {time.time() - archery_start:.1f}s"
         )
 
         stable_start = time.time()
@@ -1880,6 +1825,14 @@ def main():
         total_stable = sum(len(v) for v in stable_scores.values())
         print(
             f"Stable roles: {total_stable} units in {time.time() - stable_start:.1f}s"
+        )
+
+        siege_start = time.time()
+        siege_scores = compute_siege_antibuilding_scores()
+        write_role_scores_to_db(siege_scores, ["siege"], SIEGE_SCORE_TYPES)
+        total_siege = sum(len(v) for v in siege_scores.values())
+        print(
+            f"Siege anti-building: {total_siege} units in {time.time() - siege_start:.1f}s"
         )
         return
 
@@ -1913,7 +1866,7 @@ def main():
     # Build all units and compute fingerprints (infantry/archery excluded — uses DB scores)
     current_fps = {}
     for line_slug, config in UNIT_LINES.items():
-        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS or line_slug in STABLE_LINE_SLUGS:
+        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS or line_slug in STABLE_LINE_SLUGS or line_slug in SIEGE_LINE_SLUGS or line_slug in HIDDEN_LINE_SLUGS:
             continue
         for age_key in ["castle", "imperial"]:
             std_slug = config.get(f"{age_key}_slug")
@@ -1996,7 +1949,7 @@ def main():
     rr_misses_total = 0
 
     for line_slug, config in UNIT_LINES.items():
-        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS or line_slug in STABLE_LINE_SLUGS:
+        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS or line_slug in STABLE_LINE_SLUGS or line_slug in SIEGE_LINE_SLUGS or line_slug in HIDDEN_LINE_SLUGS:
             continue  # infantry/archery/stable uses role-based scores from battle_scores table
         for age_key in ["castle", "imperial"]:
             slug = config.get(f"{age_key}_slug")
@@ -2037,20 +1990,14 @@ def main():
         f"Infantry roles: {total_infantry} units across {len(role_scores)} lines in {role_time:.1f}s"
     )
 
-    # Archery role scores + anti-archer scores (written to DB, not JSON)
+    # Archery role scores (written to DB, not JSON)
     archery_start = time.time()
     archery_scores = compute_archery_role_scores()
-    aa_scores = compute_anti_archer_scores()
-    # Merge anti-archer scores into archery scores (same line keys, same unit keys)
-    for line_key, unit_scores in aa_scores.items():
-        for uk, scores in unit_scores.items():
-            archery_scores.setdefault(line_key, {}).setdefault(uk, {}).update(scores)
-    combined_types = ARCHERY_ROLE_SCORE_TYPES + ANTI_ARCHER_SCORE_TYPES
-    write_role_scores_to_db(archery_scores, ARCHERY_LINE_SLUGS, combined_types)
+    write_role_scores_to_db(archery_scores, ARCHERY_LINE_SLUGS, ARCHERY_ROLE_SCORE_TYPES)
     archery_time = time.time() - archery_start
     total_archery = sum(len(v) for v in archery_scores.values())
     print(
-        f"Archery roles (incl. anti-archer): {total_archery} units across {len(archery_scores)} lines in {archery_time:.1f}s"
+        f"Archery roles: {total_archery} units across {len(archery_scores)} lines in {archery_time:.1f}s"
     )
 
     # Stable role scores (written to DB, not JSON)
@@ -2061,6 +2008,16 @@ def main():
     total_stable = sum(len(v) for v in stable_scores.values())
     print(
         f"Stable roles: {total_stable} units in {stable_time:.1f}s"
+    )
+
+    # Siege anti-building scores (written to DB, not JSON)
+    siege_start = time.time()
+    siege_scores = compute_siege_antibuilding_scores()
+    write_role_scores_to_db(siege_scores, ["siege"], SIEGE_SCORE_TYPES)
+    siege_time = time.time() - siege_start
+    total_siege = sum(len(v) for v in siege_scores.values())
+    print(
+        f"Siege anti-building: {total_siege} units in {siege_time:.1f}s"
     )
 
     # Write output (round-robin + benchmarks only, no militia)

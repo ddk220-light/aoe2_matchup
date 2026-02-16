@@ -113,22 +113,38 @@ function updateAll() {
 /* ---- Initial render ---- */
 updateAll();
 
+/* ---- Stage labels ---- */
+const STAGE_LABELS = {
+    cavalry: "Cavalry Matchup",
+    infantry: "Infantry Matchup",
+    ranged: "Ranged Matchup",
+    siege: "Siege Matchup",
+};
+
+const STAGE_ORDER = ["cavalry", "infantry", "ranged", "siege"];
+
 /* ---- Analysis ---- */
 analyzeBtn.addEventListener("click", async () => {
     resultsEl.innerHTML = '<div class="loading-indicator">Analyzing teams...</div>';
     analyzeBtn.disabled = true;
 
-    const params = new URLSearchParams({
-        team1: team1.join(","),
-        team2: team2.join(","),
-        stage: "cavalry",
-    });
-
     try {
-        const resp = await fetch("/api/team-analysis?" + params);
-        if (!resp.ok) throw new Error("API error: " + resp.status);
-        const data = await resp.json();
-        renderResults(data);
+        // Fetch all 4 stages in parallel (overall tab for each)
+        const fetches = STAGE_ORDER.map(stage => {
+            const params = new URLSearchParams({
+                team1: team1.join(","),
+                team2: team2.join(","),
+                stage: stage,
+                tab: "overall",
+            });
+            return fetch("/api/team-analysis?" + params).then(r => {
+                if (!r.ok) throw new Error(`${stage}: API error ${r.status}`);
+                return r.json();
+            });
+        });
+
+        const results = await Promise.all(fetches);
+        renderAllResults(results);
     } catch (err) {
         resultsEl.innerHTML = `<div class="loading-indicator" style="color:var(--team1)">Error: ${err.message}</div>`;
     } finally {
@@ -136,15 +152,19 @@ analyzeBtn.addEventListener("click", async () => {
     }
 });
 
-/* ---- Render results ---- */
-function renderResults(data) {
+/* ---- Render all stage cards ---- */
+function renderAllResults(resultsArray) {
     resultsEl.innerHTML = "";
-    resultsEl.appendChild(buildStageCard(data));
+    resultsArray.forEach(data => {
+        resultsEl.appendChild(buildStageCard(data));
+    });
 }
 
+/* ---- Build a single stage card with tabs ---- */
 function buildStageCard(data) {
     const card = document.createElement("div");
     card.className = "stage-card";
+    card.dataset.stage = data.stage;
 
     // Header
     const header = document.createElement("div");
@@ -152,8 +172,7 @@ function buildStageCard(data) {
 
     const title = document.createElement("span");
     title.className = "stage-title";
-    const stageLabels = { cavalry: "Cavalry Matchup", ranged: "Ranged Matchup", infantry: "Infantry Matchup" };
-    title.textContent = stageLabels[data.stage] || data.stage;
+    title.textContent = STAGE_LABELS[data.stage] || data.stage;
 
     const adv = document.createElement("span");
     adv.className = "stage-advantage " + data.advantage;
@@ -169,12 +188,85 @@ function buildStageCard(data) {
     header.appendChild(adv);
     card.appendChild(header);
 
+    // Tab bar (only if more than 1 tab)
+    if (data.available_tabs && data.available_tabs.length > 1) {
+        const tabBar = document.createElement("div");
+        tabBar.className = "stage-tabs";
+
+        data.available_tabs.forEach(tabInfo => {
+            const btn = document.createElement("button");
+            btn.className = "stage-tab" + (tabInfo.key === data.tab ? " active" : "");
+            btn.textContent = tabInfo.label;
+            btn.dataset.tab = tabInfo.key;
+
+            btn.addEventListener("click", async () => {
+                if (btn.classList.contains("active")) return;
+
+                // Mark active
+                tabBar.querySelectorAll(".stage-tab").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+
+                // Fetch new tab data
+                const params = new URLSearchParams({
+                    team1: team1.join(","),
+                    team2: team2.join(","),
+                    stage: data.stage,
+                    tab: tabInfo.key,
+                });
+
+                try {
+                    const body = card.querySelector(".stage-body");
+                    body.innerHTML = '<div class="loading-indicator">Loading...</div>';
+
+                    const resp = await fetch("/api/team-analysis?" + params);
+                    if (!resp.ok) throw new Error("API error: " + resp.status);
+                    const tabData = await resp.json();
+
+                    // Update advantage indicator
+                    const advEl = card.querySelector(".stage-advantage");
+                    advEl.className = "stage-advantage " + tabData.advantage;
+                    if (tabData.advantage === "team1") {
+                        advEl.textContent = "Team 1 +" + tabData.advantage_margin.toFixed(1);
+                    } else if (tabData.advantage === "team2") {
+                        advEl.textContent = "Team 2 +" + tabData.advantage_margin.toFixed(1);
+                    } else {
+                        advEl.textContent = "Even";
+                    }
+
+                    // Re-render body
+                    body.innerHTML = "";
+                    body.appendChild(buildStageBody(tabData));
+                } catch (err) {
+                    const body = card.querySelector(".stage-body");
+                    body.innerHTML = `<div class="loading-indicator" style="color:var(--team1)">Error: ${err.message}</div>`;
+                }
+            });
+
+            tabBar.appendChild(btn);
+        });
+
+        card.appendChild(tabBar);
+    }
+
+    // Body wrapper
+    const body = document.createElement("div");
+    body.className = "stage-body";
+    body.appendChild(buildStageBody(data));
+    card.appendChild(body);
+
+    return card;
+}
+
+/* ---- Build stage body (columns + footer) ---- */
+function buildStageBody(data) {
+    const frag = document.createDocumentFragment();
+
     // Columns
     const cols = document.createElement("div");
     cols.className = "stage-columns";
     cols.appendChild(buildTeamColumn("Team 1", "team1", data.team1));
     cols.appendChild(buildTeamColumn("Team 2", "team2", data.team2));
-    card.appendChild(cols);
+    frag.appendChild(cols);
 
     // Footer — civs with no above-median units
     const t1Above = new Set(data.team1.above_median_units.map(u => u.civ));
@@ -185,14 +277,15 @@ function buildStageCard(data) {
     if (t1Missing.length || t2Missing.length) {
         const footer = document.createElement("div");
         footer.className = "stage-footer";
+        const stageName = (STAGE_LABELS[data.stage] || data.stage).replace(" Matchup", "").toLowerCase();
         const parts = [];
         if (t1Missing.length) parts.push("Team 1: " + t1Missing.join(", "));
         if (t2Missing.length) parts.push("Team 2: " + t2Missing.join(", "));
-        footer.textContent = "No above-median cavalry: " + parts.join(" | ");
-        card.appendChild(footer);
+        footer.textContent = "No above-median " + stageName + ": " + parts.join(" | ");
+        frag.appendChild(footer);
     }
 
-    return card;
+    return frag;
 }
 
 function buildTeamColumn(label, teamClass, teamData) {

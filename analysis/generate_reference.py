@@ -370,11 +370,16 @@ def generate_reference_database(analyzer):
             civ_name TEXT NOT NULL,
             unit_slug TEXT NOT NULL,
             score_type TEXT NOT NULL,
-            score_value REAL NOT NULL
+            score_value REAL NOT NULL,
+            rank INTEGER,
+            median_delta REAL
         );
     """)
     cursor.execute(
         "CREATE INDEX idx_battle_scores_line_age ON battle_scores (line_slug, age);"
+    )
+    cursor.execute(
+        "CREATE INDEX idx_battle_scores_lookup ON battle_scores (line_slug, age, score_type, civ_name);"
     )
 
     # Class names from unit data

@@ -1,1242 +1,136 @@
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>{{ civ_name }} — AoE2 Unit Details</title>
-        <link
-            href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&display=swap"
-            rel="stylesheet"
-        />
-        <style>
-            :root {
-                --gold: #c9a84c;
-                --gold-light: #dbb960;
-                --gold-dark: #a07830;
-                --red-accent: #7a1a1a;
-                --red-deep: #4a0e0e;
-                --bg: #2c1e10;
-                --bg-deep: #1a1008;
-                --card-bg: #3a2a18;
-                --card-border: #5a4228;
-                --text: #e8dcc8;
-                --text-muted: #a89878;
-                --parchment: #d4c4a0;
-                --green: #5a9a3a;
-                --red: #a83030;
-            }
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-            body {
-                font-family: "Inter", sans-serif;
-                background: var(--bg-deep);
-                color: var(--text);
-                min-height: 100vh;
-                line-height: 1.5;
-            }
+{% extends 'base.html' %}
 
-            /* Header */
-            .page-header {
-                padding: 20px 20px 16px;
-                background: linear-gradient(
-                    180deg,
-                    var(--red-deep) 0%,
-                    var(--bg) 100%
-                );
-                border-bottom: 3px solid;
-                border-image: linear-gradient(
-                        90deg,
-                        transparent 5%,
-                        var(--gold-dark) 30%,
-                        var(--gold) 50%,
-                        var(--gold-dark) 70%,
-                        transparent 95%
-                    )
-                    1;
-            }
-            .header-top {
-                max-width: 1100px;
-                margin: 0 auto;
-            }
-            .back-link {
-                color: var(--text-muted);
-                text-decoration: none;
-                font-size: 0.8rem;
-                transition: color 0.2s;
-            }
-            .back-link:hover {
-                color: var(--gold);
-            }
-            .header-main {
-                display: flex;
-                align-items: center;
-                gap: 16px;
-                margin-top: 12px;
-            }
-            .civ-emblem {
-                width: 48px;
-                height: 48px;
-                border-radius: 50%;
-                border: 2px solid var(--gold-dark);
-                object-fit: cover;
-                background: var(--bg);
-            }
-            .header-main h1 {
-                font-family: "Cinzel", serif;
-                font-size: 1.5rem;
-                color: var(--gold);
-            }
+{% block title %}{{ civ_name }} — AoE2 Unit Analyzer{% endblock %}
 
-            /* Age Toggle */
-            .age-toggle {
-                display: flex;
-                gap: 6px;
-                margin-left: auto;
-            }
-            .age-btn {
-                font-family: "Cinzel", serif;
-                font-size: 0.8rem;
-                padding: 6px 16px;
-                border: 1px solid var(--card-border);
-                border-radius: 6px;
-                background: var(--card-bg);
-                color: var(--text-muted);
-                cursor: pointer;
-                transition: all 0.2s;
-            }
-            .age-btn:hover {
-                border-color: var(--gold-dark);
-                color: var(--text);
-            }
-            .age-btn.active {
-                background: var(--gold-dark);
-                color: var(--bg-deep);
-                border-color: var(--gold);
-                font-weight: 600;
-            }
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/civ-detail.css') }}" />
+{% endblock %}
 
-            /* Loading */
-            .loading {
-                text-align: center;
-                padding: 60px 20px;
-                color: var(--text-muted);
-                font-size: 1rem;
-            }
-
-            /* Content */
-            .content {
-                max-width: 1600px;
-                margin: 0 auto;
-                padding: 20px 28px 60px;
-            }
-
-            /* Buildings grid - multi-column */
-            .buildings-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-                gap: 20px;
-                align-items: start;
-            }
-
-            /* Building Group */
-            .building-group {
-                background: rgba(58, 42, 24, 0.3);
-                border: 1px solid var(--card-border);
-                border-radius: 10px;
-                padding: 12px;
-            }
-            .building-header {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                padding-bottom: 8px;
-                margin-bottom: 10px;
-                border-bottom: 1px solid var(--card-border);
-            }
-            .building-icon {
-                width: 28px;
-                height: 28px;
-                border-radius: 4px;
-                object-fit: cover;
-            }
-            .building-header h2 {
-                font-family: "Cinzel", serif;
-                font-size: 0.9rem;
-                color: var(--gold);
-                font-weight: 600;
-            }
-
-            /* Unit Cards Grid */
-            .units-row {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 10px;
-            }
-            .unit-card {
-                width: 120px;
-                padding: 10px 8px;
-                background: var(--card-bg);
-                border: 1px solid var(--card-border);
-                border-radius: 8px;
-                text-align: center;
-                cursor: pointer;
-                transition: all 0.2s;
-                position: relative;
-            }
-            .unit-card:hover {
-                border-color: var(--gold-dark);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-            }
-            .unit-icon {
-                width: 88px;
-                height: 88px;
-                border-radius: 8px;
-                border: 2px solid var(--gold-dark);
-                object-fit: cover;
-                background: var(--bg);
-                margin: 0 auto 6px;
-                display: block;
-            }
-            .unit-name {
-                font-size: 0.75rem;
-                font-weight: 600;
-                color: var(--text);
-                line-height: 1.2;
-            }
-            .civ-star {
-                position: absolute;
-                top: 3px;
-                right: 3px;
-                color: var(--gold);
-                font-size: 0.8rem;
-            }
-
-            /* Modal Overlay */
-            .modal-overlay {
-                display: none;
-                position: fixed;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.7);
-                z-index: 1000;
-                overflow-y: auto;
-                padding: 40px 20px;
-            }
-            .modal-overlay.open {
-                display: flex;
-                justify-content: center;
-                align-items: flex-start;
-            }
-            .modal {
-                background: var(--card-bg);
-                border: 1px solid var(--card-border);
-                border-radius: 12px;
-                max-width: 640px;
-                width: 100%;
-                position: relative;
-                overflow: hidden;
-            }
-            .modal-gold-bar {
-                height: 3px;
-                background: linear-gradient(
-                    90deg,
-                    transparent,
-                    var(--gold-dark),
-                    var(--gold),
-                    var(--gold-dark),
-                    transparent
-                );
-            }
-            .modal-close {
-                position: absolute;
-                top: 12px;
-                right: 14px;
-                background: none;
-                border: none;
-                color: var(--text-muted);
-                font-size: 1.3rem;
-                cursor: pointer;
-                z-index: 1;
-            }
-            .modal-close:hover {
-                color: var(--text);
-            }
-            .modal-body {
-                padding: 28px;
-            }
-
-            /* Modal Header */
-            .modal-unit-header {
-                display: flex;
-                align-items: center;
-                gap: 16px;
-                margin-bottom: 22px;
-            }
-            .modal-unit-icon {
-                width: 64px;
-                height: 64px;
-                border-radius: 8px;
-                border: 2px solid var(--gold-dark);
-                object-fit: cover;
-                background: var(--bg);
-            }
-            .modal-unit-info h3 {
-                font-family: "Cinzel", serif;
-                font-size: 1.4rem;
-                color: var(--gold);
-            }
-            .modal-unit-info .class-badge {
-                font-size: 0.8rem;
-                color: var(--text-muted);
-                background: rgba(201, 168, 76, 0.1);
-                border: 1px solid rgba(201, 168, 76, 0.2);
-                border-radius: 10px;
-                padding: 2px 10px;
-                display: inline-block;
-                margin-top: 4px;
-            }
-
-            /* Stat Breakdown */
-            .stat-section {
-                margin-bottom: 18px;
-            }
-            .stat-section h4 {
-                font-family: "Cinzel", serif;
-                font-size: 0.95rem;
-                color: var(--gold);
-                margin-bottom: 8px;
-                padding-bottom: 4px;
-                border-bottom: 1px solid var(--card-border);
-            }
-            .stat-row {
-                display: flex;
-                align-items: baseline;
-                gap: 8px;
-                padding: 5px 0;
-                font-size: 0.9rem;
-                flex-wrap: wrap;
-                border-bottom: 1px solid rgba(90, 66, 40, 0.15);
-            }
-            .stat-label {
-                width: 110px;
-                flex-shrink: 0;
-                color: var(--text-muted);
-                font-size: 0.85rem;
-            }
-            .stat-final-val {
-                font-weight: 700;
-                font-size: 1rem;
-                color: var(--text);
-                min-width: 36px;
-            }
-            .stat-final-val.improved {
-                color: var(--green);
-            }
-            .stat-chain {
-                font-size: 0.8rem;
-                color: var(--text-muted);
-            }
-            .stat-chain .base-val {
-                color: var(--text-muted);
-            }
-            .stat-chain .step {
-                color: var(--text-muted);
-                opacity: 0.85;
-            }
-            .stat-chain .step.positive {
-                color: var(--green);
-            }
-            .stat-chain .step.negative {
-                color: var(--red);
-            }
-            .stat-chain .step .tech-name {
-                color: var(--text-muted);
-                opacity: 0.7;
-                font-size: 0.75rem;
-            }
-
-            /* Cost row */
-            .cost-row {
-                display: flex;
-                gap: 12px;
-                font-size: 0.8rem;
-                margin-bottom: 4px;
-            }
-            .cost-item {
-                display: flex;
-                align-items: center;
-                gap: 3px;
-            }
-            .cost-food {
-                color: #d44;
-            }
-            .cost-wood {
-                color: #a86;
-            }
-            .cost-gold {
-                color: var(--gold);
-            }
-
-            /* Attack/Armor tables */
-            .class-table {
-                width: 100%;
-                font-size: 0.85rem;
-                border-collapse: collapse;
-            }
-            .class-table th {
-                text-align: left;
-                padding: 4px 8px;
-                color: var(--text-muted);
-                border-bottom: 1px solid var(--card-border);
-                font-weight: 500;
-            }
-            .class-table td {
-                padding: 3px 8px;
-            }
-            .class-table tr:nth-child(even) td {
-                background: rgba(0, 0, 0, 0.1);
-            }
-            .class-table .val {
-                text-align: right;
-                font-weight: 600;
-            }
-
-            /* Special effects */
-            .special-item {
-                font-size: 0.85rem;
-                padding: 5px 0;
-                border-bottom: 1px solid rgba(90, 66, 40, 0.3);
-            }
-            .special-name {
-                color: var(--gold);
-                font-weight: 600;
-            }
-            .special-desc {
-                color: var(--text-muted);
-            }
-
-            /* Two column layout for attacks/armors */
-            .classes-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 16px;
-            }
-
-            /* Responsive */
-            @media (max-width: 768px) {
-                .header-main {
-                    flex-wrap: wrap;
-                }
-                .age-toggle {
-                    margin-left: 0;
-                    width: 100%;
-                    margin-top: 8px;
-                }
-                .age-btn {
-                    flex: 1;
-                    text-align: center;
-                }
-                .buildings-grid {
-                    grid-template-columns: 1fr;
-                }
-                .unit-card {
-                    width: 100px;
-                }
-                .unit-icon {
-                    width: 72px;
-                    height: 72px;
-                }
-                .classes-grid {
-                    grid-template-columns: 1fr;
-                }
-                .modal {
-                    margin: 10px;
-                }
-                .modal-body {
-                    padding: 16px;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <div class="page-header">
-            <div class="header-top">
-                <a href="/civ" class="back-link"
-                    >&#8592; Back to Civilizations</a
+{% block content %}
+<div class="page-header">
+    <div class="header-top">
+        <a href="/civilizations" class="back-link">&#8592; Back to Civilizations</a>
+        <div class="header-main">
+            <img
+                class="civ-emblem"
+                src="https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/{{ civ_name|lower }}.png"
+                alt="{{ civ_name }}"
+            />
+            <h1>{{ civ_name }}</h1>
+            <div class="age-toggle">
+                <button
+                    class="age-btn"
+                    data-age="Castle"
+                    onclick="setAge('Castle')"
                 >
-                <div class="header-main">
-                    <img
-                        class="civ-emblem"
-                        src="https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/{{ civ_name|lower }}.png"
-                        alt="{{ civ_name }}"
-                    />
-                    <h1>{{ civ_name }}</h1>
-                    <div class="age-toggle">
-                        <button
-                            class="age-btn"
-                            data-age="Castle"
-                            onclick="setAge('Castle')"
-                        >
-                            <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 14 14"
-                                fill="none"
-                                style="vertical-align: -2px; margin-right: 2px"
-                            >
-                                <rect
-                                    x="4"
-                                    y="2"
-                                    width="6"
-                                    height="10"
-                                    rx="1"
-                                    stroke="currentColor"
-                                    stroke-width="1.2"
-                                    fill="none"
-                                />
-                                <rect
-                                    x="1"
-                                    y="5"
-                                    width="3"
-                                    height="7"
-                                    rx="0.5"
-                                    stroke="currentColor"
-                                    stroke-width="1"
-                                    fill="none"
-                                />
-                                <rect
-                                    x="10"
-                                    y="5"
-                                    width="3"
-                                    height="7"
-                                    rx="0.5"
-                                    stroke="currentColor"
-                                    stroke-width="1"
-                                    fill="none"
-                                />
-                            </svg>
-                            Castle
-                        </button>
-                        <button
-                            class="age-btn active"
-                            data-age="Imperial"
-                            onclick="setAge('Imperial')"
-                        >
-                            <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 14 14"
-                                fill="none"
-                                style="vertical-align: -2px; margin-right: 2px"
-                            >
-                                <path
-                                    d="M7 1L1 5v2h12V5L7 1z"
-                                    stroke="currentColor"
-                                    stroke-width="1.2"
-                                    fill="none"
-                                />
-                                <rect
-                                    x="2"
-                                    y="7"
-                                    width="10"
-                                    height="5"
-                                    stroke="currentColor"
-                                    stroke-width="1"
-                                    fill="none"
-                                />
-                                <rect
-                                    x="5"
-                                    y="9"
-                                    width="4"
-                                    height="3"
-                                    stroke="currentColor"
-                                    stroke-width="0.8"
-                                    fill="none"
-                                />
-                            </svg>
-                            Imperial
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="content">
-            <div class="loading" id="loading">Loading unit data...</div>
-            <div id="units-container"></div>
-        </div>
-
-        <!-- Modal -->
-        <div
-            class="modal-overlay"
-            id="modal-overlay"
-            onclick="if (event.target === this) closeModal();"
-        >
-            <div class="modal">
-                <div class="modal-gold-bar"></div>
-                <button class="modal-close" onclick="closeModal()">
-                    &times;
+                    <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 14 14"
+                        fill="none"
+                        style="vertical-align: -2px; margin-right: 2px"
+                    >
+                        <rect
+                            x="4"
+                            y="2"
+                            width="6"
+                            height="10"
+                            rx="1"
+                            stroke="currentColor"
+                            stroke-width="1.2"
+                            fill="none"
+                        />
+                        <rect
+                            x="1"
+                            y="5"
+                            width="3"
+                            height="7"
+                            rx="0.5"
+                            stroke="currentColor"
+                            stroke-width="1"
+                            fill="none"
+                        />
+                        <rect
+                            x="10"
+                            y="5"
+                            width="3"
+                            height="7"
+                            rx="0.5"
+                            stroke="currentColor"
+                            stroke-width="1"
+                            fill="none"
+                        />
+                    </svg>
+                    Castle
                 </button>
-                <div class="modal-body" id="modal-body"></div>
+                <button
+                    class="age-btn active"
+                    data-age="Imperial"
+                    onclick="setAge('Imperial')"
+                >
+                    <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 14 14"
+                        fill="none"
+                        style="vertical-align: -2px; margin-right: 2px"
+                    >
+                        <path
+                            d="M7 1L1 5v2h12V5L7 1z"
+                            stroke="currentColor"
+                            stroke-width="1.2"
+                            fill="none"
+                        />
+                        <rect
+                            x="2"
+                            y="7"
+                            width="10"
+                            height="5"
+                            stroke="currentColor"
+                            stroke-width="1"
+                            fill="none"
+                        />
+                        <rect
+                            x="5"
+                            y="9"
+                            width="4"
+                            height="3"
+                            stroke="currentColor"
+                            stroke-width="0.8"
+                            fill="none"
+                        />
+                    </svg>
+                    Imperial
+                </button>
             </div>
         </div>
+    </div>
+</div>
 
-        <script>
-            const CIV_NAME = "{{ civ_name }}";
-            const ICON_BASE =
-                "https://raw.githubusercontent.com/qwyt/aoe2-icon-resources/master/objects/";
-            const ICON_BASE_FALLBACK = "https://aoe2techtree.net/img/Units/";
+<div class="content">
+    <div class="loading" id="loading">Loading unit data...</div>
+    <div id="units-container"></div>
+</div>
 
-            // Unit name → game icon ID (name-based for accuracy across civs)
-            const NAME_TO_ICON = {
-                // Infantry
-                Spearman: 93,
-                Pikeman: 358,
-                Halberdier: 359,
-                "Man-at-Arms": 75,
-                "Long Swordsman": 77,
-                "Two-Handed Swordsman": 473,
-                Champion: 567,
-                Legionary: 1793,
-                // Eagle line
-                "Eagle Scout": 751,
-                "Eagle Warrior": 753,
-                "Elite Eagle Warrior": 752,
-                // Archers
-                Archer: 4,
-                Crossbowman: 24,
-                Arbalester: 492,
-                Skirmisher: 7,
-                "Elite Skirmisher": 6,
-                "Cavalry Archer": 39,
-                "Heavy Cavalry Archer": 474,
-                "Hand Cannoneer": 5,
-                // Cavalry
-                "Scout Cavalry": 448,
-                "Light Cavalry": 546,
-                Hussar: 441,
-                "Winged Hussar": 1707,
-                Knight: 38,
-                Cavalier: 283,
-                Paladin: 569,
-                Savar: 569,
-                "Camel Rider": 329,
-                "Heavy Camel Rider": 330,
-                "Steppe Lancer": 1370,
-                "Elite Steppe Lancer": 1372,
-                "Battle Elephant": 1132,
-                "Elite Battle Elephant": 1134,
-                "Elephant Archer": 873,
-                "Elite Elephant Archer": 875,
-                "Armored Elephant": 1744,
-                "Siege Elephant": 1746,
-                // Siege
-                "Battering Ram": 1258,
-                "Capped Ram": 422,
-                "Siege Ram": 548,
-                Mangonel: 280,
-                Onager: 550,
-                "Siege Onager": 588,
-                "Rocket Cart": 1904,
-                "Heavy Rocket Cart": 1907,
-                Scorpion: 279,
-                "Heavy Scorpion": 542,
-                "Bombard Cannon": 36,
-                Trebuchet: 331,
-                // Unique units - Age of Kings
-                Longbowman: 8,
-                "Elite Longbowman": 8,
-                Cataphract: 40,
-                "Elite Cataphract": 40,
-                "Woad Raider": 232,
-                "Elite Woad Raider": 232,
-                "Chu Ko Nu": 73,
-                "Elite Chu Ko Nu": 73,
-                "Throwing Axeman": 281,
-                "Elite Throwing Axeman": 281,
-                Huskarl: 41,
-                "Elite Huskarl": 41,
-                Samurai: 291,
-                "Elite Samurai": 291,
-                Mangudai: 11,
-                "Elite Mangudai": 11,
-                "Battle Elephant": 1132,
-                "Elite Battle Elephant": 1134,
-                "Elephant Archer": 873,
-                "Elite Elephant Archer": 875,
-                "Armored Elephant": 1744,
-                "Siege Elephant": 1746,
-                "War Elephant": 239,
-                "Elite War Elephant": 239,
-                Mameluke: 282,
-                "Elite Mameluke": 282,
-                "Teutonic Knight": 25,
-                "Elite Teutonic Knight": 25,
-                Janissary: 46,
-                "Elite Janissary": 46,
-                Berserk: 692,
-                "Elite Berserk": 692,
-                "Fire Lancer": 1901,
-                "Elite Fire Lancer": 1903,
-                // Unique units - The Conquerors
-                "Jaguar Warrior": 725,
-                "Elite Jaguar Warrior": 725,
-                "Plumed Archer": 763,
-                "Elite Plumed Archer": 763,
-                Tarkan: 755,
-                "Elite Tarkan": 755,
-                "War Wagon": 827,
-                "Elite War Wagon": 827,
-                Conquistador: 771,
-                "Elite Conquistador": 771,
-                // Unique units - The Forgotten
-                Kamayuk: 879,
-                "Elite Kamayuk": 879,
-                "Genoese Crossbowman": 866,
-                "Elite Genoese Crossbowman": 866,
-                "Magyar Huszar": 869,
-                "Elite Magyar Huszar": 869,
-                Boyar: 876,
-                "Elite Boyar": 876,
-                Condottiero: 882,
-                // Regional units - The Forgotten
-                Slinger: 185,
-                // Regional units - Rise of the Rajas
-                "Imperial Skirmisher": 1155,
-                // Regional units - African Kingdoms
-                Genitour: 1010,
-                "Elite Genitour": 1012,
-                // Unique units - African Kingdoms
-                "Camel Archer": 1007,
-                "Elite Camel Archer": 1009,
-                "Shotel Warrior": 1016,
-                "Elite Shotel Warrior": 1018,
-                Gbeto: 1013,
-                "Elite Gbeto": 1015,
-                "Organ Gun": 1001,
-                "Elite Organ Gun": 1003,
-                // Unique units - Rise of the Rajas
-                Arambai: 1126,
-                "Elite Arambai": 1128,
-                "Ballista Elephant": 1120,
-                "Elite Ballista Elephant": 1122,
-                "Karambit Warrior": 1123,
-                "Elite Karambit Warrior": 1125,
-                "Rattan Archer": 1129,
-                "Elite Rattan Archer": 1131,
-                // Unique units - Last Khans
-                Konnik: 1225,
-                "Elite Konnik": 1227,
-                Keshik: 1228,
-                "Elite Keshik": 1230,
-                Kipchak: 1231,
-                "Elite Kipchak": 1233,
-                Leitis: 1234,
-                "Elite Leitis": 1236,
-                // Unique units - Lords of the West / Dawn of the Dukes
-                Coustillier: 1655,
-                "Elite Coustillier": 1657,
-                Serjeant: 1658,
-                "Elite Serjeant": 1659,
-                "Flemish Militia": 1699,
-                Obuch: 1701,
-                "Elite Obuch": 1703,
-                "Hussite Wagon": 1704,
-                "Elite Hussite Wagon": 1706,
-                // Unique units - Dynasties of India
-                "Ratha (Melee)": 1759,
-                "Elite Ratha (Melee)": 1761,
-                "Ratha (Ranged)": 1759,
-                "Elite Ratha (Ranged)": 1761,
-                "Urumi Swordsman": 1735,
-                "Elite Urumi Swordsman": 1737,
-                "Shrivamsha Rider": 1751,
-                "Elite Shrivamsha Rider": 1753,
-                "Chakram Thrower": 1741,
-                "Elite Chakram Thrower": 1743,
-                Ghulam: 1747,
-                "Elite Ghulam": 1749,
-                "Imperial Camel Rider": 207,
-                // Unique units - Return of Rome
-                Centurion: 1790,
-                "Elite Centurion": 1792,
-                // Unique units - The Mountain Royals
-                "Composite Bowman": 1800,
-                "Elite Composite Bowman": 1802,
-                "Warrior Priest": 1811,
-                Monaspa: 1803,
-                "Elite Monaspa": 1805,
-                // Three Kingdoms
-                "Iron Pagoda": 1908,
-                "Elite Iron Pagoda": 1910,
-                Grenadier: 1911,
-                "Liao Dao": 1920,
-                "Elite Liao Dao": 1922,
-                "Mounted Trebuchet": 1923,
-                "White Feather Crossbowman": 1959,
-                "Elite White Feather Crossbowman": 1961,
-                "War Chariot": 279,
-                "Elite War Chariot": 542,
-                "Tiger Cavalry": 1949,
-                "Elite Tiger Cavalry": 1951,
-                "Xianbei Raider": 1952,
-                "Fire Archer": 1968,
-                "Elite Fire Archer": 1970,
-                "Jian Swordsman": 1974,
-                "Hei-Kuang Cavalry": 1944,
-                "Heavy Hei-Kuang Cavalry": 1946,
-            };
+<!-- Modal -->
+<div
+    class="modal-overlay"
+    id="modal-overlay"
+    onclick="if (event.target === this) closeModal();"
+>
+    <div class="modal">
+        <div class="modal-gold-bar"></div>
+        <button class="modal-close" onclick="closeModal()">
+            &times;
+        </button>
+        <div class="modal-body" id="modal-body"></div>
+    </div>
+</div>
+{% endblock %}
 
-            const PLACEHOLDER_ICON =
-                "data:image/svg+xml," +
-                encodeURIComponent(
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect x="1" y="1" width="38" height="38" rx="6" stroke="#5a4228" stroke-width="2" fill="#2c1e10"/></svg>',
-                );
-
-            function iconUrl(id) {
-                return ICON_BASE + id + ".png";
-            }
-
-            function unitIconUrl(name) {
-                const id = NAME_TO_ICON[name];
-                if (!id) return "";
-                return iconUrl(id);
-            }
-
-            // Building config
-            const BUILDING_ORDER = [
-                "Barracks",
-                "Archery Range",
-                "Stable",
-                "Castle",
-                "Siege Workshop",
-            ];
-            const BUILDING_ICONS = {
-                Barracks: 12,
-                "Archery Range": 87,
-                Stable: 101,
-                "Siege Workshop": 49,
-                Castle: 82,
-            };
-            const CLASS_TO_BUILDING = {
-                Infantry: "Barracks",
-                Archer: "Archery Range",
-                "Hand Cannoneer": "Archery Range",
-                "Cavalry Archer": "Archery Range",
-                Cavalry: "Stable",
-                "Siege Weapon": "Siege Workshop",
-                Ballista: "Siege Workshop",
-                "Unpacked Siege Unit": "Castle",
-            };
-
-            // SVG stat icons (tiny inline)
-            const ICONS = {
-                hp: '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 9L1.5 5.5C0 4 0 2 1.5 1.5S4 1 5 3C6 1 7.5 0 8.5 1.5S10 4 8.5 5.5L5 9z" fill="#c44"/></svg>',
-                atk: '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 8L8 2M6 1h3v3" stroke="#c9a84c" stroke-width="1.2" fill="none"/></svg>',
-                armor: '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 1L1 3v3c0 2 2 3 4 3s4-1 4-3V3L5 1z" stroke="#8a8" stroke-width="1" fill="none"/></svg>',
-                range: '<svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="3.5" stroke="#8ac" stroke-width="1" fill="none"/><circle cx="5" cy="5" r="1" fill="#8ac"/></svg>',
-                speed: '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M3 2L7 5L3 8" stroke="#a8a" stroke-width="1.2" fill="none"/></svg>',
-            };
-
-            let civData = null;
-            let currentAge = "Imperial";
-
-            async function loadData() {
-                try {
-                    const resp = await fetch(`/api/ref/civ/${CIV_NAME}`);
-                    if (!resp.ok) throw new Error("Failed to load");
-                    civData = await resp.json();
-                    document.getElementById("loading").style.display = "none";
-                    render();
-                } catch (e) {
-                    document.getElementById("loading").textContent =
-                        "Error loading data: " + e.message;
-                }
-            }
-
-            function setAge(age) {
-                currentAge = age;
-                document
-                    .querySelectorAll(".age-btn")
-                    .forEach((b) =>
-                        b.classList.toggle("active", b.dataset.age === age),
-                    );
-                render();
-            }
-
-            function hasCivBonus(u) {
-                // Check if unit has civ-specific bonuses (unique tech, civ bonus, team bonus)
-                if (!u.stat_chain) return false;
-                return u.stat_chain.some(
-                    (s) =>
-                        s.tech_type === "civ_bonus" ||
-                        s.tech_type === "unique_tech" ||
-                        s.tech_type === "team_bonus",
-                );
-            }
-
-            function render() {
-                const units = civData.units_by_age[currentAge] || [];
-                const container = document.getElementById("units-container");
-                const groups = {};
-                const UNIQUE_BUILDING = {
-                    "Jian Swordsman": "Barracks",
-                    "Xianbei Raider": "Archery Range",
-                    Grenadier: "Archery Range",
-                    "Warrior Priest": "Barracks",
-                    "Shrivamsha Rider": "Stable",
-                    "Elite Shrivamsha Rider": "Stable",
-                    "Mounted Trebuchet": "Siege Workshop",
-                };
-                for (const u of units) {
-                    let building =
-                        CLASS_TO_BUILDING[u.unit_class_name] || "Castle";
-                    if (u.unit_type === "unique")
-                        building = UNIQUE_BUILDING[u.unit_name] || "Castle";
-                    if (!groups[building]) groups[building] = [];
-                    groups[building].push(u);
-                }
-                let html = '<div class="buildings-grid">';
-                for (const bldg of BUILDING_ORDER) {
-                    const bUnits = groups[bldg];
-                    if (!bUnits || bUnits.length === 0) continue;
-                    const bIconId = BUILDING_ICONS[bldg];
-                    html += `<div class="building-group">
-                <div class="building-header">
-                    <img class="building-icon" src="${iconUrl(bIconId)}" alt="${bldg}" onerror="this.style.display='none'" />
-                    <h2>${bldg}</h2>
-                </div>
-                <div class="units-row">`;
-                    for (const u of bUnits) html += renderUnitCard(u);
-                    html += `</div></div>`;
-                }
-                html += "</div>";
-                container.innerHTML = html;
-            }
-
-            function getMainAttack(u) {
-                const fa = u.final_attacks || {};
-                return u.is_ranged
-                    ? (fa["Base Pierce"] ?? u.final_stats.attack ?? 0)
-                    : (fa["Base Melee"] ?? u.final_stats.attack ?? 0);
-            }
-
-            function renderUnitCard(u) {
-                const iUrl = unitIconUrl(u.unit_name);
-                const civBonus = hasCivBonus(u);
-                return `<div class="unit-card" onclick='openModal(${JSON.stringify(u.unit_slug)})'>
-            ${civBonus ? '<span class="civ-star" title="Has civ bonus">&#9733;</span>' : ""}
-            <img class="unit-icon" src="${iUrl}" alt="${u.unit_name}" onerror="if(!this.dataset.tried){this.dataset.tried='1';const id=NAME_TO_ICON[this.alt];if(id)this.src=ICON_BASE_FALLBACK+id+'.png';else this.src='${PLACEHOLDER_ICON}'}else{this.src='${PLACEHOLDER_ICON}'}"/>
-            <div class="unit-name">${u.unit_name}</div>
-        </div>`;
-            }
-
-            // Get the primary attack class key for a unit (melee or pierce)
-            function getPrimaryAtkClass(u) {
-                return u.is_ranged ? "3" : "4"; // 3=Base Pierce, 4=Base Melee
-            }
-
-            function getMainAtkFromJson(attacksJson, primaryClass) {
-                if (!attacksJson) return 0;
-                const parsed =
-                    typeof attacksJson === "string"
-                        ? JSON.parse(attacksJson)
-                        : attacksJson;
-                return (
-                    parsed[primaryClass] ??
-                    Math.max(...Object.values(parsed), 0)
-                );
-            }
-
-            function openModal(slug) {
-                const units = civData.units_by_age[currentAge] || [];
-                const u = units.find((x) => x.unit_slug === slug);
-                if (!u) return;
-
-                const iUrl = unitIconUrl(u.unit_name);
-                const bs = u.base_stats;
-                const fs = u.final_stats;
-                const primaryAtkClass = getPrimaryAtkClass(u);
-
-                let html = `<div class="modal-unit-header">
-            <img class="modal-unit-icon" src="${iUrl}" alt="${u.unit_name}" onerror="if(!this.dataset.tried){this.dataset.tried='1';const id=NAME_TO_ICON[this.alt];if(id)this.src=ICON_BASE_FALLBACK+id+'.png';else this.style.display='none'}else{this.style.display='none'}" />
-            <div class="modal-unit-info">
-                <h3>${u.unit_name}</h3>
-                <span class="class-badge">${u.unit_class_name}${u.unit_type === "unique" ? " — Unique" : ""}</span>
-            </div>
-        </div>`;
-
-                // Get base/final main attack from attacks data
-                const baseMainAtk = u.is_ranged
-                    ? (u.base_attacks["Base Pierce"] ?? bs.attack ?? 0)
-                    : (u.base_attacks["Base Melee"] ?? bs.attack ?? 0);
-                const finalMainAtk = getMainAttack(u);
-
-                // Stat breakdown: "Final (base +X (tech) +Y (tech) ...)"
-                html += `<div class="stat-section"><h4>Stats Breakdown</h4>`;
-                const statDefs = [
-                    { key: "hp", label: "HP", chainCol: "hp" },
-                    {
-                        key: "attack",
-                        label: "Attack",
-                        chainCol: "attack",
-                        baseOverride: baseMainAtk,
-                        finalOverride: finalMainAtk,
-                        useAtkJson: true,
-                    },
-                    {
-                        key: "melee_armor",
-                        label: "Melee Armor",
-                        chainCol: "melee_armor",
-                    },
-                    {
-                        key: "pierce_armor",
-                        label: "Pierce Armor",
-                        chainCol: "pierce_armor",
-                    },
-                    { key: "range", label: "Range", chainCol: "range_val" },
-                    { key: "speed", label: "Speed", chainCol: "speed" },
-                    {
-                        key: "reload_time",
-                        label: "Reload Time",
-                        chainCol: "reload_time",
-                        lowerIsBetter: true,
-                    },
-                ];
-                for (const sd of statDefs) {
-                    const baseVal = sd.baseOverride ?? bs[sd.key] ?? 0;
-                    const finalVal = sd.finalOverride ?? fs[sd.key] ?? 0;
-                    if (
-                        baseVal === 0 &&
-                        finalVal === 0 &&
-                        sd.key !== "melee_armor" &&
-                        sd.key !== "pierce_armor"
-                    )
-                        continue;
-                    const changed = Math.abs(finalVal - baseVal) > 0.01;
-                    const chainStr = buildStatChain(
-                        u.stat_chain,
-                        sd.chainCol,
-                        sd.key,
-                        sd.useAtkJson ? primaryAtkClass : null,
-                        sd.lowerIsBetter,
-                    );
-                    html += `<div class="stat-row">
-                <span class="stat-label">${sd.label}</span>
-                <span class="stat-final-val${changed ? " improved" : ""}">${fmtStat(finalVal)}</span>
-                ${chainStr ? `<span class="stat-chain">(${chainStr})</span>` : ""}
-            </div>`;
-                }
-                html += `</div>`;
-
-                // Cost with chain
-                html += `<div class="stat-section"><h4>Cost</h4>`;
-                const costDefs = [
-                    { key: "cost_food", label: "Food", cls: "cost-food" },
-                    { key: "cost_wood", label: "Wood", cls: "cost-wood" },
-                    { key: "cost_gold", label: "Gold", cls: "cost-gold" },
-                ];
-                for (const cd of costDefs) {
-                    const baseVal = bs[cd.key] ?? 0;
-                    const finalVal = fs[cd.key] ?? 0;
-                    if (baseVal === 0 && finalVal === 0) continue;
-                    const costChain = buildStatChain(
-                        u.stat_chain,
-                        cd.key,
-                        cd.key,
-                        null,
-                        true,
-                    );
-                    const changed = Math.abs(finalVal - baseVal) > 0.01;
-                    html += `<div class="stat-row">
-                <span class="stat-label">${cd.label}</span>
-                <span class="stat-final-val${changed ? " improved" : ""}">${Math.round(finalVal)}</span>
-                ${costChain ? `<span class="stat-chain">(${costChain})</span>` : ""}
-            </div>`;
-                }
-                // Train time with chain
-                const baseTT = bs.train_time ?? 0;
-                const finalTT = fs.train_time ?? 0;
-                if (baseTT > 0 || finalTT > 0) {
-                    const ttChain = buildStatChain(
-                        u.stat_chain,
-                        "train_time",
-                        "train_time",
-                        null,
-                        true,
-                    );
-                    const ttChanged = Math.abs(finalTT - baseTT) > 0.01;
-                    html += `<div class="stat-row">
-                <span class="stat-label">Train Time</span>
-                <span class="stat-final-val${ttChanged ? " improved" : ""}">${fmtStat(finalTT)}s</span>
-                ${ttChain ? `<span class="stat-chain">(${ttChain})</span>` : ""}
-            </div>`;
-                }
-                html += `</div>`;
-
-                // Attack & Armor classes side by side
-                html += `<div class="classes-grid">`;
-                html += renderClassTable(
-                    "Attack Classes",
-                    u.final_attacks,
-                    u.base_attacks,
-                );
-                html += renderClassTable(
-                    "Armor Classes",
-                    u.final_armors,
-                    u.base_armors,
-                );
-                html += `</div>`;
-
-                // Special effects
-                if (u.special_effects && u.special_effects.length > 0) {
-                    html += `<div class="stat-section"><h4>Special Properties</h4>`;
-                    for (const se of u.special_effects) {
-                        html += `<div class="special-item">
-                    <span class="special-name">${se.property_name}</span>: ${se.property_value}
-                    <span class="special-desc">${se.description ? " — " + se.description : ""}</span>
-                </div>`;
-                    }
-                    html += `</div>`;
-                }
-
-                // Projectiles
-                if (u.projectiles && u.projectiles.length > 0) {
-                    html += `<div class="stat-section"><h4>Projectiles</h4>`;
-                    for (const p of u.projectiles) {
-                        const atkStr = p.attacks_json
-                            ? Object.entries(p.attacks_json)
-                                  .map(([k, v]) => `${k}: ${v}`)
-                                  .join(", ")
-                            : "";
-                        html += `<div class="special-item">
-                    <span class="special-name">${p.projectile_type}</span>
-                    — Count: ${p.projectile_count}, Speed: ${p.projectile_speed}
-                    ${p.blast_radius ? `, Blast: ${p.blast_radius}` : ""}
-                    ${p.is_siege_projectile ? " (Siege)" : ""}
-                    ${atkStr ? `<br><span class="special-desc">Attacks: ${atkStr}</span>` : ""}
-                </div>`;
-                    }
-                    html += `</div>`;
-                }
-
-                // Techs applied
-                html += `<div class="stat-section"><h4>Technologies Applied</h4>`;
-                for (const t of u.techs_applied) {
-                    const bldg =
-                        t.building && t.building !== "N/A"
-                            ? `<span style="color:var(--text-muted)">[${t.building}]</span> `
-                            : "";
-                    html += `<div style="font-size:0.8rem;padding:3px 0">
-                ${bldg}<span style="color:var(--parchment)">${t.tech_name}</span>
-                <span class="special-desc"> — ${t.effect_description}</span>
-            </div>`;
-                }
-                html += `</div>`;
-
-                document.getElementById("modal-body").innerHTML = html;
-                document.getElementById("modal-overlay").classList.add("open");
-                document.body.style.overflow = "hidden";
-            }
-
-            function closeModal() {
-                document
-                    .getElementById("modal-overlay")
-                    .classList.remove("open");
-                document.body.style.overflow = "";
-            }
-
-            // Build inline stat chain: "base +X (Tech1) +Y (Tech2) ..."
-            function buildStatChain(
-                chain,
-                chainCol,
-                statKey,
-                atkClass,
-                lowerIsBetter,
-            ) {
-                if (!chain || chain.length < 1) return "";
-                // Get base value
-                const first = chain[0];
-                let baseVal;
-                if (atkClass) {
-                    baseVal = getMainAtkFromJson(first.attacks_json, atkClass);
-                } else {
-                    baseVal = first[chainCol] ?? 0;
-                }
-
-                let parts = [fmtStat(baseVal)];
-                let anyChange = false;
-
-                for (let i = 1; i < chain.length; i++) {
-                    const prev = chain[i - 1];
-                    const curr = chain[i];
-                    let prevVal, currVal;
-
-                    if (atkClass) {
-                        prevVal = getMainAtkFromJson(
-                            prev.attacks_json,
-                            atkClass,
-                        );
-                        currVal = getMainAtkFromJson(
-                            curr.attacks_json,
-                            atkClass,
-                        );
-                    } else {
-                        prevVal = prev[chainCol] ?? 0;
-                        currVal = curr[chainCol] ?? 0;
-                    }
-
-                    const diff = currVal - prevVal;
-                    if (Math.abs(diff) < 0.01) continue;
-                    anyChange = true;
-                    const sign = diff > 0 ? "+" : "";
-                    // For lowerIsBetter stats (reload, cost, train time), decrease is good
-                    const isGood = lowerIsBetter ? diff < 0 : diff > 0;
-                    const cls = isGood ? "positive" : "negative";
-                    const techName = curr.tech_name || "";
-                    const shortName = techName
-                        .replace(/^C-Bonus, /, "")
-                        .replace(/^Building Work Rate.*/, "Conscription");
-                    parts.push(
-                        `<span class="step ${cls}">${sign}${fmtStat(diff)}</span> <span class="step"><span class="tech-name">${shortName}</span></span>`,
-                    );
-                }
-                if (!anyChange) return "";
-                return parts.join(" ");
-            }
-
-            function fmtStat(v) {
-                if (v === null || v === undefined) return "0";
-                const n = Number(v);
-                return Number.isInteger(n)
-                    ? n.toString()
-                    : n.toFixed(2).replace(/\.?0+$/, "");
-            }
-
-            function renderClassTable(title, finalClasses, baseClasses) {
-                const entries = Object.entries(finalClasses || {}).filter(
-                    ([k, v]) =>
-                        v !== 0 || (baseClasses && baseClasses[k] !== 0),
-                );
-                if (entries.length === 0) return "";
-                let html = `<div class="stat-section"><h4>${title}</h4>
-            <table class="class-table"><tr><th>Class</th><th style="text-align:right">Value</th></tr>`;
-                for (const [cls, val] of entries.sort(
-                    (a, b) => Math.abs(b[1]) - Math.abs(a[1]),
-                )) {
-                    html += `<tr><td>${cls}</td><td class="val">${val}</td></tr>`;
-                }
-                html += `</table></div>`;
-                return html;
-            }
-
-            document.addEventListener("keydown", (e) => {
-                if (e.key === "Escape") closeModal();
-            });
-            loadData();
-        </script>
-    </body>
-</html>
+{% block page_js %}
+<script>
+    const CIV_NAME = "{{ civ_name }}";
+</script>
+<script src="{{ url_for('static', filename='js/civ-detail.js') }}"></script>
+{% endblock %}

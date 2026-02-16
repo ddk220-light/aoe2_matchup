@@ -5,9 +5,7 @@ Reads all unit data from aoe2_reference.db (ref_units, ref_special_effects, ref_
 and creates the main DB with civilizations, ages, units, and unit_stats tables.
 
 Usage:
-    python3 -m database_creation.generate_main_db
-    # or from project root:
-    python3 database_creation/generate_main_db.py
+    python3 -m analysis.generate_main_db
 """
 
 import json
@@ -24,7 +22,7 @@ try:
     from .config import COMBAT_PROPERTIES, PAIRED_UNITS
 except ImportError:
     sys.path.insert(0, str(Path(__file__).parent.parent))
-    from database_creation.config import COMBAT_PROPERTIES, PAIRED_UNITS
+    from analysis.config import COMBAT_PROPERTIES, PAIRED_UNITS
 
 # Age mapping: ref DB uses "Castle"/"Imperial" strings, main DB uses integer IDs
 AGE_MAP = {
@@ -234,7 +232,7 @@ def generate_main_database():
 
     if not REF_DB_PATH.exists():
         print(f"ERROR: Reference database not found at {REF_DB_PATH}")
-        print("Run 'python3 -m database_creation.run' first to generate it.")
+        print("Run 'python3 -m extraction.run' and 'python3 -m analysis.generate_reference' first.")
         sys.exit(1)
 
     # Connect to reference DB
@@ -500,7 +498,7 @@ def generate_main_database():
     print(f"  Inserted {len(civ_id_map)} civilizations")
 
     # --- Populate armor_classes from reference DB extracted data ---
-    armor_classes_file = Path(__file__).parent / "extracted_data" / "armor_classes.json"
+    armor_classes_file = Path(__file__).parent.parent / "extraction" / "extracted_data" / "armor_classes.json"
     if armor_classes_file.exists():
         armor_classes = json.load(open(armor_classes_file))
         for ac in armor_classes:

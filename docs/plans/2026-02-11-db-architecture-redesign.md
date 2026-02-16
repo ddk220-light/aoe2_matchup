@@ -151,7 +151,7 @@ webapp/
 
 ## Verification
 
-1. `python3 -m database_creation.generate_reference` — regenerate with new columns
+1. `python3 -m analysis.generate_reference` — regenerate with new columns
 2. Run validation: compare militia combat properties new `ref_units` vs old `unit_stats` for all 50 civs
 3. `python3 webapp/compute_battle_scores.py --roles-only` — verify militia scores unchanged
 4. Start server, load militia rankings — verify identical results

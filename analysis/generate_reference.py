@@ -2,9 +2,7 @@
 """Generate the AoE2 reference/audit database with detailed stat breakdowns.
 
 Usage:
-    python3 -m database_creation.generate_reference
-    # or from project root:
-    python3 database_creation/generate_reference.py
+    python3 -m analysis.generate_reference
 """
 
 import json

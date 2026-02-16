@@ -103,7 +103,7 @@ def main():
     base_dir = os.path.join(os.path.dirname(__file__), '..')
 
     # --- Load extracted base stats ---
-    with open(os.path.join(base_dir, 'database_creation', 'extracted_data', 'units.json')) as f:
+    with open(os.path.join(base_dir, 'extraction', 'extracted_data', 'units.json')) as f:
         extracted_units = json.load(f)
 
     # --- Load DB combat properties + upgrade costs ---

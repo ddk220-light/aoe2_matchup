@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Single entry point: extract data from dat file and generate reference database.
+"""Extract data from the game's dat file into JSON files.
 
 Usage:
-    python3 -m database_creation.run
+    python3 -m extraction.run
 """
 
 import json
@@ -116,29 +116,14 @@ def main():
 
     if not dat_path.exists():
         print(f"ERROR: dat file not found at {dat_path}")
-        print("Copy empires2_x2_p1.dat into the database_creation/ folder.")
+        print("Copy empires2_x2_p1.dat into the extraction/ folder.")
         sys.exit(1)
 
-    # Step 1: Extract from dat file -> JSON
     print("=" * 60)
-    print("Step 1: Extracting data from dat file...")
+    print("Extracting data from dat file...")
     print("=" * 60)
     extract_all(dat_path, output_dir)
-
-    # Step 2: Generate reference database from JSON
-    print("\n" + "=" * 60)
-    print("Step 2: Generating reference database...")
-    print("=" * 60)
-
-    from .generate_reference import generate_reference_database
-    from .unit_analyzer import UnitAnalyzer
-
-    analyzer = UnitAnalyzer()
-    generate_reference_database(analyzer)
-
-    from .config import REF_DB_PATH
-
-    print(f"\nDone! Reference database at: {REF_DB_PATH}")
+    print("\nDone! JSON files written to extraction/extracted_data/")
 
 
 if __name__ == "__main__":

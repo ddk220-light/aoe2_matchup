@@ -30,7 +30,7 @@ When given a unit name and civilization, produce a complete analysis covering:
 - Also check `ref_special_effects` table if it exists for special effect data.
 
 ### Step 3: Check Hardcoded Configuration
-- Read `database_creation/generate_main_db.py` (or the relevant config file) to find:
+- Read `analysis/config.py` to find:
   - `UNIQUE_COMBAT_PROPERTIES` - hardcoded per-unit special effects
   - `CIV_COMBAT_PROPERTIES` - hardcoded per-civ-unit special effects
   - `COMBAT_PROPERTIES` - general hardcoded combat properties
@@ -38,13 +38,13 @@ When given a unit name and civilization, produce a complete analysis covering:
 - Common hardcoded properties: `ignores_melee_armor`, `ignores_pierce_armor`, `bleed_dps`, `bleed_duration`, `block_first_melee`, `attack_bonus_per_kill`, `hp_transform_threshold`, `dismount_unit_id`
 
 ### Step 4: Check Data-Driven Extracted Properties
-- Read `database_creation/generate_main_db.py` to find `get_extracted_combat_properties()` function.
+- Read `analysis/combat_properties.py` to find `get_extracted_combat_properties()` function.
 - Data-driven properties (from dat extraction): `min_attack_range`, `projectile_speed`, `is_siege_projectile`, `splash_radius`, `extra_projectiles`, `extra_projectile_attacks_json`, `charge_projectile_count`, `charge_projectile_attacks_json`, `charge_projectile_speed`, `trample_percent`, `trample_radius`, `dodge_shield_max`, `dodge_shield_recharge`, `splash_on_hit_radius`, `first_attack_extra_projectiles`, `bonus_damage_reduction`, `hp_regen`
-- Check `extracted_data/units.json` or `database_creation/output/units.json` for the raw extracted data for this unit ID.
+- Check `extraction/extracted_data/units.json` for the raw extracted data for this unit ID.
 
 ### Step 5: Check Tech Applications
 - Look at the `civ_upgrades` and tech tree data in the database or config to determine which techs are applied.
-- Check `database_creation/generate_main_db.py` for `IMPERIAL_UNITS`, `UNIT_LINES`, and civ-specific upgrade paths.
+- Check `analysis/config.py` for `IMPERIAL_UNITS`, `UNIT_LINES`, and civ-specific upgrade paths.
 - Note any unique techs (Castle Age UT, Imperial Age UT) that affect this unit.
 
 ## Output Format

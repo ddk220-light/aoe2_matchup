@@ -26,9 +26,10 @@ Follow these steps precisely:
 
 1. **Check prerequisites**:
    - Verify `webapp/aoe2_units.db` exists. If not, inform the user they need to run the build pipeline first:
-     - Step 1: `python3 -m database_creation.run`
-     - Step 2: `python3 -m database_creation.generate_main_db`
-     - Step 3: `cd webapp && python3 compute_battle_scores.py`
+     - Step 1: `python3 -m extraction.run`
+     - Step 2: `python3 -m analysis.generate_reference`
+     - Step 3: `python3 -m analysis.generate_main_db`
+     - Step 4: `cd webapp && python3 compute_battle_scores.py`
    - Verify the virtual environment exists (`venv/` or `.venv/`)
 
 2. **Start the webapp**:

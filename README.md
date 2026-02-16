@@ -81,7 +81,9 @@ The main product is a Flask web application with several features:
 ```bash
 # Generate databases (requires dat file)
 source venv/bin/activate
-python3 -m database_creation.run
+python3 -m extraction.run              # Step 1: dat → JSON
+python3 -m analysis.generate_reference  # Step 2: JSON → reference DB
+python3 -m analysis.generate_main_db    # Step 3: reference DB → main DB
 
 # Pre-compute battle scores
 cd webapp && python3 compute_battle_scores.py
@@ -92,7 +94,7 @@ PORT=5002 python3 webapp/app.py
 
 Visit `http://localhost:5002` in your browser.
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for full API reference and feature documentation.
+See [docs/architecture.md](docs/architecture.md) for full API reference and feature documentation.
 
 ## CLI Usage Examples
 
@@ -209,40 +211,35 @@ Knight is countered by:
 ```
 aoe2-unit-analyzer/
 ├── README.md
-├── DESIGN.md                    # Database pipeline design doc
-├── ARCHITECTURE.md              # System architecture & product features
-├── ADDING_CIVS.md               # Guide for adding new civilizations
 ├── requirements.txt
-├── extract.py                   # Standalone extraction script
-├── explore.py                   # Interactive data explorer (CLI)
 │
-├── database_creation/           # Data pipeline package
-│   ├── run.py                   # Entry point (extract + generate)
-│   ├── config.py                # Unit definitions, combat properties
+├── extraction/                  # Step 1: dat → JSON
+│   ├── run.py                   # Entry: python3 -m extraction.run
 │   ├── extract_units.py         # dat → units.json
 │   ├── extract_techs.py         # dat → technologies.json, tech_ages.json
 │   ├── extract_effects.py       # dat → effects.json, civ_tech_trees.json
+│   ├── extract_constants.py     # Shared constants (armor classes, civ names)
+│   └── extracted_data/          # Output JSON files (gitignored)
+│
+├── analysis/                    # Steps 2-3: JSON → databases
+│   ├── config.py                # Unit definitions, combat properties
 │   ├── unit_analyzer.py         # Stat computation engine
 │   ├── combat_properties.py     # Combat property extraction + layering
-│   ├── generate_reference.py    # Builds reference DB (5 tables)
-│   └── generate_main_db.py      # Builds main DB (flat unit_stats)
+│   ├── generate_reference.py    # Entry: python3 -m analysis.generate_reference
+│   └── generate_main_db.py      # Entry: python3 -m analysis.generate_main_db
 │
-├── webapp/                      # Flask web application
+├── webapp/                      # Step 4 + serving
 │   ├── app.py                   # Flask app + API endpoints
 │   ├── simulation.py            # Tick-based battle simulator
 │   ├── compute_battle_scores.py # Pre-compute round-robin rankings
-│   ├── aoe2_units.db            # Main database (gitignored)
-│   ├── aoe2_reference.db        # Reference database (gitignored)
-│   ├── battle_scores.json       # Pre-computed rankings (gitignored)
 │   ├── Procfile                 # Railway deployment
 │   └── templates/               # HTML templates
-│       ├── home.html            # Landing page
-│       ├── index.html           # Unit browser
-│       ├── civ_select.html      # Civilization grid
-│       ├── civ_detail.html      # Civ detail page
-│       ├── simulate.html        # Battle simulator (2D canvas)
-│       ├── matchup_advisor.html # Matchup advisor
-│       └── analysis.html        # Audit/verification tool
+│
+├── docs/                        # Documentation
+│   ├── architecture.md          # System architecture & product features
+│   ├── design.md                # Database pipeline design
+│   ├── adding-civs.md           # Guide for adding new civilizations
+│   └── plans/                   # Implementation plans
 │
 └── output/                      # Standalone extraction output
     ├── units.json
@@ -253,9 +250,9 @@ aoe2-unit-analyzer/
 
 ## Documentation
 
-- [DESIGN.md](DESIGN.md) — Database pipeline engineering design
-- [ARCHITECTURE.md](ARCHITECTURE.md) — System architecture, product features, API reference
-- [ADDING_CIVS.md](ADDING_CIVS.md) — Guide for adding new civilizations and combat mechanics
+- [docs/design.md](docs/design.md) — Database pipeline engineering design
+- [docs/architecture.md](docs/architecture.md) — System architecture, product features, API reference
+- [docs/adding-civs.md](docs/adding-civs.md) — Guide for adding new civilizations and combat mechanics
 
 ## License
 

@@ -4,7 +4,7 @@ This guide explains how to add a new civilization to the AoE2 Unit Analyzer, inc
 
 ## Prerequisites
 
-- A copy of `empires2_x2_p1.dat` from the game installation in `database_creation/`
+- A copy of `empires2_x2_p1.dat` from the game installation in `extraction/`
 - Python 3.8+ with `genieutils` installed
 - Familiarity with the [DESIGN.md](DESIGN.md) database pipeline
 
@@ -247,10 +247,10 @@ Also update the matching config in `webapp/compute_battle_scores.py` (it duplica
 
 ```bash
 # Full pipeline: extract from dat + generate both databases
-python3 -m database_creation.run
+python3 -m extraction.run && python3 -m analysis.generate_reference
 
 # Or just regenerate from existing JSON (if dat file hasn't changed)
-python3 -m database_creation.generate_reference
+python3 -m analysis.generate_reference
 python3 generate_database.py
 ```
 
@@ -299,7 +299,7 @@ Add the new column to the `unit_stats` CREATE TABLE statement and populate it in
 
 ### 4. Add to reference DB
 
-**File:** `database_creation/generate_reference.py`
+**File:** `analysis/generate_reference.py`
 
 Record the property in the `ref_special_effects` table (in the special effects recording section).
 
@@ -395,7 +395,7 @@ _ADVISOR_EXCLUDED = {"trebuchet", "ram", "siege_ram", "new_unit"}
 ### 5. Regenerate and recompute
 
 ```bash
-python3 -m database_creation.run
+python3 -m extraction.run && python3 -m analysis.generate_reference
 cd webapp && python3 compute_battle_scores.py
 ```
 

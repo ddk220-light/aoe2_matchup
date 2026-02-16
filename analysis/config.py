@@ -4,7 +4,7 @@ from pathlib import Path
 
 # Paths - relative to project root
 PROJECT_ROOT = Path(__file__).parent.parent
-OUTPUT_DIR = Path(__file__).parent / "extracted_data"
+OUTPUT_DIR = Path(__file__).parent.parent / "extraction" / "extracted_data"
 REF_DB_PATH = PROJECT_ROOT / "webapp" / "aoe2_reference.db"
 
 # Age constants

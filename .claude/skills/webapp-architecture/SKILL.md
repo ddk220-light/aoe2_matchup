@@ -48,9 +48,9 @@ These files are duplicated or coupled. Missing one causes bugs:
 
 **Combat unit data (most common path):**
 ```
-database_creation/config.py (COMBAT/UNIQUE/CIV_COMBAT_PROPERTIES)
-  → database_creation/generate_reference.py → aoe2_reference.db
-    → database_creation/generate_main_db.py → aoe2_units.db (unit_stats table)
+analysis/config.py (COMBAT/UNIQUE/CIV_COMBAT_PROPERTIES)
+  → analysis/generate_reference.py → aoe2_reference.db
+    → analysis/generate_main_db.py → aoe2_units.db (unit_stats table)
       → app.py /api/combat-unit/<civ>/<slug> (SQL SELECT on unit_stats)
         → simulate.html JS fetches JSON → simulation.py prepare_combat_unit() → simulate_battle()
 ```
@@ -60,14 +60,14 @@ database_creation/config.py (COMBAT/UNIQUE/CIV_COMBAT_PROPERTIES)
 defaults → extracted dat data → COMBAT_PROPERTIES → UNIQUE_COMBAT_PROPERTIES → CIV_COMBAT_PROPERTIES
 ```
 
-**Build pipeline:** `python3 -m database_creation.run` → `python3 -m database_creation.generate_main_db` → `cd webapp && python3 compute_battle_scores.py`
+**Build pipeline:** `python3 -m extraction.run` → `python3 -m analysis.generate_reference` → `python3 -m analysis.generate_main_db` → `cd webapp && python3 compute_battle_scores.py`
 
 ## Modification Recipes
 
 ### Add a new simulation mechanic
-1. Add column to `unit_stats` CREATE TABLE in `generate_main_db.py`
-2. Populate: data-driven in `generate_reference.py` OR hardcoded in `config.py` (COMBAT/UNIQUE/CIV_COMBAT_PROPERTIES)
-3. Add to `build_combat_dict_from_ref()` in `generate_main_db.py`
+1. Add column to `unit_stats` CREATE TABLE in `analysis/generate_main_db.py`
+2. Populate: data-driven in `analysis/generate_reference.py` OR hardcoded in `analysis/config.py` (COMBAT/UNIQUE/CIV_COMBAT_PROPERTIES)
+3. Add to `build_combat_dict_from_ref()` in `analysis/generate_main_db.py`
 4. Add to SELECT query in `app.py` `api_combat_unit()` (line 589+)
 5. Add to `prepare_combat_unit()` in `simulation.py` (line 84)
 6. Implement in `simulate_battle()` tick loop in `simulation.py`
@@ -75,7 +75,7 @@ defaults → extracted dat data → COMBAT_PROPERTIES → UNIQUE_COMBAT_PROPERTI
 8. Rebuild DBs, rerun battle scores (sync rule 6)
 
 ### Add a new unit or civ
-1. Add to extraction config in `database_creation/`
+1. Add to extraction config in `extraction/` and analysis config in `analysis/`
 2. Run full build pipeline (see above)
 3. Update `UNIT_LINES` in BOTH `app.py` AND `compute_battle_scores.py` (sync rule 1)
 4. If unique unit: add to `UNIQUE_BUILDING` in `simulate.html` + `civ_detail.html` (sync rule 3)

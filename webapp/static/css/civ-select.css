@@ -1,0 +1,176 @@
+/* ==========================================================================
+   AoE2 Unit Analyzer — Civilization Select Page
+   ========================================================================== */
+
+/* ---------- Expansion Sections ---------- */
+.expansions {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 20px 40px;
+}
+
+.expansion {
+    margin-bottom: 20px;
+}
+
+.expansion-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-light);
+    flex-wrap: wrap;
+}
+
+.expansion-header h2 {
+    font-size: 1rem;
+}
+
+.expansion-header .year {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.expansion-header .count {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-left: auto;
+}
+
+/* ---------- Badges ---------- */
+.badge-ready {
+    display: inline-block;
+    padding: 2px 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--green);
+    border: 1px solid rgba(90, 154, 58, 0.3);
+    border-radius: 12px;
+    background: rgba(90, 154, 58, 0.1);
+}
+
+.badge-soon {
+    display: inline-block;
+    padding: 2px 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gold);
+    border: 1px solid rgba(201, 168, 76, 0.3);
+    border-radius: 12px;
+    background: rgba(201, 168, 76, 0.08);
+}
+
+/* ---------- Civ Grid ---------- */
+.civ-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 10px;
+}
+
+.civ-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 6px 10px;
+    background: var(--bg-warm);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.25s ease;
+}
+
+.civ-card.ready:hover {
+    transform: translateY(-3px);
+    border-color: var(--gold-dark);
+    box-shadow:
+        0 6px 24px rgba(0, 0, 0, 0.4),
+        0 0 0 1px var(--gold-glow);
+}
+
+.civ-card.soon {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.civ-emblem {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--gold-dark);
+    object-fit: cover;
+    background: var(--bg);
+    margin-bottom: 6px;
+}
+
+.civ-emblem-placeholder {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--gold-dark);
+    background: var(--bg);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.civ-name {
+    font-size: 0.75rem;
+    text-align: center;
+    line-height: 1.2;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+    .expansions {
+        padding: 12px 12px 24px;
+    }
+
+    .expansion {
+        margin-bottom: 14px;
+    }
+
+    .expansion-header {
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    .expansion-header h2 {
+        font-size: 0.85rem;
+    }
+
+    .expansion-header .year,
+    .expansion-header .count {
+        font-size: 0.7rem;
+    }
+
+    .expansion-header .count {
+        margin-left: 0;
+    }
+
+    .civ-grid {
+        grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+        gap: 8px;
+    }
+
+    .civ-card {
+        padding: 8px 4px 8px;
+    }
+
+    .civ-emblem,
+    .civ-emblem-placeholder {
+        width: 36px;
+        height: 36px;
+        margin-bottom: 4px;
+    }
+
+    .civ-name {
+        font-size: 0.65rem;
+    }
+}

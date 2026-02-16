@@ -60,34 +60,49 @@ def get_units_by_age():
     return units_by_age
 
 
+@app.route("/")
+def home():
+    """Battle Sim is the homepage."""
+    return render_template("simulate.html", active_nav="simulate")
+
+
 @app.route("/units")
 def units():
     units_by_age = get_units_by_age()
     ages = {k: v["name"] for k, v in AGES.items()}
-    return render_template("index.html", units_by_age=units_by_age, ages=ages)
+    return render_template("index.html", units_by_age=units_by_age, ages=ages, active_nav="rankings")
 
 
-@app.route("/civ")
+@app.route("/civilizations")
 def civ_view():
     """Civilization selection grid."""
-    return render_template("civ_select.html")
+    return render_template("civ_select.html", active_nav="civ_select")
 
 
-@app.route("/civ/<civ_name>")
+@app.route("/civilizations/<civ_name>")
 def civ_detail(civ_name):
     """Civilization unit detail page."""
     if civ_name not in ORIGINAL_13_CIVS:
-        return redirect("/civ")
-    return render_template("civ_detail.html", civ_name=civ_name)
+        return redirect("/civilizations")
+    return render_template("civ_detail.html", civ_name=civ_name, active_nav="civ_detail")
 
 
-# ============== Battle Simulation ==============
+@app.route("/civ")
+def civ_redirect():
+    """Backward compat redirect."""
+    return redirect("/civilizations", code=301)
+
+
+@app.route("/civ/<civ_name>")
+def civ_detail_redirect(civ_name):
+    """Backward compat redirect."""
+    return redirect(f"/civilizations/{civ_name}", code=301)
 
 
 @app.route("/simulate")
-def simulate():
-    """Battle simulation page."""
-    return render_template("simulate.html")
+def simulate_redirect():
+    """Redirect old /simulate URL to homepage."""
+    return redirect("/", code=301)
 
 
 @app.route("/api/armor-classes")
@@ -1519,7 +1534,7 @@ def _run_army_sims(
 def matchup_advisor():
     """Matchup Advisor page."""
     civs = _get_ref_civs()
-    return render_template("matchup_advisor.html", civs=civs)
+    return render_template("matchup_advisor.html", civs=civs, active_nav="matchup")
 
 
 def _run_matchup_analysis(civ1, civ2):

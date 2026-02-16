@@ -1787,6 +1787,53 @@ def write_role_scores_to_db(role_scores_dict, line_slugs, score_types):
     print(f"  Wrote {len(rows)} battle_scores rows to DB")
 
 
+def compute_rankings():
+    """Compute rank and median_delta for every (line_slug, age, score_type) group.
+
+    For each group:
+    - median = numpy.median(score_values)
+    - rank = position sorted by score_value desc (1 = highest)
+    - median_delta = score_value - median
+    """
+    import numpy as np
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    # Get all distinct groups
+    c.execute("SELECT DISTINCT line_slug, age, score_type FROM battle_scores")
+    groups = c.fetchall()
+
+    total_updated = 0
+    for line_slug, age, score_type in groups:
+        # Fetch all rows in this group
+        c.execute(
+            "SELECT id, score_value FROM battle_scores WHERE line_slug=? AND age=? AND score_type=?",
+            (line_slug, age, score_type),
+        )
+        rows = c.fetchall()
+        if not rows:
+            continue
+
+        values = [r[1] for r in rows]
+        median = float(np.median(values))
+
+        # Sort by score_value desc for ranking
+        ranked = sorted(rows, key=lambda r: r[1], reverse=True)
+
+        for rank, (row_id, score_value) in enumerate(ranked, start=1):
+            delta = round(score_value - median, 4)
+            c.execute(
+                "UPDATE battle_scores SET rank=?, median_delta=? WHERE id=?",
+                (rank, delta, row_id),
+            )
+            total_updated += 1
+
+    conn.commit()
+    conn.close()
+    print(f"Rankings: updated {total_updated} rows across {len(groups)} groups")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Compute battle ranking scores")
     parser.add_argument(
@@ -1832,6 +1879,11 @@ def main():
         print(
             f"Siege anti-building: {total_siege} units in {time.time() - siege_start:.1f}s"
         )
+
+        # Compute rankings for all scores
+        ranking_start = time.time()
+        compute_rankings()
+        print(f"Rankings: {time.time() - ranking_start:.1f}s")
         return
 
     # Compute simulation engine hash
@@ -2017,6 +2069,12 @@ def main():
     print(
         f"Siege anti-building: {total_siege} units in {siege_time:.1f}s"
     )
+
+    # Compute rankings for all DB scores (rank + median_delta)
+    ranking_start = time.time()
+    compute_rankings()
+    ranking_time = time.time() - ranking_start
+    print(f"Rankings: {ranking_time:.1f}s")
 
     # Write output (round-robin + benchmarks only, no militia)
     out_path = os.path.join(os.path.dirname(__file__), "battle_scores.json")

@@ -18,10 +18,6 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent
 REF_DB_PATH = PROJECT_ROOT / "webapp" / "aoe2_reference.db"
 MAIN_DB_PATH = PROJECT_ROOT / "webapp" / "aoe2_units.db"
-EXTRACTED_UNITS_PATH = (
-    PROJECT_ROOT / "database_creation" / "extracted_data" / "units.json"
-)
-
 # Import config for COMBAT_PROPERTIES, PAIRED_UNITS, etc.
 # When run as module, use relative import; when run as script, add parent to path
 try:
@@ -29,13 +25,6 @@ try:
 except ImportError:
     sys.path.insert(0, str(Path(__file__).parent.parent))
     from database_creation.config import COMBAT_PROPERTIES, PAIRED_UNITS
-
-# Load extracted units data for dismount resolution
-_EXTRACTED_UNITS = {}
-if EXTRACTED_UNITS_PATH.exists():
-    with open(EXTRACTED_UNITS_PATH) as f:
-        for u in json.load(f):
-            _EXTRACTED_UNITS[u["id"]] = u
 
 # Age mapping: ref DB uses "Castle"/"Imperial" strings, main DB uses integer IDs
 AGE_MAP = {
@@ -85,37 +74,6 @@ def _get_paired_unit_slug(unit_slug):
                 return partner_slug + suffix
             return partner_slug
     return None
-
-
-def _resolve_dismount(unit_id):
-    """Look up dismount unit stats from extracted data. Returns dict or None."""
-    u = _EXTRACTED_UNITS.get(int(unit_id))
-    if not u:
-        return None
-    creatable = u.get("creatable", {})
-    attacks = {}
-    armors = {}
-    for entry in creatable.get("attacks", []):
-        attacks[entry["class"]] = entry["amount"]
-    for entry in creatable.get("armours", []):
-        armors[entry["class"]] = entry["amount"]
-    return {
-        "hp": int(u.get("hit_points", 0)),
-        "attack": int(creatable.get("displayed_attack", 0)),
-        "melee_armor": int(creatable.get("displayed_melee_armour", 0)),
-        "pierce_armor": int(creatable.get("displayed_range_armour", 0)),
-        "attack_speed": round(1.0 / creatable.get("reload_time", 2.0), 3)
-        if creatable.get("reload_time")
-        else 0.5,
-        "attack_delay": creatable.get("frame_delay", 0)
-        * creatable.get("reload_time", 2.0)
-        / max(1, creatable.get("max_frame", 10))
-        if creatable.get("frame_delay")
-        else 0,
-        "movement_speed": u.get("speed", 0.9),
-        "attacks_json": json.dumps(attacks) if attacks else None,
-        "armors_json": json.dumps(armors) if armors else None,
-    }
 
 
 def build_combat_dict_from_ref(rc, row):

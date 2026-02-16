@@ -118,7 +118,7 @@ Update `compute_battle_scores.py` to write militia role scores here instead of J
 
 | File | Action |
 |------|---|
-| `database_creation/generate_reference.py` | Add combat property + dismount/transform columns to `ref_units`; add `armor_classes` table; populate during `process_unit_audited()` |
+| `analysis/generate_reference.py` | Add combat property + dismount/transform columns to `ref_units`; add `armor_classes` table; populate during `process_unit_audited()` |
 | `webapp/app.py` | Point `get_db()` at `app_data.db`; migrate all game-data queries to `get_ref_db()`; remove dismount enrichment from `_build_combat_dict_from_ref()` |
 | `webapp/compute_battle_scores.py` | Simplify `build_combat_dict()`; write `battle_scores` table |
 

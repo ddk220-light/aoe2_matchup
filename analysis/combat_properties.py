@@ -4,7 +4,6 @@ import json
 
 from .config import (
     CIV_COMBAT_PROPERTIES,
-    CIV_TEAM_BONUS_ATTACK,
     COMBAT_PROPERTIES,
     PAIRED_UNITS,
     UNIQUE_COMBAT_PROPERTIES,
@@ -268,84 +267,3 @@ def get_combat_properties(unit_slug, civ_name=None, unit_id=None, units_data=Non
             break
 
     return props
-
-
-def compute_dismount_stats(analyzer, dismount_unit_id, civ_name, max_age):
-    """Compute stats for a dismounted unit (e.g., Konnik -> dismounted Konnik).
-
-    Looks up the dismounted unit's base stats and applies relevant techs.
-    Returns a dict with the dismounted unit's combat stats, or None.
-    """
-    if not dismount_unit_id:
-        return None
-
-    unit = analyzer.get_unit(dismount_unit_id)
-    if not unit:
-        return None
-
-    stats = analyzer.get_base_stats(unit)
-    unit_class = unit.get("class", 6)  # dismounted Konnik is infantry (class 6)
-
-    # Apply standard techs (blacksmith upgrades, etc.)
-    standard_techs = analyzer.find_techs_affecting_unit(
-        dismount_unit_id, unit_class, max_age
-    )
-    disabled_techs = analyzer.get_disabled_techs(civ_name)
-
-    for tech_id in sorted(standard_techs):
-        if tech_id in disabled_techs:
-            continue
-        if tech_id in analyzer.tech_effect_map:
-            te = analyzer.tech_effect_map[tech_id]
-            for cmd in te.get("commands", []):
-                analyzer.apply_effect_command(cmd, stats, dismount_unit_id, unit_class)
-
-    # Apply civ bonus techs
-    civ_bonus_techs = analyzer.get_civ_bonus_techs_for_unit(
-        civ_name, dismount_unit_id, unit_class, max_age
-    )
-    for te in civ_bonus_techs:
-        for cmd in te.get("commands", []):
-            analyzer.apply_effect_command(cmd, stats, dismount_unit_id, unit_class)
-
-    # Apply team bonus attack bonuses
-    for bonus in CIV_TEAM_BONUS_ATTACK.get(civ_name, []):
-        if len(bonus) == 3:
-            b_uid, atk_cls, amt = bonus
-            if b_uid == dismount_unit_id:
-                stats.attacks[atk_cls] = stats.attacks.get(atk_cls, 0) + amt
-        elif len(bonus) == 4:
-            b_uid, atk_cls, amt, b_cls = bonus
-            if b_uid == -1 and b_cls == unit_class:
-                stats.attacks[atk_cls] = stats.attacks.get(atk_cls, 0) + amt
-
-    # Apply unique techs
-    unique_techs = analyzer.get_unique_techs_for_unit(
-        civ_name, dismount_unit_id, unit_class, max_age
-    )
-    for te in unique_techs:
-        for cmd in te.get("commands", []):
-            analyzer.apply_effect_command(cmd, stats, dismount_unit_id, unit_class)
-
-    # Round values
-    stats.hp = round(stats.hp)
-    stats.attack = round(stats.attack)
-    stats.melee_armor = round(stats.melee_armor)
-    stats.pierce_armor = round(stats.pierce_armor)
-    stats.speed = round(stats.speed, 2)
-    stats.reload_time = round(stats.reload_time, 3)
-    stats.attack_delay = round(stats.attack_delay, 3)
-
-    return {
-        "hp": int(stats.hp),
-        "attack": int(stats.attack),
-        "melee_armor": int(stats.melee_armor),
-        "pierce_armor": int(stats.pierce_armor),
-        "attack_speed": round(1.0 / stats.reload_time, 3)
-        if stats.reload_time > 0
-        else 0,
-        "attack_delay": stats.attack_delay,
-        "movement_speed": stats.speed,
-        "attacks_json": json.dumps(stats.attacks) if stats.attacks else None,
-        "armors_json": json.dumps(stats.armors) if stats.armors else None,
-    }

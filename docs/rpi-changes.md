@@ -34,18 +34,18 @@ The existing hp_regen path only worked for:
 
 **Files changed:**
 
-1. `database_creation/config.py`
+1. `analysis/config.py`
    - Added `ATTR_HP_REGEN = 109` constant
    - Added `ATTR_HP_REGEN` to `ATTR_DISPLAY_NAMES`
 
-2. `database_creation/unit_analyzer.py`
+2. `analysis/unit_analyzer.py`
    - Added `hp_regen: float = 0` field to `UnitStats` dataclass
    - Added `hp_regen` to `UnitStats.copy()`
    - Imported `ATTR_HP_REGEN` from config
    - Added `ATTR_HP_REGEN` handling in `_set_attribute()` and `_add_attribute()`
    - Added `stats.hp_regen = round(stats.hp_regen, 1)` to final rounding
 
-3. `database_creation/generate_reference.py`
+3. `analysis/generate_reference.py`
    - After `get_combat_properties()`, merge analyzer's `stats.hp_regen` into
      `combat_props` if it's higher than the existing value
    - Added `hp_regen` to the `ref_units` UPDATE statement so the reference DB
@@ -69,11 +69,11 @@ To verify the fix and run rankings, a runtime patching approach was used: after
 loading unit data from the existing DB, Wu infantry units are patched in-memory
 with `hp_regen = 30.0` before running simulations. This hack is used only for
 local testing/ranking scripts — the pipeline fix above is the real solution and
-will take effect on the next `python3 -m database_creation.run` rebuild.
+will take effect on the next `python3 -m extraction.run && python3 -m analysis.generate_reference` rebuild.
 
 ### Verification
 
-After rebuilding databases (`python3 -m database_creation.run`), Wu Champion
+After rebuilding databases (`python3 -m extraction.run && python3 -m analysis.generate_reference`), Wu Champion
 should show `hp_regen = 30.0` in both `aoe2_reference.db` and `aoe2_units.db`.
 
 Simulation test: 10 Wu Champions vs 10 Chinese Champions (identical stats except
@@ -123,10 +123,10 @@ below threshold) but never checked for the revert condition (HP heals above thre
 
 **Files changed:**
 
-1. `database_creation/config.py`
+1. `analysis/config.py`
    - Changed `hp_transform_threshold` from `0.5` to `45.0 / 70.0` (~0.6429)
 
-2. `database_creation/generate_reference.py`
+2. `analysis/generate_reference.py`
    - After computing `final_snap` (fully upgraded normal stats) and before writing
      special props, apply tech deltas to transform stats:
      `transform_final = normal_final + (transform_base - normal_base)`
@@ -153,4 +153,4 @@ below threshold) but never checked for the revert condition (HP heals above thre
 - HP threshold matches the in-game 45 HP value
 - Units with regen (Wu infantry) can now oscillate between forms as HP fluctuates
   around the threshold, matching in-game behavior
-- DB rebuild (`python3 -m database_creation.run`) required for pipeline fix to take effect
+- DB rebuild (`python3 -m extraction.run && python3 -m analysis.generate_reference`) required for pipeline fix to take effect

@@ -12,7 +12,7 @@ This guide explains how to add a new civilization to the AoE2 Unit Analyzer, inc
 
 ### 1. Add the civilization name
 
-**File:** `database_creation/config.py`
+**File:** `analysis/config.py`
 
 Add the civ name to `ORIGINAL_13_CIVS` (rename this list if expanding beyond 13):
 
@@ -29,7 +29,7 @@ The name must match exactly what appears in `extracted_data/civ_tech_trees.json`
 
 ### 2. Add unique units
 
-**File:** `database_creation/config.py` → `UNIQUE_UNITS`
+**File:** `analysis/config.py` → `UNIQUE_UNITS`
 
 Add an entry for the new civ with its unique unit(s):
 
@@ -59,7 +59,7 @@ UNIQUE_UNITS = {
 
 If the civ gets a unique replacement for a standard unit line (like Persians get Savar instead of Paladin), add a `civ_upgrades` entry to the standard unit definition.
 
-**File:** `database_creation/config.py` → `IMPERIAL_UNITS` or `CASTLE_UNITS`
+**File:** `analysis/config.py` → `IMPERIAL_UNITS` or `CASTLE_UNITS`
 
 ```python
 "paladin": {
@@ -98,7 +98,7 @@ These require **no manual configuration**. They are read from the unit's data in
 
 For abilities not extractable from the dat file, add entries to `UNIQUE_COMBAT_PROPERTIES`:
 
-**File:** `database_creation/config.py`
+**File:** `analysis/config.py`
 
 ```python
 UNIQUE_COMBAT_PROPERTIES = {
@@ -127,7 +127,7 @@ Key is the base unit name (without civ suffix). Available properties:
 
 For effects that come from unique technologies (e.g., Logistica giving Cataphracts trample), add to `CIV_COMBAT_PROPERTIES`:
 
-**File:** `database_creation/config.py`
+**File:** `analysis/config.py`
 
 ```python
 CIV_COMBAT_PROPERTIES = {
@@ -337,7 +337,7 @@ To add an entirely new unit type (e.g., a new siege unit or mounted unit):
 
 ### 1. Add to config
 
-**File:** `database_creation/config.py`
+**File:** `analysis/config.py`
 
 Add entries to `CASTLE_UNITS` and/or `IMPERIAL_UNITS`:
 

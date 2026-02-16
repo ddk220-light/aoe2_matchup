@@ -4,17 +4,17 @@ This document is for rebuilding data generation from scratch while keeping the c
 
 ## 1. Source of truth and outputs
 
-Use `database_creation/empires2_x2_p1.dat` as source of truth.
+Use `extraction/ and analysis/empires2_x2_p1.dat` as source of truth.
 
 Target intermediate outputs (JSON):
-- `database_creation/extracted_data/units.json`
-- `database_creation/extracted_data/technologies.json`
-- `database_creation/extracted_data/tech_ages.json`
-- `database_creation/extracted_data/civilizations.json`
-- `database_creation/extracted_data/armor_classes.json`
-- `database_creation/extracted_data/effects.json`
-- `database_creation/extracted_data/civ_tech_trees.json`
-- `database_creation/extracted_data/tech_effects.json`
+- `extraction/ and analysis/extracted_data/units.json`
+- `extraction/ and analysis/extracted_data/technologies.json`
+- `extraction/ and analysis/extracted_data/tech_ages.json`
+- `extraction/ and analysis/extracted_data/civilizations.json`
+- `extraction/ and analysis/extracted_data/armor_classes.json`
+- `extraction/ and analysis/extracted_data/effects.json`
+- `extraction/ and analysis/extracted_data/civ_tech_trees.json`
+- `extraction/ and analysis/extracted_data/tech_effects.json`
 
 Target DB outputs:
 - `webapp/aoe2_reference.db` (audit + stat chain + projectile/special effects)

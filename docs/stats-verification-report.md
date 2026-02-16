@@ -205,5 +205,5 @@ The following units had **all base stats verified as matching** the wiki (exclud
 
 | File | Change |
 |------|--------|
-| `database_creation/unit_analyzer.py` | Added shadow tech filter (research_location==-1), added UNIT_STAT_OVERRIDES application |
-| `database_creation/config.py` | Added UNIT_STAT_OVERRIDES dict, fixed Ratha elite_tech 832→828, removed Grenadier hardcoded splash |
+| `analysis/unit_analyzer.py` | Added shadow tech filter (research_location==-1), added UNIT_STAT_OVERRIDES application |
+| `analysis/config.py` | Added UNIT_STAT_OVERRIDES dict, fixed Ratha elite_tech 832→828, removed Grenadier hardcoded splash |

@@ -475,7 +475,7 @@ Categorize discrepancies:
 **Step 2: Create follow-up tasks**
 
 For confirmed data bugs, create actionable tasks specifying:
-- Which file to fix (`database_creation/config.py`, `extracted_data/`, `generate_main_db.py`)
+- Which file to fix (`extraction/ and analysis/config.py`, `extracted_data/`, `generate_main_db.py`)
 - What the correct value should be
 - Which units are affected
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `database_creation/` package extracts Age of Empires II: Definitive Edition unit and technology data from the game's binary data file, computes fully-upgraded unit stats for each civilization, and writes a golden reference database (`webapp/aoe2_reference.db`).
+The `extraction/ and analysis/` package extracts Age of Empires II: Definitive Edition unit and technology data from the game's binary data file, computes fully-upgraded unit stats for each civilization, and writes a golden reference database (`webapp/aoe2_reference.db`).
 
 The pipeline has two phases:
 
@@ -12,7 +12,7 @@ empires2_x2_p1.dat  ──►  extracted_data/*.json  ──►  webapp/aoe2_ref
      Phase 1: extract        Phase 2: generate
 ```
 
-**Single command:** `python3 -m database_creation.run`
+**Single command:** `python3 -m extraction.run && python3 -m analysis.generate_reference`
 
 **Scope:** 50 civilizations (including Three Kingdoms DLC: Jurchens, Khitans, Shu, Wei, Wu), Castle and Imperial age units, including unique units. 1247 total unit entries.
 
@@ -25,21 +25,15 @@ empires2_x2_p1.dat  ──►  extracted_data/*.json  ──►  webapp/aoe2_ref
 ## Directory Structure
 
 ```
-database_creation/
+extraction/
 ├── __init__.py              # Package marker
-├── run.py                   # Entry point — runs Phase 1 then Phase 2
+├── run.py                   # Entry point — runs Phase 1 extraction only
 │
 │  ── Phase 1: Extraction (dat → JSON) ──
 ├── extract_constants.py     # Shared: ARMOR_CLASSES, CIV_NAMES
 ├── extract_units.py         # dat → units.json (1182 units)
 ├── extract_techs.py         # dat → technologies.json (1309), tech_ages.json (62)
 ├── extract_effects.py       # dat → effects.json (1064), civ_tech_trees.json (50), tech_effects.json (956)
-│
-│  ── Phase 2: Reference DB Generation (JSON → SQLite) ──
-├── config.py                # Unit definitions, combat properties, constants
-├── unit_analyzer.py         # UnitStats dataclass + UnitAnalyzer (loads JSON, applies techs)
-├── combat_properties.py     # Combat property extraction and layering
-├── generate_reference.py    # Builds the 5-table reference database
 │
 │  ── Data ──
 ├── empires2_x2_p1.dat       # Game binary (10MB, gitignored)
@@ -52,6 +46,16 @@ database_creation/
     ├── tech_ages.json        # Standard tech → age availability
     ├── civilizations.json    # Civ names and IDs
     └── armor_classes.json    # Armor class ID → name mapping
+
+analysis/
+├── __init__.py              # Package marker
+│
+│  ── Phase 2: Reference DB Generation (JSON → SQLite) ──
+├── config.py                # Unit definitions, combat properties, constants
+├── unit_analyzer.py         # UnitStats dataclass + UnitAnalyzer (loads JSON, applies techs)
+├── combat_properties.py     # Combat property extraction and layering
+├── generate_reference.py    # Builds the 5-table reference database
+└── generate_main_db.py      # Builds the main database
 ```
 
 ---
@@ -484,16 +488,16 @@ Later layers override earlier layers.
 ### Prerequisites
 - Python 3.8+
 - `genieutils` package (`pip install genieutils`)
-- `empires2_x2_p1.dat` in `database_creation/` (copy from AoE2:DE installation, gitignored)
+- `empires2_x2_p1.dat` in `extraction/ and analysis/` (copy from AoE2:DE installation, gitignored)
 
 ### Full pipeline (extract + generate)
 ```bash
-python3 -m database_creation.run
+python3 -m extraction.run && python3 -m analysis.generate_reference
 ```
 
 ### Generate DB only (from existing JSON)
 ```bash
-python3 -m database_creation.generate_reference
+python3 -m analysis.generate_reference
 ```
 
 ### Adding a new civilization
@@ -502,7 +506,7 @@ python3 -m database_creation.generate_reference
 2. Add any civ-specific entries to `CIV_COMBAT_PROPERTIES` (for unique tech effects like Logistica trample)
 3. Add unique units to `UNIQUE_UNITS[civ_name]`
 4. Add civ-specific unit overrides to `civ_upgrades` in `CASTLE_UNITS`/`IMPERIAL_UNITS` if needed (e.g., Persians' Savar replacing Paladin)
-5. Run `python3 -m database_creation.run`
+5. Run `python3 -m extraction.run && python3 -m analysis.generate_reference`
 
 ### Adding a new unit line
 

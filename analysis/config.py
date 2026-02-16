@@ -1,6 +1,5 @@
 """Configuration constants and unit definitions for AoE2 reference database generation."""
 
-from dataclasses import dataclass, field
 from pathlib import Path
 
 # Paths - relative to project root
@@ -535,19 +534,6 @@ PAIRED_UNITS = {
     "ratha_(ranged)": "ratha_(melee)",
     "elite_ratha_(melee)": "elite_ratha_(ranged)",
     "elite_ratha_(ranged)": "elite_ratha_(melee)",
-}
-
-# =============================================================================
-# ALLY (TEAM) UNITS
-# =============================================================================
-# Units that become available to ALL civs when a specific civ is on the team.
-# Key: source civ name. Value: list of unit slugs from CASTLE_UNITS/IMPERIAL_UNITS.
-# These units must have "civ_only" set in their unit config to restrict solo generation.
-# Not yet used in any feature — reserved for future team game support.
-ALLY_UNITS = {
-    "Italians": ["condottiero"],
-    "Berbers": ["genitour", "elite_genitour"],
-    "Vietnamese": ["imperial_skirmisher"],
 }
 
 # =============================================================================

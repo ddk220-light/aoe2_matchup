@@ -274,8 +274,10 @@ analyzeBtn.addEventListener("click", async () => {
 
     try {
         const [r1, r2] = await Promise.all([
-            fetch(`/api/civ-power-units/${encodeURIComponent(c1)}`).then(r => r.json()),
-            fetch(`/api/civ-power-units/${encodeURIComponent(c2)}`).then(r => r.json()),
+            fetch(`/api/civ-power-units/${encodeURIComponent(c1)}`)
+                .then(r => { if (!r.ok) throw new Error(`Failed to load ${c1} (${r.status})`); return r.json(); }),
+            fetch(`/api/civ-power-units/${encodeURIComponent(c2)}`)
+                .then(r => { if (!r.ok) throw new Error(`Failed to load ${c2} (${r.status})`); return r.json(); }),
         ]);
         if (r1.error || r2.error) throw new Error(r1.error || r2.error);
 
@@ -283,9 +285,9 @@ analyzeBtn.addEventListener("click", async () => {
 
         // Phase B: matchup recommendations in background
         fetch(`/api/matchup-recommendations/${encodeURIComponent(c1)}/${encodeURIComponent(c2)}`)
-            .then(r => r.json())
+            .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
             .then(data => renderRecommendations(data))
-            .catch(() => {});
+            .catch(err => console.warn("Matchup recommendations failed:", err));
     } catch (e) {
         resultsEl.innerHTML = `<div class="no-data">Error: ${e.message}</div>`;
     } finally {

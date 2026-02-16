@@ -16,6 +16,33 @@ def _get_db():
     return conn
 
 
+def _fetch_unit_stats(conn, civ_name, unit_slug, age="Imperial"):
+    """Fetch summary stats for a unit from ref_units."""
+    rc = conn.cursor()
+    rc.execute(
+        """SELECT unit_name, final_hp, final_attack, final_melee_armor,
+                  final_pierce_armor, final_speed, final_range,
+                  final_cost_food, final_cost_wood, final_cost_gold
+           FROM ref_units WHERE civ_name=? AND unit_slug=? AND age=?""",
+        (civ_name, unit_slug, age),
+    )
+    row = rc.fetchone()
+    if not row:
+        return None, None
+    stats = {
+        "hp": row["final_hp"],
+        "attack": row["final_attack"],
+        "melee_armor": row["final_melee_armor"],
+        "pierce_armor": row["final_pierce_armor"],
+        "speed": row["final_speed"],
+        "range": row["final_range"] or 0,
+        "cost_food": row["final_cost_food"] or 0,
+        "cost_wood": row["final_cost_wood"] or 0,
+        "cost_gold": row["final_cost_gold"] or 0,
+    }
+    return row["unit_name"], stats
+
+
 # Role definitions: (role_key, line_slugs, score_type)
 ROLE_DEFS = [
     ("cavalry", ["stable"], "stable_effectiveness"),
@@ -64,6 +91,7 @@ def compute_civ_power_units():
         civ_data = {"imperial": None, "castle": None}
 
         for age_key in ["imperial"]:  # Start with imperial only
+            db_age = "Imperial" if age_key == "imperial" else "Castle"
             power_units = {}
 
             for role_key, line_slugs, score_type in ROLE_DEFS:
@@ -82,14 +110,17 @@ def compute_civ_power_units():
                 row = rc.fetchone()
                 if row:
                     strength = _classify_strength(row["rank"], row["median_delta"])
+                    unit_name, stats = _fetch_unit_stats(conn, civ, row["unit_slug"], db_age)
                     power_units[role_key] = {
                         "unit_slug": row["unit_slug"],
+                        "unit_name": unit_name or row["unit_slug"],
                         "line_slug": row["line_slug"],
                         "score": round(row["score_value"], 1),
                         "rank": row["rank"],
                         "median_delta": round(row["median_delta"], 1),
                         "is_signature": strength == "signature",
                         "strength": strength,
+                        "stats": stats,
                     }
                 else:
                     power_units[role_key] = None
@@ -114,14 +145,17 @@ def compute_civ_power_units():
                 row = rc.fetchone()
                 if row:
                     strength = _classify_strength(row["rank"], row["median_delta"])
+                    unit_name, stats = _fetch_unit_stats(conn, civ, row["unit_slug"], db_age)
                     power_units["trash"] = {
                         "unit_slug": row["unit_slug"],
+                        "unit_name": unit_name or row["unit_slug"],
                         "line_slug": row["line_slug"],
                         "score": round(row["score_value"], 1),
                         "rank": row["rank"],
                         "median_delta": round(row["median_delta"], 1),
                         "is_signature": strength == "signature",
                         "strength": strength,
+                        "stats": stats,
                     }
                 else:
                     power_units["trash"] = None

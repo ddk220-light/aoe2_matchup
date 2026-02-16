@@ -327,7 +327,7 @@ function buildSimUrl(
     res,
     count,
 ) {
-    let url = `/simulate?civ1=${encodeURIComponent(unitCiv)}&unit1=${encodeURIComponent(unitSlug)}&civ2=${encodeURIComponent(oppCiv)}&unit2=${encodeURIComponent(oppSlug)}`;
+    let url = `/?civ1=${encodeURIComponent(unitCiv)}&unit1=${encodeURIComponent(unitSlug)}&civ2=${encodeURIComponent(oppCiv)}&unit2=${encodeURIComponent(oppSlug)}`;
     if (mode === "resources")
         url += `&mode=resources&resources=${res}`;
     else if (mode === "count")

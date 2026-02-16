@@ -301,9 +301,13 @@ class UnitAnalyzer:
         stats.attack = unit.get("displayed_attack", 0)
 
         for atk in unit.get("attacks", []):
-            stats.attacks[atk["class"]] = atk["amount"]
+            cls = atk["class"]
+            if cls not in stats.attacks:  # Keep first entry (duplicates have 0 second)
+                stats.attacks[cls] = atk["amount"]
         for arm in unit.get("armors", []):
-            stats.armors[arm["class"]] = arm["amount"]
+            cls = arm["class"]
+            if cls not in stats.armors:
+                stats.armors[cls] = arm["amount"]
 
         return stats
 
@@ -689,6 +693,21 @@ class UnitAnalyzer:
             stats.cost_food *= value
         elif attr == ATTR_WOOD_COST:
             stats.cost_wood *= value
+        elif attr == ATTR_ATTACK:
+            # Encoded as class * 256 + percent (e.g., Siege Engineers: class 11, 120 = 1.2x)
+            atk_class, percent = self._decode_armor_attack_value(value)
+            if atk_class in stats.attacks:
+                stats.attacks[atk_class] = round(stats.attacks[atk_class] * percent / 100)
+            if atk_class == 4:
+                stats.attack = round(stats.attack * percent / 100)
+        elif attr == ATTR_ARMOR:
+            arm_class, percent = self._decode_armor_attack_value(value)
+            if arm_class in stats.armors:
+                stats.armors[arm_class] = round(stats.armors[arm_class] * percent / 100)
+            if arm_class == 4:
+                stats.melee_armor = round(stats.melee_armor * percent / 100)
+            elif arm_class == 3:
+                stats.pierce_armor = round(stats.pierce_armor * percent / 100)
 
     def calculate_upgrade_cost(
         self, civ_name: str, relevant_techs: set, disabled_techs: set

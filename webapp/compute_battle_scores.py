@@ -10,7 +10,6 @@ Usage:
 """
 
 import argparse
-import copy
 import hashlib
 import json
 import math
@@ -22,47 +21,7 @@ from simulation import prepare_combat_unit, simulate_battle
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 CACHE_PATH = os.path.join(os.path.dirname(__file__), "battle_cache.json")
-EXTRACTED_UNITS_PATH = os.path.join(
-    os.path.dirname(__file__), "..", "database_creation", "extracted_data", "units.json"
-)
 CACHE_VERSION = 11
-
-# Load extracted units data for dismount resolution
-_EXTRACTED_UNITS = {}
-if os.path.exists(EXTRACTED_UNITS_PATH):
-    with open(EXTRACTED_UNITS_PATH) as f:
-        for u in json.load(f):
-            _EXTRACTED_UNITS[u["id"]] = u
-
-
-def _resolve_dismount(unit_id):
-    """Look up dismount unit stats from extracted data. Returns dict or None."""
-    u = _EXTRACTED_UNITS.get(int(unit_id))
-    if not u:
-        return None
-    creatable = u.get("creatable", {})
-    attacks = {}
-    armors = {}
-    for entry in creatable.get("attacks", []):
-        attacks[str(entry["class"])] = entry["amount"]
-    for entry in creatable.get("armours", []):
-        armors[str(entry["class"])] = entry["amount"]
-    reload_time = creatable.get("reload_time", 2.0)
-    attack_speed = round(1.0 / reload_time, 3) if reload_time else 0.5
-    frame_delay = creatable.get("frame_delay", 0)
-    max_frame = max(1, creatable.get("max_frame", 10))
-    attack_delay = frame_delay * reload_time / max_frame if frame_delay else 0
-    return {
-        "hp": int(u.get("hit_points", 0)),
-        "attack": int(creatable.get("displayed_attack", 0)),
-        "melee_armor": int(creatable.get("displayed_melee_armour", 0)),
-        "pierce_armor": int(creatable.get("displayed_range_armour", 0)),
-        "attack_speed": attack_speed,
-        "attack_delay": attack_delay,
-        "movement_speed": u.get("speed", 0.9),
-        "attacks_json": json.dumps(attacks) if attacks else None,
-        "armors_json": json.dumps(armors) if armors else None,
-    }
 
 
 # Unit lines config (must match app.py UNIT_LINES)

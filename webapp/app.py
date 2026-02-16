@@ -534,7 +534,6 @@ UNIT_LINES = {
                 "shotel_warrior_ethiopians",
                 "elite_shotel_warrior_ethiopians",
             ),
-            "Malay": ("karambit_warrior_malay", "elite_karambit_warrior_malay"),
             "Burgundians": (None, "flemish_militia"),
             "Sicilians": ("serjeant_sicilians", "elite_serjeant_sicilians"),
             "Poles": ("obuch_poles", "elite_obuch_poles"),
@@ -568,6 +567,7 @@ UNIT_LINES = {
             "Aztecs": ("eagle_warrior", "elite_eagle"),
             "Incas": ("eagle_warrior", "elite_eagle"),
             "Mayans": ("eagle_warrior", "elite_eagle"),
+            "Malay": ("karambit_warrior_malay", "elite_karambit_warrior_malay"),
         },
     },
     "archer": {

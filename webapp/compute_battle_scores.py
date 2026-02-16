@@ -44,7 +44,6 @@ UNIT_LINES = {
                 "shotel_warrior_ethiopians",
                 "elite_shotel_warrior_ethiopians",
             ),
-            "Malay": ("karambit_warrior_malay", "elite_karambit_warrior_malay"),
             "Burgundians": (None, "flemish_militia"),
             "Sicilians": ("serjeant_sicilians", "elite_serjeant_sicilians"),
             "Poles": ("obuch_poles", "elite_obuch_poles"),
@@ -78,6 +77,7 @@ UNIT_LINES = {
             "Aztecs": ("eagle_warrior", "elite_eagle"),
             "Incas": ("eagle_warrior", "elite_eagle"),
             "Mayans": ("eagle_warrior", "elite_eagle"),
+            "Malay": ("karambit_warrior_malay", "elite_karambit_warrior_malay"),
         },
     },
     "archer": {
@@ -779,13 +779,22 @@ def compute_benchmarks(bench_units, bench_fps, benchmark_cache, unit_fps):
 
 MILITIA_ROLE_BENCHMARKS = [
     # (key, civ, slug, age, mode, param)
-    # General Combat (3K resources each)
-    ("gc_vs_paladin", "Spanish", "paladin", "Imperial", "res", 3000),
-    ("gc_vs_arb", "Chinese", "arbalester", "Imperial", "res", 3000),
-    ("gc_vs_champ", "Chinese", "champion", "Imperial", "res", 3000),
-    # Anti-Cav (3K resources each) — gc_vs_paladin reused from above
-    ("ac_vs_elephant", "Persians", "elite_war_elephant_persians", "Imperial", "res", 3000),
-    ("ac_vs_hussar", "Spanish", "hussar", "Imperial", "res", 3000),
+    # General Combat — 30v30 fixed count (pop-adjusted: half-pop units get double)
+    ("gc_30v30_vs_paladin", "Spanish", "paladin", "Imperial", "pop", 30),
+    ("gc_30v30_vs_arb", "Chinese", "arbalester", "Imperial", "pop", 30),
+    ("gc_30v30_vs_champ", "Chinese", "champion", "Imperial", "pop", 30),
+    # General Combat — 3K resources each
+    ("gc_3k_vs_paladin", "Spanish", "paladin", "Imperial", "res", 3000),
+    ("gc_3k_vs_arb", "Chinese", "arbalester", "Imperial", "res", 3000),
+    ("gc_3k_vs_champ", "Chinese", "champion", "Imperial", "res", 3000),
+    # Anti-Cav — 30v30 fixed count (pop-adjusted)
+    # gc_30v30_vs_paladin reused from above
+    ("ac_30v30_vs_elephant", "Persians", "elite_war_elephant_persians", "Imperial", "pop", 30),
+    ("ac_30v30_vs_hussar", "Spanish", "hussar", "Imperial", "pop", 30),
+    # Anti-Cav — 3K resources each
+    # gc_3k_vs_paladin reused from above
+    ("ac_3k_vs_elephant", "Persians", "elite_war_elephant_persians", "Imperial", "res", 3000),
+    ("ac_3k_vs_hussar", "Spanish", "hussar", "Imperial", "res", 3000),
 ]
 
 ANTI_CAV_BENCHMARKS = [
@@ -944,18 +953,30 @@ def compute_infantry_role_scores():
                     scores[key] = 0.0
                     continue
 
-                bench_cost = calc_weighted_cost(
-                    bench["cost_food"], bench["cost_wood"], bench["cost_gold"], True
-                )
+                if mode == "pop":
+                    # Pop-adjusted 30v30: fixed_count respects pop_space
+                    # (e.g. Karambit Warrior at 0.5 pop gets 60 units)
+                    winner, _, _, hp1, hp2 = simulate_battle(
+                        cu,
+                        bench,
+                        param,
+                        fixed_count=param,
+                        return_hp=True,
+                    )
+                else:
+                    # Resource-based: weighted cost determines army size
+                    bench_cost = calc_weighted_cost(
+                        bench["cost_food"], bench["cost_wood"], bench["cost_gold"], True
+                    )
+                    winner, _, _, hp1, hp2 = simulate_battle(
+                        cu,
+                        bench,
+                        param,
+                        cost1_override=unit_cost,
+                        cost2_override=bench_cost,
+                        return_hp=True,
+                    )
 
-                winner, _, _, hp1, hp2 = simulate_battle(
-                    cu,
-                    bench,
-                    param,
-                    cost1_override=unit_cost,
-                    cost2_override=bench_cost,
-                    return_hp=True,
-                )
                 if winner == 1:
                     scores[key] = round(hp1 * 100, 1)
                 elif winner == 2:
@@ -977,14 +998,16 @@ def compute_infantry_role_scores():
             s[key] = round((s[key] - lo) / span * 100, 1)
 
     # Compute general_combat and anti_cav composites from normalized scores
+    gc_keys = [k for k, *_ in MILITIA_ROLE_BENCHMARKS if k.startswith("gc_")]
+    ac_keys_30v30 = ["gc_30v30_vs_paladin", "ac_30v30_vs_elephant", "ac_30v30_vs_hussar"]
+    ac_keys_3k = ["gc_3k_vs_paladin", "ac_3k_vs_elephant", "ac_3k_vs_hussar"]
+    ac_keys = ac_keys_30v30 + ac_keys_3k
     for sk, scores in all_scores.items():
         scores["general_combat"] = round(
-            (scores["gc_vs_paladin"] + scores["gc_vs_arb"] + scores["gc_vs_champ"]) / 3,
-            1,
+            sum(scores[k] for k in gc_keys) / len(gc_keys), 1
         )
         scores["anti_cav"] = round(
-            (scores["gc_vs_paladin"] + scores["ac_vs_elephant"] + scores["ac_vs_hussar"]) / 3,
-            1,
+            sum(scores[k] for k in ac_keys) / len(ac_keys), 1
         )
 
     # Compute anti-cav ranking scores (uses _combat_unit refs)
@@ -1461,11 +1484,16 @@ INFANTRY_ROLE_SCORE_TYPES = [
     "militia_value",
     "general_combat",
     "anti_cav",
-    "gc_vs_paladin",
-    "gc_vs_arb",
-    "gc_vs_champ",
-    "ac_vs_elephant",
-    "ac_vs_hussar",
+    "gc_30v30_vs_paladin",
+    "gc_30v30_vs_arb",
+    "gc_30v30_vs_champ",
+    "gc_3k_vs_paladin",
+    "gc_3k_vs_arb",
+    "gc_3k_vs_champ",
+    "ac_30v30_vs_elephant",
+    "ac_30v30_vs_hussar",
+    "ac_3k_vs_elephant",
+    "ac_3k_vs_hussar",
     # Anti-cav ranking scores
     "anti_cav_total",
     "frontline",

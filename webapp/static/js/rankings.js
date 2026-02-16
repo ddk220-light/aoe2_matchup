@@ -63,62 +63,26 @@ const statChainCache = {};
 const SCORE_BREAKDOWN = {
     general_combat: {
         title: "General Combat",
-        formula: "Average of 3 normalized matchups (3K resources each)",
+        formula: "Average of 6 normalized matchups (3 \u00d7 30v30 + 3 \u00d7 3K res)",
         subs: [
-            {
-                key: "gc_vs_paladin",
-                label: "vs Paladin",
-                civ: "Spanish",
-                slug: "paladin",
-                mode: "resources",
-                res: 3000,
-            },
-            {
-                key: "gc_vs_arb",
-                label: "vs Arbalester",
-                civ: "Chinese",
-                slug: "arbalester",
-                mode: "resources",
-                res: 3000,
-            },
-            {
-                key: "gc_vs_champ",
-                label: "vs Champion",
-                civ: "Chinese",
-                slug: "champion",
-                mode: "resources",
-                res: 3000,
-            },
+            { key: "gc_30v30_vs_paladin", label: "vs Paladin (30v30)", civ: "Spanish", slug: "paladin", mode: "count", count: 30 },
+            { key: "gc_30v30_vs_arb", label: "vs Arbalester (30v30)", civ: "Chinese", slug: "arbalester", mode: "count", count: 30 },
+            { key: "gc_30v30_vs_champ", label: "vs Champion (30v30)", civ: "Chinese", slug: "champion", mode: "count", count: 30 },
+            { key: "gc_3k_vs_paladin", label: "vs Paladin (3K res)", civ: "Spanish", slug: "paladin", mode: "resources", res: 3000 },
+            { key: "gc_3k_vs_arb", label: "vs Arbalester (3K res)", civ: "Chinese", slug: "arbalester", mode: "resources", res: 3000 },
+            { key: "gc_3k_vs_champ", label: "vs Champion (3K res)", civ: "Chinese", slug: "champion", mode: "resources", res: 3000 },
         ],
     },
     anti_cav: {
         title: "Anti-Cav",
-        formula: "Average of 3 normalized matchups (3K resources each)",
+        formula: "Average of 6 normalized matchups (3 \u00d7 30v30 + 3 \u00d7 3K res)",
         subs: [
-            {
-                key: "gc_vs_paladin",
-                label: "vs Paladin",
-                civ: "Spanish",
-                slug: "paladin",
-                mode: "resources",
-                res: 3000,
-            },
-            {
-                key: "ac_vs_elephant",
-                label: "vs War Elephant",
-                civ: "Persians",
-                slug: "elite_war_elephant_persians",
-                mode: "resources",
-                res: 3000,
-            },
-            {
-                key: "ac_vs_hussar",
-                label: "vs Hussar",
-                civ: "Spanish",
-                slug: "hussar",
-                mode: "resources",
-                res: 3000,
-            },
+            { key: "gc_30v30_vs_paladin", label: "vs Paladin (30v30)", civ: "Spanish", slug: "paladin", mode: "count", count: 30 },
+            { key: "ac_30v30_vs_elephant", label: "vs War Elephant (30v30)", civ: "Persians", slug: "elite_war_elephant_persians", mode: "count", count: 30 },
+            { key: "ac_30v30_vs_hussar", label: "vs Hussar (30v30)", civ: "Spanish", slug: "hussar", mode: "count", count: 30 },
+            { key: "gc_3k_vs_paladin", label: "vs Paladin (3K res)", civ: "Spanish", slug: "paladin", mode: "resources", res: 3000 },
+            { key: "ac_3k_vs_elephant", label: "vs War Elephant (3K res)", civ: "Persians", slug: "elite_war_elephant_persians", mode: "resources", res: 3000 },
+            { key: "ac_3k_vs_hussar", label: "vs Hussar (3K res)", civ: "Spanish", slug: "hussar", mode: "resources", res: 3000 },
         ],
     },
     raid_building: {
@@ -193,21 +157,21 @@ const SCORE_KEYS = new Set([
     "militia_value",
     "general_combat",
     "anti_cav",
-    "gc_vs_paladin",
-    "gc_vs_arb",
-    "gc_vs_champ",
-    "ac_vs_elephant",
-    "ac_vs_hussar",
     "raid_building",
-    // Archery scores
-    "ranged_effectiveness",
-    "anti_archer",
+    // Infantry 30v30 + 3K scores
     "gc_30v30_vs_paladin",
     "gc_30v30_vs_arb",
     "gc_30v30_vs_champ",
     "gc_3k_vs_paladin",
     "gc_3k_vs_arb",
     "gc_3k_vs_champ",
+    "ac_30v30_vs_elephant",
+    "ac_30v30_vs_hussar",
+    "ac_3k_vs_elephant",
+    "ac_3k_vs_hussar",
+    // Archery scores
+    "ranged_effectiveness",
+    "anti_archer",
     "aa_30v30_vs_arb",
     "aa_30v30_vs_ca",
     "aa_30v30_vs_ele_archer",
@@ -216,17 +180,8 @@ const SCORE_KEYS = new Set([
     "aa_3k_vs_ele_archer",
     // Stable scores
     "stable_effectiveness",
-    // general_combat and anti_cav already in infantry scores above
-    "gc_30v30_vs_paladin",
-    "gc_30v30_vs_arb",
-    "gc_30v30_vs_champ",
-    "gc_3k_vs_paladin",
-    "gc_3k_vs_arb",
-    "gc_3k_vs_champ",
     "ac_30v30_vs_heavy_camel",
-    "ac_30v30_vs_elephant",
     "ac_3k_vs_heavy_camel",
-    "ac_3k_vs_elephant",
 ]);
 const STAT_KEYS = new Set([
     "final_hp",
@@ -1042,12 +997,12 @@ function renderTable() {
         {
             key: "general_combat",
             label: "General Combat",
-            info: "Avg of 3 normalized matchups (3K res): vs Spanish Paladin, Chinese Arbalester, Chinese Champion",
+            info: "Avg of 6 normalized matchups (30v30 + 3K res): vs Spanish Paladin, Chinese Arbalester, Chinese Champion",
         },
         {
             key: "anti_cav",
             label: "Anti-Cav",
-            info: "Avg of 3 normalized matchups (3K res): vs Spanish Paladin, Persian War Elephant, Spanish Hussar",
+            info: "Avg of 6 normalized matchups (30v30 + 3K res): vs Spanish Paladin, Persian War Elephant, Spanish Hussar",
         },
         {
             key: "raid_building",
@@ -1243,33 +1198,7 @@ function renderTable() {
         else if (
             k === "dps" ||
             k === "ehp_per_cost" ||
-            k === "militia_value" ||
-            k === "general_combat" ||
-            k === "anti_cav" ||
-            k === "gc_vs_paladin" ||
-            k === "gc_vs_arb" ||
-            k === "gc_vs_champ" ||
-            k === "ac_vs_elephant" ||
-            k === "ac_vs_hussar" ||
-            k === "stable_effectiveness" ||
-            k === "gc_30v30_vs_paladin" ||
-            k === "gc_30v30_vs_arb" ||
-            k === "gc_30v30_vs_champ" ||
-            k === "gc_3k_vs_paladin" ||
-            k === "gc_3k_vs_arb" ||
-            k === "gc_3k_vs_champ" ||
-            k === "ac_30v30_vs_heavy_camel" ||
-            k === "ac_30v30_vs_elephant" ||
-            k === "ac_3k_vs_heavy_camel" ||
-            k === "ac_3k_vs_elephant" ||
-            k === "ranged_effectiveness" ||
-            k === "anti_archer" ||
-            k === "aa_30v30_vs_arb" ||
-            k === "aa_30v30_vs_ca" ||
-            k === "aa_30v30_vs_ele_archer" ||
-            k === "aa_3k_vs_arb" ||
-            k === "aa_3k_vs_ca" ||
-            k === "aa_3k_vs_ele_archer"
+            SCORE_KEYS.has(k)
         )
             formatted = v.toFixed(1);
         else if (k === "total_cost" || k === "total_upgrade_cost")

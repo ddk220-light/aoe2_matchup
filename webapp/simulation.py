@@ -213,8 +213,8 @@ def _calc_damage(
 
     bonus_damage = 0
     for armor_class, armor_value in defender_armors.items():
-        # Skip base damage classes (3=pierce, 4=melee) and blast/trample class (1)
-        if armor_class in attacker_attacks and armor_class not in (1, 3, 4):
+        # Skip base damage classes (3=pierce, 4=melee)
+        if armor_class in attacker_attacks and armor_class not in (3, 4):
             attack_bonus = attacker_attacks[armor_class]
             if attack_bonus > 0:
                 bonus_damage += max(0, attack_bonus - armor_value)

@@ -1453,6 +1453,11 @@ def compute_siege_antibuilding_scores():
                 reload_time = 1.0 / cu["attack_speed"] if cu["attack_speed"] > 0 else 2.0
                 unit_dps = damage_per_hit / reload_time
 
+                # Fire Archer (Wu): Red Cliffs Tactics adds 5 fire damage over 5s
+                # to buildings, ignoring armor, stacking per unit (= 1.0 DPS/unit)
+                if "fire_archer_wu" in u["unit_slug"]:
+                    unit_dps += 1.0
+
                 # Does the unit outrange the castle?
                 outranges = cu["attack_range"] > castle["arrow_range"]
 

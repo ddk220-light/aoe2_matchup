@@ -206,6 +206,10 @@ function buildStageCard(data) {
                 tabBar.querySelectorAll(".stage-tab").forEach(b => b.classList.remove("active"));
                 btn.classList.add("active");
 
+                // Abort any in-flight tab fetch for this card
+                if (card._abortController) card._abortController.abort();
+                card._abortController = new AbortController();
+
                 // Fetch new tab data
                 const params = new URLSearchParams({
                     team1: team1.join(","),
@@ -218,7 +222,7 @@ function buildStageCard(data) {
                     const body = card.querySelector(".stage-body");
                     body.innerHTML = '<div class="loading-indicator">Loading...</div>';
 
-                    const resp = await fetch("/api/team-analysis?" + params);
+                    const resp = await fetch("/api/team-analysis?" + params, { signal: card._abortController.signal });
                     if (!resp.ok) throw new Error("API error: " + resp.status);
                     const tabData = await resp.json();
 
@@ -237,6 +241,7 @@ function buildStageCard(data) {
                     body.innerHTML = "";
                     body.appendChild(buildStageBody(tabData));
                 } catch (err) {
+                    if (err.name === "AbortError") return; // superseded by newer tab click
                     const body = card.querySelector(".stage-body");
                     body.innerHTML = `<div class="loading-indicator" style="color:var(--team1)">Error: ${err.message}</div>`;
                 }

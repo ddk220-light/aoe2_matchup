@@ -3,6 +3,7 @@ import os
 import sqlite3
 
 from flask import Flask, jsonify, redirect, render_template, request
+from best_units import load_civ_power_units, get_matchup_recommendations
 from simulation import prepare_combat_unit, simulate_battle, simulate_mixed_battle
 
 app = Flask(__name__)
@@ -1630,18 +1631,22 @@ def api_team_analysis():
     def get_team_data(civs):
         civ_placeholders = ",".join("?" for _ in civs)
         rc.execute(
-            f"""SELECT civ_name, unit_slug, score_value, rank, median_delta
-                FROM battle_scores
-                WHERE line_slug IN ({ls_placeholders}) AND age=? AND score_type=?
-                  AND civ_name IN ({civ_placeholders})
-                  AND median_delta > 0
-                ORDER BY score_value DESC""",
+            f"""SELECT bs.civ_name, bs.unit_slug, bs.score_value, bs.rank, bs.median_delta,
+                       ru.unit_name
+                FROM battle_scores bs
+                JOIN ref_units ru ON bs.civ_name = ru.civ_name
+                  AND bs.unit_slug = ru.unit_slug AND LOWER(ru.age) = bs.age
+                WHERE bs.line_slug IN ({ls_placeholders}) AND bs.age=? AND bs.score_type=?
+                  AND bs.civ_name IN ({civ_placeholders})
+                  AND bs.median_delta > 0
+                ORDER BY bs.score_value DESC""",
             line_slugs + [age, score_type] + civs,
         )
         above = [
             {
                 "civ": row["civ_name"],
                 "unit_slug": row["unit_slug"],
+                "unit_name": row["unit_name"],
                 "score": round(row["score_value"], 1),
                 "rank": row["rank"],
                 "median_delta": round(row["median_delta"], 1),
@@ -2246,6 +2251,32 @@ def api_matchup_advisor_army(civ1, civ2):
         }
 
     return jsonify({"civ1": civ1, "civ2": civ2, "ages": army_results})
+
+
+@app.route("/api/civ-power-units/<civ_name>")
+def api_civ_power_units(civ_name):
+    """Get pre-computed power units for a civilization."""
+    age = request.args.get("age", "imperial").lower()
+    data = load_civ_power_units()
+    if not data:
+        return jsonify({"error": "civ_power_units.json not found"}), 500
+    civ_data = data.get(civ_name)
+    if not civ_data:
+        return jsonify({"error": f"Civilization '{civ_name}' not found"}), 404
+    age_data = civ_data.get(age)
+    if not age_data:
+        return jsonify({"error": f"No {age} data for {civ_name}"}), 404
+    return jsonify({"civ_name": civ_name, "age": age, **age_data})
+
+
+@app.route("/api/matchup-recommendations/<civ_a>/<civ_b>")
+def api_matchup_recommendations(civ_a, civ_b):
+    """Get recommended units and compositions for civ_a vs civ_b."""
+    age = request.args.get("age", "imperial").lower()
+    result = get_matchup_recommendations(civ_a, civ_b, age)
+    if "error" in result:
+        return jsonify(result), 400
+    return jsonify(result)
 
 
 if __name__ == "__main__":

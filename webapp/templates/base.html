@@ -10,17 +10,33 @@
 </head>
 <body>
     <nav class="site-nav">
-        <a href="/" class="nav-brand">AoE2 Analyzer</a>
+        <a href="/" class="nav-brand">
+            <svg class="nav-brand-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+            </svg>
+            AoE2 Analyzer
+        </a>
         <div class="nav-links">
-            <a href="/" class="nav-link {% if active_nav == 'simulate' %}active{% endif %}">Battle Sim</a>
-            <a href="/matchup-advisor" class="nav-link {% if active_nav == 'matchup' %}active{% endif %}">Matchup Advisor</a>
-            <a href="/units" class="nav-link {% if active_nav == 'rankings' %}active{% endif %}">Rankings</a>
-            <div class="nav-dropdown">
-                <span class="nav-link nav-dropdown-toggle {% if active_nav in ['civ_select', 'civ_detail'] %}active{% endif %}">Database</span>
-                <div class="nav-dropdown-menu">
-                    <a href="/civilizations" {% if active_nav in ['civ_select', 'civ_detail'] %}class="active"{% endif %}>Civilizations</a>
-                </div>
-            </div>
+            <a href="/" class="nav-tab {% if active_nav == 'simulate' %}active{% endif %}">
+                <span class="nav-tab-icon">&#9876;</span>
+                <span class="nav-tab-label">Battle Sim</span>
+                <span class="nav-tab-desc">Army combat simulator</span>
+            </a>
+            <a href="/matchup-advisor" class="nav-tab {% if active_nav == 'matchup' %}active{% endif %}">
+                <span class="nav-tab-icon">&#9813;</span>
+                <span class="nav-tab-label">Matchup Advisor</span>
+                <span class="nav-tab-desc">Civ vs civ strategy</span>
+            </a>
+            <a href="/units" class="nav-tab {% if active_nav == 'rankings' %}active{% endif %}">
+                <span class="nav-tab-icon">&#9734;</span>
+                <span class="nav-tab-label">Rankings</span>
+                <span class="nav-tab-desc">Unit stat comparisons</span>
+            </a>
+            <a href="/civilizations" class="nav-tab {% if active_nav in ['civ_select', 'civ_detail'] %}active{% endif %}">
+                <span class="nav-tab-icon">&#127984;</span>
+                <span class="nav-tab-label">Civilizations</span>
+                <span class="nav-tab-desc">Browse all 50 civs</span>
+            </a>
         </div>
     </nav>
 

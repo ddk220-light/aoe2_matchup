@@ -20,6 +20,9 @@
 ## API Endpoints (confirmed working)
 - `/api/ref/combat-unit/<civ_name>/<unit_slug>?age=Imperial` - combat-ready stats from reference DB
 - `/api/ref/unit-line/<slug>` - unit line ranking data (21 backend slugs, 18 frontend-visible)
+- `/api/ref/unit-line/stable` - virtual stable line, 127 imperial units, 16 score types
+- `/api/ref/unit-line/all_cavalry` - REMOVED (returns 404). Replaced by "stable" virtual line.
+- Individual sub-lines still work: knight (54), camel (13), light_cav (48), steppe_lancer (5), elephant (6)
 - Server responds at `/` with 200
 
 ## Unit Rankings Page (`/units`)
@@ -42,3 +45,14 @@
 - 30v30 result: Champions win decisively (30 surviving, 0.7 HP remaining total)
 - Simulation is symmetric: same result regardless of team assignment
 - Arbalester attack_delay=0.333 (from API), pierce attack class 3 = 10 damage
+
+## Stable Scoring (verified 2026-02-13)
+- 127 units across 20 distinct slugs, 47 civs, Imperial age only
+- Score types (16): stable_power, attack_power, movement_speed_score, survivability_score, 6 atk_*, 6 surv_*
+- Sub-scores (atk_*/surv_*) range -100 to +100 (battle outcome). Composites shifted to 0-100.
+- Formula: stable_power = 0.6*attack + 0.2*speed + 0.2*survivability (max rounding error 0.04)
+- Ranges: stable_power 22.7-70.2, attack_power 9.1-85.3, speed 0-100, survivability 6.3-71.5
+- Top: Ratha (70.2), Leitis (68.9), Monaspa (67.6), Konnik (66.6). Bottom: Viking Hussar (22.7)
+- Scoring DB: `webapp/aoe2_reference.db` (NOT aoe2_units.db)
+- compute_battle_scores.py --roles-only: runs infantry(~6s) + archery(~9s) + stable(~4.6s) = ~20s total
+- Stale .pyc files can cause errors after code changes; if you see unexpected KeyErrors, try `find webapp -name '*.pyc' -delete`

@@ -1590,7 +1590,7 @@ def api_team_analysis():
     team2_raw = request.args.get("team2", "")
     stage = request.args.get("stage", "cavalry")
     tab = request.args.get("tab", "overall")
-    age = request.args.get("age", "Imperial")
+    age = request.args.get("age", "imperial").lower()
 
     if stage not in TEAM_ANALYSIS_STAGES:
         return jsonify({"error": f"Unknown stage: {stage}"}), 400

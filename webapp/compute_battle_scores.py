@@ -1320,7 +1320,7 @@ def compute_stable_role_scores():
         )
 
     # Return in the format write_role_scores_to_db expects: {line_age_key: {unit_key: scores}}
-    return {"stable|Imperial": all_scores}
+    return {"stable|imperial": all_scores}
 
 
 # ===== Siege anti-building scoring =====

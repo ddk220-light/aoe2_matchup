@@ -3,8 +3,8 @@
 ## Environment
 - Python: `python3` (macOS, `python` not in PATH)
 - Virtual env: `venv/` (has flask + numpy), `.venv/` (flask only). Use `venv/`.
-- Port 5000: AirPlay Receiver. Use 5001-5004.
-- Flask start: `cd webapp && PORT=5003 python3 app.py`
+- Port 5000: AirPlay Receiver. Use 5001-5055.
+- Flask start: `cd webapp && PORT=5055 python3 app.py`
 - DB: `webapp/aoe2_units.db` (SQLite)
 
 ## Simulation Testing
@@ -56,3 +56,12 @@
 - Scoring DB: `webapp/aoe2_reference.db` (NOT aoe2_units.db)
 - compute_battle_scores.py --roles-only: runs infantry(~6s) + archery(~9s) + stable(~4.6s) = ~20s total
 - Stale .pyc files can cause errors after code changes; if you see unexpected KeyErrors, try `find webapp -name '*.pyc' -delete`
+
+## Team Analysis API (verified 2026-02-16)
+- Endpoint: `/api/team-analysis?team1=...&team2=...&stage=...&tab=...`
+- Stages: cavalry (3 tabs), infantry (4 tabs), ranged (4 tabs), siege (2 tabs)
+- BUG FIXED: `age` column casing mismatch -- stable stored "Imperial", all others "imperial". Fixed in compute_battle_scores.py (line 1323) and app.py (line 1593: `.lower()`).
+- Response shape: `{stage, tab, tab_label, available_tabs: [{key, label}], age, score_type, median, team1: {civs, above_median_units, total_delta}, team2: {...}, advantage}`
+- Each unit in above_median_units: `{civ, unit_slug, score, rank, median_delta}`
+- Error responses: 400 for invalid stage/tab, 404 for no scores found
+- macOS `date +%s%3N` not supported; use Python `time.time()` for timing in test scripts

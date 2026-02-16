@@ -25,6 +25,14 @@ function formatUnitName(slug) {
     return slug.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
 
+function unitIconUrl(name) {
+    const id = NAME_TO_ICON[name];
+    if (!id) return null;
+    return ICON_BASE + id + ".png";
+}
+
+const PLACEHOLDER_ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'/%3E";
+
 /* ---- Render slots ---- */
 function renderSlots(container, teamArr, teamColor) {
     container.innerHTML = "";
@@ -313,14 +321,39 @@ function buildTeamColumn(label, teamClass, teamData) {
         const entry = document.createElement("div");
         entry.className = "unit-entry";
 
-        const img = document.createElement("img");
-        img.className = "civ-emblem";
-        img.src = civEmblemUrl(unit.civ);
-        img.alt = unit.civ;
+        const displayName = unit.unit_name || formatUnitName(unit.unit_slug);
+
+        const emblems = document.createElement("div");
+        emblems.className = "unit-entry-icons";
+
+        const civImg = document.createElement("img");
+        civImg.className = "civ-emblem";
+        civImg.src = civEmblemUrl(unit.civ);
+        civImg.alt = unit.civ;
+        emblems.appendChild(civImg);
+
+        const iUrl = unitIconUrl(displayName);
+        if (iUrl) {
+            const unitImg = document.createElement("img");
+            unitImg.className = "unit-icon";
+            unitImg.src = iUrl;
+            unitImg.alt = displayName;
+            unitImg.onerror = function() {
+                if (!this.dataset.tried) {
+                    this.dataset.tried = "1";
+                    const id = NAME_TO_ICON[this.alt];
+                    if (id) this.src = ICON_BASE_FALLBACK + id + ".png";
+                    else this.style.display = "none";
+                } else {
+                    this.style.display = "none";
+                }
+            };
+            emblems.appendChild(unitImg);
+        }
 
         const info = document.createElement("div");
         info.className = "unit-entry-info";
-        info.innerHTML = `<div class="unit-entry-name">${formatUnitName(unit.unit_slug)}</div>`
+        info.innerHTML = `<div class="unit-entry-name">${displayName}</div>`
             + `<div class="unit-entry-civ">${unit.civ}</div>`;
 
         const stats = document.createElement("div");
@@ -328,7 +361,7 @@ function buildTeamColumn(label, teamClass, teamData) {
         stats.innerHTML = `<div class="unit-entry-score">${unit.score.toFixed(1)}</div>`
             + `<div class="unit-entry-meta">Rank #${unit.rank} | +${unit.median_delta.toFixed(1)}</div>`;
 
-        entry.appendChild(img);
+        entry.appendChild(emblems);
         entry.appendChild(info);
         entry.appendChild(stats);
         col.appendChild(entry);

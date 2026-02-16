@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}AoE2 Unit Analyzer{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Alegreya+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+    {% block page_css %}{% endblock %}
+</head>
+<body>
+    <nav class="site-nav">
+        <a href="/" class="nav-brand">AoE2 Analyzer</a>
+        <div class="nav-links">
+            <a href="/" class="nav-link {% if active_nav == 'simulate' %}active{% endif %}">Battle Sim</a>
+            <a href="/matchup-advisor" class="nav-link {% if active_nav == 'matchup' %}active{% endif %}">Matchup Advisor</a>
+            <a href="/units" class="nav-link {% if active_nav == 'rankings' %}active{% endif %}">Rankings</a>
+            <div class="nav-dropdown">
+                <span class="nav-link nav-dropdown-toggle {% if active_nav in ['civ_select', 'civ_detail'] %}active{% endif %}">Database</span>
+                <div class="nav-dropdown-menu">
+                    <a href="/civilizations" {% if active_nav in ['civ_select', 'civ_detail'] %}class="active"{% endif %}>Civilizations</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {% block content %}{% endblock %}
+
+    <script src="{{ url_for('static', filename='js/constants.js') }}"></script>
+    {% block page_js %}{% endblock %}
+</body>
+</html>

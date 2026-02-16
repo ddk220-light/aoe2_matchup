@@ -775,11 +775,42 @@ STABLE_LINE_SLUGS = {"knight", "light_cav", "camel", "steppe_lancer", "elephant"
 SIEGE_LINE_SLUGS = {"ram", "mangonel", "trebuchet", "bombard_cannon"}
 
 # Stage-to-query mapping for team analysis
+# Each stage has line_slugs (list of DB line_slug values to query) and tabs
+# (ordered dict of sub-category breakdowns, each mapping to a score_type).
 TEAM_ANALYSIS_STAGES = {
-    "cavalry": {"line_slug": "stable", "score_type": "stable_effectiveness"},
-    # Future stages:
-    # "ranged": {"line_slug": "archery", "score_type": "ranged_effectiveness"},
-    # "infantry": {"line_slug": "infantry", "score_type": "militia_value"},
+    "cavalry": {
+        "line_slugs": ["stable"],
+        "tabs": {
+            "overall":        {"score_type": "stable_effectiveness", "label": "Overall"},
+            "general_combat": {"score_type": "general_combat",       "label": "General Combat"},
+            "anti_cav":       {"score_type": "anti_cav",             "label": "Anti-Cav"},
+        },
+    },
+    "infantry": {
+        "line_slugs": ["militia", "spear", "shock_infantry"],
+        "tabs": {
+            "overall":        {"score_type": "militia_value",    "label": "Overall"},
+            "general_combat": {"score_type": "general_combat",   "label": "General Combat"},
+            "anti_cav":       {"score_type": "anti_cav",         "label": "Anti-Cav"},
+            "raiding":        {"score_type": "raiding_value",    "label": "Raiding"},
+        },
+    },
+    "ranged": {
+        "line_slugs": ["archer", "skirmisher", "cav_archer", "scorpion", "gunpowder"],
+        "tabs": {
+            "overall":        {"score_type": "ranged_effectiveness", "label": "Overall"},
+            "general_combat": {"score_type": "general_combat",       "label": "General Combat"},
+            "anti_archer":    {"score_type": "anti_archer",          "label": "Anti-Archer"},
+            "mobility":       {"score_type": "mobility_score",       "label": "Mobility"},
+        },
+    },
+    "siege": {
+        "line_slugs": ["siege"],
+        "tabs": {
+            "overall":      {"score_type": "anti_building_score", "label": "Overall"},
+            "time_to_kill": {"score_type": "time_to_kill",        "label": "Time to Kill"},
+        },
+    },
 }
 
 
@@ -1554,14 +1585,21 @@ def team_analysis():
 
 @app.route("/api/team-analysis")
 def api_team_analysis():
-    """Team analysis: compare two teams' strength in a given stage."""
+    """Team analysis: compare two teams' strength in a given stage/tab."""
     team1_raw = request.args.get("team1", "")
     team2_raw = request.args.get("team2", "")
     stage = request.args.get("stage", "cavalry")
+    tab = request.args.get("tab", "overall")
     age = request.args.get("age", "Imperial")
 
     if stage not in TEAM_ANALYSIS_STAGES:
         return jsonify({"error": f"Unknown stage: {stage}"}), 400
+
+    stage_cfg = TEAM_ANALYSIS_STAGES[stage]
+    tabs = stage_cfg["tabs"]
+
+    if tab not in tabs:
+        return jsonify({"error": f"Unknown tab '{tab}' for stage '{stage}'"}), 400
 
     team1_civs = [c.strip() for c in team1_raw.split(",") if c.strip()]
     team2_civs = [c.strip() for c in team2_raw.split(",") if c.strip()]
@@ -1569,34 +1607,36 @@ def api_team_analysis():
     if len(team1_civs) != 4 or len(team2_civs) != 4:
         return jsonify({"error": "Each team must have exactly 4 civs"}), 400
 
-    stage_cfg = TEAM_ANALYSIS_STAGES[stage]
-    line_slug = stage_cfg["line_slug"]
-    score_type = stage_cfg["score_type"]
+    line_slugs = stage_cfg["line_slugs"]
+    score_type = tabs[tab]["score_type"]
 
     ref_conn = get_ref_db()
     rc = ref_conn.cursor()
 
-    # Get median for this group (from any row — they all have same median_delta offset)
+    # Build line_slug IN clause
+    ls_placeholders = ",".join("?" for _ in line_slugs)
+
+    # Get median for this group
     rc.execute(
-        "SELECT score_value, median_delta FROM battle_scores WHERE line_slug=? AND age=? AND score_type=? LIMIT 1",
-        (line_slug, age, score_type),
+        f"SELECT score_value, median_delta FROM battle_scores WHERE line_slug IN ({ls_placeholders}) AND age=? AND score_type=? LIMIT 1",
+        line_slugs + [age, score_type],
     )
     sample = rc.fetchone()
     if not sample:
         ref_conn.close()
-        return jsonify({"error": "No scores found for this stage/age"}), 404
+        return jsonify({"error": "No scores found for this stage/tab/age"}), 404
     median = round(sample["score_value"] - sample["median_delta"], 4)
 
     def get_team_data(civs):
-        placeholders = ",".join("?" for _ in civs)
+        civ_placeholders = ",".join("?" for _ in civs)
         rc.execute(
             f"""SELECT civ_name, unit_slug, score_value, rank, median_delta
                 FROM battle_scores
-                WHERE line_slug=? AND age=? AND score_type=?
-                  AND civ_name IN ({placeholders})
+                WHERE line_slug IN ({ls_placeholders}) AND age=? AND score_type=?
+                  AND civ_name IN ({civ_placeholders})
                   AND median_delta > 0
                 ORDER BY score_value DESC""",
-            [line_slug, age, score_type] + civs,
+            line_slugs + [age, score_type] + civs,
         )
         above = [
             {
@@ -1624,6 +1664,9 @@ def api_team_analysis():
 
     return jsonify({
         "stage": stage,
+        "tab": tab,
+        "tab_label": tabs[tab]["label"],
+        "available_tabs": [{"key": k, "label": v["label"]} for k, v in tabs.items()],
         "age": age,
         "score_type": score_type,
         "median": round(median, 1),

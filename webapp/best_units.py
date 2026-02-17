@@ -282,6 +282,9 @@ def compute_civ_power_units():
     for row in rc.fetchall():
         trash_by_civ.setdefault(row["civ_name"], set()).add(row["unit_slug"])
 
+    # Build reference tech sets once (for missing tech computation)
+    reference_techs = _build_reference_techs(conn, "Imperial")
+
     result = {}
 
     for civ in all_civs:
@@ -300,29 +303,66 @@ def compute_civ_power_units():
                           AND LOWER(age) = ?
                           AND score_type = ?
                           AND line_slug IN ({placeholders})
-                        ORDER BY median_delta DESC
-                        LIMIT 1""",
+                        ORDER BY median_delta DESC""",
                     [civ, age_key, score_type] + line_slugs,
                 )
-                row = rc.fetchone()
-                if row:
-                    strength = _classify_strength(row["rank"], row["median_delta"])
+                rows = rc.fetchall()
+
+                all_units = []
+                for row in rows:
                     unit_name, stats = _fetch_unit_stats(conn, civ, row["unit_slug"], db_age)
-                    power_units[role_key] = {
+                    standard_techs, bonus_abilities, special_effects = _get_unit_techs_and_bonuses(
+                        conn, civ, row["unit_slug"], db_age
+                    )
+                    missing = _compute_missing_techs(
+                        standard_techs, reference_techs.get(row["unit_slug"], set())
+                    )
+                    strength = _classify_strength(row["rank"], row["median_delta"])
+                    speed = stats["speed"] if stats else 0
+                    all_units.append({
                         "unit_slug": row["unit_slug"],
                         "unit_name": unit_name or row["unit_slug"],
                         "line_slug": row["line_slug"],
                         "score": round(row["score_value"], 1),
                         "rank": row["rank"],
                         "median_delta": round(row["median_delta"], 1),
-                        "is_signature": strength == "signature",
                         "strength": strength,
+                        "is_signature": strength == "signature",
                         "stats": stats,
+                        "speed": speed,
+                        "missing_techs": missing,
+                        "bonus_abilities": bonus_abilities,
+                        "special_effects": special_effects,
+                    })
+
+                if all_units:
+                    best = all_units[0]
+                    narrative_key = _determine_narrative_key(role_key, all_units)
+                    above_avg = [u for u in all_units if u["median_delta"] > 0]
+                    has_sig = any(u["is_signature"] for u in all_units)
+                    power_units[role_key] = {
+                        # Backward-compat fields from best unit
+                        "unit_slug": best["unit_slug"],
+                        "unit_name": best["unit_name"],
+                        "line_slug": best["line_slug"],
+                        "score": best["score"],
+                        "rank": best["rank"],
+                        "median_delta": best["median_delta"],
+                        "is_signature": best["is_signature"],
+                        "strength": best["strength"],
+                        "stats": None,  # stats now per all_units entry only
+                        # New expanded fields
+                        "all_units": all_units,
+                        "narrative_key": narrative_key,
+                        "above_avg_count": len(above_avg),
+                        "total_count": len(all_units),
+                        "has_signature": has_sig,
+                        "best_unit": best["unit_slug"],
                     }
                 else:
                     power_units[role_key] = None
 
-            # Trash: best general_combat among zero-gold units
+            # Trash: best general_combat among zero-gold units (all units, no LIMIT)
             civ_trash = trash_by_civ.get(civ, set())
             if civ_trash:
                 trash_placeholders = ",".join("?" for _ in civ_trash)
@@ -335,24 +375,59 @@ def compute_civ_power_units():
                           AND score_type = 'general_combat'
                           AND line_slug IN ({line_placeholders})
                           AND unit_slug IN ({trash_placeholders})
-                        ORDER BY median_delta DESC
-                        LIMIT 1""",
+                        ORDER BY median_delta DESC""",
                     [civ, age_key] + TRASH_LINES + list(civ_trash),
                 )
-                row = rc.fetchone()
-                if row:
-                    strength = _classify_strength(row["rank"], row["median_delta"])
+                rows = rc.fetchall()
+
+                all_units = []
+                for row in rows:
                     unit_name, stats = _fetch_unit_stats(conn, civ, row["unit_slug"], db_age)
-                    power_units["trash"] = {
+                    standard_techs, bonus_abilities, special_effects = _get_unit_techs_and_bonuses(
+                        conn, civ, row["unit_slug"], db_age
+                    )
+                    missing = _compute_missing_techs(
+                        standard_techs, reference_techs.get(row["unit_slug"], set())
+                    )
+                    strength = _classify_strength(row["rank"], row["median_delta"])
+                    speed = stats["speed"] if stats else 0
+                    all_units.append({
                         "unit_slug": row["unit_slug"],
                         "unit_name": unit_name or row["unit_slug"],
                         "line_slug": row["line_slug"],
                         "score": round(row["score_value"], 1),
                         "rank": row["rank"],
                         "median_delta": round(row["median_delta"], 1),
-                        "is_signature": strength == "signature",
                         "strength": strength,
+                        "is_signature": strength == "signature",
                         "stats": stats,
+                        "speed": speed,
+                        "missing_techs": missing,
+                        "bonus_abilities": bonus_abilities,
+                        "special_effects": special_effects,
+                    })
+
+                if all_units:
+                    best = all_units[0]
+                    narrative_key = _determine_narrative_key("trash", all_units)
+                    above_avg = [u for u in all_units if u["median_delta"] > 0]
+                    has_sig = any(u["is_signature"] for u in all_units)
+                    power_units["trash"] = {
+                        "unit_slug": best["unit_slug"],
+                        "unit_name": best["unit_name"],
+                        "line_slug": best["line_slug"],
+                        "score": best["score"],
+                        "rank": best["rank"],
+                        "median_delta": best["median_delta"],
+                        "is_signature": best["is_signature"],
+                        "strength": best["strength"],
+                        "stats": None,
+                        "all_units": all_units,
+                        "narrative_key": narrative_key,
+                        "above_avg_count": len(above_avg),
+                        "total_count": len(all_units),
+                        "has_signature": has_sig,
+                        "best_unit": best["unit_slug"],
                     }
                 else:
                     power_units["trash"] = None
@@ -365,9 +440,46 @@ def compute_civ_power_units():
                 entry = power_units.get(role_key)
                 strength_profile[role_key] = entry["strength"] if entry else "weak"
 
+            # Build strategic summary
+            main_roles = ["cavalry", "ranged", "infantry", "anti_cavalry", "siege"]
+            strong_areas = []
+            weak_areas = []
+            signature_areas = []
+            for rk in main_roles:
+                entry = power_units.get(rk)
+                if not entry:
+                    weak_areas.append(rk)
+                    continue
+                if entry.get("has_signature"):
+                    signature_areas.append(rk)
+                    strong_areas.append(rk)
+                elif entry["strength"] in ("strong", "signature"):
+                    strong_areas.append(rk)
+                elif entry["strength"] == "weak":
+                    weak_areas.append(rk)
+
+            total_strong = len(strong_areas)
+            if total_strong >= 3:
+                summary_key = "multi_flexible"
+            elif total_strong >= 1:
+                summary_key = "one_area_strong"
+            else:
+                summary_key = "none_exceptional"
+
+            primary_strength = strong_areas[0] if strong_areas else None
+
+            strategic_summary = {
+                "strong_areas": strong_areas,
+                "weak_areas": weak_areas,
+                "signature_areas": signature_areas,
+                "summary_key": summary_key,
+                "primary_strength": primary_strength,
+            }
+
             civ_data[age_key] = {
                 "power_units": power_units,
                 "strength_profile": strength_profile,
+                "strategic_summary": strategic_summary,
             }
 
         result[civ] = civ_data

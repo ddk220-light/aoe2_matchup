@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Civ Matchup — AoE2 Unit Analyzer{% endblock %}
+{% block title %}Civ Analysis — AoE2 Unit Analyzer{% endblock %}
 
 {% block page_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/matchup.css') }}" />
@@ -8,26 +8,17 @@
 
 {% block content %}
 <div class="page-header">
-    <h1>Civ Matchup</h1>
-    <p class="subtitle">Strategic army composition analysis for any civ matchup</p>
+    <h1>Civ Analysis</h1>
+    <p class="subtitle">Select a civilization to see its strengths, weaknesses, and strategic identity</p>
 </div>
 
 <div class="container">
     <div class="civ-selector">
         <div class="step-label step-civ1" id="step-label">
-            Click a civilization to select Civ 1
+            Click a civilization to analyze
         </div>
         <div class="civ-grid" id="civ-grid"></div>
-        <div class="selected-display" id="selected-display">
-            <span class="civ1-pick" id="pick-civ1">&mdash;</span>
-            <span class="vs-text">vs</span>
-            <span class="civ2-pick" id="pick-civ2">&mdash;</span>
-        </div>
     </div>
-
-    <button id="analyze-btn" class="compare-btn" disabled>
-        Analyze Matchup
-    </button>
 
     <div id="results" class="results-container"></div>
 </div>

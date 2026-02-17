@@ -212,6 +212,142 @@ def _compute_missing_techs(civ_standard_techs, reference_techs_for_slug):
     return sorted(missing)
 
 
+def _batch_fetch_civ_tech_data(conn, civ_name, age="Imperial"):
+    """Batch-fetch all techs and special effects for a civ in one pass.
+
+    Returns two dicts keyed by unit_slug:
+      techs_by_slug: {slug: [tech_name, ...]}
+      effects_by_slug: {slug: [(property_name, property_value), ...]}
+    """
+    rc = conn.cursor()
+
+    # All techs for this civ's units at this age
+    rc.execute(
+        """SELECT ru.unit_slug, rta.tech_name
+           FROM ref_units ru
+           JOIN ref_techs_applied rta ON rta.ref_unit_id = ru.id
+           WHERE ru.civ_name = ? AND ru.age = ?""",
+        (civ_name, age),
+    )
+    techs_by_slug = {}
+    for row in rc.fetchall():
+        techs_by_slug.setdefault(row["unit_slug"], []).append(row["tech_name"])
+
+    # All special effects for this civ's units at this age
+    rc.execute(
+        """SELECT ru.unit_slug, rse.property_name, rse.property_value
+           FROM ref_units ru
+           JOIN ref_special_effects rse ON rse.ref_unit_id = ru.id
+           WHERE ru.civ_name = ? AND ru.age = ?""",
+        (civ_name, age),
+    )
+    effects_by_slug = {}
+    for row in rc.fetchall():
+        effects_by_slug.setdefault(row["unit_slug"], []).append(
+            (row["property_name"], row["property_value"])
+        )
+
+    return techs_by_slug, effects_by_slug
+
+
+def _parse_techs_and_bonuses(techs_list, effects_list):
+    """Parse raw tech/effect lists into (standard_techs, bonus_abilities, special_effects).
+
+    Args:
+        techs_list: list of tech_name strings from ref_techs_applied
+        effects_list: list of (property_name, property_value) tuples from ref_special_effects
+    """
+    civ_techs = set(techs_list or [])
+
+    # Bonus abilities from civ bonuses and unique techs
+    bonus_abilities = []
+    for tech in sorted(civ_techs):
+        if tech.startswith("C-Bonus, "):
+            bonus_abilities.append(tech[len("C-Bonus, "):])
+        elif " UT" in tech or tech.endswith(" UT"):
+            bonus_abilities.append(tech)
+
+    # Special effects
+    special_effects = []
+    for pname, pval in (effects_list or []):
+        label = _EFFECT_LABELS.get(pname)
+        if not label:
+            continue
+        try:
+            v = float(pval)
+        except (ValueError, TypeError):
+            continue
+        if v == 0:
+            continue
+        if pname in ("ignores_melee_armor", "ignores_pierce_armor",
+                      "block_first_melee", "pass_through_percent"):
+            special_effects.append(label.split("{")[0].strip())
+        else:
+            special_effects.append(label.format(v=v))
+
+    # Standard techs (for missing_techs comparison)
+    standard_techs = [t for t in sorted(civ_techs) if not t.startswith("C-Bonus") and " UT" not in t]
+
+    return standard_techs, bonus_abilities, special_effects
+
+
+def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slug, effects_by_slug):
+    """Build a single unit entry dict with stats, techs, bonuses, and effects."""
+    slug = row["unit_slug"]
+    unit_name, stats = _fetch_unit_stats(conn, civ_name, slug, db_age)
+    standard_techs, bonus_abilities, special_effects = _parse_techs_and_bonuses(
+        techs_by_slug.get(slug, []), effects_by_slug.get(slug, [])
+    )
+    missing = _compute_missing_techs(standard_techs, reference_techs.get(slug, set()))
+    strength = _classify_strength(row["rank"], row["median_delta"])
+    speed = stats["speed"] if stats else 0
+
+    return {
+        "unit_slug": slug,
+        "unit_name": unit_name or slug,
+        "line_slug": row["line_slug"],
+        "score": round(row["score_value"], 1),
+        "rank": row["rank"],
+        "median_delta": round(row["median_delta"], 1),
+        "strength": strength,
+        "is_signature": strength == "signature",
+        "stats": stats,
+        "speed": speed,
+        "missing_techs": missing,
+        "bonus_abilities": bonus_abilities,
+        "special_effects": special_effects,
+    }
+
+
+def _build_role_dict(all_units, role_key):
+    """Build the role-level dict from a list of unit entries."""
+    if not all_units:
+        return None
+    best = all_units[0]
+    narrative_key = _determine_narrative_key(role_key, all_units)
+    above_avg = [u for u in all_units if u["median_delta"] > 0]
+    has_sig = any(u["is_signature"] for u in all_units)
+    return {
+        # Backward-compat fields from best unit
+        "unit_slug": best["unit_slug"],
+        "unit_name": best["unit_name"],
+        "line_slug": best["line_slug"],
+        "score": best["score"],
+        "rank": best["rank"],
+        "median_delta": best["median_delta"],
+        "is_signature": best["is_signature"],
+        "strength": best["strength"],
+        "stats": None,  # stats now per all_units entry only
+        # New expanded fields
+        "all_units": all_units,
+        "narrative_key": narrative_key,
+        "above_avg_count": len(above_avg),
+        "total_count": len(all_units),
+        "has_signature": has_sig,
+        "best_unit": best["unit_slug"],
+    }
+
+
 def _determine_narrative_key(role_key, all_units):
     """Determine the narrative key for a role based on unit analysis."""
     above_avg = [u for u in all_units if u["median_delta"] > 0]
@@ -294,7 +430,11 @@ def compute_civ_power_units():
             db_age = "Imperial" if age_key == "imperial" else "Castle"
             power_units = {}
 
+            # Batch-fetch all techs and effects for this civ (2 queries instead of N*3)
+            techs_by_slug, effects_by_slug = _batch_fetch_civ_tech_data(conn, civ, db_age)
+
             for role_key, line_slugs, score_type in ROLE_DEFS:
+                # Safe: placeholders generated from hardcoded ROLE_DEFS constants
                 placeholders = ",".join("?" for _ in line_slugs)
                 rc.execute(
                     f"""SELECT unit_slug, line_slug, score_value, rank, median_delta
@@ -306,63 +446,14 @@ def compute_civ_power_units():
                         ORDER BY median_delta DESC""",
                     [civ, age_key, score_type] + line_slugs,
                 )
-                rows = rc.fetchall()
+                all_units = [
+                    _build_unit_entry(row, civ, conn, db_age, reference_techs,
+                                      techs_by_slug, effects_by_slug)
+                    for row in rc.fetchall()
+                ]
+                power_units[role_key] = _build_role_dict(all_units, role_key)
 
-                all_units = []
-                for row in rows:
-                    unit_name, stats = _fetch_unit_stats(conn, civ, row["unit_slug"], db_age)
-                    standard_techs, bonus_abilities, special_effects = _get_unit_techs_and_bonuses(
-                        conn, civ, row["unit_slug"], db_age
-                    )
-                    missing = _compute_missing_techs(
-                        standard_techs, reference_techs.get(row["unit_slug"], set())
-                    )
-                    strength = _classify_strength(row["rank"], row["median_delta"])
-                    speed = stats["speed"] if stats else 0
-                    all_units.append({
-                        "unit_slug": row["unit_slug"],
-                        "unit_name": unit_name or row["unit_slug"],
-                        "line_slug": row["line_slug"],
-                        "score": round(row["score_value"], 1),
-                        "rank": row["rank"],
-                        "median_delta": round(row["median_delta"], 1),
-                        "strength": strength,
-                        "is_signature": strength == "signature",
-                        "stats": stats,
-                        "speed": speed,
-                        "missing_techs": missing,
-                        "bonus_abilities": bonus_abilities,
-                        "special_effects": special_effects,
-                    })
-
-                if all_units:
-                    best = all_units[0]
-                    narrative_key = _determine_narrative_key(role_key, all_units)
-                    above_avg = [u for u in all_units if u["median_delta"] > 0]
-                    has_sig = any(u["is_signature"] for u in all_units)
-                    power_units[role_key] = {
-                        # Backward-compat fields from best unit
-                        "unit_slug": best["unit_slug"],
-                        "unit_name": best["unit_name"],
-                        "line_slug": best["line_slug"],
-                        "score": best["score"],
-                        "rank": best["rank"],
-                        "median_delta": best["median_delta"],
-                        "is_signature": best["is_signature"],
-                        "strength": best["strength"],
-                        "stats": None,  # stats now per all_units entry only
-                        # New expanded fields
-                        "all_units": all_units,
-                        "narrative_key": narrative_key,
-                        "above_avg_count": len(above_avg),
-                        "total_count": len(all_units),
-                        "has_signature": has_sig,
-                        "best_unit": best["unit_slug"],
-                    }
-                else:
-                    power_units[role_key] = None
-
-            # Trash: best general_combat among zero-gold units (all units, no LIMIT)
+            # Trash: best general_combat among zero-gold units
             civ_trash = trash_by_civ.get(civ, set())
             if civ_trash:
                 trash_placeholders = ",".join("?" for _ in civ_trash)
@@ -378,59 +469,12 @@ def compute_civ_power_units():
                         ORDER BY median_delta DESC""",
                     [civ, age_key] + TRASH_LINES + list(civ_trash),
                 )
-                rows = rc.fetchall()
-
-                all_units = []
-                for row in rows:
-                    unit_name, stats = _fetch_unit_stats(conn, civ, row["unit_slug"], db_age)
-                    standard_techs, bonus_abilities, special_effects = _get_unit_techs_and_bonuses(
-                        conn, civ, row["unit_slug"], db_age
-                    )
-                    missing = _compute_missing_techs(
-                        standard_techs, reference_techs.get(row["unit_slug"], set())
-                    )
-                    strength = _classify_strength(row["rank"], row["median_delta"])
-                    speed = stats["speed"] if stats else 0
-                    all_units.append({
-                        "unit_slug": row["unit_slug"],
-                        "unit_name": unit_name or row["unit_slug"],
-                        "line_slug": row["line_slug"],
-                        "score": round(row["score_value"], 1),
-                        "rank": row["rank"],
-                        "median_delta": round(row["median_delta"], 1),
-                        "strength": strength,
-                        "is_signature": strength == "signature",
-                        "stats": stats,
-                        "speed": speed,
-                        "missing_techs": missing,
-                        "bonus_abilities": bonus_abilities,
-                        "special_effects": special_effects,
-                    })
-
-                if all_units:
-                    best = all_units[0]
-                    narrative_key = _determine_narrative_key("trash", all_units)
-                    above_avg = [u for u in all_units if u["median_delta"] > 0]
-                    has_sig = any(u["is_signature"] for u in all_units)
-                    power_units["trash"] = {
-                        "unit_slug": best["unit_slug"],
-                        "unit_name": best["unit_name"],
-                        "line_slug": best["line_slug"],
-                        "score": best["score"],
-                        "rank": best["rank"],
-                        "median_delta": best["median_delta"],
-                        "is_signature": best["is_signature"],
-                        "strength": best["strength"],
-                        "stats": None,
-                        "all_units": all_units,
-                        "narrative_key": narrative_key,
-                        "above_avg_count": len(above_avg),
-                        "total_count": len(all_units),
-                        "has_signature": has_sig,
-                        "best_unit": best["unit_slug"],
-                    }
-                else:
-                    power_units["trash"] = None
+                all_units = [
+                    _build_unit_entry(row, civ, conn, db_age, reference_techs,
+                                      techs_by_slug, effects_by_slug)
+                    for row in rc.fetchall()
+                ]
+                power_units["trash"] = _build_role_dict(all_units, "trash")
             else:
                 power_units["trash"] = None
 

@@ -262,6 +262,9 @@ def _parse_techs_and_bonuses(techs_list, effects_list):
             continue
         if v == 0:
             continue
+        # pass_through_count of 1 is default (single target), skip it
+        if pname == "pass_through_count" and v <= 1:
+            continue
         # trample_percent is stored as fraction (0.25 = 25%)
         if pname == "trample_percent":
             v = v * 100
@@ -388,6 +391,78 @@ def _determine_narrative_key(role_key, all_units):
     return "unknown"
 
 
+# Score type mapping for trash-specific rankings by line group
+_TRASH_SCORE_MAP = {
+    "spear": "militia_value",
+    "militia": "militia_value",
+    "shock_infantry": "militia_value",
+    "archer": "ranged_effectiveness",
+    "cav_archer": "ranged_effectiveness",
+    "skirmisher": "ranged_effectiveness",
+    "gunpowder": "ranged_effectiveness",
+    "scorpion": "ranged_effectiveness",
+    "stable": "stable_effectiveness",
+}
+
+
+def _compute_trash_rankings(conn, trash_by_civ, age_key="imperial"):
+    """Compute rankings among trash units only (not vs all units in their line).
+
+    Returns dict: {(civ_name, unit_slug): {trash_rank, trash_median_delta, trash_score}}
+    """
+    rc = conn.cursor()
+
+    # Group score types → list of (line_slug, ...) that use that score_type
+    score_groups = {}
+    for line, score_type in _TRASH_SCORE_MAP.items():
+        score_groups.setdefault(score_type, []).append(line)
+
+    # Collect all trash entries across civs, grouped by score_type
+    # Each entry: (civ_name, unit_slug, score_value)
+    entries_by_score = {}  # score_type -> [(civ, slug, score)]
+
+    for score_type, lines in score_groups.items():
+        placeholders = ",".join("?" for _ in lines)
+        rc.execute(
+            f"""SELECT civ_name, unit_slug, line_slug, score_value
+                FROM battle_scores
+                WHERE LOWER(age) = ?
+                  AND score_type = ?
+                  AND line_slug IN ({placeholders})""",
+            [age_key, score_type] + lines,
+        )
+        for row in rc.fetchall():
+            civ = row["civ_name"]
+            slug = row["unit_slug"]
+            # Only include if this unit is actually trash for this civ
+            if slug in trash_by_civ.get(civ, set()):
+                entries_by_score.setdefault(score_type, []).append(
+                    (civ, slug, row["score_value"])
+                )
+
+    # Now rank within each score_type group
+    result = {}
+    for score_type, entries in entries_by_score.items():
+        # Sort by score descending
+        entries.sort(key=lambda x: x[2], reverse=True)
+        scores = [e[2] for e in entries]
+        median_score = scores[len(scores) // 2] if scores else 0
+
+        for rank_idx, (civ, slug, score) in enumerate(entries):
+            rank = rank_idx + 1
+            delta = score - median_score
+            key = (civ, slug)
+            # If a unit appears in multiple score groups, keep the best ranking
+            if key not in result or delta > result[key]["trash_median_delta"]:
+                result[key] = {
+                    "trash_rank": rank,
+                    "trash_median_delta": round(delta, 1),
+                    "trash_score": round(score, 1),
+                }
+
+    return result
+
+
 def compute_civ_power_units():
     """Pre-compute power units for all civs. Returns dict keyed by civ_name."""
     conn = _get_db()
@@ -407,6 +482,9 @@ def compute_civ_power_units():
 
     # Build reference tech sets once (for missing tech computation)
     reference_techs = _build_reference_techs(conn, "Imperial")
+
+    # Compute trash-specific rankings (rank among trash units only, not all units)
+    trash_rankings = _compute_trash_rankings(conn, trash_by_civ, "imperial")
 
     result = {}
 
@@ -440,7 +518,7 @@ def compute_civ_power_units():
                 ]
                 power_units[role_key] = _build_role_dict(all_units, role_key)
 
-            # Trash: best general_combat among zero-gold units
+            # Trash: use line-appropriate scores, ranked among trash only
             civ_trash = trash_by_civ.get(civ, set())
             if civ_trash:
                 trash_placeholders = ",".join("?" for _ in civ_trash)
@@ -461,6 +539,17 @@ def compute_civ_power_units():
                                       techs_by_slug, effects_by_slug)
                     for row in rc.fetchall()
                 ]
+                # Override rank/median_delta with trash-specific rankings
+                for u in all_units:
+                    tr = trash_rankings.get((civ, u["unit_slug"]))
+                    if tr:
+                        u["rank"] = tr["trash_rank"]
+                        u["median_delta"] = tr["trash_median_delta"]
+                        u["score"] = tr["trash_score"]
+                        u["strength"] = _classify_strength(tr["trash_rank"], tr["trash_median_delta"])
+                        u["is_signature"] = u["strength"] == "signature"
+                # Re-sort by trash-specific median_delta
+                all_units.sort(key=lambda u: u["median_delta"], reverse=True)
                 power_units["trash"] = _build_role_dict(all_units, "trash")
             else:
                 power_units["trash"] = None
@@ -490,7 +579,7 @@ def compute_civ_power_units():
                     weak_areas.append(rk)
 
             total_strong = len(strong_areas)
-            if total_strong >= 3:
+            if total_strong >= 2:
                 summary_key = "multi_flexible"
             elif total_strong >= 1:
                 summary_key = "one_area_strong"

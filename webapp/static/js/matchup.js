@@ -165,44 +165,64 @@ function renderAnalysis(civName, data) {
     html += '<h2 class="analysis-civ-name">' + escapeHtml(civName) + '</h2>';
     html += '</div>';
 
-    /* Role sections */
+    /* Strategic summary — now at top, below header */
+    html += renderStrategicSummary(summary);
+
+    /* Toggle button for showing all units */
+    html += '<div class="toggle-row">';
+    html += '<button class="toggle-all-btn" onclick="toggleAllUnits(this)">Show all units</button>';
+    html += '</div>';
+
+    /* Role columns grid */
+    html += '<div class="role-columns">';
+
     for (var i = 0; i < ROLE_ORDER.length; i++) {
         var role = ROLE_ORDER[i];
         var roleData = powerUnits[role];
-        if (!roleData) continue;
-
         var roleLabel = ROLE_LABELS[role] || role;
-        var hasSig = roleData.has_signature;
-        var sectionClass = "role-section" + (hasSig ? " has-signature" : "");
+        var hasSig = roleData && roleData.has_signature;
+        var colClass = "role-column" + (hasSig ? " has-signature" : "");
 
-        html += '<div class="' + sectionClass + '">';
+        html += '<div class="' + colClass + '">';
 
         /* Role header */
         html += '<div class="role-header">' + escapeHtml(roleLabel) + '</div>';
 
-        /* Narrative */
-        var narrativeText = getNarrative(role, roleData);
-        if (narrativeText) {
-            html += '<div class="role-narrative">' + escapeHtml(narrativeText) + '</div>';
-        }
-
-        /* Unit badges */
-        var allUnits = roleData.all_units || [];
-        if (allUnits.length > 0) {
-            html += '<div class="unit-badges">';
-            for (var j = 0; j < allUnits.length; j++) {
-                html += renderUnitBadge(allUnits[j]);
+        if (roleData) {
+            /* Narrative */
+            var narrativeText = getNarrative(role, roleData);
+            if (narrativeText) {
+                html += '<div class="role-narrative">' + escapeHtml(narrativeText) + '</div>';
             }
-            html += '</div>';
+
+            /* Unit badges — signature/strong visible, average/weak hidden by default */
+            var allUnits = roleData.all_units || [];
+            for (var j = 0; j < allUnits.length; j++) {
+                var unit = allUnits[j];
+                var isKeyUnit = unit.strength === "signature" || unit.strength === "strong";
+                var wrapClass = isKeyUnit ? "unit-wrap" : "unit-wrap hidden-tier";
+                html += '<div class="' + wrapClass + '">';
+                html += renderUnitBadge(unit);
+                html += '</div>';
+            }
+        } else {
+            html += '<div class="role-narrative">Not available</div>';
         }
 
         html += '</div>';
     }
 
-    /* Strategic summary */
-    html += renderStrategicSummary(summary);
+    html += '</div>'; /* end role-columns */
 
     return html;
+}
+
+/* ---- Toggle show/hide for average/weak units ---- */
+function toggleAllUnits(btn) {
+    var container = btn.closest(".results-container");
+    if (!container) return;
+    var isShowing = container.classList.toggle("show-all");
+    btn.textContent = isShowing ? "Show key units" : "Show all units";
 }
 
 /* ---- Narrative lookup ---- */
@@ -238,9 +258,13 @@ function renderUnitBadge(unit) {
         html += '<span class="signature-star">\u2605</span>';
     }
 
-    /* Icon */
+    /* Icon — try primary source, fall back to aoe2techtree.net, then hide */
     if (iconUrl) {
-        html += '<img src="' + iconUrl + '" class="' + iconSize + '" alt="' + escapeHtml(name) + '" onerror="this.style.display=\'none\'">';
+        var fallbackUrl = getIconFallbackUrl(name);
+        var onerrorChain = fallbackUrl
+            ? "this.onerror=function(){this.style.display='none'};this.src='" + fallbackUrl + "'"
+            : "this.style.display='none'";
+        html += '<img src="' + iconUrl + '" class="' + iconSize + '" alt="' + escapeHtml(name) + '" onerror="' + onerrorChain + '">';
     } else {
         html += '<div class="' + iconSize + ' icon-placeholder"></div>';
     }

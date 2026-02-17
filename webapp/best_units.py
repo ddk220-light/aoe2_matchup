@@ -68,6 +68,203 @@ def _classify_strength(rank, median_delta):
     return "average"
 
 
+# Techs that meaningfully impact combat — used for "missing techs" tooltip
+IMPACTFUL_TECHS = {
+    # Blacksmith - melee
+    "Forging", "Iron casting", "Blast Furnace",
+    "Scale Mail Armor", "Chain Mail Armor", "Plate Mail Armor",
+    # Blacksmith - ranged
+    "Fletching", "Bodkin Arrow", "Bracer",
+    "Padded Archer Armor", "Leather Archer Armor", "Ring Archer Armor",
+    # Blacksmith - cavalry
+    "Scale Barding Armor", "Chain Barding Armor", "Plate Barding Armor",
+    # Stable
+    "Bloodlines", "Husbandry",
+    # Barracks
+    "Squires", "Arson", "Gambesons",
+    # Castle
+    "Conscription",
+    # University
+    "Ballistics", "Chemistry", "Siege Engineers",
+    # Archery Range
+    "Thumb Ring", "Parthian Tactics",
+}
+
+# Special effect labels for tooltip display
+_EFFECT_LABELS = {
+    "trample_percent": "Trample {v:.0f}%",
+    "ignores_melee_armor": "Ignores melee armor",
+    "ignores_pierce_armor": "Ignores pierce armor",
+    "bleed_dps": "Bleed {v:.0f} dps",
+    "dodge_shield_max": "Dodge shield ({v:.0f} charges)",
+    "block_first_melee": "Blocks first melee hit",
+    "hp_regen": "+{v:.1f} HP/min regen",
+    "charge_attack_melee": "Charge +{v:.0f} melee",
+    "attack_bonus_per_kill": "+{v:.0f} attack per kill",
+    "bonus_damage_reduction": "{v:.0f}% bonus damage reduction",
+    "splash_radius": "Splash damage ({v:.1f} radius)",
+    "extra_projectiles": "+{v:.0f} extra projectiles",
+    "splash_on_hit_radius": "Splash on hit ({v:.1f} radius)",
+    "armor_strip_per_hit": "Strips {v:.0f} armor/hit",
+    "pass_through_percent": "Pass-through damage",
+    "hp_per_kill": "+{v:.0f} HP per kill",
+}
+
+# Scout line slugs for cavalry narrative
+SCOUT_SLUGS = {"hussar", "light_cavalry", "winged_hussar"}
+
+# Teuton Paladin speed — threshold for "strong but lacks mobility"
+SLOW_CAV_THRESHOLD = 1.35
+
+
+def _build_reference_techs(conn, age="Imperial"):
+    """Build a dict: unit_slug -> set of standard tech names available to ANY civ.
+
+    This is the 'full tech tree' reference. For each unit_slug at the given age,
+    we collect all standard techs that appear in ref_techs_applied for any civ's
+    version of that unit, filtered to IMPACTFUL_TECHS only.
+    """
+    rc = conn.cursor()
+    rc.execute(
+        """SELECT ru.unit_slug, rta.tech_name
+           FROM ref_units ru
+           JOIN ref_techs_applied rta ON rta.ref_unit_id = ru.id
+           WHERE ru.age = ? AND rta.tech_name NOT LIKE 'C-Bonus%'
+             AND rta.tech_name NOT LIKE '%UT%'""",
+        (age,),
+    )
+    ref = {}
+    for row in rc.fetchall():
+        slug = row["unit_slug"]
+        tech = row["tech_name"]
+        if tech in IMPACTFUL_TECHS:
+            ref.setdefault(slug, set()).add(tech)
+    return ref
+
+
+def _get_unit_techs_and_bonuses(conn, civ_name, unit_slug, age="Imperial"):
+    """Get missing techs, bonus abilities, and special effects for a unit.
+
+    Returns (standard_techs: list[str], bonus_abilities: list[str], special_effects: list[str])
+    """
+    rc = conn.cursor()
+
+    # Get ref_unit_id
+    rc.execute(
+        "SELECT id FROM ref_units WHERE civ_name=? AND unit_slug=? AND age=?",
+        (civ_name, unit_slug, age),
+    )
+    row = rc.fetchone()
+    if not row:
+        return [], [], []
+    ref_unit_id = row["id"]
+
+    # Get all techs applied to this unit
+    rc.execute(
+        "SELECT tech_name FROM ref_techs_applied WHERE ref_unit_id=?",
+        (ref_unit_id,),
+    )
+    civ_techs = {r["tech_name"] for r in rc.fetchall()}
+
+    # Extract bonus abilities from civ bonuses and unique techs
+    bonus_abilities = []
+    for tech in sorted(civ_techs):
+        if tech.startswith("C-Bonus, "):
+            bonus_abilities.append(tech[len("C-Bonus, "):])
+        elif " UT" in tech or tech.endswith(" UT"):
+            bonus_abilities.append(tech)
+
+    # Get special effects
+    rc.execute(
+        "SELECT property_name, property_value FROM ref_special_effects WHERE ref_unit_id=?",
+        (ref_unit_id,),
+    )
+    special_effects = []
+    for r in rc.fetchall():
+        pname = r["property_name"]
+        label = _EFFECT_LABELS.get(pname)
+        if not label:
+            continue
+        try:
+            v = float(r["property_value"])
+        except (ValueError, TypeError):
+            continue
+        if v == 0:
+            continue
+        # Boolean-style effects (1.0 = yes)
+        if pname in ("ignores_melee_armor", "ignores_pierce_armor",
+                      "block_first_melee", "pass_through_percent"):
+            special_effects.append(label.split("{")[0].strip())
+        else:
+            special_effects.append(label.format(v=v))
+
+    # Standard techs only (for missing_techs comparison)
+    standard_techs = [t for t in sorted(civ_techs) if not t.startswith("C-Bonus") and " UT" not in t]
+
+    return standard_techs, bonus_abilities, special_effects
+
+
+def _compute_missing_techs(civ_standard_techs, reference_techs_for_slug):
+    """Compute which impactful techs this civ is missing vs the reference."""
+    if not reference_techs_for_slug:
+        return []
+    missing = reference_techs_for_slug - set(civ_standard_techs)
+    return sorted(missing)
+
+
+def _determine_narrative_key(role_key, all_units):
+    """Determine the narrative key for a role based on unit analysis."""
+    above_avg = [u for u in all_units if u["median_delta"] > 0]
+
+    if role_key == "cavalry":
+        above_avg_non_scout = [u for u in above_avg if u["unit_slug"] not in SCOUT_SLUGS]
+        best = all_units[0] if all_units else None
+        if not above_avg:
+            return "cav_none"
+        if above_avg and not above_avg_non_scout:
+            return "cav_trash_only"
+        if best and best["speed"] <= SLOW_CAV_THRESHOLD and best["median_delta"] > 0:
+            return "cav_strong_slow"
+        if len(above_avg) == 1:
+            return "cav_one_strong"
+        return "cav_all_strong"
+
+    elif role_key == "ranged":
+        if len(above_avg) >= 2:
+            return "ranged_strong"
+        if len(above_avg) == 1:
+            return "ranged_one_strong"
+        return "ranged_none"
+
+    elif role_key == "infantry":
+        if len(above_avg) >= 2:
+            return "inf_strong"
+        if len(above_avg) == 1:
+            return "inf_one_strong"
+        return "inf_none"
+
+    elif role_key == "anti_cavalry":
+        if len(above_avg) >= 2:
+            return "anticav_strong"
+        if len(above_avg) == 1:
+            return "anticav_one_strong"
+        return "anticav_weak"
+
+    elif role_key == "trash":
+        if above_avg:
+            return "trash_strong"
+        return "trash_weak"
+
+    elif role_key == "siege":
+        if len(above_avg) >= 2:
+            return "siege_strong"
+        if len(above_avg) == 1:
+            return "siege_one_strong"
+        return "siege_weak"
+
+    return "unknown"
+
+
 def compute_civ_power_units():
     """Pre-compute power units for all civs. Returns dict keyed by civ_name."""
     conn = _get_db()

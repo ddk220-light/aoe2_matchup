@@ -92,7 +92,10 @@ IMPACTFUL_TECHS = {
 
 # Special effect labels for tooltip display
 _EFFECT_LABELS = {
-    "trample_percent": "Trample {v:.0f}%",
+    "trample_percent": "Trample {v:.0f}%",  # NOTE: stored as fraction, multiply by 100 before format
+    "trample_flat_damage": "Trample +{v:.0f} flat damage",
+    "trample_radius": "Trample ({v:.1f} radius)",
+    "pass_through_count": "Pass-through x{v:.0f}",
     "ignores_melee_armor": "Ignores melee armor",
     "ignores_pierce_armor": "Ignores pierce armor",
     "bleed_dps": "Bleed {v:.0f} dps",
@@ -129,8 +132,7 @@ def _build_reference_techs(conn, age="Imperial"):
         """SELECT ru.unit_slug, rta.tech_name
            FROM ref_units ru
            JOIN ref_techs_applied rta ON rta.ref_unit_id = ru.id
-           WHERE ru.age = ? AND rta.tech_name NOT LIKE 'C-Bonus%'
-             AND rta.tech_name NOT LIKE '%UT%'""",
+           WHERE ru.age = ? AND rta.tech_type IN ('standard', 'work_rate')""",
         (age,),
     )
     ref = {}
@@ -159,47 +161,22 @@ def _get_unit_techs_and_bonuses(conn, civ_name, unit_slug, age="Imperial"):
         return [], [], []
     ref_unit_id = row["id"]
 
-    # Get all techs applied to this unit
+    # Get all techs applied to this unit (with tech_type for classification)
     rc.execute(
-        "SELECT tech_name FROM ref_techs_applied WHERE ref_unit_id=?",
+        "SELECT tech_name, tech_type FROM ref_techs_applied WHERE ref_unit_id=?",
         (ref_unit_id,),
     )
-    civ_techs = {r["tech_name"] for r in rc.fetchall()}
-
-    # Extract bonus abilities from civ bonuses and unique techs
-    bonus_abilities = []
-    for tech in sorted(civ_techs):
-        if tech.startswith("C-Bonus, "):
-            bonus_abilities.append(tech[len("C-Bonus, "):])
-        elif " UT" in tech or tech.endswith(" UT"):
-            bonus_abilities.append(tech)
+    techs_list = [(r["tech_name"], r["tech_type"]) for r in rc.fetchall()]
 
     # Get special effects
     rc.execute(
         "SELECT property_name, property_value FROM ref_special_effects WHERE ref_unit_id=?",
         (ref_unit_id,),
     )
-    special_effects = []
-    for r in rc.fetchall():
-        pname = r["property_name"]
-        label = _EFFECT_LABELS.get(pname)
-        if not label:
-            continue
-        try:
-            v = float(r["property_value"])
-        except (ValueError, TypeError):
-            continue
-        if v == 0:
-            continue
-        # Boolean-style effects (1.0 = yes)
-        if pname in ("ignores_melee_armor", "ignores_pierce_armor",
-                      "block_first_melee", "pass_through_percent"):
-            special_effects.append(label.split("{")[0].strip())
-        else:
-            special_effects.append(label.format(v=v))
+    effects_list = [(r["property_name"], r["property_value"]) for r in rc.fetchall()]
 
-    # Standard techs only (for missing_techs comparison)
-    standard_techs = [t for t in sorted(civ_techs) if not t.startswith("C-Bonus") and " UT" not in t]
+    # Delegate to shared parser
+    standard_techs, bonus_abilities, special_effects = _parse_techs_and_bonuses(techs_list, effects_list)
 
     return standard_techs, bonus_abilities, special_effects
 
@@ -216,14 +193,14 @@ def _batch_fetch_civ_tech_data(conn, civ_name, age="Imperial"):
     """Batch-fetch all techs and special effects for a civ in one pass.
 
     Returns two dicts keyed by unit_slug:
-      techs_by_slug: {slug: [tech_name, ...]}
+      techs_by_slug: {slug: [(tech_name, tech_type), ...]}
       effects_by_slug: {slug: [(property_name, property_value), ...]}
     """
     rc = conn.cursor()
 
-    # All techs for this civ's units at this age
+    # All techs for this civ's units at this age (include tech_type for classification)
     rc.execute(
-        """SELECT ru.unit_slug, rta.tech_name
+        """SELECT ru.unit_slug, rta.tech_name, rta.tech_type
            FROM ref_units ru
            JOIN ref_techs_applied rta ON rta.ref_unit_id = ru.id
            WHERE ru.civ_name = ? AND ru.age = ?""",
@@ -231,7 +208,9 @@ def _batch_fetch_civ_tech_data(conn, civ_name, age="Imperial"):
     )
     techs_by_slug = {}
     for row in rc.fetchall():
-        techs_by_slug.setdefault(row["unit_slug"], []).append(row["tech_name"])
+        techs_by_slug.setdefault(row["unit_slug"], []).append(
+            (row["tech_name"], row["tech_type"])
+        )
 
     # All special effects for this civ's units at this age
     rc.execute(
@@ -254,18 +233,22 @@ def _parse_techs_and_bonuses(techs_list, effects_list):
     """Parse raw tech/effect lists into (standard_techs, bonus_abilities, special_effects).
 
     Args:
-        techs_list: list of tech_name strings from ref_techs_applied
+        techs_list: list of (tech_name, tech_type) tuples from ref_techs_applied
         effects_list: list of (property_name, property_value) tuples from ref_special_effects
     """
-    civ_techs = set(techs_list or [])
-
-    # Bonus abilities from civ bonuses and unique techs
+    # Classify techs by tech_type from the database
     bonus_abilities = []
-    for tech in sorted(civ_techs):
-        if tech.startswith("C-Bonus, "):
-            bonus_abilities.append(tech[len("C-Bonus, "):])
-        elif " UT" in tech or tech.endswith(" UT"):
-            bonus_abilities.append(tech)
+    standard_tech_names = set()
+    for tech_name, tech_type in (techs_list or []):
+        if tech_type == "unique_tech":
+            bonus_abilities.append(tech_name)
+        elif tech_type == "civ_bonus":
+            # Strip "C-Bonus, " prefix if present for cleaner display
+            display = tech_name[len("C-Bonus, "):] if tech_name.startswith("C-Bonus, ") else tech_name
+            bonus_abilities.append(display)
+        else:
+            # standard, work_rate, etc. — these are standard techs
+            standard_tech_names.add(tech_name)
 
     # Special effects
     special_effects = []
@@ -279,14 +262,17 @@ def _parse_techs_and_bonuses(techs_list, effects_list):
             continue
         if v == 0:
             continue
+        # trample_percent is stored as fraction (0.25 = 25%)
+        if pname == "trample_percent":
+            v = v * 100
         if pname in ("ignores_melee_armor", "ignores_pierce_armor",
                       "block_first_melee", "pass_through_percent"):
             special_effects.append(label.split("{")[0].strip())
         else:
             special_effects.append(label.format(v=v))
 
-    # Standard techs (for missing_techs comparison)
-    standard_techs = [t for t in sorted(civ_techs) if not t.startswith("C-Bonus") and " UT" not in t]
+    # Standard techs sorted for missing_techs comparison
+    standard_techs = sorted(standard_tech_names)
 
     return standard_techs, bonus_abilities, special_effects
 
@@ -354,12 +340,13 @@ def _determine_narrative_key(role_key, all_units):
 
     if role_key == "cavalry":
         above_avg_non_scout = [u for u in above_avg if u["unit_slug"] not in SCOUT_SLUGS]
-        best = all_units[0] if all_units else None
         if not above_avg:
             return "cav_none"
         if above_avg and not above_avg_non_scout:
             return "cav_trash_only"
-        if best and best["speed"] <= SLOW_CAV_THRESHOLD and best["median_delta"] > 0:
+        # Check if ALL above-average non-scout cav is slow (e.g. only War Elephants)
+        fast_above_avg = [u for u in above_avg_non_scout if u["speed"] > SLOW_CAV_THRESHOLD]
+        if above_avg_non_scout and not fast_above_avg:
             return "cav_strong_slow"
         if len(above_avg) == 1:
             return "cav_one_strong"

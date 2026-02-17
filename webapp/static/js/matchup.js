@@ -264,8 +264,8 @@ function renderTooltip(unit, name) {
     var missingTechs = unit.missing_techs || [];
     var strength = STRENGTH_COLORS[unit.strength] || STRENGTH_COLORS.average;
 
-    /* Only show tooltip if there is special info */
-    var hasContent = bonusAbilities.length > 0 || specialEffects.length > 0 || missingTechs.length > 0;
+    /* Only show tooltip if there is special info or a rank */
+    var hasContent = bonusAbilities.length > 0 || specialEffects.length > 0 || missingTechs.length > 0 || unit.rank;
     if (!hasContent) return "";
 
     var html = '<div class="unit-badge-tooltip">';

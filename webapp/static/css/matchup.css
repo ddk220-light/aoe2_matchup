@@ -162,27 +162,6 @@
     color: #e74c3c;
 }
 
-/* --- Toggle Button Row --- */
-.toggle-row {
-    text-align: center;
-    margin-bottom: 16px;
-}
-.toggle-all-btn {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: var(--text-muted);
-    padding: 6px 18px;
-    border-radius: 16px;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-.toggle-all-btn:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: var(--text);
-    border-color: rgba(201, 168, 76, 0.3);
-}
-
 /* --- Role Columns Grid --- */
 .role-columns {
     display: grid;
@@ -223,15 +202,9 @@
     margin-bottom: 10px;
 }
 
-/* --- Unit Wrap (for toggle visibility) --- */
+/* --- Unit Wrap --- */
 .unit-wrap {
     margin-bottom: 8px;
-}
-.unit-wrap.hidden-tier {
-    display: none;
-}
-.results-container.show-all .unit-wrap.hidden-tier {
-    display: block;
 }
 
 /* --- Unit Badge (compact for columns) --- */

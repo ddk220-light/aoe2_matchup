@@ -134,6 +134,7 @@ async function loadAnalysis(civName) {
     } catch (e) {
         resultsEl.innerHTML = '<div class="no-data">Error: ' + escapeHtml(e.message) + '</div>';
     }
+    resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 /* ---- Helpers ---- */
@@ -168,11 +169,6 @@ function renderAnalysis(civName, data) {
     /* Strategic summary — now at top, below header */
     html += renderStrategicSummary(summary);
 
-    /* Toggle button for showing all units */
-    html += '<div class="toggle-row">';
-    html += '<button class="toggle-all-btn" onclick="toggleAllUnits(this)">Show all units</button>';
-    html += '</div>';
-
     /* Role columns grid */
     html += '<div class="role-columns">';
 
@@ -195,14 +191,11 @@ function renderAnalysis(civName, data) {
                 html += '<div class="role-narrative">' + escapeHtml(narrativeText) + '</div>';
             }
 
-            /* Unit badges — signature/strong visible, average/weak hidden by default */
+            /* Unit badges */
             var allUnits = roleData.all_units || [];
             for (var j = 0; j < allUnits.length; j++) {
-                var unit = allUnits[j];
-                var isKeyUnit = unit.strength === "signature" || unit.strength === "strong";
-                var wrapClass = isKeyUnit ? "unit-wrap" : "unit-wrap hidden-tier";
-                html += '<div class="' + wrapClass + '">';
-                html += renderUnitBadge(unit);
+                html += '<div class="unit-wrap">';
+                html += renderUnitBadge(allUnits[j]);
                 html += '</div>';
             }
         } else {
@@ -215,14 +208,6 @@ function renderAnalysis(civName, data) {
     html += '</div>'; /* end role-columns */
 
     return html;
-}
-
-/* ---- Toggle show/hide for average/weak units ---- */
-function toggleAllUnits(btn) {
-    var container = btn.closest(".results-container");
-    if (!container) return;
-    var isShowing = container.classList.toggle("show-all");
-    btn.textContent = isShowing ? "Show key units" : "Show all units";
 }
 
 /* ---- Narrative lookup ---- */

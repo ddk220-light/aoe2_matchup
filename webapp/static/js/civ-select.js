@@ -1,4 +1,5 @@
 /* ==========================================================================
+   OBSOLETE: No longer routed. Replaced by matchup.js served at /civilizations.
    AoE2 Unit Analyzer — Civilization Select Page
    Populates expansion civ grids with emblem cards.
    Depends on: constants.js (CIV_EMBLEM_BASE)

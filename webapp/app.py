@@ -76,8 +76,9 @@ def units():
 
 @app.route("/civilizations")
 def civ_view():
-    """Civilization selection grid."""
-    return render_template("civ_select.html", active_nav="civ_select")
+    """Civilization analysis page — shows power units, strengths, and strategic identity."""
+    civs = _get_ref_civs()
+    return render_template("matchup_advisor.html", civs=civs, active_nav="civ_select")
 
 
 @app.route("/civilizations/<civ_name>")
@@ -1053,9 +1054,8 @@ def _get_ref_civs():
 
 @app.route("/matchup-advisor")
 def matchup_advisor():
-    """Matchup Advisor page."""
-    civs = _get_ref_civs()
-    return render_template("matchup_advisor.html", civs=civs, active_nav="matchup")
+    """Matchup Advisor page — WIP."""
+    return render_template("matchup_wip.html", active_nav="matchup")
 
 
 @app.route("/team-analysis")

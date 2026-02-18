@@ -1588,6 +1588,125 @@ def compute_anti_cav_scores(all_scores, sk_to_line):
 
 
 # ---------------------------------------------------------------------------
+# Combined anti-cav ranking (infantry + qualifying stable units)
+# ---------------------------------------------------------------------------
+
+# The 4 shared benchmarks used for cross-line anti-cav comparison (3K res each)
+COMBINED_AC_BENCHMARKS = [
+    ("ac_vs_paladin", "Spanish", "paladin", "Imperial", "res", 3000),
+    ("ac_vs_hussar", "Spanish", "hussar", "Imperial", "res", 3000),
+    ("ac_vs_heavy_camel", "Persians", "heavy_camel", "Imperial", "res", 3000),
+    ("ac_vs_elephant", "Vietnamese", "elite_elephant", "Imperial", "res", 3000),
+]
+
+COMBINED_AC_KEYS = [k for k, *_ in COMBINED_AC_BENCHMARKS]
+
+
+def compute_combined_anti_cav_scores(stable_role_scores):
+    """Combine infantry and qualifying stable anti-cav scores into one pool.
+
+    1. Build infantry units and simulate 4 shared benchmarks
+    2. Filter stable units to above-median anti_cav specialists
+    3. Simulate same 4 benchmarks against qualifying stable units
+    4. Pool, min-max normalize 0-100, compute anti_cav_combined
+    5. Return dict for write_role_scores_to_db: {"anti_cav_pool|imperial": {civ|slug: scores}}
+    """
+    bench_cache = {}
+    for key, civ, slug, age, mode, param in COMBINED_AC_BENCHMARKS:
+        cache_key = (civ, slug, age)
+        if cache_key not in bench_cache:
+            bench_cache[cache_key] = _load_benchmark_unit(civ, slug, age)
+            if bench_cache[cache_key] is None:
+                print(f"  WARNING: combined AC benchmark {civ}/{slug}/{age} not found")
+
+    def _sim_unit_vs_benchmarks(cu):
+        """Simulate a combat unit against the 4 shared AC benchmarks."""
+        unit_cost = calc_weighted_cost(
+            cu["cost_food"], cu["cost_wood"], cu["cost_gold"], True
+        )
+        raw = {}
+        for key, civ, slug, age, mode, param in COMBINED_AC_BENCHMARKS:
+            bench = bench_cache.get((civ, slug, age))
+            if bench is None:
+                raw[key] = 0.0
+                continue
+            bench_cost = calc_weighted_cost(
+                bench["cost_food"], bench["cost_wood"], bench["cost_gold"], True
+            )
+            winner, _, _, hp1, hp2 = simulate_battle(
+                cu, bench, param,
+                cost1_override=unit_cost, cost2_override=bench_cost,
+                return_hp=True,
+            )
+            if winner == 1:
+                raw[key] = round(hp1 * 100, 1)
+            elif winner == 2:
+                raw[key] = round(-hp2 * 100, 1)
+            else:
+                raw[key] = 0.0
+        return raw
+
+    # --- Build and simulate infantry units ---
+    pool = {}
+    infantry_lines = ["militia", "spear", "shock_infantry"]
+    for line_slug in infantry_lines:
+        units = build_line_units(line_slug, "imperial")
+        for u in units:
+            cu = u["combat_unit"]
+            sk = f"{u['civ_name']}|{u['unit_slug']}"
+            pool[sk] = _sim_unit_vs_benchmarks(cu)
+
+    infantry_count = len(pool)
+
+    # --- Filter qualifying stable units (above-median anti_cav) ---
+    stable_dict = stable_role_scores.get("stable|imperial", {})
+    if stable_dict:
+        ac_scores = [s.get("anti_cav", 0) for s in stable_dict.values()]
+        ac_median = sorted(ac_scores)[len(ac_scores) // 2] if ac_scores else 0
+    else:
+        ac_median = 0
+
+    # --- Simulate qualifying stable units ---
+    stable_count = 0
+    for line_slug in STABLE_LINE_SLUGS:
+        units = build_line_units(line_slug, "imperial")
+        for u in units:
+            if "ele_archer" in u["unit_slug"]:
+                continue
+            sk = f"{u['civ_name']}|{u['unit_slug']}"
+            # Check if this unit qualifies (above-median anti_cav)
+            stable_scores = stable_dict.get(sk, {})
+            if stable_scores.get("anti_cav", 0) < ac_median:
+                continue
+            cu = u["combat_unit"]
+            pool[sk] = _sim_unit_vs_benchmarks(cu)
+            stable_count += 1
+
+    print(f"  Combined anti-cav pool: {len(pool)} units ({infantry_count} infantry + {stable_count} stable)")
+
+    if not pool:
+        return {}
+
+    # --- Min-max normalize each benchmark across the combined pool ---
+    for key in COMBINED_AC_KEYS:
+        vals = [p[key] for p in pool.values()]
+        lo, hi = min(vals), max(vals)
+        span = hi - lo if hi != lo else 1
+        for p in pool.values():
+            p[key] = round((p[key] - lo) / span * 100, 1)
+
+    # --- Compute anti_cav_combined (average of 4 normalized scores) ---
+    for sk, raw in pool.items():
+        raw["anti_cav_combined"] = round(
+            sum(raw[k] for k in COMBINED_AC_KEYS) / len(COMBINED_AC_KEYS), 1
+        )
+
+    # --- Format for write_role_scores_to_db ---
+    result = {"anti_cav_pool|imperial": pool}
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Raiding ranking
 # ---------------------------------------------------------------------------
 
@@ -2069,6 +2188,13 @@ def main():
     print(
         f"Siege anti-building: {total_siege} units in {siege_time:.1f}s"
     )
+
+    # Combined anti-cav pool (infantry + qualifying stable, written to DB)
+    ac_start = time.time()
+    combined_ac = compute_combined_anti_cav_scores(stable_scores)
+    write_role_scores_to_db(combined_ac, ["anti_cav_pool"], ["anti_cav_combined"])
+    ac_time = time.time() - ac_start
+    print(f"Combined anti-cav: {ac_time:.1f}s")
 
     # Compute rankings for all DB scores (rank + median_delta)
     ranking_start = time.time()

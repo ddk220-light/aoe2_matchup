@@ -48,7 +48,7 @@ ROLE_DEFS = [
     ("cavalry", ["stable"], "stable_effectiveness"),
     ("ranged", ["archer", "cav_archer", "scorpion", "gunpowder"], "ranged_effectiveness"),
     ("infantry", ["militia", "shock_infantry"], "militia_value"),
-    ("anti_cavalry", ["spear", "militia"], "anti_cav_value"),
+    ("anti_cavalry", ["anti_cav_pool"], "anti_cav_combined"),
     ("siege", ["siege"], "anti_building_score"),
 ]
 
@@ -463,41 +463,6 @@ def _compute_trash_rankings(conn, trash_by_civ, age_key="imperial"):
     return result
 
 
-def _compute_cross_line_rankings(conn, line_slugs, score_type, age_key="imperial"):
-    """Compute rankings across multiple lines combined (not per-line).
-
-    Used for roles like anti_cavalry where spear+militia should be ranked together
-    by their raw score, not by per-line median_delta.
-
-    Returns dict: {(civ_name, unit_slug): {rank, median_delta, score}}
-    """
-    rc = conn.cursor()
-    placeholders = ",".join("?" for _ in line_slugs)
-    rc.execute(
-        f"""SELECT civ_name, unit_slug, score_value
-            FROM battle_scores
-            WHERE LOWER(age) = ?
-              AND score_type = ?
-              AND line_slug IN ({placeholders})""",
-        [age_key, score_type] + list(line_slugs),
-    )
-    entries = [(row["civ_name"], row["unit_slug"], row["score_value"]) for row in rc.fetchall()]
-    if not entries:
-        return {}
-
-    entries.sort(key=lambda x: x[2], reverse=True)
-    scores = [e[2] for e in entries]
-    median_score = scores[len(scores) // 2]
-
-    result = {}
-    for rank_idx, (civ, slug, score) in enumerate(entries):
-        result[(civ, slug)] = {
-            "rank": rank_idx + 1,
-            "median_delta": round(score - median_score, 1),
-            "score": round(score, 1),
-        }
-    return result
-
 
 def compute_civ_power_units():
     """Pre-compute power units for all civs. Returns dict keyed by civ_name."""
@@ -521,11 +486,6 @@ def compute_civ_power_units():
 
     # Compute trash-specific rankings (rank among trash units only, not all units)
     trash_rankings = _compute_trash_rankings(conn, trash_by_civ, "imperial")
-
-    # Compute cross-line anti-cav rankings (spear + militia ranked together by anti_cav_value)
-    anticav_rankings = _compute_cross_line_rankings(
-        conn, ["spear", "militia"], "anti_cav_value", "imperial"
-    )
 
     result = {}
 
@@ -557,18 +517,6 @@ def compute_civ_power_units():
                                       techs_by_slug, effects_by_slug)
                     for row in rc.fetchall()
                 ]
-                # For anti_cavalry, override with cross-line rankings
-                if role_key == "anti_cavalry":
-                    for u in all_units:
-                        acr = anticav_rankings.get((civ, u["unit_slug"]))
-                        if acr:
-                            u["rank"] = acr["rank"]
-                            u["median_delta"] = acr["median_delta"]
-                            u["score"] = acr["score"]
-                            u["strength"] = _classify_strength(acr["rank"], acr["median_delta"])
-                            u["is_signature"] = u["strength"] == "signature"
-                    all_units.sort(key=lambda u: u["median_delta"], reverse=True)
-
                 power_units[role_key] = _build_role_dict(all_units, role_key)
 
             # Trash: use line-appropriate scores, ranked among trash only

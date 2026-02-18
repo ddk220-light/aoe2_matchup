@@ -49,12 +49,9 @@ ROLE_DEFS = [
     ("ranged", ["archer", "cav_archer", "scorpion", "gunpowder"], "ranged_effectiveness"),
     ("infantry", ["militia", "shock_infantry"], "militia_value"),
     ("anti_cavalry", ["anti_cav_pool"], "anti_cav_combined"),
+    ("anti_archer", ["archer", "cav_archer", "scorpion", "gunpowder", "skirmisher"], "anti_archer"),
     ("siege", ["siege"], "anti_building_score"),
 ]
-
-# Trash role handled separately (needs gold cost filter)
-TRASH_LINES = ["stable", "militia", "spear", "shock_infantry", "archer", "cav_archer",
-               "scorpion", "gunpowder", "skirmisher"]
 
 
 def _classify_strength(rank, median_delta):
@@ -376,10 +373,12 @@ def _determine_narrative_key(role_key, all_units):
             return "anticav_one_strong"
         return "anticav_weak"
 
-    elif role_key == "trash":
-        if above_avg:
-            return "trash_strong"
-        return "trash_weak"
+    elif role_key == "anti_archer":
+        if len(above_avg) >= 2:
+            return "antiarcher_strong"
+        if len(above_avg) == 1:
+            return "antiarcher_one_strong"
+        return "antiarcher_weak"
 
     elif role_key == "siege":
         if len(above_avg) >= 2:
@@ -389,78 +388,6 @@ def _determine_narrative_key(role_key, all_units):
         return "siege_weak"
 
     return "unknown"
-
-
-# Score type mapping for trash-specific rankings by line group
-_TRASH_SCORE_MAP = {
-    "spear": "militia_value",
-    "militia": "militia_value",
-    "shock_infantry": "militia_value",
-    "archer": "ranged_effectiveness",
-    "cav_archer": "ranged_effectiveness",
-    "skirmisher": "ranged_effectiveness",
-    "gunpowder": "ranged_effectiveness",
-    "scorpion": "ranged_effectiveness",
-    "stable": "stable_effectiveness",
-}
-
-
-def _compute_trash_rankings(conn, trash_by_civ, age_key="imperial"):
-    """Compute rankings among trash units only (not vs all units in their line).
-
-    Returns dict: {(civ_name, unit_slug): {trash_rank, trash_median_delta, trash_score}}
-    """
-    rc = conn.cursor()
-
-    # Group score types → list of (line_slug, ...) that use that score_type
-    score_groups = {}
-    for line, score_type in _TRASH_SCORE_MAP.items():
-        score_groups.setdefault(score_type, []).append(line)
-
-    # Collect all trash entries across civs, grouped by score_type
-    # Each entry: (civ_name, unit_slug, score_value)
-    entries_by_score = {}  # score_type -> [(civ, slug, score)]
-
-    for score_type, lines in score_groups.items():
-        placeholders = ",".join("?" for _ in lines)
-        rc.execute(
-            f"""SELECT civ_name, unit_slug, line_slug, score_value
-                FROM battle_scores
-                WHERE LOWER(age) = ?
-                  AND score_type = ?
-                  AND line_slug IN ({placeholders})""",
-            [age_key, score_type] + lines,
-        )
-        for row in rc.fetchall():
-            civ = row["civ_name"]
-            slug = row["unit_slug"]
-            # Only include if this unit is actually trash for this civ
-            if slug in trash_by_civ.get(civ, set()):
-                entries_by_score.setdefault(score_type, []).append(
-                    (civ, slug, row["score_value"])
-                )
-
-    # Now rank within each score_type group
-    result = {}
-    for score_type, entries in entries_by_score.items():
-        # Sort by score descending
-        entries.sort(key=lambda x: x[2], reverse=True)
-        scores = [e[2] for e in entries]
-        median_score = scores[len(scores) // 2] if scores else 0
-
-        for rank_idx, (civ, slug, score) in enumerate(entries):
-            rank = rank_idx + 1
-            delta = score - median_score
-            key = (civ, slug)
-            # If a unit appears in multiple score groups, keep the best ranking
-            if key not in result or delta > result[key]["trash_median_delta"]:
-                result[key] = {
-                    "trash_rank": rank,
-                    "trash_median_delta": round(delta, 1),
-                    "trash_score": round(score, 1),
-                }
-
-    return result
 
 
 
@@ -473,19 +400,8 @@ def compute_civ_power_units():
     rc.execute("SELECT DISTINCT civ_name FROM battle_scores ORDER BY civ_name")
     all_civs = [row["civ_name"] for row in rc.fetchall()]
 
-    # Get trash unit slugs (gold cost = 0) from ref_units
-    rc.execute(
-        "SELECT DISTINCT civ_name, unit_slug FROM ref_units WHERE final_cost_gold = 0 AND age = 'Imperial'"
-    )
-    trash_by_civ = {}
-    for row in rc.fetchall():
-        trash_by_civ.setdefault(row["civ_name"], set()).add(row["unit_slug"])
-
     # Build reference tech sets once (for missing tech computation)
     reference_techs = _build_reference_techs(conn, "Imperial")
-
-    # Compute trash-specific rankings (rank among trash units only, not all units)
-    trash_rankings = _compute_trash_rankings(conn, trash_by_civ, "imperial")
 
     result = {}
 
@@ -519,50 +435,14 @@ def compute_civ_power_units():
                 ]
                 power_units[role_key] = _build_role_dict(all_units, role_key)
 
-            # Trash: use line-appropriate scores, ranked among trash only
-            civ_trash = trash_by_civ.get(civ, set())
-            if civ_trash:
-                trash_placeholders = ",".join("?" for _ in civ_trash)
-                line_placeholders = ",".join("?" for _ in TRASH_LINES)
-                rc.execute(
-                    f"""SELECT unit_slug, line_slug, score_value, rank, median_delta
-                        FROM battle_scores
-                        WHERE civ_name = ?
-                          AND LOWER(age) = ?
-                          AND score_type = 'general_combat'
-                          AND line_slug IN ({line_placeholders})
-                          AND unit_slug IN ({trash_placeholders})
-                        ORDER BY median_delta DESC""",
-                    [civ, age_key] + TRASH_LINES + list(civ_trash),
-                )
-                all_units = [
-                    _build_unit_entry(row, civ, conn, db_age, reference_techs,
-                                      techs_by_slug, effects_by_slug)
-                    for row in rc.fetchall()
-                ]
-                # Override rank/median_delta with trash-specific rankings
-                for u in all_units:
-                    tr = trash_rankings.get((civ, u["unit_slug"]))
-                    if tr:
-                        u["rank"] = tr["trash_rank"]
-                        u["median_delta"] = tr["trash_median_delta"]
-                        u["score"] = tr["trash_score"]
-                        u["strength"] = _classify_strength(tr["trash_rank"], tr["trash_median_delta"])
-                        u["is_signature"] = u["strength"] == "signature"
-                # Re-sort by trash-specific median_delta
-                all_units.sort(key=lambda u: u["median_delta"], reverse=True)
-                power_units["trash"] = _build_role_dict(all_units, "trash")
-            else:
-                power_units["trash"] = None
-
             # Build strength profile
             strength_profile = {}
-            for role_key in ["cavalry", "ranged", "infantry", "anti_cavalry", "trash", "siege"]:
+            for role_key in ["cavalry", "ranged", "infantry", "anti_cavalry", "anti_archer", "siege"]:
                 entry = power_units.get(role_key)
                 strength_profile[role_key] = entry["strength"] if entry else "weak"
 
             # Build strategic summary
-            main_roles = ["cavalry", "ranged", "infantry", "anti_cavalry", "siege"]
+            main_roles = ["cavalry", "ranged", "infantry", "anti_cavalry", "anti_archer", "siege"]
             strong_areas = []
             weak_areas = []
             signature_areas = []

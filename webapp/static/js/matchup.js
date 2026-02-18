@@ -5,13 +5,13 @@
    ========================================================================== */
 
 /* ---- Constants ---- */
-const ROLE_ORDER = ["cavalry", "ranged", "infantry", "anti_cavalry", "trash", "siege"];
+const ROLE_ORDER = ["cavalry", "ranged", "infantry", "anti_cavalry", "anti_archer", "siege"];
 const ROLE_LABELS = {
     cavalry: "Cavalry",
     ranged: "Ranged",
     infantry: "Infantry",
     anti_cavalry: "Anti-Cavalry",
-    trash: "Trash",
+    anti_archer: "Anti-Archer",
     siege: "Siege",
 };
 const STRENGTH_COLORS = {
@@ -44,9 +44,10 @@ const NARRATIVES = {
         anticav_one_strong: "{best_unit} provides solid anti-cavalry capability.",
         anticav_weak: "Anti-cavalry is a weakness \u2014 be cautious against cavalry-heavy opponents.",
     },
-    trash: {
-        trash_strong: "Trash units are above average, giving staying power in long games.",
-        trash_weak: "Trash units are below average \u2014 gold-heavy strategies may be needed.",
+    anti_archer: {
+        antiarcher_strong: "Strong anti-archer options give this civ tools to shut down enemy ranged units.",
+        antiarcher_one_strong: "{best_unit} provides solid anti-archer capability.",
+        antiarcher_weak: "Anti-archer options are limited \u2014 be cautious against archer-heavy opponents.",
     },
     siege: {
         siege_strong: "Strong siege options for pushing fortified positions.",

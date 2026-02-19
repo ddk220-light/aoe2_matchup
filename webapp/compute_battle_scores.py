@@ -868,6 +868,19 @@ ARCHERY_ROLE_SCORE_TYPES = [
     "aa_3k_vs_arb",
     "aa_3k_vs_ca",
     "aa_3k_vs_ele_archer",
+    # Raw (pre-normalization) scores
+    "gc_30v30_vs_paladin_raw",
+    "gc_30v30_vs_arb_raw",
+    "gc_30v30_vs_champ_raw",
+    "gc_3k_vs_paladin_raw",
+    "gc_3k_vs_arb_raw",
+    "gc_3k_vs_champ_raw",
+    "aa_30v30_vs_arb_raw",
+    "aa_30v30_vs_ca_raw",
+    "aa_30v30_vs_ele_archer_raw",
+    "aa_3k_vs_arb_raw",
+    "aa_3k_vs_ca_raw",
+    "aa_3k_vs_ele_archer_raw",
     # Mobility ranking scores
     "mobility_score",
     "mobility_speed_dps",
@@ -914,6 +927,17 @@ STABLE_SCORE_TYPES = [
     "ac_30v30_vs_elephant",
     "ac_3k_vs_heavy_camel",
     "ac_3k_vs_elephant",
+    # Raw (pre-normalization) scores
+    "gc_30v30_vs_paladin_raw",
+    "gc_30v30_vs_arb_raw",
+    "gc_30v30_vs_champ_raw",
+    "gc_3k_vs_paladin_raw",
+    "gc_3k_vs_arb_raw",
+    "gc_3k_vs_champ_raw",
+    "ac_30v30_vs_heavy_camel_raw",
+    "ac_30v30_vs_elephant_raw",
+    "ac_3k_vs_heavy_camel_raw",
+    "ac_3k_vs_elephant_raw",
 ]
 
 
@@ -988,8 +1012,13 @@ def compute_infantry_role_scores():
             all_scores[sk] = scores
             sk_to_line[sk] = line_slug
 
-    # Normalize each benchmark score to 0–100 across ALL infantry units
+    # Save raw scores before normalization
     bench_keys = [k for k, _, _, _, _, _ in MILITIA_ROLE_BENCHMARKS]
+    for key in bench_keys:
+        for s in all_scores.values():
+            s[f"{key}_raw"] = s[key]
+
+    # Normalize each benchmark score to 0–100 across ALL infantry units
     for key in bench_keys:
         vals = [s[key] for s in all_scores.values()]
         lo, hi = min(vals), max(vals)
@@ -1125,11 +1154,16 @@ def compute_archery_role_scores():
             all_scores[sk] = scores
             sk_to_line[sk] = line_slug
 
-    # Min-max normalize each benchmark score across all archery units (0-100)
+    # Save raw scores before normalization
     gc_keys = [k for k, *_ in ARCHERY_ROLE_BENCHMARKS if k.startswith("gc_")]
     aa_keys = [k for k, *_ in ARCHERY_ROLE_BENCHMARKS if k.startswith("aa_")]
     all_bench_keys = gc_keys + aa_keys
 
+    for key in all_bench_keys:
+        for s in all_scores.values():
+            s[f"{key}_raw"] = s[key]
+
+    # Min-max normalize each benchmark score across all archery units (0-100)
     for bk in all_bench_keys:
         vals = [s[bk] for s in all_scores.values()]
         lo, hi = min(vals), max(vals)
@@ -1292,11 +1326,16 @@ def compute_stable_role_scores():
 
         all_scores[sk] = scores
 
-    # Min-max normalize each benchmark score across all stable units (0-100)
+    # Save raw scores before normalization
     gc_keys = [k for k, *_ in STABLE_BENCHMARKS if k.startswith("gc_")]
     ac_only_keys = [k for k, *_ in STABLE_BENCHMARKS if k.startswith("ac_")]
     all_bench_keys = gc_keys + ac_only_keys
 
+    for key in all_bench_keys:
+        for s in all_scores.values():
+            s[f"{key}_raw"] = s[key]
+
+    # Min-max normalize each benchmark score across all stable units (0-100)
     for bk in all_bench_keys:
         vals = [s[bk] for s in all_scores.values()]
         lo, hi = min(vals), max(vals)
@@ -1491,6 +1530,17 @@ INFANTRY_ROLE_SCORE_TYPES = [
     "ac_30v30_vs_hussar",
     "ac_3k_vs_elephant",
     "ac_3k_vs_hussar",
+    # Raw (pre-normalization) scores
+    "gc_30v30_vs_paladin_raw",
+    "gc_30v30_vs_arb_raw",
+    "gc_30v30_vs_champ_raw",
+    "gc_3k_vs_paladin_raw",
+    "gc_3k_vs_arb_raw",
+    "gc_3k_vs_champ_raw",
+    "ac_30v30_vs_elephant_raw",
+    "ac_30v30_vs_hussar_raw",
+    "ac_3k_vs_elephant_raw",
+    "ac_3k_vs_hussar_raw",
     # Anti-cav ranking scores
     "anti_cav_total",
     "frontline",

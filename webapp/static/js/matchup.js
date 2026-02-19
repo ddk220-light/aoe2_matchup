@@ -16,9 +16,8 @@ const ROLE_LABELS = {
 };
 const STRENGTH_COLORS = {
     signature: { bg: "rgba(201, 168, 76, 0.2)", text: "var(--gold)", label: "Signature" },
-    strong: { bg: "rgba(46, 204, 113, 0.15)", text: "#2ecc71", label: "Strong" },
+    good: { bg: "rgba(46, 204, 113, 0.15)", text: "#2ecc71", label: "Good" },
     average: { bg: "rgba(255, 255, 255, 0.05)", text: "var(--text-muted)", label: "Average" },
-    weak: { bg: "rgba(231, 76, 60, 0.15)", text: "#e74c3c", label: "Weak" },
 };
 
 const NARRATIVES = {

@@ -78,7 +78,7 @@ def units():
 def civ_view():
     """Civilization analysis page — shows power units, strengths, and strategic identity."""
     civs = _get_ref_civs()
-    return render_template("matchup_advisor.html", civs=civs, active_nav="civ_select")
+    return render_template("civ_detail.html", civs=civs, active_nav="civ_select")
 
 
 @app.route("/civilizations/<civ_name>")
@@ -86,7 +86,7 @@ def civ_detail(civ_name):
     """Civilization unit detail page."""
     if civ_name not in ORIGINAL_13_CIVS:
         return redirect("/civilizations")
-    return render_template("civ_detail.html", civ_name=civ_name, active_nav="civ_detail")
+    return render_template("deprecated-civ.html", civ_name=civ_name, active_nav="civ_detail")
 
 
 @app.route("/civ")

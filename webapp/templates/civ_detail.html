@@ -1,136 +1,32 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ civ_name }} — AoE2 Unit Analyzer{% endblock %}
+{% block title %}Civilizations — AoE2 Unit Analyzer{% endblock %}
 
 {% block page_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/civ-detail.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/matchup.css') }}" />
 {% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <div class="header-top">
-        <a href="/civilizations" class="back-link">&#8592; All Civilizations</a>
-        <div class="header-main">
-            <img
-                class="civ-emblem"
-                src="https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/{{ civ_name|lower }}.png"
-                alt="{{ civ_name }}"
-            />
-            <h1>{{ civ_name }}</h1>
-            <div class="age-toggle">
-                <button
-                    class="age-btn"
-                    data-age="Castle"
-                    onclick="setAge('Castle')"
-                >
-                    <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 14 14"
-                        fill="none"
-                        style="vertical-align: -2px; margin-right: 2px"
-                    >
-                        <rect
-                            x="4"
-                            y="2"
-                            width="6"
-                            height="10"
-                            rx="1"
-                            stroke="currentColor"
-                            stroke-width="1.2"
-                            fill="none"
-                        />
-                        <rect
-                            x="1"
-                            y="5"
-                            width="3"
-                            height="7"
-                            rx="0.5"
-                            stroke="currentColor"
-                            stroke-width="1"
-                            fill="none"
-                        />
-                        <rect
-                            x="10"
-                            y="5"
-                            width="3"
-                            height="7"
-                            rx="0.5"
-                            stroke="currentColor"
-                            stroke-width="1"
-                            fill="none"
-                        />
-                    </svg>
-                    Castle
-                </button>
-                <button
-                    class="age-btn active"
-                    data-age="Imperial"
-                    onclick="setAge('Imperial')"
-                >
-                    <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 14 14"
-                        fill="none"
-                        style="vertical-align: -2px; margin-right: 2px"
-                    >
-                        <path
-                            d="M7 1L1 5v2h12V5L7 1z"
-                            stroke="currentColor"
-                            stroke-width="1.2"
-                            fill="none"
-                        />
-                        <rect
-                            x="2"
-                            y="7"
-                            width="10"
-                            height="5"
-                            stroke="currentColor"
-                            stroke-width="1"
-                            fill="none"
-                        />
-                        <rect
-                            x="5"
-                            y="9"
-                            width="4"
-                            height="3"
-                            stroke="currentColor"
-                            stroke-width="0.8"
-                            fill="none"
-                        />
-                    </svg>
-                    Imperial
-                </button>
-            </div>
+    <h1>Civilizations</h1>
+    <p class="subtitle">Select a civilization to see its strengths, weaknesses, and strategic identity</p>
+</div>
+
+<div class="container">
+    <div class="civ-selector">
+        <div class="step-label step-civ1" id="step-label">
+            Click a civilization to analyze
         </div>
+        <div class="civ-grid" id="civ-grid"></div>
     </div>
-</div>
 
-<div class="content">
-    <div class="loading" id="loading">Loading unit data...</div>
-    <div id="units-container"></div>
-</div>
-
-<!-- Modal -->
-<div
-    class="modal-overlay"
-    id="modal-overlay"
-    onclick="if (event.target === this) closeModal();"
->
-    <div class="modal">
-        <div class="modal-gold-bar"></div>
-        <button class="modal-close" onclick="closeModal()">
-            &times;
-        </button>
-        <div class="modal-body" id="modal-body"></div>
-    </div>
+    <div id="results" class="results-container"></div>
 </div>
 {% endblock %}
 
 {% block page_js %}
 <script>
-    const CIV_NAME = "{{ civ_name }}";
+    const CIVS = {{ civs | tojson }};
 </script>
-<script src="{{ url_for('static', filename='js/civ-detail.js') }}"></script>
+<script src="{{ url_for('static', filename='js/matchup.js') }}"></script>
 {% endblock %}

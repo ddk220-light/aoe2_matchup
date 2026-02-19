@@ -1480,7 +1480,10 @@ function exportCSV() {
     const age = currentAge.toLowerCase();
     a.href = url;
     a.download = `${lineName}_${age}_rankings.csv`;
+    a.style.display = "none";
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
 

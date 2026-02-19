@@ -155,6 +155,7 @@ function slugToName(slug) {
 function renderAnalysis(civName, data) {
     var powerUnits = data.power_units || {};
     var summary = data.strategic_summary || {};
+    var strategicDescription = data.strategic_description || "";
     var civSlug = civName.toLowerCase();
     var emblemUrl = CIV_EMBLEM_BASE + civSlug + ".png";
 
@@ -162,12 +163,12 @@ function renderAnalysis(civName, data) {
     var weakAreas = summary.weak_areas || [];
     var html = '';
 
-    /* Hero: emblem + name + strategic summary side-by-side */
+    /* Hero: emblem + name + strategic description side-by-side */
     html += '<div class="analysis-hero">';
     html += '<img src="' + emblemUrl + '" class="analysis-emblem" alt="' + escapeHtml(civName) + '">';
     html += '<div class="analysis-hero-body">';
     html += '<h2 class="analysis-civ-name">' + escapeHtml(civName) + '</h2>';
-    html += renderStrategicSummaryInline(summary);
+    html += renderStrategicSummaryInline(summary, strategicDescription);
     html += '</div>';
     html += '</div>';
 
@@ -311,48 +312,30 @@ function renderTooltip(unit, name) {
 }
 
 /* ---- Strategic summary renderer (inline, for hero section) ---- */
-function renderStrategicSummaryInline(summary) {
-    if (!summary || !summary.summary_key) return "";
+function renderStrategicSummaryInline(summary, strategicDescription) {
+    if (!strategicDescription && (!summary || !summary.summary_key)) return "";
 
-    var template = SUMMARY_TEMPLATES[summary.summary_key];
-    if (!template) return "";
+    var html = '';
 
-    var strongAreas = summary.strong_areas || [];
-    var weakAreas = summary.weak_areas || [];
-    var primaryStrength = summary.primary_strength
-        ? (ROLE_LABELS[summary.primary_strength] || summary.primary_strength)
-        : "";
-
-    var areasText = strongAreas.map(function (a) {
-        return ROLE_LABELS[a] || a;
-    }).join(", ");
-
-    var narrativeText = template
-        .replace("{areas}", areasText)
-        .replace("{primary_strength}", primaryStrength);
-
-    var html = '<div class="analysis-hero-narrative">' + escapeHtml(narrativeText) + '</div>';
-
-    /* Strength pills */
-    if (strongAreas.length > 0) {
-        html += '<div class="pill-row">';
-        html += '<span class="pill-label">Strengths:</span>';
-        for (var i = 0; i < strongAreas.length; i++) {
-            var label = ROLE_LABELS[strongAreas[i]] || strongAreas[i];
-            html += '<span class="pill pill-strong">' + escapeHtml(label) + '</span>';
+    /* Main strategic description paragraph */
+    if (strategicDescription) {
+        html += '<div class="analysis-hero-narrative">' + escapeHtml(strategicDescription) + '</div>';
+    } else {
+        /* Fallback to old template if no description generated */
+        var template = SUMMARY_TEMPLATES[summary.summary_key];
+        if (template) {
+            var strongAreas = summary.strong_areas || [];
+            var primaryStrength = summary.primary_strength
+                ? (ROLE_LABELS[summary.primary_strength] || summary.primary_strength)
+                : "";
+            var areasText = strongAreas.map(function (a) {
+                return ROLE_LABELS[a] || a;
+            }).join(", ");
+            var narrativeText = template
+                .replace("{areas}", areasText)
+                .replace("{primary_strength}", primaryStrength);
+            html += '<div class="analysis-hero-narrative">' + escapeHtml(narrativeText) + '</div>';
         }
-        html += '</div>';
-    }
-
-    /* Weakness pills */
-    if (weakAreas.length > 0) {
-        html += '<div class="pill-row">';
-        html += '<span class="pill-label">Weaknesses:</span>';
-        for (var i = 0; i < weakAreas.length; i++) {
-            var label = ROLE_LABELS[weakAreas[i]] || weakAreas[i];
-            html += '<span class="pill pill-weak">' + escapeHtml(label) + '</span>';
-        }
-        html += '</div>';
     }
 
     return html;

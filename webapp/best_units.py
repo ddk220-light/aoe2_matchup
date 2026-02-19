@@ -425,7 +425,7 @@ def compute_civ_power_units():
                           AND LOWER(age) = ?
                           AND score_type = ?
                           AND line_slug IN ({placeholders})
-                        ORDER BY median_delta DESC""",
+                        ORDER BY score_value DESC""",
                     [civ, age_key, score_type] + line_slugs,
                 )
                 all_units = [

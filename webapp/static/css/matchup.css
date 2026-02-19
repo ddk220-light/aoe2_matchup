@@ -84,15 +84,15 @@
     display: block;
 }
 
-/* --- Analysis Header --- */
-.analysis-header {
+/* --- Analysis Hero (header + strategic summary side-by-side) --- */
+.analysis-hero {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 10px;
-    padding: 24px 20px;
+    gap: 24px;
+    padding: 20px 24px;
     margin-bottom: 16px;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(201, 168, 76, 0.15);
     border-radius: 12px;
 }
 .analysis-emblem {
@@ -102,35 +102,31 @@
     border: 3px solid rgba(201, 168, 76, 0.5);
     object-fit: cover;
     background: rgba(0, 0, 0, 0.3);
+    flex-shrink: 0;
+}
+.analysis-hero-body {
+    flex: 1;
+    min-width: 0;
 }
 .analysis-civ-name {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     color: var(--gold);
-    margin: 0;
+    margin: 0 0 4px;
 }
-
-/* --- Strategic Summary (now at top) --- */
-.strategic-summary {
-    margin-bottom: 16px;
-    padding: 16px 20px;
-    border: 1px solid rgba(201, 168, 76, 0.25);
-    border-radius: 12px;
-    background: rgba(201, 168, 76, 0.04);
-}
-.strategic-summary-header {
-    color: var(--gold);
-    font-size: 1rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
-}
-.strategic-summary-text {
-    color: var(--text);
+.analysis-hero-narrative {
+    color: var(--text-muted);
     font-size: 0.9rem;
     line-height: 1.5;
     margin-bottom: 10px;
 }
+.analysis-hero-body .pill-row {
+    margin-bottom: 4px;
+}
+.analysis-hero-body .pill-row:last-child {
+    margin-bottom: 0;
+}
+
+/* (Strategic summary merged into .analysis-hero above) */
 
 /* --- Pills --- */
 .pill-row {
@@ -178,9 +174,23 @@
     background: rgba(255, 255, 255, 0.02);
     min-width: 0;
 }
+.role-column.col-strong {
+    border-top-color: #2ecc71;
+    background: rgba(46, 204, 113, 0.05);
+}
+.role-column.col-strong .role-header {
+    color: #2ecc71;
+}
+.role-column.col-weak {
+    border-top-color: rgba(231, 76, 60, 0.4);
+    background: rgba(231, 76, 60, 0.02);
+}
 .role-column.has-signature {
     border-top-color: var(--gold);
-    background: rgba(201, 168, 76, 0.04);
+    background: rgba(201, 168, 76, 0.06);
+}
+.role-column.has-signature .role-header {
+    color: var(--gold);
 }
 
 /* --- Role Header --- */
@@ -293,12 +303,31 @@
     white-space: nowrap;
 }
 
-/* --- Unit Badge Rank --- */
+/* --- Unit Badge Rank (pill style) --- */
 .unit-badge-rank {
-    font-size: 0.6rem;
-    font-weight: 600;
+    font-size: 0.65rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-top: 2px;
+}
+.rank-signature {
+    background: rgba(201, 168, 76, 0.2);
+    color: var(--gold);
+}
+.rank-strong {
+    background: rgba(46, 204, 113, 0.18);
+    color: #2ecc71;
+}
+.rank-average {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted);
+}
+.rank-weak {
+    background: rgba(231, 76, 60, 0.18);
+    color: #e74c3c;
 }
 
 /* --- Hover Tooltip (CSS-only, positioned above badge) --- */
@@ -389,8 +418,12 @@
 
 /* --- Responsive: 768px — 3 columns --- */
 @media (max-width: 768px) {
+    .analysis-hero {
+        gap: 16px;
+        padding: 16px 20px;
+    }
     .analysis-civ-name {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
     }
     .analysis-emblem {
         width: 56px;
@@ -408,12 +441,9 @@
         transform: none;
         min-width: 160px;
     }
-    .strategic-summary {
-        padding: 14px 16px;
-    }
 }
 
-/* --- Responsive: 600px — 2 columns --- */
+/* --- Responsive: 600px — 2 columns, hero stacks --- */
 @media (max-width: 600px) {
     .civ-grid {
         grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
@@ -426,12 +456,22 @@
     .civ-card-name {
         font-size: 0.7rem;
     }
+    .analysis-hero {
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+    }
+    .analysis-hero-body .pill-row {
+        justify-content: center;
+    }
     .analysis-civ-name {
         font-size: 1.2rem;
     }
     .analysis-emblem {
-        width: 48px;
-        height: 48px;
+        width: 56px;
+        height: 56px;
     }
     .role-columns {
         grid-template-columns: repeat(2, 1fr);
@@ -450,6 +490,7 @@
     }
     .unit-badge-rank {
         font-size: 0.55rem;
+        padding: 1px 6px;
     }
     .role-header {
         font-size: 0.7rem;

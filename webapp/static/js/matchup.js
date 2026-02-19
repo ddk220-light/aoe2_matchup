@@ -159,16 +159,18 @@ function renderAnalysis(civName, data) {
     var civSlug = civName.toLowerCase();
     var emblemUrl = CIV_EMBLEM_BASE + civSlug + ".png";
 
+    var strongAreas = summary.strong_areas || [];
+    var weakAreas = summary.weak_areas || [];
     var html = '';
 
-    /* Analysis header */
-    html += '<div class="analysis-header">';
+    /* Hero: emblem + name + strategic summary side-by-side */
+    html += '<div class="analysis-hero">';
     html += '<img src="' + emblemUrl + '" class="analysis-emblem" alt="' + escapeHtml(civName) + '">';
+    html += '<div class="analysis-hero-body">';
     html += '<h2 class="analysis-civ-name">' + escapeHtml(civName) + '</h2>';
+    html += renderStrategicSummaryInline(summary);
     html += '</div>';
-
-    /* Strategic summary — now at top, below header */
-    html += renderStrategicSummary(summary);
+    html += '</div>';
 
     /* Role columns grid */
     html += '<div class="role-columns">';
@@ -178,7 +180,12 @@ function renderAnalysis(civName, data) {
         var roleData = powerUnits[role];
         var roleLabel = ROLE_LABELS[role] || role;
         var hasSig = roleData && roleData.has_signature;
-        var colClass = "role-column" + (hasSig ? " has-signature" : "");
+        var isStrong = strongAreas.indexOf(role) !== -1;
+        var isWeak = weakAreas.indexOf(role) !== -1;
+        var colClass = "role-column";
+        if (isStrong) colClass += " col-strong";
+        if (isWeak) colClass += " col-weak";
+        if (hasSig) colClass += " has-signature";
 
         html += '<div class="' + colClass + '">';
 
@@ -260,7 +267,7 @@ function renderUnitBadge(unit) {
 
     /* Rank */
     if (unit.rank) {
-        html += '<span class="unit-badge-rank" style="color: ' + strength.text + '">#' + unit.rank + ' ' + strength.label + '</span>';
+        html += '<span class="unit-badge-rank rank-' + (unit.strength || 'average') + '">#' + unit.rank + ' ' + strength.label + '</span>';
     }
 
     html += '</div>';
@@ -304,21 +311,19 @@ function renderTooltip(unit, name) {
     return html;
 }
 
-/* ---- Strategic summary renderer ---- */
-function renderStrategicSummary(summary) {
+/* ---- Strategic summary renderer (inline, for hero section) ---- */
+function renderStrategicSummaryInline(summary) {
     if (!summary || !summary.summary_key) return "";
 
     var template = SUMMARY_TEMPLATES[summary.summary_key];
     if (!template) return "";
 
-    /* Build substitution values */
     var strongAreas = summary.strong_areas || [];
     var weakAreas = summary.weak_areas || [];
     var primaryStrength = summary.primary_strength
         ? (ROLE_LABELS[summary.primary_strength] || summary.primary_strength)
         : "";
 
-    /* Format areas list for {areas} substitution */
     var areasText = strongAreas.map(function (a) {
         return ROLE_LABELS[a] || a;
     }).join(", ");
@@ -327,9 +332,7 @@ function renderStrategicSummary(summary) {
         .replace("{areas}", areasText)
         .replace("{primary_strength}", primaryStrength);
 
-    var html = '<div class="strategic-summary">';
-    html += '<div class="strategic-summary-header">Strategic Identity</div>';
-    html += '<div class="strategic-summary-text">' + escapeHtml(narrativeText) + '</div>';
+    var html = '<div class="analysis-hero-narrative">' + escapeHtml(narrativeText) + '</div>';
 
     /* Strength pills */
     if (strongAreas.length > 0) {
@@ -353,6 +356,5 @@ function renderStrategicSummary(summary) {
         html += '</div>';
     }
 
-    html += '</div>';
     return html;
 }

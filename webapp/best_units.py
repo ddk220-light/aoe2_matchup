@@ -437,6 +437,147 @@ def _determine_narrative_key(role_key, all_units):
     return "unknown"
 
 
+# Role labels for description text
+_ROLE_NAMES = {
+    "cavalry": "cavalry",
+    "ranged": "ranged",
+    "infantry": "infantry",
+    "anti_cavalry": "anti-cavalry",
+    "anti_archer": "anti-archer",
+    "siege": "siege",
+}
+
+
+def _generate_strategic_description(power_units, strong_areas, weak_areas):
+    """Generate a multi-sentence strategic description for a civilization.
+
+    Composes three parts:
+    1. Primary playstyle (based on strongest combat role)
+    2. Defensive assessment (based on anti_cav + anti_archer)
+    3. Push strategy (based on siege + primary strength)
+    """
+    sentences = []
+
+    # --- Part 1: Primary Playstyle ---
+    # Determine primary combat roles (cavalry, ranged, infantry only — not counter or siege roles)
+    combat_strong = [r for r in strong_areas if r in ("cavalry", "ranged", "infantry")]
+
+    if len(combat_strong) >= 2:
+        area_names = [_ROLE_NAMES[r] for r in combat_strong]
+        sentences.append(
+            "This civ is versatile, with strength across "
+            + " and ".join([", ".join(area_names[:-1]), area_names[-1]] if len(area_names) > 2 else area_names)
+            + " -- allowing flexible strategies that adapt to any opponent."
+        )
+    elif len(combat_strong) == 1:
+        role = combat_strong[0]
+        entry = power_units.get(role)
+        best_name = entry["unit_name"] if entry else "their best unit"
+
+        if role == "cavalry":
+            narrative_key = entry["narrative_key"] if entry else ""
+            if narrative_key == "cav_strong_slow":
+                sentences.append(
+                    f"This civ fields powerful but slower cavalry like {best_name},"
+                    " favoring head-on engagements over mobility."
+                )
+            else:
+                sentences.append(
+                    f"This civ excels at mobile cavalry play -- able to raid,"
+                    f" flank, and apply pressure across the map with {best_name}."
+                )
+        elif role == "ranged":
+            sentences.append(
+                f"This civ has strong ranged options for concentrated pushes,"
+                f" with {best_name} providing range advantage and sustained damage output."
+            )
+        elif role == "infantry":
+            sentences.append(
+                f"This civ has strong infantry for frontline pressure,"
+                f" with {best_name} serving as the backbone of siege-backed pushes."
+            )
+    else:
+        sentences.append(
+            "This civ doesn't have a standout late-game powerhouse"
+            " -- focus on early aggression and maintaining a lead."
+        )
+
+    # --- Part 2: Defensive Assessment ---
+    anticav_strong = "anti_cavalry" in strong_areas
+    antiarcher_strong = "anti_archer" in strong_areas
+
+    if anticav_strong and antiarcher_strong:
+        sentences.append(
+            "Defensively well-rounded, with solid options to shut down"
+            " both cavalry and ranged threats."
+        )
+    elif anticav_strong and not antiarcher_strong:
+        sentences.append(
+            "Can hold the line against cavalry, but vulnerable to massed archers"
+            " -- consider aggressive play before ranged compositions develop."
+        )
+    elif not anticav_strong and antiarcher_strong:
+        sentences.append(
+            "Good tools against ranged units, but lacks reliable anti-cavalry"
+            " -- beware of knight-heavy opponents."
+        )
+    else:
+        sentences.append(
+            "Limited counter options mean this civ must play aggressively"
+            " and press its advantage before opponents can mass their army."
+        )
+
+    # --- Part 3: Push Strategy ---
+    siege_entry = power_units.get("siege")
+    siege_units = siege_entry["all_units"] if siege_entry else []
+    infantry_strong = "infantry" in strong_areas
+
+    # Check siege sub-lines
+    ram_units = [u for u in siege_units if u["line_slug"] == "ram"]
+    treb_units = [u for u in siege_units if u["line_slug"] == "trebuchet"]
+    bbc_units = [u for u in siege_units if u["line_slug"] == "bombard_cannon"]
+
+    has_good_ram = any(u["strength"] in ("signature", "good") for u in ram_units)
+    has_good_treb = any(u["strength"] in ("signature", "good") for u in treb_units)
+    has_good_bbc = any(u["strength"] in ("signature", "good") for u in bbc_units)
+
+    ranged_strong = "ranged" in strong_areas
+    best_inf_name = ""
+    if infantry_strong:
+        inf_entry = power_units.get("infantry")
+        best_inf_name = inf_entry["unit_name"] if inf_entry else "infantry"
+    best_ranged_name = ""
+    if ranged_strong:
+        ranged_entry = power_units.get("ranged")
+        best_ranged_name = ranged_entry["unit_name"] if ranged_entry else "ranged units"
+
+    if infantry_strong and has_good_ram:
+        sentences.append(
+            f"An infantry ram push is the signature play -- use {best_inf_name}"
+            " as a meatshield to protect rams pushing into enemy bases."
+        )
+    elif ranged_strong and has_good_treb:
+        sentences.append(
+            f"Pushing behind trebuchets maximizes the ranged advantage"
+            f" -- set up trebs and let {best_ranged_name} protect them."
+        )
+    elif has_good_bbc:
+        sentences.append(
+            "Bombard Cannons provide long-range siege power"
+            " for breaking through fortified positions."
+        )
+    elif "siege" in strong_areas:
+        sentences.append(
+            "Solid siege options give flexibility in how to close out games."
+        )
+    else:
+        sentences.append(
+            "Siege options are limited -- look to win through"
+            " open-field engagements rather than pushing fortifications."
+        )
+
+    return " ".join(sentences)
+
 
 def compute_civ_power_units():
     """Pre-compute power units for all civs. Returns dict keyed by civ_name."""
@@ -527,10 +668,16 @@ def compute_civ_power_units():
                 "primary_strength": primary_strength,
             }
 
+            # Generate strategic description paragraph
+            strategic_description = _generate_strategic_description(
+                power_units, strong_areas, weak_areas
+            )
+
             civ_data[age_key] = {
                 "power_units": power_units,
                 "strength_profile": strength_profile,
                 "strategic_summary": strategic_summary,
+                "strategic_description": strategic_description,
             }
 
         result[civ] = civ_data

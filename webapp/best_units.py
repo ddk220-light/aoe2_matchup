@@ -87,6 +87,17 @@ IMPACTFUL_TECHS = {
     "Thumb Ring", "Parthian Tactics",
 }
 
+# Techs to exclude from "missing" display for specific unit slugs.
+# Rams share the siege_ram slug with siege elephants, but rams don't benefit
+# from blacksmith attack techs (they deal siege damage) or cavalry techs.
+_SLUG_TECH_EXCLUSIONS = {
+    "siege_ram": {
+        "Forging", "Iron casting", "Blast Furnace",
+        "Bloodlines", "Husbandry",
+        "Scale Barding Armor", "Chain Barding Armor", "Plate Barding Armor",
+    },
+}
+
 # Special effect labels for tooltip display
 _EFFECT_LABELS = {
     "trample_percent": "Trample {v:.0f}%",  # NOTE: stored as fraction, multiply by 100 before format
@@ -178,11 +189,15 @@ def _get_unit_techs_and_bonuses(conn, civ_name, unit_slug, age="Imperial"):
     return standard_techs, bonus_abilities, special_effects
 
 
-def _compute_missing_techs(civ_standard_techs, reference_techs_for_slug):
+def _compute_missing_techs(civ_standard_techs, reference_techs_for_slug, slug=""):
     """Compute which impactful techs this civ is missing vs the reference."""
     if not reference_techs_for_slug:
         return []
     missing = reference_techs_for_slug - set(civ_standard_techs)
+    # Filter out techs that don't actually affect this unit type
+    exclusions = _SLUG_TECH_EXCLUSIONS.get(slug, set())
+    if exclusions:
+        missing -= exclusions
     return sorted(missing)
 
 
@@ -284,7 +299,9 @@ def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slu
     standard_techs, bonus_abilities, special_effects = _parse_techs_and_bonuses(
         techs_by_slug.get(slug, []), effects_by_slug.get(slug, [])
     )
-    missing = _compute_missing_techs(standard_techs, reference_techs.get(slug, set()))
+    # Only apply tech exclusions for actual rams, not siege elephants sharing the slug
+    excl_slug = slug if not (unit_name and "Elephant" in unit_name) else ""
+    missing = _compute_missing_techs(standard_techs, reference_techs.get(slug, set()), excl_slug)
     strength = _classify_strength(row["rank"], row["median_delta"])
     speed = stats["speed"] if stats else 0
 

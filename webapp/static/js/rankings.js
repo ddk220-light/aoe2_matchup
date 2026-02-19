@@ -1256,7 +1256,11 @@ function sortBy(column) {
 
 // ===== CSV EXPORT =====
 function exportCSV() {
-    if (!currentEnriched || currentEnriched.length === 0) return;
+    if (!currentEnriched || currentEnriched.length === 0) {
+        console.warn("exportCSV: no data to export");
+        return;
+    }
+    try {
 
     const isInfantry = INFANTRY_SLUGS.has(currentLine);
     const isArchery = ARCHERY_SLUGS.has(currentLine);
@@ -1483,8 +1487,14 @@ function exportCSV() {
     a.style.display = "none";
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 100);
+    } catch (err) {
+        console.error("exportCSV error:", err);
+        alert("CSV export failed: " + err.message);
+    }
 }
 
 // ===== INIT =====

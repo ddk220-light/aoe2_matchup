@@ -1412,7 +1412,7 @@ def compute_siege_antibuilding_scores():
     Returns dict in write_role_scores_to_db format.
     """
     castle = SIEGE_CASTLE_TARGET
-    all_scores = {}  # age -> {sk: scores}
+    all_scores = {}  # (line_slug, age) -> {sk: scores}
 
     for age in ["castle", "imperial"]:
         is_imperial = age == "imperial"
@@ -1458,25 +1458,22 @@ def compute_siege_antibuilding_scores():
                     )
 
                 sk = f"{u['civ_name']}|{u['unit_slug']}"
-                all_scores.setdefault(age, {})[sk] = {
+                all_scores.setdefault((line_slug, age), {})[sk] = {
                     "time_to_kill": round(min(ttk, 600.0), 1),
                 }
 
-    # Normalize per age: faster = higher score (0-100, inverted)
-    for age in ["castle", "imperial"]:
-        if age not in all_scores:
-            continue
-        scores = all_scores[age]
+    # Normalize per (line_slug, age): faster = higher score (0-100, inverted)
+    for (line_slug, age), scores in all_scores.items():
         ttk_vals = [s["time_to_kill"] for s in scores.values()]
         lo, hi = min(ttk_vals), max(ttk_vals)
         span = hi - lo if hi != lo else 1
         for s in scores.values():
             s["anti_building_score"] = round((hi - s["time_to_kill"]) / span * 100, 1)
 
-    # Format for write_role_scores_to_db
+    # Format for write_role_scores_to_db (keyed per line_slug)
     result = {}
-    for age, scores in all_scores.items():
-        result[f"siege|{age}"] = scores
+    for (line_slug, age), scores in all_scores.items():
+        result[f"{line_slug}|{age}"] = scores
     return result
 
 
@@ -1993,7 +1990,7 @@ def main():
 
         siege_start = time.time()
         siege_scores = compute_siege_antibuilding_scores()
-        write_role_scores_to_db(siege_scores, ["siege"], SIEGE_SCORE_TYPES)
+        write_role_scores_to_db(siege_scores, SIEGE_LINE_SLUGS, SIEGE_SCORE_TYPES)
         total_siege = sum(len(v) for v in siege_scores.values())
         print(
             f"Siege anti-building: {total_siege} units in {time.time() - siege_start:.1f}s"
@@ -2182,7 +2179,7 @@ def main():
     # Siege anti-building scores (written to DB, not JSON)
     siege_start = time.time()
     siege_scores = compute_siege_antibuilding_scores()
-    write_role_scores_to_db(siege_scores, ["siege"], SIEGE_SCORE_TYPES)
+    write_role_scores_to_db(siege_scores, SIEGE_LINE_SLUGS, SIEGE_SCORE_TYPES)
     siege_time = time.time() - siege_start
     total_siege = sum(len(v) for v in siege_scores.values())
     print(

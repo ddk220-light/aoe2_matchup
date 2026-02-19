@@ -1124,7 +1124,8 @@ function renderTable() {
     );
 
     let html = `<div class="civ-filter-wrap">
-        <input type="text" id="civFilterInput" placeholder="Filter by civilization..." value="${civFilter}" oninput="renderTable()" />`;
+        <input type="text" id="civFilterInput" placeholder="Filter by civilization..." value="${civFilter}" oninput="renderTable()" />
+        <button class="export-btn" onclick="exportCSV()" title="Export current view as CSV">Export CSV</button>`;
     if (lineInfo?.subLines && lineInfo.subLines.length > 1) {
         html += `<div class="line-filters"><span class="line-filters-label">Lines:</span>`;
         for (const sl of lineInfo.subLines) {
@@ -1251,6 +1252,236 @@ function sortBy(column) {
                 : "desc";
     }
     renderTable();
+}
+
+// ===== CSV EXPORT =====
+function exportCSV() {
+    if (!currentEnriched || currentEnriched.length === 0) return;
+
+    const isInfantry = INFANTRY_SLUGS.has(currentLine);
+    const isArchery = ARCHERY_SLUGS.has(currentLine);
+    const isSiege = SIEGE_SLUGS.has(currentLine);
+    const isStable = currentLine === "stable";
+
+    // Sort by primary composite score descending to compute rank
+    const primaryScore = isInfantry ? "militia_value"
+        : isArchery ? "ranged_effectiveness"
+        : isStable ? "stable_effectiveness"
+        : isSiege ? "anti_building_score"
+        : "pes";
+    const ranked = [...currentEnriched].sort((a, b) => {
+        const va = a[primaryScore] ?? -999;
+        const vb = b[primaryScore] ?? -999;
+        return vb - va;
+    });
+    const rankMap = new Map();
+    ranked.forEach((row, i) => rankMap.set(row, i + 1));
+
+    // Define columns per category
+    let csvColumns;
+    if (isInfantry) {
+        csvColumns = [
+            { key: "_rank", label: "Rank" },
+            { key: "civ_name", label: "Civilization" },
+            { key: "unit_name", label: "Unit" },
+            { key: "line_slug", label: "Line" },
+            { key: "is_unique", label: "Is Unique" },
+            { key: "militia_value", label: "Overall Score" },
+            { key: "general_combat", label: "General Combat" },
+            { key: "anti_cav", label: "Anti-Cav" },
+            { key: "raid_building", label: "Anti-Building" },
+            { key: "gc_30v30_vs_paladin", label: "GC vs Paladin 30v30 (norm)" },
+            { key: "gc_30v30_vs_arb", label: "GC vs Arbalester 30v30 (norm)" },
+            { key: "gc_30v30_vs_champ", label: "GC vs Champion 30v30 (norm)" },
+            { key: "gc_3k_vs_paladin", label: "GC vs Paladin 3K (norm)" },
+            { key: "gc_3k_vs_arb", label: "GC vs Arbalester 3K (norm)" },
+            { key: "gc_3k_vs_champ", label: "GC vs Champion 3K (norm)" },
+            { key: "gc_30v30_vs_paladin_raw", label: "GC vs Paladin 30v30 (raw)" },
+            { key: "gc_30v30_vs_arb_raw", label: "GC vs Arbalester 30v30 (raw)" },
+            { key: "gc_30v30_vs_champ_raw", label: "GC vs Champion 30v30 (raw)" },
+            { key: "gc_3k_vs_paladin_raw", label: "GC vs Paladin 3K (raw)" },
+            { key: "gc_3k_vs_arb_raw", label: "GC vs Arbalester 3K (raw)" },
+            { key: "gc_3k_vs_champ_raw", label: "GC vs Champion 3K (raw)" },
+            { key: "ac_30v30_vs_elephant", label: "AC vs War Elephant 30v30 (norm)" },
+            { key: "ac_30v30_vs_hussar", label: "AC vs Hussar 30v30 (norm)" },
+            { key: "ac_3k_vs_elephant", label: "AC vs War Elephant 3K (norm)" },
+            { key: "ac_3k_vs_hussar", label: "AC vs Hussar 3K (norm)" },
+            { key: "ac_30v30_vs_elephant_raw", label: "AC vs War Elephant 30v30 (raw)" },
+            { key: "ac_30v30_vs_hussar_raw", label: "AC vs Hussar 30v30 (raw)" },
+            { key: "ac_3k_vs_elephant_raw", label: "AC vs War Elephant 3K (raw)" },
+            { key: "ac_3k_vs_hussar_raw", label: "AC vs Hussar 3K (raw)" },
+            { key: "raid_vs_tc_nmin", label: "Raid vs TC (norm)" },
+            { key: "raid_vs_castle_nmin", label: "Raid vs Castle (norm)" },
+            { key: "dps", label: "DPS" },
+            { key: "final_hp", label: "HP" },
+            { key: "final_attack", label: "Attack" },
+            { key: "final_melee_armor", label: "Melee Armor" },
+            { key: "final_pierce_armor", label: "Pierce Armor" },
+            { key: "final_speed", label: "Speed" },
+            { key: "total_cost", label: "Total Cost" },
+            { key: "total_upgrade_cost", label: "Upgrade Cost" },
+        ];
+    } else if (isArchery) {
+        csvColumns = [
+            { key: "_rank", label: "Rank" },
+            { key: "civ_name", label: "Civilization" },
+            { key: "unit_name", label: "Unit" },
+            { key: "line_slug", label: "Line" },
+            { key: "is_unique", label: "Is Unique" },
+            { key: "ranged_effectiveness", label: "Ranged Effectiveness" },
+            { key: "general_combat", label: "General Combat" },
+            { key: "anti_archer", label: "Anti-Archer" },
+            { key: "gc_30v30_vs_paladin", label: "GC vs Paladin 30v30 (norm)" },
+            { key: "gc_30v30_vs_arb", label: "GC vs Arbalester 30v30 (norm)" },
+            { key: "gc_30v30_vs_champ", label: "GC vs Champion 30v30 (norm)" },
+            { key: "gc_3k_vs_paladin", label: "GC vs Paladin 3K (norm)" },
+            { key: "gc_3k_vs_arb", label: "GC vs Arbalester 3K (norm)" },
+            { key: "gc_3k_vs_champ", label: "GC vs Champion 3K (norm)" },
+            { key: "gc_30v30_vs_paladin_raw", label: "GC vs Paladin 30v30 (raw)" },
+            { key: "gc_30v30_vs_arb_raw", label: "GC vs Arbalester 30v30 (raw)" },
+            { key: "gc_30v30_vs_champ_raw", label: "GC vs Champion 30v30 (raw)" },
+            { key: "gc_3k_vs_paladin_raw", label: "GC vs Paladin 3K (raw)" },
+            { key: "gc_3k_vs_arb_raw", label: "GC vs Arbalester 3K (raw)" },
+            { key: "gc_3k_vs_champ_raw", label: "GC vs Champion 3K (raw)" },
+            { key: "aa_30v30_vs_arb", label: "AA vs Arbalester 30v30 (norm)" },
+            { key: "aa_30v30_vs_ca", label: "AA vs Cav Archer 30v30 (norm)" },
+            { key: "aa_30v30_vs_ele_archer", label: "AA vs Ele Archer 30v30 (norm)" },
+            { key: "aa_3k_vs_arb", label: "AA vs Arbalester 3K (norm)" },
+            { key: "aa_3k_vs_ca", label: "AA vs Cav Archer 3K (norm)" },
+            { key: "aa_3k_vs_ele_archer", label: "AA vs Ele Archer 3K (norm)" },
+            { key: "aa_30v30_vs_arb_raw", label: "AA vs Arbalester 30v30 (raw)" },
+            { key: "aa_30v30_vs_ca_raw", label: "AA vs Cav Archer 30v30 (raw)" },
+            { key: "aa_30v30_vs_ele_archer_raw", label: "AA vs Ele Archer 30v30 (raw)" },
+            { key: "aa_3k_vs_arb_raw", label: "AA vs Arbalester 3K (raw)" },
+            { key: "aa_3k_vs_ca_raw", label: "AA vs Cav Archer 3K (raw)" },
+            { key: "aa_3k_vs_ele_archer_raw", label: "AA vs Ele Archer 3K (raw)" },
+            { key: "dps", label: "DPS" },
+            { key: "final_hp", label: "HP" },
+            { key: "final_attack", label: "Attack" },
+            { key: "final_melee_armor", label: "Melee Armor" },
+            { key: "final_pierce_armor", label: "Pierce Armor" },
+            { key: "final_speed", label: "Speed" },
+            { key: "final_range", label: "Range" },
+            { key: "total_cost", label: "Total Cost" },
+            { key: "total_upgrade_cost", label: "Upgrade Cost" },
+        ];
+    } else if (isStable) {
+        csvColumns = [
+            { key: "_rank", label: "Rank" },
+            { key: "civ_name", label: "Civilization" },
+            { key: "unit_name", label: "Unit" },
+            { key: "line_slug", label: "Line" },
+            { key: "is_unique", label: "Is Unique" },
+            { key: "stable_effectiveness", label: "Stable Effectiveness" },
+            { key: "general_combat", label: "General Combat" },
+            { key: "anti_cav", label: "Anti-Cav" },
+            { key: "gc_30v30_vs_paladin", label: "GC vs Paladin 30v30 (norm)" },
+            { key: "gc_30v30_vs_arb", label: "GC vs Arbalester 30v30 (norm)" },
+            { key: "gc_30v30_vs_champ", label: "GC vs Champion 30v30 (norm)" },
+            { key: "gc_3k_vs_paladin", label: "GC vs Paladin 3K (norm)" },
+            { key: "gc_3k_vs_arb", label: "GC vs Arbalester 3K (norm)" },
+            { key: "gc_3k_vs_champ", label: "GC vs Champion 3K (norm)" },
+            { key: "gc_30v30_vs_paladin_raw", label: "GC vs Paladin 30v30 (raw)" },
+            { key: "gc_30v30_vs_arb_raw", label: "GC vs Arbalester 30v30 (raw)" },
+            { key: "gc_30v30_vs_champ_raw", label: "GC vs Champion 30v30 (raw)" },
+            { key: "gc_3k_vs_paladin_raw", label: "GC vs Paladin 3K (raw)" },
+            { key: "gc_3k_vs_arb_raw", label: "GC vs Arbalester 3K (raw)" },
+            { key: "gc_3k_vs_champ_raw", label: "GC vs Champion 3K (raw)" },
+            { key: "ac_30v30_vs_heavy_camel", label: "AC vs Heavy Camel 30v30 (norm)" },
+            { key: "ac_30v30_vs_elephant", label: "AC vs Battle Elephant 30v30 (norm)" },
+            { key: "ac_3k_vs_heavy_camel", label: "AC vs Heavy Camel 3K (norm)" },
+            { key: "ac_3k_vs_elephant", label: "AC vs Battle Elephant 3K (norm)" },
+            { key: "ac_30v30_vs_heavy_camel_raw", label: "AC vs Heavy Camel 30v30 (raw)" },
+            { key: "ac_30v30_vs_elephant_raw", label: "AC vs Battle Elephant 30v30 (raw)" },
+            { key: "ac_3k_vs_heavy_camel_raw", label: "AC vs Heavy Camel 3K (raw)" },
+            { key: "ac_3k_vs_elephant_raw", label: "AC vs Battle Elephant 3K (raw)" },
+            { key: "dps", label: "DPS" },
+            { key: "final_hp", label: "HP" },
+            { key: "final_attack", label: "Attack" },
+            { key: "final_melee_armor", label: "Melee Armor" },
+            { key: "final_pierce_armor", label: "Pierce Armor" },
+            { key: "final_speed", label: "Speed" },
+            { key: "total_cost", label: "Total Cost" },
+            { key: "total_upgrade_cost", label: "Upgrade Cost" },
+        ];
+    } else if (isSiege) {
+        csvColumns = [
+            { key: "_rank", label: "Rank" },
+            { key: "civ_name", label: "Civilization" },
+            { key: "unit_name", label: "Unit" },
+            { key: "line_slug", label: "Line" },
+            { key: "is_unique", label: "Is Unique" },
+            { key: "anti_building_score", label: "Anti-Building Score (norm)" },
+            { key: "time_to_kill", label: "Time To Kill seconds (raw)" },
+            { key: "dps", label: "DPS" },
+            { key: "final_hp", label: "HP" },
+            { key: "final_attack", label: "Attack" },
+            { key: "final_melee_armor", label: "Melee Armor" },
+            { key: "final_pierce_armor", label: "Pierce Armor" },
+            { key: "final_speed", label: "Speed" },
+            { key: "final_range", label: "Range" },
+            { key: "total_cost", label: "Total Cost" },
+            { key: "total_upgrade_cost", label: "Upgrade Cost" },
+        ];
+    } else {
+        csvColumns = [
+            { key: "_rank", label: "Rank" },
+            { key: "civ_name", label: "Civilization" },
+            { key: "unit_name", label: "Unit" },
+            { key: "is_unique", label: "Is Unique" },
+            { key: "pes", label: "PES" },
+            { key: "res", label: "RES" },
+            { key: "score_30v30", label: "30v30" },
+            { key: "score_3k", label: "3K Res" },
+            { key: "score_5k", label: "5K+Upg" },
+            { key: "pop_vs_champ", label: "30v Champ" },
+            { key: "pop_vs_paladin", label: "30v Paladin" },
+            { key: "pop_vs_arb", label: "30v Arbalester" },
+            { key: "vs_champ", label: "vs Champ" },
+            { key: "vs_paladin", label: "vs Paladin" },
+            { key: "vs_arb", label: "vs Arbalester" },
+            { key: "dps", label: "DPS" },
+            { key: "final_hp", label: "HP" },
+            { key: "final_attack", label: "Attack" },
+            { key: "final_melee_armor", label: "Melee Armor" },
+            { key: "final_pierce_armor", label: "Pierce Armor" },
+            { key: "final_speed", label: "Speed" },
+            { key: "final_range", label: "Range" },
+            { key: "total_cost", label: "Total Cost" },
+            { key: "total_upgrade_cost", label: "Upgrade Cost" },
+        ];
+    }
+
+    // Build CSV content
+    const headers = csvColumns.map(c => c.label);
+    const csvRows = [headers.join(",")];
+
+    for (const row of currentEnriched) {
+        const vals = csvColumns.map(col => {
+            if (col.key === "_rank") return rankMap.get(row) ?? "";
+            if (col.key === "is_unique") return row.is_unique ? "Yes" : "No";
+            if (col.key === "line_slug") return LINE_LABELS[row.line_slug] || row.line_slug || "";
+            const v = row[col.key];
+            if (v === undefined || v === null || v <= -999) return "";
+            if (typeof v === "string") {
+                return `"${v.replace(/"/g, '""')}"`;
+            }
+            return typeof v === "number" ? v : v;
+        });
+        csvRows.push(vals.join(","));
+    }
+
+    // Trigger download
+    const csvContent = csvRows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const lineName = currentLine || "units";
+    const age = currentAge.toLowerCase();
+    a.href = url;
+    a.download = `${lineName}_${age}_rankings.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
 }
 
 // ===== INIT =====

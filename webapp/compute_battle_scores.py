@@ -1047,6 +1047,7 @@ def compute_infantry_role_scores():
                     scores[key] = 0.0
 
             scores["_combat_unit"] = cu  # temp ref for anti-cav scoring
+            scores["_speed"] = cu["movement_speed"]
             all_scores[sk] = scores
             sk_to_line[sk] = line_slug
 
@@ -1092,9 +1093,17 @@ def compute_infantry_role_scores():
             1,
         )
 
+    # Apply speed weighting: multiply composites by speed, re-normalize 0-100
+    _apply_speed_weighting(
+        all_scores,
+        ["general_combat", "anti_cav", "militia_value", "raid_building", "anti_cav_value"],
+        scope="pool",
+    )
+
     # Clean up temp combat unit refs
     for s in all_scores.values():
         s.pop("_combat_unit", None)
+        s.pop("_speed", None)
 
     # Regroup by line for DB storage
     all_role_scores = {}
@@ -1190,6 +1199,7 @@ def compute_archery_role_scores():
                     else:
                         scores[key] = 0.0
 
+            scores["_speed"] = cu["movement_speed"]
             all_scores[sk] = scores
             sk_to_line[sk] = line_slug
 
@@ -1230,6 +1240,18 @@ def compute_archery_role_scores():
             0.70 * scores["general_combat"] + 0.30 * scores["anti_archer"],
             1,
         )
+
+    # Apply speed weighting: multiply composites by speed, re-normalize per line
+    _apply_speed_weighting(
+        all_scores,
+        ["general_combat", "anti_archer", "ranged_effectiveness"],
+        scope="per_line",
+        line_groups=line_groups,
+    )
+
+    # Clean up temp speed refs
+    for s in all_scores.values():
+        s.pop("_speed", None)
 
     # Compute mobility ranking scores
     # Step 1: Collect raw values from combat units
@@ -1379,6 +1401,7 @@ def compute_stable_role_scores():
                 else:
                     scores[key] = 0.0
 
+        scores["_speed"] = cu["movement_speed"]
         all_scores[sk] = scores
 
     # Save raw scores before normalization
@@ -1412,6 +1435,17 @@ def compute_stable_role_scores():
             0.70 * scores["general_combat"] + 0.30 * scores["anti_cav"],
             1,
         )
+
+    # Apply speed weighting: multiply composites by speed, re-normalize across all stable
+    _apply_speed_weighting(
+        all_scores,
+        ["general_combat", "anti_cav", "stable_effectiveness"],
+        scope="pool",
+    )
+
+    # Clean up temp speed refs
+    for s in all_scores.values():
+        s.pop("_speed", None)
 
     # Return in the format write_role_scores_to_db expects: {line_age_key: {unit_key: scores}}
     return {"stable|imperial": all_scores}
@@ -1554,6 +1588,7 @@ def compute_siege_antibuilding_scores():
                 sk = f"{u['civ_name']}|{u['unit_slug']}"
                 all_scores.setdefault((line_slug, age), {})[sk] = {
                     "time_to_kill": round(min(ttk, 600.0), 1),
+                    "_speed": cu["movement_speed"],
                 }
 
     # Normalize per (line_slug, age): faster = higher score (0-100, inverted)
@@ -1563,6 +1598,27 @@ def compute_siege_antibuilding_scores():
         span = hi - lo if hi != lo else 1
         for s in scores.values():
             s["anti_building_score"] = round((hi - s["time_to_kill"]) / span * 100, 1)
+
+    # Apply speed weighting per line (exempt trebuchet — speed=0)
+    for (line_slug, age), scores in all_scores.items():
+        if line_slug == "trebuchet":
+            continue
+        weighted = {}
+        for sk, s in scores.items():
+            speed = s.get("_speed", 1.0)
+            weighted[sk] = s["anti_building_score"] * speed
+        vals = list(weighted.values())
+        lo, hi = min(vals), max(vals)
+        span = hi - lo if hi != lo else 1
+        for sk in scores:
+            scores[sk]["anti_building_score"] = round(
+                (weighted[sk] - lo) / span * 100, 1
+            )
+
+    # Clean up temp speed refs
+    for (line_slug, age), scores in all_scores.items():
+        for s in scores.values():
+            s.pop("_speed", None)
 
     # Format for write_role_scores_to_db (keyed per line_slug)
     result = {}
@@ -1757,6 +1813,7 @@ def compute_combined_anti_cav_scores(stable_role_scores):
             cu = u["combat_unit"]
             sk = f"{u['civ_name']}|{u['unit_slug']}"
             pool[sk] = _sim_unit_vs_benchmarks(cu)
+            pool[sk]["_speed"] = cu["movement_speed"]
 
     infantry_count = len(pool)
 
@@ -1782,6 +1839,7 @@ def compute_combined_anti_cav_scores(stable_role_scores):
                 continue
             cu = u["combat_unit"]
             pool[sk] = _sim_unit_vs_benchmarks(cu)
+            pool[sk]["_speed"] = cu["movement_speed"]
             stable_count += 1
 
     print(f"  Combined anti-cav pool: {len(pool)} units ({infantry_count} infantry + {stable_count} stable)")
@@ -1802,6 +1860,13 @@ def compute_combined_anti_cav_scores(stable_role_scores):
         raw["anti_cav_combined"] = round(
             sum(raw[k] for k in COMBINED_AC_KEYS) / len(COMBINED_AC_KEYS), 1
         )
+
+    # Apply speed weighting: multiply anti_cav_combined by speed, re-normalize
+    _apply_speed_weighting(pool, ["anti_cav_combined"], scope="pool")
+
+    # Clean up temp speed refs
+    for p in pool.values():
+        p.pop("_speed", None)
 
     # --- Format for write_role_scores_to_db ---
     result = {"anti_cav_pool|imperial": pool}

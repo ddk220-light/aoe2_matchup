@@ -533,6 +533,44 @@ def calc_weighted_cost(food, wood, gold, is_imperial):
     return int(cost) if cost > 0 else 100
 
 
+def _apply_speed_weighting(all_scores, score_keys, scope="pool", line_groups=None):
+    """Multiply composite scores by movement speed, then re-normalize to 0-100.
+
+    Args:
+        all_scores: dict {sk: {score_key: value, "_speed": float, ...}}
+        score_keys: list of score keys to apply speed weighting to
+        scope: "pool" = normalize across all units; "per_line" = normalize per line group
+        line_groups: dict {line_slug: [sk, ...]} — required when scope="per_line"
+    """
+    if scope == "per_line" and line_groups:
+        for key in score_keys:
+            for line, sks in line_groups.items():
+                # Multiply by speed
+                weighted = {}
+                for sk in sks:
+                    speed = all_scores[sk].get("_speed", 1.0)
+                    weighted[sk] = all_scores[sk][key] * speed
+                # Re-normalize 0-100
+                vals = list(weighted.values())
+                lo, hi = min(vals), max(vals)
+                span = hi - lo if hi != lo else 1
+                for sk in sks:
+                    all_scores[sk][key] = round((weighted[sk] - lo) / span * 100, 1)
+    else:
+        for key in score_keys:
+            # Multiply by speed
+            weighted = {}
+            for sk, scores in all_scores.items():
+                speed = scores.get("_speed", 1.0)
+                weighted[sk] = scores[key] * speed
+            # Re-normalize 0-100
+            vals = list(weighted.values())
+            lo, hi = min(vals), max(vals)
+            span = hi - lo if hi != lo else 1
+            for sk in all_scores:
+                all_scores[sk][key] = round((weighted[sk] - lo) / span * 100, 1)
+
+
 def build_line_units(line_slug, age):
     """Build combat-ready units for a line + age."""
     line = UNIT_LINES[line_slug]

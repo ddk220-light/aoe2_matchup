@@ -20,6 +20,14 @@ const STRENGTH_COLORS = {
     average: { bg: "rgba(255, 255, 255, 0.05)", text: "var(--text-muted)", label: "Average" },
 };
 
+/* 4-column layout: anti-cavalry nests under cavalry, anti-archer nests under ranged */
+const COLUMN_LAYOUT = [
+    { main: "cavalry", sub: "anti_cavalry" },
+    { main: "ranged", sub: "anti_archer" },
+    { main: "infantry", sub: null },
+    { main: "siege", sub: null },
+];
+
 const NARRATIVES = {
     cavalry: {
         cav_all_strong: "This civ has good cavalry, and can be a good option for mobility.",
@@ -172,12 +180,15 @@ function renderAnalysis(civName, data) {
     html += '</div>';
     html += '</div>';
 
-    /* Role columns grid */
+    /* Role columns grid — 4 columns with nested sub-sections */
     html += '<div class="role-columns">';
 
-    for (var i = 0; i < ROLE_ORDER.length; i++) {
-        var role = ROLE_ORDER[i];
+    for (var i = 0; i < COLUMN_LAYOUT.length; i++) {
+        var col = COLUMN_LAYOUT[i];
+        var role = col.main;
+        var subRole = col.sub;
         var roleData = powerUnits[role];
+        var subData = subRole ? powerUnits[subRole] : null;
         var roleLabel = ROLE_LABELS[role] || role;
         var hasSig = roleData && roleData.has_signature;
         var isStrong = strongAreas.indexOf(role) !== -1;
@@ -189,17 +200,15 @@ function renderAnalysis(civName, data) {
 
         html += '<div class="' + colClass + '">';
 
-        /* Role header */
+        /* Main role header */
         html += '<div class="role-header">' + escapeHtml(roleLabel) + '</div>';
 
         if (roleData) {
-            /* Narrative */
             var narrativeText = getNarrative(role, roleData);
             if (narrativeText) {
                 html += '<div class="role-narrative">' + escapeHtml(narrativeText) + '</div>';
             }
 
-            /* Unit badges */
             var allUnits = roleData.all_units || [];
             for (var j = 0; j < allUnits.length; j++) {
                 html += '<div class="unit-wrap">';
@@ -208,6 +217,34 @@ function renderAnalysis(civName, data) {
             }
         } else {
             html += '<div class="role-narrative">Not available</div>';
+        }
+
+        /* Sub-role section (anti-cavalry under cavalry, anti-archer under ranged) */
+        if (subData) {
+            var subLabel = ROLE_LABELS[subRole] || subRole;
+            var subHasSig = subData.has_signature;
+            var subIsStrong = strongAreas.indexOf(subRole) !== -1;
+            var subIsWeak = weakAreas.indexOf(subRole) !== -1;
+            var subClass = "role-sub-section";
+            if (subHasSig) subClass += " sub-signature";
+            else if (subIsStrong) subClass += " sub-strong";
+            else if (subIsWeak) subClass += " sub-weak";
+
+            html += '<div class="' + subClass + '">';
+            html += '<div class="role-sub-header">' + escapeHtml(subLabel) + '</div>';
+
+            var subNarrative = getNarrative(subRole, subData);
+            if (subNarrative) {
+                html += '<div class="role-sub-narrative">' + escapeHtml(subNarrative) + '</div>';
+            }
+
+            var subUnits = subData.all_units || [];
+            for (var j = 0; j < subUnits.length; j++) {
+                html += '<div class="unit-wrap">';
+                html += renderUnitBadge(subUnits[j]);
+                html += '</div>';
+            }
+            html += '</div>';
         }
 
         html += '</div>';

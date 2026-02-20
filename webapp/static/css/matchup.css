@@ -158,10 +158,10 @@
     color: #e74c3c;
 }
 
-/* --- Role Columns Grid --- */
+/* --- Role Columns Grid (4 columns: cav, ranged, inf, siege) --- */
 .role-columns {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 12px;
     margin-bottom: 24px;
 }
@@ -215,6 +215,37 @@
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
+}
+
+/* --- Role Sub-Section (anti-cav under cavalry, anti-archer under ranged) --- */
+.role-sub-section {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+}
+.role-sub-header {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 4px;
+    text-align: center;
+}
+.role-sub-narrative {
+    color: var(--text-dim);
+    font-size: 0.72rem;
+    line-height: 1.35;
+    margin-bottom: 8px;
+}
+.role-sub-section.sub-strong .role-sub-header {
+    color: #2ecc71;
+}
+.role-sub-section.sub-signature .role-sub-header {
+    color: var(--gold);
+}
+.role-sub-section.sub-weak .role-sub-header {
+    color: rgba(231, 76, 60, 0.7);
 }
 
 /* --- Unit Wrap --- */
@@ -421,7 +452,7 @@
     text-align: center;
 }
 
-/* --- Responsive: 768px — 3 columns --- */
+/* --- Responsive: 768px — 2 columns --- */
 @media (max-width: 768px) {
     .analysis-hero {
         gap: 16px;
@@ -435,7 +466,7 @@
         height: 56px;
     }
     .role-columns {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap: 10px;
     }
     .unit-badge-name {
@@ -448,7 +479,7 @@
     }
 }
 
-/* --- Responsive: 600px — 2 columns, hero stacks --- */
+/* --- Responsive: 600px — 1 column, hero stacks --- */
 @media (max-width: 600px) {
     .civ-grid {
         grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
@@ -479,7 +510,7 @@
         height: 56px;
     }
     .role-columns {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
         gap: 8px;
     }
     .unit-badge-icon {
@@ -502,5 +533,11 @@
     }
     .role-narrative {
         font-size: 0.7rem;
+    }
+    .role-sub-header {
+        font-size: 0.65rem;
+    }
+    .role-sub-narrative {
+        font-size: 0.68rem;
     }
 }

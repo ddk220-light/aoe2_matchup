@@ -288,13 +288,9 @@ function renderUnitBadge(unit) {
         html += '<span class="signature-star">\u2605</span>';
     }
 
-    /* Icon — try primary source, fall back to aoe2techtree.net, then hide */
+    /* Icon */
     if (iconUrl) {
-        var fallbackUrl = getIconFallbackUrl(name);
-        var onerrorChain = fallbackUrl
-            ? "this.onerror=function(){this.style.display='none'};this.src='" + fallbackUrl + "'"
-            : "this.style.display='none'";
-        html += '<img src="' + iconUrl + '" class="' + iconSize + '" alt="' + escapeHtml(name) + '" onerror="' + onerrorChain + '">';
+        html += '<img src="' + iconUrl + '" class="' + iconSize + '" alt="' + escapeHtml(name) + '" onerror="this.style.display=\'none\'">';
     } else {
         html += '<div class="' + iconSize + ' icon-placeholder"></div>';
     }

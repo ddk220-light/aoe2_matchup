@@ -4,7 +4,7 @@ const CANVAS_HEIGHT = 600;
 const TILE_SIZE = 30;
 const MELEE_RANGE_BUFFER = 5;
 
-// ENABLED_CIVS, NAME_TO_ICON, UNIQUE_BUILDING, ICON_BASE, ICON_BASE_FALLBACK,
+// ENABLED_CIVS, NAME_TO_ICON, UNIQUE_BUILDING, ICON_BASE,
 // CIV_EMBLEM_BASE are loaded from constants.js (via base.html)
 
 const CLASS_TO_BUILDING = {
@@ -33,7 +33,7 @@ const BUILDING_ICONS = {
 };
 
 function iconUrl(id) {
-    return ICON_BASE + id + "." + iconExt(id);
+    return ICON_BASE + id + ".png";
 }
 function unitIconUrl(name) {
     const id = NAME_TO_ICON[name];
@@ -121,7 +121,7 @@ function renderSelection(teamNum) {
                 for (const u of bUnits) {
                     const iUrl = unitIconUrl(u.unit_name);
                     html += `<div class="unit-pick" onclick="selectUnit(${teamNum},'${u.unit_slug}','${u.unit_name.replace(/'/g, "\\'")}')">
-                                <img src="${iUrl}" alt="${u.unit_name}" onerror="if(!this.dataset.tried){this.dataset.tried='1';const id=NAME_TO_ICON[this.alt];if(id)this.src=ICON_BASE_FALLBACK+id+'.png';else this.style.display='none'}else{this.style.display='none'}" />
+                                <img src="${iUrl}" alt="${u.unit_name}" onerror="this.style.display='none'" />
                                 <span>${u.unit_name}</span>
                             </div>`;
                 }
@@ -185,14 +185,7 @@ function selectUnit(teamNum, slug, name) {
     const iconId = NAME_TO_ICON[name];
     if (iconId) {
         const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onerror = function () {
-            if (!this.dataset.tried) {
-                this.dataset.tried = "1";
-                this.src = ICON_BASE_FALLBACK + iconId + ".png";
-            }
-        };
-        img.src = ICON_BASE + iconId + "." + iconExt(iconId);
+        img.src = ICON_BASE + iconId + ".png";
         unitImages[teamNum] = img;
     }
     renderSelection(teamNum);

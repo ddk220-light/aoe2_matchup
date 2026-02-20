@@ -28,7 +28,7 @@ function formatUnitName(slug) {
 function unitIconUrl(name) {
     const id = NAME_TO_ICON[name];
     if (!id) return null;
-    return ICON_BASE + id + "." + iconExt(id);
+    return ICON_BASE + id + ".png";
 }
 
 const PLACEHOLDER_ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'/%3E";
@@ -339,14 +339,7 @@ function buildTeamColumn(label, teamClass, teamData) {
             unitImg.src = iUrl;
             unitImg.alt = displayName;
             unitImg.onerror = function() {
-                if (!this.dataset.tried) {
-                    this.dataset.tried = "1";
-                    const id = NAME_TO_ICON[this.alt];
-                    if (id) this.src = ICON_BASE_FALLBACK + id + ".png";
-                    else this.style.display = "none";
-                } else {
-                    this.style.display = "none";
-                }
+                this.style.display = "none";
             };
             emblems.appendChild(unitImg);
         }

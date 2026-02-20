@@ -3,9 +3,7 @@
    ============================================ */
 
 /* --- Icon URLs --- */
-const ICON_BASE =
-    "https://raw.githubusercontent.com/qwyt/aoe2-icon-resources/master/objects/";
-const ICON_BASE_FALLBACK = "https://aoe2techtree.net/img/Unit/";
+const ICON_BASE = "/static/img/units/";
 const CIV_EMBLEM_BASE =
     "https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/";
 
@@ -265,22 +263,9 @@ const UNIQUE_BUILDING = {
     "Mounted Trebuchet": "Siege Workshop",
 };
 
-/* --- Icons stored as .jpg on the qwyt GitHub CDN --- */
-const JPG_ICONS = new Set([279, 422, 542, 548]);
-
 /* --- Icon Helpers --- */
-function iconExt(id) {
-    return JPG_ICONS.has(id) ? "jpg" : "png";
-}
-
 function getIconUrl(name) {
     const id = NAME_TO_ICON[name];
     if (!id) return null;
-    return `${ICON_BASE}${id}.${iconExt(id)}`;
-}
-
-function getIconFallbackUrl(name) {
-    const id = NAME_TO_ICON[name];
-    if (!id) return null;
-    return `${ICON_BASE_FALLBACK}${id}.png`;
+    return `${ICON_BASE}${id}.png`;
 }

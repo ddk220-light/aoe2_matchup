@@ -1,6 +1,6 @@
 /* ==========================================================================
    AoE2 Unit Analyzer — Civ Detail Page
-   Requires: constants.js (NAME_TO_ICON, ICON_BASE, ICON_BASE_FALLBACK, UNIQUE_BUILDING)
+   Requires: constants.js (NAME_TO_ICON, ICON_BASE, UNIQUE_BUILDING)
    Requires: CIV_NAME global set in inline <script> tag
    ========================================================================== */
 
@@ -11,7 +11,7 @@ const PLACEHOLDER_ICON =
     );
 
 function iconUrl(id) {
-    return ICON_BASE + id + "." + iconExt(id);
+    return ICON_BASE + id + ".png";
 }
 
 function unitIconUrl(name) {
@@ -134,7 +134,7 @@ function renderUnitCard(u) {
     const civBonus = hasCivBonus(u);
     return `<div class="unit-card" onclick='openModal(${JSON.stringify(u.unit_slug)})'>
     ${civBonus ? '<span class="civ-star" title="Has civ bonus">&#9733;</span>' : ""}
-    <img class="unit-icon" src="${iUrl}" alt="${u.unit_name}" onerror="if(!this.dataset.tried){this.dataset.tried='1';const id=NAME_TO_ICON[this.alt];if(id)this.src=ICON_BASE_FALLBACK+id+'.png';else this.src='${PLACEHOLDER_ICON}'}else{this.src='${PLACEHOLDER_ICON}'}"/>
+    <img class="unit-icon" src="${iUrl}" alt="${u.unit_name}" onerror="this.src='${PLACEHOLDER_ICON}'"/>
     <div class="unit-name">${u.unit_name}</div>
 </div>`;
 }
@@ -167,7 +167,7 @@ function openModal(slug) {
     const primaryAtkClass = getPrimaryAtkClass(u);
 
     let html = `<div class="modal-unit-header">
-    <img class="modal-unit-icon" src="${iUrl}" alt="${u.unit_name}" onerror="if(!this.dataset.tried){this.dataset.tried='1';const id=NAME_TO_ICON[this.alt];if(id)this.src=ICON_BASE_FALLBACK+id+'.png';else this.style.display='none'}else{this.style.display='none'}" />
+    <img class="modal-unit-icon" src="${iUrl}" alt="${u.unit_name}" onerror="this.style.display='none'" />
     <div class="modal-unit-info">
         <h3>${u.unit_name}</h3>
         <span class="class-badge">${u.unit_class_name}${u.unit_type === "unique" ? " — Unique" : ""}</span>

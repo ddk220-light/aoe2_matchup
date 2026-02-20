@@ -1,7 +1,7 @@
 /* ==========================================================================
    AoE2 Unit Analyzer - Rankings Page JavaScript
    Depends on: constants.js (ENABLED_CIVS, CIV_EMBLEM_BASE, ICON_BASE,
-               ICON_BASE_FALLBACK, NAME_TO_ICON)
+               NAME_TO_ICON)
    ========================================================================== */
 
 // Unit lines definition (mirrors backend UNIT_LINES)
@@ -41,7 +41,7 @@ const UNIT_LINES = {
 };
 
 function iconUrl(id) {
-    return ICON_BASE + id + "." + iconExt(id);
+    return ICON_BASE + id + ".png";
 }
 function unitIconUrl(name) {
     const id = NAME_TO_ICON[name];
@@ -626,7 +626,7 @@ function renderLineSelector() {
         const unavailClass = unavailable ? " unavailable" : "";
 
         html += `<button class="unit-tab${activeClass}${unavailClass}" onclick="selectLine('${slug}')">
-            <img src="${iUrl}" alt="${line.name}" onerror="if(!this.dataset.tried){this.dataset.tried='1';const id=NAME_TO_ICON[this.alt];if(id)this.src=ICON_BASE_FALLBACK+id+'.png';else this.style.display='none'}else{this.style.display='none'}" />
+            <img src="${iUrl}" alt="${line.name}" onerror="this.style.display='none'" />
             ${line.name}
         </button>`;
     }
@@ -1173,7 +1173,7 @@ function renderTable() {
         if (k === "unit_name") {
             const unitImg = unitIconUrl(v);
             return `<td><div class="unit-cell">
-                <img src="${unitImg}" alt="${v}" onerror="if(!this.dataset.tried){this.dataset.tried='1';const id=NAME_TO_ICON[this.alt];if(id)this.src=ICON_BASE_FALLBACK+id+'.png';else this.style.display='none'}else{this.style.display='none'}" />
+                <img src="${unitImg}" alt="${v}" onerror="this.style.display='none'" />
                 ${v}${row.is_unique ? " *" : ""}
             </div></td>`;
         }

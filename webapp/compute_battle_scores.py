@@ -2166,6 +2166,12 @@ def main():
             f"Siege anti-building: {total_siege} units in {time.time() - siege_start:.1f}s"
         )
 
+        # Combined anti-cav pool (infantry + qualifying stable)
+        ac_start = time.time()
+        combined_ac = compute_combined_anti_cav_scores(stable_scores)
+        write_role_scores_to_db(combined_ac, ["anti_cav_pool"], ["anti_cav_combined"])
+        print(f"Combined anti-cav: {time.time() - ac_start:.1f}s")
+
         # Compute rankings for all scores
         ranking_start = time.time()
         compute_rankings()

@@ -5,7 +5,7 @@
 /* --- Icon URLs --- */
 const ICON_BASE =
     "https://raw.githubusercontent.com/qwyt/aoe2-icon-resources/master/objects/";
-const ICON_BASE_FALLBACK = "https://aoe2techtree.net/img/Units/";
+const ICON_BASE_FALLBACK = "https://aoe2techtree.net/img/Unit/";
 const CIV_EMBLEM_BASE =
     "https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/";
 
@@ -75,7 +75,7 @@ const NAME_TO_ICON = {
     Legionary: 1793,
     "Eagle Scout": 751,
     "Eagle Warrior": 753,
-    "Elite Eagle Warrior": 752,
+    "Elite Eagle Warrior": 753,
     Archer: 4,
     Crossbowman: 24,
     Arbalester: 492,
@@ -105,7 +105,7 @@ const NAME_TO_ICON = {
     Scorpion: 279,
     "Heavy Scorpion": 542,
     "Bombard Cannon": 36,
-    Trebuchet: 331,
+    Trebuchet: 42,
     "Steppe Lancer": 1370,
     "Elite Steppe Lancer": 1372,
     "Fire Lancer": 1901,
@@ -129,7 +129,7 @@ const NAME_TO_ICON = {
     "Battle Elephant": 1132,
     "Elite Battle Elephant": 1134,
     "Elephant Archer": 873,
-    "Elite Elephant Archer": 875,
+    "Elite Elephant Archer": 873,
     "Armored Elephant": 1744,
     "Siege Elephant": 1746,
     "War Elephant": 239,
@@ -168,34 +168,34 @@ const NAME_TO_ICON = {
     "Imperial Skirmisher": 1155,
     // Regional units - African Kingdoms
     Genitour: 1010,
-    "Elite Genitour": 1012,
+    "Elite Genitour": 1010,
     // Unique units - African Kingdoms
     "Camel Archer": 1007,
-    "Elite Camel Archer": 1009,
+    "Elite Camel Archer": 1007,
     "Shotel Warrior": 1016,
-    "Elite Shotel Warrior": 1018,
+    "Elite Shotel Warrior": 1016,
     Gbeto: 1013,
-    "Elite Gbeto": 1015,
+    "Elite Gbeto": 1013,
     "Organ Gun": 1001,
-    "Elite Organ Gun": 1003,
+    "Elite Organ Gun": 1001,
     // Unique units - Rise of the Rajas
     Arambai: 1126,
-    "Elite Arambai": 1128,
+    "Elite Arambai": 1126,
     "Ballista Elephant": 1120,
-    "Elite Ballista Elephant": 1122,
+    "Elite Ballista Elephant": 1120,
     "Karambit Warrior": 1123,
-    "Elite Karambit Warrior": 1125,
+    "Elite Karambit Warrior": 1123,
     "Rattan Archer": 1129,
-    "Elite Rattan Archer": 1131,
+    "Elite Rattan Archer": 1129,
     // Unique units - Last Khans
     Konnik: 1225,
-    "Elite Konnik": 1227,
+    "Elite Konnik": 1225,
     Keshik: 1228,
-    "Elite Keshik": 1230,
+    "Elite Keshik": 1228,
     Kipchak: 1231,
-    "Elite Kipchak": 1233,
+    "Elite Kipchak": 1231,
     Leitis: 1234,
-    "Elite Leitis": 1236,
+    "Elite Leitis": 1234,
     // Unique units - Lords of the West / Dawn of the Dukes
     Coustillier: 1655,
     "Elite Coustillier": 1657,

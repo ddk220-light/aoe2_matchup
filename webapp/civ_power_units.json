@@ -259,7 +259,78 @@
           "unit_name": "Halberdier",
           "unit_slug": "halberdier"
         },
-        "anti_cavalry": null,
+        "anti_cavalry": {
+          "above_avg_count": 0,
+          "all_units": [
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.0,
+              "missing_techs": [
+                "Plate Barding Armor"
+              ],
+              "rank": 71,
+              "score": 19.4,
+              "special_effects": [],
+              "speed": 1.49,
+              "stats": {
+                "attack": 16.0,
+                "cost_food": 60.0,
+                "cost_gold": 75.0,
+                "cost_wood": 0,
+                "hp": 140.0,
+                "melee_armor": 4.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.49
+              },
+              "strength": "average",
+              "unit_name": "Cavalier",
+              "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -10.6,
+              "missing_techs": [
+                "Plate Barding Armor"
+              ],
+              "rank": 115,
+              "score": 10.8,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 80.0,
+                "melee_armor": 2.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Light Cavalry",
+              "unit_slug": "hussar"
+            }
+          ],
+          "best_unit": "paladin",
+          "has_signature": false,
+          "is_signature": false,
+          "line_slug": "stable",
+          "median_delta": -2.0,
+          "narrative_key": "anticav_weak",
+          "rank": 71,
+          "score": 19.4,
+          "stats": null,
+          "strength": "average",
+          "total_count": 2,
+          "unit_name": "Cavalier",
+          "unit_slug": "paladin"
+        },
         "cavalry": {
           "above_avg_count": 0,
           "all_units": [
@@ -619,14 +690,12 @@
           "anti_archer"
         ],
         "summary_key": "multi_flexible",
-        "weak_areas": [
-          "anti_cavalry"
-        ]
+        "weak_areas": []
       },
       "strength_profile": {
         "anti_archer": "good",
         "anti_cav_infantry": "good",
-        "anti_cavalry": "weak",
+        "anti_cavalry": "average",
         "cavalry": "average",
         "infantry": "signature",
         "ranged": "average",
@@ -1383,18 +1452,18 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 1,
+          "above_avg_count": 2,
           "all_units": [
             {
               "bonus_abilities": [
                 "Paiks"
               ],
-              "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": 22.1,
+              "is_signature": true,
+              "line_slug": "stable",
+              "median_delta": 66.3,
               "missing_techs": [],
-              "rank": 52,
-              "score": 86.3,
+              "rank": 2,
+              "score": 87.7,
               "special_effects": [
                 "Trample 20%",
                 "Trample (0.5 radius)",
@@ -1412,7 +1481,7 @@
                 "range": 3.0,
                 "speed": 1.43
               },
-              "strength": "good",
+              "strength": "signature",
               "unit_name": "Elite Ratha (Melee)",
               "unit_slug": "elite_ratha_(melee)_bengalis"
             },
@@ -1423,11 +1492,11 @@
                 "Paiks"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -8.0,
+              "line_slug": "stable",
+              "median_delta": 48.0,
               "missing_techs": [],
-              "rank": 127,
-              "score": 56.3,
+              "rank": 10,
+              "score": 69.4,
               "special_effects": [
                 "Trample 25%",
                 "Trample (0.4 radius)",
@@ -1445,22 +1514,49 @@
                 "range": 0,
                 "speed": 0.99
               },
-              "strength": "average",
+              "strength": "good",
               "unit_name": "Elite Battle Elephant",
               "unit_slug": "elite_elephant"
+            },
+            {
+              "bonus_abilities": [
+                "Cavalry vs Skirm"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -6.3,
+              "missing_techs": [],
+              "rank": 100,
+              "score": 15.1,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 80.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Light Cavalry",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "elite_ratha_(melee)_bengalis",
-          "has_signature": false,
-          "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": 22.1,
-          "narrative_key": "anticav_one_strong",
-          "rank": 52,
-          "score": 86.3,
+          "has_signature": true,
+          "is_signature": true,
+          "line_slug": "stable",
+          "median_delta": 66.3,
+          "narrative_key": "anticav_strong",
+          "rank": 2,
+          "score": 87.7,
           "stats": null,
-          "strength": "good",
-          "total_count": 2,
+          "strength": "signature",
+          "total_count": 3,
           "unit_name": "Elite Ratha (Melee)",
           "unit_slug": "elite_ratha_(melee)_bengalis"
         },
@@ -1834,6 +1930,7 @@
         "signature_areas": [
           "cavalry",
           "ranged",
+          "anti_cavalry",
           "anti_archer"
         ],
         "strong_areas": [
@@ -1848,7 +1945,7 @@
       "strength_profile": {
         "anti_archer": "good",
         "anti_cav_infantry": "average",
-        "anti_cavalry": "good",
+        "anti_cavalry": "signature",
         "cavalry": "signature",
         "infantry": "average",
         "ranged": "signature",
@@ -2133,7 +2230,7 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 1,
+          "above_avg_count": 3,
           "all_units": [
             {
               "bonus_abilities": [
@@ -2142,11 +2239,11 @@
                 "Berber UT"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": 10.6,
+              "line_slug": "stable",
+              "median_delta": 47.1,
               "missing_techs": [],
-              "rank": 76,
-              "score": 74.8,
+              "rank": 11,
+              "score": 68.5,
               "special_effects": [
                 "+15.0 HP/min regen"
               ],
@@ -2172,11 +2269,11 @@
                 "Stable units -20% che"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -15.4,
+              "line_slug": "stable",
+              "median_delta": 8.2,
               "missing_techs": [],
-              "rank": 150,
-              "score": 48.8,
+              "rank": 47,
+              "score": 29.6,
               "special_effects": [],
               "speed": 1.65,
               "stats": {
@@ -2200,11 +2297,11 @@
                 "Stable units -20% che"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -34.1,
+              "line_slug": "stable",
+              "median_delta": 6.6,
               "missing_techs": [],
-              "rank": 178,
-              "score": 30.1,
+              "rank": 52,
+              "score": 28.0,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -2226,11 +2323,11 @@
           "best_unit": "heavy_camel",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": 10.6,
-          "narrative_key": "anticav_one_strong",
-          "rank": 76,
-          "score": 74.8,
+          "line_slug": "stable",
+          "median_delta": 47.1,
+          "narrative_key": "anticav_strong",
+          "rank": 11,
+          "score": 68.5,
           "stats": null,
           "strength": "good",
           "total_count": 3,
@@ -2892,7 +2989,80 @@
           "unit_name": "Halberdier",
           "unit_slug": "halberdier"
         },
-        "anti_cavalry": null,
+        "anti_cavalry": {
+          "above_avg_count": 0,
+          "all_units": [
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -6.5,
+              "missing_techs": [
+                "Bloodlines",
+                "Plate Barding Armor"
+              ],
+              "rank": 104,
+              "score": 14.9,
+              "special_effects": [],
+              "speed": 1.49,
+              "stats": {
+                "attack": 16.0,
+                "cost_food": 60.0,
+                "cost_gold": 75.0,
+                "cost_wood": 0,
+                "hp": 120.0,
+                "melee_armor": 4.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.49
+              },
+              "strength": "average",
+              "unit_name": "Cavalier",
+              "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -13.3,
+              "missing_techs": [
+                "Bloodlines",
+                "Plate Barding Armor"
+              ],
+              "rank": 120,
+              "score": 8.1,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 60.0,
+                "melee_armor": 2.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Light Cavalry",
+              "unit_slug": "hussar"
+            }
+          ],
+          "best_unit": "paladin",
+          "has_signature": false,
+          "is_signature": false,
+          "line_slug": "stable",
+          "median_delta": -6.5,
+          "narrative_key": "anticav_weak",
+          "rank": 104,
+          "score": 14.9,
+          "stats": null,
+          "strength": "average",
+          "total_count": 2,
+          "unit_name": "Cavalier",
+          "unit_slug": "paladin"
+        },
         "cavalry": {
           "above_avg_count": 0,
           "all_units": [
@@ -3251,14 +3421,12 @@
           "siege"
         ],
         "summary_key": "multi_flexible",
-        "weak_areas": [
-          "anti_cavalry"
-        ]
+        "weak_areas": []
       },
       "strength_profile": {
         "anti_archer": "signature",
         "anti_cav_infantry": "good",
-        "anti_cavalry": "weak",
+        "anti_cavalry": "average",
         "cavalry": "average",
         "infantry": "average",
         "ranged": "signature",
@@ -3508,7 +3676,78 @@
           "unit_name": "Halberdier",
           "unit_slug": "halberdier"
         },
-        "anti_cavalry": null,
+        "anti_cavalry": {
+          "above_avg_count": 0,
+          "all_units": [
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -4.5,
+              "missing_techs": [
+                "Bloodlines"
+              ],
+              "rank": 94,
+              "score": 16.9,
+              "special_effects": [],
+              "speed": 1.49,
+              "stats": {
+                "attack": 16.0,
+                "cost_food": 60.0,
+                "cost_gold": 75.0,
+                "cost_wood": 0,
+                "hp": 120.0,
+                "melee_armor": 5.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.49
+              },
+              "strength": "average",
+              "unit_name": "Cavalier",
+              "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -13.2,
+              "missing_techs": [
+                "Bloodlines"
+              ],
+              "rank": 119,
+              "score": 8.2,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 60.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Light Cavalry",
+              "unit_slug": "hussar"
+            }
+          ],
+          "best_unit": "paladin",
+          "has_signature": false,
+          "is_signature": false,
+          "line_slug": "stable",
+          "median_delta": -4.5,
+          "narrative_key": "anticav_weak",
+          "rank": 94,
+          "score": 16.9,
+          "stats": null,
+          "strength": "average",
+          "total_count": 2,
+          "unit_name": "Cavalier",
+          "unit_slug": "paladin"
+        },
         "cavalry": {
           "above_avg_count": 0,
           "all_units": [
@@ -3845,14 +4084,12 @@
           "anti_archer"
         ],
         "summary_key": "multi_flexible",
-        "weak_areas": [
-          "anti_cavalry"
-        ]
+        "weak_areas": []
       },
       "strength_profile": {
         "anti_archer": "good",
         "anti_cav_infantry": "good",
-        "anti_cavalry": "weak",
+        "anti_cavalry": "average",
         "cavalry": "average",
         "infantry": "average",
         "ranged": "good",
@@ -4062,18 +4299,18 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 3,
           "all_units": [
             {
               "bonus_abilities": [
                 "Khmer UT"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -7.8,
+              "line_slug": "stable",
+              "median_delta": 45.5,
               "missing_techs": [],
-              "rank": 126,
-              "score": 56.5,
+              "rank": 13,
+              "score": 66.9,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -4087,7 +4324,7 @@
                 "range": 0,
                 "speed": 1.49
               },
-              "strength": "average",
+              "strength": "good",
               "unit_name": "Elite Konnik",
               "unit_slug": "elite_konnik_bulgarians"
             },
@@ -4096,38 +4333,11 @@
                 "Khmer UT"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -26.8,
+              "line_slug": "stable",
+              "median_delta": 5.6,
               "missing_techs": [],
-              "rank": 164,
-              "score": 37.5,
-              "special_effects": [],
-              "speed": 1.65,
-              "stats": {
-                "attack": 11.0,
-                "cost_food": 80.0,
-                "cost_gold": 0,
-                "cost_wood": 0,
-                "hp": 95.0,
-                "melee_armor": 3.0,
-                "pierce_armor": 6.0,
-                "range": 0,
-                "speed": 1.65
-              },
-              "strength": "average",
-              "unit_name": "Hussar",
-              "unit_slug": "hussar"
-            },
-            {
-              "bonus_abilities": [
-                "Khmer UT"
-              ],
-              "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -44.0,
-              "missing_techs": [],
-              "rank": 186,
-              "score": 20.2,
+              "rank": 55,
+              "score": 27.0,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -4144,18 +4354,45 @@
               "strength": "average",
               "unit_name": "Cavalier",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [
+                "Khmer UT"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": 3.4,
+              "missing_techs": [],
+              "rank": 58,
+              "score": 24.8,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "elite_konnik_bulgarians",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -7.8,
-          "narrative_key": "anticav_weak",
-          "rank": 126,
-          "score": 56.5,
+          "line_slug": "stable",
+          "median_delta": 45.5,
+          "narrative_key": "anticav_strong",
+          "rank": 13,
+          "score": 66.9,
           "stats": null,
-          "strength": "average",
+          "strength": "good",
           "total_count": 3,
           "unit_name": "Elite Konnik",
           "unit_slug": "elite_konnik_bulgarians"
@@ -4473,13 +4710,14 @@
           "unit_slug": "siege_ram"
         }
       },
-      "strategic_description": "This civ is versatile, with strength across cavalry and ranged -- allowing flexible strategies that adapt to any opponent. Strong infantry anti-cavalry with Halberdier to hold defensive positions against cavalry pushes. Good tools against ranged units help shut down archer compositions. Solid siege options give flexibility in how to close out games.",
+      "strategic_description": "This civ is versatile, with strength across cavalry and ranged -- allowing flexible strategies that adapt to any opponent. Excellent anti-cavalry options from both stable and barracks -- very hard for cavalry-heavy opponents to find an opening. Good tools against ranged units help shut down archer compositions. Solid siege options give flexibility in how to close out games.",
       "strategic_summary": {
         "primary_strength": "cavalry",
         "signature_areas": [],
         "strong_areas": [
           "cavalry",
           "ranged",
+          "anti_cavalry",
           "anti_cav_infantry",
           "anti_archer",
           "siege"
@@ -4490,7 +4728,7 @@
       "strength_profile": {
         "anti_archer": "good",
         "anti_cav_infantry": "good",
-        "anti_cavalry": "average",
+        "anti_cavalry": "good",
         "cavalry": "good",
         "infantry": "average",
         "ranged": "good",
@@ -4761,16 +4999,16 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 2,
           "all_units": [
             {
               "bonus_abilities": [],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -13.3,
+              "line_slug": "stable",
+              "median_delta": 25.5,
               "missing_techs": [],
-              "rank": 146,
-              "score": 50.9,
+              "rank": 30,
+              "score": 46.9,
               "special_effects": [
                 "Charge +25 melee"
               ],
@@ -4786,20 +5024,20 @@
                 "range": 0,
                 "speed": 1.49
               },
-              "strength": "average",
+              "strength": "good",
               "unit_name": "Elite Coustillier",
               "unit_slug": "elite_coustillier_burgundians"
             },
             {
               "bonus_abilities": [],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -34.5,
+              "line_slug": "stable",
+              "median_delta": 14.0,
               "missing_techs": [
                 "Bloodlines"
               ],
-              "rank": 179,
-              "score": 29.8,
+              "rank": 43,
+              "score": 35.4,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -4816,19 +5054,46 @@
               "strength": "average",
               "unit_name": "Paladin",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -9.7,
+              "missing_techs": [
+                "Bloodlines"
+              ],
+              "rank": 111,
+              "score": 11.7,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 75.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "elite_coustillier_burgundians",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -13.3,
-          "narrative_key": "anticav_weak",
-          "rank": 146,
-          "score": 50.9,
+          "line_slug": "stable",
+          "median_delta": 25.5,
+          "narrative_key": "anticav_strong",
+          "rank": 30,
+          "score": 46.9,
           "stats": null,
-          "strength": "average",
-          "total_count": 2,
+          "strength": "good",
+          "total_count": 3,
           "unit_name": "Elite Coustillier",
           "unit_slug": "elite_coustillier_burgundians"
         },
@@ -5240,12 +5505,13 @@
           "unit_slug": "bombard_cannon"
         }
       },
-      "strategic_description": "This civ excels at mobile cavalry play -- able to raid, flank, and apply pressure across the map with Elite Coustillier. Strong infantry anti-cavalry with Halberdier to hold defensive positions against cavalry pushes. Vulnerable to massed archers -- consider aggressive play before ranged compositions develop. Bombard Cannons provide long-range siege power for breaking through fortified positions.",
+      "strategic_description": "This civ excels at mobile cavalry play -- able to raid, flank, and apply pressure across the map with Elite Coustillier. Excellent anti-cavalry options from both stable and barracks -- very hard for cavalry-heavy opponents to find an opening. Vulnerable to massed archers -- consider aggressive play before ranged compositions develop. Bombard Cannons provide long-range siege power for breaking through fortified positions.",
       "strategic_summary": {
         "primary_strength": "cavalry",
         "signature_areas": [],
         "strong_areas": [
           "cavalry",
+          "anti_cavalry",
           "anti_cav_infantry",
           "siege"
         ],
@@ -5255,7 +5521,7 @@
       "strength_profile": {
         "anti_archer": "average",
         "anti_cav_infantry": "good",
-        "anti_cavalry": "average",
+        "anti_cavalry": "good",
         "cavalry": "good",
         "infantry": "average",
         "ranged": "average",
@@ -5502,7 +5768,7 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 1,
           "all_units": [
             {
               "bonus_abilities": [
@@ -5511,11 +5777,11 @@
                 "Burmese UT"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -13.1,
+              "line_slug": "stable",
+              "median_delta": 42.3,
               "missing_techs": [],
-              "rank": 141,
-              "score": 51.2,
+              "rank": 15,
+              "score": 63.7,
               "special_effects": [
                 "Trample 25%",
                 "Trample (0.4 radius)"
@@ -5532,7 +5798,7 @@
                 "range": 0,
                 "speed": 0.99
               },
-              "strength": "average",
+              "strength": "good",
               "unit_name": "Elite Battle Elephant",
               "unit_slug": "elite_elephant"
             },
@@ -5541,11 +5807,11 @@
                 "Burmese UT"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -50.5,
+              "line_slug": "stable",
+              "median_delta": 0.0,
               "missing_techs": [],
-              "rank": 189,
-              "score": 13.8,
+              "rank": 63,
+              "score": 21.4,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -5562,19 +5828,46 @@
               "strength": "average",
               "unit_name": "Cavalier",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [
+                "Burmese UT"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.8,
+              "missing_techs": [],
+              "rank": 84,
+              "score": 18.6,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "elite_elephant",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -13.1,
-          "narrative_key": "anticav_weak",
-          "rank": 141,
-          "score": 51.2,
+          "line_slug": "stable",
+          "median_delta": 42.3,
+          "narrative_key": "anticav_one_strong",
+          "rank": 15,
+          "score": 63.7,
           "stats": null,
-          "strength": "average",
-          "total_count": 2,
+          "strength": "good",
+          "total_count": 3,
           "unit_name": "Elite Battle Elephant",
           "unit_slug": "elite_elephant"
         },
@@ -5954,7 +6247,7 @@
           "unit_slug": "bombard_cannon"
         }
       },
-      "strategic_description": "This civ is versatile, with strength across cavalry and ranged -- allowing flexible strategies that adapt to any opponent. Strong infantry anti-cavalry with Halberdier to hold defensive positions against cavalry pushes. Good tools against ranged units help shut down archer compositions. Bombard Cannons provide long-range siege power for breaking through fortified positions.",
+      "strategic_description": "This civ is versatile, with strength across cavalry and ranged -- allowing flexible strategies that adapt to any opponent. Excellent anti-cavalry options from both stable and barracks -- very hard for cavalry-heavy opponents to find an opening. Good tools against ranged units help shut down archer compositions. Bombard Cannons provide long-range siege power for breaking through fortified positions.",
       "strategic_summary": {
         "primary_strength": "cavalry",
         "signature_areas": [
@@ -5964,6 +6257,7 @@
         "strong_areas": [
           "cavalry",
           "ranged",
+          "anti_cavalry",
           "anti_cav_infantry",
           "anti_archer",
           "siege"
@@ -5974,7 +6268,7 @@
       "strength_profile": {
         "anti_archer": "good",
         "anti_cav_infantry": "good",
-        "anti_cavalry": "average",
+        "anti_cavalry": "good",
         "cavalry": "signature",
         "infantry": "average",
         "ranged": "signature",
@@ -6214,21 +6508,21 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 1,
+          "above_avg_count": 3,
           "all_units": [
             {
               "bonus_abilities": [
                 "Skirms Pikes cost -25%"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": 6.5,
+              "line_slug": "stable",
+              "median_delta": 38.7,
               "missing_techs": [
                 "Blast Furnace",
                 "Bloodlines"
               ],
-              "rank": 84,
-              "score": 70.8,
+              "rank": 17,
+              "score": 60.1,
               "special_effects": [],
               "speed": 1.6,
               "stats": {
@@ -6251,11 +6545,11 @@
                 "Byzantine Logistica"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -27.8,
+              "line_slug": "stable",
+              "median_delta": 28.0,
               "missing_techs": [],
-              "rank": 166,
-              "score": 36.5,
+              "rank": 26,
+              "score": 49.4,
               "special_effects": [
                 "Trample (0.5 radius)",
                 "Trample +5 flat damage"
@@ -6272,21 +6566,21 @@
                 "range": 0,
                 "speed": 1.49
               },
-              "strength": "average",
+              "strength": "good",
               "unit_name": "Elite Cataphract",
               "unit_slug": "elite_cataphract_byzantines"
             },
             {
               "bonus_abilities": [],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -42.9,
+              "line_slug": "stable",
+              "median_delta": 7.4,
               "missing_techs": [
                 "Blast Furnace",
                 "Bloodlines"
               ],
-              "rank": 183,
-              "score": 21.4,
+              "rank": 50,
+              "score": 28.8,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -6303,19 +6597,47 @@
               "strength": "average",
               "unit_name": "Paladin",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -16.3,
+              "missing_techs": [
+                "Blast Furnace",
+                "Bloodlines"
+              ],
+              "rank": 125,
+              "score": 5.1,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 9.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 75.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "heavy_camel",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": 6.5,
-          "narrative_key": "anticav_one_strong",
-          "rank": 84,
-          "score": 70.8,
+          "line_slug": "stable",
+          "median_delta": 38.7,
+          "narrative_key": "anticav_strong",
+          "rank": 17,
+          "score": 60.1,
           "stats": null,
           "strength": "good",
-          "total_count": 3,
+          "total_count": 4,
           "unit_name": "Heavy Camel Rider",
           "unit_slug": "heavy_camel"
         },
@@ -7005,19 +7327,19 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 1,
           "all_units": [
             {
               "bonus_abilities": [],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -40.6,
+              "line_slug": "stable",
+              "median_delta": 11.4,
               "missing_techs": [
                 "Bloodlines",
                 "Plate Barding Armor"
               ],
-              "rank": 182,
-              "score": 23.6,
+              "rank": 46,
+              "score": 32.8,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -7034,19 +7356,47 @@
               "strength": "average",
               "unit_name": "Paladin",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -9.9,
+              "missing_techs": [
+                "Bloodlines",
+                "Plate Barding Armor"
+              ],
+              "rank": 112,
+              "score": 11.5,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 75.0,
+                "melee_armor": 2.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "paladin",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -40.6,
-          "narrative_key": "anticav_weak",
-          "rank": 182,
-          "score": 23.6,
+          "line_slug": "stable",
+          "median_delta": 11.4,
+          "narrative_key": "anticav_one_strong",
+          "rank": 46,
+          "score": 32.8,
           "stats": null,
           "strength": "average",
-          "total_count": 1,
+          "total_count": 2,
           "unit_name": "Paladin",
           "unit_slug": "paladin"
         },
@@ -7672,7 +8022,74 @@
           "unit_name": "Halberdier",
           "unit_slug": "halberdier"
         },
-        "anti_cavalry": null,
+        "anti_cavalry": {
+          "above_avg_count": 0,
+          "all_units": [
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -0.3,
+              "missing_techs": [],
+              "rank": 69,
+              "score": 21.1,
+              "special_effects": [],
+              "speed": 1.49,
+              "stats": {
+                "attack": 16.0,
+                "cost_food": 60.0,
+                "cost_gold": 75.0,
+                "cost_wood": 0,
+                "hp": 140.0,
+                "melee_armor": 5.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.49
+              },
+              "strength": "average",
+              "unit_name": "Cavalier",
+              "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -6.4,
+              "missing_techs": [],
+              "rank": 102,
+              "score": 15.0,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 80.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Light Cavalry",
+              "unit_slug": "hussar"
+            }
+          ],
+          "best_unit": "paladin",
+          "has_signature": false,
+          "is_signature": false,
+          "line_slug": "stable",
+          "median_delta": -0.3,
+          "narrative_key": "anticav_weak",
+          "rank": 69,
+          "score": 21.1,
+          "stats": null,
+          "strength": "average",
+          "total_count": 2,
+          "unit_name": "Cavalier",
+          "unit_slug": "paladin"
+        },
         "cavalry": {
           "above_avg_count": 0,
           "all_units": [
@@ -8028,14 +8445,12 @@
           "anti_archer"
         ],
         "summary_key": "multi_flexible",
-        "weak_areas": [
-          "anti_cavalry"
-        ]
+        "weak_areas": []
       },
       "strength_profile": {
         "anti_archer": "good",
         "anti_cav_infantry": "good",
-        "anti_cavalry": "weak",
+        "anti_cavalry": "average",
         "cavalry": "average",
         "infantry": "signature",
         "ranged": "average",
@@ -8282,7 +8697,7 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 2,
           "all_units": [
             {
               "bonus_abilities": [
@@ -8291,13 +8706,13 @@
                 "Cavalry +5% speed Age4"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -30.6,
+              "line_slug": "stable",
+              "median_delta": 18.2,
               "missing_techs": [
                 "Husbandry"
               ],
-              "rank": 173,
-              "score": 33.6,
+              "rank": 37,
+              "score": 39.6,
               "special_effects": [],
               "speed": 1.56,
               "stats": {
@@ -8322,13 +8737,13 @@
                 "Cavalry +5% speed Age4"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -44.4,
+              "line_slug": "stable",
+              "median_delta": 5.4,
               "missing_techs": [
                 "Husbandry"
               ],
-              "rank": 187,
-              "score": 19.9,
+              "rank": 56,
+              "score": 26.8,
               "special_effects": [],
               "speed": 1.68,
               "stats": {
@@ -8345,19 +8760,83 @@
               "strength": "average",
               "unit_name": "Camel Rider",
               "unit_slug": "heavy_camel"
+            },
+            {
+              "bonus_abilities": [
+                "Cavalry +5% speed Age2",
+                "Cavalry +5% speed Age3",
+                "Cavalry +5% speed Age4",
+                "Burmese UT"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.5,
+              "missing_techs": [
+                "Husbandry"
+              ],
+              "rank": 77,
+              "score": 18.9,
+              "special_effects": [],
+              "speed": 1.74,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.74
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
+            },
+            {
+              "bonus_abilities": [
+                "Cavalry +5% speed Age2",
+                "Cavalry +5% speed Age3",
+                "Cavalry +5% speed Age4",
+                "Burmese UT"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -7.4,
+              "missing_techs": [
+                "Husbandry"
+              ],
+              "rank": 107,
+              "score": 14.0,
+              "special_effects": [],
+              "speed": 1.68,
+              "stats": {
+                "attack": 15.0,
+                "cost_food": 70.0,
+                "cost_gold": 40.0,
+                "cost_wood": 0,
+                "hp": 100.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 1.0,
+                "speed": 1.68
+              },
+              "strength": "average",
+              "unit_name": "Elite Steppe Lancer",
+              "unit_slug": "elite_steppe"
             }
           ],
           "best_unit": "paladin",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -30.6,
-          "narrative_key": "anticav_weak",
-          "rank": 173,
-          "score": 33.6,
+          "line_slug": "stable",
+          "median_delta": 18.2,
+          "narrative_key": "anticav_strong",
+          "rank": 37,
+          "score": 39.6,
           "stats": null,
           "strength": "average",
-          "total_count": 2,
+          "total_count": 4,
           "unit_name": "Paladin",
           "unit_slug": "paladin"
         },
@@ -9053,7 +9532,7 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 1,
           "all_units": [
             {
               "bonus_abilities": [
@@ -9061,14 +9540,14 @@
                 "Wootz Steel"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -30.4,
+              "line_slug": "stable",
+              "median_delta": 26.3,
               "missing_techs": [
                 "Bloodlines",
                 "Plate Barding Armor"
               ],
-              "rank": 171,
-              "score": 33.9,
+              "rank": 28,
+              "score": 47.7,
               "special_effects": [
                 "Ignores melee armor",
                 "Trample 25%",
@@ -9087,22 +9566,54 @@
                 "range": 0,
                 "speed": 0.99
               },
-              "strength": "average",
+              "strength": "good",
               "unit_name": "Battle Elephant",
               "unit_slug": "elite_elephant"
+            },
+            {
+              "bonus_abilities": [
+                "Wootz Steel"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.3,
+              "missing_techs": [
+                "Bloodlines",
+                "Plate Barding Armor"
+              ],
+              "rank": 76,
+              "score": 19.1,
+              "special_effects": [
+                "Ignores melee armor"
+              ],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 60.0,
+                "melee_armor": 2.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Light Cavalry",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "elite_elephant",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -30.4,
-          "narrative_key": "anticav_weak",
-          "rank": 171,
-          "score": 33.9,
+          "line_slug": "stable",
+          "median_delta": 26.3,
+          "narrative_key": "anticav_one_strong",
+          "rank": 28,
+          "score": 47.7,
           "stats": null,
-          "strength": "average",
-          "total_count": 1,
+          "strength": "good",
+          "total_count": 2,
           "unit_name": "Battle Elephant",
           "unit_slug": "elite_elephant"
         },
@@ -9517,7 +10028,7 @@
           "unit_slug": "bombard_cannon"
         }
       },
-      "strategic_description": "This civ is versatile, with strength across ranged and infantry -- allowing flexible strategies that adapt to any opponent. Strong infantry anti-cavalry with Halberdier to hold defensive positions against cavalry pushes. Good tools against ranged units help shut down archer compositions. Bombard Cannons provide long-range siege power for breaking through fortified positions.",
+      "strategic_description": "This civ is versatile, with strength across ranged and infantry -- allowing flexible strategies that adapt to any opponent. Excellent anti-cavalry options from both stable and barracks -- very hard for cavalry-heavy opponents to find an opening. Good tools against ranged units help shut down archer compositions. Bombard Cannons provide long-range siege power for breaking through fortified positions.",
       "strategic_summary": {
         "primary_strength": "ranged",
         "signature_areas": [
@@ -9528,6 +10039,7 @@
         "strong_areas": [
           "ranged",
           "infantry",
+          "anti_cavalry",
           "anti_cav_infantry",
           "anti_archer",
           "siege"
@@ -9538,7 +10050,7 @@
       "strength_profile": {
         "anti_archer": "signature",
         "anti_cav_infantry": "good",
-        "anti_cavalry": "average",
+        "anti_cavalry": "good",
         "cavalry": "average",
         "infantry": "good",
         "ranged": "signature",
@@ -9774,21 +10286,21 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 1,
           "all_units": [
             {
               "bonus_abilities": [
                 "Ethiopian UT"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -19.9,
+              "line_slug": "stable",
+              "median_delta": 24.6,
               "missing_techs": [
                 "Bloodlines",
                 "Plate Barding Armor"
               ],
-              "rank": 155,
-              "score": 44.4,
+              "rank": 32,
+              "score": 46.0,
               "special_effects": [],
               "speed": 1.6,
               "stats": {
@@ -9802,22 +10314,78 @@
                 "range": 0,
                 "speed": 1.6
               },
-              "strength": "average",
+              "strength": "good",
               "unit_name": "Heavy Camel Rider",
               "unit_slug": "heavy_camel"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -6.3,
+              "missing_techs": [
+                "Bloodlines",
+                "Plate Barding Armor"
+              ],
+              "rank": 101,
+              "score": 15.1,
+              "special_effects": [],
+              "speed": 1.49,
+              "stats": {
+                "attack": 16.0,
+                "cost_food": 60.0,
+                "cost_gold": 75.0,
+                "cost_wood": 0,
+                "hp": 120.0,
+                "melee_armor": 4.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.49
+              },
+              "strength": "average",
+              "unit_name": "Cavalier",
+              "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -10.0,
+              "missing_techs": [
+                "Bloodlines",
+                "Plate Barding Armor"
+              ],
+              "rank": 113,
+              "score": 11.4,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 75.0,
+                "melee_armor": 2.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "heavy_camel",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -19.9,
-          "narrative_key": "anticav_weak",
-          "rank": 155,
-          "score": 44.4,
+          "line_slug": "stable",
+          "median_delta": 24.6,
+          "narrative_key": "anticav_one_strong",
+          "rank": 32,
+          "score": 46.0,
           "stats": null,
-          "strength": "average",
-          "total_count": 1,
+          "strength": "good",
+          "total_count": 3,
           "unit_name": "Heavy Camel Rider",
           "unit_slug": "heavy_camel"
         },
@@ -10198,12 +10766,13 @@
           "unit_slug": "siege_ram"
         }
       },
-      "strategic_description": "This civ has strong ranged options for concentrated pushes, with Heavy Scorpion providing range advantage and sustained damage output. Strong infantry anti-cavalry with Halberdier to hold defensive positions against cavalry pushes. Good tools against ranged units help shut down archer compositions. Bombard Cannons provide long-range siege power for breaking through fortified positions.",
+      "strategic_description": "This civ has strong ranged options for concentrated pushes, with Heavy Scorpion providing range advantage and sustained damage output. Excellent anti-cavalry options from both stable and barracks -- very hard for cavalry-heavy opponents to find an opening. Good tools against ranged units help shut down archer compositions. Bombard Cannons provide long-range siege power for breaking through fortified positions.",
       "strategic_summary": {
         "primary_strength": "ranged",
         "signature_areas": [],
         "strong_areas": [
           "ranged",
+          "anti_cavalry",
           "anti_cav_infantry",
           "anti_archer",
           "siege"
@@ -10214,7 +10783,7 @@
       "strength_profile": {
         "anti_archer": "good",
         "anti_cav_infantry": "good",
-        "anti_cavalry": "average",
+        "anti_cavalry": "good",
         "cavalry": "average",
         "infantry": "average",
         "ranged": "good",
@@ -10486,20 +11055,20 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 1,
           "all_units": [
             {
               "bonus_abilities": [
                 "Cavalry +20% HP"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -27.9,
+              "line_slug": "stable",
+              "median_delta": 20.2,
               "missing_techs": [
                 "Bloodlines"
               ],
-              "rank": 167,
-              "score": 36.3,
+              "rank": 35,
+              "score": 41.6,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -10516,19 +11085,48 @@
               "strength": "average",
               "unit_name": "Paladin",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [
+                "Cavalry +20% HP"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -10.6,
+              "missing_techs": [
+                "Bloodlines"
+              ],
+              "rank": 116,
+              "score": 10.8,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 72.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Light Cavalry",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "paladin",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -27.9,
-          "narrative_key": "anticav_weak",
-          "rank": 167,
-          "score": 36.3,
+          "line_slug": "stable",
+          "median_delta": 20.2,
+          "narrative_key": "anticav_one_strong",
+          "rank": 35,
+          "score": 41.6,
           "stats": null,
           "strength": "average",
-          "total_count": 1,
+          "total_count": 2,
           "unit_name": "Paladin",
           "unit_slug": "paladin"
         },
@@ -11171,7 +11769,7 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 1,
+          "above_avg_count": 2,
           "all_units": [
             {
               "bonus_abilities": [
@@ -11180,12 +11778,12 @@
                 "Cavalry regeneration age4",
                 "Aznauri Cavalry"
               ],
-              "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": 12.3,
+              "is_signature": true,
+              "line_slug": "stable",
+              "median_delta": 50.5,
               "missing_techs": [],
-              "rank": 71,
-              "score": 76.6,
+              "rank": 4,
+              "score": 71.9,
               "special_effects": [
                 "+14.0 HP/min regen"
               ],
@@ -11201,7 +11799,7 @@
                 "range": 0,
                 "speed": 1.54
               },
-              "strength": "good",
+              "strength": "signature",
               "unit_name": "Elite Monaspa",
               "unit_slug": "elite_monaspa_georgians"
             },
@@ -11213,11 +11811,11 @@
                 "Aznauri Cavalry"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -48.5,
+              "line_slug": "stable",
+              "median_delta": 1.5,
               "missing_techs": [],
-              "rank": 188,
-              "score": 15.8,
+              "rank": 62,
+              "score": 22.9,
               "special_effects": [
                 "+14.0 HP/min regen"
               ],
@@ -11236,19 +11834,51 @@
               "strength": "average",
               "unit_name": "Cavalier",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [
+                "Cavalry regeneration age2",
+                "Cavalry regeneration age3",
+                "Cavalry regeneration age4",
+                "Aznauri Cavalry"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.5,
+              "missing_techs": [],
+              "rank": 78,
+              "score": 18.9,
+              "special_effects": [
+                "+14.0 HP/min regen"
+              ],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "elite_monaspa_georgians",
-          "has_signature": false,
-          "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": 12.3,
-          "narrative_key": "anticav_one_strong",
-          "rank": 71,
-          "score": 76.6,
+          "has_signature": true,
+          "is_signature": true,
+          "line_slug": "stable",
+          "median_delta": 50.5,
+          "narrative_key": "anticav_strong",
+          "rank": 4,
+          "score": 71.9,
           "stats": null,
-          "strength": "good",
-          "total_count": 2,
+          "strength": "signature",
+          "total_count": 3,
           "unit_name": "Elite Monaspa",
           "unit_slug": "elite_monaspa_georgians"
         },
@@ -11617,7 +12247,9 @@
       "strategic_description": "This civ is versatile, with strength across cavalry and ranged -- allowing flexible strategies that adapt to any opponent. Excellent anti-cavalry options from both stable and barracks -- very hard for cavalry-heavy opponents to find an opening. Good tools against ranged units help shut down archer compositions. Solid siege options give flexibility in how to close out games.",
       "strategic_summary": {
         "primary_strength": "cavalry",
-        "signature_areas": [],
+        "signature_areas": [
+          "anti_cavalry"
+        ],
         "strong_areas": [
           "cavalry",
           "ranged",
@@ -11632,7 +12264,7 @@
       "strength_profile": {
         "anti_archer": "good",
         "anti_cav_infantry": "good",
-        "anti_cavalry": "good",
+        "anti_cavalry": "signature",
         "cavalry": "good",
         "infantry": "average",
         "ranged": "good",
@@ -11926,7 +12558,78 @@
           "unit_name": "Halberdier",
           "unit_slug": "halberdier"
         },
-        "anti_cavalry": null,
+        "anti_cavalry": {
+          "above_avg_count": 0,
+          "all_units": [
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.2,
+              "missing_techs": [
+                "Plate Barding Armor"
+              ],
+              "rank": 74,
+              "score": 19.2,
+              "special_effects": [],
+              "speed": 1.49,
+              "stats": {
+                "attack": 16.0,
+                "cost_food": 60.0,
+                "cost_gold": 75.0,
+                "cost_wood": 0,
+                "hp": 140.0,
+                "melee_armor": 4.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.49
+              },
+              "strength": "average",
+              "unit_name": "Cavalier",
+              "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -5.3,
+              "missing_techs": [
+                "Plate Barding Armor"
+              ],
+              "rank": 96,
+              "score": 16.1,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 2.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
+            }
+          ],
+          "best_unit": "paladin",
+          "has_signature": false,
+          "is_signature": false,
+          "line_slug": "stable",
+          "median_delta": -2.2,
+          "narrative_key": "anticav_weak",
+          "rank": 74,
+          "score": 19.2,
+          "stats": null,
+          "strength": "average",
+          "total_count": 2,
+          "unit_name": "Cavalier",
+          "unit_slug": "paladin"
+        },
         "cavalry": {
           "above_avg_count": 0,
           "all_units": [
@@ -12330,14 +13033,12 @@
           "anti_archer"
         ],
         "summary_key": "multi_flexible",
-        "weak_areas": [
-          "anti_cavalry"
-        ]
+        "weak_areas": []
       },
       "strength_profile": {
         "anti_archer": "good",
         "anti_cav_infantry": "signature",
-        "anti_cavalry": "weak",
+        "anti_cavalry": "average",
         "cavalry": "average",
         "infantry": "average",
         "ranged": "average",
@@ -12637,14 +13338,14 @@
                 "Kshatriyas",
                 "Frontier Guards"
               ],
-              "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": 15.7,
+              "is_signature": true,
+              "line_slug": "stable",
+              "median_delta": 59.8,
               "missing_techs": [
                 "Blast Furnace"
               ],
-              "rank": 65,
-              "score": 79.9,
+              "rank": 3,
+              "score": 81.2,
               "special_effects": [],
               "speed": 1.6,
               "stats": {
@@ -12658,22 +13359,86 @@
                 "range": 0,
                 "speed": 1.6
               },
-              "strength": "good",
+              "strength": "signature",
               "unit_name": "Heavy Camel Rider",
               "unit_slug": "heavy_camel"
+            },
+            {
+              "bonus_abilities": [
+                "+20% Cav bonus damage",
+                "+30% Cav bonus damage",
+                "+40% Cav bonus damage",
+                "Kshatriyas"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.1,
+              "missing_techs": [],
+              "rank": 72,
+              "score": 19.3,
+              "special_effects": [
+                "Dodge shield (7 charges)"
+              ],
+              "speed": 1.76,
+              "stats": {
+                "attack": 13.0,
+                "cost_food": 52.0,
+                "cost_gold": 30.0,
+                "cost_wood": 0,
+                "hp": 90.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 5.0,
+                "range": 0,
+                "speed": 1.76
+              },
+              "strength": "average",
+              "unit_name": "Elite Shrivamsha Rider",
+              "unit_slug": "elite_shrivamsha_rider_gurjaras"
+            },
+            {
+              "bonus_abilities": [
+                "+20% Cav bonus damage",
+                "+30% Cav bonus damage",
+                "+40% Cav bonus damage",
+                "Kshatriyas"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.7,
+              "missing_techs": [
+                "Blast Furnace"
+              ],
+              "rank": 80,
+              "score": 18.7,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 9.0,
+                "cost_food": 60.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "heavy_camel",
-          "has_signature": false,
-          "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": 15.7,
+          "has_signature": true,
+          "is_signature": true,
+          "line_slug": "stable",
+          "median_delta": 59.8,
           "narrative_key": "anticav_one_strong",
-          "rank": 65,
-          "score": 79.9,
+          "rank": 3,
+          "score": 81.2,
           "stats": null,
-          "strength": "good",
-          "total_count": 1,
+          "strength": "signature",
+          "total_count": 3,
           "unit_name": "Heavy Camel Rider",
           "unit_slug": "heavy_camel"
         },
@@ -13126,6 +13891,7 @@
         "primary_strength": "cavalry",
         "signature_areas": [
           "ranged",
+          "anti_cavalry",
           "anti_archer",
           "siege"
         ],
@@ -13142,7 +13908,7 @@
       "strength_profile": {
         "anti_archer": "signature",
         "anti_cav_infantry": "average",
-        "anti_cavalry": "good",
+        "anti_cavalry": "signature",
         "cavalry": "good",
         "infantry": "average",
         "ranged": "signature",
@@ -13412,12 +14178,12 @@
               "bonus_abilities": [
                 "Camel Rider attack speed"
               ],
-              "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": 4.8,
+              "is_signature": true,
+              "line_slug": "stable",
+              "median_delta": 50.5,
               "missing_techs": [],
-              "rank": 88,
-              "score": 69.0,
+              "rank": 5,
+              "score": 71.9,
               "special_effects": [],
               "speed": 1.6,
               "stats": {
@@ -13431,22 +14197,47 @@
                 "range": 0,
                 "speed": 1.6
               },
-              "strength": "good",
+              "strength": "signature",
               "unit_name": "Imperial Camel Rider",
               "unit_slug": "heavy_camel"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -3.0,
+              "missing_techs": [],
+              "rank": 91,
+              "score": 18.4,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "heavy_camel",
-          "has_signature": false,
-          "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": 4.8,
+          "has_signature": true,
+          "is_signature": true,
+          "line_slug": "stable",
+          "median_delta": 50.5,
           "narrative_key": "anticav_one_strong",
-          "rank": 88,
-          "score": 69.0,
+          "rank": 5,
+          "score": 71.9,
           "stats": null,
-          "strength": "good",
-          "total_count": 1,
+          "strength": "signature",
+          "total_count": 2,
           "unit_name": "Imperial Camel Rider",
           "unit_slug": "heavy_camel"
         },
@@ -13824,7 +14615,8 @@
       "strategic_summary": {
         "primary_strength": "cavalry",
         "signature_areas": [
-          "ranged"
+          "ranged",
+          "anti_cavalry"
         ],
         "strong_areas": [
           "cavalry",
@@ -13840,7 +14632,7 @@
       "strength_profile": {
         "anti_archer": "good",
         "anti_cav_infantry": "average",
-        "anti_cavalry": "good",
+        "anti_cavalry": "signature",
         "cavalry": "good",
         "infantry": "good",
         "ranged": "signature",
@@ -14058,16 +14850,41 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 2,
           "all_units": [
             {
               "bonus_abilities": [],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -24.2,
+              "line_slug": "stable",
+              "median_delta": 18.1,
               "missing_techs": [],
-              "rank": 158,
-              "score": 40.0,
+              "rank": 38,
+              "score": 39.5,
+              "special_effects": [],
+              "speed": 1.49,
+              "stats": {
+                "attack": 18.0,
+                "cost_food": 60.0,
+                "cost_gold": 75.0,
+                "cost_wood": 0,
+                "hp": 180.0,
+                "melee_armor": 5.0,
+                "pierce_armor": 7.0,
+                "range": 0,
+                "speed": 1.49
+              },
+              "strength": "average",
+              "unit_name": "Paladin",
+              "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": 17.1,
+              "missing_techs": [],
+              "rank": 41,
+              "score": 38.5,
               "special_effects": [],
               "speed": 1.54,
               "stats": {
@@ -14088,42 +14905,42 @@
             {
               "bonus_abilities": [],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -30.4,
+              "line_slug": "stable",
+              "median_delta": -2.9,
               "missing_techs": [],
-              "rank": 172,
-              "score": 33.8,
+              "rank": 88,
+              "score": 18.5,
               "special_effects": [],
-              "speed": 1.49,
+              "speed": 1.65,
               "stats": {
-                "attack": 18.0,
-                "cost_food": 60.0,
-                "cost_gold": 75.0,
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
                 "cost_wood": 0,
-                "hp": 180.0,
-                "melee_armor": 5.0,
-                "pierce_armor": 7.0,
+                "hp": 95.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
                 "range": 0,
-                "speed": 1.49
+                "speed": 1.65
               },
               "strength": "average",
-              "unit_name": "Paladin",
-              "unit_slug": "paladin"
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
-          "best_unit": "elite_tarkan_huns",
+          "best_unit": "paladin",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -24.2,
-          "narrative_key": "anticav_weak",
-          "rank": 158,
-          "score": 40.0,
+          "line_slug": "stable",
+          "median_delta": 18.1,
+          "narrative_key": "anticav_strong",
+          "rank": 38,
+          "score": 39.5,
           "stats": null,
           "strength": "average",
-          "total_count": 2,
-          "unit_name": "Elite Tarkan",
-          "unit_slug": "elite_tarkan_huns"
+          "total_count": 3,
+          "unit_name": "Paladin",
+          "unit_slug": "paladin"
         },
         "cavalry": {
           "above_avg_count": 2,
@@ -15364,11 +16181,11 @@
             {
               "bonus_abilities": [],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -50.5,
+              "line_slug": "stable",
+              "median_delta": 0.0,
               "missing_techs": [],
-              "rank": 190,
-              "score": 13.8,
+              "rank": 64,
+              "score": 21.4,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -15385,19 +16202,44 @@
               "strength": "average",
               "unit_name": "Cavalier",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.8,
+              "missing_techs": [],
+              "rank": 85,
+              "score": 18.6,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "paladin",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -50.5,
+          "line_slug": "stable",
+          "median_delta": 0.0,
           "narrative_key": "anticav_weak",
-          "rank": 190,
-          "score": 13.8,
+          "rank": 64,
+          "score": 21.4,
           "stats": null,
           "strength": "average",
-          "total_count": 1,
+          "total_count": 2,
           "unit_name": "Cavalier",
           "unit_slug": "paladin"
         },
@@ -16084,7 +16926,78 @@
           "unit_name": "Halberdier",
           "unit_slug": "halberdier"
         },
-        "anti_cavalry": null,
+        "anti_cavalry": {
+          "above_avg_count": 0,
+          "all_units": [
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.2,
+              "missing_techs": [
+                "Plate Barding Armor"
+              ],
+              "rank": 75,
+              "score": 19.2,
+              "special_effects": [],
+              "speed": 1.49,
+              "stats": {
+                "attack": 16.0,
+                "cost_food": 60.0,
+                "cost_gold": 75.0,
+                "cost_wood": 0,
+                "hp": 140.0,
+                "melee_armor": 4.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.49
+              },
+              "strength": "average",
+              "unit_name": "Cavalier",
+              "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -10.6,
+              "missing_techs": [
+                "Plate Barding Armor"
+              ],
+              "rank": 117,
+              "score": 10.8,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 80.0,
+                "melee_armor": 2.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Light Cavalry",
+              "unit_slug": "hussar"
+            }
+          ],
+          "best_unit": "paladin",
+          "has_signature": false,
+          "is_signature": false,
+          "line_slug": "stable",
+          "median_delta": -2.2,
+          "narrative_key": "anticav_weak",
+          "rank": 75,
+          "score": 19.2,
+          "stats": null,
+          "strength": "average",
+          "total_count": 2,
+          "unit_name": "Cavalier",
+          "unit_slug": "paladin"
+        },
         "cavalry": {
           "above_avg_count": 0,
           "all_units": [
@@ -16437,14 +17350,12 @@
           "siege"
         ],
         "summary_key": "multi_flexible",
-        "weak_areas": [
-          "anti_cavalry"
-        ]
+        "weak_areas": []
       },
       "strength_profile": {
         "anti_archer": "good",
         "anti_cav_infantry": "good",
-        "anti_cavalry": "weak",
+        "anti_cavalry": "average",
         "cavalry": "average",
         "infantry": "good",
         "ranged": "good",
@@ -16730,7 +17641,7 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 2,
           "all_units": [
             {
               "bonus_abilities": [
@@ -16738,11 +17649,11 @@
                 "No friendly damage"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -19.2,
+              "line_slug": "stable",
+              "median_delta": 28.3,
               "missing_techs": [],
-              "rank": 153,
-              "score": 45.0,
+              "rank": 25,
+              "score": 49.7,
               "special_effects": [
                 "Blocks first melee hit"
               ],
@@ -16758,7 +17669,7 @@
                 "range": 0,
                 "speed": 1.54
               },
-              "strength": "average",
+              "strength": "good",
               "unit_name": "Elite Iron Pagoda",
               "unit_slug": "elite_iron_pagoda_jurchens"
             },
@@ -16768,11 +17679,11 @@
                 "No friendly damage"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -29.4,
+              "line_slug": "stable",
+              "median_delta": 2.4,
               "missing_techs": [],
-              "rank": 168,
-              "score": 34.9,
+              "rank": 60,
+              "score": 23.8,
               "special_effects": [],
               "speed": 1.65,
               "stats": {
@@ -16789,19 +17700,47 @@
               "strength": "average",
               "unit_name": "Hussar",
               "unit_slug": "hussar"
+            },
+            {
+              "bonus_abilities": [
+                "cav & Fire Lancer +25% attack",
+                "No friendly damage"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -4.7,
+              "missing_techs": [],
+              "rank": 95,
+              "score": 16.7,
+              "special_effects": [],
+              "speed": 1.6,
+              "stats": {
+                "attack": 15.0,
+                "cost_food": 70.0,
+                "cost_gold": 40.0,
+                "cost_wood": 0,
+                "hp": 100.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 1.0,
+                "speed": 1.6
+              },
+              "strength": "average",
+              "unit_name": "Elite Steppe Lancer",
+              "unit_slug": "elite_steppe"
             }
           ],
           "best_unit": "elite_iron_pagoda_jurchens",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -19.2,
-          "narrative_key": "anticav_weak",
-          "rank": 153,
-          "score": 45.0,
+          "line_slug": "stable",
+          "median_delta": 28.3,
+          "narrative_key": "anticav_strong",
+          "rank": 25,
+          "score": 49.7,
           "stats": null,
-          "strength": "average",
-          "total_count": 2,
+          "strength": "good",
+          "total_count": 3,
           "unit_name": "Elite Iron Pagoda",
           "unit_slug": "elite_iron_pagoda_jurchens"
         },
@@ -17226,7 +18165,7 @@
           "unit_slug": "siege_ram"
         }
       },
-      "strategic_description": "This civ is versatile, with strength across cavalry, ranged and infantry -- allowing flexible strategies that adapt to any opponent. Anti-cavalry options are limited -- beware of knight-heavy opponents. Good tools against ranged units help shut down archer compositions. An infantry ram push is the signature play -- use Elite Fire Lancer as a meatshield to protect rams pushing into enemy bases.",
+      "strategic_description": "This civ is versatile, with strength across cavalry, ranged and infantry -- allowing flexible strategies that adapt to any opponent. Can answer enemy cavalry with mobile options like Elite Iron Pagoda, allowing counter-raids and flexible responses. Good tools against ranged units help shut down archer compositions. An infantry ram push is the signature play -- use Elite Fire Lancer as a meatshield to protect rams pushing into enemy bases.",
       "strategic_summary": {
         "primary_strength": "cavalry",
         "signature_areas": [
@@ -17236,6 +18175,7 @@
           "cavalry",
           "ranged",
           "infantry",
+          "anti_cavalry",
           "anti_archer",
           "siege"
         ],
@@ -17245,7 +18185,7 @@
       "strength_profile": {
         "anti_archer": "good",
         "anti_cav_infantry": "average",
-        "anti_cavalry": "average",
+        "anti_cavalry": "good",
         "cavalry": "good",
         "infantry": "signature",
         "ranged": "good",
@@ -17561,7 +18501,7 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 1,
           "all_units": [
             {
               "bonus_abilities": [
@@ -17569,14 +18509,14 @@
                 "Double Iron Casting"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -12.2,
+              "line_slug": "stable",
+              "median_delta": 31.5,
               "missing_techs": [
                 "Blast Furnace",
                 "Bloodlines"
               ],
-              "rank": 137,
-              "score": 52.1,
+              "rank": 23,
+              "score": 52.9,
               "special_effects": [
                 "+20.0 HP/min regen"
               ],
@@ -17592,22 +18532,89 @@
                 "range": 0,
                 "speed": 1.6
               },
-              "strength": "average",
+              "strength": "good",
               "unit_name": "Heavy Camel Rider",
               "unit_slug": "heavy_camel"
+            },
+            {
+              "bonus_abilities": [
+                "Double Forging",
+                "Double Iron Casting",
+                "Skirms Spear Scout train 25% faster"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -7.4,
+              "missing_techs": [
+                "Blast Furnace",
+                "Bloodlines"
+              ],
+              "rank": 108,
+              "score": 14.0,
+              "special_effects": [
+                "+20.0 HP/min regen"
+              ],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 75.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
+            },
+            {
+              "bonus_abilities": [
+                "Double Forging",
+                "Double Iron Casting"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -10.0,
+              "missing_techs": [
+                "Blast Furnace",
+                "Bloodlines"
+              ],
+              "rank": 114,
+              "score": 11.4,
+              "special_effects": [
+                "+20.0 HP/min regen"
+              ],
+              "speed": 1.6,
+              "stats": {
+                "attack": 15.0,
+                "cost_food": 70.0,
+                "cost_gold": 40.0,
+                "cost_wood": 0,
+                "hp": 80.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 1.0,
+                "speed": 1.6
+              },
+              "strength": "average",
+              "unit_name": "Elite Steppe Lancer",
+              "unit_slug": "elite_steppe"
             }
           ],
           "best_unit": "heavy_camel",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -12.2,
-          "narrative_key": "anticav_weak",
-          "rank": 137,
-          "score": 52.1,
+          "line_slug": "stable",
+          "median_delta": 31.5,
+          "narrative_key": "anticav_one_strong",
+          "rank": 23,
+          "score": 52.9,
           "stats": null,
-          "strength": "average",
-          "total_count": 1,
+          "strength": "good",
+          "total_count": 3,
           "unit_name": "Heavy Camel Rider",
           "unit_slug": "heavy_camel"
         },
@@ -18041,7 +19048,7 @@
           "unit_slug": "siege_ram"
         }
       },
-      "strategic_description": "This civ has strong infantry for frontline pressure, with Elite Liao Dao serving as the backbone of siege-backed pushes. Anti-cavalry options are limited -- beware of knight-heavy opponents. Good tools against ranged units help shut down archer compositions. An infantry ram push is the signature play -- use Elite Liao Dao as a meatshield to protect rams pushing into enemy bases.",
+      "strategic_description": "This civ has strong infantry for frontline pressure, with Elite Liao Dao serving as the backbone of siege-backed pushes. Can answer enemy cavalry with mobile options like Heavy Camel Rider, allowing counter-raids and flexible responses. Good tools against ranged units help shut down archer compositions. An infantry ram push is the signature play -- use Elite Liao Dao as a meatshield to protect rams pushing into enemy bases.",
       "strategic_summary": {
         "primary_strength": "infantry",
         "signature_areas": [
@@ -18049,6 +19056,7 @@
         ],
         "strong_areas": [
           "infantry",
+          "anti_cavalry",
           "anti_archer",
           "siege"
         ],
@@ -18058,7 +19066,7 @@
       "strength_profile": {
         "anti_archer": "good",
         "anti_cav_infantry": "average",
-        "anti_cavalry": "average",
+        "anti_cavalry": "good",
         "cavalry": "average",
         "infantry": "signature",
         "ranged": "average",
@@ -18330,7 +19338,7 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 1,
           "all_units": [
             {
               "bonus_abilities": [
@@ -18338,11 +19346,11 @@
                 "Khmer UT"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -8.8,
+              "line_slug": "stable",
+              "median_delta": 49.2,
               "missing_techs": [],
-              "rank": 129,
-              "score": 55.4,
+              "rank": 8,
+              "score": 70.6,
               "special_effects": [
                 "Trample 25%",
                 "Trample (0.4 radius)"
@@ -18359,18 +19367,18 @@
                 "range": 0,
                 "speed": 1.09
               },
-              "strength": "average",
+              "strength": "good",
               "unit_name": "Elite Battle Elephant",
               "unit_slug": "elite_elephant"
             },
             {
               "bonus_abilities": [],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -50.5,
+              "line_slug": "stable",
+              "median_delta": 0.0,
               "missing_techs": [],
-              "rank": 191,
-              "score": 13.8,
+              "rank": 65,
+              "score": 21.4,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -18387,19 +19395,44 @@
               "strength": "average",
               "unit_name": "Cavalier",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.7,
+              "missing_techs": [],
+              "rank": 81,
+              "score": 18.7,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "elite_elephant",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -8.8,
-          "narrative_key": "anticav_weak",
-          "rank": 129,
-          "score": 55.4,
+          "line_slug": "stable",
+          "median_delta": 49.2,
+          "narrative_key": "anticav_one_strong",
+          "rank": 8,
+          "score": 70.6,
           "stats": null,
-          "strength": "average",
-          "total_count": 2,
+          "strength": "good",
+          "total_count": 3,
           "unit_name": "Elite Battle Elephant",
           "unit_slug": "elite_elephant"
         },
@@ -18775,7 +19808,7 @@
           "unit_slug": "siege_ram"
         }
       },
-      "strategic_description": "This civ is versatile, with strength across cavalry and ranged -- allowing flexible strategies that adapt to any opponent. Anti-cavalry options are limited -- beware of knight-heavy opponents. Good tools against ranged units help shut down archer compositions. Solid siege options give flexibility in how to close out games.",
+      "strategic_description": "This civ is versatile, with strength across cavalry and ranged -- allowing flexible strategies that adapt to any opponent. Can answer enemy cavalry with mobile options like Elite Battle Elephant, allowing counter-raids and flexible responses. Good tools against ranged units help shut down archer compositions. Solid siege options give flexibility in how to close out games.",
       "strategic_summary": {
         "primary_strength": "cavalry",
         "signature_areas": [
@@ -18785,6 +19818,7 @@
         "strong_areas": [
           "cavalry",
           "ranged",
+          "anti_cavalry",
           "anti_archer",
           "siege"
         ],
@@ -18794,7 +19828,7 @@
       "strength_profile": {
         "anti_archer": "good",
         "anti_cav_infantry": "average",
-        "anti_cavalry": "average",
+        "anti_cavalry": "good",
         "cavalry": "signature",
         "infantry": "average",
         "ranged": "signature",
@@ -19093,7 +20127,82 @@
           "unit_name": "Halberdier",
           "unit_slug": "halberdier"
         },
-        "anti_cavalry": null,
+        "anti_cavalry": {
+          "above_avg_count": 0,
+          "all_units": [
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -10.6,
+              "missing_techs": [
+                "Blast Furnace",
+                "Bloodlines",
+                "Plate Barding Armor"
+              ],
+              "rank": 118,
+              "score": 10.8,
+              "special_effects": [],
+              "speed": 1.49,
+              "stats": {
+                "attack": 14.0,
+                "cost_food": 60.0,
+                "cost_gold": 75.0,
+                "cost_wood": 0,
+                "hp": 120.0,
+                "melee_armor": 4.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.49
+              },
+              "strength": "average",
+              "unit_name": "Cavalier",
+              "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -16.2,
+              "missing_techs": [
+                "Blast Furnace",
+                "Bloodlines",
+                "Plate Barding Armor"
+              ],
+              "rank": 124,
+              "score": 5.2,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 9.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 75.0,
+                "melee_armor": 2.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
+            }
+          ],
+          "best_unit": "paladin",
+          "has_signature": false,
+          "is_signature": false,
+          "line_slug": "stable",
+          "median_delta": -10.6,
+          "narrative_key": "anticav_weak",
+          "rank": 118,
+          "score": 10.8,
+          "stats": null,
+          "strength": "average",
+          "total_count": 2,
+          "unit_name": "Cavalier",
+          "unit_slug": "paladin"
+        },
         "cavalry": {
           "above_avg_count": 0,
           "all_units": [
@@ -19512,14 +20621,12 @@
           "siege"
         ],
         "summary_key": "multi_flexible",
-        "weak_areas": [
-          "anti_cavalry"
-        ]
+        "weak_areas": []
       },
       "strength_profile": {
         "anti_archer": "signature",
         "anti_cav_infantry": "signature",
-        "anti_cavalry": "weak",
+        "anti_cavalry": "average",
         "cavalry": "average",
         "infantry": "average",
         "ranged": "signature",
@@ -19763,7 +20870,7 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 1,
+          "above_avg_count": 2,
           "all_units": [
             {
               "bonus_abilities": [
@@ -19773,11 +20880,11 @@
                 "Relic +1 cav attack 4"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": 5.5,
+              "line_slug": "stable",
+              "median_delta": 50.4,
               "missing_techs": [],
-              "rank": 87,
-              "score": 69.7,
+              "rank": 6,
+              "score": 71.8,
               "special_effects": [
                 "Ignores melee armor"
               ],
@@ -19805,13 +20912,13 @@
                 "Relic +1 cav attack 4"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -23.9,
+              "line_slug": "stable",
+              "median_delta": 24.8,
               "missing_techs": [
                 "Blast Furnace"
               ],
-              "rank": 157,
-              "score": 40.4,
+              "rank": 31,
+              "score": 46.2,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -19825,22 +20932,49 @@
                 "range": 0,
                 "speed": 1.49
               },
-              "strength": "average",
+              "strength": "good",
               "unit_name": "Paladin",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -0.1,
+              "missing_techs": [
+                "Blast Furnace"
+              ],
+              "rank": 68,
+              "score": 21.3,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 100.0,
+                "melee_armor": 4.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Winged Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "elite_leitis_lithuanians",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": 5.5,
-          "narrative_key": "anticav_one_strong",
-          "rank": 87,
-          "score": 69.7,
+          "line_slug": "stable",
+          "median_delta": 50.4,
+          "narrative_key": "anticav_strong",
+          "rank": 6,
+          "score": 71.8,
           "stats": null,
           "strength": "good",
-          "total_count": 2,
+          "total_count": 3,
           "unit_name": "Elite Leitis",
           "unit_slug": "elite_leitis_lithuanians"
         },
@@ -20455,18 +21589,18 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 3,
           "all_units": [
             {
               "bonus_abilities": [
                 "Magyars UT"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -9.1,
+              "line_slug": "stable",
+              "median_delta": 20.5,
               "missing_techs": [],
-              "rank": 131,
-              "score": 55.2,
+              "rank": 34,
+              "score": 41.9,
               "special_effects": [],
               "speed": 1.65,
               "stats": {
@@ -20485,40 +21619,13 @@
               "unit_slug": "elite_magyar_huszar_magyars"
             },
             {
-              "bonus_abilities": [
-                "C-Bonus Lcav Cheaper"
-              ],
-              "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -19.6,
-              "missing_techs": [],
-              "rank": 154,
-              "score": 44.6,
-              "special_effects": [],
-              "speed": 1.65,
-              "stats": {
-                "attack": 11.0,
-                "cost_food": 68.0,
-                "cost_gold": 0,
-                "cost_wood": 0,
-                "hp": 95.0,
-                "melee_armor": 3.0,
-                "pierce_armor": 6.0,
-                "range": 0,
-                "speed": 1.65
-              },
-              "strength": "average",
-              "unit_name": "Hussar",
-              "unit_slug": "hussar"
-            },
-            {
               "bonus_abilities": [],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -30.6,
+              "line_slug": "stable",
+              "median_delta": 18.0,
               "missing_techs": [],
-              "rank": 174,
-              "score": 33.6,
+              "rank": 39,
+              "score": 39.4,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -20535,16 +21642,43 @@
               "strength": "average",
               "unit_name": "Paladin",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [
+                "C-Bonus Lcav Cheaper"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": 6.0,
+              "missing_techs": [],
+              "rank": 54,
+              "score": 27.4,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 68.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "elite_magyar_huszar_magyars",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -9.1,
-          "narrative_key": "anticav_weak",
-          "rank": 131,
-          "score": 55.2,
+          "line_slug": "stable",
+          "median_delta": 20.5,
+          "narrative_key": "anticav_strong",
+          "rank": 34,
+          "score": 41.9,
           "stats": null,
           "strength": "average",
           "total_count": 3,
@@ -21122,15 +22256,15 @@
                 "Battle Ele 35% cheaper"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": 7.7,
+              "line_slug": "stable",
+              "median_delta": 49.9,
               "missing_techs": [
                 "Bloodlines",
                 "Chain Barding Armor",
                 "Plate Barding Armor"
               ],
-              "rank": 81,
-              "score": 71.9,
+              "rank": 7,
+              "score": 71.3,
               "special_effects": [
                 "Trample 25%",
                 "Trample (0.4 radius)"
@@ -21150,19 +22284,77 @@
               "strength": "good",
               "unit_name": "Elite Battle Elephant",
               "unit_slug": "elite_elephant"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -7.8,
+              "missing_techs": [
+                "Bloodlines",
+                "Chain Barding Armor",
+                "Plate Barding Armor"
+              ],
+              "rank": 110,
+              "score": 13.6,
+              "special_effects": [],
+              "speed": 1.49,
+              "stats": {
+                "attack": 16.0,
+                "cost_food": 60.0,
+                "cost_gold": 75.0,
+                "cost_wood": 0,
+                "hp": 120.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 3.0,
+                "range": 0,
+                "speed": 1.49
+              },
+              "strength": "average",
+              "unit_name": "Cavalier",
+              "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -14.3,
+              "missing_techs": [
+                "Bloodlines",
+                "Chain Barding Armor",
+                "Plate Barding Armor"
+              ],
+              "rank": 123,
+              "score": 7.1,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 60.0,
+                "melee_armor": 1.0,
+                "pierce_armor": 3.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Light Cavalry",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "elite_elephant",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": 7.7,
+          "line_slug": "stable",
+          "median_delta": 49.9,
           "narrative_key": "anticav_one_strong",
-          "rank": 81,
-          "score": 71.9,
+          "rank": 7,
+          "score": 71.3,
           "stats": null,
           "strength": "good",
-          "total_count": 1,
+          "total_count": 3,
           "unit_name": "Elite Battle Elephant",
           "unit_slug": "elite_elephant"
         },
@@ -21836,20 +23028,20 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 3,
           "all_units": [
             {
               "bonus_abilities": [
                 "Malian UT"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -2.2,
+              "line_slug": "stable",
+              "median_delta": 42.8,
               "missing_techs": [
                 "Blast Furnace"
               ],
-              "rank": 111,
-              "score": 62.0,
+              "rank": 14,
+              "score": 64.2,
               "special_effects": [],
               "speed": 1.6,
               "stats": {
@@ -21872,42 +23064,13 @@
                 "Malian UT"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -25.6,
+              "line_slug": "stable",
+              "median_delta": 7.9,
               "missing_techs": [
                 "Blast Furnace"
               ],
-              "rank": 163,
-              "score": 38.6,
-              "special_effects": [],
-              "speed": 1.65,
-              "stats": {
-                "attack": 14.0,
-                "cost_food": 80.0,
-                "cost_gold": 0,
-                "cost_wood": 0,
-                "hp": 80.0,
-                "melee_armor": 3.0,
-                "pierce_armor": 6.0,
-                "range": 0,
-                "speed": 1.65
-              },
-              "strength": "average",
-              "unit_name": "Light Cavalry",
-              "unit_slug": "hussar"
-            },
-            {
-              "bonus_abilities": [
-                "Malian UT"
-              ],
-              "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -38.6,
-              "missing_techs": [
-                "Blast Furnace"
-              ],
-              "rank": 181,
-              "score": 25.6,
+              "rank": 48,
+              "score": 29.3,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -21924,16 +23087,45 @@
               "strength": "average",
               "unit_name": "Cavalier",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [
+                "Malian UT"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": 6.2,
+              "missing_techs": [
+                "Blast Furnace"
+              ],
+              "rank": 53,
+              "score": 27.6,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 14.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 80.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Light Cavalry",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "heavy_camel",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -2.2,
-          "narrative_key": "anticav_weak",
-          "rank": 111,
-          "score": 62.0,
+          "line_slug": "stable",
+          "median_delta": 42.8,
+          "narrative_key": "anticav_strong",
+          "rank": 14,
+          "score": 64.2,
           "stats": null,
           "strength": "good",
           "total_count": 3,
@@ -23117,18 +24309,18 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 2,
           "all_units": [
             {
               "bonus_abilities": [],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -12.3,
+              "line_slug": "stable",
+              "median_delta": 32.3,
               "missing_techs": [
                 "Plate Barding Armor"
               ],
-              "rank": 138,
-              "score": 51.9,
+              "rank": 22,
+              "score": 53.7,
               "special_effects": [],
               "speed": 1.6,
               "stats": {
@@ -23142,7 +24334,7 @@
                 "range": 0,
                 "speed": 1.6
               },
-              "strength": "average",
+              "strength": "good",
               "unit_name": "Heavy Camel Rider",
               "unit_slug": "heavy_camel"
             },
@@ -23152,13 +24344,13 @@
                 "Light Cavalry +30% HP + BL"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -30.6,
+              "line_slug": "stable",
+              "median_delta": 2.3,
               "missing_techs": [
                 "Plate Barding Armor"
               ],
-              "rank": 175,
-              "score": 33.6,
+              "rank": 61,
+              "score": 23.7,
               "special_effects": [],
               "speed": 1.65,
               "stats": {
@@ -23175,19 +24367,76 @@
               "strength": "average",
               "unit_name": "Hussar",
               "unit_slug": "hussar"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.1,
+              "missing_techs": [
+                "Plate Barding Armor"
+              ],
+              "rank": 73,
+              "score": 19.3,
+              "special_effects": [],
+              "speed": 1.49,
+              "stats": {
+                "attack": 16.0,
+                "cost_food": 60.0,
+                "cost_gold": 75.0,
+                "cost_wood": 0,
+                "hp": 140.0,
+                "melee_armor": 4.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.49
+              },
+              "strength": "average",
+              "unit_name": "Cavalier",
+              "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [
+                "Light Cavalry +20% HP + BL",
+                "Light Cavalry +30% HP + BL"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -3.2,
+              "missing_techs": [
+                "Plate Barding Armor"
+              ],
+              "rank": 92,
+              "score": 18.2,
+              "special_effects": [],
+              "speed": 1.6,
+              "stats": {
+                "attack": 15.0,
+                "cost_food": 70.0,
+                "cost_gold": 40.0,
+                "cost_wood": 0,
+                "hp": 124.0,
+                "melee_armor": 2.0,
+                "pierce_armor": 4.0,
+                "range": 1.0,
+                "speed": 1.6
+              },
+              "strength": "average",
+              "unit_name": "Elite Steppe Lancer",
+              "unit_slug": "elite_steppe"
             }
           ],
           "best_unit": "heavy_camel",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -12.3,
-          "narrative_key": "anticav_weak",
-          "rank": 138,
-          "score": 51.9,
+          "line_slug": "stable",
+          "median_delta": 32.3,
+          "narrative_key": "anticav_strong",
+          "rank": 22,
+          "score": 53.7,
           "stats": null,
-          "strength": "average",
-          "total_count": 2,
+          "strength": "good",
+          "total_count": 4,
           "unit_name": "Heavy Camel Rider",
           "unit_slug": "heavy_camel"
         },
@@ -23570,7 +24819,7 @@
           "unit_slug": "siege_ram"
         }
       },
-      "strategic_description": "This civ has strong ranged options for concentrated pushes, with Elite Mangudai providing range advantage and sustained damage output. Anti-cavalry options are limited -- beware of knight-heavy opponents. Good tools against ranged units help shut down archer compositions. Solid siege options give flexibility in how to close out games.",
+      "strategic_description": "This civ has strong ranged options for concentrated pushes, with Elite Mangudai providing range advantage and sustained damage output. Can answer enemy cavalry with mobile options like Heavy Camel Rider, allowing counter-raids and flexible responses. Good tools against ranged units help shut down archer compositions. Solid siege options give flexibility in how to close out games.",
       "strategic_summary": {
         "primary_strength": "ranged",
         "signature_areas": [
@@ -23579,6 +24828,7 @@
         ],
         "strong_areas": [
           "ranged",
+          "anti_cavalry",
           "anti_archer",
           "siege"
         ],
@@ -23588,7 +24838,7 @@
       "strength_profile": {
         "anti_archer": "signature",
         "anti_cav_infantry": "average",
-        "anti_cavalry": "average",
+        "anti_cavalry": "good",
         "cavalry": "average",
         "infantry": "average",
         "ranged": "good",
@@ -23825,16 +25075,16 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 1,
+          "above_avg_count": 3,
           "all_units": [
             {
               "bonus_abilities": [],
-              "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": 7.7,
+              "is_signature": true,
+              "line_slug": "stable",
+              "median_delta": 69.4,
               "missing_techs": [],
-              "rank": 82,
-              "score": 71.9,
+              "rank": 1,
+              "score": 90.8,
               "special_effects": [
                 "Trample 50%",
                 "Trample (0.5 radius)"
@@ -23851,18 +25101,18 @@
                 "range": 0,
                 "speed": 0.88
               },
-              "strength": "good",
+              "strength": "signature",
               "unit_name": "Elite War Elephant",
               "unit_slug": "elite_war_elephant_persians"
             },
             {
               "bonus_abilities": [],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -6.0,
+              "line_slug": "stable",
+              "median_delta": 36.5,
               "missing_techs": [],
-              "rank": 119,
-              "score": 58.3,
+              "rank": 20,
+              "score": 57.9,
               "special_effects": [],
               "speed": 1.6,
               "stats": {
@@ -23885,11 +25135,11 @@
                 "Persians Team Bonus"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -27.6,
+              "line_slug": "stable",
+              "median_delta": 20.7,
               "missing_techs": [],
-              "rank": 165,
-              "score": 36.7,
+              "rank": 33,
+              "score": 42.1,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -23906,19 +25156,44 @@
               "strength": "average",
               "unit_name": "Savar",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.9,
+              "missing_techs": [],
+              "rank": 89,
+              "score": 18.5,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "elite_war_elephant_persians",
-          "has_signature": false,
-          "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": 7.7,
-          "narrative_key": "anticav_one_strong",
-          "rank": 82,
-          "score": 71.9,
+          "has_signature": true,
+          "is_signature": true,
+          "line_slug": "stable",
+          "median_delta": 69.4,
+          "narrative_key": "anticav_strong",
+          "rank": 1,
+          "score": 90.8,
           "stats": null,
-          "strength": "good",
-          "total_count": 3,
+          "strength": "signature",
+          "total_count": 4,
           "unit_name": "Elite War Elephant",
           "unit_slug": "elite_war_elephant_persians"
         },
@@ -24323,7 +25598,8 @@
       "strategic_summary": {
         "primary_strength": "cavalry",
         "signature_areas": [
-          "cavalry"
+          "cavalry",
+          "anti_cavalry"
         ],
         "strong_areas": [
           "cavalry",
@@ -24336,7 +25612,7 @@
       "strength_profile": {
         "anti_archer": "average",
         "anti_cav_infantry": "good",
-        "anti_cavalry": "good",
+        "anti_cavalry": "signature",
         "cavalry": "signature",
         "infantry": "average",
         "ranged": "average",
@@ -24574,20 +25850,49 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 2,
           "all_units": [
+            {
+              "bonus_abilities": [
+                "Szlachta Privileges"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": 19.0,
+              "missing_techs": [
+                "Plate Barding Armor"
+              ],
+              "rank": 36,
+              "score": 40.4,
+              "special_effects": [],
+              "speed": 1.49,
+              "stats": {
+                "attack": 16.0,
+                "cost_food": 60.0,
+                "cost_gold": 30.0,
+                "cost_wood": 0,
+                "hp": 140.0,
+                "melee_armor": 4.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.49
+              },
+              "strength": "average",
+              "unit_name": "Cavalier",
+              "unit_slug": "paladin"
+            },
             {
               "bonus_abilities": [
                 "Lechitic Legacy"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -10.1,
+              "line_slug": "stable",
+              "median_delta": 12.2,
               "missing_techs": [
                 "Plate Barding Armor"
               ],
-              "rank": 134,
-              "score": 54.2,
+              "rank": 45,
+              "score": 33.6,
               "special_effects": [
                 "Trample 50%",
                 "Trample (0.5 radius)"
@@ -24607,50 +25912,21 @@
               "strength": "average",
               "unit_name": "Winged Hussar",
               "unit_slug": "hussar"
-            },
-            {
-              "bonus_abilities": [
-                "Szlachta Privileges"
-              ],
-              "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -12.6,
-              "missing_techs": [
-                "Plate Barding Armor"
-              ],
-              "rank": 139,
-              "score": 51.7,
-              "special_effects": [],
-              "speed": 1.49,
-              "stats": {
-                "attack": 16.0,
-                "cost_food": 60.0,
-                "cost_gold": 30.0,
-                "cost_wood": 0,
-                "hp": 140.0,
-                "melee_armor": 4.0,
-                "pierce_armor": 4.0,
-                "range": 0,
-                "speed": 1.49
-              },
-              "strength": "average",
-              "unit_name": "Cavalier",
-              "unit_slug": "paladin"
             }
           ],
-          "best_unit": "hussar",
+          "best_unit": "paladin",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -10.1,
-          "narrative_key": "anticav_weak",
-          "rank": 134,
-          "score": 54.2,
+          "line_slug": "stable",
+          "median_delta": 19.0,
+          "narrative_key": "anticav_strong",
+          "rank": 36,
+          "score": 40.4,
           "stats": null,
           "strength": "average",
           "total_count": 2,
-          "unit_name": "Winged Hussar",
-          "unit_slug": "hussar"
+          "unit_name": "Cavalier",
+          "unit_slug": "paladin"
         },
         "cavalry": {
           "above_avg_count": 2,
@@ -25288,18 +26564,18 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 1,
           "all_units": [
             {
               "bonus_abilities": [
                 "All units -20% gold"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -38.0,
+              "line_slug": "stable",
+              "median_delta": 5.0,
               "missing_techs": [],
-              "rank": 180,
-              "score": 26.3,
+              "rank": 57,
+              "score": 26.4,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -25316,19 +26592,46 @@
               "strength": "average",
               "unit_name": "Cavalier",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [
+                "All units -20% gold"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -6.4,
+              "missing_techs": [],
+              "rank": 103,
+              "score": 15.0,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 80.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Light Cavalry",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "paladin",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -38.0,
-          "narrative_key": "anticav_weak",
-          "rank": 180,
-          "score": 26.3,
+          "line_slug": "stable",
+          "median_delta": 5.0,
+          "narrative_key": "anticav_one_strong",
+          "rank": 57,
+          "score": 26.4,
           "stats": null,
           "strength": "average",
-          "total_count": 1,
+          "total_count": 2,
           "unit_name": "Cavalier",
           "unit_slug": "paladin"
         },
@@ -25959,7 +27262,7 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 2,
           "all_units": [
             {
               "bonus_abilities": [
@@ -25968,11 +27271,11 @@
                 "Comitatenses"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -25.1,
+              "line_slug": "stable",
+              "median_delta": 27.1,
               "missing_techs": [],
-              "rank": 161,
-              "score": 39.2,
+              "rank": 27,
+              "score": 48.5,
               "special_effects": [
                 "Charge +5 melee"
               ],
@@ -25988,7 +27291,7 @@
                 "range": 0,
                 "speed": 1.49
               },
-              "strength": "average",
+              "strength": "good",
               "unit_name": "Elite Centurion",
               "unit_slug": "elite_centurion_romans"
             },
@@ -25997,11 +27300,11 @@
                 "Comitatenses"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -43.5,
+              "line_slug": "stable",
+              "median_delta": 7.0,
               "missing_techs": [],
-              "rank": 184,
-              "score": 20.8,
+              "rank": 51,
+              "score": 28.4,
               "special_effects": [
                 "Charge +5 melee"
               ],
@@ -26020,19 +27323,44 @@
               "strength": "average",
               "unit_name": "Cavalier",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -6.2,
+              "missing_techs": [],
+              "rank": 99,
+              "score": 15.2,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 80.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Light Cavalry",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "elite_centurion_romans",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -25.1,
-          "narrative_key": "anticav_weak",
-          "rank": 161,
-          "score": 39.2,
+          "line_slug": "stable",
+          "median_delta": 27.1,
+          "narrative_key": "anticav_strong",
+          "rank": 27,
+          "score": 48.5,
           "stats": null,
-          "strength": "average",
-          "total_count": 2,
+          "strength": "good",
+          "total_count": 3,
           "unit_name": "Elite Centurion",
           "unit_slug": "elite_centurion_romans"
         },
@@ -26367,7 +27695,7 @@
           "unit_slug": "siege_ram"
         }
       },
-      "strategic_description": "This civ is versatile, with strength across cavalry, ranged and infantry -- allowing flexible strategies that adapt to any opponent. Strong infantry anti-cavalry with Halberdier to hold defensive positions against cavalry pushes. Good tools against ranged units help shut down archer compositions. An infantry ram push is the signature play -- use Legionary as a meatshield to protect rams pushing into enemy bases.",
+      "strategic_description": "This civ is versatile, with strength across cavalry, ranged and infantry -- allowing flexible strategies that adapt to any opponent. Excellent anti-cavalry options from both stable and barracks -- very hard for cavalry-heavy opponents to find an opening. Good tools against ranged units help shut down archer compositions. An infantry ram push is the signature play -- use Legionary as a meatshield to protect rams pushing into enemy bases.",
       "strategic_summary": {
         "primary_strength": "cavalry",
         "signature_areas": [
@@ -26378,6 +27706,7 @@
           "cavalry",
           "ranged",
           "infantry",
+          "anti_cavalry",
           "anti_cav_infantry",
           "anti_archer",
           "siege"
@@ -26388,7 +27717,7 @@
       "strength_profile": {
         "anti_archer": "signature",
         "anti_cav_infantry": "good",
-        "anti_cavalry": "average",
+        "anti_cavalry": "good",
         "cavalry": "good",
         "infantry": "good",
         "ranged": "signature",
@@ -26653,11 +27982,11 @@
                 "Camels +25% HP"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": 1.6,
+              "line_slug": "stable",
+              "median_delta": 45.7,
               "missing_techs": [],
-              "rank": 91,
-              "score": 65.9,
+              "rank": 12,
+              "score": 67.1,
               "special_effects": [],
               "speed": 1.6,
               "stats": {
@@ -26674,19 +28003,69 @@
               "strength": "good",
               "unit_name": "Heavy Camel Rider",
               "unit_slug": "heavy_camel"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.7,
+              "missing_techs": [],
+              "rank": 82,
+              "score": 18.7,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -7.4,
+              "missing_techs": [],
+              "rank": 109,
+              "score": 14.0,
+              "special_effects": [],
+              "speed": 1.49,
+              "stats": {
+                "attack": 14.0,
+                "cost_food": 60.0,
+                "cost_gold": 75.0,
+                "cost_wood": 0,
+                "hp": 120.0,
+                "melee_armor": 5.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.49
+              },
+              "strength": "average",
+              "unit_name": "Knight",
+              "unit_slug": "paladin"
             }
           ],
           "best_unit": "heavy_camel",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": 1.6,
+          "line_slug": "stable",
+          "median_delta": 45.7,
           "narrative_key": "anticav_one_strong",
-          "rank": 91,
-          "score": 65.9,
+          "rank": 12,
+          "score": 67.1,
           "stats": null,
           "strength": "good",
-          "total_count": 1,
+          "total_count": 3,
           "unit_name": "Heavy Camel Rider",
           "unit_slug": "heavy_camel"
         },
@@ -27333,7 +28712,82 @@
           "unit_name": "Halberdier",
           "unit_slug": "halberdier"
         },
-        "anti_cavalry": null,
+        "anti_cavalry": {
+          "above_avg_count": 0,
+          "all_units": [
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -7.0,
+              "missing_techs": [
+                "Blast Furnace",
+                "Bloodlines",
+                "Iron casting"
+              ],
+              "rank": 106,
+              "score": 14.4,
+              "special_effects": [],
+              "speed": 1.49,
+              "stats": {
+                "attack": 13.0,
+                "cost_food": 65.0,
+                "cost_gold": 65.0,
+                "cost_wood": 0,
+                "hp": 90.0,
+                "melee_armor": 7.0,
+                "pierce_armor": 7.0,
+                "range": 0,
+                "speed": 1.49
+              },
+              "strength": "average",
+              "unit_name": "Heavy Hei-Kuang Cavalry",
+              "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -21.2,
+              "missing_techs": [
+                "Blast Furnace",
+                "Bloodlines",
+                "Iron casting"
+              ],
+              "rank": 127,
+              "score": 0.2,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 8.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 60.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Light Cavalry",
+              "unit_slug": "hussar"
+            }
+          ],
+          "best_unit": "paladin",
+          "has_signature": false,
+          "is_signature": false,
+          "line_slug": "stable",
+          "median_delta": -7.0,
+          "narrative_key": "anticav_weak",
+          "rank": 106,
+          "score": 14.4,
+          "stats": null,
+          "strength": "average",
+          "total_count": 2,
+          "unit_name": "Heavy Hei-Kuang Cavalry",
+          "unit_slug": "paladin"
+        },
         "cavalry": {
           "above_avg_count": 0,
           "all_units": [
@@ -27702,14 +29156,12 @@
           "siege"
         ],
         "summary_key": "multi_flexible",
-        "weak_areas": [
-          "anti_cavalry"
-        ]
+        "weak_areas": []
       },
       "strength_profile": {
         "anti_archer": "good",
         "anti_cav_infantry": "signature",
-        "anti_cavalry": "weak",
+        "anti_cavalry": "average",
         "cavalry": "average",
         "infantry": "good",
         "ranged": "average",
@@ -27971,7 +29423,7 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 1,
           "all_units": [
             {
               "bonus_abilities": [
@@ -27979,11 +29431,11 @@
                 "Hauberk"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -43.5,
+              "line_slug": "stable",
+              "median_delta": 7.9,
               "missing_techs": [],
-              "rank": 185,
-              "score": 20.8,
+              "rank": 49,
+              "score": 29.3,
               "special_effects": [
                 "0% bonus damage reduction"
               ],
@@ -28002,19 +29454,48 @@
               "strength": "average",
               "unit_name": "Cavalier",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [
+                "Bonus damage resistance"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -4.0,
+              "missing_techs": [],
+              "rank": 93,
+              "score": 17.4,
+              "special_effects": [
+                "0% bonus damage reduction"
+              ],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 80.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Light Cavalry",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "paladin",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -43.5,
-          "narrative_key": "anticav_weak",
-          "rank": 185,
-          "score": 20.8,
+          "line_slug": "stable",
+          "median_delta": 7.9,
+          "narrative_key": "anticav_one_strong",
+          "rank": 49,
+          "score": 29.3,
           "stats": null,
           "strength": "average",
-          "total_count": 1,
+          "total_count": 2,
           "unit_name": "Cavalier",
           "unit_slug": "paladin"
         },
@@ -28598,11 +30079,11 @@
             {
               "bonus_abilities": [],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": 4.3,
+              "line_slug": "stable",
+              "median_delta": 49.0,
               "missing_techs": [],
-              "rank": 89,
-              "score": 68.6,
+              "rank": 9,
+              "score": 70.4,
               "special_effects": [],
               "speed": 1.43,
               "stats": {
@@ -28619,19 +30100,69 @@
               "strength": "good",
               "unit_name": "Elite Boyar",
               "unit_slug": "elite_boyar_slavs"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -0.3,
+              "missing_techs": [],
+              "rank": 70,
+              "score": 21.1,
+              "special_effects": [],
+              "speed": 1.49,
+              "stats": {
+                "attack": 16.0,
+                "cost_food": 60.0,
+                "cost_gold": 75.0,
+                "cost_wood": 0,
+                "hp": 140.0,
+                "melee_armor": 5.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.49
+              },
+              "strength": "average",
+              "unit_name": "Cavalier",
+              "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.7,
+              "missing_techs": [],
+              "rank": 83,
+              "score": 18.7,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "elite_boyar_slavs",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": 4.3,
+          "line_slug": "stable",
+          "median_delta": 49.0,
           "narrative_key": "anticav_one_strong",
-          "rank": 89,
-          "score": 68.6,
+          "rank": 9,
+          "score": 70.4,
           "stats": null,
           "strength": "good",
-          "total_count": 1,
+          "total_count": 3,
           "unit_name": "Elite Boyar",
           "unit_slug": "elite_boyar_slavs"
         },
@@ -29226,16 +30757,16 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 1,
           "all_units": [
             {
               "bonus_abilities": [],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -30.9,
+              "line_slug": "stable",
+              "median_delta": 18.0,
               "missing_techs": [],
-              "rank": 176,
-              "score": 33.4,
+              "rank": 40,
+              "score": 39.4,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -29252,19 +30783,44 @@
               "strength": "average",
               "unit_name": "Paladin",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.6,
+              "missing_techs": [],
+              "rank": 79,
+              "score": 18.8,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "paladin",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -30.9,
-          "narrative_key": "anticav_weak",
-          "rank": 176,
-          "score": 33.4,
+          "line_slug": "stable",
+          "median_delta": 18.0,
+          "narrative_key": "anticav_one_strong",
+          "rank": 40,
+          "score": 39.4,
           "stats": null,
           "strength": "average",
-          "total_count": 1,
+          "total_count": 2,
           "unit_name": "Paladin",
           "unit_slug": "paladin"
         },
@@ -29886,41 +31442,16 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 2,
           "all_units": [
             {
               "bonus_abilities": [],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -1.9,
+              "line_slug": "stable",
+              "median_delta": 36.7,
               "missing_techs": [],
-              "rank": 110,
-              "score": 62.4,
-              "special_effects": [],
-              "speed": 1.54,
-              "stats": {
-                "attack": 15.0,
-                "cost_food": 60.0,
-                "cost_gold": 40.0,
-                "cost_wood": 0,
-                "hp": 165.0,
-                "melee_armor": 4.0,
-                "pierce_armor": 7.0,
-                "range": 0,
-                "speed": 1.54
-              },
-              "strength": "good",
-              "unit_name": "Elite Keshik",
-              "unit_slug": "elite_keshik_tatars"
-            },
-            {
-              "bonus_abilities": [],
-              "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -6.0,
-              "missing_techs": [],
-              "rank": 120,
-              "score": 58.3,
+              "rank": 19,
+              "score": 58.1,
               "special_effects": [],
               "speed": 1.6,
               "stats": {
@@ -29941,11 +31472,36 @@
             {
               "bonus_abilities": [],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -50.5,
+              "line_slug": "stable",
+              "median_delta": 29.9,
               "missing_techs": [],
-              "rank": 192,
-              "score": 13.8,
+              "rank": 24,
+              "score": 51.3,
+              "special_effects": [],
+              "speed": 1.54,
+              "stats": {
+                "attack": 15.0,
+                "cost_food": 60.0,
+                "cost_gold": 40.0,
+                "cost_wood": 0,
+                "hp": 165.0,
+                "melee_armor": 4.0,
+                "pierce_armor": 7.0,
+                "range": 0,
+                "speed": 1.54
+              },
+              "strength": "good",
+              "unit_name": "Elite Keshik",
+              "unit_slug": "elite_keshik_tatars"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": 0.0,
+              "missing_techs": [],
+              "rank": 66,
+              "score": 21.4,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -29962,21 +31518,75 @@
               "strength": "average",
               "unit_name": "Cavalier",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [
+                "Malay UT"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.8,
+              "missing_techs": [],
+              "rank": 86,
+              "score": 18.6,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 4.0,
+                "pierce_armor": 7.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
+            },
+            {
+              "bonus_abilities": [
+                "Malay UT"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -5.4,
+              "missing_techs": [],
+              "rank": 97,
+              "score": 16.0,
+              "special_effects": [],
+              "speed": 1.6,
+              "stats": {
+                "attack": 15.0,
+                "cost_food": 70.0,
+                "cost_gold": 40.0,
+                "cost_wood": 0,
+                "hp": 100.0,
+                "melee_armor": 4.0,
+                "pierce_armor": 7.0,
+                "range": 1.0,
+                "speed": 1.6
+              },
+              "strength": "average",
+              "unit_name": "Elite Steppe Lancer",
+              "unit_slug": "elite_steppe"
             }
           ],
-          "best_unit": "elite_keshik_tatars",
+          "best_unit": "heavy_camel",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -1.9,
-          "narrative_key": "anticav_weak",
-          "rank": 110,
-          "score": 62.4,
+          "line_slug": "stable",
+          "median_delta": 36.7,
+          "narrative_key": "anticav_strong",
+          "rank": 19,
+          "score": 58.1,
           "stats": null,
           "strength": "good",
-          "total_count": 3,
-          "unit_name": "Elite Keshik",
-          "unit_slug": "elite_keshik_tatars"
+          "total_count": 5,
+          "unit_name": "Heavy Camel Rider",
+          "unit_slug": "heavy_camel"
         },
         "cavalry": {
           "above_avg_count": 3,
@@ -30366,7 +31976,7 @@
           "unit_slug": "siege_ram"
         }
       },
-      "strategic_description": "This civ is versatile, with strength across cavalry and ranged -- allowing flexible strategies that adapt to any opponent. Can answer enemy cavalry with mobile options like Elite Keshik, allowing counter-raids and flexible responses. Good tools against ranged units help shut down archer compositions. Solid siege options give flexibility in how to close out games.",
+      "strategic_description": "This civ is versatile, with strength across cavalry and ranged -- allowing flexible strategies that adapt to any opponent. Can answer enemy cavalry with mobile options like Heavy Camel Rider, allowing counter-raids and flexible responses. Good tools against ranged units help shut down archer compositions. Solid siege options give flexibility in how to close out games.",
       "strategic_summary": {
         "primary_strength": "cavalry",
         "signature_areas": [],
@@ -30658,7 +32268,7 @@
           "unit_slug": "elite_teutonic_knight_teutons"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 1,
           "all_units": [
             {
               "bonus_abilities": [
@@ -30666,13 +32276,13 @@
                 "Inf Cav +1 armor Age4"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -20.1,
+              "line_slug": "stable",
+              "median_delta": 25.8,
               "missing_techs": [
                 "Husbandry"
               ],
-              "rank": 156,
-              "score": 44.2,
+              "rank": 29,
+              "score": 47.2,
               "special_effects": [],
               "speed": 1.35,
               "stats": {
@@ -30686,22 +32296,52 @@
                 "range": 0,
                 "speed": 1.35
               },
-              "strength": "average",
+              "strength": "good",
               "unit_name": "Paladin",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [
+                "Inf Cav +1 armor Age3",
+                "Inf Cav +1 armor Age4"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -16.8,
+              "missing_techs": [
+                "Husbandry"
+              ],
+              "rank": 126,
+              "score": 4.6,
+              "special_effects": [],
+              "speed": 1.55,
+              "stats": {
+                "attack": 9.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 65.0,
+                "melee_armor": 5.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.55
+              },
+              "strength": "average",
+              "unit_name": "Scout Cavalry",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "paladin",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -20.1,
-          "narrative_key": "anticav_weak",
-          "rank": 156,
-          "score": 44.2,
+          "line_slug": "stable",
+          "median_delta": 25.8,
+          "narrative_key": "anticav_one_strong",
+          "rank": 29,
+          "score": 47.2,
           "stats": null,
-          "strength": "average",
-          "total_count": 1,
+          "strength": "good",
+          "total_count": 2,
           "unit_name": "Paladin",
           "unit_slug": "paladin"
         },
@@ -31090,7 +32730,7 @@
           "unit_slug": "bombard_cannon"
         }
       },
-      "strategic_description": "This civ is versatile, with strength across cavalry, ranged and infantry -- allowing flexible strategies that adapt to any opponent. Strong infantry anti-cavalry with Elite Teutonic Knight to hold defensive positions against cavalry pushes. Good tools against ranged units help shut down archer compositions. Bombard Cannons provide long-range siege power for breaking through fortified positions.",
+      "strategic_description": "This civ is versatile, with strength across cavalry, ranged and infantry -- allowing flexible strategies that adapt to any opponent. Excellent anti-cavalry options from both stable and barracks -- very hard for cavalry-heavy opponents to find an opening. Good tools against ranged units help shut down archer compositions. Bombard Cannons provide long-range siege power for breaking through fortified positions.",
       "strategic_summary": {
         "primary_strength": "cavalry",
         "signature_areas": [
@@ -31101,6 +32741,7 @@
           "cavalry",
           "ranged",
           "infantry",
+          "anti_cavalry",
           "anti_cav_infantry",
           "anti_archer",
           "siege"
@@ -31111,7 +32752,7 @@
       "strength_profile": {
         "anti_archer": "good",
         "anti_cav_infantry": "signature",
-        "anti_cavalry": "average",
+        "anti_cavalry": "good",
         "cavalry": "good",
         "infantry": "signature",
         "ranged": "good",
@@ -31373,16 +33014,16 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 1,
           "all_units": [
             {
               "bonus_abilities": [],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -7.5,
+              "line_slug": "stable",
+              "median_delta": 36.8,
               "missing_techs": [],
-              "rank": 125,
-              "score": 56.8,
+              "rank": 18,
+              "score": 58.2,
               "special_effects": [],
               "speed": 1.6,
               "stats": {
@@ -31403,11 +33044,11 @@
             {
               "bonus_abilities": [],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -50.8,
+              "line_slug": "stable",
+              "median_delta": 0.0,
               "missing_techs": [],
-              "rank": 193,
-              "score": 13.5,
+              "rank": 67,
+              "score": 21.4,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -31424,19 +33065,46 @@
               "strength": "average",
               "unit_name": "Cavalier",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [
+                "Light cavalry +1P armor"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.8,
+              "missing_techs": [],
+              "rank": 87,
+              "score": 18.6,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 7.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "heavy_camel",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -7.5,
-          "narrative_key": "anticav_weak",
-          "rank": 125,
-          "score": 56.8,
+          "line_slug": "stable",
+          "median_delta": 36.8,
+          "narrative_key": "anticav_one_strong",
+          "rank": 18,
+          "score": 58.2,
           "stats": null,
           "strength": "good",
-          "total_count": 2,
+          "total_count": 3,
           "unit_name": "Heavy Camel Rider",
           "unit_slug": "heavy_camel"
         },
@@ -32125,20 +33793,20 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 1,
           "all_units": [
             {
               "bonus_abilities": [
                 "Vietnamese UT"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -14.4,
+              "line_slug": "stable",
+              "median_delta": 40.3,
               "missing_techs": [
                 "Blast Furnace"
               ],
-              "rank": 148,
-              "score": 49.8,
+              "rank": 16,
+              "score": 61.7,
               "special_effects": [
                 "Trample 25%",
                 "Trample (0.4 radius)"
@@ -32155,22 +33823,76 @@
                 "range": 0,
                 "speed": 0.99
               },
-              "strength": "average",
+              "strength": "good",
               "unit_name": "Elite Battle Elephant",
               "unit_slug": "elite_elephant"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -5.4,
+              "missing_techs": [
+                "Blast Furnace"
+              ],
+              "rank": 98,
+              "score": 16.0,
+              "special_effects": [],
+              "speed": 1.49,
+              "stats": {
+                "attack": 14.0,
+                "cost_food": 60.0,
+                "cost_gold": 75.0,
+                "cost_wood": 0,
+                "hp": 140.0,
+                "melee_armor": 5.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.49
+              },
+              "strength": "average",
+              "unit_name": "Cavalier",
+              "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -13.6,
+              "missing_techs": [
+                "Blast Furnace"
+              ],
+              "rank": 121,
+              "score": 7.8,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 9.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 80.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Light Cavalry",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "elite_elephant",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -14.4,
-          "narrative_key": "anticav_weak",
-          "rank": 148,
-          "score": 49.8,
+          "line_slug": "stable",
+          "median_delta": 40.3,
+          "narrative_key": "anticav_one_strong",
+          "rank": 16,
+          "score": 61.7,
           "stats": null,
-          "strength": "average",
-          "total_count": 1,
+          "strength": "good",
+          "total_count": 3,
           "unit_name": "Elite Battle Elephant",
           "unit_slug": "elite_elephant"
         },
@@ -32577,7 +34299,7 @@
           "unit_slug": "bombard_cannon"
         }
       },
-      "strategic_description": "This civ is versatile, with strength across cavalry and ranged -- allowing flexible strategies that adapt to any opponent. Strong infantry anti-cavalry with Halberdier to hold defensive positions against cavalry pushes. Good tools against ranged units help shut down archer compositions. Bombard Cannons provide long-range siege power for breaking through fortified positions.",
+      "strategic_description": "This civ is versatile, with strength across cavalry and ranged -- allowing flexible strategies that adapt to any opponent. Excellent anti-cavalry options from both stable and barracks -- very hard for cavalry-heavy opponents to find an opening. Good tools against ranged units help shut down archer compositions. Bombard Cannons provide long-range siege power for breaking through fortified positions.",
       "strategic_summary": {
         "primary_strength": "cavalry",
         "signature_areas": [
@@ -32587,6 +34309,7 @@
         "strong_areas": [
           "cavalry",
           "ranged",
+          "anti_cavalry",
           "anti_cav_infantry",
           "anti_archer",
           "siege"
@@ -32597,7 +34320,7 @@
       "strength_profile": {
         "anti_archer": "signature",
         "anti_cav_infantry": "good",
-        "anti_cavalry": "average",
+        "anti_cavalry": "good",
         "cavalry": "good",
         "infantry": "average",
         "ranged": "signature",
@@ -32845,7 +34568,82 @@
           "unit_name": "Pikeman",
           "unit_slug": "halberdier"
         },
-        "anti_cavalry": null,
+        "anti_cavalry": {
+          "above_avg_count": 0,
+          "all_units": [
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -6.7,
+              "missing_techs": [
+                "Bloodlines",
+                "Husbandry",
+                "Plate Barding Armor"
+              ],
+              "rank": 105,
+              "score": 14.7,
+              "special_effects": [],
+              "speed": 1.35,
+              "stats": {
+                "attack": 16.0,
+                "cost_food": 60.0,
+                "cost_gold": 75.0,
+                "cost_wood": 0,
+                "hp": 120.0,
+                "melee_armor": 4.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.35
+              },
+              "strength": "average",
+              "unit_name": "Cavalier",
+              "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -13.9,
+              "missing_techs": [
+                "Bloodlines",
+                "Husbandry",
+                "Plate Barding Armor"
+              ],
+              "rank": 122,
+              "score": 7.5,
+              "special_effects": [],
+              "speed": 1.5,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 60.0,
+                "melee_armor": 2.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.5
+              },
+              "strength": "average",
+              "unit_name": "Light Cavalry",
+              "unit_slug": "hussar"
+            }
+          ],
+          "best_unit": "paladin",
+          "has_signature": false,
+          "is_signature": false,
+          "line_slug": "stable",
+          "median_delta": -6.7,
+          "narrative_key": "anticav_weak",
+          "rank": 105,
+          "score": 14.7,
+          "stats": null,
+          "strength": "average",
+          "total_count": 2,
+          "unit_name": "Cavalier",
+          "unit_slug": "paladin"
+        },
         "cavalry": {
           "above_avg_count": 0,
           "all_units": [
@@ -33186,14 +34984,12 @@
           "siege"
         ],
         "summary_key": "multi_flexible",
-        "weak_areas": [
-          "anti_cavalry"
-        ]
+        "weak_areas": []
       },
       "strength_profile": {
         "anti_archer": "good",
         "anti_cav_infantry": "good",
-        "anti_cavalry": "weak",
+        "anti_cavalry": "average",
         "cavalry": "average",
         "infantry": "signature",
         "ranged": "good",
@@ -33406,7 +35202,7 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 3,
           "all_units": [
             {
               "bonus_abilities": [
@@ -33415,13 +35211,13 @@
                 "Ming-Kuang Armor"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -3.8,
+              "line_slug": "stable",
+              "median_delta": 35.5,
               "missing_techs": [
                 "Plate Barding Armor"
               ],
-              "rank": 117,
-              "score": 60.5,
+              "rank": 21,
+              "score": 56.9,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -33444,40 +35240,11 @@
                 "Ming-Kuang Armor"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -24.9,
-              "missing_techs": [
-                "Plate Barding Armor"
-              ],
-              "rank": 160,
-              "score": 39.3,
-              "special_effects": [],
-              "speed": 1.65,
-              "stats": {
-                "attack": 11.0,
-                "cost_food": 80.0,
-                "cost_gold": 0,
-                "cost_wood": 0,
-                "hp": 95.0,
-                "melee_armor": 6.0,
-                "pierce_armor": 4.0,
-                "range": 0,
-                "speed": 1.65
-              },
-              "strength": "average",
-              "unit_name": "Hussar",
-              "unit_slug": "hussar"
-            },
-            {
-              "bonus_abilities": [
-                "Ming-Kuang Armor"
-              ],
-              "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -30.1,
+              "line_slug": "stable",
+              "median_delta": 15.4,
               "missing_techs": [],
-              "rank": 170,
-              "score": 34.1,
+              "rank": 42,
+              "score": 36.8,
               "special_effects": [
                 "+4 attack per kill",
                 "+10 HP per kill"
@@ -33497,16 +35264,45 @@
               "strength": "average",
               "unit_name": "Elite Tiger Cavalry",
               "unit_slug": "elite_tiger_cavalry_wei"
+            },
+            {
+              "bonus_abilities": [
+                "Ming-Kuang Armor"
+              ],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": 3.3,
+              "missing_techs": [
+                "Plate Barding Armor"
+              ],
+              "rank": 59,
+              "score": 24.7,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 6.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "paladin",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -3.8,
-          "narrative_key": "anticav_weak",
-          "rank": 117,
-          "score": 60.5,
+          "line_slug": "stable",
+          "median_delta": 35.5,
+          "narrative_key": "anticav_strong",
+          "rank": 21,
+          "score": 56.9,
           "stats": null,
           "strength": "good",
           "total_count": 3,
@@ -34177,18 +35973,18 @@
           "unit_slug": "halberdier"
         },
         "anti_cavalry": {
-          "above_avg_count": 0,
+          "above_avg_count": 1,
           "all_units": [
             {
               "bonus_abilities": [
                 "Jian & Hei Kuang attack"
               ],
               "is_signature": false,
-              "line_slug": "anti_cav_pool",
-              "median_delta": -29.6,
+              "line_slug": "stable",
+              "median_delta": 13.2,
               "missing_techs": [],
-              "rank": 169,
-              "score": 34.7,
+              "rank": 44,
+              "score": 34.6,
               "special_effects": [],
               "speed": 1.49,
               "stats": {
@@ -34205,19 +36001,44 @@
               "strength": "average",
               "unit_name": "Heavy Hei-Kuang Cavalry",
               "unit_slug": "paladin"
+            },
+            {
+              "bonus_abilities": [],
+              "is_signature": false,
+              "line_slug": "stable",
+              "median_delta": -2.9,
+              "missing_techs": [],
+              "rank": 90,
+              "score": 18.5,
+              "special_effects": [],
+              "speed": 1.65,
+              "stats": {
+                "attack": 11.0,
+                "cost_food": 80.0,
+                "cost_gold": 0,
+                "cost_wood": 0,
+                "hp": 95.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.65
+              },
+              "strength": "average",
+              "unit_name": "Hussar",
+              "unit_slug": "hussar"
             }
           ],
           "best_unit": "paladin",
           "has_signature": false,
           "is_signature": false,
-          "line_slug": "anti_cav_pool",
-          "median_delta": -29.6,
-          "narrative_key": "anticav_weak",
-          "rank": 169,
-          "score": 34.7,
+          "line_slug": "stable",
+          "median_delta": 13.2,
+          "narrative_key": "anticav_one_strong",
+          "rank": 44,
+          "score": 34.6,
           "stats": null,
           "strength": "average",
-          "total_count": 1,
+          "total_count": 2,
           "unit_name": "Heavy Hei-Kuang Cavalry",
           "unit_slug": "paladin"
         },

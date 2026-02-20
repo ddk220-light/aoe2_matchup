@@ -93,12 +93,23 @@ def _compute_role_thresholds(conn):
         else:
             thresholds[role_key] = 0
 
-    # Anti-cav thresholds: split the anti_cav_pool into stable vs infantry sub-pools
-    # Each sub-pool gets its own 75th percentile so cavalry anti-cav units aren't
-    # dwarfed by halberdier-class scores.
+    # Anti-cav (cavalry): uses stable line's anti_cav score (all stable units)
     rc.execute(
-        """SELECT bs.unit_slug, bs.score_value,
-                  CASE WHEN s.unit_slug IS NOT NULL THEN 1 ELSE 0 END AS is_stable
+        """SELECT score_value FROM battle_scores
+           WHERE line_slug = 'stable' AND LOWER(age) = 'imperial'
+             AND score_type = 'anti_cav'
+           ORDER BY score_value ASC""",
+    )
+    stable_ac_scores = [row["score_value"] for row in rc.fetchall()]
+    if stable_ac_scores:
+        idx = int(len(stable_ac_scores) * 0.75)
+        thresholds["anti_cavalry"] = stable_ac_scores[min(idx, len(stable_ac_scores) - 1)]
+    else:
+        thresholds["anti_cavalry"] = 0
+
+    # Anti-cav (infantry): uses anti_cav_pool filtered to non-stable units
+    rc.execute(
+        """SELECT bs.score_value
            FROM battle_scores bs
            LEFT JOIN (SELECT DISTINCT unit_slug FROM battle_scores
                       WHERE line_slug = 'stable' AND LOWER(age) = 'imperial') s
@@ -106,22 +117,15 @@ def _compute_role_thresholds(conn):
            WHERE bs.line_slug = 'anti_cav_pool'
              AND LOWER(bs.age) = 'imperial'
              AND bs.score_type = 'anti_cav_combined'
+             AND s.unit_slug IS NULL
            ORDER BY bs.score_value ASC""",
     )
-    stable_scores = []
-    infantry_scores = []
-    for row in rc.fetchall():
-        if row["is_stable"]:
-            stable_scores.append(row["score_value"])
-        else:
-            infantry_scores.append(row["score_value"])
-
-    for key, scores in [("anti_cavalry", stable_scores), ("anti_cav_infantry", infantry_scores)]:
-        if scores:
-            idx = int(len(scores) * 0.75)
-            thresholds[key] = scores[min(idx, len(scores) - 1)]
-        else:
-            thresholds[key] = 0
+    inf_ac_scores = [row["score_value"] for row in rc.fetchall()]
+    if inf_ac_scores:
+        idx = int(len(inf_ac_scores) * 0.75)
+        thresholds["anti_cav_infantry"] = inf_ac_scores[min(idx, len(inf_ac_scores) - 1)]
+    else:
+        thresholds["anti_cav_infantry"] = 0
 
     return thresholds
 
@@ -691,7 +695,26 @@ def compute_civ_power_units():
                 ]
                 power_units[role_key] = _build_role_dict(all_units, role_key)
 
-            # Split anti_cav_pool into stable (anti_cavalry) and infantry (anti_cav_infantry)
+            # Anti-cav (cavalry): ALL stable units with their anti_cav score
+            rc.execute(
+                """SELECT unit_slug, line_slug, score_value, rank, median_delta
+                   FROM battle_scores
+                   WHERE civ_name = ?
+                     AND LOWER(age) = ?
+                     AND score_type = 'anti_cav'
+                     AND line_slug = 'stable'
+                   ORDER BY score_value DESC""",
+                [civ, age_key],
+            )
+            ac_stable_threshold = role_thresholds.get("anti_cavalry", 0)
+            ac_stable_units = [
+                _build_unit_entry(row, civ, conn, db_age, reference_techs,
+                                  techs_by_slug, effects_by_slug, ac_stable_threshold)
+                for row in rc.fetchall()
+            ]
+            power_units["anti_cavalry"] = _build_role_dict(ac_stable_units, "anti_cavalry")
+
+            # Anti-cav (infantry): infantry units from the anti_cav_pool
             rc.execute(
                 """SELECT unit_slug, line_slug, score_value, rank, median_delta
                    FROM battle_scores
@@ -702,23 +725,12 @@ def compute_civ_power_units():
                    ORDER BY score_value DESC""",
                 [civ, age_key],
             )
-            ac_rows = rc.fetchall()
-            ac_stable_rows = [r for r in ac_rows if r["unit_slug"] in stable_slugs]
-            ac_infantry_rows = [r for r in ac_rows if r["unit_slug"] not in stable_slugs]
-
-            ac_stable_threshold = role_thresholds.get("anti_cavalry", 0)
-            ac_stable_units = [
-                _build_unit_entry(row, civ, conn, db_age, reference_techs,
-                                  techs_by_slug, effects_by_slug, ac_stable_threshold)
-                for row in ac_stable_rows
-            ]
-            power_units["anti_cavalry"] = _build_role_dict(ac_stable_units, "anti_cavalry")
-
             ac_inf_threshold = role_thresholds.get("anti_cav_infantry", 0)
             ac_inf_units = [
                 _build_unit_entry(row, civ, conn, db_age, reference_techs,
                                   techs_by_slug, effects_by_slug, ac_inf_threshold)
-                for row in ac_infantry_rows
+                for row in rc.fetchall()
+                if row["unit_slug"] not in stable_slugs
             ]
             power_units["anti_cav_infantry"] = _build_role_dict(ac_inf_units, "anti_cav_infantry")
 

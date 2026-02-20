@@ -5,12 +5,13 @@
    ========================================================================== */
 
 /* ---- Constants ---- */
-const ROLE_ORDER = ["cavalry", "ranged", "infantry", "anti_cavalry", "anti_archer", "siege"];
+const ROLE_ORDER = ["cavalry", "ranged", "infantry", "anti_cavalry", "anti_cav_infantry", "anti_archer", "siege"];
 const ROLE_LABELS = {
     cavalry: "Cavalry",
     ranged: "Ranged",
     infantry: "Infantry",
     anti_cavalry: "Anti-Cavalry",
+    anti_cav_infantry: "Anti-Cavalry",
     anti_archer: "Anti-Archer",
     siege: "Siege",
 };
@@ -24,7 +25,7 @@ const STRENGTH_COLORS = {
 const COLUMN_LAYOUT = [
     { main: "cavalry", sub: "anti_cavalry" },
     { main: "ranged", sub: "anti_archer" },
-    { main: "infantry", sub: null },
+    { main: "infantry", sub: "anti_cav_infantry" },
     { main: "siege", sub: null },
 ];
 
@@ -47,9 +48,14 @@ const NARRATIVES = {
         inf_none: "Infantry is not a strong area for this civ.",
     },
     anti_cavalry: {
-        anticav_strong: "Strong anti-cavalry options give this civ tools to shut down enemy cavalry.",
-        anticav_one_strong: "{best_unit} provides solid anti-cavalry capability.",
-        anticav_weak: "Anti-cavalry is a weakness \u2014 be cautious against cavalry-heavy opponents.",
+        anticav_strong: "Strong cavalry options for countering enemy cavalry.",
+        anticav_one_strong: "{best_unit} provides a mobile anti-cavalry option.",
+        anticav_weak: "Cavalry anti-cavalry options are limited.",
+    },
+    anti_cav_infantry: {
+        anticav_strong: "Strong infantry to hold the line against cavalry.",
+        anticav_one_strong: "{best_unit} anchors the anti-cavalry defense.",
+        anticav_weak: "Infantry anti-cavalry options are limited.",
     },
     anti_archer: {
         antiarcher_strong: "Strong anti-archer options give this civ tools to shut down enemy ranged units.",
@@ -298,9 +304,9 @@ function renderUnitBadge(unit) {
     /* Name */
     html += '<span class="unit-badge-name">' + escapeHtml(name) + '</span>';
 
-    /* Rank */
-    if (unit.rank) {
-        html += '<span class="unit-badge-rank rank-' + (unit.strength || 'average') + '">#' + unit.rank + ' ' + strength.label + '</span>';
+    /* Score */
+    if (unit.score != null) {
+        html += '<span class="unit-badge-rank rank-' + (unit.strength || 'average') + '">' + unit.score.toFixed(1) + ' ' + strength.label + '</span>';
     }
 
     html += '</div>';
@@ -314,8 +320,8 @@ function renderTooltip(unit, name) {
     var missingTechs = unit.missing_techs || [];
     var strength = STRENGTH_COLORS[unit.strength] || STRENGTH_COLORS.average;
 
-    /* Only show tooltip if there is special info or a rank */
-    var hasContent = bonusAbilities.length > 0 || specialEffects.length > 0 || missingTechs.length > 0 || unit.rank;
+    /* Only show tooltip if there is special info or a score */
+    var hasContent = bonusAbilities.length > 0 || specialEffects.length > 0 || missingTechs.length > 0 || unit.score != null;
     if (!hasContent) return "";
 
     var html = '<div class="unit-badge-tooltip">';
@@ -335,9 +341,9 @@ function renderTooltip(unit, name) {
         html += '<div class="tooltip-missing">\u2717 Missing: ' + escapeHtml(missingTechs[i]) + '</div>';
     }
 
-    /* Rank line */
-    if (unit.rank) {
-        html += '<div class="tooltip-rank">#' + unit.rank + ' \u00b7 ' + strength.label + '</div>';
+    /* Score line */
+    if (unit.score != null) {
+        html += '<div class="tooltip-rank">' + unit.score.toFixed(1) + ' \u00b7 ' + strength.label + '</div>';
     }
 
     html += '</div>';

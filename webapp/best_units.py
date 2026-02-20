@@ -44,11 +44,11 @@ def _fetch_unit_stats(conn, civ_name, unit_slug, age="Imperial"):
 
 
 # Role definitions: (role_key, line_slugs, score_type)
+# NOTE: anti_cavalry is handled separately — split into stable and infantry sub-pools
 ROLE_DEFS = [
     ("cavalry", ["stable"], "stable_effectiveness"),
     ("ranged", ["archer", "cav_archer", "scorpion", "gunpowder"], "ranged_effectiveness"),
     ("infantry", ["militia", "shock_infantry"], "militia_value"),
-    ("anti_cavalry", ["anti_cav_pool"], "anti_cav_combined"),
     ("anti_archer", ["archer", "cav_archer", "scorpion", "gunpowder", "skirmisher"], "anti_archer"),
     ("siege", ["ram", "trebuchet", "bombard_cannon"], "anti_building_score"),
 ]
@@ -92,6 +92,37 @@ def _compute_role_thresholds(conn):
             thresholds[role_key] = scores[min(idx, len(scores) - 1)]
         else:
             thresholds[role_key] = 0
+
+    # Anti-cav thresholds: split the anti_cav_pool into stable vs infantry sub-pools
+    # Each sub-pool gets its own 75th percentile so cavalry anti-cav units aren't
+    # dwarfed by halberdier-class scores.
+    rc.execute(
+        """SELECT bs.unit_slug, bs.score_value,
+                  CASE WHEN s.unit_slug IS NOT NULL THEN 1 ELSE 0 END AS is_stable
+           FROM battle_scores bs
+           LEFT JOIN (SELECT DISTINCT unit_slug FROM battle_scores
+                      WHERE line_slug = 'stable' AND LOWER(age) = 'imperial') s
+             ON bs.unit_slug = s.unit_slug
+           WHERE bs.line_slug = 'anti_cav_pool'
+             AND LOWER(bs.age) = 'imperial'
+             AND bs.score_type = 'anti_cav_combined'
+           ORDER BY bs.score_value ASC""",
+    )
+    stable_scores = []
+    infantry_scores = []
+    for row in rc.fetchall():
+        if row["is_stable"]:
+            stable_scores.append(row["score_value"])
+        else:
+            infantry_scores.append(row["score_value"])
+
+    for key, scores in [("anti_cavalry", stable_scores), ("anti_cav_infantry", infantry_scores)]:
+        if scores:
+            idx = int(len(scores) * 0.75)
+            thresholds[key] = scores[min(idx, len(scores) - 1)]
+        else:
+            thresholds[key] = 0
+
     return thresholds
 
 
@@ -413,7 +444,7 @@ def _determine_narrative_key(role_key, all_units):
             return "inf_one_strong"
         return "inf_none"
 
-    elif role_key == "anti_cavalry":
+    elif role_key in ("anti_cavalry", "anti_cav_infantry"):
         if len(above_avg) >= 2:
             return "anticav_strong"
         if len(above_avg) == 1:
@@ -443,6 +474,7 @@ _ROLE_NAMES = {
     "ranged": "ranged",
     "infantry": "infantry",
     "anti_cavalry": "anti-cavalry",
+    "anti_cav_infantry": "anti-cavalry (infantry)",
     "anti_archer": "anti-archer",
     "siege": "siege",
 }
@@ -503,28 +535,51 @@ def _generate_strategic_description(power_units, strong_areas, weak_areas):
         )
 
     # --- Part 2: Defensive Assessment ---
-    anticav_strong = "anti_cavalry" in strong_areas
+    anticav_cav_strong = "anti_cavalry" in strong_areas
+    anticav_inf_strong = "anti_cav_infantry" in strong_areas
     antiarcher_strong = "anti_archer" in strong_areas
 
-    if anticav_strong and antiarcher_strong:
+    # Anti-cavalry assessment (cavalry and infantry sub-pools independently)
+    if anticav_cav_strong and anticav_inf_strong:
         sentences.append(
-            "Defensively well-rounded, with solid options to shut down"
-            " both cavalry and ranged threats."
+            "Excellent anti-cavalry options from both stable and barracks"
+            " -- very hard for cavalry-heavy opponents to find an opening."
         )
-    elif anticav_strong and not antiarcher_strong:
+    elif anticav_cav_strong:
+        ac_entry = power_units.get("anti_cavalry")
+        ac_name = ac_entry["unit_name"] if ac_entry else "cavalry"
         sentences.append(
-            "Can hold the line against cavalry, but vulnerable to massed archers"
-            " -- consider aggressive play before ranged compositions develop."
+            f"Can answer enemy cavalry with mobile options like {ac_name},"
+            " allowing counter-raids and flexible responses."
         )
-    elif not anticav_strong and antiarcher_strong:
+    elif anticav_inf_strong:
+        ac_entry = power_units.get("anti_cav_infantry")
+        ac_name = ac_entry["unit_name"] if ac_entry else "infantry"
         sentences.append(
-            "Good tools against ranged units, but lacks reliable anti-cavalry"
-            " -- beware of knight-heavy opponents."
+            f"Strong infantry anti-cavalry with {ac_name} to hold"
+            " defensive positions against cavalry pushes."
         )
     else:
         sentences.append(
+            "Anti-cavalry options are limited"
+            " -- beware of knight-heavy opponents."
+        )
+
+    # Anti-archer assessment
+    if antiarcher_strong:
+        sentences.append(
+            "Good tools against ranged units help shut down archer compositions."
+        )
+    elif not antiarcher_strong and not anticav_cav_strong and not anticav_inf_strong:
+        # Replace the generic "limited" with a broader message only if ALL counters are weak
+        sentences[-1] = (
             "Limited counter options mean this civ must play aggressively"
             " and press its advantage before opponents can mass their army."
+        )
+    else:
+        sentences.append(
+            "Vulnerable to massed archers"
+            " -- consider aggressive play before ranged compositions develop."
         )
 
     # --- Part 3: Push Strategy ---
@@ -606,6 +661,14 @@ def compute_civ_power_units():
             # Batch-fetch all techs and effects for this civ (2 queries instead of N*3)
             techs_by_slug, effects_by_slug = _batch_fetch_civ_tech_data(conn, civ, db_age)
 
+            # Pre-fetch stable unit_slugs for this civ (used to split anti_cav_pool)
+            rc.execute(
+                """SELECT DISTINCT unit_slug FROM battle_scores
+                   WHERE civ_name = ? AND LOWER(age) = ? AND line_slug = 'stable'""",
+                [civ, age_key],
+            )
+            stable_slugs = {row["unit_slug"] for row in rc.fetchall()}
+
             for role_key, line_slugs, score_type in ROLE_DEFS:
                 # Safe: placeholders generated from hardcoded ROLE_DEFS constants
                 placeholders = ",".join("?" for _ in line_slugs)
@@ -620,21 +683,53 @@ def compute_civ_power_units():
                     [civ, age_key, score_type] + line_slugs,
                 )
                 threshold = role_thresholds.get(role_key, 0)
+                rows = rc.fetchall()
                 all_units = [
                     _build_unit_entry(row, civ, conn, db_age, reference_techs,
                                       techs_by_slug, effects_by_slug, threshold)
-                    for row in rc.fetchall()
+                    for row in rows
                 ]
                 power_units[role_key] = _build_role_dict(all_units, role_key)
 
+            # Split anti_cav_pool into stable (anti_cavalry) and infantry (anti_cav_infantry)
+            rc.execute(
+                """SELECT unit_slug, line_slug, score_value, rank, median_delta
+                   FROM battle_scores
+                   WHERE civ_name = ?
+                     AND LOWER(age) = ?
+                     AND score_type = 'anti_cav_combined'
+                     AND line_slug = 'anti_cav_pool'
+                   ORDER BY score_value DESC""",
+                [civ, age_key],
+            )
+            ac_rows = rc.fetchall()
+            ac_stable_rows = [r for r in ac_rows if r["unit_slug"] in stable_slugs]
+            ac_infantry_rows = [r for r in ac_rows if r["unit_slug"] not in stable_slugs]
+
+            ac_stable_threshold = role_thresholds.get("anti_cavalry", 0)
+            ac_stable_units = [
+                _build_unit_entry(row, civ, conn, db_age, reference_techs,
+                                  techs_by_slug, effects_by_slug, ac_stable_threshold)
+                for row in ac_stable_rows
+            ]
+            power_units["anti_cavalry"] = _build_role_dict(ac_stable_units, "anti_cavalry")
+
+            ac_inf_threshold = role_thresholds.get("anti_cav_infantry", 0)
+            ac_inf_units = [
+                _build_unit_entry(row, civ, conn, db_age, reference_techs,
+                                  techs_by_slug, effects_by_slug, ac_inf_threshold)
+                for row in ac_infantry_rows
+            ]
+            power_units["anti_cav_infantry"] = _build_role_dict(ac_inf_units, "anti_cav_infantry")
+
             # Build strength profile
             strength_profile = {}
-            for role_key in ["cavalry", "ranged", "infantry", "anti_cavalry", "anti_archer", "siege"]:
+            for role_key in ["cavalry", "ranged", "infantry", "anti_cavalry", "anti_cav_infantry", "anti_archer", "siege"]:
                 entry = power_units.get(role_key)
                 strength_profile[role_key] = entry["strength"] if entry else "weak"
 
             # Build strategic summary
-            main_roles = ["cavalry", "ranged", "infantry", "anti_cavalry", "anti_archer", "siege"]
+            main_roles = ["cavalry", "ranged", "infantry", "anti_cavalry", "anti_cav_infantry", "anti_archer", "siege"]
             strong_areas = []
             weak_areas = []
             signature_areas = []

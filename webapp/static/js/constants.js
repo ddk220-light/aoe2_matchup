@@ -264,11 +264,18 @@ const UNIQUE_BUILDING = {
     "Mounted Trebuchet": "Siege Workshop",
 };
 
+/* --- Icons stored as .jpg on the qwyt GitHub CDN --- */
+const JPG_ICONS = new Set([279, 422, 542, 548]);
+
 /* --- Icon Helpers --- */
+function iconExt(id) {
+    return JPG_ICONS.has(id) ? "jpg" : "png";
+}
+
 function getIconUrl(name) {
     const id = NAME_TO_ICON[name];
     if (!id) return null;
-    return `${ICON_BASE}${id}.png`;
+    return `${ICON_BASE}${id}.${iconExt(id)}`;
 }
 
 function getIconFallbackUrl(name) {

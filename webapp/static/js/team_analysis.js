@@ -28,7 +28,7 @@ function formatUnitName(slug) {
 function unitIconUrl(name) {
     const id = NAME_TO_ICON[name];
     if (!id) return null;
-    return ICON_BASE + id + ".png";
+    return ICON_BASE + id + "." + iconExt(id);
 }
 
 const PLACEHOLDER_ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'/%3E";

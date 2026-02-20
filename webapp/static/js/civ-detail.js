@@ -11,7 +11,7 @@ const PLACEHOLDER_ICON =
     );
 
 function iconUrl(id) {
-    return ICON_BASE + id + ".png";
+    return ICON_BASE + id + "." + iconExt(id);
 }
 
 function unitIconUrl(name) {

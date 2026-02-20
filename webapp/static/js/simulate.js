@@ -33,7 +33,7 @@ const BUILDING_ICONS = {
 };
 
 function iconUrl(id) {
-    return ICON_BASE + id + ".png";
+    return ICON_BASE + id + "." + iconExt(id);
 }
 function unitIconUrl(name) {
     const id = NAME_TO_ICON[name];
@@ -192,7 +192,7 @@ function selectUnit(teamNum, slug, name) {
                 this.src = ICON_BASE_FALLBACK + iconId + ".png";
             }
         };
-        img.src = ICON_BASE + iconId + ".png";
+        img.src = ICON_BASE + iconId + "." + iconExt(iconId);
         unitImages[teamNum] = img;
     }
     renderSelection(teamNum);

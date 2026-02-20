@@ -284,7 +284,7 @@ function renderUnitBadge(unit) {
     var badgeClass = "unit-badge" + (isSig ? " signature" : "");
     var iconSize = isSig ? "signature-icon" : "unit-badge-icon";
 
-    var html = '<div class="' + badgeClass + '" style="border-color: ' + strength.text + '">';
+    var html = '<div class="' + badgeClass + '" style="border-left-color: ' + strength.text + '">';
 
     /* Tooltip */
     html += renderTooltip(unit, name);
@@ -301,13 +301,13 @@ function renderUnitBadge(unit) {
         html += '<div class="' + iconSize + ' icon-placeholder"></div>';
     }
 
-    /* Name */
+    /* Info block (name + score) */
+    html += '<div class="unit-badge-info">';
     html += '<span class="unit-badge-name">' + escapeHtml(name) + '</span>';
-
-    /* Score */
     if (unit.score != null) {
         html += '<span class="unit-badge-rank rank-' + (unit.strength || 'average') + '">' + unit.score.toFixed(1) + ' ' + strength.label + '</span>';
     }
+    html += '</div>';
 
     html += '</div>';
     return html;

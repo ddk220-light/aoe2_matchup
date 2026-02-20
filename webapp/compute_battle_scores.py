@@ -1074,8 +1074,9 @@ def compute_archery_role_scores():
     """Compute role-based scores for all Imperial archery units.
 
     Uses a unified set of benchmarks for both general combat and anti-archer.
-    Each raw benchmark score (-100 to +100) is min-max normalized across all
-    archery units (0-100) before averaging into sub-scores.
+    Each raw benchmark score (-100 to +100) is min-max normalized per unit line
+    (0-100) before averaging into sub-scores.  This means archer scores are
+    normalized among archers, skirmisher scores among skirmishers, etc.
 
     Final: ranged_effectiveness = 0.7 * general_combat + 0.3 * anti_archer
 
@@ -1163,13 +1164,21 @@ def compute_archery_role_scores():
         for s in all_scores.values():
             s[f"{key}_raw"] = s[key]
 
-    # Min-max normalize each benchmark score across all archery units (0-100)
+    # Min-max normalize each benchmark score per unit line (0-100)
+    # Each line (archer, skirmisher, cav_archer, etc.) is normalized independently
+    # so scores reflect how good a unit is within its role, not across all ranged.
+    line_groups = {}
+    for sk, scores in all_scores.items():
+        line = sk_to_line[sk]
+        line_groups.setdefault(line, []).append(sk)
+
     for bk in all_bench_keys:
-        vals = [s[bk] for s in all_scores.values()]
-        lo, hi = min(vals), max(vals)
-        span = hi - lo if hi != lo else 1
-        for s in all_scores.values():
-            s[bk] = round((s[bk] - lo) / span * 100, 1)
+        for line, sks in line_groups.items():
+            vals = [all_scores[sk][bk] for sk in sks]
+            lo, hi = min(vals), max(vals)
+            span = hi - lo if hi != lo else 1
+            for sk in sks:
+                all_scores[sk][bk] = round((all_scores[sk][bk] - lo) / span * 100, 1)
 
     # Compute derived scores from normalized values
     for sk, scores in all_scores.items():
@@ -1204,14 +1213,22 @@ def compute_archery_role_scores():
                 "hp": cu["hp"],
             }
 
-    # Step 2: Normalize each component 0-100
+    # Step 2: Normalize each component 0-100 per unit line
     if mobility_raw:
+        mob_line_groups = {}
+        for sk in mobility_raw:
+            line = sk_to_line[sk]
+            mob_line_groups.setdefault(line, []).append(sk)
+
         for component in ["speed_dps", "pierce_armor", "hp"]:
-            vals = [r[component] for r in mobility_raw.values()]
-            lo, hi = min(vals), max(vals)
-            span = hi - lo if hi != lo else 1
-            for r in mobility_raw.values():
-                r[f"norm_{component}"] = round((r[component] - lo) / span * 100, 1)
+            for line, sks in mob_line_groups.items():
+                vals = [mobility_raw[sk][component] for sk in sks]
+                lo, hi = min(vals), max(vals)
+                span = hi - lo if hi != lo else 1
+                for sk in sks:
+                    mobility_raw[sk][f"norm_{component}"] = round(
+                        (mobility_raw[sk][component] - lo) / span * 100, 1
+                    )
 
         # Step 3: Compute composite and store
         for sk, raw in mobility_raw.items():

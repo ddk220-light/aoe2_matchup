@@ -248,42 +248,58 @@
     color: rgba(231, 76, 60, 0.7);
 }
 
-/* --- Unit Wrap --- */
+/* --- Unit Wrap (entrance animation) --- */
 .unit-wrap {
     margin-bottom: 8px;
+    animation: cardSlideIn 0.35s ease both;
 }
 
-/* --- Unit Badge (compact for columns) --- */
+@keyframes cardSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- Unit Badge (horizontal card: icon left, info right) --- */
 .unit-badge {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 3px;
-    padding: 8px 6px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 3px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
     background: rgba(0, 0, 0, 0.15);
-    text-align: center;
+    text-align: left;
     position: relative;
-    transition: background 0.15s ease, box-shadow 0.15s ease;
+    transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
     width: 100%;
     box-sizing: border-box;
 }
 .unit-badge:hover {
     background: rgba(0, 0, 0, 0.3);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    transform: translateX(2px);
 }
 
 /* --- Signature Badge --- */
 .unit-badge.signature {
-    border-color: var(--gold);
-    background: rgba(201, 168, 76, 0.08);
-    box-shadow: 0 0 10px rgba(201, 168, 76, 0.15);
-    padding: 10px 8px;
+    border-color: rgba(201, 168, 76, 0.3);
+    border-left-color: var(--gold);
+    border-left-width: 3px;
+    background: linear-gradient(135deg, rgba(201, 168, 76, 0.1) 0%, rgba(201, 168, 76, 0.03) 100%);
+    box-shadow: 0 0 12px rgba(201, 168, 76, 0.1);
+    padding: 10px 12px;
 }
 .unit-badge.signature:hover {
-    background: rgba(201, 168, 76, 0.15);
-    box-shadow: 0 0 16px rgba(201, 168, 76, 0.25);
+    background: linear-gradient(135deg, rgba(201, 168, 76, 0.16) 0%, rgba(201, 168, 76, 0.06) 100%);
+    box-shadow: 0 2px 16px rgba(201, 168, 76, 0.2);
 }
 
 /* --- Signature Star --- */
@@ -291,69 +307,85 @@
     position: absolute;
     top: -6px;
     right: -6px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--gold);
     background: var(--bg-deep);
     border-radius: 50%;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--gold);
+    border: 1.5px solid var(--gold);
     line-height: 1;
+    box-shadow: 0 0 6px rgba(201, 168, 76, 0.3);
 }
 
 /* --- Unit Badge Icon --- */
 .unit-badge-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
-    border: 2px solid rgba(201, 168, 76, 0.3);
-    background: rgba(0, 0, 0, 0.3);
+    width: 64px;
+    height: 64px;
+    border-radius: 6px;
+    border: 2px solid rgba(201, 168, 76, 0.25);
+    background: rgba(0, 0, 0, 0.35);
     object-fit: cover;
     flex-shrink: 0;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 .signature-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 6px;
+    width: 72px;
+    height: 72px;
+    border-radius: 8px;
     border: 2px solid rgba(201, 168, 76, 0.5);
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.35);
     object-fit: cover;
     flex-shrink: 0;
+    box-shadow: 0 0 8px rgba(201, 168, 76, 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 .icon-placeholder {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* --- Unit Badge Info (name + score stack) --- */
+.unit-badge-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
 }
 
 /* --- Unit Badge Name --- */
 .unit-badge-name {
-    font-size: 0.68rem;
-    font-weight: 500;
+    font-size: 0.78rem;
+    font-weight: 600;
     color: var(--text);
     line-height: 1.2;
-    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+.unit-badge.signature .unit-badge-name {
+    color: var(--gold-light);
+    font-size: 0.82rem;
+}
 
 /* --- Unit Badge Rank (pill style) --- */
 .unit-badge-rank {
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     padding: 2px 8px;
     border-radius: 10px;
-    margin-top: 2px;
+    width: fit-content;
 }
 .rank-signature {
     background: rgba(201, 168, 76, 0.2);
     color: var(--gold);
 }
-.rank-strong {
+.rank-good {
     background: rgba(46, 204, 113, 0.18);
     color: #2ecc71;
 }
@@ -470,7 +502,7 @@
         gap: 10px;
     }
     .unit-badge-name {
-        font-size: 0.65rem;
+        font-size: 0.72rem;
     }
     .unit-badge-tooltip {
         left: 0;
@@ -514,15 +546,15 @@
         gap: 8px;
     }
     .unit-badge-icon {
-        width: 28px;
-        height: 28px;
+        width: 52px;
+        height: 52px;
     }
     .signature-icon {
-        width: 34px;
-        height: 34px;
+        width: 60px;
+        height: 60px;
     }
     .unit-badge-name {
-        font-size: 0.6rem;
+        font-size: 0.7rem;
     }
     .unit-badge-rank {
         font-size: 0.55rem;

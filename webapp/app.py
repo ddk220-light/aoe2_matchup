@@ -577,8 +577,6 @@ UNIT_LINES = {
         "building": "Archery Range",
         "castle_slug": "crossbow",
         "imperial_slug": "arbalester",
-        "extra_castle_slugs": ["elephant_archer"],
-        "extra_imperial_slugs": ["elite_ele_archer"],
         "unique_units": {
             "Britons": ("longbowman_britons", "elite_longbowman_britons"),
             "Chinese": ("chu_ko_nu_chinese", "elite_chu_ko_nu_chinese"),
@@ -612,6 +610,8 @@ UNIT_LINES = {
         "building": "Archery Range",
         "castle_slug": "cav_archer",
         "imperial_slug": "heavy_cav_archer",
+        "extra_castle_slugs": ["elephant_archer"],
+        "extra_imperial_slugs": ["elite_ele_archer"],
         "unique_units": {
             "Mongols": ("mangudai_mongols", "elite_mangudai_mongols"),
             "Saracens": ("mameluke_saracens", "elite_mameluke_saracens"),
@@ -623,6 +623,8 @@ UNIT_LINES = {
                 "elite_ratha_(ranged)_bengalis",
             ),
             "Wei": ("xianbei_raider_wei", "xianbei_raider_wei"),
+            "Spanish": ("conquistador_spanish", "elite_conquistador_spanish"),
+            "Koreans": ("war_wagon_koreans", "elite_war_wagon_koreans"),
         },
     },
     "knight": {
@@ -707,10 +709,10 @@ UNIT_LINES = {
         "imperial_slug": "hand_cannoneer",
         "unique_units": {
             "Turks": ("janissary_turks", "elite_janissary_turks"),
-            "Spanish": ("conquistador_spanish", "elite_conquistador_spanish"),
             "Portuguese": ("organ_gun_portuguese", "elite_organ_gun_portuguese"),
             "Jurchens": ("grenadier_jurchens", "grenadier_jurchens"),
             "Incas": ("slinger", "imp_slinger"),
+            "Bohemians": ("hussite_wagon_bohemians", "elite_hussite_wagon_bohemians"),
             "Franks": ("throwing_axeman_franks", "elite_throwing_axeman_franks"),
             "Malians": ("gbeto_malians", "elite_gbeto_malians"),
             "Gurjaras": (
@@ -728,8 +730,6 @@ UNIT_LINES = {
             "Khmer": ("ballista_elephant_khmer", "elite_ballista_elephant_khmer"),
             "Shu": ("war_chariot_shu", "elite_war_chariot_shu"),
             "Khitans": ("mounted_trebuchet_khitans", "mounted_trebuchet_khitans"),
-            "Koreans": ("war_wagon_koreans", "elite_war_wagon_koreans"),
-            "Bohemians": ("hussite_wagon_bohemians", "elite_hussite_wagon_bohemians"),
         },
     },
     "trebuchet": {

@@ -853,26 +853,6 @@ MILITIA_ROLE_BENCHMARKS = {
     ],
 }
 
-ANTI_CAV_BENCHMARKS = {
-    "imperial": [
-        # (key, civ, slug, age, mode, param)
-        ("ac_vs_paladin", "Spanish", "paladin", "Imperial", "res", 3000),
-        ("ac_vs_hussar", "Spanish", "hussar", "Imperial", "res", 3000),
-        ("ac_vs_heavy_camel", "Persians", "heavy_camel", "Imperial", "res", 3000),
-        ("ac_vs_elephant", "Vietnamese", "elite_elephant", "Imperial", "res", 3000),
-        ("ac_vs_halb", "Spanish", "halberdier", "Imperial", "res", 3000),
-        ("ac_vs_arb", "Chinese", "arbalester", "Imperial", "res", 3000),
-    ],
-    "castle": [
-        ("ac_vs_paladin", "Spanish", "knight", "Castle", "res", 3000),
-        ("ac_vs_hussar", "Spanish", "light_cav", "Castle", "res", 3000),
-        ("ac_vs_heavy_camel", "Turks", "camel", "Castle", "res", 3000),
-        ("ac_vs_elephant", "Vietnamese", "elephant", "Castle", "res", 3000),
-        ("ac_vs_halb", "Spanish", "pikeman", "Castle", "res", 3000),
-        ("ac_vs_arb", "Chinese", "crossbow", "Castle", "res", 3000),
-    ],
-}
-
 DT = 0.1  # must match simulation.py DT
 MAX_BATTLE_TIME = 250.0  # MAX_TICKS * DT
 
@@ -1154,9 +1134,6 @@ def compute_infantry_role_scores(age="imperial"):
             sum(scores[k] for k in ac_keys) / len(ac_keys), 1
         )
 
-    # Compute anti-cav ranking scores (uses _combat_unit refs)
-    compute_anti_cav_scores(all_scores, sk_to_line, age)
-
     # Compute raiding ranking scores (uses _combat_unit refs)
     compute_raiding_scores(all_scores, sk_to_line, age)
 
@@ -1172,7 +1149,7 @@ def compute_infantry_role_scores(age="imperial"):
     # Apply speed weighting: multiply composites by speed, re-normalize 0-100
     _apply_speed_weighting(
         all_scores,
-        ["general_combat", "anti_cav", "militia_value", "raid_building", "anti_cav_value"],
+        ["general_combat", "anti_cav", "militia_value", "raid_building"],
         scope="per_line",
         line_groups=line_groups,
     )
@@ -1748,16 +1725,6 @@ INFANTRY_ROLE_SCORE_TYPES = [
     "ac_30v30_vs_hussar_raw",
     "ac_3k_vs_elephant_raw",
     "ac_3k_vs_hussar_raw",
-    # Anti-cav ranking scores
-    "anti_cav_total",
-    "frontline",
-    "anti_cav_value",
-    "ac_vs_paladin",
-    "ac_vs_hussar",
-    "ac_vs_heavy_camel",
-    "ac_vs_elephant",
-    "ac_vs_halb",
-    "ac_vs_arb",
     # Raiding ranking scores
     "raid_speed",
     "raid_vill_kill",
@@ -1766,83 +1733,6 @@ INFANTRY_ROLE_SCORE_TYPES = [
     "raid_vs_tc_nmin",
     "raid_vs_castle_nmin",
 ]
-
-
-def compute_anti_cav_scores(all_scores, sk_to_line, age="imperial"):
-    """Compute anti-cav ranking scores for all infantry units (in-place).
-
-    Uses the same pooled all_scores dict from compute_infantry_role_scores.
-    Adds anti_cav_total, frontline, anti_cav_value and raw sub-scores.
-    """
-    is_imperial = age == "imperial"
-    ac_benchmarks = ANTI_CAV_BENCHMARKS[age]
-
-    # Load benchmark opponents
-    bench_cache = {}
-    for key, civ, slug, bench_age, mode, param in ac_benchmarks:
-        cache_key = (civ, slug, bench_age)
-        if cache_key not in bench_cache:
-            bench_cache[cache_key] = _load_benchmark_unit(civ, slug, bench_age)
-            if bench_cache[cache_key] is None:
-                print(f"  WARNING: anti-cav benchmark {civ}/{slug}/{bench_age} not found")
-
-    # Simulate each infantry unit vs each anti-cav benchmark
-    for sk, scores in all_scores.items():
-        cu = scores["_combat_unit"]
-        unit_cost = calc_weighted_cost(
-            cu["cost_food"], cu["cost_wood"], cu["cost_gold"], is_imperial
-        )
-
-        for key, civ, slug, bench_age, mode, param in ac_benchmarks:
-            bench = bench_cache.get((civ, slug, bench_age))
-            if bench is None:
-                scores[key] = 0.0
-                continue
-
-            bench_cost = calc_weighted_cost(
-                bench["cost_food"], bench["cost_wood"], bench["cost_gold"], is_imperial
-            )
-
-            winner, _, _, hp1, hp2 = simulate_battle(
-                cu,
-                bench,
-                param,
-                cost1_override=unit_cost,
-                cost2_override=bench_cost,
-                return_hp=True,
-            )
-            if winner == 1:
-                scores[key] = round(hp1 * 100, 1)
-            elif winner == 2:
-                scores[key] = round(-hp2 * 100, 1)
-            else:
-                scores[key] = 0.0
-
-    # Compute raw derived scores
-    for sk, scores in all_scores.items():
-        scores["anti_cav_total"] = (
-            scores["ac_vs_paladin"]
-            + scores["ac_vs_hussar"]
-            + scores["ac_vs_heavy_camel"]
-            + scores["ac_vs_elephant"]
-        ) / 4
-        scores["frontline"] = (scores["ac_vs_halb"] + scores["ac_vs_arb"]) / 2
-
-    # Normalize to 0–100 across all infantry
-    for key in ["anti_cav_total", "frontline"]:
-        vals = [s[key] for s in all_scores.values()]
-        lo, hi = min(vals), max(vals)
-        span = hi - lo if hi != lo else 1
-        for s in all_scores.values():
-            s[key] = round((s[key] - lo) / span * 100, 1)
-
-    # Compute weighted composite
-    for sk, scores in all_scores.items():
-        scores["anti_cav_value"] = round(
-            0.90 * scores["anti_cav_total"] + 0.10 * scores["frontline"],
-            1,
-        )
-
 
 
 # ---------------------------------------------------------------------------

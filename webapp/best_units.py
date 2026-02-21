@@ -690,37 +690,44 @@ def _calc_weighted_cost(food, wood, gold):
 
 
 # Counter-role mapping: opponent strength -> what Civ A should query
+_STABLE_LINES = ["knight", "light_cav", "camel", "steppe_lancer", "elephant"]
 COUNTER_MAP = {
     "cavalry": [
         # (lines_to_search, score_type, description)
-        (["spear", "militia"], "anti_cav_value", "anti-cavalry specialist"),
-        (["stable"], "anti_cav", "camel/cavalry counter"),
+        (["spear", "militia"], "anti_cav", "anti-cavalry specialist"),
+        (["camel", "knight", "light_cav", "steppe_lancer", "elephant"], "anti_cav", "camel/cavalry counter"),
     ],
     "ranged": [
-        (["stable"], "general_combat", "cavalry closes distance on ranged"),
+        (_STABLE_LINES, "general_combat", "cavalry closes distance on ranged"),
         (["archer", "cav_archer", "scorpion", "gunpowder", "skirmisher"], "anti_archer", "anti-archer unit"),
     ],
     "infantry": [
         (["archer", "cav_archer", "scorpion", "gunpowder"], "general_combat", "ranged vs infantry"),
-        (["stable"], "general_combat", "cavalry vs infantry"),
+        (_STABLE_LINES, "general_combat", "cavalry vs infantry"),
     ],
     "siege": [
-        (["stable"], "general_combat", "cavalry snipes siege"),
+        (_STABLE_LINES, "general_combat", "cavalry snipes siege"),
     ],
 }
 
 # Trash pairing logic: gold_unit_line -> preferred trash partner
 TRASH_PAIRING = {
-    "stable": "skirmisher",       # cavalry + skirm (skirm handles halbs)
-    "archer": "stable",           # archers + hussar (hussar tanks & raids)
-    "cav_archer": "stable",       # cav archers + hussar
-    "scorpion": "spear",          # scorpion + halbs (halbs screen from cav)
-    "gunpowder": "spear",         # hand cannoneers + halbs
-    "militia": "stable",          # infantry + hussar
-    "spear": "skirmisher",        # spearmen + skirm
-    "shock_infantry": "stable",   # shock infantry + hussar
-    "skirmisher": "stable",       # skirm + hussar
-    "siege": "spear",             # siege + halbs
+    "knight": "skirmisher",        # cavalry + skirm (skirm handles halbs)
+    "light_cav": "skirmisher",     # hussar + skirm
+    "camel": "skirmisher",         # camel + skirm
+    "steppe_lancer": "skirmisher", # steppe lancer + skirm
+    "elephant": "skirmisher",      # elephant + skirm
+    "archer": "light_cav",         # archers + hussar (hussar tanks & raids)
+    "cav_archer": "light_cav",     # cav archers + hussar
+    "scorpion": "spear",           # scorpion + halbs (halbs screen from cav)
+    "gunpowder": "spear",          # hand cannoneers + halbs
+    "militia": "light_cav",        # infantry + hussar
+    "spear": "skirmisher",         # spearmen + skirm
+    "shock_infantry": "light_cav", # shock infantry + hussar
+    "skirmisher": "light_cav",     # skirm + hussar
+    "ram": "spear",                # siege + halbs
+    "bombard_cannon": "spear",     # bombard + halbs
+    "trebuchet": "spear",          # trebuchet + halbs
 }
 
 
@@ -988,36 +995,38 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
     individual_counters.sort(key=lambda x: x["composite"], reverse=True)
 
     # Step 4: Composition generation
-    # Find civ_a's best trash unit
-    civ_a_trash = civ_a_data["power_units"].get("trash")
     compositions = []
 
     for counter in individual_counters[:2]:  # Top 2 gold units
         gold_slug = counter["unit_slug"]
         gold_line = counter["line_slug"]
 
-        # Determine trash partner
-        trash_line = TRASH_PAIRING.get(gold_line, "stable")
-        # Get actual trash unit for civ_a in that line
+        # Determine trash partner from preferred line
+        trash_line = TRASH_PAIRING.get(gold_line, "light_cav")
+        # Try to find the civ's unit in the preferred trash line
         trash_slug = None
-        if civ_a_trash:
-            trash_slug = civ_a_trash["unit_slug"]
-        # Try to find a better match from the preferred line
-        tconn = _get_db()
-        trc = tconn.cursor()
-        trc.execute(
-            """SELECT unit_slug FROM ref_units
-               WHERE civ_name=? AND age=? AND final_cost_gold=0
-               ORDER BY final_hp DESC LIMIT 1""",
-            (civ_a, db_age),
-        )
-        trash_row = trc.fetchone()
-        if trash_row:
-            trash_slug = trash_row["unit_slug"]
-        tconn.close()
-
-        if not trash_slug:
-            trash_slug = civ_a_trash["unit_slug"] if civ_a_trash else None
+        trash_entry = None
+        for col_data in civ_a_data["power_units"].values():
+            entry = col_data.get(trash_line) if isinstance(col_data, dict) else None
+            if entry:
+                trash_entry = entry
+                break
+        if trash_entry:
+            trash_slug = trash_entry["unit_slug"]
+        else:
+            # Fallback: find any zero-gold unit for this civ
+            tconn = _get_db()
+            trc = tconn.cursor()
+            trc.execute(
+                """SELECT unit_slug FROM ref_units
+                   WHERE civ_name=? AND age=? AND final_cost_gold=0
+                   ORDER BY final_hp DESC LIMIT 1""",
+                (civ_a, db_age),
+            )
+            trash_row = trc.fetchone()
+            if trash_row:
+                trash_slug = trash_row["unit_slug"]
+            tconn.close()
 
         # Load units for reasoning
         gold_cu = _load_combat_unit(civ_a, gold_slug, db_age)

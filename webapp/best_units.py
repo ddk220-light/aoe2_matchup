@@ -47,15 +47,33 @@ def _fetch_unit_stats(conn, civ_name, unit_slug, age="Imperial"):
     return row["unit_name"], stats
 
 
-# Role definitions: (role_key, line_slugs, score_type)
-# NOTE: anti_cavalry is handled separately — split into stable and infantry sub-pools
-ROLE_DEFS = [
-    ("cavalry", ["stable"], "stable_effectiveness"),
-    ("ranged", ["archer", "cav_archer", "scorpion", "gunpowder"], "ranged_effectiveness"),
-    ("infantry", ["militia", "shock_infantry"], "militia_value"),
-    ("anti_archer", ["skirmisher", "scorpion"], "anti_archer"),
-    ("siege", ["ram", "trebuchet", "bombard_cannon"], "anti_building_score"),
-]
+# Column definitions: (column_key, line_slugs)
+COLUMN_DEFS = {
+    "cavalry": ["light_cav", "knight", "camel", "steppe_lancer", "elephant"],
+    "ranged": ["skirmisher", "archer", "cav_archer", "gunpowder", "scorpion"],
+    "infantry": ["militia", "spear", "shock_infantry"],
+    "siege": ["ram", "bombard_cannon", "trebuchet"],
+}
+
+# Per-line score type to use for ranking
+LINE_SCORE_TYPE = {
+    "light_cav": "stable_effectiveness",
+    "knight": "stable_effectiveness",
+    "camel": "stable_effectiveness",
+    "steppe_lancer": "stable_effectiveness",
+    "elephant": "stable_effectiveness",
+    "skirmisher": "ranged_effectiveness",
+    "archer": "ranged_effectiveness",
+    "cav_archer": "ranged_effectiveness",
+    "gunpowder": "ranged_effectiveness",
+    "scorpion": "ranged_effectiveness",
+    "militia": "militia_value",
+    "spear": "militia_value",
+    "shock_infantry": "militia_value",
+    "ram": "anti_building_score",
+    "bombard_cannon": "anti_building_score",
+    "trebuchet": "anti_building_score",
+}
 
 
 def _classify_strength(percentile):
@@ -166,12 +184,6 @@ _EFFECT_LABELS = {
     "pass_through_percent": "Pass-through damage",
     "hp_per_kill": "+{v:.0f} HP per kill",
 }
-
-# Scout line slugs for cavalry narrative
-SCOUT_SLUGS = {"hussar", "light_cavalry", "winged_hussar"}
-
-# Teuton Paladin speed — threshold for "strong but lacks mobility"
-SLOW_CAV_THRESHOLD = 1.35
 
 
 def _build_reference_techs(conn, age="Imperial"):
@@ -375,147 +387,40 @@ def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slu
     }
 
 
-def _build_role_dict(all_units, role_key):
-    """Build the role-level dict from a list of unit entries."""
-    if not all_units:
-        return None
-    best = all_units[0]
-    narrative_key = _determine_narrative_key(role_key, all_units)
-    above_avg = [u for u in all_units if u["median_delta"] > 0]
-    has_sig = any(u["is_signature"] for u in all_units)
-    return {
-        # Backward-compat fields from best unit
-        "unit_slug": best["unit_slug"],
-        "unit_name": best["unit_name"],
-        "line_slug": best["line_slug"],
-        "score": best["score"],
-        "rank": best["rank"],
-        "median_delta": best["median_delta"],
-        "is_signature": best["is_signature"],
-        "strength": best["strength"],
-        "stats": None,  # stats now per all_units entry only
-        # New expanded fields
-        "all_units": all_units,
-        "narrative_key": narrative_key,
-        "above_avg_count": len(above_avg),
-        "total_count": len(all_units),
-        "has_signature": has_sig,
-        "best_unit": best["unit_slug"],
-    }
-
-
-def _determine_narrative_key(role_key, all_units):
-    """Determine the narrative key for a role based on unit analysis."""
-    above_avg = [u for u in all_units if u["median_delta"] > 0]
-
-    if role_key == "cavalry":
-        above_avg_non_scout = [u for u in above_avg if u["unit_slug"] not in SCOUT_SLUGS]
-        if not above_avg:
-            return "cav_none"
-        if above_avg and not above_avg_non_scout:
-            return "cav_trash_only"
-        # Check if ALL above-average non-scout cav is slow (e.g. only War Elephants)
-        fast_above_avg = [u for u in above_avg_non_scout if u["speed"] > SLOW_CAV_THRESHOLD]
-        if above_avg_non_scout and not fast_above_avg:
-            return "cav_strong_slow"
-        if len(above_avg) == 1:
-            return "cav_one_strong"
-        return "cav_all_strong"
-
-    elif role_key == "ranged":
-        if len(above_avg) >= 2:
-            return "ranged_strong"
-        if len(above_avg) == 1:
-            return "ranged_one_strong"
-        return "ranged_none"
-
-    elif role_key == "infantry":
-        if len(above_avg) >= 2:
-            return "inf_strong"
-        if len(above_avg) == 1:
-            return "inf_one_strong"
-        return "inf_none"
-
-    elif role_key in ("anti_cavalry", "anti_cav_infantry"):
-        if len(above_avg) >= 2:
-            return "anticav_strong"
-        if len(above_avg) == 1:
-            return "anticav_one_strong"
-        return "anticav_weak"
-
-    elif role_key == "anti_archer":
-        if len(above_avg) >= 2:
-            return "antiarcher_strong"
-        if len(above_avg) == 1:
-            return "antiarcher_one_strong"
-        return "antiarcher_weak"
-
-    elif role_key == "siege":
-        if len(above_avg) >= 2:
-            return "siege_strong"
-        if len(above_avg) == 1:
-            return "siege_one_strong"
-        return "siege_weak"
-
-    return "unknown"
-
-
-# Role labels for description text
-_ROLE_NAMES = {
-    "cavalry": "cavalry",
-    "ranged": "ranged",
-    "infantry": "infantry",
-    "anti_cavalry": "anti-cavalry",
-    "anti_cav_infantry": "anti-cavalry (infantry)",
-    "anti_archer": "anti-archer",
-    "siege": "siege",
-}
-
-
-def _generate_strategic_description(power_units, strong_areas, weak_areas):
-    """Generate a multi-sentence strategic description for a civilization.
-
-    Composes three parts:
-    1. Primary playstyle (based on strongest combat role)
-    2. Defensive assessment (based on anti_cav + anti_archer)
-    3. Push strategy (based on siege + primary strength)
-    """
+def _generate_strategic_description(power_units, strong_columns, weak_areas, strength_profile):
+    """Generate a multi-sentence strategic description for a civilization."""
     sentences = []
 
     # --- Part 1: Primary Playstyle ---
-    # Determine primary combat roles (cavalry, ranged, infantry only — not counter or siege roles)
-    combat_strong = [r for r in strong_areas if r in ("cavalry", "ranged", "infantry")]
+    combat_strong = [c for c in strong_columns if c in ("cavalry", "ranged", "infantry")]
 
     if len(combat_strong) >= 2:
-        area_names = [_ROLE_NAMES[r] for r in combat_strong]
+        col_names = [c.capitalize() for c in combat_strong]
+        joined = " and ".join([", ".join(col_names[:-1]), col_names[-1]] if len(col_names) > 2 else col_names)
         sentences.append(
-            "This civ is versatile, with strength across "
-            + " and ".join([", ".join(area_names[:-1]), area_names[-1]] if len(area_names) > 2 else area_names)
+            "This civ is versatile, with strength across " + joined
             + " -- allowing flexible strategies that adapt to any opponent."
         )
     elif len(combat_strong) == 1:
-        role = combat_strong[0]
-        entry = power_units.get(role)
-        best_name = entry["unit_name"] if entry else "their best unit"
+        col = combat_strong[0]
+        col_data = power_units.get(col, {})
+        best_entry = None
+        for entry in col_data.values():
+            if entry and (best_entry is None or entry.get("percentile", 0) > best_entry.get("percentile", 0)):
+                best_entry = entry
+        best_name = best_entry["unit_name"] if best_entry else "their best unit"
 
-        if role == "cavalry":
-            narrative_key = entry["narrative_key"] if entry else ""
-            if narrative_key == "cav_strong_slow":
-                sentences.append(
-                    f"This civ fields powerful but slower cavalry like {best_name},"
-                    " favoring head-on engagements over mobility."
-                )
-            else:
-                sentences.append(
-                    f"This civ excels at mobile cavalry play -- able to raid,"
-                    f" flank, and apply pressure across the map with {best_name}."
-                )
-        elif role == "ranged":
+        if col == "cavalry":
+            sentences.append(
+                f"This civ excels at mobile cavalry play -- able to raid,"
+                f" flank, and apply pressure across the map with {best_name}."
+            )
+        elif col == "ranged":
             sentences.append(
                 f"This civ has strong ranged options for concentrated pushes,"
                 f" with {best_name} providing range advantage and sustained damage output."
             )
-        elif role == "infantry":
+        elif col == "infantry":
             sentences.append(
                 f"This civ has strong infantry for frontline pressure,"
                 f" with {best_name} serving as the backbone of siege-backed pushes."
@@ -527,29 +432,32 @@ def _generate_strategic_description(power_units, strong_areas, weak_areas):
         )
 
     # --- Part 2: Defensive Assessment ---
-    anticav_cav_strong = "anti_cavalry" in strong_areas
-    anticav_inf_strong = "anti_cav_infantry" in strong_areas
-    antiarcher_strong = "anti_archer" in strong_areas
+    spear_strength = strength_profile.get("spear")
+    camel_strength = strength_profile.get("camel")
+    skirm_strength = strength_profile.get("skirmisher")
 
-    # Anti-cavalry assessment (cavalry and infantry sub-pools independently)
-    if anticav_cav_strong and anticav_inf_strong:
+    has_good_spear = spear_strength in ("strong", "signature")
+    has_good_camel = camel_strength in ("strong", "signature")
+    has_good_skirm = skirm_strength in ("strong", "signature")
+
+    if has_good_spear and has_good_camel:
         sentences.append(
-            "Excellent anti-cavalry options from both stable and barracks"
+            "Excellent anti-cavalry options from both spears and camels"
             " -- very hard for cavalry-heavy opponents to find an opening."
         )
-    elif anticav_cav_strong:
-        ac_entry = power_units.get("anti_cavalry")
-        ac_name = ac_entry["unit_name"] if ac_entry else "cavalry"
+    elif has_good_camel:
+        camel_data = power_units.get("cavalry", {}).get("camel")
+        camel_name = camel_data["unit_name"] if camel_data else "camels"
         sentences.append(
-            f"Can answer enemy cavalry with mobile options like {ac_name},"
+            f"Can answer enemy cavalry with mobile {camel_name},"
             " allowing counter-raids and flexible responses."
         )
-    elif anticav_inf_strong:
-        ac_entry = power_units.get("anti_cav_infantry")
-        ac_name = ac_entry["unit_name"] if ac_entry else "infantry"
+    elif has_good_spear:
+        spear_data = power_units.get("infantry", {}).get("spear")
+        spear_name = spear_data["unit_name"] if spear_data else "spearmen"
         sentences.append(
-            f"Strong infantry anti-cavalry with {ac_name} to hold"
-            " defensive positions against cavalry pushes."
+            f"Strong anti-cavalry defense with {spear_name} to hold"
+            " positions against cavalry pushes."
         )
     else:
         sentences.append(
@@ -557,13 +465,11 @@ def _generate_strategic_description(power_units, strong_areas, weak_areas):
             " -- beware of knight-heavy opponents."
         )
 
-    # Anti-archer assessment
-    if antiarcher_strong:
+    if has_good_skirm:
         sentences.append(
-            "Good tools against ranged units help shut down archer compositions."
+            "Good skirmishers help shut down archer compositions."
         )
-    elif not antiarcher_strong and not anticav_cav_strong and not anticav_inf_strong:
-        # Replace the generic "limited" with a broader message only if ALL counters are weak
+    elif not has_good_spear and not has_good_camel:
         sentences[-1] = (
             "Limited counter options mean this civ must play aggressively"
             " and press its advantage before opponents can mass their army."
@@ -575,45 +481,45 @@ def _generate_strategic_description(power_units, strong_areas, weak_areas):
         )
 
     # --- Part 3: Push Strategy ---
-    siege_entry = power_units.get("siege")
-    siege_units = siege_entry["all_units"] if siege_entry else []
-    infantry_strong = "infantry" in strong_areas
+    siege_data = power_units.get("siege", {})
+    ram_entry = siege_data.get("ram")
+    treb_entry = siege_data.get("trebuchet")
+    bbc_entry = siege_data.get("bombard_cannon")
 
-    # Check siege sub-lines
-    ram_units = [u for u in siege_units if u["line_slug"] == "ram"]
-    treb_units = [u for u in siege_units if u["line_slug"] == "trebuchet"]
-    bbc_units = [u for u in siege_units if u["line_slug"] == "bombard_cannon"]
-
-    has_good_ram = any(u["strength"] in ("signature", "strong") for u in ram_units)
-    has_good_treb = any(u["strength"] in ("signature", "strong") for u in treb_units)
-    has_good_bbc = any(u["strength"] in ("signature", "strong") for u in bbc_units)
-
-    ranged_strong = "ranged" in strong_areas
-    best_inf_name = ""
-    if infantry_strong:
-        inf_entry = power_units.get("infantry")
-        best_inf_name = inf_entry["unit_name"] if inf_entry else "infantry"
-    best_ranged_name = ""
-    if ranged_strong:
-        ranged_entry = power_units.get("ranged")
-        best_ranged_name = ranged_entry["unit_name"] if ranged_entry else "ranged units"
+    has_good_ram = ram_entry and ram_entry["strength"] in ("signature", "strong")
+    has_good_treb = treb_entry and treb_entry["strength"] in ("signature", "strong")
+    has_good_bbc = bbc_entry and bbc_entry["strength"] in ("signature", "strong")
+    infantry_strong = "infantry" in strong_columns
+    ranged_strong = "ranged" in strong_columns
 
     if infantry_strong and has_good_ram:
+        inf_data = power_units.get("infantry", {})
+        best_inf = None
+        for entry in inf_data.values():
+            if entry and (best_inf is None or entry.get("percentile", 0) > best_inf.get("percentile", 0)):
+                best_inf = entry
+        inf_name = best_inf["unit_name"] if best_inf else "infantry"
         sentences.append(
-            f"An infantry ram push is the signature play -- use {best_inf_name}"
+            f"An infantry ram push is the signature play -- use {inf_name}"
             " as a meatshield to protect rams pushing into enemy bases."
         )
     elif ranged_strong and has_good_treb:
+        rng_data = power_units.get("ranged", {})
+        best_rng = None
+        for entry in rng_data.values():
+            if entry and (best_rng is None or entry.get("percentile", 0) > best_rng.get("percentile", 0)):
+                best_rng = entry
+        rng_name = best_rng["unit_name"] if best_rng else "ranged units"
         sentences.append(
             f"Pushing behind trebuchets maximizes the ranged advantage"
-            f" -- set up trebs and let {best_ranged_name} protect them."
+            f" -- set up trebs and let {rng_name} protect them."
         )
     elif has_good_bbc:
         sentences.append(
             "Bombard Cannons provide long-range siege power"
             " for breaking through fortified positions."
         )
-    elif "siege" in strong_areas:
+    elif "siege" in strong_columns:
         sentences.append(
             "Solid siege options give flexibility in how to close out games."
         )
@@ -631,11 +537,9 @@ def compute_civ_power_units():
     conn = _get_db()
     rc = conn.cursor()
 
-    # Get all civ names
     rc.execute("SELECT DISTINCT civ_name FROM battle_scores ORDER BY civ_name")
     all_civs = [row["civ_name"] for row in rc.fetchall()]
 
-    # Build reference tech sets and line counts per age
     reference_techs_by_age = {
         "imperial": _build_reference_techs(conn, "Imperial"),
         "castle": _build_reference_techs(conn, "Castle"),
@@ -656,122 +560,90 @@ def compute_civ_power_units():
             line_counts = line_counts_by_age[age_key]
             power_units = {}
 
-            # Batch-fetch all techs and effects for this civ (2 queries instead of N*3)
             techs_by_slug, effects_by_slug = _batch_fetch_civ_tech_data(conn, civ, db_age)
 
-            # Pre-fetch stable unit_slugs for this civ (used to split anti_cav_pool)
-            rc.execute(
-                """SELECT DISTINCT unit_slug FROM battle_scores
-                   WHERE civ_name = ? AND LOWER(age) = ? AND line_slug = 'stable'""",
-                [civ, age_key],
-            )
-            stable_slugs = {row["unit_slug"] for row in rc.fetchall()}
+            for col_key, line_slugs in COLUMN_DEFS.items():
+                col_data = {}
+                for line_slug in line_slugs:
+                    score_type = LINE_SCORE_TYPE[line_slug]
+                    rc.execute(
+                        """SELECT unit_slug, line_slug, score_value, rank, median_delta
+                            FROM battle_scores
+                            WHERE civ_name = ?
+                              AND LOWER(age) = ?
+                              AND score_type = ?
+                              AND line_slug = ?
+                            ORDER BY score_value DESC
+                            LIMIT 1""",
+                        [civ, age_key, score_type, line_slug],
+                    )
+                    row = rc.fetchone()
 
-            for role_key, line_slugs, score_type in ROLE_DEFS:
-                # Safe: placeholders generated from hardcoded ROLE_DEFS constants
-                placeholders = ",".join("?" for _ in line_slugs)
-                rc.execute(
-                    f"""SELECT unit_slug, line_slug, score_value, rank, median_delta
-                        FROM battle_scores
-                        WHERE civ_name = ?
-                          AND LOWER(age) = ?
-                          AND score_type = ?
-                          AND line_slug IN ({placeholders})
-                        ORDER BY score_value DESC""",
-                    [civ, age_key, score_type] + line_slugs,
-                )
-                rows = rc.fetchall()
-                # Filter out trebuchets for civs that don't have them
-                if civ in CIVS_WITHOUT_TREBUCHET:
-                    rows = [r for r in rows
-                            if r["unit_slug"] not in _TREBUCHET_SLUGS]
-                all_units = [
-                    _build_unit_entry(row, civ, conn, db_age, reference_techs,
-                                      techs_by_slug, effects_by_slug, line_counts, score_type)
-                    for row in rows
-                ]
-                power_units[role_key] = _build_role_dict(all_units, role_key)
+                    if row and civ in CIVS_WITHOUT_TREBUCHET and row["unit_slug"] in _TREBUCHET_SLUGS:
+                        row = None
 
-            # Anti-cav (cavalry): ALL stable units with their anti_cav score
-            rc.execute(
-                """SELECT unit_slug, line_slug, score_value, rank, median_delta
-                   FROM battle_scores
-                   WHERE civ_name = ?
-                     AND LOWER(age) = ?
-                     AND score_type = 'anti_cav'
-                     AND line_slug = 'stable'
-                   ORDER BY score_value DESC""",
-                [civ, age_key],
-            )
-            ac_stable_units = [
-                _build_unit_entry(row, civ, conn, db_age, reference_techs,
-                                  techs_by_slug, effects_by_slug, line_counts, "anti_cav")
-                for row in rc.fetchall()
-            ]
-            power_units["anti_cavalry"] = _build_role_dict(ac_stable_units, "anti_cavalry")
+                    if row:
+                        entry = _build_unit_entry(
+                            row, civ, conn, db_age, reference_techs,
+                            techs_by_slug, effects_by_slug, line_counts, score_type
+                        )
+                        col_data[line_slug] = entry
+                    else:
+                        col_data[line_slug] = None
 
-            # Anti-cav (infantry): infantry units from the anti_cav_pool
-            rc.execute(
-                """SELECT unit_slug, line_slug, score_value, rank, median_delta
-                   FROM battle_scores
-                   WHERE civ_name = ?
-                     AND LOWER(age) = ?
-                     AND score_type = 'anti_cav_combined'
-                     AND line_slug = 'anti_cav_pool'
-                   ORDER BY score_value DESC""",
-                [civ, age_key],
-            )
-            ac_inf_units = [
-                _build_unit_entry(row, civ, conn, db_age, reference_techs,
-                                  techs_by_slug, effects_by_slug, line_counts, "anti_cav_combined")
-                for row in rc.fetchall()
-                if row["unit_slug"] not in stable_slugs
-            ]
-            power_units["anti_cav_infantry"] = _build_role_dict(ac_inf_units, "anti_cav_infantry")
+                power_units[col_key] = col_data
 
-            # Build strength profile
+            # Build strength profile (per-line)
             strength_profile = {}
-            for role_key in ["cavalry", "ranged", "infantry", "anti_cavalry", "anti_cav_infantry", "anti_archer", "siege"]:
-                entry = power_units.get(role_key)
-                strength_profile[role_key] = entry["strength"] if entry else "weak"
+            for col_key, line_slugs in COLUMN_DEFS.items():
+                for line_slug in line_slugs:
+                    entry = power_units[col_key].get(line_slug)
+                    strength_profile[line_slug] = entry["strength"] if entry else None
+
+            # Determine which columns have at least one strong/signature line
+            strong_columns = []
+            for col_key, line_slugs in COLUMN_DEFS.items():
+                if any(strength_profile.get(ls) in ("strong", "signature") for ls in line_slugs):
+                    strong_columns.append(col_key)
 
             # Build strategic summary
-            main_roles = ["cavalry", "ranged", "infantry", "anti_cavalry", "anti_cav_infantry", "anti_archer", "siege"]
+            all_line_slugs = [ls for slugs in COLUMN_DEFS.values() for ls in slugs]
             strong_areas = []
             weak_areas = []
             signature_areas = []
-            for rk in main_roles:
-                entry = power_units.get(rk)
-                if not entry:
-                    weak_areas.append(rk)
+            for ls in all_line_slugs:
+                s = strength_profile.get(ls)
+                if s is None:
                     continue
-                if entry.get("has_signature"):
-                    signature_areas.append(rk)
-                    strong_areas.append(rk)
-                elif entry["strength"] in ("strong", "signature"):
-                    strong_areas.append(rk)
+                if s == "signature":
+                    signature_areas.append(ls)
+                    strong_areas.append(ls)
+                elif s == "strong":
+                    strong_areas.append(ls)
+                elif s in ("weak", "poor"):
+                    weak_areas.append(ls)
 
-            total_strong = len(strong_areas)
-            if total_strong >= 2:
+            total_strong_cols = len(strong_columns)
+            if total_strong_cols >= 2:
                 summary_key = "multi_flexible"
-            elif total_strong >= 1:
+            elif total_strong_cols >= 1:
                 summary_key = "one_area_strong"
             else:
                 summary_key = "none_exceptional"
 
-            primary_strength = strong_areas[0] if strong_areas else None
+            primary_strength = strong_columns[0] if strong_columns else None
 
             strategic_summary = {
                 "strong_areas": strong_areas,
+                "strong_columns": strong_columns,
                 "weak_areas": weak_areas,
                 "signature_areas": signature_areas,
                 "summary_key": summary_key,
                 "primary_strength": primary_strength,
             }
 
-            # Generate strategic description paragraph
             strategic_description = _generate_strategic_description(
-                power_units, strong_areas, weak_areas
+                power_units, strong_columns, weak_areas, strength_profile
             )
 
             civ_data[age_key] = {
@@ -1022,29 +894,38 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
 
     # Step 1: Identify opponent's strengths (strong or signature)
     opponent_strengths = []
-    for role_key in ["cavalry", "ranged", "infantry", "siege"]:
-        entry = civ_b_data["power_units"].get(role_key)
-        if entry and entry["strength"] in ("strong", "signature"):
+    for col_key in ["cavalry", "ranged", "infantry", "siege"]:
+        col_data = civ_b_data["power_units"].get(col_key, {})
+        # Find the best (highest percentile) entry in this column
+        best_entry = None
+        for line_slug, entry in col_data.items():
+            if entry and entry["strength"] in ("strong", "signature"):
+                if best_entry is None or entry.get("median_delta", 0) > best_entry.get("median_delta", 0):
+                    best_entry = entry
+        if best_entry:
             opponent_strengths.append({
-                "role": role_key,
-                "unit_slug": entry["unit_slug"],
-                "strength": entry["strength"],
-                "median_delta": entry["median_delta"],
+                "role": col_key,
+                "unit_slug": best_entry["unit_slug"],
+                "strength": best_entry["strength"],
+                "median_delta": best_entry["median_delta"],
             })
 
     # If opponent has no clear strengths, use their best roles anyway
     if not opponent_strengths:
-        best_role = max(
-            ["cavalry", "ranged", "infantry"],
-            key=lambda r: (civ_b_data["power_units"].get(r) or {}).get("median_delta", -999),
-        )
-        entry = civ_b_data["power_units"].get(best_role)
-        if entry:
+        best_col = None
+        best_entry = None
+        for col_key in ["cavalry", "ranged", "infantry"]:
+            col_data = civ_b_data["power_units"].get(col_key, {})
+            for line_slug, entry in col_data.items():
+                if entry and (best_entry is None or entry.get("median_delta", 0) > best_entry.get("median_delta", 0)):
+                    best_entry = entry
+                    best_col = col_key
+        if best_entry:
             opponent_strengths.append({
-                "role": best_role,
-                "unit_slug": entry["unit_slug"],
-                "strength": entry["strength"],
-                "median_delta": entry["median_delta"],
+                "role": best_col,
+                "unit_slug": best_entry["unit_slug"],
+                "strength": best_entry["strength"],
+                "median_delta": best_entry["median_delta"],
             })
 
     # Step 2: Find counter candidates from battle_scores

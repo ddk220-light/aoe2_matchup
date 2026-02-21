@@ -5,70 +5,47 @@
    ========================================================================== */
 
 /* ---- Constants ---- */
-const ROLE_ORDER = ["cavalry", "ranged", "infantry", "anti_cavalry", "anti_cav_infantry", "anti_archer", "siege"];
-const ROLE_LABELS = {
+const COLUMN_DEFS = {
+    cavalry: ["light_cav", "knight", "camel", "steppe_lancer", "elephant"],
+    ranged: ["skirmisher", "archer", "cav_archer", "gunpowder", "scorpion"],
+    infantry: ["militia", "spear", "shock_infantry"],
+    siege: ["ram", "bombard_cannon", "trebuchet"],
+};
+
+const COLUMN_LABELS = {
     cavalry: "Cavalry",
     ranged: "Ranged",
     infantry: "Infantry",
-    anti_cavalry: "Anti-Cavalry",
-    anti_cav_infantry: "Anti-Cavalry",
-    anti_archer: "Anti-Archer",
     siege: "Siege",
 };
+
+const LINE_NAMES = {
+    light_cav: "Light Cavalry",
+    knight: "Knight Line",
+    camel: "Camel Line",
+    steppe_lancer: "Steppe Lancer",
+    elephant: "Battle Elephant",
+    skirmisher: "Skirmisher",
+    archer: "Archer Line",
+    cav_archer: "Cavalry Archer",
+    gunpowder: "Gunpowder",
+    scorpion: "Scorpion",
+    militia: "Militia Line",
+    spear: "Spear Line",
+    shock_infantry: "Shock Infantry",
+    ram: "Rams",
+    bombard_cannon: "Bombard Cannon",
+    trebuchet: "Trebuchet",
+};
+
+const COLUMN_ORDER = ["cavalry", "ranged", "infantry", "siege"];
+
 const STRENGTH_COLORS = {
     signature: { bg: "rgba(201, 168, 76, 0.2)", text: "var(--gold)", label: "Signature" },
     strong: { bg: "rgba(46, 204, 113, 0.15)", text: "#2ecc71", label: "Strong" },
     average: { bg: "rgba(255, 255, 255, 0.05)", text: "var(--text-muted)", label: "Average" },
     weak: { bg: "rgba(230, 126, 34, 0.15)", text: "#e67e22", label: "Weak" },
     poor: { bg: "rgba(231, 76, 60, 0.15)", text: "#e74c3c", label: "Poor" },
-};
-
-/* 4-column layout: anti-cavalry nests under cavalry, anti-archer nests under ranged */
-const COLUMN_LAYOUT = [
-    { main: "cavalry", sub: "anti_cavalry" },
-    { main: "ranged", sub: "anti_archer" },
-    { main: "infantry", sub: "anti_cav_infantry" },
-    { main: "siege", sub: null },
-];
-
-const NARRATIVES = {
-    cavalry: {
-        cav_all_strong: "This civ has good cavalry, and can be a good option for mobility.",
-        cav_one_strong: "This civ's mobility is centered around {best_unit}.",
-        cav_strong_slow: "The cavalry is strong, but lacks mobility.",
-        cav_trash_only: "Mobility is only available late game with trash units.",
-        cav_none: "Cavalry line is not a strong suite for this civ.",
-    },
-    ranged: {
-        ranged_strong: "This civ has strong ranged options, so pushing a single position can be very effective.",
-        ranged_one_strong: "Ranged options are limited, but {best_unit} stands out.",
-        ranged_none: "Ranged units are not a strength for this civ.",
-    },
-    infantry: {
-        inf_strong: "This civ has strong infantry that can help push with siege.",
-        inf_one_strong: "Infantry options center around {best_unit} for frontline pressure.",
-        inf_none: "Infantry is not a strong area for this civ.",
-    },
-    anti_cavalry: {
-        anticav_strong: "Strong cavalry options for countering enemy cavalry.",
-        anticav_one_strong: "{best_unit} provides a mobile anti-cavalry option.",
-        anticav_weak: "Cavalry anti-cavalry options are limited.",
-    },
-    anti_cav_infantry: {
-        anticav_strong: "Strong infantry to hold the line against cavalry.",
-        anticav_one_strong: "{best_unit} anchors the anti-cavalry defense.",
-        anticav_weak: "Infantry anti-cavalry options are limited.",
-    },
-    anti_archer: {
-        antiarcher_strong: "Strong anti-archer options give this civ tools to shut down enemy ranged units.",
-        antiarcher_one_strong: "{best_unit} provides solid anti-archer capability.",
-        antiarcher_weak: "Anti-archer options are limited \u2014 be cautious against archer-heavy opponents.",
-    },
-    siege: {
-        siege_strong: "Strong siege options for pushing fortified positions.",
-        siege_one_strong: "{best_unit} is a notable siege option.",
-        siege_weak: "Siege is not a strength \u2014 consider alternative push strategies.",
-    },
 };
 
 const SUMMARY_TEMPLATES = {
@@ -174,9 +151,7 @@ function renderAnalysis(civName, data) {
     var strategicDescription = data.strategic_description || "";
     var civSlug = civName.toLowerCase();
     var emblemUrl = CIV_EMBLEM_BASE + civSlug + ".png";
-
-    var strongAreas = summary.strong_areas || [];
-    var weakAreas = summary.weak_areas || [];
+    var strongColumns = summary.strong_columns || [];
     var html = '';
 
     /* Hero: emblem + name + strategic description side-by-side */
@@ -188,69 +163,45 @@ function renderAnalysis(civName, data) {
     html += '</div>';
     html += '</div>';
 
-    /* Role columns grid — 4 columns with nested sub-sections */
+    /* Role columns grid — 4 columns with per-line sections */
     html += '<div class="role-columns">';
 
-    for (var i = 0; i < COLUMN_LAYOUT.length; i++) {
-        var col = COLUMN_LAYOUT[i];
-        var role = col.main;
-        var subRole = col.sub;
-        var roleData = powerUnits[role];
-        var subData = subRole ? powerUnits[subRole] : null;
-        var roleLabel = ROLE_LABELS[role] || role;
-        var hasSig = roleData && roleData.has_signature;
-        var isStrong = strongAreas.indexOf(role) !== -1;
-        var isWeak = weakAreas.indexOf(role) !== -1;
-        var colClass = "role-column";
-        if (isStrong) colClass += " col-strong";
-        if (isWeak) colClass += " col-weak";
-        if (hasSig) colClass += " has-signature";
+    for (var i = 0; i < COLUMN_ORDER.length; i++) {
+        var colKey = COLUMN_ORDER[i];
+        var lineSlugs = COLUMN_DEFS[colKey];
+        var colData = powerUnits[colKey] || {};
+        var colLabel = COLUMN_LABELS[colKey];
 
-        html += '<div class="' + colClass + '">';
-
-        /* Main role header */
-        html += '<div class="role-header">' + escapeHtml(roleLabel) + '</div>';
-
-        if (roleData) {
-            var narrativeText = getNarrative(role, roleData);
-            if (narrativeText) {
-                html += '<div class="role-narrative">' + escapeHtml(narrativeText) + '</div>';
-            }
-
-            var allUnits = roleData.all_units || [];
-            for (var j = 0; j < allUnits.length; j++) {
-                html += '<div class="unit-wrap">';
-                html += renderUnitBadge(allUnits[j]);
-                html += '</div>';
-            }
-        } else {
-            html += '<div class="role-narrative">Not available</div>';
+        /* Check if column has any strong/signature line */
+        var colHasSig = false;
+        var colIsStrong = strongColumns.indexOf(colKey) !== -1;
+        for (var k = 0; k < lineSlugs.length; k++) {
+            var entry = colData[lineSlugs[k]];
+            if (entry && entry.is_signature) colHasSig = true;
         }
 
-        /* Sub-role section (anti-cavalry under cavalry, anti-archer under ranged) */
-        if (subData) {
-            var subLabel = ROLE_LABELS[subRole] || subRole;
-            var subHasSig = subData.has_signature;
-            var subIsStrong = strongAreas.indexOf(subRole) !== -1;
-            var subIsWeak = weakAreas.indexOf(subRole) !== -1;
-            var subClass = "role-sub-section";
-            if (subHasSig) subClass += " sub-signature";
-            else if (subIsStrong) subClass += " sub-strong";
-            else if (subIsWeak) subClass += " sub-weak";
+        var colClass = "role-column";
+        if (colIsStrong) colClass += " col-strong";
+        if (colHasSig) colClass += " has-signature";
 
-            html += '<div class="' + subClass + '">';
-            html += '<div class="role-sub-header">' + escapeHtml(subLabel) + '</div>';
+        html += '<div class="' + colClass + '">';
+        html += '<div class="role-header">' + escapeHtml(colLabel) + '</div>';
 
-            var subNarrative = getNarrative(subRole, subData);
-            if (subNarrative) {
-                html += '<div class="role-sub-narrative">' + escapeHtml(subNarrative) + '</div>';
-            }
+        /* Render each unit line */
+        for (var j = 0; j < lineSlugs.length; j++) {
+            var lineSlug = lineSlugs[j];
+            var lineEntry = colData[lineSlug];
+            var lineName = LINE_NAMES[lineSlug] || slugToName(lineSlug);
 
-            var subUnits = subData.all_units || [];
-            for (var j = 0; j < subUnits.length; j++) {
+            html += '<div class="line-section">';
+            html += '<div class="line-label">' + escapeHtml(lineName) + '</div>';
+
+            if (lineEntry) {
                 html += '<div class="unit-wrap">';
-                html += renderUnitBadge(subUnits[j]);
+                html += renderUnitBadge(lineEntry);
                 html += '</div>';
+            } else {
+                html += '<div class="line-unavailable">\u2014</div>';
             }
             html += '</div>';
         }
@@ -259,22 +210,7 @@ function renderAnalysis(civName, data) {
     }
 
     html += '</div>'; /* end role-columns */
-
     return html;
-}
-
-/* ---- Narrative lookup ---- */
-function getNarrative(role, roleData) {
-    var key = roleData.narrative_key;
-    if (!key) return null;
-    var templates = NARRATIVES[role];
-    if (!templates) return null;
-    var template = templates[key];
-    if (!template) return null;
-
-    /* Substitute {best_unit} with the display name of the best unit */
-    var bestUnitName = roleData.unit_name || slugToName(roleData.best_unit || "");
-    return template.replace("{best_unit}", bestUnitName);
 }
 
 /* ---- Unit badge renderer ---- */
@@ -365,12 +301,12 @@ function renderStrategicSummaryInline(summary, strategicDescription) {
         /* Fallback to old template if no description generated */
         var template = SUMMARY_TEMPLATES[summary.summary_key];
         if (template) {
-            var strongAreas = summary.strong_areas || [];
+            var strongColumns = summary.strong_columns || [];
             var primaryStrength = summary.primary_strength
-                ? (ROLE_LABELS[summary.primary_strength] || summary.primary_strength)
+                ? (COLUMN_LABELS[summary.primary_strength] || summary.primary_strength)
                 : "";
-            var areasText = strongAreas.map(function (a) {
-                return ROLE_LABELS[a] || a;
+            var areasText = strongColumns.map(function (a) {
+                return COLUMN_LABELS[a] || a;
             }).join(", ");
             var narrativeText = template
                 .replace("{areas}", areasText)

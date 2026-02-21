@@ -204,48 +204,26 @@
     text-align: center;
 }
 
-/* --- Role Narrative (clamped to 3 lines for cross-column alignment) --- */
-.role-narrative {
-    color: var(--text-muted);
-    font-size: 0.75rem;
-    line-height: 1.4;
-    margin-bottom: 10px;
-    height: 4.2em; /* exactly 3 lines × 1.4 line-height */
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
+/* --- Line Section (individual unit line within a column) --- */
+.line-section {
+    margin-bottom: 6px;
 }
 
-/* --- Role Sub-Section (anti-cav under cavalry, anti-archer under ranged) --- */
-.role-sub-section {
-    margin-top: 16px;
-    padding-top: 14px;
-    border-top: 1px dashed rgba(255, 255, 255, 0.1);
-}
-.role-sub-header {
+.line-label {
     color: var(--text-muted);
-    font-size: 0.7rem;
-    font-weight: 600;
+    font-size: 0.68rem;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-bottom: 4px;
-    text-align: center;
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+    padding-left: 2px;
 }
-.role-sub-narrative {
+
+.line-unavailable {
     color: var(--text-dim);
-    font-size: 0.72rem;
-    line-height: 1.35;
-    margin-bottom: 8px;
-}
-.role-sub-section.sub-strong .role-sub-header {
-    color: #2ecc71;
-}
-.role-sub-section.sub-signature .role-sub-header {
-    color: var(--gold);
-}
-.role-sub-section.sub-weak .role-sub-header {
-    color: rgba(231, 76, 60, 0.7);
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    opacity: 0.4;
 }
 
 /* --- Unit Wrap (entrance animation) --- */
@@ -570,9 +548,6 @@
 [data-theme="light"] .rank-signature {
     background: rgba(139, 105, 20, 0.12);
 }
-[data-theme="light"] .role-sub-section {
-    border-top-color: rgba(0, 0, 0, 0.1);
-}
 [data-theme="light"] .loading-spinner .spinner {
     border-color: rgba(139, 105, 20, 0.15);
     border-top-color: var(--gold);
@@ -663,13 +638,7 @@
     .role-header {
         font-size: 0.7rem;
     }
-    .role-narrative {
-        font-size: 0.7rem;
-    }
-    .role-sub-header {
-        font-size: 0.65rem;
-    }
-    .role-sub-narrative {
-        font-size: 0.68rem;
+    .line-label {
+        font-size: 0.62rem;
     }
 }

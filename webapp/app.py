@@ -866,7 +866,7 @@ def api_ref_unit_line(line_slug):
         "imperial": [],
     }
 
-    # Load role scores from DB (keyed by "civ_name|unit_slug")
+    # Load role scores from DB (keyed by "age|civ_name|unit_slug")
     _db_role_scores = {}
     _score_line_slugs = [s for s in sub_lines if s in INFANTRY_LINE_SLUGS or s in ARCHERY_LINE_SLUGS]
     # For stable/siege virtual lines, scores are stored under the virtual line_slug in DB
@@ -877,18 +877,18 @@ def api_ref_unit_line(line_slug):
     if _score_line_slugs:
         placeholders = ",".join("?" for _ in _score_line_slugs)
         rc.execute(
-            f"SELECT civ_name, unit_slug, score_type, score_value FROM battle_scores WHERE line_slug IN ({placeholders})",
+            f"SELECT age, civ_name, unit_slug, score_type, score_value FROM battle_scores WHERE line_slug IN ({placeholders})",
             _score_line_slugs,
         )
         for bs_row in rc.fetchall():
-            uk = f"{bs_row['civ_name']}|{bs_row['unit_slug']}"
+            uk = f"{bs_row['age'].lower()}|{bs_row['civ_name']}|{bs_row['unit_slug']}"
             _db_role_scores.setdefault(uk, {})[bs_row["score_type"]] = bs_row[
                 "score_value"
             ]
 
     def _attach_scores(entry, age_key, sub_slug):
         """Attach battle scores: DB role scores for infantry/archery/stable/siege, JSON for other lines."""
-        unit_key = f"{entry['civ_name']}|{entry['unit_slug']}"
+        unit_key = f"{age_key}|{entry['civ_name']}|{entry['unit_slug']}"
         if (sub_slug in INFANTRY_LINE_SLUGS or sub_slug in ARCHERY_LINE_SLUGS or sub_slug in STABLE_LINE_SLUGS or sub_slug in SIEGE_LINE_SLUGS) and _db_role_scores:
             rs = _db_role_scores.get(unit_key, {})
             for rk, rv in rs.items():
@@ -1030,9 +1030,9 @@ def api_ref_unit_line(line_slug):
                     _attach_special(entry)
                     result[age_key].append(entry)
 
-    # Stable line is Imperial-only; exclude Elephant Archers (ranged, already in archery rankings)
+    # Exclude Elephant Archers from stable (ranged, already in archery rankings)
     if line_slug == "stable":
-        result["castle"] = []
+        result["castle"] = [u for u in result["castle"] if "ele_archer" not in u["unit_slug"]]
         result["imperial"] = [u for u in result["imperial"] if "ele_archer" not in u["unit_slug"]]
 
     ref_conn.close()

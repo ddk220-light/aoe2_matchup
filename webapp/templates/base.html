@@ -4,7 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}AoE2 Unit Analyzer{% endblock %}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Alegreya+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <script>
+        /* Apply saved theme before paint to prevent flash */
+        (function() {
+            var t = localStorage.getItem('aoe2-theme');
+            if (t) document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
     {% block page_css %}{% endblock %}
 </head>
@@ -43,11 +50,46 @@
                 <span class="nav-tab-desc">Strengths &amp; strategy</span>
             </a>
         </div>
+        <div class="theme-toggle">
+            <button class="theme-toggle-btn" id="themeToggle" title="Toggle light/dark mode">
+                <span class="toggle-icon" id="themeIcon">&#9790;</span>
+                <span class="theme-toggle-label" id="themeLabel">Light</span>
+            </button>
+        </div>
     </nav>
 
     {% block content %}{% endblock %}
 
     <script src="{{ url_for('static', filename='js/constants.js') }}"></script>
+    <script>
+        (function() {
+            var btn   = document.getElementById('themeToggle');
+            var icon  = document.getElementById('themeIcon');
+            var label = document.getElementById('themeLabel');
+
+            function applyTheme(theme) {
+                if (theme === 'light') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    icon.innerHTML  = '&#9728;';
+                    label.textContent = 'Dark';
+                } else {
+                    document.documentElement.removeAttribute('data-theme');
+                    icon.innerHTML  = '&#9790;';
+                    label.textContent = 'Light';
+                }
+            }
+
+            /* Set correct icon on load */
+            applyTheme(localStorage.getItem('aoe2-theme') || 'dark');
+
+            btn.addEventListener('click', function() {
+                var current = document.documentElement.getAttribute('data-theme');
+                var next    = current === 'light' ? 'dark' : 'light';
+                localStorage.setItem('aoe2-theme', next);
+                applyTheme(next);
+            });
+        })();
+    </script>
     {% block page_js %}{% endblock %}
 </body>
 </html>

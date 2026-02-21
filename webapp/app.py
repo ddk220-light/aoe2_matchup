@@ -813,7 +813,7 @@ TEAM_ANALYSIS_STAGES = {
         },
     },
     "siege": {
-        "line_slugs": ["siege"],
+        "line_slugs": ["ram", "trebuchet", "bombard_cannon"],
         "tabs": {
             "overall":      {"score_type": "anti_building_score", "label": "Overall"},
             "time_to_kill": {"score_type": "time_to_kill",        "label": "Time to Kill"},
@@ -875,11 +875,12 @@ def api_ref_unit_line(line_slug):
     # Load role scores from DB (keyed by "age|civ_name|unit_slug")
     _db_role_scores = {}
     _score_line_slugs = [s for s in sub_lines if s in INFANTRY_LINE_SLUGS or s in ARCHERY_LINE_SLUGS]
-    # For stable/siege virtual lines, scores are stored under the virtual line_slug in DB
+    # For stable virtual line, scores are stored under the virtual line_slug in DB
+    # For siege, scores are stored per sub-line (ram, trebuchet, bombard_cannon)
     if line_slug == "stable":
         _score_line_slugs = ["stable"]
     elif line_slug == "siege":
-        _score_line_slugs = ["siege"]
+        _score_line_slugs = ["ram", "trebuchet", "bombard_cannon"]
     if _score_line_slugs:
         placeholders = ",".join("?" for _ in _score_line_slugs)
         rc.execute(

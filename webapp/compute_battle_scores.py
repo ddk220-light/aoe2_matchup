@@ -2165,6 +2165,22 @@ def write_role_scores_to_db(role_scores_dict, line_slugs, score_types):
     print(f"  Wrote {len(rows)} battle_scores rows to DB")
 
 
+def _cleanup_stale_siege_entries():
+    """Remove stale pooled 'siege' line_slug entries from battle_scores.
+
+    Siege scores are stored per sub-line (ram, trebuchet, bombard_cannon).
+    Any entries with line_slug='siege' are stale from an older format.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("DELETE FROM battle_scores WHERE line_slug='siege'")
+    deleted = c.rowcount
+    conn.commit()
+    conn.close()
+    if deleted:
+        print(f"  Cleaned up {deleted} stale pooled 'siege' entries")
+
+
 def compute_rankings():
     """Compute rank and median_delta for every (line_slug, age, score_type) group.
 
@@ -2264,6 +2280,8 @@ def main():
         siege_start = time.time()
         siege_scores = compute_siege_antibuilding_scores()
         write_role_scores_to_db(siege_scores, SIEGE_LINE_SLUGS, SIEGE_SCORE_TYPES)
+        # Clean up stale pooled "siege" entries (scores are now per sub-line)
+        _cleanup_stale_siege_entries()
         total_siege = sum(len(v) for v in siege_scores.values())
         print(
             f"Siege anti-building: {total_siege} units in {time.time() - siege_start:.1f}s"
@@ -2456,6 +2474,8 @@ def main():
     siege_start = time.time()
     siege_scores = compute_siege_antibuilding_scores()
     write_role_scores_to_db(siege_scores, SIEGE_LINE_SLUGS, SIEGE_SCORE_TYPES)
+    # Clean up stale pooled "siege" entries (scores are now per sub-line)
+    _cleanup_stale_siege_entries()
     total_siege = sum(len(v) for v in siege_scores.values())
     print(
         f"Siege anti-building: {total_siege} units in {time.time() - siege_start:.1f}s"

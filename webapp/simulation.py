@@ -407,9 +407,10 @@ def simulate_battle(
     is_ranged2 = range2 >= 1.0 and not (melee_dmg2 and range2 < 2.0)
     speed1 = unit1["movement_speed"]
     speed2 = unit2["movement_speed"]
-    # Accuracy: main projectile hit chance (0-100). Extra projectiles use ~50% (scatter).
-    accuracy1 = unit1.get("accuracy", 100) / 100.0  # fraction 0.0-1.0
-    accuracy2 = unit2.get("accuracy", 100) / 100.0
+    # Accuracy: primary projectiles always hit (distance reduces miss chance to ~0).
+    # Only secondary/extra projectiles use accuracy (they scatter).
+    accuracy1 = 1.0  # primary projectile always hits
+    accuracy2 = 1.0  # primary projectile always hits
     EXTRA_PROJ_ACCURACY = 0.5  # secondary projectiles scatter significantly
 
     # Attack timing
@@ -1746,7 +1747,7 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
             is_rng = rng >= 1.0 and not (m_dmg and rng < 2.0)
             aspd = cu["attack_speed"] or 0.5
             rl = 1.0 / aspd if aspd > 0 else 2.0
-            acc = cu.get("accuracy", 100) / 100.0
+            acc = 1.0  # primary projectile always hits; only extra projectiles scatter
             spd = cu["movement_speed"]
             regen = cu["hp_regen"] / 60.0 * DT if cu["hp_regen"] > 0 else 0.0
 

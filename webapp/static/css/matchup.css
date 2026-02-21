@@ -484,6 +484,102 @@
     text-align: center;
 }
 
+/* --- Light Mode Overrides --- */
+[data-theme="light"] .civ-card {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+[data-theme="light"] .civ-card:hover {
+    border-color: rgba(139, 105, 20, 0.4);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+[data-theme="light"] .civ-card.selected-civ1 {
+    background: rgba(139, 105, 20, 0.1);
+}
+[data-theme="light"] .analysis-hero {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(139, 105, 20, 0.2);
+}
+[data-theme="light"] .role-column {
+    background: rgba(0, 0, 0, 0.02);
+    border-top-color: rgba(0, 0, 0, 0.15);
+}
+[data-theme="light"] .role-column.col-strong {
+    border-top-color: #2a9a50;
+    background: rgba(42, 154, 80, 0.06);
+}
+[data-theme="light"] .role-column.has-signature {
+    border-top-color: var(--gold);
+    background: rgba(139, 105, 20, 0.06);
+}
+[data-theme="light"] .unit-badge {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.1);
+    border-left-color: rgba(0, 0, 0, 0.15);
+}
+[data-theme="light"] .unit-badge:hover {
+    background: rgba(0, 0, 0, 0.07);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+[data-theme="light"] .unit-badge.signature {
+    border-color: rgba(139, 105, 20, 0.3);
+    border-left-color: var(--gold);
+    background: linear-gradient(135deg, rgba(139, 105, 20, 0.08) 0%, rgba(139, 105, 20, 0.03) 100%);
+    box-shadow: 0 0 12px rgba(139, 105, 20, 0.08);
+}
+[data-theme="light"] .unit-badge-tooltip {
+    background: rgba(244, 240, 232, 0.97);
+    border-color: rgba(139, 105, 20, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+[data-theme="light"] .unit-badge-tooltip::after {
+    border-top-color: rgba(244, 240, 232, 0.97);
+}
+[data-theme="light"] .unit-badge-icon {
+    background: rgba(0, 0, 0, 0.08);
+}
+[data-theme="light"] .signature-icon {
+    background: rgba(0, 0, 0, 0.08);
+}
+[data-theme="light"] .signature-star {
+    background: var(--bg-deep);
+}
+[data-theme="light"] .pill-strong {
+    background: rgba(42, 154, 80, 0.12);
+    color: #1f7a3a;
+}
+[data-theme="light"] .pill-weak {
+    background: rgba(200, 60, 50, 0.1);
+    color: #b83030;
+}
+[data-theme="light"] .rank-good {
+    background: rgba(42, 154, 80, 0.12);
+    color: #1f7a3a;
+}
+[data-theme="light"] .rank-weak {
+    background: rgba(200, 60, 50, 0.1);
+    color: #b83030;
+}
+[data-theme="light"] .rank-average {
+    background: rgba(0, 0, 0, 0.05);
+}
+[data-theme="light"] .rank-signature {
+    background: rgba(139, 105, 20, 0.12);
+}
+[data-theme="light"] .role-sub-section {
+    border-top-color: rgba(0, 0, 0, 0.1);
+}
+[data-theme="light"] .loading-spinner .spinner {
+    border-color: rgba(139, 105, 20, 0.15);
+    border-top-color: var(--gold);
+}
+[data-theme="light"] .tooltip-bonus {
+    color: #1f7a3a;
+}
+[data-theme="light"] .tooltip-missing {
+    color: #b83030;
+}
+
 /* --- Responsive: 768px — 2 columns --- */
 @media (max-width: 768px) {
     .analysis-hero {

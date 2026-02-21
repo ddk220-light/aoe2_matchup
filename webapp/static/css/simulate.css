@@ -403,9 +403,10 @@
     border: 1px solid var(--card-border);
     border-radius: 8px;
     padding: 12px;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     max-height: calc(100vh - 120px);
     overflow-y: auto;
+    font-variant-numeric: tabular-nums;
 }
 .debug-panel h3 {
     font-family: "Cinzel", serif;
@@ -483,6 +484,29 @@
     color: var(--gold);
     font-size: 1.4rem;
     font-weight: bold;
+}
+
+/* ---------- Light Mode Overrides ---------- */
+[data-theme="light"] .selection-badge {
+    background: rgba(0, 0, 0, 0.06);
+}
+[data-theme="light"] .civ-card {
+    background: rgba(0, 0, 0, 0.04);
+}
+[data-theme="light"] .civ-card:hover {
+    background: rgba(139, 105, 20, 0.1);
+}
+[data-theme="light"] .unit-pick {
+    background: rgba(0, 0, 0, 0.04);
+}
+[data-theme="light"] .unit-pick:hover {
+    background: rgba(139, 105, 20, 0.1);
+}
+[data-theme="light"] #battleCanvas {
+    background: #8aab6a;
+}
+[data-theme="light"] .formula-value .attack-val {
+    color: #b07a08;
 }
 
 /* ---------- Responsive ---------- */

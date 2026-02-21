@@ -330,6 +330,43 @@
     color: var(--text-muted);
 }
 
+/* --- Light Mode Overrides --- */
+[data-theme="light"] .team-panel {
+    background: rgba(0, 0, 0, 0.02);
+}
+[data-theme="light"] .team-panel .civ-card {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+[data-theme="light"] .team-panel .civ-card:hover {
+    border-color: rgba(139, 105, 20, 0.35);
+}
+[data-theme="light"] .team1-panel .civ-card.selected {
+    background: rgba(176, 41, 28, 0.1);
+}
+[data-theme="light"] .team2-panel .civ-card.selected {
+    background: rgba(26, 108, 160, 0.1);
+}
+[data-theme="light"] .stage-card {
+    background: rgba(0, 0, 0, 0.02);
+}
+[data-theme="light"] .unit-entry {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+[data-theme="light"] .stage-advantage.team1 {
+    background: rgba(176, 41, 28, 0.1);
+}
+[data-theme="light"] .stage-advantage.team2 {
+    background: rgba(26, 108, 160, 0.1);
+}
+[data-theme="light"] .stage-advantage.even {
+    background: rgba(0, 0, 0, 0.05);
+}
+[data-theme="light"] .team-slot .slot-emblem {
+    background: rgba(0, 0, 0, 0.06);
+}
+
 /* --- Responsive --- */
 @media (max-width: 768px) {
     .team-picker {

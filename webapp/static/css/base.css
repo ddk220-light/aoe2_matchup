@@ -26,6 +26,29 @@
     --team2:           #2980b9;
 }
 
+/* ---------- Light Theme ---------- */
+[data-theme="light"] {
+    --gold:            #8b6914;
+    --gold-light:      #a07a1a;
+    --gold-dark:       #6b4f0e;
+    --gold-glow:       rgba(139, 105, 20, 0.12);
+    --bg-deep:         #f4f0e8;
+    --bg:              #ece6da;
+    --bg-warm:         #e3dbd0;
+    --bg-hover:        #d9d0c2;
+    --border:          #c8bda8;
+    --border-light:    #b5a88e;
+    --text:            #2c2416;
+    --text-muted:      #6b5d48;
+    --text-dim:        #9a8b74;
+    --red-accent:      #f5e8e8;
+    --red-deep:        #faf2f0;
+    --green:           #3a7a22;
+    --red:             #b83030;
+    --team1:           #b0291c;
+    --team2:           #1a6ca0;
+}
+
 /* ---------- Reset ---------- */
 *, *::before, *::after {
     margin: 0;
@@ -35,12 +58,22 @@
 
 /* ---------- Base Typography ---------- */
 body {
-    font-family: "Alegreya Sans", sans-serif;
+    font-family: "Source Sans 3", "Alegreya Sans", sans-serif;
     background: var(--bg-deep);
     background-image: radial-gradient(ellipse at center, rgba(42, 31, 20, 0.4) 0%, transparent 70%);
     color: var(--text);
     min-height: 100vh;
     line-height: 1.5;
+}
+
+[data-theme="light"] body {
+    background-image: radial-gradient(ellipse at center, rgba(200, 189, 168, 0.3) 0%, transparent 70%);
+}
+
+/* Smooth theme transition */
+body,
+body *:not(#battleCanvas):not(.spinner):not(img) {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 h1, h2, h3 {
@@ -289,7 +322,7 @@ a:hover {
     border-radius: 6px;
     background: transparent;
     color: var(--text-muted);
-    font-family: "Alegreya Sans", sans-serif;
+    font-family: "Source Sans 3", "Alegreya Sans", sans-serif;
     font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
@@ -306,6 +339,61 @@ a:hover {
     color: var(--bg-deep);
     border-color: var(--gold-dark);
     font-weight: 600;
+}
+
+/* ---------- Light Mode Card Overrides ---------- */
+[data-theme="light"] .card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+[data-theme="light"] .card:hover {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12), 0 0 8px var(--gold-glow);
+}
+[data-theme="light"] .nav-tab:hover {
+    background: rgba(139, 105, 20, 0.06);
+}
+[data-theme="light"] .nav-tab.active .nav-tab-icon {
+    filter: sepia(1) saturate(4) hue-rotate(10deg) brightness(0.7);
+}
+
+/* ---------- Theme Toggle ---------- */
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+
+.theme-toggle-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-family: "Source Sans 3", "Alegreya Sans", sans-serif;
+    font-weight: 500;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.theme-toggle-btn:hover {
+    border-color: var(--gold-dark);
+    color: var(--text);
+    background: var(--bg-hover);
+}
+
+.theme-toggle-btn .toggle-icon {
+    font-size: 0.9rem;
+    line-height: 1;
+}
+
+.theme-toggle-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.02em;
 }
 
 /* ---------- Responsive ---------- */
@@ -338,6 +426,14 @@ a:hover {
 
     .nav-tab-label {
         font-size: 0.75rem;
+    }
+
+    .theme-toggle-label {
+        display: none;
+    }
+
+    .theme-toggle-btn {
+        padding: 6px 8px;
     }
 }
 

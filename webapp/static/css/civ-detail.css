@@ -282,10 +282,11 @@
     display: flex;
     align-items: baseline;
     gap: 8px;
-    padding: 5px 0;
+    padding: 6px 0;
     font-size: 0.9rem;
     flex-wrap: wrap;
     border-bottom: 1px solid rgba(90, 66, 40, 0.15);
+    font-variant-numeric: tabular-nums;
 }
 
 .stat-label {
@@ -409,6 +410,29 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
+}
+
+/* ---------- Light Mode Overrides ---------- */
+[data-theme="light"] .building-group {
+    background: rgba(0, 0, 0, 0.03);
+}
+[data-theme="light"] .modal {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+[data-theme="light"] .modal-overlay {
+    background: rgba(0, 0, 0, 0.4);
+}
+[data-theme="light"] .class-table tr:nth-child(even) td {
+    background: rgba(0, 0, 0, 0.03);
+}
+[data-theme="light"] .stat-final-val.improved {
+    color: #2a7a22;
+}
+[data-theme="light"] .stat-chain .step.positive {
+    color: #2a7a22;
+}
+[data-theme="light"] .stat-chain .step.negative {
+    color: #b83030;
 }
 
 /* ---------- Responsive ---------- */

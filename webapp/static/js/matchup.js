@@ -17,8 +17,10 @@ const ROLE_LABELS = {
 };
 const STRENGTH_COLORS = {
     signature: { bg: "rgba(201, 168, 76, 0.2)", text: "var(--gold)", label: "Signature" },
-    good: { bg: "rgba(46, 204, 113, 0.15)", text: "#2ecc71", label: "Good" },
+    strong: { bg: "rgba(46, 204, 113, 0.15)", text: "#2ecc71", label: "Strong" },
     average: { bg: "rgba(255, 255, 255, 0.05)", text: "var(--text-muted)", label: "Average" },
+    weak: { bg: "rgba(230, 126, 34, 0.15)", text: "#e67e22", label: "Weak" },
+    poor: { bg: "rgba(231, 76, 60, 0.15)", text: "#e74c3c", label: "Poor" },
 };
 
 /* 4-column layout: anti-cavalry nests under cavalry, anti-archer nests under ranged */
@@ -341,9 +343,10 @@ function renderTooltip(unit, name) {
         html += '<div class="tooltip-missing">\u2717 Missing: ' + escapeHtml(missingTechs[i]) + '</div>';
     }
 
-    /* Score line */
+    /* Score line with percentile */
     if (unit.score != null) {
-        html += '<div class="tooltip-rank">' + unit.score.toFixed(1) + ' \u00b7 ' + strength.label + '</div>';
+        var pctText = unit.percentile != null ? ' \u00b7 ' + unit.percentile.toFixed(0) + 'th pctl' : '';
+        html += '<div class="tooltip-rank">' + unit.score.toFixed(1) + pctText + ' \u00b7 ' + strength.label + '</div>';
     }
 
     html += '</div>';

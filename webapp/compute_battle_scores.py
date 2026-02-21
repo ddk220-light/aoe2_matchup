@@ -1126,13 +1126,20 @@ def compute_infantry_role_scores(age="imperial"):
         for s in all_scores.values():
             s[f"{key}_raw"] = s[key]
 
-    # Normalize each benchmark score to 0–100 across ALL infantry units
+    # Build line_groups for per-line normalization
+    line_groups = {}
+    for sk in all_scores:
+        line = sk_to_line[sk]
+        line_groups.setdefault(line, []).append(sk)
+
+    # Normalize each benchmark score to 0–100 per infantry sub-line
     for key in bench_keys:
-        vals = [s[key] for s in all_scores.values()]
-        lo, hi = min(vals), max(vals)
-        span = hi - lo if hi != lo else 1
-        for s in all_scores.values():
-            s[key] = round((s[key] - lo) / span * 100, 1)
+        for line, sks in line_groups.items():
+            vals = [all_scores[sk][key] for sk in sks]
+            lo, hi = min(vals), max(vals)
+            span = hi - lo if hi != lo else 1
+            for sk in sks:
+                all_scores[sk][key] = round((all_scores[sk][key] - lo) / span * 100, 1)
 
     # Compute general_combat and anti_cav composites from normalized scores
     gc_keys = [k for k, *_ in benchmarks if k.startswith("gc_")]
@@ -1166,7 +1173,8 @@ def compute_infantry_role_scores(age="imperial"):
     _apply_speed_weighting(
         all_scores,
         ["general_combat", "anti_cav", "militia_value", "raid_building", "anti_cav_value"],
-        scope="pool",
+        scope="per_line",
+        line_groups=line_groups,
     )
 
     # Clean up temp combat unit refs

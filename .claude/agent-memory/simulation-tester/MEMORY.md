@@ -68,9 +68,32 @@
 - Combat-unit API: `/api/combat-unit/<civ_name>/<unit_slug>` (path params, NOT query params)
 - API `fetchone()` may return wrong age for multi-age slugs; prefer direct DB access for precision
 
+### Elite Janissary (Turks) Key Findings
+- Slug: `elite_janissary_turks` (Imperial), `janissary_turks` (Castle)
+- Classified under `gunpowder` line (not archer)
+- **Accuracy: 65%** -- one of the lowest-accuracy ranged units
+- Turk civ bonus: +25% HP to gunpowder units (40 -> 50 HP)
+- Stray hit mechanic significantly boosts effective accuracy: 65% nominal -> ~80% effective vs 20 targets
+- Ranking: #14/31 ranged_effectiveness overall, but #4 anti-archer, #4 vs paladin (30v30)
+- Dead last (#31) in general_combat and vs_champion scores
+- 20v20 vs Japanese Champions: wins 10/10, avg 19.1 survivors at 86% HP
+
+### Accuracy Stray Hit Mechanic
+- When a shot misses (1 - accuracy chance), there's a stray hit chance
+- Stray chance = `min(0.5, len(alive_enemies) * 0.05)`
+- 20 enemies: 50% stray chance. 10 enemies: 50%. 5 enemies: 25%. 1 enemy: 5%
+- Stray target is random.choice(alive_enemies)
+- `miss_damage_percent` field overrides the generic stray formula if set
+- This means even 50% accuracy units have ~62-75% effective hit rate vs groups
+
+### Reference DB vs Main DB
+- Reference DB (`aoe2_reference.db`) has `ref_units` table with fully computed stats (final_*)
+- Reference DB has `battle_scores` table with pre-computed ranking scores
+- Combat unit API uses ref DB: `/api/ref/combat-unit/<civ>/<slug>?age=Imperial`
+- ORIGINAL_13_CIVS list has ~50 civs (misleading name)
+
 ### Environment
-- Must `source venv/bin/activate` before running python3 scripts
-- Must `cd webapp` to import from `simulation` (relative import in app.py)
-- DB path: `/Users/deepak/AI/aoe2unitanalyzer/webapp/aoe2_units.db`
-- Import path: `sys.path.insert(0, '/Users/deepak/AI/aoe2unitanalyzer/webapp')`
-- Cannot import `EXTRA_PROJ_ACCURACY` from simulation (module-level constant not exported)
+- Must `cd webapp` or `os.chdir('webapp')` before imports (relative paths in app.py)
+- DB path (linux): `/home/user/aoe2-unit-analyzer/webapp/aoe2_units.db`
+- Import path: `sys.path.insert(0, 'webapp')` then `os.chdir('webapp')`
+- EXTRA_PROJ_ACCURACY (0.5) can be imported: `from simulation import EXTRA_PROJ_ACCURACY`... actually it's a local var in simulate_battle, not exported

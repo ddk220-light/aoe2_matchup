@@ -25,7 +25,7 @@ const UNIT_LINES = {
     stable: {
         name: "Stable Effectiveness",
         building: "Stable",
-        castle: null,
+        castle: "Knight",
         imperial: "Paladin",
         hasUnique: true,
         subLines: ["knight", "light_cav", "camel", "steppe_lancer", "elephant"],
@@ -587,8 +587,6 @@ function toggleLine(slug) {
 }
 
 function setAge(age) {
-    // Stable is Imperial-only
-    if (currentLine === "stable" && age === "Castle") return;
     currentAge = age;
     document.querySelectorAll(".age-btn").forEach((btn) => {
         btn.classList.toggle(
@@ -657,17 +655,6 @@ const SIEGE_SLUGS = new Set([
 async function selectLine(slug) {
     currentLine = slug;
     unpinHoverCard();
-
-    // Force Imperial age for stable (no Castle age data)
-    if (slug === "stable") {
-        currentAge = "Imperial";
-        document.querySelectorAll(".age-btn").forEach((btn) => {
-            btn.classList.toggle(
-                "active",
-                btn.textContent.includes("Imperial"),
-            );
-        });
-    }
 
     // Highlight active tab
     document

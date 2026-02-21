@@ -69,7 +69,7 @@ def _classify_strength(score, rank, threshold):
     return "average"
 
 
-def _compute_role_thresholds(conn):
+def _compute_role_thresholds(conn, age_key="imperial"):
     """Compute 75th percentile score threshold per role for categorization.
 
     Returns dict: {role_key: threshold_score}
@@ -80,11 +80,11 @@ def _compute_role_thresholds(conn):
         placeholders = ",".join("?" for _ in line_slugs)
         rc.execute(
             f"""SELECT score_value FROM battle_scores
-                WHERE LOWER(age) = 'imperial'
+                WHERE LOWER(age) = ?
                   AND score_type = ?
                   AND line_slug IN ({placeholders})
                 ORDER BY score_value ASC""",
-            [score_type] + line_slugs,
+            [age_key, score_type] + line_slugs,
         )
         scores = [row["score_value"] for row in rc.fetchall()]
         if scores:
@@ -96,9 +96,10 @@ def _compute_role_thresholds(conn):
     # Anti-cav (cavalry): uses stable line's anti_cav score (all stable units)
     rc.execute(
         """SELECT score_value FROM battle_scores
-           WHERE line_slug = 'stable' AND LOWER(age) = 'imperial'
+           WHERE line_slug = 'stable' AND LOWER(age) = ?
              AND score_type = 'anti_cav'
            ORDER BY score_value ASC""",
+        [age_key],
     )
     stable_ac_scores = [row["score_value"] for row in rc.fetchall()]
     if stable_ac_scores:
@@ -112,13 +113,14 @@ def _compute_role_thresholds(conn):
         """SELECT bs.score_value
            FROM battle_scores bs
            LEFT JOIN (SELECT DISTINCT unit_slug FROM battle_scores
-                      WHERE line_slug = 'stable' AND LOWER(age) = 'imperial') s
+                      WHERE line_slug = 'stable' AND LOWER(age) = ?) s
              ON bs.unit_slug = s.unit_slug
            WHERE bs.line_slug = 'anti_cav_pool'
-             AND LOWER(bs.age) = 'imperial'
+             AND LOWER(bs.age) = ?
              AND bs.score_type = 'anti_cav_combined'
              AND s.unit_slug IS NULL
            ORDER BY bs.score_value ASC""",
+        [age_key, age_key],
     )
     inf_ac_scores = [row["score_value"] for row in rc.fetchall()]
     if inf_ac_scores:
@@ -647,19 +649,25 @@ def compute_civ_power_units():
     rc.execute("SELECT DISTINCT civ_name FROM battle_scores ORDER BY civ_name")
     all_civs = [row["civ_name"] for row in rc.fetchall()]
 
-    # Build reference tech sets once (for missing tech computation)
-    reference_techs = _build_reference_techs(conn, "Imperial")
-
-    # Compute per-role 75th percentile thresholds for categorization
-    role_thresholds = _compute_role_thresholds(conn)
+    # Build reference tech sets and thresholds per age
+    reference_techs_by_age = {
+        "imperial": _build_reference_techs(conn, "Imperial"),
+        "castle": _build_reference_techs(conn, "Castle"),
+    }
+    role_thresholds_by_age = {
+        "imperial": _compute_role_thresholds(conn, "imperial"),
+        "castle": _compute_role_thresholds(conn, "castle"),
+    }
 
     result = {}
 
     for civ in all_civs:
         civ_data = {"imperial": None, "castle": None}
 
-        for age_key in ["imperial"]:  # Start with imperial only
+        for age_key in ["imperial", "castle"]:
             db_age = "Imperial" if age_key == "imperial" else "Castle"
+            reference_techs = reference_techs_by_age[age_key]
+            role_thresholds = role_thresholds_by_age[age_key]
             power_units = {}
 
             # Batch-fetch all techs and effects for this civ (2 queries instead of N*3)

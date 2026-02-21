@@ -306,8 +306,8 @@ function renderUnitBadge(unit) {
     /* Info block (name + score) */
     html += '<div class="unit-badge-info">';
     html += '<span class="unit-badge-name">' + escapeHtml(name) + '</span>';
-    if (unit.score != null) {
-        html += '<span class="unit-badge-rank rank-' + (unit.strength || 'average') + '">' + unit.score.toFixed(1) + ' ' + strength.label + '</span>';
+    if (unit.percentile != null) {
+        html += '<span class="unit-badge-rank rank-' + (unit.strength || 'average') + '">' + unit.percentile.toFixed(0) + 'th pctl \u00b7 ' + strength.label + '</span>';
     }
     html += '</div>';
 
@@ -343,10 +343,9 @@ function renderTooltip(unit, name) {
         html += '<div class="tooltip-missing">\u2717 Missing: ' + escapeHtml(missingTechs[i]) + '</div>';
     }
 
-    /* Score line with percentile */
+    /* Score line */
     if (unit.score != null) {
-        var pctText = unit.percentile != null ? ' \u00b7 ' + unit.percentile.toFixed(0) + 'th pctl' : '';
-        html += '<div class="tooltip-rank">' + unit.score.toFixed(1) + pctText + ' \u00b7 ' + strength.label + '</div>';
+        html += '<div class="tooltip-rank">Score: ' + unit.score.toFixed(1) + ' \u00b7 ' + strength.label + '</div>';
     }
 
     html += '</div>';

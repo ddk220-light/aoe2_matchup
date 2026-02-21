@@ -54,82 +54,57 @@ ROLE_DEFS = [
 ]
 
 
-def _classify_strength(score, rank, threshold):
-    """Classify a unit's strength tier based on score percentile.
+def _classify_strength(percentile):
+    """Classify a unit's strength tier based on its percentile within the role.
 
-    Args:
-        score: the unit's absolute score for this role
-        rank: percentile rank (1=best, 50=worst)
-        threshold: 75th percentile score for this role
+    Percentile is computed from rank within the unit's scoring pool:
+      percentile = (total_count - rank) / (total_count - 1) * 100
+
+    Tiers:
+        signature:  top 10%  (percentile >= 90)
+        strong:     65-90th  (percentile >= 65)
+        average:    35-65th  (percentile >= 35)
+        weak:       15-35th  (percentile >= 15)
+        poor:       bottom 15%
     """
-    if score is not None and score >= threshold:
-        if rank is not None and rank <= 5:
-            return "signature"
-        return "good"
-    return "average"
+    if percentile >= 90:
+        return "signature"
+    if percentile >= 65:
+        return "strong"
+    if percentile >= 35:
+        return "average"
+    if percentile >= 15:
+        return "weak"
+    return "poor"
 
 
-def _compute_role_thresholds(conn, age_key="imperial"):
-    """Compute 75th percentile score threshold per role for categorization.
+def _compute_line_counts(conn, age_key="imperial"):
+    """Compute total unit count per (line_slug, score_type) for percentile calculation.
 
-    Returns dict: {role_key: threshold_score}
+    Returns dict: {(line_slug, score_type): total_count}
     """
     rc = conn.cursor()
-    thresholds = {}
-    for role_key, line_slugs, score_type in ROLE_DEFS:
-        placeholders = ",".join("?" for _ in line_slugs)
-        rc.execute(
-            f"""SELECT score_value FROM battle_scores
-                WHERE LOWER(age) = ?
-                  AND score_type = ?
-                  AND line_slug IN ({placeholders})
-                ORDER BY score_value ASC""",
-            [age_key, score_type] + line_slugs,
-        )
-        scores = [row["score_value"] for row in rc.fetchall()]
-        if scores:
-            idx = int(len(scores) * 0.75)
-            thresholds[role_key] = scores[min(idx, len(scores) - 1)]
-        else:
-            thresholds[role_key] = 0
-
-    # Anti-cav (cavalry): uses stable line's anti_cav score (all stable units)
     rc.execute(
-        """SELECT score_value FROM battle_scores
-           WHERE line_slug = 'stable' AND LOWER(age) = ?
-             AND score_type = 'anti_cav'
-           ORDER BY score_value ASC""",
+        """SELECT line_slug, score_type, COUNT(*) as cnt
+           FROM battle_scores
+           WHERE LOWER(age) = ?
+           GROUP BY line_slug, score_type""",
         [age_key],
     )
-    stable_ac_scores = [row["score_value"] for row in rc.fetchall()]
-    if stable_ac_scores:
-        idx = int(len(stable_ac_scores) * 0.75)
-        thresholds["anti_cavalry"] = stable_ac_scores[min(idx, len(stable_ac_scores) - 1)]
-    else:
-        thresholds["anti_cavalry"] = 0
+    counts = {}
+    for row in rc.fetchall():
+        counts[(row["line_slug"], row["score_type"])] = row["cnt"]
+    return counts
 
-    # Anti-cav (infantry): uses anti_cav_pool filtered to non-stable units
-    rc.execute(
-        """SELECT bs.score_value
-           FROM battle_scores bs
-           LEFT JOIN (SELECT DISTINCT unit_slug FROM battle_scores
-                      WHERE line_slug = 'stable' AND LOWER(age) = ?) s
-             ON bs.unit_slug = s.unit_slug
-           WHERE bs.line_slug = 'anti_cav_pool'
-             AND LOWER(bs.age) = ?
-             AND bs.score_type = 'anti_cav_combined'
-             AND s.unit_slug IS NULL
-           ORDER BY bs.score_value ASC""",
-        [age_key, age_key],
-    )
-    inf_ac_scores = [row["score_value"] for row in rc.fetchall()]
-    if inf_ac_scores:
-        idx = int(len(inf_ac_scores) * 0.75)
-        thresholds["anti_cav_infantry"] = inf_ac_scores[min(idx, len(inf_ac_scores) - 1)]
-    else:
-        thresholds["anti_cav_infantry"] = 0
 
-    return thresholds
+def _compute_percentile(rank, total_count):
+    """Compute percentile from rank and total count.
+
+    rank=1 is best (highest percentile), rank=total_count is worst.
+    """
+    if total_count <= 1:
+        return 50.0
+    return round((total_count - rank) / (total_count - 1) * 100, 1)
 
 
 # Techs that meaningfully impact combat — used for "missing techs" tooltip
@@ -359,7 +334,7 @@ def _parse_techs_and_bonuses(techs_list, effects_list):
     return standard_techs, bonus_abilities, special_effects
 
 
-def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slug, effects_by_slug, role_threshold=0):
+def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slug, effects_by_slug, line_counts=None, score_type=""):
     """Build a single unit entry dict with stats, techs, bonuses, and effects."""
     slug = row["unit_slug"]
     unit_name, stats = _fetch_unit_stats(conn, civ_name, slug, db_age)
@@ -369,7 +344,13 @@ def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slu
     # Only apply tech exclusions for actual rams, not siege elephants sharing the slug
     excl_slug = slug if not (unit_name and "Elephant" in unit_name) else ""
     missing = _compute_missing_techs(standard_techs, reference_techs.get(slug, set()), excl_slug)
-    strength = _classify_strength(row["score_value"], row["rank"], role_threshold)
+
+    # Compute percentile from rank within the scoring pool
+    total_count = 1
+    if line_counts and score_type:
+        total_count = line_counts.get((row["line_slug"], score_type), 1)
+    percentile = _compute_percentile(row["rank"], total_count)
+    strength = _classify_strength(percentile)
     speed = stats["speed"] if stats else 0
 
     return {
@@ -378,6 +359,7 @@ def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slu
         "line_slug": row["line_slug"],
         "score": round(row["score_value"], 1),
         "rank": row["rank"],
+        "percentile": percentile,
         "median_delta": round(row["median_delta"], 1),
         "strength": strength,
         "is_signature": strength == "signature",
@@ -598,9 +580,9 @@ def _generate_strategic_description(power_units, strong_areas, weak_areas):
     treb_units = [u for u in siege_units if u["line_slug"] == "trebuchet"]
     bbc_units = [u for u in siege_units if u["line_slug"] == "bombard_cannon"]
 
-    has_good_ram = any(u["strength"] in ("signature", "good") for u in ram_units)
-    has_good_treb = any(u["strength"] in ("signature", "good") for u in treb_units)
-    has_good_bbc = any(u["strength"] in ("signature", "good") for u in bbc_units)
+    has_good_ram = any(u["strength"] in ("signature", "strong") for u in ram_units)
+    has_good_treb = any(u["strength"] in ("signature", "strong") for u in treb_units)
+    has_good_bbc = any(u["strength"] in ("signature", "strong") for u in bbc_units)
 
     ranged_strong = "ranged" in strong_areas
     best_inf_name = ""
@@ -649,14 +631,14 @@ def compute_civ_power_units():
     rc.execute("SELECT DISTINCT civ_name FROM battle_scores ORDER BY civ_name")
     all_civs = [row["civ_name"] for row in rc.fetchall()]
 
-    # Build reference tech sets and thresholds per age
+    # Build reference tech sets and line counts per age
     reference_techs_by_age = {
         "imperial": _build_reference_techs(conn, "Imperial"),
         "castle": _build_reference_techs(conn, "Castle"),
     }
-    role_thresholds_by_age = {
-        "imperial": _compute_role_thresholds(conn, "imperial"),
-        "castle": _compute_role_thresholds(conn, "castle"),
+    line_counts_by_age = {
+        "imperial": _compute_line_counts(conn, "imperial"),
+        "castle": _compute_line_counts(conn, "castle"),
     }
 
     result = {}
@@ -667,7 +649,7 @@ def compute_civ_power_units():
         for age_key in ["imperial", "castle"]:
             db_age = "Imperial" if age_key == "imperial" else "Castle"
             reference_techs = reference_techs_by_age[age_key]
-            role_thresholds = role_thresholds_by_age[age_key]
+            line_counts = line_counts_by_age[age_key]
             power_units = {}
 
             # Batch-fetch all techs and effects for this civ (2 queries instead of N*3)
@@ -694,11 +676,10 @@ def compute_civ_power_units():
                         ORDER BY score_value DESC""",
                     [civ, age_key, score_type] + line_slugs,
                 )
-                threshold = role_thresholds.get(role_key, 0)
                 rows = rc.fetchall()
                 all_units = [
                     _build_unit_entry(row, civ, conn, db_age, reference_techs,
-                                      techs_by_slug, effects_by_slug, threshold)
+                                      techs_by_slug, effects_by_slug, line_counts, score_type)
                     for row in rows
                 ]
                 power_units[role_key] = _build_role_dict(all_units, role_key)
@@ -714,10 +695,9 @@ def compute_civ_power_units():
                    ORDER BY score_value DESC""",
                 [civ, age_key],
             )
-            ac_stable_threshold = role_thresholds.get("anti_cavalry", 0)
             ac_stable_units = [
                 _build_unit_entry(row, civ, conn, db_age, reference_techs,
-                                  techs_by_slug, effects_by_slug, ac_stable_threshold)
+                                  techs_by_slug, effects_by_slug, line_counts, "anti_cav")
                 for row in rc.fetchall()
             ]
             power_units["anti_cavalry"] = _build_role_dict(ac_stable_units, "anti_cavalry")
@@ -733,10 +713,9 @@ def compute_civ_power_units():
                    ORDER BY score_value DESC""",
                 [civ, age_key],
             )
-            ac_inf_threshold = role_thresholds.get("anti_cav_infantry", 0)
             ac_inf_units = [
                 _build_unit_entry(row, civ, conn, db_age, reference_techs,
-                                  techs_by_slug, effects_by_slug, ac_inf_threshold)
+                                  techs_by_slug, effects_by_slug, line_counts, "anti_cav_combined")
                 for row in rc.fetchall()
                 if row["unit_slug"] not in stable_slugs
             ]
@@ -761,9 +740,8 @@ def compute_civ_power_units():
                 if entry.get("has_signature"):
                     signature_areas.append(rk)
                     strong_areas.append(rk)
-                elif entry["strength"] in ("good", "signature"):
+                elif entry["strength"] in ("strong", "signature"):
                     strong_areas.append(rk)
-                # No more "weak" tier — anything below threshold is "average"
 
             total_strong = len(strong_areas)
             if total_strong >= 2:
@@ -1038,7 +1016,7 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
     opponent_strengths = []
     for role_key in ["cavalry", "ranged", "infantry", "siege"]:
         entry = civ_b_data["power_units"].get(role_key)
-        if entry and entry["strength"] in ("good", "signature"):
+        if entry and entry["strength"] in ("strong", "signature"):
             opponent_strengths.append({
                 "role": role_key,
                 "unit_slug": entry["unit_slug"],

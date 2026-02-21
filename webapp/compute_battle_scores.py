@@ -1194,7 +1194,7 @@ def compute_archery_role_scores(age="imperial"):
     (0-100) before averaging into sub-scores.  This means archer scores are
     normalized among archers, skirmisher scores among skirmishers, etc.
 
-    Final: ranged_effectiveness = 0.7 * general_combat + 0.3 * anti_archer
+    Final: ranged_effectiveness = general_combat
 
     Returns dict: {"archer|<age>": {...}, "cav_archer|<age>": {...}, ...}"""
 
@@ -1308,10 +1308,7 @@ def compute_archery_role_scores(age="imperial"):
         scores["anti_archer"] = round(
             sum(scores[k] for k in aa_keys) / len(aa_keys), 1
         )
-        scores["ranged_effectiveness"] = round(
-            0.70 * scores["general_combat"] + 0.30 * scores["anti_archer"],
-            1,
-        )
+        scores["ranged_effectiveness"] = scores["general_combat"]
 
     # Apply speed weighting: multiply composites by speed, re-normalize per line
     _apply_speed_weighting(

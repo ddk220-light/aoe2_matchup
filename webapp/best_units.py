@@ -9,6 +9,10 @@ import sqlite3
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 POWER_UNITS_PATH = os.path.join(os.path.dirname(__file__), "civ_power_units.json")
 
+# Civilizations that do not have access to trebuchets in-game.
+CIVS_WITHOUT_TREBUCHET = {"Wu", "Wei", "Shu"}
+_TREBUCHET_SLUGS = {"trebuchet", "traction_trebuchet"}
+
 
 def _get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -677,6 +681,10 @@ def compute_civ_power_units():
                     [civ, age_key, score_type] + line_slugs,
                 )
                 rows = rc.fetchall()
+                # Filter out trebuchets for civs that don't have them
+                if civ in CIVS_WITHOUT_TREBUCHET:
+                    rows = [r for r in rows
+                            if r["unit_slug"] not in _TREBUCHET_SLUGS]
                 all_units = [
                     _build_unit_entry(row, civ, conn, db_age, reference_techs,
                                       techs_by_slug, effects_by_slug, line_counts, score_type)

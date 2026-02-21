@@ -3,7 +3,7 @@ import os
 import sqlite3
 
 from flask import Flask, jsonify, redirect, render_template, request
-from best_units import load_civ_power_units, get_matchup_recommendations
+from best_units import load_civ_power_units, get_matchup_recommendations, CIVS_WITHOUT_TREBUCHET
 
 
 app = Flask(__name__)
@@ -171,6 +171,8 @@ ORIGINAL_13_CIVS = [
     "Wu",
 ]
 
+_TREBUCHET_SLUGS = {"trebuchet", "traction_trebuchet"}
+
 
 @app.route("/api/ref/civ/<civ_name>")
 def api_ref_civ(civ_name):
@@ -187,6 +189,10 @@ def api_ref_civ(civ_name):
         (civ_name,),
     )
     units_rows = rc.fetchall()
+
+    # Filter out trebuchets for civs that don't have them
+    if civ_name in CIVS_WITHOUT_TREBUCHET:
+        units_rows = [r for r in units_rows if r["unit_slug"] not in _TREBUCHET_SLUGS]
 
     # Get verifications
     main_conn = get_db()

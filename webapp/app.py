@@ -787,7 +787,7 @@ SIEGE_LINE_SLUGS = {"ram", "mangonel", "trebuchet", "bombard_cannon"}
 # (ordered dict of sub-category breakdowns, each mapping to a score_type).
 TEAM_ANALYSIS_STAGES = {
     "cavalry": {
-        "line_slugs": ["stable"],
+        "line_slugs": ["knight", "light_cav", "camel", "steppe_lancer", "elephant"],
         "tabs": {
             "overall":        {"score_type": "stable_effectiveness", "label": "Overall"},
             "general_combat": {"score_type": "general_combat",       "label": "General Combat"},
@@ -875,10 +875,9 @@ def api_ref_unit_line(line_slug):
     # Load role scores from DB (keyed by "age|civ_name|unit_slug")
     _db_role_scores = {}
     _score_line_slugs = [s for s in sub_lines if s in INFANTRY_LINE_SLUGS or s in ARCHERY_LINE_SLUGS]
-    # For stable virtual line, scores are stored under the virtual line_slug in DB
-    # For siege, scores are stored per sub-line (ram, trebuchet, bombard_cannon)
+    # Stable and siege scores are stored per sub-line in DB
     if line_slug == "stable":
-        _score_line_slugs = ["stable"]
+        _score_line_slugs = list(STABLE_LINE_SLUGS)
     elif line_slug == "siege":
         _score_line_slugs = ["ram", "trebuchet", "bombard_cannon"]
     if _score_line_slugs:

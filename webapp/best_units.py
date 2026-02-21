@@ -49,7 +49,7 @@ ROLE_DEFS = [
     ("cavalry", ["stable"], "stable_effectiveness"),
     ("ranged", ["archer", "cav_archer", "scorpion", "gunpowder"], "ranged_effectiveness"),
     ("infantry", ["militia", "shock_infantry"], "militia_value"),
-    ("anti_archer", ["archer", "cav_archer", "scorpion", "gunpowder", "skirmisher"], "anti_archer"),
+    ("anti_archer", ["skirmisher", "scorpion"], "anti_archer"),
     ("siege", ["ram", "trebuchet", "bombard_cannon"], "anti_building_score"),
 ]
 

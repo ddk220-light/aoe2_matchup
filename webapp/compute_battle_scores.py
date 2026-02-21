@@ -1386,11 +1386,11 @@ def compute_stable_role_scores(age="imperial"):
     """Compute benchmark-based scores for stable units at the given age.
 
     Uses the same pattern as archery: simulate benchmarks, min-max normalize
-    each one 0-100 across all stable units, then average into composites.
+    each one 0-100 per unit line, then average into composites.
 
     Final: stable_effectiveness = 0.7 * general_combat + 0.3 * anti_cav
 
-    Returns dict: {"stable|<age>": {civ|slug: {score_type: value, ...}, ...}}"""
+    Returns dict: {"knight|<age>": {...}, "light_cav|<age>": {...}, ...}"""
 
     is_imperial = age == "imperial"
     benchmarks = STABLE_BENCHMARKS[age]
@@ -1404,77 +1404,77 @@ def compute_stable_role_scores(age="imperial"):
         if bench_cache[cache_key] is None:
             print(f"  WARNING: stable benchmark {civ}/{slug}/{bench_age} not found")
 
-    # Collect stable units from all source lines
-    all_units = []
+    all_scores = {}
+    sk_to_line = {}  # sk -> line_slug
+
     for line_slug in STABLE_LINE_SLUGS:
         units = build_line_units(line_slug, age)
-        all_units.extend(units)
+        if not units:
+            continue
 
-    # Exclude Elephant Archers (ranged units already scored in archery rankings)
-    all_units = [u for u in all_units if "ele_archer" not in u["unit_slug"]]
+        # Exclude Elephant Archers (ranged units already scored in archery rankings)
+        units = [u for u in units if "ele_archer" not in u["unit_slug"]]
 
-    if not all_units:
+        for u in units:
+            cu = u["combat_unit"]
+            unit_cost = calc_weighted_cost(
+                cu["cost_food"], cu["cost_wood"], cu["cost_gold"], is_imperial
+            )
+            sk = f"{u['civ_name']}|{u['unit_slug']}"
+            scores = {}
+
+            for key, civ, slug, bench_age, mode, param in benchmarks:
+                bench = bench_cache[(civ, slug, bench_age)]
+                if bench is None:
+                    scores[key] = 0.0
+                    continue
+
+                if mode == "res":
+                    bench_cost = calc_weighted_cost(
+                        bench["cost_food"],
+                        bench["cost_wood"],
+                        bench["cost_gold"],
+                        is_imperial,
+                    )
+                    winner, _, _, hp1, hp2 = simulate_battle(
+                        cu,
+                        bench,
+                        param,
+                        cost1_override=unit_cost,
+                        cost2_override=bench_cost,
+                        return_hp=True,
+                    )
+                    if winner == 1:
+                        scores[key] = round(hp1 * 100, 1)
+                    elif winner == 2:
+                        scores[key] = round(-hp2 * 100, 1)
+                    else:
+                        scores[key] = 0.0
+
+                elif mode == "fixed_hp":
+                    m_count, o_count = param
+                    fake_res = m_count * o_count
+                    winner, _, _, hp1, hp2 = simulate_battle(
+                        cu,
+                        bench,
+                        fake_res,
+                        cost1_override=fake_res // m_count,
+                        cost2_override=fake_res // o_count,
+                        return_hp=True,
+                    )
+                    if winner == 1:
+                        scores[key] = round(hp1 * 100, 1)
+                    elif winner == 2:
+                        scores[key] = round(-hp2 * 100, 1)
+                    else:
+                        scores[key] = 0.0
+
+            scores["_speed"] = cu["movement_speed"]
+            all_scores[sk] = scores
+            sk_to_line[sk] = line_slug
+
+    if not all_scores:
         return {}
-
-    all_scores = {}
-
-    # Run each unit against all benchmarks
-    for u in all_units:
-        cu = u["combat_unit"]
-        unit_cost = calc_weighted_cost(
-            cu["cost_food"], cu["cost_wood"], cu["cost_gold"], is_imperial
-        )
-        sk = f"{u['civ_name']}|{u['unit_slug']}"
-        scores = {}
-
-        for key, civ, slug, bench_age, mode, param in benchmarks:
-            bench = bench_cache[(civ, slug, bench_age)]
-            if bench is None:
-                scores[key] = 0.0
-                continue
-
-            if mode == "res":
-                bench_cost = calc_weighted_cost(
-                    bench["cost_food"],
-                    bench["cost_wood"],
-                    bench["cost_gold"],
-                    is_imperial,
-                )
-                winner, _, _, hp1, hp2 = simulate_battle(
-                    cu,
-                    bench,
-                    param,
-                    cost1_override=unit_cost,
-                    cost2_override=bench_cost,
-                    return_hp=True,
-                )
-                if winner == 1:
-                    scores[key] = round(hp1 * 100, 1)
-                elif winner == 2:
-                    scores[key] = round(-hp2 * 100, 1)
-                else:
-                    scores[key] = 0.0
-
-            elif mode == "fixed_hp":
-                m_count, o_count = param
-                fake_res = m_count * o_count
-                winner, _, _, hp1, hp2 = simulate_battle(
-                    cu,
-                    bench,
-                    fake_res,
-                    cost1_override=fake_res // m_count,
-                    cost2_override=fake_res // o_count,
-                    return_hp=True,
-                )
-                if winner == 1:
-                    scores[key] = round(hp1 * 100, 1)
-                elif winner == 2:
-                    scores[key] = round(-hp2 * 100, 1)
-                else:
-                    scores[key] = 0.0
-
-        scores["_speed"] = cu["movement_speed"]
-        all_scores[sk] = scores
 
     # Save raw scores before normalization
     gc_keys = [k for k, *_ in benchmarks if k.startswith("gc_")]
@@ -1485,13 +1485,21 @@ def compute_stable_role_scores(age="imperial"):
         for s in all_scores.values():
             s[f"{key}_raw"] = s[key]
 
-    # Min-max normalize each benchmark score across all stable units (0-100)
+    # Min-max normalize each benchmark score per unit line (0-100)
+    # Each line (knight, light_cav, camel, etc.) is normalized independently
+    # so scores reflect how good a unit is within its role, not across all stable.
+    line_groups = {}
+    for sk in all_scores:
+        line = sk_to_line[sk]
+        line_groups.setdefault(line, []).append(sk)
+
     for bk in all_bench_keys:
-        vals = [s[bk] for s in all_scores.values()]
-        lo, hi = min(vals), max(vals)
-        span = hi - lo if hi != lo else 1
-        for s in all_scores.values():
-            s[bk] = round((s[bk] - lo) / span * 100, 1)
+        for line, sks in line_groups.items():
+            vals = [all_scores[sk][bk] for sk in sks]
+            lo, hi = min(vals), max(vals)
+            span = hi - lo if hi != lo else 1
+            for sk in sks:
+                all_scores[sk][bk] = round((all_scores[sk][bk] - lo) / span * 100, 1)
 
     # Compute derived scores from normalized values
     # Anti-cav reuses gc paladin benchmarks (30v30 + 3K)
@@ -1508,19 +1516,27 @@ def compute_stable_role_scores(age="imperial"):
             1,
         )
 
-    # Apply speed weighting: multiply composites by speed, re-normalize across all stable
+    # Apply speed weighting: multiply composites by speed, re-normalize per line
     _apply_speed_weighting(
         all_scores,
         ["general_combat", "anti_cav", "stable_effectiveness"],
-        scope="pool",
+        scope="per_line",
+        line_groups=line_groups,
     )
 
     # Clean up temp speed refs
     for s in all_scores.values():
         s.pop("_speed", None)
 
-    # Return in the format write_role_scores_to_db expects: {line_age_key: {unit_key: scores}}
-    return {f"stable|{age}": all_scores}
+    # Regroup by line for DB storage
+    all_role_scores = {}
+    for sk, scores in all_scores.items():
+        line_slug = sk_to_line[sk]
+        line_key = f"{line_slug}|{age}"
+        if line_key not in all_role_scores:
+            all_role_scores[line_key] = {}
+        all_role_scores[line_key][sk] = scores
+    return all_role_scores
 
 
 # ===== Siege anti-building scoring =====
@@ -1904,7 +1920,10 @@ def compute_combined_anti_cav_scores(stable_role_scores, age="imperial"):
     infantry_count = len(pool)
 
     # --- Filter qualifying stable units (above-median anti_cav) ---
-    stable_dict = stable_role_scores.get(f"stable|{age}", {})
+    # Merge all per-line stable dicts into one flat dict
+    stable_dict = {}
+    for line_slug in STABLE_LINE_SLUGS:
+        stable_dict.update(stable_role_scores.get(f"{line_slug}|{age}", {}))
     if stable_dict:
         ac_scores = [s.get("anti_cav", 0) for s in stable_dict.values()]
         ac_median = sorted(ac_scores)[len(ac_scores) // 2] if ac_scores else 0
@@ -2181,6 +2200,22 @@ def _cleanup_stale_siege_entries():
         print(f"  Cleaned up {deleted} stale pooled 'siege' entries")
 
 
+def _cleanup_stale_stable_entries():
+    """Remove stale pooled 'stable' line_slug entries from battle_scores.
+
+    Stable scores are now stored per sub-line (knight, light_cav, camel, etc.).
+    Any entries with line_slug='stable' are stale from an older format.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("DELETE FROM battle_scores WHERE line_slug='stable'")
+    deleted = c.rowcount
+    conn.commit()
+    conn.close()
+    if deleted:
+        print(f"  Cleaned up {deleted} stale pooled 'stable' entries")
+
+
 def compute_rankings():
     """Compute rank and median_delta for every (line_slug, age, score_type) group.
 
@@ -2264,10 +2299,10 @@ def main():
 
             stable_start = time.time()
             stable_scores = compute_stable_role_scores(age=role_age)
-            write_role_scores_to_db(stable_scores, ["stable"], STABLE_SCORE_TYPES)
+            write_role_scores_to_db(stable_scores, STABLE_LINE_SLUGS, STABLE_SCORE_TYPES)
             total_stable = sum(len(v) for v in stable_scores.values())
             print(
-                f"Stable roles: {total_stable} units in {time.time() - stable_start:.1f}s"
+                f"Stable roles: {total_stable} units across {len(stable_scores)} lines in {time.time() - stable_start:.1f}s"
             )
 
             # Combined anti-cav pool (infantry + qualifying stable)
@@ -2280,8 +2315,9 @@ def main():
         siege_start = time.time()
         siege_scores = compute_siege_antibuilding_scores()
         write_role_scores_to_db(siege_scores, SIEGE_LINE_SLUGS, SIEGE_SCORE_TYPES)
-        # Clean up stale pooled "siege" entries (scores are now per sub-line)
+        # Clean up stale pooled entries (scores are now per sub-line)
         _cleanup_stale_siege_entries()
+        _cleanup_stale_stable_entries()
         total_siege = sum(len(v) for v in siege_scores.values())
         print(
             f"Siege anti-building: {total_siege} units in {time.time() - siege_start:.1f}s"
@@ -2459,10 +2495,10 @@ def main():
 
         stable_start = time.time()
         stable_scores = compute_stable_role_scores(age=role_age)
-        write_role_scores_to_db(stable_scores, ["stable"], STABLE_SCORE_TYPES)
+        write_role_scores_to_db(stable_scores, STABLE_LINE_SLUGS, STABLE_SCORE_TYPES)
         total_stable = sum(len(v) for v in stable_scores.values())
         print(
-            f"Stable roles: {total_stable} units in {time.time() - stable_start:.1f}s"
+            f"Stable roles: {total_stable} units across {len(stable_scores)} lines in {time.time() - stable_start:.1f}s"
         )
 
         ac_start = time.time()
@@ -2474,8 +2510,9 @@ def main():
     siege_start = time.time()
     siege_scores = compute_siege_antibuilding_scores()
     write_role_scores_to_db(siege_scores, SIEGE_LINE_SLUGS, SIEGE_SCORE_TYPES)
-    # Clean up stale pooled "siege" entries (scores are now per sub-line)
+    # Clean up stale pooled entries (scores are now per sub-line)
     _cleanup_stale_siege_entries()
+    _cleanup_stale_stable_entries()
     total_siege = sum(len(v) for v in siege_scores.values())
     print(
         f"Siege anti-building: {total_siege} units in {time.time() - siege_start:.1f}s"

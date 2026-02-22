@@ -176,8 +176,8 @@ function renderAnalysis(civName, data) {
         var colHasSig = false;
         var colIsStrong = strongColumns.indexOf(colKey) !== -1;
         for (var k = 0; k < lineSlugs.length; k++) {
-            var entry = colData[lineSlugs[k]];
-            if (entry && entry.is_signature) colHasSig = true;
+            var entries = colData[lineSlugs[k]];
+            if (entries && entries.length > 0 && entries[0].is_signature) colHasSig = true;
         }
 
         var colClass = "role-column";
@@ -190,15 +190,18 @@ function renderAnalysis(civName, data) {
         /* Render each unit line */
         for (var j = 0; j < lineSlugs.length; j++) {
             var lineSlug = lineSlugs[j];
-            var lineEntry = colData[lineSlug];
+            var lineEntries = colData[lineSlug];
             var lineName = LINE_NAMES[lineSlug] || slugToName(lineSlug);
 
             html += '<div class="line-section">';
             html += '<div class="line-label">' + escapeHtml(lineName) + '</div>';
 
-            if (lineEntry) {
-                html += '<div class="unit-wrap">';
-                html += renderUnitBadge(lineEntry);
+            if (lineEntries && lineEntries.length > 0) {
+                var isMulti = lineEntries.length > 1;
+                html += '<div class="unit-wrap' + (isMulti ? ' multi-unit' : '') + '">';
+                for (var u = 0; u < lineEntries.length; u++) {
+                    html += renderUnitBadge(lineEntries[u]);
+                }
                 html += '</div>';
             } else {
                 html += '<div class="line-unavailable">\u2014</div>';

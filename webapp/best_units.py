@@ -405,9 +405,11 @@ def _generate_strategic_description(power_units, strong_columns, weak_areas, str
         col = combat_strong[0]
         col_data = power_units.get(col, {})
         best_entry = None
-        for entry in col_data.values():
-            if entry and (best_entry is None or entry.get("percentile", 0) > best_entry.get("percentile", 0)):
-                best_entry = entry
+        for entries in col_data.values():
+            if entries:
+                top = entries[0]
+                if best_entry is None or top.get("percentile", 0) > best_entry.get("percentile", 0):
+                    best_entry = top
         best_name = best_entry["unit_name"] if best_entry else "their best unit"
 
         if col == "cavalry":
@@ -446,15 +448,15 @@ def _generate_strategic_description(power_units, strong_columns, weak_areas, str
             " -- very hard for cavalry-heavy opponents to find an opening."
         )
     elif has_good_camel:
-        camel_data = power_units.get("cavalry", {}).get("camel")
-        camel_name = camel_data["unit_name"] if camel_data else "camels"
+        camel_entries = power_units.get("cavalry", {}).get("camel")
+        camel_name = camel_entries[0]["unit_name"] if camel_entries else "camels"
         sentences.append(
             f"Can answer enemy cavalry with mobile {camel_name},"
             " allowing counter-raids and flexible responses."
         )
     elif has_good_spear:
-        spear_data = power_units.get("infantry", {}).get("spear")
-        spear_name = spear_data["unit_name"] if spear_data else "spearmen"
+        spear_entries = power_units.get("infantry", {}).get("spear")
+        spear_name = spear_entries[0]["unit_name"] if spear_entries else "spearmen"
         sentences.append(
             f"Strong anti-cavalry defense with {spear_name} to hold"
             " positions against cavalry pushes."
@@ -482,22 +484,24 @@ def _generate_strategic_description(power_units, strong_columns, weak_areas, str
 
     # --- Part 3: Push Strategy ---
     siege_data = power_units.get("siege", {})
-    ram_entry = siege_data.get("ram")
-    treb_entry = siege_data.get("trebuchet")
-    bbc_entry = siege_data.get("bombard_cannon")
+    ram_entries = siege_data.get("ram")
+    treb_entries = siege_data.get("trebuchet")
+    bbc_entries = siege_data.get("bombard_cannon")
 
-    has_good_ram = ram_entry and ram_entry["strength"] in ("signature", "strong")
-    has_good_treb = treb_entry and treb_entry["strength"] in ("signature", "strong")
-    has_good_bbc = bbc_entry and bbc_entry["strength"] in ("signature", "strong")
+    has_good_ram = ram_entries and ram_entries[0]["strength"] in ("signature", "strong")
+    has_good_treb = treb_entries and treb_entries[0]["strength"] in ("signature", "strong")
+    has_good_bbc = bbc_entries and bbc_entries[0]["strength"] in ("signature", "strong")
     infantry_strong = "infantry" in strong_columns
     ranged_strong = "ranged" in strong_columns
 
     if infantry_strong and has_good_ram:
         inf_data = power_units.get("infantry", {})
         best_inf = None
-        for entry in inf_data.values():
-            if entry and (best_inf is None or entry.get("percentile", 0) > best_inf.get("percentile", 0)):
-                best_inf = entry
+        for entries in inf_data.values():
+            if entries:
+                top = entries[0]
+                if best_inf is None or top.get("percentile", 0) > best_inf.get("percentile", 0):
+                    best_inf = top
         inf_name = best_inf["unit_name"] if best_inf else "infantry"
         sentences.append(
             f"An infantry ram push is the signature play -- use {inf_name}"
@@ -506,9 +510,11 @@ def _generate_strategic_description(power_units, strong_columns, weak_areas, str
     elif ranged_strong and has_good_treb:
         rng_data = power_units.get("ranged", {})
         best_rng = None
-        for entry in rng_data.values():
-            if entry and (best_rng is None or entry.get("percentile", 0) > best_rng.get("percentile", 0)):
-                best_rng = entry
+        for entries in rng_data.values():
+            if entries:
+                top = entries[0]
+                if best_rng is None or top.get("percentile", 0) > best_rng.get("percentile", 0):
+                    best_rng = top
         rng_name = best_rng["unit_name"] if best_rng else "ranged units"
         sentences.append(
             f"Pushing behind trebuchets maximizes the ranged advantage"
@@ -573,21 +579,24 @@ def compute_civ_power_units():
                               AND LOWER(age) = ?
                               AND score_type = ?
                               AND line_slug = ?
-                            ORDER BY score_value DESC
-                            LIMIT 1""",
+                            ORDER BY score_value DESC""",
                         [civ, age_key, score_type, line_slug],
                     )
-                    row = rc.fetchone()
+                    rows = rc.fetchall()
 
-                    if row and civ in CIVS_WITHOUT_TREBUCHET and row["unit_slug"] in _TREBUCHET_SLUGS:
-                        row = None
+                    # Filter trebuchets for civs that don't have them
+                    if civ in CIVS_WITHOUT_TREBUCHET:
+                        rows = [r for r in rows if r["unit_slug"] not in _TREBUCHET_SLUGS]
 
-                    if row:
-                        entry = _build_unit_entry(
-                            row, civ, conn, db_age, reference_techs,
-                            techs_by_slug, effects_by_slug, line_counts, score_type
-                        )
-                        col_data[line_slug] = entry
+                    if rows:
+                        entries = []
+                        for row in rows:
+                            entry = _build_unit_entry(
+                                row, civ, conn, db_age, reference_techs,
+                                techs_by_slug, effects_by_slug, line_counts, score_type
+                            )
+                            entries.append(entry)
+                        col_data[line_slug] = entries
                     else:
                         col_data[line_slug] = None
 
@@ -597,8 +606,8 @@ def compute_civ_power_units():
             strength_profile = {}
             for col_key, line_slugs in COLUMN_DEFS.items():
                 for line_slug in line_slugs:
-                    entry = power_units[col_key].get(line_slug)
-                    strength_profile[line_slug] = entry["strength"] if entry else None
+                    entries = power_units[col_key].get(line_slug)
+                    strength_profile[line_slug] = entries[0]["strength"] if entries else None
 
             # Determine which columns have at least one strong/signature line
             strong_columns = []
@@ -905,10 +914,12 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
         col_data = civ_b_data["power_units"].get(col_key, {})
         # Find the best (highest percentile) entry in this column
         best_entry = None
-        for line_slug, entry in col_data.items():
-            if entry and entry["strength"] in ("strong", "signature"):
-                if best_entry is None or entry.get("median_delta", 0) > best_entry.get("median_delta", 0):
-                    best_entry = entry
+        for line_slug, entries in col_data.items():
+            if entries:
+                top = entries[0]
+                if top["strength"] in ("strong", "signature"):
+                    if best_entry is None or top.get("median_delta", 0) > best_entry.get("median_delta", 0):
+                        best_entry = top
         if best_entry:
             opponent_strengths.append({
                 "role": col_key,
@@ -923,10 +934,12 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
         best_entry = None
         for col_key in ["cavalry", "ranged", "infantry"]:
             col_data = civ_b_data["power_units"].get(col_key, {})
-            for line_slug, entry in col_data.items():
-                if entry and (best_entry is None or entry.get("median_delta", 0) > best_entry.get("median_delta", 0)):
-                    best_entry = entry
-                    best_col = col_key
+            for line_slug, entries in col_data.items():
+                if entries:
+                    top = entries[0]
+                    if best_entry is None or top.get("median_delta", 0) > best_entry.get("median_delta", 0):
+                        best_entry = top
+                        best_col = col_key
         if best_entry:
             opponent_strengths.append({
                 "role": best_col,
@@ -1007,9 +1020,9 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
         trash_slug = None
         trash_entry = None
         for col_data in civ_a_data["power_units"].values():
-            entry = col_data.get(trash_line) if isinstance(col_data, dict) else None
-            if entry:
-                trash_entry = entry
+            entries = col_data.get(trash_line) if isinstance(col_data, dict) else None
+            if entries:
+                trash_entry = entries[0]
                 break
         if trash_entry:
             trash_slug = trash_entry["unit_slug"]

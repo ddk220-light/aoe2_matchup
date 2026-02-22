@@ -51,5 +51,20 @@ ANALYSIS.md
 # User data
 webapp/matchup_votes.jsonl
 
-# Battle score cache (machine-local build state)
+# Battle score cache and DB (machine-local build artifacts)
 webapp/battle_cache.json
+webapp/battle_scores.db
+
+# Downloaded wiki assets (fetched via download scripts, not source)
+webapp/static/img/units-wiki/
+webapp/static/img/units-wiki-gifs/
+
+# One-off download/scraping scripts
+webapp/download_wiki_*.py
+
+# Scratch design notes
+civ_detail_mockup.md
+new-civ-view.md
+
+# Claude Code worktree state
+.claude/worktrees/

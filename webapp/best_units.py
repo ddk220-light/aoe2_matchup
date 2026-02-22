@@ -11,7 +11,7 @@ POWER_UNITS_PATH = os.path.join(os.path.dirname(__file__), "civ_power_units.json
 
 # Civilizations that do not have access to trebuchets in-game.
 CIVS_WITHOUT_TREBUCHET = {"Wu", "Wei", "Shu"}
-_TREBUCHET_SLUGS = {"trebuchet", "traction_trebuchet"}
+_TREBUCHET_SLUGS = {"trebuchet"}
 
 
 def _get_db():

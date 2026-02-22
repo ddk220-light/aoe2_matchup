@@ -171,7 +171,7 @@ ORIGINAL_13_CIVS = [
     "Wu",
 ]
 
-_TREBUCHET_SLUGS = {"trebuchet", "traction_trebuchet"}
+_TREBUCHET_SLUGS = {"trebuchet"}
 
 
 @app.route("/api/ref/civ/<civ_name>")

@@ -32943,7 +32943,37 @@
           ]
         },
         "siege": {
-          "bombard_cannon": null,
+          "bombard_cannon": [
+            {
+              "bonus_abilities": [
+                "Siege +10% movement",
+                "Siege +15% movement"
+              ],
+              "is_signature": false,
+              "line_slug": "bombard_cannon",
+              "median_delta": 12.6,
+              "missing_techs": [],
+              "percentile": 89.3,
+              "rank": 4,
+              "score": 81.5,
+              "special_effects": [],
+              "speed": 0.66,
+              "stats": {
+                "attack": 51.0,
+                "cost_food": 0,
+                "cost_gold": 210.0,
+                "cost_wood": 175.0,
+                "hp": 115.0,
+                "melee_armor": 1.0,
+                "pierce_armor": 8.0,
+                "range": 15.0,
+                "speed": 0.66
+              },
+              "strength": "strong",
+              "unit_name": "Traction Trebuchet",
+              "unit_slug": "traction_trebuchet"
+            }
+          ],
           "ram": [
             {
               "bonus_abilities": [
@@ -32987,7 +33017,8 @@
         "strong_areas": [
           "militia",
           "spear",
-          "ram"
+          "ram",
+          "bombard_cannon"
         ],
         "strong_columns": [
           "infantry",
@@ -33002,7 +33033,7 @@
       },
       "strength_profile": {
         "archer": "average",
-        "bombard_cannon": null,
+        "bombard_cannon": "strong",
         "camel": null,
         "cav_archer": "weak",
         "elephant": null,
@@ -40237,7 +40268,38 @@
           ]
         },
         "siege": {
-          "bombard_cannon": null,
+          "bombard_cannon": [
+            {
+              "bonus_abilities": [
+                "C-Bonus Cheaper Traction Treb"
+              ],
+              "is_signature": false,
+              "line_slug": "bombard_cannon",
+              "median_delta": -4.9,
+              "missing_techs": [
+                "Siege Engineers"
+              ],
+              "percentile": 35.7,
+              "rank": 19,
+              "score": 64.0,
+              "special_effects": [],
+              "speed": 0.57,
+              "stats": {
+                "attack": 51.0,
+                "cost_food": 0,
+                "cost_gold": 158.0,
+                "cost_wood": 131.0,
+                "hp": 115.0,
+                "melee_armor": 1.0,
+                "pierce_armor": 8.0,
+                "range": 14.0,
+                "speed": 0.57
+              },
+              "strength": "average",
+              "unit_name": "Traction Trebuchet",
+              "unit_slug": "traction_trebuchet"
+            }
+          ],
           "ram": [
             {
               "bonus_abilities": [],
@@ -40292,7 +40354,7 @@
       },
       "strength_profile": {
         "archer": "average",
-        "bombard_cannon": null,
+        "bombard_cannon": "average",
         "camel": null,
         "cav_archer": "strong",
         "elephant": null,
@@ -41015,6 +41077,36 @@
           "bombard_cannon": [
             {
               "bonus_abilities": [
+                "Ming-Kuang Armor"
+              ],
+              "is_signature": false,
+              "line_slug": "bombard_cannon",
+              "median_delta": -4.9,
+              "missing_techs": [
+                "Siege Engineers"
+              ],
+              "percentile": 32.1,
+              "rank": 20,
+              "score": 64.0,
+              "special_effects": [],
+              "speed": 0.57,
+              "stats": {
+                "attack": 51.0,
+                "cost_food": 0,
+                "cost_gold": 210.0,
+                "cost_wood": 175.0,
+                "hp": 115.0,
+                "melee_armor": 1.0,
+                "pierce_armor": 8.0,
+                "range": 14.0,
+                "speed": 0.57
+              },
+              "strength": "weak",
+              "unit_name": "Traction Trebuchet",
+              "unit_slug": "traction_trebuchet"
+            },
+            {
+              "bonus_abilities": [
                 "Red Cliffs Tactics"
               ],
               "is_signature": false,
@@ -41097,7 +41189,7 @@
       },
       "strength_profile": {
         "archer": "average",
-        "bombard_cannon": "poor",
+        "bombard_cannon": "weak",
         "camel": null,
         "cav_archer": "poor",
         "elephant": null,

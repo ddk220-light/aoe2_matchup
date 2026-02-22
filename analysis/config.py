@@ -381,11 +381,8 @@ UNIQUE_COMBAT_PROPERTIES = {
     # blast_damage=1.0 in dat = pass-through, not splash
     "chakram_thrower": {"pass_through_percent": 1.0, "pass_through_count": 3},
     "elite_chakram_thrower": {"pass_through_percent": 1.0, "pass_through_count": 3},
-    # Ghulam pass-through (blast_attack_level=130, blast_damage=0.5 in dat)
-    # Thrusting attack penetrates to unit behind target for 50% damage.
-    # In group fights (which sim always models), there's usually a unit behind the target.
-    "ghulam": {"pass_through_percent": 0.5},
-    "elite_ghulam": {"pass_through_percent": 0.5},
+    # Ghulam has blast_damage=0.5 in dat but small melee splash radius —
+    # not modeled (position-less sim over-amplifies melee splash on cheap swarm units).
     # Ballista Elephant bolts pass through 3 additional enemies (like scorpions)
     "ballista_elephant": {"pass_through_count": 3},
     "elite_ballista_elephant": {"pass_through_count": 3},

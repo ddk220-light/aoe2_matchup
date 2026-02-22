@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Matchup Advisor — AoE2 Unit Analyzer{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/matchup_advisor.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Matchup Advisor</h1>
+    <p class="subtitle">Compare two civilizations side by side</p>
+</div>
+
+<div class="container">
+    <!-- Civ Picker -->
+    <div class="ma-picker">
+        <div class="ma-slot ma-slot-left" id="slot-left">
+            <span class="ma-slot-placeholder">Your Civ</span>
+        </div>
+        <div class="ma-vs">vs</div>
+        <div class="ma-slot ma-slot-right" id="slot-right">
+            <span class="ma-slot-placeholder">Opponent</span>
+        </div>
+    </div>
+
+    <div class="ma-civ-grid" id="civ-grid"></div>
+
+    <!-- Age Toggle -->
+    <div class="ma-controls" id="controls" style="display:none;">
+        <div class="ma-age-toggle">
+            <button class="ma-age-btn active" data-age="imperial">Imperial</button>
+            <button class="ma-age-btn" data-age="castle">Castle</button>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results"></div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+    const CIVS = {{ civs | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/constants.js') }}"></script>
+<script src="{{ url_for('static', filename='js/matchup_advisor.js') }}"></script>
+{% endblock %}

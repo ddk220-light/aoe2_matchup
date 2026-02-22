@@ -1060,8 +1060,9 @@ def _get_ref_civs():
 
 @app.route("/matchup-advisor")
 def matchup_advisor():
-    """Matchup Advisor page — WIP."""
-    return render_template("matchup_wip.html", active_nav="matchup")
+    """Matchup Advisor — civ vs civ comparison."""
+    civs = _get_ref_civs()
+    return render_template("matchup_advisor.html", civs=civs, active_nav="matchup")
 
 
 @app.route("/team-analysis")

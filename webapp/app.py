@@ -734,7 +734,7 @@ UNIT_LINES = {
         "imperial_slug": "heavy_scorpion",
         "unique_units": {
             "Khmer": ("ballista_elephant_khmer", "elite_ballista_elephant_khmer"),
-            "Shu": ("war_chariot_shu", "elite_war_chariot_shu"),
+            "Shu": ("war_chariot_shu", "war_chariot_shu"),
             "Khitans": ("mounted_trebuchet_khitans", "mounted_trebuchet_khitans"),
         },
     },

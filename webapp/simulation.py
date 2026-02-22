@@ -890,6 +890,7 @@ def simulate_battle(
         a_accuracy=1.0,
         a_miss_dmg_pct=0,
         a_scatter=0,
+        a_pass_through=0,
     ):
         """Apply num_shots opening shots from attacker_team using focus fire."""
         if num_shots <= 0:
@@ -927,9 +928,9 @@ def simulate_battle(
                     if alive and random.random() < stray_chance:
                         stray = random.choice(alive)
                         _apply_opening_hit(attacker_team, stray, damage, a_idx)
-                # Extra projectiles: low accuracy (~50%), they scatter
+                # Extra projectiles: pass-through bolts always hit; others ~50%
                 for _ in range(num_proj - 1):
-                    if random.random() < EXTRA_PROJ_ACCURACY:
+                    if a_pass_through > 0 or random.random() < EXTRA_PROJ_ACCURACY:
                         if a_scatter:
                             t_alive_scat = [i for i in range(target_count) if target_hp_arr[i] > 0]
                             if t_alive_scat:
@@ -1106,6 +1107,7 @@ def simulate_battle(
             a_accuracy=accuracy1,
             a_miss_dmg_pct=miss_dmg_pct1,
             a_scatter=extra_proj_scatter1,
+            a_pass_through=pass_through1,
         )
         # Set cooldowns to reflect time elapsed since last opening shot
         if is_ranged1 and closing_time1 > 0:
@@ -1128,6 +1130,7 @@ def simulate_battle(
             a_accuracy=accuracy2,
             a_miss_dmg_pct=miss_dmg_pct2,
             a_scatter=extra_proj_scatter2,
+            a_pass_through=pass_through2,
         )
         if is_ranged2 and closing_time2 > 0:
             last_shot_t = delay2 + (opening2 - 1) * reload2
@@ -1188,6 +1191,7 @@ def simulate_battle(
                 t_reload, t_delay = reload1, delay1
                 t_extra_proj, t_first_burst = extra_proj1, first_burst1
                 t_scatter = extra_proj_scatter1
+                t_pass_through = pass_through1
                 t_dmg = dmg1
                 t_extra_proj_dmg = extra_proj_dmg1
                 t_dmg_vs_dismount = dmg1_vs_dismount2 if dismount2 else dmg1
@@ -1217,6 +1221,7 @@ def simulate_battle(
                 t_reload, t_delay = reload2, delay2
                 t_extra_proj, t_first_burst = extra_proj2, first_burst2
                 t_scatter = extra_proj_scatter2
+                t_pass_through = pass_through2
                 t_dmg = dmg2
                 t_extra_proj_dmg = extra_proj_dmg2
                 t_dmg_vs_dismount = dmg2_vs_dismount1 if dismount1 else dmg2
@@ -1346,12 +1351,12 @@ def simulate_battle(
                             pending_damage.append(
                                 (enemy_team, stray, hit_dmg, i, team_id)
                             )
-                    # Extra projectiles: low accuracy (~50%), they scatter
+                    # Extra projectiles: pass-through bolts always hit; others ~50%
                     if num_extra > 0:
                         extra_base = t_extra_proj_dmg
                         extra_hit = extra_base + int(my_bonus_atk[i])
                         for _ in range(num_extra):
-                            if random.random() < EXTRA_PROJ_ACCURACY:
+                            if t_pass_through > 0 or random.random() < EXTRA_PROJ_ACCURACY:
                                 if t_scatter and enemy_alive:
                                     scat_target = random.choice(enemy_alive)
                                     pending_damage.append(
@@ -2121,9 +2126,9 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                         pending.append((stray, main_dmg))
                         sim_hp[stray] -= main_dmg
 
-                # Extra projectiles
+                # Extra projectiles: pass-through bolts always hit; others ~50%
                 for _ in range(num_extra):
-                    if random.random() < EXTRA_PROJ_ACCURACY:
+                    if tmpl["pass_through"] > 0 or random.random() < EXTRA_PROJ_ACCURACY:
                         if tmpl["scatter"] and d_alive_now:
                             scat_target = random.choice(d_alive_now)
                             pending.append((scat_target, extra_dmg))
@@ -2131,6 +2136,19 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                         else:
                             pending.append((target, extra_dmg))
                             sim_hp[target] -= extra_dmg
+                        # Pass-through: extra bolt also pierces through targets
+                        if tmpl["pass_through"] > 0:
+                            pt_dmg = max(1, int(extra_dmg * tmpl["pass_through"]))
+                            pt_hit = 0
+                            pt_max = tmpl["pass_through_count"]
+                            hit_target = scat_target if (tmpl["scatter"] and d_alive_now) else target
+                            for idx in d_alive_now:
+                                if idx != hit_target and sim_hp[idx] > 0:
+                                    pending.append((idx, pt_dmg))
+                                    sim_hp[idx] -= pt_dmg
+                                    pt_hit += 1
+                                    if pt_hit >= pt_max:
+                                        break
 
         return pending
 
@@ -2352,9 +2370,9 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                             pending_damage.append(
                                 (enemy_team_id, stray, main_dmg, i, team_id)
                             )
-                    # Extra projectiles
+                    # Extra projectiles: pass-through bolts always hit; others ~50%
                     for _ in range(num_extra):
-                        if random.random() < EXTRA_PROJ_ACCURACY:
+                        if tmpl["pass_through"] > 0 or random.random() < EXTRA_PROJ_ACCURACY:
                             if tmpl["scatter"] and enemy_alive:
                                 scat_target = random.choice(enemy_alive)
                                 pending_damage.append(

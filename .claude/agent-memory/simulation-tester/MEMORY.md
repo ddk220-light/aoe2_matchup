@@ -54,6 +54,10 @@
 - IS ranged (range=6 >= 1.0, pierce damage) -- gets opening volley
 - NOT cant_attack_melee (min_range=1 < 2.0) -- can fire in melee phase
 - Very slow reload (7.52s) but extra projectiles compensate
+- Trample data (0.4/0.4) exists but is INACTIVE because unit is ranged
+- **Extra proj accuracy bypass**: pass_through > 0 short-circuits accuracy check -> 100% hit rate
+- All 7 projectiles PLUS pass-through make simulation fully deterministic (no RNG)
+- 30v30 vs Shu Paladin: WC wins, 26 surviving, 204 ticks. Pass-through is the decisive mechanic.
 
 ### Organ Gun (Portuguese)
 - Elite: HP=70, Atk=8(8P), Range=8, Min Range=1, RoF=0.29 (3.45s), MA=2/PA=6

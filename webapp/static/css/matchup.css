@@ -222,17 +222,17 @@
     opacity: 0.4;
 }
 
+/* --- Unit Wrap (entrance animation) --- */
+.unit-wrap {
+    margin-bottom: 8px;
+    animation: cardSlideIn 0.35s ease both;
+}
+
 /* --- Multi-unit layout (2+ units in same line) --- */
 .unit-wrap.multi-unit {
     display: flex;
     flex-direction: column;
     gap: 2px;
-}
-
-/* --- Unit Wrap (entrance animation) --- */
-.unit-wrap {
-    margin-bottom: 8px;
-    animation: cardSlideIn 0.35s ease both;
 }
 
 @keyframes cardSlideIn {

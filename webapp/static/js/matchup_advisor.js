@@ -656,7 +656,26 @@ function _buildTopColumn(topUnits, civName, oppGoldSlugs, side, unitsBySlug) {
         return { item, sidekicks };
     });
 
-    const allHaveGaps = topWithSidekicks.every(({ sidekicks }) => {
+    // Filter sidekicks: if best sidekick has no gap, drop alt sidekick if it has a gap
+    topWithSidekicks.forEach((tw) => {
+        if (tw.sidekicks.length >= 2 && tw.sidekicks[0].gap.length === 0 && tw.sidekicks[1].gap.length > 0) {
+            tw.sidekicks = [tw.sidekicks[0]];
+        }
+    });
+
+    // Filter top units: if any combo has no gap, drop combos that have gaps.
+    // A top unit with no weaknesses (sidekicks=[]) is also perfect — it beats everything solo.
+    const _isPerfect = ({ item, sidekicks }) =>
+        sidekicks.length === 0
+            ? (item.losses.filter((l) => oppGoldSlugs.has(l)).length === 0 &&
+               (item.goldPopWins || []).length === 0 && (item.goldEcoWins || []).length === 0)
+            : sidekicks[0].gap.length === 0;
+    const anyPerfect = topWithSidekicks.some(_isPerfect);
+    const filtered = anyPerfect
+        ? topWithSidekicks.filter(_isPerfect)
+        : topWithSidekicks;
+
+    const allHaveGaps = filtered.every(({ sidekicks }) => {
         if (sidekicks.length === 0) return true; // no sidekick = gap
         return sidekicks[0].gap.length > 0; // best sidekick has gap
     });
@@ -671,7 +690,7 @@ function _buildTopColumn(topUnits, civName, oppGoldSlugs, side, unitsBySlug) {
     }
 
     // Render top unit cards (with sidekicks already computed)
-    topWithSidekicks.forEach(({ item, sidekicks }) => {
+    filtered.forEach(({ item, sidekicks }) => {
         const card = _buildTopCard(item, civName, oppGoldSlugs, sidekicks);
         col.appendChild(card);
     });

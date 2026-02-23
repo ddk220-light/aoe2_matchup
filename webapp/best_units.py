@@ -1095,6 +1095,9 @@ def get_matchup_sims(civ_left, civ_right, age="imperial"):
     if not power_data:
         return {"left": {}, "right": {}, "name_map": {}}
 
+    if civ_left not in power_data or civ_right not in power_data:
+        return {"error": f"Unknown civilization: {civ_left if civ_left not in power_data else civ_right}"}
+
     left_data = power_data.get(civ_left, {}).get(age)
     right_data = power_data.get(civ_right, {}).get(age)
     if not left_data or not right_data:

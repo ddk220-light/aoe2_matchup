@@ -54,6 +54,7 @@ let civRight = null;
 let activeSlot = "left";
 let currentAge = "imperial";
 let simData = null;
+let simRequestId = 0;
 
 /* ---- DOM refs ---- */
 const slotLeft = document.getElementById("slot-left");
@@ -235,6 +236,7 @@ async function loadComparison() {
 }
 
 async function loadSims() {
+    const myId = ++simRequestId;
     try {
         const resp = await fetch("/api/matchup-sims", {
             method: "POST",
@@ -245,7 +247,7 @@ async function loadSims() {
                 age: currentAge,
             }),
         });
-        if (!resp.ok) return;
+        if (!resp.ok || myId !== simRequestId) return;
         simData = await resp.json();
         renderSimOverlays();
     } catch (e) {
@@ -280,15 +282,14 @@ function renderSimOverlays() {
 
         wins.forEach((oppSlug) => {
             const oppName = simData.name_map[oppSlug] || oppSlug;
+            const iconUrl = getIconUrl(oppName);
+            if (!iconUrl) return;  // skip units without icons
             const icon = document.createElement("img");
             icon.className = "ma-beats-icon";
             if (highlightSet.has(oppSlug)) {
                 icon.classList.add("exclusive");
             }
-            const iconUrl = getIconUrl(oppName);
-            if (iconUrl) {
-                icon.src = iconUrl;
-            }
+            icon.src = iconUrl;
             icon.alt = oppName;
             icon.title = oppName;
             iconWrap.appendChild(icon);

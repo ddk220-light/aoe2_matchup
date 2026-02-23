@@ -507,7 +507,7 @@ function _computeSidekicks(topItem, side, unitsBySlug, oppGoldSlugs) {
     const sideData = simData[side];
     if (!sideData) return [];
 
-    const topIsGold = topItem.entry.stats && topItem.entry.stats.cost_gold > 0;
+    const topIsGold = !!(topItem.entry.stats && topItem.entry.stats.cost_gold > 0);
 
     // Top unit's weaknesses: losses + draws (opponent slugs)
     const topLosses = new Set((topItem.losses || []).filter((s) => oppGoldSlugs.has(s)));
@@ -527,7 +527,7 @@ function _computeSidekicks(topItem, side, unitsBySlug, oppGoldSlugs) {
         if (slug === topItem.slug) continue;
 
         // Strict gold↔trash: sidekick must be opposite cost type
-        const isGold = entry.stats && entry.stats.cost_gold > 0;
+        const isGold = !!(entry.stats && entry.stats.cost_gold > 0);
         if (isGold === topIsGold) continue;
 
         const d = sideData[slug];

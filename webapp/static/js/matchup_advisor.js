@@ -696,14 +696,13 @@ function _computeGoldCombo(topItem, side, unitsBySlug, oppGoldSlugs) {
     return ranked.length > 0 ? ranked[0] : null;
 }
 
-function _buildComboCard(topItem, partner, partnerType, civName, oppGoldSlugs, side) {
+function _buildComboCard(topItem, partner, partnerType, civName, gapResult) {
     /**Build a unified combo card.
      * @param topItem     — top unit object from _computeTopUnits
      * @param partner     — partner object (from _computeSidekicks or _computeGoldCombo), or null for solo
      * @param partnerType — "trash" | "gold" | null (solo)
      * @param civName     — civ name string
-     * @param oppGoldSlugs — Set of opponent gold unit slugs
-     * @param side        — "left" | "right"
+     * @param gapResult   — pre-computed result from _computeComboGap
      */
     const card = document.createElement("div");
     card.className = "ma-gold-combo-card";
@@ -765,10 +764,6 @@ function _buildComboCard(topItem, partner, partnerType, civName, oppGoldSlugs, s
     }
 
     card.appendChild(pairRow);
-
-    // Compute gap
-    const partnerSlug = partner ? partner.slug : null;
-    const gapResult = _computeComboGap(topItem.slug, partnerSlug, side, oppGoldSlugs);
 
     // Summary
     const summary = document.createElement("div");
@@ -847,28 +842,28 @@ function _buildTopColumn(topUnits, civName, oppGoldSlugs, side, unitsBySlug) {
         // Pick the best option: smallest gap, prefer sidekick on tie
         let bestPartner = null;
         let bestType = null;
-        let bestGapSize = soloGap.gap.length;
+        let bestGap = soloGap;
 
-        if (sidekickGap && sidekickGap.gap.length <= bestGapSize) {
+        if (sidekickGap && sidekickGap.gap.length <= bestGap.gap.length) {
             bestPartner = bestSidekick;
             bestType = "trash";
-            bestGapSize = sidekickGap.gap.length;
+            bestGap = sidekickGap;
         }
-        if (goldGap && goldGap.gap.length < bestGapSize) {
+        if (goldGap && goldGap.gap.length < bestGap.gap.length) {
             bestPartner = goldPartner;
             bestType = "gold";
-            bestGapSize = goldGap.gap.length;
+            bestGap = goldGap;
         }
 
-        cards.push({ item, partner: bestPartner, type: bestType, gapSize: bestGapSize });
+        cards.push({ item, partner: bestPartner, type: bestType, gapSize: bestGap.gap.length, gapResult: bestGap });
     }
 
     // If any card has zero gap, filter to only zero-gap cards
     const anyPerfect = cards.some((c) => c.gapSize === 0);
     const filtered = anyPerfect ? cards.filter((c) => c.gapSize === 0) : cards;
 
-    filtered.forEach(({ item, partner, type }) => {
-        const card = _buildComboCard(item, partner, type, civName, oppGoldSlugs, side);
+    filtered.forEach(({ item, partner, type, gapResult }) => {
+        const card = _buildComboCard(item, partner, type, civName, gapResult);
         col.appendChild(card);
     });
 

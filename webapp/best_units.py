@@ -1078,5 +1078,169 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
     }
 
 
+def get_matchup_sims(civ_left, civ_right, age="imperial"):
+    """Run cross-civ simulations for all power units and return win/highlight data.
+
+    For every unit on the left side, determines which right-side units it beats
+    (and vice versa) using both 30v30 and 3k-resource battles.  A win requires
+    winning BOTH scenarios with >= 10% remaining HP.
+
+    Highlighted wins are "exclusive" -- wins that no other unit in the same
+    opponent line_slug can also claim, showing what makes each unit uniquely
+    valuable in the matchup.
+
+    Returns dict with 'left', 'right', and 'name_map' keys.
+    """
+    power_data = load_civ_power_units()
+    if not power_data:
+        return {"left": {}, "right": {}, "name_map": {}}
+
+    left_data = power_data.get(civ_left, {}).get(age)
+    right_data = power_data.get(civ_right, {}).get(age)
+    if not left_data or not right_data:
+        return {"left": {}, "right": {}, "name_map": {}}
+
+    db_age = "Imperial" if age == "imperial" else "Castle"
+
+    # --- Collect unit entries from power_units ---------------------------------
+    def _collect_units(pu_data):
+        """Yield (unit_slug, unit_name, line_slug) for every unit in power_units."""
+        for col_key in ("cavalry", "ranged", "infantry", "siege"):
+            col_data = pu_data.get(col_key, {})
+            for line_slug, entries in col_data.items():
+                if not entries:
+                    continue
+                for entry in entries:
+                    yield entry["unit_slug"], entry["unit_name"], entry["line_slug"]
+
+    left_units = list(_collect_units(left_data["power_units"]))
+    right_units = list(_collect_units(right_data["power_units"]))
+
+    # --- Load combat units with cache -----------------------------------------
+    _cu_cache = {}
+    name_map = {}
+
+    def _get_cu(civ_name, slug, uname):
+        """Load and cache a combat unit; record its display name."""
+        key = (civ_name, slug)
+        if key not in _cu_cache:
+            _cu_cache[key] = _load_combat_unit(civ_name, slug, db_age)
+        name_map[slug] = uname
+        return _cu_cache[key]
+
+    # Pre-load all units
+    for slug, uname, _ in left_units:
+        _get_cu(civ_left, slug, uname)
+    for slug, uname, _ in right_units:
+        _get_cu(civ_right, slug, uname)
+
+    # --- Win check helper -----------------------------------------------------
+    def _wins(cu_a, cu_b, cost_a, cost_b):
+        """Return True if unit A wins BOTH 30v30 and 3k-resource battles."""
+        if cu_a is None or cu_b is None:
+            return False
+
+        # 30v30 fixed count
+        w1, _, _, hp1_1, _ = simulate_battle(
+            cu_a, cu_b, 0, fixed_count=30, return_hp=True
+        )
+        if w1 != 1 or hp1_1 < 0.10:
+            return False
+
+        # 3k resource battle
+        w2, _, _, hp1_2, _ = simulate_battle(
+            cu_a, cu_b, 3000, cost1_override=cost_a, cost2_override=cost_b,
+            return_hp=True
+        )
+        if w2 != 1 or hp1_2 < 0.10:
+            return False
+
+        return True
+
+    # --- Run cross-matchups ---------------------------------------------------
+    left_wins = {}   # {left_slug: set(right_slugs beaten)}
+    right_wins = {}  # {right_slug: set(left_slugs beaten)}
+
+    for l_slug, _, _ in left_units:
+        left_wins.setdefault(l_slug, set())
+    for r_slug, _, _ in right_units:
+        right_wins.setdefault(r_slug, set())
+
+    for l_slug, _, _ in left_units:
+        cu_l = _cu_cache.get((civ_left, l_slug))
+        if cu_l is None:
+            continue
+        cost_l = _calc_weighted_cost(
+            cu_l["cost_food"], cu_l["cost_wood"], cu_l["cost_gold"]
+        )
+        for r_slug, _, _ in right_units:
+            cu_r = _cu_cache.get((civ_right, r_slug))
+            if cu_r is None:
+                continue
+            cost_r = _calc_weighted_cost(
+                cu_r["cost_food"], cu_r["cost_wood"], cu_r["cost_gold"]
+            )
+
+            # Left unit attacking right unit
+            if _wins(cu_l, cu_r, cost_l, cost_r):
+                left_wins[l_slug].add(r_slug)
+
+            # Right unit attacking left unit
+            if _wins(cu_r, cu_l, cost_r, cost_l):
+                right_wins[r_slug].add(l_slug)
+
+    # --- Highlight logic (exclusive wins per opponent line) --------------------
+    # Group units by line_slug for each side
+    left_by_line = {}   # {line_slug: [slug, ...]}
+    right_by_line = {}
+
+    for slug, _, line_slug in left_units:
+        left_by_line.setdefault(line_slug, []).append(slug)
+    for slug, _, line_slug in right_units:
+        right_by_line.setdefault(line_slug, []).append(slug)
+
+    def _compute_highlights(my_wins, my_by_line):
+        """Exclusive wins: for each unit, wins that no sibling in the same
+        line_slug can also claim."""
+        highlights = {}
+        for slug, wins in my_wins.items():
+            # Find this unit's line
+            my_line = None
+            for line_slug, members in my_by_line.items():
+                if slug in members:
+                    my_line = line_slug
+                    break
+            if my_line is None:
+                highlights[slug] = set(wins)
+                continue
+            # Collect wins from siblings in the same line
+            sibling_wins = set()
+            for sibling in my_by_line[my_line]:
+                if sibling != slug:
+                    sibling_wins.update(my_wins.get(sibling, set()))
+            # Highlighted = my wins minus anything a sibling also wins
+            highlights[slug] = wins - sibling_wins
+        return highlights
+
+    left_highlights = _compute_highlights(left_wins, left_by_line)
+    right_highlights = _compute_highlights(right_wins, right_by_line)
+
+    # --- Build response -------------------------------------------------------
+    def _build_side(wins_dict, highlights_dict):
+        result = {}
+        for slug, wins in wins_dict.items():
+            result[slug] = {
+                "wins": sorted(wins),
+                "highlighted": sorted(highlights_dict.get(slug, set())),
+            }
+        return result
+
+    return {
+        "left": _build_side(left_wins, left_highlights),
+        "right": _build_side(right_wins, right_highlights),
+        "name_map": name_map,
+    }
+
+
 if __name__ == "__main__":
     save_civ_power_units()

@@ -483,6 +483,8 @@ function _computeTopUnits(side, unitsBySlug, oppGoldSlugs, oppSide, myGoldSlugs)
             entry,
             goldWins,
             goldWinCount: goldWins.length,
+            goldPopWins,
+            goldEcoWins,
             percentile: entry.percentile || 0,
             losses: d.losses || [],
             score,

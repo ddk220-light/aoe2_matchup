@@ -650,8 +650,28 @@ function _buildTopColumn(topUnits, civName, oppGoldSlugs, side, unitsBySlug) {
         return col;
     }
 
-    topUnits.forEach((item) => {
+    // Compute sidekicks for each top unit and check if ALL have gaps
+    const topWithSidekicks = topUnits.map((item) => {
         const sidekicks = _computeSidekicks(item, side, unitsBySlug, oppGoldSlugs);
+        return { item, sidekicks };
+    });
+
+    const allHaveGaps = topWithSidekicks.every(({ sidekicks }) => {
+        if (sidekicks.length === 0) return true; // no sidekick = gap
+        return sidekicks[0].gap.length > 0; // best sidekick has gap
+    });
+
+    // If all combos have gaps, try double-gold combo with #1 top unit
+    if (allHaveGaps && topUnits.length > 0) {
+        const combo = _computeGoldCombo(topUnits[0], side, unitsBySlug, oppGoldSlugs);
+        if (combo) {
+            const comboCard = _buildGoldComboCard(topUnits[0], combo, civName, oppGoldSlugs);
+            col.appendChild(comboCard);
+        }
+    }
+
+    // Render top unit cards (with sidekicks already computed)
+    topWithSidekicks.forEach(({ item, sidekicks }) => {
         const card = _buildTopCard(item, civName, oppGoldSlugs, sidekicks);
         col.appendChild(card);
     });

@@ -426,11 +426,11 @@ function renderTopUnits() {
     body.className = "ma-top-units-body";
 
     // Left side
-    const leftCol = _buildTopColumn(leftTop, civLeft, rightGoldSlugs, "left");
+    const leftCol = _buildTopColumn(leftTop, civLeft, rightGoldSlugs, "left", leftBySlug);
     body.appendChild(leftCol);
 
     // Right side
-    const rightCol = _buildTopColumn(rightTop, civRight, leftGoldSlugs, "right");
+    const rightCol = _buildTopColumn(rightTop, civRight, leftGoldSlugs, "right", rightBySlug);
     body.appendChild(rightCol);
 
     section.appendChild(body);
@@ -570,7 +570,7 @@ function _computeSidekicks(topItem, side, unitsBySlug, oppGoldSlugs) {
     return ranked.slice(0, 2);
 }
 
-function _buildTopColumn(topUnits, civName, oppGoldSlugs, side) {
+function _buildTopColumn(topUnits, civName, oppGoldSlugs, side, unitsBySlug) {
     const col = document.createElement("div");
     col.className = "ma-top-col ma-top-col-" + side;
 
@@ -583,14 +583,15 @@ function _buildTopColumn(topUnits, civName, oppGoldSlugs, side) {
     }
 
     topUnits.forEach((item) => {
-        const card = _buildTopCard(item, civName, oppGoldSlugs);
+        const sidekicks = _computeSidekicks(item, side, unitsBySlug, oppGoldSlugs);
+        const card = _buildTopCard(item, civName, oppGoldSlugs, sidekicks);
         col.appendChild(card);
     });
 
     return col;
 }
 
-function _buildTopCard(item, civName, oppGoldSlugs) {
+function _buildTopCard(item, civName, oppGoldSlugs, sidekicks) {
     const card = document.createElement("div");
     card.className = "ma-top-card";
 
@@ -673,6 +674,97 @@ function _buildTopCard(item, civName, oppGoldSlugs) {
         });
         lossRow.appendChild(lossIcons);
         card.appendChild(lossRow);
+    }
+
+    // Sidekick sub-cards
+    if (sidekicks && sidekicks.length > 0) {
+        const skSection = document.createElement("div");
+        skSection.className = "ma-sidekick-section";
+
+        sidekicks.forEach((sk, idx) => {
+            const skCard = document.createElement("div");
+            skCard.className = "ma-sidekick-card";
+
+            // Name row: label + icon + name
+            const skNameRow = document.createElement("div");
+            skNameRow.className = "ma-sidekick-name-row";
+
+            const skLabel = document.createElement("span");
+            skLabel.className = "ma-sidekick-label";
+            skLabel.textContent = idx === 0 ? "Best Sidekick:" : "Alt Sidekick:";
+
+            const skIcon = document.createElement("img");
+            skIcon.className = "ma-unit-icon";
+            const skIconUrl = getIconUrl(sk.entry.unit_name);
+            if (skIconUrl) skIcon.src = skIconUrl;
+            skIcon.alt = sk.entry.unit_name;
+
+            const skName = document.createElement("span");
+            skName.className = "ma-sidekick-name";
+            skName.textContent = sk.entry.unit_name;
+
+            skNameRow.appendChild(skLabel);
+            skNameRow.appendChild(skIcon);
+            skNameRow.appendChild(skName);
+            skCard.appendChild(skNameRow);
+
+            // Summary: "Covers X of Y weaknesses"
+            const skSummary = document.createElement("div");
+            skSummary.className = "ma-sidekick-summary";
+            skSummary.innerHTML = "Covers <strong>" + sk.covered.length + "</strong> of " + sk.totalWeaknesses + " weaknesses";
+            skCard.appendChild(skSummary);
+
+            // Covered icons row
+            if (sk.covered.length > 0) {
+                const covRow = document.createElement("div");
+                covRow.className = "ma-sidekick-covers-row";
+                const covIcons = document.createElement("div");
+                covIcons.className = "ma-beats-icons";
+                sk.covered.forEach((oppSlug) => {
+                    const oppName = simData.name_map[oppSlug] || oppSlug;
+                    const url = getIconUrl(oppName);
+                    if (!url) return;
+                    const img = document.createElement("img");
+                    img.className = "ma-beats-icon";
+                    img.src = url;
+                    img.alt = oppName;
+                    img.title = oppName;
+                    covIcons.appendChild(img);
+                });
+                covRow.appendChild(covIcons);
+                skCard.appendChild(covRow);
+            }
+
+            // Gap icons row — "Neither can beat:"
+            if (sk.gap.length > 0) {
+                const gapRow = document.createElement("div");
+                gapRow.className = "ma-sidekick-gap-row";
+                const gapLabel = document.createElement("span");
+                gapLabel.className = "ma-beats-label ma-label-gap";
+                gapLabel.textContent = "Neither can beat:";
+                gapRow.appendChild(gapLabel);
+
+                const gapIcons = document.createElement("div");
+                gapIcons.className = "ma-beats-icons";
+                sk.gap.forEach((oppSlug) => {
+                    const oppName = simData.name_map[oppSlug] || oppSlug;
+                    const url = getIconUrl(oppName);
+                    if (!url) return;
+                    const img = document.createElement("img");
+                    img.className = "ma-beats-icon loss";
+                    img.src = url;
+                    img.alt = oppName;
+                    img.title = oppName;
+                    gapIcons.appendChild(img);
+                });
+                gapRow.appendChild(gapIcons);
+                skCard.appendChild(gapRow);
+            }
+
+            skSection.appendChild(skCard);
+        });
+
+        card.appendChild(skSection);
     }
 
     return card;

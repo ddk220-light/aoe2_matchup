@@ -3,7 +3,7 @@ import os
 import sqlite3
 
 from flask import Flask, jsonify, redirect, render_template, request
-from best_units import load_civ_power_units, get_matchup_recommendations, CIVS_WITHOUT_TREBUCHET
+from best_units import load_civ_power_units, get_matchup_recommendations, get_matchup_sims, CIVS_WITHOUT_TREBUCHET
 
 
 app = Flask(__name__)
@@ -1191,6 +1191,26 @@ def api_matchup_recommendations(civ_a, civ_b):
     """Get recommended units and compositions for civ_a vs civ_b."""
     age = request.args.get("age", "imperial").lower()
     result = get_matchup_recommendations(civ_a, civ_b, age)
+    if "error" in result:
+        return jsonify(result), 400
+    return jsonify(result)
+
+
+@app.route("/api/matchup-sims", methods=["POST"])
+def api_matchup_sims():
+    """Run cross-matchup simulations between two civs' power units."""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "JSON body required"}), 400
+
+    civ_left = data.get("civ_left", "")
+    civ_right = data.get("civ_right", "")
+    age = data.get("age", "imperial").lower()
+
+    if not civ_left or not civ_right:
+        return jsonify({"error": "civ_left and civ_right required"}), 400
+
+    result = get_matchup_sims(civ_left, civ_right, age)
     if "error" in result:
         return jsonify(result), 400
     return jsonify(result)

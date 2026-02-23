@@ -1104,14 +1104,19 @@ def get_matchup_sims(civ_left, civ_right, age="imperial"):
 
     # --- Collect unit entries from power_units ---------------------------------
     def _collect_units(pu_data):
-        """Yield (unit_slug, unit_name, line_slug) for every unit in power_units."""
+        """Yield (unit_slug, unit_name, line_slug) for every unit in power_units.
+        Deduplicates by unit_slug to avoid redundant simulations."""
+        seen = set()
         for col_key in ("cavalry", "ranged", "infantry", "siege"):
             col_data = pu_data.get(col_key, {})
             for line_slug, entries in col_data.items():
                 if not entries:
                     continue
                 for entry in entries:
-                    yield entry["unit_slug"], entry["unit_name"], entry["line_slug"]
+                    slug = entry["unit_slug"]
+                    if slug not in seen:
+                        seen.add(slug)
+                        yield slug, entry["unit_name"], entry["line_slug"]
 
     left_units = list(_collect_units(left_data["power_units"]))
     right_units = list(_collect_units(right_data["power_units"]))
@@ -1125,7 +1130,7 @@ def get_matchup_sims(civ_left, civ_right, age="imperial"):
         key = (civ_name, slug)
         if key not in _cu_cache:
             _cu_cache[key] = _load_combat_unit(civ_name, slug, db_age)
-        name_map[slug] = uname
+        name_map.setdefault(slug, uname)
         return _cu_cache[key]
 
     # Pre-load all units
@@ -1166,20 +1171,31 @@ def get_matchup_sims(civ_left, civ_right, age="imperial"):
     for r_slug, _, _ in right_units:
         right_wins.setdefault(r_slug, set())
 
+    # Pre-compute weighted costs to avoid redundant calculations in inner loop
+    _cost_cache = {}
+    for slug, _, _ in left_units:
+        cu = _cu_cache.get((civ_left, slug))
+        if cu:
+            _cost_cache[(civ_left, slug)] = _calc_weighted_cost(
+                cu["cost_food"], cu["cost_wood"], cu["cost_gold"]
+            )
+    for slug, _, _ in right_units:
+        cu = _cu_cache.get((civ_right, slug))
+        if cu:
+            _cost_cache[(civ_right, slug)] = _calc_weighted_cost(
+                cu["cost_food"], cu["cost_wood"], cu["cost_gold"]
+            )
+
     for l_slug, _, _ in left_units:
         cu_l = _cu_cache.get((civ_left, l_slug))
         if cu_l is None:
             continue
-        cost_l = _calc_weighted_cost(
-            cu_l["cost_food"], cu_l["cost_wood"], cu_l["cost_gold"]
-        )
+        cost_l = _cost_cache[(civ_left, l_slug)]
         for r_slug, _, _ in right_units:
             cu_r = _cu_cache.get((civ_right, r_slug))
             if cu_r is None:
                 continue
-            cost_r = _calc_weighted_cost(
-                cu_r["cost_food"], cu_r["cost_wood"], cu_r["cost_gold"]
-            )
+            cost_r = _cost_cache[(civ_right, r_slug)]
 
             # Left unit attacking right unit
             if _wins(cu_l, cu_r, cost_l, cost_r):

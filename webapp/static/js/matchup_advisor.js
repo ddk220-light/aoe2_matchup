@@ -40,6 +40,9 @@ const MA_LINE_NAMES = {
 
 const MA_COLUMN_ORDER = ["cavalry", "ranged", "infantry", "siege"];
 
+// Siege lines only show percentile — no sim overlays.
+const MA_SIEGE_LINES = new Set(["ram", "bombard_cannon", "trebuchet"]);
+
 const MA_STRENGTH_COLORS = {
     signature: { bg: "rgba(201, 168, 76, 0.2)", text: "var(--gold)", bar: "#c9a84c" },
     strong:    { bg: "rgba(46, 204, 113, 0.15)", text: "#2ecc71", bar: "#2ecc71" },
@@ -463,16 +466,18 @@ function buildUnitSide(entry, civName, isWinner) {
         entry.strength.charAt(0).toUpperCase() + entry.strength.slice(1);
     side.appendChild(strength);
 
-    // Beats row (populated by sim overlay)
-    const beatsRow = document.createElement("div");
-    beatsRow.className = "ma-beats-row";
-    beatsRow.dataset.unitSlug = entry.unit_slug;
-    beatsRow.dataset.side = civName === civLeft ? "left" : "right";
-    // Show spinner while waiting for sim data
-    const spinner = document.createElement("div");
-    spinner.className = "ma-beats-spinner";
-    beatsRow.appendChild(spinner);
-    side.appendChild(beatsRow);
+    // Beats row (populated by sim overlay) — skip for siege lines (percentile only)
+    if (!MA_SIEGE_LINES.has(entry.line_slug)) {
+        const beatsRow = document.createElement("div");
+        beatsRow.className = "ma-beats-row";
+        beatsRow.dataset.unitSlug = entry.unit_slug;
+        beatsRow.dataset.side = civName === civLeft ? "left" : "right";
+        // Show spinner while waiting for sim data
+        const spinner = document.createElement("div");
+        spinner.className = "ma-beats-spinner";
+        beatsRow.appendChild(spinner);
+        side.appendChild(beatsRow);
+    }
 
     return side;
 }

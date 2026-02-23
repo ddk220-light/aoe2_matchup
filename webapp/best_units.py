@@ -13,6 +13,9 @@ POWER_UNITS_PATH = os.path.join(os.path.dirname(__file__), "civ_power_units.json
 CIVS_WITHOUT_TREBUCHET = {"Wu", "Wei", "Shu"}
 _TREBUCHET_SLUGS = {"trebuchet"}
 
+# Siege line slugs — these only show percentile scores in match-advisor (no sims).
+SIEGE_LINE_SLUGS = {"ram", "bombard_cannon", "trebuchet"}
+
 
 def _get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -387,6 +390,30 @@ def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slu
     }
 
 
+def _strip_siege_entries(power_units):
+    """Strip siege unit entries to percentile + strength only.
+
+    Siege units (ram, bombard cannon, trebuchet) don't need full analysis
+    in the match-advisor — only the percentile score matters.
+    """
+    siege_data = power_units.get("siege", {})
+    for line_slug in SIEGE_LINE_SLUGS:
+        entries = siege_data.get(line_slug)
+        if not entries:
+            continue
+        siege_data[line_slug] = [
+            {
+                "unit_slug": e["unit_slug"],
+                "unit_name": e["unit_name"],
+                "line_slug": e["line_slug"],
+                "percentile": e["percentile"],
+                "strength": e["strength"],
+                "is_signature": e["is_signature"],
+            }
+            for e in entries
+        ]
+
+
 def _generate_strategic_description(power_units, strong_columns, weak_areas, strength_profile):
     """Generate a multi-sentence strategic description for a civilization."""
     sentences = []
@@ -654,6 +681,9 @@ def compute_civ_power_units():
             strategic_description = _generate_strategic_description(
                 power_units, strong_columns, weak_areas, strength_profile
             )
+
+            # Strip siege entries to minimal data (percentile only — no sims)
+            _strip_siege_entries(power_units)
 
             civ_data[age_key] = {
                 "power_units": power_units,
@@ -1108,9 +1138,10 @@ def get_matchup_sims(civ_left, civ_right, age="imperial"):
     # --- Collect unit entries from power_units ---------------------------------
     def _collect_units(pu_data):
         """Yield (unit_slug, unit_name, line_slug) for every unit in power_units.
-        Deduplicates by unit_slug to avoid redundant simulations."""
+        Deduplicates by unit_slug to avoid redundant simulations.
+        Skips siege lines (ram/bombard/trebuchet) — percentile only."""
         seen = set()
-        for col_key in ("cavalry", "ranged", "infantry", "siege"):
+        for col_key in ("cavalry", "ranged", "infantry"):
             col_data = pu_data.get(col_key, {})
             for line_slug, entries in col_data.items():
                 if not entries:

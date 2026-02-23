@@ -408,8 +408,8 @@ function renderTopUnits() {
     rightUnits.forEach((u) => { rightBySlug[u.unit_slug] = u; });
 
     // Compute top units for left side (beats most right gold units)
-    const leftTop = _computeTopUnits("left", leftBySlug, rightGoldSlugs);
-    const rightTop = _computeTopUnits("right", rightBySlug, leftGoldSlugs);
+    const leftTop = _computeTopUnits("left", leftBySlug, rightGoldSlugs, "right", leftGoldSlugs);
+    const rightTop = _computeTopUnits("right", rightBySlug, leftGoldSlugs, "left", rightGoldSlugs);
 
     if (leftTop.length === 0 && rightTop.length === 0) return;
 
@@ -437,21 +437,46 @@ function renderTopUnits() {
     topUnitsEl.appendChild(section);
 }
 
-function _computeTopUnits(side, unitsBySlug, oppGoldSlugs) {
-    /**Rank units by how many opponent gold units they beat, then by percentile.**/
+function _computeTopUnits(side, unitsBySlug, oppGoldSlugs, oppSide, myGoldSlugs) {
+    /**Rank units by weighted score: wins=3pts, draws=1pt, each multiplied
+     * by opponent unit's strength (how many of my gold units it beats).
+     * Tiebreak by percentile.**/
     const sideData = simData[side];
-    if (!sideData) return [];
+    const oppData = simData[oppSide];
+    if (!sideData || !oppData) return [];
 
+    // Step 1: Compute opponent strength — how many of MY gold units each opp unit beats
+    const oppStrength = {};
+    for (const oppSlug of oppGoldSlugs) {
+        const od = oppData[oppSlug];
+        if (!od) { oppStrength[oppSlug] = 0; continue; }
+        const oppWins = od.wins || [];
+        oppStrength[oppSlug] = oppWins.filter((w) => myGoldSlugs.has(w)).length;
+    }
+
+    // Step 2: Score each of my units
     const ranked = [];
     for (const slug of Object.keys(sideData)) {
         const entry = unitsBySlug[slug];
         if (!entry) continue;
 
-        const wins = sideData[slug].wins || [];
-        const goldWins = wins.filter((w) => oppGoldSlugs.has(w));
+        const d = sideData[slug];
+        const wins = d.wins || [];
+        const popWins = d.pop_wins || [];
+        const ecoWins = d.eco_wins || [];
 
-        // Only include units that beat at least 1 gold unit
-        if (goldWins.length === 0) continue;
+        const goldWins = wins.filter((w) => oppGoldSlugs.has(w));
+        const goldPopWins = popWins.filter((w) => oppGoldSlugs.has(w));
+        const goldEcoWins = ecoWins.filter((w) => oppGoldSlugs.has(w));
+
+        // Weighted score: 3 * strength for wins, 1 * strength for draws
+        let score = 0;
+        for (const w of goldWins) score += 3 * (oppStrength[w] || 0);
+        for (const w of goldPopWins) score += 1 * (oppStrength[w] || 0);
+        for (const w of goldEcoWins) score += 1 * (oppStrength[w] || 0);
+
+        // Only include units with score > 0 or at least 1 gold win
+        if (score === 0 && goldWins.length === 0) continue;
 
         ranked.push({
             slug,
@@ -459,13 +484,14 @@ function _computeTopUnits(side, unitsBySlug, oppGoldSlugs) {
             goldWins,
             goldWinCount: goldWins.length,
             percentile: entry.percentile || 0,
-            losses: sideData[slug].losses || [],
+            losses: d.losses || [],
+            score,
         });
     }
 
-    // Sort: most gold wins first, then highest percentile
+    // Sort: highest score first, then highest percentile
     ranked.sort((a, b) => {
-        if (b.goldWinCount !== a.goldWinCount) return b.goldWinCount - a.goldWinCount;
+        if (b.score !== a.score) return b.score - a.score;
         return b.percentile - a.percentile;
     });
 

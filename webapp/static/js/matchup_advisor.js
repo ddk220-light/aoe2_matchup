@@ -58,12 +58,15 @@ let activeSlot = "left";
 let currentAge = "imperial";
 let simData = null;
 let simRequestId = 0;
+let savedDataL = null;
+let savedDataR = null;
 
 /* ---- DOM refs ---- */
 const slotLeft = document.getElementById("slot-left");
 const slotRight = document.getElementById("slot-right");
 const civGrid = document.getElementById("civ-grid");
 const controls = document.getElementById("controls");
+const topUnitsEl = document.getElementById("top-units");
 const resultsEl = document.getElementById("results");
 
 /* ---- Init ---- */
@@ -211,6 +214,9 @@ function clearResults() {
     resultsEl.innerHTML = "";
     controls.style.display = "none";
     simData = null;
+    savedDataL = null;
+    savedDataR = null;
+    topUnitsEl.innerHTML = "";
 }
 
 /* ---- Data Loading ---- */
@@ -347,11 +353,238 @@ function renderSimOverlays() {
 
     // Remove remaining spinners
     document.querySelectorAll(".ma-beats-spinner").forEach((s) => s.remove());
+
+    // Render top units summary
+    renderTopUnits();
+}
+
+/* ---- Top Units Section ---- */
+
+function _collectAllUnits(puData) {
+    /**Collect all unit entries from power_units (flat list, skipping siege).**/
+    const units = [];
+    for (const colKey of ["cavalry", "ranged", "infantry"]) {
+        const col = puData[colKey] || {};
+        for (const lineSlug of Object.keys(col)) {
+            const entries = col[lineSlug];
+            if (!entries) continue;
+            for (const entry of entries) {
+                units.push(entry);
+            }
+        }
+    }
+    return units;
+}
+
+function _getGoldSlugs(units) {
+    /**Return set of unit_slugs that cost gold > 0.**/
+    const goldSlugs = new Set();
+    for (const u of units) {
+        if (u.stats && u.stats.cost_gold > 0) {
+            goldSlugs.add(u.unit_slug);
+        }
+    }
+    return goldSlugs;
+}
+
+function renderTopUnits() {
+    topUnitsEl.innerHTML = "";
+    if (!simData || !savedDataL || !savedDataR) return;
+
+    const puL = savedDataL.power_units || {};
+    const puR = savedDataR.power_units || {};
+
+    const leftUnits = _collectAllUnits(puL);
+    const rightUnits = _collectAllUnits(puR);
+
+    // Gold slugs for each side (opponent's gold units)
+    const leftGoldSlugs = _getGoldSlugs(leftUnits);
+    const rightGoldSlugs = _getGoldSlugs(rightUnits);
+
+    // Build lookup: slug -> entry (for percentile)
+    const leftBySlug = {};
+    leftUnits.forEach((u) => { leftBySlug[u.unit_slug] = u; });
+    const rightBySlug = {};
+    rightUnits.forEach((u) => { rightBySlug[u.unit_slug] = u; });
+
+    // Compute top units for left side (beats most right gold units)
+    const leftTop = _computeTopUnits("left", leftBySlug, rightGoldSlugs);
+    const rightTop = _computeTopUnits("right", rightBySlug, leftGoldSlugs);
+
+    if (leftTop.length === 0 && rightTop.length === 0) return;
+
+    // Build section
+    const section = document.createElement("div");
+    section.className = "ma-top-units";
+
+    const header = document.createElement("div");
+    header.className = "ma-top-units-header";
+    header.textContent = "Top Units";
+    section.appendChild(header);
+
+    const body = document.createElement("div");
+    body.className = "ma-top-units-body";
+
+    // Left side
+    const leftCol = _buildTopColumn(leftTop, civLeft, rightGoldSlugs, "left");
+    body.appendChild(leftCol);
+
+    // Right side
+    const rightCol = _buildTopColumn(rightTop, civRight, leftGoldSlugs, "right");
+    body.appendChild(rightCol);
+
+    section.appendChild(body);
+    topUnitsEl.appendChild(section);
+}
+
+function _computeTopUnits(side, unitsBySlug, oppGoldSlugs) {
+    /**Rank units by how many opponent gold units they beat, then by percentile.**/
+    const sideData = simData[side];
+    if (!sideData) return [];
+
+    const ranked = [];
+    for (const slug of Object.keys(sideData)) {
+        const entry = unitsBySlug[slug];
+        if (!entry) continue;
+
+        const wins = sideData[slug].wins || [];
+        const goldWins = wins.filter((w) => oppGoldSlugs.has(w));
+
+        // Only include units that beat at least 1 gold unit
+        if (goldWins.length === 0) continue;
+
+        ranked.push({
+            slug,
+            entry,
+            goldWins,
+            goldWinCount: goldWins.length,
+            percentile: entry.percentile || 0,
+            losses: sideData[slug].losses || [],
+        });
+    }
+
+    // Sort: most gold wins first, then highest percentile
+    ranked.sort((a, b) => {
+        if (b.goldWinCount !== a.goldWinCount) return b.goldWinCount - a.goldWinCount;
+        return b.percentile - a.percentile;
+    });
+
+    return ranked.slice(0, 2);
+}
+
+function _buildTopColumn(topUnits, civName, oppGoldSlugs, side) {
+    const col = document.createElement("div");
+    col.className = "ma-top-col ma-top-col-" + side;
+
+    if (topUnits.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "ma-top-empty";
+        empty.textContent = "No gold unit wins";
+        col.appendChild(empty);
+        return col;
+    }
+
+    topUnits.forEach((item) => {
+        const card = _buildTopCard(item, civName, oppGoldSlugs);
+        col.appendChild(card);
+    });
+
+    return col;
+}
+
+function _buildTopCard(item, civName, oppGoldSlugs) {
+    const card = document.createElement("div");
+    card.className = "ma-top-card";
+
+    const sc = MA_STRENGTH_COLORS[item.entry.strength] || MA_STRENGTH_COLORS.average;
+
+    // Name row: emblem + icon + name
+    const nameRow = document.createElement("div");
+    nameRow.className = "ma-unit-name-row";
+
+    const emblem = document.createElement("img");
+    emblem.src = CIV_EMBLEM_BASE + civName.toLowerCase() + ".png";
+    emblem.className = "ma-unit-emblem";
+    emblem.alt = civName;
+
+    const icon = document.createElement("img");
+    icon.className = "ma-unit-icon";
+    const iconUrl = getIconUrl(item.entry.unit_name);
+    if (iconUrl) icon.src = iconUrl;
+    icon.alt = item.entry.unit_name;
+
+    const name = document.createElement("span");
+    name.className = "ma-unit-name";
+    name.textContent = item.entry.unit_name;
+
+    nameRow.appendChild(emblem);
+    nameRow.appendChild(icon);
+    nameRow.appendChild(name);
+    card.appendChild(nameRow);
+
+    // "Beats X of Y gold units" summary
+    const totalOppGold = oppGoldSlugs.size;
+    const summary = document.createElement("div");
+    summary.className = "ma-top-summary";
+    summary.innerHTML = "Beats <strong>" + item.goldWinCount + "</strong> of " + totalOppGold + " gold units";
+    card.appendChild(summary);
+
+    // Icons of beaten gold units
+    if (item.goldWins.length > 0) {
+        const beatsRow = document.createElement("div");
+        beatsRow.className = "ma-top-beats-row";
+        const beatsIcons = document.createElement("div");
+        beatsIcons.className = "ma-beats-icons";
+        item.goldWins.forEach((oppSlug) => {
+            const oppName = simData.name_map[oppSlug] || oppSlug;
+            const url = getIconUrl(oppName);
+            if (!url) return;
+            const img = document.createElement("img");
+            img.className = "ma-beats-icon";
+            img.src = url;
+            img.alt = oppName;
+            img.title = oppName;
+            beatsIcons.appendChild(img);
+        });
+        beatsRow.appendChild(beatsIcons);
+        card.appendChild(beatsRow);
+    }
+
+    // Gold unit losses callout
+    const goldLosses = item.losses.filter((l) => oppGoldSlugs.has(l));
+    if (goldLosses.length > 0) {
+        const lossRow = document.createElement("div");
+        lossRow.className = "ma-top-loss-row";
+        const lossLabel = document.createElement("span");
+        lossLabel.className = "ma-beats-label ma-label-loss";
+        lossLabel.textContent = "Loses to:";
+        lossRow.appendChild(lossLabel);
+
+        const lossIcons = document.createElement("div");
+        lossIcons.className = "ma-beats-icons";
+        goldLosses.forEach((oppSlug) => {
+            const oppName = simData.name_map[oppSlug] || oppSlug;
+            const url = getIconUrl(oppName);
+            if (!url) return;
+            const img = document.createElement("img");
+            img.className = "ma-beats-icon loss";
+            img.src = url;
+            img.alt = oppName;
+            img.title = oppName;
+            lossIcons.appendChild(img);
+        });
+        lossRow.appendChild(lossIcons);
+        card.appendChild(lossRow);
+    }
+
+    return card;
 }
 
 /* ---- Rendering ---- */
 function renderComparison(dataL, dataR) {
     resultsEl.innerHTML = "";
+    savedDataL = dataL;
+    savedDataR = dataR;
     const puL = dataL.power_units || {};
     const puR = dataR.power_units || {};
 

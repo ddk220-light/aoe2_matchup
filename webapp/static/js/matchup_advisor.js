@@ -500,6 +500,76 @@ function _computeTopUnits(side, unitsBySlug, oppGoldSlugs, oppSide, myGoldSlugs)
     return ranked.slice(0, 2);
 }
 
+function _computeSidekicks(topItem, side, unitsBySlug, oppGoldSlugs) {
+    /**Find the top 2 complementary sidekick units for a top unit.
+     * Sidekick = opposite resource type (gold↔trash).
+     * Scores against the top unit's losses and draws.**/
+    const sideData = simData[side];
+    if (!sideData) return [];
+
+    const topIsGold = topItem.entry.stats && topItem.entry.stats.cost_gold > 0;
+
+    // Top unit's weaknesses: losses + draws (opponent slugs)
+    const topLosses = new Set((topItem.losses || []).filter((s) => oppGoldSlugs.has(s)));
+    const topDraws = new Set([
+        ...(topItem.goldPopWins || []),
+        ...(topItem.goldEcoWins || []),
+    ]);
+    const allWeaknesses = new Set([...topLosses, ...topDraws]);
+
+    if (allWeaknesses.size === 0) return [];
+
+    // Score each candidate sidekick
+    const ranked = [];
+    for (const slug of Object.keys(sideData)) {
+        const entry = unitsBySlug[slug];
+        if (!entry) continue;
+        if (slug === topItem.slug) continue;
+
+        // Strict gold↔trash: sidekick must be opposite cost type
+        const isGold = entry.stats && entry.stats.cost_gold > 0;
+        if (isGold === topIsGold) continue;
+
+        const d = sideData[slug];
+        const skWins = new Set(d.wins || []);
+        const skDraws = new Set([...(d.pop_wins || []), ...(d.eco_wins || [])]);
+
+        let score = 0;
+        const covered = [];
+
+        for (const opp of topLosses) {
+            if (skWins.has(opp)) { score += 3; covered.push(opp); }
+            else if (skDraws.has(opp)) { score += 2; covered.push(opp); }
+        }
+        for (const opp of topDraws) {
+            if (skWins.has(opp)) { score += 2; covered.push(opp); }
+            else if (skDraws.has(opp)) { score += 1; covered.push(opp); }
+        }
+
+        if (score === 0) continue;
+
+        const coveredSet = new Set(covered);
+        const gap = [...allWeaknesses].filter((s) => !coveredSet.has(s));
+
+        ranked.push({
+            slug,
+            entry,
+            score,
+            percentile: entry.percentile || 0,
+            covered,
+            gap,
+            totalWeaknesses: allWeaknesses.size,
+        });
+    }
+
+    ranked.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return b.percentile - a.percentile;
+    });
+
+    return ranked.slice(0, 2);
+}
+
 function _buildTopColumn(topUnits, civName, oppGoldSlugs, side) {
     const col = document.createElement("div");
     col.className = "ma-top-col ma-top-col-" + side;

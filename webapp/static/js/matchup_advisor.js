@@ -570,6 +570,64 @@ function _computeSidekicks(topItem, side, unitsBySlug, oppGoldSlugs) {
     return ranked.slice(0, 2);
 }
 
+function _computeComboGap(topSlug, partnerSlug, side, oppGoldSlugs) {
+    /**Compute categorized gap for a combo (top unit + partner).
+     * For each opponent gold unit, find the best result from either unit.
+     * Returns { covered: number, total: number, gap: [{slug, category}] }
+     *
+     * Categories:
+     *   "loss" — neither unit wins either sim
+     *   "pop"  — best result is pop-only win (30v30 win, 3k loss)
+     *   "eco"  — best result is eco-only win (3k win, 30v30 loss)
+     *
+     * Cross-coverage: if one unit has pop_win and other has eco_win
+     * against the same opponent, that opponent is covered (not in gap).
+     */
+    const sideData = simData[side];
+    if (!sideData) return { covered: 0, total: oppGoldSlugs.size, gap: [] };
+
+    const topD = sideData[topSlug] || {};
+    const partD = partnerSlug ? (sideData[partnerSlug] || {}) : {};
+
+    const topWins = new Set(topD.wins || []);
+    const topPop = new Set(topD.pop_wins || []);
+    const topEco = new Set(topD.eco_wins || []);
+
+    const partWins = new Set(partD.wins || []);
+    const partPop = new Set(partD.pop_wins || []);
+    const partEco = new Set(partD.eco_wins || []);
+
+    let covered = 0;
+    const gap = [];
+
+    for (const oppSlug of oppGoldSlugs) {
+        // Full win by either unit
+        if (topWins.has(oppSlug) || partWins.has(oppSlug)) {
+            covered++;
+            continue;
+        }
+
+        // Cross-coverage: one has pop, other has eco
+        const anyPop = topPop.has(oppSlug) || partPop.has(oppSlug);
+        const anyEco = topEco.has(oppSlug) || partEco.has(oppSlug);
+        if (anyPop && anyEco) {
+            covered++;
+            continue;
+        }
+
+        // Partial — in the gap
+        if (anyPop) {
+            gap.push({ slug: oppSlug, category: "pop" });
+        } else if (anyEco) {
+            gap.push({ slug: oppSlug, category: "eco" });
+        } else {
+            gap.push({ slug: oppSlug, category: "loss" });
+        }
+    }
+
+    return { covered, total: oppGoldSlugs.size, gap };
+}
+
 function _computeGoldCombo(topItem, side, unitsBySlug, oppGoldSlugs) {
     /**Find the best gold unit partner for a top unit.
      * Same scoring as sidekicks but partner must be gold (not opposite cost type).

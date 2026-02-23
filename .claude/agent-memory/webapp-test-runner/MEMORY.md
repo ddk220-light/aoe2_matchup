@@ -3,8 +3,8 @@
 ## Environment
 - Python: `python3` (macOS, `python` not in PATH)
 - Virtual env: `venv/` (has flask + numpy), `.venv/` (flask only). Use `venv/`.
-- Port 5000: AirPlay Receiver. Use 5001-5055.
-- Flask start: `cd webapp && PORT=5055 python3 app.py`
+- Port 5000: AirPlay Receiver. Ports 5001-5003 often occupied by prior Flask runs. Use 5010+.
+- Flask start: `cd webapp && PORT=5010 python3 app.py`
 - DB: `webapp/aoe2_units.db` (SQLite)
 
 ## Simulation Testing
@@ -56,6 +56,17 @@
 - Scoring DB: `webapp/aoe2_reference.db` (NOT aoe2_units.db)
 - compute_battle_scores.py --roles-only: runs infantry(~6s) + archery(~9s) + stable(~4.6s) = ~20s total
 - Stale .pyc files can cause errors after code changes; if you see unexpected KeyErrors, try `find webapp -name '*.pyc' -delete`
+
+## Matchup Sims API (verified 2026-02-22)
+- Endpoint: `POST /api/matchup-sims` with JSON body `{civ_left, civ_right, age}`
+- Response: `{left: {slug: {wins:[], highlighted:[]}}, right: {...}, name_map: {slug: displayName}}`
+- Franks vs Saracens: 13 left units, 14 right units, 15 name_map entries
+- Runs N*M*2 sim pairs (up to 728 for 13x14); each pair = 30v30 + 3k-resource battle
+- Timing: ~2.2s for Franks vs Saracens (marginally over 2s target)
+- Same-civ test: symmetric (left and right win sets identical)
+- Error handling: empty JSON->400, missing fields->400, non-JSON Content-Type->415 HTML (Flask default)
+- Invalid civ/age: returns 200 with empty `{left:{}, right:{}, name_map:{}}` (soft fail)
+- Page: `GET /matchup-advisor` -> 200, 5.7KB HTML
 
 ## Team Analysis API (verified 2026-02-16)
 - Endpoint: `/api/team-analysis?team1=...&team2=...&stage=...&tab=...`

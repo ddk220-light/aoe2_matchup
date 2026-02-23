@@ -327,6 +327,54 @@
     to { transform: rotate(360deg); }
 }
 
+/* --- Beats Row (sim overlay) --- */
+.ma-beats-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    min-height: 20px;
+    flex-wrap: wrap;
+}
+.ma-beats-label {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 2px;
+}
+.ma-beats-icons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+.ma-beats-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    object-fit: cover;
+    background: rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s ease;
+}
+.ma-beats-icon:hover {
+    transform: scale(1.3);
+    z-index: 1;
+}
+.ma-beats-icon.exclusive {
+    border-color: var(--gold);
+    box-shadow: 0 0 6px rgba(201, 168, 76, 0.4);
+}
+.ma-beats-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(201, 168, 76, 0.15);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: maSpin 0.8s linear infinite;
+}
+
 /* --- Light Mode Overrides --- */
 [data-theme="light"] .ma-slot {
     background: rgba(0, 0, 0, 0.02);
@@ -379,6 +427,14 @@
 }
 [data-theme="light"] .ma-age-btn.active {
     background: rgba(139, 105, 20, 0.12);
+}
+[data-theme="light"] .ma-beats-icon {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+[data-theme="light"] .ma-beats-icon.exclusive {
+    border-color: var(--gold);
+    box-shadow: 0 0 6px rgba(139, 105, 20, 0.3);
 }
 
 /* --- Responsive: 768px — single column sections --- */

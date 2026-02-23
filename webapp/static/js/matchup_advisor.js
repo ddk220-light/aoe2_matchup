@@ -696,6 +696,123 @@ function _computeGoldCombo(topItem, side, unitsBySlug, oppGoldSlugs) {
     return ranked.length > 0 ? ranked[0] : null;
 }
 
+function _buildComboCard(topItem, partner, partnerType, civName, oppGoldSlugs, side) {
+    /**Build a unified combo card.
+     * @param topItem     — top unit object from _computeTopUnits
+     * @param partner     — partner object (from _computeSidekicks or _computeGoldCombo), or null for solo
+     * @param partnerType — "trash" | "gold" | null (solo)
+     * @param civName     — civ name string
+     * @param oppGoldSlugs — Set of opponent gold unit slugs
+     * @param side        — "left" | "right"
+     */
+    const card = document.createElement("div");
+    card.className = "ma-gold-combo-card";
+
+    // Header
+    const header = document.createElement("div");
+    header.className = "ma-gold-combo-header";
+    if (partnerType === "trash") {
+        header.textContent = "Best Combo";
+    } else if (partnerType === "gold") {
+        header.textContent = "Gold Combo";
+    } else {
+        header.textContent = topItem.entry.unit_name;
+    }
+    card.appendChild(header);
+
+    // Unit pair row
+    const pairRow = document.createElement("div");
+    pairRow.className = "ma-gold-combo-pair";
+
+    // Civ emblem
+    const emblem = document.createElement("img");
+    emblem.src = CIV_EMBLEM_BASE + civName.toLowerCase() + ".png";
+    emblem.className = "ma-unit-emblem";
+    emblem.alt = civName;
+    pairRow.appendChild(emblem);
+
+    // Top unit icon + name
+    const icon1 = document.createElement("img");
+    icon1.className = "ma-unit-icon";
+    const url1 = getIconUrl(topItem.entry.unit_name);
+    if (url1) icon1.src = url1;
+    icon1.alt = topItem.entry.unit_name;
+    pairRow.appendChild(icon1);
+
+    const name1 = document.createElement("span");
+    name1.className = "ma-gold-combo-name";
+    name1.textContent = topItem.entry.unit_name;
+    pairRow.appendChild(name1);
+
+    // Partner (if present)
+    if (partner) {
+        const plus = document.createElement("span");
+        plus.className = "ma-gold-combo-plus";
+        plus.textContent = "+";
+        pairRow.appendChild(plus);
+
+        const icon2 = document.createElement("img");
+        icon2.className = "ma-unit-icon";
+        const url2 = getIconUrl(partner.entry.unit_name);
+        if (url2) icon2.src = url2;
+        icon2.alt = partner.entry.unit_name;
+        pairRow.appendChild(icon2);
+
+        const name2 = document.createElement("span");
+        name2.className = "ma-gold-combo-name";
+        name2.textContent = partner.entry.unit_name;
+        pairRow.appendChild(name2);
+    }
+
+    card.appendChild(pairRow);
+
+    // Compute gap
+    const partnerSlug = partner ? partner.slug : null;
+    const gapResult = _computeComboGap(topItem.slug, partnerSlug, side, oppGoldSlugs);
+
+    // Summary
+    const summary = document.createElement("div");
+    summary.className = "ma-gold-combo-summary";
+    const verb = partner ? "Together handle" : "Handles";
+    summary.innerHTML = verb + " <strong>" + gapResult.covered + "</strong> of " + gapResult.total + " opponent gold units";
+    card.appendChild(summary);
+
+    // Gap row (only if there are gap opponents)
+    if (gapResult.gap.length > 0) {
+        const gapRow = document.createElement("div");
+        gapRow.className = "ma-combo-gap-row";
+
+        const gapLabel = document.createElement("span");
+        gapLabel.className = "ma-beats-label ma-label-loss";
+        gapLabel.textContent = "Can't beat:";
+        gapRow.appendChild(gapLabel);
+
+        const gapIcons = document.createElement("div");
+        gapIcons.className = "ma-beats-icons";
+
+        // Sort: complete losses first, then pop, then eco
+        const categoryOrder = { loss: 0, pop: 1, eco: 2 };
+        gapResult.gap.sort((a, b) => categoryOrder[a.category] - categoryOrder[b.category]);
+
+        gapResult.gap.forEach(({ slug, category }) => {
+            const oppName = simData.name_map[slug] || slug;
+            const url = getIconUrl(oppName);
+            if (!url) return;
+            const img = document.createElement("img");
+            img.className = "ma-gap-icon gap-" + category;
+            img.src = url;
+            img.alt = oppName;
+            img.title = oppName + (category === "loss" ? " (complete loss)" : category === "pop" ? " (pop win only)" : " (eco win only)");
+            gapIcons.appendChild(img);
+        });
+
+        gapRow.appendChild(gapIcons);
+        card.appendChild(gapRow);
+    }
+
+    return card;
+}
+
 function _buildTopColumn(topUnits, civName, oppGoldSlugs, side, unitsBySlug) {
     const col = document.createElement("div");
     col.className = "ma-top-col ma-top-col-" + side;

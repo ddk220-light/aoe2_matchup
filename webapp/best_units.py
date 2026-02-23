@@ -1218,31 +1218,43 @@ def get_matchup_sims(civ_left, civ_right, age="imperial"):
     for slug, _, line_slug in right_units:
         right_by_line.setdefault(line_slug, []).append(slug)
 
-    def _compute_highlights(my_wins, my_by_line):
-        """Exclusive wins: for each unit, wins that no sibling in the same
-        line_slug can also claim."""
+    def _compute_highlights(my_wins, my_by_line, opp_wins, opp_by_line):
+        """Exclusive wins: for each unit, wins that the opponent's same-line
+        units cannot achieve against my side.
+
+        E.g. Bohemian Arbalester beats Briton Champion.  Is that exclusive?
+        Check whether any Briton archer-line unit also beats Bohemian Champion.
+        If not, highlight it.
+        """
+        # Build reverse lookup: slug -> line_slug for my side
+        slug_to_line = {}
+        for line_slug, members in my_by_line.items():
+            for s in members:
+                slug_to_line[s] = line_slug
+
         highlights = {}
         for slug, wins in my_wins.items():
-            # Find this unit's line
-            my_line = None
-            for line_slug, members in my_by_line.items():
-                if slug in members:
-                    my_line = line_slug
-                    break
+            my_line = slug_to_line.get(slug)
             if my_line is None:
                 highlights[slug] = set(wins)
                 continue
-            # Collect wins from siblings in the same line
-            sibling_wins = set()
-            for sibling in my_by_line[my_line]:
-                if sibling != slug:
-                    sibling_wins.update(my_wins.get(sibling, set()))
-            # Highlighted = my wins minus anything a sibling also wins
-            highlights[slug] = wins - sibling_wins
+            # Get opponent units in the same line
+            opp_same_line = opp_by_line.get(my_line, [])
+            # Collect what opponents' same-line units beat on MY side
+            opp_same_line_wins = set()
+            for opp_slug in opp_same_line:
+                opp_same_line_wins.update(opp_wins.get(opp_slug, set()))
+            # Highlighted = my wins over opponent units that the opponent's
+            # same-line units can NOT win against on my side
+            highlights[slug] = wins - opp_same_line_wins
         return highlights
 
-    left_highlights = _compute_highlights(left_wins, left_by_line)
-    right_highlights = _compute_highlights(right_wins, right_by_line)
+    left_highlights = _compute_highlights(
+        left_wins, left_by_line, right_wins, right_by_line
+    )
+    right_highlights = _compute_highlights(
+        right_wins, right_by_line, left_wins, left_by_line
+    )
 
     # --- Build response -------------------------------------------------------
     def _build_side(wins_dict, highlights_dict):

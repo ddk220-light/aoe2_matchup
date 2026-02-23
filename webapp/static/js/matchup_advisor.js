@@ -662,7 +662,7 @@ function _buildTopColumn(topUnits, civName, oppGoldSlugs, side, unitsBySlug) {
     });
 
     // If all combos have gaps, try double-gold combo with #1 top unit
-    if (allHaveGaps && topUnits.length > 0) {
+    if (allHaveGaps) {
         const combo = _computeGoldCombo(topUnits[0], side, unitsBySlug, oppGoldSlugs);
         if (combo) {
             const comboCard = _buildGoldComboCard(topUnits[0], combo, civName, oppGoldSlugs);

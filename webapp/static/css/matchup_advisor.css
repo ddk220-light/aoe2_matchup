@@ -528,6 +528,50 @@
     font-size: 0.62rem;
 }
 
+/* --- Gold Combo Card --- */
+.ma-gold-combo-card {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(218, 165, 32, 0.08);
+    border: 1px solid rgba(218, 165, 32, 0.25);
+    margin-bottom: 10px;
+}
+.ma-gold-combo-header {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+}
+.ma-gold-combo-pair {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+.ma-gold-combo-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text);
+}
+.ma-gold-combo-plus {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--gold);
+    margin: 0 2px;
+}
+.ma-gold-combo-summary {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin: 4px 0;
+}
+.ma-gold-combo-summary strong {
+    color: var(--gold);
+    font-weight: 700;
+}
+
 /* --- Light Mode Overrides --- */
 [data-theme="light"] .ma-slot {
     background: rgba(0, 0, 0, 0.02);
@@ -616,6 +660,10 @@
 }
 [data-theme="light"] .ma-sidekick-section {
     border-top-color: rgba(0, 0, 0, 0.08);
+}
+[data-theme="light"] .ma-gold-combo-card {
+    background: rgba(218, 165, 32, 0.06);
+    border-color: rgba(218, 165, 32, 0.2);
 }
 
 /* --- Responsive: 768px — single column sections --- */

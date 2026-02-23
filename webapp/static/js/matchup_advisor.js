@@ -858,6 +858,126 @@ function _buildTopCard(item, civName, oppGoldSlugs, sidekicks) {
     return card;
 }
 
+function _buildGoldComboCard(topItem, partner, civName, oppGoldSlugs) {
+    const card = document.createElement("div");
+    card.className = "ma-gold-combo-card";
+
+    // Header label
+    const header = document.createElement("div");
+    header.className = "ma-gold-combo-header";
+    header.textContent = "Best Gold Combo";
+    card.appendChild(header);
+
+    // Unit pair row: both icons + names
+    const pairRow = document.createElement("div");
+    pairRow.className = "ma-gold-combo-pair";
+
+    // Civ emblem (once)
+    const emblem = document.createElement("img");
+    emblem.src = CIV_EMBLEM_BASE + civName.toLowerCase() + ".png";
+    emblem.className = "ma-unit-emblem";
+    emblem.alt = civName;
+    pairRow.appendChild(emblem);
+
+    // Top unit icon + name
+    const icon1 = document.createElement("img");
+    icon1.className = "ma-unit-icon";
+    const url1 = getIconUrl(topItem.entry.unit_name);
+    if (url1) icon1.src = url1;
+    icon1.alt = topItem.entry.unit_name;
+    pairRow.appendChild(icon1);
+
+    const name1 = document.createElement("span");
+    name1.className = "ma-gold-combo-name";
+    name1.textContent = topItem.entry.unit_name;
+    pairRow.appendChild(name1);
+
+    // "+" separator
+    const plus = document.createElement("span");
+    plus.className = "ma-gold-combo-plus";
+    plus.textContent = "+";
+    pairRow.appendChild(plus);
+
+    // Partner icon + name
+    const icon2 = document.createElement("img");
+    icon2.className = "ma-unit-icon";
+    const url2 = getIconUrl(partner.entry.unit_name);
+    if (url2) icon2.src = url2;
+    icon2.alt = partner.entry.unit_name;
+    pairRow.appendChild(icon2);
+
+    const name2 = document.createElement("span");
+    name2.className = "ma-gold-combo-name";
+    name2.textContent = partner.entry.unit_name;
+    pairRow.appendChild(name2);
+
+    card.appendChild(pairRow);
+
+    // Summary: "Together cover X of Y opponent gold units"
+    const totalOppGold = oppGoldSlugs.size;
+    const topWins = new Set(topItem.goldWins || []);
+    const topDraws = new Set([
+        ...(topItem.goldPopWins || []),
+        ...(topItem.goldEcoWins || []),
+    ]);
+    const partnerCovered = new Set(partner.covered || []);
+    const allCovered = new Set([...topWins, ...topDraws, ...partnerCovered]);
+    const totalCovered = allCovered.size;
+
+    const summary = document.createElement("div");
+    summary.className = "ma-gold-combo-summary";
+    summary.innerHTML = "Together cover <strong>" + totalCovered + "</strong> of " + totalOppGold + " opponent gold units";
+    card.appendChild(summary);
+
+    // Covered icons (all opponent gold units that at least one handles)
+    const covIcons = document.createElement("div");
+    covIcons.className = "ma-beats-icons";
+    for (const oppSlug of allCovered) {
+        const oppName = simData.name_map[oppSlug] || oppSlug;
+        const url = getIconUrl(oppName);
+        if (!url) continue;
+        const img = document.createElement("img");
+        img.className = "ma-beats-icon";
+        img.src = url;
+        img.alt = oppName;
+        img.title = oppName;
+        covIcons.appendChild(img);
+    }
+    card.appendChild(covIcons);
+
+    // Gap row — opponent gold units neither can beat
+    const comboGap = [];
+    for (const oppSlug of oppGoldSlugs) {
+        if (!allCovered.has(oppSlug)) comboGap.push(oppSlug);
+    }
+    if (comboGap.length > 0) {
+        const gapRow = document.createElement("div");
+        gapRow.className = "ma-sidekick-gap-row";
+        const gapLabel = document.createElement("span");
+        gapLabel.className = "ma-beats-label ma-label-gap";
+        gapLabel.textContent = "Can't beat:";
+        gapRow.appendChild(gapLabel);
+
+        const gapIcons = document.createElement("div");
+        gapIcons.className = "ma-beats-icons";
+        comboGap.forEach((oppSlug) => {
+            const oppName = simData.name_map[oppSlug] || oppSlug;
+            const url = getIconUrl(oppName);
+            if (!url) return;
+            const img = document.createElement("img");
+            img.className = "ma-beats-icon loss";
+            img.src = url;
+            img.alt = oppName;
+            img.title = oppName;
+            gapIcons.appendChild(img);
+        });
+        gapRow.appendChild(gapIcons);
+        card.appendChild(gapRow);
+    }
+
+    return card;
+}
+
 /* ---- Rendering ---- */
 function renderComparison(dataL, dataR) {
     resultsEl.innerHTML = "";

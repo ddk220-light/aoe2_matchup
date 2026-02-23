@@ -375,6 +375,40 @@
     animation: maSpin 0.8s linear infinite;
 }
 
+/* --- Sim overlay extra rows (pop wins, eco wins, losses) --- */
+.ma-sim-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 3px;
+    min-height: 0;
+    flex-wrap: wrap;
+}
+.ma-sim-row:empty {
+    display: none;
+}
+.ma-label-pop {
+    color: #3498db;
+}
+.ma-label-eco {
+    color: #f39c12;
+}
+.ma-label-loss {
+    color: #e74c3c;
+}
+.ma-beats-icon.pop-win {
+    border-color: rgba(52, 152, 219, 0.4);
+    opacity: 0.75;
+}
+.ma-beats-icon.eco-win {
+    border-color: rgba(243, 156, 18, 0.4);
+    opacity: 0.75;
+}
+.ma-beats-icon.loss {
+    border-color: rgba(231, 76, 60, 0.4);
+    opacity: 0.65;
+}
+
 /* --- Light Mode Overrides --- */
 [data-theme="light"] .ma-slot {
     background: rgba(0, 0, 0, 0.02);
@@ -435,6 +469,15 @@
 [data-theme="light"] .ma-beats-icon.exclusive {
     border-color: var(--gold);
     box-shadow: 0 0 6px rgba(139, 105, 20, 0.3);
+}
+[data-theme="light"] .ma-beats-icon.pop-win {
+    border-color: rgba(41, 128, 185, 0.5);
+}
+[data-theme="light"] .ma-beats-icon.eco-win {
+    border-color: rgba(211, 132, 0, 0.5);
+}
+[data-theme="light"] .ma-beats-icon.loss {
+    border-color: rgba(192, 57, 43, 0.5);
 }
 
 /* --- Responsive: 768px — single column sections --- */

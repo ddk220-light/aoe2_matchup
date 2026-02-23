@@ -1173,37 +1173,52 @@ def get_matchup_sims(civ_left, civ_right, age="imperial"):
     for slug, uname, _ in right_units:
         _get_cu(civ_right, slug, uname)
 
-    # --- Win check helper -----------------------------------------------------
-    def _wins(cu_a, cu_b, cost_a, cost_b):
-        """Return True if unit A wins BOTH 30v30 and 3k-resource battles."""
-        if cu_a is None or cu_b is None:
-            return False
+    # --- Battle result helper --------------------------------------------------
+    def _battle_result(cu_a, cu_b, cost_a, cost_b):
+        """Return (pop_win, eco_win) booleans from unit A's perspective.
 
-        # 30v30 fixed count
+        pop_win: A wins the 30v30 fixed-count battle with >= 10% HP remaining.
+        eco_win: A wins the 3k-resource battle with >= 10% HP remaining.
+        """
+        if cu_a is None or cu_b is None:
+            return False, False
+
+        # 30v30 fixed count (pop efficiency)
         w1, _, _, hp1_1, _ = simulate_battle(
             cu_a, cu_b, 0, fixed_count=30, return_hp=True
         )
-        if w1 != 1 or hp1_1 < 0.10:
-            return False
+        pop_win = (w1 == 1 and hp1_1 >= 0.10)
 
-        # 3k resource battle
+        # 3k resource battle (eco efficiency)
         w2, _, _, hp1_2, _ = simulate_battle(
             cu_a, cu_b, 3000, cost1_override=cost_a, cost2_override=cost_b,
             return_hp=True
         )
-        if w2 != 1 or hp1_2 < 0.10:
-            return False
+        eco_win = (w2 == 1 and hp1_2 >= 0.10)
 
-        return True
+        return pop_win, eco_win
 
     # --- Run cross-matchups ---------------------------------------------------
-    left_wins = {}   # {left_slug: set(right_slugs beaten)}
-    right_wins = {}  # {right_slug: set(left_slugs beaten)}
+    left_wins = {}       # {left_slug: set(right_slugs beaten)}
+    left_pop_wins = {}   # {left_slug: set(right_slugs)} — won v30 only (draw overall)
+    left_eco_wins = {}   # {left_slug: set(right_slugs)} — won 3k only (draw overall)
+    left_losses = {}     # {left_slug: set(right_slugs)} — lost both to opponent
+
+    right_wins = {}      # {right_slug: set(left_slugs beaten)}
+    right_pop_wins = {}
+    right_eco_wins = {}
+    right_losses = {}
 
     for l_slug, _, _ in left_units:
         left_wins.setdefault(l_slug, set())
+        left_pop_wins.setdefault(l_slug, set())
+        left_eco_wins.setdefault(l_slug, set())
+        left_losses.setdefault(l_slug, set())
     for r_slug, _, _ in right_units:
         right_wins.setdefault(r_slug, set())
+        right_pop_wins.setdefault(r_slug, set())
+        right_eco_wins.setdefault(r_slug, set())
+        right_losses.setdefault(r_slug, set())
 
     # Pre-compute weighted costs to avoid redundant calculations in inner loop
     _cost_cache = {}
@@ -1231,13 +1246,29 @@ def get_matchup_sims(civ_left, civ_right, age="imperial"):
                 continue
             cost_r = _cost_cache[(civ_right, r_slug)]
 
-            # Left unit attacking right unit
-            if _wins(cu_l, cu_r, cost_l, cost_r):
+            # Left unit vs right unit
+            l_pop, l_eco = _battle_result(cu_l, cu_r, cost_l, cost_r)
+            if l_pop and l_eco:
                 left_wins[l_slug].add(r_slug)
+            elif l_pop:
+                left_pop_wins[l_slug].add(r_slug)
+            elif l_eco:
+                left_eco_wins[l_slug].add(r_slug)
 
-            # Right unit attacking left unit
-            if _wins(cu_r, cu_l, cost_r, cost_l):
+            # Right unit vs left unit
+            r_pop, r_eco = _battle_result(cu_r, cu_l, cost_r, cost_l)
+            if r_pop and r_eco:
                 right_wins[r_slug].add(l_slug)
+            elif r_pop:
+                right_pop_wins[r_slug].add(l_slug)
+            elif r_eco:
+                right_eco_wins[r_slug].add(l_slug)
+
+            # Losses: opponent wins both against me
+            if r_pop and r_eco:
+                left_losses[l_slug].add(r_slug)
+            if l_pop and l_eco:
+                right_losses[r_slug].add(l_slug)
 
     # --- Highlight logic (exclusive wins per opponent line) --------------------
     # Group units by line_slug for each side
@@ -1288,18 +1319,21 @@ def get_matchup_sims(civ_left, civ_right, age="imperial"):
     )
 
     # --- Build response -------------------------------------------------------
-    def _build_side(wins_dict, highlights_dict):
+    def _build_side(wins_dict, highlights_dict, pop_wins_dict, eco_wins_dict, losses_dict):
         result = {}
         for slug, wins in wins_dict.items():
             result[slug] = {
                 "wins": sorted(wins),
                 "highlighted": sorted(highlights_dict.get(slug, set())),
+                "pop_wins": sorted(pop_wins_dict.get(slug, set())),
+                "eco_wins": sorted(eco_wins_dict.get(slug, set())),
+                "losses": sorted(losses_dict.get(slug, set())),
             }
         return result
 
     return {
-        "left": _build_side(left_wins, left_highlights),
-        "right": _build_side(right_wins, right_highlights),
+        "left": _build_side(left_wins, left_highlights, left_pop_wins, left_eco_wins, left_losses),
+        "right": _build_side(right_wins, right_highlights, right_pop_wins, right_eco_wins, right_losses),
         "name_map": name_map,
     }
 

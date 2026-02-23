@@ -258,8 +258,33 @@ async function loadSims() {
     }
 }
 
+function _renderIconRow(row, slugs, labelText, labelClass, iconClass) {
+    row.innerHTML = "";
+    if (!slugs || slugs.length === 0) return;
+    const label = document.createElement("span");
+    label.className = "ma-beats-label " + labelClass;
+    label.textContent = labelText;
+    row.appendChild(label);
+
+    const iconWrap = document.createElement("div");
+    iconWrap.className = "ma-beats-icons";
+    slugs.forEach((oppSlug) => {
+        const oppName = simData.name_map[oppSlug] || oppSlug;
+        const iconUrl = getIconUrl(oppName);
+        if (!iconUrl) return;
+        const icon = document.createElement("img");
+        icon.className = "ma-beats-icon " + iconClass;
+        icon.src = iconUrl;
+        icon.alt = oppName;
+        icon.title = oppName;
+        iconWrap.appendChild(icon);
+    });
+    row.appendChild(iconWrap);
+}
+
 function renderSimOverlays() {
     if (!simData) return;
+    // Render "Beats" row (wins both v30 + 3k)
     document.querySelectorAll(".ma-beats-row").forEach((row) => {
         const slug = row.dataset.unitSlug;
         const side = row.dataset.side;
@@ -286,7 +311,7 @@ function renderSimOverlays() {
         wins.forEach((oppSlug) => {
             const oppName = simData.name_map[oppSlug] || oppSlug;
             const iconUrl = getIconUrl(oppName);
-            if (!iconUrl) return;  // skip units without icons
+            if (!iconUrl) return;
             const icon = document.createElement("img");
             icon.className = "ma-beats-icon";
             if (highlightSet.has(oppSlug)) {
@@ -299,6 +324,27 @@ function renderSimOverlays() {
         });
         row.appendChild(iconWrap);
     });
+
+    // Render pop wins, eco wins, losses rows
+    document.querySelectorAll(".ma-pop-wins-row").forEach((row) => {
+        const slug = row.dataset.unitSlug;
+        const side = row.dataset.side;
+        const d = simData[side] && simData[side][slug];
+        _renderIconRow(row, d && d.pop_wins, "Pop:", "ma-label-pop", "pop-win");
+    });
+    document.querySelectorAll(".ma-eco-wins-row").forEach((row) => {
+        const slug = row.dataset.unitSlug;
+        const side = row.dataset.side;
+        const d = simData[side] && simData[side][slug];
+        _renderIconRow(row, d && d.eco_wins, "Eco:", "ma-label-eco", "eco-win");
+    });
+    document.querySelectorAll(".ma-losses-row").forEach((row) => {
+        const slug = row.dataset.unitSlug;
+        const side = row.dataset.side;
+        const d = simData[side] && simData[side][slug];
+        _renderIconRow(row, d && d.losses, "Loses:", "ma-label-loss", "loss");
+    });
+
     // Remove remaining spinners
     document.querySelectorAll(".ma-beats-spinner").forEach((s) => s.remove());
 }
@@ -466,17 +512,41 @@ function buildUnitSide(entry, civName, isWinner) {
         entry.strength.charAt(0).toUpperCase() + entry.strength.slice(1);
     side.appendChild(strength);
 
-    // Beats row (populated by sim overlay) — skip for siege lines (percentile only)
+    // Sim overlay rows — skip for siege lines (percentile only)
     if (!MA_SIEGE_LINES.has(entry.line_slug)) {
+        const sideName = civName === civLeft ? "left" : "right";
+
+        // Beats row (wins both v30 + 3k)
         const beatsRow = document.createElement("div");
         beatsRow.className = "ma-beats-row";
         beatsRow.dataset.unitSlug = entry.unit_slug;
-        beatsRow.dataset.side = civName === civLeft ? "left" : "right";
+        beatsRow.dataset.side = sideName;
         // Show spinner while waiting for sim data
         const spinner = document.createElement("div");
         spinner.className = "ma-beats-spinner";
         beatsRow.appendChild(spinner);
         side.appendChild(beatsRow);
+
+        // Pop wins row (v30 wins that were draw overall)
+        const popRow = document.createElement("div");
+        popRow.className = "ma-sim-row ma-pop-wins-row";
+        popRow.dataset.unitSlug = entry.unit_slug;
+        popRow.dataset.side = sideName;
+        side.appendChild(popRow);
+
+        // Eco wins row (3k wins that were draw overall)
+        const ecoRow = document.createElement("div");
+        ecoRow.className = "ma-sim-row ma-eco-wins-row";
+        ecoRow.dataset.unitSlug = entry.unit_slug;
+        ecoRow.dataset.side = sideName;
+        side.appendChild(ecoRow);
+
+        // Losses row
+        const lossRow = document.createElement("div");
+        lossRow.className = "ma-sim-row ma-losses-row";
+        lossRow.dataset.unitSlug = entry.unit_slug;
+        lossRow.dataset.side = sideName;
+        side.appendChild(lossRow);
     }
 
     return side;

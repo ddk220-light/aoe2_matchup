@@ -825,48 +825,50 @@ function _buildTopColumn(topUnits, civName, oppGoldSlugs, side, unitsBySlug) {
         return col;
     }
 
-    // Compute sidekicks for each top unit and check if ALL have gaps
-    const topWithSidekicks = topUnits.map((item) => {
+    // For each top unit, find the best partner and render a combo card
+    const cards = [];
+    for (const item of topUnits) {
+        // Try trash sidekick (best one only)
         const sidekicks = _computeSidekicks(item, side, unitsBySlug, oppGoldSlugs);
-        return { item, sidekicks };
-    });
+        const bestSidekick = sidekicks.length > 0 ? sidekicks[0] : null;
 
-    // Filter sidekicks: if best sidekick has no gap, drop alt sidekick if it has a gap
-    topWithSidekicks.forEach((tw) => {
-        if (tw.sidekicks.length >= 2 && tw.sidekicks[0].gap.length === 0 && tw.sidekicks[1].gap.length > 0) {
-            tw.sidekicks = [tw.sidekicks[0]];
+        // Try gold combo
+        const goldPartner = _computeGoldCombo(item, side, unitsBySlug, oppGoldSlugs);
+
+        // Compute gaps for each option
+        const sidekickGap = bestSidekick
+            ? _computeComboGap(item.slug, bestSidekick.slug, side, oppGoldSlugs)
+            : null;
+        const goldGap = goldPartner
+            ? _computeComboGap(item.slug, goldPartner.slug, side, oppGoldSlugs)
+            : null;
+        const soloGap = _computeComboGap(item.slug, null, side, oppGoldSlugs);
+
+        // Pick the best option: smallest gap, prefer sidekick on tie
+        let bestPartner = null;
+        let bestType = null;
+        let bestGapSize = soloGap.gap.length;
+
+        if (sidekickGap && sidekickGap.gap.length <= bestGapSize) {
+            bestPartner = bestSidekick;
+            bestType = "trash";
+            bestGapSize = sidekickGap.gap.length;
         }
-    });
-
-    // Filter top units: if any combo has no gap, drop combos that have gaps.
-    // A top unit with no weaknesses (sidekicks=[]) is also perfect — it beats everything solo.
-    const _isPerfect = ({ item, sidekicks }) =>
-        sidekicks.length === 0
-            ? (item.losses.filter((l) => oppGoldSlugs.has(l)).length === 0 &&
-               (item.goldPopWins || []).length === 0 && (item.goldEcoWins || []).length === 0)
-            : sidekicks[0].gap.length === 0;
-    const anyPerfect = topWithSidekicks.some(_isPerfect);
-    const filtered = anyPerfect
-        ? topWithSidekicks.filter(_isPerfect)
-        : topWithSidekicks;
-
-    const allHaveGaps = filtered.every(({ sidekicks }) => {
-        if (sidekicks.length === 0) return true; // no sidekick = gap
-        return sidekicks[0].gap.length > 0; // best sidekick has gap
-    });
-
-    // If all combos have gaps, try double-gold combo with #1 top unit
-    if (allHaveGaps) {
-        const combo = _computeGoldCombo(topUnits[0], side, unitsBySlug, oppGoldSlugs);
-        if (combo) {
-            const comboCard = _buildGoldComboCard(topUnits[0], combo, civName, oppGoldSlugs);
-            col.appendChild(comboCard);
+        if (goldGap && goldGap.gap.length < bestGapSize) {
+            bestPartner = goldPartner;
+            bestType = "gold";
+            bestGapSize = goldGap.gap.length;
         }
+
+        cards.push({ item, partner: bestPartner, type: bestType, gapSize: bestGapSize });
     }
 
-    // Render top unit cards (with sidekicks already computed)
-    filtered.forEach(({ item, sidekicks }) => {
-        const card = _buildTopCard(item, civName, oppGoldSlugs, sidekicks);
+    // If any card has zero gap, filter to only zero-gap cards
+    const anyPerfect = cards.some((c) => c.gapSize === 0);
+    const filtered = anyPerfect ? cards.filter((c) => c.gapSize === 0) : cards;
+
+    filtered.forEach(({ item, partner, type }) => {
+        const card = _buildComboCard(item, partner, type, civName, oppGoldSlugs, side);
         col.appendChild(card);
     });
 

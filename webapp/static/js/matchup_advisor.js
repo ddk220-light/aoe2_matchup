@@ -53,6 +53,7 @@ let civLeft = null;
 let civRight = null;
 let activeSlot = "left";
 let currentAge = "imperial";
+let simData = null;
 
 /* ---- DOM refs ---- */
 const slotLeft = document.getElementById("slot-left");
@@ -205,6 +206,7 @@ function renderSlot(slotEl, civName, placeholder, side) {
 function clearResults() {
     resultsEl.innerHTML = "";
     controls.style.display = "none";
+    simData = null;
 }
 
 /* ---- Data Loading ---- */
@@ -225,9 +227,76 @@ async function loadComparison() {
         const dataL = await respL.json();
         const dataR = await respR.json();
         renderComparison(dataL, dataR);
+        // Fire background sim fetch
+        loadSims();
     } catch (e) {
         resultsEl.innerHTML = '<div class="ma-loading">Error loading data.</div>';
     }
+}
+
+async function loadSims() {
+    try {
+        const resp = await fetch("/api/matchup-sims", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                civ_left: civLeft,
+                civ_right: civRight,
+                age: currentAge,
+            }),
+        });
+        if (!resp.ok) return;
+        simData = await resp.json();
+        renderSimOverlays();
+    } catch (e) {
+        // Silently fail — sim overlay is non-critical
+    }
+}
+
+function renderSimOverlays() {
+    if (!simData) return;
+    document.querySelectorAll(".ma-beats-row").forEach((row) => {
+        const slug = row.dataset.unitSlug;
+        const side = row.dataset.side;
+        const sideData = simData[side];
+        if (!sideData || !sideData[slug]) {
+            row.innerHTML = "";
+            return;
+        }
+        const { wins, highlighted } = sideData[slug];
+        if (!wins || wins.length === 0) {
+            row.innerHTML = "";
+            return;
+        }
+        row.innerHTML = "";
+        const label = document.createElement("span");
+        label.className = "ma-beats-label";
+        label.textContent = "Beats:";
+        row.appendChild(label);
+
+        const iconWrap = document.createElement("div");
+        iconWrap.className = "ma-beats-icons";
+        const highlightSet = new Set(highlighted || []);
+
+        wins.forEach((oppSlug) => {
+            const oppName = simData.name_map[oppSlug] || oppSlug;
+            const icon = document.createElement("img");
+            icon.className = "ma-beats-icon";
+            if (highlightSet.has(oppSlug)) {
+                icon.classList.add("exclusive");
+            }
+            const iconUrl = getIconUrl(oppName);
+            if (iconUrl) {
+                icon.src = iconUrl;
+            }
+            icon.alt = oppName;
+            icon.title = oppName;
+            iconWrap.appendChild(icon);
+        });
+        row.appendChild(iconWrap);
+    });
+    // Remove remaining spinners
+    document.querySelectorAll(".ma-beats-spinner").forEach((s) => s.remove());
 }
 
 /* ---- Rendering ---- */
@@ -392,6 +461,17 @@ function buildUnitSide(entry, civName, isWinner) {
     strength.textContent = sc.bar === "#c9a84c" ? "Signature" :
         entry.strength.charAt(0).toUpperCase() + entry.strength.slice(1);
     side.appendChild(strength);
+
+    // Beats row (populated by sim overlay)
+    const beatsRow = document.createElement("div");
+    beatsRow.className = "ma-beats-row";
+    beatsRow.dataset.unitSlug = entry.unit_slug;
+    beatsRow.dataset.side = civName === civLeft ? "left" : "right";
+    // Show spinner while waiting for sim data
+    const spinner = document.createElement("div");
+    spinner.className = "ma-beats-spinner";
+    beatsRow.appendChild(spinner);
+    side.appendChild(beatsRow);
 
     return side;
 }

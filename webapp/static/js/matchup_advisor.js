@@ -570,6 +570,74 @@ function _computeSidekicks(topItem, side, unitsBySlug, oppGoldSlugs) {
     return ranked.slice(0, 2);
 }
 
+function _computeGoldCombo(topItem, side, unitsBySlug, oppGoldSlugs) {
+    /**Find the best gold unit partner for a top unit.
+     * Same scoring as sidekicks but partner must be gold (not opposite cost type).
+     * Used when no gold+trash sidekick can fully cover.**/
+    const sideData = simData[side];
+    if (!sideData) return null;
+
+    // Top unit's weaknesses: losses + draws (opponent gold slugs)
+    const topLosses = new Set((topItem.losses || []).filter((s) => oppGoldSlugs.has(s)));
+    const topDraws = new Set([
+        ...(topItem.goldPopWins || []),
+        ...(topItem.goldEcoWins || []),
+    ]);
+    const allWeaknesses = new Set([...topLosses, ...topDraws]);
+
+    if (allWeaknesses.size === 0) return null;
+
+    // Score each gold unit as partner
+    const ranked = [];
+    for (const slug of Object.keys(sideData)) {
+        const entry = unitsBySlug[slug];
+        if (!entry) continue;
+        if (slug === topItem.slug) continue;
+
+        // Partner must be gold
+        const isGold = !!(entry.stats && entry.stats.cost_gold > 0);
+        if (!isGold) continue;
+
+        const d = sideData[slug];
+        const pWins = new Set(d.wins || []);
+        const pDraws = new Set([...(d.pop_wins || []), ...(d.eco_wins || [])]);
+
+        let score = 0;
+        const covered = [];
+
+        for (const opp of topLosses) {
+            if (pWins.has(opp)) { score += 3; covered.push(opp); }
+            else if (pDraws.has(opp)) { score += 2; covered.push(opp); }
+        }
+        for (const opp of topDraws) {
+            if (pWins.has(opp)) { score += 2; covered.push(opp); }
+            else if (pDraws.has(opp)) { score += 1; covered.push(opp); }
+        }
+
+        if (score === 0) continue;
+
+        const coveredSet = new Set(covered);
+        const gap = [...allWeaknesses].filter((s) => !coveredSet.has(s));
+
+        ranked.push({
+            slug,
+            entry,
+            score,
+            percentile: entry.percentile || 0,
+            covered,
+            gap,
+            totalWeaknesses: allWeaknesses.size,
+        });
+    }
+
+    ranked.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return b.percentile - a.percentile;
+    });
+
+    return ranked.length > 0 ? ranked[0] : null;
+}
+
 function _buildTopColumn(topUnits, civName, oppGoldSlugs, side, unitsBySlug) {
     const col = document.createElement("div");
     col.className = "ma-top-col ma-top-col-" + side;

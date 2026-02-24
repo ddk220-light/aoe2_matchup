@@ -525,6 +525,31 @@
     font-weight: 700;
 }
 
+/* --- Ease statements on combo cards --- */
+.ma-ease-statement {
+    font-size: 0.68rem;
+    line-height: 1.35;
+    margin-top: 6px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-style: italic;
+}
+.ma-ease-upside {
+    color: #7ebd7e;
+    background: rgba(126, 189, 126, 0.08);
+    border-left: 2px solid rgba(126, 189, 126, 0.3);
+}
+.ma-ease-downside {
+    color: #d4856a;
+    background: rgba(212, 133, 106, 0.08);
+    border-left: 2px solid rgba(212, 133, 106, 0.3);
+}
+.ma-ease-neutral {
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 2px solid rgba(255, 255, 255, 0.1);
+}
+
 /* --- Light Mode Overrides --- */
 [data-theme="light"] .ma-slot {
     background: rgba(0, 0, 0, 0.02);
@@ -618,6 +643,21 @@
 [data-theme="light"] .ma-gold-combo-card {
     background: rgba(218, 165, 32, 0.06);
     border-color: rgba(218, 165, 32, 0.2);
+}
+[data-theme="light"] .ma-ease-upside {
+    color: #3a7a3a;
+    background: rgba(58, 122, 58, 0.06);
+    border-left-color: rgba(58, 122, 58, 0.3);
+}
+[data-theme="light"] .ma-ease-downside {
+    color: #a84832;
+    background: rgba(168, 72, 50, 0.06);
+    border-left-color: rgba(168, 72, 50, 0.3);
+}
+[data-theme="light"] .ma-ease-neutral {
+    color: var(--text-muted);
+    background: rgba(0, 0, 0, 0.02);
+    border-left-color: rgba(0, 0, 0, 0.1);
 }
 
 /* --- Responsive: 768px — single column sections --- */

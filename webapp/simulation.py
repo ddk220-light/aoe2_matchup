@@ -25,6 +25,9 @@ MELEE_ENGAGE_STEP = 0.1    # increase per attack round (every ~2 seconds)
 MELEE_ENGAGE_ROUND_TICKS = 20  # ticks per "attack round" for ramp (~2 seconds)
 MELEE_MAX_PER_TARGET = 1   # max melee attackers per ranged target
 MELEE_VS_MELEE_MAX = 2     # soft cap for melee-vs-melee targeting
+MELEE_VS_MELEE_RAMP_TICKS = 20  # ticks before next attacker can engage (~2.0s, one attack cycle)
+INF_VS_CAV_INITIAL_CAP = 2  # infantry can stack 2-wide on large cavalry hitboxes immediately
+INF_VS_CAV_MAX_CAP = 3      # infantry can stack 3-wide on cavalry after pathing delay
 
 
 def _parse_dismount(row):
@@ -285,17 +288,22 @@ def _assign_targets_melee_capped(my_alive, enemy_alive, tick):
     return assignments
 
 
-def _assign_targets_spread_capped(my_alive, enemy_alive):
+def _assign_targets_spread_capped(my_alive, enemy_alive, tick=0,
+                                   initial_cap=1, max_cap=MELEE_VS_MELEE_MAX):
     """Assign melee attackers spread across enemies with a per-target cap.
 
-    Same as _assign_targets_spread but limits each enemy to MELEE_VS_MELEE_MAX
-    attackers. Surplus melee units beyond the total cap get no target.
+    Same as _assign_targets_spread but limits each enemy to a cap that ramps
+    from initial_cap to max_cap after pathing delay. Infantry vs cavalry uses
+    higher caps (2→3) since cavalry hitboxes allow more surrounding.
+    Surplus melee units beyond the total cap get no target.
     """
     if not enemy_alive:
         return {}
+    # Ramp: initial_cap at start, max_cap after pathing delay
+    cap = initial_cap if tick < MELEE_VS_MELEE_RAMP_TICKS else max_cap
     assignments = {}
     slots_used = {}
-    total_slots = len(enemy_alive) * MELEE_VS_MELEE_MAX
+    total_slots = len(enemy_alive) * cap
     n_en = len(enemy_alive)
     assigned = 0
     for li, i in enumerate(my_alive):
@@ -303,11 +311,11 @@ def _assign_targets_spread_capped(my_alive, enemy_alive):
             break
         target_pos = li % n_en
         target = enemy_alive[target_pos]
-        if slots_used.get(target, 0) >= MELEE_VS_MELEE_MAX:
+        if slots_used.get(target, 0) >= cap:
             found = False
             for offset in range(1, n_en):
                 alt = enemy_alive[(target_pos + offset) % n_en]
-                if slots_used.get(alt, 0) < MELEE_VS_MELEE_MAX:
+                if slots_used.get(alt, 0) < cap:
                     target = alt
                     found = True
                     break
@@ -835,8 +843,8 @@ def simulate_battle(
         t_hp[target_idx] -= hit_dmg
 
         if was_alive and t_hp[target_idx] <= 0:
-            if a_kill_bonus > 0:
-                a_bonus[attacker_idx] += a_kill_bonus
+            if a_kill_bonus > 0 and a_bonus[attacker_idx] < a_kill_bonus:
+                a_bonus[attacker_idx] = min(a_bonus[attacker_idx] + 1, a_kill_bonus)
             if a_hp_per_kill > 0 and a_hp_gained[attacker_idx] < a_hp_per_kill_max:
                 heal = min(a_hp_per_kill, a_hp_per_kill_max - a_hp_gained[attacker_idx])
                 a_hp_arr[attacker_idx] = min(a_hp_arr[attacker_idx] + heal, a_max_hp + a_hp_per_kill_max)
@@ -1142,6 +1150,22 @@ def simulate_battle(
     # PHASE 2: Tick-based combat loop
     # =========================================================
 
+    # Infantry vs cavalry: infantry can stack more around large cavalry hitboxes
+    is_inf1 = 1 in unit1["armors"]  # armor class 1 = Infantry
+    is_inf2 = 1 in unit2["armors"]
+    is_cav1 = 8 in unit1["armors"]  # armor class 8 = Cavalry
+    is_cav2 = 8 in unit2["armors"]
+    # Team 1 attacking team 2: if infantry attacking cavalry, use higher caps
+    if is_inf1 and is_cav2:
+        spread_initial1, spread_max1 = INF_VS_CAV_INITIAL_CAP, INF_VS_CAV_MAX_CAP
+    else:
+        spread_initial1, spread_max1 = 1, MELEE_VS_MELEE_MAX
+    # Team 2 attacking team 1
+    if is_inf2 and is_cav1:
+        spread_initial2, spread_max2 = INF_VS_CAV_INITIAL_CAP, INF_VS_CAV_MAX_CAP
+    else:
+        spread_initial2, spread_max2 = 1, MELEE_VS_MELEE_MAX
+
     for tick in range(MAX_TICKS):
         alive1 = _get_alive_targets(hp1, count1)
         alive2 = _get_alive_targets(hp2, count2)
@@ -1161,13 +1185,27 @@ def simulate_battle(
         elif is_ranged2:
             targets1 = _assign_targets_melee_capped(alive1, alive2, tick)
         else:
-            targets1 = _assign_targets_spread_capped(alive1, alive2)
+            targets1 = _assign_targets_spread_capped(alive1, alive2, tick,
+                                                      spread_initial1, spread_max1)
         if is_ranged2:
             targets2 = _assign_targets_focus(alive2, alive1, hp1, dmg2, 1 + extra_proj2)
         elif is_ranged1:
             targets2 = _assign_targets_melee_capped(alive2, alive1, tick)
         else:
-            targets2 = _assign_targets_spread_capped(alive2, alive1)
+            targets2 = _assign_targets_spread_capped(alive2, alive1, tick,
+                                                      spread_initial2, spread_max2)
+
+        # Reverse maps: who is targeting each unit (for retarget-on-attacked)
+        # targeted_by1[i] = first enemy (team2) unit targeting team1 unit i
+        # targeted_by2[i] = first enemy (team1) unit targeting team2 unit i
+        targeted_by1 = {}
+        for attacker, target in targets2.items():
+            if target not in targeted_by1:
+                targeted_by1[target] = attacker
+        targeted_by2 = {}
+        for attacker, target in targets1.items():
+            if target not in targeted_by2:
+                targeted_by2[target] = attacker
 
         # Collect pending damage: (target_team, target_idx, damage, attacker_idx)
         pending_damage = []
@@ -1209,6 +1247,7 @@ def simulate_battle(
                 enemy_hp = hp2
                 enemy_alive = alive2
                 enemy_team = 2
+                my_targeted_by = targeted_by1  # who (team2) is attacking me (team1)
             else:
                 my_alive = alive2
                 my_targets = targets2
@@ -1239,6 +1278,7 @@ def simulate_battle(
                 enemy_hp = hp1
                 enemy_alive = alive1
                 enemy_team = 1
+                my_targeted_by = targeted_by2  # who (team1) is attacking me (team2)
 
             for i in my_alive:
                 # Check if this unit has dismounted (Konnik)
@@ -1299,12 +1339,19 @@ def simulate_battle(
                 if target_idx < 0:
                     continue
                 # Retarget delay: melee units need time to walk to new target
+                # Exception: if an enemy is already attacking this unit, switch
+                # to that enemy instantly (they're already in melee range)
                 prev = my_prev_target[i]
                 if prev >= 0 and target_idx != prev and not t_is_ranged:
-                    retarget_time = RETARGET_DIST / t_speed if t_speed > 0 else 2.0
-                    my_cooldown[i] = retarget_time
-                    my_prev_target[i] = target_idx
-                    continue
+                    attacker = my_targeted_by.get(i)
+                    if attacker is not None and enemy_hp[attacker] > 0:
+                        # Switch to the enemy attacking us — no walk needed
+                        target_idx = attacker
+                    else:
+                        retarget_time = RETARGET_DIST / t_speed if t_speed > 0 else 2.0
+                        my_cooldown[i] = retarget_time
+                        my_prev_target[i] = target_idx
+                        continue
                 my_prev_target[i] = target_idx
 
                 if i_dismounted:
@@ -1503,8 +1550,8 @@ def simulate_battle(
 
             # Kill bonus (attack + HP)
             if was_alive and t_hp[target_idx] <= 0:
-                if a_kill_bonus > 0:
-                    a_bonus[attacker_idx] += a_kill_bonus
+                if a_kill_bonus > 0 and a_bonus[attacker_idx] < a_kill_bonus:
+                    a_bonus[attacker_idx] = min(a_bonus[attacker_idx] + 1, a_kill_bonus)
                 if a_hp_per_kill > 0 and a_hp_gained[attacker_idx] < a_hp_per_kill_max:
                     heal = min(a_hp_per_kill, a_hp_per_kill_max - a_hp_gained[attacker_idx])
                     a_hp_arr[attacker_idx] = min(a_hp_arr[attacker_idx] + heal, a_max_hp + a_hp_per_kill_max)
@@ -2233,24 +2280,25 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
             my_melee = [i for i in my_alive if not my_team["is_ranged"][i]]
             my_ranged = [i for i in my_alive if my_team["is_ranged"][i]]
 
-            # Melee targeting: engage enemy melee first (capped 2:1), overflow to ranged (capped)
-            melee_capacity = len(enemy_melee) * MELEE_VS_MELEE_MAX
+            # Melee targeting: engage enemy melee first (ramped cap), overflow to ranged
+            melee_cap = 1 if tick < MELEE_VS_MELEE_RAMP_TICKS else MELEE_VS_MELEE_MAX
+            melee_capacity = len(enemy_melee) * melee_cap
             melee_on_melee = my_melee[:melee_capacity]
             melee_overflow = my_melee[melee_capacity:]
 
-            # Assign melee-on-melee (spread, capped at MELEE_VS_MELEE_MAX)
+            # Assign melee-on-melee (spread, capped)
             if enemy_melee and melee_on_melee:
                 slots_used = {}
                 for li, i in enumerate(melee_on_melee):
                     t_pos = li % len(enemy_melee)
                     t = enemy_melee[t_pos]
-                    if slots_used.get(t, 0) < MELEE_VS_MELEE_MAX:
+                    if slots_used.get(t, 0) < melee_cap:
                         targets[i] = t
                         slots_used[t] = slots_used.get(t, 0) + 1
                     else:
                         for offset in range(1, len(enemy_melee)):
                             alt = enemy_melee[(t_pos + offset) % len(enemy_melee)]
-                            if slots_used.get(alt, 0) < MELEE_VS_MELEE_MAX:
+                            if slots_used.get(alt, 0) < melee_cap:
                                 targets[i] = alt
                                 slots_used[alt] = slots_used.get(alt, 0) + 1
                                 break
@@ -2287,6 +2335,16 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
         targets1 = _assign_mixed(alive1, t1, alive2, hp2, t2)
         targets2 = _assign_mixed(alive2, t2, alive1, hp1, t1)
 
+        # Reverse maps: who is targeting each unit (for retarget-on-attacked)
+        targeted_by1 = {}
+        for attacker, target in targets2.items():
+            if target not in targeted_by1:
+                targeted_by1[target] = attacker
+        targeted_by2 = {}
+        for attacker, target in targets1.items():
+            if target not in targeted_by2:
+                targeted_by2[target] = attacker
+
         pending_damage = []
 
         if tick % 2 == 0:
@@ -2302,6 +2360,7 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                 enemy_hp, enemy_alive, enemy_team_data = hp2, alive2, t2
                 dmg_matrix = dmg_1v2
                 enemy_team_id = 2
+                my_targeted_by = targeted_by1
             else:
                 my_alive, my_team, my_targets = alive2, t2, targets2
                 my_cooldown, my_used_first = cooldown2, used_first2
@@ -2309,6 +2368,7 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                 enemy_hp, enemy_alive, enemy_team_data = hp1, alive1, t1
                 dmg_matrix = dmg_2v1
                 enemy_team_id = 1
+                my_targeted_by = targeted_by2
 
             for i in my_alive:
                 if my_cooldown[i] > 0:
@@ -2334,14 +2394,19 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                     continue
 
                 # Retarget delay for melee
+                # Exception: if an enemy is attacking this unit, switch instantly
                 prev = my_prev_target[i]
                 if prev >= 0 and target_idx != prev and not tmpl["is_ranged"]:
-                    retarget_time = (
-                        RETARGET_DIST / tmpl["speed"] if tmpl["speed"] > 0 else 2.0
-                    )
-                    my_cooldown[i] = retarget_time
-                    my_prev_target[i] = target_idx
-                    continue
+                    attacker = my_targeted_by.get(i)
+                    if attacker is not None and enemy_hp[attacker] > 0:
+                        target_idx = attacker
+                    else:
+                        retarget_time = (
+                            RETARGET_DIST / tmpl["speed"] if tmpl["speed"] > 0 else 2.0
+                        )
+                        my_cooldown[i] = retarget_time
+                        my_prev_target[i] = target_idx
+                        continue
                 my_prev_target[i] = target_idx
 
                 d_ti = enemy_team_data["type_idx"][target_idx]

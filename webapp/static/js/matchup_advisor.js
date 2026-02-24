@@ -411,6 +411,33 @@ function renderTopUnits() {
     const leftTop = _computeTopUnits("left", leftBySlug, rightGoldSlugs, "right", leftGoldSlugs);
     const rightTop = _computeTopUnits("right", rightBySlug, leftGoldSlugs, "left", rightGoldSlugs);
 
+    // Compute best combo ease for each side (to pass to opponent)
+    function _bestComboEase(topUnits, side, unitsBySlug, oppGoldSlugs) {
+        if (topUnits.length === 0) return null;
+        const item = topUnits[0];
+        const sidekicks = _computeSidekicks(item, side, unitsBySlug, oppGoldSlugs);
+        const bestSidekick = sidekicks.length > 0 ? sidekicks[0] : null;
+        const goldPartner = _computeGoldCombo(item, side, unitsBySlug, oppGoldSlugs);
+        const sidekickGap = bestSidekick ? _computeComboGap(item.slug, bestSidekick.slug, side, oppGoldSlugs) : null;
+        const goldGap = goldPartner ? _computeComboGap(item.slug, goldPartner.slug, side, oppGoldSlugs) : null;
+        const soloGap = _computeComboGap(item.slug, null, side, oppGoldSlugs);
+
+        let bestPartner = null;
+        let bestGap = soloGap;
+        if (sidekickGap && sidekickGap.gap.length <= bestGap.gap.length) { bestPartner = bestSidekick; bestGap = sidekickGap; }
+        if (goldGap && goldGap.gap.length < bestGap.gap.length) { bestPartner = goldPartner; bestGap = goldGap; }
+
+        const subs = _avgEaseSubs(item, bestPartner);
+        const hasCastle = !!(
+            (item.entry.ease && item.entry.ease.is_castle_unit) ||
+            (bestPartner && bestPartner.entry.ease && bestPartner.entry.ease.is_castle_unit)
+        );
+        return { subs, hasCastle };
+    }
+
+    const leftBestEase = _bestComboEase(leftTop, "left", leftBySlug, rightGoldSlugs);
+    const rightBestEase = _bestComboEase(rightTop, "right", rightBySlug, leftGoldSlugs);
+
     if (leftTop.length === 0 && rightTop.length === 0) return;
 
     // Build section
@@ -426,11 +453,11 @@ function renderTopUnits() {
     body.className = "ma-top-units-body";
 
     // Left side
-    const leftCol = _buildTopColumn(leftTop, civLeft, rightGoldSlugs, "left", leftBySlug);
+    const leftCol = _buildTopColumn(leftTop, civLeft, rightGoldSlugs, "left", leftBySlug, rightBestEase);
     body.appendChild(leftCol);
 
     // Right side
-    const rightCol = _buildTopColumn(rightTop, civRight, leftGoldSlugs, "right", rightBySlug);
+    const rightCol = _buildTopColumn(rightTop, civRight, leftGoldSlugs, "right", rightBySlug, leftBestEase);
     body.appendChild(rightCol);
 
     section.appendChild(body);
@@ -696,7 +723,123 @@ function _computeGoldCombo(topItem, side, unitsBySlug, oppGoldSlugs) {
     return ranked.length > 0 ? ranked[0] : null;
 }
 
-function _buildComboCard(topItem, partner, partnerType, civName, gapResult) {
+function _avgEase(topItem, partner) {
+    /**Compute average ease_score for a combo (top unit + optional partner).**/
+    const topEase = topItem.entry.ease ? topItem.entry.ease.score : 0;
+    if (!partner) return topEase;
+    const partnerEase = partner.entry.ease ? partner.entry.ease.score : 0;
+    return (topEase + partnerEase) / 2;
+}
+
+function _avgEaseSubs(topItem, partner) {
+    /**Compute average ease sub_scores for a combo. Returns sub_scores dict or null.**/
+    const topSubs = topItem.entry.ease ? topItem.entry.ease.sub_scores : null;
+    if (!partner) return topSubs;
+    const partSubs = partner.entry.ease ? partner.entry.ease.sub_scores : null;
+    if (!topSubs && !partSubs) return null;
+    if (!topSubs) return partSubs;
+    if (!partSubs) return topSubs;
+    const result = {};
+    for (const key of Object.keys(topSubs)) {
+        result[key] = (topSubs[key] + (partSubs[key] || 0)) / 2;
+    }
+    return result;
+}
+
+function _computeCombatContext(gapResult) {
+    /**Generate combat context statement from gap categories.
+     * Returns string or null (for zero-gap or all-loss gaps).**/
+    if (gapResult.gap.length === 0) return null;
+
+    const categories = new Set(gapResult.gap.map((g) => g.category));
+    const hasLoss = categories.has("loss");
+    const hasPop = categories.has("pop");
+    const hasEco = categories.has("eco");
+
+    // If all gaps are complete losses, no combat qualifier
+    if (hasLoss && !hasPop && !hasEco) return null;
+
+    if (hasPop && !hasEco && !hasLoss) {
+        return "Loses on pop efficiency, but trades better on eco";
+    }
+    if (hasEco && !hasPop && !hasLoss) {
+        return "Less eco-efficient, but more pop-efficient";
+    }
+    // Mixed
+    if (hasPop && hasEco) {
+        return "Mixed results \u2014 pop-efficient vs some, eco-efficient vs others";
+    }
+    // Pop or eco with some losses
+    if (hasPop) return "Loses on pop efficiency, but trades better on eco";
+    if (hasEco) return "Less eco-efficient, but more pop-efficient";
+    return null;
+}
+
+function _computeEaseStatement(mySubs, oppSubs, myHasCastle, oppHasCastle) {
+    /**Generate ease comparison statement.
+     * @param mySubs    — my combo's average sub_scores dict
+     * @param oppSubs   — opponent's best combo's average sub_scores dict
+     * @param myHasCastle  — boolean, does my combo include a castle unit?
+     * @param oppHasCastle — boolean, does opponent's combo include a castle unit?
+     * Returns { text: string, isUpside: boolean } or null.**/
+    if (!mySubs || !oppSubs) return null;
+
+    const THRESHOLD = 0.15;
+    const factors = [];
+
+    // Castle: always include if asymmetric
+    if (myHasCastle && !oppHasCastle) {
+        factors.push({ key: "not_castle", delta: -(mySubs.not_castle - oppSubs.not_castle), text: "needs a Castle" });
+    }
+
+    // Creation time (higher = faster train = better)
+    const ctDelta = mySubs.creation_time - oppSubs.creation_time;
+    if (Math.abs(ctDelta) >= THRESHOLD) {
+        factors.push({ key: "creation_time", delta: ctDelta, text: ctDelta > 0 ? "trains faster" : "slower to train" });
+    }
+
+    // Upgrade cost (higher = cheaper = better)
+    const ucDelta = mySubs.upgrade_cost - oppSubs.upgrade_cost;
+    if (Math.abs(ucDelta) >= THRESHOLD) {
+        factors.push({ key: "upgrade_cost", delta: ucDelta, text: ucDelta > 0 ? "cheaper upgrades" : "costlier upgrades" });
+    }
+
+    // Castle unique tech: only if asymmetric
+    if (!myHasCastle || !oppHasCastle) {
+        const utDelta = mySubs.no_castle_ut - oppSubs.no_castle_ut;
+        if (Math.abs(utDelta) >= THRESHOLD) {
+            factors.push({ key: "no_castle_ut", delta: utDelta, text: utDelta > 0 ? "no Castle tech needed" : "needs a Castle unique tech" });
+        }
+    }
+
+    // Speed (higher = faster = better)
+    const spDelta = mySubs.speed - oppSubs.speed;
+    if (Math.abs(spDelta) >= THRESHOLD) {
+        factors.push({ key: "speed", delta: spDelta, text: spDelta > 0 ? "faster on the field" : "slower on the field" });
+    }
+
+    if (factors.length === 0) return null;
+
+    // Sort by absolute delta descending, take top 3
+    factors.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+    const top = factors.slice(0, 3);
+
+    // Determine overall direction: positive factors = easier, negative = harder
+    const avgDelta = top.reduce((sum, f) => sum + f.delta, 0) / top.length;
+    const isUpside = avgDelta >= 0;
+
+    const factorTexts = top.map((f) => f.text).join(" and ");
+    let text;
+    if (isUpside) {
+        text = "Easier to mass \u2014 " + factorTexts;
+    } else {
+        text = "Harder to get going \u2014 " + factorTexts;
+    }
+
+    return { text, isUpside };
+}
+
+function _buildComboCard(topItem, partner, partnerType, civName, gapResult, oppBestEase) {
     /**Build a unified combo card.
      * @param topItem     — top unit object from _computeTopUnits
      * @param partner     — partner object (from _computeSidekicks or _computeGoldCombo), or null for solo
@@ -805,10 +948,40 @@ function _buildComboCard(topItem, partner, partnerType, civName, gapResult) {
         card.appendChild(gapRow);
     }
 
+    // Ease + combat context statements (only for combos with gaps)
+    if (gapResult.gap.length > 0) {
+        const mySubs = _avgEaseSubs(topItem, partner);
+        const myHasCastle = !!(
+            (topItem.entry.ease && topItem.entry.ease.is_castle_unit) ||
+            (partner && partner.entry.ease && partner.entry.ease.is_castle_unit)
+        );
+
+        const combatCtx = _computeCombatContext(gapResult);
+        const easeStmt = oppBestEase
+            ? _computeEaseStatement(mySubs, oppBestEase.subs, myHasCastle, oppBestEase.hasCastle)
+            : null;
+
+        if (combatCtx || easeStmt) {
+            const stmtDiv = document.createElement("div");
+            let parts = [];
+            if (combatCtx) parts.push(combatCtx);
+            if (easeStmt) parts.push(easeStmt.text);
+
+            if (parts.length > 0) {
+                const cssClass = easeStmt
+                    ? (easeStmt.isUpside ? "ma-ease-upside" : "ma-ease-downside")
+                    : "ma-ease-neutral";
+                stmtDiv.className = "ma-ease-statement " + cssClass;
+                stmtDiv.textContent = parts.join(". ") + ".";
+                card.appendChild(stmtDiv);
+            }
+        }
+    }
+
     return card;
 }
 
-function _buildTopColumn(topUnits, civName, oppGoldSlugs, side, unitsBySlug) {
+function _buildTopColumn(topUnits, civName, oppGoldSlugs, side, unitsBySlug, oppBestEase) {
     const col = document.createElement("div");
     col.className = "ma-top-col ma-top-col-" + side;
 
@@ -870,10 +1043,16 @@ function _buildTopColumn(topUnits, civName, oppGoldSlugs, side, unitsBySlug) {
 
     // If any card has zero gap, filter to only zero-gap cards
     const anyPerfect = cards.some((c) => c.gapSize === 0);
-    const filtered = anyPerfect ? cards.filter((c) => c.gapSize === 0) : cards;
+    let filtered = anyPerfect ? cards.filter((c) => c.gapSize === 0) : cards;
+
+    // Sort: smallest gap first, then highest ease score
+    filtered.sort((a, b) => {
+        if (a.gapSize !== b.gapSize) return a.gapSize - b.gapSize;
+        return _avgEase(b.item, b.partner) - _avgEase(a.item, a.partner);
+    });
 
     filtered.forEach(({ item, partner, type, gapResult }) => {
-        const card = _buildComboCard(item, partner, type, civName, gapResult);
+        const card = _buildComboCard(item, partner, type, civName, gapResult, oppBestEase);
         col.appendChild(card);
     });
 

@@ -756,8 +756,8 @@ function _computeCombatContext(gapResult) {
     const hasPop = categories.has("pop");
     const hasEco = categories.has("eco");
 
-    // If all gaps are complete losses, no combat qualifier
-    if (hasLoss && !hasPop && !hasEco) return null;
+    // If all gaps are complete losses, flag it
+    if (hasLoss && !hasPop && !hasEco) return "Doesn't win outright";
 
     if (hasPop && !hasEco && !hasLoss) {
         return "Loses on pop efficiency, but trades better on eco";
@@ -963,16 +963,28 @@ function _buildComboCard(topItem, partner, partnerType, civName, gapResult, oppB
 
         if (combatCtx || easeStmt) {
             const stmtDiv = document.createElement("div");
-            let parts = [];
-            if (combatCtx) parts.push(combatCtx);
-            if (easeStmt) parts.push(easeStmt.text);
+            let text = "";
 
-            if (parts.length > 0) {
+            if (combatCtx && easeStmt) {
+                // "Doesn't win outright" + downside → join with " and " (lowercase)
+                // Other combat context + ease → join with ". "
+                if (combatCtx === "Doesn't win outright" && !easeStmt.isUpside) {
+                    text = combatCtx + " and " + easeStmt.text.toLowerCase();
+                } else {
+                    text = combatCtx + ". " + easeStmt.text;
+                }
+            } else if (combatCtx) {
+                text = combatCtx;
+            } else if (easeStmt) {
+                text = easeStmt.text;
+            }
+
+            if (text) {
                 const cssClass = easeStmt
                     ? (easeStmt.isUpside ? "ma-ease-upside" : "ma-ease-downside")
                     : "ma-ease-neutral";
                 stmtDiv.className = "ma-ease-statement " + cssClass;
-                stmtDiv.textContent = parts.join(". ") + ".";
+                stmtDiv.textContent = text + ".";
                 card.appendChild(stmtDiv);
             }
         }

@@ -821,7 +821,7 @@ function _buildTopColumn(topUnits, civName, oppGoldSlugs, side, unitsBySlug) {
     }
 
     // For each top unit, find the best partner and render a combo card
-    const cards = [];
+    let cards = [];
     for (const item of topUnits) {
         // Try trash sidekick (best one only)
         const sidekicks = _computeSidekicks(item, side, unitsBySlug, oppGoldSlugs);

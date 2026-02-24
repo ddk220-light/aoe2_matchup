@@ -353,7 +353,7 @@ def _parse_techs_and_bonuses(techs_list, effects_list):
     return standard_techs, bonus_abilities, special_effects
 
 
-def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slug, effects_by_slug, line_counts=None, score_type=""):
+def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slug, effects_by_slug, line_counts=None, score_type="", ease_by_slug=None):
     """Build a single unit entry dict with stats, techs, bonuses, and effects."""
     slug = row["unit_slug"]
     unit_name, stats = _fetch_unit_stats(conn, civ_name, slug, db_age)
@@ -372,6 +372,10 @@ def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slu
     strength = _classify_strength(percentile)
     speed = stats["speed"] if stats else 0
 
+    ease = None
+    if ease_by_slug:
+        ease = ease_by_slug.get(slug)
+
     return {
         "unit_slug": slug,
         "unit_name": unit_name or slug,
@@ -387,6 +391,7 @@ def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slu
         "missing_techs": missing,
         "bonus_abilities": bonus_abilities,
         "special_effects": special_effects,
+        "ease": ease,
     }
 
 
@@ -409,6 +414,7 @@ def _strip_siege_entries(power_units):
                 "percentile": e["percentile"],
                 "strength": e["strength"],
                 "is_signature": e["is_signature"],
+                "ease": e.get("ease"),
             }
             for e in entries
         ]
@@ -565,6 +571,36 @@ def _generate_strategic_description(power_units, strong_columns, weak_areas, str
     return " ".join(sentences)
 
 
+def _batch_fetch_ease_data(conn, civ_name):
+    """Load ease-of-creation data for all units of a civ. Returns dict keyed by unit_slug."""
+    rc = conn.cursor()
+    rc.execute("""
+        SELECT unit_slug, ease_score, is_castle_unit, creation_time,
+               total_upgrade_cost, needs_castle_ut, movement_speed,
+               score_not_castle, score_creation_time, score_upgrade_cost,
+               score_no_castle_ut, score_speed
+        FROM unit_creation_ease
+        WHERE civ_name = ?
+    """, [civ_name])
+    result = {}
+    for row in rc.fetchall():
+        result[row["unit_slug"]] = {
+            "score": round(row["ease_score"], 4),
+            "is_castle_unit": bool(row["is_castle_unit"]),
+            "creation_time": row["creation_time"],
+            "total_upgrade_cost": row["total_upgrade_cost"],
+            "needs_castle_ut": bool(row["needs_castle_ut"]),
+            "sub_scores": {
+                "not_castle": round(row["score_not_castle"], 4),
+                "creation_time": round(row["score_creation_time"], 4),
+                "upgrade_cost": round(row["score_upgrade_cost"], 4),
+                "no_castle_ut": round(row["score_no_castle_ut"], 4),
+                "speed": round(row["score_speed"], 4),
+            },
+        }
+    return result
+
+
 def compute_civ_power_units():
     """Pre-compute power units for all civs. Returns dict keyed by civ_name."""
     conn = _get_db()
@@ -594,6 +630,7 @@ def compute_civ_power_units():
             power_units = {}
 
             techs_by_slug, effects_by_slug = _batch_fetch_civ_tech_data(conn, civ, db_age)
+            ease_by_slug = _batch_fetch_ease_data(conn, civ)
 
             for col_key, line_slugs in COLUMN_DEFS.items():
                 col_data = {}
@@ -620,7 +657,8 @@ def compute_civ_power_units():
                         for row in rows:
                             entry = _build_unit_entry(
                                 row, civ, conn, db_age, reference_techs,
-                                techs_by_slug, effects_by_slug, line_counts, score_type
+                                techs_by_slug, effects_by_slug, line_counts, score_type,
+                                ease_by_slug,
                             )
                             entries.append(entry)
                         col_data[line_slug] = entries

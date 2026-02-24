@@ -858,6 +858,16 @@ function _buildTopColumn(topUnits, civName, oppGoldSlugs, side, unitsBySlug) {
         cards.push({ item, partner: bestPartner, type: bestType, gapSize: bestGap.gap.length, gapResult: bestGap });
     }
 
+    // Deduplicate: drop cards with the same unit pair in swapped roles
+    const seenPairs = new Set();
+    cards = cards.filter((c) => {
+        if (!c.partner) return true;
+        const key = [c.item.slug, c.partner.slug].sort().join("|");
+        if (seenPairs.has(key)) return false;
+        seenPairs.add(key);
+        return true;
+    });
+
     // If any card has zero gap, filter to only zero-gap cards
     const anyPerfect = cards.some((c) => c.gapSize === 0);
     const filtered = anyPerfect ? cards.filter((c) => c.gapSize === 0) : cards;

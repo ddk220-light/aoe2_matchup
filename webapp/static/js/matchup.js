@@ -131,11 +131,7 @@ async function loadAnalysis(civName) {
 }
 
 /* ---- Helpers ---- */
-function escapeHtml(str) {
-    var div = document.createElement("div");
-    div.appendChild(document.createTextNode(str));
-    return div.innerHTML;
-}
+// escapeHtml is provided globally by constants.js.
 
 function slugToName(slug) {
     if (!slug) return "";

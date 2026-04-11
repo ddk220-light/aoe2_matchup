@@ -154,7 +154,7 @@ analyzeBtn.addEventListener("click", async () => {
         const results = await Promise.all(fetches);
         renderAllResults(results);
     } catch (err) {
-        resultsEl.innerHTML = `<div class="loading-indicator" style="color:var(--team1)">Error: ${err.message}</div>`;
+        resultsEl.innerHTML = `<div class="loading-indicator" style="color:var(--team1)">Error: ${escapeHtml(err.message)}</div>`;
     } finally {
         analyzeBtn.disabled = false;
     }
@@ -251,7 +251,7 @@ function buildStageCard(data) {
                 } catch (err) {
                     if (err.name === "AbortError") return; // superseded by newer tab click
                     const body = card.querySelector(".stage-body");
-                    body.innerHTML = `<div class="loading-indicator" style="color:var(--team1)">Error: ${err.message}</div>`;
+                    body.innerHTML = `<div class="loading-indicator" style="color:var(--team1)">Error: ${escapeHtml(err.message)}</div>`;
                 }
             });
 
@@ -346,8 +346,8 @@ function buildTeamColumn(label, teamClass, teamData) {
 
         const info = document.createElement("div");
         info.className = "unit-entry-info";
-        info.innerHTML = `<div class="unit-entry-name">${displayName}</div>`
-            + `<div class="unit-entry-civ">${unit.civ}</div>`;
+        info.innerHTML = `<div class="unit-entry-name">${escapeHtml(displayName)}</div>`
+            + `<div class="unit-entry-civ">${escapeHtml(unit.civ)}</div>`;
 
         const stats = document.createElement("div");
         stats.className = "unit-entry-stats";

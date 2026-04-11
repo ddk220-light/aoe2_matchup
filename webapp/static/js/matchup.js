@@ -115,14 +115,7 @@ async function loadAnalysis(civName) {
     resultsEl.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><div>Loading analysis\u2026</div></div>';
 
     try {
-        var response = await fetch("/api/civ-power-units/" + encodeURIComponent(civName));
-        if (!response.ok) {
-            throw new Error("Failed to load " + civName + " (" + response.status + ")");
-        }
-        var data = await response.json();
-        if (data.error) {
-            throw new Error(data.error);
-        }
+        var data = await apiGet("/api/civ-power-units/" + encodeURIComponent(civName));
         resultsEl.innerHTML = renderAnalysis(civName, data);
     } catch (e) {
         resultsEl.innerHTML = '<div class="no-data">Error: ' + escapeHtml(e.message) + '</div>';

@@ -145,10 +145,7 @@ analyzeBtn.addEventListener("click", async () => {
                 stage: stage,
                 tab: "overall",
             });
-            return fetch("/api/team-analysis?" + params).then(r => {
-                if (!r.ok) throw new Error(`${stage}: API error ${r.status}`);
-                return r.json();
-            });
+            return apiGet("/api/team-analysis?" + params);
         });
 
         const results = await Promise.all(fetches);

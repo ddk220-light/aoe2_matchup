@@ -60,9 +60,7 @@ let currentAge = "Imperial";
 
 async function loadData() {
     try {
-        const resp = await fetch(`/api/ref/civ/${CIV_NAME}`);
-        if (!resp.ok) throw new Error("Failed to load");
-        civData = await resp.json();
+        civData = await apiGet(`/api/ref/civ/${CIV_NAME}`);
         document.getElementById("loading").style.display = "none";
         render();
     } catch (e) {

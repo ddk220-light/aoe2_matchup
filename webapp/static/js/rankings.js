@@ -392,8 +392,13 @@ function buildScoreHoverHtml(row, scoreKey, dataKey) {
 
 async function getStatChain(refUnitId) {
     if (statChainCache[refUnitId]) return statChainCache[refUnitId];
-    const resp = await fetch(`/api/ref/stat-chain/${refUnitId}`);
-    const data = await resp.json();
+    let data;
+    try {
+        data = await apiGet(`/api/ref/stat-chain/${refUnitId}`);
+    } catch (e) {
+        console.error("Failed to load stat chain for unit", refUnitId, e);
+        return {};
+    }
     statChainCache[refUnitId] = data;
     return data;
 }

@@ -203,8 +203,7 @@ async function selectCiv(teamNum, civName) {
 
     // Fetch civ data
     try {
-        const resp = await fetch(`/api/ref/civ/${civName}`);
-        state.civData = await resp.json();
+        state.civData = await apiGet(`/api/ref/civ/${civName}`);
     } catch (e) {
         console.error("Failed to load civ data:", e);
     }

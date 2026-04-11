@@ -96,7 +96,6 @@ def test_golden_regression(key):
 
     expected = baseline[key]
     assert actual == expected, (
-        f"Golden regression failed for {key}.\n"
-        f"Keys in actual but not expected: {set(str(actual)[:200])}\n"
-        "Re-run .golden/capture_baseline.py to regenerate if behavior change is intentional."
+        f"Golden regression failed for {key}. "
+        f"Re-run .golden/capture_baseline.py to regenerate if behavior change is intentional."
     )

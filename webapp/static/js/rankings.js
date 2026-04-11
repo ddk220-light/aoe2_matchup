@@ -392,15 +392,15 @@ function buildScoreHoverHtml(row, scoreKey, dataKey) {
 
 async function getStatChain(refUnitId) {
     if (statChainCache[refUnitId]) return statChainCache[refUnitId];
-    let data;
     try {
-        data = await apiGet(`/api/ref/stat-chain/${refUnitId}`);
+        const data = await apiGet(`/api/ref/stat-chain/${refUnitId}`);
+        statChainCache[refUnitId] = data;
+        return data;
     } catch (e) {
         console.error("Failed to load stat chain for unit", refUnitId, e);
+        statChainCache[refUnitId] = {};   // tombstone: degrade once, don't retry on every hover
         return {};
     }
-    statChainCache[refUnitId] = data;
-    return data;
 }
 
 const STAT_CHAIN_MAP = {

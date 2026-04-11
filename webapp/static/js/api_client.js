@@ -24,9 +24,11 @@ async function apiRequest(url, opts) {
     var timeoutMs = options.timeoutMs != null ? options.timeoutMs : DEFAULT_TIMEOUT_MS;
     var externalSignal = options.signal || null;
 
+    var timedOut = false;
     var controller = new AbortController();
     var timeoutId = setTimeout(function () {
-        controller.abort(new Error("Request timed out after " + timeoutMs + "ms"));
+        timedOut = true;
+        controller.abort();
     }, timeoutMs);
 
     // If caller passed an external signal, propagate its abort to our controller
@@ -52,11 +54,10 @@ async function apiRequest(url, opts) {
     } catch (err) {
         clearTimeout(timeoutId);
         if (err.name === "AbortError") {
-            throw new ApiError(
-                "Request to " + url + " aborted: " + (err.message || "unknown reason"),
-                0,
-                null
-            );
+            if (timedOut) {
+                throw new ApiError("Request timed out after " + timeoutMs + "ms", 0, null);
+            }
+            throw new ApiError("Request to " + url + " aborted", 0, null);
         }
         throw new ApiError("Network error fetching " + url + ": " + err.message, 0, null);
     }

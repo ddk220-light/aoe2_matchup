@@ -145,7 +145,9 @@ analyzeBtn.addEventListener("click", async () => {
                 stage: stage,
                 tab: "overall",
             });
-            return apiGet("/api/team-analysis?" + params);
+            return apiGet("/api/team-analysis?" + params).catch(e => {
+                throw new Error(`${stage}: ${e.message}`);
+            });
         });
 
         const results = await Promise.all(fetches);

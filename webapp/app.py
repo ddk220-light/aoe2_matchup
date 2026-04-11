@@ -1,6 +1,7 @@
 import json
 import os
 import sqlite3
+from functools import lru_cache
 
 from flask import Flask, jsonify, redirect, render_template, request
 from best_units import load_civ_power_units, get_matchup_recommendations, get_matchup_sims, CIVS_WITHOUT_TREBUCHET
@@ -84,7 +85,7 @@ def civ_view():
 @app.route("/civilizations/<civ_name>")
 def civ_detail(civ_name):
     """Civilization unit detail page."""
-    if civ_name not in ORIGINAL_13_CIVS:
+    if civ_name not in _valid_civs():
         return redirect("/civilizations")
     return render_template("deprecated-civ.html", civ_name=civ_name, active_nav="civ_detail")
 
@@ -177,8 +178,9 @@ _TREBUCHET_SLUGS = {"trebuchet"}
 @app.route("/api/ref/civ/<civ_name>")
 def api_ref_civ(civ_name):
     """Get all reference data for a civilization."""
-    if civ_name not in ORIGINAL_13_CIVS:
-        return jsonify({"error": "Civilization not in original 13"}), 404
+    err = _validate_civ_name(civ_name)
+    if err:
+        return err
 
     ref_conn = get_ref_db()
     rc = ref_conn.cursor()
@@ -464,10 +466,14 @@ def api_ref_stat_chain(ref_unit_id):
 @app.route("/api/ref/combat-unit/<civ_name>/<unit_slug>")
 def api_ref_combat_unit(civ_name, unit_slug):
     """Get combat-ready stats for a unit from reference DB (for battle simulator)."""
-    if civ_name not in ORIGINAL_13_CIVS:
-        return jsonify({"error": "Civilization not in original 13"}), 404
+    err = _validate_civ_name(civ_name)
+    if err:
+        return err
 
     age = request.args.get("age", "Imperial")
+    err = _validate_age(age)
+    if err:
+        return err
 
     ref_conn = get_ref_db()
     rc = ref_conn.cursor()
@@ -1058,6 +1064,40 @@ def _get_ref_civs():
     return civs
 
 
+# ============== Input validation ==============
+
+_VALID_AGES = frozenset({"castle", "imperial"})
+
+
+@lru_cache(maxsize=1)
+def _valid_civs():
+    """Cached frozenset of canonical civ names from the reference DB.
+    Cached for the lifetime of the process — restart Flask if civs are added
+    to the DB. Used for fast O(1) membership checks in input validators."""
+    return frozenset(_get_ref_civs())
+
+
+def _validate_civ_name(name):
+    """Return None if `name` is a known civilization, else a Flask 400
+    response. Compare is case-sensitive — call sites must pass the
+    canonical capitalised form (e.g. 'Britons')."""
+    if not isinstance(name, str) or name not in _valid_civs():
+        return jsonify({"error": f"Unknown civilization: {name!r}"}), 400
+    return None
+
+
+def _validate_age(age):
+    """Return None if `age` is a valid age string, else a Flask 400
+    response. Compares case-insensitively — caller is free to keep its
+    original case after this call returns None."""
+    if not isinstance(age, str) or age.lower() not in _VALID_AGES:
+        return (
+            jsonify({"error": f"Invalid age: {age!r}. Must be 'castle' or 'imperial'."}),
+            400,
+        )
+    return None
+
+
 @app.route("/matchup-advisor")
 def matchup_advisor():
     """Matchup Advisor — civ vs civ comparison."""
@@ -1081,6 +1121,10 @@ def api_team_analysis():
     tab = request.args.get("tab", "overall")
     age = request.args.get("age", "imperial").lower()
 
+    err = _validate_age(age)
+    if err:
+        return err
+
     if stage not in TEAM_ANALYSIS_STAGES:
         return jsonify({"error": f"Unknown stage: {stage}"}), 400
 
@@ -1095,6 +1139,11 @@ def api_team_analysis():
 
     if len(team1_civs) != 4 or len(team2_civs) != 4:
         return jsonify({"error": "Each team must have exactly 4 civs"}), 400
+
+    for civ in team1_civs + team2_civs:
+        err = _validate_civ_name(civ)
+        if err:
+            return err
 
     line_slugs = stage_cfg["line_slugs"]
     score_type = tabs[tab]["score_type"]
@@ -1173,7 +1222,13 @@ def api_team_analysis():
 @app.route("/api/civ-power-units/<civ_name>")
 def api_civ_power_units(civ_name):
     """Get pre-computed power units for a civilization."""
+    err = _validate_civ_name(civ_name)
+    if err:
+        return err
     age = request.args.get("age", "imperial").lower()
+    err = _validate_age(age)
+    if err:
+        return err
     data = load_civ_power_units()
     if not data:
         return jsonify({"error": "civ_power_units.json not found"}), 500
@@ -1189,7 +1244,14 @@ def api_civ_power_units(civ_name):
 @app.route("/api/matchup-recommendations/<civ_a>/<civ_b>")
 def api_matchup_recommendations(civ_a, civ_b):
     """Get recommended units and compositions for civ_a vs civ_b."""
+    for civ in (civ_a, civ_b):
+        err = _validate_civ_name(civ)
+        if err:
+            return err
     age = request.args.get("age", "imperial").lower()
+    err = _validate_age(age)
+    if err:
+        return err
     result = get_matchup_recommendations(civ_a, civ_b, age)
     if "error" in result:
         return jsonify(result), 400
@@ -1209,6 +1271,14 @@ def api_matchup_sims():
 
     if not civ_left or not civ_right:
         return jsonify({"error": "civ_left and civ_right required"}), 400
+
+    for civ in (civ_left, civ_right):
+        err = _validate_civ_name(civ)
+        if err:
+            return err
+    err = _validate_age(age)
+    if err:
+        return err
 
     result = get_matchup_sims(civ_left, civ_right, age)
     if "error" in result:

@@ -9,6 +9,7 @@ Usage:
 """
 
 import json
+import logging
 import sqlite3
 import sys
 from pathlib import Path
@@ -95,10 +96,26 @@ def build_combat_dict_from_ref(rc, row):
     )
     special = {}
     for s in rc.fetchall():
+        name = s["property_name"]
+        value = s["property_value"]
+        # Properties whose name ends in `_json` carry stringified JSON for
+        # downstream consumers (dismount_attacks_json, transform_armors_json,
+        # etc.) — keep them as the original string. All other properties are
+        # numeric scalars; if a non-numeric value sneaks through, log loudly
+        # and store None so the bug surfaces instead of silently corrupting.
+        if name.endswith("_json"):
+            special[name] = value
+            continue
         try:
-            special[s["property_name"]] = float(s["property_value"])
+            special[name] = float(value)
         except (ValueError, TypeError):
-            special[s["property_name"]] = s["property_value"]
+            logging.warning(
+                "Non-numeric value for special effect %r=%r on ref_unit_id=%s — storing None",
+                name,
+                value,
+                uid,
+            )
+            special[name] = None
 
     # Get projectile data
     rc.execute(

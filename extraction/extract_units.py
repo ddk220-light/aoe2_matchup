@@ -1,6 +1,6 @@
 """Extract unit data from dat file into units.json."""
 
-from .extract_constants import ARMOR_CLASSES
+from .extract_constants import ARMOR_CLASSES, RESOURCE_TYPE_NAMES
 
 # Unit class names (combat-relevant classes only)
 UNIT_CLASSES = {
@@ -382,8 +382,7 @@ def extract_unit_data(unit, all_units=None):
         if hasattr(c, "resource_costs"):
             for rc in c.resource_costs:
                 if rc.amount > 0:
-                    resource_names = {0: "food", 1: "wood", 2: "stone", 3: "gold"}
-                    res_name = resource_names.get(rc.type, None)
+                    res_name = RESOURCE_TYPE_NAMES.get(rc.type, None)
                     if res_name:
                         cost[res_name] = int(rc.amount)
         data["cost"] = cost

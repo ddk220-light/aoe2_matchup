@@ -7,31 +7,6 @@ const MELEE_RANGE_BUFFER = 5;
 // ENABLED_CIVS, NAME_TO_ICON, UNIQUE_BUILDING, ICON_BASE,
 // CIV_EMBLEM_BASE are loaded from constants.js (via base.html)
 
-const CLASS_TO_BUILDING = {
-    Infantry: "Barracks",
-    Archer: "Archery Range",
-    "Hand Cannoneer": "Archery Range",
-    "Cavalry Archer": "Archery Range",
-    Cavalry: "Stable",
-    "Siege Weapon": "Siege Workshop",
-    Ballista: "Siege Workshop",
-    "Unpacked Siege Unit": "Castle",
-};
-const BUILDING_ORDER = [
-    "Barracks",
-    "Archery Range",
-    "Stable",
-    "Castle",
-    "Siege Workshop",
-];
-const BUILDING_ICONS = {
-    Barracks: 12,
-    "Archery Range": 87,
-    Stable: 101,
-    "Siege Workshop": 49,
-    Castle: 82,
-};
-
 function iconUrl(id) {
     return ICON_BASE + id + ".png";
 }

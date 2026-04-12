@@ -7,13 +7,13 @@ import os
 import sqlite3
 
 from combat_unit_loader import build_combat_dict_from_ref
+from unit_lines import TREBUCHET_SLUGS
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 POWER_UNITS_PATH = os.path.join(os.path.dirname(__file__), "civ_power_units.json")
 
 # Civilizations that do not have access to trebuchets in-game.
 CIVS_WITHOUT_TREBUCHET = {"Wu", "Wei", "Shu"}
-_TREBUCHET_SLUGS = {"trebuchet"}
 
 # Siege line slugs — these only show percentile scores in match-advisor (no sims).
 SIEGE_LINE_SLUGS = {"ram", "bombard_cannon", "trebuchet"}
@@ -615,7 +615,7 @@ def compute_civ_power_units():
 
                     # Filter trebuchets for civs that don't have them
                     if civ in CIVS_WITHOUT_TREBUCHET:
-                        rows = [r for r in rows if r["unit_slug"] not in _TREBUCHET_SLUGS]
+                        rows = [r for r in rows if r["unit_slug"] not in TREBUCHET_SLUGS]
 
                     if rows:
                         entries = []

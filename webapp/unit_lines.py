@@ -274,3 +274,6 @@ UNIT_LINES = {
         "sub_lines": ["ram", "trebuchet", "bombard_cannon"],
     },
 }
+
+# Trebuchet unit slugs — excluded from matchup sim results (siege-only, no direct combat).
+TREBUCHET_SLUGS = {"trebuchet"}

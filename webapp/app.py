@@ -6,7 +6,7 @@ from functools import lru_cache
 from flask import Flask, jsonify, redirect, render_template, request
 from best_units import load_civ_power_units, get_matchup_recommendations, get_matchup_sims, CIVS_WITHOUT_TREBUCHET
 from combat_unit_loader import build_combat_dict_from_ref
-from unit_lines import UNIT_LINES
+from unit_lines import UNIT_LINES, TREBUCHET_SLUGS
 
 
 app = Flask(__name__)
@@ -174,9 +174,6 @@ ORIGINAL_13_CIVS = [
     "Wu",
 ]
 
-_TREBUCHET_SLUGS = {"trebuchet"}
-
-
 @app.route("/api/ref/civ/<civ_name>")
 def api_ref_civ(civ_name):
     """Get all reference data for a civilization."""
@@ -196,7 +193,7 @@ def api_ref_civ(civ_name):
 
     # Filter out trebuchets for civs that don't have them
     if civ_name in CIVS_WITHOUT_TREBUCHET:
-        units_rows = [r for r in units_rows if r["unit_slug"] not in _TREBUCHET_SLUGS]
+        units_rows = [r for r in units_rows if r["unit_slug"] not in TREBUCHET_SLUGS]
 
     # Get verifications
     main_conn = get_db()

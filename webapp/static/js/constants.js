@@ -272,3 +272,33 @@ function getIconUrl(name) {
     if (!id) return null;
     return `${ICON_BASE}${id}.png`;
 }
+
+/* --- Building Config --- */
+const CLASS_TO_BUILDING = {
+    Infantry: "Barracks",
+    Archer: "Archery Range",
+    "Hand Cannoneer": "Archery Range",
+    "Cavalry Archer": "Archery Range",
+    Cavalry: "Stable",
+    "Siege Weapon": "Siege Workshop",
+    Ballista: "Siege Workshop",
+    "Unpacked Siege Unit": "Castle",
+};
+const BUILDING_ORDER = [
+    "Barracks", "Archery Range", "Stable", "Castle", "Siege Workshop",
+];
+const BUILDING_ICONS = {
+    Barracks: 12, "Archery Range": 87, Stable: 101,
+    "Siege Workshop": 49, Castle: 82,
+};
+
+/* --- HTML Escaping ---
+   Escape a string so it is safe to interpolate into an innerHTML template
+   literal. For attributes, make sure the attribute is quoted — this escaping
+   turns `&`, `<`, `>`, `"` into character entities via DOM textContent. */
+function escapeHtml(str) {
+    if (str == null) return "";
+    const div = document.createElement("div");
+    div.appendChild(document.createTextNode(String(str)));
+    return div.innerHTML;
+}

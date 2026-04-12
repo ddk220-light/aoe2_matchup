@@ -1,5 +1,7 @@
 """Extract technology data and compute tech ages from dat file."""
 
+from .extract_constants import RESOURCE_TYPE_NAMES
+
 
 def extract_tech_data(tech):
     """Extract relevant data from a genieutils technology object.
@@ -46,8 +48,7 @@ def extract_tech_data(tech):
     if hasattr(tech, "resource_costs"):
         for rc in tech.resource_costs:
             if rc.amount > 0:
-                resource_names = {0: "food", 1: "wood", 2: "stone", 3: "gold"}
-                res_name = resource_names.get(rc.type, None)
+                res_name = RESOURCE_TYPE_NAMES.get(rc.type, None)
                 if res_name:
                     cost[res_name] = int(rc.amount)
     data["cost"] = cost

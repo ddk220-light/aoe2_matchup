@@ -7,31 +7,6 @@ const MELEE_RANGE_BUFFER = 5;
 // ENABLED_CIVS, NAME_TO_ICON, UNIQUE_BUILDING, ICON_BASE,
 // CIV_EMBLEM_BASE are loaded from constants.js (via base.html)
 
-const CLASS_TO_BUILDING = {
-    Infantry: "Barracks",
-    Archer: "Archery Range",
-    "Hand Cannoneer": "Archery Range",
-    "Cavalry Archer": "Archery Range",
-    Cavalry: "Stable",
-    "Siege Weapon": "Siege Workshop",
-    Ballista: "Siege Workshop",
-    "Unpacked Siege Unit": "Castle",
-};
-const BUILDING_ORDER = [
-    "Barracks",
-    "Archery Range",
-    "Stable",
-    "Castle",
-    "Siege Workshop",
-];
-const BUILDING_ICONS = {
-    Barracks: 12,
-    "Archery Range": 87,
-    Stable: 101,
-    "Siege Workshop": 49,
-    Castle: 82,
-};
-
 function iconUrl(id) {
     return ICON_BASE + id + ".png";
 }
@@ -64,6 +39,11 @@ const teamState = {
 const unitImages = { 1: null, 2: null };
 
 // ===== SELECTION UI =====
+// Click handlers are bound once via delegation in DOMContentLoaded (see
+// initSelectionDelegation below). The selection container reads
+// [data-action] + sibling data attributes rather than using inline
+// onclick= handlers, so user-controllable strings (unit name, civ name)
+// never land inside an attribute that becomes executable JavaScript.
 function renderSelection(teamNum) {
     const container = document.getElementById(
         `team${teamNum}Selection`,
@@ -74,9 +54,10 @@ function renderSelection(teamNum) {
         // Show civ grid
         let html = '<div class="civ-grid">';
         for (const civ of ENABLED_CIVS) {
-            html += `<div class="civ-card" onclick="selectCiv(${teamNum},'${civ}')">
-                        <img src="${CIV_EMBLEM_BASE}${civ.toLowerCase()}.png" alt="${civ}" />
-                        <span>${civ}</span>
+            const civSafe = escapeHtml(civ);
+            html += `<div class="civ-card" data-action="selectCiv" data-team="${teamNum}" data-civ="${civSafe}">
+                        <img src="${CIV_EMBLEM_BASE}${civ.toLowerCase()}.png" alt="${civSafe}" />
+                        <span>${civSafe}</span>
                     </div>`;
         }
         html += "</div>";
@@ -85,17 +66,18 @@ function renderSelection(teamNum) {
     }
 
     // Civ selected badge
+    const civSafe = escapeHtml(state.civ);
     let html = `<div class="selection-badge">
-                <img src="${CIV_EMBLEM_BASE}${state.civ.toLowerCase()}.png" alt="${state.civ}" />
-                <span class="badge-text">${state.civ}</span>
-                <span class="change-btn" onclick="clearCiv(${teamNum})">change</span>
+                <img src="${CIV_EMBLEM_BASE}${state.civ.toLowerCase()}.png" alt="${civSafe}" />
+                <span class="badge-text">${civSafe}</span>
+                <span class="change-btn" data-action="clearCiv" data-team="${teamNum}">change</span>
             </div>`;
 
     if (!state.unitSlug) {
         // Age toggle + unit grid
         html += `<div class="age-toggle">
-                    <button class="age-btn${state.age === "Castle" ? " active" : ""}" onclick="setTeamAge(${teamNum},'Castle')">Castle</button>
-                    <button class="age-btn${state.age === "Imperial" ? " active" : ""}" onclick="setTeamAge(${teamNum},'Imperial')">Imperial</button>
+                    <button class="age-btn${state.age === "Castle" ? " active" : ""}" data-action="setAge" data-team="${teamNum}" data-age="Castle">Castle</button>
+                    <button class="age-btn${state.age === "Imperial" ? " active" : ""}" data-action="setAge" data-team="${teamNum}" data-age="Imperial">Imperial</button>
                 </div>`;
 
         if (state.civData) {
@@ -115,14 +97,17 @@ function renderSelection(teamNum) {
                 const bUnits = groups[bldg];
                 if (!bUnits || bUnits.length === 0) continue;
                 const bIconId = BUILDING_ICONS[bldg];
+                const bldgSafe = escapeHtml(bldg);
                 html += `<div class="unit-grid-section">
-                            <h4><img src="${iconUrl(bIconId)}" alt="${bldg}" onerror="this.style.display='none'" /> ${bldg}</h4>
+                            <h4><img src="${iconUrl(bIconId)}" alt="${bldgSafe}" onerror="this.style.display='none'" /> ${bldgSafe}</h4>
                             <div class="unit-grid">`;
                 for (const u of bUnits) {
                     const iUrl = unitIconUrl(u.unit_name);
-                    html += `<div class="unit-pick" onclick="selectUnit(${teamNum},'${u.unit_slug}','${u.unit_name.replace(/'/g, "\\'")}')">
-                                <img src="${iUrl}" alt="${u.unit_name}" onerror="this.style.display='none'" />
-                                <span>${u.unit_name}</span>
+                    const nameSafe = escapeHtml(u.unit_name);
+                    const slugSafe = escapeHtml(u.unit_slug);
+                    html += `<div class="unit-pick" data-action="selectUnit" data-team="${teamNum}" data-slug="${slugSafe}" data-name="${nameSafe}">
+                                <img src="${iUrl}" alt="${nameSafe}" onerror="this.style.display='none'" />
+                                <span>${nameSafe}</span>
                             </div>`;
                 }
                 html += "</div></div>";
@@ -134,15 +119,53 @@ function renderSelection(teamNum) {
     } else {
         // Unit selected badge
         const iUrl = unitIconUrl(state.unitName);
+        const unitNameSafe = escapeHtml(state.unitName);
+        const ageSafe = escapeHtml(state.age);
         html += `<div class="selection-badge">
-                    <img src="${iUrl}" alt="${state.unitName}" onerror="this.style.display='none'" />
-                    <span class="badge-text">${state.unitName}</span>
-                    <span style="font-size:0.7rem;color:var(--text-muted);margin-left:4px">(${state.age})</span>
-                    <span class="change-btn" onclick="clearUnit(${teamNum})">change</span>
+                    <img src="${iUrl}" alt="${unitNameSafe}" onerror="this.style.display='none'" />
+                    <span class="badge-text">${unitNameSafe}</span>
+                    <span style="font-size:0.7rem;color:var(--text-muted);margin-left:4px">(${ageSafe})</span>
+                    <span class="change-btn" data-action="clearUnit" data-team="${teamNum}">change</span>
                 </div>`;
     }
 
     container.innerHTML = html;
+}
+
+function initSelectionDelegation() {
+    [1, 2].forEach((teamNum) => {
+        const container = document.getElementById(
+            `team${teamNum}Selection`,
+        );
+        if (!container) return;
+        container.addEventListener("click", (event) => {
+            const target = event.target.closest("[data-action]");
+            if (!target || !container.contains(target)) return;
+            const action = target.dataset.action;
+            const team = parseInt(target.dataset.team, 10);
+            switch (action) {
+                case "selectCiv":
+                    selectCiv(team, target.dataset.civ);
+                    break;
+                case "clearCiv":
+                    clearCiv(team);
+                    break;
+                case "setAge":
+                    setTeamAge(team, target.dataset.age);
+                    break;
+                case "selectUnit":
+                    selectUnit(
+                        team,
+                        target.dataset.slug,
+                        target.dataset.name,
+                    );
+                    break;
+                case "clearUnit":
+                    clearUnit(team);
+                    break;
+            }
+        });
+    });
 }
 
 async function selectCiv(teamNum, civName) {
@@ -155,8 +178,7 @@ async function selectCiv(teamNum, civName) {
 
     // Fetch civ data
     try {
-        const resp = await fetch(`/api/ref/civ/${civName}`);
-        state.civData = await resp.json();
+        state.civData = await apiGet(`/api/ref/civ/${civName}`);
     } catch (e) {
         console.error("Failed to load civ data:", e);
     }
@@ -1939,9 +1961,14 @@ class BattleSimulation {
             return html;
         };
 
+        const team1CivSafe = escapeHtml(this.team1Stats.civ);
+        const team1NameSafe = escapeHtml(this.team1Stats.name);
+        const team2CivSafe = escapeHtml(this.team2Stats.civ);
+        const team2NameSafe = escapeHtml(this.team2Stats.name);
+
         let html = "";
-        html += `<div class="debug-section team1"><h4>${this.team1Stats.civ} ${this.team1Stats.name}</h4>`;
-        html += `<h5 style="color:var(--text-muted);margin-bottom:8px;font-size:0.7rem">&rarr; vs ${this.team2Stats.civ} ${this.team2Stats.name}</h5>`;
+        html += `<div class="debug-section team1"><h4>${team1CivSafe} ${team1NameSafe}</h4>`;
+        html += `<h5 style="color:var(--text-muted);margin-bottom:8px;font-size:0.7rem">&rarr; vs ${team2CivSafe} ${team2NameSafe}</h5>`;
         html +=
             buildFormula(
                 unit1,
@@ -1951,8 +1978,8 @@ class BattleSimulation {
                 this.team2Stats,
             ) + `</div>`;
 
-        html += `<div class="debug-section team2"><h4>${this.team2Stats.civ} ${this.team2Stats.name}</h4>`;
-        html += `<h5 style="color:var(--text-muted);margin-bottom:8px;font-size:0.7rem">&rarr; vs ${this.team1Stats.civ} ${this.team1Stats.name}</h5>`;
+        html += `<div class="debug-section team2"><h4>${team2CivSafe} ${team2NameSafe}</h4>`;
+        html += `<h5 style="color:var(--text-muted);margin-bottom:8px;font-size:0.7rem">&rarr; vs ${team1CivSafe} ${team1NameSafe}</h5>`;
         html +=
             buildFormula(
                 unit2,
@@ -1983,6 +2010,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Render initial selection UI
+    initSelectionDelegation();
     renderSelection(1);
     renderSelection(2);
 

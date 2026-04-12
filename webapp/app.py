@@ -1,9 +1,13 @@
 import json
 import os
 import sqlite3
+from collections import defaultdict
+from functools import lru_cache
 
 from flask import Flask, jsonify, redirect, render_template, request
 from best_units import load_civ_power_units, get_matchup_recommendations, get_matchup_sims, CIVS_WITHOUT_TREBUCHET
+from combat_unit_loader import build_combat_dict_from_ref
+from unit_lines import UNIT_LINES, TREBUCHET_SLUGS
 
 
 app = Flask(__name__)
@@ -84,7 +88,7 @@ def civ_view():
 @app.route("/civilizations/<civ_name>")
 def civ_detail(civ_name):
     """Civilization unit detail page."""
-    if civ_name not in ORIGINAL_13_CIVS:
+    if civ_name not in _valid_civs():
         return redirect("/civilizations")
     return render_template("deprecated-civ.html", civ_name=civ_name, active_nav="civ_detail")
 
@@ -171,14 +175,12 @@ ORIGINAL_13_CIVS = [
     "Wu",
 ]
 
-_TREBUCHET_SLUGS = {"trebuchet"}
-
-
 @app.route("/api/ref/civ/<civ_name>")
 def api_ref_civ(civ_name):
     """Get all reference data for a civilization."""
-    if civ_name not in ORIGINAL_13_CIVS:
-        return jsonify({"error": "Civilization not in original 13"}), 404
+    err = _validate_civ_name(civ_name)
+    if err:
+        return err
 
     ref_conn = get_ref_db()
     rc = ref_conn.cursor()
@@ -192,7 +194,7 @@ def api_ref_civ(civ_name):
 
     # Filter out trebuchets for civs that don't have them
     if civ_name in CIVS_WITHOUT_TREBUCHET:
-        units_rows = [r for r in units_rows if r["unit_slug"] not in _TREBUCHET_SLUGS]
+        units_rows = [r for r in units_rows if r["unit_slug"] not in TREBUCHET_SLUGS]
 
     # Get verifications
     main_conn = get_db()
@@ -205,56 +207,84 @@ def api_ref_civ(civ_name):
     rc.execute("SELECT id, name FROM armor_classes ORDER BY id")
     ac_names = {str(row["id"]): row["name"] for row in rc.fetchall()}
 
+    # Batch-load related data for all units (avoids N+1 per-unit queries)
+    all_uids = [row["id"] for row in units_rows]
+    placeholders = ",".join("?" * len(all_uids))
+
+    # Techs applied — grouped by ref_unit_id
+    techs_by_uid = defaultdict(list)
+    if all_uids:
+        rc.execute(
+            f"""SELECT ref_unit_id, tech_name, tech_type, building, age_available, effect_description
+                FROM ref_techs_applied WHERE ref_unit_id IN ({placeholders}) ORDER BY id""",
+            all_uids,
+        )
+        for t in rc.fetchall():
+            d = dict(t)
+            uid_key = d.pop("ref_unit_id")
+            techs_by_uid[uid_key].append(d)
+
+    # Stat chain — grouped by ref_unit_id
+    stat_chain_by_uid = defaultdict(list)
+    if all_uids:
+        rc.execute(
+            f"""SELECT ref_unit_id, step_order, tech_name, tech_type,
+                       hp, attack, melee_armor, pierce_armor,
+                       speed, range_val, reload_time, accuracy, los,
+                       train_time, cost_food, cost_wood, cost_gold,
+                       attacks_json, armors_json
+                FROM ref_stat_chain WHERE ref_unit_id IN ({placeholders}) ORDER BY step_order""",
+            all_uids,
+        )
+        for s in rc.fetchall():
+            d = dict(s)
+            uid_key = d.pop("ref_unit_id")
+            stat_chain_by_uid[uid_key].append(d)
+
+    # Special effects — grouped by ref_unit_id
+    special_by_uid = defaultdict(list)
+    if all_uids:
+        rc.execute(
+            f"""SELECT ref_unit_id, property_name, property_value, source, description
+                FROM ref_special_effects WHERE ref_unit_id IN ({placeholders})""",
+            all_uids,
+        )
+        for s in rc.fetchall():
+            d = dict(s)
+            uid_key = d.pop("ref_unit_id")
+            special_by_uid[uid_key].append(d)
+
+    # Projectiles — grouped by ref_unit_id
+    projectiles_by_uid = defaultdict(list)
+    if all_uids:
+        rc.execute(
+            f"""SELECT ref_unit_id, projectile_type, projectile_count, projectile_speed,
+                       attacks_json, blast_radius, is_siege_projectile
+                FROM ref_projectiles WHERE ref_unit_id IN ({placeholders})""",
+            all_uids,
+        )
+        for p in rc.fetchall():
+            d = dict(p)
+            uid_key = d.pop("ref_unit_id")
+            projectiles_by_uid[uid_key].append(d)
+
+    # Convert class IDs to names in attack/armor JSONs
+    def convert_classes(json_str):
+        if not json_str:
+            return {}
+        raw = json.loads(json_str)
+        return {ac_names.get(k, f"class_{k}"): v for k, v in raw.items()}
+
     units = []
     for row in units_rows:
         uid = row["id"]
 
-        # Get techs applied
-        rc.execute(
-            """SELECT tech_name, tech_type, building, age_available, effect_description
-               FROM ref_techs_applied WHERE ref_unit_id=? ORDER BY id""",
-            (uid,),
-        )
-        techs = [dict(t) for t in rc.fetchall()]
+        techs = techs_by_uid[uid]
+        stat_chain = stat_chain_by_uid[uid]
+        special = special_by_uid[uid]
 
-        # Get stat chain
-        rc.execute(
-            """SELECT step_order, tech_name, tech_type,
-                      hp, attack, melee_armor, pierce_armor,
-                      speed, range_val, reload_time, accuracy, los,
-                      train_time, cost_food, cost_wood, cost_gold,
-                      attacks_json, armors_json
-               FROM ref_stat_chain WHERE ref_unit_id=? ORDER BY step_order""",
-            (uid,),
-        )
-        stat_chain = [dict(s) for s in rc.fetchall()]
-
-        # Get special effects
-        rc.execute(
-            """SELECT property_name, property_value, source, description
-               FROM ref_special_effects WHERE ref_unit_id=?""",
-            (uid,),
-        )
-        special = [dict(s) for s in rc.fetchall()]
-
-        # Convert class IDs to names in attack/armor JSONs
-        def convert_classes(json_str):
-            if not json_str:
-                return {}
-            raw = json.loads(json_str)
-            return {ac_names.get(k, f"class_{k}"): v for k, v in raw.items()}
-
-        # Get projectiles
-        rc.execute(
-            """SELECT projectile_type, projectile_count, projectile_speed,
-                      attacks_json, blast_radius, is_siege_projectile
-               FROM ref_projectiles WHERE ref_unit_id=?""",
-            (uid,),
-        )
-        projectiles_raw = rc.fetchall()
         projectiles = []
-        for p in projectiles_raw:
-            pd = dict(p)
+        for pd in projectiles_by_uid[uid]:
             if pd.get("attacks_json"):
                 pd["attacks"] = convert_classes(pd["attacks_json"])
             projectiles.append(pd)
@@ -338,102 +368,7 @@ def api_ref_civ(civ_name):
 
 
 # ===== Combat unit building from reference DB =====
-
-
-def _build_combat_dict_from_ref(rc, row):
-    """Build a dict from a ref_units row, compatible with prepare_combat_unit().
-
-    All combat properties are now inline on ref_units — no extra queries needed.
-    """
-    reload_time = row["final_reload_time"] or 2.0
-    attack_speed = 1.0 / reload_time if reload_time > 0 else 0.5
-
-    return {
-        "slug": row["unit_slug"],
-        "unit_name": row["unit_name"],
-        "unit_category": "military",
-        "paired_unit_slug": None,
-        "hp": row["final_hp"],
-        "attack": row["final_attack"],
-        "attack_range": row["final_range"] if row["is_ranged"] else 0,
-        "attack_speed": attack_speed,
-        "attack_delay": row["final_attack_delay"] or 0,
-        "melee_armor": row["final_melee_armor"],
-        "pierce_armor": row["final_pierce_armor"],
-        "movement_speed": row["final_speed"],
-        "cost_food": row["final_cost_food"] or 0,
-        "cost_wood": row["final_cost_wood"] or 0,
-        "cost_gold": row["final_cost_gold"] or 0,
-        "upgrade_cost_food": row["upgrade_cost_food"] or 0,
-        "upgrade_cost_wood": row["upgrade_cost_wood"] or 0,
-        "upgrade_cost_gold": row["upgrade_cost_gold"] or 0,
-        "attacks_json": row["final_attacks_json"],
-        "armors_json": row["final_armors_json"],
-        "accuracy": row["final_accuracy"] or 100,
-        "min_attack_range": row["min_range"] or 0,
-        "projectile_speed": row["projectile_speed"] or 0,
-        "is_siege_projectile": row["is_siege_projectile"] or 0,
-        "splash_radius": row["splash_radius"] or 0,
-        "extra_projectiles": row["extra_projectiles"] or 0,
-        "extra_projectile_attacks_json": row["extra_projectile_attacks_json"],
-        "trample_percent": row["trample_percent"] or 0,
-        "trample_radius": row["trample_radius"] or 0,
-        "trample_flat_damage": row["trample_flat_damage"] or 0,
-        "hp_regen": row["hp_regen"] or 0,
-        "charge_projectile_count": row["charge_projectile_count"] or 0,
-        "charge_projectile_speed": row["charge_projectile_speed"] or 0,
-        "charge_projectile_attacks_json": row["charge_projectile_attacks_json"],
-        "charge_attack_range": float(row["charge_attack_range"] or 0),
-        "charge_ignores_armor": int(row["charge_ignores_armor"] or 0),
-        "ignores_pierce_armor": int(row["ignores_pierce_armor"] or 0),
-        "ignores_melee_armor": int(row["ignores_melee_armor"] or 0),
-        "bonus_damage_reduction": row["bonus_damage_reduction"] or 0,
-        "splash_on_hit_radius": row["splash_on_hit_radius"] or 0,
-        "splash_on_hit_fraction": row["splash_on_hit_fraction"] or 1.0,
-        "dodge_shield_max": int(row["dodge_shield_max"] or 0),
-        "dodge_shield_recharge": row["dodge_shield_recharge"] or 0,
-        "bleed_dps": row["bleed_dps"] or 0,
-        "bleed_duration": row["bleed_duration"] or 0,
-        "block_first_melee": int(row["block_first_melee"] or 0),
-        "attack_bonus_per_kill": int(row["attack_bonus_per_kill"] or 0),
-        "first_attack_extra_projectiles": int(
-            row["first_attack_extra_projectiles"] or 0
-        ),
-        "pass_through_percent": row["pass_through_percent"] or 0,
-        "pass_through_count": row["pass_through_count"] or 1,
-        "extra_proj_scatter": row["extra_proj_scatter"] or 0,
-        "miss_damage_percent": row["miss_damage_percent"] or 0,
-        "hp_per_kill": int(row["hp_per_kill"] or 0),
-        "hp_per_kill_max": int(row["hp_per_kill_max"] or 0),
-        "hp_transform_threshold": row["hp_transform_threshold"] or 0,
-        "pop_space": row["pop_space"] or 1.0,
-        "armor_strip_per_hit": int(row["armor_strip_per_hit"] or 0),
-        "charge_attack_melee": int(row["charge_attack_melee"] or 0),
-        "charge_recharge_time": row["charge_recharge_time"] or 0,
-        "attack_bonus_nearby": row["attack_bonus_nearby"] or 0,
-        "nearby_bonus_count": int(row["nearby_bonus_count"] or 0),
-        "damage_reflect_percent": row["damage_reflect_percent"] or 0,
-        "hp_nearby_percent_per_unit": row["hp_nearby_percent_per_unit"] or 0,
-        "hp_nearby_max_units": int(row["hp_nearby_max_units"] or 0),
-        "dismount_hp": row["dismount_hp"],
-        "dismount_attack": row["dismount_attack"],
-        "dismount_melee_armor": row["dismount_melee_armor"],
-        "dismount_pierce_armor": row["dismount_pierce_armor"],
-        "dismount_attack_speed": row["dismount_attack_speed"],
-        "dismount_attack_delay": row["dismount_attack_delay"],
-        "dismount_movement_speed": row["dismount_movement_speed"],
-        "dismount_attacks_json": row["dismount_attacks_json"],
-        "dismount_armors_json": row["dismount_armors_json"],
-        "transform_hp": row["transform_hp"],
-        "transform_attack": row["transform_attack"],
-        "transform_melee_armor": row["transform_melee_armor"],
-        "transform_pierce_armor": row["transform_pierce_armor"],
-        "transform_attack_speed": row["transform_attack_speed"],
-        "transform_attack_delay": row["transform_attack_delay"],
-        "transform_movement_speed": row["transform_movement_speed"],
-        "transform_attacks_json": row["transform_attacks_json"],
-        "transform_armors_json": row["transform_armors_json"],
-    }
+# build_combat_dict_from_ref() is imported from combat_unit_loader
 
 
 @app.route("/api/ref/stat-chain/<int:ref_unit_id>")
@@ -464,10 +399,14 @@ def api_ref_stat_chain(ref_unit_id):
 @app.route("/api/ref/combat-unit/<civ_name>/<unit_slug>")
 def api_ref_combat_unit(civ_name, unit_slug):
     """Get combat-ready stats for a unit from reference DB (for battle simulator)."""
-    if civ_name not in ORIGINAL_13_CIVS:
-        return jsonify({"error": "Civilization not in original 13"}), 404
+    err = _validate_civ_name(civ_name)
+    if err:
+        return err
 
     age = request.args.get("age", "Imperial")
+    err = _validate_age(age)
+    if err:
+        return err
 
     ref_conn = get_ref_db()
     rc = ref_conn.cursor()
@@ -488,7 +427,7 @@ def api_ref_combat_unit(civ_name, unit_slug):
         ref_conn.close()
         return jsonify({"error": f"Unit {unit_slug} not found for {civ_name}"}), 404
 
-    result = _build_combat_dict_from_ref(rc, row)
+    result = build_combat_dict_from_ref(row)
 
     # Add stat chain for debug breakdown (HTTP endpoint only)
     rc.execute(
@@ -521,261 +460,6 @@ def api_ref_combat_unit(civ_name, unit_slug):
     ref_conn.close()
     return jsonify(result)
 
-
-# ===== Unit Lines config for rankings page =====
-UNIT_LINES = {
-    "militia": {
-        "name": "Militia Line",
-        "building": "Barracks",
-        "castle_slug": "swordsmen",
-        "imperial_slug": "champion",
-        "unique_units": {
-            "Goths": ("huskarl_goths", "elite_huskarl_goths"),
-            "Celts": ("woad_raider_celts", "elite_woad_raider_celts"),
-            "Vikings": ("berserk_vikings", "elite_berserk_vikings"),
-            "Japanese": ("samurai_japanese", "elite_samurai_japanese"),
-            "Teutons": ("teutonic_knight_teutons", "elite_teutonic_knight_teutons"),
-            "Aztecs": ("jaguar_warrior_aztecs", "elite_jaguar_warrior_aztecs"),
-            "Incas": ("kamayuk_incas", "elite_kamayuk_incas"),
-            "Italians": (None, "condottiero"),
-            "Ethiopians": (
-                "shotel_warrior_ethiopians",
-                "elite_shotel_warrior_ethiopians",
-            ),
-            "Burgundians": (None, "flemish_militia"),
-            "Sicilians": ("serjeant_sicilians", "elite_serjeant_sicilians"),
-            "Poles": ("obuch_poles", "elite_obuch_poles"),
-            "Dravidians": (
-                "urumi_swordsman_dravidians",
-                "elite_urumi_swordsman_dravidians",
-            ),
-            "Hindustanis": ("ghulam_hindustanis", "elite_ghulam_hindustanis"),
-            "Armenians": ("warrior_priest_armenians", "warrior_priest_armenians"),
-            "Khitans": ("liao_dao_khitans", "elite_liao_dao_khitans"),
-            "Wu": ("jian_swordsman_wu", "jian_swordsman_wu"),
-            "Shu": (
-                "white_feather_guard_shu",
-                "elite_white_feather_guard_shu",
-            ),
-        },
-    },
-    "spear": {
-        "name": "Spear Line",
-        "building": "Barracks",
-        "castle_slug": "pikeman",
-        "imperial_slug": "halberdier",
-        "unique_units": {},
-    },
-    "shock_infantry": {
-        "name": "Shock Infantry",
-        "building": "Barracks",
-        "castle_slug": "fire_lancer",
-        "imperial_slug": "elite_fire_lancer",
-        "unique_units": {
-            "Aztecs": ("eagle_warrior", "elite_eagle"),
-            "Incas": ("eagle_warrior", "elite_eagle"),
-            "Mayans": ("eagle_warrior", "elite_eagle"),
-            "Malay": ("karambit_warrior_malay", "elite_karambit_warrior_malay"),
-        },
-    },
-    "archer": {
-        "name": "Archers & Gunpowder",
-        "building": "Archery Range",
-        "castle_slug": "crossbow",
-        "imperial_slug": "arbalester",
-        "unique_units": {
-            "Britons": ("longbowman_britons", "elite_longbowman_britons"),
-            "Chinese": ("chu_ko_nu_chinese", "elite_chu_ko_nu_chinese"),
-            "Mayans": ("plumed_archer_mayans", "elite_plumed_archer_mayans"),
-            "Italians": (
-                "genoese_crossbowman_italians",
-                "elite_genoese_crossbowman_italians",
-            ),
-            "Vietnamese": (
-                "rattan_archer_vietnamese",
-                "elite_rattan_archer_vietnamese",
-            ),
-            "Armenians": (
-                "composite_bowman_armenians",
-                "elite_composite_bowman_armenians",
-            ),
-            "Wu": ("fire_archer_wu", "elite_fire_archer_wu"),
-        },
-    },
-    "skirmisher": {
-        "name": "Skirmisher Line",
-        "building": "Archery Range",
-        "castle_slug": "elite_skirm",
-        "imperial_slug": "imp_elite_skirm",
-        "unique_units": {
-            "Berbers": ("genitour", "elite_genitour"),
-        },
-    },
-    "cav_archer": {
-        "name": "Cavalry Archer Line",
-        "building": "Archery Range",
-        "castle_slug": "cav_archer",
-        "imperial_slug": "heavy_cav_archer",
-        "extra_castle_slugs": ["elephant_archer"],
-        "extra_imperial_slugs": ["elite_ele_archer"],
-        "unique_units": {
-            "Mongols": ("mangudai_mongols", "elite_mangudai_mongols"),
-            "Saracens": ("mameluke_saracens", "elite_mameluke_saracens"),
-            "Berbers": ("camel_archer_berbers", "elite_camel_archer_berbers"),
-            "Burmese": ("arambai_burmese", "elite_arambai_burmese"),
-            "Cumans": ("kipchak_cumans", "elite_kipchak_cumans"),
-            "Bengalis": (
-                "ratha_(ranged)_bengalis",
-                "elite_ratha_(ranged)_bengalis",
-            ),
-            "Wei": ("xianbei_raider_wei", "xianbei_raider_wei"),
-            "Spanish": ("conquistador_spanish", "elite_conquistador_spanish"),
-            "Koreans": ("war_wagon_koreans", "elite_war_wagon_koreans"),
-        },
-    },
-    "knight": {
-        "name": "Knight Line",
-        "building": "Stable",
-        "castle_slug": "knight",
-        "imperial_slug": "paladin",
-        "unique_units": {
-            "Byzantines": ("cataphract_byzantines", "elite_cataphract_byzantines"),
-            "Huns": ("tarkan_huns", "elite_tarkan_huns"),
-            "Slavs": ("boyar_slavs", "elite_boyar_slavs"),
-            "Bulgarians": ("konnik_bulgarians", "elite_konnik_bulgarians"),
-            "Lithuanians": ("leitis_lithuanians", "elite_leitis_lithuanians"),
-            "Tatars": ("keshik_tatars", "elite_keshik_tatars"),
-            "Burgundians": ("coustillier_burgundians", "elite_coustillier_burgundians"),
-            "Bengalis": (
-                "ratha_(melee)_bengalis",
-                "elite_ratha_(melee)_bengalis",
-            ),
-            "Gurjaras": (
-                "shrivamsha_rider_gurjaras",
-                "elite_shrivamsha_rider_gurjaras",
-            ),
-            "Romans": ("centurion_romans", "elite_centurion_romans"),
-            "Georgians": ("monaspa_georgians", "elite_monaspa_georgians"),
-            "Jurchens": ("iron_pagoda_jurchens", "elite_iron_pagoda_jurchens"),
-            "Wei": ("tiger_cavalry_wei", "elite_tiger_cavalry_wei"),
-        },
-    },
-    "light_cav": {
-        "name": "Light Cavalry Line",
-        "building": "Stable",
-        "castle_slug": "light_cav",
-        "imperial_slug": "hussar",
-        "unique_units": {
-            "Magyars": ("magyar_huszar_magyars", "elite_magyar_huszar_magyars"),
-        },
-    },
-    "camel": {
-        "name": "Camel Line",
-        "building": "Stable",
-        "castle_slug": "camel",
-        "imperial_slug": "heavy_camel",
-        "unique_units": {},
-    },
-    "steppe_lancer": {
-        "name": "Steppe Lancer",
-        "building": "Stable",
-        "castle_slug": "steppe_lancer",
-        "imperial_slug": "elite_steppe",
-        "unique_units": {},
-    },
-    "elephant": {
-        "name": "Elephant Line",
-        "building": "Stable",
-        "castle_slug": "elephant",
-        "imperial_slug": "elite_elephant",
-        "extra_castle_slugs": ["elephant_archer"],
-        "extra_imperial_slugs": ["elite_ele_archer"],
-        "unique_units": {
-            "Persians": ("war_elephant_persians", "elite_war_elephant_persians"),
-        },
-    },
-    "ram": {
-        "name": "Ram Line",
-        "building": "Siege Workshop",
-        "castle_slug": "ram",
-        "imperial_slug": "siege_ram",
-        "unique_units": {},
-    },
-    "mangonel": {
-        "name": "Mangonel Line",
-        "building": "Siege Workshop",
-        "castle_slug": "mangonel",
-        "imperial_slug": "siege_onager",
-        "unique_units": {},
-    },
-    "gunpowder": {
-        "name": "Gunpowder",
-        "building": "Archery Range",
-        "castle_slug": None,
-        "imperial_slug": "hand_cannoneer",
-        "unique_units": {
-            "Turks": ("janissary_turks", "elite_janissary_turks"),
-            "Portuguese": ("organ_gun_portuguese", "elite_organ_gun_portuguese"),
-            "Jurchens": ("grenadier_jurchens", "grenadier_jurchens"),
-            "Incas": ("slinger", "imp_slinger"),
-            "Bohemians": ("hussite_wagon_bohemians", "elite_hussite_wagon_bohemians"),
-            "Franks": ("throwing_axeman_franks", "elite_throwing_axeman_franks"),
-            "Malians": ("gbeto_malians", "elite_gbeto_malians"),
-            "Gurjaras": (
-                "chakram_thrower_gurjaras",
-                "elite_chakram_thrower_gurjaras",
-            ),
-        },
-    },
-    "scorpion": {
-        "name": "Scorpion Line",
-        "building": "Siege Workshop",
-        "castle_slug": "scorpion",
-        "imperial_slug": "heavy_scorpion",
-        "unique_units": {
-            "Khmer": ("ballista_elephant_khmer", "elite_ballista_elephant_khmer"),
-            "Shu": ("war_chariot_shu", "war_chariot_shu"),
-            "Khitans": ("mounted_trebuchet_khitans", "mounted_trebuchet_khitans"),
-        },
-    },
-    "trebuchet": {
-        "name": "Trebuchet",
-        "building": "Siege Workshop",
-        "castle_slug": None,
-        "imperial_slug": "trebuchet",
-        "unique_units": {},
-    },
-    "bombard_cannon": {
-        "name": "Bombard Cannon",
-        "building": "Siege Workshop",
-        "castle_slug": None,
-        "imperial_slug": "bombard_cannon",
-        "extra_imperial_slugs": ["traction_trebuchet"],
-        "unique_units": {
-            "Wu": (None, "elite_fire_archer_wu"),
-        },
-    },
-    "archery": {
-        "name": "Ranged Effectiveness",
-        "building": "Archery Range",
-        "sub_lines": ["archer", "cav_archer", "skirmisher", "scorpion", "gunpowder"],
-    },
-    "infantry": {
-        "name": "Infantry Effectiveness",
-        "building": "Barracks",
-        "sub_lines": ["militia", "spear", "shock_infantry"],
-    },
-    "stable": {
-        "name": "Stable Units",
-        "building": "Stable",
-        "sub_lines": ["knight", "light_cav", "camel", "steppe_lancer", "elephant"],
-    },
-    "siege": {
-        "name": "Anti-Building Effectiveness",
-        "building": "Siege Workshop",
-        "sub_lines": ["ram", "trebuchet", "bombard_cannon"],
-    },
-}
 
 INFANTRY_LINE_SLUGS = {"militia", "spear", "shock_infantry"}
 ARCHERY_LINE_SLUGS = {"archer", "skirmisher", "cav_archer", "scorpion", "gunpowder"}
@@ -1058,6 +742,40 @@ def _get_ref_civs():
     return civs
 
 
+# ============== Input validation ==============
+
+_VALID_AGES = frozenset({"castle", "imperial"})
+
+
+@lru_cache(maxsize=1)
+def _valid_civs():
+    """Cached frozenset of canonical civ names from the reference DB.
+    Cached for the lifetime of the process — restart Flask if civs are added
+    to the DB. Used for fast O(1) membership checks in input validators."""
+    return frozenset(_get_ref_civs())
+
+
+def _validate_civ_name(name):
+    """Return None if `name` is a known civilization, else a Flask 400
+    response. Compare is case-sensitive — call sites must pass the
+    canonical capitalised form (e.g. 'Britons')."""
+    if not isinstance(name, str) or name not in _valid_civs():
+        return jsonify({"error": f"Unknown civilization: {name!r}"}), 400
+    return None
+
+
+def _validate_age(age):
+    """Return None if `age` is a valid age string, else a Flask 400
+    response. Compares case-insensitively — caller is free to keep its
+    original case after this call returns None."""
+    if not isinstance(age, str) or age.lower() not in _VALID_AGES:
+        return (
+            jsonify({"error": f"Invalid age: {age!r}. Must be 'castle' or 'imperial'."}),
+            400,
+        )
+    return None
+
+
 @app.route("/matchup-advisor")
 def matchup_advisor():
     """Matchup Advisor — civ vs civ comparison."""
@@ -1081,6 +799,10 @@ def api_team_analysis():
     tab = request.args.get("tab", "overall")
     age = request.args.get("age", "imperial").lower()
 
+    err = _validate_age(age)
+    if err:
+        return err
+
     if stage not in TEAM_ANALYSIS_STAGES:
         return jsonify({"error": f"Unknown stage: {stage}"}), 400
 
@@ -1095,6 +817,11 @@ def api_team_analysis():
 
     if len(team1_civs) != 4 or len(team2_civs) != 4:
         return jsonify({"error": "Each team must have exactly 4 civs"}), 400
+
+    for civ in team1_civs + team2_civs:
+        err = _validate_civ_name(civ)
+        if err:
+            return err
 
     line_slugs = stage_cfg["line_slugs"]
     score_type = tabs[tab]["score_type"]
@@ -1173,7 +900,13 @@ def api_team_analysis():
 @app.route("/api/civ-power-units/<civ_name>")
 def api_civ_power_units(civ_name):
     """Get pre-computed power units for a civilization."""
+    err = _validate_civ_name(civ_name)
+    if err:
+        return err
     age = request.args.get("age", "imperial").lower()
+    err = _validate_age(age)
+    if err:
+        return err
     data = load_civ_power_units()
     if not data:
         return jsonify({"error": "civ_power_units.json not found"}), 500
@@ -1189,7 +922,14 @@ def api_civ_power_units(civ_name):
 @app.route("/api/matchup-recommendations/<civ_a>/<civ_b>")
 def api_matchup_recommendations(civ_a, civ_b):
     """Get recommended units and compositions for civ_a vs civ_b."""
+    for civ in (civ_a, civ_b):
+        err = _validate_civ_name(civ)
+        if err:
+            return err
     age = request.args.get("age", "imperial").lower()
+    err = _validate_age(age)
+    if err:
+        return err
     result = get_matchup_recommendations(civ_a, civ_b, age)
     if "error" in result:
         return jsonify(result), 400
@@ -1209,6 +949,14 @@ def api_matchup_sims():
 
     if not civ_left or not civ_right:
         return jsonify({"error": "civ_left and civ_right required"}), 400
+
+    for civ in (civ_left, civ_right):
+        err = _validate_civ_name(civ)
+        if err:
+            return err
+    err = _validate_age(age)
+    if err:
+        return err
 
     result = get_matchup_sims(civ_left, civ_right, age)
     if "error" in result:

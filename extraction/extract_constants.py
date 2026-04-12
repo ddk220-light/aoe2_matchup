@@ -1,5 +1,8 @@
 """Shared constants for data extraction from empires2_x2_p1.dat."""
 
+# Resource type names (index matches dat resource_cost.type field)
+RESOURCE_TYPE_NAMES = {0: "food", 1: "wood", 2: "stone", 3: "gold"}
+
 # Known armor/attack class names
 ARMOR_CLASSES = {
     0: "Unused",

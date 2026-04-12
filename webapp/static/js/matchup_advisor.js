@@ -224,23 +224,16 @@ async function loadComparison() {
     resultsEl.innerHTML = '<div class="ma-loading"><div class="spinner"></div>Loading comparison...</div>';
 
     try {
-        const [respL, respR] = await Promise.all([
-            fetch(`/api/civ-power-units/${encodeURIComponent(civLeft)}?age=${currentAge}`),
-            fetch(`/api/civ-power-units/${encodeURIComponent(civRight)}?age=${currentAge}`),
+        const [dataL, dataR] = await Promise.all([
+            apiGet(`/api/civ-power-units/${encodeURIComponent(civLeft)}?age=${currentAge}`),
+            apiGet(`/api/civ-power-units/${encodeURIComponent(civRight)}?age=${currentAge}`),
         ]);
 
-        if (!respL.ok || !respR.ok) {
-            resultsEl.innerHTML = '<div class="ma-loading">Error loading data.</div>';
-            return;
-        }
-
-        const dataL = await respL.json();
-        const dataR = await respR.json();
         renderComparison(dataL, dataR);
         // Fire background sim fetch
         loadSims();
     } catch (e) {
-        resultsEl.innerHTML = '<div class="ma-loading">Error loading data.</div>';
+        resultsEl.innerHTML = `<div class="ma-loading">Error loading data: ${escapeHtml(e.message)}</div>`;
     }
 }
 

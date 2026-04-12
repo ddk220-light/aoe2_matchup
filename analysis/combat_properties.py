@@ -1,6 +1,7 @@
 """Combat property extraction and lookup functions."""
 
 import json
+from collections import defaultdict
 
 from .config import (
     CIV_COMBAT_PROPERTIES,
@@ -9,6 +10,12 @@ from .config import (
     UNIQUE_COMBAT_PROPERTIES,
     UNIQUE_UNIT_BUILDING,
 )
+
+# Pre-compute reverse index: civ_name -> list of (base_slug, props)
+# Avoids O(n) scan over all CIV_COMBAT_PROPERTIES on every call.
+_CIV_PROPS_BY_CIV = defaultdict(list)
+for (civ, base_slug), props in CIV_COMBAT_PROPERTIES.items():
+    _CIV_PROPS_BY_CIV[civ].append((base_slug, props))
 
 
 def get_extracted_combat_properties(unit_id, units_data):
@@ -248,12 +255,10 @@ def get_combat_properties(unit_slug, civ_name=None, unit_id=None, units_data=Non
             props.update(CIV_COMBAT_PROPERTIES[civ_key])
 
         # For unique units, try base slug (strip civ suffix) against CIV_COMBAT_PROPERTIES
-        # Check all CIV_COMBAT_PROPERTIES keys for base slug matches
-        for civ, base_slug in CIV_COMBAT_PROPERTIES:
-            if civ == civ_name and base_slug != unit_slug:
-                if unit_slug.startswith(base_slug + "_"):
-                    props.update(CIV_COMBAT_PROPERTIES[(civ, base_slug)])
-                    break
+        for base_slug, civ_props in _CIV_PROPS_BY_CIV.get(civ_name, []):
+            if base_slug != unit_slug and unit_slug.startswith(base_slug + "_"):
+                props.update(civ_props)
+                break
 
     # Check paired units
     for paired_slug, partner_slug in PAIRED_UNITS.items():

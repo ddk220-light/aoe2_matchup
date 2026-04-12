@@ -20,32 +20,6 @@ function unitIconUrl(name) {
     return iconUrl(id);
 }
 
-// Building config
-const BUILDING_ORDER = [
-    "Barracks",
-    "Archery Range",
-    "Stable",
-    "Castle",
-    "Siege Workshop",
-];
-const BUILDING_ICONS = {
-    Barracks: 12,
-    "Archery Range": 87,
-    Stable: 101,
-    "Siege Workshop": 49,
-    Castle: 82,
-};
-const CLASS_TO_BUILDING = {
-    Infantry: "Barracks",
-    Archer: "Archery Range",
-    "Hand Cannoneer": "Archery Range",
-    "Cavalry Archer": "Archery Range",
-    Cavalry: "Stable",
-    "Siege Weapon": "Siege Workshop",
-    Ballista: "Siege Workshop",
-    "Unpacked Siege Unit": "Castle",
-};
-
 // SVG stat icons (tiny inline)
 const ICONS = {
     hp: '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 9L1.5 5.5C0 4 0 2 1.5 1.5S4 1 5 3C6 1 7.5 0 8.5 1.5S10 4 8.5 5.5L5 9z" fill="#c44"/></svg>',
@@ -60,9 +34,7 @@ let currentAge = "Imperial";
 
 async function loadData() {
     try {
-        const resp = await fetch(`/api/ref/civ/${CIV_NAME}`);
-        if (!resp.ok) throw new Error("Failed to load");
-        civData = await resp.json();
+        civData = await apiGet(`/api/ref/civ/${CIV_NAME}`);
         document.getElementById("loading").style.display = "none";
         render();
     } catch (e) {

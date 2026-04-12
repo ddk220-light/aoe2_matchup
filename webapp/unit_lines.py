@@ -55,6 +55,11 @@ UNIT_LINES = {
                 "white_feather_guard_shu",
                 "elite_white_feather_guard_shu",
             ),
+            "Muisca": ("temple_guard_muisca", "elite_temple_guard_muisca"),
+            "Tupi": (
+                "ibirapema_warrior_tupi",
+                "elite_ibirapema_warrior_tupi",
+            ),
         },
     },
     "spear": {
@@ -71,8 +76,11 @@ UNIT_LINES = {
         "imperial_slug": "elite_fire_lancer",
         "unique_units": {
             "Aztecs": ("eagle_warrior", "elite_eagle"),
-            "Incas": ("eagle_warrior", "elite_eagle"),
             "Mayans": ("eagle_warrior", "elite_eagle"),
+            "Incas": ("champi_warrior", "elite_champi_warrior"),
+            "Muisca": ("champi_warrior", "elite_champi_warrior"),
+            "Mapuche": ("champi_warrior", "elite_champi_warrior"),
+            "Tupi": ("champi_warrior", "elite_champi_warrior"),
             "Malay": ("karambit_warrior_malay", "elite_karambit_warrior_malay"),
         },
     },
@@ -98,6 +106,8 @@ UNIT_LINES = {
                 "elite_composite_bowman_armenians",
             ),
             "Wu": ("fire_archer_wu", "elite_fire_archer_wu"),
+            "Muisca": ("guecha_warrior_muisca", "elite_guecha_warrior_muisca"),
+            "Tupi": ("blackwood_archer_tupi", "elite_blackwood_archer_tupi"),
         },
     },
     "skirmisher": {
@@ -129,6 +139,7 @@ UNIT_LINES = {
             "Wei": ("xianbei_raider_wei", "xianbei_raider_wei"),
             "Spanish": ("conquistador_spanish", "elite_conquistador_spanish"),
             "Koreans": ("war_wagon_koreans", "elite_war_wagon_koreans"),
+            "Mapuche": ("bolas_rider_mapuche", "elite_bolas_rider_mapuche"),
         },
     },
     "knight": {
@@ -156,6 +167,7 @@ UNIT_LINES = {
             "Georgians": ("monaspa_georgians", "elite_monaspa_georgians"),
             "Jurchens": ("iron_pagoda_jurchens", "elite_iron_pagoda_jurchens"),
             "Wei": ("tiger_cavalry_wei", "elite_tiger_cavalry_wei"),
+            "Mapuche": ("kona_mapuche", "elite_kona_mapuche"),
         },
     },
     "light_cav": {

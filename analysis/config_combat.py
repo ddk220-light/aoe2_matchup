@@ -147,6 +147,16 @@ UNIQUE_COMBAT_PROPERTIES = {
     # Monaspa nearby ally attack bonus (+2 per nearby cavalry, max 4 nearby)
     "monaspa": {"attack_bonus_nearby": 2, "nearby_bonus_count": 4},
     "elite_monaspa": {"attack_bonus_nearby": 2, "nearby_bonus_count": 4},
+    # Ibirapema Warrior: blast_width=1.0 in dat = area/splash melee damage
+    # blast_attack_level=162 — treat as trample (similar to Druzhina infantry splash)
+    "ibirapema_warrior": {"trample_flat_damage": 5, "trample_radius": 0.5},
+    "elite_ibirapema_warrior": {"trample_flat_damage": 5, "trample_radius": 0.5},
+    # Temple Guard: tanky anti-cavalry infantry, no special combat flags needed
+    # Guecha Warrior: ranged anti-archer, no special combat flags needed
+    # Kona: flanking mechanic (flank_attack_modifier=1.25 in dat); not simulated
+    # Bolas Rider: charge extra projectile (charge_type=6 in dat); data-driven
+    # War Dog: dodge shield (charge_type=4 in dat) + hp_regen (15/min); data-driven
+    # Blackwood Archer: poison via Curare tech; modeled as CIV_COMBAT_PROPERTIES below
 }
 
 # Civ-conditional properties (applied on top of base/unique properties)
@@ -267,4 +277,11 @@ CIV_COMBAT_PROPERTIES = {
     ("Jurchens", "mangonel"): {"extra_projectiles": 1},
     ("Jurchens", "siege_onager"): {"extra_projectiles": 1},
     ("Jurchens", "grenadier"): {"extra_projectiles": 1},
+    # Tupi Curare (Imp UT) — arrow projectiles apply poison (2 DPS for 15 seconds)
+    ("Tupi", "arbalester"): {"bleed_dps": 2.0, "bleed_duration": 15.0},
+    ("Tupi", "crossbow"): {"bleed_dps": 2.0, "bleed_duration": 15.0},
+    ("Tupi", "elite_blackwood_archer"): {"bleed_dps": 2.0, "bleed_duration": 15.0},
+    ("Tupi", "blackwood_archer"): {"bleed_dps": 2.0, "bleed_duration": 15.0},
+    ("Tupi", "heavy_cav_archer"): {"bleed_dps": 2.0, "bleed_duration": 15.0},
+    ("Tupi", "cav_archer"): {"bleed_dps": 2.0, "bleed_duration": 15.0},
 }

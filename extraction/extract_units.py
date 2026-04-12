@@ -327,6 +327,29 @@ UNIT_NAMES = {
     1946: "Heavy Hei-Kuang Cavalry",
     # ===== Traction Trebuchet (Castle Age trebuchet variant) =====
     1942: "Traction Trebuchet",
+    # ===== Champi Line (South American regional) =====
+    2550: "Champi Runner",
+    2552: "Champi Warrior",
+    2554: "Elite Champi Warrior",
+    2588: "Champi Scout",
+    # ===== Unique Units - Muisca =====
+    2562: "Guecha Warrior",
+    2564: "Elite Guecha Warrior",
+    2586: "Temple Guard",
+    2587: "Elite Temple Guard",
+    # ===== Unique Units - Mapuche =====
+    2566: "Kona",
+    2568: "Elite Kona",
+    2569: "Bolas Rider",
+    2571: "Elite Bolas Rider",
+    # ===== Unique Units - Tupi =====
+    2579: "Blackwood Archer",
+    2581: "Elite Blackwood Archer",
+    2582: "Ibirapema Warrior",
+    2584: "Elite Ibirapema Warrior",
+    # ===== War Dog (South American regional) =====
+    2612: "War Dog",
+    2613: "Elite War Dog",
 }
 
 

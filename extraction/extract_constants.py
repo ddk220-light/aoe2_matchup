@@ -109,4 +109,8 @@ CIV_NAMES = [
     None,  # 54 Macedonians - skip
     None,  # 55 Thracians - skip
     None,  # 56 Puru - skip
+    # The Last Chieftains DLC (in ranked play)
+    "Muisca",  # 57
+    "Mapuche",  # 58
+    "Tupi",  # 59
 ]

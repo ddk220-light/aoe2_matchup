@@ -41,8 +41,10 @@ const ENABLED_CIVS = [
     "Magyars",
     "Malay",
     "Malians",
+    "Mapuche",
     "Mayans",
     "Mongols",
+    "Muisca",
     "Persians",
     "Poles",
     "Portuguese",
@@ -54,6 +56,7 @@ const ENABLED_CIVS = [
     "Spanish",
     "Tatars",
     "Teutons",
+    "Tupi",
     "Turks",
     "Vietnamese",
     "Vikings",
@@ -253,6 +256,25 @@ const NAME_TO_ICON = {
     "Heavy Rocket Cart": "Heavy_Rocket_Cart",
     "Fire Lancer": "Fire_Lancer",
     "Elite Fire Lancer": "Elite_Fire_Lancer",
+    // The Last Chieftains
+    "Champi Runner": "Champi_Runner",
+    "Champi Scout": "Champi_Scout",
+    "Champi Warrior": "Champi_Warrior",
+    "Elite Champi Warrior": "Elite_Champi_Warrior",
+    "Guecha Warrior": "Guecha_Warrior",
+    "Elite Guecha Warrior": "Elite_Guecha_Warrior",
+    "Temple Guard": "Temple_Guard",
+    "Elite Temple Guard": "Elite_Temple_Guard",
+    Kona: "Kona",
+    "Elite Kona": "Elite_Kona",
+    "Bolas Rider": "Bolas_Rider",
+    "Elite Bolas Rider": "Elite_Bolas_Rider",
+    "Blackwood Archer": "Blackwood_Archer",
+    "Elite Blackwood Archer": "Elite_Blackwood_Archer",
+    "Ibirapema Warrior": "Ibirapema_Warrior",
+    "Elite Ibirapema Warrior": "Elite_Ibirapema_Warrior",
+    "War Dog": "War_Dog",
+    "Elite War Dog": "Elite_War_Dog",
 };
 
 /* --- Unique Unit Building Overrides --- */
@@ -264,6 +286,12 @@ const UNIQUE_BUILDING = {
     "Shrivamsha Rider": "Stable",
     "Elite Shrivamsha Rider": "Stable",
     "Mounted Trebuchet": "Siege Workshop",
+    "Temple Guard": "Barracks",
+    "Elite Temple Guard": "Barracks",
+    "Bolas Rider": "Archery Range",
+    "Elite Bolas Rider": "Archery Range",
+    "Ibirapema Warrior": "Barracks",
+    "Elite Ibirapema Warrior": "Barracks",
 };
 
 /* --- Icon Helpers --- */

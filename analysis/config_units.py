@@ -207,6 +207,13 @@ CASTLE_UNITS = {
         "availability_tech": 433,  # Eagle Warrior (make avail)
         "upgrades": [],
     },
+    "champi_warrior": {
+        "base_id": 2552,
+        "display_name": "Champi Warrior",
+        "unit_class": 6,
+        "availability_tech": 1351,  # Champi Warrior (make avail)
+        "upgrades": [],
+    },
     "light_cav": {
         "base_id": 448,  # Scout Cavalry (upgrades to Light Cav)
         "display_name": "Light Cavalry",
@@ -378,6 +385,15 @@ IMPERIAL_UNITS = {
         "availability_tech": 433,
         "upgrades": [
             (384, 752, "Elite Eagle Warrior"),
+        ],
+    },
+    "elite_champi_warrior": {
+        "base_id": 2552,
+        "display_name": "Elite Champi Warrior",
+        "unit_class": 6,
+        "availability_tech": 1351,
+        "upgrades": [
+            (1352, 2554, "Elite Champi Warrior"),
         ],
     },
     "elite_fire_lancer": {
@@ -1303,6 +1319,66 @@ UNIQUE_UNITS = {
             "elite_tech": None,
             "elite_id": None,
             "elite_name": None,
+        },
+    ],
+    "Muisca": [
+        {
+            "base_id": 2562,
+            "display_name": "Guecha Warrior",
+            "unit_class": 0,  # Archer
+            "availability_tech": 1363,
+            "elite_tech": 1364,
+            "elite_id": 2564,
+            "elite_name": "Elite Guecha Warrior",
+        },
+        {
+            "base_id": 2586,
+            "display_name": "Temple Guard",
+            "unit_class": 6,  # Infantry
+            "availability_tech": 1400,
+            "elite_tech": 1401,
+            "elite_id": 2587,
+            "elite_name": "Elite Temple Guard",
+        },
+    ],
+    "Mapuche": [
+        {
+            "base_id": 2566,
+            "display_name": "Kona",
+            "unit_class": 12,  # Cavalry
+            "availability_tech": 1375,
+            "elite_tech": 1376,
+            "elite_id": 2568,
+            "elite_name": "Elite Kona",
+        },
+        {
+            "base_id": 2569,
+            "display_name": "Bolas Rider",
+            "unit_class": 36,  # Cavalry Archer
+            "availability_tech": 1377,
+            "elite_tech": 1378,
+            "elite_id": 2571,
+            "elite_name": "Elite Bolas Rider",
+        },
+    ],
+    "Tupi": [
+        {
+            "base_id": 2579,
+            "display_name": "Blackwood Archer",
+            "unit_class": 0,  # Archer
+            "availability_tech": 1388,
+            "elite_tech": 1389,
+            "elite_id": 2581,
+            "elite_name": "Elite Blackwood Archer",
+        },
+        {
+            "base_id": 2582,
+            "display_name": "Ibirapema Warrior",
+            "unit_class": 6,  # Infantry
+            "availability_tech": 1390,
+            "elite_tech": 1391,
+            "elite_id": 2584,
+            "elite_name": "Elite Ibirapema Warrior",
         },
     ],
 }

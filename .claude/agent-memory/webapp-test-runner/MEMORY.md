@@ -57,6 +57,16 @@
 - compute_battle_scores.py --roles-only: runs infantry(~6s) + archery(~9s) + stable(~4.6s) = ~20s total
 - Stale .pyc files can cause errors after code changes; if you see unexpected KeyErrors, try `find webapp -name '*.pyc' -delete`
 
+## New Civs (verified 2026-04-12)
+- 53 total civs (was 50). Added: Muisca, Mapuche, Tupi.
+- Muisca uniques: Guecha Warrior (HP=50, ATK=6, Castle), Temple Guard (HP=100, ATK=14, Castle)
+- Mapuche uniques: Kona (HP=125, ATK=11, Castle), Bolas Rider (HP=55, ATK=5, Castle)
+- Tupi uniques: Blackwood Archer (HP=20, ATK=4, Castle, ranged range=7), Ibirapema Warrior (HP=80, ATK=10)
+- All three share Champi Warrior (standard, not unique). Incas also gets Champi, loses Eagle Warrior.
+- Blackwood Archer: bleed_dps=2.0, bleed_duration=15.0, pass_through_count=1
+- `/api/ref/civs` endpoint does NOT exist (404). Query DB directly for civ list.
+- Battle scores: loaded 0 round-robin, 0 benchmark -- scores not yet computed for new civs.
+
 ## Matchup Sims API (verified 2026-02-22)
 - Endpoint: `POST /api/matchup-sims` with JSON body `{civ_left, civ_right, age}`
 - Response: `{left: {slug: {wins:[], highlighted:[]}}, right: {...}, name_map: {slug: displayName}}`

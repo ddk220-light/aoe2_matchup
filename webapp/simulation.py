@@ -352,101 +352,90 @@ def _find_alive_target(target_idx, enemy_hp, enemy_alive):
     return -1
 
 
-def simulate_battle(
-    unit1,
-    unit2,
-    resources,
-    fixed_count=None,
-    cost1_override=None,
-    cost2_override=None,
-    return_hp=False,
-    return_ticks=False,
-):
+class BattleState:
+    """Mutable state bundle for simulate_battle().
+
+    Holds all per-unit arrays, pre-computed damage values, and combat
+    constants so that phase functions can read/write them without 30+
+    argument signatures.  Created by _init_battle_state().
     """
-    Tick-based battle simulation with no positions/movement.
+    pass
 
-    Phase 1: Opening volley (range/kiting advantage shots)
-    Phase 2: Tick-based combat loop with all mechanics
-    Phase 3: Winner determination
 
-    Args:
-        unit1/unit2: dicts from prepare_combat_unit()
-        resources: total resource pool for army sizing
-        fixed_count: if set, both sides get this many units
-        cost1_override/cost2_override: override unit costs for army sizing
-        return_hp: if True, returns 5-tuple with HP totals
-        return_ticks: if True, returns 6-tuple with HP totals + elapsed ticks
+def _init_battle_state(unit1, unit2, resources, fixed_count, cost1_override, cost2_override):
+    """Set up all pre-computed values and per-unit arrays for a battle.
 
-    Returns: (winner, unit1_remaining, unit2_remaining) or
-             (winner, unit1_remaining, unit2_remaining, hp_pct1, hp_pct2) if return_hp
-             (winner, remaining1, remaining2, hp_pct1, hp_pct2, elapsed_ticks) if return_ticks
-        winner: 1 if unit1 wins, 2 if unit2 wins, 0 if draw
-        hp_pct1/hp_pct2: remaining HP as fraction of starting total (0.0-1.0)
-        elapsed_ticks: number of ticks the battle lasted (multiply by DT for seconds)
+    Returns a populated BattleState with every variable the tick loop needs.
     """
+    s = BattleState()
+    s.unit1 = unit1
+    s.unit2 = unit2
+
     # --- Army sizes ---
     if fixed_count is not None:
-        # Adjust for pop_space (e.g. Karambit Warrior = 0.5 pop → 60 units in 30v30)
         pop1 = unit1.get("pop_space", 1.0)
         pop2 = unit2.get("pop_space", 1.0)
-        count1 = int(fixed_count / pop1)
-        count2 = int(fixed_count / pop2)
+        s.count1 = int(fixed_count / pop1)
+        s.count2 = int(fixed_count / pop2)
     else:
         cost1 = cost1_override or (unit1["cost"] if unit1["cost"] > 0 else 100)
         cost2 = cost2_override or (unit2["cost"] if unit2["cost"] > 0 else 100)
-        count1 = int(max(1, resources // cost1))
-        count2 = int(max(1, resources // cost2))
+        s.count1 = int(max(1, resources // cost1))
+        s.count2 = int(max(1, resources // cost2))
+
+    count1 = s.count1
+    count2 = s.count2
 
     # --- Unit properties ---
-    range1 = unit1["attack_range"]
-    range2 = unit2["attack_range"]
-    melee_dmg1 = _does_melee_damage(unit1["attacks"])
-    melee_dmg2 = _does_melee_damage(unit2["attacks"])
+    s.range1 = unit1["attack_range"]
+    s.range2 = unit2["attack_range"]
+    s.melee_dmg1 = _does_melee_damage(unit1["attacks"])
+    s.melee_dmg2 = _does_melee_damage(unit2["attacks"])
     # Melee-at-range units with short range (Steppe Lancer, Kamayuk) are treated as melee
-    is_ranged1 = range1 >= 1.0 and not (melee_dmg1 and range1 < 2.0)
-    is_ranged2 = range2 >= 1.0 and not (melee_dmg2 and range2 < 2.0)
-    speed1 = unit1["movement_speed"]
-    speed2 = unit2["movement_speed"]
+    s.is_ranged1 = s.range1 >= 1.0 and not (s.melee_dmg1 and s.range1 < 2.0)
+    s.is_ranged2 = s.range2 >= 1.0 and not (s.melee_dmg2 and s.range2 < 2.0)
+    s.speed1 = unit1["movement_speed"]
+    s.speed2 = unit2["movement_speed"]
     # Accuracy: primary projectiles always hit (distance reduces miss chance to ~0).
     # Only secondary/extra projectiles use accuracy (they scatter).
-    accuracy1 = 1.0  # primary projectile always hits
-    accuracy2 = 1.0  # primary projectile always hits
-    EXTRA_PROJ_ACCURACY = 0.5  # secondary projectiles scatter significantly
+    s.accuracy1 = 1.0  # primary projectile always hits
+    s.accuracy2 = 1.0  # primary projectile always hits
+    s.EXTRA_PROJ_ACCURACY = 0.5  # secondary projectiles scatter significantly
 
     # Attack timing
     aspeed1 = unit1["attack_speed"] or 0.5
     aspeed2 = unit2["attack_speed"] or 0.5
-    reload1 = 1.0 / aspeed1 if aspeed1 > 0 else 2.0
-    reload2 = 1.0 / aspeed2 if aspeed2 > 0 else 2.0
-    delay1 = unit1["attack_delay"]
-    delay2 = unit2["attack_delay"]
-    min_range1 = unit1["min_attack_range"]
-    min_range2 = unit2["min_attack_range"]
+    s.reload1 = 1.0 / aspeed1 if aspeed1 > 0 else 2.0
+    s.reload2 = 1.0 / aspeed2 if aspeed2 > 0 else 2.0
+    s.delay1 = unit1["attack_delay"]
+    s.delay2 = unit2["attack_delay"]
+    s.min_range1 = unit1["min_attack_range"]
+    s.min_range2 = unit2["min_attack_range"]
 
     # Pre-compute damage
-    dmg1 = _calc_damage(
+    s.dmg1 = _calc_damage(
         unit1["attacks"],
         unit1["attack"],
         unit2["armors"],
         unit2["melee_armor"],
         unit2["pierce_armor"],
-        is_ranged1,
+        s.is_ranged1,
         ignores_pierce=unit1["ignores_pierce_armor"],
         ignores_melee=unit1["ignores_melee_armor"],
         bonus_damage_reduction=unit2["bonus_damage_reduction"],
-        melee_damage=melee_dmg1,
+        melee_damage=s.melee_dmg1,
     )
-    dmg2 = _calc_damage(
+    s.dmg2 = _calc_damage(
         unit2["attacks"],
         unit2["attack"],
         unit1["armors"],
         unit1["melee_armor"],
         unit1["pierce_armor"],
-        is_ranged2,
+        s.is_ranged2,
         ignores_pierce=unit2["ignores_pierce_armor"],
         ignores_melee=unit2["ignores_melee_armor"],
         bonus_damage_reduction=unit1["bonus_damage_reduction"],
-        melee_damage=melee_dmg2,
+        melee_damage=s.melee_dmg2,
     )
 
     # Nearby ally attack bonus (Monaspa): pre-compute as flat damage addition
@@ -454,13 +443,13 @@ def simulate_battle(
     if nearby_bonus1 > 0:
         max_nearby1 = unit1.get("nearby_bonus_count", 4)
         effective_nearby1 = min(max_nearby1, count1 - 1)
-        dmg1 += nearby_bonus1 * effective_nearby1
+        s.dmg1 += nearby_bonus1 * effective_nearby1
 
     nearby_bonus2 = unit2.get("attack_bonus_nearby", 0)
     if nearby_bonus2 > 0:
         max_nearby2 = unit2.get("nearby_bonus_count", 4)
         effective_nearby2 = min(max_nearby2, count2 - 1)
-        dmg2 += nearby_bonus2 * effective_nearby2
+        s.dmg2 += nearby_bonus2 * effective_nearby2
 
     # Trample (melee only)
     tp1, tr1, tf1 = (
@@ -468,123 +457,123 @@ def simulate_battle(
         unit1["trample_radius"],
         unit1["trample_flat_damage"],
     )
-    has_trample1 = (tp1 > 0 or tf1 > 0) and not is_ranged1
-    trample_dmg1 = (int(dmg1 * tp1) + tf1) if has_trample1 else 0
-    trample_extra1 = _splash_targets(tr1) if has_trample1 else 0
+    s.has_trample1 = (tp1 > 0 or tf1 > 0) and not s.is_ranged1
+    s.trample_dmg1 = (int(s.dmg1 * tp1) + tf1) if s.has_trample1 else 0
+    s.trample_extra1 = _splash_targets(tr1) if s.has_trample1 else 0
 
     tp2, tr2, tf2 = (
         unit2["trample_percent"],
         unit2["trample_radius"],
         unit2["trample_flat_damage"],
     )
-    has_trample2 = (tp2 > 0 or tf2 > 0) and not is_ranged2
-    trample_dmg2 = (int(dmg2 * tp2) + tf2) if has_trample2 else 0
-    trample_extra2 = _splash_targets(tr2) if has_trample2 else 0
+    s.has_trample2 = (tp2 > 0 or tf2 > 0) and not s.is_ranged2
+    s.trample_dmg2 = (int(s.dmg2 * tp2) + tf2) if s.has_trample2 else 0
+    s.trample_extra2 = _splash_targets(tr2) if s.has_trample2 else 0
 
     # Siege splash
-    is_siege1 = unit1["is_siege_projectile"] == 1
-    is_siege2 = unit2["is_siege_projectile"] == 1
-    siege_splash1 = _splash_targets(unit1["splash_radius"]) if is_siege1 else 0
-    siege_splash2 = _splash_targets(unit2["splash_radius"]) if is_siege2 else 0
+    s.is_siege1 = unit1["is_siege_projectile"] == 1
+    s.is_siege2 = unit2["is_siege_projectile"] == 1
+    s.siege_splash1 = _splash_targets(unit1["splash_radius"]) if s.is_siege1 else 0
+    s.siege_splash2 = _splash_targets(unit2["splash_radius"]) if s.is_siege2 else 0
 
     # Splash on hit
-    splash_hit1 = _splash_targets(unit1["splash_on_hit_radius"])
-    splash_hit2 = _splash_targets(unit2["splash_on_hit_radius"])
-    splash_hit_frac1 = unit1["splash_on_hit_fraction"]
-    splash_hit_frac2 = unit2["splash_on_hit_fraction"]
+    s.splash_hit1 = _splash_targets(unit1["splash_on_hit_radius"])
+    s.splash_hit2 = _splash_targets(unit2["splash_on_hit_radius"])
+    s.splash_hit_frac1 = unit1["splash_on_hit_fraction"]
+    s.splash_hit_frac2 = unit2["splash_on_hit_fraction"]
 
     # Pass-through damage (Scorpion bolts, Pirotecnia)
-    pass_through1 = unit1["pass_through_percent"]
-    pass_through2 = unit2["pass_through_percent"]
-    pass_through_count1 = unit1["pass_through_count"]
-    pass_through_count2 = unit2["pass_through_count"]
+    s.pass_through1 = unit1["pass_through_percent"]
+    s.pass_through2 = unit2["pass_through_percent"]
+    s.pass_through_count1 = unit1["pass_through_count"]
+    s.pass_through_count2 = unit2["pass_through_count"]
 
     # Extra projectile scatter (Organ Gun)
-    extra_proj_scatter1 = unit1["extra_proj_scatter"]
-    extra_proj_scatter2 = unit2["extra_proj_scatter"]
+    s.extra_proj_scatter1 = unit1["extra_proj_scatter"]
+    s.extra_proj_scatter2 = unit2["extra_proj_scatter"]
 
     # Extra projectiles
-    extra_proj1 = unit1["extra_projectiles"]
-    extra_proj2 = unit2["extra_projectiles"]
-    first_burst1 = unit1["first_attack_extra_projectiles"]
-    first_burst2 = unit2["first_attack_extra_projectiles"]
+    s.extra_proj1 = unit1["extra_projectiles"]
+    s.extra_proj2 = unit2["extra_projectiles"]
+    s.first_burst1 = unit1["first_attack_extra_projectiles"]
+    s.first_burst2 = unit2["first_attack_extra_projectiles"]
 
     # Extra projectile damage (secondary projectile has different attacks)
     # e.g. Chu Ko Nu extra arrows: 3 pierce only, vs main: 8 pierce + anti-spearman
     extra_proj_attacks1 = unit1.get("extra_projectile_attacks")
     extra_proj_attacks2 = unit2.get("extra_projectile_attacks")
 
-    if extra_proj_attacks1 and (extra_proj1 > 0 or first_burst1 > 0):
+    if extra_proj_attacks1 and (s.extra_proj1 > 0 or s.first_burst1 > 0):
         sec_base1 = extra_proj_attacks1.get(3, extra_proj_attacks1.get(4, 0))
-        extra_proj_dmg1 = _calc_damage(
+        s.extra_proj_dmg1 = _calc_damage(
             extra_proj_attacks1,
             sec_base1,
             unit2["armors"],
             unit2["melee_armor"],
             unit2["pierce_armor"],
-            is_ranged1,
+            s.is_ranged1,
             ignores_pierce=unit1["ignores_pierce_armor"],
             ignores_melee=unit1["ignores_melee_armor"],
             bonus_damage_reduction=unit2["bonus_damage_reduction"],
             melee_damage=_does_melee_damage(extra_proj_attacks1),
         )
     else:
-        extra_proj_dmg1 = dmg1  # No secondary attacks: extra proj same as main
+        s.extra_proj_dmg1 = s.dmg1  # No secondary attacks: extra proj same as main
 
-    if extra_proj_attacks2 and (extra_proj2 > 0 or first_burst2 > 0):
+    if extra_proj_attacks2 and (s.extra_proj2 > 0 or s.first_burst2 > 0):
         sec_base2 = extra_proj_attacks2.get(3, extra_proj_attacks2.get(4, 0))
-        extra_proj_dmg2 = _calc_damage(
+        s.extra_proj_dmg2 = _calc_damage(
             extra_proj_attacks2,
             sec_base2,
             unit1["armors"],
             unit1["melee_armor"],
             unit1["pierce_armor"],
-            is_ranged2,
+            s.is_ranged2,
             ignores_pierce=unit2["ignores_pierce_armor"],
             ignores_melee=unit2["ignores_melee_armor"],
             bonus_damage_reduction=unit1["bonus_damage_reduction"],
             melee_damage=_does_melee_damage(extra_proj_attacks2),
         )
     else:
-        extra_proj_dmg2 = dmg2
+        s.extra_proj_dmg2 = s.dmg2
 
     # Unique mechanics
-    dodge_max1 = unit1["dodge_shield_max"]
-    dodge_max2 = unit2["dodge_shield_max"]
-    dodge_recharge1 = unit1["dodge_shield_recharge"]
-    dodge_recharge2 = unit2["dodge_shield_recharge"]
-    bleed_dps1, bleed_dur1 = unit1["bleed_dps"], unit1["bleed_duration"]
-    bleed_dps2, bleed_dur2 = unit2["bleed_dps"], unit2["bleed_duration"]
+    s.dodge_max1 = unit1["dodge_shield_max"]
+    s.dodge_max2 = unit2["dodge_shield_max"]
+    s.dodge_recharge1 = unit1["dodge_shield_recharge"]
+    s.dodge_recharge2 = unit2["dodge_shield_recharge"]
+    s.bleed_dps1, s.bleed_dur1 = unit1["bleed_dps"], unit1["bleed_duration"]
+    s.bleed_dps2, s.bleed_dur2 = unit2["bleed_dps"], unit2["bleed_duration"]
     # HP regen: stored as HP/minute, convert to HP/tick
-    regen_per_tick1 = unit1["hp_regen"] / 60.0 * DT if unit1["hp_regen"] > 0 else 0.0
-    regen_per_tick2 = unit2["hp_regen"] / 60.0 * DT if unit2["hp_regen"] > 0 else 0.0
-    max_hp1 = float(unit1["hp"])
-    max_hp2 = float(unit2["hp"])
-    block_melee1 = unit1["block_first_melee"]
-    block_melee2 = unit2["block_first_melee"]
-    kill_bonus1 = unit1["attack_bonus_per_kill"]
-    kill_bonus2 = unit2["attack_bonus_per_kill"]
-    hp_per_kill1 = unit1.get("hp_per_kill", 0)
-    hp_per_kill2 = unit2.get("hp_per_kill", 0)
-    hp_per_kill_max1 = unit1.get("hp_per_kill_max", 0)
-    hp_per_kill_max2 = unit2.get("hp_per_kill_max", 0)
-    miss_dmg_pct1 = unit1.get("miss_damage_percent", 0)
-    miss_dmg_pct2 = unit2.get("miss_damage_percent", 0)
-    transform_thresh1 = unit1["hp_transform_threshold"]
-    transform_thresh2 = unit2["hp_transform_threshold"]
+    s.regen_per_tick1 = unit1["hp_regen"] / 60.0 * DT if unit1["hp_regen"] > 0 else 0.0
+    s.regen_per_tick2 = unit2["hp_regen"] / 60.0 * DT if unit2["hp_regen"] > 0 else 0.0
+    s.max_hp1 = float(unit1["hp"])
+    s.max_hp2 = float(unit2["hp"])
+    s.block_melee1 = unit1["block_first_melee"]
+    s.block_melee2 = unit2["block_first_melee"]
+    s.kill_bonus1 = unit1["attack_bonus_per_kill"]
+    s.kill_bonus2 = unit2["attack_bonus_per_kill"]
+    s.hp_per_kill1 = unit1.get("hp_per_kill", 0)
+    s.hp_per_kill2 = unit2.get("hp_per_kill", 0)
+    s.hp_per_kill_max1 = unit1.get("hp_per_kill_max", 0)
+    s.hp_per_kill_max2 = unit2.get("hp_per_kill_max", 0)
+    s.miss_dmg_pct1 = unit1.get("miss_damage_percent", 0)
+    s.miss_dmg_pct2 = unit2.get("miss_damage_percent", 0)
+    s.transform_thresh1 = unit1["hp_transform_threshold"]
+    s.transform_thresh2 = unit2["hp_transform_threshold"]
 
     # Kiting: ranged vs melee only
-    should_kite1 = is_ranged1 and not is_ranged2
-    should_kite2 = is_ranged2 and not is_ranged1
+    s.should_kite1 = s.is_ranged1 and not s.is_ranged2
+    s.should_kite2 = s.is_ranged2 and not s.is_ranged1
 
     # Min range: units with high min_range can't attack in melee phase
     # (e.g. mangonels min_range=3, can't hit units at melee range)
-    cant_attack_melee1 = is_ranged1 and min_range1 >= 2.0 and not is_ranged2
-    cant_attack_melee2 = is_ranged2 and min_range2 >= 2.0 and not is_ranged1
+    s.cant_attack_melee1 = s.is_ranged1 and s.min_range1 >= 2.0 and not s.is_ranged2
+    s.cant_attack_melee2 = s.is_ranged2 and s.min_range2 >= 2.0 and not s.is_ranged1
 
     # --- Per-unit state (plain Python lists) ---
-    hp1 = [float(unit1["hp"])] * count1
-    hp2 = [float(unit2["hp"])] * count2
+    s.hp1 = [float(unit1["hp"])] * count1
+    s.hp2 = [float(unit2["hp"])] * count2
 
     # Percentage-based HP bonus from nearby allies (Shu Coiled Serpent Array)
     # +X% HP per nearby qualifying unit, capped at max_units
@@ -594,186 +583,245 @@ def simulate_battle(
         eff1 = min(max_n1, count1 - 1)
         hp_mult1 = 1.0 + (pct1 * eff1 / 100.0)
         for i in range(count1):
-            hp1[i] = hp1[i] * hp_mult1
+            s.hp1[i] = s.hp1[i] * hp_mult1
     pct2 = unit2.get("hp_nearby_percent_per_unit", 0)
     if pct2 > 0:
         max_n2 = unit2.get("hp_nearby_max_units", 30)
         eff2 = min(max_n2, count2 - 1)
         hp_mult2 = 1.0 + (pct2 * eff2 / 100.0)
         for i in range(count2):
-            hp2[i] = hp2[i] * hp_mult2
+            s.hp2[i] = s.hp2[i] * hp_mult2
 
-    cooldown1 = [0.0] * count1
-    cooldown2 = [0.0] * count2
-    bonus_atk1 = [0.0] * count1
-    bonus_atk2 = [0.0] * count2
-    hp_gained1 = [0] * count1  # Track cumulative HP gained from kills (for cap)
-    hp_gained2 = [0] * count2
-    used_first1 = [False] * count1
-    used_first2 = [False] * count2
-    transformed1 = [False] * count1
-    transformed2 = [False] * count2
-    shield1 = [float(dodge_max1)] * count1
-    shield2 = [float(dodge_max2)] * count2
-    shield_timer1 = [0.0] * count1
-    shield_timer2 = [0.0] * count2
-    has_blocked1 = [False] * count1
-    has_blocked2 = [False] * count2
-    bleed_on1 = {}  # idx -> (dps, remaining)
-    bleed_on2 = {}
-    committed1 = {}  # idx -> (target, time_remaining)
-    committed2 = {}
-    prev_target1 = [-1] * count1  # last attacked target per unit (for retarget delay)
-    prev_target2 = [-1] * count2
+    s.cooldown1 = [0.0] * count1
+    s.cooldown2 = [0.0] * count2
+    s.bonus_atk1 = [0.0] * count1
+    s.bonus_atk2 = [0.0] * count2
+    s.hp_gained1 = [0] * count1  # Track cumulative HP gained from kills (for cap)
+    s.hp_gained2 = [0] * count2
+    s.used_first1 = [False] * count1
+    s.used_first2 = [False] * count2
+    s.transformed1 = [False] * count1
+    s.transformed2 = [False] * count2
+    s.shield1 = [float(s.dodge_max1)] * count1
+    s.shield2 = [float(s.dodge_max2)] * count2
+    s.shield_timer1 = [0.0] * count1
+    s.shield_timer2 = [0.0] * count2
+    s.has_blocked1 = [False] * count1
+    s.has_blocked2 = [False] * count2
+    s.bleed_on1 = {}  # idx -> (dps, remaining)
+    s.bleed_on2 = {}
+    s.committed1 = {}  # idx -> (target, time_remaining)
+    s.committed2 = {}
+    s.prev_target1 = [-1] * count1  # last attacked target per unit (for retarget delay)
+    s.prev_target2 = [-1] * count2
 
     # Dismount on death (Konnik): pre-compute dismount damage
-    dismount1 = unit1.get("dismount")
-    dismount2 = unit2.get("dismount")
-    dismounted1 = [False] * count1 if dismount1 else None
-    dismounted2 = [False] * count2 if dismount2 else None
+    s.dismount1 = unit1.get("dismount")
+    s.dismount2 = unit2.get("dismount")
+    s.dismounted1 = [False] * count1 if s.dismount1 else None
+    s.dismounted2 = [False] * count2 if s.dismount2 else None
 
-    if dismount1:
+    s.dmg1_dismount = 0
+    s.dmg2_vs_dismount1 = 0
+    s.reload1_dismount = 0
+    s.delay1_dismount = 0
+    s.dmg2_dismount = 0
+    s.dmg1_vs_dismount2 = 0
+    s.reload2_dismount = 0
+    s.delay2_dismount = 0
+
+    if s.dismount1:
         # Dismounted team1 attacking team2
-        dmg1_dismount = _calc_damage(
-            dismount1["attacks"],
-            dismount1["attack"],
+        s.dmg1_dismount = _calc_damage(
+            s.dismount1["attacks"],
+            s.dismount1["attack"],
             unit2["armors"],
             unit2["melee_armor"],
             unit2["pierce_armor"],
             False,  # dismounted is always melee
         )
         # Team2 attacking dismounted team1 (different armor classes!)
-        dmg2_vs_dismount1 = _calc_damage(
+        s.dmg2_vs_dismount1 = _calc_damage(
             unit2["attacks"],
             unit2["attack"],
-            dismount1["armors"],
-            dismount1["melee_armor"],
-            dismount1["pierce_armor"],
-            is_ranged2,
+            s.dismount1["armors"],
+            s.dismount1["melee_armor"],
+            s.dismount1["pierce_armor"],
+            s.is_ranged2,
             ignores_pierce=unit2["ignores_pierce_armor"],
             ignores_melee=unit2["ignores_melee_armor"],
-            melee_damage=melee_dmg2,
+            melee_damage=s.melee_dmg2,
         )
-        reload1_dismount = (
-            1.0 / dismount1["attack_speed"] if dismount1["attack_speed"] > 0 else 2.0
+        s.reload1_dismount = (
+            1.0 / s.dismount1["attack_speed"] if s.dismount1["attack_speed"] > 0 else 2.0
         )
-        delay1_dismount = dismount1["attack_delay"]
-    if dismount2:
+        s.delay1_dismount = s.dismount1["attack_delay"]
+    if s.dismount2:
         # Dismounted team2 attacking team1
-        dmg2_dismount = _calc_damage(
-            dismount2["attacks"],
-            dismount2["attack"],
+        s.dmg2_dismount = _calc_damage(
+            s.dismount2["attacks"],
+            s.dismount2["attack"],
             unit1["armors"],
             unit1["melee_armor"],
             unit1["pierce_armor"],
             False,
         )
         # Team1 attacking dismounted team2 (different armor classes!)
-        dmg1_vs_dismount2 = _calc_damage(
+        s.dmg1_vs_dismount2 = _calc_damage(
             unit1["attacks"],
             unit1["attack"],
-            dismount2["armors"],
-            dismount2["melee_armor"],
-            dismount2["pierce_armor"],
-            is_ranged1,
+            s.dismount2["armors"],
+            s.dismount2["melee_armor"],
+            s.dismount2["pierce_armor"],
+            s.is_ranged1,
             ignores_pierce=unit1["ignores_pierce_armor"],
             ignores_melee=unit1["ignores_melee_armor"],
-            melee_damage=melee_dmg1,
+            melee_damage=s.melee_dmg1,
         )
-        reload2_dismount = (
-            1.0 / dismount2["attack_speed"] if dismount2["attack_speed"] > 0 else 2.0
+        s.reload2_dismount = (
+            1.0 / s.dismount2["attack_speed"] if s.dismount2["attack_speed"] > 0 else 2.0
         )
-        delay2_dismount = dismount2["attack_delay"]
+        s.delay2_dismount = s.dismount2["attack_delay"]
 
     # HP transform (Jian Swordsman): pre-compute transformed damage
-    transform1 = unit1.get("transform")
-    transform2 = unit2.get("transform")
+    s.transform1 = unit1.get("transform")
+    s.transform2 = unit2.get("transform")
 
-    if transform1:
+    s.dmg1_transform = s.dmg1
+    s.dmg2_vs_transform1 = s.dmg2
+    s.dmg2_transform = s.dmg2
+    s.dmg1_vs_transform2 = s.dmg1
+
+    if s.transform1:
         # Transformed team1 attacking team2
-        dmg1_transform = _calc_damage(
-            transform1["attacks"],
-            transform1["attack"],
+        s.dmg1_transform = _calc_damage(
+            s.transform1["attacks"],
+            s.transform1["attack"],
             unit2["armors"],
             unit2["melee_armor"],
             unit2["pierce_armor"],
-            is_ranged1,
+            s.is_ranged1,
             ignores_pierce=unit1["ignores_pierce_armor"],
             ignores_melee=unit1["ignores_melee_armor"],
             bonus_damage_reduction=unit2["bonus_damage_reduction"],
-            melee_damage=_does_melee_damage(transform1["attacks"]),
+            melee_damage=_does_melee_damage(s.transform1["attacks"]),
         )
         # Team2 attacking transformed team1 (different armor!)
-        dmg2_vs_transform1 = _calc_damage(
+        s.dmg2_vs_transform1 = _calc_damage(
             unit2["attacks"],
             unit2["attack"],
-            transform1["armors"],
-            transform1["melee_armor"],
-            transform1["pierce_armor"],
-            is_ranged2,
+            s.transform1["armors"],
+            s.transform1["melee_armor"],
+            s.transform1["pierce_armor"],
+            s.is_ranged2,
             ignores_pierce=unit2["ignores_pierce_armor"],
             ignores_melee=unit2["ignores_melee_armor"],
             bonus_damage_reduction=unit1["bonus_damage_reduction"],
-            melee_damage=melee_dmg2,
+            melee_damage=s.melee_dmg2,
         )
-    if transform2:
-        dmg2_transform = _calc_damage(
-            transform2["attacks"],
-            transform2["attack"],
+    if s.transform2:
+        s.dmg2_transform = _calc_damage(
+            s.transform2["attacks"],
+            s.transform2["attack"],
             unit1["armors"],
             unit1["melee_armor"],
             unit1["pierce_armor"],
-            is_ranged2,
+            s.is_ranged2,
             ignores_pierce=unit2["ignores_pierce_armor"],
             ignores_melee=unit2["ignores_melee_armor"],
             bonus_damage_reduction=unit1["bonus_damage_reduction"],
-            melee_damage=_does_melee_damage(transform2["attacks"]),
+            melee_damage=_does_melee_damage(s.transform2["attacks"]),
         )
-        dmg1_vs_transform2 = _calc_damage(
+        s.dmg1_vs_transform2 = _calc_damage(
             unit1["attacks"],
             unit1["attack"],
-            transform2["armors"],
-            transform2["melee_armor"],
-            transform2["pierce_armor"],
-            is_ranged1,
+            s.transform2["armors"],
+            s.transform2["melee_armor"],
+            s.transform2["pierce_armor"],
+            s.is_ranged1,
             ignores_pierce=unit1["ignores_pierce_armor"],
             ignores_melee=unit1["ignores_melee_armor"],
             bonus_damage_reduction=unit2["bonus_damage_reduction"],
-            melee_damage=melee_dmg1,
+            melee_damage=s.melee_dmg1,
         )
 
     # Charge attack (Coustillier): extra melee damage on first hit, then recharges
-    charge_melee1 = unit1.get("charge_attack_melee", 0) or 0
-    charge_melee2 = unit2.get("charge_attack_melee", 0) or 0
-    charge_recharge1 = unit1.get("charge_recharge_time", 0) or 0
-    charge_recharge2 = unit2.get("charge_recharge_time", 0) or 0
-    charge_ready1 = [True] * count1 if charge_melee1 > 0 else None
-    charge_ready2 = [True] * count2 if charge_melee2 > 0 else None
-    charge_timer1 = [0.0] * count1 if charge_melee1 > 0 else None
-    charge_timer2 = [0.0] * count2 if charge_melee2 > 0 else None
+    s.charge_melee1 = unit1.get("charge_attack_melee", 0) or 0
+    s.charge_melee2 = unit2.get("charge_attack_melee", 0) or 0
+    s.charge_recharge1 = unit1.get("charge_recharge_time", 0) or 0
+    s.charge_recharge2 = unit2.get("charge_recharge_time", 0) or 0
+    s.charge_ready1 = [True] * count1 if s.charge_melee1 > 0 else None
+    s.charge_ready2 = [True] * count2 if s.charge_melee2 > 0 else None
+    s.charge_timer1 = [0.0] * count1 if s.charge_melee1 > 0 else None
+    s.charge_timer2 = [0.0] * count2 if s.charge_melee2 > 0 else None
 
     # Armor stripping (Obuch): each hit reduces enemy melee + pierce armor by N
-    armor_strip1 = unit1.get("armor_strip_per_hit", 0) or 0
-    armor_strip2 = unit2.get("armor_strip_per_hit", 0) or 0
+    s.armor_strip1 = unit1.get("armor_strip_per_hit", 0) or 0
+    s.armor_strip2 = unit2.get("armor_strip_per_hit", 0) or 0
     # Per-unit armor tracking when armor stripping is in play
-    if armor_strip1 or armor_strip2:
-        current_ma2 = [unit2["melee_armor"]] * count2
-        current_pa2 = [unit2["pierce_armor"]] * count2
-        current_ma1 = [unit1["melee_armor"]] * count1
-        current_pa1 = [unit1["pierce_armor"]] * count1
+    if s.armor_strip1 or s.armor_strip2:
+        s.current_ma2 = [unit2["melee_armor"]] * count2
+        s.current_pa2 = [unit2["pierce_armor"]] * count2
+        s.current_ma1 = [unit1["melee_armor"]] * count1
+        s.current_pa1 = [unit1["pierce_armor"]] * count1
     else:
-        current_ma1 = current_pa1 = current_ma2 = current_pa2 = None
+        s.current_ma1 = s.current_pa1 = s.current_ma2 = s.current_pa2 = None
 
     # Damage reflection (Khitan Lamellar Armor): melee attackers take % damage back
-    reflect1 = unit1.get("damage_reflect_percent", 0) or 0
-    reflect2 = unit2.get("damage_reflect_percent", 0) or 0
+    s.reflect1 = unit1.get("damage_reflect_percent", 0) or 0
+    s.reflect2 = unit2.get("damage_reflect_percent", 0) or 0
 
-    start_total_hp1 = float(unit1["hp"]) * count1
-    start_total_hp2 = float(unit2["hp"]) * count2
+    s.start_total_hp1 = float(unit1["hp"]) * count1
+    s.start_total_hp2 = float(unit2["hp"]) * count2
 
-    # =========================================================
-    # PHASE 1: Opening volley (range/kiting advantage)
-    # =========================================================
+    return s
+
+
+def _run_opening_volley(s):
+    """Phase 1: Calculate and apply opening shots for range/kiting advantage.
+
+    Modifies s.hp1, s.hp2, s.cooldown1, s.cooldown2, and related arrays in-place.
+    """
+    # Local aliases (these reference the same mutable lists/dicts in s)
+    count1, count2 = s.count1, s.count2
+    is_ranged1, is_ranged2 = s.is_ranged1, s.is_ranged2
+    speed1, speed2 = s.speed1, s.speed2
+    accuracy1, accuracy2 = s.accuracy1, s.accuracy2
+    EXTRA_PROJ_ACCURACY = s.EXTRA_PROJ_ACCURACY
+    reload1, reload2 = s.reload1, s.reload2
+    delay1, delay2 = s.delay1, s.delay2
+    min_range1, min_range2 = s.min_range1, s.min_range2
+    range1, range2 = s.range1, s.range2
+    dmg1, dmg2 = s.dmg1, s.dmg2
+    is_siege1, is_siege2 = s.is_siege1, s.is_siege2
+    siege_splash1, siege_splash2 = s.siege_splash1, s.siege_splash2
+    splash_hit1, splash_hit2 = s.splash_hit1, s.splash_hit2
+    splash_hit_frac1, splash_hit_frac2 = s.splash_hit_frac1, s.splash_hit_frac2
+    pass_through1, pass_through2 = s.pass_through1, s.pass_through2
+    pass_through_count1, pass_through_count2 = s.pass_through_count1, s.pass_through_count2
+    extra_proj_scatter1, extra_proj_scatter2 = s.extra_proj_scatter1, s.extra_proj_scatter2
+    extra_proj1, extra_proj2 = s.extra_proj1, s.extra_proj2
+    first_burst1, first_burst2 = s.first_burst1, s.first_burst2
+    extra_proj_dmg1, extra_proj_dmg2 = s.extra_proj_dmg1, s.extra_proj_dmg2
+    dodge_max1, dodge_max2 = s.dodge_max1, s.dodge_max2
+    dodge_recharge1, dodge_recharge2 = s.dodge_recharge1, s.dodge_recharge2
+    bleed_dps1, bleed_dur1 = s.bleed_dps1, s.bleed_dur1
+    bleed_dps2, bleed_dur2 = s.bleed_dps2, s.bleed_dur2
+    max_hp1, max_hp2 = s.max_hp1, s.max_hp2
+    block_melee1, block_melee2 = s.block_melee1, s.block_melee2
+    kill_bonus1, kill_bonus2 = s.kill_bonus1, s.kill_bonus2
+    hp_per_kill1, hp_per_kill2 = s.hp_per_kill1, s.hp_per_kill2
+    hp_per_kill_max1, hp_per_kill_max2 = s.hp_per_kill_max1, s.hp_per_kill_max2
+    miss_dmg_pct1, miss_dmg_pct2 = s.miss_dmg_pct1, s.miss_dmg_pct2
+    hp1, hp2 = s.hp1, s.hp2
+    cooldown1, cooldown2 = s.cooldown1, s.cooldown2
+    bonus_atk1, bonus_atk2 = s.bonus_atk1, s.bonus_atk2
+    hp_gained1, hp_gained2 = s.hp_gained1, s.hp_gained2
+    used_first1, used_first2 = s.used_first1, s.used_first2
+    shield1, shield2 = s.shield1, s.shield2
+    shield_timer1, shield_timer2 = s.shield_timer1, s.shield_timer2
+    has_blocked1, has_blocked2 = s.has_blocked1, s.has_blocked2
+    bleed_on1, bleed_on2 = s.bleed_on1, s.bleed_on2
 
     def _apply_opening_hit(attacker_team, target_idx, damage, attacker_idx):
         """Apply a single opening hit with all mechanics."""
@@ -1138,6 +1186,504 @@ def simulate_battle(
             for i in range(count2):
                 cooldown2[i] = remaining_cd
 
+
+def _apply_tick_damage(s, pending_damage, alive1, alive2):
+    """Apply all pending damage from attack generation atomically.
+
+    Handles dodge shields, block-first-melee, armor stripping, damage
+    reflection, kill bonuses, trample, siege splash, splash-on-hit,
+    pass-through, and bleed application.
+
+    Modifies s.hp1, s.hp2, and related per-unit arrays in-place.
+    """
+    # Local aliases (mutable references into state)
+    hp1, hp2 = s.hp1, s.hp2
+    shield1, shield2 = s.shield1, s.shield2
+    shield_timer1, shield_timer2 = s.shield_timer1, s.shield_timer2
+    has_blocked1, has_blocked2 = s.has_blocked1, s.has_blocked2
+    bleed_on1, bleed_on2 = s.bleed_on1, s.bleed_on2
+    bonus_atk1, bonus_atk2 = s.bonus_atk1, s.bonus_atk2
+    hp_gained1, hp_gained2 = s.hp_gained1, s.hp_gained2
+    is_ranged1, is_ranged2 = s.is_ranged1, s.is_ranged2
+    dodge_max1, dodge_max2 = s.dodge_max1, s.dodge_max2
+    dodge_recharge1, dodge_recharge2 = s.dodge_recharge1, s.dodge_recharge2
+    block_melee1, block_melee2 = s.block_melee1, s.block_melee2
+    kill_bonus1, kill_bonus2 = s.kill_bonus1, s.kill_bonus2
+    hp_per_kill1, hp_per_kill2 = s.hp_per_kill1, s.hp_per_kill2
+    hp_per_kill_max1, hp_per_kill_max2 = s.hp_per_kill_max1, s.hp_per_kill_max2
+    max_hp1, max_hp2 = s.max_hp1, s.max_hp2
+    bleed_dps1, bleed_dur1 = s.bleed_dps1, s.bleed_dur1
+    bleed_dps2, bleed_dur2 = s.bleed_dps2, s.bleed_dur2
+    trample_dmg1, trample_extra1 = s.trample_dmg1, s.trample_extra1
+    trample_dmg2, trample_extra2 = s.trample_dmg2, s.trample_extra2
+    splash_hit1, splash_hit2 = s.splash_hit1, s.splash_hit2
+    splash_hit_frac1, splash_hit_frac2 = s.splash_hit_frac1, s.splash_hit_frac2
+    siege_splash1, siege_splash2 = s.siege_splash1, s.siege_splash2
+    is_siege1, is_siege2 = s.is_siege1, s.is_siege2
+    pass_through1, pass_through2 = s.pass_through1, s.pass_through2
+    pass_through_count1, pass_through_count2 = s.pass_through_count1, s.pass_through_count2
+    armor_strip1, armor_strip2 = s.armor_strip1, s.armor_strip2
+    current_ma1, current_pa1 = s.current_ma1, s.current_pa1
+    current_ma2, current_pa2 = s.current_ma2, s.current_pa2
+    reflect1, reflect2 = s.reflect1, s.reflect2
+    unit1, unit2 = s.unit1, s.unit2
+
+    for (
+        target_team,
+        target_idx,
+        damage,
+        attacker_idx,
+        attacker_team,
+    ) in pending_damage:
+        if target_team == 1:
+            t_hp = hp1
+            t_shield, t_shield_timer = shield1, shield_timer1
+            t_blocked, t_bleed = has_blocked1, bleed_on1
+            a_bonus = bonus_atk2
+            a_is_ranged = is_ranged2
+            d_dodge_max, d_recharge = dodge_max1, dodge_recharge1
+            d_block = block_melee1
+            a_kill_bonus = kill_bonus2
+            a_hp_per_kill, a_hp_per_kill_max = hp_per_kill2, hp_per_kill_max2
+            a_hp_gained, a_hp_arr = hp_gained2, hp2
+            a_max_hp = max_hp2
+            a_bleed_dps, a_bleed_dur = bleed_dps2, bleed_dur2
+            a_trample_dmg, a_trample_extra = trample_dmg2, trample_extra2
+            a_splash_hit = splash_hit2
+            a_splash_hit_frac = splash_hit_frac2
+            a_siege_splash = siege_splash2
+            a_is_siege = is_siege2
+            a_pass_through = pass_through2
+            a_pass_through_count = pass_through_count2
+            a_armor_strip = armor_strip2
+            t_current_ma, t_current_pa = current_ma1, current_pa1
+            all_alive = alive1
+        else:
+            t_hp = hp2
+            t_shield, t_shield_timer = shield2, shield_timer2
+            t_blocked, t_bleed = has_blocked2, bleed_on2
+            a_bonus = bonus_atk1
+            a_is_ranged = is_ranged1
+            d_dodge_max, d_recharge = dodge_max2, dodge_recharge2
+            d_block = block_melee2
+            a_kill_bonus = kill_bonus1
+            a_hp_per_kill, a_hp_per_kill_max = hp_per_kill1, hp_per_kill_max1
+            a_hp_gained, a_hp_arr = hp_gained1, hp1
+            a_max_hp = max_hp1
+            a_bleed_dps, a_bleed_dur = bleed_dps1, bleed_dur1
+            a_trample_dmg, a_trample_extra = trample_dmg1, trample_extra1
+            a_splash_hit = splash_hit1
+            a_splash_hit_frac = splash_hit_frac1
+            a_siege_splash = siege_splash1
+            a_is_siege = is_siege1
+            a_pass_through = pass_through1
+            a_pass_through_count = pass_through_count1
+            a_armor_strip = armor_strip1
+            t_current_ma, t_current_pa = current_ma2, current_pa2
+            all_alive = alive2
+
+        if t_hp[target_idx] <= 0:
+            continue
+
+        # Dodge shield (ranged attacks only)
+        if d_dodge_max > 0 and a_is_ranged and t_shield[target_idx] > 0:
+            t_shield[target_idx] -= 1
+            t_shield_timer[target_idx] = d_recharge
+            continue
+
+        # Block first melee
+        if d_block and not a_is_ranged and not t_blocked[target_idx]:
+            t_blocked[target_idx] = True
+            continue
+
+        was_alive = t_hp[target_idx] > 0
+
+        # Armor stripping (Obuch): adjust damage for stripped armor on target
+        if t_current_ma is not None:
+            if a_is_ranged:
+                orig_armor = (
+                    unit1["pierce_armor"]
+                    if target_team == 1
+                    else unit2["pierce_armor"]
+                )
+                cur_armor = t_current_pa[target_idx]
+            else:
+                orig_armor = (
+                    unit1["melee_armor"]
+                    if target_team == 1
+                    else unit2["melee_armor"]
+                )
+                cur_armor = t_current_ma[target_idx]
+            armor_lost = orig_armor - cur_armor
+            if armor_lost > 0:
+                damage += armor_lost
+
+        t_hp[target_idx] -= damage
+
+        # Damage reflection (Khitan Lamellar Armor): melee attackers take % back
+        if not a_is_ranged:
+            t_reflect = reflect1 if target_team == 1 else reflect2
+            if t_reflect > 0:
+                reflect_dmg = max(1, int(damage * t_reflect))
+                a_hp = hp2 if target_team == 1 else hp1
+                a_hp[attacker_idx] -= reflect_dmg
+
+        # Armor stripping (Obuch): reduce target armor after hit
+        if a_armor_strip > 0 and t_current_ma is not None:
+            t_current_ma[target_idx] = max(
+                -99, t_current_ma[target_idx] - a_armor_strip
+            )
+            t_current_pa[target_idx] = max(
+                -99, t_current_pa[target_idx] - a_armor_strip
+            )
+
+        # Kill bonus (attack + HP)
+        if was_alive and t_hp[target_idx] <= 0:
+            if a_kill_bonus > 0:
+                a_bonus[attacker_idx] += a_kill_bonus
+            if a_hp_per_kill > 0 and a_hp_gained[attacker_idx] < a_hp_per_kill_max:
+                heal = min(a_hp_per_kill, a_hp_per_kill_max - a_hp_gained[attacker_idx])
+                a_hp_arr[attacker_idx] = min(a_hp_arr[attacker_idx] + heal, a_max_hp + a_hp_per_kill_max)
+                a_hp_gained[attacker_idx] += heal
+
+        # Trample: 25% chance to damage a nearby alive enemy
+        if (
+            a_trample_dmg > 0
+            and a_trample_extra > 0
+            and random.random() < TRAMPLE_HIT_CHANCE
+        ):
+            splashed = 0
+            for idx in all_alive:
+                if (
+                    idx != target_idx
+                    and t_hp[idx] > 0
+                    and splashed < a_trample_extra
+                ):
+                    t_hp[idx] -= a_trample_dmg
+                    splashed += 1
+
+        # Siege splash: extra targets
+        if a_is_siege and a_siege_splash > 0:
+            splashed = 0
+            for idx in all_alive:
+                if (
+                    idx != target_idx
+                    and t_hp[idx] > 0
+                    and splashed < a_siege_splash
+                ):
+                    t_hp[idx] -= damage
+                    splashed += 1
+
+        # Splash on hit: extra targets near the target
+        if a_splash_hit > 0:
+            splash_dmg = max(1, damage * a_splash_hit_frac)
+            splashed = 0
+            for idx in all_alive:
+                if idx != target_idx and t_hp[idx] > 0 and splashed < a_splash_hit:
+                    t_hp[idx] -= splash_dmg
+                    splashed += 1
+
+        # Pass-through: up to N additional units take a fraction of the damage
+        if a_pass_through > 0:
+            pt_dmg = max(1, int(damage * a_pass_through))
+            pt_hit = 0
+            for idx in all_alive:
+                if idx != target_idx and t_hp[idx] > 0:
+                    t_hp[idx] -= pt_dmg
+                    pt_hit += 1
+                    if pt_hit >= a_pass_through_count:
+                        break
+
+        # Bleed
+        if a_bleed_dps > 0 and was_alive:
+            t_bleed[target_idx] = (a_bleed_dps, a_bleed_dur)
+
+
+def _apply_tick_effects(s, alive1, alive2):
+    """Apply per-tick effects: dodge recharge, charge recharge, bleed, HP regen,
+    HP transform, and dismount-on-death.
+
+    Modifies s.hp1, s.hp2, and related per-unit arrays in-place.
+    """
+    # Local aliases (mutable references into state)
+    count1, count2 = s.count1, s.count2
+    hp1, hp2 = s.hp1, s.hp2
+    cooldown1, cooldown2 = s.cooldown1, s.cooldown2
+    shield1, shield2 = s.shield1, s.shield2
+    shield_timer1, shield_timer2 = s.shield_timer1, s.shield_timer2
+    dodge_max1, dodge_max2 = s.dodge_max1, s.dodge_max2
+    dodge_recharge1, dodge_recharge2 = s.dodge_recharge1, s.dodge_recharge2
+    charge_ready1, charge_ready2 = s.charge_ready1, s.charge_ready2
+    charge_timer1, charge_timer2 = s.charge_timer1, s.charge_timer2
+    bleed_on1, bleed_on2 = s.bleed_on1, s.bleed_on2
+    regen_per_tick1, regen_per_tick2 = s.regen_per_tick1, s.regen_per_tick2
+    max_hp1, max_hp2 = s.max_hp1, s.max_hp2
+    transform_thresh1, transform_thresh2 = s.transform_thresh1, s.transform_thresh2
+    transformed1, transformed2 = s.transformed1, s.transformed2
+    dismount1, dismount2 = s.dismount1, s.dismount2
+    dismounted1, dismounted2 = s.dismounted1, s.dismounted2
+    committed1, committed2 = s.committed1, s.committed2
+    reload1_dismount, reload2_dismount = s.reload1_dismount, s.reload2_dismount
+    unit1, unit2 = s.unit1, s.unit2
+
+    # Dodge shield recharge
+    if dodge_max1 > 0:
+        for i in alive1:
+            if shield_timer1[i] > 0:
+                shield_timer1[i] -= DT
+                if shield_timer1[i] <= 0 and shield1[i] < dodge_max1:
+                    shield1[i] += 1
+                    if shield1[i] < dodge_max1:
+                        shield_timer1[i] = dodge_recharge1
+                    else:
+                        shield_timer1[i] = 0.0
+    if dodge_max2 > 0:
+        for i in alive2:
+            if shield_timer2[i] > 0:
+                shield_timer2[i] -= DT
+                if shield_timer2[i] <= 0 and shield2[i] < dodge_max2:
+                    shield2[i] += 1
+                    if shield2[i] < dodge_max2:
+                        shield_timer2[i] = dodge_recharge2
+                    else:
+                        shield_timer2[i] = 0.0
+
+    # Charge attack recharge (Coustillier)
+    if charge_timer1 is not None:
+        for i in alive1:
+            if not charge_ready1[i] and charge_timer1[i] > 0:
+                charge_timer1[i] -= DT
+                if charge_timer1[i] <= 0:
+                    charge_ready1[i] = True
+    if charge_timer2 is not None:
+        for i in alive2:
+            if not charge_ready2[i] and charge_timer2[i] > 0:
+                charge_timer2[i] -= DT
+                if charge_timer2[i] <= 0:
+                    charge_ready2[i] = True
+
+    # Bleed damage
+    for idx in list(bleed_on1):
+        if hp1[idx] > 0:
+            dps, remaining = bleed_on1[idx]
+            hp1[idx] -= dps * DT
+            remaining -= DT
+            if remaining > 0:
+                bleed_on1[idx] = (dps, remaining)
+            else:
+                del bleed_on1[idx]
+        else:
+            del bleed_on1[idx]
+    for idx in list(bleed_on2):
+        if hp2[idx] > 0:
+            dps, remaining = bleed_on2[idx]
+            hp2[idx] -= dps * DT
+            remaining -= DT
+            if remaining > 0:
+                bleed_on2[idx] = (dps, remaining)
+            else:
+                del bleed_on2[idx]
+        else:
+            del bleed_on2[idx]
+
+    # HP regeneration
+    if regen_per_tick1 > 0:
+        for idx in alive1:
+            if hp1[idx] < max_hp1:
+                hp1[idx] = min(max_hp1, hp1[idx] + regen_per_tick1)
+    if regen_per_tick2 > 0:
+        for idx in alive2:
+            if hp2[idx] < max_hp2:
+                hp2[idx] = min(max_hp2, hp2[idx] + regen_per_tick2)
+
+    # HP transform (e.g. Jian Swordsman — switch to unshielded form, revert when healed)
+    if transform_thresh1 > 0:
+        threshold_hp = unit1["hp"] * transform_thresh1
+        for idx in alive1:
+            if not transformed1[idx] and hp1[idx] <= threshold_hp and hp1[idx] > 0:
+                transformed1[idx] = True
+            elif transformed1[idx] and hp1[idx] > threshold_hp:
+                transformed1[idx] = False
+    if transform_thresh2 > 0:
+        threshold_hp = unit2["hp"] * transform_thresh2
+        for idx in alive2:
+            if not transformed2[idx] and hp2[idx] <= threshold_hp and hp2[idx] > 0:
+                transformed2[idx] = True
+            elif transformed2[idx] and hp2[idx] > threshold_hp:
+                transformed2[idx] = False
+
+    # Dismount on death: respawn dead mounted units as dismounted
+    if dismount1:
+        for idx in range(count1):
+            if hp1[idx] <= 0 and not dismounted1[idx]:
+                dismounted1[idx] = True
+                hp1[idx] = float(dismount1["hp"])
+                cooldown1[idx] = reload1_dismount
+                if idx in committed1:
+                    del committed1[idx]
+    if dismount2:
+        for idx in range(count2):
+            if hp2[idx] <= 0 and not dismounted2[idx]:
+                dismounted2[idx] = True
+                hp2[idx] = float(dismount2["hp"])
+                cooldown2[idx] = reload2_dismount
+                if idx in committed2:
+                    del committed2[idx]
+
+
+def _determine_winner(s, tick, return_hp, return_ticks):
+    """Phase 3: Determine the battle winner from remaining HP arrays.
+
+    Returns the appropriate result tuple based on return_hp/return_ticks flags.
+    """
+    hp1, hp2 = s.hp1, s.hp2
+    count1, count2 = s.count1, s.count2
+    start_total_hp1, start_total_hp2 = s.start_total_hp1, s.start_total_hp2
+
+    remaining1 = sum(1 for h in hp1 if h > 0)
+    remaining2 = sum(1 for h in hp2 if h > 0)
+    total_hp1 = sum(max(0, h) for h in hp1)
+    total_hp2 = sum(max(0, h) for h in hp2)
+    hp_pct1 = total_hp1 / start_total_hp1 if start_total_hp1 > 0 else 0.0
+    hp_pct2 = total_hp2 / start_total_hp2 if start_total_hp2 > 0 else 0.0
+    elapsed_ticks = tick + 1  # tick is 0-indexed from the for loop
+
+    def _result(winner):
+        if return_ticks:
+            return (winner, remaining1, remaining2, hp_pct1, hp_pct2, elapsed_ticks)
+        if return_hp:
+            return (winner, remaining1, remaining2, hp_pct1, hp_pct2)
+        return (winner, remaining1, remaining2)
+
+    if remaining1 > 0 and remaining2 == 0:
+        return _result(1)
+    elif remaining2 > 0 and remaining1 == 0:
+        return _result(2)
+    else:
+        lost1 = count1 - remaining1
+        lost2 = count2 - remaining2
+        if lost1 > lost2:
+            return _result(2)
+        elif lost2 > lost1:
+            return _result(1)
+        else:
+            if hp_pct1 < hp_pct2:
+                return _result(2)
+            elif hp_pct2 < hp_pct1:
+                return _result(1)
+            else:
+                return _result(0)
+
+
+def simulate_battle(
+    unit1,
+    unit2,
+    resources,
+    fixed_count=None,
+    cost1_override=None,
+    cost2_override=None,
+    return_hp=False,
+    return_ticks=False,
+):
+    """
+    Tick-based battle simulation with no positions/movement.
+
+    Phase 1: Opening volley (range/kiting advantage shots)
+    Phase 2: Tick-based combat loop with all mechanics
+    Phase 3: Winner determination
+
+    Args:
+        unit1/unit2: dicts from prepare_combat_unit()
+        resources: total resource pool for army sizing
+        fixed_count: if set, both sides get this many units
+        cost1_override/cost2_override: override unit costs for army sizing
+        return_hp: if True, returns 5-tuple with HP totals
+        return_ticks: if True, returns 6-tuple with HP totals + elapsed ticks
+
+    Returns: (winner, unit1_remaining, unit2_remaining) or
+             (winner, unit1_remaining, unit2_remaining, hp_pct1, hp_pct2) if return_hp
+             (winner, remaining1, remaining2, hp_pct1, hp_pct2, elapsed_ticks) if return_ticks
+        winner: 1 if unit1 wins, 2 if unit2 wins, 0 if draw
+        hp_pct1/hp_pct2: remaining HP as fraction of starting total (0.0-1.0)
+        elapsed_ticks: number of ticks the battle lasted (multiply by DT for seconds)
+    """
+    # --- Initialize all battle state ---
+    s = _init_battle_state(unit1, unit2, resources, fixed_count, cost1_override, cost2_override)
+
+    # Local aliases for hot-path variables (avoids s.attr lookups in tight loops)
+    count1, count2 = s.count1, s.count2
+    range1, range2 = s.range1, s.range2
+    is_ranged1, is_ranged2 = s.is_ranged1, s.is_ranged2
+    speed1, speed2 = s.speed1, s.speed2
+    accuracy1, accuracy2 = s.accuracy1, s.accuracy2
+    EXTRA_PROJ_ACCURACY = s.EXTRA_PROJ_ACCURACY
+    reload1, reload2 = s.reload1, s.reload2
+    delay1, delay2 = s.delay1, s.delay2
+    min_range1, min_range2 = s.min_range1, s.min_range2
+    dmg1, dmg2 = s.dmg1, s.dmg2
+    trample_dmg1, trample_extra1 = s.trample_dmg1, s.trample_extra1
+    trample_dmg2, trample_extra2 = s.trample_dmg2, s.trample_extra2
+    is_siege1, is_siege2 = s.is_siege1, s.is_siege2
+    siege_splash1, siege_splash2 = s.siege_splash1, s.siege_splash2
+    splash_hit1, splash_hit2 = s.splash_hit1, s.splash_hit2
+    splash_hit_frac1, splash_hit_frac2 = s.splash_hit_frac1, s.splash_hit_frac2
+    pass_through1, pass_through2 = s.pass_through1, s.pass_through2
+    pass_through_count1, pass_through_count2 = s.pass_through_count1, s.pass_through_count2
+    extra_proj_scatter1, extra_proj_scatter2 = s.extra_proj_scatter1, s.extra_proj_scatter2
+    extra_proj1, extra_proj2 = s.extra_proj1, s.extra_proj2
+    first_burst1, first_burst2 = s.first_burst1, s.first_burst2
+    extra_proj_dmg1, extra_proj_dmg2 = s.extra_proj_dmg1, s.extra_proj_dmg2
+    dodge_max1, dodge_max2 = s.dodge_max1, s.dodge_max2
+    dodge_recharge1, dodge_recharge2 = s.dodge_recharge1, s.dodge_recharge2
+    bleed_dps1, bleed_dur1 = s.bleed_dps1, s.bleed_dur1
+    bleed_dps2, bleed_dur2 = s.bleed_dps2, s.bleed_dur2
+    regen_per_tick1, regen_per_tick2 = s.regen_per_tick1, s.regen_per_tick2
+    max_hp1, max_hp2 = s.max_hp1, s.max_hp2
+    block_melee1, block_melee2 = s.block_melee1, s.block_melee2
+    kill_bonus1, kill_bonus2 = s.kill_bonus1, s.kill_bonus2
+    hp_per_kill1, hp_per_kill2 = s.hp_per_kill1, s.hp_per_kill2
+    hp_per_kill_max1, hp_per_kill_max2 = s.hp_per_kill_max1, s.hp_per_kill_max2
+    miss_dmg_pct1, miss_dmg_pct2 = s.miss_dmg_pct1, s.miss_dmg_pct2
+    transform_thresh1, transform_thresh2 = s.transform_thresh1, s.transform_thresh2
+    cant_attack_melee1, cant_attack_melee2 = s.cant_attack_melee1, s.cant_attack_melee2
+    hp1, hp2 = s.hp1, s.hp2
+    cooldown1, cooldown2 = s.cooldown1, s.cooldown2
+    bonus_atk1, bonus_atk2 = s.bonus_atk1, s.bonus_atk2
+    hp_gained1, hp_gained2 = s.hp_gained1, s.hp_gained2
+    used_first1, used_first2 = s.used_first1, s.used_first2
+    transformed1, transformed2 = s.transformed1, s.transformed2
+    shield1, shield2 = s.shield1, s.shield2
+    shield_timer1, shield_timer2 = s.shield_timer1, s.shield_timer2
+    has_blocked1, has_blocked2 = s.has_blocked1, s.has_blocked2
+    bleed_on1, bleed_on2 = s.bleed_on1, s.bleed_on2
+    committed1, committed2 = s.committed1, s.committed2
+    prev_target1, prev_target2 = s.prev_target1, s.prev_target2
+    dismount1, dismount2 = s.dismount1, s.dismount2
+    dismounted1, dismounted2 = s.dismounted1, s.dismounted2
+    dmg1_dismount, dmg2_vs_dismount1 = s.dmg1_dismount, s.dmg2_vs_dismount1
+    reload1_dismount, delay1_dismount = s.reload1_dismount, s.delay1_dismount
+    dmg2_dismount, dmg1_vs_dismount2 = s.dmg2_dismount, s.dmg1_vs_dismount2
+    reload2_dismount, delay2_dismount = s.reload2_dismount, s.delay2_dismount
+    transform1, transform2 = s.transform1, s.transform2
+    dmg1_transform = s.dmg1_transform
+    dmg2_vs_transform1 = s.dmg2_vs_transform1
+    dmg2_transform = s.dmg2_transform
+    dmg1_vs_transform2 = s.dmg1_vs_transform2
+    charge_melee1, charge_melee2 = s.charge_melee1, s.charge_melee2
+    charge_recharge1, charge_recharge2 = s.charge_recharge1, s.charge_recharge2
+    charge_ready1, charge_ready2 = s.charge_ready1, s.charge_ready2
+    charge_timer1, charge_timer2 = s.charge_timer1, s.charge_timer2
+    armor_strip1, armor_strip2 = s.armor_strip1, s.armor_strip2
+    current_ma1, current_pa1 = s.current_ma1, s.current_pa1
+    current_ma2, current_pa2 = s.current_ma2, s.current_pa2
+    reflect1, reflect2 = s.reflect1, s.reflect2
+    start_total_hp1, start_total_hp2 = s.start_total_hp1, s.start_total_hp2
+
+    # =========================================================
+    # PHASE 1: Opening volley (range/kiting advantage)
+    # =========================================================
+    _run_opening_volley(s)
+
     # =========================================================
     # PHASE 2: Tick-based combat loop
     # =========================================================
@@ -1392,319 +1938,15 @@ def simulate_battle(
                         my_cooldown[i] = t_reload
 
         # --- Apply all pending damage atomically ---
-        for (
-            target_team,
-            target_idx,
-            damage,
-            attacker_idx,
-            attacker_team,
-        ) in pending_damage:
-            if target_team == 1:
-                t_hp = hp1
-                t_shield, t_shield_timer = shield1, shield_timer1
-                t_blocked, t_bleed = has_blocked1, bleed_on1
-                a_bonus = bonus_atk2
-                a_is_ranged = is_ranged2
-                d_dodge_max, d_recharge = dodge_max1, dodge_recharge1
-                d_block = block_melee1
-                a_kill_bonus = kill_bonus2
-                a_hp_per_kill, a_hp_per_kill_max = hp_per_kill2, hp_per_kill_max2
-                a_hp_gained, a_hp_arr = hp_gained2, hp2
-                a_max_hp = max_hp2
-                a_bleed_dps, a_bleed_dur = bleed_dps2, bleed_dur2
-                a_trample_dmg, a_trample_extra = trample_dmg2, trample_extra2
-                a_splash_hit = splash_hit2
-                a_splash_hit_frac = splash_hit_frac2
-                a_siege_splash = siege_splash2
-                a_is_siege = is_siege2
-                a_pass_through = pass_through2
-                a_pass_through_count = pass_through_count2
-                a_armor_strip = armor_strip2
-                t_current_ma, t_current_pa = current_ma1, current_pa1
-                all_alive = alive1
-            else:
-                t_hp = hp2
-                t_shield, t_shield_timer = shield2, shield_timer2
-                t_blocked, t_bleed = has_blocked2, bleed_on2
-                a_bonus = bonus_atk1
-                a_is_ranged = is_ranged1
-                d_dodge_max, d_recharge = dodge_max2, dodge_recharge2
-                d_block = block_melee2
-                a_kill_bonus = kill_bonus1
-                a_hp_per_kill, a_hp_per_kill_max = hp_per_kill1, hp_per_kill_max1
-                a_hp_gained, a_hp_arr = hp_gained1, hp1
-                a_max_hp = max_hp1
-                a_bleed_dps, a_bleed_dur = bleed_dps1, bleed_dur1
-                a_trample_dmg, a_trample_extra = trample_dmg1, trample_extra1
-                a_splash_hit = splash_hit1
-                a_splash_hit_frac = splash_hit_frac1
-                a_siege_splash = siege_splash1
-                a_is_siege = is_siege1
-                a_pass_through = pass_through1
-                a_pass_through_count = pass_through_count1
-                a_armor_strip = armor_strip1
-                t_current_ma, t_current_pa = current_ma2, current_pa2
-                all_alive = alive2
-
-            if t_hp[target_idx] <= 0:
-                continue
-
-            # Dodge shield (ranged attacks only)
-            if d_dodge_max > 0 and a_is_ranged and t_shield[target_idx] > 0:
-                t_shield[target_idx] -= 1
-                t_shield_timer[target_idx] = d_recharge
-                continue
-
-            # Block first melee
-            if d_block and not a_is_ranged and not t_blocked[target_idx]:
-                t_blocked[target_idx] = True
-                continue
-
-            was_alive = t_hp[target_idx] > 0
-
-            # Armor stripping (Obuch): adjust damage for stripped armor on target
-            if t_current_ma is not None:
-                if a_is_ranged:
-                    orig_armor = (
-                        unit1["pierce_armor"]
-                        if target_team == 1
-                        else unit2["pierce_armor"]
-                    )
-                    cur_armor = t_current_pa[target_idx]
-                else:
-                    orig_armor = (
-                        unit1["melee_armor"]
-                        if target_team == 1
-                        else unit2["melee_armor"]
-                    )
-                    cur_armor = t_current_ma[target_idx]
-                armor_lost = orig_armor - cur_armor
-                if armor_lost > 0:
-                    damage += armor_lost
-
-            t_hp[target_idx] -= damage
-
-            # Damage reflection (Khitan Lamellar Armor): melee attackers take % back
-            if not a_is_ranged:
-                t_reflect = reflect1 if target_team == 1 else reflect2
-                if t_reflect > 0:
-                    reflect_dmg = max(1, int(damage * t_reflect))
-                    a_hp = hp2 if target_team == 1 else hp1
-                    a_hp[attacker_idx] -= reflect_dmg
-
-            # Armor stripping (Obuch): reduce target armor after hit
-            if a_armor_strip > 0 and t_current_ma is not None:
-                t_current_ma[target_idx] = max(
-                    -99, t_current_ma[target_idx] - a_armor_strip
-                )
-                t_current_pa[target_idx] = max(
-                    -99, t_current_pa[target_idx] - a_armor_strip
-                )
-
-            # Kill bonus (attack + HP)
-            if was_alive and t_hp[target_idx] <= 0:
-                if a_kill_bonus > 0:
-                    a_bonus[attacker_idx] += a_kill_bonus
-                if a_hp_per_kill > 0 and a_hp_gained[attacker_idx] < a_hp_per_kill_max:
-                    heal = min(a_hp_per_kill, a_hp_per_kill_max - a_hp_gained[attacker_idx])
-                    a_hp_arr[attacker_idx] = min(a_hp_arr[attacker_idx] + heal, a_max_hp + a_hp_per_kill_max)
-                    a_hp_gained[attacker_idx] += heal
-
-            # Trample: 25% chance to damage a nearby alive enemy
-            if (
-                a_trample_dmg > 0
-                and a_trample_extra > 0
-                and random.random() < TRAMPLE_HIT_CHANCE
-            ):
-                splashed = 0
-                for idx in all_alive:
-                    if (
-                        idx != target_idx
-                        and t_hp[idx] > 0
-                        and splashed < a_trample_extra
-                    ):
-                        t_hp[idx] -= a_trample_dmg
-                        splashed += 1
-
-            # Siege splash: extra targets
-            if a_is_siege and a_siege_splash > 0:
-                splashed = 0
-                for idx in all_alive:
-                    if (
-                        idx != target_idx
-                        and t_hp[idx] > 0
-                        and splashed < a_siege_splash
-                    ):
-                        t_hp[idx] -= damage
-                        splashed += 1
-
-            # Splash on hit: extra targets near the target
-            if a_splash_hit > 0:
-                splash_dmg = max(1, damage * a_splash_hit_frac)
-                splashed = 0
-                for idx in all_alive:
-                    if idx != target_idx and t_hp[idx] > 0 and splashed < a_splash_hit:
-                        t_hp[idx] -= splash_dmg
-                        splashed += 1
-
-            # Pass-through: up to N additional units take a fraction of the damage
-            if a_pass_through > 0:
-                pt_dmg = max(1, int(damage * a_pass_through))
-                pt_hit = 0
-                for idx in all_alive:
-                    if idx != target_idx and t_hp[idx] > 0:
-                        t_hp[idx] -= pt_dmg
-                        pt_hit += 1
-                        if pt_hit >= a_pass_through_count:
-                            break
-
-            # Bleed
-            if a_bleed_dps > 0 and was_alive:
-                t_bleed[target_idx] = (a_bleed_dps, a_bleed_dur)
+        _apply_tick_damage(s, pending_damage, alive1, alive2)
 
         # --- Tick-based effects ---
-
-        # Dodge shield recharge
-        if dodge_max1 > 0:
-            for i in alive1:
-                if shield_timer1[i] > 0:
-                    shield_timer1[i] -= DT
-                    if shield_timer1[i] <= 0 and shield1[i] < dodge_max1:
-                        shield1[i] += 1
-                        if shield1[i] < dodge_max1:
-                            shield_timer1[i] = dodge_recharge1
-                        else:
-                            shield_timer1[i] = 0.0
-        if dodge_max2 > 0:
-            for i in alive2:
-                if shield_timer2[i] > 0:
-                    shield_timer2[i] -= DT
-                    if shield_timer2[i] <= 0 and shield2[i] < dodge_max2:
-                        shield2[i] += 1
-                        if shield2[i] < dodge_max2:
-                            shield_timer2[i] = dodge_recharge2
-                        else:
-                            shield_timer2[i] = 0.0
-
-        # Charge attack recharge (Coustillier)
-        if charge_timer1 is not None:
-            for i in alive1:
-                if not charge_ready1[i] and charge_timer1[i] > 0:
-                    charge_timer1[i] -= DT
-                    if charge_timer1[i] <= 0:
-                        charge_ready1[i] = True
-        if charge_timer2 is not None:
-            for i in alive2:
-                if not charge_ready2[i] and charge_timer2[i] > 0:
-                    charge_timer2[i] -= DT
-                    if charge_timer2[i] <= 0:
-                        charge_ready2[i] = True
-
-        # Bleed damage
-        for idx in list(bleed_on1):
-            if hp1[idx] > 0:
-                dps, remaining = bleed_on1[idx]
-                hp1[idx] -= dps * DT
-                remaining -= DT
-                if remaining > 0:
-                    bleed_on1[idx] = (dps, remaining)
-                else:
-                    del bleed_on1[idx]
-            else:
-                del bleed_on1[idx]
-        for idx in list(bleed_on2):
-            if hp2[idx] > 0:
-                dps, remaining = bleed_on2[idx]
-                hp2[idx] -= dps * DT
-                remaining -= DT
-                if remaining > 0:
-                    bleed_on2[idx] = (dps, remaining)
-                else:
-                    del bleed_on2[idx]
-            else:
-                del bleed_on2[idx]
-
-        # HP regeneration
-        if regen_per_tick1 > 0:
-            for idx in alive1:
-                if hp1[idx] < max_hp1:
-                    hp1[idx] = min(max_hp1, hp1[idx] + regen_per_tick1)
-        if regen_per_tick2 > 0:
-            for idx in alive2:
-                if hp2[idx] < max_hp2:
-                    hp2[idx] = min(max_hp2, hp2[idx] + regen_per_tick2)
-
-        # HP transform (e.g. Jian Swordsman — switch to unshielded form, revert when healed)
-        if transform_thresh1 > 0:
-            threshold_hp = unit1["hp"] * transform_thresh1
-            for idx in alive1:
-                if not transformed1[idx] and hp1[idx] <= threshold_hp and hp1[idx] > 0:
-                    transformed1[idx] = True
-                elif transformed1[idx] and hp1[idx] > threshold_hp:
-                    transformed1[idx] = False
-        if transform_thresh2 > 0:
-            threshold_hp = unit2["hp"] * transform_thresh2
-            for idx in alive2:
-                if not transformed2[idx] and hp2[idx] <= threshold_hp and hp2[idx] > 0:
-                    transformed2[idx] = True
-                elif transformed2[idx] and hp2[idx] > threshold_hp:
-                    transformed2[idx] = False
-
-        # Dismount on death: respawn dead mounted units as dismounted
-        if dismount1:
-            for idx in range(count1):
-                if hp1[idx] <= 0 and not dismounted1[idx]:
-                    dismounted1[idx] = True
-                    hp1[idx] = float(dismount1["hp"])
-                    cooldown1[idx] = reload1_dismount
-                    if idx in committed1:
-                        del committed1[idx]
-        if dismount2:
-            for idx in range(count2):
-                if hp2[idx] <= 0 and not dismounted2[idx]:
-                    dismounted2[idx] = True
-                    hp2[idx] = float(dismount2["hp"])
-                    cooldown2[idx] = reload2_dismount
-                    if idx in committed2:
-                        del committed2[idx]
+        _apply_tick_effects(s, alive1, alive2)
 
     # =========================================================
     # PHASE 3: Winner determination
     # =========================================================
-
-    remaining1 = sum(1 for h in hp1 if h > 0)
-    remaining2 = sum(1 for h in hp2 if h > 0)
-    total_hp1 = sum(max(0, h) for h in hp1)
-    total_hp2 = sum(max(0, h) for h in hp2)
-    hp_pct1 = total_hp1 / start_total_hp1 if start_total_hp1 > 0 else 0.0
-    hp_pct2 = total_hp2 / start_total_hp2 if start_total_hp2 > 0 else 0.0
-    elapsed_ticks = tick + 1  # tick is 0-indexed from the for loop
-
-    def _result(winner):
-        if return_ticks:
-            return (winner, remaining1, remaining2, hp_pct1, hp_pct2, elapsed_ticks)
-        if return_hp:
-            return (winner, remaining1, remaining2, hp_pct1, hp_pct2)
-        return (winner, remaining1, remaining2)
-
-    if remaining1 > 0 and remaining2 == 0:
-        return _result(1)
-    elif remaining2 > 0 and remaining1 == 0:
-        return _result(2)
-    else:
-        lost1 = count1 - remaining1
-        lost2 = count2 - remaining2
-        if lost1 > lost2:
-            return _result(2)
-        elif lost2 > lost1:
-            return _result(1)
-        else:
-            if hp_pct1 < hp_pct2:
-                return _result(2)
-            elif hp_pct2 < hp_pct1:
-                return _result(1)
-            else:
-                return _result(0)
+    return _determine_winner(s, tick, return_hp, return_ticks)
 
 
 def simulate_mixed_battle(units_team1, units_team2, return_hp=False):

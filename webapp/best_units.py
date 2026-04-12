@@ -772,9 +772,11 @@ TRASH_PAIRING = {
 }
 
 
-def _load_combat_unit(civ_name, unit_slug, age="Imperial"):
+def _load_combat_unit(civ_name, unit_slug, age="Imperial", conn=None):
     """Load a single combat-ready unit from ref_units."""
-    conn = _get_db()
+    own_conn = conn is None
+    if own_conn:
+        conn = _get_db()
     rc = conn.cursor()
     rc.execute(
         "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=? AND age=?",
@@ -782,11 +784,13 @@ def _load_combat_unit(civ_name, unit_slug, age="Imperial"):
     )
     row = rc.fetchone()
     if not row:
-        conn.close()
+        if own_conn:
+            conn.close()
         return None
 
     combat_dict = build_combat_dict_from_ref(row)
-    conn.close()
+    if own_conn:
+        conn.close()
     cu = prepare_combat_unit(combat_dict)
     cu["cost_food"] = combat_dict["cost_food"]
     cu["cost_wood"] = combat_dict["cost_wood"]
@@ -1075,19 +1079,21 @@ def get_matchup_sims(civ_left, civ_right, age="imperial"):
     _cu_cache = {}
     name_map = {}
 
-    def _get_cu(civ_name, slug, uname):
+    def _get_cu(civ_name, slug, uname, conn=None):
         """Load and cache a combat unit; record its display name."""
         key = (civ_name, slug)
         if key not in _cu_cache:
-            _cu_cache[key] = _load_combat_unit(civ_name, slug, db_age)
+            _cu_cache[key] = _load_combat_unit(civ_name, slug, db_age, conn=conn)
         name_map.setdefault(slug, uname)
         return _cu_cache[key]
 
-    # Pre-load all units
+    # Pre-load all units using a single shared connection
+    preload_conn = _get_db()
     for slug, uname, _ in left_units:
-        _get_cu(civ_left, slug, uname)
+        _get_cu(civ_left, slug, uname, conn=preload_conn)
     for slug, uname, _ in right_units:
-        _get_cu(civ_right, slug, uname)
+        _get_cu(civ_right, slug, uname, conn=preload_conn)
+    preload_conn.close()
 
     # --- Battle result helper --------------------------------------------------
     def _battle_result(cu_a, cu_b, cost_a, cost_b):

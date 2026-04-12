@@ -1,6 +1,7 @@
 import json
 import os
 import sqlite3
+from collections import defaultdict
 from functools import lru_cache
 
 from flask import Flask, jsonify, redirect, render_template, request
@@ -206,56 +207,84 @@ def api_ref_civ(civ_name):
     rc.execute("SELECT id, name FROM armor_classes ORDER BY id")
     ac_names = {str(row["id"]): row["name"] for row in rc.fetchall()}
 
+    # Batch-load related data for all units (avoids N+1 per-unit queries)
+    all_uids = [row["id"] for row in units_rows]
+    placeholders = ",".join("?" * len(all_uids))
+
+    # Techs applied — grouped by ref_unit_id
+    techs_by_uid = defaultdict(list)
+    if all_uids:
+        rc.execute(
+            f"""SELECT ref_unit_id, tech_name, tech_type, building, age_available, effect_description
+                FROM ref_techs_applied WHERE ref_unit_id IN ({placeholders}) ORDER BY id""",
+            all_uids,
+        )
+        for t in rc.fetchall():
+            d = dict(t)
+            uid_key = d.pop("ref_unit_id")
+            techs_by_uid[uid_key].append(d)
+
+    # Stat chain — grouped by ref_unit_id
+    stat_chain_by_uid = defaultdict(list)
+    if all_uids:
+        rc.execute(
+            f"""SELECT ref_unit_id, step_order, tech_name, tech_type,
+                       hp, attack, melee_armor, pierce_armor,
+                       speed, range_val, reload_time, accuracy, los,
+                       train_time, cost_food, cost_wood, cost_gold,
+                       attacks_json, armors_json
+                FROM ref_stat_chain WHERE ref_unit_id IN ({placeholders}) ORDER BY step_order""",
+            all_uids,
+        )
+        for s in rc.fetchall():
+            d = dict(s)
+            uid_key = d.pop("ref_unit_id")
+            stat_chain_by_uid[uid_key].append(d)
+
+    # Special effects — grouped by ref_unit_id
+    special_by_uid = defaultdict(list)
+    if all_uids:
+        rc.execute(
+            f"""SELECT ref_unit_id, property_name, property_value, source, description
+                FROM ref_special_effects WHERE ref_unit_id IN ({placeholders})""",
+            all_uids,
+        )
+        for s in rc.fetchall():
+            d = dict(s)
+            uid_key = d.pop("ref_unit_id")
+            special_by_uid[uid_key].append(d)
+
+    # Projectiles — grouped by ref_unit_id
+    projectiles_by_uid = defaultdict(list)
+    if all_uids:
+        rc.execute(
+            f"""SELECT ref_unit_id, projectile_type, projectile_count, projectile_speed,
+                       attacks_json, blast_radius, is_siege_projectile
+                FROM ref_projectiles WHERE ref_unit_id IN ({placeholders})""",
+            all_uids,
+        )
+        for p in rc.fetchall():
+            d = dict(p)
+            uid_key = d.pop("ref_unit_id")
+            projectiles_by_uid[uid_key].append(d)
+
+    # Convert class IDs to names in attack/armor JSONs
+    def convert_classes(json_str):
+        if not json_str:
+            return {}
+        raw = json.loads(json_str)
+        return {ac_names.get(k, f"class_{k}"): v for k, v in raw.items()}
+
     units = []
     for row in units_rows:
         uid = row["id"]
 
-        # Get techs applied
-        rc.execute(
-            """SELECT tech_name, tech_type, building, age_available, effect_description
-               FROM ref_techs_applied WHERE ref_unit_id=? ORDER BY id""",
-            (uid,),
-        )
-        techs = [dict(t) for t in rc.fetchall()]
+        techs = techs_by_uid[uid]
+        stat_chain = stat_chain_by_uid[uid]
+        special = special_by_uid[uid]
 
-        # Get stat chain
-        rc.execute(
-            """SELECT step_order, tech_name, tech_type,
-                      hp, attack, melee_armor, pierce_armor,
-                      speed, range_val, reload_time, accuracy, los,
-                      train_time, cost_food, cost_wood, cost_gold,
-                      attacks_json, armors_json
-               FROM ref_stat_chain WHERE ref_unit_id=? ORDER BY step_order""",
-            (uid,),
-        )
-        stat_chain = [dict(s) for s in rc.fetchall()]
-
-        # Get special effects
-        rc.execute(
-            """SELECT property_name, property_value, source, description
-               FROM ref_special_effects WHERE ref_unit_id=?""",
-            (uid,),
-        )
-        special = [dict(s) for s in rc.fetchall()]
-
-        # Convert class IDs to names in attack/armor JSONs
-        def convert_classes(json_str):
-            if not json_str:
-                return {}
-            raw = json.loads(json_str)
-            return {ac_names.get(k, f"class_{k}"): v for k, v in raw.items()}
-
-        # Get projectiles
-        rc.execute(
-            """SELECT projectile_type, projectile_count, projectile_speed,
-                      attacks_json, blast_radius, is_siege_projectile
-               FROM ref_projectiles WHERE ref_unit_id=?""",
-            (uid,),
-        )
-        projectiles_raw = rc.fetchall()
         projectiles = []
-        for p in projectiles_raw:
-            pd = dict(p)
+        for pd in projectiles_by_uid[uid]:
             if pd.get("attacks_json"):
                 pd["attacks"] = convert_classes(pd["attacks_json"])
             projectiles.append(pd)

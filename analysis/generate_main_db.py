@@ -198,6 +198,18 @@ def build_combat_dict_from_ref(rc, row):
         "damage_reflect_percent": row["damage_reflect_percent"] or 0,
         "hp_nearby_percent_per_unit": row["hp_nearby_percent_per_unit"] or 0,
         "hp_nearby_max_units": int(row["hp_nearby_max_units"] or 0),
+        # Charge slow (Bolas Rider): charge projectile slows target
+        "charge_slow_percent": row["charge_slow_percent"] or 0,
+        "charge_slow_duration": row["charge_slow_duration"] or 0,
+        # Attack speed ramp (Temple Guard)
+        "attack_speed_ramp": row["attack_speed_ramp"] or 0,
+        "attack_speed_min": row["attack_speed_min"] or 0,
+        # Execute damage (Kona)
+        "execute_damage_per_step": row["execute_damage_per_step"] or 0,
+        "execute_hp_step": row["execute_hp_step"] or 0,
+        # Ally death heal (Guecha)
+        "ally_death_heal": row["ally_death_heal"] or 0,
+        "ally_death_heal_duration": row["ally_death_heal_duration"] or 0,
         # Dismount on death (Konnik): from hardcoded config via special effects
         "dismount_hp": int(special["dismount_hp"])
         if "dismount_hp" in special
@@ -431,6 +443,14 @@ def generate_main_database():
             damage_reflect_percent REAL DEFAULT 0,
             hp_nearby_percent_per_unit REAL DEFAULT 0,
             hp_nearby_max_units INTEGER DEFAULT 0,
+            charge_slow_percent REAL DEFAULT 0,
+            charge_slow_duration REAL DEFAULT 0,
+            attack_speed_ramp REAL DEFAULT 0,
+            attack_speed_min REAL DEFAULT 0,
+            execute_damage_per_step REAL DEFAULT 0,
+            execute_hp_step REAL DEFAULT 0,
+            ally_death_heal REAL DEFAULT 0,
+            ally_death_heal_duration REAL DEFAULT 0,
             transform_hp INTEGER DEFAULT NULL,
             transform_attack INTEGER DEFAULT NULL,
             transform_melee_armor INTEGER DEFAULT NULL,
@@ -655,6 +675,10 @@ def generate_main_database():
                         attack_bonus_nearby, nearby_bonus_count,
                         damage_reflect_percent,
                         hp_nearby_percent_per_unit, hp_nearby_max_units,
+                        charge_slow_percent, charge_slow_duration,
+                        attack_speed_ramp, attack_speed_min,
+                        execute_damage_per_step, execute_hp_step,
+                        ally_death_heal, ally_death_heal_duration,
                         transform_hp, transform_attack, transform_melee_armor,
                         transform_pierce_armor, transform_attack_speed,
                         transform_attack_delay, transform_movement_speed,
@@ -689,6 +713,10 @@ def generate_main_database():
                         ?, ?, ?,
                         ?, ?,
                         ?,
+                        ?, ?,
+                        ?, ?,
+                        ?, ?,
+                        ?, ?,
                         ?, ?,
                         ?, ?,
                         ?, ?,
@@ -770,6 +798,17 @@ def generate_main_database():
                         combat["damage_reflect_percent"],
                         combat["hp_nearby_percent_per_unit"],
                         combat["hp_nearby_max_units"],
+                        combat["charge_slow_percent"],
+                        combat["charge_slow_duration"],
+                        # Attack speed ramp (Temple Guard)
+                        combat["attack_speed_ramp"],
+                        combat["attack_speed_min"],
+                        # Execute damage (Kona)
+                        combat["execute_damage_per_step"],
+                        combat["execute_hp_step"],
+                        # Ally death heal (Guecha)
+                        combat["ally_death_heal"],
+                        combat["ally_death_heal_duration"],
                         # Transform on HP threshold (Jian Swordsman)
                         combat["transform_hp"],
                         combat["transform_attack"],

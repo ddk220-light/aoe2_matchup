@@ -151,12 +151,25 @@ UNIQUE_COMBAT_PROPERTIES = {
     # blast_attack_level=162 — treat as trample (similar to Druzhina infantry splash)
     "ibirapema_warrior": {"trample_flat_damage": 5, "trample_radius": 0.5},
     "elite_ibirapema_warrior": {"trample_flat_damage": 5, "trample_radius": 0.5},
-    # Temple Guard: tanky anti-cavalry infantry, no special combat flags needed
-    # Guecha Warrior: ranged anti-archer, no special combat flags needed
-    # Kona: flanking mechanic (flank_attack_modifier=1.25 in dat); not simulated
-    # Bolas Rider: charge extra projectile (charge_type=6 in dat); data-driven
+    "temple_guard": {"attack_speed_ramp": 0.2, "attack_speed_min": 1.0},
+    "elite_temple_guard": {"attack_speed_ramp": 0.2, "attack_speed_min": 1.0},
+    # Guecha Warrior: regen on nearby ally Guecha death (+5 HP over 3s, refreshes)
+    "guecha_warrior": {"ally_death_heal": 5.0, "ally_death_heal_duration": 3.0},
+    "elite_guecha_warrior": {"ally_death_heal": 5.0, "ally_death_heal_duration": 3.0},
+    # Kona execute damage: +1 attack per 15% missing HP on the target
+    "kona": {"execute_damage_per_step": 1, "execute_hp_step": 0.15},
+    "elite_kona": {"execute_damage_per_step": 1, "execute_hp_step": 0.15},
+    # Bolas Rider: charge extra projectile (charge_type=6 in dat)
+    # max_total_projectiles=1 so extraction sets charge_projectile_count=0;
+    # override to 1 because the one projectile IS stronger on charge.
+    # charge_recharge_rate=0.0333 in dat → recharge_time = 1/0.0333 ≈ 30s.
+    "bolas_rider": {"charge_projectile_count": 1, "charge_recharge_time": 30.0, "charge_slow_percent": 0.15, "charge_slow_duration": 10.0},
+    "elite_bolas_rider": {"charge_projectile_count": 1, "charge_recharge_time": 30.0, "charge_slow_percent": 0.15, "charge_slow_duration": 10.0},
     # War Dog: dodge shield (charge_type=4 in dat) + hp_regen (15/min); data-driven
-    # Blackwood Archer: poison via Curare tech; modeled as CIV_COMBAT_PROPERTIES below
+    # Blackwood Archer: 0.5 pop space (trained in pairs like Karambit Warrior)
+    # Poison via Curare tech modeled as CIV_COMBAT_PROPERTIES below
+    "blackwood_archer": {"pop_space": 0.5},
+    "elite_blackwood_archer": {"pop_space": 0.5},
 }
 
 # Civ-conditional properties (applied on top of base/unique properties)
@@ -277,11 +290,15 @@ CIV_COMBAT_PROPERTIES = {
     ("Jurchens", "mangonel"): {"extra_projectiles": 1},
     ("Jurchens", "siege_onager"): {"extra_projectiles": 1},
     ("Jurchens", "grenadier"): {"extra_projectiles": 1},
+    # Mapuche Malon (Castle UT) — Bolas Riders, Slingers, Skirmishers deal 30% pass-through damage
+    ("Mapuche", "bolas_rider"): {"pass_through_percent": 0.30, "pass_through_count": 1},
+    ("Mapuche", "elite_bolas_rider"): {"pass_through_percent": 0.30, "pass_through_count": 1},
+    ("Mapuche", "slinger"): {"pass_through_percent": 0.30, "pass_through_count": 1},
+    ("Mapuche", "imp_slinger"): {"pass_through_percent": 0.30, "pass_through_count": 1},
+    ("Mapuche", "elite_skirm"): {"pass_through_percent": 0.30, "pass_through_count": 1},
+    ("Mapuche", "imp_elite_skirm"): {"pass_through_percent": 0.30, "pass_through_count": 1},
     # Tupi Curare (Imp UT) — arrow projectiles apply poison (2 DPS for 15 seconds)
+    # Imperial-age only: Curare is an Imperial UT, so Castle-age archers don't get it.
     ("Tupi", "arbalester"): {"bleed_dps": 2.0, "bleed_duration": 15.0},
-    ("Tupi", "crossbow"): {"bleed_dps": 2.0, "bleed_duration": 15.0},
     ("Tupi", "elite_blackwood_archer"): {"bleed_dps": 2.0, "bleed_duration": 15.0},
-    ("Tupi", "blackwood_archer"): {"bleed_dps": 2.0, "bleed_duration": 15.0},
-    ("Tupi", "heavy_cav_archer"): {"bleed_dps": 2.0, "bleed_duration": 15.0},
-    ("Tupi", "cav_archer"): {"bleed_dps": 2.0, "bleed_duration": 15.0},
 }

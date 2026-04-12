@@ -230,6 +230,14 @@ def get_combat_properties(unit_slug, civ_name=None, unit_id=None, units_data=Non
         "miss_damage_percent": 0,
         "hp_per_kill": 0,
         "hp_per_kill_max": 0,
+        "charge_slow_percent": 0,
+        "charge_slow_duration": 0,
+        "attack_speed_ramp": 0,
+        "attack_speed_min": 0,
+        "execute_damage_per_step": 0,
+        "execute_hp_step": 0,
+        "ally_death_heal": 0,
+        "ally_death_heal_duration": 0,
     }
 
     # Apply extracted data from dat file (data-driven stats)

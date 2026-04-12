@@ -84,6 +84,17 @@ def build_combat_dict_from_ref(row):
         "damage_reflect_percent": row["damage_reflect_percent"] or 0,
         "hp_nearby_percent_per_unit": row["hp_nearby_percent_per_unit"] or 0,
         "hp_nearby_max_units": int(row["hp_nearby_max_units"] or 0),
+        "charge_slow_percent": row["charge_slow_percent"] or 0,
+        "charge_slow_duration": row["charge_slow_duration"] or 0,
+        # Attack speed ramp (Temple Guard)
+        "attack_speed_ramp": row["attack_speed_ramp"] or 0,
+        "attack_speed_min": row["attack_speed_min"] or 0,
+        # Execute damage (Kona)
+        "execute_damage_per_step": row["execute_damage_per_step"] or 0,
+        "execute_hp_step": row["execute_hp_step"] or 0,
+        # Ally death heal (Guecha)
+        "ally_death_heal": row["ally_death_heal"] or 0,
+        "ally_death_heal_duration": row["ally_death_heal_duration"] or 0,
         # Dismount on death (Konnik)
         "dismount_hp": row["dismount_hp"],
         "dismount_attack": row["dismount_attack"],

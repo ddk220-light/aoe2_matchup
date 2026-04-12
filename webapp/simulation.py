@@ -152,11 +152,27 @@ def prepare_combat_unit(row):
         "armor_strip_per_hit": row.get("armor_strip_per_hit", 0) or 0,
         "charge_attack_melee": row.get("charge_attack_melee", 0) or 0,
         "charge_recharge_time": row.get("charge_recharge_time", 0) or 0,
+        "charge_projectile_count": row.get("charge_projectile_count", 0) or 0,
+        "charge_projectile_attacks": {
+            int(k): v
+            for k, v in json.loads(row["charge_projectile_attacks_json"]).items()
+        }
+        if row.get("charge_projectile_attacks_json")
+        else None,
+        "charge_projectile_speed": row.get("charge_projectile_speed", 0) or 0,
         "attack_bonus_nearby": row.get("attack_bonus_nearby", 0) or 0,
         "nearby_bonus_count": row.get("nearby_bonus_count", 0) or 0,
         "damage_reflect_percent": row.get("damage_reflect_percent", 0) or 0,
+        "attack_speed_ramp": row.get("attack_speed_ramp", 0) or 0,
+        "attack_speed_min": row.get("attack_speed_min", 0) or 0,
         "hp_nearby_percent_per_unit": row.get("hp_nearby_percent_per_unit", 0) or 0,
         "hp_nearby_max_units": row.get("hp_nearby_max_units", 0) or 0,
+        "execute_damage_per_step": row.get("execute_damage_per_step", 0) or 0,
+        "execute_hp_step": row.get("execute_hp_step", 0) or 0,
+        "charge_slow_percent": row.get("charge_slow_percent", 0) or 0,
+        "charge_slow_duration": row.get("charge_slow_duration", 0) or 0,
+        "ally_death_heal": row.get("ally_death_heal", 0) or 0,
+        "ally_death_heal_duration": row.get("ally_death_heal_duration", 0) or 0,
         # Metadata
         "slug": row["slug"]
         if "slug" in (row.keys() if hasattr(row, "keys") else row)
@@ -758,10 +774,55 @@ def _init_battle_state(unit1, unit2, resources, fixed_count, cost1_override, cos
     s.charge_melee2 = unit2.get("charge_attack_melee", 0) or 0
     s.charge_recharge1 = unit1.get("charge_recharge_time", 0) or 0
     s.charge_recharge2 = unit2.get("charge_recharge_time", 0) or 0
-    s.charge_ready1 = [True] * count1 if s.charge_melee1 > 0 else None
-    s.charge_ready2 = [True] * count2 if s.charge_melee2 > 0 else None
-    s.charge_timer1 = [0.0] * count1 if s.charge_melee1 > 0 else None
-    s.charge_timer2 = [0.0] * count2 if s.charge_melee2 > 0 else None
+
+    # Charge projectile (Bolas Rider): ranged units fire stronger projectile on charge
+    s.charge_proj_count1 = unit1.get("charge_projectile_count", 0) or 0
+    s.charge_proj_count2 = unit2.get("charge_projectile_count", 0) or 0
+
+    # Pre-compute charge projectile damage
+    charge_proj_attacks1 = unit1.get("charge_projectile_attacks")
+    if charge_proj_attacks1 and s.charge_proj_count1 > 0:
+        cp_base1 = charge_proj_attacks1.get(3, charge_proj_attacks1.get(4, 0))
+        s.charge_proj_dmg1 = _calc_damage(
+            charge_proj_attacks1,
+            cp_base1,
+            unit2["armors"],
+            unit2["melee_armor"],
+            unit2["pierce_armor"],
+            s.is_ranged1,
+            ignores_pierce=unit1["ignores_pierce_armor"],
+            ignores_melee=unit1["ignores_melee_armor"],
+            bonus_damage_reduction=unit2["bonus_damage_reduction"],
+            melee_damage=_does_melee_damage(charge_proj_attacks1),
+        )
+    else:
+        s.charge_proj_dmg1 = 0
+
+    charge_proj_attacks2 = unit2.get("charge_projectile_attacks")
+    if charge_proj_attacks2 and s.charge_proj_count2 > 0:
+        cp_base2 = charge_proj_attacks2.get(3, charge_proj_attacks2.get(4, 0))
+        s.charge_proj_dmg2 = _calc_damage(
+            charge_proj_attacks2,
+            cp_base2,
+            unit1["armors"],
+            unit1["melee_armor"],
+            unit1["pierce_armor"],
+            s.is_ranged2,
+            ignores_pierce=unit2["ignores_pierce_armor"],
+            ignores_melee=unit2["ignores_melee_armor"],
+            bonus_damage_reduction=unit1["bonus_damage_reduction"],
+            melee_damage=_does_melee_damage(charge_proj_attacks2),
+        )
+    else:
+        s.charge_proj_dmg2 = 0
+
+    # Initialize charge ready/timer arrays for either melee charge or projectile charge
+    has_charge1 = s.charge_melee1 > 0 or s.charge_proj_count1 > 0
+    has_charge2 = s.charge_melee2 > 0 or s.charge_proj_count2 > 0
+    s.charge_ready1 = [True] * count1 if has_charge1 else None
+    s.charge_ready2 = [True] * count2 if has_charge2 else None
+    s.charge_timer1 = [0.0] * count1 if has_charge1 else None
+    s.charge_timer2 = [0.0] * count2 if has_charge2 else None
 
     # Armor stripping (Obuch): each hit reduces enemy melee + pierce armor by N
     s.armor_strip1 = unit1.get("armor_strip_per_hit", 0) or 0
@@ -778,6 +839,61 @@ def _init_battle_state(unit1, unit2, resources, fixed_count, cost1_override, cos
     # Damage reflection (Khitan Lamellar Armor): melee attackers take % damage back
     s.reflect1 = unit1.get("damage_reflect_percent", 0) or 0
     s.reflect2 = unit2.get("damage_reflect_percent", 0) or 0
+
+    # Attack speed ramp (Temple Guard): each hit reduces reload by N seconds, down to minimum
+    s.attack_speed_ramp1 = unit1.get("attack_speed_ramp", 0) or 0
+    s.attack_speed_ramp2 = unit2.get("attack_speed_ramp", 0) or 0
+    s.attack_speed_min1 = unit1.get("attack_speed_min", 0) or 0
+    s.attack_speed_min2 = unit2.get("attack_speed_min", 0) or 0
+    # Per-unit cumulative reload reduction (increases by attack_speed_ramp each hit)
+    s.ramp_reduction1 = [0.0] * count1 if s.attack_speed_ramp1 > 0 else None
+    s.ramp_reduction2 = [0.0] * count2 if s.attack_speed_ramp2 > 0 else None
+
+    # Execute damage (Kona): flat bonus damage per % of target HP missing
+    s.execute_per_step1 = unit1.get("execute_damage_per_step", 0) or 0
+    s.execute_per_step2 = unit2.get("execute_damage_per_step", 0) or 0
+    s.execute_hp_step1 = unit1.get("execute_hp_step", 0) or 0
+    s.execute_hp_step2 = unit2.get("execute_hp_step", 0) or 0
+
+    # Charge slow (Bolas Rider): charge projectile slows target's movement speed
+    s.charge_slow_pct1 = unit1.get("charge_slow_percent", 0) or 0
+    s.charge_slow_pct2 = unit2.get("charge_slow_percent", 0) or 0
+    s.charge_slow_dur1 = unit1.get("charge_slow_duration", 0) or 0
+    s.charge_slow_dur2 = unit2.get("charge_slow_duration", 0) or 0
+    # Per-unit slow timers on TARGETS (team1 slows team2's units, and vice versa)
+    # slow_timer2 = remaining slow duration on each team2 unit (applied by team1's charge)
+    has_slow1 = s.charge_slow_pct1 > 0 and s.charge_slow_dur1 > 0
+    has_slow2 = s.charge_slow_pct2 > 0 and s.charge_slow_dur2 > 0
+    s.slow_timer1 = [0.0] * count1 if has_slow2 else None  # team2 slows team1
+    s.slow_timer2 = [0.0] * count2 if has_slow1 else None  # team1 slows team2
+    # Store slow percent applied TO each team (from the opposing team's charge)
+    s.slow_pct_on1 = s.charge_slow_pct2  # team2's slow % applied to team1 units
+    s.slow_pct_on2 = s.charge_slow_pct1  # team1's slow % applied to team2 units
+
+    # Ally death heal (Guecha Warrior): when a same-team unit dies, surviving
+    # allies gain a heal-over-time that refreshes (does not stack).
+    s.ally_death_heal1 = unit1.get("ally_death_heal", 0) or 0
+    s.ally_death_heal_dur1 = unit1.get("ally_death_heal_duration", 0) or 0
+    s.ally_death_heal2 = unit2.get("ally_death_heal", 0) or 0
+    s.ally_death_heal_dur2 = unit2.get("ally_death_heal_duration", 0) or 0
+    # Per-unit timers: remaining duration of current heal-over-time (0 = not healing)
+    s.death_heal_timer1 = (
+        [0.0] * count1 if s.ally_death_heal1 > 0 else None
+    )
+    s.death_heal_timer2 = (
+        [0.0] * count2 if s.ally_death_heal2 > 0 else None
+    )
+    # Pre-compute heal per tick: (total_heal / duration) * DT
+    s.death_heal_per_tick1 = (
+        (s.ally_death_heal1 / s.ally_death_heal_dur1 * DT)
+        if s.ally_death_heal_dur1 > 0
+        else 0.0
+    )
+    s.death_heal_per_tick2 = (
+        (s.ally_death_heal2 / s.ally_death_heal_dur2 * DT)
+        if s.ally_death_heal_dur2 > 0
+        else 0.0
+    )
 
     s.start_total_hp1 = float(unit1["hp"]) * count1
     s.start_total_hp2 = float(unit2["hp"]) * count2
@@ -1234,6 +1350,8 @@ def _apply_tick_damage(s, pending_damage, alive1, alive2):
     current_ma1, current_pa1 = s.current_ma1, s.current_pa1
     current_ma2, current_pa2 = s.current_ma2, s.current_pa2
     reflect1, reflect2 = s.reflect1, s.reflect2
+    execute_per_step1, execute_per_step2 = s.execute_per_step1, s.execute_per_step2
+    execute_hp_step1, execute_hp_step2 = s.execute_hp_step1, s.execute_hp_step2
     unit1, unit2 = s.unit1, s.unit2
 
     for (
@@ -1266,6 +1384,9 @@ def _apply_tick_damage(s, pending_damage, alive1, alive2):
             a_armor_strip = armor_strip2
             t_current_ma, t_current_pa = current_ma1, current_pa1
             all_alive = alive1
+            a_execute_per_step = execute_per_step2
+            a_execute_hp_step = execute_hp_step2
+            t_max_hp = max_hp1
         else:
             t_hp = hp2
             t_shield, t_shield_timer = shield2, shield_timer2
@@ -1289,6 +1410,9 @@ def _apply_tick_damage(s, pending_damage, alive1, alive2):
             a_armor_strip = armor_strip1
             t_current_ma, t_current_pa = current_ma2, current_pa2
             all_alive = alive2
+            a_execute_per_step = execute_per_step1
+            a_execute_hp_step = execute_hp_step1
+            t_max_hp = max_hp2
 
         if t_hp[target_idx] <= 0:
             continue
@@ -1325,6 +1449,12 @@ def _apply_tick_damage(s, pending_damage, alive1, alive2):
             armor_lost = orig_armor - cur_armor
             if armor_lost > 0:
                 damage += armor_lost
+
+        # Execute damage (Kona): flat bonus per 15% missing HP on target
+        if a_execute_per_step > 0 and a_execute_hp_step > 0 and t_max_hp > 0:
+            missing_frac = 1.0 - (t_hp[target_idx] / t_max_hp)
+            if missing_frac > 0:
+                damage += int(missing_frac / a_execute_hp_step) * a_execute_per_step
 
         t_hp[target_idx] -= damage
 
@@ -1456,7 +1586,7 @@ def _apply_tick_effects(s, alive1, alive2):
                     else:
                         shield_timer2[i] = 0.0
 
-    # Charge attack recharge (Coustillier)
+    # Charge attack recharge (melee charge: Coustillier; projectile charge: Bolas Rider)
     if charge_timer1 is not None:
         for i in alive1:
             if not charge_ready1[i] and charge_timer1[i] > 0:
@@ -1469,6 +1599,17 @@ def _apply_tick_effects(s, alive1, alive2):
                 charge_timer2[i] -= DT
                 if charge_timer2[i] <= 0:
                     charge_ready2[i] = True
+
+    # Slow timer tick-down (Bolas Rider charge slow)
+    slow_timer1, slow_timer2 = s.slow_timer1, s.slow_timer2
+    if slow_timer1 is not None:
+        for i in alive1:
+            if slow_timer1[i] > 0:
+                slow_timer1[i] = max(0.0, slow_timer1[i] - DT)
+    if slow_timer2 is not None:
+        for i in alive2:
+            if slow_timer2[i] > 0:
+                slow_timer2[i] = max(0.0, slow_timer2[i] - DT)
 
     # Bleed damage
     for idx in list(bleed_on1):
@@ -1503,6 +1644,23 @@ def _apply_tick_effects(s, alive1, alive2):
         for idx in alive2:
             if hp2[idx] < max_hp2:
                 hp2[idx] = min(max_hp2, hp2[idx] + regen_per_tick2)
+
+    # Ally death heal-over-time (Guecha Warrior)
+    death_heal_timer1, death_heal_timer2 = s.death_heal_timer1, s.death_heal_timer2
+    if death_heal_timer1 is not None:
+        heal_per_tick = s.death_heal_per_tick1
+        for idx in alive1:
+            if death_heal_timer1[idx] > 0:
+                if hp1[idx] < max_hp1:
+                    hp1[idx] = min(max_hp1, hp1[idx] + heal_per_tick)
+                death_heal_timer1[idx] = max(0.0, death_heal_timer1[idx] - DT)
+    if death_heal_timer2 is not None:
+        heal_per_tick = s.death_heal_per_tick2
+        for idx in alive2:
+            if death_heal_timer2[idx] > 0:
+                if hp2[idx] < max_hp2:
+                    hp2[idx] = min(max_hp2, hp2[idx] + heal_per_tick)
+                death_heal_timer2[idx] = max(0.0, death_heal_timer2[idx] - DT)
 
     # HP transform (e.g. Jian Swordsman — switch to unshielded form, revert when healed)
     if transform_thresh1 > 0:
@@ -1681,10 +1839,21 @@ def simulate_battle(
     charge_recharge1, charge_recharge2 = s.charge_recharge1, s.charge_recharge2
     charge_ready1, charge_ready2 = s.charge_ready1, s.charge_ready2
     charge_timer1, charge_timer2 = s.charge_timer1, s.charge_timer2
+    charge_proj_count1, charge_proj_count2 = s.charge_proj_count1, s.charge_proj_count2
+    charge_proj_dmg1, charge_proj_dmg2 = s.charge_proj_dmg1, s.charge_proj_dmg2
     armor_strip1, armor_strip2 = s.armor_strip1, s.armor_strip2
     current_ma1, current_pa1 = s.current_ma1, s.current_pa1
     current_ma2, current_pa2 = s.current_ma2, s.current_pa2
     reflect1, reflect2 = s.reflect1, s.reflect2
+    attack_speed_ramp1 = s.attack_speed_ramp1
+    attack_speed_ramp2 = s.attack_speed_ramp2
+    attack_speed_min1 = s.attack_speed_min1
+    attack_speed_min2 = s.attack_speed_min2
+    ramp_reduction1 = s.ramp_reduction1
+    ramp_reduction2 = s.ramp_reduction2
+    slow_timer1, slow_timer2 = s.slow_timer1, s.slow_timer2
+    charge_slow_dur1, charge_slow_dur2 = s.charge_slow_dur1, s.charge_slow_dur2
+    slow_pct_on1, slow_pct_on2 = s.slow_pct_on1, s.slow_pct_on2
     start_total_hp1, start_total_hp2 = s.start_total_hp1, s.start_total_hp2
 
     # =========================================================
@@ -1790,10 +1959,19 @@ def simulate_battle(
                 my_charge_timer = charge_timer1
                 t_charge_melee = charge_melee1
                 t_charge_recharge = charge_recharge1
+                t_charge_proj_count = charge_proj_count1
+                t_charge_proj_dmg = charge_proj_dmg1
+                my_ramp_reduction = ramp_reduction1
+                t_attack_speed_ramp = attack_speed_ramp1
+                t_attack_speed_min = attack_speed_min1
                 enemy_hp = hp2
                 enemy_alive = alive2
                 enemy_team = 2
                 my_targeted_by = targeted_by1  # who (team2) is attacking me (team1)
+                enemy_slow_timer = slow_timer2  # team1 slows team2
+                t_charge_slow_dur = charge_slow_dur1
+                my_slow_timer = slow_timer1  # team2 may have slowed team1 units
+                my_slow_pct = slow_pct_on1  # slow % applied to my units
             else:
                 my_alive = alive2
                 my_targets = targets2
@@ -1821,10 +1999,19 @@ def simulate_battle(
                 my_charge_timer = charge_timer2
                 t_charge_melee = charge_melee2
                 t_charge_recharge = charge_recharge2
+                t_charge_proj_count = charge_proj_count2
+                t_charge_proj_dmg = charge_proj_dmg2
+                my_ramp_reduction = ramp_reduction2
+                t_attack_speed_ramp = attack_speed_ramp2
+                t_attack_speed_min = attack_speed_min2
                 enemy_hp = hp1
                 enemy_alive = alive1
                 enemy_team = 1
                 my_targeted_by = targeted_by2  # who (team1) is attacking me (team2)
+                enemy_slow_timer = slow_timer1  # team2 slows team1
+                t_charge_slow_dur = charge_slow_dur2
+                my_slow_timer = slow_timer2  # team1 may have slowed team2 units
+                my_slow_pct = slow_pct_on2  # slow % applied to my units
 
             for i in my_alive:
                 # Check if this unit has dismounted (Konnik)
@@ -1865,7 +2052,15 @@ def simulate_battle(
                                 reload1_dismount if team_id == 1 else reload2_dismount
                             )
                         else:
-                            my_cooldown[i] = t_reload
+                            # Attack speed ramp: each hit reduces reload time
+                            if my_ramp_reduction is not None and t_attack_speed_ramp > 0:
+                                my_ramp_reduction[i] += t_attack_speed_ramp
+                                my_cooldown[i] = max(
+                                    t_attack_speed_min,
+                                    t_reload - my_ramp_reduction[i],
+                                )
+                            else:
+                                my_cooldown[i] = t_reload
                     else:
                         my_committed[i] = (target_idx, time_left)
                     continue
@@ -1894,7 +2089,10 @@ def simulate_battle(
                         # Switch to the enemy attacking us — no walk needed
                         target_idx = attacker
                     else:
-                        retarget_time = RETARGET_DIST / t_speed if t_speed > 0 else 2.0
+                        eff_speed = t_speed
+                        if my_slow_timer and my_slow_timer[i] > 0 and my_slow_pct > 0:
+                            eff_speed = t_speed * (1.0 - my_slow_pct)
+                        retarget_time = RETARGET_DIST / eff_speed if eff_speed > 0 else 2.0
                         my_cooldown[i] = retarget_time
                         my_prev_target[i] = target_idx
                         continue
@@ -1920,18 +2118,29 @@ def simulate_battle(
                     if t_first_burst > 0 and not my_used_first[i]:
                         num_extra += t_first_burst
                         my_used_first[i] = True
-                    if t_enemy_dismounted and t_enemy_dismounted[target_idx]:
+                    # Charge projectile: use stronger damage when charge is ready
+                    use_charge_proj = (
+                        t_charge_proj_count > 0
+                        and my_charge_ready
+                        and my_charge_ready[i]
+                    )
+                    if use_charge_proj:
+                        base = t_charge_proj_dmg
+                    elif t_enemy_dismounted and t_enemy_dismounted[target_idx]:
                         base = t_dmg_vs_dismount
                     elif t_enemy_transformed and t_enemy_transformed[target_idx]:
                         base = t_dmg_vs_transform
                     else:
                         base = t_dmg
                     # Main projectile: hit chance = unit accuracy
+                    charge_hit_target = -1  # track which target got hit by charge proj
                     if t_accuracy >= 1.0 or random.random() < t_accuracy:
                         hit_dmg = base + int(my_bonus_atk[i])
                         pending_damage.append(
                             (enemy_team, target_idx, hit_dmg, i, team_id)
                         )
+                        if use_charge_proj:
+                            charge_hit_target = target_idx
                     else:
                         # Missed shot — may hit random enemy in formation
                         if t_miss_dmg_pct > 0:
@@ -1944,6 +2153,15 @@ def simulate_battle(
                             pending_damage.append(
                                 (enemy_team, stray, hit_dmg, i, team_id)
                             )
+                            if use_charge_proj:
+                                charge_hit_target = stray
+                    # Reset charge after firing (whether hit or miss)
+                    if use_charge_proj:
+                        my_charge_ready[i] = False
+                        my_charge_timer[i] = t_charge_recharge
+                        # Charge slow: apply slow debuff to the hit target
+                        if charge_hit_target >= 0 and enemy_slow_timer is not None:
+                            enemy_slow_timer[charge_hit_target] = t_charge_slow_dur
                     # Extra projectiles: pass-through bolts always hit; others ~50%
                     if num_extra > 0:
                         extra_base = t_extra_proj_dmg
@@ -1959,7 +2177,15 @@ def simulate_battle(
                                     pending_damage.append(
                                         (enemy_team, target_idx, extra_hit, i, team_id)
                                     )
-                    my_cooldown[i] = t_reload
+                    # Attack speed ramp: each hit reduces reload time
+                    if my_ramp_reduction is not None and t_attack_speed_ramp > 0:
+                        my_ramp_reduction[i] += t_attack_speed_ramp
+                        my_cooldown[i] = max(
+                            t_attack_speed_min,
+                            t_reload - my_ramp_reduction[i],
+                        )
+                    else:
+                        my_cooldown[i] = t_reload
                 else:
                     # Melee: commit with delay or hit instantly
                     if t_delay > 0:
@@ -1982,13 +2208,40 @@ def simulate_battle(
                         pending_damage.append(
                             (enemy_team, target_idx, hit_dmg, i, team_id)
                         )
-                        my_cooldown[i] = t_reload
+                        # Attack speed ramp: each hit reduces reload time
+                        if my_ramp_reduction is not None and t_attack_speed_ramp > 0:
+                            my_ramp_reduction[i] += t_attack_speed_ramp
+                            my_cooldown[i] = max(
+                                t_attack_speed_min,
+                                t_reload - my_ramp_reduction[i],
+                            )
+                        else:
+                            my_cooldown[i] = t_reload
+
+        # Snapshot alive counts before damage (for ally-death-heal detection)
+        pre_alive1 = len(alive1) if s.death_heal_timer1 is not None else 0
+        pre_alive2 = len(alive2) if s.death_heal_timer2 is not None else 0
 
         # --- Apply all pending damage atomically ---
         _apply_tick_damage(s, pending_damage, alive1, alive2)
 
         # --- Tick-based effects ---
         _apply_tick_effects(s, alive1, alive2)
+
+        # --- Ally death heal trigger (Guecha Warrior) ---
+        # If any allied Guecha died this tick, refresh heal timer on all survivors.
+        if s.death_heal_timer1 is not None:
+            post_alive1 = sum(1 for i in range(count1) if hp1[i] > 0)
+            if post_alive1 < pre_alive1 and post_alive1 > 0:
+                for i in range(count1):
+                    if hp1[i] > 0:
+                        s.death_heal_timer1[i] = s.ally_death_heal_dur1
+        if s.death_heal_timer2 is not None:
+            post_alive2 = sum(1 for i in range(count2) if hp2[i] > 0)
+            if post_alive2 < pre_alive2 and post_alive2 > 0:
+                for i in range(count2):
+                    if hp2[i] > 0:
+                        s.death_heal_timer2[i] = s.ally_death_heal_dur2
 
     # =========================================================
     # PHASE 3: Winner determination

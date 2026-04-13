@@ -78,6 +78,9 @@ LINE_SCORE_TYPE = {
     "ram": "anti_building_score",
     "bombard_cannon": "anti_building_score",
     "trebuchet": "anti_building_score",
+    # cannon_galleon intentionally absent: queried from ref_units directly,
+    # not from battle_scores. The special-case in compute_civ_power_units()
+    # handles it with generate_cannon_galleon_entry() and skips this dict.
 }
 
 

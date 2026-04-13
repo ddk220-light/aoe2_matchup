@@ -20,3 +20,4 @@ from .config_combat import *     # noqa: F401,F403
 # Explicit re-exports for underscore-prefixed names excluded from star imports
 from .config_constants import _tech_age_name  # noqa: F401
 from .config_units import _PREVIOUS_AGE_NAMES  # noqa: F401
+from .config_units import NAVAL_LINE_CONFIGS, NAVAL_UNIQUE_UNITS  # noqa: F401

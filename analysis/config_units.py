@@ -668,6 +668,184 @@ AGE_NAMES = {
     IMPERIAL_AGE: "Imperial Age",
 }
 
+# =============================================================================
+# NAVAL UNIT CONFIGURATIONS
+# =============================================================================
+# One config per naval line. Both Castle and Imperial runs use the same config;
+# calculate_unit_stats_for_civ() applies only techs available by the given max_age.
+#
+# Tech 34 (War Galley) upgrades Galley→War Galley, Fire Galley→Fire Ship, AND
+# Hulk→War Hulk simultaneously — all three share that Castle-age tier gate.
+NAVAL_LINE_CONFIGS = {
+    "galleon": {
+        "base_id": 539,           # Galley (always available)
+        "display_name": "Galley",
+        "unit_class": 22,         # Ship class
+        "availability_tech": None,
+        "upgrades": [
+            (34, 21, "War Galley"),    # Castle Age
+            (911, 442, "Galleon"),     # Imperial Age
+        ],
+    },
+    "fire": {
+        "base_id": 1103,          # Fire Galley (always available)
+        "display_name": "Fire Galley",
+        "unit_class": 22,
+        "availability_tech": None,
+        "upgrades": [
+            (34, 529, "Fire Ship"),        # Castle Age
+            (246, 532, "Fast Fire Ship"),  # Imperial Age
+        ],
+    },
+    "hulk": {
+        "base_id": 2626,          # Hulk (requires tech 903)
+        "display_name": "Hulk",
+        "unit_class": 22,
+        "availability_tech": 903,
+        "upgrades": [
+            (34, 2627, "War Hulk"),    # Castle Age
+            (904, 2628, "Carrack"),    # Imperial Age
+        ],
+    },
+    "demo": {
+        "base_id": 1104,          # Demo Raft (always available)
+        "display_name": "Demo Raft",
+        "unit_class": 22,
+        "availability_tech": None,
+        "upgrades": [
+            (905, 527, "Demo Ship"),          # Castle Age
+            (244, 528, "Heavy Demo Ship"),    # Imperial Age
+        ],
+    },
+    "cannon_galleon": {
+        "base_id": 420,           # Cannon Galleon (requires tech 37)
+        "display_name": "Cannon Galleon",
+        "unit_class": 22,
+        "availability_tech": 37,
+        "upgrades": [
+            (376, 691, "Elite Cannon Galleon"),  # Imperial Age
+        ],
+    },
+}
+
+# Unique naval units keyed by civ. Structure mirrors UNIQUE_UNITS.
+# "line" field identifies which standard line slot this unit replaces.
+NAVAL_UNIQUE_UNITS = {
+    "Vikings": [
+        {
+            "base_id": 250,
+            "display_name": "Longboat",
+            "unit_class": 22,
+            "availability_tech": 272,
+            "elite_tech": 372,
+            "elite_id": 533,
+            "elite_name": "Elite Longboat",
+            "line": "galleon",
+        }
+    ],
+    "Koreans": [
+        {
+            "base_id": 831,
+            "display_name": "Turtle Ship",
+            "unit_class": 22,
+            "availability_tech": 447,
+            "elite_tech": 448,
+            "elite_id": 832,
+            "elite_name": "Elite Turtle Ship",
+            "line": "hulk",
+        }
+    ],
+    "Portuguese": [
+        {
+            "base_id": 1004,
+            "display_name": "Caravel",
+            "unit_class": 22,
+            "availability_tech": 596,
+            "elite_tech": 597,
+            "elite_id": 1006,
+            "elite_name": "Elite Caravel",
+            "line": "galleon",
+        }
+    ],
+    "Dravidians": [
+        {
+            "base_id": 1750,
+            "display_name": "Thirisadai",
+            "unit_class": 22,
+            "availability_tech": 841,
+            "elite_tech": None,
+            "elite_id": None,
+            "line": "galleon",
+        }
+    ],
+    "Berbers": [
+        {
+            "base_id": 1631,
+            "display_name": "Xebec",
+            "unit_class": 22,
+            "availability_tech": None,
+            "elite_tech": None,
+            "elite_id": None,
+            "line": "galleon",
+        }
+    ],
+    "Byzantines": [
+        {
+            "base_id": 1795,
+            "display_name": "Dromon",
+            "unit_class": 22,
+            "availability_tech": 886,
+            "elite_tech": None,
+            "elite_id": None,
+            "line": "cannon_galleon",
+        }
+    ],
+    "Mapuche": [
+        {
+            "base_id": 2633,
+            "display_name": "Catapult Galleon",
+            "unit_class": 22,
+            "availability_tech": 913,
+            "elite_tech": None,
+            "elite_id": None,
+            "line": "cannon_galleon",
+        }
+    ],
+    "Wu": [
+        {
+            "base_id": 1948,
+            "display_name": "Lou Chuan",
+            "unit_class": 22,
+            "availability_tech": 1034,
+            "elite_tech": None,
+            "elite_id": None,
+            "line": "cannon_galleon",
+        }
+    ],
+    "Shu": [
+        {
+            "base_id": 1948,
+            "display_name": "Lou Chuan",
+            "unit_class": 22,
+            "availability_tech": 1034,
+            "elite_tech": None,
+            "elite_id": None,
+            "line": "cannon_galleon",
+        }
+    ],
+    "Wei": [
+        {
+            "base_id": 1948,
+            "display_name": "Lou Chuan",
+            "unit_class": 22,
+            "availability_tech": 1034,
+            "elite_tech": None,
+            "elite_id": None,
+            "line": "cannon_galleon",
+        }
+    ],
+}
+
 # Build mapping: unit_id -> display name from previous age configs
 # Used to get correct names when a config's upgrades don't apply
 # (e.g., "Pikeman" config falls back to "Spearman" for Turks)

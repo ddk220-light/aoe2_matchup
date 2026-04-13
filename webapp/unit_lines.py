@@ -289,3 +289,50 @@ UNIT_LINES = {
 
 # Trebuchet unit slugs — excluded from matchup sim results (siege-only, no direct combat).
 TREBUCHET_SLUGS = {"trebuchet"}
+
+# =============================================================================
+# NAVAL UNIT LINES
+# =============================================================================
+# Maps line_slug → unique_slug_by_civ → (castle_slug, imperial_slug).
+# The castle_slug is the ref_units slug to query for Castle-age display,
+# imperial_slug for Imperial-age display. When a civ has a unique, its unique
+# slug is used instead of the standard line slug.
+NAVAL_UNIT_LINES = {
+    "galleon": {
+        "name": "Galleon Line",
+        "unique_slug_by_civ": {
+            "Vikings":    ("longboat_vikings",    "elite_longboat_vikings"),
+            "Portuguese": ("caravel_portuguese",  "elite_caravel_portuguese"),
+            "Dravidians": ("thirisadai_dravidians","thirisadai_dravidians"),  # no elite
+            "Berbers":    ("xebec_berbers",       "xebec_berbers"),          # no elite
+        },
+    },
+    "fire": {
+        "name": "Fire Ship Line",
+        "unique_slug_by_civ": {},
+    },
+    "hulk": {
+        "name": "Hulk Line",
+        "unique_slug_by_civ": {
+            "Koreans": ("turtle_ship_koreans", "elite_turtle_ship_koreans"),
+        },
+    },
+    "demo": {
+        "name": "Demo Ship Line",
+        "unique_slug_by_civ": {},
+    },
+}
+
+# Cannon Galleon is part of the Siege column, not Navy.
+# Unique replacements: Dromon (Byzantines), Lou Chuan (Wu/Shu/Wei),
+# Catapult Galleon (Mapuche).
+CANNON_GALLEON_LINE = {
+    "name": "Cannon Galleon",
+    "unique_slug_by_civ": {
+        "Byzantines": ("dromon_byzantines",         "dromon_byzantines"),
+        "Mapuche":    ("catapult_galleon_mapuche",  "catapult_galleon_mapuche"),
+        "Wu":         ("lou_chuan_wu",              "lou_chuan_wu"),
+        "Shu":        ("lou_chuan_shu",             "lou_chuan_shu"),
+        "Wei":        ("lou_chuan_wei",             "lou_chuan_wei"),
+    },
+}

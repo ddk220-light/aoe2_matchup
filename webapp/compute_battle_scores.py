@@ -2149,6 +2149,16 @@ def main():
         f"Siege anti-building: {total_siege} units in {time.time() - siege_start:.1f}s"
     )
 
+    # Naval role scores
+    naval_start = time.time()
+    naval_scores_all = {}
+    for naval_age in ["imperial", "castle"]:
+        naval_scores = compute_naval_role_scores(age=naval_age)
+        naval_scores_all.update(naval_scores)
+    write_role_scores_to_db(naval_scores_all, NAVAL_LINE_SLUGS, NAVAL_SCORE_TYPES)
+    total_naval = sum(len(v) for v in naval_scores_all.values())
+    print(f"Naval roles: {total_naval} units in {time.time() - naval_start:.1f}s")
+
     # Compute rankings for all DB scores (rank + median_delta)
     ranking_start = time.time()
     compute_rankings()

@@ -1,3 +1,6 @@
+from unittest.mock import patch
+
+
 def test_naval_aggregate_returns_units(client):
     """Naval aggregate slug returns galleon/fire/hulk units."""
     resp = client.get("/api/ref/unit-line/naval")
@@ -38,9 +41,6 @@ def test_naval_no_score_columns(client):
         assert "militia_value" not in unit
         assert "ranged_effectiveness" not in unit
         assert "anti_building_score" not in unit
-
-
-from unittest.mock import patch
 
 
 def test_compute_naval_role_scores_structure():

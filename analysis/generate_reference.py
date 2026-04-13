@@ -1424,7 +1424,7 @@ def generate_reference_database(analyzer):
 
                 # Check availability tech (if set)
                 avail_tech = nu_config.get("availability_tech")
-                disabled = analyzer.get_disabled_techs(civ_name)
+                disabled = disabled_techs
                 if avail_tech is not None and avail_tech in disabled:
                     continue
 

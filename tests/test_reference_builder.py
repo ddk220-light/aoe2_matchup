@@ -174,6 +174,15 @@ def test_compare_val_missing_db():
 def test_compare_val_both_none():
     assert builder.compare_val(None, None) == builder.MISSING_EXT
 
+def test_compare_val_string_match():
+    assert builder.compare_val("Infantry", "Infantry") == builder.MATCH
+
+def test_compare_val_string_case_insensitive():
+    assert builder.compare_val("Infantry", "infantry") == builder.MATCH
+
+def test_compare_val_string_mismatch():
+    assert builder.compare_val("Infantry", "Cavalry") == builder.MISMATCH
+
 
 # --- Techtree helper tests ---
 

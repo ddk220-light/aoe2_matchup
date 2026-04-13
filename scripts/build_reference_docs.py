@@ -378,12 +378,13 @@ def fetch_techtree() -> dict:
 def generate_armor_classes(conn: sqlite3.Connection, args, stats: dict):
     """Write reference/armor-classes.md."""
     out_path = REF_DIR / "armor-classes.md"
-    if out_path.exists() and not args.force and not getattr(args, 'dry_run', False):
+    if out_path.exists() and not args.force and not args.dry_run:
         stats["skipped"] += 1
         return
     classes = query_armor_classes(conn)
     content = render_armor_classes(classes)
-    if not getattr(args, 'dry_run', False):
+    if not args.dry_run:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(content, encoding="utf-8")
         stats["written"] += 1
         print(f"  Written: {out_path}")

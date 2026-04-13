@@ -196,7 +196,7 @@ function renderAnalysis(civName, data) {
                 var isMulti = lineEntries.length > 1;
                 html += '<div class="unit-wrap' + (isMulti ? ' multi-unit' : '') + '">';
                 for (var u = 0; u < lineEntries.length; u++) {
-                    html += renderUnitBadge(lineEntries[u]);
+                    html += renderUnitBadge(lineEntries[u], colKey);
                 }
                 html += '</div>';
             } else {
@@ -213,10 +213,10 @@ function renderAnalysis(civName, data) {
 }
 
 /* ---- Unit badge renderer ---- */
-function renderUnitBadge(unit) {
+function renderUnitBadge(unit, colKey) {
     var name = unit.unit_name || slugToName(unit.unit_slug);
     var iconUrl = getIconUrl(name);
-    var isNavy = (unit.strength === null || unit.strength === undefined) && !unit.percentile;
+    var isNavy = colKey === "navy";
     var strength = STRENGTH_COLORS[unit.strength] || STRENGTH_COLORS.average;
     var isSig = unit.is_signature && !isNavy;
     var badgeClass = "unit-badge" + (isSig ? " signature" : "") + (isNavy ? " no-strength" : "");

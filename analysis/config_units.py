@@ -775,6 +775,7 @@ NAVAL_UNIQUE_UNITS = {
             "availability_tech": 841,
             "elite_tech": None,
             "elite_id": None,
+            "elite_name": None,
             "line": "galleon",
         }
     ],
@@ -786,6 +787,7 @@ NAVAL_UNIQUE_UNITS = {
             "availability_tech": None,
             "elite_tech": None,
             "elite_id": None,
+            "elite_name": None,
             "line": "galleon",
         }
     ],
@@ -797,6 +799,7 @@ NAVAL_UNIQUE_UNITS = {
             "availability_tech": 886,
             "elite_tech": None,
             "elite_id": None,
+            "elite_name": None,
             "line": "cannon_galleon",
         }
     ],
@@ -808,9 +811,11 @@ NAVAL_UNIQUE_UNITS = {
             "availability_tech": 913,
             "elite_tech": None,
             "elite_id": None,
+            "elite_name": None,
             "line": "cannon_galleon",
         }
     ],
+    # Lou Chuan (1948) is a shared unit ID across all Three Kingdoms civs (Wu/Shu/Wei).
     "Wu": [
         {
             "base_id": 1948,
@@ -819,6 +824,7 @@ NAVAL_UNIQUE_UNITS = {
             "availability_tech": 1034,
             "elite_tech": None,
             "elite_id": None,
+            "elite_name": None,
             "line": "cannon_galleon",
         }
     ],
@@ -830,6 +836,7 @@ NAVAL_UNIQUE_UNITS = {
             "availability_tech": 1034,
             "elite_tech": None,
             "elite_id": None,
+            "elite_name": None,
             "line": "cannon_galleon",
         }
     ],
@@ -841,6 +848,7 @@ NAVAL_UNIQUE_UNITS = {
             "availability_tech": 1034,
             "elite_tech": None,
             "elite_id": None,
+            "elite_name": None,
             "line": "cannon_galleon",
         }
     ],

@@ -1,20 +1,26 @@
 # Franks
 
-**Focus:** ⚠️ Not found  
+**Focus:** Cavalry  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Farm upgrades are free.
+- Castles are 15%/25% cheaper in the Castle/Imperial Age.
+- Mounted units have +20% hit points (starting in the Feudal Age).
+- Foragers work 15% faster.
 
 ## Team Bonus
 
-⚠️ Not found
+Knights have +2 Line of Sight.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Bearded Axe | Throwing Axeman +{{tt|2 |
+| Chivalry | Stables work 40% faster) |
 
 ## Unique Units
 
@@ -35,12 +41,17 @@
 
 _Full stat comparison: see `reference/units/unique/Throwing_Axeman.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Franks**.
+Battering Ram, Bombard Cannon, Capped Ram, Cavalry Archer, Champion, Crossbowman, Elite Skirmisher, Halberdier, Hand Cannoneer, Heavy Cavalry Archer, Heavy Scorpion, Knight, Light Cavalry, Long Swordsman, Mangonel, Onager, Paladin, Pikeman, Scorpion, Trebuchet
+
+## Disabled Standard Units
+
+_None — this civ has access to all widely-available standard units._
 
 ## DB Summary
 
 - Total units in DB: 25
 - Unique units: 2
 - Standard units: 23
+- Disabled standard units: 0

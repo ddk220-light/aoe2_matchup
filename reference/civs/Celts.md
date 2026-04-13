@@ -1,20 +1,26 @@
 # Celts
 
-**Focus:** ⚠️ Not found  
+**Focus:** Infantry / Siege weapons  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Infantry units move 5%/10%/15%/20% faster in the Dark/Feudal/Castle/Imperial Age.
+- Lumberjacks work 15% faster.
+- Siege weapons fire 25% faster.
+- Non-Celt herdable animals can be converted regardless of units next to them.
 
 ## Team Bonus
 
-⚠️ Not found
+Siege Workshops work 20% faster.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Stronghold | Castles and towers fire 33% faster; Castles can heal allied infantry units by 30 hit points per minute in an 18 tile square |
+| Furor Celtica | Gives Siege Workshop units +40% hit points |
 
 ## Unique Units
 
@@ -35,12 +41,18 @@
 
 _Full stat comparison: see `reference/units/unique/Woad_Raider.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Celts**.
+Battering Ram, Cavalry Archer, Champion, Crossbowman, Elite Skirmisher, Halberdier, Heavy Cavalry Archer, Heavy Scorpion, Hussar, Knight, Light Cavalry, Long Swordsman, Mangonel, Paladin, Pikeman, Scorpion, Siege Onager, Siege Ram, Trebuchet
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 23
 - Unique units: 2
 - Standard units: 21
+- Disabled standard units: 2

@@ -1,20 +1,26 @@
 # Chinese
 
-**Focus:** ⚠️ Not found  
+**Focus:** Archers / Gunpowder  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Start game with +3 Villagers, but with -200 food, -50 wood.
+- Town Centers support 15 population (instead of 5) and have +7 Line of Sight.
+- Technologies are 5%/10%/15% cheaper in the Feudal/Castle/Imperial Age, respectively.
+- [[Fire Galley (Age of Empires II)
 
 ## Team Bonus
 
-⚠️ Not found
+Farms and Pastures contain +10% food.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Great Wall | Increases the hit points of walls and towers by +30% |
+| Rocketry | Scorpions, Rocket Carts, Lou Chuans +25% attack. Lou Chuans fire rockets instead of arrows in their anti-unit attacks, which deal Area of Effect damage |
 
 ## Unique Units
 
@@ -35,12 +41,18 @@
 
 _Full stat comparison: see `reference/units/unique/Chu_Ko_Nu.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Chinese**.
+Arbalester, Battering Ram, Cavalier, Cavalry Archer, Champion, Crossbowman, Elite Fire Lancer, Elite Skirmisher, Fire Lancer, Halberdier, Heavy Cavalry Archer, Heavy Rocket Cart, Heavy Scorpion, Knight, Light Cavalry, Long Swordsman, Pikeman, Rocket Cart, Scorpion, Siege Ram, Trebuchet
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 25
 - Unique units: 2
 - Standard units: 23
+- Disabled standard units: 2

@@ -1,20 +1,27 @@
 # Italians
 
-**Focus:** ⚠️ Not found  
+**Focus:** Archers / Navy  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Advancing to the next Age is 15% cheaper.
+- Foot archers (except Skirmishers) and Condottieri +1/+1 armor.
+- Dock and University technologies are 25% cheaper.
+- Fishing Ships are 15% cheaper.
+- Gunpowder units are 20% cheaper.
 
 ## Team Bonus
 
-⚠️ Not found
+Condottieri are available at the Barracks.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Silk Road | Halves trade units' cost |
+| Pirotechnia | Hand Cannoneers are more accurate and deal pass-through damage |
 
 ## Unique Units
 
@@ -35,12 +42,17 @@
 
 _Full stat comparison: see `reference/units/unique/Genoese_Crossbowman.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Italians**.
+Arbalester, Battering Ram, Bombard Cannon, Capped Ram, Cavalier, Cavalry Archer, Champion, Condottiero, Crossbowman, Elite Skirmisher, Hand Cannoneer, Hussar, Knight, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Trebuchet
+
+## Disabled Standard Units
+
+_None — this civ has access to all widely-available standard units._
 
 ## DB Summary
 
 - Total units in DB: 26
 - Unique units: 2
 - Standard units: 24
+- Disabled standard units: 0

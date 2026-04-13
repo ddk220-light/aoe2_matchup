@@ -1,20 +1,26 @@
 # Vietnamese
 
-**Focus:** ⚠️ Not found  
+**Focus:** Archers  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Archery Range units and [[Fire Lancer (Age of Empires II) have +20% hit points.
+- Reveal enemy initial Town Centers location at the start of the game.
+- Conscription is free.
+- Economic technologies (except Coinage and Banking) cost no wood and are researched 100% faster.
 
 ## Team Bonus
 
-⚠️ Not found
+Imperial Skirmisher upgrade is available at the Archery Range (requires the Imperial Age and Elite Skirmisher).
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Chatras | Gives Battle Elephants +100 hit points |
+| Paper Money | Lumberjacks generate gold when working |
 
 ## Unique Units
 
@@ -35,12 +41,17 @@
 
 _Full stat comparison: see `reference/units/unique/Rattan_Archer.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Vietnamese**.
+Arbalester, Battering Ram, Battle Elephant, Bombard Cannon, Capped Ram, Cavalier, Cavalry Archer, Champion, Crossbowman, Elite Battle Elephant, Elite Fire Lancer, Elite Skirmisher, Fire Lancer, Halberdier, Heavy Cavalry Archer, Imperial Skirmisher, Knight, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Trebuchet
+
+## Disabled Standard Units
+
+- Hand Cannoneer _(available to 23/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 28
 - Unique units: 2
 - Standard units: 26
+- Disabled standard units: 1

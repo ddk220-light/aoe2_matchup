@@ -39,3 +39,50 @@
 | Cost Food | 0 | 0.0 | ✅ |
 | Cost Wood | 75 | 75.0 | ✅ |
 | Cost Gold | 60 | 60.0 | ✅ |
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| -3 | Mounted Archers |
+| +2 | Rams |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Cavalry | 0 |
+| Archers | 0 |
+| Unique Units | 0 |
+| Cavalry Archers | 0 |
+| Leitis | 0 |
+
+## Strengths & Weaknesses
+
+**Strong vs:** Infantry
+**Weak vs:** Archer, Elite Skirmisher, Monk
+
+## Technologies
+
+| Stat | Technology (Effect) |
+|------|---------------------|
+| HP | Bloodlines (+20) |
+| Attack | Chemistry (+1) |
+| Attack | Parthian Tactics (+2 against Spearmen) |
+| Armor | Padded Archer Armor (+1/+1) |
+| Armor | Parthian Tactics (+1/+2) |
+| Speed | Husbandry (+10%) |
+| Conversion | Devotion (+1 min, +1 max) |
+| Conversion | Faith (+4 min, +4 max) |
+| Creation | Conscription (+33%) |
+| Creation | Kasbah (+25%, with a Berber ally only) |
+
+## Civilization Bonuses
+
+**Team bonuses:**
+
+| Stat | Civ (Bonus) |
+|------|-------------|
+| Conversion | Teutons (+3 min, +1 max) |

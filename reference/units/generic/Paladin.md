@@ -96,8 +96,8 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 | Stat | Civ (Bonus) |
 |------|-------------|
-| Attack | Persians (+2 vs.) |
-| Attack | Wei (+2 vs.) |
+| Attack | Persians (+2 vs. Archers) |
+| Attack | Wei (+2 vs. Siege Weapons) |
 | Conversion | Teutons (+3 min, +1 max) |
 | Creation | Huns (+20%) |
 | LOS | Franks (+2) |

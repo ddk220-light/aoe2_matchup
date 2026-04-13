@@ -29,15 +29,54 @@
 
 | Field | External | Our DB (Castle) | Match |
 |-------|----------|-----------------|-------|
-| HP | ⚠️ | 50.0 | ⚠️ |
-| Attack | ⚠️ | 40.0 | ⚠️ |
-| Melee Armor | ⚠️ | 0.0 | ⚠️ |
-| Pierce Armor | ⚠️ | 6.0 | ⚠️ |
-| Speed | ⚠️ | 0.6 | ⚠️ |
-| Range | ⚠️ | 7.0 | ⚠️ |
-| Reload Time | ⚠️ | 6.0 | ⚠️ |
-| Cost Food | 0 | 0.0 | ✅ |
-| Cost Wood | 0 | 160.0 | ❌ |
-| Cost Gold | 0 | 135.0 | ❌ |
+| HP | 45.0 | 50.0 | ❌ |
+| Attack | 5.0 | 40.0 | ❌ |
+| Melee Armor | 0.0 | 0.0 | ✅ |
+| Pierce Armor | 6.0 | 6.0 | ✅ |
+| Speed | 0.6 | 0.6 | ✅ |
+| Range | 7.0 | 7.0 | ✅ |
+| Reload Time | 5.5 | 6.0 | ❌ |
+| Cost Food | 800 | 0.0 | ❌ |
+| Cost Wood | 800 | 160.0 | ❌ |
+| Cost Gold | 155 | 135.0 | ❌ |
 
-**⚠️ 2 mismatch(es) found — investigate.**
+**⚠️ 6 mismatch(es) found — investigate.**
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| +40 | Unused |
+| +35 | All Buildings |
+| +12 | Siege Weapons |
+| -1 | Monks |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Siege Weapons | 0 |
+| Leitis | 0 |
+
+## Technologies
+
+| Stat | Technology (Effect) |
+|------|---------------------|
+| Attack | Siege Engineers (+20% vs. buildings) |
+| Attack | Rocketry (+25%, Chinese only) |
+| Conversion | Devotion (+1 min, +1 max) |
+| Conversion | Faith (+4 min, +4 max) |
+| Conversion | Heresy (die upon getting converted, Khitans only) |
+
+## Civilization Bonuses
+
+**Team bonuses:**
+
+| Stat | Civ (Bonus) |
+|------|-------------|
+| Conversion | Teutons (+3 min, +1 max) |
+| Creation | Celts (+20%) |
+| Creation | Turks (+25%) |
+| LOS | Jurchens (+2) |

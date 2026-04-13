@@ -1,20 +1,25 @@
 # Vikings
 
-**Focus:** ⚠️ Not found  
+**Focus:** Infantry / Navy  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Wheelbarrow and Hand Cart free.
+- Warships cost -10%/-15%/-20% in the Feudal/Castle/Imperial Age.
+- Infantry have +20% hit points starting from the Feudal Age.
 
 ## Team Bonus
 
-⚠️ Not found
+Docks are 15% cheaper.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Chieftains | Gives infantry +5 attack against Cavalry and +4 attack against {{2class |
+| Bogsveigar | Archer-line and Longboats +1 attack (available since update 81058) |
 
 ## Unique Units
 
@@ -35,12 +40,18 @@
 
 _Full stat comparison: see `reference/units/unique/Berserk.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Vikings**.
+Arbalester, Battering Ram, Cavalier, Cavalry Archer, Champion, Crossbowman, Elite Skirmisher, Heavy Scorpion, Knight, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Siege Ram, Trebuchet
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 23
 - Unique units: 2
 - Standard units: 21
+- Disabled standard units: 2

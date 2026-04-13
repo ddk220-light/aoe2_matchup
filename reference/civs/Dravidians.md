@@ -1,20 +1,27 @@
 # Dravidians
 
-**Focus:** ⚠️ Not found  
+**Focus:** Infantry / Ships  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Receive  when advancing to the next Age.
+- Fishermen, Oyster gatherers, and Fishing Ships carry +15.
+- Barracks technologies cost -50%.
+- Siege units cost .
+- Skirmishers and Elephant Archers attack 25% faster.
 
 ## Team Bonus
 
-⚠️ Not found
+Docks provide +5 population space.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Medical Corps | Elephant units regenerate 30 hit points per minute |
+| Wootz Steel | Infantry and cavalry attacks ignore armor |
 
 ## Unique Units
 
@@ -35,12 +42,20 @@
 
 _Full stat comparison: see `reference/units/unique/Urumi_Swordsman.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Dravidians**.
+Arbalester, Armored Elephant, Battle Elephant, Bombard Cannon, Champion, Crossbowman, Elephant Archer, Elite Elephant Archer, Elite Skirmisher, Halberdier, Hand Cannoneer, Heavy Scorpion, Light Cavalry, Long Swordsman, Mangonel, Pikeman, Scorpion, Siege Elephant, Siege Onager, Trebuchet
+
+## Disabled Standard Units
+
+- Cavalry Archer _(available to 42/53 civs)_
+- Heavy Cavalry Archer _(available to 42/53 civs)_
+- Knight _(available to 38/53 civs)_
+- Cavalier _(available to 41/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 25
 - Unique units: 2
 - Standard units: 23
+- Disabled standard units: 4

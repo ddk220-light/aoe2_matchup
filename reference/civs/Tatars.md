@@ -1,20 +1,26 @@
 # Tatars
 
-**Focus:** ⚠️ Not found  
+**Focus:** Cavalry Archer  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Herdable animals contain .
+- Units do +20% damage when attacking from higher elevations (+50% instead of +25%).
+- Parthian Tactics and Thumb Ring are free.
+- Two Sheep spawn near newly-constructed Town Centers starting in the Castle Age.
 
 ## Team Bonus
 
-⚠️ Not found
+Mounted archers have +2 Line of Sight.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Silk Armor | Scout Cavalry line, Steppe Lancers and mounted archers have {{tt|+1 |
+| Timurid Siegecraft | Trebuchets have +2 range |
 
 ## Unique Units
 
@@ -35,12 +41,17 @@
 
 _Full stat comparison: see `reference/units/unique/Keshik.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Tatars**.
+Battering Ram, Camel Rider, Cavalier, Cavalry Archer, Crossbowman, Elite Skirmisher, Elite Steppe Lancer, Halberdier, Hand Cannoneer, Heavy Camel Rider, Heavy Cavalry Archer, Heavy Scorpion, Hussar, Knight, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Siege Ram, Steppe Lancer, Trebuchet, Two-Handed Swordsman
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 28
 - Unique units: 2
 - Standard units: 26
+- Disabled standard units: 1

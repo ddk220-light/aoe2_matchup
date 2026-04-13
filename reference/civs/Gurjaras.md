@@ -1,20 +1,27 @@
 # Gurjaras
 
-**Focus:** ⚠️ Not found  
+**Focus:** Cavalry / Camels  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Start the game with a Camel Scout.
+- Starts with 2 Forage Bushes with  each under the Town Center.
+- Can garrison Docks with +5 allied Fishing Ships.
+- Can garrison Mills with herdable animals to produce food.thumb|Cumulative food generation rates for various numbers of Sheep stored in Mills, before and after update 66692The formula used for this is:
+- Mounted units deal +20%/+30%/+40% bonus damage in the Feudal/Castle/Imperial Age.
 
 ## Team Bonus
 
-⚠️ Not found
+Camel and elephant units are created 25% faster.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Kshatriyas | Military units cost {{Resources |
+| Frontier Guards | Camel Riders and Elephant Archers +4 melee armor |
 
 ## Unique Units
 
@@ -52,12 +59,20 @@ _Full stat comparison: see `reference/units/unique/Chakram_Thrower.md`_
 
 _Full stat comparison: see `reference/units/unique/Shrivamsha_Rider.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Gurjaras**.
+Armored Elephant, Bombard Cannon, Camel Rider, Crossbowman, Elephant Archer, Elite Elephant Archer, Elite Skirmisher, Hand Cannoneer, Heavy Camel Rider, Heavy Scorpion, Hussar, Light Cavalry, Long Swordsman, Mangonel, Onager, Scorpion, Siege Elephant, Spearman, Trebuchet, Two-Handed Swordsman
+
+## Disabled Standard Units
+
+- Cavalry Archer _(available to 42/53 civs)_
+- Heavy Cavalry Archer _(available to 42/53 civs)_
+- Knight _(available to 38/53 civs)_
+- Cavalier _(available to 41/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 27
 - Unique units: 4
 - Standard units: 23
+- Disabled standard units: 4

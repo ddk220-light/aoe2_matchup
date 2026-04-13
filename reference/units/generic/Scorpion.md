@@ -42,3 +42,21 @@
 | Cost Gold | 0 | 75.0 | ❌ |
 
 **⚠️ 2 mismatch(es) found — investigate.**
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| +7 | War Elephants |
+| +3 | All Buildings |
+| +1 | Rams |
+| +1 | Infantry |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Siege Weapons | 0 |
+| Leitis | 0 |

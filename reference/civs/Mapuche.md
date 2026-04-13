@@ -1,20 +1,28 @@
 # Mapuche
 
-**Focus:** ⚠️ Not found  
+**Focus:** Cavalry / Counter-units  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Foragers drop off .
+- Settlements can train the Spearman and Skirmisher lines in 2.15×/1.61×/same time as regular production buildings in the Feudal/Castle/Imperial Ages, respectively.
+- * Settlements can upgrade the Spearman and Skirmisher lines in the same time as their regular production buildings.
+- Infantry, Slingers, and Skirmishers get +5/10/15 hit points in the Feudal/Castle/Imperial Age.
+- Mounted units generate  per military unit killed.
+- Enemy Castles are revealed on the map.
 
 ## Team Bonus
 
-⚠️ Not found
+Spearmen and Skirmishers have +2 Line of Sight.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Malon | Bolas Riders, Slingers, and Skirmishers deal pass-through damage |
+| Butalmapu | Team Castle unique units and Bola Riders cost -15% |
 
 ## Unique Units
 
@@ -52,12 +60,24 @@ _Full stat comparison: see `reference/units/unique/Bolas_Rider.md`_
 
 _Full stat comparison: see `reference/units/unique/Kona.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Mapuche**.
+Battering Ram, Capped Ram, Champi Warrior, Crossbowman, Elite Champi Warrior, Elite Skirmisher, Halberdier, Heavy Scorpion, Man-at-Arms, Mangonel, Onager, Pikeman, Scorpion, Slinger, Trebuchet
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Cavalry Archer _(available to 42/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
+- Heavy Cavalry Archer _(available to 42/53 civs)_
+- Hussar _(available to 47/53 civs)_
+- Knight _(available to 38/53 civs)_
+- Light Cavalry _(available to 47/53 civs)_
+- Cavalier _(available to 41/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 23
 - Unique units: 4
 - Standard units: 19
+- Disabled standard units: 8

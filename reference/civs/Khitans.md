@@ -1,20 +1,25 @@
 # Khitans
 
-**Focus:** ⚠️ Not found  
+**Focus:** Infantry / Cavalry  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- The effects of Forging and Iron Casting are doubled.
+- Skirmishers, Genitours, and the Spearman and Scout Cavalry lines are trained and upgraded 15% faster.
+- Heavy Cavalry Archer upgrade available in the Castle Age and costs -50%
 
 ## Team Bonus
 
-⚠️ Not found
+Infantry units +2 attack vs Archers
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Lamellar Armor | Infantry and skirmishers reflect 25% melee damage back to the attacker |
+| Ordo Cavalry | Melee cavalry regenerates 150% hit points per minute in combat |
 
 ## Unique Units
 
@@ -52,12 +57,20 @@ _Full stat comparison: see `reference/units/unique/Liao_Dao.md`_
 
 _Full stat comparison: see `reference/units/unique/Mounted_Trebuchet.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Khitans**.
+Battering Ram, Camel Rider, Cavalry Archer, Champion, Crossbowman, Elite Fire Lancer, Elite Skirmisher, Elite Steppe Lancer, Fire Lancer, Heavy Camel Rider, Heavy Cavalry Archer, Heavy Rocket Cart, Hussar, Light Cavalry, Long Swordsman, Pikeman, Rocket Cart, Scorpion, Siege Ram, Steppe Lancer, Trebuchet
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
+- Knight _(available to 38/53 civs)_
+- Cavalier _(available to 41/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 29
 - Unique units: 4
 - Standard units: 25
+- Disabled standard units: 4

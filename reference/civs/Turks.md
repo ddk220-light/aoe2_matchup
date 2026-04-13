@@ -1,20 +1,28 @@
 # Turks
 
-**Focus:** ⚠️ Not found  
+**Focus:** Gunpowder units  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Gunpowder units have +25% hit points.
+- Chemistry is free.
+- Gunpowder technologies are 50% cheaper.
+- Gold Miners work 25% faster.
+- Light Cavalry and Hussar upgrades are free.
+- Scout Cavalry line gain +1 pierce armor.
 
 ## Team Bonus
 
-⚠️ Not found
+Gunpowder units are created 25% faster.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Sipahi | Mounted archers +20 hit points |
+| Artillery | +2 range for Bombard Towers, Bombard Cannons, Cannon Galleons |
 
 ## Unique Units
 
@@ -35,12 +43,17 @@
 
 _Full stat comparison: see `reference/units/unique/Janissary.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Turks**.
+Battering Ram, Bombard Cannon, Camel Rider, Cavalier, Cavalry Archer, Champion, Crossbowman, Hand Cannoneer, Heavy Camel Rider, Heavy Cavalry Archer, Heavy Scorpion, Hussar, Knight, Light Cavalry, Long Swordsman, Mangonel, Scorpion, Siege Ram, Skirmisher, Spearman, Trebuchet
+
+## Disabled Standard Units
+
+_None — this civ has access to all widely-available standard units._
 
 ## DB Summary
 
 - Total units in DB: 27
 - Unique units: 2
 - Standard units: 25
+- Disabled standard units: 0

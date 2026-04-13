@@ -1,20 +1,26 @@
 # Slavs
 
-**Focus:** ⚠️ Not found  
+**Focus:** Infantry / Siege weapons  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Farmers work 15% faster.
+- Arson and Gambesons are free.
+- Siege Workshop units are 15% cheaper.
+- Monks move 20% faster.
 
 ## Team Bonus
 
-⚠️ Not found
+Barracks, Archery Ranges, Stables, and Siege Workshops provide +5 population.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Detinets | Replaces 40% of Castles' and Towers' stone cost with wood |
+| Druzhina | Infantry units damage adjacent units in +0.5 tiles radius with 5 damage |
 
 ## Unique Units
 
@@ -35,12 +41,18 @@
 
 _Full stat comparison: see `reference/units/unique/Boyar.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Slavs**.
+Battering Ram, Cavalier, Cavalry Archer, Champion, Crossbowman, Elite Skirmisher, Halberdier, Heavy Cavalry Archer, Heavy Scorpion, Hussar, Knight, Light Cavalry, Long Swordsman, Mangonel, Pikeman, Scorpion, Siege Onager, Siege Ram, Trebuchet
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 23
 - Unique units: 2
 - Standard units: 21
+- Disabled standard units: 2

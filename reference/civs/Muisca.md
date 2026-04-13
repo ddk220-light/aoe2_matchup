@@ -1,20 +1,27 @@
 # Muisca
 
-**Focus:** ⚠️ Not found  
+**Focus:** Archers / Monks  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Advancing to the next Age costs .
+- Settlements cost -25% and heal allied human units within 3 tiles by 5/10/15/15 HP/min in the Dark/Feudal/Castle/Imperial Age.
+- The Champi Scout line and Archery Range units have +1/2/3 melee armor in the Feudal/Castle/Imperial Age.
+- Monks regain faith 100% faster.
+- Caravan and Guilds are free.
 
 ## Team Bonus
 
-⚠️ Not found
+Natural gold sources (Foxes, Gold Mines, Oysters, and Whales) last 15% longer.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Herbalism | Archer and Champi Scout lines move 15% faster |
+| Huaracas | Slingers have +1 range and are trained 25% faster |
 
 ## Unique Units
 
@@ -52,12 +59,24 @@ _Full stat comparison: see `reference/units/unique/Guecha_Warrior.md`_
 
 _Full stat comparison: see `reference/units/unique/Temple_Guard.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Muisca**.
+Arbalester, Battering Ram, Capped Ram, Champi Warrior, Crossbowman, Elite Champi Warrior, Elite Skirmisher, Heavy Scorpion, Man-at-Arms, Mangonel, Pikeman, Scorpion, Siege Onager, Slinger, Trebuchet
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Cavalry Archer _(available to 42/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
+- Heavy Cavalry Archer _(available to 42/53 civs)_
+- Hussar _(available to 47/53 civs)_
+- Knight _(available to 38/53 civs)_
+- Light Cavalry _(available to 47/53 civs)_
+- Cavalier _(available to 41/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 23
 - Unique units: 4
 - Standard units: 19
+- Disabled standard units: 8

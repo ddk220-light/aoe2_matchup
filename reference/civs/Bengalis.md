@@ -1,20 +1,27 @@
 # Bengalis
 
-**Focus:** ⚠️ Not found  
+**Focus:** Elephants / Naval  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Elephant units receive 25% less bonus damage and are more resistant to conversion.
+- All Town Centers spawn 2 Villagers when the next Age is reached.
+- Cavalry units +2 attack vs Skirmishers.
+- Ships regenerate 15 HP per minute.
+- Monks +3/+3 armor.
 
 ## Team Bonus
 
-⚠️ Not found
+Trade units yield  in addition to gold.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Paiks | Rathas and elephant units attack 20% faster |
+| Mahayana | Villagers and Monks take up -10% population space |
 
 ## Unique Units
 
@@ -52,12 +59,22 @@ _Full stat comparison: see `reference/units/unique/Ratha_(Melee).md`_
 
 _Full stat comparison: see `reference/units/unique/Ratha_(Ranged).md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Bengalis**.
+Arbalester, Armored Elephant, Battle Elephant, Champion, Crossbowman, Elephant Archer, Elite Battle Elephant, Elite Elephant Archer, Elite Skirmisher, Halberdier, Heavy Scorpion, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Siege Elephant, Trebuchet
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Cavalry Archer _(available to 42/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
+- Heavy Cavalry Archer _(available to 42/53 civs)_
+- Knight _(available to 38/53 civs)_
+- Cavalier _(available to 41/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 25
 - Unique units: 4
 - Standard units: 21
+- Disabled standard units: 6

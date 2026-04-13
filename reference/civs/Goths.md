@@ -1,20 +1,27 @@
 # Goths
 
-**Focus:** ⚠️ Not found  
+**Focus:** Infantry  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Infantry units are 15%/20%/25%/30% cheaper in the Dark/Feudal/Castle/Imperial Age.
+- Infantry units have +1/+2/+3 attack bonus against Standard Buildings in the Feudal/Castle/Imperial Age.
+- Hunters carry . Hunt lasts 20% longer.
+- Loom is researched instantly.
+- +10 population cap in the Imperial Age.
 
 ## Team Bonus
 
-⚠️ Not found
+Barracks work 20% faster.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Anarchy | Allows the creation of Huskarls at the Barracks |
+| Perfusion | Increases the working speed of Barracks by +100% |
 
 ## Unique Units
 
@@ -35,12 +42,17 @@
 
 _Full stat comparison: see `reference/units/unique/Huskarl.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Goths**.
+Battering Ram, Bombard Cannon, Capped Ram, Cavalier, Cavalry Archer, Champion, Crossbowman, Elite Skirmisher, Halberdier, Hand Cannoneer, Heavy Cavalry Archer, Heavy Scorpion, Hussar, Knight, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Trebuchet
+
+## Disabled Standard Units
+
+_None — this civ has access to all widely-available standard units._
 
 ## DB Summary
 
 - Total units in DB: 25
 - Unique units: 2
 - Standard units: 23
+- Disabled standard units: 0

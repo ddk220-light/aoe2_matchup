@@ -1,20 +1,25 @@
 # Portuguese
 
-**Focus:** ⚠️ Not found  
+**Focus:** Navy / Gunpowder units  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- All units cost –20% gold.
+- All ships have +10% hit points.
+- Foragers generate wood in addition to food ( ).
 
 ## Team Bonus
 
-⚠️ Not found
+All technologies (excluding Age ups) are researched 25% faster.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Circumnavigation | Sets the entire map to explored, Ships train +33% faster |
+| Arquebus | Gunpowder units can track moving targets |
 
 ## Unique Units
 
@@ -35,12 +40,17 @@
 
 _Full stat comparison: see `reference/units/unique/Organ_Gun.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Portuguese**.
+Arbalester, Battering Ram, Bombard Cannon, Capped Ram, Cavalier, Cavalry Archer, Champion, Crossbowman, Elite Skirmisher, Halberdier, Hand Cannoneer, Knight, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Trebuchet
+
+## Disabled Standard Units
+
+_None — this civ has access to all widely-available standard units._
 
 ## DB Summary
 
 - Total units in DB: 25
 - Unique units: 2
 - Standard units: 23
+- Disabled standard units: 0

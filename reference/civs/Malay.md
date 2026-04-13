@@ -1,20 +1,26 @@
 # Malay
 
-**Focus:** ⚠️ Not found  
+**Focus:** Navy  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Advancing in Age is +66% faster.
+- Fish Traps are 33% cheaper and provide .
+- Battle Elephants are 25% cheaper in the Castle Age, 35% cheaper in the Imperial Age.
+- Infantry armor upgrades are free.
 
 ## Team Bonus
 
-⚠️ Not found
+Docks have +6 Line of Sight.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Thalassocracy | Upgrades Docks to Harbors |
+| Forced Levy | Militia line costs {{Resources|food = +20 |
 
 ## Unique Units
 
@@ -35,12 +41,17 @@
 
 _Full stat comparison: see `reference/units/unique/Karambit_Warrior.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Malay**.
+Arbalester, Battering Ram, Battle Elephant, Bombard Cannon, Capped Ram, Cavalier, Cavalry Archer, Crossbowman, Elite Battle Elephant, Elite Skirmisher, Halberdier, Heavy Scorpion, Knight, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Trebuchet, Two-Handed Swordsman
+
+## Disabled Standard Units
+
+- Hand Cannoneer _(available to 23/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 26
 - Unique units: 2
 - Standard units: 24
+- Disabled standard units: 1

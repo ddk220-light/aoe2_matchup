@@ -1,20 +1,29 @@
 # Armenians
 
-**Focus:** ⚠️ Not found  
+**Focus:** Infantry / Naval  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Mule Carts cost -25%. Mule Carts replace Lumber Camps and Mining Camps.
+- Mule Cart technologies are 40% more effective.This means that:
+- Double-Bit Axe and Bow Saw provide +28% boost instead of +20%.
+- All mining upgrades provide +21% boost instead of +15%.
+- Fortified Churches replace Monasteries, and the first one constructed receives a free Relic.
+- Long Swordsman and above, and Spearman line available one Age earlier.
+- Galley-line and Dromons* fire one additional projectile each, which deal 1 attack and advertised attack respectively.
 
 ## Team Bonus
 
-⚠️ Not found
+Infantry have +2 Line of Sight.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Cilician Fleet | Demolition Ships +{{tt|20% |
+| Fereters | Infantry (except Spearman-line) +30 hit points, Warrior Priests +100% heal speed |
 
 ## Unique Units
 
@@ -52,12 +61,18 @@ _Full stat comparison: see `reference/units/unique/Composite_Bowman.md`_
 
 _Full stat comparison: see `reference/units/unique/Warrior_Priest.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Armenians**.
+Arbalester, Battering Ram, Capped Ram, Cavalier, Cavalry Archer, Champion, Crossbowman, Elite Skirmisher, Halberdier, Heavy Scorpion, Knight, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Trebuchet
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 25
 - Unique units: 4
 - Standard units: 21
+- Disabled standard units: 2

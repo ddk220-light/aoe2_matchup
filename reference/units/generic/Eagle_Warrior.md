@@ -41,3 +41,23 @@
 | Cost Gold | 0 | 50.0 | ❌ |
 
 **⚠️ 2 mismatch(es) found — investigate.**
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| +8 | Monks |
+| +3 | Cavalry |
+| +3 | Siege Weapons |
+| +2 | Camels |
+| +1 | Ships & Saboteurs |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Infantry | 0 |
+| Eagle Warriors | 0 |
+| Leitis | 0 |

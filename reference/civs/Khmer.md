@@ -1,20 +1,26 @@
 # Khmer
 
-**Focus:** ⚠️ Not found  
+**Focus:** Siege weapons / Elephants  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- No buildings are required to advance to the next age or to unlock other buildings.
+- Battle Elephants move 10% faster.
+- Farmers don't carry food but rather add it directly to the stockpile without any drop-off, but work 5% slower.
+- Villagers (and Kings) can garrison in Houses.
 
 ## Team Bonus
 
-⚠️ Not found
+Scorpions have +1 range.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Tusk Swords | Battle Elephants +3 attack |
+| Double Crossbow | Ballista Elephants and Scorpions fire an additional bolt of half strength |
 
 ## Unique Units
 
@@ -35,12 +41,17 @@
 
 _Full stat comparison: see `reference/units/unique/Ballista_Elephant.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Khmer**.
+Arbalester, Battering Ram, Battle Elephant, Cavalier, Cavalry Archer, Crossbowman, Elite Battle Elephant, Elite Skirmisher, Halberdier, Hand Cannoneer, Heavy Cavalry Archer, Heavy Scorpion, Hussar, Knight, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Siege Ram, Trebuchet, Two-Handed Swordsman
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 26
 - Unique units: 2
 - Standard units: 24
+- Disabled standard units: 1

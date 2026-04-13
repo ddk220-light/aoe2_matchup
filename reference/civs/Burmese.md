@@ -1,20 +1,26 @@
 # Burmese
 
-**Focus:** ⚠️ Not found  
+**Focus:** Infantry / Cavalry  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Lumber Camp technologies are free.
+- Battle Elephants have +1/+1 armor.
+- Infantry units have +1/+2/+3 attack in the Feudal/Castle/Imperial Age.
+- Monastery technologies are 50% cheaper.
 
 ## Team Bonus
 
-⚠️ Not found
+Relics are visible on the map from the game start.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Manipur Cavalry | Gives cavalry units +4 attack against {{2class |
+| Howdah | Gives Battle Elephants +1/+1 armor |
 
 ## Unique Units
 
@@ -35,12 +41,17 @@
 
 _Full stat comparison: see `reference/units/unique/Arambai.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Burmese**.
+Battering Ram, Battle Elephant, Bombard Cannon, Capped Ram, Cavalier, Cavalry Archer, Champion, Crossbowman, Elite Battle Elephant, Elite Skirmisher, Halberdier, Heavy Cavalry Archer, Heavy Scorpion, Hussar, Knight, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Trebuchet
+
+## Disabled Standard Units
+
+- Hand Cannoneer _(available to 23/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 26
 - Unique units: 2
 - Standard units: 24
+- Disabled standard units: 1

@@ -30,15 +30,54 @@
 
 | Field | External | Our DB (Castle) | Match |
 |-------|----------|-----------------|-------|
-| HP | ⚠️ | 50.0 | ⚠️ |
-| Attack | ⚠️ | 6.0 | ⚠️ |
-| Melee Armor | ⚠️ | 0.0 | ⚠️ |
-| Pierce Armor | ⚠️ | 3.0 | ⚠️ |
-| Speed | ⚠️ | 1.15 | ⚠️ |
-| Range | ⚠️ | 3.0 | ⚠️ |
-| Reload Time | ⚠️ | 3.0 | ⚠️ |
-| Cost Food | 0 | 0.0 | ✅ |
-| Cost Wood | 0 | 50.0 | ❌ |
-| Cost Gold | 0 | 60.0 | ❌ |
+| HP | 50.0 | 50.0 | ✅ |
+| Attack | 6.0 | 6.0 | ✅ |
+| Melee Armor | 0.0 | 0.0 | ✅ |
+| Pierce Armor | 3.0 | 3.0 | ✅ |
+| Speed | 1.15 | 1.15 | ✅ |
+| Range | 3.0 | 3.0 | ✅ |
+| Reload Time | 3.0 | 3.0 | ✅ |
+| Cost Food | 25 | 0.0 | ❌ |
+| Cost Wood | 50 | 50.0 | ✅ |
+| Cost Gold | 60 | 60.0 | ✅ |
 
-**⚠️ 2 mismatch(es) found — investigate.**
+**⚠️ 1 mismatch(es) found — investigate.**
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| +3 | Archers |
+| +2 | Cavalry Archers |
+| +2 | Spearmen |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Archers | 0 |
+| Unique Units | 0 |
+| Leitis | 0 |
+| Skirmishers | 0 |
+| Class 40 | 0 |
+
+## Strengths & Weaknesses
+
+**Strong vs:** Archer
+
+## Technologies
+
+| Stat | Technology (Effect) |
+|------|---------------------|
+| Attack | Fletching (+1) |
+| Attack | Bodkin Arrow (+1) |
+| Attack | Bracer (+1) |
+| Attack | Chemistry (+1) |
+| Armor | Padded Archer Armor (+1/+1) |
+| Armor | Leather Archer Armor (+1/+1) |
+| Conversion | Devotion (+1 min, +1 max) |
+| Conversion | Faith (+4 min, +4 max) |
+| Conversion | Heresy (die upon getting converted) |
+| Creation | Conscription (+33%) |

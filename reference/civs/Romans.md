@@ -1,20 +1,26 @@
 # Romans
 
-**Focus:** ⚠️ Not found  
+**Focus:** Infantry units  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Villagers gather, build, and repair 5% faster.
+- Galley-line and Dromon +1/+1 armor.
+- Infantry receives double the effect from Blacksmith armor upgrades.
+- Scorpions cost -50% gold.
 
 ## Team Bonus
 
-⚠️ Not found
+The Scorpion-line's minimum range is reduced to 1.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Ballistas | Scorpions fire 33% faster, the Galley-line has +2 attack |
+| Comitatenses | Militia-line, Knight-line, and Centurions train 50% faster and receive +5 charge attack over 20 seconds |
 
 ## Unique Units
 
@@ -35,12 +41,18 @@
 
 _Full stat comparison: see `reference/units/unique/Centurion.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Romans**.
+Battering Ram, Cavalier, Cavalry Archer, Crossbowman, Elite Skirmisher, Halberdier, Heavy Cavalry Archer, Heavy Scorpion, Knight, Legionary, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Siege Ram, Trebuchet
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 23
 - Unique units: 2
 - Standard units: 21
+- Disabled standard units: 2

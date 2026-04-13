@@ -1,20 +1,25 @@
 # Wei
 
-**Focus:** ⚠️ Not found  
+**Focus:** Cavalry  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Receive one free Villager for each economic technology researched
+- Hei Guang Cavalry and Xianbei Raider +20%/30% hit points in Castle/Imperial Age
+- Traction Trebuchets and Lou Chuans cost -25%
 
 ## Team Bonus
 
-⚠️ Not found
+Cavalry units +2 attack vs. siege weapons
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Tuntian | Soldiers passively produce food |
+| Ming Guang Armor | Mounted units +4 melee armor |
 
 ## Unique Units
 
@@ -52,12 +57,21 @@ _Full stat comparison: see `reference/units/unique/Tiger_Cavalry.md`_
 
 _Full stat comparison: see `reference/units/unique/Xianbei_Raider.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Wei**.
+Battering Ram, Crossbowman, Elite Skirmisher, Halberdier, Heavy Hei-Kuang Cavalry, Heavy Scorpion, Hussar, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Siege Ram, Traction Trebuchet, Trebuchet, Two-Handed Swordsman
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Cavalry Archer _(available to 42/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
+- Heavy Cavalry Archer _(available to 42/53 civs)_
+- Knight _(available to 38/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 23
 - Unique units: 4
 - Standard units: 19
+- Disabled standard units: 5

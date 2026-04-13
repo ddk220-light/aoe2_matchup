@@ -1,20 +1,32 @@
 # Shu
 
-**Focus:** ⚠️ Not found  
+**Focus:** Archers / Siege  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Lumberjacks generate  for every .
+- Archery unit technologies at the Archery Range and BlacksmithThe following technologies are affected:{{columns|cols=2|
+- Thumb Ring
+- Parthian Tactics
+- Fletching line
+- Padded Archer Armor line
+- 22px Crossbowman
+- 22px Arbalester
+- 22px Heavy Cavalry Archer}} cost -25%
+- All land siege units and Lou Chuans move +10/15% faster in Castle/Imperial Age
 
 ## Team Bonus
 
-⚠️ Not found
+Foot archer units except Skirmishers +2 Line of Sight
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Coiled Serpent Array | Spearman-line and White Feather Guards gain additional hit points when near each other |
+| Bolt Magazine | Archer-line, War Chariots, and Lou Chuans fire additional projectiles |
 
 ## Unique Units
 
@@ -52,12 +64,19 @@ _Full stat comparison: see `reference/units/unique/War_Chariot.md`_
 
 _Full stat comparison: see `reference/units/unique/White_Feather_Guard.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Shu**.
+Arbalester, Battering Ram, Cavalry Archer, Champion, Crossbowman, Elite Skirmisher, Halberdier, Heavy Cavalry Archer, Heavy Hei-Kuang Cavalry, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Siege Ram, Traction Trebuchet, Trebuchet
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
+- Knight _(available to 38/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 25
 - Unique units: 4
 - Standard units: 21
+- Disabled standard units: 3

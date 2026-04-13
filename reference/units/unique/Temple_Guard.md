@@ -41,3 +41,55 @@
 | Cost Food | 80 | 80.0 | ✅ |
 | Cost Wood | 0 | 0.0 | ✅ |
 | Cost Gold | 45 | 45.0 | ✅ |
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| +3 | Cavalry |
+| +3 | War Elephants |
+| +2 | Camels |
+| +2 | Ships & Saboteurs |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Infantry | 0 |
+| Unique Units | 0 |
+| Eagle Warriors | 0 |
+| Leitis | 0 |
+
+## Strengths & Weaknesses
+
+**Strong vs:** Cavalry
+**Weak vs:** infantry, archer, Hand Cannoneer, Cataphract
+
+## Technologies
+
+| Stat | Technology (Effect) |
+|------|---------------------|
+| Attack | Forging (+1) |
+| Attack | Iron Casting (+1) |
+| Armor | Scale Mail Armor (melee=+1, pierce=+1) |
+| Armor | Chain Mail Armor (melee=+1, pierce=+1) |
+| Armor | Plate Mail Armor (melee=+1, pierce=+2) |
+| Speed | Squires (+10%) |
+| Conversion | Devotion (+1 min, +1 max) |
+| Conversion | Faith (+4 min, +4 max) |
+| Conversion | Heresy (die upon getting converted) |
+| Creation | Conscription (+33%, Barracks only) |
+
+## Civilization Bonuses
+
+**Team bonuses:**
+
+| Stat | Civ (Bonus) |
+|------|-------------|
+| Attack | Khitans (+2 vs. Archers) |
+| Conversion | Teutons (+3 min, +1 max) |
+| Creation | Goths (+20%, Barracks only) |
+| Creation | Lithuanians (+20%, Monastery only) |
+| LOS | Armenians (+2) |

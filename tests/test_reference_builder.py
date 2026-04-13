@@ -12,34 +12,44 @@ spec.loader.exec_module(builder)
 # --- Wiki parser tests ---
 
 SAMPLE_CIV_WIKITEXT = """
-{{Civilization infobox
-|name=Aztecs
-|focus=Infantry & Monk
-|team_bonus=Relics generate +33% gold
-|unique_unit=[[Jaguar Warrior]]<br>[[Elite Jaguar Warrior]]
-|unique_tech_castle=[[Atlatl]] (400 food, 350 wood)
-|unique_tech_imperial=[[Garland Wars]] (450 food, 750 gold)
-|bonuses=
-* Villagers carry +5
-* Military units created 11% faster
-* Monks +5 HP per Monastery technology researched
+{{Infobox civilization
+|Name = Aztecs
+|Focus = [[Infantry unit (Age of Empires II)|Infantry]] & [[Monk (Age of Empires II)|Monk]]
+|Unit = {{2icons|Jaguar Warrior}}
+|Tech = {{2icons|Atlatl}}<br />{{2icons|Garland Wars}}
 }}
+
+== Characteristics ==
+=== Unique unit ===
+: {{2icons|Jaguar Warrior}}: Melee infantry unit strong vs. infantry.
+
+=== Unique technologies ===
+* {{2icons|Atlatl}} (Skirmishers +1 attack, +1 range).
+* {{2icons|Garland Wars}} (Infantry +4 attack).
+
+=== Civilization bonuses ===
+* Villagers carry +5.
+* Military units created 11% faster.
+* Monks +5 HP per Monastery technology researched.
+
+=== Team bonus ===
+: Relics generate +33% gold.
 """
 
 def test_parse_wiki_civ_bonuses():
     result = builder.parse_wiki_civ(SAMPLE_CIV_WIKITEXT)
-    assert "Villagers carry +5" in result["bonuses"]
+    assert any("Villagers carry" in b for b in result["bonuses"])
     assert len(result["bonuses"]) == 3
 
 def test_parse_wiki_civ_team_bonus():
     result = builder.parse_wiki_civ(SAMPLE_CIV_WIKITEXT)
-    assert result["team_bonus"] == "Relics generate +33% gold"
+    assert "Relics generate" in result["team_bonus"]
 
 def test_parse_wiki_civ_unique_techs():
     result = builder.parse_wiki_civ(SAMPLE_CIV_WIKITEXT)
     assert any("Atlatl" in t["name"] for t in result["unique_techs"])
-    castle_tech = next(t for t in result["unique_techs"] if t["age"] == "Castle")
-    assert "400" in castle_tech["cost"]
+    atlatl = next(t for t in result["unique_techs"] if "Atlatl" in t["name"])
+    assert "range" in atlatl["effect"]
 
 def test_parse_wiki_civ_unique_units():
     result = builder.parse_wiki_civ(SAMPLE_CIV_WIKITEXT)
@@ -47,7 +57,7 @@ def test_parse_wiki_civ_unique_units():
 
 def test_parse_wiki_civ_focus():
     result = builder.parse_wiki_civ(SAMPLE_CIV_WIKITEXT)
-    assert result["focus"] == "Infantry & Monk"
+    assert "Infantry" in result["focus"]
 
 
 # --- Unit wikitext parser tests ---

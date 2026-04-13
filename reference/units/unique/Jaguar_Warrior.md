@@ -73,7 +73,7 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 | Attack | Forging (+1) |
 | Attack | Iron Casting (+1) |
 | Attack | Blast Furnace (+2) |
-| Attack | Arson (+2 against) |
+| Attack | Arson (+2 against Standard Buildings) |
 | Attack | Garland Wars (+4) |
 | Armor | Scale Mail Armor (+1/+1) |
 | Armor | Chain Mail Armor (+1/+1) |
@@ -90,6 +90,6 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 | Stat | Civ (Bonus) |
 |------|-------------|
-| Attack | Khitans (+2 vs) |
+| Attack | Khitans (+2 vs archers) |
 | Conversion | Teutons (+3 min, +1 max) |
 | LOS | Armenians (+2) |

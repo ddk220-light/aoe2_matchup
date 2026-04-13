@@ -63,6 +63,7 @@ def fetch_wiki_wikitext(page_name: str) -> str | None:
         "page": page_name,
         "prop": "wikitext",
         "format": "json",
+        "redirects": "1",
     })
     url = f"{WIKI_API}?{params}"
     try:
@@ -78,16 +79,49 @@ def fetch_wiki_wikitext(page_name: str) -> str | None:
 # --- PARSE LAYER ---
 
 def _strip_wiki_markup(text: str) -> str:
-    """Remove [[links]], {{templates}}, and HTML tags from text."""
+    """
+    Clean wiki markup to plain text:
+    - {{tt|display|tooltip}} → display value
+    - {{resources|gold = +50}} → '+50 gold'
+    - <br /> → ' / '
+    - <ref>...</ref> → removed
+    - [[page|display]] / [[page]] → display text
+    - remaining {{templates}} → removed
+    - remaining HTML tags → removed
+    """
+    # {{tt|display|tooltip}} → keep display
+    text = re.sub(r"\{\{tt\|([^|}]+)\|[^}]*\}\}", r"\1", text)
+    # {{2class|ClassName}} → ClassName (armor class icon template)
+    text = re.sub(r"\{\{2class\|([^|}]+?)(?:\|[^}]*)?\}\}", r"\1", text)
+    # {{2icons|Name}} used inline (not as a tech reference) → Name
+    text = re.sub(r"\{\{2icons\|([^|}]+?)(?:\|[^}]*)?\}\}", r"\1", text)
+    # {{resources|food = 200|gold = 100}} → '200 food, 100 gold'
+    def _fmt_resources(m: re.Match) -> str:
+        parts = []
+        for seg in m.group(1).split("|"):
+            rm = re.match(r"\s*(\w+)\s*=\s*(.+)", seg.strip())
+            if rm:
+                parts.append(f"{rm.group(2).strip()} {rm.group(1)}")
+        return ", ".join(parts)
+    text = re.sub(r"\{\{resources\|([^}]+)\}\}", _fmt_resources, text)
+    # <br /> or <br> → separator
+    text = re.sub(r"<br\s*/?>", " / ", text, flags=re.IGNORECASE)
+    # <ref ...>...</ref> → remove
+    text = re.sub(r"<ref[^>]*>.*?</ref>", "", text, flags=re.DOTALL)
+    # [[page|display]] or [[page]] → display
     text = re.sub(r"\[\[([^\]|]+\|)?([^\]]+)\]\]", r"\2", text)
-    text = re.sub(r"{{[^}]+}}", "", text)
+    # remaining {{templates}} → remove (single-depth; handles most cases)
+    text = re.sub(r"\{\{[^{}]+\}\}", "", text)
+    # remaining HTML tags
     text = re.sub(r"<[^>]+>", "", text)
     return text.strip()
 
 
 def parse_wiki_civ(wikitext: str) -> dict:
     """
-    Parse a civilization infobox from wiki wikitext.
+    Parse a civilization page from wiki wikitext.
+    Handles the real Fandom format: {{Infobox civilization with |Focus =,
+    and === Characteristics === subsections for bonuses/team bonus/unique techs.
     Returns dict with keys: focus, team_bonus, bonuses (list), unique_techs (list of dicts), unique_units (list).
     """
     result = {
@@ -98,42 +132,71 @@ def parse_wiki_civ(wikitext: str) -> dict:
         "unique_units": [],
     }
 
-    # Focus / description
-    m = re.search(r"\|focus\s*=\s*(.+)", wikitext)
+    # Focus — |Focus = [[Cavalry unit...|Cavalry]] in {{Infobox civilization
+    m = re.search(r"\|Focus\s*=\s*(.+)", wikitext, re.IGNORECASE)
     if m:
         result["focus"] = _strip_wiki_markup(m.group(1)).strip()
 
-    # Team bonus
-    m = re.search(r"\|team_bonus\s*=\s*(.+)", wikitext)
-    if m:
-        result["team_bonus"] = _strip_wiki_markup(m.group(1)).strip()
+    def _section(heading: str) -> str:
+        """Extract text between === heading === and the next === or end."""
+        pat = rf"===\s*{re.escape(heading)}\s*===\s*\n([\s\S]*?)(?====|\Z)"
+        sm = re.search(pat, wikitext, re.IGNORECASE)
+        return sm.group(1) if sm else ""
 
-    # Bonuses — bullet list after |bonuses=
-    m = re.search(r"\|bonuses\s*=\s*([\s\S]*?)(?=\n\||\Z)", wikitext)
-    if m:
-        bonus_text = m.group(1)
+    # Civilization bonuses — bullet list under === Civilization bonuses ===
+    bonus_text = _section("Civilization bonuses")
+    if bonus_text:
         bonuses = re.findall(r"\*\s*(.+)", bonus_text)
         result["bonuses"] = [_strip_wiki_markup(b).strip() for b in bonuses if b.strip()]
 
-    # Unique techs — parse castle + imperial separately
-    for age_key, age_label in [("unique_tech_castle", "Castle"), ("unique_tech_imperial", "Imperial")]:
-        m = re.search(rf"\|{age_key}\s*=\s*\[\[([^\]]+)\]\]\s*\(([^)]+)\)", wikitext)
-        if m:
-            name = m.group(1).strip()
-            cost_raw = m.group(2).strip()
-            result["unique_techs"].append({
-                "name": name,
-                "age": age_label,
-                "cost": cost_raw,
-                "effect": "",
-            })
+    # Team bonus — colon-prefixed line under === Team bonus ===
+    team_text = _section("Team bonus")
+    if team_text:
+        tm = re.search(r":\s*(.+)", team_text)
+        if tm:
+            result["team_bonus"] = _strip_wiki_markup(tm.group(1)).strip()
 
-    # Unique units
-    m = re.search(r"\|unique_unit\s*=\s*(.+)", wikitext)
-    if m:
-        raw = m.group(1)
-        units = re.findall(r"\[\[([^\]|]+?)(?:\|[^\]]+)?\]\]", raw)
-        result["unique_units"] = [u for u in units if "Elite" not in u]
+    # Unique technologies — supports:
+    #   * {{2icons|Name}} (effect)      — most civs
+    #   : {{2icons|Name}}: effect       — Khmer (colon-prefix)
+    #   * {{AoEII Icons|Name}}: effect  — Spanish, Mayans (different icon template)
+    #   * {{tt|{{AoEII Icons|Name}}: effect|old name}}  — Mayans (versioned wrapper)
+    tech_text = _section("Unique technologies")
+    if tech_text:
+        for line in re.findall(r"[*:]\s*(.+)", tech_text):
+            name_m = re.search(r"\{\{(?:2icons|AoEII\s*Icons)\|([^}|]+)", line)
+            if not name_m:
+                continue
+            tech_name = name_m.group(1).strip()
+            # Effect = text after the closing }} of the icon template, strip remaining markup
+            close_pos = line.find("}}", name_m.end())
+            after = line[close_pos + 2:].lstrip() if close_pos != -1 else ""
+            # Strip leading colon/parens delimiters
+            after = re.sub(r"^[:()\s]+", "", after)
+            # Strip {{tt}} tooltip tail: |old text}} that may follow nested templates
+            after = re.sub(r"\|[^|{}]*\}\}[^}]*$", "", after)
+            effect = _strip_wiki_markup(after).rstrip(".")
+            # Fallback: parentheses in stripped full line
+            if not effect:
+                eff_m = re.search(r"\(([^)]+)\)", _strip_wiki_markup(line))
+                effect = eff_m.group(1).strip() if eff_m else ""
+            result["unique_techs"].append({"name": tech_name, "effect": effect})
+
+    # Unique units — from === Unique unit === subsection
+    unit_text = _section("Unique unit")
+    if unit_text:
+        for name_m in re.finditer(r"\{\{2icons\|([^}|]+)", unit_text):
+            name = _strip_wiki_markup(name_m.group(1)).strip()
+            if name and "Elite" not in name:
+                result["unique_units"].append(name)
+    if not result["unique_units"]:
+        # Fallback: |Unit = {{2icons|Name}} in the infobox
+        um = re.search(r"\|Unit\s*=\s*(.+)", wikitext)
+        if um:
+            for name_m in re.finditer(r"\{\{2icons\|([^}|]+)", um.group(1)):
+                name = _strip_wiki_markup(name_m.group(1)).strip()
+                if name and "Elite" not in name:
+                    result["unique_units"].append(name)
 
     return result
 
@@ -366,7 +429,8 @@ def query_db_unit(conn: sqlite3.Connection, unit_slug_prefix: str) -> dict:
 
 def query_db_civ(conn: sqlite3.Connection, civ_name: str) -> dict:
     """
-    Return all units for a civ, split into 'standard' and 'unique' lists.
+    Return all units for a civ, split into 'standard', 'unique', and 'disabled' lists.
+    'disabled' = standard units available in 20+ civs that this civ lacks.
     Each unit has slug, name, type, age, and base stats.
     """
     rows = conn.execute(
@@ -377,13 +441,31 @@ def query_db_civ(conn: sqlite3.Connection, civ_name: str) -> dict:
            FROM ref_units WHERE civ_name = ? AND unit_type IN ('standard', 'unique') ORDER BY unit_type, age, unit_slug""",
         (civ_name,),
     ).fetchall()
-    result = {"standard": [], "unique": []}
+    result: dict = {"standard": [], "unique": [], "disabled": []}
     for row in rows:
         d = dict(row)
         key = d["unit_type"]
-        if key not in result:
-            result[key] = []
         result[key].append(d)
+
+    # Disabled standard units: appear in 20+ civs but not in this civ
+    # Use a subquery to pick the most-common name per slug (avoids arbitrary GROUP BY name pick)
+    civ_slugs = {d["unit_slug"] for d in result["standard"]}
+    widespread = conn.execute(
+        """SELECT unit_slug, COUNT(DISTINCT civ_name) as cnt
+           FROM ref_units WHERE unit_type='standard'
+           GROUP BY unit_slug HAVING cnt >= 20 ORDER BY unit_slug"""
+    ).fetchall()
+    for slug, cnt in widespread:
+        if slug not in civ_slugs:
+            # Canonical name = most frequent unit_name for this slug
+            name_row = conn.execute(
+                """SELECT unit_name FROM ref_units WHERE unit_slug=? AND unit_type='standard'
+                   GROUP BY unit_name ORDER BY COUNT(*) DESC LIMIT 1""",
+                (slug,),
+            ).fetchone()
+            name = name_row[0] if name_row else slug
+            result["disabled"].append({"unit_slug": slug, "unit_name": name, "civ_count": cnt})
+
     return result
 
 
@@ -560,11 +642,11 @@ def render_civ_file(civ_name: str, wiki: dict, techtree_civ, db: dict) -> tuple:
     unique_techs = wiki.get("unique_techs", [])
     if unique_techs:
         lines += [
-            "| Tech | Age | Cost | Effect |",
-            "|------|-----|------|--------|",
+            "| Tech | Effect |",
+            "|------|--------|",
         ]
         for tech in unique_techs:
-            lines.append(f"| {tech['name']} | {tech['age']} | {tech['cost']} | {tech.get('effect') or '—'} |")
+            lines.append(f"| {tech['name']} | {tech.get('effect') or '—'} |")
     else:
         lines.append("⚠️ No unique tech data found from wiki.")
     lines.append("")
@@ -605,13 +687,25 @@ def render_civ_file(civ_name: str, wiki: dict, techtree_civ, db: dict) -> tuple:
         lines.append(f"_Full stat comparison: see `reference/units/unique/{base_name.replace(' ', '_')}.md`_")
         lines.append("")
 
-    # Tech Tree info from techtree_civ
-    lines += ["## Tech Tree Notes", ""]
-    if techtree_civ is None:
-        lines.append("⚠️ No techtree data available for this civ (may be a new civ not yet in SiegeEngineers/aoe2techtree).")
+    # Unit Availability
+    lines += ["## Standard Units Available", ""]
+    standard_units = db.get("standard", [])
+    if standard_units:
+        # Deduplicate by unit_name (Elite Skirmisher may appear under two slugs)
+        names = sorted({u["unit_name"] for u in standard_units})
+        lines.append(", ".join(names))
     else:
-        tt_name = techtree_civ.get("name", civ_name)
-        lines.append(f"Tech tree data available from SiegeEngineers/aoe2techtree for **{tt_name}**.")
+        lines.append("⚠️ No standard units found in DB.")
+    lines.append("")
+
+    # Disabled Standard Units
+    disabled = db.get("disabled", [])
+    lines += ["## Disabled Standard Units", ""]
+    if disabled:
+        for d in disabled:
+            lines.append(f"- {d['unit_name']} _(available to {d['civ_count']}/53 civs)_")
+    else:
+        lines.append("_None — this civ has access to all widely-available standard units._")
     lines.append("")
 
     # DB Summary
@@ -620,6 +714,7 @@ def render_civ_file(civ_name: str, wiki: dict, techtree_civ, db: dict) -> tuple:
     lines.append(f"- Total units in DB: {len(all_units)}")
     lines.append(f"- Unique units: {len(db.get('unique', []))}")
     lines.append(f"- Standard units: {len(db.get('standard', []))}")
+    lines.append(f"- Disabled standard units: {len(disabled)}")
     lines.append("")
 
     return "\n".join(lines), mismatch_count

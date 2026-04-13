@@ -1,20 +1,25 @@
 # Berbers
 
-**Focus:** ⚠️ Not found  
+**Focus:** Cavalry / Navy  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Villagers move 5% faster in Dark Age, 10% faster starting in Feudal Age.
+- Cavalry units are 15%/20% cheaper in the Castle/Imperial Age.
+- Ships move 10% faster.
 
 ## Team Bonus
 
-⚠️ Not found
+Genitours are available at the Archery Range starting in the Castle Age.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Kasbah | Allied Castles work 25% faster |
+| Maghrebi Camels | Camel units regenerate 15 HP/min |
 
 ## Unique Units
 
@@ -35,12 +40,17 @@
 
 _Full stat comparison: see `reference/units/unique/Camel_Archer.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Berbers**.
+Battering Ram, Bombard Cannon, Camel Rider, Capped Ram, Cavalier, Cavalry Archer, Champion, Crossbowman, Elite Genitour, Elite Skirmisher, Genitour, Hand Cannoneer, Heavy Camel Rider, Heavy Cavalry Archer, Heavy Scorpion, Hussar, Knight, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Trebuchet
+
+## Disabled Standard Units
+
+_None — this civ has access to all widely-available standard units._
 
 ## DB Summary
 
 - Total units in DB: 29
 - Unique units: 2
 - Standard units: 27
+- Disabled standard units: 0

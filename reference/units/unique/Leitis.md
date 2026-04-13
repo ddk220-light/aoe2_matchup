@@ -39,3 +39,49 @@
 | Cost Food | 70 | 70.0 | ✅ |
 | Cost Wood | 0 | 0.0 | ✅ |
 | Cost Gold | 50 | 50.0 | ✅ |
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| -3 | Mounted Archers |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Cavalry | 0 |
+| Unique Units | 0 |
+| Leitis | 0 |
+
+## Strengths & Weaknesses
+
+**Strong vs:** Serjeant, Teutonic Knight, Boyar
+**Weak vs:** Pikemen, Kamayuk, Genoese Crossbowmen, Mameluke, Camel Rider, Monk, War Elephant, Battle Elephant, Samurai, archer
+
+## Technologies
+
+| Stat | Technology (Effect) |
+|------|---------------------|
+| HP | Bloodlines (+20) |
+| Attack | Forging (+1) |
+| Attack | Iron Casting (+1) |
+| Armor | Scale Barding Armor (+1/+1) |
+| Armor | Chain Barding Armor (+1/+1) |
+| Armor | Plate Barding Armor (+1/+2) |
+| Speed | Husbandry (+10%) |
+| Conversion | Devotion (+1 min, +1 max) |
+| Conversion | Faith (+4 min, +4 max) |
+| Conversion | Heresy (die upon getting converted) |
+| Creation | Conscription (+33%) |
+| Creation | Kasbah (+25%, with a Berber ally only) |
+
+## Civilization Bonuses
+
+**Team bonuses:**
+
+| Stat | Civ (Bonus) |
+|------|-------------|
+| Conversion | Teutons (+3 min, +1 max) |

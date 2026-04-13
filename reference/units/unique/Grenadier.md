@@ -41,3 +41,24 @@
 | Cost Gold | 0 | 65.0 | ❌ |
 
 **⚠️ 2 mismatch(es) found — investigate.**
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| +9 | Infantry |
+| -9 | Condottieri |
+| +4 | Standard Buildings |
+| +3 | Rams |
+| +1 | Spearmen |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Archers | 0 |
+| Unique Units | 0 |
+| Gunpowder Units | 0 |
+| Leitis | 0 |

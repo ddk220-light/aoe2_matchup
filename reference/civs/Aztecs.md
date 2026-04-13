@@ -1,20 +1,27 @@
 # Aztecs
 
-**Focus:** ⚠️ Not found  
+**Focus:** Infantry / Monks  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Start the game with an Eagle Scout.
+- Villagers carry +3 extra resources.
+- All military units are created 15% faster.
+- Monks gain 5 HP for every researched Monastery technology.
+- Start with +50 gold.
 
 ## Team Bonus
 
-⚠️ Not found
+Relics generate +33% gold.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Atlatl | Skirmishers +1 attack and range |
+| Garland Wars | Infantry +4 attack |
 
 ## Unique Units
 
@@ -35,12 +42,24 @@
 
 _Full stat comparison: see `reference/units/unique/Jaguar_Warrior.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Aztecs**.
+Arbalester, Battering Ram, Champion, Crossbowman, Eagle Warrior, Elite Eagle Warrior, Elite Skirmisher, Long Swordsman, Mangonel, Pikeman, Scorpion, Siege Onager, Siege Ram, Trebuchet
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Cavalry Archer _(available to 42/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
+- Heavy Cavalry Archer _(available to 42/53 civs)_
+- Hussar _(available to 47/53 civs)_
+- Knight _(available to 38/53 civs)_
+- Light Cavalry _(available to 47/53 civs)_
+- Cavalier _(available to 41/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 19
 - Unique units: 2
 - Standard units: 17
+- Disabled standard units: 8

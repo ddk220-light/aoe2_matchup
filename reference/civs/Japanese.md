@@ -1,20 +1,26 @@
 # Japanese
 
-**Focus:** ⚠️ Not found  
+**Focus:** Infantry  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Fishing Ships have double hit points, +2 pierce armor, and work 5%/10%/15%/20% faster in the Dark/Feudal/Castle/Imperial Age.
+- Mills, Lumber Camps and Mining Camps are 50% cheaper.
+- Infantry attack 33% faster starting in the Feudal Age.
+- Mounted archers +2 attack vs. Archers (except Skirmishers).
 
 ## Team Bonus
 
-⚠️ Not found
+Galleys have +4 Line of Sight.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Yasama | Gives towers two extra arrows |
+| Kataparuto | Makes Trebuchets pack, unpack, and fire faster |
 
 ## Unique Units
 
@@ -35,12 +41,17 @@
 
 _Full stat comparison: see `reference/units/unique/Samurai.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Japanese**.
+Arbalester, Battering Ram, Capped Ram, Cavalier, Cavalry Archer, Champion, Crossbowman, Elite Skirmisher, Halberdier, Hand Cannoneer, Heavy Cavalry Archer, Heavy Scorpion, Knight, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Trebuchet
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 24
 - Unique units: 2
 - Standard units: 22
+- Disabled standard units: 1

@@ -40,3 +40,50 @@
 | Cost Food | 55 | 55.0 | ✅ |
 | Cost Wood | 0 | 0.0 | ✅ |
 | Cost Gold | 55 | 55.0 | ✅ |
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| -3 | Mounted Archers |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Cavalry | 0 |
+| Unique Units | 0 |
+| Leitis | 0 |
+
+## Strengths & Weaknesses
+
+**Strong vs:** Infantry, archer, Villager, siege weapon, light cavalry
+**Weak vs:** Kamayuk, Genoese Crossbowmen, Mameluke, Camel Rider, Samurai, War Elephant, Boyar, Pikemen, Monk
+
+## Technologies
+
+| Stat | Technology (Effect) |
+|------|---------------------|
+| Attack | Forging (+1) |
+| Attack | Iron Casting (+1) |
+| Attack | Blast Furnace (+2) |
+| Armor | Scale Barding Armor (+1/+1) |
+| Armor | Chain Barding Armor (+1/+1) |
+| Armor | Plate Barding Armor (+1/+2) |
+| Speed | Husbandry (+10%) |
+| Conversion | Devotion (+1 min, +1 max) |
+| Conversion | Faith (+4 min, +4 max) |
+| Creation | Conscription (+33%) |
+| Creation | Kasbah (+25%, with a Berber ally only) |
+
+## Civilization Bonuses
+
+**Team bonuses:**
+
+| Stat | Civ (Bonus) |
+|------|-------------|
+| Attack | Wei (+2 against siege weapons) |
+| Conversion | Teutons (+3 min, +1 max) |
+| Other | Portuguese (upgrade to Elite Coustillier is 25% faster) |

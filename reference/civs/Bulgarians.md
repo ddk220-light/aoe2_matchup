@@ -1,20 +1,25 @@
 # Bulgarians
 
-**Focus:** ⚠️ Not found  
+**Focus:** Infantry / Cavalry  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Militia line units are upgraded for free.
+- Town Centers cost  (except starting Town Center).
+- Blacksmith and Siege Workshop technologies cost .
 
 ## Team Bonus
 
-⚠️ Not found
+Blacksmiths work 80% faster.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Stirrups | {{tt|Cavalry |
+| Bagains | Militia line units {{tt|+5 |
 
 ## Unique Units
 
@@ -35,12 +40,18 @@
 
 _Full stat comparison: see `reference/units/unique/Konnik.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Bulgarians**.
+Archer, Battering Ram, Cavalier, Cavalry Archer, Elite Skirmisher, Halberdier, Heavy Cavalry Archer, Heavy Scorpion, Hussar, Knight, Light Cavalry, Long Swordsman, Mangonel, Pikeman, Scorpion, Siege Onager, Siege Ram, Trebuchet, Two-Handed Swordsman
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 23
 - Unique units: 2
 - Standard units: 21
+- Disabled standard units: 2

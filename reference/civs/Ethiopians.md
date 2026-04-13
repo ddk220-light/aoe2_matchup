@@ -1,20 +1,25 @@
 # Ethiopians
 
-**Focus:** ⚠️ Not found  
+**Focus:** Archers  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- The Archer line fires 18% faster.
+- Receive +100 food, +100 gold whenever a new Age is reached.
+- The Pikeman upgrade is free.
 
 ## Team Bonus
 
-⚠️ Not found
+Outposts +3 Line of Sight and stone cost removed.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Royal Heirs | Shotels and Camel units receive -3 damage from mounted units |
+| Torsion Engines | Increases the blast radius of Siege Workshop units |
 
 ## Unique Units
 
@@ -35,12 +40,17 @@
 
 _Full stat comparison: see `reference/units/unique/Shotel_Warrior.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Ethiopians**.
+Arbalester, Battering Ram, Bombard Cannon, Camel Rider, Cavalier, Cavalry Archer, Crossbowman, Elite Skirmisher, Halberdier, Heavy Camel Rider, Heavy Cavalry Archer, Heavy Scorpion, Hussar, Knight, Light Cavalry, Long Swordsman, Mangonel, Pikeman, Scorpion, Siege Onager, Siege Ram, Trebuchet, Two-Handed Swordsman
+
+## Disabled Standard Units
+
+- Hand Cannoneer _(available to 23/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 26
 - Unique units: 2
 - Standard units: 24
+- Disabled standard units: 1

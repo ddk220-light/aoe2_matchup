@@ -1,20 +1,28 @@
 # Teutons
 
-**Focus:** ⚠️ Not found  
+**Focus:** Infantry  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Monks have double healing range.
+- Towers garrison twice as many units.
+- Murder Holes and Herbal Medicine are free.
+- Farms are 40% cheaper.
+- Town Centers can garrison +10 units.
+- Barracks and Stable units receive +1/+2 melee armor in the Castle/Imperial Age.
 
 ## Team Bonus
 
-⚠️ Not found
+Units and buildings resist conversion (+3/+1 min/max conversion intervals).
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Ironclad | Gives siege weapons +4 melee armor |
+| Crenellations | Gives Castles +3 range and makes garrisoned infantry shoot arrows |
 
 ## Unique Units
 
@@ -35,12 +43,17 @@
 
 _Full stat comparison: see `reference/units/unique/Teutonic_Knight.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Teutons**.
+Battering Ram, Bombard Cannon, Capped Ram, Cavalry Archer, Champion, Crossbowman, Elite Skirmisher, Halberdier, Hand Cannoneer, Heavy Scorpion, Knight, Long Swordsman, Mangonel, Paladin, Pikeman, Scorpion, Scout Cavalry, Siege Onager, Trebuchet
+
+## Disabled Standard Units
+
+_None — this civ has access to all widely-available standard units._
 
 ## DB Summary
 
 - Total units in DB: 25
 - Unique units: 2
 - Standard units: 23
+- Disabled standard units: 0

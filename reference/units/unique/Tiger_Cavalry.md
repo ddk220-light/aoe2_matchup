@@ -42,3 +42,20 @@
 | Cost Gold | 0 | 80.0 | ❌ |
 
 **⚠️ 2 mismatch(es) found — investigate.**
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| +6 | Archers |
+| -3 | Mounted Archers |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Cavalry | 0 |
+| Unique Units | 0 |
+| Leitis | 0 |

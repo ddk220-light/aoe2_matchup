@@ -41,3 +41,22 @@
 | Cost Gold | 0 | 0.0 | ✅ |
 
 **⚠️ 2 mismatch(es) found — investigate.**
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| +4 | Infantry |
+| +4 | Monks |
+| +3 | Siege Weapons |
+| +1 | Spearmen |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Archers | 0 |
+| Leitis | 0 |
+| Skirmishers | 0 |

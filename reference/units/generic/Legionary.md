@@ -41,3 +41,19 @@
 | Cost Gold | 20 | 20.0 | ✅ |
 
 **⚠️ 4 mismatch(es) found — investigate.**
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| +8 | Eagle Warriors |
+| +4 | Standard Buildings |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Infantry | 0 |
+| Leitis | 0 |

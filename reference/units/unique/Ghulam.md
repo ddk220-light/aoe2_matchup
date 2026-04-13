@@ -39,3 +39,21 @@
 | Cost Food | 30 | 30.0 | ✅ |
 | Cost Wood | 0 | 0.0 | ✅ |
 | Cost Gold | 45 | 45.0 | ✅ |
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| +5 | Archers |
+| +2 | Standard Buildings |
+| +2 | Eagle Warriors |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Infantry | 0 |
+| Unique Units | 0 |
+| Leitis | 0 |

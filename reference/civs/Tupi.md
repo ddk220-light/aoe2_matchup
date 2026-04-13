@@ -1,20 +1,26 @@
 # Tupi
 
-**Focus:** ⚠️ Not found  
+**Focus:** Archers / Infantry  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Start with +25 of each resource once the first Town Center is built.
+- Villagers can garrison in Settlements (max 5).
+- Fallen units, except ships and siege weapons, return 15% of their cost.
+- Archery Range and Barracks technologies cost .
 
 ## Team Bonus
 
-⚠️ Not found
+The Watch Tower line, Bombard Towers, Kreposts, Donjons, and Castles provide +10 population space.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Caciques | Champi Scout line and Slingers attack 25% faster |
+| Curare | Foot archers and fortifications deal poison damage |
 
 ## Unique Units
 
@@ -52,12 +58,24 @@ _Full stat comparison: see `reference/units/unique/Blackwood_Archer.md`_
 
 _Full stat comparison: see `reference/units/unique/Ibirapema_Warrior.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Tupi**.
+Arbalester, Battering Ram, Champi Warrior, Crossbowman, Elite Champi Warrior, Elite Skirmisher, Halberdier, Heavy Scorpion, Man-at-Arms, Mangonel, Onager, Pikeman, Scorpion, Siege Ram, Slinger, Trebuchet
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Cavalry Archer _(available to 42/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
+- Heavy Cavalry Archer _(available to 42/53 civs)_
+- Hussar _(available to 47/53 civs)_
+- Knight _(available to 38/53 civs)_
+- Light Cavalry _(available to 47/53 civs)_
+- Cavalier _(available to 41/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 23
 - Unique units: 4
 - Standard units: 19
+- Disabled standard units: 8

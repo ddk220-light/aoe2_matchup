@@ -41,3 +41,19 @@
 | Cost Gold | 0 | 45.0 | ❌ |
 
 **⚠️ 2 mismatch(es) found — investigate.**
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| +2 | Spearmen |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Archers | 0 |
+| Unique Units | 0 |
+| Leitis | 0 |

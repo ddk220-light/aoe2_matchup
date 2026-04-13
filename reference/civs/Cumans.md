@@ -1,20 +1,26 @@
 # Cumans
 
-**Focus:** ⚠️ Not found  
+**Focus:** Cavalry  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- A second Town Center can be built in the Feudal Age.
+- Archery Ranges and Stables cost -75 wood.
+- Siege Workshop and Battering Ram available in Feudal Age; Capped Ram upgrade available in Castle Age.
+- Mounted units move 5%/10%/15% faster in the Feudal/[[Castle Age (Age of Empires II).
 
 ## Team Bonus
 
-⚠️ Not found
+Palisade Walls have +33% hit points.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Steppe Husbandry | Scout Cavalry line, Steppe Lancers, and Cavalry Archers are trained {{tt|100% |
+| Cuman Mercenaries | Team members can create 5 free Elite Kipchaks per each Castle |
 
 ## Unique Units
 
@@ -35,12 +41,18 @@
 
 _Full stat comparison: see `reference/units/unique/Kipchak.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Cumans**.
+Battering Ram, Camel Rider, Cavalry Archer, Champion, Crossbowman, Elite Skirmisher, Elite Steppe Lancer, Halberdier, Heavy Cavalry Archer, Hussar, Knight, Light Cavalry, Long Swordsman, Mangonel, Paladin, Pikeman, Scorpion, Siege Onager, Siege Ram, Steppe Lancer, Trebuchet
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 27
 - Unique units: 2
 - Standard units: 25
+- Disabled standard units: 2

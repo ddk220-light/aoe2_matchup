@@ -41,3 +41,24 @@
 | Cost Gold | 0 | 45.0 | ❌ |
 
 **⚠️ 2 mismatch(es) found — investigate.**
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| +5 | Cavalry |
+| +5 | War Elephants |
+| +4 | Ships & Saboteurs |
+| +4 | Camels |
+| +1 | Standard Buildings |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Infantry | 0 |
+| Gunpowder Units | 0 |
+| Eagle Warriors | 0 |
+| Leitis | 0 |

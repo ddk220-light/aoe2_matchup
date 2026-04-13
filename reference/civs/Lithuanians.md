@@ -1,20 +1,25 @@
 # Lithuanians
 
-**Focus:** ⚠️ Not found  
+**Focus:** Cavalry / Monks  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Each Town Center (including starting one) provides .
+- Spearman line and Skirmishers move 10% faster.
+- Each garrisoned Relic gives +1 attack to Knights and Leitis (maximum +4).
 
 ## Team Bonus
 
-⚠️ Not found
+Monasteries (and Fortified Churches) work 20% faster.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Hill Forts | Town Centers +3 range |
+| Tower Shields | Spearman line and Skirmishers +2 pierce armor |
 
 ## Unique Units
 
@@ -35,12 +40,17 @@
 
 _Full stat comparison: see `reference/units/unique/Leitis.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Lithuanians**.
+Battering Ram, Bombard Cannon, Capped Ram, Cavalry Archer, Champion, Crossbowman, Elite Skirmisher, Halberdier, Hand Cannoneer, Heavy Cavalry Archer, Knight, Light Cavalry, Long Swordsman, Mangonel, Onager, Paladin, Pikeman, Scorpion, Trebuchet, Winged Hussar
+
+## Disabled Standard Units
+
+_None — this civ has access to all widely-available standard units._
 
 ## DB Summary
 
 - Total units in DB: 25
 - Unique units: 2
 - Standard units: 23
+- Disabled standard units: 0

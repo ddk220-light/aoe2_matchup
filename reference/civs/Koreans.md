@@ -1,20 +1,26 @@
 # Koreans
 
-**Focus:** ⚠️ Not found  
+**Focus:** Defense / Navy  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Stone Miners work 20% faster.
+- Archer armor and tower upgrades are free (Bombard Tower requires Chemistry).
+- Archer and infantry units cost .
+- Warships cost .
 
 ## Team Bonus
 
-⚠️ Not found
+[[Villager (Age of Empires II).
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Eupseong | Towers (except Bombard Towers) have +2 range |
+| Shinkichon | {{tt|Rocket Carts and Turtle Ships have +1 range and fire additional rockets |
 
 ## Unique Units
 
@@ -35,12 +41,17 @@
 
 _Full stat comparison: see `reference/units/unique/War_Wagon.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Koreans**.
+Arbalester, Battering Ram, Bombard Cannon, Capped Ram, Cavalier, Cavalry Archer, Champion, Crossbowman, Elite Fire Lancer, Elite Skirmisher, Fire Lancer, Halberdier, Hand Cannoneer, Heavy Cavalry Archer, Heavy Rocket Cart, Hussar, Knight, Light Cavalry, Long Swordsman, Pikeman, Rocket Cart, Scorpion, Trebuchet
+
+## Disabled Standard Units
+
+_None — this civ has access to all widely-available standard units._
 
 ## DB Summary
 
 - Total units in DB: 27
 - Unique units: 2
 - Standard units: 25
+- Disabled standard units: 0

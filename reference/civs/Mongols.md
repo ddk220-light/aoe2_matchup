@@ -1,20 +1,25 @@
 # Mongols
 
-**Focus:** ⚠️ Not found  
+**Focus:** Cavalry Archers  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Cavalry archers fire 25% faster.
+- Scout Cavalry-line and Steppe Lancers +20/30% hit points in the Castle/Imperial Age.
+- Hunters work 40% faster.
 
 ## Team Bonus
 
-⚠️ Not found
+The Scout Cavalry line has +2 Line of Sight.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Nomads | Makes Houses keep their population space if they are destroyed |
+| Drill | Increases the movement speed of Siege Workshop units by +50% |
 
 ## Unique Units
 
@@ -35,12 +40,18 @@
 
 _Full stat comparison: see `reference/units/unique/Mangudai.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Mongols**.
+Arbalester, Battering Ram, Camel Rider, Cavalier, Cavalry Archer, Champion, Crossbowman, Elite Skirmisher, Elite Steppe Lancer, Heavy Camel Rider, Heavy Cavalry Archer, Heavy Scorpion, Hussar, Knight, Light Cavalry, Long Swordsman, Mangonel, Pikeman, Scorpion, Siege Onager, Siege Ram, Steppe Lancer, Trebuchet
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 27
 - Unique units: 2
 - Standard units: 25
+- Disabled standard units: 2

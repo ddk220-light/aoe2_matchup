@@ -1,20 +1,27 @@
 # Byzantines
 
-**Focus:** ⚠️ Not found  
+**Focus:** Defense  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Buildings, Walls/Gates, and Farms have +10%/+20%/+30%/+40% hit points in the Dark/Feudal/Castle/Imperial Age.
+- Camel Rider, Skirmisher, and Spearman lines are 25% cheaper.
+- Fire Ships and Dromons fire 25% faster.
+- Advancing to the Imperial Age is 33% cheaper.
+- Town Watch and Town Patrol are free.
 
 ## Team Bonus
 
-⚠️ Not found
+Monks heal 100% faster.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Greek Fire | Gives Fire Ships +1 range; Dromons +0.2 blast radius; Bombard Towers +0.5 blast radius [25% effect without friendly fire damage] |
+| Logistica | Gives Cataphracts trample damage in 0.5 tiles radius (pure 5 damage) and +6 attack against {{2class |
 
 ## Unique Units
 
@@ -35,12 +42,17 @@
 
 _Full stat comparison: see `reference/units/unique/Cataphract.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Byzantines**.
+Arbalester, Battering Ram, Bombard Cannon, Camel Rider, Cavalry Archer, Champion, Crossbowman, Elite Skirmisher, Halberdier, Hand Cannoneer, Heavy Camel Rider, Heavy Cavalry Archer, Hussar, Knight, Light Cavalry, Long Swordsman, Mangonel, Onager, Paladin, Pikeman, Scorpion, Siege Ram, Trebuchet
+
+## Disabled Standard Units
+
+_None — this civ has access to all widely-available standard units._
 
 ## DB Summary
 
 - Total units in DB: 27
 - Unique units: 2
 - Standard units: 25
+- Disabled standard units: 0

@@ -41,3 +41,23 @@
 | Cost Gold | 0 | 70.0 | ❌ |
 
 **⚠️ 2 mismatch(es) found — investigate.**
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| +2 | Infantry |
+| +2 | Skirmishers |
+| -2 | Condottieri |
+| +1 | Rams |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Unique Units | 0 |
+| Siege Weapons | 0 |
+| Gunpowder Units | 0 |
+| Leitis | 0 |

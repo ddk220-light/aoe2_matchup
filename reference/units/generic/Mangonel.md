@@ -41,3 +41,21 @@
 | Cost Gold | 0 | 135.0 | ❌ |
 
 **⚠️ 2 mismatch(es) found — investigate.**
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| +40 | Unused |
+| +35 | All Buildings |
+| +12 | Siege Weapons |
+| -1 | Monks |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Siege Weapons | 0 |
+| Leitis | 0 |

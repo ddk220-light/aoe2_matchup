@@ -1,20 +1,41 @@
 # Jurchens
 
-**Focus:** ⚠️ Not found  
+**Focus:** Cavalry / Gunpowder  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Meat of hunted and livestock animals does not decay.
+- Mounted units and Fire Lancers attack +25% faster starting in the Feudal Age.
+- Siege Engineers available in the Castle Age.
+- Siege and fortification technologiesRefers to:
+- Siege Engineers
+- Masonry
+- Architecture
+- Treadmill Crane
+- 22px Guard Tower
+- 22px Keep
+- Fortified Wall
+- Arrowslits
+- 22px Heavy Scorpion
+- 22px Heavy Rocket Cart
+- 22px Capped Ram
+- 22px Siege Ram
+- Sappers
+- Hoardings}} cost  and are researched 100% faster.
+- Military units receive -50% friendly fire damage.
 
 ## Team Bonus
 
-⚠️ Not found
+Gunpowder units +2 Line of Sight.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Fortified Bastions | Fortifications regenerate 500 hit points per minute |
+| Thunderclap Bombs | Rocket Carts, Grenadiers, and Lou Chuans detonate when defeated; projectiles produce additional explosions |
 
 ## Unique Units
 
@@ -52,12 +73,19 @@ _Full stat comparison: see `reference/units/unique/Grenadier.md`_
 
 _Full stat comparison: see `reference/units/unique/Iron_Pagoda.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Jurchens**.
+Battering Ram, Bombard Cannon, Cavalry Archer, Crossbowman, Elite Fire Lancer, Elite Skirmisher, Elite Steppe Lancer, Fire Lancer, Halberdier, Heavy Cavalry Archer, Heavy Rocket Cart, Heavy Scorpion, Hussar, Light Cavalry, Man-at-Arms, Pikeman, Rocket Cart, Scorpion, Siege Ram, Steppe Lancer, Trebuchet
+
+## Disabled Standard Units
+
+- Hand Cannoneer _(available to 23/53 civs)_
+- Knight _(available to 38/53 civs)_
+- Cavalier _(available to 41/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 28
 - Unique units: 4
 - Standard units: 24
+- Disabled standard units: 3

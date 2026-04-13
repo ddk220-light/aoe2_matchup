@@ -41,3 +41,18 @@
 | Cost Gold | 0 | 50.0 | ❌ |
 
 **⚠️ 2 mismatch(es) found — investigate.**
+
+## Attack Bonuses
+
+No bonus damage entries.
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Infantry | 0 |
+| Unique Units | 0 |
+| Monks | 0 |
+| Leitis | 0 |

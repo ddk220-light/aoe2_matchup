@@ -29,15 +29,82 @@
 
 | Field | External | Our DB (Imperial) | Match |
 |-------|----------|-----------------|-------|
-| HP | ⚠️ | 35.0 | ⚠️ |
-| Attack | ⚠️ | 3.0 | ⚠️ |
-| Melee Armor | ⚠️ | 0.0 | ⚠️ |
-| Pierce Armor | ⚠️ | 4.0 | ⚠️ |
-| Speed | ⚠️ | 0.96 | ⚠️ |
-| Range | ⚠️ | 5.0 | ⚠️ |
-| Reload Time | ⚠️ | 3.0 | ⚠️ |
-| Cost Food | 0 | 25.0 | ❌ |
-| Cost Wood | 0 | 35.0 | ❌ |
-| Cost Gold | 0 | 0.0 | ✅ |
+| HP | 35.0 | 35.0 | ✅ |
+| Attack | 4.0 | 3.0 | ❌ |
+| Melee Armor | 0.0 | 0.0 | ✅ |
+| Pierce Armor | 5.0 | 4.0 | ❌ |
+| Speed | 0.96 | 0.96 | ✅ |
+| Range | 5.0 | 5.0 | ✅ |
+| Reload Time | 3.0 | 3.0 | ✅ |
+| Cost Food | 25 | 25.0 | ✅ |
+| Cost Wood | 35 | 35.0 | ✅ |
+| Cost Gold | 20 | 0.0 | ❌ |
 
-**⚠️ 2 mismatch(es) found — investigate.**
+**⚠️ 3 mismatch(es) found — investigate.**
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| +4 | Spearmen |
+| +4 | Archers |
+| +2 | Cavalry Archers |
+| +2 | Heroes & Kings |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Archers | 0 |
+| Leitis | 0 |
+| Skirmishers | 0 |
+
+## Strengths & Weaknesses
+
+**Strong vs:** Archer
+**Weak vs:** siege unit
+
+## Technologies
+
+| Stat | Technology (Effect) |
+|------|---------------------|
+| Attack | Fletching (+1) |
+| Attack | Bodkin Arrow (+1) |
+| Attack | Bracer (+1) |
+| Attack | Chemistry (+1) |
+| Attack | Atlatl (+1, Aztecs only) |
+| Armor | Padded Archer Armor (melee=+1, pierce=+1) |
+| Armor | Leather Archer Armor (melee=+1, pierce=+1) |
+| Armor | Ring Archer Armor (melee=+1, pierce=+2) |
+| Armor | Tower Shields (pierce=+2, Lithuanians only) |
+| Conversion | Devotion (+1 min, +1 max) |
+| Conversion | Faith (+4 min, +4 max) |
+| Conversion | Heresy (die upon getting converted) |
+| Conversion | First Crusade (+4 min, +4 max, Sicilians only) |
+| Creation | Conscription (+33%) |
+| Other | Malon (deal 30% pass-through damage, Mapuche only) |
+
+## Civilization Bonuses
+
+**Unique to civ:**
+
+| Stat | Civ (Bonus) |
+|------|-------------|
+| HP | Vietnamese (+20%) |
+| HP | Mapuche (+15) |
+| Attack | Tatars (+20% damage {+50% instead of +25%} from higher elevation) |
+| Armor | Muisca (melee=+3) |
+| Speed | Lithuanians (+10%) |
+| Creation | Aztecs (+15%) |
+| Creation | Khitans (+15%) |
+
+**Team bonuses:**
+
+| Stat | Civ (Bonus) |
+|------|-------------|
+| Attack | Saracens (+3 vs. Standard Buildings) |
+| Conversion | Teutons (+3 min, +1 max) |
+| Creation | Britons (+10%) |
+| LOS | Mapuche (+2) |

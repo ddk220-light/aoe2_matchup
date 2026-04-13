@@ -1,20 +1,27 @@
 # Saracens
 
-**Focus:** ⚠️ Not found  
+**Focus:** Camels / Navy  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- The commodity trading fee is 5%.
+- Markets cost 75 wood.
+- Transport Ships have double hit points and +20 carry capacity.
+- Galleys attack 25% faster.
+- Camel units +25% hit points.
 
 ## Team Bonus
 
-⚠️ Not found
+Foot archers have +3 attack against Standard Buildings.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Bimaristan | Monks automatically heal multiple nearby units |
+| Counterweights | Trebuchets and Mangonel-line +15% attack.{{tt|* |
 
 ## Unique Units
 
@@ -35,12 +42,17 @@
 
 _Full stat comparison: see `reference/units/unique/Mameluke.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Saracens**.
+Arbalester, Battering Ram, Bombard Cannon, Camel Rider, Cavalry Archer, Champion, Crossbowman, Elite Skirmisher, Hand Cannoneer, Heavy Camel Rider, Heavy Cavalry Archer, Hussar, Knight, Light Cavalry, Long Swordsman, Mangonel, Pikeman, Scorpion, Siege Onager, Siege Ram, Trebuchet
+
+## Disabled Standard Units
+
+_None — this civ has access to all widely-available standard units._
 
 ## DB Summary
 
 - Total units in DB: 27
 - Unique units: 2
 - Standard units: 25
+- Disabled standard units: 0

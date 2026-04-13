@@ -1,20 +1,27 @@
 # Bohemians
 
-**Focus:** ⚠️ Not found  
+**Focus:** Gunpowder units / Monks  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Blacksmiths and Universities cost .
+- Chemistry and Hand Cannoneer available in Castle Age.
+- Spearman-line deals +25% bonus damage.
+- Fervor and Sanctity affect Villagers.
+- Mining Camp technologies are free.
 
 ## Team Bonus
 
-⚠️ Not found
+Markets work 80% faster.
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Wagenburg Tactics | Gunpowder units move 15% faster |
+| Hussite Reforms | Monks and Monastery technologies have their gold cost replaced by an equal food cost |
 
 ## Unique Units
 
@@ -35,12 +42,18 @@
 
 _Full stat comparison: see `reference/units/unique/Hussite_Wagon.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Bohemians**.
+Arbalester, Battering Ram, Bombard Cannon, Capped Ram, Cavalier, Champion, Crossbowman, Elite Skirmisher, Halberdier, Hand Cannoneer, Heavy Scorpion, Knight, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Trebuchet
+
+## Disabled Standard Units
+
+- Cavalry Archer _(available to 42/53 civs)_
+- Heavy Cavalry Archer _(available to 42/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 23
 - Unique units: 2
 - Standard units: 21
+- Disabled standard units: 2

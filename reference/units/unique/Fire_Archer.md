@@ -41,3 +41,22 @@
 | Cost Gold | 0 | 45.0 | ❌ |
 
 **⚠️ 2 mismatch(es) found — investigate.**
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| +4 | Standard Buildings |
+| +3 | Ships & Saboteurs |
+| +2 | Spearmen |
+| +1 | Siege Weapons |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Archers | 0 |
+| Unique Units | 0 |
+| Leitis | 0 |

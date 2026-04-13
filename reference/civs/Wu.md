@@ -1,20 +1,26 @@
 # Wu
 
-**Focus:** ⚠️ Not found  
+**Focus:** Infantry / Naval  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
 **Generated:** 2026-04-12
 
 ## Civilization Bonuses
 
-⚠️ No bonus data found from wiki.
+- Barracks, Archery Ranges, Stables, Siege Workshops, Castles, and Docks provide  when constructed.
+- Infantry regenerate 10/15/30 hit points per minute in Feudal/Castle/Imperial Age.
+- Jian Swordsmen and Hei Guang Cavalry have +2 attack in Imperial Age.
+- Careening and Dry Dock are free.
 
 ## Team Bonus
 
-⚠️ Not found
+Houses built 100% faster
 
 ## Unique Technologies
 
-⚠️ No unique tech data found from wiki.
+| Tech | Effect |
+|------|--------|
+| Red Cliffs Tactics | Demolition Ships and Fire Archers deal fire damage to ships and buildings |
+| Sitting Tiger | Traction Trebuchets and Lou Chuan trebuchet weapons fire additional projectiles |
 
 ## Unique Units
 
@@ -52,12 +58,19 @@ _Full stat comparison: see `reference/units/unique/Fire_Archer.md`_
 
 _Full stat comparison: see `reference/units/unique/Jian_Swordsman.md`_
 
-## Tech Tree Notes
+## Standard Units Available
 
-Tech tree data available from SiegeEngineers/aoe2techtree for **Wu**.
+Arbalester, Battering Ram, Cavalry Archer, Champion, Crossbowman, Elite Skirmisher, Halberdier, Heavy Hei-Kuang Cavalry, Heavy Scorpion, Hussar, Light Cavalry, Long Swordsman, Mangonel, Onager, Pikeman, Scorpion, Traction Trebuchet, Trebuchet
+
+## Disabled Standard Units
+
+- Bombard Cannon _(available to 25/53 civs)_
+- Hand Cannoneer _(available to 23/53 civs)_
+- Knight _(available to 38/53 civs)_
 
 ## DB Summary
 
 - Total units in DB: 25
 - Unique units: 4
 - Standard units: 21
+- Disabled standard units: 3

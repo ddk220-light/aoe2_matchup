@@ -1,0 +1,43 @@
+# Ratha (Melee)
+
+**Type:** Unique  
+**Available to:** Bengalis  
+**Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
+**Generated:** 2026-04-12
+
+## Stats
+
+| Stat | Castle | Imperial |
+|------|---------|-------|
+| HP | 100.0 | 115.0 |
+| Attack | 10.0 | 12.0 |
+| Melee Armor | 3.0 | 3.0 |
+| Pierce Armor | 1.0 | 3.0 |
+| Speed | 1.3 | 1.3 |
+| Range | 0.0 | 0.0 |
+| Reload Time | 2.0 | 2.0 |
+| Cost Food | 0.0 | 0.0 |
+| Cost Wood | 60.0 | 60.0 |
+| Cost Gold | 60.0 | 60.0 |
+| Pop Space | 1.0 | 1.0 |
+
+## Special Effects
+
+- **trample_percent:** 0.2
+- **trample_radius:** 0.5
+- **pass_through_count:** 1.0
+
+## DB Comparison
+
+| Field | External | Our DB (Castle) | Match |
+|-------|----------|-----------------|-------|
+| HP | 100 | 100.0 | ✅ |
+| Attack | 10 | 10.0 | ✅ |
+| Melee Armor | 3 | 3.0 | ✅ |
+| Pierce Armor | 1 | 1.0 | ✅ |
+| Speed | 1.3 | 1.3 | ✅ |
+| Range | 0 | 0.0 | ✅ |
+| Reload Time | 2 | 2.0 | ✅ |
+| Cost Food | 0 | 0.0 | ✅ |
+| Cost Wood | 60 | 60.0 | ✅ |
+| Cost Gold | 60 | 60.0 | ✅ |

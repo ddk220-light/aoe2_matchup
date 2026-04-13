@@ -711,10 +711,73 @@ def generate_all_units(techtree: dict, conn: sqlite3.Connection, args, stats: di
 
 # --- STUB FUNCTIONS (to be implemented in later tasks) ---
 
+TECHTREE_STRINGS_URL = "https://raw.githubusercontent.com/SiegeEngineers/aoe2techtree/master/data/locales/en/strings.json"
+
+
 def fetch_techtree() -> dict:
-    """Fetch SiegeEngineers data.json and return parsed JSON."""
-    data = http_get(TECHTREE_URL)
-    return json.loads(data)
+    """
+    Fetch SiegeEngineers data.json, normalize and return a dict with:
+      - 'units': {str_id: unit_dict} with lowercase stat keys + 'name' (display name where available)
+      - 'civs': list of {name: str, ...} dicts
+    """
+    raw = json.loads(http_get(TECHTREE_URL))
+
+    # Fetch English strings for display names (best-effort; may be incomplete)
+    try:
+        strings: dict = json.loads(http_get(TECHTREE_STRINGS_URL))
+    except Exception:
+        strings = {}
+
+    # Normalize civs: raw is {civ_name: {...}} → list of dicts with 'name' key
+    raw_civs = raw.get("civs", {})
+    if isinstance(raw_civs, dict):
+        civs_list = []
+        for civ_name, civ_data in raw_civs.items():
+            entry = dict(civ_data) if isinstance(civ_data, dict) else {}
+            entry.setdefault("name", civ_name)
+            civs_list.append(entry)
+    else:
+        civs_list = list(raw_civs)
+
+    # Normalize units: raw is data.Unit[id] with PascalCase keys → lowercase keys + 'name'
+    raw_units = raw.get("data", {}).get("Unit", {})
+    units_dict: dict = {}
+    for uid, u in raw_units.items():
+        if not isinstance(u, dict):
+            continue
+        ma = u.get("MeleeArmor", 0) or 0
+        pa = u.get("PierceArmor", 0) or 0
+        cost_raw = u.get("Cost", {}) or {}
+        lang_id = str(u.get("LanguageNameId", ""))
+        # Try to get display name from strings; fall back to internal_name
+        display_name = strings.get(lang_id, "") or ""
+        # Clean up HTML line breaks in names
+        display_name = re.sub(r"<br\s*/?>", " ", display_name).strip()
+        if not display_name:
+            display_name = u.get("internal_name", f"Unit_{uid}")
+        units_dict[str(uid)] = {
+            "id": u.get("ID", int(uid)),
+            "name": display_name,
+            "internal_name": u.get("internal_name", ""),
+            "hp": u.get("HP"),
+            "attack": u.get("Attack"),
+            "armor": f"{ma}/{pa}",
+            "melee_armor": ma,
+            "pierce_armor": pa,
+            "speed": u.get("Speed"),
+            "range": u.get("Range", 0),
+            "reloadTime": u.get("ReloadTime"),
+            "attackSpeed": u.get("ReloadTime"),
+            "cost": {
+                "Food": cost_raw.get("Food", 0),
+                "Wood": cost_raw.get("Wood", 0),
+                "Gold": cost_raw.get("Gold", 0),
+            },
+            "trainTime": u.get("TrainTime"),
+            "populationUse": u.get("PopulationUse", 1),
+        }
+
+    return {"units": units_dict, "civs": civs_list}
 
 def generate_armor_classes(conn: sqlite3.Connection, args, stats: dict):
     """Write reference/armor-classes.md."""
@@ -731,7 +794,75 @@ def generate_armor_classes(conn: sqlite3.Connection, args, stats: dict):
         print(f"  Written: {out_path}")
     else:
         print(f"  [dry-run] Would write: {out_path}")
-def write_readme(args, stats): pass
+def write_readme(args, stats: dict):
+    """Write reference/README.md index file."""
+    if args.dry_run:
+        return
+    content = """# AoE2 Reference Corpus
+
+Generated: {today}
+
+This directory contains markdown reference files for all AoE2 civilizations, units, and armor classes.
+Each file includes a **DB Comparison** table showing whether our local database matches the authoritative
+external sources (Fandom wiki + SiegeEngineers/aoe2techtree).
+
+## Structure
+
+```
+reference/
+  armor-classes.md       — All armor classes
+  civs/                  — One file per civilization (53 total)
+  units/generic/         — Generic unit lines (Arbalester, Paladin, etc.)
+  units/unique/          — Unique units per civ
+```
+
+## How to Regenerate
+
+From the project root (activate venv first: `source venv/bin/activate`):
+
+```bash
+# Regenerate all files (skip existing)
+python3 scripts/build_reference_docs.py
+
+# Force regenerate all files
+python3 scripts/build_reference_docs.py --force
+
+# Regenerate a single civ
+python3 scripts/build_reference_docs.py --civ Muisca
+
+# Regenerate a single unit
+python3 scripts/build_reference_docs.py --unit "Temple Guard"
+
+# Dry run — report what would be written
+python3 scripts/build_reference_docs.py --dry-run
+```
+
+## Reading the DB Comparison Tables
+
+| Symbol | Meaning |
+|--------|---------|
+| ✅ | Values match within tolerance (±0.01 for floats) |
+| ❌ | Values differ — needs investigation |
+| ⚠️ | External data not available for this field |
+| ❌ NOT IN DB | Field missing from our database |
+
+## When to Regenerate
+
+Regenerate the corpus after:
+- A new dat file update (new patch with balance changes)
+- Adding new civilizations
+- Adding new combat mechanics to the simulator
+
+## Sources
+
+- **Stats:** [SiegeEngineers/aoe2techtree](https://github.com/SiegeEngineers/aoe2techtree)
+- **Civ bonuses + unique techs:** [Fandom Wiki](https://ageofempires.fandom.com/wiki/Age_of_Empires_II)
+- **DB:** `webapp/aoe2_reference.db` (local SQLite, queried directly)
+""".format(today=TODAY)
+    readme_path = REF_DIR / "README.md"
+    readme_path.parent.mkdir(parents=True, exist_ok=True)
+    readme_path.write_text(content, encoding="utf-8")
+    print(f"  Written: {readme_path}")
 
 
 def main():

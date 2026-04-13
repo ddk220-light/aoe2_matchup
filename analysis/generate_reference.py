@@ -33,6 +33,8 @@ from .config import (
     REF_DB_PATH,
     UNIQUE_COMBAT_PROPERTIES,
     UNIQUE_UNIT_BUILDING,
+    NAVAL_LINE_CONFIGS,
+    NAVAL_UNIQUE_UNITS,
     UNIQUE_UNITS,
     UNIQUE_UNITS_IN_BARRACKS,
     UNIT_CLASS_TO_BUILDING,
@@ -1377,6 +1379,107 @@ def generate_reference_database(analyzer):
                         IMPERIAL_AGE,
                         unit_data,
                         excluded_tech_ids=excluded,
+                    )
+
+        # =================================================================
+        # Naval standard units (line configs)
+        # =================================================================
+        # Each NAVAL_LINE_CONFIGS entry is processed twice — once at
+        # CASTLE_AGE and once at IMPERIAL_AGE — so both tiers land in the
+        # DB. The unit_name in the stored row reflects the highest tier that
+        # civ achieves by that age.
+        for age_const, age_label in ((CASTLE_AGE, "Castle"), (IMPERIAL_AGE, "Imperial")):
+            for line_slug, config in NAVAL_LINE_CONFIGS.items():
+                result = analyzer.calculate_unit_stats_for_civ(
+                    civ_name, config, age_const
+                )
+                if not result["has_unit"]:
+                    continue
+                final_unit_id = result.get("unit_id", config["base_id"])
+                unit_data = analyzer.get_unit(final_unit_id)
+                if not unit_data:
+                    continue
+                process_unit_audited(
+                    civ_name,
+                    final_unit_id,
+                    result.get("unit_class", config["unit_class"]),
+                    result["unit_name"],
+                    line_slug,           # slug = line slug (e.g. "galleon")
+                    "naval",             # unit_type='naval'
+                    age_label,
+                    age_const,
+                    unit_data,
+                )
+
+        # =================================================================
+        # Naval unique units (per-civ, replace a standard line slot)
+        # =================================================================
+        if civ_name in NAVAL_UNIQUE_UNITS:
+            for nu_config in NAVAL_UNIQUE_UNITS[civ_name]:
+                base_id = nu_config["base_id"]
+                disp_name = nu_config["display_name"]
+                unit_data = analyzer.get_unit(base_id)
+                if not unit_data:
+                    continue
+
+                # Check availability tech (if set)
+                avail_tech = nu_config.get("availability_tech")
+                disabled = analyzer.get_disabled_techs(civ_name)
+                if avail_tech is not None and avail_tech in disabled:
+                    continue
+
+                slug = (
+                    disp_name.lower()
+                    .replace(" ", "_")
+                    .replace("-", "_")
+                )
+                civ_slug = f"{slug}_{civ_name.lower()}"
+
+                # Castle Age (base form)
+                process_unit_audited(
+                    civ_name,
+                    base_id,
+                    nu_config["unit_class"],
+                    disp_name,
+                    civ_slug,
+                    "unique",
+                    "Castle",
+                    CASTLE_AGE,
+                    unit_data,
+                )
+
+                # Imperial Age (elite form if exists, else base with Imp techs)
+                elite_id = nu_config.get("elite_id")
+                if elite_id:
+                    elite_data = analyzer.get_unit(elite_id)
+                    if elite_data:
+                        elite_name = nu_config.get(
+                            "elite_name", f"Elite {disp_name}"
+                        )
+                        elite_civ_slug = f"elite_{civ_slug}"
+                        process_unit_audited(
+                            civ_name,
+                            elite_id,
+                            nu_config["unit_class"],
+                            elite_name,
+                            elite_civ_slug,
+                            "unique",
+                            "Imperial",
+                            IMPERIAL_AGE,
+                            elite_data,
+                        )
+                else:
+                    # No elite — show base unit with Imperial-age techs
+                    process_unit_audited(
+                        civ_name,
+                        base_id,
+                        nu_config["unit_class"],
+                        disp_name,
+                        civ_slug,
+                        "unique",
+                        "Imperial",
+                        IMPERIAL_AGE,
+                        unit_data,
                     )
 
     conn.commit()

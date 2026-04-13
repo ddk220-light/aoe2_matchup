@@ -74,7 +74,6 @@ UNIT_NAMES = {
     # Knight line: 38 → 283(Cav) → 569(Pal)
     38: "Knight",
     283: "Cavalier",
-    529: "Paladin",
     569: "Paladin",
     1813: "Savar",
     # Camel line: 329 → 330(Heavy) → 207(Imperial)
@@ -95,11 +94,10 @@ UNIT_NAMES = {
     873: "Elephant Archer",
     875: "Elite Elephant Archer",
     # ===== Siege Weapons =====
-    # Ram line: 35 → 422(Capped) → 548(Siege), alternates 493, 527
+    # Ram line: 35 → 422(Capped) → 548(Siege), alternates 493
     35: "Battering Ram",
     422: "Capped Ram",
     493: "Capped Ram",
-    527: "Siege Ram",
     548: "Siege Ram",
     # Armored Elephant: 1733/1744 → 1746(Siege)
     1733: "Armored Elephant",
@@ -119,6 +117,36 @@ UNIT_NAMES = {
     42: "Trebuchet",
     331: "Trebuchet (Packed)",
     188: "Siege Tower",
+    # ===== Naval Units =====
+    # Galleon line: 539(Galley) → 21(War Galley) → 442(Galleon)
+    539: "Galley",
+    21: "War Galley",
+    442: "Galleon",
+    # Fire Ship line: 1103(Fire Galley) → 529(Fire Ship) → 532(Fast Fire Ship)
+    1103: "Fire Galley",
+    529: "Fire Ship",
+    532: "Fast Fire Ship",
+    # Demo Ship line: 1104(Demo Raft) → 527(Demo Ship) → 528(Heavy Demo Ship)
+    1104: "Demo Raft",
+    527: "Demo Ship",
+    528: "Heavy Demo Ship",
+    # Cannon Galleon line: 420(Cannon Galleon) → 691(Elite Cannon Galleon)
+    420: "Cannon Galleon",
+    691: "Elite Cannon Galleon",
+    # Hulk line: 2626(Hulk) → 2627(War Hulk) → 2628(Carrack)
+    2626: "Hulk",
+    2627: "War Hulk",
+    2628: "Carrack",
+    # Naval unique units
+    250: "Longboat",
+    533: "Elite Longboat",
+    831: "Turtle Ship",
+    832: "Elite Turtle Ship",
+    1004: "Caravel",
+    1006: "Elite Caravel",
+    1631: "Xebec",
+    1750: "Thirisadai",
+    1795: "Dromon",
     # ===== Unique Units - Britons =====
     8: "Longbowman",
     530: "Elite Longbowman",
@@ -175,13 +203,9 @@ UNIT_NAMES = {
     # ===== Unique Units - Koreans =====
     827: "War Wagon",
     829: "Elite War Wagon",
-    828: "Turtle Ship",
-    830: "Elite Turtle Ship",
     # ===== Unique Units - Italians =====
     866: "Genoese Crossbowman",
     868: "Elite Genoese Crossbowman",
-    1004: "Genoese Crossbowman",
-    1006: "Elite Genoese Crossbowman",
     882: "Condottiero",
     # ===== Unique Units - Hindustanis =====
     1747: "Ghulam",

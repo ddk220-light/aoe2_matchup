@@ -530,6 +530,185 @@ def generate_all_civs(techtree: dict, conn: sqlite3.Connection, args, stats: dic
         generate_single_civ(civ_name, techtree, conn, args, stats)
 
 
+def render_unit_file(
+    unit_name: str,
+    unit_type: str,
+    ext_stats: dict,
+    db_rows: dict,
+    civ_name: str = None,
+) -> tuple:
+    """
+    Render a unit reference markdown file.
+    ext_stats: from techtree_unit_stats() or parse_wiki_unit() — external source values
+    db_rows: {age: db_dict} from query_db_unit()
+    Returns (content_string, mismatch_count) tuple.
+    """
+    ages = list(db_rows.keys()) if db_rows else []
+    col_a = ages[0] if ages else "Regular"
+    col_b = ages[1] if len(ages) > 1 else "Elite"
+
+    db_a = db_rows.get(col_a, {})
+    db_b = db_rows.get(col_b, {})
+
+    lines = [
+        f"# {unit_name}",
+        "",
+        f"**Type:** {unit_type.capitalize()}  ",
+        f"**Available to:** {'All civs' if not civ_name else civ_name}  ",
+        "**Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  ",
+        f"**Generated:** {TODAY}",
+        "",
+        "## Stats",
+        "",
+        f"| Stat | {col_a} | {col_b} |",
+        "|------|---------|-------|",
+    ]
+
+    stat_rows = [
+        ("HP", "base_hp"),
+        ("Attack", "base_attack"),
+        ("Melee Armor", "base_melee_armor"),
+        ("Pierce Armor", "base_pierce_armor"),
+        ("Speed", "base_speed"),
+        ("Range", "base_range"),
+        ("Reload Time", "base_reload_time"),
+        ("Cost Food", "base_cost_food"),
+        ("Cost Wood", "base_cost_wood"),
+        ("Cost Gold", "base_cost_gold"),
+        ("Pop Space", "pop_space"),
+    ]
+    for label, col in stat_rows:
+        a = db_a.get(col, "—")
+        b = db_b.get(col, "—")
+        lines.append(f"| {label} | {a} | {b} |")
+    lines.append("")
+
+    # Special effects
+    special_fields = [
+        "bleed_dps", "bleed_duration", "trample_percent", "trample_flat_damage",
+        "trample_radius", "pass_through_percent", "pass_through_count",
+        "attack_bonus_per_kill", "charge_attack_melee", "dodge_shield_max",
+        "attack_speed_ramp", "attack_speed_min", "execute_damage_per_step",
+        "ally_death_heal",
+    ]
+    special = {k: db_a.get(k) for k in special_fields if db_a.get(k)}
+    lines += ["## Special Effects", ""]
+    if special:
+        for k, v in special.items():
+            lines.append(f"- **{k}:** {v}")
+    else:
+        lines.append("None")
+    lines.append("")
+
+    # DB Comparison table (external vs our DB for first age)
+    lines += [
+        "## DB Comparison",
+        "",
+        f"| Field | External | Our DB ({col_a}) | Match |",
+        "|-------|----------|-----------------|-------|",
+    ]
+    mismatch_count = 0
+
+    # Map external stat keys → db column names
+    ext_to_db = {
+        "hp": "base_hp",
+        "attack": "base_attack",
+        "melee_armor": "base_melee_armor",
+        "pierce_armor": "base_pierce_armor",
+        "speed": "base_speed",
+        "range": "base_range",
+        "reload_time": "base_reload_time",
+        "cost_food": "base_cost_food",
+        "cost_wood": "base_cost_wood",
+        "cost_gold": "base_cost_gold",
+    }
+    for label, col in stat_rows[:10]:  # skip pop_space (not in external sources)
+        ext_key = next((k for k, v in ext_to_db.items() if v == col), col)
+        ext_val = ext_stats.get(ext_key)
+        db_val = db_a.get(col)
+        symbol = compare_val(ext_val, db_val)
+        ext_display = ext_val if ext_val is not None else "⚠️"
+        db_display = db_val if db_val is not None else "—"
+        lines.append(f"| {label} | {ext_display} | {db_display} | {symbol} |")
+        if symbol == MISMATCH:
+            mismatch_count += 1
+    lines.append("")
+
+    if mismatch_count:
+        lines.append(f"**⚠️ {mismatch_count} mismatch(es) found — investigate.**")
+        lines.append("")
+
+    return "\n".join(lines), mismatch_count
+
+
+def generate_single_unit(unit_name: str, techtree: dict, conn: sqlite3.Connection, args, stats: dict):
+    """Generate reference file for one unit by display name."""
+    safe_name = unit_name.replace(" ", "_")
+
+    # Find in DB — get type and one slug to use as prefix
+    slug_rows = conn.execute(
+        "SELECT DISTINCT unit_slug, unit_type, civ_name FROM ref_units WHERE unit_name = ? LIMIT 5",
+        (unit_name,),
+    ).fetchall()
+
+    if not slug_rows:
+        print(f"  ⚠️ Unit not found in DB: {unit_name}")
+        return
+
+    unit_type = slug_rows[0]["unit_type"]
+    civ_name = slug_rows[0]["civ_name"] if unit_type == "unique" else None
+    base_slug = slug_rows[0]["unit_slug"]
+
+    subdir = "unique" if unit_type == "unique" else "generic"
+    out_path = REF_DIR / "units" / subdir / f"{safe_name}.md"
+
+    if out_path.exists() and not args.force and not args.dry_run:
+        stats["skipped"] += 1
+        print(f"  Skipped (exists): {out_path}")
+        return
+
+    # Get external stats from techtree first, then wiki fallback
+    tt_unit = find_techtree_unit(techtree, unit_name)
+    if tt_unit:
+        ext_stats = techtree_unit_stats(tt_unit)
+    else:
+        print(f"  Fetching wiki unit: {unit_name}...", end=" ", flush=True)
+        time.sleep(WIKI_DELAY)
+        wikitext = fetch_wiki_wikitext(unit_name.replace(" ", "_"))
+        if wikitext:
+            print("✓")
+            ext_stats = parse_wiki_unit(wikitext)
+        else:
+            print("⚠️ not found")
+            ext_stats = {}
+
+    db_rows = query_db_unit(conn, base_slug)
+    content, mismatches = render_unit_file(unit_name, unit_type, ext_stats, db_rows, civ_name)
+
+    if not args.dry_run:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(content, encoding="utf-8")
+        stats["written"] += 1
+        stats["mismatches"] += mismatches
+        suffix = f" ({mismatches} ❌)" if mismatches else ""
+        print(f"  Written: {out_path}{suffix}")
+    else:
+        print(f"  [dry-run] Would write: {out_path}")
+
+
+def generate_all_units(techtree: dict, conn: sqlite3.Connection, args, stats: dict):
+    """Generate unit files for all distinct unit names in the DB."""
+    units = conn.execute(
+        """SELECT DISTINCT unit_name, unit_type
+           FROM ref_units
+           WHERE unit_name NOT LIKE 'Elite %'
+           ORDER BY unit_type, unit_name"""
+    ).fetchall()
+    print(f"\nGenerating {len(units)} unit files...")
+    for row in units:
+        generate_single_unit(row["unit_name"], techtree, conn, args, stats)
+
+
 # --- STUB FUNCTIONS (to be implemented in later tasks) ---
 
 def fetch_techtree() -> dict:
@@ -552,8 +731,6 @@ def generate_armor_classes(conn: sqlite3.Connection, args, stats: dict):
         print(f"  Written: {out_path}")
     else:
         print(f"  [dry-run] Would write: {out_path}")
-def generate_all_units(techtree, conn, args, stats): pass
-def generate_single_unit(name, techtree, conn, args, stats): pass
 def write_readme(args, stats): pass
 
 

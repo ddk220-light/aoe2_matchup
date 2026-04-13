@@ -12,9 +12,10 @@ def test_naval_score_attached_to_unit(client):
     conn = sqlite3.connect(_db_path())
     c = conn.cursor()
     # Save existing score (if any) so we can restore it after the test
+    # battle_scores stores age as lowercase ('imperial', not 'Imperial')
     c.execute(
         "SELECT score_value FROM battle_scores"
-        " WHERE line_slug='galleon' AND age='Imperial' AND civ_name='Britons'"
+        " WHERE line_slug='galleon' AND age='imperial' AND civ_name='Britons'"
         " AND unit_slug='galleon' AND score_type='naval_effectiveness'",
     )
     existing = c.fetchone()
@@ -22,13 +23,13 @@ def test_naval_score_attached_to_unit(client):
 
     # Replace with synthetic test value
     c.execute(
-        "DELETE FROM battle_scores WHERE line_slug='galleon' AND age='Imperial'"
+        "DELETE FROM battle_scores WHERE line_slug='galleon' AND age='imperial'"
         " AND civ_name='Britons' AND unit_slug='galleon' AND score_type='naval_effectiveness'",
     )
     c.execute(
         "INSERT INTO battle_scores (line_slug, age, civ_name, unit_slug, score_type, score_value)"
         " VALUES (?, ?, ?, ?, ?, ?)",
-        ("galleon", "Imperial", "Britons", "galleon", "naval_effectiveness", 77.5),
+        ("galleon", "imperial", "Britons", "galleon", "naval_effectiveness", 77.5),
     )
     conn.commit()
     conn.close()
@@ -49,14 +50,14 @@ def test_naval_score_attached_to_unit(client):
     finally:
         conn = sqlite3.connect(_db_path())
         conn.execute(
-            "DELETE FROM battle_scores WHERE line_slug='galleon' AND age='Imperial'"
+            "DELETE FROM battle_scores WHERE line_slug='galleon' AND age='imperial'"
             " AND civ_name='Britons' AND unit_slug='galleon' AND score_type='naval_effectiveness'",
         )
         if original_value is not None:
             conn.execute(
                 "INSERT INTO battle_scores (line_slug, age, civ_name, unit_slug, score_type, score_value)"
                 " VALUES (?, ?, ?, ?, ?, ?)",
-                ("galleon", "Imperial", "Britons", "galleon", "naval_effectiveness", original_value),
+                ("galleon", "imperial", "Britons", "galleon", "naval_effectiveness", original_value),
             )
         conn.commit()
         conn.close()
@@ -67,9 +68,10 @@ def test_naval_aggregate_score_attached(client):
     conn = sqlite3.connect(_db_path())
     c = conn.cursor()
     # Save existing score (if any) so we can restore it after the test
+    # battle_scores stores age as lowercase ('imperial', not 'Imperial')
     c.execute(
         "SELECT score_value FROM battle_scores"
-        " WHERE line_slug='galleon' AND age='Imperial' AND civ_name='Britons'"
+        " WHERE line_slug='galleon' AND age='imperial' AND civ_name='Britons'"
         " AND unit_slug='galleon' AND score_type='naval_effectiveness'",
     )
     existing = c.fetchone()
@@ -77,13 +79,13 @@ def test_naval_aggregate_score_attached(client):
 
     # Replace with synthetic test value
     c.execute(
-        "DELETE FROM battle_scores WHERE line_slug='galleon' AND age='Imperial'"
+        "DELETE FROM battle_scores WHERE line_slug='galleon' AND age='imperial'"
         " AND civ_name='Britons' AND unit_slug='galleon' AND score_type='naval_effectiveness'",
     )
     c.execute(
         "INSERT INTO battle_scores (line_slug, age, civ_name, unit_slug, score_type, score_value)"
         " VALUES (?, ?, ?, ?, ?, ?)",
-        ("galleon", "Imperial", "Britons", "galleon", "naval_effectiveness", 65.0),
+        ("galleon", "imperial", "Britons", "galleon", "naval_effectiveness", 65.0),
     )
     conn.commit()
     conn.close()
@@ -102,14 +104,14 @@ def test_naval_aggregate_score_attached(client):
     finally:
         conn = sqlite3.connect(_db_path())
         conn.execute(
-            "DELETE FROM battle_scores WHERE line_slug='galleon' AND age='Imperial'"
+            "DELETE FROM battle_scores WHERE line_slug='galleon' AND age='imperial'"
             " AND civ_name='Britons' AND unit_slug='galleon' AND score_type='naval_effectiveness'",
         )
         if original_value is not None:
             conn.execute(
                 "INSERT INTO battle_scores (line_slug, age, civ_name, unit_slug, score_type, score_value)"
                 " VALUES (?, ?, ?, ?, ?, ?)",
-                ("galleon", "Imperial", "Britons", "galleon", "naval_effectiveness", original_value),
+                ("galleon", "imperial", "Britons", "galleon", "naval_effectiveness", original_value),
             )
         conn.commit()
         conn.close()

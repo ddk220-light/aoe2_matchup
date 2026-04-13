@@ -570,7 +570,7 @@ def api_ref_unit_line(line_slug):
     if line_slug == "stable":
         _score_line_slugs = list(STABLE_LINE_SLUGS)
     elif line_slug == "siege":
-        _score_line_slugs = ["ram", "trebuchet", "bombard_cannon"]
+        _score_line_slugs = ["ram", "trebuchet", "bombard_cannon", "cannon_galleon"]
     elif line_slug == "naval":
         _score_line_slugs = ["galleon", "fire", "hulk"]
     if _score_line_slugs:

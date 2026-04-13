@@ -36,7 +36,7 @@ const UNIT_LINES = {
         castle: "Battering Ram",
         imperial: "Trebuchet",
         hasUnique: true,
-        subLines: ["ram", "trebuchet", "bombard_cannon"],
+        subLines: ["ram", "trebuchet", "bombard_cannon", "cannon_galleon"],
     },
     naval: {
         name: "Naval Effectiveness",
@@ -159,6 +159,19 @@ const SCORE_BREAKDOWN = {
             { key: "ac_3k_vs_elephant", label: "vs Battle Elephant (3K res)", civ: "Vietnamese", slug: "elite_elephant", mode: "resources", res: 3000 },
         ],
     },
+    // Siege score breakdowns
+    anti_building_score: {
+        title: "Anti-Building Score",
+        formula: "Normalized time to destroy a fully upgraded Spanish Castle (1K weighted resources, speed-weighted)",
+        subs: [
+            { key: "time_to_kill", label: "Time to Kill (s)" },
+        ],
+    },
+    time_to_kill: {
+        title: "Time to Kill",
+        formula: "Seconds for a 1K-resource army to destroy a fully upgraded Spanish Castle",
+        subs: [],
+    },
     naval_effectiveness: {
         title: "Naval Effectiveness",
         formula: "Average of vs_galleon + vs_fire + vs_hulk (each = avg 30v30 + 3K res), speed-weighted per sub-line",
@@ -202,6 +215,9 @@ const SCORE_KEYS = new Set([
     "stable_effectiveness",
     "ac_30v30_vs_heavy_camel",
     "ac_3k_vs_heavy_camel",
+    // Siege scores
+    "anti_building_score",
+    "time_to_kill",
     // Naval scores
     "naval_effectiveness",
     "vs_galleon",

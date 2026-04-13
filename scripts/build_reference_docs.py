@@ -181,6 +181,71 @@ def parse_wiki_unit(wikitext: str) -> dict:
     return result
 
 
+# --- DB QUERY LAYER ---
+
+def query_armor_classes(conn: sqlite3.Connection) -> list:
+    """Return all armor classes as list of {id, name} dicts."""
+    rows = conn.execute("SELECT id, name FROM armor_classes ORDER BY id").fetchall()
+    return [{"id": r["id"], "name": r["name"]} for r in rows]
+
+
+def query_db_unit(conn: sqlite3.Connection, unit_slug_prefix: str) -> dict:
+    """
+    Query ref_units for all rows matching unit_slug_prefix (handles both regular + elite
+    which share a slug prefix like 'jaguar_warrior_aztecs' / 'elite_jaguar_warrior_aztecs').
+    Returns dict keyed by age: {'Castle': {...stats...}, 'Imperial': {...stats...}}
+    Special effects are merged into each age's dict.
+    """
+    rows = conn.execute(
+        """SELECT ru.*, GROUP_CONCAT(se.property_name || '=' || se.property_value, '|') as effects
+           FROM ref_units ru
+           LEFT JOIN ref_special_effects se ON se.ref_unit_id = ru.id
+           WHERE ru.unit_slug LIKE ? OR ru.unit_slug = ?
+           GROUP BY ru.id
+           ORDER BY ru.age""",
+        (f"%{unit_slug_prefix}%", unit_slug_prefix),
+    ).fetchall()
+
+    result = {}
+    for row in rows:
+        age = row["age"]
+        d = dict(row)
+        # Parse special effects into flat keys
+        effects_str = d.pop("effects", "") or ""
+        for effect in effects_str.split("|"):
+            if "=" in effect:
+                k, v = effect.split("=", 1)
+                try:
+                    d[k] = float(v)
+                except ValueError:
+                    d[k] = v
+        result[age] = d
+    return result
+
+
+def query_db_civ(conn: sqlite3.Connection, civ_name: str) -> dict:
+    """
+    Return all units for a civ, split into 'standard' and 'unique' lists.
+    Each unit has slug, name, type, age, and base stats.
+    """
+    rows = conn.execute(
+        """SELECT unit_slug, unit_name, unit_type, age,
+                  base_hp, base_attack, base_melee_armor, base_pierce_armor,
+                  base_speed, base_range, base_reload_time,
+                  base_cost_food, base_cost_wood, base_cost_gold, pop_space
+           FROM ref_units WHERE civ_name = ? ORDER BY unit_type, age, unit_slug""",
+        (civ_name,),
+    ).fetchall()
+    result = {"standard": [], "unique": []}
+    for row in rows:
+        d = dict(row)
+        key = d["unit_type"]
+        if key not in result:
+            result[key] = []
+        result[key].append(d)
+    return result
+
+
 # --- STUB FUNCTIONS (to be implemented in later tasks) ---
 
 def fetch_techtree() -> dict:

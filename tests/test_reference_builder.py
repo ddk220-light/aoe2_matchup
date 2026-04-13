@@ -82,3 +82,70 @@ def test_parse_wiki_unit_cost():
     assert result["cost_food"] == 60
     assert result["cost_gold"] == 30
     assert result["cost_wood"] == 0
+
+
+# --- DB query tests (in-memory sqlite) ---
+import sqlite3
+
+def make_test_db():
+    """Create a minimal in-memory DB that mirrors ref_units schema."""
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    conn.executescript("""
+        CREATE TABLE ref_units (
+            id INTEGER PRIMARY KEY,
+            civ_name TEXT, unit_name TEXT, unit_slug TEXT, unit_type TEXT, age TEXT,
+            base_hp REAL, base_attack REAL, base_melee_armor REAL, base_pierce_armor REAL,
+            base_speed REAL, base_range REAL, base_reload_time REAL,
+            base_cost_food REAL, base_cost_wood REAL, base_cost_gold REAL,
+            base_attacks_json TEXT, base_armors_json TEXT, pop_space REAL DEFAULT 1,
+            has_unit INTEGER DEFAULT 1
+        );
+        CREATE TABLE ref_special_effects (
+            id INTEGER PRIMARY KEY,
+            ref_unit_id INTEGER,
+            property_name TEXT,
+            property_value REAL
+        );
+        CREATE TABLE armor_classes (
+            id INTEGER PRIMARY KEY,
+            name TEXT
+        );
+        INSERT INTO ref_units VALUES
+            (1,'Aztecs','Jaguar Warrior','jaguar_warrior_aztecs','unique','Castle',
+             50,10,1,0,1.0,0,2.0,60,0,30,'{"1":10}','{}',1,1),
+            (2,'Aztecs','Elite Jaguar Warrior','elite_jaguar_warrior_aztecs','unique','Imperial',
+             75,12,1,0,1.0,0,2.0,60,0,30,'{"1":12}','{}',1,1);
+        INSERT INTO ref_special_effects VALUES (1,1,'attack_bonus_per_kill',4);
+        INSERT INTO armor_classes VALUES (0,'Unused'),(1,'Infantry'),(8,'Cavalry');
+    """)
+    return conn
+
+def test_query_db_unit_base_stats():
+    conn = make_test_db()
+    result = builder.query_db_unit(conn, "jaguar_warrior_aztecs")
+    assert result["Castle"]["base_hp"] == 50
+    assert result["Castle"]["base_attack"] == 10
+
+def test_query_db_unit_special_effects():
+    conn = make_test_db()
+    result = builder.query_db_unit(conn, "jaguar_warrior_aztecs")
+    assert result["Castle"]["attack_bonus_per_kill"] == 4
+
+def test_query_db_unit_both_ages():
+    conn = make_test_db()
+    result = builder.query_db_unit(conn, "jaguar_warrior_aztecs")
+    assert "Castle" in result
+    assert "Imperial" in result
+
+def test_query_armor_classes():
+    conn = make_test_db()
+    result = builder.query_armor_classes(conn)
+    assert result[0]["name"] == "Unused"
+    assert result[1]["name"] == "Infantry"
+
+def test_query_db_civ():
+    conn = make_test_db()
+    result = builder.query_db_civ(conn, "Aztecs")
+    slugs = [u["unit_slug"] for u in result["unique"]]
+    assert "jaguar_warrior_aztecs" in slugs

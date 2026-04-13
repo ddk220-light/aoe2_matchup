@@ -41,3 +41,63 @@
 | Cost Gold | 75 | 65.0 | ❌ |
 
 **⚠️ 6 mismatch(es) found — investigate.**
+
+## Attack Bonuses
+
+| Bonus | Armor Class |
+|-------|-------------|
+| -3 | Mounted Archers |
+| +1 | Infantry |
+
+## Armor Classes (Vulnerability)
+
+_Units with attack bonuses against these classes deal extra damage to this unit._
+
+| Armor Class | Armor Value |
+|-------------|-------------|
+| Cavalry | 0 |
+| Leitis | 0 |
+
+## Strengths & Weaknesses
+
+**Strong vs:** Infantry, foot archer, siege weapon, light cavalry
+**Weak vs:** Halberdier, Heavy Camel Rider, Monk, Elite Battle Elephant, Boyar, Kamayuk, Berserk, Genoese Crossbowmen, Teutonic Knight, Mameluke, War Elephant
+
+## Technologies
+
+| Stat | Technology (Effect) |
+|------|---------------------|
+| HP | Bloodlines (+20) |
+| Attack | Forging (+1) |
+| Attack | Iron Casting (+1) |
+| Attack | Blast Furnace (+2) |
+| Armor | Scale Barding Armor (melee=+1, pierce=+1) |
+| Armor | Chain Barding Armor (melee=+1, pierce=+1) |
+| Armor | Plate Barding Armor (melee=+1, pierce=+2) |
+| Speed | Husbandry (+10%) |
+| Conversion | Devotion (+1 min, +1 max) |
+| Conversion | Faith (+4 min, +4 max) |
+| Conversion | Heresy (die upon getting converted) |
+| Creation | Conscription (+33%) |
+| Creation | Chivalry (+40%, Franks only) |
+
+## Civilization Bonuses
+
+**Unique to civ:**
+
+| Stat | Civ (Bonus) |
+|------|-------------|
+| HP | Franks (+20%) |
+| Attack | Lithuanians (+1 per Relic garrisoned, max +4) |
+| Armor | Teutons (melee=+2) |
+| Speed | Cumans (+15.76%) |
+
+**Team bonuses:**
+
+| Stat | Civ (Bonus) |
+|------|-------------|
+| Attack | Persians (+2 vs.) |
+| Attack | Wei (+2 vs.) |
+| Conversion | Teutons (+3 min, +1 max) |
+| Creation | Huns (+20%) |
+| LOS | Franks (+2) |

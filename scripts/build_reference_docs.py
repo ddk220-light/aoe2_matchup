@@ -202,6 +202,126 @@ def parse_wiki_unit(wikitext: str) -> dict:
     return result
 
 
+def _extract_brace_block(text: str, tag: str) -> str:
+    """
+    Find {{tag ...}} in text and return the block content (after the tag line, before closing }}).
+    Uses brace-depth counting so nested {{ }} don't cause early termination.
+    Returns empty string if not found.
+    """
+    start = text.find("{{" + tag)
+    if start == -1:
+        return ""
+    pos = start + 2  # skip opening {{
+    depth = 1
+    while pos < len(text) and depth > 0:
+        if text[pos:pos+2] == "{{":
+            depth += 1
+            pos += 2
+        elif text[pos:pos+2] == "}}":
+            depth -= 1
+            if depth == 0:
+                break
+            pos += 2
+        else:
+            pos += 1
+    # Return content between the tag name and closing }}
+    content_start = start + 2 + len(tag)
+    return text[content_start:pos]
+
+
+def _extract_wiki_display_names(text: str) -> list:
+    """Extract display names from [[page|display]] or [[page]] wiki links."""
+    results = []
+    for m in re.finditer(r'\[\[([^\]]+)\]\]', text):
+        inner = m.group(1)
+        if "|" in inner:
+            display = inner.split("|", 1)[1]
+        else:
+            display = re.sub(r'\s*\(Age of Empires II\)', '', inner)
+        display = display.strip().rstrip("s")  # strip trailing plural 's' added outside link
+        if display and "File:" not in display:
+            results.append(display)
+    return results
+
+
+def parse_wiki_unit_extras(wikitext: str) -> dict:
+    """
+    Parse enhancement data from a unit wiki page:
+    - Technologies that boost the unit ({{Boosts|Technologies}})
+    - Civilization bonuses ({{Boosts|Civilization bonuses}})
+    - Team bonuses ({{Boosts|Team bonuses}})
+    - Strengths & Weaknesses ({{S&W}})
+    Returns dict with keys: techs, civ_bonuses, team_bonuses, strong_vs, weak_vs.
+    Each boost section is a dict of {stat_label: [list of entry strings]}.
+    """
+    result = {"techs": {}, "civ_bonuses": {}, "team_bonuses": {}, "strong_vs": [], "weak_vs": []}
+
+    def _parse_boosts_block(section_name: str) -> dict:
+        """Extract |Stat = items from a {{Boosts|section_name}} template, brace-safe."""
+        block = _extract_brace_block(wikitext, f"Boosts|{section_name}")
+        if not block:
+            return {}
+        out = {}
+        for stat in ["HP", "Attack", "Armor", "Speed", "Conversion", "Creation", "LOS", "Other"]:
+            sm = re.search(rf'\|{stat}\s*=\s*(.+?)(?=\n\||\Z)', block, re.DOTALL)
+            if not sm:
+                continue
+            raw = sm.group(1).strip()
+            # Split individual entries on <br />
+            items_raw = re.split(r'<br\s*/?>', raw)
+            items = []
+            for item in items_raw:
+                item = item.strip()
+                if not item:
+                    continue
+                # Name: from {{2icons|Name}} template
+                nm = re.search(r'\{\{2icons\|([^}|]+)', item)
+                name = nm.group(1).strip() if nm else ""
+                # Value: the part in outer parentheses (...), which may contain nested {{ }}
+                # Use brace-aware extraction: find first '(' and scan to matching ')'
+                val = ""
+                pi = item.find("(")
+                if pi != -1:
+                    depth = 0
+                    for i, ch in enumerate(item[pi:], pi):
+                        if ch == "(":
+                            depth += 1
+                        elif ch == ")":
+                            depth -= 1
+                            if depth == 0:
+                                raw_val = item[pi+1:i]
+                                # Clean: {{tt|+20%|+32}} → +20%
+                                raw_val = re.sub(r'\{\{tt\|([^|]+)\|[^}]+\}\}', r'\1', raw_val)
+                                # Clean: {{Armor|melee = +1|pierce = +1}} → melee=+1, pierce=+1
+                                raw_val = re.sub(
+                                    r'\{\{Armor\|([^}]+)\}\}',
+                                    lambda mv: mv.group(1).replace(" = ", "=").replace("|", ", "),
+                                    raw_val
+                                )
+                                val = _strip_wiki_markup(raw_val).strip()
+                                break
+                if name or val:
+                    entry = name + (f" ({val})" if val else "")
+                    items.append(entry.strip())
+            if items:
+                out[stat] = items
+        return out
+
+    result["techs"] = _parse_boosts_block("Technologies")
+    result["civ_bonuses"] = _parse_boosts_block("Civilization bonuses")
+    result["team_bonuses"] = _parse_boosts_block("Team bonuses")
+
+    # Strengths & Weaknesses from {{S&W}}
+    sw_block = _extract_brace_block(wikitext, "S&W")
+    if sw_block:
+        for key, field in [("strong_vs", "S"), ("weak_vs", "W")]:
+            sm = re.search(rf'\|{field}\s*=\s*(.+?)(?=\n\||\Z)', sw_block, re.DOTALL)
+            if sm:
+                result[key] = _extract_wiki_display_names(sm.group(1))
+
+    return result
+
+
 # --- DB QUERY LAYER ---
 
 def query_armor_classes(conn: sqlite3.Connection) -> list:
@@ -557,6 +677,8 @@ def render_unit_file(
     ext_stats: dict,
     db_rows: dict,
     civ_name: str = None,
+    extras: dict = None,
+    armor_class_map: dict = None,
 ) -> tuple:
     """
     Render a unit reference markdown file.
@@ -659,6 +781,93 @@ def render_unit_file(
         lines.append(f"**⚠️ {mismatch_count} mismatch(es) found — investigate.**")
         lines.append("")
 
+    # --- Attack Bonuses (from DB attacks_json) ---
+    acmap = armor_class_map or {}
+    attacks_raw = db_a.get("base_attacks_json") or "{}"
+    try:
+        attacks = json.loads(attacks_raw)
+    except (json.JSONDecodeError, TypeError):
+        attacks = {}
+    bonus_entries = [
+        (int(cid), val) for cid, val in attacks.items()
+        if int(cid) not in (3, 4) and val != 0  # skip base melee/pierce class; skip zeros
+    ]
+    lines += ["## Attack Bonuses", ""]
+    if bonus_entries:
+        lines += ["| Bonus | Armor Class |", "|-------|-------------|"]
+        for cid, val in sorted(bonus_entries, key=lambda x: -abs(x[1])):
+            name = acmap.get(cid, f"Class {cid}")
+            sign = "+" if val > 0 else ""
+            lines.append(f"| {sign}{val} | {name} |")
+    else:
+        lines.append("No bonus damage entries.")
+    lines.append("")
+
+    # --- Armor Classes (what this unit belongs to → what counters it) ---
+    armors_raw = db_a.get("base_armors_json") or "{}"
+    try:
+        armors = json.loads(armors_raw)
+    except (json.JSONDecodeError, TypeError):
+        armors = {}
+    armor_entries = [
+        (int(cid), val) for cid, val in armors.items()
+        if int(cid) not in (3, 4)  # skip base melee/pierce
+    ]
+    lines += ["## Armor Classes (Vulnerability)", ""]
+    lines.append("_Units with attack bonuses against these classes deal extra damage to this unit._")
+    lines.append("")
+    if armor_entries:
+        lines += ["| Armor Class | Armor Value |", "|-------------|-------------|"]
+        for cid, val in sorted(armor_entries, key=lambda x: x[0]):
+            name = acmap.get(cid, f"Class {cid}")
+            lines.append(f"| {name} | {val} |")
+    else:
+        lines.append("No non-base armor classes.")
+    lines.append("")
+
+    # --- Extras from wiki ---
+    if extras:
+        # Strengths & Weaknesses
+        strong = extras.get("strong_vs", [])
+        weak   = extras.get("weak_vs", [])
+        if strong or weak:
+            lines += ["## Strengths & Weaknesses", ""]
+            if strong:
+                lines.append(f"**Strong vs:** {', '.join(strong)}")
+            if weak:
+                lines.append(f"**Weak vs:** {', '.join(weak)}")
+            lines.append("")
+
+        # Technologies
+        techs = extras.get("techs", {})
+        if techs:
+            lines += ["## Technologies", ""]
+            lines += ["| Stat | Technology (Effect) |", "|------|---------------------|"]
+            for stat, items in techs.items():
+                for item in items:
+                    lines.append(f"| {stat} | {item} |")
+            lines.append("")
+
+        # Civilization Bonuses
+        civ_bonuses = extras.get("civ_bonuses", {})
+        team_bonuses = extras.get("team_bonuses", {})
+        if civ_bonuses or team_bonuses:
+            lines += ["## Civilization Bonuses", ""]
+            if civ_bonuses:
+                lines += ["**Unique to civ:**", ""]
+                lines += ["| Stat | Civ (Bonus) |", "|------|-------------|"]
+                for stat, items in civ_bonuses.items():
+                    for item in items:
+                        lines.append(f"| {stat} | {item} |")
+                lines.append("")
+            if team_bonuses:
+                lines += ["**Team bonuses:**", ""]
+                lines += ["| Stat | Civ (Bonus) |", "|------|-------------|"]
+                for stat, items in team_bonuses.items():
+                    for item in items:
+                        lines.append(f"| {stat} | {item} |")
+                lines.append("")
+
     return "\n".join(lines), mismatch_count
 
 
@@ -688,23 +897,39 @@ def generate_single_unit(unit_name: str, techtree: dict, conn: sqlite3.Connectio
         print(f"  Skipped (exists): {out_path}")
         return
 
-    # Get external stats from techtree first, then wiki fallback
+    # Fetch wiki wikitext — needed for extras (techs, civ bonuses, S&W) regardless of techtree
+    print(f"  Fetching wiki unit: {unit_name}...", end=" ", flush=True)
+    time.sleep(WIKI_DELAY)
+    wikitext = fetch_wiki_wikitext(unit_name.replace(" ", "_"))
+    if not wikitext:
+        # Try with disambig suffix
+        wikitext = fetch_wiki_wikitext(f"{unit_name.replace(' ', '_')}_(Age_of_Empires_II)")
+    if wikitext:
+        print("✓")
+    else:
+        print("⚠️ not found")
+
+    # External stats: prefer techtree (more reliable for numbers), fall back to wiki
     tt_unit = find_techtree_unit(techtree, unit_name)
     if tt_unit:
         ext_stats = techtree_unit_stats(tt_unit)
+    elif wikitext:
+        ext_stats = parse_wiki_unit(wikitext)
     else:
-        print(f"  Fetching wiki unit: {unit_name}...", end=" ", flush=True)
-        time.sleep(WIKI_DELAY)
-        wikitext = fetch_wiki_wikitext(unit_name.replace(" ", "_"))
-        if wikitext:
-            print("✓")
-            ext_stats = parse_wiki_unit(wikitext)
-        else:
-            print("⚠️ not found")
-            ext_stats = {}
+        ext_stats = {}
+
+    # Parse wiki extras (techs, civ bonuses, strengths/weaknesses)
+    extras = parse_wiki_unit_extras(wikitext) if wikitext else {}
+
+    # Build armor class map for rendering attack/armor sections
+    armor_classes = query_armor_classes(conn)
+    acmap = {ac["id"]: ac["name"] for ac in armor_classes}
 
     db_rows = query_db_unit(conn, base_slug)
-    content, mismatches = render_unit_file(unit_name, unit_type, ext_stats, db_rows, civ_name)
+    content, mismatches = render_unit_file(
+        unit_name, unit_type, ext_stats, db_rows, civ_name,
+        extras=extras, armor_class_map=acmap,
+    )
 
     if not args.dry_run:
         out_path.parent.mkdir(parents=True, exist_ok=True)

@@ -9,7 +9,8 @@ const COLUMN_DEFS = {
     cavalry: ["light_cav", "knight", "camel", "steppe_lancer", "elephant"],
     ranged: ["skirmisher", "archer", "cav_archer", "gunpowder", "scorpion"],
     infantry: ["militia", "spear", "shock_infantry"],
-    siege: ["ram", "bombard_cannon", "trebuchet"],
+    siege: ["ram", "bombard_cannon", "trebuchet", "cannon_galleon"],
+    navy: ["galleon", "fire", "hulk", "demo"],
 };
 
 const COLUMN_LABELS = {
@@ -17,6 +18,7 @@ const COLUMN_LABELS = {
     ranged: "Ranged",
     infantry: "Infantry",
     siege: "Siege",
+    navy: "Navy",
 };
 
 const LINE_NAMES = {
@@ -36,9 +38,14 @@ const LINE_NAMES = {
     ram: "Rams",
     bombard_cannon: "Bombard Cannon",
     trebuchet: "Trebuchet",
+    cannon_galleon: "Cannon Galleon",
+    galleon: "Galleon Line",
+    fire: "Fire Ship Line",
+    hulk: "Hulk Line",
+    demo: "Demo Ship Line",
 };
 
-const COLUMN_ORDER = ["cavalry", "ranged", "infantry", "siege"];
+const COLUMN_ORDER = ["cavalry", "ranged", "infantry", "siege", "navy"];
 
 const STRENGTH_COLORS = {
     signature: { bg: "rgba(201, 168, 76, 0.2)", text: "var(--gold)", label: "Signature" },
@@ -209,12 +216,14 @@ function renderAnalysis(civName, data) {
 function renderUnitBadge(unit) {
     var name = unit.unit_name || slugToName(unit.unit_slug);
     var iconUrl = getIconUrl(name);
+    var isNavy = (unit.strength === null || unit.strength === undefined) && !unit.percentile;
     var strength = STRENGTH_COLORS[unit.strength] || STRENGTH_COLORS.average;
-    var isSig = unit.is_signature;
-    var badgeClass = "unit-badge" + (isSig ? " signature" : "");
+    var isSig = unit.is_signature && !isNavy;
+    var badgeClass = "unit-badge" + (isSig ? " signature" : "") + (isNavy ? " no-strength" : "");
     var iconSize = isSig ? "signature-icon" : "unit-badge-icon";
 
-    var html = '<div class="' + badgeClass + '" style="border-left-color: ' + strength.text + '">';
+    var borderColor = isNavy ? "var(--text-muted)" : strength.text;
+    var html = '<div class="' + badgeClass + '" style="border-left-color: ' + borderColor + '">';
 
     /* Tooltip */
     html += renderTooltip(unit, name);

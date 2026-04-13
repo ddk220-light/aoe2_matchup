@@ -275,6 +275,33 @@ const NAME_TO_ICON = {
     "Elite Ibirapema Warrior": "Elite_Ibirapema_Warrior",
     "War Dog": "War_Dog",
     "Elite War Dog": "Elite_War_Dog",
+    // Naval — standard
+    Galley: "Galley",
+    "War Galley": "War_Galley",
+    Galleon: "Galleon",
+    "Fire Galley": "Fire_Galley",
+    "Fire Ship": "Fire_Ship",
+    "Fast Fire Ship": "Fast_Fire_Ship",
+    Hulk: "Hulk",
+    "War Hulk": "War_Hulk",
+    Carrack: "Carrack",
+    "Demo Raft": "Demo_Raft",
+    "Demo Ship": "Demo_Ship",
+    "Heavy Demo Ship": "Heavy_Demo_Ship",
+    "Cannon Galleon": "Cannon_Galleon",
+    "Elite Cannon Galleon": "Elite_Cannon_Galleon",
+    // Naval — unique
+    Longboat: "Longboat",
+    "Elite Longboat": "Elite_Longboat",
+    "Turtle Ship": "Turtle_Ship",
+    "Elite Turtle Ship": "Elite_Turtle_Ship",
+    Caravel: "Caravel",
+    "Elite Caravel": "Elite_Caravel",
+    Thirisadai: "Thirisadai",
+    Dromon: "Dromon",
+    "Lou Chuan": "Lou_Chuan",
+    "Catapult Galleon": "Catapult_Galleon",
+    Xebec: "Xebec",
 };
 
 /* --- Unique Unit Building Overrides --- */

@@ -39,10 +39,154 @@ TODAY = date.today().isoformat()
 WIKI_DELAY = 0.5  # seconds between wiki API calls
 
 
+# --- FETCH LAYER ---
+
+def http_get(url: str, timeout: int = 15) -> bytes:
+    """Fetch URL with one retry on timeout."""
+    req = urllib.request.Request(url, headers={"User-Agent": "AoE2UnitAnalyzer/1.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.read()
+    except urllib.error.URLError:
+        time.sleep(1)
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.read()
+
+
+def fetch_wiki_wikitext(page_name: str) -> str | None:
+    """
+    Fetch raw wikitext for a Fandom wiki page.
+    Returns None if the page doesn't exist or network fails.
+    """
+    params = urllib.parse.urlencode({
+        "action": "parse",
+        "page": page_name,
+        "prop": "wikitext",
+        "format": "json",
+    })
+    url = f"{WIKI_API}?{params}"
+    try:
+        data = json.loads(http_get(url))
+        wikitext = data.get("parse", {}).get("wikitext", {}).get("*", "")
+        if not wikitext:
+            return None
+        return wikitext
+    except Exception:
+        return None
+
+
+# --- PARSE LAYER ---
+
+def _strip_wiki_markup(text: str) -> str:
+    """Remove [[links]], {{templates}}, and HTML tags from text."""
+    text = re.sub(r"\[\[([^\]|]+\|)?([^\]]+)\]\]", r"\2", text)
+    text = re.sub(r"{{[^}]+}}", "", text)
+    text = re.sub(r"<[^>]+>", "", text)
+    return text.strip()
+
+
+def parse_wiki_civ(wikitext: str) -> dict:
+    """
+    Parse a civilization infobox from wiki wikitext.
+    Returns dict with keys: focus, team_bonus, bonuses (list), unique_techs (list of dicts), unique_units (list).
+    """
+    result = {
+        "focus": "",
+        "team_bonus": "",
+        "bonuses": [],
+        "unique_techs": [],
+        "unique_units": [],
+    }
+
+    # Focus / description
+    m = re.search(r"\|focus\s*=\s*(.+)", wikitext)
+    if m:
+        result["focus"] = _strip_wiki_markup(m.group(1)).strip()
+
+    # Team bonus
+    m = re.search(r"\|team_bonus\s*=\s*(.+)", wikitext)
+    if m:
+        result["team_bonus"] = _strip_wiki_markup(m.group(1)).strip()
+
+    # Bonuses — bullet list after |bonuses=
+    m = re.search(r"\|bonuses\s*=\s*([\s\S]*?)(?=\n\||\Z)", wikitext)
+    if m:
+        bonus_text = m.group(1)
+        bonuses = re.findall(r"\*\s*(.+)", bonus_text)
+        result["bonuses"] = [_strip_wiki_markup(b).strip() for b in bonuses if b.strip()]
+
+    # Unique techs — parse castle + imperial separately
+    for age_key, age_label in [("unique_tech_castle", "Castle"), ("unique_tech_imperial", "Imperial")]:
+        m = re.search(rf"\|{age_key}\s*=\s*\[\[([^\]]+)\]\]\s*\(([^)]+)\)", wikitext)
+        if m:
+            name = m.group(1).strip()
+            cost_raw = m.group(2).strip()
+            result["unique_techs"].append({
+                "name": name,
+                "age": age_label,
+                "cost": cost_raw,
+                "effect": "",
+            })
+
+    # Unique units
+    m = re.search(r"\|unique_unit\s*=\s*(.+)", wikitext)
+    if m:
+        raw = m.group(1)
+        units = re.findall(r"\[\[([^\]|]+?)(?:\|[^\]]+)?\]\]", raw)
+        result["unique_units"] = [u for u in units if "Elite" not in u]
+
+    return result
+
+
+def parse_wiki_unit(wikitext: str) -> dict:
+    """
+    Parse a unit infobox from wiki wikitext.
+    Returns dict with numeric stat fields and attack_bonuses list.
+    """
+    result = {
+        "hp": None, "attack": None, "melee_armor": None, "pierce_armor": None,
+        "speed": None, "range": None, "reload_time": None,
+        "cost_food": 0, "cost_wood": 0, "cost_gold": 0,
+        "train_time": None, "pop_space": 1,
+        "attack_bonuses": [],
+    }
+
+    def _get_float(key: str):
+        m = re.search(rf"\|{key}\s*=\s*([\d.]+)", wikitext)
+        return float(m.group(1)) if m else None
+
+    for field in ["hp", "attack", "melee_armor", "pierce_armor", "speed", "range", "reload_time", "pop_space"]:
+        result[field] = _get_float(field)
+
+    # Cost parsing: "60 food, 30 gold" or "25 food, 45 wood"
+    m = re.search(r"\|cost\s*=\s*([^\n|]+)", wikitext)
+    if m:
+        cost_str = m.group(1).lower()
+        for resource in ["food", "wood", "gold"]:
+            cm = re.search(rf"(\d+)\s*{resource}", cost_str)
+            if cm:
+                result[f"cost_{resource}"] = int(cm.group(1))
+
+    # Train time
+    m = re.search(r"\|train_time\s*=\s*(\d+)", wikitext)
+    if m:
+        result["train_time"] = int(m.group(1))
+
+    # Attack bonuses: "+10 vs Infantry" patterns
+    m = re.search(r"\|attack_bonus\s*=\s*(.+)", wikitext, re.DOTALL)
+    if m:
+        bonuses_raw = m.group(1).split("|")[0]  # Stop at next field
+        result["attack_bonuses"] = re.findall(r"\+(\d+)\s*vs\s*([^\n<,]+)", bonuses_raw)
+
+    return result
+
+
 # --- STUB FUNCTIONS (to be implemented in later tasks) ---
 
 def fetch_techtree() -> dict:
-    raise NotImplementedError
+    """Fetch SiegeEngineers data.json and return parsed JSON."""
+    data = http_get(TECHTREE_URL)
+    return json.loads(data)
 
 def generate_armor_classes(conn, args, stats): pass
 def generate_all_civs(techtree, conn, args, stats): pass

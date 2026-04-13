@@ -606,6 +606,53 @@ class UnitAnalyzer:
             return False
         return True
 
+    def _is_class_cancellation_cmd(
+        self, cmd: dict, te: dict, unit_id: int, unit_class
+    ) -> bool:
+        """Return True if cmd is a unit-specific armor ADD that exactly cancels a
+        class-based armor ADD in the same tech effect.
+
+        This pattern (`a=-1, b=class, d=+X` paired with `a=unit_id, d=-X`) is used
+        by the dat to exclude a single unit from a class-wide civ bonus. Per the
+        user's design intent, armor-class logic should take precedence over such
+        individual exclusions in civ bonus techs, so we skip these cancellation
+        commands and let the unit inherit its class bonus.
+
+        Only applies to ADD_ATTRIBUTE (type=4) commands on the ATTR_ARMOR (c=8)
+        attribute, because that is the only known use of this pattern.
+        """
+        if cmd.get("type") != CMD_ADD_ATTRIBUTE:
+            return False
+        if cmd.get("c") != ATTR_ARMOR:
+            return False
+        # Must be a unit-specific command (not class-wide)
+        if cmd.get("a") != unit_id:
+            return False
+
+        cancel_d = cmd.get("d", 0)
+        # Look for a matching class-based positive command whose d sums to zero
+        for other in te.get("commands", []):
+            if other is cmd:
+                continue
+            if other.get("type") != CMD_ADD_ATTRIBUTE:
+                continue
+            if other.get("c") != ATTR_ARMOR:
+                continue
+            if other.get("a") != -1:
+                continue
+            # Check class match
+            b = other.get("b", -999)
+            if isinstance(unit_class, (list, tuple)):
+                class_match = b in unit_class
+            else:
+                class_match = b == unit_class
+            if not class_match:
+                continue
+            # The cancellation: unit d + class d == 0
+            if cancel_d + other.get("d", 0) == 0:
+                return True
+        return False
+
     def _decode_armor_attack_value(self, d: float) -> tuple:
         d_int = int(d)
         if d_int >= 0:
@@ -904,6 +951,10 @@ class UnitAnalyzer:
             tech_name = te.get("tech_name", f"Tech {te['tech_id']}")
             applied_attrs = set()
             for cmd in te.get("commands", []):
+                # Skip unit-specific armor cancellations that counteract a class bonus;
+                # armor-class logic should take precedence over individual exclusions.
+                if self._is_class_cancellation_cmd(cmd, te, final_unit_id, unit_class):
+                    continue
                 attr_key = (cmd.get("type", 0), cmd.get("c", 0), cmd.get("d", 0))
                 if attr_key in applied_attrs:
                     continue
@@ -1054,6 +1105,10 @@ class UnitAnalyzer:
         for te in civ_bonus_techs:
             tech_name = te.get("tech_name", f"Tech {te['tech_id']}")
             for cmd in te.get("commands", []):
+                # Skip unit-specific armor cancellations that counteract a class bonus;
+                # armor-class logic should take precedence over individual exclusions.
+                if self._is_class_cancellation_cmd(cmd, te, unit_id, unit_class):
+                    continue
                 if self.apply_effect_command(cmd, stats, unit_id, unit_class):
                     if tech_name not in applied_bonuses:
                         applied_bonuses.append(tech_name)

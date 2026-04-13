@@ -616,6 +616,10 @@ def generate_reference_database(analyzer):
             effects = []
             applied_attrs = set()
             for cmd in te.get("commands", []):
+                # Skip unit-specific armor cancellations that counteract a class bonus;
+                # armor-class logic should take precedence over individual exclusions.
+                if analyzer._is_class_cancellation_cmd(cmd, te, unit_id, unit_class):
+                    continue
                 attr_key = (cmd.get("type", 0), cmd.get("c", 0), cmd.get("d", 0))
                 if attr_key in applied_attrs:
                     continue

@@ -1956,7 +1956,8 @@ def main():
                 f"Naval roles ({naval_age}): {total_naval} units in {time.time() - naval_start:.1f}s"
             )
         write_role_scores_to_db(naval_scores_all, NAVAL_LINE_SLUGS, NAVAL_SCORE_TYPES)
-        print(f"Naval roles total: {time.time() - naval_start:.1f}s")
+        total_naval_all = sum(len(v) for v in naval_scores_all.values())
+        print(f"Naval roles total: {total_naval_all} units in {time.time() - naval_start:.1f}s")
 
         # Compute rankings for all scores
         ranking_start = time.time()

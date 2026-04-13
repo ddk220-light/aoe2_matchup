@@ -202,6 +202,11 @@ const SCORE_KEYS = new Set([
     "stable_effectiveness",
     "ac_30v30_vs_heavy_camel",
     "ac_3k_vs_heavy_camel",
+    // Naval scores
+    "naval_effectiveness",
+    "vs_galleon",
+    "vs_fire",
+    "vs_hulk",
 ]);
 const STAT_KEYS = new Set([
     "final_hp",

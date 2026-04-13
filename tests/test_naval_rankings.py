@@ -38,3 +38,31 @@ def test_naval_no_score_columns(client):
         assert "militia_value" not in unit
         assert "ranged_effectiveness" not in unit
         assert "anti_building_score" not in unit
+
+
+from unittest.mock import patch
+
+
+def test_compute_naval_role_scores_structure():
+    """compute_naval_role_scores returns galleon/fire/hulk sub-line dicts with required keys."""
+    import sys, os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "webapp"))
+    from compute_battle_scores import compute_naval_role_scores
+
+    with patch("compute_battle_scores.simulate_battle") as mock_sim:
+        mock_sim.return_value = (1, 100, 10.0, 0.5, 0.0)
+        result = compute_naval_role_scores("imperial")
+
+    assert "galleon|imperial" in result
+    assert "fire|imperial" in result
+    assert "hulk|imperial" in result
+
+    for line_key in ["galleon|imperial", "fire|imperial", "hulk|imperial"]:
+        assert len(result[line_key]) > 0, f"{line_key} is empty"
+        for unit_key, scores in result[line_key].items():
+            assert "naval_effectiveness" in scores, f"{unit_key} missing naval_effectiveness"
+            assert "vs_galleon" in scores, f"{unit_key} missing vs_galleon"
+            assert "vs_fire" in scores,    f"{unit_key} missing vs_fire"
+            assert "vs_hulk" in scores,    f"{unit_key} missing vs_hulk"
+            assert 0 <= scores["naval_effectiveness"] <= 100, \
+                f"{unit_key} naval_effectiveness={scores['naval_effectiveness']} out of range"

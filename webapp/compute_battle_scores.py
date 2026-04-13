@@ -430,7 +430,7 @@ def compute_benchmarks(bench_units, bench_fps, benchmark_cache, unit_fps):
     total_misses = 0
 
     for line_slug, config in UNIT_LINES.items():
-        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS or line_slug in STABLE_LINE_SLUGS or line_slug in SIEGE_LINE_SLUGS or line_slug in HIDDEN_LINE_SLUGS:
+        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS or line_slug in STABLE_LINE_SLUGS or line_slug in SIEGE_LINE_SLUGS or line_slug in HIDDEN_LINE_SLUGS or line_slug in NAVAL_LINE_SLUGS:
             continue  # infantry/archery/stable uses role-based scores from battle_scores table
         for age_key in ["castle", "imperial"]:
             std_slug = config.get(f"{age_key}_slug")
@@ -631,6 +631,8 @@ ARCHERY_ROLE_SCORE_TYPES = [
 # ===== Stable unit scoring =====
 STABLE_LINE_SLUGS = ["knight", "light_cav", "camel", "steppe_lancer", "elephant"]
 
+NAVAL_LINE_SLUGS = ["galleon", "fire", "hulk"]
+
 SIEGE_LINE_SLUGS = ["ram", "trebuchet", "bombard_cannon"]
 
 # Lines not displayed in any ranking category (skipped from all computation)
@@ -696,6 +698,45 @@ STABLE_SCORE_TYPES = [
     "ac_30v30_vs_elephant_raw",
     "ac_3k_vs_heavy_camel_raw",
     "ac_3k_vs_elephant_raw",
+]
+
+NAVAL_ROLE_BENCHMARKS = {
+    "imperial": [
+        ("vs_galleon_30v30", "Britons",   "galleon", "Imperial", "fixed_hp", (30, 30)),
+        ("vs_galleon_3k",    "Britons",   "galleon", "Imperial", "res",      3000),
+        ("vs_fire_30v30",    "Britons",   "fire",    "Imperial", "fixed_hp", (30, 30)),
+        ("vs_fire_3k",       "Britons",   "fire",    "Imperial", "res",      3000),
+        ("vs_hulk_30v30",    "Sicilians", "hulk",    "Imperial", "fixed_hp", (30, 30)),
+        ("vs_hulk_3k",       "Sicilians", "hulk",    "Imperial", "res",      3000),
+    ],
+    "castle": [
+        ("vs_galleon_30v30", "Britons",   "galleon", "Castle",   "fixed_hp", (30, 30)),
+        ("vs_galleon_3k",    "Britons",   "galleon", "Castle",   "res",      3000),
+        ("vs_fire_30v30",    "Britons",   "fire",    "Castle",   "fixed_hp", (30, 30)),
+        ("vs_fire_3k",       "Britons",   "fire",    "Castle",   "res",      3000),
+        ("vs_hulk_30v30",    "Sicilians", "hulk",    "Castle",   "fixed_hp", (30, 30)),
+        ("vs_hulk_3k",       "Sicilians", "hulk",    "Castle",   "res",      3000),
+    ],
+}
+
+NAVAL_SCORE_TYPES = [
+    "naval_effectiveness",
+    "vs_galleon",
+    "vs_fire",
+    "vs_hulk",
+    "vs_galleon_30v30",
+    "vs_galleon_3k",
+    "vs_fire_30v30",
+    "vs_fire_3k",
+    "vs_hulk_30v30",
+    "vs_hulk_3k",
+    # Raw (pre-normalization) scores
+    "vs_galleon_30v30_raw",
+    "vs_galleon_3k_raw",
+    "vs_fire_30v30_raw",
+    "vs_fire_3k_raw",
+    "vs_hulk_30v30_raw",
+    "vs_hulk_3k_raw",
 ]
 
 
@@ -1195,6 +1236,149 @@ def compute_stable_role_scores(age="imperial"):
         if line_key not in all_role_scores:
             all_role_scores[line_key] = {}
         all_role_scores[line_key][sk] = scores
+    return all_role_scores
+
+
+def compute_naval_role_scores(age="imperial"):
+    """Compute role-based scores for naval units at the given age.
+
+    Simulates each naval unit against three benchmark opponents:
+    Britons Galleon, Britons Fast Fire Ship, Sicilians Carrack (hulk).
+    Each sub-score = avg of 30v30 fixed-count and 3K resource battles,
+    normalized 0-100 per sub-line, then speed-weighted.
+
+    Final: naval_effectiveness = (vs_galleon + vs_fire + vs_hulk) / 3
+
+    Returns dict: {"galleon|<age>": {...}, "fire|<age>": {...}, "hulk|<age>": {...}}
+    """
+    is_imperial = age == "imperial"
+    benchmarks = NAVAL_ROLE_BENCHMARKS[age]
+
+    bench_cache = {}
+    for key, civ, slug, bench_age, mode, param in benchmarks:
+        cache_key = (civ, slug, bench_age)
+        if cache_key not in bench_cache:
+            bench_cache[cache_key] = _load_benchmark_unit(civ, slug, bench_age)
+        if bench_cache[cache_key] is None:
+            print(f"  WARNING: naval benchmark {civ}/{slug}/{bench_age} not found")
+
+    all_scores = {}
+    sk_to_line = {}
+
+    for line_slug in NAVAL_LINE_SLUGS:
+        units = build_line_units(line_slug, age)
+        if not units:
+            continue
+
+        for u in units:
+            cu = u["combat_unit"]
+            unit_cost = calc_weighted_cost(
+                cu["cost_food"], cu["cost_wood"], cu["cost_gold"], is_imperial
+            )
+            sk = f"{u['civ_name']}|{u['unit_slug']}"
+            scores = {}
+
+            for key, civ, slug, bench_age, mode, param in benchmarks:
+                bench = bench_cache[(civ, slug, bench_age)]
+                if bench is None:
+                    scores[key] = 0.0
+                    continue
+
+                if mode == "res":
+                    bench_cost = calc_weighted_cost(
+                        bench["cost_food"],
+                        bench["cost_wood"],
+                        bench["cost_gold"],
+                        is_imperial,
+                    )
+                    winner, _, _, hp1, hp2 = simulate_battle(
+                        cu, bench, param,
+                        cost1_override=unit_cost,
+                        cost2_override=bench_cost,
+                        return_hp=True,
+                    )
+                    if winner == 1:
+                        scores[key] = round(hp1 * 100, 1)
+                    elif winner == 2:
+                        scores[key] = round(-hp2 * 100, 1)
+                    else:
+                        scores[key] = 0.0
+
+                elif mode == "fixed_hp":
+                    m_count, o_count = param
+                    fake_res = m_count * o_count
+                    winner, _, _, hp1, hp2 = simulate_battle(
+                        cu, bench, fake_res,
+                        cost1_override=fake_res // m_count,
+                        cost2_override=fake_res // o_count,
+                        return_hp=True,
+                    )
+                    if winner == 1:
+                        scores[key] = round(hp1 * 100, 1)
+                    elif winner == 2:
+                        scores[key] = round(-hp2 * 100, 1)
+                    else:
+                        scores[key] = 0.0
+
+            scores["_speed"] = cu["movement_speed"]
+            all_scores[sk] = scores
+            sk_to_line[sk] = line_slug
+
+    if not all_scores:
+        return {}
+
+    all_bench_keys = [k for k, *_ in benchmarks]
+    for key in all_bench_keys:
+        for s in all_scores.values():
+            s[f"{key}_raw"] = s[key]
+
+    line_groups = {}
+    for sk in all_scores:
+        line = sk_to_line[sk]
+        line_groups.setdefault(line, []).append(sk)
+
+    for bk in all_bench_keys:
+        for line, sks in line_groups.items():
+            vals = [all_scores[sk][bk] for sk in sks]
+            lo, hi = min(vals), max(vals)
+            span = hi - lo if hi != lo else 1
+            for sk in sks:
+                all_scores[sk][bk] = round(
+                    (all_scores[sk][bk] - lo) / span * 100, 1
+                )
+
+    for sk, scores in all_scores.items():
+        scores["vs_galleon"] = round(
+            (scores["vs_galleon_30v30"] + scores["vs_galleon_3k"]) / 2, 1
+        )
+        scores["vs_fire"] = round(
+            (scores["vs_fire_30v30"] + scores["vs_fire_3k"]) / 2, 1
+        )
+        scores["vs_hulk"] = round(
+            (scores["vs_hulk_30v30"] + scores["vs_hulk_3k"]) / 2, 1
+        )
+        scores["naval_effectiveness"] = round(
+            (scores["vs_galleon"] + scores["vs_fire"] + scores["vs_hulk"]) / 3, 1
+        )
+
+    _apply_speed_weighting(
+        all_scores,
+        ["vs_galleon", "vs_fire", "vs_hulk", "naval_effectiveness"],
+        scope="per_line",
+        line_groups=line_groups,
+    )
+
+    for s in all_scores.values():
+        s.pop("_speed", None)
+
+    all_role_scores = {}
+    for sk, scores in all_scores.items():
+        line_slug = sk_to_line[sk]
+        line_key = f"{line_slug}|{age}"
+        if line_key not in all_role_scores:
+            all_role_scores[line_key] = {}
+        all_role_scores[line_key][sk] = scores
+
     return all_role_scores
 
 
@@ -1761,6 +1945,19 @@ def main():
             f"Siege anti-building: {total_siege} units in {time.time() - siege_start:.1f}s"
         )
 
+        # Naval role scores
+        naval_start = time.time()
+        naval_scores_all = {}
+        for naval_age in ["imperial", "castle"]:
+            naval_scores = compute_naval_role_scores(age=naval_age)
+            naval_scores_all.update(naval_scores)
+            total_naval = sum(len(v) for v in naval_scores.values())
+            print(
+                f"Naval roles ({naval_age}): {total_naval} units in {time.time() - naval_start:.1f}s"
+            )
+        write_role_scores_to_db(naval_scores_all, NAVAL_LINE_SLUGS, NAVAL_SCORE_TYPES)
+        print(f"Naval roles total: {time.time() - naval_start:.1f}s")
+
         # Compute rankings for all scores
         ranking_start = time.time()
         compute_rankings()
@@ -1797,7 +1994,7 @@ def main():
     # Build all units and compute fingerprints (infantry/archery excluded — uses DB scores)
     current_fps = {}
     for line_slug, config in UNIT_LINES.items():
-        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS or line_slug in STABLE_LINE_SLUGS or line_slug in SIEGE_LINE_SLUGS or line_slug in HIDDEN_LINE_SLUGS:
+        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS or line_slug in STABLE_LINE_SLUGS or line_slug in SIEGE_LINE_SLUGS or line_slug in HIDDEN_LINE_SLUGS or line_slug in NAVAL_LINE_SLUGS:
             continue
         for age_key in ["castle", "imperial"]:
             std_slug = config.get(f"{age_key}_slug")
@@ -1880,7 +2077,7 @@ def main():
     rr_misses_total = 0
 
     for line_slug, config in UNIT_LINES.items():
-        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS or line_slug in STABLE_LINE_SLUGS or line_slug in SIEGE_LINE_SLUGS or line_slug in HIDDEN_LINE_SLUGS:
+        if line_slug in INFANTRY_LINE_SLUGS or line_slug in ARCHERY_LINE_SLUGS or line_slug in STABLE_LINE_SLUGS or line_slug in SIEGE_LINE_SLUGS or line_slug in HIDDEN_LINE_SLUGS or line_slug in NAVAL_LINE_SLUGS:
             continue  # infantry/archery/stable uses role-based scores from battle_scores table
         for age_key in ["castle", "imperial"]:
             slug = config.get(f"{age_key}_slug")

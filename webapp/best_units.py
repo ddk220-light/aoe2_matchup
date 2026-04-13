@@ -7,7 +7,7 @@ import os
 import sqlite3
 
 from combat_unit_loader import build_combat_dict_from_ref
-from unit_lines import TREBUCHET_SLUGS
+from unit_lines import TREBUCHET_SLUGS, NAVAL_UNIT_LINES, CANNON_GALLEON_LINE
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 POWER_UNITS_PATH = os.path.join(os.path.dirname(__file__), "civ_power_units.json")
@@ -57,7 +57,7 @@ COLUMN_DEFS = {
     "cavalry": ["light_cav", "knight", "camel", "steppe_lancer", "elephant"],
     "ranged": ["skirmisher", "archer", "cav_archer", "gunpowder", "scorpion"],
     "infantry": ["militia", "spear", "shock_infantry"],
-    "siege": ["ram", "bombard_cannon", "trebuchet"],
+    "siege": ["ram", "bombard_cannon", "trebuchet", "cannon_galleon"],
 }
 
 # Per-line score type to use for ranking
@@ -603,6 +603,88 @@ def _batch_fetch_ease_data(conn, civ_name):
     return result
 
 
+def generate_naval_column(civ_name, conn, age_key="imperial"):
+    """Return the navy column dict for one civ at one age.
+
+    For each of the 4 naval lines, returns the highest-tier unit the civ can
+    build, preferring unique naval units over standard ones. Returns None for a
+    slot if the civ cannot build any unit in that line.
+
+    Output structure:
+        {"galleon": [{"unit_name":..., "unit_slug":..., "strength": None, "is_signature": False}] or None,
+         "fire":    [...] or None,
+         "hulk":    [...] or None,
+         "demo":    [...] or None}
+    """
+    db_age = "Imperial" if age_key == "imperial" else "Castle"
+    # Index 1 = imperial slug, index 0 = castle slug in the (castle, imperial) tuple
+    unique_idx = 1 if age_key == "imperial" else 0
+
+    rc = conn.cursor()
+    col_data = {}
+
+    for line_slug in ("galleon", "fire", "hulk", "demo"):
+        line_def = NAVAL_UNIT_LINES[line_slug]
+        unique_slugs = line_def["unique_slug_by_civ"].get(civ_name)
+
+        if unique_slugs:
+            query_slug = unique_slugs[unique_idx]
+        else:
+            query_slug = line_slug
+
+        rc.execute(
+            "SELECT unit_name, unit_slug FROM ref_units "
+            "WHERE civ_name=? AND unit_slug=? AND age=?",
+            (civ_name, query_slug, db_age),
+        )
+        row = rc.fetchone()
+        if row:
+            col_data[line_slug] = [
+                {
+                    "unit_name": row["unit_name"],
+                    "unit_slug": row["unit_slug"],
+                    "strength": None,
+                    "is_signature": False,
+                }
+            ]
+        else:
+            col_data[line_slug] = None
+
+    return col_data
+
+
+def generate_cannon_galleon_entry(civ_name, conn, age_key="imperial"):
+    """Return cannon_galleon entry for one civ at one age, or None if unavailable.
+
+    Uses civ-specific unique replacement if defined (Dromon, Lou Chuan,
+    Catapult Galleon). Falls back to standard Cannon Galleon / Elite CG.
+    """
+    db_age = "Imperial" if age_key == "imperial" else "Castle"
+    unique_idx = 1 if age_key == "imperial" else 0
+
+    unique_slugs = CANNON_GALLEON_LINE["unique_slug_by_civ"].get(civ_name)
+    if unique_slugs:
+        query_slug = unique_slugs[unique_idx]
+    else:
+        query_slug = "cannon_galleon"
+
+    rc = conn.cursor()
+    rc.execute(
+        "SELECT unit_name, unit_slug FROM ref_units "
+        "WHERE civ_name=? AND unit_slug=? AND age=?",
+        (civ_name, query_slug, db_age),
+    )
+    row = rc.fetchone()
+    if not row:
+        return None
+    return {
+        "unit_name": row["unit_name"],
+        "unit_slug": row["unit_slug"],
+        "strength": None,
+        "is_signature": False,
+    }
+
+
 def compute_civ_power_units():
     """Pre-compute power units for all civs. Returns dict keyed by civ_name."""
     conn = _get_db()
@@ -634,9 +716,18 @@ def compute_civ_power_units():
             techs_by_slug, effects_by_slug = _batch_fetch_civ_tech_data(conn, civ, db_age)
             ease_by_slug = _batch_fetch_ease_data(conn, civ)
 
+            # Navy column: strength=null, no battle_scores lookup
+            power_units["navy"] = generate_naval_column(civ, conn, age_key)
+
             for col_key, line_slugs in COLUMN_DEFS.items():
                 col_data = {}
                 for line_slug in line_slugs:
+                    # cannon_galleon: skip battle_scores, query ref_units directly
+                    if line_slug == "cannon_galleon":
+                        entry = generate_cannon_galleon_entry(civ, conn, age_key)
+                        col_data[line_slug] = [entry] if entry else None
+                        continue
+
                     score_type = LINE_SCORE_TYPE[line_slug]
                     rc.execute(
                         """SELECT unit_slug, line_slug, score_value, rank, median_delta

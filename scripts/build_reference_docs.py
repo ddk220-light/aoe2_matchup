@@ -233,7 +233,7 @@ def query_db_civ(conn: sqlite3.Connection, civ_name: str) -> dict:
                   base_hp, base_attack, base_melee_armor, base_pierce_armor,
                   base_speed, base_range, base_reload_time,
                   base_cost_food, base_cost_wood, base_cost_gold, pop_space
-           FROM ref_units WHERE civ_name = ? ORDER BY unit_type, age, unit_slug""",
+           FROM ref_units WHERE civ_name = ? AND unit_type IN ('standard', 'unique') ORDER BY unit_type, age, unit_slug""",
         (civ_name,),
     ).fetchall()
     result = {"standard": [], "unique": []}

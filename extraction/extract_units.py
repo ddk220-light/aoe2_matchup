@@ -147,6 +147,8 @@ UNIT_NAMES = {
     1631: "Xebec",
     1750: "Thirisadai",
     1795: "Dromon",
+    1948: "Lou Chuan",
+    2633: "Catapult Galleon",
     # ===== Unique Units - Britons =====
     8: "Longbowman",
     530: "Elite Longbowman",

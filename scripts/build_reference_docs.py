@@ -609,21 +609,21 @@ def render_unit_file(
     ]
     mismatch_count = 0
 
-    # Map external stat keys → db column names
-    ext_to_db = {
-        "hp": "base_hp",
-        "attack": "base_attack",
-        "melee_armor": "base_melee_armor",
-        "pierce_armor": "base_pierce_armor",
-        "speed": "base_speed",
-        "range": "base_range",
-        "reload_time": "base_reload_time",
-        "cost_food": "base_cost_food",
-        "cost_wood": "base_cost_wood",
-        "cost_gold": "base_cost_gold",
+    # Map db column names → external stat keys (pre-computed reverse)
+    db_to_ext = {
+        "base_hp": "hp",
+        "base_attack": "attack",
+        "base_melee_armor": "melee_armor",
+        "base_pierce_armor": "pierce_armor",
+        "base_speed": "speed",
+        "base_range": "range",
+        "base_reload_time": "reload_time",
+        "base_cost_food": "cost_food",
+        "base_cost_wood": "cost_wood",
+        "base_cost_gold": "cost_gold",
     }
     for label, col in stat_rows[:10]:  # skip pop_space (not in external sources)
-        ext_key = next((k for k, v in ext_to_db.items() if v == col), col)
+        ext_key = db_to_ext.get(col, col)
         ext_val = ext_stats.get(ext_key)
         db_val = db_a.get(col)
         symbol = compare_val(ext_val, db_val)

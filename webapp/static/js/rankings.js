@@ -1309,12 +1309,14 @@ function exportCSV() {
     const isArchery = ARCHERY_SLUGS.has(currentLine);
     const isSiege = SIEGE_SLUGS.has(currentLine);
     const isStable = currentLine === "stable";
+    const isNaval = NAVAL_SLUGS.has(currentLine);
 
     // Sort by primary composite score descending to compute rank
     const primaryScore = isInfantry ? "militia_value"
         : isArchery ? "ranged_effectiveness"
         : isStable ? "stable_effectiveness"
         : isSiege ? "anti_building_score"
+        : isNaval ? "final_hp"
         : "pes";
     const ranked = [...currentEnriched].sort((a, b) => {
         const va = a[primaryScore] ?? -999;
@@ -1469,6 +1471,23 @@ function exportCSV() {
             { key: "final_range", label: "Range" },
             { key: "total_cost", label: "Total Cost" },
             { key: "total_upgrade_cost", label: "Upgrade Cost" },
+        ];
+    } else if (isNaval) {
+        csvColumns = [
+            { key: "civ_name", label: "Civilization" },
+            { key: "unit_name", label: "Unit" },
+            { key: "line_slug", label: "Line" },
+            { key: "is_unique", label: "Is Unique" },
+            { key: "dps", label: "DPS" },
+            { key: "final_hp", label: "HP" },
+            { key: "final_attack", label: "Attack" },
+            { key: "final_melee_armor", label: "Melee Armor" },
+            { key: "final_pierce_armor", label: "Pierce Armor" },
+            { key: "final_speed", label: "Speed" },
+            { key: "final_range", label: "Range" },
+            { key: "total_cost", label: "Total Cost" },
+            { key: "total_upgrade_cost", label: "Upgrade Cost" },
+            { key: "special_abilities", label: "Special" },
         ];
     } else {
         csvColumns = [

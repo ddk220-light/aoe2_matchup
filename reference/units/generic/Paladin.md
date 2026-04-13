@@ -29,15 +29,15 @@
 
 | Field | External | Our DB (Imperial) | Match |
 |-------|----------|-----------------|-------|
-| HP | ⚠️ | 90.0 | ⚠️ |
-| Attack | ⚠️ | 12.0 | ⚠️ |
-| Melee Armor | ⚠️ | 4.0 | ⚠️ |
-| Pierce Armor | ⚠️ | 3.0 | ⚠️ |
-| Speed | ⚠️ | 1.35 | ⚠️ |
+| HP | 160.0 | 90.0 | ❌ |
+| Attack | 14.0 | 12.0 | ❌ |
+| Melee Armor | 2.0 | 4.0 | ❌ |
+| Pierce Armor | 3.0 | 3.0 | ✅ |
+| Speed | 1.35 | 1.35 | ✅ |
 | Range | ⚠️ | 0.0 | ⚠️ |
-| Reload Time | ⚠️ | 1.8 | ⚠️ |
-| Cost Food | 0 | 65.0 | ❌ |
+| Reload Time | 1.9 | 1.8 | ❌ |
+| Cost Food | 60 | 65.0 | ❌ |
 | Cost Wood | 0 | 0.0 | ✅ |
-| Cost Gold | 0 | 65.0 | ❌ |
+| Cost Gold | 75 | 65.0 | ❌ |
 
-**⚠️ 2 mismatch(es) found — investigate.**
+**⚠️ 6 mismatch(es) found — investigate.**

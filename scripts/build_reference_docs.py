@@ -141,6 +141,8 @@ def parse_wiki_civ(wikitext: str) -> dict:
 def parse_wiki_unit(wikitext: str) -> dict:
     """
     Parse a unit infobox from wiki wikitext.
+    Supports both real Fandom format ({{Infobox AoE2 unit, |HP =, |MAttack =, |Food =)
+    and simplified test format (|hp=, |attack=, |cost=60 food, 30 gold).
     Returns dict with numeric stat fields and attack_bonuses list.
     """
     result = {
@@ -151,31 +153,50 @@ def parse_wiki_unit(wikitext: str) -> dict:
         "attack_bonuses": [],
     }
 
-    def _get_float(key: str):
-        m = re.search(rf"\|{key}\s*=\s*([\d.]+)", wikitext)
-        return float(m.group(1)) if m else None
+    def _get_field(*keys) -> float | None:
+        """Try multiple field name variants (case-insensitive value extraction)."""
+        for key in keys:
+            m = re.search(rf"\|{key}\s*=\s*([\d.]+)", wikitext, re.IGNORECASE)
+            if m:
+                return float(m.group(1))
+        return None
 
-    for field in ["hp", "attack", "melee_armor", "pierce_armor", "speed", "range", "reload_time", "pop_space"]:
-        result[field] = _get_float(field)
+    # Real wiki field names first, simplified fallbacks second
+    result["hp"]           = _get_field("HP", "hp")
+    result["attack"]       = _get_field("MAttack", "PAttack", "attack")  # melee or ranged
+    result["melee_armor"]  = _get_field("Armor", "melee_armor")
+    result["pierce_armor"] = _get_field("PierceArmor", "pierce_armor")
+    result["speed"]        = _get_field("Speed", "speed")
+    result["range"]        = _get_field("Range", "range")
+    result["reload_time"]  = _get_field("ROF", "reload_time")
+    result["pop_space"]    = _get_field("PopSpace", "pop_space")
 
-    # Cost parsing: "60 food, 30 gold" or "25 food, 45 wood"
-    m = re.search(r"\|cost\s*=\s*([^\n|]+)", wikitext)
-    if m:
-        cost_str = m.group(1).lower()
-        for resource in ["food", "wood", "gold"]:
-            cm = re.search(rf"(\d+)\s*{resource}", cost_str)
-            if cm:
-                result[f"cost_{resource}"] = int(cm.group(1))
+    # Real wiki: separate |Food =, |Wood =, |Gold = fields
+    for resource in ["Food", "Wood", "Gold"]:
+        m = re.search(rf"\|{resource}\s*=\s*(\d+)", wikitext, re.IGNORECASE)
+        if m:
+            result[f"cost_{resource.lower()}"] = int(m.group(1))
 
-    # Train time
-    m = re.search(r"\|train_time\s*=\s*(\d+)", wikitext)
+    # Simplified format fallback: |cost=60 food, 30 gold
+    if result["cost_food"] == 0 and result["cost_wood"] == 0 and result["cost_gold"] == 0:
+        m = re.search(r"\|cost\s*=\s*([^\n|]+)", wikitext)
+        if m:
+            cost_str = m.group(1).lower()
+            for resource in ["food", "wood", "gold"]:
+                cm = re.search(rf"(\d+)\s*{resource}", cost_str)
+                if cm:
+                    result[f"cost_{resource}"] = int(cm.group(1))
+
+    # Train time: real wiki "|Time = 27 seconds", simplified "|train_time = 27"
+    m = re.search(r"\|Time\s*=\s*(\d+)", wikitext, re.IGNORECASE) or \
+        re.search(r"\|train_time\s*=\s*(\d+)", wikitext)
     if m:
         result["train_time"] = int(m.group(1))
 
-    # Attack bonuses: "+10 vs Infantry" patterns
+    # Attack bonuses
     m = re.search(r"\|attack_bonus\s*=\s*(.+)", wikitext, re.DOTALL)
     if m:
-        bonuses_raw = m.group(1).split("|")[0]  # Stop at next field
+        bonuses_raw = m.group(1).split("|")[0]
         result["attack_bonuses"] = re.findall(r"\+(\d+)\s*vs\s*([^\n<,]+)", bonuses_raw)
 
     return result

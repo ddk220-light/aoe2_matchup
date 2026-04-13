@@ -38,6 +38,14 @@ const UNIT_LINES = {
         hasUnique: true,
         subLines: ["ram", "trebuchet", "bombard_cannon"],
     },
+    naval: {
+        name: "Naval Effectiveness",
+        building: "Dock",
+        castle: "War Galley",
+        imperial: "Galleon",
+        hasUnique: true,
+        subLines: ["galleon", "fire", "hulk"],
+    },
 };
 
 function iconUrl(id) {
@@ -655,6 +663,14 @@ const ARCHERY_SLUGS = new Set([
 
 const SIEGE_SLUGS = new Set([
     "siege",
+    "cannon_galleon",
+]);
+
+const NAVAL_SLUGS = new Set([
+    "galleon",
+    "fire",
+    "hulk",
+    "naval",
 ]);
 
 async function selectLine(slug) {
@@ -685,7 +701,9 @@ async function selectLine(slug) {
                     ? "ranged_effectiveness"
                     : SIEGE_SLUGS.has(slug)
                         ? "anti_building_score"
-                        : "pes";
+                        : NAVAL_SLUGS.has(slug)
+                            ? "final_hp"
+                            : "pes";
     sortDir = "desc";
     renderTable();
 }
@@ -708,6 +726,10 @@ const LINE_LABELS = {
     gunpowder: "Gunpowder",
     trebuchet: "Trebuchet",
     bombard_cannon: "Bombard Cannon",
+    galleon: "Galleon",
+    fire: "Fire Ship",
+    hulk: "Hulk",
+    cannon_galleon: "Cannon Galleon",
 };
 
 function renderTable() {
@@ -913,6 +935,16 @@ function renderTable() {
     ];
     const isArchery = ARCHERY_SLUGS.has(currentLine);
     const isSiege = SIEGE_SLUGS.has(currentLine);
+    const isNaval = NAVAL_SLUGS.has(currentLine);
+    const navalStatCols = [
+        "dps",
+        "final_hp",
+        "final_attack",
+        "final_melee_armor",
+        "final_pierce_armor",
+        "final_speed",
+        "final_range",
+    ];
     const statCols =
         currentLine === "stable"
             ? stableStatCols
@@ -922,7 +954,9 @@ function renderTable() {
                     ? infantryStatCols
                     : isArchery
                         ? archeryStatCols
-                        : defaultStatCols;
+                        : isNaval
+                            ? navalStatCols
+                            : defaultStatCols;
 
     const medians = {};
     for (const col of statCols) {
@@ -1097,6 +1131,21 @@ function renderTable() {
         { key: "total_upgrade_cost", label: "Upg Cost" },
         { key: "special_abilities", label: "Special" },
     ];
+    const navalColumns = [
+        { key: "civ_name", label: "Civ" },
+        { key: "unit_name", label: "Unit" },
+        { key: "line_slug", label: "Line" },
+        { key: "dps", label: "DPS" },
+        { key: "final_hp", label: "HP" },
+        { key: "final_attack", label: "Atk" },
+        { key: "final_melee_armor", label: "M.Arm" },
+        { key: "final_pierce_armor", label: "P.Arm" },
+        { key: "final_speed", label: "Speed" },
+        { key: "final_range", label: "Range" },
+        { key: "total_cost", label: "Cost" },
+        { key: "total_upgrade_cost", label: "Upg Cost" },
+        { key: "special_abilities", label: "Special" },
+    ];
     const columns =
         currentLine === "stable"
             ? stableColumns
@@ -1106,7 +1155,9 @@ function renderTable() {
                     ? infantryColumns
                     : isArchery
                         ? archeryColumns
-                        : defaultColumns;
+                        : isNaval
+                            ? navalColumns
+                            : defaultColumns;
 
     const lineInfo = UNIT_LINES[currentLine];
     const titleIcon = unitIconUrl(

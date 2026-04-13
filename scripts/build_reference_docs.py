@@ -349,6 +349,20 @@ def techtree_unit_stats(unit: dict) -> dict:
 
 # --- RENDERERS ---
 
+UNIT_STAT_FIELDS = [
+    ("HP", "base_hp"),
+    ("Attack", "base_attack"),
+    ("Melee Armor", "base_melee_armor"),
+    ("Pierce Armor", "base_pierce_armor"),
+    ("Speed", "base_speed"),
+    ("Range", "base_range"),
+    ("Reload Time", "base_reload_time"),
+    ("Cost Food", "base_cost_food"),
+    ("Cost Wood", "base_cost_wood"),
+    ("Cost Gold", "base_cost_gold"),
+]
+
+
 def render_armor_classes(classes: list) -> str:
     """Render armor-classes.md content."""
     lines = [
@@ -366,6 +380,150 @@ def render_armor_classes(classes: list) -> str:
     for ac in classes:
         lines.append(f"| {ac['id']} | {ac['name']} |")
     return "\n".join(lines) + "\n"
+
+
+def render_civ_file(civ_name: str, wiki: dict, techtree_civ, db: dict) -> tuple:
+    """
+    Render a full civ reference markdown file.
+    wiki: output of parse_wiki_civ() — may be empty dict if wiki not found
+    techtree_civ: civ entry from data.json, or None
+    db: output of query_db_civ()
+    Returns (content_string, mismatch_count) tuple.
+    """
+    lines = [
+        f"# {civ_name}",
+        "",
+        f"**Focus:** {wiki.get('focus') or '⚠️ Not found'}  ",
+        "**Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  ",
+        f"**Generated:** {TODAY}",
+        "",
+    ]
+
+    # Civilization Bonuses
+    lines += ["## Civilization Bonuses", ""]
+    bonuses = wiki.get("bonuses", [])
+    if bonuses:
+        for bonus in bonuses:
+            lines.append(f"- {bonus}")
+    else:
+        lines.append("⚠️ No bonus data found from wiki.")
+    lines.append("")
+
+    # Team Bonus
+    lines += ["## Team Bonus", ""]
+    lines.append(wiki.get("team_bonus") or "⚠️ Not found")
+    lines.append("")
+
+    # Unique Technologies
+    lines += ["## Unique Technologies", ""]
+    unique_techs = wiki.get("unique_techs", [])
+    if unique_techs:
+        lines += [
+            "| Tech | Age | Cost | Effect |",
+            "|------|-----|------|--------|",
+        ]
+        for tech in unique_techs:
+            lines.append(f"| {tech['name']} | {tech['age']} | {tech['cost']} | {tech.get('effect') or '—'} |")
+    else:
+        lines.append("⚠️ No unique tech data found from wiki.")
+    lines.append("")
+
+    # Unique Units (from DB)
+    lines += ["## Unique Units", ""]
+    unique_units = db.get("unique", [])
+
+    # Group by base name (Castle = regular, Imperial = elite)
+    by_base: dict = {}
+    for unit in unique_units:
+        name = unit["unit_name"]
+        base = name[6:] if name.startswith("Elite ") else name
+        by_base.setdefault(base, {})[unit["age"]] = unit
+
+    mismatch_count = 0
+
+    for base_name, variants in sorted(by_base.items()):
+        castle = variants.get("Castle", {})
+        imperial = variants.get("Imperial", {})
+        lines += [f"### {base_name}", ""]
+
+        lines += [
+            "| Stat | Regular | Elite |",
+            "|------|---------|-------|",
+        ]
+        for label, col in UNIT_STAT_FIELDS:
+            castle_val = castle.get(col, "—")
+            imperial_val = imperial.get(col, "—")
+            lines.append(f"| {label} | {castle_val} | {imperial_val} |")
+        lines.append("")
+
+        # Cross-reference note — full comparison is in the unit file
+        lines.append(f"_Full stat comparison: see `reference/units/unique/{base_name.replace(' ', '_')}.md`_")
+        lines.append("")
+
+    # Tech Tree info from techtree_civ
+    lines += ["## Tech Tree Notes", ""]
+    if techtree_civ is None:
+        lines.append("⚠️ No techtree data available for this civ (may be a new civ not yet in SiegeEngineers/aoe2techtree).")
+    else:
+        tt_name = techtree_civ.get("name", civ_name)
+        lines.append(f"Tech tree data available from SiegeEngineers/aoe2techtree for **{tt_name}**.")
+    lines.append("")
+
+    # DB Summary
+    lines += ["## DB Summary", ""]
+    all_units = db.get("standard", []) + db.get("unique", [])
+    lines.append(f"- Total units in DB: {len(all_units)}")
+    lines.append(f"- Unique units: {len(db.get('unique', []))}")
+    lines.append(f"- Standard units: {len(db.get('standard', []))}")
+    lines.append("")
+
+    return "\n".join(lines), mismatch_count
+
+
+def generate_single_civ(civ_name: str, techtree: dict, conn: sqlite3.Connection, args, stats: dict):
+    """Generate reference/civs/{civ_name}.md"""
+    out_path = REF_DIR / "civs" / f"{civ_name}.md"
+    if out_path.exists() and not args.force and not args.dry_run:
+        stats["skipped"] += 1
+        print(f"  Skipped (exists): {out_path}")
+        return
+
+    # Try wiki — first with "(Age_of_Empires_II)" suffix, then bare name
+    print(f"  Fetching wiki: {civ_name}...", end=" ", flush=True)
+    time.sleep(WIKI_DELAY)
+    wikitext = fetch_wiki_wikitext(f"{civ_name}_(Age_of_Empires_II)")
+    if not wikitext:
+        wikitext = fetch_wiki_wikitext(civ_name)
+    if not wikitext:
+        print("⚠️ not found")
+        wiki = {}
+    else:
+        print("✓")
+        wiki = parse_wiki_civ(wikitext)
+
+    techtree_civ = find_techtree_civ(techtree, civ_name)
+    db = query_db_civ(conn, civ_name)
+
+    content, mismatches = render_civ_file(civ_name, wiki, techtree_civ, db)
+
+    if not args.dry_run:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(content, encoding="utf-8")
+        stats["written"] += 1
+        stats["mismatches"] += mismatches
+        print(f"  Written: {out_path}")
+    else:
+        print(f"  [dry-run] Would write: {out_path}")
+
+
+def generate_all_civs(techtree: dict, conn: sqlite3.Connection, args, stats: dict):
+    """Generate civ files for all civs in the DB."""
+    civ_names = [row[0] for row in conn.execute(
+        "SELECT DISTINCT civ_name FROM ref_units ORDER BY civ_name"
+    ).fetchall()]
+    print(f"\nGenerating {len(civ_names)} civ files...")
+    for civ_name in civ_names:
+        generate_single_civ(civ_name, techtree, conn, args, stats)
 
 
 # --- STUB FUNCTIONS (to be implemented in later tasks) ---
@@ -390,9 +548,7 @@ def generate_armor_classes(conn: sqlite3.Connection, args, stats: dict):
         print(f"  Written: {out_path}")
     else:
         print(f"  [dry-run] Would write: {out_path}")
-def generate_all_civs(techtree, conn, args, stats): pass
 def generate_all_units(techtree, conn, args, stats): pass
-def generate_single_civ(name, techtree, conn, args, stats): pass
 def generate_single_unit(name, techtree, conn, args, stats): pass
 def write_readme(args, stats): pass
 

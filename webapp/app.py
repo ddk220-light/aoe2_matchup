@@ -467,7 +467,7 @@ def api_ref_combat_unit(civ_name, unit_slug):
 INFANTRY_LINE_SLUGS = {"militia", "spear", "shock_infantry"}
 ARCHERY_LINE_SLUGS = {"archer", "skirmisher", "cav_archer", "scorpion", "gunpowder"}
 STABLE_LINE_SLUGS = {"knight", "light_cav", "camel", "steppe_lancer", "elephant"}
-SIEGE_LINE_SLUGS = {"ram", "mangonel", "trebuchet", "bombard_cannon"}
+SIEGE_LINE_SLUGS = {"ram", "mangonel", "trebuchet", "bombard_cannon", "cannon_galleon"}
 
 # Stage-to-query mapping for team analysis
 # Each stage has line_slugs (list of DB line_slug values to query) and tabs

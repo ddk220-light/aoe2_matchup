@@ -265,6 +265,47 @@ UNIT_LINES = {
             "Wu": (None, "elite_fire_archer_wu"),
         },
     },
+    "galleon": {
+        "name": "Galleon Line",
+        "building": "Dock",
+        "castle_slug": "galleon",
+        "imperial_slug": "galleon",
+        "unique_units": {
+            "Vikings":    ("longboat_vikings",      "elite_longboat_vikings"),
+            "Portuguese": ("caravel_portuguese",    "elite_caravel_portuguese"),
+            "Dravidians": ("thirisadai_dravidians",  "thirisadai_dravidians"),
+            "Wu":         ("lou_chuan_wu",           "lou_chuan_wu"),
+        },
+    },
+    "fire": {
+        "name": "Fire Ship Line",
+        "building": "Dock",
+        "castle_slug": "fire",
+        "imperial_slug": "fire",
+        "unique_units": {},
+    },
+    "hulk": {
+        "name": "Hulk Line",
+        "building": "Dock",
+        "castle_slug": "hulk",
+        "imperial_slug": "hulk",
+        "unique_units": {
+            "Koreans": ("turtle_ship_koreans", "elite_turtle_ship_koreans"),
+        },
+    },
+    "cannon_galleon": {
+        "name": "Cannon Galleon",
+        "building": "Dock",
+        "castle_slug": None,
+        "imperial_slug": "cannon_galleon",
+        "unique_units": {
+            "Byzantines": (None, "dromon_byzantines"),
+            "Mapuche":    (None, "catapult_galleon_mapuche"),
+            "Wu":         (None, "lou_chuan_wu"),
+            "Shu":        (None, "lou_chuan_shu"),
+            "Wei":        (None, "lou_chuan_wei"),
+        },
+    },
     "archery": {
         "name": "Ranged Effectiveness",
         "building": "Archery Range",
@@ -283,7 +324,12 @@ UNIT_LINES = {
     "siege": {
         "name": "Anti-Building Effectiveness",
         "building": "Siege Workshop",
-        "sub_lines": ["ram", "trebuchet", "bombard_cannon"],
+        "sub_lines": ["ram", "trebuchet", "bombard_cannon", "cannon_galleon"],
+    },
+    "naval": {
+        "name": "Naval Effectiveness",
+        "building": "Dock",
+        "sub_lines": ["galleon", "fire", "hulk"],
     },
 }
 

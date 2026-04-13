@@ -32,6 +32,7 @@ def test_cannon_galleon_in_siege(client):
 def test_naval_no_score_columns(client):
     """Naval units have no land battle score fields (no scoring yet)."""
     resp = client.get("/api/ref/unit-line/naval")
+    assert resp.status_code == 200, resp.get_data(as_text=True)
     data = resp.get_json()
     for unit in data["imperial"]:
         assert "militia_value" not in unit

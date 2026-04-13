@@ -270,11 +270,13 @@ UNIT_LINES = {
         "building": "Dock",
         "castle_slug": "galleon",
         "imperial_slug": "galleon",
+        # Berbers/Xebec intentionally excluded from rankings (no confirmed icon/data).
+        # See NAVAL_UNIT_LINES for the civ-overview mapping which still references it.
         "unique_units": {
-            "Vikings":    ("longboat_vikings",      "elite_longboat_vikings"),
-            "Portuguese": ("caravel_portuguese",    "elite_caravel_portuguese"),
-            "Dravidians": ("thirisadai_dravidians",  "thirisadai_dravidians"),
-            "Wu":         ("lou_chuan_wu",           "lou_chuan_wu"),
+            "Vikings": ("longboat_vikings", "elite_longboat_vikings"),
+            "Portuguese": ("caravel_portuguese", "elite_caravel_portuguese"),
+            "Dravidians": ("thirisadai_dravidians", "thirisadai_dravidians"),
+            "Wu": ("lou_chuan_wu", "lou_chuan_wu"),
         },
     },
     "fire": {
@@ -300,10 +302,10 @@ UNIT_LINES = {
         "imperial_slug": "cannon_galleon",
         "unique_units": {
             "Byzantines": (None, "dromon_byzantines"),
-            "Mapuche":    (None, "catapult_galleon_mapuche"),
-            "Wu":         (None, "lou_chuan_wu"),
-            "Shu":        (None, "lou_chuan_shu"),
-            "Wei":        (None, "lou_chuan_wei"),
+            "Mapuche": (None, "catapult_galleon_mapuche"),
+            "Wu": (None, "lou_chuan_wu"),
+            "Shu": (None, "lou_chuan_shu"),
+            "Wei": (None, "lou_chuan_wei"),
         },
     },
     "archery": {

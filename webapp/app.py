@@ -468,6 +468,7 @@ INFANTRY_LINE_SLUGS = {"militia", "spear", "shock_infantry"}
 ARCHERY_LINE_SLUGS = {"archer", "skirmisher", "cav_archer", "scorpion", "gunpowder"}
 STABLE_LINE_SLUGS = {"knight", "light_cav", "camel", "steppe_lancer", "elephant"}
 SIEGE_LINE_SLUGS = {"ram", "mangonel", "trebuchet", "bombard_cannon", "cannon_galleon"}
+NAVAL_LINE_SLUGS = {"galleon", "fire", "hulk", "naval"}
 
 # Stage-to-query mapping for team analysis
 # Each stage has line_slugs (list of DB line_slug values to query) and tabs
@@ -561,12 +562,17 @@ def api_ref_unit_line(line_slug):
 
     # Load role scores from DB (keyed by "age|civ_name|unit_slug")
     _db_role_scores = {}
-    _score_line_slugs = [s for s in sub_lines if s in INFANTRY_LINE_SLUGS or s in ARCHERY_LINE_SLUGS]
+    _score_line_slugs = [
+        s for s in sub_lines
+        if s in INFANTRY_LINE_SLUGS or s in ARCHERY_LINE_SLUGS or s in NAVAL_LINE_SLUGS
+    ]
     # Stable and siege scores are stored per sub-line in DB
     if line_slug == "stable":
         _score_line_slugs = list(STABLE_LINE_SLUGS)
     elif line_slug == "siege":
         _score_line_slugs = ["ram", "trebuchet", "bombard_cannon"]
+    elif line_slug == "naval":
+        _score_line_slugs = ["galleon", "fire", "hulk"]
     if _score_line_slugs:
         placeholders = ",".join("?" for _ in _score_line_slugs)
         rc.execute(
@@ -582,7 +588,7 @@ def api_ref_unit_line(line_slug):
     def _attach_scores(entry, age_key, sub_slug):
         """Attach battle scores: DB role scores for infantry/archery/stable/siege, JSON for other lines."""
         unit_key = f"{age_key}|{entry['civ_name']}|{entry['unit_slug']}"
-        if (sub_slug in INFANTRY_LINE_SLUGS or sub_slug in ARCHERY_LINE_SLUGS or sub_slug in STABLE_LINE_SLUGS or sub_slug in SIEGE_LINE_SLUGS) and _db_role_scores:
+        if (sub_slug in INFANTRY_LINE_SLUGS or sub_slug in ARCHERY_LINE_SLUGS or sub_slug in STABLE_LINE_SLUGS or sub_slug in SIEGE_LINE_SLUGS or sub_slug in NAVAL_LINE_SLUGS) and _db_role_scores:
             rs = _db_role_scores.get(unit_key, {})
             for rk, rv in rs.items():
                 entry[rk] = rv

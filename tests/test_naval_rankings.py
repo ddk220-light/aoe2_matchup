@@ -1,4 +1,78 @@
+import sqlite3
+import os
 from unittest.mock import patch
+
+
+def _db_path():
+    return os.path.join(os.path.dirname(__file__), "..", "webapp", "aoe2_reference.db")
+
+
+def test_naval_score_attached_to_unit(client):
+    """After inserting a battle_score row, /api/ref/unit-line/galleon returns it on the unit."""
+    conn = sqlite3.connect(_db_path())
+    c = conn.cursor()
+    c.execute(
+        "INSERT INTO battle_scores (line_slug, age, civ_name, unit_slug, score_type, score_value)"
+        " VALUES (?, ?, ?, ?, ?, ?)",
+        ("galleon", "Imperial", "Britons", "galleon", "naval_effectiveness", 77.5),
+    )
+    conn.commit()
+    conn.close()
+
+    try:
+        resp = client.get("/api/ref/unit-line/galleon")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        britons = next(
+            (u for u in data["imperial"]
+             if u["civ_name"] == "Britons" and u["unit_slug"] == "galleon"),
+            None,
+        )
+        assert britons is not None, "Britons galleon not found in imperial list"
+        assert britons.get("naval_effectiveness") == 77.5, (
+            f"expected 77.5, got {britons.get('naval_effectiveness')}"
+        )
+    finally:
+        conn = sqlite3.connect(_db_path())
+        conn.execute(
+            "DELETE FROM battle_scores WHERE line_slug='galleon'"
+            " AND score_type='naval_effectiveness' AND civ_name='Britons'"
+        )
+        conn.commit()
+        conn.close()
+
+
+def test_naval_aggregate_score_attached(client):
+    """GET /api/ref/unit-line/naval attaches naval_effectiveness scores to galleon units."""
+    conn = sqlite3.connect(_db_path())
+    c = conn.cursor()
+    c.execute(
+        "INSERT INTO battle_scores (line_slug, age, civ_name, unit_slug, score_type, score_value)"
+        " VALUES (?, ?, ?, ?, ?, ?)",
+        ("galleon", "Imperial", "Britons", "galleon", "naval_effectiveness", 65.0),
+    )
+    conn.commit()
+    conn.close()
+
+    try:
+        resp = client.get("/api/ref/unit-line/naval")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        britons = next(
+            (u for u in data["imperial"]
+             if u["civ_name"] == "Britons" and u["unit_slug"] == "galleon"),
+            None,
+        )
+        assert britons is not None
+        assert britons.get("naval_effectiveness") == 65.0
+    finally:
+        conn = sqlite3.connect(_db_path())
+        conn.execute(
+            "DELETE FROM battle_scores WHERE line_slug='galleon'"
+            " AND score_type='naval_effectiveness' AND civ_name='Britons'"
+        )
+        conn.commit()
+        conn.close()
 
 
 def test_naval_aggregate_returns_units(client):

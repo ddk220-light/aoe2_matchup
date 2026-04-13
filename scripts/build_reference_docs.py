@@ -246,6 +246,128 @@ def query_db_civ(conn: sqlite3.Connection, civ_name: str) -> dict:
     return result
 
 
+# --- COMPARISON ENGINE ---
+
+def compare_val(external, db_val) -> str:
+    """
+    Compare an external value against our DB value.
+    Returns MATCH, MISMATCH, MISSING_EXT, or NOT_IN_DB symbol.
+    Float comparison uses FLOAT_TOL tolerance (0.01).
+    """
+    if external is None:
+        return MISSING_EXT
+    if db_val is None:
+        return NOT_IN_DB
+    try:
+        if abs(float(external) - float(db_val)) <= FLOAT_TOL:
+            return MATCH
+        return MISMATCH
+    except (TypeError, ValueError):
+        if str(external).strip().lower() == str(db_val).strip().lower():
+            return MATCH
+        return MISMATCH
+
+
+def count_mismatches(rows: list) -> int:
+    """Count rows where the last element equals MISMATCH."""
+    return sum(1 for row in rows if row[-1] == MISMATCH)
+
+
+def unit_comparison_rows(ext: dict, db: dict, fields: list) -> list:
+    """
+    Build comparison table rows.
+    fields: list of (display_label, db_column) tuples.
+    ext: dict of external values keyed by db_column name.
+    db: dict of DB values keyed by db_column name.
+    Returns list of (field_label, ext_val, db_val, match_symbol) tuples.
+    """
+    rows = []
+    for label, col in fields:
+        ext_val = ext.get(col)
+        db_val = db.get(col)
+        symbol = compare_val(ext_val, db_val)
+        rows.append((label, ext_val if ext_val is not None else "⚠️", db_val if db_val is not None else "—", symbol))
+    return rows
+
+
+# --- TECHTREE HELPERS ---
+
+def find_techtree_unit(techtree: dict, name: str):
+    """
+    Find a unit in aoe2techtree data.json by name (case-insensitive).
+    Returns the unit dict or None if not found.
+    """
+    units = techtree.get("units", {})
+    name_lower = name.lower()
+    for unit_id, unit in units.items():
+        if unit.get("name", "").lower() == name_lower:
+            return unit
+    return None
+
+
+def find_techtree_civ(techtree: dict, name: str):
+    """
+    Find a civilization in aoe2techtree data.json by name (case-insensitive).
+    Returns the civ dict or None if not found.
+    """
+    civs = techtree.get("civs", [])
+    name_lower = name.lower()
+    for civ in civs:
+        if civ.get("name", "").lower() == name_lower:
+            return civ
+    return None
+
+
+def techtree_unit_stats(unit: dict) -> dict:
+    """
+    Extract standardised stats from an aoe2techtree unit dict.
+    Returns dict with same keys as parse_wiki_unit() for uniform downstream processing.
+    """
+    if unit is None:
+        return {}
+    armor_str = unit.get("armor", "0/0")
+    try:
+        ma, pa = [int(x) for x in armor_str.split("/")]
+    except (ValueError, AttributeError):
+        ma, pa = 0, 0
+    cost = unit.get("cost", {})
+    return {
+        "hp": unit.get("hp"),
+        "attack": unit.get("attack"),
+        "melee_armor": ma,
+        "pierce_armor": pa,
+        "speed": unit.get("speed"),
+        "range": unit.get("range", 0),
+        "reload_time": unit.get("reloadTime") or unit.get("attackSpeed"),
+        "cost_food": cost.get("Food", 0),
+        "cost_wood": cost.get("Wood", 0),
+        "cost_gold": cost.get("Gold", 0),
+        "train_time": unit.get("trainTime"),
+        "pop_space": unit.get("populationUse", 1),
+    }
+
+
+# --- RENDERERS ---
+
+def render_armor_classes(classes: list) -> str:
+    """Render armor-classes.md content."""
+    lines = [
+        "# AoE2 Armor Classes",
+        "",
+        f"_Generated: {TODAY}_",
+        "",
+        "Armor classes define which unit types bonus damage applies to.",
+        "A unit's `armors_json` lists the armor classes it belongs to.",
+        "A unit's `attacks_json` lists the armor classes it deals bonus damage against.",
+        "",
+        "| ID | Name |",
+        "|----|------|",
+    ]
+    for ac in classes:
+        lines.append(f"| {ac['id']} | {ac['name']} |")
+    return "\n".join(lines) + "\n"
+
+
 # --- STUB FUNCTIONS (to be implemented in later tasks) ---
 
 def fetch_techtree() -> dict:
@@ -253,7 +375,20 @@ def fetch_techtree() -> dict:
     data = http_get(TECHTREE_URL)
     return json.loads(data)
 
-def generate_armor_classes(conn, args, stats): pass
+def generate_armor_classes(conn: sqlite3.Connection, args, stats: dict):
+    """Write reference/armor-classes.md."""
+    out_path = REF_DIR / "armor-classes.md"
+    if out_path.exists() and not args.force and not getattr(args, 'dry_run', False):
+        stats["skipped"] += 1
+        return
+    classes = query_armor_classes(conn)
+    content = render_armor_classes(classes)
+    if not getattr(args, 'dry_run', False):
+        out_path.write_text(content, encoding="utf-8")
+        stats["written"] += 1
+        print(f"  Written: {out_path}")
+    else:
+        print(f"  [dry-run] Would write: {out_path}")
 def generate_all_civs(techtree, conn, args, stats): pass
 def generate_all_units(techtree, conn, args, stats): pass
 def generate_single_civ(name, techtree, conn, args, stats): pass

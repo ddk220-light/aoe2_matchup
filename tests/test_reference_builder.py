@@ -149,3 +149,69 @@ def test_query_db_civ():
     result = builder.query_db_civ(conn, "Aztecs")
     slugs = [u["unit_slug"] for u in result["unique"]]
     assert "jaguar_warrior_aztecs" in slugs
+
+
+# --- Comparison engine tests ---
+
+def test_compare_val_match_exact():
+    assert builder.compare_val(50, 50) == builder.MATCH
+
+def test_compare_val_match_float_tolerance():
+    assert builder.compare_val(0.96, 0.9600) == builder.MATCH
+
+def test_compare_val_mismatch():
+    assert builder.compare_val(50, 55) == builder.MISMATCH
+
+def test_compare_val_mismatch_outside_tolerance():
+    assert builder.compare_val(0.96, 0.98) == builder.MISMATCH
+
+def test_compare_val_missing_external():
+    assert builder.compare_val(None, 50) == builder.MISSING_EXT
+
+def test_compare_val_missing_db():
+    assert builder.compare_val(50, None) == builder.NOT_IN_DB
+
+def test_compare_val_both_none():
+    assert builder.compare_val(None, None) == builder.MISSING_EXT
+
+
+# --- Techtree helper tests ---
+
+SAMPLE_TECHTREE = {
+    "units": {
+        "359": {
+            "id": 359, "name": "Arbalester", "age": 4,
+            "hp": 40, "attack": 6, "armor": "0/0",
+            "speed": 0.96, "range": 5, "reloadTime": 2.0,
+            "cost": {"Food": 25, "Wood": 45},
+            "trainTime": 27, "populationUse": 1,
+        }
+    },
+    "civs": [{"name": "Aztecs", "uniqueTechs": []}]
+}
+
+def test_find_techtree_unit_found():
+    result = builder.find_techtree_unit(SAMPLE_TECHTREE, "Arbalester")
+    assert result is not None
+    assert result["id"] == 359
+
+def test_find_techtree_unit_case_insensitive():
+    result = builder.find_techtree_unit(SAMPLE_TECHTREE, "arbalester")
+    assert result is not None
+
+def test_find_techtree_unit_not_found():
+    result = builder.find_techtree_unit(SAMPLE_TECHTREE, "Nonexistent Unit")
+    assert result is None
+
+def test_techtree_unit_stats_armor_parsing():
+    unit = {"armor": "1/3", "hp": 50, "attack": 8, "speed": 1.0, "cost": {}}
+    result = builder.techtree_unit_stats(unit)
+    assert result["melee_armor"] == 1
+    assert result["pierce_armor"] == 3
+
+def test_techtree_unit_stats_cost():
+    unit = {"armor": "0/0", "cost": {"Food": 60, "Gold": 30}}
+    result = builder.techtree_unit_stats(unit)
+    assert result["cost_food"] == 60
+    assert result["cost_gold"] == 30
+    assert result["cost_wood"] == 0

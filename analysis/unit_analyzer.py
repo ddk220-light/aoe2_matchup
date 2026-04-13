@@ -704,6 +704,10 @@ class UnitAnalyzer:
             if atk_class in stats.attacks:
                 stats.attacks[atk_class] += amount
             if atk_class == 4:
+                # Melee primary attack
+                stats.attack += amount
+            elif atk_class == 3 and 3 in stats.attacks:
+                # Base pierce — primary attack for archers and ships (e.g. Bracer +1)
                 stats.attack += amount
         elif attr == ATTR_HP_REGEN:
             stats.hp_regen += value

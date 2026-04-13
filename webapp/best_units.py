@@ -157,6 +157,13 @@ IMPACTFUL_TECHS = {
     "Ballistics", "Chemistry", "Siege Engineers",
     # Archery Range
     "Thumb Ring", "Parthian Tactics",
+    # Naval
+    "Careening",             # All ships: +1 PA, +10% speed
+    "Dry Dock",              # All ships: +1 PA, +15% speed
+    "Shipwright",            # All ships: -20% train time, -15% wood cost
+    "Carvel Hull",           # All ships: +1 PA, +10% speed (The Last Chieftains)
+    "Clinker Construction",  # All ships: +1 PA (The Last Chieftains)
+    "Circumnavigation",      # All ships: +5 LOS (The Last Chieftains)
 }
 
 # Techs to exclude from "missing" display for specific unit slugs.
@@ -606,7 +613,7 @@ def _batch_fetch_ease_data(conn, civ_name):
     return result
 
 
-def _build_naval_unit_entry(row, civ_name, conn, db_age, techs_by_slug=None, effects_by_slug=None):
+def _build_naval_unit_entry(row, civ_name, conn, db_age, techs_by_slug=None, effects_by_slug=None, reference_techs=None):
     """Build an enriched entry dict for a naval unit.
 
     Returns the same tooltip-relevant fields that renderTooltip() expects,
@@ -637,19 +644,23 @@ def _build_naval_unit_entry(row, civ_name, conn, db_age, techs_by_slug=None, eff
             conn, civ_name, slug, db_age
         )
 
+    # Compute missing techs using same logic as land units
+    ref_pool = reference_techs.get(slug, set()) if reference_techs else set()
+    missing = _compute_missing_techs(standard_techs, ref_pool, slug)
+
     return {
         "unit_slug": slug,
         "unit_name": row["unit_name"],
         "strength": None,
         "is_signature": False,
         "stats": stats,
-        "missing_techs": [],  # Naval units share no standard tech reference pool
+        "missing_techs": missing,
         "bonus_abilities": bonus_abilities,
         "special_effects": special_effects,
     }
 
 
-def generate_naval_column(civ_name, conn, age_key="imperial", techs_by_slug=None, effects_by_slug=None):
+def generate_naval_column(civ_name, conn, age_key="imperial", techs_by_slug=None, effects_by_slug=None, reference_techs=None):
     """Return the navy column dict for one civ at one age.
 
     For each of the 4 naval lines, returns the highest-tier unit the civ can
@@ -686,7 +697,7 @@ def generate_naval_column(civ_name, conn, age_key="imperial", techs_by_slug=None
         row = rc.fetchone()
         if row:
             col_data[line_slug] = [
-                _build_naval_unit_entry(row, civ_name, conn, db_age, techs_by_slug, effects_by_slug)
+                _build_naval_unit_entry(row, civ_name, conn, db_age, techs_by_slug, effects_by_slug, reference_techs)
             ]
         else:
             col_data[line_slug] = None
@@ -694,7 +705,7 @@ def generate_naval_column(civ_name, conn, age_key="imperial", techs_by_slug=None
     return col_data
 
 
-def generate_cannon_galleon_entry(civ_name, conn, age_key="imperial", techs_by_slug=None, effects_by_slug=None):
+def generate_cannon_galleon_entry(civ_name, conn, age_key="imperial", techs_by_slug=None, effects_by_slug=None, reference_techs=None):
     """Return cannon_galleon entry for one civ at one age, or None if unavailable.
 
     Uses civ-specific unique replacement if defined (Dromon, Lou Chuan,
@@ -718,7 +729,7 @@ def generate_cannon_galleon_entry(civ_name, conn, age_key="imperial", techs_by_s
     row = rc.fetchone()
     if not row:
         return None
-    return _build_naval_unit_entry(row, civ_name, conn, db_age, techs_by_slug, effects_by_slug)
+    return _build_naval_unit_entry(row, civ_name, conn, db_age, techs_by_slug, effects_by_slug, reference_techs)
 
 
 def compute_civ_power_units():
@@ -753,14 +764,14 @@ def compute_civ_power_units():
             ease_by_slug = _batch_fetch_ease_data(conn, civ)
 
             # Navy column: strength=null, no battle_scores lookup
-            power_units["navy"] = generate_naval_column(civ, conn, age_key, techs_by_slug, effects_by_slug)
+            power_units["navy"] = generate_naval_column(civ, conn, age_key, techs_by_slug, effects_by_slug, reference_techs)
 
             for col_key, line_slugs in COLUMN_DEFS.items():
                 col_data = {}
                 for line_slug in line_slugs:
                     # cannon_galleon: skip battle_scores, query ref_units directly
                     if line_slug == "cannon_galleon":
-                        entry = generate_cannon_galleon_entry(civ, conn, age_key, techs_by_slug, effects_by_slug)
+                        entry = generate_cannon_galleon_entry(civ, conn, age_key, techs_by_slug, effects_by_slug, reference_techs)
                         col_data[line_slug] = [entry] if entry else None
                         continue
 

@@ -159,6 +159,18 @@ const SCORE_BREAKDOWN = {
             { key: "ac_3k_vs_elephant", label: "vs Battle Elephant (3K res)", civ: "Vietnamese", slug: "elite_elephant", mode: "resources", res: 3000 },
         ],
     },
+    naval_effectiveness: {
+        title: "Naval Effectiveness",
+        formula: "Average of vs_galleon + vs_fire + vs_hulk (each = avg 30v30 + 3K res), speed-weighted per sub-line",
+        subs: [
+            { key: "vs_galleon_30v30", label: "vs Galleon (30v30)",   civ: "Britons",   slug: "galleon", mode: "count", count: 30 },
+            { key: "vs_galleon_3k",    label: "vs Galleon (3K res)",   civ: "Britons",   slug: "galleon", mode: "resources", res: 3000 },
+            { key: "vs_fire_30v30",    label: "vs Fire Ship (30v30)",  civ: "Britons",   slug: "fire",    mode: "count", count: 30 },
+            { key: "vs_fire_3k",       label: "vs Fire Ship (3K res)", civ: "Britons",   slug: "fire",    mode: "resources", res: 3000 },
+            { key: "vs_hulk_30v30",    label: "vs Hulk (30v30)",       civ: "Sicilians", slug: "hulk",    mode: "count", count: 30 },
+            { key: "vs_hulk_3k",       label: "vs Hulk (3K res)",      civ: "Sicilians", slug: "hulk",    mode: "resources", res: 3000 },
+        ],
+    },
 };
 
 const SCORE_KEYS = new Set([
@@ -702,7 +714,7 @@ async function selectLine(slug) {
                     : SIEGE_SLUGS.has(slug)
                         ? "anti_building_score"
                         : NAVAL_SLUGS.has(slug)
-                            ? "final_hp"
+                            ? "naval_effectiveness"
                             : "pes";
     sortDir = "desc";
     renderTable();
@@ -937,6 +949,7 @@ function renderTable() {
     const isSiege = SIEGE_SLUGS.has(currentLine);
     const isNaval = NAVAL_SLUGS.has(currentLine);
     const navalStatCols = [
+        "naval_effectiveness",
         "dps",
         "final_hp",
         "final_attack",
@@ -1135,6 +1148,7 @@ function renderTable() {
         { key: "civ_name", label: "Civ" },
         { key: "unit_name", label: "Unit" },
         { key: "line_slug", label: "Line" },
+        { key: "naval_effectiveness", label: "Score" },
         { key: "dps", label: "DPS" },
         { key: "final_hp", label: "HP" },
         { key: "final_attack", label: "Atk" },
@@ -1316,7 +1330,7 @@ function exportCSV() {
         : isArchery ? "ranged_effectiveness"
         : isStable ? "stable_effectiveness"
         : isSiege ? "anti_building_score"
-        : isNaval ? "final_hp"
+        : isNaval ? "naval_effectiveness"
         : "pes";
     const ranked = [...currentEnriched].sort((a, b) => {
         const va = a[primaryScore] ?? -999;
@@ -1474,10 +1488,15 @@ function exportCSV() {
         ];
     } else if (isNaval) {
         csvColumns = [
+            { key: "_rank", label: "Rank" },
             { key: "civ_name", label: "Civilization" },
             { key: "unit_name", label: "Unit" },
             { key: "line_slug", label: "Line" },
             { key: "is_unique", label: "Is Unique" },
+            { key: "naval_effectiveness", label: "Naval Score (norm)" },
+            { key: "vs_galleon", label: "vs Galleon (norm)" },
+            { key: "vs_fire", label: "vs Fire Ship (norm)" },
+            { key: "vs_hulk", label: "vs Hulk (norm)" },
             { key: "dps", label: "DPS" },
             { key: "final_hp", label: "HP" },
             { key: "final_attack", label: "Attack" },

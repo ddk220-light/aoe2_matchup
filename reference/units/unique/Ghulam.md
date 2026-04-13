@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Hindustanis  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -57,3 +57,13 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 | Infantry | 0 |
 | Unique Units | 0 |
 | Leitis | 0 |
+
+## Civilization Bonuses
+
+**Team bonuses:**
+
+| Stat | Civ (Bonus) |
+|------|-------------|
+| Attack | Khitans (+2 vs archers) |
+| Conversion | Teutons (+3 min, +1 max) |
+| LOS | Armenians (+2) |

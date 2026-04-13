@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Burmese  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -24,6 +24,7 @@
 ## Special Effects
 
 - **pass_through_count:** 1.0
+- **miss_damage_percent:** 1.0
 
 ## DB Comparison
 
@@ -63,6 +64,10 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Infantry
 **Weak vs:** Archer, Elite Skirmisher, Monk
+
+## Ability
+
+_Missed projectiles deal 100% damage too_
 
 ## Technologies
 

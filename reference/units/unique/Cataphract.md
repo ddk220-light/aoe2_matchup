@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Byzantines  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -31,18 +31,18 @@
 
 | Field | External | Our DB (Castle) | Match |
 |-------|----------|-----------------|-------|
-| HP | ⚠️ | 110.0 | ⚠️ |
-| Attack | ⚠️ | 9.0 | ⚠️ |
-| Melee Armor | ⚠️ | 2.0 | ⚠️ |
-| Pierce Armor | ⚠️ | 1.0 | ⚠️ |
-| Speed | ⚠️ | 1.35 | ⚠️ |
+| HP | 110.0 | 110.0 | ✅ |
+| Attack | 9.0 | 9.0 | ✅ |
+| Melee Armor | 2.0 | 2.0 | ✅ |
+| Pierce Armor | 1.0 | 1.0 | ✅ |
+| Speed | 1.35 | 1.35 | ✅ |
 | Range | ⚠️ | 0.0 | ⚠️ |
 | Reload Time | ⚠️ | 1.8 | ⚠️ |
-| Cost Food | 0 | 70.0 | ❌ |
+| Cost Food | 70 | 70.0 | ✅ |
 | Cost Wood | 0 | 0.0 | ✅ |
-| Cost Gold | 0 | 75.0 | ❌ |
+| Cost Gold | 800 | 75.0 | ❌ |
 
-**⚠️ 2 mismatch(es) found — investigate.**
+**⚠️ 1 mismatch(es) found — investigate.**
 
 ## Attack Bonuses
 

@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Mapuche  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -25,6 +25,9 @@
 
 - **pass_through_percent:** 0.3
 - **pass_through_count:** 1.0
+- **charge_recharge_time:** 30.0
+- **charge_slow_percent:** 0.15
+- **charge_slow_duration:** 10.0
 
 ## DB Comparison
 
@@ -69,6 +72,13 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Mounted unit, Infantry
 **Weak vs:** Skirmisher, Genoese Crossbowmen, Rattan Archer, ranged siege weapon
+
+## Ability
+
+_Fires a projectile shot every 30 seconds that has +2 (+3 Elite) attack and slows targets by 15% for 10 seconds
+Generates_
+
+The Bolas Rider charges its attack over 30 seconds to gain +2 (+3 for Elite) attack, which can be used against infantry, cavalry, foot archers, mounted archers, Monks, Villagers, and Trade Carts. This attack is done with a special projectile that has the ability to slow its target by 15% for 10 seconds. This effect does not stack, but the timer does reset whenever the target receives a hit from any (Elite) Bolas Rider. If Malon is researched, all enemies hit by a Bolas Rider's pass-through charged attack will be slowed.
 
 ## Technologies
 

@@ -3,7 +3,7 @@
 **Type:** Standard  
 **Available to:** All civs  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -65,6 +65,10 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Infantry, Heavy Camel Rider
 **Weak vs:** Elite Skirmisher, Scorpion, Onager, Genitour, Condottieri
+
+## Ability
+
+_Pirotechnia (+15% pass-through damage, Italians only)_
 
 ## Technologies
 

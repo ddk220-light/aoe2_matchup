@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Bulgarians  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -24,6 +24,12 @@
 ## Special Effects
 
 - **pass_through_count:** 1.0
+- **dismount_hp:** 45.0
+- **dismount_attack:** 12.0
+- **dismount_melee_armor:** 1.0
+- **dismount_pierce_armor:** 1.0
+- **dismount_attack_speed:** 2.4
+- **dismount_movement_speed:** 0.9
 
 ## DB Comparison
 
@@ -60,6 +66,10 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Infantry, siege weapon, light cavalry
 **Weak vs:** Archer, Pikemen, Monk, Camel Rider, siege weapon, Boyar, Kamayuk, Berserk, Genoese Crossbowmen, Teutonic Knight, Mameluke, War Elephant, Battle Elephant, Samurai, Cataphract, Flemish Militia, Composite Bowmen
+
+## Ability
+
+_Turn into a(n) (Elite) Dismounted Konnik upon death_
 
 ## Technologies
 

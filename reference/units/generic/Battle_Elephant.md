@@ -3,53 +3,50 @@
 **Type:** Standard  
 **Available to:** All civs  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
 | Stat | Castle | Imperial |
 |------|---------|-------|
-| HP | 250.0 | 300.0 |
-| Attack | 12.0 | 14.0 |
-| Melee Armor | 1.0 | 1.0 |
-| Pierce Armor | 2.0 | 3.0 |
+| HP | 230.0 | 250.0 |
+| Attack | 6.0 | 12.0 |
+| Melee Armor | 0.0 | 1.0 |
+| Pierce Armor | 2.0 | 2.0 |
 | Speed | 0.9 | 0.9 |
-| Range | 0.0 | 0.0 |
+| Range | 4.0 | 0.0 |
 | Reload Time | 2.0 | 2.0 |
-| Cost Food | 100.0 | 100.0 |
+| Cost Food | 60.0 | 100.0 |
 | Cost Wood | 0.0 | 0.0 |
-| Cost Gold | 70.0 | 70.0 |
+| Cost Gold | 80.0 | 70.0 |
 | Pop Space | 1.0 | 1.0 |
 
 ## Special Effects
 
-- **trample_percent:** 0.25
-- **trample_radius:** 0.4
 - **pass_through_count:** 1.0
+- **hp_regen:** 30.0
 
 ## DB Comparison
 
 | Field | External | Our DB (Castle) | Match |
 |-------|----------|-----------------|-------|
-| HP | 250.0 | 250.0 | ✅ |
-| Attack | 12.0 | 12.0 | ✅ |
-| Melee Armor | 1.0 | 1.0 | ✅ |
+| HP | 250.0 | 230.0 | ❌ |
+| Attack | 12.0 | 6.0 | ❌ |
+| Melee Armor | 1.0 | 0.0 | ❌ |
 | Pierce Armor | 2.0 | 2.0 | ✅ |
 | Speed | ⚠️ | 0.9 | ⚠️ |
-| Range | ⚠️ | 0.0 | ⚠️ |
+| Range | ⚠️ | 4.0 | ⚠️ |
 | Reload Time | 2.0 | 2.0 | ✅ |
-| Cost Food | 75 | 100.0 | ❌ |
+| Cost Food | 75 | 60.0 | ❌ |
 | Cost Wood | 0 | 0.0 | ✅ |
-| Cost Gold | 70 | 70.0 | ✅ |
+| Cost Gold | 70 | 80.0 | ❌ |
 
-**⚠️ 1 mismatch(es) found — investigate.**
+**⚠️ 5 mismatch(es) found — investigate.**
 
 ## Attack Bonuses
 
 | Bonus | Armor Class |
 |-------|-------------|
-| +4 | All Buildings |
-| +4 | Stone Defense |
 | -3 | Mounted Archers |
 
 ## Armor Classes (Vulnerability)
@@ -60,12 +57,18 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 |-------------|-------------|
 | War Elephants | 0 |
 | Cavalry | 0 |
+| Archers | 0 |
+| Cavalry Archers | -4 |
 | Leitis | 0 |
 
 ## Strengths & Weaknesses
 
 **Strong vs:** building, foot archer
 **Weak vs:** Pikemen, Kamayuk, Genoese Crossbowmen, Mameluke, Cavalry Archer, Monk, War Elephant, Scorpion, Flaming Camel
+
+## Ability
+
+_Wootz Steel (attack ignores armor, Dravidians only)_
 
 ## Technologies
 

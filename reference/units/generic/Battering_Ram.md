@@ -3,7 +3,7 @@
 **Type:** Standard  
 **Available to:** All civs  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -29,18 +29,18 @@
 
 | Field | External | Our DB (Castle) | Match |
 |-------|----------|-----------------|-------|
-| HP | ⚠️ | 175.0 | ⚠️ |
-| Attack | ⚠️ | 2.0 | ⚠️ |
+| HP | 175.0 | 175.0 | ✅ |
+| Attack | 2.0 | 2.0 | ✅ |
 | Melee Armor | ⚠️ | -3.0 | ⚠️ |
-| Pierce Armor | ⚠️ | 180.0 | ⚠️ |
+| Pierce Armor | 180.0 | 180.0 | ✅ |
 | Speed | ⚠️ | 0.6 | ⚠️ |
 | Range | ⚠️ | 0.0 | ⚠️ |
-| Reload Time | ⚠️ | 5.0 | ⚠️ |
-| Cost Food | 0 | 0.0 | ✅ |
-| Cost Wood | 0 | 160.0 | ❌ |
-| Cost Gold | 0 | 75.0 | ❌ |
+| Reload Time | 5.0 | 5.0 | ✅ |
+| Cost Food | 300 | 0.0 | ❌ |
+| Cost Wood | 160 | 160.0 | ✅ |
+| Cost Gold | 75 | 75.0 | ✅ |
 
-**⚠️ 2 mismatch(es) found — investigate.**
+**⚠️ 1 mismatch(es) found — investigate.**
 
 ## Attack Bonuses
 
@@ -58,3 +58,45 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 | Rams | 0 |
 | Siege Weapons | 0 |
 | Leitis | 0 |
+
+## Strengths & Weaknesses
+
+**Strong vs:** Building, archer, Trebuchet
+**Weak vs:** Mangudai, Chu Ko Nu, Kipchak, Mangonel, Magyar Huszar, Villager
+
+## Ability
+
+_Garrisoned infantry increase its attack and speed.
+Cannot be converted by enemy Monks from distance._
+
+## Technologies
+
+| Stat | Technology (Effect) |
+|------|---------------------|
+| HP | Furor Celtica (+40%, Celts only) |
+| Attack | Siege Engineers (+20% against All Buildings) |
+| Armor | Ironclad (, Teutons only) |
+| Speed | Drill (+50%, Mongols only) |
+| Conversion | Devotion (+1 min, +1 max) |
+| Conversion | Faith (+4 min, +4 max) |
+| Conversion | Heresy (die upon getting converted) |
+| Conversion | First Crusade (+4 min, +4 max, Sicilians only) |
+| LOS | Siege Engineers (+1) |
+
+## Civilization Bonuses
+
+**Unique to civ:**
+
+| Stat | Civ (Bonus) |
+|------|-------------|
+| Attack | Tatars (+20% damage {+50% instead of +25%} from higher elevation) |
+| Speed | Shu (+10%/+15% in the Castle/Imperial Age) |
+| Creation | Aztecs (+15%) |
+| Other | Cumans (available in the Feudal Age) |
+
+**Team bonuses:**
+
+| Stat | Civ (Bonus) |
+|------|-------------|
+| Conversion | Teutons (+3 min, +1 max) |
+| Creation | Celts (+20%) |

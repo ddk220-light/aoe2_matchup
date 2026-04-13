@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Burgundians  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -25,6 +25,7 @@
 
 - **pass_through_count:** 1.0
 - **charge_attack_melee:** 20.0
+- **charge_recharge_time:** 40.0
 
 ## DB Comparison
 
@@ -61,6 +62,17 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Infantry, archer, Villager, siege weapon, light cavalry
 **Weak vs:** Kamayuk, Genoese Crossbowmen, Mameluke, Camel Rider, Samurai, War Elephant, Boyar, Pikemen, Monk
+
+## Ability
+
+_Charges its attack over 40 seconds, dealing +20 (+25 Elite) attack on the first enemy unit attacked_
+
+thumb|left|316px|Showing one charged attack followed by three regular attacks
+The Coustillier can charge its melee attack by +20 (+25 for Elite). The effective charge attack is the result of subtracting the total armor value (including technologies) of the target unit from the Coustillier's base attack + charge bonus + attack technologies.
+
+The charge attack does not affect buildings and is not triggered when the Coustillier attacks them.
+
+When trained, Coustilliers have their charge built up at maximum. Upon catching up with the enemy unit (i.e. entering the attack animation), it takes 0.6 seconds for the Coustillier to inflict its first charged blow (marked with a unique attack animation) after which the animation switches to regular, and the Coustillier deals usual attack. It takes 40 seconds for the ability to be recharged for both Elite and non-Elite Coustillier.
 
 ## Technologies
 

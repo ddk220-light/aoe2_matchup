@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Khitans  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -24,6 +24,7 @@
 ## Special Effects
 
 - **pass_through_count:** 1.0
+- **hp_regen:** 113.0
 
 ## DB Comparison
 
@@ -62,6 +63,14 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 | Leitis | 0 |
 | Unused | 0 |
 | Mounted Archers | -3 |
+
+## Ability
+
+_Projectiles spawn area hazard
+Can attack ground_
+
+The lingering fire area hazard left behind by the Mounted Trebuchet's projectile|thumb|left
+On impact, its projectiles create a patch of fire that lasts for  seconds, dealing 2 damage per second to any enemy unit and 4 damage per second to any enemy building in a  tile radius. The fire damage ignores armor, but does not stack if multiple Mounted Trebuchet projectiles land on the same area.
 
 ## Technologies
 

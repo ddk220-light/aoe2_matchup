@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Muisca  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -66,6 +66,12 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 ## Strengths & Weaknesses
 
 **Strong vs:** Archer
+
+## Ability
+
+_Death heals nearby Guecha Warriors_
+
+The Guecha Warrior regenerates 5 hit points over 3 seconds (100 HP/min regeneration for 3 seconds) whenever a nearby allied Guecha Warrior is killed in a 6 tiles radius. The effect does not stack over multiple dead Guecha Warriors. As such, a Guecha Warrior surrounded by two Guecha Warriors killed at second 0 and 1.5 will regenerate 100 HP/min for 4.5 seconds for a total of 7.5 hit points healed.
 
 ## Technologies
 

@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Spanish  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -29,16 +29,16 @@
 
 | Field | External | Our DB (Castle) | Match |
 |-------|----------|-----------------|-------|
-| HP | ⚠️ | 55.0 | ⚠️ |
-| Attack | ⚠️ | 16.0 | ⚠️ |
-| Melee Armor | ⚠️ | 2.0 | ⚠️ |
+| HP | 55.0 | 55.0 | ✅ |
+| Attack | 16.0 | 16.0 | ✅ |
+| Melee Armor | 2.0 | 2.0 | ✅ |
 | Pierce Armor | ⚠️ | 1.0 | ⚠️ |
-| Speed | ⚠️ | 1.3 | ⚠️ |
-| Range | ⚠️ | 6.0 | ⚠️ |
-| Reload Time | ⚠️ | 2.9 | ⚠️ |
-| Cost Food | 0 | 70.0 | ❌ |
+| Speed | 1.3 | 1.3 | ✅ |
+| Range | 6.0 | 6.0 | ✅ |
+| Reload Time | 2.9 | 2.9 | ✅ |
+| Cost Food | 900 | 70.0 | ❌ |
 | Cost Wood | 0 | 0.0 | ✅ |
-| Cost Gold | 0 | 60.0 | ❌ |
+| Cost Gold | 600 | 60.0 | ❌ |
 
 **⚠️ 2 mismatch(es) found — investigate.**
 
@@ -61,3 +61,33 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 | Gunpowder Units | 0 |
 | Cavalry Archers | 0 |
 | Leitis | 0 |
+
+## Strengths & Weaknesses
+
+**Strong vs:** Infantry, Villager
+**Weak vs:** Monk, Elite Skirmisher, Elite Genitour, Camel Archer, Camel Rider, Mameluke
+
+## Technologies
+
+| Stat | Technology (Effect) |
+|------|---------------------|
+| HP | Bloodlines (+20) |
+| Armor | Padded Archer Armor (+1/+1) |
+| Armor | Leather Archer Armor (+1/+1) |
+| Armor | Ring Archer Armor (+1/+2) |
+| Speed | Husbandry (+10%) |
+| Conversion | Devotion (+1 min, +1 max) |
+| Conversion | Faith (+4 min, +4 max) |
+| Conversion | Heresy (die upon getting converted) |
+| Creation | Conscription (+33%) |
+| Creation | Kasbah (+25%, with a Berber ally only) |
+
+## Civilization Bonuses
+
+**Team bonuses:**
+
+| Stat | Civ (Bonus) |
+|------|-------------|
+| Conversion | Teutons (+3 min, +1 max) |
+| Creation | Turks (+25%) |
+| LOS | Jurchens (+2) |

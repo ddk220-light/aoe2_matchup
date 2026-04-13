@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Muisca  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -66,6 +66,97 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Cavalry
 **Weak vs:** infantry, archer, Hand Cannoneer, Cataphract
+
+## Ability
+
+_Attacks faster the longer it remains in combat_
+
+Every attack of the Temple Guard decreases its attack reload time by 0.2 seconds for 5 seconds. As such, with the base attack reload time of 2 seconds, the minimum it reaches is 1. Though the shown reload time reads 2.0 seconds, that value is never used. The attack cycle stabilizes after 14.6 seconds. The attack cycle of the Temple Guard for the first 16 seconds of sustained combat is shown in the following table:
+{|class=wikitable
+!Second
+!Event
+!Reload time after event
+|-
+|0
+|First hit
+|1.8
+|-
+|1.8
+|Second hit
+|1.6
+|-
+|3.4
+|Third hit
+|1.4
+|-
+|4.8
+|Fourth hit
+|1.2
+|-
+|5
+|Effect of first hit expires
+|1.4
+|-
+|6
+|Fifth hit
+|1.2
+|-
+|6.8
+|Effect of second hit expires
+|1.4
+|-
+|7.2
+|Sixth hit
+|1.2
+|-
+|8.4
+|Seventh hitEffect of third hit expires
+|1.2
+|-
+|9.6
+|Eighth hit
+|1.0
+|-
+|9.8
+|Effect of fourth hit expires
+|1.2
+|-
+|10.6
+|Ninth hit
+|1
+|-
+|11
+|Effect of fifth hit expires
+|1.2
+|-
+|11.6
+|Tenth hit
+|1
+|-
+|12.2
+|Effect of sixth hit expires
+|1.2
+|-
+|12.6
+|Eleventh hit
+|1
+|-
+|13.4
+|Effect of seventh hit expires
+|1.2
+|-
+|13.6
+|Twelfth hit 
+|1
+|-
+|14.6
+|Thirteenth hitEffect of eighth hit expires
+|1
+|-
+|15.6
+|Fourteenth hitEffect of ninth hit expires
+|1
+|}
 
 ## Technologies
 

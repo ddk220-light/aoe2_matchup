@@ -3,22 +3,22 @@
 **Type:** Standard  
 **Available to:** All civs  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
 | Stat | Imperial | Elite |
 |------|---------|-------|
-| HP | 90.0 | — |
-| Attack | 12.0 | — |
-| Melee Armor | 4.0 | — |
-| Pierce Armor | 3.0 | — |
+| HP | 145.0 | — |
+| Attack | 14.0 | — |
+| Melee Armor | 3.0 | — |
+| Pierce Armor | 4.0 | — |
 | Speed | 1.35 | — |
 | Range | 0.0 | — |
 | Reload Time | 1.8 | — |
-| Cost Food | 65.0 | — |
+| Cost Food | 60.0 | — |
 | Cost Wood | 0.0 | — |
-| Cost Gold | 65.0 | — |
+| Cost Gold | 75.0 | — |
 | Pop Space | 1.0 | — |
 
 ## Special Effects
@@ -29,25 +29,23 @@
 
 | Field | External | Our DB (Imperial) | Match |
 |-------|----------|-----------------|-------|
-| HP | 145 | 90.0 | ❌ |
-| Attack | 14 | 12.0 | ❌ |
-| Melee Armor | 3 | 4.0 | ❌ |
-| Pierce Armor | 4 | 3.0 | ❌ |
+| HP | 145 | 145.0 | ✅ |
+| Attack | 14 | 14.0 | ✅ |
+| Melee Armor | 3 | 3.0 | ✅ |
+| Pierce Armor | 4 | 4.0 | ✅ |
 | Speed | 1.35 | 1.35 | ✅ |
 | Range | 0 | 0.0 | ✅ |
 | Reload Time | 1.8 | 1.8 | ✅ |
-| Cost Food | 60 | 65.0 | ❌ |
+| Cost Food | 60 | 60.0 | ✅ |
 | Cost Wood | 0 | 0.0 | ✅ |
-| Cost Gold | 75 | 65.0 | ❌ |
-
-**⚠️ 6 mismatch(es) found — investigate.**
+| Cost Gold | 75 | 75.0 | ✅ |
 
 ## Attack Bonuses
 
 | Bonus | Armor Class |
 |-------|-------------|
 | -3 | Mounted Archers |
-| +1 | Infantry |
+| +2 | Archers |
 
 ## Armor Classes (Vulnerability)
 

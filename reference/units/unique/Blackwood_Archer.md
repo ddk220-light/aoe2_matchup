@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Tupi  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -63,6 +63,12 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Infantry, archer, Villager
 **Weak vs:** Elite Skirmisher, siege weapon, Huskarl, Ghulam, Rattan Archer, Genitour, War Wagon, Elephant Archer, heavy cavalry
+
+## Ability
+
+_Costs 0.5 population
+Trained in pairs
+Returns 15% of its cost when killed_
 
 ## Technologies
 

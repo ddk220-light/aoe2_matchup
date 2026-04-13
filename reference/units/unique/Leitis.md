@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Lithuanians  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -24,6 +24,7 @@
 ## Special Effects
 
 - **pass_through_count:** 1.0
+- **ignores_melee_armor:** 1.0
 
 ## DB Comparison
 
@@ -60,6 +61,10 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Serjeant, Teutonic Knight, Boyar
 **Weak vs:** Pikemen, Kamayuk, Genoese Crossbowmen, Mameluke, Camel Rider, Monk, War Elephant, Battle Elephant, Samurai, archer
+
+## Ability
+
+_Attacks ignore armor of non-siege land units_
 
 ## Technologies
 

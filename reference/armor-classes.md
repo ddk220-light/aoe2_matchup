@@ -1,6 +1,6 @@
 # AoE2 Armor Classes
 
-_Generated: 2026-04-12_
+_Generated: 2026-04-13_
 
 Armor classes define which unit types bonus damage applies to.
 A unit's `armors_json` lists the armor classes it belongs to.

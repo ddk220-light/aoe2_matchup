@@ -3,7 +3,7 @@
 **Type:** Standard  
 **Available to:** All civs  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -63,6 +63,10 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Foot archer, building
 **Weak vs:** Heavy infantry, heavy cavalry
+
+## Ability
+
+_Can build Outposts*_
 
 ## Technologies
 

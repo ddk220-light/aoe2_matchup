@@ -3,14 +3,14 @@
 **Type:** Standard  
 **Available to:** All civs  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
 | Stat | Imperial | Elite |
 |------|---------|-------|
-| HP | 70.0 | — |
-| Attack | 14.0 | — |
+| HP | 65.0 | — |
+| Attack | 12.0 | — |
 | Melee Armor | 1.0 | — |
 | Pierce Armor | 1.0 | — |
 | Speed | 0.96 | — |
@@ -29,8 +29,8 @@
 
 | Field | External | Our DB (Imperial) | Match |
 |-------|----------|-----------------|-------|
-| HP | ⚠️ | 70.0 | ⚠️ |
-| Attack | ⚠️ | 14.0 | ⚠️ |
+| HP | ⚠️ | 65.0 | ⚠️ |
+| Attack | ⚠️ | 12.0 | ⚠️ |
 | Melee Armor | ⚠️ | 1.0 | ⚠️ |
 | Pierce Armor | ⚠️ | 1.0 | ⚠️ |
 | Speed | ⚠️ | 0.96 | ⚠️ |
@@ -62,6 +62,13 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Elite Skirmisher, Halberdier, Heavy Camel Rider, Elite Eagle Warrior, building
 **Weak vs:** Archer, Heavy Scorpion, Cataphract, Jaguar Warrior, Boyar, Teutonic Knight
+
+## Ability
+
+_Chieftains (generates  when killing Villagers, trade units, and Monks, respectively, Vikings only)
+Lamellar Armor (25% non-projectile damage reflection, Khitans only)
+Druzhina (deals 5 trample damage in 0.5 tile radius, Slavs only)
+Wootz Steel (attack ignores armor, Dravidians only)_
 
 ## Technologies
 

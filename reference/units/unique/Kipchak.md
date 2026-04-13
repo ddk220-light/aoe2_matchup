@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Cumans  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -63,6 +63,10 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** ram, Monk
 **Weak vs:** Archer, camel unit
+
+## Ability
+
+_Tuntian (Passively generate /min, Wei only)_
 
 ## Technologies
 

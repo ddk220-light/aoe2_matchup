@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Gurjaras  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -25,6 +25,7 @@
 
 - **pass_through_count:** 1.0
 - **dodge_shield_max:** 5.0
+- **dodge_shield_recharge:** 20.0
 
 ## DB Comparison
 
@@ -62,6 +63,10 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 ## Strengths & Weaknesses
 
 **Strong vs:** Archer, siege weapon, Villager, Gbeto, Throwing Axemen, Chakram Thrower, Mameluke, Trade Cart
+
+## Ability
+
+_Can "dodge" five (seven for Elite) consecutive projectiles in a 20 second time frame_
 
 ## Technologies
 

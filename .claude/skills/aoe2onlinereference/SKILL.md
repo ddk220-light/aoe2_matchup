@@ -1,13 +1,41 @@
 ---
 name: aoe2onlinereference
-description: Use when pulling unit stats, civ bonuses, unique techs, or armor class data from external online sources (Fandom wiki, SiegeEngineers/aoe2techtree, hsynlms/aoe2techtree) to document or validate the local database. Invoke when asked to "check the wiki", "compare with aoe2techtree", "pull online stats", or "build reference markdown files".
+description: Use when pulling unit stats, civ bonuses, unique techs, armor class data, or unit ability descriptions from external online sources to document or validate the local database. Invoke when asked to "check the wiki", "compare with aoe2techtree", "pull online stats", "verify mechanic", or "build reference markdown files".
 ---
 
 # AoE2 Online Reference Sources
 
-Three external sources are used for AoE2 data. Each has different strengths. Always cross-reference at least two sources before drawing conclusions.
+Four external sources are used for AoE2 data. Each has different strengths. Always cross-reference at least two sources before drawing conclusions.
 
 **Important:** These sources are for pulling EXTERNAL data to compare against our local database (`webapp/aoe2_reference.db`, `webapp/aoe2_units.db`). Do NOT use our own Railway API (aoe2.up.railway.app) as the source — that only reflects what we already have. The goal is to validate our DB against the authoritative external sources.
+
+---
+
+## ⭐ Source 0: Firecrawl (FIRST STEP for any wiki page)
+
+**API key:** stored as env var `FIRECRAWL_API_KEY` (`fc-dc42befccd9640d5a2dfdc4bc5e92a4a`)  
+**MCP tool:** `mcp__Apify__apify-slash-rag-web-browser` or direct `WebFetch` to Firecrawl API
+
+Use Firecrawl **before** the raw wiki API for any page that may be:
+- Behind JavaScript rendering (Fandom wiki renders some infoboxes client-side)
+- A complex page with templates that the raw wikitext doesn't fully expand
+- A page where the bare URL returns a stub (Fandom redirects can return 283-char stubs)
+
+### Firecrawl API usage
+
+```bash
+# Scrape a Fandom wiki page to clean markdown
+curl -X POST https://api.firecrawl.dev/v1/scrape \
+  -H "Authorization: Bearer fc-dc42befccd9640d5a2dfdc4bc5e92a4a" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://ageofempires.fandom.com/wiki/Galleon_(Age_of_Empires_II)", "formats": ["markdown"]}'
+```
+
+Returns clean markdown with all template content rendered. Much richer than raw wikitext for ability sections, stat tables, and civ bonus lists.
+
+### When to fall back to raw wiki API
+
+If Firecrawl is unavailable or rate-limited, fall back to Source 1 (Fandom wiki API). The wiki API is still reliable for wikitext-level data but misses JS-rendered content.
 
 ---
 
@@ -39,12 +67,12 @@ https://ageofempires.fandom.com/api.php?action=parse&page=PAGE_NAME&prop=section
 | Content | Pattern | Example |
 |---------|---------|---------|
 | Civilization | `CivName_(Age_of_Empires_II)` | `Muisca_(Age_of_Empires_II)` |
-| Generic unit | `Unit_Name` | `Arbalester` |
-| Unique unit | `Unit_Name` | `Temple_Guard` |
+| Generic unit | `Unit_Name_(Age_of_Empires_II)` | `Arbalester_(Age_of_Empires_II)` |
+| Unique unit | `Unit_Name_(Age_of_Empires_II)` | `Temple_Guard_(Age_of_Empires_II)` |
 | Tech | `Tech_Name` | `Heresy` |
 | Armor class | Not available directly | — |
 
-Try without the `_(Age_of_Empires_II)` suffix first; add it if the first attempt redirects or returns the wrong page.
+**⚠️ ALWAYS try the `_(Age_of_Empires_II)` suffix FIRST.** Bare unit names (e.g., `Fire_Archer`) return 283-character stub pages that are NOT None — the API succeeds but the content is useless. The suffix version always returns the correct full page. Only fall back to the bare name if the suffix fails.
 
 ### What the Wikitext Contains
 

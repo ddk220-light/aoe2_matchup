@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Khitans  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -23,9 +23,10 @@
 
 ## Special Effects
 
-- **bleed_dps:** 2.0
-- **bleed_duration:** 5.0
+- **bleed_dps:** 3.0
+- **bleed_duration:** 3.0
 - **pass_through_count:** 1.0
+- **damage_reflect_percent:** 0.25
 
 ## DB Comparison
 
@@ -63,6 +64,12 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Infantry, Battering Ram
 **Weak vs:** Archer, Hand Cannoneer, Siege unit, Monk, Samurai, War Elephant
+
+## Ability
+
+_Deals 9 additional bleeding damage to non-siege units over 3 seconds_
+
+Its attack deals an additional 9 damage to land units, except siege weapons, over 3 seconds, which can stack and is unaffected by armor. Organic siege units (thus excluding the fully mechanical siege weapons), like the Armored Elephant and Mounted Trebuchet, are affected.
 
 ## Technologies
 

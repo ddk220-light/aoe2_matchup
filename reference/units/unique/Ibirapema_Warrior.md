@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Tupi  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -62,6 +62,10 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 ## Strengths & Weaknesses
 
 **Weak vs:** Archer, Hand Cannoneer, Jaguar Warrior, Legionarie, Liao Dao, Samurai, Teutonic Knight, Urumi Swordsmen, Chakram Thrower, Cataphract, Battle Elephant, War Elephant, Scorpion, Organ Gun
+
+## Ability
+
+_Returns 15% of its cost when killed_
 
 ## Technologies
 

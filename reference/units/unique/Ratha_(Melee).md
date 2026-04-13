@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Bengalis  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -26,6 +26,7 @@
 - **trample_percent:** 0.2
 - **trample_radius:** 0.5
 - **pass_through_count:** 1.0
+- **bonus_damage_reduction:** 0.25
 
 ## DB Comparison
 

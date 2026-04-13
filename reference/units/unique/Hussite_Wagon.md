@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Bohemians  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -63,6 +63,11 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Pikemen, archer unit
 **Weak vs:** Mangonel, Bombard Cannon, cavalry, Throwing Axemen, Huskarl, Samurai, Condottieri
+
+## Ability
+
+_Halves the damage dealt by enemy projectiles passing through its hitbox by taking 1 damage
+Fires 5 additional bullets_
 
 ## Technologies
 

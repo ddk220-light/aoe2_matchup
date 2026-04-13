@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Malay  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -57,6 +57,10 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 | Infantry | 0 |
 | Unique Units | 0 |
 | Leitis | 0 |
+
+## Ability
+
+_Costs 0.5 population_
 
 ## Civilization Bonuses
 

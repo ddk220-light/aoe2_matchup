@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Mayans  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 

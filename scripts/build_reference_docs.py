@@ -38,6 +38,66 @@ NOT_IN_DB = "❌ NOT IN DB"
 TODAY = date.today().isoformat()
 WIKI_DELAY = 0.5  # seconds between wiki API calls
 
+# Naval unit base names (without "Elite " prefix).
+# Standard naval units are routed to reference/units/naval/.
+# Unique naval units map to their civ in NAVAL_UNIQUE_CIVS.
+NAVAL_UNIT_NAMES = frozenset({
+    # Standard naval lines
+    "Galley", "Fire Galley", "War Galley", "Galleon",
+    "Demolition Raft", "Demolition Ship", "Heavy Demolition Ship",
+    "Fire Ship", "Fast Fire Ship",
+    "Cannon Galleon",
+    "Transport Ship",
+    # Unique naval units (trainable combat ships)
+    "Longboat",      # Vikings
+    "Turtle Ship",   # Koreans
+    "Caravel",       # Portuguese
+    "Dromon",        # Byzantines
+    "Thirisadai",    # Dravidians
+    # Note: Galleass is an Italian unique TECHNOLOGY, not a trainable unit.
+    # Note: Junk is a non-combat trade/scenario ship, not part of the combat analyzer.
+})
+
+# Which civ owns each unique naval unit
+NAVAL_UNIQUE_CIVS: dict = {
+    "Longboat": "Vikings",
+    "Turtle Ship": "Koreans",
+    "Caravel": "Portuguese",
+    "Dromon": "Byzantines",
+    "Thirisadai": "Dravidians",
+}
+
+# Authoritative naval unit stats (post The Last Chieftains update 169123).
+# Keyed by unit name (including "Elite " variants). Stats use ext_stats keys.
+# Sources: AoE2 wiki + SiegeEngineers/aoe2techtree.
+NAVAL_STATS: dict = {
+    # --- Galley line ---
+    "Galley":       {"hp": 110, "attack": 6,  "melee_armor": 0, "pierce_armor": 3, "speed": 1.36, "range": 5,  "reload_time": 3.0,  "cost_food": 0, "cost_wood": 90,  "cost_gold": 30,  "pop_space": 1},
+    "War Galley":   {"hp": 125, "attack": 7,  "melee_armor": 0, "pierce_armor": 4, "speed": 1.36, "range": 6,  "reload_time": 3.0,  "cost_food": 0, "cost_wood": 90,  "cost_gold": 30,  "pop_space": 1},
+    "Galleon":      {"hp": 155, "attack": 9,  "melee_armor": 0, "pierce_armor": 6, "speed": 1.36, "range": 7,  "reload_time": 3.0,  "cost_food": 0, "cost_wood": 90,  "cost_gold": 30,  "pop_space": 1},
+    # --- Fire Ship line (attack=melee, range≈0.5 contact range) ---
+    "Fire Galley":      {"hp": 110, "attack": 2, "melee_armor": 1, "pierce_armor": 4, "speed": 1.36, "range": 0,  "reload_time": 0.25, "cost_food": 0, "cost_wood": 75, "cost_gold": 45, "pop_space": 1},
+    "Fire Ship":        {"hp": 120, "attack": 3, "melee_armor": 2, "pierce_armor": 4, "speed": 1.47, "range": 0,  "reload_time": 0.25, "cost_food": 0, "cost_wood": 75, "cost_gold": 45, "pop_space": 1},
+    "Fast Fire Ship":   {"hp": 140, "attack": 4, "melee_armor": 3, "pierce_armor": 7, "speed": 1.56, "range": 0,  "reload_time": 0.25, "cost_food": 0, "cost_wood": 75, "cost_gold": 45, "pop_space": 1},
+    # --- Demolition Ship line (suicide ships; attack = explosion damage) ---
+    "Demolition Raft":       {"hp": 40,  "attack": 75,  "melee_armor": 0, "pierce_armor": 0, "speed": 1.42, "range": 0, "reload_time": 0, "cost_food": 0, "cost_wood": 45, "cost_gold": 80, "pop_space": 1},
+    "Demolition Ship":       {"hp": 50,  "attack": 95,  "melee_armor": 1, "pierce_armor": 0, "speed": 1.52, "range": 0, "reload_time": 0, "cost_food": 0, "cost_wood": 45, "cost_gold": 80, "pop_space": 1},
+    "Heavy Demolition Ship": {"hp": 60,  "attack": 120, "melee_armor": 2, "pierce_armor": 0, "speed": 1.52, "range": 0, "reload_time": 0, "cost_food": 0, "cost_wood": 45, "cost_gold": 80, "pop_space": 1},
+    # --- Cannon Galleon ---
+    "Cannon Galleon": {"hp": 120, "attack": 50, "melee_armor": 0, "pierce_armor": 5, "speed": 1.05, "range": 13, "reload_time": 10.0, "cost_food": 0, "cost_wood": 200, "cost_gold": 150, "pop_space": 1},
+    # --- Transport Ship ---
+    "Transport Ship": {"hp": 70,  "attack": 0,  "melee_armor": 0, "pierce_armor": 2, "speed": 1.45, "range": 0,  "reload_time": 0,   "cost_food": 0, "cost_wood": 125, "cost_gold": 20,  "pop_space": 1},
+    # --- Unique naval units ---
+    "Longboat":       {"hp": 125, "attack": 5, "melee_armor": 0, "pierce_armor": 1, "speed": 1.46, "range": 6, "reload_time": 3.0, "cost_food": 0, "cost_wood": 85, "cost_gold": 43, "pop_space": 1},
+    "Elite Longboat": {"hp": 130, "attack": 7, "melee_armor": 3, "pierce_armor": 6, "speed": 1.46, "range": 7, "reload_time": 3.0, "cost_food": 0, "cost_wood": 85, "cost_gold": 43, "pop_space": 1},
+    "Turtle Ship":       {"hp": 275, "attack": 20, "melee_armor": 2, "pierce_armor": 7,  "speed": 1.0, "range": 6, "reload_time": 6.0, "cost_food": 0, "cost_wood": 180, "cost_gold": 180, "pop_space": 1},
+    "Elite Turtle Ship": {"hp": 350, "attack": 25, "melee_armor": 3, "pierce_armor": 12, "speed": 1.0, "range": 7, "reload_time": 6.0, "cost_food": 0, "cost_wood": 180, "cost_gold": 180, "pop_space": 1},
+    "Caravel":       {"hp": 143, "attack": 4, "melee_armor": 0, "pierce_armor": 5, "speed": 1.36, "range": 6, "reload_time": 3.0, "cost_food": 0, "cost_wood": 90, "cost_gold": 34, "pop_space": 1},
+    "Elite Caravel": {"hp": 165, "attack": 7, "melee_armor": 0, "pierce_armor": 6, "speed": 1.36, "range": 7, "reload_time": 3.0, "cost_food": 0, "cost_wood": 90, "cost_gold": 34, "pop_space": 1},
+    "Dromon":        {"hp": 125, "attack": 8, "melee_armor": 1, "pierce_armor": 6, "speed": 1.2,  "range": 12, "reload_time": 8.0, "cost_food": 0, "cost_wood": 175, "cost_gold": 150, "pop_space": 1},
+    "Thirisadai":    {"hp": 250, "attack": 10, "melee_armor": 2, "pierce_armor": 11, "speed": 1.25, "range": 7, "reload_time": 3.45, "cost_food": 0, "cost_wood": 180, "cost_gold": 60, "pop_space": 1},
+}
+
 
 # --- FETCH LAYER ---
 
@@ -307,6 +367,42 @@ def _extract_wiki_display_names(text: str) -> list:
     return results
 
 
+def parse_wiki_unit_ability(wikitext: str) -> dict:
+    """
+    Extract special ability info from a unit wiki page.
+    Returns dict with:
+      'summary': str — from |Ability = infobox field (one-liner like "Switches to long-range mode vs buildings")
+      'detail': str — from == Ability == section (multi-sentence mechanic description)
+    Both may be empty strings if the unit has no ability section.
+    """
+    result = {"summary": "", "detail": ""}
+
+    # |Ability = ... in infobox (stop at next | field or end of template)
+    m = re.search(r'\|Ability\s*=\s*(.+?)(?=\n\s*\||\n\s*\}\}|\Z)', wikitext, re.DOTALL)
+    if m:
+        raw = m.group(1).strip()
+        # Collapse <br /> inside the field to newlines for multi-mode descriptions
+        raw = re.sub(r'<br\s*/?>', '\n', raw, flags=re.IGNORECASE)
+        result["summary"] = _strip_wiki_markup(raw).strip()
+
+    # == Ability == section body (stop at next == heading or end)
+    sec_m = re.search(r'==\s*Ability\s*==\s*\n([\s\S]*?)(?=\n==|\Z)', wikitext)
+    if sec_m:
+        raw = sec_m.group(1).strip()
+        # Strip wiki references and template noise; preserve sentences
+        raw = re.sub(r'<ref[^>]*>.*?</ref>', '', raw, flags=re.DOTALL)
+        raw = re.sub(r'\[\[([^\]|]+\|)?([^\]]+)\]\]', r'\2', raw)
+        # Collapse remaining templates (icons, etc.)
+        raw = re.sub(r'\{\{[^{}]*\}\}', '', raw)
+        raw = re.sub(r"'{2,}", '', raw)          # remove bold/italic markers
+        raw = re.sub(r'<[^>]+>', '', raw)        # remaining HTML
+        # Compress multiple blank lines
+        raw = re.sub(r'\n{3,}', '\n\n', raw)
+        result["detail"] = raw.strip()
+
+    return result
+
+
 def parse_wiki_unit_extras(wikitext: str) -> dict:
     """
     Parse enhancement data from a unit wiki page:
@@ -393,22 +489,34 @@ def query_armor_classes(conn: sqlite3.Connection) -> list:
     return [{"id": r["id"], "name": r["name"]} for r in rows]
 
 
-def query_db_unit(conn: sqlite3.Connection, unit_slug_prefix: str) -> dict:
+def query_db_unit(conn: sqlite3.Connection, unit_slug_prefix: str, civ_name: str | None = None) -> dict:
     """
-    Query ref_units for all rows matching unit_slug_prefix (handles both regular + elite
-    which share a slug prefix like 'jaguar_warrior_aztecs' / 'elite_jaguar_warrior_aztecs').
+    Query ref_units for all rows matching unit_slug_prefix.
+    If civ_name is given, filters to that civ (used for units that vary by civ,
+    e.g. Paladin/Cavalier/Legionary all share the 'champion' or 'paladin' slug).
     Returns dict keyed by age: {'Castle': {...stats...}, 'Imperial': {...stats...}}
     Special effects are merged into each age's dict.
     """
-    rows = conn.execute(
-        """SELECT ru.*, GROUP_CONCAT(se.property_name || '=' || se.property_value, '|') as effects
-           FROM ref_units ru
-           LEFT JOIN ref_special_effects se ON se.ref_unit_id = ru.id
-           WHERE ru.unit_slug LIKE ? OR ru.unit_slug = ?
-           GROUP BY ru.id
-           ORDER BY ru.age""",
-        (f"%{unit_slug_prefix}%", unit_slug_prefix),
-    ).fetchall()
+    if civ_name:
+        rows = conn.execute(
+            """SELECT ru.*, GROUP_CONCAT(se.property_name || '=' || se.property_value, '|') as effects
+               FROM ref_units ru
+               LEFT JOIN ref_special_effects se ON se.ref_unit_id = ru.id
+               WHERE (ru.unit_slug LIKE ? OR ru.unit_slug = ?) AND ru.civ_name = ?
+               GROUP BY ru.id
+               ORDER BY ru.age""",
+            (f"%{unit_slug_prefix}%", unit_slug_prefix, civ_name),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            """SELECT ru.*, GROUP_CONCAT(se.property_name || '=' || se.property_value, '|') as effects
+               FROM ref_units ru
+               LEFT JOIN ref_special_effects se ON se.ref_unit_id = ru.id
+               WHERE ru.unit_slug LIKE ? OR ru.unit_slug = ?
+               GROUP BY ru.id
+               ORDER BY ru.age""",
+            (f"%{unit_slug_prefix}%", unit_slug_prefix),
+        ).fetchall()
 
     result = {}
     for row in rows:
@@ -774,33 +882,30 @@ def render_unit_file(
     civ_name: str = None,
     extras: dict = None,
     armor_class_map: dict = None,
+    ability: dict = None,
+    naval_stats: dict = None,
 ) -> tuple:
     """
     Render a unit reference markdown file.
     ext_stats: from techtree_unit_stats() or parse_wiki_unit() — external source values
     db_rows: {age: db_dict} from query_db_unit()
+    naval_stats: optional dict {col_label: {ext_key: val}} for naval units not in sim DB.
+                 When provided, the Stats table shows these values and DB Comparison is skipped.
     Returns (content_string, mismatch_count) tuple.
     """
+    is_naval = naval_stats is not None
+
     ages = list(db_rows.keys()) if db_rows else []
-    col_a = ages[0] if ages else "Regular"
-    col_b = ages[1] if len(ages) > 1 else "Elite"
+    if is_naval:
+        nav_ages = list(naval_stats.keys())
+        col_a = nav_ages[0] if nav_ages else "Stats"
+        col_b = nav_ages[1] if len(nav_ages) > 1 else "Elite"
+    else:
+        col_a = ages[0] if ages else "Regular"
+        col_b = ages[1] if len(ages) > 1 else "Elite"
 
     db_a = db_rows.get(col_a, {})
     db_b = db_rows.get(col_b, {})
-
-    lines = [
-        f"# {unit_name}",
-        "",
-        f"**Type:** {unit_type.capitalize()}  ",
-        f"**Available to:** {'All civs' if not civ_name else civ_name}  ",
-        "**Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  ",
-        f"**Generated:** {TODAY}",
-        "",
-        "## Stats",
-        "",
-        f"| Stat | {col_a} | {col_b} |",
-        "|------|---------|-------|",
-    ]
 
     stat_rows = [
         ("HP", "base_hp"),
@@ -815,19 +920,97 @@ def render_unit_file(
         ("Cost Gold", "base_cost_gold"),
         ("Pop Space", "pop_space"),
     ]
-    for label, col in stat_rows:
-        a = db_a.get(col, "—")
-        b = db_b.get(col, "—")
-        lines.append(f"| {label} | {a} | {b} |")
+
+    # ext_stats key mapping → db column name (inverse of db_to_ext below)
+    ext_to_db = {
+        "hp": "base_hp", "attack": "base_attack", "melee_armor": "base_melee_armor",
+        "pierce_armor": "base_pierce_armor", "speed": "base_speed", "range": "base_range",
+        "reload_time": "base_reload_time", "cost_food": "base_cost_food",
+        "cost_wood": "base_cost_wood", "cost_gold": "base_cost_gold", "pop_space": "pop_space",
+    }
+
+    # Determine whether the stats table has one or two data columns
+    if is_naval:
+        nav_ages = list(naval_stats.keys())
+        has_two_nav_cols = len(nav_ages) >= 2
+        nav_col_a = nav_ages[0] if nav_ages else "Stats"
+        nav_col_b = nav_ages[1] if has_two_nav_cols else None
+        nav_a = naval_stats.get(nav_col_a, {})
+        nav_b = naval_stats.get(nav_col_b, {}) if nav_col_b else {}
+        if has_two_nav_cols:
+            header = f"| Stat | {nav_col_a} | {nav_col_b} |"
+            sep    = "|------|---------|-------|"
+        else:
+            header = f"| Stat | {nav_col_a} |"
+            sep    = "|------|---------|"
+    else:
+        header = f"| Stat | {col_a} | {col_b} |"
+        sep    = "|------|---------|-------|"
+
+    lines = [
+        f"# {unit_name}",
+        "",
+        f"**Type:** {unit_type.capitalize()}  ",
+        f"**Available to:** {'All civs' if not civ_name else civ_name}  ",
+        "**Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  ",
+        f"**Generated:** {TODAY}",
+        "",
+        "## Stats",
+        "",
+        header,
+        sep,
+    ]
+
+    if is_naval:
+        for label, col in stat_rows:
+            ext_key = next((k for k, v in ext_to_db.items() if v == col), col)
+            a = nav_a.get(ext_key, "—")
+            if has_two_nav_cols:
+                b = nav_b.get(ext_key, "—") if nav_b else "—"
+                lines.append(f"| {label} | {a} | {b} |")
+            else:
+                lines.append(f"| {label} | {a} |")
+    else:
+        for label, col in stat_rows:
+            a = db_a.get(col, "—")
+            b = db_b.get(col, "—")
+            lines.append(f"| {label} | {a} | {b} |")
     lines.append("")
 
-    # Special effects
+    # Special effects — all known combat mechanics that may appear in ref_special_effects
     special_fields = [
-        "bleed_dps", "bleed_duration", "trample_percent", "trample_flat_damage",
-        "trample_radius", "pass_through_percent", "pass_through_count",
-        "attack_bonus_per_kill", "charge_attack_melee", "dodge_shield_max",
-        "attack_speed_ramp", "attack_speed_min", "execute_damage_per_step",
-        "ally_death_heal",
+        # Bleed / DoT
+        "bleed_dps", "bleed_duration",
+        # Trample / splash
+        "trample_percent", "trample_flat_damage", "trample_radius",
+        # Pass-through projectiles
+        "pass_through_percent", "pass_through_count",
+        # Kill-streak bonuses
+        "attack_bonus_per_kill", "hp_per_kill", "hp_per_kill_max",
+        # HP regen
+        "hp_regen",
+        # Charge attacks
+        "charge_attack_melee", "charge_attack_range", "charge_ignores_armor",
+        "charge_recharge_time", "charge_slow_percent", "charge_slow_duration",
+        # Nearby ally bonus (Monaspa)
+        "attack_bonus_nearby", "nearby_bonus_count",
+        # Dodge shield
+        "dodge_shield_max", "dodge_shield_recharge",
+        # Attack speed ramp (Temple Guard)
+        "attack_speed_ramp", "attack_speed_min",
+        # Damage reflect (Liao Dao + Lamellar Armor)
+        "damage_reflect_percent",
+        # Dismount stats (Konnik)
+        "dismount_hp", "dismount_attack", "dismount_melee_armor",
+        "dismount_pierce_armor", "dismount_attack_speed", "dismount_movement_speed",
+        # Transform (Jian Swordsman)
+        "hp_transform_threshold", "transform_hp", "transform_attack",
+        "transform_melee_armor", "transform_pierce_armor",
+        "transform_attack_speed", "transform_movement_speed",
+        # Other
+        "execute_damage_per_step", "ally_death_heal",
+        "bonus_damage_reduction", "ignores_melee_armor", "ignores_pierce_armor",
+        "miss_damage_percent",
     ]
     special = {k: db_a.get(k) for k in special_fields if db_a.get(k)}
     lines += ["## Special Effects", ""]
@@ -838,87 +1021,109 @@ def render_unit_file(
         lines.append("None")
     lines.append("")
 
-    # DB Comparison table (external vs our DB for first age)
-    lines += [
-        "## DB Comparison",
-        "",
-        f"| Field | External | Our DB ({col_a}) | Match |",
-        "|-------|----------|-----------------|-------|",
-    ]
     mismatch_count = 0
+    if is_naval:
+        # Naval units are not in the simulation database — skip DB comparison.
+        lines += [
+            "## DB Comparison",
+            "",
+            "_Naval units are not in the simulation database. Stats shown above are from the AoE2 wiki._",
+            "",
+        ]
+    else:
+        # DB Comparison table (external vs our DB for first age)
+        lines += [
+            "## DB Comparison",
+            "",
+            f"| Field | External | Our DB ({col_a}) | Match |",
+            "|-------|----------|-----------------|-------|",
+        ]
 
-    # Map db column names → external stat keys (pre-computed reverse)
-    db_to_ext = {
-        "base_hp": "hp",
-        "base_attack": "attack",
-        "base_melee_armor": "melee_armor",
-        "base_pierce_armor": "pierce_armor",
-        "base_speed": "speed",
-        "base_range": "range",
-        "base_reload_time": "reload_time",
-        "base_cost_food": "cost_food",
-        "base_cost_wood": "cost_wood",
-        "base_cost_gold": "cost_gold",
-    }
-    for label, col in stat_rows[:10]:  # skip pop_space (not in external sources)
-        ext_key = db_to_ext.get(col, col)
-        ext_val = ext_stats.get(ext_key)
-        db_val = db_a.get(col)
-        symbol = compare_val(ext_val, db_val)
-        ext_display = ext_val if ext_val is not None else "⚠️"
-        db_display = db_val if db_val is not None else "—"
-        lines.append(f"| {label} | {ext_display} | {db_display} | {symbol} |")
-        if symbol == MISMATCH:
-            mismatch_count += 1
-    lines.append("")
-
-    if mismatch_count:
-        lines.append(f"**⚠️ {mismatch_count} mismatch(es) found — investigate.**")
+        # Map db column names → external stat keys (pre-computed reverse)
+        db_to_ext = {
+            "base_hp": "hp",
+            "base_attack": "attack",
+            "base_melee_armor": "melee_armor",
+            "base_pierce_armor": "pierce_armor",
+            "base_speed": "speed",
+            "base_range": "range",
+            "base_reload_time": "reload_time",
+            "base_cost_food": "cost_food",
+            "base_cost_wood": "cost_wood",
+            "base_cost_gold": "cost_gold",
+        }
+        for label, col in stat_rows[:10]:  # skip pop_space (not in external sources)
+            ext_key = db_to_ext.get(col, col)
+            ext_val = ext_stats.get(ext_key)
+            db_val = db_a.get(col)
+            symbol = compare_val(ext_val, db_val)
+            ext_display = ext_val if ext_val is not None else "⚠️"
+            db_display = db_val if db_val is not None else "—"
+            lines.append(f"| {label} | {ext_display} | {db_display} | {symbol} |")
+            if symbol == MISMATCH:
+                mismatch_count += 1
         lines.append("")
+
+        if mismatch_count:
+            lines.append(f"**⚠️ {mismatch_count} mismatch(es) found — investigate.**")
+            lines.append("")
 
     # --- Attack Bonuses (from DB attacks_json) ---
     acmap = armor_class_map or {}
-    attacks_raw = db_a.get("base_attacks_json") or "{}"
-    try:
-        attacks = json.loads(attacks_raw)
-    except (json.JSONDecodeError, TypeError):
-        attacks = {}
-    bonus_entries = [
-        (int(cid), val) for cid, val in attacks.items()
-        if int(cid) not in (3, 4) and val != 0  # skip base melee/pierce class; skip zeros
-    ]
-    lines += ["## Attack Bonuses", ""]
-    if bonus_entries:
-        lines += ["| Bonus | Armor Class |", "|-------|-------------|"]
-        for cid, val in sorted(bonus_entries, key=lambda x: -abs(x[1])):
-            name = acmap.get(cid, f"Class {cid}")
-            sign = "+" if val > 0 else ""
-            lines.append(f"| {sign}{val} | {name} |")
+    if is_naval:
+        lines += ["## Attack Bonuses", "", "No bonus damage entries.", ""]
     else:
-        lines.append("No bonus damage entries.")
-    lines.append("")
+        attacks_raw = db_a.get("base_attacks_json") or "{}"
+        try:
+            attacks = json.loads(attacks_raw)
+        except (json.JSONDecodeError, TypeError):
+            attacks = {}
+        bonus_entries = [
+            (int(cid), val) for cid, val in attacks.items()
+            if int(cid) not in (3, 4) and val != 0  # skip base melee/pierce class; skip zeros
+        ]
+        lines += ["## Attack Bonuses", ""]
+        if bonus_entries:
+            lines += ["| Bonus | Armor Class |", "|-------|-------------|"]
+            for cid, val in sorted(bonus_entries, key=lambda x: -abs(x[1])):
+                name = acmap.get(cid, f"Class {cid}")
+                sign = "+" if val > 0 else ""
+                lines.append(f"| {sign}{val} | {name} |")
+        else:
+            lines.append("No bonus damage entries.")
+        lines.append("")
 
     # --- Armor Classes (what this unit belongs to → what counters it) ---
-    armors_raw = db_a.get("base_armors_json") or "{}"
-    try:
-        armors = json.loads(armors_raw)
-    except (json.JSONDecodeError, TypeError):
-        armors = {}
-    armor_entries = [
-        (int(cid), val) for cid, val in armors.items()
-        if int(cid) not in (3, 4)  # skip base melee/pierce
-    ]
-    lines += ["## Armor Classes (Vulnerability)", ""]
-    lines.append("_Units with attack bonuses against these classes deal extra damage to this unit._")
-    lines.append("")
-    if armor_entries:
-        lines += ["| Armor Class | Armor Value |", "|-------------|-------------|"]
-        for cid, val in sorted(armor_entries, key=lambda x: x[0]):
-            name = acmap.get(cid, f"Class {cid}")
-            lines.append(f"| {name} | {val} |")
+    if is_naval:
+        lines += [
+            "## Armor Classes (Vulnerability)",
+            "",
+            "_Units with attack bonuses against these classes deal extra damage to this unit._",
+            "",
+            "No non-base armor classes.",
+            "",
+        ]
     else:
-        lines.append("No non-base armor classes.")
-    lines.append("")
+        armors_raw = db_a.get("base_armors_json") or "{}"
+        try:
+            armors = json.loads(armors_raw)
+        except (json.JSONDecodeError, TypeError):
+            armors = {}
+        armor_entries = [
+            (int(cid), val) for cid, val in armors.items()
+            if int(cid) not in (3, 4)  # skip base melee/pierce
+        ]
+        lines += ["## Armor Classes (Vulnerability)", ""]
+        lines.append("_Units with attack bonuses against these classes deal extra damage to this unit._")
+        lines.append("")
+        if armor_entries:
+            lines += ["| Armor Class | Armor Value |", "|-------------|-------------|"]
+            for cid, val in sorted(armor_entries, key=lambda x: x[0]):
+                name = acmap.get(cid, f"Class {cid}")
+                lines.append(f"| {name} | {val} |")
+        else:
+            lines.append("No non-base armor classes.")
+        lines.append("")
 
     # --- Extras from wiki ---
     if extras:
@@ -933,6 +1138,17 @@ def render_unit_file(
                 lines.append(f"**Weak vs:** {', '.join(weak)}")
             lines.append("")
 
+    # --- Special Ability (from wiki |Ability = and == Ability == section) ---
+    if ability and (ability.get("summary") or ability.get("detail")):
+        lines += ["## Ability", ""]
+        if ability.get("summary"):
+            lines.append(f"_{ability['summary']}_")
+            lines.append("")
+        if ability.get("detail"):
+            lines.append(ability["detail"])
+            lines.append("")
+
+    if extras:
         # Technologies
         techs = extras.get("techs", {})
         if techs:
@@ -984,7 +1200,14 @@ def generate_single_unit(unit_name: str, techtree: dict, conn: sqlite3.Connectio
     civ_name = slug_rows[0]["civ_name"] if unit_type == "unique" else None
     base_slug = slug_rows[0]["unit_slug"]
 
-    subdir = "unique" if unit_type == "unique" else "generic"
+    # Naval units get their own subdirectory regardless of standard/unique classification
+    base_name_for_naval = unit_name[6:] if unit_name.startswith("Elite ") else unit_name
+    if base_name_for_naval in NAVAL_UNIT_NAMES:
+        subdir = "naval"
+    elif unit_type == "unique":
+        subdir = "unique"
+    else:
+        subdir = "generic"
     out_path = REF_DIR / "units" / subdir / f"{safe_name}.md"
 
     if out_path.exists() and not args.force and not args.dry_run:
@@ -992,13 +1215,15 @@ def generate_single_unit(unit_name: str, techtree: dict, conn: sqlite3.Connectio
         print(f"  Skipped (exists): {out_path}")
         return
 
-    # Fetch wiki wikitext — needed for extras (techs, civ bonuses, S&W) regardless of techtree
+    # Fetch wiki wikitext — needed for extras (techs, civ bonuses, S&W) regardless of techtree.
+    # Try with the "(Age_of_Empires_II)" disambig suffix first — it always hits the right page.
+    # Fall back to bare name only if the suffix page doesn't exist.
     print(f"  Fetching wiki unit: {unit_name}...", end=" ", flush=True)
     time.sleep(WIKI_DELAY)
-    wikitext = fetch_wiki_wikitext(unit_name.replace(" ", "_"))
+    slug = unit_name.replace(" ", "_")
+    wikitext = fetch_wiki_wikitext(f"{slug}_(Age_of_Empires_II)")
     if not wikitext:
-        # Try with disambig suffix
-        wikitext = fetch_wiki_wikitext(f"{unit_name.replace(' ', '_')}_(Age_of_Empires_II)")
+        wikitext = fetch_wiki_wikitext(slug)
     if wikitext:
         print("✓")
     else:
@@ -1016,14 +1241,37 @@ def generate_single_unit(unit_name: str, techtree: dict, conn: sqlite3.Connectio
     # Parse wiki extras (techs, civ bonuses, strengths/weaknesses)
     extras = parse_wiki_unit_extras(wikitext) if wikitext else {}
 
+    # Parse wiki ability section (special mechanics like dual firing modes)
+    ability = parse_wiki_unit_ability(wikitext) if wikitext else {}
+
     # Build armor class map for rendering attack/armor sections
     armor_classes = query_armor_classes(conn)
     acmap = {ac["id"]: ac["name"] for ac in armor_classes}
 
-    db_rows = query_db_unit(conn, base_slug)
+    # For standard units the slug may map to multiple unit_names across civs
+    # (e.g. 'paladin' slug → Cavalier / Paladin / Heavy Hei-Kuang Cavalry).
+    # Find a canonical civ whose unit_name matches, so the DB comparison is accurate.
+    canonical_civ = civ_name  # already set for unique units
+    if not canonical_civ:
+        row = conn.execute(
+            """SELECT civ_name FROM ref_units
+               WHERE (unit_slug LIKE ? OR unit_slug = ?) AND unit_name = ?
+               AND age = 'Imperial' LIMIT 1""",
+            (f"%{base_slug}%", base_slug, unit_name),
+        ).fetchone()
+        if not row:
+            row = conn.execute(
+                """SELECT civ_name FROM ref_units
+                   WHERE (unit_slug LIKE ? OR unit_slug = ?) AND unit_name = ?
+                   LIMIT 1""",
+                (f"%{base_slug}%", base_slug, unit_name),
+            ).fetchone()
+        canonical_civ = row["civ_name"] if row else None
+
+    db_rows = query_db_unit(conn, base_slug, civ_name=canonical_civ)
     content, mismatches = render_unit_file(
         unit_name, unit_type, ext_stats, db_rows, civ_name,
-        extras=extras, armor_class_map=acmap,
+        extras=extras, armor_class_map=acmap, ability=ability,
     )
 
     if not args.dry_run:
@@ -1048,6 +1296,83 @@ def generate_all_units(techtree: dict, conn: sqlite3.Connection, args, stats: di
     print(f"\nGenerating {len(units)} unit files...")
     for row in units:
         generate_single_unit(row["unit_name"], techtree, conn, args, stats)
+
+
+def generate_naval_unit(unit_name: str, techtree: dict, conn: sqlite3.Connection, args, stats: dict):
+    """
+    Generate reference/units/naval/{Unit_Name}.md for a naval unit.
+    Naval units are not in the simulation DB, so DB comparison is omitted.
+    Data sources: aoe2techtree (stats) + Fandom wiki (ability, techs, S&W).
+    """
+    safe_name = unit_name.replace(" ", "_")
+    out_path = REF_DIR / "units" / "naval" / f"{safe_name}.md"
+
+    if out_path.exists() and not args.force and not args.dry_run:
+        stats["skipped"] += 1
+        print(f"  Skipped (exists): {out_path}")
+        return
+
+    print(f"  Fetching wiki naval unit: {unit_name}...", end=" ", flush=True)
+    time.sleep(WIKI_DELAY)
+    slug = unit_name.replace(" ", "_")
+    wikitext = fetch_wiki_wikitext(f"{slug}_(Age_of_Empires_II)")
+    if not wikitext:
+        wikitext = fetch_wiki_wikitext(slug)
+    print("✓" if wikitext else "⚠️ not found")
+
+    # External stats from techtree; fall back to wiki infobox
+    tt_unit = find_techtree_unit(techtree, unit_name)
+    if tt_unit:
+        ext_stats = techtree_unit_stats(tt_unit)
+    elif wikitext:
+        ext_stats = parse_wiki_unit(wikitext)
+    else:
+        ext_stats = {}
+
+    extras = parse_wiki_unit_extras(wikitext) if wikitext else {}
+    ability = parse_wiki_unit_ability(wikitext) if wikitext else {}
+
+    armor_classes = query_armor_classes(conn)
+    acmap = {ac["id"]: ac["name"] for ac in armor_classes}
+
+    civ_name = NAVAL_UNIQUE_CIVS.get(unit_name)
+    unit_type = "unique" if civ_name else "standard"
+
+    # Build naval_stats dict for the Stats table.
+    # Prefer NAVAL_STATS (wiki-verified, post-update) over techtree for accuracy.
+    base_name = unit_name[6:] if unit_name.startswith("Elite ") else unit_name
+    reg_stats = NAVAL_STATS.get(unit_name) or NAVAL_STATS.get(base_name) or ext_stats
+    elite_name = f"Elite {base_name}"
+    elite_s = NAVAL_STATS.get(elite_name)
+    if elite_s:
+        naval_stats_arg = {"Regular": reg_stats, "Elite": elite_s}
+    else:
+        naval_stats_arg = {"Stats": reg_stats}
+
+    content, mismatches = render_unit_file(
+        unit_name, unit_type, ext_stats, {}, civ_name,
+        extras=extras, armor_class_map=acmap, ability=ability,
+        naval_stats=naval_stats_arg,
+    )
+
+    if not args.dry_run:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(content, encoding="utf-8")
+        stats["written"] += 1
+        print(f"  Written: {out_path}")
+    else:
+        print(f"  [dry-run] Would write: {out_path}")
+
+
+def generate_all_naval_units(techtree: dict, conn: sqlite3.Connection, args, stats: dict):
+    """Generate reference files for all naval units in NAVAL_UNIT_NAMES."""
+    # Standard naval first, then unique
+    standard = sorted(n for n in NAVAL_UNIT_NAMES if n not in NAVAL_UNIQUE_CIVS)
+    unique = sorted(NAVAL_UNIQUE_CIVS.keys())
+    all_naval = standard + unique
+    print(f"\nGenerating {len(all_naval)} naval unit files...")
+    for name in all_naval:
+        generate_naval_unit(name, techtree, conn, args, stats)
 
 
 # --- STUB FUNCTIONS (to be implemented in later tasks) ---
@@ -1152,9 +1477,10 @@ external sources (Fandom wiki + SiegeEngineers/aoe2techtree).
 ```
 reference/
   armor-classes.md       — All armor classes
-  civs/                  — One file per civilization (53 total)
-  units/generic/         — Generic unit lines (Arbalester, Paladin, etc.)
-  units/unique/          — Unique units per civ
+  civs/                  — One file per civilization (50+ total)
+  units/generic/         — Generic land unit lines (Arbalester, Paladin, etc.)
+  units/naval/           — Naval units (Galleon, Turtle Ship, Dromon, etc.)
+  units/unique/          — Unique land units per civ
 ```
 
 ## How to Regenerate
@@ -1231,12 +1557,18 @@ def main():
     generate_armor_classes(conn, args, stats)
 
     if args.unit:
-        generate_single_unit(args.unit, techtree, conn, args, stats)
+        # Check if it's a naval unit
+        base = args.unit[6:] if args.unit.startswith("Elite ") else args.unit
+        if base in NAVAL_UNIT_NAMES:
+            generate_naval_unit(args.unit, techtree, conn, args, stats)
+        else:
+            generate_single_unit(args.unit, techtree, conn, args, stats)
     elif args.civ:
         generate_single_civ(args.civ, techtree, conn, args, stats)
     else:
         generate_all_civs(techtree, conn, args, stats)
         generate_all_units(techtree, conn, args, stats)
+        generate_all_naval_units(techtree, conn, args, stats)
         write_readme(args, stats)
 
     conn.close()

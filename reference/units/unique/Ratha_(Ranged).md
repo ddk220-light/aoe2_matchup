@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Bengalis  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -24,6 +24,7 @@
 ## Special Effects
 
 - **pass_through_count:** 1.0
+- **bonus_damage_reduction:** 0.25
 
 ## DB Comparison
 

@@ -3,23 +3,23 @@
 **Type:** Standard  
 **Available to:** All civs  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
-| Stat | Castle | Imperial |
+| Stat | Imperial | Elite |
 |------|---------|-------|
-| HP | 75.0 | 115.0 |
-| Attack | 30.0 | 50.0 |
-| Melee Armor | 2.0 | 1.0 |
-| Pierce Armor | 4.0 | 8.0 |
-| Speed | 0.8 | 0.57 |
-| Range | 10.0 | 14.0 |
-| Reload Time | 6.5 | 11.0 |
-| Cost Food | 175.0 | 0.0 |
-| Cost Wood | 0.0 | 175.0 |
-| Cost Gold | 175.0 | 210.0 |
-| Pop Space | 1.0 | 1.0 |
+| HP | 150.0 | — |
+| Attack | 200.0 | — |
+| Melee Armor | 1.0 | — |
+| Pierce Armor | 150.0 | — |
+| Speed | 0.0 | — |
+| Range | 16.0 | — |
+| Reload Time | 10.0 | — |
+| Cost Food | 0.0 | — |
+| Cost Wood | 200.0 | — |
+| Cost Gold | 200.0 | — |
+| Pop Space | 1.0 | — |
 
 ## Special Effects
 
@@ -27,28 +27,24 @@
 
 ## DB Comparison
 
-| Field | External | Our DB (Castle) | Match |
+| Field | External | Our DB (Imperial) | Match |
 |-------|----------|-----------------|-------|
-| HP | 150 | 75.0 | ❌ |
-| Attack | 200 | 30.0 | ❌ |
-| Melee Armor | 1 | 2.0 | ❌ |
-| Pierce Armor | 150 | 4.0 | ❌ |
-| Speed | 0 | 0.8 | ❌ |
-| Range | 16 | 10.0 | ❌ |
-| Reload Time | 10 | 6.5 | ❌ |
-| Cost Food | 0 | 175.0 | ❌ |
-| Cost Wood | 200 | 0.0 | ❌ |
-| Cost Gold | 200 | 175.0 | ❌ |
-
-**⚠️ 10 mismatch(es) found — investigate.**
+| HP | 150 | 150.0 | ✅ |
+| Attack | 200 | 200.0 | ✅ |
+| Melee Armor | 1 | 1.0 | ✅ |
+| Pierce Armor | 150 | 150.0 | ✅ |
+| Speed | 0 | 0.0 | ✅ |
+| Range | 16 | 16.0 | ✅ |
+| Reload Time | 10 | 10.0 | ✅ |
+| Cost Food | 0 | 0.0 | ✅ |
+| Cost Wood | 200 | 200.0 | ✅ |
+| Cost Gold | 200 | 200.0 | ✅ |
 
 ## Attack Bonuses
 
 | Bonus | Armor Class |
 |-------|-------------|
-| +30 | Siege Weapons |
-| +30 | Unused |
-| +10 | All Buildings |
+| +250 | All Buildings |
 
 ## Armor Classes (Vulnerability)
 
@@ -56,17 +52,20 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 | Armor Class | Armor Value |
 |-------------|-------------|
-| Unique Units | 0 |
+| Rams | 0 |
 | Siege Weapons | 0 |
-| Camels | 0 |
 | Leitis | 0 |
-| Unused | 0 |
-| Mounted Archers | -3 |
 
 ## Strengths & Weaknesses
 
 **Strong vs:** Building, archer unit
 **Weak vs:** Magyar Huszar, Elite Eagle Warrior, ram, Bombard Cannon, Mangudai, Onager
+
+## Ability
+
+_Cannot be converted from distance
+Can attack ground
+Can destroy trees_
 
 ## Technologies
 

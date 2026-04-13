@@ -3,16 +3,16 @@
 **Type:** Standard  
 **Available to:** All civs  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
 | Stat | Imperial | Elite |
 |------|---------|-------|
 | HP | 35.0 | — |
-| Attack | 3.0 | — |
+| Attack | 4.0 | — |
 | Melee Armor | 0.0 | — |
-| Pierce Armor | 4.0 | — |
+| Pierce Armor | 5.0 | — |
 | Speed | 0.96 | — |
 | Range | 5.0 | — |
 | Reload Time | 3.0 | — |
@@ -30,9 +30,9 @@
 | Field | External | Our DB (Imperial) | Match |
 |-------|----------|-----------------|-------|
 | HP | 35.0 | 35.0 | ✅ |
-| Attack | 4.0 | 3.0 | ❌ |
+| Attack | 4.0 | 4.0 | ✅ |
 | Melee Armor | 0.0 | 0.0 | ✅ |
-| Pierce Armor | 5.0 | 4.0 | ❌ |
+| Pierce Armor | 5.0 | 5.0 | ✅ |
 | Speed | 0.96 | 0.96 | ✅ |
 | Range | 5.0 | 5.0 | ✅ |
 | Reload Time | 3.0 | 3.0 | ✅ |
@@ -40,16 +40,16 @@
 | Cost Wood | 35 | 35.0 | ✅ |
 | Cost Gold | 20 | 0.0 | ❌ |
 
-**⚠️ 3 mismatch(es) found — investigate.**
+**⚠️ 1 mismatch(es) found — investigate.**
 
 ## Attack Bonuses
 
 | Bonus | Armor Class |
 |-------|-------------|
+| +5 | Archers |
 | +4 | Spearmen |
-| +4 | Archers |
-| +2 | Cavalry Archers |
-| +2 | Heroes & Kings |
+| +3 | Cavalry Archers |
+| +3 | Heroes & Kings |
 
 ## Armor Classes (Vulnerability)
 
@@ -65,6 +65,10 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Archer
 **Weak vs:** siege unit
+
+## Ability
+
+_Lamellar Armor (25% non-projectile damage reflection, Khitans only)_
 
 ## Technologies
 

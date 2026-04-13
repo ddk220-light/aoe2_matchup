@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Shu  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -64,6 +64,12 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Cavalry
 **Weak vs:** infantry, mounted archer, Hand Cannoneer
+
+## Ability
+
+_Snares non-siege enemy units, reducing their speed by 15% for 10 seconds (does not stack)_
+
+Its attack slows down non-siege enemy units by 15% for 10 seconds. This effect does not stack, but the timer does reset whenever the target receives a hit from any White Feather Guard.
 
 ## Technologies
 

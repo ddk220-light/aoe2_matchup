@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Mapuche  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -61,6 +61,38 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 ## Strengths & Weaknesses
 
 **Strong vs:** Gunpowder unit
+
+## Ability
+
+_Deals increased damage to injured targets
+Generates_
+
+When the Kona attacks a unit, its attack is increased (which is visible on the user interface) based on the percentage of total hit points previously lost by the target unit. The Kona gains +1 attack for every missing 15% hit points of the target. The Kona receives the attack boost even if the unit was not damaged by a Kona.
+{|class=fandom-table
+!Remaining HP %
+!Attack increase
+|-
+|85 to 100
+|0
+|-
+|70 to 85
+|1
+|-
+|55 to 70
+|2
+|-
+|40 to 55
+|3
+|-
+|25 to 40
+|4
+|-
+|10 to 25
+|5
+|-
+|0 to 10
+|6
+|}
 
 ## Technologies
 

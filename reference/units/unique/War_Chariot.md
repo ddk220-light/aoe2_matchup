@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Shu  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -60,3 +60,40 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 | Cavalry | 0 |
 | Unique Units | 0 |
 | Leitis | 0 |
+
+## Strengths & Weaknesses
+
+**Strong vs:** Archer, infantry, Villager
+**Weak vs:** Cavalry, siege unit, Eagle Warrior, Champi Warrior, Huskarl, Ghulam, Genoese Crossbowmen
+
+## Ability
+
+_Mode switch_
+
+: 22px/22px Change Fire Mode (toggle): Switches between Barrage mode and Focus Fire mode.
+* 22px Barrage mode: Its projectiles are more numerous and have greater spread. Projectiles which hit other targets deal 100% damage.
+* 22px Focus Fire mode: It fires fewer projectiles, all of which land on the target and deal pass-through damage.
+
+It fires its multiple projectiles one at a time, which means that the more projectiles it fires, the longer it will take to reload.
+
+## Technologies
+
+| Stat | Technology (Effect) |
+|------|---------------------|
+| Attack | Chemistry (+1) |
+| Armor | Scale Barding Armor (melee=+1, pierce=+1) |
+| Armor | Chain Barding Armor (melee=+1, pierce=+1) |
+| Armor | Plate Barding Armor (melee=+1, pierce=+2) |
+| Speed | Husbandry (+10%) |
+| Conversion | Devotion (+1 min, +1 max) |
+| Conversion | Faith (+4 min, +4 max) |
+| Conversion | Heresy (die upon getting converted) |
+
+## Civilization Bonuses
+
+**Team bonuses:**
+
+| Stat | Civ (Bonus) |
+|------|-------------|
+| Conversion | Teutons (+3 min, +1 max) |
+| Creation | Celts (+20%) |

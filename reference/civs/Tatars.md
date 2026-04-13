@@ -2,7 +2,7 @@
 
 **Focus:** Cavalry Archer  
 **Sources:** Fandom wiki, SiegeEngineers/aoe2techtree  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Civilization Bonuses
 

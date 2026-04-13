@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Georgians  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -24,6 +24,9 @@
 ## Special Effects
 
 - **pass_through_count:** 1.0
+- **hp_regen:** 8.0
+- **attack_bonus_nearby:** 1.0
+- **nearby_bonus_count:** 4.0
 
 ## DB Comparison
 
@@ -60,6 +63,16 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** siege weapon
 **Weak vs:** Pikemen, Kamayuk, Berserk, Genoese Crossbowmen, Teutonic Knight, Mameluke, Camel Rider, Monk, War Elephant, Battle Elephant, Leiciai
+
+## Ability
+
+_Receive +1 (max +4) attack for every 7 own Monaspas or Knights within 15 tiles_
+
+Mountain Affinity (passive): Monaspas gain extra attack from nearby Monaspas and Knight-line units.
+
+The Monaspa gains +1 attack for every  Knights and/or Monaspas within 15 tiles, up to a cap of +4. The Monaspa gaining the attack does not count for the calculation. Hence groups of eight, fifteen, twenty-two, and twenty-nine (and above) have +1, +2, +3, and +4 attack respectively. Knights do not gain any attack being near Monaspas though. The effect does not chain in that if eight Monaspas are in a straight line with consecutive ones being 2.15 tiles apart, the first and last Monaspas will not get a boost because they individually do not have seven Monaspas within their fifteen tile radius.
+
+The extra attack is not frozen upon conversion, but is re-calculated for the new owner. This works for both converted Monaspas and converted Knight line units. In other words, if a Monaspa surrounded by 14 of the player's Knights and 21 of the opponent's Knights is converted, it gains another attack. Similarly, if a player having a Monaspa surrounded by 13 of the player's Knights brings in a converted Knight, the Monaspa gains another attack.
 
 ## Technologies
 

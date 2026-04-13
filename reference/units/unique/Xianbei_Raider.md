@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Wei  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -66,6 +66,14 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Villager
 **Weak vs:** Archer, camel unit, defensive structure, siege weapon
+
+## Ability
+
+_Charged volley attack_
+
+It has a charged attack which fires five arrows against units (excluding siege weapons) and recharges over 30 seconds. The projectiles of the charge attack are shot together, have 5 speed, 100% accuracy, and deal 1 pierce attack, +4 vs.  and +1 vs. . In addition, even missed targets receive 100% damage.
+
+This charge attack  the standard attack.
 
 ## Technologies
 

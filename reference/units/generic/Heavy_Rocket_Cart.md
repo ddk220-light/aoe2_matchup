@@ -3,22 +3,22 @@
 **Type:** Standard  
 **Available to:** All civs  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
 | Stat | Imperial | Elite |
 |------|---------|-------|
-| HP | 60.0 | — |
-| Attack | 50.0 | — |
+| HP | 65.0 | — |
+| Attack | 5.0 | — |
 | Melee Armor | 0.0 | — |
-| Pierce Armor | 7.0 | — |
+| Pierce Armor | 8.0 | — |
 | Speed | 0.6 | — |
 | Range | 8.0 | — |
-| Reload Time | 6.0 | — |
+| Reload Time | 5.35 | — |
 | Cost Food | 0.0 | — |
-| Cost Wood | 160.0 | — |
-| Cost Gold | 135.0 | — |
+| Cost Wood | 135.0 | — |
+| Cost Gold | 155.0 | — |
 | Pop Space | 1.0 | — |
 
 ## Special Effects
@@ -29,26 +29,28 @@
 
 | Field | External | Our DB (Imperial) | Match |
 |-------|----------|-----------------|-------|
-| HP | 65.0 | 60.0 | ❌ |
-| Attack | 5.0 | 50.0 | ❌ |
+| HP | 65.0 | 65.0 | ✅ |
+| Attack | 5.0 | 5.0 | ✅ |
 | Melee Armor | 0.0 | 0.0 | ✅ |
-| Pierce Armor | 8.0 | 7.0 | ❌ |
+| Pierce Armor | 8.0 | 8.0 | ✅ |
 | Speed | 0.6 | 0.6 | ✅ |
 | Range | 8.0 | 8.0 | ✅ |
-| Reload Time | 5.35 | 6.0 | ❌ |
+| Reload Time | 5.35 | 5.35 | ✅ |
 | Cost Food | 800 | 0.0 | ❌ |
-| Cost Wood | 800 | 160.0 | ❌ |
-| Cost Gold | 155 | 135.0 | ❌ |
+| Cost Wood | 800 | 135.0 | ❌ |
+| Cost Gold | 155 | 155.0 | ✅ |
 
-**⚠️ 7 mismatch(es) found — investigate.**
+**⚠️ 2 mismatch(es) found — investigate.**
 
 ## Attack Bonuses
 
 | Bonus | Armor Class |
 |-------|-------------|
-| +50 | Unused |
-| +45 | All Buildings |
-| +12 | Siege Weapons |
+| +12 | All Buildings |
+| +7 | Castles |
+| +7 | Walls & Gates |
+| +5 | Unused |
+| +2 | Siege Weapons |
 
 ## Armor Classes (Vulnerability)
 
@@ -57,7 +59,14 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 | Armor Class | Armor Value |
 |-------------|-------------|
 | Siege Weapons | 0 |
+| Gunpowder Units | 0 |
 | Leitis | 0 |
+
+## Ability
+
+_Can attack ground
+Can destroy trees
+Attacks ignore armor of non-siege land units_
 
 ## Technologies
 

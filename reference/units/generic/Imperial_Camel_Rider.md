@@ -3,14 +3,14 @@
 **Type:** Standard  
 **Available to:** All civs  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
 | Stat | Imperial | Elite |
 |------|---------|-------|
-| HP | 120.0 | — |
-| Attack | 7.0 | — |
+| HP | 140.0 | — |
+| Attack | 8.0 | — |
 | Melee Armor | 0.0 | — |
 | Pierce Armor | 0.0 | — |
 | Speed | 1.45 | — |
@@ -29,8 +29,8 @@
 
 | Field | External | Our DB (Imperial) | Match |
 |-------|----------|-----------------|-------|
-| HP | 140.0 | 120.0 | ❌ |
-| Attack | ⚠️ | 7.0 | ⚠️ |
+| HP | 140.0 | 140.0 | ✅ |
+| Attack | ⚠️ | 8.0 | ⚠️ |
 | Melee Armor | 0.0 | 0.0 | ✅ |
 | Pierce Armor | 0.0 | 0.0 | ✅ |
 | Speed | 1.45 | 1.45 | ✅ |
@@ -39,8 +39,6 @@
 | Cost Food | 55 | 55.0 | ✅ |
 | Cost Wood | 0 | 0.0 | ✅ |
 | Cost Gold | 60 | 60.0 | ✅ |
-
-**⚠️ 1 mismatch(es) found — investigate.**
 
 ## Attack Bonuses
 

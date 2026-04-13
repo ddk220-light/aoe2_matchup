@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Wu  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -24,6 +24,14 @@
 ## Special Effects
 
 - **pass_through_count:** 1.0
+- **hp_regen:** 15.0
+- **hp_transform_threshold:** 0.6428571428571429
+- **transform_hp:** 70.0
+- **transform_attack:** 13.0
+- **transform_melee_armor:** 2.0
+- **transform_pierce_armor:** 4.0
+- **transform_attack_speed:** 0.5
+- **transform_movement_speed:** 1.21
 
 ## DB Comparison
 
@@ -57,6 +65,12 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 | Unique Units | 0 |
 | Eagle Warriors | 0 |
 | Leitis | 0 |
+
+## Ability
+
+_Automatically switches between shielded and unshielded versions when crossing 45 HP_
+
+It changes its form once below 45 hit points, gaining speed and attack but losing armor. If its hit points increase to be equal to or more than 45 again, it regains armor but loses speed and attack. Formally, it loses  armor and gains +3 attack and +10% speed when its hit points fall below 45.
 
 ## Technologies
 

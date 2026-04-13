@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Italians  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -29,16 +29,16 @@
 
 | Field | External | Our DB (Castle) | Match |
 |-------|----------|-----------------|-------|
-| HP | ⚠️ | 45.0 | ⚠️ |
-| Attack | ⚠️ | 6.0 | ⚠️ |
+| HP | 45.0 | 45.0 | ✅ |
+| Attack | 6.0 | 6.0 | ✅ |
 | Melee Armor | ⚠️ | 1.0 | ⚠️ |
 | Pierce Armor | ⚠️ | 0.0 | ⚠️ |
-| Speed | ⚠️ | 0.96 | ⚠️ |
-| Range | ⚠️ | 4.0 | ⚠️ |
+| Speed | 0.96 | 0.96 | ✅ |
+| Range | 4.0 | 4.0 | ✅ |
 | Reload Time | ⚠️ | 2.0 | ⚠️ |
-| Cost Food | 0 | 0.0 | ✅ |
-| Cost Wood | 0 | 45.0 | ❌ |
-| Cost Gold | 0 | 40.0 | ❌ |
+| Cost Food | 900 | 0.0 | ❌ |
+| Cost Wood | 45 | 45.0 | ✅ |
+| Cost Gold | 750 | 40.0 | ❌ |
 
 **⚠️ 2 mismatch(es) found — investigate.**
 

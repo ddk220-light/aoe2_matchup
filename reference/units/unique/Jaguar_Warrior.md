@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Aztecs  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -65,6 +65,12 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Infantry, building
 **Weak vs:** Scorpion, Mangonel, Hand Cannoneer, Cataphract, Samurai, War Elephant
+
+## Ability
+
+_Gains +1 attack for each unit killed (up to 4)_
+
+For every enemy military unit it kills, up to a maximum of 4 enemies, it gains +1 attack (max +4). Monks, military warships, Transport Ships, and Kings count as military units for this ability.
 
 ## Technologies
 

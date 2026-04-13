@@ -3,7 +3,7 @@
 **Type:** Standard  
 **Available to:** All civs  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -62,6 +62,13 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Elite Skirmisher, Genitour, Halberdier, Heavy Camel Rider, Elite Eagle Warrior, building, Hussar, Huskarl
 **Weak vs:** Archer unit, Heavy Scorpion, Mangonel, Cataphract, Jaguar Warrior, Paladin, Boyar, War Elephant, Elite Battle Elephant, Teutonic Knight, Obuch
+
+## Ability
+
+_Chieftains (generates gold when killing Villagers, trade units, and Monks, Vikings only)
+Lamellar Armor (25% non-projectile damage reflection, Khitans only)
+Druzhina (deals 5 trample damage in 0.5 tiles radius, Slavs only)
+Wootz Steel (attack ignores armor, Dravidians only)_
 
 ## Technologies
 

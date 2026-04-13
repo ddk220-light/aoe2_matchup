@@ -3,7 +3,7 @@
 **Type:** Standard  
 **Available to:** All civs  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -24,6 +24,7 @@
 ## Special Effects
 
 - **pass_through_count:** 1.0
+- **hp_regen:** 15.0
 
 ## DB Comparison
 
@@ -66,6 +67,10 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Elite Skirmisher, siege weapon, mounted archer, cavalry
 **Weak vs:** Infantry, foot archer, Cataphract, defensive structure
+
+## Ability
+
+_Gurjaras (Auto Scout)_
 
 ## Technologies
 

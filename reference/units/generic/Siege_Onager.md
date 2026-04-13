@@ -3,16 +3,16 @@
 **Type:** Standard  
 **Available to:** All civs  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
 | Stat | Imperial | Elite |
 |------|---------|-------|
-| HP | 60.0 | — |
-| Attack | 50.0 | — |
+| HP | 70.0 | — |
+| Attack | 75.0 | — |
 | Melee Armor | 0.0 | — |
-| Pierce Armor | 7.0 | — |
+| Pierce Armor | 8.0 | — |
 | Speed | 0.6 | — |
 | Range | 8.0 | — |
 | Reload Time | 6.0 | — |
@@ -29,10 +29,10 @@
 
 | Field | External | Our DB (Imperial) | Match |
 |-------|----------|-----------------|-------|
-| HP | 70.0 | 60.0 | ❌ |
-| Attack | 75.0 | 50.0 | ❌ |
+| HP | 70.0 | 70.0 | ✅ |
+| Attack | 75.0 | 75.0 | ✅ |
 | Melee Armor | 0.0 | 0.0 | ✅ |
-| Pierce Armor | 8.0 | 7.0 | ❌ |
+| Pierce Armor | 8.0 | 8.0 | ✅ |
 | Speed | ⚠️ | 0.6 | ⚠️ |
 | Range | 8.0 | 8.0 | ✅ |
 | Reload Time | 6.0 | 6.0 | ✅ |
@@ -40,14 +40,14 @@
 | Cost Wood | 160 | 160.0 | ✅ |
 | Cost Gold | 135 | 135.0 | ✅ |
 
-**⚠️ 4 mismatch(es) found — investigate.**
+**⚠️ 1 mismatch(es) found — investigate.**
 
 ## Attack Bonuses
 
 | Bonus | Armor Class |
 |-------|-------------|
+| +60 | All Buildings |
 | +50 | Unused |
-| +45 | All Buildings |
 | +12 | Siege Weapons |
 
 ## Armor Classes (Vulnerability)
@@ -63,6 +63,12 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Building, archer, siege unit, Bombard Cannon
 **Weak vs:** Magyar Huszar, Elite Eagle Warrior, Mangudai, Monk
+
+## Ability
+
+_Can attack ground
+Can destroy trees
+Fires 9 additional projectiles at once each of which deal the minimum damage_
 
 ## Technologies
 

@@ -1,6 +1,6 @@
 # AoE2 Reference Corpus
 
-Generated: 2026-04-12
+Generated: 2026-04-13
 
 This directory contains markdown reference files for all AoE2 civilizations, units, and armor classes.
 Each file includes a **DB Comparison** table showing whether our local database matches the authoritative
@@ -11,9 +11,10 @@ external sources (Fandom wiki + SiegeEngineers/aoe2techtree).
 ```
 reference/
   armor-classes.md       — All armor classes
-  civs/                  — One file per civilization (53 total)
-  units/generic/         — Generic unit lines (Arbalester, Paladin, etc.)
-  units/unique/          — Unique units per civ
+  civs/                  — One file per civilization (50+ total)
+  units/generic/         — Generic land unit lines (Arbalester, Paladin, etc.)
+  units/naval/           — Naval units (Galleon, Turtle Ship, Dromon, etc.)
+  units/unique/          — Unique land units per civ
 ```
 
 ## How to Regenerate

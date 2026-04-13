@@ -86,16 +86,19 @@ UNIQUE_COMBAT_PROPERTIES = {
     # Berserk HP regen is now data-driven from rear_attack_modifier in dat (40 HP/min)
     # Organ Gun/Fire Archer extra projectiles are now data-driven
     # Bleed damage (ability flag + stat values not in dat)
-    "liao_dao": {"bleed_dps": 2.0, "bleed_duration": 5.0},
-    "elite_liao_dao": {"bleed_dps": 3.0, "bleed_duration": 5.0},
+    # Wiki: "9 additional bleeding damage to non-siege units over 3 seconds" for both forms
+    "liao_dao": {"bleed_dps": 3.0, "bleed_duration": 3.0},
+    "elite_liao_dao": {"bleed_dps": 3.0, "bleed_duration": 3.0},
     # Block first melee hit (ability flag, not in dat)
     "iron_pagoda": {"block_first_melee": 1},
     "elite_iron_pagoda": {"block_first_melee": 1},
     # Grenadier splash: data-driven from dat (blast_level=11, blast_width=0.65)
     # Kill bonus attack + HP regen per kill (ability flags, not in dat)
-    # Tiger Cavalry: +4 attack and +10 HP per kill, max +40 HP gained
+    # attack_bonus_per_kill = MAX CAP (not per-kill increment). Sim adds +1 per kill up to this cap.
+    # Tiger Cavalry: +1 attack per kill (max +4); +10 HP per kill (max +40 HP gained)
     "tiger_cavalry": {"attack_bonus_per_kill": 4, "hp_per_kill": 10, "hp_per_kill_max": 40},
     "elite_tiger_cavalry": {"attack_bonus_per_kill": 4, "hp_per_kill": 10, "hp_per_kill_max": 40},
+    # Jaguar Warrior: +1 attack per kill (max +4); wiki: "gains +1 attack for each enemy unit killed, up to +4"
     "jaguar_warrior": {"attack_bonus_per_kill": 4},
     "elite_jaguar_warrior": {"attack_bonus_per_kill": 4},
     # HP transformation (ability flag, not in dat)
@@ -144,9 +147,11 @@ UNIQUE_COMBAT_PROPERTIES = {
     # With 20/30% accuracy, most shots miss but hit other units in group fights.
     "arambai": {"miss_damage_percent": 1.0},
     "elite_arambai": {"miss_damage_percent": 1.0},
-    # Monaspa nearby ally attack bonus (+2 per nearby cavalry, max 4 nearby)
-    "monaspa": {"attack_bonus_nearby": 2, "nearby_bonus_count": 4},
-    "elite_monaspa": {"attack_bonus_nearby": 2, "nearby_bonus_count": 4},
+    # Monaspa nearby ally attack bonus: +1 attack per 7 Knights/Monaspas within 15 tiles, max +4
+    # Wiki: "Receive +1 (max +4) attack for every 7 own Monaspas or Knights within 15 tiles"
+    # Simulation approximation: +1 per adjacent ally, capped at 4 (exact threshold not modelled)
+    "monaspa": {"attack_bonus_nearby": 1, "nearby_bonus_count": 4},
+    "elite_monaspa": {"attack_bonus_nearby": 1, "nearby_bonus_count": 4},
     # Ibirapema Warrior: blast_width=1.0 in dat = area/splash melee damage
     # blast_attack_level=162 — treat as trample (similar to Druzhina infantry splash)
     "ibirapema_warrior": {"trample_flat_damage": 5, "trample_radius": 0.5},
@@ -235,6 +240,9 @@ CIV_COMBAT_PROPERTIES = {
     ("Poles", "winged_hussar"): {"trample_percent": 0.5, "trample_radius": 0.5},
     # Comitatenses (Romans Imperial UT, Tech 884) - charge attack for knights, militia, centurion
     # charge_recharge_rate=0.25 in dat → recharge_time = 1/0.25 = 4.0 seconds
+    # Note: Centurion also has a unique "Imperium" AURA ability (buffs nearby militia-line units
+    # with +10-15% move speed and +20-33% attack speed in ~10 tile radius). Aura mechanics are
+    # not currently modeled in the simulation engine (would require new property type).
     ("Romans", "champion"): {"charge_attack_melee": 5, "charge_recharge_time": 4.0},
     ("Romans", "legionary"): {"charge_attack_melee": 5, "charge_recharge_time": 4.0},
     ("Romans", "paladin"): {"charge_attack_melee": 5, "charge_recharge_time": 4.0},
@@ -252,18 +260,19 @@ CIV_COMBAT_PROPERTIES = {
     ("Khitans", "imp_elite_skirm"): {"damage_reflect_percent": 0.25},
     ("Khitans", "liao_dao"): {"damage_reflect_percent": 0.25},
     ("Khitans", "elite_liao_dao"): {"damage_reflect_percent": 0.25},
-    # Khitan Ordo Cavalry — cavalry HP regen in combat (20 HP/min)
-    ("Khitans", "heavy_cav_archer"): {"hp_regen": 20},
-    ("Khitans", "cav_archer"): {"hp_regen": 20},
-    ("Khitans", "hussar"): {"hp_regen": 20},
-    ("Khitans", "light_cav"): {"hp_regen": 20},
-    ("Khitans", "steppe_lancer"): {"hp_regen": 20},
-    ("Khitans", "elite_steppe"): {"hp_regen": 20},
-    ("Khitans", "camel"): {"hp_regen": 20},
-    ("Khitans", "heavy_camel"): {"hp_regen": 20},
-    ("Khitans", "fire_lancer"): {"hp_regen": 20},
-    ("Khitans", "elite_fire_lancer"): {"hp_regen": 20},
-    ("Khitans", "mounted_trebuchet"): {"hp_regen": 20},
+    # Khitan Ordo Cavalry — "Melee cavalry regenerates 150% of max HP per minute in combat"
+    # Per-unit values = round(base_hp * 1.5). Source: Ordo_Cavalry wiki page.
+    ("Khitans", "heavy_cav_archer"): {"hp_regen": 90},   # 60 HP × 1.5
+    ("Khitans", "cav_archer"): {"hp_regen": 75},          # 50 HP × 1.5
+    ("Khitans", "hussar"): {"hp_regen": 113},             # 75 HP × 1.5
+    ("Khitans", "light_cav"): {"hp_regen": 90},           # 60 HP × 1.5
+    ("Khitans", "steppe_lancer"): {"hp_regen": 90},       # 60 HP × 1.5
+    ("Khitans", "elite_steppe"): {"hp_regen": 120},       # 80 HP × 1.5
+    ("Khitans", "camel"): {"hp_regen": 150},              # 100 HP × 1.5
+    ("Khitans", "heavy_camel"): {"hp_regen": 180},        # 120 HP × 1.5
+    ("Khitans", "fire_lancer"): {"hp_regen": 98},         # 65 HP × 1.5
+    ("Khitans", "elite_fire_lancer"): {"hp_regen": 128},  # 85 HP × 1.5
+    ("Khitans", "mounted_trebuchet"): {"hp_regen": 113},  # 75 HP × 1.5
     # Shu Coiled Serpent Array (Castle UT) — spear-line + White Feather gain %HP near each other
     # +0.5% HP per nearby qualifying unit, capped at 30 units = +15% HP max
     ("Shu", "halberdier"): {"hp_nearby_percent_per_unit": 0.5, "hp_nearby_max_units": 30},

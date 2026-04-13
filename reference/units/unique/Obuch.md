@@ -3,7 +3,7 @@
 **Type:** Unique  
 **Available to:** Poles  
 **Sources:** SiegeEngineers/aoe2techtree, Fandom wiki  
-**Generated:** 2026-04-12
+**Generated:** 2026-04-13
 
 ## Stats
 
@@ -61,6 +61,12 @@ _Units with attack bonuses against these classes deal extra damage to this unit.
 
 **Strong vs:** Skirmisher, building
 **Weak vs:** Samurai, gunpowder, mounted archer, Scorpion, Berserk, Cataphract, Jaguar Warrior, Slinger, Organ Gun, Throwing Axemen, Mameluke, Gbeto, Battle Elephant, War Elephant, Monk
+
+## Ability
+
+_Reduces armor and pierce armor of units by 1 each with every attack_
+
+The Obuch's special ability is to tear armor of units with each hit by –1/–1 (melee/pierce). Armor against bonus damage (such as the anti- attack armor of Cataphracts) are unaffected. Armor can be reduced to a minimum of 0, so units with negative armor such as Battering Ram (-3/180) cannot lose further melee armor, but can still lose pierce armor. This effect is applied after the Obuch's attack has inflicted damage to a unit. The armor loss lasts until the unit is brought back to full hit points.
 
 ## Technologies
 

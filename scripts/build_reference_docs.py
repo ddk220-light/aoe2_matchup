@@ -432,6 +432,10 @@ def render_civ_file(civ_name: str, wiki: dict, techtree_civ, db: dict) -> tuple:
     lines += ["## Unique Units", ""]
     unique_units = db.get("unique", [])
 
+    if not unique_units:
+        lines.append("⚠️ No unique units found in DB for this civ.")
+        lines.append("")
+
     # Group by base name (Castle = regular, Imperial = elite)
     by_base: dict = {}
     for unit in unique_units:

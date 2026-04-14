@@ -162,15 +162,8 @@ const SCORE_BREAKDOWN = {
     // Siege score breakdowns
     anti_building_score: {
         title: "Anti-Building Score",
-        formula: "Normalized time to destroy a fully upgraded Spanish Castle (1K weighted resources, speed-weighted)",
-        subs: [
-            { key: "time_to_kill", label: "Time to Kill (s)" },
-        ],
-    },
-    time_to_kill: {
-        title: "Time to Kill",
-        formula: "Seconds for a 1K-resource army to destroy a fully upgraded Spanish Castle",
-        subs: [],
+        formula: "Avg effective TTK across 3 Imperial castles (Persian / Teuton / Byzantine) × 2 modes, speed-weighted",
+        subs: "siege_breakdown",   // sentinel: use custom siege hover renderer
     },
     naval_effectiveness: {
         title: "Naval Effectiveness",
@@ -217,7 +210,12 @@ const SCORE_KEYS = new Set([
     "ac_3k_vs_heavy_camel",
     // Siege scores
     "anti_building_score",
-    "time_to_kill",
+    "ab_persian_5u_ttk",   "ab_persian_5k_ttk",
+    "ab_teuton_5u_ttk",    "ab_teuton_5k_ttk",
+    "ab_byzantine_5u_ttk", "ab_byzantine_5k_ttk",
+    "ab_persian_5u_dmg",   "ab_persian_5k_dmg",
+    "ab_teuton_5u_dmg",    "ab_teuton_5k_dmg",
+    "ab_byzantine_5u_dmg", "ab_byzantine_5k_dmg",
     // Naval scores
     "naval_effectiveness",
     "vs_galleon",
@@ -331,6 +329,48 @@ function buildSimUrl(
     return url;
 }
 
+function _buildSiegeBreakdownHtml(row) {
+    const castles = [
+        { name: "vs Persian",   prefix: "ab_persian" },
+        { name: "vs Teuton",    prefix: "ab_teuton" },
+        { name: "vs Byzantine", prefix: "ab_byzantine" },
+    ];
+    const modes = [
+        { suffix: "5u", label: "Fixed" },
+        { suffix: "5k", label: "5K res" },
+    ];
+
+    // Header row
+    let html = `<div class="hc-row hc-siege-header">`;
+    html += `<span></span>`;
+    for (const m of modes) {
+        html += `<span>${m.label}</span>`;
+    }
+    html += `</div>`;
+
+    // One row per castle
+    for (const castle of castles) {
+        html += `<div class="hc-row">`;
+        html += `<span>${castle.name}</span>`;
+        for (const mode of modes) {
+            const ttk = row[`${castle.prefix}_${mode.suffix}_ttk`];
+            const dmg = row[`${castle.prefix}_${mode.suffix}_dmg`];
+            let cell;
+            if (dmg === undefined || ttk === undefined) {
+                cell = "—";
+            } else if (dmg >= 1.0) {
+                cell = `${Math.round(ttk)}s`;
+            } else {
+                const pct = Math.round(dmg * 100);
+                cell = `✗ ${pct}%`;
+            }
+            html += `<span>${cell}</span>`;
+        }
+        html += `</div>`;
+    }
+    return html;
+}
+
 function buildScoreHoverHtml(row, scoreKey, dataKey) {
     dataKey = dataKey || scoreKey;
     const info = SCORE_BREAKDOWN[scoreKey];
@@ -407,6 +447,13 @@ function buildScoreHoverHtml(row, scoreKey, dataKey) {
         return "";
     }
     let html = `<div class="hc-title">${info.title}</div>`;
+    if (info.subs === "siege_breakdown") {
+        html += `<div class="hc-formula">${info.formula}</div>`;
+        html += _buildSiegeBreakdownHtml(row);
+        const total = row[dataKey];
+        html += `<div class="hc-row total"><span>Score</span><span style="color:${scoreColor(total)}">${total !== undefined ? total.toFixed(1) : "—"}</span></div>`;
+        return html;
+    }
     html += `<div class="hc-formula">${info.formula}</div>`;
     for (const sub of info.subs) {
         const v = row[sub.key];
@@ -946,7 +993,6 @@ function renderTable() {
     ];
     const siegeStatCols = [
         "anti_building_score",
-        "time_to_kill",
         "dps",
         "final_hp",
         "final_attack",
@@ -1007,7 +1053,7 @@ function renderTable() {
             vals.length > 0 ? vals[Math.floor(vals.length / 2)] : 0;
     }
 
-    const LOWER_IS_BETTER = new Set(["time_to_kill"]);
+    const LOWER_IS_BETTER = new Set([]);
     function valClass(col, val) {
         const med = medians[col];
         if (med === undefined || val === med) return "";
@@ -1118,12 +1164,7 @@ function renderTable() {
         {
             key: "anti_building_score",
             label: "Score",
-            info: "1K resources vs fully upgraded Spanish Castle. Higher = kills faster (normalized 0\u2013100)",
-        },
-        {
-            key: "time_to_kill",
-            label: "TTK (s)",
-            info: "Time in seconds to destroy a fully upgraded Spanish Castle with 1K weighted resources of units",
+            info: "Avg effective TTK across 3 Imperial castles (Persian / Teuton / Byzantine) \u00d7 2 modes, speed-weighted (normalized 0\u2013100)",
         },
         { key: "dps", label: "DPS" },
         { key: "final_hp", label: "HP" },
@@ -1496,7 +1537,6 @@ function exportCSV() {
             { key: "line_slug", label: "Line" },
             { key: "is_unique", label: "Is Unique" },
             { key: "anti_building_score", label: "Anti-Building Score (norm)" },
-            { key: "time_to_kill", label: "Time To Kill seconds (raw)" },
             { key: "dps", label: "DPS" },
             { key: "final_hp", label: "HP" },
             { key: "final_attack", label: "Attack" },

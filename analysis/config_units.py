@@ -853,7 +853,32 @@ NAVAL_UNIQUE_UNITS = {
             "line": "cannon_galleon",
         }
     ],
+    # Catapult Galleon (2633): South American civs — tech 913 enabled for all three
     "Mapuche": [
+        {
+            "base_id": 2633,
+            "display_name": "Catapult Galleon",
+            "unit_class": 22,
+            "availability_tech": 913,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+            "line": "cannon_galleon",
+        }
+    ],
+    "Tupi": [
+        {
+            "base_id": 2633,
+            "display_name": "Catapult Galleon",
+            "unit_class": 22,
+            "availability_tech": 913,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+            "line": "cannon_galleon",
+        }
+    ],
+    "Muisca": [
         {
             "base_id": 2633,
             "display_name": "Catapult Galleon",

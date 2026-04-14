@@ -307,8 +307,10 @@ UNIT_LINES = {
             "Armenians":  (None, "dromon_armenians"),
             "Goths":      (None, "dromon_goths"),
             "Huns":       (None, "dromon_huns"),
-            # Catapult Galleon: Mapuche only
+            # Catapult Galleon: South American civs (Mapuche, Tupi, Muisca)
             "Mapuche":    (None, "catapult_galleon_mapuche"),
+            "Tupi":       (None, "catapult_galleon_tupi"),
+            "Muisca":     (None, "catapult_galleon_muisca"),
             # Lou Chuan: Chinese, Jurchens + Three Kingdoms civs (tech 1034 enabled)
             "Chinese":    (None, "lou_chuan_chinese"),
             "Jurchens":   (None, "lou_chuan_jurchens"),
@@ -392,8 +394,10 @@ CANNON_GALLEON_LINE = {
         "Armenians":  ("dromon_armenians",          "dromon_armenians"),
         "Goths":      ("dromon_goths",              "dromon_goths"),
         "Huns":       ("dromon_huns",               "dromon_huns"),
-        # Catapult Galleon (2633): Mapuche only
+        # Catapult Galleon (2633): South American civs
         "Mapuche":    ("catapult_galleon_mapuche",  "catapult_galleon_mapuche"),
+        "Tupi":       ("catapult_galleon_tupi",     "catapult_galleon_tupi"),
+        "Muisca":     ("catapult_galleon_muisca",   "catapult_galleon_muisca"),
         # Lou Chuan (1948): Chinese, Jurchens, Wu, Shu, Wei
         "Chinese":    ("lou_chuan_chinese",         "lou_chuan_chinese"),
         "Jurchens":   ("lou_chuan_jurchens",        "lou_chuan_jurchens"),

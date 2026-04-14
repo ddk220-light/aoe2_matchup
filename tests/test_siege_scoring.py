@@ -144,3 +144,41 @@ def test_get_siege_fixed_count_special():
     assert _get_siege_fixed_count("fire_archer_wu") == 30
     assert _get_siege_fixed_count("tarkan") == 30
     assert _get_siege_fixed_count("tarkan_huns") == 30
+
+
+# ===== compute_siege_antibuilding_scores integration tests =====
+
+def test_compute_siege_scores_returns_expected_keys():
+    """compute_siege_antibuilding_scores must return all 13 score sub-keys for each unit."""
+    from compute_battle_scores import compute_siege_antibuilding_scores, SIEGE_SCORE_TYPES
+    scores = compute_siege_antibuilding_scores()
+    assert scores, "should return non-empty results"
+    # pick any group
+    group = next(iter(scores.values()))
+    unit_scores = next(iter(group.values()))
+    for key in SIEGE_SCORE_TYPES:
+        assert key in unit_scores, f"missing key: {key}"
+
+
+def test_anti_building_score_range():
+    """anti_building_score must be 0-100 for all units."""
+    from compute_battle_scores import compute_siege_antibuilding_scores
+    scores = compute_siege_antibuilding_scores()
+    for group in scores.values():
+        for sk, s in group.items():
+            score = s["anti_building_score"]
+            assert 0 <= score <= 100, f"{sk} score={score} out of range"
+
+
+def test_dmg_fraction_range():
+    """Damage fractions must be 0.0-1.0."""
+    from compute_battle_scores import compute_siege_antibuilding_scores
+    scores = compute_siege_antibuilding_scores()
+    dmg_keys = [k for k in ["ab_persian_5u_dmg", "ab_persian_5k_dmg",
+                              "ab_teuton_5u_dmg", "ab_teuton_5k_dmg",
+                              "ab_byzantine_5u_dmg", "ab_byzantine_5k_dmg"]]
+    for group in scores.values():
+        for sk, s in group.items():
+            for dk in dmg_keys:
+                v = s[dk]
+                assert 0.0 <= v <= 1.0, f"{sk}.{dk}={v} out of range"

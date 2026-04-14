@@ -1445,10 +1445,6 @@ CASTLE_TARGETS = [
     },
 ]
 
-# Backward-compat alias: Task 5 will update compute_siege_antibuilding_scores() to
-# use CASTLE_TARGETS. Until then, keep the single-castle reference pointing at the
-# first entry (persian, which most closely matches the original Spanish Castle config).
-SIEGE_CASTLE_TARGET = CASTLE_TARGETS[0]
 
 SIEGE_SCORE_TYPES = [
     "anti_building_score",
@@ -1569,13 +1565,18 @@ def _effective_ttk(ttk, dmg_fraction, max_winner_ttk):
 def compute_siege_antibuilding_scores():
     """Compute anti-building scores for all siege units (Castle + Imperial).
 
-    Each unit gets 1000 weighted resources. They attack a fully upgraded
-    Spanish Castle. Ranked by time to destroy (faster = higher score).
+    Each unit is simulated against 3 castle types (persian, teuton, byzantine)
+    in 2 modes (fixed-count, 5k-resource) for 6 total simulations per unit.
+    Results are averaged into a single anti_building_score (0-100).
 
     Returns dict in write_role_scores_to_db format.
     """
-    castle = SIEGE_CASTLE_TARGET
-    all_scores = {}  # (line_slug, age) -> {sk: scores}
+    from statistics import mean
+
+    # Phase 1 — Collect raw results
+    raw_results = {}    # sk -> {(castle_name, mode): (ttk, dmg)}
+    unit_groups = {}    # sk -> (line_slug, age)
+    unit_speeds = {}    # sk -> movement_speed
 
     for age in ["castle", "imperial"]:
         is_imperial = age == "imperial"
@@ -1587,61 +1588,108 @@ def compute_siege_antibuilding_scores():
 
             for u in units:
                 cu = u["combat_unit"]
-                unit_cost = calc_weighted_cost(
-                    cu["cost_food"], cu["cost_wood"], cu["cost_gold"], is_imperial
-                )
-                n_units = max(1, 1000 // unit_cost)
+                sk = f"{u['civ_name']}|{u['unit_slug']}"
+                unit_groups[sk] = (line_slug, age)
+                unit_speeds[sk] = cu["movement_speed"]
+                raw_results.setdefault(sk, {})
 
-                # Damage per hit vs castle (full AoE2 damage model)
                 attacks = cu.get("attacks", {})
-                damage_per_hit = _calc_building_damage(attacks, castle["armor"])
-                # Dromon fires N+1 independent fire bolts that all land on buildings.
-                # Lou Chuan's extra_projectiles are its anti-ship scatter mode — they
-                # don't multiply building damage, so we only apply this for Dromon.
-                if "dromon" in u["unit_slug"]:
-                    extra_proj = cu.get("extra_projectiles", 0) or 0
-                    if extra_proj > 0:
-                        damage_per_hit *= (1 + extra_proj)
                 reload_time = 1.0 / cu["attack_speed"] if cu["attack_speed"] > 0 else 2.0
-                unit_dps = damage_per_hit / reload_time
 
-                # Fire Archer (Wu): Red Cliffs Tactics adds 5 fire damage over 5s
-                # to buildings, ignoring armor, stacking per unit (= 1.0 DPS/unit)
-                if "fire_archer_wu" in u["unit_slug"]:
-                    unit_dps += 1.0
+                for castle in CASTLE_TARGETS:
+                    castle_name = castle["name"]
 
-                # Does the unit outrange the castle?
-                outranges = cu["attack_range"] > castle["arrow_range"]
+                    # Compute unit_dps (castle-specific due to armor differences)
+                    damage_per_hit = _calc_building_damage(attacks, castle["armor"])
+                    if "dromon" in u["unit_slug"]:
+                        extra_proj = cu.get("extra_projectiles", 0) or 0
+                        if extra_proj > 0:
+                            damage_per_hit *= (1 + extra_proj)
+                    unit_dps = damage_per_hit / reload_time
+                    if "fire_archer_wu" in u["unit_slug"]:
+                        unit_dps += 1.0
 
-                if outranges:
-                    # No attrition — pure DPS
-                    total_dps = n_units * unit_dps
-                    ttk = castle["hp"] / total_dps if total_dps > 0 else 600.0
-                else:
-                    # Attrition: castle fires at units
+                    # Compute castle_dps
                     dmg_per_arrow = max(1, castle["arrow_attack"] - cu["pierce_armor"])
                     castle_dps = castle["arrows"] * dmg_per_arrow / castle["reload"]
+                    # Persian bonus attacks vs specific armor classes
+                    for bonus_class, bonus_attack in castle.get("arrow_bonus_attacks", {}).items():
+                        if bonus_class in cu.get("armors", {}):
+                            extra_dmg = max(0, bonus_attack - cu["armors"][bonus_class])
+                            castle_dps += castle["arrows"] * extra_dmg / castle["reload"]
 
-                    ttk = _simulate_siege_vs_castle(
-                        n_units, cu["hp"], unit_dps, castle["hp"], castle_dps,
+                    # Fixed-count mode
+                    n_fixed = _get_siege_fixed_count(u["unit_slug"])
+                    ttk_5u, dmg_5u = _simulate_siege_vs_castle(
+                        n_fixed, cu["hp"], unit_dps, castle["hp"], castle_dps,
                         cu["movement_speed"], cu["attack_range"], castle["arrow_range"],
                     )
+                    raw_results[sk][(castle_name, "5u")] = (ttk_5u, dmg_5u)
 
-                sk = f"{u['civ_name']}|{u['unit_slug']}"
-                all_scores.setdefault((line_slug, age), {})[sk] = {
-                    "time_to_kill": round(min(ttk, 600.0), 1),
-                    "_speed": cu["movement_speed"],
-                }
+                    # 5K-resource mode
+                    unit_cost = calc_weighted_cost(
+                        cu["cost_food"], cu["cost_wood"], cu["cost_gold"], is_imperial
+                    )
+                    n_5k = max(1, 5000 // unit_cost)
+                    ttk_5k, dmg_5k = _simulate_siege_vs_castle(
+                        n_5k, cu["hp"], unit_dps, castle["hp"], castle_dps,
+                        cu["movement_speed"], cu["attack_range"], castle["arrow_range"],
+                    )
+                    raw_results[sk][(castle_name, "5k")] = (ttk_5k, dmg_5k)
 
-    # Normalize per (line_slug, age): faster = higher score (0-100, inverted)
-    for (line_slug, age), scores in all_scores.items():
-        ttk_vals = [s["time_to_kill"] for s in scores.values()]
-        lo, hi = min(ttk_vals), max(ttk_vals)
+    # Phase 2 — Compute effective TTKs
+    # Group units by (line_slug, age)
+    groups = {}  # (line_slug, age) -> [sk, ...]
+    for sk, (ls, ag) in unit_groups.items():
+        groups.setdefault((ls, ag), []).append(sk)
+
+    eff_ttks = {}  # sk -> {(castle_name, mode): eff_ttk}
+    raw_dmgs = {}  # sk -> {(castle_name, mode): dmg}
+
+    combos = [(c["name"], m) for c in CASTLE_TARGETS for m in ("5u", "5k")]
+
+    for (ls, ag), sks in groups.items():
+        for combo in combos:
+            # Find max_winner_ttk for this group + combo
+            winner_ttks = []
+            for sk in sks:
+                ttk, dmg = raw_results[sk][combo]
+                if dmg >= 1.0:
+                    winner_ttks.append(ttk)
+            max_winner_ttk = max(winner_ttks) if winner_ttks else None
+
+            for sk in sks:
+                ttk, dmg = raw_results[sk][combo]
+                eff = _effective_ttk(ttk, dmg, max_winner_ttk)
+                eff_ttks.setdefault(sk, {})[combo] = eff
+                raw_dmgs.setdefault(sk, {})[combo] = dmg
+
+    # Phase 3 — Average effective TTK + normalize
+    avg_eff = {}  # sk -> float
+    for sk in eff_ttks:
+        avg_eff[sk] = mean(eff_ttks[sk].values())
+
+    all_scores = {}  # (line_slug, age) -> {sk: score_dict}
+
+    for (ls, ag), sks in groups.items():
+        group_avgs = [avg_eff[sk] for sk in sks]
+        lo, hi = min(group_avgs), max(group_avgs)
         span = hi - lo if hi != lo else 1
-        for s in scores.values():
-            s["anti_building_score"] = round((hi - s["time_to_kill"]) / span * 100, 1)
 
-    # Apply speed weighting per line (exempt trebuchet — speed=0)
+        group_scores = {}
+        for sk in sks:
+            score = round((hi - avg_eff[sk]) / span * 100, 1)
+            d = {"anti_building_score": score, "_speed": unit_speeds[sk]}
+            # Store sub-score keys
+            for castle_name, mode in combos:
+                prefix = f"ab_{castle_name}_{mode}"
+                d[f"{prefix}_ttk"] = round(eff_ttks[sk][(castle_name, mode)], 1)
+                d[f"{prefix}_dmg"] = round(raw_dmgs[sk][(castle_name, mode)], 4)
+            group_scores[sk] = d
+
+        all_scores[(ls, ag)] = group_scores
+
+    # Phase 4 — Speed weighting (exempt trebuchet — speed=0)
     for (line_slug, age), scores in all_scores.items():
         if line_slug == "trebuchet":
             continue
@@ -1650,19 +1698,18 @@ def compute_siege_antibuilding_scores():
             speed = s.get("_speed", 1.0)
             weighted[sk] = s["anti_building_score"] * speed
         vals = list(weighted.values())
-        lo, hi = min(vals), max(vals)
-        span = hi - lo if hi != lo else 1
+        w_lo, w_hi = min(vals), max(vals)
+        w_span = w_hi - w_lo if w_hi != w_lo else 1
         for sk in scores:
             scores[sk]["anti_building_score"] = round(
-                (weighted[sk] - lo) / span * 100, 1
+                (weighted[sk] - w_lo) / w_span * 100, 1
             )
 
-    # Clean up temp speed refs
+    # Phase 5 — Clean up and assemble result
     for (line_slug, age), scores in all_scores.items():
         for s in scores.values():
             s.pop("_speed", None)
 
-    # Format for write_role_scores_to_db (keyed per line_slug)
     result = {}
     for (line_slug, age), scores in all_scores.items():
         result[f"{line_slug}|{age}"] = scores

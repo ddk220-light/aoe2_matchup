@@ -1491,6 +1491,13 @@ def compute_siege_antibuilding_scores():
                 # Damage per hit vs castle (full AoE2 damage model)
                 attacks = cu.get("attacks", {})
                 damage_per_hit = _calc_building_damage(attacks, castle["armor"])
+                # Dromon fires N+1 independent fire bolts that all land on buildings.
+                # Lou Chuan's extra_projectiles are its anti-ship scatter mode — they
+                # don't multiply building damage, so we only apply this for Dromon.
+                if "dromon" in u["unit_slug"]:
+                    extra_proj = cu.get("extra_projectiles", 0) or 0
+                    if extra_proj > 0:
+                        damage_per_hit *= (1 + extra_proj)
                 reload_time = 1.0 / cu["attack_speed"] if cu["attack_speed"] > 0 else 2.0
                 unit_dps = damage_per_hit / reload_time
 

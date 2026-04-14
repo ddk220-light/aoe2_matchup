@@ -791,7 +791,57 @@ NAVAL_UNIQUE_UNITS = {
             "line": "galleon",
         }
     ],
+    # Dromon (1795) is enabled for Byzantines, Romans, Armenians, Goths, Huns
+    # (tech 886 = "Dromon make avail" is active for all five civs in the dat).
     "Byzantines": [
+        {
+            "base_id": 1795,
+            "display_name": "Dromon",
+            "unit_class": 22,
+            "availability_tech": 886,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+            "line": "cannon_galleon",
+        }
+    ],
+    "Romans": [
+        {
+            "base_id": 1795,
+            "display_name": "Dromon",
+            "unit_class": 22,
+            "availability_tech": 886,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+            "line": "cannon_galleon",
+        }
+    ],
+    "Armenians": [
+        {
+            "base_id": 1795,
+            "display_name": "Dromon",
+            "unit_class": 22,
+            "availability_tech": 886,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+            "line": "cannon_galleon",
+        }
+    ],
+    "Goths": [
+        {
+            "base_id": 1795,
+            "display_name": "Dromon",
+            "unit_class": 22,
+            "availability_tech": 886,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+            "line": "cannon_galleon",
+        }
+    ],
+    "Huns": [
         {
             "base_id": 1795,
             "display_name": "Dromon",
@@ -815,7 +865,32 @@ NAVAL_UNIQUE_UNITS = {
             "line": "cannon_galleon",
         }
     ],
-    # Lou Chuan (1948) is a shared unit ID across all Three Kingdoms civs (Wu/Shu/Wei).
+    # Lou Chuan (1948) — tech 1034 "Lou Chuan make avail" is active for
+    # Chinese, Jurchens, and all Three Kingdoms civs (Wu/Shu/Wei).
+    "Chinese": [
+        {
+            "base_id": 1948,
+            "display_name": "Lou Chuan",
+            "unit_class": 22,
+            "availability_tech": 1034,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+            "line": "cannon_galleon",
+        }
+    ],
+    "Jurchens": [
+        {
+            "base_id": 1948,
+            "display_name": "Lou Chuan",
+            "unit_class": 22,
+            "availability_tech": 1034,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+            "line": "cannon_galleon",
+        }
+    ],
     "Wu": [
         {
             "base_id": 1948,

@@ -301,11 +301,20 @@ UNIT_LINES = {
         "castle_slug": None,
         "imperial_slug": "cannon_galleon",
         "unique_units": {
+            # Dromon: Byzantines + Romans/Armenians/Goths/Huns (tech 886 enabled)
             "Byzantines": (None, "dromon_byzantines"),
-            "Mapuche": (None, "catapult_galleon_mapuche"),
-            "Wu": (None, "lou_chuan_wu"),
-            "Shu": (None, "lou_chuan_shu"),
-            "Wei": (None, "lou_chuan_wei"),
+            "Romans":     (None, "dromon_romans"),
+            "Armenians":  (None, "dromon_armenians"),
+            "Goths":      (None, "dromon_goths"),
+            "Huns":       (None, "dromon_huns"),
+            # Catapult Galleon: Mapuche only
+            "Mapuche":    (None, "catapult_galleon_mapuche"),
+            # Lou Chuan: Chinese, Jurchens + Three Kingdoms civs (tech 1034 enabled)
+            "Chinese":    (None, "lou_chuan_chinese"),
+            "Jurchens":   (None, "lou_chuan_jurchens"),
+            "Wu":         (None, "lou_chuan_wu"),
+            "Shu":        (None, "lou_chuan_shu"),
+            "Wei":        (None, "lou_chuan_wei"),
         },
     },
     "archery": {
@@ -377,8 +386,17 @@ NAVAL_UNIT_LINES = {
 CANNON_GALLEON_LINE = {
     "name": "Cannon Galleon",
     "unique_slug_by_civ": {
+        # Dromon (1795): Byzantines, Romans, Armenians, Goths, Huns
         "Byzantines": ("dromon_byzantines",         "dromon_byzantines"),
+        "Romans":     ("dromon_romans",             "dromon_romans"),
+        "Armenians":  ("dromon_armenians",          "dromon_armenians"),
+        "Goths":      ("dromon_goths",              "dromon_goths"),
+        "Huns":       ("dromon_huns",               "dromon_huns"),
+        # Catapult Galleon (2633): Mapuche only
         "Mapuche":    ("catapult_galleon_mapuche",  "catapult_galleon_mapuche"),
+        # Lou Chuan (1948): Chinese, Jurchens, Wu, Shu, Wei
+        "Chinese":    ("lou_chuan_chinese",         "lou_chuan_chinese"),
+        "Jurchens":   ("lou_chuan_jurchens",        "lou_chuan_jurchens"),
         "Wu":         ("lou_chuan_wu",              "lou_chuan_wu"),
         "Shu":        ("lou_chuan_shu",             "lou_chuan_shu"),
         "Wei":        ("lou_chuan_wei",             "lou_chuan_wei"),

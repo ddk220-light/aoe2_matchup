@@ -492,7 +492,7 @@ def compute_benchmarks(bench_units, bench_fps, benchmark_cache, unit_fps):
 MILITIA_ROLE_BENCHMARKS = {
     "imperial": [
         # (key, civ, slug, age, mode, param)
-        # General Combat — 30v30 fixed count (pop-adjusted: half-pop units get double)
+        # General Combat — 30v30 fixed count (pop-adjusted)
         ("gc_30v30_vs_paladin", "Spanish", "paladin", "Imperial", "pop", 30),
         ("gc_30v30_vs_arb", "Chinese", "arbalester", "Imperial", "pop", 30),
         ("gc_30v30_vs_champ", "Chinese", "champion", "Imperial", "pop", 30),
@@ -501,13 +501,21 @@ MILITIA_ROLE_BENCHMARKS = {
         ("gc_3k_vs_arb", "Chinese", "arbalester", "Imperial", "res", 3000),
         ("gc_3k_vs_champ", "Chinese", "champion", "Imperial", "res", 3000),
         # Anti-Cav — 30v30 fixed count (pop-adjusted)
-        # gc_30v30_vs_paladin reused from above
-        ("ac_30v30_vs_elephant", "Persians", "elite_war_elephant_persians", "Imperial", "pop", 30),
-        ("ac_30v30_vs_hussar", "Spanish", "hussar", "Imperial", "pop", 30),
+        ("ac_30v30_vs_battle_elephant", "Khmer", "elite_elephant", "Imperial", "pop", 30),
+        ("ac_30v30_vs_heavy_camel", "Turks", "heavy_camel", "Imperial", "pop", 30),
+        ("ac_30v30_vs_steppe_lancer", "Mongols", "elite_steppe", "Imperial", "pop", 30),
         # Anti-Cav — 3K resources each
-        # gc_3k_vs_paladin reused from above
-        ("ac_3k_vs_elephant", "Persians", "elite_war_elephant_persians", "Imperial", "res", 3000),
-        ("ac_3k_vs_hussar", "Spanish", "hussar", "Imperial", "res", 3000),
+        ("ac_3k_vs_battle_elephant", "Khmer", "elite_elephant", "Imperial", "res", 3000),
+        ("ac_3k_vs_heavy_camel", "Turks", "heavy_camel", "Imperial", "res", 3000),
+        ("ac_3k_vs_steppe_lancer", "Mongols", "elite_steppe", "Imperial", "res", 3000),
+        # Anti-Trash — 30v30 fixed count (pop-adjusted)
+        ("at_30v30_vs_halb", "Spanish", "halberdier", "Imperial", "pop", 30),
+        ("at_30v30_vs_hussar", "Spanish", "hussar", "Imperial", "pop", 30),
+        ("at_30v30_vs_elite_skirm", "Spanish", "imp_elite_skirm", "Imperial", "pop", 30),
+        # Anti-Trash — 3K resources each
+        ("at_3k_vs_halb", "Spanish", "halberdier", "Imperial", "res", 3000),
+        ("at_3k_vs_hussar", "Spanish", "hussar", "Imperial", "res", 3000),
+        ("at_3k_vs_elite_skirm", "Spanish", "imp_elite_skirm", "Imperial", "res", 3000),
     ],
     "castle": [
         # General Combat — 30v30 fixed count (pop-adjusted)
@@ -519,11 +527,21 @@ MILITIA_ROLE_BENCHMARKS = {
         ("gc_3k_vs_arb", "Chinese", "crossbow", "Castle", "res", 3000),
         ("gc_3k_vs_champ", "Chinese", "swordsmen", "Castle", "res", 3000),
         # Anti-Cav — 30v30 fixed count (pop-adjusted)
-        ("ac_30v30_vs_elephant", "Persians", "war_elephant_persians", "Castle", "pop", 30),
-        ("ac_30v30_vs_hussar", "Spanish", "light_cav", "Castle", "pop", 30),
+        ("ac_30v30_vs_battle_elephant", "Khmer", "elephant", "Castle", "pop", 30),
+        ("ac_30v30_vs_heavy_camel", "Turks", "camel", "Castle", "pop", 30),
+        ("ac_30v30_vs_steppe_lancer", "Mongols", "steppe_lancer", "Castle", "pop", 30),
         # Anti-Cav — 3K resources each
-        ("ac_3k_vs_elephant", "Persians", "war_elephant_persians", "Castle", "res", 3000),
-        ("ac_3k_vs_hussar", "Spanish", "light_cav", "Castle", "res", 3000),
+        ("ac_3k_vs_battle_elephant", "Khmer", "elephant", "Castle", "res", 3000),
+        ("ac_3k_vs_heavy_camel", "Turks", "camel", "Castle", "res", 3000),
+        ("ac_3k_vs_steppe_lancer", "Mongols", "steppe_lancer", "Castle", "res", 3000),
+        # Anti-Trash — 30v30 fixed count (pop-adjusted)
+        ("at_30v30_vs_halb", "Spanish", "pikeman", "Castle", "pop", 30),
+        ("at_30v30_vs_hussar", "Spanish", "light_cav", "Castle", "pop", 30),
+        ("at_30v30_vs_elite_skirm", "Spanish", "elite_skirm", "Castle", "pop", 30),
+        # Anti-Trash — 3K resources each
+        ("at_3k_vs_halb", "Spanish", "pikeman", "Castle", "res", 3000),
+        ("at_3k_vs_hussar", "Spanish", "light_cav", "Castle", "res", 3000),
+        ("at_3k_vs_elite_skirm", "Spanish", "elite_skirm", "Castle", "res", 3000),
     ],
 }
 
@@ -827,20 +845,24 @@ def compute_infantry_role_scores(age="imperial"):
         line = sk_to_line[sk]
         line_groups.setdefault(line, []).append(sk)
 
-    # Normalize each benchmark score to 0–100 per infantry sub-line
+    # Normalize each benchmark score to 0–100 globally across all infantry lines
     for key in bench_keys:
-        for line, sks in line_groups.items():
-            vals = [all_scores[sk][key] for sk in sks]
-            lo, hi = min(vals), max(vals)
-            span = hi - lo if hi != lo else 1
-            for sk in sks:
-                all_scores[sk][key] = round((all_scores[sk][key] - lo) / span * 100, 1)
+        vals = [all_scores[sk][key] for sk in all_scores]
+        lo, hi = min(vals), max(vals)
+        span = hi - lo if hi != lo else 1
+        for sk in all_scores:
+            all_scores[sk][key] = round((all_scores[sk][key] - lo) / span * 100, 1)
 
-    # Compute general_combat and anti_cav composites from normalized scores
+    # Compute general_combat, anti_cav, anti_trash composites from normalized scores
     gc_keys = [k for k, *_ in benchmarks if k.startswith("gc_")]
-    ac_keys_30v30 = ["gc_30v30_vs_paladin", "ac_30v30_vs_elephant", "ac_30v30_vs_hussar"]
-    ac_keys_3k = ["gc_3k_vs_paladin", "ac_3k_vs_elephant", "ac_3k_vs_hussar"]
-    ac_keys = ac_keys_30v30 + ac_keys_3k
+    ac_keys = [
+        "ac_30v30_vs_battle_elephant", "ac_30v30_vs_heavy_camel", "ac_30v30_vs_steppe_lancer",
+        "ac_3k_vs_battle_elephant",   "ac_3k_vs_heavy_camel",   "ac_3k_vs_steppe_lancer",
+    ]
+    at_keys = [
+        "at_30v30_vs_halb", "at_30v30_vs_hussar", "at_30v30_vs_elite_skirm",
+        "at_3k_vs_halb",   "at_3k_vs_hussar",   "at_3k_vs_elite_skirm",
+    ]
     for sk, scores in all_scores.items():
         scores["general_combat"] = round(
             sum(scores[k] for k in gc_keys) / len(gc_keys), 1
@@ -848,25 +870,27 @@ def compute_infantry_role_scores(age="imperial"):
         scores["anti_cav"] = round(
             sum(scores[k] for k in ac_keys) / len(ac_keys), 1
         )
+        scores["anti_trash"] = round(
+            sum(scores[k] for k in at_keys) / len(at_keys), 1
+        )
 
     # Compute raiding ranking scores (uses _combat_unit refs)
     compute_raiding_scores(all_scores, sk_to_line, age)
 
-    # Compute militia_value from general_combat, anti_cav, and raid_building
+    # Compute militia_value from general_combat, anti_cav, and anti_trash
     for sk, scores in all_scores.items():
         scores["militia_value"] = round(
-            0.50 * scores["general_combat"]
-            + 0.30 * scores["anti_cav"]
-            + 0.20 * scores["raid_building"],
+            0.75 * scores["general_combat"]
+            + 0.10 * scores["anti_cav"]
+            + 0.15 * scores["anti_trash"],
             1,
         )
 
-    # Apply speed weighting: multiply composites by speed, re-normalize 0-100
+    # Apply speed weighting: multiply composites by speed, re-normalize globally
     _apply_speed_weighting(
         all_scores,
-        ["general_combat", "anti_cav", "militia_value", "raid_building"],
-        scope="per_line",
-        line_groups=line_groups,
+        ["general_combat", "anti_cav", "anti_trash", "militia_value", "raid_building"],
+        scope="pool",
     )
 
     # Clean up temp combat unit refs
@@ -1726,16 +1750,25 @@ INFANTRY_ROLE_SCORE_TYPES = [
     "militia_value",
     "general_combat",
     "anti_cav",
+    "anti_trash",
     "gc_30v30_vs_paladin",
     "gc_30v30_vs_arb",
     "gc_30v30_vs_champ",
     "gc_3k_vs_paladin",
     "gc_3k_vs_arb",
     "gc_3k_vs_champ",
-    "ac_30v30_vs_elephant",
-    "ac_30v30_vs_hussar",
-    "ac_3k_vs_elephant",
-    "ac_3k_vs_hussar",
+    "ac_30v30_vs_battle_elephant",
+    "ac_30v30_vs_heavy_camel",
+    "ac_30v30_vs_steppe_lancer",
+    "ac_3k_vs_battle_elephant",
+    "ac_3k_vs_heavy_camel",
+    "ac_3k_vs_steppe_lancer",
+    "at_30v30_vs_halb",
+    "at_30v30_vs_hussar",
+    "at_30v30_vs_elite_skirm",
+    "at_3k_vs_halb",
+    "at_3k_vs_hussar",
+    "at_3k_vs_elite_skirm",
     # Raw (pre-normalization) scores
     "gc_30v30_vs_paladin_raw",
     "gc_30v30_vs_arb_raw",
@@ -1743,10 +1776,18 @@ INFANTRY_ROLE_SCORE_TYPES = [
     "gc_3k_vs_paladin_raw",
     "gc_3k_vs_arb_raw",
     "gc_3k_vs_champ_raw",
-    "ac_30v30_vs_elephant_raw",
-    "ac_30v30_vs_hussar_raw",
-    "ac_3k_vs_elephant_raw",
-    "ac_3k_vs_hussar_raw",
+    "ac_30v30_vs_battle_elephant_raw",
+    "ac_30v30_vs_heavy_camel_raw",
+    "ac_30v30_vs_steppe_lancer_raw",
+    "ac_3k_vs_battle_elephant_raw",
+    "ac_3k_vs_heavy_camel_raw",
+    "ac_3k_vs_steppe_lancer_raw",
+    "at_30v30_vs_halb_raw",
+    "at_30v30_vs_hussar_raw",
+    "at_30v30_vs_elite_skirm_raw",
+    "at_3k_vs_halb_raw",
+    "at_3k_vs_hussar_raw",
+    "at_3k_vs_elite_skirm_raw",
     # Raiding ranking scores
     "raid_speed",
     "raid_vill_kill",
@@ -2007,6 +2048,29 @@ def _cleanup_stale_anti_cav_pool():
         print(f"  Cleaned up {deleted} stale anti_cav_pool entries")
 
 
+def _cleanup_stale_infantry_scores():
+    """Remove old infantry benchmark score_type rows replaced by the redesign."""
+    stale_keys = [
+        "ac_30v30_vs_elephant", "ac_30v30_vs_hussar",
+        "ac_3k_vs_elephant",   "ac_3k_vs_hussar",
+        "ac_30v30_vs_elephant_raw", "ac_30v30_vs_hussar_raw",
+        "ac_3k_vs_elephant_raw",   "ac_3k_vs_hussar_raw",
+    ]
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    placeholders = ",".join("?" * len(stale_keys))
+    c.execute(
+        f"DELETE FROM battle_scores WHERE line_slug IN ('militia','spear','shock_infantry')"
+        f" AND score_type IN ({placeholders})",
+        stale_keys,
+    )
+    deleted = c.rowcount
+    conn.commit()
+    conn.close()
+    if deleted:
+        print(f"  Cleaned up {deleted} stale infantry benchmark rows")
+
+
 def compute_rankings():
     """Compute rank and median_delta for every (line_slug, age, score_type) group.
 
@@ -2074,6 +2138,7 @@ def main():
             print(f"\n=== {role_age.upper()} AGE ===")
 
             role_scores = compute_infantry_role_scores(age=role_age)
+            _cleanup_stale_infantry_scores()
             write_role_scores_to_db(role_scores, INFANTRY_LINE_SLUGS, INFANTRY_ROLE_SCORE_TYPES)
             total = sum(len(v) for v in role_scores.values())
             print(
@@ -2279,6 +2344,7 @@ def main():
         print(f"\n=== {role_age.upper()} AGE ===")
 
         role_scores = compute_infantry_role_scores(age=role_age)
+        _cleanup_stale_infantry_scores()
         write_role_scores_to_db(role_scores, INFANTRY_LINE_SLUGS, INFANTRY_ROLE_SCORE_TYPES)
         total_infantry = sum(len(v) for v in role_scores.values())
         print(

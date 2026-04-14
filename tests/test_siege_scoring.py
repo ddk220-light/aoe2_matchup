@@ -1,7 +1,7 @@
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'webapp'))
 import pytest
-from compute_battle_scores import _simulate_siege_vs_castle
+from compute_battle_scores import _simulate_siege_vs_castle, _effective_ttk, _get_siege_fixed_count
 
 
 def test_winner_returns_actual_ttk_and_full_damage():
@@ -111,3 +111,36 @@ def test_castle_targets_non_persian_no_arrow_bonus():
             assert entry["arrow_bonus_attacks"] == {}, (
                 f"{entry['name']} should have empty arrow_bonus_attacks"
             )
+
+
+# ===== _effective_ttk tests =====
+
+def test_effective_ttk_winner():
+    assert _effective_ttk(120.0, 1.0, 150.0) == 120.0
+
+
+def test_effective_ttk_loser_with_winners():
+    # (100 + 200) / 0.5 = 600.0
+    assert _effective_ttk(600.0, 0.5, 100.0) == 600.0
+
+
+def test_effective_ttk_loser_no_winners():
+    assert _effective_ttk(600.0, 0.3, None) == 600.0
+
+
+def test_effective_ttk_loser_zero_damage():
+    assert _effective_ttk(600.0, 0.0, 100.0) == 600.0
+
+
+# ===== _get_siege_fixed_count tests =====
+
+def test_get_siege_fixed_count_default():
+    assert _get_siege_fixed_count("ram") == 5
+    assert _get_siege_fixed_count("trebuchet") == 5
+    assert _get_siege_fixed_count("bombard_cannon") == 5
+
+
+def test_get_siege_fixed_count_special():
+    assert _get_siege_fixed_count("fire_archer_wu") == 30
+    assert _get_siege_fixed_count("tarkan") == 30
+    assert _get_siege_fixed_count("tarkan_huns") == 30

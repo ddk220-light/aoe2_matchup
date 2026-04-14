@@ -219,7 +219,11 @@ UNIT_LINES = {
         "building": "Siege Workshop",
         "castle_slug": "ram",
         "imperial_slug": "siege_ram",
-        "unique_units": {},
+        "unique_units": {
+            # Elite Tarkan (Huns) competes in the ram anti-building category —
+            # same pattern as elite_fire_archer_wu in the bombard_cannon line.
+            "Huns": (None, "elite_tarkan_huns"),
+        },
     },
     "mangonel": {
         "name": "Mangonel Line",

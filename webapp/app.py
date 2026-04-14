@@ -467,7 +467,7 @@ def api_ref_combat_unit(civ_name, unit_slug):
 INFANTRY_LINE_SLUGS = {"militia", "spear", "shock_infantry"}
 ARCHERY_LINE_SLUGS = {"archer", "skirmisher", "cav_archer", "scorpion", "gunpowder"}
 STABLE_LINE_SLUGS = {"knight", "light_cav", "camel", "steppe_lancer", "elephant"}
-SIEGE_LINE_SLUGS = {"ram", "mangonel", "trebuchet", "bombard_cannon", "cannon_galleon", "tarkan"}
+SIEGE_LINE_SLUGS = {"ram", "mangonel", "trebuchet", "bombard_cannon", "cannon_galleon"}
 NAVAL_LINE_SLUGS = {"galleon", "fire", "hulk", "naval"}
 
 # Stage-to-query mapping for team analysis
@@ -570,7 +570,7 @@ def api_ref_unit_line(line_slug):
     if line_slug == "stable":
         _score_line_slugs = list(STABLE_LINE_SLUGS)
     elif line_slug == "siege":
-        _score_line_slugs = ["ram", "trebuchet", "bombard_cannon", "cannon_galleon", "tarkan"]
+        _score_line_slugs = ["ram", "trebuchet", "bombard_cannon", "cannon_galleon"]
     elif line_slug == "naval":
         _score_line_slugs = ["galleon", "fire", "hulk"]
     if _score_line_slugs:

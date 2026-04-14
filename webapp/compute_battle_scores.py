@@ -633,7 +633,7 @@ STABLE_LINE_SLUGS = ["knight", "light_cav", "camel", "steppe_lancer", "elephant"
 
 NAVAL_LINE_SLUGS = ["galleon", "fire", "hulk"]
 
-SIEGE_LINE_SLUGS = ["ram", "trebuchet", "bombard_cannon", "cannon_galleon", "tarkan"]
+SIEGE_LINE_SLUGS = ["ram", "trebuchet", "bombard_cannon", "cannon_galleon"]
 
 # Lines not displayed in any ranking category (skipped from all computation)
 HIDDEN_LINE_SLUGS = ["mangonel"]

@@ -36,7 +36,7 @@ const UNIT_LINES = {
         castle: "Battering Ram",
         imperial: "Trebuchet",
         hasUnique: true,
-        subLines: ["ram", "trebuchet", "bombard_cannon", "cannon_galleon", "tarkan"],
+        subLines: ["ram", "trebuchet", "bombard_cannon", "cannon_galleon"],
     },
     naval: {
         name: "Naval Effectiveness",
@@ -744,7 +744,6 @@ const ARCHERY_SLUGS = new Set([
 const SIEGE_SLUGS = new Set([
     "siege",
     "cannon_galleon",
-    "tarkan",
 ]);
 
 const NAVAL_SLUGS = new Set([

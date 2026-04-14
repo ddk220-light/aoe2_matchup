@@ -68,9 +68,17 @@ def test_tarkan_line_exists_in_unit_lines():
     assert UNIT_LINES["tarkan"]["imperial_slug"] == "elite_tarkan_huns"
 
 
-def test_tarkan_line_in_siege_line_slugs():
+def test_tarkan_not_in_siege_line_slugs():
+    """Tarkan is a unique_units entry in the ram line, not its own SIEGE_LINE_SLUG."""
     from compute_battle_scores import SIEGE_LINE_SLUGS
-    assert "tarkan" in SIEGE_LINE_SLUGS
+    assert "tarkan" not in SIEGE_LINE_SLUGS
+    assert "ram" in SIEGE_LINE_SLUGS
+
+def test_tarkan_in_ram_unique_units():
+    """Elite Tarkan (Huns) is a unique_units entry in the ram line."""
+    from unit_lines import UNIT_LINES
+    assert "Huns" in UNIT_LINES["ram"]["unique_units"]
+    assert UNIT_LINES["ram"]["unique_units"]["Huns"] == (None, "elite_tarkan_huns")
 
 
 # ===== CASTLE_TARGETS tests =====
@@ -236,10 +244,16 @@ def test_trebuchet_scores_higher_than_tarkan():
     assert treb_group, "trebuchet|imperial group missing"
     treb_scores = [s["anti_building_score"] for s in treb_group.values()]
 
-    # Get tarkan castle scores
-    tarkan_group = scores.get("tarkan|castle", {})
-    assert tarkan_group, "tarkan|castle group missing"
-    tarkan_scores = [s["anti_building_score"] for s in tarkan_group.values()]
+    # Tarkan is now a unique_unit in the ram line (not a standalone line)
+    ram_imperial = scores.get("ram|imperial", {})
+    assert ram_imperial, "ram|imperial group missing"
+    # elite_tarkan_huns appears as a civ-specific slug within ram|imperial
+    tarkan_scores = [
+        s["anti_building_score"]
+        for sk, s in ram_imperial.items()
+        if "tarkan" in sk
+    ]
+    assert tarkan_scores, "elite_tarkan_huns not found in ram|imperial group"
 
     avg_treb = sum(treb_scores) / len(treb_scores)
     avg_tarkan = sum(tarkan_scores) / len(tarkan_scores)

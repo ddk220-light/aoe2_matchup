@@ -1384,24 +1384,82 @@ def compute_naval_role_scores(age="imperial"):
 
 # ===== Siege anti-building scoring =====
 
-# Fully upgraded Spanish Castle (Masonry + Architecture + Hoardings + all arrow techs)
-SIEGE_CASTLE_TARGET = {
-    "hp": 7028,           # 4800 * 1.1 * 1.1 * 1.21
-    "armor": {
-        3: 13,            # pierce: 11 + 1 + 1
-        4: 10,            # melee: 8 + 1 + 1
-        11: 6,            # standard building: 0 + 3 + 3
-        21: 0,            # standard buildings class (no bonus armor)
+# Three fully-upgraded Imperial-age castle targets (one per civ config).
+# Each entry represents a specific civ's castle with all available techs researched.
+# Used in Task 5 for the 6-simulation loop (3 castles × 2 resource modes).
+CASTLE_TARGETS = [
+    {
+        "name": "persian",
+        # Hoardings(×1.21) × Masonry(×1.10) × Architecture(×1.10) = 4800 × 1.4641 ≈ 7027
+        # Citadels (unique tech): +4 pierce attack, +3 bonus vs Rams (class 17), +3 bonus vs Infantry (class 1)
+        # Stronghold is Celts-only (NOT universal) — reload stays 2.0s
+        "hp": 7027,
+        "armor": {
+            3:  13,   # pierce: 11 + 1(Masonry) + 1(Architecture)
+            4:  10,   # melee:  8 + 1 + 1
+            11: 14,   # std_building: 8 + 3(Masonry) + 3(Architecture)
+            21: 0,
+        },
+        "arrows": 5,
+        "arrow_attack": 18,   # 11 + 1(Fletching) + 1(Bodkin) + 1(Chemistry) + 4(Citadels); no Bracer
+        "arrow_range": 10,    # 8 + 1(Fletching) + 1(Bodkin); no Bracer
+        "reload": 2.0,        # No Stronghold (Celts-only)
+        "arrow_bonus_attacks": {17: 3, 1: 3},   # Citadels: +3 vs Rams (class 17), +3 vs Infantry (class 1)
     },
-    "arrows": 5,          # base arrows (no garrison)
-    "arrow_attack": 15,   # 11 + 1 + 1 + 1 + 1 (Fletching/Bodkin/Bracer/Chemistry)
-    "arrow_range": 11,    # 8 + 1 + 1 + 1
-    "reload": 2.0,
-}
+    {
+        "name": "teuton",
+        # Hoardings(×1.21) × Masonry(×1.10) = 4800 × 1.331 ≈ 6388; NO Architecture (disabled)
+        # Civ bonus "+2 melee armor" applies only to infantry/cavalry units, NOT castle
+        # Crenellations (unique tech): +3 range
+        # No Bracer (disabled). No Stronghold.
+        "hp": 6388,
+        "armor": {
+            3:  12,   # pierce: 11 + 1(Masonry); no Architecture, no Bracer
+            4:   9,   # melee:  8 + 1(Masonry); no Architecture, no civ bonus (castle unit 82)
+            11: 11,   # std_building: 8 + 3(Masonry); no Architecture
+            21: 0,
+        },
+        "arrows": 5,
+        "arrow_attack": 14,   # 11 + 1(Fletching) + 1(Bodkin) + 1(Chemistry); no Bracer
+        "arrow_range": 13,    # 8 + 1(Fletching) + 1(Bodkin) + 3(Crenellations); no Bracer
+        "reload": 2.0,
+        "arrow_bonus_attacks": {},
+    },
+    {
+        "name": "byzantine",
+        # Hoardings(×1.21) only (Masonry + Architecture disabled).
+        # Byzantine civ bonus: +10% HP/age (×1.40 at Imperial) → 4800 × 1.21 × 1.40 ≈ 8127
+        # Has Bracer (+1 pierce armor, +1 attack, +1 range). No Heated Shot. No Stronghold.
+        "hp": 8127,
+        "armor": {
+            3:  12,   # pierce: 11 + 1(Bracer); no Masonry/Architecture
+            4:   8,   # melee: 8 base; no Masonry/Architecture
+            11:  8,   # std_building: 8 base; no Masonry/Architecture
+            21: 0,
+        },
+        "arrows": 5,
+        "arrow_attack": 15,   # 11 + 1(Fletching) + 1(Bodkin) + 1(Bracer) + 1(Chemistry)
+        "arrow_range": 11,    # 8 + 1(Fletching) + 1(Bodkin) + 1(Bracer)
+        "reload": 2.0,
+        "arrow_bonus_attacks": {},
+    },
+]
+
+# Backward-compat alias: Task 5 will update compute_siege_antibuilding_scores() to
+# use CASTLE_TARGETS. Until then, keep the single-castle reference pointing at the
+# first entry (persian, which most closely matches the original Spanish Castle config).
+SIEGE_CASTLE_TARGET = CASTLE_TARGETS[0]
 
 SIEGE_SCORE_TYPES = [
     "anti_building_score",
-    "time_to_kill",
+    # Sub-score TTKs (effective TTK in seconds, stored for hover card)
+    "ab_persian_5u_ttk",   "ab_persian_5k_ttk",
+    "ab_teuton_5u_ttk",    "ab_teuton_5k_ttk",
+    "ab_byzantine_5u_ttk", "ab_byzantine_5k_ttk",
+    # Damage fraction (0.0–1.0; 1.0 = castle destroyed, <1.0 = unit died first)
+    "ab_persian_5u_dmg",   "ab_persian_5k_dmg",
+    "ab_teuton_5u_dmg",    "ab_teuton_5k_dmg",
+    "ab_byzantine_5u_dmg", "ab_byzantine_5k_dmg",
 ]
 
 
@@ -1474,6 +1532,38 @@ def _simulate_siege_vs_castle(n_units, unit_hp, unit_dps, castle_hp,
     if remaining_hp <= 0:
         return round(time, 1), 1.0
     return MAX_TIME, dmg_fraction
+
+
+def _get_siege_fixed_count(slug):
+    """Return the fixed unit count for siege anti-building simulations."""
+    if slug == "fire_archer_wu" or slug.startswith("tarkan"):
+        return 30
+    return 5
+
+
+def _effective_ttk(ttk, dmg_fraction, max_winner_ttk):
+    """
+    Compute effective TTK for scoring.
+
+    Winners (dmg_fraction == 1.0): return actual TTK.
+    Losers (dmg_fraction < 1.0):  return (max_winner_ttk + 200) / dmg_fraction.
+    Edge case (max_winner_ttk is None, no unit in group won):  return 600.
+
+    Args:
+        ttk: actual simulation TTK (seconds)
+        dmg_fraction: 0.0–1.0; 1.0 means castle was destroyed
+        max_winner_ttk: slowest actual TTK among winners in the same group,
+                        or None if no unit in the group won
+    Returns:
+        float: effective TTK in seconds (higher = worse)
+    """
+    if dmg_fraction >= 1.0:
+        return ttk
+    if max_winner_ttk is None:
+        return 600.0
+    if dmg_fraction <= 0:
+        return 600.0
+    return (max_winner_ttk + 200) / dmg_fraction
 
 
 def compute_siege_antibuilding_scores():

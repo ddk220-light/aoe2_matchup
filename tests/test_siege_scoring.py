@@ -59,3 +59,55 @@ def test_tarkan_line_exists_in_unit_lines():
 def test_tarkan_line_in_siege_line_slugs():
     from compute_battle_scores import SIEGE_LINE_SLUGS
     assert "tarkan" in SIEGE_LINE_SLUGS
+
+
+# ===== CASTLE_TARGETS tests =====
+
+def test_castle_targets_length():
+    from compute_battle_scores import CASTLE_TARGETS
+    assert len(CASTLE_TARGETS) == 3
+
+
+def test_castle_targets_names():
+    from compute_battle_scores import CASTLE_TARGETS
+    assert [c["name"] for c in CASTLE_TARGETS] == ["persian", "teuton", "byzantine"]
+
+
+def test_castle_targets_hp_ordering():
+    """Byzantine is hardest (civ HP bonus), then Persian, then Teuton (no Architecture)."""
+    from compute_battle_scores import CASTLE_TARGETS
+    by_name = {c["name"]: c["hp"] for c in CASTLE_TARGETS}
+    assert by_name["byzantine"] > by_name["persian"] > by_name["teuton"]
+
+
+def test_castle_targets_required_keys():
+    from compute_battle_scores import CASTLE_TARGETS
+    required = {"name", "hp", "armor", "arrows", "arrow_attack", "arrow_range", "reload", "arrow_bonus_attacks"}
+    for entry in CASTLE_TARGETS:
+        assert required == required & entry.keys(), f"{entry['name']} missing keys: {required - entry.keys()}"
+
+
+def test_castle_targets_armor_classes():
+    """Each castle armor dict must have all four building armor classes."""
+    from compute_battle_scores import CASTLE_TARGETS
+    for entry in CASTLE_TARGETS:
+        assert set(entry["armor"].keys()) == {3, 4, 11, 21}, (
+            f"{entry['name']} armor keys mismatch"
+        )
+
+
+def test_castle_targets_persian_arrow_bonus():
+    """Persian Citadels grant bonus attacks vs Rams (17) and Infantry (1)."""
+    from compute_battle_scores import CASTLE_TARGETS
+    persian = next(c for c in CASTLE_TARGETS if c["name"] == "persian")
+    assert persian["arrow_bonus_attacks"] == {17: 3, 1: 3}
+
+
+def test_castle_targets_non_persian_no_arrow_bonus():
+    """Teuton and Byzantine have no arrow bonus attacks."""
+    from compute_battle_scores import CASTLE_TARGETS
+    for entry in CASTLE_TARGETS:
+        if entry["name"] != "persian":
+            assert entry["arrow_bonus_attacks"] == {}, (
+                f"{entry['name']} should have empty arrow_bonus_attacks"
+            )

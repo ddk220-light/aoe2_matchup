@@ -120,8 +120,8 @@ def test_effective_ttk_winner():
 
 
 def test_effective_ttk_loser_with_winners():
-    # (100 + 200) / 0.5 = 600.0
-    assert _effective_ttk(600.0, 0.5, 100.0) == 600.0
+    # (50 + 200) / 0.5 = 500.0 — distinct from fallback 600.0
+    assert _effective_ttk(600.0, 0.5, 50.0) == 500.0
 
 
 def test_effective_ttk_loser_no_winners():

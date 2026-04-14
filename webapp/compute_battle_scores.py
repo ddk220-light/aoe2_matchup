@@ -1491,8 +1491,9 @@ def _simulate_siege_vs_castle(n_units, unit_hp, unit_dps, castle_hp,
     focused_unit_hp = float(unit_hp)
     time = 0.0
 
-    # Fast path: unit outranges castle — castle arrows can't reach, no attrition
-    if unit_range >= castle_range:
+    # Fast path: unit strictly outranges castle — castle arrows can't reach, no attrition.
+    # Equal range means both fire simultaneously (handled below in combat phase).
+    if unit_range > castle_range:
         total_dps = n_units * unit_dps
         if total_dps <= 0:
             return MAX_TIME, 0.0
@@ -1502,19 +1503,20 @@ def _simulate_siege_vs_castle(n_units, unit_hp, unit_dps, castle_hp,
         dmg = min(1.0, total_dps * MAX_TIME / castle_hp)
         return MAX_TIME, round(dmg, 4)
 
-    # Closing time: units walk into range while castle fires
-    closing_distance = castle_range - unit_range
-    closing_time = closing_distance / unit_speed if unit_speed > 0 else MAX_TIME
+    # Melee units (range=0) walk from castle_range to 0 while castle fires.
+    # Ranged units pre-position at their attack range — no closing phase.
+    # This removes the speed advantage that faster ranged units had when closing.
+    if unit_range == 0:
+        closing_time = castle_range / unit_speed if unit_speed > 0 else MAX_TIME
+        while time < closing_time and units_alive > 0:
+            focused_unit_hp -= castle_dps * DT
+            if focused_unit_hp <= 0:
+                units_alive -= 1
+                if units_alive > 0:
+                    focused_unit_hp = float(unit_hp)
+            time += DT
 
-    while time < closing_time and units_alive > 0:
-        focused_unit_hp -= castle_dps * DT
-        if focused_unit_hp <= 0:
-            units_alive -= 1
-            if units_alive > 0:
-                focused_unit_hp = float(unit_hp)
-        time += DT
-
-    # Combat phase
+    # Combat phase: both fire simultaneously from pre-positioned range
     while remaining_hp > 0 and units_alive > 0 and time < MAX_TIME:
         focused_unit_hp -= castle_dps * DT
         if focused_unit_hp <= 0:
@@ -1534,8 +1536,10 @@ def _simulate_siege_vs_castle(n_units, unit_hp, unit_dps, castle_hp,
 
 def _get_siege_fixed_count(slug):
     """Return the fixed unit count for siege anti-building simulations."""
-    if slug == "fire_archer_wu" or slug.startswith("tarkan"):
+    if "fire_archer_wu" in slug or "tarkan" in slug:
         return 30
+    if slug == "ram":
+        return 3
     return 5
 
 
@@ -1671,11 +1675,22 @@ def compute_siege_antibuilding_scores():
     for sk in eff_ttks:
         avg_eff[sk] = mean(eff_ttks[sk].values())
 
+    # Global bounds per age: used for single-unit groups (e.g. tarkan) so they
+    # get a meaningful score relative to the full siege pool, not just themselves.
+    global_bounds = {}
+    for ag in ("castle", "imperial"):
+        age_avgs = [avg_eff[sk] for sk in avg_eff if unit_groups[sk][1] == ag]
+        if age_avgs:
+            global_bounds[ag] = (min(age_avgs), max(age_avgs))
+
     all_scores = {}  # (line_slug, age) -> {sk: score_dict}
 
     for (ls, ag), sks in groups.items():
         group_avgs = [avg_eff[sk] for sk in sks]
-        lo, hi = min(group_avgs), max(group_avgs)
+        if len(sks) == 1 and ag in global_bounds:
+            lo, hi = global_bounds[ag]
+        else:
+            lo, hi = min(group_avgs), max(group_avgs)
         span = hi - lo if hi != lo else 1
 
         group_scores = {}
@@ -1691,10 +1706,12 @@ def compute_siege_antibuilding_scores():
 
         all_scores[(ls, ag)] = group_scores
 
-    # Phase 4 — Speed weighting (exempt trebuchet — speed=0)
+    # Phase 4 — Speed weighting (exempt trebuchet — speed=0; exempt single-unit groups)
     for (line_slug, age), group_scores in all_scores.items():
         if line_slug == "trebuchet":
             continue
+        if len(group_scores) <= 1:
+            continue  # Single-unit group: skip — would re-normalize to 0
         _apply_speed_weighting(group_scores, ["anti_building_score"], scope="pool")
 
     # Phase 5 — Clean up and assemble result

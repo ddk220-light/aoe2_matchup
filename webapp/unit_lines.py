@@ -208,6 +208,8 @@ UNIT_LINES = {
         # Standalone entry for siege anti-building scoring.
         # Tarkan (Huns unique) — replaces knight line for Huns.
         # Only Huns have this unit; no generic base slug.
+        "name": "Tarkan",
+        "building": "Stables",
         "castle_slug": "tarkan_huns",
         "imperial_slug": "elite_tarkan_huns",
         "unique_units": {},

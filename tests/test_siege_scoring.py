@@ -38,6 +38,18 @@ def test_outranges_castle_always_wins():
     assert ttk < 600.0
 
 
+def test_equal_range_fires_simultaneously():
+    """Unit range == castle range → both fire at same time (not fast path)."""
+    # Castle kills everything fast → unit loses (castle_dps high)
+    ttk, dmg = _simulate_siege_vs_castle(
+        n_units=1, unit_hp=1, unit_dps=100,
+        castle_hp=10_000, castle_dps=999,
+        unit_speed=1.0, unit_range=13, castle_range=13,
+    )
+    # Unit dies immediately (1 HP vs 999 DPS), castle barely scratched → loss
+    assert dmg < 1.0
+
+
 def test_outranges_castle_slow_kill_returns_loss():
     """Unit outranges but takes too long → (600.0, damage_fraction)"""
     ttk, dmg = _simulate_siege_vs_castle(
@@ -135,15 +147,46 @@ def test_effective_ttk_loser_zero_damage():
 # ===== _get_siege_fixed_count tests =====
 
 def test_get_siege_fixed_count_default():
-    assert _get_siege_fixed_count("ram") == 5
+    assert _get_siege_fixed_count("ram") == 3
     assert _get_siege_fixed_count("trebuchet") == 5
     assert _get_siege_fixed_count("bombard_cannon") == 5
 
 
 def test_get_siege_fixed_count_special():
     assert _get_siege_fixed_count("fire_archer_wu") == 30
+    assert _get_siege_fixed_count("elite_fire_archer_wu") == 30
     assert _get_siege_fixed_count("tarkan") == 30
     assert _get_siege_fixed_count("tarkan_huns") == 30
+    assert _get_siege_fixed_count("elite_tarkan_huns") == 30
+
+
+def test_ranged_unit_within_castle_range_starts_firing_immediately():
+    """Ranged unit within castle range pre-positions — no closing phase, fires from t=0."""
+    # unit_range=8 < castle_range=12, but unit_speed is nearly 0 (would take ages to close old-style)
+    # With new behavior: unit fires immediately despite low speed
+    ttk, dmg = _simulate_siege_vs_castle(
+        n_units=5, unit_hp=500, unit_dps=100,
+        castle_hp=500, castle_dps=1,
+        unit_speed=0.001,  # would take 400s to close 4 units — would timeout old-style
+        unit_range=8, castle_range=12,
+    )
+    # Castle dies in 500 / (5*100) = 1.0s — fast win regardless of speed
+    assert dmg == 1.0
+    assert ttk < 5.0
+
+
+def test_melee_unit_still_closes_from_castle_range():
+    """Melee unit (range=0) walks from castle_range distance while taking fire."""
+    # unit can survive the approach (high HP, low castle DPS) then kill castle
+    ttk, dmg = _simulate_siege_vs_castle(
+        n_units=3, unit_hp=1000, unit_dps=50,
+        castle_hp=500, castle_dps=1,
+        unit_speed=1.0, unit_range=0, castle_range=10,
+    )
+    # Takes 10s to close, then kills castle. Castle does 10 DPS total during close.
+    # All 3 units survive, then kill 500 HP castle at 3*50=150 DPS → ~3.3s more.
+    assert dmg == 1.0
+    assert ttk > 10.0  # closing time adds to total
 
 
 # ===== compute_siege_antibuilding_scores integration tests =====

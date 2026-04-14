@@ -182,3 +182,25 @@ def test_dmg_fraction_range():
             for dk in dmg_keys:
                 v = s[dk]
                 assert 0.0 <= v <= 1.0, f"{sk}.{dk}={v} out of range"
+
+
+def test_trebuchet_scores_higher_than_tarkan():
+    """Trebuchet should vastly outperform tarkan as siege — validates score direction."""
+    from compute_battle_scores import compute_siege_antibuilding_scores
+    scores = compute_siege_antibuilding_scores()
+
+    # Get trebuchet imperial scores
+    treb_group = scores.get("trebuchet|imperial", {})
+    assert treb_group, "trebuchet|imperial group missing"
+    treb_scores = [s["anti_building_score"] for s in treb_group.values()]
+
+    # Get tarkan castle scores
+    tarkan_group = scores.get("tarkan|castle", {})
+    assert tarkan_group, "tarkan|castle group missing"
+    tarkan_scores = [s["anti_building_score"] for s in tarkan_group.values()]
+
+    avg_treb = sum(treb_scores) / len(treb_scores)
+    avg_tarkan = sum(tarkan_scores) / len(tarkan_scores)
+    assert avg_treb > avg_tarkan, (
+        f"Trebuchet avg score ({avg_treb:.1f}) should be > tarkan avg ({avg_tarkan:.1f})"
+    )

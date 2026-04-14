@@ -1449,6 +1449,8 @@ CASTLE_TARGETS = [
 SIEGE_SCORE_TYPES = [
     "anti_building_score",
     # Sub-score TTKs (effective TTK in seconds, stored for hover card)
+    # "5u" = fixed-count mode (5 units by default; 30 for tarkan/fire_archer_wu)
+    # "5k" = 5000-resource mode (n = max(1, 5000 // weighted_unit_cost))
     "ab_persian_5u_ttk",   "ab_persian_5k_ttk",
     "ab_teuton_5u_ttk",    "ab_teuton_5k_ttk",
     "ab_byzantine_5u_ttk", "ab_byzantine_5k_ttk",
@@ -1690,20 +1692,10 @@ def compute_siege_antibuilding_scores():
         all_scores[(ls, ag)] = group_scores
 
     # Phase 4 — Speed weighting (exempt trebuchet — speed=0)
-    for (line_slug, age), scores in all_scores.items():
+    for (line_slug, age), group_scores in all_scores.items():
         if line_slug == "trebuchet":
             continue
-        weighted = {}
-        for sk, s in scores.items():
-            speed = s.get("_speed", 1.0)
-            weighted[sk] = s["anti_building_score"] * speed
-        vals = list(weighted.values())
-        w_lo, w_hi = min(vals), max(vals)
-        w_span = w_hi - w_lo if w_hi != w_lo else 1
-        for sk in scores:
-            scores[sk]["anti_building_score"] = round(
-                (weighted[sk] - w_lo) / w_span * 100, 1
-            )
+        _apply_speed_weighting(group_scores, ["anti_building_score"], scope="pool")
 
     # Phase 5 — Clean up and assemble result
     for (line_slug, age), scores in all_scores.items():

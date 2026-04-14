@@ -1678,11 +1678,9 @@ def compute_siege_antibuilding_scores():
     all_scores = {}  # (line_slug, age) -> {sk: score_dict}
 
     for (ls, ag), sks in groups.items():
-        group_avgs = [avg_eff[sk] for sk in sks]
-        if len(sks) == 1 and ag in global_bounds:
-            lo, hi = global_bounds[ag]
-        else:
-            lo, hi = min(group_avgs), max(group_avgs)
+        # Normalize across ALL siege units of the same age (not per-line).
+        # This gives a single cross-line leaderboard: best unit overall = 100.
+        lo, hi = global_bounds.get(ag, (0, 1))
         span = hi - lo if hi != lo else 1
 
         group_scores = {}

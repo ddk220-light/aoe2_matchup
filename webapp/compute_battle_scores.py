@@ -1662,10 +1662,23 @@ def compute_siege_antibuilding_scores():
                 eff_ttks.setdefault(sk, {})[combo] = eff
                 raw_dmgs.setdefault(sk, {})[combo] = dmg
 
-    # Phase 3 — Average effective TTK + normalize
+    # Phase 3 — Weighted average effective TTK + normalize
+    # Castle weights: Persian 40%, Byzantine 40%, Teuton 20%.
+    # Each castle has 2 modes (5u + 5k) that split the castle's weight equally.
+    _CASTLE_WEIGHTS = {
+        ("persian",   "5u"): 0.20,
+        ("persian",   "5k"): 0.20,
+        ("byzantine", "5u"): 0.20,
+        ("byzantine", "5k"): 0.20,
+        ("teuton",    "5u"): 0.10,
+        ("teuton",    "5k"): 0.10,
+    }
     avg_eff = {}  # sk -> float
     for sk in eff_ttks:
-        avg_eff[sk] = mean(eff_ttks[sk].values())
+        avg_eff[sk] = sum(
+            eff_ttks[sk][combo] * _CASTLE_WEIGHTS[combo]
+            for combo in _CASTLE_WEIGHTS
+        )
 
     # Global bounds per age: used for single-unit groups (e.g. tarkan) so they
     # get a meaningful score relative to the full siege pool, not just themselves.

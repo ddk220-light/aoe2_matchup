@@ -488,6 +488,7 @@ TEAM_ANALYSIS_STAGES = {
             "overall":        {"score_type": "militia_value",    "label": "Overall"},
             "general_combat": {"score_type": "general_combat",   "label": "General Combat"},
             "anti_cav":       {"score_type": "anti_cav",         "label": "Anti-Cav"},
+            "anti_trash":     {"score_type": "anti_trash",       "label": "Anti-Trash"},
             "raiding":        {"score_type": "raiding_value",    "label": "Raiding"},
         },
     },

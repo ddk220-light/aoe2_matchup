@@ -358,7 +358,7 @@ function _buildSiegeBreakdownHtml(row) {
             let cell;
             if (dmg === undefined || ttk === undefined) {
                 cell = "—";
-            } else if (dmg >= 1.0) {
+            } else if (dmg >= 0.999) {
                 cell = `${Math.round(ttk)}s`;
             } else {
                 const pct = Math.round(dmg * 100);

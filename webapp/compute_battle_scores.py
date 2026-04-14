@@ -1423,8 +1423,9 @@ def _simulate_siege_vs_castle(n_units, unit_hp, unit_dps, castle_hp,
                                castle_dps, unit_speed, unit_range, castle_range):
     """Tick-based attrition sim: units attack a castle that fires back.
 
-    Returns time in seconds to destroy the castle, or MAX_TIME if it survives.
-    Castle focus-fires one unit at a time. Melee units need closing time.
+    Returns (time_seconds, damage_fraction) where:
+      - time_seconds: actual TTK if castle destroyed, else 600.0
+      - damage_fraction: castle HP destroyed / castle_hp (1.0 = win)
     """
     DT = 0.1
     MAX_TIME = 600.0
@@ -1434,21 +1435,30 @@ def _simulate_siege_vs_castle(n_units, unit_hp, unit_dps, castle_hp,
     focused_unit_hp = float(unit_hp)
     time = 0.0
 
-    # Closing time for units that need to walk into range
-    if unit_range < castle_range:
-        closing_distance = castle_range - unit_range
-        closing_time = closing_distance / unit_speed if unit_speed > 0 else MAX_TIME
+    # Fast path: unit outranges castle — castle arrows can't reach, no attrition
+    if unit_range >= castle_range:
+        total_dps = n_units * unit_dps
+        if total_dps <= 0:
+            return MAX_TIME, 0.0
+        ttk = castle_hp / total_dps
+        if ttk <= MAX_TIME:
+            return round(ttk, 1), 1.0
+        dmg = min(1.0, total_dps * MAX_TIME / castle_hp)
+        return MAX_TIME, round(dmg, 4)
 
-        # During approach: castle fires but units can't attack yet
-        while time < closing_time and units_alive > 0:
-            focused_unit_hp -= castle_dps * DT
-            if focused_unit_hp <= 0:
-                units_alive -= 1
-                if units_alive > 0:
-                    focused_unit_hp = float(unit_hp)
-            time += DT
+    # Closing time: units walk into range while castle fires
+    closing_distance = castle_range - unit_range
+    closing_time = closing_distance / unit_speed if unit_speed > 0 else MAX_TIME
 
-    # Combat phase: units attack castle, castle fires back
+    while time < closing_time and units_alive > 0:
+        focused_unit_hp -= castle_dps * DT
+        if focused_unit_hp <= 0:
+            units_alive -= 1
+            if units_alive > 0:
+                focused_unit_hp = float(unit_hp)
+        time += DT
+
+    # Combat phase
     while remaining_hp > 0 and units_alive > 0 and time < MAX_TIME:
         focused_unit_hp -= castle_dps * DT
         if focused_unit_hp <= 0:
@@ -1459,7 +1469,11 @@ def _simulate_siege_vs_castle(n_units, unit_hp, unit_dps, castle_hp,
         remaining_hp -= units_alive * unit_dps * DT
         time += DT
 
-    return time if remaining_hp <= 0 else MAX_TIME
+    dmg_fraction = min(1.0, round((castle_hp - max(0.0, remaining_hp)) / castle_hp, 4))
+
+    if remaining_hp <= 0:
+        return round(time, 1), 1.0
+    return MAX_TIME, dmg_fraction
 
 
 def compute_siege_antibuilding_scores():

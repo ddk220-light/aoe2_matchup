@@ -1503,20 +1503,14 @@ def _simulate_siege_vs_castle(n_units, unit_hp, unit_dps, castle_hp,
         dmg = min(1.0, total_dps * MAX_TIME / castle_hp)
         return MAX_TIME, round(dmg, 4)
 
-    # Melee units (range=0) walk from castle_range to 0 while castle fires.
-    # Ranged units pre-position at their attack range — no closing phase.
-    # This removes the speed advantage that faster ranged units had when closing.
-    if unit_range == 0:
-        closing_time = castle_range / unit_speed if unit_speed > 0 else MAX_TIME
-        while time < closing_time and units_alive > 0:
-            focused_unit_hp -= castle_dps * DT
-            if focused_unit_hp <= 0:
-                units_alive -= 1
-                if units_alive > 0:
-                    focused_unit_hp = float(unit_hp)
-            time += DT
+    # All siege units pre-position at their final attack spot — no closing phase.
+    # Ranged units (BC, trebuchet) start at their attack range.
+    # Melee units (rams) start at range 0, already adjacent to the castle.
+    # Rams have 180 pierce armor so the castle barely damages them during approach
+    # anyway (1 dmg/arrow = 2.5 DPS), making closing time a negligible noise source
+    # that inflates faster civs' scores without reflecting real DPS differences.
 
-    # Combat phase: both fire simultaneously from pre-positioned range
+    # Combat phase: both fire simultaneously
     while remaining_hp > 0 and units_alive > 0 and time < MAX_TIME:
         focused_unit_hp -= castle_dps * DT
         if focused_unit_hp <= 0:
@@ -1582,7 +1576,6 @@ def compute_siege_antibuilding_scores():
     # Phase 1 — Collect raw results
     raw_results = {}    # sk -> {(castle_name, mode): (ttk, dmg)}
     unit_groups = {}    # sk -> (line_slug, age)
-    unit_speeds = {}    # sk -> movement_speed
 
     for age in ["castle", "imperial"]:
         is_imperial = age == "imperial"
@@ -1596,7 +1589,6 @@ def compute_siege_antibuilding_scores():
                 cu = u["combat_unit"]
                 sk = f"{u['civ_name']}|{u['unit_slug']}"
                 unit_groups[sk] = (line_slug, age)
-                unit_speeds[sk] = cu["movement_speed"]
                 raw_results.setdefault(sk, {})
 
                 attacks = cu.get("attacks", {})
@@ -1696,7 +1688,7 @@ def compute_siege_antibuilding_scores():
         group_scores = {}
         for sk in sks:
             score = round((hi - avg_eff[sk]) / span * 100, 1)
-            d = {"anti_building_score": score, "_speed": unit_speeds[sk]}
+            d = {"anti_building_score": score}
             # Store sub-score keys
             for castle_name, mode in combos:
                 prefix = f"ab_{castle_name}_{mode}"
@@ -1706,19 +1698,13 @@ def compute_siege_antibuilding_scores():
 
         all_scores[(ls, ag)] = group_scores
 
-    # Phase 4 — Speed weighting (exempt trebuchet — speed=0; exempt single-unit groups)
-    for (line_slug, age), group_scores in all_scores.items():
-        if line_slug == "trebuchet":
-            continue
-        if len(group_scores) <= 1:
-            continue  # Single-unit group: skip — would re-normalize to 0
-        _apply_speed_weighting(group_scores, ["anti_building_score"], scope="pool")
+    # Phase 4 — No speed weighting for siege.
+    # Ranged units pre-position at attack range (no closing phase), so speed has
+    # no effect on their simulation outcome. Rams have 180 pierce armor so the
+    # castle barely damages them during approach. Speed weighting is removed entirely
+    # to avoid inflating scores for faster civs (e.g. Mongols) without real DPS benefit.
 
-    # Phase 5 — Clean up and assemble result
-    for (line_slug, age), scores in all_scores.items():
-        for s in scores.values():
-            s.pop("_speed", None)
-
+    # Phase 5 — Assemble result
     result = {}
     for (line_slug, age), scores in all_scores.items():
         result[f"{line_slug}|{age}"] = scores

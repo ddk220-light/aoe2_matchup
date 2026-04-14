@@ -175,18 +175,17 @@ def test_ranged_unit_within_castle_range_starts_firing_immediately():
     assert ttk < 5.0
 
 
-def test_melee_unit_still_closes_from_castle_range():
-    """Melee unit (range=0) walks from castle_range distance while taking fire."""
-    # unit can survive the approach (high HP, low castle DPS) then kill castle
+def test_melee_unit_starts_at_castle_no_closing_phase():
+    """Melee unit (range=0) pre-positions at the castle — no closing phase."""
     ttk, dmg = _simulate_siege_vs_castle(
         n_units=3, unit_hp=1000, unit_dps=50,
         castle_hp=500, castle_dps=1,
-        unit_speed=1.0, unit_range=0, castle_range=10,
+        unit_speed=0.001,  # speed is irrelevant — no closing phase
+        unit_range=0, castle_range=10,
     )
-    # Takes 10s to close, then kills castle. Castle does 10 DPS total during close.
-    # All 3 units survive, then kill 500 HP castle at 3*50=150 DPS → ~3.3s more.
+    # 3 units × 50 DPS = 150 DPS; castle 500 HP → ~3.3s, regardless of speed
     assert dmg == 1.0
-    assert ttk > 10.0  # closing time adds to total
+    assert ttk < 10.0  # no closing time added
 
 
 # ===== compute_siege_antibuilding_scores integration tests =====

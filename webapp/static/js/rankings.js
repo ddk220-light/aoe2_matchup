@@ -382,73 +382,61 @@ function buildScoreHoverHtml(row, scoreKey, dataKey) {
     dataKey = dataKey || scoreKey;
     const info = SCORE_BREAKDOWN[scoreKey];
     if (!info) {
-        // Composite score hover cards
+        // Composite score hover cards.
+        // `parts` show the component values stored in the DB (already
+        // post-processed by their own speed-weighting). `formula` describes
+        // how the displayed Score is computed from those components and
+        // what additional weighting is applied — the math will NOT add up
+        // by simple weighted-sum of `parts`, because the score is
+        // re-normalized to 0-100 after each weighting step. The note line
+        // explains what extra weighting/normalization happens.
         const composites = {
             militia_value: {
                 title: "Overall Score",
+                formula: "0.75 \u00d7 General Combat + 0.10 \u00d7 Anti-Cav + 0.15 \u00d7 Anti-Trash",
+                note: "Final score is then multiplied by movement speed and re-normalized 0-100 across the entire infantry pool (militia, spear, shock).",
                 parts: [
-                    {
-                        key: "general_combat",
-                        label: "General Combat",
-                        weight: "75%",
-                    },
-                    {
-                        key: "anti_cav",
-                        label: "Anti-Cav",
-                        weight: "10%",
-                    },
-                    {
-                        key: "anti_trash",
-                        label: "Anti-Trash",
-                        weight: "15%",
-                    },
+                    { key: "general_combat", label: "General Combat" },
+                    { key: "anti_cav", label: "Anti-Cav" },
+                    { key: "anti_trash", label: "Anti-Trash" },
                 ],
             },
             ranged_effectiveness: {
                 title: "Ranged Effectiveness Score",
+                formula: "0.70 \u00d7 General Combat + 0.30 \u00d7 Anti-Archer",
+                note: "Components are speed-weighted (pool) before combining; final score is then multiplied by attack range and re-normalized 0-100 across all ranged units (archer, skirmisher, cav archer, scorpion, gunpowder).",
                 parts: [
-                    {
-                        key: "general_combat",
-                        label: "General Combat",
-                        weight: "70%",
-                    },
-                    {
-                        key: "anti_archer",
-                        label: "Anti-Archer",
-                        weight: "30%",
-                    },
+                    { key: "general_combat", label: "General Combat (speed-weighted)" },
+                    { key: "anti_archer", label: "Anti-Archer (speed-weighted)" },
                 ],
             },
             stable_effectiveness: {
                 title: "Stable Effectiveness",
+                formula: "0.70 \u00d7 General Combat + 0.30 \u00d7 Anti-Cav",
+                note: "Final score is multiplied by movement speed and re-normalized 0-100 within each sub-line (knight / light cav / camel / steppe lancer / elephant).",
                 parts: [
-                    {
-                        key: "general_combat",
-                        label: "General Combat",
-                        weight: "70%",
-                    },
-                    {
-                        key: "anti_cav",
-                        label: "Anti-Cav",
-                        weight: "30%",
-                    },
+                    { key: "general_combat", label: "General Combat" },
+                    { key: "anti_cav", label: "Anti-Cav" },
                 ],
             },
         };
         const comp = composites[scoreKey];
         if (comp) {
             let html = `<div class="hc-title">${comp.title}</div>`;
-            html += `<div class="hc-formula">Weighted: ${comp.parts.map((p) => p.weight + " " + p.label).join(" + ")}</div>`;
+            html += `<div class="hc-formula">${comp.formula}</div>`;
             for (const p of comp.parts) {
                 const v = row[p.key];
                 const vs =
                     v !== undefined && v > -999
                         ? v.toFixed(1)
                         : "\u2014";
-                html += `<div class="hc-row"><span>${p.label} (\u00d7${p.weight})</span><span style="color:${scoreColor(v)}">${vs}</span></div>`;
+                html += `<div class="hc-row"><span>${p.label}</span><span style="color:${scoreColor(v)}">${vs}</span></div>`;
             }
             const total = row[dataKey];
             html += `<div class="hc-row total"><span>Score</span><span style="color:${scoreColor(total)}">${total !== undefined ? total.toFixed(1) : "\u2014"}</span></div>`;
+            if (comp.note) {
+                html += `<div class="hc-note" style="margin-top:6px;font-size:0.85em;opacity:0.75;line-height:1.3">${comp.note}</div>`;
+            }
             return html;
         }
         return "";
@@ -1105,7 +1093,7 @@ function renderTable() {
         {
             key: "militia_value",
             label: "Score",
-            info: "75% General Combat + 10% Anti-Cav + 15% Anti-Trash (globally normalized)",
+            info: "0.75 \u00d7 General Combat + 0.10 \u00d7 Anti-Cav + 0.15 \u00d7 Anti-Trash, then speed-weighted and re-normalized 0\u2013100 globally across all infantry (militia, spear, shock).",
         },
         {
             key: "general_combat",
@@ -1141,7 +1129,7 @@ function renderTable() {
         {
             key: "ranged_effectiveness",
             label: "Score",
-            info: "70% General Combat + 30% Anti-Archer (each speed-weighted), then range-weighted",
+            info: "0.70 \u00d7 General Combat + 0.30 \u00d7 Anti-Archer (components are speed-weighted; result is then range-weighted and re-normalized 0\u2013100 globally across all ranged units).",
         },
         {
             key: "general_combat",
@@ -1191,7 +1179,7 @@ function renderTable() {
         {
             key: "stable_effectiveness",
             label: "Score",
-            info: "70% General Combat + 30% Anti-Cav (normalized benchmarks)",
+            info: "0.70 \u00d7 General Combat + 0.30 \u00d7 Anti-Cav, then speed-weighted and re-normalized 0\u2013100 within each sub-line (knight / light cav / camel / steppe lancer / elephant).",
         },
         {
             key: "general_combat",

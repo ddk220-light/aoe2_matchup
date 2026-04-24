@@ -7,24 +7,6 @@ canonical version that all of them import.
 """
 
 
-# Post-load stat overrides for units whose dat-stored primary attack represents
-# only one of multiple firing modes. The data pipeline reads ONE attack profile
-# from the .dat file; multi-mode units need an override to model the other mode.
-# Keyed by unit_slug, applied at the end of build_combat_dict_from_ref.
-#
-# Wu Fire Archer: dat stores the anti-BUILDING primary attack (range 9/10 base,
-# 1 projectile). vs units the wiki says it auto-switches to anti-UNIT mode
-# (range 5/6 base, 3 projectiles, 0.25 blast). extra_projectiles=2 is already
-# extracted from a separate dat field (the secondary mode). Override range to
-# anti-unit base + tech bonuses (matches the Chu Ko Nu pattern: +2 castle /
-# +3 imperial from Fletching/Bodkin/Bracer).
-# Sources: Fandom Fire_Archer page, SiegeEngineers data.json (charge_type=6).
-SLUG_STAT_OVERRIDES = {
-    "fire_archer_wu":       {"attack_range": 7.0},
-    "elite_fire_archer_wu": {"attack_range": 9.0},
-}
-
-
 def build_combat_dict_from_ref(row):
     """Build a combat-unit dict from a ref_units row.
 
@@ -35,7 +17,7 @@ def build_combat_dict_from_ref(row):
     reload_time = row["final_reload_time"] or 2.0
     attack_speed = 1.0 / reload_time if reload_time > 0 else 0.5
 
-    result = {
+    return {
         "slug": row["unit_slug"],
         "unit_name": row["unit_name"],
         "unit_category": "military",
@@ -134,9 +116,3 @@ def build_combat_dict_from_ref(row):
         "transform_attacks_json": row["transform_attacks_json"],
         "transform_armors_json": row["transform_armors_json"],
     }
-
-    overrides = SLUG_STAT_OVERRIDES.get(result["slug"])
-    if overrides:
-        result.update(overrides)
-
-    return result

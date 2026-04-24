@@ -121,6 +121,16 @@ UNIT_STAT_OVERRIDES = {
         "los": 8,
         "attacks": {3: 8, 1: 2},  # Pierce 8, +2 buildings
     },
+    # Fire Archer (1968) / Elite Fire Archer (1970): dat exposes the
+    # anti-BUILDING primary attack (range 9 / 10). For unit-vs-unit combat
+    # the in-game logic auto-switches to the anti-UNIT charge attack
+    # (range 5 / 6, 3 projectiles, 0.25 blast). extra_projectiles=2 is
+    # already extracted from the secondary mode; only range needs override.
+    # Tech bonuses (Fletching/Bodkin/Bracer) then yield 7 castle / 9 imperial
+    # post-tech, matching the Chu Ko Nu pattern.
+    # Sources: Fandom Fire_Archer page, SiegeEngineers data.json (charge_type=6).
+    1968: {"range": 5},
+    1970: {"range": 6},
 }
 
 # Paired units mapping (for matchup mode switching)

@@ -1024,21 +1024,21 @@ def compute_archery_role_scores(age="imperial"):
         for s in all_scores.values():
             s[f"{key}_raw"] = s[key]
 
-    # Min-max normalize each benchmark score per unit line (0-100)
-    # Each line (archer, skirmisher, cav_archer, etc.) is normalized independently
-    # so scores reflect how good a unit is within its role, not across all ranged.
+    # Group by line (kept for downstream DB-write step that splits by line)
     line_groups = {}
     for sk, scores in all_scores.items():
         line = sk_to_line[sk]
         line_groups.setdefault(line, []).append(sk)
 
+    # Min-max normalize each benchmark score 0-100 globally across all ranged
+    # units (archer + skirmisher + cav_archer + scorpion + gunpowder pooled
+    # together), so scores are directly comparable across sub-lines.
     for bk in all_bench_keys:
-        for line, sks in line_groups.items():
-            vals = [all_scores[sk][bk] for sk in sks]
-            lo, hi = min(vals), max(vals)
-            span = hi - lo if hi != lo else 1
-            for sk in sks:
-                all_scores[sk][bk] = round((all_scores[sk][bk] - lo) / span * 100, 1)
+        vals = [all_scores[sk][bk] for sk in all_scores]
+        lo, hi = min(vals), max(vals)
+        span = hi - lo if hi != lo else 1
+        for sk in all_scores:
+            all_scores[sk][bk] = round((all_scores[sk][bk] - lo) / span * 100, 1)
 
     # Compute composites from normalized benchmark values.
     for sk, scores in all_scores.items():
@@ -1049,17 +1049,18 @@ def compute_archery_role_scores(age="imperial"):
             sum(scores[k] for k in aa_keys) / len(aa_keys), 1
         )
 
-    # Speed-weight the component scores (per-line, multiply by speed, re-normalize).
+    # Speed-weight the component scores globally (multiply by speed, re-normalize 0-100).
     _apply_speed_weighting(
         all_scores,
         ["general_combat", "anti_archer"],
-        scope="per_line",
-        line_groups=line_groups,
+        scope="pool",
     )
 
     # Ranged effectiveness combines both components (70% general / 30% anti-archer)
     # over the speed-weighted values, then is further weighted by attack range
-    # (longer-range archers gain a kiting/positioning premium).
+    # (longer-range units gain a kiting/positioning premium). Range-weighting
+    # is also globally pooled so the resulting score is comparable across all
+    # ranged sub-lines.
     for sk, scores in all_scores.items():
         scores["ranged_effectiveness"] = round(
             0.7 * scores["general_combat"] + 0.3 * scores["anti_archer"], 1
@@ -1067,8 +1068,7 @@ def compute_archery_role_scores(age="imperial"):
     _apply_speed_weighting(
         all_scores,
         ["ranged_effectiveness"],
-        scope="per_line",
-        line_groups=line_groups,
+        scope="pool",
         multiplier_keys=("_range",),
     )
 

@@ -7,6 +7,35 @@ canonical version that all of them import.
 """
 
 
+# Post-load stat overrides for units whose dat-stored stats represent only
+# one of multiple firing modes. Keyed by unit_slug. Applied at the end of
+# build_combat_dict_from_ref. Use sparingly — these bypass the audit pipeline.
+#
+# Wu Fire Archer: extraction stores the anti-BUILDING primary attack (range 9
+# base + techs = 11 castle / 13 imperial, 1 projectile). For unit-vs-unit
+# combat the wiki says it auto-switches to anti-UNIT mode (range 5/6 base,
+# 3 projectiles, 0.25 blast width). extra_projectiles=2 is already in the DB,
+# but range is wrong. Override range to anti-unit base + tech bonuses
+# (matching the Chu Ko Nu pattern: +2 castle / +3 imperial from Fletching/Bodkin/Bracer).
+# Sources: Fandom Fire_Archer page, SiegeEngineers data.json (charge_type=6).
+SLUG_STAT_OVERRIDES = {
+    "fire_archer_wu":       {"attack_range": 7.0},
+    "elite_fire_archer_wu": {"attack_range": 9.0},
+}
+
+# Civ + slug overrides applied identically. Mirrors analysis/config_combat.py
+# CIV_COMBAT_PROPERTIES entries that need to take effect at runtime when the
+# ref_units DB has not been regenerated. Once the analysis pipeline is rerun
+# these become redundant (same values get baked into the DB) but harmless.
+#
+# Curare wiki: poison is "X damage over 15s (per shot)". Stored as DPS so
+# bleed_dps = total / duration. Standard archers: 5/15 = 0.333. Blackwood: 2/15 = 0.133.
+CIV_SLUG_STAT_OVERRIDES = {
+    ("Tupi", "arbalester"):                  {"bleed_dps": 0.333, "bleed_duration": 15.0},
+    ("Tupi", "elite_blackwood_archer_tupi"): {"bleed_dps": 0.133, "bleed_duration": 15.0},
+}
+
+
 def build_combat_dict_from_ref(row):
     """Build a combat-unit dict from a ref_units row.
 
@@ -17,7 +46,7 @@ def build_combat_dict_from_ref(row):
     reload_time = row["final_reload_time"] or 2.0
     attack_speed = 1.0 / reload_time if reload_time > 0 else 0.5
 
-    return {
+    result = {
         "slug": row["unit_slug"],
         "unit_name": row["unit_name"],
         "unit_category": "military",
@@ -116,3 +145,13 @@ def build_combat_dict_from_ref(row):
         "transform_attacks_json": row["transform_attacks_json"],
         "transform_armors_json": row["transform_armors_json"],
     }
+
+    overrides = SLUG_STAT_OVERRIDES.get(result["slug"])
+    if overrides:
+        result.update(overrides)
+
+    civ_slug_overrides = CIV_SLUG_STAT_OVERRIDES.get((row["civ_name"], result["slug"]))
+    if civ_slug_overrides:
+        result.update(civ_slug_overrides)
+
+    return result

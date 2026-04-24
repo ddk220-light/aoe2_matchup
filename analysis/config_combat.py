@@ -306,8 +306,11 @@ CIV_COMBAT_PROPERTIES = {
     ("Mapuche", "imp_slinger"): {"pass_through_percent": 0.30, "pass_through_count": 1},
     ("Mapuche", "elite_skirm"): {"pass_through_percent": 0.30, "pass_through_count": 1},
     ("Mapuche", "imp_elite_skirm"): {"pass_through_percent": 0.30, "pass_through_count": 1},
-    # Tupi Curare (Imp UT) — arrow projectiles apply poison (2 DPS for 15 seconds)
-    # Imperial-age only: Curare is an Imperial UT, so Castle-age archers don't get it.
-    ("Tupi", "arbalester"): {"bleed_dps": 2.0, "bleed_duration": 15.0},
-    ("Tupi", "elite_blackwood_archer"): {"bleed_dps": 2.0, "bleed_duration": 15.0},
+    # Tupi Curare (Imp UT) — arrow projectiles apply poison.
+    # Per Fandom Curare wiki: standard Archer line takes 5 dmg over 15s (-20 HP/min);
+    # Blackwood Archer takes 2 dmg over 15s (-8 HP/min). Imperial-age only.
+    # bleed_dps = total / duration. Note: real game stacks per-shot, our sim
+    # refreshes one bleed slot per target — so multi-shooter stacking is undermodeled.
+    ("Tupi", "arbalester"): {"bleed_dps": 0.333, "bleed_duration": 15.0},
+    ("Tupi", "elite_blackwood_archer"): {"bleed_dps": 0.133, "bleed_duration": 15.0},
 }

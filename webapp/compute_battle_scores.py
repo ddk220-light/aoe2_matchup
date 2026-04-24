@@ -987,13 +987,15 @@ def compute_archery_role_scores(age="imperial"):
 
                 elif mode == "fixed_hp":
                     m_count, o_count = param
-                    fake_res = m_count * o_count
+                    # Use fixed_count so simulate_battle honors pop_space.
+                    # Half-pop units (Blackwood Archer, Karambit Warrior) get
+                    # 2x unit count for the same pop slots, e.g. 30 pop = 60 units.
+                    # Assumes m_count == o_count (true for all current benchmarks).
                     winner, _, _, hp1, hp2 = simulate_battle(
                         cu,
                         bench,
-                        fake_res,
-                        cost1_override=fake_res // m_count,
-                        cost2_override=fake_res // o_count,
+                        resources=0,
+                        fixed_count=m_count,
                         return_hp=True,
                     )
                     if winner == 1:
@@ -1185,13 +1187,15 @@ def compute_stable_role_scores(age="imperial"):
 
                 elif mode == "fixed_hp":
                     m_count, o_count = param
-                    fake_res = m_count * o_count
+                    # Use fixed_count so simulate_battle honors pop_space.
+                    # Half-pop units (Blackwood Archer, Karambit Warrior) get
+                    # 2x unit count for the same pop slots, e.g. 30 pop = 60 units.
+                    # Assumes m_count == o_count (true for all current benchmarks).
                     winner, _, _, hp1, hp2 = simulate_battle(
                         cu,
                         bench,
-                        fake_res,
-                        cost1_override=fake_res // m_count,
-                        cost2_override=fake_res // o_count,
+                        resources=0,
+                        fixed_count=m_count,
                         return_hp=True,
                     )
                     if winner == 1:

@@ -35,6 +35,15 @@ CIV_MISSING_UNITS = {
     ("Tupi", "swordsmen"), ("Tupi", "champion"),
     # Muisca additionally lacks Halberdier (|Halberdier=0); Pikeman only.
     ("Muisca", "halberdier"),
+    # Mapuche lacks Arbalester (and Bracer) — archer line caps at Crossbowman.
+    # Source: SiegeEngineers data.json civs.Mapuche.Unit (Arbalester id 492 absent).
+    ("Mapuche", "arbalester"),
+    # All four Andean/Amazonian civs lack Imperial Skirmisher (cap at Elite Skirm).
+    # Source: SiegeEngineers data.json civs.{Civ}.Unit (Imperial Skirm id 1155 absent).
+    ("Incas", "imp_elite_skirm"),
+    ("Mapuche", "imp_elite_skirm"),
+    ("Muisca", "imp_elite_skirm"),
+    ("Tupi", "imp_elite_skirm"),
 }
 
 
@@ -262,7 +271,14 @@ UNIT_LINES = {
             "Turks": ("janissary_turks", "elite_janissary_turks"),
             "Portuguese": ("organ_gun_portuguese", "elite_organ_gun_portuguese"),
             "Jurchens": ("grenadier_jurchens", "grenadier_jurchens"),
-            "Incas": ("slinger", "imp_slinger"),
+            # Slinger is a regional Archery Range unit shared by all four
+            # South American civs. No upgrade exists — imp_slinger here is
+            # a synthetic Imperial-age tech-applied entry (same unit, finals
+            # diff via age techs).
+            "Incas":   ("slinger", "imp_slinger"),
+            "Mapuche": ("slinger", "imp_slinger"),
+            "Muisca":  ("slinger", "imp_slinger"),
+            "Tupi":    ("slinger", "imp_slinger"),
             "Bohemians": ("hussite_wagon_bohemians", "elite_hussite_wagon_bohemians"),
             "Franks": ("throwing_axeman_franks", "elite_throwing_axeman_franks"),
             "Malians": ("gbeto_malians", "elite_gbeto_malians"),

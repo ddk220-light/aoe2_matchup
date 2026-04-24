@@ -64,6 +64,7 @@ UNIT_LINES = {
                 "elite_urumi_swordsman_dravidians",
             ),
             "Hindustanis": ("ghulam_hindustanis", "elite_ghulam_hindustanis"),
+            "Malay": ("karambit_warrior_malay", "elite_karambit_warrior_malay"),
             "Armenians": ("warrior_priest_armenians", "warrior_priest_armenians"),
             "Khitans": ("liao_dao_khitans", "elite_liao_dao_khitans"),
             "Shu": (
@@ -74,10 +75,7 @@ UNIT_LINES = {
                 ("kamayuk_incas", "elite_kamayuk_incas"),
                 ("champi_warrior", "elite_champi_warrior"),
             ],
-            "Muisca": [
-                ("temple_guard_muisca", "elite_temple_guard_muisca"),
-                ("champi_warrior", "elite_champi_warrior"),
-            ],
+            "Muisca": ("champi_warrior", "elite_champi_warrior"),
             "Mapuche": ("champi_warrior", "elite_champi_warrior"),
             "Tupi": [
                 ("ibirapema_warrior_tupi", "elite_ibirapema_warrior_tupi"),
@@ -93,6 +91,9 @@ UNIT_LINES = {
         "unique_units": {},
     },
     "shock_infantry": {
+        # Units in the Eagle Warriors armor class (id=29 in armor_classes).
+        # This is the in-game "shock infantry" armor class — units with
+        # "+X vs Eagle Warriors" bonus damage hit everything here.
         "name": "Shock Infantry",
         "building": "Barracks",
         "castle_slug": "fire_lancer",
@@ -100,8 +101,8 @@ UNIT_LINES = {
         "unique_units": {
             "Aztecs": ("eagle_warrior", "elite_eagle"),
             "Mayans": ("eagle_warrior", "elite_eagle"),
-            "Malay": ("karambit_warrior_malay", "elite_karambit_warrior_malay"),
             "Wu": ("jian_swordsman_wu", "jian_swordsman_wu"),
+            "Muisca": ("temple_guard_muisca", "elite_temple_guard_muisca"),
         },
     },
     "archer": {

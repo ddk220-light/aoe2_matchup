@@ -121,19 +121,6 @@ const SCORE_BREAKDOWN = {
             },
         ],
     },
-    // Archery score breakdowns
-    general_combat: {
-        title: "General Combat Score",
-        formula: "Normalized avg of 6 matchups (3 \u00d7 30v30 + 3 \u00d7 3K res)",
-        subs: [
-            { key: "gc_30v30_vs_paladin", label: "vs Paladin (30v30)", civ: "Spanish", slug: "paladin", mode: "count", count: 30 },
-            { key: "gc_30v30_vs_arb", label: "vs Arbalester (30v30)", civ: "Chinese", slug: "arbalester", mode: "count", count: 30 },
-            { key: "gc_30v30_vs_champ", label: "vs Champion (30v30)", civ: "Chinese", slug: "champion", mode: "count", count: 30 },
-            { key: "gc_3k_vs_paladin", label: "vs Paladin (3K res)", civ: "Spanish", slug: "paladin", mode: "resources", res: 3000 },
-            { key: "gc_3k_vs_arb", label: "vs Arbalester (3K res)", civ: "Chinese", slug: "arbalester", mode: "resources", res: 3000 },
-            { key: "gc_3k_vs_champ", label: "vs Champion (3K res)", civ: "Chinese", slug: "champion", mode: "resources", res: 3000 },
-        ],
-    },
     anti_archer: {
         title: "Anti-Archer Score",
         formula: "Normalized avg of 6 matchups (3 \u00d7 30v30 + 3 \u00d7 3K res)",

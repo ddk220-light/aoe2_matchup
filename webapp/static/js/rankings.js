@@ -161,7 +161,7 @@ const SCORE_BREAKDOWN = {
     // Siege score breakdowns
     anti_building_score: {
         title: "Anti-Building Score",
-        formula: "Avg effective TTK across 3 Imperial castles (Persian / Teuton / Byzantine) × 2 modes, speed-weighted",
+        formula: "Avg effective TTK across 3 Imperial castles (Persian / Teuton / Byzantine) × 2 modes (fixed-count + 5K res), normalized globally across all siege units of the same age. No speed weighting (siege pre-positions at range; rams are armored).",
         subs: "siege_breakdown",   // sentinel: use custom siege hover renderer
     },
     naval_effectiveness: {
@@ -413,7 +413,7 @@ function buildScoreHoverHtml(row, scoreKey, dataKey) {
             stable_effectiveness: {
                 title: "Stable Effectiveness",
                 formula: "0.70 \u00d7 General Combat + 0.30 \u00d7 Anti-Cav",
-                note: "Final score is multiplied by movement speed and re-normalized 0-100 within each sub-line (knight / light cav / camel / steppe lancer / elephant).",
+                note: "Final score is multiplied by movement speed and re-normalized 0-100 globally across all stable units (knight, light cav, camel, steppe lancer, elephant).",
                 parts: [
                     { key: "general_combat", label: "General Combat" },
                     { key: "anti_cav", label: "Anti-Cav" },
@@ -1159,7 +1159,7 @@ function renderTable() {
         {
             key: "anti_building_score",
             label: "Score",
-            info: "Avg effective TTK across 3 Imperial castles (Persian / Teuton / Byzantine) \u00d7 2 modes, speed-weighted (normalized 0\u2013100)",
+            info: "Avg effective TTK across 3 Imperial castles (Persian / Teuton / Byzantine) \u00d7 2 modes (fixed-count + 5K res), re-normalized 0\u2013100 globally across all siege units of the same age. No speed weighting.",
         },
         { key: "dps", label: "DPS" },
         { key: "final_hp", label: "HP" },
@@ -1179,7 +1179,7 @@ function renderTable() {
         {
             key: "stable_effectiveness",
             label: "Score",
-            info: "0.70 \u00d7 General Combat + 0.30 \u00d7 Anti-Cav, then speed-weighted and re-normalized 0\u2013100 within each sub-line (knight / light cav / camel / steppe lancer / elephant).",
+            info: "0.70 \u00d7 General Combat + 0.30 \u00d7 Anti-Cav, then speed-weighted and re-normalized 0\u2013100 globally across all stable units (knight, light cav, camel, steppe lancer, elephant).",
         },
         {
             key: "general_combat",
@@ -1205,7 +1205,11 @@ function renderTable() {
         { key: "civ_name", label: "Civ" },
         { key: "unit_name", label: "Unit" },
         { key: "line_slug", label: "Line" },
-        { key: "naval_effectiveness", label: "Score" },
+        {
+            key: "naval_effectiveness",
+            label: "Score",
+            info: "Average of vs_galleon, vs_fire_ship, vs_hulk (each = avg 30v30 + 3K res), then speed-weighted and re-normalized 0\u2013100 within each sub-line (galleon, fire, hulk).",
+        },
         { key: "dps", label: "DPS" },
         { key: "final_hp", label: "HP" },
         { key: "final_attack", label: "Atk" },

@@ -1242,21 +1242,22 @@ def compute_stable_role_scores(age="imperial"):
         for s in all_scores.values():
             s[f"{key}_raw"] = s[key]
 
-    # Min-max normalize each benchmark score per unit line (0-100)
-    # Each line (knight, light_cav, camel, etc.) is normalized independently
-    # so scores reflect how good a unit is within its role, not across all stable.
+    # Group by line (kept for downstream DB-write step that splits by line)
     line_groups = {}
     for sk in all_scores:
         line = sk_to_line[sk]
         line_groups.setdefault(line, []).append(sk)
 
+    # Min-max normalize each benchmark score 0-100 globally across all stable
+    # units (knight + light_cav + camel + steppe_lancer + elephant pooled
+    # together), so scores are directly comparable across sub-lines —
+    # mirrors the infantry and ranged scoring approach.
     for bk in all_bench_keys:
-        for line, sks in line_groups.items():
-            vals = [all_scores[sk][bk] for sk in sks]
-            lo, hi = min(vals), max(vals)
-            span = hi - lo if hi != lo else 1
-            for sk in sks:
-                all_scores[sk][bk] = round((all_scores[sk][bk] - lo) / span * 100, 1)
+        vals = [all_scores[sk][bk] for sk in all_scores]
+        lo, hi = min(vals), max(vals)
+        span = hi - lo if hi != lo else 1
+        for sk in all_scores:
+            all_scores[sk][bk] = round((all_scores[sk][bk] - lo) / span * 100, 1)
 
     # Compute derived scores from normalized values
     # Anti-cav reuses gc paladin benchmarks (30v30 + 3K)
@@ -1273,12 +1274,11 @@ def compute_stable_role_scores(age="imperial"):
             1,
         )
 
-    # Apply speed weighting: multiply composites by speed, re-normalize per line
+    # Apply speed weighting globally (multiply composites by speed, re-normalize 0-100).
     _apply_speed_weighting(
         all_scores,
         ["general_combat", "anti_cav", "stable_effectiveness"],
-        scope="per_line",
-        line_groups=line_groups,
+        scope="pool",
     )
 
     # Clean up temp speed refs

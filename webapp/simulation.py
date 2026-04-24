@@ -343,14 +343,34 @@ def _assign_targets_spread_capped(my_alive, enemy_alive, tick=0,
     return assignments
 
 
-def _assign_targets_focus(my_alive, enemy_alive, enemy_hp, dmg_per_hit, num_proj):
+def _assign_targets_focus(
+    my_alive,
+    enemy_alive,
+    enemy_hp,
+    dmg_per_hit,
+    num_proj,
+    extra_dmg=None,
+    extra_accuracy=1.0,
+):
     """Focus-fire targeting: group just enough attackers to kill each enemy.
 
     Assigns attackers to the first enemy until enough are assigned to kill it
-    (based on current HP and damage per hit), then moves to the next enemy.
+    (based on expected damage per shot), then moves to the next enemy.
+
+    `dmg_per_hit` is the main projectile's damage. When a unit fires extra
+    projectiles whose damage differs from main (e.g. Shu Bolt Magazine adds a
+    1-pierce arrow alongside a 10-pierce main, or Chu Ko Nu's secondary arrows
+    deal less than the primary), pass `extra_dmg` so the assignment reflects
+    expected per-shot damage = main + extra * (num_proj - 1) * extra_accuracy.
+    Without this, units with weak extras get OVER-estimated and the sim
+    under-assigns attackers, leaving targets alive longer than they should.
     """
     if not enemy_alive:
         return {}
+    if extra_dmg is None:
+        per_shot = dmg_per_hit * num_proj
+    else:
+        per_shot = dmg_per_hit + extra_dmg * (num_proj - 1) * extra_accuracy
     assignments = {}
     e_idx = 0  # current enemy target index
     assigned_dmg = 0.0  # damage assigned to current target so far
@@ -359,7 +379,7 @@ def _assign_targets_focus(my_alive, enemy_alive, enemy_hp, dmg_per_hit, num_proj
             e_idx = 0  # wrap around if more attackers than needed
             assigned_dmg = 0.0
         assignments[i] = enemy_alive[e_idx]
-        assigned_dmg += dmg_per_hit * num_proj
+        assigned_dmg += per_shot
         if assigned_dmg >= enemy_hp[enemy_alive[e_idx]]:
             e_idx += 1
             assigned_dmg = 0.0
@@ -1074,7 +1094,8 @@ def _run_opening_volley(s):
                 break
             # Use focus-fire targeting: concentrate fire to get kills
             targets = _assign_targets_focus(
-                a_alive, t_alive, target_hp_arr, damage, 1 + a_extra_proj
+                a_alive, t_alive, target_hp_arr, damage, 1 + a_extra_proj,
+                extra_dmg=extra_proj_damage, extra_accuracy=EXTRA_PROJ_ACCURACY,
             )
             for a_idx in a_alive:
                 t_alive_now = [i for i in range(target_count) if target_hp_arr[i] > 0]
@@ -1100,9 +1121,12 @@ def _run_opening_volley(s):
                     if alive and random.random() < stray_chance:
                         stray = random.choice(alive)
                         _apply_opening_hit(attacker_team, stray, damage, a_idx)
-                # Extra projectiles: pass-through bolts always hit; others ~50%
+                # Extra projectiles: pass-through bolts always hit; scatter
+                # multi-barrel projectiles (Organ Gun) also always land on
+                # SOME target; ordinary secondary projectiles (Chu Ko Nu,
+                # Bolt Magazine) scatter at ~50% accuracy.
                 for _ in range(num_proj - 1):
-                    if a_pass_through > 0 or random.random() < EXTRA_PROJ_ACCURACY:
+                    if a_pass_through > 0 or a_scatter or random.random() < EXTRA_PROJ_ACCURACY:
                         if a_scatter:
                             t_alive_scat = [i for i in range(target_count) if target_hp_arr[i] > 0]
                             if t_alive_scat:
@@ -1896,14 +1920,20 @@ def simulate_battle(
 
         # Assign targets: ranged focus fire, melee capped vs ranged, spread capped vs melee
         if is_ranged1:
-            targets1 = _assign_targets_focus(alive1, alive2, hp2, dmg1, 1 + extra_proj1)
+            targets1 = _assign_targets_focus(
+                alive1, alive2, hp2, dmg1, 1 + extra_proj1,
+                extra_dmg=extra_proj_dmg1, extra_accuracy=EXTRA_PROJ_ACCURACY,
+            )
         elif is_ranged2:
             targets1 = _assign_targets_melee_capped(alive1, alive2, tick)
         else:
             targets1 = _assign_targets_spread_capped(alive1, alive2, tick,
                                                       spread_initial1, spread_max1)
         if is_ranged2:
-            targets2 = _assign_targets_focus(alive2, alive1, hp1, dmg2, 1 + extra_proj2)
+            targets2 = _assign_targets_focus(
+                alive2, alive1, hp1, dmg2, 1 + extra_proj2,
+                extra_dmg=extra_proj_dmg2, extra_accuracy=EXTRA_PROJ_ACCURACY,
+            )
         elif is_ranged1:
             targets2 = _assign_targets_melee_capped(alive2, alive1, tick)
         else:
@@ -2166,8 +2196,11 @@ def simulate_battle(
                     if num_extra > 0:
                         extra_base = t_extra_proj_dmg
                         extra_hit = extra_base + int(my_bonus_atk[i])
+                        # Scatter multi-barrel extras (Organ Gun) always land
+                        # on SOME target; pass-through extras pierce. Other
+                        # secondary projectiles roll EXTRA_PROJ_ACCURACY.
                         for _ in range(num_extra):
-                            if t_pass_through > 0 or random.random() < EXTRA_PROJ_ACCURACY:
+                            if t_pass_through > 0 or t_scatter or random.random() < EXTRA_PROJ_ACCURACY:
                                 if t_scatter and enemy_alive:
                                     scat_target = random.choice(enemy_alive)
                                     pending_damage.append(
@@ -2668,9 +2701,11 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                         pending.append((stray, main_dmg))
                         sim_hp[stray] -= main_dmg
 
-                # Extra projectiles: pass-through bolts always hit; others ~50%
+                # Extra projectiles: pass-through bolts always hit; scatter
+                # multi-barrel extras (Organ Gun) always land on SOME target;
+                # other secondaries roll ~50%.
                 for _ in range(num_extra):
-                    if tmpl["pass_through"] > 0 or random.random() < EXTRA_PROJ_ACCURACY:
+                    if tmpl["pass_through"] > 0 or tmpl["scatter"] or random.random() < EXTRA_PROJ_ACCURACY:
                         if tmpl["scatter"] and d_alive_now:
                             scat_target = random.choice(d_alive_now)
                             pending.append((scat_target, extra_dmg))
@@ -2930,9 +2965,10 @@ def simulate_mixed_battle(units_team1, units_team2, return_hp=False):
                             pending_damage.append(
                                 (enemy_team_id, stray, main_dmg, i, team_id)
                             )
-                    # Extra projectiles: pass-through bolts always hit; others ~50%
+                    # Extra projectiles: pass-through always hit; scatter
+                    # multi-barrel always land on SOME target; others ~50%.
                     for _ in range(num_extra):
-                        if tmpl["pass_through"] > 0 or random.random() < EXTRA_PROJ_ACCURACY:
+                        if tmpl["pass_through"] > 0 or tmpl["scatter"] or random.random() < EXTRA_PROJ_ACCURACY:
                             if tmpl["scatter"] and enemy_alive:
                                 scat_target = random.choice(enemy_alive)
                                 pending_damage.append(

@@ -7,32 +7,21 @@ canonical version that all of them import.
 """
 
 
-# Post-load stat overrides for units whose dat-stored stats represent only
-# one of multiple firing modes. Keyed by unit_slug. Applied at the end of
-# build_combat_dict_from_ref. Use sparingly — these bypass the audit pipeline.
+# Post-load stat overrides for units whose dat-stored primary attack represents
+# only one of multiple firing modes. The data pipeline reads ONE attack profile
+# from the .dat file; multi-mode units need an override to model the other mode.
+# Keyed by unit_slug, applied at the end of build_combat_dict_from_ref.
 #
-# Wu Fire Archer: extraction stores the anti-BUILDING primary attack (range 9
-# base + techs = 11 castle / 13 imperial, 1 projectile). For unit-vs-unit
-# combat the wiki says it auto-switches to anti-UNIT mode (range 5/6 base,
-# 3 projectiles, 0.25 blast width). extra_projectiles=2 is already in the DB,
-# but range is wrong. Override range to anti-unit base + tech bonuses
-# (matching the Chu Ko Nu pattern: +2 castle / +3 imperial from Fletching/Bodkin/Bracer).
+# Wu Fire Archer: dat stores the anti-BUILDING primary attack (range 9/10 base,
+# 1 projectile). vs units the wiki says it auto-switches to anti-UNIT mode
+# (range 5/6 base, 3 projectiles, 0.25 blast). extra_projectiles=2 is already
+# extracted from a separate dat field (the secondary mode). Override range to
+# anti-unit base + tech bonuses (matches the Chu Ko Nu pattern: +2 castle /
+# +3 imperial from Fletching/Bodkin/Bracer).
 # Sources: Fandom Fire_Archer page, SiegeEngineers data.json (charge_type=6).
 SLUG_STAT_OVERRIDES = {
     "fire_archer_wu":       {"attack_range": 7.0},
     "elite_fire_archer_wu": {"attack_range": 9.0},
-}
-
-# Civ + slug overrides applied identically. Mirrors analysis/config_combat.py
-# CIV_COMBAT_PROPERTIES entries that need to take effect at runtime when the
-# ref_units DB has not been regenerated. Once the analysis pipeline is rerun
-# these become redundant (same values get baked into the DB) but harmless.
-#
-# Curare wiki: poison is "X damage over 15s (per shot)". Stored as DPS so
-# bleed_dps = total / duration. Standard archers: 5/15 = 0.333. Blackwood: 2/15 = 0.133.
-CIV_SLUG_STAT_OVERRIDES = {
-    ("Tupi", "arbalester"):                  {"bleed_dps": 0.333, "bleed_duration": 15.0},
-    ("Tupi", "elite_blackwood_archer_tupi"): {"bleed_dps": 0.133, "bleed_duration": 15.0},
 }
 
 
@@ -149,9 +138,5 @@ def build_combat_dict_from_ref(row):
     overrides = SLUG_STAT_OVERRIDES.get(result["slug"])
     if overrides:
         result.update(overrides)
-
-    civ_slug_overrides = CIV_SLUG_STAT_OVERRIDES.get((row["civ_name"], result["slug"]))
-    if civ_slug_overrides:
-        result.update(civ_slug_overrides)
 
     return result

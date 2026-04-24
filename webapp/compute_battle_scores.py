@@ -323,24 +323,26 @@ def build_line_units(line_slug, age):
                     }
                 )
 
-    for civ_name, (castle_uu, imperial_uu) in line.get("unique_units", {}).items():
-        uu_slug = castle_uu if is_castle else imperial_uu
-        if not uu_slug:
-            continue
-        rc.execute(
-            "SELECT * FROM ref_units WHERE unit_slug=? AND civ_name=? AND age=?",
-            (uu_slug, civ_name, db_age),
-        )
-        row = rc.fetchone()
-        if row:
-            cd = build_combat_dict(rc, row)
-            cu = prepare_combat_unit(cd)
-            cu["upgrade_cost_food"] = row["upgrade_cost_food"] or 0
-            cu["upgrade_cost_wood"] = row["upgrade_cost_wood"] or 0
-            cu["upgrade_cost_gold"] = row["upgrade_cost_gold"] or 0
-            units.append(
-                {"civ_name": civ_name, "unit_slug": uu_slug, "combat_unit": cu}
+    for civ_name, entries in line.get("unique_units", {}).items():
+        entries = entries if isinstance(entries, list) else [entries]
+        for castle_uu, imperial_uu in entries:
+            uu_slug = castle_uu if is_castle else imperial_uu
+            if not uu_slug:
+                continue
+            rc.execute(
+                "SELECT * FROM ref_units WHERE unit_slug=? AND civ_name=? AND age=?",
+                (uu_slug, civ_name, db_age),
             )
+            row = rc.fetchone()
+            if row:
+                cd = build_combat_dict(rc, row)
+                cu = prepare_combat_unit(cd)
+                cu["upgrade_cost_food"] = row["upgrade_cost_food"] or 0
+                cu["upgrade_cost_wood"] = row["upgrade_cost_wood"] or 0
+                cu["upgrade_cost_gold"] = row["upgrade_cost_gold"] or 0
+                units.append(
+                    {"civ_name": civ_name, "unit_slug": uu_slug, "combat_unit": cu}
+                )
 
     conn.close()
     return units

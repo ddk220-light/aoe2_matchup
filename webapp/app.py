@@ -707,28 +707,28 @@ def api_ref_unit_line(line_slug):
                 _attach_special(entry)
                 result["imperial"].append(entry)
 
-        # Unique units
-        for civ_name, (castle_uu, imperial_uu) in sub_line.get(
-            "unique_units", {}
-        ).items():
-            for uu_slug, age_key, db_age in [
-                (castle_uu, "castle", "Castle"),
-                (imperial_uu, "imperial", "Imperial"),
-            ]:
-                if not uu_slug:
-                    continue
-                rc.execute(
-                    f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND civ_name=? AND age=?",
-                    (uu_slug, civ_name, db_age),
-                )
-                row = rc.fetchone()
-                if row:
-                    entry = dict(row)
-                    entry["is_unique"] = True
-                    entry["line_slug"] = sub_slug
-                    _attach_scores(entry, age_key, sub_slug)
-                    _attach_special(entry)
-                    result[age_key].append(entry)
+        # Unique units (value may be a single (castle, imperial) tuple or a list of such tuples)
+        for civ_name, entries in sub_line.get("unique_units", {}).items():
+            entries = entries if isinstance(entries, list) else [entries]
+            for castle_uu, imperial_uu in entries:
+                for uu_slug, age_key, db_age in [
+                    (castle_uu, "castle", "Castle"),
+                    (imperial_uu, "imperial", "Imperial"),
+                ]:
+                    if not uu_slug:
+                        continue
+                    rc.execute(
+                        f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND civ_name=? AND age=?",
+                        (uu_slug, civ_name, db_age),
+                    )
+                    row = rc.fetchone()
+                    if row:
+                        entry = dict(row)
+                        entry["is_unique"] = True
+                        entry["line_slug"] = sub_slug
+                        _attach_scores(entry, age_key, sub_slug)
+                        _attach_special(entry)
+                        result[age_key].append(entry)
 
     # Exclude Elephant Archers from stable (ranged, already in archery rankings)
     if line_slug == "stable":

@@ -34,7 +34,6 @@ UNIT_LINES = {
             "Japanese": ("samurai_japanese", "elite_samurai_japanese"),
             "Teutons": ("teutonic_knight_teutons", "elite_teutonic_knight_teutons"),
             "Aztecs": ("jaguar_warrior_aztecs", "elite_jaguar_warrior_aztecs"),
-            "Incas": ("kamayuk_incas", "elite_kamayuk_incas"),
             "Italians": (None, "condottiero"),
             "Ethiopians": (
                 "shotel_warrior_ethiopians",
@@ -50,16 +49,23 @@ UNIT_LINES = {
             "Hindustanis": ("ghulam_hindustanis", "elite_ghulam_hindustanis"),
             "Armenians": ("warrior_priest_armenians", "warrior_priest_armenians"),
             "Khitans": ("liao_dao_khitans", "elite_liao_dao_khitans"),
-            "Wu": ("jian_swordsman_wu", "jian_swordsman_wu"),
             "Shu": (
                 "white_feather_guard_shu",
                 "elite_white_feather_guard_shu",
             ),
-            "Muisca": ("temple_guard_muisca", "elite_temple_guard_muisca"),
-            "Tupi": (
-                "ibirapema_warrior_tupi",
-                "elite_ibirapema_warrior_tupi",
-            ),
+            "Incas": [
+                ("kamayuk_incas", "elite_kamayuk_incas"),
+                ("champi_warrior", "elite_champi_warrior"),
+            ],
+            "Muisca": [
+                ("temple_guard_muisca", "elite_temple_guard_muisca"),
+                ("champi_warrior", "elite_champi_warrior"),
+            ],
+            "Mapuche": ("champi_warrior", "elite_champi_warrior"),
+            "Tupi": [
+                ("ibirapema_warrior_tupi", "elite_ibirapema_warrior_tupi"),
+                ("champi_warrior", "elite_champi_warrior"),
+            ],
         },
     },
     "spear": {
@@ -77,11 +83,8 @@ UNIT_LINES = {
         "unique_units": {
             "Aztecs": ("eagle_warrior", "elite_eagle"),
             "Mayans": ("eagle_warrior", "elite_eagle"),
-            "Incas": ("champi_warrior", "elite_champi_warrior"),
-            "Muisca": ("champi_warrior", "elite_champi_warrior"),
-            "Mapuche": ("champi_warrior", "elite_champi_warrior"),
-            "Tupi": ("champi_warrior", "elite_champi_warrior"),
             "Malay": ("karambit_warrior_malay", "elite_karambit_warrior_malay"),
+            "Wu": ("jian_swordsman_wu", "jian_swordsman_wu"),
         },
     },
     "archer": {

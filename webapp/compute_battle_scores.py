@@ -207,24 +207,34 @@ def calc_weighted_cost(food, wood, gold, is_imperial):
     return int(cost) if cost > 0 else 100
 
 
-def _apply_speed_weighting(all_scores, score_keys, scope="pool", line_groups=None):
-    """Multiply composite scores by movement speed, then re-normalize to 0-100.
+def _apply_speed_weighting(
+    all_scores,
+    score_keys,
+    scope="pool",
+    line_groups=None,
+    multiplier_keys=("_speed",),
+):
+    """Multiply composite scores by one or more stat multipliers, then re-normalize to 0-100.
 
     Args:
         all_scores: dict {sk: {score_key: value, "_speed": float, ...}}
-        score_keys: list of score keys to apply speed weighting to
+        score_keys: list of score keys to apply weighting to
         scope: "pool" = normalize across all units; "per_line" = normalize per line group
         line_groups: dict {line_slug: [sk, ...]} — required when scope="per_line"
+        multiplier_keys: tuple of stat keys (e.g. "_speed", "_range") to multiply
+            into each score before re-normalization. Default = ("_speed",).
     """
+
+    def _multiplier(scores):
+        m = 1.0
+        for mk in multiplier_keys:
+            m *= scores.get(mk, 1.0)
+        return m
+
     if scope == "per_line" and line_groups:
         for key in score_keys:
             for line, sks in line_groups.items():
-                # Multiply by speed
-                weighted = {}
-                for sk in sks:
-                    speed = all_scores[sk].get("_speed", 1.0)
-                    weighted[sk] = all_scores[sk][key] * speed
-                # Re-normalize 0-100
+                weighted = {sk: all_scores[sk][key] * _multiplier(all_scores[sk]) for sk in sks}
                 vals = list(weighted.values())
                 lo, hi = min(vals), max(vals)
                 span = hi - lo if hi != lo else 1
@@ -232,12 +242,7 @@ def _apply_speed_weighting(all_scores, score_keys, scope="pool", line_groups=Non
                     all_scores[sk][key] = round((weighted[sk] - lo) / span * 100, 1)
     else:
         for key in score_keys:
-            # Multiply by speed
-            weighted = {}
-            for sk, scores in all_scores.items():
-                speed = scores.get("_speed", 1.0)
-                weighted[sk] = scores[key] * speed
-            # Re-normalize 0-100
+            weighted = {sk: scores[key] * _multiplier(scores) for sk, scores in all_scores.items()}
             vals = list(weighted.values())
             lo, hi = min(vals), max(vals)
             span = hi - lo if hi != lo else 1
@@ -1006,6 +1011,7 @@ def compute_archery_role_scores(age="imperial"):
                         scores[key] = 0.0
 
             scores["_speed"] = cu["movement_speed"]
+            scores["_range"] = cu["attack_range"] or 1.0
             all_scores[sk] = scores
             sk_to_line[sk] = line_slug
 
@@ -1034,7 +1040,7 @@ def compute_archery_role_scores(age="imperial"):
             for sk in sks:
                 all_scores[sk][bk] = round((all_scores[sk][bk] - lo) / span * 100, 1)
 
-    # Compute derived scores from normalized values
+    # Compute composites from normalized benchmark values.
     for sk, scores in all_scores.items():
         scores["general_combat"] = round(
             sum(scores[k] for k in gc_keys) / len(gc_keys), 1
@@ -1042,19 +1048,34 @@ def compute_archery_role_scores(age="imperial"):
         scores["anti_archer"] = round(
             sum(scores[k] for k in aa_keys) / len(aa_keys), 1
         )
-        scores["ranged_effectiveness"] = scores["general_combat"]
 
-    # Apply speed weighting: multiply composites by speed, re-normalize per line
+    # Speed-weight the component scores (per-line, multiply by speed, re-normalize).
     _apply_speed_weighting(
         all_scores,
-        ["general_combat", "anti_archer", "ranged_effectiveness"],
+        ["general_combat", "anti_archer"],
         scope="per_line",
         line_groups=line_groups,
     )
 
-    # Clean up temp speed refs
+    # Ranged effectiveness combines both components (70% general / 30% anti-archer)
+    # over the speed-weighted values, then is further weighted by attack range
+    # (longer-range archers gain a kiting/positioning premium).
+    for sk, scores in all_scores.items():
+        scores["ranged_effectiveness"] = round(
+            0.7 * scores["general_combat"] + 0.3 * scores["anti_archer"], 1
+        )
+    _apply_speed_weighting(
+        all_scores,
+        ["ranged_effectiveness"],
+        scope="per_line",
+        line_groups=line_groups,
+        multiplier_keys=("_range",),
+    )
+
+    # Clean up temp speed/range refs
     for s in all_scores.values():
         s.pop("_speed", None)
+        s.pop("_range", None)
 
     # Compute mobility ranking scores
     # Step 1: Collect raw values from combat units

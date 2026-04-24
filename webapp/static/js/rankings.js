@@ -1141,7 +1141,7 @@ function renderTable() {
         {
             key: "ranged_effectiveness",
             label: "Score",
-            info: "Weighted aggregate: 70% General Combat + 30% Anti-Archer",
+            info: "70% General Combat + 30% Anti-Archer (each speed-weighted), then range-weighted",
         },
         {
             key: "general_combat",

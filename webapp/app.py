@@ -7,7 +7,7 @@ from functools import lru_cache
 from flask import Flask, jsonify, redirect, render_template, request
 from best_units import load_civ_power_units, get_matchup_recommendations, get_matchup_sims, CIVS_WITHOUT_TREBUCHET
 from combat_unit_loader import build_combat_dict_from_ref
-from unit_lines import UNIT_LINES, TREBUCHET_SLUGS
+from unit_lines import UNIT_LINES, TREBUCHET_SLUGS, CIV_MISSING_UNITS
 
 
 app = Flask(__name__)
@@ -673,6 +673,8 @@ def api_ref_unit_line(line_slug):
                     (slug, db_age),
                 )
                 for row in rc.fetchall():
+                    if (row["civ_name"], slug) in CIV_MISSING_UNITS:
+                        continue
                     entry = dict(row)
                     entry["is_unique"] = False
                     entry["line_slug"] = sub_slug
@@ -687,6 +689,8 @@ def api_ref_unit_line(line_slug):
                 (extra_slug, "Castle"),
             )
             for row in rc.fetchall():
+                if (row["civ_name"], extra_slug) in CIV_MISSING_UNITS:
+                    continue
                 entry = dict(row)
                 entry["is_unique"] = False
                 entry["line_slug"] = sub_slug
@@ -700,6 +704,8 @@ def api_ref_unit_line(line_slug):
                 (extra_slug, "Imperial"),
             )
             for row in rc.fetchall():
+                if (row["civ_name"], extra_slug) in CIV_MISSING_UNITS:
+                    continue
                 entry = dict(row)
                 entry["is_unique"] = False
                 entry["line_slug"] = sub_slug

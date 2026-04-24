@@ -19,7 +19,7 @@ import time
 
 from combat_unit_loader import build_combat_dict_from_ref
 from simulation import prepare_combat_unit, simulate_battle
-from unit_lines import UNIT_LINES
+from unit_lines import UNIT_LINES, CIV_MISSING_UNITS
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 CACHE_PATH = os.path.join(os.path.dirname(__file__), "battle_cache.json")
@@ -270,6 +270,8 @@ def build_line_units(line_slug, age):
             "SELECT * FROM ref_units WHERE unit_slug=? AND age=?", (std_slug, db_age)
         )
         for row in rc.fetchall():
+            if (row["civ_name"], std_slug) in CIV_MISSING_UNITS:
+                continue
             cd = build_combat_dict(rc, row)
             cu = prepare_combat_unit(cd)
             cu["upgrade_cost_food"] = row["upgrade_cost_food"] or 0
@@ -291,6 +293,8 @@ def build_line_units(line_slug, age):
                 (extra_slug, "Castle"),
             )
             for row in rc.fetchall():
+                if (row["civ_name"], extra_slug) in CIV_MISSING_UNITS:
+                    continue
                 cd = build_combat_dict(rc, row)
                 cu = prepare_combat_unit(cd)
                 cu["upgrade_cost_food"] = row["upgrade_cost_food"] or 0
@@ -310,6 +314,8 @@ def build_line_units(line_slug, age):
                 (extra_slug, "Imperial"),
             )
             for row in rc.fetchall():
+                if (row["civ_name"], extra_slug) in CIV_MISSING_UNITS:
+                    continue
                 cd = build_combat_dict(rc, row)
                 cu = prepare_combat_unit(cd)
                 cu["upgrade_cost_food"] = row["upgrade_cost_food"] or 0

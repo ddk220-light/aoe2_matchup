@@ -21,6 +21,23 @@ in their respective files for now; they should be reconciled and extracted here 
 a future task to avoid unintended behavior changes to role-scoring logic.
 """
 
+# Civ-specific unit exclusions: (civ_name, unit_slug) pairs that should be
+# filtered out of rankings and battle-score computation. The extraction
+# pipeline emits these rows regardless of tech-tree availability, so we gate
+# them declaratively here based on the authoritative Fandom tech trees.
+CIV_MISSING_UNITS = {
+    # Incas / Mapuche / Muisca / Tupi: entire Militia line disabled
+    # (|Militia=0 in Barracks Tech Tree template). Champi Warrior is their
+    # only Barracks "infantry line" unit.
+    ("Incas", "swordsmen"), ("Incas", "champion"),
+    ("Mapuche", "swordsmen"), ("Mapuche", "champion"),
+    ("Muisca", "swordsmen"), ("Muisca", "champion"),
+    ("Tupi", "swordsmen"), ("Tupi", "champion"),
+    # Muisca additionally lacks Halberdier (|Halberdier=0); Pikeman only.
+    ("Muisca", "halberdier"),
+}
+
+
 UNIT_LINES = {
     "militia": {
         "name": "Militia Line",

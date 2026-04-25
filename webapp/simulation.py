@@ -117,6 +117,7 @@ def prepare_combat_unit(row):
         "splash_radius": row["splash_radius"] or 0,
         "projectile_speed": row["projectile_speed"] or 0,
         "accuracy": row.get("accuracy", 100) if hasattr(row, "get") else 100,
+        "base_accuracy": (row.get("base_accuracy", 100) if hasattr(row, "get") else 100) or 100,
         "ignores_pierce_armor": row["ignores_pierce_armor"] or 0,
         "ignores_melee_armor": row["ignores_melee_armor"] or 0,
         "trample_percent": row["trample_percent"] or 0,
@@ -441,10 +442,17 @@ def _init_battle_state(unit1, unit2, resources, fixed_count, cost1_override, cos
     s.speed1 = unit1["movement_speed"]
     s.speed2 = unit2["movement_speed"]
     # Accuracy: primary projectiles always hit (distance reduces miss chance to ~0).
-    # Only secondary/extra projectiles use accuracy (they scatter).
-    s.accuracy1 = 1.0  # primary projectile always hits
-    s.accuracy2 = 1.0  # primary projectile always hits
-    s.EXTRA_PROJ_ACCURACY = 0.5  # secondary projectiles scatter significantly
+    # Primary projectile uses the unit's `accuracy` (post-Thumb-Ring final
+    # value, e.g. 100% for arbalester / Chu Ko Nu first arrow with TR).
+    # Extra projectiles use `base_accuracy` (Thumb Ring is a primary-only
+    # bonus per Fandom, e.g. CKN extras stay at 85% even with TR).
+    s.accuracy1 = (unit1.get("accuracy", 100) or 100) / 100.0
+    s.accuracy2 = (unit2.get("accuracy", 100) or 100) / 100.0
+    s.extra_accuracy1 = (unit1.get("base_accuracy", 100) or 100) / 100.0
+    s.extra_accuracy2 = (unit2.get("base_accuracy", 100) or 100) / 100.0
+    # Legacy default for code paths that don't yet read per-side extra
+    # accuracy (e.g. simulate_mixed_battle templates).
+    s.EXTRA_PROJ_ACCURACY = 0.85
 
     # Attack timing
     aspeed1 = unit1["attack_speed"] or 0.5
@@ -931,6 +939,7 @@ def _run_opening_volley(s):
     is_ranged1, is_ranged2 = s.is_ranged1, s.is_ranged2
     speed1, speed2 = s.speed1, s.speed2
     accuracy1, accuracy2 = s.accuracy1, s.accuracy2
+    extra_accuracy1, extra_accuracy2 = s.extra_accuracy1, s.extra_accuracy2
     EXTRA_PROJ_ACCURACY = s.EXTRA_PROJ_ACCURACY
     reload1, reload2 = s.reload1, s.reload2
     delay1, delay2 = s.delay1, s.delay2
@@ -1083,6 +1092,7 @@ def _run_opening_volley(s):
         a_miss_dmg_pct=0,
         a_scatter=0,
         a_pass_through=0,
+        a_extra_accuracy=0.85,
     ):
         """Apply num_shots opening shots from attacker_team using focus fire."""
         if num_shots <= 0:
@@ -1095,7 +1105,7 @@ def _run_opening_volley(s):
             # Use focus-fire targeting: concentrate fire to get kills
             targets = _assign_targets_focus(
                 a_alive, t_alive, target_hp_arr, damage, 1 + a_extra_proj,
-                extra_dmg=extra_proj_damage, extra_accuracy=EXTRA_PROJ_ACCURACY,
+                extra_dmg=extra_proj_damage, extra_accuracy=a_extra_accuracy,
             )
             for a_idx in a_alive:
                 t_alive_now = [i for i in range(target_count) if target_hp_arr[i] > 0]
@@ -1124,9 +1134,11 @@ def _run_opening_volley(s):
                 # Extra projectiles: pass-through bolts always hit; scatter
                 # multi-barrel projectiles (Organ Gun) also always land on
                 # SOME target; ordinary secondary projectiles (Chu Ko Nu,
-                # Bolt Magazine) scatter at ~50% accuracy.
+                # Bolt Magazine, Hul'che extras) roll the unit's BASE accuracy
+                # — Thumb Ring is a primary-only bonus per Fandom, so extras
+                # don't get the +15% lift that a_accuracy carries.
                 for _ in range(num_proj - 1):
-                    if a_pass_through > 0 or a_scatter or random.random() < EXTRA_PROJ_ACCURACY:
+                    if a_pass_through > 0 or a_scatter or random.random() < a_extra_accuracy:
                         if a_scatter:
                             t_alive_scat = [i for i in range(target_count) if target_hp_arr[i] > 0]
                             if t_alive_scat:
@@ -1304,6 +1316,7 @@ def _run_opening_volley(s):
             a_miss_dmg_pct=miss_dmg_pct1,
             a_scatter=extra_proj_scatter1,
             a_pass_through=pass_through1,
+            a_extra_accuracy=extra_accuracy1,
         )
         # Set cooldowns to reflect time elapsed since last opening shot
         if is_ranged1 and closing_time1 > 0:
@@ -1327,6 +1340,7 @@ def _run_opening_volley(s):
             a_miss_dmg_pct=miss_dmg_pct2,
             a_scatter=extra_proj_scatter2,
             a_pass_through=pass_through2,
+            a_extra_accuracy=extra_accuracy2,
         )
         if is_ranged2 and closing_time2 > 0:
             last_shot_t = delay2 + (opening2 - 1) * reload2
@@ -1806,6 +1820,7 @@ def simulate_battle(
     is_ranged1, is_ranged2 = s.is_ranged1, s.is_ranged2
     speed1, speed2 = s.speed1, s.speed2
     accuracy1, accuracy2 = s.accuracy1, s.accuracy2
+    extra_accuracy1, extra_accuracy2 = s.extra_accuracy1, s.extra_accuracy2
     EXTRA_PROJ_ACCURACY = s.EXTRA_PROJ_ACCURACY
     reload1, reload2 = s.reload1, s.reload2
     delay1, delay2 = s.delay1, s.delay2
@@ -1922,7 +1937,7 @@ def simulate_battle(
         if is_ranged1:
             targets1 = _assign_targets_focus(
                 alive1, alive2, hp2, dmg1, 1 + extra_proj1,
-                extra_dmg=extra_proj_dmg1, extra_accuracy=EXTRA_PROJ_ACCURACY,
+                extra_dmg=extra_proj_dmg1, extra_accuracy=extra_accuracy1,
             )
         elif is_ranged2:
             targets1 = _assign_targets_melee_capped(alive1, alive2, tick)
@@ -1932,7 +1947,7 @@ def simulate_battle(
         if is_ranged2:
             targets2 = _assign_targets_focus(
                 alive2, alive1, hp1, dmg2, 1 + extra_proj2,
-                extra_dmg=extra_proj_dmg2, extra_accuracy=EXTRA_PROJ_ACCURACY,
+                extra_dmg=extra_proj_dmg2, extra_accuracy=extra_accuracy2,
             )
         elif is_ranged1:
             targets2 = _assign_targets_melee_capped(alive2, alive1, tick)
@@ -1970,6 +1985,7 @@ def simulate_battle(
                 t_is_ranged, t_is_siege = is_ranged1, is_siege1
                 t_speed = speed1
                 t_accuracy = accuracy1
+                t_extra_accuracy = extra_accuracy1
                 t_miss_dmg_pct = miss_dmg_pct1
                 t_reload, t_delay = reload1, delay1
                 t_extra_proj, t_first_burst = extra_proj1, first_burst1
@@ -2010,6 +2026,7 @@ def simulate_battle(
                 t_is_ranged, t_is_siege = is_ranged2, is_siege2
                 t_speed = speed2
                 t_accuracy = accuracy2
+                t_extra_accuracy = extra_accuracy2
                 t_miss_dmg_pct = miss_dmg_pct2
                 t_reload, t_delay = reload2, delay2
                 t_extra_proj, t_first_burst = extra_proj2, first_burst2
@@ -2197,10 +2214,12 @@ def simulate_battle(
                         extra_base = t_extra_proj_dmg
                         extra_hit = extra_base + int(my_bonus_atk[i])
                         # Scatter multi-barrel extras (Organ Gun) always land
-                        # on SOME target; pass-through extras pierce. Other
-                        # secondary projectiles roll EXTRA_PROJ_ACCURACY.
+                        # on SOME target; pass-through extras pierce. Ordinary
+                        # secondary projectiles (Chu Ko Nu, Bolt Magazine,
+                        # Hul'che) roll the unit's BASE accuracy — Thumb Ring
+                        # is a primary-only bonus per Fandom.
                         for _ in range(num_extra):
-                            if t_pass_through > 0 or t_scatter or random.random() < EXTRA_PROJ_ACCURACY:
+                            if t_pass_through > 0 or t_scatter or random.random() < t_extra_accuracy:
                                 if t_scatter and enemy_alive:
                                     scat_target = random.choice(enemy_alive)
                                     pending_damage.append(

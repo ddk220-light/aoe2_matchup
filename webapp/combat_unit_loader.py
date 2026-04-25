@@ -39,6 +39,11 @@ def build_combat_dict_from_ref(row):
         "attacks_json": row["final_attacks_json"],
         "armors_json": row["final_armors_json"],
         "accuracy": row["final_accuracy"] or 100,
+        # Base accuracy (pre-Thumb Ring) is the per-arrow rate for SECONDARY
+        # projectiles — Thumb Ring boosts only the primary arrow. Used by
+        # simulation.py to roll extra-projectile hits at the unit's natural
+        # accuracy (e.g. 85% for Chu Ko Nu) rather than a flat 50% heuristic.
+        "base_accuracy": row["base_accuracy"] or 100,
         "min_attack_range": row["min_range"] or 0,
         "projectile_speed": row["projectile_speed"] or 0,
         "is_siege_projectile": row["is_siege_projectile"] or 0,

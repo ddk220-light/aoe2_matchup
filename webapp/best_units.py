@@ -1204,7 +1204,7 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
     }
 
 
-def get_matchup_sims(civ_left, civ_right, age="imperial"):
+def get_matchup_sims(civ_left, civ_right, age="imperial", sim_func=None):
     """Run cross-civ simulations for all power units and return win/highlight data.
 
     For every unit on the left side, determines which right-side units it beats
@@ -1272,6 +1272,11 @@ def get_matchup_sims(civ_left, civ_right, age="imperial"):
     preload_conn.close()
 
     # --- Battle result helper --------------------------------------------------
+    # sim_func defaults to simulate_battle (the abstract tick-based fast sim).
+    # Pass simulate_real_battle from simulation_real to use the position-aware
+    # one instead.  Both share the same call signature.
+    _sim = sim_func if sim_func is not None else simulate_battle
+
     def _battle_result(cu_a, cu_b, cost_a, cost_b):
         """Return (pop_win, eco_win) booleans from unit A's perspective.
 
@@ -1282,13 +1287,13 @@ def get_matchup_sims(civ_left, civ_right, age="imperial"):
             return False, False
 
         # 30v30 fixed count (pop efficiency)
-        w1, _, _, hp1_1, _ = simulate_battle(
+        w1, _, _, hp1_1, _ = _sim(
             cu_a, cu_b, 0, fixed_count=30, return_hp=True
         )
         pop_win = (w1 == 1 and hp1_1 >= 0.10)
 
         # 3k resource battle (eco efficiency)
-        w2, _, _, hp1_2, _ = simulate_battle(
+        w2, _, _, hp1_2, _ = _sim(
             cu_a, cu_b, 3000, cost1_override=cost_a, cost2_override=cost_b,
             return_hp=True
         )

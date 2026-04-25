@@ -190,6 +190,11 @@ def prepare_combat_unit(row):
         # Dismount on death (Konnik)
         "transform": _parse_transform(row),
         "dismount": _parse_dismount(row),
+        # Outline size — passed through for position-aware simulation_real.py.
+        # The fast (tick-based) sim does not use it.
+        "outline_size": row.get("outline_size", 0.2) if hasattr(row, "get") else (
+            row["outline_size"] if "outline_size" in (row.keys() if hasattr(row, "keys") else row) else 0.2
+        ),
     }
 
 

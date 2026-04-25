@@ -120,4 +120,8 @@ def build_combat_dict_from_ref(row):
         "transform_movement_speed": row["transform_movement_speed"],
         "transform_attacks_json": row["transform_attacks_json"],
         "transform_armors_json": row["transform_armors_json"],
+        # Outline size — used by the position-aware sim (simulation_real.py)
+        # to compute unit radius for collision/range calculations.  Not used
+        # by the abstract tick-based sim in simulation.py.
+        "outline_size": row["outline_size_x"] or 0.2,
     }

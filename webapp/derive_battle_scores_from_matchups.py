@@ -100,6 +100,26 @@ LINE_COMPOSITE = {
     "elephant":       "stable_effectiveness",
 }
 
+# Lines grouped into pools for normalization.  All categorical and composite
+# scores are normalized 0..100 across the entire pool, not within each line
+# individually -- so a Knight competes with Camels, Skirmishers compete with
+# Scorpions, etc.  Mirrors compute_battle_scores `scope="pool"` semantics.
+POOL_OF_LINE = {
+    "militia":        "infantry",
+    "spear":          "infantry",
+    "shock_infantry": "infantry",
+    "skirmisher":     "ranged",
+    "archer":         "ranged",
+    "cav_archer":     "ranged",
+    "gunpowder":      "ranged",
+    "scorpion":       "ranged",
+    "light_cav":      "stable",
+    "knight":         "stable",
+    "camel":          "stable",
+    "steppe_lancer":  "stable",
+    "elephant":       "stable",
+}
+
 # Lines that get speed/range weighting on their composite.
 SPEED_WEIGHTED_COMPOSITES = {
     "ranged_effectiveness": ("_speed", "_range"),
@@ -239,66 +259,75 @@ def _normalize_pool(values, key):
 def compute_scores(counts, ref_units_by_civ_slug, slug_to_line, age="Imperial"):
     """Convert recommendation counts into 0-100 ranking scores per (civ, unit).
 
+    Normalization is across each *pool* (infantry / ranged / stable) so
+    units within the same broad category compete on one scale, not just
+    against same-line peers.
+
     Returns {(line_slug, civ_name, unit_slug): {score_type: value, ...}}.
     """
-    # Group units by line_slug for pool normalization.
-    by_line = defaultdict(dict)  # {line_slug: {(civ, slug): {raw_metrics, _speed, _range}}}
+    # Group units by POOL (infantry/ranged/stable), keyed by (line, civ, slug).
+    by_pool = defaultdict(dict)  # {pool: {(line, civ, slug): {raw, _speed, _range}}}
 
     for (civ, slug), c in counts.items():
         line_slug = slug_to_line.get(slug)
         if line_slug is None:
-            # Unmapped unit (probably a unique unit our slug map missed)
             continue
-        # Lookup speed/range from ref_units for later weighting.
+        pool = POOL_OF_LINE.get(line_slug)
+        if pool is None:
+            continue  # not in a scored pool (siege, naval, shock_only, etc.)
         ref = ref_units_by_civ_slug.get((civ, slug))
         if ref is None:
             continue
-        by_line[line_slug][(civ, slug)] = {
+        by_pool[pool][(line_slug, civ, slug)] = {
             "_n_top": c["n_top"],
-            "_n_perfect": c["n_perfect_top"],
-            "_n_aa": c["n_anti_archer"],
-            "_n_ac": c["n_anti_cav"],
-            "_n_at": c["n_anti_trash"],
+            "_n_aa":  c["n_anti_archer"],
+            "_n_ac":  c["n_anti_cav"],
+            "_n_at":  c["n_anti_trash"],
             "_speed": ref["final_speed"] or 1.0,
             "_range": (ref["final_range"] or 0) + 1.0,  # +1 so melee != 0
         }
 
-    # Pool-normalize raw counts into 0-100 scores within each line × age.
     out = defaultdict(dict)
-    for line_slug, units in by_line.items():
+    for pool, units in by_pool.items():
         if not units:
             continue
-        # Convert the raw counts into normalized scores.
+        # Categorical scores: pool-normalize raw counts into 0-100.
         for metric, target_key in (
-            ("_n_top",     "general_combat"),
-            ("_n_aa",      "anti_archer"),
-            ("_n_ac",      "anti_cav"),
-            ("_n_at",      "anti_trash"),
+            ("_n_top", "general_combat"),
+            ("_n_aa",  "anti_archer"),
+            ("_n_ac",  "anti_cav"),
+            ("_n_at",  "anti_trash"),
         ):
             tmp = {k: {"v": v[metric]} for k, v in units.items()}
             _normalize_pool(tmp, "v")
             for k, v in tmp.items():
-                out[(line_slug, k[0], k[1])][target_key] = v["v"]
+                line_slug, civ, slug = k
+                out[(line_slug, civ, slug)][target_key] = v["v"]
 
-        # Each line gets ONE composite (mirroring LINE_COMPOSITE).
-        comp_name = LINE_COMPOSITE.get(line_slug)
-        if comp_name:
-            weights = COMPOSITE_WEIGHTS[comp_name]
-            tmp = {}
-            for ck, _ in units.items():
-                row = out[(line_slug, ck[0], ck[1])]
-                val = sum(weights[c] * row.get(c, 0) for c in weights)
-                tmp[ck] = {"v": val}
-            mult_keys = SPEED_WEIGHTED_COMPOSITES.get(comp_name)
-            if mult_keys:
-                for k, v in tmp.items():
-                    mult = 1.0
-                    for mk in mult_keys:
-                        mult *= units[k][mk]
-                    v["v"] *= mult
-            _normalize_pool(tmp, "v")
+        # Composite for the pool (one composite per pool).
+        # All units in the pool share the same composite type.
+        sample_line = next(iter(units))[0]
+        comp_name = LINE_COMPOSITE.get(sample_line)
+        if not comp_name:
+            continue
+        weights = COMPOSITE_WEIGHTS[comp_name]
+        tmp = {}
+        for k in units:
+            line_slug, civ, slug = k
+            row = out[(line_slug, civ, slug)]
+            val = sum(weights[c] * row.get(c, 0) for c in weights)
+            tmp[k] = {"v": val}
+        mult_keys = SPEED_WEIGHTED_COMPOSITES.get(comp_name)
+        if mult_keys:
             for k, v in tmp.items():
-                out[(line_slug, k[0], k[1])][comp_name] = v["v"]
+                mult = 1.0
+                for mk in mult_keys:
+                    mult *= units[k][mk]
+                v["v"] *= mult
+        _normalize_pool(tmp, "v")
+        for k, v in tmp.items():
+            line_slug, civ, slug = k
+            out[(line_slug, civ, slug)][comp_name] = v["v"]
 
     return out
 

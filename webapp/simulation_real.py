@@ -240,6 +240,40 @@ class Projectile:
 
 
 class BattleUnit:
+    __slots__ = (
+        "id", "team", "stats",
+        "cost_food", "cost_wood", "cost_gold",
+        "max_hp", "current_hp", "attack",
+        "raw_attack_range", "attack_range",
+        "attack_speed", "reload_time", "attack_delay",
+        "move_speed",
+        "melee_armor", "pierce_armor", "attacks", "armors",
+        "accuracy", "base_accuracy",
+        "min_attack_range", "is_siege_projectile", "splash_radius",
+        "projectile_speed", "ignores_pierce_armor", "ignores_melee_armor",
+        "trample_percent", "trample_radius", "trample_flat_damage",
+        "bonus_damage_reduction",
+        "extra_projectiles", "extra_proj_attacks",
+        "splash_on_hit_radius", "splash_on_hit_fraction",
+        "dodge_shield_max", "dodge_shield_recharge",
+        "bleed_dps", "bleed_duration",
+        "block_first_melee", "attack_bonus_per_kill",
+        "first_attack_extra_projectiles",
+        "hp_transform_threshold", "hp_regen",
+        "pass_through_percent", "pass_through_count",
+        "charge_projectile_count", "charge_projectile_speed",
+        "charge_attack_range", "charge_ignores_armor", "charge_projectile_attacks",
+        "shield_charges", "shield_recharge_timer",
+        "has_blocked_first_melee", "kill_bonus_attack",
+        "has_used_first_attack", "is_transformed",
+        "bleed_effect", "has_used_charge",
+        "x", "y", "radius",
+        "target", "state", "attack_cooldown",
+        "was_moving", "committed_attack",
+        "vx", "vy",
+        "stuck_timer", "last_dist_to_target", "blocked_targets",
+    )
+
     def __init__(self, uid, team, stats):
         self.id = uid
         self.team = team
@@ -437,7 +471,9 @@ class BattleUnit:
         if self.state == "dead":
             return
 
-        self.attack_cooldown = max(0.0, self.attack_cooldown - dt)
+        # Alias hot attributes to locals for the duration of this tick
+        cooldown = max(0.0, self.attack_cooldown - dt)
+        self.attack_cooldown = cooldown
 
         if self.hp_regen > 0 and 0 < self.current_hp < self.max_hp:
             self.current_hp = min(self.max_hp, self.current_hp + (self.hp_regen / 60.0) * dt)
@@ -481,22 +517,23 @@ class BattleUnit:
             self.state = "idle"
             return
 
+        was_moving = self.was_moving
         if self.is_ranged():
             should_kite = not self.target.is_ranged()
             if self.too_close():
                 self.state = "kiting"
                 self.move_away_from_target(dt, grid)
                 self.was_moving = True
-            elif not self.was_moving and self.attack_cooldown <= 0:
+            elif not was_moving and cooldown <= 0:
                 self.state = "attacking"
                 self.perform_attack(sim)
                 self.was_moving = True
-            elif not self.was_moving:
+            elif not was_moving:
                 self.state = "attacking"
-            elif self.attack_cooldown > 0 and should_kite:
+            elif cooldown > 0 and should_kite:
                 self.state = "kiting"
                 self.move_away_from_target(dt, grid)
-            elif self.attack_cooldown > 0:
+            elif cooldown > 0:
                 self.state = "attacking"
             elif self.in_range():
                 self.attack_cooldown = self.attack_delay
@@ -624,8 +661,8 @@ class BattleUnit:
                         continue
                     dx = enemy.x - impact_x
                     dy = enemy.y - impact_y
-                    d = math.hypot(dx, dy)
-                    if d <= attacker.splash_on_hit_radius + enemy.radius:
+                    _r = attacker.splash_on_hit_radius + enemy.radius
+                    if dx * dx + dy * dy <= _r * _r:
                         s_dmg = max(1, math.floor(damage * attacker.splash_on_hit_fraction))
                         enemy.take_damage(s_dmg, attacker)
 
@@ -710,22 +747,23 @@ class BattleUnit:
                     continue
                 dx = enemy.x - target.x
                 dy = enemy.y - target.y
-                if math.hypot(dx, dy) <= self.splash_on_hit_radius + enemy.radius:
+                _r = self.splash_on_hit_radius + enemy.radius
+                if dx * dx + dy * dy <= _r * _r:
                     s_dmg = max(1, math.floor(damage * self.splash_on_hit_fraction))
                     enemy.take_damage(s_dmg, self)
 
         if self.pass_through_percent > 0:
             pt_dmg = max(1, math.floor(damage * self.pass_through_percent))
             enemies = sim.team2 if self.team == 1 else sim.team1
-            best, best_dist = None, float("inf")
+            best, best_dist_sq = None, float("inf")
             for enemy in enemies:
                 if enemy is target or enemy.state == "dead":
                     continue
                 dx = enemy.x - target.x
                 dy = enemy.y - target.y
-                d = math.hypot(dx, dy)
-                if d < best_dist:
-                    best_dist, best = d, enemy
+                d_sq = dx * dx + dy * dy
+                if d_sq < best_dist_sq:
+                    best_dist_sq, best = d_sq, enemy
             if best:
                 best.take_damage(pt_dmg, self)
 
@@ -876,6 +914,7 @@ class BattleSimulation:
         self.winner = None  # 1, 2, or 0 (draw)
         self.end_reason = None  # set when run() exits
         self.grid = SpatialGrid()
+        self.alive = []  # maintained across ticks; populated on first step
 
     def setup_team(self, team_num, stats, count):
         team = []
@@ -928,11 +967,18 @@ class BattleSimulation:
 
     def step(self, dt):
         self.battle_time += dt
-        all_units = self.team1 + self.team2
+
+        # Maintain self.alive: on first step populate from both teams;
+        # on subsequent steps prune units that died last tick.
+        if not self.alive:
+            self.alive = [u for u in self.team1 + self.team2 if u.state != "dead"]
+        else:
+            self.alive = [u for u in self.alive if u.state != "dead"]
+        alive = self.alive
 
         # Rebuild spatial grid once per tick before unit updates (avoidance
         # queries the grid).
-        self.grid.rebuild(all_units)
+        self.grid.rebuild(alive)
 
         for u in self.team1:
             u.update(dt, self.grid, self.team2, self)
@@ -943,7 +989,9 @@ class BattleSimulation:
         # its 3x3 cell neighborhood — same relevant pairs as O(N²) after
         # culling, just discovered faster.  We dedupe by id ordering (process
         # the pair only when a's id < b's id) to avoid a per-tick set.
-        alive = [u for u in all_units if u.state != "dead"]
+        # Prune any units that died during this tick's update pass.
+        self.alive = [u for u in alive if u.state != "dead"]
+        alive = self.alive
         sqrt = math.sqrt
         EPS = 0.01 / 30.0
         EPS_NUDGE = 2.0 / 30.0

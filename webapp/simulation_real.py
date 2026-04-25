@@ -28,6 +28,11 @@ import math
 import random
 import time as _time
 
+try:
+    from webapp.battle_outcome import BattleOutcome
+except ImportError:
+    from battle_outcome import BattleOutcome
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -239,6 +244,10 @@ class BattleUnit:
         self.id = uid
         self.team = team
         self.stats = stats
+
+        self.cost_food = float(stats.get("cost_food") or 0)
+        self.cost_wood = float(stats.get("cost_wood") or 0)
+        self.cost_gold = float(stats.get("cost_gold") or 0)
 
         self.max_hp = float(stats["hp"])
         self.current_hp = float(stats["hp"])
@@ -865,6 +874,7 @@ class BattleSimulation:
         self.projectiles = []
         self.battle_time = 0.0
         self.winner = None  # 1, 2, or 0 (draw)
+        self.end_reason = None  # set when run() exits
         self.grid = SpatialGrid()
 
     def setup_team(self, team_num, stats, count):
@@ -906,6 +916,15 @@ class BattleSimulation:
     def total_max_hp(self, team_num):
         team = self.team1 if team_num == 1 else self.team2
         return sum(u.max_hp for u in team)
+
+    def total_resources_lost(self, team_num):
+        team = self.team1 if team_num == 1 else self.team2
+        # cost_food/wood/gold attached during prepare_combat_unit; default 0.
+        total = 0
+        for u in team:
+            if u.state == "dead":
+                total += int(u.cost_food + u.cost_wood + u.cost_gold)
+        return total
 
     def step(self, dt):
         self.battle_time += dt
@@ -973,10 +992,13 @@ class BattleSimulation:
         a2 = self.alive_count(2)
         if a1 == 0 and a2 > 0:
             self.winner = 2
+            self.end_reason = "eliminated"
         elif a2 == 0 and a1 > 0:
             self.winner = 1
+            self.end_reason = "eliminated"
         elif a1 == 0 and a2 == 0:
             self.winner = 0
+            self.end_reason = "eliminated"
 
     def run(self, max_seconds=MAX_BATTLE_SECONDS,
             max_wallclock=DEFAULT_MAX_WALLCLOCK_SECONDS,
@@ -1012,6 +1034,7 @@ class BattleSimulation:
                 hp2_pct = self.total_hp(2) / max(1.0, self.total_max_hp(2))
                 if abs(hp1_pct - hp2_pct) >= decisive_delta:
                     self.winner = 1 if hp1_pct > hp2_pct else 2
+                    self.end_reason = "decisive_lead"
                     return tick + 1
                 next_decisive_tick += decisive_step
 
@@ -1020,8 +1043,7 @@ class BattleSimulation:
                 if _time.perf_counter() - wall_start >= max_wallclock:
                     break
 
-        # Game-time cap (60s) reached: declare winner by raw HP diff (any
-        # positive diff = win; only an exact tie is a draw).
+        # Game-time cap (60s) or wall-clock backstop reached
         hp1_pct = self.total_hp(1) / max(1.0, self.total_max_hp(1))
         hp2_pct = self.total_hp(2) / max(1.0, self.total_max_hp(2))
         if hp1_pct > hp2_pct:
@@ -1030,6 +1052,7 @@ class BattleSimulation:
             self.winner = 2
         else:
             self.winner = 0
+        self.end_reason = "time_cap"
         return tick + 1
 
 
@@ -1055,16 +1078,18 @@ def simulate_real_battle(
     fixed_count=None,
     cost1_override=None,
     cost2_override=None,
-    return_hp=False,
-    return_ticks=False,
+    return_hp=False,             # legacy param, ignored by default new return
+    return_ticks=False,          # legacy param, ignored by default new return
     max_seconds=MAX_BATTLE_SECONDS,
     max_wallclock=DEFAULT_MAX_WALLCLOCK_SECONDS,
     seed=None,
+    _legacy_tuple=False,         # set True for old tuple return shape
 ):
-    """Position-aware battle simulation.
+    """Position-aware battle simulation. Returns BattleOutcome.
 
-    Args/return shape match simulate_battle() in simulation.py for drop-in use.
-    max_wallclock caps real time per sim; on hit, winner is decided by HP%.
+    For backwards compatibility, callers that still want the old (winner,
+    remaining1, remaining2, [hp1, hp2, [ticks]]) tuple shape can pass
+    `_legacy_tuple=True` along with `return_hp` / `return_ticks`.
     """
     if seed is not None:
         random.seed(seed)
@@ -1083,11 +1108,26 @@ def simulate_real_battle(
     hp1_pct = sim.total_hp(1) / max(1.0, sim.total_max_hp(1))
     hp2_pct = sim.total_hp(2) / max(1.0, sim.total_max_hp(2))
 
-    if return_ticks:
-        return winner, remaining1, remaining2, hp1_pct, hp2_pct, elapsed_ticks
-    if return_hp:
-        return winner, remaining1, remaining2, hp1_pct, hp2_pct
-    return winner, remaining1, remaining2
+    if _legacy_tuple:
+        if return_ticks:
+            return winner, remaining1, remaining2, hp1_pct, hp2_pct, elapsed_ticks
+        if return_hp:
+            return winner, remaining1, remaining2, hp1_pct, hp2_pct
+        return winner, remaining1, remaining2
+
+    return BattleOutcome(
+        winner=winner,
+        end_reason=sim.end_reason or "time_cap",
+        game_time_s=round(elapsed_ticks * DT, 3),
+        team1_hp_pct=round(hp1_pct, 4),
+        team2_hp_pct=round(hp2_pct, 4),
+        team1_survivors=remaining1,
+        team2_survivors=remaining2,
+        team1_resources_lost=sim.total_resources_lost(1),
+        team2_resources_lost=sim.total_resources_lost(2),
+        team1_start_count=count1,
+        team2_start_count=count2,
+    )
 
 
 # Convenience: build a deterministic seed from civ/slug pair so the same

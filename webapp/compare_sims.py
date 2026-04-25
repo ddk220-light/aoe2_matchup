@@ -82,6 +82,7 @@ def _battle_pair(cu_a, cu_b, scenario):
         rw, _, _, rhp1, rhp2 = simulate_real_battle(
             cu_a, cu_b, 0,
             seed=deterministic_seed(cu_a.get("slug"), cu_b.get("slug"), "pop"),
+            _legacy_tuple=True,
             **kwargs,
         )
         rt = time.perf_counter() - t0
@@ -94,6 +95,7 @@ def _battle_pair(cu_a, cu_b, scenario):
         rw, _, _, rhp1, rhp2 = simulate_real_battle(
             cu_a, cu_b, 3000,
             seed=deterministic_seed(cu_a.get("slug"), cu_b.get("slug"), "eco"),
+            _legacy_tuple=True,
             **kwargs,
         )
         rt = time.perf_counter() - t0

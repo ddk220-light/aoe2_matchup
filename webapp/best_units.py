@@ -898,6 +898,7 @@ def load_civ_power_units():
 ###############################################################################
 
 from simulation import prepare_combat_unit, simulate_battle
+from simulation_real import simulate_real_battle
 
 
 def _calc_weighted_cost(food, wood, gold):
@@ -1287,16 +1288,21 @@ def get_matchup_sims(civ_left, civ_right, age="imperial", sim_func=None):
             return False, False
 
         # 30v30 fixed count (pop efficiency)
-        w1, _, _, hp1_1, _ = _sim(
-            cu_a, cu_b, 0, fixed_count=30, return_hp=True
-        )
+        if _sim is simulate_real_battle:
+            out1 = _sim(cu_a, cu_b, 0, fixed_count=30, return_hp=True, _legacy_tuple=True)
+        else:
+            out1 = _sim(cu_a, cu_b, 0, fixed_count=30, return_hp=True)
+        w1, _, _, hp1_1, _ = out1
         pop_win = (w1 == 1 and hp1_1 >= 0.10)
 
         # 3k resource battle (eco efficiency)
-        w2, _, _, hp1_2, _ = _sim(
-            cu_a, cu_b, 3000, cost1_override=cost_a, cost2_override=cost_b,
-            return_hp=True
-        )
+        if _sim is simulate_real_battle:
+            out2 = _sim(cu_a, cu_b, 3000, cost1_override=cost_a, cost2_override=cost_b,
+                        return_hp=True, _legacy_tuple=True)
+        else:
+            out2 = _sim(cu_a, cu_b, 3000, cost1_override=cost_a, cost2_override=cost_b,
+                        return_hp=True)
+        w2, _, _, hp1_2, _ = out2
         eco_win = (w2 == 1 and hp1_2 >= 0.10)
 
         return pop_win, eco_win

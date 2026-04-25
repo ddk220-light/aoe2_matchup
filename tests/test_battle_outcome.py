@@ -1,4 +1,35 @@
+import os
+import sqlite3
+
+import pytest
+
 from webapp.battle_outcome import BattleOutcome, signed_score, average_outcomes
+from webapp.combat_unit_loader import build_combat_dict_from_ref
+from webapp.simulation import prepare_combat_unit
+from webapp.simulation_real import simulate_real_battle
+
+
+REF_DB = os.path.join(os.path.dirname(__file__), "..", "webapp", "aoe2_reference.db")
+
+
+def _load(civ, slug, age="Imperial"):
+    conn = sqlite3.connect(REF_DB)
+    conn.row_factory = sqlite3.Row
+    row = conn.execute(
+        "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=? AND age=?",
+        (civ, slug, age),
+    ).fetchone()
+    conn.close()
+    if row is None:
+        pytest.skip(f"{civ}/{slug}/{age} not in ref DB")
+    cd = build_combat_dict_from_ref(row)
+    cu = prepare_combat_unit(cd)
+    cu["cost_food"] = cd["cost_food"]
+    cu["cost_wood"] = cd["cost_wood"]
+    cu["cost_gold"] = cd["cost_gold"]
+    cu["outline_size"] = cd.get("outline_size", 0.2)
+    cu["cost"] = cd["cost_food"] + cd["cost_wood"] + cd["cost_gold"]
+    return cu
 
 
 def _outcome(**overrides):
@@ -59,3 +90,29 @@ def test_average_outcomes_tie_picks_higher_hp_side():
     b = _outcome(winner=2, team1_hp_pct=0.0, team2_hp_pct=0.5)
     avg = average_outcomes([a, b])
     assert avg.winner == 2  # avg t2_hp_pct (0.25) > avg t1_hp_pct (0.20)
+
+
+def test_simulate_real_battle_returns_battle_outcome():
+    champ = _load("Vikings", "champion")
+    halb = _load("Britons", "halberdier")
+    out = simulate_real_battle(champ, halb, resources=3000, fixed_count=30, seed=0)
+    assert isinstance(out, BattleOutcome)
+    assert out.winner in (1, 2, 0)
+    assert out.end_reason in ("eliminated", "decisive_lead", "time_cap")
+    assert 0.0 <= out.team1_hp_pct <= 1.0
+    assert 0.0 <= out.team2_hp_pct <= 1.0
+    assert out.team1_start_count == 30
+    assert out.team2_start_count == 30
+    assert out.team1_survivors <= 30
+    assert out.game_time_s > 0
+
+
+def test_simulate_real_battle_legacy_tuple_via_kwarg():
+    champ = _load("Vikings", "champion")
+    halb = _load("Britons", "halberdier")
+    legacy = simulate_real_battle(
+        champ, halb, resources=3000, fixed_count=30, seed=0,
+        return_hp=True, _legacy_tuple=True,
+    )
+    assert isinstance(legacy, tuple)
+    assert len(legacy) == 5  # winner, r1, r2, hp1, hp2

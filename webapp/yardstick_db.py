@@ -2,8 +2,14 @@
 
 One row per (civ, my_unit_slug, yardstick_slug, scale).  Stores the averaged
 BattleOutcome plus runs_count and score_stddev.
+
+dedup_group is a stable 16-char hex string (MD5 prefix of the group key tuple)
+that tags every row sharing the same sim result — i.e., all (civ, unit) pairs
+whose unit fingerprint was identical for a given (yardstick, scale).  Query:
+    SELECT * FROM yardstick_battles WHERE dedup_group = ?
 """
 
+import hashlib
 import os
 import sqlite3
 
@@ -33,10 +39,17 @@ CREATE TABLE IF NOT EXISTS yardstick_battles (
     team2_start_count INTEGER NOT NULL,
     runs_count INTEGER NOT NULL,
     score_stddev REAL,
+    dedup_group TEXT,
     UNIQUE(civ, my_unit_slug, yardstick_slug, scale)
 );
 CREATE INDEX IF NOT EXISTS idx_civ_unit ON yardstick_battles(civ, my_unit_slug);
+CREATE INDEX IF NOT EXISTS idx_dedup_group ON yardstick_battles(dedup_group);
 """
+
+
+def _short_hash(t):
+    """Stable 16-char hex prefix of a tuple — used as dedup_group label."""
+    return hashlib.md5(repr(t).encode()).hexdigest()[:16]
 
 
 def create_db(path=DEFAULT_DB_PATH):
@@ -49,7 +62,7 @@ def create_db(path=DEFAULT_DB_PATH):
 
 def insert_outcome(conn, *, civ, my_unit_slug, yardstick_slug, scale,
                    my_count, opp_count, outcome: BattleOutcome,
-                   runs_count, score_stddev):
+                   runs_count, score_stddev, dedup_group=None):
     conn.execute("""
         INSERT INTO yardstick_battles (
             civ, my_unit_slug, yardstick_slug, scale,
@@ -59,8 +72,8 @@ def insert_outcome(conn, *, civ, my_unit_slug, yardstick_slug, scale,
             team1_survivors, team2_survivors,
             team1_resources_lost, team2_resources_lost,
             team1_start_count, team2_start_count,
-            runs_count, score_stddev
-        ) VALUES (?,?,?,?, ?,?, ?,?,?, ?,?, ?,?, ?,?, ?,?, ?,?)
+            runs_count, score_stddev, dedup_group
+        ) VALUES (?,?,?,?, ?,?, ?,?,?, ?,?, ?,?, ?,?, ?,?, ?,?,?)
         ON CONFLICT(civ, my_unit_slug, yardstick_slug, scale) DO UPDATE SET
             my_count=excluded.my_count,
             opp_count=excluded.opp_count,
@@ -76,7 +89,8 @@ def insert_outcome(conn, *, civ, my_unit_slug, yardstick_slug, scale,
             team1_start_count=excluded.team1_start_count,
             team2_start_count=excluded.team2_start_count,
             runs_count=excluded.runs_count,
-            score_stddev=excluded.score_stddev
+            score_stddev=excluded.score_stddev,
+            dedup_group=excluded.dedup_group
     """, (
         civ, my_unit_slug, yardstick_slug, scale,
         my_count, opp_count,
@@ -85,7 +99,7 @@ def insert_outcome(conn, *, civ, my_unit_slug, yardstick_slug, scale,
         outcome.team1_survivors, outcome.team2_survivors,
         outcome.team1_resources_lost, outcome.team2_resources_lost,
         outcome.team1_start_count, outcome.team2_start_count,
-        runs_count, score_stddev,
+        runs_count, score_stddev, dedup_group,
     ))
     conn.commit()
 

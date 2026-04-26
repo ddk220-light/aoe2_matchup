@@ -52,24 +52,16 @@ MAP_H = 20.0
 DEFAULT_PROJECTILE_SPEED = 7.0  # tiles/s
 
 # Battle timeout (game-time seconds).  Hard cap — at this point the leader
-# (by raw HP diff) is declared winner.  Calibrated from sample_sim_timings.py:
-# typical battles end naturally in 20-65s of game time, so 60s catches the
-# tail without sacrificing accuracy on the cases that mattered.
-MAX_BATTLE_SECONDS = 60.0
+# (by raw HP diff) is declared winner.  600s (10 min) is a generous ceiling
+# that lets almost all fights run to natural elimination; cost-asymmetric
+# large-scale battles that would previously exit via decisive_lead now play
+# out fully so HP-margin figures are meaningful.
+MAX_BATTLE_SECONDS = 600.0
 
 # Wall-clock cap (seconds): if a single sim takes longer than this in real
-# time, abort and award winner by HP%.  Backstop only — with the 60s game-time
-# cap, sims now have a bounded tick budget and rarely hit this.
-DEFAULT_MAX_WALLCLOCK_SECONDS = 90.0
-
-# Decisive-lead early exit:
-#   Every DECISIVE_CHECK_INTERVAL_S of game time (starting at t = interval),
-#   if |hp1_pct - hp2_pct| >= DECISIVE_HP_DELTA, declare the leader.
-#   Calibrated from sample_sim_timings.py: most battles develop a clear
-#   20pp+ lead by 15-30s game time, so this clips them off as soon as the
-#   outcome is decided rather than running to last-unit-standing.
-DECISIVE_CHECK_INTERVAL_S = 15.0
-DECISIVE_HP_DELTA = 0.20
+# time, abort and award winner by HP%.  Bumped to 180s to accommodate the
+# longer natural-end fights that arise from removing the decisive_lead exit.
+DEFAULT_MAX_WALLCLOCK_SECONDS = 180.0
 
 # Movement smoothing factor (matches JS: 0.3 means blend 30% old + 70% new).
 MOVE_SMOOTHING = 0.3
@@ -1068,16 +1060,12 @@ class BattleSimulation:
             self.end_reason = "eliminated"
 
     def run(self, max_seconds=MAX_BATTLE_SECONDS,
-            max_wallclock=DEFAULT_MAX_WALLCLOCK_SECONDS,
-            decisive_interval_s=DECISIVE_CHECK_INTERVAL_S,
-            decisive_delta=DECISIVE_HP_DELTA):
+            max_wallclock=DEFAULT_MAX_WALLCLOCK_SECONDS):
         """Run the sim until one of:
-        1. One team wins naturally (last opposing unit dies)
-        2. Decisive-lead early exit: every decisive_interval_s of game time,
-           if |hp1_pct - hp2_pct| >= decisive_delta the leader wins.
-        3. Game-time cap (max_seconds): winner is whichever side has more HP%
-           remaining (any positive diff = win; equal = draw).
-        4. Wall-clock cap (max_wallclock): backstop — winner by HP%.
+        1. One team wins naturally (last opposing unit dies) → end_reason="eliminated"
+        2. Game-time cap (max_seconds): winner is whichever side has more HP%
+           remaining (any positive diff = win; equal = draw) → end_reason="time_cap"
+        3. Wall-clock cap (max_wallclock): backstop — winner by HP% → end_reason="time_cap"
 
         Returns the number of ticks elapsed.
         """
@@ -1086,31 +1074,17 @@ class BattleSimulation:
         # Wall-clock check every 30 ticks (~1s of game time).
         wall_check_interval = 30
 
-        # Decisive-lead checkpoints — first check at t = decisive_interval_s.
-        decisive_step = max(1, int(decisive_interval_s / DT))
-        next_decisive_tick = decisive_step
-
         for tick in range(max_ticks):
             self.step(DT)
             if self.winner is not None:
                 return tick + 1
-
-            # Decisive-lead check at scheduled tick milestones
-            if tick + 1 >= next_decisive_tick:
-                hp1_pct = self.total_hp(1) / max(1.0, self.total_max_hp(1))
-                hp2_pct = self.total_hp(2) / max(1.0, self.total_max_hp(2))
-                if abs(hp1_pct - hp2_pct) >= decisive_delta:
-                    self.winner = 1 if hp1_pct > hp2_pct else 2
-                    self.end_reason = "decisive_lead"
-                    return tick + 1
-                next_decisive_tick += decisive_step
 
             # Wall-clock backstop
             if max_wallclock and (tick + 1) % wall_check_interval == 0:
                 if _time.perf_counter() - wall_start >= max_wallclock:
                     break
 
-        # Game-time cap (60s) or wall-clock backstop reached
+        # Game-time cap (600s) or wall-clock backstop reached
         hp1_pct = self.total_hp(1) / max(1.0, self.total_max_hp(1))
         hp2_pct = self.total_hp(2) / max(1.0, self.total_max_hp(2))
         if hp1_pct > hp2_pct:

@@ -1,7 +1,14 @@
 """Batch runner: per (civ, power_unit) × (yardstick, scale) → yardstick_battles.db.
 
-Uses fingerprint-based outcome dedup and close-match (|score| <= 10) repeat
-runs for noise reduction.  Multi-process pool with resume support.
+Global cross-process dedup: units whose fingerprints are identical across civs
+(same final stats, costs, special properties) share a single sim execution.
+The result is then distributed to every member of the dedup group.
+
+dedup_group key: (yardstick_slug, scale_label, my_fingerprint_tuple)
+  — opp fingerprint is implied by yardstick_slug (canonical civ, fixed).
+
+Close-match (|score| <= 10) repeat runs for noise reduction still apply
+within each group's single worker execution.
 """
 
 import argparse
@@ -11,13 +18,16 @@ import os
 import sqlite3
 import statistics
 import time
+from collections import defaultdict
 
 from webapp.battle_outcome import BattleOutcome, signed_score, average_outcomes
 from webapp.combat_unit_loader import build_combat_dict_from_ref
 from webapp.simulation import prepare_combat_unit
 from webapp.simulation_real import simulate_real_battle
-from webapp.sim_outcome_cache import OutcomeCache, unit_fingerprint
-from webapp.yardstick_db import create_db, insert_outcome, has_row, DEFAULT_DB_PATH
+from webapp.sim_outcome_cache import unit_fingerprint
+from webapp.yardstick_db import (
+    create_db, insert_outcome, has_row, DEFAULT_DB_PATH, _short_hash,
+)
 
 REF_DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 POWER_UNITS_PATH = os.path.join(os.path.dirname(__file__), "civ_power_units.json")
@@ -112,32 +122,28 @@ def _power_units_for_civ(power_units_data, civ):
 
 
 # ---------------------------------------------------------------------------
-# Per-pair sim with cache + close-match repeat
+# Per-group sim with close-match repeat
 # ---------------------------------------------------------------------------
 
 
-def _run_pair(my_unit, opp_unit, scale_label, fixed_count, resources, cache):
-    fp1 = unit_fingerprint(my_unit)
-    fp2 = unit_fingerprint(opp_unit)
+def _run_group(my_unit, opp_unit, scale_label, fixed_count, resources):
+    """Run a sim for one dedup group (one unique fingerprint combo).
 
+    Returns (BattleOutcome, runs_count, score_stddev).
+    Close-match repeats: if |score| <= CLOSE_MATCH_THRESHOLD on the first
+    seed, run up to 2 more seeds and average for noise reduction.
+    """
     outcomes = []
-    seeds_used = []
     for seed in REPEAT_SEEDS:
         if not outcomes and seed != DEFAULT_SEED:
-            continue  # only the first seed is mandatory
-        cached = cache.get(fp1, fp2, fixed_count or 0, 0, scale_label, seed)
-        if cached is not None:
-            o = cached
-        else:
-            o = simulate_real_battle(
-                my_unit, opp_unit,
-                resources=resources or 0,
-                fixed_count=fixed_count,
-                seed=seed,
-            )
-            cache.put(fp1, fp2, fixed_count or 0, 0, scale_label, seed, o)
+            continue  # only run first seed initially
+        o = simulate_real_battle(
+            my_unit, opp_unit,
+            resources=resources or 0,
+            fixed_count=fixed_count,
+            seed=seed,
+        )
         outcomes.append(o)
-        seeds_used.append(seed)
 
         if seed == DEFAULT_SEED:
             sc = signed_score(o)
@@ -153,46 +159,20 @@ def _run_pair(my_unit, opp_unit, scale_label, fixed_count, resources, cache):
 
 
 # ---------------------------------------------------------------------------
-# Worker function
+# Worker function (one task = one dedup group)
 # ---------------------------------------------------------------------------
 
 
-_WORKER_STATE = {}
-
-
-def _init_worker():
-    """Per-process: open ref DB, load yardsticks, init cache."""
-    conn = sqlite3.connect(REF_DB_PATH)
-    conn.row_factory = sqlite3.Row
-    _WORKER_STATE["ref_conn"] = conn
-    _WORKER_STATE["yardsticks"] = _load_yardsticks(conn)
-    _WORKER_STATE["cache"] = OutcomeCache()
-
-
 def _worker_run(task):
-    """task = (civ, my_slug)"""
-    civ, my_slug = task
-    conn = _WORKER_STATE["ref_conn"]
-    yardsticks = _WORKER_STATE["yardsticks"]
-    cache = _WORKER_STATE["cache"]
-    my_unit = _load_unit(conn, civ, my_slug)
-    if my_unit is None:
-        return civ, my_slug, [], "skipped: my unit not found"
+    """task = (group_key, my_unit_dict, opp_unit_dict, fixed_count, resources)
 
-    rows = []
-    for ys_slug, _ in YARDSTICKS:
-        opp = yardsticks[ys_slug]
-        for scale_label, fixed_count, resources in SCALES:
-            avg, runs_count, stddev = _run_pair(
-                my_unit, opp, scale_label, fixed_count, resources, cache
-            )
-            rows.append({
-                "civ": civ, "my_unit_slug": my_slug, "yardstick_slug": ys_slug,
-                "scale": scale_label,
-                "my_count": avg.team1_start_count, "opp_count": avg.team2_start_count,
-                "outcome": avg, "runs_count": runs_count, "score_stddev": stddev,
-            })
-    return civ, my_slug, rows, None
+    Returns (group_key, BattleOutcome, runs_count, score_stddev).
+    """
+    group_key, my_unit, opp_unit, fixed_count, resources = task
+    avg, runs_count, stddev = _run_group(my_unit, opp_unit,
+                                         group_key[1],  # scale_label
+                                         fixed_count, resources)
+    return group_key, avg, runs_count, stddev
 
 
 # ---------------------------------------------------------------------------
@@ -217,36 +197,126 @@ def main():
     with open(POWER_UNITS_PATH) as f:
         power_units = json.load(f)
 
+    # -----------------------------------------------------------------------
+    # Pre-pass: build dedup groups in the main process
+    # -----------------------------------------------------------------------
+
+    ref_conn = sqlite3.connect(REF_DB_PATH)
+    ref_conn.row_factory = sqlite3.Row
+    yardsticks = _load_yardsticks(ref_conn)
+
     civs = args.civs or sorted(power_units.keys())
-    tasks = []
+
+    # groups[key]          = list of (civ, my_unit_slug) members
+    # representatives[key] = (my_unit_dict, opp_unit_dict, fixed_count, resources)
+    groups = defaultdict(list)
+    representatives = {}
+
+    total_slots = 0
+    skipped_complete = 0
+
     for civ in civs:
         for slug in _power_units_for_civ(power_units, civ):
-            # Skip pairs already complete (all yardsticks × all scales).
-            if all(
-                has_row(out_conn, civ, slug, ys[0], sc[0])
-                for ys in YARDSTICKS for sc in SCALES
-            ):
+            my_unit = _load_unit(ref_conn, civ, slug)
+            if my_unit is None:
                 continue
-            tasks.append((civ, slug))
+            my_fp = unit_fingerprint(my_unit)
 
-    print(f"Running {len(tasks)} (civ, unit) tasks across {args.workers} workers")
+            for ys_slug, _ in YARDSTICKS:
+                opp = yardsticks[ys_slug]
+                for scale_label, fixed_count, resources in SCALES:
+                    total_slots += 1
+                    key = (ys_slug, scale_label, my_fp)
+                    groups[key].append((civ, slug))
+                    if key not in representatives:
+                        representatives[key] = (my_unit, opp, fixed_count, resources)
+
+    ref_conn.close()
+
+    # Resume support: skip groups where EVERY member already has a DB row
+    pending_keys = []
+    for key, members in groups.items():
+        ys_slug, scale_label, _fp = key
+        all_done = all(
+            has_row(out_conn, civ, slug, ys_slug, scale_label)
+            for civ, slug in members
+        )
+        if all_done:
+            skipped_complete += len(members)
+        else:
+            pending_keys.append(key)
+
+    unique_groups = len(groups)
+    pending_groups = len(pending_keys)
+    reduction = total_slots / unique_groups if unique_groups else 1.0
+
+    print(f"Pre-pass complete:")
+    print(f"  Total raw slots : {total_slots}")
+    print(f"  Unique dedup groups : {unique_groups}  (pending: {pending_groups})")
+    print(f"  Reduction factor  : {reduction:.2f}x")
+    print(f"  Skipped (complete): {skipped_complete} slots in {unique_groups - pending_groups} groups")
+
+    if not pending_keys:
+        print("All groups already complete — nothing to do.")
+        out_conn.close()
+        return
+
+    # Build pool tasks for pending groups only
+    tasks = [
+        (key, *representatives[key])  # (key, my_unit, opp, fixed_count, resources)
+        for key in pending_keys
+    ]
+
+    print(f"Dispatching {len(tasks)} group tasks across {args.workers} workers")
     t0 = time.perf_counter()
 
-    with mp.Pool(processes=args.workers, initializer=_init_worker) as pool:
-        for i, (civ, slug, rows, err) in enumerate(
+    with mp.Pool(processes=args.workers) as pool:
+        for i, (group_key, avg, runs_count, stddev) in enumerate(
             pool.imap_unordered(_worker_run, tasks), start=1
         ):
-            if err:
-                print(f"[{i}/{len(tasks)}] {civ} {slug} :: {err}")
-                continue
-            for row in rows:
-                insert_outcome(out_conn, **row)
+            ys_slug, scale_label, my_fp = group_key
+            members = groups[group_key]
+
+            # Stable dedup_group label: hash of (yardstick, scale, my_fingerprint)
+            # so all civs sharing this fingerprint for this matchup are tagged identically.
+            dg = _short_hash((ys_slug, scale_label, my_fp))
+
+            for civ, slug in members:
+                insert_outcome(
+                    out_conn,
+                    civ=civ, my_unit_slug=slug,
+                    yardstick_slug=ys_slug, scale=scale_label,
+                    my_count=avg.team1_start_count, opp_count=avg.team2_start_count,
+                    outcome=avg, runs_count=runs_count, score_stddev=stddev,
+                    dedup_group=dg,
+                )
+
             if i % 10 == 0 or i == len(tasks):
                 elapsed = time.perf_counter() - t0
-                print(f"[{i}/{len(tasks)}] {civ} {slug} ({elapsed:.0f}s)")
+                rep_civ, rep_slug = members[0]
+                print(f"[{i}/{len(tasks)}] {ys_slug} × {scale_label} "
+                      f"(rep: {rep_civ}/{rep_slug}, {len(members)} civs share) "
+                      f"end={avg.end_reason} score={signed_score(avg):.1f}  "
+                      f"({elapsed:.0f}s)")
+
+    elapsed_total = time.perf_counter() - t0
+
+    # -----------------------------------------------------------------------
+    # Summary: top-5 groups by member count
+    # -----------------------------------------------------------------------
+    top5 = sorted(
+        ((len(groups[k]), k) for k in groups),
+        reverse=True,
+    )[:5]
+    print("\nTop-5 dedup groups by member count:")
+    for count, (ys_slug, scale_label, _fp) in top5:
+        rep_civ, rep_slug = groups[(ys_slug, scale_label, _fp)][0]
+        print(f"  {rep_slug} × {scale_label} vs {ys_slug} — {count} civs share "
+              f"(rep: {rep_civ})")
+
+    print(f"\nDone in {elapsed_total:.0f}s.")
 
     out_conn.close()
-    print("Done.")
 
 
 if __name__ == "__main__":

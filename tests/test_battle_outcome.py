@@ -98,7 +98,7 @@ def test_simulate_real_battle_returns_battle_outcome():
     out = simulate_real_battle(champ, halb, resources=3000, fixed_count=30, seed=0)
     assert isinstance(out, BattleOutcome)
     assert out.winner in (1, 2, 0)
-    assert out.end_reason in ("eliminated", "decisive_lead", "time_cap")
+    assert out.end_reason in ("eliminated", "time_cap")
     assert 0.0 <= out.team1_hp_pct <= 1.0
     assert 0.0 <= out.team2_hp_pct <= 1.0
     assert out.team1_start_count == 30

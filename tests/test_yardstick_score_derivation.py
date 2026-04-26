@@ -29,7 +29,8 @@ def test_create_and_roundtrip():
         insert_outcome(conn, civ="Aztecs", my_unit_slug="elite_jaguar_warrior_aztecs",
                        yardstick_slug="halberdier", scale="30v30",
                        my_count=30, opp_count=30,
-                       outcome=o, runs_count=1, score_stddev=None)
+                       outcome=o, runs_count=1, score_stddev=None,
+                       dedup_group="test")
         rows = fetch_all_rows(conn)
         assert len(rows) == 1
         r = rows[0]
@@ -53,8 +54,8 @@ def test_insert_idempotent_on_unique_key():
             yardstick_slug="halberdier", scale="30v30",
             my_count=30, opp_count=30,
         )
-        insert_outcome(conn, outcome=o1, runs_count=1, score_stddev=None, **kw)
-        insert_outcome(conn, outcome=o2, runs_count=3, score_stddev=2.5, **kw)
+        insert_outcome(conn, outcome=o1, runs_count=1, score_stddev=None, dedup_group="test", **kw)
+        insert_outcome(conn, outcome=o2, runs_count=3, score_stddev=2.5, dedup_group="test", **kw)
         rows = fetch_all_rows(conn)
         assert len(rows) == 1
         assert rows[0]["winner"] == 2  # second insert replaced first

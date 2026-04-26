@@ -44,16 +44,10 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 MATCHUP_DB_PATH = os.path.join(os.path.dirname(__file__), "matchup_combos_real.db")
 BACKUP_DIR = os.path.join(os.path.dirname(__file__), "backups")
 
-# Score types we will overwrite.  Pre-cleared before INSERT.
-TARGET_SCORE_TYPES = (
-    "general_combat",
-    "anti_archer",
-    "anti_cav",
-    "anti_trash",
-    "militia_value",
-    "ranged_effectiveness",
-    "stable_effectiveness",
-)
+# These score types are now owned by derive_scores_from_yardsticks.py.
+# Keeping the script for the matchup_advisor side-effects (recommendation
+# tracking) but it no longer writes ranking scores.
+TARGET_SCORE_TYPES = ()
 
 # Map opponent's rank-1 top-unit's line_slug to the role bucket on OUR side
 # (which categorical score increments).
@@ -464,6 +458,12 @@ def main():
         n = restore_backup(conn, args.restore)
         conn.close()
         print(f"Restored {n} rows from {args.restore}")
+        return
+
+    if not TARGET_SCORE_TYPES:
+        print("derive_battle_scores_from_matchups: no score types owned. "
+              "(yardstick deriver owns rankings now.) Exiting.")
+        conn.close()
         return
 
     print(f"Loading slug -> line mapping...")

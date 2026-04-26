@@ -20,7 +20,7 @@ import sqlite3
 import time
 from collections import defaultdict
 
-from webapp.unit_lines import UNIT_LINES
+from webapp.unit_lines import UNIT_LINES, CIV_MISSING_UNITS
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 YARDSTICK_DB_PATH = os.path.join(os.path.dirname(__file__), "yardstick_battles.db")
@@ -180,6 +180,10 @@ def compute_scores(yardstick_conn, ref_units_by_civ_slug, slug_to_line):
 
     by_unit = defaultdict(list)  # (civ, slug) -> [(ys, scale, signed_score)]
     for r in rows:
+        # Skip phantom rows — units present in ref_units but not actually in
+        # the civ's tech tree (e.g. Mapuche/Tupi/Muisca/Incas champion).
+        if (r["civ"], r["my_unit_slug"]) in CIV_MISSING_UNITS:
+            continue
         by_unit[(r["civ"], r["my_unit_slug"])].append(
             (r["yardstick_slug"], r["scale"], _signed_score_from_row(r))
         )

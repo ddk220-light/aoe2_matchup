@@ -25,7 +25,7 @@ from webapp.combat_unit_loader import build_combat_dict_from_ref
 from webapp.simulation import prepare_combat_unit
 from webapp.simulation_real import simulate_real_battle
 from webapp.sim_outcome_cache import unit_fingerprint
-from webapp.unit_lines import UNIT_LINES
+from webapp.unit_lines import UNIT_LINES, CIV_MISSING_UNITS
 from webapp.yardstick_db import (
     create_db, insert_outcome, has_row, DEFAULT_DB_PATH, _short_hash,
 )
@@ -128,6 +128,10 @@ def _units_for_civ(ref_conn, civ, slug_to_line):
     ranked line.  Includes generic units (paladin, halberdier, hussar, ...)
     AND unique replacements (leitis, boyar, ...) — every unit a civ can field
     in a yardstick-eligible role gets simulated.
+
+    CIV_MISSING_UNITS is enforced — units present in ref_units but not actually
+    in the civ's tech tree (e.g. Champion for Andean civs that have Champi
+    Warrior instead) are skipped here too.
     """
     rows = ref_conn.execute(
         "SELECT unit_slug FROM ref_units WHERE civ_name=? AND age='Imperial'",
@@ -140,6 +144,8 @@ def _units_for_civ(ref_conn, civ, slug_to_line):
             continue
         line = slug_to_line.get(slug)
         if line not in RANKED_LINES:
+            continue
+        if (civ, slug) in CIV_MISSING_UNITS:
             continue
         seen.add(slug)
         out.append(slug)

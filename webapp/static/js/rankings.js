@@ -899,10 +899,24 @@ function renderTable() {
         );
     }
 
-    // Sort
+    // Sort. Missing/sentinel values (undefined, null, -999) always sink to the
+    // bottom regardless of direction — JS's `undefined < x` and `undefined > x`
+    // both yield false, so without explicit handling they fix unsortable rows
+    // in their original positions and corrupt the rest of the order.
+    const _isMissing = (v) =>
+        v === undefined || v === null || v === -999;
     filtered.sort((a, b) => {
         let va = a[sortColumn],
             vb = b[sortColumn];
+        const aMissing = _isMissing(va);
+        const bMissing = _isMissing(vb);
+        if (aMissing && bMissing) {
+            if (a.is_unique !== b.is_unique)
+                return a.is_unique ? 1 : -1;
+            return 0;
+        }
+        if (aMissing) return 1;
+        if (bMissing) return -1;
         if (typeof va === "string") va = va.toLowerCase();
         if (typeof vb === "string") vb = vb.toLowerCase();
         if (va < vb) return sortDir === "asc" ? -1 : 1;

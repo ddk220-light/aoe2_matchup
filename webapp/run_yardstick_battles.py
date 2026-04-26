@@ -25,12 +25,22 @@ from webapp.combat_unit_loader import build_combat_dict_from_ref
 from webapp.simulation import prepare_combat_unit
 from webapp.simulation_real import simulate_real_battle
 from webapp.sim_outcome_cache import unit_fingerprint
+from webapp.unit_lines import UNIT_LINES
 from webapp.yardstick_db import (
     create_db, insert_outcome, has_row, DEFAULT_DB_PATH, _short_hash,
 )
 
 REF_DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 POWER_UNITS_PATH = os.path.join(os.path.dirname(__file__), "civ_power_units.json")
+
+# Pools the deriver normalizes scores within. Slugs that map to one of these
+# lines are simulated against the yardsticks; others (siege, naval, support)
+# don't have role-aggregate scores so we skip them here.
+RANKED_LINES = frozenset({
+    "militia", "spear", "shock_infantry",
+    "skirmisher", "archer", "cav_archer", "gunpowder", "scorpion",
+    "light_cav", "knight", "camel", "steppe_lancer", "elephant",
+})
 
 # Yardsticks: (slug, canonical_civ).  Canonical civ keeps the yardstick's
 # fingerprint identical regardless of who's fighting it — so we measure
@@ -87,37 +97,52 @@ def _load_yardsticks(conn):
     return out
 
 
-def _power_units_for_civ(power_units_data, civ):
-    """Return list of unit_slug strings for imperial-age power units of this civ.
+def _build_slug_to_line():
+    """Mirror of derive_scores_from_yardsticks.build_slug_to_line — maps every
+    known unit slug (generic + unique) to its line slug."""
+    out = {}
+    for line_slug, info in UNIT_LINES.items():
+        for k in ("castle_slug", "imperial_slug"):
+            if info.get(k):
+                out[info[k]] = line_slug
+        for k in ("castle_slugs", "imperial_slugs",
+                  "extra_castle_slugs", "extra_imperial_slugs"):
+            for s in (info.get(k) or []):
+                if s:
+                    out[s] = line_slug
+        for civ_slugs in (info.get("unique_units") or {}).values():
+            if isinstance(civ_slugs, list):
+                for tup in civ_slugs:
+                    for s in tup:
+                        if s:
+                            out[s] = line_slug
+            else:
+                for s in civ_slugs:
+                    if s:
+                        out[s] = line_slug
+    return out
 
-    civ_power_units.json maps line slugs (knight, militia, ...) to a list of
-    unit entries.  The actual DB slug lives inside each entry as 'unit_slug'.
-    Values of None mean the unit line is unavailable for this civ.
+
+def _units_for_civ(ref_conn, civ, slug_to_line):
+    """Return list of imperial-age unit_slugs for this civ that fall within a
+    ranked line.  Includes generic units (paladin, halberdier, hussar, ...)
+    AND unique replacements (leitis, boyar, ...) — every unit a civ can field
+    in a yardstick-eligible role gets simulated.
     """
-    civ_data = power_units_data.get(civ, {})
-    imp = civ_data.get("imperial", {}).get("power_units", {})
-    slugs = []
-    for category_units in imp.values():
-        if not isinstance(category_units, dict):
-            continue
-        for entries in category_units.values():
-            # entries is either None (line unavailable) or a list of dicts
-            if not entries:
-                continue
-            if isinstance(entries, list):
-                for entry in entries:
-                    if isinstance(entry, dict):
-                        slug = entry.get("unit_slug")
-                        if slug:
-                            slugs.append(slug)
-                        break  # only the first entry per line
-            # If entries is a dict (unexpected structure), skip it
-    # de-dupe preserving order
+    rows = ref_conn.execute(
+        "SELECT unit_slug FROM ref_units WHERE civ_name=? AND age='Imperial'",
+        (civ,),
+    ).fetchall()
     seen, out = set(), []
-    for s in slugs:
-        if s not in seen:
-            seen.add(s)
-            out.append(s)
+    for r in rows:
+        slug = r["unit_slug"]
+        if slug in seen:
+            continue
+        line = slug_to_line.get(slug)
+        if line not in RANKED_LINES:
+            continue
+        seen.add(slug)
+        out.append(slug)
     return out
 
 
@@ -194,9 +219,6 @@ def main():
 
     out_conn = create_db(args.db)
 
-    with open(POWER_UNITS_PATH) as f:
-        power_units = json.load(f)
-
     # -----------------------------------------------------------------------
     # Pre-pass: build dedup groups in the main process
     # -----------------------------------------------------------------------
@@ -204,8 +226,14 @@ def main():
     ref_conn = sqlite3.connect(REF_DB_PATH)
     ref_conn.row_factory = sqlite3.Row
     yardsticks = _load_yardsticks(ref_conn)
+    slug_to_line = _build_slug_to_line()
 
-    civs = args.civs or sorted(power_units.keys())
+    if args.civs:
+        civs = args.civs
+    else:
+        civs = sorted({r["civ_name"] for r in ref_conn.execute(
+            "SELECT DISTINCT civ_name FROM ref_units"
+        ).fetchall()})
 
     # groups[key]          = list of (civ, my_unit_slug) members
     # representatives[key] = (my_unit_dict, opp_unit_dict, fixed_count, resources)
@@ -216,7 +244,7 @@ def main():
     skipped_complete = 0
 
     for civ in civs:
-        for slug in _power_units_for_civ(power_units, civ):
+        for slug in _units_for_civ(ref_conn, civ, slug_to_line):
             my_unit = _load_unit(ref_conn, civ, slug)
             if my_unit is None:
                 continue

@@ -63,6 +63,10 @@ MAX_BATTLE_SECONDS = 600.0
 # longer natural-end fights that arise from removing the decisive_lead exit.
 DEFAULT_MAX_WALLCLOCK_SECONDS = 180.0
 
+# Window after the unit's last attack attempt during which it counts as
+# "in combat" for hp_regen purposes.  Matches AoE2 convention (~5 seconds).
+COMBAT_WINDOW_S = 5.0
+
 # Movement smoothing factor (matches JS: 0.3 means blend 30% old + 70% new).
 MOVE_SMOOTHING = 0.3
 
@@ -260,7 +264,7 @@ class BattleUnit:
         "has_used_first_attack", "is_transformed",
         "bleed_effect", "has_used_charge",
         "x", "y", "radius",
-        "target", "state", "attack_cooldown",
+        "target", "state", "attack_cooldown", "combat_timer",
         "was_moving", "committed_attack",
         "vx", "vy",
         "stuck_timer", "last_dist_to_target", "blocked_targets",
@@ -357,6 +361,7 @@ class BattleUnit:
         self.target = None
         self.state = "idle"
         self.attack_cooldown = 0.0
+        self.combat_timer = 0.0
         self.was_moving = True
         self.committed_attack = None  # {"target": unit, "time_left": float}
 
@@ -467,7 +472,13 @@ class BattleUnit:
         cooldown = max(0.0, self.attack_cooldown - dt)
         self.attack_cooldown = cooldown
 
-        if self.hp_regen > 0 and 0 < self.current_hp < self.max_hp:
+        if self.combat_timer > 0:
+            self.combat_timer -= dt
+            if self.combat_timer < 0:
+                self.combat_timer = 0
+
+        if (self.hp_regen > 0 and 0 < self.current_hp < self.max_hp
+                and self.combat_timer > 0):
             self.current_hp = min(self.max_hp, self.current_hp + (self.hp_regen / 60.0) * dt)
 
         if self.bleed_effect:
@@ -546,6 +557,7 @@ class BattleUnit:
                     for _ in range(self.charge_projectile_count):
                         self.fire_charge_projectile(self.target, sim)
                     self.attack_cooldown = self.reload_time
+                    self.combat_timer = COMBAT_WINDOW_S
                 else:
                     self.state = "moving"
                     self.move_toward_target(dt, grid)
@@ -559,6 +571,7 @@ class BattleUnit:
                         self.perform_attack_on(target, sim)
                     self.committed_attack = None
                     self.attack_cooldown = self.reload_time
+                    self.combat_timer = COMBAT_WINDOW_S
                     self.was_moving = False
             elif self.in_range():
                 if self.attack_cooldown <= 0:
@@ -606,6 +619,7 @@ class BattleUnit:
             else:
                 self.perform_attack_on(self.target, sim)
         self.attack_cooldown = self.reload_time
+        self.combat_timer = COMBAT_WINDOW_S
 
     def fire_projectile(self, target, sim, attacks_override=None, is_extra=False):
         damage = self.get_damage_against(target, attacks_override=attacks_override) \

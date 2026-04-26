@@ -35,7 +35,34 @@ YARDSTICK_TO_ROLE = {
     "hussar":          ["anti_trash"],
 }
 
+# Maps each role to the key prefix used in per-benchmark sub-scores.
+ROLE_PREFIX = {
+    "general_combat": "gc",
+    "anti_cav":       "ac",
+    "anti_archer":    "aa",
+    "anti_trash":     "at",
+}
+
+# Maps yardstick_slug to short label used in sub-score keys.
+YARDSTICK_LABEL = {
+    "champion":        "champ",
+    "paladin":         "paladin",
+    "arbalester":      "arb",
+    "halberdier":      "halb",
+    "imp_elite_skirm": "elite_skirm",
+    "hussar":          "hussar",
+}
+
 ROLE_SCORE_TYPES = ("general_combat", "anti_archer", "anti_cav", "anti_trash")
+
+
+def sub_score_keys(role, yardstick_slug, scale):
+    """Yield (norm_key, raw_key) for each (role, yardstick, scale) combo
+    that the JS rankings tooltips look up."""
+    prefix = ROLE_PREFIX[role]
+    label = YARDSTICK_LABEL[yardstick_slug]
+    base = f"{prefix}_{scale}_vs_{label}"
+    return base, f"{base}_raw"
 
 COMPOSITE_WEIGHTS = {
     "militia_value":         {"general_combat": 0.75, "anti_cav": 0.10, "anti_trash": 0.15},
@@ -66,7 +93,18 @@ SPEED_WEIGHTED_COMPOSITES = {
     "stable_effectiveness": ("_speed",),
 }
 
-TARGET_SCORE_TYPES = ROLE_SCORE_TYPES + tuple(COMPOSITE_WEIGHTS)
+def _all_sub_score_types():
+    keys = []
+    for ys, roles in YARDSTICK_TO_ROLE.items():
+        for role in roles:
+            for scale in ("30v30", "3k"):
+                norm_key, raw_key = sub_score_keys(role, ys, scale)
+                keys.append(norm_key)
+                keys.append(raw_key)
+    return tuple(keys)
+
+
+TARGET_SCORE_TYPES = ROLE_SCORE_TYPES + tuple(COMPOSITE_WEIGHTS) + _all_sub_score_types()
 
 
 def _signed_score_from_row(row):
@@ -146,6 +184,16 @@ def compute_scores(yardstick_conn, ref_units_by_civ_slug, slug_to_line):
             (r["yardstick_slug"], r["scale"], _signed_score_from_row(r))
         )
 
+    # Track raw per-benchmark signed scores keyed by (civ, slug) -> {sub_key: raw}
+    raw_subs = defaultdict(dict)
+    for (civ, slug), pair_rows in by_unit.items():
+        for ys, scale, sc in pair_rows:
+            for role in YARDSTICK_TO_ROLE.get(ys, ()):
+                norm_key, raw_key = sub_score_keys(role, ys, scale)
+                raw_subs[(civ, slug)][raw_key] = round(sc, 1)
+                # store norm under norm_key for now; will be overwritten with normalized value
+                raw_subs[(civ, slug)][norm_key] = sc
+
     by_pool = defaultdict(dict)
     for (civ, slug), pair_rows in by_unit.items():
         line = slug_to_line.get(slug)
@@ -166,6 +214,31 @@ def compute_scores(yardstick_conn, ref_units_by_civ_slug, slug_to_line):
         by_pool[pool][(line, civ, slug)] = entry
 
     out = defaultdict(dict)
+
+    # Pool-normalize per-benchmark sub-scores. Done across the same pool that
+    # the role uses, so a unit's normalized vs-Paladin score is comparable to
+    # the pool-normalized anti_cav role score.
+    for pool, units in by_pool.items():
+        sub_keys_in_pool = set()
+        for (line, civ, slug) in units:
+            for k in raw_subs[(civ, slug)]:
+                if not k.endswith("_raw"):
+                    sub_keys_in_pool.add(k)
+        for sub_key in sub_keys_in_pool:
+            tmp = {}
+            for k in units:
+                _, civ, slug = k
+                v = raw_subs[(civ, slug)].get(sub_key, 0)
+                tmp[k] = {"v": v}
+            _normalize_pool(tmp, "v")
+            for k, v in tmp.items():
+                out[k][sub_key] = v["v"]
+        # raw values: passthrough, no normalization
+        for k in units:
+            _, civ, slug = k
+            for rkey, rval in raw_subs[(civ, slug)].items():
+                if rkey.endswith("_raw"):
+                    out[k][rkey] = rval
 
     for pool, units in by_pool.items():
         for role in ROLE_SCORE_TYPES:

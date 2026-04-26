@@ -83,14 +83,10 @@ const SCORE_BREAKDOWN = {
     },
     anti_cav: {
         title: "Anti-Cav",
-        formula: "Average of 6 normalized matchups (3 \u00d7 30v30 + 3 \u00d7 3K res)",
+        formula: "Avg of 2 normalized matchups (vs Paladin at 30v30 + 3K res)",
         subs: [
-            { key: "ac_30v30_vs_battle_elephant", label: "vs Battle Elephant (30v30)", civ: "Khmer",   slug: "elite_elephant", mode: "count", count: 30 },
-            { key: "ac_30v30_vs_heavy_camel",     label: "vs Heavy Camel (30v30)",     civ: "Turks",   slug: "heavy_camel",    mode: "count", count: 30 },
-            { key: "ac_30v30_vs_steppe_lancer",   label: "vs Steppe Lancer (30v30)",   civ: "Mongols", slug: "elite_steppe",   mode: "count", count: 30 },
-            { key: "ac_3k_vs_battle_elephant",    label: "vs Battle Elephant (3K res)", civ: "Khmer",   slug: "elite_elephant", mode: "resources", res: 3000 },
-            { key: "ac_3k_vs_heavy_camel",        label: "vs Heavy Camel (3K res)",     civ: "Turks",   slug: "heavy_camel",    mode: "resources", res: 3000 },
-            { key: "ac_3k_vs_steppe_lancer",      label: "vs Steppe Lancer (3K res)",   civ: "Mongols", slug: "elite_steppe",   mode: "resources", res: 3000 },
+            { key: "ac_30v30_vs_paladin", label: "vs Paladin (30v30)", civ: "Spanish", slug: "paladin", mode: "count", count: 30 },
+            { key: "ac_3k_vs_paladin",    label: "vs Paladin (3K res)", civ: "Spanish", slug: "paladin", mode: "resources", res: 3000 },
         ],
     },
     anti_trash: {
@@ -123,14 +119,10 @@ const SCORE_BREAKDOWN = {
     },
     anti_archer: {
         title: "Anti-Archer Score",
-        formula: "Normalized avg of 6 matchups (3 \u00d7 30v30 + 3 \u00d7 3K res)",
+        formula: "Avg of 2 normalized matchups (vs Arbalester at 30v30 + 3K res)",
         subs: [
             { key: "aa_30v30_vs_arb", label: "vs Arbalester (30v30)", civ: "Chinese", slug: "arbalester", mode: "count", count: 30 },
-            { key: "aa_30v30_vs_ca", label: "vs Cav Archer (30v30)", civ: "Chinese", slug: "heavy_cav_archer", mode: "count", count: 30 },
-            { key: "aa_30v30_vs_ele_archer", label: "vs Ele Archer (30v30)", civ: "Gurjaras", slug: "elite_ele_archer", mode: "count", count: 30 },
-            { key: "aa_3k_vs_arb", label: "vs Arbalester (3K res)", civ: "Chinese", slug: "arbalester", mode: "resources", res: 3000 },
-            { key: "aa_3k_vs_ca", label: "vs Cav Archer (3K res)", civ: "Chinese", slug: "heavy_cav_archer", mode: "resources", res: 3000 },
-            { key: "aa_3k_vs_ele_archer", label: "vs Ele Archer (3K res)", civ: "Gurjaras", slug: "elite_ele_archer", mode: "resources", res: 3000 },
+            { key: "aa_3k_vs_arb",    label: "vs Arbalester (3K res)", civ: "Chinese", slug: "arbalester", mode: "resources", res: 3000 },
         ],
     },
     // Stable score breakdowns
@@ -148,14 +140,10 @@ const SCORE_BREAKDOWN = {
     },
     anti_cav_stable: {
         title: "Anti-Cav",
-        formula: "Average of 6 normalized matchups (30v30 + 3K res each)",
+        formula: "Avg of 2 normalized matchups (vs Paladin at 30v30 + 3K res)",
         subs: [
-            { key: "gc_30v30_vs_paladin", label: "vs Paladin (30v30)", civ: "Spanish", slug: "paladin", mode: "count", count: 30 },
-            { key: "gc_3k_vs_paladin", label: "vs Paladin (3K res)", civ: "Spanish", slug: "paladin", mode: "resources", res: 3000 },
-            { key: "ac_30v30_vs_heavy_camel", label: "vs Heavy Camel (30v30)", civ: "Turks", slug: "heavy_camel", mode: "count", count: 30 },
-            { key: "ac_30v30_vs_elephant", label: "vs Battle Elephant (30v30)", civ: "Vietnamese", slug: "elite_elephant", mode: "count", count: 30 },
-            { key: "ac_3k_vs_heavy_camel", label: "vs Heavy Camel (3K res)", civ: "Turks", slug: "heavy_camel", mode: "resources", res: 3000 },
-            { key: "ac_3k_vs_elephant", label: "vs Battle Elephant (3K res)", civ: "Vietnamese", slug: "elite_elephant", mode: "resources", res: 3000 },
+            { key: "ac_30v30_vs_paladin", label: "vs Paladin (30v30)", civ: "Spanish", slug: "paladin", mode: "count", count: 30 },
+            { key: "ac_3k_vs_paladin",    label: "vs Paladin (3K res)", civ: "Spanish", slug: "paladin", mode: "resources", res: 3000 },
         ],
     },
     // Siege score breakdowns
@@ -190,11 +178,8 @@ const SCORE_KEYS = new Set([
     "gc_3k_vs_paladin",
     "gc_3k_vs_arb",
     "gc_3k_vs_champ",
-    "ac_30v30_vs_battle_elephant",
-    "ac_30v30_vs_steppe_lancer",
-    "ac_3k_vs_battle_elephant",
-    "ac_3k_vs_steppe_lancer",
-    // ac_*_vs_heavy_camel keys already present (shared with stable scoring)
+    "ac_30v30_vs_paladin",
+    "ac_3k_vs_paladin",
     "anti_trash",
     "at_30v30_vs_halb",
     "at_30v30_vs_hussar",
@@ -206,15 +191,9 @@ const SCORE_KEYS = new Set([
     "ranged_effectiveness",
     "anti_archer",
     "aa_30v30_vs_arb",
-    "aa_30v30_vs_ca",
-    "aa_30v30_vs_ele_archer",
     "aa_3k_vs_arb",
-    "aa_3k_vs_ca",
-    "aa_3k_vs_ele_archer",
     // Stable scores
     "stable_effectiveness",
-    "ac_30v30_vs_heavy_camel",
-    "ac_3k_vs_heavy_camel",
     // Siege scores
     "anti_building_score",
     "ab_persian_5u_ttk",   "ab_persian_5k_ttk",

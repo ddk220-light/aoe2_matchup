@@ -913,8 +913,9 @@ class BattleSimulation:
         self.battle_time = 0.0
         self.winner = None  # 1, 2, or 0 (draw)
         self.end_reason = None  # set when run() exits
-        self.grid = SpatialGrid()
+        self.grid = None  # lazily created on first step() with auto-tuned cell_size
         self.alive = []  # maintained across ticks; populated on first step
+        self.has_ranged = False  # set to True if any unit on either team is ranged
 
     def setup_team(self, team_num, stats, count):
         team = []
@@ -943,6 +944,9 @@ class BattleSimulation:
             self.team1 = team
         else:
             self.team2 = team
+
+        if any(u.is_ranged() for u in team):
+            self.has_ranged = True
 
     def alive_count(self, team_num):
         team = self.team1 if team_num == 1 else self.team2
@@ -975,6 +979,20 @@ class BattleSimulation:
         else:
             self.alive = [u for u in self.alive if u.state != "dead"]
         alive = self.alive
+
+        # Lazily create the spatial grid on the first tick with an auto-tuned
+        # cell size derived from actual unit radii and max attack range.
+        if self.grid is None:
+            max_radius = max(
+                (u.radius for u in self.team1 + self.team2), default=0.5
+            )
+            max_range = max(
+                (u.raw_attack_range for u in self.team1 + self.team2
+                 if u.is_ranged()),
+                default=0.0,
+            )
+            cell = max(max_radius * 4.0, max_range, GRID_CELL_SIZE)
+            self.grid = SpatialGrid(cell_size=cell)
 
         # Rebuild spatial grid once per tick before unit updates (avoidance
         # queries the grid).
@@ -1031,10 +1049,11 @@ class BattleSimulation:
             u.x = max(u.radius, min(MAP_W - u.radius, u.x))
             u.y = max(u.radius, min(MAP_H - u.radius, u.y))
 
-        # Projectiles
-        for p in self.projectiles:
-            p.update(dt)
-        self.projectiles = [p for p in self.projectiles if not p.done]
+        # Projectiles — skip entirely for melee-only fights
+        if self.has_ranged:
+            for p in self.projectiles:
+                p.update(dt)
+            self.projectiles = [p for p in self.projectiles if not p.done]
 
         a1 = self.alive_count(1)
         a2 = self.alive_count(2)

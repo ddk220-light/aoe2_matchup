@@ -142,6 +142,7 @@ def prepare_combat_unit(row):
         "attack_bonus_per_kill": row["attack_bonus_per_kill"] or 0,
         "first_attack_extra_projectiles": row["first_attack_extra_projectiles"] or 0,
         "hp_regen": row["hp_regen"] or 0,
+        "hp_regen_in_combat": row.get("hp_regen_in_combat", 0) or 0,
         "pass_through_percent": row["pass_through_percent"] or 0,
         "pass_through_count": row.get("pass_through_count", 1) or 1,
         "extra_proj_scatter": row.get("extra_proj_scatter", 0) or 0,

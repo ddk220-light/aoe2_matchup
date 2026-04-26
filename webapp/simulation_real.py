@@ -255,7 +255,7 @@ class BattleUnit:
         "bleed_dps", "bleed_duration",
         "block_first_melee", "attack_bonus_per_kill",
         "first_attack_extra_projectiles",
-        "hp_transform_threshold", "hp_regen",
+        "hp_transform_threshold", "hp_regen", "hp_regen_in_combat",
         "pass_through_percent", "pass_through_count",
         "charge_projectile_count", "charge_projectile_speed",
         "charge_attack_range", "charge_ignores_armor", "charge_projectile_attacks",
@@ -331,6 +331,7 @@ class BattleUnit:
         )
         self.hp_transform_threshold = float(stats.get("hp_transform_threshold") or 0)
         self.hp_regen = float(stats.get("hp_regen") or 0)
+        self.hp_regen_in_combat = float(stats.get("hp_regen_in_combat") or 0)
         self.pass_through_percent = float(stats.get("pass_through_percent") or 0)
         self.pass_through_count = max(1, _to_int(stats.get("pass_through_count")) or 1)
 
@@ -477,9 +478,18 @@ class BattleUnit:
             if self.combat_timer < 0:
                 self.combat_timer = 0
 
-        if (self.hp_regen > 0 and 0 < self.current_hp < self.max_hp
-                and self.combat_timer > 0):
+        # Passive regen: applies whenever damaged + alive (Berserkers, Berber
+        # camels, Dravidian elephants, etc.).  Standard AoE2 behavior.
+        if self.hp_regen > 0 and 0 < self.current_hp < self.max_hp:
             self.current_hp = min(self.max_hp, self.current_hp + (self.hp_regen / 60.0) * dt)
+        # Combat-gated regen: only fires when the unit attacked in the last
+        # COMBAT_WINDOW_S seconds.  Khitan Ordo Cavalry only.
+        if (self.hp_regen_in_combat > 0 and 0 < self.current_hp < self.max_hp
+                and self.combat_timer > 0):
+            self.current_hp = min(
+                self.max_hp,
+                self.current_hp + (self.hp_regen_in_combat / 60.0) * dt
+            )
 
         if self.bleed_effect:
             self.current_hp -= self.bleed_effect["dps"] * dt

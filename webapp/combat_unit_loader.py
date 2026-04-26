@@ -54,6 +54,7 @@ def build_combat_dict_from_ref(row):
         "trample_radius": row["trample_radius"] or 0,
         "trample_flat_damage": row["trample_flat_damage"] or 0,
         "hp_regen": row["hp_regen"] or 0,
+        "hp_regen_in_combat": row["hp_regen_in_combat"] or 0,
         "charge_projectile_count": row["charge_projectile_count"] or 0,
         "charge_projectile_speed": row["charge_projectile_speed"] or 0,
         "charge_projectile_attacks_json": row["charge_projectile_attacks_json"],

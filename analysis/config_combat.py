@@ -262,17 +262,18 @@ CIV_COMBAT_PROPERTIES = {
     ("Khitans", "elite_liao_dao"): {"damage_reflect_percent": 0.25},
     # Khitan Ordo Cavalry — "Melee cavalry regenerates 150% of max HP per minute in combat"
     # Per-unit values = round(base_hp * 1.5). Source: Ordo_Cavalry wiki page.
-    ("Khitans", "heavy_cav_archer"): {"hp_regen": 90},   # 60 HP × 1.5
-    ("Khitans", "cav_archer"): {"hp_regen": 75},          # 50 HP × 1.5
-    ("Khitans", "hussar"): {"hp_regen": 113},             # 75 HP × 1.5
-    ("Khitans", "light_cav"): {"hp_regen": 90},           # 60 HP × 1.5
-    ("Khitans", "steppe_lancer"): {"hp_regen": 90},       # 60 HP × 1.5
-    ("Khitans", "elite_steppe"): {"hp_regen": 120},       # 80 HP × 1.5
-    ("Khitans", "camel"): {"hp_regen": 150},              # 100 HP × 1.5
-    ("Khitans", "heavy_camel"): {"hp_regen": 180},        # 120 HP × 1.5
-    ("Khitans", "fire_lancer"): {"hp_regen": 98},         # 65 HP × 1.5
-    ("Khitans", "elite_fire_lancer"): {"hp_regen": 128},  # 85 HP × 1.5
-    ("Khitans", "mounted_trebuchet"): {"hp_regen": 113},  # 75 HP × 1.5
+    # NOTE: uses hp_regen_in_combat (gated) NOT hp_regen (passive) — only Khitan Ordo has this caveat.
+    ("Khitans", "heavy_cav_archer"): {"hp_regen_in_combat": 90},   # 60 HP × 1.5
+    ("Khitans", "cav_archer"): {"hp_regen_in_combat": 75},          # 50 HP × 1.5
+    ("Khitans", "hussar"): {"hp_regen_in_combat": 113},             # 75 HP × 1.5
+    ("Khitans", "light_cav"): {"hp_regen_in_combat": 90},           # 60 HP × 1.5
+    ("Khitans", "steppe_lancer"): {"hp_regen_in_combat": 90},       # 60 HP × 1.5
+    ("Khitans", "elite_steppe"): {"hp_regen_in_combat": 120},       # 80 HP × 1.5
+    ("Khitans", "camel"): {"hp_regen_in_combat": 150},              # 100 HP × 1.5
+    ("Khitans", "heavy_camel"): {"hp_regen_in_combat": 180},        # 120 HP × 1.5
+    ("Khitans", "fire_lancer"): {"hp_regen_in_combat": 98},         # 65 HP × 1.5
+    ("Khitans", "elite_fire_lancer"): {"hp_regen_in_combat": 128},  # 85 HP × 1.5
+    ("Khitans", "mounted_trebuchet"): {"hp_regen_in_combat": 113},  # 75 HP × 1.5
     # Shu Coiled Serpent Array (Castle UT) — spear-line + White Feather gain %HP near each other
     # +0.5% HP per nearby qualifying unit, capped at 30 units = +15% HP max
     ("Shu", "halberdier"): {"hp_nearby_percent_per_unit": 0.5, "hp_nearby_max_units": 30},

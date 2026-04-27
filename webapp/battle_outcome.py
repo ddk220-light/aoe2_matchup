@@ -10,17 +10,45 @@ from collections import Counter
 
 @dataclass
 class BattleOutcome:
-    winner: int                       # 1, 2, or 0 (draw)
-    end_reason: str                   # "eliminated" | "decisive_lead" | "time_cap"
+    winner: int
+    end_reason: str
     game_time_s: float
-    team1_hp_pct: float               # remaining HP / starting HP, 0..1
+    team1_hp_pct: float
     team2_hp_pct: float
     team1_survivors: int
     team2_survivors: int
-    team1_resources_lost: int
+    team1_resources_lost: int        # legacy: integer sum of all 3 resources
     team2_resources_lost: int
     team1_start_count: int
     team2_start_count: int
+
+    # Per-resource breakdown — HP-weighted loss
+    team1_food_lost: float = 0.0
+    team1_wood_lost: float = 0.0
+    team1_gold_lost: float = 0.0
+    team2_food_lost: float = 0.0
+    team2_wood_lost: float = 0.0
+    team2_gold_lost: float = 0.0
+
+    # Resources gained from kill-bonus civ effects (e.g. Mapuche +3 gold/kill)
+    team1_food_gained: float = 0.0
+    team1_wood_gained: float = 0.0
+    team1_gold_gained: float = 0.0
+    team2_food_gained: float = 0.0
+    team2_wood_gained: float = 0.0
+    team2_gold_gained: float = 0.0
+
+    # Net value lost = (food + wood + gold lost) - (food + wood + gold gained)
+    team1_value_lost: float = 0.0
+    team2_value_lost: float = 0.0
+
+    # Per-unit cost (cached so downstream consumers don't need to re-lookup)
+    my_cost_food: float = 0.0
+    my_cost_wood: float = 0.0
+    my_cost_gold: float = 0.0
+    opp_cost_food: float = 0.0
+    opp_cost_wood: float = 0.0
+    opp_cost_gold: float = 0.0
 
 
 def signed_score(o: BattleOutcome) -> float:
@@ -60,15 +88,36 @@ def average_outcomes(outcomes):
     n = len(outcomes)
     sample = outcomes[0]
     end_reason = Counter(o.end_reason for o in outcomes).most_common(1)[0][0]
+
+    def mean(attr):
+        return round(sum(getattr(o, attr) for o in outcomes) / n, 4)
+
+    def imean(attr):
+        return int(round(sum(getattr(o, attr) for o in outcomes) / n))
+
     return replace(
         sample,
         winner=_majority_winner(outcomes),
         end_reason=end_reason,
         game_time_s=round(sum(o.game_time_s for o in outcomes) / n, 3),
-        team1_hp_pct=round(sum(o.team1_hp_pct for o in outcomes) / n, 4),
-        team2_hp_pct=round(sum(o.team2_hp_pct for o in outcomes) / n, 4),
-        team1_survivors=int(round(sum(o.team1_survivors for o in outcomes) / n)),
-        team2_survivors=int(round(sum(o.team2_survivors for o in outcomes) / n)),
-        team1_resources_lost=int(round(sum(o.team1_resources_lost for o in outcomes) / n)),
-        team2_resources_lost=int(round(sum(o.team2_resources_lost for o in outcomes) / n)),
+        team1_hp_pct=mean("team1_hp_pct"),
+        team2_hp_pct=mean("team2_hp_pct"),
+        team1_survivors=imean("team1_survivors"),
+        team2_survivors=imean("team2_survivors"),
+        team1_resources_lost=imean("team1_resources_lost"),
+        team2_resources_lost=imean("team2_resources_lost"),
+        team1_food_lost=mean("team1_food_lost"),
+        team1_wood_lost=mean("team1_wood_lost"),
+        team1_gold_lost=mean("team1_gold_lost"),
+        team2_food_lost=mean("team2_food_lost"),
+        team2_wood_lost=mean("team2_wood_lost"),
+        team2_gold_lost=mean("team2_gold_lost"),
+        team1_food_gained=mean("team1_food_gained"),
+        team1_wood_gained=mean("team1_wood_gained"),
+        team1_gold_gained=mean("team1_gold_gained"),
+        team2_food_gained=mean("team2_food_gained"),
+        team2_wood_gained=mean("team2_wood_gained"),
+        team2_gold_gained=mean("team2_gold_gained"),
+        team1_value_lost=mean("team1_value_lost"),
+        team2_value_lost=mean("team2_value_lost"),
     )

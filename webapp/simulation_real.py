@@ -33,6 +33,7 @@ try:
 except ImportError:
     from battle_outcome import BattleOutcome
 
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -140,6 +141,43 @@ def _stat_charge_proj_attacks(stats):
     if isinstance(v, dict):
         return _parse_attacks_armors(v)
     return _parse_attacks_armors(stats.get("charge_projectile_attacks_json"))
+
+
+def prepare_combat_unit(stats):
+    """Normalise a combat-unit dict for use with simulate_real_battle().
+
+    Accepts both DB-row-shaped dicts (with ``attacks_json`` / ``armors_json``
+    string fields) and plain dicts (with numeric keys already in ``attacks``
+    / ``armors``).  Unknown keys are passed through unchanged so callers can
+    attach extra fields (e.g. ``cost_food``, ``outline_size``) without losing
+    them.
+
+    This is a thin wrapper: simulation_real already handles both dict shapes
+    via ``_stat_attacks`` / ``_stat_armors``, so all we do here is return a
+    shallow copy with known numeric fields coerced.
+    """
+    out = dict(stats)
+    # Resolve hp / max_hp — BattleUnit reads stats["hp"].
+    hp_val = stats.get("hp") or stats.get("max_hp") or 100
+    out["hp"] = hp_val
+    out.setdefault("max_hp", hp_val)
+    out.setdefault("attack", 0)
+    out.setdefault("melee_armor", 0)
+    out.setdefault("pierce_armor", 0)
+    out.setdefault("attack_range", 0)
+    out.setdefault("cost_food", 0)
+    out.setdefault("cost_wood", 0)
+    out.setdefault("cost_gold", 0)
+    out.setdefault("cost", (out.get("cost_food") or 0) + (out.get("cost_wood") or 0) + (out.get("cost_gold") or 0))
+    # attack_speed: BattleUnit computes reload_time from attack_speed.
+    # If caller supplied reload_time instead, convert it.
+    if "attack_speed" not in out:
+        rt = stats.get("reload_time")
+        out["attack_speed"] = (1.0 / rt) if rt else 0.5
+    # movement_speed: BattleUnit reads stats.movement_speed.
+    if "movement_speed" not in out:
+        out["movement_speed"] = stats.get("speed") or 1.0
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -1249,6 +1287,14 @@ def simulate_real_battle(
             return winner, remaining1, remaining2, hp1_pct, hp2_pct
         return winner, remaining1, remaining2
 
+    # Per-unit costs from the prepared combat dicts.
+    u1_cost_food = float(unit1.get("cost_food") or 0)
+    u1_cost_wood = float(unit1.get("cost_wood") or 0)
+    u1_cost_gold = float(unit1.get("cost_gold") or 0)
+    u2_cost_food = float(unit2.get("cost_food") or 0)
+    u2_cost_wood = float(unit2.get("cost_wood") or 0)
+    u2_cost_gold = float(unit2.get("cost_gold") or 0)
+
     return BattleOutcome(
         winner=winner,
         end_reason=sim.end_reason or "time_cap",
@@ -1261,6 +1307,26 @@ def simulate_real_battle(
         team2_resources_lost=sim.total_resources_lost(2),
         team1_start_count=count1,
         team2_start_count=count2,
+        team1_food_lost=sim.total_food_lost(1),
+        team1_wood_lost=sim.total_wood_lost(1),
+        team1_gold_lost=sim.total_gold_lost(1),
+        team2_food_lost=sim.total_food_lost(2),
+        team2_wood_lost=sim.total_wood_lost(2),
+        team2_gold_lost=sim.total_gold_lost(2),
+        team1_food_gained=round(sim.team1_food_gained, 3),
+        team1_wood_gained=round(sim.team1_wood_gained, 3),
+        team1_gold_gained=round(sim.team1_gold_gained, 3),
+        team2_food_gained=round(sim.team2_food_gained, 3),
+        team2_wood_gained=round(sim.team2_wood_gained, 3),
+        team2_gold_gained=round(sim.team2_gold_gained, 3),
+        team1_value_lost=sim.total_value_lost(1),
+        team2_value_lost=sim.total_value_lost(2),
+        my_cost_food=u1_cost_food,
+        my_cost_wood=u1_cost_wood,
+        my_cost_gold=u1_cost_gold,
+        opp_cost_food=u2_cost_food,
+        opp_cost_wood=u2_cost_wood,
+        opp_cost_gold=u2_cost_gold,
     )
 
 

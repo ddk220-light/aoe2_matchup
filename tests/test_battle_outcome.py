@@ -116,3 +116,24 @@ def test_simulate_real_battle_legacy_tuple_via_kwarg():
     )
     assert isinstance(legacy, tuple)
     assert len(legacy) == 5  # winner, r1, r2, hp1, hp2
+
+
+def test_battle_outcome_carries_per_resource_fields():
+    o = BattleOutcome(
+        winner=1, end_reason="eliminated", game_time_s=10.0,
+        team1_hp_pct=1.0, team2_hp_pct=0.0,
+        team1_survivors=30, team2_survivors=0,
+        team1_resources_lost=0, team2_resources_lost=4500,
+        team1_start_count=30, team2_start_count=30,
+        team1_food_lost=0.0, team1_wood_lost=0.0, team1_gold_lost=0.0,
+        team1_food_gained=0.0, team1_wood_gained=0.0, team1_gold_gained=90.0,
+        team1_value_lost=-90.0,
+        team2_food_lost=2250.0, team2_wood_lost=0.0, team2_gold_lost=2250.0,
+        team2_food_gained=0.0, team2_wood_gained=0.0, team2_gold_gained=0.0,
+        team2_value_lost=4500.0,
+        my_cost_food=50, my_cost_wood=0, my_cost_gold=50,
+        opp_cost_food=75, opp_cost_wood=0, opp_cost_gold=75,
+    )
+    assert o.team1_gold_gained == 90.0
+    assert o.team2_value_lost == 4500.0
+    assert o.my_cost_food == 50

@@ -175,7 +175,10 @@ def main():
                         help="Delete existing matchup DB before running")
     parser.add_argument("--workers", type=int, default=max(1, mp.cpu_count() - 1))
     parser.add_argument("--db", default=DEFAULT_DB_PATH)
-    parser.add_argument("--civs", nargs="+", help="Limit to specific civs")
+    parser.add_argument("--civs", nargs="+",
+                        help="Limit BOTH sides to specific civs (full subset matrix)")
+    parser.add_argument("--my-civs", nargs="+", dest="my_civs",
+                        help="Limit MY side to these civs; opp side stays as all civs")
     args = parser.parse_args()
 
     if args.reset and os.path.exists(args.db):
@@ -189,44 +192,73 @@ def main():
     ref_conn.row_factory = sqlite3.Row
     slug_to_line = _build_slug_to_line()
 
-    if args.civs:
-        civs = args.civs
-    else:
-        civs = sorted({r["civ_name"] for r in ref_conn.execute(
-            "SELECT DISTINCT civ_name FROM ref_units"
-        ).fetchall()})
+    all_civs = sorted({r["civ_name"] for r in ref_conn.execute(
+        "SELECT DISTINCT civ_name FROM ref_units"
+    ).fetchall()})
 
-    # Build the full (civ, unit) list with fingerprints
-    all_units = []  # list of (civ, slug, cu, fingerprint)
-    for civ in civs:
+    if args.civs:
+        my_civs = opp_civs = args.civs
+    elif args.my_civs:
+        my_civs = args.my_civs
+        opp_civs = all_civs
+    else:
+        my_civs = opp_civs = all_civs
+
+    # Build separate my-side and opp-side unit lists.
+    # all_units holds the union (with fingerprints); my_indices marks which
+    # entries are eligible to BE the "my side" of a matchup.
+    all_units = []   # list of (civ, slug, cu, fingerprint)
+    my_indices = set()
+    seen_keys = set()
+    civs_union = sorted(set(my_civs) | set(opp_civs))
+    for civ in civs_union:
         for slug in _units_for_civ(ref_conn, civ, slug_to_line):
+            key = (civ, slug)
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
             cu = _load_unit(ref_conn, civ, slug)
             if cu is None:
                 continue
+            idx = len(all_units)
             all_units.append((civ, slug, cu, unit_fingerprint(cu)))
+            if civ in my_civs:
+                my_indices.add(idx)
 
     ref_conn.close()
-    print(f"Eligible units: {len(all_units)} (civ, slug) pairs")
+    print(f"Eligible units: {len(all_units)} (civ, slug) pairs total; "
+          f"{len(my_indices)} on my side")
 
     # Build (my, opp) pairs with mirror-symmetry dedup.
-    # Members carry their fingerprints so the insert step can detect
-    # whether each row needs avg as-is (rep's direction) or flipped (mirror).
+    # i must be a my-side index; j ranges across all units.
+    # When both i and j are my-side, we still apply mirror dedup (i <= j)
+    # because the result of A vs B is the mirror of B vs A.
+    # When i is my-side but j is opp-only, we ALWAYS create the pair (no mirror needed).
     groups = defaultdict(list)            # key -> list of (my_civ, my_slug, my_fp, opp_civ, opp_slug, opp_fp)
     representatives = {}                   # key -> (my_unit, opp_unit, my_fp, fixed, resources)
 
     total_slots = 0
     for i in range(len(all_units)):
-        for j in range(i, len(all_units)):  # i == j allowed (mirror match)
+        if i not in my_indices:
+            continue
+        for j in range(len(all_units)):
+            # Mirror dedup only applies when BOTH sides are my-eligible:
+            # otherwise we always need the (my=i, opp=j) row.
+            if j in my_indices and j < i:
+                continue
             my_civ, my_slug, my_cu, my_fp = all_units[i]
             opp_civ, opp_slug, opp_cu, opp_fp = all_units[j]
             for scale_label, fixed_count, resources in SCALES:
-                # 2 raw slots per pair (the (my, opp) and the mirror (opp, my))
-                total_slots += 1 if i == j else 2
-                # Dedup key: order-insensitive fingerprint pair + scale
+                # Add the (my, opp) direction always.
+                # Add the mirror (opp, my) only when opp is also my-eligible
+                # (otherwise we'd be recording rows where opp-only civs are
+                # the my side, which we explicitly said we don't want).
+                add_mirror = (i != j) and (j in my_indices)
+                total_slots += 2 if add_mirror else 1
                 fp_key = tuple(sorted((my_fp, opp_fp)))
                 key = (fp_key, scale_label)
                 groups[key].append((my_civ, my_slug, my_fp, opp_civ, opp_slug, opp_fp))
-                if i != j:
+                if add_mirror:
                     groups[key].append((opp_civ, opp_slug, opp_fp, my_civ, my_slug, my_fp))
                 if key not in representatives:
                     representatives[key] = (my_cu, opp_cu, my_fp, fixed_count, resources)

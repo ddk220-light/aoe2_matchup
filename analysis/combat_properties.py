@@ -238,6 +238,9 @@ def get_combat_properties(unit_slug, civ_name=None, unit_id=None, units_data=Non
         "execute_hp_step": 0,
         "ally_death_heal": 0,
         "ally_death_heal_duration": 0,
+        "food_per_kill": 0,
+        "wood_per_kill": 0,
+        "gold_per_kill": 0,
     }
 
     # Apply extracted data from dat file (data-driven stats)

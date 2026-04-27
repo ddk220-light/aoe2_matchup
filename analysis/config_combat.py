@@ -301,8 +301,11 @@ CIV_COMBAT_PROPERTIES = {
     ("Jurchens", "siege_onager"): {"extra_projectiles": 1},
     ("Jurchens", "grenadier"): {"extra_projectiles": 1},
     # Mapuche Malon (Castle UT) — Bolas Riders, Slingers, Skirmishers deal 30% pass-through damage
-    ("Mapuche", "bolas_rider"): {"pass_through_percent": 0.30, "pass_through_count": 1},
-    ("Mapuche", "elite_bolas_rider"): {"pass_through_percent": 0.30, "pass_through_count": 1},
+    ("Mapuche", "bolas_rider"): {"pass_through_percent": 0.30, "pass_through_count": 1, "gold_per_kill": 3},
+    ("Mapuche", "elite_bolas_rider"): {"pass_through_percent": 0.30, "pass_through_count": 1, "gold_per_kill": 3},
+    # Mapuche civ bonus — mounted units generate +3 gold per military unit killed
+    ("Mapuche", "kona"): {"gold_per_kill": 3},
+    ("Mapuche", "elite_kona"): {"gold_per_kill": 3},
     ("Mapuche", "slinger"): {"pass_through_percent": 0.30, "pass_through_count": 1},
     ("Mapuche", "imp_slinger"): {"pass_through_percent": 0.30, "pass_through_count": 1},
     ("Mapuche", "elite_skirm"): {"pass_through_percent": 0.30, "pass_through_count": 1},

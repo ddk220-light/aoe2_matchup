@@ -254,6 +254,7 @@ class BattleUnit:
         "dodge_shield_max", "dodge_shield_recharge",
         "bleed_dps", "bleed_duration",
         "block_first_melee", "attack_bonus_per_kill",
+        "food_per_kill", "wood_per_kill", "gold_per_kill",
         "first_attack_extra_projectiles",
         "hp_transform_threshold", "hp_regen", "hp_regen_in_combat",
         "pass_through_percent", "pass_through_count",
@@ -326,6 +327,9 @@ class BattleUnit:
         self.bleed_duration = float(stats.get("bleed_duration") or 0)
         self.block_first_melee = _to_int(stats.get("block_first_melee"))
         self.attack_bonus_per_kill = _to_int(stats.get("attack_bonus_per_kill"))
+        self.food_per_kill = float(stats.get("food_per_kill") or 0)
+        self.wood_per_kill = float(stats.get("wood_per_kill") or 0)
+        self.gold_per_kill = float(stats.get("gold_per_kill") or 0)
         self.first_attack_extra_projectiles = _to_int(
             stats.get("first_attack_extra_projectiles")
         )

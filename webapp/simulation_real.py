@@ -664,8 +664,15 @@ class BattleUnit:
                 self.state = "kiting"
                 self.move_away_from_target(dt, grid)
             elif cooldown > 0:
-                # Reloading (post-kite-stop OR vs ranged target): hold position.
-                self.state = "attacking"
+                # Reloading vs ranged target OR post-kite-stop. Hold if
+                # target is in range; otherwise close the distance — the
+                # kite-stop bans running AWAY, not pursuing.
+                if self.in_range():
+                    self.state = "attacking"
+                else:
+                    self.state = "moving"
+                    self.move_toward_target(dt, grid)
+                    self.was_moving = True
             elif self.in_range():
                 # Cooldown done, in range — start the windup for next shot.
                 if self.attack_delay > 0:

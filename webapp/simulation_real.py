@@ -62,6 +62,15 @@ DEFAULT_PROJECTILE_SPEED = 7.0  # tiles/s
 # get reliably grazed.
 MISS_SPREAD_RADIUS = 2.0  # tiles
 
+# After this many game-seconds, ranged units stop kiting and just attack.
+# Models real-game reality: an infinite kite is impossible — units hit
+# walls, micro fails, the player shifts focus.  Lets battles actually
+# resolve so we get meaningful HP-remaining data on melee units.
+# Units with min_attack_range > 0 (Onager/Mangonel/Scorpion/Trebuchet)
+# still need their target to be outside the dead zone after kite-stop —
+# they will switch targets if possible, else go idle.
+KITE_STOP_TIME = 60.0  # game-seconds
+
 # Battle timeout (game-time seconds).  Hard cap — at this point the leader
 # (by raw HP diff) is declared winner.  600s (10 min) is a generous ceiling
 # that lets almost all fights run to natural elimination; cost-asymmetric
@@ -515,6 +524,24 @@ class BattleUnit:
         self.last_dist_to_target = self.distance_to(self.target) if self.target else float("inf")
         return self.target
 
+    def find_target_outside_dead_zone(self, enemies):
+        """For min_range > 0 ranged units after kite-stop: prefer the
+        closest enemy that's at or beyond min_attack_range.  If none
+        exist, return None (caller should idle)."""
+        if self.min_attack_range <= 0:
+            return self.find_target(enemies)
+        best = None
+        best_dist = float("inf")
+        for enemy in enemies:
+            if enemy.state == "dead":
+                continue
+            d = self.distance_to(enemy)
+            if d < self.min_attack_range:
+                continue
+            if d < best_dist:
+                best, best_dist = enemy, d
+        return best
+
     # ---- Update -----------------------------------------------------------
 
     def update(self, dt, grid, enemies, sim):
@@ -585,6 +612,9 @@ class BattleUnit:
         was_moving = self.was_moving
         if self.is_ranged():
             should_kite = not self.target.is_ranged()
+            # After KITE_STOP_TIME, ranged units stop kiting and just attack
+            # (model real-world micro failure / map-edge hit).
+            can_kite = sim.battle_time < KITE_STOP_TIME
 
             # Committed shot: locked in windup animation, can't move.
             # Mirrors the melee branch's committed_attack pattern.  After
@@ -612,15 +642,29 @@ class BattleUnit:
                 return
 
             if self.too_close():
-                self.state = "kiting"
-                self.move_away_from_target(dt, grid)
-                self.was_moving = True
-            elif cooldown > 0 and should_kite:
+                # Target is inside the dead zone (only happens for units
+                # with min_attack_range > 0 — Onager, Mangonel, etc.).
+                if can_kite:
+                    self.state = "kiting"
+                    self.move_away_from_target(dt, grid)
+                    self.was_moving = True
+                else:
+                    # Past kite-stop: try to switch to a target outside
+                    # the dead zone; if none, go idle (the unit is
+                    # surrounded and can't shoot).
+                    new_target = self.find_target_outside_dead_zone(enemies)
+                    if new_target is None:
+                        self.state = "idle"
+                        return
+                    self.target = new_target
+                    self.was_moving = False
+                    # Fall through to handle as an in-range/out-of-range case
+            elif cooldown > 0 and should_kite and can_kite:
                 # Reloading vs melee target: free to kite away.
                 self.state = "kiting"
                 self.move_away_from_target(dt, grid)
             elif cooldown > 0:
-                # Reloading vs ranged target: hold position.
+                # Reloading (post-kite-stop OR vs ranged target): hold position.
                 self.state = "attacking"
             elif self.in_range():
                 # Cooldown done, in range — start the windup for next shot.

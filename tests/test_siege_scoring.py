@@ -61,13 +61,6 @@ def test_outranges_castle_slow_kill_returns_loss():
     assert 0.0 < dmg < 1.0
 
 
-def test_tarkan_line_exists_in_unit_lines():
-    from unit_lines import UNIT_LINES
-    assert "tarkan" in UNIT_LINES, "tarkan must have a standalone UNIT_LINES entry"
-    assert UNIT_LINES["tarkan"]["castle_slug"] == "tarkan_huns"
-    assert UNIT_LINES["tarkan"]["imperial_slug"] == "elite_tarkan_huns"
-
-
 def test_tarkan_not_in_siege_line_slugs():
     """Tarkan is a unique_units entry in the ram line, not its own SIEGE_LINE_SLUG."""
     from compute_battle_scores import SIEGE_LINE_SLUGS

@@ -660,6 +660,18 @@ class BattleUnit:
                     and target.state == "dead"):
                 attacker.kill_bonus_attack += attacker.attack_bonus_per_kill
 
+            if (target_was_alive and target.state == "dead"
+                    and (attacker.food_per_kill > 0 or attacker.wood_per_kill > 0
+                         or attacker.gold_per_kill > 0)):
+                if attacker.team == 1:
+                    sim.team1_food_gained += attacker.food_per_kill
+                    sim.team1_wood_gained += attacker.wood_per_kill
+                    sim.team1_gold_gained += attacker.gold_per_kill
+                else:
+                    sim.team2_food_gained += attacker.food_per_kill
+                    sim.team2_wood_gained += attacker.wood_per_kill
+                    sim.team2_gold_gained += attacker.gold_per_kill
+
             if splash_r > 0 and will_hit:
                 enemies = sim.team2 if team == 1 else sim.team1
                 for enemy in enemies:
@@ -747,6 +759,18 @@ class BattleUnit:
         if (self.attack_bonus_per_kill > 0 and target_was_alive
                 and target.state == "dead"):
             self.kill_bonus_attack += self.attack_bonus_per_kill
+
+        if (target_was_alive and target.state == "dead"
+                and (self.food_per_kill > 0 or self.wood_per_kill > 0
+                     or self.gold_per_kill > 0)):
+            if self.team == 1:
+                sim.team1_food_gained += self.food_per_kill
+                sim.team1_wood_gained += self.wood_per_kill
+                sim.team1_gold_gained += self.gold_per_kill
+            else:
+                sim.team2_food_gained += self.food_per_kill
+                sim.team2_wood_gained += self.wood_per_kill
+                sim.team2_gold_gained += self.gold_per_kill
 
         # Trample (melee)
         if not self.is_ranged():

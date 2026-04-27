@@ -2177,8 +2177,10 @@ Expected: PyPy 3.x version string. If missing, install from https://www.pypy.org
 
 - [ ] **Step 2: Reset and run**
 
+On the dev machine (Ryzen 9 9900X / 12C-24T / 64 GB RAM), the default `--workers cpu_count-1 = 23` is correct. Each PyPy worker uses ~300 MB–1 GB; 23 × ~500 MB = ~12 GB peak, well within budget.
+
 Run: `pypy3 -m webapp.run_matchup_battles --reset 2>&1 | tee /tmp/matchup_full_run.log | tail -20`
-Expected: Pre-pass prints, dispatches ~130K group tasks. Runtime ~3–5 hours. Final line: "Done in Ns."
+Expected: Pre-pass prints, dispatches ~130K group tasks. Runtime ~2–4 hours on this hardware. Final line: "Done in Ns."
 
 If it errors midway, fix the error and re-run **without** `--reset` — sim_version skip will resume from where it left off.
 

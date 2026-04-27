@@ -24,3 +24,16 @@ def test_battleunit_defaults_kill_bonuses_to_zero():
     assert u.food_per_kill == 0
     assert u.wood_per_kill == 0
     assert u.gold_per_kill == 0
+
+
+from simulation_real import BattleSimulation
+
+
+def test_simulation_initializes_resource_accumulators():
+    sim = BattleSimulation()
+    assert sim.team1_food_gained == 0.0
+    assert sim.team1_wood_gained == 0.0
+    assert sim.team1_gold_gained == 0.0
+    assert sim.team2_food_gained == 0.0
+    assert sim.team2_wood_gained == 0.0
+    assert sim.team2_gold_gained == 0.0

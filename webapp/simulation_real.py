@@ -936,6 +936,12 @@ class BattleSimulation:
         self.grid = None  # lazily created on first step() with auto-tuned cell_size
         self.alive = []  # maintained across ticks; populated on first step
         self.has_ranged = False  # set to True if any unit on either team is ranged
+        self.team1_food_gained = 0.0
+        self.team1_wood_gained = 0.0
+        self.team1_gold_gained = 0.0
+        self.team2_food_gained = 0.0
+        self.team2_wood_gained = 0.0
+        self.team2_gold_gained = 0.0
 
     def setup_team(self, team_num, stats, count):
         team = []

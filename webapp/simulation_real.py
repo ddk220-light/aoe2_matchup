@@ -71,6 +71,30 @@ MISS_SPREAD_RADIUS = 2.0  # tiles
 # they will switch targets if possible, else go idle.
 KITE_STOP_TIME = 60.0  # game-seconds
 
+# Weighted resource cost: gold is the scarcest economic resource, wood the
+# most abundant.  Used everywhere we collapse (food, wood, gold) into a
+# single "cost" or "value" scalar — unit-count budgets at the 3k scale,
+# value_lost aggregation, and the ranking-side calc_weighted_cost in
+# compute_battle_scores.py.
+COST_WEIGHT_FOOD = 1.0
+COST_WEIGHT_WOOD = 0.7
+COST_WEIGHT_GOLD = 1.5
+
+# 3k scale cap: if either side would have more than this many units at the
+# 3k resource budget, that side is capped at 30 and the OPPOSITE side's
+# count is recomputed to match the capped side's total cost.  Keeps fights
+# manageable: avoids 60-vs-60 halberdier slugfests, and avoids matching
+# 9 elephants against ~57 halbs (trims to ~5 elephants vs 30 halbs at the
+# same cost ratio, much faster to simulate).
+SCALE_3K_UNIT_CAP = 30
+
+
+def weighted_cost(food, wood, gold):
+    """Collapse a (food, wood, gold) triple into a single cost scalar."""
+    return (COST_WEIGHT_FOOD * (food or 0)
+            + COST_WEIGHT_WOOD * (wood or 0)
+            + COST_WEIGHT_GOLD * (gold or 0))
+
 # Battle timeout (game-time seconds).  Hard cap — at this point the leader
 # (by raw HP diff) is declared winner.  600s (10 min) is a generous ceiling
 # that lets almost all fights run to natural elimination; cost-asymmetric
@@ -187,7 +211,7 @@ def prepare_combat_unit(stats):
     out.setdefault("cost_food", 0)
     out.setdefault("cost_wood", 0)
     out.setdefault("cost_gold", 0)
-    out.setdefault("cost", (out.get("cost_food") or 0) + (out.get("cost_wood") or 0) + (out.get("cost_gold") or 0))
+    out.setdefault("cost", weighted_cost(out.get("cost_food"), out.get("cost_wood"), out.get("cost_gold")))
     # attack_speed: BattleUnit computes reload_time from attack_speed.
     # If caller supplied reload_time instead, convert it.
     if "attack_speed" not in out:
@@ -1202,14 +1226,22 @@ class BattleSimulation:
         ))
 
     def total_value_lost(self, team_num):
-        """Net value lost = (food + wood + gold lost) - (food + wood + gold gained)."""
+        """Net value lost using weighted cost (gold scarcer than food, wood cheapest).
+
+        value = COST_WEIGHT_FOOD*food + COST_WEIGHT_WOOD*wood + COST_WEIGHT_GOLD*gold,
+        applied to both losses and per-kill resource gains.
+        """
         if team_num == 1:
-            gained = self.team1_food_gained + self.team1_wood_gained + self.team1_gold_gained
+            gained = (COST_WEIGHT_FOOD * self.team1_food_gained
+                      + COST_WEIGHT_WOOD * self.team1_wood_gained
+                      + COST_WEIGHT_GOLD * self.team1_gold_gained)
         else:
-            gained = self.team2_food_gained + self.team2_wood_gained + self.team2_gold_gained
-        lost = (self._resource_lost(team_num, "cost_food")
-                + self._resource_lost(team_num, "cost_wood")
-                + self._resource_lost(team_num, "cost_gold"))
+            gained = (COST_WEIGHT_FOOD * self.team2_food_gained
+                      + COST_WEIGHT_WOOD * self.team2_wood_gained
+                      + COST_WEIGHT_GOLD * self.team2_gold_gained)
+        lost = (COST_WEIGHT_FOOD * self._resource_lost(team_num, "cost_food")
+                + COST_WEIGHT_WOOD * self._resource_lost(team_num, "cost_wood")
+                + COST_WEIGHT_GOLD * self._resource_lost(team_num, "cost_gold"))
         return round(lost - gained, 3)
 
     def step(self, dt):
@@ -1363,6 +1395,49 @@ def _calc_count(unit, resources, fixed_count, cost_override):
     return int(max(1, resources // cost))
 
 
+def _calc_counts(unit1, unit2, resources, fixed_count,
+                 cost1_override, cost2_override):
+    """Return (count1, count2) honoring the SCALE_3K_UNIT_CAP rule.
+
+    For fixed_count scales (e.g. 30v30), defers to _calc_count per side.
+    For resource-budget scales (e.g. 3k):
+      * Compute each side's uncapped count from its own weighted cost.
+      * If a side exceeds SCALE_3K_UNIT_CAP, cap it at 30, then rematch
+        the OPPOSITE side's count to the capped side's total weighted
+        cost (so the two armies still cost the same).
+      * If both sides would exceed the cap (mirror or both-cheap), cap
+        both at 30 with their natural costs — no rematch needed.
+    """
+    if fixed_count is not None:
+        return (_calc_count(unit1, resources, fixed_count, cost1_override),
+                _calc_count(unit2, resources, fixed_count, cost2_override))
+
+    cost1 = cost1_override if cost1_override is not None else (
+        unit1["cost"] if unit1.get("cost") and unit1["cost"] > 0 else 100)
+    cost2 = cost2_override if cost2_override is not None else (
+        unit2["cost"] if unit2.get("cost") and unit2["cost"] > 0 else 100)
+
+    n1 = max(1, int(resources // cost1))
+    n2 = max(1, int(resources // cost2))
+
+    over1 = n1 > SCALE_3K_UNIT_CAP
+    over2 = n2 > SCALE_3K_UNIT_CAP
+
+    if over1 and over2:
+        # Both sides cheap — symmetric cap, no rematch.
+        return SCALE_3K_UNIT_CAP, SCALE_3K_UNIT_CAP
+    if over1:
+        # Side 1 cheap, side 2 expensive: cap side 1, rematch side 2.
+        n1 = SCALE_3K_UNIT_CAP
+        n2 = max(1, int((n1 * cost1) // cost2))
+        return n1, n2
+    if over2:
+        n2 = SCALE_3K_UNIT_CAP
+        n1 = max(1, int((n2 * cost2) // cost1))
+        return n1, n2
+    return n1, n2
+
+
 def simulate_real_battle(
     unit1,
     unit2,
@@ -1386,8 +1461,8 @@ def simulate_real_battle(
     if seed is not None:
         random.seed(seed)
 
-    count1 = _calc_count(unit1, resources, fixed_count, cost1_override)
-    count2 = _calc_count(unit2, resources, fixed_count, cost2_override)
+    count1, count2 = _calc_counts(unit1, unit2, resources, fixed_count,
+                                   cost1_override, cost2_override)
 
     sim = BattleSimulation()
     sim.setup_team(1, unit1, count1)

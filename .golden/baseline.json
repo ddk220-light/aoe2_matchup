@@ -4,20 +4,20 @@
       "left": {
         "crossbow": {
           "eco_wins": [
-            "knight",
+            "cav_archer",
             "warrior_priest_armenians"
           ],
           "highlighted": [
             "composite_bowman_armenians"
           ],
           "losses": [
-            "cav_archer",
             "elite_skirm",
             "light_cav",
-            "scorpion"
+            "scorpion",
+            "swordsmen"
           ],
           "pop_wins": [
-            "swordsmen"
+            "crossbow"
           ],
           "wins": [
             "composite_bowman_armenians",
@@ -26,10 +26,10 @@
         },
         "eagle_warrior": {
           "eco_wins": [
-            "cav_archer",
             "knight"
           ],
           "highlighted": [
+            "cav_archer",
             "crossbow",
             "elite_skirm",
             "scorpion"
@@ -44,6 +44,7 @@
             "pikeman"
           ],
           "wins": [
+            "cav_archer",
             "crossbow",
             "elite_skirm",
             "scorpion"
@@ -53,7 +54,6 @@
           "eco_wins": [
             "knight",
             "scorpion",
-            "swordsmen",
             "warrior_priest_armenians"
           ],
           "highlighted": [
@@ -62,7 +62,8 @@
             "elite_skirm"
           ],
           "losses": [
-            "light_cav"
+            "light_cav",
+            "swordsmen"
           ],
           "pop_wins": [],
           "wins": [
@@ -78,18 +79,18 @@
             "knight"
           ],
           "highlighted": [
-            "elite_skirm",
+            "cav_archer",
             "light_cav",
             "warrior_priest_armenians"
           ],
           "losses": [
-            "cav_archer",
             "composite_bowman_armenians"
           ],
           "pop_wins": [
             "crossbow"
           ],
           "wins": [
+            "cav_archer",
             "elite_skirm",
             "light_cav",
             "pikeman",
@@ -100,6 +101,7 @@
         },
         "pikeman": {
           "eco_wins": [
+            "cav_archer",
             "knight",
             "scorpion"
           ],
@@ -141,20 +143,20 @@
         },
         "swordsmen": {
           "eco_wins": [
+            "cav_archer",
             "knight",
             "scorpion"
           ],
           "highlighted": [
-            "elite_skirm",
             "light_cav"
           ],
           "losses": [
-            "cav_archer",
             "composite_bowman_armenians",
             "warrior_priest_armenians"
           ],
           "pop_wins": [],
           "wins": [
+            "crossbow",
             "elite_skirm",
             "light_cav",
             "pikeman"
@@ -178,24 +180,19 @@
       "right": {
         "cav_archer": {
           "eco_wins": [],
-          "highlighted": [
-            "crossbow",
-            "jaguar_warrior_aztecs",
-            "swordsmen"
-          ],
+          "highlighted": [],
           "losses": [
+            "eagle_warrior",
             "elite_skirm",
+            "jaguar_warrior_aztecs",
             "scorpion"
           ],
           "pop_wins": [
-            "eagle_warrior",
-            "pikeman"
-          ],
-          "wins": [
             "crossbow",
-            "jaguar_warrior_aztecs",
+            "pikeman",
             "swordsmen"
-          ]
+          ],
+          "wins": []
         },
         "composite_bowman_armenians": {
           "eco_wins": [
@@ -219,18 +216,15 @@
           ]
         },
         "crossbow": {
-          "eco_wins": [
-            "jaguar_warrior_aztecs"
-          ],
+          "eco_wins": [],
           "highlighted": [],
           "losses": [
             "eagle_warrior",
             "elite_skirm",
-            "scorpion"
-          ],
-          "pop_wins": [
+            "scorpion",
             "swordsmen"
           ],
+          "pop_wins": [],
           "wins": [
             "pikeman"
           ]
@@ -332,11 +326,11 @@
           "losses": [
             "jaguar_warrior_aztecs"
           ],
-          "pop_wins": [
-            "elite_skirm"
-          ],
+          "pop_wins": [],
           "wins": [
+            "crossbow",
             "eagle_warrior",
+            "elite_skirm",
             "pikeman"
           ]
         },
@@ -365,6 +359,7 @@
       "left": {
         "arbalester": {
           "eco_wins": [
+            "heavy_cav_archer",
             "heavy_scorpion",
             "paladin",
             "warrior_priest_armenians"
@@ -376,7 +371,6 @@
           "losses": [
             "arbalester",
             "champion",
-            "heavy_cav_archer",
             "imp_elite_skirm"
           ],
           "pop_wins": [],
@@ -388,22 +382,22 @@
         },
         "champion": {
           "eco_wins": [
-            "heavy_cav_archer",
             "heavy_scorpion",
             "paladin",
             "warrior_priest_armenians"
           ],
           "highlighted": [
+            "heavy_cav_archer",
             "hussar"
           ],
           "losses": [
-            "arbalester",
             "champion",
             "elite_composite_bowman_armenians"
           ],
           "pop_wins": [],
           "wins": [
             "halberdier",
+            "heavy_cav_archer",
             "hussar",
             "imp_elite_skirm"
           ]
@@ -445,10 +439,9 @@
           "losses": [
             "elite_composite_bowman_armenians"
           ],
-          "pop_wins": [
-            "arbalester"
-          ],
+          "pop_wins": [],
           "wins": [
+            "arbalester",
             "champion",
             "halberdier",
             "heavy_cav_archer",
@@ -461,6 +454,7 @@
         },
         "halberdier": {
           "eco_wins": [
+            "heavy_cav_archer",
             "heavy_scorpion",
             "paladin"
           ],
@@ -484,6 +478,7 @@
         "heavy_scorpion": {
           "eco_wins": [],
           "highlighted": [
+            "heavy_cav_archer",
             "heavy_scorpion"
           ],
           "losses": [
@@ -496,16 +491,15 @@
             "arbalester",
             "elite_composite_bowman_armenians",
             "halberdier",
-            "heavy_cav_archer",
             "imp_elite_skirm"
           ],
           "wins": [
+            "heavy_cav_archer",
             "heavy_scorpion"
           ]
         },
         "imp_elite_skirm": {
           "eco_wins": [
-            "hussar",
             "paladin"
           ],
           "highlighted": [
@@ -515,6 +509,8 @@
           ],
           "losses": [
             "champion",
+            "heavy_scorpion",
+            "hussar",
             "warrior_priest_armenians"
           ],
           "pop_wins": [],
@@ -544,28 +540,25 @@
       "right": {
         "arbalester": {
           "eco_wins": [
-            "elite_jaguar_warrior_aztecs",
             "heavy_scorpion"
           ],
           "highlighted": [
-            "arbalester",
-            "champion"
+            "arbalester"
           ],
           "losses": [
             "elite_eagle",
+            "elite_jaguar_warrior_aztecs",
             "imp_elite_skirm"
           ],
           "pop_wins": [],
           "wins": [
             "arbalester",
-            "champion",
             "halberdier"
           ]
         },
         "champion": {
           "eco_wins": [],
           "highlighted": [
-            "arbalester",
             "elite_eagle"
           ],
           "losses": [
@@ -618,28 +611,26 @@
           "wins": []
         },
         "heavy_cav_archer": {
-          "eco_wins": [
-            "heavy_scorpion"
-          ],
-          "highlighted": [
-            "arbalester"
-          ],
+          "eco_wins": [],
+          "highlighted": [],
           "losses": [
+            "champion",
             "elite_eagle",
             "elite_jaguar_warrior_aztecs",
+            "heavy_scorpion",
             "imp_elite_skirm"
           ],
           "pop_wins": [
-            "champion",
+            "arbalester",
             "halberdier"
           ],
-          "wins": [
-            "arbalester"
-          ]
+          "wins": []
         },
         "heavy_scorpion": {
           "eco_wins": [],
-          "highlighted": [],
+          "highlighted": [
+            "imp_elite_skirm"
+          ],
           "losses": [
             "elite_eagle",
             "elite_jaguar_warrior_aztecs",
@@ -648,15 +639,17 @@
           "pop_wins": [
             "arbalester",
             "champion",
-            "halberdier",
-            "imp_elite_skirm"
+            "halberdier"
           ],
-          "wins": []
+          "wins": [
+            "imp_elite_skirm"
+          ]
         },
         "hussar": {
           "eco_wins": [],
           "highlighted": [
-            "heavy_scorpion"
+            "heavy_scorpion",
+            "imp_elite_skirm"
           ],
           "losses": [
             "arbalester",
@@ -665,11 +658,10 @@
             "elite_jaguar_warrior_aztecs",
             "halberdier"
           ],
-          "pop_wins": [
-            "imp_elite_skirm"
-          ],
+          "pop_wins": [],
           "wins": [
-            "heavy_scorpion"
+            "heavy_scorpion",
+            "imp_elite_skirm"
           ]
         },
         "imp_elite_skirm": {
@@ -728,27 +720,21 @@
     "Celts_vs_Koreans_castle": {
       "left": {
         "cav_archer": {
-          "eco_wins": [
-            "knight"
-          ],
-          "highlighted": [
-            "fire_lancer"
-          ],
+          "eco_wins": [],
+          "highlighted": [],
           "losses": [
             "cav_archer",
+            "crossbow",
             "elite_skirm",
+            "knight",
             "scorpion",
             "war_wagon_koreans"
           ],
           "pop_wins": [
-            "crossbow",
+            "light_cav",
             "pikeman"
           ],
-          "wins": [
-            "fire_lancer",
-            "light_cav",
-            "swordsmen"
-          ]
+          "wins": []
         },
         "crossbow": {
           "eco_wins": [
@@ -765,9 +751,7 @@
             "scorpion",
             "war_wagon_koreans"
           ],
-          "pop_wins": [
-            "swordsmen"
-          ],
+          "pop_wins": [],
           "wins": [
             "fire_lancer",
             "pikeman"
@@ -780,6 +764,7 @@
           ],
           "highlighted": [],
           "losses": [
+            "elite_skirm",
             "fire_lancer",
             "knight",
             "light_cav",
@@ -937,7 +922,9 @@
           "highlighted": [
             "cav_archer",
             "crossbow",
+            "light_cav",
             "pikeman",
+            "swordsmen",
             "woad_raider_celts"
           ],
           "losses": [
@@ -956,10 +943,10 @@
         },
         "crossbow": {
           "eco_wins": [
-            "cav_archer",
             "knight"
           ],
           "highlighted": [
+            "cav_archer",
             "crossbow",
             "light_cav",
             "swordsmen",
@@ -971,6 +958,7 @@
           ],
           "pop_wins": [],
           "wins": [
+            "cav_archer",
             "crossbow",
             "light_cav",
             "pikeman",
@@ -980,12 +968,13 @@
         },
         "elite_skirm": {
           "eco_wins": [
-            "elite_skirm",
             "knight",
             "scorpion",
             "woad_raider_celts"
           ],
-          "highlighted": [],
+          "highlighted": [
+            "elite_skirm"
+          ],
           "losses": [
             "light_cav",
             "swordsmen"
@@ -994,11 +983,13 @@
           "wins": [
             "cav_archer",
             "crossbow",
+            "elite_skirm",
             "pikeman"
           ]
         },
         "fire_lancer": {
           "eco_wins": [
+            "cav_archer",
             "knight",
             "scorpion"
           ],
@@ -1008,7 +999,6 @@
             "pikeman"
           ],
           "losses": [
-            "cav_archer",
             "crossbow",
             "swordsmen",
             "woad_raider_celts"
@@ -1023,28 +1013,30 @@
         "knight": {
           "eco_wins": [],
           "highlighted": [
+            "cav_archer",
             "elite_skirm"
           ],
           "losses": [],
           "pop_wins": [
-            "cav_archer",
             "crossbow",
             "swordsmen",
             "woad_raider_celts"
           ],
           "wins": [
+            "cav_archer",
             "elite_skirm",
             "light_cav",
             "scorpion"
           ]
         },
         "light_cav": {
-          "eco_wins": [],
+          "eco_wins": [
+            "cav_archer"
+          ],
           "highlighted": [
             "crossbow"
           ],
           "losses": [
-            "cav_archer",
             "knight",
             "pikeman",
             "swordsmen",
@@ -1097,14 +1089,14 @@
         },
         "swordsmen": {
           "eco_wins": [
+            "cav_archer",
+            "crossbow",
             "knight",
             "scorpion",
             "woad_raider_celts"
           ],
           "highlighted": [],
-          "losses": [
-            "cav_archer"
-          ],
+          "losses": [],
           "pop_wins": [],
           "wins": [
             "elite_skirm",
@@ -1118,7 +1110,9 @@
             "cav_archer",
             "crossbow",
             "knight",
+            "light_cav",
             "scorpion",
+            "swordsmen",
             "woad_raider_celts"
           ],
           "losses": [],
@@ -1150,14 +1144,12 @@
             "champion",
             "elite_fire_lancer",
             "elite_war_wagon_koreans",
-            "hand_cannoneer",
             "heavy_cav_archer",
             "heavy_scorpion",
+            "hussar",
             "imp_elite_skirm"
           ],
-          "pop_wins": [
-            "hussar"
-          ],
+          "pop_wins": [],
           "wins": [
             "halberdier"
           ]
@@ -1237,7 +1229,9 @@
           ]
         },
         "heavy_cav_archer": {
-          "eco_wins": [],
+          "eco_wins": [
+            "paladin"
+          ],
           "highlighted": [],
           "losses": [
             "arbalester",
@@ -1250,11 +1244,11 @@
           ],
           "pop_wins": [
             "champion",
-            "halberdier"
+            "halberdier",
+            "hand_cannoneer"
           ],
           "wins": [
-            "hussar",
-            "paladin"
+            "hussar"
           ]
         },
         "heavy_scorpion": {
@@ -1283,6 +1277,7 @@
         },
         "hussar": {
           "eco_wins": [
+            "hand_cannoneer",
             "paladin"
           ],
           "highlighted": [
@@ -1294,7 +1289,6 @@
             "elite_fire_lancer",
             "elite_war_wagon_koreans",
             "halberdier",
-            "hand_cannoneer",
             "heavy_cav_archer"
           ],
           "pop_wins": [
@@ -1307,6 +1301,7 @@
         },
         "imp_elite_skirm": {
           "eco_wins": [
+            "arbalester",
             "hand_cannoneer",
             "heavy_cav_archer",
             "heavy_scorpion",
@@ -1322,13 +1317,13 @@
           ],
           "pop_wins": [],
           "wins": [
-            "arbalester",
             "halberdier"
           ]
         },
         "paladin": {
           "eco_wins": [],
           "highlighted": [
+            "hand_cannoneer",
             "hussar",
             "paladin"
           ],
@@ -1339,11 +1334,11 @@
             "arbalester",
             "champion",
             "halberdier",
-            "hand_cannoneer",
             "heavy_cav_archer",
             "imp_elite_skirm"
           ],
           "wins": [
+            "hand_cannoneer",
             "heavy_scorpion",
             "hussar",
             "paladin"
@@ -1377,10 +1372,11 @@
             "hussar"
           ],
           "losses": [
-            "heavy_scorpion",
+            "heavy_scorpion"
+          ],
+          "pop_wins": [
             "imp_elite_skirm"
           ],
-          "pop_wins": [],
           "wins": [
             "arbalester",
             "champion",
@@ -1445,7 +1441,8 @@
             "champion",
             "elite_woad_raider_celts",
             "heavy_cav_archer",
-            "imp_elite_skirm"
+            "imp_elite_skirm",
+            "paladin"
           ],
           "losses": [],
           "pop_wins": [
@@ -1481,30 +1478,27 @@
           ]
         },
         "hand_cannoneer": {
-          "eco_wins": [
-            "paladin"
-          ],
+          "eco_wins": [],
           "highlighted": [
-            "arbalester",
             "champion",
             "elite_woad_raider_celts",
             "halberdier",
-            "heavy_cav_archer",
-            "hussar"
+            "heavy_cav_archer"
           ],
           "losses": [
-            "heavy_scorpion"
+            "heavy_scorpion",
+            "paladin"
           ],
           "pop_wins": [
+            "arbalester",
+            "hussar",
             "imp_elite_skirm"
           ],
           "wins": [
-            "arbalester",
             "champion",
             "elite_woad_raider_celts",
             "halberdier",
-            "heavy_cav_archer",
-            "hussar"
+            "heavy_cav_archer"
           ]
         },
         "heavy_cav_archer": {
@@ -1554,6 +1548,7 @@
         "hussar": {
           "eco_wins": [],
           "highlighted": [
+            "arbalester",
             "imp_elite_skirm"
           ],
           "losses": [
@@ -1566,6 +1561,7 @@
           ],
           "pop_wins": [],
           "wins": [
+            "arbalester",
             "heavy_scorpion",
             "imp_elite_skirm"
           ]
@@ -1576,6 +1572,7 @@
             "paladin"
           ],
           "highlighted": [
+            "arbalester",
             "heavy_cav_archer",
             "imp_elite_skirm"
           ],
@@ -1598,7 +1595,6 @@
           "losses": [
             "elite_woad_raider_celts",
             "halberdier",
-            "heavy_cav_archer",
             "paladin"
           ],
           "pop_wins": [
@@ -1637,14 +1633,15 @@
         },
         "chu_ko_nu_chinese": {
           "eco_wins": [
-            "knight"
+            "cav_archer",
+            "knight",
+            "scorpion"
           ],
           "highlighted": [
             "light_cav",
             "samurai_japanese"
           ],
           "losses": [
-            "cav_archer",
             "crossbow",
             "elite_skirm"
           ],
@@ -1823,7 +1820,6 @@
           "eco_wins": [],
           "highlighted": [
             "cav_archer",
-            "chu_ko_nu_chinese",
             "crossbow",
             "fire_lancer",
             "pikeman"
@@ -1832,12 +1828,12 @@
             "scorpion"
           ],
           "pop_wins": [
+            "chu_ko_nu_chinese",
             "elite_skirm",
             "light_cav"
           ],
           "wins": [
             "cav_archer",
-            "chu_ko_nu_chinese",
             "crossbow",
             "fire_lancer",
             "knight",
@@ -2058,17 +2054,17 @@
         },
         "elite_chu_ko_nu_chinese": {
           "eco_wins": [
-            "hand_cannoneer",
-            "heavy_scorpion",
-            "paladin"
+            "heavy_cav_archer",
+            "heavy_scorpion"
           ],
           "highlighted": [
             "elite_samurai_japanese",
-            "hussar"
+            "hand_cannoneer",
+            "hussar",
+            "paladin"
           ],
           "losses": [
             "arbalester",
-            "heavy_cav_archer",
             "imp_elite_skirm"
           ],
           "pop_wins": [],
@@ -2076,7 +2072,9 @@
             "champion",
             "elite_samurai_japanese",
             "halberdier",
-            "hussar"
+            "hand_cannoneer",
+            "hussar",
+            "paladin"
           ]
         },
         "elite_fire_lancer": {
@@ -2340,9 +2338,7 @@
           ]
         },
         "hand_cannoneer": {
-          "eco_wins": [
-            "paladin"
-          ],
+          "eco_wins": [],
           "highlighted": [
             "champion",
             "elite_fire_lancer",
@@ -2350,12 +2346,12 @@
           ],
           "losses": [
             "arbalester",
+            "elite_chu_ko_nu_chinese",
             "heavy_cav_archer",
             "heavy_scorpion",
             "imp_elite_skirm"
           ],
           "pop_wins": [
-            "elite_chu_ko_nu_chinese",
             "hussar"
           ],
           "wins": [
@@ -2368,7 +2364,6 @@
           "eco_wins": [],
           "highlighted": [
             "arbalester",
-            "elite_chu_ko_nu_chinese",
             "elite_fire_lancer",
             "heavy_cav_archer"
           ],
@@ -2376,12 +2371,12 @@
             "heavy_scorpion"
           ],
           "pop_wins": [
+            "elite_chu_ko_nu_chinese",
             "imp_elite_skirm"
           ],
           "wins": [
             "arbalester",
             "champion",
-            "elite_chu_ko_nu_chinese",
             "elite_fire_lancer",
             "halberdier",
             "heavy_cav_archer",
@@ -2456,6 +2451,7 @@
           "eco_wins": [],
           "highlighted": [],
           "losses": [
+            "elite_chu_ko_nu_chinese",
             "elite_fire_lancer",
             "halberdier",
             "heavy_cav_archer"
@@ -2463,7 +2459,6 @@
           "pop_wins": [
             "arbalester",
             "champion",
-            "elite_chu_ko_nu_chinese",
             "hussar",
             "imp_elite_skirm"
           ],
@@ -2477,30 +2472,25 @@
       "left": {
         "cav_archer": {
           "eco_wins": [
-            "knight"
+            "cav_archer"
           ],
-          "highlighted": [
-            "cav_archer",
-            "light_cav"
-          ],
+          "highlighted": [],
           "losses": [
+            "crossbow",
             "elite_skirm",
+            "knight",
             "longbowman_britons",
             "scorpion"
           ],
           "pop_wins": [
-            "crossbow",
-            "pikeman"
-          ],
-          "wins": [
-            "cav_archer",
             "light_cav",
+            "pikeman",
             "swordsmen"
-          ]
+          ],
+          "wins": []
         },
         "crossbow": {
           "eco_wins": [
-            "cav_archer",
             "knight"
           ],
           "highlighted": [],
@@ -2509,12 +2499,12 @@
             "elite_skirm",
             "light_cav",
             "longbowman_britons",
-            "scorpion"
-          ],
-          "pop_wins": [
+            "scorpion",
             "swordsmen"
           ],
+          "pop_wins": [],
           "wins": [
+            "cav_archer",
             "pikeman"
           ]
         },
@@ -2547,13 +2537,13 @@
           ],
           "losses": [],
           "pop_wins": [
-            "cav_archer",
             "crossbow",
             "longbowman_britons",
             "pikeman",
             "swordsmen"
           ],
           "wins": [
+            "cav_archer",
             "elite_skirm",
             "knight",
             "light_cav",
@@ -2562,22 +2552,24 @@
         },
         "light_cav": {
           "eco_wins": [
-            "cav_archer",
             "knight"
           ],
           "highlighted": [
-            "light_cav"
+            "cav_archer",
+            "light_cav",
+            "longbowman_britons"
           ],
           "losses": [
-            "longbowman_britons",
             "pikeman",
             "swordsmen"
           ],
           "pop_wins": [],
           "wins": [
+            "cav_archer",
             "crossbow",
             "elite_skirm",
             "light_cav",
+            "longbowman_britons",
             "scorpion"
           ]
         },
@@ -2601,31 +2593,33 @@
         },
         "scorpion": {
           "eco_wins": [],
-          "highlighted": [],
+          "highlighted": [
+            "longbowman_britons"
+          ],
           "losses": [
             "knight",
             "light_cav"
           ],
           "pop_wins": [
-            "crossbow",
             "elite_skirm",
-            "longbowman_britons",
             "pikeman",
             "swordsmen"
           ],
           "wins": [
-            "cav_archer"
+            "cav_archer",
+            "crossbow",
+            "longbowman_britons"
           ]
         },
         "swordsmen": {
           "eco_wins": [
+            "cav_archer",
+            "crossbow",
             "knight",
             "scorpion"
           ],
           "highlighted": [],
           "losses": [
-            "cav_archer",
-            "crossbow",
             "longbowman_britons"
           ],
           "pop_wins": [],
@@ -2637,23 +2631,23 @@
         },
         "throwing_axeman_franks": {
           "eco_wins": [
+            "cav_archer",
             "scorpion"
           ],
           "highlighted": [
+            "elite_skirm",
             "knight",
             "light_cav",
             "pikeman",
             "swordsmen"
           ],
           "losses": [
-            "cav_archer",
             "crossbow",
             "longbowman_britons"
           ],
-          "pop_wins": [
-            "elite_skirm"
-          ],
+          "pop_wins": [],
           "wins": [
+            "elite_skirm",
             "knight",
             "light_cav",
             "pikeman",
@@ -2675,53 +2669,43 @@
       },
       "right": {
         "cav_archer": {
-          "eco_wins": [
-            "knight"
-          ],
-          "highlighted": [
-            "throwing_axeman_franks"
-          ],
+          "eco_wins": [],
+          "highlighted": [],
           "losses": [
-            "cav_archer",
+            "crossbow",
             "elite_skirm",
+            "knight",
+            "light_cav",
             "scorpion"
           ],
           "pop_wins": [
             "crossbow",
-            "light_cav",
             "pikeman"
           ],
-          "wins": [
-            "swordsmen",
-            "throwing_axeman_franks"
-          ]
+          "wins": []
         },
         "crossbow": {
-          "eco_wins": [
-            "cav_archer",
-            "knight"
-          ],
+          "eco_wins": [],
           "highlighted": [
             "crossbow",
-            "swordsmen",
             "throwing_axeman_franks"
           ],
           "losses": [
             "elite_skirm",
-            "light_cav"
+            "light_cav",
+            "scorpion"
           ],
           "pop_wins": [],
           "wins": [
+            "cav_archer",
             "crossbow",
             "pikeman",
-            "swordsmen",
             "throwing_axeman_franks"
           ]
         },
         "elite_skirm": {
           "eco_wins": [
-            "scorpion",
-            "throwing_axeman_franks"
+            "scorpion"
           ],
           "highlighted": [
             "elite_skirm"
@@ -2729,7 +2713,8 @@
           "losses": [
             "knight",
             "light_cav",
-            "swordsmen"
+            "swordsmen",
+            "throwing_axeman_franks"
           ],
           "pop_wins": [],
           "wins": [
@@ -2747,21 +2732,22 @@
             "throwing_axeman_franks"
           ],
           "pop_wins": [
-            "cav_archer",
             "crossbow",
             "light_cav",
             "swordsmen"
           ],
           "wins": [
+            "cav_archer",
             "elite_skirm",
             "scorpion"
           ]
         },
         "light_cav": {
-          "eco_wins": [],
+          "eco_wins": [
+            "cav_archer"
+          ],
           "highlighted": [],
           "losses": [
-            "cav_archer",
             "knight",
             "light_cav",
             "pikeman",
@@ -2780,20 +2766,19 @@
             "knight"
           ],
           "highlighted": [
-            "cav_archer",
             "crossbow",
-            "light_cav",
             "swordsmen",
             "throwing_axeman_franks"
           ],
           "losses": [
-            "elite_skirm"
+            "elite_skirm",
+            "light_cav",
+            "scorpion"
           ],
           "pop_wins": [],
           "wins": [
             "cav_archer",
             "crossbow",
-            "light_cav",
             "pikeman",
             "swordsmen",
             "throwing_axeman_franks"
@@ -2801,6 +2786,7 @@
         },
         "pikeman": {
           "eco_wins": [
+            "cav_archer",
             "knight",
             "scorpion"
           ],
@@ -2818,9 +2804,7 @@
         },
         "scorpion": {
           "eco_wins": [],
-          "highlighted": [
-            "crossbow"
-          ],
+          "highlighted": [],
           "losses": [
             "knight",
             "light_cav"
@@ -2838,16 +2822,19 @@
         },
         "swordsmen": {
           "eco_wins": [
+            "cav_archer",
             "knight",
             "scorpion"
           ],
-          "highlighted": [],
+          "highlighted": [
+            "crossbow"
+          ],
           "losses": [
-            "cav_archer",
             "throwing_axeman_franks"
           ],
           "pop_wins": [],
           "wins": [
+            "crossbow",
             "elite_skirm",
             "light_cav",
             "pikeman"
@@ -2877,14 +2864,14 @@
         },
         "champion": {
           "eco_wins": [
+            "heavy_cav_archer",
             "heavy_scorpion",
             "paladin"
           ],
           "highlighted": [],
           "losses": [
             "arbalester",
-            "elite_longbowman_britons",
-            "heavy_cav_archer"
+            "elite_longbowman_britons"
           ],
           "pop_wins": [],
           "wins": [
@@ -2920,6 +2907,7 @@
         },
         "halberdier": {
           "eco_wins": [
+            "heavy_cav_archer",
             "heavy_scorpion"
           ],
           "highlighted": [
@@ -2943,8 +2931,7 @@
           ],
           "highlighted": [
             "champion",
-            "halberdier",
-            "hussar"
+            "halberdier"
           ],
           "losses": [
             "arbalester",
@@ -2953,17 +2940,16 @@
             "heavy_scorpion",
             "imp_elite_skirm"
           ],
-          "pop_wins": [],
+          "pop_wins": [
+            "hussar"
+          ],
           "wins": [
             "champion",
-            "halberdier",
-            "hussar"
+            "halberdier"
           ]
         },
         "heavy_cav_archer": {
-          "eco_wins": [
-            "paladin"
-          ],
+          "eco_wins": [],
           "highlighted": [],
           "losses": [
             "arbalester",
@@ -2974,11 +2960,10 @@
           ],
           "pop_wins": [
             "champion",
-            "halberdier"
-          ],
-          "wins": [
+            "halberdier",
             "hussar"
-          ]
+          ],
+          "wins": []
         },
         "heavy_scorpion": {
           "eco_wins": [],
@@ -2991,24 +2976,25 @@
             "arbalester",
             "champion",
             "elite_longbowman_britons",
-            "halberdier",
-            "imp_elite_skirm"
+            "halberdier"
           ],
           "wins": [
-            "heavy_cav_archer"
+            "heavy_cav_archer",
+            "imp_elite_skirm"
           ]
         },
         "hussar": {
-          "eco_wins": [],
+          "eco_wins": [
+            "arbalester",
+            "heavy_cav_archer"
+          ],
           "highlighted": [
             "hussar"
           ],
           "losses": [
-            "arbalester",
             "champion",
             "elite_longbowman_britons",
-            "halberdier",
-            "heavy_cav_archer"
+            "halberdier"
           ],
           "pop_wins": [],
           "wins": [
@@ -3084,13 +3070,14 @@
             "elite_throwing_axeman_franks",
             "hand_cannoneer",
             "heavy_cav_archer",
-            "hussar",
             "imp_elite_skirm"
           ],
           "losses": [
             "paladin"
           ],
-          "pop_wins": [],
+          "pop_wins": [
+            "hussar"
+          ],
           "wins": [
             "arbalester",
             "champion",
@@ -3098,7 +3085,6 @@
             "halberdier",
             "hand_cannoneer",
             "heavy_cav_archer",
-            "hussar",
             "imp_elite_skirm"
           ]
         },
@@ -3174,7 +3160,6 @@
           "eco_wins": [],
           "highlighted": [
             "arbalester",
-            "champion",
             "hand_cannoneer",
             "heavy_cav_archer"
           ],
@@ -3183,24 +3168,23 @@
             "paladin"
           ],
           "pop_wins": [
+            "champion",
             "elite_throwing_axeman_franks",
             "halberdier",
+            "hussar",
             "imp_elite_skirm"
           ],
           "wins": [
             "arbalester",
-            "champion",
             "hand_cannoneer",
-            "heavy_cav_archer",
-            "hussar"
+            "heavy_cav_archer"
           ]
         },
         "heavy_scorpion": {
           "eco_wins": [],
           "highlighted": [
             "arbalester",
-            "hand_cannoneer",
-            "imp_elite_skirm"
+            "hand_cannoneer"
           ],
           "losses": [
             "hussar",
@@ -3219,7 +3203,10 @@
           ]
         },
         "hussar": {
-          "eco_wins": [],
+          "eco_wins": [
+            "hand_cannoneer",
+            "heavy_cav_archer"
+          ],
           "highlighted": [
             "arbalester"
           ],
@@ -3227,8 +3214,6 @@
             "champion",
             "elite_throwing_axeman_franks",
             "halberdier",
-            "hand_cannoneer",
-            "heavy_cav_archer",
             "hussar",
             "paladin"
           ],
@@ -3240,9 +3225,7 @@
           ]
         },
         "imp_elite_skirm": {
-          "eco_wins": [
-            "heavy_scorpion"
-          ],
+          "eco_wins": [],
           "highlighted": [
             "arbalester",
             "hand_cannoneer",
@@ -3252,6 +3235,7 @@
           "losses": [
             "champion",
             "elite_throwing_axeman_franks",
+            "heavy_scorpion",
             "hussar",
             "paladin"
           ],
@@ -3781,7 +3765,6 @@
           "losses": [
             "arbalester",
             "champion",
-            "elite_cataphract_byzantines",
             "hand_cannoneer",
             "heavy_cav_archer",
             "imp_elite_skirm"
@@ -3828,12 +3811,12 @@
             "arbalester",
             "champion",
             "elite_cataphract_byzantines",
-            "hand_cannoneer",
             "heavy_camel",
             "hussar",
             "paladin"
           ],
           "pop_wins": [
+            "hand_cannoneer",
             "imp_elite_skirm"
           ],
           "wins": []
@@ -3973,19 +3956,18 @@
         "elite_cataphract_byzantines": {
           "eco_wins": [],
           "highlighted": [
-            "champion",
-            "halberdier"
+            "champion"
           ],
           "losses": [
             "paladin"
           ],
           "pop_wins": [
             "arbalester",
-            "elite_tarkan_huns"
+            "elite_tarkan_huns",
+            "halberdier"
           ],
           "wins": [
             "champion",
-            "halberdier",
             "heavy_scorpion",
             "hussar",
             "imp_elite_skirm"
@@ -4011,11 +3993,12 @@
           ]
         },
         "hand_cannoneer": {
-          "eco_wins": [],
+          "eco_wins": [
+            "heavy_scorpion"
+          ],
           "highlighted": [
             "champion",
-            "halberdier",
-            "heavy_scorpion"
+            "halberdier"
           ],
           "losses": [
             "arbalester",
@@ -4024,13 +4007,10 @@
             "imp_elite_skirm",
             "paladin"
           ],
-          "pop_wins": [
-            "hussar"
-          ],
+          "pop_wins": [],
           "wins": [
             "champion",
-            "halberdier",
-            "heavy_scorpion"
+            "halberdier"
           ]
         },
         "heavy_camel": {
@@ -4205,7 +4185,8 @@
             "scorpion"
           ],
           "highlighted": [
-            "cav_archer"
+            "cav_archer",
+            "elite_skirm"
           ],
           "losses": [
             "knight",
@@ -4213,12 +4194,11 @@
             "swordsmen",
             "war_elephant_persians"
           ],
-          "pop_wins": [
-            "elite_skirm"
-          ],
+          "pop_wins": [],
           "wins": [
             "cav_archer",
             "crossbow",
+            "elite_skirm",
             "pikeman"
           ]
         },
@@ -4389,6 +4369,7 @@
           ],
           "losses": [
             "eagle_warrior",
+            "elite_skirm",
             "swordsmen"
           ],
           "pop_wins": [],
@@ -4646,6 +4627,7 @@
         "heavy_scorpion": {
           "eco_wins": [],
           "highlighted": [
+            "hand_cannoneer",
             "heavy_cav_archer",
             "imp_elite_skirm"
           ],
@@ -4658,10 +4640,10 @@
           "pop_wins": [
             "arbalester",
             "champion",
-            "halberdier",
-            "hand_cannoneer"
+            "halberdier"
           ],
           "wins": [
+            "hand_cannoneer",
             "heavy_cav_archer",
             "imp_elite_skirm"
           ]
@@ -4781,9 +4763,7 @@
           "wins": []
         },
         "hand_cannoneer": {
-          "eco_wins": [
-            "heavy_scorpion"
-          ],
+          "eco_wins": [],
           "highlighted": [
             "champion",
             "elite_eagle",
@@ -4792,6 +4772,7 @@
           "losses": [
             "arbalester",
             "elite_plumed_archer_mayans",
+            "heavy_scorpion",
             "imp_elite_skirm"
           ],
           "pop_wins": [],
@@ -4925,11 +4906,11 @@
             "knight"
           ],
           "highlighted": [
+            "cav_archer",
             "light_cav",
             "scorpion"
           ],
           "losses": [
-            "cav_archer",
             "pikeman",
             "swordsmen",
             "teutonic_knight_teutons"
@@ -4939,6 +4920,7 @@
             "elite_skirm"
           ],
           "wins": [
+            "cav_archer",
             "light_cav",
             "scorpion"
           ]
@@ -4951,6 +4933,7 @@
             "knight",
             "light_cav",
             "pikeman",
+            "swordsmen",
             "teutonic_knight_teutons"
           ],
           "losses": [
@@ -4994,7 +4977,9 @@
           "eco_wins": [
             "scorpion"
           ],
-          "highlighted": [],
+          "highlighted": [
+            "elite_skirm"
+          ],
           "losses": [
             "knight",
             "light_cav",
@@ -5005,12 +4990,14 @@
           "wins": [
             "cav_archer",
             "crossbow",
+            "elite_skirm",
             "pikeman"
           ]
         },
         "knight": {
           "eco_wins": [],
           "highlighted": [
+            "cav_archer",
             "light_cav"
           ],
           "losses": [
@@ -5018,21 +5005,20 @@
             "teutonic_knight_teutons"
           ],
           "pop_wins": [
-            "cav_archer",
             "crossbow",
             "swordsmen"
           ],
           "wins": [
+            "cav_archer",
             "elite_skirm",
             "light_cav",
             "scorpion"
           ]
         },
         "light_cav": {
-          "eco_wins": [
-            "cav_archer"
-          ],
+          "eco_wins": [],
           "highlighted": [
+            "cav_archer",
             "crossbow",
             "light_cav"
           ],
@@ -5043,6 +5029,7 @@
           ],
           "pop_wins": [],
           "wins": [
+            "cav_archer",
             "crossbow",
             "elite_skirm",
             "light_cav",
@@ -5059,6 +5046,7 @@
             "knight",
             "light_cav",
             "pikeman",
+            "swordsmen",
             "teutonic_knight_teutons"
           ],
           "losses": [
@@ -5077,6 +5065,7 @@
         },
         "pikeman": {
           "eco_wins": [
+            "cav_archer",
             "knight",
             "scorpion"
           ],
@@ -5113,11 +5102,11 @@
         "steppe_lancer": {
           "eco_wins": [],
           "highlighted": [
+            "cav_archer",
             "elite_skirm",
             "scorpion"
           ],
           "losses": [
-            "cav_archer",
             "knight",
             "pikeman",
             "teutonic_knight_teutons"
@@ -5127,6 +5116,7 @@
             "light_cav"
           ],
           "wins": [
+            "cav_archer",
             "elite_skirm",
             "scorpion"
           ]
@@ -5138,7 +5128,6 @@
           ],
           "highlighted": [],
           "losses": [
-            "cav_archer",
             "crossbow",
             "teutonic_knight_teutons"
           ],
@@ -5166,34 +5155,27 @@
       },
       "right": {
         "cav_archer": {
-          "eco_wins": [
-            "knight"
-          ],
-          "highlighted": [
-            "camel",
-            "steppe_lancer"
-          ],
+          "eco_wins": [],
+          "highlighted": [],
           "losses": [
+            "camel",
             "cav_archer",
             "elite_skirm",
+            "knight",
+            "light_cav",
             "mangudai_mongols",
-            "scorpion"
+            "scorpion",
+            "steppe_lancer"
           ],
           "pop_wins": [
-            "crossbow",
-            "light_cav",
-            "pikeman"
-          ],
-          "wins": [
-            "camel",
-            "steppe_lancer",
+            "pikeman",
             "swordsmen"
-          ]
+          ],
+          "wins": []
         },
         "crossbow": {
           "eco_wins": [
             "camel",
-            "knight",
             "steppe_lancer"
           ],
           "highlighted": [],
@@ -5220,6 +5202,7 @@
             "mangudai_mongols"
           ],
           "losses": [
+            "elite_skirm",
             "knight",
             "light_cav",
             "steppe_lancer",
@@ -5377,13 +5360,13 @@
       "left": {
         "arbalester": {
           "eco_wins": [
-            "elite_teutonic_knight_teutons",
-            "heavy_cav_archer"
+            "elite_teutonic_knight_teutons"
           ],
           "highlighted": [
             "arbalester",
             "champion",
             "hand_cannoneer",
+            "heavy_cav_archer",
             "hussar"
           ],
           "losses": [
@@ -5397,17 +5380,18 @@
             "champion",
             "halberdier",
             "hand_cannoneer",
+            "heavy_cav_archer",
             "hussar"
           ]
         },
         "champion": {
           "eco_wins": [
-            "heavy_cav_archer",
             "heavy_scorpion",
             "paladin"
           ],
           "highlighted": [
-            "arbalester"
+            "arbalester",
+            "heavy_cav_archer"
           ],
           "losses": [
             "champion",
@@ -5418,6 +5402,7 @@
           "wins": [
             "arbalester",
             "halberdier",
+            "heavy_cav_archer",
             "hussar",
             "imp_elite_skirm"
           ]
@@ -5455,6 +5440,7 @@
           "eco_wins": [],
           "highlighted": [
             "arbalester",
+            "hand_cannoneer",
             "heavy_cav_archer",
             "heavy_scorpion",
             "hussar",
@@ -5469,6 +5455,7 @@
           "pop_wins": [],
           "wins": [
             "arbalester",
+            "hand_cannoneer",
             "heavy_cav_archer",
             "heavy_scorpion",
             "hussar",
@@ -5571,11 +5558,11 @@
         },
         "hussar": {
           "eco_wins": [
-            "hand_cannoneer",
-            "heavy_cav_archer"
+            "hand_cannoneer"
           ],
           "highlighted": [
             "arbalester",
+            "heavy_cav_archer",
             "hussar"
           ],
           "losses": [
@@ -5587,6 +5574,7 @@
           "pop_wins": [],
           "wins": [
             "arbalester",
+            "heavy_cav_archer",
             "heavy_scorpion",
             "hussar",
             "imp_elite_skirm"
@@ -5617,19 +5605,21 @@
         },
         "paladin": {
           "eco_wins": [],
-          "highlighted": [],
+          "highlighted": [
+            "heavy_cav_archer"
+          ],
           "losses": [
             "elite_teutonic_knight_teutons",
             "halberdier",
             "paladin"
           ],
           "pop_wins": [
-            "arbalester",
             "champion",
-            "hand_cannoneer",
-            "heavy_cav_archer"
+            "hand_cannoneer"
           ],
           "wins": [
+            "arbalester",
+            "heavy_cav_archer",
             "heavy_scorpion",
             "hussar",
             "imp_elite_skirm"
@@ -5654,8 +5644,7 @@
       "right": {
         "arbalester": {
           "eco_wins": [
-            "heavy_camel",
-            "paladin"
+            "heavy_camel"
           ],
           "highlighted": [],
           "losses": [
@@ -5666,7 +5655,8 @@
             "heavy_cav_archer",
             "heavy_scorpion",
             "hussar",
-            "imp_elite_skirm"
+            "imp_elite_skirm",
+            "paladin"
           ],
           "pop_wins": [],
           "wins": [
@@ -5753,7 +5743,6 @@
         },
         "hand_cannoneer": {
           "eco_wins": [
-            "elite_steppe",
             "paladin"
           ],
           "highlighted": [
@@ -5764,6 +5753,7 @@
           "losses": [
             "arbalester",
             "elite_mangudai_mongols",
+            "elite_steppe",
             "heavy_cav_archer",
             "heavy_scorpion",
             "imp_elite_skirm"
@@ -5778,23 +5768,22 @@
           ]
         },
         "heavy_cav_archer": {
-          "eco_wins": [
-            "paladin"
-          ],
+          "eco_wins": [],
           "highlighted": [],
           "losses": [
+            "arbalester",
+            "champion",
             "elite_mangudai_mongols",
             "elite_steppe",
             "heavy_camel",
             "heavy_cav_archer",
             "heavy_scorpion",
-            "imp_elite_skirm"
+            "hussar",
+            "imp_elite_skirm",
+            "paladin"
           ],
           "pop_wins": [
-            "arbalester",
-            "champion",
-            "halberdier",
-            "hussar"
+            "halberdier"
           ],
           "wins": []
         },
@@ -5862,7 +5851,6 @@
         "paladin": {
           "eco_wins": [],
           "highlighted": [
-            "arbalester",
             "elite_steppe",
             "paladin"
           ],
@@ -6418,24 +6406,23 @@
         },
         "hand_cannoneer": {
           "eco_wins": [],
-          "highlighted": [
-            "heavy_camel"
-          ],
+          "highlighted": [],
           "losses": [
             "arbalester",
             "elite_camel_archer_berbers",
             "elite_genitour",
+            "heavy_camel",
             "heavy_cav_archer",
             "heavy_scorpion",
-            "imp_elite_skirm"
+            "imp_elite_skirm",
+            "paladin"
           ],
           "pop_wins": [
             "hussar"
           ],
           "wins": [
             "champion",
-            "halberdier",
-            "heavy_camel"
+            "halberdier"
           ]
         },
         "heavy_cav_archer": {
@@ -6466,7 +6453,6 @@
           "highlighted": [],
           "losses": [
             "elite_camel_archer_berbers",
-            "hand_cannoneer",
             "heavy_camel",
             "heavy_cav_archer",
             "heavy_scorpion",
@@ -6477,6 +6463,7 @@
             "arbalester",
             "elite_genitour",
             "halberdier",
+            "hand_cannoneer",
             "imp_elite_skirm"
           ],
           "wins": []
@@ -6529,7 +6516,6 @@
           "eco_wins": [],
           "highlighted": [
             "elite_genitour",
-            "hand_cannoneer",
             "heavy_cav_archer",
             "paladin"
           ],
@@ -6677,10 +6663,10 @@
           ]
         },
         "hand_cannoneer": {
-          "eco_wins": [],
-          "highlighted": [
+          "eco_wins": [
             "heavy_scorpion"
           ],
+          "highlighted": [],
           "losses": [
             "elite_conquistador_spanish",
             "heavy_cav_archer",
@@ -6688,19 +6674,18 @@
             "paladin"
           ],
           "pop_wins": [
-            "arbalester",
-            "hussar"
+            "arbalester"
           ],
           "wins": [
             "champion",
-            "halberdier",
-            "heavy_scorpion"
+            "halberdier"
           ]
         },
         "heavy_camel": {
           "eco_wins": [],
           "highlighted": [
             "arbalester",
+            "hand_cannoneer",
             "heavy_cav_archer",
             "heavy_scorpion",
             "hussar",
@@ -6710,12 +6695,12 @@
           "losses": [
             "champion",
             "elite_conquistador_spanish",
-            "halberdier",
-            "hand_cannoneer"
+            "halberdier"
           ],
           "pop_wins": [],
           "wins": [
             "arbalester",
+            "hand_cannoneer",
             "heavy_cav_archer",
             "heavy_scorpion",
             "hussar",
@@ -6819,11 +6804,11 @@
             "paladin"
           ],
           "pop_wins": [
-            "champion",
-            "hand_cannoneer"
+            "champion"
           ],
           "wins": [
             "arbalester",
+            "hand_cannoneer",
             "heavy_scorpion",
             "hussar",
             "imp_elite_skirm"
@@ -6916,29 +6901,26 @@
           ]
         },
         "janissary_turks": {
-          "eco_wins": [
-            "mameluke_saracens"
-          ],
+          "eco_wins": [],
           "highlighted": [
             "camel",
-            "knight",
-            "pikeman",
-            "scorpion",
-            "swordsmen"
+            "pikeman"
           ],
-          "losses": [],
-          "pop_wins": [
+          "losses": [
             "cav_archer",
             "crossbow",
             "elite_skirm",
-            "light_cav"
+            "knight",
+            "mameluke_saracens",
+            "scorpion"
+          ],
+          "pop_wins": [
+            "light_cav",
+            "swordsmen"
           ],
           "wins": [
             "camel",
-            "knight",
-            "pikeman",
-            "scorpion",
-            "swordsmen"
+            "pikeman"
           ]
         },
         "knight": {
@@ -7075,10 +7057,10 @@
           ]
         },
         "cav_archer": {
-          "eco_wins": [
+          "eco_wins": [],
+          "highlighted": [
             "janissary_turks"
           ],
-          "highlighted": [],
           "losses": [
             "cav_archer",
             "scorpion"
@@ -7090,6 +7072,7 @@
           ],
           "wins": [
             "camel",
+            "janissary_turks",
             "knight",
             "pikeman",
             "swordsmen"
@@ -7097,11 +7080,11 @@
         },
         "crossbow": {
           "eco_wins": [
-            "janissary_turks",
             "knight"
           ],
           "highlighted": [
-            "camel"
+            "camel",
+            "janissary_turks"
           ],
           "losses": [
             "cav_archer",
@@ -7113,6 +7096,7 @@
           ],
           "wins": [
             "camel",
+            "janissary_turks",
             "pikeman",
             "swordsmen"
           ]
@@ -7120,13 +7104,13 @@
         "elite_skirm": {
           "eco_wins": [
             "camel",
-            "janissary_turks",
             "scorpion"
           ],
           "highlighted": [
             "cav_archer",
             "crossbow",
-            "elite_skirm"
+            "elite_skirm",
+            "janissary_turks"
           ],
           "losses": [
             "knight",
@@ -7138,15 +7122,17 @@
             "cav_archer",
             "crossbow",
             "elite_skirm",
+            "janissary_turks",
             "pikeman"
           ]
         },
         "knight": {
           "eco_wins": [],
-          "highlighted": [],
-          "losses": [
-            "cav_archer",
+          "highlighted": [
             "janissary_turks"
+          ],
+          "losses": [
+            "cav_archer"
           ],
           "pop_wins": [
             "crossbow",
@@ -7156,11 +7142,14 @@
           ],
           "wins": [
             "elite_skirm",
+            "janissary_turks",
             "scorpion"
           ]
         },
         "light_cav": {
-          "eco_wins": [],
+          "eco_wins": [
+            "janissary_turks"
+          ],
           "highlighted": [],
           "losses": [
             "camel",
@@ -7177,17 +7166,18 @@
         "mameluke_saracens": {
           "eco_wins": [],
           "highlighted": [
+            "janissary_turks",
             "scorpion"
           ],
           "losses": [],
           "pop_wins": [
             "cav_archer",
             "crossbow",
-            "elite_skirm",
-            "janissary_turks"
+            "elite_skirm"
           ],
           "wins": [
             "camel",
+            "janissary_turks",
             "knight",
             "light_cav",
             "pikeman",
@@ -7222,11 +7212,11 @@
         "scorpion": {
           "eco_wins": [],
           "highlighted": [
-            "elite_skirm"
+            "elite_skirm",
+            "janissary_turks"
           ],
           "losses": [
             "camel",
-            "janissary_turks",
             "knight",
             "light_cav"
           ],
@@ -7237,20 +7227,21 @@
           "wins": [
             "cav_archer",
             "crossbow",
-            "elite_skirm"
+            "elite_skirm",
+            "janissary_turks"
           ]
         },
         "swordsmen": {
           "eco_wins": [
             "camel",
+            "janissary_turks",
             "knight",
             "scorpion"
           ],
           "highlighted": [],
           "losses": [
             "cav_archer",
-            "crossbow",
-            "janissary_turks"
+            "crossbow"
           ],
           "pop_wins": [],
           "wins": [
@@ -7305,28 +7296,28 @@
           ]
         },
         "elite_janissary_turks": {
-          "eco_wins": [],
+          "eco_wins": [
+            "elite_mameluke_saracens"
+          ],
           "highlighted": [
-            "elite_mameluke_saracens",
             "hand_cannoneer",
+            "heavy_camel",
             "heavy_scorpion",
-            "hussar",
             "paladin"
           ],
-          "losses": [],
+          "losses": [
+            "heavy_cav_archer"
+          ],
           "pop_wins": [
-            "arbalester",
-            "heavy_cav_archer",
+            "champion",
+            "hussar",
             "imp_elite_skirm"
           ],
           "wins": [
-            "champion",
-            "elite_mameluke_saracens",
             "halberdier",
             "hand_cannoneer",
             "heavy_camel",
             "heavy_scorpion",
-            "hussar",
             "paladin"
           ]
         },
@@ -7352,14 +7343,14 @@
         },
         "hand_cannoneer": {
           "eco_wins": [
-            "elite_mameluke_saracens",
-            "heavy_scorpion"
-          ],
-          "highlighted": [
+            "heavy_camel",
+            "heavy_scorpion",
             "paladin"
           ],
+          "highlighted": [],
           "losses": [
             "arbalester",
+            "elite_mameluke_saracens",
             "heavy_cav_archer",
             "imp_elite_skirm"
           ],
@@ -7368,9 +7359,7 @@
           ],
           "wins": [
             "champion",
-            "halberdier",
-            "heavy_camel",
-            "paladin"
+            "halberdier"
           ]
         },
         "heavy_camel": {
@@ -7380,7 +7369,6 @@
             "arbalester",
             "champion",
             "elite_mameluke_saracens",
-            "hand_cannoneer",
             "heavy_camel"
           ],
           "pop_wins": [
@@ -7418,7 +7406,9 @@
         },
         "heavy_scorpion": {
           "eco_wins": [],
-          "highlighted": [],
+          "highlighted": [
+            "hand_cannoneer"
+          ],
           "losses": [
             "elite_mameluke_saracens",
             "heavy_camel",
@@ -7430,18 +7420,20 @@
             "arbalester",
             "champion",
             "halberdier",
-            "hand_cannoneer",
             "heavy_cav_archer",
             "imp_elite_skirm"
           ],
-          "wins": []
+          "wins": [
+            "hand_cannoneer"
+          ]
         },
         "hussar": {
           "eco_wins": [
-            "hand_cannoneer",
             "paladin"
           ],
-          "highlighted": [],
+          "highlighted": [
+            "hand_cannoneer"
+          ],
           "losses": [
             "champion",
             "elite_mameluke_saracens",
@@ -7452,6 +7444,7 @@
           "pop_wins": [],
           "wins": [
             "arbalester",
+            "hand_cannoneer",
             "heavy_scorpion",
             "imp_elite_skirm"
           ]
@@ -7544,6 +7537,7 @@
         },
         "champion": {
           "eco_wins": [
+            "elite_janissary_turks",
             "heavy_scorpion",
             "paladin"
           ],
@@ -7552,7 +7546,6 @@
             "heavy_camel"
           ],
           "losses": [
-            "elite_janissary_turks",
             "hand_cannoneer",
             "heavy_cav_archer"
           ],
@@ -7570,18 +7563,17 @@
           "highlighted": [
             "heavy_camel"
           ],
-          "losses": [
-            "elite_janissary_turks"
-          ],
+          "losses": [],
           "pop_wins": [
             "arbalester",
-            "hand_cannoneer",
+            "elite_janissary_turks",
             "heavy_cav_archer",
             "imp_elite_skirm"
           ],
           "wins": [
             "champion",
             "halberdier",
+            "hand_cannoneer",
             "heavy_camel",
             "heavy_scorpion",
             "hussar",
@@ -7614,23 +7606,22 @@
         },
         "hand_cannoneer": {
           "eco_wins": [
-            "heavy_scorpion",
-            "paladin"
+            "heavy_camel"
           ],
           "highlighted": [],
           "losses": [
             "arbalester",
             "elite_janissary_turks",
-            "heavy_cav_archer"
+            "heavy_cav_archer",
+            "heavy_scorpion",
+            "hussar"
           ],
           "pop_wins": [
-            "hussar",
             "imp_elite_skirm"
           ],
           "wins": [
             "champion",
-            "halberdier",
-            "heavy_camel"
+            "halberdier"
           ]
         },
         "heavy_camel": {
@@ -7640,12 +7631,12 @@
             "imp_elite_skirm"
           ],
           "losses": [
-            "elite_janissary_turks",
-            "hand_cannoneer"
+            "elite_janissary_turks"
           ],
           "pop_wins": [
             "arbalester",
             "halberdier",
+            "hand_cannoneer",
             "heavy_cav_archer"
           ],
           "wins": [
@@ -7658,10 +7649,10 @@
         },
         "heavy_cav_archer": {
           "eco_wins": [
-            "elite_janissary_turks",
             "heavy_camel"
           ],
           "highlighted": [
+            "elite_janissary_turks",
             "imp_elite_skirm"
           ],
           "losses": [
@@ -7671,6 +7662,7 @@
           "wins": [
             "arbalester",
             "champion",
+            "elite_janissary_turks",
             "halberdier",
             "hand_cannoneer",
             "hussar",
@@ -7703,13 +7695,13 @@
         },
         "hussar": {
           "eco_wins": [
+            "elite_janissary_turks",
             "hand_cannoneer",
             "paladin"
           ],
           "highlighted": [],
           "losses": [
             "champion",
-            "elite_janissary_turks",
             "heavy_camel",
             "heavy_cav_archer"
           ],
@@ -7752,7 +7744,6 @@
           "highlighted": [],
           "losses": [
             "elite_janissary_turks",
-            "hand_cannoneer",
             "heavy_camel",
             "heavy_cav_archer",
             "paladin"
@@ -7761,6 +7752,7 @@
             "arbalester",
             "champion",
             "halberdier",
+            "hand_cannoneer",
             "hussar"
           ],
           "wins": [
@@ -7778,13 +7770,13 @@
             "huskarl_goths",
             "knight"
           ],
-          "losses": [
-            "cav_archer"
-          ],
+          "losses": [],
           "pop_wins": [
+            "crossbow",
             "swordsmen"
           ],
           "wins": [
+            "cav_archer",
             "elite_skirm",
             "huskarl_goths",
             "knight",
@@ -7794,19 +7786,18 @@
           ]
         },
         "cav_archer": {
-          "eco_wins": [
-            "knight"
-          ],
+          "eco_wins": [],
           "highlighted": [],
           "losses": [
             "cav_archer",
+            "crossbow",
             "elite_skirm",
             "huskarl_goths",
+            "knight",
+            "light_cav",
             "scorpion"
           ],
           "pop_wins": [
-            "crossbow",
-            "light_cav",
             "pikeman",
             "swordsmen"
           ],
@@ -7814,22 +7805,22 @@
         },
         "crossbow": {
           "eco_wins": [
-            "knight"
+            "cav_archer"
           ],
-          "highlighted": [
-            "swordsmen"
-          ],
+          "highlighted": [],
           "losses": [
-            "cav_archer",
+            "crossbow",
             "elite_skirm",
             "huskarl_goths",
+            "knight",
             "light_cav",
             "scorpion"
           ],
-          "pop_wins": [],
-          "wins": [
-            "pikeman",
+          "pop_wins": [
             "swordsmen"
+          ],
+          "wins": [
+            "pikeman"
           ]
         },
         "elite_skirm": {
@@ -7854,7 +7845,6 @@
           "eco_wins": [],
           "highlighted": [],
           "losses": [
-            "cav_archer",
             "knight"
           ],
           "pop_wins": [
@@ -7864,16 +7854,17 @@
             "swordsmen"
           ],
           "wins": [
+            "cav_archer",
             "elite_skirm",
             "scorpion"
           ]
         },
         "light_cav": {
-          "eco_wins": [],
+          "eco_wins": [
+            "cav_archer"
+          ],
           "highlighted": [],
           "losses": [
-            "cav_archer",
-            "crossbow",
             "huskarl_goths",
             "knight",
             "light_cav",
@@ -7882,6 +7873,7 @@
           ],
           "pop_wins": [],
           "wins": [
+            "crossbow",
             "elite_skirm",
             "scorpion"
           ]
@@ -7926,7 +7918,6 @@
         },
         "swordsmen": {
           "eco_wins": [
-            "cav_archer",
             "knight"
           ],
           "highlighted": [
@@ -7937,6 +7928,7 @@
             "swordsmen"
           ],
           "wins": [
+            "cav_archer",
             "crossbow",
             "elite_skirm",
             "huskarl_goths",
@@ -7960,47 +7952,46 @@
       },
       "right": {
         "cav_archer": {
-          "eco_wins": [],
+          "eco_wins": [
+            "knight"
+          ],
           "highlighted": [
-            "berserk_vikings",
-            "cav_archer",
-            "crossbow",
-            "knight",
-            "light_cav"
+            "cav_archer"
           ],
           "losses": [
+            "berserk_vikings",
             "elite_skirm",
-            "scorpion"
-          ],
-          "pop_wins": [
-            "pikeman",
+            "knight",
+            "scorpion",
             "swordsmen"
           ],
-          "wins": [
-            "berserk_vikings",
-            "cav_archer",
+          "pop_wins": [
             "crossbow",
-            "knight",
-            "light_cav"
+            "light_cav",
+            "pikeman"
+          ],
+          "wins": [
+            "cav_archer"
           ]
         },
         "crossbow": {
           "eco_wins": [
-            "berserk_vikings",
-            "cav_archer",
             "knight"
           ],
           "highlighted": [
-            "light_cav"
+            "cav_archer",
+            "crossbow"
           ],
           "losses": [
             "elite_skirm",
+            "light_cav",
             "scorpion",
             "swordsmen"
           ],
           "pop_wins": [],
           "wins": [
-            "light_cav",
+            "cav_archer",
+            "crossbow",
             "pikeman"
           ]
         },
@@ -8026,9 +8017,7 @@
           "eco_wins": [
             "knight"
           ],
-          "highlighted": [
-            "cav_archer"
-          ],
+          "highlighted": [],
           "losses": [
             "berserk_vikings",
             "swordsmen"
@@ -8046,6 +8035,7 @@
         "knight": {
           "eco_wins": [],
           "highlighted": [
+            "crossbow",
             "knight",
             "light_cav"
           ],
@@ -8053,11 +8043,11 @@
             "berserk_vikings"
           ],
           "pop_wins": [
-            "cav_archer",
-            "crossbow",
             "swordsmen"
           ],
           "wins": [
+            "cav_archer",
+            "crossbow",
             "elite_skirm",
             "knight",
             "light_cav",
@@ -8066,11 +8056,10 @@
         },
         "light_cav": {
           "eco_wins": [
-            "cav_archer",
             "knight"
           ],
           "highlighted": [
-            "crossbow",
+            "cav_archer",
             "light_cav"
           ],
           "losses": [
@@ -8080,6 +8069,7 @@
           ],
           "pop_wins": [],
           "wins": [
+            "cav_archer",
             "crossbow",
             "elite_skirm",
             "light_cav",
@@ -8127,14 +8117,13 @@
           "eco_wins": [
             "berserk_vikings",
             "cav_archer",
+            "crossbow",
             "knight",
             "scorpion",
             "swordsmen"
           ],
           "highlighted": [],
-          "losses": [
-            "crossbow"
-          ],
+          "losses": [],
           "pop_wins": [],
           "wins": [
             "elite_skirm",
@@ -8203,7 +8192,6 @@
             "paladin"
           ],
           "losses": [
-            "arbalester",
             "hand_cannoneer",
             "heavy_cav_archer"
           ],
@@ -8211,6 +8199,7 @@
             "champion"
           ],
           "wins": [
+            "arbalester",
             "elite_huskarl_goths",
             "halberdier",
             "hussar",
@@ -8229,7 +8218,6 @@
             "champion",
             "elite_huskarl_goths",
             "hand_cannoneer",
-            "heavy_cav_archer",
             "imp_elite_skirm"
           ],
           "pop_wins": [],
@@ -8238,22 +8226,21 @@
           ]
         },
         "heavy_cav_archer": {
-          "eco_wins": [
-            "paladin"
-          ],
+          "eco_wins": [],
           "highlighted": [],
           "losses": [
+            "arbalester",
             "elite_huskarl_goths",
             "hand_cannoneer",
             "heavy_cav_archer",
             "heavy_scorpion",
-            "imp_elite_skirm"
+            "hussar",
+            "imp_elite_skirm",
+            "paladin"
           ],
           "pop_wins": [
-            "arbalester",
             "champion",
-            "halberdier",
-            "hussar"
+            "halberdier"
           ],
           "wins": []
         },
@@ -8262,8 +8249,7 @@
           "highlighted": [
             "arbalester",
             "hand_cannoneer",
-            "heavy_scorpion",
-            "imp_elite_skirm"
+            "heavy_scorpion"
           ],
           "losses": [
             "elite_huskarl_goths",
@@ -8304,18 +8290,20 @@
         },
         "imp_elite_skirm": {
           "eco_wins": [
-            "champion",
-            "heavy_scorpion",
             "paladin"
           ],
           "highlighted": [
             "hand_cannoneer"
           ],
           "losses": [
+            "champion",
             "elite_huskarl_goths",
+            "heavy_scorpion",
             "hussar"
           ],
-          "pop_wins": [],
+          "pop_wins": [
+            "imp_elite_skirm"
+          ],
           "wins": [
             "arbalester",
             "halberdier",
@@ -8327,7 +8315,6 @@
           "eco_wins": [],
           "highlighted": [],
           "losses": [
-            "hand_cannoneer",
             "heavy_cav_archer",
             "paladin"
           ],
@@ -8335,6 +8322,7 @@
             "arbalester",
             "champion",
             "elite_huskarl_goths",
+            "hand_cannoneer",
             "hussar",
             "imp_elite_skirm"
           ],
@@ -8359,22 +8347,22 @@
       "right": {
         "arbalester": {
           "eco_wins": [
-            "heavy_cav_archer",
             "paladin"
           ],
           "highlighted": [
-            "elite_berserk_vikings"
+            "heavy_cav_archer"
           ],
           "losses": [
             "arbalester",
             "champion",
+            "elite_berserk_vikings",
             "heavy_scorpion",
             "imp_elite_skirm"
           ],
           "pop_wins": [],
           "wins": [
-            "elite_berserk_vikings",
             "halberdier",
+            "heavy_cav_archer",
             "hussar"
           ]
         },
@@ -8390,12 +8378,11 @@
           "losses": [
             "arbalester"
           ],
-          "pop_wins": [
-            "imp_elite_skirm"
-          ],
+          "pop_wins": [],
           "wins": [
             "halberdier",
-            "hussar"
+            "hussar",
+            "imp_elite_skirm"
           ]
         },
         "elite_huskarl_goths": {
@@ -8440,14 +8427,15 @@
           ]
         },
         "hand_cannoneer": {
-          "eco_wins": [],
+          "eco_wins": [
+            "paladin"
+          ],
           "highlighted": [
             "champion",
             "elite_berserk_vikings",
             "halberdier",
             "heavy_cav_archer",
-            "hussar",
-            "paladin"
+            "hussar"
           ],
           "losses": [
             "arbalester",
@@ -8460,15 +8448,13 @@
             "elite_berserk_vikings",
             "halberdier",
             "heavy_cav_archer",
-            "hussar",
-            "paladin"
+            "hussar"
           ]
         },
         "heavy_cav_archer": {
           "eco_wins": [],
           "highlighted": [
             "elite_berserk_vikings",
-            "halberdier",
             "heavy_cav_archer",
             "hussar",
             "paladin"
@@ -8479,11 +8465,11 @@
           ],
           "pop_wins": [
             "arbalester",
-            "champion"
+            "champion",
+            "halberdier"
           ],
           "wins": [
             "elite_berserk_vikings",
-            "halberdier",
             "heavy_cav_archer",
             "hussar",
             "paladin"
@@ -8499,19 +8485,19 @@
           ],
           "pop_wins": [
             "arbalester",
-            "halberdier",
-            "imp_elite_skirm"
+            "halberdier"
           ],
           "wins": [
-            "heavy_cav_archer"
+            "heavy_cav_archer",
+            "imp_elite_skirm"
           ]
         },
         "hussar": {
           "eco_wins": [
-            "heavy_cav_archer",
             "paladin"
           ],
           "highlighted": [
+            "heavy_cav_archer",
             "hussar",
             "imp_elite_skirm"
           ],
@@ -8523,6 +8509,7 @@
           ],
           "pop_wins": [],
           "wins": [
+            "heavy_cav_archer",
             "heavy_scorpion",
             "hussar",
             "imp_elite_skirm"
@@ -8549,6 +8536,7 @@
         "paladin": {
           "eco_wins": [],
           "highlighted": [
+            "heavy_cav_archer",
             "hussar",
             "paladin"
           ],
@@ -8558,10 +8546,10 @@
           ],
           "pop_wins": [
             "arbalester",
-            "heavy_cav_archer",
             "imp_elite_skirm"
           ],
           "wins": [
+            "heavy_cav_archer",
             "heavy_scorpion",
             "hussar",
             "paladin"

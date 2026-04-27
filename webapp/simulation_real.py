@@ -1010,14 +1010,49 @@ class BattleSimulation:
         team = self.team1 if team_num == 1 else self.team2
         return sum(u.max_hp for u in team)
 
-    def total_resources_lost(self, team_num):
+    def _resource_lost(self, team_num, attr):
+        """HP-weighted resource loss: cost × (1 - current_hp / max_hp), summed."""
         team = self.team1 if team_num == 1 else self.team2
-        # cost_food/wood/gold attached during prepare_combat_unit; default 0.
-        total = 0
+        total = 0.0
         for u in team:
+            cost = float(getattr(u, attr) or 0)
+            if cost == 0:
+                continue
             if u.state == "dead":
-                total += int(u.cost_food + u.cost_wood + u.cost_gold)
+                total += cost
+            else:
+                lost_fraction = 1.0 - (u.current_hp / u.max_hp)
+                if lost_fraction > 0:
+                    total += cost * lost_fraction
         return total
+
+    def total_food_lost(self, team_num):
+        return round(self._resource_lost(team_num, "cost_food"), 3)
+
+    def total_wood_lost(self, team_num):
+        return round(self._resource_lost(team_num, "cost_wood"), 3)
+
+    def total_gold_lost(self, team_num):
+        return round(self._resource_lost(team_num, "cost_gold"), 3)
+
+    def total_resources_lost(self, team_num):
+        """Legacy compat: integer sum of food + wood + gold lost (rounded)."""
+        return int(round(
+            self._resource_lost(team_num, "cost_food")
+            + self._resource_lost(team_num, "cost_wood")
+            + self._resource_lost(team_num, "cost_gold")
+        ))
+
+    def total_value_lost(self, team_num):
+        """Net value lost = (food + wood + gold lost) - (food + wood + gold gained)."""
+        if team_num == 1:
+            gained = self.team1_food_gained + self.team1_wood_gained + self.team1_gold_gained
+        else:
+            gained = self.team2_food_gained + self.team2_wood_gained + self.team2_gold_gained
+        lost = (self._resource_lost(team_num, "cost_food")
+                + self._resource_lost(team_num, "cost_wood")
+                + self._resource_lost(team_num, "cost_gold"))
+        return round(lost - gained, 3)
 
     def step(self, dt):
         self.battle_time += dt

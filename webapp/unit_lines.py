@@ -207,6 +207,7 @@ UNIT_LINES = {
         "imperial_slug": "hussar",
         "unique_units": {
             "Magyars": ("magyar_huszar_magyars", "elite_magyar_huszar_magyars"),
+            "Huns": ("tarkan_huns", "elite_tarkan_huns"),
         },
     },
     "camel": {
@@ -249,11 +250,7 @@ UNIT_LINES = {
         "building": "Siege Workshop",
         "castle_slug": "ram",
         "imperial_slug": "siege_ram",
-        "unique_units": {
-            # Elite Tarkan (Huns) competes in the ram anti-building category —
-            # same pattern as elite_fire_archer_wu in the bombard_cannon line.
-            "Huns": (None, "elite_tarkan_huns"),
-        },
+        "unique_units": {},
     },
     "mangonel": {
         "name": "Mangonel Line",
@@ -312,9 +309,7 @@ UNIT_LINES = {
         "castle_slug": None,
         "imperial_slug": "bombard_cannon",
         "extra_imperial_slugs": ["traction_trebuchet"],
-        "unique_units": {
-            "Wu": (None, "elite_fire_archer_wu"),
-        },
+        "unique_units": {},
     },
     "galleon": {
         "name": "Galleon Line",

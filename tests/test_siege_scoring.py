@@ -74,11 +74,12 @@ def test_tarkan_not_in_siege_line_slugs():
     assert "tarkan" not in SIEGE_LINE_SLUGS
     assert "ram" in SIEGE_LINE_SLUGS
 
-def test_tarkan_in_ram_unique_units():
-    """Elite Tarkan (Huns) is a unique_units entry in the ram line."""
+def test_tarkan_in_light_cav_unique_units():
+    """Tarkan (Huns) is a unique_units entry in the light_cav line."""
     from unit_lines import UNIT_LINES
-    assert "Huns" in UNIT_LINES["ram"]["unique_units"]
-    assert UNIT_LINES["ram"]["unique_units"]["Huns"] == (None, "elite_tarkan_huns")
+    assert "Huns" in UNIT_LINES["light_cav"]["unique_units"]
+    assert UNIT_LINES["light_cav"]["unique_units"]["Huns"] == ("tarkan_huns", "elite_tarkan_huns")
+    assert "Huns" not in UNIT_LINES["ram"]["unique_units"]
 
 
 # ===== CASTLE_TARGETS tests =====
@@ -234,8 +235,8 @@ def test_dmg_fraction_range():
                 assert 0.0 <= v <= 1.0, f"{sk}.{dk}={v} out of range"
 
 
-def test_trebuchet_scores_higher_than_tarkan():
-    """Trebuchet should vastly outperform tarkan as siege — validates score direction."""
+def test_trebuchet_scores_higher_than_ram():
+    """Trebuchet should vastly outperform ram as siege — validates score direction."""
     from compute_battle_scores import compute_siege_antibuilding_scores
     scores = compute_siege_antibuilding_scores()
 
@@ -244,19 +245,18 @@ def test_trebuchet_scores_higher_than_tarkan():
     assert treb_group, "trebuchet|imperial group missing"
     treb_scores = [s["anti_building_score"] for s in treb_group.values()]
 
-    # Tarkan is now a unique_unit in the ram line (not a standalone line)
+    # Get ram imperial scores (tarkan is no longer in siege scoring)
     ram_imperial = scores.get("ram|imperial", {})
     assert ram_imperial, "ram|imperial group missing"
-    # elite_tarkan_huns appears as a civ-specific slug within ram|imperial
-    tarkan_scores = [
-        s["anti_building_score"]
-        for sk, s in ram_imperial.items()
-        if "tarkan" in sk
-    ]
-    assert tarkan_scores, "elite_tarkan_huns not found in ram|imperial group"
+    ram_scores = [s["anti_building_score"] for s in ram_imperial.values()]
+
+    # Tarkan (Huns) is now in light_cav, not siege — confirm it's absent from siege scores
+    for group in scores.values():
+        for sk in group:
+            assert "tarkan" not in sk, f"tarkan should not appear in siege scores, found in {sk}"
 
     avg_treb = sum(treb_scores) / len(treb_scores)
-    avg_tarkan = sum(tarkan_scores) / len(tarkan_scores)
-    assert avg_treb > avg_tarkan, (
-        f"Trebuchet avg score ({avg_treb:.1f}) should be > tarkan avg ({avg_tarkan:.1f})"
+    avg_ram = sum(ram_scores) / len(ram_scores)
+    assert avg_treb > avg_ram, (
+        f"Trebuchet avg score ({avg_treb:.1f}) should be > ram avg ({avg_ram:.1f})"
     )

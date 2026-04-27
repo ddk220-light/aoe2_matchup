@@ -325,26 +325,10 @@ Target: full rebuild fits an after-work overnight run; routine re-derives are se
 - `tests/test_advisor_derive.py` — synthetic matchup_db → expected advisor_recommendations
 - Sanity: Lithuanian Leitis still rank-1 stable_effectiveness; Aztec Jaguar still high anti_trash; Spanish Conquistador still top of ranged.
 
-## Open Questions
+## Resolved decisions
 
-**1. Where do derived tables live?**
-Two options:
-- (a) Keep `battle_scores` in `aoe2_reference.db` (today's location); put `advisor_recommendations` there too.
-- (b) New file `derived_data.db` containing both `battle_scores` and `advisor_recommendations`; `aoe2_reference.db` stays purely for unit/tech reference data.
+**1. Derived tables live in `derived_data.db`** — a new file separate from `aoe2_reference.db`. `battle_scores` and `advisor_recommendations` both move there. `aoe2_reference.db` stays purely for unit/tech reference data and never needs backing up before a derive run.
 
-My lean: **(b)** — clean separation between "reference facts" (units, techs, classes) and "derived analysis" (scores, recommendations). Reference DB doesn't need to be backed up before each derive; derived DB does.
+**2. PyPy is hard-required.** If `pypy3` is not on PATH at runtime, the runner exits with a clear error message and a debug pointer. No fallback. This forces the install once and avoids silent slowdowns.
 
-**2. PyPy fallback behavior?**
-- Hard fail if `pypy3` not on PATH?
-- Or fallback to CPython with a runtime warning?
-
-My lean: **fallback to CPython with a clear warning** — keeps the dev environment working without forcing PyPy install for code-only changes.
-
-**3. Schema migration strategy for old yardstick rows?**
-Existing yardstick rows have no per-resource breakdown. Options:
-- (a) Re-sim everything once schema is up (clean slate).
-- (b) Migrate existing rows with computed `*_lost` fields from `team*_resources_lost` and `0` for `*_gained`, then mark `sim_version='legacy'` so incremental triggers re-sim.
-
-My lean: **(a)** — clean slate. The first full PyPy run is overnight anyway, and migrated rows would lack the new sim outputs (resources_gained, value_lost from civ effects).
-
-These are minor; flagging for explicit decision.
+**3. Migration is clean-slate.** No backfill of existing yardstick rows. The first run after schema cutover is a full PyPy batch (~3.6 hours). Old DB files are kept on disk until step 14 of the migration plan completes successfully.

@@ -55,10 +55,12 @@ TEAM_OFFSET_FROM_CENTER = 15.0  # tiles each team starts left/right of map cente
 # Default projectile speed when stat is 0 (JS fallback: 7 * TILE_SIZE px/s)
 DEFAULT_PROJECTILE_SPEED = 7.0  # tiles/s
 
-# Missed projectiles can still graze an adjacent enemy; this is the max
-# distance (in tiles, edge-to-edge) for a miss to redirect onto another
-# unit at 0.5x damage.
-MISS_REDIRECT_RADIUS = 1.0
+# Missed projectiles land somewhere in a circle of this radius around
+# the intended impact point.  If any enemy unit happens to occupy that
+# random landing spot at the instant of impact, they take 0.5x damage.
+# Most misses land in empty space and do nothing — only tight formations
+# get reliably grazed.
+MISS_SPREAD_RADIUS = 2.0  # tiles
 
 # Battle timeout (game-time seconds).  Hard cap — at this point the leader
 # (by raw HP diff) is declared winner.  600s (10 min) is a generous ceiling
@@ -734,26 +736,26 @@ class BattleUnit:
             if target.state != "dead" and will_hit:
                 target.take_damage(damage, attacker)
             elif target.state != "dead" and not will_hit:
-                # Missed shots aren't always wasted: a missed projectile
-                # can still hit a nearby unit at 0.5x damage (real AoE2
-                # arrows have spread; misses sometimes land on adjacent
-                # units in tight formations).
-                miss_dmg = max(1, math.floor(damage * 0.5))
+                # Missed shots: pick a random point within MISS_SPREAD_RADIUS
+                # tiles of the intended impact and check if any unit happens
+                # to occupy that exact spot.  If yes, that unit takes 0.5x
+                # damage; if not, the shot is wasted (most misses).
+                # Most misses fall in empty space; only tight formations
+                # get reliably grazed.
+                miss_angle = random.random() * 2.0 * math.pi
+                miss_dist = random.random() * MISS_SPREAD_RADIUS
+                land_x = impact_x + miss_dist * math.cos(miss_angle)
+                land_y = impact_y + miss_dist * math.sin(miss_angle)
                 enemies = sim.team2 if team == 1 else sim.team1
-                # Look for the closest live enemy within 1.0 tile of the
-                # intended impact point (tighter than splash so it only
-                # catches truly adjacent units).
-                best, best_d = None, MISS_REDIRECT_RADIUS
                 for enemy in enemies:
                     if enemy is target or enemy.state == "dead":
                         continue
-                    dx = enemy.x - impact_x
-                    dy = enemy.y - impact_y
-                    d = math.hypot(dx, dy) - enemy.radius
-                    if d < best_d:
-                        best, best_d = enemy, d
-                if best is not None:
-                    best.take_damage(miss_dmg, attacker)
+                    dx = enemy.x - land_x
+                    dy = enemy.y - land_y
+                    if dx * dx + dy * dy <= enemy.radius * enemy.radius:
+                        miss_dmg = max(1, math.floor(damage * 0.5))
+                        enemy.take_damage(miss_dmg, attacker)
+                        break
 
             if (attacker.attack_bonus_per_kill > 0 and target_was_alive
                     and target.state == "dead"):

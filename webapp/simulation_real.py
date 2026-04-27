@@ -45,12 +45,20 @@ DT = 1.0 / 30.0
 # Match the JS sim's pixel-space buffer (5 px / 30 px-per-tile = 0.167 tiles)
 MELEE_RANGE_BUFFER = 5.0 / 30.0
 
-# Map size in tiles (matches 900x600 canvas / TILE_SIZE 30)
-MAP_W = 30.0
+# Map size in tiles. Width widened to 60 so ranged units have room to kite;
+# unit start positions are anchored 15 tiles from the center on each side
+# (see setup_team), giving 15 tiles of free kiting space behind each army.
+MAP_W = 60.0
 MAP_H = 20.0
+TEAM_OFFSET_FROM_CENTER = 15.0  # tiles each team starts left/right of map center
 
 # Default projectile speed when stat is 0 (JS fallback: 7 * TILE_SIZE px/s)
 DEFAULT_PROJECTILE_SPEED = 7.0  # tiles/s
+
+# Missed projectiles can still graze an adjacent enemy; this is the max
+# distance (in tiles, edge-to-edge) for a miss to redirect onto another
+# unit at 0.5x damage.
+MISS_REDIRECT_RADIUS = 1.0
 
 # Battle timeout (game-time seconds).  Hard cap — at this point the leader
 # (by raw HP diff) is declared winner.  600s (10 min) is a generous ceiling
@@ -575,28 +583,60 @@ class BattleUnit:
         was_moving = self.was_moving
         if self.is_ranged():
             should_kite = not self.target.is_ranged()
+
+            # Committed shot: locked in windup animation, can't move.
+            # Mirrors the melee branch's committed_attack pattern.  After
+            # the windup elapses, the projectile fires, and the remaining
+            # reload time becomes the post-fire cooldown so total cycle
+            # time stays = reload_time.
+            if self.committed_attack:
+                self.committed_attack["time_left"] -= dt
+                self.state = "windup"
+                if self.committed_attack["time_left"] <= 0:
+                    target = self.committed_attack["target"]
+                    if target is not None and target.state != "dead":
+                        # perform_attack reads self.target; restore in case
+                        # the unit's primary target changed mid-windup.
+                        prev_target = self.target
+                        self.target = target
+                        self.perform_attack(sim)
+                        self.target = prev_target if prev_target and prev_target.state != "dead" else target
+                    self.committed_attack = None
+                    # perform_attack already set cooldown = reload_time;
+                    # subtract the windup we already spent so total cycle
+                    # equals reload_time per shot.
+                    self.attack_cooldown = max(0.0, self.reload_time - self.attack_delay)
+                    self.was_moving = False
+                return
+
             if self.too_close():
                 self.state = "kiting"
                 self.move_away_from_target(dt, grid)
                 self.was_moving = True
-            elif not was_moving and cooldown <= 0:
-                self.state = "attacking"
-                self.perform_attack(sim)
-                self.was_moving = True
-            elif not was_moving:
-                self.state = "attacking"
             elif cooldown > 0 and should_kite:
+                # Reloading vs melee target: free to kite away.
                 self.state = "kiting"
                 self.move_away_from_target(dt, grid)
             elif cooldown > 0:
+                # Reloading vs ranged target: hold position.
                 self.state = "attacking"
             elif self.in_range():
-                self.attack_cooldown = self.attack_delay
-                self.was_moving = False
-                self.state = "attacking"
+                # Cooldown done, in range — start the windup for next shot.
+                if self.attack_delay > 0:
+                    self.committed_attack = {
+                        "target": self.target,
+                        "time_left": self.attack_delay,
+                    }
+                    self.state = "windup"
+                    self.was_moving = False
+                else:
+                    self.state = "attacking"
+                    self.perform_attack(sim)
+                    self.was_moving = False
             else:
                 self.state = "moving"
                 self.move_toward_target(dt, grid)
+                self.was_moving = True
         else:
             # Charge projectile attack (Fire Lancer)
             if (self.charge_projectile_count > 0 and not self.has_used_charge
@@ -693,6 +733,27 @@ class BattleUnit:
             target_was_alive = target.state != "dead"
             if target.state != "dead" and will_hit:
                 target.take_damage(damage, attacker)
+            elif target.state != "dead" and not will_hit:
+                # Missed shots aren't always wasted: a missed projectile
+                # can still hit a nearby unit at 0.5x damage (real AoE2
+                # arrows have spread; misses sometimes land on adjacent
+                # units in tight formations).
+                miss_dmg = max(1, math.floor(damage * 0.5))
+                enemies = sim.team2 if team == 1 else sim.team1
+                # Look for the closest live enemy within 1.0 tile of the
+                # intended impact point (tighter than splash so it only
+                # catches truly adjacent units).
+                best, best_d = None, MISS_REDIRECT_RADIUS
+                for enemy in enemies:
+                    if enemy is target or enemy.state == "dead":
+                        continue
+                    dx = enemy.x - impact_x
+                    dy = enemy.y - impact_y
+                    d = math.hypot(dx, dy) - enemy.radius
+                    if d < best_d:
+                        best, best_d = enemy, d
+                if best is not None:
+                    best.take_damage(miss_dmg, attacker)
 
             if (attacker.attack_bonus_per_kill > 0 and target_was_alive
                     and target.state == "dead"):
@@ -1011,7 +1072,13 @@ class BattleSimulation:
         # Match JS layout but in tile coordinates.
         outline = float(stats.get("outline_size") or 0.2)
         radius = (10.0 + min(outline, 1.0) * 20.0) / 30.0
-        start_x = (1.0 + radius) if team_num == 1 else (MAP_W - 1.0 - radius)
+        # Anchor each team TEAM_OFFSET_FROM_CENTER tiles from map center, leaving
+        # the rest of the map width as free kiting space behind each army.
+        center_x = MAP_W / 2.0
+        if team_num == 1:
+            start_x = center_x - TEAM_OFFSET_FROM_CENTER
+        else:
+            start_x = center_x + TEAM_OFFSET_FROM_CENTER
         min_spacing = radius * 2.2
         if count > 1:
             natural_spacing = (MAP_H - 2 * radius) / (count - 1)

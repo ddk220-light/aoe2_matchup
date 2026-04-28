@@ -45,12 +45,55 @@ DT = 1.0 / 30.0
 # Match the JS sim's pixel-space buffer (5 px / 30 px-per-tile = 0.167 tiles)
 MELEE_RANGE_BUFFER = 5.0 / 30.0
 
-# Map size in tiles (matches 900x600 canvas / TILE_SIZE 30)
-MAP_W = 30.0
+# Map size in tiles. Width widened to 60 so ranged units have room to kite;
+# unit start positions are anchored 15 tiles from the center on each side
+# (see setup_team), giving 15 tiles of free kiting space behind each army.
+MAP_W = 60.0
 MAP_H = 20.0
+TEAM_OFFSET_FROM_CENTER = 15.0  # tiles each team starts left/right of map center
 
 # Default projectile speed when stat is 0 (JS fallback: 7 * TILE_SIZE px/s)
 DEFAULT_PROJECTILE_SPEED = 7.0  # tiles/s
+
+# Missed projectiles land somewhere in a circle of this radius around
+# the intended impact point.  If any enemy unit happens to occupy that
+# random landing spot at the instant of impact, they take 0.5x damage.
+# Most misses land in empty space and do nothing — only tight formations
+# get reliably grazed.
+MISS_SPREAD_RADIUS = 2.0  # tiles
+
+# After this many game-seconds, ranged units stop kiting and just attack.
+# Models real-game reality: an infinite kite is impossible — units hit
+# walls, micro fails, the player shifts focus.  Lets battles actually
+# resolve so we get meaningful HP-remaining data on melee units.
+# Units with min_attack_range > 0 (Onager/Mangonel/Scorpion/Trebuchet)
+# still need their target to be outside the dead zone after kite-stop —
+# they will switch targets if possible, else go idle.
+KITE_STOP_TIME = 60.0  # game-seconds
+
+# Weighted resource cost: gold is the scarcest economic resource, wood the
+# most abundant.  Used everywhere we collapse (food, wood, gold) into a
+# single "cost" or "value" scalar — unit-count budgets at the 3k scale,
+# value_lost aggregation, and the ranking-side calc_weighted_cost in
+# compute_battle_scores.py.
+COST_WEIGHT_FOOD = 1.0
+COST_WEIGHT_WOOD = 0.7
+COST_WEIGHT_GOLD = 1.5
+
+# 3k scale cap: if either side would have more than this many units at the
+# 3k resource budget, that side is capped at 30 and the OPPOSITE side's
+# count is recomputed to match the capped side's total cost.  Keeps fights
+# manageable: avoids 60-vs-60 halberdier slugfests, and avoids matching
+# 9 elephants against ~57 halbs (trims to ~5 elephants vs 30 halbs at the
+# same cost ratio, much faster to simulate).
+SCALE_3K_UNIT_CAP = 30
+
+
+def weighted_cost(food, wood, gold):
+    """Collapse a (food, wood, gold) triple into a single cost scalar."""
+    return (COST_WEIGHT_FOOD * (food or 0)
+            + COST_WEIGHT_WOOD * (wood or 0)
+            + COST_WEIGHT_GOLD * (gold or 0))
 
 # Battle timeout (game-time seconds).  Hard cap — at this point the leader
 # (by raw HP diff) is declared winner.  600s (10 min) is a generous ceiling
@@ -168,7 +211,7 @@ def prepare_combat_unit(stats):
     out.setdefault("cost_food", 0)
     out.setdefault("cost_wood", 0)
     out.setdefault("cost_gold", 0)
-    out.setdefault("cost", (out.get("cost_food") or 0) + (out.get("cost_wood") or 0) + (out.get("cost_gold") or 0))
+    out.setdefault("cost", weighted_cost(out.get("cost_food"), out.get("cost_wood"), out.get("cost_gold")))
     # attack_speed: BattleUnit computes reload_time from attack_speed.
     # If caller supplied reload_time instead, convert it.
     if "attack_speed" not in out:
@@ -505,6 +548,24 @@ class BattleUnit:
         self.last_dist_to_target = self.distance_to(self.target) if self.target else float("inf")
         return self.target
 
+    def find_target_outside_dead_zone(self, enemies):
+        """For min_range > 0 ranged units after kite-stop: prefer the
+        closest enemy that's at or beyond min_attack_range.  If none
+        exist, return None (caller should idle)."""
+        if self.min_attack_range <= 0:
+            return self.find_target(enemies)
+        best = None
+        best_dist = float("inf")
+        for enemy in enemies:
+            if enemy.state == "dead":
+                continue
+            d = self.distance_to(enemy)
+            if d < self.min_attack_range:
+                continue
+            if d < best_dist:
+                best, best_dist = enemy, d
+        return best
+
     # ---- Update -----------------------------------------------------------
 
     def update(self, dt, grid, enemies, sim):
@@ -575,28 +636,84 @@ class BattleUnit:
         was_moving = self.was_moving
         if self.is_ranged():
             should_kite = not self.target.is_ranged()
+            # After KITE_STOP_TIME, ranged units stop kiting and just attack
+            # (model real-world micro failure / map-edge hit).
+            can_kite = sim.battle_time < KITE_STOP_TIME
+
+            # Committed shot: locked in windup animation, can't move.
+            # Mirrors the melee branch's committed_attack pattern.  After
+            # the windup elapses, the projectile fires, and the remaining
+            # reload time becomes the post-fire cooldown so total cycle
+            # time stays = reload_time.
+            if self.committed_attack:
+                self.committed_attack["time_left"] -= dt
+                self.state = "windup"
+                if self.committed_attack["time_left"] <= 0:
+                    target = self.committed_attack["target"]
+                    if target is not None and target.state != "dead":
+                        # perform_attack reads self.target; restore in case
+                        # the unit's primary target changed mid-windup.
+                        prev_target = self.target
+                        self.target = target
+                        self.perform_attack(sim)
+                        self.target = prev_target if prev_target and prev_target.state != "dead" else target
+                    self.committed_attack = None
+                    # perform_attack already set cooldown = reload_time;
+                    # subtract the windup we already spent so total cycle
+                    # equals reload_time per shot.
+                    self.attack_cooldown = max(0.0, self.reload_time - self.attack_delay)
+                    self.was_moving = False
+                return
+
             if self.too_close():
-                self.state = "kiting"
-                self.move_away_from_target(dt, grid)
-                self.was_moving = True
-            elif not was_moving and cooldown <= 0:
-                self.state = "attacking"
-                self.perform_attack(sim)
-                self.was_moving = True
-            elif not was_moving:
-                self.state = "attacking"
-            elif cooldown > 0 and should_kite:
+                # Target is inside the dead zone (only happens for units
+                # with min_attack_range > 0 — Onager, Mangonel, etc.).
+                if can_kite:
+                    self.state = "kiting"
+                    self.move_away_from_target(dt, grid)
+                    self.was_moving = True
+                else:
+                    # Past kite-stop: try to switch to a target outside
+                    # the dead zone; if none, go idle (the unit is
+                    # surrounded and can't shoot).
+                    new_target = self.find_target_outside_dead_zone(enemies)
+                    if new_target is None:
+                        self.state = "idle"
+                        return
+                    self.target = new_target
+                    self.was_moving = False
+                    # Fall through to handle as an in-range/out-of-range case
+            elif cooldown > 0 and should_kite and can_kite:
+                # Reloading vs melee target: free to kite away.
                 self.state = "kiting"
                 self.move_away_from_target(dt, grid)
             elif cooldown > 0:
-                self.state = "attacking"
+                # Reloading vs ranged target OR post-kite-stop. Hold if
+                # target is in range; otherwise close the distance — the
+                # kite-stop bans running AWAY, not pursuing.
+                if self.in_range():
+                    self.state = "attacking"
+                else:
+                    self.state = "moving"
+                    self.move_toward_target(dt, grid)
+                    self.was_moving = True
             elif self.in_range():
-                self.attack_cooldown = self.attack_delay
-                self.was_moving = False
-                self.state = "attacking"
+                # Cooldown done, in range — start the windup for next shot.
+                if self.attack_delay > 0:
+                    self.committed_attack = {
+                        "target": self.target,
+                        "time_left": self.attack_delay,
+                    }
+                    self.state = "windup"
+                    self.was_moving = False
+                else:
+                    self.state = "attacking"
+                    self.perform_attack(sim)
+                    self.was_moving = False
             else:
                 self.state = "moving"
                 self.move_toward_target(dt, grid)
+                self.was_moving = True
         else:
             # Charge projectile attack (Fire Lancer)
             if (self.charge_projectile_count > 0 and not self.has_used_charge
@@ -693,6 +810,27 @@ class BattleUnit:
             target_was_alive = target.state != "dead"
             if target.state != "dead" and will_hit:
                 target.take_damage(damage, attacker)
+            elif target.state != "dead" and not will_hit:
+                # Missed shots: pick a random point within MISS_SPREAD_RADIUS
+                # tiles of the intended impact and check if any unit happens
+                # to occupy that exact spot.  If yes, that unit takes 0.5x
+                # damage; if not, the shot is wasted (most misses).
+                # Most misses fall in empty space; only tight formations
+                # get reliably grazed.
+                miss_angle = random.random() * 2.0 * math.pi
+                miss_dist = random.random() * MISS_SPREAD_RADIUS
+                land_x = impact_x + miss_dist * math.cos(miss_angle)
+                land_y = impact_y + miss_dist * math.sin(miss_angle)
+                enemies = sim.team2 if team == 1 else sim.team1
+                for enemy in enemies:
+                    if enemy is target or enemy.state == "dead":
+                        continue
+                    dx = enemy.x - land_x
+                    dy = enemy.y - land_y
+                    if dx * dx + dy * dy <= enemy.radius * enemy.radius:
+                        miss_dmg = max(1, math.floor(damage * 0.5))
+                        enemy.take_damage(miss_dmg, attacker)
+                        break
 
             if (attacker.attack_bonus_per_kill > 0 and target_was_alive
                     and target.state == "dead"):
@@ -1011,7 +1149,13 @@ class BattleSimulation:
         # Match JS layout but in tile coordinates.
         outline = float(stats.get("outline_size") or 0.2)
         radius = (10.0 + min(outline, 1.0) * 20.0) / 30.0
-        start_x = (1.0 + radius) if team_num == 1 else (MAP_W - 1.0 - radius)
+        # Anchor each team TEAM_OFFSET_FROM_CENTER tiles from map center, leaving
+        # the rest of the map width as free kiting space behind each army.
+        center_x = MAP_W / 2.0
+        if team_num == 1:
+            start_x = center_x - TEAM_OFFSET_FROM_CENTER
+        else:
+            start_x = center_x + TEAM_OFFSET_FROM_CENTER
         min_spacing = radius * 2.2
         if count > 1:
             natural_spacing = (MAP_H - 2 * radius) / (count - 1)
@@ -1082,14 +1226,22 @@ class BattleSimulation:
         ))
 
     def total_value_lost(self, team_num):
-        """Net value lost = (food + wood + gold lost) - (food + wood + gold gained)."""
+        """Net value lost using weighted cost (gold scarcer than food, wood cheapest).
+
+        value = COST_WEIGHT_FOOD*food + COST_WEIGHT_WOOD*wood + COST_WEIGHT_GOLD*gold,
+        applied to both losses and per-kill resource gains.
+        """
         if team_num == 1:
-            gained = self.team1_food_gained + self.team1_wood_gained + self.team1_gold_gained
+            gained = (COST_WEIGHT_FOOD * self.team1_food_gained
+                      + COST_WEIGHT_WOOD * self.team1_wood_gained
+                      + COST_WEIGHT_GOLD * self.team1_gold_gained)
         else:
-            gained = self.team2_food_gained + self.team2_wood_gained + self.team2_gold_gained
-        lost = (self._resource_lost(team_num, "cost_food")
-                + self._resource_lost(team_num, "cost_wood")
-                + self._resource_lost(team_num, "cost_gold"))
+            gained = (COST_WEIGHT_FOOD * self.team2_food_gained
+                      + COST_WEIGHT_WOOD * self.team2_wood_gained
+                      + COST_WEIGHT_GOLD * self.team2_gold_gained)
+        lost = (COST_WEIGHT_FOOD * self._resource_lost(team_num, "cost_food")
+                + COST_WEIGHT_WOOD * self._resource_lost(team_num, "cost_wood")
+                + COST_WEIGHT_GOLD * self._resource_lost(team_num, "cost_gold"))
         return round(lost - gained, 3)
 
     def step(self, dt):
@@ -1243,6 +1395,49 @@ def _calc_count(unit, resources, fixed_count, cost_override):
     return int(max(1, resources // cost))
 
 
+def _calc_counts(unit1, unit2, resources, fixed_count,
+                 cost1_override, cost2_override):
+    """Return (count1, count2) honoring the SCALE_3K_UNIT_CAP rule.
+
+    For fixed_count scales (e.g. 30v30), defers to _calc_count per side.
+    For resource-budget scales (e.g. 3k):
+      * Compute each side's uncapped count from its own weighted cost.
+      * If a side exceeds SCALE_3K_UNIT_CAP, cap it at 30, then rematch
+        the OPPOSITE side's count to the capped side's total weighted
+        cost (so the two armies still cost the same).
+      * If both sides would exceed the cap (mirror or both-cheap), cap
+        both at 30 with their natural costs — no rematch needed.
+    """
+    if fixed_count is not None:
+        return (_calc_count(unit1, resources, fixed_count, cost1_override),
+                _calc_count(unit2, resources, fixed_count, cost2_override))
+
+    cost1 = cost1_override if cost1_override is not None else (
+        unit1["cost"] if unit1.get("cost") and unit1["cost"] > 0 else 100)
+    cost2 = cost2_override if cost2_override is not None else (
+        unit2["cost"] if unit2.get("cost") and unit2["cost"] > 0 else 100)
+
+    n1 = max(1, int(resources // cost1))
+    n2 = max(1, int(resources // cost2))
+
+    over1 = n1 > SCALE_3K_UNIT_CAP
+    over2 = n2 > SCALE_3K_UNIT_CAP
+
+    if over1 and over2:
+        # Both sides cheap — symmetric cap, no rematch.
+        return SCALE_3K_UNIT_CAP, SCALE_3K_UNIT_CAP
+    if over1:
+        # Side 1 cheap, side 2 expensive: cap side 1, rematch side 2.
+        n1 = SCALE_3K_UNIT_CAP
+        n2 = max(1, int((n1 * cost1) // cost2))
+        return n1, n2
+    if over2:
+        n2 = SCALE_3K_UNIT_CAP
+        n1 = max(1, int((n2 * cost2) // cost1))
+        return n1, n2
+    return n1, n2
+
+
 def simulate_real_battle(
     unit1,
     unit2,
@@ -1266,8 +1461,8 @@ def simulate_real_battle(
     if seed is not None:
         random.seed(seed)
 
-    count1 = _calc_count(unit1, resources, fixed_count, cost1_override)
-    count2 = _calc_count(unit2, resources, fixed_count, cost2_override)
+    count1, count2 = _calc_counts(unit1, unit2, resources, fixed_count,
+                                   cost1_override, cost2_override)
 
     sim = BattleSimulation()
     sim.setup_team(1, unit1, count1)

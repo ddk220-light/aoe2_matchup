@@ -203,7 +203,9 @@ def build_combat_dict(rc, row):
 
 
 def calc_weighted_cost(food, wood, gold, is_imperial):
-    cost = 0.8 * (wood or 0) + (food or 0) + 1.5 * (gold or 0)
+    # Keep in lockstep with simulation_real.weighted_cost — gold is the
+    # scarcest resource, wood the most abundant.
+    cost = 0.7 * (wood or 0) + (food or 0) + 1.5 * (gold or 0)
     return int(cost) if cost > 0 else 100
 
 

@@ -16,6 +16,7 @@ app.json.sort_keys = False
 # Database paths
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_units.db")
 REF_DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
+DERIVED_DB_PATH = os.path.join(os.path.dirname(__file__), "derived_data.db")
 
 # Age definitions
 AGES = {
@@ -35,6 +36,15 @@ def get_db():
 def get_ref_db():
     """Get a connection to the reference/audit database."""
     conn = sqlite3.connect(REF_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def get_derived_db():
+    """Get a connection to the derived-data database (battle_scores produced
+    by webapp/derive_unit_rankings.py from matchup_db.db raw battles).
+    """
+    conn = sqlite3.connect(DERIVED_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -575,12 +585,27 @@ def api_ref_unit_line(line_slug):
     elif line_slug == "naval":
         _score_line_slugs = ["galleon", "fire", "hulk"]
     if _score_line_slugs:
+        # Battle scores live in derived_data.db (produced by
+        # webapp/derive_unit_rankings.py from raw matchup_db.db rows).
+        # Fall back to the reference DB only if derived_data is missing — the
+        # legacy reference battle_scores table has been empty since the
+        # simulation pipeline was rebuilt for the sim-improvements branch.
+        derived_conn = get_derived_db()
         placeholders = ",".join("?" for _ in _score_line_slugs)
-        rc.execute(
+        derived_rows = derived_conn.execute(
             f"SELECT age, civ_name, unit_slug, score_type, score_value FROM battle_scores WHERE line_slug IN ({placeholders})",
             _score_line_slugs,
-        )
-        for bs_row in rc.fetchall():
+        ).fetchall()
+        derived_conn.close()
+
+        if not derived_rows:
+            rc.execute(
+                f"SELECT age, civ_name, unit_slug, score_type, score_value FROM battle_scores WHERE line_slug IN ({placeholders})",
+                _score_line_slugs,
+            )
+            derived_rows = rc.fetchall()
+
+        for bs_row in derived_rows:
             uk = f"{bs_row['age'].lower()}|{bs_row['civ_name']}|{bs_row['unit_slug']}"
             _db_role_scores.setdefault(uk, {})[bs_row["score_type"]] = bs_row[
                 "score_value"

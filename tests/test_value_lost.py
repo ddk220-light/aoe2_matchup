@@ -27,18 +27,18 @@ def test_dead_unit_contributes_full_cost():
     sim.setup_team(1, _stats(), 3)
     sim.team1[0].current_hp = 0
     sim.team1[0].state = "dead"
-    # 1 dead unit at 50 food + 30 gold = 80 lost
+    # 1 dead unit weighted: 1.0*50f + 1.5*30g = 95
     assert sim.total_food_lost(1) == pytest.approx(50.0)
     assert sim.total_gold_lost(1) == pytest.approx(30.0)
-    assert sim.total_value_lost(1) == pytest.approx(80.0)
+    assert sim.total_value_lost(1) == pytest.approx(95.0)
 
 
 def test_partial_damage_partial_loss():
     sim = BattleSimulation()
     sim.setup_team(1, _stats(hp=100), 1)
     sim.team1[0].current_hp = 50  # 50% damaged
-    # Lost = cost * (1 - 0.5) = 50% of 80 = 40
-    assert sim.total_value_lost(1) == pytest.approx(40.0)
+    # Lost = weighted cost * (1 - 0.5) = 50% of 95 = 47.5
+    assert sim.total_value_lost(1) == pytest.approx(47.5)
 
 
 def test_value_lost_subtracts_gained():
@@ -47,5 +47,5 @@ def test_value_lost_subtracts_gained():
     sim.team1[0].current_hp = 0
     sim.team1[0].state = "dead"
     sim.team1_gold_gained = 25.0  # killed enough to gain 25 gold
-    # Lost 80 - gained 25 = 55 net
-    assert sim.total_value_lost(1) == pytest.approx(55.0)
+    # Lost 95 - gained (1.5 * 25) = 95 - 37.5 = 57.5 net
+    assert sim.total_value_lost(1) == pytest.approx(57.5)

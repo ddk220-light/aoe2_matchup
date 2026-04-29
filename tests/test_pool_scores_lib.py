@@ -236,3 +236,41 @@ def test_final_score_missing_role_treated_as_zero():
     role_means = {"GC": +50.0}  # missing AC
     expected = 0.7 * 50.0 + 0.30 * 0.0  # = 35.0
     assert final_score_for_pool(role_means, "stable") == pytest.approx(expected)
+
+
+from pool_scores_lib import compute_shape
+
+
+def test_compute_shape_empty_input():
+    s = compute_shape([])
+    assert s == {"n": 0, "mean": 0.0, "stddev": 0.0,
+                 "win_rate": 0.0, "decisive_win_rate": 0.0,
+                 "big_win_rate": 0.0, "catastrophic_loss_rate": 0.0}
+
+
+def test_compute_shape_basic():
+    # 4 raw signed_scores: [+90, +60, +20, -70]
+    # n=4, mean=25, win_rate=75% (>0), decisive=50% (>30),
+    # big=50% (>50), cat_loss=25% (<-50)
+    s = compute_shape([+90.0, +60.0, +20.0, -70.0])
+    assert s["n"] == 4
+    assert s["mean"] == pytest.approx(25.0)
+    # population stddev: sqrt(mean of (x-25)^2) = sqrt((4225+1225+25+9025)/4)
+    # = sqrt(14500/4) = sqrt(3625) ~= 60.21
+    assert s["stddev"] == pytest.approx(60.2079, abs=1e-3)
+    assert s["win_rate"] == pytest.approx(75.0)
+    assert s["decisive_win_rate"] == pytest.approx(50.0)
+    assert s["big_win_rate"] == pytest.approx(50.0)
+    assert s["catastrophic_loss_rate"] == pytest.approx(25.0)
+
+
+def test_compute_shape_all_wins():
+    s = compute_shape([+10.0, +20.0, +30.0, +40.0])
+    assert s["win_rate"] == 100.0
+    assert s["catastrophic_loss_rate"] == 0.0
+
+
+def test_compute_shape_all_catastrophic_losses():
+    s = compute_shape([-90.0, -80.0])
+    assert s["win_rate"] == 0.0
+    assert s["catastrophic_loss_rate"] == 100.0

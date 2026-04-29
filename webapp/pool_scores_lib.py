@@ -198,3 +198,29 @@ def final_score_for_pool(role_means: dict[str, float], pool: str) -> float:
     """Apply pool-specific role weights. Missing roles count as 0."""
     weights = POOL_WEIGHTS[pool]
     return sum(weights[r] * role_means.get(r, 0.0) for r in weights)
+
+
+def compute_shape(raw_signed_scores) -> dict:
+    """Distribution descriptors over RAW signed_scores (not adjusted).
+
+    Win/loss rates are computed from the raw HP-based signed_score so
+    they describe the underlying battle outcomes regardless of which
+    axis is being scored. Used to drive UI profile labels later.
+    """
+    values = list(raw_signed_scores)
+    n = len(values)
+    if n == 0:
+        return {"n": 0, "mean": 0.0, "stddev": 0.0,
+                "win_rate": 0.0, "decisive_win_rate": 0.0,
+                "big_win_rate": 0.0, "catastrophic_loss_rate": 0.0}
+    mean_v = sum(values) / n
+    var = sum((x - mean_v) ** 2 for x in values) / n
+    return {
+        "n": n,
+        "mean": mean_v,
+        "stddev": var ** 0.5,
+        "win_rate": 100.0 * sum(1 for x in values if x > 0) / n,
+        "decisive_win_rate": 100.0 * sum(1 for x in values if x > 30) / n,
+        "big_win_rate": 100.0 * sum(1 for x in values if x > 50) / n,
+        "catastrophic_loss_rate": 100.0 * sum(1 for x in values if x < -50) / n,
+    }

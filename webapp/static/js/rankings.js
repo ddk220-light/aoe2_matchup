@@ -860,6 +860,41 @@ const LINE_LABELS = {
     cannon_galleon: "Cannon Galleon",
 };
 
+function scoreColumnLabel(axis, scale) {
+    const axisLabel = axis === "hp" ? "HP" : axis === "cost" ? "Cost" : "Speed";
+    const scaleLabel = scale === "pop" ? "Pop" : scale === "cost" ? "3k" : "Avg";
+    if (axis === "cost") {
+        return `${axisLabel} (${scaleLabel}, lower=better)`;
+    }
+    return `${axisLabel} (${scaleLabel})`;
+}
+
+function scoreColumnInfo(axis, scale) {
+    const axisDesc = {
+        hp:    "HP-based score: 100 × (winner_hp − loser_hp), signed by who won, with λ=2 loss aversion.",
+        cost:  "Resource cost (weighted: 0.8 wood + food + 1.5 gold). For a win, cost = my_spent. For a loss, cost = 2 × (my_spent + opp_remaining). Lower is better.",
+        speed: "Speed-to-win: linear, T_MAX=120s. Win = +100 × (1 − t/120). Loss = −2 × 100 × (1 − t/120).",
+    }[axis];
+    const scaleDesc = scale === "average"
+        ? "Average of pop (30v30) and cost (3k cost-matched) values."
+        : scale === "pop"
+            ? "Population-matched (30v30 fixed-count)."
+            : "Cost-matched (3k weighted resources, capped at 30 units).";
+    return `${axisDesc}\n\n${scaleDesc}\n\nFinal score = 0.7 × GC + (pool-specific role weights). No normalization, no speed/range weighting.`;
+}
+
+function roleColumnInfo(role, pool) {
+    const lineSets = {
+        GC: "militia, knight, archer line opponents",
+        AC: pool === "infantry"
+            ? "knight, camel, steppe_lancer, elephant line opponents"
+            : "knight, camel, steppe_lancer, elephant, light_cav line opponents",
+        AT: "spear, skirmisher, light_cav line opponents",
+        AA: "archer, skirmisher, cav_archer, gunpowder line opponents",
+    };
+    return `${role} role: average across ${lineSets[role]}. Within each line: mean adjusted_signed_score (λ=2 loss aversion), deduped by fingerprint. Across lines: equally weighted mean.`;
+}
+
 function renderTable() {
     const container = document.getElementById("tableContainer");
     if (!currentData) {
@@ -953,6 +988,11 @@ function renderTable() {
                               10,
                       ) / 10
                     : 0,
+            pool_score: getPoolScoreValue(r, currentScoreAxis, currentScoreScale, "final"),
+            pool_gc: getPoolScoreValue(r, currentScoreAxis, currentScoreScale, "gc"),
+            pool_ac: getPoolScoreValue(r, currentScoreAxis, currentScoreScale, "ac"),
+            pool_at: getPoolScoreValue(r, currentScoreAxis, currentScoreScale, "at"),
+            pool_aa: getPoolScoreValue(r, currentScoreAxis, currentScoreScale, "aa"),
         };
     });
 
@@ -1030,10 +1070,10 @@ function renderTable() {
         "final_range",
     ];
     const infantryStatCols = [
-        "militia_value",
-        "general_combat",
-        "anti_cav",
-        "anti_trash",
+        "pool_score",
+        "pool_gc",
+        "pool_ac",
+        "pool_at",
         "dps",
         "final_hp",
         "final_attack",
@@ -1042,9 +1082,9 @@ function renderTable() {
         "final_speed",
     ];
     const archeryStatCols = [
-        "ranged_effectiveness",
-        "general_combat",
-        "anti_archer",
+        "pool_score",
+        "pool_gc",
+        "pool_aa",
         "dps",
         "final_hp",
         "final_attack",
@@ -1064,9 +1104,9 @@ function renderTable() {
         "final_range",
     ];
     const stableStatCols = [
-        "stable_effectiveness",
-        "general_combat",
-        "anti_cav",
+        "pool_score",
+        "pool_gc",
+        "pool_ac",
         "dps",
         "final_hp",
         "final_attack",
@@ -1158,24 +1198,24 @@ function renderTable() {
             ? [{ key: "line_slug", label: "Line" }]
             : []),
         {
-            key: "militia_value",
-            label: "Score",
-            info: "0.75 \u00d7 General Combat + 0.10 \u00d7 Anti-Cav + 0.15 \u00d7 Anti-Trash, then speed-weighted and re-normalized 0\u2013100 globally across all infantry (militia, spear, shock).",
+            key: "pool_score",
+            label: scoreColumnLabel(currentScoreAxis, currentScoreScale),
+            info: scoreColumnInfo(currentScoreAxis, currentScoreScale),
         },
         {
-            key: "general_combat",
-            label: "General Combat",
-            info: "Avg of 6 normalized matchups (30v30 + 3K res): vs Spanish Paladin, Chinese Arbalester, Chinese Champion",
+            key: "pool_gc",
+            label: "GC",
+            info: roleColumnInfo("GC", "infantry"),
         },
         {
-            key: "anti_cav",
-            label: "Anti-Cav",
-            info: "Avg of 6 normalized matchups (30v30 + 3K res): vs Khmer Battle Elephant, Turk Heavy Camel, Mongol Steppe Lancer",
+            key: "pool_ac",
+            label: "AC",
+            info: roleColumnInfo("AC", "infantry"),
         },
         {
-            key: "anti_trash",
-            label: "Anti-Trash",
-            info: "Avg of 6 normalized matchups (30v30 + 3K res): vs Spanish Halberdier, Spanish Hussar, Spanish Elite Skirmisher",
+            key: "pool_at",
+            label: "AT",
+            info: roleColumnInfo("AT", "infantry"),
         },
         { key: "dps", label: "DPS" },
         { key: "final_hp", label: "HP" },
@@ -1194,19 +1234,19 @@ function renderTable() {
             ? [{ key: "line_slug", label: "Line" }]
             : []),
         {
-            key: "ranged_effectiveness",
-            label: "Score",
-            info: "0.70 \u00d7 General Combat + 0.30 \u00d7 Anti-Archer (components are speed-weighted; result is then range-weighted and re-normalized 0\u2013100 globally across all ranged units).",
+            key: "pool_score",
+            label: scoreColumnLabel(currentScoreAxis, currentScoreScale),
+            info: scoreColumnInfo(currentScoreAxis, currentScoreScale),
         },
         {
-            key: "general_combat",
-            label: "General",
-            info: "Normalized avg of 30v30 and 3K res fights vs Spanish Paladin, Chinese Arbalester, Chinese Champion",
+            key: "pool_gc",
+            label: "GC",
+            info: roleColumnInfo("GC", "archery"),
         },
         {
-            key: "anti_archer",
-            label: "Anti-Archer",
-            info: "Normalized avg of 30v30 and 3K res fights vs Chinese Arb, Chinese Cav Archer, Gurjaras Elephant Archer",
+            key: "pool_aa",
+            label: "AA",
+            info: roleColumnInfo("AA", "archery"),
         },
         { key: "dps", label: "DPS" },
         { key: "final_hp", label: "HP" },
@@ -1244,19 +1284,19 @@ function renderTable() {
         { key: "unit_name", label: "Unit" },
         { key: "line_slug", label: "Line" },
         {
-            key: "stable_effectiveness",
-            label: "Score",
-            info: "0.70 \u00d7 General Combat + 0.30 \u00d7 Anti-Cav, then speed-weighted and re-normalized 0\u2013100 globally across all stable units (knight, light cav, camel, steppe lancer, elephant).",
+            key: "pool_score",
+            label: scoreColumnLabel(currentScoreAxis, currentScoreScale),
+            info: scoreColumnInfo(currentScoreAxis, currentScoreScale),
         },
         {
-            key: "general_combat",
-            label: "General Combat",
-            info: "Avg of 6 normalized matchups (30v30 + 3K res vs Spanish Paladin, Chinese Arb, Chinese Champion)",
+            key: "pool_gc",
+            label: "GC",
+            info: roleColumnInfo("GC", "stable"),
         },
         {
-            key: "anti_cav",
-            label: "Anti-Cav",
-            info: "Avg of 6 normalized matchups (30v30 + 3K res vs Spanish Paladin, Turks Heavy Camel, Vietnamese Battle Elephant)",
+            key: "pool_ac",
+            label: "AC",
+            info: roleColumnInfo("AC", "stable"),
         },
         { key: "dps", label: "DPS" },
         { key: "final_hp", label: "HP" },

@@ -267,7 +267,10 @@ CIV_COMBAT_PROPERTIES = {
         "charge_attack_melee": 1,
         "charge_recharge_time": 30.0,
     },
-    # Khitan Lamellar Armor (Imp UT) — infantry + skirmishers reflect 25% melee damage
+    # Khitan Lamellar Armor (Imp UT) — infantry + skirmishers reflect 25% melee damage.
+    # Wiki: "infantry, the Skirmisher line, and the Genitour line"; per the Khitan
+    # Fire Lancer wiki section the Fire Lancer line is included (categorized as
+    # gunpowder infantry → infantry).
     ("Khitans", "champion"): {"damage_reflect_percent": 0.25},
     ("Khitans", "halberdier"): {"damage_reflect_percent": 0.25},
     ("Khitans", "pikeman"): {"damage_reflect_percent": 0.25},
@@ -276,6 +279,8 @@ CIV_COMBAT_PROPERTIES = {
     ("Khitans", "imp_elite_skirm"): {"damage_reflect_percent": 0.25},
     ("Khitans", "liao_dao"): {"damage_reflect_percent": 0.25},
     ("Khitans", "elite_liao_dao"): {"damage_reflect_percent": 0.25},
+    ("Khitans", "fire_lancer"): {"damage_reflect_percent": 0.25},
+    ("Khitans", "elite_fire_lancer"): {"damage_reflect_percent": 0.25},
     # Khitan Ordo Cavalry — "Melee cavalry regenerates 150% of max HP per minute in combat"
     # Per-unit values = round(base_hp * 1.5). Source: Ordo_Cavalry wiki page.
     # NOTE: uses hp_regen_in_combat (gated) NOT hp_regen (passive) — only Khitan Ordo has this caveat.
@@ -287,8 +292,9 @@ CIV_COMBAT_PROPERTIES = {
     ("Khitans", "elite_steppe"): {"hp_regen_in_combat": 120},       # 80 HP × 1.5
     ("Khitans", "camel"): {"hp_regen_in_combat": 150},              # 100 HP × 1.5
     ("Khitans", "heavy_camel"): {"hp_regen_in_combat": 180},        # 120 HP × 1.5
-    ("Khitans", "fire_lancer"): {"hp_regen_in_combat": 98},         # 65 HP × 1.5
-    ("Khitans", "elite_fire_lancer"): {"hp_regen_in_combat": 128},  # 85 HP × 1.5
+    # NOTE: Fire Lancer is INFANTRY, not cavalry — Ordo Cavalry does NOT apply.
+    # (Fandom wiki Ordo_Cavalry: "causes melee cavalry units to regenerate HP".)
+    # Lamellar Armor's 25% melee damage reflect IS applied above.
     ("Khitans", "mounted_trebuchet"): {"hp_regen_in_combat": 113},  # 75 HP × 1.5
     # Shu Coiled Serpent Array (Castle UT) — spear-line + White Feather gain %HP near each other
     # +0.5% HP per nearby qualifying unit, capped at 30 units = +15% HP max

@@ -1580,7 +1580,17 @@ function renderTable() {
             return `<td>${LINE_LABELS[v] || v}</td>`;
         }
         if (k === "special_abilities") {
-            return `<td style="white-space:normal;max-width:200px;font-size:0.7rem">${v || "\u2014"}</td>`;
+            const effects = v || "";
+            const missing = row.missing_techs || [];
+            const lines = [];
+            if (effects) lines.push(`<div class="special-effects">${effects}</div>`);
+            if (missing.length > 0) {
+                lines.push(
+                    `<div class="special-missing">\u274c Missing: ${missing.join(", ")}</div>`,
+                );
+            }
+            if (lines.length === 0) lines.push("\u2014");
+            return `<td class="special-cell">${lines.join("")}</td>`;
         }
         if (k.startsWith("role_line_")) {
             if (v === undefined || v === null) return `<td>\u2014</td>`;

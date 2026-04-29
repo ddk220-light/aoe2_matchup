@@ -500,3 +500,19 @@ td.hc-cell {
     color: var(--text-muted);
     font-style: italic;
 }
+
+/* === Special column two-line layout === */
+.special-cell {
+    white-space: normal;
+    max-width: 220px;
+    font-size: 0.7rem;
+    line-height: 1.3;
+}
+.special-cell .special-effects {
+    color: var(--text);
+}
+.special-cell .special-missing {
+    color: var(--text-muted);
+    font-size: 0.65rem;
+    margin-top: 2px;
+}

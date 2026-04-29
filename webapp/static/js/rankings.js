@@ -85,6 +85,34 @@ function lineUsesPoolScores(slug) {
     return POOL_SCORE_LINES.has(slug);
 }
 
+// Per-group expansion state - fully transient, resets on page load.
+// Groups are: "GC", "AC", "AT", "AA", "Special".
+const expandedGroups = new Set();
+
+function toggleGroup(group) {
+    if (expandedGroups.has(group)) expandedGroups.delete(group);
+    else expandedGroups.add(group);
+    renderTable();
+}
+
+function expandAll() {
+    expandedGroups.add("GC");
+    expandedGroups.add("AC");
+    expandedGroups.add("AT");
+    expandedGroups.add("AA");
+    expandedGroups.add("Special");
+    renderTable();
+}
+
+function collapseAll() {
+    expandedGroups.clear();
+    renderTable();
+}
+
+function isExpanded(group) {
+    return expandedGroups.has(group);
+}
+
 // Score-axis convention: cost is "lower = better"; hp/speed are "higher = better".
 function scoreAxisDirection(axis) {
     return axis === "cost" ? "asc" : "desc";
@@ -1455,8 +1483,14 @@ function renderTable() {
         const infoHtml = col.info
             ? `<span class="info-icon" title="${col.info}">\u24D8</span>`
             : "";
+        let chevronHtml = "";
+        if (col.expandable) {
+            const expanded = isExpanded(col.expandable);
+            const ch = expanded ? "▾" : "▸";
+            chevronHtml = `<span class="col-chevron" onclick="event.stopPropagation();toggleGroup('${col.expandable}')" title="${expanded ? "Collapse" : "Expand"}">${ch}</span>`;
+        }
         html += `<th class="${isSorted ? "sorted" : ""}" onclick="sortBy('${col.key}')">
-            ${col.label}${infoHtml}<span class="sort-arrow">${arrow}</span>
+            ${col.label}${infoHtml}${chevronHtml}<span class="sort-arrow">${arrow}</span>
         </th>`;
     }
     html += "</tr></thead><tbody>";

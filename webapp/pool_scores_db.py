@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS pool_scores (
     catastrophic_loss_rate REAL NOT NULL,
     sim_version           TEXT,
     derived_at            TEXT NOT NULL,
+    role_line_means       TEXT,
     PRIMARY KEY (civ_name, unit_slug, scale, axis)
 );
 
@@ -48,13 +49,13 @@ INSERT OR REPLACE INTO pool_scores (
     final_score, gc, ac, at, aa,
     n, mean, stddev,
     win_rate, decisive_win_rate, big_win_rate, catastrophic_loss_rate,
-    sim_version, derived_at
+    sim_version, derived_at, role_line_means
 ) VALUES (
     :civ_name, :unit_slug, :pool, :scale, :axis,
     :final_score, :gc, :ac, :at, :aa,
     :n, :mean, :stddev,
     :win_rate, :decisive_win_rate, :big_win_rate, :catastrophic_loss_rate,
-    :sim_version, :derived_at
+    :sim_version, :derived_at, :role_line_means
 )
 """
 

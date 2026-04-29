@@ -16,6 +16,7 @@ def _make_row(civ, slug, scale, axis, **overrides):
         "win_rate": 0.0, "decisive_win_rate": 0.0,
         "big_win_rate": 0.0, "catastrophic_loss_rate": 0.0,
         "sim_version": "v1", "derived_at": "t1",
+        "role_line_means": None,
     }
     base.update(overrides)
     return base

@@ -267,9 +267,10 @@ def derive_unit_scores(*, civ: str, unit_slug: str, scale: str,
     Returns an empty list if the unit's pool can't be determined
     (e.g. siege/naval/monk, out of scope for this stage).
 
-    Each opponent's line is bucketed into the FIRST matching role only
-    (GC before AC before AT/AA). This keeps roles mutually exclusive when
-    lines such as "knight" appear in both GC and AC definitions.
+    Each opponent's line is bucketed into ALL matching roles — a line may
+    appear in more than one role (e.g. knight counts in both GC and AC for
+    the infantry pool, producing the ~0.27 effective weight described in
+    the spec).
     """
     pool = unit_to_pool(UNIT_LINES, unit_slug)
     if pool is None:
@@ -303,14 +304,14 @@ def derive_unit_scores(*, civ: str, unit_slug: str, scale: str,
         # Track raw HP for shape (first dedup_group entry wins).
         raw_hp_by_dedup.setdefault(dedup, raw_hp)
 
-        # Bucket per-axis adjusted values; each line goes to FIRST matching role.
+        # Bucket per-axis adjusted values; a line may appear in multiple roles
+        # (e.g. knight is in both GC and AC for infantry — intentional per spec).
         for line_key in opp_line_keys:
             for role, lines in role_def.items():
                 if line_key in lines:
                     line_axis_values[(line_key, role)]["hp"].setdefault(dedup, adj_hp)
                     line_axis_values[(line_key, role)]["cost"].setdefault(dedup, cost)
                     line_axis_values[(line_key, role)]["speed"].setdefault(dedup, speed)
-                    break  # first matching role wins — keeps roles mutually exclusive
 
     # Compute shape from raw HP signed scores (shared across all axes).
     shape = compute_shape(raw_hp_by_dedup.values())

@@ -297,8 +297,10 @@ def _row(opp_unit, winner=1, t1=0.8, t2=0.0, dedup="g",
 def test_derive_unit_scores_synthetic_infantry():
     # Three deduped wins vs militia/knight/archer, one each.
     # All clean wins at 80% HP -> hp_score = +80, adjusted = +80.
-    # GC mean = 80; AC and AT empty so means = 0.
-    # final = 0.7*80 + 0.15*0 + 0.15*0 = 56.
+    # GC mean = 80 (militia=80, knight=80, archer=80).
+    # AC mean = 80 (knight is in BOTH GC and AC per spec; only AC line with data).
+    # AT mean = 0 (no AT opponents).
+    # final = 0.7*80 + 0.15*80 + 0.15*0 = 68.
     rows = [
         _row("champion", dedup="g1"),
         _row("paladin",  dedup="g2"),  # knight line
@@ -315,10 +317,10 @@ def test_derive_unit_scores_synthetic_infantry():
     assert hp["pool"] == "infantry"
     assert hp["scale"] == "30v30"
     assert hp["gc"] == pytest.approx(80.0)
-    assert hp["ac"] == pytest.approx(0.0)  # no AC opponents in input
-    assert hp["at"] == pytest.approx(0.0)  # no AT opponents
-    assert hp["aa"] is None  # archer-only
-    assert hp["final_score"] == pytest.approx(0.7 * 80.0)
+    assert hp["ac"] == pytest.approx(80.0)  # WAS 0.0 — paladin is in knight line which is in AC
+    assert hp["at"] == pytest.approx(0.0)   # no AT opponents
+    assert hp["aa"] is None                  # archer-only
+    assert hp["final_score"] == pytest.approx(68.0)  # WAS 0.7 * 80.0 = 56
     assert hp["n"] == 3
     assert hp["win_rate"] == 100.0
 

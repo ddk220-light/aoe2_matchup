@@ -8,6 +8,7 @@ from flask import Flask, jsonify, redirect, render_template, request
 from best_units import load_civ_power_units, get_matchup_recommendations, get_matchup_sims, CIVS_WITHOUT_TREBUCHET
 from combat_unit_loader import build_combat_dict_from_ref
 from unit_lines import UNIT_LINES, TREBUCHET_SLUGS, CIV_MISSING_UNITS
+from pool_scores_query import load_pool_scores
 
 
 app = Flask(__name__)
@@ -765,6 +766,21 @@ def api_ref_unit_line(line_slug):
     if line_slug == "stable":
         result["castle"] = [u for u in result["castle"] if "ele_archer" not in u["unit_slug"]]
         result["imperial"] = [u for u in result["imperial"] if "ele_archer" not in u["unit_slug"]]
+
+    # Attach pool_scores payload for units covered by pool_scores.db.
+    # Out-of-pool units (siege/naval) simply don't get the field.
+    pool_scores_db_path = os.path.join(os.path.dirname(__file__), "pool_scores.db")
+    all_unit_pairs = [
+        (entry["civ_name"], entry["unit_slug"])
+        for age_key in ("castle", "imperial")
+        for entry in result[age_key]
+    ]
+    pool_scores_by_unit = load_pool_scores(pool_scores_db_path, all_unit_pairs)
+    for age_key in ("castle", "imperial"):
+        for entry in result[age_key]:
+            key = (entry["civ_name"], entry["unit_slug"])
+            if key in pool_scores_by_unit:
+                entry["pool_scores"] = pool_scores_by_unit[key]
 
     ref_conn.close()
     return jsonify(result)

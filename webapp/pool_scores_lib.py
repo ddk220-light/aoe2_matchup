@@ -79,3 +79,74 @@ def speed_score(winner: int, game_time_s: float,
     if winner == 2:
         return -lam * 100.0 * factor
     return 0.0
+
+
+BUILDING_TO_POOL = {
+    "Barracks": "infantry",
+    "Stable": "stable",
+    "Archery Range": "archer",
+}
+
+
+def line_imperial_slugs(unit_lines: dict, line_key: str) -> set[str]:
+    """All imperial-age slugs that map to a line, across all civs.
+
+    Used to filter eligible OPPONENTS — who counts as 'in the militia
+    line' when computing GC vs militia? Answer: champion + every elite
+    unique unit listed under militia['unique_units'] + extra_imperial.
+    """
+    line = unit_lines[line_key]
+    out: set[str] = set()
+    if line.get("imperial_slug"):
+        out.add(line["imperial_slug"])
+    for s in line.get("extra_imperial_slugs") or []:
+        out.add(s)
+    for civ, val in (line.get("unique_units") or {}).items():
+        if val is None:
+            continue
+        if isinstance(val, list):
+            for pair in val:
+                if pair and pair[1]:
+                    out.add(pair[1])
+        else:
+            if val[1]:
+                out.add(val[1])
+    return {s for s in out if s}
+
+
+def _all_line_slugs_including_castle(unit_lines: dict, line_key: str) -> set[str]:
+    """Imperial slugs PLUS castle slugs and castle UU slugs.
+
+    Used for unit_to_pool — a unit that only appears in matchup_db at
+    its castle slug (e.g. cataphract_byzantines vs elite_cataphract_byzantines)
+    still needs to be classifiable.
+    """
+    line = unit_lines[line_key]
+    out: set[str] = set(line_imperial_slugs(unit_lines, line_key))
+    if line.get("castle_slug"):
+        out.add(line["castle_slug"])
+    for s in line.get("extra_castle_slugs") or []:
+        out.add(s)
+    for civ, val in (line.get("unique_units") or {}).items():
+        if val is None:
+            continue
+        if isinstance(val, list):
+            for pair in val:
+                if pair and pair[0]:
+                    out.add(pair[0])
+        else:
+            if val[0]:
+                out.add(val[0])
+    return {s for s in out if s}
+
+
+def unit_to_pool(unit_lines: dict, unit_slug: str) -> str | None:
+    """Return 'infantry' / 'stable' / 'archer' / None for a unit slug.
+
+    None is returned for siege/naval/monk/etc — units outside the three
+    pools we score in this stage. Callers should skip such units.
+    """
+    for line_key, line in unit_lines.items():
+        if unit_slug in _all_line_slugs_including_castle(unit_lines, line_key):
+            return BUILDING_TO_POOL.get(line.get("building"))
+    return None

@@ -117,3 +117,53 @@ def test_speed_score_60s_loss():
 
 def test_speed_score_tie_returns_zero():
     assert speed_score(winner=0, game_time_s=30.0) == 0.0
+
+
+from pool_scores_lib import line_imperial_slugs, unit_to_pool
+from unit_lines import UNIT_LINES
+
+
+def test_line_imperial_slugs_militia_includes_champion_and_uniques():
+    slugs = line_imperial_slugs(UNIT_LINES, "militia")
+    assert "champion" in slugs
+    assert "elite_berserk_vikings" in slugs
+    assert "elite_huskarl_goths" in slugs
+    assert "elite_jaguar_warrior_aztecs" in slugs
+
+
+def test_line_imperial_slugs_archer_includes_arbalester_and_plumed():
+    slugs = line_imperial_slugs(UNIT_LINES, "archer")
+    assert "arbalester" in slugs
+    assert "elite_plumed_archer_mayans" in slugs
+
+
+def test_line_imperial_slugs_elephant_includes_extra_imperial():
+    # elephant line has extra_imperial_slugs = ['elite_ele_archer']
+    slugs = line_imperial_slugs(UNIT_LINES, "elephant")
+    assert "elite_elephant" in slugs
+    assert "elite_ele_archer" in slugs
+
+
+def test_unit_to_pool_champion_is_infantry():
+    assert unit_to_pool(UNIT_LINES, "champion") == "infantry"
+
+
+def test_unit_to_pool_berserker_is_infantry():
+    assert unit_to_pool(UNIT_LINES, "elite_berserk_vikings") == "infantry"
+
+
+def test_unit_to_pool_paladin_is_stable():
+    assert unit_to_pool(UNIT_LINES, "paladin") == "stable"
+
+
+def test_unit_to_pool_cataphract_is_stable():
+    assert unit_to_pool(UNIT_LINES, "elite_cataphract_byzantines") == "stable"
+
+
+def test_unit_to_pool_arbalester_is_archer():
+    assert unit_to_pool(UNIT_LINES, "arbalester") == "archer"
+
+
+def test_unit_to_pool_unknown_returns_none():
+    assert unit_to_pool(UNIT_LINES, "trebuchet") is None
+    assert unit_to_pool(UNIT_LINES, "totally_made_up_slug") is None

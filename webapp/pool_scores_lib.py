@@ -322,16 +322,22 @@ def derive_unit_scores(*, civ: str, unit_slug: str, scale: str,
     for axis in ("hp", "cost", "speed"):
         # Per-line mean → per-role mean across lines that had data.
         role_means: dict = {}
+        # Per-line means per role: every line in POOL_ROLES[pool][role] gets a key,
+        # value is None if no data, else the mean of dedup-survivors.
+        role_line_means: dict = {}
         for role, lines in role_def.items():
             line_vals = []
+            per_line_for_role: dict = {}
             for line in lines:
                 vals = line_axis_values.get((line, role), {}).get(axis, {})
                 if vals:
-                    line_vals.append(sum(vals.values()) / len(vals))
-            if line_vals:
-                role_means[role] = sum(line_vals) / len(line_vals)
-            else:
-                role_means[role] = 0.0
+                    mean_v = sum(vals.values()) / len(vals)
+                    line_vals.append(mean_v)
+                    per_line_for_role[line] = mean_v
+                else:
+                    per_line_for_role[line] = None
+            role_means[role] = sum(line_vals) / len(line_vals) if line_vals else 0.0
+            role_line_means[role] = per_line_for_role
 
         final = final_score_for_pool(role_means, pool)
         weights = POOL_WEIGHTS[pool]
@@ -350,5 +356,6 @@ def derive_unit_scores(*, civ: str, unit_slug: str, scale: str,
             "big_win_rate": shape["big_win_rate"],
             "catastrophic_loss_rate": shape["catastrophic_loss_rate"],
             "sim_version": sim_version, "derived_at": derived_at,
+            "role_line_means": role_line_means,
         })
     return out_rows

@@ -352,3 +352,73 @@ def test_derive_unit_scores_unknown_pool_returns_empty():
         scale="30v30", rows=[_row("champion")],
     )
     assert out == []
+
+
+def _row_rlm(opp_slug, winner=1, t1=0.5, t2=0.0, dedup="g"):
+    """Synthetic matchup_battles row helper. Costs equal to keep cost-axis simple."""
+    return {
+        "opp_unit_slug": opp_slug, "winner": winner,
+        "team1_hp_pct": t1, "team2_hp_pct": t2,
+        "my_count": 30, "my_cost_food": 60, "my_cost_wood": 0, "my_cost_gold": 20,
+        "opp_count": 30, "opp_cost_food": 60, "opp_cost_wood": 0, "opp_cost_gold": 20,
+        "game_time_s": 60.0, "dedup_group": dedup,
+    }
+
+
+def test_role_line_means_present_per_axis():
+    rows = [
+        _row_rlm("champion", winner=1, t1=0.7, t2=0.0, dedup="m"),
+        _row_rlm("paladin",  winner=2, t1=0.0, t2=0.8, dedup="k"),
+        _row_rlm("arbalester", winner=1, t1=0.5, t2=0.0, dedup="a"),
+    ]
+    out = derive_unit_scores(
+        civ="Vikings", unit_slug="champion", scale="30v30", rows=rows,
+    )
+    assert len(out) == 3
+    for axis_row in out:
+        assert "role_line_means" in axis_row
+        rlm = axis_row["role_line_means"]
+        assert "GC" in rlm
+        assert set(rlm["GC"].keys()) == {"militia", "knight", "archer"}
+        assert "AC" in rlm
+        assert "AT" in rlm
+
+
+def test_role_line_means_hp_values_for_champion():
+    rows = [
+        _row_rlm("champion",  winner=1, t1=0.7, t2=0.0, dedup="m"),
+        _row_rlm("paladin",   winner=2, t1=0.0, t2=0.8, dedup="k"),
+        _row_rlm("arbalester", winner=1, t1=0.5, t2=0.0, dedup="a"),
+    ]
+    out = derive_unit_scores(
+        civ="Vikings", unit_slug="champion", scale="30v30", rows=rows,
+    )
+    hp = next(r for r in out if r["axis"] == "hp")
+    rlm = hp["role_line_means"]
+    assert rlm["GC"]["militia"] == pytest.approx(70.0)
+    assert rlm["GC"]["knight"]  == pytest.approx(-160.0)
+    assert rlm["GC"]["archer"]  == pytest.approx(50.0)
+
+
+def test_role_line_means_lines_with_no_data_are_null():
+    rows = [_row_rlm("champion", winner=1, t1=0.6, t2=0.0, dedup="m")]
+    out = derive_unit_scores(
+        civ="Vikings", unit_slug="champion", scale="30v30", rows=rows,
+    )
+    hp = next(r for r in out if r["axis"] == "hp")
+    rlm = hp["role_line_means"]
+    assert rlm["GC"]["militia"] == pytest.approx(60.0)
+    assert rlm["GC"]["knight"]  is None
+    assert rlm["GC"]["archer"]  is None
+
+
+def test_knight_appears_in_both_gc_and_ac_per_line_means():
+    """Spec: knight is in both GC and AC lists for infantry pool."""
+    rows = [_row_rlm("paladin", winner=2, t1=0.0, t2=1.0, dedup="k")]
+    out = derive_unit_scores(
+        civ="Vikings", unit_slug="champion", scale="30v30", rows=rows,
+    )
+    hp = next(r for r in out if r["axis"] == "hp")
+    rlm = hp["role_line_means"]
+    assert rlm["GC"]["knight"] == pytest.approx(-200.0)
+    assert rlm["AC"]["knight"] == pytest.approx(-200.0)

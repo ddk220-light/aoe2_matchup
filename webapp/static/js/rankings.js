@@ -205,6 +205,32 @@ const SCORE_BREAKDOWN = {
             { key: "vs_hulk_3k",       label: "vs Hulk (3K res)",      civ: "Sicilians", slug: "hulk",    mode: "resources", res: 3000 },
         ],
     },
+    // Pool-score breakdowns (driven by toggle state).
+    pool_score: {
+        title: "Score",
+        formula: "dynamic",  // sentinel — renderer reads currentScoreAxis/Scale
+        subs: "pool_score_breakdown",
+    },
+    pool_gc: {
+        title: "GC (General Combat)",
+        formula: "dynamic",
+        subs: "pool_role_breakdown",
+    },
+    pool_ac: {
+        title: "AC (Anti-Cav)",
+        formula: "dynamic",
+        subs: "pool_role_breakdown",
+    },
+    pool_at: {
+        title: "AT (Anti-Trash)",
+        formula: "dynamic",
+        subs: "pool_role_breakdown",
+    },
+    pool_aa: {
+        title: "AA (Anti-Archer)",
+        formula: "dynamic",
+        subs: "pool_role_breakdown",
+    },
 };
 
 const SCORE_KEYS = new Set([
@@ -247,6 +273,12 @@ const SCORE_KEYS = new Set([
     "naval_effectiveness",
     "vs_galleon",
     "vs_fire",
+    // Pool scores
+    "pool_score",
+    "pool_gc",
+    "pool_ac",
+    "pool_at",
+    "pool_aa",
     "vs_hulk",
 ]);
 const STAT_KEYS = new Set([
@@ -462,6 +494,13 @@ function buildScoreHoverHtml(row, scoreKey, dataKey) {
         return "";
     }
     let html = `<div class="hc-title">${info.title}</div>`;
+    if (info.subs === "pool_score_breakdown") {
+        return renderPoolScoreHover(row, currentScoreAxis, currentScoreScale);
+    }
+    if (info.subs === "pool_role_breakdown") {
+        const role = scoreKey.replace("pool_", "").toUpperCase();
+        return renderPoolRoleHover(row, role, currentScoreAxis, currentScoreScale);
+    }
     if (info.subs === "siege_breakdown") {
         html += `<div class="hc-formula">${info.formula}</div>`;
         html += _buildSiegeBreakdownHtml(row);
@@ -898,6 +937,75 @@ function roleColumnInfo(role, pool) {
         AA: "archer, skirmisher, cav_archer, gunpowder line opponents",
     };
     return `${role} role: average across ${lineSets[role]}. Within each line: mean adjusted_signed_score (λ=2 loss aversion), deduped by fingerprint. Across lines: equally weighted mean.`;
+}
+
+function _fmt(v, digits = 1) {
+    if (v == null) return "—";
+    return Number(v).toFixed(digits);
+}
+
+function renderPoolScoreHover(unitRow, axis, scale) {
+    const ps = unitRow && unitRow.pool_scores;
+    if (!ps) return "<div class='hover-empty'>No pool-score data for this unit.</div>";
+
+    const axisLabel = axis === "hp" ? "HP%" : axis === "cost" ? "Resource cost" : "Speed";
+    const scaleLabel = scale === "pop" ? "Pop (30v30)" : scale === "cost" ? "Cost (3k)" : "Average";
+    const final = getPoolScoreValue(unitRow, axis, scale, "final");
+    const gc = getPoolScoreValue(unitRow, axis, scale, "gc");
+    const ac = getPoolScoreValue(unitRow, axis, scale, "ac");
+    const at = getPoolScoreValue(unitRow, axis, scale, "at");
+    const aa = getPoolScoreValue(unitRow, axis, scale, "aa");
+
+    let rolesHtml = "";
+    if (gc != null) rolesHtml += `<span class='role'>GC ${_fmt(gc)}</span>`;
+    if (ac != null) rolesHtml += `<span class='role'>AC ${_fmt(ac)}</span>`;
+    if (at != null) rolesHtml += `<span class='role'>AT ${_fmt(at)}</span>`;
+    if (aa != null) rolesHtml += `<span class='role'>AA ${_fmt(aa)}</span>`;
+
+    const decimals = axis === "cost" ? 0 : 2;
+    let shapeHtml = "";
+    if (scale === "average") {
+        const a = ps.scales["30v30"] && ps.scales["30v30"].shape;
+        const b = ps.scales["3k"] && ps.scales["3k"].shape;
+        if (a && b) {
+            shapeHtml = `<div class='shape-pair'>
+                <div><strong>Pop:</strong> n=${a.n}, win ${_fmt(a.win_rate)}%, cat-loss ${_fmt(a.catastrophic_loss_rate)}%, stddev ${_fmt(a.stddev)}</div>
+                <div><strong>Cost:</strong> n=${b.n}, win ${_fmt(b.win_rate)}%, cat-loss ${_fmt(b.catastrophic_loss_rate)}%, stddev ${_fmt(b.stddev)}</div>
+            </div>`;
+        }
+    } else {
+        const sk = scale === "pop" ? "30v30" : "3k";
+        const sh = ps.scales[sk] && ps.scales[sk].shape;
+        if (sh) {
+            shapeHtml = `<div>n=${sh.n}, win ${_fmt(sh.win_rate)}%, cat-loss ${_fmt(sh.catastrophic_loss_rate)}%, stddev ${_fmt(sh.stddev)}</div>`;
+        }
+    }
+
+    return `<div class='hover-pool-score'>
+        <div class='hover-title'>${unitRow.unit_name || unitRow.unit_slug} — ${axisLabel} × ${scaleLabel}</div>
+        <div class='hover-final'>final ${_fmt(final, decimals)}</div>
+        <div class='hover-roles'>${rolesHtml}</div>
+        ${shapeHtml}
+        <div class='hover-note'>Final score = 0.7 × GC + pool-specific role weights. λ=2 loss aversion on negative atomic scores. ${axis === "cost" ? "Lower is better." : "Higher is better."}</div>
+    </div>`;
+}
+
+function renderPoolRoleHover(unitRow, role, axis, scale) {
+    const pool = unitRow && unitRow.pool_scores && unitRow.pool_scores.pool;
+    const lineSets = {
+        GC: "militia, knight, archer line opponents",
+        AC: pool === "infantry"
+            ? "knight, camel, steppe_lancer, elephant line opponents"
+            : "knight, camel, steppe_lancer, elephant, light_cav line opponents",
+        AT: "spear, skirmisher, light_cav line opponents",
+        AA: "archer, skirmisher, cav_archer, gunpowder line opponents",
+    };
+    const value = getPoolScoreValue(unitRow, axis, scale, role.toLowerCase());
+    return `<div class='hover-pool-role'>
+        <div class='hover-title'>${role} — ${(unitRow && (unitRow.unit_name || unitRow.unit_slug)) || ""}</div>
+        <div class='hover-final'>${role} = ${_fmt(value)}</div>
+        <div class='hover-note'>Average across ${lineSets[role]}.<br>Within each line: mean adjusted signed score (λ=2). Across lines: equally weighted mean. Deduped by fingerprint.</div>
+    </div>`;
 }
 
 function renderTable() {

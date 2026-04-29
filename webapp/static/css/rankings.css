@@ -464,3 +464,39 @@ td.hc-cell {
     color: var(--text);
     background: var(--bg);
 }
+
+/* Pool-score hover cards */
+.hover-pool-score, .hover-pool-role {
+    font-size: 12px;
+    line-height: 1.5;
+    max-width: 360px;
+}
+.hover-pool-score .hover-title,
+.hover-pool-role .hover-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.hover-pool-score .hover-final,
+.hover-pool-role .hover-final {
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+.hover-pool-score .hover-roles .role {
+    display: inline-block;
+    margin-right: 8px;
+    color: var(--text-muted);
+}
+.hover-pool-score .hover-note,
+.hover-pool-role .hover-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 6px;
+}
+.hover-pool-score .shape-pair > div {
+    margin: 2px 0;
+}
+.hover-empty {
+    color: var(--text-muted);
+    font-style: italic;
+}

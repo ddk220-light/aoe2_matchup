@@ -4,6 +4,10 @@ No I/O: every function takes plain values or in-memory collections and
 returns plain values. The orchestrator (derive_pool_scores.py) is
 responsible for reading from matchup_db and writing to pool_scores.db.
 """
+import datetime
+from collections import defaultdict
+
+from unit_lines import UNIT_LINES
 
 LAMBDA = 2.0
 T_MAX_SECONDS = 120.0
@@ -229,10 +233,6 @@ def compute_shape(raw_signed_scores) -> dict:
 # ---------------------------------------------------------------------------
 # Task 10: derive_unit_scores — integration entry point
 # ---------------------------------------------------------------------------
-import datetime  # noqa: E402
-from collections import defaultdict  # noqa: E402
-from unit_lines import UNIT_LINES  # noqa: E402
-
 
 def _opponent_to_lines() -> dict:
     """Map every imperial-age opponent slug to the list of line keys it appears in.
@@ -317,7 +317,7 @@ def derive_unit_scores(*, civ: str, unit_slug: str, scale: str,
     shape = compute_shape(raw_hp_by_dedup.values())
 
     # Build one output row per axis.
-    derived_at = datetime.datetime.utcnow().isoformat(timespec="seconds")
+    derived_at = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
     out_rows = []
     for axis in ("hp", "cost", "speed"):
         # Per-line mean → per-role mean across lines that had data.

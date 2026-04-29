@@ -531,3 +531,23 @@ td.hc-cell {
     background: var(--bg-hover);
     border-color: var(--gold-dark);
 }
+
+/* === Slide animation for expandable columns === */
+.col-expandable {
+    transition: max-width 200ms ease, padding 200ms ease, opacity 150ms ease;
+    overflow: hidden;
+    white-space: nowrap;
+    max-width: 240px;
+    opacity: 1;
+}
+.col-expandable.collapsed {
+    max-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+    .col-expandable {
+        transition: none;
+    }
+}

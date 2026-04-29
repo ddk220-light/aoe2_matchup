@@ -1395,13 +1395,13 @@ function renderTable() {
     }
 
     function _perLineColumns(pool, role) {
-        if (!isExpanded(role)) return [];
         const lines = (POOL_ROLE_LINES[pool] && POOL_ROLE_LINES[pool][role]) || [];
         return lines.map((line) => ({
             key: `role_line_${role}_${line}`,
             label: `vs ${LINE_LABEL_SHORT[line] || line}`,
             expandable: role,
             perLine: true,
+            hiddenWhenCollapsed: true,
         }));
     }
 
@@ -1430,22 +1430,20 @@ function renderTable() {
         } else if (pool === "archer") {
             cols.push(_roleColumn("AA", pool, "AA"), ..._perLineColumns(pool, "AA"));
         }
-        if (isExpanded("Special")) {
-            cols.push(
-                { key: "dps",              label: "DPS",     expandable: "Special" },
-                { key: "final_hp",         label: "HP",      expandable: "Special" },
-                { key: "final_attack",     label: "Atk",     expandable: "Special" },
-                { key: "armor_combined",   label: "M/P Arm", expandable: "Special" },
-                { key: "final_speed",      label: "Speed",   expandable: "Special" },
-            );
-            if (pool === "archer") {
-                cols.push({ key: "final_range", label: "Range", expandable: "Special" });
-            }
-            cols.push(
-                { key: "total_cost",          label: "Cost",     expandable: "Special" },
-                { key: "total_upgrade_cost",  label: "Upg Cost", expandable: "Special" },
-            );
+        cols.push(
+            { key: "dps",              label: "DPS",     expandable: "Special", hiddenWhenCollapsed: true },
+            { key: "final_hp",         label: "HP",      expandable: "Special", hiddenWhenCollapsed: true },
+            { key: "final_attack",     label: "Atk",     expandable: "Special", hiddenWhenCollapsed: true },
+            { key: "armor_combined",   label: "M/P Arm", expandable: "Special", hiddenWhenCollapsed: true },
+            { key: "final_speed",      label: "Speed",   expandable: "Special", hiddenWhenCollapsed: true },
+        );
+        if (pool === "archer") {
+            cols.push({ key: "final_range", label: "Range", expandable: "Special", hiddenWhenCollapsed: true });
         }
+        cols.push(
+            { key: "total_cost",          label: "Cost",     expandable: "Special", hiddenWhenCollapsed: true },
+            { key: "total_upgrade_cost",  label: "Upg Cost", expandable: "Special", hiddenWhenCollapsed: true },
+        );
         cols.push({
             key: "special_abilities", label: "Special", expandable: "Special",
         });
@@ -1578,12 +1576,17 @@ function renderTable() {
             ? `<span class="info-icon" title="${col.info}">\u24D8</span>`
             : "";
         let chevronHtml = "";
-        if (col.expandable) {
+        if (col.expandable && !col.hiddenWhenCollapsed) {
             const expanded = isExpanded(col.expandable);
             const ch = expanded ? "▾" : "▸";
             chevronHtml = `<span class="col-chevron" onclick="event.stopPropagation();toggleGroup('${col.expandable}')" title="${expanded ? "Collapse" : "Expand"}">${ch}</span>`;
         }
-        html += `<th class="${isSorted ? "sorted" : ""}" onclick="sortBy('${col.key}')">
+        const collapsedClass = (col.hiddenWhenCollapsed && !isExpanded(col.expandable))
+            ? "col-expandable collapsed"
+            : (col.hiddenWhenCollapsed ? "col-expandable" : "");
+        const sortedClass = isSorted ? "sorted" : "";
+        const cls = [collapsedClass, sortedClass].filter(Boolean).join(" ");
+        html += `<th class="${cls}" onclick="sortBy('${col.key}')">
             ${col.label}${infoHtml}${chevronHtml}<span class="sort-arrow">${arrow}</span>
         </th>`;
     }
@@ -1593,22 +1596,26 @@ function renderTable() {
     function fmtCell(col, row, rowIdx) {
         const k = col.key;
         const v = row[k];
+        const collapsed = col.hiddenWhenCollapsed && !isExpanded(col.expandable);
+        const expandableClass = col.hiddenWhenCollapsed
+            ? (collapsed ? "col-expandable collapsed" : "col-expandable")
+            : "";
         if (k === "civ_name") {
             const civImg = `${CIV_EMBLEM_BASE}${v.toLowerCase()}.png`;
-            return `<td><div class="civ-cell">
+            return `<td class="${expandableClass}"><div class="civ-cell">
                 <img src="${civImg}" alt="${v}" onerror="this.style.display='none'" />
                 ${v}
             </div></td>`;
         }
         if (k === "unit_name") {
             const unitImg = unitIconUrl(v);
-            return `<td><div class="unit-cell">
+            return `<td class="${expandableClass}"><div class="unit-cell">
                 <img src="${unitImg}" alt="${v}" onerror="this.style.display='none'" />
                 ${v}${row.is_unique ? " *" : ""}
             </div></td>`;
         }
         if (k === "line_slug") {
-            return `<td>${LINE_LABELS[v] || v}</td>`;
+            return `<td class="${expandableClass}">${LINE_LABELS[v] || v}</td>`;
         }
         if (k === "special_abilities") {
             const effects = v || "";
@@ -1621,18 +1628,18 @@ function renderTable() {
                 );
             }
             if (lines.length === 0) lines.push("\u2014");
-            return `<td class="special-cell">${lines.join("")}</td>`;
+            return `<td class="special-cell ${expandableClass}">${lines.join("")}</td>`;
         }
         if (k.startsWith("role_line_")) {
-            if (v === undefined || v === null) return `<td>\u2014</td>`;
-            return `<td>${v.toFixed(1)}</td>`;
+            if (v === undefined || v === null) return `<td class="${expandableClass}">\u2014</td>`;
+            return `<td class="${expandableClass}">${v.toFixed(1)}</td>`;
         }
         if (k === "armor_combined") {
-            return `<td>${v}</td>`;
+            return `<td class="${expandableClass}">${v}</td>`;
         }
         // Numeric columns with color coding
         if (v === undefined || v === null || v <= -999) {
-            return `<td>\u2014</td>`;
+            return `<td class="${expandableClass}">\u2014</td>`;
         }
 
         const cls = valClass(k, v);
@@ -1656,12 +1663,12 @@ function renderTable() {
         else formatted = typeof v === "number" ? v.toFixed(1) : v;
 
         if (isScore) {
-            return `<td class="${cls}${hcClass}" onmouseenter="onScoreCellEnter(event,${rowIdx},'${k}')" onmouseleave="onScoreCellLeave()" onclick="onScoreCellClick(event,${rowIdx},'${k}')">${formatted}</td>`;
+            return `<td class="${cls}${hcClass} ${expandableClass}" onmouseenter="onScoreCellEnter(event,${rowIdx},'${k}')" onmouseleave="onScoreCellLeave()" onclick="onScoreCellClick(event,${rowIdx},'${k}')">${formatted}</td>`;
         }
         if (isStat) {
-            return `<td class="${cls}${hcClass}" onmouseenter="onStatCellEnter(event,${rowIdx},'${k}')" onmouseleave="onStatCellLeave()" onclick="onStatCellClick(event,${rowIdx},'${k}')">${formatted}</td>`;
+            return `<td class="${cls}${hcClass} ${expandableClass}" onmouseenter="onStatCellEnter(event,${rowIdx},'${k}')" onmouseleave="onStatCellLeave()" onclick="onStatCellClick(event,${rowIdx},'${k}')">${formatted}</td>`;
         }
-        return `<td class="${cls}">${formatted}</td>`;
+        return `<td class="${cls} ${expandableClass}">${formatted}</td>`;
     }
 
     for (let i = 0; i < filtered.length; i++) {

@@ -5,7 +5,14 @@ from collections import defaultdict
 from functools import lru_cache
 
 from flask import Flask, jsonify, redirect, render_template, request
-from best_units import load_civ_power_units, get_matchup_recommendations, get_matchup_sims, CIVS_WITHOUT_TREBUCHET
+from best_units import (
+    load_civ_power_units,
+    get_matchup_recommendations,
+    get_matchup_sims,
+    CIVS_WITHOUT_TREBUCHET,
+    _compute_missing_techs as compute_missing_techs,
+    _parse_techs_and_bonuses as parse_techs_and_bonuses,
+)
 from combat_unit_loader import build_combat_dict_from_ref
 from unit_lines import UNIT_LINES, TREBUCHET_SLUGS, CIV_MISSING_UNITS
 from pool_scores_query import load_pool_scores
@@ -662,6 +669,25 @@ def api_ref_unit_line(line_slug):
         "dodge_shield_recharge": None,
     }
 
+    # Build reference tech sets per unit_slug across all civs in scope.
+    # For each slug, the set of standard techs that ANY civ has applied.
+    # Used for missing-techs computation — a civ "missing" a tech is one in
+    # this reference set that they don't have applied.
+    _reference_techs_by_slug: dict[str, set[str]] = {}
+    _per_slug_civ_techs: dict[tuple[str, str], list[tuple[str, str]]] = {}
+    rc.execute("""
+        SELECT ru.civ_name, ru.unit_slug, rta.tech_name, rta.tech_type
+          FROM ref_units ru
+          JOIN ref_techs_applied rta ON rta.ref_unit_id = ru.id
+    """)
+    for r in rc.fetchall():
+        _per_slug_civ_techs.setdefault((r["civ_name"], r["unit_slug"]), []).append(
+            (r["tech_name"], r["tech_type"])
+        )
+    for (civ, slug), techs in _per_slug_civ_techs.items():
+        standard_techs, _bonus, _eff = parse_techs_and_bonuses(techs, [])
+        _reference_techs_by_slug.setdefault(slug, set()).update(standard_techs)
+
     def _attach_special(entry):
         rc.execute(
             "SELECT property_name, property_value FROM ref_special_effects WHERE ref_unit_id=?",
@@ -680,6 +706,12 @@ def api_ref_unit_line(line_slug):
                 continue
             parts.append(label.format(v=v))
         entry["special_abilities"] = "; ".join(parts) if parts else ""
+
+        # Missing techs: this civ's standard techs vs the per-slug reference.
+        civ_techs = _per_slug_civ_techs.get((entry["civ_name"], entry["unit_slug"]), [])
+        standard_techs, _bonus, _eff = parse_techs_and_bonuses(civ_techs, [])
+        reference = _reference_techs_by_slug.get(entry["unit_slug"], set())
+        entry["missing_techs"] = compute_missing_techs(standard_techs, reference, entry["unit_slug"])
 
     # Fetch units for each sub-line
     for sub_slug in sub_lines:

@@ -79,3 +79,25 @@ def test_pool_scores_shape_descriptors_present(client):
     assert "win_rate" in shape
     assert "catastrophic_loss_rate" in shape
     assert "stddev" in shape
+
+
+def test_unit_row_includes_missing_techs(client):
+    resp = client.get("/api/ref/unit-line/militia")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    aztec_champ = _find(data["imperial"], "Aztecs", "champion")
+    assert aztec_champ is not None
+    assert "missing_techs" in aztec_champ
+    assert isinstance(aztec_champ["missing_techs"], list)
+
+
+def test_unit_row_includes_role_line_means(client):
+    resp = client.get("/api/ref/unit-line/militia")
+    data = resp.get_json()
+    berserker = _find(data["imperial"], "Vikings", "elite_berserk_vikings")
+    pop_hp = berserker["pool_scores"]["scales"]["30v30"]["hp"]
+    assert "role_line_means" in pop_hp
+    rlm = pop_hp["role_line_means"]
+    assert "GC" in rlm and set(rlm["GC"].keys()) == {"militia", "knight", "archer"}
+    assert "AC" in rlm
+    assert "AT" in rlm

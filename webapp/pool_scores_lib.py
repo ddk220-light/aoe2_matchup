@@ -224,3 +224,130 @@ def compute_shape(raw_signed_scores) -> dict:
         "big_win_rate": 100.0 * sum(1 for x in values if x > 50) / n,
         "catastrophic_loss_rate": 100.0 * sum(1 for x in values if x < -50) / n,
     }
+
+
+# ---------------------------------------------------------------------------
+# Task 10: derive_unit_scores — integration entry point
+# ---------------------------------------------------------------------------
+import datetime  # noqa: E402
+from collections import defaultdict  # noqa: E402
+from unit_lines import UNIT_LINES  # noqa: E402
+
+
+def _opponent_to_lines() -> dict:
+    """Map every imperial-age opponent slug to the list of line keys it appears in.
+
+    Cached on first call. Pre-computing avoids O(units × lines) scans
+    inside the per-row hot loop.
+    """
+    out: dict = defaultdict(list)
+    for line_key in UNIT_LINES:
+        for slug in line_imperial_slugs(UNIT_LINES, line_key):
+            out[slug].append(line_key)
+    return dict(out)
+
+
+_OPP_TO_LINES_CACHE: dict | None = None
+
+
+def _opponent_lines(opp_slug: str) -> list:
+    global _OPP_TO_LINES_CACHE
+    if _OPP_TO_LINES_CACHE is None:
+        _OPP_TO_LINES_CACHE = _opponent_to_lines()
+    return _OPP_TO_LINES_CACHE.get(opp_slug, [])
+
+
+def derive_unit_scores(*, civ: str, unit_slug: str, scale: str,
+                       rows: list,
+                       sim_version=None) -> list:
+    """Derive 3 output rows (one per axis) for one (civ, unit, scale).
+
+    `rows` is the list of matchup_battles rows for this unit at this
+    scale. Each row must have the keys used by `_row()` in the tests.
+    Returns an empty list if the unit's pool can't be determined
+    (e.g. siege/naval/monk, out of scope for this stage).
+
+    Each opponent's line is bucketed into the FIRST matching role only
+    (GC before AC before AT/AA). This keeps roles mutually exclusive when
+    lines such as "knight" appear in both GC and AC definitions.
+    """
+    pool = unit_to_pool(UNIT_LINES, unit_slug)
+    if pool is None:
+        return []
+
+    role_def = POOL_ROLES[pool]
+    # Bucket: (line_key, role) -> axis -> {dedup_group: value}
+    line_axis_values: dict = defaultdict(lambda: {"hp": {}, "cost": {}, "speed": {}})
+    # Raw HP signed scores (unadjusted) keyed by dedup_group — for shape descriptors.
+    # All three axes share the same underlying battle outcomes.
+    raw_hp_by_dedup: dict = {}
+
+    for r in rows:
+        opp_slug = r["opp_unit_slug"]
+        opp_line_keys = _opponent_lines(opp_slug)
+        if not opp_line_keys:
+            continue
+
+        my_total = r["my_count"] * weighted_cost(
+            r["my_cost_food"], r["my_cost_wood"], r["my_cost_gold"])
+        opp_total = r["opp_count"] * weighted_cost(
+            r["opp_cost_food"], r["opp_cost_wood"], r["opp_cost_gold"])
+        raw_hp = hp_score(r["team1_hp_pct"], r["team2_hp_pct"], r["winner"])
+        adj_hp = apply_loss_aversion(raw_hp)
+        cost = cost_score(r["team1_hp_pct"], r["team2_hp_pct"], r["winner"],
+                          my_total, opp_total)
+        speed = speed_score(r["winner"], r["game_time_s"])
+
+        dedup = r["dedup_group"]
+
+        # Track raw HP for shape (first dedup_group entry wins).
+        raw_hp_by_dedup.setdefault(dedup, raw_hp)
+
+        # Bucket per-axis adjusted values; each line goes to FIRST matching role.
+        for line_key in opp_line_keys:
+            for role, lines in role_def.items():
+                if line_key in lines:
+                    line_axis_values[(line_key, role)]["hp"].setdefault(dedup, adj_hp)
+                    line_axis_values[(line_key, role)]["cost"].setdefault(dedup, cost)
+                    line_axis_values[(line_key, role)]["speed"].setdefault(dedup, speed)
+                    break  # first matching role wins — keeps roles mutually exclusive
+
+    # Compute shape from raw HP signed scores (shared across all axes).
+    shape = compute_shape(raw_hp_by_dedup.values())
+
+    # Build one output row per axis.
+    derived_at = datetime.datetime.utcnow().isoformat(timespec="seconds")
+    out_rows = []
+    for axis in ("hp", "cost", "speed"):
+        # Per-line mean → per-role mean across lines that had data.
+        role_means: dict = {}
+        for role, lines in role_def.items():
+            line_vals = []
+            for line in lines:
+                vals = line_axis_values.get((line, role), {}).get(axis, {})
+                if vals:
+                    line_vals.append(sum(vals.values()) / len(vals))
+            if line_vals:
+                role_means[role] = sum(line_vals) / len(line_vals)
+            else:
+                role_means[role] = 0.0
+
+        final = final_score_for_pool(role_means, pool)
+        weights = POOL_WEIGHTS[pool]
+
+        out_rows.append({
+            "civ_name": civ, "unit_slug": unit_slug,
+            "pool": pool, "scale": scale, "axis": axis,
+            "final_score": final,
+            "gc": role_means.get("GC", 0.0) if "GC" in weights else None,
+            "ac": role_means.get("AC", 0.0) if "AC" in weights else None,
+            "at": role_means.get("AT", 0.0) if "AT" in weights else None,
+            "aa": role_means.get("AA", 0.0) if "AA" in weights else None,
+            "n": shape["n"], "mean": shape["mean"], "stddev": shape["stddev"],
+            "win_rate": shape["win_rate"],
+            "decisive_win_rate": shape["decisive_win_rate"],
+            "big_win_rate": shape["big_win_rate"],
+            "catastrophic_loss_rate": shape["catastrophic_loss_rate"],
+            "sim_version": sim_version, "derived_at": derived_at,
+        })
+    return out_rows

@@ -274,3 +274,79 @@ def test_compute_shape_all_catastrophic_losses():
     s = compute_shape([-90.0, -80.0])
     assert s["win_rate"] == 0.0
     assert s["catastrophic_loss_rate"] == 100.0
+
+
+from pool_scores_lib import derive_unit_scores
+
+
+def _row(opp_unit, winner=1, t1=0.8, t2=0.0, dedup="g",
+         my_count=30, my_food=65, my_wood=0, my_gold=20,
+         opp_count=30, opp_food=60, opp_wood=0, opp_gold=20,
+         game_time=20.0):
+    return {
+        "opp_unit_slug": opp_unit, "winner": winner,
+        "team1_hp_pct": t1, "team2_hp_pct": t2,
+        "my_count": my_count, "my_cost_food": my_food,
+        "my_cost_wood": my_wood, "my_cost_gold": my_gold,
+        "opp_count": opp_count, "opp_cost_food": opp_food,
+        "opp_cost_wood": opp_wood, "opp_cost_gold": opp_gold,
+        "game_time_s": game_time, "dedup_group": dedup,
+    }
+
+
+def test_derive_unit_scores_synthetic_infantry():
+    # Three deduped wins vs militia/knight/archer, one each.
+    # All clean wins at 80% HP -> hp_score = +80, adjusted = +80.
+    # GC mean = 80; AC and AT empty so means = 0.
+    # final = 0.7*80 + 0.15*0 + 0.15*0 = 56.
+    rows = [
+        _row("champion", dedup="g1"),
+        _row("paladin",  dedup="g2"),  # knight line
+        _row("arbalester", dedup="g3"),
+    ]
+    out = derive_unit_scores(
+        civ="Vikings", unit_slug="elite_berserk_vikings",
+        scale="30v30", rows=rows,
+    )
+    # Three axes -> three output rows for this scale.
+    assert len(out) == 3
+    by_axis = {r["axis"]: r for r in out}
+    hp = by_axis["hp"]
+    assert hp["pool"] == "infantry"
+    assert hp["scale"] == "30v30"
+    assert hp["gc"] == pytest.approx(80.0)
+    assert hp["ac"] == pytest.approx(0.0)  # no AC opponents in input
+    assert hp["at"] == pytest.approx(0.0)  # no AT opponents
+    assert hp["aa"] is None  # archer-only
+    assert hp["final_score"] == pytest.approx(0.7 * 80.0)
+    assert hp["n"] == 3
+    assert hp["win_rate"] == 100.0
+
+
+def test_derive_unit_scores_dedup_collapses_duplicates():
+    rows = [
+        _row("champion", t1=0.8, dedup="g1"),
+        _row("champion", t1=0.5, dedup="g1"),  # same group, ignored
+        _row("champion", t1=0.0, winner=2, t2=0.5, dedup="g2"),
+    ]
+    out = derive_unit_scores(
+        civ="Vikings", unit_slug="elite_berserk_vikings",
+        scale="30v30", rows=rows,
+    )
+    hp = next(r for r in out if r["axis"] == "hp")
+    # Deduped to two raw HP scores: +80 (g1 first), -50 (g2).
+    # Adjusted with lambda=2: +80 and -100. Militia-line mean = -10.
+    # GC = avg of [militia=-10, knight=None, archer=None] = -10/1 = -10.
+    # final = 0.7 * -10 + 0.15*0 + 0.15*0 = -7.
+    assert hp["n"] == 2  # deduped count
+    assert hp["gc"] == pytest.approx(-10.0)
+    assert hp["final_score"] == pytest.approx(-7.0)
+
+
+def test_derive_unit_scores_unknown_pool_returns_empty():
+    # Unknown unit_slug -> not in any pool -> no rows produced.
+    out = derive_unit_scores(
+        civ="Whatever", unit_slug="totally_made_up",
+        scale="30v30", rows=[_row("champion")],
+    )
+    assert out == []

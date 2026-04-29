@@ -61,3 +61,21 @@ def cost_score(t1_hp: float, t2_hp: float, winner: int,
     if winner == 2:
         return lam * (my_spent + opp_remaining)
     return my_spent + opp_remaining
+
+
+def speed_score(winner: int, game_time_s: float,
+                t_max: float = T_MAX_SECONDS,
+                lam: float = LAMBDA) -> float:
+    """Linear speed score signed by win/loss.
+
+    Spec §"Speed-to-win axis":
+      win:  +100 * max(0, 1 - t/T_MAX)
+      loss: -lam * 100 * max(0, 1 - t/T_MAX)
+      tie:  0
+    """
+    factor = max(0.0, 1.0 - game_time_s / t_max)
+    if winner == 1:
+        return 100.0 * factor
+    if winner == 2:
+        return -lam * 100.0 * factor
+    return 0.0

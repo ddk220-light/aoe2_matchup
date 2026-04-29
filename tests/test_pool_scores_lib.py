@@ -85,3 +85,35 @@ def test_cost_score_tie_no_lambda():
     # Tie: cost = my_spent + opp_remaining, no lambda multiplier.
     assert cost_score(t1_hp=0.5, t2_hp=0.5, winner=0,
                       my_total_cost=100, opp_total_cost=100) == pytest.approx(100.0)
+
+
+from pool_scores_lib import speed_score
+
+
+def test_speed_score_instant_win_max_score():
+    # Win at 0s -> +100.
+    assert speed_score(winner=1, game_time_s=0.0) == 100.0
+
+
+def test_speed_score_60s_win_half_score():
+    # Win at 60s with T_MAX=120 -> +100 * (1 - 60/120) = +50.
+    assert speed_score(winner=1, game_time_s=60.0) == pytest.approx(50.0)
+
+
+def test_speed_score_at_or_past_t_max_clipped_to_zero():
+    assert speed_score(winner=1, game_time_s=120.0) == 0.0
+    assert speed_score(winner=1, game_time_s=200.0) == 0.0
+
+
+def test_speed_score_fast_loss_doubled_negative():
+    # Loss at 0s -> -lambda*100 = -200.
+    assert speed_score(winner=2, game_time_s=0.0) == -200.0
+
+
+def test_speed_score_60s_loss():
+    # Loss at 60s -> -2 * 100 * 0.5 = -100.
+    assert speed_score(winner=2, game_time_s=60.0) == pytest.approx(-100.0)
+
+
+def test_speed_score_tie_returns_zero():
+    assert speed_score(winner=0, game_time_s=30.0) == 0.0

@@ -101,3 +101,91 @@ def test_insert_writes_role_line_means_json(tmp_path):
     (got,) = cur.fetchone()
     assert got == '{"GC":{"militia":-10.2,"knight":-5.5,"archer":-4.6}}'
     conn.close()
+
+
+import json
+import sqlite3
+from derive_pool_scores import main as derive_main
+
+
+def test_orchestrator_writes_json_role_line_means(tmp_path):
+    """End-to-end: derive on a tiny synthetic matchup DB and verify the JSON column."""
+    matchup_path = tmp_path / "matchup.db"
+    out_path = tmp_path / "pool.db"
+
+    mc = sqlite3.connect(matchup_path)
+    mc.executescript("""
+        CREATE TABLE matchup_battles (
+            my_civ TEXT, my_unit_slug TEXT, opp_unit_slug TEXT,
+            scale TEXT, winner INTEGER,
+            team1_hp_pct REAL, team2_hp_pct REAL,
+            my_count INTEGER, my_cost_food REAL, my_cost_wood REAL, my_cost_gold REAL,
+            opp_count INTEGER, opp_cost_food REAL, opp_cost_wood REAL, opp_cost_gold REAL,
+            game_time_s REAL, dedup_group TEXT, sim_version TEXT
+        );
+    """)
+    mc.execute("""
+        INSERT INTO matchup_battles VALUES
+        ('Vikings','champion','paladin','30v30',2,0.0,0.5,30,60,0,20,30,60,0,80,40.0,'g1','vTEST')
+    """)
+    mc.commit()
+    mc.close()
+
+    rc = derive_main(["--matchup-db", str(matchup_path), "--out", str(out_path)])
+    assert rc == 0
+
+    conn = sqlite3.connect(out_path)
+    cur = conn.execute(
+        "SELECT axis, role_line_means FROM pool_scores WHERE unit_slug='champion' AND scale='30v30'"
+    )
+    rows = dict(cur.fetchall())
+    conn.close()
+
+    assert "hp" in rows
+    rlm = json.loads(rows["hp"])
+    assert rlm["GC"]["knight"] is not None
+    assert rlm["GC"]["militia"] is None
+    assert rlm["GC"]["archer"] is None
+
+
+def test_orchestrator_migrates_existing_db_without_column(tmp_path):
+    """Old pool_scores.db (no role_line_means column) gets ALTER TABLE on next run."""
+    out_path = tmp_path / "pool.db"
+
+    legacy = sqlite3.connect(out_path)
+    legacy.executescript("""
+        CREATE TABLE pool_scores (
+            civ_name TEXT, unit_slug TEXT, pool TEXT, scale TEXT, axis TEXT,
+            final_score REAL, gc REAL, ac REAL, at REAL, aa REAL,
+            n INTEGER, mean REAL, stddev REAL,
+            win_rate REAL, decisive_win_rate REAL, big_win_rate REAL,
+            catastrophic_loss_rate REAL,
+            sim_version TEXT, derived_at TEXT,
+            PRIMARY KEY (civ_name, unit_slug, scale, axis)
+        );
+    """)
+    legacy.commit()
+    legacy.close()
+
+    matchup_path = tmp_path / "matchup.db"
+    mc = sqlite3.connect(matchup_path)
+    mc.executescript("""
+        CREATE TABLE matchup_battles (
+            my_civ TEXT, my_unit_slug TEXT, opp_unit_slug TEXT,
+            scale TEXT, winner INTEGER,
+            team1_hp_pct REAL, team2_hp_pct REAL,
+            my_count INTEGER, my_cost_food REAL, my_cost_wood REAL, my_cost_gold REAL,
+            opp_count INTEGER, opp_cost_food REAL, opp_cost_wood REAL, opp_cost_gold REAL,
+            game_time_s REAL, dedup_group TEXT, sim_version TEXT
+        );
+    """)
+    mc.commit()
+    mc.close()
+
+    derive_main(["--matchup-db", str(matchup_path), "--out", str(out_path)])
+
+    conn = sqlite3.connect(out_path)
+    cur = conn.execute("PRAGMA table_info(pool_scores)")
+    cols = {r[1] for r in cur.fetchall()}
+    conn.close()
+    assert "role_line_means" in cols

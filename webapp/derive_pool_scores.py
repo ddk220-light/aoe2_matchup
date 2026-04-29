@@ -17,6 +17,7 @@ Units outside those pools (siege, naval, monks) are skipped.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sqlite3
 from collections import defaultdict
@@ -71,6 +72,18 @@ def _sim_version_for(matchup_conn: sqlite3.Connection,
     return row[0] if row else None
 
 
+def _migrate_role_line_means_column(conn: sqlite3.Connection) -> None:
+    """Add role_line_means column to legacy DBs that pre-date this column.
+
+    Idempotent: PRAGMA table_info reports current columns; only ALTER if missing.
+    """
+    cur = conn.execute("PRAGMA table_info(pool_scores)")
+    cols = {r[1] for r in cur.fetchall()}
+    if "role_line_means" not in cols:
+        conn.execute("ALTER TABLE pool_scores ADD COLUMN role_line_means TEXT")
+        conn.commit()
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--matchup-db", default=DEFAULT_MATCHUP_DB)
@@ -79,6 +92,7 @@ def main(argv: list[str] | None = None) -> int:
 
     matchup_conn = sqlite3.connect(args.matchup_db)
     out_conn = create_db(args.out)
+    _migrate_role_line_means_column(out_conn)
 
     pairs = _list_unit_pairs(matchup_conn)
     written = 0
@@ -99,6 +113,9 @@ def main(argv: list[str] | None = None) -> int:
                 sim_version=sim_version,
             )
             for row in out_rows:
+                # JSON-encode the per-line breakdown for the TEXT column.
+                rlm = row.get("role_line_means")
+                row["role_line_means"] = json.dumps(rlm) if rlm is not None else None
                 insert_score(out_conn, row)
                 written += 1
                 by_pool[row["pool"]] += 1

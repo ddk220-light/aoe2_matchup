@@ -1,6 +1,12 @@
 # Pool Scores UI Integration — Design
 
-**Status:** Locked in. Ready for implementation plan.
+**Status:** Implemented. **2026-04-29 update:** axis toggle removed from
+v1 UI (HP-only). Cost and Speed axes are still computed in
+`pool_scores.db` and returned in the API payload, but the UI hides them
+because their rankings disagree with HP in ways that aren't useful to
+surface yet (e.g., "cheap halberdiers rank well on cost but poorly on
+HP"). Re-enabling is a UI change only — the lib code, schema, and API
+all still support all three axes.
 
 **Predecessor:** `2026-04-28-pool-ranking-redesign-design.md` (DB-generation stage,
 implemented in commits `3bd3f6c..ca860fc`).

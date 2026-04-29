@@ -67,9 +67,12 @@ let currentEnriched = [];
 let pinnedCell = null;
 const statChainCache = {};
 
-// Pool-scores toggle state. Defaults: HP axis, Average scale.
-let currentScoreAxis = "hp";       // "hp" | "cost" | "speed"
-let currentScoreScale = "average"; // "pop" | "cost" | "average"
+// Pool-scores toggle state.
+// Axis is fixed to "hp" — the cost and speed axes are still computed in
+// pool_scores.db (lib code preserved) but hidden from the UI because their
+// rankings disagree with HP in ways that aren't useful to surface yet.
+const currentScoreAxis = "hp";       // (constant; no toggle in v1 UI)
+let currentScoreScale = "average";   // "pop" | "cost" | "average"
 
 // Lines covered by pool_scores.db; toggles apply only to these tabs.
 const POOL_SCORE_LINES = new Set([
@@ -745,19 +748,6 @@ function setAge(age) {
     if (currentData) renderTable();
 }
 
-function setScoreAxis(axis) {
-    currentScoreAxis = axis;
-    document.querySelectorAll("#scoreAxisToggle .score-btn").forEach((b) => {
-        b.classList.toggle("active", b.dataset.value === axis);
-    });
-    // Reset sort to the score column with natural direction for new axis.
-    if (currentLine && lineUsesPoolScores(currentLine)) {
-        sortColumn = "pool_score";
-        sortDir = scoreAxisDirection(axis);
-    }
-    if (currentData) renderTable();
-}
-
 function setScoreScale(scale) {
     currentScoreScale = scale;
     document.querySelectorAll("#scoreScaleToggle .score-btn").forEach((b) => {
@@ -905,20 +895,13 @@ const LINE_LABELS = {
 };
 
 function scoreColumnLabel(axis, scale) {
-    const axisLabel = axis === "hp" ? "HP" : axis === "cost" ? "Cost" : "Speed";
+    // Axis is fixed to "hp" in v1; the parameter is preserved for future re-enable.
     const scaleLabel = scale === "pop" ? "Pop" : scale === "cost" ? "3k" : "Avg";
-    if (axis === "cost") {
-        return `${axisLabel} (${scaleLabel}, lower=better)`;
-    }
-    return `${axisLabel} (${scaleLabel})`;
+    return `Score (${scaleLabel})`;
 }
 
 function scoreColumnInfo(axis, scale) {
-    const axisDesc = {
-        hp:    "HP-based score: 100 × (winner_hp − loser_hp), signed by who won, with λ=2 loss aversion.",
-        cost:  "Resource cost (weighted: 0.8 wood + food + 1.5 gold). For a win, cost = my_spent. For a loss, cost = 2 × (my_spent + opp_remaining). Lower is better.",
-        speed: "Speed-to-win: linear, T_MAX=120s. Win = +100 × (1 − t/120). Loss = −2 × 100 × (1 − t/120).",
-    }[axis];
+    const axisDesc = "HP-based score: 100 × (winner_hp − loser_hp), signed by who won, with λ=2 loss aversion.";
     const scaleDesc = scale === "average"
         ? "Average of pop (30v30) and cost (3k cost-matched) values."
         : scale === "pop"
@@ -945,10 +928,10 @@ function _fmt(v, digits = 1) {
 }
 
 function renderPoolScoreHover(unitRow, axis, scale) {
+    // axis is fixed to "hp" in the v1 UI; parameter preserved for re-enable.
     const ps = unitRow && unitRow.pool_scores;
     if (!ps) return "<div class='hover-empty'>No pool-score data for this unit.</div>";
 
-    const axisLabel = axis === "hp" ? "HP%" : axis === "cost" ? "Resource cost" : "Speed";
     const scaleLabel = scale === "pop" ? "Pop (30v30)" : scale === "cost" ? "Cost (3k)" : "Average";
     const final = getPoolScoreValue(unitRow, axis, scale, "final");
     const gc = getPoolScoreValue(unitRow, axis, scale, "gc");
@@ -962,7 +945,6 @@ function renderPoolScoreHover(unitRow, axis, scale) {
     if (at != null) rolesHtml += `<span class='role'>AT ${_fmt(at)}</span>`;
     if (aa != null) rolesHtml += `<span class='role'>AA ${_fmt(aa)}</span>`;
 
-    const decimals = axis === "cost" ? 0 : 2;
     let shapeHtml = "";
     if (scale === "average") {
         const a = ps.scales["30v30"] && ps.scales["30v30"].shape;
@@ -982,11 +964,11 @@ function renderPoolScoreHover(unitRow, axis, scale) {
     }
 
     return `<div class='hover-pool-score'>
-        <div class='hover-title'>${unitRow.unit_name || unitRow.unit_slug} — ${axisLabel} × ${scaleLabel}</div>
-        <div class='hover-final'>final ${_fmt(final, decimals)}</div>
+        <div class='hover-title'>${unitRow.unit_name || unitRow.unit_slug} — Score (${scaleLabel})</div>
+        <div class='hover-final'>final ${_fmt(final, 2)}</div>
         <div class='hover-roles'>${rolesHtml}</div>
         ${shapeHtml}
-        <div class='hover-note'>Final score = 0.7 × GC + pool-specific role weights. λ=2 loss aversion on negative atomic scores. ${axis === "cost" ? "Lower is better." : "Higher is better."}</div>
+        <div class='hover-note'>HP-based score: 100 × (winner_hp − loser_hp), signed by who won, λ=2 loss aversion on losses. Final = 0.7 × GC + pool-specific role weights. Higher is better.</div>
     </div>`;
 }
 

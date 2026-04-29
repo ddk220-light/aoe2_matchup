@@ -114,3 +114,39 @@ def test_berserker_shape_descriptors_pop(berserker_rows_30v30):
     assert hp["n"] >= 200  # full population, exact n depends on dedup
     assert hp["win_rate"] == pytest.approx(61.71, abs=3.0)
     assert hp["catastrophic_loss_rate"] == pytest.approx(27.14, abs=3.0)
+
+
+def test_berserker_pop_hp_per_line_means(berserker_rows_30v30):
+    out = derive_unit_scores(
+        civ="Vikings", unit_slug="elite_berserk_vikings",
+        scale="30v30", rows=berserker_rows_30v30,
+    )
+    hp = _by_axis(out)["hp"]
+    rlm = hp["role_line_means"]
+    # GC has militia/knight/archer.
+    assert "GC" in rlm and set(rlm["GC"].keys()) == {"militia", "knight", "archer"}
+    # AC has knight/camel/steppe_lancer/elephant.
+    assert set(rlm["AC"].keys()) == {"knight", "camel", "steppe_lancer", "elephant"}
+    # AT has spear/skirmisher/light_cav.
+    assert set(rlm["AT"].keys()) == {"spear", "skirmisher", "light_cav"}
+    # All values either float or None.
+    for role_dict in rlm.values():
+        for v in role_dict.values():
+            assert v is None or isinstance(v, (int, float))
+
+
+def test_berserker_pop_hp_per_line_means_pinned(berserker_rows_30v30):
+    """Pin the actual GC-line values for the 30v30 HP axis as a regression guardrail."""
+    out = derive_unit_scores(
+        civ="Vikings", unit_slug="elite_berserk_vikings",
+        scale="30v30", rows=berserker_rows_30v30,
+    )
+    hp = _by_axis(out)["hp"]
+    gc = hp["role_line_means"]["GC"]
+    # PIN: values from sqlite query (Task 5 / Step 2). Tolerance 0.5.
+    expected_militia = 38.734791666666666
+    expected_knight  = -15.862105263157895
+    expected_archer  = -43.28777777777778
+    assert gc["militia"] == pytest.approx(expected_militia, abs=0.5)
+    assert gc["knight"]  == pytest.approx(expected_knight,  abs=0.5)
+    assert gc["archer"]  == pytest.approx(expected_archer,  abs=0.5)

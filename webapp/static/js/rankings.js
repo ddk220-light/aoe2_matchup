@@ -1164,6 +1164,8 @@ function renderTable() {
             dps,
             pes,
             res,
+            armor_combined: `${r.final_melee_armor || 0}/${r.final_pierce_armor || 0}`,
+            armor_sort_key: r.final_melee_armor || 0,
             total_cost: totalCost,
             total_upgrade_cost:
                 (r.upgrade_cost_food || 0) +
@@ -1213,8 +1215,9 @@ function renderTable() {
     const _isMissing = (v) =>
         v === undefined || v === null || v === -999;
     filtered.sort((a, b) => {
-        let va = a[sortColumn],
-            vb = b[sortColumn];
+        const sortKey = sortColumn === "armor_combined" ? "armor_sort_key" : sortColumn;
+        let va = a[sortKey],
+            vb = b[sortKey];
         const aMissing = _isMissing(va);
         const bMissing = _isMissing(vb);
         if (aMissing && bMissing) {
@@ -1403,6 +1406,22 @@ function renderTable() {
         } else if (pool === "archer") {
             cols.push(_roleColumn("AA", pool, "AA"), ..._perLineColumns(pool, "AA"));
         }
+        if (isExpanded("Special")) {
+            cols.push(
+                { key: "dps",              label: "DPS",     expandable: "Special" },
+                { key: "final_hp",         label: "HP",      expandable: "Special" },
+                { key: "final_attack",     label: "Atk",     expandable: "Special" },
+                { key: "armor_combined",   label: "M/P Arm", expandable: "Special" },
+                { key: "final_speed",      label: "Speed",   expandable: "Special" },
+            );
+            if (pool === "archer") {
+                cols.push({ key: "final_range", label: "Range", expandable: "Special" });
+            }
+            cols.push(
+                { key: "total_cost",          label: "Cost",     expandable: "Special" },
+                { key: "total_upgrade_cost",  label: "Upg Cost", expandable: "Special" },
+            );
+        }
         cols.push({
             key: "special_abilities", label: "Special", expandable: "Special",
         });
@@ -1566,6 +1585,9 @@ function renderTable() {
         if (k.startsWith("role_line_")) {
             if (v === undefined || v === null) return `<td>\u2014</td>`;
             return `<td>${v.toFixed(1)}</td>`;
+        }
+        if (k === "armor_combined") {
+            return `<td>${v}</td>`;
         }
         // Numeric columns with color coding
         if (v === undefined || v === null || v <= -999) {

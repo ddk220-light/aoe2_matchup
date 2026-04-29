@@ -289,25 +289,31 @@ later, the label can be materialized as a derived column.
 
 ### ✅ Reference unit & validation
 
-Viking Elite Berserk is the canonical reference unit. Reference
-values under the **raw** signed_score (pre-loss-aversion):
+Viking Elite Berserk is the canonical reference unit. Pinned by
+`tests/test_pool_scores_integration.py` against the live
+`webapp/matchup_db.db`.
 
-* Pop score: +26.2 (GC +13.0, AC +21.2, AT +92.7)
-* Cost score: +41.6 (GC +29.7, AC +45.8, AT +92.9)
-* Pop overall profile: SOLID (mean +35.2, win 72%, cat-loss 13%)
-* Cost overall profile: RELIABLE (mean +51.3, win 85%, cat-loss 7%)
+**Final-score reference (matches spec ±0.5 in the regression test):**
 
-Reference values under the locked-in **λ = 2.0** transform:
+| scale | HP score | resource cost | speed |
+| --- | ---: | ---: | ---: |
+| 30v30 | **+8.9** (GC −6.8, AC −1.6, AT +92.7) | **3961.8** | **+1.20** |
+| 3k    | **+31.6** (GC +17.4, AC +36.8, AT +92.9) | **2506.9** | **+26.60** |
 
-* Pop score: **+8.9** (GC −6.8, AC −1.6, AT +92.7)
-* Cost score: **+31.6** (GC +17.4, AC +36.8, AT +92.9)
-* Overall profiles will be recomputed once all transforms are locked
-  in and the full pipeline runs.
+**Shape descriptors (re-pinned to current matchup_db snapshot, 2026-04-28):**
 
-A regression test will pin these values to four decimal places (or
-within an explicit tolerance, decided in implementation). The
-reference set may be re-pinned once additional scoring topics
-(currently being brainstormed) are folded in.
+* 30v30 overall: n=269, win-rate ≈ 61.71%, catastrophic-loss-rate ≈ 27.14%
+
+The shape descriptors will drift as more battles are added to
+matchup_db (the original brainstorming numbers were taken at n=238;
+current snapshot has n=269 deduped opponents). The integration test
+re-pins to current data with ±3.0% tolerance. If a future batch
+materially shifts these numbers, update the test and this section
+together.
+
+Final scores are robust against population shifts (role-weighted means
+of line means barely move when a few new battles are added), so they
+remain pinned to ±0.5 against spec.
 
 ## Resolved decisions
 

@@ -139,6 +139,28 @@ function getPoolScoreValue(unitRow, axis, scale, role = "final") {
     return v == null ? null : v;
 }
 
+// Read the per-line breakdown for one (role, line_key) under the active scale.
+function getPoolLineValue(unitRow, role, lineKey) {
+    const ps = unitRow && unitRow.pool_scores;
+    if (!ps || !ps.scales) return null;
+    const axis = currentScoreAxis;
+    const readScale = (k) => {
+        const sc = ps.scales[k];
+        if (!sc || !sc[axis] || !sc[axis].role_line_means) return null;
+        const r = sc[axis].role_line_means[role];
+        if (!r) return null;
+        const v = r[lineKey];
+        return v == null ? null : v;
+    };
+    if (currentScoreScale === "average") {
+        const a = readScale("30v30");
+        const b = readScale("3k");
+        if (a == null || b == null) return null;
+        return (a + b) / 2;
+    }
+    return readScale(currentScoreScale === "pop" ? "30v30" : "3k");
+}
+
 // ===== SCORE BREAKDOWN CONFIG =====
 const SCORE_BREAKDOWN = {
     general_combat: {
@@ -922,6 +944,38 @@ const LINE_LABELS = {
     cannon_galleon: "Cannon Galleon",
 };
 
+// Short labels used for per-line breakdown column headers (vs <Line>).
+const LINE_LABEL_SHORT = {
+    militia: "Militia",
+    knight: "Knight",
+    archer: "Archer",
+    spear: "Spear",
+    skirmisher: "Skirm",
+    light_cav: "Lt Cav",
+    camel: "Camel",
+    steppe_lancer: "Stp Lan",
+    elephant: "Elephant",
+    cav_archer: "Cav Arch",
+    gunpowder: "Gun",
+};
+
+// Lines defined for each (pool, role) — must mirror POOL_ROLES in pool_scores_lib.py.
+const POOL_ROLE_LINES = {
+    infantry: {
+        GC: ["militia", "knight", "archer"],
+        AC: ["knight", "camel", "steppe_lancer", "elephant"],
+        AT: ["spear", "skirmisher", "light_cav"],
+    },
+    stable: {
+        GC: ["militia", "knight", "archer"],
+        AC: ["knight", "camel", "steppe_lancer", "elephant", "light_cav"],
+    },
+    archer: {
+        GC: ["militia", "knight", "archer"],
+        AA: ["archer", "skirmisher", "cav_archer", "gunpowder"],
+    },
+};
+
 function scoreColumnLabel(axis, scale) {
     // Axis is fixed to "hp" in v1; the parameter is preserved for future re-enable.
     const scaleLabel = scale === "pop" ? "Pop" : scale === "cost" ? "3k" : "Avg";
@@ -1016,6 +1070,21 @@ function renderPoolRoleHover(unitRow, role, axis, scale) {
         <div class='hover-final'>${role} = ${_fmt(value)}</div>
         <div class='hover-note'>Average across ${lineSets[role]}.<br>Within each line: mean adjusted signed score (λ=2). Across lines: equally weighted mean. Deduped by fingerprint.</div>
     </div>`;
+}
+
+function buildRoleLineFields(row) {
+    const ps = row.pool_scores;
+    if (!ps) return {};
+    const pool = ps.pool;
+    const def = POOL_ROLE_LINES[pool];
+    if (!def) return {};
+    const out = {};
+    for (const role of Object.keys(def)) {
+        for (const line of def[role]) {
+            out[`role_line_${role}_${line}`] = getPoolLineValue(row, role, line);
+        }
+    }
+    return out;
 }
 
 function renderTable() {
@@ -1116,6 +1185,7 @@ function renderTable() {
             pool_ac: getPoolScoreValue(r, currentScoreAxis, currentScoreScale, "ac"),
             pool_at: getPoolScoreValue(r, currentScoreAxis, currentScoreScale, "at"),
             pool_aa: getPoolScoreValue(r, currentScoreAxis, currentScoreScale, "aa"),
+            ...buildRoleLineFields(r),
         };
     });
 
@@ -1288,6 +1358,57 @@ function renderTable() {
         return val > med ? "val-high" : "val-low";
     }
 
+    function _roleColumn(role, pool, label) {
+        return {
+            key: `pool_${role.toLowerCase()}`,
+            label,
+            info: roleColumnInfo(role, pool),
+            expandable: role,
+        };
+    }
+
+    function _perLineColumns(pool, role) {
+        if (!isExpanded(role)) return [];
+        const lines = (POOL_ROLE_LINES[pool] && POOL_ROLE_LINES[pool][role]) || [];
+        return lines.map((line) => ({
+            key: `role_line_${role}_${line}`,
+            label: `vs ${LINE_LABEL_SHORT[line] || line}`,
+            expandable: role,
+            perLine: true,
+        }));
+    }
+
+    function buildColumns(pool) {
+        const showLine =
+            (pool === "infantry" && currentLine === "infantry") ||
+            (pool === "archer" && currentLine === "archery") ||
+            pool === "stable";
+        const cols = [
+            { key: "civ_name", label: "Civ" },
+            { key: "unit_name", label: "Unit" },
+            ...(showLine ? [{ key: "line_slug", label: "Line" }] : []),
+            {
+                key: "pool_score",
+                label: scoreColumnLabel(currentScoreAxis, currentScoreScale),
+                info: scoreColumnInfo(currentScoreAxis, currentScoreScale),
+            },
+            _roleColumn("GC", pool, "GC"),
+            ..._perLineColumns(pool, "GC"),
+        ];
+        if (pool === "infantry") {
+            cols.push(_roleColumn("AC", pool, "AC"), ..._perLineColumns(pool, "AC"));
+            cols.push(_roleColumn("AT", pool, "AT"), ..._perLineColumns(pool, "AT"));
+        } else if (pool === "stable") {
+            cols.push(_roleColumn("AC", pool, "AC"), ..._perLineColumns(pool, "AC"));
+        } else if (pool === "archer") {
+            cols.push(_roleColumn("AA", pool, "AA"), ..._perLineColumns(pool, "AA"));
+        }
+        cols.push({
+            key: "special_abilities", label: "Special", expandable: "Special",
+        });
+        return cols;
+    }
+
     const defaultColumns = [
         { key: "civ_name", label: "Civ" },
         { key: "unit_name", label: "Unit" },
@@ -1314,62 +1435,6 @@ function renderTable() {
         { key: "total_cost", label: "Cost" },
         { key: "total_upgrade_cost", label: "Upg Cost" },
     ];
-    const infantryColumns = [
-        { key: "civ_name", label: "Civ" },
-        { key: "unit_name", label: "Unit" },
-        ...(currentLine === "infantry"
-            ? [{ key: "line_slug", label: "Line" }]
-            : []),
-        {
-            key: "pool_score",
-            label: scoreColumnLabel(currentScoreAxis, currentScoreScale),
-            info: scoreColumnInfo(currentScoreAxis, currentScoreScale),
-        },
-        {
-            key: "pool_gc",
-            label: "GC",
-            info: roleColumnInfo("GC", "infantry"),
-            expandable: "GC",
-        },
-        {
-            key: "pool_ac",
-            label: "AC",
-            info: roleColumnInfo("AC", "infantry"),
-            expandable: "AC",
-        },
-        {
-            key: "pool_at",
-            label: "AT",
-            info: roleColumnInfo("AT", "infantry"),
-            expandable: "AT",
-        },
-        { key: "special_abilities", label: "Special", expandable: "Special" },
-    ];
-    const archeryColumns = [
-        { key: "civ_name", label: "Civ" },
-        { key: "unit_name", label: "Unit" },
-        ...(currentLine === "archery"
-            ? [{ key: "line_slug", label: "Line" }]
-            : []),
-        {
-            key: "pool_score",
-            label: scoreColumnLabel(currentScoreAxis, currentScoreScale),
-            info: scoreColumnInfo(currentScoreAxis, currentScoreScale),
-        },
-        {
-            key: "pool_gc",
-            label: "GC",
-            info: roleColumnInfo("GC", "archery"),
-            expandable: "GC",
-        },
-        {
-            key: "pool_aa",
-            label: "AA",
-            info: roleColumnInfo("AA", "archery"),
-            expandable: "AA",
-        },
-        { key: "special_abilities", label: "Special", expandable: "Special" },
-    ];
     const siegeColumns = [
         { key: "civ_name", label: "Civ" },
         { key: "unit_name", label: "Unit" },
@@ -1389,29 +1454,6 @@ function renderTable() {
         { key: "total_cost", label: "Cost" },
         { key: "total_upgrade_cost", label: "Upg Cost" },
         { key: "special_abilities", label: "Special" },
-    ];
-    const stableColumns = [
-        { key: "civ_name", label: "Civ" },
-        { key: "unit_name", label: "Unit" },
-        { key: "line_slug", label: "Line" },
-        {
-            key: "pool_score",
-            label: scoreColumnLabel(currentScoreAxis, currentScoreScale),
-            info: scoreColumnInfo(currentScoreAxis, currentScoreScale),
-        },
-        {
-            key: "pool_gc",
-            label: "GC",
-            info: roleColumnInfo("GC", "stable"),
-            expandable: "GC",
-        },
-        {
-            key: "pool_ac",
-            label: "AC",
-            info: roleColumnInfo("AC", "stable"),
-            expandable: "AC",
-        },
-        { key: "special_abilities", label: "Special", expandable: "Special" },
     ];
     const navalColumns = [
         { key: "civ_name", label: "Civ" },
@@ -1433,18 +1475,20 @@ function renderTable() {
         { key: "total_upgrade_cost", label: "Upg Cost" },
         { key: "special_abilities", label: "Special" },
     ];
-    const columns =
-        currentLine === "stable"
-            ? stableColumns
-            : isSiege
-                ? siegeColumns
-                : isInfantry
-                    ? infantryColumns
-                    : isArchery
-                        ? archeryColumns
-                        : isNaval
-                            ? navalColumns
-                            : defaultColumns;
+    let columns;
+    if (currentLine === "stable" || (UNIT_LINES.stable && UNIT_LINES.stable.subLines && UNIT_LINES.stable.subLines.includes(currentLine))) {
+        columns = buildColumns("stable");
+    } else if (isSiege) {
+        columns = siegeColumns;
+    } else if (isInfantry) {
+        columns = buildColumns("infantry");
+    } else if (isArchery) {
+        columns = buildColumns("archer");
+    } else if (isNaval) {
+        columns = navalColumns;
+    } else {
+        columns = defaultColumns;
+    }
 
     const lineInfo = UNIT_LINES[currentLine];
     const titleIcon = unitIconUrl(
@@ -1518,6 +1562,10 @@ function renderTable() {
         }
         if (k === "special_abilities") {
             return `<td style="white-space:normal;max-width:200px;font-size:0.7rem">${v || "\u2014"}</td>`;
+        }
+        if (k.startsWith("role_line_")) {
+            if (v === undefined || v === null) return `<td>\u2014</td>`;
+            return `<td>${v.toFixed(1)}</td>`;
         }
         // Numeric columns with color coding
         if (v === undefined || v === null || v <= -999) {

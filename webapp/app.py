@@ -670,10 +670,14 @@ def api_ref_unit_line(line_slug):
     }
 
     # Build reference tech sets per unit_slug across all civs in scope.
-    # For each slug, the set of standard techs that ANY civ has applied.
+    # For each slug, the set of standard techs that ≥2 civs have applied.
     # Used for missing-techs computation — a civ "missing" a tech is one in
     # this reference set that they don't have applied.
-    _reference_techs_by_slug: dict[str, set[str]] = {}
+    #
+    # The ≥2 civ filter drops civ-locked work_rate / standard techs that only
+    # one civ ever has (e.g. Goths' "Gothic Perfusion" has tech_type='work_rate'
+    # and only Goths get it — without this filter every other civ's militia
+    # line would falsely show "Missing: Gothic Perfusion").
     _per_slug_civ_techs: dict[tuple[str, str], list[tuple[str, str]]] = {}
     rc.execute("""
         SELECT ru.civ_name, ru.unit_slug, rta.tech_name, rta.tech_type
@@ -684,9 +688,17 @@ def api_ref_unit_line(line_slug):
         _per_slug_civ_techs.setdefault((r["civ_name"], r["unit_slug"]), []).append(
             (r["tech_name"], r["tech_type"])
         )
+    # Count, per (slug, tech), how many civs apply it.
+    _slug_tech_civ_counts: dict[tuple[str, str], int] = {}
     for (civ, slug), techs in _per_slug_civ_techs.items():
         standard_techs, _bonus, _eff = parse_techs_and_bonuses(techs, [])
-        _reference_techs_by_slug.setdefault(slug, set()).update(standard_techs)
+        for tech in standard_techs:
+            _slug_tech_civ_counts[(slug, tech)] = _slug_tech_civ_counts.get((slug, tech), 0) + 1
+    # Reference set per slug = standard techs applied by ≥2 civs.
+    _reference_techs_by_slug: dict[str, set[str]] = {}
+    for (slug, tech), count in _slug_tech_civ_counts.items():
+        if count >= 2:
+            _reference_techs_by_slug.setdefault(slug, set()).add(tech)
 
     def _attach_special(entry):
         rc.execute(

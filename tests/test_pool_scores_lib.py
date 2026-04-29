@@ -191,3 +191,48 @@ def test_dedup_mean_all_same_group():
 def test_dedup_mean_unique_groups():
     values = [("a", 10.0), ("b", 20.0), ("c", 30.0)]
     assert dedup_mean(values) == 20.0
+
+
+from pool_scores_lib import (
+    POOL_ROLES, POOL_WEIGHTS, final_score_for_pool,
+)
+
+
+def test_pool_roles_match_spec():
+    assert set(POOL_ROLES) == {"infantry", "stable", "archer"}
+    assert POOL_ROLES["infantry"]["AC"] == ["knight", "camel", "steppe_lancer", "elephant"]
+    assert POOL_ROLES["stable"]["AC"] == ["knight", "camel", "steppe_lancer", "elephant", "light_cav"]
+    assert POOL_ROLES["archer"]["AA"] == ["archer", "skirmisher", "cav_archer", "gunpowder"]
+
+
+def test_pool_weights_sum_to_one():
+    for pool, weights in POOL_WEIGHTS.items():
+        assert abs(sum(weights.values()) - 1.0) < 1e-9, pool
+
+
+def test_final_score_infantry():
+    # 0.7*GC + 0.15*AC + 0.15*AT
+    role_means = {"GC": -10.0, "AC": +50.0, "AT": +90.0}
+    expected = 0.7 * -10.0 + 0.15 * 50.0 + 0.15 * 90.0  # = 14.0
+    assert final_score_for_pool(role_means, "infantry") == pytest.approx(expected)
+
+
+def test_final_score_stable():
+    # 0.7*GC + 0.30*AC
+    role_means = {"GC": +20.0, "AC": +40.0}
+    expected = 0.7 * 20.0 + 0.30 * 40.0  # = 26.0
+    assert final_score_for_pool(role_means, "stable") == pytest.approx(expected)
+
+
+def test_final_score_archer():
+    # 0.7*GC + 0.30*AA
+    role_means = {"GC": +30.0, "AA": -10.0}
+    expected = 0.7 * 30.0 + 0.30 * -10.0  # = 18.0
+    assert final_score_for_pool(role_means, "archer") == pytest.approx(expected)
+
+
+def test_final_score_missing_role_treated_as_zero():
+    # If a role has no data, treat the role mean as 0 (don't reweight).
+    role_means = {"GC": +50.0}  # missing AC
+    expected = 0.7 * 50.0 + 0.30 * 0.0  # = 35.0
+    assert final_score_for_pool(role_means, "stable") == pytest.approx(expected)

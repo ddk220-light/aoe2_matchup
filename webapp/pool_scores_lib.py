@@ -169,3 +169,32 @@ def dedup_mean(group_value_pairs) -> float | None:
     if not by_group:
         return None
     return sum(by_group.values()) / len(by_group)
+
+
+POOL_ROLES = {
+    "infantry": {
+        "GC": ["militia", "knight", "archer"],
+        "AC": ["knight", "camel", "steppe_lancer", "elephant"],
+        "AT": ["spear", "skirmisher", "light_cav"],
+    },
+    "stable": {
+        "GC": ["militia", "knight", "archer"],
+        "AC": ["knight", "camel", "steppe_lancer", "elephant", "light_cav"],
+    },
+    "archer": {
+        "GC": ["militia", "knight", "archer"],
+        "AA": ["archer", "skirmisher", "cav_archer", "gunpowder"],
+    },
+}
+
+POOL_WEIGHTS = {
+    "infantry": {"GC": 0.70, "AC": 0.15, "AT": 0.15},
+    "stable":   {"GC": 0.70, "AC": 0.30},
+    "archer":   {"GC": 0.70, "AA": 0.30},
+}
+
+
+def final_score_for_pool(role_means: dict[str, float], pool: str) -> float:
+    """Apply pool-specific role weights. Missing roles count as 0."""
+    weights = POOL_WEIGHTS[pool]
+    return sum(weights[r] * role_means.get(r, 0.0) for r in weights)

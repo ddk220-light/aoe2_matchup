@@ -167,3 +167,27 @@ def test_unit_to_pool_arbalester_is_archer():
 def test_unit_to_pool_unknown_returns_none():
     assert unit_to_pool(UNIT_LINES, "trebuchet") is None
     assert unit_to_pool(UNIT_LINES, "totally_made_up_slug") is None
+
+
+from pool_scores_lib import dedup_mean
+
+
+def test_dedup_mean_collapses_same_group():
+    # Two values share group "G1"; first wins.
+    values = [("G1", 80.0), ("G1", 100.0), ("G2", 50.0)]
+    # G1 -> 80.0 (first seen), G2 -> 50.0; mean = 65.0
+    assert dedup_mean(values) == pytest.approx(65.0)
+
+
+def test_dedup_mean_empty_returns_none():
+    assert dedup_mean([]) is None
+
+
+def test_dedup_mean_all_same_group():
+    values = [("G1", 10.0), ("G1", 20.0)]
+    assert dedup_mean(values) == 10.0
+
+
+def test_dedup_mean_unique_groups():
+    values = [("a", 10.0), ("b", 20.0), ("c", 30.0)]
+    assert dedup_mean(values) == 20.0

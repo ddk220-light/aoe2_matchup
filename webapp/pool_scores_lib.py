@@ -150,3 +150,22 @@ def unit_to_pool(unit_lines: dict, unit_slug: str) -> str | None:
         if unit_slug in _all_line_slugs_including_castle(unit_lines, line_key):
             return BUILDING_TO_POOL.get(line.get("building"))
     return None
+
+
+def dedup_mean(group_value_pairs) -> float | None:
+    """Collapse rows by dedup_group (first wins), return mean of survivors.
+
+    `group_value_pairs` is an iterable of `(dedup_group, value)` tuples.
+    Returns `None` if the input is empty.
+
+    First-wins matches the existing fingerprint-dedup convention in
+    `run_matchup_battles.py`; rows in the same group are simulator-
+    identical so the choice is arbitrary.
+    """
+    by_group: dict[str, float] = {}
+    for group, value in group_value_pairs:
+        if group not in by_group:
+            by_group[group] = value
+    if not by_group:
+        return None
+    return sum(by_group.values()) / len(by_group)

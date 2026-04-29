@@ -113,6 +113,30 @@ function isExpanded(group) {
     return expandedGroups.has(group);
 }
 
+function _isPoolPage() {
+    // Pool tabs (infantry/archer/stable) — not siege/naval which keep legacy columns.
+    const isInfantry = INFANTRY_SLUGS.has(currentLine);
+    const isArchery = ARCHERY_SLUGS.has(currentLine);
+    const isStable = currentLine === "stable" ||
+        (UNIT_LINES.stable && UNIT_LINES.stable.subLines &&
+         UNIT_LINES.stable.subLines.includes(currentLine));
+    return isInfantry || isArchery || isStable;
+}
+
+function _groupExistsForCurrentPool(group) {
+    const isInfantry = INFANTRY_SLUGS.has(currentLine);
+    const isArchery = ARCHERY_SLUGS.has(currentLine);
+    const isStable = currentLine === "stable" ||
+        (UNIT_LINES.stable && UNIT_LINES.stable.subLines &&
+         UNIT_LINES.stable.subLines.includes(currentLine));
+    if (group === "Special") return isInfantry || isArchery || isStable;
+    if (group === "GC") return isInfantry || isArchery || isStable;
+    if (group === "AC") return isInfantry || isStable;
+    if (group === "AT") return isInfantry;
+    if (group === "AA") return isArchery;
+    return false;
+}
+
 // Score-axis convention: cost is "lower = better"; hp/speed are "higher = better".
 function scoreAxisDirection(axis) {
     return axis === "cost" ? "asc" : "desc";
@@ -1516,9 +1540,16 @@ function renderTable() {
             : lineInfo?.imperial,
     );
 
+    const allExpanded = ["GC", "AC", "AT", "AA", "Special"]
+        .filter((g) => _groupExistsForCurrentPool(g))
+        .every((g) => isExpanded(g));
+    const expandBtnLabel = allExpanded ? "▾ Collapse All" : "▸ Expand All";
+    const expandBtnAction = allExpanded ? "collapseAll()" : "expandAll()";
+
     let html = `<div class="civ-filter-wrap">
         <input type="text" id="civFilterInput" placeholder="Filter by civilization..." value="${civFilter}" oninput="renderTable()" />
-        <button class="export-btn" onclick="exportCSV()" title="Export current view as CSV">Export CSV</button>`;
+        <button class="export-btn" onclick="exportCSV()" title="Export current view as CSV">Export CSV</button>
+        ${_isPoolPage() ? `<button class="expand-btn" onclick="${expandBtnAction}">${expandBtnLabel}</button>` : ""}`;
     if (lineInfo?.subLines && lineInfo.subLines.length > 1) {
         html += `<div class="line-filters"><span class="line-filters-label">Lines:</span>`;
         for (const sl of lineInfo.subLines) {

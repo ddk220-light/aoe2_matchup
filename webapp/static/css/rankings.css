@@ -37,51 +37,58 @@
     flex-wrap: wrap;
     gap: 16px;
     align-items: center;
-    margin: 12px 0 8px 0;
+    margin: 12px 0 8px;
 }
 
 .score-toggle-group {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background: var(--card-bg, #1a1a1a);
-    border: 1px solid var(--border, #333);
+    background: var(--bg-warm);
+    border: 1px solid var(--border-light);
     border-radius: 6px;
     padding: 4px 8px;
 }
 
 .score-toggle-label {
-    font-size: 12px;
-    color: var(--text-muted, #888);
+    font-family: "Cinzel", serif;
+    font-size: 0.75rem;
+    color: var(--text-muted);
     margin-right: 6px;
+    letter-spacing: 0.02em;
 }
 
 .score-btn {
+    font-family: "Cinzel", serif;
     background: transparent;
     border: 1px solid transparent;
-    color: var(--text, #ccc);
-    font-size: 12px;
+    color: var(--text-muted);
+    font-size: 0.75rem;
     padding: 4px 10px;
     border-radius: 4px;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition: all 0.2s;
 }
 
 .score-btn:hover {
-    background: var(--hover-bg, #222);
+    background: var(--bg-hover);
+    color: var(--text);
 }
 
 .score-btn.active {
-    background: var(--accent, #5a8edc);
-    color: #fff;
+    background: var(--gold-dark);
+    color: var(--bg-deep);
+    border-color: var(--gold);
     font-weight: 600;
 }
 
 .score-toggle-note {
-    font-size: 11px;
-    color: var(--text-muted, #888);
+    font-family: "Cinzel", serif;
+    font-size: 0.7rem;
+    color: var(--text-muted);
     font-style: italic;
     flex-basis: 100%;
+    letter-spacing: 0.02em;
 }
 
 /* Tab bar */

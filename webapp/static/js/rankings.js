@@ -1620,8 +1620,14 @@ function renderTable() {
         if (k === "special_abilities") {
             const effects = v || "";
             const missing = row.missing_techs || [];
+            const bonuses = row.civ_bonus_techs || [];
             const lines = [];
             if (effects) lines.push(`<div class="special-effects">${effects}</div>`);
+            if (bonuses.length > 0) {
+                lines.push(
+                    `<div class="special-bonuses">\u2728 ${bonuses.join(", ")}</div>`,
+                );
+            }
             if (missing.length > 0) {
                 lines.push(
                     `<div class="special-missing">\u274c Missing: ${missing.join(", ")}</div>`,

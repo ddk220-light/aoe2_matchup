@@ -721,9 +721,25 @@ def api_ref_unit_line(line_slug):
 
         # Missing techs: this civ's standard techs vs the per-slug reference.
         civ_techs = _per_slug_civ_techs.get((entry["civ_name"], entry["unit_slug"]), [])
-        standard_techs, _bonus, _eff = parse_techs_and_bonuses(civ_techs, [])
+        standard_techs, bonus_abilities, _eff = parse_techs_and_bonuses(civ_techs, [])
         reference = _reference_techs_by_slug.get(entry["unit_slug"], set())
         entry["missing_techs"] = compute_missing_techs(standard_techs, reference, entry["unit_slug"])
+
+        # Civ bonuses + unique techs as a separate display field. These are stat
+        # boosts (e.g. "+15 HP" via "Skirm Spear +5 HP × 3 ages") and named effects
+        # (e.g. "Garland Wars", "Druzhina") that don't fit ref_special_effects but
+        # belong in the Special cell as the third info line.
+        # De-dupe and drop blatantly internal-looking names (containing 'attr_').
+        seen = set()
+        cleaned = []
+        for name in bonus_abilities:
+            if "attr_" in name:
+                continue
+            if name in seen:
+                continue
+            seen.add(name)
+            cleaned.append(name)
+        entry["civ_bonus_techs"] = cleaned
 
     # Fetch units for each sub-line
     for sub_slug in sub_lines:

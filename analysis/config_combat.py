@@ -152,10 +152,12 @@ UNIQUE_COMBAT_PROPERTIES = {
     # Simulation approximation: +1 per adjacent ally, capped at 4 (exact threshold not modelled)
     "monaspa": {"attack_bonus_nearby": 1, "nearby_bonus_count": 4},
     "elite_monaspa": {"attack_bonus_nearby": 1, "nearby_bonus_count": 4},
-    # Ibirapema Warrior: blast_width=1.0 in dat = area/splash melee damage
-    # blast_attack_level=162 — treat as trample (similar to Druzhina infantry splash)
-    "ibirapema_warrior": {"trample_flat_damage": 5, "trample_radius": 0.5},
-    "elite_ibirapema_warrior": {"trample_flat_damage": 5, "trample_radius": 0.5},
+    # Ibirapema Warrior: blast_attack_level=162 = conical splash shape; blast_damage=1.0 = 100%.
+    # Source: Fandom wiki — "deals 100% damage in a conical shape" (vs Ghulam's 50% straight line).
+    # Modeled as full trample_percent=1.0 since the position-less sim can't represent the cone shape.
+    # Radius approximated to 0.5 (cone ~ small AoE in front; tile-radius not given on wiki).
+    "ibirapema_warrior": {"trample_percent": 1.0, "trample_radius": 0.5},
+    "elite_ibirapema_warrior": {"trample_percent": 1.0, "trample_radius": 0.5},
     "temple_guard": {"attack_speed_ramp": 0.2, "attack_speed_min": 1.0},
     "elite_temple_guard": {"attack_speed_ramp": 0.2, "attack_speed_min": 1.0},
     # Guecha Warrior: regen on nearby ally Guecha death (+5 HP over 3s, refreshes)
@@ -250,6 +252,20 @@ CIV_COMBAT_PROPERTIES = {
     ("Romans", "elite_centurion"): {
         "charge_attack_melee": 5,
         "charge_recharge_time": 4.0,
+    },
+    # Japanese Samurai charge (Update 141935 / Battle for Greece): +1 bonus damage on
+    # charged strike (30s recharge) plus a +25% movement boost when target is within
+    # 2-6 tiles (7 for Elite). The damage component is modeled here; the speed-charge
+    # trigger range/multiplier needs a sim engine extension to model fully — for now
+    # only the +1 charge damage applies, which understates Samurai relative to AoE2:DE.
+    # Source: Fandom wiki Samurai page (Ability section), update 141935 changelog.
+    ("Japanese", "samurai_japanese"): {
+        "charge_attack_melee": 1,
+        "charge_recharge_time": 30.0,
+    },
+    ("Japanese", "elite_samurai_japanese"): {
+        "charge_attack_melee": 1,
+        "charge_recharge_time": 30.0,
     },
     # Khitan Lamellar Armor (Imp UT) — infantry + skirmishers reflect 25% melee damage
     ("Khitans", "champion"): {"damage_reflect_percent": 0.25},

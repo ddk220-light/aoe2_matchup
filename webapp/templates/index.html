@@ -31,6 +31,23 @@
             Imperial Age
         </button>
     </div>
+    <div class="score-toggles">
+        <div class="score-toggle-group" id="scoreAxisToggle" data-toggle-group="axis">
+            <span class="score-toggle-label">Score axis:</span>
+            <button class="score-btn active" data-value="hp" onclick="setScoreAxis('hp')">HP%</button>
+            <button class="score-btn" data-value="cost" onclick="setScoreAxis('cost')">Resource cost</button>
+            <button class="score-btn" data-value="speed" onclick="setScoreAxis('speed')">Speed</button>
+        </div>
+        <div class="score-toggle-group" id="scoreScaleToggle" data-toggle-group="scale">
+            <span class="score-toggle-label">Scale:</span>
+            <button class="score-btn" data-value="pop" onclick="setScoreScale('pop')">Pop (30v30)</button>
+            <button class="score-btn" data-value="cost" onclick="setScoreScale('cost')">Cost (3k)</button>
+            <button class="score-btn active" data-value="average" onclick="setScoreScale('average')">Average</button>
+        </div>
+        <div class="score-toggle-note" id="scoreToggleNote" hidden>
+            Toggles apply to infantry, stable, and archery pools. Siege and naval still use the legacy composite score.
+        </div>
+    </div>
     <div id="lineSelector"></div>
     <div class="table-container" id="tableContainer"></div>
 </div>

@@ -67,6 +67,47 @@ let currentEnriched = [];
 let pinnedCell = null;
 const statChainCache = {};
 
+// Pool-scores toggle state. Defaults: HP axis, Average scale.
+let currentScoreAxis = "hp";       // "hp" | "cost" | "speed"
+let currentScoreScale = "average"; // "pop" | "cost" | "average"
+
+// Lines covered by pool_scores.db; toggles apply only to these tabs.
+const POOL_SCORE_LINES = new Set([
+    "infantry", "militia", "spear", "shock_infantry",
+    "archery", "archer", "skirmisher", "cav_archer", "scorpion", "gunpowder",
+    "stable", "knight", "light_cav", "camel", "steppe_lancer", "elephant",
+]);
+
+function lineUsesPoolScores(slug) {
+    return POOL_SCORE_LINES.has(slug);
+}
+
+// Score-axis convention: cost is "lower = better"; hp/speed are "higher = better".
+function scoreAxisDirection(axis) {
+    return axis === "cost" ? "asc" : "desc";
+}
+
+// Read a pool-scores value for a unit row, axis, scale.
+// Returns null if the unit has no pool_scores or the requested fields are missing.
+function getPoolScoreValue(unitRow, axis, scale, role = "final") {
+    const ps = unitRow && unitRow.pool_scores;
+    if (!ps || !ps.scales) return null;
+    if (scale === "average") {
+        const a = ps.scales["30v30"];
+        const b = ps.scales["3k"];
+        if (!a || !b || !a[axis] || !b[axis]) return null;
+        const va = a[axis][role];
+        const vb = b[axis][role];
+        if (va == null || vb == null) return null;
+        return (va + vb) / 2;
+    }
+    const scaleKey = scale === "pop" ? "30v30" : "3k";
+    const sc = ps.scales[scaleKey];
+    if (!sc || !sc[axis]) return null;
+    const v = sc[axis][role];
+    return v == null ? null : v;
+}
+
 // ===== SCORE BREAKDOWN CONFIG =====
 const SCORE_BREAKDOWN = {
     general_combat: {
@@ -665,6 +706,27 @@ function setAge(age) {
     if (currentData) renderTable();
 }
 
+function setScoreAxis(axis) {
+    currentScoreAxis = axis;
+    document.querySelectorAll("#scoreAxisToggle .score-btn").forEach((b) => {
+        b.classList.toggle("active", b.dataset.value === axis);
+    });
+    // Reset sort to the score column with natural direction for new axis.
+    if (currentLine && lineUsesPoolScores(currentLine)) {
+        sortColumn = "pool_score";
+        sortDir = scoreAxisDirection(axis);
+    }
+    if (currentData) renderTable();
+}
+
+function setScoreScale(scale) {
+    currentScoreScale = scale;
+    document.querySelectorAll("#scoreScaleToggle .score-btn").forEach((b) => {
+        b.classList.toggle("active", b.dataset.value === scale);
+    });
+    if (currentData) renderTable();
+}
+
 function renderLineSelector() {
     const container = document.getElementById("lineSelector");
     let html = '<div class="tab-bar">';
@@ -730,6 +792,18 @@ const NAVAL_SLUGS = new Set([
 async function selectLine(slug) {
     currentLine = slug;
     unpinHoverCard();
+
+    // Show/hide the score toggles based on whether the current line is
+    // covered by pool_scores.db.
+    const togglesEl = document.querySelector(".score-toggles");
+    const noteEl = document.getElementById("scoreToggleNote");
+    if (togglesEl) {
+        const covered = lineUsesPoolScores(slug);
+        togglesEl.querySelectorAll(".score-toggle-group").forEach((g) => {
+            g.style.display = covered ? "" : "none";
+        });
+        if (noteEl) noteEl.hidden = covered;
+    }
 
     // Highlight active tab
     document

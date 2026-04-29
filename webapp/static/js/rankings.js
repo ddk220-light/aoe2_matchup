@@ -820,19 +820,24 @@ async function selectLine(slug) {
     // Enable all sub-lines by default
     const lineInfo = UNIT_LINES[slug];
     enabledLines = new Set(lineInfo?.subLines || []);
-    sortColumn =
-        slug === "stable"
-            ? "stable_effectiveness"
-            : INFANTRY_SLUGS.has(slug)
-                ? "militia_value"
-                : ARCHERY_SLUGS.has(slug)
-                    ? "ranged_effectiveness"
-                    : SIEGE_SLUGS.has(slug)
-                        ? "anti_building_score"
-                        : NAVAL_SLUGS.has(slug)
-                            ? "naval_effectiveness"
-                            : "pes";
-    sortDir = "desc";
+    if (lineUsesPoolScores(slug)) {
+        sortColumn = "pool_score";
+        sortDir = scoreAxisDirection(currentScoreAxis);
+    } else {
+        sortColumn =
+            slug === "stable"
+                ? "stable_effectiveness"
+                : INFANTRY_SLUGS.has(slug)
+                    ? "militia_value"
+                    : ARCHERY_SLUGS.has(slug)
+                        ? "ranged_effectiveness"
+                        : SIEGE_SLUGS.has(slug)
+                            ? "anti_building_score"
+                            : NAVAL_SLUGS.has(slug)
+                                ? "naval_effectiveness"
+                                : "pes";
+        sortDir = "desc";
+    }
     renderTable();
 }
 

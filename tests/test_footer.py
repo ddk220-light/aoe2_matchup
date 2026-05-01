@@ -101,3 +101,45 @@ def test_jsonld_omits_sameas_when_no_social_urls(monkeypatch):
         body = c.get("/").data.decode()
     # When all social URLs are unset, the sameAs key should not appear.
     assert '"sameAs"' not in body
+
+
+def test_footer_renders_on_home_page(client):
+    body = client.get("/").data.decode()
+    assert '<footer class="site-footer"' in body
+    # Brand column
+    assert "AoE2 Matchup" in body
+    # Explore column has the four nav links
+    for href in ["/", "/matchup-advisor", "/units", "/civilizations"]:
+        assert f'href="{href}"' in body
+    # Sources column
+    assert "aoe2techtree.net" in body
+    assert "genieutils" in body.lower()
+    assert "ageofempires.fandom.com" in body
+    # Microsoft disclaimer
+    assert "not affiliated" in body.lower()
+    assert "Microsoft" in body
+
+
+def test_footer_hides_contact_button_when_endpoint_unset(client, monkeypatch):
+    monkeypatch.delenv("CONTACT_FORM_ENDPOINT", raising=False)
+    import importlib, app as flask_app
+    importlib.reload(flask_app)
+    flask_app.app.config["TESTING"] = True
+    with flask_app.app.test_client() as c:
+        body = c.get("/").data.decode()
+    assert 'data-action="open-contact-modal"' not in body
+
+
+def test_footer_hides_social_link_when_url_unset(client, monkeypatch):
+    monkeypatch.delenv("SOCIAL_DISCORD_URL",   raising=False)
+    monkeypatch.setenv("SOCIAL_YOUTUBE_URL",   "https://youtube.com/@example")
+    monkeypatch.delenv("SOCIAL_INSTAGRAM_URL", raising=False)
+    import importlib, app as flask_app
+    importlib.reload(flask_app)
+    flask_app.app.config["TESTING"] = True
+    with flask_app.app.test_client() as c:
+        body = c.get("/").data.decode()
+    assert "youtube.com/@example" in body
+    # No discord or instagram link rendered
+    assert "discord.gg" not in body
+    assert "instagram.com" not in body

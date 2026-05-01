@@ -143,3 +143,29 @@ def test_footer_hides_social_link_when_url_unset(client, monkeypatch):
     # No discord or instagram link rendered
     assert "discord.gg" not in body
     assert "instagram.com" not in body
+
+
+def test_contact_modal_renders_when_endpoint_set(client, monkeypatch):
+    monkeypatch.setenv("CONTACT_FORM_ENDPOINT", "https://formspree.io/f/abc123")
+    import importlib, app as flask_app
+    importlib.reload(flask_app)
+    flask_app.app.config["TESTING"] = True
+    with flask_app.app.test_client() as c:
+        body = c.get("/").data.decode()
+    assert 'class="contact-modal"' in body
+    assert 'action="https://formspree.io/f/abc123"' in body
+    # Honeypot field present
+    assert 'name="_gotcha"' in body
+    # Required fields
+    assert 'name="email"' in body
+    assert 'name="message"' in body
+
+
+def test_contact_modal_absent_when_endpoint_unset(client, monkeypatch):
+    monkeypatch.delenv("CONTACT_FORM_ENDPOINT", raising=False)
+    import importlib, app as flask_app
+    importlib.reload(flask_app)
+    flask_app.app.config["TESTING"] = True
+    with flask_app.app.test_client() as c:
+        body = c.get("/").data.decode()
+    assert 'class="contact-modal"' not in body

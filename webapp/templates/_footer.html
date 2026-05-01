@@ -87,3 +87,112 @@
         </span>
     </div>
 </footer>
+
+{% if contact_form_endpoint %}
+<div class="contact-modal" id="contactModal" role="dialog" aria-modal="true" aria-labelledby="contactModalTitle" hidden>
+    <div class="contact-modal-backdrop" data-action="close-contact-modal"></div>
+    <div class="contact-modal-panel" role="document">
+        <button type="button" class="contact-modal-close" data-action="close-contact-modal" aria-label="Close">×</button>
+        <h2 id="contactModalTitle" class="contact-modal-title">Contact</h2>
+        <p class="contact-modal-intro">
+            Question, bug report, or just want to say hi? Drop a note.
+        </p>
+        <form class="contact-modal-form" id="contactForm" action="{{ contact_form_endpoint }}" method="POST" novalidate>
+            <label class="contact-modal-label">
+                Name
+                <input type="text" name="name" autocomplete="name" />
+            </label>
+            <label class="contact-modal-label">
+                Email
+                <input type="email" name="email" required autocomplete="email" />
+            </label>
+            <label class="contact-modal-label">
+                Message
+                <textarea name="message" rows="5" required minlength="10"></textarea>
+            </label>
+            <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden" aria-hidden="true" />
+            <button type="submit" class="contact-modal-submit">Send</button>
+            <div class="contact-modal-status" id="contactStatus" role="status" aria-live="polite"></div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function() {
+    var modal       = document.getElementById('contactModal');
+    var form        = document.getElementById('contactForm');
+    var statusEl    = document.getElementById('contactStatus');
+    var openBtn     = document.querySelector('[data-action="open-contact-modal"]');
+    var closeEls    = modal.querySelectorAll('[data-action="close-contact-modal"]');
+    var lastFocused = null;
+
+    if (!openBtn) return;
+
+    function trapFocusable() {
+        return modal.querySelectorAll(
+            'a[href], button:not([disabled]), input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+    }
+    function openModal() {
+        lastFocused = document.activeElement;
+        modal.hidden = false;
+        document.body.style.overflow = 'hidden';
+        var focusable = trapFocusable();
+        if (focusable.length) focusable[0].focus();
+    }
+    function closeModal() {
+        modal.hidden = true;
+        document.body.style.overflow = '';
+        statusEl.textContent = '';
+        statusEl.className   = 'contact-modal-status';
+        form.style.display   = '';
+        form.reset();
+        if (lastFocused) lastFocused.focus();
+    }
+    function onKeydown(e) {
+        if (modal.hidden) return;
+        if (e.key === 'Escape') { e.preventDefault(); closeModal(); return; }
+        if (e.key === 'Tab') {
+            var focusable = Array.prototype.slice.call(trapFocusable());
+            if (!focusable.length) return;
+            var first = focusable[0], last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeEls.forEach(function(el) { el.addEventListener('click', closeModal); });
+    document.addEventListener('keydown', onKeydown);
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled  = true;
+        submitBtn.textContent = 'Sending...';
+        statusEl.textContent = '';
+        statusEl.className   = 'contact-modal-status';
+
+        fetch(form.action, {
+            method:  'POST',
+            body:    new FormData(form),
+            headers: { 'Accept': 'application/json' }
+        }).then(function(resp) {
+            if (resp.ok) {
+                form.style.display = 'none';
+                statusEl.textContent = "Thanks! I'll get back to you soon.";
+                statusEl.className   = 'contact-modal-status is-success';
+            } else {
+                throw new Error('Bad status: ' + resp.status);
+            }
+        }).catch(function() {
+            statusEl.textContent = 'Something went wrong. Please try again later.';
+            statusEl.className   = 'contact-modal-status is-error';
+        }).finally(function() {
+            submitBtn.disabled    = false;
+            submitBtn.textContent = 'Send';
+        });
+    });
+})();
+</script>
+{% endif %}

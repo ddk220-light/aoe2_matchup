@@ -22,6 +22,7 @@
     <meta name="twitter:image" content="{{ self.og_image() }}" />
     {# ---- Structured data (JSON-LD) ---- #}
     {% block structured_data %}
+    {% set _social_urls = (social_links.values() | reject('none') | list) if social_links is defined else [] %}
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -31,7 +32,8 @@
       "applicationCategory": "GameApplication",
       "operatingSystem": "Web",
       "url": "{{ site_url }}",
-      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }{% if _social_urls %},
+      "sameAs": [{% for u in _social_urls %}"{{ u }}"{% if not loop.last %}, {% endif %}{% endfor %}]{% endif %}
     }
     </script>
     {% endblock %}

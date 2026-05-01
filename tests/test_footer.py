@@ -73,3 +73,31 @@ def test_og_site_name_is_renamed(client):
     resp = client.get("/")
     body = resp.data.decode()
     assert '<meta property="og:site_name" content="AoE2 Matchup"' in body
+
+
+def test_jsonld_includes_sameas_when_social_urls_set(monkeypatch):
+    monkeypatch.setenv("SOCIAL_DISCORD_URL",   "https://discord.gg/example")
+    monkeypatch.setenv("SOCIAL_YOUTUBE_URL",   "https://youtube.com/@example")
+    monkeypatch.setenv("SOCIAL_INSTAGRAM_URL", "https://instagram.com/example")
+    import importlib, app as flask_app
+    importlib.reload(flask_app)
+    flask_app.app.config["TESTING"] = True
+    with flask_app.app.test_client() as c:
+        body = c.get("/").data.decode()
+    assert '"sameAs"' in body
+    assert "https://discord.gg/example" in body
+    assert "https://youtube.com/@example" in body
+    assert "https://instagram.com/example" in body
+
+
+def test_jsonld_omits_sameas_when_no_social_urls(monkeypatch):
+    monkeypatch.delenv("SOCIAL_DISCORD_URL",   raising=False)
+    monkeypatch.delenv("SOCIAL_YOUTUBE_URL",   raising=False)
+    monkeypatch.delenv("SOCIAL_INSTAGRAM_URL", raising=False)
+    import importlib, app as flask_app
+    importlib.reload(flask_app)
+    flask_app.app.config["TESTING"] = True
+    with flask_app.app.test_client() as c:
+        body = c.get("/").data.decode()
+    # When all social URLs are unset, the sameAs key should not appear.
+    assert '"sameAs"' not in body

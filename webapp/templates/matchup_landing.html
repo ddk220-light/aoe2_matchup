@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block meta_description %}{{ meta_description }}{% endblock %}
+{% block og_type %}article{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [{
+    "@type": "Question",
+    "name": "Who wins, {{ a_name }} ({{ civ_a }}) or {{ b_name }} ({{ civ_b }})?",
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Run the live battle simulator at {{ canonical_url }} to see the tick-by-tick result. The page shows full upgraded stats, costs, and armor classes for both units."
+    }
+  },{
+    "@type": "Question",
+    "name": "What are the full stats for {{ a_name }}?",
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "{{ a_name }} ({{ civ_a }}, Imperial Age, fully upgraded): {{ a.final_hp|int }} HP, {{ a.final_attack|int }} attack, {{ a.final_melee_armor|int }}/{{ a.final_pierce_armor|int }} armor."
+    }
+  },{
+    "@type": "Question",
+    "name": "What are the full stats for {{ b_name }}?",
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "{{ b_name }} ({{ civ_b }}, Imperial Age, fully upgraded): {{ b.final_hp|int }} HP, {{ b.final_attack|int }} attack, {{ b.final_melee_armor|int }}/{{ b.final_pierce_armor|int }} armor."
+    }
+  }]
+}
+</script>
+{% endblock %}
+
+{% block page_css %}
+<style>
+.matchup-landing {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 16px 80px;
+}
+.matchup-landing h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 2rem;
+    margin: 8px 0 4px;
+    line-height: 1.2;
+}
+.matchup-landing .subtitle {
+    opacity: 0.75;
+    margin-bottom: 24px;
+    font-size: 1.05rem;
+}
+.matchup-landing .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0 24px;
+    align-items: center;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0 32px;
+}
+.matchup-landing .unit-col {
+    text-align: center;
+}
+.matchup-landing .unit-col h2 {
+    font-family: 'Cinzel', serif;
+    margin: 0 0 4px;
+    font-size: 1.4rem;
+}
+.matchup-landing .unit-col .civ {
+    opacity: 0.7;
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+}
+.matchup-landing .vs-divider {
+    font-family: 'Cinzel', serif;
+    font-size: 1.6rem;
+    opacity: 0.6;
+}
+.matchup-landing .stat-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 16px;
+    padding: 8px 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+}
+.matchup-landing .stat-row:first-of-type { border-top: none; }
+.matchup-landing .stat-row .label {
+    text-align: center;
+    opacity: 0.6;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.matchup-landing .stat-row .a { text-align: right; }
+.matchup-landing .stat-row .b { text-align: left; }
+.matchup-landing .cta {
+    display: inline-block;
+    background: #d4a017;
+    color: #111;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    padding: 14px 28px;
+    border-radius: 8px;
+    text-decoration: none;
+    margin: 8px 0 24px;
+}
+.matchup-landing .cta:hover { background: #e6b224; }
+.matchup-landing .body-copy {
+    line-height: 1.65;
+    font-size: 1.02rem;
+    max-width: 760px;
+}
+.matchup-landing .body-copy p { margin-bottom: 14px; }
+.matchup-landing .related {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+.matchup-landing .related a {
+    display: inline-block;
+    margin: 4px 12px 4px 0;
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 6px;
+    text-decoration: none;
+    color: inherit;
+    font-size: 0.92rem;
+}
+.matchup-landing .related a:hover { background: rgba(255,255,255,0.1); }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="matchup-landing">
+    <h1>{{ a_name }} vs {{ b_name }}: Who Wins?</h1>
+    <p class="subtitle">
+        {{ a_name }} ({{ civ_a }}) versus {{ b_name }} ({{ civ_b }}) — full Imperial Age stats, fully upgraded, and a live tick-by-tick simulator.
+    </p>
+
+    <a class="cta" href="/?a_civ={{ civ_a }}&a_unit={{ unit_a }}&b_civ={{ civ_b }}&b_unit={{ unit_b }}">
+        ▶ Run this simulation now
+    </a>
+
+    <div class="stat-grid">
+        <div class="unit-col">
+            <h2>{{ a_name }}</h2>
+            <div class="civ">{{ civ_a }}</div>
+        </div>
+        <div class="vs-divider">vs</div>
+        <div class="unit-col">
+            <h2>{{ b_name }}</h2>
+            <div class="civ">{{ civ_b }}</div>
+        </div>
+
+        <div class="stat-row"><span class="a">{{ a.final_hp|int }}</span><span class="label">HP</span><span class="b">{{ b.final_hp|int }}</span></div>
+        <div class="stat-row"><span class="a">{{ a.final_attack|int }}</span><span class="label">Attack</span><span class="b">{{ b.final_attack|int }}</span></div>
+        <div class="stat-row"><span class="a">{{ a.final_melee_armor|int }} / {{ a.final_pierce_armor|int }}</span><span class="label">Melee / Pierce Armor</span><span class="b">{{ b.final_melee_armor|int }} / {{ b.final_pierce_armor|int }}</span></div>
+        {% if a.final_range or b.final_range %}
+        <div class="stat-row"><span class="a">{{ a.final_range|int if a.final_range else '—' }}</span><span class="label">Range</span><span class="b">{{ b.final_range|int if b.final_range else '—' }}</span></div>
+        {% endif %}
+        <div class="stat-row"><span class="a">{{ '%.2f'|format(a.final_speed) if a.final_speed else '—' }}</span><span class="label">Speed</span><span class="b">{{ '%.2f'|format(b.final_speed) if b.final_speed else '—' }}</span></div>
+        <div class="stat-row">
+            <span class="a">
+                {% if a.final_cost_food %}{{ a.final_cost_food|int }}F {% endif %}
+                {% if a.final_cost_wood %}{{ a.final_cost_wood|int }}W {% endif %}
+                {% if a.final_cost_gold %}{{ a.final_cost_gold|int }}G{% endif %}
+            </span>
+            <span class="label">Cost</span>
+            <span class="b">
+                {% if b.final_cost_food %}{{ b.final_cost_food|int }}F {% endif %}
+                {% if b.final_cost_wood %}{{ b.final_cost_wood|int }}W {% endif %}
+                {% if b.final_cost_gold %}{{ b.final_cost_gold|int }}G{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <div class="body-copy">
+        <p>
+            This page lists the fully-upgraded Imperial Age stats for the
+            <strong>{{ a_name }}</strong> as fielded by the <strong>{{ civ_a }}</strong>
+            and the <strong>{{ b_name }}</strong> as fielded by the <strong>{{ civ_b }}</strong>.
+            Stats include all generic blacksmith / university / unique tech upgrades the civilization has access to,
+            plus civ bonuses that affect this unit.
+        </p>
+        <p>
+            To find out who actually wins the fight, click <em>Run this simulation now</em> above.
+            The simulator runs a deterministic, tick-by-tick model that handles armor classes,
+            attack delays, projectile travel time, charge attacks, trample, bleed, and every
+            other special mechanic in the game.
+        </p>
+        <p>
+            Want to compare other matchups? Browse the
+            <a href="/units">unit rankings</a>, the
+            <a href="/civilizations">civilization breakdowns</a>, or jump straight into the
+            <a href="/">battle simulator</a> and pick your own.
+        </p>
+    </div>
+
+    <div class="related">
+        <strong style="display:block; margin-bottom:8px; opacity:0.7;">Related:</strong>
+        <a href="/civilizations/{{ civ_a }}">{{ civ_a }} overview</a>
+        <a href="/civilizations/{{ civ_b }}">{{ civ_b }} overview</a>
+        <a href="/units">All unit rankings</a>
+        <a href="/">Battle simulator</a>
+    </div>
+</main>
+{% endblock %}

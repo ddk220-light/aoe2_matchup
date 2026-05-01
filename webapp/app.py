@@ -4,7 +4,7 @@ import sqlite3
 from collections import defaultdict
 from functools import lru_cache
 
-from flask import Flask, jsonify, redirect, render_template, request
+from flask import Flask, Response, abort, jsonify, redirect, render_template, request
 from best_units import (
     load_civ_power_units,
     get_matchup_recommendations,
@@ -20,6 +20,17 @@ from pool_scores_query import load_pool_scores
 
 app = Flask(__name__)
 app.json.sort_keys = False
+
+# Public site URL — used for canonical URLs, sitemap, OG tags.
+# Override with SITE_URL env var if you ever change domains.
+SITE_URL = os.environ.get("SITE_URL", "https://aoe2matchup.com").rstrip("/")
+
+
+@app.context_processor
+def inject_site_url():
+    """Make site_url and canonical_url available in every template."""
+    return {"site_url": SITE_URL, "canonical_url": None}
+
 
 # Database paths
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_units.db")
@@ -127,6 +138,130 @@ def civ_detail_redirect(civ_name):
 def simulate_redirect():
     """Redirect old /simulate URL to homepage."""
     return redirect("/", code=301)
+
+
+# =====================================================================
+# SEO: robots.txt, sitemap.xml, and per-matchup landing pages
+# =====================================================================
+
+@app.route("/robots.txt")
+def robots_txt():
+    body = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /api/\n"
+        f"Sitemap: {SITE_URL}/sitemap.xml\n"
+    )
+    return Response(body, mimetype="text/plain")
+
+
+def _matchup_seed_pairs(limit_per_side=200):
+    """Return a list of (civ_a, slug_a, civ_b, slug_b) tuples for the sitemap.
+
+    Strategy: every unique unit (one per civ) vs every other unique unit. That
+    gives us a few thousand long-tail SEO targets without exploding to millions.
+    """
+    conn = get_ref_db()
+    cur = conn.cursor()
+    cur.execute(
+        """SELECT civ_name, unit_slug
+           FROM ref_units
+           WHERE age='Imperial' AND unit_slug LIKE '%\\_%' ESCAPE '\\'
+           ORDER BY civ_name, unit_slug"""
+    )
+    rows = cur.fetchall()
+    conn.close()
+
+    # Keep one (civ, slug) per civ — prefer the Elite (Imperial) variant when one
+    # exists, otherwise fall back to the Castle-age unique.
+    by_civ = {}  # civ -> slug, with elite_* taking precedence
+    for r in rows:
+        civ, slug = r["civ_name"], r["unit_slug"]
+        # Slugs that end with civ name (lowercased) are uniques: e.g. "berserk_vikings"
+        if not slug.endswith("_" + civ.lower()):
+            continue
+        existing = by_civ.get(civ)
+        if existing is None or (slug.startswith("elite_") and not existing.startswith("elite_")):
+            by_civ[civ] = slug
+    uniques = sorted(by_civ.items())[:limit_per_side]
+    uniques = [(civ, slug) for civ, slug in uniques]
+
+    pairs = []
+    for i, a in enumerate(uniques):
+        for b in uniques[i + 1:]:
+            pairs.append((a[0], a[1], b[0], b[1]))
+    return pairs
+
+
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    urls = ["/", "/units", "/civilizations", "/matchup-advisor"]
+    for civ in sorted(_valid_civs()):
+        urls.append(f"/civilizations/{civ}")
+
+    # Per-matchup landing pages — every unique-unit pair.
+    for civ_a, slug_a, civ_b, slug_b in _matchup_seed_pairs():
+        urls.append(f"/vs/{civ_a}/{slug_a}/{civ_b}/{slug_b}")
+
+    xml_parts = ['<?xml version="1.0" encoding="UTF-8"?>',
+                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for u in urls:
+        xml_parts.append(f"<url><loc>{SITE_URL}{u}</loc></url>")
+    xml_parts.append("</urlset>")
+    return Response("\n".join(xml_parts), mimetype="application/xml")
+
+
+def _load_unit_for_landing(civ_name, unit_slug):
+    """Fetch ref_units row for landing page. Returns dict or None."""
+    conn = get_ref_db()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=? AND age='Imperial'",
+        (civ_name, unit_slug),
+    )
+    row = cur.fetchone()
+    if not row:
+        cur.execute(
+            "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=?",
+            (civ_name, unit_slug),
+        )
+        row = cur.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+@app.route("/vs/<civ_a>/<unit_a>/<civ_b>/<unit_b>")
+def matchup_landing(civ_a, unit_a, civ_b, unit_b):
+    """SEO landing page for a unit-vs-unit matchup. Stat comparison + CTA to live sim."""
+    if civ_a not in _valid_civs() or civ_b not in _valid_civs():
+        abort(404)
+    a = _load_unit_for_landing(civ_a, unit_a)
+    b = _load_unit_for_landing(civ_b, unit_b)
+    if not a or not b:
+        abort(404)
+
+    a_name = a.get("unit_name") or unit_a.replace("_", " ").title()
+    b_name = b.get("unit_name") or unit_b.replace("_", " ").title()
+
+    page_title = f"{a_name} ({civ_a}) vs {b_name} ({civ_b}) — Who Wins? | AoE2 Simulator"
+    meta_description = (
+        f"Simulated 1v1 result for {a_name} ({civ_a}) versus {b_name} ({civ_b}) in "
+        f"Age of Empires II at full upgrades. Stat comparison, costs, armor classes, "
+        f"and a live battle simulator to test it yourself."
+    )
+    canonical = f"{SITE_URL}/vs/{civ_a}/{unit_a}/{civ_b}/{unit_b}"
+
+    return render_template(
+        "matchup_landing.html",
+        a=a, b=b,
+        civ_a=civ_a, civ_b=civ_b,
+        unit_a=unit_a, unit_b=unit_b,
+        a_name=a_name, b_name=b_name,
+        page_title=page_title,
+        meta_description=meta_description,
+        canonical_url=canonical,
+        active_nav="simulate",
+    )
 
 
 @app.route("/api/armor-classes")

@@ -26,17 +26,19 @@ Costs: Elite Kona 105 res • Elite Bolas Rider (check DB) • Bombard Cannon 45
 
 ---
 
-**PASTE THIS:**
+**PASTE THIS** (plain text, no > prefix):
 
-> u/borwil — the usual advice is "use cavalry to run down BBCs before they fire" but Mapuche doesn't have that. The Mapuche answer is **Elite Kona + Bolas Riders**.
->
-> The key is not to fight BBCs directly in equal numbers (20 BBCs will delete anything). The strategy is to **overpower the army protecting them** — once that army is dead, BBCs are helpless against melee. Kona is your frontline: 145 HP, speed of 1.55 (faster than most infantry and some cavalry), plus a built-in +5 attack bonus vs Gunpowder units baked into its stats. It tanks through the first volley or two and hits the BBC. Bolas Riders handle whatever cavalry they're using as a screen — Bolas wins vs Knights at equal resources 31–0, and still beats Paladins at equal resources too.
->
-> The resource math also works in your favor: a Bombard Cannon costs 450 resources. Kona costs 105. At equal spending, you're throwing ~28 Konas at 6 BBCs — and the Konas win that 22–0. They can't afford enough BBCs to stop a mass push.
->
-> So: mass Kona + Bolas Rider, hit their army hard, and once their units are cleared the BBCs fold immediately. You shouldn't need your teammate for that fight.
->
-> Ran the numbers at aoe2matchup.com if you want to dig into other Mapuche matchups.
+---PASTE START---
+no hussar is rough for this exact situation lol
+
+the play is kona + bolas riders. kona has 145 hp, moves at 1.55 speed (faster than most infantry), and has a +5 attack bonus vs gunpowder units built into its stats. just mass them and rush straight at the army protecting the bbc - they'll reach it through the first couple of volleys. bolas riders handle any cavalry being used as a screen, they beat knights easily at equal resources and still win vs paladins at equal cost.
+
+the other thing working in your favor: a bbc costs 450 resources, kona is 105. at equal spending you're sending like 28 konas at 6 bbcs and the konas win. they can't afford enough bbcs to actually stop a mass push.
+
+kill their army first, then the bbcs fold to anything melee. you shouldn't need your teammate for that
+
+checked the numbers at aoe2matchup.com if you want to see other mapuche matchups
+---PASTE END---
 
 ---
 
@@ -62,15 +64,17 @@ Costs: Elite Organ Gun 136 res • Arbalester 70 res • Elite Eagle 70 res • 
 
 ---
 
-**PASTE THIS:**
+**PASTE THIS** (plain text, no > prefix):
 
-> The comments are right that Feitorias are overhyped on open maps — they're only a problem when all the mines run dry. But "just play standard" has a hidden assumption that your standard comp handles their Organ Guns. It often doesn't.
->
-> The simulation result that surprised me: **Arbalest loses to Elite Organ Gun at equal resources, badly.** OG wins 22–0 at full HP. Same for Elite Skirmisher — OG wins that too. The Organ Gun fires multiple scatter projectiles per shot, and clustered ranged units bunch up perfectly to eat every projectile. It's the opposite of the archer matchup intuition.
->
-> What actually works: **fast melee**. Hussar beats Organ Gun at equal resources (barely — 15 remaining at 7% HP). Elite Eagle is even better — same cost as an arbalest (70 resources each) but beats Organ Guns decisively at equal resources (31 Eagles left vs 0). They close the gap through the opening volleys and then it becomes a melee fight the OG can't win.
->
-> So the real answer to Portuguese lategame isn't "be more aggressive" — it's "don't mass archers into their castle, make fast melee instead."
+---PASTE START---
+feitorias are overhyped yeah, but i'd push back on "just play standard" once they hit imp
+
+the thing that catches people is organ guns are way stronger than they look, and arbs don't counter them the way you'd expect. the scatter shots absolutely shred clustered ranged units - ran the numbers and organ guns beat arbs even at equal resources, completely. same story for elite skirm.
+
+what actually works is fast melee. hussars beat organ guns at equal cost, eagles even more so (same price as an arb but way more effective here). they just close the gap through the first couple volleys before too much lands, then it's a melee fight the og can't win.
+
+so yeah you don't need to go crazy aggressive to stop feitorias, but if you see organ guns don't answer with archers
+---PASTE END---
 
 ---
 

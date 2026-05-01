@@ -4,7 +4,8 @@ from unittest.mock import patch
 
 
 def _db_path():
-    return os.path.join(os.path.dirname(__file__), "..", "webapp", "aoe2_reference.db")
+    """Battle scores live in derived_data.db now (app.py reads from there)."""
+    return os.path.join(os.path.dirname(__file__), "..", "webapp", "derived_data.db")
 
 
 def test_naval_score_attached_to_unit(client):

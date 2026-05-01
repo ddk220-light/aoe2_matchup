@@ -216,13 +216,13 @@ function renderAnalysis(civName, data) {
 function renderUnitBadge(unit, colKey) {
     var name = unit.unit_name || slugToName(unit.unit_slug);
     var iconUrl = getIconUrl(name);
-    var isNavy = colKey === "navy";
+    var hasScore = unit.percentile != null && unit.strength != null;
     var strength = STRENGTH_COLORS[unit.strength] || STRENGTH_COLORS.average;
-    var isSig = unit.is_signature && !isNavy;
-    var badgeClass = "unit-badge" + (isSig ? " signature" : "") + (isNavy ? " no-strength" : "");
+    var isSig = !!unit.is_signature;
+    var badgeClass = "unit-badge" + (isSig ? " signature" : "") + (!hasScore ? " no-strength" : "");
     var iconSize = isSig ? "signature-icon" : "unit-badge-icon";
 
-    var borderColor = isNavy ? "var(--text-muted)" : strength.text;
+    var borderColor = hasScore ? strength.text : "var(--text-muted)";
     var html = '<div class="' + badgeClass + '" style="border-left-color: ' + borderColor + '">';
 
     /* Tooltip */

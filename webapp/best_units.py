@@ -10,17 +10,28 @@ from combat_unit_loader import build_combat_dict_from_ref
 from unit_lines import TREBUCHET_SLUGS, NAVAL_UNIT_LINES, CANNON_GALLEON_LINE
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
+DERIVED_DB_PATH = os.path.join(os.path.dirname(__file__), "derived_data.db")
 POWER_UNITS_PATH = os.path.join(os.path.dirname(__file__), "civ_power_units.json")
 
 # Civilizations that do not have access to trebuchets in-game.
 CIVS_WITHOUT_TREBUCHET = {"Wu", "Wei", "Shu"}
 
 # Siege line slugs — these only show percentile scores in match-advisor (no sims).
-SIEGE_LINE_SLUGS = {"ram", "bombard_cannon", "trebuchet"}
+# Naval line slugs — same: percentile-only display, no on-the-fly sims yet.
+SIEGE_LINE_SLUGS = {"ram", "bombard_cannon", "trebuchet", "cannon_galleon"}
+NAVAL_LINE_SLUGS = {"galleon", "fire", "hulk"}
 
 
 def _get_db():
+    """Reference DB — ref_units, ref_techs_applied, ref_special_effects, etc."""
     conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def _get_derived_db():
+    """Derived DB — battle_scores live here (yardstick land sims + naval/siege)."""
+    conn = sqlite3.connect(DERIVED_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -53,11 +64,13 @@ def _fetch_unit_stats(conn, civ_name, unit_slug, age="Imperial"):
 
 
 # Column definitions: (column_key, line_slugs)
+# navy is its own column with three scored lines + demo (stat-only).
 COLUMN_DEFS = {
     "cavalry": ["light_cav", "knight", "camel", "steppe_lancer", "elephant"],
     "ranged": ["skirmisher", "archer", "cav_archer", "gunpowder", "scorpion"],
     "infantry": ["militia", "spear", "shock_infantry"],
     "siege": ["ram", "bombard_cannon", "trebuchet", "cannon_galleon"],
+    "navy": ["galleon", "fire", "hulk", "demo"],
 }
 
 # Per-line score type to use for ranking
@@ -78,9 +91,11 @@ LINE_SCORE_TYPE = {
     "ram": "anti_building_score",
     "bombard_cannon": "anti_building_score",
     "trebuchet": "anti_building_score",
-    # cannon_galleon intentionally absent: queried from ref_units directly,
-    # not from battle_scores. The special-case in compute_civ_power_units()
-    # handles it with generate_cannon_galleon_entry() and skips this dict.
+    "cannon_galleon": "anti_building_score",
+    "galleon": "naval_effectiveness",
+    "fire": "naval_effectiveness",
+    "hulk": "naval_effectiveness",
+    # "demo": no battle sims for the demo ship line — falls back to stat-only entry.
 }
 
 
@@ -108,12 +123,14 @@ def _classify_strength(percentile):
     return "poor"
 
 
-def _compute_line_counts(conn, age_key="imperial"):
+def _compute_line_counts(derived_conn, age_key="imperial"):
     """Compute total unit count per (line_slug, score_type) for percentile calculation.
+
+    Reads from derived_data.db.battle_scores.
 
     Returns dict: {(line_slug, score_type): total_count}
     """
-    rc = conn.cursor()
+    rc = derived_conn.cursor()
     rc.execute(
         """SELECT line_slug, score_type, COUNT(*) as cnt
            FROM battle_scores
@@ -407,29 +424,38 @@ def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slu
     }
 
 
-def _strip_siege_entries(power_units):
-    """Strip siege unit entries to percentile + strength only.
+def _strip_minimal_entries(power_units, col_key, line_slugs):
+    """Strip entries in `col_key`'s `line_slugs` to a minimal display payload.
 
-    Siege units (ram, bombard cannon, trebuchet) don't need full analysis
-    in the match-advisor — only the percentile score matters.
+    Used for siege and navy: percentile + strength + tooltip data only,
+    no on-the-fly cross-civ sims in matchup-advisor.
     """
-    siege_data = power_units.get("siege", {})
-    for line_slug in SIEGE_LINE_SLUGS:
-        entries = siege_data.get(line_slug)
+    col_data = power_units.get(col_key, {})
+    for line_slug in line_slugs:
+        entries = col_data.get(line_slug)
         if not entries:
             continue
-        siege_data[line_slug] = [
+        col_data[line_slug] = [
             {
                 "unit_slug": e["unit_slug"],
                 "unit_name": e["unit_name"],
-                "line_slug": e["line_slug"],
-                "percentile": e["percentile"],
-                "strength": e["strength"],
-                "is_signature": e["is_signature"],
+                "line_slug": e.get("line_slug", line_slug),
+                "percentile": e.get("percentile"),
+                "strength": e.get("strength"),
+                "is_signature": e.get("is_signature", False),
                 "ease": e.get("ease"),
+                "stats": e.get("stats"),
+                "missing_techs": e.get("missing_techs", []),
+                "bonus_abilities": e.get("bonus_abilities", []),
+                "special_effects": e.get("special_effects", []),
             }
             for e in entries
         ]
+
+
+def _strip_siege_entries(power_units):
+    """Backwards-compat alias used by external callers."""
+    _strip_minimal_entries(power_units, "siege", SIEGE_LINE_SLUGS)
 
 
 def _generate_strategic_description(power_units, strong_columns, weak_areas, strength_profile):
@@ -584,8 +610,17 @@ def _generate_strategic_description(power_units, strong_columns, weak_areas, str
 
 
 def _batch_fetch_ease_data(conn, civ_name):
-    """Load ease-of-creation data for all units of a civ. Returns dict keyed by unit_slug."""
+    """Load ease-of-creation data for all units of a civ. Returns dict keyed by unit_slug.
+
+    Returns {} if the unit_creation_ease table does not exist (it was a
+    legacy artifact that's no longer populated by the current pipeline).
+    """
     rc = conn.cursor()
+    rc.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='unit_creation_ease'"
+    )
+    if not rc.fetchone():
+        return {}
     rc.execute("""
         SELECT unit_slug, ease_score, is_castle_unit, creation_time,
                total_upgrade_cost, needs_castle_ut, movement_speed,
@@ -736,8 +771,12 @@ def compute_civ_power_units():
     """Pre-compute power units for all civs. Returns dict keyed by civ_name."""
     conn = _get_db()
     rc = conn.cursor()
+    derived_conn = _get_derived_db()
+    drc = derived_conn.cursor()
 
-    rc.execute("SELECT DISTINCT civ_name FROM battle_scores ORDER BY civ_name")
+    # Civ list comes from ref_units (master list), not battle_scores —
+    # navy/siege civs without scores still appear.
+    rc.execute("SELECT DISTINCT civ_name FROM ref_units ORDER BY civ_name")
     all_civs = [row["civ_name"] for row in rc.fetchall()]
 
     reference_techs_by_age = {
@@ -745,9 +784,14 @@ def compute_civ_power_units():
         "castle": _build_reference_techs(conn, "Castle"),
     }
     line_counts_by_age = {
-        "imperial": _compute_line_counts(conn, "imperial"),
-        "castle": _compute_line_counts(conn, "castle"),
+        "imperial": _compute_line_counts(derived_conn, "imperial"),
+        "castle": _compute_line_counts(derived_conn, "castle"),
     }
+
+    # Demo line and cannon_galleon for civs without battle_scores fall back
+    # to a stat-only entry sourced from ref_units. The other naval/siege lines
+    # use their battle_scores-derived percentile.
+    NAVAL_STATIC_LINES = {"demo"}
 
     result = {}
 
@@ -763,20 +807,25 @@ def compute_civ_power_units():
             techs_by_slug, effects_by_slug = _batch_fetch_civ_tech_data(conn, civ, db_age)
             ease_by_slug = _batch_fetch_ease_data(conn, civ)
 
-            # Navy column: strength=null, no battle_scores lookup
-            power_units["navy"] = generate_naval_column(civ, conn, age_key, techs_by_slug, effects_by_slug, reference_techs)
+            # Pre-compute navy fallback entries for the demo line — no battle_scores.
+            naval_fallback = generate_naval_column(
+                civ, conn, age_key, techs_by_slug, effects_by_slug, reference_techs
+            )
 
             for col_key, line_slugs in COLUMN_DEFS.items():
                 col_data = {}
                 for line_slug in line_slugs:
-                    # cannon_galleon: skip battle_scores, query ref_units directly
-                    if line_slug == "cannon_galleon":
-                        entry = generate_cannon_galleon_entry(civ, conn, age_key, techs_by_slug, effects_by_slug, reference_techs)
-                        col_data[line_slug] = [entry] if entry else None
+                    # Lines with no sim data: use stat-only fallback from ref_units
+                    if line_slug in NAVAL_STATIC_LINES:
+                        col_data[line_slug] = naval_fallback.get(line_slug)
                         continue
 
-                    score_type = LINE_SCORE_TYPE[line_slug]
-                    rc.execute(
+                    score_type = LINE_SCORE_TYPE.get(line_slug)
+                    if not score_type:
+                        col_data[line_slug] = None
+                        continue
+
+                    drc.execute(
                         """SELECT unit_slug, line_slug, score_value, rank, median_delta
                             FROM battle_scores
                             WHERE civ_name = ?
@@ -786,7 +835,7 @@ def compute_civ_power_units():
                             ORDER BY score_value DESC""",
                         [civ, age_key, score_type, line_slug],
                     )
-                    rows = rc.fetchall()
+                    rows = drc.fetchall()
 
                     # Filter trebuchets for civs that don't have them
                     if civ in CIVS_WITHOUT_TREBUCHET:
@@ -802,17 +851,25 @@ def compute_civ_power_units():
                             )
                             entries.append(entry)
                         col_data[line_slug] = entries
+                    elif col_key == "navy":
+                        # Navy lines without battle_scores (e.g. civ has no fire ship):
+                        # fall back to stat-only entry so the slot still renders.
+                        col_data[line_slug] = naval_fallback.get(line_slug)
                     else:
                         col_data[line_slug] = None
 
                 power_units[col_key] = col_data
 
-            # Build strength profile (per-line)
+            # Build strength profile (per-line). Naval entries built from
+            # `generate_naval_column()` carry strength=None; treat None as missing.
             strength_profile = {}
             for col_key, line_slugs in COLUMN_DEFS.items():
                 for line_slug in line_slugs:
                     entries = power_units[col_key].get(line_slug)
-                    strength_profile[line_slug] = entries[0]["strength"] if entries else None
+                    if entries:
+                        strength_profile[line_slug] = entries[0].get("strength")
+                    else:
+                        strength_profile[line_slug] = None
 
             # Determine which columns have at least one strong/signature line
             strong_columns = []
@@ -860,8 +917,9 @@ def compute_civ_power_units():
                 power_units, strong_columns, weak_areas, strength_profile
             )
 
-            # Strip siege entries to minimal data (percentile only — no sims)
-            _strip_siege_entries(power_units)
+            # Strip siege & navy entries to minimal data (percentile only — no on-the-fly sims)
+            _strip_minimal_entries(power_units, "siege", SIEGE_LINE_SLUGS)
+            _strip_minimal_entries(power_units, "navy", NAVAL_LINE_SLUGS | {"demo"})
 
             civ_data[age_key] = {
                 "power_units": power_units,
@@ -873,6 +931,7 @@ def compute_civ_power_units():
         result[civ] = civ_data
 
     conn.close()
+    derived_conn.close()
     return result
 
 
@@ -1075,9 +1134,9 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
                 "median_delta": best_entry["median_delta"],
             })
 
-    # Step 2: Find counter candidates from battle_scores
-    conn = _get_db()
-    rc = conn.cursor()
+    # Step 2: Find counter candidates from battle_scores (in derived_data.db)
+    derived_conn = _get_derived_db()
+    drc = derived_conn.cursor()
     db_age = "Imperial" if age == "imperial" else "Castle"
 
     counter_candidates = []  # list of (unit_slug, line_slug, score, vs_role)
@@ -1087,7 +1146,7 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
         counter_defs = COUNTER_MAP.get(opp["role"], [])
         for line_slugs, score_type, desc in counter_defs:
             placeholders = ",".join("?" for _ in line_slugs)
-            rc.execute(
+            drc.execute(
                 f"""SELECT unit_slug, line_slug, score_value, rank, median_delta
                     FROM battle_scores
                     WHERE civ_name = ?
@@ -1098,7 +1157,7 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
                     LIMIT 3""",
                 [civ_a, age, score_type] + line_slugs,
             )
-            for row in rc.fetchall():
+            for row in drc.fetchall():
                 slug = row["unit_slug"]
                 if slug not in seen_slugs:
                     seen_slugs.add(slug)
@@ -1111,7 +1170,7 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
                         "vs_unit_slug": opp["unit_slug"],
                     })
 
-    conn.close()
+    derived_conn.close()
 
     # Step 3: Simulate top candidates vs opponent power units
     individual_counters = []

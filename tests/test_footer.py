@@ -57,3 +57,19 @@ def test_footer_config_all_unset(reload_app):
             "youtube": None,
             "instagram": None,
         }
+
+
+def test_home_page_uses_new_site_name(client):
+    resp = client.get("/")
+    assert resp.status_code == 200
+    body = resp.data.decode()
+    assert "AoE2 Matchup" in body
+    # Old name must not appear anywhere in the rendered HTML
+    assert "AoE2 Unit Analyzer" not in body
+    assert "AoE2 Analyzer" not in body
+
+
+def test_og_site_name_is_renamed(client):
+    resp = client.get("/")
+    body = resp.data.decode()
+    assert '<meta property="og:site_name" content="AoE2 Matchup"' in body

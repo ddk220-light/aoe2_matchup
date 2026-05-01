@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}AoE2 Unit Analyzer — Simulate any matchup, fully upgraded{% endblock %}</title>
+    <title>{% block title %}AoE2 Matchup — Simulate any matchup, fully upgraded{% endblock %}</title>
     {# ---- SEO meta ---- #}
     <meta name="description" content="{% block meta_description %}Free Age of Empires II matchup simulator. Every unit, fully upgraded, all 50 civilizations — tick-by-tick battle simulations to settle who actually wins.{% endblock %}" />
     <meta name="robots" content="{% block meta_robots %}index,follow{% endblock %}" />
     <link rel="canonical" href="{{ canonical_url or (site_url ~ request.path) }}" />
     {# ---- Open Graph (Reddit / Discord / Facebook link previews) ---- #}
-    <meta property="og:site_name" content="AoE2 Unit Analyzer" />
+    <meta property="og:site_name" content="AoE2 Matchup" />
     <meta property="og:type" content="{% block og_type %}website{% endblock %}" />
     <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}" />
     <meta property="og:description" content="{% block og_description %}{{ self.meta_description() }}{% endblock %}" />
@@ -26,7 +26,7 @@
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
-      "name": "AoE2 Unit Analyzer",
+      "name": "AoE2 Matchup",
       "description": "Age of Empires II battle simulator and unit matchup database covering all 50 civilizations with fully-upgraded stats.",
       "applicationCategory": "GameApplication",
       "operatingSystem": "Web",
@@ -53,7 +53,7 @@
             <svg class="nav-brand-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
             </svg>
-            AoE2 Analyzer
+            AoE2 Matchup
         </a>
         <div class="nav-links">
             <a href="/" class="nav-tab {% if active_nav == 'simulate' %}active{% endif %}">

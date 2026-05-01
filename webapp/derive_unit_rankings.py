@@ -265,6 +265,23 @@ def compute_and_write_rankings(matchup_db_path=MATCHUP_DB_PATH,
             by_line_type[(line, st)].append((civ, slug, val))
 
     cur = dconn.cursor()
+    # Aggressive cleanup: for every (civ, slug) we're about to write, also
+    # delete any rows for that pair under DIFFERENT line_slugs at this age.
+    # This prevents stale rows from a previous classification (e.g. an older
+    # last-write-wins build_slug_to_line that put elite_ele_archer under
+    # `elephant`) from sticking around when the classification changes.
+    # Scope: only land-line score_types (we own those); naval/siege rows
+    # written by other pipelines are untouched.
+    LAND_SCORE_TYPES = ROLE_SCORE_TYPES + tuple(COMPOSITE_WEIGHTS.keys())
+    land_score_phs = ",".join("?" for _ in LAND_SCORE_TYPES)
+    for (line, civ, slug), _st_map in out.items():
+        cur.execute(
+            f"DELETE FROM battle_scores WHERE age=? AND civ_name=? "
+            f"AND unit_slug=? AND line_slug != ? "
+            f"AND score_type IN ({land_score_phs})",
+            (age_lower, civ, slug, line) + LAND_SCORE_TYPES,
+        )
+
     inserts = 0
     for (line, st), entries in by_line_type.items():
         for civ, slug, _ in entries:

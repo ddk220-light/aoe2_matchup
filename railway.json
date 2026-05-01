@@ -1,7 +1,11 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "buildCommand": "pip install -r webapp/requirements.txt"
+    "buildCommand": "pip install -r webapp/requirements.txt",
+    "watchPatterns": [
+      "webapp/**",
+      "railway.json"
+    ]
   },
   "deploy": {
     "startCommand": "cd webapp && gunicorn app:app",

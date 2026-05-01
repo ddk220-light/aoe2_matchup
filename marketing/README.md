@@ -10,14 +10,26 @@ marketing/
 ├── launch-plan.md               ← Reddit launch post + Discord drops + creator outreach
 ├── reply-playbook.md            ← five reply templates by question type, tone rules,
 │                                  9:1 self-promo guidance
+├── responded-threads.json       ← dedup list of threads we've already replied to;
+│                                  read this before drafting any new reply
 ├── reports/                     ← deep-dive analysis posts (one every ~2 weeks)
 │   └── 2026-04-30-new-civs-community-vs-sim.md
 │       (Tupi/Muisca/Mapuche: community wisdom vs simulation results)
 │
 └── replies/                     ← drafted replies to specific live threads
-    └── 2026-04-30-aoe2-forum-batch.md
-        (3 paste-ready replies for forums.ageofempires.com)
+    ├── 2026-04-30-aoe2-forum-batch.md  (3 forum replies — Tupi counter, PUP-May, civ balance)
+    └── 2026-05-01-reddit-batch.md      (2 reddit replies — Mapuche vs BBC, Portuguese OG)
 ```
+
+## Scout & reply workflow
+
+There's a global skill installed at `~/.claude/skills/aoe2matchup-marketing-scout/SKILL.md`
+that codifies the full process: how to scout Reddit (JSON API via `urllib`) and the AoE2
+forum (browser only — Reddit is blocked), how to dedup against `responded-threads.json`,
+how to choose simulations to run, and how to write replies in casual Reddit-native prose
+without sounding like an AI.
+
+When asking Claude to scout for new threads, it should auto-load that skill.
 
 ## Naming convention
 

@@ -109,6 +109,18 @@ Britons, Byzantines, Celts, Chinese, Franks, Goths, Japanese, Mongols, Persians,
 - Flask, gunicorn (see `requirements.txt`)
 - Age of Empires II: Definitive Edition (for the data file)
 
+## Environment variables
+
+| Variable | Purpose | If unset |
+|---|---|---|
+| `SITE_URL` | Public origin for canonical / OG / sitemap URLs | Defaults to `https://aoe2matchup.com` |
+| `CONTACT_FORM_ENDPOINT` | Formspree endpoint URL (e.g. `https://formspree.io/f/xxxx`) -- backs the footer Contact modal | Contact button + modal are hidden |
+| `SOCIAL_DISCORD_URL` | Public Discord invite shown in footer + JSON-LD `sameAs` | Discord link is hidden |
+| `SOCIAL_YOUTUBE_URL` | YouTube channel URL shown in footer + JSON-LD `sameAs` | YouTube link is hidden |
+| `SOCIAL_INSTAGRAM_URL` | Instagram profile URL shown in footer + JSON-LD `sameAs` | Instagram link is hidden |
+
+For Railway: set these in the project's Variables tab. For local dev: prepend to the `python3 webapp/app.py` command, or use a `.env` loader of your choice.
+
 ## License
 
 Code is MIT licensed. Game data extracted from Age of Empires II: Definitive Edition is subject to Microsoft's Game Content Usage Rules.

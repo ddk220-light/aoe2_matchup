@@ -14,27 +14,29 @@ Scouted via Reddit JSON API (`r/aoe2/new` + `r/aoe2/hot`). Two threads with genu
 **Sim data backing this reply:**
 | Matchup | 20v20 | Equal resources (3000) |
 |---|---|---|
-| Elite Champi Warrior vs Halberdier | Champi 20–0 (74% HP) | Champi 40–0 (65% HP) |
-| Elite Champi Warrior vs Bombard Cannon (10v10, equal res 3000) | BBC 10–0 | Champi 28–0 (70% HP) |
-| Elite Kona vs Bombard Cannon (15v15, equal res 3000) | Kona 1–0 (3% HP) | Kona 22–0 (79% HP) |
+| Elite Bolas Rider vs Knight | Bolas 20–0 (80% HP) | Bolas 31–0 (95% HP) |
+| Elite Bolas Rider vs Paladin | Paladin wins 20v20 | **Bolas 11–0 (30% HP)** |
+| Elite Bolas Rider vs Halberdier | Bolas 18–0 (72% HP) | Halbs win (cost gap) |
+| Elite Kona vs Knight | Kona 20–0 (26% HP) | Kona 28–0 (53% HP) |
+| Elite Kona vs Bombard Cannon (equal res 3000) | BBC wins equal count | **Kona 22–0 (79% HP)** |
 
-Costs: Champi Warrior 75 res • Halberdier 60 res • Bombard Cannon 450 res
+Costs: Elite Kona 105 res • Elite Bolas Rider (check DB) • Bombard Cannon 450 res • Knight 160 res
 
-**Key insight:** Halbs counter cavalry, not infantry. Elite Champi Warriors beat halberdiers at both equal count AND equal resources — so the enemy's "pike screen to defend BBCs from cavalry" is completely irrelevant to Mapuche's answer. Also, Mapuche has no cavalry at all (no hussar, no cavalier), so the standard BBC counter doesn't apply.
+**Key insight:** Against BBC, the approach is not to fight them head-on in equal numbers — you overpower their protecting army first (Bolas counters cavalry screen, Kona tanks and rushes), then the unprotected BBCs are helpless. Kona is very fast (1.55 tiles/s) with 145 HP and a built-in +5 vs Gunpowder, letting it reach the cannons before too many shots land. BBC also costs 450 resources vs Kona's 105, so at equal resources you massively outnumber them.
 
 ---
 
 **PASTE THIS:**
 
-> u/borwil — the tough part with Mapuche is you have no hussar, so the normal "cavalry through the pikes" answer is off the table.
+> u/borwil — the usual advice is "use cavalry to run down BBCs before they fire" but Mapuche doesn't have that. The Mapuche answer is **Elite Kona + Bolas Riders**.
 >
-> What actually works is your **Elite Champi Warrior**. The key thing people miss: halberdiers counter *cavalry*, not infantry. Your Champi Warriors are infantry, so the pike screen protecting the BBCs does nothing against them. In a 20v20, Champi Warriors beat halbs 20–0 (74% HP remaining), and they still win at equal resources because Champi costs only 75 res vs halbs 60 — very similar price.
+> The key is not to fight BBCs directly in equal numbers (20 BBCs will delete anything). The strategy is to **overpower the army protecting them** — once that army is dead, BBCs are helpless against melee. Kona is your frontline: 145 HP, speed of 1.55 (faster than most infantry and some cavalry), plus a built-in +5 attack bonus vs Gunpowder units baked into its stats. It tanks through the first volley or two and hits the BBC. Bolas Riders handle whatever cavalry they're using as a screen — Bolas wins vs Knights at equal resources 31–0, and still beats Paladins at equal resources too.
 >
-> Against the BBCs themselves: a Bombard Cannon costs 450 resources each. At equal cost (~3000 res), you're sending 40 Champi Warriors into 6 BBCs, and the Champi Warriors win 28–0. Yes, if they have equal *numbers* of BBCs the cannon will shred you — but no one can afford equal numbers of BBCs. Just mass the Champi Warriors, accept the opening volleys, and sweep through.
+> The resource math also works in your favor: a Bombard Cannon costs 450 resources. Kona costs 105. At equal spending, you're throwing ~28 Konas at 6 BBCs — and the Konas win that 22–0. They can't afford enough BBCs to stop a mass push.
 >
-> Elite Kona also has a built-in +5 attack bonus vs Gunpowder units (literally coded in as a BBC counter) and wins vs BBCs at equal resources too. It costs 105 res vs Champi's 75, so for teamgame resource efficiency Champi mass is usually the better call.
+> So: mass Kona + Bolas Rider, hit their army hard, and once their units are cleared the BBCs fold immediately. You shouldn't need your teammate for that fight.
 >
-> Ran the numbers at aoe2matchup.com if you want to check other Mapuche matchups.
+> Ran the numbers at aoe2matchup.com if you want to dig into other Mapuche matchups.
 
 ---
 

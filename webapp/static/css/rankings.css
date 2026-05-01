@@ -503,10 +503,16 @@ td.hc-cell {
 
 /* === Special column two-line layout === */
 .special-cell {
-    white-space: normal;
     max-width: 220px;
     font-size: 0.7rem;
     line-height: 1.3;
+    /* Each line truncates to a single line; full text on hover via title attr. */
+}
+.special-cell > div {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
 }
 .special-cell .special-effects {
     color: var(--text);

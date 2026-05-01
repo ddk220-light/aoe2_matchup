@@ -1622,15 +1622,27 @@ function renderTable() {
             const missing = row.missing_techs || [];
             const bonuses = row.civ_bonus_techs || [];
             const lines = [];
-            if (effects) lines.push(`<div class="special-effects">${effects}</div>`);
-            if (bonuses.length > 0) {
+            const esc = (s) =>
+                String(s)
+                    .replace(/&/g, "&amp;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;");
+            if (effects) {
                 lines.push(
-                    `<div class="special-bonuses">\u2728 ${bonuses.join(", ")}</div>`,
+                    `<div class="special-effects" title="${esc(effects)}">${effects}</div>`,
+                );
+            }
+            if (bonuses.length > 0) {
+                const text = bonuses.join(", ");
+                lines.push(
+                    `<div class="special-bonuses" title="${esc("\u2728 " + text)}">\u2728 ${text}</div>`,
                 );
             }
             if (missing.length > 0) {
+                const text = missing.join(", ");
                 lines.push(
-                    `<div class="special-missing">\u274c Missing: ${missing.join(", ")}</div>`,
+                    `<div class="special-missing" title="${esc("\u274c Missing: " + text)}">\u274c Missing: ${text}</div>`,
                 );
             }
             if (lines.length === 0) lines.push("\u2014");

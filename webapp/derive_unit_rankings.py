@@ -105,26 +105,35 @@ def _normalize_pool(units_dict, key):
 
 
 def build_slug_to_line():
+    """Build {unit_slug -> line_slug} for ranking classification.
+
+    First-write-wins: when a slug is listed under multiple lines (e.g.
+    elite_ele_archer is in both cav_archer and elephant), the line that
+    appears earlier in UNIT_LINES wins. This is intentional — the elephant
+    archer is conceptually a ranged unit, and cav_archer is defined before
+    elephant in unit_lines.py, so it's correctly scored as ranged_effectiveness
+    rather than getting overwritten to stable_effectiveness.
+    """
     out = {}
     for line_slug, info in UNIT_LINES.items():
         for k in ("castle_slug", "imperial_slug"):
             if info.get(k):
-                out[info[k]] = line_slug
+                out.setdefault(info[k], line_slug)
         for k in ("castle_slugs", "imperial_slugs",
                   "extra_castle_slugs", "extra_imperial_slugs"):
             for s in (info.get(k) or []):
                 if s:
-                    out[s] = line_slug
+                    out.setdefault(s, line_slug)
         for civ_slugs in (info.get("unique_units") or {}).values():
             if isinstance(civ_slugs, list):
                 for tup in civ_slugs:
                     for s in tup:
                         if s:
-                            out[s] = line_slug
+                            out.setdefault(s, line_slug)
             else:
                 for s in civ_slugs:
                     if s:
-                        out[s] = line_slug
+                        out.setdefault(s, line_slug)
     return out
 
 

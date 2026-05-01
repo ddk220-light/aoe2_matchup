@@ -7,6 +7,20 @@ canonical version that all of them import.
 """
 
 
+def _get(row, key, default=None):
+    """Read a sqlite3.Row column, returning `default` if the column is missing.
+
+    sqlite3.Row raises IndexError on unknown keys, but some DBs (e.g. an older
+    aoe2_reference.db built before a column was added) may not have every
+    column the simulator now expects. This lets newer code work against older
+    DB blobs without crashing.
+    """
+    try:
+        return row[key]
+    except (IndexError, KeyError):
+        return default
+
+
 def build_combat_dict_from_ref(row):
     """Build a combat-unit dict from a ref_units row.
 
@@ -53,11 +67,11 @@ def build_combat_dict_from_ref(row):
         "trample_percent": row["trample_percent"] or 0,
         "trample_radius": row["trample_radius"] or 0,
         "trample_flat_damage": row["trample_flat_damage"] or 0,
-        "hp_regen": row["hp_regen"] or 0,
-        "hp_regen_in_combat": row["hp_regen_in_combat"] or 0,
-        "food_per_kill": row["food_per_kill"] or 0,
-        "wood_per_kill": row["wood_per_kill"] or 0,
-        "gold_per_kill": row["gold_per_kill"] or 0,
+        "hp_regen": _get(row, "hp_regen", 0) or 0,
+        "hp_regen_in_combat": _get(row, "hp_regen_in_combat", 0) or 0,
+        "food_per_kill": _get(row, "food_per_kill", 0) or 0,
+        "wood_per_kill": _get(row, "wood_per_kill", 0) or 0,
+        "gold_per_kill": _get(row, "gold_per_kill", 0) or 0,
         "charge_projectile_count": row["charge_projectile_count"] or 0,
         "charge_projectile_speed": row["charge_projectile_speed"] or 0,
         "charge_projectile_attacks_json": row["charge_projectile_attacks_json"],

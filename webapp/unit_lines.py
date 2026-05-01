@@ -229,6 +229,12 @@ UNIT_LINES = {
         "building": "Stable",
         "castle_slug": "elephant",
         "imperial_slug": "elite_elephant",
+        # elephant_archer / elite_ele_archer also live in cav_archer (Archery
+        # Range). They appear here too so callers that walk the elephant line's
+        # extra slugs (e.g. legacy compute_battle_scores aggregations) still
+        # find them. derive_unit_rankings.build_slug_to_line uses first-write-
+        # wins, so the slug→line mapping resolves to cav_archer (which is
+        # defined first in this dict) and the units get scored as ranged.
         "extra_castle_slugs": ["elephant_archer"],
         "extra_imperial_slugs": ["elite_ele_archer"],
         "unique_units": {

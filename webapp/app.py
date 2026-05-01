@@ -32,6 +32,20 @@ def inject_site_url():
     return {"site_url": SITE_URL, "canonical_url": None}
 
 
+@app.context_processor
+def inject_footer_config():
+    """Footer-related config from env vars. Unset vars resolve to None so
+    templates can hide the corresponding link/button cleanly."""
+    return {
+        "contact_form_endpoint": os.environ.get("CONTACT_FORM_ENDPOINT") or None,
+        "social_links": {
+            "discord":   os.environ.get("SOCIAL_DISCORD_URL")   or None,
+            "youtube":   os.environ.get("SOCIAL_YOUTUBE_URL")   or None,
+            "instagram": os.environ.get("SOCIAL_INSTAGRAM_URL") or None,
+        },
+    }
+
+
 # Database paths
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_units.db")
 REF_DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")

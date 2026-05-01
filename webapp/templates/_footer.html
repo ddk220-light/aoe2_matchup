@@ -110,7 +110,7 @@
                 Message
                 <textarea name="message" rows="5" required minlength="10"></textarea>
             </label>
-            <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden" aria-hidden="true" />
+            <input type="text" name="_gotcha" class="contact-modal-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" />
             <button type="submit" class="contact-modal-submit">Send</button>
             <div class="contact-modal-status" id="contactStatus" role="status" aria-live="polite"></div>
         </form>
@@ -156,6 +156,11 @@
             var focusable = Array.prototype.slice.call(trapFocusable());
             if (!focusable.length) return;
             var first = focusable[0], last = focusable[focusable.length - 1];
+            if (!modal.contains(document.activeElement)) {
+                e.preventDefault();
+                first.focus();
+                return;
+            }
             if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
             else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
         }
@@ -185,7 +190,8 @@
             } else {
                 throw new Error('Bad status: ' + resp.status);
             }
-        }).catch(function() {
+        }).catch(function(err) {
+            console.error('Contact form submit failed:', err);
             statusEl.textContent = 'Something went wrong. Please try again later.';
             statusEl.className   = 'contact-modal-status is-error';
         }).finally(function() {

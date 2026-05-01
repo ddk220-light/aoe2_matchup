@@ -712,6 +712,14 @@ a:hover {
 .contact-modal-status.is-success { color: #6fbe6f; }
 .contact-modal-status.is-error   { color: #d97a7a; }
 
+.contact-modal-honeypot {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
 @media (max-width: 640px) {
     .contact-modal-panel { padding: 1.5rem 1.1rem 1.25rem; }
 }

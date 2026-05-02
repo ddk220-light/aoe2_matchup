@@ -56,24 +56,70 @@
     box-sizing: border-box;
 }
 
+/* ---------- Font Smoothing (global) ---------- */
+html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
 /* ---------- Base Typography ---------- */
 body {
     font-family: "Source Sans 3", "Alegreya Sans", sans-serif;
     background: var(--bg-deep);
-    background-image: radial-gradient(ellipse at center, rgba(42, 31, 20, 0.4) 0%, transparent 70%);
+    background-image:
+        radial-gradient(ellipse at top, rgba(58, 14, 14, 0.35) 0%, transparent 55%),
+        radial-gradient(ellipse at center, rgba(42, 31, 20, 0.4) 0%, transparent 70%);
     color: var(--text);
     min-height: 100vh;
-    line-height: 1.5;
+    line-height: 1.55;
+    letter-spacing: 0.005em;
+    position: relative;
+}
+
+/* Subtle film-grain / parchment texture overlay (no glow, additive depth only) */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.35;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.78  0 0 0 0 0.66  0 0 0 0 0.30  0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    mix-blend-mode: overlay;
 }
 
 [data-theme="light"] body {
-    background-image: radial-gradient(ellipse at center, rgba(200, 189, 168, 0.3) 0%, transparent 70%);
+    background-image:
+        radial-gradient(ellipse at top, rgba(200, 189, 168, 0.35) 0%, transparent 55%),
+        radial-gradient(ellipse at center, rgba(200, 189, 168, 0.3) 0%, transparent 70%);
+}
+
+[data-theme="light"] body::before {
+    opacity: 0.18;
+    mix-blend-mode: multiply;
+}
+
+/* Lift content above the texture overlay */
+.site-nav,
+.page-header,
+.container,
+.container-wide,
+main {
+    position: relative;
+    z-index: 1;
 }
 
 /* Smooth theme transition */
 body,
 body *:not(#battleCanvas):not(.spinner):not(img) {
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease,
+        border-color 0.3s ease,
+        box-shadow 0.3s ease,
+        transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1),
+        filter 0.25s ease;
 }
 
 h1, h2, h3 {
@@ -83,10 +129,12 @@ h1, h2, h3 {
 
 h1 {
     font-weight: 700;
+    letter-spacing: 0.04em;
 }
 
 h2, h3 {
     font-weight: 600;
+    letter-spacing: 0.03em;
 }
 
 a {
@@ -234,21 +282,59 @@ a:hover {
 
 /* ---------- Page Header ---------- */
 .page-header {
-    padding: 20px 24px 16px;
-    background: linear-gradient(180deg, var(--red-deep) 0%, var(--bg) 100%);
-    border-bottom: 2px solid;
-    border-image: linear-gradient(90deg, transparent, var(--gold-dark), var(--gold), var(--gold-dark), transparent) 1;
+    padding: 36px 24px 32px;
+    background:
+        radial-gradient(ellipse at center top, rgba(122, 26, 26, 0.45) 0%, transparent 60%),
+        linear-gradient(180deg, var(--red-deep) 0%, var(--bg-warm) 60%, var(--bg) 100%);
+    border-bottom: 1px solid;
+    border-image: linear-gradient(90deg, transparent 8%, rgba(139, 105, 20, 0.45) 30%, rgba(201, 168, 76, 0.7) 50%, rgba(139, 105, 20, 0.45) 70%, transparent 92%) 1;
     text-align: center;
+    overflow: hidden;
+}
+
+/* Decorative ornament: soft gold rule with diamond marks above the title */
+.page-header::before {
+    content: "";
+    display: block;
+    width: 120px;
+    height: 1px;
+    margin: 0 auto 14px;
+    background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.55), transparent);
 }
 
 .page-header h1 {
-    font-size: 1.5rem;
-    margin-bottom: 4px;
+    font-size: 2.1rem;
+    margin-bottom: 8px;
+    letter-spacing: 0.08em;
+    line-height: 1.1;
+    color: var(--gold-light);
 }
 
 .page-header .subtitle {
-    font-size: 0.85rem;
+    font-size: 0.92rem;
     color: var(--text-muted);
+    letter-spacing: 0.03em;
+    font-style: italic;
+    max-width: 640px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        padding: 24px 16px 20px;
+    }
+    .page-header h1 {
+        font-size: 1.55rem;
+        letter-spacing: 0.06em;
+    }
+    .page-header::before {
+        width: 80px;
+        margin-bottom: 10px;
+    }
+    .page-header .subtitle {
+        font-size: 0.82rem;
+    }
 }
 
 /* ---------- Container ---------- */
@@ -268,14 +354,15 @@ a:hover {
 .card {
     background: var(--bg-warm);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    transition: border-color 0.2s, box-shadow 0.2s;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .card:hover {
-    border-color: var(--gold-dark);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4), 0 0 8px var(--gold-glow);
+    border-color: rgba(139, 105, 20, 0.55);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    transform: translateY(-1px);
 }
 
 /* ---------- Buttons ---------- */
@@ -301,7 +388,8 @@ a:hover {
 
 .btn-gold:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(201, 168, 76, 0.3);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+    filter: brightness(1.06);
 }
 
 .btn-gold:disabled {
@@ -471,14 +559,6 @@ a:hover {
 }
 
 @media (max-width: 768px) {
-    .page-header {
-        padding: 12px 16px;
-    }
-
-    .page-header h1 {
-        font-size: 1.2rem;
-    }
-
     .container,
     .container-wide {
         padding: 12px;
@@ -722,4 +802,59 @@ a:hover {
 
 @media (max-width: 640px) {
     .contact-modal-panel { padding: 1.5rem 1.1rem 1.25rem; }
+}
+
+/* ==========================================================================
+   Page entrance animations — staggered fade-up for content sections.
+   Smooth, gentle (14px lift, 0.55s cubic-bezier). Disabled for reduced motion.
+   ========================================================================== */
+@keyframes pageFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pageFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.page-header {
+    animation: pageFadeIn 0.55s ease-out both;
+}
+
+.container > *,
+.container-wide > * {
+    animation: pageFadeUp 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.container > *:nth-child(1),
+.container-wide > *:nth-child(1) { animation-delay: 0.05s; }
+
+.container > *:nth-child(2),
+.container-wide > *:nth-child(2) { animation-delay: 0.12s; }
+
+.container > *:nth-child(3),
+.container-wide > *:nth-child(3) { animation-delay: 0.19s; }
+
+.container > *:nth-child(4),
+.container-wide > *:nth-child(4) { animation-delay: 0.26s; }
+
+.container > *:nth-child(5),
+.container-wide > *:nth-child(5) { animation-delay: 0.32s; }
+
+.container > *:nth-child(n+6),
+.container-wide > *:nth-child(n+6) { animation-delay: 0.36s; }
+
+@media (prefers-reduced-motion: reduce) {
+    .page-header,
+    .container > *,
+    .container-wide > * {
+        animation: none;
+    }
 }

@@ -82,42 +82,58 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 8px 4px 6px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    padding: 10px 4px 8px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition:
+        transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1),
+        border-color 0.28s ease,
+        background 0.28s ease,
+        box-shadow 0.28s ease;
     color: var(--text);
 }
 .ma-civ-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(201, 168, 76, 0.3);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px) scale(1.025);
+    border-color: rgba(201, 168, 76, 0.35);
+    background: linear-gradient(180deg, rgba(201, 168, 76, 0.08) 0%, rgba(201, 168, 76, 0.02) 100%);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.42);
+}
+.ma-civ-card:hover .ma-civ-emblem {
+    transform: scale(1.04);
+    border-color: rgba(201, 168, 76, 0.55);
+}
+.ma-civ-card:hover .ma-civ-card-name {
+    color: var(--gold-light);
 }
 .ma-civ-card.selected-left {
-    border-color: var(--gold);
-    background: rgba(201, 168, 76, 0.15);
-    box-shadow: 0 0 12px rgba(201, 168, 76, 0.3);
+    border-color: rgba(201, 168, 76, 0.65);
+    background: linear-gradient(180deg, rgba(201, 168, 76, 0.14) 0%, rgba(201, 168, 76, 0.05) 100%);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 .ma-civ-card.selected-right {
-    border-color: var(--team2);
-    background: rgba(52, 152, 219, 0.15);
-    box-shadow: 0 0 12px rgba(52, 152, 219, 0.3);
+    border-color: rgba(41, 128, 185, 0.6);
+    background: linear-gradient(180deg, rgba(52, 152, 219, 0.13) 0%, rgba(52, 152, 219, 0.04) 100%);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 .ma-civ-emblem {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    border: 2px solid rgba(201, 168, 76, 0.4);
+    border: 1px solid rgba(201, 168, 76, 0.35);
     object-fit: cover;
     background: rgba(0, 0, 0, 0.3);
-    margin-bottom: 4px;
+    margin-bottom: 5px;
+    transition: transform 0.28s ease, border-color 0.28s ease;
 }
 .ma-civ-card-name {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     text-align: center;
-    line-height: 1.2;
+    line-height: 1.25;
+    letter-spacing: 0.015em;
+    color: var(--text-muted);
+    transition: color 0.25s ease;
 }
 
 /* --- Age Toggle --- */

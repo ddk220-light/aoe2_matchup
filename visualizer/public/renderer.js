@@ -115,12 +115,18 @@ class Renderer {
     }
   }
 
+  // Normalize a unit/building key so server-emitted types, sprites.json keys,
+  // and icon filenames all match regardless of case, spaces, or punctuation.
+  normKey(name) {
+    return (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  }
+
   // Load a single sprite image
   loadSpriteImage(name, file) {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
-        this.spriteImages[name] = img;
+        this.spriteImages[this.normKey(name)] = img;
         resolve();
       };
       img.onerror = () => {
@@ -131,9 +137,9 @@ class Renderer {
     });
   }
 
-  // Get sprite image for a unit/building type (exact match only)
+  // Get sprite image for a unit/building type (normalized match)
   getSprite(name) {
-    return this.spriteImages[name] || null;
+    return this.spriteImages[this.normKey(name)] || null;
   }
 
   setupCanvas() {

@@ -936,3 +936,37 @@ main {
 .hidden {
     display: none !important;
 }
+
+/* ---- Mobile / narrow screens ---- */
+/* The playback row (transport buttons + time + speed buttons) is a no-wrap
+   flexbox; on a phone it overflows off the right edge, hiding Play and the
+   speed buttons. Let it wrap and center so every control stays on-screen. */
+@media (max-width: 768px) {
+    .controls-panel {
+        padding: 10px;
+    }
+
+    .playback-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .time-display {
+        margin-left: 0;
+        width: 100%;
+        text-align: center;
+        order: -1; /* show the clock above the buttons */
+    }
+
+    .speed-controls {
+        margin-left: 0; /* don't push speed buttons off the right edge */
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .playback-controls button {
+        padding: 8px 12px; /* a bit larger tap targets */
+    }
+}

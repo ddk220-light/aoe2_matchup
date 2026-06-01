@@ -583,14 +583,9 @@ class Renderer {
           break;
 
         default:
-          // Triangle for unknown military
-          this.ctx.beginPath();
-          this.ctx.moveTo(pos.x, pos.y - size / 2);
-          this.ctx.lineTo(pos.x - size / 2, pos.y + size / 2);
-          this.ctx.lineTo(pos.x + size / 2, pos.y + size / 2);
-          this.ctx.closePath();
-          this.ctx.fill();
-          this.ctx.stroke();
+          // Unrecognized unit with no matching sprite: draw nothing. We only show
+          // units we can actually identify, rather than a bare placeholder triangle.
+          break;
       }
 
       this.ctx.globalAlpha = 1;

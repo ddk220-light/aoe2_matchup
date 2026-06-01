@@ -1324,8 +1324,12 @@ class Renderer {
       );
       this.drawBaseOutline(b, newer);
     }
-    // Labels on top of all outlines.
-    for (const b of bases) this.drawBaseLabel(b.center, b.label, b.color);
+  }
+
+  // Base name/team labels, drawn last so they always sit above buildings/units.
+  drawBaseLabels() {
+    if (!this._bases) return;
+    for (const b of this._bases) this.drawBaseLabel(b.center, b.label, b.color);
   }
 
   // Is base `b` the one that yields (gets bitten) versus base `c`? The more
@@ -1681,11 +1685,11 @@ class Renderer {
     for (const [name, building] of state.buildings) {
       const age = building.age || 0;
       let opacity;
-      if (age < 30) {
-        opacity = 1; // Full opacity for first 30 seconds
+      if (age < 10) {
+        opacity = 1; // Full opacity for first 10 seconds
       } else if (age < 300) {
-        // Smooth fade from 1.0 down to 0.25 between 30s and 5 minutes
-        opacity = 1 - ((age - 30) / 270) * 0.75;
+        // Smooth fade from 1.0 down to 0.25 between 10s and 5 minutes
+        opacity = 1 - ((age - 10) / 290) * 0.75;
       } else {
         opacity = 0.25; // 25% after 5 minutes
       }
@@ -1806,6 +1810,9 @@ class Renderer {
         attack.opacity,
       );
     }
+
+    // Base labels last, so player names always stay in the foreground.
+    this.drawBaseLabels();
   }
 
   // Draw an attack arrow from attacker to target

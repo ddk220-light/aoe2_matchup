@@ -22,6 +22,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh; /* dvh excludes the mobile address bar so the bottom controls stay on-screen */
     padding: 10px;
 }
 
@@ -942,6 +943,24 @@ main {
    flexbox; on a phone it overflows off the right edge, hiding Play and the
    speed buttons. Let it wrap and center so every control stays on-screen. */
 @media (max-width: 768px) {
+    /* Let the page scroll on phones instead of clipping the bottom controls. */
+    html,
+    body {
+        overflow: auto;
+    }
+
+    .container {
+        height: auto;
+        min-height: 100dvh;
+    }
+
+    /* Give the map a fixed share of the screen so the controls flow below it
+       and are always reachable by scrolling. */
+    .map-container {
+        flex: none;
+        height: 60vh;
+    }
+
     .controls-panel {
         padding: 10px;
     }

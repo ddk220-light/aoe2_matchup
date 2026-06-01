@@ -1098,8 +1098,8 @@ class Playback {
     // in-flight shots (progress 0..1) launching from the treb's current spot to
     // the targeted building, for the renderer to draw as arcing flaming balls.
     const TREB_WINDUP = 2; // s to move into range + unpack before first shot
-    const TREB_RELOAD = 2.2; // s between shots
-    const TREB_FLIGHT = 1.6; // s a shot is airborne (kept < reload, but close)
+    const TREB_RELOAD = 10; // s between shots (realistic siege cadence)
+    const TREB_FLIGHT = 2.5; // s a shot is airborne (slow, lofty arc)
     const trebProjectiles = [];
     for (const ep of this.trebAttacks || []) {
       const fireStart = ep.start + TREB_WINDUP;

@@ -331,6 +331,82 @@ class Renderer {
   }
 
   // Draw the base map as a diamond
+  // Receive the starting-map data (terrain grid + GAIA objects) and pre-render
+  // it once to an offscreen canvas used as the static map backdrop.
+  setMapData(terrain, mapObjects) {
+    this.terrain = terrain || null;
+    this.mapObjects = mapObjects || null;
+    this.mapLayer = null;
+    if (this.terrain && this.terrain.ids) {
+      this.buildMapLayer();
+    }
+  }
+
+  buildMapLayer() {
+    const dim = this.terrain.dimension;
+    const tw = this.tileWidth; // 6
+    const th = this.tileHeight; // 3
+    const originY = (dim * th) / 2; // shift so projected Y is >= 0
+    const off = document.createElement("canvas");
+    off.width = Math.ceil(dim * tw) + 2;
+    off.height = Math.ceil(dim * th) + 2;
+    const c = off.getContext("2d");
+
+    // Same iso projection as gameToCanvas, but at zoom=1 / pan=0 in offscreen space.
+    const proj = (x, y) => ({
+      x: (x + y) * (tw / 2),
+      y: (y - x) * (th / 2) + originY,
+    });
+
+    // Terrain tiles (filled diamonds). Stroke each in its own color to hide
+    // sub-pixel seams between adjacent tiles.
+    const ids = this.terrain.ids;
+    const pal = this.terrain.palette || {};
+    c.lineWidth = 1;
+    for (let ty = 0; ty < dim; ty++) {
+      for (let tx = 0; tx < dim; tx++) {
+        const color = pal[ids[ty * dim + tx]] || "#4f7a36";
+        const a = proj(tx, ty);
+        const b = proj(tx + 1, ty);
+        const d = proj(tx + 1, ty + 1);
+        const e = proj(tx, ty + 1);
+        c.fillStyle = color;
+        c.strokeStyle = color;
+        c.beginPath();
+        c.moveTo(a.x, a.y);
+        c.lineTo(b.x, b.y);
+        c.lineTo(d.x, d.y);
+        c.lineTo(e.x, e.y);
+        c.closePath();
+        c.fill();
+        c.stroke();
+      }
+    }
+
+    // Resource / tree objects as small colored dots.
+    const colors = {
+      tree: "#2f5a2a",
+      gold: "#ffcc33",
+      stone: "#c2c2c2",
+      forage: "#d4486a",
+      boar: "#7a4a2a",
+      hunt: "#b5894e",
+      relic: "#c45ad6",
+      fish: "#3aa0c0",
+      sheep: "#e6ddcb",
+    };
+    for (const o of this.mapObjects || []) {
+      const p = proj(o.x, o.y);
+      c.fillStyle = colors[o.c] || "#ffffff";
+      c.beginPath();
+      c.arc(p.x, p.y, o.c === "tree" ? 2.0 : 2.6, 0, Math.PI * 2);
+      c.fill();
+    }
+
+    this.mapLayer = off;
+    this.mapOriginY = originY;
+  }
+
   drawMap() {
     const ctx = this.ctx;
 
@@ -345,15 +421,27 @@ class Renderer {
     const right = this.gameToCanvas(this.mapSize, this.mapSize);
     const bottom = this.gameToCanvas(0, this.mapSize);
 
-    // Draw filled diamond
-    ctx.fillStyle = "#2d5a2d";
-    ctx.beginPath();
-    ctx.moveTo(top.x, top.y);
-    ctx.lineTo(right.x, right.y);
-    ctx.lineTo(bottom.x, bottom.y);
-    ctx.lineTo(left.x, left.y);
-    ctx.closePath();
-    ctx.fill();
+    if (this.mapLayer) {
+      // Blit the pre-rendered terrain backdrop (scale by zoom, translate by pan).
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(
+        this.mapLayer,
+        this.panX,
+        this.panY - this.zoom * this.mapOriginY,
+        this.mapLayer.width * this.zoom,
+        this.mapLayer.height * this.zoom,
+      );
+    } else {
+      // Fallback: flat green diamond (uploads / replays without terrain data)
+      ctx.fillStyle = "#2d5a2d";
+      ctx.beginPath();
+      ctx.moveTo(top.x, top.y);
+      ctx.lineTo(right.x, right.y);
+      ctx.lineTo(bottom.x, bottom.y);
+      ctx.lineTo(left.x, left.y);
+      ctx.closePath();
+      ctx.fill();
+    }
 
     // Draw grid lines if zoomed in enough
     if (this.zoom >= 1.5) {

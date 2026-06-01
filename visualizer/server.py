@@ -298,6 +298,104 @@ def load_object_names():
         return {}
 
 
+# ---- Starting-map terrain + GAIA objects (visualizer map backdrop) ----
+
+def _load_terrain_names(dataset_id):
+    """terrain id -> name, from aocref's dataset table (best-effort)."""
+    try:
+        import aocref
+        path = os.path.join(
+            os.path.dirname(aocref.__file__), "data", "datasets", f"{dataset_id}.json"
+        )
+        with open(path, encoding="utf-8") as f:
+            table = json.load(f).get("terrain", {})
+        return {int(k): (v.get("name") if isinstance(v, dict) else v) for k, v in table.items()}
+    except Exception:
+        return {}
+
+
+def _terrain_hex(name):
+    """Map a terrain name to a backdrop color (keyword match, first wins)."""
+    n = (name or "").lower()
+
+    def has(*ws):
+        return any(w in n for w in ws)
+
+    if has("ice"):
+        return "#d7e6f0"
+    if has("snow"):
+        return "#e8eef2"
+    if has("forest", "jungle", "bamboo", "leaves", "underbrush", "rainforest",
+           "bush", "reeds", "acacia", "baobab", "dragon", "dead forest", "moorland"):
+        return "#2f4d24"
+    if has("water") and has("deep", "ocean"):
+        return "#1f4e79"
+    if has("water", "azure"):
+        return "#2e6699"
+    if has("shallow", "bridge"):
+        return "#4a86b8"
+    if has("beach", "sand"):
+        return "#d8c48a"
+    if has("road", "foundation"):
+        return "#9a9080"
+    if has("desert", "quicksand", "savannah", "cracked"):
+        return "#cdb87a"
+    if has("dry grass", "bogland"):
+        return "#9aa860"
+    if has("dirt", "rock", "gravel"):
+        return "#8c7d57"
+    if has("farm"):
+        return "#9c7b4a"
+    if has("black"):
+        return "#111111"
+    return "#4f7a36"  # default: grass
+
+
+def _extract_terrain(match):
+    """Flat terrain-id grid + a palette (id -> hex) for the tiles present."""
+    mp = match.map
+    dim = mp.dimension
+    grid = [0] * (dim * dim)
+    present = set()
+    for t in mp.tiles:
+        grid[t.position.y * dim + t.position.x] = t.terrain
+        present.add(t.terrain)
+    names = _load_terrain_names(getattr(match, "dataset_id", 100))
+    palette = {str(tid): _terrain_hex(names.get(tid, "")) for tid in present}
+    return {"dimension": dim, "ids": grid, "palette": palette}
+
+
+# (category, keywords) — first match wins; everything else is decoration and skipped.
+_OBJ_CATEGORIES = (
+    ("relic", ("relic",)),
+    ("gold", ("gold",)),
+    ("stone", ("stone",)),
+    ("boar", ("boar", "rhino", "elephant", "javelina")),
+    ("hunt", ("deer", "ibex", "goose", "gazelle", "zebra", "ostrich", "stag", "crocodile", "emu", "elk")),
+    ("fish", ("fish", "marlin", "dolphin", "turtle", "salmon", "snapper", "tuna", "perch")),
+    ("sheep", ("sheep", "turkey", "llama", "goat", "cow", "buffalo", "pig")),
+    ("forage", ("forage", "berry", "fruit")),
+    ("tree", ("tree", "snag", "stump")),
+)
+
+
+def _extract_map_objects(match):
+    """Resource/tree/relic GAIA objects at game start: [{c, x, y}]."""
+    out = []
+    for g in getattr(match, "gaia", None) or []:
+        n = (getattr(g, "name", None) or "").lower()
+        if not n:
+            continue
+        cat = next((c for c, kws in _OBJ_CATEGORIES if any(k in n for k in kws)), None)
+        if cat is None:
+            continue
+        p = getattr(g, "position", None)
+        if p is None:
+            continue
+        out.append({"c": cat, "x": round(p.x, 1), "y": round(p.y, 1)})
+    return out
+
+
 def process_replay(replay_file):
     """Process a replay file and return JSON data."""
 
@@ -399,6 +497,16 @@ def process_replay(replay_file):
         "walls": [],
         "unit_deaths": {},
     }
+
+    # Starting-map backdrop: terrain grid + GAIA resource/tree objects.
+    try:
+        data["match"]["map_size"] = match.map.dimension
+        data["terrain"] = _extract_terrain(match)
+        data["map_objects"] = _extract_map_objects(match)
+    except Exception as e:
+        app.logger.warning(f"terrain/object extraction failed: {e}")
+        data["terrain"] = None
+        data["map_objects"] = []
 
     # Add players
     for player in match.players:

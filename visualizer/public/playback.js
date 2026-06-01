@@ -964,6 +964,7 @@ class Playback {
             player: event.player,
             type: event.type,
             age: buildingAge, // Time since building was placed
+            time: event.time, // When it was placed (for base recency)
           });
         }
       }

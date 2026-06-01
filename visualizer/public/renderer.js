@@ -1255,11 +1255,13 @@ class Renderer {
     // Group buildings by player, ignoring walls/gates and tagging each with its
     // kind so a Town Center can seed a base and a Castle can reach further.
     const byPlayer = new Map();
+    const all = [];
     for (const [, b] of buildings) {
       if (b.x == null || b.y == null) continue;
       const kind = this.buildingKind(b.type);
       if (kind === "wall") continue; // walls don't count toward a base
       b._kind = kind;
+      all.push(b);
       if (!byPlayer.has(b.player)) byPlayer.set(b.player, []);
       byPlayer.get(b.player).push(b);
     }
@@ -1296,6 +1298,10 @@ class Renderer {
         if (hull.length < 3) continue;
         let poly = this.bufferHull(hull, this.BASE_BUFFER);
         poly = this.clipToMap(poly, dim); // keep inside the map
+        if (poly.length < 3) continue;
+        // Newest buildings win contested ground: shrink this base out of any
+        // newer enemy building's territory (older bases get pushed back).
+        poly = this.clipAgainstNewer(poly, cl, all, player);
         if (poly.length < 3) continue;
 
         let cx = 0, cy = 0;
@@ -1348,6 +1354,51 @@ class Renderer {
       }
     }
     return out;
+  }
+
+  // Shrink this base's outline out of any *newer* enemy building's territory, so
+  // the most recently built side wins contested ground (and a base being taken
+  // over visibly recedes as the attacker builds in). Only the older side is
+  // clipped; the newer base keeps its natural shape.
+  clipAgainstNewer(poly, cluster, allBuildings, player) {
+    const castleHalf = (this.BUILDING_HALF + this.BASE_BUFFER) * 2 - this.BASE_BUFFER;
+    let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+    for (const b of cluster) {
+      if (b.x < minx) minx = b.x;
+      if (b.y < miny) miny = b.y;
+      if (b.x > maxx) maxx = b.x;
+      if (b.y > maxy) maxy = b.y;
+    }
+    const margin = 2 * castleHalf + 2 * this.BASE_BUFFER; // generous prefilter radius
+    for (const q of allBuildings) {
+      if (q.player === player) continue;
+      if (q.x < minx - margin || q.x > maxx + margin || q.y < miny - margin || q.y > maxy + margin) {
+        continue;
+      }
+      // nearest of our buildings to this enemy building
+      let best = Infinity, m = null;
+      for (const b of cluster) {
+        const dx = b.x - q.x, dy = b.y - q.y;
+        const d = dx * dx + dy * dy;
+        if (d < best) {
+          best = d;
+          m = b;
+        }
+      }
+      if (m === null) continue;
+      // Only give way when their building is newer than our nearest one.
+      if (!(q.time > m.time)) continue;
+      const dx = q.x - m.x, dy = q.y - m.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const ux = dx / len, uy = dy / len;
+      // +1 tile clearance so the older outline clears the newer one cleanly
+      // (avoids thin overlap slivers without an obvious gap).
+      const reach = (q._kind === "castle" ? castleHalf : this.BUILDING_HALF) + this.BASE_BUFFER + 1;
+      const ex = q.x - ux * reach, ey = q.y - uy * reach; // edge of their territory toward us
+      poly = this.clipByLinear(poly, (p) => (p.x - ex) * ux + (p.y - ey) * uy);
+      if (poly.length < 3) break;
+    }
+    return poly;
   }
 
   // Keep the polygon within the [0, dim] map square.

@@ -56,7 +56,7 @@ PLAYER_COLORS = {
     3: {"name": "Yellow", "hex": "#FFFF00"},
     4: {"name": "Cyan", "hex": "#00FFFF"},
     5: {"name": "Purple", "hex": "#FF00FF"},
-    6: {"name": "Grey", "hex": "#808080"},
+    6: {"name": "Grey", "hex": "#404040"},
     7: {"name": "Orange", "hex": "#FFA500"},
 }
 

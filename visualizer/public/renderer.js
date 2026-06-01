@@ -1223,6 +1223,7 @@ class Renderer {
   MIN_BASE_BUILDINGS = 5;
   BASE_BUFFER = 5; // tiles of margin around the outer buildings
   BUILDING_HALF = 1.5; // approx building half-footprint (tiles) for hull corners
+  BASE_FILL_ALPHA = 0.1; // very light player-colour tint inside a base
 
   drawBaseBoundaries(state) {
     if (!state || !state.buildings || state.buildings.size === 0) return;
@@ -1269,17 +1270,19 @@ class Renderer {
   // colour, so b's line hugs just behind each newer boundary).
   drawBaseOutline(b, newer) {
     if (!newer || newer.length === 0) {
+      this.fillPolygon(b.poly, b.color, this.BASE_FILL_ALPHA);
       this.drawDottedPolygon(b.poly, b.color);
       return;
     }
     const ctx = this.ctx;
 
-    // Pass 1: b's own border, clipped to outside every newer base.
+    // Pass 1: b's own fill + border, clipped to outside every newer base.
     ctx.save();
     ctx.beginPath();
     ctx.rect(0, 0, ctx.canvas.width, ctx.canvas.height);
     for (const c of newer) this._addPolyPath(c.poly);
     ctx.clip("evenodd"); // canvas minus the newer polygons
+    this.fillPolygon(b.poly, b.color, this.BASE_FILL_ALPHA);
     this.drawDottedPolygon(b.poly, b.color);
     ctx.restore();
 
@@ -1328,7 +1331,7 @@ class Renderer {
     for (const [player, bldgs] of byPlayer) {
       const color = this.playerColors[player] || "#ffffff";
       const team = this.playerTeams ? this.playerTeams[player] : null;
-      const label = team ? `${player} · Team ${team}` : player;
+      const label = team ? `(${team}) ${player}` : player;
 
       for (const cl of this.clusterBuildings(bldgs, this.BASE_LINK_DIST)) {
         // A Town Center counts as a whole base on its own (weight = MIN);
@@ -1573,6 +1576,19 @@ class Renderer {
     ctx.restore();
   }
 
+  // Fill a closed polygon (game-coord points) with a faint player-colour tint.
+  fillPolygon(poly, color, alpha) {
+    if (!poly || poly.length < 3) return;
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.beginPath();
+    this._addPolyPath(poly);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.restore();
+  }
+
   // Full render cycle
   render(state) {
     this.clear();
@@ -1770,21 +1786,25 @@ class Renderer {
     const end = this.gameToCanvas(wall.x_end, wall.y_end);
     const color = this.playerColors[wall.player] || "#888888";
 
-    // Determine wall style based on type
-    let wallWidth = 4 * this.zoom;
+    // Determine wall style based on type (half the previous thickness).
+    let wallWidth = 2 * this.zoom;
     let wallColor = color;
 
     if (wall.type.includes("stone") || wall.type.includes("fortified")) {
-      wallWidth = 6 * this.zoom;
+      wallWidth = 3 * this.zoom;
       wallColor = this.darkenColor(color, 0.2);
     } else if (wall.type.includes("palisade")) {
-      wallWidth = 3 * this.zoom;
+      wallWidth = 1.5 * this.zoom;
     }
 
-    // Draw outline first (darker/thicker line behind)
-    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
-    this.ctx.lineWidth = wallWidth + 2 * this.zoom;
+    // Walls render at half opacity so they read as lighter, thinner lines.
+    this.ctx.save();
+    this.ctx.globalAlpha = 0.5;
     this.ctx.lineCap = "round";
+
+    // Draw outline first (darker/thinner line behind)
+    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+    this.ctx.lineWidth = wallWidth + 1 * this.zoom;
     this.ctx.beginPath();
     this.ctx.moveTo(start.x, start.y);
     this.ctx.lineTo(end.x, end.y);
@@ -1807,6 +1827,8 @@ class Renderer {
     this.ctx.beginPath();
     this.ctx.arc(end.x, end.y, postSize / 2, 0, Math.PI * 2);
     this.ctx.fill();
+
+    this.ctx.restore();
   }
 }
 

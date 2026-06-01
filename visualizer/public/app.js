@@ -1300,6 +1300,8 @@ class App {
         actionLines: state.actionLines.filter(
           (line) => this.playerVisibility[line.player] !== false,
         ),
+        // Needed by renderer.drawAnimals() to hide animals past their gone_at.
+        currentTime: state.currentTime,
       };
 
       this.renderer.render(filteredState);

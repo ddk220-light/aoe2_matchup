@@ -11,7 +11,7 @@ import os
 import sys
 import tempfile
 import zipfile
-from collections import defaultdict
+from collections import defaultdict, Counter
 from datetime import datetime
 
 import mgz
@@ -776,6 +776,157 @@ def _analyze_buildings(match):
     return interactions, deletions
 
 
+# Commands only a VILLAGER can be the subject of.
+_VIL_CMDS = {"BUILD", "REPAIR", "WALL"}
+# Commands only a MILITARY unit can be the subject of.
+_MIL_CMDS = {"STANCE", "FORMATION", "PATROL", "ATTACK_GROUND", "DE_ATTACK_MOVE", "GUARD"}
+# Commands whose object_ids reference a BUILDING, not the acting unit.
+_BLD_SUBJECT_CMDS = {
+    "DE_QUEUE", "RESEARCH", "GATHER_POINT", "SELL", "BUY",
+    "TOWN_BELL", "UNGARRISON", "DE_MULTI_GATHERPOINT",
+}
+# GAIA names that ONLY villagers interact with (no animals: scouts lure boar;
+# no relics: monks; no terrain decoration).
+_RESOURCE_KW = ("gold mine", "stone mine", "tree", "bush", "berr", "forage", "shrub", "plant")
+
+
+def _classify_units(match):
+    """Identify every commanded unit's type from player behavior + production.
+
+    Recorded games never announce a produced unit's type — only the starting
+    units are named — so we reconstruct it in three steps:
+
+      1. Behavioral hard-labels (a unit's OWN commands betray its class):
+           villager <- it BUILD/REPAIRs, builds a WALL, or gathers a resource
+           military <- it sets a STANCE/FORMATION, PATROLs, attack-grounds,
+                       GUARDs, or attacks an enemy-owned object
+         Military-only commands win conflicts; eco-definitive beats attack.
+      2. Resolve the remaining 'unknown' units against each player's exact
+         villager count (from DE_QUEUE): earliest-appearing unknowns fill the
+         villager quota, the rest are military.
+      3. Give each military unit a concrete type by greedily matching it to the
+         most-recently-queued MILITARY unit (villagers excluded) for that player
+         before it first appeared. Searching the military-only queue keeps the
+         constant stream of villager queues from stealing military units — the
+         core bug in the old time-only matcher.
+
+    Returns {instance_id: type_string} for commanded (non-starting) units.
+    """
+    def norm(s):
+        return (s or "").lower().replace(" ", "")
+
+    # Owner of every instance id (players only).
+    owner = {}
+    for p in match.players:
+        for o in (p.objects or []):
+            owner[o.instance_id] = p.name
+    for a in match.actions:
+        if not a.player:
+            continue
+        for oid in (a.payload or {}).get("object_ids", []):
+            owner.setdefault(oid, a.player.name)
+
+    # GAIA ids: all (to recognise non-resource targets) and villager-only resources.
+    gaia = getattr(match, "gaia", None) or []
+    gaia_all = {getattr(g, "instance_id", None) for g in gaia}
+    resource_ids = set()
+    for g in gaia:
+        iid = getattr(g, "instance_id", None)
+        nm = (getattr(g, "name", None) or "").lower()
+        if iid is None or not nm:
+            continue
+        if any(k in nm for k in _RESOURCE_KW) and "dry" not in nm and "grass" not in nm:
+            resource_ids.add(iid)
+
+    start_ids = {o.instance_id for p in match.players for o in (p.objects or [])}
+
+    # Pass 1: behavioral signals + first-seen time.
+    mil_def, vil_def, mil_atk = set(), set(), set()
+    first_seen = {}
+    for a in match.actions:
+        if not a.player:
+            continue
+        at = str(a.type).replace("Action.", "")
+        if at in _BLD_SUBJECT_CMDS:
+            continue
+        payload = a.payload or {}
+        t = a.timestamp.total_seconds()
+        tgt = payload.get("target_id")
+        for oid in payload.get("object_ids", []):
+            first_seen.setdefault(oid, t)
+            if at in _MIL_CMDS:
+                mil_def.add(oid)
+            if at in _VIL_CMDS:
+                vil_def.add(oid)
+            if at == "ORDER" and isinstance(tgt, int):
+                if tgt in resource_ids:
+                    vil_def.add(oid)
+                elif tgt not in gaia_all and owner.get(tgt) and owner.get(tgt) != owner.get(oid):
+                    mil_atk.add(oid)
+
+    # Per-player production: exact villager count + a military-only queue.
+    prod = defaultdict(Counter)
+    mil_queue = defaultdict(list)
+    for a in match.actions:
+        if str(a.type).endswith("DE_QUEUE") and a.player and a.payload:
+            u = norm(a.payload.get("unit"))
+            amt = a.payload.get("amount", 1) or 1
+            prod[a.player.name][u] += amt
+            if u != "villager":
+                ts = a.timestamp.total_seconds()
+                for _ in range(amt):
+                    mil_queue[a.player.name].append({"time": ts, "type": u, "used": False})
+    for q in mil_queue.values():
+        q.sort(key=lambda x: x["time"])
+
+    MIL, UNK = "\x00mil", "\x00unk"
+    cls = {}
+    for oid in first_seen:
+        if oid in start_ids:
+            continue
+        if oid in mil_def or oid in mil_atk:
+            cls[oid] = MIL if (oid in mil_def or oid not in vil_def) else "villager"
+        elif oid in vil_def:
+            cls[oid] = "villager"
+        else:
+            cls[oid] = UNK
+
+    # Pass 2: fill each player's villager quota from earliest unknowns.
+    unk_by_player = defaultdict(list)
+    for oid, c in cls.items():
+        if c == UNK:
+            unk_by_player[owner.get(oid)].append(oid)
+    for p, unk in unk_by_player.items():
+        vp = prod[p].get("villager", 0)
+        hard_vil = sum(1 for oid, c in cls.items() if c == "villager" and owner.get(oid) == p)
+        quota = max(0, vp - hard_vil)
+        for i, oid in enumerate(sorted(unk, key=lambda o: first_seen.get(o, 0))):
+            cls[oid] = "villager" if i < quota else MIL
+
+    # Pass 3: assign a concrete military type from the military-only queue.
+    def grab(p, t):
+        q = mil_queue.get(p, [])
+        best, best_t, after, after_t = None, -1, None, float("inf")
+        for s in q:
+            if s["used"]:
+                continue
+            if s["time"] <= t and s["time"] > best_t:
+                best_t, best = s["time"], s
+            elif s["time"] > t and s["time"] < after_t:
+                after_t, after = s["time"], s
+        s = best or after
+        if s:
+            s["used"] = True
+            return s["type"]
+        mt = [(u, n) for u, n in prod[p].items() if u != "villager"]
+        return max(mt, key=lambda x: x[1])[0] if mt else "unit"
+
+    result = {}
+    for oid, c in cls.items():
+        result[oid] = grab(owner.get(oid), first_seen.get(oid, 0)) if c == MIL else c
+    return result
+
+
 def process_replay(replay_file):
     """Process a replay file and return JSON data."""
 
@@ -819,36 +970,18 @@ def process_replay(replay_file):
                 if obj_id not in unit_first_seen:
                     unit_first_seen[obj_id] = action_time
 
-    # Determine villagers by BUILD actions
-    villager_ids = set()
-    for obj_id, actions in unit_actions.items():
-        if any(a["type"] == "BUILD" for a in actions):
-            villager_ids.add(obj_id)
+    # Identify each commanded unit's type from behavior + production. See
+    # _classify_units: villager/military split from each unit's own commands,
+    # then a concrete military type from the player's military-only train queue.
+    try:
+        unit_type_map = _classify_units(match)
+    except Exception as e:
+        app.logger.warning(f"unit classification failed: {e}")
+        unit_type_map = {}
 
     # Build unit names
     unit_name_map = {}
     unit_counters = defaultdict(lambda: defaultdict(int))
-
-    # Collect training events with more detail
-    # Track training queue per player - list of (time, unit_type, used) tuples
-    training_queue = defaultdict(list)  # player -> [(time, unit_type, used), ...]
-    for action in match.actions:
-        if not action.player:
-            continue
-        action_type = str(action.type).replace("Action.", "")
-        if action_type == "DE_QUEUE" and action.payload:
-            unit_type_name = action.payload.get("unit", "unit")
-            training_queue[action.player.name].append(
-                {
-                    "time": action.timestamp.total_seconds(),
-                    "unit_type": unit_type_name.lower().replace(" ", ""),
-                    "used": False,
-                }
-            )
-
-    # Sort training queues by time
-    for player in training_queue:
-        training_queue[player].sort(key=lambda x: x["time"])
 
     # Name starting units (these have obj.name from the replay)
     starting_obj_ids = set()
@@ -985,38 +1118,10 @@ def process_replay(replay_file):
         for obj_id in unit_ids:
             if obj_id not in unit_name_map:
                 owner = unit_owner_map.get(obj_id, action.player.name)
-                first_seen = unit_first_seen.get(
-                    obj_id, action.timestamp.total_seconds()
-                )
 
-                # Determine unit type
-                if obj_id in villager_ids:
-                    unit_type = "villager"
-                elif obj_id in starting_obj_ids:
-                    # This shouldn't happen as starting units are already named
-                    unit_type = "unit"
-                else:
-                    # Find the best matching UNUSED training event for this player
-                    # Training takes time, so we look for events where:
-                    # queue_time < first_seen (unit was queued before it appeared)
-                    # We pick the most recent unused training event before first_seen
-                    unit_type = "unit"
-                    player_queue = training_queue.get(owner, [])
-                    best_match = None
-                    best_time = -1
-                    for te in player_queue:
-                        if te["used"]:
-                            continue
-                        # Training event must be before unit first appeared
-                        if te["time"] < first_seen:
-                            # Pick the most recent one (closest to first_seen)
-                            if te["time"] > best_time:
-                                best_time = te["time"]
-                                best_match = te
-
-                    if best_match:
-                        unit_type = best_match["unit_type"]
-                        best_match["used"] = True
+                # Type comes from the behavior+production classifier; default to
+                # generic "unit" only if it never appeared in the classifier pass.
+                unit_type = unit_type_map.get(obj_id, "unit")
 
                 unit_counters[owner][unit_type] += 1
                 count = unit_counters[owner][unit_type]
@@ -1086,7 +1191,8 @@ def process_replay(replay_file):
         if not unit_name:
             continue
 
-        if obj_id in villager_ids:
+        # Villagers don't "die" from idleness (only military units do).
+        if unit_name.startswith("villager"):
             continue
 
         last_time = actions[-1]["time"]

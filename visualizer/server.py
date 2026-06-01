@@ -24,6 +24,9 @@ from flask_cors import CORS
 AOE2_COMPANION_API = "https://data.aoe2companion.com/api"
 AOE2_COMPANION_HEADERS = {"User-Agent": "https://github.com/aoe2record-visualizer"}
 REPLAY_DOWNLOAD_URL = "https://aoe.ms/replay"
+# Cache downloaded replays so the same match isn't re-fetched from aoe.ms on
+# every load (aoe.ms rate-limits per IP and returns 429 under repeated pulls).
+REPLAY_CACHE_DIR = os.path.join(tempfile.gettempdir(), "aoe2_replay_cache")
 
 # Players list file
 PLAYERS_CSV_PATH = os.path.join(os.path.dirname(__file__), "players.csv")
@@ -1270,9 +1273,65 @@ def get_matches_for_player(player_name):
         return jsonify({"error": f"Error: {str(e)}"}), 500
 
 
+def _fetch_replay_to_cache(match_id, profile_id):
+    """Return a local path to the match's .aoe2record, downloading from aoe.ms
+    only if it isn't already cached. Retries briefly on HTTP 429 (rate limit).
+    Raises RuntimeError with a user-facing message on failure."""
+    import time
+
+    os.makedirs(REPLAY_CACHE_DIR, exist_ok=True)
+    cache_path = os.path.join(REPLAY_CACHE_DIR, f"{match_id}.aoe2record")
+    if os.path.exists(cache_path) and os.path.getsize(cache_path) > 0:
+        app.logger.info(f"Replay cache hit: {cache_path}")
+        return cache_path
+
+    download_url = f"{REPLAY_DOWNLOAD_URL}/?gameId={match_id}&profileId={profile_id}"
+    app.logger.info(f"Downloading replay from: {download_url}")
+
+    resp = None
+    for attempt in range(3):
+        resp = requests.get(
+            download_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=60
+        )
+        if resp.status_code == 200:
+            break
+        if resp.status_code == 429 and attempt < 2:
+            try:
+                wait = int(resp.headers.get("Retry-After", "2"))
+            except ValueError:
+                wait = 2
+            time.sleep(min(max(wait, 1), 5))
+            continue
+        break
+
+    if resp is None or resp.status_code != 200:
+        code = resp.status_code if resp is not None else "n/a"
+        if code == 429:
+            raise RuntimeError(
+                "The replay host (aoe.ms) is rate-limiting downloads right now "
+                "(HTTP 429). Please wait a minute and try again."
+            )
+        raise RuntimeError(f"Failed to download replay: HTTP {code}")
+
+    with zipfile.ZipFile(io.BytesIO(resp.content)) as zf:
+        record_file = next(
+            (n for n in zf.namelist() if n.endswith(".aoe2record")), None
+        )
+        if not record_file:
+            raise RuntimeError("No .aoe2record file found in ZIP")
+        # Write to a temp file then atomically move into the cache.
+        with tempfile.NamedTemporaryFile(
+            dir=REPLAY_CACHE_DIR, suffix=".part", delete=False
+        ) as tmp:
+            tmp.write(zf.read(record_file))
+            tmp_path = tmp.name
+    os.replace(tmp_path, cache_path)
+    return cache_path
+
+
 @app.route("/api/load-match", methods=["POST"])
 def load_match():
-    """Download replay from aoe.ms, unzip, parse, and return replay data."""
+    """Download (or reuse cached) replay from aoe.ms, parse, return replay data."""
     data = request.get_json()
     if not data:
         return jsonify({"error": "No JSON data provided"}), 400
@@ -1283,67 +1342,28 @@ def load_match():
     if not match_id or not profile_id:
         return jsonify({"error": "matchId and profileId are required"}), 400
 
+    download_url = f"{REPLAY_DOWNLOAD_URL}/?gameId={match_id}&profileId={profile_id}"
     try:
-        # Download replay ZIP from aoe.ms
-        download_url = (
-            f"{REPLAY_DOWNLOAD_URL}/?gameId={match_id}&profileId={profile_id}"
-        )
-        app.logger.info(f"Downloading replay from: {download_url}")
-
-        resp = requests.get(
-            download_url,
-            headers={"User-Agent": "Mozilla/5.0"},
-            timeout=60,
-            stream=True,
-        )
-
-        if resp.status_code != 200:
-            return jsonify(
-                {"error": f"Failed to download replay: HTTP {resp.status_code}"}
-            ), 500
-
-        # Read ZIP content
-        zip_content = resp.content
-        app.logger.info(f"Downloaded {len(zip_content)} bytes")
-
-        # Extract .aoe2record from ZIP
-        with zipfile.ZipFile(io.BytesIO(zip_content)) as zf:
-            # Find the .aoe2record file in the ZIP
-            record_file = None
-            for name in zf.namelist():
-                if name.endswith(".aoe2record"):
-                    record_file = name
-                    break
-
-            if not record_file:
-                return jsonify({"error": "No .aoe2record file found in ZIP"}), 500
-
-            app.logger.info(f"Extracting: {record_file}")
-
-            # Extract to temp file and process
-            with tempfile.NamedTemporaryFile(suffix=".aoe2record", delete=False) as tmp:
-                tmp.write(zf.read(record_file))
-                tmp_path = tmp.name
-
-        try:
-            with open(tmp_path, "rb") as f:
-                replay_data = process_replay(f)
-
-            # Add match metadata
-            replay_data["source"] = {
-                "matchId": match_id,
-                "profileId": profile_id,
-                "downloadUrl": download_url,
-            }
-
-            return jsonify(replay_data)
-        finally:
-            os.unlink(tmp_path)
-
+        cache_path = _fetch_replay_to_cache(match_id, profile_id)
+    except RuntimeError as e:
+        # 429 -> surface as 429 so the client can show a clear retry message.
+        status = 429 if "429" in str(e) else 502
+        return jsonify({"error": str(e)}), status
     except requests.RequestException as e:
-        return jsonify({"error": f"Failed to download replay: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to download replay: {str(e)}"}), 502
     except zipfile.BadZipFile:
-        return jsonify({"error": "Downloaded file is not a valid ZIP"}), 500
+        return jsonify({"error": "Downloaded file is not a valid ZIP"}), 502
+
+    try:
+        with open(cache_path, "rb") as f:
+            replay_data = process_replay(f)
+
+        replay_data["source"] = {
+            "matchId": match_id,
+            "profileId": profile_id,
+            "downloadUrl": download_url,
+        }
+        return jsonify(replay_data)
     except Exception as e:
         import traceback
 

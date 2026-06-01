@@ -344,18 +344,26 @@ class Renderer {
 
   buildMapLayer() {
     const dim = this.terrain.dimension;
-    const tw = this.tileWidth; // 6
-    const th = this.tileHeight; // 3
-    const originY = (dim * th) / 2; // shift so projected Y is >= 0
+
+    // Render the backdrop at a higher tile resolution than the on-screen base
+    // (tileWidth=6) so it stays crisp when zoomed in. Pick the largest tile
+    // size that keeps the offscreen canvas under a mobile-safe pixel budget
+    // (iOS caps canvas area around ~16.7M px). Area = dim^2 * OTW^2 / 2.
+    const PIXEL_BUDGET = 14_000_000;
+    let otw = Math.floor(Math.sqrt((PIXEL_BUDGET * 2) / (dim * dim)));
+    otw = Math.max(this.tileWidth, Math.min(28, otw)); // >= native, <= 28
+    const oth = otw / 2;
+    const originY = (dim * oth) / 2; // shift so projected Y is >= 0
+
     const off = document.createElement("canvas");
-    off.width = Math.ceil(dim * tw) + 2;
-    off.height = Math.ceil(dim * th) + 2;
+    off.width = Math.ceil(dim * otw) + 2;
+    off.height = Math.ceil(dim * oth) + 2;
     const c = off.getContext("2d");
 
-    // Same iso projection as gameToCanvas, but at zoom=1 / pan=0 in offscreen space.
+    // Iso projection in offscreen space (zoom=1, pan=0) at the higher tile size.
     const proj = (x, y) => ({
-      x: (x + y) * (tw / 2),
-      y: (y - x) * (th / 2) + originY,
+      x: (x + y) * (otw / 2),
+      y: (y - x) * (oth / 2) + originY,
     });
 
     // Terrain tiles (filled diamonds). Stroke each in its own color to hide
@@ -383,7 +391,7 @@ class Renderer {
       }
     }
 
-    // Resource / tree objects as small colored dots.
+    // Resource / tree objects as colored dots, ~one tile across.
     const colors = {
       tree: "#2f5a2a",
       gold: "#ffcc33",
@@ -395,16 +403,19 @@ class Renderer {
       fish: "#3aa0c0",
       sheep: "#e6ddcb",
     };
+    const rDot = oth * 0.55;
     for (const o of this.mapObjects || []) {
       const p = proj(o.x, o.y);
       c.fillStyle = colors[o.c] || "#ffffff";
       c.beginPath();
-      c.arc(p.x, p.y, o.c === "tree" ? 2.0 : 2.6, 0, Math.PI * 2);
+      c.arc(p.x, p.y, o.c === "tree" ? rDot * 0.9 : rDot, 0, Math.PI * 2);
       c.fill();
     }
 
     this.mapLayer = off;
     this.mapOriginY = originY;
+    // Scale between offscreen pixels and native world pixels, for blitting.
+    this.mapLayerScale = this.tileWidth / otw;
   }
 
   drawMap() {
@@ -422,14 +433,16 @@ class Renderer {
     const bottom = this.gameToCanvas(0, this.mapSize);
 
     if (this.mapLayer) {
-      // Blit the pre-rendered terrain backdrop (scale by zoom, translate by pan).
+      // Blit the pre-rendered terrain backdrop. The offscreen is at a higher
+      // tile resolution, so scale by zoom * (native/offscreen tile size).
+      const s = this.zoom * this.mapLayerScale;
       ctx.imageSmoothingEnabled = true;
       ctx.drawImage(
         this.mapLayer,
         this.panX,
-        this.panY - this.zoom * this.mapOriginY,
-        this.mapLayer.width * this.zoom,
-        this.mapLayer.height * this.zoom,
+        this.panY - s * this.mapOriginY,
+        this.mapLayer.width * s,
+        this.mapLayer.height * s,
       );
     } else {
       // Fallback: flat green diamond (uploads / replays without terrain data)
@@ -490,7 +503,22 @@ class Renderer {
 
     const pos = this.gameToCanvas(x, y);
     const color = this.playerColors[player] || "#ffffff";
-    const size = (this.sizes[type] || this.sizes.military) * this.zoom;
+
+    // A unit occupies at most one tile: its diameter fits within the tile's
+    // short diagonal (tileHeight). Small per-type variation, all <= 1 tile.
+    const tileShort = this.tileHeight * this.zoom;
+    const unitScale = {
+      villager: 0.8,
+      infantry: 0.95,
+      archer: 0.95,
+      cavalry: 1.0,
+      siege: 1.0,
+      monk: 0.95,
+      ship: 1.0,
+      king: 1.0,
+      military: 0.95,
+    };
+    const size = Math.max(2.5, tileShort * (unitScale[type] || 0.95));
 
     // Extract actual unit type from name for sprite lookup
     const actualType = unitName ? this.extractUnitType(unitName) : type;
@@ -498,14 +526,7 @@ class Renderer {
     // Try to use sprite (exact match only)
     const sprite = this.getSprite(actualType);
     if (sprite) {
-      this.drawSpriteWithPlayerColor(
-        pos.x,
-        pos.y,
-        sprite,
-        color,
-        size * 1.35, // 75% of 1.8 = 1.35
-        opacity,
-      );
+      this.drawSpriteWithPlayerColor(pos.x, pos.y, sprite, color, size, opacity);
     } else {
       // Fallback to geometric shapes
       this.ctx.globalAlpha = opacity;
@@ -578,24 +599,27 @@ class Renderer {
     }
   }
 
-  // Draw a sprite with player color indicator (circle for units)
-  drawSpriteWithPlayerColor(x, y, sprite, playerColor, size, opacity = 1) {
+  // Draw a sprite with player color indicator (circle for units).
+  // `diameter` is the full circle diameter (one tile = tileHeight*zoom).
+  drawSpriteWithPlayerColor(x, y, sprite, playerColor, diameter, opacity = 1) {
     const ctx = this.ctx;
     ctx.globalAlpha = opacity;
+    const r = diameter / 2;
 
-    // Draw player color glow/background circle
+    // Player-color circle (this is the full unit footprint, ~one tile)
     ctx.fillStyle = playerColor;
     ctx.beginPath();
-    ctx.arc(x, y, size / 2 + 2, 0, Math.PI * 2);
+    ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
 
-    // Draw black outline
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
-    ctx.lineWidth = 1;
+    // Thin black outline (scales with size)
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.lineWidth = Math.max(0.5, diameter * 0.08);
     ctx.stroke();
 
-    // Draw the sprite centered
-    ctx.drawImage(sprite, x - size / 2, y - size / 2, size, size);
+    // Sprite inset slightly so a thin player-color rim shows around it
+    const sd = diameter * 0.82;
+    ctx.drawImage(sprite, x - sd / 2, y - sd / 2, sd, sd);
 
     ctx.globalAlpha = 1;
   }

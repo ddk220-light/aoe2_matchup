@@ -1769,7 +1769,7 @@ class Renderer {
         // k·goldenAngle. ringStep is set so neighbouring icons overlap ~50%,
         // giving a dense blob that reads as a massed army rather than a grid.
         const baseSize = Math.max(3, this.tileHeight * this.zoom * 0.9 * 1.25);
-        const OVERLAP = 0.5; // icons overlap up to ~50%
+        const OVERLAP = 0.1; // icons overlap up to ~10%
         const ringStep = (baseSize * (1 - OVERLAP)) / 1.9;
 
         // The centre unit grows with the group: same size up to 5 units, then

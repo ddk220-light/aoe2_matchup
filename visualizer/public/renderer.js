@@ -518,7 +518,7 @@ class Renderer {
       king: 1.0,
       military: 0.95,
     };
-    const size = Math.max(2.5, tileShort * (unitScale[type] || 0.95));
+    const size = Math.max(3, tileShort * (unitScale[type] || 0.95) * 1.25);
 
     // Extract actual unit type from name for sprite lookup
     const actualType = unitName ? this.extractUnitType(unitName) : type;
@@ -664,8 +664,8 @@ class Renderer {
     // The transform creates a 2:1 isometric projection
     ctx.transform(1, 0.5, -1, 0.5, 0, 0);
 
-    // Scale to fit the desired size (accounting for transformation)
-    const scaleFactor = (size / sprite.width) * 0.7;
+    // Scale so the sprite roughly fills its tile footprint (slight overhang).
+    const scaleFactor = (size / sprite.width) * 0.55;
     ctx.scale(scaleFactor, scaleFactor);
 
     // Draw centered
@@ -839,6 +839,39 @@ class Renderer {
     ctx.fillStyle = color;
   }
 
+  // Building footprint in tiles (NxN). Approximate AoE2 DE values.
+  buildingFootprint(type, alt = "") {
+    const F = {
+      towncenter: 4,
+      castle: 4,
+      wonder: 5,
+      farm: 3,
+      barracks: 3,
+      archeryrange: 3,
+      stable: 3,
+      blacksmith: 3,
+      market: 3,
+      monastery: 3,
+      university: 3,
+      siegeworkshop: 3,
+      dock: 3,
+      house: 2,
+      mill: 2,
+      lumbercamp: 2,
+      miningcamp: 2,
+      outpost: 1,
+      watchtower: 1,
+      guardtower: 1,
+      keep: 1,
+      bombardtower: 1,
+    };
+    if (F[type] !== undefined) return F[type];
+    if (F[alt] !== undefined) return F[alt];
+    if (type.includes("wall") || type.includes("gate") || type.includes("tower"))
+      return 1;
+    return 2; // sensible default for unknown buildings
+  }
+
   // Draw a building based on its type
   drawBuilding(x, y, player, buildingType, opacity = 1) {
     if (x === null || y === null) return;
@@ -847,19 +880,14 @@ class Renderer {
     const color = this.playerColors[player] || "#ffffff";
     const typeClean = buildingType.toLowerCase().replace(/\s/g, "");
 
-    // Determine building size for rendering
-    let size = this.sizes.building_small * this.zoom;
     let spriteType = typeClean;
+    if (typeClean.includes("towncenter")) spriteType = "towncenter";
+    else if (typeClean.includes("castle")) spriteType = "castle";
 
-    if (typeClean.includes("towncenter")) {
-      size = this.sizes.towncenter * this.zoom;
-      spriteType = "towncenter";
-    } else if (typeClean.includes("castle")) {
-      size = this.sizes.castle * this.zoom;
-      spriteType = "castle";
-    } else if (this.largeBuildings.has(typeClean)) {
-      size = this.sizes.building_large * this.zoom;
-    }
+    // A building spans its real tile footprint: the player-color diamond is
+    // N tiles wide (N*tileWidth), so it covers an NxN tile area on the map.
+    const footprint = this.buildingFootprint(spriteType, typeClean);
+    const size = footprint * this.tileWidth * this.zoom;
 
     // Try to use sprite (exact match only)
     const sprite = this.getSprite(spriteType);
@@ -869,7 +897,7 @@ class Renderer {
         pos.y,
         sprite,
         color,
-        size * 0.6,
+        size,
         opacity,
       );
     } else {

@@ -1252,29 +1252,44 @@ class Renderer {
   // Compute every base outline for every player: cluster -> buffered hull ->
   // clipped to the map and to the midline against nearby other players.
   computeAllBases(buildings) {
+    // Group buildings by player, ignoring walls/gates and tagging each with its
+    // kind so a Town Center can seed a base and a Castle can reach further.
     const byPlayer = new Map();
     for (const [, b] of buildings) {
       if (b.x == null || b.y == null) continue;
+      const kind = this.buildingKind(b.type);
+      if (kind === "wall") continue; // walls don't count toward a base
+      b._kind = kind;
       if (!byPlayer.has(b.player)) byPlayer.set(b.player, []);
       byPlayer.get(b.player).push(b);
     }
 
     const dim = this.mapSize;
     const h = this.BUILDING_HALF;
+    // A castle reaches about double a normal building, so its hull-corner extent
+    // (which the buffer is added to) is sized so total reach ≈ 2x normal.
+    const castleHalf = (this.BUILDING_HALF + this.BASE_BUFFER) * 2 - this.BASE_BUFFER;
     const bases = [];
     for (const [player, bldgs] of byPlayer) {
-      if (bldgs.length < this.MIN_BASE_BUILDINGS) continue;
       const color = this.playerColors[player] || "#ffffff";
       const team = this.playerTeams ? this.playerTeams[player] : null;
       const label = team ? `${player} · Team ${team}` : player;
 
       for (const cl of this.clusterBuildings(bldgs, this.BASE_LINK_DIST)) {
-        if (cl.length < this.MIN_BASE_BUILDINGS) continue;
+        // A Town Center counts as a whole base on its own (weight = MIN);
+        // everything else contributes 1.
+        let weight = 0;
+        for (const b of cl) {
+          weight += b._kind === "tc" ? this.MIN_BASE_BUILDINGS : 1;
+        }
+        if (weight < this.MIN_BASE_BUILDINGS) continue;
+
         const pts = [];
         for (const b of cl) {
+          const hb = b._kind === "castle" ? castleHalf : h;
           pts.push(
-            { x: b.x - h, y: b.y - h }, { x: b.x + h, y: b.y - h },
-            { x: b.x + h, y: b.y + h }, { x: b.x - h, y: b.y + h },
+            { x: b.x - hb, y: b.y - hb }, { x: b.x + hb, y: b.y - hb },
+            { x: b.x + hb, y: b.y + hb }, { x: b.x - hb, y: b.y + hb },
           );
         }
         const hull = this.convexHull(pts);
@@ -1298,6 +1313,15 @@ class Renderer {
       }
     }
     return bases;
+  }
+
+  // Classify a building by name for base detection.
+  buildingKind(type) {
+    const t = (type || "").toLowerCase();
+    if (/wall|palisade|gate/.test(t)) return "wall";
+    if (/town\s*cent|\btc\b/.test(t)) return "tc";
+    if (/castle|krepost/.test(t)) return "castle";
+    return "other";
   }
 
   // Clip a convex polygon by the half-plane f(point) <= 0 (Sutherland-Hodgman).
@@ -1351,7 +1375,9 @@ class Renderer {
     ctx.restore();
   }
 
-  // Union-find single-linkage clustering of buildings by centre distance.
+  // Union-find single-linkage clustering of buildings by centre distance. A
+  // castle links from double the normal distance (it pulls farther buildings
+  // into the base).
   clusterBuildings(bldgs, linkDist) {
     const n = bldgs.length;
     const parent = Array.from({ length: n }, (_, i) => i);
@@ -1363,11 +1389,16 @@ class Renderer {
       return x;
     };
     const d2 = linkDist * linkDist;
+    const d2Castle = (linkDist * 2) * (linkDist * 2);
     for (let i = 0; i < n; i++) {
       for (let j = i + 1; j < n; j++) {
         const dx = bldgs[i].x - bldgs[j].x;
         const dy = bldgs[i].y - bldgs[j].y;
-        if (dx * dx + dy * dy <= d2) parent[find(i)] = find(j);
+        const limit =
+          bldgs[i]._kind === "castle" || bldgs[j]._kind === "castle"
+            ? d2Castle
+            : d2;
+        if (dx * dx + dy * dy <= limit) parent[find(i)] = find(j);
       }
     }
     const groups = new Map();

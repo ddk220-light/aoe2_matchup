@@ -881,13 +881,17 @@ class Renderer {
     return 2; // sensible default for unknown buildings
   }
 
-  // Vertical "height" (canvas px, pre-zoom) for tall structures, so they read
-  // as raised 3D blocks in the isometric view. 0 = flat (drawn on the ground).
-  buildingHeight(spriteType, typeClean) {
+  // Vertical "height" (canvas px, pre-zoom) for buildings, so they read as
+  // raised 3D blocks in the isometric view. Height scales with footprint:
+  // castle/TC/towers are special, farms stay flat, 3x3+ are 5px, 2x2 (and
+  // smaller) are 2px. 0 = flat (drawn on the ground).
+  buildingHeight(spriteType, typeClean, footprint) {
     if (spriteType === "castle") return 18;
     if (spriteType === "towncenter") return 11;
     if (/tower|keep|outpost|turret|donjon/.test(typeClean)) return 14;
-    return 0;
+    if (/farm/.test(typeClean)) return 0; // farms lie flat on the ground
+    if (footprint >= 3) return 5;
+    return 2; // 2x2 and smaller
   }
 
   // Draw a raised isometric block (the two viewer-facing vertical faces) under a
@@ -956,7 +960,8 @@ class Renderer {
 
     // Tall structures (TC / castle / towers) sit on a raised iso block; their
     // sprite/shape is drawn elevated onto the top of it.
-    const heightPx = this.buildingHeight(spriteType, typeClean) * this.zoom;
+    const heightPx =
+      this.buildingHeight(spriteType, typeClean, footprint) * this.zoom;
     let drawX = pos.x;
     let drawY = pos.y;
     if (heightPx > 0) {

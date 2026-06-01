@@ -1834,7 +1834,10 @@ class Renderer {
             pxX = radius * Math.cos(angle);
             pxY = radius * Math.sin(angle);
           }
-          const scale = scaleOf.get(name) || 1;
+          // A trebuchet the engine considers actively firing is blown up to 3×
+          // and tagged, so it's obvious it's "firing" even before projectiles.
+          const firing = !!unit.firing;
+          const scale = firing ? 3 : scaleOf.get(name) || 1;
 
           this.drawUnit(
             unit.x,
@@ -1847,6 +1850,11 @@ class Renderer {
             pxY,
             scale,
           );
+
+          if (firing) {
+            const pos = this.gameToCanvas(unit.x, unit.y);
+            this.drawFiringTag(pos.x + pxX, pos.y + pxY, baseSize * scale);
+          }
         }
       }
     };
@@ -1921,6 +1929,24 @@ class Renderer {
       ctx.fill();
       ctx.restore();
     }
+  }
+
+  // Debug tag drawn under a trebuchet the engine thinks is firing.
+  drawFiringTag(cx, cy, sizePx) {
+    const ctx = this.ctx;
+    const fontSize = Math.max(9, 11 * this.zoom);
+    ctx.save();
+    ctx.font = `bold ${fontSize}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    const label = "FIRING";
+    const w = ctx.measureText(label).width;
+    const y = cy + sizePx / 2 + 3;
+    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+    ctx.fillRect(cx - w / 2 - 3, y - 1, w + 6, fontSize + 3);
+    ctx.fillStyle = "#ffd24a";
+    ctx.fillText(label, cx, y);
+    ctx.restore();
   }
 
   // Expanding flash at the impact point; t in 0..1 over the last bit of flight.

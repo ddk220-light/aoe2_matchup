@@ -1106,6 +1106,9 @@ class Playback {
       if (this.currentTime < fireStart || this.currentTime > ep.end) continue;
       const attacker = interpolatedUnits.get(ep.unitName);
       if (!attacker || !attacker.alive) continue;
+      // Mark the treb as actively firing for the whole window (debug: the
+      // renderer enlarges it and tags it, independent of projectile drawing).
+      attacker.firing = true;
       const firstK = Math.max(
         0,
         Math.ceil((this.currentTime - TREB_FLIGHT - fireStart) / TREB_RELOAD),

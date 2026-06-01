@@ -280,31 +280,97 @@ class Playback {
     return true;
   }
 
+  // Like isTileBlocked but without the start/goal exemption: the raw occupancy
+  // of a tile at `time`. Used to detect commands that target a blocked tile.
+  tileBlockedRaw(tx, ty, time) {
+    const pf = this.pf;
+    if (tx < 0 || ty < 0 || tx >= pf.dim || ty >= pf.dim) return true;
+    const idx = ty * pf.dim + tx;
+    if (pf.staticBlocked[idx]) return true;
+    const bt = pf.buildingBlockTime.get(idx);
+    return bt !== undefined && bt <= time;
+  }
+
+  // Nearest free tile to (tx,ty) by expanding Chebyshev rings (null if none
+  // within maxR). Lets a unit sent onto a tree/resource stop at its edge.
+  nearestFreeTile(tx, ty, time, maxR) {
+    if (!this.tileBlockedRaw(tx, ty, time)) return { x: tx, y: ty };
+    for (let r = 1; r <= maxR; r++) {
+      for (let dx = -r; dx <= r; dx++) {
+        for (let dy = -r; dy <= r; dy++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; // ring perimeter only
+          if (!this.tileBlockedRaw(tx + dx, ty + dy, time)) {
+            return { x: tx + dx, y: ty + dy };
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  // Where a unit actually comes to rest for a command whose target may be on a
+  // blocked tile (wood / gold / stone): the resource edge, matching how findPath
+  // resolves a blocked goal. Keeps boundary/resting positions out of obstacles.
+  resolvedStop(x, y, time) {
+    if (!this.pf || !this.tileBlockedRaw(Math.floor(x), Math.floor(y), time)) {
+      return { x, y };
+    }
+    const f = this.nearestFreeTile(Math.floor(x), Math.floor(y), time, 8);
+    return f ? { x: f.x + 0.5, y: f.y + 0.5 } : { x, y };
+  }
+
   // A* on the tile grid from (sx,sy) to (gx,gy) at `time`. Returns a smoothed
   // list of waypoints [{x,y}, ...] from start to goal, or a straight [start,goal]
   // fallback if there's no grid, no obstacle in the way, or no path within budget.
   findPath(sx, sy, gx, gy, time) {
-    const straight = [
-      { x: sx, y: sy },
-      { x: gx, y: gy },
-    ];
     const pf = this.pf;
-    if (!pf) return straight;
+    if (!pf) {
+      return [
+        { x: sx, y: sy },
+        { x: gx, y: gy },
+      ];
+    }
 
-    const start = { x: Math.floor(sx), y: Math.floor(sy) };
-    const goal = { x: Math.floor(gx), y: Math.floor(gy) };
-    if (start.x === goal.x && start.y === goal.y) return straight;
+    // If an endpoint sits on a blocked tile (a villager commanded onto a tree or
+    // gold/stone pile), pathfind to/from the nearest free tile instead of into
+    // it. Otherwise the target is unreachable from open ground and A* clips
+    // straight in. The unit stops at the forest/resource edge, like real
+    // gathering. A blocked start keeps the real start as a first hop out.
+    let ax = sx, ay = sy, bx = gx, by = gy;
+    let prefix = null;
+    if (this.tileBlockedRaw(Math.floor(sx), Math.floor(sy), time)) {
+      const f = this.nearestFreeTile(Math.floor(sx), Math.floor(sy), time, 8);
+      if (f) {
+        prefix = { x: sx, y: sy };
+        ax = f.x + 0.5;
+        ay = f.y + 0.5;
+      }
+    }
+    if (this.tileBlockedRaw(Math.floor(gx), Math.floor(gy), time)) {
+      const f = this.nearestFreeTile(Math.floor(gx), Math.floor(gy), time, 8);
+      if (f) {
+        bx = f.x + 0.5;
+        by = f.y + 0.5;
+      }
+    }
+    const finalize = (core) => (prefix ? [prefix, ...core] : core);
+
+    const start = { x: Math.floor(ax), y: Math.floor(ay) };
+    const goal = { x: Math.floor(bx), y: Math.floor(by) };
+    if (start.x === goal.x && start.y === goal.y) {
+      return finalize([{ x: ax, y: ay }, { x: bx, y: by }]);
+    }
 
     // Nothing in the way -> keep it cheap and exact.
-    if (this.lineClear(sx, sy, gx, gy, time, start.x, start.y, goal.x, goal.y)) {
-      return straight;
+    if (this.lineClear(ax, ay, bx, by, time, start.x, start.y, goal.x, goal.y)) {
+      return finalize([{ x: ax, y: ay }, { x: bx, y: by }]);
     }
 
     // Shared cache (buildings change slowly, so bucket time coarsely).
     const bucket = Math.floor(time / 20);
     const key = `${start.x},${start.y},${goal.x},${goal.y},${bucket}`;
     const cached = this._pathCache.get(key);
-    if (cached) return cached;
+    if (cached) return finalize(cached);
 
     const dim = pf.dim;
     const gScore = new Map();
@@ -359,7 +425,7 @@ class Playback {
       [1, 1, Math.SQRT2], [1, -1, Math.SQRT2],
       [-1, 1, Math.SQRT2], [-1, -1, Math.SQRT2],
     ];
-    const MAX_EXPANSIONS = 4000;
+    const MAX_EXPANSIONS = 8000;
     let expansions = 0;
     let found = false;
 
@@ -401,8 +467,11 @@ class Playback {
     }
 
     if (!found) {
-      this._pathCache.set(key, straight);
-      return straight;
+      // No route within budget: stop at the resolved (edge) endpoints rather
+      // than the raw command target, so we don't draw a line into the forest.
+      const fallback = [{ x: ax, y: ay }, { x: bx, y: by }];
+      this._pathCache.set(key, fallback);
+      return finalize(fallback);
     }
 
     // Reconstruct tile path, then smooth it with line-of-sight string pulling.
@@ -416,9 +485,9 @@ class Playback {
       cur = came.get(cur);
     }
     tiles.reverse();
-    // Anchor the real start/goal so motion is exact at both ends.
-    tiles[0] = { x: sx, y: sy };
-    tiles[tiles.length - 1] = { x: gx, y: gy };
+    // Anchor the resolved start/goal so motion is exact at both ends.
+    tiles[0] = { x: ax, y: ay };
+    tiles[tiles.length - 1] = { x: bx, y: by };
 
     const smoothed = [tiles[0]];
     let anchor = 0;
@@ -436,7 +505,7 @@ class Playback {
     smoothed.push(tiles[tiles.length - 1]);
 
     this._pathCache.set(key, smoothed);
-    return smoothed;
+    return finalize(smoothed);
   }
 
   // Walk `dist` tiles along a polyline path; returns the resulting {x,y}.
@@ -681,18 +750,26 @@ class Playback {
     // finished a command rest exactly on its target either way). This keeps even a
     // far timeline seek to ~one A* per unit instead of one per command.
     let pf = unit._pf;
-    if (!pf) pf = unit._pf = { boundaries: [], upto: -1, activeIndex: -1, activePath: null };
+    if (!pf)
+      pf = unit._pf = {
+        boundaries: [], upto: -1, activeIndex: -1, activePath: null,
+        restIndex: -1, restPos: null,
+      };
 
     const segStartTime = (i) =>
       i === 0 ? movements[0].time - 10 : movements[i].time; // assume it existed ~10s before its first command
     const segStartPos = (i) =>
       i === 0 ? { x: startX, y: startY } : pf.boundaries[i - 1];
 
-    // Extend the cached boundary chain over every command that's already finished.
+    // Extend the cached boundary chain over every command that's already
+    // finished. Resolve targets off blocked tiles so a unit that finished a
+    // gather command rests at the resource edge, not inside the forest/pile.
     for (let i = pf.upto + 1; i < commandIndex; i++) {
       const from = segStartPos(i);
-      const dest = destFor(i, from);
-      const avail = Math.max(0, movements[i + 1].time - segStartTime(i)) * speed;
+      const t0i = segStartTime(i);
+      const raw = destFor(i, from);
+      const dest = this.resolvedStop(raw.x, raw.y, t0i);
+      const avail = Math.max(0, movements[i + 1].time - t0i) * speed;
       pf.boundaries[i] = this.advanceStraight(from, dest, avail);
       pf.upto = i;
     }
@@ -707,12 +784,18 @@ class Playback {
     // Resting shortcut: once the unit has had far more time than even a heavily
     // detoured route could need, it's sitting on the target — return it directly
     // and skip A* entirely. This is what keeps a far timeline seek cheap, since
-    // most units are idle on their last command at any given moment.
+    // most units are idle on their last command at any given moment. A target on
+    // a blocked tile (e.g. wood/gold) resolves to the resource edge so the unit
+    // doesn't rest inside the forest. Cache the resolved spot per command.
     const straightDist = Math.hypot(dest.x - from.x, dest.y - from.y);
     if (dist >= straightDist * 4 + 8) {
       pf.activeIndex = -1;
       pf.activePath = null;
-      return { x: dest.x, y: dest.y };
+      if (pf.restIndex !== commandIndex) {
+        pf.restPos = this.resolvedStop(dest.x, dest.y, t0);
+        pf.restIndex = commandIndex;
+      }
+      return pf.restPos;
     }
 
     // Otherwise compute (and cache until the command changes) the avoidance path.

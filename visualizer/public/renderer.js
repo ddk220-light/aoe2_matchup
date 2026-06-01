@@ -881,6 +881,62 @@ class Renderer {
     return 2; // sensible default for unknown buildings
   }
 
+  // Vertical "height" (canvas px, pre-zoom) for tall structures, so they read
+  // as raised 3D blocks in the isometric view. 0 = flat (drawn on the ground).
+  buildingHeight(spriteType, typeClean) {
+    if (spriteType === "castle") return 18;
+    if (spriteType === "towncenter") return 11;
+    if (/tower|keep|outpost|turret|donjon/.test(typeClean)) return 14;
+    return 0;
+  }
+
+  // Draw a raised isometric block (the two viewer-facing vertical faces) under a
+  // building so it appears to have height. The building's own diamond/sprite is
+  // drawn elevated by `heightPx` and serves as the top cap of the block.
+  drawIsoExtrusion(x, y, footprint, heightPx, color, opacity = 1) {
+    const ctx = this.ctx;
+    const halfW = (footprint * this.tileWidth * this.zoom) / 2;
+    const halfH = (footprint * this.tileHeight * this.zoom) / 2;
+
+    // Ground diamond's lower corners (left, bottom, right) and their raised twins.
+    const gL = { x: x - halfW, y: y };
+    const gB = { x: x, y: y + halfH };
+    const gR = { x: x + halfW, y: y };
+    const tL = { x: gL.x, y: gL.y - heightPx };
+    const tB = { x: gB.x, y: gB.y - heightPx };
+    const tR = { x: gR.x, y: gR.y - heightPx };
+
+    ctx.save();
+    ctx.globalAlpha = opacity;
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.55)";
+    ctx.lineWidth = 1;
+    ctx.lineJoin = "round";
+
+    // Left face (darker) — L -> B -> B' -> L'
+    ctx.fillStyle = this.darkenColor(color, 0.5);
+    ctx.beginPath();
+    ctx.moveTo(gL.x, gL.y);
+    ctx.lineTo(gB.x, gB.y);
+    ctx.lineTo(tB.x, tB.y);
+    ctx.lineTo(tL.x, tL.y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Right face (a touch lighter) — B -> R -> R' -> B'
+    ctx.fillStyle = this.darkenColor(color, 0.3);
+    ctx.beginPath();
+    ctx.moveTo(gB.x, gB.y);
+    ctx.lineTo(gR.x, gR.y);
+    ctx.lineTo(tR.x, tR.y);
+    ctx.lineTo(tB.x, tB.y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
   // Draw a building based on its type
   drawBuilding(x, y, player, buildingType, opacity = 1) {
     if (x === null || y === null) return;
@@ -898,12 +954,22 @@ class Renderer {
     const footprint = this.buildingFootprint(spriteType, typeClean);
     const size = footprint * this.tileWidth * this.zoom;
 
+    // Tall structures (TC / castle / towers) sit on a raised iso block; their
+    // sprite/shape is drawn elevated onto the top of it.
+    const heightPx = this.buildingHeight(spriteType, typeClean) * this.zoom;
+    let drawX = pos.x;
+    let drawY = pos.y;
+    if (heightPx > 0) {
+      this.drawIsoExtrusion(pos.x, pos.y, footprint, heightPx, color, opacity);
+      drawY = pos.y - heightPx;
+    }
+
     // Try to use sprite (exact match only)
     const sprite = this.getSprite(spriteType);
     if (sprite) {
       this.drawBuildingSpriteWithPlayerColor(
-        pos.x,
-        pos.y,
+        drawX,
+        drawY,
         sprite,
         color,
         size,
@@ -917,19 +983,19 @@ class Renderer {
       this.ctx.lineWidth = 1;
 
       if (typeClean.includes("towncenter")) {
-        this.drawTownCenter(pos.x, pos.y, color);
+        this.drawTownCenter(drawX, drawY, color);
       } else if (typeClean.includes("castle")) {
-        this.drawCastle(pos.x, pos.y, color);
+        this.drawCastle(drawX, drawY, color);
       } else if (this.largeBuildings.has(typeClean)) {
         this.drawLargeBuilding(
-          pos.x,
-          pos.y,
+          drawX,
+          drawY,
           this.sizes.building_large * this.zoom,
         );
       } else {
         this.drawSmallBuilding(
-          pos.x,
-          pos.y,
+          drawX,
+          drawY,
           this.sizes.building_small * this.zoom,
         );
       }
@@ -1786,46 +1852,60 @@ class Renderer {
     const end = this.gameToCanvas(wall.x_end, wall.y_end);
     const color = this.playerColors[wall.player] || "#888888";
 
-    // Determine wall style based on type (half the previous thickness).
+    // Determine wall style based on type (half the previous thickness). Each
+    // wall also gets a small height so it reads as a raised 3D ribbon.
     let wallWidth = 2 * this.zoom;
     let wallColor = color;
+    let height = 5 * this.zoom;
 
     if (wall.type.includes("stone") || wall.type.includes("fortified")) {
       wallWidth = 3 * this.zoom;
       wallColor = this.darkenColor(color, 0.2);
+      height = 8 * this.zoom;
     } else if (wall.type.includes("palisade")) {
       wallWidth = 1.5 * this.zoom;
+      height = 4 * this.zoom;
     }
 
-    // Walls render at half opacity so they read as lighter, thinner lines.
+    // Raised twins of the segment endpoints (lifted straight up the screen).
+    const sTop = { x: start.x, y: start.y - height };
+    const eTop = { x: end.x, y: end.y - height };
+
+    // Walls render at half opacity so they read as lighter, thinner ribbons.
     this.ctx.save();
     this.ctx.globalAlpha = 0.5;
     this.ctx.lineCap = "round";
+    this.ctx.lineJoin = "round";
 
-    // Draw outline first (darker/thinner line behind)
-    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
-    this.ctx.lineWidth = wallWidth + 1 * this.zoom;
+    // Vertical face of the wall (the "height"), a darker shade of the colour.
+    this.ctx.fillStyle = this.darkenColor(wallColor, 0.45);
+    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
+    this.ctx.lineWidth = 1 * this.zoom;
     this.ctx.beginPath();
     this.ctx.moveTo(start.x, start.y);
     this.ctx.lineTo(end.x, end.y);
+    this.ctx.lineTo(eTop.x, eTop.y);
+    this.ctx.lineTo(sTop.x, sTop.y);
+    this.ctx.closePath();
+    this.ctx.fill();
     this.ctx.stroke();
 
-    // Draw the wall line on top
+    // Top cap of the wall, in the player colour.
     this.ctx.strokeStyle = wallColor;
     this.ctx.lineWidth = wallWidth;
     this.ctx.beginPath();
-    this.ctx.moveTo(start.x, start.y);
-    this.ctx.lineTo(end.x, end.y);
+    this.ctx.moveTo(sTop.x, sTop.y);
+    this.ctx.lineTo(eTop.x, eTop.y);
     this.ctx.stroke();
 
-    // Draw end posts
+    // Raised end posts.
     const postSize = wallWidth * 1.5;
     this.ctx.fillStyle = this.darkenColor(wallColor, 0.3);
     this.ctx.beginPath();
-    this.ctx.arc(start.x, start.y, postSize / 2, 0, Math.PI * 2);
+    this.ctx.arc(sTop.x, sTop.y, postSize / 2, 0, Math.PI * 2);
     this.ctx.fill();
     this.ctx.beginPath();
-    this.ctx.arc(end.x, end.y, postSize / 2, 0, Math.PI * 2);
+    this.ctx.arc(eTop.x, eTop.y, postSize / 2, 0, Math.PI * 2);
     this.ctx.fill();
 
     this.ctx.restore();

@@ -545,16 +545,30 @@ class Renderer {
 
   // Draw a unit based on its type
   // unitName is the full name like "knight_Player1_1" for label display
-  drawUnit(x, y, player, type, opacity = 1, unitName = null) {
+  drawUnit(
+    x,
+    y,
+    player,
+    type,
+    opacity = 1,
+    unitName = null,
+    pxOffsetX = 0,
+    pxOffsetY = 0,
+    sizeScale = 1,
+  ) {
     if (x === null || y === null) return;
 
+    // Base position is projected from game coords; the spread offset is added in
+    // screen pixels so a group reads as a true circular blob on screen.
     const pos = this.gameToCanvas(x, y);
+    const cx = pos.x + pxOffsetX;
+    const cy = pos.y + pxOffsetY;
     const color = this.playerColors[player] || "#ffffff";
 
     // A unit occupies at most one tile: its diameter fits within the tile's
-    // short diagonal (tileHeight). Uniform size across all types.
+    // short diagonal (tileHeight). sizeScale enlarges the centre of big groups.
     const tileShort = this.tileHeight * this.zoom;
-    const size = Math.max(3, tileShort * 0.9 * 1.25);
+    const size = Math.max(3, tileShort * 0.9 * 1.25) * sizeScale;
 
     // Villagers stay as plain player-colored dots. Military units show their
     // unit icon on a player-colored circle. A unit with no matching icon falls
@@ -568,14 +582,14 @@ class Renderer {
     }
 
     if (sprite) {
-      this.drawSpriteWithPlayerColor(pos.x, pos.y, sprite, color, size, opacity);
+      this.drawSpriteWithPlayerColor(cx, cy, sprite, color, size, opacity);
       return;
     }
 
     this.ctx.globalAlpha = opacity;
     this.ctx.fillStyle = color;
     this.ctx.beginPath();
-    this.ctx.arc(pos.x, pos.y, size / 2, 0, Math.PI * 2);
+    this.ctx.arc(cx, cy, size / 2, 0, Math.PI * 2);
     this.ctx.fill();
     this.ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
     this.ctx.lineWidth = Math.max(0.5, size * 0.08);
@@ -1734,66 +1748,71 @@ class Renderer {
       }
     }
 
-    // Helper function to draw unit groups with position offsets
+    // Golden angle (~137.5°): consecutive points spiral to fill a disc evenly.
+    const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+
+    // Helper function to draw co-located units as one tight "army blob".
     const drawUnitGroup = (unitsByPosition, isIdleVillagerGroup = false) => {
       for (const [posKey, units] of unitsByPosition) {
         const count = units.length;
 
-        for (let i = 0; i < count; i++) {
-          const { name, unit } = units[i];
+        // Stable slot order: sort by unit name so each unit keeps the same
+        // spiral slot frame-to-frame (no jitter from iteration-order changes).
+        const ordered =
+          count > 1
+            ? [...units].sort((a, b) =>
+                a.name < b.name ? -1 : a.name > b.name ? 1 : 0,
+              )
+            : units;
+
+        // Vogel sunflower spiral in screen pixels: radius = ringStep·√k, angle =
+        // k·goldenAngle. ringStep is set so neighbouring icons overlap ~50%,
+        // giving a dense blob that reads as a massed army rather than a grid.
+        const baseSize = Math.max(3, this.tileHeight * this.zoom * 0.9 * 1.25);
+        const OVERLAP = 0.5; // icons overlap up to ~50%
+        const ringStep = (baseSize * (1 - OVERLAP)) / 1.9;
+
+        // The centre unit grows with the group: same size up to 5 units, then
+        // +1/3 of normal per extra 5, capped at 2× (reached ~16-20 units). Makes
+        // a big incoming army easy to spot at a glance.
+        const centerScale = 1 + Math.min(3, Math.floor((count - 1) / 5)) / 3;
+
+        // Draw outermost first so the larger central unit lands on top.
+        for (let k = count - 1; k >= 0; k--) {
+          const { name, unit } = ordered[k];
           let opacity = unit.dying ? 0.5 : 1;
 
           // Idle villagers: 50% opacity after 30s, fading to 25% by 5 minutes
           if (isIdleVillagerGroup) {
             const idleTime = unit.idleTime || 0;
             if (idleTime < 300) {
-              // Fade from 50% to 25% between 30s and 5 minutes idle
               opacity *= 0.5 - ((idleTime - 30) / 270) * 0.25;
             } else {
-              // 25% after 5 minutes idle
               opacity *= 0.25;
             }
           }
 
-          // Calculate offset for multiple units at same position
-          let offsetX = 0;
-          let offsetY = 0;
-
+          let pxX = 0;
+          let pxY = 0;
+          let scale = 1;
           if (count > 1) {
-            // Arrange units in a circle/grid pattern around the center
-            const spacing = 1.5; // Game units spacing
-            if (count <= 4) {
-              // Square pattern for 2-4 units
-              const offsets = [
-                [-0.5, -0.5],
-                [0.5, -0.5],
-                [-0.5, 0.5],
-                [0.5, 0.5],
-              ];
-              offsetX = offsets[i][0] * spacing;
-              offsetY = offsets[i][1] * spacing;
-            } else if (count <= 9) {
-              // 3x3 grid for 5-9 units
-              const row = Math.floor(i / 3);
-              const col = i % 3;
-              offsetX = (col - 1) * spacing;
-              offsetY = (row - 1) * spacing;
-            } else {
-              // Circle pattern for many units
-              const angle = (i / count) * Math.PI * 2;
-              const radius = Math.ceil(Math.sqrt(count)) * spacing * 0.5;
-              offsetX = Math.cos(angle) * radius;
-              offsetY = Math.sin(angle) * radius;
-            }
+            const radius = ringStep * Math.sqrt(k);
+            const angle = k * GOLDEN_ANGLE;
+            pxX = radius * Math.cos(angle);
+            pxY = radius * Math.sin(angle);
+            if (k === 0) scale = centerScale;
           }
 
           this.drawUnit(
-            unit.x + offsetX,
-            unit.y + offsetY,
+            unit.x,
+            unit.y,
             unit.player,
             unit.type,
             opacity,
             name,
+            pxX,
+            pxY,
+            scale,
           );
         }
       }

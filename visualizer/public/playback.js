@@ -37,6 +37,11 @@ class Playback {
     // Pre-process all unit movements
     this.preprocessMovements();
 
+    // Build the static + time-aware obstacle grid used for pathfinding so units
+    // route around trees, resources and buildings instead of walking through them.
+    this.buildObstacleGrid();
+    this._pathCache = new Map();
+
     // Initialize state
     this.initializeUnits();
   }
@@ -173,6 +178,285 @@ class Playback {
 
     // Sort building events by time
     this.buildingEvents.sort((a, b) => a.time - b.time);
+  }
+
+  // ---- Pathfinding: obstacle grid + A* so units route around static obstacles ----
+
+  // Approximate building footprints in tiles (keyword -> side length). Units path
+  // around the whole footprint. Exact sizes aren't important for routing.
+  static BUILDING_TILE_SIZES = [
+    [/town\s*cent|\btc\b/, 4],
+    [/castle|krepost/, 4],
+    [/wonder/, 4],
+    [/wall|gate|tower|outpost/, 1],
+    [/house/, 2],
+    [/mill|lumber|mining|\bcamp\b|dock|fish trap/, 2],
+    [/farm/, 3],
+    [/barrack|archery|stable|siege|blacksmith|market|monaster|universit|harbor|donjon|feitoria/, 3],
+  ];
+
+  buildingTileSize(type) {
+    const t = (type || "").toLowerCase();
+    for (const [re, n] of Playback.BUILDING_TILE_SIZES) {
+      if (re.test(t)) return n;
+    }
+    return 3; // default footprint
+  }
+
+  // Build the occupancy grid. Static blockers (forest terrain + resource piles)
+  // never change; buildings are recorded with the time they appear so paths
+  // computed earlier in the game don't avoid a building that isn't placed yet.
+  buildObstacleGrid() {
+    this.pf = null;
+    const terrain = this.data.terrain;
+    if (!terrain || !terrain.ids || !terrain.dimension) return; // no map -> straight lines
+
+    const dim = terrain.dimension;
+    const staticBlocked = new Uint8Array(dim * dim);
+
+    // Forest tiles (baked into terrain, colored as forest green).
+    const palette = terrain.palette || {};
+    const FOREST_HEX = "#2f4d24";
+    for (let i = 0; i < terrain.ids.length; i++) {
+      if (palette[terrain.ids[i]] === FOREST_HEX) staticBlocked[i] = 1;
+    }
+
+    // Resource piles (gold / stone / relic / forage) occupy their tile.
+    const BLOCKING_RES = new Set(["gold", "stone", "relic", "forage"]);
+    for (const o of this.data.map_objects || []) {
+      if (!BLOCKING_RES.has(o.c)) continue;
+      const tx = Math.floor(o.x);
+      const ty = Math.floor(o.y);
+      if (tx >= 0 && ty >= 0 && tx < dim && ty < dim) staticBlocked[ty * dim + tx] = 1;
+    }
+
+    // Buildings: tile -> earliest build time (so blocking is time-aware).
+    const buildingBlockTime = new Map();
+    for (const b of this.buildingEvents) {
+      const s = this.buildingTileSize(b.type);
+      const x0 = Math.round(b.x - s / 2);
+      const y0 = Math.round(b.y - s / 2);
+      for (let dy = 0; dy < s; dy++) {
+        for (let dx = 0; dx < s; dx++) {
+          const tx = x0 + dx;
+          const ty = y0 + dy;
+          if (tx < 0 || ty < 0 || tx >= dim || ty >= dim) continue;
+          const idx = ty * dim + tx;
+          const prev = buildingBlockTime.get(idx);
+          if (prev === undefined || b.time < prev) buildingBlockTime.set(idx, b.time);
+        }
+      }
+    }
+
+    this.pf = { dim, staticBlocked, buildingBlockTime };
+  }
+
+  // Is tile (tx,ty) blocked at `time`? The start and goal tiles are always
+  // passable so a unit can leave/enter a resource or building tile it was
+  // commanded onto (e.g. a villager sent to mine gold).
+  isTileBlocked(tx, ty, time, sx, sy, gx, gy) {
+    const pf = this.pf;
+    if (tx < 0 || ty < 0 || tx >= pf.dim || ty >= pf.dim) return true;
+    if ((tx === sx && ty === sy) || (tx === gx && ty === gy)) return false;
+    const idx = ty * pf.dim + tx;
+    if (pf.staticBlocked[idx]) return true;
+    const bt = pf.buildingBlockTime.get(idx);
+    return bt !== undefined && bt <= time;
+  }
+
+  // Straight line from a to b is clear of obstacles (used to smooth A* paths).
+  lineClear(ax, ay, bx, by, time, sx, sy, gx, gy) {
+    const dx = bx - ax;
+    const dy = by - ay;
+    const dist = Math.hypot(dx, dy);
+    const steps = Math.max(1, Math.ceil(dist / 0.25));
+    for (let k = 1; k < steps; k++) {
+      const px = ax + (dx * k) / steps;
+      const py = ay + (dy * k) / steps;
+      if (this.isTileBlocked(Math.floor(px), Math.floor(py), time, sx, sy, gx, gy)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // A* on the tile grid from (sx,sy) to (gx,gy) at `time`. Returns a smoothed
+  // list of waypoints [{x,y}, ...] from start to goal, or a straight [start,goal]
+  // fallback if there's no grid, no obstacle in the way, or no path within budget.
+  findPath(sx, sy, gx, gy, time) {
+    const straight = [
+      { x: sx, y: sy },
+      { x: gx, y: gy },
+    ];
+    const pf = this.pf;
+    if (!pf) return straight;
+
+    const start = { x: Math.floor(sx), y: Math.floor(sy) };
+    const goal = { x: Math.floor(gx), y: Math.floor(gy) };
+    if (start.x === goal.x && start.y === goal.y) return straight;
+
+    // Nothing in the way -> keep it cheap and exact.
+    if (this.lineClear(sx, sy, gx, gy, time, start.x, start.y, goal.x, goal.y)) {
+      return straight;
+    }
+
+    // Shared cache (buildings change slowly, so bucket time coarsely).
+    const bucket = Math.floor(time / 20);
+    const key = `${start.x},${start.y},${goal.x},${goal.y},${bucket}`;
+    const cached = this._pathCache.get(key);
+    if (cached) return cached;
+
+    const dim = pf.dim;
+    const gScore = new Map();
+    const came = new Map();
+    const closed = new Set();
+    const sIdx = start.y * dim + start.x;
+    const gIdx = goal.y * dim + goal.x;
+    const h = (x, y) => {
+      const ddx = Math.abs(x - goal.x);
+      const ddy = Math.abs(y - goal.y);
+      return Math.max(ddx, ddy) + (Math.SQRT2 - 1) * Math.min(ddx, ddy);
+    };
+
+    // Binary min-heap of [f, idx] so the lowest-f node is O(log n) to pop.
+    const heap = [];
+    const hpush = (f, idx) => {
+      heap.push([f, idx]);
+      let i = heap.length - 1;
+      while (i > 0) {
+        const p = (i - 1) >> 1;
+        if (heap[p][0] <= heap[i][0]) break;
+        const tmp = heap[p]; heap[p] = heap[i]; heap[i] = tmp;
+        i = p;
+      }
+    };
+    const hpop = () => {
+      const top = heap[0];
+      const last = heap.pop();
+      if (heap.length) {
+        heap[0] = last;
+        let i = 0;
+        const n = heap.length;
+        for (;;) {
+          const l = 2 * i + 1;
+          const r = 2 * i + 2;
+          let s = i;
+          if (l < n && heap[l][0] < heap[s][0]) s = l;
+          if (r < n && heap[r][0] < heap[s][0]) s = r;
+          if (s === i) break;
+          const tmp = heap[s]; heap[s] = heap[i]; heap[i] = tmp;
+          i = s;
+        }
+      }
+      return top;
+    };
+
+    gScore.set(sIdx, 0);
+    hpush(h(start.x, start.y), sIdx);
+
+    const NEIGHBORS = [
+      [1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1],
+      [1, 1, Math.SQRT2], [1, -1, Math.SQRT2],
+      [-1, 1, Math.SQRT2], [-1, -1, Math.SQRT2],
+    ];
+    const MAX_EXPANSIONS = 4000;
+    let expansions = 0;
+    let found = false;
+
+    while (heap.length > 0) {
+      const curIdx = hpop()[1];
+      if (closed.has(curIdx)) continue; // stale heap entry
+      if (curIdx === gIdx) {
+        found = true;
+        break;
+      }
+      closed.add(curIdx);
+      if (++expansions > MAX_EXPANSIONS) break;
+
+      const cx = curIdx % dim;
+      const cy = (curIdx - cx) / dim;
+      const cg = gScore.get(curIdx);
+      for (const [ndx, ndy, cost] of NEIGHBORS) {
+        const nx = cx + ndx;
+        const ny = cy + ndy;
+        if (this.isTileBlocked(nx, ny, time, start.x, start.y, goal.x, goal.y)) continue;
+        // Don't cut diagonally between two blocked tiles.
+        if (ndx !== 0 && ndy !== 0) {
+          if (
+            this.isTileBlocked(cx + ndx, cy, time, start.x, start.y, goal.x, goal.y) &&
+            this.isTileBlocked(cx, cy + ndy, time, start.x, start.y, goal.x, goal.y)
+          ) {
+            continue;
+          }
+        }
+        const nIdx = ny * dim + nx;
+        if (closed.has(nIdx)) continue;
+        const tentative = cg + cost;
+        if (tentative < (gScore.get(nIdx) ?? Infinity)) {
+          came.set(nIdx, curIdx);
+          gScore.set(nIdx, tentative);
+          hpush(tentative + h(nx, ny), nIdx);
+        }
+      }
+    }
+
+    if (!found) {
+      this._pathCache.set(key, straight);
+      return straight;
+    }
+
+    // Reconstruct tile path, then smooth it with line-of-sight string pulling.
+    const tiles = [];
+    let cur = gIdx;
+    while (cur !== undefined) {
+      const cx = cur % dim;
+      const cy = (cur - cx) / dim;
+      tiles.push({ x: cx + 0.5, y: cy + 0.5 });
+      if (cur === sIdx) break;
+      cur = came.get(cur);
+    }
+    tiles.reverse();
+    // Anchor the real start/goal so motion is exact at both ends.
+    tiles[0] = { x: sx, y: sy };
+    tiles[tiles.length - 1] = { x: gx, y: gy };
+
+    const smoothed = [tiles[0]];
+    let anchor = 0;
+    for (let i = 2; i < tiles.length; i++) {
+      if (
+        !this.lineClear(
+          tiles[anchor].x, tiles[anchor].y, tiles[i].x, tiles[i].y,
+          time, start.x, start.y, goal.x, goal.y,
+        )
+      ) {
+        smoothed.push(tiles[i - 1]);
+        anchor = i - 1;
+      }
+    }
+    smoothed.push(tiles[tiles.length - 1]);
+
+    this._pathCache.set(key, smoothed);
+    return smoothed;
+  }
+
+  // Walk `dist` tiles along a polyline path; returns the resulting {x,y}.
+  advanceAlongPath(path, dist) {
+    if (!path || path.length === 0) return null;
+    if (dist <= 0) return { x: path[0].x, y: path[0].y };
+    let remaining = dist;
+    for (let i = 0; i < path.length - 1; i++) {
+      const a = path[i];
+      const b = path[i + 1];
+      const segLen = Math.hypot(b.x - a.x, b.y - a.y);
+      if (segLen === 0) continue;
+      if (remaining <= segLen) {
+        const t = remaining / segLen;
+        return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+      }
+      remaining -= segLen;
+    }
+    const last = path[path.length - 1];
+    return { x: last.x, y: last.y };
   }
 
   initializeUnits() {
@@ -362,74 +646,91 @@ class Playback {
       return { x: unit.x, y: unit.y };
     }
 
-    // Calculate position by simulating movement through all commands up to now
-    let currentX = unit.x !== null ? unit.x : movements[0].x;
-    let currentY = unit.y !== null ? unit.y : movements[0].y;
+    // Starting position (spawned units have no initial x/y until first seen).
+    const startX = unit.x !== null ? unit.x : movements[0].x;
+    const startY = unit.y !== null ? unit.y : movements[0].y;
 
-    // If no starting position, use first command destination
-    if (currentX === null || currentY === null) {
-      currentX = movements[0].x;
-      currentY = movements[0].y;
-    }
-
-    // Ranged unit types that should stay at distance when attacking
+    // Ranged units stop short of their attack target instead of walking onto it.
     const RANGED_TYPES = new Set(["archer", "siege"]);
-    const RANGED_ATTACK_DISTANCE = 5; // Tiles - ranged units stop this far from target
+    const RANGED_ATTACK_DISTANCE = 5; // tiles
     const isRangedUnit = RANGED_TYPES.has(unit.type);
 
-    for (let i = 0; i <= commandIndex; i++) {
-      const command = movements[i];
-      let destX = command.x;
-      let destY = command.y;
-
-      // For ranged units attacking, stop at a distance from the target
-      if (isRangedUnit && command.isAttack) {
-        const dx = destX - currentX;
-        const dy = destY - currentY;
+    // Effective destination of command i, given the unit begins it at `from`.
+    const destFor = (i, from) => {
+      let dx2 = movements[i].x;
+      let dy2 = movements[i].y;
+      if (isRangedUnit && movements[i].isAttack) {
+        const dx = dx2 - from.x;
+        const dy = dy2 - from.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-
         if (distance > RANGED_ATTACK_DISTANCE) {
-          // Move to attack range, not all the way to target
-          const stopDistance = distance - RANGED_ATTACK_DISTANCE;
-          const ratio = stopDistance / distance;
-          destX = currentX + dx * ratio;
-          destY = currentY + dy * ratio;
+          const ratio = (distance - RANGED_ATTACK_DISTANCE) / distance;
+          dx2 = from.x + dx * ratio;
+          dy2 = from.y + dy * ratio;
         } else {
-          // Already in range, don't move
-          destX = currentX;
-          destY = currentY;
+          dx2 = from.x;
+          dy2 = from.y;
         }
       }
+      return { x: dx2, y: dy2 };
+    };
 
-      // Time available for this movement
-      const startTime = i === 0 ? movements[0].time - 10 : movements[i].time; // Assume unit existed 10s before first command
-      const endTime =
-        i < commandIndex ? movements[i + 1].time : this.currentTime;
-      const availableTime = endTime - startTime;
+    // We only ever RENDER the currently-active command, so that's the only one
+    // worth the A* cost. Completed commands just need an end position to seed the
+    // next segment's start, which a cheap straight-line advance gives (units that
+    // finished a command rest exactly on its target either way). This keeps even a
+    // far timeline seek to ~one A* per unit instead of one per command.
+    let pf = unit._pf;
+    if (!pf) pf = unit._pf = { boundaries: [], upto: -1, activeIndex: -1, activePath: null };
 
-      // Distance to destination
-      const dx = destX - currentX;
-      const dy = destY - currentY;
-      const distance = Math.sqrt(dx * dx + dy * dy);
+    const segStartTime = (i) =>
+      i === 0 ? movements[0].time - 10 : movements[i].time; // assume it existed ~10s before its first command
+    const segStartPos = (i) =>
+      i === 0 ? { x: startX, y: startY } : pf.boundaries[i - 1];
 
-      if (distance > 0) {
-        // Time needed to reach destination
-        const timeNeeded = distance / speed;
-
-        if (availableTime >= timeNeeded) {
-          // Unit reaches destination
-          currentX = destX;
-          currentY = destY;
-        } else {
-          // Unit is interrupted - calculate how far it got
-          const progress = (availableTime * speed) / distance;
-          currentX = currentX + dx * progress;
-          currentY = currentY + dy * progress;
-        }
-      }
+    // Extend the cached boundary chain over every command that's already finished.
+    for (let i = pf.upto + 1; i < commandIndex; i++) {
+      const from = segStartPos(i);
+      const dest = destFor(i, from);
+      const avail = Math.max(0, movements[i + 1].time - segStartTime(i)) * speed;
+      pf.boundaries[i] = this.advanceStraight(from, dest, avail);
+      pf.upto = i;
     }
 
-    return { x: currentX, y: currentY };
+    // Active command: route around obstacles, then follow that path by however
+    // far the unit has travelled.
+    const from = segStartPos(commandIndex);
+    const t0 = segStartTime(commandIndex);
+    const dest = destFor(commandIndex, from);
+    const dist = Math.max(0, this.currentTime - t0) * speed;
+
+    // Resting shortcut: once the unit has had far more time than even a heavily
+    // detoured route could need, it's sitting on the target — return it directly
+    // and skip A* entirely. This is what keeps a far timeline seek cheap, since
+    // most units are idle on their last command at any given moment.
+    const straightDist = Math.hypot(dest.x - from.x, dest.y - from.y);
+    if (dist >= straightDist * 4 + 8) {
+      pf.activeIndex = -1;
+      pf.activePath = null;
+      return { x: dest.x, y: dest.y };
+    }
+
+    // Otherwise compute (and cache until the command changes) the avoidance path.
+    if (pf.activeIndex !== commandIndex || !pf.activePath) {
+      pf.activePath = this.findPath(from.x, from.y, dest.x, dest.y, t0);
+      pf.activeIndex = commandIndex;
+    }
+    return this.advanceAlongPath(pf.activePath, dist) || { x: startX, y: startY };
+  }
+
+  // Straight-line advance of `dist` tiles from `from` toward `dest` (clamped).
+  advanceStraight(from, dest, dist) {
+    const dx = dest.x - from.x;
+    const dy = dest.y - from.y;
+    const d = Math.hypot(dx, dy);
+    if (d === 0 || dist >= d) return { x: dest.x, y: dest.y };
+    const r = dist / d;
+    return { x: from.x + dx * r, y: from.y + dy * r };
   }
 
   // Get current game state for rendering

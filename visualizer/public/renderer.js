@@ -66,8 +66,9 @@ class Renderer {
       "harbor",
     ]);
 
-    // Debug mode: show type labels (for sprite verification)
-    this.showTypeLabels = true;
+    // Debug mode: show type labels (for sprite verification). Off — units are
+    // rendered as plain circles with no labels until identification is verified.
+    this.showTypeLabels = false;
 
     // Sprite system
     this.spritesLoaded = false;
@@ -549,93 +550,25 @@ class Renderer {
     const color = this.playerColors[player] || "#ffffff";
 
     // A unit occupies at most one tile: its diameter fits within the tile's
-    // short diagonal (tileHeight). Small per-type variation, all <= 1 tile.
+    // short diagonal (tileHeight). Size is uniform across all types — type
+    // classification isn't yet reliable, so we deliberately don't let it leak
+    // into the visual (a mislabeled knight must not render villager-sized).
     const tileShort = this.tileHeight * this.zoom;
-    const unitScale = {
-      villager: 0.8,
-      infantry: 0.95,
-      archer: 0.95,
-      cavalry: 1.0,
-      siege: 1.0,
-      monk: 0.95,
-      ship: 1.0,
-      king: 1.0,
-      military: 0.95,
-    };
-    const size = Math.max(3, tileShort * (unitScale[type] || 0.95) * 1.25);
+    const size = Math.max(3, tileShort * 0.9 * 1.25);
 
-    // Extract actual unit type from name for sprite lookup
-    const actualType = unitName ? this.extractUnitType(unitName) : type;
-
-    // Try to use sprite (exact match only)
-    const sprite = this.getSprite(actualType);
-    if (sprite) {
-      this.drawSpriteWithPlayerColor(pos.x, pos.y, sprite, color, size, opacity);
-    } else {
-      // Fallback to geometric shapes
-      this.ctx.globalAlpha = opacity;
-      this.ctx.fillStyle = color;
-      this.ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
-      this.ctx.lineWidth = 1;
-
-      switch (type) {
-        case "villager":
-          // Small circle for villagers
-          this.ctx.beginPath();
-          this.ctx.arc(pos.x, pos.y, size / 2, 0, Math.PI * 2);
-          this.ctx.fill();
-          this.ctx.stroke();
-          break;
-
-        case "infantry":
-          // Shield shape (rounded rectangle) for infantry
-          this.drawShield(pos.x, pos.y, size);
-          break;
-
-        case "archer":
-          // Diamond/arrow shape for archers
-          this.drawArcher(pos.x, pos.y, size, color);
-          break;
-
-        case "cavalry":
-          // Horizontal oval/horse shape for cavalry
-          this.drawCavalry(pos.x, pos.y, size, color);
-          break;
-
-        case "siege":
-          // Square for siege units
-          this.ctx.fillRect(pos.x - size / 2, pos.y - size / 2, size, size);
-          this.ctx.strokeRect(pos.x - size / 2, pos.y - size / 2, size, size);
-          break;
-
-        case "monk":
-          // Cross shape for monks
-          this.drawMonk(pos.x, pos.y, size, color);
-          break;
-
-        case "ship":
-          // Boat shape for ships
-          this.drawShip(pos.x, pos.y, size, color);
-          break;
-
-        case "king":
-          // Star/crown for king
-          this.drawKing(pos.x, pos.y, size, color);
-          break;
-
-        default:
-          // Unrecognized unit with no matching sprite: draw nothing. We only show
-          // units we can actually identify, rather than a bare placeholder triangle.
-          break;
-      }
-
-      this.ctx.globalAlpha = 1;
-    }
-
-    // Draw type label if debug mode is on (but not for units with sprites or generic "unit" type)
-    if (this.showTypeLabels && unitName && !sprite && actualType !== "unit") {
-      this.drawTypeLabel(pos.x, pos.y, actualType, size);
-    }
+    // Every unit is drawn as a generic player-colored circle. No sprites, no
+    // per-type shapes, and no text labels — those are intentionally deferred
+    // (icons will come back later) so the map stays clean and so misidentified
+    // units don't show as the wrong shape or size.
+    this.ctx.globalAlpha = opacity;
+    this.ctx.fillStyle = color;
+    this.ctx.beginPath();
+    this.ctx.arc(pos.x, pos.y, size / 2, 0, Math.PI * 2);
+    this.ctx.fill();
+    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
+    this.ctx.lineWidth = Math.max(0.5, size * 0.08);
+    this.ctx.stroke();
+    this.ctx.globalAlpha = 1;
   }
 
   // Draw a sprite with player color indicator (circle for units).

@@ -1887,8 +1887,11 @@ class Renderer {
     const dx = to.x - from.x;
     const dy = to.y - from.y;
     const dist = Math.hypot(dx, dy);
-    const arcH = Math.min(90, dist * 0.45); // peak lift of the arc, in px
-    const r = Math.max(2, 3.5 * this.zoom);
+    // Peak arc lift: scales with range but has a floor so even a short-range
+    // treb (target only a few tiles away) shows a clearly visible lob.
+    const unitPx = this.tileHeight * this.zoom * 0.9 * 1.25;
+    const arcH = Math.max(unitPx * 1.6, Math.min(90, dist * 0.45));
+    const r = Math.max(3, unitPx * 0.45); // flaming ball radius
     const ctx = this.ctx;
 
     for (const p of tp.shots) {

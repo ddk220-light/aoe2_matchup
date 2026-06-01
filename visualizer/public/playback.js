@@ -959,7 +959,16 @@ class Playback {
       // Exception: don't apply this in the last 3 minutes of game
       let idleVillager = false;
 
-      if (!isVillager && alive && lastCommandInGame !== null) {
+      // Siege is exempt: a trebuchet/mangonel keeps firing long after its last
+      // command (you click the target once and leave it), so it must stay alive
+      // until its actual fade (unit_deaths, +5min idle) instead of vanishing the
+      // moment it has no further command.
+      if (
+        !isVillager &&
+        unit.type !== "siege" &&
+        alive &&
+        lastCommandInGame !== null
+      ) {
         // Check if unit has no future commands (last command is in the past)
         if (lastCommandTime !== null && lastCommandTime === lastCommandInGame) {
           // This unit has no more commands after this point
@@ -1089,8 +1098,8 @@ class Playback {
     // in-flight shots (progress 0..1) launching from the treb's current spot to
     // the targeted building, for the renderer to draw as arcing flaming balls.
     const TREB_WINDUP = 2; // s to move into range + unpack before first shot
-    const TREB_RELOAD = 3; // s between shots
-    const TREB_FLIGHT = 1.2; // s a shot is airborne
+    const TREB_RELOAD = 2.2; // s between shots
+    const TREB_FLIGHT = 1.6; // s a shot is airborne (kept < reload, but close)
     const trebProjectiles = [];
     for (const ep of this.trebAttacks || []) {
       const fireStart = ep.start + TREB_WINDUP;

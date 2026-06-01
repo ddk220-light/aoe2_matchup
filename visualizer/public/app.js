@@ -450,13 +450,13 @@ class App {
     this.setupUI();
     this.setupKeyboardShortcuts();
 
-    // Preprocess building, attack, and training data for storyteller
+    // Preprocess building, attack, and training data (used elsewhere too)
     this.preprocessBuildingData();
     this.preprocessAttackData();
     this.preprocessTrainingData();
 
-    // Initialize storyteller
-    this.initializeStoryteller();
+    // Storyteller narration ("Castle Age", "building a Castle", ...) disabled.
+    // this.initializeStoryteller();
 
     // Initial render
     this.startRenderLoop();

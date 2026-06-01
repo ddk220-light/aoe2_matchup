@@ -864,20 +864,23 @@ def _classify_units(match):
                 elif tgt not in gaia_all and owner.get(tgt) and owner.get(tgt) != owner.get(oid):
                     mil_atk.add(oid)
 
-    # Per-player production: exact villager count + a military-only queue.
+    # Per-player production slots: a villager queue and a typed military queue,
+    # each a list of one slot per produced unit (DE_QUEUE amounts expanded).
     prod = defaultdict(Counter)
+    vil_queue = defaultdict(list)
     mil_queue = defaultdict(list)
     for a in match.actions:
         if str(a.type).endswith("DE_QUEUE") and a.player and a.payload:
             u = norm(a.payload.get("unit"))
             amt = a.payload.get("amount", 1) or 1
             prod[a.player.name][u] += amt
-            if u != "villager":
-                ts = a.timestamp.total_seconds()
-                for _ in range(amt):
-                    mil_queue[a.player.name].append({"time": ts, "type": u, "used": False})
-    for q in mil_queue.values():
-        q.sort(key=lambda x: x["time"])
+            ts = a.timestamp.total_seconds()
+            q = vil_queue if u == "villager" else mil_queue
+            for _ in range(amt):
+                q[a.player.name].append({"time": ts, "type": u, "used": False})
+    for d in (vil_queue, mil_queue):
+        for q in d.values():
+            q.sort(key=lambda x: x["time"])
 
     MIL, UNK = "\x00mil", "\x00unk"
     cls = {}
@@ -891,39 +894,58 @@ def _classify_units(match):
         else:
             cls[oid] = UNK
 
-    # Pass 2: fill each player's villager quota from earliest unknowns.
-    unk_by_player = defaultdict(list)
-    for oid, c in cls.items():
-        if c == UNK:
-            unk_by_player[owner.get(oid)].append(oid)
-    for p, unk in unk_by_player.items():
-        vp = prod[p].get("villager", 0)
-        hard_vil = sum(1 for oid, c in cls.items() if c == "villager" and owner.get(oid) == p)
-        quota = max(0, vp - hard_vil)
-        for i, oid in enumerate(sorted(unk, key=lambda o: first_seen.get(o, 0))):
-            cls[oid] = "villager" if i < quota else MIL
-
-    # Pass 3: assign a concrete military type from the military-only queue.
-    def grab(p, t):
-        q = mil_queue.get(p, [])
-        best, best_t, after, after_t = None, -1, None, float("inf")
-        for s in q:
+    # Nearest unused slot in a queue to time `t`, preferring a slot at or before
+    # `t` (a unit appears after it is produced); later slots are distance-
+    # penalised. `peek` returns (slot, distance) without consuming; `take` marks
+    # a slot used.
+    def peek(queue, t):
+        best, best_d = None, float("inf")
+        for s in queue:
             if s["used"]:
                 continue
-            if s["time"] <= t and s["time"] > best_t:
-                best_t, best = s["time"], s
-            elif s["time"] > t and s["time"] < after_t:
-                after_t, after = s["time"], s
-        s = best or after
-        if s:
-            s["used"] = True
-            return s["type"]
-        mt = [(u, n) for u, n in prod[p].items() if u != "villager"]
-        return max(mt, key=lambda x: x[1])[0] if mt else "unit"
+            d = (t - s["time"]) if s["time"] <= t else (s["time"] - t) * 3
+            if d < best_d:
+                best_d, best = d, s
+        return best, best_d
 
+    # Resolve every unit in appearance order so earlier units claim the closest
+    # production slots first.
     result = {}
-    for oid, c in cls.items():
-        result[oid] = grab(owner.get(oid), first_seen.get(oid, 0)) if c == MIL else c
+    for oid in sorted(cls, key=lambda o: first_seen.get(o, 0)):
+        c = cls[oid]
+        p = owner.get(oid)
+        t = first_seen.get(oid, 0)
+        if c == "villager":
+            sv, _ = peek(vil_queue.get(p, []), t)  # consume to keep counts honest
+            if sv:
+                sv["used"] = True
+            result[oid] = "villager"
+        elif c == MIL:
+            sm, _ = peek(mil_queue.get(p, []), t)
+            if sm:
+                sm["used"] = True
+                result[oid] = sm["type"]
+            else:
+                mt = [(u, n) for u, n in prod[p].items() if u != "villager"]
+                result[oid] = max(mt, key=lambda x: x[1])[0] if mt else "unit"
+        else:
+            # Unknown (no behavioural tell): villager vs military decided by which
+            # production was happening nearest its appearance — the timeline, not
+            # its raw timestamp. Stops an early military unit from being swept
+            # into the villager count just for appearing early.
+            sv, dv = peek(vil_queue.get(p, []), t)
+            sm, dm = peek(mil_queue.get(p, []), t)
+            if sv is not None and dv <= dm:
+                sv["used"] = True
+                result[oid] = "villager"
+            elif sm is not None:
+                sm["used"] = True
+                result[oid] = sm["type"]
+            elif sv is not None:
+                sv["used"] = True
+                result[oid] = "villager"
+            else:
+                result[oid] = "unit"
     return result
 
 

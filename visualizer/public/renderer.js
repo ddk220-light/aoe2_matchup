@@ -215,6 +215,68 @@ class Renderer {
       this.isDragging = false;
     });
 
+    // Touch: one finger pans, two fingers pinch-zoom
+    let lastTouchDist = null;
+    this.canvas.addEventListener(
+      "touchstart",
+      (e) => {
+        if (e.touches.length === 1) {
+          this.isDragging = true;
+          this.lastMouseX = e.touches[0].clientX;
+          this.lastMouseY = e.touches[0].clientY;
+        } else if (e.touches.length === 2) {
+          this.isDragging = false;
+          lastTouchDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY,
+          );
+        }
+      },
+      { passive: false },
+    );
+
+    this.canvas.addEventListener(
+      "touchmove",
+      (e) => {
+        e.preventDefault(); // stop the page from scrolling/zooming over the map
+        if (e.touches.length === 1 && this.isDragging) {
+          const t = e.touches[0];
+          this.panX += t.clientX - this.lastMouseX;
+          this.panY += t.clientY - this.lastMouseY;
+          this.lastMouseX = t.clientX;
+          this.lastMouseY = t.clientY;
+        } else if (e.touches.length === 2 && lastTouchDist !== null) {
+          const dist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY,
+          );
+          const rect = this.canvas.getBoundingClientRect();
+          const midX =
+            (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+          const midY =
+            (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+          this.zoomAt(midX, midY, dist / lastTouchDist);
+          lastTouchDist = dist;
+        }
+      },
+      { passive: false },
+    );
+
+    const endTouch = (e) => {
+      if (e.touches.length === 0) {
+        this.isDragging = false;
+        lastTouchDist = null;
+      } else if (e.touches.length === 1) {
+        // Going from two fingers back to one: resume panning from that finger.
+        lastTouchDist = null;
+        this.isDragging = true;
+        this.lastMouseX = e.touches[0].clientX;
+        this.lastMouseY = e.touches[0].clientY;
+      }
+    };
+    this.canvas.addEventListener("touchend", endTouch);
+    this.canvas.addEventListener("touchcancel", endTouch);
+
     // Handle resize
     window.addEventListener("resize", () => {
       this.setupCanvas();

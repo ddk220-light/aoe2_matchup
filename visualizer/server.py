@@ -325,8 +325,11 @@ def _terrain_hex(name):
         return "#d7e6f0"
     if has("snow"):
         return "#e8eef2"
-    if has("forest", "jungle", "bamboo", "leaves", "underbrush", "rainforest",
-           "bush", "reeds", "acacia", "baobab", "dragon", "dead forest", "moorland"):
+    # Only true tree-forests here; ground covers (underbrush, leaves, bush,
+    # reeds, moorland) are NOT forest and fall through to grass. Real forests
+    # are also caught by the tree-density check in _extract_terrain.
+    if has("forest", "jungle", "bamboo", "rainforest", "acacia", "baobab",
+           "dragon", "dead forest", "mangrove forest", "taiga"):
         return "#2f4d24"
     if has("water") and has("deep", "ocean"):
         return "#1f4e79"

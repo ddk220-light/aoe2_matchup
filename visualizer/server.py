@@ -596,31 +596,49 @@ def _tech_class(t):
     return None
 
 
-def _extract_building_interactions(match):
-    """List of {x, y, player, time}: each time a player used one of their
-    buildings (trained, researched, set a gather point, ordered a castle to
-    attack, etc.). x/y are the building's recovered tile position."""
+def _act_type(a):
+    return str(a.type).replace("Action.", "")
+
+
+def _analyze_buildings(match):
+    """Reconstruct building positions and produce both interaction and deletion
+    events. Returns (interactions, deletions), each a list of
+    {x, y, player, time}.
+
+    Production/research actions reference a building only by instance_id (no
+    position), and DELETE actions likewise. Instance_ids are assigned in
+    creation order, so within each building CLASS the k-th building a player
+    builds gets the k-th id. We:
+
+      1. Find abandoned foundations first: a DELETE of an id that never produced
+         is matched to that player's most recent prior un-claimed BUILD (the
+         place-then-relocate / cancel pattern). These build slots are removed
+         from the map and excluded from production pairing.
+      2. Pair each producing/researching id (by id order) to that player's
+         surviving BUILD orders of its inferred class (by time) -> position.
+      3. Interactions = any action whose object_ids names a located building.
+         Deletions = abandoned foundations + razes of located buildings.
+    """
     from collections import Counter, defaultdict
 
-    def act_type(a):
-        return str(a.type).replace("Action.", "")
+    act_type = _act_type
 
-    # BUILD orders grouped by (player, class), sorted by time -> positions.
-    builds = defaultdict(list)
+    # All BUILDs with a position, per player (time-sorted, claimable), and the
+    # interactive-class subset grouped by (player, class) for production pairing.
+    all_builds = defaultdict(list)  # player -> [[time, x, y, claimed]]
     for a in match.actions:
         if not a.player or act_type(a) != "BUILD":
             continue
-        c = _building_class((a.payload or {}).get("building"))
         pos = getattr(a, "position", None)
-        if c and pos:
-            builds[(a.player.name, c)].append(
-                (a.timestamp.total_seconds(), round(pos.x), round(pos.y))
-            )
-    for k in builds:
-        builds[k].sort()
+        if pos is None:
+            continue
+        all_builds[a.player.name].append(
+            [a.timestamp.total_seconds(), round(pos.x), round(pos.y), False]
+        )
+    for p in all_builds:
+        all_builds[p].sort()
 
-    # Starting buildings (mainly the Town Center) are anchored directly by
-    # instance_id from player.objects, and excluded from BUILD pairing.
+    # Starting buildings (mainly the Town Center) anchored by instance_id.
     anchor = {}  # iid -> (player, x, y)
     for pl in match.players:
         for o in (pl.objects or []):
@@ -649,7 +667,36 @@ def _extract_building_interactions(match):
                 d["units"][payload.get("unit")] += 1
             else:
                 d["techs"][payload.get("technology")] += 1
+    producing = set(prod)
 
+    # ---- Pass 1: abandoned foundations (delete of a never-used building) ----
+    deletions = []
+    razes = []  # (iid, time): a located (used) building was razed; resolve later
+    abandoned_pos = set()  # (player, x, y) build slots that were abandoned
+    dels = sorted(
+        (a for a in match.actions if a.player and act_type(a) == "DELETE"),
+        key=lambda a: a.timestamp.total_seconds(),
+    )
+    for a in dels:
+        ts = a.timestamp.total_seconds()
+        player = a.player.name
+        for oid in (a.payload or {}).get("object_ids", []):
+            if oid in producing or oid in anchor:
+                razes.append((oid, ts))  # a real building was destroyed
+                continue
+            # Abandoned: most recent prior un-claimed BUILD by this player.
+            cand = None
+            for rec in all_builds.get(player, []):
+                if rec[0] < ts and not rec[3]:
+                    cand = rec  # time-sorted, so last qualifying = most recent
+            if cand is not None:
+                cand[3] = True
+                abandoned_pos.add((player, cand[1], cand[2]))
+                deletions.append(
+                    {"x": cand[1], "y": cand[2], "player": player, "time": ts}
+                )
+
+    # ---- Pass 2: pair producing ids to SURVIVING builds of their class ----
     def classify(d):
         cc = Counter()
         for u, k in d["units"].items():
@@ -664,7 +711,22 @@ def _extract_building_interactions(match):
                 cc[c] += k
         return cc.most_common(1)[0][0] if cc else None
 
-    # Bucket interacting iids by (player, class), excluding starting anchors.
+    builds = defaultdict(list)  # (player, class) -> [(time, x, y)] surviving
+    for a in match.actions:
+        if not a.player or act_type(a) != "BUILD":
+            continue
+        c = _building_class((a.payload or {}).get("building"))
+        pos = getattr(a, "position", None)
+        if c and pos:
+            key3 = (a.player.name, round(pos.x), round(pos.y))
+            if key3 in abandoned_pos:
+                continue  # this slot was abandoned, no production came from it
+            builds[(a.player.name, c)].append(
+                (a.timestamp.total_seconds(), round(pos.x), round(pos.y))
+            )
+    for k in builds:
+        builds[k].sort()
+
     buckets = defaultdict(list)
     for iid, d in prod.items():
         if iid in anchor:
@@ -673,7 +735,6 @@ def _extract_building_interactions(match):
         if c:
             buckets[(d["player"], c)].append(iid)
 
-    # Pair iids (creation order) to BUILD positions (time order) of same class.
     iid_pos = dict(anchor)  # iid -> (player, x, y)
     for key, iids in buckets.items():
         iids.sort()  # ascending id == build order
@@ -682,7 +743,15 @@ def _extract_building_interactions(match):
             if i < len(bl):
                 iid_pos[iid] = (key[0], bl[i][1], bl[i][2])
 
-    # Any action whose object_ids names a positioned building is an interaction.
+    # Resolve razes of located buildings now that iid_pos is known.
+    for oid, ts in razes:
+        loc = iid_pos.get(oid)
+        if loc:
+            deletions.append(
+                {"x": loc[1], "y": loc[2], "player": loc[0], "time": ts}
+            )
+
+    # ---- Interactions: any action whose object_ids names a located building ----
     interactions = []
     seen = set()
     for a in match.actions:
@@ -693,13 +762,15 @@ def _extract_building_interactions(match):
             loc = iid_pos.get(oid)
             if not loc:
                 continue
-            player, x, y = loc
             kdup = (oid, round(ts, 2))
             if kdup in seen:
                 continue
             seen.add(kdup)
-            interactions.append({"x": x, "y": y, "player": player, "time": ts})
-    return interactions
+            interactions.append(
+                {"x": loc[1], "y": loc[2], "player": loc[0], "time": ts}
+            )
+
+    return interactions, deletions
 
 
 def process_replay(replay_file):
@@ -803,14 +874,19 @@ def process_replay(replay_file):
         "walls": [],
         "unit_deaths": {},
         "building_interactions": [],
+        "building_deletions": [],
     }
 
-    # Recover when each (built) building was used, to re-brighten it on activity.
+    # Recover building activity: re-brighten on use (interactions) and remove
+    # abandoned/razed buildings from the map (deletions).
     try:
-        data["building_interactions"] = _extract_building_interactions(match)
+        interactions, deletions = _analyze_buildings(match)
+        data["building_interactions"] = interactions
+        data["building_deletions"] = deletions
     except Exception as e:
-        app.logger.warning(f"building interaction extraction failed: {e}")
+        app.logger.warning(f"building analysis failed: {e}")
         data["building_interactions"] = []
+        data["building_deletions"] = []
 
     # Starting-map backdrop: terrain grid + GAIA resource/tree objects.
     try:

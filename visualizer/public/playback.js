@@ -194,6 +194,19 @@ class Playback {
     for (const times of this.buildingInteractions.values()) {
       times.sort((a, b) => a - b);
     }
+
+    // Server-resolved building removals (abandoned foundations, razed
+    // buildings). DELETE actions in the replay only name a building by id with
+    // no position, so the backend recovers the position; here we just feed them
+    // into the same deletion list getState already checks.
+    for (const d of this.data.building_deletions || []) {
+      this.buildingDeletions.push({
+        time: d.time,
+        x: Math.round(d.x),
+        y: Math.round(d.y),
+        player: d.player,
+      });
+    }
   }
 
   // Latest interaction time <= `t` for a building key, or null. Binary search
@@ -985,6 +998,7 @@ class Playback {
           if (
             deletion.time > event.time &&
             deletion.time <= this.currentTime &&
+            deletion.player === event.player &&
             Math.abs(deletion.x - roundedX) <= 2 &&
             Math.abs(deletion.y - roundedY) <= 2
           ) {

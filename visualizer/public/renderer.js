@@ -1766,7 +1766,7 @@ class Renderer {
         // Per-type representative sizing: a group can mix unit types, so we
         // enlarge ONE unit per distinct type (its first occurrence in the
         // spiral), sized by how many of that type are present — normal up to 5,
-        // +1/3 of normal per extra 5, capped at 2× (~16-20). A 15-archer +
+        // +2/3 of normal per extra 5, capped at 3× (~16-20). A 15-archer +
         // 1-elephant army then shows a big archer and a small elephant, so the
         // army's composition reads at a glance.
         const typeOf = (m) =>
@@ -1806,7 +1806,10 @@ class Renderer {
         const spiral = [...reps.map((r) => r.m), ...rest];
         const scaleOf = new Map();
         for (const r of reps)
-          scaleOf.set(r.m.name, 1 + Math.min(3, Math.floor((r.n - 1) / 5)) / 3);
+          scaleOf.set(
+            r.m.name,
+            1 + (Math.min(3, Math.floor((r.n - 1) / 5)) * 2) / 3,
+          );
 
         // Draw outermost first so larger central representatives land on top.
         for (let k = spiral.length - 1; k >= 0; k--) {

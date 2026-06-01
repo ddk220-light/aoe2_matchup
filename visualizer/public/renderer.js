@@ -1204,10 +1204,215 @@ class Renderer {
     ctx.restore();
   }
 
+  // ---- Player base territory outlines ----
+  // A base is a cluster of >= MIN_BASE_BUILDINGS buildings near each other; it
+  // grows as more buildings are placed nearby. Its boundary is drawn as a dotted
+  // line in the player's colour, BASE_BUFFER tiles out from the outer buildings.
+  BASE_LINK_DIST = 12; // tiles: buildings within this of the cluster join it
+  MIN_BASE_BUILDINGS = 5;
+  BASE_BUFFER = 5; // tiles of margin around the outer buildings
+  BUILDING_HALF = 1.5; // approx building half-footprint (tiles) for hull corners
+
+  drawBaseBoundaries(state) {
+    if (!state || !state.buildings || state.buildings.size === 0) return;
+    if (!this._baseCache) this._baseCache = new Map();
+
+    // Group currently-visible buildings by player.
+    const byPlayer = new Map();
+    for (const [, b] of state.buildings) {
+      if (b.x == null || b.y == null) continue;
+      if (!byPlayer.has(b.player)) byPlayer.set(b.player, []);
+      byPlayer.get(b.player).push(b);
+    }
+
+    for (const [player, bldgs] of byPlayer) {
+      if (bldgs.length < this.MIN_BASE_BUILDINGS) continue;
+
+      // Cheap signature so we only recompute when this player's set changes.
+      let sumx = 0, sumy = 0;
+      for (const b of bldgs) {
+        sumx += b.x;
+        sumy += b.y;
+      }
+      const sig = `${bldgs.length}:${Math.round(sumx)}:${Math.round(sumy)}`;
+      const cached = this._baseCache.get(player);
+      let polys;
+      if (cached && cached.sig === sig) {
+        polys = cached.polys;
+      } else {
+        polys = this.computeBasePolys(bldgs);
+        this._baseCache.set(player, { sig, polys });
+      }
+
+      const color = this.playerColors[player] || "#ffffff";
+      for (const poly of polys) this.drawDottedPolygon(poly, color);
+    }
+  }
+
+  // Union-find single-linkage clustering of buildings by centre distance.
+  clusterBuildings(bldgs, linkDist) {
+    const n = bldgs.length;
+    const parent = Array.from({ length: n }, (_, i) => i);
+    const find = (x) => {
+      while (parent[x] !== x) {
+        parent[x] = parent[parent[x]];
+        x = parent[x];
+      }
+      return x;
+    };
+    const d2 = linkDist * linkDist;
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        const dx = bldgs[i].x - bldgs[j].x;
+        const dy = bldgs[i].y - bldgs[j].y;
+        if (dx * dx + dy * dy <= d2) parent[find(i)] = find(j);
+      }
+    }
+    const groups = new Map();
+    for (let i = 0; i < n; i++) {
+      const r = find(i);
+      if (!groups.has(r)) groups.set(r, []);
+      groups.get(r).push(bldgs[i]);
+    }
+    return [...groups.values()];
+  }
+
+  // For each qualifying cluster, the buffered convex-hull outline (game coords).
+  computeBasePolys(bldgs) {
+    const clusters = this.clusterBuildings(bldgs, this.BASE_LINK_DIST);
+    const polys = [];
+    const h = this.BUILDING_HALF;
+    for (const cl of clusters) {
+      if (cl.length < this.MIN_BASE_BUILDINGS) continue;
+      // Hull over each building's footprint corners so the boundary clears their extent.
+      const pts = [];
+      for (const b of cl) {
+        pts.push(
+          { x: b.x - h, y: b.y - h },
+          { x: b.x + h, y: b.y - h },
+          { x: b.x + h, y: b.y + h },
+          { x: b.x - h, y: b.y + h },
+        );
+      }
+      const hull = this.convexHull(pts);
+      if (hull.length < 3) continue; // degenerate (collinear) — skip
+      polys.push(this.bufferHull(hull, this.BASE_BUFFER));
+    }
+    return polys;
+  }
+
+  // Convex hull (Andrew's monotone chain). Returns ordered hull vertices.
+  convexHull(points) {
+    const pts = points
+      .slice()
+      .sort((a, b) => a.x - b.x || a.y - b.y);
+    const cross = (o, a, b) =>
+      (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+    const lower = [];
+    for (const p of pts) {
+      while (
+        lower.length >= 2 &&
+        cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0
+      )
+        lower.pop();
+      lower.push(p);
+    }
+    const upper = [];
+    for (let i = pts.length - 1; i >= 0; i--) {
+      const p = pts[i];
+      while (
+        upper.length >= 2 &&
+        cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0
+      )
+        upper.pop();
+      upper.push(p);
+    }
+    lower.pop();
+    upper.pop();
+    return lower.concat(upper);
+  }
+
+  // Expand a convex hull outward by r tiles with rounded corners (Minkowski sum
+  // with a disk): offset each edge along its outward normal, join with corner arcs.
+  bufferHull(hull, r) {
+    const n = hull.length;
+    let cx = 0, cy = 0;
+    for (const p of hull) {
+      cx += p.x;
+      cy += p.y;
+    }
+    cx /= n;
+    cy /= n;
+
+    // Outward unit normal per edge (sign chosen to point away from the centroid).
+    const norm = [];
+    for (let i = 0; i < n; i++) {
+      const a = hull[i];
+      const b = hull[(i + 1) % n];
+      let nx = b.y - a.y;
+      let ny = -(b.x - a.x);
+      const len = Math.hypot(nx, ny) || 1;
+      nx /= len;
+      ny /= len;
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2;
+      if ((mx - cx) * nx + (my - cy) * ny < 0) {
+        nx = -nx;
+        ny = -ny;
+      }
+      norm.push({ x: nx, y: ny });
+    }
+
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      const a = hull[i];
+      const b = hull[(i + 1) % n];
+      const ni = norm[i];
+      out.push({ x: a.x + ni.x * r, y: a.y + ni.y * r });
+      out.push({ x: b.x + ni.x * r, y: b.y + ni.y * r });
+      // Rounded corner at b, sweeping from this edge's normal to the next edge's.
+      const nj = norm[(i + 1) % n];
+      const a1 = Math.atan2(ni.y, ni.x);
+      const a2 = Math.atan2(nj.y, nj.x);
+      let da = a2 - a1;
+      while (da <= -Math.PI) da += 2 * Math.PI;
+      while (da > Math.PI) da -= 2 * Math.PI;
+      const steps = Math.max(1, Math.round(Math.abs(da) / (Math.PI / 8)));
+      for (let s = 1; s < steps; s++) {
+        const ang = a1 + (da * s) / steps;
+        out.push({ x: b.x + Math.cos(ang) * r, y: b.y + Math.sin(ang) * r });
+      }
+    }
+    return out;
+  }
+
+  // Stroke a closed polygon (game-coord points) as a dotted line in `color`.
+  drawDottedPolygon(poly, color) {
+    if (!poly || poly.length < 3) return;
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.beginPath();
+    for (let i = 0; i < poly.length; i++) {
+      const p = this.gameToCanvas(poly[i].x, poly[i].y);
+      if (i === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    }
+    ctx.closePath();
+    ctx.setLineDash([5, 5]);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = 0.85;
+    ctx.stroke();
+    ctx.restore();
+  }
+
   // Full render cycle
   render(state) {
     this.clear();
     this.drawMap();
+
+    // Player base territory outlines sit on the ground, under everything else.
+    this.drawBaseBoundaries(state);
 
     // Starting animals sit on the ground, below walls/buildings/units.
     this.drawAnimals(state.currentTime || 0);

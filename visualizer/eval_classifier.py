@@ -1,22 +1,22 @@
-"""Eval harness for the v2 unit classifier (unit_classifier.py).
+"""Gate harness for the v2 unit classifier (unit_classifier.py).
 
-Runs the new pipeline on a replay, prints phase-gate metrics, and compares the
-class decision against the shipping baseline (server._classify_units).
+Runs the pipeline with per-stage snapshots and checks the gates that must hold
+before redeploy:
+  G1 every confidence stage changes >0 (no inert stages)
+  G2 co-moving groups are mostly homogeneous in type (heterogeneity low)
+  G3 type proportions track production
+  G4 hard-class co-command purity stays ~100%
+  G5 no phantom-duplicate units (shifted ids collapse to one canonical unit)
 
-Usage:
-    python eval_classifier.py <replay.aoe2record> [target_player]
-
-The mgz fork path can be overridden with the MGZ_PATH env var.
+Usage: python eval_classifier.py [replay.aoe2record] [target_player]
 """
 import os
 import sys
 import types
-from collections import Counter
-from itertools import combinations
+from collections import Counter, defaultdict
 
 
-def _bootstrap_imports():
-    # stub the web deps so 'import server' works headless
+def _bootstrap():
     for m in ("flask", "flask_cors", "requests"):
         sys.modules.setdefault(m, types.ModuleType(m))
     sys.modules["flask"].Flask = lambda *a, **k: types.SimpleNamespace(route=lambda *a, **k: (lambda f: f))
@@ -24,142 +24,117 @@ def _bootstrap_imports():
     sys.modules["flask"].request = None
     sys.modules["flask"].send_from_directory = lambda *a, **k: None
     sys.modules["flask_cors"].CORS = lambda *a, **k: None
-    mgz_path = os.environ.get("MGZ_PATH", "C:/dev/aoe2/aoc-mgz-67x")
     here = os.path.dirname(os.path.abspath(__file__))
-    for p in (mgz_path, here):
+    for p in (os.environ.get("MGZ_PATH", "C:/dev/aoe2/aoc-mgz-67x"), here):
         if p not in sys.path:
             sys.path.insert(0, p)
 
 
 def main():
-    _bootstrap_imports()
+    _bootstrap()
     import mgz.model
-    import server
     import unit_classifier as uc
 
     replay = sys.argv[1] if len(sys.argv) > 1 else "C:/dev/_tmp_replay/AgeIIDE_Replay_481391706.aoe2record"
     target = sys.argv[2] if len(sys.argv) > 2 else None
-
     with open(replay, "rb") as f:
         match = mgz.model.parse_match(f)
-    if target is None:
-        # default to the player with the most commanded units
-        target = max((p.name for p in match.players), key=lambda n: 1)
     print(f"replay: {os.path.basename(replay)}  players: {[p.name for p in match.players]}")
+    GEN = uc.GENERIC_TYPES
 
-    # --- run the pipeline with instrumentation ---
-    ctx = uc.build_context(match)
-    uc.behavioral_labels(ctx)
-    hard = sum(1 for g in ctx.guesses.values() if g.cls != "unknown" and g.instance_id not in ctx.start_ids)
-    weight = uc.cocommand_graph(ctx)
-    uc.propagate_class(ctx, weight)
-    # Stages 3-4: types
-    uc.production_timeline(ctx)
-    uc.type_units(ctx)
-    squads = uc.form_squads(ctx, weight)
-    uc.type_squads(ctx, squads)
-    uc.finalize(ctx)
-    guesses = ctx.guesses
+    # ---- run with per-stage snapshots (G1) ----
+    def snap(ctx):
+        return {cid: (g.cls, g.type) for cid, g in ctx.guesses.items()}
 
-    # --- Stage 0 gate: id normalization / no phantom dupes ---
-    raw_shifted = set()
-    for a in match.actions:
-        if a.player:
-            for o in (a.payload or {}).get("object_ids", []):
-                if o >= uc.SHIFT_THRESHOLD:
-                    raw_shifted.add(o)
-    phantom_in_output = [cid for cid in guesses if cid >= uc.SHIFT_THRESHOLD]
-    merged = sum(1 for s in raw_shifted if (s >> 8) in guesses)
-    print("\n== Stage 0: id normalization ==")
-    print(f"  raw shifted ids in stream: {len(raw_shifted)}  | shifted ids leaking into output: {len(phantom_in_output)} (want 0)")
-    print(f"  shifted refs merged onto a canonical id: {merged}")
+    def delta(prev, cur):
+        cs = cc = tf = tflip = 0
+        for cid, (c, t) in cur.items():
+            pc, pt = prev.get(cid, ("unknown", "unit"))
+            if c != pc:
+                cs += pc == "unknown"
+                cc += pc != "unknown"
+            if t != pt:
+                tf += pt in GEN and t not in GEN
+                tflip += pt not in GEN and t not in GEN
+        return cs, cc, tf, tflip
 
-    # --- per-target class split vs production villager count ---
-    tgt = [g for g in guesses.values() if g.player == target and g.instance_id not in ctx.start_ids
-           and g.instance_id not in ctx.building_ids]
-    csplit = Counter(g.cls for g in tgt)
-    # villager production for target = sum of DE_QUEUE amounts (expanded)
-    vil_q = 0
-    for a in match.actions:
-        if str(a.type).endswith("DE_QUEUE") and a.player and a.player.name == target and a.payload:
-            if uc._norm(a.payload.get("unit")) == "villager":
-                vil_q += a.payload.get("amount", 1) or 1
-    print(f"\n== class split for {target} (non-start, non-building units: {len(tgt)}) ==")
-    print(f"  villager={csplit.get('villager',0)}  military={csplit.get('military',0)}  unknown={csplit.get('unknown',0)}")
-    print(f"  (DE_QUEUE villager count for {target}: {vil_q})")
-    print(f"  class coverage: hard-only={hard} -> after co-command propagation="
-          f"{sum(1 for g in guesses.values() if g.cls!='unknown' and g.instance_id not in ctx.start_ids)}")
+    ctx = uc.build_context(match); prev = snap(ctx); rows = [("build_context", delta({}, prev))]
+    uc.behavioral_labels(ctx); c = snap(ctx); rows.append(("behavioral_labels", delta(prev, c))); prev = c
+    w = uc.cocommand_graph(ctx); uc.propagate_class(ctx, w); c = snap(ctx); rows.append(("propagate_class", delta(prev, c))); prev = c
+    uc.production_timeline(ctx); c = snap(ctx); rows.append(("production_timeline*", delta(prev, c))); prev = c
+    sq = uc.form_squads(ctx, w); c = snap(ctx); rows.append(("form_squads*", delta(prev, c))); prev = c
+    uc.assign_types(ctx, sq); c = snap(ctx); rows.append(("assign_types", delta(prev, c))); prev = c
+    uc.finalize(ctx); c = snap(ctx); rows.append(("finalize", delta(prev, c))); prev = c
+    g = ctx.guesses
 
-    # --- Stage 1 gate: villagers that also attack stay villagers ---
-    vil_attackers = [g for g in guesses.values()
-                     if g.cls == "villager" and g.behavior.get("attacks_building")]
-    flipped = [g for g in vil_attackers if g.cls != "villager"]
-    print("\n== Stage 1: refined rules (attacks != military) ==")
-    print(f"  hard/with-attack villagers that ALSO attack an enemy object: {len(vil_attackers)}")
-    print(f"  of those wrongly flipped to military: {len(flipped)} (want 0)")
+    print("\n== G1 per-stage marginal effect (cls_set/cls_chg/type_fill/type_flip) ==  (* = data/grouping stage)")
+    for name, (cs, cc, tf, tflip) in rows:
+        tot = cs + cc + tf + tflip
+        flag = "" if (tot or name.endswith("*")) else "  <-- INERT (gate fail)"
+        print(f"  {name:22} {cs:6} {cc:6} {tf:7} {tflip:7}{flag}")
 
-    # --- Stage 2 gate: pairwise class consistency among co-commanded units ---
-    same = diff = 0          # all labeled (hard + propagated)
-    hsame = hdiff = 0        # hard-only (cls_conf >= hard_class)
-    HC = uc.CONF["hard_class"]
-    for (x, y), w in weight.items():
-        gx, gy = guesses.get(x), guesses.get(y)
-        if not (gx and gy and gx.cls != "unknown" and gy.cls != "unknown"):
+    # ---- G5 phantom dedup ----
+    flat, remap = uc.build_type_map(match)
+    leak = [k for k in flat if k >= uc.SHIFT_THRESHOLD]
+    print(f"\n== G5 phantom dedup ==  shifted refs in remap: {len(remap)}  | shifted ids leaking into type map: {len(leak)} (want 0)")
+
+    # ---- per-player + target metrics ----
+    def prod_of(player):
+        c = Counter()
+        for a in match.actions:
+            if str(a.type).endswith("DE_QUEUE") and a.player and a.player.name == player and a.payload:
+                c[uc._norm(a.payload.get("unit"))] += a.payload.get("amount", 1) or 1
+        return c
+
+    units_by_p = defaultdict(list)
+    for cid, gu in g.items():
+        if cid in ctx.building_ids or cid in ctx.start_ids:
             continue
-        if gx.cls == gy.cls:
-            same += 1
-        else:
-            diff += 1
-        if gx.cls_conf >= HC and gy.cls_conf >= HC:
+        units_by_p[gu.player].append(gu)
+    if target is None:
+        target = max(units_by_p, key=lambda p: len(units_by_p[p]))
+
+    tgt = units_by_p[target]
+    typed = sum(1 for u in tgt if u.type not in GEN)
+    print(f"\n== G3 types for {target} ({typed}/{len(tgt)} = {100*typed/len(tgt):.0f}% typed) ==")
+    print(f"  classified: {dict(Counter(u.type for u in tgt).most_common())}")
+    print(f"  produced:   {dict(prod_of(target).most_common())}")
+
+    # ---- G4 hard-class co-command purity ----
+    HC = uc.CONF["hard_class"]
+    hs = hd = 0
+    for (x, y), wt in w.items():
+        gx, gy = g.get(x), g.get(y)
+        if gx and gy and gx.cls_conf >= HC and gy.cls_conf >= HC and gx.cls != "unknown" and gy.cls != "unknown":
             if gx.cls == gy.cls:
-                hsame += 1
+                hs += 1
             else:
-                hdiff += 1
-    print("\n== Stage 2: co-command class consistency ==")
-    if same + diff:
-        print(f"  all-labeled edges: {same+diff}  | SAME: {100*same/(same+diff):.1f}%  | mixed: {diff}")
-    if hsame + hdiff:
-        print(f"  hard-only  edges: {hsame+hdiff}  | SAME: {100*hsame/(hsame+hdiff):.1f}%  | mixed: {hdiff}  (validates the signal)")
+                hd += 1
+    print(f"\n== G4 hard-class co-command purity ==  {100*hs/(hs+hd):.1f}% same ({hd} mixed of {hs+hd})" if hs + hd else "G4 n/a")
 
-    # --- compare class decision vs shipping baseline ---
-    try:
-        base = server._classify_units(match)  # {id: type_string}
-        agree = disagree = 0
-        for g in tgt:
-            bt = base.get(g.instance_id) or base.get(g.instance_id << 8)
-            if bt is None:
-                continue
-            bcls = "villager" if bt == "villager" else "military"
-            if g.cls == "unknown":
-                continue
-            if g.cls == bcls:
-                agree += 1
-            else:
-                disagree += 1
-        print("\n== vs shipping baseline (class agreement on target) ==")
-        print(f"  agree={agree}  disagree={disagree}"
-              f"  ({100*agree/(agree+disagree):.1f}% agree)" if (agree+disagree) else "  (no overlap)")
-    except Exception as e:  # noqa
-        print(f"\n(baseline comparison skipped: {e})")
-
-    # --- Stage 3-4: type breakdown vs production ---
-    tb = Counter(g.type for g in tgt)
-    prod = Counter()
+    # ---- G2 group heterogeneity (final types within a single group command) ----
+    GROUP = {"MOVE", "PATROL", "ORDER", "DE_ATTACK_MOVE", "GUARD"}
+    total = het = 0
+    by_cmd = defaultdict(lambda: [0, 0])
     for a in match.actions:
-        if str(a.type).endswith("DE_QUEUE") and a.player and a.player.name == target and a.payload:
-            prod[uc._norm(a.payload.get("unit"))] += a.payload.get("amount", 1) or 1
-    typed = sum(1 for g in tgt if g.type not in uc.GENERIC_TYPES)
-    print(f"\n== types for {target} ({typed}/{len(tgt)} = {100*typed/len(tgt):.0f}% typed; squads={len(squads)}) ==")
-    print(f"  classified: {dict(tb.most_common())}")
-    print(f"  produced:   {dict(prod.most_common())}")
-    # treb placement
-    treb = [g for g in tgt if g.type == "trebuchet"]
-    if treb:
-        import statistics
-        print(f"  treb-labeled: {len(treb)} (9 queued); median first_seen="
-              f"{statistics.median([g.behavior.get('first_seen',0) for g in treb]):.0f}s "
-              f"%patrol={100*sum(1 for g in treb if g.behavior.get('patrols'))/len(treb):.0f} "
-              f"%atkBldg={100*sum(1 for g in treb if g.behavior.get('attacks_building'))/len(treb):.0f}")
+        if not a.player:
+            continue
+        at = str(a.type).replace("Action.", "")
+        if at not in GROUP:
+            continue
+        ids = set(ctx.canon(o) for o in (a.payload or {}).get("object_ids", []))
+        typed_ids = [i for i in ids if g.get(i) and g[i].type not in GEN]
+        if len(typed_ids) < 3:
+            continue
+        nd = len(set(g[i].type for i in typed_ids))
+        total += 1; by_cmd[at][1] += 1
+        if nd > 1:
+            het += 1; by_cmd[at][0] += 1
+    print(f"\n== G2 heterogeneous co-moving groups (>=3 typed members) ==")
+    if total:
+        print(f"  {het}/{total} = {100*het/total:.0f}% MIXED  (was 68% before the rework)")
+        for cmd, (h, t) in sorted(by_cmd.items()):
+            print(f"    {cmd:14} {100*h/t:.0f}% mixed ({h}/{t})")
 
 
 if __name__ == "__main__":

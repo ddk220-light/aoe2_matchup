@@ -129,6 +129,22 @@ computed once and never reset.
 - **Backward compat** → keep flat type strings; additive JSON; `v2` flag with
   instant rollback to `server._classify_units`.
 
+## Status
+
+- **Phases 0–4 implemented + wired** (`unit_classifier.py`, `server.py`). Typing
+  is now **group-first**: `assign_types` types each co-command blob as one unit
+  from the production stream with a fill-ratio quota (homogeneous groups + honest
+  proportions). Edge fixes landed: **C1** phantom dedup (canonical `unit_name_map`
+  key; 4783→4147 units), **C2** source-aware id normalization (SPECIAL/UNGARRISON,
+  not a magnitude threshold), **M3** class-aware fallback, partial **M2** unique
+  train times.
+- **Gate results (481391706):** G1 every stage active · G2 heterogeneity 68%→**3%**
+  · G3 huszar/villager/CA track production (~76–89%) · G4 hard-class purity 97.5%
+  · G5 phantoms collapsed. Run `python eval_classifier.py <replay> [player]`.
+- **Known gaps:** rare types (trebuchet/trade cart) still under-detected — needs
+  role-based detection; **Phase 5** behavior-driven siege rendering not started;
+  **Phase 6** multi-replay validation + legacy-path removal pending.
+
 ## Decisions (locked)
 
 - Sequence: **foundation-first**, phases 0→6 in order.

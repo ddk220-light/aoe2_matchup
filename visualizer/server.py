@@ -1005,8 +1005,8 @@ def process_replay(replay_file):
     _canon = lambda x: x  # noqa: E731
     try:
         import unit_classifier as _uc
-        unit_type_map, _ = _uc.build_type_map(match)
-        _canon = _uc.canonical_id
+        unit_type_map, _remap = _uc.build_type_map(match)
+        _canon = lambda o: _remap.get(o, o)  # noqa: E731  collapse shifted dups
     except Exception as e:
         app.logger.warning(f"v2 classification failed, falling back to legacy: {e}")
         try:
@@ -1152,18 +1152,21 @@ def process_replay(replay_file):
         subject_names = []
 
         for obj_id in unit_ids:
-            if obj_id not in unit_name_map:
+            # Canonicalize so a unit referenced by both its raw id (MOVE) and its
+            # shifted id (SPECIAL/UNGARRISON) is ONE on-map unit, not two.
+            cid = _canon(obj_id)
+            if cid not in unit_name_map:
                 owner = unit_owner_map.get(obj_id, action.player.name)
 
                 # Type comes from the behavior+production classifier; default to
                 # generic "unit" only if it never appeared in the classifier pass.
-                unit_type = unit_type_map.get(_canon(obj_id), "unit")
+                unit_type = unit_type_map.get(cid, "unit")
 
                 unit_counters[owner][unit_type] += 1
                 count = unit_counters[owner][unit_type]
-                unit_name_map[obj_id] = f"{unit_type}_{owner}_{count}"
+                unit_name_map[cid] = f"{unit_type}_{owner}_{count}"
 
-            subject_names.append(unit_name_map[obj_id])
+            subject_names.append(unit_name_map[cid])
 
         target_name = ""
         if action_type == "BUILD":
@@ -1223,7 +1226,7 @@ def process_replay(replay_file):
         if not actions:
             continue
 
-        unit_name = unit_name_map.get(obj_id)
+        unit_name = unit_name_map.get(_canon(obj_id))
         if not unit_name:
             continue
 

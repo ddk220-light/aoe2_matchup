@@ -48,7 +48,14 @@ TRAIN_TIMES = {
     "scoutcavalry": 30, "knight": 30, "camelrider": 22, "camelscout": 22, "battleelephant": 24,
     "monk": 51, "mangonel": 46, "scorpion": 30, "batteringram": 36, "trebuchet": 50,
     "bombardcannon": 56, "magyarhuszar": 16,
+    # common unique/regional units (base DE values; default 30 otherwise)
+    "berserk": 16, "mangudai": 26, "rattanarcher": 16, "steppelancer": 24,
+    "battleelephant": 24, "eaglewarrior": 35, "eaglescout": 60, "konnik": 19,
+    "woadraider": 10, "huskarl": 16, "tarkan": 14, "genoesecrossbowman": 22,
+    "camel": 22, "lightcavalry": 30, "hussar": 30, "elephantarcher": 25,
 }
+# TODO(M2): prefer match.dataset train times (civ-complete, locale-proof) over
+# this hardcoded table; defaults to 30s for anything missing.
 
 
 def _norm(s):
@@ -86,6 +93,14 @@ class Context:
     group_cmds: list = field(default_factory=list)     # [(player, [canonical ids]), ...]
     # production: building id -> list of (queue_time, unit_type)
     queues: dict = field(default_factory=lambda: defaultdict(list))
+    shifted: set = field(default_factory=set)  # raw ids that arrive byte-shifted
+
+    def canon(self, oid):
+        """Source-aware id normalization. Only ids that arrive via SPECIAL/
+        UNGARRISON are byte-shifted (id<<8) by the parser, so decode *only* those
+        -- avoids the fragile >=1M magnitude heuristic that could corrupt a
+        legitimate large id in a long game."""
+        return (oid >> 8) if oid in self.shifted else oid
 
 
 def _at(action):
@@ -109,6 +124,13 @@ def build_context(match):
     """
     ctx = Context(match=match)
 
+    # Pre-pass: collect the byte-shifted ids (those that arrive via SPECIAL /
+    # UNGARRISON) so ctx.canon can decode exactly those.
+    for a in match.actions:
+        if a.player and _at(a) in ("SPECIAL", "UNGARRISON"):
+            for o in (a.payload or {}).get("object_ids", []):
+                ctx.shifted.add(o)
+
     # gaia: all ids + the villager-only resource subset
     gaia = getattr(match, "gaia", None) or []
     for g in gaia:
@@ -123,7 +145,7 @@ def build_context(match):
     # starting (header) units: known owner + name -> seed class at top confidence
     for p in match.players:
         for o in (p.objects or []):
-            cid = canonical_id(o.instance_id)
+            cid = ctx.canon(o.instance_id)
             ctx.start_ids.add(cid)
             ctx.owner[cid] = p.name
             g = _ensure(ctx, cid, p.name)
@@ -138,7 +160,7 @@ def build_context(match):
         at = _at(a)
         payload = a.payload or {}
         t = a.timestamp.total_seconds()
-        ids = [canonical_id(o) for o in payload.get("object_ids", [])]
+        ids = [ctx.canon(o) for o in payload.get("object_ids", [])]
 
         # DE_QUEUE etc: object_ids are BUILDINGS, not acting units
         if at in BLD_SUBJECT_CMDS:
@@ -216,7 +238,7 @@ def behavioral_labels(ctx):
         if not (is_mil or is_vil):
             continue
         for o in (a.payload or {}).get("object_ids", []):
-            cid = canonical_id(o)
+            cid = ctx.canon(o)
             if cid in ctx.building_ids:
                 continue
             _ensure(ctx, cid, a.player.name)
@@ -347,42 +369,89 @@ def _role_of(g):
     return "military"
 
 
-def type_units(ctx):
-    """Stage 4b/c: assign types from production via creation-order alignment.
+def assign_types(ctx, squads):
+    """Stage 4: GROUP-based typing.
 
-    Hard villagers -> 'villager'. Hard military -> aligned to military-only
-    completions. Unknowns -> aligned to the full completion stream (which also
-    decides their class).
+    Each 'blob' -- a co-command squad, or a lone unit -- is typed as ONE unit, so
+    co-moving groups come out homogeneous (the strongest signal we have:
+    co-commanded units are ~100% the same type). Military types are handed out
+    from the player's production stream with a REMAINING-BUDGET constraint, so
+    homogenizing can't let the dominant unit (huszar) absorb the minorities
+    (cav-archer/treb) -- global proportions still track production.
+
+    This replaces the old per-unit id-rank typing + inert gap-fill smoothing.
     """
-    by_player = defaultdict(list)
     for cid, g in ctx.guesses.items():
         if cid in ctx.building_ids or cid in ctx.start_ids:
             continue
-        by_player[g.player].append(cid)
+        g.role = _role_of(g)
 
-    for player, ids in by_player.items():
-        mil_types = [t for _, t in ctx.prod_mil.get(player, [])]
-        full_types = [t for _, t in ctx.prod_full.get(player, [])]
+    squad_of = {}
+    for sid, c in enumerate(squads):
+        for cid in c:
+            squad_of[cid] = sid
 
-        for cid in ids:
-            g = ctx.guesses[cid]
-            g.role = _role_of(g)
-            if g.cls == "villager":
-                _set_type(g, "villager", 0.9 if g.cls_conf >= CONF["hard_class"] else 0.7, "class")
+    blobs = defaultdict(list)
+    for cid, g in ctx.guesses.items():
+        if cid in ctx.building_ids or cid in ctx.start_ids:
+            continue
+        key = ("sq", squad_of[cid]) if cid in squad_of else ("solo", cid)
+        blobs[key].append(cid)
 
-        hmil = sorted(cid for cid in ids if ctx.guesses[cid].cls == "military")
-        for cid, t in _align(hmil, mil_types).items():
-            _set_type(ctx.guesses[cid], t, CONF["idrank_type"], "idrank")
+    by_player = defaultdict(list)
+    for members in blobs.values():
+        by_player[ctx.guesses[members[0]].player].append(members)
 
-        unk = sorted(cid for cid in ids if ctx.guesses[cid].cls == "unknown")
-        for cid, t in _align(unk, full_types).items():
-            g = ctx.guesses[cid]
-            if t == "villager":
-                _set_type(g, "villager", CONF["idrank_type"] - 0.05, "idrank")
-                _set_class(g, "villager", CONF["idrank_type"], "idrank")
-            elif t:
-                _set_type(g, t, CONF["idrank_type"] - 0.05, "idrank")
-                _set_class(g, "military", CONF["idrank_type"], "idrank")
+    def blob_class(members):
+        known = [ctx.guesses[m].cls for m in members if ctx.guesses[m].cls != "unknown"]
+        return Counter(known).most_common(1)[0][0] if known else None
+
+    def med(members):
+        s = sorted(members)
+        return s[len(s) // 2]
+
+    for player, blist in by_player.items():
+        # ONE budget over the full production stream (villagers + every military
+        # type), so blobs are handed types in creation order, constrained by what
+        # the player actually produced. This keeps proportions honest across BOTH
+        # classes -- unknowns can't all pile into the single most-common type.
+        full = [t for _, t in ctx.prod_full.get(player, [])]
+        F = len(full)
+        mil_types = set(t for t in full if t != "villager") or {"military"}
+        target = Counter(full)        # production counts per type (the quota)
+        assigned = Counter()          # running assignment
+
+        all_ids = sorted(cid for members in blist for cid in members)
+        Nall = len(all_ids)
+        rank = {cid: i for i, cid in enumerate(all_ids)}
+
+        def pos(cid):
+            return round(rank[cid] * (F - 1) / (Nall - 1)) if (Nall > 1 and F > 0) else 0
+
+        # Pick the in-window candidate furthest BELOW its production quota, so
+        # minorities (cav-archer/cart/treb) get their share and large blobs still
+        # fall to the large types -- proportions track production without one
+        # type starving the rest.
+        def pick(cand, s):
+            return min(cand, key=lambda c: (assigned[c] + s) / max(1, target.get(c, 1)))
+
+        for members in sorted(blist, key=med):
+            s = len(members)
+            cls = blob_class(members)
+            window = full[min(pos(m) for m in members):max(pos(m) for m in members) + 1] if F else []
+            if cls == "villager":
+                t, conf = "villager", CONF["squad_type"]
+            elif cls == "military":
+                cand = set(w for w in window if w != "villager") or mil_types
+                t, conf = pick(cand, s), CONF["squad_type"]
+            else:  # no class signal -> full window decides vil/mil
+                cand = set(window) or set(full) or {"unit"}
+                t, conf = pick(cand, s), CONF["idrank_type"]
+            assigned[t] += s
+            bcls = "villager" if t == "villager" else "military"
+            for m in members:
+                _set_type(ctx.guesses[m], t, conf, "group")
+                _set_class(ctx.guesses[m], bcls, conf, "group")
 
 
 class _UF:
@@ -418,72 +487,52 @@ def form_squads(ctx, weight, min_weight=2):
     return squads
 
 
-def type_squads(ctx, squads):
-    """Stage 4: co-typing smoothing -- a squad's plurality type fills its members.
-
-    Respects hard class (never crosses a hard villager/military boundary) and
-    never downgrades a specific type to generic (handled by _set_type).
-    """
-    for c in squads:
-        votes = Counter()
-        for cid in c:
-            g = ctx.guesses[cid]
-            if g.type not in GENERIC_TYPES:
-                votes[g.type] += g.type_conf
-        if not votes:
-            continue
-        top, _ = votes.most_common(1)[0]
-        frac = sum(1 for cid in c if ctx.guesses[cid].type == top) / len(c)
-        conf = min(CONF["squad_type"], 0.5 + 0.4 * frac)
-        tcls = "villager" if top == "villager" else "military"
-        for cid in c:
-            g = ctx.guesses[cid]
-            if g.cls_conf >= CONF["hard_class"] and g.cls != tcls:
-                continue  # don't override a hard class
-            # Co-typing FILLS gaps -- it must not overwrite a confident specific
-            # type, or the dominant unit (huszar) eats the minorities (CA/treb).
-            # A unit's own id-rank type is kept; only generic/unknown members
-            # inherit the squad's plurality. (Squad-level typing is a later phase.)
-            if g.type in GENERIC_TYPES:
-                _set_type(g, top, conf, "squad")
-            if g.cls == "unknown":
-                _set_class(g, tcls, conf, "squad")
-
-
 def finalize(ctx):
-    """Stage 5: fill any still-generic military with the player's dominant type."""
+    """Stage 5: class-aware fallback -- a unit we know is MILITARY but couldn't
+    type still gets the player's dominant military type, never bare 'unit'."""
     dom = {}
     for player, comp in ctx.prod_mil.items():
         c = Counter(t for _, t in comp)
         if c:
             dom[player] = c.most_common(1)[0][0]
     for g in ctx.guesses.values():
-        if g.cls == "military" and g.type in GENERIC_TYPES and g.player in dom:
-            _set_type(g, dom[g.player], CONF["fallback"], "dominant")
+        if g.type in GENERIC_TYPES:
+            if g.cls == "villager":
+                _set_type(g, "villager", CONF["fallback"], "fallback")
+            elif g.cls == "military" and g.player in dom:
+                _set_type(g, dom[g.player], CONF["fallback"], "fallback")
 
 
-def classify(match):
-    """Run the full pipeline. Returns {canonical instance_id: UnitGuess}."""
+def _run(match):
+    """Run the full pipeline; returns the Context."""
     ctx = build_context(match)
     behavioral_labels(ctx)
     weight = cocommand_graph(ctx)
     propagate_class(ctx, weight)
     production_timeline(ctx)
-    type_units(ctx)
     squads = form_squads(ctx, weight)
-    type_squads(ctx, squads)
+    assign_types(ctx, squads)
     finalize(ctx)
-    return ctx.guesses
+    return ctx
+
+
+def classify(match):
+    """Run the full pipeline. Returns {canonical instance_id: UnitGuess}."""
+    return _run(match).guesses
 
 
 def build_type_map(match):
-    """Flat {instance_id: type_string} for process_replay, covering raw and
-    shifted ids. Class-only units resolve to 'villager' or 'unit'."""
-    guesses = classify(match)
+    """For process_replay: returns (flat, remap).
+
+    flat  = {canonical instance_id: type_string} (class-only units -> 'villager'
+            or 'unit').
+    remap = {raw shifted id: canonical id} so the caller can canonicalize the
+            ids it sees (collapsing the SPECIAL/UNGARRISON phantom duplicates).
+    """
+    ctx = _run(match)
     flat = {}
-    for cid, g in guesses.items():
-        t = g.type
-        if t in GENERIC_TYPES:
-            t = "villager" if g.cls == "villager" else "unit"
+    for cid, g in ctx.guesses.items():
+        t = g.type if g.type not in GENERIC_TYPES else ("villager" if g.cls == "villager" else "unit")
         flat[cid] = t
-    return flat, guesses
+    remap = {o: (o >> 8) for o in ctx.shifted}
+    return flat, remap

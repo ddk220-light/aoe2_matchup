@@ -208,16 +208,17 @@ class Playback {
       });
     }
 
-    // Trebuchet firing episodes. A treb keeps trebbing its target from the
-    // moment it's ordered to attack until its next command (or until it fades,
-    // i.e. it was destroyed). We record [start, end] windows + the target
-    // position so getState can spawn arcing projectiles during the window.
+    // Siege bombardment episodes (trebuchets and bombard cannons). The unit
+    // keeps firing at its target from the moment it's ordered to attack until
+    // its next command (or until it fades, i.e. it was destroyed). We record
+    // [start, end] windows + the target position so getState can spawn arcing
+    // projectiles during the window.
     this.trebAttacks = [];
     const matchDuration =
       (this.data.match && this.data.match.duration_seconds) || 1e9;
     const deaths = this.data.unit_deaths || {};
     for (const [unitName, movements] of this.unitMovements) {
-      if (!/trebuchet/i.test(unitName)) continue;
+      if (!Playback.SIEGE_SHOOTER_RE.test(unitName)) continue;
       const player = this.unitOwners.get(unitName);
       for (let i = 0; i < movements.length; i++) {
         if (!movements[i].isAttack) continue;
@@ -260,6 +261,10 @@ class Playback {
     }
     return ans;
   }
+
+  // Siege units that bombard buildings at range with arcing projectiles
+  // (trebuchets, bombard cannons). Matched against unit names.
+  static SIEGE_SHOOTER_RE = /trebuchet|bombard/i;
 
   // ---- Pathfinding: obstacle grid + A* so units route around static obstacles ----
 
@@ -1076,8 +1081,8 @@ class Playback {
       if (timeSinceAttack >= 0 && timeSinceAttack <= ATTACK_DISPLAY_DURATION) {
         // Get attacker positions
         for (const attackerName of attack.attackerNames) {
-          // Trebuchets show arcing projectiles instead of a static arrow.
-          if (/trebuchet/i.test(attackerName)) continue;
+          // Siege bombarders show arcing projectiles instead of a static arrow.
+          if (Playback.SIEGE_SHOOTER_RE.test(attackerName)) continue;
           const attackerUnit = interpolatedUnits.get(attackerName);
           if (attackerUnit && attackerUnit.alive) {
             activeAttacks.push({

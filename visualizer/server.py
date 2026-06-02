@@ -63,7 +63,11 @@ PLAYER_COLORS = {
     7: {"name": "Orange", "hex": "#FFA500"},
 }
 
-DEATH_THRESHOLD = 5 * 60
+# A unit with no further action for this long is assumed destroyed (it fades
+# out). Mainly governs siege (trebuchets / bombard cannons), which are kept
+# alive between commands so they can keep bombarding; other military units are
+# hidden almost immediately after their last command.
+DEATH_THRESHOLD = 3 * 60
 
 # Unit type classification
 INFANTRY_UNITS = {

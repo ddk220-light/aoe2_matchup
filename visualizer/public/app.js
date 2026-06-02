@@ -1343,11 +1343,9 @@ class App {
         actionLines: state.actionLines.filter(
           (line) => this.playerVisibility[line.player] !== false,
         ),
-        // Attack arrows and trebuchet shots are keyed by player too — carry
-        // them through (they were being dropped, so neither ever rendered).
-        attacks: (state.attacks || []).filter(
-          (a) => this.playerVisibility[a.player] !== false,
-        ),
+        // Trebuchet shots are keyed by player too — carry them through (they
+        // were being dropped, so they never rendered). Generic attack arrows
+        // are intentionally left out (visually noisy).
         trebProjectiles: (state.trebProjectiles || []).filter(
           (tp) => this.playerVisibility[tp.player] !== false,
         ),

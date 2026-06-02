@@ -1106,11 +1106,9 @@ class Playback {
       if (this.currentTime < fireStart || this.currentTime > ep.end) continue;
       const attacker = interpolatedUnits.get(ep.unitName);
       if (!attacker || !attacker.alive) continue;
-      // Mark the treb as actively firing for the whole window (debug: the
-      // renderer enlarges it and draws a line to the target, independent of
-      // projectile drawing).
+      // Mark the treb as actively firing so the renderer enlarges it (3×) for
+      // the whole barrage window, independent of individual shot drawing.
       attacker.firing = true;
-      attacker.firingTarget = { x: ep.targetX, y: ep.targetY };
       const firstK = Math.max(
         0,
         Math.ceil((this.currentTime - TREB_FLIGHT - fireStart) / TREB_RELOAD),

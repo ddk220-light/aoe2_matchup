@@ -1834,11 +1834,9 @@ class Renderer {
             pxX = radius * Math.cos(angle);
             pxY = radius * Math.sin(angle);
           }
-          // A trebuchet the engine considers actively firing is blown up to 3×
-          // and draws a line to its target, so it's obvious what it's firing at
-          // even before projectiles.
-          const firing = !!unit.firing;
-          const scale = firing ? 3 : scaleOf.get(name) || 1;
+          // A trebuchet the engine considers actively firing is drawn at 3× so
+          // a siege in progress stands out.
+          const scale = unit.firing ? 3 : scaleOf.get(name) || 1;
 
           this.drawUnit(
             unit.x,
@@ -1851,17 +1849,6 @@ class Renderer {
             pxY,
             scale,
           );
-
-          if (firing && unit.firingTarget) {
-            const pos = this.gameToCanvas(unit.x, unit.y);
-            this.drawFiringLine(
-              pos.x + pxX,
-              pos.y + pxY,
-              unit.firingTarget.x,
-              unit.firingTarget.y,
-              this.playerColors[unit.player] || "#ff8000",
-            );
-          }
         }
       }
     };
@@ -1916,48 +1903,12 @@ class Renderer {
       y: from.y + dy * q - arcH * 4 * q * (1 - q),
     });
 
-    // Faint trajectory guide: the full parabola shots travel, so the path is
-    // visible even between shots.
-    ctx.save();
-    ctx.strokeStyle = "rgba(255, 140, 0, 0.4)";
-    ctx.lineWidth = Math.max(1, this.zoom);
-    ctx.setLineDash([4, 5]);
-    ctx.beginPath();
-    for (let q = 0; q <= 1.0001; q += 0.04) {
-      const pt = arcPos(q);
-      if (q === 0) ctx.moveTo(pt.x, pt.y);
-      else ctx.lineTo(pt.x, pt.y);
-    }
-    ctx.stroke();
-    ctx.restore();
-
     for (const p of tp.shots) {
       const pt = arcPos(p);
 
       if (p > 0.88) {
         this.drawImpactFlash(to.x, to.y, (p - 0.88) / 0.12);
       }
-
-      // Debug: bold line from the treb to the shot's current spot + a label,
-      // so the projectile is unmistakable.
-      ctx.save();
-      ctx.strokeStyle = "#ff2a00";
-      ctx.lineWidth = Math.max(2, 2.5 * this.zoom);
-      ctx.beginPath();
-      ctx.moveTo(from.x, from.y);
-      ctx.lineTo(pt.x, pt.y);
-      ctx.stroke();
-      const fontSize = Math.max(10, 11 * this.zoom);
-      ctx.font = `bold ${fontSize}px Arial`;
-      ctx.textAlign = "left";
-      ctx.textBaseline = "bottom";
-      const label = `SHOT ${p.toFixed(2)}`;
-      const w = ctx.measureText(label).width;
-      ctx.fillStyle = "rgba(0,0,0,0.8)";
-      ctx.fillRect(pt.x + 8, pt.y - fontSize - 5, w + 6, fontSize + 4);
-      ctx.fillStyle = "#ffd24a";
-      ctx.fillText(label, pt.x + 11, pt.y - 3);
-      ctx.restore();
 
       ctx.save();
       // Motion trail: a few fading balls behind the head along the arc.
@@ -1986,28 +1937,6 @@ class Renderer {
       ctx.fill();
       ctx.restore();
     }
-  }
-
-  // Debug line from a firing trebuchet (screen px) to its target (game coords).
-  drawFiringLine(fx, fy, targetGameX, targetGameY, color) {
-    const to = this.gameToCanvas(targetGameX, targetGameY);
-    const ctx = this.ctx;
-    ctx.save();
-    ctx.globalAlpha = 0.9;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = Math.max(1.5, 2 * this.zoom);
-    ctx.setLineDash([6, 4]);
-    ctx.beginPath();
-    ctx.moveTo(fx, fy);
-    ctx.lineTo(to.x, to.y);
-    ctx.stroke();
-    // Solid dot at the target so the aim point is unambiguous.
-    ctx.setLineDash([]);
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(to.x, to.y, Math.max(2.5, 3.5 * this.zoom), 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
   }
 
   // Expanding flash at the impact point; t in 0..1 over the last bit of flight.

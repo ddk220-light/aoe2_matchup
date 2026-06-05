@@ -5,7 +5,7 @@
     "watchPatterns": ["webapp/**"]
   },
   "deploy": {
-    "startCommand": "cd webapp && gunicorn app:app",
+    "startCommand": "cd webapp && gunicorn app:app --workers 2 --timeout 300 --graceful-timeout 300",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }

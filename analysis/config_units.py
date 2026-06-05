@@ -1441,7 +1441,11 @@ UNIQUE_UNITS = {
         {
             "base_id": 1738,
             "display_name": "Ratha (Melee)",
-            "unit_class": 36,
+            # Melee form's true dat class is 12 (Cavalry). Must NOT be 36
+            # (Cavalry Archer): 36 drops the melee blacksmith line (Forging/
+            # Iron Casting/Blast Furnace) and adds inert Chemistry/Thumb Ring.
+            # The Ranged form below is genuinely class 36 — leave it.
+            "unit_class": 12,
             "availability_tech": 831,
             "elite_tech": 828,
             "elite_id": 1740,
@@ -1481,7 +1485,10 @@ UNIQUE_UNITS = {
         {
             "base_id": 1790,
             "display_name": "Centurion",
-            "unit_class": 6,
+            # The Centurion is mounted — true dat class is 12 (Cavalry). Must NOT
+            # be 6 (Infantry): 6 grants infantry Mail Armor/Squires/Arson and drops
+            # the cavalry upgrades the game gives it (Bloodlines, Husbandry, Barding).
+            "unit_class": 12,
             "availability_tech": 935,
             "elite_tech": 936,
             "elite_id": 1792,

@@ -1563,7 +1563,9 @@ def make_clip():
             traceback.print_exc()
             return jsonify({"error": f"clip generation failed: {e}"}), 500
 
-    base = request.host_url.rstrip("/")
+    # respect the proxy's scheme (Railway terminates TLS) so shared links are https
+    proto = request.headers.get("X-Forwarded-Proto", request.scheme)
+    base = f"{proto}://{request.host}"
     return jsonify({
         "clip_url": f"{base}/clips/{out_name}",
         "view_url": f"{base}/?matchId={match_id}&profileId={profile_id}",

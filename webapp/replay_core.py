@@ -1399,6 +1399,107 @@ def get_matches_for_player(player_name):
         return jsonify({"error": f"Error: {str(e)}"}), 500
 
 
+@replay_bp.route("/replay/api/players", methods=["GET"])
+def search_players():
+    """Search the AoE2 Companion player directory by name and return the list of
+    candidate profiles so the user can pick the right one before browsing their
+    games. Query param: ?search=<name> (alias ?q=). Returns up to 15 profiles."""
+    query = (request.args.get("search") or request.args.get("q") or "").strip()
+    if not query:
+        return jsonify({"error": "Missing 'search' query parameter"}), 400
+
+    try:
+        search_resp = requests.get(
+            f"{AOE2_COMPANION_API}/profiles",
+            params={"search": query},
+            headers=AOE2_COMPANION_HEADERS,
+            timeout=15,
+        )
+        search_data = search_resp.json()
+
+        profiles = []
+        for p in search_data.get("profiles", []):
+            pid = p.get("profileId")
+            if pid is None:
+                continue
+            # Number of games can come back as a string from the API.
+            try:
+                games = int(p.get("games") or 0)
+            except (TypeError, ValueError):
+                games = 0
+            profiles.append(
+                {
+                    "profileId": pid,
+                    "name": p.get("name"),
+                    "country": p.get("country"),
+                    "clan": p.get("clan") or "",
+                    "games": games,
+                    "verified": bool(p.get("verified")),
+                    "platformName": p.get("platformName"),
+                }
+            )
+
+        # Most-played first so the well-known account tends to surface on top.
+        profiles.sort(key=lambda x: x["games"], reverse=True)
+
+        return jsonify({"query": query, "players": profiles[:15]})
+
+    except requests.RequestException as e:
+        return jsonify({"error": f"Failed to search players: {str(e)}"}), 500
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return jsonify({"error": f"Error: {str(e)}"}), 500
+
+
+@replay_bp.route("/replay/api/player/<int:profile_id>/matches", methods=["GET"])
+def get_player_matches(profile_id):
+    """Fetch a specific player's most recent games (all maps/modes) by profile id.
+    Optional ?limit=<n> (default 10, max 25). Used after the user picks a player
+    from the search results."""
+    try:
+        limit = request.args.get("limit", default=10, type=int) or 10
+        limit = max(1, min(limit, 25))
+
+        matches_resp = requests.get(
+            f"{AOE2_COMPANION_API}/matches",
+            params={"profile_ids": profile_id, "perPage": limit},
+            headers=AOE2_COMPANION_HEADERS,
+            timeout=15,
+        )
+        matches_data = matches_resp.json()
+        matches = matches_data.get("matches", [])[:limit]
+
+        # Pull the player's display name from the returned matches if present.
+        name = None
+        for match in matches:
+            for team in match.get("teams", []):
+                for player in team.get("players", []):
+                    if player.get("profileId") == profile_id:
+                        name = player.get("name")
+                        break
+                if name:
+                    break
+            if name:
+                break
+
+        return jsonify(
+            {
+                "player": {"profileId": profile_id, "name": name},
+                "matches": matches,
+            }
+        )
+
+    except requests.RequestException as e:
+        return jsonify({"error": f"Failed to fetch matches: {str(e)}"}), 500
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return jsonify({"error": f"Error: {str(e)}"}), 500
+
+
 def _fetch_replay_to_cache(match_id, profile_id):
     """Return a local path to the match's .aoe2record, downloading from aoe.ms
     only if it isn't already cached. Retries briefly on HTTP 429 (rate limit).

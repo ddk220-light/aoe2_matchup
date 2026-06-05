@@ -978,6 +978,122 @@ main {
     cursor: not-allowed;
 }
 
+/* Player Search (find-a-player step) */
+.player-search-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.player-search-bar input[type="text"] {
+    flex: 1;
+    background: #1a1a2e;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: #fff;
+    font-size: 0.95rem;
+}
+
+.player-search-bar input[type="text"]:focus {
+    outline: none;
+    border-color: #4a90d9;
+}
+
+.player-search-hint {
+    color: #888;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 24px 12px;
+}
+
+.player-results {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.player-result {
+    background: #1a1a2e;
+    border-radius: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition:
+        background 0.2s,
+        transform 0.1s;
+    border: 1px solid transparent;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.player-result:hover {
+    background: #2a2a4e;
+    border-color: #4a90d9;
+}
+
+.player-result-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.player-result-clan {
+    color: #888;
+    font-size: 0.85rem;
+}
+
+.player-result-name {
+    font-weight: 600;
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.player-result-verified {
+    color: #4a9f4a;
+    font-size: 0.85rem;
+}
+
+.player-result-country {
+    color: #888;
+    font-size: 0.75rem;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+.player-result-meta {
+    color: #888;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.selected-player-header {
+    margin-bottom: 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.selected-player-label {
+    color: #888;
+    font-size: 0.85rem;
+}
+
+.selected-player-name {
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+#back-to-player-search {
+    margin-bottom: 12px;
+}
+
 /* Upload Fallback */
 .upload-fallback {
     font-size: 0.85rem;

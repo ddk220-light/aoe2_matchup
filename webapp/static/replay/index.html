@@ -13,7 +13,7 @@
                 <div class="header-controls">
                     <span id="match-info">Loading...</span>
                     <button class="browse-btn" id="browse-matches-btn">
-                        Browse Matches
+                        Find Player
                     </button>
                     <button
                         class="browse-btn"
@@ -113,22 +113,67 @@
         <div id="match-list-overlay" class="modal-overlay hidden">
             <div class="modal-panel match-list-panel">
                 <div class="panel-header">
-                    <h2>Recent Matches</h2>
+                    <h2 id="match-list-title">Find a Player</h2>
                     <button class="close-btn" id="close-match-list">
                         &times;
                     </button>
                 </div>
                 <div class="panel-content">
-                    <div id="match-list-loading" class="loading-spinner">
-                        Loading matches...
+                    <!-- Step 1: search for a player by name -->
+                    <div id="player-search-step">
+                        <form id="player-search-form" class="player-search-bar">
+                            <input
+                                type="text"
+                                id="player-search-input"
+                                placeholder="Enter a player name…"
+                                autocomplete="off"
+                                spellcheck="false"
+                            />
+                            <button
+                                type="submit"
+                                class="primary-btn"
+                                id="player-search-btn"
+                            >
+                                Search
+                            </button>
+                        </form>
+                        <div
+                            id="player-search-loading"
+                            class="loading-spinner hidden"
+                        >
+                            Searching players…
+                        </div>
+                        <div id="player-results" class="player-results">
+                            <div class="player-search-hint">
+                                Type a player name and hit Search to find their
+                                profile.
+                            </div>
+                        </div>
                     </div>
-                    <div id="match-list" class="match-list">
-                        <!-- Populated by JS -->
+
+                    <!-- Step 2: that player's recent games -->
+                    <div id="player-matches-step" class="hidden">
+                        <button class="back-btn" id="back-to-player-search">
+                            &larr; Back to search
+                        </button>
+                        <div
+                            id="selected-player-header"
+                            class="selected-player-header"
+                        ></div>
+                        <div
+                            id="match-list-loading"
+                            class="loading-spinner hidden"
+                        >
+                            Loading matches…
+                        </div>
+                        <div id="match-list" class="match-list">
+                            <!-- Populated by JS -->
+                        </div>
                     </div>
                 </div>
                 <div class="panel-footer">
                     <label class="upload-fallback">
-                        Or upload file directly:
+                        Or load a replay / saved game file directly:
                         <input
                             type="file"
                             id="file-input"

@@ -57,9 +57,24 @@ class App {
     // Match browsing UI elements
     this.browseMatchesBtn = document.getElementById("browse-matches-btn");
     this.matchListOverlay = document.getElementById("match-list-overlay");
+    this.matchListTitle = document.getElementById("match-list-title");
     this.matchListLoading = document.getElementById("match-list-loading");
     this.matchList = document.getElementById("match-list");
     this.closeMatchListBtn = document.getElementById("close-match-list");
+
+    // Player-search step elements
+    this.playerSearchStep = document.getElementById("player-search-step");
+    this.playerMatchesStep = document.getElementById("player-matches-step");
+    this.playerSearchForm = document.getElementById("player-search-form");
+    this.playerSearchInput = document.getElementById("player-search-input");
+    this.playerSearchLoading = document.getElementById("player-search-loading");
+    this.playerResults = document.getElementById("player-results");
+    this.selectedPlayerHeader = document.getElementById(
+      "selected-player-header",
+    );
+    this.backToPlayerSearchBtn = document.getElementById(
+      "back-to-player-search",
+    );
     this.matchDetailOverlay = document.getElementById("match-detail-overlay");
     this.matchDetailContent = document.getElementById("match-detail-content");
     this.backToListBtn = document.getElementById("back-to-list");
@@ -106,6 +121,9 @@ class App {
     this.currentPlayer = { name: "ddk220", profileId: null };
     this.matches = [];
     this.selectedMatch = null;
+    // The player chosen from the search step. Used to highlight their row in
+    // each match and to pick the download perspective when loading a replay.
+    this.selectedPlayer = null;
   }
 
   async init() {
@@ -155,6 +173,17 @@ class App {
       this.showMatchListPanel();
     });
 
+    // Player search (step 1)
+    this.playerSearchForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      this.searchPlayers();
+    });
+
+    // Back from a player's matches (step 2) to the search results (step 1)
+    this.backToPlayerSearchBtn.addEventListener("click", () => {
+      this.showPlayerSearchStep();
+    });
+
     // Close buttons
     this.closeMatchListBtn.addEventListener("click", () => {
       this.hideMatchListPanel();
@@ -164,10 +193,12 @@ class App {
       this.hideMatchDetailPanel();
     });
 
-    // Back to list
+    // Back to the chosen player's match list (not the player search step)
     this.backToListBtn.addEventListener("click", () => {
       this.hideMatchDetailPanel();
-      this.showMatchListPanel();
+      document.querySelector(".loading")?.remove();
+      this.matchListOverlay.classList.remove("hidden");
+      this.showPlayerMatchesStep();
     });
 
     // Load match button
@@ -191,14 +222,122 @@ class App {
     });
   }
 
-  async showMatchListPanel() {
+  showMatchListPanel() {
     document.querySelector(".loading")?.remove();
     this.matchListOverlay.classList.remove("hidden");
+    // Always open on the player-search step.
+    this.showPlayerSearchStep();
+    // Focus the search box for quick typing.
+    setTimeout(() => this.playerSearchInput?.focus(), 0);
+  }
+
+  hideMatchListPanel() {
+    this.matchListOverlay.classList.add("hidden");
+  }
+
+  // Step 1 ⇄ Step 2 toggling within the panel.
+  showPlayerSearchStep() {
+    this.playerSearchStep.classList.remove("hidden");
+    this.playerMatchesStep.classList.add("hidden");
+    if (this.matchListTitle) this.matchListTitle.textContent = "Find a Player";
+  }
+
+  showPlayerMatchesStep() {
+    this.playerSearchStep.classList.add("hidden");
+    this.playerMatchesStep.classList.remove("hidden");
+    if (this.matchListTitle) this.matchListTitle.textContent = "Recent Matches";
+  }
+
+  // ---- Step 1: search players by name ----
+
+  async searchPlayers() {
+    const query = (this.playerSearchInput.value || "").trim();
+    if (!query) {
+      this.playerSearchInput.focus();
+      return;
+    }
+
+    this.playerSearchLoading.classList.remove("hidden");
+    this.playerResults.innerHTML = "";
+
+    try {
+      const response = await fetch(
+        `/replay/api/players?search=${encodeURIComponent(query)}`,
+      );
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Failed to search players");
+      }
+      const data = await response.json();
+      this.renderPlayerResults(data.players || []);
+    } catch (error) {
+      console.error("Failed to search players:", error);
+      this.playerResults.innerHTML = `<div class="error-message">${error.message}</div>`;
+    }
+
+    this.playerSearchLoading.classList.add("hidden");
+  }
+
+  renderPlayerResults(players) {
+    this.playerResults.innerHTML = "";
+
+    if (!players.length) {
+      this.playerResults.innerHTML =
+        '<div class="no-matches">No players found. Try a different name.</div>';
+      return;
+    }
+
+    for (const player of players) {
+      const item = document.createElement("div");
+      item.className = "player-result";
+      item.addEventListener("click", () => this.selectPlayer(player));
+
+      const country = player.country
+        ? `<span class="player-result-country">${player.country.toUpperCase()}</span>`
+        : "";
+      const clan = player.clan
+        ? `<span class="player-result-clan">[${player.clan}]</span>`
+        : "";
+      const games =
+        typeof player.games === "number" && player.games > 0
+          ? `<span class="player-result-games">${player.games.toLocaleString()} games</span>`
+          : "";
+      const verified = player.verified
+        ? '<span class="player-result-verified" title="Verified profile">✓</span>'
+        : "";
+
+      item.innerHTML = `
+        <div class="player-result-main">
+          ${clan}
+          <span class="player-result-name">${player.name || "Unknown"}</span>
+          ${verified}
+          ${country}
+        </div>
+        <div class="player-result-meta">${games}</div>
+      `;
+
+      this.playerResults.appendChild(item);
+    }
+  }
+
+  // ---- Step 2: a chosen player's recent games ----
+
+  async selectPlayer(player) {
+    this.selectedPlayer = player;
+    // The match renderers highlight "tracked" players and pick the download
+    // perspective from this list — make it the player we just chose.
+    this.players = [{ name: player.name, profileId: player.profileId }];
+
+    this.showPlayerMatchesStep();
+    this.selectedPlayerHeader.innerHTML = `
+      <span class="selected-player-label">Last 10 games for</span>
+      <span class="selected-player-name">${player.name || "player"}</span>
+    `;
     this.matchListLoading.classList.remove("hidden");
     this.matchList.innerHTML = "";
 
     try {
-      await this.fetchMatches();
+      await this.fetchMatchesForPlayer(player.profileId);
       this.renderMatchList();
     } catch (error) {
       console.error("Failed to fetch matches:", error);
@@ -208,8 +347,16 @@ class App {
     this.matchListLoading.classList.add("hidden");
   }
 
-  hideMatchListPanel() {
-    this.matchListOverlay.classList.add("hidden");
+  async fetchMatchesForPlayer(profileId) {
+    const response = await fetch(
+      `/replay/api/player/${profileId}/matches?limit=10`,
+    );
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || "Failed to fetch matches");
+    }
+    const data = await response.json();
+    this.matches = data.matches || [];
   }
 
   showMatchDetailPanel(match) {
@@ -231,18 +378,6 @@ class App {
 
   hideLoadingOverlay() {
     this.loadingOverlay.classList.add("hidden");
-  }
-
-  async fetchMatches() {
-    const response = await fetch("/replay/api/matches");
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Failed to fetch matches");
-    }
-
-    const data = await response.json();
-    this.players = data.players;
-    this.matches = data.matches;
   }
 
   renderMatchList() {
@@ -404,9 +539,11 @@ class App {
     this.hideMatchDetailPanel();
     this.showLoadingOverlay("Downloading replay...");
 
-    // Find a tracked player in this match to use for download perspective
+    // Find a tracked player in this match to use for download perspective.
+    // Default to the player chosen from search (whose game this is).
     const playerIds = new Set((this.players || []).map((p) => p.profileId));
-    let profileIdForDownload = 612690; // Default to ddk220
+    let profileIdForDownload =
+      this.selectedPlayer?.profileId || 612690; // Fallback: ddk220
     for (const team of match.teams || []) {
       for (const player of team.players || []) {
         if (playerIds.has(player.profileId)) {

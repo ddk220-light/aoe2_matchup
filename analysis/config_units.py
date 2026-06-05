@@ -1167,7 +1167,10 @@ UNIQUE_UNITS = {
         {
             "base_id": 771,
             "display_name": "Conquistador",
-            "unit_class": 36,
+            # dat unit class is 23 ("Conquistador" class). Must NOT be 36
+            # (Cavalry Archer): 36 wrongly grants Fletching/Bodkin/Bracer/
+            # Chemistry/Thumb Ring, none of which the Conquistador receives.
+            "unit_class": 23,
             "availability_tech": 58,
             "elite_tech": 60,
             "elite_id": 773,
@@ -1313,7 +1316,11 @@ UNIQUE_UNITS = {
         {
             "base_id": 1126,  # Correct ID per AoE2ScenarioParser
             "display_name": "Arambai",
-            "unit_class": 36,
+            # dat unit class is 23 ("Conquistador" class), same as Conquistador.
+            # Must NOT be 36 (Cavalry Archer): 36 wrongly grants Fletching/
+            # Bodkin/Bracer/Thumb Ring. Chemistry & Parthian Tactics still apply
+            # because the dat targets the Arambai by unit id (1126/1128).
+            "unit_class": 23,
             "availability_tech": 618,
             "elite_tech": 619,
             "elite_id": 1128,  # Correct ID per AoE2ScenarioParser

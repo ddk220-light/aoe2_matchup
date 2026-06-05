@@ -5901,26 +5901,22 @@
         },
         "conquistador_spanish": {
           "eco_wins": [],
-          "highlighted": [
-            "camel",
+          "highlighted": [],
+          "losses": [
             "camel_archer_berbers",
-            "elite_skirm",
             "scorpion"
           ],
-          "losses": [],
           "pop_wins": [
-            "genitour"
-          ],
-          "wins": [
             "camel",
-            "camel_archer_berbers",
             "cav_archer",
             "crossbow",
             "elite_skirm",
-            "knight",
+            "genitour",
             "light_cav",
-            "pikeman",
-            "scorpion",
+            "pikeman"
+          ],
+          "wins": [
+            "knight",
             "swordsmen"
           ]
         },
@@ -6090,6 +6086,7 @@
       "right": {
         "camel": {
           "eco_wins": [
+            "conquistador_spanish",
             "knight"
           ],
           "highlighted": [
@@ -6098,7 +6095,6 @@
           ],
           "losses": [
             "cav_archer",
-            "conquistador_spanish",
             "pikeman"
           ],
           "pop_wins": [
@@ -6112,9 +6108,13 @@
         },
         "camel_archer_berbers": {
           "eco_wins": [],
-          "highlighted": [],
-          "losses": [
+          "highlighted": [
+            "cav_archer",
             "conquistador_spanish",
+            "crossbow",
+            "light_cav"
+          ],
+          "losses": [
             "scorpion"
           ],
           "pop_wins": [
@@ -6122,6 +6122,7 @@
           ],
           "wins": [
             "cav_archer",
+            "conquistador_spanish",
             "crossbow",
             "knight",
             "light_cav",
@@ -6130,10 +6131,13 @@
           ]
         },
         "cav_archer": {
-          "eco_wins": [],
-          "highlighted": [],
+          "eco_wins": [
+            "conquistador_spanish"
+          ],
+          "highlighted": [
+            "crossbow"
+          ],
           "losses": [
-            "conquistador_spanish",
             "elite_skirm",
             "scorpion"
           ],
@@ -6150,13 +6154,13 @@
         "crossbow": {
           "eco_wins": [
             "cav_archer",
+            "conquistador_spanish",
             "knight"
           ],
           "highlighted": [
             "crossbow"
           ],
           "losses": [
-            "conquistador_spanish",
             "elite_skirm",
             "light_cav",
             "scorpion"
@@ -6170,11 +6174,11 @@
         },
         "elite_skirm": {
           "eco_wins": [
+            "conquistador_spanish",
             "scorpion"
           ],
           "highlighted": [],
           "losses": [
-            "conquistador_spanish",
             "knight",
             "light_cav",
             "swordsmen"
@@ -6232,13 +6236,13 @@
         "light_cav": {
           "eco_wins": [
             "cav_archer",
+            "conquistador_spanish",
             "knight",
             "light_cav",
             "swordsmen"
           ],
           "highlighted": [],
           "losses": [
-            "conquistador_spanish",
             "pikeman"
           ],
           "pop_wins": [],
@@ -6250,13 +6254,13 @@
         },
         "pikeman": {
           "eco_wins": [
+            "conquistador_spanish",
             "knight",
             "scorpion"
           ],
           "highlighted": [],
           "losses": [
             "cav_archer",
-            "conquistador_spanish",
             "crossbow",
             "elite_skirm",
             "swordsmen"
@@ -6268,9 +6272,10 @@
         },
         "scorpion": {
           "eco_wins": [],
-          "highlighted": [],
+          "highlighted": [
+            "conquistador_spanish"
+          ],
           "losses": [
-            "conquistador_spanish",
             "knight",
             "light_cav"
           ],
@@ -6281,6 +6286,7 @@
           ],
           "wins": [
             "cav_archer",
+            "conquistador_spanish",
             "crossbow"
           ]
         },
@@ -6357,26 +6363,24 @@
         "elite_conquistador_spanish": {
           "eco_wins": [],
           "highlighted": [
-            "elite_camel_archer_berbers",
-            "heavy_camel",
-            "imp_elite_skirm",
             "paladin"
           ],
-          "losses": [],
+          "losses": [
+            "elite_camel_archer_berbers",
+            "elite_genitour",
+            "heavy_camel",
+            "heavy_scorpion"
+          ],
           "pop_wins": [
-            "elite_genitour"
+            "arbalester",
+            "halberdier",
+            "heavy_cav_archer",
+            "hussar",
+            "imp_elite_skirm"
           ],
           "wins": [
-            "arbalester",
             "champion",
-            "elite_camel_archer_berbers",
-            "halberdier",
             "hand_cannoneer",
-            "heavy_camel",
-            "heavy_cav_archer",
-            "heavy_scorpion",
-            "hussar",
-            "imp_elite_skirm",
             "paladin"
           ]
         },
@@ -6559,6 +6563,7 @@
       "right": {
         "arbalester": {
           "eco_wins": [
+            "elite_conquistador_spanish",
             "heavy_scorpion"
           ],
           "highlighted": [
@@ -6567,7 +6572,6 @@
           ],
           "losses": [
             "champion",
-            "elite_conquistador_spanish",
             "heavy_cav_archer",
             "hussar",
             "imp_elite_skirm",
@@ -6603,10 +6607,13 @@
           "eco_wins": [
             "paladin"
           ],
-          "highlighted": [],
-          "losses": [
-            "elite_conquistador_spanish"
+          "highlighted": [
+            "elite_conquistador_spanish",
+            "heavy_cav_archer",
+            "heavy_scorpion",
+            "hussar"
           ],
+          "losses": [],
           "pop_wins": [
             "halberdier",
             "imp_elite_skirm"
@@ -6614,6 +6621,7 @@
           "wins": [
             "arbalester",
             "champion",
+            "elite_conquistador_spanish",
             "hand_cannoneer",
             "heavy_cav_archer",
             "heavy_scorpion",
@@ -6622,10 +6630,10 @@
         },
         "elite_genitour": {
           "eco_wins": [
-            "elite_conquistador_spanish",
             "heavy_scorpion"
           ],
           "highlighted": [
+            "elite_conquistador_spanish",
             "heavy_cav_archer",
             "imp_elite_skirm"
           ],
@@ -6639,6 +6647,7 @@
           ],
           "wins": [
             "arbalester",
+            "elite_conquistador_spanish",
             "hand_cannoneer",
             "heavy_cav_archer",
             "imp_elite_skirm"
@@ -6646,6 +6655,7 @@
         },
         "halberdier": {
           "eco_wins": [
+            "elite_conquistador_spanish",
             "heavy_scorpion",
             "paladin"
           ],
@@ -6653,7 +6663,6 @@
           "losses": [
             "arbalester",
             "champion",
-            "elite_conquistador_spanish",
             "halberdier",
             "hand_cannoneer",
             "heavy_cav_archer",
@@ -6687,6 +6696,7 @@
           "eco_wins": [],
           "highlighted": [
             "arbalester",
+            "elite_conquistador_spanish",
             "hand_cannoneer",
             "heavy_cav_archer",
             "heavy_scorpion",
@@ -6696,12 +6706,12 @@
           ],
           "losses": [
             "champion",
-            "elite_conquistador_spanish",
             "halberdier"
           ],
           "pop_wins": [],
           "wins": [
             "arbalester",
+            "elite_conquistador_spanish",
             "hand_cannoneer",
             "heavy_cav_archer",
             "heavy_scorpion",
@@ -6711,10 +6721,14 @@
           ]
         },
         "heavy_cav_archer": {
-          "eco_wins": [],
-          "highlighted": [],
+          "eco_wins": [
+            "elite_conquistador_spanish"
+          ],
+          "highlighted": [
+            "heavy_scorpion",
+            "hussar"
+          ],
           "losses": [
-            "elite_conquistador_spanish",
             "paladin"
           ],
           "pop_wins": [
@@ -6733,13 +6747,13 @@
           "eco_wins": [],
           "highlighted": [
             "arbalester",
+            "elite_conquistador_spanish",
             "hand_cannoneer",
             "heavy_cav_archer",
             "heavy_scorpion",
             "imp_elite_skirm"
           ],
           "losses": [
-            "elite_conquistador_spanish",
             "hussar",
             "paladin"
           ],
@@ -6749,6 +6763,7 @@
           ],
           "wins": [
             "arbalester",
+            "elite_conquistador_spanish",
             "hand_cannoneer",
             "heavy_cav_archer",
             "heavy_scorpion",
@@ -6757,6 +6772,7 @@
         },
         "hussar": {
           "eco_wins": [
+            "elite_conquistador_spanish",
             "hand_cannoneer",
             "heavy_cav_archer",
             "hussar",
@@ -6765,7 +6781,6 @@
           "highlighted": [],
           "losses": [
             "champion",
-            "elite_conquistador_spanish",
             "halberdier"
           ],
           "pop_wins": [],
@@ -6777,13 +6792,13 @@
         },
         "imp_elite_skirm": {
           "eco_wins": [
+            "elite_conquistador_spanish",
             "heavy_cav_archer",
             "heavy_scorpion"
           ],
           "highlighted": [],
           "losses": [
             "champion",
-            "elite_conquistador_spanish",
             "hussar",
             "paladin"
           ],

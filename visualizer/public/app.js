@@ -27,6 +27,25 @@ class App {
     this.fileInput = document.getElementById("file-input");
     this.saveRecordBtn = document.getElementById("save-record-btn");
 
+    // Share-clip UI elements
+    this.shareClipBtn = document.getElementById("share-clip-btn");
+    this.clipOverlay = document.getElementById("clip-overlay");
+    this.closeClipBtn = document.getElementById("close-clip");
+    this.clipPlayerSelect = document.getElementById("clip-player-select");
+    this.clipGenerateBtn = document.getElementById("clip-generate-btn");
+    this.clipStatus = document.getElementById("clip-status");
+    this.clipResult = document.getElementById("clip-result");
+    this.clipVideo = document.getElementById("clip-video");
+    this.clipUrlInput = document.getElementById("clip-url-input");
+    this.clipViewInput = document.getElementById("clip-view-input");
+    this.copyClipUrlBtn = document.getElementById("copy-clip-url");
+    this.copyClipViewBtn = document.getElementById("copy-clip-view");
+    // The aoe2 match id + download profile id of the currently loaded replay.
+    // Only set for replays loaded from the browser / deep-link (not uploads),
+    // since the server needs them to re-download the replay for clip export.
+    this.currentMatchId = null;
+    this.currentProfileId = null;
+
     // Timeline scrubbing state: while the user drags the marker we pause the
     // engine and stop the play loop from yanking the thumb back, then resume.
     this.isScrubbing = false;
@@ -414,6 +433,8 @@ class App {
 
       this.showLoadingOverlay("Processing replay...");
       this.data = await response.json();
+      this.currentMatchId = match.matchId;
+      this.currentProfileId = profileIdForDownload;
 
       // Stop existing render loop if any
       if (this.renderLoopId) {
@@ -447,6 +468,8 @@ class App {
       }
       this.showLoadingOverlay("Processing replay...");
       this.data = await response.json();
+      this.currentMatchId = matchId;
+      this.currentProfileId = profileId;
       if (this.renderLoopId) {
         cancelAnimationFrame(this.renderLoopId);
       }
@@ -509,6 +532,15 @@ class App {
 
     // Storyteller narration ("Castle Age", "building a Castle", ...) disabled.
     // this.initializeStoryteller();
+
+    // Share-clip button is only usable for replays loaded by aoe2 match id
+    // (browser / deep-link) — server-side clip export re-downloads by id.
+    if (this.shareClipBtn) {
+      this.shareClipBtn.disabled = !this.currentMatchId;
+      this.shareClipBtn.title = this.currentMatchId
+        ? "Generate a short shareable WebM highlight clip of this match"
+        : "Load a match from Browse Matches to generate a shareable clip";
+    }
 
     // Initial render
     this.startRenderLoop();
@@ -956,6 +988,9 @@ class App {
     try {
       const text = await file.text();
       this.data = JSON.parse(text);
+      // Local file: no aoe2 match id, so server-side clip export isn't available.
+      this.currentMatchId = null;
+      this.currentProfileId = null;
 
       // Stop existing render loop if any
       if (this.renderLoopId) {
@@ -1003,6 +1038,106 @@ class App {
     URL.revokeObjectURL(url);
   }
 
+  // ==================== Share Clip ====================
+
+  // Open the clip modal, populating the focus-player dropdown from the loaded
+  // match. Defaults the selection to the tracked player we downloaded from.
+  openClipPanel() {
+    if (!this.currentMatchId) {
+      alert("Load a match from Browse Matches first to generate a clip.");
+      return;
+    }
+    // (Re)populate the player dropdown.
+    this.clipPlayerSelect.innerHTML = "";
+    const players = (this.data && this.data.players) || [];
+    for (const p of players) {
+      const opt = document.createElement("option");
+      opt.value = p.name;
+      opt.textContent = p.name;
+      this.clipPlayerSelect.appendChild(opt);
+    }
+    // Default to the perspective player if it's in the match.
+    const myName = (this.currentPlayer && this.currentPlayer.name) || "";
+    if (players.some((p) => p.name === myName)) {
+      this.clipPlayerSelect.value = myName;
+    }
+
+    // Reset transient UI state.
+    this.clipResult.classList.add("hidden");
+    this.clipStatus.classList.add("hidden");
+    this.clipGenerateBtn.disabled = false;
+    if (this.clipVideo) this.clipVideo.removeAttribute("src");
+
+    this.clipOverlay.classList.remove("hidden");
+  }
+
+  hideClipPanel() {
+    this.clipOverlay.classList.add("hidden");
+    // Stop the preview so it isn't playing behind the scenes.
+    if (this.clipVideo) {
+      this.clipVideo.pause();
+      this.clipVideo.removeAttribute("src");
+      this.clipVideo.load();
+    }
+  }
+
+  // Call the server-side clip exporter and show the resulting WebM + links.
+  async generateClip() {
+    if (!this.currentMatchId) {
+      alert("Load a match from Browse Matches first to generate a clip.");
+      return;
+    }
+    const player = this.clipPlayerSelect.value || "";
+    this.clipGenerateBtn.disabled = true;
+    this.clipResult.classList.add("hidden");
+    this.clipStatus.classList.remove("hidden");
+    this.clipStatus.textContent =
+      "Rendering highlight clip… this can take up to a minute.";
+
+    try {
+      const params = new URLSearchParams({
+        matchId: String(this.currentMatchId),
+        profileId: String(this.currentProfileId || ""),
+      });
+      if (player) params.set("player", player);
+      const resp = await fetch(`/api/clip?${params.toString()}`);
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${resp.status}`);
+      }
+      const out = await resp.json();
+      // Cache-bust so a regenerated clip for the same player refreshes.
+      const bust = `?v=${Date.now()}`;
+      this.clipVideo.src = out.clip_url + bust;
+      this.clipVideo.load();
+      this.clipUrlInput.value = out.clip_url;
+      this.clipViewInput.value = out.view_url || "";
+      this.clipStatus.classList.add("hidden");
+      this.clipResult.classList.remove("hidden");
+    } catch (error) {
+      console.error("Clip generation failed:", error);
+      this.clipStatus.textContent = `Failed to generate clip: ${error.message}`;
+    } finally {
+      this.clipGenerateBtn.disabled = false;
+    }
+  }
+
+  async copyToClipboard(input, btn) {
+    if (!input || !input.value) return;
+    try {
+      await navigator.clipboard.writeText(input.value);
+    } catch (e) {
+      // Fallback for older browsers / insecure contexts.
+      input.select();
+      document.execCommand("copy");
+    }
+    const prev = btn.textContent;
+    btn.textContent = "Copied!";
+    setTimeout(() => {
+      btn.textContent = prev;
+    }, 1500);
+  }
+
   async uploadReplay(file) {
     // Show loading state
     this.matchInfo.textContent = `Processing ${file.name}...`;
@@ -1022,6 +1157,9 @@ class App {
       }
 
       this.data = await response.json();
+      // Uploaded raw replay: no aoe2 match id for server-side clip export.
+      this.currentMatchId = null;
+      this.currentProfileId = null;
 
       // Stop existing render loop if any
       if (this.renderLoopId) {
@@ -1106,6 +1244,34 @@ class App {
       // Save the processed match as a .aoe2ddkrecord file.
       if (this.saveRecordBtn) {
         this.saveRecordBtn.addEventListener("click", () => this.saveRecord());
+      }
+
+      // Share-clip modal wiring.
+      if (this.shareClipBtn) {
+        this.shareClipBtn.addEventListener("click", () => this.openClipPanel());
+      }
+      if (this.closeClipBtn) {
+        this.closeClipBtn.addEventListener("click", () => this.hideClipPanel());
+      }
+      if (this.clipOverlay) {
+        this.clipOverlay.addEventListener("click", (e) => {
+          if (e.target === this.clipOverlay) this.hideClipPanel();
+        });
+      }
+      if (this.clipGenerateBtn) {
+        this.clipGenerateBtn.addEventListener("click", () =>
+          this.generateClip(),
+        );
+      }
+      if (this.copyClipUrlBtn) {
+        this.copyClipUrlBtn.addEventListener("click", () =>
+          this.copyToClipboard(this.clipUrlInput, this.copyClipUrlBtn),
+        );
+      }
+      if (this.copyClipViewBtn) {
+        this.copyClipViewBtn.addEventListener("click", () =>
+          this.copyToClipboard(this.clipViewInput, this.copyClipViewBtn),
+        );
       }
 
       // Speed buttons

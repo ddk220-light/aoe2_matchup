@@ -589,6 +589,95 @@ main {
     background-color: #357abd;
 }
 
+.browse-btn:disabled {
+    background-color: #3a4150;
+    color: #8089a0;
+    cursor: not-allowed;
+}
+
+/* Share-clip modal */
+.clip-panel {
+    max-width: 720px;
+}
+
+.clip-hint {
+    color: #aab2c5;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin: 0 0 14px;
+}
+
+.clip-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.clip-controls label {
+    color: #d4d9e6;
+    font-size: 0.9rem;
+}
+
+.clip-controls select {
+    background: #1c1c2b;
+    color: #fff;
+    border: 1px solid #3a4150;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 0.9rem;
+    min-width: 160px;
+}
+
+.clip-status {
+    color: #ffd166;
+    font-size: 0.9rem;
+    padding: 10px 0;
+}
+
+.clip-status.hidden,
+.clip-result.hidden {
+    display: none;
+}
+
+.clip-result video {
+    width: 100%;
+    border-radius: 8px;
+    background: #000;
+    display: block;
+    margin-bottom: 14px;
+}
+
+.clip-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.clip-links label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: #aab2c5;
+    font-size: 0.8rem;
+}
+
+.clip-copy-row {
+    display: flex;
+    gap: 8px;
+}
+
+.clip-copy-row input {
+    flex: 1;
+    background: #1c1c2b;
+    color: #fff;
+    border: 1px solid #3a4150;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+}
+
 /* Modal Overlay */
 .modal-overlay {
     position: fixed;

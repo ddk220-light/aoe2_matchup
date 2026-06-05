@@ -22,6 +22,14 @@
                     >
                         Save
                     </button>
+                    <button
+                        class="browse-btn"
+                        id="share-clip-btn"
+                        title="Generate a short shareable WebM highlight clip of this match"
+                        disabled
+                    >
+                        Share Clip
+                    </button>
                 </div>
             </header>
 
@@ -150,6 +158,75 @@
                     <button class="primary-btn" id="load-match-btn">
                         Load Replay
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Share Clip Panel Overlay -->
+        <div id="clip-overlay" class="modal-overlay hidden">
+            <div class="modal-panel clip-panel">
+                <div class="panel-header">
+                    <h2>Share Highlight Clip</h2>
+                    <button class="close-btn" id="close-clip">&times;</button>
+                </div>
+                <div class="panel-content" id="clip-content">
+                    <p class="clip-hint">
+                        Generates a short (≤30s, 8× speed) WebM that auto-clips
+                        to the biggest engagements — perfect for Discord or the
+                        web. A timeline at the bottom shows what was skipped.
+                    </p>
+                    <div class="clip-controls">
+                        <label for="clip-player-select">Focus player:</label>
+                        <select id="clip-player-select"></select>
+                        <button class="primary-btn" id="clip-generate-btn">
+                            Generate Clip
+                        </button>
+                    </div>
+                    <div id="clip-status" class="clip-status hidden"></div>
+                    <div id="clip-result" class="clip-result hidden">
+                        <video
+                            id="clip-video"
+                            controls
+                            autoplay
+                            loop
+                            muted
+                            playsinline
+                        ></video>
+                        <div class="clip-links">
+                            <label>
+                                Clip URL
+                                <span class="clip-copy-row">
+                                    <input
+                                        type="text"
+                                        id="clip-url-input"
+                                        readonly
+                                    />
+                                    <button
+                                        class="browse-btn"
+                                        id="copy-clip-url"
+                                    >
+                                        Copy
+                                    </button>
+                                </span>
+                            </label>
+                            <label>
+                                Watch in UI
+                                <span class="clip-copy-row">
+                                    <input
+                                        type="text"
+                                        id="clip-view-input"
+                                        readonly
+                                    />
+                                    <button
+                                        class="browse-btn"
+                                        id="copy-clip-view"
+                                    >
+                                        Copy
+                                    </button>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1568,7 +1568,9 @@ def make_clip():
     base = f"{proto}://{request.host}"
     return jsonify({
         "clip_url": f"{base}/clips/{out_name}",
-        "view_url": f"{base}/?matchId={match_id}&profileId={profile_id}",
+        # Use the ?match=&profile= deep-link params the frontend actually reads
+        # (app.js init()) so the shared "Watch in UI" link auto-loads the replay.
+        "view_url": f"{base}/?match={match_id}&profile={profile_id}",
     })
 
 

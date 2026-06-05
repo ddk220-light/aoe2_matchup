@@ -531,11 +531,22 @@ def _ffmpeg_exe():
 
 
 def _encode(frames_dir, out_path):
+    # Encode to a temp file and atomically rename, so a killed/timed-out worker
+    # never leaves a half-written .webm that would be served from cache.
+    tmp_out = out_path + ".tmp.webm"
     cmd = [_ffmpeg_exe(), "-y", "-framerate", str(FPS),
            "-i", os.path.join(frames_dir, "f%05d.png"),
            "-c:v", "libvpx-vp9", "-b:v", "0", "-crf", "34", "-pix_fmt", "yuv420p",
-           "-row-mt", "1", "-an", out_path]
-    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+           "-row-mt", "1", "-an", tmp_out]
+    try:
+        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        os.replace(tmp_out, out_path)
+    finally:
+        if os.path.exists(tmp_out):
+            try:
+                os.remove(tmp_out)
+            except OSError:
+                pass
 
 
 def build_clip(match, focus_player, out_path):

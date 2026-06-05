@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Replay Analyzer — watch &amp; share AoE2 replays | AoE2 Matchup{% endblock %}
+{% block meta_description %}Browse and watch Age of Empires II replays on an isometric map, classify every unit, and export a short shareable WebM highlight clip of the biggest engagements.{% endblock %}
+
+{% block page_css %}
+<style>
+    /* Full-screen replay app sits below the sticky nav. The visualizer is a
+       self-contained full-screen SPA, so we isolate it in an iframe to avoid
+       any CSS collisions with the analyzer's styles. */
+    html, body { overflow: hidden; }
+    #replay-host { width: 100%; }
+    #replay-frame {
+        display: block;
+        width: 100%;
+        border: 0;
+        background: #1a1a2e;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="replay-host">
+    <iframe
+        id="replay-frame"
+        title="AoE2 Replay Analyzer"
+        src="/static/replay/index.html{{ replay_qs }}"
+        allow="clipboard-write"
+    ></iframe>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+    // Size the iframe to fill from its top to the bottom of the viewport, so it
+    // works regardless of the (sticky, sometimes wrapping) nav's height.
+    (function () {
+        var frame = document.getElementById('replay-frame');
+        function size() {
+            var top = frame.getBoundingClientRect().top;
+            frame.style.height = Math.max(360, window.innerHeight - top) + 'px';
+        }
+        window.addEventListener('resize', size);
+        window.addEventListener('load', size);
+        size();
+    })();
+</script>
+{% endblock %}

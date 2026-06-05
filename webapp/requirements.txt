@@ -1,3 +1,13 @@
 flask==3.0.0
 gunicorn==21.2.0
 numpy
+# ---- Replay Analyzer feature (webapp/replay_core.py, clip_export.py) ----
+requests>=2.31.0
+flask-cors>=4.0.0
+# mgz pinned to sanduckhan's fork: AoE2 DE save-version 67.x support (current
+# game builds) — not yet upstream. See aoc-mgz PR #141.
+mgz @ https://github.com/sanduckhan/aoc-mgz/archive/a1683d8eeca67796ced0d0c05b145420c97d862d.tar.gz
+# Server-side WebM clip export: Pillow renders frames; the imageio-ffmpeg wheel
+# bundles an ffmpeg binary so no apt install is needed on the slim image.
+Pillow>=10.0.0
+imageio-ffmpeg>=0.4.9

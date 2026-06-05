@@ -46,6 +46,22 @@ def inject_footer_config():
     }
 
 
+# ---- Replay Analyzer (ported from the standalone visualizer) -----------------
+# Mounts the AoE2 replay browser/visualizer + WebM clip exporter under /replay/*.
+# It pulls heavy optional deps (mgz, Pillow, imageio-ffmpeg, requests); if any
+# are missing we skip registration so the core simulator site still boots.
+try:
+    from replay_core import replay_bp
+    app.register_blueprint(replay_bp)
+    REPLAY_ENABLED = True
+except Exception as _replay_err:  # pragma: no cover
+    import logging
+    logging.getLogger(__name__).warning(
+        "Replay Analyzer disabled (import failed): %s", _replay_err
+    )
+    REPLAY_ENABLED = False
+
+
 # Database paths
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_units.db")
 REF_DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
@@ -112,6 +128,20 @@ def get_units_by_age():
 def home():
     """Battle Sim is the homepage."""
     return render_template("simulate.html", active_nav="simulate")
+
+
+@app.route("/replay")
+def replay():
+    """Replay Analyzer tab. Embeds the full-screen visualizer in an isolated
+    iframe so the analyzer nav + theme stay on top with no CSS conflicts.
+    Forwards deep-link params (?match=&profile=&t=) into the iframe so shared
+    links auto-load a replay (and optionally jump to a timestamp)."""
+    from urllib.parse import urlencode
+    allowed = {k: request.args[k] for k in ("match", "profile", "t")
+               if request.args.get(k)}
+    replay_qs = ("?" + urlencode(allowed)) if allowed else ""
+    return render_template("replay.html", active_nav="replay",
+                           replay_qs=replay_qs)
 
 
 @app.route("/units")

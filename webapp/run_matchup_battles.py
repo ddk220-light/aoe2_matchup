@@ -19,15 +19,6 @@ import sys
 import time
 from collections import defaultdict
 
-# PyPy guard: must be checked before slow imports so the error is immediate.
-if platform.python_implementation() != "PyPy":
-    sys.stderr.write(
-        "\nERROR: run_matchup_battles.py requires PyPy 3.\n"
-        "  Install pypy3 from https://www.pypy.org/download.html\n"
-        "  Then run: pypy3 -m webapp.run_matchup_battles\n\n"
-    )
-    sys.exit(2)
-
 # Ensure webapp/ is on the path when run as `pypy3 run_matchup_battles.py`
 # (no-op when run as `pypy3 -m webapp.run_matchup_battles`).
 _here = os.path.dirname(os.path.abspath(__file__))
@@ -170,7 +161,25 @@ def _flip_outcome(o):
     )
 
 
+def _group_pending(has_row_fn, members, scale_label, sim_version, force=False):
+    """Return True if this dedup group must be (re-)simmed.
+
+    force=True bypasses the version-skip (used after a stat-only patch where
+    sim_version is unchanged but the unit stats changed)."""
+    if force:
+        return True
+    return not all(
+        has_row_fn(m[0], m[1], m[3], m[4], scale_label, sim_version)
+        for m in members
+    )
+
+
 def main():
+    if platform.python_implementation() != "PyPy":
+        sys.stderr.write(
+            "\nERROR: run_matchup_battles.py requires PyPy 3.\n"
+            "  Then run: pypy3 -m webapp.run_matchup_battles\n\n")
+        sys.exit(2)
     parser = argparse.ArgumentParser()
     parser.add_argument("--reset", action="store_true",
                         help="Delete existing matchup DB before running")
@@ -185,6 +194,10 @@ def main():
                              "matchups where AT LEAST ONE side is in this set; "
                              "all other pairs keep their existing rows. This is "
                              "the 'update only what changed' incremental path.")
+    parser.add_argument("--force", action="store_true",
+                        help="Re-sim matched groups even if a row already exists "
+                             "at the current sim_version (use after a stat-only "
+                             "patch). Combine with --changed-units.")
     args = parser.parse_args()
 
     changed_units = None
@@ -288,15 +301,12 @@ def main():
     skipped = 0
     for key, members in groups.items():
         scale_label = key[1]
-        # member tuple = (my_civ, my_slug, my_fp, opp_civ, opp_slug, opp_fp)
-        all_done = all(
-            has_row_with_version(out_conn, m[0], m[1], m[3], m[4], scale_label, sim_version)
-            for m in members
-        )
-        if all_done:
-            skipped += len(members)
-        else:
+        def _has(a, b, c, d, e, f):
+            return has_row_with_version(out_conn, a, b, c, d, e, f)
+        if _group_pending(_has, members, scale_label, sim_version, force=args.force):
             pending_keys.append(key)
+        else:
+            skipped += len(members)
 
     print(f"Total raw slots:        {total_slots}")
     print(f"Unique dedup groups:    {len(groups)}")

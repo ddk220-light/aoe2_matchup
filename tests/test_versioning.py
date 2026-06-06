@@ -139,3 +139,12 @@ def test_migrate_baseline_tags_and_rebuilds(tmp_path, monkeypatch):
     bc = sqlite3.connect(dd)
     assert bc.execute("SELECT COUNT(*) FROM battle_scores").fetchone()[0] == 1
     bc.close()
+
+
+def test_force_marks_all_pending():
+    import run_matchup_battles as r  # importable under CPython once the PyPy
+    # guard is moved into main() (see Step 3).
+    members = [("A", "x", 0, "B", "y", 0)]
+    # has_row=True everywhere; without force -> skip; with force -> pending
+    assert r._group_pending(lambda *a: True, members, "30v30", "ver", force=False) is False
+    assert r._group_pending(lambda *a: True, members, "30v30", "ver", force=True) is True

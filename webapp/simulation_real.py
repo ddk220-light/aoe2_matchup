@@ -912,6 +912,20 @@ class BattleUnit:
     def perform_attack(self, sim):
         if not self.target or self.target.state == "dead":
             return
+        # Ranged charge volley (Fire Archer/Xianbei/Bolas Rider). Fires when the
+        # charge is ready.  recharge_time<=0 is an every-attack charge that REPLACES
+        # the normal shot (Fire Archer anti-unit mode); recharge_time>0 fires the
+        # charge in ADDITION to the normal volley (Xianbei burst, Bolas).
+        if (self.is_ranged() and self.charge_projectile_count > 0
+                and self.charge_timer <= 0):
+            for _ in range(self.charge_projectile_count):
+                self.fire_charge_projectile(self.target, sim)
+            if self.charge_recharge_time > 0:
+                self.charge_timer = self.charge_recharge_time
+            else:
+                self.attack_cooldown = self.reload_time
+                self.combat_timer = COMBAT_WINDOW_S
+                return
         num_proj = 1 + self.extra_projectiles
         if self.first_attack_extra_projectiles > 0 and not self.has_used_first_attack:
             num_proj += self.first_attack_extra_projectiles
@@ -1095,9 +1109,11 @@ class BattleUnit:
 
         # Melee charge bonus (Coustillier/Centurion/Urumi): extra damage on the
         # charged strike (reduced by target melee armor), then it recharges.
+        charged = False
         if self.charge_attack_melee > 0 and self.charge_timer <= 0:
             damage += max(0, self.charge_attack_melee - target.melee_armor)
             self.charge_timer = self.charge_recharge_time
+            charged = True
 
         target_was_alive = target.state != "dead"
         target.take_damage(damage, self)
@@ -1143,8 +1159,9 @@ class BattleUnit:
                 sim.team2_wood_gained += self.wood_per_kill
                 sim.team2_gold_gained += self.gold_per_kill
 
-        # Trample (melee)
-        if not self.is_ranged():
+        # Trample (melee). Charge-melee units (Urumi) splash ONLY on the charged
+        # strike; always-on tramplers (Cataphract/elephants/Ibirapema) on every hit.
+        if not self.is_ranged() and (self.charge_attack_melee <= 0 or charged):
             if self.trample_percent > 0 or self.trample_flat_damage > 0:
                 trample_dmg = math.floor(damage * self.trample_percent) + self.trample_flat_damage
                 if trample_dmg > 0:

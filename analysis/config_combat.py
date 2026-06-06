@@ -80,9 +80,13 @@ UNIQUE_COMBAT_PROPERTIES = {
     "elite_leitis": {"ignores_melee_armor": 1},
     "composite_bowman": {"ignores_pierce_armor": 1},
     "elite_composite_bowman": {"ignores_pierce_armor": 1},
-    # Fire Lancer charge: 3 projectiles, range 4, ignores armor (except siege/ships/buildings)
-    "fire_lancer": {"charge_attack_range": 4, "charge_ignores_armor": 1},
-    "elite_fire_lancer": {"charge_attack_range": 4, "charge_ignores_armor": 1},
+    # Fire Lancer charge: 3 projectiles, range 4, ignores armor; recharges every 30s
+    # (dat MaxCharge=1/rate=0.0333). Without the recharge it would only fire once.
+    "fire_lancer": {"charge_attack_range": 4, "charge_ignores_armor": 1, "charge_recharge_time": 30.0},
+    "elite_fire_lancer": {"charge_attack_range": 4, "charge_ignores_armor": 1, "charge_recharge_time": 30.0},
+    # Xianbei Raider: burst-fires 5 charge arrows every ~30s (dat ChargeType=7).
+    "xianbei_raider": {"charge_recharge_time": 30.0},
+    "elite_xianbei_raider": {"charge_recharge_time": 30.0},
     # Berserk HP regen is now data-driven from rear_attack_modifier in dat (40 HP/min)
     # Organ Gun/Fire Archer extra projectiles are now data-driven
     # Bleed damage (ability flag + stat values not in dat)
@@ -121,6 +125,12 @@ UNIQUE_COMBAT_PROPERTIES = {
     # Obuch strips 1 melee + 1 pierce armor per hit (not in dat)
     "obuch": {"armor_strip_per_hit": 1},
     "elite_obuch": {"armor_strip_per_hit": 1},
+    # Urumi Swordsman: periodic charged AoE strike (ChargeType=3 splash in dat).
+    # MaxCharge = +12/+15 bonus dmg; recharge = MaxCharge/RechargeRate =
+    # 12/0.5 = 24s (base), 15/0.75 = 20s (elite). The dat-driven trample/splash is
+    # gated to the charged strike in simulation_real.py (not every hit).
+    "urumi_swordsman": {"charge_attack_melee": 12, "charge_recharge_time": 24.0},
+    "elite_urumi_swordsman": {"charge_attack_melee": 15, "charge_recharge_time": 20.0},
     # Coustillier melee charge attack (charge_type=1 in dat, data-driven fields extracted)
     "coustillier": {"charge_attack_melee": 20, "charge_recharge_time": 40.0},
     "elite_coustillier": {"charge_attack_melee": 25, "charge_recharge_time": 40.0},

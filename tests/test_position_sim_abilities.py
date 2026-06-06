@@ -126,3 +126,81 @@ def test_hp_nearby_aura():
     a._update_auras(sim)
     # +0.5% per ally x 4 = +2% of 100 = +2 HP
     assert abs(a.max_hp - (base_max + 2.0)) < 1e-6
+
+
+def test_urumi_trample_gated_to_charged_strike():
+    """Charge-melee units (Urumi) splash only on the charged hit, not every hit."""
+    sim = _Sim()
+    a = _mk(_base(charge_attack_melee=12, charge_recharge_time=24,
+                  trample_percent=0.5, trample_radius=0.5))
+    t = _mk(_base(), 2, "t")
+    b = _mk(_base(), 2, "b")
+    sim.team1 = [a]
+    sim.team2 = [t, b]
+    a.x = a.y = 0.0
+    t.x, t.y = 0.4, 0.0
+    b.x, b.y = 0.7, 0.0
+    hb = b.current_hp
+    a.perform_attack_on(t, sim)            # charge ready -> trample fires
+    charged = hb - b.current_hp
+    b.current_hp = t.current_hp = 100.0
+    hb = b.current_hp
+    a.perform_attack_on(t, sim)            # recharging -> no trample
+    uncharged = hb - b.current_hp
+    assert charged > 0 and uncharged == 0
+
+
+def test_ranged_charge_replaces_normal_when_every_attack():
+    """Fire Archer (recharge<=0): charge fires every attack and replaces the shot."""
+    sim = _Sim()
+    fa = _mk(_base(attack_range=5, charge_projectile_count=2, charge_recharge_time=0,
+                   charge_projectile_attacks_json='{"3":10}'))
+    t = _mk(_base(), 2, "t")
+    sim.team1 = [fa]
+    sim.team2 = [t]
+    fa.x = fa.y = 0.0
+    t.x, t.y = 3.0, 0.0
+    fa.target = t
+    fa.perform_attack(sim)
+    assert len(sim.projectiles) == 2       # 2 charge projectiles, no normal
+
+
+def test_ranged_charge_adds_then_recharges():
+    """Xianbei (recharge>0): charge burst adds to the normal shot, then recharges."""
+    sim = _Sim()
+    xb = _mk(_base(attack_range=5, charge_projectile_count=5, charge_recharge_time=30,
+                   charge_projectile_attacks_json='{"3":5}'))
+    t = _mk(_base(), 2, "t")
+    sim.team1 = [xb]
+    sim.team2 = [t]
+    xb.x = xb.y = 0.0
+    t.x, t.y = 3.0, 0.0
+    xb.target = t
+    xb.perform_attack(sim)                 # 5 charge + 1 normal
+    first = len(sim.projectiles)
+    assert first == 6 and xb.charge_timer == 30
+    xb.perform_attack(sim)                 # recharging -> 1 normal only
+    assert len(sim.projectiles) - first == 1
+
+
+def test_guecha_ally_death_heal():
+    """Guecha heals over time when a nearby ally dies during a sim step."""
+    from simulation_real import BattleSimulation
+    g = {"hp": 65, "attack": 10, "attack_speed": 0.5, "attack_delay": 0,
+         "movement_speed": 1.0, "melee_armor": 0, "pierce_armor": 0,
+         "attacks_json": '{"4":10}', "armors_json": "{}", "attack_range": 0,
+         "accuracy": 100, "ally_death_heal": 5.0, "ally_death_heal_duration": 3.0,
+         "outline_size": 0.5}
+    enemy = dict(g, ally_death_heal=0, ally_death_heal_duration=0)
+    sim = BattleSimulation()
+    sim.setup_team(1, g, 2)
+    sim.setup_team(2, enemy, 1)
+    guecha, victim = sim.team1[0], sim.team1[1]
+    guecha.x, guecha.y = 10.0, 10.0
+    victim.x, victim.y = 10.6, 10.0
+    guecha.current_hp = 40.0
+    victim.bleed_effect = {"dps": 1000.0, "time_remaining": 1.0}
+    for _ in range(40):
+        sim.step(0.1)
+    assert victim.state == "dead"
+    assert abs(guecha.current_hp - 45.0) < 0.01   # +5 HP healed over 3s

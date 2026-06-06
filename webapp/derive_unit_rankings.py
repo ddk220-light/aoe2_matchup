@@ -311,8 +311,12 @@ def compute_and_write_rankings(matchup_db_path=MATCHUP_DB_PATH,
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--age", default="imperial")
+    parser.add_argument("--matchup-db", dest="matchup_db", default=MATCHUP_DB_PATH,
+                        help="Path to the matchup DB to derive from "
+                             "(default: webapp/matchup_db.db).")
     args = parser.parse_args()
-    n = compute_and_write_rankings(age=args.age.capitalize())
+    n = compute_and_write_rankings(matchup_db_path=args.matchup_db,
+                                   age=args.age.capitalize())
     print(f"Inserted {n} rows into derived_data.battle_scores")
 
 

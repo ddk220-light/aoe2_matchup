@@ -1007,7 +1007,10 @@ class BattleUnit:
 
             if (attacker.attack_bonus_per_kill > 0 and target_was_alive
                     and target.state == "dead"):
-                attacker.kill_bonus_attack += attacker.attack_bonus_per_kill
+                # attack_bonus_per_kill is the MAX CAP: +1 attack per kill, up to it
+                # (e.g. Tiger Cavalry/Jaguar Warrior: +1/kill, max +4). NOT +cap/kill.
+                attacker.kill_bonus_attack = min(
+                    attacker.attack_bonus_per_kill, attacker.kill_bonus_attack + 1)
 
             if (target_was_alive and target.state == "dead"
                     and (attacker.food_per_kill > 0 or attacker.wood_per_kill > 0
@@ -1129,7 +1132,9 @@ class BattleUnit:
 
         if (self.attack_bonus_per_kill > 0 and target_was_alive
                 and target.state == "dead"):
-            self.kill_bonus_attack += self.attack_bonus_per_kill
+            # attack_bonus_per_kill is the MAX CAP: +1 attack per kill, up to it.
+            self.kill_bonus_attack = min(
+                self.attack_bonus_per_kill, self.kill_bonus_attack + 1)
 
         # HP per kill (Tiger Cavalry): heal on kill, up to the cap.
         if (self.hp_per_kill > 0 and target_was_alive and target.state == "dead"

@@ -226,7 +226,7 @@ def _compute_percentile(rank, total_count):
 
     rank=1 is best (highest percentile), rank=total_count is worst.
     """
-    if total_count <= 1:
+    if rank is None or total_count <= 1:
         return 50.0
     return round((total_count - rank) / (total_count - 1) * 100, 1)
 
@@ -499,10 +499,10 @@ def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slu
         "unit_slug": slug,
         "unit_name": unit_name or slug,
         "line_slug": row["line_slug"],
-        "score": round(row["score_value"], 1),
+        "score": round(row["score_value"], 1) if row["score_value"] is not None else None,
         "rank": row["rank"],
         "percentile": percentile,
-        "median_delta": round(row["median_delta"], 1),
+        "median_delta": round(row["median_delta"], 1) if row["median_delta"] is not None else None,
         "strength": strength,
         "is_signature": strength == "signature",
         "stats": stats,

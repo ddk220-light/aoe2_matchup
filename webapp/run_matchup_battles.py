@@ -9,6 +9,7 @@ Hard requirement: PyPy 3.  Run with `pypy3 -m webapp.run_matchup_battles`.
 """
 
 import argparse
+import json
 import multiprocessing as mp
 import os
 import platform
@@ -179,7 +180,19 @@ def main():
                         help="Limit BOTH sides to specific civs (full subset matrix)")
     parser.add_argument("--my-civs", nargs="+", dest="my_civs",
                         help="Limit MY side to these civs; opp side stays as all civs")
+    parser.add_argument("--changed-units", dest="changed_units",
+                        help="Path to a JSON list of unit slugs. Only (re-)sim "
+                             "matchups where AT LEAST ONE side is in this set; "
+                             "all other pairs keep their existing rows. This is "
+                             "the 'update only what changed' incremental path.")
     args = parser.parse_args()
+
+    changed_units = None
+    if args.changed_units:
+        with open(args.changed_units) as f:
+            changed_units = set(json.load(f))
+        print(f"Changed-unit filter: {len(changed_units)} slugs — only matchups "
+              f"touching one of these will be (re-)simmed.")
 
     if args.reset and os.path.exists(args.db):
         os.remove(args.db)
@@ -248,6 +261,13 @@ def main():
                 continue
             my_civ, my_slug, my_cu, my_fp = all_units[i]
             opp_civ, opp_slug, opp_cu, opp_fp = all_units[j]
+            # Incremental scope: a matchup's outcome can only have changed if at
+            # least one side is a changed unit. Skip pairs of two unchanged units
+            # entirely — their existing rows stay valid.
+            if (changed_units is not None
+                    and my_slug not in changed_units
+                    and opp_slug not in changed_units):
+                continue
             for scale_label, fixed_count, resources in SCALES:
                 # Add the (my, opp) direction always.
                 # Add the mirror (opp, my) only when opp is also my-eligible
@@ -318,7 +338,7 @@ def main():
                     outcome=out, runs_count=runs_count, score_stddev=stddev,
                     dedup_group=dg, sim_version=sim_version,
                 )
-            if i % 20 == 0 or i == len(tasks):
+            if i <= 5 or i % 20 == 0 or i == len(tasks):
                 elapsed = time.perf_counter() - t0
                 rep_civ, rep_slug, _, _, _, _ = members[0]
                 print(f"[{i}/{len(tasks)}] {rep_civ}/{rep_slug} × {scale_label} "

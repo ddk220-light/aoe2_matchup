@@ -1058,8 +1058,12 @@ class BattleUnit {
                     targetWasAlive &&
                     target.state === "dead"
                 ) {
-                    attacker.killBonusAttack +=
-                        attacker.attackBonusPerKill;
+                    // attackBonusPerKill is the MAX CAP: +1 per kill up to it
+                    // (Tiger Cav/Jaguar: +1/kill, max +4), not +cap/kill.
+                    attacker.killBonusAttack = Math.min(
+                        attacker.attackBonusPerKill,
+                        attacker.killBonusAttack + 1,
+                    );
                 }
 
                 // Siege area splash damage with distance falloff
@@ -1270,7 +1274,11 @@ class BattleUnit {
             targetWasAlive &&
             target.state === "dead"
         ) {
-            this.killBonusAttack += this.attackBonusPerKill;
+            // attackBonusPerKill is the MAX CAP: +1 per kill, up to it.
+            this.killBonusAttack = Math.min(
+                this.attackBonusPerKill,
+                this.killBonusAttack + 1,
+            );
         }
 
         // HP per kill (Tiger Cavalry): heal on kill, up to the cap.

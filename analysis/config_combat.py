@@ -85,8 +85,14 @@ UNIQUE_COMBAT_PROPERTIES = {
     "fire_lancer": {"charge_attack_range": 4, "charge_ignores_armor": 1, "charge_recharge_time": 30.0},
     "elite_fire_lancer": {"charge_attack_range": 4, "charge_ignores_armor": 1, "charge_recharge_time": 30.0},
     # Xianbei Raider: burst-fires 5 charge arrows every ~30s (dat ChargeType=7).
-    "xianbei_raider": {"charge_recharge_time": 30.0},
-    "elite_xianbei_raider": {"charge_recharge_time": 30.0},
+    # Each charge arrow deals only 1 pierce (+4 vs Spearmen, +1 vs Infantry) per
+    # Fandom — NOT the unit's upgraded 5-9 pierce. The extracted
+    # charge_projectile_attacks wrongly carried 5 pierce; override to the real
+    # per-arrow values (these match the correctly-extracted extra_projectile_attacks).
+    "xianbei_raider": {"charge_recharge_time": 30.0,
+                       "charge_projectile_attacks_json": '{"27": 4, "3": 1, "1": 1, "39": -3}'},
+    "elite_xianbei_raider": {"charge_recharge_time": 30.0,
+                             "charge_projectile_attacks_json": '{"27": 4, "3": 1, "1": 1, "39": -3}'},
     # Berserk HP regen is now data-driven from rear_attack_modifier in dat (40 HP/min)
     # Organ Gun/Fire Archer extra projectiles are now data-driven
     # Bleed damage (ability flag + stat values not in dat)
@@ -157,6 +163,18 @@ UNIQUE_COMBAT_PROPERTIES = {
     # With 20/30% accuracy, most shots miss but hit other units in group fights.
     "arambai": {"miss_damage_percent": 1.0},
     "elite_arambai": {"miss_damage_percent": 1.0},
+    # Fire Archer (Wu): the dat models its anti-unit attack as a CHARGE
+    # (charge_type=6), which the position-engine ability port turned into a
+    # normal-shot-REPLACING 2x charge salvo at 5 dmg each — wildly over-buffing
+    # it (0 losses; beat Huskarl/Elephant/Jian at +100). Real behavior (Fandom):
+    # a 3-arrow volley — the PRIMARY shot (atk 10 = 6 + Fletching/Bodkin/Bracer +
+    # Chemistry; 85% acc, no Thumb Ring) PLUS 2 additional projectiles dealing 3
+    # each. Model as extra_projectiles and disable the charge. Range (anti-unit
+    # base 5/6 + 3 tech = 7/9) is already correct via the 1968/1970 range override.
+    "fire_archer": {"charge_projectile_count": 0, "extra_projectiles": 2,
+                    "extra_projectile_attacks_json": '{"3": 3}'},
+    "elite_fire_archer": {"charge_projectile_count": 0, "extra_projectiles": 2,
+                          "extra_projectile_attacks_json": '{"3": 3}'},
     # Monaspa nearby ally attack bonus: +1 attack per 7 Knights/Monaspas within 15 tiles, max +4
     # Wiki: "Receive +1 (max +4) attack for every 7 own Monaspas or Knights within 15 tiles"
     # Simulation approximation: +1 per adjacent ally, capped at 4 (exact threshold not modelled)

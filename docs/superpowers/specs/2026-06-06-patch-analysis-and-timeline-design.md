@@ -62,8 +62,13 @@ aoe2_reference.db (new patch state)   patch_unit_changes (raw stat deltas)
 matchup_db.db  ──diff outcomes──►  patch_matchup_changes + patch_unit_ranking
   │
   │  re-derive pool_scores / derived_data / civ_power_units
+  │  → INSERT a NEW snapshot TAGGED by build_number (never overwrite the prior one)
   ▼
-patches.db  ◄── (writes all of the above, tagged by patch_id)
+patches.db  ◄── (writes all of the above, tagged by patch_id; holds the builds registry)
+  │
+  │  current_build = newest patch in the registry
+  ▼
+Rankings, Matchup Advisor (and other stat pages) read ONLY the current build's snapshot
   │
   ├─ (4) /patches  → Patches tab: timeline + per-patch summary + official link
   └─ (5) /patches/<build>/<civ>/<unit> → per-unit analysis: stat deltas, ranking move,
@@ -81,6 +86,7 @@ CREATE TABLE patches (
   summary_md TEXT,                     -- user-pasted relevant notes (markdown)
   source_url TEXT,                     -- official link
   baseline_build TEXT,                 -- "170934" (the 'before')
+  is_current INTEGER DEFAULT 0,        -- exactly one row = 1; the build the live pages read
   created_at TEXT
 );
 
@@ -111,15 +117,66 @@ Timeline = `SELECT ... WHERE unit_slug=? ORDER BY p.release_date` across all tab
 Committed like our other sim-data DBs. *(Rejected alternative: per-patch JSON files —
 simpler but poor for cross-patch queries.)*
 
+## Versioning the result DBs (rankings + matchup advisor)
+
+The derived result data that drives the Rankings and Matchup Advisor pages is itself
+**versioned by build**, so each patch keeps its own immutable snapshot and the live pages
+always read the **current (newest) build**. This is also what makes the timeline real: the
+per-unit "ranking moved X→Y" is just two adjacent build snapshots compared.
+
+**What gets tagged (all small — KB/low-MB, cheap to keep every build, committed):**
+
+| Result artifact | File | Versioning change |
+|---|---|---|
+| `battle_scores` | `webapp/derived_data.db` | add `build_number` column; one snapshot per build |
+| pool scores | `webapp/pool_scores.db` | add `build_number` column; one snapshot per build |
+| civ power units | `webapp/civ_power_units/<build>.json` | one file per build (replaces the single flat file) |
+
+The big `matchup_db.db` (193 MB, local, not committed) is **not** versioned per build — it
+stays the live incrementally-updated source. The "before" outcomes needed for the diff are
+preserved in `patch_matchup_changes` at re-sim time (snapshot-before-overwrite, per pipeline
+step 5), so we never need to keep two copies of the 193 MB DB.
+
+**Current-build resolution.** The `patches.is_current` flag (one row = 1) marks the current
+build; it's explicit and overridable, and defaults to the newest by `release_date`. A single
+helper `get_current_build()` (reads `patches.db`) is the one place the answer lives —
+`SELECT build_number FROM patches WHERE is_current=1`.
+
+The Rankings query (`/api/ref/unit-line`) and the advisor's `civ_power_units` load both
+resolve through `get_current_build()` and filter `WHERE build_number = ?` (or load
+`civ_power_units/<current>.json`). No page hard-codes a build.
+
+**Baseline migration (one-time, before the first patch run).** The currently committed
+`derived_data.db` / `pool_scores.db` / `civ_power_units.json` already represent the **170934**
+state. A one-time migration tags them as `build_number = '170934'`, seeds a `patches` row for
+170934 (marked current), and moves the flat JSON to `civ_power_units/170934.json`. After the
+177723 pipeline runs, 177723 becomes current; 170934 remains queryable as the prior snapshot.
+
+**Scope note:** the *stat-source* DBs (`aoe2_units.db`, `aoe2_reference.db`) and the live
+legacy-sim overlay (`/api/matchup-sims`) reflect the **current** build only — they are rebuilt
+in place each patch and are not snapshotted per build in this iteration. Consequence: a
+"▶ View this fight" deep link always opens the fight at *current* stats, while the patch page's
+stored stat-deltas/outcomes show the historical before→after. Versioning the stat-source DBs
+(to replay a fight exactly as it was in an old patch) is future work.
+
 ## Pipeline — `webapp/patch_pipeline.py` (one repeatable run per patch)
 
+0. **(One-time, first run only) Baseline migration** — `migrate_baseline.py`: add the
+   `build_number` columns, tag existing `derived_data.db` / `pool_scores.db` rows as `170934`,
+   move `civ_power_units.json` → `civ_power_units/170934.json`, and seed the `patches` row for
+   170934 marked `is_current=1`. Idempotent; skips if 170934 already present.
 1. **Archive** current `extraction/extracted_data/` → `extraction/extracted_data_prev/`.
 2. **Re-extract**: `python -m extraction.run` on the new `.dat` → fresh JSON. (genieutils-py confirmed installed.)
 3. **Diff JSON** prev↔new → write `patch_unit_changes` (raw, pre-modeling — clean attribution of *game* changes). Cross-check against the pasted notes; flag anything in the notes not seen in the diff (and vice-versa).
 4. **Rebuild** `aoe2_reference.db` + `aoe2_units.db`; re-apply surgical patches (`analysis/patches/patch_mayan_archer_cost.py`).
 5. **Snapshot** current matchup outcomes for the changed units (from `D:\AI\matchup_db.db`); **re-sim** only the changed units (`run_matchup_battles.py --changed-units <list>`, derived from step 3).
-6. **Diff outcomes** → `patch_matchup_changes`; **re-derive** `pool_scores.db` / `derived_data.db` / `civ_power_units.json`, capturing old vs new scores → `patch_unit_ranking`.
-7. **Insert** the `patches` row (build, date, pasted `summary_md`, `source_url`).
+6. **Diff outcomes** → `patch_matchup_changes`; **re-derive** the result DBs as a **new
+   build-tagged snapshot** (INSERT rows with `build_number=<new>` into `pool_scores.db` /
+   `derived_data.db`; write `civ_power_units/<new>.json`) — the prior build's snapshot is left
+   intact. Capture old-vs-new scores (current build vs new build) → `patch_unit_ranking`.
+7. **Insert** the `patches` row (build, date, pasted `summary_md`, `source_url`) and flip
+   `is_current` to the new build (clear it on the prior one). This is the switch that makes the
+   live pages show the new patch.
 
 Changed-unit list for re-sim = (units with stat changes in step 3) ∩ (matchup-DB slugs),
 plus their elite/imperial forms. Re-uses the incremental machinery already built.
@@ -144,12 +201,21 @@ patch card's changed-unit chips):
 **Deep links:** add `?civ1=&unit1=&civ2=&unit2=&mode=` query-param support to the Battle
 Sim page (`simulate.html`/`simulate.js`) so links pre-load + auto-run the exact matchup.
 
+**Existing pages read the current build.** The Rankings page (`/api/ref/unit-line`,
+`derived_data.db` + `pool_scores.db`) and the Matchup Advisor (`civ_power_units`) are updated
+to resolve `get_current_build()` and read only that build's snapshot. They show the latest
+patch automatically once the pipeline flips `is_current`. (A user-facing patch/version selector
+on these pages is a possible later enhancement — out of scope here; default is always latest.)
+
 ## Testing
 
 - Pipeline: unit-test the JSON diff (synthetic before/after) and the matchup-delta computation.
 - A `patches.db` integrity check (every `patch_matchup_changes` row references a real patch + unit).
 - Frontend: routes return 200; deep-link params parse correctly.
 - Cross-check: the diff's changed units match the pasted notes' unit list (warn on mismatch).
+- Versioning: exactly one `is_current` build; `get_current_build()` returns the newest patch;
+  Rankings/Advisor read only current-build rows; the baseline migration is idempotent and leaves
+  170934 + 177723 snapshots both queryable.
 
 ## Out of scope (future)
 

@@ -2414,9 +2414,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Handle URL params for deep-linking from ranking hover cards
     const params = new URLSearchParams(window.location.search);
+    const dl = (typeof readSimParams === "function") ? readSimParams(window.location.search) : null;
     if (params.has("civ1") && params.has("unit1")) {
         const civ1 = params.get("civ1");
         const unit1 = params.get("unit1");
+        if (dl && dl.age1) setTeamAge(1, dl.age1);
         await selectCiv(1, civ1);
         // Find unit in civ data by slug
         if (teamState[1].civData) {
@@ -2432,6 +2434,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (params.has("civ2") && params.has("unit2")) {
         const civ2 = params.get("civ2");
         const unit2 = params.get("unit2");
+        if (dl && dl.age2) setTeamAge(2, dl.age2);
         await selectCiv(2, civ2);
         if (teamState[2].civData) {
             const units =
@@ -2464,6 +2467,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             const c2 = document.getElementById("team2Count");
             if (c2) c2.value = params.get("count2");
         }
+    }
+    if (dl && dl.autorun && teamState[1].unitSlug && teamState[2].unitSlug) {
+        await startBattle();
     }
 });
 

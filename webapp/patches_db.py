@@ -68,7 +68,9 @@ def insert_patch(conn, *, build_number, release_date, title, summary_md,
 
 def set_current_build(conn, build_number):
     conn.execute("UPDATE patches SET is_current=0")
-    conn.execute("UPDATE patches SET is_current=1 WHERE build_number=?", (build_number,))
+    cur = conn.execute("UPDATE patches SET is_current=1 WHERE build_number=?", (build_number,))
+    if cur.rowcount == 0:
+        raise ValueError(f"build_number {build_number!r} not found in patches table")
 
 
 def patch_id_for(conn, build_number):

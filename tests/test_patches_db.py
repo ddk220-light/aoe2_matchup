@@ -25,3 +25,28 @@ def test_create_and_current_build(tmp_path):
 
 def test_get_current_build_missing_db(tmp_path):
     assert patches_db.get_current_build(patches_db_path=str(tmp_path / "nope.db")) is None
+
+
+def test_patch_id_for(tmp_path):
+    db = str(tmp_path / "patches.db")
+    conn = patches_db.create_db(db)
+    pid = patches_db.insert_patch(conn, build_number="170934", release_date="2026-04-01",
+                                  title="Update 170934", summary_md="b", source_url="u",
+                                  baseline_build=None, is_current=1)
+    conn.commit()
+    assert patches_db.patch_id_for(conn, "170934") == pid
+    assert patches_db.patch_id_for(conn, "999999") is None
+    conn.close()
+
+
+def test_set_current_build_unknown_raises(tmp_path):
+    import pytest
+    db = str(tmp_path / "patches.db")
+    conn = patches_db.create_db(db)
+    patches_db.insert_patch(conn, build_number="170934", release_date="2026-04-01",
+                            title="t", summary_md="b", source_url="u",
+                            baseline_build=None, is_current=1)
+    conn.commit()
+    with pytest.raises(ValueError):
+        patches_db.set_current_build(conn, "does_not_exist")
+    conn.close()

@@ -16,6 +16,7 @@ from best_units import (
 from combat_unit_loader import build_combat_dict_from_ref
 from unit_lines import UNIT_LINES, TREBUCHET_SLUGS, CIV_MISSING_UNITS
 from pool_scores_query import load_pool_scores
+from patches_db import get_current_build
 
 
 app = Flask(__name__)
@@ -66,6 +67,7 @@ except Exception as _replay_err:  # pragma: no cover
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_units.db")
 REF_DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 DERIVED_DB_PATH = os.path.join(os.path.dirname(__file__), "derived_data.db")
+PATCHES_DB_PATH = os.path.join(os.path.dirname(__file__), "patches.db")
 
 # Age definitions
 AGES = {
@@ -96,6 +98,11 @@ def get_derived_db():
     conn = sqlite3.connect(DERIVED_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def current_build():
+    """Resolve the live build once per call (None if patches.db absent)."""
+    return get_current_build(patches_db_path=PATCHES_DB_PATH)
 
 
 def get_units_by_age():
@@ -738,10 +745,20 @@ def api_ref_unit_line(line_slug):
         # simulation pipeline was rebuilt for the sim-improvements branch.
         derived_conn = get_derived_db()
         placeholders = ",".join("?" for _ in _score_line_slugs)
-        derived_rows = derived_conn.execute(
-            f"SELECT age, civ_name, unit_slug, score_type, score_value FROM battle_scores WHERE line_slug IN ({placeholders})",
-            _score_line_slugs,
-        ).fetchall()
+        _bld = current_build()
+        if _bld:
+            derived_rows = derived_conn.execute(
+                f"SELECT age, civ_name, unit_slug, score_type, score_value "
+                f"FROM battle_scores WHERE line_slug IN ({placeholders}) "
+                f"AND build_number = ?",
+                _score_line_slugs + [_bld],
+            ).fetchall()
+        else:
+            derived_rows = derived_conn.execute(
+                f"SELECT age, civ_name, unit_slug, score_type, score_value "
+                f"FROM battle_scores WHERE line_slug IN ({placeholders})",
+                _score_line_slugs,
+            ).fetchall()
         derived_conn.close()
 
         if not derived_rows:
@@ -973,7 +990,8 @@ def api_ref_unit_line(line_slug):
         for age_key in ("castle", "imperial")
         for entry in result[age_key]
     ]
-    pool_scores_by_unit = load_pool_scores(pool_scores_db_path, all_unit_pairs)
+    pool_scores_by_unit = load_pool_scores(pool_scores_db_path, all_unit_pairs,
+                                           build_number=current_build())
     for age_key in ("castle", "imperial"):
         for entry in result[age_key]:
             key = (entry["civ_name"], entry["unit_slug"])
@@ -1048,7 +1066,7 @@ def api_civ_power_units(civ_name):
     err = _validate_age(age)
     if err:
         return err
-    data = load_civ_power_units()
+    data = load_civ_power_units(build_number=current_build())
     if not data:
         return jsonify({"error": "civ_power_units.json not found"}), 500
     civ_data = data.get(civ_name)

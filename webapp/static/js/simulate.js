@@ -2536,14 +2536,33 @@ async function startBattle() {
                 Math.floor(budget2 / unitCost2),
             );
         } else {
-            team1Count =
+            // "30 vs 30" mode: the entered number is a POPULATION budget, not a
+            // raw unit count. Half-pop units (Karambit Warrior 0.5, Blackwood
+            // Archer 0.5) therefore field 2x as many units for the same pop
+            // (30 pop -> 60 units). Mirrors simulation_real._calc_count
+            // (count = int(fixed_count / pop_space)) which drives the matchup
+            // table, so the on-page sim and the table agree. No-op for the 1847
+            // units that take 1.0 pop.
+            const pop1 =
                 parseInt(
                     document.getElementById("team1Count").value,
                 ) || 30;
-            team2Count =
+            const pop2 =
                 parseInt(
                     document.getElementById("team2Count").value,
                 ) || 30;
+            const [pstats1, pstats2] = await Promise.all([
+                fetch(
+                    `/api/ref/combat-unit/${encodeURIComponent(s1.civ)}/${s1.unitSlug}?age=${encodeURIComponent(s1.age)}`,
+                ).then((r) => r.json()),
+                fetch(
+                    `/api/ref/combat-unit/${encodeURIComponent(s2.civ)}/${s2.unitSlug}?age=${encodeURIComponent(s2.age)}`,
+                ).then((r) => r.json()),
+            ]);
+            const popSpace1 = (pstats1 && pstats1.pop_space) || 1.0;
+            const popSpace2 = (pstats2 && pstats2.pop_space) || 1.0;
+            team1Count = Math.max(1, Math.floor(pop1 / popSpace1));
+            team2Count = Math.max(1, Math.floor(pop2 / popSpace2));
         }
 
         simulation.reset();

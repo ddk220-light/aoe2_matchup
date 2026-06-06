@@ -350,6 +350,23 @@ class BattleUnit:
         "was_moving", "committed_attack",
         "vx", "vy",
         "stuck_timer", "last_dist_to_target", "blocked_targets",
+        # --- ported abilities (parity with position-less engine) ---
+        "charge_attack_melee", "charge_recharge_time", "charge_timer",
+        "charge_slow_percent", "charge_slow_duration",
+        "execute_damage_per_step", "execute_hp_step",
+        "attack_speed_ramp", "attack_speed_min", "ramp_reduction",
+        "hp_per_kill", "hp_per_kill_max", "hp_gained_from_kills",
+        "miss_damage_percent", "armor_strip_per_hit",
+        "attack_bonus_nearby", "nearby_bonus_count", "aura_attack_bonus",
+        "hp_nearby_percent_per_unit", "hp_nearby_max_units", "aura_hp_bonus",
+        "damage_reflect_percent",
+        "ally_death_heal", "ally_death_heal_duration",
+        "ally_heal_remaining", "ally_heal_rate",
+        "extra_proj_scatter", "slow_timer", "base_move_speed",
+        "transform_attack", "transform_max_hp",
+        "transform_attacks", "transform_armors",
+        "transform_melee_armor", "transform_pierce_armor",
+        "transform_attack_speed", "transform_move_speed",
     )
 
     def __init__(self, uid, team, stats):
@@ -437,6 +454,46 @@ class BattleUnit:
         self.bleed_effect = None  # {"dps": float, "time_remaining": float}
         self.has_used_charge = False
 
+        # --- ported abilities (parity with position-less engine) ---
+        self.charge_attack_melee = float(stats.get("charge_attack_melee") or 0)
+        self.charge_recharge_time = float(stats.get("charge_recharge_time") or 0)
+        self.charge_timer = 0.0  # 0 == ready; set to recharge_time after use
+        self.charge_slow_percent = float(stats.get("charge_slow_percent") or 0)
+        self.charge_slow_duration = float(stats.get("charge_slow_duration") or 0)
+        self.execute_damage_per_step = float(stats.get("execute_damage_per_step") or 0)
+        self.execute_hp_step = float(stats.get("execute_hp_step") or 0)
+        self.attack_speed_ramp = float(stats.get("attack_speed_ramp") or 0)
+        self.attack_speed_min = float(stats.get("attack_speed_min") or 0)
+        self.ramp_reduction = 0.0
+        self.hp_per_kill = float(stats.get("hp_per_kill") or 0)
+        self.hp_per_kill_max = float(stats.get("hp_per_kill_max") or 0)
+        self.hp_gained_from_kills = 0.0
+        self.miss_damage_percent = float(stats.get("miss_damage_percent") or 0)
+        self.armor_strip_per_hit = _to_int(stats.get("armor_strip_per_hit"))
+        self.attack_bonus_nearby = float(stats.get("attack_bonus_nearby") or 0)
+        self.nearby_bonus_count = _to_int(stats.get("nearby_bonus_count"))
+        self.aura_attack_bonus = 0.0
+        self.hp_nearby_percent_per_unit = float(stats.get("hp_nearby_percent_per_unit") or 0)
+        self.hp_nearby_max_units = _to_int(stats.get("hp_nearby_max_units"))
+        self.aura_hp_bonus = 0.0
+        self.damage_reflect_percent = float(stats.get("damage_reflect_percent") or 0)
+        self.ally_death_heal = float(stats.get("ally_death_heal") or 0)
+        self.ally_death_heal_duration = float(stats.get("ally_death_heal_duration") or 0)
+        self.ally_heal_remaining = 0.0
+        self.ally_heal_rate = 0.0
+        self.extra_proj_scatter = _to_int(stats.get("extra_proj_scatter"))
+        self.slow_timer = 0.0
+        self.base_move_speed = self.move_speed
+        # Transform target stats (Jian Swordsman); applied on HP threshold
+        self.transform_max_hp = float(stats.get("transform_hp") or 0)
+        self.transform_attack = float(stats.get("transform_attack") or 0)
+        self.transform_melee_armor = float(stats.get("transform_melee_armor") or 0)
+        self.transform_pierce_armor = float(stats.get("transform_pierce_armor") or 0)
+        self.transform_attack_speed = float(stats.get("transform_attack_speed") or 0)
+        self.transform_move_speed = float(stats.get("transform_movement_speed") or 0)
+        self.transform_attacks = _parse_attacks_armors(stats.get("transform_attacks_json"))
+        self.transform_armors = _parse_attacks_armors(stats.get("transform_armors_json"))
+
         self.x = 0.0
         self.y = 0.0
         # Outline-size scaling matches JS: 0.2->14 px, 0.5->20 px, 1.0->30 px.
@@ -493,7 +550,7 @@ class BattleUnit:
         is_ranged = self.is_ranged()
         attacks = attacks_override if attacks_override is not None else self.attacks
         base_class = "3" if is_ranged else "4"
-        base_attack = attacks.get(base_class, attacks.get("4", self.attack))
+        base_attack = attacks.get(base_class, attacks.get("4", self.attack)) + self.aura_attack_bonus
 
         if ignores_armor_override is not None:
             ignore = ignores_armor_override
@@ -523,7 +580,14 @@ class BattleUnit:
         if target.bonus_damage_reduction > 0:
             bonus_damage = math.floor(bonus_damage * (1 - target.bonus_damage_reduction))
 
-        return max(1, base_dmg + bonus_damage)
+        # Execute scaling (Kona): +N damage per missing-HP step on the target.
+        execute_bonus = 0.0
+        if (self.execute_damage_per_step > 0 and self.execute_hp_step > 0
+                and target.max_hp > 0):
+            missing = 1.0 - (target.current_hp / target.max_hp)
+            execute_bonus = self.execute_damage_per_step * int(missing / self.execute_hp_step)
+
+        return max(1, base_dmg + bonus_damage + execute_bonus)
 
     # ---- Targeting --------------------------------------------------------
 
@@ -614,10 +678,36 @@ class BattleUnit:
                 else:
                     self.shield_recharge_timer = 0
 
+        # --- charge recharge timer (melee charge + charge projectiles) ---
+        if self.charge_timer > 0:
+            self.charge_timer = max(0.0, self.charge_timer - dt)
+
+        # --- attack-speed ramp decay (Temple Guard): reset out of combat ---
+        if (self.attack_speed_ramp > 0 and self.ramp_reduction > 0
+                and self.combat_timer <= 0):
+            self.ramp_reduction = 0.0
+            self.reload_time = 1.0 / self.attack_speed if self.attack_speed > 0 else 2.0
+
+        # --- charge-slow expiry: restore movement speed ---
+        if self.slow_timer > 0:
+            self.slow_timer = max(0.0, self.slow_timer - dt)
+            if self.slow_timer <= 0:
+                self.move_speed = self.base_move_speed
+
+        # --- ally-death heal-over-time (Guecha Warrior) ---
+        if self.ally_heal_remaining > 0 and 0 < self.current_hp < self.max_hp:
+            heal = min(self.ally_heal_rate * dt, self.ally_heal_remaining)
+            self.current_hp = min(self.max_hp, self.current_hp + heal)
+            self.ally_heal_remaining -= heal
+
+        # --- nearby-ally auras (Monaspa attack, Shu %HP) ---
+        if self.attack_bonus_nearby > 0 or self.hp_nearby_percent_per_unit > 0:
+            self._update_auras(sim)
+
+        # --- HP transform (Jian Swordsman): swap to transformed stats once ---
         if self.hp_transform_threshold > 0 and not self.is_transformed:
-            if self.current_hp <= self.max_hp * self.hp_transform_threshold and self.current_hp > 0:
-                self.is_transformed = True
-                self.kill_bonus_attack += 3
+            if 0 < self.current_hp <= self.max_hp * self.hp_transform_threshold:
+                self._apply_transform()
 
         # Clean blocked targets
         dead_blocked = [bt for bt in self.blocked_targets if bt.state == "dead"]
@@ -715,13 +805,20 @@ class BattleUnit:
                 self.move_toward_target(dt, grid)
                 self.was_moving = True
         else:
-            # Charge projectile attack (Fire Lancer)
-            if (self.charge_projectile_count > 0 and not self.has_used_charge
-                    and self.target):
+            # Charge projectile attack (Fire Lancer). Recharges if the unit has a
+            # charge_recharge_time; otherwise one-shot (legacy fallback for units
+            # whose recharge data isn't populated).
+            charge_ready = ((self.charge_timer <= 0) if self.charge_recharge_time > 0
+                            else (not self.has_used_charge))
+            if (self.charge_projectile_count > 0 and charge_ready
+                    and self.attack_cooldown <= 0 and self.target):
                 d = self.distance_to(self.target)
                 charge_range = self.charge_attack_range + self.radius + self.target.radius
                 if d <= charge_range:
-                    self.has_used_charge = True
+                    if self.charge_recharge_time > 0:
+                        self.charge_timer = self.charge_recharge_time
+                    else:
+                        self.has_used_charge = True
                     self.state = "attacking"
                     for _ in range(self.charge_projectile_count):
                         self.fire_charge_projectile(self.target, sim)
@@ -761,6 +858,55 @@ class BattleUnit:
                 self.move_toward_target(dt, grid)
                 self.was_moving = True
 
+    def _update_auras(self, sim):
+        """Recompute nearby-ally aura bonuses (Monaspa attack, Shu %HP)."""
+        AURA_RADIUS = 5.0
+        allies = sim.team1 if self.team == 1 else sim.team2
+        n = 0
+        for ally in allies:
+            if ally is self or ally.state == "dead":
+                continue
+            if self.distance_to(ally) <= AURA_RADIUS:
+                n += 1
+        if self.attack_bonus_nearby > 0:
+            cap = self.nearby_bonus_count or n
+            self.aura_attack_bonus = self.attack_bonus_nearby * min(n, cap)
+        if self.hp_nearby_percent_per_unit > 0:
+            cap = self.hp_nearby_max_units or n
+            base = self.max_hp - self.aura_hp_bonus  # unbuffed max
+            target_bonus = base * (self.hp_nearby_percent_per_unit / 100.0) * min(n, cap)
+            delta = target_bonus - self.aura_hp_bonus
+            self.max_hp += delta
+            if delta > 0:
+                self.current_hp += delta
+            elif self.current_hp > self.max_hp:
+                self.current_hp = self.max_hp
+            self.aura_hp_bonus = target_bonus
+
+    def _apply_transform(self):
+        """Swap to the transformed stat block (Jian Swordsman)."""
+        self.is_transformed = True
+        if self.transform_max_hp > 0:
+            self.max_hp = self.transform_max_hp
+            if self.current_hp > self.max_hp:
+                self.current_hp = self.max_hp
+            if self.transform_attack > 0:
+                self.attack = self.transform_attack
+            self.melee_armor = self.transform_melee_armor
+            self.pierce_armor = self.transform_pierce_armor
+            if self.transform_attacks:
+                self.attacks = self.transform_attacks
+            if self.transform_armors:
+                self.armors = self.transform_armors
+            if self.transform_attack_speed > 0:
+                self.attack_speed = self.transform_attack_speed
+                self.reload_time = 1.0 / self.transform_attack_speed
+            if self.transform_move_speed > 0:
+                self.move_speed = self.transform_move_speed
+                self.base_move_speed = self.transform_move_speed
+        else:
+            self.kill_bonus_attack += 3  # fallback approximation
+
     # ---- Attacks ----------------------------------------------------------
 
     def perform_attack(self, sim):
@@ -770,6 +916,12 @@ class BattleUnit:
         if self.first_attack_extra_projectiles > 0 and not self.has_used_first_attack:
             num_proj += self.first_attack_extra_projectiles
             self.has_used_first_attack = True
+        # Organ Gun: extra projectiles scatter to different enemies.
+        scatter = None
+        if self.extra_proj_scatter and self.is_ranged():
+            foes = sim.team2 if self.team == 1 else sim.team1
+            scatter = [e for e in foes if e.state != "dead" and e is not self.target]
+        scat_i = 0
         for p_idx in range(num_proj):
             if not self.target or self.target.state == "dead":
                 break
@@ -778,13 +930,17 @@ class BattleUnit:
                 # is primary-only).  This mirrors the modeling fix in
                 # simulation.py / commit 756705e.
                 is_extra = (p_idx > 0)
+                tgt = self.target
+                if is_extra and scatter:
+                    tgt = scatter[scat_i % len(scatter)]
+                    scat_i += 1
                 if is_extra and self.extra_proj_attacks:
                     # Some extras (e.g. Bolt Magazine) use a different attack profile.
-                    self.fire_projectile(self.target, sim,
+                    self.fire_projectile(tgt, sim,
                                          attacks_override=self.extra_proj_attacks,
                                          is_extra=True)
                 else:
-                    self.fire_projectile(self.target, sim, is_extra=is_extra)
+                    self.fire_projectile(tgt, sim, is_extra=is_extra)
             else:
                 self.perform_attack_on(self.target, sim)
         self.attack_cooldown = self.reload_time
@@ -828,7 +984,10 @@ class BattleUnit:
                     dx = enemy.x - land_x
                     dy = enemy.y - land_y
                     if dx * dx + dy * dy <= enemy.radius * enemy.radius:
-                        miss_dmg = max(1, math.floor(damage * 0.5))
+                        # Arambai (miss_damage_percent=1.0): missed shots deal full
+                        # damage to a grazed unit; default graze is 0.5x.
+                        miss_frac = attacker.miss_damage_percent if attacker.miss_damage_percent > 0 else 0.5
+                        miss_dmg = max(1, math.floor(damage * miss_frac))
                         enemy.take_damage(miss_dmg, attacker)
                         break
 
@@ -920,6 +1079,10 @@ class BattleUnit:
             if target.state == "dead":
                 return
             target.take_damage(charge_dmg, attacker)
+            # Charge slow (Bolas Rider): slow the struck target.
+            if attacker.charge_slow_percent > 0 and target.slow_timer <= 0:
+                target.move_speed = target.base_move_speed * (1 - attacker.charge_slow_percent)
+                target.slow_timer = attacker.charge_slow_duration
 
         proj = Projectile(self.x, self.y, target.x, target.y, speed, self.team,
                           False, on_hit)
@@ -929,12 +1092,44 @@ class BattleUnit:
         if not target or target.state == "dead":
             return
         damage = self.get_damage_against(target) + math.floor(self.kill_bonus_attack)
+
+        # Melee charge bonus (Coustillier/Centurion/Urumi): extra damage on the
+        # charged strike (reduced by target melee armor), then it recharges.
+        if self.charge_attack_melee > 0 and self.charge_timer <= 0:
+            damage += max(0, self.charge_attack_melee - target.melee_armor)
+            self.charge_timer = self.charge_recharge_time
+
         target_was_alive = target.state != "dead"
         target.take_damage(damage, self)
+
+        # Armor strip (Obuch): permanently lower the target's armor each hit.
+        if self.armor_strip_per_hit > 0 and target.state != "dead":
+            target.melee_armor = max(0, target.melee_armor - self.armor_strip_per_hit)
+            target.pierce_armor = max(0, target.pierce_armor - self.armor_strip_per_hit)
+            if "4" in target.armors:
+                target.armors["4"] = max(0, target.armors["4"] - self.armor_strip_per_hit)
+            if "3" in target.armors:
+                target.armors["3"] = max(0, target.armors["3"] - self.armor_strip_per_hit)
 
         if (self.attack_bonus_per_kill > 0 and target_was_alive
                 and target.state == "dead"):
             self.kill_bonus_attack += self.attack_bonus_per_kill
+
+        # HP per kill (Tiger Cavalry): heal on kill, up to the cap.
+        if (self.hp_per_kill > 0 and target_was_alive and target.state == "dead"
+                and self.hp_gained_from_kills < self.hp_per_kill_max):
+            heal = min(self.hp_per_kill, self.hp_per_kill_max - self.hp_gained_from_kills)
+            self.current_hp = min(self.max_hp, self.current_hp + heal)
+            self.hp_gained_from_kills += heal
+
+        # Attack-speed ramp (Temple Guard): each hit shortens reload toward the
+        # floor; reset out of combat by update().  Mutating reload_time here makes
+        # every cooldown=reload_time assignment use the ramped value.
+        if self.attack_speed_ramp > 0:
+            base_reload = (1.0 / self.attack_speed) if self.attack_speed > 0 else 2.0
+            self.ramp_reduction = min(self.ramp_reduction + self.attack_speed_ramp,
+                                      max(0.0, base_reload - self.attack_speed_min))
+            self.reload_time = max(self.attack_speed_min, base_reload - self.ramp_reduction)
 
         if (target_was_alive and target.state == "dead"
                 and (self.food_per_kill > 0 or self.wood_per_kill > 0
@@ -1005,6 +1200,14 @@ class BattleUnit:
                 and not attacker.is_ranged() and not self.has_blocked_first_melee):
             self.has_blocked_first_melee = True
             return
+        # Damage reflect (Khitan Lamellar Armor): bounce a % of melee damage back.
+        if (self.damage_reflect_percent > 0 and amount > 0 and attacker is not None
+                and not attacker.is_ranged() and attacker.state != "dead"):
+            attacker.current_hp -= amount * self.damage_reflect_percent
+            if attacker.current_hp <= 0:
+                attacker.current_hp = 0
+                attacker.state = "dead"
+                attacker.target = None
         self.current_hp -= amount
         if self.current_hp <= 0:
             self.current_hp = 0
@@ -1282,6 +1485,21 @@ class BattleSimulation:
         # its 3x3 cell neighborhood — same relevant pairs as O(N²) after
         # culling, just discovered faster.  We dedupe by id ordering (process
         # the pair only when a's id < b's id) to avoid a per-tick set.
+        # Ally-death heal (Guecha Warrior): when a unit dies, nearby allies with
+        # ally_death_heal gain a refreshing heal-over-time.
+        for dead in alive:
+            if dead.state != "dead":
+                continue
+            allies = self.team1 if dead.team == 1 else self.team2
+            for ally in allies:
+                if (ally is dead or ally.state == "dead"
+                        or ally.ally_death_heal <= 0):
+                    continue
+                if ally.distance_to(dead) <= 5.0:
+                    ally.ally_heal_remaining = ally.ally_death_heal
+                    ally.ally_heal_rate = (
+                        ally.ally_death_heal / ally.ally_death_heal_duration
+                        if ally.ally_death_heal_duration > 0 else ally.ally_death_heal)
         # Prune any units that died during this tick's update pass.
         self.alive = [u for u in alive if u.state != "dead"]
         alive = self.alive

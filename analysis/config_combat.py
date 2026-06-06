@@ -241,17 +241,18 @@ CIV_COMBAT_PROPERTIES = {
     ("Poles", "hussar"): {"trample_percent": 0.5, "trample_radius": 0.5},
     ("Poles", "winged_hussar"): {"trample_percent": 0.5, "trample_radius": 0.5},
     # Comitatenses (Romans Imperial UT, Tech 884) - charge attack for knights, militia, centurion
-    # charge_recharge_rate=0.25 in dat → recharge_time = 1/0.25 = 4.0 seconds
+    # Comitatenses sets MaxCharge=5 (attr 59), RechargeRate=0.25 (attr 60) in dat
+    # → recharge_time = MaxCharge/Rate = 5/0.25 = 20.0 seconds (dat-verified).
     # Note: Centurion also has a unique "Imperium" AURA ability (buffs nearby militia-line units
     # with +10-15% move speed and +20-33% attack speed in ~10 tile radius). Aura mechanics are
     # not currently modeled in the simulation engine (would require new property type).
-    ("Romans", "champion"): {"charge_attack_melee": 5, "charge_recharge_time": 4.0},
-    ("Romans", "legionary"): {"charge_attack_melee": 5, "charge_recharge_time": 4.0},
-    ("Romans", "paladin"): {"charge_attack_melee": 5, "charge_recharge_time": 4.0},
-    ("Romans", "centurion"): {"charge_attack_melee": 5, "charge_recharge_time": 4.0},
+    ("Romans", "champion"): {"charge_attack_melee": 5, "charge_recharge_time": 20.0},
+    ("Romans", "legionary"): {"charge_attack_melee": 5, "charge_recharge_time": 20.0},
+    ("Romans", "paladin"): {"charge_attack_melee": 5, "charge_recharge_time": 20.0},
+    ("Romans", "centurion"): {"charge_attack_melee": 5, "charge_recharge_time": 20.0},
     ("Romans", "elite_centurion"): {
         "charge_attack_melee": 5,
-        "charge_recharge_time": 4.0,
+        "charge_recharge_time": 20.0,
     },
     # Japanese Samurai charge (Update 141935 / Battle for Greece): +1 bonus damage on
     # charged strike (30s recharge) plus a +25% movement boost when target is within

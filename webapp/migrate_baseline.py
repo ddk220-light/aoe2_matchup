@@ -80,10 +80,22 @@ def run(*, derived_db=DEFAULT_DERIVED, pool_db=DEFAULT_POOL,
         patches_db=DEFAULT_PATCHES,
         baseline_build="170934", release_date=None, source_url=None,
         summary_md=None):
+    # baseline_build is interpolated into the rebuild DDL via f-string, so it
+    # must be a bare numeric build id (it always is — '170934', '177723').
+    if not str(baseline_build).isdigit():
+        raise ValueError(f"baseline_build must be a numeric build id, got {baseline_build!r}")
     if os.path.exists(derived_db):
-        c = sqlite3.connect(derived_db); _rebuild_battle_scores(c, baseline_build); c.close()
+        c = sqlite3.connect(derived_db)
+        try:
+            _rebuild_battle_scores(c, baseline_build)
+        finally:
+            c.close()
     if os.path.exists(pool_db):
-        c = sqlite3.connect(pool_db); _rebuild_pool_scores(c, baseline_build); c.close()
+        c = sqlite3.connect(pool_db)
+        try:
+            _rebuild_pool_scores(c, baseline_build)
+        finally:
+            c.close()
 
     os.makedirs(cpu_dir, exist_ok=True)
     dest = os.path.join(cpu_dir, f"{baseline_build}.json")

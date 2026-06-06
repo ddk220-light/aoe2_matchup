@@ -1,5 +1,7 @@
+import html as _html
 import json
 import os
+import re as _re
 import sqlite3
 from collections import defaultdict
 from functools import lru_cache
@@ -103,6 +105,64 @@ def get_derived_db():
 def current_build():
     """Resolve the live build once per call (None if patches.db absent)."""
     return get_current_build(patches_db_path=PATCHES_DB_PATH)
+
+
+def render_patch_summary(md):
+    """Minimal, safe markdown -> HTML for user-pasted patch notes.
+
+    Supports: escaping, **bold**, [text](url), `- ` bullet lists, blank-line
+    paragraphs. Everything else is escaped plain text."""
+    if not md:
+        return ""
+    md = _html.escape(md)
+    out, in_list = [], False
+    for raw in md.splitlines():
+        line = raw.rstrip()
+        if line.startswith("- "):
+            if not in_list:
+                out.append("<ul>"); in_list = True
+            out.append(f"<li>{line[2:].strip()}</li>")
+            continue
+        if in_list:
+            out.append("</ul>"); in_list = False
+        if not line:
+            out.append("")
+        else:
+            out.append(f"<p>{line}</p>")
+    if in_list:
+        out.append("</ul>")
+    txt = "\n".join(out)
+    txt = _re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", txt)
+    txt = _re.sub(r"\[([^\]]+)\]\((https?://[^\s)]+)\)",
+                  r'<a href="\2" target="_blank" rel="noopener">\1</a>', txt)
+    return txt
+
+
+def _patches_conn():
+    conn = sqlite3.connect(PATCHES_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+@app.route("/patches")
+def patches_page():
+    if not os.path.exists(PATCHES_DB_PATH):
+        return render_template("patches.html", patches=[], active_nav="patches")
+    conn = _patches_conn()
+    rows = conn.execute("SELECT * FROM patches ORDER BY release_date DESC").fetchall()
+    patches = []
+    for p in rows:
+        chips = conn.execute(
+            "SELECT DISTINCT civ_name, unit_slug FROM patch_unit_changes "
+            "WHERE patch_id=? ORDER BY civ_name, unit_slug", (p["id"],)).fetchall()
+        patches.append({
+            "build_number": p["build_number"], "title": p["title"],
+            "release_date": p["release_date"], "source_url": p["source_url"],
+            "summary_html": render_patch_summary(p["summary_md"]),
+            "units": [dict(c) for c in chips],
+        })
+    conn.close()
+    return render_template("patches.html", patches=patches, active_nav="patches")
 
 
 def get_units_by_age():

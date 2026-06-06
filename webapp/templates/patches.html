@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Patches{% endblock %}
+{% block content %}
+<style>
+  .patch-wrap { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+  .patch-card { background:#1c1f26; border:1px solid #2c313c; border-radius:10px;
+    padding:20px 24px; margin-bottom:22px; }
+  .patch-head { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .patch-head h2 { margin:0; font-size:1.3rem; }
+  .patch-date { color:#8b93a7; font-size:.9rem; }
+  .patch-link { margin-left:auto; font-size:.85rem; }
+  .patch-summary p { margin:.4rem 0; line-height:1.5; }
+  .patch-summary ul { margin:.4rem 0 .4rem 1.2rem; }
+  .unit-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .unit-chip { background:#262b35; border:1px solid #39414f; border-radius:999px;
+    padding:5px 12px; font-size:.82rem; text-decoration:none; color:#dbe2f0; }
+  .unit-chip:hover { background:#313a48; }
+  .empty { color:#8b93a7; text-align:center; padding:60px 0; }
+</style>
+<div class="patch-wrap">
+  <h1>Game Patches</h1>
+  <p class="patch-date">How each balance update reshaped unit rankings and matchups in our simulator.</p>
+  {% if not patches %}
+    <div class="empty">No patches recorded yet.</div>
+  {% endif %}
+  {% for p in patches %}
+  <div class="patch-card">
+    <div class="patch-head">
+      <h2>{{ p.title }}</h2>
+      <span class="patch-date">{{ p.release_date }}</span>
+      {% if p.source_url %}
+      <a class="patch-link" href="{{ p.source_url }}" target="_blank" rel="noopener">Official notes &#8599;</a>
+      {% endif %}
+    </div>
+    <div class="patch-summary">{{ p.summary_html|safe }}</div>
+    {% if p.units %}
+    <div class="unit-chips">
+      {% for u in p.units %}
+      <a class="unit-chip" href="/patches/{{ p.build_number }}/{{ u.civ_name }}/{{ u.unit_slug }}">
+        {{ u.civ_name }} {{ u.unit_slug.replace('_', ' ') }}
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

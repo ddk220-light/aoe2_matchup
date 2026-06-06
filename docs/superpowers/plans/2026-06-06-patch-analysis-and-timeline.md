@@ -1544,7 +1544,8 @@ def main():
                    help="Path to a file with the user-pasted relevant patch notes (markdown).")
     p.add_argument("--baseline-build", default=None,
                    help="Defaults to the current build in patches.db.")
-    p.add_argument("--pypy", required=True, help="Path to the pypy3 executable.")
+    p.add_argument("--pypy", default="pypy3",
+                   help="pypy3 executable (default: 'pypy3' on PATH).")
     p.add_argument("--matchup-db", required=True, help="Path to the (local) matchup_db.db.")
     a = p.parse_args()
     import patches_db
@@ -2150,9 +2151,15 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 
 This is an **operational** task (not TDD). It produces the committed data the deployed site serves.
 
-- [ ] **Step 1: Save the user-pasted 177723 notes**
+- [ ] **Step 1: Save the user-pasted 177723 notes (well-formatted markdown)**
 
-Create `webapp/patch_notes/177723.md` containing the user-pasted relevant balance changes (markdown). (Confirm with the user that this is the text to display — per the IP constraint we show the user's summary + a link, not the full official notes verbatim.)
+Create `webapp/patch_notes/177723.md` from the balance-change text the user pasted earlier
+in this project (the Update 177723 relevant changes), formatted cleanly as markdown:
+group by civ/unit with `## headings` and `- ` bullets, keep each change as a concise
+before→after line (e.g. `- **Tiger Cavalry** HP 130 -> 125; train 15 -> 18s`). This is the
+text rendered on the patch card by `render_patch_summary`. Per the IP constraint, this is the
+**user's summary** (not the official notes verbatim); the card also links to `--source-url`.
+The renderer supports `**bold**`, `[text](url)` links, `- ` bullets, and paragraphs.
 
 - [ ] **Step 2: Run the baseline migration (tag current data as 170934)**
 
@@ -2178,14 +2185,13 @@ Expected: rankings + advisor return data; `/patches` shows the 170934 baseline c
 
 - [ ] **Step 4: Run the 177723 pipeline**
 
-> The `.dat` already in `extraction/empires2_x2_p1.dat` is build 177723. The real matchup DB is the LOCAL `D:\AI\matchup_db.db`. Use the installed PyPy.
+> The `.dat` already in `extraction/empires2_x2_p1.dat` is build 177723. The real matchup DB is the LOCAL `D:\AI\matchup_db.db`. `pypy3` is on PATH (PyPy 7.3.20 / Python 3.11.13), so `--pypy` can be omitted.
 
 ```bash
 cd /d/AI/aoe2-unit-analyzer
 python -m webapp.patch_pipeline --build 177723 --release-date 2026-06-02 \
   --source-url "https://www.ageofempires.com/news/age-of-empires-ii-definitive-edition-update-177723/" \
   --summary-file webapp/patch_notes/177723.md \
-  --pypy "C:/path/to/pypy3.exe" \
   --matchup-db "D:/AI/matchup_db.db"
 ```
 Watch the `[3/8]` line: confirm the changed-slug set matches the known 177723 combat changes (tiger_cavalry_wei + elite, temple_guard/guecha for Muisca, blackwood_archer_tupi, composite_bowman_armenians + elite, slinger, champi line, xolotl, kamayuk). Cross-check against the pasted notes; investigate any unit in the notes that's missing from the diff (e.g., availability-only changes like "gains Siege Ram" won't appear as a stat delta — add a manual `note` row if desired).

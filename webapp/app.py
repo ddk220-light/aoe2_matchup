@@ -5,6 +5,7 @@ import re as _re
 import sqlite3
 from collections import defaultdict
 from functools import lru_cache
+from urllib.parse import urlencode
 
 from flask import Flask, Response, abort, jsonify, redirect, render_template, request
 from best_units import (
@@ -163,6 +164,64 @@ def patches_page():
         })
     conn.close()
     return render_template("patches.html", patches=patches, active_nav="patches")
+
+
+def battle_sim_deep_link(my_civ, my_slug, opp_civ, opp_slug, scale,
+                         age1="Imperial", age2="Imperial"):
+    """Build a Battle Sim URL that pre-loads + auto-runs this exact matchup."""
+    params = {"civ1": my_civ, "unit1": my_slug, "civ2": opp_civ, "unit2": opp_slug,
+              "age1": age1, "age2": age2, "autorun": "1"}
+    if scale == "3k":
+        params["mode"] = "resources"; params["resources"] = "3000"
+    else:
+        params["mode"] = "count"; params["count1"] = "30"; params["count2"] = "30"
+    return "/?" + urlencode(params)
+
+
+@app.route("/patches/<build>/<civ>/<path:unit>")
+def patch_unit_page(build, civ, unit):
+    if not os.path.exists(PATCHES_DB_PATH):
+        abort(404)
+    conn = _patches_conn()
+    patch = conn.execute("SELECT * FROM patches WHERE build_number=?", (build,)).fetchone()
+    if patch is None:
+        conn.close(); abort(404)
+    pid = patch["id"]
+    stat_changes = [dict(r) for r in conn.execute(
+        "SELECT field, old_value, new_value, note FROM patch_unit_changes "
+        "WHERE patch_id=? AND civ_name=? AND unit_slug=? ORDER BY field",
+        (pid, civ, unit)).fetchall()]
+    ranking = [dict(r) for r in conn.execute(
+        "SELECT score_type, old_score, new_score, old_rank, new_rank "
+        "FROM patch_unit_ranking WHERE patch_id=? AND civ_name=? AND unit_slug=? "
+        "ORDER BY score_type", (pid, civ, unit)).fetchall()]
+    mrows = conn.execute(
+        "SELECT * FROM patch_matchup_changes WHERE patch_id=? AND my_civ=? "
+        "AND my_unit_slug=? ORDER BY swing", (pid, civ, unit)).fetchall()
+    now_beats, now_loses, shifted = [], [], []
+    for m in mrows:
+        d = dict(m)
+        d["link"] = battle_sim_deep_link(m["my_civ"], m["my_unit_slug"],
+                                         m["opp_civ"], m["opp_unit_slug"], m["scale"])
+        flipped_to_win = m["old_winner"] != 1 and m["new_winner"] == 1
+        flipped_to_loss = m["old_winner"] == 1 and m["new_winner"] != 1
+        if flipped_to_win:
+            now_beats.append(d)
+        elif flipped_to_loss:
+            now_loses.append(d)
+        else:
+            shifted.append(d)
+    # timeline: this unit across all patches
+    timeline = [dict(r) for r in conn.execute(
+        "SELECT p.build_number, p.release_date, c.field, c.old_value, c.new_value "
+        "FROM patch_unit_changes c JOIN patches p ON p.id=c.patch_id "
+        "WHERE c.civ_name=? AND c.unit_slug=? ORDER BY p.release_date",
+        (civ, unit)).fetchall()]
+    conn.close()
+    return render_template("patch_unit.html", build=build, civ=civ, unit=unit,
+                           patch=dict(patch), stat_changes=stat_changes, ranking=ranking,
+                           now_beats=now_beats, now_loses=now_loses, shifted=shifted,
+                           timeline=timeline, active_nav="patches")
 
 
 def get_units_by_age():

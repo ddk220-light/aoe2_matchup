@@ -33,3 +33,42 @@ def test_render_markdown_basic():
     assert "<strong>bold</strong>" in html
     assert '<a href="http://x"' in html
     assert "<li>one</li>" in html
+
+
+def _seed_unit_detail(path):
+    import patches_db
+    conn = patches_db.create_db(path)
+    pid = patches_db.insert_patch(conn, build_number="177723", release_date="2026-06-02",
+        title="Update 177723", summary_md="x", source_url="u",
+        baseline_build="170934", is_current=1)
+    conn.execute("INSERT INTO patch_unit_changes VALUES (?,?,?,?,?,?,?)",
+                 (pid,"Wei","tiger_cavalry_wei","base_hp",130,125,None))
+    conn.execute("INSERT INTO patch_unit_ranking VALUES (?,?,?,?,?,?,?,?)",
+                 (pid,"Wei","tiger_cavalry_wei","stable_effectiveness",90,85,1,4))
+    conn.execute("INSERT INTO patch_matchup_changes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                 (pid,"Wei","tiger_cavalry_wei","Franks","knight","30v30",1,2,60,-20,-80))
+    conn.commit(); conn.close()
+
+
+def test_patch_unit_page(tmp_path, monkeypatch):
+    import app
+    db = str(tmp_path / "patches.db")
+    _seed_unit_detail(db)
+    monkeypatch.setattr(app, "PATCHES_DB_PATH", db)
+    client = app.app.test_client()
+    r = client.get("/patches/177723/Wei/tiger_cavalry_wei")
+    assert r.status_code == 200
+    assert b"tiger" in r.data.lower()
+    # deep link to the flipped matchup
+    assert b"civ1=Wei" in r.data and b"unit2=knight" in r.data and b"autorun=1" in r.data
+
+
+def test_deep_link_builder():
+    import app
+    url = app.battle_sim_deep_link("Wei", "tiger_cavalry_wei", "Franks", "knight", "30v30")
+    assert url.startswith("/?")
+    assert "civ1=Wei" in url and "unit1=tiger_cavalry_wei" in url
+    assert "civ2=Franks" in url and "unit2=knight" in url
+    assert "mode=count" in url and "autorun=1" in url
+    url3k = app.battle_sim_deep_link("Wei", "tiger_cavalry_wei", "Franks", "knight", "3k")
+    assert "mode=resources" in url3k and "resources=3000" in url3k

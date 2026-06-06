@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ civ }} {{ unit.replace('_',' ') }} — {{ patch.title }}{% endblock %}
+{% block content %}
+<style>
+  .pu-wrap { max-width: 920px; margin:0 auto; padding:24px 16px; }
+  .pu-wrap h1 { margin-bottom:4px; }
+  .pu-sub { color:#8b93a7; margin-bottom:24px; }
+  .pu-sec { background:#1c1f26; border:1px solid #2c313c; border-radius:10px;
+    padding:18px 22px; margin-bottom:20px; }
+  .pu-sec h3 { margin-top:0; }
+  table.pu { width:100%; border-collapse:collapse; }
+  table.pu td, table.pu th { padding:7px 10px; text-align:left; border-bottom:1px solid #2c313c; }
+  .up { color:#5ed18b; } .down { color:#e8736b; }
+  .mlist a { color:#7fb2ff; text-decoration:none; }
+  .mlist a:hover { text-decoration:underline; }
+  .swing { font-variant-numeric: tabular-nums; }
+  .back { font-size:.85rem; }
+</style>
+<div class="pu-wrap">
+  <a class="back" href="/patches">&#8592; All patches</a>
+  <h1>{{ civ }} {{ unit.replace('_',' ')|title }}</h1>
+  <div class="pu-sub">{{ patch.title }} &middot; {{ patch.release_date }}</div>
+
+  <div class="pu-sec">
+    <h3>Stat changes</h3>
+    {% if stat_changes %}
+    <table class="pu"><tr><th>Field</th><th>Before</th><th>After</th></tr>
+    {% for s in stat_changes %}
+      <tr><td>{{ s.field.replace('base_','').replace('_',' ') }}</td>
+        <td>{{ s.old_value }}</td>
+        <td class="{{ 'up' if (s.new_value or 0) > (s.old_value or 0) else 'down' }}">
+          {{ s.new_value }}{% if s.note %} <em>({{ s.note }})</em>{% endif %}</td></tr>
+    {% endfor %}
+    </table>
+    {% else %}<p>No direct stat changes recorded.</p>{% endif %}
+  </div>
+
+  <div class="pu-sec">
+    <h3>Ranking move</h3>
+    {% if ranking %}
+    <table class="pu"><tr><th>Score</th><th>Before</th><th>After</th><th>Rank</th></tr>
+    {% for r in ranking %}
+      <tr><td>{{ r.score_type.replace('_',' ') }}</td>
+        <td>{{ r.old_score }}</td>
+        <td class="{{ 'up' if (r.new_score or 0) >= (r.old_score or 0) else 'down' }}">{{ r.new_score }}</td>
+        <td>#{{ r.old_rank }} &#8594; #{{ r.new_rank }}</td></tr>
+    {% endfor %}
+    </table>
+    {% else %}<p>Ranking unchanged.</p>{% endif %}
+  </div>
+
+  {% macro mtable(items) %}
+    <table class="pu mlist"><tr><th>Opponent</th><th>Scale</th><th>Score</th><th>Swing</th><th></th></tr>
+    {% for m in items %}
+      <tr><td>{{ m.opp_civ }} {{ m.opp_unit_slug.replace('_',' ') }}</td>
+        <td>{{ m.scale }}</td>
+        <td>{{ m.old_score }} &#8594; {{ m.new_score }}</td>
+        <td class="swing {{ 'up' if m.swing >= 0 else 'down' }}">{{ '%+.0f'|format(m.swing) }}</td>
+        <td><a href="{{ m.link }}">&#9654; View fight</a></td></tr>
+    {% endfor %}
+    </table>
+  {% endmacro %}
+
+  {% if now_beats %}<div class="pu-sec"><h3>Now beats</h3>{{ mtable(now_beats) }}</div>{% endif %}
+  {% if now_loses %}<div class="pu-sec"><h3>Now loses to</h3>{{ mtable(now_loses) }}</div>{% endif %}
+  {% if shifted %}<div class="pu-sec"><h3>Shifted margins</h3>{{ mtable(shifted) }}</div>{% endif %}
+
+  {% if timeline|length > 1 %}
+  <div class="pu-sec"><h3>Timeline</h3>
+    <table class="pu"><tr><th>Patch</th><th>Field</th><th>Change</th></tr>
+    {% for t in timeline %}
+      <tr><td>{{ t.build_number }}</td><td>{{ t.field.replace('base_','').replace('_',' ') }}</td>
+        <td>{{ t.old_value }} &#8594; {{ t.new_value }}</td></tr>
+    {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

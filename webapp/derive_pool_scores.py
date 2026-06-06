@@ -73,28 +73,20 @@ def _sim_version_for(matchup_conn: sqlite3.Connection,
     return row[0] if row else None
 
 
-def _migrate_legacy_columns(conn: sqlite3.Connection) -> None:
-    """Add missing columns to legacy pool_scores DBs.
+def _migrate_role_line_means_column(conn: sqlite3.Connection) -> None:
+    """Add role_line_means column to legacy DBs that pre-date this column.
 
     Idempotent: PRAGMA table_info reports current columns; only ALTER if missing.
-    Handles role_line_means (pre-2026-04) and build_number (pre-2026-06).
-    No-op when the table does not yet exist (fresh DBs are handled by create_db).
+    NOTE: build_number versioning is NOT migrated here — that requires a full
+    table rebuild (the PRIMARY KEY must change), which is owned by
+    migrate_baseline.py. derive_pool_scores assumes a current schema (either a
+    fresh create_db or a DB already migrated by migrate_baseline).
     """
-    # Check if table exists at all — fresh DBs have no table yet.
-    exists = conn.execute(
-        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='pool_scores'"
-    ).fetchone()[0]
-    if not exists:
-        return
     cur = conn.execute("PRAGMA table_info(pool_scores)")
     cols = {r[1] for r in cur.fetchall()}
     if "role_line_means" not in cols:
         conn.execute("ALTER TABLE pool_scores ADD COLUMN role_line_means TEXT")
-    if "build_number" not in cols:
-        conn.execute(
-            "ALTER TABLE pool_scores ADD COLUMN build_number TEXT NOT NULL DEFAULT '170934'"
-        )
-    conn.commit()
+        conn.commit()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -107,12 +99,8 @@ def main(argv: list[str] | None = None) -> int:
     build_number = args.build or get_current_build() or "170934"
 
     matchup_conn = sqlite3.connect(args.matchup_db)
-    # Migrate legacy columns BEFORE create_db so the index creation
-    # (which references build_number) succeeds on pre-existing DBs.
-    _pre_conn = sqlite3.connect(args.out)
-    _migrate_legacy_columns(_pre_conn)
-    _pre_conn.close()
     out_conn = create_db(args.out)
+    _migrate_role_line_means_column(out_conn)
 
     pairs = _list_unit_pairs(matchup_conn)
     written = 0

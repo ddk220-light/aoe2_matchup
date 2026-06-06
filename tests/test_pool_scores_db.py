@@ -155,6 +155,9 @@ def test_orchestrator_migrates_existing_db_without_column(tmp_path):
     """Old pool_scores.db (no role_line_means column) gets ALTER TABLE on next run."""
     out_path = tmp_path / "pool.db"
 
+    # Legacy table missing ONLY role_line_means. (A DB missing build_number is
+    # not a state derive handles — those must be rebuilt by migrate_baseline,
+    # which changes the PRIMARY KEY. derive assumes a current build_number schema.)
     legacy = sqlite3.connect(out_path)
     legacy.executescript("""
         CREATE TABLE pool_scores (
@@ -164,7 +167,8 @@ def test_orchestrator_migrates_existing_db_without_column(tmp_path):
             win_rate REAL, decisive_win_rate REAL, big_win_rate REAL,
             catastrophic_loss_rate REAL,
             sim_version TEXT, derived_at TEXT,
-            PRIMARY KEY (civ_name, unit_slug, scale, axis)
+            build_number TEXT NOT NULL DEFAULT '170934',
+            PRIMARY KEY (civ_name, unit_slug, scale, axis, build_number)
         );
     """)
     legacy.commit()

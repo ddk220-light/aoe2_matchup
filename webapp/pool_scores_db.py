@@ -27,11 +27,12 @@ CREATE TABLE IF NOT EXISTS pool_scores (
     sim_version           TEXT,
     derived_at            TEXT NOT NULL,
     role_line_means       TEXT,
-    PRIMARY KEY (civ_name, unit_slug, scale, axis)
+    build_number          TEXT NOT NULL DEFAULT '170934',
+    PRIMARY KEY (civ_name, unit_slug, scale, axis, build_number)
 );
 
 CREATE INDEX IF NOT EXISTS idx_pool_scores_pool_axis_scale
-    ON pool_scores (pool, axis, scale);
+    ON pool_scores (pool, axis, scale, build_number);
 """
 
 
@@ -49,13 +50,13 @@ INSERT OR REPLACE INTO pool_scores (
     final_score, gc, ac, at, aa,
     n, mean, stddev,
     win_rate, decisive_win_rate, big_win_rate, catastrophic_loss_rate,
-    sim_version, derived_at, role_line_means
+    sim_version, derived_at, role_line_means, build_number
 ) VALUES (
     :civ_name, :unit_slug, :pool, :scale, :axis,
     :final_score, :gc, :ac, :at, :aa,
     :n, :mean, :stddev,
     :win_rate, :decisive_win_rate, :big_win_rate, :catastrophic_loss_rate,
-    :sim_version, :derived_at, :role_line_means
+    :sim_version, :derived_at, :role_line_means, :build_number
 )
 """
 

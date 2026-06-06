@@ -16,7 +16,8 @@ _ROLE_KEYS = ("gc", "ac", "at", "aa")
 
 
 def load_pool_scores(db_path: str,
-                     civ_unit_pairs: list[tuple[str, str]]) -> dict:
+                     civ_unit_pairs: list[tuple[str, str]],
+                     build_number: str | None = None) -> dict:
     """Return {(civ_name, unit_slug): payload, ...} for known units.
 
     Each scale's per-axis dict gains a `role_line_means` key with the
@@ -35,7 +36,7 @@ def load_pool_scores(db_path: str,
         params: list[str] = []
         for civ, slug in civ_unit_pairs:
             params.extend((civ, slug))
-        cur = conn.execute(f"""
+        sql = f"""
             SELECT civ_name, unit_slug, pool, scale, axis,
                    final_score, gc, ac, at, aa,
                    n, mean, stddev,
@@ -43,7 +44,11 @@ def load_pool_scores(db_path: str,
                    role_line_means
             FROM pool_scores
             WHERE (civ_name, unit_slug) IN ({placeholders})
-        """, params)
+        """
+        if build_number is not None:
+            sql += " AND build_number = ?"
+            params.append(build_number)
+        cur = conn.execute(sql, params)
         rows = cur.fetchall()
     finally:
         conn.close()

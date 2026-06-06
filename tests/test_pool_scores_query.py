@@ -18,6 +18,7 @@ def _make_row(civ, slug, scale, axis, **overrides):
         "big_win_rate": 0.0, "catastrophic_loss_rate": 0.0,
         "sim_version": "v1", "derived_at": "t1",
         "role_line_means": None,
+        "build_number": "170934",
     }
     base.update(overrides)
     return base
@@ -125,6 +126,7 @@ def test_load_decodes_role_line_means(tmp_path):
             "AC": {"knight": -2.1, "camel": 0.0, "steppe_lancer": None, "elephant": -2.8},
             "AT": {"spear": 92.7, "skirmisher": 91.4, "light_cav": 94.0},
         }),
+        "build_number": "170934",
     })
     conn.commit()
     conn.close()
@@ -150,6 +152,7 @@ def test_load_missing_role_line_means_yields_empty_dict(tmp_path):
         "big_win_rate": 0, "catastrophic_loss_rate": 0,
         "sim_version": "v", "derived_at": "t",
         "role_line_means": None,
+        "build_number": "170934",
     })
     conn.commit()
     conn.close()

@@ -48,6 +48,7 @@ def test_insert_and_read_back(tmp_path):
         "big_win_rate": 55.9, "catastrophic_loss_rate": 13.0,
         "sim_version": "ba893a3", "derived_at": "2026-04-28T00:00:00",
         "role_line_means": None,
+        "build_number": "170934",
     })
     conn.commit()
     cur = conn.cursor()
@@ -69,6 +70,7 @@ def test_insert_replaces_on_duplicate_key(tmp_path):
         "big_win_rate": 0, "catastrophic_loss_rate": 0,
         "sim_version": "v1", "derived_at": "t1",
         "role_line_means": None,
+        "build_number": "170934",
     }
     insert_score(conn, payload)
     payload["final_score"] = 99.0
@@ -94,6 +96,7 @@ def test_insert_writes_role_line_means_json(tmp_path):
         "big_win_rate": 47.1, "catastrophic_loss_rate": 27.1,
         "sim_version": "v", "derived_at": "t",
         "role_line_means": '{"GC":{"militia":-10.2,"knight":-5.5,"archer":-4.6}}',
+        "build_number": "170934",
     })
     conn.commit()
     cur = conn.cursor()

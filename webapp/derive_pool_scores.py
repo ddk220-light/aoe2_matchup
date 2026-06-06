@@ -25,6 +25,7 @@ from collections import defaultdict
 from pool_scores_lib import derive_unit_scores, unit_to_pool
 from pool_scores_db import create_db, insert_score
 from unit_lines import UNIT_LINES
+from patches_db import get_current_build
 
 _WEBAPP_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_MATCHUP_DB = os.path.join(_WEBAPP_DIR, "matchup_db.db")
@@ -72,27 +73,46 @@ def _sim_version_for(matchup_conn: sqlite3.Connection,
     return row[0] if row else None
 
 
-def _migrate_role_line_means_column(conn: sqlite3.Connection) -> None:
-    """Add role_line_means column to legacy DBs that pre-date this column.
+def _migrate_legacy_columns(conn: sqlite3.Connection) -> None:
+    """Add missing columns to legacy pool_scores DBs.
 
     Idempotent: PRAGMA table_info reports current columns; only ALTER if missing.
+    Handles role_line_means (pre-2026-04) and build_number (pre-2026-06).
+    No-op when the table does not yet exist (fresh DBs are handled by create_db).
     """
+    # Check if table exists at all — fresh DBs have no table yet.
+    exists = conn.execute(
+        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='pool_scores'"
+    ).fetchone()[0]
+    if not exists:
+        return
     cur = conn.execute("PRAGMA table_info(pool_scores)")
     cols = {r[1] for r in cur.fetchall()}
     if "role_line_means" not in cols:
         conn.execute("ALTER TABLE pool_scores ADD COLUMN role_line_means TEXT")
-        conn.commit()
+    if "build_number" not in cols:
+        conn.execute(
+            "ALTER TABLE pool_scores ADD COLUMN build_number TEXT NOT NULL DEFAULT '170934'"
+        )
+    conn.commit()
 
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--matchup-db", default=DEFAULT_MATCHUP_DB)
     p.add_argument("--out", default=DEFAULT_OUT_DB)
+    p.add_argument("--build", default=None)
     args = p.parse_args(argv)
 
+    build_number = args.build or get_current_build() or "170934"
+
     matchup_conn = sqlite3.connect(args.matchup_db)
+    # Migrate legacy columns BEFORE create_db so the index creation
+    # (which references build_number) succeeds on pre-existing DBs.
+    _pre_conn = sqlite3.connect(args.out)
+    _migrate_legacy_columns(_pre_conn)
+    _pre_conn.close()
     out_conn = create_db(args.out)
-    _migrate_role_line_means_column(out_conn)
 
     pairs = _list_unit_pairs(matchup_conn)
     written = 0
@@ -116,6 +136,7 @@ def main(argv: list[str] | None = None) -> int:
                 # JSON-encode the per-line breakdown for the TEXT column.
                 rlm = row.get("role_line_means")
                 row["role_line_means"] = json.dumps(rlm) if rlm is not None else None
+                row["build_number"] = build_number
                 insert_score(out_conn, row)
                 written += 1
                 by_pool[row["pool"]] += 1

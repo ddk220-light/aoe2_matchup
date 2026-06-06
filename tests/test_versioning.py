@@ -25,3 +25,26 @@ def test_battle_scores_schema_has_build_number(tmp_path):
                      "AND unit_slug='knight'").fetchone()[0]
     assert n == 2
     conn.close()
+
+
+import pool_scores_db
+
+
+def _pool_row(civ, build, score):
+    return dict(civ_name=civ, unit_slug="knight", pool="stable", scale="30v30",
+                axis="hp", final_score=score, gc=None, ac=None, at=None, aa=None,
+                n=10, mean=score, stddev=1.0, win_rate=0.5, decisive_win_rate=0.3,
+                big_win_rate=0.2, catastrophic_loss_rate=0.1, sim_version="x",
+                derived_at="2026-06-06", role_line_means=None, build_number=build)
+
+
+def test_pool_scores_build_number(tmp_path):
+    db = str(tmp_path / "pool.db")
+    conn = pool_scores_db.create_db(db)
+    pool_scores_db.insert_score(conn, _pool_row("Franks", "170934", 90.0))
+    pool_scores_db.insert_score(conn, _pool_row("Franks", "177723", 85.0))
+    conn.commit()
+    n = conn.execute("SELECT COUNT(*) FROM pool_scores WHERE civ_name='Franks' "
+                     "AND unit_slug='knight' AND scale='30v30' AND axis='hp'").fetchone()[0]
+    assert n == 2
+    conn.close()

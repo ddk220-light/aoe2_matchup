@@ -391,6 +391,13 @@ class BattleUnit {
         this.trampleFlatDamage = stats.trample_flat_damage || 0;
         this.bonusDamageReduction =
             stats.bonus_damage_reduction || 0;
+        // Projectile accuracy (0-1 fraction). A missed shot still flies but
+        // deals no direct damage; it may graze a different nearby unit (default
+        // 0.5x, Arambai missDamagePercent=1.0 -> full). Mirrors simulation_real.py.
+        // Primary arrow uses `accuracy`; extra/secondary arrows use baseAccuracy
+        // (Thumb Ring only boosts the primary), matching the backend.
+        this.accuracy = (stats.accuracy || 100) / 100;
+        this.baseAccuracy = (stats.base_accuracy || 100) / 100;
 
         // Unique mechanics
         this.extraProjectiles = stats.extra_projectiles || 0;
@@ -966,7 +973,7 @@ class BattleUnit {
                         tgt = scatter[scatI % scatter.length];
                         scatI++;
                     }
-                    this.fireProjectile(tgt);
+                    this.fireProjectile(tgt, p > 0);
                 } else {
                     this.performAttackOn(this.target);
                 }
@@ -975,10 +982,17 @@ class BattleUnit {
         this.attackCooldown = this.reloadTime;
     }
 
-    fireProjectile(target) {
+    fireProjectile(target, isExtra = false) {
         const damage =
             this.getDamageAgainst(target) +
             Math.floor(this.killBonusAttack);
+        // Accuracy roll (mirrors simulation_real.py fire_projectile). A miss
+        // still spawns a projectile but applies 0 direct damage; on impact it
+        // grazes a random nearby unit instead. Primary arrow uses unit accuracy;
+        // extra arrows use baseAccuracy.
+        const accuracy = isExtra ? this.baseAccuracy : this.accuracy;
+        const willHit = accuracy >= 1.0 ? true : Math.random() < accuracy;
+        const MISS_SPREAD = 2.0 * TILE_SIZE; // tiles, matches MISS_SPREAD_RADIUS
         const speed =
             this.projectileSpeed > 0
                 ? this.projectileSpeed
@@ -1001,8 +1015,42 @@ class BattleUnit {
             this.isSiegeProjectile,
             () => {
                 const targetWasAlive = target.state !== "dead";
-                if (target.state !== "dead") {
+                if (target.state !== "dead" && willHit) {
                     target.takeDamage(damage, attacker);
+                } else if (target.state !== "dead" && !willHit) {
+                    // Missed: the arrow lands at a random point within
+                    // MISS_SPREAD of the intended impact. If a (different) unit
+                    // happens to occupy that spot it is grazed; otherwise the
+                    // shot is wasted. Graze is 0.5x by default; Arambai
+                    // (missDamagePercent=1.0) deals full damage on a graze.
+                    const missAngle = Math.random() * 2 * Math.PI;
+                    const missDist = Math.random() * MISS_SPREAD;
+                    const landX = impactX + missDist * Math.cos(missAngle);
+                    const landY = impactY + missDist * Math.sin(missAngle);
+                    const foes =
+                        attacker.team === 1
+                            ? simulation.team2
+                            : simulation.team1;
+                    for (const enemy of foes) {
+                        if (enemy === target || enemy.state === "dead")
+                            continue;
+                        const ex = enemy.x - landX;
+                        const ey = enemy.y - landY;
+                        if (
+                            ex * ex + ey * ey <=
+                            enemy.radius * enemy.radius
+                        ) {
+                            const frac =
+                                attacker.missDamagePercent > 0
+                                    ? attacker.missDamagePercent
+                                    : 0.5;
+                            enemy.takeDamage(
+                                Math.max(1, Math.floor(damage * frac)),
+                                attacker,
+                            );
+                            break;
+                        }
+                    }
                 }
 
                 if (
@@ -1015,7 +1063,7 @@ class BattleUnit {
                 }
 
                 // Siege area splash damage with distance falloff
-                if (splashR > 0) {
+                if (splashR > 0 && willHit) {
                     const enemies =
                         attacker.team === 1
                             ? simulation.team2
@@ -1057,7 +1105,8 @@ class BattleUnit {
                 // Splash on hit (non-siege, e.g. scorpion pass-through)
                 if (
                     attacker.splashOnHitRadius > 0 &&
-                    splashR === 0
+                    splashR === 0 &&
+                    willHit
                 ) {
                     const enemies =
                         attacker.team === 1
@@ -1085,7 +1134,7 @@ class BattleUnit {
                 }
 
                 // Pass-through: 1 unit behind target takes fraction of damage
-                if (attacker.passThroughPercent > 0) {
+                if (attacker.passThroughPercent > 0 && willHit) {
                     const ptDmg = Math.max(
                         1,
                         Math.floor(
@@ -1119,7 +1168,7 @@ class BattleUnit {
                 }
 
                 // Bleed
-                if (attacker.bleedDps > 0 && targetWasAlive) {
+                if (attacker.bleedDps > 0 && targetWasAlive && willHit) {
                     target.bleedEffect = {
                         dps: attacker.bleedDps,
                         timeRemaining: attacker.bleedDuration,

@@ -148,3 +148,45 @@ def test_force_marks_all_pending():
     # has_row=True everywhere; without force -> skip; with force -> pending
     assert r._group_pending(lambda *a: True, members, "30v30", "ver", force=False) is False
     assert r._group_pending(lambda *a: True, members, "30v30", "ver", force=True) is True
+
+
+def test_carry_forward_battle_scores(tmp_path):
+    import sqlite3
+    import derived_db, patch_pipeline
+    dd = str(tmp_path / "d.db")
+    conn = derived_db.create_db(dd)
+    # naval row only exists at old build; must be carried to new build
+    conn.execute("INSERT INTO battle_scores (line_slug,age,civ_name,unit_slug,"
+                 "score_type,score_value,rank,median_delta,build_number) VALUES "
+                 "('naval','imperial','Britons','galleon','naval_effectiveness',70,1,2,'170934')")
+    conn.commit(); conn.close()
+    patch_pipeline.carry_forward_battle_scores(dd, "170934", "177723")
+    conn = sqlite3.connect(dd)
+    n = conn.execute("SELECT COUNT(*) FROM battle_scores WHERE build_number='177723' "
+                     "AND unit_slug='galleon'").fetchone()[0]
+    conn.close()
+    assert n == 1
+
+
+def test_write_patch_records(tmp_path):
+    import patches_db, patch_pipeline
+    pdb = str(tmp_path / "p.db")
+    conn = patches_db.create_db(pdb)
+    pid = patches_db.insert_patch(conn, build_number="177723", release_date="2026-06-02",
+        title="Update 177723", summary_md="x", source_url="u",
+        baseline_build="170934", is_current=0)
+    conn.commit()
+    patch_pipeline.write_patch_records(conn, pid,
+        unit_changes=[{"civ_name":"Wei","unit_slug":"tiger_cavalry_wei",
+                       "field":"base_hp","old_value":115,"new_value":110}],
+        ranking_changes=[{"civ_name":"Wei","unit_slug":"tiger_cavalry_wei",
+                       "score_type":"stable_effectiveness","old_score":90,"new_score":85,
+                       "old_rank":1,"new_rank":4}],
+        matchup_changes=[{"my_civ":"Wei","my_unit_slug":"tiger_cavalry_wei",
+                       "opp_civ":"Franks","opp_unit_slug":"knight","scale":"30v30",
+                       "old_winner":1,"new_winner":2,"old_score":60,"new_score":-20,"swing":-80}])
+    conn.commit()
+    assert conn.execute("SELECT COUNT(*) FROM patch_unit_changes WHERE patch_id=?", (pid,)).fetchone()[0] == 1
+    assert conn.execute("SELECT COUNT(*) FROM patch_unit_ranking WHERE patch_id=?", (pid,)).fetchone()[0] == 1
+    assert conn.execute("SELECT COUNT(*) FROM patch_matchup_changes WHERE patch_id=?", (pid,)).fetchone()[0] == 1
+    conn.close()

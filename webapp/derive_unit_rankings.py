@@ -146,7 +146,8 @@ def compute_and_write_rankings(matchup_db_path=MATCHUP_DB_PATH,
     """Returns count of rows inserted into battle_scores. Rows are tagged with
     build_number (defaults to the current build from patches.db, then '170934')."""
     if build_number is None:
-        build_number = get_current_build(derived_db_path=derived_db_path) or "170934"
+        # patches.db lives at a fixed webapp location; no path needed here.
+        build_number = get_current_build() or "170934"
     mconn = sqlite3.connect(matchup_db_path)
     mconn.row_factory = sqlite3.Row
     rconn = sqlite3.connect(ref_db_path)

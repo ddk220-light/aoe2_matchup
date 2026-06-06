@@ -95,7 +95,8 @@ def create_db(path=DEFAULT_DB_PATH):
 def insert_outcome(conn, *, my_civ, my_unit_slug, opp_civ, opp_unit_slug,
                    scale, my_count, opp_count,
                    outcome: BattleOutcome,
-                   runs_count, score_stddev, dedup_group, sim_version):
+                   runs_count, score_stddev, dedup_group, sim_version,
+                   commit=True):
     conn.execute("""
         INSERT INTO matchup_battles (
             my_civ, my_unit_slug, opp_civ, opp_unit_slug, scale,
@@ -163,7 +164,8 @@ def insert_outcome(conn, *, my_civ, my_unit_slug, opp_civ, opp_unit_slug,
         outcome.team1_start_count, outcome.team2_start_count,
         runs_count, score_stddev, dedup_group, sim_version,
     ))
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 def fetch_all_rows(conn):

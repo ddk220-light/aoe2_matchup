@@ -211,6 +211,12 @@ def main():
         os.remove(args.db)
 
     out_conn = create_db(args.db)
+    # Bulk-write tuning: this is a batch job writing to a local DB with a backup,
+    # so skip per-commit fsync and use WAL. Dedup groups can have 1000+ members
+    # (one sim, many rows); without this each row's commit fsyncs and dominates
+    # runtime. Combined with per-group (not per-row) commits below.
+    out_conn.execute("PRAGMA synchronous=OFF")
+    out_conn.execute("PRAGMA journal_mode=WAL")
     sim_version = compute_sim_version()
     print(f"Sim version: {sim_version}")
 
@@ -347,7 +353,9 @@ def main():
                     my_count=out.team1_start_count, opp_count=out.team2_start_count,
                     outcome=out, runs_count=runs_count, score_stddev=stddev,
                     dedup_group=dg, sim_version=sim_version,
+                    commit=False,
                 )
+            out_conn.commit()  # one commit per dedup group, not per row
             if i <= 5 or i % 20 == 0 or i == len(tasks):
                 elapsed = time.perf_counter() - t0
                 rep_civ, rep_slug, _, _, _, _ = members[0]

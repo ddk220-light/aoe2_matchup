@@ -29,6 +29,7 @@ def test_pool_scores_columns_match_spec(tmp_path):
         "big_win_rate": "REAL", "catastrophic_loss_rate": "REAL",
         "sim_version": "TEXT", "derived_at": "TEXT",
         "role_line_means": "TEXT",
+        "build_number": "TEXT",
     }
     for col, ctype in expected.items():
         assert col in cols, f"missing column: {col}"

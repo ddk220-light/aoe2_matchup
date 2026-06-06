@@ -1,4 +1,5 @@
 # tests/test_versioning.py
+import importlib
 import os, sqlite3, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "webapp"))
 import derived_db
@@ -50,12 +51,30 @@ def test_pool_scores_build_number(tmp_path):
     conn.close()
 
 
-import importlib
-
-
 def test_power_units_path_for_build(monkeypatch, tmp_path):
     import best_units
     importlib.reload(best_units)
     monkeypatch.setattr(best_units, "POWER_UNITS_DIR", str(tmp_path / "cpu"))
     p = best_units.power_units_path("177723")
     assert p.endswith(os.path.join("cpu", "177723.json"))
+
+
+def test_load_civ_power_units_fallback_chain(monkeypatch, tmp_path):
+    import json
+    import best_units
+    importlib.reload(best_units)
+    cpu_dir = str(tmp_path / "cpu")
+    legacy = str(tmp_path / "legacy.json")
+    monkeypatch.setattr(best_units, "POWER_UNITS_DIR", cpu_dir)
+    monkeypatch.setattr(best_units, "POWER_UNITS_PATH", legacy)
+    # neither present -> None
+    assert best_units.load_civ_power_units(build_number="177723") is None
+    # only legacy present -> legacy
+    with open(legacy, "w") as f:
+        json.dump({"src": "legacy"}, f)
+    assert best_units.load_civ_power_units(build_number="177723") == {"src": "legacy"}
+    # per-build present -> per-build wins over legacy
+    os.makedirs(cpu_dir, exist_ok=True)
+    with open(best_units.power_units_path("177723"), "w") as f:
+        json.dump({"src": "perbuild"}, f)
+    assert best_units.load_civ_power_units(build_number="177723") == {"src": "perbuild"}

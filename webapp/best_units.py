@@ -1070,6 +1070,11 @@ def load_civ_power_units(build_number=None):
                 return json.load(f)
     # legacy fallback (pre-migration single file)
     if os.path.exists(POWER_UNITS_PATH):
+        if build_number:
+            # We have a current build but no per-build file — the legacy flat
+            # file may belong to a DIFFERENT build. Surface it in the logs.
+            print(f"WARNING: civ_power_units/{build_number}.json missing; "
+                  f"falling back to legacy civ_power_units.json (possibly stale).")
         with open(POWER_UNITS_PATH, "r") as f:
             return json.load(f)
     return None

@@ -48,3 +48,14 @@ def test_pool_scores_build_number(tmp_path):
                      "AND unit_slug='knight' AND scale='30v30' AND axis='hp'").fetchone()[0]
     assert n == 2
     conn.close()
+
+
+import importlib
+
+
+def test_power_units_path_for_build(monkeypatch, tmp_path):
+    import best_units
+    importlib.reload(best_units)
+    monkeypatch.setattr(best_units, "POWER_UNITS_DIR", str(tmp_path / "cpu"))
+    p = best_units.power_units_path("177723")
+    assert p.endswith(os.path.join("cpu", "177723.json"))

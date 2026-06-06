@@ -8,11 +8,18 @@ import sqlite3
 
 from combat_unit_loader import build_combat_dict_from_ref
 from unit_lines import TREBUCHET_SLUGS, NAVAL_UNIT_LINES, CANNON_GALLEON_LINE
+from patches_db import get_current_build
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 DERIVED_DB_PATH = os.path.join(os.path.dirname(__file__), "derived_data.db")
 POOL_SCORES_DB_PATH = os.path.join(os.path.dirname(__file__), "pool_scores.db")
 POWER_UNITS_PATH = os.path.join(os.path.dirname(__file__), "civ_power_units.json")
+POWER_UNITS_DIR = os.path.join(os.path.dirname(__file__), "civ_power_units")
+
+
+def power_units_path(build_number):
+    return os.path.join(POWER_UNITS_DIR, f"{build_number}.json")
+
 
 # Civilizations that do not have access to trebuchets in-game.
 CIVS_WITHOUT_TREBUCHET = {"Wu", "Wei", "Shu"}
@@ -52,7 +59,7 @@ def _line_imperial_slugs(line_def):
     return {s for s in out if s}
 
 
-def _load_pool_score_percentiles():
+def _load_pool_score_percentiles(build_number=None):
     """Compute per-(line_slug, civ, unit_slug) percentile from pool_scores.db.
 
     Mirrors the rankings-page methodology: average of `final_score` at
@@ -63,6 +70,7 @@ def _load_pool_score_percentiles():
 
     Returns dict keyed by (line_slug, civ, unit_slug) -> percentile float.
     """
+    build_number = build_number or get_current_build() or "170934"
     if not os.path.exists(POOL_SCORES_DB_PATH):
         return {}
     from unit_lines import UNIT_LINES
@@ -81,7 +89,9 @@ def _load_pool_score_percentiles():
 
     # Pull all hp scores for these slugs at both scales.
     rows = conn.execute(
-        "SELECT civ_name, unit_slug, scale, final_score FROM pool_scores WHERE axis='hp'"
+        "SELECT civ_name, unit_slug, scale, final_score FROM pool_scores "
+        "WHERE axis='hp' AND build_number = ?",
+        (build_number,),
     ).fetchall()
     conn.close()
 
@@ -200,20 +210,21 @@ def _classify_strength(percentile):
     return "poor"
 
 
-def _compute_line_counts(derived_conn, age_key="imperial"):
+def _compute_line_counts(derived_conn, age_key="imperial", build_number=None):
     """Compute total unit count per (line_slug, score_type) for percentile calculation.
 
     Reads from derived_data.db.battle_scores.
 
     Returns dict: {(line_slug, score_type): total_count}
     """
+    build_number = build_number or get_current_build() or "170934"
     rc = derived_conn.cursor()
     rc.execute(
         """SELECT line_slug, score_type, COUNT(*) as cnt
            FROM battle_scores
-           WHERE LOWER(age) = ?
+           WHERE LOWER(age) = ? AND build_number = ?
            GROUP BY line_slug, score_type""",
-        [age_key],
+        [age_key, build_number],
     )
     counts = {}
     for row in rc.fetchall():
@@ -857,8 +868,9 @@ def generate_cannon_galleon_entry(civ_name, conn, age_key="imperial", techs_by_s
     return _build_naval_unit_entry(row, civ_name, conn, db_age, techs_by_slug, effects_by_slug, reference_techs)
 
 
-def compute_civ_power_units():
+def compute_civ_power_units(build_number=None):
     """Pre-compute power units for all civs. Returns dict keyed by civ_name."""
+    build_number = build_number or get_current_build() or "170934"
     conn = _get_db()
     rc = conn.cursor()
     derived_conn = _get_derived_db()
@@ -868,7 +880,7 @@ def compute_civ_power_units():
     # page shows so the civ page agrees with it. Siege/navy lines aren't in
     # pool_scores; they fall back to battle_scores rank percentile inside
     # `_build_unit_entry`.
-    pool_pct_lookup = _load_pool_score_percentiles()
+    pool_pct_lookup = _load_pool_score_percentiles(build_number)
 
     # Civ list comes from ref_units (master list), not battle_scores —
     # navy/siege civs without scores still appear.
@@ -880,8 +892,8 @@ def compute_civ_power_units():
         "castle": _build_reference_techs(conn, "Castle"),
     }
     line_counts_by_age = {
-        "imperial": _compute_line_counts(derived_conn, "imperial"),
-        "castle": _compute_line_counts(derived_conn, "castle"),
+        "imperial": _compute_line_counts(derived_conn, "imperial", build_number),
+        "castle": _compute_line_counts(derived_conn, "castle", build_number),
     }
 
     # Demo line and cannon_galleon for civs without battle_scores fall back
@@ -928,8 +940,9 @@ def compute_civ_power_units():
                               AND LOWER(age) = ?
                               AND score_type = ?
                               AND line_slug = ?
+                              AND build_number = ?
                             ORDER BY score_value DESC""",
-                        [civ, age_key, score_type, line_slug],
+                        [civ, age_key, score_type, line_slug, build_number],
                     )
                     rows = drc.fetchall()
 
@@ -1037,21 +1050,29 @@ def compute_civ_power_units():
     return result
 
 
-def save_civ_power_units():
-    """Compute and write civ_power_units.json."""
-    data = compute_civ_power_units()
-    with open(POWER_UNITS_PATH, "w") as f:
+def save_civ_power_units(build_number=None):
+    build_number = build_number or get_current_build() or "170934"
+    data = compute_civ_power_units(build_number=build_number)
+    os.makedirs(POWER_UNITS_DIR, exist_ok=True)
+    path = power_units_path(build_number)
+    with open(path, "w") as f:
         json.dump(data, f, indent=2, sort_keys=True)
-    print(f"Wrote {POWER_UNITS_PATH} ({len(data)} civs)")
+    print(f"Wrote {path} ({len(data)} civs, build {build_number})")
     return data
 
 
-def load_civ_power_units():
-    """Load pre-computed civ power units. Returns dict or None if file missing."""
-    if not os.path.exists(POWER_UNITS_PATH):
-        return None
-    with open(POWER_UNITS_PATH, "r") as f:
-        return json.load(f)
+def load_civ_power_units(build_number=None):
+    build_number = build_number or get_current_build()
+    if build_number:
+        p = power_units_path(build_number)
+        if os.path.exists(p):
+            with open(p, "r") as f:
+                return json.load(f)
+    # legacy fallback (pre-migration single file)
+    if os.path.exists(POWER_UNITS_PATH):
+        with open(POWER_UNITS_PATH, "r") as f:
+            return json.load(f)
+    return None
 
 
 ###############################################################################
@@ -1237,6 +1258,7 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
             })
 
     # Step 2: Find counter candidates from battle_scores (in derived_data.db)
+    build_number = get_current_build() or "170934"
     derived_conn = _get_derived_db()
     drc = derived_conn.cursor()
     db_age = "Imperial" if age == "imperial" else "Castle"
@@ -1255,9 +1277,10 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
                       AND LOWER(age) = ?
                       AND score_type = ?
                       AND line_slug IN ({placeholders})
+                      AND build_number = ?
                     ORDER BY median_delta DESC
                     LIMIT 3""",
-                [civ_a, age, score_type] + line_slugs,
+                [civ_a, age, score_type] + line_slugs + [build_number],
             )
             for row in drc.fetchall():
                 slug = row["unit_slug"]

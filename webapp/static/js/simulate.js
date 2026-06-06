@@ -432,6 +432,50 @@ class BattleUnit {
         this.bleedEffect = null;
         this.hasUsedCharge = false;
 
+        // --- ported abilities (parity with simulation_real.py) ---
+        this.chargeAttackMelee = stats.charge_attack_melee || 0;
+        this.chargeRechargeTime = stats.charge_recharge_time || 0;
+        this.chargeTimer = 0;
+        this.chargeSlowPercent = stats.charge_slow_percent || 0;
+        this.chargeSlowDuration = stats.charge_slow_duration || 0;
+        this.executeDamagePerStep = stats.execute_damage_per_step || 0;
+        this.executeHpStep = stats.execute_hp_step || 0;
+        this.attackSpeedRamp = stats.attack_speed_ramp || 0;
+        this.attackSpeedMin = stats.attack_speed_min || 0;
+        this.rampReduction = 0;
+        this.hpPerKill = stats.hp_per_kill || 0;
+        this.hpPerKillMax = stats.hp_per_kill_max || 0;
+        this.hpGainedFromKills = 0;
+        this.missDamagePercent = stats.miss_damage_percent || 0;
+        this.armorStripPerHit = stats.armor_strip_per_hit || 0;
+        this.attackBonusNearby = stats.attack_bonus_nearby || 0;
+        this.nearbyBonusCount = stats.nearby_bonus_count || 0;
+        this.auraAttackBonus = 0;
+        this.hpNearbyPercentPerUnit = stats.hp_nearby_percent_per_unit || 0;
+        this.hpNearbyMaxUnits = stats.hp_nearby_max_units || 0;
+        this.auraHpBonus = 0;
+        this.damageReflectPercent = stats.damage_reflect_percent || 0;
+        this.allyDeathHeal = stats.ally_death_heal || 0;
+        this.allyDeathHealDuration = stats.ally_death_heal_duration || 0;
+        this.allyHealRemaining = 0;
+        this.allyHealRate = 0;
+        this.extraProjScatter = stats.extra_proj_scatter || 0;
+        this.slowTimer = 0;
+        this.baseMoveSpeed = this.moveSpeed;
+        // Transform target stats (Jian Swordsman)
+        this.transformMaxHp = stats.transform_hp || 0;
+        this.transformAttack = stats.transform_attack || 0;
+        this.transformMeleeArmor = stats.transform_melee_armor || 0;
+        this.transformPierceArmor = stats.transform_pierce_armor || 0;
+        this.transformAttackSpeed = stats.transform_attack_speed || 0;
+        this.transformMoveSpeed = stats.transform_movement_speed || 0;
+        this.transformAttacks = stats.transform_attacks_json
+            ? JSON.parse(stats.transform_attacks_json)
+            : null;
+        this.transformArmors = stats.transform_armors_json
+            ? JSON.parse(stats.transform_armors_json)
+            : null;
+
         this.x = 0;
         this.y = 0;
         // Scale radius based on unit outline_size
@@ -468,9 +512,9 @@ class BattleUnit {
         const isRanged = this.isRanged();
         const baseAttackClass = isRanged ? "3" : "4";
         const baseAttack =
-            this.attacks[baseAttackClass] ||
-            this.attacks["4"] ||
-            this.attack;
+            (this.attacks[baseAttackClass] ||
+                this.attacks["4"] ||
+                this.attack) + this.auraAttackBonus;
         let targetBaseArmor;
         if (isRanged && this.ignoresPierceArmor) {
             targetBaseArmor = 0;
@@ -542,7 +586,22 @@ class BattleUnit {
             );
         }
 
-        const totalDamage = Math.max(1, baseDmg + bonusDamage);
+        // Execute scaling (Kona): +N damage per missing-HP step on the target.
+        let executeBonus = 0;
+        if (
+            this.executeDamagePerStep > 0 &&
+            this.executeHpStep > 0 &&
+            target.maxHp > 0
+        ) {
+            const missing = 1 - target.currentHp / target.maxHp;
+            executeBonus =
+                this.executeDamagePerStep *
+                Math.floor(missing / this.executeHpStep);
+        }
+        const totalDamage = Math.max(
+            1,
+            baseDmg + bonusDamage + executeBonus,
+        );
         if (detailed) return { total: totalDamage, breakdown };
         return totalDamage;
     }
@@ -658,7 +717,62 @@ class BattleUnit {
             }
         }
 
-        // HP transform
+        // Charge recharge timer (melee charge + charge projectiles)
+        if (this.chargeTimer > 0)
+            this.chargeTimer = Math.max(0, this.chargeTimer - dt);
+
+        // Charge-slow expiry: restore movement speed
+        if (this.slowTimer > 0) {
+            this.slowTimer = Math.max(0, this.slowTimer - dt);
+            if (this.slowTimer <= 0) this.moveSpeed = this.baseMoveSpeed;
+        }
+
+        // Ally-death heal-over-time (Guecha Warrior)
+        if (
+            this.allyHealRemaining > 0 &&
+            this.currentHp > 0 &&
+            this.currentHp < this.maxHp
+        ) {
+            const heal = Math.min(
+                this.allyHealRate * dt,
+                this.allyHealRemaining,
+            );
+            this.currentHp = Math.min(this.maxHp, this.currentHp + heal);
+            this.allyHealRemaining -= heal;
+        }
+
+        // Nearby-ally auras (Monaspa attack, Shu %HP)
+        if (this.attackBonusNearby > 0 || this.hpNearbyPercentPerUnit > 0) {
+            const auraRadius = 5 * TILE_SIZE;
+            const allies =
+                this.team === 1 ? simulation.team1 : simulation.team2;
+            let n = 0;
+            for (const ally of allies) {
+                if (ally === this || ally.state === "dead") continue;
+                if (this.distanceTo(ally) <= auraRadius) n++;
+            }
+            if (this.attackBonusNearby > 0) {
+                const cap = this.nearbyBonusCount || n;
+                this.auraAttackBonus =
+                    this.attackBonusNearby * Math.min(n, cap);
+            }
+            if (this.hpNearbyPercentPerUnit > 0) {
+                const cap = this.hpNearbyMaxUnits || n;
+                const base = this.maxHp - this.auraHpBonus;
+                const targetBonus =
+                    base *
+                    (this.hpNearbyPercentPerUnit / 100) *
+                    Math.min(n, cap);
+                const delta = targetBonus - this.auraHpBonus;
+                this.maxHp += delta;
+                if (delta > 0) this.currentHp += delta;
+                else if (this.currentHp > this.maxHp)
+                    this.currentHp = this.maxHp;
+                this.auraHpBonus = targetBonus;
+            }
+        }
+
+        // HP transform (Jian Swordsman): swap to transformed stats once
         if (this.hpTransformThreshold > 0 && !this.isTransformed) {
             if (
                 this.currentHp <=
@@ -666,7 +780,29 @@ class BattleUnit {
                 this.currentHp > 0
             ) {
                 this.isTransformed = true;
-                this.killBonusAttack += 3;
+                if (this.transformMaxHp > 0) {
+                    this.maxHp = this.transformMaxHp;
+                    if (this.currentHp > this.maxHp)
+                        this.currentHp = this.maxHp;
+                    if (this.transformAttack > 0)
+                        this.attack = this.transformAttack;
+                    this.meleeArmor = this.transformMeleeArmor;
+                    this.pierceArmor = this.transformPierceArmor;
+                    if (this.transformAttacks)
+                        this.attacks = this.transformAttacks;
+                    if (this.transformArmors)
+                        this.armors = this.transformArmors;
+                    if (this.transformAttackSpeed > 0) {
+                        this.attackSpeed = this.transformAttackSpeed;
+                        this.reloadTime = 1.0 / this.transformAttackSpeed;
+                    }
+                    if (this.transformMoveSpeed > 0) {
+                        this.moveSpeed = this.transformMoveSpeed * TILE_SIZE;
+                        this.baseMoveSpeed = this.moveSpeed;
+                    }
+                } else {
+                    this.killBonusAttack += 3;
+                }
             }
         }
 
@@ -788,6 +924,22 @@ class BattleUnit {
 
     performAttack() {
         if (!this.target || this.target.state === "dead") return;
+        // Ranged charge volley (Fire Archer/Xianbei/Bolas). recharge<=0 fires
+        // every attack and replaces the normal shot; recharge>0 adds then recharges.
+        if (
+            this.isRanged() &&
+            this.chargeProjectileCount > 0 &&
+            this.chargeTimer <= 0
+        ) {
+            for (let c = 0; c < this.chargeProjectileCount; c++)
+                this.fireChargeProjectile(this.target);
+            if (this.chargeRechargeTime > 0) {
+                this.chargeTimer = this.chargeRechargeTime;
+            } else {
+                this.attackCooldown = this.reloadTime;
+                return;
+            }
+        }
         let numProjectiles = 1 + this.extraProjectiles;
         if (
             this.firstAttackExtraProjectiles > 0 &&
@@ -796,10 +948,25 @@ class BattleUnit {
             numProjectiles += this.firstAttackExtraProjectiles;
             this.hasUsedFirstAttack = true;
         }
+        // Organ Gun: extra projectiles scatter to different enemies.
+        let scatter = null;
+        if (this.extraProjScatter && this.isRanged()) {
+            const foes =
+                this.team === 1 ? simulation.team2 : simulation.team1;
+            scatter = foes.filter(
+                (e) => e.state !== "dead" && e !== this.target,
+            );
+        }
+        let scatI = 0;
         for (let p = 0; p < numProjectiles; p++) {
             if (this.target && this.target.state !== "dead") {
                 if (this.isRanged()) {
-                    this.fireProjectile(this.target);
+                    let tgt = this.target;
+                    if (p > 0 && scatter && scatter.length > 0) {
+                        tgt = scatter[scatI % scatter.length];
+                        scatI++;
+                    }
+                    this.fireProjectile(tgt);
                 } else {
                     this.performAttackOn(this.target);
                 }
@@ -997,6 +1164,12 @@ class BattleUnit {
             () => {
                 if (target.state === "dead") return;
                 target.takeDamage(chargeDmg, this);
+                // Charge slow (Bolas Rider): slow the struck target.
+                if (this.chargeSlowPercent > 0 && target.slowTimer <= 0) {
+                    target.moveSpeed =
+                        target.baseMoveSpeed * (1 - this.chargeSlowPercent);
+                    target.slowTimer = this.chargeSlowDuration;
+                }
             },
         );
         simulation.projectiles.push(proj);
@@ -1008,8 +1181,40 @@ class BattleUnit {
         let damage =
             this.getDamageAgainst(target) +
             Math.floor(this.killBonusAttack);
+
+        // Melee charge bonus (Coustillier/Centurion/Urumi): extra damage on the
+        // charged strike (reduced by target melee armor), then it recharges.
+        let charged = false;
+        if (this.chargeAttackMelee > 0 && this.chargeTimer <= 0) {
+            damage += Math.max(0, this.chargeAttackMelee - target.meleeArmor);
+            this.chargeTimer = this.chargeRechargeTime;
+            charged = true;
+        }
+
         const targetWasAlive = target.state !== "dead";
         target.takeDamage(damage, this);
+
+        // Armor strip (Obuch): permanently lower the target's armor each hit.
+        if (this.armorStripPerHit > 0 && target.state !== "dead") {
+            target.meleeArmor = Math.max(
+                0,
+                target.meleeArmor - this.armorStripPerHit,
+            );
+            target.pierceArmor = Math.max(
+                0,
+                target.pierceArmor - this.armorStripPerHit,
+            );
+            if ("4" in target.armors)
+                target.armors["4"] = Math.max(
+                    0,
+                    target.armors["4"] - this.armorStripPerHit,
+                );
+            if ("3" in target.armors)
+                target.armors["3"] = Math.max(
+                    0,
+                    target.armors["3"] - this.armorStripPerHit,
+                );
+        }
 
         if (
             this.attackBonusPerKill > 0 &&
@@ -1019,8 +1224,38 @@ class BattleUnit {
             this.killBonusAttack += this.attackBonusPerKill;
         }
 
-        // Trample
-        if (!this.isRanged()) {
+        // HP per kill (Tiger Cavalry): heal on kill, up to the cap.
+        if (
+            this.hpPerKill > 0 &&
+            targetWasAlive &&
+            target.state === "dead" &&
+            this.hpGainedFromKills < this.hpPerKillMax
+        ) {
+            const heal = Math.min(
+                this.hpPerKill,
+                this.hpPerKillMax - this.hpGainedFromKills,
+            );
+            this.currentHp = Math.min(this.maxHp, this.currentHp + heal);
+            this.hpGainedFromKills += heal;
+        }
+
+        // Attack-speed ramp (Temple Guard): shorten reload toward the floor.
+        if (this.attackSpeedRamp > 0) {
+            const baseReload =
+                this.attackSpeed > 0 ? 1.0 / this.attackSpeed : 2.0;
+            this.rampReduction = Math.min(
+                this.rampReduction + this.attackSpeedRamp,
+                Math.max(0, baseReload - this.attackSpeedMin),
+            );
+            this.reloadTime = Math.max(
+                this.attackSpeedMin,
+                baseReload - this.rampReduction,
+            );
+        }
+
+        // Trample (melee). Charge-melee units (Urumi) splash only on the charged
+        // strike; always-on tramplers (Cataphract/elephants) every hit.
+        if (!this.isRanged() && (this.chargeAttackMelee <= 0 || charged)) {
             const trampleInfo = this.getTrampleInfo();
             if (trampleInfo) {
                 const trampleDmg =
@@ -1156,6 +1391,21 @@ class BattleUnit {
                 alpha: 1.0,
             });
             return;
+        }
+        // Damage reflect (Khitan Lamellar Armor): bounce a % of melee damage back.
+        if (
+            this.damageReflectPercent > 0 &&
+            amount > 0 &&
+            attacker &&
+            !attacker.isRanged() &&
+            attacker.state !== "dead"
+        ) {
+            attacker.currentHp -= amount * this.damageReflectPercent;
+            if (attacker.currentHp <= 0) {
+                attacker.currentHp = 0;
+                attacker.state = "dead";
+                attacker.target = null;
+            }
         }
         this.currentHp -= amount;
         this.damageNumbers.push({
@@ -1531,6 +1781,29 @@ class BattleSimulation {
         // Update projectiles
         for (const p of this.projectiles) p.update(dt);
         this.projectiles = this.projectiles.filter((p) => !p.done);
+
+        // Ally-death heal (Guecha Warrior): when a unit dies, nearby allies with
+        // ally_death_heal gain a refreshing heal-over-time.  Each death fires once.
+        for (const dead of allUnits) {
+            if (dead.state !== "dead" || dead.deathHealTriggered) continue;
+            dead.deathHealTriggered = true;
+            const allies = dead.team === 1 ? this.team1 : this.team2;
+            for (const ally of allies) {
+                if (
+                    ally === dead ||
+                    ally.state === "dead" ||
+                    ally.allyDeathHeal <= 0
+                )
+                    continue;
+                if (dead.distanceTo(ally) <= 5 * TILE_SIZE) {
+                    ally.allyHealRemaining = ally.allyDeathHeal;
+                    ally.allyHealRate =
+                        ally.allyDeathHealDuration > 0
+                            ? ally.allyDeathHeal / ally.allyDeathHealDuration
+                            : ally.allyDeathHeal;
+                }
+            }
+        }
 
         // Update effects
         for (const e of this.effects) e.update(dt);

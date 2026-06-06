@@ -25,10 +25,11 @@ CREATE TABLE IF NOT EXISTS battle_scores (
     score_value REAL NOT NULL,
     rank INTEGER,
     median_delta REAL,
-    UNIQUE(line_slug, age, civ_name, unit_slug, score_type)
+    build_number TEXT NOT NULL DEFAULT '170934',
+    UNIQUE(line_slug, age, civ_name, unit_slug, score_type, build_number)
 );
-CREATE INDEX IF NOT EXISTS idx_bs_line_age ON battle_scores(line_slug, age);
-CREATE INDEX IF NOT EXISTS idx_bs_civ_unit ON battle_scores(civ_name, unit_slug, age);
+CREATE INDEX IF NOT EXISTS idx_bs_line_age ON battle_scores(line_slug, age, build_number);
+CREATE INDEX IF NOT EXISTS idx_bs_civ_unit ON battle_scores(civ_name, unit_slug, age, build_number);
 
 CREATE TABLE IF NOT EXISTS advisor_recommendations (
     id INTEGER PRIMARY KEY,

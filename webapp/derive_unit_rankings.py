@@ -13,6 +13,7 @@ from collections import defaultdict
 from derived_db import create_db as create_derived_db
 from matchup_db import DEFAULT_DB_PATH as MATCHUP_DB_PATH
 from unit_lines import UNIT_LINES, CIV_MISSING_UNITS
+from patches_db import get_current_build  # resolves the build to tag rows with
 
 REF_DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 DERIVED_DB_PATH = os.path.join(os.path.dirname(__file__), "derived_data.db")
@@ -140,8 +141,12 @@ def build_slug_to_line():
 def compute_and_write_rankings(matchup_db_path=MATCHUP_DB_PATH,
                                ref_db_path=REF_DB_PATH,
                                derived_db_path=DERIVED_DB_PATH,
-                               age="Imperial"):
-    """Returns count of rows inserted into battle_scores."""
+                               age="Imperial",
+                               build_number=None):
+    """Returns count of rows inserted into battle_scores. Rows are tagged with
+    build_number (defaults to the current build from patches.db, then '170934')."""
+    if build_number is None:
+        build_number = get_current_build(derived_db_path=derived_db_path) or "170934"
     mconn = sqlite3.connect(matchup_db_path)
     mconn.row_factory = sqlite3.Row
     rconn = sqlite3.connect(ref_db_path)
@@ -277,9 +282,9 @@ def compute_and_write_rankings(matchup_db_path=MATCHUP_DB_PATH,
     for (line, civ, slug), _st_map in out.items():
         cur.execute(
             f"DELETE FROM battle_scores WHERE age=? AND civ_name=? "
-            f"AND unit_slug=? AND line_slug != ? "
+            f"AND unit_slug=? AND line_slug != ? AND build_number=? "
             f"AND score_type IN ({land_score_phs})",
-            (age_lower, civ, slug, line) + LAND_SCORE_TYPES,
+            (age_lower, civ, slug, line, build_number) + LAND_SCORE_TYPES,
         )
 
     inserts = 0
@@ -287,8 +292,8 @@ def compute_and_write_rankings(matchup_db_path=MATCHUP_DB_PATH,
         for civ, slug, _ in entries:
             cur.execute(
                 "DELETE FROM battle_scores WHERE line_slug=? AND age=? "
-                "AND civ_name=? AND unit_slug=? AND score_type=?",
-                (line, age_lower, civ, slug, st),
+                "AND civ_name=? AND unit_slug=? AND score_type=? AND build_number=?",
+                (line, age_lower, civ, slug, st, build_number),
             )
         entries.sort(key=lambda e: -e[2])
         sorted_vals = sorted(e[2] for e in entries)
@@ -297,10 +302,10 @@ def compute_and_write_rankings(matchup_db_path=MATCHUP_DB_PATH,
             cur.execute("""
                 INSERT INTO battle_scores
                 (line_slug, age, civ_name, unit_slug, score_type, score_value,
-                 rank, median_delta)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                 rank, median_delta, build_number)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (line, age_lower, civ, slug, st, round(val, 1),
-                  rank_idx, round(val - median_val, 1)))
+                  rank_idx, round(val - median_val, 1), build_number))
             inserts += 1
 
     dconn.commit()
@@ -314,9 +319,12 @@ def main():
     parser.add_argument("--matchup-db", dest="matchup_db", default=MATCHUP_DB_PATH,
                         help="Path to the matchup DB to derive from "
                              "(default: webapp/matchup_db.db).")
+    parser.add_argument("--build", dest="build", default=None,
+                        help="Build number to tag rows with (default: current).")
     args = parser.parse_args()
     n = compute_and_write_rankings(matchup_db_path=args.matchup_db,
-                                   age=args.age.capitalize())
+                                   age=args.age.capitalize(),
+                                   build_number=args.build)
     print(f"Inserted {n} rows into derived_data.battle_scores")
 
 

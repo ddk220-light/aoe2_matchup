@@ -26,6 +26,10 @@ import sys
 
 _WEBAPP = os.path.dirname(__file__)
 _ROOT = os.path.dirname(_WEBAPP)
+# When invoked as `python -m webapp.patch_pipeline` from the repo root, only the
+# root is on sys.path — add webapp/ so the bare `import patches_db` etc. resolve.
+if _WEBAPP not in sys.path:
+    sys.path.insert(0, _WEBAPP)
 DERIVED_DB = os.path.join(_WEBAPP, "derived_data.db")
 POOL_DB = os.path.join(_WEBAPP, "pool_scores.db")
 REF_DB = os.path.join(_WEBAPP, "aoe2_reference.db")
@@ -104,6 +108,10 @@ def run(*, build, release_date, source_url, summary_md, baseline_build,
     deltas, changed_slugs = ref_diff.diff(REF_PREV, REF_DB)
     print(f"[3/8] {len(deltas)} stat deltas across {len(changed_slugs)} changed slugs:"
           f" {sorted(changed_slugs)}")
+    if not changed_slugs:
+        print("[3/8] WARNING: no unit stat changes detected. If you expected combat "
+              "changes, verify the new .dat is actually the new patch. Continuing — "
+              "the patch will still be recorded (notes only, no re-sim impact).")
     cu_file = os.path.join(_WEBAPP, f"changed_units_{build}.json")
     with open(cu_file, "w") as f:
         json.dump(sorted(changed_slugs), f)
@@ -169,6 +177,10 @@ def main():
     a = p.parse_args()
     import patches_db
     baseline = a.baseline_build or patches_db.get_current_build(patches_db_path=PATCHES_DB)
+    if not baseline:
+        sys.exit("ERROR: no baseline build found. Run `python webapp/migrate_baseline.py` "
+                 "first (it seeds patches.db with the 170934 baseline), or pass "
+                 "--baseline-build explicitly.")
     with open(a.summary_file, encoding="utf-8") as f:
         summary_md = f.read()
     run(build=a.build, release_date=a.release_date, source_url=a.source_url,

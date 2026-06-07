@@ -135,12 +135,8 @@ def _unit_panel(u: dict, side: int, winners: dict) -> str:
                       for b in u.get("attack_bonuses", []))
     bonus_block = (f'<div class="row-label">Attack bonus</div>'
                    f'<div class="chips">{bonuses}</div>') if bonuses else ""
-    upg = u.get("upgrades", [])
-    upg_block = (f'<div class="row-label">Upgrades ({len(upg)})</div>'
-                 f'<div class="chips">{_list_chips(upg, "upg")}</div>') if upg else ""
-    civb = u.get("civ_bonuses", [])
-    civ_block = (f'<div class="row-label">Civ bonuses</div>'
-                 f'<div class="chips">{_list_chips(civb, "civb")}</div>') if civb else ""
+    # Upgrades and Civ-bonuses sections intentionally omitted from the video card —
+    # the overview keeps to stats, cost, attack bonuses, and unique tech.
     return f"""
     <div class="unit">
       <div class="head">
@@ -153,7 +149,7 @@ def _unit_panel(u: dict, side: int, winners: dict) -> str:
         </div>
       </div>
       <div class="stats">{_stat_rows(u['stats'], side, winners)}</div>
-      {bonus_block}{_unique_block(u.get('unique_techs', []))}{upg_block}{civ_block}
+      {bonus_block}{_unique_block(u.get('unique_techs', []))}
     </div>"""
 
 
@@ -242,8 +238,17 @@ def build_outro_html(result, u1: dict, u2: dict) -> str:
         who = f"{u2['name']} wins"
     else:
         who = "Draw"
-    sub = (f"Position-based sim &middot; {result.end_reason.replace('_',' ')} "
-           f"in {result.duration_s:.0f}s")
+    # Describe the battle we just watched: who won and how many units are left.
+    if win == 0:
+        sub = (f"Both sides spent &middot; {u1['name']} {result.survivors1} "
+               f"&middot; {u2['name']} {result.survivors2} left")
+    else:
+        w_name = u1['name'] if win == 1 else u2['name']
+        w_surv = result.survivors1 if win == 1 else result.survivors2
+        w_start = result.start1 if win == 1 else result.start2
+        l_surv = result.survivors2 if win == 1 else result.survivors1
+        sub = (f"{w_surv} of {w_start} {w_name} still standing "
+               f"&middot; {l_surv} left on the other side")
 
     def col(u, side, surv, start, hp):
         cls = "scol win" if win == side else ("scol lose" if win else "scol")

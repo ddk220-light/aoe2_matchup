@@ -55,6 +55,10 @@ class MatchResult:
     engine: str
     # per-sample series: each item {t, s1, s2, hp1, hp2}
     timeline: List[dict] = field(default_factory=list)
+    # for video OCR: absolute window (s) of the readable readout in the SOURCE clip,
+    # so callers can trim the recording to just the fight. 0.0 for sim results.
+    fight_start_s: float = 0.0
+    fight_end_s: float = 0.0
 
     @property
     def winner_label(self) -> str:

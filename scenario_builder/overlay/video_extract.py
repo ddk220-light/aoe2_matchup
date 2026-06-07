@@ -25,12 +25,32 @@ from PIL import Image, ImageDraw, ImageFont
 
 from results import MatchResult
 
-_FONTS = Path("C:/Windows/Fonts")
+# Cross-platform font dir for the mock-video generator (cosmetic only).
+_FONTS = next((Path(p) for p in (
+    "/System/Library/Fonts/Supplemental", "/Library/Fonts",
+    "C:/Windows/Fonts", "/usr/share/fonts/truetype") if Path(p).exists()),
+    Path("."))
 
-# Fractional ROIs (x0,y0,x1,y1) of the frame where each side's number sits.
-# These are the MOCK layout; tune to the real game's readout location later.
+# The REAL in-game readout (from make_scenario's display_instructions) is ONE
+# centered line: "Unit A: N  VS  Unit B: M". We crop this band, OCR it raw
+# (rapidocr handles the light-text-on-field directly — NO dark-panel preprocess),
+# split on "VS", and take the first integer on each side. Verified on Mac DE.
+READOUT_BAND = (0.28, 0.13, 0.74, 0.22)   # fractional x0,y0,x1,y1
+# Legacy two-panel ROIs — used ONLY by the synthetic mock readout video below.
 ROI_LEFT = (0.255, 0.035, 0.455, 0.150)
 ROI_RIGHT = (0.545, 0.035, 0.745, 0.150)
+
+
+def _parse_counts(text: str):
+    """Parse 'Unit A: N  VS  Unit B: M' -> (N, M); None if it doesn't match."""
+    parts = re.split(r"\bvs\b", text, flags=re.IGNORECASE)
+    if len(parts) != 2:
+        return None
+    left = re.findall(r"\d+", parts[0])
+    right = re.findall(r"\d+", parts[1])
+    if not left or not right:
+        return None
+    return int(left[0]), int(right[0])
 
 
 @lru_cache(maxsize=1)
@@ -89,19 +109,24 @@ def _crop(frame_rgb: np.ndarray, roi) -> np.ndarray:
     return frame_rgb[int(y0 * h):int(y1 * h), int(x0 * w):int(x1 * w)]
 
 
-def extract_video_results(video_path, *, roi_left=ROI_LEFT, roi_right=ROI_RIGHT,
-                          sample_hz=2.0, civ1="", slug1="", civ2="", slug2="",
+def extract_video_results(video_path, *, band=READOUT_BAND, sample_hz=2.0,
+                          civ1="", slug1="", civ2="", slug2="",
                           start1=None, start2=None) -> MatchResult:
-    """OCR a battle video's count readout into a MatchResult (timeline + final)."""
+    """OCR a recording's centered 'Unit A: N  VS  Unit B: M' readout into a MatchResult.
+
+    Samples the whole clip, keeps only frames where BOTH counts parse (so pre-fight
+    menu/countdown frames are skipped), re-bases the timeline to the first readable
+    frame, clamps counts to monotonic-decrease, and records the absolute fight window
+    (fight_start_s/fight_end_s) so the caller can trim the source clip to the fight.
+    """
     import cv2
     cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened():
         raise RuntimeError(f"Cannot open {video_path}")
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
-    n_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0
-    duration = n_frames / fps if n_frames else 0.0
+    duration = (cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0) / fps
 
-    timeline, last1, last2 = [], None, None
+    samples = []  # (abs_t, raw_s1, raw_s2)
     t = 0.0
     step = 1.0 / sample_hz
     while t <= duration + 1e-6:
@@ -109,39 +134,37 @@ def extract_video_results(video_path, *, roi_left=ROI_LEFT, roi_right=ROI_RIGHT,
         ok, frame = cap.read()
         if not ok:
             break
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        s1 = _read_int(_crop(rgb, roi_left))
-        s2 = _read_int(_crop(rgb, roi_right))
-        # hold last good reading if a frame is unreadable (OCR hiccup)
-        s1 = s1 if s1 is not None else last1
-        s2 = s2 if s2 is not None else last2
-        if s1 is not None and s2 is not None:
-            timeline.append({"t": round(t, 2), "s1": s1, "s2": s2,
-                             "hp1": None, "hp2": None})
-            last1, last2 = s1, s2
+        crop = _crop(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), band)
+        res, _ = _ocr()(crop)        # rapidocr on the raw color crop (no preprocess)
+        if res:
+            counts = _parse_counts(" ".join(line[1] for line in res))
+            if counts:
+                samples.append((round(t, 2), counts[0], counts[1]))
         t += step
     cap.release()
 
-    if not timeline:
-        raise RuntimeError("OCR produced no readable samples — check ROIs.")
+    if not samples:
+        raise RuntimeError("OCR produced no readable readout — check the band/footage.")
 
     # domain cleanup: survivor counts only ever decrease
-    s1_clean = _clean_monotonic([r["s1"] for r in timeline])
-    s2_clean = _clean_monotonic([r["s2"] for r in timeline])
-    for r, a, b in zip(timeline, s1_clean, s2_clean):
-        r["s1"], r["s2"] = a, b
+    s1 = _clean_monotonic([s[1] for s in samples])
+    s2 = _clean_monotonic([s[2] for s in samples])
+    st1 = start1 if start1 is not None else max(s1)
+    st2 = start2 if start2 is not None else max(s2)
+    t0 = samples[0][0]
+    timeline = [{"t": round(ts - t0, 2), "s1": a, "s2": b,
+                 "hp1": (a / st1 if st1 else 0.0), "hp2": (b / st2 if st2 else 0.0)}
+                for (ts, _, _), a, b in zip(samples, s1, s2)]
 
-    final = timeline[-1]
-    surv1, surv2 = final["s1"], final["s2"]
+    surv1, surv2 = s1[-1], s2[-1]
     winner = 1 if surv1 > surv2 else (2 if surv2 > surv1 else 0)
     return MatchResult(
         civ1=civ1, slug1=slug1, civ2=civ2, slug2=slug2,
-        start1=start1 if start1 is not None else timeline[0]["s1"],
-        start2=start2 if start2 is not None else timeline[0]["s2"],
-        winner=winner, survivors1=surv1, survivors2=surv2,
-        hp1_pct=1.0 if surv1 else 0.0, hp2_pct=1.0 if surv2 else 0.0,
-        duration_s=round(final["t"], 2), end_reason="ocr_video",
-        engine="video_ocr", timeline=timeline)
+        start1=st1, start2=st2, winner=winner, survivors1=surv1, survivors2=surv2,
+        hp1_pct=(surv1 / st1 if st1 else 0.0), hp2_pct=(surv2 / st2 if st2 else 0.0),
+        duration_s=round(timeline[-1]["t"], 2), end_reason="ocr_video",
+        engine="video_ocr", timeline=timeline,
+        fight_start_s=t0, fight_end_s=samples[-1][0])
 
 
 # --------------------------------------------------------------------------- #
@@ -151,16 +174,11 @@ def _mock_frame(s1, s2, name1, name2, t, size) -> Image.Image:
     W, H = size
     img = Image.new("RGB", (W, H), (51, 64, 28))  # field
     d = ImageDraw.Draw(img)
-    # top banner
-    d.rectangle([0, 0, W, int(H * 0.17)], fill=(18, 14, 9))
-    lbl = _font("georgiab.ttf", 26)
-    num = _font("arialbd.ttf", 54)
-    d.text((W * 0.18, H * 0.045), name1, font=lbl, fill=(201, 168, 76), anchor="ma")
-    d.text((W * 0.82, H * 0.045), name2, font=lbl, fill=(201, 168, 76), anchor="ma")
-    # numbers centered inside the ROIs
-    d.text((W * 0.355, H * 0.093), str(s1), font=num, fill=(255, 255, 255), anchor="mm")
-    d.text((W * 0.645, H * 0.093), str(s2), font=num, fill=(255, 255, 255), anchor="mm")
-    d.text((W * 0.5, H * 0.075), "VS", font=lbl, fill=(201, 168, 76), anchor="mm")
+    # Single centered readout line matching the real game's display_instructions,
+    # positioned inside READOUT_BAND (~y 0.13-0.22) so extract_video_results reads it.
+    lbl = _font("georgiab.ttf", 30)
+    line = f"{name1}: {s1}   VS   {name2}: {s2}"
+    d.text((W * 0.5, H * 0.175), line, font=lbl, fill=(232, 224, 196), anchor="mm")
     return img
 
 

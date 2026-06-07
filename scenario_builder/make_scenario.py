@@ -54,6 +54,7 @@ from AoE2ScenarioParser.datasets.trigger_lists import (
     Operation,
     PanelLocation,
     Comparison,
+    VisibilityState,
 )
 
 SCOUT_CONST = UnitInfo.SCOUT_CAVALRY.ID  # 448
@@ -117,6 +118,11 @@ class MatchupSpec:
     countdown_seconds: int = 3
     # output
     output_name: str = "matchup"
+    # scenario file FORMAT version. None -> AoE2ScenarioParser's latest (1.58, current
+    # Windows DE). The Feral macOS port lags one patch (1.57); AoE2:DE refuses to load a
+    # scenario whose format is NEWER than the game ("There seems to be a problem with
+    # scenario ..."), so on Mac this must match the installed game (currently "1.57").
+    scenario_version: "str | None" = None
 
 
 # --------------------------------------------------------------------------- #
@@ -151,7 +157,7 @@ def _wall_perimeter(x0: int, y0: int, x1: int, y1: int) -> List[Tuple[float, flo
 # builder
 # --------------------------------------------------------------------------- #
 def build_matchup_scenario(spec: MatchupSpec, out_dir: str | Path = ".") -> Path:
-    scn = AoE2DEScenario.from_default()
+    scn = AoE2DEScenario.from_default(spec.scenario_version)
 
     pm = scn.player_manager
     um = scn.unit_manager
@@ -188,6 +194,17 @@ def build_matchup_scenario(spec: MatchupSpec, out_dir: str | Path = ".") -> Path
     for (wx, wy) in _wall_perimeter(ax0, ay0, ax1, ay1):
         um.add_unit(player=1, unit_const=wall_const, x=wx, y=wy)
 
+    # --- keep-alive object for the spectator (P1) -------------------------
+    # CRITICAL: AoE2 does NOT count walls toward a player's "has objects"
+    # status, so a P1 owning ONLY walls is declared defeated the instant the
+    # test starts -> "You have been defeated!" before the armies ever engage.
+    # Give P1 one real, immobile building in a far corner so the spectator
+    # stays alive for the whole fight. P1 is allied to both armies (never
+    # attacked); a Town Center is a different object type than the test units,
+    # so it never affects the "army wiped -> other wins" survivor checks.
+    um.add_unit(player=1, unit_const=BuildingInfo.TOWN_CENTER.ID,
+                x=ax0 - 6 + 0.5, y=ay1 + 6 + 0.5)
+
     # --- armies (army1 -> P2, army2 -> P3) --------------------------------
     gap = spec.army_gap / 2.0
     a1_center = (cx, cy - gap)   # army1 toward top (lower y)
@@ -211,6 +228,17 @@ def build_matchup_scenario(spec: MatchupSpec, out_dir: str | Path = ".") -> Path
 
     # SETUP trigger (runs on load): camera (spectator P1), title, upgrades, scout stance
     setup = tm.add_trigger("Setup", enabled=True, looping=False)
+    # Force diplomacy at runtime. The scenario player-diplomacy fields don't reliably apply
+    # to HU players in Test mode, so the armies were treating P1's allied walls as ENEMY and
+    # attacking them instead of each other. P1 (spectator + wall/TC owner) is MUTUALLY allied
+    # to both fighters; P2 vs P3 are mutual enemies. mutual_diplomacy=True sets BOTH sides.
+    setup.new_effect.change_diplomacy(source_player=1, target_player=2, diplomacy=ALLY, mutual_diplomacy=True)
+    setup.new_effect.change_diplomacy(source_player=1, target_player=3, diplomacy=ALLY, mutual_diplomacy=True)
+    setup.new_effect.change_diplomacy(source_player=2, target_player=3, diplomacy=ENEMY, mutual_diplomacy=True)
+    # Reveal the whole arena to the spectator (P1) so the recording/OCR isn't fogged.
+    for _fpid in (2, 3):
+        setup.new_effect.set_player_visibility(
+            source_player=1, target_player=_fpid, visibility_state=int(VisibilityState.VISIBLE))
     if spec.cinematic:
         setup.new_effect.change_view(source_player=1, location_x=cx, location_y=cy)
         title = f"{spec.army1.count} {spec.army1.label}  VS  {spec.army2.count} {spec.army2.label}"
@@ -241,14 +269,18 @@ def build_matchup_scenario(spec: MatchupSpec, out_dir: str | Path = ".") -> Path
                 source_player=0, message=str(n), display_time=1,
                 instruction_panel_position=int(PanelLocation.MIDDLE))
 
-    # RECOMMENDED: force-engage (attack-move both armies to arena center)
+    # RECOMMENDED: force-engage. PATROL each army INTO the OTHER army's start position so
+    # they cross the arena and collide in the middle. Patrol is more reliable than attack-move
+    # to a single point (which can stall, or — pre-diplomacy-fix — target the nearest object).
+    # P2 (owns a1c) patrols to where P3/a2 sits; P3 (owns a2c) patrols to where P2/a1 sits.
     if spec.force_engage:
         eng = tm.add_trigger("Engage", enabled=True, looping=False)
         if engage_delay:
             eng.new_condition.timer(timer=engage_delay + 1)
-        for pid, uc in FIGHTERS:
-            eng.new_effect.attack_move(
-                source_player=pid, object_list_unit_id=uc, location_x=cx, location_y=cy)
+        eng.new_effect.patrol(source_player=2, object_list_unit_id=a1c,
+                              location_x=int(round(a2_center[0])), location_y=int(round(a2_center[1])))
+        eng.new_effect.patrol(source_player=3, object_list_unit_id=a2c,
+                              location_x=int(round(a1_center[0])), location_y=int(round(a1_center[1])))
 
     # RECOMMENDED: exact survivor readout variables (var0=army1/P2, var1=army2/P3)
     if spec.survivor_readout:
@@ -335,6 +367,7 @@ if __name__ == "__main__":
         army1=Army(UnitInfo.ELITE_FIRE_ARCHER.ID, Civilization.WU, 30, "Elite Fire Archer"),
         army2=Army(UnitInfo.JIAN_SWORDSMAN.ID, Civilization.WU, 30, "Jian Swordsman"),
         output_name="TEMPLATE_firearcher_vs_jian",
+        scenario_version="1.57",  # Feral macOS port is on 1.57 (Windows DE is 1.58)
     )
     path = build_matchup_scenario(spec, out_dir=".")
     print(f"WROTE {path}")

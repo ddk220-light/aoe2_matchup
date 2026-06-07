@@ -8,7 +8,14 @@ prior derive_scores_from_yardsticks.py.
 import argparse
 import os
 import sqlite3
+import sys
 from collections import defaultdict
+
+# Allow `python -m webapp.derive_unit_rankings` from the repo root: make this
+# directory (webapp/) importable for the bare sibling imports below.
+_here = os.path.dirname(os.path.abspath(__file__))
+if _here not in sys.path:
+    sys.path.insert(0, _here)
 
 from derived_db import create_db as create_derived_db
 from matchup_db import DEFAULT_DB_PATH as MATCHUP_DB_PATH

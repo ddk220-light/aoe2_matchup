@@ -20,7 +20,14 @@ import argparse
 import json
 import os
 import sqlite3
+import sys
 from collections import defaultdict
+
+# Allow `python -m webapp.derive_pool_scores` from the repo root: make this
+# directory (webapp/) importable for the bare sibling imports below.
+_here = os.path.dirname(os.path.abspath(__file__))
+if _here not in sys.path:
+    sys.path.insert(0, _here)
 
 from pool_scores_lib import derive_unit_scores, unit_to_pool
 from pool_scores_db import create_db, insert_score

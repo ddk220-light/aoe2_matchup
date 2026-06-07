@@ -28,10 +28,11 @@ SIZE = (1920, 1248)  # everything (cards, HUD, fight) normalized to this.
 
 
 def make_real_matchup_video(recording, civ1, slug1, civ2, slug2, out_path,
-                            end_pad=1.5, work_dir=None) -> Path:
+                            end_pad=1.5, work_dir=None, result=None) -> Path:
     recording = Path(recording).resolve()
-    result = extract_video_results(str(recording), civ1=civ1, slug1=slug1,
-                                   civ2=civ2, slug2=slug2)
+    if result is None:
+        result = extract_video_results(str(recording), civ1=civ1, slug1=slug1,
+                                       civ2=civ2, slug2=slug2)
     names = {1: f"{slug1}", 2: f"{slug2}", 0: "draw"}
     print(f"OCR  start {result.start1} vs {result.start2}  ->  final "
           f"{result.survivors1}-{result.survivors2}  winner={names[result.winner]}  "

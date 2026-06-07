@@ -20,7 +20,11 @@ from overlay_data import get_unit_card          # noqa: E402
 from video_extract import extract_video_results  # noqa: E402
 from compose import make_matchup_video, _ffmpeg   # noqa: E402
 
-SIZE = (1280, 720)   # everything (cards, HUD, fight) normalized to this
+SIZE = (1920, 1248)  # everything (cards, HUD, fight) normalized to this.
+# 1920x1248 keeps the 2940x1912 capture aspect (1.538) — no squish — and is a big
+# quality bump over the old 1280x720 (which downscaled AND squished). Native 2940x1912
+# can't sustain a high capture framerate (drops to ~11fps in busy fights), so we record
+# scaled to 1920-wide @60fps; this stays smooth.
 
 
 def make_real_matchup_video(recording, civ1, slug1, civ2, slug2, out_path,
@@ -41,8 +45,11 @@ def make_real_matchup_video(recording, civ1, slug1, civ2, slug2, out_path,
     subprocess.run(
         [_ffmpeg(), "-y", "-i", str(recording),
          "-ss", f"{result.fight_start_s}", "-to", f"{result.fight_end_s + end_pad}",
+         # keep the captured game audio (optional — placeholder/silent clips have none)
+         "-map", "0:v:0", "-map", "0:a:0?",
          "-vf", f"scale={SIZE[0]}:{SIZE[1]}", "-c:v", "libx264", "-preset", "ultrafast",
-         "-pix_fmt", "yuv420p", "-r", "30", str(fight)],
+         "-pix_fmt", "yuv420p", "-r", "30", "-c:a", "aac", "-ar", "48000", "-ac", "2",
+         str(fight)],
         check=True, capture_output=True)
 
     u1 = get_unit_card(civ1, slug1)

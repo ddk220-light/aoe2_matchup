@@ -74,12 +74,7 @@ function renderSelection(teamNum) {
             </div>`;
 
     if (!state.unitSlug) {
-        // Age toggle + unit grid
-        html += `<div class="age-toggle">
-                    <button class="age-btn${state.age === "Castle" ? " active" : ""}" data-action="setAge" data-team="${teamNum}" data-age="Castle">Castle</button>
-                    <button class="age-btn${state.age === "Imperial" ? " active" : ""}" data-action="setAge" data-team="${teamNum}" data-age="Imperial">Imperial</button>
-                </div>`;
-
+        // Imperial-only (fully upgraded). Age toggle removed.
         if (state.civData) {
             const units =
                 state.civData.units_by_age[state.age] || [];
@@ -120,11 +115,9 @@ function renderSelection(teamNum) {
         // Unit selected badge
         const iUrl = unitIconUrl(state.unitName);
         const unitNameSafe = escapeHtml(state.unitName);
-        const ageSafe = escapeHtml(state.age);
         html += `<div class="selection-badge">
                     <img src="${iUrl}" alt="${unitNameSafe}" onerror="this.style.display='none'" />
                     <span class="badge-text">${unitNameSafe}</span>
-                    <span style="font-size:0.7rem;color:var(--text-muted);margin-left:4px">(${ageSafe})</span>
                     <span class="change-btn" data-action="clearUnit" data-team="${teamNum}">change</span>
                 </div>`;
     }

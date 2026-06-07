@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ civ }} {{ unit.replace('_',' ') }} — {{ patch.title }}{% endblock %}
+{% block title %}{{ civ }} {{ unit_title }} — {{ patch.title }}{% endblock %}
 {% block content %}
 <style>
   .pu-wrap { max-width: 920px; margin:0 auto; padding:24px 16px; }
@@ -18,7 +18,7 @@
 </style>
 <div class="pu-wrap">
   <a class="back" href="/patches">&#8592; All patches</a>
-  <h1>{{ civ }} {{ unit.replace('_',' ')|title }}</h1>
+  <h1>{{ civ }} {{ unit_title }}</h1>
   <div class="pu-sub">{{ patch.title }} &middot; {{ patch.release_date }}</div>
 
   <div class="pu-sec">
@@ -52,7 +52,7 @@
   {% macro mtable(items) %}
     <table class="pu mlist"><tr><th>Opponent</th><th>Scale</th><th>Score</th><th>Swing</th><th></th></tr>
     {% for m in items %}
-      <tr><td>{{ m.opp_civ }} {{ m.opp_unit_slug.replace('_',' ') }}</td>
+      <tr><td>{{ m.opp }}</td>
         <td>{{ m.scale }}</td>
         <td>{{ m.old_score }} &#8594; {{ m.new_score }}</td>
         <td class="swing {{ 'up' if m.swing >= 0 else 'down' }}">{{ '%+.0f'|format(m.swing) }}</td>

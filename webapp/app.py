@@ -187,6 +187,29 @@ def _pretty_unit(slug, civ):
     return slug.replace("_", " ").strip().title()
 
 
+_REF_UNIT_NAMES = None
+
+
+def _ref_unit_name(civ, slug):
+    """Actual unit a civ fields for a line slug (e.g. Berbers 'paladin' ->
+    Cavalier, Persians -> Savar), from ref_units. Prefers the Imperial-age name,
+    falls back to Castle (units kept un-upgraded), then to the prettified slug."""
+    global _REF_UNIT_NAMES
+    if _REF_UNIT_NAMES is None:
+        m = {}
+        conn = sqlite3.connect(REF_DB_PATH)
+        for civ_name, unit_slug, unit_name, age in conn.execute(
+            "SELECT civ_name, unit_slug, unit_name, age FROM ref_units"):
+            key = (civ_name, unit_slug)
+            if age == "Imperial":
+                m[key] = unit_name                 # Imperial always wins
+            else:
+                m.setdefault(key, unit_name)       # Castle only if no Imperial
+        conn.close()
+        _REF_UNIT_NAMES = m
+    return _REF_UNIT_NAMES.get((civ, slug)) or _pretty_unit(slug, civ)
+
+
 # How many top matchups to show per unit, and which opponents to drop.
 _PATCH_MAX_MATCHUPS = 5
 
@@ -238,7 +261,7 @@ def _patch_unit_tables(conn, pid, build):
         out_rows = []
         for r in top:
             out_rows.append({
-                "opp": f"{r['opp_civ']} {_pretty_unit(r['opp_unit_slug'], r['opp_civ'])}",
+                "opp": f"{r['opp_civ']} {_ref_unit_name(r['opp_civ'], r['opp_unit_slug'])}",
                 "old_score": r["old_score"], "new_score": r["new_score"],
                 "swing": r["swing"], "dir": "up" if r["swing"] >= 0 else "down",
                 "link": battle_sim_deep_link(r["my_civ"], r["my_unit_slug"],
@@ -246,7 +269,7 @@ def _patch_unit_tables(conn, pid, build):
             })
         tables.append({
             "civ": civ, "slug": slug,
-            "title": f"{civ} {_pretty_unit(slug, civ)}",
+            "title": f"{civ} {_ref_unit_name(civ, slug)}",
             "scale": best_scale,
             "stat_summary": "; ".join(stat_by_unit.get((civ, slug), [])),
             "detail_url": f"/patches/{build}/{civ}/{slug}",
@@ -310,6 +333,7 @@ def patch_unit_page(build, civ, unit):
     now_beats, now_loses, shifted = [], [], []
     for m in mrows:
         d = dict(m)
+        d["opp"] = f"{m['opp_civ']} {_ref_unit_name(m['opp_civ'], m['opp_unit_slug'])}"
         d["link"] = battle_sim_deep_link(m["my_civ"], m["my_unit_slug"],
                                          m["opp_civ"], m["opp_unit_slug"], m["scale"])
         flipped_to_win = m["old_winner"] != 1 and m["new_winner"] == 1
@@ -328,6 +352,7 @@ def patch_unit_page(build, civ, unit):
         (civ, unit)).fetchall()]
     conn.close()
     return render_template("patch_unit.html", build=build, civ=civ, unit=unit,
+                           unit_title=_ref_unit_name(civ, unit),
                            patch=dict(patch), stat_changes=stat_changes, ranking=ranking,
                            now_beats=now_beats, now_loses=now_loses, shifted=shifted,
                            timeline=timeline, active_nav="patches")

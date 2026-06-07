@@ -81,6 +81,21 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
 
 var recorder: Recorder!
 var theStream: SCStream!
+var sigSrcs: [DispatchSourceSignal] = []
+var stopping = false
+
+// Stop capture and finalize the .mov (writes the moov atom). Safe to call from the
+// deadline OR from a SIGINT/SIGTERM handler (graceful early stop). Idempotent.
+func stopAndFinish() {
+    if stopping { return }
+    stopping = true
+    guard theStream != nil else { exit(0) }
+    theStream.stopCapture { _ in
+        recorder.finish()
+        FileHandle.standardError.write("done\n".data(using: .utf8)!)
+        exit(0)
+    }
+}
 
 SCShareableContent.getWithCompletionHandler { content, err in
     guard let content = content, let display = content.displays.first else {
@@ -123,14 +138,18 @@ SCShareableContent.getWithCompletionHandler { content, err in
         if let error = error {
             FileHandle.standardError.write("startCapture failed: \(error)\n".data(using: .utf8)!); exit(1)
         }
-        FileHandle.standardError.write("recording \(w)x\(h)@\(fps) for \(seconds)s -> \(outURL.path)\n".data(using: .utf8)!)
+        FileHandle.standardError.write("recording \(w)x\(h)@\(fps) (cap \(seconds)s, stop early w/ SIGINT) -> \(outURL.path)\n".data(using: .utf8)!)
     }
-    DispatchQueue.main.asyncAfter(deadline: .now() + seconds) {
-        theStream.stopCapture { _ in
-            recorder.finish()
-            FileHandle.standardError.write("done\n".data(using: .utf8)!)
-            exit(0)
-        }
+    // safety cap: stop after `seconds` no matter what
+    DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { stopAndFinish() }
+    // graceful early stop: SIGINT/SIGTERM -> finalize the file (not a hard kill, which
+    // would leave the .mov unfinalized/corrupt). Used to stop when the game really ends.
+    for sig in [SIGINT, SIGTERM] {
+        signal(sig, SIG_IGN)
+        let src = DispatchSource.makeSignalSource(signal: sig, queue: .main)
+        src.setEventHandler { stopAndFinish() }
+        src.resume()
+        sigSrcs.append(src)
     }
 }
 

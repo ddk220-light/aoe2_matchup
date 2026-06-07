@@ -25,6 +25,24 @@ fight, then feed the `.mov` to `../overlay/make_real_video.py`.
 `sck_record` directly: `sck_record <out.mov> <seconds> [fps] [width] [height]`
 (omit width/height for native display resolution).
 
+### Adaptive length (stop when the game really ends)
+
+`<seconds>` is a **safety cap**, not a fixed length. The recorder also handles
+**SIGINT/SIGTERM**: on either signal it stops capture and *finalizes* the `.mov`
+(writes the moov atom) before exiting — a clean stop, not a corrupting hard kill.
+
+So for a fight of unknown length: start with a generous cap (e.g. 240s), watch
+for the in-game end-of-game banner ("You have been defeated!" / victory, raised
+by the scenario's `declare_victory` trigger the instant an army is wiped), then:
+
+```bash
+pkill -INT sck_record     # name-only, NOT -f (so the wrapper shell isn't hit)
+```
+
+The recording stops exactly at the real end; downstream OCR trims the dead time
+and the banner tail. This avoids both cutting off a long fight and recording a
+huge fixed-length file.
+
 **Why 1920x1248, not native?** Native Retina res can't sustain a high capture
 framerate in busy fights (drops to ~11 fps). 1920-wide keeps the capture aspect
 (no squish) and stays smooth. SCK only emits frames when screen content changes,

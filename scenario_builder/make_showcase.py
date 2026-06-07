@@ -63,7 +63,7 @@ def build_all(out_dir: Path, peaceful: bool = True):
             # spectator to a "defeated" screen mid-showcase); real fights keep 180s.
             timeout_seconds=0 if peaceful else 180,
             cinematic=True,
-            output_name=f"MATCHUP_{THEME_OUT[theme]}",
+            output_name=f"MATCHUP_{THEME_OUT[theme]}" + ("" if peaceful else "_fight"),
             **COMMON,
         )
         path = build_matchup_scenario(spec, out_dir=out_dir)

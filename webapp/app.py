@@ -17,6 +17,7 @@ from best_units import (
     _parse_techs_and_bonuses as parse_techs_and_bonuses,
 )
 from combat_unit_loader import build_combat_dict_from_ref
+from top_units import load_top_units, compute_top_units
 from unit_lines import UNIT_LINES, TREBUCHET_SLUGS, CIV_MISSING_UNITS
 from pool_scores_query import load_pool_scores
 from patches_db import get_current_build
@@ -1201,6 +1202,41 @@ def api_civ_power_units(civ_name):
     if not age_data:
         return jsonify({"error": f"No {age} data for {civ_name}"}), 404
     return jsonify({"civ_name": civ_name, "age": age, **age_data})
+
+
+def _top_units_data():
+    """Per-civ top units per line (Imperial). Prefers committed JSON; falls back
+    to on-the-fly derivation from ref_units."""
+    return load_top_units() or compute_top_units()
+
+
+@app.route("/api/top-units/<civ_name>")
+def api_top_units(civ_name):
+    """Each line's highest-tier unit this civ fields at Imperial age
+    (e.g. Koreans knight -> Cavalier, Cumans camel -> Camel Rider)."""
+    err = _validate_civ_name(civ_name)
+    if err:
+        return err
+    data = _top_units_data()
+    civ_data = data.get(civ_name)
+    if civ_data is None:
+        return jsonify({"error": f"Civilization '{civ_name}' not found"}), 404
+    return jsonify({"civ_name": civ_name, "lines": civ_data})
+
+
+@app.route("/api/top-unit/<civ_name>/<line>")
+def api_top_unit(civ_name, line):
+    """The highest-tier unit(s) a civ fields in one line at Imperial age."""
+    err = _validate_civ_name(civ_name)
+    if err:
+        return err
+    civ_data = _top_units_data().get(civ_name)
+    if civ_data is None:
+        return jsonify({"error": f"Civilization '{civ_name}' not found"}), 404
+    line_data = civ_data.get(line)
+    if line_data is None:
+        return jsonify({"error": f"{civ_name} has no '{line}' line"}), 404
+    return jsonify({"civ_name": civ_name, "line": line, **line_data})
 
 
 @app.route("/api/matchup-recommendations/<civ_a>/<civ_b>")

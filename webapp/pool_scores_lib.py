@@ -91,6 +91,20 @@ BUILDING_TO_POOL = {
     "Archery Range": "archer",
 }
 
+# Per-LINE pool overrides that win over BUILDING_TO_POOL. Used when a line is
+# trained from a building that maps to no pool (or the wrong pool) but the
+# rankings UI groups it elsewhere. The scorpion line is built at the Siege
+# Workshop (which has no pool) yet is shown under "Ranged Effectiveness"
+# (the archer pool) on the rankings page — so score it in the archer pool to
+# match the UI grouping. Covers every scorpion-line slug (scorpion,
+# heavy_scorpion, and the civ replacements: Khmer Ballista Elephant, Shu War
+# Chariot, Khitans Mounted Trebuchet). NOTE: this only makes scorpion a SCORED
+# unit; it does NOT add scorpion as an opponent in any pool's role (see
+# POOL_ROLES), so other ranged units' scores are unaffected.
+LINE_POOL_OVERRIDE = {
+    "scorpion": "archer",
+}
+
 
 def line_imperial_slugs(unit_lines: dict, line_key: str) -> set[str]:
     """All imperial-age slugs that map to a line, across all civs.
@@ -152,6 +166,8 @@ def unit_to_pool(unit_lines: dict, unit_slug: str) -> str | None:
     """
     for line_key, line in unit_lines.items():
         if unit_slug in _all_line_slugs_including_castle(unit_lines, line_key):
+            if line_key in LINE_POOL_OVERRIDE:
+                return LINE_POOL_OVERRIDE[line_key]
             return BUILDING_TO_POOL.get(line.get("building"))
     return None
 

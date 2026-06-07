@@ -1692,3 +1692,64 @@ UNIQUE_UNITS = {
         },
     ],
 }
+
+
+# ---------------------------------------------------------------------------
+# Authoritative per-civ availability overrides (phantom-unit fix)
+# ---------------------------------------------------------------------------
+# unit_analyzer's availability model is a BLOCKLIST: a civ trains a unit unless
+# the unit's "make-avail" tech is in that civ's disabled_techs (extracted from
+# type-102 DISABLE_TECH commands in the civ's tech-tree effect). That is correct
+# for default-roster units (e.g. Knight is explicitly disabled for non-knight
+# civs).
+#
+# The lines below are ALLOWLIST units instead: in empires2_x2_p1.dat they are
+# NOT disabled for the civs that lack them; the game auto-enables them per civ
+# through tech-tree resolution (prerequisites / auto-research) that this
+# pipeline does not replicate. With no disable signal, the blocklist lets EVERY
+# civ train them -> ~776 phantom rows (each line attached to ~48 civs), incl.
+# wrong upgrade tiers (Cumans Heavy Camel, Dravidians Elite Battle Elephant).
+#
+# Fix: pin each affected slug to its authoritative civ list. Source of truth =
+# SiegeEngineers/aoe2techtree data.json per-civ Unit lists (resolved tech-tree
+# availability), verified per UPGRADE TIER via the exact genie unit id and
+# cross-checked against the clean build-170934 reference. paladin = knight line
+# (unit 38) plus the Three Kingdoms Hei-Kuang Cavalry alternate (unit 1944).
+#
+# The CASTLE_UNITS / IMPERIAL_UNITS loops in generate_reference already honor
+# "civ_only", so this needs no code change. NOTE: per these sources the Eagle
+# line is Aztecs/Mayans only (Incas is excluded) -- matches the clean baseline.
+_AVAILABILITY_OVERRIDES = {
+    "eagle_warrior": ["Aztecs", "Mayans"],
+    "elite_eagle": ["Aztecs", "Mayans"],
+    "camel": ["Berbers", "Byzantines", "Cumans", "Ethiopians", "Gurjaras", "Hindustanis", "Khitans", "Malians", "Mongols", "Persians", "Saracens", "Tatars", "Turks"],
+    "heavy_camel": ["Berbers", "Byzantines", "Ethiopians", "Gurjaras", "Hindustanis", "Khitans", "Malians", "Mongols", "Persians", "Saracens", "Tatars", "Turks"],
+    "elephant": ["Bengalis", "Burmese", "Dravidians", "Khmer", "Malay", "Vietnamese"],
+    "elite_elephant": ["Bengalis", "Burmese", "Khmer", "Malay", "Vietnamese"],
+    "elephant_archer": ["Bengalis", "Dravidians", "Gurjaras"],
+    "elite_ele_archer": ["Bengalis", "Dravidians", "Gurjaras"],
+    "slinger": ["Incas", "Mapuche", "Muisca", "Tupi"],
+    "imp_slinger": ["Incas", "Mapuche", "Muisca", "Tupi"],
+    "champi_warrior": ["Incas", "Mapuche", "Muisca", "Tupi"],
+    "elite_champi_warrior": ["Incas", "Mapuche", "Muisca", "Tupi"],
+    "steppe_lancer": ["Cumans", "Jurchens", "Khitans", "Mongols", "Tatars"],
+    "elite_steppe": ["Cumans", "Jurchens", "Khitans", "Mongols", "Tatars"],
+    "fire_lancer": ["Chinese", "Jurchens", "Khitans", "Koreans", "Vietnamese"],
+    "elite_fire_lancer": ["Chinese", "Jurchens", "Khitans", "Koreans", "Vietnamese"],
+    "paladin": ["Armenians", "Berbers", "Bohemians", "Britons", "Bulgarians", "Burgundians", "Burmese", "Byzantines", "Celts", "Chinese", "Cumans", "Ethiopians", "Franks", "Georgians", "Goths", "Huns", "Italians", "Japanese", "Khmer", "Koreans", "Lithuanians", "Magyars", "Malay", "Malians", "Mongols", "Persians", "Poles", "Portuguese", "Romans", "Saracens", "Shu", "Sicilians", "Slavs", "Spanish", "Tatars", "Teutons", "Turks", "Vietnamese", "Vikings", "Wei", "Wu"],
+}
+
+_missing_override_slugs = []
+for _avail_dict in (CASTLE_UNITS, IMPERIAL_UNITS):
+    for _slug, _civs in _AVAILABILITY_OVERRIDES.items():
+        if _slug in _avail_dict:
+            _avail_dict[_slug]["civ_only"] = list(_civs)
+# Any override slug not found in either dict is a config drift bug -> surface it.
+_found = set(CASTLE_UNITS) | set(IMPERIAL_UNITS)
+_missing_override_slugs = [s for s in _AVAILABILITY_OVERRIDES if s not in _found]
+if _missing_override_slugs:
+    import warnings as _warnings
+    _warnings.warn(
+        "phantom-fix availability overrides reference unknown slugs: "
+        + ", ".join(_missing_override_slugs)
+    )

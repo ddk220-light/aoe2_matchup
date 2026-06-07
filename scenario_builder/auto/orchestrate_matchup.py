@@ -1,28 +1,33 @@
-"""orchestrate_matchup.py — full kick-off MACRO for a matchup video.
+"""orchestrate_matchup.py — one-command MACRO for a matchup video.
 
-One command: stage the scenario folder to a single file -> navigate the Scenario
-Editor (deterministic clicks; the Load list has ONE entry so no search/typing) ->
-start recording -> Test -> watch for the real game-end -> stop -> OCR -> compose
-titled video (with audio) -> copy out.
+Template-based, no-OCR pipeline. Given two `civ slug` pairs it:
 
-OPTION B (dedicated folder): the AoE2 scenario folder is kept holding exactly the
-target scenario (others moved to _archive/, recoverable), so the macro never has
-to use the Load search box — which keeps a stale query and has no select-all.
+  1. build_run     generate the run scenario from the golden jungle template
+                   (swap units + civs, retarget triggers, add force-engage,
+                   NO tech research) -> /tmp/aoe2_matchup_runs/
+  2. stage         clear the game's scenario folder and drop in that ONE file
+                   (named "Matchup Run") so the Load list has a single entry
+  3. navigate      Load -> click the one row -> Load -> editor -> Menu (no search)
+  4. record        SCK recorder: video + system audio, 1920x1248@60
+  5. Test          fight begins; recorder captures from the countdown
+  6. watch         poll the screen; the end-of-game banner = the fight is over
+  7. stop          SIGINT -> the .mov finalizes at the end
+  8. compose       intro stat card -> real fight (+audio) -> recap card  (NO OCR,
+                   no survivor counts — see build_run.py / the recap design)
+  9. copy          drop the finished mp4 in --copy-to
 
-PREREQUISITES (one-time): run from a Terminal that has BOTH
-  * Screen Recording   (for screencapture + the SCK recorder), and
-  * Accessibility       (for scripted clicks via cliclick)
-in System Settings -> Privacy & Security. Leave AoE2:DE open in the Scenario
-Editor, frontmost, with any scenario loaded.
+The scenario folder is DEDICATED to these runs: it holds exactly the staged file
+(so no search is needed). The golden template lives in the git repo
+(templates/template_landscape_jungle.aoe2scenario); generated runs live in /tmp.
 
-  python -m auto.orchestrate_matchup <civ1> <slug1> <civ2> <slug2> \
-      --scenario MATCHUP_jungle_fight \
-      --copy-to "/Volumes/Orchid/AOEII_videos/3kResMatchUpVideos" \
-      --name "Fire Archer vs Jian.mp4"
+PREREQUISITES (one-time): run from a Terminal that has BOTH Screen Recording and
+Accessibility (System Settings -> Privacy & Security). Leave AoE2:DE open in the
+Scenario Editor (or its Load page), frontmost.
 
-The navigation is a fixed sequence; buttons are located by their label text (so
-coordinates adapt to resolution) but NOT state-gated between steps — just clicked
-one after another, exactly as a macro. Only the end-detection stays adaptive.
+  python -m auto.orchestrate_matchup Muisca elite_temple_guard_muisca \
+      Aztecs elite_jaguar_warrior_aztecs \
+      --name "Elite Temple Guard vs Jaguar Warrior (Muisca vs Aztecs).mp4" \
+      --copy-to "/Volumes/Orchid/AOEII_videos/3kResMatchUpVideos"
 """
 from __future__ import annotations
 
@@ -31,47 +36,66 @@ import shutil
 import subprocess
 import sys
 import time
-from datetime import datetime
 from pathlib import Path
 
 AOE2_BUNDLE = "com.feralinteractive.ageofempires2"
 
-# The AoE2:DE scenario folder, DEDICATED to these simulations (option B): the macro
-# keeps exactly the target scenario here so the Load list has a single entry and no
-# search/typing is needed. Everything else is moved aside into _archive/ (recoverable).
+# The AoE2:DE scenario folder, DEDICATED to these runs. The macro keeps exactly the
+# staged run scenario here so the Load list has a single entry (no search/typing).
 SCEN_DIR = Path(
     "/Users/deepak/Library/Application Support/Feral Interactive/Age Of Empires II/"
     "VFS/User/Games/Age of Empires 2 DE/76561198053842894/resources/_common/scenario"
 )
+RUN_DIR = Path("/tmp/aoe2_matchup_runs")        # generated scenarios (pre-stage)
+STAGE_NAME = "Matchup Run"                       # fixed name shown in the Load list
+LEAD_PAD = 3.0                                    # extra trim past Test-click (load+countdown)
+
+HERE = Path(__file__).resolve().parent
+SB = HERE.parent
+sys.path.insert(0, str(SB))
+sys.path.insert(0, str(SB / "overlay"))
+
+from auto import vision, input_driver as ui          # noqa: E402
+from auto.record_until_end import (                   # noqa: E402
+    start_recorder, watch_until_end, stop_recorder, compose_recap, log)
+from build_run import build_run                       # noqa: E402
+
+# search regions (fractional) to disambiguate repeated labels
+R_MENU_BTN = (0.85, 0.0, 1.0, 0.10)      # top-right "Menu"
+R_DIALOG = (0.33, 0.38, 0.67, 0.78)      # menu-dialog buttons (Load/Test/...)
+R_SAVE = (0.30, 0.50, 0.70, 0.66)        # "No" on the save prompt
+R_LIST = (0.12, 0.33, 0.60, 0.76)        # scenario list rows
+R_LOAD_BTN = (0.38, 0.78, 0.62, 0.90)    # bottom "Load Scenario" button
 
 
-def stage_single_scenario(target, scen_dir=SCEN_DIR, archive="_archive", logfile=None):
-    """Make `target` the SOLE .aoe2scenario in scen_dir (recovering it from the
-    archive if needed); move every other scenario into scen_dir/<archive>/. Returns
-    the target's display name. So the Load list shows just this one entry."""
+def resolve_side(civ: str, slug: str):
+    """(civ, slug) -> (civ, unit_key, display_label) for build_run.
+
+    The scenario unit key is the slug minus its civ suffix (unique-unit slugs carry
+    one, e.g. 'elite_temple_guard_muisca' -> 'elite_temple_guard'); the label is the
+    unit's display name from the reference DB."""
+    from overlay_data import get_unit_card
+    suffix = "_" + civ.lower()
+    key = slug[: -len(suffix)] if slug.endswith(suffix) else slug
+    label = get_unit_card(civ, slug)["name"]
+    return (civ, key, label)
+
+
+def stage_generated(src, scen_dir=SCEN_DIR, stage_name=STAGE_NAME, logfile=None) -> str:
+    """Clear the game's scenario folder and copy `src` in as the SOLE entry (named
+    `stage_name`), so the Load list shows one row. Returns the display name."""
     scen = Path(scen_dir)
-    arch = scen / archive
-    arch.mkdir(exist_ok=True)
-    fname = target if target.endswith(".aoe2scenario") else target + ".aoe2scenario"
-    # recover the target from the archive if it was moved out by a prior run
-    if not (scen / fname).exists() and (arch / fname).exists():
-        shutil.move(str(arch / fname), str(scen / fname))
-    if not (scen / fname).exists():
-        raise FileNotFoundError(f"target scenario {fname!r} not in {scen} or {arch}")
-    moved = 0
+    scen.mkdir(parents=True, exist_ok=True)
     for f in scen.glob("*.aoe2scenario"):
-        if f.name != fname:
-            shutil.move(str(f), str(arch / f.name))
-            moved += 1
-    log(f"[stage] {fname} is the sole scenario; archived {moved} other(s) -> {arch.name}/",
-        logfile)
-    return fname[: -len(".aoe2scenario")]
+        f.unlink()
+    dest = scen / f"{stage_name}.aoe2scenario"
+    shutil.copy2(str(src), str(dest))
+    log(f"[stage] '{stage_name}' is the sole scenario in the game folder", logfile)
+    return stage_name
 
 
-def bring_game_to_front(logfile=None, timeout=8.0):
-    """Activate AoE2:DE so the scripted clicks land on it (the launching Terminal is
-    frontmost right after you press Enter), then wait until a known game screen is
-    actually showing. Returns the detected state."""
+def bring_game_to_front(logfile=None, timeout=8.0) -> str:
+    """Activate AoE2:DE and wait until a known game screen shows. Returns the state."""
     subprocess.run(["open", "-b", AOE2_BUNDLE], capture_output=True)
     t0 = time.time()
     st = "unknown"
@@ -82,37 +106,10 @@ def bring_game_to_front(logfile=None, timeout=8.0):
             break
     return st
 
-HERE = Path(__file__).resolve().parent
-SB = HERE.parent
-sys.path.insert(0, str(SB))
 
-from auto import vision, input_driver as ui          # noqa: E402
-from auto.record_until_end import (                  # noqa: E402
-    start_recorder, watch_until_end, stop_recorder, ocr_and_compose, log)
-
-# search regions (fractional) to disambiguate repeated labels like "Load Scenario"
-R_MENU_BTN = (0.85, 0.0, 1.0, 0.10)      # top-right "Menu"
-R_DIALOG = (0.33, 0.38, 0.67, 0.78)      # menu-dialog buttons (Load/Test/...)
-R_SAVE = (0.30, 0.50, 0.70, 0.66)        # "No" on the save prompt
-R_SEARCH = (0.10, 0.25, 0.42, 0.34)      # "Search" label
-R_LIST = (0.12, 0.33, 0.60, 0.76)        # scenario list rows
-R_LOAD_BTN = (0.38, 0.78, 0.62, 0.90)    # bottom "Load Scenario" button
-
-
-def find_with_retry(pattern, region, logfile, retries=6, delay=0.8):
-    """Locate `pattern` (no click), retrying while the screen settles. Point or None."""
+def find_and_click(pattern, region, logfile, label=None, retries=4, dbl=False) -> bool:
+    """Locate `pattern` in `region` and click it; retry briefly while the screen settles."""
     for _ in range(retries):
-        pt = vision.find_text(vision.grab(), pattern, region=region)
-        if pt:
-            return pt
-        time.sleep(delay)
-    return None
-
-
-def find_and_click(pattern, region, logfile, label=None, retries=4, dbl=False):
-    """Grab screen, locate `pattern` in `region`, click it. Retries briefly if the
-    screen hasn't settled yet. Returns True on success."""
-    for i in range(retries):
         pt = vision.find_text(vision.grab(), pattern, region=region)
         if pt:
             (ui.double_click if dbl else ui.click)(pt)
@@ -123,9 +120,8 @@ def find_and_click(pattern, region, logfile, label=None, retries=4, dbl=False):
     return False
 
 
-def _reach_load_page(state, logfile):
-    """From `state` (editor / main_menu / load_dialog), get to the Load Scenario
-    page. Returns True when on (or assumed on) the load page."""
+def _reach_load_page(state, logfile) -> bool:
+    """From editor / main_menu / load_dialog, get to the Load Scenario page."""
     if state == "load_dialog":
         return True
     if state == "editor":
@@ -145,23 +141,19 @@ def _reach_load_page(state, logfile):
     return False
 
 
-def navigate_to_test_menu(start_state, scenario_name, logfile):
-    """From the Load Scenario page (reached from `start_state`): the folder is staged
-    to a SINGLE scenario (option B), so just click that one row -> Load -> editor ->
-    Menu. NO search/typing (the Load search box keeps its previous query and has no
-    select-all, so we avoid it entirely). Leaves the Main Menu open with Test visible."""
+def navigate_to_test_menu(start_state, scenario_name, logfile) -> bool:
+    """Load page -> click the ONE list row -> Load -> editor -> Menu. No search."""
     if not _reach_load_page(start_state, logfile):
         return False
-    time.sleep(1.0)                        # let the load page finish rendering
-    # the list has one entry — click it directly (no search needed)
+    time.sleep(1.0)
     if not find_and_click(scenario_name, R_LIST, logfile, f"row {scenario_name!r}"):
-        return False
+        # the staged file is named "Matchup Run" — try the first word as a fallback
+        if not find_and_click(scenario_name.split()[0], R_LIST, logfile, "row (first word)"):
+            return False
     time.sleep(0.5)
-    # Load Scenario (bottom button)
     if not find_and_click("Load Scenario", R_LOAD_BTN, logfile, "Load Scenario (button)"):
         return False
-    time.sleep(2.5)                        # editor loads the scenario
-    # open Menu again, ready for Test
+    time.sleep(2.5)
     if not find_and_click("Menu", R_MENU_BTN, logfile, "Menu", dbl=True):
         return False
     time.sleep(0.8)
@@ -172,7 +164,6 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("civ1"); ap.add_argument("slug1")
     ap.add_argument("civ2"); ap.add_argument("slug2")
-    ap.add_argument("--scenario", required=True, help="exact scenario name to load")
     ap.add_argument("--out-mov", default="/tmp/auto_fight.mov")
     ap.add_argument("--final", default="/tmp/auto_matchup_FINAL.mp4")
     ap.add_argument("--cap", type=int, default=240)
@@ -181,48 +172,60 @@ def main():
     ap.add_argument("--log", default="/tmp/auto_matchup.log")
     a = ap.parse_args()
     open(a.log, "w").close()
-    log(f"=== orchestrate {a.slug1} vs {a.slug2} on {a.scenario} ===", a.log)
+    log(f"=== orchestrate {a.slug1} vs {a.slug2} (template-based, no OCR) ===", a.log)
 
     if not ui.accessibility_ok():
-        log("ERROR: Accessibility not granted to this terminal — scripted clicks "
-            "will fail. System Settings -> Privacy & Security -> Accessibility.", a.log)
+        log("ERROR: Accessibility not granted to this terminal — scripted clicks will "
+            "fail. System Settings -> Privacy & Security -> Accessibility.", a.log)
         sys.exit(2)
 
-    # OPTION B: dedicate the scenario folder to one file so the Load list shows a
-    # single entry (no search). Recover/keep the target, archive everything else.
+    # 1. BUILD the run scenario from the golden template (swap units/civs, no tech)
     try:
-        a.scenario = stage_single_scenario(a.scenario, logfile=a.log)
+        side1 = resolve_side(a.civ1, a.slug1)
+        side2 = resolve_side(a.civ2, a.slug2)
     except Exception as e:
-        log(f"ERROR: could not stage scenario: {e}", a.log)
+        log(f"ERROR: could not resolve units ({e}).", a.log)
+        sys.exit(1)
+    run_path = RUN_DIR / f"{side1[1]}_vs_{side2[1]}.aoe2scenario"
+    try:
+        build_run(side1, side2, run_path)
+        log(f"[build] {side1[2]} ({a.civ1}) vs {side2[2]} ({a.civ2}) -> {run_path}", a.log)
+    except Exception as e:
+        log(f"ERROR: build_run failed ({e}).", a.log)
         sys.exit(1)
 
-    # bring AoE2 to the front (the Terminal is frontmost after you press Enter)
+    # 2. STAGE it as the sole scenario in the game folder
+    scen_name = stage_generated(run_path, logfile=a.log)
+
+    # 3. bring AoE2 to the front and NAVIGATE (deterministic macro)
     log("[nav] bringing AoE2:DE to the front...", a.log)
     st = bring_game_to_front(a.log)
     log(f"[nav] starting screen: {st}", a.log)
     if st not in ("editor", "main_menu", "load_dialog"):
-        log(f"[nav] ERROR: unexpected starting screen {st!r}; open AoE2 in the "
-            "Scenario Editor (or its Load Scenario page) and try again.", a.log)
+        log(f"[nav] ERROR: unexpected starting screen {st!r}; open AoE2 in the Scenario "
+            "Editor (or its Load page) and try again.", a.log)
         sys.exit(1)
-
-    # NAVIGATE (deterministic macro) — works from the editor OR the load page
-    if not navigate_to_test_menu(st, a.scenario, a.log):
+    if not navigate_to_test_menu(st, scen_name, a.log):
         log("ERROR: navigation failed — aborting before recording.", a.log)
         sys.exit(1)
 
-    # RECORD: start recorder, then click Test so the fight is captured from the start
+    # 4-5. RECORD, then click Test so the fight is captured from the start
     rec = start_recorder(a.out_mov, a.cap, logfile=a.log)
+    t_rec = time.time()
     if not find_and_click("Test", R_DIALOG, a.log, "Test"):
         stop_recorder(rec, a.out_mov, a.log)
         log("ERROR: could not click Test — aborting.", a.log)
         sys.exit(1)
-    t0 = time.time()
+    t_test = time.time()
 
-    # WATCH -> STOP -> COMPOSE -> COPY
-    watch_until_end(t0, a.cap, logfile=a.log)
+    # 6-7. WATCH for the end banner -> STOP
+    watch_until_end(t_test, a.cap, logfile=a.log)
     stop_recorder(rec, a.out_mov, a.log)
-    final = ocr_and_compose(a.civ1, a.slug1, a.civ2, a.slug2, a.out_mov, a.final,
-                            a.copy_to, a.name, a.log)
+
+    # 8-9. COMPOSE (recap, no OCR) -> COPY. Trim the menu/load lead-in off the front.
+    lead_in = max(0.0, (t_test - t_rec) + LEAD_PAD)
+    final = compose_recap(a.civ1, a.slug1, a.civ2, a.slug2, a.out_mov, a.final,
+                          a.copy_to, a.name, lead_in=lead_in, logfile=a.log)
     log(f"DONE -> {final}", a.log)
 
 

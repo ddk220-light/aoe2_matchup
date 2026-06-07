@@ -106,6 +106,29 @@ def ocr_and_compose(civ1, slug1, civ2, slug2, out_mov, final,
     return Path(out)
 
 
+def compose_recap(civ1, slug1, civ2, slug2, out_mov, final,
+                  copy_to=None, name=None, lead_in=0.0, logfile=None) -> Path:
+    """No-OCR compose: intro stat card -> real fight footage (+ captured audio) ->
+    recap card. No survivor counts are extracted (see build_run.py / the 'matchup
+    recap' design). `lead_in` trims the menu/load seconds off the front of the clip."""
+    sys.path.insert(0, str(SB / "overlay"))
+    from overlay_data import get_unit_card
+    from compose import make_recap_video
+    import shutil
+    log("[compose] intro card -> real fight (+audio) -> recap card (no OCR)...", logfile)
+    u1 = get_unit_card(civ1, slug1)
+    u2 = get_unit_card(civ2, slug2)
+    out = make_recap_video(u1, u2, final, battle_clip=out_mov, lead_in=lead_in)
+    log(f"[compose] -> {out} ({Path(out).stat().st_size // 1024} KB)", logfile)
+    if copy_to:
+        Path(copy_to).mkdir(parents=True, exist_ok=True)
+        dest = Path(copy_to) / (name or Path(out).name)
+        shutil.copy2(out, dest)
+        log(f"[copy] -> {dest}", logfile)
+        return Path(dest)
+    return Path(out)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("civ1"); ap.add_argument("slug1")

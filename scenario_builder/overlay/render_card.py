@@ -270,6 +270,30 @@ def build_outro_html(result, u1: dict, u2: dict) -> str:
 </div></body></html>"""
 
 
+def build_outro_recap_html(u1: dict, u2: dict) -> str:
+    """A minimal post-fight recap: both units side by side, NO winner / survivor
+    counts (the automated pipeline doesn't measure them — see build_run.py). Just a
+    clean 'that was the matchup' bookend after the real footage."""
+    def col(u):
+        icon = _img_data_uri(u.get("icon", ""))
+        img = f'<img src="{icon}">' if icon else ""
+        return f"""<div class="scol">{img}
+          <div class="nm">{u['name']}</div>
+          <div class="lbl">{u['civ']} &middot; {u.get('unit_type','')}</div></div>"""
+    return f"""<!doctype html><html><head><meta charset="utf-8"><style>{_css()}</style></head>
+<body><div class="wrap">
+  <div class="result-banner"><div class="who">Battle Complete</div>
+    <div class="sub">{u1['name']} &nbsp;vs&nbsp; {u2['name']}</div></div>
+  <div class="score">
+    {col(u1)}<div class="vs">VS</div>{col(u2)}
+  </div>
+</div></body></html>"""
+
+
+def render_outro_recap(u1, u2, out_png, width=1000, height=440, scale=2) -> Path:
+    return _screenshot(build_outro_recap_html(u1, u2), out_png, width, height, scale)
+
+
 def _screenshot(html: str, out_png, width: int, height: int, scale: int = 2,
                 browser: str | None = None) -> Path:
     out_png = Path(out_png).resolve()

@@ -22,7 +22,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from render_card import render_intro, render_outro
+from render_card import render_intro, render_outro, render_outro_recap
 from hud import render_hud_frame
 
 
@@ -128,6 +128,49 @@ def _fight_segment(battle_clip: Path, hud_dir: Path, hud_fps: float,
             "-shortest", *_x264(), *_AAC, str(out)]
     _run(cmd)
     return out
+
+
+def _fight_segment_plain(battle_clip: Path, out: Path, size, lead_in: float = 0.0) -> Path:
+    """Battle footage normalized to `size`, KEEPING its captured audio, with NO HUD
+    overlay (the no-OCR recap path has no survivor timeline to draw). `lead_in` trims
+    that many seconds off the front (skip the menu/load before the fight)."""
+    has_a = _has_audio(battle_clip)
+    cmd = [_ffmpeg(), "-y"]
+    if lead_in and lead_in > 0:
+        cmd += ["-ss", f"{lead_in}"]            # input seek: drop the lead-in
+    cmd += ["-i", str(battle_clip)]
+    if not has_a:
+        cmd += ["-f", "lavfi", "-i", _ANULLSRC]
+    cmd += ["-vf", f"scale={size[0]}:{size[1]}",
+            "-map", "0:v:0", "-map", ("0:a:0?" if has_a else "1:a")]
+    if not has_a:
+        cmd += ["-shortest"]
+    cmd += [*_x264(), *_AAC, str(out)]
+    _run(cmd)
+    return out
+
+
+def make_recap_video(u1: dict, u2: dict, out_path, battle_clip,
+                     size=(1920, 1248), intro_seconds=5.0, outro_seconds=5.0,
+                     lead_in: float = 0.0, work_dir=None) -> Path:
+    """No-OCR pipeline: intro stat card -> real fight footage (+ audio) -> recap card.
+    No live HUD, no survivor counts — just the matchup bookends around the real fight."""
+    out_path = Path(out_path).resolve()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = Path(work_dir) if work_dir else Path(tempfile.mkdtemp(prefix="recap_"))
+
+    intro_png = render_intro(u1, u2, tmp / "intro.png")
+    outro_png = render_outro_recap(u1, u2, tmp / "outro.png")
+
+    seg_intro = _card_segment(intro_png, intro_seconds, tmp / "seg_intro.mp4",
+                              size, card_width_frac=0.94)
+    seg_fight = _fight_segment_plain(Path(battle_clip).resolve(), tmp / "seg_fight.mp4",
+                                     size, lead_in=lead_in)
+    seg_outro = _card_segment(outro_png, outro_seconds, tmp / "seg_outro.mp4",
+                              size, card_width_frac=0.74)
+
+    _concat([seg_intro, seg_fight, seg_outro], out_path)
+    return out_path
 
 
 def _concat(segments: list[Path], out: Path) -> Path:

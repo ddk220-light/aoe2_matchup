@@ -38,6 +38,7 @@ Run as a script to emit the Fire Archer vs Jian demo:
 from __future__ import annotations
 
 import math
+import random
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Tuple
@@ -45,6 +46,8 @@ from typing import List, Tuple
 from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.buildings import BuildingInfo
+from AoE2ScenarioParser.datasets.terrains import TerrainId
+from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.players import PlayerId
 from AoE2ScenarioParser.datasets.object_support import Civilization, StartingAge
 from AoE2ScenarioParser.datasets.techs import TechInfo
@@ -54,6 +57,7 @@ from AoE2ScenarioParser.datasets.trigger_lists import (
     Operation,
     PanelLocation,
     Comparison,
+    VisibilityState,
 )
 
 SCOUT_CONST = UnitInfo.SCOUT_CAVALRY.ID  # 448
@@ -101,6 +105,12 @@ class MatchupSpec:
     arena_size: int = 40       # inner side length in tiles ("large ~40x40")
     map_size: int = 80         # square map dimension
     wall_type: str = "stone"
+    # boundary style: "wall" (stone/fortified perimeter — proven containment for real
+    # matchups) or "natural" (no walls; a solid Gaia treeline on the arena perimeter
+    # contains the fight, backed by tents + destroyed buildings for a battlefield look).
+    boundary: str = "wall"
+    # paint a shallow river band across the TOP of the map (cosmetic).
+    river_top: bool = False
     formation_spacing: float = 1.0
     army_gap: int = 24         # tiles between the two formation centers
     # setup
@@ -117,6 +127,18 @@ class MatchupSpec:
     countdown_seconds: int = 3
     # output
     output_name: str = "matchup"
+    # scenario file FORMAT version. None -> AoE2ScenarioParser's latest (1.58, current
+    # Windows DE). The Feral macOS port lags one patch (1.57); AoE2:DE refuses to load a
+    # scenario whose format is NEWER than the game ("There seems to be a problem with
+    # scenario ..."), so on Mac this must match the installed game (currently "1.57").
+    scenario_version: "str | None" = None
+    # cosmetic map decoration: "none" | "meso_jungle" | "meso_ruins" | "meso_river"
+    # (Central/South-American themed terrain + Gaia eye-candy around the arena).
+    theme: str = "none"
+    decor_seed: int = 7
+    # showcase mode: armies are mutually ALLIED (never fight) so the decorated map
+    # can be viewed/screenshotted statically without the match ending in a defeat screen.
+    peaceful: bool = False
 
 
 # --------------------------------------------------------------------------- #
@@ -148,14 +170,205 @@ def _wall_perimeter(x0: int, y0: int, x1: int, y1: int) -> List[Tuple[float, flo
 
 
 # --------------------------------------------------------------------------- #
+# Central-American themed map decoration (cosmetic; fight interior stays clear)
+# --------------------------------------------------------------------------- #
+_THEMES = {
+    "meso_jungle": {  # lush Maya rainforest clearing
+        "ground": TerrainId.GRASS_JUNGLE,
+        "accents": [TerrainId.GRASS_JUNGLE_RAINFOREST, TerrainId.GRASS_FLOWERS_1, TerrainId.UNDERBRUSH_JUNGLE],
+        "forest": TerrainId.FOREST_RAINFOREST,
+        "trees": [OtherInfo.TREE_RAINFOREST, OtherInfo.TREE_JUNGLE, OtherInfo.TREE_PALM_FOREST],
+        "structures": [OtherInfo.TEMPLE_RUIN, OtherInfo.ANDEAN_RUINS, OtherInfo.ROCK_JUNGLE, OtherInfo.ROCK_LIMESTONE],
+        "plants": [OtherInfo.PLANT_RAINFOREST, OtherInfo.PLANT_UNDERBRUSH_TROPICAL, OtherInfo.PINEAPPLE_BUSH, OtherInfo.FERN_PATCH, OtherInfo.FLOWERS_1],
+        "animals": [UnitInfo.MACAW, UnitInfo.JAGUAR, UnitInfo.MONKEY, UnitInfo.TAPIR],
+        "n_trees": 100, "n_struct": 10, "n_plants": 80, "n_animals": 8, "n_battle": 20, "water": False,
+    },
+    "meso_ruins": {  # open stone-ruins plaza
+        "ground": TerrainId.GRASS_JUNGLE,
+        "accents": [TerrainId.DIRT_3, TerrainId.DIRT_SAVANNAH, TerrainId.GRASS_FLOWERS_2],
+        "forest": TerrainId.FOREST_PALM_GRASS,
+        "trees": [OtherInfo.TREE_PALM_FOREST, OtherInfo.TREE_BRAZILWOOD, OtherInfo.TREE_WAX_PALM, OtherInfo.PAPAYA_TREE],
+        "structures": [OtherInfo.PURU_RUINS, OtherInfo.ANDEAN_RUINS, OtherInfo.TEMPLE_RUIN, OtherInfo.STATUE_LEFT, OtherInfo.STATUE_RIGHT, OtherInfo.ROCK_LIMESTONE, OtherInfo.ROCK_PILLAR],
+        "plants": [OtherInfo.FLOWERS_2, OtherInfo.FERN_PATCH, OtherInfo.PINEAPPLE_BUSH, OtherInfo.PLANT_JUNGLE],
+        "animals": [OtherInfo.HOWLER_MONKEY, UnitInfo.MACAW, UnitInfo.TURKEY, UnitInfo.DEER, UnitInfo.LLAMA_A],
+        "n_trees": 60, "n_struct": 26, "n_plants": 65, "n_animals": 9, "n_battle": 26, "water": False,
+    },
+    "meso_river": {  # jungle with a riverside/water feature
+        "ground": TerrainId.GRASS_JUNGLE,
+        "accents": [TerrainId.GRASS_JUNGLE_RAINFOREST, TerrainId.GRASS_FLOWERS_1],
+        "forest": TerrainId.FOREST_MANGROVE,
+        "trees": [OtherInfo.TREE_MANGROVE, OtherInfo.TREE_RAINFOREST, OtherInfo.TREE_PALM_FOREST, OtherInfo.PAPAYA_TREE],
+        "structures": [OtherInfo.ANDEAN_RUINS, OtherInfo.TEMPLE_RUIN, OtherInfo.ROCK_LIMESTONE],
+        "plants": [OtherInfo.PLANT_RAINFOREST, OtherInfo.FERN_PATCH, OtherInfo.FLOWERS_1, OtherInfo.PINEAPPLE_BUSH],
+        "animals": [UnitInfo.MACAW, UnitInfo.CAPYBARA, UnitInfo.CONDOR, UnitInfo.JAGUAR],
+        "n_trees": 85, "n_struct": 10, "n_plants": 72, "n_animals": 10, "n_battle": 20, "water": True,
+    },
+}
+
+
+# battlefield-aftermath eye-candy shared across themes (bones, fires, dead wood)
+_BATTLE = [OtherInfo.SKELETON, OtherInfo.SKELETON_ANTIQUITY_SOLDIER,
+           OtherInfo.SKELETON_ANTIQUITY_CIVILIAN, OtherInfo.ANIMAL_SKELETON,
+           OtherInfo.BONFIRE, OtherInfo.TORCH_A, OtherInfo.TREE_DEAD,
+           OtherInfo.STUMP, OtherInfo.FELLED_TREE]
+
+# "tents" / encampment props (no literal tent object exists in the dataset; these
+# canopy/camp props read as a war camp lining the boundary).
+_TENTS = [OtherInfo.MARKET_STALL, OtherInfo.ASIAN_MARKET_STALLS, OtherInfo.GARDEN_PAVILION,
+          OtherInfo.SIEGE_CAMP_EQUIPMENT, OtherInfo.SIEGE_CAMP_WEAPONS, OtherInfo.SIEGE_PROPS]
+
+# destroyed / ruined buildings for the boundary (clearly "destroyed" + a couple of
+# meso ruins so it stays on-theme).
+_DESTROYED = [OtherInfo.BURNED_BUILDING_A, OtherInfo.BURNED_BUILDING_B, OtherInfo.BURNED_BUILDING_C,
+              OtherInfo.RUBBLE_2_X_2, OtherInfo.RUBBLE_3_X_3, OtherInfo.RUBBLE_4_X_4,
+              OtherInfo.TEMPLE_RUIN, OtherInfo.ANDEAN_RUINS]
+
+
+def _decorate_meso(scn, spec, cx, cy, ax0, ay0, ax1, ay1):
+    """Paint themed terrain + scatter Gaia eye-candy around the arena.
+    Cosmetic only: the fight interior stays clear and gaia objects are a different
+    unit type than the test units, so win-detection is unaffected. With
+    ``spec.boundary == "natural"`` a solid Gaia treeline on the arena perimeter
+    physically contains the fight (replacing the walls), backed by tents + destroyed
+    buildings; with a river band optionally painted across the top of the map."""
+    cfg = _THEMES.get(spec.theme)
+    if cfg is None:
+        return
+    mm, um = scn.map_manager, scn.unit_manager
+    rng = random.Random(spec.decor_seed)
+    N = spec.map_size
+    # geometry-adaptive bands (tuned to scale from the old 80/40 layout down to a
+    # tiny map with a half-size arena).
+    margin = ax0                              # tiles from map edge to the arena
+    EDGE = max(3, min(6, margin // 4))        # forest backdrop band at the map rim
+    OUT = max(5, margin - EDGE - 1)           # decorate band outside the arena
+    arena_half = (ax1 - ax0) // 2
+    FIGHT_CLEAR = max(2, arena_half - 4)      # keep the central combat lane empty
+    area_scale = (N * N) / (80.0 * 80.0)      # scale object counts to map area
+    ground = int(cfg["ground"])
+    forest = int(cfg["forest"])
+    accents = [int(t) for t in cfg["accents"]]
+
+    def in_arena(x, y):                       # arena (+1 ring): keep clear
+        return (ax0 - 1) <= x <= (ax1 + 1) and (ay0 - 1) <= y <= (ay1 + 1)
+
+    reserved = [(ax0 - 6, ay1 + 6), (ax0 - 8, ay0 - 8), (ax1 + 8, ay1 + 8)]  # TC + scouts
+    def reserved_near(x, y, r=3):
+        return any(abs(x - rx) < r and abs(y - ry) < r for rx, ry in reserved)
+
+    # river: forms the NORTH EDGE of the arena itself — the fight is bounded by water
+    # on the top side (water blocks land units, so it contains them like the treeline
+    # does on the other three sides). Only the arena center is recorded, so this sits
+    # right at the visible top of frame. Jagged south (fight-facing) bank.
+    water = set()
+    if spec.river_top or cfg.get("water"):
+        depth = 6                                     # rows of water at the arena's north edge
+        for x in range(0, N):
+            jag = rng.randint(0, 1)                   # ragged shoreline toward the fight
+            for y in range(ay0 - depth, ay0 + 1 - jag):
+                if 0 <= y < N and not reserved_near(x, y):
+                    water.add((x, y))
+
+    # 1) terrain: jungle base everywhere; forest backdrop at the rim; scattered
+    #    accent patches in the clearing; river band (if any).
+    for tile in mm.terrain:
+        x, y = tile.x, tile.y
+        if (x, y) in water:
+            tile.terrain_id = int(TerrainId.WATER_AZURE)
+        elif (x < EDGE or x > N - 1 - EDGE or y < EDGE or y > N - 1 - EDGE) and not in_arena(x, y):
+            tile.terrain_id = forest
+        else:
+            tile.terrain_id = ground
+            if not in_arena(x, y) and rng.random() < 0.12:
+                tile.terrain_id = rng.choice(accents)
+    if water:                                  # sandy shore along the river's banks
+        for (x, y) in list(water):
+            ny = y + 1                          # fight-facing (south) bank — the shoreline
+            if 0 <= ny < N and (x, ny) not in water:
+                mm.get_tile(x, ny).terrain_id = int(TerrainId.BEACH)
+            for dx in (-1, 0, 1):               # natural shore on the outer (unseen) sides
+                for dy in (-1, 0, 1):
+                    nx, nyy = x + dx, y + dy
+                    if 0 <= nx < N and 0 <= nyy < N and (nx, nyy) not in water and not in_arena(nx, nyy):
+                        mm.get_tile(nx, nyy).terrain_id = int(TerrainId.BEACH)
+
+    def on_perimeter(x, y):
+        return (x in (ax0, ax1) and ay0 <= y <= ay1) or (y in (ay0, ay1) and ax0 <= x <= ax1)
+
+    # 2) NATURAL BOUNDARY (replaces stone walls): a solid Gaia treeline on the arena
+    #    perimeter (trees block movement -> contains the fight), backed by an outer
+    #    band of tents + destroyed buildings for a battlefield-camp look.
+    if spec.boundary == "natural":
+        tree_ids = [int(getattr(o, "ID", o)) for o in cfg["trees"]]
+        for (wx, wy) in _wall_perimeter(ax0, ay0, ax1, ay1):
+            ix, iy = int(wx), int(wy)
+            if (ix, iy) in water or reserved_near(ix, iy):
+                continue
+            um.add_unit(player=0, unit_const=rng.choice(tree_ids), x=wx, y=wy)
+        border_items = [int(getattr(o, "ID", o)) for o in (_TENTS + _DESTROYED)]
+        for i, (wx, wy) in enumerate(_wall_perimeter(ax0 - 2, ay0 - 2, ax1 + 2, ay1 + 2)):
+            if i % 3 != 0:                     # sprinkle, don't pave
+                continue
+            ix, iy = int(wx), int(wy)
+            if not (1 <= ix < N - 1 and 1 <= iy < N - 1):
+                continue
+            if (ix, iy) in water or reserved_near(ix, iy):
+                continue
+            um.add_unit(player=0, unit_const=rng.choice(border_items), x=wx, y=wy)
+
+    # 3) scatter Gaia eye-candy: mostly OUTSIDE the arena (forest depth), with a few
+    #    battlefield bones inside. Animals go outside only.
+    def pick_inside():
+        lo, hi = ax0 + 1, cx - FIGHT_CLEAR - 1
+        if rng.random() < 0.5 and lo <= hi:
+            x = rng.randint(lo, hi)
+        else:
+            x = rng.randint(cx + FIGHT_CLEAR + 1, ax1 - 1)
+        return x, rng.randint(ay0 + 1, ay1 - 1)
+
+    def pick_outside():
+        if rng.random() < 0.5:
+            x = rng.choice([rng.randint(ax0 - OUT, ax0 - 2), rng.randint(ax1 + 2, ax1 + OUT)])
+            y = rng.randint(ay0 - OUT, ay1 + OUT)
+        else:
+            x = rng.randint(ax0 - OUT, ax1 + OUT)
+            y = rng.choice([rng.randint(ay0 - OUT, ay0 - 2), rng.randint(ay1 + 2, ay1 + OUT)])
+        return x, y
+
+    def scatter(items, count, inside_frac):
+        ids = [int(getattr(o, "ID", o)) for o in items]
+        count = max(1, int(round(count * area_scale)))
+        placed = tries = 0
+        while placed < count and tries < count * 30:
+            tries += 1
+            x, y = pick_inside() if rng.random() < inside_frac else pick_outside()
+            if not (1 <= x < N - 1 and 1 <= y < N - 1):
+                continue
+            if (x, y) in water or reserved_near(x, y) or on_perimeter(x, y):
+                continue
+            um.add_unit(player=0, unit_const=rng.choice(ids), x=x + 0.5, y=y + 0.5)
+            placed += 1
+
+    scatter(cfg["trees"], cfg["n_trees"], inside_frac=0.12)
+    scatter(cfg["structures"], cfg["n_struct"], inside_frac=0.18)
+    scatter(cfg["plants"], cfg["n_plants"], inside_frac=0.22)
+    scatter(cfg["animals"], cfg["n_animals"], inside_frac=0.0)   # animals stay outside
+    scatter(_BATTLE, cfg.get("n_battle", 18), inside_frac=0.5)   # battlefield bones/fires
+
+
+# --------------------------------------------------------------------------- #
 # builder
 # --------------------------------------------------------------------------- #
 def build_matchup_scenario(spec: MatchupSpec, out_dir: str | Path = ".") -> Path:
-    scn = AoE2DEScenario.from_default()
+    scn = AoE2DEScenario.from_default(spec.scenario_version)
 
     pm = scn.player_manager
     um = scn.unit_manager
     tm = scn.trigger_manager
+
+    # Resize the map (default scenario is 80x80). The builder previously relied on
+    # that default; set it explicitly so spec.map_size actually takes effect.
+    scn.map_manager.map_size = spec.map_size
 
     # --- players -----------------------------------------------------------
     def player(pid):
@@ -170,9 +383,10 @@ def build_matchup_scenario(spec: MatchupSpec, out_dir: str | Path = ".") -> Path
     for p in (p1, p2, p3):
         p.starting_age = spec.starting_age
     ALLY, ENEMY = int(DiplomacyState.ALLY), int(DiplomacyState.ENEMY)
+    P23 = ALLY if spec.peaceful else ENEMY              # showcase -> no fight
     p1.diplomacy[2] = ALLY; p1.diplomacy[3] = ALLY      # spectator allied to both
-    p2.diplomacy[1] = ALLY; p2.diplomacy[3] = ENEMY     # fighters: ally spectator, fight each other
-    p3.diplomacy[1] = ALLY; p3.diplomacy[2] = ENEMY
+    p2.diplomacy[1] = ALLY; p2.diplomacy[3] = P23       # fighters: ally spectator, fight each other
+    p3.diplomacy[1] = ALLY; p3.diplomacy[2] = P23
 
     # --- arena geometry ----------------------------------------------------
     cx = cy = spec.map_size // 2
@@ -180,13 +394,26 @@ def build_matchup_scenario(spec: MatchupSpec, out_dir: str | Path = ".") -> Path
     ax0, ay0, ax1, ay1 = cx - half, cy - half, cx + half, cy + half  # inclusive tile box
     arena_area = dict(area_x1=ax0, area_y1=ay0, area_x2=ax1, area_y2=ay1)
 
-    # --- walls owned by the spectator (P1) -------------------------------
-    # P1 owning the walls keeps the spectator alive (has objects) and, since P1
-    # is allied to both fighters, the walls are never attacked; they still block
-    # movement to contain the fight.
-    wall_const = WALL_TYPES.get(spec.wall_type, WALL_TYPES["stone"])
-    for (wx, wy) in _wall_perimeter(ax0, ay0, ax1, ay1):
-        um.add_unit(player=1, unit_const=wall_const, x=wx, y=wy)
+    # --- boundary -----------------------------------------------------------
+    # "wall": Gaia-blocking stone/fortified perimeter owned by P1 (proven
+    #   containment for real matchups; P1 is allied to both so it's never attacked).
+    # "natural": NO walls — a solid Gaia treeline on the arena perimeter (built in
+    #   _decorate_meso) contains the fight instead, for a cleaner battlefield look.
+    if spec.boundary == "wall":
+        wall_const = WALL_TYPES.get(spec.wall_type, WALL_TYPES["stone"])
+        for (wx, wy) in _wall_perimeter(ax0, ay0, ax1, ay1):
+            um.add_unit(player=1, unit_const=wall_const, x=wx, y=wy)
+
+    # --- keep-alive object for the spectator (P1) -------------------------
+    # CRITICAL: AoE2 does NOT count walls toward a player's "has objects"
+    # status, so a P1 owning ONLY walls is declared defeated the instant the
+    # test starts -> "You have been defeated!" before the armies ever engage.
+    # Give P1 one real, immobile building in a far corner so the spectator
+    # stays alive for the whole fight. P1 is allied to both armies (never
+    # attacked); a Town Center is a different object type than the test units,
+    # so it never affects the "army wiped -> other wins" survivor checks.
+    um.add_unit(player=1, unit_const=BuildingInfo.TOWN_CENTER.ID,
+                x=ax0 - 6 + 0.5, y=ay1 + 6 + 0.5)
 
     # --- armies (army1 -> P2, army2 -> P3) --------------------------------
     gap = spec.army_gap / 2.0
@@ -203,6 +430,10 @@ def build_matchup_scenario(spec: MatchupSpec, out_dir: str | Path = ".") -> Path
         um.add_unit(player=2, unit_const=SCOUT_CONST, x=ax0 - 8 + 0.5, y=ay0 - 8 + 0.5)
         um.add_unit(player=3, unit_const=SCOUT_CONST, x=ax1 + 8 + 0.5, y=ay1 + 8 + 0.5)
 
+    # --- cosmetic Central-American themed decoration (terrain + Gaia eye-candy) -
+    if spec.theme and spec.theme != "none":
+        _decorate_meso(scn, spec, cx, cy, ax0, ay0, ax1, ay1)
+
     # ----------------------------------------------------------------------
     #  TRIGGERS  (army1 on P2, army2 on P3; P1 = spectator)
     # ----------------------------------------------------------------------
@@ -211,6 +442,17 @@ def build_matchup_scenario(spec: MatchupSpec, out_dir: str | Path = ".") -> Path
 
     # SETUP trigger (runs on load): camera (spectator P1), title, upgrades, scout stance
     setup = tm.add_trigger("Setup", enabled=True, looping=False)
+    # Force diplomacy at runtime. The scenario player-diplomacy fields don't reliably apply
+    # to HU players in Test mode, so the armies were treating P1's allied walls as ENEMY and
+    # attacking them instead of each other. P1 (spectator + wall/TC owner) is MUTUALLY allied
+    # to both fighters; P2 vs P3 are mutual enemies. mutual_diplomacy=True sets BOTH sides.
+    setup.new_effect.change_diplomacy(source_player=1, target_player=2, diplomacy=ALLY, mutual_diplomacy=True)
+    setup.new_effect.change_diplomacy(source_player=1, target_player=3, diplomacy=ALLY, mutual_diplomacy=True)
+    setup.new_effect.change_diplomacy(source_player=2, target_player=3, diplomacy=P23, mutual_diplomacy=True)
+    # Reveal the whole arena to the spectator (P1) so the recording/OCR isn't fogged.
+    for _fpid in (2, 3):
+        setup.new_effect.set_player_visibility(
+            source_player=1, target_player=_fpid, visibility_state=int(VisibilityState.VISIBLE))
     if spec.cinematic:
         setup.new_effect.change_view(source_player=1, location_x=cx, location_y=cy)
         title = f"{spec.army1.count} {spec.army1.label}  VS  {spec.army2.count} {spec.army2.label}"
@@ -241,14 +483,18 @@ def build_matchup_scenario(spec: MatchupSpec, out_dir: str | Path = ".") -> Path
                 source_player=0, message=str(n), display_time=1,
                 instruction_panel_position=int(PanelLocation.MIDDLE))
 
-    # RECOMMENDED: force-engage (attack-move both armies to arena center)
+    # RECOMMENDED: force-engage. PATROL each army INTO the OTHER army's start position so
+    # they cross the arena and collide in the middle. Patrol is more reliable than attack-move
+    # to a single point (which can stall, or — pre-diplomacy-fix — target the nearest object).
+    # P2 (owns a1c) patrols to where P3/a2 sits; P3 (owns a2c) patrols to where P2/a1 sits.
     if spec.force_engage:
         eng = tm.add_trigger("Engage", enabled=True, looping=False)
         if engage_delay:
             eng.new_condition.timer(timer=engage_delay + 1)
-        for pid, uc in FIGHTERS:
-            eng.new_effect.attack_move(
-                source_player=pid, object_list_unit_id=uc, location_x=cx, location_y=cy)
+        eng.new_effect.patrol(source_player=2, object_list_unit_id=a1c,
+                              location_x=int(round(a2_center[0])), location_y=int(round(a2_center[1])))
+        eng.new_effect.patrol(source_player=3, object_list_unit_id=a2c,
+                              location_x=int(round(a1_center[0])), location_y=int(round(a1_center[1])))
 
     # RECOMMENDED: exact survivor readout variables (var0=army1/P2, var1=army2/P3)
     if spec.survivor_readout:
@@ -335,6 +581,7 @@ if __name__ == "__main__":
         army1=Army(UnitInfo.ELITE_FIRE_ARCHER.ID, Civilization.WU, 30, "Elite Fire Archer"),
         army2=Army(UnitInfo.JIAN_SWORDSMAN.ID, Civilization.WU, 30, "Jian Swordsman"),
         output_name="TEMPLATE_firearcher_vs_jian",
+        scenario_version="1.57",  # Feral macOS port is on 1.57 (Windows DE is 1.58)
     )
     path = build_matchup_scenario(spec, out_dir=".")
     print(f"WROTE {path}")

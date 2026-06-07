@@ -48,6 +48,15 @@ def double_click(pt, gap=0.45):
     click(pt)
 
 
+def clear_field(backspaces=50):
+    """Clear a focused text field. The AoE2 Load dialog keeps the PREVIOUS search
+    text, so we must wipe it before typing or the new name appends. Select-all +
+    delete handles it; a run of backspaces is a backup for fields that ignore Cmd+A."""
+    _run("kd:cmd", "t:a", "ku:cmd")          # Cmd+A (select all)
+    time.sleep(0.1)
+    _run(*(["kp:delete"] * backspaces))      # backspaces, in one invocation
+
+
 def type_text(text, settle=0.3):
     """Type into the focused field."""
     time.sleep(settle)

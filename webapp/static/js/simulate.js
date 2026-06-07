@@ -2486,17 +2486,16 @@ async function startBattle() {
         ).value;
         let team1Count, team2Count;
 
-        function calcUnitCost(s, isImp) {
-            const f = s.cost_food || 0,
-                w = s.cost_wood || 0,
-                g = s.cost_gold || 0;
-            return isImp ? w + f + g : Math.floor(w + 1.5 * f + g);
+        // Imperial-only: resource cost = Wood + Food + Gold (no age weighting).
+        function calcUnitCost(s) {
+            return (s.cost_wood || 0) + (s.cost_food || 0) + (s.cost_gold || 0);
         }
-        function calcUpgradeCost(s, isImp) {
-            const f = s.upgrade_cost_food || 0,
-                w = s.upgrade_cost_wood || 0,
-                g = s.upgrade_cost_gold || 0;
-            return isImp ? w + f + g : Math.floor(w + 1.5 * f + g);
+        function calcUpgradeCost(s) {
+            return (
+                (s.upgrade_cost_wood || 0) +
+                (s.upgrade_cost_food || 0) +
+                (s.upgrade_cost_gold || 0)
+            );
         }
 
         if (
@@ -2518,18 +2517,14 @@ async function startBattle() {
             if (stats1.error) throw new Error(stats1.error);
             if (stats2.error) throw new Error(stats2.error);
 
-            const isImp1 = s1.age === "Imperial",
-                isImp2 = s2.age === "Imperial";
-            const unitCost1 =
-                calcUnitCost(stats1, isImp1) || stats1.total_cost;
-            const unitCost2 =
-                calcUnitCost(stats2, isImp2) || stats2.total_cost;
+            const unitCost1 = calcUnitCost(stats1) || stats1.total_cost;
+            const unitCost2 = calcUnitCost(stats2) || stats2.total_cost;
 
             let budget1 = totalResources,
                 budget2 = totalResources;
             if (armyMode === "resources_upgrades") {
-                budget1 -= calcUpgradeCost(stats1, isImp1);
-                budget2 -= calcUpgradeCost(stats2, isImp2);
+                budget1 -= calcUpgradeCost(stats1);
+                budget2 -= calcUpgradeCost(stats2);
                 budget1 = Math.max(budget1, unitCost1); // at least 1 unit
                 budget2 = Math.max(budget2, unitCost2);
             }

@@ -14,10 +14,32 @@
   .patch-summary h2 { font-size:1rem; margin:1rem 0 .2rem; color:#c8d0e0; }
   .patch-summary h3 { font-size:.95rem; margin:.8rem 0 .2rem; color:#c8d0e0; }
   .patch-summary h4 { font-size:.9rem; margin:.6rem 0 .1rem; color:#aab4c8; }
-  .unit-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
-  .unit-chip { background:#262b35; border:1px solid #39414f; border-radius:999px;
-    padding:5px 12px; font-size:.82rem; text-decoration:none; color:#dbe2f0; }
-  .unit-chip:hover { background:#313a48; }
+  .unit-acc { border:1px solid #2c313c; border-radius:8px; margin-top:10px;
+    background:#181b21; overflow:hidden; }
+  .unit-acc > summary { list-style:none; cursor:pointer; padding:10px 14px;
+    display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+    font-weight:600; color:#dbe2f0; }
+  .unit-acc > summary::-webkit-details-marker { display:none; }
+  .unit-acc > summary::before { content:"\25B8"; color:#8b93a7; font-weight:400;
+    transition:transform .15s; }
+  .unit-acc[open] > summary::before { transform:rotate(90deg); display:inline-block; }
+  .unit-acc > summary:hover { background:#1f232b; }
+  .unit-acc .acc-stat { font-weight:400; font-size:.82rem; color:#8b93a7; }
+  .unit-acc .acc-scale { margin-left:auto; font-weight:400; font-size:.75rem;
+    color:#8b93a7; border:1px solid #39414f; border-radius:999px; padding:1px 8px; }
+  .mtable { width:100%; border-collapse:collapse; font-size:.85rem; }
+  .mtable th, .mtable td { padding:6px 14px; text-align:left;
+    border-top:1px solid #23272f; }
+  .mtable th { color:#8b93a7; font-weight:500; font-size:.78rem; }
+  .mtable td.num { font-variant-numeric:tabular-nums; color:#aab4c8; }
+  .mtable .swing { font-variant-numeric:tabular-nums; font-weight:600; }
+  .mtable .swing.up { color:#5fd38a; }
+  .mtable .swing.down { color:#e06c75; }
+  .mtable a { color:#7aa2ff; text-decoration:none; white-space:nowrap; }
+  .mtable a:hover { text-decoration:underline; }
+  .acc-foot { padding:8px 14px; font-size:.8rem; }
+  .acc-foot a { color:#8b93a7; text-decoration:none; }
+  .acc-foot a:hover { color:#dbe2f0; }
   .empty { color:#8b93a7; text-align:center; padding:60px 0; }
 </style>
 <div class="patch-wrap">
@@ -36,14 +58,29 @@
       {% endif %}
     </div>
     <div class="patch-summary">{{ p.summary_html|safe }}</div>
-    {% if p.units %}
-    <div class="unit-chips">
-      {% for u in p.units %}
-      <a class="unit-chip" href="/patches/{{ p.build_number }}/{{ u.civ_name }}/{{ u.unit_slug }}">
-        {{ u.civ_name }} {{ u.unit_slug.replace('_', ' ') }}
-      </a>
-      {% endfor %}
-    </div>
+    {% if p.unit_tables %}
+    <h3 class="patch-summary" style="margin-top:18px">Biggest matchup shifts by unit</h3>
+    {% for t in p.unit_tables %}
+    <details class="unit-acc"{% if loop.first %} open{% endif %}>
+      <summary>
+        {{ t.title }}
+        {% if t.stat_summary %}<span class="acc-stat">{{ t.stat_summary }}</span>{% endif %}
+        <span class="acc-scale">{{ t.scale }}</span>
+      </summary>
+      <table class="mtable">
+        <tr><th>Opponent</th><th>Score</th><th>Swing</th><th></th></tr>
+        {% for r in t.rows %}
+        <tr>
+          <td>{{ r.opp }}</td>
+          <td class="num">{{ r.old_score }} &#8594; {{ r.new_score }}</td>
+          <td class="swing {{ r.dir }}">{{ '%+.0f'|format(r.swing) }}</td>
+          <td><a href="{{ r.link }}">&#9654; View fight</a></td>
+        </tr>
+        {% endfor %}
+      </table>
+      <div class="acc-foot"><a href="{{ t.detail_url }}">Full breakdown &#8594;</a></div>
+    </details>
+    {% endfor %}
     {% endif %}
   </div>
   {% endfor %}

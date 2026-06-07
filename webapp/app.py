@@ -152,6 +152,102 @@ def _patches_conn():
     return conn
 
 
+_SLUG_TO_LINE = None
+
+
+def _slug_to_line():
+    """Reverse map: unit_slug -> line key (for same-line mirror detection)."""
+    global _SLUG_TO_LINE
+    if _SLUG_TO_LINE is None:
+        m = {}
+        for line_key, line in UNIT_LINES.items():
+            for s in (line.get("castle_slug"), line.get("imperial_slug")):
+                if s:
+                    m[s] = line_key
+            for uu in line.get("unique_units", {}).values():
+                pairs = uu if isinstance(uu, list) else [uu]
+                for cs, isl in pairs:
+                    if cs:
+                        m[cs] = line_key
+                    if isl:
+                        m[isl] = line_key
+        _SLUG_TO_LINE = m
+    return _SLUG_TO_LINE
+
+
+def _line_of(slug):
+    return _slug_to_line().get(slug, slug)
+
+
+def _pretty_unit(slug, civ):
+    """Human label for a unit slug, dropping a redundant trailing civ suffix."""
+    suffix = "_" + civ.lower().replace(" ", "_")
+    if slug.endswith(suffix):
+        slug = slug[: -len(suffix)]
+    return slug.replace("_", " ").strip().title()
+
+
+# How many top matchups to show per unit, and which opponents to drop.
+_PATCH_MAX_MATCHUPS = 5
+
+
+def _patch_unit_tables(conn, pid, build):
+    """Per changed unit (that we have matchup stats for): up to 5 biggest matchup
+    swings on a SINGLE scale, excluding same-line mirrors and scorpion opponents.
+    Ordered by impact (largest swing first) so the first table is the headline."""
+    # stat-change summary per unit (context shown under each unit's header).
+    stat_by_unit = defaultdict(list)
+    for r in conn.execute(
+        "SELECT civ_name, unit_slug, field, old_value, new_value "
+        "FROM patch_unit_changes WHERE patch_id=? ORDER BY field", (pid,)):
+        stat_by_unit[(r["civ_name"], r["unit_slug"])].append(
+            f"{r['field']} {r['old_value']} → {r['new_value']}")
+
+    rows_by_unit = defaultdict(list)
+    for m in conn.execute(
+        "SELECT * FROM patch_matchup_changes WHERE patch_id=?", (pid,)):
+        my_line, opp_line = _line_of(m["my_unit_slug"]), _line_of(m["opp_unit_slug"])
+        if my_line == opp_line:
+            continue                                   # same-line mirror (halb v halb)
+        if opp_line == "scorpion" or "scorpion" in m["opp_unit_slug"]:
+            continue                                   # ignore scorpions
+        rows_by_unit[(m["my_civ"], m["my_unit_slug"])].append(dict(m))
+
+    tables = []
+    for (civ, slug), mrows in rows_by_unit.items():
+        # Pick ONE scale: the one holding this unit's single biggest swing
+        # (tie -> 30v30). Never mix scales within a unit's table.
+        by_scale = defaultdict(list)
+        for r in mrows:
+            by_scale[r["scale"]].append(r)
+        best_scale = max(
+            by_scale,
+            key=lambda s: (max(abs(x["swing"]) for x in by_scale[s]),
+                           1 if s == "30v30" else 0))
+        chosen = sorted(by_scale[best_scale], key=lambda x: -abs(x["swing"]))
+        top = chosen[: _PATCH_MAX_MATCHUPS]
+        out_rows = []
+        for r in top:
+            out_rows.append({
+                "opp": f"{r['opp_civ']} {_pretty_unit(r['opp_unit_slug'], r['opp_civ'])}",
+                "old_score": r["old_score"], "new_score": r["new_score"],
+                "swing": r["swing"], "dir": "up" if r["swing"] >= 0 else "down",
+                "link": battle_sim_deep_link(r["my_civ"], r["my_unit_slug"],
+                                             r["opp_civ"], r["opp_unit_slug"], r["scale"]),
+            })
+        tables.append({
+            "civ": civ, "slug": slug,
+            "title": f"{civ} {_pretty_unit(slug, civ)}",
+            "scale": best_scale,
+            "stat_summary": "; ".join(stat_by_unit.get((civ, slug), [])),
+            "detail_url": f"/patches/{build}/{civ}/{slug}",
+            "max_swing": max(abs(r["swing"]) for r in top),
+            "rows": out_rows,
+        })
+    tables.sort(key=lambda t: -t["max_swing"])
+    return tables
+
+
 @app.route("/patches")
 def patches_page():
     if not os.path.exists(PATCHES_DB_PATH):
@@ -160,14 +256,11 @@ def patches_page():
     rows = conn.execute("SELECT * FROM patches ORDER BY release_date DESC").fetchall()
     patches = []
     for p in rows:
-        chips = conn.execute(
-            "SELECT DISTINCT civ_name, unit_slug FROM patch_unit_changes "
-            "WHERE patch_id=? ORDER BY civ_name, unit_slug", (p["id"],)).fetchall()
         patches.append({
             "build_number": p["build_number"], "title": p["title"],
             "release_date": p["release_date"], "source_url": p["source_url"],
             "summary_html": render_patch_summary(p["summary_md"]),
-            "units": [dict(c) for c in chips],
+            "unit_tables": _patch_unit_tables(conn, p["id"], p["build_number"]),
         })
     conn.close()
     return render_template("patches.html", patches=patches, active_nav="patches")

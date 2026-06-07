@@ -128,6 +128,12 @@ def render_patch_summary(md):
             out.append("</ul>"); in_list = False
         if not line:
             out.append("")
+        elif line.startswith("### "):
+            out.append(f"<h4>{line[4:].strip()}</h4>")
+        elif line.startswith("## "):
+            out.append(f"<h3>{line[3:].strip()}</h3>")
+        elif line.startswith("# "):
+            out.append(f"<h2>{line[2:].strip()}</h2>")
         else:
             out.append(f"<p>{line}</p>")
     if in_list:

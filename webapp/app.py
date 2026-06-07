@@ -225,7 +225,16 @@ def _patch_unit_tables(conn, pid, build):
             key=lambda s: (max(abs(x["swing"]) for x in by_scale[s]),
                            1 if s == "30v30" else 0))
         chosen = sorted(by_scale[best_scale], key=lambda x: -abs(x["swing"]))
-        top = chosen[: _PATCH_MAX_MATCHUPS]
+        # Dedupe to DISTINCT opponent units: the same unit across many civs
+        # (e.g. Heavy Cav Archer for 5 civs) collapses to its single biggest
+        # swing, so the table shows variety rather than near-duplicates.
+        seen, deduped = set(), []
+        for r in chosen:
+            if r["opp_unit_slug"] in seen:
+                continue
+            seen.add(r["opp_unit_slug"])
+            deduped.append(r)
+        top = deduped[: _PATCH_MAX_MATCHUPS]
         out_rows = []
         for r in top:
             out_rows.append({

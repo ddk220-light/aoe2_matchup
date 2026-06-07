@@ -22,10 +22,20 @@ one after another, exactly as a macro. Only the end-detection stays adaptive.
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
+
+AOE2_BUNDLE = "com.feralinteractive.ageofempires2"
+
+
+def bring_game_to_front(logfile=None, settle=2.0):
+    """Activate AoE2:DE so the scripted clicks land on it (the launching Terminal is
+    frontmost right after you press Enter)."""
+    subprocess.run(["open", "-b", AOE2_BUNDLE], capture_output=True)
+    time.sleep(settle)
 
 HERE = Path(__file__).resolve().parent
 SB = HERE.parent
@@ -116,6 +126,12 @@ def main():
         log("ERROR: Accessibility not granted to this terminal — scripted clicks "
             "will fail. System Settings -> Privacy & Security -> Accessibility.", a.log)
         sys.exit(2)
+
+    # bring AoE2 to the front (the Terminal is frontmost after you press Enter)
+    log("[nav] bringing AoE2:DE to the front...", a.log)
+    bring_game_to_front(a.log)
+    st = vision.detect_state(vision.grab())
+    log(f"[nav] starting screen: {st}", a.log)
 
     # NAVIGATE (deterministic macro)
     if not navigate_to_test_menu(a.scenario, a.log):

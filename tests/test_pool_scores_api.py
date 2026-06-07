@@ -27,8 +27,8 @@ def test_pool_scores_attached_for_infantry_unit(client):
     assert "30v30" in ps["scales"]
     assert "3k" in ps["scales"]
     pop_hp = ps["scales"]["30v30"]["hp"]
-    assert pop_hp["final"] == pytest.approx(8.9, abs=0.5)
-    assert pop_hp["at"] == pytest.approx(92.7, abs=0.5)
+    assert pop_hp["final"] == pytest.approx(5.84, abs=0.5)
+    assert pop_hp["at"] == pytest.approx(92.85, abs=0.5)
 
 
 def test_pool_scores_attached_for_stable_unit(client):

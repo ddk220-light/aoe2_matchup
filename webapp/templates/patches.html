@@ -58,30 +58,6 @@
       {% endif %}
     </div>
     <div class="patch-summary">{{ p.summary_html|safe }}</div>
-    {% if p.unit_tables %}
-    <h3 class="patch-summary" style="margin-top:18px">Biggest matchup shifts by unit</h3>
-    {% for t in p.unit_tables %}
-    <details class="unit-acc"{% if loop.first %} open{% endif %}>
-      <summary>
-        {{ t.title }}
-        {% if t.stat_summary %}<span class="acc-stat">{{ t.stat_summary }}</span>{% endif %}
-        <span class="acc-scale">{{ t.scale }}</span>
-      </summary>
-      <table class="mtable">
-        <tr><th>Opponent</th><th>Score</th><th>Swing</th><th></th></tr>
-        {% for r in t.rows %}
-        <tr>
-          <td>{{ r.opp }}</td>
-          <td class="num">{{ r.old_score }} &#8594; {{ r.new_score }}</td>
-          <td class="swing {{ r.dir }}">{{ '%+.0f'|format(r.swing) }}</td>
-          <td><a href="{{ r.link }}">&#9654; View fight</a></td>
-        </tr>
-        {% endfor %}
-      </table>
-      <div class="acc-foot"><a href="{{ t.detail_url }}">Full breakdown &#8594;</a></div>
-    </details>
-    {% endfor %}
-    {% endif %}
   </div>
   {% endfor %}
 </div>

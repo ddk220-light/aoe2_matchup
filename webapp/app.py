@@ -109,41 +109,141 @@ def current_build():
     return get_current_build(patches_db_path=PATCHES_DB_PATH)
 
 
-def render_patch_summary(md):
-    """Minimal, safe markdown -> HTML for user-pasted patch notes.
+def _format_inline(text):
+    """**bold** + [text](url) on an already-escaped string."""
+    text = _re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+    text = _re.sub(r"\[([^\]]+)\]\((https?://[^\s)]+)\)",
+                   r'<a href="\2" target="_blank" rel="noopener">\1</a>', text)
+    return text
 
-    Supports: escaping, **bold**, [text](url), `- ` bullet lists, blank-line
-    paragraphs. Everything else is escaped plain text."""
+
+def _norm_unit(text):
+    """Loose unit token from free text (drop Elite/parens/punctuation)."""
+    text = _re.sub(r"\(elite\)|elite", " ", text, flags=_re.I)
+    return _re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
+
+
+def _first_bold(text):
+    m = _re.search(r"\*\*(.+?)\*\*", text)
+    return m.group(1) if m else None
+
+
+def _token_of_slug(slug, civ):
+    """Match token for a unit slug: drop civ suffix + elite/imp tier prefix."""
+    s = slug
+    suf = "_" + civ.lower().replace(" ", "_")
+    if s.endswith(suf):
+        s = s[: -len(suf)]
+    for pre in ("imp_elite_", "elite_", "imp_"):
+        if s.startswith(pre):
+            s = s[len(pre):]
+            break
+    return s.replace("_", " ").strip()
+
+
+def _render_unit_table_html(t, is_open):
+    esc = _html.escape
+    rows = "".join(
+        f'<tr><td>{esc(r["opp"])}</td>'
+        f'<td class="num">{r["old_score"]} &#8594; {r["new_score"]}</td>'
+        f'<td class="swing {r["dir"]}">{"%+.0f" % r["swing"]}</td>'
+        f'<td><a href="{esc(r["link"])}">&#9654; View fight</a></td></tr>'
+        for r in t["rows"])
+    stat = (f'<span class="acc-stat">{esc(t["stat_summary"])}</span>'
+            if t.get("stat_summary") else "")
+    return (
+        f'<details class="unit-acc"{" open" if is_open else ""}>'
+        f'<summary>{esc(t["title"])}{stat}'
+        f'<span class="acc-scale">{esc(t["scale"])}</span></summary>'
+        f'<table class="mtable"><tr><th>Opponent</th><th>Score</th>'
+        f'<th>Swing</th><th></th></tr>{rows}</table>'
+        f'<div class="acc-foot"><a href="{esc(t["detail_url"])}">'
+        f'Full breakdown &#8594;</a></div></details>')
+
+
+def render_patch_summary(md, unit_tables=None):
+    """Safe markdown -> HTML for user-pasted patch notes, with each changed
+    unit's matchup table inlined right after the note bullet that mentions it.
+
+    Matching: a bullet's first **bold** unit name is matched (by loose token)
+    against the unit tables; within a `## <Civ>` section only that civ's tables
+    are eligible, in a non-civ section (e.g. "Units (all civs)") any civ's.
+    A civ's tables not tied to a specific bullet are flushed at the end of that
+    civ's section; anything still unplaced lands under "Other changed units".
+    """
     if not md:
         return ""
-    md = _html.escape(md)
-    out, in_list = [], False
-    for raw in md.splitlines():
+    tables = list(unit_tables or [])
+    tokens = [_token_of_slug(t["slug"], t["civ"]) for t in tables]
+    civ_set = {t["civ"] for t in tables}
+    placed = [False] * len(tables)
+    first_open = [True]
+
+    def emit(predicate):
+        html = ""
+        for i, t in enumerate(tables):
+            if placed[i] or not predicate(i, t):
+                continue
+            placed[i] = True
+            html += _render_unit_table_html(t, first_open[0])
+            first_open[0] = False
+        return html
+
+    out, in_list, current_civ = [], False, None
+
+    def close_list():
+        nonlocal in_list
+        if in_list:
+            out.append("</ul>")
+            in_list = False
+
+    for raw in _html.escape(md).splitlines():
         line = raw.rstrip()
         if line.startswith("- "):
             if not in_list:
-                out.append("<ul>"); in_list = True
-            out.append(f"<li>{line[2:].strip()}</li>")
+                out.append("<ul>")
+                in_list = True
+            out.append(f"<li>{_format_inline(line[2:].strip())}</li>")
+            bold = _first_bold(line[2:])
+            if bold is not None:
+                nt = _norm_unit(bold)
+
+                def pred(i, t, nt=nt):
+                    tk = tokens[i]
+                    if not tk or not (tk in nt or nt in tk):
+                        return False
+                    return t["civ"] == current_civ if current_civ in civ_set else True
+
+                tbl = emit(pred)
+                if tbl:
+                    close_list()
+                    out.append(tbl)
             continue
-        if in_list:
-            out.append("</ul>"); in_list = False
+        close_list()
+        if line.startswith(("## ", "# ")):
+            if current_civ:                      # flush prior civ's leftover tables
+                out.append(emit(lambda i, t: t["civ"] == current_civ))
         if not line:
             out.append("")
         elif line.startswith("### "):
-            out.append(f"<h4>{line[4:].strip()}</h4>")
+            out.append(f"<h4>{_format_inline(line[4:].strip())}</h4>")
         elif line.startswith("## "):
-            out.append(f"<h3>{line[3:].strip()}</h3>")
+            heading = line[3:].strip()
+            current_civ = heading if heading in civ_set else None
+            out.append(f"<h3>{_format_inline(heading)}</h3>")
         elif line.startswith("# "):
-            out.append(f"<h2>{line[2:].strip()}</h2>")
+            current_civ = None
+            out.append(f"<h2>{_format_inline(line[2:].strip())}</h2>")
         else:
-            out.append(f"<p>{line}</p>")
-    if in_list:
-        out.append("</ul>")
-    txt = "\n".join(out)
-    txt = _re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", txt)
-    txt = _re.sub(r"\[([^\]]+)\]\((https?://[^\s)]+)\)",
-                  r'<a href="\2" target="_blank" rel="noopener">\1</a>', txt)
-    return txt
+            out.append(f"<p>{_format_inline(line)}</p>")
+    close_list()
+    if current_civ:
+        out.append(emit(lambda i, t: t["civ"] == current_civ))
+    orphan = emit(lambda i, t: True)
+    if orphan:
+        out.append('<h3>Other changed units</h3>')
+        out.append(orphan)
+    return "\n".join(out)
 
 
 def _patches_conn():
@@ -288,11 +388,11 @@ def patches_page():
     rows = conn.execute("SELECT * FROM patches ORDER BY release_date DESC").fetchall()
     patches = []
     for p in rows:
+        tables = _patch_unit_tables(conn, p["id"], p["build_number"])
         patches.append({
             "build_number": p["build_number"], "title": p["title"],
             "release_date": p["release_date"], "source_url": p["source_url"],
-            "summary_html": render_patch_summary(p["summary_md"]),
-            "unit_tables": _patch_unit_tables(conn, p["id"], p["build_number"]),
+            "summary_html": render_patch_summary(p["summary_md"], tables),
         })
     conn.close()
     return render_template("patches.html", patches=patches, active_nav="patches")

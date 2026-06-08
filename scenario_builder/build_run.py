@@ -25,6 +25,7 @@ intro-card -> real fight -> recap-card (counts are not extracted).
 from __future__ import annotations
 
 import argparse
+import math
 import os
 import tempfile
 from pathlib import Path
@@ -32,6 +33,7 @@ from pathlib import Path
 from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.object_support import Civilization
+from AoE2ScenarioParser.datasets.trigger_lists import PanelLocation
 
 HERE = Path(__file__).resolve().parent
 TEMPLATE = HERE / "templates" / "template_landscape_jungle.aoe2scenario"
@@ -106,6 +108,45 @@ def _centroid(units, const):
     return (sum(x for x, _ in pts) / len(pts), sum(y for _, y in pts) / len(pts))
 
 
+def _grid_positions(count, cx, cy, spacing=1.0):
+    """`count` positions in a centered ~square grid around (cx, cy)."""
+    cols = max(1, int(math.ceil(math.sqrt(count))))
+    rows = int(math.ceil(count / cols))
+    x0 = cx - (cols - 1) * spacing / 2.0
+    y0 = cy - (rows - 1) * spacing / 2.0
+    return [(x0 + (i % cols) * spacing, y0 + (i // cols) * spacing) for i in range(count)]
+
+
+def _set_army(um, pid, old_const, new_const, count, center, spacing=1.0):
+    """Replace player `pid`'s test army with exactly `count` `new_const` units in a
+    centered grid. The template ships 30 per side; resource-capped runs use fewer for
+    the pricier unit, so we remove the template units and re-place the right number."""
+    for u in [x for x in um.get_player_units(pid) if x.unit_const == old_const]:
+        um.remove_unit(unit=u)
+    for (px, py) in _grid_positions(count, center[0], center[1], spacing):
+        um.add_unit(player=pid, unit_const=new_const, x=px, y=py)
+
+
+def _add_readout(scn, new1, label1, new2, label2):
+    """Looping on-screen readout 'Label1: N   vs   Label2: M', refreshed every second,
+    for the VIEWER (not extracted). Each side's surviving units are counted into a
+    variable whose value the message substitutes via the <name> token (verified to
+    render in DE). HP can't be summed by a trigger effect, so this shows unit COUNT."""
+    tm = scn.trigger_manager
+    tm.add_variable("left1", 0)
+    tm.add_variable("left2", 1)
+    live = tm.add_trigger("Live readout", enabled=True, looping=True)
+    live.new_condition.timer(timer=1)
+    for pid, const, var in ((P_SIDE1, new1, 0), (P_SIDE2, new2, 1)):
+        live.new_effect.count_units_into_variable(
+            source_player=pid, object_list_unit_id=const, variable2=var,
+            area_x1=1, area_y1=1, area_x2=58, area_y2=58)
+    live.new_effect.display_instructions(
+        source_player=0, display_time=2,
+        instruction_panel_position=int(PanelLocation.TOP),
+        message=f"{label1}: <left1>   vs   {label2}: <left2>")
+
+
 def _add_engage(scn, new1, new2, c1, c2, engage_at=4):
     """The template freezes both armies for the countdown (stop_object) but never
     releases them — add an Engage trigger that PATROLs each army into the other's
@@ -120,11 +161,14 @@ def _add_engage(scn, new1, new2, c1, c2, engage_at=4):
                           location_x=int(round(c1[0])), location_y=int(round(c1[1])))
 
 
-def build_run(side1, side2, out_path, template=TEMPLATE):
-    """side1/side2 = (civ_name, unit_key, label). Writes the run scenario; returns Path."""
+def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE):
+    """side1/side2 = (civ_name, unit_key, label). `counts` = (n1, n2) units per side
+    (equal-count is (30, 30); resource-capped runs pass uneven counts). Writes the run
+    scenario; returns Path."""
     civ1, key1, label1 = side1
     civ2, key2, label2 = side2
     new1, new2 = unit_const(key1), unit_const(key2)
+    n1, n2 = counts
 
     scn = AoE2DEScenario.from_file(str(template))
     pm, um = scn.player_manager, scn.unit_manager
@@ -135,25 +179,18 @@ def build_run(side1, side2, out_path, template=TEMPLATE):
     player(P_SIDE1).civilization = civ_enum(civ1)
     player(P_SIDE2).civilization = civ_enum(civ2)
 
-    u1 = um.get_player_units(P_SIDE1)
-    u2 = um.get_player_units(P_SIDE2)
-    old1, old2 = _test_const(u1), _test_const(u2)
+    old1 = _test_const(um.get_player_units(P_SIDE1))
+    old2 = _test_const(um.get_player_units(P_SIDE2))
+    c1 = _centroid(um.get_player_units(P_SIDE1), old1)   # template army centers
+    c2 = _centroid(um.get_player_units(P_SIDE2), old2)
 
-    n1 = n2 = 0
-    for u in u1:
-        if u.unit_const == old1:
-            u.unit_const = new1
-            n1 += 1
-    for u in u2:
-        if u.unit_const == old2:
-            u.unit_const = new2
-            n2 += 1
+    _set_army(um, P_SIDE1, old1, new1, n1, c1)           # re-place with the right counts
+    _set_army(um, P_SIDE2, old2, new2, n2, c2)
 
     _retarget(scn, old1, new1, old2, new2)
     _set_title(scn, n1, label1, n2, label2)
-    c1 = _centroid(um.get_player_units(P_SIDE1), new1)
-    c2 = _centroid(um.get_player_units(P_SIDE2), new2)
     _add_engage(scn, new1, new2, c1, c2)
+    _add_readout(scn, new1, label1, new2, label2)
 
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)

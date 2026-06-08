@@ -62,6 +62,22 @@ against a slice of it without typing each matchup:
 - `--join NAME.mp4` → after all fights, concatenate every clip into **one** combined
   video (the individual clips are not copied out in join mode — only the joined one).
 
+### Equal-count vs equal-resources
+
+By default each side fields `--unit-cap` units (30v30). Add **`--resources`** for an
+equal-*resource* fight instead: the cheaper unit is capped at `--unit-cap`, and the
+pricier unit's count is the most that fits the **same total cost** (food + wood +
+gold, taken from the reference DB). E.g. Temple Guard (115) vs Jaguar Warrior (90)
+→ **23 vs 30**. The computed counts show in the dry-run plan and the on-screen title.
+
+### On-screen unit count
+
+Every generated scenario carries a looping **Live readout** trigger that prints
+`UnitA: N   vs   UnitB: M` at the top of the screen, refreshed each second, so the
+surviving counts are visible *in the video* (not OCR-extracted). Trigger effects
+can't sum army HP, so this shows unit **count** only — individual HP bars are
+already visible in-game.
+
 ### Prerequisites (one-time)
 
 Run from a **Terminal** (Terminal.app / iTerm) that has BOTH, in System Settings →

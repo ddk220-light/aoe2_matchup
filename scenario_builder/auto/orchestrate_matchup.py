@@ -83,6 +83,19 @@ def resolve_side(civ: str, slug: str):
     return (civ, key, label)
 
 
+def equal_resource_counts(civ1, slug1, civ2, slug2, unit_cap=30):
+    """Counts for an equal-RESOURCE fight: the cheaper unit is capped at `unit_cap`,
+    and the pricier unit's count is the largest that fits the SAME total resources
+    (cost = food + wood + gold, reusing the reference-DB cost the website shows).
+    Returns (n1, n2)."""
+    from overlay_data import get_unit_card
+    c1 = get_unit_card(civ1, slug1)["cost"]["total"] or 1
+    c2 = get_unit_card(civ2, slug2)["cost"]["total"] or 1
+    if c1 <= c2:                                   # side 1 cheaper -> it gets the cap
+        return unit_cap, max(1, int(unit_cap * c1 // c2))
+    return max(1, int(unit_cap * c2 // c1)), unit_cap
+
+
 def stage_generated(src, scen_dir=SCEN_DIR, stage_name=STAGE_NAME, logfile=None) -> str:
     """Clear the game's scenario folder and copy `src` in as the SOLE entry (named
     `stage_name`), so the Load list shows one row. Returns the display name."""
@@ -186,17 +199,27 @@ def return_to_editor(logfile, retries=8) -> bool:
 
 
 def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, cap=240,
+                mode="count", unit_cap=30,
                 out_mov="/tmp/auto_fight.mov", final="/tmp/auto_matchup_FINAL.mp4",
                 dismiss_after=True, logfile=None) -> Path:
     """One full matchup: build from template -> stage -> navigate -> record -> Test
     -> watch for end -> stop -> (dismiss to editor) -> compose recap -> copy.
+
+    mode="count"     -> unit_cap vs unit_cap (equal-count, default 30v30)
+    mode="resources" -> equal total resources, cheaper unit capped at unit_cap
+
     Returns the final video Path. Designed to be called repeatedly for a batch."""
     # 1. BUILD the run scenario from the golden template (swap units/civs, no tech)
     side1 = resolve_side(civ1, slug1)
     side2 = resolve_side(civ2, slug2)
+    if mode == "resources":
+        counts = equal_resource_counts(civ1, slug1, civ2, slug2, unit_cap)
+    else:
+        counts = (unit_cap, unit_cap)
     run_path = RUN_DIR / f"{side1[1]}_vs_{side2[1]}.aoe2scenario"
-    build_run(side1, side2, run_path)
-    log(f"[build] {side1[2]} ({civ1}) vs {side2[2]} ({civ2}) -> {run_path}", logfile)
+    build_run(side1, side2, run_path, counts=counts)
+    log(f"[build] {side1[2]} x{counts[0]} ({civ1}) vs {side2[2]} x{counts[1]} ({civ2}) "
+        f"[{mode}] -> {run_path}", logfile)
 
     # 2. STAGE it as the sole scenario in the game folder
     scen_name = stage_generated(run_path, logfile=logfile)
@@ -249,6 +272,9 @@ def main():
     ap.add_argument("--out-mov", default="/tmp/auto_fight.mov")
     ap.add_argument("--final", default="/tmp/auto_matchup_FINAL.mp4")
     ap.add_argument("--cap", type=int, default=240)
+    ap.add_argument("--resources", action="store_true",
+                    help="equal-resource counts (cheaper unit capped at --unit-cap)")
+    ap.add_argument("--unit-cap", type=int, default=30)
     ap.add_argument("--copy-to", default=None)
     ap.add_argument("--name", default=None)
     ap.add_argument("--log", default="/tmp/auto_matchup.log")
@@ -262,6 +288,8 @@ def main():
         sys.exit(2)
     try:
         final = run_matchup(a.civ1, a.slug1, a.civ2, a.slug2, name=a.name,
+                            mode=("resources" if a.resources else "count"),
+                            unit_cap=a.unit_cap,
                             copy_to=a.copy_to, cap=a.cap, out_mov=a.out_mov,
                             final=a.final, logfile=a.log)
     except Exception as e:

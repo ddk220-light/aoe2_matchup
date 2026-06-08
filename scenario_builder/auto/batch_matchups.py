@@ -40,7 +40,8 @@ sys.path.insert(0, str(SB))
 sys.path.insert(0, str(SB / "overlay"))
 
 from auto import input_driver as ui                          # noqa: E402
-from auto.orchestrate_matchup import run_matchup, resolve_side, RUN_DIR  # noqa: E402
+from auto.orchestrate_matchup import (                       # noqa: E402
+    run_matchup, resolve_side, equal_resource_counts, RUN_DIR)
 from auto.record_until_end import log, RECORDER              # noqa: E402
 from build_run import TEMPLATE, unit_const                   # noqa: E402
 
@@ -83,9 +84,9 @@ def matchups_from_list(list_path, slice_spec, opponent):
     return out
 
 
-def preflight(matchups, copy_to, logfile=None):
+def preflight(matchups, copy_to, mode="count", unit_cap=30, logfile=None):
     """Validate the whole batch before touching the game. Returns (errors, plan).
-    `plan` is a list of (name, label1, label2) for the ones that resolve."""
+    `plan` is a list of (name, label1, label2, n1, n2) for the ones that resolve."""
     errors, plan = [], []
     # environment
     if not TEMPLATE.exists():
@@ -108,7 +109,12 @@ def preflight(matchups, copy_to, logfile=None):
                 labels.append(None)
                 errors.append(f"matchup {i} [{m['name']}]: cannot resolve {civ}/{slug} — {e}")
         if all(labels):
-            plan.append((m["name"], labels[0], labels[1]))
+            if mode == "resources":
+                n1, n2 = equal_resource_counts(m["civ1"], m["slug1"],
+                                               m["civ2"], m["slug2"], unit_cap)
+            else:
+                n1 = n2 = unit_cap
+            plan.append((m["name"], labels[0], labels[1], n1, n2))
     return errors, plan
 
 
@@ -123,6 +129,11 @@ def main():
                     help="fixed side for --list mode (e.g. Muisca:elite_temple_guard_muisca)")
     ap.add_argument("--join", metavar="NAME.mp4",
                     help="also concatenate every clip into ONE video with this filename")
+    ap.add_argument("--resources", action="store_true",
+                    help="equal-RESOURCE fight: cheaper unit capped at --unit-cap, "
+                         "pricier unit count matched to the same total cost (f+w+g)")
+    ap.add_argument("--unit-cap", type=int, default=30,
+                    help="max units for the cheaper side (default 30)")
     ap.add_argument("--copy-to", default=DEFAULT_COPY_TO,
                     help=f"output folder (default: {DEFAULT_COPY_TO})")
     ap.add_argument("--cap", type=int, default=240, help="per-fight recording safety cap (s)")
@@ -131,6 +142,7 @@ def main():
                     help="validate matchups + environment and print the plan, then exit")
     a = ap.parse_args()
     open(a.log, "w").close()
+    mode = "resources" if a.resources else "count"
 
     # ---- BUILD THE QUEUE -------------------------------------------------
     matchups = list(a.matchup)
@@ -143,10 +155,10 @@ def main():
     n = len(matchups)
 
     # ---- PRE-FLIGHT ------------------------------------------------------
-    errors, plan = preflight(matchups, a.copy_to, a.log)
-    log(f"=== BATCH of {n} matchup(s); {len(plan)} valid ===", a.log)
-    for i, (name, l1, l2) in enumerate(plan, 1):
-        log(f"  [{i}] {l1}  vs  {l2}   ->  {name}.mp4", a.log)
+    errors, plan = preflight(matchups, a.copy_to, mode, a.unit_cap, a.log)
+    log(f"=== BATCH of {n} matchup(s); {len(plan)} valid  [{mode}] ===", a.log)
+    for i, (name, l1, l2, n1, n2) in enumerate(plan, 1):
+        log(f"  [{i}] {l1} x{n1}  vs  {l2} x{n2}   ->  {name}.mp4", a.log)
     if errors:
         for e in errors:
             log(f"  PRE-FLIGHT ERROR: {e}", a.log)
@@ -174,6 +186,7 @@ def main():
             final = run_matchup(
                 m["civ1"], m["slug1"], m["civ2"], m["slug2"],
                 name=f"{m['name']}.mp4", copy_to=per_run_copy_to, cap=a.cap,
+                mode=mode, unit_cap=a.unit_cap,
                 out_mov=f"/tmp/auto_fight_{i}.mov", final=f"/tmp/auto_matchup_{i}.mp4",
                 dismiss_after=True, logfile=a.log)
             log(f"[{i}/{n}] DONE -> {final}", a.log)

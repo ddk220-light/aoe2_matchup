@@ -58,8 +58,10 @@ sys.path.insert(0, str(SB / "overlay"))
 
 from auto import vision, input_driver as ui          # noqa: E402
 from auto.record_until_end import (                   # noqa: E402
-    start_recorder, watch_until_end, stop_recorder, compose_recap, log)
+    start_recorder, watch_until_result, stop_recorder, compose_recap, log)
 from build_run import build_run                       # noqa: E402
+
+RESULT_HOLD = 5.0                                      # seconds to hold the result on screen
 
 # search regions (fractional) to disambiguate repeated labels
 R_MENU_BTN = (0.85, 0.0, 1.0, 0.10)      # top-right "Menu"
@@ -67,7 +69,15 @@ R_DIALOG = (0.33, 0.38, 0.67, 0.78)      # menu-dialog buttons (Load/Test/...)
 R_SAVE = (0.30, 0.50, 0.70, 0.66)        # "No" on the save prompt
 R_LIST = (0.12, 0.33, 0.60, 0.76)        # scenario list rows
 R_LOAD_BTN = (0.38, 0.78, 0.62, 0.90)    # bottom "Load Scenario" button
-R_CONTINUE = (0.30, 0.56, 0.70, 0.76)    # "Continue" on the end-of-game banner
+R_CONTINUE = (0.30, 0.56, 0.70, 0.76)    # "Continue" on the (legacy) defeat banner
+R_GAME_MENU_ICON = (0.982, 0.061)        # rightmost in-game HUD icon = Menu (fractional pt)
+R_GAME_MENU = (0.34, 0.36, 0.66, 0.52)   # "Quit Current Game" in the in-game Main Menu
+R_CONFIRM = (0.28, 0.48, 0.72, 0.62)     # Yes/No confirm dialog
+
+
+def _frac_point(img, fx, fy):
+    """Fractional screen position -> logical click point (screencapture is Retina 2x)."""
+    return (fx * img.width / vision.SCALE, fy * img.height / vision.SCALE)
 
 
 def resolve_side(civ: str, slug: str):
@@ -117,7 +127,7 @@ def bring_game_to_front(logfile=None, timeout=8.0) -> str:
     while time.time() - t0 < timeout:
         time.sleep(0.6)
         st = vision.detect_state(vision.grab())
-        if st in ("editor", "load_dialog", "main_menu", "end_screen"):
+        if st in ("editor", "load_dialog", "main_menu", "end_screen", "in_game"):
             break
     return st
 
@@ -175,24 +185,37 @@ def navigate_to_test_menu(start_state, scenario_name, logfile) -> bool:
     return True
 
 
-def return_to_editor(logfile, retries=8) -> bool:
-    """After a fight ends, dismiss the end-of-game banner back to the Scenario
-    Editor so the game is clean for the NEXT run. The 'You have been defeated!'
-    screen has a single 'Continue' button -> clicking it returns DIRECTLY to the
-    editor (no intermediate stats screen). Idempotent: returns True once the editor
-    tabs are visible."""
+def return_to_editor(logfile, retries=12) -> bool:
+    """Quit the running test back to the Scenario Editor so the game is clean for the
+    NEXT run. The no-lose scenario holds the result on screen WITHOUT ending the game
+    (no banner), so the path is: open the in-game Menu (rightmost HUD icon) -> 'Quit
+    Current Game' -> 'Yes'. A leftover defeat banner ('Continue') is handled too, for
+    safety. Idempotent: returns True once the editor tabs are visible."""
     for _ in range(retries):
         img = vision.grab()
         if vision.detect_state(img) == "editor":
             log("[end] back in the Scenario Editor — clean for the next run", logfile)
             return True
-        pt = vision.find_text(img, "Continue", region=R_CONTINUE)
-        if pt:
-            ui.click(pt)
-            log(f"[end] clicked Continue at {int(pt[0])},{int(pt[1])}", logfile)
-            time.sleep(2.5)
-        else:
-            time.sleep(1.0)
+        # legacy defeat banner (shouldn't occur with no-lose triggers)
+        if vision.detect_end(img):
+            pt = vision.find_text(img, "Continue", region=R_CONTINUE)
+            if pt:
+                ui.click(pt); time.sleep(2.5); continue
+        # in-game Main Menu open -> Quit Current Game -> Yes
+        q = vision.find_text(img, "Quit Current Game", region=R_GAME_MENU)
+        if q:
+            ui.click(q)
+            time.sleep(1.5)
+            y = vision.find_text(vision.grab(), "Yes", region=R_CONFIRM)
+            if y:
+                ui.click(y)
+            log("[end] Quit Current Game -> Yes", logfile)
+            time.sleep(3.5)
+            continue
+        # otherwise open the in-game Menu via the rightmost HUD icon (no text -> fixed pos)
+        ui.click(_frac_point(img, *R_GAME_MENU_ICON))
+        log("[end] opened in-game Menu (HUD icon)", logfile)
+        time.sleep(1.3)
     ok = vision.detect_state(vision.grab()) == "editor"
     log(f"[end] {'in editor' if ok else 'WARNING: editor not confirmed'}", logfile)
     return ok
@@ -227,7 +250,7 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, cap=240,
     # 3. bring AoE2 to the front; if a previous fight left an end banner up, clear it
     log("[nav] bringing AoE2:DE to the front...", logfile)
     st = bring_game_to_front(logfile)
-    if st == "end_screen":
+    if st in ("end_screen", "in_game", "unknown"):   # leftover test/banner -> editor first
         return_to_editor(logfile)
         st = bring_game_to_front(logfile)
     log(f"[nav] starting screen: {st}", logfile)
@@ -246,7 +269,8 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, cap=240,
         if not find_and_click("Test", R_DIALOG, logfile, "Test"):
             raise RuntimeError("could not click Test")
         t_test = time.time()
-        watch_until_end(t_test, cap, logfile=logfile)
+        watch_until_result(t_test, cap, logfile=logfile)
+        time.sleep(RESULT_HOLD)            # keep recording the on-screen result hold
     finally:
         stop_recorder(rec, out_mov, logfile)
         if dismiss_after:

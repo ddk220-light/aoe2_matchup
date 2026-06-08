@@ -105,6 +105,16 @@ def detect_end(img: Image.Image | None = None) -> bool:
     return any(k in txt for k in ("defeat", "victor", "you have been"))
 
 
+def detect_result(img: Image.Image | None = None) -> bool:
+    """True when the scenario's win trigger is holding '<unit> WINS!' on the center
+    panel. This is how the automation knows the fight is over WITHOUT the game ending
+    (the win trigger shows this instead of declare_victory, so there's no banner)."""
+    if img is None:
+        img = grab()
+    txt = ocr_text(img, (0.10, 0.18, 0.90, 0.52))
+    return "wins" in txt
+
+
 # OCR cue -> screen name. Order matters (most specific first).
 def detect_state(img: Image.Image | None = None) -> str:
     """Best-effort identification of the current screen, for navigation gating.

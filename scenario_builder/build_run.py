@@ -34,6 +34,10 @@ from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.object_support import Civilization
 from AoE2ScenarioParser.datasets.trigger_lists import PanelLocation
+from AoE2ScenarioParser.datasets.effects import EffectId
+
+_DECLARE_VICTORY = int(EffectId.DECLARE_VICTORY)
+WIN_MARKER = "WINS"   # the automation watches the center band for this word
 
 HERE = Path(__file__).resolve().parent
 TEMPLATE = HERE / "templates" / "template_landscape_jungle.aoe2scenario"
@@ -147,6 +151,36 @@ def _add_readout(scn, new1, label1, new2, label2):
         message=f"{label1}: <left1>   vs   {label2}: <left2>")
 
 
+def _rework_win_triggers(scn, new1, label1, new2, label2):
+    """Replace the template's declare_victory (which pops the 'You have been defeated!'
+    banner and ends the game) with a persistent on-screen RESULT. When a side is wiped
+    the trigger re-counts both armies and shows '<winner> WINS!' at center for a long
+    time — the game stays in-play so the viewer sees the result, there's no banner, and
+    the automation detects the WIN_MARKER word to know the fight is over."""
+    tm = scn.trigger_manager
+    for trig in tm.triggers:
+        cond_consts = [getattr(c, "object_list", None) for c in trig.conditions]
+        if new1 in cond_consts:        # P2 (new1) wiped -> P3 (new2) wins
+            winner = label2
+        elif new2 in cond_consts:      # P3 (new2) wiped -> P2 (new1) wins
+            winner = label1
+        else:
+            continue
+        # drop declare_victory (no banner, game keeps running on the final frame)
+        trig.effects = [e for e in trig.effects
+                        if (int(e.effect_type) if not isinstance(e.effect_type, int)
+                            else e.effect_type) != _DECLARE_VICTORY]
+        # refresh the counts, then hold the result on screen
+        for pid, const, var in ((P_SIDE1, new1, 0), (P_SIDE2, new2, 1)):
+            trig.new_effect.count_units_into_variable(
+                source_player=pid, object_list_unit_id=const, variable2=var,
+                area_x1=1, area_y1=1, area_x2=58, area_y2=58)
+        trig.new_effect.display_instructions(
+            source_player=0, display_time=90,
+            instruction_panel_position=int(PanelLocation.MIDDLE),
+            message=f"{winner} {WIN_MARKER}!")
+
+
 def _add_engage(scn, new1, new2, c1, c2, engage_at=4):
     """The template freezes both armies for the countdown (stop_object) but never
     releases them — add an Engage trigger that PATROLs each army into the other's
@@ -190,7 +224,8 @@ def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE):
     _retarget(scn, old1, new1, old2, new2)
     _set_title(scn, n1, label1, n2, label2)
     _add_engage(scn, new1, new2, c1, c2)
-    _add_readout(scn, new1, label1, new2, label2)
+    _add_readout(scn, new1, label1, new2, label2)        # adds vars left1/left2 + readout
+    _rework_win_triggers(scn, new1, label1, new2, label2)  # result hold instead of defeat banner
 
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)

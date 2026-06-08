@@ -58,6 +58,32 @@ def _parse_matchup(s: str) -> dict:
     return dict(civ1=civ1, slug1=slug1, civ2=civ2, slug2=slug2, name=name)
 
 
+# civs whose adjective is NOT just "drop the trailing s"
+_CIV_ADJ_KEEP = {"Chinese", "Vietnamese", "Burmese", "Portuguese"}
+
+
+def _civ_adj(civ: str) -> str:
+    """'Armenians' -> 'Armenian', 'Aztecs' -> 'Aztec', 'Chinese' -> 'Chinese'."""
+    if civ in _CIV_ADJ_KEEP:
+        return civ
+    return civ[:-1] if civ.endswith("s") else civ
+
+
+def write_chapters(entries, out_txt) -> Path:
+    """Write YouTube chapter markers (cumulative start times) for the joined video.
+    entries = [(label, clip_duration_seconds), ...]."""
+    lines, t = [], 0.0
+    for label, dur in entries:
+        s = int(t)
+        h, rem = divmod(s, 3600)
+        m, sec = divmod(rem, 60)
+        ts = f"{h}:{m:02d}:{sec:02d}" if h else f"{m}:{sec:02d}"
+        lines.append(f"{ts} - {label}")
+        t += dur
+    Path(out_txt).write_text("\n".join(lines) + "\n")
+    return Path(out_txt)
+
+
 def _slice_1based(spec: str, n: int):
     """'A:B' 1-based inclusive -> (lo, hi) python indices. 'A:'/':B'/'' tolerated."""
     if not spec:
@@ -179,7 +205,7 @@ def main():
     # is the deliverable (kept in /tmp so we can concatenate them at the end).
     join_mode = bool(a.join)
     per_run_copy_to = None if join_mode else a.copy_to
-    results, clips = [], []
+    results, clips, chapters = [], [], []
     for i, m in enumerate(matchups, 1):
         log(f"===== [{i}/{n}] {m['name']} =====", a.log)
         try:
@@ -192,19 +218,26 @@ def main():
             log(f"[{i}/{n}] DONE -> {final}", a.log)
             results.append((m["name"], "OK", str(final)))
             clips.append(str(final))
+            # chapter label = the opponent unit (the varying side), e.g. "Aztec Jaguar Warrior"
+            label = f"{_civ_adj(m['civ2'])} {resolve_side(m['civ2'], m['slug2'])[2].replace('Elite ', '')}"
+            chapters.append((label, str(final)))
         except Exception as e:
             log(f"[{i}/{n}] FAILED: {e}", a.log)
             results.append((m["name"], "FAILED", str(e)))
 
-    # ---- JOIN (one combined video) --------------------------------------
+    # ---- JOIN (one combined video) + CHAPTERS ---------------------------
     if join_mode and clips:
-        from compose import concat_videos
+        from compose import concat_videos, _duration
         log(f"[join] concatenating {len(clips)} clip(s) -> {a.join} ...", a.log)
         joined = concat_videos(clips, "/tmp/joined_matchups.mp4")
         Path(a.copy_to).mkdir(parents=True, exist_ok=True)
         dest = Path(a.copy_to) / a.join
         shutil.copy2(joined, dest)
         log(f"[join] -> {dest} ({Path(dest).stat().st_size // 1024} KB)", a.log)
+        # YouTube chapters .txt (cumulative start time per matchup)
+        ch_entries = [(lbl, _duration(clip)) for lbl, clip in chapters]
+        ch_path = write_chapters(ch_entries, Path(a.copy_to) / f"{Path(a.join).stem} chapters.txt")
+        log(f"[chapters] -> {ch_path}", a.log)
 
     # ---- SUMMARY ---------------------------------------------------------
     ok = sum(1 for _, s, _ in results if s == "OK")

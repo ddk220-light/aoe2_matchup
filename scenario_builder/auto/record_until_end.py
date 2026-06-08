@@ -71,6 +71,25 @@ def watch_until_end(t0, cap=240, min_fight=8.0, poll=3.0, logfile=None) -> bool:
     return False
 
 
+def watch_until_result(t0, cap=240, min_fight=8.0, poll=2.0, logfile=None) -> bool:
+    """Poll the screen until the win trigger's '<unit> WINS!' result shows. The no-lose
+    scenario holds this on screen instead of ending the game, so this is how we know the
+    fight is over (no defeat banner). Returns True if detected before the cap."""
+    log(f"[watch] for the result banner (min {min_fight}s, poll {poll}s)...", logfile)
+    while time.time() - t0 < min_fight:
+        time.sleep(0.5)
+    while time.time() - t0 < cap - 2:
+        try:
+            if vision.detect_result(vision.grab()):
+                log(f"[watch] result detected at +{time.time() - t0:.1f}s", logfile)
+                return True
+        except Exception as e:
+            log(f"[watch] detect error: {e}", logfile)
+        time.sleep(poll)
+    log("[watch] cap reached without a result — stopping anyway", logfile)
+    return False
+
+
 def stop_recorder(rec: subprocess.Popen, out_mov, logfile=None):
     if rec.poll() is None:
         rec.send_signal(signal.SIGINT)        # graceful: finalize the .mov

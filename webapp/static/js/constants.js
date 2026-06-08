@@ -110,6 +110,7 @@ const NAME_TO_ICON = {
     Scorpion: "Scorpion",
     "Heavy Scorpion": "Heavy_Scorpion",
     "Bombard Cannon": "Bombard_Cannon",
+    Houfnice: "Houfnice",  // Bohemian Bombard Cannon upgrade (UT)
     Trebuchet: "Trebuchet",
     // Regional
     Slinger: "Slinger",

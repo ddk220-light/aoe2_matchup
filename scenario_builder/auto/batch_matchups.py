@@ -29,6 +29,8 @@ the mouse/keyboard or switch apps while it runs (the recorder captures the scree
 from __future__ import annotations
 
 import argparse
+import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -53,6 +55,32 @@ def _parse_matchup(s: str) -> dict:
             f"matchup must be CIV1:slug1:CIV2:slug2:Name — got {s!r}")
     civ1, slug1, civ2, slug2, name = (p.strip() for p in parts)
     return dict(civ1=civ1, slug1=slug1, civ2=civ2, slug2=slug2, name=name)
+
+
+def _slice_1based(spec: str, n: int):
+    """'A:B' 1-based inclusive -> (lo, hi) python indices. 'A:'/':B'/'' tolerated."""
+    if not spec:
+        return 0, n
+    a, _, b = spec.partition(":")
+    lo = int(a) if a.strip() else 1
+    hi = int(b) if b.strip() else n
+    return max(0, lo - 1), hi
+
+
+def matchups_from_list(list_path, slice_spec, opponent):
+    """Build 'opponent vs each list entry' matchups from a unique_units.json list.
+    `opponent` = 'CIV:slug' (the fixed side, e.g. Muisca:elite_temple_guard_muisca)."""
+    entries = json.loads(Path(list_path).read_text())
+    lo, hi = _slice_1based(slice_spec, len(entries))
+    entries = entries[lo:hi]
+    opp_civ, opp_slug = opponent.split(":", 1)
+    opp_label = resolve_side(opp_civ, opp_slug)[2]
+    out = []
+    for e in entries:
+        name = f"{opp_label} vs {e['name']} ({opp_civ} vs {e['civ']})"
+        out.append(dict(civ1=opp_civ, slug1=opp_slug,
+                        civ2=e["civ"], slug2=e["slug"], name=name))
+    return out
 
 
 def preflight(matchups, copy_to, logfile=None):
@@ -86,8 +114,15 @@ def preflight(matchups, copy_to, logfile=None):
 
 def main():
     ap = argparse.ArgumentParser(description="Chain matchup videos back-to-back.")
-    ap.add_argument("--matchup", action="append", required=True, type=_parse_matchup,
-                    metavar="CIV1:slug1:CIV2:slug2:Name", help="repeatable")
+    ap.add_argument("--matchup", action="append", default=[], type=_parse_matchup,
+                    metavar="CIV1:slug1:CIV2:slug2:Name", help="explicit matchup (repeatable)")
+    ap.add_argument("--list", dest="list_path",
+                    help="JSON unique-units list to run against --opponent (auto/unique_units.json)")
+    ap.add_argument("--slice", help="1-based inclusive range into --list, e.g. 1:5")
+    ap.add_argument("--opponent", metavar="CIV:slug",
+                    help="fixed side for --list mode (e.g. Muisca:elite_temple_guard_muisca)")
+    ap.add_argument("--join", metavar="NAME.mp4",
+                    help="also concatenate every clip into ONE video with this filename")
     ap.add_argument("--copy-to", default=DEFAULT_COPY_TO,
                     help=f"output folder (default: {DEFAULT_COPY_TO})")
     ap.add_argument("--cap", type=int, default=240, help="per-fight recording safety cap (s)")
@@ -96,10 +131,19 @@ def main():
                     help="validate matchups + environment and print the plan, then exit")
     a = ap.parse_args()
     open(a.log, "w").close()
-    n = len(a.matchup)
+
+    # ---- BUILD THE QUEUE -------------------------------------------------
+    matchups = list(a.matchup)
+    if a.list_path:
+        if not a.opponent:
+            log("ERROR: --list requires --opponent CIV:slug", a.log); sys.exit(2)
+        matchups += matchups_from_list(a.list_path, a.slice, a.opponent)
+    if not matchups:
+        log("ERROR: no matchups — give --matchup or --list + --opponent.", a.log); sys.exit(2)
+    n = len(matchups)
 
     # ---- PRE-FLIGHT ------------------------------------------------------
-    errors, plan = preflight(a.matchup, a.copy_to, a.log)
+    errors, plan = preflight(matchups, a.copy_to, a.log)
     log(f"=== BATCH of {n} matchup(s); {len(plan)} valid ===", a.log)
     for i, (name, l1, l2) in enumerate(plan, 1):
         log(f"  [{i}] {l1}  vs  {l2}   ->  {name}.mp4", a.log)
@@ -113,30 +157,49 @@ def main():
             "clicks will fail. System Settings -> Privacy & Security -> Accessibility.", a.log)
         sys.exit(2)
     if a.dry_run:
+        if a.join:
+            log(f"--join: the {len(plan)} clips would be concatenated into {a.join}", a.log)
         log("--dry-run: validation passed; not running.", a.log)
         return
 
     # ---- RUN -------------------------------------------------------------
-    results = []
-    for i, m in enumerate(a.matchup, 1):
+    # In --join mode the individual clips are NOT copied out — only the joined video
+    # is the deliverable (kept in /tmp so we can concatenate them at the end).
+    join_mode = bool(a.join)
+    per_run_copy_to = None if join_mode else a.copy_to
+    results, clips = [], []
+    for i, m in enumerate(matchups, 1):
         log(f"===== [{i}/{n}] {m['name']} =====", a.log)
         try:
             final = run_matchup(
                 m["civ1"], m["slug1"], m["civ2"], m["slug2"],
-                name=f"{m['name']}.mp4", copy_to=a.copy_to, cap=a.cap,
+                name=f"{m['name']}.mp4", copy_to=per_run_copy_to, cap=a.cap,
                 out_mov=f"/tmp/auto_fight_{i}.mov", final=f"/tmp/auto_matchup_{i}.mp4",
                 dismiss_after=True, logfile=a.log)
             log(f"[{i}/{n}] DONE -> {final}", a.log)
             results.append((m["name"], "OK", str(final)))
+            clips.append(str(final))
         except Exception as e:
             log(f"[{i}/{n}] FAILED: {e}", a.log)
             results.append((m["name"], "FAILED", str(e)))
+
+    # ---- JOIN (one combined video) --------------------------------------
+    if join_mode and clips:
+        from compose import concat_videos
+        log(f"[join] concatenating {len(clips)} clip(s) -> {a.join} ...", a.log)
+        joined = concat_videos(clips, "/tmp/joined_matchups.mp4")
+        Path(a.copy_to).mkdir(parents=True, exist_ok=True)
+        dest = Path(a.copy_to) / a.join
+        shutil.copy2(joined, dest)
+        log(f"[join] -> {dest} ({Path(dest).stat().st_size // 1024} KB)", a.log)
 
     # ---- SUMMARY ---------------------------------------------------------
     ok = sum(1 for _, s, _ in results if s == "OK")
     log(f"=== BATCH COMPLETE — {ok}/{n} succeeded ===", a.log)
     for name, status, detail in results:
         log(f"  [{status}] {name}  ->  {detail}", a.log)
+    if join_mode and clips:
+        log(f"  JOINED -> {Path(a.copy_to) / a.join}", a.log)
     sys.exit(0 if ok == n else 1)
 
 

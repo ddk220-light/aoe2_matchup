@@ -150,6 +150,39 @@ def _fight_segment_plain(battle_clip: Path, out: Path, size, lead_in: float = 0.
     return out
 
 
+def concat_videos(paths, out_path) -> Path:
+    """Join several finished mp4s into one. They all come from this pipeline (same
+    codec/size/fps/audio), so try a fast stream-copy concat first; fall back to a
+    re-encode if the demuxer balks at any parameter drift."""
+    out_path = Path(out_path).resolve()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    paths = [str(Path(p).resolve()) for p in paths]
+    fd, listf = tempfile.mkstemp(suffix=".txt")
+    with os.fdopen(fd, "w") as f:
+        for p in paths:
+            f.write(f"file '{p}'\n")
+    try:
+        sc = subprocess.run(
+            [_ffmpeg(), "-y", "-f", "concat", "-safe", "0", "-i", listf,
+             "-c", "copy", "-movflags", "+faststart", str(out_path)],
+            capture_output=True, text=True)
+        if sc.returncode != 0 or not out_path.exists():
+            inputs = []
+            for p in paths:
+                inputs += ["-i", p]
+            streams = "".join(f"[{i}:v][{i}:a]" for i in range(len(paths)))
+            _run([_ffmpeg(), "-y", *inputs, "-filter_complex",
+                  f"{streams}concat=n={len(paths)}:v=1:a=1[v][a]",
+                  "-map", "[v]", "-map", "[a]", *_x264(), *_AAC,
+                  "-movflags", "+faststart", str(out_path)])
+    finally:
+        try:
+            os.unlink(listf)
+        except OSError:
+            pass
+    return out_path
+
+
 def make_recap_video(u1: dict, u2: dict, out_path, battle_clip,
                      size=(1920, 1248), intro_seconds=5.0, outro_seconds=5.0,
                      lead_in: float = 0.0, work_dir=None) -> Path:

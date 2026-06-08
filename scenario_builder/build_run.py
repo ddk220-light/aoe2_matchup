@@ -41,8 +41,21 @@ SCOUT_CONST = UnitInfo.SCOUT_CAVALRY.ID         # 448 — never swapped (it's th
 P_SPECTATOR, P_SIDE1, P_SIDE2 = 1, 2, 3         # player slots in the template
 
 
+# Unit keys whose scenario id can't be derived from the slug by a simple suffix-strip
+# + UnitInfo[KEY] lookup (e.g. the Bengali Ratha's slug carries a "(melee)"/"(ranged)"
+# mode tag the dataset spells without parentheses).
+_KEY_CONST_OVERRIDE = {
+    "elite_ratha_(melee)": int(UnitInfo.ELITE_RATHA_MELEE.ID),
+    "elite_ratha_(ranged)": int(UnitInfo.ELITE_RATHA_RANGED.ID),
+    "ratha_(melee)": int(UnitInfo.RATHA_MELEE.ID),
+    "ratha_(ranged)": int(UnitInfo.RATHA_RANGED.ID),
+}
+
+
 def unit_const(key: str) -> int:
     """Map a unit key like 'elite_temple_guard' -> its scenario unit id (2587)."""
+    if key in _KEY_CONST_OVERRIDE:
+        return _KEY_CONST_OVERRIDE[key]
     return int(UnitInfo[key.upper()].ID)
 
 

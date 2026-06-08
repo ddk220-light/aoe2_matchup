@@ -44,6 +44,24 @@ environment, then exits without touching the game:
 .venv/bin/python -m auto.batch_matchups --dry-run --matchup "..." --matchup "..."
 ```
 
+### Sweep a unit against the unique-unit list
+
+`unique_units.json` (built by `python -m auto.build_unique_list`) is the ordered,
+validated list of all 62 land unique units, alphabetical by civ. Run a fixed unit
+against a slice of it without typing each matchup:
+
+```bash
+.venv/bin/python -m auto.batch_matchups \
+  --list auto/unique_units.json --slice 1:5 \
+  --opponent "Muisca:elite_temple_guard_muisca" \
+  --join "Temple Guard vs Uniques 01-05.mp4"
+```
+
+- `--list` + `--opponent CIV:slug` → builds `opponent vs <each list entry>` matchups.
+- `--slice A:B` → 1-based inclusive range into the list (`1:5` = the first five).
+- `--join NAME.mp4` → after all fights, concatenate every clip into **one** combined
+  video (the individual clips are not copied out in join mode — only the joined one).
+
 ### Prerequisites (one-time)
 
 Run from a **Terminal** (Terminal.app / iTerm) that has BOTH, in System Settings →

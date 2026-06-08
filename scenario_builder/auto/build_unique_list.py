@@ -35,7 +35,10 @@ NAVAL = ("dromon", "xebec", "lou chuan", "thirisadai", "catapult galleon",
 # the Bengali Ratha is ONE unit with two modes; keep the melee form, drop the ranged
 # duplicate so the list is one-entry-per-unit
 DROP_DUP = ("(ranged)",)
+# siege by class OR by name — the Khitan Mounted Trebuchet is class "Cavalry" in the
+# DB but is functionally a siege weapon (min attack range, won't fight point-blank).
 SIEGE_CLASSES = ("siege", "ballista")
+SIEGE_NAMES = ("trebuchet", "ballista", "organ gun", "hussite")
 
 
 def enumerate_uniques():
@@ -61,9 +64,10 @@ def enumerate_uniques():
                 unit_const(key)
             except Exception as e:
                 skipped.append((civ, name, f"unresolved ({type(e).__name__})")); continue
+            is_siege = (any(s in cls.lower() for s in SIEGE_CLASSES)
+                        or any(k in label.lower() for k in SIEGE_NAMES))
             units.append({"civ": civ, "slug": slug, "name": label,
-                          "unit_class": cls,
-                          "is_siege": any(s in cls.lower() for s in SIEGE_CLASSES)})
+                          "unit_class": cls, "is_siege": is_siege})
     return units, skipped
 
 

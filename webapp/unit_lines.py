@@ -314,11 +314,16 @@ UNIT_LINES = {
         "imperial_slug": "galleon",
         # Berbers/Xebec intentionally excluded from rankings (no confirmed icon/data).
         # See NAVAL_UNIT_LINES for the civ-overview mapping which still references it.
+        # NOTE: the Wu Lou Chuan is NOT a warship — its stat profile is a Cannon
+        # Galleon (230 building damage, range 13 / min-range 3) and Wu has no
+        # regular Cannon Galleon, so it's Wu's cannon-galleon replacement. It is
+        # mapped in the cannon_galleon line below (matching Chinese/Jurchens/Shu/
+        # Wei), NOT here — otherwise it would be (mis)scored in the naval ranking
+        # and excluded from Anti-Building Effectiveness.
         "unique_units": {
             "Vikings": ("longboat_vikings", "elite_longboat_vikings"),
             "Portuguese": ("caravel_portuguese", "elite_caravel_portuguese"),
             "Dravidians": ("thirisadai_dravidians", "thirisadai_dravidians"),
-            "Wu": ("lou_chuan_wu", "lou_chuan_wu"),
         },
     },
     "fire": {

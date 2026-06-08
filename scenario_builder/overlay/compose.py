@@ -72,7 +72,9 @@ def _run(cmd: list):
 # Output quality knobs (env-overridable for quick experiments).
 OUT_FPS = int(os.environ.get("MATCHUP_FPS", "60"))       # smoother motion
 X264_CRF = os.environ.get("MATCHUP_CRF", "17")           # lower = higher quality
-X264_PRESET = os.environ.get("MATCHUP_PRESET", "slow")   # better compression/quality
+# 'veryfast' encodes ~8x faster than 'slow' for a negligible quality/size change at
+# CRF 17 — the fight segment is the compose bottleneck, so this is the big speed knob.
+X264_PRESET = os.environ.get("MATCHUP_PRESET", "veryfast")
 
 
 def _x264() -> list:
@@ -207,17 +209,10 @@ def make_recap_video(u1: dict, u2: dict, out_path, battle_clip,
 
 
 def _concat(segments: list[Path], out: Path) -> Path:
-    n = len(segments)
-    inputs = []
-    for s in segments:
-        inputs += ["-i", str(s)]
-    # every segment carries one video + one audio stream (cards silent, fight real)
-    streams = "".join(f"[{i}:v][{i}:a]" for i in range(n))
-    _run([_ffmpeg(), "-y", *inputs,
-          "-filter_complex", f"{streams}concat=n={n}:v=1:a=1[v][a]",
-          "-map", "[v]", "-map", "[a]", *_x264(), *_AAC,
-          "-movflags", "+faststart", str(out)])
-    return out
+    # the three segments come from this pipeline with identical codec/params, so a
+    # stream-copy concat (no re-encode) joins them in a fraction of the time. Falls
+    # back to a re-encode automatically (concat_videos) if a param ever drifts.
+    return concat_videos(segments, out)
 
 
 def make_matchup_video(result, u1: dict, u2: dict, out_path,

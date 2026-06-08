@@ -610,6 +610,14 @@ IMPERIAL_UNITS = {
         "unit_class": 13,
         "availability_tech": 188,  # Bombard Cannon (make avail)
         "upgrades": [],
+        # Houfnice (Bohemian Imperial UT, tech 787) upgrades the Bombard Cannon
+        # in place to unit 1709 "Houfnice" (+10 HP, +10 attack, +50 vs buildings,
+        # +1 pierce armor). Same UPGRADE_UNIT pattern as Persian Savar.
+        "civ_upgrades": {
+            "Bohemians": [
+                (787, 1709, "Houfnice"),
+            ],
+        },
     },
     "trebuchet": {
         "base_id": 42,

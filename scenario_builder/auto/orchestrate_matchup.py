@@ -62,9 +62,11 @@ from auto.record_until_end import (                   # noqa: E402
 from build_run import build_run                       # noqa: E402
 
 RESULT_HOLD = 5.0                                      # seconds to hold the result on screen
-PATROL_LEAD = 3.0                                      # clip starts ~here after game-start
-#   (the armies are frozen for the 3-2-1 countdown and patrol in at game-time ~4s;
-#    starting from the detected game-start makes this robust to variable load time)
+PATROL_LEAD = 3.5                                      # clip starts ~here after game-start
+#   At game-start the camera spends ~2s panning to the arena; the armies are frozen for
+#   the 3-2-1 countdown and patrol IN at game-time ~4s. Starting ~3.5s after the
+#   detected game-start lands past the camera pan and right on the charge — never on
+#   the pan, never already mid-fight — robust to variable scenario-load time.
 
 # search regions (fractional) to disambiguate repeated labels
 R_MENU_BTN = (0.85, 0.0, 1.0, 0.10)      # top-right "Menu"

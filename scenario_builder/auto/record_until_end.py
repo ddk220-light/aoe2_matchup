@@ -38,6 +38,32 @@ def _focus_game():
                    capture_output=True)
 
 
+PATROL_LEAD = 2.0   # start the clip this many seconds after the detected game-start
+#   (game-start = on-screen title/readout appears; the camera pans ~2s then the armies
+#    charge in — +2.0s lands on the charge, past the pan, before contact)
+
+
+def detect_game_start(mov, t_from=1.0, t_to=18.0, step=0.3):
+    """FRAME-ACCURATE game-start in a recording: the first frame where the on-screen
+    'N vs M' title/readout appears (scenario loaded, timer running). Far more reliable
+    than a wall-clock guess (load time varies run to run). Returns seconds, or None."""
+    import cv2
+    from PIL import Image
+    cap = cv2.VideoCapture(str(mov))
+    t, found = t_from, None
+    while t < t_to:
+        cap.set(cv2.CAP_PROP_POS_MSEC, t * 1000)
+        ok, fr = cap.read()
+        if not ok:
+            break
+        if vision.read_counts(Image.fromarray(cv2.cvtColor(fr, cv2.COLOR_BGR2RGB))) is not None:
+            found = t
+            break
+        t += step
+    cap.release()
+    return found
+
+
 def log(msg, logfile=None):
     line = f"[{datetime.now():%H:%M:%S}] {msg}"
     print(line, flush=True)
@@ -144,7 +170,13 @@ def compose_recap(civ1, slug1, civ2, slug2, out_mov, final,
     from overlay_data import get_unit_card
     from compose import make_recap_video
     import shutil
-    log("[compose] intro card -> real fight (+audio, capped 30s) ...", logfile)
+    # Prefer a FRAME-ACCURATE clip start: detect game-start in the actual recording and
+    # start on the charge (game_start + PATROL_LEAD). Falls back to the passed lead_in.
+    gs = detect_game_start(out_mov)
+    if gs is not None:
+        lead_in = gs + PATROL_LEAD
+    log(f"[compose] game_start={gs}  lead_in={lead_in:.1f}  -> intro card -> fight (capped 30s) ...",
+        logfile)
     u1 = get_unit_card(civ1, slug1)
     u2 = get_unit_card(civ2, slug2)
     out = make_recap_video(u1, u2, final, battle_clip=out_mov, lead_in=lead_in,

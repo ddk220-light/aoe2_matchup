@@ -161,7 +161,7 @@ def _unit_panel(u: dict, side: int, winners: dict, bonuses_list: list, count: in
         </div>
       </div>
       <div class="stats">{_stat_rows(u['stats'], side, winners)}</div>
-      {bonus_block}{_unique_block(u.get('unique_techs', []))}
+      {bonus_block}
     </div>"""
 
 

@@ -62,6 +62,9 @@ from auto.record_until_end import (                   # noqa: E402
 from build_run import build_run                       # noqa: E402
 
 RESULT_HOLD = 5.0                                      # seconds to hold the result on screen
+PATROL_LEAD = 3.0                                      # clip starts ~here after game-start
+#   (the armies are frozen for the 3-2-1 countdown and patrol in at game-time ~4s;
+#    starting from the detected game-start makes this robust to variable load time)
 
 # search regions (fractional) to disambiguate repeated labels
 R_MENU_BTN = (0.85, 0.0, 1.0, 0.10)      # top-right "Menu"
@@ -194,6 +197,22 @@ def navigate_to_test_menu(start_state, scenario_name, logfile) -> bool:
     return True
 
 
+def wait_for_game_start(t0, timeout=20.0, logfile=None) -> float:
+    """After clicking Test, wait until the in-game title/readout first appears — i.e.
+    the scenario has finished loading and its timer is running. Returns that timestamp,
+    so the clip's start can be measured from a fixed in-game moment (robust to variable
+    load time) rather than from the Test click."""
+    while time.time() - t0 < timeout:
+        _focus_game()
+        if vision.read_counts(vision.grab()) is not None:
+            t = time.time()
+            log(f"[watch] game started at +{t - t0:.1f}s", logfile)
+            return t
+        time.sleep(0.4)
+    log("[watch] game-start not detected — using fallback offset", logfile)
+    return t0 + 5.0
+
+
 def return_to_editor(logfile, retries=12) -> bool:
     """Quit the running test back to the Scenario Editor so the game is clean for the
     NEXT run. The no-lose scenario holds the result on screen WITHOUT ending the game
@@ -274,11 +293,12 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, cap=240,
     # a recorder orphaned or the game stuck for the next matchup.
     rec = start_recorder(out_mov, cap, logfile=logfile)
     t_rec = time.time()
-    t_test = None
+    t_gs = None
     try:
         if not find_and_click("Test", R_DIALOG, logfile, "Test"):
             raise RuntimeError("could not click Test")
         t_test = time.time()
+        t_gs = wait_for_game_start(t_test, logfile=logfile)   # when the fight actually begins
         watch_until_result(t_test, cap, logfile=logfile)
         time.sleep(RESULT_HOLD)            # keep recording the on-screen result hold
     finally:
@@ -293,8 +313,10 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, cap=240,
         raise RuntimeError(f"recording looks empty ({sz} bytes) — is Screen Recording "
                            "granted to this terminal, and the recorder built?")
 
-    # 8-9. COMPOSE (recap, no OCR) -> COPY. Trim the menu/load lead-in off the front.
-    lead_in = max(0.0, (t_test - t_rec) + LEAD_PAD)
+    # 8-9. COMPOSE (recap, no OCR) -> COPY. Start the clip when the armies patrol in
+    # (measured from the detected game-start), and the compose drops the idle tail.
+    base = t_gs if t_gs is not None else t_rec
+    lead_in = max(0.0, (base - t_rec) + PATROL_LEAD)
     return compose_recap(civ1, slug1, civ2, slug2, out_mov, final,
                          copy_to, name, lead_in=lead_in, counts=counts, logfile=logfile)
 

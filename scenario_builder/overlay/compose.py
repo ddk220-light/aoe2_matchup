@@ -132,14 +132,18 @@ def _fight_segment(battle_clip: Path, hud_dir: Path, hud_fps: float,
     return out
 
 
-def _fight_segment_plain(battle_clip: Path, out: Path, size, lead_in: float = 0.0) -> Path:
+def _fight_segment_plain(battle_clip: Path, out: Path, size, lead_in: float = 0.0,
+                         tail_trim: float = 0.0) -> Path:
     """Battle footage normalized to `size`, KEEPING its captured audio, with NO HUD
     overlay (the no-OCR recap path has no survivor timeline to draw). `lead_in` trims
-    that many seconds off the front (skip the menu/load before the fight)."""
+    the front (menu/load/countdown before the units charge in); `tail_trim` trims the
+    end (the idle units-standing tail after the result)."""
     has_a = _has_audio(battle_clip)
     cmd = [_ffmpeg(), "-y"]
     if lead_in and lead_in > 0:
         cmd += ["-ss", f"{lead_in}"]            # input seek: drop the lead-in
+    if tail_trim and tail_trim > 0:             # stop early: drop the idle tail
+        cmd += ["-t", f"{max(0.5, _duration(battle_clip) - tail_trim - lead_in)}"]
     cmd += ["-i", str(battle_clip)]
     if not has_a:
         cmd += ["-f", "lavfi", "-i", _ANULLSRC]
@@ -200,26 +204,30 @@ def _ff_badge(text: str, out_png: Path) -> Path:
 
 
 def _fight_segment_ramped(battle_clip: Path, out: Path, size, lead_in: float = 0.0,
-                          result_hold: float = 5.0, max_fight: float = 30.0) -> Path:
+                          result_hold: float = 3.5, tail_trim: float = 3.0,
+                          max_fight: float = 30.0) -> Path:
     """Battle footage normalized to `size`, capped so the COMBAT is at most `max_fight`
     seconds: a long fight plays first 10s + last 10s at normal speed with the middle
-    sped up to 10s (a 'FAST FORWARD' badge marks it), then the trailing `result_hold`
-    seconds (the in-game who-won hold) always play at normal speed. Short fights pass
-    through untouched. Keeps the captured audio."""
+    sped up to 10s (a 'FAST FORWARD' badge marks it), then `result_hold` seconds of the
+    who-won result at normal speed. `lead_in` trims the front (menu/load/countdown);
+    `tail_trim` trims the idle units-standing tail off the end. Short fights pass
+    through (front+tail trimmed). Keeps the captured audio."""
     W, H = size
     D = _duration(battle_clip)
-    fc_dur = D - lead_in - result_hold                     # the combat portion length
+    end = D - tail_trim                                     # drop the idle tail
+    fc_dur = end - lead_in - result_hold                    # the combat portion length
     if fc_dur <= max_fight or fc_dur <= 0:
-        return _fight_segment_plain(battle_clip, out, size, lead_in=lead_in)
+        return _fight_segment_plain(battle_clip, out, size, lead_in=lead_in,
+                                    tail_trim=tail_trim)
 
     has_a = _has_audio(battle_clip)
     speed = (fc_dur - 20.0) / 10.0                          # middle compressed to 10s
     badge = _ff_badge(f"»  FAST FORWARD  »     {speed:.1f}x",
                       out.parent / "_ffbadge.png")
     a0, a1 = lead_in, lead_in + 10.0                        # A first 10s
-    b0, b1 = a1, D - result_hold - 10.0                     # B middle (sped up)
-    c0, c1 = b1, D - result_hold                            # C last 10s
-    d0, d1 = c1, D                                          # D result hold
+    b0, b1 = a1, end - result_hold - 10.0                   # B middle (sped up)
+    c0, c1 = b1, end - result_hold                          # C last 10s
+    d0, d1 = c1, end                                        # D result hold
     # ONE decode + ONE encode: scale, split into the 4 ranges, speed the middle +
     # overlay the badge, concat. Far faster than encoding 4 segments separately.
     vfc = (

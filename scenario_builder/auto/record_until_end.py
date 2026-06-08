@@ -161,7 +161,7 @@ def ocr_and_compose(civ1, slug1, civ2, slug2, out_mov, final,
 
 def compose_recap(civ1, slug1, civ2, slug2, out_mov, final,
                   copy_to=None, name=None, lead_in=0.0, counts=(30, 30),
-                  logfile=None) -> Path:
+                  raw_copy_to=None, logfile=None) -> Path:
     """No-OCR compose: intro stat card (with per-side counts + resources) -> real
     fight footage (+ captured audio), capped to 30s of combat with a speed-ramp and
     ending on the in-game ~5s who-won hold. No outro card. `lead_in` trims the
@@ -182,6 +182,18 @@ def compose_recap(civ1, slug1, civ2, slug2, out_mov, final,
     out = make_recap_video(u1, u2, final, battle_clip=out_mov, lead_in=lead_in,
                            counts=counts)
     log(f"[compose] -> {out} ({Path(out).stat().st_size // 1024} KB)", logfile)
+    # Archive the RAW recording (so a clip can be re-composed later without re-running
+    # the game) to <raw_copy_to>/raw recordings/, named like the video. Done for EVERY
+    # run, independent of whether the composed clip itself is copied (e.g. join mode).
+    if raw_copy_to and os.path.exists(out_mov):
+        raw_dir = Path(raw_copy_to) / "raw recordings"
+        raw_dir.mkdir(parents=True, exist_ok=True)
+        raw_dest = raw_dir / (Path(name or Path(out).name).stem + ".mov")
+        try:
+            shutil.copy2(out_mov, raw_dest)
+            log(f"[raw] -> {raw_dest} ({Path(raw_dest).stat().st_size // 1048576} MB)", logfile)
+        except Exception as e:
+            log(f"[raw] copy failed: {e}", logfile)
     if copy_to:
         Path(copy_to).mkdir(parents=True, exist_ok=True)
         dest = Path(copy_to) / (name or Path(out).name)

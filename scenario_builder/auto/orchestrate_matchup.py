@@ -252,8 +252,8 @@ def return_to_editor(logfile, retries=12) -> bool:
     return ok
 
 
-def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, cap=240,
-                mode="count", unit_cap=30,
+def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_to=None,
+                cap=240, mode="count", unit_cap=30,
                 out_mov="/tmp/auto_fight.mov", final="/tmp/auto_matchup_FINAL.mp4",
                 dismiss_after=True, logfile=None) -> Path:
     """One full matchup: build from template -> stage -> navigate -> record -> Test
@@ -320,7 +320,8 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, cap=240,
     base = t_gs if t_gs is not None else t_rec
     lead_in = max(0.0, (base - t_rec) + PATROL_LEAD)
     return compose_recap(civ1, slug1, civ2, slug2, out_mov, final,
-                         copy_to, name, lead_in=lead_in, counts=counts, logfile=logfile)
+                         copy_to, name, lead_in=lead_in, counts=counts,
+                         raw_copy_to=raw_copy_to, logfile=logfile)
 
 
 def main():
@@ -348,8 +349,8 @@ def main():
         final = run_matchup(a.civ1, a.slug1, a.civ2, a.slug2, name=a.name,
                             mode=("resources" if a.resources else "count"),
                             unit_cap=a.unit_cap,
-                            copy_to=a.copy_to, cap=a.cap, out_mov=a.out_mov,
-                            final=a.final, logfile=a.log)
+                            copy_to=a.copy_to, raw_copy_to=a.copy_to, cap=a.cap,
+                            out_mov=a.out_mov, final=a.final, logfile=a.log)
     except Exception as e:
         log(f"ERROR: {e}", a.log)
         sys.exit(1)

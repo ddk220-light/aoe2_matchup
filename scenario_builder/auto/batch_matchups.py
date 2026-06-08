@@ -211,7 +211,8 @@ def main():
         try:
             final = run_matchup(
                 m["civ1"], m["slug1"], m["civ2"], m["slug2"],
-                name=f"{m['name']}.mp4", copy_to=per_run_copy_to, cap=a.cap,
+                name=f"{m['name']}.mp4", copy_to=per_run_copy_to,
+                raw_copy_to=a.copy_to, cap=a.cap,    # archive the raw for EVERY run
                 mode=mode, unit_cap=a.unit_cap,
                 out_mov=f"/tmp/auto_fight_{i}.mov", final=f"/tmp/auto_matchup_{i}.mp4",
                 dismiss_after=True, logfile=a.log)

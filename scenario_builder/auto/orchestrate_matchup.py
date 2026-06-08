@@ -262,7 +262,7 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, cap=240,
     # 8-9. COMPOSE (recap, no OCR) -> COPY. Trim the menu/load lead-in off the front.
     lead_in = max(0.0, (t_test - t_rec) + LEAD_PAD)
     return compose_recap(civ1, slug1, civ2, slug2, out_mov, final,
-                         copy_to, name, lead_in=lead_in, logfile=logfile)
+                         copy_to, name, lead_in=lead_in, counts=counts, logfile=logfile)
 
 
 def main():

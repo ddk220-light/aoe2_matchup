@@ -152,6 +152,104 @@ def _fight_segment_plain(battle_clip: Path, out: Path, size, lead_in: float = 0.
     return out
 
 
+_FF_FONT = next((p for p in (
+    "/System/Library/Fonts/Supplemental/Arial.ttf", "/Library/Fonts/Arial.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "C:/Windows/Fonts/arialbd.ttf") if os.path.exists(p)), None)
+
+
+def _duration(path) -> float:
+    out = subprocess.run([_ffprobe(), "-v", "error", "-show_entries", "format=duration",
+                          "-of", "csv=p=0", str(path)], capture_output=True, text=True).stdout.strip()
+    try:
+        return float(out)
+    except ValueError:
+        return 0.0
+
+
+def _atempo_chain(f: float) -> str:
+    """atempo handles 0.5..2.0 per instance; chain to reach higher speed factors."""
+    parts, r = [], f
+    while r > 2.0:
+        parts.append("atempo=2.0"); r /= 2.0
+    parts.append(f"atempo={r:.5f}")
+    return ",".join(parts)
+
+
+def _ff_badge(text: str, out_png: Path) -> Path:
+    """Render a 'FAST FORWARD' badge PNG (white text on a translucent pill) to overlay
+    on the sped-up segment — this ffmpeg build has no drawtext, so we use PIL + overlay."""
+    from PIL import Image, ImageDraw, ImageFont
+    try:
+        font = ImageFont.truetype(_FF_FONT, 54) if _FF_FONT else ImageFont.load_default()
+    except OSError:
+        font = ImageFont.load_default()
+    d0 = ImageDraw.Draw(Image.new("RGBA", (8, 8)))
+    bb = d0.textbbox((0, 0), text, font=font)
+    tw, th = bb[2] - bb[0], bb[3] - bb[1]
+    px, py = 44, 26
+    img = Image.new("RGBA", (tw + 2 * px, th + 2 * py), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    try:
+        d.rounded_rectangle([0, 0, img.width - 1, img.height - 1], radius=18, fill=(0, 0, 0, 150))
+    except AttributeError:
+        d.rectangle([0, 0, img.width - 1, img.height - 1], fill=(0, 0, 0, 150))
+    d.text((px - bb[0], py - bb[1]), text, font=font, fill=(255, 255, 255, 255))
+    img.save(out_png)
+    return out_png
+
+
+def _fight_segment_ramped(battle_clip: Path, out: Path, size, lead_in: float = 0.0,
+                          result_hold: float = 5.0, max_fight: float = 30.0) -> Path:
+    """Battle footage normalized to `size`, capped so the COMBAT is at most `max_fight`
+    seconds: a long fight plays first 10s + last 10s at normal speed with the middle
+    sped up to 10s (a 'FAST FORWARD' badge marks it), then the trailing `result_hold`
+    seconds (the in-game who-won hold) always play at normal speed. Short fights pass
+    through untouched. Keeps the captured audio."""
+    W, H = size
+    D = _duration(battle_clip)
+    fc_dur = D - lead_in - result_hold                     # the combat portion length
+    if fc_dur <= max_fight or fc_dur <= 0:
+        return _fight_segment_plain(battle_clip, out, size, lead_in=lead_in)
+
+    has_a = _has_audio(battle_clip)
+    speed = (fc_dur - 20.0) / 10.0                          # middle compressed to 10s
+    badge = _ff_badge(f"»  FAST FORWARD  »     {speed:.1f}x",
+                      out.parent / "_ffbadge.png")
+    a0, a1 = lead_in, lead_in + 10.0                        # A first 10s
+    b0, b1 = a1, D - result_hold - 10.0                     # B middle (sped up)
+    c0, c1 = b1, D - result_hold                            # C last 10s
+    d0, d1 = c1, D                                          # D result hold
+    # ONE decode + ONE encode: scale, split into the 4 ranges, speed the middle +
+    # overlay the badge, concat. Far faster than encoding 4 segments separately.
+    vfc = (
+        f"[0:v]scale={W}:{H},split=4[s0][s1][s2][s3];"
+        f"[s0]trim={a0}:{a1},setpts=PTS-STARTPTS[va];"
+        f"[s1]trim={b0}:{b1},setpts=(PTS-STARTPTS)/{speed:.6f}[vbr];"
+        f"[vbr][1:v]overlay=x=(main_w-overlay_w)/2:y=60[vb];"
+        f"[s2]trim={c0}:{c1},setpts=PTS-STARTPTS[vc];"
+        f"[s3]trim={d0}:{d1},setpts=PTS-STARTPTS[vd];"
+        f"[va][vb][vc][vd]concat=n=4:v=1:a=0[v]"
+    )
+    cmd = [_ffmpeg(), "-y", "-i", str(battle_clip), "-i", str(badge)]
+    if has_a:
+        afc = (
+            f"[0:a]asplit=4[t0][t1][t2][t3];"
+            f"[t0]atrim={a0}:{a1},asetpts=PTS-STARTPTS[aa];"
+            f"[t1]atrim={b0}:{b1},asetpts=PTS-STARTPTS,{_atempo_chain(speed)}[ab];"
+            f"[t2]atrim={c0}:{c1},asetpts=PTS-STARTPTS[ac];"
+            f"[t3]atrim={d0}:{d1},asetpts=PTS-STARTPTS[ad];"
+            f"[aa][ab][ac][ad]concat=n=4:v=0:a=1[a]"
+        )
+        cmd += ["-filter_complex", vfc + ";" + afc, "-map", "[v]", "-map", "[a]"]
+    else:
+        cmd += ["-filter_complex", vfc, "-map", "[v]",
+                "-f", "lavfi", "-i", _ANULLSRC, "-map", "2:a", "-shortest"]
+    cmd += [*_x264(), *_AAC, "-movflags", "+faststart", str(out)]
+    _run(cmd)
+    return out
+
+
 def concat_videos(paths, out_path) -> Path:
     """Join several finished mp4s into one. They all come from this pipeline (same
     codec/size/fps/audio), so try a fast stream-copy concat first; fall back to a
@@ -186,25 +284,23 @@ def concat_videos(paths, out_path) -> Path:
 
 
 def make_recap_video(u1: dict, u2: dict, out_path, battle_clip,
-                     size=(1920, 1248), intro_seconds=5.0, outro_seconds=5.0,
-                     lead_in: float = 0.0, work_dir=None) -> Path:
-    """No-OCR pipeline: intro stat card -> real fight footage (+ audio) -> recap card.
-    No live HUD, no survivor counts — just the matchup bookends around the real fight."""
+                     size=(1920, 1248), intro_seconds=5.0,
+                     lead_in: float = 0.0, counts=(30, 30), work_dir=None) -> Path:
+    """No-OCR pipeline: intro stat card -> real fight footage (+ audio). The fight
+    footage already ends on a ~5s in-game result hold (who won + counts), so there is
+    NO separate outro card — it just cuts to the next matchup. `counts` = (n1, n2)
+    units per side, shown on the intro card with each side's total resources."""
     out_path = Path(out_path).resolve()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     tmp = Path(work_dir) if work_dir else Path(tempfile.mkdtemp(prefix="recap_"))
 
-    intro_png = render_intro(u1, u2, tmp / "intro.png")
-    outro_png = render_outro_recap(u1, u2, tmp / "outro.png")
-
+    intro_png = render_intro(u1, u2, tmp / "intro.png", counts=counts)
     seg_intro = _card_segment(intro_png, intro_seconds, tmp / "seg_intro.mp4",
                               size, card_width_frac=0.94)
-    seg_fight = _fight_segment_plain(Path(battle_clip).resolve(), tmp / "seg_fight.mp4",
-                                     size, lead_in=lead_in)
-    seg_outro = _card_segment(outro_png, outro_seconds, tmp / "seg_outro.mp4",
-                              size, card_width_frac=0.74)
+    seg_fight = _fight_segment_ramped(Path(battle_clip).resolve(), tmp / "seg_fight.mp4",
+                                      size, lead_in=lead_in)
 
-    _concat([seg_intro, seg_fight, seg_outro], out_path)
+    _concat([seg_intro, seg_fight], out_path)
     return out_path
 
 

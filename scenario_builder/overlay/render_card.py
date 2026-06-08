@@ -127,16 +127,27 @@ def _unique_block(unique: list) -> str:
     return f'<div class="row-label">Unique tech</div>{"".join(rows)}'
 
 
-def _unit_panel(u: dict, side: int, winners: dict) -> str:
+def _applicable_bonuses(attacker: dict, defender: dict) -> list:
+    """The attacker's attack bonuses that actually apply against THIS defender — i.e.
+    '+X vs <class>' only when the defender belongs to that armor class."""
+    dac = set(defender.get("armor_class_ids", []))
+    return [b for b in attacker.get("attack_bonuses", []) if b.get("vs_id") in dac]
+
+
+def _unit_panel(u: dict, side: int, winners: dict, bonuses_list: list, count: int) -> str:
     icon = _img_data_uri(u.get("icon", ""))
     icon_html = (f'<img class="icon" src="{icon}" alt="">' if icon
                  else '<div class="icon"></div>')
-    bonuses = "".join(f'<span class="bonus">+{b["amount"]} vs {b["vs"]}</span>'
-                      for b in u.get("attack_bonuses", []))
-    bonus_block = (f'<div class="row-label">Attack bonus</div>'
-                   f'<div class="chips">{bonuses}</div>') if bonuses else ""
-    # Upgrades and Civ-bonuses sections intentionally omitted from the video card —
-    # the overview keeps to stats, cost, attack bonuses, and unique tech.
+    if bonuses_list:
+        chips = "".join(f'<span class="bonus">+{b["amount"]} vs {b["vs"]}</span>'
+                        for b in bonuses_list)
+    else:
+        chips = '<span class="none">no bonus applies</span>'
+    bonus_block = f'<div class="row-label">Bonus vs opponent</div><div class="chips">{chips}</div>'
+    total_res = int(count * (u["cost"]["total"] or 0))
+    army_line = (f'<div class="army"><b>{count}</b> units &middot; '
+                 f'<b>{total_res}</b> resources</div>')
+    # Upgrades and Civ-bonuses sections intentionally omitted from the video card.
     return f"""
     <div class="unit">
       <div class="head">
@@ -145,7 +156,8 @@ def _unit_panel(u: dict, side: int, winners: dict) -> str:
           <div class="name">{u['name']}</div>
           <div class="sub">{u['civ']} &middot; {u.get('unit_type','')}</div>
           <div class="cost">{_res_chips(u['cost'])}
-            <span class="total">= {u['cost']['total']} res</span></div>
+            <span class="total">= {u['cost']['total']} res each</span></div>
+          {army_line}
         </div>
       </div>
       <div class="stats">{_stat_rows(u['stats'], side, winners)}</div>
@@ -177,6 +189,10 @@ html,body {{ margin:0; padding:0; background:transparent;
 .cost {{ margin-top:9px; font-size:16px; }}
 .res {{ font-weight:bold; margin-right:9px; }}
 .total {{ color:{P['text_muted']}; font-size:13px; }}
+.army {{ margin-top:7px; font-size:17px; color:{P['gold_light']}; }}
+.army b {{ color:{P['text']}; font-size:19px; }}
+.none {{ font-size:12px; padding:2px 8px; border-radius:10px; color:{P['text_muted']};
+  border:1px dashed rgba(168,152,120,.4); }}
 .stats {{ display:grid; grid-template-columns:1fr 1fr; gap:6px 18px; margin:14px 0 4px; }}
 .stat {{ display:flex; justify-content:space-between;
   border-bottom:1px dotted rgba(168,152,120,.3); padding:4px 0; font-size:17px; }}
@@ -219,13 +235,16 @@ html,body {{ margin:0; padding:0; background:transparent;
 """
 
 
-def build_intro_html(u1: dict, u2: dict, title: str | None = None) -> str:
+def build_intro_html(u1: dict, u2: dict, title: str | None = None,
+                     counts=(30, 30)) -> str:
     winners = _stat_winners(u1, u2)
     title = title or f"{u1['name']}  vs  {u2['name']}"
+    b1 = _applicable_bonuses(u1, u2)
+    b2 = _applicable_bonuses(u2, u1)
     return f"""<!doctype html><html><head><meta charset="utf-8"><style>{_css()}</style></head>
 <body><div class="wrap">
   <div class="banner">{title}<span class="brand">aoe2matchup.com</span></div>
-  <div class="matchup">{_unit_panel(u1,1,winners)}<div class="vs">VS</div>{_unit_panel(u2,2,winners)}</div>
+  <div class="matchup">{_unit_panel(u1,1,winners,b1,counts[0])}<div class="vs">VS</div>{_unit_panel(u2,2,winners,b2,counts[1])}</div>
 </div></body></html>"""
 
 
@@ -313,8 +332,9 @@ def _screenshot(html: str, out_png, width: int, height: int, scale: int = 2,
     return out_png
 
 
-def render_intro(u1, u2, out_png, width=1340, height=760, scale=2, title=None) -> Path:
-    return _screenshot(build_intro_html(u1, u2, title), out_png, width, height, scale)
+def render_intro(u1, u2, out_png, width=1340, height=760, scale=2, title=None,
+                 counts=(30, 30)) -> Path:
+    return _screenshot(build_intro_html(u1, u2, title, counts), out_png, width, height, scale)
 
 
 def render_outro(result, u1, u2, out_png, width=1000, height=520, scale=2) -> Path:

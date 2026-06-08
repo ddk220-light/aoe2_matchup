@@ -77,7 +77,16 @@ def get_unit_card(civ: str, slug: str, age: str = "Imperial",
             name = cls.get(cid, f"class {cid}")
             if name in ("Unused",):
                 continue
-            bonuses.append({"vs": name, "amount": int(amount)})
+            bonuses.append({"vs": name, "amount": int(amount), "vs_id": cid})
+
+        # the armor classes this unit BELONGS to — an opponent's "+X vs <class>" only
+        # applies if that class id is in here (the value can be 0; membership is what
+        # matters). Used to filter bonuses down to the ones relevant to a matchup.
+        try:
+            arm = json.loads(g("final_armors_json") or "{}")
+        except (TypeError, ValueError):
+            arm = {}
+        armor_class_ids = sorted(int(k) for k in arm)
 
         # techs applied, grouped by type
         techs = conn.execute(
@@ -134,6 +143,7 @@ def get_unit_card(civ: str, slug: str, age: str = "Imperial",
             "icon": _icon_path(row["unit_name"]),
             "stats": stats,
             "attack_bonuses": bonuses,
+            "armor_class_ids": armor_class_ids,
             "cost": {"food": _num(f), "wood": _num(w), "gold": _num(gd),
                      "total": _num((f or 0) + (w or 0) + (gd or 0))},
             "upgrades": [u["name"] for u in upgrades],

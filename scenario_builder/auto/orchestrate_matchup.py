@@ -32,6 +32,7 @@ Scenario Editor (or its Load page), frontmost.
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -212,23 +213,30 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, cap=240,
     if not navigate_to_test_menu(st, scen_name, logfile):
         raise RuntimeError("navigation failed")
 
-    # 4-5. RECORD, then click Test so the fight is captured from the start
+    # 4-7. RECORD -> Test -> watch for the end banner. Whatever happens, ALWAYS stop
+    # the recorder and (try to) dismiss back to the editor, so one bad run can't leave
+    # a recorder orphaned or the game stuck for the next matchup.
     rec = start_recorder(out_mov, cap, logfile=logfile)
     t_rec = time.time()
-    if not find_and_click("Test", R_DIALOG, logfile, "Test"):
+    t_test = None
+    try:
+        if not find_and_click("Test", R_DIALOG, logfile, "Test"):
+            raise RuntimeError("could not click Test")
+        t_test = time.time()
+        watch_until_end(t_test, cap, logfile=logfile)
+    finally:
         stop_recorder(rec, out_mov, logfile)
-        raise RuntimeError("could not click Test")
-    t_test = time.time()
+        if dismiss_after:
+            return_to_editor(logfile)
 
-    # 6-7. WATCH for the end banner -> STOP
-    watch_until_end(t_test, cap, logfile=logfile)
-    stop_recorder(rec, out_mov, logfile)
+    # recording sanity: an empty/tiny .mov means the capture failed (Screen Recording
+    # grant missing, or the recorder never started) — fail loudly, don't compose black.
+    sz = os.path.getsize(out_mov) if os.path.exists(out_mov) else 0
+    if sz < 1_000_000:
+        raise RuntimeError(f"recording looks empty ({sz} bytes) — is Screen Recording "
+                           "granted to this terminal, and the recorder built?")
 
-    # 8. dismiss the end banner back to the editor (clean for the next run)
-    if dismiss_after:
-        return_to_editor(logfile)
-
-    # 9. COMPOSE (recap, no OCR) -> COPY. Trim the menu/load lead-in off the front.
+    # 8-9. COMPOSE (recap, no OCR) -> COPY. Trim the menu/load lead-in off the front.
     lead_in = max(0.0, (t_test - t_rec) + LEAD_PAD)
     return compose_recap(civ1, slug1, civ2, slug2, out_mov, final,
                          copy_to, name, lead_in=lead_in, logfile=logfile)

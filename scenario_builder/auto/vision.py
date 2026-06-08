@@ -22,6 +22,8 @@ from functools import lru_cache
 import numpy as np
 from PIL import Image
 
+from auto import platform_io
+
 
 @lru_cache(maxsize=1)
 def _ocr():
@@ -30,18 +32,8 @@ def _ocr():
 
 
 def grab() -> Image.Image:
-    """Full-screen screenshot as a PIL RGB image (needs Screen Recording perm)."""
-    fd, path = tempfile.mkstemp(suffix=".png")
-    os.close(fd)
-    try:
-        subprocess.run(["screencapture", "-x", "-t", "png", path],
-                       check=True, capture_output=True)
-        return Image.open(path).convert("RGB")
-    finally:
-        try:
-            os.unlink(path)
-        except OSError:
-            pass
+    """Full-screen screenshot as a PIL RGB image (OS-specific; see platform_io)."""
+    return platform_io.grab()
 
 
 def ocr_text(img: Image.Image, box=(0.0, 0.0, 1.0, 1.0)) -> str:
@@ -55,7 +47,7 @@ def ocr_text(img: Image.Image, box=(0.0, 0.0, 1.0, 1.0)) -> str:
     return " ".join(line[1] for line in res).lower()
 
 
-SCALE = 2.0  # screencapture pixels per logical point (Retina 2x); point = pixel / SCALE
+SCALE = platform_io.SCALE  # screenshot pixels per click-point (Retina Mac=2, Windows~1)
 
 
 def find_text(img: Image.Image, pattern: str, region=(0.0, 0.0, 1.0, 1.0)):

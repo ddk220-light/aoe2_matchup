@@ -29,6 +29,7 @@ SB = HERE.parent
 sys.path.insert(0, str(SB))
 sys.path.insert(0, str(SB / "overlay"))
 
+from auto import platform_io                                   # noqa: E402
 from auto.orchestrate_matchup import resolve_side, equal_resource_counts  # noqa: E402
 from auto.record_until_end import log, detect_game_start, PATROL_LEAD     # noqa: E402
 from auto.batch_matchups import _civ_adj, write_chapters       # noqa: E402
@@ -45,7 +46,7 @@ def main():
     ap.add_argument("--copy-to", default=None)
     ap.add_argument("--join", default=None)
     ap.add_argument("--slice", default=None)
-    ap.add_argument("--log", default="/tmp/recompose.log")
+    ap.add_argument("--log", default=str(Path(platform_io.TMP_DIR) / "recompose.log"))
     a = ap.parse_args()
     open(a.log, "w").close()
 
@@ -83,7 +84,7 @@ def main():
 
     if a.join and clips:
         log(f"[join] {len(clips)} clips -> {a.join}", a.log)
-        joined = concat_videos(clips, "/tmp/joined_recompose.mp4")
+        joined = concat_videos(clips, str(Path(platform_io.TMP_DIR) / "joined_recompose.mp4"))
         if a.copy_to:
             Path(a.copy_to).mkdir(parents=True, exist_ok=True)
             shutil.copy2(joined, Path(a.copy_to) / a.join)

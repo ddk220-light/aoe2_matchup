@@ -34,32 +34,26 @@ from __future__ import annotations
 import argparse
 import os
 import shutil
-import subprocess
 import sys
 import time
 from pathlib import Path
-
-AOE2_BUNDLE = "com.feralinteractive.ageofempires2"
-
-# The AoE2:DE scenario folder, DEDICATED to these runs. The macro keeps exactly the
-# staged run scenario here so the Load list has a single entry (no search/typing).
-SCEN_DIR = Path(
-    "/Users/deepak/Library/Application Support/Feral Interactive/Age Of Empires II/"
-    "VFS/User/Games/Age of Empires 2 DE/76561198053842894/resources/_common/scenario"
-)
-RUN_DIR = Path("/tmp/aoe2_matchup_runs")        # generated scenarios (pre-stage)
-STAGE_NAME = "Matchup Run"                       # fixed name shown in the Load list
-LEAD_PAD = 3.0                                    # extra trim past Test-click (load+countdown)
 
 HERE = Path(__file__).resolve().parent
 SB = HERE.parent
 sys.path.insert(0, str(SB))
 sys.path.insert(0, str(SB / "overlay"))
 
-from auto import vision, input_driver as ui          # noqa: E402
+from auto import vision, input_driver as ui, platform_io   # noqa: E402
 from auto.record_until_end import (                   # noqa: E402
     start_recorder, watch_until_result, stop_recorder, compose_recap, log)
 from build_run import build_run                       # noqa: E402
+
+# The AoE2:DE scenario folder, DEDICATED to these runs (OS-specific; see platform_io).
+# The macro keeps exactly the staged run scenario here so the Load list has one entry.
+SCEN_DIR = platform_io.scenario_dir()
+TMP = platform_io.TMP_DIR                         # /tmp on mac, %TEMP% on windows
+RUN_DIR = Path(TMP) / "aoe2_matchup_runs"        # generated scenarios (pre-stage)
+STAGE_NAME = "Matchup Run"                       # fixed name shown in the Load list
 
 RESULT_HOLD = 5.0                                      # seconds to hold the result on screen
 PATROL_LEAD = 3.5                                      # clip starts ~here after game-start
@@ -126,7 +120,7 @@ def stage_generated(src, scen_dir=SCEN_DIR, stage_name=STAGE_NAME, logfile=None)
 
 def bring_game_to_front(logfile=None, timeout=8.0) -> str:
     """Activate AoE2:DE and wait until a known game screen shows. Returns the state."""
-    subprocess.run(["open", "-b", AOE2_BUNDLE], capture_output=True)
+    platform_io.bring_to_front()
     t0 = time.time()
     st = "unknown"
     while time.time() - t0 < timeout:
@@ -140,8 +134,7 @@ def bring_game_to_front(logfile=None, timeout=8.0) -> str:
 def _focus_game():
     """Re-assert AoE2:DE as the frontmost app so screenshots capture it and clicks land
     on it — even if another app (Terminal, Claude, a notification) grabbed focus."""
-    subprocess.run(["osascript", "-e", f'tell application id "{AOE2_BUNDLE}" to activate'],
-                   capture_output=True)
+    platform_io.activate_game()
     time.sleep(0.4)
 
 
@@ -254,7 +247,8 @@ def return_to_editor(logfile, retries=12) -> bool:
 
 def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_to=None,
                 cap=240, mode="count", unit_cap=30,
-                out_mov="/tmp/auto_fight.mov", final="/tmp/auto_matchup_FINAL.mp4",
+                out_mov=os.path.join(TMP, "auto_fight.mov"),
+                final=os.path.join(TMP, "auto_matchup_FINAL.mp4"),
                 dismiss_after=True, logfile=None) -> Path:
     """One full matchup: build from template -> stage -> navigate -> record -> Test
     -> watch for end -> stop -> (dismiss to editor) -> compose recap -> copy.
@@ -328,15 +322,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("civ1"); ap.add_argument("slug1")
     ap.add_argument("civ2"); ap.add_argument("slug2")
-    ap.add_argument("--out-mov", default="/tmp/auto_fight.mov")
-    ap.add_argument("--final", default="/tmp/auto_matchup_FINAL.mp4")
+    ap.add_argument("--out-mov", default=os.path.join(TMP, "auto_fight.mov"))
+    ap.add_argument("--final", default=os.path.join(TMP, "auto_matchup_FINAL.mp4"))
     ap.add_argument("--cap", type=int, default=240)
     ap.add_argument("--resources", action="store_true",
                     help="equal-resource counts (cheaper unit capped at --unit-cap)")
     ap.add_argument("--unit-cap", type=int, default=30)
     ap.add_argument("--copy-to", default=None)
     ap.add_argument("--name", default=None)
-    ap.add_argument("--log", default="/tmp/auto_matchup.log")
+    ap.add_argument("--log", default=os.path.join(TMP, "auto_matchup.log"))
     a = ap.parse_args()
     open(a.log, "w").close()
     log(f"=== orchestrate {a.slug1} vs {a.slug2} (template-based, no OCR) ===", a.log)

@@ -26,16 +26,12 @@ SB = HERE.parent                       # scenario_builder/
 sys.path.insert(0, str(SB / "overlay"))
 sys.path.insert(0, str(SB))
 
-from auto import vision                 # noqa: E402
-
-RECORDER = SB / "recorder" / "sck_record"
-AOE2_BUNDLE = "com.feralinteractive.ageofempires2"
+from auto import vision, platform_io    # noqa: E402
 
 
 def _focus_game():
     """Keep AoE2:DE frontmost so the recorder captures the fight (not another app)."""
-    subprocess.run(["osascript", "-e", f'tell application id "{AOE2_BUNDLE}" to activate'],
-                   capture_output=True)
+    platform_io.activate_game()
 
 
 PATROL_LEAD = 2.0   # start the clip this many seconds after the detected game-start
@@ -73,12 +69,10 @@ def log(msg, logfile=None):
 
 
 def start_recorder(out_mov, cap=240, w=1920, h=1248, fps=60, logfile=None) -> subprocess.Popen:
-    if not RECORDER.exists():
-        raise FileNotFoundError(f"recorder not built at {RECORDER} (run recorder/build.sh)")
+    if not platform_io.recorder_available():
+        raise FileNotFoundError(platform_io.recorder_hint())
     log(f"[rec] start (cap {cap}s, {w}x{h}@{fps}) -> {out_mov}", logfile)
-    return subprocess.Popen(
-        [str(RECORDER), out_mov, str(cap), str(fps), str(w), str(h)],
-        stderr=subprocess.DEVNULL)
+    return platform_io.recorder_start(out_mov, cap=cap, fps=fps, w=w, h=h)
 
 
 def watch_until_end(t0, cap=240, min_fight=8.0, poll=3.0, logfile=None) -> bool:
@@ -125,13 +119,7 @@ def watch_until_result(t0, cap=240, min_fight=8.0, poll=2.0, logfile=None) -> bo
 
 
 def stop_recorder(rec: subprocess.Popen, out_mov, logfile=None):
-    if rec.poll() is None:
-        rec.send_signal(signal.SIGINT)        # graceful: finalize the .mov
-        try:
-            rec.wait(timeout=20)
-        except subprocess.TimeoutExpired:
-            log("[rec] slow to finalize; killing", logfile)
-            rec.kill()
+    platform_io.recorder_stop(rec, out_mov)       # graceful finalize (SIGINT / ffmpeg 'q')
     sz = os.path.getsize(out_mov) // 1024 if os.path.exists(out_mov) else 0
     log(f"[rec] stopped; {sz} KB captured", logfile)
 
@@ -207,12 +195,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("civ1"); ap.add_argument("slug1")
     ap.add_argument("civ2"); ap.add_argument("slug2")
-    ap.add_argument("--out-mov", default="/tmp/auto_fight.mov")
-    ap.add_argument("--final", default="/tmp/auto_matchup_FINAL.mp4")
+    ap.add_argument("--out-mov", default=os.path.join(platform_io.TMP_DIR, "auto_fight.mov"))
+    ap.add_argument("--final", default=os.path.join(platform_io.TMP_DIR, "auto_matchup_FINAL.mp4"))
     ap.add_argument("--cap", type=int, default=240)
     ap.add_argument("--copy-to", default=None)
     ap.add_argument("--name", default=None)
-    ap.add_argument("--log", default="/tmp/auto_matchup.log")
+    ap.add_argument("--log", default=os.path.join(platform_io.TMP_DIR, "auto_matchup.log"))
     ap.add_argument("--min-fight", type=float, default=8.0)
     ap.add_argument("--poll", type=float, default=3.0)
     a = ap.parse_args()

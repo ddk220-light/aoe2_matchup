@@ -1,0 +1,10 @@
+# Extra deps for the Windows backend (auto/platform_io.py). Install on the Windows
+# machine IN ADDITION to the shared deps:
+#   AoE2ScenarioParser rapidocr-onnxruntime opencv-python pillow numpy
+# and have ffmpeg + Google Chrome on PATH, and AoE2:DE installed.
+#
+#   py -3.12 -m pip install -r auto/requirements_windows.txt
+pydirectinput        # DirectInput-compatible mouse/keyboard (works inside the game)
+pygetwindow          # find + activate the AoE2 window (keep it frontmost)
+mss                  # (optional) faster screenshots than Pillow's ImageGrab
+pywin32              # (optional) lower-level window/focus control if pygetwindow falls short

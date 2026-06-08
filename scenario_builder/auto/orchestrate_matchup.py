@@ -66,6 +66,7 @@ R_DIALOG = (0.33, 0.38, 0.67, 0.78)      # menu-dialog buttons (Load/Test/...)
 R_SAVE = (0.30, 0.50, 0.70, 0.66)        # "No" on the save prompt
 R_LIST = (0.12, 0.33, 0.60, 0.76)        # scenario list rows
 R_LOAD_BTN = (0.38, 0.78, 0.62, 0.90)    # bottom "Load Scenario" button
+R_CONTINUE = (0.30, 0.56, 0.70, 0.76)    # "Continue" on the end-of-game banner
 
 
 def resolve_side(civ: str, slug: str):
@@ -160,6 +161,79 @@ def navigate_to_test_menu(start_state, scenario_name, logfile) -> bool:
     return True
 
 
+def return_to_editor(logfile, retries=8) -> bool:
+    """After a fight ends, dismiss the end-of-game banner back to the Scenario
+    Editor so the game is clean for the NEXT run. The 'You have been defeated!'
+    screen has a single 'Continue' button -> clicking it returns DIRECTLY to the
+    editor (no intermediate stats screen). Idempotent: returns True once the editor
+    tabs are visible."""
+    for _ in range(retries):
+        img = vision.grab()
+        if vision.detect_state(img) == "editor":
+            log("[end] back in the Scenario Editor — clean for the next run", logfile)
+            return True
+        pt = vision.find_text(img, "Continue", region=R_CONTINUE)
+        if pt:
+            ui.click(pt)
+            log(f"[end] clicked Continue at {int(pt[0])},{int(pt[1])}", logfile)
+            time.sleep(2.5)
+        else:
+            time.sleep(1.0)
+    ok = vision.detect_state(vision.grab()) == "editor"
+    log(f"[end] {'in editor' if ok else 'WARNING: editor not confirmed'}", logfile)
+    return ok
+
+
+def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, cap=240,
+                out_mov="/tmp/auto_fight.mov", final="/tmp/auto_matchup_FINAL.mp4",
+                dismiss_after=True, logfile=None) -> Path:
+    """One full matchup: build from template -> stage -> navigate -> record -> Test
+    -> watch for end -> stop -> (dismiss to editor) -> compose recap -> copy.
+    Returns the final video Path. Designed to be called repeatedly for a batch."""
+    # 1. BUILD the run scenario from the golden template (swap units/civs, no tech)
+    side1 = resolve_side(civ1, slug1)
+    side2 = resolve_side(civ2, slug2)
+    run_path = RUN_DIR / f"{side1[1]}_vs_{side2[1]}.aoe2scenario"
+    build_run(side1, side2, run_path)
+    log(f"[build] {side1[2]} ({civ1}) vs {side2[2]} ({civ2}) -> {run_path}", logfile)
+
+    # 2. STAGE it as the sole scenario in the game folder
+    scen_name = stage_generated(run_path, logfile=logfile)
+
+    # 3. bring AoE2 to the front; if a previous fight left an end banner up, clear it
+    log("[nav] bringing AoE2:DE to the front...", logfile)
+    st = bring_game_to_front(logfile)
+    if st == "end_screen":
+        return_to_editor(logfile)
+        st = bring_game_to_front(logfile)
+    log(f"[nav] starting screen: {st}", logfile)
+    if st not in ("editor", "main_menu", "load_dialog"):
+        raise RuntimeError(f"unexpected starting screen {st!r}")
+    if not navigate_to_test_menu(st, scen_name, logfile):
+        raise RuntimeError("navigation failed")
+
+    # 4-5. RECORD, then click Test so the fight is captured from the start
+    rec = start_recorder(out_mov, cap, logfile=logfile)
+    t_rec = time.time()
+    if not find_and_click("Test", R_DIALOG, logfile, "Test"):
+        stop_recorder(rec, out_mov, logfile)
+        raise RuntimeError("could not click Test")
+    t_test = time.time()
+
+    # 6-7. WATCH for the end banner -> STOP
+    watch_until_end(t_test, cap, logfile=logfile)
+    stop_recorder(rec, out_mov, logfile)
+
+    # 8. dismiss the end banner back to the editor (clean for the next run)
+    if dismiss_after:
+        return_to_editor(logfile)
+
+    # 9. COMPOSE (recap, no OCR) -> COPY. Trim the menu/load lead-in off the front.
+    lead_in = max(0.0, (t_test - t_rec) + LEAD_PAD)
+    return compose_recap(civ1, slug1, civ2, slug2, out_mov, final,
+                         copy_to, name, lead_in=lead_in, logfile=logfile)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("civ1"); ap.add_argument("slug1")
@@ -178,54 +252,13 @@ def main():
         log("ERROR: Accessibility not granted to this terminal — scripted clicks will "
             "fail. System Settings -> Privacy & Security -> Accessibility.", a.log)
         sys.exit(2)
-
-    # 1. BUILD the run scenario from the golden template (swap units/civs, no tech)
     try:
-        side1 = resolve_side(a.civ1, a.slug1)
-        side2 = resolve_side(a.civ2, a.slug2)
+        final = run_matchup(a.civ1, a.slug1, a.civ2, a.slug2, name=a.name,
+                            copy_to=a.copy_to, cap=a.cap, out_mov=a.out_mov,
+                            final=a.final, logfile=a.log)
     except Exception as e:
-        log(f"ERROR: could not resolve units ({e}).", a.log)
+        log(f"ERROR: {e}", a.log)
         sys.exit(1)
-    run_path = RUN_DIR / f"{side1[1]}_vs_{side2[1]}.aoe2scenario"
-    try:
-        build_run(side1, side2, run_path)
-        log(f"[build] {side1[2]} ({a.civ1}) vs {side2[2]} ({a.civ2}) -> {run_path}", a.log)
-    except Exception as e:
-        log(f"ERROR: build_run failed ({e}).", a.log)
-        sys.exit(1)
-
-    # 2. STAGE it as the sole scenario in the game folder
-    scen_name = stage_generated(run_path, logfile=a.log)
-
-    # 3. bring AoE2 to the front and NAVIGATE (deterministic macro)
-    log("[nav] bringing AoE2:DE to the front...", a.log)
-    st = bring_game_to_front(a.log)
-    log(f"[nav] starting screen: {st}", a.log)
-    if st not in ("editor", "main_menu", "load_dialog"):
-        log(f"[nav] ERROR: unexpected starting screen {st!r}; open AoE2 in the Scenario "
-            "Editor (or its Load page) and try again.", a.log)
-        sys.exit(1)
-    if not navigate_to_test_menu(st, scen_name, a.log):
-        log("ERROR: navigation failed — aborting before recording.", a.log)
-        sys.exit(1)
-
-    # 4-5. RECORD, then click Test so the fight is captured from the start
-    rec = start_recorder(a.out_mov, a.cap, logfile=a.log)
-    t_rec = time.time()
-    if not find_and_click("Test", R_DIALOG, a.log, "Test"):
-        stop_recorder(rec, a.out_mov, a.log)
-        log("ERROR: could not click Test — aborting.", a.log)
-        sys.exit(1)
-    t_test = time.time()
-
-    # 6-7. WATCH for the end banner -> STOP
-    watch_until_end(t_test, a.cap, logfile=a.log)
-    stop_recorder(rec, a.out_mov, a.log)
-
-    # 8-9. COMPOSE (recap, no OCR) -> COPY. Trim the menu/load lead-in off the front.
-    lead_in = max(0.0, (t_test - t_rec) + LEAD_PAD)
-    final = compose_recap(a.civ1, a.slug1, a.civ2, a.slug2, a.out_mov, a.final,
-                          a.copy_to, a.name, lead_in=lead_in, logfile=a.log)
     log(f"DONE -> {final}", a.log)
 
 

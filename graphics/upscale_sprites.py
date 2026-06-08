@@ -51,10 +51,29 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--scale', type=int, default=4)
     ap.add_argument('--esrgan-exe', default=DEFAULT_EXE)
+    ap.add_argument('--model-pth', default=None,
+                    help='Path to an ESRGAN .pth (e.g. 4x-UltraSharp); uses '
+                         'spandrel+torch (run under a CUDA torch env) instead of '
+                         'the bundled ncnn x4plus. Produces sharper sprite output.')
     a = ap.parse_args()
     S = a.scale
     EXE, WD = a.esrgan_exe, os.path.dirname(a.esrgan_exe)
-    have_esrgan = os.path.exists(EXE)
+    use_torch = bool(a.model_pth)
+    have_esrgan = use_torch or os.path.exists(EXE)
+    torch_model = None
+    if use_torch:
+        import torch
+        from spandrel import ModelLoader
+        torch_model = ModelLoader().load_from_file(a.model_pth).to('cuda').eval()
+
+        def _torch_up(bled_pil):
+            import numpy as _np
+            arr = _np.asarray(bled_pil.convert('RGB')).astype('float32') / 255.0
+            t = torch.from_numpy(arr).permute(2, 0, 1).unsqueeze(0).to('cuda')
+            with torch.no_grad():
+                o = torch_model(t)
+            o = o.squeeze(0).clamp(0, 1).permute(1, 2, 0).cpu().numpy()
+            return Image.fromarray((o * 255).round().astype('uint8'), 'RGB')
     BLED = os.path.join(ROOT, '.scratch', 'bled'); BUP = os.path.join(ROOT, '.scratch', 'bled_up')
     for d in (BLED, BUP):
         shutil.rmtree(d, ignore_errors=True); os.makedirs(d)
@@ -73,8 +92,12 @@ def main():
         poses.append((slug, pose, rgba.split()[3], bled.size))
     print(f'prepared {len(poses)} bled images')
 
-    # ESRGAN: folder pass, then per-file repair
-    if have_esrgan:
+    # ESRGAN upscale of the bled (opaque) images -> BUP
+    if use_torch:
+        for slug, pose, _a, sz in poses:
+            flat = f'{slug}__{pose}.png'
+            _torch_up(Image.open(os.path.join(BLED, flat))).save(os.path.join(BUP, flat))
+    elif have_esrgan:
         subprocess.run([EXE, '-i', BLED, '-o', BUP, '-n', 'realesrgan-x4plus', '-s', str(S)],
                        cwd=WD, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         for slug, pose, _a, sz in poses:

@@ -132,9 +132,18 @@ def bring_game_to_front(logfile=None, timeout=8.0) -> str:
     return st
 
 
+def _focus_game():
+    """Re-assert AoE2:DE as the frontmost app so screenshots capture it and clicks land
+    on it — even if another app (Terminal, Claude, a notification) grabbed focus."""
+    subprocess.run(["osascript", "-e", f'tell application id "{AOE2_BUNDLE}" to activate'],
+                   capture_output=True)
+    time.sleep(0.4)
+
+
 def find_and_click(pattern, region, logfile, label=None, retries=4, dbl=False) -> bool:
     """Locate `pattern` in `region` and click it; retry briefly while the screen settles."""
     for _ in range(retries):
+        _focus_game()
         pt = vision.find_text(vision.grab(), pattern, region=region)
         if pt:
             (ui.double_click if dbl else ui.click)(pt)
@@ -192,6 +201,7 @@ def return_to_editor(logfile, retries=12) -> bool:
     Current Game' -> 'Yes'. A leftover defeat banner ('Continue') is handled too, for
     safety. Idempotent: returns True once the editor tabs are visible."""
     for _ in range(retries):
+        _focus_game()
         img = vision.grab()
         if vision.detect_state(img) == "editor":
             log("[end] back in the Scenario Editor — clean for the next run", logfile)

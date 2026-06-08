@@ -29,6 +29,13 @@ sys.path.insert(0, str(SB))
 from auto import vision                 # noqa: E402
 
 RECORDER = SB / "recorder" / "sck_record"
+AOE2_BUNDLE = "com.feralinteractive.ageofempires2"
+
+
+def _focus_game():
+    """Keep AoE2:DE frontmost so the recorder captures the fight (not another app)."""
+    subprocess.run(["osascript", "-e", f'tell application id "{AOE2_BUNDLE}" to activate'],
+                   capture_output=True)
 
 
 def log(msg, logfile=None):
@@ -80,6 +87,7 @@ def watch_until_result(t0, cap=240, min_fight=8.0, poll=2.0, logfile=None) -> bo
         time.sleep(0.5)
     while time.time() - t0 < cap - 2:
         try:
+            _focus_game()                 # keep the fight on screen for the recorder
             if vision.detect_result(vision.grab()):
                 log(f"[watch] result detected at +{time.time() - t0:.1f}s", logfile)
                 return True

@@ -50,6 +50,21 @@ Prompt skeleton (two refs; single figure + no-emblem + tone clauses are mandator
 
 - ~110–230 s/render on the 5090 (single figure, 2 refs). If anything still looks off (wrong helmet/weapon, an emblem, a second view) → tighten the description / no-emblem clause and re-run (seed 21).
 
+## Recurring feedback → apply these PRE-EMPTIVELY
+
+Patterns learned from per-unit review. Bake them into the description before the first render to avoid a re-run:
+
+1. **Hands gripping bows/blades are FLUX's #1 weak spot.** A nocked/drawn arrow almost always renders mis-aligned, and two hands on a hilt come out malformed. Defaults that dodge it:
+   - **Archers:** hold the bow *at rest*, **no arrow nocked**, all arrows in the back quiver. State "ONLY the bow, no arrow on the string, no loose arrow in the hands."
+   - **Swordsmen:** if a clean grip keeps failing, render the sword **sheathed at the hip** with hands relaxed at the sides (you may have to relax the "exact same pose as image 1" instruction to let the arms drop).
+2. **Confirm the weapon from the SPRITE, not the icon or assumption.** Decode the dir05 sprite when a weapon is ambiguous — this caught the Leitis wielding a *spear*, not a sword. Stat-card lore can lie; the model art is truth.
+3. **Match the icon's exact shield heraldry / emblem.** Generic "decorated shield" drifts. Name it: Konnik = blue field + gold dome boss + 4 gold spokes; Leitis = white double-barred cross on blue; Serjeant = white griffin; Monaspa = blue Bolnisi crosses.
+4. **State every material/colour explicitly — FLUX defaults to "generic fantasy."** Horse colour (Mangudai = *dark* horse), barding metal (Leitis = *silver-iron*, not gold), "brown leather" vs "steel" chest, helmet plume colour (Mangudai = *red* plume). If you don't say it, you'll get light-brown horses and gold everything.
+5. **"More gold" means naming the parts.** Under-gilding is common. Spell out gold pauldrons, gold belt/sash, gold shield-rim, gold robe trim — not just "gold trim."
+6. **Low-res (48 px) icons → decode the sprite for detail, or ask the user for a hi-res pic.** Champi Warrior and Ibirapema have 48 px icons; the user-supplied 256 px Champi pic produced a far better render. The repo has no icon at all for a few (Ji Infantry) → go sprite-only (single ref).
+7. **Non-humanoid subjects need their own subject clause** (the figure clause produces grids/duplicates): ships → "the whole ship, broadside, dir00"; wagons/organ guns → "the whole vehicle [+ gunner]"; chariots → "the chariot with its horses and rider as one subject"; elephants → keep howdah/mount together.
+8. **Proportions:** if a foot unit comes out squat, add "TALL, full-height adult, long legs, not stocky." And don't drop footwear (Champi went barefoot until told otherwise).
+
 ## Step 4 — Cut + save
 - rembg `remove(session=isnet-general-use)` → `getbbox()` crop → transparent PNG.
 - Save 3 forms to `graphics/art/flux2_hybrid/`:
@@ -57,9 +72,10 @@ Prompt skeleton (two refs; single figure + no-emblem + tone clauses are mandator
   - `<slug>_idle_dir05_nobg.png` — full-res transparent
   - `<slug>_idle_dir05_icon.png` — 256×256 transparent, full-body centered (margin 0.96)
 
-## Step 5 — Review delivery (Tailscale)
-- Build an HTML gallery (icon vs render per unit), serve with `python -m http.server <port>` bound to the Tailscale IP (`dragonstar` = 100.123.128.35).
-- Open `http://100.123.128.35:<port>/` on the phone (`iphone172`) to approve / request changes.
+## Step 5 — Review delivery (Tailscale Taildrop)
+- Build ONE per-batch review montage (PIL): repo icon on the left, render on the right, 5 rows stacked — easy to flick through on a phone. For an icon-less/low-res unit, compare against its upscaled sprite or the user-supplied hi-res pic.
+- Deliver via **Taildrop** (NOT an http server): `tailscale file cp <montage> <renders...> iphone172:` (binary at `/c/Program Files/Tailscale/tailscale.exe`). On Windows the GUI may auto-save *received* files to `Downloads/` rather than the `tailscale file get` queue.
+- User approves per-unit or requests changes; re-run just the flagged units (seed 7 keeps composition; bump seed only if a pose/grip won't resolve).
 
 ## Batch cadence
 - 5 units per batch, alphabetical by display name.

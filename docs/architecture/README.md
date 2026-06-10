@@ -105,7 +105,7 @@ Where to look (and what to edit) for each kind of fact:
 | Sim cache key | `compute_sim_version()` in `webapp/sim_version.py` | Hashes `simulation_real.py` + `analysis/config_combat.py` — **not** `simulation.py` |
 | Pool scoring spec | constants in `webapp/pool_scores_lib.py` | λ=2 loss aversion, pool roles/weights |
 | Battle scoring | `webapp/battle_outcome.py` | `BattleOutcome`, `signed_score` (−100…+100), multi-seed aggregation |
-| Resource cost weights | `weighted_cost` in `webapp/simulation_real.py` | ⚠ duplicated in `compute_battle_scores.calc_weighted_cost` |
+| Resource cost weights | `weighted_cost` in `webapp/simulation_real.py` | ⚠ duplicated in `compute_battle_scores.calc_weighted_cost`; `best_units._calc_weighted_cost` delegates to it (int floor on top); `pool_scores_lib.weighted_cost` intentionally frozen at wood ×0.8 (matches committed pool_scores.db) |
 | Replay sprites | `webapp/static/replay/assets/sprites/sprites.json` | Shared by renderer.js and clip_export.py |
 | Train times (classifier) | `webapp/train_times.json` | Used by the replay unit classifier |
 

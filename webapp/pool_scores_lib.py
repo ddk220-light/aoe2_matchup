@@ -42,8 +42,10 @@ def hp_score(team1_hp_pct: float, team2_hp_pct: float, winner: int) -> float:
 def weighted_cost(food: float | None, wood: float | None, gold: float | None) -> float:
     """Resource cost with gold weighted higher.
 
-    Mirrors `_calc_weighted_cost` in webapp/best_units.py:904 — same
-    coefficients used by the existing 3k cost-matched scenarios.
+    NOTE: intentionally frozen at wood x0.8 — the coefficients the committed
+    pool_scores.db was derived with. The canonical live weights are
+    `simulation_real.weighted_cost` (wood x0.7); aligning this requires
+    re-deriving pool_scores.db, so do both together or not at all.
     """
     return 0.8 * (wood or 0) + (food or 0) + 1.5 * (gold or 0)
 

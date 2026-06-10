@@ -4,11 +4,18 @@ Best units logic: civ power units (pre-computed) + matchup recommendations (on-t
 
 import json
 import os
+import random
 import sqlite3
 
 from combat_unit_loader import build_combat_dict_from_ref
 from unit_lines import TREBUCHET_SLUGS, NAVAL_UNIT_LINES, CANNON_GALLEON_LINE
 from patches_db import get_current_build
+
+# GOLDEN_SEED — keep in sync with .golden/capture_baseline.py.
+# Seeded at the top of get_matchup_sims / get_matchup_recommendations so the
+# live advisor endpoints are deterministic (simulation.py rolls the unseeded
+# module-level `random` for accuracy/stray/scatter/trample).
+_SIM_SEED = 20260411
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 DERIVED_DB_PATH = os.path.join(os.path.dirname(__file__), "derived_data.db")
@@ -1085,12 +1092,17 @@ def load_civ_power_units(build_number=None):
 ###############################################################################
 
 from simulation import prepare_combat_unit, simulate_battle
-from simulation_real import simulate_real_battle
+from simulation_real import simulate_real_battle, weighted_cost
 
 
 def _calc_weighted_cost(food, wood, gold):
-    """Resource cost with gold weighted higher."""
-    cost = 0.8 * (wood or 0) + (food or 0) + 1.5 * (gold or 0)
+    """Resource cost with gold weighted higher.
+
+    Delegates to the canonical `simulation_real.weighted_cost` (food 1.0,
+    wood 0.7, gold 1.5) so advisor sims size 3k-resource armies the same
+    way as the batch matchup baseline; keeps the int floor for callers.
+    """
+    cost = weighted_cost(food, wood, gold)
     return int(cost) if cost > 0 else 100
 
 
@@ -1213,6 +1225,8 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
 
     Returns dict with opponent_strengths, recommended_compositions, individual_counters.
     """
+    # Deterministic output: _sim_score -> simulate_battle rolls the global RNG.
+    random.seed(_SIM_SEED)
     power_data = load_civ_power_units()
     if not power_data:
         return {"error": "civ_power_units.json not found -- run best_units.py first"}
@@ -1407,6 +1421,10 @@ def get_matchup_sims(civ_left, civ_right, age="imperial", sim_func=None):
 
     Returns dict with 'left', 'right', and 'name_map' keys.
     """
+    # Deterministic output: the sims below roll the global RNG. Matches the
+    # external seeding .golden/capture_baseline.py applies, so the golden
+    # baseline is unchanged by this seed.
+    random.seed(_SIM_SEED)
     power_data = load_civ_power_units()
     if not power_data:
         return {"left": {}, "right": {}, "name_map": {}}

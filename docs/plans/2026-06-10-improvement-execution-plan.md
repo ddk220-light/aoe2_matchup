@@ -32,9 +32,16 @@ Baseline at start: 252 passed, **2 failed** (golden: Aztecs_vs_Armenians, Spanis
 
 ## Deferred — recorded, do later
 
+**Completed 2026-06-10 (second pass — these only needed *missing rows*, not a full re-sim):**
+Cumans Camel Rider / Dravidians Battle Elephant restored (`29a7525` config + surgical ref rows;
+scoped baseline re-sim of 1,040 pending groups / 4,056 rows in 8.5 min via
+`rebuild_matchup_baseline`'s `groups_done` resume — same escalating sampler as the baseline,
+`sim_version` unchanged) and `pool_scores_lib` wood 0.7 alignment + full re-derive (`b9d2735`,
+naval rows preserved byte-identically). Baseline now 495,440 rows / 517 units; pre-change
+backup at `D:/AI/matchup_baseline_177723_pre_cumans.db`.
+
 | Item | Why deferred |
 |---|---|
-| Cumans Camel Rider / Dravidians Battle Elephant at Imperial | Needs reference-DB surgical row addition **and** incremental matchup re-sim for the two units |
 | Engine renames (`sim_abstract`/`sim_position`) + `simulation_real.py` docstring | Any byte change re-stales 491k baseline rows — bundle with the next forced full re-sim (next game patch) |
 | Naval rankings regeneration script | Baseline has no naval rows; needs naval sims |
 | Incremental-resim noise (multi-seed degradation) | Sim-pipeline policy change; design alongside next patch run |

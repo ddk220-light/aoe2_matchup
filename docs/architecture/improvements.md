@@ -23,9 +23,11 @@ The findings below are kept as written (they document the pre-fix state); this t
 | `favicon.png` + `og-default.png` created (+ og:image dimension tags) | `0074ec5` |
 | **Live 500 fixed**: `/api/matchup-recommendations` KeyError `median_delta` on stripped siege entries (+ regression tests) | `bf35ecd` |
 | GitHub Actions CI (pytest + 2 Node tests) | bookkeeping commit |
+| **Cumans Camel Rider / Dravidians Battle Elephant restored at Imperial** — config restructure (`upgrades`→`civ_upgrades`), surgical 2-row ref-DB addition (neutrality proven), scoped baseline re-sim via `rebuild_matchup_baseline` resume (1,040 groups / 4,056 rows / 8.5 min, escalating sampler, `sim_version` unchanged), full re-derive. Wootz Steel `ignores_melee_armor` now active for Dravidians | `29a7525`, `b9d2735` |
+| `pool_scores_lib` cost weight aligned to canonical wood 0.7 (delegates to `simulation_real.weighted_cost`); pool_scores re-derived; naval rows verified byte-identical; patch backfill refreshed | `b9d2735` |
 
-**Deferred — needs matchup re-sim or blocked** (detail in the execution plan's deferred table):
-Cumans Camel Rider / Dravidians Battle Elephant Imperial restore; engine renames + `simulation_real.py` docstring (bundle with next full re-sim); naval-rankings regeneration; incremental-resim noise policy; `scenario_builder/overlay/results.py` port + `aoe2_units.db` retirement (blocked on `feat/matchup-video-automation`); `best_units.py` split; `compute_battle_scores.py` scoring-lib extraction; `pool_scores_lib` wood 0.8 alignment (needs pool re-derive); `webapp/jobs/` subpackage.
+**Deferred — needs full matchup re-sim or blocked** (detail in the execution plan's deferred table):
+Engine renames + `simulation_real.py` docstring (any byte change = full 491k+ re-sim — bundle with next game patch); naval-rankings regeneration (baseline has no naval rows; new sim campaign); incremental-resim noise policy (note: `rebuild_matchup_baseline`'s `groups_done` resume is the noise-free path for roster additions — use it over `run_matchup_battles` when rows are *missing* rather than *changed*); `scenario_builder/overlay/results.py` port + `aoe2_units.db` retirement (blocked on `feat/matchup-video-automation`); `best_units.py` split; `compute_battle_scores.py` scoring-lib extraction; `webapp/jobs/` subpackage.
 
 ## Quick wins
 

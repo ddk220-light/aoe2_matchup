@@ -463,15 +463,30 @@ IMPERIAL_UNITS = {
         "display_name": "Heavy Camel Rider",
         "unit_class": 12,
         "availability_tech": 235,
-        "upgrades": [
-            (236, 330, "Heavy Camel Rider"),
-        ],
-        # Imperial Camel Rider is Hindustanis-only
+        # The Heavy Camel upgrade is per-civ (tech 236 is NOT in the
+        # have-nots' disabled_techs — the dat gates it via tech-tree
+        # resolution this pipeline doesn't replicate), so it is expressed
+        # via civ_upgrades instead of a default upgrades list. Civs in the
+        # _AVAILABILITY_OVERRIDES "heavy_camel" list but absent here
+        # (Cumans) get the base-tier Camel Rider at Imperial.
+        "upgrades": [],
         "civ_upgrades": {
+            "Berbers": [(236, 330, "Heavy Camel Rider")],
+            "Byzantines": [(236, 330, "Heavy Camel Rider")],
+            "Ethiopians": [(236, 330, "Heavy Camel Rider")],
+            "Gurjaras": [(236, 330, "Heavy Camel Rider")],
+            # Imperial Camel Rider is Hindustanis-only
             "Hindustanis": [
                 (236, 330, "Heavy Camel Rider"),
                 (521, 207, "Imperial Camel Rider"),
             ],
+            "Khitans": [(236, 330, "Heavy Camel Rider")],
+            "Malians": [(236, 330, "Heavy Camel Rider")],
+            "Mongols": [(236, 330, "Heavy Camel Rider")],
+            "Persians": [(236, 330, "Heavy Camel Rider")],
+            "Saracens": [(236, 330, "Heavy Camel Rider")],
+            "Tatars": [(236, 330, "Heavy Camel Rider")],
+            "Turks": [(236, 330, "Heavy Camel Rider")],
         },
     },
     "elite_elephant": {
@@ -479,9 +494,19 @@ IMPERIAL_UNITS = {
         "display_name": "Elite Battle Elephant",
         "unit_class": 12,
         "availability_tech": 630,
-        "upgrades": [
-            (631, 1134, "Elite Battle Elephant"),  # Correct elite ID: 1134
-        ],
+        # Like heavy_camel: the Elite upgrade (tech 631) is per-civ and not
+        # blockable via disabled_techs, so it lives in civ_upgrades. Civs in
+        # the _AVAILABILITY_OVERRIDES "elite_elephant" list but absent here
+        # (Dravidians) get the base-tier Battle Elephant at Imperial.
+        "upgrades": [],
+        "civ_upgrades": {
+            # Correct elite ID: 1134
+            "Bengalis": [(631, 1134, "Elite Battle Elephant")],
+            "Burmese": [(631, 1134, "Elite Battle Elephant")],
+            "Khmer": [(631, 1134, "Elite Battle Elephant")],
+            "Malay": [(631, 1134, "Elite Battle Elephant")],
+            "Vietnamese": [(631, 1134, "Elite Battle Elephant")],
+        },
     },
     "elite_steppe": {
         "base_id": 1370,
@@ -1698,8 +1723,10 @@ UNIQUE_UNITS = {
 # NOT disabled for the civs that lack them; the game auto-enables them per civ
 # through tech-tree resolution (prerequisites / auto-research) that this
 # pipeline does not replicate. With no disable signal, the blocklist lets EVERY
-# civ train them -> ~776 phantom rows (each line attached to ~48 civs), incl.
-# wrong upgrade tiers (Cumans Heavy Camel, Dravidians Elite Battle Elephant).
+# civ train them -> ~776 phantom rows (each line attached to ~48 civs). Wrong
+# upgrade TIERS (e.g. Cumans Heavy Camel, Dravidians Elite Battle Elephant)
+# are prevented separately: those configs express the upgrade tech per civ
+# via "civ_upgrades", so base-tier-only civs get the base unit at Imperial.
 #
 # Fix: pin each affected slug to its authoritative civ list. Source of truth =
 # SiegeEngineers/aoe2techtree data.json per-civ Unit lists (resolved tech-tree
@@ -1714,9 +1741,13 @@ _AVAILABILITY_OVERRIDES = {
     "eagle_warrior": ["Aztecs", "Mayans"],
     "elite_eagle": ["Aztecs", "Mayans"],
     "camel": ["Berbers", "Byzantines", "Cumans", "Ethiopians", "Gurjaras", "Hindustanis", "Khitans", "Malians", "Mongols", "Persians", "Saracens", "Tatars", "Turks"],
-    "heavy_camel": ["Berbers", "Byzantines", "Ethiopians", "Gurjaras", "Hindustanis", "Khitans", "Malians", "Mongols", "Persians", "Saracens", "Tatars", "Turks"],
+    # heavy_camel / elite_elephant include the base-tier-only civs (Cumans,
+    # Dravidians): the slug row exists at Imperial for them, but the upgrade
+    # tier is gated per civ by the config's civ_upgrades (best-available-tier
+    # convention, like Turks halberdier@Imperial = "Spearman").
+    "heavy_camel": ["Berbers", "Byzantines", "Cumans", "Ethiopians", "Gurjaras", "Hindustanis", "Khitans", "Malians", "Mongols", "Persians", "Saracens", "Tatars", "Turks"],
     "elephant": ["Bengalis", "Burmese", "Dravidians", "Khmer", "Malay", "Vietnamese"],
-    "elite_elephant": ["Bengalis", "Burmese", "Khmer", "Malay", "Vietnamese"],
+    "elite_elephant": ["Bengalis", "Burmese", "Dravidians", "Khmer", "Malay", "Vietnamese"],
     "elephant_archer": ["Bengalis", "Dravidians", "Gurjaras"],
     "elite_ele_archer": ["Bengalis", "Dravidians", "Gurjaras"],
     "slinger": ["Incas", "Mapuche", "Muisca", "Tupi"],

@@ -61,7 +61,7 @@ green ⇒ you're ready to run a batch.
 | `AOE2_OS` | Force the backend (`windows`/`mac`) — normally auto-detected. |
 | `AOE2_GRPC_PRIMARY` | `1` (default): a sane gRPC redecode drives the overlay outright — exact game data, no OCR pass. `0` forces the OCR readout (with gRPC HP merged in when the series agree). The decoder was fixed + clock-corrected 2026-06-10 (deaths 24/24 timed, sidecar in video seconds via `AOE2_GAME_SPEED`=1.7) and cross-checked against footage offline (rmse 0.43) and live (merge rmse 0.41, end counts exact). |
 | `AOE2_GAME_SPEED` | Game-sim-to-video clock ratio for the gRPC stream (default `1.7`, AoE2:DE "normal" speed). Change only if you run scenario tests at a different game speed. |
-| `AOE2_NO_READOUT` | `1` blanks the on-screen title + count readout in generated scenarios (clean footage). Unblocked now that the gRPC redecode is primary — but it removes the OCR fallback for those recordings, so leave it off if you want a safety net while the fixed decoder accumulates mileage. |
+| `AOE2_NO_READOUT` | `1` (default): generated scenarios have no on-screen title/count readout — clean footage; the overlay counts come from the gRPC stream and the WINS banner remains as the stop signal. Set `0` to put the readout back for a one-off decoder cross-check run (e.g. after a game patch). |
 
 PowerShell example (only if you need to override the profile):
 ```powershell

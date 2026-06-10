@@ -34,12 +34,13 @@ from AoE2ScenarioParser.datasets.object_support import Civilization
 
 WIN_MARKER = "WINS"   # the automation watches the center band for this word
 
-# AOE2_NO_READOUT=1 blanks the on-screen TITLE + live COUNT READOUT texts (the WINS
-# hold stays — it's the end-detection ground truth). Flip this on once a sweep has
-# verified the gRPC redecode path: the overlay then gets its counts from the game's
-# data stream, the OCR fallback becomes impossible for these runs, and the footage
-# is clean of the trigger text.
-NO_READOUT = os.environ.get("AOE2_NO_READOUT", "0").lower() not in ("0", "", "false", "no")
+# Clean footage by DEFAULT: the on-screen TITLE + live COUNT READOUT texts are blanked
+# (the WINS hold stays — it's the recording stop signal). The overlay gets its counts
+# from the gRPC data stream (decoder fixed + live-validated 2026-06-10); there is no
+# OCR count fallback for these runs by deliberate choice — if a game patch drifts the
+# decoder, fix it against the archived frames.bin and re-render. Set AOE2_NO_READOUT=0
+# to put the readout back (e.g. for a one-off decoder cross-check run).
+NO_READOUT = os.environ.get("AOE2_NO_READOUT", "1").lower() not in ("0", "", "false", "no")
 
 HERE = Path(__file__).resolve().parent
 # the GOLDEN template every run is generated from. default1 (2026-06-10) = the

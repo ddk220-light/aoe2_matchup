@@ -124,21 +124,28 @@ def watch_until_end(t0, cap=240, min_fight=8.0, poll=3.0, logfile=None) -> bool:
     return False
 
 
-def watch_until_result(t0, cap=240, min_fight=8.0, poll=2.0, logfile=None) -> bool:
-    """Poll the screen until the win trigger's '<unit> WINS!' result shows. The no-lose
-    scenario holds this on screen instead of ending the game, so this is how we know the
-    fight is over (no defeat banner). Polls are change-gated (vision.ResultWatcher): the
-    OCR only runs when the centre band actually changed, so an idle screen costs ~nothing.
-    Returns True if detected before the cap."""
-    log(f"[watch] for the result banner (min {min_fight}s, poll {poll}s)...", logfile)
+def watch_until_result(t0, cap=240, min_fight=8.0, poll=2.0, logfile=None,
+                       end_flag=None) -> bool:
+    """Poll until the fight is over. PRIMARY signal: the gRPC live tailer's `end_flag`
+    file (<grpc-prefix>.END), written by the stream recorder the moment one army's
+    alive count hits 0 — exact, no OCR. FALLBACK: the win trigger's '<unit> WINS!'
+    banner via the change-gated screen watcher (vision.ResultWatcher), which also
+    covers runs where the live decode disabled itself. Returns True if either fires
+    before the cap."""
+    log(f"[watch] for fight end (gRPC .END + banner fallback, min {min_fight}s, "
+        f"poll {poll}s)...", logfile)
     watcher = vision.ResultWatcher()
     while time.time() - t0 < min_fight:
         time.sleep(0.5)
     while time.time() - t0 < cap - 2:
         try:
+            if end_flag and os.path.exists(end_flag):
+                log(f"[watch] gRPC live tailer reports fight end at "
+                    f"+{time.time() - t0:.1f}s", logfile)
+                return True
             _focus_game()                 # keep the fight on screen for the recorder
             if watcher.check(vision.grab()):
-                log(f"[watch] result detected at +{time.time() - t0:.1f}s", logfile)
+                log(f"[watch] result banner detected at +{time.time() - t0:.1f}s", logfile)
                 return True
         except Exception as e:
             log(f"[watch] detect error: {e}", logfile)

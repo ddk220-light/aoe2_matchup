@@ -37,7 +37,8 @@ def start_logger(prefix, dur=270, logfile=None):
             "(set AOE2_GRPC_PYTHON / AOE2_GRPC_LOGGER)", logfile)
         return None
     for ext in (".END", ".meta.json", ".hp_log.jsonl", ".frames.bin",
-                ".seed_snap.bin", ".reseed.bin", ".hp.json"):  # clear stale artifacts
+                ".seed_snap.bin", ".reseed.bin", ".hp.json",
+                ".live_seed.bin"):                             # clear stale artifacts
         try:
             os.remove(prefix + ext)
         except OSError:

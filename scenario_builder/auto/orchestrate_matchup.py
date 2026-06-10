@@ -485,11 +485,12 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
         _park_cursor(logfile)                                 # cursor out of the captured frame
         t_gs = wait_for_game_start(t_test, logfile=logfile)   # when the fight actually begins
         # End-detection: the in-game "WINS" banner is the GAME'S OWN verdict, so OCR reads
-        # it correctly every run. The gRPC logger runs alongside (started above) purely to
-        # capture the HP timeline for the overlay — its in-combat decode isn't yet reliable
-        # on this game version (it can desync mid-battle and pick the wrong winner), so we
-        # do NOT gate end-detection on it.
-        got_result = watch_until_result(t_test, cap, logfile=logfile)
+        # it correctly every run. The gRPC recorder's LIVE TAILER (fixed decoder) writes
+        # <prefix>.END the moment one army hits 0 — the exact battle end; the WINS-banner
+        # screen watcher remains the fallback when the tailer disabled itself.
+        got_result = watch_until_result(
+            t_test, cap, logfile=logfile,
+            end_flag=(grpc_prefix + ".END") if grpc_proc else None)
         time.sleep(RESULT_HOLD)            # keep recording the on-screen result hold
     finally:
         stop_recorder(rec, out_mov, logfile)

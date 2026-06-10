@@ -74,3 +74,20 @@ webapp/backups/
 graphics/game_raw_files/
 # Scratch / working files
 .scratch/
+tmp/
+.tmp_research/
+
+# Archived-but-kept files (see .old/README.md); local only
+.old/
+
+# Claude Code local state
+.claude/launch.json
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+
+# Patch-pipeline local artifacts (pre-patch archives + intermediates;
+# created by webapp/patch_pipeline.py, never committed)
+extraction/extracted_data_prev/
+webapp/aoe2_reference_*.db
+webapp/changed_units_*.json
+webapp/*.db.bak

@@ -1,12 +1,17 @@
-"""
-Standalone script to pre-compute battle ranking scores for the unit rankings page.
+"""Role: legacy — RETIRED as a pipeline; survives as a scoring LIBRARY.
 
-Run this after regenerating aoe2_reference.db to produce battle_scores.json.
-The Flask server loads this file at startup (no simulations at serve time).
+Do NOT run this as a script. The battle_scores.json chain it used to produce
+is retired: rankings are served from derived_data.db (built by the derive_*
+scripts from the matchup baseline), and webapp/battle_scores.json is a
+342-byte stub.
 
-Usage:
-    cd webapp && python3 compute_battle_scores.py            # incremental (cached)
-    cd webapp && python3 compute_battle_scores.py --full      # force full recompute
+Still imported as a library:
+  - derive_siege_scores.py uses compute_siege_antibuilding_scores()
+  - tests/test_infantry_scoring.py, test_naval_rankings.py and
+    test_siege_scoring.py exercise the infantry/naval/siege scoring helpers.
+
+Phase-3 plan (docs/architecture/improvements.md): extract the scoring
+functions into a lib and archive the rest.
 """
 
 import argparse

@@ -1,5 +1,4 @@
-"""
-Shared combat-unit dict builder for ref_units rows.
+"""Role: serving — shared combat-unit dict builder for ref_units rows.
 
 All three callers (app.py, best_units.py, compute_battle_scores.py) previously
 duplicated the same 85-line field mapping.  This module provides a single

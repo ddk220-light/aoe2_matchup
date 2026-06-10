@@ -1,4 +1,4 @@
-"""Server-side WebM clip generator for AoE2 replays.
+"""Role: replay — server-side WebM clip generator for AoE2 replays.
 
 Given a parsed mgz match + a focus player, produce a short (<=30s) WebM that:
   - clips to the biggest engagements (battle clusters), skipping idle stretches,
@@ -531,9 +531,13 @@ def _ffmpeg_exe():
 
 
 def _encode(frames_dir, out_path):
-    # Encode to a temp file and atomically rename, so a killed/timed-out worker
-    # never leaves a half-written .webm that would be served from cache.
-    tmp_out = out_path + ".tmp.webm"
+    # Encode to a UNIQUE temp file and atomically rename, so a killed/timed-out
+    # worker never leaves a half-written .webm that would be served from cache,
+    # and two concurrent renders of the same match can't share a tmp path and
+    # cache a corrupt clip (the old fixed out_path + '.tmp.webm' could).
+    fd, tmp_out = tempfile.mkstemp(
+        suffix=".tmp.webm", dir=os.path.dirname(out_path) or None)
+    os.close(fd)
     cmd = [_ffmpeg_exe(), "-y", "-framerate", str(FPS),
            "-i", os.path.join(frames_dir, "f%05d.png"),
            "-c:v", "libvpx-vp9", "-b:v", "0", "-crf", "34", "-pix_fmt", "yuv420p",

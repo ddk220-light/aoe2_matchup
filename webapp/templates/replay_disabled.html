@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Replay Analyzer temporarily unavailable | AoE2 Matchup{% endblock %}
+{% block meta_description %}The AoE2 Replay Analyzer is temporarily unavailable on this deployment.{% endblock %}
+
+{% block content %}
+<div style="max-width: 640px; margin: 4rem auto; padding: 0 1rem; text-align: center;">
+    <h1>Replay Analyzer is temporarily unavailable</h1>
+    <p>
+        The replay subsystem could not start on this deployment (a server-side
+        dependency failed to load). The rest of the site works normally —
+        try the <a href="/">Battle Sim</a> or <a href="/units">Unit Rankings</a>.
+    </p>
+</div>
+{% endblock %}

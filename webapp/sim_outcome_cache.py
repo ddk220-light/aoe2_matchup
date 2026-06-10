@@ -1,4 +1,4 @@
-"""Per-fingerprint outcome cache for sim deduplication.
+"""Role: batch-runner — per-fingerprint outcome cache for sim deduplication.
 
 Two civs that produce a unit with identical final stats, costs, and special
 properties will produce identical sim outcomes for the same opponent and

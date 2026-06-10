@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
-Capture a deterministic golden baseline of simulation + matchup-sims output.
+Capture a deterministic golden baseline of matchup-sims output.
 
-Used by the cleanup/codebase-improvements branch to assert that refactors
-preserve behavior. Deliberately does NOT print timing — it produces stable,
-byte-comparable JSON.
+tests/test_simulations.py asserts current output matches .golden/baseline.json,
+so refactors of the abstract engine path (simulation.py / best_units.py) can't
+silently change behavior. Deliberately does NOT print timing — it produces
+stable, byte-comparable JSON.
 
-Coverage: 10 civ pairs × 2 ages × (matchup sims top/sidekick sections) plus
-a direct simulate_battle() call for a handful of fixed units, giving us a
-wide-but-cheap oracle (~30s total runtime).
+Coverage: 10 civ pairs × 2 ages of get_matchup_sims (top/sidekick sections) —
+a wide-but-cheap oracle (~30s total runtime). After any INTENDED sim-behavior
+change, regenerate and commit on staging:  python .golden/capture_baseline.py
 """
 import json
 import os

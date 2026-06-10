@@ -1,4 +1,4 @@
-"""End-to-end patch pipeline. Run ONCE per new patch from the repo root:
+"""Role: patch-tooling — end-to-end patch pipeline. Run ONCE per new patch from the repo root:
 
   python -m webapp.patch_pipeline --build 177723 --release-date 2026-06-02 \
       --source-url https://www.ageofempires.com/news/...update-177723/ \

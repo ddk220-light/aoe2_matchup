@@ -1,4 +1,4 @@
-"""Derive pool scores for every (civ, unit_slug, scale) in a matchup DB.
+"""Role: derive — pool scores for every (civ, unit_slug, scale) in a matchup DB.
 
 `--matchup-db` is REQUIRED — point it at the external baseline-of-record
 (the committed webapp/matchup_db.db is an Armenians-only stub):

@@ -1,3 +1,13 @@
+"""Role: serving — Flask app for aoe2matchup.com.
+
+All page + API routes (battle sim home, rankings, civ pages, matchup advisor,
+patch tracker, SEO landing pages, sitemap) plus the /replay/* blueprint
+mounted from replay_core. Serves the committed data artifacts —
+aoe2_reference.db, derived_data.db, pool_scores.db, patches.db,
+matchup_db.db, civ_power_units/<build>.json — and only simulates at serve
+time for the live Matchup Advisor endpoints (best_units.get_matchup_sims /
+get_matchup_recommendations).
+"""
 import html as _html
 import json
 import os
@@ -25,6 +35,8 @@ from patches_db import get_current_build
 
 app = Flask(__name__)
 app.json.sort_keys = False
+# Cap request bodies (replay uploads are single-digit MB; 50 MB is generous).
+app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
 # Public site URL — used for canonical URLs, sitemap, OG tags.
 # Override with SITE_URL env var if you ever change domains.
@@ -65,6 +77,13 @@ except Exception as _replay_err:  # pragma: no cover
         "Replay Analyzer disabled (import failed): %s", _replay_err
     )
     REPLAY_ENABLED = False
+
+
+@app.context_processor
+def inject_replay_enabled():
+    """Expose whether the replay blueprint mounted, so base.html can hide
+    the Replay nav tab when its optional deps failed to import."""
+    return {"replay_enabled": REPLAY_ENABLED}
 
 
 # Database paths
@@ -495,7 +514,13 @@ def replay():
     """Replay Analyzer tab. Embeds the full-screen visualizer in an isolated
     iframe so the analyzer nav + theme stay on top with no CSS conflicts.
     Forwards deep-link params (?match=&profile=&t=) into the iframe so shared
-    links auto-load a replay (and optionally jump to a timestamp)."""
+    links auto-load a replay (and optionally jump to a timestamp).
+
+    Returns 503 with a friendly notice when the replay blueprint failed to
+    mount (optional deps missing) — otherwise the SPA would render but every
+    API call would 404."""
+    if not REPLAY_ENABLED:
+        return render_template("replay_disabled.html", active_nav="replay"), 503
     from urllib.parse import urlencode
     allowed = {k: request.args[k] for k in ("match", "profile", "t")
                if request.args.get(k)}

@@ -1,4 +1,4 @@
-"""patch_resim.py — stable multi-seed matchup means for patch-diff analysis.
+"""Role: patch-tooling — stable multi-seed matchup means for patch-diff analysis.
 
 Run the "my-side" units (a small set of changed units) against the full
 opponent pool, averaging N seeds per matchup so that the mean score is

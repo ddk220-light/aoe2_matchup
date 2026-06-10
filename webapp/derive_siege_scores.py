@@ -1,4 +1,4 @@
-"""Re-derive anti-building (siege) scores into derived_data.db.
+"""Role: derive — re-derive anti-building (siege) scores into derived_data.db.
 
 The live app reads `derived_data.db` battle_scores. Historically the siege rows
 there were written once and only carried forward build-to-build

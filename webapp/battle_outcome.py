@@ -1,4 +1,4 @@
-"""BattleOutcome dataclass and aggregation helpers.
+"""Role: engine — BattleOutcome dataclass and aggregation helpers.
 
 Single source of truth for the rich per-battle data captured by
 simulate_real_battle() and persisted by both batch runners.

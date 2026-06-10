@@ -1,4 +1,5 @@
-"""Schema + I/O for matchup_db.db.
+"""Role: batch-runner — schema + I/O for matchup_db.db (written by the batch
+runners, read by the derive_* jobs).
 
 One row per (my_civ, my_unit, opp_civ, opp_unit, scale).  Stores raw
 1v1 simulation outcomes including per-resource losses, gains, and

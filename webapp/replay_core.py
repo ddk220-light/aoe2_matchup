@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-"""
-Flask server for AoE2 Replay Visualizer.
-Handles file uploads and processes replay files.
+"""Role: replay — Flask Blueprint for the AoE2 Replay Analyzer.
+
+Defines `replay_bp` (mounted under /replay/* by webapp/app.py — this module
+is NOT a standalone server): replay upload/download + parsing via mgz,
+unit-type reconstruction, map/playback payloads for the canvas SPA, and the
+WebM highlight-clip export (clip_export.py). Full subsystem design:
+docs/architecture/replay.md.
 """
 
 import csv
@@ -1002,7 +1006,7 @@ def process_replay(replay_file):
     # then a concrete military type from the player's military-only train queue.
     # v2: group-first, confidence-based classifier (unit_classifier.py). Falls
     # back to the legacy greedy matcher if anything goes wrong. See
-    # CLASSIFIER_REWORK.md.
+    # docs/architecture/replay.md ("Unit classification").
     _canon = lambda x: x  # noqa: E731
     try:
         import unit_classifier as _uc
@@ -1605,8 +1609,8 @@ CLIP_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 @replay_bp.route("/replay/api/clip", methods=["GET"])
 def make_clip():
     """Generate (or reuse a cached) short shareable WebM of a match's biggest
-    engagements (<=30s, 8x, with a skip-aware timeline). Reuses the same replay
-    download/cache as /api/load-match.
+    engagements (<=30s, 4x — clip_export.SPEED — with a skip-aware timeline).
+    Reuses the same replay download/cache as /api/load-match.
 
     Query: matchId, profileId, [player]. Returns {clip_url, view_url}."""
     import re as _re

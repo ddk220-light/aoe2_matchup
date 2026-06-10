@@ -87,11 +87,13 @@
                 <span class="nav-tab-label">Civilizations</span>
                 <span class="nav-tab-desc">Strengths &amp; strategy</span>
             </a>
+            {% if replay_enabled %}
             <a href="/replay" class="nav-tab {% if active_nav == 'replay' %}active{% endif %}">
                 <span class="nav-tab-icon">&#9654;</span>
                 <span class="nav-tab-label">Replay Analyzer</span>
                 <span class="nav-tab-desc">Watch &amp; share replays</span>
             </a>
+            {% endif %}
             <a href="/patches" class="nav-tab {% if active_nav == 'patches' %}active{% endif %}">
                 <span class="nav-tab-icon">&#128221;</span>
                 <span class="nav-tab-label">Patches</span>

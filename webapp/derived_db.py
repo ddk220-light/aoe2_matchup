@@ -1,8 +1,11 @@
-"""Schema + I/O for derived_data.db.
+"""Role: derive — schema + I/O for derived_data.db.
 
 Holds analysis tables computed from matchup_db.db raw outcomes:
   - battle_scores:           ranking scores per (line, civ, unit, score_type)
-  - advisor_recommendations: best top-unit + partner per (civ, opponent)
+  - advisor_recommendations: PARKED/LEGACY — its deriver was archived to
+    .old/webapp/derive_advisor_recs.py (2026-06-10); nothing writes it and the
+    live advisor simulates on the fly (best_units). DDL kept so existing DBs
+    keep validating.
 
 Reference data (units, techs, classes) stays in aoe2_reference.db; this
 file only holds derivations that get rebuilt when the sim or scoring

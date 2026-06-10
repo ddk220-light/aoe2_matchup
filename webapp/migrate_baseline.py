@@ -1,9 +1,13 @@
-"""One-time baseline migration: tag the existing committed result DBs as build
-170934, rebuild their schemas to include build_number, seed the baseline
-patches row, and move civ_power_units.json -> civ_power_units/170934.json.
+"""Role: legacy — one-time baseline migration: tag the existing committed result
+DBs as build 170934, rebuild their schemas to include build_number, seed the
+baseline patches row, and move civ_power_units.json -> civ_power_units/170934.json.
 
 Idempotent: re-running detects build_number already present and only ensures
 the patches row + per-build JSON exist.
+
+Status: already applied to the committed DBs. Retained because it is the
+documented fresh-checkout bootstrap (patch_pipeline.py points here when no
+baseline build exists) and is exercised by tests/test_versioning.py.
 """
 import argparse
 import os

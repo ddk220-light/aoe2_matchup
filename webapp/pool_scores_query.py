@@ -1,4 +1,4 @@
-"""Query helper for pool_scores.db.
+"""Role: serving — query helper for pool_scores.db.
 
 Loads structured per-unit payloads keyed by (civ_name, unit_slug).
 Used by the /api/ref/unit-line endpoint to attach pool-scores data

@@ -1,4 +1,5 @@
-"""Per-civ top unit per line at Imperial Age.
+"""Role: serving + derive — per-civ top unit per line at Imperial Age
+(load_top_units serves civ_top_units.json; compute_top_units rebuilds it offline).
 
 The app only deals with fully-upgraded Imperial-age units. For each civ and each
 unit line, this resolves the ACTUAL highest-tier unit that civ fields at Imperial

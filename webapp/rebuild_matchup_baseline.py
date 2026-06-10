@@ -1,4 +1,4 @@
-"""Rebuild the COMPLETE matchup table as a reliable multi-seed baseline.
+"""Role: batch-runner — rebuild the COMPLETE matchup table as a reliable multi-seed baseline.
 
 Why: the live matchup_db was sampled at 1-or-3 seeds, so contested matchups
 (high per-seed variance) flip win/loss between seeds -> inconsistent results.

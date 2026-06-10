@@ -1,4 +1,5 @@
-"""Schema + I/O for patches.db — the patch registry and per-patch diff tables.
+"""Role: patch-tooling — schema + I/O for patches.db, the patch registry and
+per-patch diff tables (also read at serve time via get_current_build).
 
 Tables:
   patches              one row per game build; is_current=1 marks the live build

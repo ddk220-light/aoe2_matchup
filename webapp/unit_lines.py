@@ -1,15 +1,18 @@
-"""
-Single source of truth for the UNIT_LINES configuration dict.
+"""Role: serving — single source of truth for the UNIT_LINES configuration dict
+(shared registry, also imported by the derive/batch/patch tooling; a JS copy
+lives in static/js/rankings.js — keep both in sync).
 
-This module was created to eliminate the drift between app.py (21 entries, including
-4 aggregate sub_lines keys) and compute_battle_scores.py (17 entries, unit lines only).
-A programmatic diff confirmed the 17 individual unit-line entries were byte-identical
-between both files; the 4-entry difference was the sub_lines aggregate keys
-(archery, infantry, stable, siege) that existed only in app.py to power the
-/api/ref/unit-line/<slug> rankings UI.
+This module was created to eliminate the drift between app.py (which carried
+4 extra aggregate sub_lines keys) and compute_battle_scores.py (unit lines
+only). A programmatic diff confirmed the individual unit-line entries were
+byte-identical between both files; the difference was the sub_lines aggregate
+keys (archery, infantry, stable, siege) that existed only in app.py to power
+the /api/ref/unit-line/<slug> rankings UI.
 
-The unified dict has all 21 keys. compute_battle_scores.py iteration sites guard
-against the aggregate entries with:
+The unified dict currently has 26 keys: 21 unit lines + 5 sub_lines
+aggregates (archery, infantry, stable, siege, naval — the naval aggregate and
+its lines were added after unification). compute_battle_scores.py iteration
+sites guard against the aggregate entries with:
     if not std_slug and not multi_slugs and not has_unique: continue
 so no behavior change and no DB regeneration is needed.
 

@@ -14,27 +14,21 @@ You set up the AoE2 Unit Analyzer webapp in a local environment, gather input on
 
 ## Environment Context
 
-- **Python**: Use `python3` (not `python`) — this is macOS and `python` is not in PATH
-- **Virtual env**: `venv/` has flask + numpy; `.venv/` has flask only. Prefer `venv/`
-- **Port**: Port 5000 is often occupied by AirPlay Receiver on macOS. Use port 5001 or another available port
-- **Webapp location**: `webapp/` directory contains `app.py` (Flask app), `aoe2_units.db` (SQLite), `simulation.py`, templates, etc.
-- **Database**: SQLite at `webapp/aoe2_units.db` — must exist before running the server
+- **Python**: This is a Windows environment — use the conda `python` (it has flask, numpy, and genieutils-py)
+- **Port**: Default local dev port is 5002 (`PORT=5002 python webapp/app.py`); pick another free port if occupied
+- **Webapp location**: `webapp/` directory contains `app.py` (Flask app), the committed SQLite DBs, `simulation.py`, templates, etc.
+- **Databases**: the app serves `webapp/aoe2_reference.db` (combat data), `derived_data.db` (rankings), `pool_scores.db`, `patches.db` — all committed. `aoe2_units.db` is legacy (no app route reads it)
 
 ## Setup Procedure
 
 Follow these steps precisely:
 
 1. **Check prerequisites**:
-   - Verify `webapp/aoe2_units.db` exists. If not, inform the user they need to run the build pipeline first:
-     - Step 1: `python3 -m extraction.run`
-     - Step 2: `python3 -m analysis.generate_reference`
-     - Step 3: `python3 -m analysis.generate_main_db`
-     - Step 4: `cd webapp && python3 compute_battle_scores.py`
-   - Verify the virtual environment exists (`venv/` or `.venv/`)
+   - Verify `webapp/aoe2_reference.db` exists (it is committed; if missing the checkout is broken).
+   - Do NOT run the regeneration pipeline (`analysis/generate_reference.py` / `generate_main_db.py`) to "fix" anything — a full regen clobbers surgical combat-prop patches in the committed DBs. Inform the user instead.
 
 2. **Start the webapp**:
-   - Navigate to the `webapp/` directory
-   - Start Flask on an available port (default to 5001): `python3 app.py` or set `FLASK_RUN_PORT=5001`
+   - From the repo root: `PORT=5002 python webapp/app.py` (or set another free port)
    - If app.py doesn't accept a port argument, you may need to modify the startup or use environment variables
    - Start the server in the background so you can run tests against it
    - Verify the server is responding by hitting the root endpoint
@@ -44,12 +38,12 @@ Follow these steps precisely:
    - Clarify the scope: single endpoint, full API sweep, database check, simulation accuracy, etc.
 
 4. **Execute the test**:
-   - Use `curl`, `python3` scripts, or direct database queries as appropriate
+   - Use `curl`, `python` scripts, or direct database queries as appropriate
    - For API tests, hit endpoints like:
      - `/api/combat-unit?slug=<slug>&age=<age>&civ=<civ>`
      - `/api/matchup?unit1=<slug>&unit2=<slug>&age=<age>`
      - Other endpoints as documented in `app.py`
-   - For database validation, query `webapp/aoe2_units.db` directly with `sqlite3` or Python
+   - For database validation, query `webapp/aoe2_reference.db` (table `ref_units`) directly with `sqlite3` or Python
    - For simulation tests, import and call functions from `simulation.py`
 
 5. **Clean up**:
@@ -120,7 +114,7 @@ Examples of what to record:
 
 # Persistent Agent Memory
 
-You have a persistent Persistent Agent Memory directory at `/Users/deepak/AI/aoe2unitanalyzer/.claude/agent-memory/webapp-test-runner/`. Its contents persist across conversations.
+You have a persistent Persistent Agent Memory directory at `.claude/agent-memory/webapp-test-runner/` (repo-relative). Its contents persist across conversations.
 
 As you work, consult your memory files to build on previous experience. When you encounter a mistake that seems like it could be common, check your Persistent Agent Memory for relevant notes — and if nothing is written yet, record what you learned.
 
@@ -153,11 +147,11 @@ Explicit user requests:
 When looking for past context:
 1. Search topic files in your memory directory:
 ```
-Grep with pattern="<search term>" path="/Users/deepak/AI/aoe2unitanalyzer/.claude/agent-memory/webapp-test-runner/" glob="*.md"
+Grep with pattern="<search term>" path=".claude/agent-memory/webapp-test-runner/" glob="*.md"
 ```
 2. Session transcript logs (last resort — large files, slow):
 ```
-Grep with pattern="<search term>" path="/Users/deepak/.claude/projects/-Users-deepak-AI-aoe2unitanalyzer/" glob="*.jsonl"
+Grep with pattern="<search term>" path="C:/Users/ddk22/.claude/projects/D--AI-aoe2-unit-analyzer/" glob="*.jsonl"
 ```
 Use narrow search terms (error messages, file paths, function names) rather than broad keywords.
 

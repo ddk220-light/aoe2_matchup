@@ -1,4 +1,4 @@
-"""SQLite schema + writer for the pool_scores derived database.
+"""Role: derive — SQLite schema + writer for the pool_scores derived database.
 
 Single table: `pool_scores`, keyed by (civ_name, unit_slug, scale, axis).
 Six rows per (civ, unit) — three axes × two scales.

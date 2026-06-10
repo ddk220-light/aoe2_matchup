@@ -1,5 +1,16 @@
 /* ============================================
    AoE2 Unit Analyzer — Shared Constants
+
+   SINGLE source of truth for frontend constants:
+   ENABLED_CIVS, NAME_TO_ICON, UNIQUE_BUILDING,
+   ICON_BASE, CIV_EMBLEM_BASE. Loaded by base.html
+   before the page scripts — do NOT re-declare
+   these in templates or page JS (the old
+   per-template copies are gone). The Python civ
+   list is validated server-side against
+   aoe2_reference.db; keep ENABLED_CIVS in sync
+   when a civ is added (see
+   docs/architecture/runbooks.md).
    ============================================ */
 
 /* --- Icon URLs --- */

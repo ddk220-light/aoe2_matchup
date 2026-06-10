@@ -1,5 +1,9 @@
-"""
-Best units logic: civ power units (pre-computed) + matchup recommendations (on-the-fly).
+"""Role: serving + derive — civ power units and the live Matchup Advisor.
+
+Two halves: the civ-power-units compute/persist job (writes
+civ_power_units/<build>.json) and the serve-time advisor endpoints'
+logic (get_matchup_recommendations / get_matchup_sims, seeded RNG)
+imported by app.py.
 """
 
 import json

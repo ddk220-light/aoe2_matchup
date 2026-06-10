@@ -1,4 +1,4 @@
-"""Pure functions for the pool-scores derivation pipeline.
+"""Role: derive — pure functions for the pool-scores derivation pipeline.
 
 No I/O: every function takes plain values or in-memory collections and
 returns plain values. The orchestrator (derive_pool_scores.py) is

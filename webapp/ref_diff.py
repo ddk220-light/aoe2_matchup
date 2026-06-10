@@ -1,4 +1,4 @@
-"""Diff two aoe2_reference.db snapshots (prev vs new) at ref_units granularity.
+"""Role: patch-tooling — diff two aoe2_reference.db snapshots (prev vs new) at ref_units granularity.
 
 Returns (deltas, changed_slugs):
   deltas        list of {civ_name, unit_slug, field, old_value, new_value}

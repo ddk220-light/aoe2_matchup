@@ -1,4 +1,4 @@
-"""verify_flips.py — adversarial, confidence-driven re-sim of candidate patch
+"""Role: patch-tooling — adversarial, confidence-driven re-sim of candidate patch
 matchup changes.
 
 Why this exists

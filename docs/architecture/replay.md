@@ -6,7 +6,7 @@ The Replay Analyzer is a self-contained subsystem that downloads or accepts AoE2
 
 ## Mounting and routes
 
-`webapp/replay_core.py` defines a Flask `Blueprint` named `replay` (line 38). `webapp/app.py` registers it at import time inside a `try/except` (lines 54–67): the blueprint pulls heavy optional dependencies (`mgz`, `requests`, and — transitively through `clip_export.py` — Pillow and imageio-ffmpeg), so if any import fails the blueprint is simply not registered, a warning is logged, and the core simulator site boots without it. `REPLAY_ENABLED` is set by this block but is currently read nowhere else — when imports fail, the `/replay` page still renders (it is a plain `@app.route` in `app.py`, not part of the blueprint) and the SPA's API calls return 404.
+`webapp/replay_core.py` defines a Flask `Blueprint` named `replay` (line 38). `webapp/app.py` registers it at import time inside a `try/except` (lines 54–67): the blueprint pulls heavy optional dependencies (`mgz`, `requests`, and — transitively through `clip_export.py` — Pillow and imageio-ffmpeg), so if any import fails the blueprint is simply not registered, a warning is logged, and the core simulator site boots without it. `REPLAY_ENABLED` gates the rest of the integration: a context processor (`inject_replay_enabled`) exposes it to every template so `base.html` hides the Replay nav tab when False, and the `/replay` page route (a plain `@app.route` in `app.py`, not part of the blueprint) returns a 503 notice (`templates/replay_disabled.html`) instead of rendering an SPA whose API calls would all 404.
 
 The dependencies live in `webapp/requirements.txt` (what Railway installs): `requests`, Pillow, `imageio-ffmpeg`, and `mgz` pinned to the `sanduckhan/aoc-mgz` fork at a specific commit for DE save-version 67.x support. `aocref` (object/terrain name tables) arrives transitively with `mgz`; every use of it is wrapped in try/except and degrades to empty name maps.
 
@@ -50,7 +50,7 @@ Key reconstruction logic, all in `replay_core.py`:
 
 ## Unit classification: `webapp/unit_classifier.py`
 
-Recorded games never state a produced unit's type — only starting (header) units are named — so types are reconstructed. `process_replay()` calls `unit_classifier.build_type_map(match)` (the "v2" classifier); if that raises, it falls back to the legacy single-function matcher `_classify_units()` inside `replay_core.py`, and if that also fails, to an empty map. (Both code paths reference a `CLASSIFIER_REWORK.md` design doc that does not exist in the repo.)
+Recorded games never state a produced unit's type — only starting (header) units are named — so types are reconstructed. `process_replay()` calls `unit_classifier.build_type_map(match)` (the "v2" classifier); if that raises, it falls back to the legacy single-function matcher `_classify_units()` inside `replay_core.py`, and if that also fails, to an empty map. (Both code paths now cite this document as the design reference; an earlier `CLASSIFIER_REWORK.md` design doc never made it into the repo.)
 
 The v2 classifier is a staged, confidence-laddered pipeline (`_run()`), standalone with no Flask dependency:
 

@@ -1,4 +1,4 @@
-"""Read matchup_db.matchup_battles, write battle_scores to derived_data.db.
+"""Role: derive — read matchup_db.matchup_battles, write battle_scores to derived_data.db.
 
 Score model: signed_score(outcome) = 100 * (winner_hp% - loser_hp%) (negated
 if team2 won). Role aggregation, composites, pool normalization mirror the

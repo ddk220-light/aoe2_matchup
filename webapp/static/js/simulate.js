@@ -1,3 +1,18 @@
+/*
+ * Role: engine — Engine 3 of 3: FRONTEND CANVAS battle sim.
+ *
+ * Runs the interactive Battle Sim page at / entirely client-side (the
+ * BattleUnit class + the animation loop). Mirrors the position-based backend
+ * engine webapp/simulation_real.py — abilities and tuning constants (miss
+ * spread, movement smoothing, stuck threshold) are kept in lockstep by
+ * comments in both files; change one, change the other.
+ *
+ * tests/test_frontend_projectile_miss.js brace-extracts the BattleUnit class
+ * from this file at test time by searching for its declaration, so keep the
+ * class top-level and brace-balanced, and never write the declaration token
+ * ("class" + space + the class name) anywhere above the real one.
+ */
+
 // ===== CONSTANTS =====
 const CANVAS_WIDTH = 900;
 const CANVAS_HEIGHT = 600;

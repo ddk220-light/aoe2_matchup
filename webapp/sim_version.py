@@ -1,7 +1,12 @@
-"""Hash sim source files into a 16-char version string.
+"""Role: batch-runner — hash sim source files into a 16-char version string.
 
 Used as a row-level cache key in matchup_db: rows with a different
 sim_version are re-simulated on the next run, others are skipped.
+
+Hashes simulation_real.py + analysis/config_combat.py BYTE content — never
+edit those two files (even a comment) outside a planned full re-sim.
+simulation.py (the abstract engine) is deliberately NOT hashed; its only
+regression guard is the golden-baseline test (tests/test_simulations.py).
 """
 
 import hashlib

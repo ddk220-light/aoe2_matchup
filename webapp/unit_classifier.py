@@ -1,11 +1,13 @@
-"""Group-first, confidence-based AoE2:DE unit-type classifier.
+"""Role: replay — group-first, confidence-based AoE2:DE unit-type classifier.
 
 Standalone: takes a parsed mgz ``match`` (no Flask dependency). See
-CLASSIFIER_REWORK.md for the full design and rationale.
+docs/architecture/replay.md ("Unit classification") for the design and
+rationale.
 
-Implemented so far: Stage 0 (context + id normalization), Stage 1 (refined
-behavioral class), Stage 2 (co-command class propagation). Stages 3-5 (production
-timeline, squad typing, finalize) are scaffolded and filled in subsequent phases.
+All stages are implemented: Stage 0 (context + id normalization), Stage 1
+(refined behavioral class), Stage 2 (co-command class propagation), Stage 3
+(production timeline), Stage 4 (squad/group typing), Stage 5 (class-aware
+finalize/fallback).
 """
 
 import bisect
@@ -13,7 +15,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from itertools import combinations
 
-# --- command semantics (refined; see findings in CLASSIFIER_REWORK.md) --------
+# --- command semantics (refined; see docs/architecture/replay.md) -------------
 # Only a MILITARY unit can be the subject of these.
 MIL_CMDS = {"STANCE", "FORMATION", "PATROL", "ATTACK_GROUND", "DE_ATTACK_MOVE", "GUARD"}
 # Only a VILLAGER can BUILD/REPAIR/WALL (gather is handled via resource targets).

@@ -1,4 +1,4 @@
-"""Snapshot + diff matchup outcomes around a re-sim, and diff ranking snapshots.
+"""Role: patch-tooling — snapshot + diff matchup outcomes around a re-sim, and diff ranking snapshots.
 
 row_score mirrors battle_outcome.signed_score but reads a DB row dict, so we can
 compute the per-matchup signed score directly from matchup_battles columns.

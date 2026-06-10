@@ -9,27 +9,28 @@ Quick reference for querying unit stats, running backend simulations, and interp
 
 ## 1. Look Up Unit Stats
 
+Query `ref_units` in `webapp/aoe2_reference.db` (the DB the app serves — NOT
+the legacy `aoe2_units.db`). Run from the repo root:
+
 ```python
 import sqlite3, sys
-sys.path.insert(0, "/Users/deepak/AI/aoe2unitanalyzer")
-from webapp.simulation import prepare_combat_unit, simulate_battle
+sys.path.insert(0, "webapp")
+from simulation import prepare_combat_unit, simulate_battle
+from combat_unit_loader import build_combat_dict_from_ref
 
-db = sqlite3.connect("/Users/deepak/AI/aoe2unitanalyzer/webapp/aoe2_units.db")
+db = sqlite3.connect("webapp/aoe2_reference.db")
 db.row_factory = sqlite3.Row
 
-def get_unit(civ_name, slug):
-    row = db.execute("""
-        SELECT us.* FROM unit_stats us
-        JOIN units u ON us.unit_id = u.id
-        JOIN civilizations c ON us.civ_id = c.id
-        WHERE c.name = ? AND u.slug = ? AND us.has_unit = 1
-    """, (civ_name, slug)).fetchone()
-    return prepare_combat_unit(dict(row))
+def get_unit(civ_name, slug, age="Imperial"):
+    row = db.execute(
+        "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=? AND age=?",
+        (civ_name, slug, age)).fetchone()
+    return prepare_combat_unit(build_combat_dict_from_ref(row))
 ```
 
 **Civ names** are title-case: `"Franks"`, `"Chinese"`, `"Byzantines"`.
 **Slugs**: standard units = `"knight"`, `"halberdier"`; unique units have civ suffix = `"huskarl_goths"`, `"cataphract_byzantines"`.
-**Age filter**: if same slug exists in Castle+Imperial (non-elite uniques), add `AND us.age = 'Imperial'`.
+**Age filter**: non-elite uniques use the same slug in Castle and Imperial — pass `age="Castle"` for the Castle-age version (the helper defaults to Imperial).
 
 ## 2. Run a Simulation
 

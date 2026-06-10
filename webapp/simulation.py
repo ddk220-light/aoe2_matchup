@@ -1,5 +1,10 @@
-"""
-Data-driven battle simulation engine (damage-only, no positions).
+"""Role: engine — Engine 1 of 3: ABSTRACT tick-based sim (damage-only, no positions).
+
+Used by the live Matchup Advisor (/api/matchup-sims via best_units) — NOT by
+the batch matchup data, which runs simulation_real.py (Engine 2, position-based);
+the interactive Battle Sim page runs static/js/simulate.js (Engine 3) client-side.
+This file is NOT hashed into sim_version; the golden-baseline test
+(tests/test_simulations.py) is its only regression guard.
 
 All unit-specific behaviors (siege projectiles, trample, armor-ignoring, etc.)
 are read from unit dict fields populated from the database — no hardcoded slug lookups.

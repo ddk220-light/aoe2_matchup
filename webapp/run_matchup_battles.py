@@ -1,4 +1,4 @@
-"""Single batch runner for matchup_db.db.
+"""Role: batch-runner — single batch runner for matchup_db.db.
 
 For each civ × eligible imperial unit, simulates 1v1 against every other
 (civ, unit) at 30v30 and 3k-resource scales.  Mirror symmetry (A vs B

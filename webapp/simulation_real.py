@@ -1,6 +1,15 @@
-"""
-Position-aware battle simulation — Python port of the JS canvas sim in
-static/js/simulate.js.
+"""Role: engine — Engine 2 of 3: POSITION-BASED 2D sim (movement, projectile flight).
+
+Python port of the JS canvas sim in static/js/simulate.js (Engine 3, the
+interactive Battle Sim page). Produces ALL batch matchup data:
+run_matchup_battles.py, rebuild_matchup_baseline.py and patch_resim.py call
+simulate_real_battle(); the live Matchup Advisor overlay runs simulation.py
+(Engine 1, abstract tick) instead.
+
+This file IS byte-hashed into sim_version (webapp/sim_version.py) together
+with analysis/config_combat.py — ANY edit, even a comment, stales every
+matchup row and forces a full re-sim. Edit only inside a planned re-sim
+window.
 
 Differences from simulation.py (the fast tick-based sim):
 - Real 2D positions, distance-based range checks.
@@ -11,7 +20,8 @@ Differences from simulation.py (the fast tick-based sim):
 
 Coordinate system: tiles (1.0 = 1 tile). The JS sim uses pixels with
 TILE_SIZE=30; we skip the scaling and work in tiles directly. The 5px
-melee buffer becomes 0.17 tiles. Map is 30x20 tiles (= 900x600 px).
+melee buffer becomes 0.17 tiles. Map is 60x20 tiles (the JS page renders
+a 30x20-tile / 900x600 px canvas).
 
 Public entry point matches simulate_battle()'s signature:
 
@@ -367,6 +377,12 @@ class BattleUnit:
         "transform_attacks", "transform_armors",
         "transform_melee_armor", "transform_pierce_armor",
         "transform_attack_speed", "transform_move_speed",
+        # Dismount-on-death stat block (Konnik)
+        "dismount_hp", "dismount_attack",
+        "dismount_melee_armor", "dismount_pierce_armor",
+        "dismount_attack_speed", "dismount_attack_delay",
+        "dismount_movement_speed", "dismount_attacks", "dismount_armors",
+        "is_dismounted",
     )
 
     def __init__(self, uid, team, stats):
@@ -493,6 +509,17 @@ class BattleUnit:
         self.transform_move_speed = float(stats.get("transform_movement_speed") or 0)
         self.transform_attacks = _parse_attacks_armors(stats.get("transform_attacks_json"))
         self.transform_armors = _parse_attacks_armors(stats.get("transform_armors_json"))
+        # Dismount-on-death stat block (Konnik); inert unless dismount_hp > 0.
+        self.dismount_hp = float(stats.get("dismount_hp") or 0)
+        self.dismount_attack = float(stats.get("dismount_attack") or 0)
+        self.dismount_melee_armor = float(stats.get("dismount_melee_armor") or 0)
+        self.dismount_pierce_armor = float(stats.get("dismount_pierce_armor") or 0)
+        self.dismount_attack_speed = float(stats.get("dismount_attack_speed") or 0)
+        self.dismount_attack_delay = float(stats.get("dismount_attack_delay") or 0)
+        self.dismount_movement_speed = float(stats.get("dismount_movement_speed") or 0)
+        self.dismount_attacks = _parse_attacks_armors(stats.get("dismount_attacks_json"))
+        self.dismount_armors = _parse_attacks_armors(stats.get("dismount_armors_json"))
+        self.is_dismounted = False
 
         self.x = 0.0
         self.y = 0.0
@@ -906,6 +933,51 @@ class BattleUnit:
                 self.base_move_speed = self.transform_move_speed
         else:
             self.kill_bonus_attack += 3  # fallback approximation
+
+    def _apply_dismount(self):
+        """Replace this dead mounted unit in place with its dismounted form
+        (Konnik). Called by BattleSimulation.step() at END of tick, mirroring
+        the abstract engine's _apply_tick_effects ordering: the horse's death
+        still credits on-kill effects to the killer, same-tick overkill and
+        splash are forgiven, any committed strike is cancelled, and a
+        killing-blow bleed dies with the old body. The foot soldier spawns at
+        FULL dismount HP with its attack cooldown starting at one full
+        dismount reload, and is always melee (the dismount block carries no
+        range).
+
+        Documented semantic choice vs the abstract engine: max_hp becomes the
+        dismounted form's max (the _apply_transform precedent), so
+        hp_pct / value_lost treat the second life as its own full-HP body;
+        the abstract engine instead measures remaining HP against the
+        STARTING mounted total. Per-unit ability state the abstract engine
+        leaves untouched on dismount (kill stacks, shields, ramp, slow timer)
+        is left untouched here too.
+        """
+        self.is_dismounted = True
+        self.max_hp = self.dismount_hp
+        self.current_hp = self.dismount_hp
+        if self.dismount_attack > 0:
+            self.attack = self.dismount_attack
+        self.melee_armor = self.dismount_melee_armor
+        self.pierce_armor = self.dismount_pierce_armor
+        if self.dismount_attacks:
+            self.attacks = self.dismount_attacks
+        if self.dismount_armors:
+            self.armors = self.dismount_armors
+        if self.dismount_attack_speed > 0:
+            self.attack_speed = self.dismount_attack_speed
+            self.reload_time = 1.0 / self.dismount_attack_speed
+        self.attack_delay = self.dismount_attack_delay
+        if self.dismount_movement_speed > 0:
+            self.move_speed = self.dismount_movement_speed
+            self.base_move_speed = self.dismount_movement_speed
+        self.raw_attack_range = 0.0
+        self.attack_range = MELEE_RANGE_BUFFER  # dismounted is always melee
+        self.state = "idle"
+        self.target = None
+        self.attack_cooldown = self.reload_time
+        self.committed_attack = None
+        self.bleed_effect = None
 
     # ---- Attacks ----------------------------------------------------------
 
@@ -1361,6 +1433,7 @@ class BattleSimulation:
         self.grid = None  # lazily created on first step() with auto-tuned cell_size
         self.alive = []  # maintained across ticks; populated on first step
         self.has_ranged = False  # set to True if any unit on either team is ranged
+        self.has_dismount = False  # True if any unit has a dismount block (Konnik)
         self.team1_food_gained = 0.0
         self.team1_wood_gained = 0.0
         self.team1_gold_gained = 0.0
@@ -1404,6 +1477,8 @@ class BattleSimulation:
 
         if any(u.is_ranged() for u in team):
             self.has_ranged = True
+        if any(u.dismount_hp > 0 for u in team):
+            self.has_dismount = True
 
     def alive_count(self, team_num):
         team = self.team1 if team_num == 1 else self.team2
@@ -1569,6 +1644,28 @@ class BattleSimulation:
             for p in self.projectiles:
                 p.update(dt)
             self.projectiles = [p for p in self.projectiles if not p.done]
+
+        # Dismount on death (Konnik): dead mounted units respawn in place as
+        # their dismounted form at END of tick — after all damage (melee,
+        # reflect, bleed, projectile impacts) and before the winner check,
+        # mirroring simulation.py's _apply_tick_effects ordering. The revived
+        # unit counts as alive for survivor/winner accounting and cannot act
+        # until next tick (its cooldown starts at a full dismount reload).
+        # RNG/tick-neutral for non-dismount matchups: one flag check per tick.
+        if self.has_dismount:
+            revived = False
+            for team in (self.team1, self.team2):
+                for u in team:
+                    if (u.state == "dead" and not u.is_dismounted
+                            and u.dismount_hp > 0):
+                        u._apply_dismount()
+                        revived = True
+            if revived:
+                # Rebuild the alive roster exactly: melee-phase deaths were
+                # pruned mid-tick but projectile-phase deaths were not, so a
+                # plain append could double-enter a unit.
+                self.alive = [u for u in self.team1 + self.team2
+                              if u.state != "dead"]
 
         a1 = self.alive_count(1)
         a2 = self.alive_count(2)

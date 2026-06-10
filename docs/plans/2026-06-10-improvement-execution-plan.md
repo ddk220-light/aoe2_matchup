@@ -40,11 +40,22 @@ scoped baseline re-sim of 1,040 pending groups / 4,056 rows in 8.5 min via
 naval rows preserved byte-identically). Baseline now 495,440 rows / 517 units; pre-change
 backup at `D:/AI/matchup_baseline_177723_pre_cumans.db`.
 
+**Completed 2026-06-10 (third pass — the bundled sim_version window):**
+The two sim_version-blocked items were executed together in one deliberate
+hash rotation (`f6ab0051d5cd4fff` → `e221c8a3a0437bd8`):
+(1) **dismount ported** to the position engine + `simulate.js` (end-of-tick
+in-place respawn mirroring `simulation.py`; gated by a 12-matchup
+byte-identity neutrality harness — non-dismount outcomes identical pre/post,
+Konnik outcomes change) and (2) **dead hand-copied dismount/transform stat
+values deleted** from `config_combat.py` (kept: `dismount_unit_id`,
+`transform_unit_id`, `hp_transform_threshold`; scratch regen diff vs the
+committed ref DB = zero rows beyond the known Mayan-cost four). The
+`simulation_real.py` docstring half of the renames item also landed.
+Every baseline matchup row is now stale pending the next full batch re-sim.
+
 | Item | Why deferred |
 |---|---|
-| Engine renames (`sim_abstract`/`sim_position`) + `simulation_real.py` docstring | Any byte change re-stales 491k baseline rows — bundle with the next forced full re-sim (next game patch) |
-| Port dismount (Konnik second life) to the position engine + simulate.js | Both lack the mechanic entirely (abstract-only today) — discovered 2026-06-10 during the form-stat fix; implementing it is a `simulation_real.py` change → full re-sim; bundle with the next window. Until then the matchup table undervalues Konnik |
-| Delete the now-dead hand-copied dismount/transform values from `config_combat.py` | Values are overridden by generation-time derivation (commit `bcdbcbc`) but the file is sim_version-hashed — delete in the same bundled window |
+| Engine renames (`sim_abstract`/`sim_position`) | Renames re-stale nothing by themselves, but touch ~16 refs + docs/skills/memory — still bundle with a re-sim window or a quiet period (the docstring half landed 2026-06-10) |
 | Naval rankings regeneration script | Baseline has no naval rows; needs naval sims |
 | Incremental-resim noise (multi-seed degradation) | Sim-pipeline policy change; design alongside next patch run |
 | `scenario_builder/overlay/results.py` port off `aoe2_units.db` (+ stage-3 retirement chain) | `scenario_builder/` owned by `feat/matchup-video-automation`; revisit after merge |

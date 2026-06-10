@@ -183,6 +183,55 @@ def test_ranged_charge_adds_then_recharges():
     assert len(sim.projectiles) - first == 1
 
 
+def test_konnik_dismounts_on_death_and_fights_on():
+    """Konnik (Bulgarians elite): on death the unit is replaced in place by its
+    dismounted form with the DERIVED teched stats (17 atk for the Bulgarians
+    elite block), counts as alive for survivor/winner accounting, and only the
+    second death is final. Stats mirror the committed ref DB row
+    (Bulgarians / elite_konnik_bulgarians @ Imperial, derived:form_tech_chain).
+    """
+    from simulation_real import BattleSimulation
+    konnik = _base(
+        hp=120, attack=18, melee_armor=5, pierce_armor=6,
+        attacks_json='{"4":18}', armors_json='{"4":5,"3":6}',
+        outline_size=0.4, cost_food=60, cost_gold=70,
+        dismount_hp=50, dismount_attack=17, dismount_melee_armor=5,
+        dismount_pierce_armor=6, dismount_attack_speed=0.4167,
+        dismount_attack_delay=0, dismount_movement_speed=0.9,
+        dismount_attacks_json='{"4":17,"21":6}',
+        dismount_armors_json='{"1":0,"3":6,"4":5,"19":0,"31":0}',
+    )
+    enemy = dict(_base(hp=60), outline_size=0.2)
+    sim = BattleSimulation()
+    sim.setup_team(1, konnik, 1)
+    sim.setup_team(2, enemy, 2)
+    assert sim.has_dismount
+    u = sim.team1[0]
+
+    # First death: lethal hit, then one tick — the end-of-tick respawn swaps
+    # in the dismounted form at FULL dismount HP.
+    u.take_damage(9999, None)
+    assert u.state == "dead"
+    sim.step(1.0 / 30.0)
+    assert u.is_dismounted and u.state != "dead"
+    assert u.current_hp == 50 and u.max_hp == 50
+    assert u.attack == 17 and u.attacks["4"] == 17
+    assert u.melee_armor == 5 and u.pierce_armor == 6
+    assert abs(u.reload_time - 1.0 / 0.4167) < 1e-9
+    assert u.attack_cooldown == u.reload_time  # waits one full dismount reload
+    assert abs(u.move_speed - 0.9) < 1e-9
+    # Survivor accounting: the second life counts as alive, no winner yet.
+    assert sim.alive_count(1) == 1 and u in sim.alive
+    assert sim.winner is None
+
+    # Second death is final — no third life.
+    u.take_damage(9999, None)
+    sim.step(1.0 / 30.0)
+    assert u.state == "dead" and not sim.team1[0].current_hp
+    assert sim.alive_count(1) == 0
+    assert sim.winner == 2
+
+
 def test_guecha_ally_death_heal():
     """Guecha heals over time when a nearby ally dies during a sim step."""
     from simulation_real import BattleSimulation

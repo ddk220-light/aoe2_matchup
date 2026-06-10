@@ -574,26 +574,31 @@ ABILITIES = {
             _p("dismount_pierce_armor", int, None),
             _p("dismount_attack_speed", float, None,
                quirks="attacks/sec (engines compute reload=1/x). The old "
-                      "config block stored reload-seconds (2.4) — fixed by "
-                      "the derived block (0.4167)."),
+                      "config block (deleted 2026-06-10) stored "
+                      "reload-seconds (2.4) — fixed by the derived block "
+                      "(0.4167)."),
             _p("dismount_attack_delay", float, None),
             _p("dismount_movement_speed", float, None),
             _p("dismount_attacks_json", str, None),
             _p("dismount_armors_json", str, None),
         ),
         source="derived:form_tech_chain (stat block, since commit bcdbcbc) "
-               "+ curated:UNIQUE_COMBAT_PROPERTIES (dismount_unit_id 1252/1253; "
-               "the config's stat values are dead inputs pending deletion in "
-               "a bundled re-sim window)",
-        engines=(ENGINE_ABSTRACT,),
+               "+ curated:UNIQUE_COMBAT_PROPERTIES (dismount_unit_id "
+               "1252/1253 only — the hand-copied stat values were deleted "
+               "from config in the 2026-06-10 re-sim window)",
+        engines=ALL_ENGINES,
         description="On death the unit respawns as its dismounted form "
                     "(Konnik -> foot Konnik, dat units 1252/1253), now "
                     "derived through the full infantry tech chain per civ.",
-        quirks="KNOWN ENGINE GAP: abstract-only. simulation_real.py and "
-               "simulate.js contain NO dismount handling — the Konnik second "
-               "life is missing from ALL batch matchup data and the "
-               "interactive page (form-fix report 2026-06-10). Document, "
-               "don't fix, in Phase A.",
+        quirks="Ported to the position engine and simulate.js in the "
+               "2026-06-10 sim_version window (was abstract-only). All three "
+               "engines swap at END of tick: the horse death credits on-kill "
+               "effects and same-tick overkill is forgiven; the foot soldier "
+               "spawns at full dismount HP with cooldown = one dismount "
+               "reload. Position/JS follow the transform precedent and set "
+               "max_hp to the dismounted form's max for hp_pct/value "
+               "accounting; the abstract engine measures HP% against the "
+               "starting mounted total.",
     ),
     "hp_transform": Ability(
         name="hp_transform",
@@ -618,8 +623,9 @@ ABILITIES = {
             _p("transform_armors_json", str, None),
         ),
         source="derived:form_tech_chain (stat block, since commit bcdbcbc) "
-               "+ curated:UNIQUE_COMBAT_PROPERTIES (threshold + unit id; the "
-               "config's stat values are dead inputs pending deletion)",
+               "+ curated:UNIQUE_COMBAT_PROPERTIES (threshold + unit id only "
+               "— the hand-copied stat values were deleted from config in "
+               "the 2026-06-10 re-sim window)",
         engines=ALL_ENGINES,
         description="Below an HP threshold the unit swaps to a second stat "
                     "block (Jian Swordsman -> dual-wield form, dat unit 1976).",

@@ -77,7 +77,7 @@ A unit whose only base attack class is melee (class 4) does melee damage even at
 | Nearby-ally attack aura | `attack_bonus_nearby`, `nearby_bonus_count` | Monaspa |
 | Nearby-ally HP aura | `hp_nearby_percent_per_unit`, `hp_nearby_max_units` | Shu (Coiled Serpent Array) |
 | Ally-death heal-over-time | `ally_death_heal`, `ally_death_heal_duration` | Guecha Warrior |
-| Dismount on death | `dismount_hp/attack/armors…` (9 `dismount_*` columns) | Konnik |
+| Dismount on death | `dismount_hp/attack/armors…` (9 `dismount_*` columns) | Konnik — in ALL THREE engines since the 2026-06-10 port (was abstract-only) |
 | HP-threshold transform | `hp_transform_threshold`, 9 `transform_*` columns | Jian Swordsman |
 | Minimum range | `min_attack_range` (≥2 ⇒ cannot fire once melee closes) | Mangonel line |
 | Population sizing | `pop_space` | Elephants in `fixed_count` battles |
@@ -100,10 +100,12 @@ Entry point: `simulate_real_battle(...)` — same positional signature as `simul
 
 **Army sizing and cost weighting.** Resource-budget battles use `weighted_cost` (food ×1.0, wood ×0.7, gold ×1.5) and the `SCALE_3K_UNIT_CAP = 30` rule: a side that would exceed 30 units is capped at 30 and the other side's count is re-matched to equal total weighted cost (`_calc_counts`).
 
-**Ability parity.** All special abilities in the table above are implemented in `BattleUnit` (verified against `tests/test_position_sim_abilities.py`, 13 tests), including the two refinements that were historically open and are now **done**:
+**Ability parity.** All special abilities in the table above are implemented in `BattleUnit` (verified against `tests/test_position_sim_abilities.py`, 14 tests), including the two refinements that were historically open and are now **done**:
 
-- *Urumi splash-charge*: trample for charge-melee units fires only on the charged strike — `perform_attack_on` gates trample on `charge_attack_melee <= 0 or charged` (line 1169). Always-on tramplers are unaffected.
-- *Ranged-path charge*: `perform_attack` (line 919) fires charge projectiles for ranged units — `charge_recharge_time <= 0` means an every-attack charge that **replaces** the normal shot (Fire Archer); `> 0` fires the charge **in addition** and then recharges (Xianbei Raider, Bolas Rider).
+- *Urumi splash-charge*: trample for charge-melee units fires only on the charged strike — `perform_attack_on` gates trample on `charge_attack_melee <= 0 or charged`. Always-on tramplers are unaffected.
+- *Ranged-path charge*: `perform_attack` fires charge projectiles for ranged units — `charge_recharge_time <= 0` means an every-attack charge that **replaces** the normal shot (Fire Archer); `> 0` fires the charge **in addition** and then recharges (Xianbei Raider, Bolas Rider).
+
+*Dismount on death* (Konnik) was the last gap, closed in the 2026-06-10 sim_version window: a dying mounted Konnik is replaced **in place** by its dismounted form at END of tick (`BattleSimulation.step()` respawn scan + `BattleUnit._apply_dismount()`), mirroring the abstract engine's `_apply_tick_effects` ordering — the horse death still credits on-kill effects, same-tick overkill is forgiven, and the foot soldier spawns at full dismount HP with its cooldown starting at one full dismount reload. One documented divergence: position/JS follow the `_apply_transform` precedent and set `max_hp` to the dismounted form's max for HP%/value accounting, while the abstract engine measures remaining HP against the starting mounted total. The port was gated by a 12-matchup byte-identity neutrality harness (non-dismount outcomes unchanged pre/post; Konnik outcomes change).
 
 Additions beyond the abstract engine: `hp_regen_in_combat` (regen only within `COMBAT_WINDOW_S = 5` s of attacking), `food/wood/gold_per_kill` tracked into `BattleOutcome` gained fields, `charge_attack_range` / `charge_ignores_armor` for melee-launched charge projectiles (Fire Lancer), and an out-of-combat reset for the Temple Guard attack-speed ramp. The abstract engine's `TRAMPLE_HIT_CHANCE` randomness does not exist here — trample uses real radii.
 
@@ -111,7 +113,7 @@ Additions beyond the abstract engine: `hp_regen_in_combat` (regen only within `C
 
 The Battle Sim page at `/` (legacy `/simulate` 301-redirects there; `webapp/templates/simulate.html`) loads this file with a `<script src>` tag (line 222) — it is **not** inlined in the template. It fetches both units from `GET /api/ref/combat-unit/<civ>/<slug>?age=...` (served by `app.py:api_ref_combat_unit`, which returns `build_combat_dict_from_ref()` output as JSON) and runs the battle entirely client-side in a `BattleUnit` class on a 900×600 px canvas (`TILE_SIZE = 30` ⇒ a 30×20-tile map).
 
-**What it mirrors.** Mechanically it is the same model as `simulation_real.py` (which was ported *from* it): per-class damage with zero-clamped base, projectile flight, miss scatter within 2 tiles with 0.5×/`missDamagePercent` graze, primary-vs-extra accuracy split, kiting, avoidance + hard collision, and the full ability set (melee charge, charged-only Urumi trample, charge projectiles for both melee and ranged paths, armor strip, execute, auras, ally-death heal, transform, dodge shield, reflect, ramp — all present and verified by grep against the Python engine).
+**What it mirrors.** Mechanically it is the same model as `simulation_real.py` (which was ported *from* it): per-class damage with zero-clamped base, projectile flight, miss scatter within 2 tiles with 0.5×/`missDamagePercent` graze, primary-vs-extra accuracy split, kiting, avoidance + hard collision, and the full ability set (melee charge, charged-only Urumi trample, charge projectiles for both melee and ranged paths, armor strip, execute, auras, ally-death heal, transform, dismount-on-death (ported 2026-06-10, end-of-tick respawn like the backend), dodge shield, reflect, ramp — all present and verified by grep against the Python engine).
 
 **Where it intentionally diverges.**
 - Variable timestep: `requestAnimationFrame` delta capped at 0.1 s, scaled by the user's speed multiplier — not a fixed 30 Hz tick.
@@ -136,7 +138,7 @@ The Battle Sim page at `/` (legacy `/simulate` 301-redirects there; `webapp/temp
 | `.golden` regression (`tests/test_simulations.py`, `.golden/capture_baseline.py`) | Abstract (via `get_matchup_sims`) | seeded with `GOLDEN_SEED = 20260411` |
 | `tests/test_position_sim_abilities.py` | Position | imports `BattleUnit`, `BattleSimulation` |
 
-**`webapp/sim_version.py`** hashes exactly two files — `webapp/simulation_real.py` and `analysis/config_combat.py` — into a 16-character SHA-256 prefix. It is the row-level cache key in `matchup_db` (`matchup_battles.sim_version`): rows with a stale version get re-simulated on the next batch run. Note it does **not** hash `simulation.py` or `simulate.js`; changes to those never invalidate matchup rows.
+**`webapp/sim_version.py`** hashes exactly two files — `webapp/simulation_real.py` and `analysis/config_combat.py` — into a 16-character SHA-256 prefix. It is the row-level cache key in `matchup_db` (`matchup_battles.sim_version`): rows with a stale version get re-simulated on the next batch run. Note it does **not** hash `simulation.py` or `simulate.js`; changes to those never invalidate matchup rows. **Current:** `e221c8a3a0437bd8` — rotated from `f6ab0051d5cd4fff` on 2026-06-10 by the bundled dismount-port + config-cleanup window, so every row in the external baseline (`D:/AI/matchup_baseline_177723.db`) is stale pending the next full batch re-sim; until then the served matchup data still reflects the pre-dismount engine.
 
 ## 5. Shared contracts
 

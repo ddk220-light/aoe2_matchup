@@ -52,30 +52,13 @@ COMBAT_PROPERTIES = {
 # Stats like extra_projectiles, trample, dodge shield are now data-driven
 # via get_extracted_combat_properties().
 UNIQUE_COMBAT_PROPERTIES = {
-    "konnik": {
-        "dismount_unit_id": 1252,
-        "dismount_hp": 45,
-        "dismount_attack": 12,
-        "dismount_melee_armor": 1,
-        "dismount_pierce_armor": 1,
-        "dismount_attack_speed": 2.4,
-        "dismount_attack_delay": 0,
-        "dismount_movement_speed": 0.9,
-        "dismount_attacks_json": '{"4": 12, "1": 0, "19": 0, "31": 0}',
-        "dismount_armors_json": '{"1": 0, "3": 1, "4": 1, "19": 0, "31": 0}',
-    },
-    "elite_konnik": {
-        "dismount_unit_id": 1253,
-        "dismount_hp": 50,
-        "dismount_attack": 13,
-        "dismount_melee_armor": 2,
-        "dismount_pierce_armor": 2,
-        "dismount_attack_speed": 2.4,
-        "dismount_attack_delay": 0,
-        "dismount_movement_speed": 0.9,
-        "dismount_attacks_json": '{"4": 13, "1": 0, "19": 0, "31": 0}',
-        "dismount_armors_json": '{"1": 0, "3": 2, "4": 2, "19": 0, "31": 0}',
-    },
+    # Konnik dismount-on-death: only the form's dat unit id lives here.
+    # The full dismount_* stat block is DERIVED at generation time by running
+    # that unit through the civ's tech chain (generate_reference.py +
+    # unit_analyzer.calculate_form_stats, since commit bcdbcbc) — the old
+    # hand-copied values were deleted in the 2026-06-10 re-sim window.
+    "konnik": {"dismount_unit_id": 1252},
+    "elite_konnik": {"dismount_unit_id": 1253},
     "leitis": {"ignores_melee_armor": 1},
     "elite_leitis": {"ignores_melee_armor": 1},
     "composite_bowman": {"ignores_pierce_armor": 1},
@@ -111,19 +94,14 @@ UNIQUE_COMBAT_PROPERTIES = {
     # Jaguar Warrior: +1 attack per kill (max +4); wiki: "gains +1 attack for each enemy unit killed, up to +4"
     "jaguar_warrior": {"attack_bonus_per_kill": 4},
     "elite_jaguar_warrior": {"attack_bonus_per_kill": 4},
-    # HP transformation (ability flag, not in dat)
+    # HP transformation (Jian Swordsman): the curated threshold ratio (45/70,
+    # genuinely not in the dat) and the form's dat unit id. The transform_*
+    # stat block is DERIVED at generation time like the Konnik dismount block
+    # (see the note above); the hand-copied values were deleted in the
+    # 2026-06-10 re-sim window.
     "jian_swordsman": {
         "hp_transform_threshold": 45.0 / 70.0,
         "transform_unit_id": 1976,
-        "transform_hp": 70,
-        "transform_attack": 11,
-        "transform_melee_armor": 0,
-        "transform_pierce_armor": 2,
-        "transform_attack_speed": 0.5,
-        "transform_attack_delay": 0.0,
-        "transform_movement_speed": 1.1,
-        "transform_attacks_json": '{"4": 11, "15": 4, "21": 2, "8": 0, "30": 0}',
-        "transform_armors_json": '{"1": 0, "4": 0, "3": 2, "31": 0, "29": 0, "19": 0}',
     },
     # Karambit Warrior takes 0.5 pop space (Malay unique tech Forced Levy is separate)
     "karambit_warrior": {"pop_space": 0.5},

@@ -30,7 +30,7 @@ Per `(civ × unit_slug × age)` — 1,851 rows in `ref_units`:
 | Per-class attacks/armors | `attacks_json` / `armors_json` (dicts keyed by armor-class id, 40 classes) | dat + per-class effect commands |
 | Costs (food/wood/gold), train time | `final_cost_*` columns | dat + cost effect commands (discounts DO flow — §6) |
 | 52 special-ability properties | flat columns on `ref_units` + audit rows in `ref_special_effects` | 19 dat-derived, 33 hardcoded in `config_combat.py` |
-| Multi-form blocks (dismount/transform) | 9 flattened columns each | hand-copied in `UNIQUE_COMBAT_PROPERTIES` |
+| Multi-form blocks (dismount/transform) | 9 flattened columns each | derived per civ at generation time (`derived:form_tech_chain`, since `bcdbcbc`); config keeps only the form unit ids + Jian threshold |
 | Audit trail | `ref_techs_applied`, `ref_stat_chain` (per-step stat snapshot), `ref_special_effects` (source-tagged), `ref_projectiles` | generated |
 
 The derivation functions (the "interpreters" the owner asked about):
@@ -122,7 +122,7 @@ Then:
 | armor_interaction | ignore_armor(2), armor_strip(1), bonus_damage_reduction(1), damage_reflect(1) | ignore zeroes base armor only; reduction applies to bonus damage only |
 | defensive | dodge_shield(2), block_first_melee(1) | shield absorbs ranged hits then recharges; block is once-ever (Iron Pagoda) |
 | aura | attack_aura(2), hp_aura(2), ally_death_heal(2) | abstract pre-computes from army size at setup (no decay); position/js live-update |
-| form_change | dismount_on_death(10), hp_transform(11), paired_forms(1) | stat blocks `derived:form_tech_chain` since bcdbcbc (config copies = dead inputs); **dismount abstract-only** (missing from batch data + JS); Ratha two-row pattern is the target model |
+| form_change | dismount_on_death(10), hp_transform(11), paired_forms(1) | stat blocks `derived:form_tech_chain` since bcdbcbc (the dead config copies were deleted 2026-06-10); dismount in ALL THREE engines since the 2026-06-10 port (was abstract-only); Ratha two-row pattern is the target model |
 | tempo | attack_speed_ramp(2), execute(2) | ramp resets out-of-combat in position engine only |
 | misc | min_attack_range, miss_damage, pop_space, hp_regen, hp_regen_in_combat, projectile_speed, unit_category (1 each) | `min_range` column ≠ dict key; Ordo regen position-only; projectile_speed unused in abstract (no flight); unit_category never reaches `ref_units` |
 
@@ -177,9 +177,19 @@ registry-vs-roster assertion instead of a one-off audit.
 > every engine consumes attacks/sec (now 0.4167), and the base Konnik dismount armor
 > was stale vs. the current dat (1/1 vs. 2/2). The stat values in
 > `UNIQUE_COMBAT_PROPERTIES` (`config_combat.py` konnik/elite_konnik/jian_swordsman
-> entries) are now **dead inputs pending deletion in a bundled re-sim window**
-> (`config_combat.py` is byte-hashed into `sim_version`, §8); only `dismount_unit_id`,
-> `transform_unit_id`, and `hp_transform_threshold` are still read from config.
+> entries) became dead inputs at that point and were **deleted in the 2026-06-10
+> bundled re-sim window**; only `dismount_unit_id`, `transform_unit_id`, and
+> `hp_transform_threshold` remain in config (scratch-regen diff vs the committed
+> DB: zero row differences beyond the known Mayan-cost rows).
+>
+> **Port complete (same window):** dismount-on-death now runs in all THREE
+> engines. The position engine (`simulation_real.py`) and `simulate.js` replace
+> a dying Konnik in place with its derived dismounted form at end of tick —
+> verified by a 12-matchup byte-identity neutrality harness (non-dismount
+> outcomes unchanged; Konnik outcomes change) plus
+> `tests/test_position_sim_abilities.py::test_konnik_dismounts_on_death_and_fights_on`.
+> The edit rotated `sim_version` `f6ab0051d5cd4fff` → `e221c8a3a0437bd8`, so
+> every matchup row is stale pending the next full batch re-sim.
 
 Konnik dismount and Jian transform are stored as 9 hand-copied columns each in
 `UNIQUE_COMBAT_PROPERTIES`. **Verified consequence:** Bulgarians Elite Konnik's

@@ -316,7 +316,9 @@ KNOWN_ENGINE_GAPS = {
     # registry's documented gaps (quirks fields); this test pins them so a
     # future port must update the registry (and this list) — and so nobody
     # "fixes" the registry by silently widening an engines tuple without code.
-    "dismount_on_death": {"position", "js"},   # Konnik second life: abstract-only
+    # (dismount_on_death left this list 2026-06-10: ported to position + js
+    # in the bundled sim_version window. Reverting that port now fails the
+    # presence test above, since the registry claims all three engines.)
     "hp_regen_in_combat": {"abstract", "js"},  # Khitan Ordo: position-only
     "resources_per_kill": {"abstract", "js"},  # Mapuche eco: position-only
     "ranged_charge_mods": {"abstract"},        # Fire Lancer range/armor-ignore

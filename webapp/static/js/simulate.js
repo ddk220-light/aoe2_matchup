@@ -490,6 +490,22 @@ class BattleUnit {
         this.transformArmors = stats.transform_armors_json
             ? JSON.parse(stats.transform_armors_json)
             : null;
+        // Dismount-on-death stat block (Konnik); inert unless dismountHp > 0.
+        // Mirrors the simulation_real.py port (2026-06-10).
+        this.dismountHp = stats.dismount_hp || 0;
+        this.dismountAttack = stats.dismount_attack || 0;
+        this.dismountMeleeArmor = stats.dismount_melee_armor || 0;
+        this.dismountPierceArmor = stats.dismount_pierce_armor || 0;
+        this.dismountAttackSpeed = stats.dismount_attack_speed || 0;
+        this.dismountAttackDelay = stats.dismount_attack_delay || 0;
+        this.dismountMovementSpeed = stats.dismount_movement_speed || 0;
+        this.dismountAttacks = stats.dismount_attacks_json
+            ? JSON.parse(stats.dismount_attacks_json)
+            : null;
+        this.dismountArmors = stats.dismount_armors_json
+            ? JSON.parse(stats.dismount_armors_json)
+            : null;
+        this.isDismounted = false;
 
         this.x = 0;
         this.y = 0;
@@ -1486,6 +1502,43 @@ class BattleUnit {
         }
     }
 
+    applyDismount() {
+        // Replace this dead mounted unit in place with its dismounted form
+        // (Konnik). Called by BattleSimulation.update() at END of tick,
+        // mirroring simulation_real.py / simulation.py: the horse's death
+        // still credits on-kill effects, same-tick overkill is forgiven,
+        // any committed strike is cancelled and a killing-blow bleed dies
+        // with the old body. The foot soldier spawns at FULL dismount HP
+        // with its cooldown starting at one full dismount reload, and is
+        // always melee (the dismount block carries no range).
+        this.isDismounted = true;
+        this.maxHp = this.dismountHp;
+        this.currentHp = this.dismountHp;
+        if (this.dismountAttack > 0) this.attack = this.dismountAttack;
+        this.meleeArmor = this.dismountMeleeArmor;
+        this.pierceArmor = this.dismountPierceArmor;
+        if (this.dismountAttacks) this.attacks = this.dismountAttacks;
+        if (this.dismountArmors) this.armors = this.dismountArmors;
+        if (this.dismountAttackSpeed > 0) {
+            this.attackSpeed = this.dismountAttackSpeed;
+            this.reloadTime = 1.0 / this.dismountAttackSpeed;
+        }
+        this.attackDelay = this.dismountAttackDelay;
+        if (this.dismountMovementSpeed > 0) {
+            this.moveSpeed = this.dismountMovementSpeed * TILE_SIZE;
+            this.baseMoveSpeed = this.moveSpeed;
+        }
+        this.rawAttackRange = 0;
+        this.attackRange = MELEE_RANGE_BUFFER; // dismounted is always melee
+        this.state = "idle";
+        this.target = null;
+        this.attackCooldown = this.reloadTime;
+        this.committedAttack = null;
+        this.bleedEffect = null;
+        // The second, final death may trigger ally-death heals again.
+        this.deathHealTriggered = false;
+    }
+
     moveTowardTarget(dt, allUnits) {
         if (!this.target) return;
         let dx = this.target.x - this.x;
@@ -1873,6 +1926,20 @@ class BattleSimulation {
         // Update effects
         for (const e of this.effects) e.update(dt);
         this.effects = this.effects.filter((e) => !e.done);
+
+        // Dismount on death (Konnik): dead mounted units respawn in place as
+        // their dismounted form at END of tick — after all damage and before
+        // the winner check, mirroring simulation_real.py / simulation.py.
+        // The revived unit counts as alive and cannot act until next tick.
+        for (const unit of allUnits) {
+            if (
+                unit.state === "dead" &&
+                !unit.isDismounted &&
+                unit.dismountHp > 0
+            ) {
+                unit.applyDismount();
+            }
+        }
 
         const team1Alive = this.team1.filter(
             (u) => u.state !== "dead",

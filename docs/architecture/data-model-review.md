@@ -133,6 +133,23 @@ registry-vs-roster assertion instead of a one-off audit.
 
 ### 3.3 Multi-form units: hand-copied stat blocks that techs never touch — **confirmed accuracy bug**
 
+> **Status: fixed at generation time 2026-06-10.** `unit_analyzer.calculate_form_stats()`
+> runs the form's dat unit (1252/1253 dismount, 1976 transform) through the full tech
+> chain and `generate_reference.py` overrides the config-supplied `dismount_*`/`transform_*`
+> values with the derived block (source-tagged `derived:form_tech_chain` in
+> `ref_special_effects`). Verified: Bulgarians Elite Konnik dismount now 17 atk / 5/6
+> armor (smith deltas equal to the mounted form's; Bagains and Stirrups correctly do
+> not apply — they target militia unit ids / cavalry classes), Wu Jian transform
+> unchanged in value but now derivation-backed (the dat's C-Bonus 1076 targets unit
+> 1976 explicitly and is picked up). The derivation also corrected two latent issues
+> the config carried: `dismount_attack_speed` was stored as reload-seconds (2.4) where
+> every engine consumes attacks/sec (now 0.4167), and the base Konnik dismount armor
+> was stale vs. the current dat (1/1 vs. 2/2). The stat values in
+> `UNIQUE_COMBAT_PROPERTIES` (`config_combat.py` konnik/elite_konnik/jian_swordsman
+> entries) are now **dead inputs pending deletion in a bundled re-sim window**
+> (`config_combat.py` is byte-hashed into `sim_version`, §8); only `dismount_unit_id`,
+> `transform_unit_id`, and `hp_transform_threshold` are still read from config.
+
 Konnik dismount and Jian transform are stored as 9 hand-copied columns each in
 `UNIQUE_COMBAT_PROPERTIES`. **Verified consequence:** Bulgarians Elite Konnik's
 dismounted form is stored with attack 13 / armor 2/2 — byte-equal to the raw dat base
@@ -226,7 +243,7 @@ else regenerates from the dat.
 |---|---|---|
 | "Civ cost discounts are skipped (type-1 commands unhandled) — costs never discounted" | **REFUTED** | `ref_units` finals: Berbers paladin 48/60 vs Franks 60/75 (−20% exact); Goths champion −30%; Berbers hussar −20%. The type-1 tech the reviewer found was not the operative mechanism; discounts arrive via multiply commands on cost attributes. The Mayan surgical patch fixes one special case, not systemic breakage. |
 | "Availability is irreducibly non-derivable for the 17 allowlist lines" | **Half-refuted** | Not derivable *from what we currently extract* — but the dat has it: civ-bound enabler techs + `required_tech_count` (not extracted). With both + a resolver it is fully derivable (§3.1). |
-| "Konnik dismount stats are just stored config" | **Confirmed, and it's a bug** | Stored dismount attack 13 / armor 2/2 == dat base of unit 1253; mounted final 18 / 5/6; in-game blacksmith applies to both forms (§3.3). |
+| "Konnik dismount stats are just stored config" | **Confirmed, and it's a bug** *(fixed 2026-06-10 — see §3.3 status)* | Stored dismount attack 13 / armor 2/2 == dat base of unit 1253; mounted final 18 / 5/6; in-game blacksmith applies to both forms (§3.3). |
 
 ## 7. Migration plan (re-sim-aware)
 

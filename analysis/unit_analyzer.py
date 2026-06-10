@@ -1212,3 +1212,107 @@ class UnitAnalyzer:
             "has_unit": True,
             "applied_bonuses": applied_bonuses,
         }
+
+    def calculate_form_stats(self, civ_name: str, unit_id: int, max_age: int):
+        """Derive fully-teched stats for a secondary-form dat unit.
+
+        Used for multi-form units whose alternate form is a real dat unit:
+        Konnik dismounted (1252 base / 1253 elite) and Jian Swordsman
+        transformed (1976). Runs the form's own dat record through the same
+        chain as any unit — standard techs, civ bonuses, team bonuses, unique
+        techs — letting the per-unit-id / per-class effect matching decide
+        what applies (e.g. infantry blacksmith techs match the class-6 forms;
+        cavalry-only techs like Stirrups and unit-id-targeted techs like
+        Bagains do not).
+
+        Intentionally skipped vs. the main paths:
+        - availability gating (the form exists iff the parent row exists),
+        - building work rate / train time (forms are never trained directly),
+        - upgrade cost accounting.
+
+        Returns a rounded UnitStats, or None if the unit id is unknown.
+        """
+        unit = self.get_unit(unit_id)
+        if not unit:
+            return None
+
+        unit_class = unit.get("class")
+        stats = self.get_base_stats(unit)
+
+        # Base stat overrides for units with known dat errors (parity with
+        # the main paths; no current form ids are listed).
+        if unit_id in UNIT_STAT_OVERRIDES:
+            for attr, value in UNIT_STAT_OVERRIDES[unit_id].items():
+                if hasattr(stats, attr):
+                    setattr(stats, attr, value)
+
+        disabled_techs = self.get_disabled_techs(civ_name)
+
+        # Standard techs (blacksmith lines, Squires, Arson, ...)
+        for tech_id in sorted(
+            self.find_techs_affecting_unit(unit_id, unit_class, max_age)
+        ):
+            if tech_id in disabled_techs:
+                continue
+            te = self.tech_effect_map.get(tech_id)
+            if not te:
+                continue
+            applied_attrs = set()
+            for cmd in te.get("commands", []):
+                attr_key = (cmd.get("type", 0), cmd.get("c", 0), cmd.get("d", 0))
+                if attr_key in applied_attrs:
+                    continue
+                if self.apply_effect_command(cmd, stats, unit_id, unit_class):
+                    applied_attrs.add(attr_key)
+
+        # Civ bonus techs (e.g. Wu "Jian & Hei Kuang attack" targets unit 1976
+        # explicitly; infantry-class bonuses match via class)
+        for te in self.get_civ_bonus_techs_for_unit(
+            civ_name, unit_id, unit_class, max_age
+        ):
+            applied_attrs = set()
+            for cmd in te.get("commands", []):
+                if self._is_class_cancellation_cmd(cmd, te, unit_id, unit_class):
+                    continue
+                attr_key = (cmd.get("type", 0), cmd.get("c", 0), cmd.get("d", 0))
+                if attr_key in applied_attrs:
+                    continue
+                if self.apply_effect_command(cmd, stats, unit_id, unit_class):
+                    applied_attrs.add(attr_key)
+
+        # Team bonus attack bonuses (hardcoded registry)
+        for bonus in CIV_TEAM_BONUS_ATTACK.get(civ_name, []):
+            if len(bonus) == 3:
+                b_unit_id, atk_class, amount = bonus
+                matched = b_unit_id == unit_id
+            elif len(bonus) == 4:
+                b_unit_id, atk_class, amount, b_class_id = bonus
+                matched = b_unit_id == -1 and b_class_id == unit_class
+            else:
+                continue
+            if matched:
+                stats.attacks[atk_class] = stats.attacks.get(atk_class, 0) + amount
+
+        # Unique techs (research-cost civ techs)
+        for te in self.get_unique_techs_for_unit(
+            civ_name, unit_id, unit_class, max_age
+        ):
+            applied_attrs = set()
+            for cmd in te.get("commands", []):
+                attr_key = (cmd.get("type", 0), cmd.get("c", 0), cmd.get("d", 0))
+                if attr_key in applied_attrs:
+                    continue
+                if self.apply_effect_command(cmd, stats, unit_id, unit_class):
+                    applied_attrs.add(attr_key)
+
+        # Round like the main paths
+        stats.hp = round(stats.hp)
+        stats.speed = round(stats.speed, 2)
+        stats.attack = round(stats.attack)
+        stats.melee_armor = round(stats.melee_armor)
+        stats.pierce_armor = round(stats.pierce_armor)
+        stats.reload_time = round(stats.reload_time, 3)
+        stats.range = round(stats.range, 1)
+        stats.hp_regen = round(stats.hp_regen, 1)
+
+        return stats

@@ -900,70 +900,51 @@ def generate_reference_database(analyzer):
         if stats.hp_regen > combat_props.get("hp_regen", 0):
             combat_props["hp_regen"] = round(stats.hp_regen, 1)
 
-        # Upgrade transform stats: apply same tech deltas as normal form
-        # delta = transform_base - normal_base; transform_final = normal_final + delta
-        if (
-            combat_props.get("hp_transform_threshold")
-            and combat_props.get("transform_attack") is not None
+        # Multi-form stat blocks (Konnik dismount, Jian Swordsman transform):
+        # the alternate form is a real dat unit (dismount_unit_id /
+        # transform_unit_id from UNIQUE_COMBAT_PROPERTIES), so derive its
+        # teched stats by running that unit through the same tech chain as
+        # any other unit (analyzer.calculate_form_stats), and OVERRIDE the
+        # hand-copied config stat values. The config's dismount_*/transform_*
+        # stat entries are thus dead inputs; only the form unit id and
+        # hp_transform_threshold (curated ratio) are still read from config.
+        # This replaces the older delta-propagation hack for transform and
+        # fixes the dismount block, which never received tech upgrades.
+        derived_form_props = {}
+        for form_prefix, form_unit_id in (
+            ("dismount", combat_props.get("dismount_unit_id")),
+            ("transform", combat_props.get("transform_unit_id")),
         ):
-            t_base_atk = combat_props["transform_attack"]
-            t_base_ma = combat_props["transform_melee_armor"]
-            t_base_pa = combat_props["transform_pierce_armor"]
-            t_base_spd = combat_props.get("transform_movement_speed", 1.0)
-
-            n_base_atk = base_snap["attack"]
-            n_base_ma = base_snap["melee_armor"]
-            n_base_pa = base_snap["pierce_armor"]
-            n_base_spd = base_snap["speed"]
-
-            combat_props["transform_attack"] = round(
-                final_snap["attack"] + (t_base_atk - n_base_atk)
+            if not form_unit_id:
+                continue
+            form_stats = analyzer.calculate_form_stats(
+                civ_name, form_unit_id, max_age
             )
-            combat_props["transform_melee_armor"] = max(
-                0, round(final_snap["melee_armor"] + (t_base_ma - n_base_ma))
-            )
-            combat_props["transform_pierce_armor"] = max(
-                0, round(final_snap["pierce_armor"] + (t_base_pa - n_base_pa))
-            )
-            speed_ratio = t_base_spd / n_base_spd if n_base_spd > 0 else 1.0
-            combat_props["transform_movement_speed"] = round(
-                final_snap["speed"] * speed_ratio, 2
-            )
-
-            # Upgrade attacks_json: per-class deltas
-            # Normalize all dicts to int keys for consistent lookup
-            t_attacks = {
-                int(k): v
-                for k, v in json.loads(
-                    combat_props.get("transform_attacks_json") or "{}"
-                ).items()
+            if form_stats is None:
+                continue
+            form_block = {
+                f"{form_prefix}_hp": round(form_stats.hp),
+                f"{form_prefix}_attack": round(form_stats.attack),
+                f"{form_prefix}_melee_armor": round(form_stats.melee_armor),
+                f"{form_prefix}_pierce_armor": round(form_stats.pierce_armor),
+                # attack_speed is attacks/sec — every consumer
+                # (simulation.py, simulation_real.py, simulate.js) computes
+                # reload = 1 / attack_speed.
+                f"{form_prefix}_attack_speed": round(1.0 / form_stats.reload_time, 4)
+                if form_stats.reload_time > 0
+                else 0,
+                f"{form_prefix}_attack_delay": round(form_stats.attack_delay, 3),
+                f"{form_prefix}_movement_speed": round(form_stats.speed, 2),
+                f"{form_prefix}_attacks_json": json.dumps(
+                    {str(k): round(v) for k, v in sorted(form_stats.attacks.items())}
+                ),
+                f"{form_prefix}_armors_json": json.dumps(
+                    {str(k): round(v) for k, v in sorted(form_stats.armors.items())}
+                ),
             }
-            b_attacks = {int(k): v for k, v in base_snap["attacks"].items()}
-            f_attacks = {int(k): v for k, v in final_snap["attacks"].items()}
-            upgraded_attacks = {}
-            for cls_int in set(list(t_attacks.keys()) + list(f_attacks.keys())):
-                delta = t_attacks.get(cls_int, 0) - b_attacks.get(cls_int, 0)
-                upgraded_attacks[str(cls_int)] = round(
-                    f_attacks.get(cls_int, 0) + delta
-                )
-            combat_props["transform_attacks_json"] = json.dumps(upgraded_attacks)
-
-            # Upgrade armors_json: per-class deltas
-            t_armors = {
-                int(k): v
-                for k, v in json.loads(
-                    combat_props.get("transform_armors_json") or "{}"
-                ).items()
-            }
-            b_armors = {int(k): v for k, v in base_snap["armors"].items()}
-            f_armors = {int(k): v for k, v in final_snap["armors"].items()}
-            upgraded_armors = {}
-            for cls_int in set(list(t_armors.keys()) + list(f_armors.keys())):
-                delta = t_armors.get(cls_int, 0) - b_armors.get(cls_int, 0)
-                upgraded_armors[str(cls_int)] = max(
-                    0, round(f_armors.get(cls_int, 0) + delta)
-                )
-            combat_props["transform_armors_json"] = json.dumps(upgraded_armors)
+            combat_props.update(form_block)
+            for k in form_block:
+                derived_form_props[k] = "derived:form_tech_chain"
 
         special_props = [
             ("ignores_melee_armor", "Unit ignores melee armor"),
@@ -1039,9 +1020,9 @@ def generate_reference_database(analyzer):
             if val:
                 cursor.execute(
                     """INSERT INTO ref_special_effects
-                       (ref_unit_id, property_name, property_value)
-                       VALUES (?, ?, ?)""",
-                    (ref_unit_id, json_prop, val),
+                       (ref_unit_id, property_name, property_value, source)
+                       VALUES (?, ?, ?, ?)""",
+                    (ref_unit_id, json_prop, val, derived_form_props.get(json_prop)),
                 )
         for prop_name, desc in special_props:
             val = combat_props.get(prop_name, 0)
@@ -1070,6 +1051,10 @@ def generate_reference_database(analyzer):
                             if prop_name in CIV_COMBAT_PROPERTIES[(civ, civ_base_slug)]:
                                 source = "CIV_COMBAT_PROPERTIES"
                             break
+                # Multi-form stat values are derived through the tech chain,
+                # not read from config (see derived_form_props above).
+                if prop_name in derived_form_props:
+                    source = derived_form_props[prop_name]
                 cursor.execute(
                     "INSERT INTO ref_special_effects (ref_unit_id, property_name, property_value, source, description) VALUES (?,?,?,?,?)",
                     (ref_unit_id, prop_name, str(val), source, desc),

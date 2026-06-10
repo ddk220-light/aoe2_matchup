@@ -63,9 +63,44 @@ def _armor_class_map(conn) -> dict[int, str]:
     return {r["id"]: r["name"] for r in conn.execute("SELECT id, name FROM armor_classes")}
 
 
+# Units the extraction/reference DB doesn't carry (odd one-offs the dat pipeline
+# skips) but that make fun matchup videos. Shape mirrors get_unit_card's return;
+# stats transcribed from the AoE2 wiki (DE, checked 2026-06). The Flaming Camel is a
+# one-shot mounted petard: it detonates on its first attack (blast radius 2), so it
+# has no reload/DPS — the duel block degrades gracefully on reload_s=None.
+HARDCODED_CARDS = {
+    ("Tatars", "flaming_camel_tatars"): {
+        "name": "Flaming Camel", "civ": "Tatars", "age": "Imperial",
+        "unit_type": "Suicide Unit (one-shot blast)", "is_ranged": False,
+        "stats": [("HP", 55), ("Attack", 20), ("Melee Armor", 0),
+                  ("Pierce Armor", 0), ("Speed", 1.3)],
+        "attack_bonuses": [
+            {"vs": "All Buildings", "amount": 200, "vs_id": 11},
+            {"vs": "War Elephants", "amount": 130, "vs_id": 5},
+            {"vs": "Cavalry", "amount": 50, "vs_id": 8},
+            {"vs": "Camels", "amount": 50, "vs_id": 30},
+            {"vs": "Siege Weapons", "amount": 25, "vs_id": 20},
+        ],
+        "armor_class_ids": [3, 4, 19, 30],          # base + Unique Units + Camels
+        "cost": {"food": 75, "wood": 0, "gold": 30, "total": 105,
+                 "weighted": round(75 * COST_WEIGHT_FOOD + 30 * COST_WEIGHT_GOLD, 2),
+                 "batch": 1},
+        "upgrades": [], "civ_bonuses": [], "unique_techs": [],
+        "bonuses_summary": "Detonates on impact: 20 melee blast (radius 2), one shot.",
+        "attacks": {4: 20.0, 11: 200.0, 5: 130.0, 8: 50.0, 30: 50.0, 20: 25.0},
+        "armors": {4: 0.0, 3: 0.0, 19: 0.0, 30: 0.0},
+        "hp": 55.0, "speed": 1.3, "range": 0, "reload_s": None,
+        "accuracy_pct": None, "melee_armor": 0, "pierce_armor": 0, "charge": None,
+    },
+}
+
+
 def get_unit_card(civ: str, slug: str, age: str = "Imperial",
                   db_path: str | os.PathLike = REF_DB) -> dict:
     """Return a dict describing a fully-upgraded unit for the overlay card."""
+    hc = HARDCODED_CARDS.get((civ, slug))
+    if hc:
+        return {**hc, "icon": _icon_path(hc["name"])}
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
     try:

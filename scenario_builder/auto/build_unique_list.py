@@ -39,15 +39,14 @@ DROP_DUP = ("(ranged)",)
 SIEGE_CLASSES = ("siege", "ballista")
 SIEGE_NAMES = ("trebuchet", "ballista", "organ gun", "hussite")
 
-# civ-specific uniques whose DB slug does NOT carry the civ suffix (shared/team
-# units the suffix scan can't see). Probed through the same validation as the rest.
-# Tatars' flaming_camel stays listed here so its exclusion is VISIBLE in the skip
-# report — it has a scenario unit id but no reference-DB row yet (needs a DB
-# rebuild with the extraction artifacts; not available on this machine).
+# civ-specific uniques the suffix scan can't see: shared/team units whose DB slug
+# carries no civ suffix, plus units with NO reference-DB row at all that resolve via
+# overlay_data.HARDCODED_CARDS (the Flaming Camel — wiki-transcribed stats). Values
+# are an optional unit-class override for entries without a DB row.
 EXTRA_SLUGS = {
-    "Italians": ("condottiero",),
-    "Berbers": ("elite_genitour",),
-    "Tatars": ("flaming_camel",),
+    "Italians": {"condottiero": None},
+    "Berbers": {"elite_genitour": None},
+    "Tatars": {"flaming_camel_tatars": "Suicide Unit"},
 }
 
 
@@ -62,14 +61,14 @@ def enumerate_uniques():
             "SELECT unit_slug, unit_name, unit_class_name FROM ref_units "
             "WHERE civ_name=? AND age='Imperial' AND unit_slug LIKE '%'||? ORDER BY unit_slug",
             (civ, suffix)).fetchall()
-        for extra in EXTRA_SLUGS.get(civ, ()):
+        for extra, cls_override in EXTRA_SLUGS.get(civ, {}).items():
             r = db.execute(
                 "SELECT unit_slug, unit_name, unit_class_name FROM ref_units "
                 "WHERE civ_name=? AND unit_slug=? ORDER BY age DESC LIMIT 1",
                 (civ, extra)).fetchone()
             rows.append(r if r is not None
                         else {"unit_slug": extra, "unit_name": extra,
-                              "unit_class_name": ""})
+                              "unit_class_name": cls_override or ""})
         for r in rows:
             slug, name, cls = r["unit_slug"], r["unit_name"], (r["unit_class_name"] or "")
             nl = name.lower()

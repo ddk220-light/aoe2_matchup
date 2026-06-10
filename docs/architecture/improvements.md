@@ -4,6 +4,29 @@
 
 This backlog merges two sources: (1) a 7-area multi-agent code review in which every confirmed high/medium finding was adversarially re-verified by a skeptic agent (35 confirmed, 5 refuted, 15 low-severity passed through unverified) — recommendations below already incorporate the verifiers' corrections; and (2) a repo-organization audit covering file/folder structure, naming, dead-script archival, and the module-docstring inventory. Severity is high/medium/low; effort is S/M/L.
 
+## Execution status (2026-06-10)
+
+Phases 1–2 were executed per [docs/plans/2026-06-10-improvement-execution-plan.md](../plans/2026-06-10-improvement-execution-plan.md).
+The findings below are kept as written (they document the pre-fix state); this table is the ledger.
+
+**Done** (suite green; CI added):
+
+| Item | Commit |
+|---|---|
+| Untrack `graphics/art/` + 488 upscale PNGs (kept on disk for future UI use); archive `derive_advisor_recs.py`+test, `armenians_matchups.csv` | `19a6e13` |
+| Dead-code deletions: `ORIGINAL_13_CIVS` app.py copy, civ list derived from `CIV_NAMES`, `simulate_mixed_battle` (~862 lines), `NO_ELITE_UNITS`/`UNITS_BY_AGE`, `battle_scores.json` + loader + `-999` branch | `8f14914` |
+| Template renames (`rankings.html` / `civ_overview.html` / `civ_detail.html` inversion fixed); "50 civilizations"→53 in 7 places | `b22789f` |
+| Advisor RNG seeded (`_SIM_SEED=20260411`); cost-weight drift fixed (delegates to `simulation_real.weighted_cost`); golden baseline regenerated — suite green from here | `fb6e9c0` |
+| Derive guardrails: `--matchup-db` required + `preflight_derive_guard` (<40 civs abort, sim_version warning); legacy flat `civ_power_units.json` fallback removed | `495744b` |
+| `patch_unit_ranking` backfilled for 177723 (318 rows); patches.db VACUUM 6.3 MB→120 KB; coverage test added | `b920f03` |
+| Docstring/`Role:` pass (30 files; sim_version-hashed files untouched); `REPLAY_ENABLED` wired (nav gating + 503 page); clip tmp collision fixed; `MAX_CONTENT_LENGTH` 50 MB; 8x→4x copy; `.claude` skill/agent doc fixes | `5d631aa` |
+| `favicon.png` + `og-default.png` created (+ og:image dimension tags) | `0074ec5` |
+| **Live 500 fixed**: `/api/matchup-recommendations` KeyError `median_delta` on stripped siege entries (+ regression tests) | `bf35ecd` |
+| GitHub Actions CI (pytest + 2 Node tests) | bookkeeping commit |
+
+**Deferred — needs matchup re-sim or blocked** (detail in the execution plan's deferred table):
+Cumans Camel Rider / Dravidians Battle Elephant Imperial restore; engine renames + `simulation_real.py` docstring (bundle with next full re-sim); naval-rankings regeneration; incremental-resim noise policy; `scenario_builder/overlay/results.py` port + `aoe2_units.db` retirement (blocked on `feat/matchup-video-automation`); `best_units.py` split; `compute_battle_scores.py` scoring-lib extraction; `pool_scores_lib` wood 0.8 alignment (needs pool re-derive); `webapp/jobs/` subpackage.
+
 ## Quick wins
 
 The best value-for-effort items across both inputs. All are S effort except the Cumans/Dravidians fix (M, but it is a live data bug on the core feature).

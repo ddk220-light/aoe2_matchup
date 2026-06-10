@@ -1,5 +1,12 @@
 # Dat File Update Runbook
 
+> **SUPERSEDED (2026-06-10):** the live runbook is now `docs/architecture/runbooks.md` §1
+> (new game patch) — use that instead. Specific steps below are stale: the `app.py`
+> civ-list copy (`ORIGINAL_13_CIVS`) was deleted, the `analysis/config_constants.py`
+> civ list is now derived from `extraction.extract_constants.CIV_NAMES` (no hand edit),
+> `battle_scores.json`/`compute_battle_scores.py` are retired, and rankings come from
+> the derive chain. Kept as dated history.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Repeatable process to integrate a new `empires2_x2_p1.dat` file containing stat changes and/or new civilizations into the full pipeline — extraction, analysis, simulation, webapp, and tests.

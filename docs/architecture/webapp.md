@@ -139,7 +139,7 @@ All connections are short-lived `sqlite3.connect()` calls with `Row` factory; th
 | `pool_scores_query.load_pool_scores()` | `webapp/pool_scores.db` | `pool_scores` (per-unit pool payloads on the rankings page) |
 | `best_units.py` module paths | `aoe2_reference.db`, `derived_data.db`, `pool_scores.db` | advisor recommendations and percentiles |
 
-JSON artifacts read at runtime: `civ_power_units/<build>.json` (per-build only — the legacy flat `civ_power_units.json` fallback was removed) and `civ_top_units.json`. (`battle_scores.json` and its `app.py` loader were deleted — role scores come from `derived_data.db`.) `webapp/matchup_db.db` (the 200+ MB raw sim cache) and `battle_cache.json` are **not** read by any route — they feed the offline derive jobs only.
+JSON artifacts read at runtime: `civ_power_units/<build>.json` (per-build only — the legacy flat `civ_power_units.json` fallback was removed) and `civ_top_units.json`. (`battle_scores.json` and its `app.py` loader were deleted — role scores come from `derived_data.db`.) `webapp/matchup_db.db` (the committed 3.9 MB matchup snapshot; the full 200+ MB baselines live outside the repo at `D:/AI/`) and `battle_cache.json` are **not** read by any route — they feed the offline derive jobs only.
 
 There is **no `app_data.db`** — older docs mention it, but the file does not exist; `unit_verifications` plus dormant `comments`/`simulation_comments`/`combat_results` tables live inside `aoe2_units.db`, and no comment routes exist anymore. The `unit_stats` table in `aoe2_units.db` is likewise not queried by any route — combat stats come from `ref_units`.
 

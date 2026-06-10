@@ -31,8 +31,8 @@ Flask app serving aoe2matchup.com. All serving data is committed SQLite/JSON (co
 | Feature | Backend | Frontend |
 |---------|---------|----------|
 | Battle Sim (page at `/`) | `/api/ref/combat-unit/<civ>/<slug>` serves the combat dict | `simulate.html` + `static/js/simulate.js` (fight runs in JS) |
-| Unit Rankings (`/units`) | `/api/ref/unit-line/<line>` reading `derived_data.db` + `pool_scores.db` | `index.html` + `static/js/rankings.js` |
-| Civ pages (`/civilizations[/<name>]`) | `/api/civ-power-units/<civ>`, `/api/ref/civ/<civ>` | `civ_detail.html`, `deprecated-civ.html` + `static/js/civ-detail.js`, `matchup.js` |
+| Unit Rankings (`/units`) | `/api/ref/unit-line/<line>` reading `derived_data.db` + `pool_scores.db` | `rankings.html` + `static/js/rankings.js` |
+| Civ pages (`/civilizations[/<name>]`) | `/api/civ-power-units/<civ>`, `/api/ref/civ/<civ>` | `civ_overview.html` (selector), `civ_detail.html` (per-civ) + `static/js/civ-detail.js`, `matchup.js` |
 | Matchup Advisor | `/api/matchup-recommendations/...`, `POST /api/matchup-sims` (live sims, `simulation.py`) | `matchup_advisor.html` + `static/js/matchup_advisor.js` |
 | Patches (`/patches[...]`) | `patches.db` via `patches_db.py` | `patches.html`, `patch_unit.html` |
 | Replay analyzer (`/replay`) | `replay_core.py` blueprint, `clip_export.py` | iframe SPA in `static/replay/` |

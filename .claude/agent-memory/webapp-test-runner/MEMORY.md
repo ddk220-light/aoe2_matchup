@@ -26,7 +26,7 @@
 - Server responds at `/` with 200
 
 ## Unit Rankings Page (`/units`)
-- Route: `/units` -> `webapp/templates/index.html`, title "Unit Rankings"
+- Route: `/units` -> `webapp/templates/rankings.html` (renamed from index.html 2026-06-10), title "Unit Rankings"
 - Client-side SPA: JS fetches `/api/ref/unit-line/{slug}` on click (no auto-load)
 - 18 lines in frontend UNIT_LINES; 21 in backend (militia/spear/shock_infantry are sub_lines of infantry aggregates)
 - Knight line imperial_slug=paladin: only Paladin-tier civs in imperial (by design)

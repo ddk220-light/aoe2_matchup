@@ -508,14 +508,14 @@ def replay():
 def units():
     units_by_age = get_units_by_age()
     ages = {k: v["name"] for k, v in AGES.items()}
-    return render_template("index.html", units_by_age=units_by_age, ages=ages, active_nav="rankings")
+    return render_template("rankings.html", units_by_age=units_by_age, ages=ages, active_nav="rankings")
 
 
 @app.route("/civilizations")
 def civ_view():
     """Civilization analysis page — shows power units, strengths, and strategic identity."""
     civs = _get_ref_civs()
-    return render_template("civ_detail.html", civs=civs, active_nav="civ_select")
+    return render_template("civ_overview.html", civs=civs, active_nav="civ_select")
 
 
 @app.route("/civilizations/<civ_name>")
@@ -523,7 +523,7 @@ def civ_detail(civ_name):
     """Civilization unit detail page."""
     if civ_name not in _valid_civs():
         return redirect("/civilizations")
-    return render_template("deprecated-civ.html", civ_name=civ_name, active_nav="civ_detail")
+    return render_template("civ_detail.html", civ_name=civ_name, active_nav="civ_detail")
 
 
 @app.route("/civ")

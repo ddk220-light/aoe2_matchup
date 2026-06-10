@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}AoE2 Civilizations — Strengths, power units & strategic identity for all 53 civs{% endblock %}
+{% block meta_description %}Detailed Age of Empires II civilization breakdowns: power units, unique techs, civ bonuses, and the matchup-tested strengths of all 53 civilizations including Three Kingdoms.{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/matchup.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Civilizations</h1>
+    <p class="subtitle">Select a civilization to see its strengths, weaknesses, and strategic identity</p>
+</div>
+
+<div class="container">
+    <div class="civ-selector">
+        <div class="step-label step-civ1" id="step-label">
+            Click a civilization to analyze
+        </div>
+        <div class="civ-grid" id="civ-grid"></div>
+    </div>
+
+    <div id="results" class="results-container"></div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+    const CIVS = {{ civs | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/matchup.js') }}"></script>
+{% endblock %}

@@ -17,15 +17,15 @@ The frontend is plain JavaScript, no framework and no build step. Shared CSS/JS 
 | Route | View function | Template | Data read |
 |---|---|---|---|
 | `/` | `home` | `simulate.html` | none server-side (JS calls APIs) |
-| `/units` | `units` | `index.html` | `aoe2_units.db` (`units` table, unit list per age) |
-| `/civilizations` | `civ_view` | `civ_detail.html` | `aoe2_reference.db` (civ list) |
-| `/civilizations/<civ_name>` | `civ_detail` | `deprecated-civ.html` | `aoe2_reference.db` (civ validation) |
+| `/units` | `units` | `rankings.html` | `aoe2_units.db` (`units` table, unit list per age) |
+| `/civilizations` | `civ_view` | `civ_overview.html` | `aoe2_reference.db` (civ list) |
+| `/civilizations/<civ_name>` | `civ_detail` | `civ_detail.html` | `aoe2_reference.db` (civ validation) |
 | `/matchup-advisor` | `matchup_advisor` | `matchup_advisor.html` | `aoe2_reference.db` (civ list) |
 | `/replay` | `replay` | `replay.html` | none (iframe shell, see [replay.md](replay.md)) |
 | `/patches` | `patches_page` | `patches.html` | `patches.db` + `aoe2_reference.db` (unit names) |
 | `/patches/<build>/<civ>/<path:unit>` | `patch_unit_page` | `patch_unit.html` | `patches.db` + `aoe2_reference.db` |
 
-Naming trap: `civ_detail.html` is the civilization *overview/selector* page, while `deprecated-civ.html` is the live per-civ detail page. The template names are inverted relative to what they render.
+Template names match what they render (since the 2026-06-10 rename): `rankings.html` is the `/units` rankings page, `civ_overview.html` is the civilization overview/selector, and `civ_detail.html` is the live per-civ detail page (formerly `deprecated-civ.html` — the old names were inverted).
 
 ### Redirects (3)
 
@@ -97,9 +97,9 @@ All templates extend `webapp/templates/base.html` except the included `_footer.h
 | `base.html` | (layout) | `css/base.css` | `js/constants.js`, `js/api_client.js`, inline theme toggle |
 | `_footer.html` | (include) | — | inline contact-modal script when `CONTACT_FORM_ENDPOINT` is set |
 | `simulate.html` | `/` | `css/simulate.css` | `js/sim_params.js`, `js/simulate.js` |
-| `index.html` | `/units` | `css/rankings.css` | `js/rankings.js` |
-| `civ_detail.html` | `/civilizations` | `css/matchup.css` | `js/matchup.js` (+ inline `CIVS` constant) |
-| `deprecated-civ.html` | `/civilizations/<civ>` | `css/civ-detail.css` | `js/civ-detail.js` (+ inline `CIV_NAME`) |
+| `rankings.html` | `/units` | `css/rankings.css` | `js/rankings.js` |
+| `civ_overview.html` | `/civilizations` | `css/matchup.css` | `js/matchup.js` (+ inline `CIVS` constant) |
+| `civ_detail.html` | `/civilizations/<civ>` | `css/civ-detail.css` | `js/civ-detail.js` (+ inline `CIV_NAME`) |
 | `matchup_advisor.html` | `/matchup-advisor` | `css/matchup_advisor.css` | `js/matchup_advisor.js` (re-loads `constants.js`, harmless duplicate) |
 | `matchup_landing.html` | `/vs/...` | inline `<style>` | none; overrides the JSON-LD block with `FAQPage` schema |
 | `patches.html` | `/patches` | inline `<style>` | none (server-rendered accordions) |

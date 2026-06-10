@@ -1,33 +1,52 @@
 {% extends 'base.html' %}
 
-{% block title %}AoE2 Civilizations — Strengths, power units & strategic identity for all 50 civs{% endblock %}
-{% block meta_description %}Detailed Age of Empires II civilization breakdowns: power units, unique techs, civ bonuses, and the matchup-tested strengths of all 50 civilizations including Three Kingdoms.{% endblock %}
+{% block title %}{{ civ_name }} — Unit stats, civ bonuses & best matchups | AoE2 Matchup{% endblock %}
+{% block meta_description %}{{ civ_name }} in Age of Empires II: full unit stats at maximum upgrades, civ bonuses, unique techs, power units, and simulated matchup results against every other civilization.{% endblock %}
 
 {% block page_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/matchup.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/civ-detail.css') }}" />
 {% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1>Civilizations</h1>
-    <p class="subtitle">Select a civilization to see its strengths, weaknesses, and strategic identity</p>
+    <div class="header-top">
+        <a href="/civilizations" class="back-link">&#8592; All Civilizations</a>
+        <div class="header-main">
+            <img
+                class="civ-emblem"
+                src="https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/{{ civ_name|lower }}.png"
+                alt="{{ civ_name }}"
+            />
+            <h1>{{ civ_name }}</h1>
+            <!-- Imperial-only (fully upgraded). Age toggle removed. -->
+        </div>
+    </div>
 </div>
 
-<div class="container">
-    <div class="civ-selector">
-        <div class="step-label step-civ1" id="step-label">
-            Click a civilization to analyze
-        </div>
-        <div class="civ-grid" id="civ-grid"></div>
-    </div>
+<div class="content">
+    <div class="loading" id="loading">Loading unit data...</div>
+    <div id="units-container"></div>
+</div>
 
-    <div id="results" class="results-container"></div>
+<!-- Modal -->
+<div
+    class="modal-overlay"
+    id="modal-overlay"
+    onclick="if (event.target === this) closeModal();"
+>
+    <div class="modal">
+        <div class="modal-gold-bar"></div>
+        <button class="modal-close" onclick="closeModal()">
+            &times;
+        </button>
+        <div class="modal-body" id="modal-body"></div>
+    </div>
 </div>
 {% endblock %}
 
 {% block page_js %}
 <script>
-    const CIVS = {{ civs | tojson }};
+    const CIV_NAME = "{{ civ_name }}";
 </script>
-<script src="{{ url_for('static', filename='js/matchup.js') }}"></script>
+<script src="{{ url_for('static', filename='js/civ-detail.js') }}"></script>
 {% endblock %}

@@ -1262,7 +1262,8 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
                 "role": col_key,
                 "unit_slug": best_entry["unit_slug"],
                 "strength": best_entry["strength"],
-                "median_delta": best_entry["median_delta"],
+                # siege entries are stripped to a minimal payload and may lack median_delta
+                "median_delta": best_entry.get("median_delta", 0),
             })
 
     # If opponent has no clear strengths, use their best roles anyway
@@ -1282,7 +1283,7 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
                 "role": best_col,
                 "unit_slug": best_entry["unit_slug"],
                 "strength": best_entry["strength"],
-                "median_delta": best_entry["median_delta"],
+                "median_delta": best_entry.get("median_delta", 0),
             })
 
     # Step 2: Find counter candidates from battle_scores (in derived_data.db)

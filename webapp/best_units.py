@@ -6,6 +6,7 @@ import json
 import os
 import random
 import sqlite3
+import sys
 
 from combat_unit_loader import build_combat_dict_from_ref
 from unit_lines import TREBUCHET_SLUGS, NAVAL_UNIT_LINES, CANNON_GALLEON_LINE
@@ -20,7 +21,6 @@ _SIM_SEED = 20260411
 DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 DERIVED_DB_PATH = os.path.join(os.path.dirname(__file__), "derived_data.db")
 POOL_SCORES_DB_PATH = os.path.join(os.path.dirname(__file__), "pool_scores.db")
-POWER_UNITS_PATH = os.path.join(os.path.dirname(__file__), "civ_power_units.json")
 POWER_UNITS_DIR = os.path.join(os.path.dirname(__file__), "civ_power_units")
 
 
@@ -1069,22 +1069,26 @@ def save_civ_power_units(build_number=None):
 
 
 def load_civ_power_units(build_number=None):
+    """Load civ_power_units/<build>.json for the given (or current) build.
+
+    No legacy fallback: the old flat civ_power_units.json (a frozen 170934
+    snapshot) was removed — serving builds-old data silently was worse than
+    failing. Returns None (and logs an ERROR) when the per-build file is
+    missing; callers surface that as an explicit error.
+    """
     build_number = build_number or get_current_build()
-    if build_number:
-        p = power_units_path(build_number)
-        if os.path.exists(p):
-            with open(p, "r") as f:
-                return json.load(f)
-    # legacy fallback (pre-migration single file)
-    if os.path.exists(POWER_UNITS_PATH):
-        if build_number:
-            # We have a current build but no per-build file — the legacy flat
-            # file may belong to a DIFFERENT build. Surface it in the logs.
-            print(f"WARNING: civ_power_units/{build_number}.json missing; "
-                  f"falling back to legacy civ_power_units.json (possibly stale).")
-        with open(POWER_UNITS_PATH, "r") as f:
-            return json.load(f)
-    return None
+    if not build_number:
+        print("ERROR: no current build in patches.db — cannot resolve "
+              "civ_power_units/<build>.json.", file=sys.stderr)
+        return None
+    p = power_units_path(build_number)
+    if not os.path.exists(p):
+        print(f"ERROR: {p} missing — run "
+              f"best_units.save_civ_power_units('{build_number}') to generate it.",
+              file=sys.stderr)
+        return None
+    with open(p, "r") as f:
+        return json.load(f)
 
 
 ###############################################################################
@@ -1229,7 +1233,8 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
     random.seed(_SIM_SEED)
     power_data = load_civ_power_units()
     if not power_data:
-        return {"error": "civ_power_units.json not found -- run best_units.py first"}
+        return {"error": "civ_power_units/<build>.json not found -- run "
+                         "best_units.save_civ_power_units() first"}
 
     civ_a_data = power_data.get(civ_a, {}).get(age)
     civ_b_data = power_data.get(civ_b, {}).get(age)

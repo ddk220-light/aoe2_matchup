@@ -84,6 +84,73 @@ def _short_hash(t):
     return hashlib.md5(repr(t).encode()).hexdigest()[:16]
 
 
+def preflight_derive_guard(db_path, *, allow_small_db=False, allow_stale=False,
+                           min_civs=40):
+    """CLI pre-flight for the derive scripts (derive_unit_rankings,
+    derive_pool_scores): sanity-check a matchup DB before deriving published
+    data from it. Aborts via SystemExit when:
+
+      * the DB covers fewer than `min_civs` distinct `my_civ` values — this
+        catches the committed Armenians-only stub `webapp/matchup_db.db`
+        (the real baseline lives at D:/AI/matchup_baseline_<build>.db).
+        Override with --allow-small-db.
+      * any rows carry a sim_version other than the current
+        `sim_version.compute_sim_version()` — the engine changed since those
+        rows were simmed. Override with --allow-stale (legitimately needed
+        after a scoped `run_matchup_battles --force --changed-units` re-sim,
+        which leaves the baseline at mixed versions; patch_pipeline passes it).
+
+    Guards live at the CLI layer only — library functions
+    (compute_and_write_rankings, derive_unit_scores, ...) stay unguarded so
+    tests can feed them small synthetic DBs.
+    """
+    import sys
+
+    from sim_version import compute_sim_version
+
+    if not os.path.exists(db_path):
+        raise SystemExit(f"ERROR: matchup DB not found: {db_path}")
+    conn = sqlite3.connect(db_path)
+    try:
+        try:
+            n_civs = conn.execute(
+                "SELECT COUNT(DISTINCT my_civ) FROM matchup_battles"
+            ).fetchone()[0]
+        except sqlite3.OperationalError as e:
+            raise SystemExit(
+                f"ERROR: {db_path} has no matchup_battles table ({e}) — "
+                "not a matchup DB?")
+        if n_civs < min_civs and not allow_small_db:
+            raise SystemExit(
+                f"ERROR: {db_path} has rows for only {n_civs} distinct civ(s) "
+                f"(expected >= {min_civs}). This looks like the committed "
+                "Armenians-only stub (webapp/matchup_db.db), not the real "
+                "baseline (D:/AI/matchup_baseline_<build>.db). Deriving from "
+                "it would publish partial/stale data. Pass --allow-small-db "
+                "to proceed anyway.")
+        current = compute_sim_version()
+        n_stale = conn.execute(
+            "SELECT COUNT(*) FROM matchup_battles "
+            "WHERE sim_version IS NULL OR sim_version != ?", (current,)
+        ).fetchone()[0]
+        if n_stale:
+            print(
+                "=" * 72 + "\n"
+                f"WARNING: {n_stale} row(s) in {db_path} were simmed under a "
+                f"sim_version other than the current {current!r}.\n"
+                "The sim engine (simulation_real.py / config_combat.py) changed "
+                "since those rows were generated — derived output would mix "
+                "engine versions.\n" + "=" * 72,
+                file=sys.stderr)
+            if not allow_stale:
+                raise SystemExit(
+                    "ERROR: refusing to derive from stale sim rows. Re-sim the "
+                    "DB, or pass --allow-stale if the mix is intentional (e.g. "
+                    "after a scoped --changed-units re-sim).")
+    finally:
+        conn.close()
+
+
 def create_db(path=DEFAULT_DB_PATH):
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row

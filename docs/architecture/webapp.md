@@ -50,7 +50,7 @@ All three use `SITE_URL` for absolute URLs.
 | `/api/ref/stat-chain/<int:ref_unit_id>` | GET | `aoe2_reference.db` | `rankings.js` (hover cards) |
 | `/api/ref/combat-unit/<civ_name>/<unit_slug>` | GET | `aoe2_reference.db` (`ref_units` via `combat_unit_loader.build_combat_dict_from_ref`) | `simulate.js` (the JS battle sim's unit loader) |
 | `/api/ref/unit-line/<line_slug>` | GET | `aoe2_reference.db` + `derived_data.db` (`battle_scores`) + `pool_scores.db` + `patches.db` (current build) | `rankings.js` |
-| `/api/civ-power-units/<civ_name>` | GET | `civ_power_units/<build>.json` (or `civ_power_units.json`) + `patches.db` | `matchup.js`, `matchup_advisor.js` |
+| `/api/civ-power-units/<civ_name>` | GET | `civ_power_units/<build>.json` + `patches.db` | `matchup.js`, `matchup_advisor.js` |
 | `/api/top-units/<civ_name>` | GET | `civ_top_units.json`, falling back to live derivation from `aoe2_reference.db` | external/diagnostic |
 | `/api/top-unit/<civ_name>/<line>` | GET | same as above | external/diagnostic |
 | `/api/matchup-recommendations/<civ_a>/<civ_b>` | GET | `best_units.py` (reads `aoe2_reference.db`, `derived_data.db`, `pool_scores.db`) + on-the-fly sims | `matchup_advisor.js` |
@@ -139,7 +139,7 @@ All connections are short-lived `sqlite3.connect()` calls with `Row` factory; th
 | `pool_scores_query.load_pool_scores()` | `webapp/pool_scores.db` | `pool_scores` (per-unit pool payloads on the rankings page) |
 | `best_units.py` module paths | `aoe2_reference.db`, `derived_data.db`, `pool_scores.db` | advisor recommendations and percentiles |
 
-JSON artifacts read at runtime: `civ_power_units/<build>.json` with `civ_power_units.json` fallback, and `civ_top_units.json`. (`battle_scores.json` and its `app.py` loader were deleted — role scores come from `derived_data.db`.) `webapp/matchup_db.db` (the 200+ MB raw sim cache) and `battle_cache.json` are **not** read by any route — they feed the offline derive jobs only.
+JSON artifacts read at runtime: `civ_power_units/<build>.json` (per-build only — the legacy flat `civ_power_units.json` fallback was removed) and `civ_top_units.json`. (`battle_scores.json` and its `app.py` loader were deleted — role scores come from `derived_data.db`.) `webapp/matchup_db.db` (the 200+ MB raw sim cache) and `battle_cache.json` are **not** read by any route — they feed the offline derive jobs only.
 
 There is **no `app_data.db`** — older docs mention it, but the file does not exist; `unit_verifications` plus dormant `comments`/`simulation_comments`/`combat_results` tables live inside `aoe2_units.db`, and no comment routes exist anymore. The `unit_stats` table in `aoe2_units.db` is likewise not queried by any route — combat stats come from `ref_units`.
 

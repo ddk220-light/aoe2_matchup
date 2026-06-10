@@ -73,7 +73,7 @@ These binary/data files are committed **on purpose** — they are how the deploy
 | `webapp/matchup_db.db` | 3.9 MB | Raw 1v1 matchup outcomes (multi-seed baseline) |
 | `webapp/pool_scores.db` | 4.4 MB | Pool-score data |
 | `webapp/patches.db` | 6.3 MB | Patch/build history for the patches pages |
-| `webapp/civ_power_units.json` + `webapp/civ_power_units/{170934,177723}.json` | ~1.8 MB each | Per-build civ power-unit data |
+| `webapp/civ_power_units/{170934,177723}.json` | ~1.8 MB each | Per-build civ power-unit data (the legacy flat `civ_power_units.json` was deleted — no fallback) |
 | `webapp/civ_top_units.json`, `webapp/train_times.json` | small | Misc serving data (`battle_scores.json` was deleted — scores moved into `derived_data.db`) |
 | `.golden/baseline.json` | 208 KB | Golden sim regression baseline (section 3) |
 | `tests/fixtures/berserker_matchups.db` | test fixture | |

@@ -1331,7 +1331,7 @@ def api_civ_power_units(civ_name):
         return err
     data = load_civ_power_units(build_number=current_build())
     if not data:
-        return jsonify({"error": "civ_power_units.json not found"}), 500
+        return jsonify({"error": "civ_power_units/<build>.json not found"}), 500
     civ_data = data.get(civ_name)
     if not civ_data:
         return jsonify({"error": f"Civilization '{civ_name}' not found"}), 404

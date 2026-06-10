@@ -59,21 +59,18 @@ def test_power_units_path_for_build(monkeypatch, tmp_path):
     assert p.endswith(os.path.join("cpu", "177723.json"))
 
 
-def test_load_civ_power_units_fallback_chain(monkeypatch, tmp_path):
+def test_load_civ_power_units_per_build_only(monkeypatch, tmp_path):
+    """Per-build file or nothing — the legacy flat-file fallback was removed."""
     import json
     import best_units
     importlib.reload(best_units)
     cpu_dir = str(tmp_path / "cpu")
-    legacy = str(tmp_path / "legacy.json")
     monkeypatch.setattr(best_units, "POWER_UNITS_DIR", cpu_dir)
-    monkeypatch.setattr(best_units, "POWER_UNITS_PATH", legacy)
-    # neither present -> None
+    # per-build file missing -> None (no silent fallback to stale data)
     assert best_units.load_civ_power_units(build_number="177723") is None
-    # only legacy present -> legacy
-    with open(legacy, "w") as f:
-        json.dump({"src": "legacy"}, f)
-    assert best_units.load_civ_power_units(build_number="177723") == {"src": "legacy"}
-    # per-build present -> per-build wins over legacy
+    # the legacy flat-file hook is gone entirely
+    assert not hasattr(best_units, "POWER_UNITS_PATH")
+    # per-build present -> loaded
     os.makedirs(cpu_dir, exist_ok=True)
     with open(best_units.power_units_path("177723"), "w") as f:
         json.dump({"src": "perbuild"}, f)

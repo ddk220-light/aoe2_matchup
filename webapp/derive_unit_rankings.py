@@ -18,7 +18,7 @@ if _here not in sys.path:
     sys.path.insert(0, _here)
 
 from derived_db import create_db as create_derived_db
-from matchup_db import DEFAULT_DB_PATH as MATCHUP_DB_PATH
+from matchup_db import DEFAULT_DB_PATH as MATCHUP_DB_PATH, preflight_derive_guard
 from unit_lines import UNIT_LINES, CIV_MISSING_UNITS
 from patches_db import get_current_build  # resolves the build to tag rows with
 
@@ -324,12 +324,23 @@ def compute_and_write_rankings(matchup_db_path=MATCHUP_DB_PATH,
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--age", default="imperial")
-    parser.add_argument("--matchup-db", dest="matchup_db", default=MATCHUP_DB_PATH,
-                        help="Path to the matchup DB to derive from "
-                             "(default: webapp/matchup_db.db).")
+    parser.add_argument("--matchup-db", dest="matchup_db", required=True,
+                        help="Path to the matchup DB to derive from (REQUIRED — "
+                             "point it at the external baseline, e.g. "
+                             "D:/AI/matchup_baseline_<build>.db; the committed "
+                             "webapp/matchup_db.db is an Armenians-only stub).")
     parser.add_argument("--build", dest="build", default=None,
                         help="Build number to tag rows with (default: current).")
+    parser.add_argument("--allow-small-db", action="store_true",
+                        help="Skip the >=40-distinct-civs sanity check "
+                             "(deliberately partial source DBs only).")
+    parser.add_argument("--allow-stale", action="store_true",
+                        help="Proceed even if rows were simmed under a non-current "
+                             "sim_version (needed after scoped --changed-units re-sims).")
     args = parser.parse_args()
+    preflight_derive_guard(args.matchup_db,
+                           allow_small_db=args.allow_small_db,
+                           allow_stale=args.allow_stale)
     n = compute_and_write_rankings(matchup_db_path=args.matchup_db,
                                    age=args.age.capitalize(),
                                    build_number=args.build)

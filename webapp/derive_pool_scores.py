@@ -1,14 +1,14 @@
-"""Derive pool scores for every (civ, unit_slug, scale) in matchup_db.
+"""Derive pool scores for every (civ, unit_slug, scale) in a matchup DB.
 
-Run from the webapp/ directory (matches the project's existing
-script-running convention — see CLAUDE.md):
+`--matchup-db` is REQUIRED — point it at the external baseline-of-record
+(the committed webapp/matchup_db.db is an Armenians-only stub):
 
-    cd webapp && python derive_pool_scores.py
+    python -m webapp.derive_pool_scores \\
+        --matchup-db D:/AI/matchup_baseline_<build>.db --out webapp/pool_scores.db
 
-Or with explicit paths:
-
-    cd webapp && python derive_pool_scores.py \\
-        --matchup-db matchup_db.db --out pool_scores.db
+A pre-flight guard (matchup_db.preflight_derive_guard) aborts on small
+(<40-civ) source DBs unless --allow-small-db, and on rows simmed under a
+non-current sim_version unless --allow-stale.
 
 For each combat unit in the three pools (infantry/stable/archer), writes
 six rows to pool_scores.db: 3 axes (hp, cost, speed) × 2 scales (30v30, 3k).
@@ -29,13 +29,13 @@ _here = os.path.dirname(os.path.abspath(__file__))
 if _here not in sys.path:
     sys.path.insert(0, _here)
 
+from matchup_db import preflight_derive_guard
 from pool_scores_lib import derive_unit_scores, unit_to_pool
 from pool_scores_db import create_db, insert_score
 from unit_lines import UNIT_LINES
 from patches_db import get_current_build
 
 _WEBAPP_DIR = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_MATCHUP_DB = os.path.join(_WEBAPP_DIR, "matchup_db.db")
 DEFAULT_OUT_DB = os.path.join(_WEBAPP_DIR, "pool_scores.db")
 
 ROW_KEYS = (
@@ -98,10 +98,23 @@ def _migrate_role_line_means_column(conn: sqlite3.Connection) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("--matchup-db", default=DEFAULT_MATCHUP_DB)
+    p.add_argument("--matchup-db", required=True,
+                   help="Path to the matchup DB to derive from (REQUIRED — "
+                        "e.g. D:/AI/matchup_baseline_<build>.db; the committed "
+                        "webapp/matchup_db.db is an Armenians-only stub).")
     p.add_argument("--out", default=DEFAULT_OUT_DB)
     p.add_argument("--build", default=None)
+    p.add_argument("--allow-small-db", action="store_true",
+                   help="Skip the >=40-distinct-civs sanity check "
+                        "(deliberately partial source DBs only).")
+    p.add_argument("--allow-stale", action="store_true",
+                   help="Proceed even if rows were simmed under a non-current "
+                        "sim_version (needed after scoped --changed-units re-sims).")
     args = p.parse_args(argv)
+
+    preflight_derive_guard(args.matchup_db,
+                           allow_small_db=args.allow_small_db,
+                           allow_stale=args.allow_stale)
 
     build_number = args.build or get_current_build() or "170934"
 

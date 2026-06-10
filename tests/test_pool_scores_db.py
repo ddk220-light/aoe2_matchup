@@ -135,7 +135,10 @@ def test_orchestrator_writes_json_role_line_means(tmp_path):
     mc.commit()
     mc.close()
 
-    rc = derive_main(["--matchup-db", str(matchup_path), "--out", str(out_path)])
+    # Tiny 1-civ synthetic DB with a fake sim_version: both CLI guards must be
+    # explicitly waived (this is exactly the footgun they exist to catch).
+    rc = derive_main(["--matchup-db", str(matchup_path), "--out", str(out_path),
+                      "--allow-small-db", "--allow-stale"])
     assert rc == 0
 
     conn = sqlite3.connect(out_path)
@@ -190,7 +193,8 @@ def test_orchestrator_migrates_existing_db_without_column(tmp_path):
     mc.commit()
     mc.close()
 
-    derive_main(["--matchup-db", str(matchup_path), "--out", str(out_path)])
+    derive_main(["--matchup-db", str(matchup_path), "--out", str(out_path),
+                 "--allow-small-db", "--allow-stale"])
 
     conn = sqlite3.connect(out_path)
     cur = conn.execute("PRAGMA table_info(pool_scores)")

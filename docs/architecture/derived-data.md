@@ -114,10 +114,14 @@ same-unit mirrors** (`my_slug == opp_slug`) and replaces the 1-or-3-seed rule wi
 | `D:/AI/matchup_baseline_177723.db` (local, NOT in git) | 276 MB | `matchup_battles`, `matchup_means`, `groups_done` | The build-177723 **baseline-of-record**: 491,384 rows in both battle and means tables, 67,654 dedup groups. Verdicts: 234,820 win / 234,820 loss (exactly symmetric) / 21,744 tossup (4.4%). Seed counts: 460,376 rows at n=8 escalating up to 1,726 at n=40. |
 
 Practical consequence: **every derive command below must be pointed at the external
-baseline** (`--matchup-db D:/AI/matchup_baseline_177723.db`). Defaults point at the
-committed stub and would silently produce Armenians-only output. `derive_advisor_recs.py`
-is the one script with **no** `--matchup-db` flag — it always reads `webapp/matchup_db.db`,
-so re-running it today would clobber the good committed recommendations (see below).
+baseline** (`--matchup-db D:/AI/matchup_baseline_177723.db`). The flag is now **required**
+(no default pointing at the stub), and both `derive_unit_rankings.py` and
+`derive_pool_scores.py` run `matchup_db.preflight_derive_guard` before writing: a source DB
+with <40 distinct `my_civ` values aborts (it looks like the Armenians-only stub; override
+with `--allow-small-db`), and rows simmed under a non-current `sim_version` abort unless
+`--allow-stale` (legitimate after scoped `--changed-units` re-sims — `patch_pipeline`
+passes it). Guards live at the CLI layer only; the library functions stay unguarded for
+tests. (`derive_advisor_recs.py`, which had no flag at all, is archived in `.old/webapp/`.)
 
 ## 2. The derive chain
 
@@ -125,7 +129,7 @@ so re-running it today would clobber the good committed recommendations (see bel
 |---|---|---|---|
 | `webapp/derive_unit_rankings.py` | `matchup_battles` (yardstick rows only) + `ref_units` | `derived_data.db` · `battle_scores` (land lines) | `python -m webapp.derive_unit_rankings --matchup-db D:/AI/matchup_baseline_177723.db --build 177723` |
 | `webapp/derive_pool_scores.py` (+ `pool_scores_lib.py`) | `matchup_battles` (all rows) | `pool_scores.db` · `pool_scores` | `python -m webapp.derive_pool_scores --matchup-db D:/AI/matchup_baseline_177723.db --out webapp/pool_scores.db --build 177723` |
-| `webapp/derive_advisor_recs.py` | `webapp/matchup_db.db` (path not overridable) | `derived_data.db` · `advisor_recommendations` | `cd webapp && python derive_advisor_recs.py` — **do not run against the stub; see warning above** |
+| `webapp/derive_advisor_recs.py` — **archived to `.old/webapp/`** (output read by nothing; no `--matchup-db` flag) | `webapp/matchup_db.db` (path not overridable) | `derived_data.db` · `advisor_recommendations` (rows kept, table DDL parked) | n/a — do not run |
 | `webapp/derive_siege_scores.py` | `compute_battle_scores.compute_siege_antibuilding_scores()` (fresh sims, not matchup_db) | `derived_data.db` · `battle_scores` (siege lines) | `python -m webapp.derive_siege_scores --build 177723` |
 | `webapp/best_units.py` `save_civ_power_units()` | `derived_data.db` + `pool_scores.db` + `ref_units` | `webapp/civ_power_units/<build>.json` | `python -c "import sys; sys.path.insert(0,'webapp'); import best_units; best_units.save_civ_power_units('177723')"` |
 | `webapp/top_units.py` | `ref_units` only (no sim data) | `webapp/civ_top_units.json` | `python -m webapp.top_units` |
@@ -207,8 +211,10 @@ standing derive script into `derived_data.db` — they survive via carry-forward
 percentiles and ref stats into a per-civ, per-age "power units" payload (strength profile,
 strategic summary, per-line entries). `save_civ_power_units(build)` writes
 `webapp/civ_power_units/<build>.json` (~1.8 MB each; `170934.json` and `177723.json` are
-committed). `load_civ_power_units()` resolves the current build via `patches.db` and falls
-back to the legacy flat `webapp/civ_power_units.json` with a staleness warning. Consumed by
+committed). `load_civ_power_units()` resolves the current build via `patches.db` and loads
+the per-build file **only** — the legacy flat `webapp/civ_power_units.json` (a frozen
+170934 snapshot) and its silent fallback were removed; a missing per-build file now logs an
+ERROR and returns None (the API surfaces a 500). Consumed by
 `/api/civ-power-units/<civ>` and the Matchup Advisor sim helpers.
 
 ### `top_units.py` → `civ_top_units.json`
@@ -226,7 +232,7 @@ script above imports (a parallel JS copy exists in `webapp/static/js/rankings.js
 |---|---|---|
 | `derived_data.db` · `battle_scores` | `build_number` (TEXT, default `'170934'`), part of the UNIQUE key | All app queries filter by current build when one resolves |
 | `pool_scores.db` · `pool_scores` | `build_number`, part of the PK | Same |
-| `civ_power_units/` | encoded in the **filename** `<build>.json` | Legacy flat `civ_power_units.json` is the pre-migration fallback |
+| `civ_power_units/` | encoded in the **filename** `<build>.json` | Per-build file only — the legacy flat `civ_power_units.json` fallback was deleted |
 | `derived_data.db` · `advisor_recommendations` | **none** | Not yet versioned |
 | `matchup_battles` | none — versioned by `sim_version`, not build | The baseline file itself is named per build |
 
@@ -246,7 +252,8 @@ Siege rows should then be properly regenerated with `derive_siege_scores.py`.
 **`migrate_baseline.py`** was the one-time migration that introduced all of this: it rebuilt
 `battle_scores` and `pool_scores` tables to add `build_number` (a full table rebuild, since
 the PK changes), tagged existing rows `170934`, copied `civ_power_units.json` →
-`civ_power_units/170934.json`, and seeded the first `patches` row with `is_current=1`.
+`civ_power_units/170934.json` (the flat file has since been deleted from the repo), and
+seeded the first `patches` row with `is_current=1`.
 It is idempotent and is still the documented bootstrap if `patches.db` is missing
 (`patch_pipeline` exits with instructions to run it).
 

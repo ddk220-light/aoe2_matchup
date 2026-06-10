@@ -131,10 +131,13 @@ def run(*, build, release_date, source_url, summary_md, baseline_build,
 
     # 7. Carry forward + re-derive at NEW build
     carry_forward_battle_scores(DERIVED_DB, baseline_build, build)
+    # --allow-stale: the scoped --changed-units re-sim above legitimately
+    # leaves the matchup DB at mixed sim_versions when the engine changed.
     _run([sys.executable, "-m", "webapp.derive_unit_rankings",
-          "--matchup-db", matchup_db, "--build", build], cwd=_ROOT)
+          "--matchup-db", matchup_db, "--build", build, "--allow-stale"], cwd=_ROOT)
     _run([sys.executable, "-m", "webapp.derive_pool_scores",
-          "--matchup-db", matchup_db, "--out", POOL_DB, "--build", build], cwd=_ROOT)
+          "--matchup-db", matchup_db, "--out", POOL_DB, "--build", build,
+          "--allow-stale"], cwd=_ROOT)
     # civ_power_units for the new build (best_units reads current build; set it first)
     pconn = patches_db.create_db(PATCHES_DB)
     pid = patches_db.insert_patch(pconn, build_number=build, release_date=release_date,

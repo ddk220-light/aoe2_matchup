@@ -18,6 +18,11 @@ Conventions for every runbook below:
 - The working matchup DB lives **outside the repo** (e.g. `D:/AI/matchup_db.db`,
   `D:/AI/matchup_baseline_177723.db`). A small `webapp/matchup_db.db` is tracked in git, but the
   patch and baseline pipelines should be pointed at the external copy via `--matchup-db`/`--db`.
+- `derive_unit_rankings.py` / `derive_pool_scores.py` now **require** `--matchup-db` and
+  pre-flight the source DB (`matchup_db.preflight_derive_guard`): <40 distinct `my_civ`
+  values aborts (anti-Armenians-stub guard; override `--allow-small-db`), and any rows at a
+  non-current `sim_version` abort unless `--allow-stale` (legitimate after scoped
+  `--changed-units` re-sims — `patch_pipeline` passes it automatically).
 
 ---
 
@@ -57,8 +62,9 @@ tail are manual. Deep detail: [`docs/patch-workflow.md`](../patch-workflow.md).
    6. Diffs matchup outcomes → `patch_matchup_changes`.
    7. `carry_forward_battle_scores` (copies the prior build's `battle_scores` rows — including
       naval/siege rows the land derive does not own — to the new build), then
-      `python -m webapp.derive_unit_rankings --matchup-db <db> --build <build>` (→ `webapp/derived_data.db`),
-      `python -m webapp.derive_pool_scores --matchup-db <db> --out webapp/pool_scores.db --build <build>`,
+      `python -m webapp.derive_unit_rankings --matchup-db <db> --build <build> --allow-stale` (→ `webapp/derived_data.db`),
+      `python -m webapp.derive_pool_scores --matchup-db <db> --out webapp/pool_scores.db --build <build> --allow-stale`
+      (`--allow-stale` because the incremental re-sim leaves mixed `sim_version` rows),
       inserts the `patches` row, flips `is_current` to the new build, then
       `best_units.save_civ_power_units('<build>')` (→ `webapp/civ_power_units/<build>.json`).
       The order matters: `save_civ_power_units` reads the *current* build's pool/battle scores.
@@ -133,6 +139,8 @@ Steps:
 5. If `simulation_real.py` changed: full baseline rebuild (runbook 1, step 5) — do **not** mix
    engine versions in one matchup DB ("patchwork" gotcha in `docs/patch-workflow.md`) — then
    re-derive rankings, pool scores, and civ power units at the **current** build number.
+   The derive CLIs enforce this: rows at a non-current `sim_version` abort the run unless
+   `--allow-stale` is passed (and a <40-civ source DB aborts unless `--allow-small-db`).
 6. The legacy round-robin/benchmark JSON chain is gone: `battle_scores.json` and its
    `app.py` loader were deleted — `/api/ref/unit-line` scores come solely from
    `derived_data.db` (plus the empty reference-DB fallback). Do not run

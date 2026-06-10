@@ -103,17 +103,25 @@ def resolve_side(civ: str, slug: str):
     return (civ, key, label)
 
 
+RES_BUDGET = 3000.0   # the cheaper side's total WEIGHTED cost must stay <= this
+
+
 def equal_resource_counts(civ1, slug1, civ2, slug2, unit_cap=30):
-    """Counts for an equal-RESOURCE fight: the cheaper unit is capped at `unit_cap`,
-    and the pricier unit's count is the largest that fits the SAME total resources
-    (cost = food + wood + gold, reusing the reference-DB cost the website shows).
+    """Counts for an equal-RESOURCE fight. Per-unit costs come from the unit card,
+    which already folds in civ cost bonuses (e.g. Mayan -30% archers), train
+    batches (Blackwood Archers come 2 per train), and the website's resource
+    weights (food 1.0 / wood 0.7 / gold 1.5 — webapp/simulation_real.py). The
+    cheaper unit takes `unit_cap`, shrunk so its army never exceeds RES_BUDGET;
+    the pricier unit's count is the largest that fits the same spend.
     Returns (n1, n2)."""
     from overlay.overlay_data import get_unit_card
-    c1 = get_unit_card(civ1, slug1)["cost"]["total"] or 1
-    c2 = get_unit_card(civ2, slug2)["cost"]["total"] or 1
+    c1 = get_unit_card(civ1, slug1)["cost"]["weighted"] or 1
+    c2 = get_unit_card(civ2, slug2)["cost"]["weighted"] or 1
     if c1 <= c2:                                   # side 1 cheaper -> it gets the cap
-        return unit_cap, max(1, int(unit_cap * c1 // c2))
-    return max(1, int(unit_cap * c2 // c1)), unit_cap
+        n1 = max(1, min(unit_cap, int(RES_BUDGET // c1)))
+        return n1, max(1, int(n1 * c1 // c2))
+    n2 = max(1, min(unit_cap, int(RES_BUDGET // c2)))
+    return max(1, int(n2 * c2 // c1)), n2
 
 
 def stage_generated(src, scen_dir=SCEN_DIR, stage_name=STAGE_NAME, logfile=None) -> str:

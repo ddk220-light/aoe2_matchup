@@ -61,6 +61,9 @@ _KEY_CONST_OVERRIDE = {
     "elite_ratha_(ranged)": int(UnitInfo.ELITE_RATHA_RANGED.ID),
     "ratha_(melee)": int(UnitInfo.RATHA_MELEE.ID),
     "ratha_(ranged)": int(UnitInfo.RATHA_RANGED.ID),
+    # the Shu War Chariot is a mode-switch unit (Focus Fire / Barrage); place its
+    # default Focus Fire form
+    "war_chariot": int(UnitInfo.WAR_CHARIOT_FOCUS_FIRE.ID),
 }
 
 

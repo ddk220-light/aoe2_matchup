@@ -21,7 +21,6 @@ HERE = Path(__file__).resolve().parent
 SB = HERE.parent
 REPO = SB.parent
 sys.path.insert(0, str(SB))
-sys.path.insert(0, str(SB / "overlay"))
 
 from auto.orchestrate_matchup import resolve_side   # noqa: E402
 from build_run import unit_const                     # noqa: E402
@@ -40,6 +39,17 @@ DROP_DUP = ("(ranged)",)
 SIEGE_CLASSES = ("siege", "ballista")
 SIEGE_NAMES = ("trebuchet", "ballista", "organ gun", "hussite")
 
+# civ-specific uniques whose DB slug does NOT carry the civ suffix (shared/team
+# units the suffix scan can't see). Probed through the same validation as the rest.
+# Tatars' flaming_camel stays listed here so its exclusion is VISIBLE in the skip
+# report — it has a scenario unit id but no reference-DB row yet (needs a DB
+# rebuild with the extraction artifacts; not available on this machine).
+EXTRA_SLUGS = {
+    "Italians": ("condottiero",),
+    "Berbers": ("elite_genitour",),
+    "Tatars": ("flaming_camel",),
+}
+
 
 def enumerate_uniques():
     db = sqlite3.connect(str(REF_DB))
@@ -52,6 +62,14 @@ def enumerate_uniques():
             "SELECT unit_slug, unit_name, unit_class_name FROM ref_units "
             "WHERE civ_name=? AND age='Imperial' AND unit_slug LIKE '%'||? ORDER BY unit_slug",
             (civ, suffix)).fetchall()
+        for extra in EXTRA_SLUGS.get(civ, ()):
+            r = db.execute(
+                "SELECT unit_slug, unit_name, unit_class_name FROM ref_units "
+                "WHERE civ_name=? AND unit_slug=? ORDER BY age DESC LIMIT 1",
+                (civ, extra)).fetchone()
+            rows.append(r if r is not None
+                        else {"unit_slug": extra, "unit_name": extra,
+                              "unit_class_name": ""})
         for r in rows:
             slug, name, cls = r["unit_slug"], r["unit_name"], (r["unit_class_name"] or "")
             nl = name.lower()

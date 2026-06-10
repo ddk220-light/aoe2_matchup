@@ -252,6 +252,68 @@ class TestGrpcSane:
 
 
 # --------------------------------------------------------------------------- #
+# equal-resources math (website weights, 3000 budget, train batches)
+# --------------------------------------------------------------------------- #
+class TestEqualResourceCounts:
+    def _patch(self, monkeypatch, w1, w2):
+        import overlay.overlay_data as od
+        monkeypatch.setattr(od, "get_unit_card", lambda civ, slug, *a, **k: {
+            "cost": {"weighted": w1 if slug == "a" else w2}})
+
+    def test_cheaper_side_takes_the_cap(self, monkeypatch):
+        from auto.orchestrate_matchup import equal_resource_counts
+        self._patch(monkeypatch, 50.0, 100.0)          # 30 x 50 = 1500 <= 3000
+        assert equal_resource_counts("C1", "a", "C2", "b") == (30, 15)
+
+    def test_budget_shrinks_the_cap(self, monkeypatch):
+        from auto.orchestrate_matchup import equal_resource_counts
+        self._patch(monkeypatch, 125.0, 250.0)         # 3000 // 125 = 24 < 30
+        assert equal_resource_counts("C1", "a", "C2", "b") == (24, 12)
+
+    def test_side2_cheaper(self, monkeypatch):
+        from auto.orchestrate_matchup import equal_resource_counts
+        self._patch(monkeypatch, 125.0, 105.0)         # n2 = min(30, 28) = 28
+        assert equal_resource_counts("C1", "a", "C2", "b") == (23, 28)
+
+    def test_cost_weights_match_the_website(self):
+        # overlay_data mirrors webapp/simulation_real.py — fail loudly on drift
+        import re
+        from pathlib import Path
+        from overlay import overlay_data as od
+        src = (Path(__file__).resolve().parents[2]
+               / "webapp" / "simulation_real.py").read_text(encoding="utf-8")
+        for name, val in (("FOOD", od.COST_WEIGHT_FOOD), ("WOOD", od.COST_WEIGHT_WOOD),
+                          ("GOLD", od.COST_WEIGHT_GOLD)):
+            m = re.search(rf"COST_WEIGHT_{name}\s*=\s*([0-9.]+)", src)
+            assert m, f"COST_WEIGHT_{name} not found in simulation_real.py"
+            assert float(m.group(1)) == val, f"COST_WEIGHT_{name} drifted"
+
+
+@pytest.mark.skipif(
+    not __import__("pathlib").Path(__file__).resolve()
+        .parents[2].joinpath("webapp", "aoe2_reference.db").exists(),
+    reason="reference DB not built")
+class TestUnitCardCosts:
+    def test_blackwood_archer_batch_of_two(self):
+        from overlay.overlay_data import get_unit_card
+        c = get_unit_card("Tupi", "elite_blackwood_archer_tupi")["cost"]
+        assert c["batch"] == 2
+        assert c["wood"] == 17.5 and c["gold"] == 22.5      # 35w/45g buys TWO
+        assert c["train"]["total"] == 80
+        assert c["weighted"] == round(17.5 * 0.7 + 22.5 * 1.5, 2)
+
+    def test_mayan_plumed_discount_in_cost(self):
+        from overlay.overlay_data import get_unit_card
+        c = get_unit_card("Mayans", "elite_plumed_archer_mayans")["cost"]
+        assert (c["wood"], c["gold"]) == (39, 39)           # 55/55 base, -30% Imperial
+
+    def test_white_feather_guard_icon_resolves(self):
+        from overlay.overlay_data import get_unit_card
+        icon = get_unit_card("Shu", "elite_white_feather_guard_shu")["icon"]
+        assert icon.endswith("Elite_White_Feather_Crossbowman.png")
+
+
+# --------------------------------------------------------------------------- #
 # gRPC sidecar clock conversion (stream = game-sim seconds at GAME_SPEED)
 # --------------------------------------------------------------------------- #
 class TestGrpcSidecarClock:

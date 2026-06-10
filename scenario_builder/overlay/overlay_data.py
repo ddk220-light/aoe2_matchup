@@ -27,10 +27,33 @@ ICON_DIR = _REPO / "webapp" / "static" / "img" / "units"
 # class ids that represent the *base* attack, not a bonus
 _BASE_ATTACK_CLASSES = {3, 4}  # Base Pierce, Base Melee
 
+# Resource weights for collapsing (food, wood, gold) into one scalar — MUST match
+# webapp/simulation_real.py COST_WEIGHT_* (the website's position-aware sim is the
+# reference for what "equal resources" means). tests/test_pure.py parses that file
+# and fails if these drift.
+COST_WEIGHT_FOOD = 1.0
+COST_WEIGHT_WOOD = 0.7
+COST_WEIGHT_GOLD = 1.5
+
+# Units the game trains in BATCHES — the dat's listed cost buys `batch` units, so
+# per-unit cost (what equal-resources math and army totals need) is cost / batch.
+TRAIN_BATCH = {
+    "blackwood_archer_tupi": 2,
+    "elite_blackwood_archer_tupi": 2,
+}
+
+# DB unit name -> icon filename stem, where the asset pack names a unit differently
+# (the Shu White Feather Guard's icon shipped as "White Feather Crossbowman").
+_ICON_NAME_ALIAS = {
+    "White Feather Guard": "White_Feather_Crossbowman",
+    "Elite White Feather Guard": "Elite_White_Feather_Crossbowman",
+}
+
 
 def _icon_path(unit_name: str) -> str:
     """Resolve a unit icon. The webapp maps names to files by spaces->underscores."""
-    candidate = ICON_DIR / f"{unit_name.replace(' ', '_')}.png"
+    stem = _ICON_NAME_ALIAS.get(unit_name, unit_name.replace(" ", "_"))
+    candidate = ICON_DIR / f"{stem}.png"
     if candidate.exists():
         return str(candidate)
     return ""  # caller can fall back to a placeholder
@@ -118,6 +141,20 @@ def get_unit_card(civ: str, slug: str, age: str = "Imperial",
 
         is_ranged = bool(g("is_ranged"))
         f, w, gd = g("final_cost_food"), g("final_cost_wood"), g("final_cost_gold")
+        # the dat's cost buys `batch` units for batch-trained lines; the card's cost
+        # dict is PER-UNIT so count*cost totals stay correct everywhere downstream
+        batch = TRAIN_BATCH.get(slug, 1)
+        fu, wu, gu = (f or 0) / batch, (w or 0) / batch, (gd or 0) / batch
+        cost = {
+            "food": _num(fu), "wood": _num(wu), "gold": _num(gu),
+            "total": _num(fu + wu + gu),
+            "weighted": round(COST_WEIGHT_FOOD * fu + COST_WEIGHT_WOOD * wu
+                              + COST_WEIGHT_GOLD * gu, 2),
+            "batch": batch,
+        }
+        if batch > 1:    # the listed (per-train) price, for card display
+            cost["train"] = {"food": _num(f), "wood": _num(w), "gold": _num(gd),
+                             "total": _num((f or 0) + (w or 0) + (gd or 0))}
 
         # ordered stat list (only show range/accuracy for ranged units)
         stats = [
@@ -134,6 +171,8 @@ def get_unit_card(civ: str, slug: str, age: str = "Imperial",
         if g("final_reload_time"):
             stats.append(("Reload", f"{_num(g('final_reload_time'))}s"))
 
+        # raw combat numbers for overlay.combat_math (duel block on the live cards)
+        charge_amt = g("charge_attack_melee") or 0
         return {
             "name": row["unit_name"],
             "civ": civ,
@@ -144,12 +183,25 @@ def get_unit_card(civ: str, slug: str, age: str = "Imperial",
             "stats": stats,
             "attack_bonuses": bonuses,
             "armor_class_ids": armor_class_ids,
-            "cost": {"food": _num(f), "wood": _num(w), "gold": _num(gd),
-                     "total": _num((f or 0) + (w or 0) + (gd or 0))},
+            "cost": cost,
             "upgrades": [u["name"] for u in upgrades],
             "civ_bonuses": [c["name"] for c in civ_bonuses],
             "unique_techs": unique_techs,
             "bonuses_summary": g("applied_bonuses_summary") or "",
+            # raw fields (combat math / trimmed live cards)
+            "attacks": {int(k): float(v) for k, v in atk.items()},
+            "armors": {int(k): float(v) for k, v in arm.items()},
+            "hp": float(g("final_hp") or 0),
+            "speed": _num(g("final_speed")),
+            "range": _num(g("final_range")),
+            "reload_s": float(g("final_reload_time") or 0) or None,
+            "accuracy_pct": _num(g("final_accuracy")) or None,
+            "melee_armor": _num(g("final_melee_armor")),
+            "pierce_armor": _num(g("final_pierce_armor")),
+            "charge": ({"melee": float(charge_amt),
+                        "recharge_s": float(g("charge_recharge_time") or 0),
+                        "ignores_armor": bool(g("charge_ignores_armor"))}
+                       if charge_amt else None),
         }
     finally:
         conn.close()

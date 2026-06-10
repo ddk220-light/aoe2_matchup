@@ -63,6 +63,25 @@ def test_patch_unit_page(tmp_path, monkeypatch):
     assert b"civ1=Wei" in r.data and b"unit2=knight" in r.data and b"autorun=1" in r.data
 
 
+def test_committed_patches_have_ranking_rows():
+    """Guard against the 177723 regression: every patch in the COMMITTED
+    patches.db that records unit changes must also carry ranking-diff rows
+    (patch_unit_ranking sat empty for build 177723 because the data was
+    written by an ad-hoc finalize script that skipped pipeline step 8)."""
+    db = os.path.join(os.path.dirname(__file__), "..", "webapp", "patches.db")
+    if not os.path.exists(db):
+        import pytest
+        pytest.skip("committed patches.db not present")
+    conn = sqlite3.connect(db)
+    missing = conn.execute(
+        "SELECT p.build_number FROM patches p "
+        "WHERE EXISTS (SELECT 1 FROM patch_unit_changes c WHERE c.patch_id=p.id) "
+        "AND NOT EXISTS (SELECT 1 FROM patch_unit_ranking r WHERE r.patch_id=p.id)"
+    ).fetchall()
+    conn.close()
+    assert not missing, f"patches with unit changes but no ranking rows: {missing}"
+
+
 def test_deep_link_builder():
     import app
     url = app.battle_sim_deep_link("Wei", "tiger_cavalry_wei", "Franks", "knight", "30v30")

@@ -4,81 +4,76 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Flask web app that extracts Age of Empires II:DE unit data from the game's binary `.dat` file, computes fully-upgraded stats for 50 civilizations, and serves matchup/simulation tools. Deployed on Railway.
+Flask web app ([aoe2matchup.com](https://aoe2matchup.com)) that extracts Age of Empires II:DE unit data from the game's binary `.dat` file, computes fully-upgraded stats for **53 civilizations**, pre-simulates ~500k unit matchups, and serves battle-sim / rankings / matchup-advisor / patch-tracker / replay-analyzer tools. Deployed on Railway.
 
-## Build Pipeline (run in order when game data or configs change)
+**Architecture docs live in `docs/architecture/`** — start at `README.md` (system map + single-sources-of-truth table). **Before any structural change, read the matching checklist in `docs/architecture/runbooks.md`** ("when X changes, update Y": new game patch, sim logic change, new combat column, new unit/civ, new icon, frontend constants, surgical stat fix).
+
+## Build Pipeline (stats)
 
 ```bash
-python3 -m extraction.run                      # ~10s — empires2_x2_p1.dat -> extraction/extracted_data/*.json
-python3 -m analysis.generate_reference         # ~30s -> webapp/aoe2_reference.db (full audit trail)
-python3 -m analysis.generate_main_db           # ~2s  -> webapp/aoe2_units.db   (flat unit_stats table)
-cd webapp && python3 compute_battle_scores.py  # ~20s -> webapp/battle_scores.json (round-robin rankings)
+python -m extraction.run                  # ~10s — empires2_x2_p1.dat -> extraction/extracted_data/*.json (needs genieutils-py)
+python -m analysis.generate_reference     # ~30s -> webapp/aoe2_reference.db (audit trail; THE DB the app serves)
+python -m analysis.generate_main_db       # ~2s  -> webapp/aoe2_units.db (flat unit_stats; legacy, no app route reads it)
 ```
 
-The `.dat` file is not in the repo. Copy it from a local AoE2:DE install into `extraction/` (see README).
+The `.dat` file is not in the repo — copy it from a local AoE2:DE install into `extraction/`. `genieutils-py` is in neither requirements file (use the conda python, which has it).
+
+Rankings/matchup data is **not** produced by the above. It comes from the sim-data chain (PyPy + `simulation_real.py`): batch matchup sims → `derive_unit_rankings.py` / `derive_pool_scores.py` / `best_units.py` → `derived_data.db` / `pool_scores.db` / `civ_power_units/<build>.json`. Exact commands: `docs/architecture/runbooks.md` §1. (`compute_battle_scores.py` is **retired** — `battle_scores.json` is a 342-byte stub; don't run it.)
 
 ## Run / Test
 
 ```bash
-PORT=5002 python3 webapp/app.py                # local dev server
+PORT=5002 python webapp/app.py                 # local dev server
 pytest                                         # full test suite (testpaths=tests)
-pytest tests/test_simulations.py               # single file
+pytest tests/test_simulations.py               # single file (golden-baseline regression)
 pytest tests/test_infantry_scoring.py::test_name -v
 ```
 
-Production start (Railway): `cd webapp && gunicorn app:app` — see `railway.json`, `webapp/Procfile`.
+Production start (Railway): `railway.json` runs `gunicorn app:app --workers 2 --timeout 300` from `webapp/` (the Procfile is a fallback). Railway installs `webapp/requirements.txt` (Flask, numpy, Pillow, imageio-ffmpeg, pinned `aoc-mgz` fork); top-level `requirements.txt` is minimal.
 
-Top-level `requirements.txt` has only `flask` + `gunicorn`; `webapp/requirements.txt` is what Railway installs. `genieutils-py` is required for extraction but is not in either requirements file (install manually when rebuilding DBs).
+## Architecture — quick map
 
-## Architecture — The Four Stages
+Full detail: `docs/architecture/README.md`. The short version:
 
-The whole project is a 4-stage pipeline. Each stage produces artifacts the next stage reads; webapp reads only stage-4 outputs.
+1. **`extraction/`** — parses the dat via genieutils-py into 8 JSONs (units, technologies, tech_ages, civilizations, armor_classes, effects, tech_effects, civ_tech_trees).
+2. **`analysis/generate_reference.py`** — applies tech effects/civ bonuses per civ into `aoe2_reference.db` with a full audit trail (`ref_stat_chain` records every step). Hardcoded combat properties layer on top from `analysis/config_combat.py` (later wins): `extracted dat → COMBAT_PROPERTIES → UNIQUE_COMBAT_PROPERTIES → CIV_COMBAT_PROPERTIES`.
+3. **`analysis/generate_main_db.py`** — flattens into `aoe2_units.db` `unit_stats` (100 columns). Legacy: the app reads `aoe2_reference.db` instead.
+4. **`webapp/`** — Flask (`app.py`, 24 routes + 7-route replay blueprint) + shared static assets (`static/js/*.js`, `static/css/*.css` — **not** inlined in templates anymore).
 
-1. **`extraction/`** — parses `empires2_x2_p1.dat` via `genieutils-py` into 8 JSON files (units, techs, effects, civs, armor classes, constants). Entry: `extraction/run.py`.
-2. **`analysis/generate_reference.py`** — applies tech effects per civ to build `aoe2_reference.db` with a full audit trail (which tech/bonus produced which stat change).
-3. **`analysis/generate_main_db.py`** — flattens the reference DB into `aoe2_units.db`'s `unit_stats` table (80+ columns, one row per civ×unit×age), which is what the webapp SQL queries hit.
-4. **`webapp/`** — Flask + inline-JS templates + `simulation.py` tick-based battle sim. `compute_battle_scores.py` is an offline batch job that pre-runs round-robin matchups into `battle_scores.json`.
+### Three sim engines — know which one you're touching
 
-### Config override priority (later wins)
+| Engine | File | Used by |
+|---|---|---|
+| Abstract tick (no positions) | `webapp/simulation.py` | `/api/matchup-sims` overlay (via `best_units.get_matchup_sims`) |
+| Position-based 2D | `webapp/simulation_real.py` | ALL batch matchup data (`run_matchup_battles.py`, `rebuild_matchup_baseline.py`, `patch_resim.py`) |
+| Frontend canvas (`BattleUnit`) | `webapp/static/js/simulate.js` | The interactive Battle Sim page at `/` — runs entirely client-side |
 
-```
-extracted .dat data  →  COMBAT_PROPERTIES  →  UNIQUE_COMBAT_PROPERTIES  →  CIV_COMBAT_PROPERTIES
-```
-
-All three `*_PROPERTIES` dicts live in `analysis/config*.py`. Use these to hardcode combat properties that can't be read from the dat file (charge, trample, bleed, dodge, projectile_count, etc.).
+`webapp/sim_version.py` hashes `simulation_real.py` + `analysis/config_combat.py` into the matchup-row cache key: editing either auto-stales matchup data (re-simmed on next batch run). Editing `simulation.py` does **not** bump it.
 
 ### Combat-unit data flow (most common debugging path)
 
 ```
-analysis/config*.py
- → analysis/generate_reference.py → aoe2_reference.db
-  → analysis/generate_main_db.py → aoe2_units.db (unit_stats)
-   → app.py /api/combat-unit/<civ>/<slug>
-    → simulate.html JS fetch → simulation.py prepare_combat_unit() → simulate_battle()
+analysis/config_combat.py (+ config_units.py)
+ → analysis/generate_reference.py → aoe2_reference.db (ref_units)
+  → webapp/combat_unit_loader.py build_combat_dict_from_ref()
+   → app.py /api/ref/combat-unit/<civ>/<slug>  (JSON)
+    → static/js/simulate.js BattleUnit (interactive page)
+    → simulation.py / simulation_real.py prepare_combat_unit() (backend callers)
 ```
-
-### Webapp internals
-
-- `webapp/app.py` — 37 routes, all DB queries, matchup analysis helpers (`_run_matchup_analysis`, `_run_army_sims`).
-- `webapp/simulation.py` — pure Python, no Flask/DB deps. `prepare_combat_unit()` parses a DB row dict; `simulate_battle()` runs the 1v1 tick loop; `simulate_mixed_battle()` runs army fights. ~1.3ms/sim.
-- `webapp/templates/*.html` — CSS and JS are **inlined per template**; there is no shared stylesheet. `simulate.html` carries its own JS canvas simulation (`BattleUnit` class) that mirrors but is separate from the backend sim.
-- Databases in `webapp/`: `aoe2_units.db` (main), `aoe2_reference.db` (audit), `matchup_combos.db`, plus `app_data.db` for comments/verifications.
 
 ## Cross-File Sync Rules (forget one → bug)
 
-These constants are duplicated across files. Any change must be applied everywhere:
-
-1. **`UNIT_LINES` dict** — in both `webapp/app.py` and `webapp/compute_battle_scores.py`.
-2. **`NAME_TO_ICON`** — in 4 templates: `index.html`, `simulate.html`, `civ_detail.html`, `matchup_advisor.html`.
-3. **`UNIQUE_BUILDING`** — in `simulate.html` and `civ_detail.html` (maps non-Castle unique units to their buildings).
-4. **`ENABLED_CIVS`** — in `index.html` and `simulate.html`; must match `ORIGINAL_13_CIVS` in `app.py` (authoritative).
-5. **New `unit_stats` column** — touches `analysis/generate_main_db.py` (schema + `build_combat_dict_from_ref`), `webapp/app.py` `api_combat_unit()` SELECT, `webapp/simulation.py` `prepare_combat_unit()`, and possibly `simulate.html` `BattleUnit`.
-6. **Battle scores go stale** after any simulation logic or stat change — rerun `compute_battle_scores.py`.
+1. **New combat column/ability** touches: `analysis/generate_reference.py` (schema) or `config_combat.py` → `analysis/generate_main_db.py` → `webapp/combat_unit_loader.py` → `simulation.py prepare_combat_unit()` → `simulation_real.py` → `static/js/simulate.js`. Checklist: runbooks §3.
+2. **`UNIT_LINES`** — Python source is `webapp/unit_lines.py` (imported by 8 modules); a JS copy lives in `static/js/rankings.js`. Update both.
+3. **Resource cost weights** — `simulation_real.py weighted_cost` ↔ `compute_battle_scores.calc_weighted_cost` (explicit keep-in-lockstep comment).
+4. **`PLAYER_COLORS`** — `replay_core.py` ↔ `clip_export.py` (intentionally different palettes; change together).
+5. **Sim behavior changes** → regenerate `.golden/baseline.json` (`python .golden/capture_baseline.py`) and re-sim/re-derive matchup data (runbooks §2).
+6. **Frontend constants** (`ENABLED_CIVS`, `NAME_TO_ICON` 218 entries, `UNIQUE_BUILDING`) live ONLY in `webapp/static/js/constants.js` — the old per-template copies are gone. (`ORIGINAL_13_CIVS` in `app.py` is dead code; server-side civ validation derives from the reference DB.)
 
 ## Conventions
 
-- **Civ names** are title-case strings (`"Franks"`, `"Byzantines"`). **Unit slugs** are lowercase; standard units use the plain name (`"knight"`, `"halberdier"`), unique units carry the civ suffix (`"huskarl_goths"`, `"cataphract_byzantines"`). For non-elite uniques that exist in both Castle and Imperial ages, filter by `us.age = 'Imperial'`.
-- Simulations are **deterministic** — run each scenario once, not in a loop.
+- **Civ names** are title-case strings (`"Franks"`). **Unit slugs** are lowercase; standard units use the plain name (`"knight"`), unique units carry the civ suffix (`"huskarl_goths"`). Non-elite uniques use the same slug in Castle and Imperial — filter by age.
+- **Determinism:** single sims are deterministic given a seed — run each scenario once, not in a loop. Batch matchup data uses explicit multi-seed sampling (8→40 escalating); golden tests pin `GOLDEN_SEED=20260411`.
 - When comparing units, run **both** equal-count and equal-resources sims; they test different things (raw strength vs. cost-efficiency).
 
 ## Project-specific skills and agents
@@ -110,6 +105,6 @@ Two long-lived branches, each tied to a Railway environment:
    `--ff-only` refuses if `main` has diverged — that's a feature, not a bug. If it errors, stop and ask the user.
 4. **Default working branch is `staging`.** When starting a new task, check out `staging` first (`git checkout staging && git pull`). If a session lands on `main` and starts committing, fix it before pushing.
 5. **If local `main` is ever ahead of `origin/main`** (e.g. accidental commits): the safe recovery is `git reset --hard origin/main`, but only after confirming the work is preserved on `staging` — ask the user.
-6. **Don't commit `webapp/matchup_db.db`** (200+ MB sim cache, modified locally during sim batches). It's already gitignored where possible; treat any "modified" status on it as noise.
-7. **Sim-data files (`webapp/aoe2_reference.db`, `webapp/derived_data.db`, `webapp/civ_power_units.json`, `webapp/pool_scores.db`) ARE committed.** They're how the deployed app gets its data — both environments deploy whatever's on their branch. Regenerate → commit on `staging` → smoke-test → promote.
+6. **Large matchup baselines live OUTSIDE the repo** (`D:/AI/matchup_baseline_<build>.db`, 200+ MB) — never commit them. The tracked `webapp/matchup_db.db` is a small (3.9 MB) snapshot; treat it as data like the other DBs.
+7. **Committed data artifacts ARE the deployment mechanism** — both environments serve whatever's on their branch: `webapp/aoe2_reference.db`, `aoe2_units.db`, `derived_data.db`, `pool_scores.db`, `patches.db`, `matchup_db.db`, `civ_power_units/*.json`, `civ_top_units.json`, `train_times.json`, `battle_scores.json` (stub). Regenerate → commit on `staging` → smoke-test → promote.
 8. **`.golden/baseline.json` is sim-output golden data.** When sim behavior changes, regenerate via `python .golden/capture_baseline.py` and commit on `staging` like any other source file.

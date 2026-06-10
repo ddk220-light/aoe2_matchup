@@ -1,32 +1,26 @@
 # AoE2 Unit Analyzer - Context for Gemini
 
 ## Project Overview
-This project is a web application that analyzes Age of Empires II: Definitive Edition unit matchups. It uses the game's binary data file (`empires2_x2_p1.dat`) to extract unit stats, computes fully-upgraded stats for all 50 civilizations, and provides interactive web tools for comparison, matchup advising, and battle simulation.
+This project is a web application (aoe2matchup.com) that analyzes Age of Empires II: Definitive Edition unit matchups. It uses the game's binary data file (`empires2_x2_p1.dat`) to extract unit stats, computes fully-upgraded stats for all 53 civilizations, pre-simulates ~500k unit matchups, and provides web tools for battle simulation, unit rankings, matchup advising, patch tracking, and replay analysis.
+
+**Authoritative architecture docs: `docs/architecture/README.md` (system map + single-sources-of-truth table) and `docs/architecture/runbooks.md` (when-X-changes-update-Y checklists).**
 
 ## Tech Stack
-- **Backend:** Python 3.8+, Flask, SQLite (for pre-computed databases)
-- **Frontend:** HTML, CSS, JavaScript (using Jinja2 templates via Flask)
-- **Data extraction:** `genieutils-py`
+- **Backend:** Python 3.8+, Flask, SQLite (committed pre-computed databases)
+- **Frontend:** Jinja2 templates + shared static assets (`webapp/static/js/*.js`, `static/css/*.css`); the interactive battle sim runs client-side in `static/js/simulate.js`
+- **Data extraction:** `genieutils-py` (conda python); **batch sims:** PyPy; **replays:** `mgz` fork
 
 ## Architecture & Pipeline
-The application works in four main steps:
-1. **Extraction (`extraction/`):** Reads the binary `empires2_x2_p1.dat` and exports data to JSON using `genieutils-py`. Scripts: `extract_units.py`, `extract_techs.py`, `extract_effects.py`, etc.
-2. **Analysis / Reference DB (`analysis/`):** Generates fully-upgraded stats for every unit x civilization combination. The `generate_reference.py` script computes stat chains and saves an audit trail to `aoe2_reference.db`.
-3. **Main DB (`analysis/`):** Flattens the reference data into a lightweight `aoe2_units.db` via `generate_main_db.py` for fast querying.
-4. **Webapp / Serving (`webapp/`):** The Flask application (`webapp/app.py`) serves the HTML templates and API endpoints. Includes an interactive tick-based battle simulator (`simulation.py`) and pre-computes battle scores via `compute_battle_scores.py`.
-
-## Key Files & Directories
-- `extraction/`: Code to parse the binary `.dat` file into JSON files.
-- `analysis/`: Stat computation logic (`unit_analyzer.py`, `combat_properties.py`, `config.py`) that applies tech trees and stat modifications.
-- `webapp/app.py`: Main Flask application. Contains all routing and API endpoints for the frontend.
-- `webapp/simulation.py`: Pure Python tick-based battle simulator.
-- `webapp/compute_battle_scores.py`: Precomputes round-robin battle simulations for rankings.
+1. **Extraction (`extraction/`):** Parses `empires2_x2_p1.dat` into 8 JSON files via `genieutils-py`.
+2. **Reference DB (`analysis/generate_reference.py`):** Applies tech effects/civ bonuses per civ into `webapp/aoe2_reference.db` with a full audit trail. Hardcoded combat properties layer on from `analysis/config_combat.py`.
+3. **Main DB (`analysis/generate_main_db.py`):** Flattens into `aoe2_units.db` (legacy — app routes read `aoe2_reference.db`).
+4. **Sim data:** Batch matchup sims (`webapp/simulation_real.py`, position-based engine) → `derive_unit_rankings.py` / `derive_pool_scores.py` / `best_units.py` → `derived_data.db` / `pool_scores.db` / `civ_power_units/<build>.json`, all keyed by build number (`patches.db`).
+5. **Serving (`webapp/app.py`):** 24 Flask routes + replay blueprint. Note: `compute_battle_scores.py` is retired; `battle_scores.json` is a stub.
 
 ## Guidelines for AI Assistant (Gemini)
-1. **Data Pipeline Awareness:** Data flows strictly from `extraction` -> `analysis` -> `webapp`. Modifications to base stats or logic often require rebuilding the databases.
-2. **Databases:** The webapp depends on two databases: `aoe2_units.db` (fast reads, flattened) and `aoe2_reference.db` (detailed stats, tech chains). 
-3. **Configuration over Hardcoding:** Data is generated procedurally from game data combined with `analysis/config.py`. Don't hardcode stats in the database; update the data pipeline or configuration instead.
-4. **Testing and Running:** 
-   - Rebuilding DBs: Run `python3 -m extraction.run`, `python3 -m analysis.generate_reference`, `python3 -m analysis.generate_main_db`, and `cd webapp && python3 compute_battle_scores.py`.
-   - Running the webapp: `PORT=5002 python3 webapp/app.py`.
-5. **Style:** Keep Python code clean, use modern Python features (the project supports 3.8+), and maintain the existing procedural and component-based project structure.
+1. **Data Pipeline Awareness:** Data flows strictly `extraction` → `analysis` → sim batch → derive → `webapp`. Stat/logic changes usually require rebuilding databases — follow `docs/architecture/runbooks.md`.
+2. **Three sim engines:** `simulation.py` (abstract, backs /api/matchup-sims), `simulation_real.py` (position-based, backs all batch matchup data, hashed into `sim_version`), `static/js/simulate.js` (interactive page). A mechanic change must touch all three.
+3. **Configuration over Hardcoding:** Don't hardcode stats in databases; update `analysis/config_*.py` and regenerate.
+4. **Rebuilding stats DBs:** `python -m extraction.run`, `python -m analysis.generate_reference`, `python -m analysis.generate_main_db`. Rankings need the sim-data chain (runbooks §1), not `compute_battle_scores.py`.
+5. **Running the webapp:** `PORT=5002 python webapp/app.py`. Tests: `pytest`.
+6. **Git:** work on `staging`; never push `main` (production auto-deploys).

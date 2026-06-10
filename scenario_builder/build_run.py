@@ -1,26 +1,24 @@
 """build_run.py — generate a per-run matchup scenario from the golden template.
 
-The golden template (`templates/template_landscape_jungle.aoe2scenario`) is the
-hand-decorated jungle battlefield: map, terrain, Gaia eye-candy, both player
-slots, the two 30-unit armies in formation, the scout keep-alive, and the control
-triggers (diplomacy / camera / title / 3-2-1 countdown / win conditions). It is
-tech-free (post-imperial armies are already fully upgraded — see prepare_template.py).
+The golden template (`templates/new_template.aoe2scenario`) is the hand-decorated
+battlefield: map, terrain, Gaia eye-candy, both player slots, the two armies placed
+**adjacent** (so they auto-engage on contact — no patrol trigger needed), the scout
+keep-alive, and the control triggers (diplomacy / camera / title / 3-2-1 countdown /
+live readout / win conditions). It is tech-free (armies start Post-Imperial, already
+fully upgraded).
 
-For each run this loads that template and does the ONLY per-run changes:
-  * set each fighting player's civilization,
-  * swap each army's unit type (P2 = side 1, P3 = side 2),
-  * retarget every trigger that referenced the old unit types,
-  * refresh the on-screen title,
-  * add a force-engage so the two armies cross the arena and collide,
-and writes the result to /tmp for the automation to stage into the game folder.
-
-No survivor readout / OCR machinery — the result video is a clean
-intro-card -> real fight -> recap-card (counts are not extracted).
+The template already carries all those triggers, authored for one specific matchup.
+For each run this loads it and does only the per-run changes:
+  * set each fighting player's civilization (P2 = side 1, P3 = side 2),
+  * set the SPECTATOR (P1) civ to side 2's civ, so the game plays that civ's music,
+  * swap each army's unit type while KEEPING the template's hand-placed positions,
+  * retarget the existing triggers (count/win/readout/title) to this run's units+counts,
+and writes the result for the automation to stage into the game folder.
 
   python build_run.py \
       --side1 Muisca:elite_temple_guard:"Elite Temple Guard" \
       --side2 Aztecs:elite_jaguar_warrior:"Elite Jaguar Warrior" \
-      --out /tmp/aoe2_matchup_runs/muisca_temple_guard_vs_aztec_jaguar.aoe2scenario
+      --out /tmp/aoe2_matchup_runs/temple_guard_vs_jaguar.aoe2scenario
 """
 from __future__ import annotations
 
@@ -33,15 +31,22 @@ from pathlib import Path
 from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.object_support import Civilization
-from AoE2ScenarioParser.datasets.trigger_lists import PanelLocation
-from AoE2ScenarioParser.datasets.effects import EffectId
 
-_DECLARE_VICTORY = int(EffectId.DECLARE_VICTORY)
 WIN_MARKER = "WINS"   # the automation watches the center band for this word
 
+# AOE2_NO_READOUT=1 blanks the on-screen TITLE + live COUNT READOUT texts (the WINS
+# hold stays — it's the end-detection ground truth). Flip this on once a sweep has
+# verified the gRPC redecode path: the overlay then gets its counts from the game's
+# data stream, the OCR fallback becomes impossible for these runs, and the footage
+# is clean of the trigger text.
+NO_READOUT = os.environ.get("AOE2_NO_READOUT", "0").lower() not in ("0", "", "false", "no")
+
 HERE = Path(__file__).resolve().parent
-TEMPLATE = HERE / "templates" / "template_landscape_jungle.aoe2scenario"
-RUN_DIR = Path("/tmp/aoe2_matchup_runs")        # generated scenarios live here
+# the GOLDEN template every run is generated from. default1 (2026-06-10) = the
+# hand-edited arena with the hard-to-see trees cleared around the battle (73 boundary
+# trees within 10 tiles of the arena vs 88 in the old new_template, kept as fallback).
+TEMPLATE = HERE / "templates" / "default1.aoe2scenario"
+RUN_DIR = Path("/tmp/aoe2_matchup_runs")        # (legacy; the auto path passes its own out)
 
 SCOUT_CONST = UnitInfo.SCOUT_CAVALRY.ID         # 448 — never swapped (it's the AI's explorer)
 P_SPECTATOR, P_SIDE1, P_SIDE2 = 1, 2, 3         # player slots in the template
@@ -79,39 +84,6 @@ def _test_const(units) -> int:
     return c.most_common(1)[0][0]
 
 
-def _retarget(scn, old1, new1, old2, new2):
-    """Rewrite every trigger condition/effect that referenced an old army unit type."""
-    swap = {old1: new1, old2: new2}
-    for trig in scn.trigger_manager.triggers:
-        for cond in trig.conditions:
-            ol = getattr(cond, "object_list", None)
-            if ol in swap:
-                cond.object_list = swap[ol]
-        for eff in trig.effects:
-            uid = getattr(eff, "object_list_unit_id", None)
-            if uid in swap:
-                eff.object_list_unit_id = swap[uid]
-
-
-def _set_title(scn, n1, label1, n2, label2):
-    """Rewrite the Setup trigger's matchup title (the VS line), leaving the
-    '3'/'2'/'1' countdown messages untouched."""
-    new_title = f"{n1} {label1}  VS  {n2} {label2}"
-    for trig in scn.trigger_manager.triggers:
-        if trig.name != "Setup":
-            continue
-        for eff in trig.effects:
-            msg = getattr(eff, "message", None)
-            if msg and " VS " in msg:          # the matchup title, not the '3'/'2'/'1' countdown
-                eff.message = new_title
-                return
-
-
-def _centroid(units, const):
-    pts = [(u.x, u.y) for u in units if u.unit_const == const]
-    return (sum(x for x, _ in pts) / len(pts), sum(y for _, y in pts) / len(pts))
-
-
 def _grid_positions(count, cx, cy, spacing=1.0):
     """`count` positions in a centered ~square grid around (cx, cy)."""
     cols = max(1, int(math.ceil(math.sqrt(count))))
@@ -121,84 +93,166 @@ def _grid_positions(count, cx, cy, spacing=1.0):
     return [(x0 + (i % cols) * spacing, y0 + (i // cols) * spacing) for i in range(count)]
 
 
-def _set_army(um, pid, old_const, new_const, count, center, spacing=1.0):
-    """Replace player `pid`'s test army with exactly `count` `new_const` units in a
-    centered grid. The template ships 30 per side; resource-capped runs use fewer for
-    the pricier unit, so we remove the template units and re-place the right number."""
-    for u in [x for x in um.get_player_units(pid) if x.unit_const == old_const]:
+def _choose_positions(positions, count, spacing=1.0):
+    """Pick `count` placement points, PRESERVING the template's hand-placed formation.
+    count == len -> use as-is; count < len -> keep the `count` closest to the formation
+    centroid (a compact core); count > len -> keep all and add a small grid of extras at
+    the centroid."""
+    positions = list(positions)
+    if count <= 0 or not positions:
+        return positions[:max(0, count)]
+    if count == len(positions):
+        return positions
+    cx = sum(x for x, _ in positions) / len(positions)
+    cy = sum(y for _, y in positions) / len(positions)
+    if count < len(positions):
+        return sorted(positions, key=lambda p: (p[0] - cx) ** 2 + (p[1] - cy) ** 2)[:count]
+    return positions + _grid_positions(count - len(positions), cx, cy, spacing)
+
+
+def _swap_army_inplace(um, pid, old_const, new_const, count):
+    """Replace player `pid`'s army (units of `old_const`) with `count` units of
+    `new_const`, KEEPING the template's positions — the user hand-placed the formation,
+    so we only swap the unit TYPE. See _choose_positions for count != template-size."""
+    army = [u for u in um.get_player_units(pid) if u.unit_const == old_const]
+    positions = [(u.x, u.y) for u in army]
+    for u in army:
         um.remove_unit(unit=u)
-    for (px, py) in _grid_positions(count, center[0], center[1], spacing):
+    for (px, py) in _choose_positions(positions, count):
         um.add_unit(player=pid, unit_const=new_const, x=px, y=py)
 
 
-def _add_readout(scn, new1, label1, new2, label2):
-    """Looping on-screen readout 'Label1: N   vs   Label2: M', refreshed every second,
-    for the VIEWER (not extracted). Each side's surviving units are counted into a
-    variable whose value the message substitutes via the <name> token (verified to
-    render in DE). HP can't be summed by a trigger effect, so this shows unit COUNT."""
-    tm = scn.trigger_manager
-    tm.add_variable("left1", 0)
-    tm.add_variable("left2", 1)
-    live = tm.add_trigger("Live readout", enabled=True, looping=True)
-    live.new_condition.timer(timer=1)
-    for pid, const, var in ((P_SIDE1, new1, 0), (P_SIDE2, new2, 1)):
-        live.new_effect.count_units_into_variable(
-            source_player=pid, object_list_unit_id=const, variable2=var,
-            area_x1=1, area_y1=1, area_x2=58, area_y2=58)
-    live.new_effect.display_instructions(
-        source_player=0, display_time=2,
-        instruction_panel_position=int(PanelLocation.TOP),
-        message=f"{label1}: <left1>   vs   {label2}: <left2>")
+def _strip_camp(um, pid, keep_const):
+    """Remove every object player `pid` owns that ISN'T its army (`keep_const`) or the
+    keep-alive scout. The template decorates each side with buildings/camp props (a yurt,
+    army tents, a bonfire, supplies). After one army is wiped, the victors path over and
+    ATTACK the loser's building, which looks wrong in the recap. Stripping them leaves only
+    the army + scout, so the winners just stand. The scout stays so neither player ever hits
+    0 objects (no defeat banner — the win trigger holds the result on screen instead)."""
+    removed = 0
+    for u in list(um.get_player_units(pid)):
+        if u.unit_const != keep_const and u.unit_const != SCOUT_CONST:
+            um.remove_unit(unit=u)
+            removed += 1
+    return removed
 
 
-def _rework_win_triggers(scn, new1, label1, new2, label2):
-    """Replace the template's declare_victory (which pops the 'You have been defeated!'
-    banner and ends the game) with a persistent on-screen RESULT. When a side is wiped
-    the trigger re-counts both armies and shows '<winner> WINS!' at center for a long
-    time — the game stays in-play so the viewer sees the result, there's no banner, and
-    the automation detects the WIN_MARKER word to know the fight is over."""
-    tm = scn.trigger_manager
-    for trig in tm.triggers:
-        cond_consts = [getattr(c, "object_list", None) for c in trig.conditions]
-        if new1 in cond_consts:        # P2 (new1) wiped -> P3 (new2) wins
-            winner = label2
-        elif new2 in cond_consts:      # P3 (new2) wiped -> P2 (new1) wins
-            winner = label1
-        else:
+def _retarget_new_template(scn, new1, label1, n1, new2, label2, n2):
+    """The golden template already carries the control triggers (title / countdown /
+    win / live readout), authored for one specific matchup. Retarget them to THIS run,
+    anchored on source_player (P2 = side 1, P3 = side 2) so it's robust to any unit-id
+    drift in the template (e.g. it counts Elite Temple Guard while placing the non-elite):
+      * COUNT_UNITS_INTO_VARIABLE -> count the ACTUAL army (P2->new1, P3->new2)
+      * OWN_FEWER_OBJECTS         -> fire on ARMY wipe (object_list = that army), not on
+                                     'any object' (a kept-alive scout would never let it
+                                     reach zero, hanging the watch loop)
+      * title / readout / WINS messages -> this run's labels and counts
+    """
+    from AoE2ScenarioParser.datasets.conditions import ConditionId
+    from AoE2ScenarioParser.datasets.effects import EffectId
+    COUNT = int(EffectId.COUNT_UNITS_INTO_VARIABLE)
+    DISPLAY = int(EffectId.DISPLAY_INSTRUCTIONS)
+    OWN_FEWER = int(ConditionId.OWN_FEWER_OBJECTS)
+    by_src = {P_SIDE1: new1, P_SIDE2: new2}
+
+    def _sp(obj):
+        sp = getattr(obj, "source_player", None)
+        try:
+            return int(sp)
+        except (TypeError, ValueError):
+            return None
+
+    for trig in scn.trigger_manager.triggers:
+        wiped_src = None
+        for cond in trig.conditions:
+            if int(cond.condition_type) == OWN_FEWER and _sp(cond) in by_src:
+                cond.object_list = by_src[_sp(cond)]   # fire when THIS army is gone
+                cond.quantity = 1
+                wiped_src = _sp(cond)
+        for eff in trig.effects:
+            et = int(eff.effect_type)
+            if et == COUNT and _sp(eff) in by_src:
+                eff.object_list_unit_id = by_src[_sp(eff)]
+            elif et == DISPLAY:
+                msg = getattr(eff, "message", None) or ""
+                if " VS " in msg:                              # the matchup title
+                    eff.message = "" if NO_READOUT else f"{n1} {label1}  VS  {n2} {label2}"
+                elif "<left1>" in msg or "<left2>" in msg:     # the live readout
+                    eff.message = ("" if NO_READOUT
+                                   else f"{label1}: <left1>   vs   {label2}: <left2>")
+                elif "WINS" in msg.upper():                    # the result banner
+                    winner = label2 if wiped_src == P_SIDE1 else label1
+                    eff.message = f"{winner} {WIN_MARKER}!"
+                    eff.display_time = 90                      # hold for OCR + viewer
+
+
+def _army_centroid(um, pid, const):
+    """Centroid (x, y) of player `pid`'s units of type `const`, or None."""
+    pts = [(u.x, u.y) for u in um.get_player_units(pid) if u.unit_const == const]
+    if not pts:
+        return None
+    return (sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts))
+
+
+# Tall Gaia decorations that actually block the view (the boundary is built from these).
+_TREE_BLOCKERS = {1146, 414, 1348, 351, 2567, 1063, 2570, 1349, 1984, 1350}
+
+
+# AoE2:DE iso screen mapping, verified from footage (P3 at +x+y appears to the RIGHT):
+#   screen-x ∝ (x + y)  [larger = right]      screen-y ∝ (y - x)  [larger = down]
+def _scr(x, y):
+    return (x + y, y - x)
+
+
+def _open_lower_left(um, cam, push_x=14.0, min_x=2.0):
+    """Once the camera centers on the (forward-left) ranged army, the clearing's LOWER-LEFT
+    boundary trees sit in the bottom-left of the view and block the battle. Push just those
+    trees out toward the lower-left map corner so the view is clear.
+
+    'Lower-left of the view' = LEFT of the camera (smaller x+y) AND below/in-front (larger
+    y-x). DECREASING a unit's X moves it down-left on screen (-1 to x+y => left, +1 to y-x
+    => down), so we drop the X of the selected foreground-left trees to slide them out of
+    frame toward the corner. Trees elsewhere (right boundary, background) are left alone."""
+    cx, cy = cam
+    csx, csy = _scr(cx, cy)                          # camera screen-x (x+y), screen-y (y-x)
+    moved = 0
+    for u in um.get_player_units(0):
+        if u.unit_const not in _TREE_BLOCKERS:
             continue
-        # drop declare_victory (no banner, game keeps running on the final frame)
-        trig.effects = [e for e in trig.effects
-                        if (int(e.effect_type) if not isinstance(e.effect_type, int)
-                            else e.effect_type) != _DECLARE_VICTORY]
-        # refresh the counts, then hold the result on screen
-        for pid, const, var in ((P_SIDE1, new1, 0), (P_SIDE2, new2, 1)):
-            trig.new_effect.count_units_into_variable(
-                source_player=pid, object_list_unit_id=const, variable2=var,
-                area_x1=1, area_y1=1, area_x2=58, area_y2=58)
-        trig.new_effect.display_instructions(
-            source_player=0, display_time=90,
-            instruction_panel_position=int(PanelLocation.MIDDLE),
-            message=f"{winner} {WIN_MARKER}!")
+        sx, sy = _scr(u.x, u.y)
+        # left of camera (sx<csx) and below/foreground (sy>csy), within the view band
+        if (sx < csx - 1) and (sy > csy + 1) and (sx > csx - 24) and (sy < csy + 22):
+            u.x = float(max(min_x, u.x - push_x))
+            moved += 1
+    return moved
 
 
-def _add_engage(scn, new1, new2, c1, c2, engage_at=4):
-    """The template freezes both armies for the countdown (stop_object) but never
-    releases them — add an Engage trigger that PATROLs each army into the other's
-    start position so they cross the arena and collide. (Patrol is steadier than a
-    single attack-move, which can stall.)"""
-    tm = scn.trigger_manager
-    eng = tm.add_trigger("Engage", enabled=True, looping=False)
-    eng.new_condition.timer(timer=engage_at)
-    eng.new_effect.patrol(source_player=P_SIDE1, object_list_unit_id=new1,
-                          location_x=int(round(c2[0])), location_y=int(round(c2[1])))
-    eng.new_effect.patrol(source_player=P_SIDE2, object_list_unit_id=new2,
-                          location_x=int(round(c1[0])), location_y=int(round(c1[1])))
+def _set_camera(scn, ranged, c1, c2):
+    """Recenter the spectator (P1) camera. In a RANGED-vs-MELEE fight the action collects
+    around the ranged army (it kites back while the melee piles in), so center the view on
+    THAT army's centroid. If both sides are the same kind (both ranged / both melee) keep
+    the template's default midpoint view."""
+    from AoE2ScenarioParser.datasets.effects import EffectId
+    r1, r2 = ranged
+    if r1 == r2 or c1 is None or c2 is None:
+        return None
+    target = c1 if r1 else c2                            # the ranged army
+    vx, vy = int(round(target[0])), int(round(target[1]))
+    CHANGE_VIEW = int(EffectId.CHANGE_VIEW)
+    for trig in scn.trigger_manager.triggers:
+        for eff in trig.effects:
+            if int(eff.effect_type) == CHANGE_VIEW:
+                eff.location_x = vx
+                eff.location_y = vy
+    return (vx, vy)
 
 
-def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE):
+def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
+              ranged=(False, False)):
     """side1/side2 = (civ_name, unit_key, label). `counts` = (n1, n2) units per side
-    (equal-count is (30, 30); resource-capped runs pass uneven counts). Writes the run
-    scenario; returns Path."""
+    (equal-count is (30, 30); resource-capped runs pass uneven counts). `ranged` = (r1, r2)
+    flags whether each side is a ranged unit — used to aim the spectator camera at the
+    ranged army in a ranged-vs-melee fight. Writes the run scenario; returns Path."""
     civ1, key1, label1 = side1
     civ2, key2, label2 = side2
     new1, new2 = unit_const(key1), unit_const(key2)
@@ -212,20 +266,26 @@ def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE):
 
     player(P_SIDE1).civilization = civ_enum(civ1)
     player(P_SIDE2).civilization = civ_enum(civ2)
+    player(P_SPECTATOR).civilization = civ_enum(civ2)    # P1 spectator hears side-2 music
 
     old1 = _test_const(um.get_player_units(P_SIDE1))
     old2 = _test_const(um.get_player_units(P_SIDE2))
-    c1 = _centroid(um.get_player_units(P_SIDE1), old1)   # template army centers
-    c2 = _centroid(um.get_player_units(P_SIDE2), old2)
+    _swap_army_inplace(um, P_SIDE1, old1, new1, n1)      # keep the template formation
+    _swap_army_inplace(um, P_SIDE2, old2, new2, n2)
+    # strip the decorative buildings/camp props off both fighting players so the victors
+    # don't run off and attack them once the enemy army is gone
+    r1 = _strip_camp(um, P_SIDE1, new1)
+    r2 = _strip_camp(um, P_SIDE2, new2)
+    if r1 or r2:
+        print(f"[build_run] removed {r1 + r2} P2/P3 buildings/camp props")
 
-    _set_army(um, P_SIDE1, old1, new1, n1, c1)           # re-place with the right counts
-    _set_army(um, P_SIDE2, old2, new2, n2, c2)
-
-    _retarget(scn, old1, new1, old2, new2)
-    _set_title(scn, n1, label1, n2, label2)
-    _add_engage(scn, new1, new2, c1, c2)
-    _add_readout(scn, new1, label1, new2, label2)        # adds vars left1/left2 + readout
-    _rework_win_triggers(scn, new1, label1, new2, label2)  # result hold instead of defeat banner
+    _retarget_new_template(scn, new1, label1, n1, new2, label2, n2)
+    cam = _set_camera(scn, ranged, _army_centroid(um, P_SIDE1, new1),
+                      _army_centroid(um, P_SIDE2, new2))
+    if cam:
+        moved = _open_lower_left(um, cam)
+        print(f"[build_run] ranged-vs-melee: camera on ranged army at {cam}; "
+              f"pushed {moved} lower-left boundary trees back")
 
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -236,6 +296,7 @@ def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE):
     scn.write_to_file(tmp)
     os.replace(tmp, str(out_path))
     print(f"[build_run] {label1} ({civ1}, {new1}) x{n1}  vs  {label2} ({civ2}, {new2}) x{n2}")
+    print(f"[build_run] P1 spectator civ = {civ2} (plays its music)")
     print(f"[build_run] wrote {out_path}")
     return out_path
 

@@ -50,6 +50,16 @@ Prompt skeleton (two refs; single figure + no-emblem + tone clauses are mandator
 
 - ~110–230 s/render on the 5090 (single figure, 2 refs). If anything still looks off (wrong helmet/weapon, an emblem, a second view) → tighten the description / no-emblem clause and re-run (seed 21).
 
+### PREFER A SHORT PROMPT — let the sprite carry the form (key lesson)
+
+Over-prompting *fights* the sprite. Piling on per-element micro-descriptions and walls of "NOT this, NOT that" produced stiff, half-invented figures and needed 4+ re-runs (Woad Raider). **Trust the dir05 sprite for build/proportions/shield-shape/kit, the icon for colour, and keep the prompt to a few sentences.** A short prompt one-shot the Woad Raider better than 4 iterations of a long one — including a *more* faithful shield.
+
+Short skeleton:
+> "Image 1 is a sprite of the AoE2 `<Name>` (`<one-line who/what>`); the final image is its official color icon. Render ONE SINGLE faithful, highly detailed full-body figure of this exact unit, matching the sprite's build, `<weapon>`, `<shield>` and kit, in the same pose and three-quarter facing as image 1, using the icon for colours. One subject, one single view, plain neutral studio background, muted weathered historic tone."
+
+- **Add LIGHT hints only for what the references can't show.** The icon is usually a bust, so legs/footwear are missing and the sprite's are tiny → name those explicitly (Woad Raider needed "long dark pinstriped braccae trousers tucked into boots"; helmet-plume colour needed "BLUE crest"). Everything the references *do* show, leave to the references.
+- **Multi-angle refs are a DEAD END for a single output** (tested twice): passing dir01/09/13 as *separate* refs → 2×2 turnaround; stitching them into a 2×2 *composite* ref → still a 2×2 output (plain `diffusers` Flux2 mirrors the reference layout; the ComfyUI "Flux Klein Ref Grid" node is not equivalent). The quality people attribute to multi-angle is really just the **shorter prompt**. If you ever truly need the turnaround look as one image, render the grid and crop+upscale the best panel.
+
 ## Recurring feedback → apply these PRE-EMPTIVELY
 
 Patterns learned from per-unit review. Bake them into the description before the first render to avoid a re-run:
@@ -64,6 +74,24 @@ Patterns learned from per-unit review. Bake them into the description before the
 6. **Low-res (48 px) icons → decode the sprite for detail, or ask the user for a hi-res pic.** Champi Warrior and Ibirapema have 48 px icons; the user-supplied 256 px Champi pic produced a far better render. The repo has no icon at all for a few (Ji Infantry) → go sprite-only (single ref).
 7. **Non-humanoid subjects need their own subject clause** (the figure clause produces grids/duplicates): ships → "the whole ship, broadside, dir00"; wagons/organ guns → "the whole vehicle [+ gunner]"; chariots → "the chariot with its horses and rider as one subject"; elephants → keep howdah/mount together.
 8. **Proportions:** if a foot unit comes out squat, add "TALL, full-height adult, long legs, not stocky." And don't drop footwear (Champi went barefoot until told otherwise).
+
+## Step 3.5 — Self-analysis loop (grade the RENDER, not just the prompt)
+
+Don't ship a render off the first generation — critique it against the reference yourself and iterate. This catches the errors the user would otherwise have to flag.
+
+1. **Build a critique panel** (`.scratch/critique_panel.py <slug> <sld> <icon> <render> [dir]`) → a labeled side-by-side `sprite | icon | render`. View it.
+   - **Then ZOOM each key element** (weapon, shield, head/helmet) — crop the same region from icon and render, upscale, view side by side. The 3-up thumbnail hides errors: a Woad Raider shield looked "fine" at thumbnail size but a zoom showed it was the wrong *shape* (round vs the icon's tall narrow oval) and wrong field. **Do not grade an element you haven't zoomed.**
+2. **Grade the render against this checklist** (PASS / list FIXES) — and be ADVERSARIAL, actively hunt for mismatches; "looks close" is not PASS. If you flag a flaw, you must FIX it, never excuse it (the reference disproves most "but it needs to be X" rationalizations):
+   - **head/helmet** — shape, crest/plume, mask, *specific* ornament (e.g. Teutonic gold cross + horns; Mangudai red plume)
+   - **face** — visible vs covered, as the reference shows (Tiger Cavalry = hood, face shows)
+   - **weapon** — type, count, and *held vs at-rest vs sheathed* (hands-on-weapon is FLUX's weak spot; bows at rest, swords sheathed if grip fails)
+   - **shield + heraldry** — exact emblem (4-spoke / double-cross / griffin / Bolnisi / spirals)
+   - **armor** — material (leather vs steel vs mail), gold detailing actually present
+   - **mount / vehicle** — right animal; **rider present or absent as required**; horse *count* and *colour*; howdah/chariot intact
+   - **palette & tone** — muted/weathered, not bright/glossy
+   - **cleanliness** — single subject, no emblem/inset/text/nameplate, correct proportions, footwear present
+3. **If FIXES** → patch that unit's description targeting the failed categories, regenerate (seed 7; bump seed only for an unresolved pose/grip), rebuild the panel, re-grade.
+4. **Cap ~3 iterations.** Surface to the user only on convergence or a genuine stuck case. Negations ("no rider", "empty wagon") sometimes need 2 tries — verify they actually held.
 
 ## Step 4 — Cut + save
 - rembg `remove(session=isnet-general-use)` → `getbbox()` crop → transparent PNG.

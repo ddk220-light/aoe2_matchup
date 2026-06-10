@@ -6,6 +6,8 @@ and analysis modules depend on. It has no dependencies on other config sub-modul
 
 from pathlib import Path
 
+from extraction.extract_constants import CIV_NAMES
+
 # Paths - relative to project root
 PROJECT_ROOT = Path(__file__).parent.parent
 OUTPUT_DIR = Path(__file__).parent.parent / "extraction" / "extracted_data"
@@ -77,62 +79,11 @@ ATTR_DISPLAY_NAMES = {
     ATTR_HP_REGEN: "HP Regen",
 }
 
-# Original 13 civilizations
-ORIGINAL_13_CIVS = [
-    "Armenians",
-    "Aztecs",
-    "Bengalis",
-    "Berbers",
-    "Bohemians",
-    "Britons",
-    "Bulgarians",
-    "Burgundians",
-    "Burmese",
-    "Byzantines",
-    "Celts",
-    "Chinese",
-    "Cumans",
-    "Dravidians",
-    "Ethiopians",
-    "Franks",
-    "Georgians",
-    "Goths",
-    "Gurjaras",
-    "Hindustanis",
-    "Huns",
-    "Incas",
-    "Italians",
-    "Japanese",
-    "Jurchens",
-    "Khitans",
-    "Khmer",
-    "Koreans",
-    "Lithuanians",
-    "Magyars",
-    "Malay",
-    "Malians",
-    "Mapuche",
-    "Mayans",
-    "Mongols",
-    "Muisca",
-    "Persians",
-    "Poles",
-    "Portuguese",
-    "Romans",
-    "Saracens",
-    "Shu",
-    "Sicilians",
-    "Slavs",
-    "Spanish",
-    "Tatars",
-    "Teutons",
-    "Tupi",
-    "Turks",
-    "Vietnamese",
-    "Vikings",
-    "Wei",
-    "Wu",
-]
+# All playable civilizations (53), alphabetical — derived from the dat civ-slot
+# list so a new DLC civ added to CIV_NAMES flows through automatically.
+# CIV_NAMES[0] is "Gaia" (not playable); None entries are unused dat slots.
+# Name is historical ("original 13" from the first prototype); rename deferred.
+ORIGINAL_13_CIVS = sorted(c for c in CIV_NAMES[1:] if c)
 
 # =============================================================================
 # SIMULATION CONFIGURATION

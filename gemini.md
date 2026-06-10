@@ -15,7 +15,7 @@ This project is a web application (aoe2matchup.com) that analyzes Age of Empires
 2. **Reference DB (`analysis/generate_reference.py`):** Applies tech effects/civ bonuses per civ into `webapp/aoe2_reference.db` with a full audit trail. Hardcoded combat properties layer on from `analysis/config_combat.py`.
 3. **Main DB (`analysis/generate_main_db.py`):** Flattens into `aoe2_units.db` (legacy — app routes read `aoe2_reference.db`).
 4. **Sim data:** Batch matchup sims (`webapp/simulation_real.py`, position-based engine) → `derive_unit_rankings.py` / `derive_pool_scores.py` / `best_units.py` → `derived_data.db` / `pool_scores.db` / `civ_power_units/<build>.json`, all keyed by build number (`patches.db`).
-5. **Serving (`webapp/app.py`):** 24 Flask routes + replay blueprint. Note: `compute_battle_scores.py` is retired; `battle_scores.json` is a stub.
+5. **Serving (`webapp/app.py`):** 24 Flask routes + replay blueprint. Note: `compute_battle_scores.py` is retired; `battle_scores.json` was deleted (scores live in `derived_data.db`).
 
 ## Guidelines for AI Assistant (Gemini)
 1. **Data Pipeline Awareness:** Data flows strictly `extraction` → `analysis` → sim batch → derive → `webapp`. Stat/logic changes usually require rebuilding databases — follow `docs/architecture/runbooks.md`.

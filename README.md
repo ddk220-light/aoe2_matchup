@@ -29,13 +29,9 @@ empires2_x2_p1.dat
        v
  [analysis/]       python3 -m analysis.generate_main_db
    ref DB -> main DB  Flattens into webapp-ready unit_stats table
-       |
-       v
- [webapp/]         cd webapp && python3 compute_battle_scores.py
-   main DB -> scores  Round-robin battle simulations for unit line rankings
 ```
 
-The webapp reads the final `aoe2_units.db` and `aoe2_reference.db` databases, plus pre-computed `battle_scores.json`.
+The webapp reads the final `aoe2_units.db` and `aoe2_reference.db` databases, plus the pre-derived ranking/matchup DBs (`derived_data.db`, `pool_scores.db` — see `docs/architecture/derived-data.md`).
 
 ## Setup
 
@@ -63,8 +59,9 @@ copy "C:\Program Files (x86)\Steam\steamapps\common\AoE2DE\resources\_common\dat
 python3 -m extraction.run               # ~10s, writes JSON to extraction/extracted_data/
 python3 -m analysis.generate_reference   # ~30s, writes webapp/aoe2_reference.db
 python3 -m analysis.generate_main_db     # ~2s,  writes webapp/aoe2_units.db
-cd webapp && python3 compute_battle_scores.py  # ~20s, writes battle_scores.json
 ```
+
+Ranking/matchup data ships pre-derived in the repo (`derived_data.db`, `pool_scores.db`); regenerating it requires the batch sim chain (`docs/architecture/runbooks.md` §1).
 
 ### Run
 
@@ -94,7 +91,7 @@ analysis/                    # Steps 2-3: JSON -> databases
 webapp/                      # Step 4 + serving
   app.py                     # Flask app + all API endpoints
   simulation.py              # Tick-based battle simulator (pure Python, ~1.3ms/sim)
-  compute_battle_scores.py   # Round-robin rankings for unit lines
+  compute_battle_scores.py   # Retired round-robin scorer (library only — do not run)
   templates/                 # HTML templates (7 pages)
 ```
 

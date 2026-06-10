@@ -32,7 +32,7 @@ The `.dat` file lives at `extraction/empires2_x2_p1.dat` and is **not** committe
 
 ### The 53-civ mapping
 
-`extract_constants.CIV_NAMES` is a 60-slot list matching dat civ ids. Skipped slots: index 0 (Gaia) and the six `None` slots — 46–48 (Achaemenids, Athenians, Spartans; Chronicles: Age of Antiquity) and 54–56 (Macedonians, Thracians, Puru; Chronicles: Alexander). That leaves **53 playable civs**, which is the count everywhere downstream (`civilizations.json`, `ORIGINAL_13_CIVS`, the `civilizations` table). The pipeline's civ list constant is `ORIGINAL_13_CIVS` in `analysis/config_constants.py` — the name is historical; it contains all 53 civs (a duplicate copy exists in `webapp/app.py`).
+`extract_constants.CIV_NAMES` is a 60-slot list matching dat civ ids. Skipped slots: index 0 (Gaia) and the six `None` slots — 46–48 (Achaemenids, Athenians, Spartans; Chronicles: Age of Antiquity) and 54–56 (Macedonians, Thracians, Puru; Chronicles: Alexander). That leaves **53 playable civs**, which is the count everywhere downstream (`civilizations.json`, `ORIGINAL_13_CIVS`, the `civilizations` table). The pipeline's civ list constant is `ORIGINAL_13_CIVS` in `analysis/config_constants.py` — the name is historical; it is now **derived** from `CIV_NAMES` (`sorted(c for c in CIV_NAMES[1:] if c)`), so a new civ added at its dat slot flows through automatically. (The old duplicate copy in `webapp/app.py` was deleted.)
 
 ## Stage 2 — Reference DB (`analysis/generate_reference.py`)
 
@@ -85,7 +85,7 @@ Availability is a **blocklist with allowlist patches**, resolved per (civ, line)
 - **Unique units:** `UNIQUE_UNITS` in `analysis/config_units.py` maps each of the 53 civs to its unique-unit configs (64 total) with `base_id`/`elite_id`; `NAVAL_UNIQUE_UNITS` adds 18 naval uniques. Unique slugs get a civ suffix (`huskarl_goths`).
 - `CIV_MISSING_UNITS` in `webapp/unit_lines.py` is a **stage-4** declarative filter on top of this (rows the pipeline still emits); see [webapp.md](webapp.md).
 
-**Ages.** Only Castle (3) and Imperial (4) are generated: the rosters are `CASTLE_UNITS` (19 lines) and `IMPERIAL_UNITS` (25 lines), plus `NAVAL_LINE_CONFIGS` (5 lines, processed at both ages) and the unique units (base form at Castle, elite at Imperial). `FEUDAL_UNITS` exists in config but is never processed by `generate_reference.py`, and there is no Dark Age. Unique units **without an elite** (Grenadier, Warrior Priest, Jian Swordsman, Houfnice, etc.) are processed twice under the **same slug** — once per age with that age's techs. The `NO_ELITE_UNITS` dict in `analysis/generate_main_db.py` (lines 45–51), which describes an `_imp`-suffix scheme, is **dead code**: it is never referenced and zero `_imp`-suffixed slugs exist in either DB. (Do not confuse it with the `imp_`-prefixed line slugs `imp_elite_skirm`/`imp_slinger`, which are real Imperial upgrade tiers.) Consumers disambiguate no-elite uniques by filtering on the `age` column.
+**Ages.** Only Castle (3) and Imperial (4) are generated: the rosters are `CASTLE_UNITS` (19 lines) and `IMPERIAL_UNITS` (25 lines), plus `NAVAL_LINE_CONFIGS` (5 lines, processed at both ages) and the unique units (base form at Castle, elite at Imperial). `FEUDAL_UNITS` exists in config but is never processed by `generate_reference.py`, and there is no Dark Age. Unique units **without an elite** (Grenadier, Warrior Priest, Jian Swordsman, Houfnice, etc.) are processed twice under the **same slug** — once per age with that age's techs; consumers disambiguate by filtering on the `age` column. (Do not confuse this with the `imp_`-prefixed line slugs `imp_elite_skirm`/`imp_slinger`, which are real Imperial upgrade tiers. The dead `NO_ELITE_UNITS` dict that described a never-implemented `_imp`-suffix scheme was deleted from `generate_main_db.py`.)
 
 ### Config patch registries (`analysis/config_constants.py`, `analysis/config_units.py`)
 
@@ -152,4 +152,3 @@ The merged result is written three ways into the reference DB: as inline columns
 | `_AVAILABILITY_OVERRIDES`, `CASTLE_UNITS`/`IMPERIAL_UNITS`/`UNIQUE_UNITS` rosters | "Which unit is available for which civ", roster counts |
 | `ref_units` / `unit_stats` schema (new combat property) | Both schema tables, the 100-column breakdown, and the 5-file sync chain in [webapp.md](webapp.md) |
 | Effect application order in `unit_analyzer.py` / `generate_reference.py` | "Order of application", worked example |
-| `NO_ELITE_UNITS` removed or wired up | "Ages" paragraph (dead-code note) |

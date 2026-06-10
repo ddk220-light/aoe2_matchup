@@ -133,9 +133,10 @@ Steps:
 5. If `simulation_real.py` changed: full baseline rebuild (runbook 1, step 5) — do **not** mix
    engine versions in one matchup DB ("patchwork" gotcha in `docs/patch-workflow.md`) — then
    re-derive rankings, pool scores, and civ power units at the **current** build number.
-6. If you care about the legacy round-robin/benchmark blocks in `/api/ref/unit-line`:
-   `cd webapp && python compute_battle_scores.py` regenerates `webapp/battle_scores.json`
-   (still loaded by `webapp/app.py`, but the rankings UI reads `derived_data.db`).
+6. The legacy round-robin/benchmark JSON chain is gone: `battle_scores.json` and its
+   `app.py` loader were deleted — `/api/ref/unit-line` scores come solely from
+   `derived_data.db` (plus the empty reference-DB fallback). Do not run
+   `compute_battle_scores.py`.
 
 ---
 
@@ -187,8 +188,10 @@ This is the verified, current chain (the CLAUDE.md "rule 5" version of this list
 8. SEO pages need **no manual step**: `/sitemap.xml` and the `/vs/...` landing pages are derived
    live from `ref_units` unique-unit rows (`webapp/app.py` `_matchup_seed_pairs`).
 
-Note: `ORIGINAL_13_CIVS` in `webapp/app.py` (line ~682, actually 53 entries) appears to be dead
-code — civ validation reads the reference DB via `_valid_civs()`. Do not treat it as authoritative.
+Note: the pipeline civ list (`ORIGINAL_13_CIVS` in `analysis/config_constants.py`) is now
+derived from `extraction.extract_constants.CIV_NAMES`, so step 1 covers it automatically —
+no separate `config_constants.py` edit. Webapp civ validation reads the reference DB via
+`_valid_civs()`; the old dead copy in `webapp/app.py` was deleted.
 
 ---
 

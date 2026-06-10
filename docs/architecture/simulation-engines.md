@@ -45,8 +45,6 @@ A unit whose only base attack class is melee (class 4) does melee damage even at
 
 **Winner determination** (`_determine_winner`): elimination first; on timeout, fewer units lost wins; then higher remaining HP fraction; else draw (winner 0). Returns plain tuples — `(winner, rem1, rem2[, hp_pct1, hp_pct2[, ticks]])` — not `BattleOutcome`.
 
-`simulate_mixed_battle(units_team1, units_team2)` (line 2310) simulates two unit types per side with a reduced mechanic set. **It currently has no callers anywhere in `webapp/` or `tests/`** — treat it as dormant code.
-
 ### Special abilities and their driving columns
 
 `prepare_combat_unit()` (line 87) reads these fields from the combat dict; each is sourced from the identically-named column of `ref_units` in `webapp/aoe2_reference.db` via `combat_unit_loader.build_combat_dict_from_ref()` (JSON-suffixed columns are parsed into int-keyed dicts).

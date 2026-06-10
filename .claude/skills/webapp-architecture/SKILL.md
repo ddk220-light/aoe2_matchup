@@ -42,7 +42,7 @@ Flask app serving aoe2matchup.com. All serving data is committed SQLite/JSON (co
 
 1. **New combat column/ability** — chain: `analysis/config_combat.py` (or `generate_reference.py` schema) → `analysis/generate_main_db.py` → `webapp/combat_unit_loader.py` → `simulation.py prepare_combat_unit()` → `simulation_real.py` → `static/js/simulate.js`. Full checklist: runbooks §3.
 2. **`UNIT_LINES`** — `webapp/unit_lines.py` (Python) ↔ JS copy in `static/js/rankings.js`.
-3. **Frontend constants** — `ENABLED_CIVS`, `NAME_TO_ICON` (218 entries), `UNIQUE_BUILDING` live ONLY in `static/js/constants.js`. No template copies. `ORIGINAL_13_CIVS` in `app.py` is dead code.
+3. **Frontend constants** — `ENABLED_CIVS`, `NAME_TO_ICON` (218 entries), `UNIQUE_BUILDING` live ONLY in `static/js/constants.js`. No template copies. Server-side civ validation derives from the reference DB; the pipeline civ list (`ORIGINAL_13_CIVS` in `analysis/config_constants.py`) is derived from `CIV_NAMES`.
 4. **Cost weights** — `simulation_real.py weighted_cost` ↔ `compute_battle_scores.calc_weighted_cost`.
 5. **`PLAYER_COLORS`** — `replay_core.py` ↔ `clip_export.py`.
 6. **Sim logic changed?** — editing `simulation_real.py`/`config_combat.py` bumps `sim_version` → matchup rows auto-stale (re-sim via batch runner, then re-derive rankings/pool scores). Editing `simulation.py` does NOT bump it. Always regenerate `.golden/baseline.json`. Checklist: runbooks §2.

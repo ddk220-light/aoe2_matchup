@@ -18,7 +18,7 @@ python -m analysis.generate_main_db       # ~2s  -> webapp/aoe2_units.db (flat u
 
 The `.dat` file is not in the repo — copy it from a local AoE2:DE install into `extraction/`. `genieutils-py` is in neither requirements file (use the conda python, which has it).
 
-Rankings/matchup data is **not** produced by the above. It comes from the sim-data chain (PyPy + `simulation_real.py`): batch matchup sims → `derive_unit_rankings.py` / `derive_pool_scores.py` / `best_units.py` → `derived_data.db` / `pool_scores.db` / `civ_power_units/<build>.json`. Exact commands: `docs/architecture/runbooks.md` §1. (`compute_battle_scores.py` is **retired** — `battle_scores.json` is a 342-byte stub; don't run it.)
+Rankings/matchup data is **not** produced by the above. It comes from the sim-data chain (PyPy + `simulation_real.py`): batch matchup sims → `derive_unit_rankings.py` / `derive_pool_scores.py` / `best_units.py` → `derived_data.db` / `pool_scores.db` / `civ_power_units/<build>.json`. Exact commands: `docs/architecture/runbooks.md` §1. (`compute_battle_scores.py` is **retired** — don't run it; its `battle_scores.json` output and the `app.py` loader were deleted, scores live in `derived_data.db`.)
 
 ## Run / Test
 
@@ -68,7 +68,7 @@ analysis/config_combat.py (+ config_units.py)
 3. **Resource cost weights** — `simulation_real.py weighted_cost` ↔ `compute_battle_scores.calc_weighted_cost` (explicit keep-in-lockstep comment).
 4. **`PLAYER_COLORS`** — `replay_core.py` ↔ `clip_export.py` (intentionally different palettes; change together).
 5. **Sim behavior changes** → regenerate `.golden/baseline.json` (`python .golden/capture_baseline.py`) and re-sim/re-derive matchup data (runbooks §2).
-6. **Frontend constants** (`ENABLED_CIVS`, `NAME_TO_ICON` 218 entries, `UNIQUE_BUILDING`) live ONLY in `webapp/static/js/constants.js` — the old per-template copies are gone. (`ORIGINAL_13_CIVS` in `app.py` is dead code; server-side civ validation derives from the reference DB.)
+6. **Frontend constants** (`ENABLED_CIVS`, `NAME_TO_ICON` 218 entries, `UNIQUE_BUILDING`) live ONLY in `webapp/static/js/constants.js` — the old per-template copies are gone. (Server-side civ validation derives from the reference DB; the pipeline civ list `ORIGINAL_13_CIVS` in `analysis/config_constants.py` is derived from `extraction.extract_constants.CIV_NAMES`.)
 
 ## Conventions
 
@@ -106,5 +106,5 @@ Two long-lived branches, each tied to a Railway environment:
 4. **Default working branch is `staging`.** When starting a new task, check out `staging` first (`git checkout staging && git pull`). If a session lands on `main` and starts committing, fix it before pushing.
 5. **If local `main` is ever ahead of `origin/main`** (e.g. accidental commits): the safe recovery is `git reset --hard origin/main`, but only after confirming the work is preserved on `staging` — ask the user.
 6. **Large matchup baselines live OUTSIDE the repo** (`D:/AI/matchup_baseline_<build>.db`, 200+ MB) — never commit them. The tracked `webapp/matchup_db.db` is a small (3.9 MB) snapshot; treat it as data like the other DBs.
-7. **Committed data artifacts ARE the deployment mechanism** — both environments serve whatever's on their branch: `webapp/aoe2_reference.db`, `aoe2_units.db`, `derived_data.db`, `pool_scores.db`, `patches.db`, `matchup_db.db`, `civ_power_units/*.json`, `civ_top_units.json`, `train_times.json`, `battle_scores.json` (stub). Regenerate → commit on `staging` → smoke-test → promote.
+7. **Committed data artifacts ARE the deployment mechanism** — both environments serve whatever's on their branch: `webapp/aoe2_reference.db`, `aoe2_units.db`, `derived_data.db`, `pool_scores.db`, `patches.db`, `matchup_db.db`, `civ_power_units/*.json`, `civ_top_units.json`, `train_times.json`. Regenerate → commit on `staging` → smoke-test → promote.
 8. **`.golden/baseline.json` is sim-output golden data.** When sim behavior changes, regenerate via `python .golden/capture_baseline.py` and commit on `staging` like any other source file.

@@ -2,12 +2,8 @@
 
 Contains all unit line definitions (FEUDAL_UNITS, CASTLE_UNITS, IMPERIAL_UNITS,
 UNIQUE_UNITS), base stat overrides, building-related mappings, and the derived
-UNITS_BY_AGE / AGE_NAMES / _PREVIOUS_AGE_NAMES lookups.
-
-Imports age constants from config_constants so this module is self-contained.
+_PREVIOUS_AGE_NAMES lookup.
 """
-
-from .config_constants import FEUDAL_AGE, CASTLE_AGE, IMPERIAL_AGE
 
 # =============================================================================
 # BUILDING WORK RATE (affects unit creation time)
@@ -671,19 +667,6 @@ IMPERIAL_UNITS = {
         "upgrades": [],
         "civ_only": ["Burgundians"],
     },
-}
-
-# All units by age
-UNITS_BY_AGE = {
-    FEUDAL_AGE: FEUDAL_UNITS,
-    CASTLE_AGE: CASTLE_UNITS,
-    IMPERIAL_AGE: IMPERIAL_UNITS,
-}
-
-AGE_NAMES = {
-    FEUDAL_AGE: "Feudal Age",
-    CASTLE_AGE: "Castle Age",
-    IMPERIAL_AGE: "Imperial Age",
 }
 
 # =============================================================================

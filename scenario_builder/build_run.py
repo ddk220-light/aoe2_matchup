@@ -231,6 +231,61 @@ def _open_lower_left(um, cam, push_x=14.0, min_x=2.0):
     return moved
 
 
+# --- stray containment --------------------------------------------------------------
+# Ranged units kite backwards and can drift out of the recorded view. A looping trigger
+# tasks any ARMY unit (scouts excluded via the unit-type filter) that strays into an
+# outer ring back to the clash point. Units inside the arena are never touched, so the
+# fight itself is unaffected; a pulled stray re-engages on arrival (aggressive stance).
+CONTAIN_MARGIN = 6      # tiles beyond the armies' spawn bbox that still count as arena
+CONTAIN_RING = 18       # band thickness beyond the arena that gets policed
+CONTAIN_EVERY_S = 2     # re-task cadence (looping timer)
+
+
+def _ring_bands(x1, y1, x2, y2, ring, size):
+    """The 4 clamped rectangles (left/right/top/bottom bands) forming a ring around
+    the arena rect. Pure geometry: returns [(bx1, by1, bx2, by2), ...], empty bands
+    dropped (arena flush against a map edge)."""
+    def cl(v):
+        return max(0, min(size - 1, int(round(v))))
+    ox1, oy1, ox2, oy2 = cl(x1 - ring), cl(y1 - ring), cl(x2 + ring), cl(y2 + ring)
+    ix1, iy1, ix2, iy2 = cl(x1), cl(y1), cl(x2), cl(y2)
+    bands = [
+        (ox1, oy1, ix1 - 1, oy2),                      # left of the arena
+        (ix2 + 1, oy1, ox2, oy2),                      # right
+        (ix1, oy1, ix2, iy1 - 1),                      # above (between the side bands)
+        (ix1, iy2 + 1, ix2, oy2),                      # below
+    ]
+    return [b for b in bands if b[0] <= b[2] and b[1] <= b[3]]
+
+
+def _containment_trigger(scn, new1, new2):
+    """Add the looping stray-containment trigger (see CONTAIN_* above). Returns the
+    number of ring bands policed (0 = no armies found, trigger not added)."""
+    um, tm = scn.unit_manager, scn.trigger_manager
+    pts = [(u.x, u.y) for pid, const in ((P_SIDE1, new1), (P_SIDE2, new2))
+           for u in um.get_player_units(pid) if u.unit_const == const]
+    if not pts:
+        return 0
+    xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+    size = scn.map_manager.map_size
+    cx, cy = int(round(sum(xs) / len(xs))), int(round(sum(ys) / len(ys)))
+    bands = _ring_bands(min(xs) - CONTAIN_MARGIN, min(ys) - CONTAIN_MARGIN,
+                        max(xs) + CONTAIN_MARGIN, max(ys) + CONTAIN_MARGIN,
+                        CONTAIN_RING, size)
+    if not bands:
+        return 0
+    trig = scn.trigger_manager.add_trigger("Contain strays")
+    trig.looping = 1
+    trig.new_condition.timer(timer=CONTAIN_EVERY_S)
+    for pid, const in ((P_SIDE1, new1), (P_SIDE2, new2)):
+        for (bx1, by1, bx2, by2) in bands:
+            trig.new_effect.task_object(
+                object_list_unit_id=const, source_player=pid,
+                area_x1=bx1, area_y1=by1, area_x2=bx2, area_y2=by2,
+                location_x=cx, location_y=cy)
+    return len(bands)
+
+
 def _set_camera(scn, ranged, c1, c2):
     """Recenter the spectator (P1) camera. In a RANGED-vs-MELEE fight the action collects
     around the ranged army (it kites back while the melee piles in), so center the view on
@@ -290,6 +345,10 @@ def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
         moved = _open_lower_left(um, cam)
         print(f"[build_run] ranged-vs-melee: camera on ranged army at {cam}; "
               f"pushed {moved} lower-left boundary trees back")
+    nb = _containment_trigger(scn, new1, new2)
+    if nb:
+        print(f"[build_run] stray containment: looping task-home trigger "
+              f"({nb} ring bands, every {CONTAIN_EVERY_S}s)")
 
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)

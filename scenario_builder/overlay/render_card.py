@@ -616,59 +616,6 @@ def render_results_panel(u1, u2, res, out_png, width=1280, height=720, scale=2) 
                                  out_png, width, height, scale))
 
 
-def build_premise_html(u1: dict, u2: dict, counts=(30, 30)) -> str:
-    """The PREMISE strip shown under the top bar for the opening seconds: states WHY
-    the army sizes are what they are. Equal-resource fights say so explicitly with the
-    matched totals; equal-count fights say that; anything else just states the sizes.
-    Each side's exact food/wood/gold spend is shown with resource icons."""
-    n1, n2 = counts
-    t1 = int(n1 * (u1["cost"]["total"] or 0))
-    t2 = int(n2 * (u2["cost"]["total"] or 0))
-    if max(t1, t2) and abs(t1 - t2) <= 0.07 * max(t1, t2):
-        title = "EQUAL RESOURCES"
-        sub = f"&asymp; {round((t1 + t2) / 2):,} res each side"
-    elif n1 == n2:
-        title = "EQUAL NUMBERS"
-        sub = f"{n1} vs {n2} &middot; {t1:,} vs {t2:,} res"
-    else:
-        title = f"{n1} vs {n2} UNITS"
-        sub = f"{t1:,} vs {t2:,} res"
-    mix1 = _res_iconic(u1["cost"], mult=n1)
-    mix2 = _res_iconic(u2["cost"], mult=n2)
-    css = """
-.wrap { padding:0; }
-.premise { width:980px; margin:0 auto; padding:12px 26px 13px; border-radius:14px;
-  background:linear-gradient(165deg, rgba(42,31,20,0.88), rgba(18,13,7,0.90));
-  border:2px solid rgba(201,168,76,0.65); text-align:center;
-  box-shadow:0 6px 24px rgba(0,0,0,0.55); }
-.premise .t { font-size:34px; letter-spacing:3px; color:#c9a84c; text-transform:uppercase;
-  text-shadow:0 2px 8px #000; }
-.premise .t .s { color:#a89878; font-size:21px; letter-spacing:1px; margin-left:14px;
-  text-transform:none; }
-.mixes { display:flex; justify-content:space-between; align-items:center; margin-top:8px;
-  font-size:21px; }
-.mixes .side { display:flex; align-items:center; gap:10px; }
-.mixes .who { color:#a89878; font-size:17px; }
-.resi { display:inline-flex; align-items:center; gap:4px; font-weight:bold; }
-.ri { width:22px; height:22px; vertical-align:middle; }
-"""
-    return f"""<!doctype html><html><head><meta charset="utf-8"><style>{_css()}
-{css}</style></head>
-<body><div class="wrap"><div class="premise">
-  <div class="t">{title}<span class="s">{sub}</span></div>
-  <div class="mixes">
-    <div class="side"><span class="who">{n1}&times; {u1['name']}</span>{mix1}</div>
-    <div class="side">{mix2}<span class="who">{n2}&times; {u2['name']}</span></div>
-  </div>
-</div></div></body></html>"""
-
-
-def render_premise(u1, u2, counts, out_png, width=1100, height=260, scale=2) -> Path:
-    """Render the premise strip to a transparent, auto-cropped PNG."""
-    return _autocrop(_screenshot(build_premise_html(u1, u2, counts),
-                                 out_png, width, height, scale))
-
-
 def _screenshot(html: str, out_png, width: int, height: int, scale: int = 2,
                 browser: str | None = None) -> Path:
     out_png = Path(out_png).resolve()

@@ -43,6 +43,8 @@ backup at `D:/AI/matchup_baseline_177723_pre_cumans.db`.
 | Item | Why deferred |
 |---|---|
 | Engine renames (`sim_abstract`/`sim_position`) + `simulation_real.py` docstring | Any byte change re-stales 491k baseline rows — bundle with the next forced full re-sim (next game patch) |
+| Port dismount (Konnik second life) to the position engine + simulate.js | Both lack the mechanic entirely (abstract-only today) — discovered 2026-06-10 during the form-stat fix; implementing it is a `simulation_real.py` change → full re-sim; bundle with the next window. Until then the matchup table undervalues Konnik |
+| Delete the now-dead hand-copied dismount/transform values from `config_combat.py` | Values are overridden by generation-time derivation (commit `bcdbcbc`) but the file is sim_version-hashed — delete in the same bundled window |
 | Naval rankings regeneration script | Baseline has no naval rows; needs naval sims |
 | Incremental-resim noise (multi-seed degradation) | Sim-pipeline policy change; design alongside next patch run |
 | `scenario_builder/overlay/results.py` port off `aoe2_units.db` (+ stage-3 retirement chain) | `scenario_builder/` owned by `feat/matchup-video-automation`; revisit after merge |

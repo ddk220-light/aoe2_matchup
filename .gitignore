@@ -72,6 +72,12 @@ webapp/backups/
 
 # Raw extracted game graphics (19GB local dump; never commit)
 graphics/game_raw_files/
+
+# Generated unit art + sprite upscales — kept on disk for future UI use, NOT tracked
+# (untracked 2026-06-10; git history before then still contains older versions)
+graphics/art/
+graphics/extracted/**/*_lanczos4x.png
+graphics/extracted/**/*_esrgan4x.png
 # Scratch / working files
 .scratch/
 tmp/

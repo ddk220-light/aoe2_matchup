@@ -161,3 +161,28 @@ def copy_sidecar(sidecar_path, dest_video, logfile=None):
     except Exception as e:
         log(f"[grpc] sidecar copy failed: {e}", logfile)
         return None
+
+
+def archive_stream(prefix, dest_video, logfile=None):
+    """Archive the raw gRPC stream dump (+ meta) next to the raw recording, so a later
+    recompose can REDECODE with the current decoder instead of trusting the sidecar of
+    the day. Clears derived per-run leftovers so the archive never mixes generations
+    (a stale frames.bin next to a newer .mov would rebuild the WRONG timeline)."""
+    import shutil
+    stem = str(Path(dest_video).with_suffix(""))
+    copied = False
+    for ext in (".frames.bin", ".meta.json"):
+        src = prefix + ext
+        if os.path.exists(src):
+            try:
+                shutil.copy2(src, stem + ext)
+                copied = ext == ".frames.bin" or copied
+            except Exception as e:
+                log(f"[grpc] stream archive failed ({ext}): {e}", logfile)
+    for ext in (".seed_snap.bin", ".reseed.bin", ".hp_log.jsonl"):  # derived, regenerable
+        try:
+            os.remove(stem + ext)
+        except OSError:
+            pass
+    if copied:
+        log(f"[grpc] raw stream archived -> {stem}.frames.bin", logfile)

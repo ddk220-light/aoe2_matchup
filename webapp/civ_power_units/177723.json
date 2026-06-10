@@ -216,7 +216,7 @@
               "is_signature": true,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 91.1,
+              "percentile": 90.9,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -740,7 +740,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 94.6,
+              "percentile": 94.5,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -890,7 +890,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 47.3,
+              "percentile": 87.3,
               "rank": 30,
               "score": 30.5,
               "special_effects": [
@@ -909,7 +909,7 @@
                 "range": 7.0,
                 "speed": 0.65
               },
-              "strength": "average",
+              "strength": "strong",
               "unit_name": "Heavy Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -958,7 +958,7 @@
               "is_signature": false,
               "line_slug": "cannon_galleon",
               "missing_techs": [],
-              "percentile": 4.3,
+              "percentile": 4.2,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -985,7 +985,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 13.5,
+              "percentile": 61.5,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -998,7 +998,7 @@
                 "range": 0,
                 "speed": 0.6
               },
-              "strength": "poor",
+              "strength": "average",
               "unit_name": "Siege Ram",
               "unit_slug": "siege_ram"
             }
@@ -1044,6 +1044,7 @@
         "strong_areas": [
           "skirmisher",
           "archer",
+          "scorpion",
           "militia",
           "spear",
           "galleon"
@@ -1058,7 +1059,6 @@
           "light_cav",
           "knight",
           "cav_archer",
-          "ram",
           "trebuchet",
           "cannon_galleon",
           "fire"
@@ -1079,8 +1079,8 @@
         "knight": "weak",
         "light_cav": "weak",
         "militia": "signature",
-        "ram": "poor",
-        "scorpion": "average",
+        "ram": "average",
+        "scorpion": "strong",
         "shock_infantry": null,
         "skirmisher": "strong",
         "spear": "signature",
@@ -1277,7 +1277,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 80.4,
+              "percentile": 80.0,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -1712,7 +1712,7 @@
                 "Carvel Hull",
                 "Dry Dock"
               ],
-              "percentile": 3.6,
+              "percentile": 1.8,
               "special_effects": [],
               "stats": {
                 "attack": 11.0,
@@ -1802,7 +1802,7 @@
               "line_slug": "scorpion",
               "median_delta": -13.5,
               "missing_techs": [],
-              "percentile": 25.5,
+              "percentile": 27.3,
               "rank": 42,
               "score": 21.1,
               "special_effects": [
@@ -2212,7 +2212,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 83.9,
+              "percentile": 83.6,
               "special_effects": [
                 "+15.0 HP/min regen"
               ],
@@ -2528,9 +2528,9 @@
               "ease": null,
               "is_signature": false,
               "line_slug": "elephant",
-              "median_delta": -0.1,
+              "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 40.0,
+              "percentile": 50.0,
               "rank": 4,
               "score": 59.0,
               "special_effects": [
@@ -2566,7 +2566,7 @@
               "line_slug": "knight",
               "median_delta": -14.0,
               "missing_techs": [],
-              "percentile": 63.0,
+              "percentile": 64.8,
               "rank": 42,
               "score": 52.4,
               "special_effects": [
@@ -2757,7 +2757,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 85.7,
+              "percentile": 85.5,
               "special_effects": [
                 "+15.0 HP/min regen"
               ],
@@ -2982,7 +2982,7 @@
               "is_signature": false,
               "line_slug": "cannon_galleon",
               "missing_techs": [],
-              "percentile": 85.1,
+              "percentile": 81.2,
               "special_effects": [
                 "+15.0 HP/min regen"
               ],
@@ -3010,10 +3010,10 @@
                 "Paiks"
               ],
               "ease": null,
-              "is_signature": true,
+              "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 94.2,
+              "percentile": 63.5,
               "special_effects": [
                 "Trample 33%",
                 "Trample (1.5 radius)"
@@ -3029,7 +3029,7 @@
                 "range": 0,
                 "speed": 0.66
               },
-              "strength": "signature",
+              "strength": "average",
               "unit_name": "Siege Elephant",
               "unit_slug": "siege_ram"
             }
@@ -3065,7 +3065,6 @@
       "strategic_summary": {
         "primary_strength": "ranged",
         "signature_areas": [
-          "ram",
           "trebuchet",
           "fire",
           "hulk"
@@ -3075,7 +3074,6 @@
           "archer",
           "cav_archer",
           "scorpion",
-          "ram",
           "trebuchet",
           "cannon_galleon",
           "galleon",
@@ -3107,7 +3105,7 @@
         "knight": "average",
         "light_cav": "average",
         "militia": "weak",
-        "ram": "signature",
+        "ram": "average",
         "scorpion": "strong",
         "shock_infantry": null,
         "skirmisher": "strong",
@@ -3344,7 +3342,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 82.1,
+              "percentile": 81.8,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -3673,9 +3671,9 @@
               "ease": null,
               "is_signature": true,
               "line_slug": "camel",
-              "median_delta": 12.6,
+              "median_delta": 15.3,
               "missing_techs": [],
-              "percentile": 90.9,
+              "percentile": 91.7,
               "rank": 1,
               "score": 80.2,
               "special_effects": [
@@ -3892,7 +3890,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 89.3,
+              "percentile": 89.1,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -4156,7 +4154,7 @@
               "is_signature": false,
               "line_slug": "bombard_cannon",
               "missing_techs": [],
-              "percentile": 74.1,
+              "percentile": 70.4,
               "special_effects": [
                 "Splash damage (0.5 radius)"
               ],
@@ -4185,7 +4183,7 @@
               "is_signature": false,
               "line_slug": "cannon_galleon",
               "missing_techs": [],
-              "percentile": 83.0,
+              "percentile": 79.2,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -4210,7 +4208,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 40.4,
+              "percentile": 36.5,
               "special_effects": [],
               "stats": {
                 "attack": 3.0,
@@ -4507,7 +4505,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 78.6,
+              "percentile": 78.2,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -4976,7 +4974,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 25.0,
+              "percentile": 23.6,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -5191,23 +5189,23 @@
               "is_signature": false,
               "line_slug": "bombard_cannon",
               "missing_techs": [],
-              "percentile": 70.4,
+              "percentile": 85.2,
               "special_effects": [
-                "Splash damage (0.5 radius)"
+                "Splash damage (0.7 radius)"
               ],
               "stats": {
-                "attack": 40.0,
+                "attack": 50.0,
                 "cost_food": 0,
                 "cost_gold": 225.0,
                 "cost_wood": 225.0,
-                "hp": 80.0,
+                "hp": 90.0,
                 "melee_armor": 2.0,
-                "pierce_armor": 5.0,
+                "pierce_armor": 6.0,
                 "range": 13.0,
                 "speed": 0.8
               },
               "strength": "strong",
-              "unit_name": "Bombard Cannon",
+              "unit_name": "Houfnice",
               "unit_slug": "bombard_cannon"
             }
           ],
@@ -5224,7 +5222,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 74.5,
+              "percentile": 72.9,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -5249,7 +5247,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 38.5,
+              "percentile": 34.6,
               "special_effects": [],
               "stats": {
                 "attack": 3.0,
@@ -5262,7 +5260,7 @@
                 "range": 0,
                 "speed": 0.6
               },
-              "strength": "average",
+              "strength": "weak",
               "unit_name": "Capped Ram",
               "unit_slug": "siege_ram"
             }
@@ -5319,6 +5317,7 @@
         "weak_areas": [
           "light_cav",
           "knight",
+          "ram",
           "galleon",
           "fire",
           "hulk"
@@ -5339,7 +5338,7 @@
         "knight": "poor",
         "light_cav": "poor",
         "militia": "average",
-        "ram": "average",
+        "ram": "weak",
         "scorpion": "strong",
         "shock_infantry": null,
         "skirmisher": "strong",
@@ -5538,7 +5537,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 76.8,
+              "percentile": 76.4,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -6255,7 +6254,7 @@
               "is_signature": false,
               "line_slug": "cannon_galleon",
               "missing_techs": [],
-              "percentile": 46.8,
+              "percentile": 45.8,
               "special_effects": [],
               "stats": {
                 "attack": 50.0,
@@ -6280,7 +6279,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 36.5,
+              "percentile": 32.7,
               "special_effects": [],
               "stats": {
                 "attack": 3.0,
@@ -6293,7 +6292,7 @@
                 "range": 0,
                 "speed": 0.6
               },
-              "strength": "average",
+              "strength": "weak",
               "unit_name": "Capped Ram",
               "unit_slug": "siege_ram"
             }
@@ -6354,6 +6353,7 @@
           "light_cav",
           "knight",
           "cav_archer",
+          "ram",
           "hulk"
         ]
       },
@@ -6372,7 +6372,7 @@
         "knight": "weak",
         "light_cav": "poor",
         "militia": "strong",
-        "ram": "average",
+        "ram": "weak",
         "scorpion": "strong",
         "shock_infantry": null,
         "skirmisher": "strong",
@@ -6602,7 +6602,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 75.0,
+              "percentile": 74.5,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -7090,7 +7090,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 23.2,
+              "percentile": 21.8,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -7279,7 +7279,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 34.0,
+              "percentile": 33.3,
               "special_effects": [],
               "stats": {
                 "attack": 50.0,
@@ -7304,7 +7304,7 @@
               "is_signature": true,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 92.3,
+              "percentile": 94.2,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -7625,7 +7625,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 73.2,
+              "percentile": 72.7,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -8143,7 +8143,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 37.5,
+              "percentile": 36.4,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -8300,7 +8300,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 12.7,
+              "percentile": 25.5,
               "rank": 49,
               "score": 18.4,
               "special_effects": [
@@ -8319,7 +8319,7 @@
                 "range": 7.0,
                 "speed": 0.65
               },
-              "strength": "poor",
+              "strength": "weak",
               "unit_name": "Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -8369,7 +8369,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 81.5,
+              "percentile": 77.8,
               "special_effects": [
                 "Splash damage (0.5 radius)"
               ],
@@ -8402,7 +8402,7 @@
                 "Shipwright",
                 "Siege Engineers"
               ],
-              "percentile": 91.5,
+              "percentile": 91.7,
               "special_effects": [],
               "stats": {
                 "attack": 75.0,
@@ -8523,7 +8523,7 @@
         "light_cav": "weak",
         "militia": "weak",
         "ram": "poor",
-        "scorpion": "poor",
+        "scorpion": "weak",
         "shock_infantry": null,
         "skirmisher": "weak",
         "spear": "strong",
@@ -8763,7 +8763,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 71.4,
+              "percentile": 70.9,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -9073,9 +9073,9 @@
               "ease": null,
               "is_signature": false,
               "line_slug": "elephant",
-              "median_delta": 2.3,
+              "median_delta": 2.4,
               "missing_techs": [],
-              "percentile": 80.0,
+              "percentile": 83.3,
               "rank": 2,
               "score": 61.4,
               "special_effects": [
@@ -9296,7 +9296,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 51.8,
+              "percentile": 50.9,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -9540,7 +9540,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 72.3,
+              "percentile": 70.8,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -9565,7 +9565,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 34.6,
+              "percentile": 30.8,
               "special_effects": [],
               "stats": {
                 "attack": 3.0,
@@ -9923,7 +9923,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 69.6,
+              "percentile": 69.1,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -10197,12 +10197,12 @@
               "ease": null,
               "is_signature": false,
               "line_slug": "camel",
-              "median_delta": -18.7,
+              "median_delta": -16.0,
               "missing_techs": [
                 "Blast Furnace",
                 "Bloodlines"
               ],
-              "percentile": 18.2,
+              "percentile": 25.0,
               "rank": 11,
               "score": 48.9,
               "special_effects": [],
@@ -10264,7 +10264,7 @@
               "line_slug": "knight",
               "median_delta": -6.7,
               "missing_techs": [],
-              "percentile": 64.8,
+              "percentile": 63.0,
               "rank": 37,
               "score": 59.7,
               "special_effects": [
@@ -10452,7 +10452,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 83.9,
+              "percentile": 83.6,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -10599,7 +10599,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 10.9,
+              "percentile": 23.6,
               "rank": 50,
               "score": 18.4,
               "special_effects": [
@@ -10618,7 +10618,7 @@
                 "range": 7.0,
                 "speed": 0.65
               },
-              "strength": "poor",
+              "strength": "weak",
               "unit_name": "Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -10695,7 +10695,7 @@
               "is_signature": false,
               "line_slug": "cannon_galleon",
               "missing_techs": [],
-              "percentile": 6.4,
+              "percentile": 6.2,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -10722,7 +10722,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 61.5,
+              "percentile": 59.6,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -10814,7 +10814,7 @@
         "light_cav": "weak",
         "militia": "weak",
         "ram": "average",
-        "scorpion": "poor",
+        "scorpion": "weak",
         "shock_infantry": null,
         "skirmisher": "strong",
         "spear": "average",
@@ -11057,7 +11057,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 67.9,
+              "percentile": 67.3,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -11566,7 +11566,7 @@
               "missing_techs": [
                 "Bracer"
               ],
-              "percentile": 19.6,
+              "percentile": 18.2,
               "special_effects": [],
               "stats": {
                 "attack": 12.0,
@@ -11690,7 +11690,7 @@
               "line_slug": "scorpion",
               "median_delta": 8.1,
               "missing_techs": [],
-              "percentile": 90.9,
+              "percentile": 96.4,
               "rank": 6,
               "score": 42.7,
               "special_effects": [
@@ -11756,7 +11756,7 @@
               "is_signature": false,
               "line_slug": "cannon_galleon",
               "missing_techs": [],
-              "percentile": 44.7,
+              "percentile": 43.8,
               "special_effects": [],
               "stats": {
                 "attack": 50.0,
@@ -12115,7 +12115,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 66.1,
+              "percentile": 65.5,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -12624,7 +12624,7 @@
               "missing_techs": [
                 "Carvel Hull"
               ],
-              "percentile": 66.1,
+              "percentile": 65.5,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -12771,7 +12771,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 45.5,
+              "percentile": 74.5,
               "rank": 31,
               "score": 30.5,
               "special_effects": [
@@ -12790,7 +12790,7 @@
                 "range": 7.0,
                 "speed": 0.65
               },
-              "strength": "average",
+              "strength": "strong",
               "unit_name": "Heavy Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -12863,7 +12863,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 59.6,
+              "percentile": 57.7,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -12920,6 +12920,7 @@
         "strong_areas": [
           "skirmisher",
           "archer",
+          "scorpion",
           "spear",
           "cannon_galleon",
           "galleon",
@@ -12953,7 +12954,7 @@
         "light_cav": "average",
         "militia": "average",
         "ram": "average",
-        "scorpion": "average",
+        "scorpion": "strong",
         "shock_infantry": "average",
         "skirmisher": "strong",
         "spear": "strong",
@@ -13229,7 +13230,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 64.3,
+              "percentile": 63.6,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -13519,7 +13520,41 @@
     "imperial": {
       "power_units": {
         "cavalry": {
-          "camel": null,
+          "camel": [
+            {
+              "bonus_abilities": [
+                "Cavalry +5% speed Age2",
+                "Cavalry +5% speed Age3",
+                "Cavalry +5% speed Age4"
+              ],
+              "ease": null,
+              "is_signature": false,
+              "line_slug": "camel",
+              "median_delta": -38.2,
+              "missing_techs": [
+                "Husbandry"
+              ],
+              "percentile": 0.0,
+              "rank": 13,
+              "score": 26.7,
+              "special_effects": [],
+              "speed": 1.68,
+              "stats": {
+                "attack": 10.0,
+                "cost_food": 55.0,
+                "cost_gold": 60.0,
+                "cost_wood": 0,
+                "hp": 120.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 1.68
+              },
+              "strength": "poor",
+              "unit_name": "Camel Rider",
+              "unit_slug": "heavy_camel"
+            }
+          ],
           "elephant": null,
           "knight": [
             {
@@ -13764,7 +13799,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 5.4,
+              "percentile": 3.6,
               "special_effects": [],
               "stats": {
                 "attack": 12.0,
@@ -13923,7 +13958,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 9.1,
+              "percentile": 21.8,
               "rank": 51,
               "score": 18.4,
               "special_effects": [
@@ -13942,7 +13977,7 @@
                 "range": 7.0,
                 "speed": 0.65
               },
-              "strength": "poor",
+              "strength": "weak",
               "unit_name": "Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -13991,7 +14026,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 57.7,
+              "percentile": 55.8,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -14057,6 +14092,7 @@
         ],
         "summary_key": "multi_flexible",
         "weak_areas": [
+          "camel",
           "steppe_lancer",
           "skirmisher",
           "archer",
@@ -14070,7 +14106,7 @@
       "strength_profile": {
         "archer": "poor",
         "bombard_cannon": null,
-        "camel": null,
+        "camel": "poor",
         "cannon_galleon": null,
         "cav_archer": "strong",
         "demo": null,
@@ -14083,7 +14119,7 @@
         "light_cav": "signature",
         "militia": "average",
         "ram": "average",
-        "scorpion": "poor",
+        "scorpion": "weak",
         "shock_infantry": null,
         "skirmisher": "weak",
         "spear": "strong",
@@ -14341,7 +14377,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 62.5,
+              "percentile": 61.8,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -14608,7 +14644,46 @@
       "power_units": {
         "cavalry": {
           "camel": null,
-          "elephant": null,
+          "elephant": [
+            {
+              "bonus_abilities": [
+                "Medical Corps",
+                "Wootz Steel"
+              ],
+              "ease": null,
+              "is_signature": false,
+              "line_slug": "elephant",
+              "median_delta": -19.0,
+              "missing_techs": [
+                "Bloodlines",
+                "Plate Barding Armor"
+              ],
+              "percentile": 0.0,
+              "rank": 7,
+              "score": 40.0,
+              "special_effects": [
+                "Ignores melee armor",
+                "Trample 25%",
+                "Trample (0.4 radius)",
+                "+30.0 HP/min regen"
+              ],
+              "speed": 0.99,
+              "stats": {
+                "attack": 16.0,
+                "cost_food": 100.0,
+                "cost_gold": 70.0,
+                "cost_wood": 0,
+                "hp": 250.0,
+                "melee_armor": 3.0,
+                "pierce_armor": 4.0,
+                "range": 0,
+                "speed": 0.99
+              },
+              "strength": "poor",
+              "unit_name": "Battle Elephant",
+              "unit_slug": "elite_elephant"
+            }
+          ],
           "knight": null,
           "light_cav": [
             {
@@ -14659,7 +14734,7 @@
               "line_slug": "militia",
               "median_delta": 15.3,
               "missing_techs": [],
-              "percentile": 73.9,
+              "percentile": 75.4,
               "rank": 19,
               "score": 58.7,
               "special_effects": [
@@ -14834,7 +14909,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 82.1,
+              "percentile": 81.8,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -14979,13 +15054,13 @@
                 "Siege wood discount"
               ],
               "ease": null,
-              "is_signature": false,
+              "is_signature": true,
               "line_slug": "scorpion",
               "median_delta": -1.6,
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 49.1,
+              "percentile": 90.9,
               "rank": 29,
               "score": 33.0,
               "special_effects": [
@@ -15004,7 +15079,7 @@
                 "range": 7.0,
                 "speed": 0.65
               },
-              "strength": "average",
+              "strength": "signature",
               "unit_name": "Heavy Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -15082,7 +15157,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 57.4,
+              "percentile": 56.2,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -15172,6 +15247,7 @@
         "primary_strength": "ranged",
         "signature_areas": [
           "cav_archer",
+          "scorpion",
           "galleon",
           "fire"
         ],
@@ -15179,6 +15255,7 @@
           "skirmisher",
           "archer",
           "cav_archer",
+          "scorpion",
           "militia",
           "spear",
           "galleon",
@@ -15193,6 +15270,7 @@
         "summary_key": "multi_flexible",
         "weak_areas": [
           "light_cav",
+          "elephant",
           "ram",
           "bombard_cannon",
           "trebuchet"
@@ -15205,7 +15283,7 @@
         "cannon_galleon": "average",
         "cav_archer": "signature",
         "demo": null,
-        "elephant": null,
+        "elephant": "poor",
         "fire": "signature",
         "galleon": "signature",
         "gunpowder": "average",
@@ -15214,7 +15292,7 @@
         "light_cav": "poor",
         "militia": "strong",
         "ram": "poor",
-        "scorpion": "average",
+        "scorpion": "signature",
         "shock_infantry": null,
         "skirmisher": "strong",
         "spear": "strong",
@@ -15477,7 +15555,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 60.7,
+              "percentile": 60.0,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -15741,12 +15819,12 @@
               "ease": null,
               "is_signature": false,
               "line_slug": "camel",
-              "median_delta": -28.6,
+              "median_delta": -25.9,
               "missing_techs": [
                 "Bloodlines",
                 "Plate Barding Armor"
               ],
-              "percentile": 0.0,
+              "percentile": 8.3,
               "rank": 12,
               "score": 39.0,
               "special_effects": [],
@@ -15990,7 +16068,7 @@
               "missing_techs": [
                 "Carvel Hull"
               ],
-              "percentile": 64.3,
+              "percentile": 63.6,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -16109,7 +16187,7 @@
               "line_slug": "scorpion",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 74.5,
+              "percentile": 72.7,
               "rank": 15,
               "score": 34.6,
               "special_effects": [
@@ -16202,7 +16280,7 @@
               "missing_techs": [
                 "Carvel Hull"
               ],
-              "percentile": 42.6,
+              "percentile": 41.7,
               "special_effects": [],
               "stats": {
                 "attack": 50.0,
@@ -16229,7 +16307,7 @@
               "is_signature": true,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 90.4,
+              "percentile": 92.3,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -16522,7 +16600,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 58.9,
+              "percentile": 58.2,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -17010,7 +17088,7 @@
                 "Bracer",
                 "Shipwright"
               ],
-              "percentile": 14.3,
+              "percentile": 12.7,
               "special_effects": [],
               "stats": {
                 "attack": 12.0,
@@ -17195,7 +17273,7 @@
               "line_slug": "scorpion",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 72.7,
+              "percentile": 70.9,
               "rank": 16,
               "score": 34.6,
               "special_effects": [
@@ -17290,7 +17368,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 31.9,
+              "percentile": 31.2,
               "special_effects": [],
               "stats": {
                 "attack": 50.0,
@@ -17315,7 +17393,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 32.7,
+              "percentile": 28.8,
               "special_effects": [],
               "stats": {
                 "attack": 3.0,
@@ -17642,7 +17720,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 57.1,
+              "percentile": 56.4,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -18147,7 +18225,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 21.4,
+              "percentile": 20.0,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -18306,7 +18384,7 @@
               "line_slug": "scorpion",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 70.9,
+              "percentile": 69.1,
               "rank": 17,
               "score": 34.6,
               "special_effects": [
@@ -18376,7 +18454,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 29.8,
+              "percentile": 29.2,
               "special_effects": [],
               "stats": {
                 "attack": 50.0,
@@ -18398,10 +18476,10 @@
             {
               "bonus_abilities": [],
               "ease": null,
-              "is_signature": false,
+              "is_signature": true,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 88.5,
+              "percentile": 90.4,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -18414,7 +18492,7 @@
                 "range": 0,
                 "speed": 0.6
               },
-              "strength": "strong",
+              "strength": "signature",
               "unit_name": "Siege Ram",
               "unit_slug": "siege_ram"
             }
@@ -18451,7 +18529,8 @@
         "primary_strength": "cavalry",
         "signature_areas": [
           "light_cav",
-          "knight"
+          "knight",
+          "ram"
         ],
         "strong_areas": [
           "light_cav",
@@ -18493,7 +18572,7 @@
         "knight": "signature",
         "light_cav": "signature",
         "militia": "average",
-        "ram": "strong",
+        "ram": "signature",
         "scorpion": "strong",
         "shock_infantry": null,
         "skirmisher": "weak",
@@ -18742,7 +18821,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 55.4,
+              "percentile": 54.5,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -19253,7 +19332,7 @@
               "missing_techs": [
                 "Dry Dock"
               ],
-              "percentile": 58.9,
+              "percentile": 58.2,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -19402,7 +19481,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 43.6,
+              "percentile": 67.3,
               "rank": 32,
               "score": 30.5,
               "special_effects": [
@@ -19421,7 +19500,7 @@
                 "range": 7.0,
                 "speed": 0.65
               },
-              "strength": "average",
+              "strength": "strong",
               "unit_name": "Heavy Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -19575,6 +19654,7 @@
         "signature_areas": [],
         "strong_areas": [
           "skirmisher",
+          "scorpion",
           "militia",
           "fire",
           "hulk"
@@ -19609,7 +19689,7 @@
         "light_cav": "average",
         "militia": "strong",
         "ram": "poor",
-        "scorpion": "average",
+        "scorpion": "strong",
         "shock_infantry": null,
         "skirmisher": "strong",
         "spear": "average",
@@ -19856,7 +19936,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 53.6,
+              "percentile": 52.7,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -20164,11 +20244,11 @@
               "ease": null,
               "is_signature": false,
               "line_slug": "camel",
-              "median_delta": 6.3,
+              "median_delta": 9.0,
               "missing_techs": [
                 "Blast Furnace"
               ],
-              "percentile": 54.5,
+              "percentile": 58.3,
               "rank": 5,
               "score": 73.9,
               "special_effects": [],
@@ -20401,7 +20481,7 @@
               "missing_techs": [
                 "Dry Dock"
               ],
-              "percentile": 57.1,
+              "percentile": 56.4,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -20594,7 +20674,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 41.8,
+              "percentile": 65.5,
               "rank": 33,
               "score": 30.5,
               "special_effects": [
@@ -20613,7 +20693,7 @@
                 "range": 7.0,
                 "speed": 0.65
               },
-              "strength": "average",
+              "strength": "strong",
               "unit_name": "Heavy Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -20692,7 +20772,7 @@
                 "Dry Dock",
                 "Siege Engineers"
               ],
-              "percentile": 8.5,
+              "percentile": 8.3,
               "special_effects": [],
               "stats": {
                 "attack": 50.0,
@@ -20725,7 +20805,7 @@
                 "Blast Furnace",
                 "Siege Engineers"
               ],
-              "percentile": 86.5,
+              "percentile": 65.4,
               "special_effects": [
                 "Trample 33%",
                 "Trample (1.5 radius)"
@@ -20783,6 +20863,7 @@
         ],
         "strong_areas": [
           "cav_archer",
+          "scorpion",
           "ram"
         ],
         "strong_columns": [
@@ -20819,7 +20900,7 @@
         "light_cav": "average",
         "militia": "poor",
         "ram": "strong",
-        "scorpion": "average",
+        "scorpion": "strong",
         "shock_infantry": null,
         "skirmisher": "average",
         "spear": "poor",
@@ -21046,7 +21127,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 51.8,
+              "percentile": 50.9,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -21297,7 +21378,7 @@
               "ease": null,
               "is_signature": true,
               "line_slug": "camel",
-              "median_delta": 9.1,
+              "median_delta": 11.8,
               "missing_techs": [],
               "percentile": 100.0,
               "rank": 4,
@@ -21513,7 +21594,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 35.7,
+              "percentile": 34.5,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -21526,7 +21607,7 @@
                 "range": 10.0,
                 "speed": 1.65
               },
-              "strength": "average",
+              "strength": "weak",
               "unit_name": "Galleon",
               "unit_slug": "galleon"
             }
@@ -21661,7 +21742,7 @@
               "line_slug": "scorpion",
               "median_delta": -13.5,
               "missing_techs": [],
-              "percentile": 23.6,
+              "percentile": 20.0,
               "rank": 43,
               "score": 21.1,
               "special_effects": [
@@ -21725,7 +21806,7 @@
               "is_signature": false,
               "line_slug": "bombard_cannon",
               "missing_techs": [],
-              "percentile": 85.2,
+              "percentile": 81.5,
               "special_effects": [
                 "Splash damage (0.5 radius)"
               ],
@@ -21757,7 +21838,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 70.2,
+              "percentile": 68.8,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -21782,7 +21863,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 55.8,
+              "percentile": 40.4,
               "special_effects": [
                 "Trample 33%",
                 "Trample (1.5 radius)"
@@ -21855,6 +21936,7 @@
           "scorpion",
           "militia",
           "spear",
+          "galleon",
           "fire"
         ]
       },
@@ -21867,7 +21949,7 @@
         "demo": null,
         "elephant": null,
         "fire": "poor",
-        "galleon": "average",
+        "galleon": "weak",
         "gunpowder": "strong",
         "hulk": "average",
         "knight": null,
@@ -22101,7 +22183,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 50.0,
+              "percentile": 49.1,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -22575,7 +22657,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 50.0,
+              "percentile": 49.1,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -22698,7 +22780,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 7.3,
+              "percentile": 18.2,
               "rank": 52,
               "score": 18.4,
               "special_effects": [
@@ -22717,7 +22799,7 @@
                 "range": 7.0,
                 "speed": 0.65
               },
-              "strength": "poor",
+              "strength": "weak",
               "unit_name": "Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -22876,7 +22958,7 @@
         "light_cav": "strong",
         "militia": "poor",
         "ram": "average",
-        "scorpion": "poor",
+        "scorpion": "weak",
         "shock_infantry": null,
         "skirmisher": "weak",
         "spear": "average",
@@ -23055,7 +23137,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 48.2,
+              "percentile": 47.3,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -23340,7 +23422,7 @@
               "line_slug": "militia",
               "median_delta": 24.6,
               "missing_techs": [],
-              "percentile": 75.4,
+              "percentile": 73.9,
               "rank": 12,
               "score": 68.0,
               "special_effects": [],
@@ -23494,7 +23576,7 @@
               "missing_techs": [
                 "Carvel Hull"
               ],
-              "percentile": 62.5,
+              "percentile": 61.8,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -23620,7 +23702,7 @@
               "line_slug": "scorpion",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 69.1,
+              "percentile": 63.6,
               "rank": 18,
               "score": 34.6,
               "special_effects": [
@@ -23639,7 +23721,7 @@
                 "range": 8.0,
                 "speed": 0.65
               },
-              "strength": "strong",
+              "strength": "average",
               "unit_name": "Heavy Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -23656,7 +23738,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 84.6,
+              "percentile": 88.5,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -23701,14 +23783,13 @@
           ]
         }
       },
-      "strategic_description": "This civ is versatile, with strength across Ranged and Infantry -- allowing flexible strategies that adapt to any opponent. Strong anti-cavalry defense with Halberdier to hold positions against cavalry pushes. Vulnerable to massed archers -- consider aggressive play before ranged compositions develop. An infantry ram push is the signature play -- use Halberdier as a meatshield to protect rams pushing into enemy bases.",
+      "strategic_description": "This civ has strong infantry for frontline pressure, with Halberdier serving as the backbone of siege-backed pushes. Strong anti-cavalry defense with Halberdier to hold positions against cavalry pushes. Vulnerable to massed archers -- consider aggressive play before ranged compositions develop. An infantry ram push is the signature play -- use Halberdier as a meatshield to protect rams pushing into enemy bases.",
       "strategic_summary": {
-        "primary_strength": "ranged",
+        "primary_strength": "infantry",
         "signature_areas": [
           "spear"
         ],
         "strong_areas": [
-          "scorpion",
           "militia",
           "spear",
           "ram",
@@ -23717,7 +23798,6 @@
           "hulk"
         ],
         "strong_columns": [
-          "ranged",
           "infantry",
           "siege",
           "navy"
@@ -23743,7 +23823,7 @@
         "light_cav": null,
         "militia": "strong",
         "ram": "strong",
-        "scorpion": "strong",
+        "scorpion": "average",
         "shock_infantry": null,
         "skirmisher": null,
         "spear": "signature",
@@ -23939,7 +24019,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 46.4,
+              "percentile": 45.5,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -24442,7 +24522,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 80.4,
+              "percentile": 80.0,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -24624,7 +24704,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 5.5,
+              "percentile": 16.4,
               "rank": 53,
               "score": 18.4,
               "special_effects": [
@@ -24643,7 +24723,7 @@
                 "range": 7.0,
                 "speed": 0.65
               },
-              "strength": "poor",
+              "strength": "weak",
               "unit_name": "Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -24724,7 +24804,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 59.6,
+              "percentile": 58.3,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -24847,7 +24927,7 @@
         "light_cav": "strong",
         "militia": "strong",
         "ram": "poor",
-        "scorpion": "poor",
+        "scorpion": "weak",
         "shock_infantry": null,
         "skirmisher": "signature",
         "spear": "weak",
@@ -25078,7 +25158,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 44.6,
+              "percentile": 43.6,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -25551,7 +25631,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 78.6,
+              "percentile": 78.2,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -25693,7 +25773,7 @@
               "line_slug": "scorpion",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 67.3,
+              "percentile": 61.8,
               "rank": 19,
               "score": 34.6,
               "special_effects": [
@@ -25712,7 +25792,7 @@
                 "range": 8.0,
                 "speed": 0.65
               },
-              "strength": "strong",
+              "strength": "average",
               "unit_name": "Heavy Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -25756,7 +25836,7 @@
               "is_signature": false,
               "line_slug": "cannon_galleon",
               "missing_techs": [],
-              "percentile": 80.9,
+              "percentile": 77.1,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -25781,7 +25861,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 30.8,
+              "percentile": 26.9,
               "special_effects": [],
               "stats": {
                 "attack": 3.0,
@@ -25837,7 +25917,6 @@
         "strong_areas": [
           "skirmisher",
           "cav_archer",
-          "scorpion",
           "militia",
           "spear",
           "trebuchet",
@@ -25875,7 +25954,7 @@
         "light_cav": "weak",
         "militia": "strong",
         "ram": "weak",
-        "scorpion": "strong",
+        "scorpion": "average",
         "shock_infantry": null,
         "skirmisher": "strong",
         "spear": "strong",
@@ -26149,7 +26228,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 42.9,
+              "percentile": 41.8,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -26729,7 +26808,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 33.9,
+              "percentile": 32.7,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -26891,7 +26970,7 @@
               "line_slug": "scorpion",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 65.5,
+              "percentile": 60.0,
               "rank": 20,
               "score": 34.6,
               "special_effects": [
@@ -26910,7 +26989,7 @@
                 "range": 8.0,
                 "speed": 0.65
               },
-              "strength": "strong",
+              "strength": "average",
               "unit_name": "Heavy Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -26989,7 +27068,7 @@
               "is_signature": true,
               "line_slug": "cannon_galleon",
               "missing_techs": [],
-              "percentile": 95.7,
+              "percentile": 95.8,
               "special_effects": [],
               "stats": {
                 "attack": 26.0,
@@ -27016,7 +27095,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 82.7,
+              "percentile": 86.5,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -27075,7 +27154,6 @@
           "light_cav",
           "knight",
           "gunpowder",
-          "scorpion",
           "ram",
           "trebuchet",
           "cannon_galleon"
@@ -27110,7 +27188,7 @@
         "light_cav": "strong",
         "militia": "poor",
         "ram": "strong",
-        "scorpion": "strong",
+        "scorpion": "average",
         "shock_infantry": "weak",
         "skirmisher": "average",
         "spear": "average",
@@ -27424,7 +27502,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 41.1,
+              "percentile": 40.0,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -27734,12 +27812,12 @@
               "ease": null,
               "is_signature": false,
               "line_slug": "camel",
-              "median_delta": 11.4,
+              "median_delta": 14.1,
               "missing_techs": [
                 "Blast Furnace",
                 "Bloodlines"
               ],
-              "percentile": 81.8,
+              "percentile": 83.3,
               "rank": 2,
               "score": 79.0,
               "special_effects": [],
@@ -28042,7 +28120,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 1.8,
+              "percentile": 0.0,
               "special_effects": [],
               "stats": {
                 "attack": 11.0,
@@ -28162,11 +28240,11 @@
                 "Double Iron Casting"
               ],
               "ease": null,
-              "is_signature": true,
+              "is_signature": false,
               "line_slug": "scorpion",
               "median_delta": 27.3,
               "missing_techs": [],
-              "percentile": 100.0,
+              "percentile": 30.9,
               "rank": 1,
               "score": 61.9,
               "special_effects": [],
@@ -28182,7 +28260,7 @@
                 "range": 11.0,
                 "speed": 0.88
               },
-              "strength": "signature",
+              "strength": "weak",
               "unit_name": "Mounted Trebuchet",
               "unit_slug": "mounted_trebuchet_khitans"
             },
@@ -28193,7 +28271,7 @@
               "line_slug": "scorpion",
               "median_delta": -13.5,
               "missing_techs": [],
-              "percentile": 21.8,
+              "percentile": 14.5,
               "rank": 44,
               "score": 21.1,
               "special_effects": [
@@ -28212,7 +28290,7 @@
                 "range": 8.0,
                 "speed": 0.65
               },
-              "strength": "weak",
+              "strength": "poor",
               "unit_name": "Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -28262,7 +28340,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 27.7,
+              "percentile": 27.1,
               "special_effects": [],
               "stats": {
                 "attack": 50.0,
@@ -28287,7 +28365,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 80.8,
+              "percentile": 84.6,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -28336,14 +28414,12 @@
       "strategic_summary": {
         "primary_strength": "cavalry",
         "signature_areas": [
-          "scorpion",
           "militia"
         ],
         "strong_areas": [
           "camel",
           "steppe_lancer",
           "cav_archer",
-          "scorpion",
           "militia",
           "shock_infantry",
           "ram",
@@ -28358,6 +28434,7 @@
         "summary_key": "multi_flexible",
         "weak_areas": [
           "light_cav",
+          "scorpion",
           "spear",
           "cannon_galleon",
           "galleon"
@@ -28379,7 +28456,7 @@
         "light_cav": "weak",
         "militia": "signature",
         "ram": "strong",
-        "scorpion": "signature",
+        "scorpion": "weak",
         "shock_infantry": "strong",
         "skirmisher": "average",
         "spear": "poor",
@@ -28612,7 +28689,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 39.3,
+              "percentile": 38.2,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -28912,9 +28989,9 @@
               "ease": null,
               "is_signature": false,
               "line_slug": "elephant",
-              "median_delta": 7.2,
+              "median_delta": 7.3,
               "missing_techs": [],
-              "percentile": 60.0,
+              "percentile": 66.7,
               "rank": 1,
               "score": 66.3,
               "special_effects": [
@@ -28933,7 +29010,7 @@
                 "range": 0,
                 "speed": 1.09
               },
-              "strength": "average",
+              "strength": "strong",
               "unit_name": "Elite Battle Elephant",
               "unit_slug": "elite_elephant"
             }
@@ -29130,7 +29207,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 48.2,
+              "percentile": 47.3,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -29278,7 +29355,7 @@
               "line_slug": "scorpion",
               "median_delta": 13.5,
               "missing_techs": [],
-              "percentile": 96.4,
+              "percentile": 100.0,
               "rank": 3,
               "score": 48.1,
               "special_effects": [
@@ -29310,7 +29387,7 @@
               "line_slug": "scorpion",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 63.6,
+              "percentile": 58.2,
               "rank": 21,
               "score": 34.6,
               "special_effects": [
@@ -29377,7 +29454,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 68.1,
+              "percentile": 66.7,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -29402,7 +29479,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 78.8,
+              "percentile": 82.7,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -29455,6 +29532,7 @@
         ],
         "strong_areas": [
           "light_cav",
+          "elephant",
           "cav_archer",
           "scorpion",
           "ram",
@@ -29478,7 +29556,7 @@
         "cannon_galleon": "strong",
         "cav_archer": "strong",
         "demo": null,
-        "elephant": "average",
+        "elephant": "strong",
         "fire": "average",
         "galleon": "average",
         "gunpowder": "average",
@@ -29725,7 +29803,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 85.7,
+              "percentile": 85.5,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -30284,7 +30362,7 @@
               "is_signature": true,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 92.9,
+              "percentile": 92.7,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -30490,7 +30568,7 @@
               "line_slug": "scorpion",
               "median_delta": -13.5,
               "missing_techs": [],
-              "percentile": 20.0,
+              "percentile": 12.7,
               "rank": 45,
               "score": 21.1,
               "special_effects": [
@@ -30509,7 +30587,7 @@
                 "range": 8.0,
                 "speed": 0.65
               },
-              "strength": "weak",
+              "strength": "poor",
               "unit_name": "Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -30583,7 +30661,7 @@
               "is_signature": false,
               "line_slug": "cannon_galleon",
               "missing_techs": [],
-              "percentile": 89.4,
+              "percentile": 87.5,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -30608,7 +30686,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 28.8,
+              "percentile": 25.0,
               "special_effects": [],
               "stats": {
                 "attack": 3.0,
@@ -30702,7 +30780,7 @@
         "light_cav": "poor",
         "militia": "weak",
         "ram": "weak",
-        "scorpion": "weak",
+        "scorpion": "poor",
         "shock_infantry": "average",
         "skirmisher": "signature",
         "spear": "average",
@@ -30941,7 +31019,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 37.5,
+              "percentile": 36.4,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -31436,7 +31514,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 46.4,
+              "percentile": 45.5,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -31583,7 +31661,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 3.6,
+              "percentile": 10.9,
               "rank": 54,
               "score": 18.4,
               "special_effects": [
@@ -31680,7 +31758,7 @@
                 "Shipwright",
                 "Siege Engineers"
               ],
-              "percentile": 51.1,
+              "percentile": 50.0,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -32028,7 +32106,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 35.7,
+              "percentile": 34.5,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -32041,7 +32119,7 @@
                 "range": 8.0,
                 "speed": 1.5
               },
-              "strength": "average",
+              "strength": "weak",
               "unit_name": "War Galley",
               "unit_slug": "galleon"
             }
@@ -32248,7 +32326,8 @@
         "weak_areas": [
           "scorpion",
           "militia",
-          "spear"
+          "spear",
+          "galleon"
         ]
       },
       "strength_profile": {
@@ -32260,7 +32339,7 @@
         "demo": null,
         "elephant": null,
         "fire": "average",
-        "galleon": "average",
+        "galleon": "weak",
         "gunpowder": null,
         "hulk": "average",
         "knight": "average",
@@ -32503,7 +32582,7 @@
               "missing_techs": [
                 "Carvel Hull"
               ],
-              "percentile": 60.7,
+              "percentile": 60.0,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -32619,7 +32698,7 @@
               "line_slug": "scorpion",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 61.8,
+              "percentile": 56.4,
               "rank": 22,
               "score": 34.6,
               "special_effects": [
@@ -32684,7 +32763,7 @@
               "missing_techs": [
                 "Carvel Hull"
               ],
-              "percentile": 40.4,
+              "percentile": 39.6,
               "special_effects": [],
               "stats": {
                 "attack": 50.0,
@@ -32709,7 +32788,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 26.9,
+              "percentile": 23.1,
               "special_effects": [],
               "stats": {
                 "attack": 3.0,
@@ -33060,7 +33139,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 33.9,
+              "percentile": 32.7,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -33324,13 +33403,13 @@
               "ease": null,
               "is_signature": false,
               "line_slug": "elephant",
-              "median_delta": -5.7,
+              "median_delta": -5.6,
               "missing_techs": [
                 "Bloodlines",
                 "Chain Barding Armor",
                 "Plate Barding Armor"
               ],
-              "percentile": 0.0,
+              "percentile": 16.7,
               "rank": 6,
               "score": 53.4,
               "special_effects": [
@@ -33349,7 +33428,7 @@
                 "range": 0,
                 "speed": 0.99
               },
-              "strength": "poor",
+              "strength": "weak",
               "unit_name": "Elite Battle Elephant",
               "unit_slug": "elite_elephant"
             }
@@ -33572,7 +33651,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 76.8,
+              "percentile": 76.4,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -33687,7 +33766,7 @@
               "line_slug": "scorpion",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 60.0,
+              "percentile": 54.5,
               "rank": 23,
               "score": 34.6,
               "special_effects": [
@@ -33776,7 +33855,7 @@
               "is_signature": false,
               "line_slug": "cannon_galleon",
               "missing_techs": [],
-              "percentile": 78.7,
+              "percentile": 75.0,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -33801,7 +33880,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 25.0,
+              "percentile": 21.2,
               "special_effects": [],
               "stats": {
                 "attack": 3.0,
@@ -33877,7 +33956,7 @@
         "cannon_galleon": "strong",
         "cav_archer": "weak",
         "demo": null,
-        "elephant": "poor",
+        "elephant": "weak",
         "fire": "strong",
         "galleon": "strong",
         "gunpowder": null,
@@ -34118,7 +34197,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 32.1,
+              "percentile": 30.9,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -34406,11 +34485,11 @@
               "ease": null,
               "is_signature": false,
               "line_slug": "camel",
-              "median_delta": 0.0,
+              "median_delta": 2.7,
               "missing_techs": [
                 "Blast Furnace"
               ],
-              "percentile": 63.6,
+              "percentile": 66.7,
               "rank": 6,
               "score": 67.6,
               "special_effects": [],
@@ -34426,7 +34505,7 @@
                 "range": 0,
                 "speed": 1.6
               },
-              "strength": "average",
+              "strength": "strong",
               "unit_name": "Heavy Camel Rider",
               "unit_slug": "heavy_camel"
             }
@@ -34444,7 +34523,7 @@
               "missing_techs": [
                 "Blast Furnace"
               ],
-              "percentile": 51.9,
+              "percentile": 50.0,
               "rank": 22,
               "score": 67.2,
               "special_effects": [],
@@ -34640,7 +34719,7 @@
                 "Bracer",
                 "Shipwright"
               ],
-              "percentile": 0.0,
+              "percentile": -1.8,
               "special_effects": [],
               "stats": {
                 "attack": 10.0,
@@ -34817,7 +34896,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 1.8,
+              "percentile": 9.1,
               "rank": 55,
               "score": 18.4,
               "special_effects": [
@@ -34913,7 +34992,7 @@
                 "Shipwright",
                 "Siege Engineers"
               ],
-              "percentile": 12.8,
+              "percentile": 12.5,
               "special_effects": [],
               "stats": {
                 "attack": 50.0,
@@ -34987,7 +35066,7 @@
           ]
         }
       },
-      "strategic_description": "This civ is versatile, with strength across Cavalry, Ranged and Infantry -- allowing flexible strategies that adapt to any opponent. Limited counter options mean this civ must play aggressively and press its advantage before opponents can mass their army. Siege options are limited -- look to win through open-field engagements rather than pushing fortifications.",
+      "strategic_description": "This civ is versatile, with strength across Cavalry, Ranged and Infantry -- allowing flexible strategies that adapt to any opponent. Can answer enemy cavalry with mobile Heavy Camel Rider, allowing counter-raids and flexible responses. Vulnerable to massed archers -- consider aggressive play before ranged compositions develop. Siege options are limited -- look to win through open-field engagements rather than pushing fortifications.",
       "strategic_summary": {
         "primary_strength": "cavalry",
         "signature_areas": [
@@ -34995,6 +35074,7 @@
         ],
         "strong_areas": [
           "light_cav",
+          "camel",
           "gunpowder",
           "militia"
         ],
@@ -35021,7 +35101,7 @@
       "strength_profile": {
         "archer": "weak",
         "bombard_cannon": "poor",
-        "camel": "average",
+        "camel": "strong",
         "cannon_galleon": "poor",
         "cav_archer": "weak",
         "demo": null,
@@ -35213,7 +35293,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 30.4,
+              "percentile": 29.1,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -35531,7 +35611,7 @@
               "line_slug": "knight",
               "median_delta": -20.2,
               "missing_techs": [],
-              "percentile": 50.0,
+              "percentile": 51.9,
               "rank": 49,
               "score": 46.2,
               "special_effects": [],
@@ -35700,7 +35780,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 8.9,
+              "percentile": 7.3,
               "special_effects": [],
               "stats": {
                 "attack": 12.0,
@@ -35826,7 +35906,7 @@
               "line_slug": "scorpion",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 58.2,
+              "percentile": 52.7,
               "rank": 24,
               "score": 34.6,
               "special_effects": [
@@ -35861,7 +35941,7 @@
               "is_signature": false,
               "line_slug": "cannon_galleon",
               "missing_techs": [],
-              "percentile": 17.0,
+              "percentile": 16.7,
               "special_effects": [],
               "stats": {
                 "attack": 31.0,
@@ -35886,7 +35966,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 23.1,
+              "percentile": 19.2,
               "special_effects": [],
               "stats": {
                 "attack": 3.0,
@@ -36140,7 +36220,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 28.6,
+              "percentile": 27.3,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -36566,7 +36646,7 @@
                 "Carvel Hull",
                 "Dry Dock"
               ],
-              "percentile": 39.3,
+              "percentile": 38.2,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -36688,7 +36768,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 40.0,
+              "percentile": 50.9,
               "rank": 34,
               "score": 30.5,
               "special_effects": [
@@ -37097,7 +37177,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 26.8,
+              "percentile": 25.5,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -37394,11 +37474,11 @@
               "ease": null,
               "is_signature": false,
               "line_slug": "camel",
-              "median_delta": -11.0,
+              "median_delta": -8.3,
               "missing_techs": [
                 "Plate Barding Armor"
               ],
-              "percentile": 9.1,
+              "percentile": 16.7,
               "rank": 10,
               "score": 56.6,
               "special_effects": [],
@@ -37414,7 +37494,7 @@
                 "range": 0,
                 "speed": 1.6
               },
-              "strength": "poor",
+              "strength": "weak",
               "unit_name": "Heavy Camel Rider",
               "unit_slug": "heavy_camel"
             }
@@ -37647,7 +37727,7 @@
               "missing_techs": [
                 "Dry Dock"
               ],
-              "percentile": 55.4,
+              "percentile": 54.5,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -37794,11 +37874,11 @@
                 "Mongol Siege Drill"
               ],
               "ease": null,
-              "is_signature": true,
+              "is_signature": false,
               "line_slug": "scorpion",
               "median_delta": 18.9,
               "missing_techs": [],
-              "percentile": 98.2,
+              "percentile": 49.1,
               "rank": 2,
               "score": 53.5,
               "special_effects": [
@@ -37817,7 +37897,7 @@
                 "range": 8.0,
                 "speed": 0.98
               },
-              "strength": "signature",
+              "strength": "average",
               "unit_name": "Heavy Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -37865,7 +37945,7 @@
               "missing_techs": [
                 "Dry Dock"
               ],
-              "percentile": 38.3,
+              "percentile": 37.5,
               "special_effects": [],
               "stats": {
                 "attack": 50.0,
@@ -37892,7 +37972,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 76.9,
+              "percentile": 80.8,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -37937,15 +38017,12 @@
           ]
         }
       },
-      "strategic_description": "This civ has strong ranged options for concentrated pushes, with Heavy Scorpion providing range advantage and sustained damage output. Limited counter options mean this civ must play aggressively and press its advantage before opponents can mass their army. Solid siege options give flexibility in how to close out games.",
+      "strategic_description": "This civ has strong ranged options for concentrated pushes, with Elite Mangudai providing range advantage and sustained damage output. Limited counter options mean this civ must play aggressively and press its advantage before opponents can mass their army. Solid siege options give flexibility in how to close out games.",
       "strategic_summary": {
         "primary_strength": "ranged",
-        "signature_areas": [
-          "scorpion"
-        ],
+        "signature_areas": [],
         "strong_areas": [
           "cav_archer",
-          "scorpion",
           "ram",
           "fire"
         ],
@@ -37967,7 +38044,7 @@
       "strength_profile": {
         "archer": "weak",
         "bombard_cannon": null,
-        "camel": "poor",
+        "camel": "weak",
         "cannon_galleon": "average",
         "cav_archer": "strong",
         "demo": null,
@@ -37980,7 +38057,7 @@
         "light_cav": "average",
         "militia": "average",
         "ram": "strong",
-        "scorpion": "signature",
+        "scorpion": "average",
         "shock_infantry": null,
         "skirmisher": "weak",
         "spear": "poor",
@@ -38156,7 +38233,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 25.0,
+              "percentile": 23.6,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -38601,7 +38678,7 @@
                 "Carvel Hull",
                 "Shipwright"
               ],
-              "percentile": 28.6,
+              "percentile": 27.3,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -38764,7 +38841,7 @@
               "line_slug": "scorpion",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 56.4,
+              "percentile": 47.3,
               "rank": 25,
               "score": 34.6,
               "special_effects": [
@@ -38799,7 +38876,7 @@
               "is_signature": false,
               "line_slug": "cannon_galleon",
               "missing_techs": [],
-              "percentile": 19.1,
+              "percentile": 18.8,
               "special_effects": [],
               "stats": {
                 "attack": 31.0,
@@ -38824,7 +38901,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 21.2,
+              "percentile": 17.3,
               "special_effects": [],
               "stats": {
                 "attack": 3.0,
@@ -39166,7 +39243,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 23.2,
+              "percentile": 21.8,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -39429,9 +39506,9 @@
               "ease": null,
               "is_signature": false,
               "line_slug": "camel",
-              "median_delta": -2.7,
+              "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 45.5,
+              "percentile": 50.0,
               "rank": 7,
               "score": 64.9,
               "special_effects": [],
@@ -39458,7 +39535,7 @@
               "ease": null,
               "is_signature": true,
               "line_slug": "elephant",
-              "median_delta": 0.0,
+              "median_delta": 0.1,
               "missing_techs": [],
               "percentile": 100.0,
               "rank": 3,
@@ -39673,7 +39750,7 @@
                 "Bracer",
                 "Shipwright"
               ],
-              "percentile": 12.5,
+              "percentile": 10.9,
               "special_effects": [],
               "stats": {
                 "attack": 12.0,
@@ -39823,7 +39900,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 38.2,
+              "percentile": 45.5,
               "rank": 35,
               "score": 30.5,
               "special_effects": [
@@ -39919,7 +39996,7 @@
                 "Shipwright",
                 "Siege Engineers"
               ],
-              "percentile": 48.9,
+              "percentile": 47.9,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -40263,7 +40340,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 21.4,
+              "percentile": 20.0,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -40748,7 +40825,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 32.1,
+              "percentile": 30.9,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -40868,7 +40945,7 @@
               "line_slug": "scorpion",
               "median_delta": -13.5,
               "missing_techs": [],
-              "percentile": 18.2,
+              "percentile": 7.3,
               "rank": 46,
               "score": 21.1,
               "special_effects": [
@@ -40887,7 +40964,7 @@
                 "range": 8.0,
                 "speed": 0.65
               },
-              "strength": "weak",
+              "strength": "poor",
               "unit_name": "Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -40962,7 +41039,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 25.5,
+              "percentile": 25.0,
               "special_effects": [],
               "stats": {
                 "attack": 50.0,
@@ -40987,7 +41064,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 75.0,
+              "percentile": 78.8,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -41072,7 +41149,7 @@
         "light_cav": "strong",
         "militia": "strong",
         "ram": "strong",
-        "scorpion": "weak",
+        "scorpion": "poor",
         "shock_infantry": null,
         "skirmisher": "weak",
         "spear": "poor",
@@ -41296,7 +41373,7 @@
               "is_signature": true,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 94.6,
+              "percentile": 94.5,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -41325,7 +41402,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 0.0,
+              "percentile": -1.8,
               "special_effects": [],
               "stats": {
                 "attack": 6.0,
@@ -41883,7 +41960,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 16.1,
+              "percentile": 14.5,
               "special_effects": [],
               "stats": {
                 "attack": 11.0,
@@ -41896,7 +41973,7 @@
                 "range": 10.0,
                 "speed": 1.65
               },
-              "strength": "weak",
+              "strength": "poor",
               "unit_name": "Elite Caravel",
               "unit_slug": "elite_caravel_portuguese"
             }
@@ -42071,7 +42148,7 @@
               "line_slug": "scorpion",
               "median_delta": -11.1,
               "missing_techs": [],
-              "percentile": 27.3,
+              "percentile": 29.1,
               "rank": 41,
               "score": 23.5,
               "special_effects": [
@@ -42137,7 +42214,7 @@
               "is_signature": false,
               "line_slug": "bombard_cannon",
               "missing_techs": [],
-              "percentile": 77.8,
+              "percentile": 74.1,
               "special_effects": [
                 "Splash damage (0.5 radius)"
               ],
@@ -42173,7 +42250,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 76.6,
+              "percentile": 85.4,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -42200,7 +42277,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 19.2,
+              "percentile": 38.5,
               "special_effects": [],
               "stats": {
                 "attack": 3.0,
@@ -42213,7 +42290,7 @@
                 "range": 0,
                 "speed": 0.6
               },
-              "strength": "weak",
+              "strength": "average",
               "unit_name": "Capped Ram",
               "unit_slug": "siege_ram"
             }
@@ -42275,8 +42352,7 @@
         "weak_areas": [
           "knight",
           "scorpion",
-          "militia",
-          "ram"
+          "militia"
         ]
       },
       "strength_profile": {
@@ -42294,7 +42370,7 @@
         "knight": "weak",
         "light_cav": "average",
         "militia": "weak",
-        "ram": "weak",
+        "ram": "average",
         "scorpion": "weak",
         "shock_infantry": null,
         "skirmisher": "average",
@@ -43049,7 +43125,7 @@
                 "Bracer",
                 "Dry Dock"
               ],
-              "percentile": 53.6,
+              "percentile": 52.7,
               "special_effects": [],
               "stats": {
                 "attack": 14.0,
@@ -43173,7 +43249,7 @@
               "line_slug": "scorpion",
               "median_delta": 10.0,
               "missing_techs": [],
-              "percentile": 94.5,
+              "percentile": 98.2,
               "rank": 4,
               "score": 44.6,
               "special_effects": [
@@ -43241,7 +43317,7 @@
               "is_signature": false,
               "line_slug": "cannon_galleon",
               "missing_techs": [],
-              "percentile": 10.6,
+              "percentile": 10.4,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -43266,7 +43342,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 73.1,
+              "percentile": 76.9,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -43585,7 +43661,7 @@
               "is_signature": true,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 92.9,
+              "percentile": 92.7,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -43883,9 +43959,9 @@
               "ease": null,
               "is_signature": false,
               "line_slug": "camel",
-              "median_delta": 9.3,
+              "median_delta": 12.0,
               "missing_techs": [],
-              "percentile": 72.7,
+              "percentile": 75.0,
               "rank": 3,
               "score": 76.9,
               "special_effects": [],
@@ -44094,7 +44170,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 87.5,
+              "percentile": 87.3,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -44267,7 +44343,7 @@
               "line_slug": "scorpion",
               "median_delta": -13.5,
               "missing_techs": [],
-              "percentile": 16.4,
+              "percentile": 5.5,
               "rank": 47,
               "score": 21.1,
               "special_effects": [
@@ -44286,7 +44362,7 @@
                 "range": 8.0,
                 "speed": 0.65
               },
-              "strength": "weak",
+              "strength": "poor",
               "unit_name": "Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -44360,7 +44436,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 66.0,
+              "percentile": 64.6,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -44373,7 +44449,7 @@
                 "range": 16.0,
                 "speed": 1.27
               },
-              "strength": "strong",
+              "strength": "average",
               "unit_name": "Elite Cannon Galleon",
               "unit_slug": "cannon_galleon"
             }
@@ -44385,7 +44461,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 71.2,
+              "percentile": 75.0,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -44444,7 +44520,6 @@
           "cav_archer",
           "ram",
           "trebuchet",
-          "cannon_galleon",
           "galleon"
         ],
         "strong_columns": [
@@ -44466,7 +44541,7 @@
         "archer": "average",
         "bombard_cannon": "average",
         "camel": "strong",
-        "cannon_galleon": "strong",
+        "cannon_galleon": "average",
         "cav_archer": "strong",
         "demo": null,
         "elephant": null,
@@ -44478,7 +44553,7 @@
         "light_cav": "strong",
         "militia": "average",
         "ram": "strong",
-        "scorpion": "weak",
+        "scorpion": "poor",
         "shock_infantry": null,
         "skirmisher": "average",
         "spear": "poor",
@@ -44680,7 +44755,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 19.6,
+              "percentile": 18.2,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -45200,7 +45275,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 75.0,
+              "percentile": 74.5,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -45316,11 +45391,11 @@
             {
               "bonus_abilities": [],
               "ease": null,
-              "is_signature": true,
+              "is_signature": false,
               "line_slug": "scorpion",
               "median_delta": 9.7,
               "missing_techs": [],
-              "percentile": 92.7,
+              "percentile": 89.1,
               "rank": 5,
               "score": 44.3,
               "special_effects": [
@@ -45341,7 +45416,7 @@
                 "range": 6.0,
                 "speed": 0.99
               },
-              "strength": "signature",
+              "strength": "strong",
               "unit_name": "War Chariot",
               "unit_slug": "war_chariot_shu"
             },
@@ -45355,7 +45430,7 @@
               "line_slug": "scorpion",
               "median_delta": -9.9,
               "missing_techs": [],
-              "percentile": 29.1,
+              "percentile": 3.6,
               "rank": 40,
               "score": 24.7,
               "special_effects": [
@@ -45374,7 +45449,7 @@
                 "range": 8.0,
                 "speed": 0.75
               },
-              "strength": "weak",
+              "strength": "poor",
               "unit_name": "Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -45477,7 +45552,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 69.2,
+              "percentile": 73.1,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -45502,7 +45577,6 @@
       "strategic_summary": {
         "primary_strength": "ranged",
         "signature_areas": [
-          "scorpion",
           "bombard_cannon",
           "cannon_galleon"
         ],
@@ -45545,7 +45619,7 @@
         "light_cav": "poor",
         "militia": "strong",
         "ram": "strong",
-        "scorpion": "signature",
+        "scorpion": "strong",
         "shock_infantry": null,
         "skirmisher": "average",
         "spear": "average",
@@ -45786,7 +45860,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 17.9,
+              "percentile": 16.4,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -46290,7 +46364,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 73.2,
+              "percentile": 72.7,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -46417,7 +46491,7 @@
               "line_slug": "scorpion",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 54.5,
+              "percentile": 43.6,
               "rank": 26,
               "score": 34.6,
               "special_effects": [
@@ -46488,7 +46562,7 @@
               "is_signature": false,
               "line_slug": "cannon_galleon",
               "missing_techs": [],
-              "percentile": 36.2,
+              "percentile": 35.4,
               "special_effects": [],
               "stats": {
                 "attack": 50.0,
@@ -46513,7 +46587,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 67.3,
+              "percentile": 71.2,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -46826,7 +46900,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 16.1,
+              "percentile": 14.5,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -46839,7 +46913,7 @@
                 "range": 8.0,
                 "speed": 1.5
               },
-              "strength": "weak",
+              "strength": "poor",
               "unit_name": "War Galley",
               "unit_slug": "galleon"
             }
@@ -47079,7 +47153,7 @@
         "demo": null,
         "elephant": null,
         "fire": "weak",
-        "galleon": "weak",
+        "galleon": "poor",
         "gunpowder": null,
         "hulk": "weak",
         "knight": "signature",
@@ -47322,7 +47396,7 @@
                 "Bracer",
                 "Shipwright"
               ],
-              "percentile": 10.7,
+              "percentile": 9.1,
               "special_effects": [],
               "stats": {
                 "attack": 12.0,
@@ -47441,11 +47515,11 @@
                 "Siege Units Cheaper"
               ],
               "ease": null,
-              "is_signature": false,
+              "is_signature": true,
               "line_slug": "scorpion",
               "median_delta": 3.9,
               "missing_techs": [],
-              "percentile": 89.1,
+              "percentile": 94.5,
               "rank": 7,
               "score": 38.5,
               "special_effects": [
@@ -47464,7 +47538,7 @@
                 "range": 8.0,
                 "speed": 0.65
               },
-              "strength": "strong",
+              "strength": "signature",
               "unit_name": "Heavy Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -47513,7 +47587,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 23.4,
+              "percentile": 22.9,
               "special_effects": [],
               "stats": {
                 "attack": 50.0,
@@ -47590,6 +47664,7 @@
         "primary_strength": "cavalry",
         "signature_areas": [
           "knight",
+          "scorpion",
           "ram"
         ],
         "strong_areas": [
@@ -47628,7 +47703,7 @@
         "light_cav": "strong",
         "militia": "average",
         "ram": "signature",
-        "scorpion": "strong",
+        "scorpion": "signature",
         "shock_infantry": null,
         "skirmisher": "poor",
         "spear": "average",
@@ -47822,7 +47897,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 14.3,
+              "percentile": 12.7,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -48286,7 +48361,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 71.4,
+              "percentile": 70.9,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -48457,7 +48532,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 0.0,
+              "percentile": 1.8,
               "rank": 56,
               "score": 18.4,
               "special_effects": [
@@ -48550,7 +48625,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 55.3,
+              "percentile": 54.2,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -48952,7 +49027,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 12.5,
+              "percentile": 10.9,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -49217,9 +49292,9 @@
               "ease": null,
               "is_signature": false,
               "line_slug": "camel",
-              "median_delta": -2.7,
+              "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 36.4,
+              "percentile": 41.7,
               "rank": 8,
               "score": 64.9,
               "special_effects": [],
@@ -49492,7 +49567,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 44.6,
+              "percentile": 43.6,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -49636,7 +49711,7 @@
               "line_slug": "scorpion",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 52.7,
+              "percentile": 41.8,
               "rank": 27,
               "score": 34.6,
               "special_effects": [
@@ -49701,7 +49776,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 63.8,
+              "percentile": 62.5,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -49726,7 +49801,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 65.4,
+              "percentile": 69.2,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -50046,7 +50121,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 10.7,
+              "percentile": 9.1,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -50553,7 +50628,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 7.1,
+              "percentile": 5.5,
               "special_effects": [],
               "stats": {
                 "attack": 12.0,
@@ -50702,11 +50777,11 @@
                 "Teutons UT"
               ],
               "ease": null,
-              "is_signature": false,
+              "is_signature": true,
               "line_slug": "scorpion",
               "median_delta": 2.8,
               "missing_techs": [],
-              "percentile": 87.3,
+              "percentile": 92.7,
               "rank": 8,
               "score": 37.4,
               "special_effects": [
@@ -50725,7 +50800,7 @@
                 "range": 8.0,
                 "speed": 0.65
               },
-              "strength": "strong",
+              "strength": "signature",
               "unit_name": "Heavy Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -50803,7 +50878,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 21.3,
+              "percentile": 20.8,
               "special_effects": [],
               "stats": {
                 "attack": 50.0,
@@ -50830,7 +50905,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 17.3,
+              "percentile": 15.4,
               "special_effects": [],
               "stats": {
                 "attack": 3.0,
@@ -50881,6 +50956,7 @@
       "strategic_summary": {
         "primary_strength": "cavalry",
         "signature_areas": [
+          "scorpion",
           "militia",
           "spear"
         ],
@@ -50924,7 +51000,7 @@
         "light_cav": "poor",
         "militia": "signature",
         "ram": "weak",
-        "scorpion": "strong",
+        "scorpion": "signature",
         "shock_infantry": null,
         "skirmisher": "poor",
         "spear": "signature",
@@ -51096,7 +51172,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 8.9,
+              "percentile": 7.3,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -51554,7 +51630,7 @@
                 "Carvel Hull",
                 "Shipwright"
               ],
-              "percentile": 26.8,
+              "percentile": 25.5,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -51709,7 +51785,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 36.4,
+              "percentile": 40.0,
               "rank": 36,
               "score": 30.5,
               "special_effects": [
@@ -51744,7 +51820,7 @@
               "is_signature": false,
               "line_slug": "cannon_galleon",
               "missing_techs": [],
-              "percentile": 14.9,
+              "percentile": 14.6,
               "special_effects": [],
               "stats": {
                 "attack": 31.0,
@@ -52081,7 +52157,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 7.1,
+              "percentile": 5.5,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -52379,9 +52455,9 @@
               "ease": null,
               "is_signature": false,
               "line_slug": "camel",
-              "median_delta": -2.7,
+              "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 27.3,
+              "percentile": 33.3,
               "rank": 9,
               "score": 64.9,
               "special_effects": [],
@@ -52588,7 +52664,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 69.6,
+              "percentile": 69.1,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -52763,7 +52839,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 34.5,
+              "percentile": 38.2,
               "rank": 37,
               "score": 30.5,
               "special_effects": [
@@ -52782,7 +52858,7 @@
                 "range": 7.0,
                 "speed": 0.65
               },
-              "strength": "weak",
+              "strength": "average",
               "unit_name": "Heavy Scorpion",
               "unit_slug": "heavy_scorpion"
             }
@@ -52862,7 +52938,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 53.2,
+              "percentile": 52.1,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -52959,7 +53035,6 @@
           "knight",
           "camel",
           "skirmisher",
-          "scorpion",
           "spear",
           "trebuchet",
           "fire"
@@ -52981,7 +53056,7 @@
         "light_cav": "average",
         "militia": "average",
         "ram": "average",
-        "scorpion": "weak",
+        "scorpion": "average",
         "shock_infantry": null,
         "skirmisher": "poor",
         "spear": "poor",
@@ -53244,7 +53319,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 5.4,
+              "percentile": 3.6,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -53546,11 +53621,11 @@
               "ease": null,
               "is_signature": false,
               "line_slug": "elephant",
-              "median_delta": -1.8,
+              "median_delta": -1.7,
               "missing_techs": [
                 "Blast Furnace"
               ],
-              "percentile": 20.0,
+              "percentile": 33.3,
               "rank": 5,
               "score": 57.3,
               "special_effects": [
@@ -53801,7 +53876,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 42.9,
+              "percentile": 41.8,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -53949,7 +54024,7 @@
               "line_slug": "scorpion",
               "median_delta": -13.5,
               "missing_techs": [],
-              "percentile": 14.5,
+              "percentile": 0.0,
               "rank": 48,
               "score": 21.1,
               "special_effects": [
@@ -54042,7 +54117,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 61.7,
+              "percentile": 60.4,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -54067,7 +54142,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 15.4,
+              "percentile": 13.5,
               "special_effects": [],
               "stats": {
                 "attack": 3.0,
@@ -54080,7 +54155,7 @@
                 "range": 0,
                 "speed": 0.6
               },
-              "strength": "weak",
+              "strength": "poor",
               "unit_name": "Capped Ram",
               "unit_slug": "siege_ram"
             }
@@ -54155,7 +54230,7 @@
         "knight": "poor",
         "light_cav": "weak",
         "militia": "weak",
-        "ram": "weak",
+        "ram": "poor",
         "scorpion": "poor",
         "shock_infantry": "average",
         "skirmisher": "signature",
@@ -54429,7 +54504,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 87.5,
+              "percentile": 87.3,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -54976,7 +55051,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 91.1,
+              "percentile": 90.9,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -55103,7 +55178,7 @@
               "line_slug": "scorpion",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 50.9,
+              "percentile": 36.4,
               "rank": 28,
               "score": 34.6,
               "special_effects": [
@@ -55174,7 +55249,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 87.2,
+              "percentile": 89.6,
               "special_effects": [],
               "stats": {
                 "attack": 60.0,
@@ -55199,7 +55274,7 @@
               "is_signature": false,
               "line_slug": "ram",
               "missing_techs": [],
-              "percentile": 63.5,
+              "percentile": 67.3,
               "special_effects": [],
               "stats": {
                 "attack": 4.0,
@@ -55212,7 +55287,7 @@
                 "range": 0,
                 "speed": 0.6
               },
-              "strength": "average",
+              "strength": "strong",
               "unit_name": "Siege Ram",
               "unit_slug": "siege_ram"
             }
@@ -55244,7 +55319,7 @@
           ]
         }
       },
-      "strategic_description": "This civ is versatile, with strength across Ranged and Infantry -- allowing flexible strategies that adapt to any opponent. Limited counter options mean this civ must play aggressively and press its advantage before opponents can mass their army. Solid siege options give flexibility in how to close out games.",
+      "strategic_description": "This civ is versatile, with strength across Ranged and Infantry -- allowing flexible strategies that adapt to any opponent. Limited counter options mean this civ must play aggressively and press its advantage before opponents can mass their army. An infantry ram push is the signature play -- use Elite Berserk as a meatshield to protect rams pushing into enemy bases.",
       "strategic_summary": {
         "primary_strength": "ranged",
         "signature_areas": [
@@ -55255,6 +55330,7 @@
         "strong_areas": [
           "archer",
           "militia",
+          "ram",
           "cannon_galleon",
           "galleon",
           "hulk"
@@ -55289,7 +55365,7 @@
         "knight": "poor",
         "light_cav": "poor",
         "militia": "signature",
-        "ram": "average",
+        "ram": "strong",
         "scorpion": "average",
         "shock_infantry": null,
         "skirmisher": "average",
@@ -55491,7 +55567,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 3.6,
+              "percentile": 1.8,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -55986,7 +56062,7 @@
                 "Dry Dock",
                 "Shipwright"
               ],
-              "percentile": 30.4,
+              "percentile": 29.1,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -56107,7 +56183,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 32.7,
+              "percentile": 34.5,
               "rank": 38,
               "score": 30.5,
               "special_effects": [
@@ -56200,7 +56276,7 @@
               "is_signature": true,
               "line_slug": "cannon_galleon",
               "missing_techs": [],
-              "percentile": 93.6,
+              "percentile": 93.8,
               "special_effects": [],
               "stats": {
                 "attack": 26.0,
@@ -56503,30 +56579,7 @@
               "is_signature": false,
               "line_slug": "galleon",
               "missing_techs": [],
-              "percentile": 89.3,
-              "special_effects": [],
-              "stats": {
-                "attack": 25.0,
-                "cost_food": 0,
-                "cost_gold": 225.0,
-                "cost_wood": 250.0,
-                "hp": 175.0,
-                "melee_armor": 0.0,
-                "pierce_armor": 10.0,
-                "range": 13.0,
-                "speed": 1.21
-              },
-              "strength": "strong",
-              "unit_name": "Lou Chuan",
-              "unit_slug": "lou_chuan_wu"
-            },
-            {
-              "bonus_abilities": [],
-              "ease": null,
-              "is_signature": false,
-              "line_slug": "galleon",
-              "missing_techs": [],
-              "percentile": 1.8,
+              "percentile": 0.0,
               "special_effects": [],
               "stats": {
                 "attack": 9.0,
@@ -56771,20 +56824,19 @@
         "signature_areas": [],
         "strong_areas": [
           "spear",
-          "shock_infantry",
-          "galleon"
+          "shock_infantry"
         ],
         "strong_columns": [
-          "infantry",
-          "navy"
+          "infantry"
         ],
-        "summary_key": "multi_flexible",
+        "summary_key": "one_area_strong",
         "weak_areas": [
           "light_cav",
           "skirmisher",
           "cav_archer",
           "scorpion",
           "ram",
+          "galleon",
           "fire",
           "hulk"
         ]
@@ -56798,7 +56850,7 @@
         "demo": null,
         "elephant": null,
         "fire": "poor",
-        "galleon": "strong",
+        "galleon": "poor",
         "gunpowder": null,
         "hulk": "poor",
         "knight": null,
@@ -57055,7 +57107,7 @@
               "missing_techs": [
                 "Shipwright"
               ],
-              "percentile": 41.1,
+              "percentile": 40.0,
               "special_effects": [],
               "stats": {
                 "attack": 13.0,
@@ -57071,31 +57123,6 @@
               "strength": "average",
               "unit_name": "Galleon",
               "unit_slug": "galleon"
-            },
-            {
-              "bonus_abilities": [
-                "Ming-Kuang Armor"
-              ],
-              "ease": null,
-              "is_signature": false,
-              "line_slug": "galleon",
-              "missing_techs": [],
-              "percentile": 17.9,
-              "special_effects": [],
-              "stats": {
-                "attack": 26.0,
-                "cost_food": 0,
-                "cost_gold": 225.0,
-                "cost_wood": 250.0,
-                "hp": 175.0,
-                "melee_armor": 0.0,
-                "pierce_armor": 11.0,
-                "range": 13.0,
-                "speed": 1.33
-              },
-              "strength": "weak",
-              "unit_name": "Lou Chuan",
-              "unit_slug": "lou_chuan_wu"
             }
           ],
           "hulk": [
@@ -57232,7 +57259,7 @@
               "missing_techs": [
                 "Siege Engineers"
               ],
-              "percentile": 30.9,
+              "percentile": 32.7,
               "rank": 39,
               "score": 30.5,
               "special_effects": [
@@ -57319,7 +57346,33 @@
               "unit_slug": "traction_trebuchet"
             }
           ],
-          "cannon_galleon": null,
+          "cannon_galleon": [
+            {
+              "bonus_abilities": [
+                "Ming-Kuang Armor"
+              ],
+              "ease": null,
+              "is_signature": false,
+              "line_slug": "cannon_galleon",
+              "missing_techs": [],
+              "percentile": 83.3,
+              "special_effects": [],
+              "stats": {
+                "attack": 26.0,
+                "cost_food": 0,
+                "cost_gold": 225.0,
+                "cost_wood": 250.0,
+                "hp": 175.0,
+                "melee_armor": 0.0,
+                "pierce_armor": 11.0,
+                "range": 13.0,
+                "speed": 1.33
+              },
+              "strength": "strong",
+              "unit_name": "Lou Chuan",
+              "unit_slug": "lou_chuan_wu"
+            }
+          ],
           "ram": [
             {
               "bonus_abilities": [],
@@ -57356,7 +57409,8 @@
         "signature_areas": [],
         "strong_areas": [
           "light_cav",
-          "bombard_cannon"
+          "bombard_cannon",
+          "cannon_galleon"
         ],
         "strong_columns": [
           "cavalry",
@@ -57376,7 +57430,7 @@
         "archer": "weak",
         "bombard_cannon": "strong",
         "camel": null,
-        "cannon_galleon": null,
+        "cannon_galleon": "strong",
         "cav_archer": "poor",
         "demo": null,
         "elephant": null,

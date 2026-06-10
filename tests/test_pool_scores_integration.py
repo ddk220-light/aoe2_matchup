@@ -79,7 +79,9 @@ def test_berserker_pop_cost_axis(berserker_rows_30v30):
         scale="30v30", rows=berserker_rows_30v30,
     )
     cost = _by_axis(out)["cost"]
-    assert cost["final_score"] == pytest.approx(4219.5, abs=10.0)
+    # Re-pinned 2026-06-10: cost weights aligned to simulation_real
+    # (wood 0.8 -> 0.7); was 4219.5 under the old 0.8 coefficient.
+    assert cost["final_score"] == pytest.approx(4204.2, abs=10.0)
 
 
 def test_berserker_cost_cost_axis(berserker_rows_3k):
@@ -88,7 +90,9 @@ def test_berserker_cost_cost_axis(berserker_rows_3k):
         scale="3k", rows=berserker_rows_3k,
     )
     cost = _by_axis(out)["cost"]
-    assert cost["final_score"] == pytest.approx(2763.3, abs=10.0)
+    # Re-pinned 2026-06-10: cost weights aligned to simulation_real
+    # (wood 0.8 -> 0.7); was 2763.3 under the old 0.8 coefficient.
+    assert cost["final_score"] == pytest.approx(2751.4, abs=10.0)
 
 
 def test_berserker_pop_speed_axis(berserker_rows_30v30):

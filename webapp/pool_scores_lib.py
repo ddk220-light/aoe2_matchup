@@ -7,6 +7,7 @@ responsible for reading from matchup_db and writing to pool_scores.db.
 import datetime
 from collections import defaultdict
 
+from simulation_real import weighted_cost as _sim_weighted_cost
 from unit_lines import UNIT_LINES
 
 LAMBDA = 2.0
@@ -42,12 +43,12 @@ def hp_score(team1_hp_pct: float, team2_hp_pct: float, winner: int) -> float:
 def weighted_cost(food: float | None, wood: float | None, gold: float | None) -> float:
     """Resource cost with gold weighted higher.
 
-    NOTE: intentionally frozen at wood x0.8 — the coefficients the committed
-    pool_scores.db was derived with. The canonical live weights are
-    `simulation_real.weighted_cost` (wood x0.7); aligning this requires
-    re-deriving pool_scores.db, so do both together or not at all.
+    Delegates to the canonical `simulation_real.weighted_cost` (food 1.0,
+    wood 0.7, gold 1.5) — same single source `best_units._calc_weighted_cost`
+    uses. The committed pool_scores.db is derived with these weights; if the
+    canonical weights ever change, re-derive pool_scores.db in the same change.
     """
-    return 0.8 * (wood or 0) + (food or 0) + 1.5 * (gold or 0)
+    return _sim_weighted_cost(food, wood, gold)
 
 
 def cost_score(t1_hp: float, t2_hp: float, winner: int,

@@ -47,8 +47,9 @@ def test_weighted_cost_champion_60f_20g():
 
 
 def test_weighted_cost_archer_25f_45w():
-    # Generic crossbow: 25f + 45w -> 25 + 36 = 61
-    assert weighted_cost(food=25, wood=45, gold=0) == 61.0
+    # Generic crossbow: 25f + 45w -> 25 + 31.5 = 56.5 (wood x0.7,
+    # the canonical simulation_real weights).
+    assert weighted_cost(food=25, wood=45, gold=0) == 56.5
 
 
 def test_weighted_cost_handles_none_inputs():

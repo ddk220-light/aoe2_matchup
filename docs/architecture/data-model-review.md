@@ -95,6 +95,37 @@ Then:
 
 ### 3.2 Special abilities: 52 flat columns, a 6-file chain, no schema
 
+> **Status: Phase A (ability-registry portion) landed 2026-06-10** — the §7
+> Phase A resolver/line-graph items are separate and still open.
+> Landed: `analysis/ability_registry.py` (36
+> abilities / 77 params across 11 families, every pipeline property declared
+> with type, default, ref column, source, engine coverage and quirks) +
+> `tests/test_ability_registry.py` (orphan-key allowlist vs the committed ref
+> DB, registry↔config↔schema↔loader↔engine parity, defaults vs
+> `prepare_combat_unit`). Storage/loader **generation from** the registry =
+> Phase B, pending. The orphan audit now lives as a strict-equality test: 20
+> allowlisted dead keys (15 `COMBAT_PROPERTIES` exact-match misses — Feudal-only
+> stages + civ-suffixed uniques; `elite_xianbei_raider`; Sicilians
+> `hand_cannoneer`/`heavy_camel`, Poles `winged_hussar`, Romans `legionary`);
+> any NEW orphan fails the suite. (`Dravidians/elite_elephant` left the orphan
+> list with the 2026-06-10 restore — verified.)
+
+**The family taxonomy** (shared core vs per-unit quirks; full detail in the registry):
+
+| Family | Abilities (params) | Shared core / notable quirks |
+|---|---|---|
+| projectile_volley | extra_projectiles(2), first_attack_burst(1), charge_projectile_volley(3), extra_proj_scatter(1) | extras roll `base_accuracy` (TR primary-only; `EXTRA_PROJ_ACCURACY=0.85` is a dead fallback); CKN/Kipchak extras carry weaker {3:3} profiles, Organ Gun's is NULL (reuses primary) + dat accuracy 0/0; burst is Xianbei-only; abstract collapses charge salvo to 1 replacing shot |
+| area_damage | siege_splash(2), splash_on_hit(2), trample(3), pass_through(2) | Centurion is a CHARGE, not splash; Logistica/Druzhina both flat-5 on disjoint rosters (no stacking path); Urumi trample gated to charged strike (position/js) vs 25%-chance ungated (abstract); miss-graze is a global position-engine mechanic |
+| charge | melee_charge(2), ranged_charge_mods(2), charge_slow(2) | recharge = dat MaxCharge/RechargeRate; `charge_recharge_time` shared with the ranged salvo; abstract adds charge flat (no armor subtract) and ignores range/armor-ignore mods |
+| damage_over_time | bleed(2) | one refreshing slot per target (multi-shooter Curare undermodeled) |
+| on_kill | attack_per_kill(1), hp_per_kill(2), resources_per_kill(3) | stored attack value = CAP not increment; eco trio position-only; food/wood unset (gold=Mapuche) |
+| armor_interaction | ignore_armor(2), armor_strip(1), bonus_damage_reduction(1), damage_reflect(1) | ignore zeroes base armor only; reduction applies to bonus damage only |
+| defensive | dodge_shield(2), block_first_melee(1) | shield absorbs ranged hits then recharges; block is once-ever (Iron Pagoda) |
+| aura | attack_aura(2), hp_aura(2), ally_death_heal(2) | abstract pre-computes from army size at setup (no decay); position/js live-update |
+| form_change | dismount_on_death(10), hp_transform(11), paired_forms(1) | stat blocks `derived:form_tech_chain` since bcdbcbc (config copies = dead inputs); **dismount abstract-only** (missing from batch data + JS); Ratha two-row pattern is the target model |
+| tempo | attack_speed_ramp(2), execute(2) | ramp resets out-of-combat in position engine only |
+| misc | min_attack_range, miss_damage, pop_space, hp_regen, hp_regen_in_combat, projectile_speed, unit_category (1 each) | `min_range` column ≠ dict key; Ordo regen position-only; projectile_speed unused in abstract (no flight); unit_category never reaches `ref_units` |
+
 The census (verified): 52 properties; 19 derived from dat fields, 33 hardcoded;
 stored twice (flat `ref_units` columns for speed + `ref_special_effects` rows for
 audit); 21 config keys are orphans matching no roster unit (silent no-ops — the same
@@ -249,7 +280,7 @@ else regenerates from the dat.
 
 | Phase | Work | Regen/re-sim impact |
 |---|---|---|
-| **A — additive, zero risk** | `ABILITY_REGISTRY` module + parity/orphan-key/lines/availability tests in *report mode*; extract `required_tech_count`; build resolver + line graph alongside current code and **diff their output against current rosters** (expected: exact match incl. the 2026-06-10 Cumans fix; any diff = investigate before proceeding) | none |
+| **A — additive, zero risk** | `ABILITY_REGISTRY` module + parity/orphan-key tests (**done 2026-06-10**, §3.2 status); lines/availability tests in *report mode*; extract `required_tech_count`; build resolver + line graph alongside current code and **diff their output against current rosters** (expected: exact match incl. the 2026-06-10 Cumans fix; any diff = investigate before proceeding) | none |
 | **B — swap sources, stat-neutral** | availability from resolver; `abilities_json` storage + generated loaders; delete `_AVAILABILITY_OVERRIDES`/`CIV_MISSING_UNITS` as data (keep as assertions) | ref regen with scratch-diff neutrality gate (the proven procedure); **no re-sim** if neutral |
 | **C — accuracy fixes (stat-changing)** | derive multi-form stats through the tech chain (Konnik/Jian); apply any missing team bonuses | fingerprint-driven scoped re-sim via `rebuild_matchup_baseline` resume (~minutes, not hours); golden regen; re-derive |
 

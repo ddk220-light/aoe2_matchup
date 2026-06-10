@@ -1,6 +1,6 @@
 # Simulation Engines
 
-*Last verified: 2026-06-09 · game build 177723 · branch `staging`*
+*Last verified: 2026-06-10 · game build 177723 · branch `staging`*
 
 The project contains **three** battle-simulation implementations of the same combat model. They share a single input contract (the "combat dict") and, for the two backend engines, a common call signature, but they make different speed/realism trade-offs and serve different consumers.
 
@@ -47,7 +47,7 @@ A unit whose only base attack class is melee (class 4) does melee damage even at
 
 ### Special abilities and their driving columns
 
-`prepare_combat_unit()` (line 87) reads these fields from the combat dict; each is sourced from the identically-named column of `ref_units` in `webapp/aoe2_reference.db` via `combat_unit_loader.build_combat_dict_from_ref()` (JSON-suffixed columns are parsed into int-keyed dicts).
+`prepare_combat_unit()` (line 87) reads these fields from the combat dict; each is sourced from the identically-named column of `ref_units` in `webapp/aoe2_reference.db` via `combat_unit_loader.build_combat_dict_from_ref()` (JSON-suffixed columns are parsed into int-keyed dicts; one exception: `min_attack_range` is stored as column `min_range`). The full ability/param/engine declaration now lives in `analysis/ability_registry.py`, validated by `tests/test_ability_registry.py`.
 
 | Ability | Driving columns | Example unit |
 |---|---|---|
@@ -56,15 +56,15 @@ A unit whose only base attack class is melee (class 4) does melee damage even at
 | Charge slow on hit | `charge_slow_percent`, `charge_slow_duration` | Bolas Rider |
 | Trample | `trample_percent`, `trample_radius`, `trample_flat_damage` | Cataphract, War Elephant |
 | Siege blast splash | `is_siege_projectile`, `splash_radius` | Mangonel line |
-| Splash on hit | `splash_on_hit_radius`, `splash_on_hit_fraction` | (config-driven splash uniques) |
+| Splash on hit | `splash_on_hit_radius`, `splash_on_hit_fraction` | Grenadier (dat blast level 11; fraction is default-only 1.0, no producer sets it) |
 | Pass-through bolts | `pass_through_percent`, `pass_through_count` | Scorpion line |
 | Extra projectiles | `extra_projectiles`, `extra_projectile_attacks_json` | Chu Ko Nu, Organ Gun |
-| First-attack burst | `first_attack_extra_projectiles` | Kipchak |
+| First-attack burst | `first_attack_extra_projectiles` | Xianbei Raider (the only non-zero row in the committed DB; Kipchak is sustained `extra_projectiles`, not a first-attack burst) |
 | Scattering extras | `extra_proj_scatter` | Organ Gun |
 | Accuracy / miss damage | `accuracy`, `base_accuracy`, `miss_damage_percent` | Arambai (`miss_damage_percent`) |
 | Dodge shield (anti-ranged) | `dodge_shield_max`, `dodge_shield_recharge` | Shrivamsha Rider |
-| Bleed damage-over-time | `bleed_dps`, `bleed_duration` | Urumi-style bleed uniques |
-| Block first melee hit | `block_first_melee` | Sicilian-style first-strike absorb |
+| Bleed damage-over-time | `bleed_dps`, `bleed_duration` | Liao Dao, Tupi Curare (Urumi does not bleed — it is charge+trample) |
+| Block first melee hit | `block_first_melee` | Iron Pagoda (the only carrier; Sicilians have `bonus_damage_reduction`, not this) |
 | Attack stacking per kill | `attack_bonus_per_kill` (value = max cap, +1 per kill) | Jaguar Warrior, Tiger Cavalry |
 | HP heal per kill | `hp_per_kill`, `hp_per_kill_max` | Tiger Cavalry |
 | HP regeneration | `hp_regen` (HP/minute) | Berserk |

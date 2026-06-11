@@ -303,7 +303,15 @@ def _navigate_fast(start_state, scenario_name, logfile) -> bool:
         _dismiss_save_prompt(logfile, timeout=6.0)       # blind No may have missed a slow fade
         if not _reach_load_page(start_state, logfile):
             return False
-    _click_frac(*FP_ROW1, logfile=logfile, label="row", settle=0.4)
+    # Select the staged row BY NAME, not by a blind top-row click: the user's scenario
+    # folder holds other files (default1/default3/The Siege/…), so the staged "Matchup
+    # Run" is NOT reliably the top row — a blind FP_ROW1 click silently test-played the
+    # WRONG scenario (observed: default3's 30v30 Genitours instead of the staged
+    # matchup; the gRPC gate caught it). OCR-find the row; FP_ROW1 is only the fallback.
+    if not find_and_click(scenario_name, R_LIST, logfile, f"row {scenario_name!r}"):
+        if not find_and_click(scenario_name.split()[0], R_LIST, logfile, "row (first word)"):
+            log("[nav] scenario row not found by name — blind top-row fallback", logfile)
+            _click_frac(*FP_ROW1, logfile=logfile, label="row (blind)", settle=0.4)
     _click_frac(*FP_LOAD_BTN, logfile=logfile, label="Load Scenario (button)", settle=0.3)
     # loading the file doesn't re-prompt (we already discarded), so no second save-poll.
     # the small scenario loads in ~2s; a fixed wait beats an OCR poll here (each editor

@@ -431,10 +431,14 @@ def make_live_overlay_video(u1: dict, u2: dict, out_path, battle_clip, sidecar,
     end = min(end_at, D - 0.2) if end_at is not None else D - 3.0
     end = max(end, lead_in + 2.0)
     combat = end - lead_in
-    # Need >5s of "middle" footage for the fast section to actually be a speed-UP
-    # (10s + 5s fixed at 1x leave combat-15s; that must exceed 5s => combat > 20s).
-    ramped = combat > 20.0
-    speed = (combat - 15.0) / 5.0 if ramped else 1.0
+    # Ramp only when the middle can run at >= 2x, and snap the factor to an INTEGER.
+    # Fractional speeds (the old floor allowed 1.0-2.0x) make CFR drop frames on an
+    # irregular cadence — e.g. 1.2x kills every 6th frame, ~10 tiny jumps per second,
+    # which reads as judder exactly where the speedup starts (user-visible; the raw
+    # footage is smooth). Integer factors drop uniformly (every 2nd/3rd frame) and
+    # look clean; fights with combat <= 25s simply play in full at 1x.
+    ramped = combat > 25.0
+    speed = max(2, round((combat - 15.0) / 5.0)) if ramped else 1.0
 
     # ---- END results card + its hold segment ------------------------------------
     # The clip gains a short HOLD after the battle (the armies standing + the in-game

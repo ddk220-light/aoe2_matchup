@@ -23,6 +23,11 @@ def extract_tech_data(tech):
         "civ": getattr(tech, "civ", -1),
         "effect_id": getattr(tech, "effect_id", -1),
         "required_tech": getattr(tech, "required_tech", -1),
+        # How many of the required_techs slots must be satisfied for this tech
+        # to fire (Genie's "min required techs"). Critical for resolving
+        # per-civ availability via civ-bound shadow techs (see
+        # docs/architecture/data-model-review.md section 3.1).
+        "required_tech_count": getattr(tech, "required_tech_count", 0),
     }
 
     # Required techs array (up to 6 prerequisite techs)

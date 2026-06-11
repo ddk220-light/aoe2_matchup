@@ -146,6 +146,8 @@ class AvailabilityResolver:
         self.civ_name_to_id = self.analyzer.civ_name_to_id
         self.effects = self.analyzer.effects
         self._resolution_cache = {}
+        self._upgrade_edges = None
+        self._disabled_closure_cache = {}
 
     # ------------------------------------------------------------------
     # tech-tree effect ingestion
@@ -167,6 +169,42 @@ class AvailabilityResolver:
                 else:
                     hard_disabled.add(cmd["a"])
         return hard_disabled, tree_enabled
+
+    def tech_tree_disabled_unit_closure(self, civ_name) -> frozenset:
+        """Unit ids the civ's tech-tree effect type-2-disables, plus every
+        unit reachable from them via the dat's type-3 upgrade edges (any tech).
+
+        This is the derivational kill switch for "ghost" line rows: a civ
+        whose tech tree disables a line's ROOT unit (e.g. unit 74 Militia for
+        Incas/Mapuche/Muisca/Tupi) can never field ANY tier of that line, so
+        the closure includes the upgraded tiers (75 Man-at-Arms, 77, 473,
+        567 Champion, ...) even though only the root carries the disable
+        command. generate_reference consults this set before emitting a line
+        for a civ. The summary ``disabled_units`` list in civ_tech_trees.json
+        is built from type-103 commands and is EMPTY for these civs — the
+        real disable lives in the raw effect commands parsed here.
+        """
+        if civ_name in self._disabled_closure_cache:
+            return self._disabled_closure_cache[civ_name]
+        if self._upgrade_edges is None:
+            edges = {}
+            for te in self.tech_effect_map.values():
+                for cmd in (te or {}).get("commands", []):
+                    if cmd["type"] == 3:
+                        edges.setdefault(cmd["a"], set()).add(cmd["b"])
+            self._upgrade_edges = edges
+        hard_disabled, _tree_enabled = self._tech_tree_unit_commands(civ_name)
+        closure = set(hard_disabled)
+        stack = list(hard_disabled)
+        while stack:
+            unit_id = stack.pop()
+            for nxt in self._upgrade_edges.get(unit_id, ()):
+                if nxt not in closure:
+                    closure.add(nxt)
+                    stack.append(nxt)
+        result = frozenset(closure)
+        self._disabled_closure_cache[civ_name] = result
+        return result
 
     # ------------------------------------------------------------------
     # fixed point
@@ -290,6 +328,14 @@ def _line_candidate_ids(config):
 def build_report(resolver: AvailabilityResolver = None, ref_db_path=_REF_DB_DEFAULT):
     """Compare resolver output against ref DB standard rosters + overrides.
 
+    The ref DB universe is IMPERIAL-ONLY (2026-06-11 purge): only
+    IMPERIAL_UNITS line configs are compared against ref rows. The resolver
+    itself still stages through Castle internally (the 655/656 Imperial
+    Skirmisher interlock and early-tier OR-slots need the phase order); only
+    the comparison universe shrank. The override comparison below still
+    covers all 17 curated lists, including the Castle-age config entries —
+    that comparison is config-vs-resolver and never touches the ref DB.
+
     Returns a dict:
       total/agree counts, mismatches (list of dicts with civ/slug/age/kind/
       expected/got), overrides {slug: {curated, resolver, match}}, warnings.
@@ -318,7 +364,7 @@ def build_report(resolver: AvailabilityResolver = None, ref_db_path=_REF_DB_DEFA
     mismatches = []
     warnings = []
 
-    age_blocks = (("Castle", 3, CASTLE_UNITS), ("Imperial", 4, IMPERIAL_UNITS))
+    age_blocks = (("Imperial", 4, IMPERIAL_UNITS),)
     for age_label, age_num, config_map in age_blocks:
         for slug in sorted(config_map):
             config = config_map[slug]
@@ -363,10 +409,13 @@ def build_report(resolver: AvailabilityResolver = None, ref_db_path=_REF_DB_DEFA
                 else:
                     agree += 1
 
-    # The 17 curated allowlists (SiegeEngineers truth) vs resolver line presence.
+    # The 17 curated allowlists (SiegeEngineers truth) vs resolver line
+    # presence. Config-vs-resolver only (no ref DB), so the Castle-age config
+    # entries are still compared at their own age.
     overrides = {}
+    override_age_blocks = (("Castle", 3, CASTLE_UNITS), ("Imperial", 4, IMPERIAL_UNITS))
     for slug, curated in _AVAILABILITY_OVERRIDES.items():
-        for age_label, age_num, config_map in age_blocks:
+        for age_label, age_num, config_map in override_age_blocks:
             if slug not in config_map:
                 continue
             config = config_map[slug]

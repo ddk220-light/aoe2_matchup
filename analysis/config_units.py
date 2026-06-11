@@ -613,7 +613,10 @@ IMPERIAL_UNITS = {
         "base_id": 279,
         "display_name": "Heavy Scorpion",
         "unit_class": 55,
-        "availability_tech": None,
+        # Tech 94 enables the Scorpion (unit 279); Shu tree-disables it
+        # (CivTechTrees marks Shu's Scorpion/Heavy Scorpion NotAvailable).
+        # Verified 2026-06-11: 94 is disabled for exactly Shu.
+        "availability_tech": 94,
         "upgrades": [
             (239, 542, "Heavy Scorpion"),
         ],
@@ -644,7 +647,11 @@ IMPERIAL_UNITS = {
         "base_id": 42,
         "display_name": "Trebuchet",
         "unit_class": 54,
-        "availability_tech": None,
+        # Tech 256 enables the packed Trebuchet (unit 331); Shu/Wei/Wu
+        # tree-disable it (they field the Traction Trebuchet instead —
+        # CivTechTrees marks their Trebuchet NotAvailable). Verified
+        # 2026-06-11: 256 is disabled for exactly those three civs.
+        "availability_tech": 256,
         "upgrades": [],
     },
     "traction_trebuchet": {

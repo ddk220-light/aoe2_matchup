@@ -280,19 +280,24 @@ def _win_recorder_cmd(ff, out_mov, cap, fps, audio, mode: str) -> list:
     if audio:
         cmd += ["-f", "dshow", "-i", f"audio={audio}"]
     pixfmt = ["-pix_fmt", "yuv420p"]
+    # p1/ull = nvenc's cheapest mode: the encoder shares the GPU with the game, and
+    # encoder cost directly becomes dropped capture frames when the GPU is saturated.
+    nvenc = ["-c:v", "h264_nvenc", "-preset", "p1", "-tune", "ull", "-cq", "19"]
     if mode == "nv_zero":
-        # the documented ddagrab zero-copy form: D3D11 frames hand straight to nvenc
-        # (no hwmap/scale_cuda — the CUDA interop hangs silently on some setups)
+        # the documented ddagrab zero-copy form: D3D11 frames hand straight to nvenc.
+        # MEASURED WORSE here (18 hitches vs 4-8): nvenc ingesting native-res BGRA
+        # costs more GPU than the hwdownload path on this box — kept as an opt-in
+        # experiment (AOE2_CAPTURE_MODE=zero), not a default.
         cmd += ["-filter_complex",
                 f"ddagrab=output_idx=0:framerate={fps}[v]",
                 "-map", "[v]"]
-        venc = ["-c:v", "h264_nvenc", "-cq", "19"]
+        venc = nvenc
         pixfmt = []                            # nvenc converts on the GPU
     elif mode == "nv_dl":
         cmd += ["-filter_complex",
                 f"ddagrab=output_idx=0:framerate={fps},hwdownload,format=bgra[v]",
                 "-map", "[v]"]
-        venc = ["-c:v", "h264_nvenc", "-cq", "19"]
+        venc = nvenc
     else:
         cmd += ["-f", "gdigrab", "-framerate", str(fps), "-i", "desktop",
                 "-map", f"{1 if audio else 0}:v"]
@@ -323,9 +328,11 @@ def _win_recorder_start(out_mov, cap, fps, w, h):
               "video-only (set AOE2_AUDIO_DEVICE, or '' to silence this)", flush=True)
         audio = ""
     caps = _win_ff_caps(ff)
-    attempts = ([("ddagrab+cuda zero-copy", "nv_zero"),
-                 ("ddagrab+h264_nvenc", "nv_dl")]
-                if caps["ddagrab"] and caps["nvenc"] else [])
+    attempts = []
+    if caps["ddagrab"] and caps["nvenc"]:
+        if os.environ.get("AOE2_CAPTURE_MODE", "").lower() == "zero":
+            attempts.append(("ddagrab+cuda zero-copy", "nv_zero"))
+        attempts.append(("ddagrab+h264_nvenc", "nv_dl"))
     attempts.append(("gdigrab+libx264", "cpu"))
     log_path = str(out_mov) + ".ffmpeg.log"
     for name, mode in attempts:

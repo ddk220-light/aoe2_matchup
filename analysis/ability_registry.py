@@ -10,10 +10,22 @@ tests/test_ability_registry.py against the four places it currently lives:
     webapp/combat_unit_loader.py       (the serving combat dict)
     the three engines (simulation.py / simulation_real.py / static/js/simulate.js)
 
-Phase A is purely additive: nothing imports this module on the serving path
-yet. Phase B (pending) will generate the loader mapping, prepare_combat_unit
-defaults, and a JS manifest FROM this registry. Until then the tests keep the
-hand-maintained chain honest.
+Phase B (landed 2026-06-10) made this registry the GENERATOR for the
+storage/serving chain — the columns stayed, the hand-written lists died:
+
+    analysis/generate_reference.py   builds the ability-column DDL fragment,
+                                     the UPDATE writer, and the
+                                     ref_special_effects audit list from
+                                     iter_params() (legacy column order pinned
+                                     there for schema byte-stability)
+    webapp/combat_unit_loader.py     generates the ability-key mapping of
+                                     build_combat_dict_from_ref()
+    webapp/simulation.py             prepare_combat_unit ability defaults come
+                                     from param defaults declared here
+
+Adding an ability is now: registry entry + config_combat value + one handler
+per engine (see docs/architecture/runbooks.md §3). A JS manifest for
+simulate.js remains a possible future step.
 
 Scope notes
 -----------
@@ -77,11 +89,18 @@ class Param:
     """One scalar/JSON property of an ability.
 
     name          combat-dict key (and ref_units column unless ref_column set)
-    type          python type of the stored value
-    default       neutral value (must match prepare_combat_unit where both define one)
+    type          python type of the stored value (drives the generated SQL
+                  type: int->INTEGER, float->REAL, str->TEXT)
+    default       neutral value (must match prepare_combat_unit where both
+                  define one; drives the generated DDL DEFAULT clause —
+                  None means no DEFAULT / raw NULL passthrough in the loader)
     ref_column    ref_units column name; _SAME -> name; None -> not stored in ref_units
     engines       per-param override of the ability's engines (None -> inherit)
     in_combat_dict  True if combat_unit_loader.build_combat_dict_from_ref emits it
+    audit         ref_special_effects audit-row description written by
+                  generate_reference.py for non-zero values; None -> no scalar
+                  audit row (the volley family is audited via ref_projectiles,
+                  the form *_json blobs via a dedicated description-less row)
     quirks        param-level deviations worth knowing
     """
 
@@ -91,6 +110,7 @@ class Param:
     ref_column: str = _SAME
     engines: tuple = None
     in_combat_dict: bool = True
+    audit: str = None
     quirks: str = ""
 
     @property
@@ -212,7 +232,10 @@ ABILITIES = {
     "extra_proj_scatter": Ability(
         name="extra_proj_scatter",
         family="projectile_volley",
-        params=(_p("extra_proj_scatter", int, 0),),
+        params=(
+            _p("extra_proj_scatter", int, 0,
+               audit="Extra projectiles scatter to different targets"),
+        ),
         source="curated:UNIQUE_COMBAT_PROPERTIES",
         engines=ALL_ENGINES,
         description="Extra projectiles spread to DIFFERENT targets instead of "
@@ -229,7 +252,7 @@ ABILITIES = {
         family="area_damage",
         params=(
             _p("is_siege_projectile", int, 0),
-            _p("splash_radius", float, 0),
+            _p("splash_radius", float, 0, audit="Splash damage radius"),
         ),
         source="dat:class==13 & blast_width>0 & blast_damage>=1 & range>=1",
         engines=ALL_ENGINES,
@@ -246,8 +269,9 @@ ABILITIES = {
         name="splash_on_hit",
         family="area_damage",
         params=(
-            _p("splash_on_hit_radius", float, 0),
+            _p("splash_on_hit_radius", float, 0, audit="Splash on hit radius"),
             _p("splash_on_hit_fraction", float, 1.0,
+               audit="Splash on hit damage fraction",
                engines=(ENGINE_ABSTRACT, ENGINE_POSITION),
                quirks="schema default-only: no extractor or config entry sets "
                       "it — every row holds 1.0. JS ignores it (frontend "
@@ -264,9 +288,9 @@ ABILITIES = {
         name="trample",
         family="area_damage",
         params=(
-            _p("trample_percent", float, 0),
-            _p("trample_radius", float, 0),
-            _p("trample_flat_damage", int, 0),
+            _p("trample_percent", float, 0, audit="Trample damage percent"),
+            _p("trample_radius", float, 0, audit="Trample damage radius"),
+            _p("trample_flat_damage", int, 0, audit="Flat trample damage"),
         ),
         source="dat:blast_attack_level==2 & 0<blast_damage<1 (percent+radius) "
                "+ curated:UNIQUE_COMBAT_PROPERTIES (Ibirapema cone->1.0/0.5) "
@@ -295,8 +319,10 @@ ABILITIES = {
         name="pass_through",
         family="area_damage",
         params=(
-            _p("pass_through_percent", float, 0),
+            _p("pass_through_percent", float, 0,
+               audit="Pass-through damage percent"),
             _p("pass_through_count", int, 1,
+               audit="Number of pass-through targets",
                engines=(ENGINE_ABSTRACT, ENGINE_POSITION),
                quirks="JS has no count — frontend pass-through always hits "
                       "exactly 1 unit behind the target. The position engine "
@@ -320,8 +346,9 @@ ABILITIES = {
         name="melee_charge",
         family="charge",
         params=(
-            _p("charge_attack_melee", int, 0),
-            _p("charge_recharge_time", float, 0),
+            _p("charge_attack_melee", int, 0, audit="Melee charge bonus damage"),
+            _p("charge_recharge_time", float, 0,
+               audit="Charge recharge time in seconds"),
         ),
         source="curated:UNIQUE_COMBAT_PROPERTIES (Coustillier 20/25, Urumi "
                "12/15) + curated:CIV_COMBAT_PROPERTIES (Comitatenses 5, "
@@ -345,8 +372,9 @@ ABILITIES = {
         name="ranged_charge_mods",
         family="charge",
         params=(
-            _p("charge_attack_range", float, 0),
-            _p("charge_ignores_armor", int, 0),
+            _p("charge_attack_range", float, 0, audit="Charge attack range"),
+            _p("charge_ignores_armor", int, 0,
+               audit="Charge attack ignores armor"),
         ),
         source="curated:UNIQUE_COMBAT_PROPERTIES (Fire Lancer)",
         engines=(ENGINE_POSITION, ENGINE_JS),
@@ -361,8 +389,10 @@ ABILITIES = {
         name="charge_slow",
         family="charge",
         params=(
-            _p("charge_slow_percent", float, 0),
-            _p("charge_slow_duration", float, 0),
+            _p("charge_slow_percent", float, 0,
+               audit="Charge projectile slow percentage"),
+            _p("charge_slow_duration", float, 0,
+               audit="Charge projectile slow duration"),
         ),
         source="curated:UNIQUE_COMBAT_PROPERTIES (Bolas Rider)",
         engines=ALL_ENGINES,
@@ -379,8 +409,8 @@ ABILITIES = {
         name="bleed",
         family="damage_over_time",
         params=(
-            _p("bleed_dps", float, 0),
-            _p("bleed_duration", float, 0),
+            _p("bleed_dps", float, 0, audit="Bleed damage per second"),
+            _p("bleed_duration", float, 0, audit="Bleed duration"),
         ),
         source="curated:UNIQUE_COMBAT_PROPERTIES (Liao Dao 3.0/3s) "
                "+ curated:CIV_COMBAT_PROPERTIES (Tupi Curare: arbalester "
@@ -398,7 +428,11 @@ ABILITIES = {
     "attack_per_kill": Ability(
         name="attack_per_kill",
         family="on_kill",
-        params=(_p("attack_bonus_per_kill", int, 0),),
+        params=(
+            _p("attack_bonus_per_kill", int, 0, audit="Attack bonus per kill",
+               quirks="Stored in a REAL column (historical schema); the "
+                      "loaders int()-cast it back."),
+        ),
         source="curated:UNIQUE_COMBAT_PROPERTIES (Jaguar Warrior, Tiger Cavalry)",
         engines=ALL_ENGINES,
         description="+1 attack per kill up to a cap; the stored value IS the "
@@ -408,8 +442,8 @@ ABILITIES = {
         name="hp_per_kill",
         family="on_kill",
         params=(
-            _p("hp_per_kill", int, 0),
-            _p("hp_per_kill_max", int, 0),
+            _p("hp_per_kill", int, 0, audit="HP restored per kill"),
+            _p("hp_per_kill_max", int, 0, audit="Max total HP gained from kills"),
         ),
         source="curated:UNIQUE_COMBAT_PROPERTIES (Tiger Cavalry +10, max +40)",
         engines=ALL_ENGINES,
@@ -422,12 +456,15 @@ ABILITIES = {
         family="on_kill",
         params=(
             _p("food_per_kill", float, 0,
+               audit="Food gained per military unit killed",
                quirks="No producer sets food today (column + engine support "
                       "exist for symmetry with gold)."),
             _p("wood_per_kill", float, 0,
+               audit="Wood gained per military unit killed",
                quirks="No producer sets wood today (column + engine support "
                       "exist for symmetry with gold)."),
-            _p("gold_per_kill", float, 0),
+            _p("gold_per_kill", float, 0,
+               audit="Gold gained per military unit killed"),
         ),
         source="curated:CIV_COMBAT_PROPERTIES (Mapuche mounted units: gold 3)",
         engines=(ENGINE_POSITION,),
@@ -444,8 +481,8 @@ ABILITIES = {
         name="ignore_armor",
         family="armor_interaction",
         params=(
-            _p("ignores_melee_armor", int, 0),
-            _p("ignores_pierce_armor", int, 0),
+            _p("ignores_melee_armor", int, 0, audit="Unit ignores melee armor"),
+            _p("ignores_pierce_armor", int, 0, audit="Unit ignores pierce armor"),
         ),
         source="curated:UNIQUE_COMBAT_PROPERTIES (Leitis, Composite Bowman) "
                "+ curated:CIV_COMBAT_PROPERTIES (Wootz Steel)",
@@ -458,7 +495,7 @@ ABILITIES = {
     "armor_strip": Ability(
         name="armor_strip",
         family="armor_interaction",
-        params=(_p("armor_strip_per_hit", int, 0),),
+        params=(_p("armor_strip_per_hit", int, 0, audit="Armor stripped per hit"),),
         source="curated:UNIQUE_COMBAT_PROPERTIES (Obuch)",
         engines=ALL_ENGINES,
         description="Each hit permanently removes 1 melee + 1 pierce armor "
@@ -467,7 +504,10 @@ ABILITIES = {
     "bonus_damage_reduction": Ability(
         name="bonus_damage_reduction",
         family="armor_interaction",
-        params=(_p("bonus_damage_reduction", float, 0),),
+        params=(
+            _p("bonus_damage_reduction", float, 0,
+               audit="Reduces bonus damage taken"),
+        ),
         source="dat:bonus_damage_resistance + curated:CIV_COMBAT_PROPERTIES "
                "(Sicilians 0.4, Bengalis elephants/Ratha 0.25)",
         engines=ALL_ENGINES,
@@ -477,7 +517,10 @@ ABILITIES = {
     "damage_reflect": Ability(
         name="damage_reflect",
         family="armor_interaction",
-        params=(_p("damage_reflect_percent", float, 0),),
+        params=(
+            _p("damage_reflect_percent", float, 0,
+               audit="Reflects percentage of melee damage"),
+        ),
         source="curated:CIV_COMBAT_PROPERTIES (Khitan Lamellar Armor 0.25)",
         engines=ALL_ENGINES,
         description="Reflects a fraction of received MELEE damage back at "
@@ -491,8 +534,9 @@ ABILITIES = {
         name="dodge_shield",
         family="defensive",
         params=(
-            _p("dodge_shield_max", int, 0),
-            _p("dodge_shield_recharge", float, 0),
+            _p("dodge_shield_max", int, 0, audit="Dodge shield charges"),
+            _p("dodge_shield_recharge", float, 0,
+               audit="Dodge shield recharge time"),
         ),
         source="dat:charge_type==4 (charge_attack=charges, "
                "recharge=charge_attack/charge_recharge_rate)",
@@ -503,7 +547,7 @@ ABILITIES = {
     "block_first_melee": Ability(
         name="block_first_melee",
         family="defensive",
-        params=(_p("block_first_melee", int, 0),),
+        params=(_p("block_first_melee", int, 0, audit="Blocks first melee hit"),),
         source="curated:UNIQUE_COMBAT_PROPERTIES (Iron Pagoda)",
         engines=ALL_ENGINES,
         description="Negates the first melee hit ever received (once per "
@@ -516,8 +560,10 @@ ABILITIES = {
         name="attack_aura",
         family="aura",
         params=(
-            _p("attack_bonus_nearby", float, 0),
-            _p("nearby_bonus_count", int, 0),
+            _p("attack_bonus_nearby", float, 0,
+               audit="Attack bonus per nearby ally"),
+            _p("nearby_bonus_count", int, 0,
+               audit="Max nearby allies for bonus"),
         ),
         source="curated:UNIQUE_COMBAT_PROPERTIES (Monaspa +1, cap 4)",
         engines=ALL_ENGINES,
@@ -533,8 +579,10 @@ ABILITIES = {
         name="hp_aura",
         family="aura",
         params=(
-            _p("hp_nearby_percent_per_unit", float, 0),
-            _p("hp_nearby_max_units", int, 0),
+            _p("hp_nearby_percent_per_unit", float, 0,
+               audit="HP bonus per nearby ally"),
+            _p("hp_nearby_max_units", int, 0,
+               audit="Max nearby allies for HP bonus"),
         ),
         source="curated:CIV_COMBAT_PROPERTIES (Shu Coiled Serpent Array: "
                "+0.5%/unit, cap 30)",
@@ -548,8 +596,9 @@ ABILITIES = {
         name="ally_death_heal",
         family="aura",
         params=(
-            _p("ally_death_heal", float, 0),
-            _p("ally_death_heal_duration", float, 0),
+            _p("ally_death_heal", float, 0, audit="Heal on ally death"),
+            _p("ally_death_heal_duration", float, 0,
+               audit="Heal duration on ally death"),
         ),
         source="curated:UNIQUE_COMBAT_PROPERTIES (Guecha Warrior +5 over 3s)",
         engines=ALL_ENGINES,
@@ -566,19 +615,25 @@ ABILITIES = {
         family="form_change",
         params=(
             _p("dismount_unit_id", int, 0, engines=(), in_combat_dict=False,
+               audit="Dismounts to unit on death",
                quirks="Generation-time input (which dat unit to derive) + "
                       "audit column; no engine or loader reads it."),
-            _p("dismount_hp", int, None),
-            _p("dismount_attack", int, None),
-            _p("dismount_melee_armor", int, None),
-            _p("dismount_pierce_armor", int, None),
+            _p("dismount_hp", int, None, audit="Dismounted unit HP"),
+            _p("dismount_attack", int, None, audit="Dismounted unit attack"),
+            _p("dismount_melee_armor", int, None,
+               audit="Dismounted unit melee armor"),
+            _p("dismount_pierce_armor", int, None,
+               audit="Dismounted unit pierce armor"),
             _p("dismount_attack_speed", float, None,
+               audit="Dismounted unit attack speed",
                quirks="attacks/sec (engines compute reload=1/x). The old "
                       "config block (deleted 2026-06-10) stored "
                       "reload-seconds (2.4) — fixed by the derived block "
                       "(0.4167)."),
-            _p("dismount_attack_delay", float, None),
-            _p("dismount_movement_speed", float, None),
+            _p("dismount_attack_delay", float, None,
+               audit="Dismounted unit attack delay"),
+            _p("dismount_movement_speed", float, None,
+               audit="Dismounted unit movement speed"),
             _p("dismount_attacks_json", str, None),
             _p("dismount_armors_json", str, None),
         ),
@@ -605,20 +660,26 @@ ABILITIES = {
         family="form_change",
         params=(
             _p("hp_transform_threshold", float, 0,
+               audit="HP threshold for form change",
                quirks="Curated ratio (45/70) — genuinely not in the dat."),
             _p("transform_unit_id", int, 0, ref_column=None, engines=(),
                in_combat_dict=False,
                quirks="Generation-time input only (dat unit 1976); unlike "
                       "dismount_unit_id it is not even stored as a column."),
-            _p("transform_hp", int, None),
-            _p("transform_attack", int, None),
-            _p("transform_melee_armor", int, None),
-            _p("transform_pierce_armor", int, None),
-            _p("transform_attack_speed", float, None),
+            _p("transform_hp", int, None, audit="Transformed unit HP"),
+            _p("transform_attack", int, None, audit="Transformed unit attack"),
+            _p("transform_melee_armor", int, None,
+               audit="Transformed unit melee armor"),
+            _p("transform_pierce_armor", int, None,
+               audit="Transformed unit pierce armor"),
+            _p("transform_attack_speed", float, None,
+               audit="Transformed unit attack speed"),
             _p("transform_attack_delay", float, None, engines=(ENGINE_ABSTRACT,),
+               audit="Transformed unit attack delay",
                quirks="Only simulation.py's _parse_transform reads the delay; "
                       "position/JS keep the pre-transform delay."),
-            _p("transform_movement_speed", float, None),
+            _p("transform_movement_speed", float, None,
+               audit="Transformed unit movement speed"),
             _p("transform_attacks_json", str, None),
             _p("transform_armors_json", str, None),
         ),
@@ -656,8 +717,9 @@ ABILITIES = {
         name="attack_speed_ramp",
         family="tempo",
         params=(
-            _p("attack_speed_ramp", float, 0),
-            _p("attack_speed_min", float, 0),
+            _p("attack_speed_ramp", float, 0,
+               audit="Reload reduction per attack"),
+            _p("attack_speed_min", float, 0, audit="Minimum reload floor"),
         ),
         source="curated:UNIQUE_COMBAT_PROPERTIES (Temple Guard 0.2/1.0)",
         engines=ALL_ENGINES,
@@ -670,8 +732,10 @@ ABILITIES = {
         name="execute",
         family="tempo",
         params=(
-            _p("execute_damage_per_step", float, 0),
-            _p("execute_hp_step", float, 0),
+            _p("execute_damage_per_step", float, 0,
+               audit="Bonus damage per missing HP step"),
+            _p("execute_hp_step", float, 0,
+               audit="HP fraction per execute step"),
         ),
         source="curated:UNIQUE_COMBAT_PROPERTIES (Kona: +1 per 15% missing HP)",
         engines=ALL_ENGINES,
@@ -697,7 +761,10 @@ ABILITIES = {
     "miss_damage": Ability(
         name="miss_damage",
         family="misc",
-        params=(_p("miss_damage_percent", float, 0),),
+        params=(
+            _p("miss_damage_percent", float, 0,
+               audit="Missed shot damage to random enemy"),
+        ),
         source="curated:UNIQUE_COMBAT_PROPERTIES (Arambai 1.0)",
         engines=ALL_ENGINES,
         description="Missed shots deal this fraction of damage to a grazed "
@@ -711,7 +778,7 @@ ABILITIES = {
     "pop_space": Ability(
         name="pop_space",
         family="misc",
-        params=(_p("pop_space", float, 1.0),),
+        params=(_p("pop_space", float, 1.0, audit="Population space per unit"),),
         source="curated:UNIQUE_COMBAT_PROPERTIES (Karambit 0.5, Blackwood "
                "Archer 0.5)",
         engines=ALL_ENGINES,
@@ -723,7 +790,7 @@ ABILITIES = {
     "hp_regen": Ability(
         name="hp_regen",
         family="misc",
-        params=(_p("hp_regen", float, 0),),
+        params=(_p("hp_regen", float, 0, audit="HP regeneration per minute"),),
         source="dat:hp_regen (attr 109, stored as rear_attack_modifier) + "
                "tech-effect chain (generate_reference merges the higher of "
                "extracted vs analyzer-tracked attr-109 additions)",
@@ -734,7 +801,11 @@ ABILITIES = {
     "hp_regen_in_combat": Ability(
         name="hp_regen_in_combat",
         family="misc",
-        params=(_p("hp_regen_in_combat", float, 0),),
+        params=(
+            _p("hp_regen_in_combat", float, 0,
+               audit="HP regeneration per minute (in-combat only, Khitan "
+                     "Ordo Cavalry)"),
+        ),
         source="curated:CIV_COMBAT_PROPERTIES (Khitan Ordo Cavalry: "
                "round(base_hp*1.5)/min)",
         engines=(ENGINE_POSITION,),
@@ -775,7 +846,8 @@ ABILITIES = {
 
 
 # ---------------------------------------------------------------------------
-# Convenience accessors (used by the validation tests; cheap, no caching)
+# Convenience accessors (used by the generators in generate_reference.py /
+# combat_unit_loader.py / simulation.py and the validation tests; cheap)
 # ---------------------------------------------------------------------------
 
 def iter_params():
@@ -783,6 +855,21 @@ def iter_params():
     for ability in ABILITIES.values():
         for param in ability.params:
             yield ability, param
+
+
+def stored_params():
+    """[(ability, param)] for params stored as ref_units columns, registry order."""
+    return [(a, p) for a, p in iter_params() if p.column is not None]
+
+
+def params_by_column():
+    """{ref_units column -> param} for every stored param."""
+    return {p.column: p for _, p in stored_params()}
+
+
+def combat_dict_defaults():
+    """{combat-dict key -> default} for every param (loader/engine defaults)."""
+    return {p.name: p.default for _, p in iter_params()}
 
 
 def param_names():

@@ -150,26 +150,35 @@ Steps:
 
 ## 3. New combat stat column / new special ability
 
-This is the verified, current chain (the CLAUDE.md "rule 5" version of this list predates the
-`combat_unit_loader`/`constants.js` refactors):
+Since the Phase B registry refactor (2026-06-10, data-model-review §3.2), the storage/serving
+chain is GENERATED from the ability registry — the old 6-file hand-sync is gone. The chain is:
+**registry entry + config value + one handler per engine**, then regenerate.
 
-1. **`analysis/config_combat.py`** — add the property to `COMBAT_PROPERTIES` (standard units),
+1. **`analysis/ability_registry.py`** — declare the ability/params: name (= combat-dict key),
+   python type (drives the SQL column type), default (drives the DDL `DEFAULT` and every
+   loader's null-coalesce), `ref_column` if it differs from the name, `audit` description
+   (the `ref_special_effects` row text), `engines`, source, quirks. This single entry makes
+   `generate_reference.py` create/write/audit the column (new columns append at the end of
+   `ref_units` — the legacy order pin there needs no edit) and makes
+   `combat_unit_loader.build_combat_dict_from_ref` emit the key. The Flask endpoint needs no
+   change either: `/api/ref/combat-unit` does `SELECT * FROM ref_units` and delegates to that
+   loader.
+2. **`analysis/config_combat.py`** — the curated value: `COMBAT_PROPERTIES` (standard units),
    `UNIQUE_COMBAT_PROPERTIES` (unique-unit abilities), or `CIV_COMBAT_PROPERTIES`
    (civ-conditional overrides). Later dicts win; the dat-extracted value is the base layer.
-2. **`analysis/generate_reference.py`** — add the column to the `ref_units` `CREATE TABLE`
-   (around line 219) and register it in the `special_props` name/description list (around
-   line 968) so the audit trail records it.
-3. **`analysis/generate_main_db.py`** — add the column to the `unit_stats` `CREATE TABLE`
-   (line ~379) and to its own `build_combat_dict_from_ref` (line ~78).
-4. **`webapp/combat_unit_loader.py`** `build_combat_dict_from_ref` — the canonical
-   ref-row → combat-dict mapping shared by `webapp/app.py`, `webapp/best_units.py`, and
-   `webapp/run_matchup_battles.py`. The Flask endpoint itself needs no change: `/api/ref/combat-unit`
-   does `SELECT * FROM ref_units` and delegates entirely to this function.
-5. **`webapp/simulation.py`** `prepare_combat_unit` (line ~87) **and**
-   **`webapp/simulation_real.py`** `prepare_combat_unit` (line ~189) plus the stat-field name
-   lists near lines 331–354 — both engines parse the dict independently.
-6. **`webapp/static/js/simulate.js`** `BattleUnit` — only if the frontend sim must model it.
-7. Rebuild and re-sim: `python -m analysis.generate_reference`, `python -m analysis.generate_main_db`.
+   (Skip if the value is dat-extracted — then extend `combat_properties.py` instead.)
+3. **One handler per engine that models it** — `webapp/simulation.py` (also add the key to its
+   `_PREPARE_SCALAR_KEYS` pin in the same file: the abstract engine consumes a deliberate
+   subset of the registry), `webapp/simulation_real.py`, `webapp/static/js/simulate.js`
+   `BattleUnit`. Declare non-implementing engines honestly in the registry `engines` tuple and
+   `tests/test_ability_registry.py::KNOWN_ENGINE_GAPS` — the presence-parity test fails on
+   undeclared gaps.
+4. **Legacy `analysis/generate_main_db.py`** (only if you care about `aoe2_units.db` — no app
+   route reads it): its `unit_stats` `CREATE TABLE` + INSERT + bespoke
+   `build_combat_dict_from_ref` still need hand edits;
+   `tests/test_ability_registry.py::test_maindb_dict_keys_track_registry` fails until the new
+   param is carried (or consciously excluded there).
+5. Rebuild and re-sim: `python -m analysis.generate_reference`, `python -m analysis.generate_main_db`.
    Because `config_combat.py` is hashed into `sim_version`, **every** matchup row goes stale —
    plan a full re-sim (runbook 2, step 5), then re-derive and regenerate golden.
 

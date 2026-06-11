@@ -16,6 +16,17 @@ range/kiting advantages. No XY positions or unit movement.
 import json
 import random
 
+try:
+    from analysis.ability_registry import combat_dict_defaults
+except ImportError:  # pragma: no cover - webapp/ on sys.path, repo root not
+    import sys
+    from pathlib import Path
+
+    _ROOT = str(Path(__file__).resolve().parents[1])
+    if _ROOT not in sys.path:
+        sys.path.insert(0, _ROOT)
+    from analysis.ability_registry import combat_dict_defaults
+
 # Simulation constants
 DT = 0.1  # 100ms time step
 MAX_TICKS = 2500  # 250 seconds max battle time
@@ -89,11 +100,86 @@ def _parse_transform(row):
     }
 
 
+# Neutral defaults for every ability key, declared once in the registry
+# (analysis/ability_registry.py) — Phase B of data-model-review §3.2.
+_ABILITY_DEFAULTS = combat_dict_defaults()
+
+# Scalar ability keys prepare_combat_unit emits, in the legacy emission order.
+# The KEY LIST stays pinned here because the abstract engine consumes a
+# deliberate SUBSET of the registry (it parses charge_projectile_speed /
+# hp_regen_in_combat without acting on them, and skips position/JS-only params
+# like charge_attack_range and the resources_per_kill trio); the DEFAULTS come
+# from the registry. JSON-carrying params (extra/charge projectile attacks)
+# and the transform/dismount blocks are parsed separately below.
+_PREPARE_SCALAR_KEYS = (
+    "min_attack_range",
+    "is_siege_projectile",
+    "splash_radius",
+    "projectile_speed",
+    "ignores_pierce_armor",
+    "ignores_melee_armor",
+    "trample_percent",
+    "trample_radius",
+    "trample_flat_damage",
+    "bonus_damage_reduction",
+    "extra_projectiles",
+    "splash_on_hit_radius",
+    "splash_on_hit_fraction",
+    "dodge_shield_max",
+    "dodge_shield_recharge",
+    "bleed_dps",
+    "bleed_duration",
+    "block_first_melee",
+    "attack_bonus_per_kill",
+    "first_attack_extra_projectiles",
+    "hp_regen",
+    "hp_regen_in_combat",
+    "pass_through_percent",
+    "pass_through_count",
+    "extra_proj_scatter",
+    "miss_damage_percent",
+    "hp_per_kill",
+    "hp_per_kill_max",
+    "hp_transform_threshold",
+    "pop_space",
+    "armor_strip_per_hit",
+    "charge_attack_melee",
+    "charge_recharge_time",
+    "charge_projectile_count",
+    "charge_projectile_speed",
+    "attack_bonus_nearby",
+    "nearby_bonus_count",
+    "damage_reflect_percent",
+    "attack_speed_ramp",
+    "attack_speed_min",
+    "hp_nearby_percent_per_unit",
+    "hp_nearby_max_units",
+    "execute_damage_per_step",
+    "execute_hp_step",
+    "charge_slow_percent",
+    "charge_slow_duration",
+    "ally_death_heal",
+    "ally_death_heal_duration",
+)
+
+_unknown = [k for k in _PREPARE_SCALAR_KEYS if k not in _ABILITY_DEFAULTS]
+if _unknown:
+    raise RuntimeError(
+        f"prepare_combat_unit keys not declared in the ability registry: {_unknown}"
+    )
+del _unknown
+
+
 def prepare_combat_unit(row):
     """Convert a DB row (sqlite3.Row or dict) into a combat-ready unit dict.
 
     Parses JSON fields once so simulate_battle() never has to.
     Call this ONCE per unit before running simulations.
+
+    Scalar ability keys are filled from _PREPARE_SCALAR_KEYS with neutral
+    defaults from the ability registry; in practice `row` is a dict from
+    combat_unit_loader.build_combat_dict_from_ref (the pre-registry version
+    already relied on dict-only .get() for half of these keys).
     """
     attacks = json.loads(row["attacks_json"]) if row["attacks_json"] else {}
     armors = json.loads(row["armors_json"]) if row["armors_json"] else {}
@@ -101,7 +187,7 @@ def prepare_combat_unit(row):
     armors = {int(k): v for k, v in armors.items()}
     cost = (row["cost_food"] or 0) + (row["cost_wood"] or 0) + (row["cost_gold"] or 0)
 
-    return {
+    unit = {
         "hp": row["hp"],
         "attack": row["attack"],
         "attack_range": row["attack_range"] or 0,
@@ -116,70 +202,29 @@ def prepare_combat_unit(row):
         "cost_food": row["cost_food"] or 0,
         "cost_wood": row["cost_wood"] or 0,
         "cost_gold": row["cost_gold"] or 0,
-        # Combat properties from DB
-        "min_attack_range": row["min_attack_range"] or 0,
-        "is_siege_projectile": row["is_siege_projectile"] or 0,
-        "splash_radius": row["splash_radius"] or 0,
-        "projectile_speed": row["projectile_speed"] or 0,
         "accuracy": row.get("accuracy", 100) if hasattr(row, "get") else 100,
         "base_accuracy": (row.get("base_accuracy", 100) if hasattr(row, "get") else 100) or 100,
-        "ignores_pierce_armor": row["ignores_pierce_armor"] or 0,
-        "ignores_melee_armor": row["ignores_melee_armor"] or 0,
-        "trample_percent": row["trample_percent"] or 0,
-        "trample_radius": row["trample_radius"] or 0,
-        "trample_flat_damage": row["trample_flat_damage"] or 0,
-        "bonus_damage_reduction": row["bonus_damage_reduction"] or 0,
-        # Unique unit mechanics
-        "extra_projectiles": row["extra_projectiles"] or 0,
+    }
+
+    # Scalar ability keys: null-coalesce to the registry default.
+    for key in _PREPARE_SCALAR_KEYS:
+        default = _ABILITY_DEFAULTS[key]
+        unit[key] = row.get(key, default) or default
+
+    unit.update({
+        # Volley damage profiles, parsed once (None = reuse primary profile)
         "extra_projectile_attacks": {
             int(k): v
             for k, v in json.loads(row["extra_projectile_attacks_json"]).items()
         }
         if row["extra_projectile_attacks_json"]
         else None,
-        "splash_on_hit_radius": row["splash_on_hit_radius"] or 0,
-        "splash_on_hit_fraction": row.get("splash_on_hit_fraction") or 1.0,
-        "dodge_shield_max": row["dodge_shield_max"] or 0,
-        "dodge_shield_recharge": row["dodge_shield_recharge"] or 0,
-        "bleed_dps": row["bleed_dps"] or 0,
-        "bleed_duration": row["bleed_duration"] or 0,
-        "block_first_melee": row["block_first_melee"] or 0,
-        "attack_bonus_per_kill": row["attack_bonus_per_kill"] or 0,
-        "first_attack_extra_projectiles": row["first_attack_extra_projectiles"] or 0,
-        "hp_regen": row["hp_regen"] or 0,
-        "hp_regen_in_combat": row.get("hp_regen_in_combat", 0) or 0,
-        "pass_through_percent": row["pass_through_percent"] or 0,
-        "pass_through_count": row.get("pass_through_count", 1) or 1,
-        "extra_proj_scatter": row.get("extra_proj_scatter", 0) or 0,
-        "miss_damage_percent": row.get("miss_damage_percent", 0) or 0,
-        "hp_per_kill": row.get("hp_per_kill", 0) or 0,
-        "hp_per_kill_max": row.get("hp_per_kill_max", 0) or 0,
-        "hp_transform_threshold": row["hp_transform_threshold"] or 0,
-        "pop_space": row["pop_space"] if row["pop_space"] else 1.0,
-        "armor_strip_per_hit": row.get("armor_strip_per_hit", 0) or 0,
-        "charge_attack_melee": row.get("charge_attack_melee", 0) or 0,
-        "charge_recharge_time": row.get("charge_recharge_time", 0) or 0,
-        "charge_projectile_count": row.get("charge_projectile_count", 0) or 0,
         "charge_projectile_attacks": {
             int(k): v
             for k, v in json.loads(row["charge_projectile_attacks_json"]).items()
         }
         if row.get("charge_projectile_attacks_json")
         else None,
-        "charge_projectile_speed": row.get("charge_projectile_speed", 0) or 0,
-        "attack_bonus_nearby": row.get("attack_bonus_nearby", 0) or 0,
-        "nearby_bonus_count": row.get("nearby_bonus_count", 0) or 0,
-        "damage_reflect_percent": row.get("damage_reflect_percent", 0) or 0,
-        "attack_speed_ramp": row.get("attack_speed_ramp", 0) or 0,
-        "attack_speed_min": row.get("attack_speed_min", 0) or 0,
-        "hp_nearby_percent_per_unit": row.get("hp_nearby_percent_per_unit", 0) or 0,
-        "hp_nearby_max_units": row.get("hp_nearby_max_units", 0) or 0,
-        "execute_damage_per_step": row.get("execute_damage_per_step", 0) or 0,
-        "execute_hp_step": row.get("execute_hp_step", 0) or 0,
-        "charge_slow_percent": row.get("charge_slow_percent", 0) or 0,
-        "charge_slow_duration": row.get("charge_slow_duration", 0) or 0,
-        "ally_death_heal": row.get("ally_death_heal", 0) or 0,
-        "ally_death_heal_duration": row.get("ally_death_heal_duration", 0) or 0,
         # Metadata
         "slug": row["slug"]
         if "slug" in (row.keys() if hasattr(row, "keys") else row)
@@ -193,7 +238,7 @@ def prepare_combat_unit(row):
         "paired_unit_slug": row["paired_unit_slug"]
         if "paired_unit_slug" in (row.keys() if hasattr(row, "keys") else row)
         else None,
-        # Dismount on death (Konnik)
+        # Form-change blocks (Jian transform, Konnik dismount)
         "transform": _parse_transform(row),
         "dismount": _parse_dismount(row),
         # Outline size — passed through for position-aware simulation_real.py.
@@ -201,7 +246,8 @@ def prepare_combat_unit(row):
         "outline_size": row.get("outline_size", 0.2) if hasattr(row, "get") else (
             row["outline_size"] if "outline_size" in (row.keys() if hasattr(row, "keys") else row) else 0.2
         ),
-    }
+    })
+    return unit
 
 
 def _does_melee_damage(attacks):

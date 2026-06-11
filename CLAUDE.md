@@ -63,7 +63,7 @@ analysis/config_combat.py (+ config_units.py)
 
 ## Cross-File Sync Rules (forget one → bug)
 
-1. **New combat column/ability** touches: `analysis/generate_reference.py` (schema) or `config_combat.py` → `analysis/generate_main_db.py` → `webapp/combat_unit_loader.py` → `simulation.py prepare_combat_unit()` → `simulation_real.py` → `static/js/simulate.js`. Checklist: runbooks §3.
+1. **New combat column/ability** = registry entry (`analysis/ability_registry.py`) + `config_combat.py` value + one handler per engine (`simulation.py` / `simulation_real.py` / `static/js/simulate.js`) — the ref-DB schema/writer/audit and `combat_unit_loader.py` are GENERATED from the registry; only legacy `generate_main_db.py` still needs hand edits. Checklist: runbooks §3.
 2. **`UNIT_LINES`** — Python source is `webapp/unit_lines.py` (imported by 8 modules); a JS copy lives in `static/js/rankings.js`. Update both.
 3. **Resource cost weights** — `simulation_real.py weighted_cost` ↔ `compute_battle_scores.calc_weighted_cost` (explicit keep-in-lockstep comment).
 4. **`PLAYER_COLORS`** — `replay_core.py` ↔ `clip_export.py` (intentionally different palettes; change together).

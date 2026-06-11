@@ -1,11 +1,18 @@
-"""Validation glue for analysis/ability_registry.py (Phase A, data-model-review §3.2/§3.5).
+"""Validation glue for analysis/ability_registry.py (data-model-review §3.2/§3.5).
 
 Five assertion layers, all against COMMITTED artifacts (no regeneration):
 
   (a) orphan keys      — config_combat.py keys vs the ref-DB roster
   (b) registry<->config — property-name parity with config_combat.py values
-  (c) registry<->schema — declared columns exist in webapp/aoe2_reference.db
-                          and combat-dict keys appear in combat_unit_loader.py
+  (c) registry<->schema/loader — declared columns exist in
+                          webapp/aoe2_reference.db, and the loaders' key sets
+                          track the registry. Since Phase B (2026-06-10) the
+                          generate_reference DDL/writer and the webapp loader
+                          mapping are GENERATED from the registry, so most of
+                          (c) holds by construction for freshly generated
+                          artifacts; the tests stay to pin the COMMITTED DB
+                          (which only changes on regen) and the two
+                          non-generated loaders against the registry.
   (d) registry<->engines — PRESENCE-ONLY check: each param's identifier appears
                           in the source of every engine the registry claims
                           implements it (snake_case for Python; snake OR
@@ -14,9 +21,16 @@ Five assertion layers, all against COMMITTED artifacts (no regeneration):
                           semantic parity lives in tests/test_position_sim_abilities.py
                           and tests/test_frontend_projectile_miss.js.
   (e) defaults         — registry defaults match simulation.prepare_combat_unit
-                          where both define one.
+                          where both define one (by construction since Phase B:
+                          prepare pulls its scalar defaults from the registry —
+                          the test still guards the transform/dismount paths
+                          and the key list itself).
 
-Phase A is declare+validate only; storage/loader generation is Phase B.
+Phase A (declare+validate) landed 2026-06-10; Phase B (the registry generates
+the generate_reference schema/writer/audit list, the combat_unit_loader
+ability mapping, and prepare_combat_unit defaults) landed the same week with a
+byte-identity gate: scratch regen + 1,851-row loader/prepared dict comparison,
+zero diffs.
 """
 
 import json
@@ -41,7 +55,6 @@ from analysis.config_combat import (
 
 ROOT = Path(__file__).resolve().parents[1]
 REF_DB = ROOT / "webapp" / "aoe2_reference.db"
-LOADER_SRC = (ROOT / "webapp" / "combat_unit_loader.py").read_text(encoding="utf-8")
 ENGINE_SOURCES = {
     "abstract": (ROOT / "webapp" / "simulation.py").read_text(encoding="utf-8"),
     "position": (ROOT / "webapp" / "simulation_real.py").read_text(encoding="utf-8"),
@@ -225,6 +238,9 @@ def test_every_curated_param_appears_in_config_or_has_quirks():
 # ---------------------------------------------------------------------------
 
 def test_every_declared_column_exists_in_ref_db(ref_columns):
+    """Holds by construction for a FRESH regen (generate_reference builds the
+    DDL from the registry); kept because the committed DB only changes on
+    regen — this pins it against registry drift in between."""
     missing = [
         (a.name, p.name, p.column)
         for a, p in iter_params()
@@ -236,28 +252,134 @@ def test_every_declared_column_exists_in_ref_db(ref_columns):
     )
 
 
-def test_every_combat_dict_param_appears_in_loader_source():
-    """String-presence check against combat_unit_loader.build_combat_dict_from_ref."""
-    missing = [
-        (a.name, p.name)
-        for a, p in iter_params()
-        if p.in_combat_dict and f'"{p.name}"' not in LOADER_SRC
-    ]
-    assert not missing, (
-        f"Params claimed to be in the combat dict but absent from "
-        f"combat_unit_loader.py: {missing}"
+# Non-ability keys build_combat_dict_from_ref emits (hand-written core stats).
+_LOADER_CORE_KEYS = {
+    "slug", "unit_name", "hp", "attack", "attack_range", "attack_speed",
+    "attack_delay", "melee_armor", "pierce_armor", "movement_speed",
+    "cost_food", "cost_wood", "cost_gold",
+    "upgrade_cost_food", "upgrade_cost_wood", "upgrade_cost_gold",
+    "attacks_json", "armors_json", "accuracy", "base_accuracy", "outline_size",
+}
+
+
+@pytest.fixture(scope="module")
+def ref_rows():
+    """All ref_units rows from the committed DB (sqlite3.Row)."""
+    conn = sqlite3.connect(f"file:{REF_DB.as_posix()}?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    try:
+        yield conn.execute("SELECT * FROM ref_units ORDER BY id").fetchall()
+    finally:
+        conn.close()
+
+
+def test_loader_emits_exactly_core_plus_registry_params(ref_rows):
+    """The webapp loader's key set == hand-written core + every registry param
+    with in_combat_dict=True (both directions). Holds BY CONSTRUCTION since
+    Phase B — the loader iterates the registry — kept as the executable
+    contract for the serving dict, replacing the old string-presence checks."""
+    from combat_unit_loader import build_combat_dict_from_ref  # webapp on sys.path
+
+    d = build_combat_dict_from_ref(ref_rows[0])
+    expected = _LOADER_CORE_KEYS | {
+        p.name for _a, p in iter_params() if p.in_combat_dict
+    }
+    assert set(d) == expected, (
+        f"loader emits {sorted(set(d) - expected)} unexpectedly; "
+        f"missing {sorted(expected - set(d))}"
     )
 
 
-def test_params_not_in_combat_dict_are_really_absent_from_loader():
-    """The inverse guard: if Phase B adds them to the loader, flip the flag."""
-    present = [
-        (a.name, p.name)
-        for a, p in iter_params()
-        if not p.in_combat_dict and f'"{p.name}"' in LOADER_SRC
-    ]
-    assert not present, (
-        f"Params flagged in_combat_dict=False but found in the loader: {present}"
+# ---------------------------------------------------------------------------
+# (c2) the legacy generate_main_db loader vs the registry / the webapp loader.
+# generate_main_db.build_combat_dict_from_ref deliberately KEEPS its bespoke
+# three-source merge (ref_special_effects + ref_projectiles + flat columns):
+# swapping it to the flat-column loader would change aoe2_units.db content
+# (231 dict-level disagreements measured 2026-06-10, classes documented in
+# test_maindb_dict_agrees_with_webapp_loader). These tests make the registry
+# the authority over its KEY SET and pin the value agreement instead.
+# ---------------------------------------------------------------------------
+
+def _maindb_loader_and_cursor():
+    from analysis.generate_main_db import build_combat_dict_from_ref as maindb_loader
+
+    conn = sqlite3.connect(f"file:{REF_DB.as_posix()}?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    return maindb_loader, conn
+
+
+def test_maindb_dict_keys_track_registry(ref_rows):
+    """The legacy aoe2_units.db builder must emit exactly the registry's
+    in_combat_dict params except the three it handles outside the dict
+    (min_attack_range via ref_row['min_range']; unit_category /
+    paired_unit_slug via its config lookups). A NEW registry param fails here
+    until generate_main_db (schema + INSERT + dict) carries it — or is
+    consciously excluded."""
+    maindb_loader, conn = _maindb_loader_and_cursor()
+    try:
+        md = maindb_loader(conn.cursor(), ref_rows[0])
+    finally:
+        conn.close()
+    expected = {p.name for _a, p in iter_params() if p.in_combat_dict} - {
+        "min_attack_range",
+        "unit_category",
+        "paired_unit_slug",
+    }
+    assert set(md) == expected, (
+        f"maindb dict emits {sorted(set(md) - expected)} unexpectedly; "
+        f"missing {sorted(expected - set(md))}"
+    )
+
+
+def test_maindb_dict_agrees_with_webapp_loader(ref_rows):
+    """Value agreement (==, not type-strict: the legacy path floats int-typed
+    values parsed from the TEXT special table; INTEGER affinity restores them
+    on write) over ALL ref rows, with two documented exception classes:
+
+    1. charge_projectile_speed / charge_projectile_attacks_json where
+       charge_projectile_count == 0 — the flat columns keep dat-extracted
+       residue (fire ships etc.); every engine gates the salvo on count > 0,
+       and the legacy DB stores 0/None because no 'charge' ref_projectiles
+       row exists.
+    2. extra_projectile_attacks_json / first_attack_extra_projectiles where
+       extra_projectiles == 0 — no 'extra' ref_projectiles row exists and
+       first_attack_extra_projectiles is not special-effects-audited, so the
+       LEGACY path loses the Xianbei opening burst (known legacy-only gap;
+       no app route reads aoe2_units.db).
+    """
+    from combat_unit_loader import build_combat_dict_from_ref as webapp_loader
+
+    maindb_loader, conn = _maindb_loader_and_cursor()
+    rc = conn.cursor()
+    diffs = []
+    try:
+        for row in ref_rows:
+            md = maindb_loader(rc, row)
+            wd = webapp_loader(row)
+            for k, mv in md.items():
+                if k not in wd or mv == wd[k]:
+                    continue
+                if (
+                    k in ("charge_projectile_speed", "charge_projectile_attacks_json")
+                    and md["charge_projectile_count"] == 0
+                    and wd["charge_projectile_count"] == 0
+                ):
+                    continue
+                if (
+                    k in ("extra_projectile_attacks_json",
+                          "first_attack_extra_projectiles")
+                    and md["extra_projectiles"] == 0
+                    and wd["extra_projectiles"] == 0
+                ):
+                    continue
+                diffs.append(
+                    (row["civ_name"], row["unit_slug"], row["age"], k, mv, wd[k])
+                )
+    finally:
+        conn.close()
+    assert not diffs, (
+        f"{len(diffs)} maindb-vs-webapp value disagreements outside the "
+        f"documented exception classes, e.g. {diffs[:5]}"
     )
 
 
@@ -342,7 +464,9 @@ def test_known_engine_gaps_match_registry():
 # (e) defaults match prepare_combat_unit
 # ---------------------------------------------------------------------------
 
-# Columns prepare_combat_unit indexes with row[...] (no .get fallback).
+# Keys the all-NULL probe row carries. (Pre-Phase-B these were the columns
+# prepare_combat_unit hard-indexed with row[...]; the generated version
+# row.get()s every scalar, but the probe row is kept as-is.)
 _PREPARE_REQUIRED_KEYS = [
     "attacks_json", "armors_json", "cost_food", "cost_wood", "cost_gold",
     "hp", "attack", "attack_range", "attack_speed", "attack_delay",
@@ -361,7 +485,10 @@ _PREPARE_REQUIRED_KEYS = [
 
 def test_registry_defaults_match_prepare_combat_unit():
     """Feed prepare_combat_unit an all-NULL row and compare what it emits with
-    the registry defaults, wherever the two define the same key.
+    the registry defaults, wherever the two define the same key. Scalar keys
+    hold by construction since Phase B (prepare pulls _ABILITY_DEFAULTS from
+    the registry); the test still guards the parsed-JSON/None paths and the
+    pinned key list.
 
     Skipped by construction: form-block params (prepare folds them into
     `transform`/`dismount` sub-dicts), and the eco trio (the abstract engine's
@@ -412,7 +539,9 @@ def test_registry_covers_all_writer_columns(ref_columns):
     """Every special-ability column generate_reference.py writes must be owned
     by exactly one registry param. The non-ability columns of ref_units are
     listed explicitly so a NEW column cannot be added without a registry entry
-    (or a conscious addition to this base list)."""
+    (or a conscious addition to this base list). Since Phase B the writer IS
+    generated from the registry, so this is the committed-DB-side pin of the
+    same invariant."""
     base_columns = {
         # identity / classification
         "id", "civ_name", "unit_name", "unit_slug", "unit_type", "age",

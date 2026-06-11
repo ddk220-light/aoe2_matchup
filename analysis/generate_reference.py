@@ -9,6 +9,7 @@ import json
 import sqlite3
 from pathlib import Path
 
+from .ability_registry import iter_params, params_by_column
 from .combat_properties import get_combat_properties
 from .config import (
     ATTR_ACCURACY,
@@ -198,6 +199,251 @@ def _diff_stats(before, after, armor_class_names):
     return ", ".join(changes) if changes else "(no change)"
 
 
+# ===========================================================================
+# Registry-driven ability storage (Phase B, data-model-review §3.2)
+#
+# The ability-column DDL fragment, the ref_units UPDATE writer, and the
+# ref_special_effects audit list are all BUILT from analysis/ability_registry.py
+# — an ability declared there needs no edit in this file. Only the ORDER pins
+# below are hand-written: the committed aoe2_reference.db schema predates the
+# registry, so existing columns/audit rows keep their historical order
+# (PRAGMA table_info / audit-row-id byte-stability across regens). New registry
+# params append after the pinned block automatically, in registry order; a
+# stale pin entry (param renamed or deleted in the registry) fails generation
+# immediately.
+# ===========================================================================
+
+# ref_units column order for the generated DDL fragment + UPDATE writer.
+_ABILITY_COLUMN_ORDER = (
+    "extra_projectiles",
+    "extra_projectile_attacks_json",
+    "first_attack_extra_projectiles",
+    "charge_projectile_count",
+    "charge_projectile_attacks_json",
+    "charge_projectile_speed",
+    "charge_attack_range",
+    "charge_ignores_armor",
+    "ignores_melee_armor",
+    "ignores_pierce_armor",
+    "trample_percent",
+    "trample_radius",
+    "trample_flat_damage",
+    "bonus_damage_reduction",
+    "splash_on_hit_radius",
+    "splash_on_hit_fraction",
+    "dodge_shield_max",
+    "dodge_shield_recharge",
+    "bleed_dps",
+    "bleed_duration",
+    "block_first_melee",
+    "attack_bonus_per_kill",
+    "hp_transform_threshold",
+    "hp_regen",
+    "hp_regen_in_combat",
+    "food_per_kill",
+    "wood_per_kill",
+    "gold_per_kill",
+    "pass_through_percent",
+    "pass_through_count",
+    "extra_proj_scatter",
+    "miss_damage_percent",
+    "hp_per_kill",
+    "hp_per_kill_max",
+    "pop_space",
+    "armor_strip_per_hit",
+    "charge_attack_melee",
+    "charge_recharge_time",
+    "damage_reflect_percent",
+    "attack_bonus_nearby",
+    "nearby_bonus_count",
+    "hp_nearby_percent_per_unit",
+    "hp_nearby_max_units",
+    "charge_slow_percent",
+    "charge_slow_duration",
+    "attack_speed_ramp",
+    "attack_speed_min",
+    "execute_damage_per_step",
+    "execute_hp_step",
+    "ally_death_heal",
+    "ally_death_heal_duration",
+    "splash_radius",
+    "is_siege_projectile",
+    "dismount_unit_id",
+    "dismount_hp",
+    "dismount_attack",
+    "dismount_melee_armor",
+    "dismount_pierce_armor",
+    "dismount_attack_speed",
+    "dismount_attack_delay",
+    "dismount_movement_speed",
+    "dismount_attacks_json",
+    "dismount_armors_json",
+    "transform_hp",
+    "transform_attack",
+    "transform_melee_armor",
+    "transform_pierce_armor",
+    "transform_attack_speed",
+    "transform_attack_delay",
+    "transform_movement_speed",
+    "transform_attacks_json",
+    "transform_armors_json",
+)
+
+# Registry columns that live in the hand-written base-stat DDL section
+# (written by the row INSERT from dat unit_data, not by the ability writer).
+# min_range is additionally rewritten by the ability UPDATE (legacy behavior).
+_BASE_SECTION_COLUMNS = {"projectile_speed", "min_range"}
+
+# ref_special_effects scalar audit-row order (descriptions live in the registry).
+_AUDIT_ORDER = (
+    "ignores_melee_armor",
+    "ignores_pierce_armor",
+    "trample_percent",
+    "trample_radius",
+    "trample_flat_damage",
+    "bonus_damage_reduction",
+    "splash_radius",
+    "splash_on_hit_radius",
+    "splash_on_hit_fraction",
+    "dodge_shield_max",
+    "dodge_shield_recharge",
+    "bleed_dps",
+    "bleed_duration",
+    "block_first_melee",
+    "attack_bonus_per_kill",
+    "charge_attack_range",
+    "charge_ignores_armor",
+    "hp_transform_threshold",
+    "dismount_unit_id",
+    "hp_regen",
+    "hp_regen_in_combat",
+    "food_per_kill",
+    "wood_per_kill",
+    "gold_per_kill",
+    "pass_through_percent",
+    "pass_through_count",
+    "extra_proj_scatter",
+    "miss_damage_percent",
+    "hp_per_kill",
+    "hp_per_kill_max",
+    "pop_space",
+    "armor_strip_per_hit",
+    "charge_attack_melee",
+    "charge_recharge_time",
+    "dismount_hp",
+    "dismount_attack",
+    "dismount_melee_armor",
+    "dismount_pierce_armor",
+    "dismount_attack_speed",
+    "dismount_attack_delay",
+    "dismount_movement_speed",
+    "attack_bonus_nearby",
+    "nearby_bonus_count",
+    "damage_reflect_percent",
+    "hp_nearby_percent_per_unit",
+    "hp_nearby_max_units",
+    "charge_slow_percent",
+    "charge_slow_duration",
+    "attack_speed_ramp",
+    "attack_speed_min",
+    "execute_damage_per_step",
+    "execute_hp_step",
+    "ally_death_heal",
+    "ally_death_heal_duration",
+    "transform_hp",
+    "transform_attack",
+    "transform_melee_armor",
+    "transform_pierce_armor",
+    "transform_attack_speed",
+    "transform_attack_delay",
+    "transform_movement_speed",
+)
+
+_SQL_TYPES = {int: "INTEGER", float: "REAL", str: "TEXT"}
+# Historical schema quirks: the column type deviates from the param's python
+# type. attack_bonus_per_kill has always been REAL; changing it would break
+# PRAGMA-level schema stability for zero benefit.
+_SQL_TYPE_OVERRIDES = {"attack_bonus_per_kill": "REAL"}
+
+
+def _pin_plus_registry_tail(pin, candidates_in_registry_order, what):
+    """Pinned legacy order first, then any new registry names appended.
+
+    Raises if the pin references a name the registry no longer declares.
+    """
+    stale = [n for n in pin if n not in candidates_in_registry_order]
+    if stale:
+        raise RuntimeError(
+            f"{what} pin references names absent from the ability registry: "
+            f"{stale} — update the pin in analysis/generate_reference.py."
+        )
+    pinned = set(pin)
+    return list(pin) + [n for n in candidates_in_registry_order if n not in pinned]
+
+
+def _ability_columns():
+    """{column: param} + the DDL/writer column order (pin + registry tail)."""
+    by_col = params_by_column()
+    candidates = [
+        c for c in by_col if c not in _BASE_SECTION_COLUMNS
+    ]  # dict preserves registry order
+    order = _pin_plus_registry_tail(_ABILITY_COLUMN_ORDER, candidates, "DDL column")
+    return by_col, order
+
+
+def _ability_ddl_fragment():
+    """Column declarations for the ability block of CREATE TABLE ref_units."""
+    by_col, order = _ability_columns()
+    lines = []
+    for col in order:
+        param = by_col[col]
+        sql_type = _SQL_TYPE_OVERRIDES.get(col, _SQL_TYPES[param.type])
+        decl = f"{col} {sql_type}"
+        if param.default is not None:
+            decl += f" DEFAULT {param.default}"
+        lines.append(decl)
+    return ",\n            ".join(lines)
+
+
+def _ability_writer():
+    """(UPDATE SQL, value-extractor) for the ability columns of a ref row.
+
+    Values come from combat_props via each param's combat-dict name and
+    registry default (e.g. column min_range <- combat_props['min_attack_range']).
+    """
+    by_col, order = _ability_columns()
+    writer_cols = ["min_range"] + order
+    sql = (
+        "UPDATE ref_units SET "
+        + ", ".join(f"{c}=?" for c in writer_cols)
+        + " WHERE id=?"
+    )
+    col_params = [(c, by_col[c]) for c in writer_cols]
+
+    def values(combat_props):
+        return [combat_props.get(p.name, p.default) for _c, p in col_params]
+
+    return sql, values
+
+
+def _audit_props():
+    """[(param_name, description)] for scalar ref_special_effects audit rows."""
+    audited = {p.name: p.audit for _a, p in iter_params() if p.audit is not None}
+    order = _pin_plus_registry_tail(_AUDIT_ORDER, list(audited), "audit")
+    return [(n, audited[n]) for n in order]
+
+
+# JSON-valued form-block properties get a dedicated (description-less) audit row.
+_FORM_JSON_AUDIT_PROPS = tuple(
+    p.name
+    for a, p in iter_params()
+    if a.family == "form_change" and p.type is str and p.column is not None
+)
+
+_ABILITY_UPDATE_SQL, _ability_update_values = _ability_writer()
+_SPECIAL_AUDIT_PROPS = _audit_props()
+
+
 def generate_reference_database(analyzer):
     """Generate the reference/audit database with detailed stat breakdowns."""
     ref_db_path = REF_DB_PATH
@@ -214,8 +460,9 @@ def generate_reference_database(analyzer):
         for ac in json.load(open(ac_file)):
             armor_class_names[ac["id"]] = ac["name"]
 
-    # Create tables
-    cursor.executescript("""
+    # Create tables. The ability-column block is generated from
+    # analysis/ability_registry.py (see _ability_ddl_fragment above).
+    cursor.executescript(f"""
         CREATE TABLE ref_units (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             civ_name TEXT NOT NULL,
@@ -243,81 +490,8 @@ def generate_reference_database(analyzer):
             upgrade_cost_food INTEGER DEFAULT 0,
             upgrade_cost_wood INTEGER DEFAULT 0,
             upgrade_cost_gold INTEGER DEFAULT 0,
-            -- Combat properties (inline for direct sim access)
-            extra_projectiles INTEGER DEFAULT 0,
-            extra_projectile_attacks_json TEXT,
-            first_attack_extra_projectiles INTEGER DEFAULT 0,
-            charge_projectile_count INTEGER DEFAULT 0,
-            charge_projectile_attacks_json TEXT,
-            charge_projectile_speed REAL DEFAULT 0,
-            charge_attack_range REAL DEFAULT 0,
-            charge_ignores_armor INTEGER DEFAULT 0,
-            ignores_melee_armor INTEGER DEFAULT 0,
-            ignores_pierce_armor INTEGER DEFAULT 0,
-            trample_percent REAL DEFAULT 0,
-            trample_radius REAL DEFAULT 0,
-            trample_flat_damage INTEGER DEFAULT 0,
-            bonus_damage_reduction REAL DEFAULT 0,
-            splash_on_hit_radius REAL DEFAULT 0,
-            splash_on_hit_fraction REAL DEFAULT 1.0,
-            dodge_shield_max INTEGER DEFAULT 0,
-            dodge_shield_recharge REAL DEFAULT 0,
-            bleed_dps REAL DEFAULT 0,
-            bleed_duration REAL DEFAULT 0,
-            block_first_melee INTEGER DEFAULT 0,
-            attack_bonus_per_kill REAL DEFAULT 0,
-            hp_transform_threshold REAL DEFAULT 0,
-            hp_regen REAL DEFAULT 0,
-            hp_regen_in_combat REAL DEFAULT 0,
-            food_per_kill REAL DEFAULT 0,
-            wood_per_kill REAL DEFAULT 0,
-            gold_per_kill REAL DEFAULT 0,
-            pass_through_percent REAL DEFAULT 0,
-            pass_through_count INTEGER DEFAULT 1,
-            extra_proj_scatter INTEGER DEFAULT 0,
-            miss_damage_percent REAL DEFAULT 0,
-            hp_per_kill INTEGER DEFAULT 0,
-            hp_per_kill_max INTEGER DEFAULT 0,
-            pop_space REAL DEFAULT 1.0,
-            armor_strip_per_hit INTEGER DEFAULT 0,
-            charge_attack_melee INTEGER DEFAULT 0,
-            charge_recharge_time REAL DEFAULT 0,
-            damage_reflect_percent REAL DEFAULT 0,
-            attack_bonus_nearby REAL DEFAULT 0,
-            nearby_bonus_count INTEGER DEFAULT 0,
-            hp_nearby_percent_per_unit REAL DEFAULT 0,
-            hp_nearby_max_units INTEGER DEFAULT 0,
-            charge_slow_percent REAL DEFAULT 0,
-            charge_slow_duration REAL DEFAULT 0,
-            attack_speed_ramp REAL DEFAULT 0,
-            attack_speed_min REAL DEFAULT 0,
-            execute_damage_per_step REAL DEFAULT 0,
-            execute_hp_step REAL DEFAULT 0,
-            ally_death_heal REAL DEFAULT 0,
-            ally_death_heal_duration REAL DEFAULT 0,
-            splash_radius REAL DEFAULT 0,
-            is_siege_projectile INTEGER DEFAULT 0,
-            -- Dismount on death (Konnik etc.)
-            dismount_unit_id INTEGER DEFAULT 0,
-            dismount_hp INTEGER,
-            dismount_attack INTEGER,
-            dismount_melee_armor INTEGER,
-            dismount_pierce_armor INTEGER,
-            dismount_attack_speed REAL,
-            dismount_attack_delay REAL,
-            dismount_movement_speed REAL,
-            dismount_attacks_json TEXT,
-            dismount_armors_json TEXT,
-            -- Transform on HP threshold (Jian Swordsman etc.)
-            transform_hp INTEGER,
-            transform_attack INTEGER,
-            transform_melee_armor INTEGER,
-            transform_pierce_armor INTEGER,
-            transform_attack_speed REAL,
-            transform_attack_delay REAL,
-            transform_movement_speed REAL,
-            transform_attacks_json TEXT,
-            transform_armors_json TEXT
+            -- Ability columns (generated from analysis/ability_registry.py)
+            {_ability_ddl_fragment()}
         );
         CREATE TABLE ref_techs_applied (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -946,76 +1120,11 @@ def generate_reference_database(analyzer):
             for k in form_block:
                 derived_form_props[k] = "derived:form_tech_chain"
 
-        special_props = [
-            ("ignores_melee_armor", "Unit ignores melee armor"),
-            ("ignores_pierce_armor", "Unit ignores pierce armor"),
-            ("trample_percent", "Trample damage percent"),
-            ("trample_radius", "Trample damage radius"),
-            ("trample_flat_damage", "Flat trample damage"),
-            ("bonus_damage_reduction", "Reduces bonus damage taken"),
-            ("splash_radius", "Splash damage radius"),
-            ("splash_on_hit_radius", "Splash on hit radius"),
-            ("splash_on_hit_fraction", "Splash on hit damage fraction"),
-            ("dodge_shield_max", "Dodge shield charges"),
-            ("dodge_shield_recharge", "Dodge shield recharge time"),
-            ("bleed_dps", "Bleed damage per second"),
-            ("bleed_duration", "Bleed duration"),
-            ("block_first_melee", "Blocks first melee hit"),
-            ("attack_bonus_per_kill", "Attack bonus per kill"),
-            ("charge_attack_range", "Charge attack range"),
-            ("charge_ignores_armor", "Charge attack ignores armor"),
-            ("hp_transform_threshold", "HP threshold for form change"),
-            ("dismount_unit_id", "Dismounts to unit on death"),
-            ("hp_regen", "HP regeneration per minute"),
-            ("hp_regen_in_combat", "HP regeneration per minute (in-combat only, Khitan Ordo Cavalry)"),
-            ("food_per_kill", "Food gained per military unit killed"),
-            ("wood_per_kill", "Wood gained per military unit killed"),
-            ("gold_per_kill", "Gold gained per military unit killed"),
-            ("pass_through_percent", "Pass-through damage percent"),
-            ("pass_through_count", "Number of pass-through targets"),
-            ("extra_proj_scatter", "Extra projectiles scatter to different targets"),
-            ("miss_damage_percent", "Missed shot damage to random enemy"),
-            ("hp_per_kill", "HP restored per kill"),
-            ("hp_per_kill_max", "Max total HP gained from kills"),
-            ("pop_space", "Population space per unit"),
-            ("armor_strip_per_hit", "Armor stripped per hit"),
-            ("charge_attack_melee", "Melee charge bonus damage"),
-            ("charge_recharge_time", "Charge recharge time in seconds"),
-            ("dismount_hp", "Dismounted unit HP"),
-            ("dismount_attack", "Dismounted unit attack"),
-            ("dismount_melee_armor", "Dismounted unit melee armor"),
-            ("dismount_pierce_armor", "Dismounted unit pierce armor"),
-            ("dismount_attack_speed", "Dismounted unit attack speed"),
-            ("dismount_attack_delay", "Dismounted unit attack delay"),
-            ("dismount_movement_speed", "Dismounted unit movement speed"),
-            ("attack_bonus_nearby", "Attack bonus per nearby ally"),
-            ("nearby_bonus_count", "Max nearby allies for bonus"),
-            ("damage_reflect_percent", "Reflects percentage of melee damage"),
-            ("hp_nearby_percent_per_unit", "HP bonus per nearby ally"),
-            ("hp_nearby_max_units", "Max nearby allies for HP bonus"),
-            ("charge_slow_percent", "Charge projectile slow percentage"),
-            ("charge_slow_duration", "Charge projectile slow duration"),
-            ("attack_speed_ramp", "Reload reduction per attack"),
-            ("attack_speed_min", "Minimum reload floor"),
-            ("execute_damage_per_step", "Bonus damage per missing HP step"),
-            ("execute_hp_step", "HP fraction per execute step"),
-            ("ally_death_heal", "Heal on ally death"),
-            ("ally_death_heal_duration", "Heal duration on ally death"),
-            ("transform_hp", "Transformed unit HP"),
-            ("transform_attack", "Transformed unit attack"),
-            ("transform_melee_armor", "Transformed unit melee armor"),
-            ("transform_pierce_armor", "Transformed unit pierce armor"),
-            ("transform_attack_speed", "Transformed unit attack speed"),
-            ("transform_attack_delay", "Transformed unit attack delay"),
-            ("transform_movement_speed", "Transformed unit movement speed"),
-        ]
+        # Scalar audit rows: names/descriptions generated from the registry
+        # (legacy row order pinned in _AUDIT_ORDER above).
+        special_props = _SPECIAL_AUDIT_PROPS
         # Also store JSON-valued properties (attacks/armors for dismount/transform)
-        for json_prop in (
-            "dismount_attacks_json",
-            "dismount_armors_json",
-            "transform_attacks_json",
-            "transform_armors_json",
-        ):
+        for json_prop in _FORM_JSON_AUDIT_PROPS:
             val = combat_props.get(json_prop)
             if val:
                 cursor.execute(
@@ -1105,155 +1214,17 @@ def generate_reference_database(analyzer):
                 ),
             )
 
-        # Update ref_units with combat properties (inline columns for direct sim access)
-        _has_transform = combat_props.get("transform_hp") or combat_props.get(
-            "hp_transform_threshold"
-        )
+        # Update ref_units with combat properties (inline columns for direct
+        # sim access). SQL + per-column values are generated from the registry
+        # (_ability_writer above): each column receives
+        # combat_props.get(param.name, param.default). The old hand-written
+        # form-block gating (int() casts + write-only-if-dismount_hp/transform
+        # guards) became dead when the stat blocks started arriving complete
+        # and already-rounded from calculate_form_stats — verified by a
+        # scratch-regen byte-identity diff when this writer landed.
         cursor.execute(
-            """UPDATE ref_units SET
-               min_range=?,
-               extra_projectiles=?, extra_projectile_attacks_json=?,
-               first_attack_extra_projectiles=?,
-               charge_projectile_count=?, charge_projectile_attacks_json=?,
-               charge_projectile_speed=?, charge_attack_range=?, charge_ignores_armor=?,
-               ignores_melee_armor=?, ignores_pierce_armor=?,
-               trample_percent=?, trample_radius=?, trample_flat_damage=?,
-               bonus_damage_reduction=?,
-               splash_on_hit_radius=?, splash_on_hit_fraction=?,
-               dodge_shield_max=?, dodge_shield_recharge=?,
-               bleed_dps=?, bleed_duration=?,
-               block_first_melee=?, attack_bonus_per_kill=?,
-               hp_transform_threshold=?, hp_regen=?, hp_regen_in_combat=?,
-               food_per_kill=?, wood_per_kill=?, gold_per_kill=?,
-               pass_through_percent=?,
-               pass_through_count=?, extra_proj_scatter=?,
-               miss_damage_percent=?, hp_per_kill=?, hp_per_kill_max=?,
-               pop_space=?, armor_strip_per_hit=?,
-               charge_attack_melee=?, charge_recharge_time=?,
-               damage_reflect_percent=?,
-               attack_bonus_nearby=?, nearby_bonus_count=?,
-               hp_nearby_percent_per_unit=?, hp_nearby_max_units=?,
-               charge_slow_percent=?, charge_slow_duration=?,
-               attack_speed_ramp=?, attack_speed_min=?,
-               execute_damage_per_step=?, execute_hp_step=?,
-               ally_death_heal=?, ally_death_heal_duration=?,
-               splash_radius=?, is_siege_projectile=?,
-               dismount_unit_id=?,
-               dismount_hp=?, dismount_attack=?,
-               dismount_melee_armor=?, dismount_pierce_armor=?,
-               dismount_attack_speed=?, dismount_attack_delay=?,
-               dismount_movement_speed=?,
-               dismount_attacks_json=?, dismount_armors_json=?,
-               transform_hp=?, transform_attack=?,
-               transform_melee_armor=?, transform_pierce_armor=?,
-               transform_attack_speed=?, transform_attack_delay=?,
-               transform_movement_speed=?,
-               transform_attacks_json=?, transform_armors_json=?
-               WHERE id=?""",
-            (
-                combat_props.get("min_attack_range", 0),
-                combat_props.get("extra_projectiles", 0),
-                combat_props.get("extra_projectile_attacks_json"),
-                combat_props.get("first_attack_extra_projectiles", 0),
-                combat_props.get("charge_projectile_count", 0),
-                combat_props.get("charge_projectile_attacks_json"),
-                combat_props.get("charge_projectile_speed", 0),
-                combat_props.get("charge_attack_range", 0),
-                combat_props.get("charge_ignores_armor", 0),
-                combat_props.get("ignores_melee_armor", 0),
-                combat_props.get("ignores_pierce_armor", 0),
-                combat_props.get("trample_percent", 0),
-                combat_props.get("trample_radius", 0),
-                combat_props.get("trample_flat_damage", 0),
-                combat_props.get("bonus_damage_reduction", 0),
-                combat_props.get("splash_on_hit_radius", 0),
-                combat_props.get("splash_on_hit_fraction", 1.0),
-                combat_props.get("dodge_shield_max", 0),
-                combat_props.get("dodge_shield_recharge", 0),
-                combat_props.get("bleed_dps", 0),
-                combat_props.get("bleed_duration", 0),
-                combat_props.get("block_first_melee", 0),
-                combat_props.get("attack_bonus_per_kill", 0),
-                combat_props.get("hp_transform_threshold", 0),
-                combat_props.get("hp_regen", 0),
-                combat_props.get("hp_regen_in_combat", 0),
-                combat_props.get("food_per_kill", 0),
-                combat_props.get("wood_per_kill", 0),
-                combat_props.get("gold_per_kill", 0),
-                combat_props.get("pass_through_percent", 0),
-                combat_props.get("pass_through_count", 1),
-                combat_props.get("extra_proj_scatter", 0),
-                combat_props.get("miss_damage_percent", 0),
-                combat_props.get("hp_per_kill", 0),
-                combat_props.get("hp_per_kill_max", 0),
-                combat_props.get("pop_space", 1.0),
-                combat_props.get("armor_strip_per_hit", 0),
-                combat_props.get("charge_attack_melee", 0),
-                combat_props.get("charge_recharge_time", 0),
-                combat_props.get("damage_reflect_percent", 0),
-                combat_props.get("attack_bonus_nearby", 0),
-                combat_props.get("nearby_bonus_count", 0),
-                combat_props.get("hp_nearby_percent_per_unit", 0),
-                combat_props.get("hp_nearby_max_units", 0),
-                combat_props.get("charge_slow_percent", 0),
-                combat_props.get("charge_slow_duration", 0),
-                combat_props.get("attack_speed_ramp", 0),
-                combat_props.get("attack_speed_min", 0),
-                combat_props.get("execute_damage_per_step", 0),
-                combat_props.get("execute_hp_step", 0),
-                combat_props.get("ally_death_heal", 0),
-                combat_props.get("ally_death_heal_duration", 0),
-                combat_props.get("splash_radius", 0),
-                combat_props.get("is_siege_projectile", 0),
-                combat_props.get("dismount_unit_id", 0),
-                int(combat_props["dismount_hp"])
-                if combat_props.get("dismount_hp")
-                else None,
-                int(combat_props["dismount_attack"])
-                if combat_props.get("dismount_hp")
-                else None,
-                int(combat_props.get("dismount_melee_armor", 0))
-                if combat_props.get("dismount_hp")
-                else None,
-                int(combat_props.get("dismount_pierce_armor", 0))
-                if combat_props.get("dismount_hp")
-                else None,
-                combat_props.get("dismount_attack_speed")
-                if combat_props.get("dismount_hp")
-                else None,
-                combat_props.get("dismount_attack_delay")
-                if combat_props.get("dismount_hp")
-                else None,
-                combat_props.get("dismount_movement_speed")
-                if combat_props.get("dismount_hp")
-                else None,
-                combat_props.get("dismount_attacks_json"),
-                combat_props.get("dismount_armors_json"),
-                int(combat_props["transform_hp"])
-                if _has_transform and combat_props.get("transform_hp")
-                else None,
-                int(combat_props.get("transform_attack", 0))
-                if _has_transform and combat_props.get("transform_hp")
-                else None,
-                int(combat_props.get("transform_melee_armor", 0))
-                if _has_transform and combat_props.get("transform_hp")
-                else None,
-                int(combat_props.get("transform_pierce_armor", 0))
-                if _has_transform and combat_props.get("transform_hp")
-                else None,
-                combat_props.get("transform_attack_speed")
-                if _has_transform and combat_props.get("transform_hp")
-                else None,
-                combat_props.get("transform_attack_delay")
-                if _has_transform and combat_props.get("transform_hp")
-                else None,
-                combat_props.get("transform_movement_speed")
-                if _has_transform and combat_props.get("transform_hp")
-                else None,
-                combat_props.get("transform_attacks_json"),
-                combat_props.get("transform_armors_json"),
-                ref_unit_id,
-            ),
+            _ABILITY_UPDATE_SQL,
+            _ability_update_values(combat_props) + [ref_unit_id],
         )
 
         return ref_unit_id

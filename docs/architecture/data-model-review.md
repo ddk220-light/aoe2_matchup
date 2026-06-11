@@ -140,20 +140,44 @@ Then:
 
 ### 3.2 Special abilities: 52 flat columns, a 6-file chain, no schema
 
-> **Status: Phase A (ability-registry portion) landed 2026-06-10** — the §7
-> Phase A resolver/line-graph items are separate and still open.
-> Landed: `analysis/ability_registry.py` (36
-> abilities / 77 params across 11 families, every pipeline property declared
-> with type, default, ref column, source, engine coverage and quirks) +
+> **Status: Phase A landed 2026-06-10; Phase B (registry-driven generation)
+> landed 2026-06-10 in the same window** — the §7 Phase A resolver/line-graph
+> items are separate and still open.
+> **Phase A:** `analysis/ability_registry.py` (36 abilities / 77 params across
+> 11 families, every pipeline property declared with type, default, ref
+> column, source, engine coverage, audit description and quirks) +
 > `tests/test_ability_registry.py` (orphan-key allowlist vs the committed ref
 > DB, registry↔config↔schema↔loader↔engine parity, defaults vs
-> `prepare_combat_unit`). Storage/loader **generation from** the registry =
-> Phase B, pending. The orphan audit now lives as a strict-equality test: 20
+> `prepare_combat_unit`). The orphan audit lives as a strict-equality test: 20
 > allowlisted dead keys (15 `COMBAT_PROPERTIES` exact-match misses — Feudal-only
 > stages + civ-suffixed uniques; `elite_xianbei_raider`; Sicilians
 > `hand_cannoneer`/`heavy_camel`, Poles `winged_hussar`, Romans `legionary`);
 > any NEW orphan fails the suite. (`Dravidians/elite_elephant` left the orphan
 > list with the 2026-06-10 restore — verified.)
+>
+> **Phase B (columns stay — `abilities_json` storage was NOT adopted, optional
+> / not planned):** the registry now *generates* (a) the ability-column DDL
+> fragment, the ref_units UPDATE writer and the `ref_special_effects` audit
+> list in `analysis/generate_reference.py` (legacy column/audit order pinned
+> there for schema byte-stability; new params append automatically), (b) the
+> ability-key mapping of `combat_unit_loader.build_combat_dict_from_ref`, and
+> (c) `simulation.prepare_combat_unit`'s ability defaults
+> (`combat_dict_defaults()`; the abstract engine's consumed-key subset stays
+> pinned in `_PREPARE_SCALAR_KEYS`). Output-identity gates, all zero-diff:
+> scratch regen vs pre-refactor scratch regen byte-identical across all 7
+> tables (vs the committed DB: only the 4 known Mayan-cost rows + a 2-row
+> Konnik audit-order artifact of the old surgical patch, sets equal); 1,851-row
+> type-aware dict comparison for the loader, prepared units, and the
+> `generate_main_db` sibling. `sim_version` untouched
+> (`e221c8a3a0437bd8`). `generate_main_db.build_combat_dict_from_ref`
+> deliberately keeps its bespoke special-effects/projectiles-table merge
+> (an import-swap would change `aoe2_units.db`: 231 dict-level disagreements
+> in 6 keys, measured) — instead the registry pins its key set and a full-row
+> agreement test documents the two exception classes
+> (`tests/test_ability_registry.py::test_maindb_dict_agrees_with_webapp_loader`).
+> Adding an ability is now registry entry + config value + handler per engine
+> (runbooks §3); a JS manifest for `simulate.js` remains open (engine-parity
+> stays presence-only).
 
 **The family taxonomy** (shared core vs per-unit quirks; full detail in the registry):
 
@@ -336,7 +360,7 @@ else regenerates from the dat.
 | Phase | Work | Regen/re-sim impact |
 |---|---|---|
 | **A — additive, zero risk** | `ABILITY_REGISTRY` module + parity/orphan-key tests (**done 2026-06-10**, §3.2 status); lines/availability tests in *report mode*; extract `required_tech_count` (**done**, cb979b1); build resolver + line graph alongside current code and **diff their output against current rosters** (resolver **done 2026-06-10**: 282 mismatches, NOT the expected exact match — §3.1 status) | none |
-| **B — swap sources, stat-neutral** | ~~availability from resolver~~ **blocked 2026-06-10** (282-mismatch report, §3.1: the dat cannot express regional availability; prerequisite is a CivTechTrees JSON extractor, then re-run the gate); `abilities_json` storage + generated loaders; delete `_AVAILABILITY_OVERRIDES`/`CIV_MISSING_UNITS` as data (keep as assertions) | ref regen with scratch-diff neutrality gate (the proven procedure); **no re-sim** if neutral |
+| **B — swap sources, stat-neutral** | ~~availability from resolver~~ **blocked 2026-06-10** (282-mismatch report, §3.1: the dat cannot express regional availability; prerequisite is a CivTechTrees JSON extractor, then re-run the gate); ~~generated loaders~~ **done 2026-06-10** (§3.2 status: registry generates schema/writer/audit/loader/defaults; columns kept, `abilities_json` not adopted; zero-diff identity gates, no re-sim); delete `_AVAILABILITY_OVERRIDES`/`CIV_MISSING_UNITS` as data (keep as assertions) — still open | ref regen with scratch-diff neutrality gate (the proven procedure); **no re-sim** if neutral |
 | **C — accuracy fixes (stat-changing)** | derive multi-form stats through the tech chain (Konnik/Jian); apply any missing team bonuses | fingerprint-driven scoped re-sim via `rebuild_matchup_baseline` resume (~minutes, not hours); golden regen; re-derive |
 
 ## 8. What NOT to do
@@ -355,6 +379,6 @@ else regenerates from the dat.
 |---|---|
 | CivTechTrees JSON extractor lands (re-run the resolver gate) | §3.1 status, §5 diagram, §6 row 2, test pin in `tests/test_availability_resolver.py` |
 | New dat build (regenerate extraction) | re-run `python -m analysis.availability_resolver`; re-probe `DEFAULT_ENABLED_UNIT_IDS`; update the 282-row pin |
-| Ability registry implemented | §3.2 status, §7 phase A |
+| Ability registry generation changes (new generated artifact, or abilities_json adopted after all) | §3.2 status, §7 phase B, runbooks §3 |
 | Multi-form derivation lands | §3.3 (close the bug), improvements.md ledger |
 | New ability families appear in DE dats | §4 irreducible-core list |

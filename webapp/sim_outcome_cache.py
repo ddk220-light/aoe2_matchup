@@ -8,6 +8,20 @@ opp_count, scale, seed) lets us skip repeat sims across civs.
 Lives per-process; not pickled across pool workers.
 """
 
+# Alternate-form stat blocks (Konnik dismount-on-death, Jian Swordsman HP
+# transform).  Appended to the fingerprint ONLY when present, so the ~99%
+# of units without forms keep their exact historical fingerprints (and
+# therefore their dedup-group hashes in existing baselines).
+_FORM_FIELDS = (
+    "hp_transform_threshold",
+    "dismount_hp", "dismount_attack", "dismount_melee_armor",
+    "dismount_pierce_armor", "dismount_attack_speed", "dismount_attack_delay",
+    "dismount_movement_speed", "dismount_attacks_json", "dismount_armors_json",
+    "transform_hp", "transform_attack", "transform_melee_armor",
+    "transform_pierce_armor", "transform_attack_speed", "transform_attack_delay",
+    "transform_movement_speed", "transform_attacks_json", "transform_armors_json",
+)
+
 
 def unit_fingerprint(unit):
     """Canonical hashable fingerprint for an instantiated combat unit dict.
@@ -32,7 +46,7 @@ def unit_fingerprint(unit):
     else:
         special_t = tuple()
 
-    return (
+    fp = (
         round(float(unit.get("hp") or 0), 1),
         round(float(unit.get("attack") or 0), 1),
         round(float(unit.get("melee_armor") or 0), 1),
@@ -49,6 +63,18 @@ def unit_fingerprint(unit):
         round(float(unit.get("outline_size") or 0.2), 3),
         attacks_t, armors_t, special_t,
     )
+
+    # Form blocks: appended ONLY when at least one field is non-empty/non-zero
+    # so form-less units keep their exact pre-existing fingerprints.
+    form_t = tuple(
+        (name, round(float(val), 4) if isinstance(val, (int, float)) else str(val))
+        for name in _FORM_FIELDS
+        for val in (unit.get(name),)
+        if val not in (None, 0, 0.0, "")
+    )
+    if form_t:
+        return fp + (form_t,)
+    return fp
 
 
 class OutcomeCache:

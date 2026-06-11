@@ -42,6 +42,35 @@ def test_fingerprint_differs_when_attacks_table_differs():
     assert unit_fingerprint(a) != unit_fingerprint(b)
 
 
+def test_fingerprint_unchanged_by_empty_form_fields():
+    # None / 0 / "" form fields must NOT alter the fingerprint — units
+    # without alternate forms keep their exact historical fingerprints
+    # (and thus their dedup-group hashes in existing baselines).
+    a = _unit()
+    b = _unit(dismount_hp=None, transform_hp=0, hp_transform_threshold=0.0,
+              dismount_attacks_json="", transform_armors_json=None)
+    assert unit_fingerprint(a) == unit_fingerprint(b)
+
+
+def test_fingerprint_differs_when_dismount_block_present():
+    a = _unit()
+    b = _unit(dismount_hp=50, dismount_attack=17,
+              dismount_attacks_json='{"4": 17}')
+    assert unit_fingerprint(a) != unit_fingerprint(b)
+
+
+def test_fingerprint_differs_when_transform_block_present():
+    a = _unit()
+    b = _unit(hp_transform_threshold=0.6429, transform_hp=70)
+    assert unit_fingerprint(a) != unit_fingerprint(b)
+
+
+def test_fingerprint_differs_between_distinct_form_blocks():
+    a = _unit(dismount_hp=50)
+    b = _unit(dismount_hp=45)
+    assert unit_fingerprint(a) != unit_fingerprint(b)
+
+
 def test_cache_returns_same_outcome_for_matching_keys():
     cache = OutcomeCache()
     fp1, fp2 = ("a",), ("b",)

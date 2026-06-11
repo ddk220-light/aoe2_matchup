@@ -66,6 +66,12 @@ The build-177723 **baseline-of-record** (276 MB — kept local, **not committed*
 **491,384 matchup rows** (= the 67,654 groups expanded). Verdict split: 47.8% win /
 47.8% loss (exactly symmetric — a correctness check) / **4.4% (21,744) toss-ups**.
 
+> **Mixed sim_version (2026-06-10):** after the Konnik dismount port, the 4,124 rows
+> involving `elite_konnik_bulgarians` / `jian_swordsman_wu` were deleted and re-simmed on
+> sim_version `e221c8a3a0437bd8`; the other 491,316 rows (proven outcome-identical under
+> the new engine) stay on `f6ab0051d5cd4fff` — an intentional patchwork per
+> `docs/patch-workflow.md` (derive with `--allow-stale`).
+
 ## Deriving the live site data from it
 
 The deployed app reads `pool_scores.db`, `derived_data.db` (battle_scores), and

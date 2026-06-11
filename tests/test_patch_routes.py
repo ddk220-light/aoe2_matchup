@@ -4,7 +4,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "webapp"))
 
 
 def _seed_patches(path):
-    import patches_db
+    from aoe2x.batch import patches_db
     conn = patches_db.create_db(path)
     pid = patches_db.insert_patch(conn, build_number="177723", release_date="2026-06-02",
         title="Update 177723", summary_md="**Tiger Cavalry** HP 130 -> 125.",
@@ -36,7 +36,7 @@ def test_render_markdown_basic():
 
 
 def _seed_unit_detail(path):
-    import patches_db
+    from aoe2x.batch import patches_db
     conn = patches_db.create_db(path)
     pid = patches_db.insert_patch(conn, build_number="177723", release_date="2026-06-02",
         title="Update 177723", summary_md="x", source_url="u",

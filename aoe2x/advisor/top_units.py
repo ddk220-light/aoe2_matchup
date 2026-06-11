@@ -13,12 +13,12 @@ civ only if that civ actually has an Imperial row for it (post phantom-fix
 availability).
 
 Usage:
-    from top_units import compute_top_units, load_top_units
+    from aoe2x.advisor.top_units import compute_top_units, load_top_units
     data = load_top_units()           # reads committed civ_top_units.json
     data["Koreans"]["knight"]["units"][0]["unit"]   # -> "Cavalier"
 
 Regenerate the JSON:
-    python -m webapp.top_units            (or: cd webapp && python top_units.py)
+    python -m aoe2x.advisor.top_units
 """
 from __future__ import annotations
 
@@ -27,14 +27,11 @@ import os
 import sqlite3
 import sys
 
-_HERE = os.path.dirname(os.path.abspath(__file__))
-if _HERE not in sys.path:
-    sys.path.insert(0, _HERE)
+from aoe2x.sim.unit_lines import UNIT_LINES
+from aoe2x.paths import WEBAPP_DIR as _DATA_DIR
 
-from unit_lines import UNIT_LINES
-
-REF_DB = os.path.join(_HERE, "aoe2_reference.db")
-OUT_JSON = os.path.join(_HERE, "civ_top_units.json")
+REF_DB = os.path.join(str(_DATA_DIR), "aoe2_reference.db")
+OUT_JSON = os.path.join(str(_DATA_DIR), "civ_top_units.json")
 
 # Lines that are real unit lines (have an imperial_slug). The "*_effectiveness"
 # aggregate pseudo-lines (archery/infantry/stable/siege/naval) have no slug.

@@ -29,10 +29,10 @@ from typing import List, Optional
 
 _REPO = Path(__file__).resolve().parents[2]
 _WEBAPP = _REPO / "webapp"
-if str(_WEBAPP) not in sys.path:
-    sys.path.insert(0, str(_WEBAPP))
+if str(_REPO) not in sys.path:
+    sys.path.insert(0, str(_REPO))
 
-import simulation_real as SR  # noqa: E402
+from aoe2x.sim import simulation_real as SR  # noqa: E402
 
 UNITS_DB = _WEBAPP / "aoe2_units.db"
 

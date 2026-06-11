@@ -13,13 +13,14 @@ file again.
 
 try:
     from analysis.ability_registry import iter_params
-except ImportError:  # pragma: no cover - webapp/ on sys.path, repo root not
-    # Production (gunicorn) and the batch runners start from webapp/, where
-    # the repo root is not importable; analysis/ is a sibling package.
+except ImportError:  # pragma: no cover - launch dir on sys.path, repo root not
+    # Production (gunicorn) starts from webapp/, where the repo root is not
+    # importable; analysis/ lives at the repo root (until it moves to
+    # aoe2x.dbgen in migration Stage 4).
     import sys
     from pathlib import Path
 
-    _ROOT = str(Path(__file__).resolve().parents[1])
+    _ROOT = str(Path(__file__).resolve().parents[2])
     if _ROOT not in sys.path:
         sys.path.insert(0, _ROOT)
     from analysis.ability_registry import iter_params

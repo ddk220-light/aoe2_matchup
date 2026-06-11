@@ -18,11 +18,11 @@ import random
 
 try:
     from analysis.ability_registry import combat_dict_defaults
-except ImportError:  # pragma: no cover - webapp/ on sys.path, repo root not
+except ImportError:  # pragma: no cover - launch dir on sys.path, repo root not
     import sys
     from pathlib import Path
 
-    _ROOT = str(Path(__file__).resolve().parents[1])
+    _ROOT = str(Path(__file__).resolve().parents[2])
     if _ROOT not in sys.path:
         sys.path.insert(0, _ROOT)
     from analysis.ability_registry import combat_dict_defaults

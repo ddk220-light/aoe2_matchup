@@ -8,7 +8,9 @@ import json
 import os
 import sqlite3
 
-DEFAULT_DB_PATH = os.path.join(os.path.dirname(__file__), "pool_scores.db")
+from aoe2x.paths import WEBAPP_DIR as _DATA_DIR
+
+DEFAULT_DB_PATH = os.path.join(str(_DATA_DIR), "pool_scores.db")
 
 _SHAPE_KEYS = ("n", "mean", "stddev", "win_rate", "decisive_win_rate",
                "big_win_rate", "catastrophic_loss_rate")

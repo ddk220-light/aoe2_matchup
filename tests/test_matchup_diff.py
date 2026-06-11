@@ -1,7 +1,7 @@
 # tests/test_matchup_diff.py
 import os, sqlite3, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "webapp"))
-import matchup_diff
+from aoe2x.batch import matchup_diff
 
 
 def _mk_matchup(path, rows):

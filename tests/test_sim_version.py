@@ -1,7 +1,7 @@
 import os
 import tempfile
 import pytest
-from sim_version import compute_sim_version
+from aoe2x.sim.sim_version import compute_sim_version
 
 
 def test_returns_16_char_hex():

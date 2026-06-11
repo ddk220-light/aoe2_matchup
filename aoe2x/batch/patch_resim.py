@@ -5,7 +5,7 @@ opponent pool, averaging N seeds per matchup so that the mean score is
 stable enough to diff across two reference DBs (e.g. 170934 vs 177723).
 
 Hard requirement: PyPy 3.  Run with:
-    pypy3 -m webapp.patch_resim --my-units my_units.json --out patch_means.db
+    pypy3 -m aoe2x.batch.patch_resim --my-units my_units.json --out patch_means.db
 
 Invoke twice — once per reference DB — then diff the two output DBs to see
 how patch-changed units fared against each opponent.
@@ -22,22 +22,16 @@ import sys
 import time
 from collections import defaultdict
 
-# Ensure webapp/ is on the path when run as `pypy3 patch_resim.py`
-# (no-op when run as `pypy3 -m webapp.patch_resim`).
-_here = os.path.dirname(os.path.abspath(__file__))
-if _here not in sys.path:
-    sys.path.insert(0, _here)
-
-from battle_outcome import signed_score
-from run_matchup_battles import (
+from aoe2x.sim.battle_outcome import signed_score
+from aoe2x.batch.run_matchup_battles import (
     _build_slug_to_line,
     _load_unit,
     _units_for_civ,
     SCALES,
     REF_DB_PATH,
 )
-from sim_outcome_cache import unit_fingerprint
-from simulation_real import simulate_real_battle
+from aoe2x.sim.sim_outcome_cache import unit_fingerprint
+from aoe2x.sim.simulation_real import simulate_real_battle
 
 
 # ---------------------------------------------------------------------------
@@ -135,7 +129,7 @@ def main():
     if platform.python_implementation() != "PyPy":
         sys.stderr.write(
             "\nERROR: patch_resim.py requires PyPy 3.\n"
-            "  Run with: pypy3 -m webapp.patch_resim\n\n"
+            "  Run with: pypy3 -m aoe2x.batch.patch_resim\n\n"
         )
         sys.exit(2)
 

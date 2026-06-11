@@ -1,11 +1,11 @@
-"""Unit tests for webapp/pool_scores_query.py."""
+"""Unit tests for aoe2x/rank/pool_scores_query.py."""
 import json
 import os
 import sqlite3
 import pytest
 
-from pool_scores_db import create_db, insert_score
-from pool_scores_query import load_pool_scores
+from aoe2x.rank.pool_scores_db import create_db, insert_score
+from aoe2x.rank.pool_scores_query import load_pool_scores
 
 
 def _make_row(civ, slug, scale, axis, **overrides):

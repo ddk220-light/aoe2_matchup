@@ -1,6 +1,6 @@
-"""Tests for webapp/pool_scores_db.py."""
+"""Tests for aoe2x/rank/pool_scores_db.py."""
 import sqlite3
-from pool_scores_db import create_db, insert_score
+from aoe2x.rank.pool_scores_db import create_db, insert_score
 
 
 def test_create_db_has_pool_scores_table(tmp_path):
@@ -109,7 +109,7 @@ def test_insert_writes_role_line_means_json(tmp_path):
 
 import json
 import sqlite3
-from derive_pool_scores import main as derive_main
+from aoe2x.rank.derive_pool_scores import main as derive_main
 
 
 def test_orchestrator_writes_json_role_line_means(tmp_path):

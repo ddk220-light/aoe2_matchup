@@ -5,7 +5,7 @@ For each civ × eligible imperial unit, simulates 1v1 against every other
 == B vs A from opposite sides) halves work; fingerprint dedup collapses
 identical-stat units.
 
-Hard requirement: PyPy 3.  Run with `pypy3 -m webapp.run_matchup_battles`.
+Hard requirement: PyPy 3.  Run with `pypy3 -m aoe2x.batch.run_matchup_battles`.
 """
 
 import argparse
@@ -19,21 +19,17 @@ import sys
 import time
 from collections import defaultdict
 
-# Ensure webapp/ is on the path when run as `pypy3 run_matchup_battles.py`
-# (no-op when run as `pypy3 -m webapp.run_matchup_battles`).
-_here = os.path.dirname(os.path.abspath(__file__))
-if _here not in sys.path:
-    sys.path.insert(0, _here)
+from aoe2x.sim.battle_outcome import signed_score, average_outcomes
+from aoe2x.sim.combat_unit_loader import build_combat_dict_from_ref
+from aoe2x.batch.matchup_db import create_db, insert_outcome, has_row_with_version, _short_hash, DEFAULT_DB_PATH
+from aoe2x.sim.simulation_real import simulate_real_battle, prepare_combat_unit
+from aoe2x.sim.sim_outcome_cache import unit_fingerprint
+from aoe2x.sim.sim_version import compute_sim_version
+from aoe2x.sim.unit_lines import UNIT_LINES, CIV_MISSING_UNITS
 
-from battle_outcome import signed_score, average_outcomes
-from combat_unit_loader import build_combat_dict_from_ref
-from matchup_db import create_db, insert_outcome, has_row_with_version, _short_hash, DEFAULT_DB_PATH
-from simulation_real import simulate_real_battle, prepare_combat_unit
-from sim_outcome_cache import unit_fingerprint
-from sim_version import compute_sim_version
-from unit_lines import UNIT_LINES, CIV_MISSING_UNITS
+from aoe2x.paths import WEBAPP_DIR as _DATA_DIR
 
-REF_DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
+REF_DB_PATH = os.path.join(str(_DATA_DIR), "aoe2_reference.db")
 
 RANKED_LINES = frozenset({
     "militia", "spear", "shock_infantry",
@@ -178,7 +174,7 @@ def main():
     if platform.python_implementation() != "PyPy":
         sys.stderr.write(
             "\nERROR: run_matchup_battles.py requires PyPy 3.\n"
-            "  Then run: pypy3 -m webapp.run_matchup_battles\n\n")
+            "  Then run: pypy3 -m aoe2x.batch.run_matchup_battles\n\n")
         sys.exit(2)
     parser = argparse.ArgumentParser()
     parser.add_argument("--reset", action="store_true",

@@ -1,5 +1,5 @@
 import pytest
-from simulation_real import BattleSimulation, BattleUnit
+from aoe2x.sim.simulation_real import BattleSimulation, BattleUnit
 
 
 def _stats(hp=100, **kw):

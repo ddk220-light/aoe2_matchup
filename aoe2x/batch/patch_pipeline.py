@@ -1,6 +1,6 @@
 """Role: patch-tooling — end-to-end patch pipeline. Run ONCE per new patch from the repo root:
 
-  python -m webapp.patch_pipeline --build 177723 --release-date 2026-06-02 \
+  python -m aoe2x.batch.patch_pipeline --build 177723 --release-date 2026-06-02 \
       --source-url https://www.ageofempires.com/news/...update-177723/ \
       --summary-file notes_177723.md --pypy /path/to/pypy3 \
       --matchup-db D:/AI/matchup_db.db
@@ -24,12 +24,10 @@ import sqlite3
 import subprocess
 import sys
 
-_WEBAPP = os.path.dirname(__file__)
-_ROOT = os.path.dirname(_WEBAPP)
-# When invoked as `python -m webapp.patch_pipeline` from the repo root, only the
-# root is on sys.path — add webapp/ so the bare `import patches_db` etc. resolve.
-if _WEBAPP not in sys.path:
-    sys.path.insert(0, _WEBAPP)
+from aoe2x.paths import REPO_ROOT, WEBAPP_DIR
+
+_ROOT = str(REPO_ROOT)
+_WEBAPP = str(WEBAPP_DIR)
 DERIVED_DB = os.path.join(_WEBAPP, "derived_data.db")
 POOL_DB = os.path.join(_WEBAPP, "pool_scores.db")
 REF_DB = os.path.join(_WEBAPP, "aoe2_reference.db")
@@ -86,7 +84,7 @@ def _run(cmd, **kw):
 
 def run(*, build, release_date, source_url, summary_md, baseline_build,
         pypy, matchup_db):
-    import patches_db, ref_diff, matchup_diff
+    from aoe2x.batch import patches_db, ref_diff, matchup_diff
 
     # 1. Archive + snapshot the 'before'
     if os.path.isdir(EXTRACTED):
@@ -121,7 +119,7 @@ def run(*, build, release_date, source_url, summary_md, baseline_build,
     print(f"[4/8] Snapshotted {len(before)} before-outcomes.")
 
     # 5. Force re-sim changed slugs (PyPy)
-    _run([pypy, "-m", "webapp.run_matchup_battles", "--force",
+    _run([pypy, "-m", "aoe2x.batch.run_matchup_battles", "--force",
           "--changed-units", cu_file, "--db", matchup_db], cwd=_ROOT)
     print("[5/8] Re-sim complete.")
 
@@ -133,9 +131,9 @@ def run(*, build, release_date, source_url, summary_md, baseline_build,
     carry_forward_battle_scores(DERIVED_DB, baseline_build, build)
     # --allow-stale: the scoped --changed-units re-sim above legitimately
     # leaves the matchup DB at mixed sim_versions when the engine changed.
-    _run([sys.executable, "-m", "webapp.derive_unit_rankings",
+    _run([sys.executable, "-m", "aoe2x.rank.derive_unit_rankings",
           "--matchup-db", matchup_db, "--build", build, "--allow-stale"], cwd=_ROOT)
-    _run([sys.executable, "-m", "webapp.derive_pool_scores",
+    _run([sys.executable, "-m", "aoe2x.rank.derive_pool_scores",
           "--matchup-db", matchup_db, "--out", POOL_DB, "--build", build,
           "--allow-stale"], cwd=_ROOT)
     # civ_power_units for the new build (best_units reads current build; set it first)
@@ -146,7 +144,7 @@ def run(*, build, release_date, source_url, summary_md, baseline_build,
     patches_db.set_current_build(pconn, build)
     pconn.commit(); pconn.close()
     _run([sys.executable, "-c",
-          "import sys; sys.path.insert(0, 'webapp'); import best_units; "
+          "from aoe2x.advisor import best_units; "
           f"best_units.save_civ_power_units('{build}')"], cwd=_ROOT)
     print("[7/8] Re-derived rankings/pool/power-units at new build.")
 
@@ -178,7 +176,7 @@ def main():
                    help="pypy3 executable (default: 'pypy3' on PATH).")
     p.add_argument("--matchup-db", required=True, help="Path to the (local) matchup_db.db.")
     a = p.parse_args()
-    import patches_db
+    from aoe2x.batch import patches_db
     baseline = a.baseline_build or patches_db.get_current_build(patches_db_path=PATCHES_DB)
     if not baseline:
         sys.exit("ERROR: no baseline build found. Run `python webapp/migrate_baseline.py` "

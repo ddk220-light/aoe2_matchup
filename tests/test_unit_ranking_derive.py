@@ -2,10 +2,10 @@ import os
 import sqlite3
 import pytest
 
-from battle_outcome import BattleOutcome
-from matchup_db import create_db as create_matchup_db, insert_outcome
-from derived_db import create_db as create_derived_db
-from derive_unit_rankings import compute_and_write_rankings
+from aoe2x.sim.battle_outcome import BattleOutcome
+from aoe2x.batch.matchup_db import create_db as create_matchup_db, insert_outcome
+from aoe2x.rank.derived_db import create_db as create_derived_db
+from aoe2x.rank.derive_unit_rankings import compute_and_write_rankings
 
 
 def _outcome(winner=1, hp1=0.8, hp2=0.0):

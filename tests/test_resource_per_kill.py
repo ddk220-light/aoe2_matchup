@@ -1,5 +1,5 @@
 import pytest
-from simulation_real import BattleUnit
+from aoe2x.sim.simulation_real import BattleUnit
 
 
 def _stats(**kwargs):
@@ -26,7 +26,7 @@ def test_battleunit_defaults_kill_bonuses_to_zero():
     assert u.gold_per_kill == 0
 
 
-from simulation_real import BattleSimulation
+from aoe2x.sim.simulation_real import BattleSimulation
 
 
 def test_simulation_initializes_resource_accumulators():
@@ -39,7 +39,7 @@ def test_simulation_initializes_resource_accumulators():
     assert sim.team2_gold_gained == 0.0
 
 
-from simulation_real import simulate_real_battle, prepare_combat_unit
+from aoe2x.sim.simulation_real import simulate_real_battle, prepare_combat_unit
 
 
 def _killer_unit(gold_per_kill=3):

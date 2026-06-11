@@ -1,7 +1,7 @@
 # tests/test_patches_db.py
 import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "webapp"))
-import patches_db
+from aoe2x.batch import patches_db
 
 
 def test_create_and_current_build(tmp_path):

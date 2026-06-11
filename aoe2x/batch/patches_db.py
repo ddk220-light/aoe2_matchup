@@ -12,7 +12,9 @@ get_current_build() is the single resolver every stat page goes through.
 import os
 import sqlite3
 
-DEFAULT_DB_PATH = os.path.join(os.path.dirname(__file__), "patches.db")
+from aoe2x.paths import WEBAPP_DIR as _DATA_DIR
+
+DEFAULT_DB_PATH = os.path.join(str(_DATA_DIR), "patches.db")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS patches (

@@ -56,8 +56,8 @@ from analysis.config_combat import (
 ROOT = Path(__file__).resolve().parents[1]
 REF_DB = ROOT / "webapp" / "aoe2_reference.db"
 ENGINE_SOURCES = {
-    "abstract": (ROOT / "webapp" / "simulation.py").read_text(encoding="utf-8"),
-    "position": (ROOT / "webapp" / "simulation_real.py").read_text(encoding="utf-8"),
+    "abstract": (ROOT / "aoe2x" / "sim" / "simulation.py").read_text(encoding="utf-8"),
+    "position": (ROOT / "aoe2x" / "sim" / "simulation_real.py").read_text(encoding="utf-8"),
     "js": (ROOT / "webapp" / "static" / "js" / "simulate.js").read_text(encoding="utf-8"),
 }
 
@@ -333,7 +333,7 @@ def test_loader_emits_exactly_core_plus_registry_params(ref_rows):
     with in_combat_dict=True (both directions). Holds BY CONSTRUCTION since
     Phase B — the loader iterates the registry — kept as the executable
     contract for the serving dict, replacing the old string-presence checks."""
-    from combat_unit_loader import build_combat_dict_from_ref  # webapp on sys.path
+    from aoe2x.sim.combat_unit_loader import build_combat_dict_from_ref  # webapp on sys.path
 
     d = build_combat_dict_from_ref(ref_rows[0])
     expected = _LOADER_CORE_KEYS | {
@@ -402,7 +402,7 @@ def test_maindb_dict_agrees_with_webapp_loader(ref_rows):
        LEGACY path loses the Xianbei opening burst (known legacy-only gap;
        no app route reads aoe2_units.db).
     """
-    from combat_unit_loader import build_combat_dict_from_ref as webapp_loader
+    from aoe2x.sim.combat_unit_loader import build_combat_dict_from_ref as webapp_loader
 
     maindb_loader, conn = _maindb_loader_and_cursor()
     rc = conn.cursor()
@@ -549,7 +549,7 @@ def test_registry_defaults_match_prepare_combat_unit():
     `transform`/`dismount` sub-dicts), and the eco trio (the abstract engine's
     prepare does not emit food/wood/gold_per_kill at all — they are
     position-engine inputs)."""
-    from simulation import prepare_combat_unit  # webapp/ is on sys.path (conftest)
+    from aoe2x.sim.simulation import prepare_combat_unit  # webapp/ is on sys.path (conftest)
 
     row = {k: None for k in _PREPARE_REQUIRED_KEYS}
     prepared = prepare_combat_unit(row)

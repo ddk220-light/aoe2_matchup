@@ -3,10 +3,10 @@ import sqlite3
 
 import pytest
 
-from webapp.battle_outcome import BattleOutcome, signed_score, average_outcomes
-from webapp.combat_unit_loader import build_combat_dict_from_ref
-from webapp.simulation import prepare_combat_unit
-from webapp.simulation_real import simulate_real_battle
+from aoe2x.sim.battle_outcome import BattleOutcome, signed_score, average_outcomes
+from aoe2x.sim.combat_unit_loader import build_combat_dict_from_ref
+from aoe2x.sim.simulation import prepare_combat_unit
+from aoe2x.sim.simulation_real import simulate_real_battle
 
 
 REF_DB = os.path.join(os.path.dirname(__file__), "..", "webapp", "aoe2_reference.db")

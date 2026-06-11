@@ -16,8 +16,8 @@ import os
 import pytest
 import sqlite3
 
-from derive_pool_scores import _fetch_unit_rows
-from pool_scores_lib import derive_unit_scores
+from aoe2x.rank.derive_pool_scores import _fetch_unit_rows
+from aoe2x.rank.pool_scores_lib import derive_unit_scores
 
 MATCHUP_DB = os.path.join(
     os.path.dirname(__file__), "fixtures", "berserker_matchups.db",

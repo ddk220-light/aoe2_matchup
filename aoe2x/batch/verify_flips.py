@@ -25,7 +25,7 @@ Strategy
    so their outcome is actually concluded.
 
 PyPy 3 required:
-    pypy3 -m webapp.verify_flips --before-db ... --after-db ... \
+    pypy3 -m aoe2x.batch.verify_flips --before-db ... --after-db ... \
         --ref-old ... --ref-new ... --out verified.db
 """
 import argparse
@@ -37,14 +37,10 @@ import statistics
 import sys
 from collections import defaultdict
 
-_here = os.path.dirname(os.path.abspath(__file__))
-if _here not in sys.path:
-    sys.path.insert(0, _here)
-
-from battle_outcome import signed_score
-from run_matchup_battles import _load_unit, _build_slug_to_line, SCALES
-from sim_outcome_cache import unit_fingerprint
-from simulation_real import simulate_real_battle
+from aoe2x.sim.battle_outcome import signed_score
+from aoe2x.batch.run_matchup_battles import _load_unit, _build_slug_to_line, SCALES
+from aoe2x.sim.sim_outcome_cache import unit_fingerprint
+from aoe2x.sim.simulation_real import simulate_real_battle
 
 PREFILTER = 10.0     # only verify matchups whose raw |after-before| >= this
 START_SEEDS = 12     # first matched batch

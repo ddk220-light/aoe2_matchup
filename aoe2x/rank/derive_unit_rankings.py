@@ -11,19 +11,15 @@ import sqlite3
 import sys
 from collections import defaultdict
 
-# Allow `python -m webapp.derive_unit_rankings` from the repo root: make this
-# directory (webapp/) importable for the bare sibling imports below.
-_here = os.path.dirname(os.path.abspath(__file__))
-if _here not in sys.path:
-    sys.path.insert(0, _here)
+from aoe2x.rank.derived_db import create_db as create_derived_db
+from aoe2x.batch.matchup_db import DEFAULT_DB_PATH as MATCHUP_DB_PATH, preflight_derive_guard
+from aoe2x.sim.unit_lines import UNIT_LINES, CIV_MISSING_UNITS
+from aoe2x.batch.patches_db import get_current_build  # resolves the build to tag rows with
 
-from derived_db import create_db as create_derived_db
-from matchup_db import DEFAULT_DB_PATH as MATCHUP_DB_PATH, preflight_derive_guard
-from unit_lines import UNIT_LINES, CIV_MISSING_UNITS
-from patches_db import get_current_build  # resolves the build to tag rows with
+from aoe2x.paths import WEBAPP_DIR as _DATA_DIR
 
-REF_DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
-DERIVED_DB_PATH = os.path.join(os.path.dirname(__file__), "derived_data.db")
+REF_DB_PATH = os.path.join(str(_DATA_DIR), "aoe2_reference.db")
+DERIVED_DB_PATH = os.path.join(str(_DATA_DIR), "derived_data.db")
 
 YARDSTICKS = [
     ("Vikings", "champion"),

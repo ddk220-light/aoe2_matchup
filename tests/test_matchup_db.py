@@ -1,8 +1,8 @@
 import os
 import tempfile
 import pytest
-from battle_outcome import BattleOutcome
-from matchup_db import (
+from aoe2x.sim.battle_outcome import BattleOutcome
+from aoe2x.batch.matchup_db import (
     create_db, insert_outcome, has_row_with_version, fetch_all_rows, _short_hash,
 )
 

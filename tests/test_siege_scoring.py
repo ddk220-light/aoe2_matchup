@@ -1,7 +1,7 @@
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'webapp'))
 import pytest
-from compute_battle_scores import _simulate_siege_vs_castle, _effective_ttk, _get_siege_fixed_count
+from aoe2x.rank.compute_battle_scores import _simulate_siege_vs_castle, _effective_ttk, _get_siege_fixed_count
 
 
 def test_winner_returns_actual_ttk_and_full_damage():
@@ -63,13 +63,13 @@ def test_outranges_castle_slow_kill_returns_loss():
 
 def test_tarkan_not_in_siege_line_slugs():
     """Tarkan is a unique_units entry in the ram line, not its own SIEGE_LINE_SLUG."""
-    from compute_battle_scores import SIEGE_LINE_SLUGS
+    from aoe2x.rank.compute_battle_scores import SIEGE_LINE_SLUGS
     assert "tarkan" not in SIEGE_LINE_SLUGS
     assert "ram" in SIEGE_LINE_SLUGS
 
 def test_tarkan_in_light_cav_unique_units():
     """Tarkan (Huns) is a unique_units entry in the light_cav line."""
-    from unit_lines import UNIT_LINES
+    from aoe2x.sim.unit_lines import UNIT_LINES
     assert "Huns" in UNIT_LINES["light_cav"]["unique_units"]
     assert UNIT_LINES["light_cav"]["unique_units"]["Huns"] == ("tarkan_huns", "elite_tarkan_huns")
     assert "Huns" not in UNIT_LINES["ram"]["unique_units"]
@@ -78,24 +78,24 @@ def test_tarkan_in_light_cav_unique_units():
 # ===== CASTLE_TARGETS tests =====
 
 def test_castle_targets_length():
-    from compute_battle_scores import CASTLE_TARGETS
+    from aoe2x.rank.compute_battle_scores import CASTLE_TARGETS
     assert len(CASTLE_TARGETS) == 3
 
 
 def test_castle_targets_names():
-    from compute_battle_scores import CASTLE_TARGETS
+    from aoe2x.rank.compute_battle_scores import CASTLE_TARGETS
     assert [c["name"] for c in CASTLE_TARGETS] == ["persian", "teuton", "byzantine"]
 
 
 def test_castle_targets_hp_ordering():
     """Byzantine is hardest (civ HP bonus), then Persian, then Teuton (no Architecture)."""
-    from compute_battle_scores import CASTLE_TARGETS
+    from aoe2x.rank.compute_battle_scores import CASTLE_TARGETS
     by_name = {c["name"]: c["hp"] for c in CASTLE_TARGETS}
     assert by_name["byzantine"] > by_name["persian"] > by_name["teuton"]
 
 
 def test_castle_targets_required_keys():
-    from compute_battle_scores import CASTLE_TARGETS
+    from aoe2x.rank.compute_battle_scores import CASTLE_TARGETS
     required = {"name", "hp", "armor", "arrows", "arrow_attack", "arrow_range", "reload", "arrow_bonus_attacks"}
     for entry in CASTLE_TARGETS:
         assert required == required & entry.keys(), f"{entry['name']} missing keys: {required - entry.keys()}"
@@ -103,7 +103,7 @@ def test_castle_targets_required_keys():
 
 def test_castle_targets_armor_classes():
     """Each castle armor dict must have all four building armor classes."""
-    from compute_battle_scores import CASTLE_TARGETS
+    from aoe2x.rank.compute_battle_scores import CASTLE_TARGETS
     for entry in CASTLE_TARGETS:
         assert set(entry["armor"].keys()) == {3, 4, 11, 21}, (
             f"{entry['name']} armor keys mismatch"
@@ -112,14 +112,14 @@ def test_castle_targets_armor_classes():
 
 def test_castle_targets_persian_arrow_bonus():
     """Persian Citadels grant bonus attacks vs Rams (17) and Infantry (1)."""
-    from compute_battle_scores import CASTLE_TARGETS
+    from aoe2x.rank.compute_battle_scores import CASTLE_TARGETS
     persian = next(c for c in CASTLE_TARGETS if c["name"] == "persian")
     assert persian["arrow_bonus_attacks"] == {17: 3, 1: 3}
 
 
 def test_castle_targets_non_persian_no_arrow_bonus():
     """Teuton and Byzantine have no arrow bonus attacks."""
-    from compute_battle_scores import CASTLE_TARGETS
+    from aoe2x.rank.compute_battle_scores import CASTLE_TARGETS
     for entry in CASTLE_TARGETS:
         if entry["name"] != "persian":
             assert entry["arrow_bonus_attacks"] == {}, (
@@ -194,7 +194,7 @@ def test_melee_unit_starts_at_castle_no_closing_phase():
 
 def test_compute_siege_scores_returns_expected_keys():
     """compute_siege_antibuilding_scores must return all 13 score sub-keys for each unit."""
-    from compute_battle_scores import compute_siege_antibuilding_scores, SIEGE_SCORE_TYPES
+    from aoe2x.rank.compute_battle_scores import compute_siege_antibuilding_scores, SIEGE_SCORE_TYPES
     scores = compute_siege_antibuilding_scores()
     assert scores, "should return non-empty results"
     # pick any group
@@ -206,7 +206,7 @@ def test_compute_siege_scores_returns_expected_keys():
 
 def test_anti_building_score_range():
     """anti_building_score must be 0-100 for all units."""
-    from compute_battle_scores import compute_siege_antibuilding_scores
+    from aoe2x.rank.compute_battle_scores import compute_siege_antibuilding_scores
     scores = compute_siege_antibuilding_scores()
     for group in scores.values():
         for sk, s in group.items():
@@ -216,7 +216,7 @@ def test_anti_building_score_range():
 
 def test_dmg_fraction_range():
     """Damage fractions must be 0.0-1.0."""
-    from compute_battle_scores import compute_siege_antibuilding_scores
+    from aoe2x.rank.compute_battle_scores import compute_siege_antibuilding_scores
     scores = compute_siege_antibuilding_scores()
     dmg_keys = [k for k in ["ab_persian_5u_dmg", "ab_persian_5k_dmg",
                               "ab_teuton_5u_dmg", "ab_teuton_5k_dmg",
@@ -230,7 +230,7 @@ def test_dmg_fraction_range():
 
 def test_trebuchet_scores_higher_than_ram():
     """Trebuchet should vastly outperform ram as siege — validates score direction."""
-    from compute_battle_scores import compute_siege_antibuilding_scores
+    from aoe2x.rank.compute_battle_scores import compute_siege_antibuilding_scores
     scores = compute_siege_antibuilding_scores()
 
     # Get trebuchet imperial scores

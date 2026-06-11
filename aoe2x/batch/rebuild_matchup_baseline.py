@@ -16,7 +16,7 @@ stat-pair, expanded to all members). Resumable: completed dedup groups are
 recorded in `groups_done`; re-running skips them.
 
 PyPy 3 required:
-    pypy3 -m webapp.rebuild_matchup_baseline --out D:/AI/matchup_baseline.db \
+    pypy3 -m aoe2x.batch.rebuild_matchup_baseline --out D:/AI/matchup_baseline.db \
         --workers 16 [--dry-run] [--sample N]
 """
 import argparse
@@ -30,16 +30,12 @@ import sys
 import time
 from collections import defaultdict
 
-_here = os.path.dirname(os.path.abspath(__file__))
-if _here not in sys.path:
-    sys.path.insert(0, _here)
-
-from battle_outcome import signed_score, average_outcomes
-from matchup_db import create_db, insert_outcome, _short_hash, DEFAULT_DB_PATH
-from sim_outcome_cache import unit_fingerprint
-from sim_version import compute_sim_version
-from simulation_real import simulate_real_battle
-from run_matchup_battles import (
+from aoe2x.sim.battle_outcome import signed_score, average_outcomes
+from aoe2x.batch.matchup_db import create_db, insert_outcome, _short_hash, DEFAULT_DB_PATH
+from aoe2x.sim.sim_outcome_cache import unit_fingerprint
+from aoe2x.sim.sim_version import compute_sim_version
+from aoe2x.sim.simulation_real import simulate_real_battle
+from aoe2x.batch.run_matchup_battles import (
     _build_slug_to_line, _load_unit, _units_for_civ, _flip_outcome,
     REF_DB_PATH, RANKED_LINES, SCALES,
 )

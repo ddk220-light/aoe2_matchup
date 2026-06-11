@@ -1,4 +1,4 @@
-"""Outcome cache + unit fingerprinting (webapp/sim_outcome_cache.py).
+"""Outcome cache + unit fingerprinting (aoe2x/sim/sim_outcome_cache.py).
 
 Includes the regression suite for the 2026-06-11 dedup bug: the old
 unit_fingerprint read keys ('speed', 'reload_time', 'max_range', 'min_range',
@@ -14,13 +14,13 @@ import sqlite3
 
 import pytest
 
-from webapp.battle_outcome import BattleOutcome
-from webapp.combat_unit_loader import build_combat_dict_from_ref
-from webapp.sim_outcome_cache import (
+from aoe2x.sim.battle_outcome import BattleOutcome
+from aoe2x.sim.combat_unit_loader import build_combat_dict_from_ref
+from aoe2x.sim.sim_outcome_cache import (
     _ABILITY_PARAMS, _CORE_STATS, _FORM_PREFIXES, OutcomeCache, unit_fingerprint,
 )
-from webapp.simulation import prepare_combat_unit as prep_abstract
-from webapp.simulation_real import prepare_combat_unit as prep_position
+from aoe2x.sim.simulation import prepare_combat_unit as prep_abstract
+from aoe2x.sim.simulation_real import prepare_combat_unit as prep_position
 
 REF_DB = os.path.join(os.path.dirname(__file__), "..", "webapp", "aoe2_reference.db")
 

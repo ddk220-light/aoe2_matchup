@@ -12,10 +12,11 @@ regression guard is the golden-baseline test (tests/test_simulations.py).
 import hashlib
 import os
 
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__))))
 DEFAULT_FILES = [
     os.path.join(os.path.dirname(__file__), "simulation_real.py"),
-    os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                 "analysis", "config_combat.py"),
+    os.path.join(_REPO_ROOT, "analysis", "config_combat.py"),
 ]
 
 

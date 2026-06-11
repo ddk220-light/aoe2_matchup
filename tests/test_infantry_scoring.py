@@ -1,7 +1,7 @@
 # tests/test_infantry_scoring.py
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'webapp'))
-from compute_battle_scores import MILITIA_ROLE_BENCHMARKS, INFANTRY_ROLE_SCORE_TYPES
+from aoe2x.rank.compute_battle_scores import MILITIA_ROLE_BENCHMARKS, INFANTRY_ROLE_SCORE_TYPES
 
 
 def test_militia_benchmarks_imperial_has_new_ac_opponents():

@@ -17,12 +17,12 @@ import os
 import random
 import sys
 
-# Make webapp importable
+# Make the aoe2x package importable when run as `python .golden/capture_baseline.py`
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-sys.path.insert(0, os.path.join(ROOT, "webapp"))
+sys.path.insert(0, ROOT)
 
-from best_units import get_matchup_sims  # noqa: E402
+from aoe2x.advisor.best_units import get_matchup_sims  # noqa: E402
 
 # Seed BEFORE any sim call so borderline matchups give a reproducible
 # answer. The simulation uses the `random` module's global state via

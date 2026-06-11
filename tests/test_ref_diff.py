@@ -1,7 +1,7 @@
 # tests/test_ref_diff.py
 import os, sqlite3, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "webapp"))
-import ref_diff
+from aoe2x.batch import ref_diff
 
 
 def _mk(path, rows):

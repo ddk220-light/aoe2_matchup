@@ -2,7 +2,7 @@ import sqlite3
 import os
 from unittest.mock import patch
 
-from patches_db import get_current_build
+from aoe2x.batch.patches_db import get_current_build
 
 
 def _db_path():
@@ -146,11 +146,9 @@ def test_naval_no_score_columns(client):
 
 def test_compute_naval_role_scores_structure():
     """compute_naval_role_scores returns galleon/fire/hulk sub-line dicts with required keys."""
-    import sys, os
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "webapp"))
-    from compute_battle_scores import compute_naval_role_scores
+    from aoe2x.rank.compute_battle_scores import compute_naval_role_scores
 
-    with patch("compute_battle_scores.simulate_battle") as mock_sim:
+    with patch("aoe2x.rank.compute_battle_scores.simulate_battle") as mock_sim:
         mock_sim.return_value = (1, 100, 10.0, 0.5, 0.0)
         result = compute_naval_role_scores("imperial")
 

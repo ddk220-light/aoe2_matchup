@@ -8,7 +8,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "webapp"))
 
-from simulation_real import BattleUnit  # noqa: E402
+from aoe2x.sim.simulation_real import BattleUnit  # noqa: E402
 
 
 def _base(**kw):
@@ -190,7 +190,7 @@ def test_konnik_dismounts_on_death_and_fights_on():
     second death is final. Stats mirror the committed ref DB row
     (Bulgarians / elite_konnik_bulgarians @ Imperial, derived:form_tech_chain).
     """
-    from simulation_real import BattleSimulation
+    from aoe2x.sim.simulation_real import BattleSimulation
     konnik = _base(
         hp=120, attack=18, melee_armor=5, pierce_armor=6,
         attacks_json='{"4":18}', armors_json='{"4":5,"3":6}',
@@ -234,7 +234,7 @@ def test_konnik_dismounts_on_death_and_fights_on():
 
 def test_guecha_ally_death_heal():
     """Guecha heals over time when a nearby ally dies during a sim step."""
-    from simulation_real import BattleSimulation
+    from aoe2x.sim.simulation_real import BattleSimulation
     g = {"hp": 65, "attack": 10, "attack_speed": 0.5, "attack_delay": 0,
          "movement_speed": 1.0, "melee_armor": 0, "pierce_armor": 0,
          "attacks_json": '{"4":10}', "armors_json": "{}", "attack_range": 0,

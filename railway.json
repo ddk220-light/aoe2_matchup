@@ -1,8 +1,8 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "buildCommand": "pip install -r webapp/requirements.txt",
-    "watchPatterns": ["webapp/**"]
+    "buildCommand": "pip install -e . -r webapp/requirements.txt",
+    "watchPatterns": ["webapp/**", "aoe2x/**"]
   },
   "deploy": {
     "startCommand": "cd webapp && gunicorn app:app --workers 2 --timeout 300 --graceful-timeout 300",

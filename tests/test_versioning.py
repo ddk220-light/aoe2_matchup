@@ -2,7 +2,7 @@
 import importlib
 import os, sqlite3, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "webapp"))
-import derived_db
+from aoe2x.rank import derived_db
 
 
 def test_battle_scores_schema_has_build_number(tmp_path):
@@ -28,7 +28,7 @@ def test_battle_scores_schema_has_build_number(tmp_path):
     conn.close()
 
 
-import pool_scores_db
+from aoe2x.rank import pool_scores_db
 
 
 def _pool_row(civ, build, score):
@@ -52,7 +52,7 @@ def test_pool_scores_build_number(tmp_path):
 
 
 def test_power_units_path_for_build(monkeypatch, tmp_path):
-    import best_units
+    from aoe2x.advisor import best_units
     importlib.reload(best_units)
     monkeypatch.setattr(best_units, "POWER_UNITS_DIR", str(tmp_path / "cpu"))
     p = best_units.power_units_path("177723")
@@ -62,7 +62,7 @@ def test_power_units_path_for_build(monkeypatch, tmp_path):
 def test_load_civ_power_units_per_build_only(monkeypatch, tmp_path):
     """Per-build file or nothing — the legacy flat-file fallback was removed."""
     import json
-    import best_units
+    from aoe2x.advisor import best_units
     importlib.reload(best_units)
     cpu_dir = str(tmp_path / "cpu")
     monkeypatch.setattr(best_units, "POWER_UNITS_DIR", cpu_dir)
@@ -113,7 +113,7 @@ def test_migrate_baseline_tags_and_rebuilds(tmp_path, monkeypatch):
     cpu_dir = str(tmp_path / "civ_power_units")
     patches = str(tmp_path / "patches.db")
 
-    import migrate_baseline
+    from aoe2x.batch import migrate_baseline
     migrate_baseline.run(derived_db=dd, pool_db=ps, cpu_json=cpu_json,
                          cpu_dir=cpu_dir, patches_db=patches,
                          baseline_build="170934", release_date="2026-04-01",
@@ -125,7 +125,7 @@ def test_migrate_baseline_tags_and_rebuilds(tmp_path, monkeypatch):
     assert bc.execute("SELECT build_number FROM battle_scores").fetchone()[0] == "170934"
     bc.close()
     assert os.path.exists(os.path.join(cpu_dir, "170934.json"))
-    import patches_db
+    from aoe2x.batch import patches_db
     assert patches_db.get_current_build(patches_db_path=patches) == "170934"
 
     # Idempotent: second run does not raise and keeps one row
@@ -139,7 +139,7 @@ def test_migrate_baseline_tags_and_rebuilds(tmp_path, monkeypatch):
 
 
 def test_force_marks_all_pending():
-    import run_matchup_battles as r  # importable under CPython once the PyPy
+    from aoe2x.batch import run_matchup_battles as r  # importable under CPython once the PyPy
     # guard is moved into main() (see Step 3).
     members = [("A", "x", 0, "B", "y", 0)]
     # has_row=True everywhere; without force -> skip; with force -> pending
@@ -149,7 +149,8 @@ def test_force_marks_all_pending():
 
 def test_carry_forward_battle_scores(tmp_path):
     import sqlite3
-    import derived_db, patch_pipeline
+    from aoe2x.rank import derived_db
+    from aoe2x.batch import patch_pipeline
     dd = str(tmp_path / "d.db")
     conn = derived_db.create_db(dd)
     # naval row only exists at old build; must be carried to new build
@@ -166,7 +167,7 @@ def test_carry_forward_battle_scores(tmp_path):
 
 
 def test_write_patch_records(tmp_path):
-    import patches_db, patch_pipeline
+    from aoe2x.batch import patches_db, patch_pipeline
     pdb = str(tmp_path / "p.db")
     conn = patches_db.create_db(pdb)
     pid = patches_db.insert_patch(conn, build_number="177723", release_date="2026-06-02",

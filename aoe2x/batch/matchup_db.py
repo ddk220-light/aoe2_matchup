@@ -16,7 +16,7 @@ import hashlib
 import os
 import sqlite3
 
-from battle_outcome import BattleOutcome
+from aoe2x.sim.battle_outcome import BattleOutcome
 
 # Default for the batch runners' local working DB. Not tracked in git —
 # the in-repo Armenians-only stub was removed 2026-06-11; real baselines
@@ -111,7 +111,7 @@ def preflight_derive_guard(db_path, *, allow_small_db=False, allow_stale=False,
     """
     import sys
 
-    from sim_version import compute_sim_version
+    from aoe2x.sim.sim_version import compute_sim_version
 
     if not os.path.exists(db_path):
         raise SystemExit(f"ERROR: matchup DB not found: {db_path}")

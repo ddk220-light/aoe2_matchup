@@ -14,9 +14,11 @@ import os
 import shutil
 import sqlite3
 
-import patches_db as _patches_db  # aliased so a `patches_db` path param can't shadow it
+from aoe2x.batch import patches_db as _patches_db  # aliased so a `patches_db` path param can't shadow it
 
-_WEBAPP = os.path.dirname(__file__)
+from aoe2x.paths import WEBAPP_DIR
+
+_WEBAPP = str(WEBAPP_DIR)
 DEFAULT_DERIVED = os.path.join(_WEBAPP, "derived_data.db")
 DEFAULT_POOL = os.path.join(_WEBAPP, "pool_scores.db")
 DEFAULT_CPU_JSON = os.path.join(_WEBAPP, "civ_power_units.json")

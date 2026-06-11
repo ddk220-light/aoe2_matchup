@@ -17,7 +17,7 @@ whenever siege stats, the sim, or the siege-line membership change.
 
 Run from the repo root:
 
-    python -m webapp.derive_siege_scores [--build 177723] \
+    python -m aoe2x.rank.derive_siege_scores [--build 177723] \
         [--derived-db webapp/derived_data.db]
 """
 from __future__ import annotations
@@ -28,14 +28,11 @@ import sqlite3
 import sys
 from statistics import median as _median
 
-_here = os.path.dirname(os.path.abspath(__file__))
-if _here not in sys.path:
-    sys.path.insert(0, _here)
+from aoe2x.rank.compute_battle_scores import compute_siege_antibuilding_scores, SIEGE_LINE_SLUGS
+from aoe2x.batch.patches_db import get_current_build
+from aoe2x.paths import WEBAPP_DIR as _DATA_DIR
 
-from compute_battle_scores import compute_siege_antibuilding_scores, SIEGE_LINE_SLUGS
-from patches_db import get_current_build
-
-DEFAULT_DERIVED = os.path.join(_here, "derived_data.db")
+DEFAULT_DERIVED = os.path.join(str(_DATA_DIR), "derived_data.db")
 
 
 def main(argv: list[str] | None = None) -> int:

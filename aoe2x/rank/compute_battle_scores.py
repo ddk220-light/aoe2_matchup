@@ -22,12 +22,14 @@ import os
 import sqlite3
 import time
 
-from combat_unit_loader import build_combat_dict_from_ref
-from simulation import prepare_combat_unit, simulate_battle
-from unit_lines import UNIT_LINES, CIV_MISSING_UNITS
+from aoe2x.sim.combat_unit_loader import build_combat_dict_from_ref
+from aoe2x.sim.simulation import prepare_combat_unit, simulate_battle
+from aoe2x.sim.unit_lines import UNIT_LINES, CIV_MISSING_UNITS
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
-CACHE_PATH = os.path.join(os.path.dirname(__file__), "battle_cache.json")
+from aoe2x.paths import WEBAPP_DIR as _DATA_DIR
+
+DB_PATH = os.path.join(str(_DATA_DIR), "aoe2_reference.db")
+CACHE_PATH = os.path.join(str(_DATA_DIR), "battle_cache.json")
 CACHE_VERSION = 11
 
 BENCHMARKS = [
@@ -65,7 +67,8 @@ def _unit_fingerprint(combat_unit):
 
 def _sim_engine_hash():
     """MD5 hash of simulation.py file contents. 12 hex chars."""
-    sim_path = os.path.join(os.path.dirname(__file__), "simulation.py")
+    sim_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                            "sim", "simulation.py")
     with open(sim_path, "rb") as f:
         return hashlib.md5(f.read()).hexdigest()[:12]
 
@@ -2437,7 +2440,7 @@ def main():
     print(f"Rankings: {ranking_time:.1f}s")
 
     # Write output (round-robin + benchmarks only, no militia)
-    out_path = os.path.join(os.path.dirname(__file__), "battle_scores.json")
+    out_path = os.path.join(str(_DATA_DIR), "battle_scores.json")
     with open(out_path, "w") as f:
         json.dump(output, f, separators=(",", ":"))
 

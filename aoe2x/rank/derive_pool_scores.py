@@ -4,7 +4,7 @@
 (matchup DBs live outside the repo; the old committed webapp/matchup_db.db
 Armenians-only stub was removed 2026-06-11):
 
-    python -m webapp.derive_pool_scores \\
+    python -m aoe2x.rank.derive_pool_scores \\
         --matchup-db D:/AI/matchup_baseline_<build>.db --out webapp/pool_scores.db
 
 A pre-flight guard (matchup_db.preflight_derive_guard) aborts on small
@@ -24,20 +24,15 @@ import sqlite3
 import sys
 from collections import defaultdict
 
-# Allow `python -m webapp.derive_pool_scores` from the repo root: make this
-# directory (webapp/) importable for the bare sibling imports below.
-_here = os.path.dirname(os.path.abspath(__file__))
-if _here not in sys.path:
-    sys.path.insert(0, _here)
+from aoe2x.batch.matchup_db import preflight_derive_guard
+from aoe2x.rank.pool_scores_lib import derive_unit_scores, unit_to_pool
+from aoe2x.rank.pool_scores_db import create_db, insert_score
+from aoe2x.sim.unit_lines import UNIT_LINES
+from aoe2x.batch.patches_db import get_current_build
 
-from matchup_db import preflight_derive_guard
-from pool_scores_lib import derive_unit_scores, unit_to_pool
-from pool_scores_db import create_db, insert_score
-from unit_lines import UNIT_LINES
-from patches_db import get_current_build
+from aoe2x.paths import WEBAPP_DIR as _WEBAPP_DIR
 
-_WEBAPP_DIR = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_OUT_DB = os.path.join(_WEBAPP_DIR, "pool_scores.db")
+DEFAULT_OUT_DB = os.path.join(str(_WEBAPP_DIR), "pool_scores.db")
 
 ROW_KEYS = (
     "opp_unit_slug", "winner", "team1_hp_pct", "team2_hp_pct",

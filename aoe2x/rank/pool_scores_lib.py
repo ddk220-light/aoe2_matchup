@@ -7,8 +7,8 @@ responsible for reading from matchup_db and writing to pool_scores.db.
 import datetime
 from collections import defaultdict
 
-from simulation_real import weighted_cost as _sim_weighted_cost
-from unit_lines import UNIT_LINES
+from aoe2x.sim.simulation_real import weighted_cost as _sim_weighted_cost
+from aoe2x.sim.unit_lines import UNIT_LINES
 
 LAMBDA = 2.0
 T_MAX_SECONDS = 120.0

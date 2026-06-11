@@ -12,9 +12,9 @@ import random
 import sqlite3
 import sys
 
-from combat_unit_loader import build_combat_dict_from_ref
-from unit_lines import TREBUCHET_SLUGS, NAVAL_UNIT_LINES, CANNON_GALLEON_LINE
-from patches_db import get_current_build
+from aoe2x.sim.combat_unit_loader import build_combat_dict_from_ref
+from aoe2x.sim.unit_lines import TREBUCHET_SLUGS, NAVAL_UNIT_LINES, CANNON_GALLEON_LINE
+from aoe2x.batch.patches_db import get_current_build
 
 # GOLDEN_SEED — keep in sync with .golden/capture_baseline.py.
 # Seeded at the top of get_matchup_sims / get_matchup_recommendations so the
@@ -22,10 +22,12 @@ from patches_db import get_current_build
 # module-level `random` for accuracy/stray/scatter/trample).
 _SIM_SEED = 20260411
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
-DERIVED_DB_PATH = os.path.join(os.path.dirname(__file__), "derived_data.db")
-POOL_SCORES_DB_PATH = os.path.join(os.path.dirname(__file__), "pool_scores.db")
-POWER_UNITS_DIR = os.path.join(os.path.dirname(__file__), "civ_power_units")
+from aoe2x.paths import WEBAPP_DIR as _DATA_DIR
+
+DB_PATH = os.path.join(str(_DATA_DIR), "aoe2_reference.db")
+DERIVED_DB_PATH = os.path.join(str(_DATA_DIR), "derived_data.db")
+POOL_SCORES_DB_PATH = os.path.join(str(_DATA_DIR), "pool_scores.db")
+POWER_UNITS_DIR = os.path.join(str(_DATA_DIR), "civ_power_units")
 
 
 def power_units_path(build_number):
@@ -84,7 +86,7 @@ def _load_pool_score_percentiles(build_number=None):
     build_number = build_number or get_current_build() or "170934"
     if not os.path.exists(POOL_SCORES_DB_PATH):
         return {}
-    from unit_lines import UNIT_LINES
+    from aoe2x.sim.unit_lines import UNIT_LINES
 
     conn = sqlite3.connect(POOL_SCORES_DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -1099,8 +1101,8 @@ def load_civ_power_units(build_number=None):
 # Phase B: Matchup Recommendations (on-the-fly with targeted simulation)
 ###############################################################################
 
-from simulation import prepare_combat_unit, simulate_battle
-from simulation_real import simulate_real_battle, weighted_cost
+from aoe2x.sim.simulation import prepare_combat_unit, simulate_battle
+from aoe2x.sim.simulation_real import simulate_real_battle, weighted_cost
 
 
 def _calc_weighted_cost(food, wood, gold):

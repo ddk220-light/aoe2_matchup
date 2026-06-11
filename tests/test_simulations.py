@@ -4,7 +4,7 @@ import random
 
 import pytest
 
-from best_units import get_matchup_sims
+from aoe2x.advisor.best_units import get_matchup_sims
 
 GOLDEN_SEED = 20260411
 BASELINE_PATH = os.path.join(os.path.dirname(__file__), "..", ".golden", "baseline.json")

@@ -18,7 +18,7 @@ from functools import lru_cache
 from urllib.parse import urlencode
 
 from flask import Flask, Response, abort, jsonify, redirect, render_template, request
-from best_units import (
+from aoe2x.advisor.best_units import (
     load_civ_power_units,
     get_matchup_recommendations,
     get_matchup_sims,
@@ -26,11 +26,11 @@ from best_units import (
     _compute_missing_techs as compute_missing_techs,
     _parse_techs_and_bonuses as parse_techs_and_bonuses,
 )
-from combat_unit_loader import build_combat_dict_from_ref
-from top_units import load_top_units, compute_top_units
-from unit_lines import UNIT_LINES, TREBUCHET_SLUGS, CIV_MISSING_UNITS
-from pool_scores_query import load_pool_scores
-from patches_db import get_current_build
+from aoe2x.sim.combat_unit_loader import build_combat_dict_from_ref
+from aoe2x.advisor.top_units import load_top_units, compute_top_units
+from aoe2x.sim.unit_lines import UNIT_LINES, TREBUCHET_SLUGS, CIV_MISSING_UNITS
+from aoe2x.rank.pool_scores_query import load_pool_scores
+from aoe2x.batch.patches_db import get_current_build
 
 
 app = Flask(__name__)

@@ -1,6 +1,6 @@
-"""Unit tests for webapp/pool_scores_lib.py."""
+"""Unit tests for aoe2x/rank/pool_scores_lib.py."""
 import pytest
-from pool_scores_lib import apply_loss_aversion, hp_score, weighted_cost, cost_score
+from aoe2x.rank.pool_scores_lib import apply_loss_aversion, hp_score, weighted_cost, cost_score
 
 
 def test_loss_aversion_positive_unchanged():
@@ -88,7 +88,7 @@ def test_cost_score_tie_no_lambda():
                       my_total_cost=100, opp_total_cost=100) == pytest.approx(100.0)
 
 
-from pool_scores_lib import speed_score
+from aoe2x.rank.pool_scores_lib import speed_score
 
 
 def test_speed_score_instant_win_max_score():
@@ -120,8 +120,8 @@ def test_speed_score_tie_returns_zero():
     assert speed_score(winner=0, game_time_s=30.0) == 0.0
 
 
-from pool_scores_lib import line_imperial_slugs, unit_to_pool
-from unit_lines import UNIT_LINES
+from aoe2x.rank.pool_scores_lib import line_imperial_slugs, unit_to_pool
+from aoe2x.sim.unit_lines import UNIT_LINES
 
 
 def test_line_imperial_slugs_militia_includes_champion_and_uniques():
@@ -170,7 +170,7 @@ def test_unit_to_pool_unknown_returns_none():
     assert unit_to_pool(UNIT_LINES, "totally_made_up_slug") is None
 
 
-from pool_scores_lib import dedup_mean
+from aoe2x.rank.pool_scores_lib import dedup_mean
 
 
 def test_dedup_mean_collapses_same_group():
@@ -194,7 +194,7 @@ def test_dedup_mean_unique_groups():
     assert dedup_mean(values) == 20.0
 
 
-from pool_scores_lib import (
+from aoe2x.rank.pool_scores_lib import (
     POOL_ROLES, POOL_WEIGHTS, final_score_for_pool,
 )
 
@@ -239,7 +239,7 @@ def test_final_score_missing_role_treated_as_zero():
     assert final_score_for_pool(role_means, "stable") == pytest.approx(expected)
 
 
-from pool_scores_lib import compute_shape
+from aoe2x.rank.pool_scores_lib import compute_shape
 
 
 def test_compute_shape_empty_input():
@@ -277,7 +277,7 @@ def test_compute_shape_all_catastrophic_losses():
     assert s["catastrophic_loss_rate"] == 100.0
 
 
-from pool_scores_lib import derive_unit_scores
+from aoe2x.rank.pool_scores_lib import derive_unit_scores
 
 
 def _row(opp_unit, winner=1, t1=0.8, t2=0.0, dedup="g",

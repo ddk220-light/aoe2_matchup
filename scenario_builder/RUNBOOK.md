@@ -67,6 +67,8 @@ never overwrite it (re-runs overwrite the raw-recordings copy of the same matchu
 
 | Symptom | Cause | Fix |
 |---|---|---|
+| Clip "stutters/lags" right where the speedup starts; raw footage looks smooth | FRACTIONAL ramp factors (1.1–1.5x) make CFR drop frames on an irregular cadence — judder. NOT a capture problem | Fixed: ramp only when the middle supports >= 2x (combat > 25s, shorter fights play in full) and snap the factor to an integer (uniform frame-drop) |
+| Chasing "freezes" reported by `freezedetect` on raws | RTS content is legitimately still for 0.2s+ stretches — the detector flags CONTENT stillness, not dropped frames | Trust human eyes on the raw before re-architecting capture (two wrong fixes shipped off this false signal). Capture default: ddagrab+hwdownload+nvenc p1/ull; `AOE2_CAPTURE_MODE=zero` is an experiment (measured WORSE here). A STATIC desktop makes any ddagrab probe look hung — Desktop Duplication emits nothing until the screen changes |
 | Every run: "AoE2:DE not detected in a known screen" | Hidden UI, a leftover save-changes modal, or game not in editor | Restore UI / dismiss modal (No) / open editor; rerun |
 | `sidecar=None` + minutes of doomed OCR per run | gRPC stack unavailable (paths moved) or redecode produced no rows | `grpc_capture.available()` must be True; read `<prefix>.logger.log`; the footage has no readout text (NO_READOUT), so OCR can never rescue a run |
 | redecode `TimeoutExpired` AND truncated `.frames.bin` (~one snapshot) | Decoder hang (the live tailer shares the decoder in-process, so a hang freezes the dump too) | Decoder bug — reproduce offline with `faulthandler.dump_traceback_later`, fix, validate vs golden dump |
@@ -90,6 +92,10 @@ kill — the END anchor absorbs this.
 
 ## Golden rules
 
+- **The template (default3) owns the arena**: boundary objects close the retreat
+  paths AND it carries its own looping 'Contain strays' trigger. The build must not
+  move trees or add containment triggers — it only retargets the template trigger's
+  unit filters (and the count/wipe/banner triggers) to each matchup.
 - **Copy, don't depend**: everything the pipeline needs lives in the repo.
 - **Never run recompose during recording** (CPU steals recording frames).
 - The WINS banner trigger stays in scenarios (stop-signal fallback + verdict check);

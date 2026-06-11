@@ -265,14 +265,30 @@ def _win_audio_ok(ff: str, device: str) -> bool:
     return _AUDIO_OK[device]
 
 
-def _win_recorder_cmd(ff, out_mov, cap, fps, audio, gpu: bool) -> list:
-    """Build the capture command. gpu=True: ddagrab (Desktop Duplication) + h264_nvenc —
-    native res at high fps, encoded on the GPU. gpu=False: gdigrab + libx264 ultrafast,
-    the portable CPU fallback. Audio (optional) is a dshow loopback device."""
+def _win_recorder_cmd(ff, out_mov, cap, fps, audio, mode: str) -> list:
+    """Build the capture command for one of three tiers:
+      "nv_zero"  ddagrab -> hwmap(cuda) -> scale_cuda(nv12) -> h264_nvenc — frames stay
+                 ON the GPU end to end. The old hwdownload path round-tripped every
+                 native-res frame over PCIe (~840 MB/s at 1440p60); when that stalled,
+                 Desktop Duplication repeated frames — the recurring 0.2-0.5s hitches
+                 baked into the raws (most visible once the ramp speeds the fight up).
+      "nv_dl"    ddagrab -> hwdownload -> h264_nvenc (the previous default; fallback
+                 when the CUDA interop isn't available).
+      "cpu"      gdigrab + libx264 ultrafast, the portable last resort.
+    Audio (optional) is a dshow loopback device."""
     cmd = [ff, "-y", "-hide_banner", "-loglevel", "error"]
     if audio:
         cmd += ["-f", "dshow", "-i", f"audio={audio}"]
-    if gpu:
+    pixfmt = ["-pix_fmt", "yuv420p"]
+    if mode == "nv_zero":
+        # the documented ddagrab zero-copy form: D3D11 frames hand straight to nvenc
+        # (no hwmap/scale_cuda — the CUDA interop hangs silently on some setups)
+        cmd += ["-filter_complex",
+                f"ddagrab=output_idx=0:framerate={fps}[v]",
+                "-map", "[v]"]
+        venc = ["-c:v", "h264_nvenc", "-cq", "19"]
+        pixfmt = []                            # nvenc converts on the GPU
+    elif mode == "nv_dl":
         cmd += ["-filter_complex",
                 f"ddagrab=output_idx=0:framerate={fps},hwdownload,format=bgra[v]",
                 "-map", "[v]"]
@@ -283,7 +299,7 @@ def _win_recorder_cmd(ff, out_mov, cap, fps, audio, gpu: bool) -> list:
         venc = ["-c:v", "libx264", "-preset", "ultrafast", "-crf", "21"]
     if audio:
         cmd += ["-map", "0:a"]
-    cmd += ["-t", str(cap), *venc, "-pix_fmt", "yuv420p", "-r", str(fps)]
+    cmd += ["-t", str(cap), *venc, *pixfmt, "-r", str(fps)]
     if audio:
         cmd += ["-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2"]
     return cmd + [str(out_mov)]
@@ -307,21 +323,42 @@ def _win_recorder_start(out_mov, cap, fps, w, h):
               "video-only (set AOE2_AUDIO_DEVICE, or '' to silence this)", flush=True)
         audio = ""
     caps = _win_ff_caps(ff)
-    attempts = ([("ddagrab+h264_nvenc", True)] if caps["ddagrab"] and caps["nvenc"] else [])
-    attempts.append(("gdigrab+libx264", False))
+    attempts = ([("ddagrab+cuda zero-copy", "nv_zero"),
+                 ("ddagrab+h264_nvenc", "nv_dl")]
+                if caps["ddagrab"] and caps["nvenc"] else [])
+    attempts.append(("gdigrab+libx264", "cpu"))
     log_path = str(out_mov) + ".ffmpeg.log"
-    for name, gpu in attempts:
-        cmd = _win_recorder_cmd(ff, out_mov, cap, fps, audio, gpu)
+    for name, mode in attempts:
+        cmd = _win_recorder_cmd(ff, out_mov, cap, fps, audio, mode)
         with open(log_path, "a") as errf:
             errf.write(f"--- attempt: {name} ---\n{' '.join(cmd)}\n")
             errf.flush()
             proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=errf)
         time.sleep(1.5)                      # start-probe: catch an instant death NOW
-        if proc.poll() is None:
+        ok = proc.poll() is None
+        if ok:
+            # a HANGING pipeline stays alive but never writes a frame (seen with the
+            # ddagrab->CUDA hwmap on some setups) — require actual output bytes too
+            deadline = time.time() + 3.5
+            while time.time() < deadline:
+                try:
+                    if os.path.getsize(out_mov) > 0:
+                        break
+                except OSError:
+                    pass
+                time.sleep(0.4)
+            else:
+                ok = False
+                try:
+                    proc.kill()
+                except Exception:
+                    pass
+        if ok:
             proc.stderr_log = log_path
             return proc
-        print(f"[rec] {name} failed at start (exit {proc.returncode}) — "
-              f"see {log_path}", flush=True)
+        print(f"[rec] {name} failed at start "
+              f"({'no output' if proc.returncode is None else f'exit {proc.returncode}'})"
+              f" — see {log_path}", flush=True)
     tail = ""
     try:
         tail = Path(log_path).read_text(errors="replace")[-800:]

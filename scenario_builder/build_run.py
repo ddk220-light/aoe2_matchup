@@ -44,9 +44,11 @@ NO_READOUT = os.environ.get("AOE2_NO_READOUT", "1").lower() not in ("0", "", "fa
 
 HERE = Path(__file__).resolve().parent
 # the GOLDEN template every run is generated from. default1 (2026-06-10) = the
-# hand-edited arena with the hard-to-see trees cleared around the battle (73 boundary
-# trees within 10 tiles of the arena vs 88 in the old new_template, kept as fallback).
-TEMPLATE = HERE / "templates" / "default1.aoe2scenario"
+# default3 (2026-06-11): the user's hand-tuned arena — boundary objects close every
+# retreat path (566 GAIA) and the template CARRIES ITS OWN looping 'Contain strays'
+# trigger, so the build must neither move trees nor add containment triggers; it only
+# retargets the template trigger's unit filters to each matchup's army types.
+TEMPLATE = HERE / "templates" / "default3.aoe2scenario"
 RUN_DIR = Path("/tmp/aoe2_matchup_runs")        # (legacy; the auto path passes its own out)
 
 SCOUT_CONST = UnitInfo.SCOUT_CAVALRY.ID         # 448 — never swapped (it's the AI's explorer)
@@ -166,6 +168,7 @@ def _retarget_new_template(scn, new1, label1, n1, new2, label2, n2):
         except (TypeError, ValueError):
             return None
 
+    TASK = 12                                          # EffectId.TASK_OBJECT
     for trig in scn.trigger_manager.triggers:
         wiped_src = None
         for cond in trig.conditions:
@@ -176,6 +179,10 @@ def _retarget_new_template(scn, new1, label1, n1, new2, label2, n2):
         for eff in trig.effects:
             et = int(eff.effect_type)
             if et == COUNT and _sp(eff) in by_src:
+                eff.object_list_unit_id = by_src[_sp(eff)]
+            elif et == TASK and _sp(eff) in by_src:
+                # the template's own 'Contain strays' trigger (user-authored areas &
+                # cadence): point its unit filter at THIS matchup's army types
                 eff.object_list_unit_id = by_src[_sp(eff)]
             elif et == DISPLAY:
                 msg = getattr(eff, "message", None) or ""
@@ -198,92 +205,10 @@ def _army_centroid(um, pid, const):
     return (sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts))
 
 
-# Tall Gaia decorations that actually block the view (the boundary is built from these).
-_TREE_BLOCKERS = {1146, 414, 1348, 351, 2567, 1063, 2570, 1349, 1984, 1350}
-
-
-# AoE2:DE iso screen mapping, verified from footage (P3 at +x+y appears to the RIGHT):
-#   screen-x ∝ (x + y)  [larger = right]      screen-y ∝ (y - x)  [larger = down]
-def _scr(x, y):
-    return (x + y, y - x)
-
-
-def _open_lower_left(um, cam, push_x=14.0, min_x=2.0):
-    """Once the camera centers on the (forward-left) ranged army, the clearing's LOWER-LEFT
-    boundary trees sit in the bottom-left of the view and block the battle. Push just those
-    trees out toward the lower-left map corner so the view is clear.
-
-    'Lower-left of the view' = LEFT of the camera (smaller x+y) AND below/in-front (larger
-    y-x). DECREASING a unit's X moves it down-left on screen (-1 to x+y => left, +1 to y-x
-    => down), so we drop the X of the selected foreground-left trees to slide them out of
-    frame toward the corner. Trees elsewhere (right boundary, background) are left alone."""
-    cx, cy = cam
-    csx, csy = _scr(cx, cy)                          # camera screen-x (x+y), screen-y (y-x)
-    moved = 0
-    for u in um.get_player_units(0):
-        if u.unit_const not in _TREE_BLOCKERS:
-            continue
-        sx, sy = _scr(u.x, u.y)
-        # left of camera (sx<csx) and below/foreground (sy>csy), within the view band
-        if (sx < csx - 1) and (sy > csy + 1) and (sx > csx - 24) and (sy < csy + 22):
-            u.x = float(max(min_x, u.x - push_x))
-            moved += 1
-    return moved
-
-
-# --- stray containment --------------------------------------------------------------
-# Ranged units kite backwards and can drift out of the recorded view. A looping trigger
-# tasks any ARMY unit (scouts excluded via the unit-type filter) that strays into an
-# outer ring back to the clash point. Units inside the arena are never touched, so the
-# fight itself is unaffected; a pulled stray re-engages on arrival (aggressive stance).
-CONTAIN_MARGIN = 6      # tiles beyond the armies' spawn bbox that still count as arena
-CONTAIN_RING = 18       # band thickness beyond the arena that gets policed
-CONTAIN_EVERY_S = 2     # re-task cadence (looping timer)
-
-
-def _ring_bands(x1, y1, x2, y2, ring, size):
-    """The 4 clamped rectangles (left/right/top/bottom bands) forming a ring around
-    the arena rect. Pure geometry: returns [(bx1, by1, bx2, by2), ...], empty bands
-    dropped (arena flush against a map edge)."""
-    def cl(v):
-        return max(0, min(size - 1, int(round(v))))
-    ox1, oy1, ox2, oy2 = cl(x1 - ring), cl(y1 - ring), cl(x2 + ring), cl(y2 + ring)
-    ix1, iy1, ix2, iy2 = cl(x1), cl(y1), cl(x2), cl(y2)
-    bands = [
-        (ox1, oy1, ix1 - 1, oy2),                      # left of the arena
-        (ix2 + 1, oy1, ox2, oy2),                      # right
-        (ix1, oy1, ix2, iy1 - 1),                      # above (between the side bands)
-        (ix1, iy2 + 1, ix2, oy2),                      # below
-    ]
-    return [b for b in bands if b[0] <= b[2] and b[1] <= b[3]]
-
-
-def _containment_trigger(scn, new1, new2):
-    """Add the looping stray-containment trigger (see CONTAIN_* above). Returns the
-    number of ring bands policed (0 = no armies found, trigger not added)."""
-    um, tm = scn.unit_manager, scn.trigger_manager
-    pts = [(u.x, u.y) for pid, const in ((P_SIDE1, new1), (P_SIDE2, new2))
-           for u in um.get_player_units(pid) if u.unit_const == const]
-    if not pts:
-        return 0
-    xs, ys = [p[0] for p in pts], [p[1] for p in pts]
-    size = scn.map_manager.map_size
-    cx, cy = int(round(sum(xs) / len(xs))), int(round(sum(ys) / len(ys)))
-    bands = _ring_bands(min(xs) - CONTAIN_MARGIN, min(ys) - CONTAIN_MARGIN,
-                        max(xs) + CONTAIN_MARGIN, max(ys) + CONTAIN_MARGIN,
-                        CONTAIN_RING, size)
-    if not bands:
-        return 0
-    trig = scn.trigger_manager.add_trigger("Contain strays")
-    trig.looping = 1
-    trig.new_condition.timer(timer=CONTAIN_EVERY_S)
-    for pid, const in ((P_SIDE1, new1), (P_SIDE2, new2)):
-        for (bx1, by1, bx2, by2) in bands:
-            trig.new_effect.task_object(
-                object_list_unit_id=const, source_player=pid,
-                area_x1=bx1, area_y1=by1, area_x2=bx2, area_y2=by2,
-                location_x=cx, location_y=cy)
-    return len(bands)
+# NOTE: the template (default3) owns BOTH the boundary-tree layout and the looping
+# 'Contain strays' trigger — per the user, the build must not move trees or add
+# containment triggers; _retarget_new_template points the template trigger's unit
+# filters at each matchup's army types instead.
 
 
 def _set_camera(scn, ranged, c1, c2):
@@ -347,14 +272,9 @@ def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
     cam = _set_camera(scn, ranged, _army_centroid(um, P_SIDE1, new1),
                       _army_centroid(um, P_SIDE2, new2))
     if cam:
-        moved = _open_lower_left(um, cam)
         kind = "midpoint" if ranged[0] == ranged[1] else "ranged army"
-        print(f"[build_run] camera on the {kind} at {cam}; "
-              f"pushed {moved} lower-left boundary trees back")
-    nb = _containment_trigger(scn, new1, new2)
-    if nb:
-        print(f"[build_run] stray containment: looping task-home trigger "
-              f"({nb} ring bands, every {CONTAIN_EVERY_S}s)")
+        print(f"[build_run] camera on the {kind} at {cam} "
+              f"(trees and containment are the template's own — not touched)")
 
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)

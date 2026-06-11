@@ -313,21 +313,6 @@ class TestUnitCardCosts:
         assert icon.endswith("Elite_White_Feather_Crossbowman.png")
 
 
-# --------------------------------------------------------------------------- #
-# stray-containment ring geometry (build_run)
-# --------------------------------------------------------------------------- #
-class TestRingBands:
-    def test_four_bands_around_interior_arena(self):
-        from build_run import _ring_bands
-        bands = _ring_bands(20, 18, 42, 40, 18, 60)
-        assert (2, 0, 19, 58) in bands and (43, 0, 59, 58) in bands
-        assert (20, 0, 42, 17) in bands and (20, 41, 42, 58) in bands
-
-    def test_bands_clamped_and_dropped_at_map_edge(self):
-        from build_run import _ring_bands
-        bands = _ring_bands(0, 0, 30, 30, 10, 60)    # arena flush against top-left
-        assert all(0 <= a <= c <= 59 and 0 <= b <= d <= 59 for a, b, c, d in bands)
-        assert len(bands) == 2                        # left + above bands vanish
 
 
 # --------------------------------------------------------------------------- #

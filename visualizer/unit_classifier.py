@@ -31,6 +31,47 @@ RESOURCE_KW = ("gold mine", "stone mine", "tree", "bush", "berr", "forage", "shr
 # SPECIAL/UNGARRISON encode object ids byte-shifted (id<<8); normalize via >>8.
 SHIFT_THRESHOLD = 1_000_000
 
+# --- behaviour-fingerprint feature flags (for A/B testing; final values shipped) ---
+FP_PIN_TREB = True      # SPECIAL Pack/Unpack Trebuchet -> pin 'trebuchet'
+FP_PIN_RELIC = True     # small-n ORDER onto a gaia relic, no economy -> pin 'monk'
+FP_MIL_MOVES = False    # moves-only -> hard military class: HURTS (flips squads into
+                        # "ball" handling via phantom hard-military members)
+FP_MIL_MOVES_SOFT = True  # moves-only -> military at cocmd confidence (0.90): below the
+                          # ball-detection threshold (hard_class), so no squad flips; an
+                          # unclaimed moves-only unit then falls back to the player's
+                          # dominant military type instead of villager
+FP_EXCL_VIL = True      # repeated distinct-time gathering -> exclude from military FIFO
+FP_SIEGE_FENCE = True   # garrisoning / own-bld-order units can't claim siege slots
+FP_BATCH_CLAIM = True   # co-commanded id-adjacent unit batches claim a feasible
+                        # same-line slot window atomically (multi-building batch
+                        # production spawns near-simultaneously)
+FP_BATCH_PAIRS = True   # extend batch claiming to strict pairs (consecutive ids,
+                        # identical first command)
+FP_CLAIM_ORDER = True   # phase-1 claim order: siege/monk, then cav, then rest --
+                        # command lag is reliable for active mobile lines, not for
+                        # held foot units
+FP_PIN_SLOT_P2 = True   # pinned units consume their slot in PHASE-2 typing only
+FP_PIN_SLOT = False     # pinned unit consumes its FIFO slot: HURTS (slot removal shifts
+                        # the whole siege-line alignment; the pin alone already fixes the unit)
+# --- techniques merged from other verified angles ---
+FP_AVAIL_VETO = True    # civ-tech-prior: veto types the owner never produced/started with
+FP_END_CUTOFF = True    # queue-ledger: drop production completing after the recording ends
+FP_ISO_LAG_GATE = False  # ensemble-arbiter: iso-retype only when command lag <= run
+                         # isolation. Score-neutral on g0+train in THIS stack (the batch
+                         # exemption already covers its cases); left off to ship the
+                         # holdout-verified behavior-fingerprint path unchanged.
+FP_VIL_SKIP = False      # ensemble-arbiter: cheaper DP skip for gather-leaning units.
+                         # Score-neutral here (eco-exclusion already removes them); off.
+FP_ARB_MONK = False      # ensemble-arbiter: claim unused monk quota for bld_order-only units
+FP_ARB_RECLAIM = False   # ensemble-arbiter: reclaim zero-eco soft villagers on clean runs
+FP_ARB_VIL = True        # ensemble-arbiter: eco-dominant abstain (gathered, never hard-mil,
+                         # barely moved -> villager regardless of which stage typed it)
+FP_ARB_RECLAIM_DOM = False  # ... reclaim's dominant-producer fallback (grabs real
+                            # villagers in this stack; the soft-moves fingerprint already
+                            # rescues true moves-only military)
+FP_ARB_GARR = True       # id-spine-solver: bld_order>=2, no gathers, moves<=6 -> garrison/
+                         # deposit villager, not the type a FIFO snap claims
+
 # Confidence ladder.
 CONF = {
     "header": 0.99,
@@ -148,8 +189,13 @@ class Context:
     shifted: set = field(default_factory=set)  # raw ids that arrive byte-shifted
     timeseries: dict = field(default_factory=dict)  # player -> [(t_sec, total_objects)]
     resign: dict = field(default_factory=dict)      # player -> resign time (sec)
+    end_t: float = float("inf")                     # recorded game duration (sec)
     unqueues: dict = field(default_factory=lambda: defaultdict(list))  # building -> [(t, slot)]
     civ: dict = field(default_factory=dict)         # player name -> civilization
+    relic_ids: set = field(default_factory=set)     # gaia relic ids (only monks carry relics)
+    farm_pos: dict = field(default_factory=lambda: defaultdict(list))  # player -> [(x, y)] farm builds
+    pins: dict = field(default_factory=dict)        # cid -> behaviour-pinned type token
+    excl_vil: set = field(default_factory=set)      # cids fingerprinted as economic (forced villager)
 
     def canon(self, oid):
         """Source-aware id normalization. Only ids that arrive via SPECIAL/
@@ -180,6 +226,12 @@ def build_context(match):
     """
     ctx = Context(match=match)
 
+    # recorded game length: production completing after this never spawned
+    try:
+        ctx.end_t = match.duration.total_seconds()
+    except Exception:
+        pass
+
     # Pre-pass: collect the byte-shifted ids (those that arrive via SPECIAL /
     # UNGARRISON) so ctx.canon can decode exactly those.
     for a in match.actions:
@@ -197,6 +249,8 @@ def build_context(match):
         ctx.gaia_all.add(iid)
         if nm and any(k in nm for k in RESOURCE_KW) and "dry" not in nm and "grass" not in nm:
             ctx.resource_ids.add(iid)
+        if nm and "relic" in nm:
+            ctx.relic_ids.add(iid)
 
     # total_objects timeseries (per-player object count over time) -> used to
     # CALIBRATE production-completion timing for dense/concurrent production where
@@ -300,7 +354,165 @@ def build_context(match):
         if at in GROUP_CMDS and len(ids) >= 2:
             ctx.group_cmds.append((a.player.name, sorted(set(ids))))
 
+    _fingerprint_pass(ctx)
     return ctx
+
+
+def _fingerprint_pass(ctx):
+    """Second behaviour pass, run after the owner map is complete, collecting the
+    fingerprint counters the first walk can't compute reliably (target ownership is
+    only fully known once every command has been seen):
+
+      - farm BUILD positions per player -> ORDER clicks landing on an OWN FARM
+        (target id unknown to us: farms never queue, so they are absent from
+        building_ids) are gathers (farm_gather).
+      - relic_order: ORDER onto a gaia relic with a small selection. Only monks can
+        pick up relics.
+      - pack_treb: SPECIAL 'Pack/Unpack Trebuchet' -- physically trebuchet-only.
+      - garrison_small: SPECIAL Garrison with a small selection (observed villager/
+        monk-only; siege can never garrison).
+      - atk_enemy: ORDER onto an ENEMY-owned object (unit or building) = combat.
+      - own_bld_times: distinct-second ORDERs onto OWN buildings with small n
+        (garrison/repair/drop-off -- villager/monk pattern; never siege).
+      - gather_times: distinct seconds with a resource (or own-farm) gather.
+      - targeted: this unit was the target of an enemy ORDER (it is on the field).
+    """
+    for a in ctx.match.actions:
+        if not a.player:
+            continue
+        at = _at(a)
+        payload = a.payload or {}
+        t = a.timestamp.total_seconds()
+        pname = a.player.name
+        if at == "BUILD" and (payload.get("building") == "Farm"):
+            pos = getattr(a, "position", None)
+            if pos is not None and pos.x is not None:
+                ctx.farm_pos[pname].append((pos.x, pos.y))
+            continue
+        if at == "SPECIAL":
+            onm = str(payload.get("order") or "")
+            ids = [ctx.canon(o) for o in payload.get("object_ids", [])]
+            n = len(ids)
+            for cid in ids:
+                g = ctx.guesses.get(cid)
+                if g is None or cid in ctx.building_ids or cid in ctx.gaia_all:
+                    continue
+                b = g.behavior
+                if "Trebuchet" in onm:
+                    b["pack_treb"] = b.get("pack_treb", 0) + 1
+                elif onm == "Garrison":
+                    b["garrison"] = b.get("garrison", 0) + 1
+                    if n <= 3:
+                        b["garrison_small"] = b.get("garrison_small", 0) + 1
+            continue
+        if at == "MOVE":
+            ids = [ctx.canon(o) for o in payload.get("object_ids", [])]
+            n = len(ids)
+            pos = getattr(a, "position", None)
+            xy = (pos.x, pos.y) if pos is not None and pos.x is not None else None
+            for cid in ids:
+                g = ctx.guesses.get(cid)
+                if g is None or cid in ctx.building_ids or cid in ctx.gaia_all:
+                    continue
+                b = g.behavior
+                b["max_move_n"] = max(b.get("max_move_n", 0), n)
+                if xy is not None:
+                    b.setdefault("move_track", []).append((t, xy[0], xy[1]))
+            continue
+        if at != "ORDER":
+            continue
+        tgt = payload.get("target_id")
+        if not isinstance(tgt, int) or tgt <= 0:
+            continue
+        ctgt = ctx.canon(tgt)
+        ids = [ctx.canon(o) for o in payload.get("object_ids", [])]
+        n = len(ids)
+        town = ctx.owner.get(ctgt)
+        # enemy ORDERed onto ctgt -> the target is a fielded unit
+        if town and town != pname and ctgt not in ctx.building_ids and ctgt not in ctx.gaia_all:
+            tg = ctx.guesses.get(ctgt)
+            if tg is not None:
+                tg.behavior["targeted"] = tg.behavior.get("targeted", 0) + 1
+        pos = getattr(a, "position", None)
+        near_own_farm = False
+        if pos is not None and pos.x is not None and ctgt not in ctx.gaia_all \
+                and ctgt not in ctx.building_ids and town is None:
+            for fx, fy in ctx.farm_pos.get(pname, []):
+                if abs(pos.x - fx) <= 2.5 and abs(pos.y - fy) <= 2.5:
+                    near_own_farm = True
+                    break
+        for cid in ids:
+            g = ctx.guesses.get(cid)
+            if g is None or cid in ctx.building_ids or cid in ctx.gaia_all:
+                continue
+            b = g.behavior
+            if ctgt in ctx.relic_ids and n <= 2:
+                b["relic_order"] = b.get("relic_order", 0) + 1
+            if ctgt in ctx.resource_ids:
+                b.setdefault("gather_times", set()).add(round(t))
+                if n <= 2:
+                    b["solo_gather"] = b.get("solo_gather", 0) + 1
+            elif near_own_farm and n <= 2:
+                b["farm_gather"] = b.get("farm_gather", 0) + 1
+                b.setdefault("gather_times", set()).add(round(t))
+            if town and town != pname:
+                b["atk_enemy"] = b.get("atk_enemy", 0) + 1
+            elif town == pname and ctgt in ctx.building_ids and n <= 2:
+                b.setdefault("own_bld_times", set()).add(round(t))
+
+
+def fingerprint_labels(ctx):
+    """Behaviour-fingerprint stage (after behavioral_labels): high-precision pins
+    and class evidence derived from physical ability constraints.
+
+      - ctx.pins: pack-treb -> 'trebuchet' (6/6 in truth); small-n relic order with
+        no economy -> 'monk' (relics are monk-carry-only).
+      - mil_fp: a unit that ONLY ever receives MOVEs (>=3, or >=2 when the enemy
+        explicitly targets it) and never gathers/builds is a fielded military unit
+        (43/45 in truth) -- scouts and army the soft DP otherwise drops to villager.
+      - ctx.excl_vil: repeated distinct-time gathering (or a solo-selected gather)
+        with at most incidental combat orders marks a real economic unit -- it must
+        not claim a military FIFO slot (fixes villagers dragged into army types by
+        mass-select co-commands).
+    """
+    for cid, g in ctx.guesses.items():
+        if cid in ctx.building_ids or cid in ctx.gaia_all or cid in ctx.start_ids:
+            continue
+        b = g.behavior
+        if FP_PIN_TREB and b.get("pack_treb"):
+            ctx.pins[cid] = "trebuchet"
+            _set_class(g, "military", CONF["hard_class"], "fp_treb")
+            continue
+        if FP_PIN_RELIC and b.get("relic_order") and not b.get("gathers") and not b.get("hard_build") \
+                and not b.get("builds") and not b.get("solo_gather"):
+            ctx.pins[cid] = "monk"
+            _set_class(g, "military", CONF["hard_class"], "fp_relic")
+            continue
+        gt = len(b.get("gather_times", ()))
+        if b.get("solo_gather"):
+            gt = max(gt, 2)
+        if b.get("garrison_small"):
+            gt += 1
+        moves = b.get("moves", 0)
+        no_eco = not b.get("gathers") and not b.get("farm_gather") and not b.get("builds") \
+            and not b.get("hard_build") and not b.get("bld_order") and not b.get("own_bld_times")
+        no_orders = no_eco and not b.get("atk_enemy") and not b.get("attacks_building") \
+            and not b.get("garrison")
+        if FP_MIL_MOVES and no_orders and (moves >= 3 or (moves >= 2 and b.get("targeted"))):
+            b["mil_fp"] = 1
+            _set_class(g, "military", CONF["hard_class"], "fp_moves")
+            continue
+        if FP_MIL_MOVES_SOFT and no_orders and (moves >= 3 or (moves >= 2 and b.get("targeted"))):
+            b["mil_fp"] = 1
+            # Always commanded in a TINY selection (<=3) -> a scouting pair/solo, not
+            # an army repositioning: type it as the player's scout-line unit later.
+            if b.get("max_move_n", 99) <= 3:
+                b["scout_fp"] = 1
+            _set_class(g, "military", CONF["cocmd_class"], "fp_moves")
+            continue
+        if FP_EXCL_VIL and not b.get("hard_mil") and not b.get("patrols") and gt >= 2 \
+                and gt >= 2 * b.get("atk_enemy", 0):
+            ctx.excl_vil.add(cid)
 
 
 def _ensure(ctx, cid, player):
@@ -472,6 +684,23 @@ _TYPE_LINE = {
     "monk": "monk", "missionary": "monk", "warriorpriest": "monk", "imam": "monk",
 }
 
+# Building-faithful remap (merged from the queue-ledger angle; pure tech-tree facts):
+# composite bowman is an ARCHERY RANGE unit (Armenians), not castle-unique; units
+# actually produced at the CASTLE share ONE production queue -- trebuchet + every
+# castle-only unique unit. The default map scatters them across 'siege'/'inf'/'arch'/
+# 'cav', so Phase-1 line claiming mixes units that compete for the same building
+# (treb vs jaguar) and separates ones that don't.
+FP_LINE_REMAP = True
+if FP_LINE_REMAP:
+    _TYPE_LINE["compositebowman"] = "arch"
+    for _u in ("trebuchet", "hussitewagon", "petard", "jaguarwarrior", "huskarl",
+               "woadraider", "berserk", "teutonicknight", "samurai", "throwingaxeman",
+               "gbeto", "shotelwarrior", "karambitwarrior", "mangudai", "rattanarcher",
+               "warwagon", "chukonu", "genoesecrossbowman", "plumedarcher", "longbowman",
+               "boyar", "cataphract", "warelephant", "leitis", "keshik", "coustillier",
+               "konnik", "tarkan"):
+        _TYPE_LINE[_u] = "unique"
+
 
 def _line_of(t):
     return _TYPE_LINE.get((t or "").replace(" ", "").lower(), "unique")
@@ -525,7 +754,10 @@ def production_timeline(ctx):
     for b, q in ctx.queues.items():
         player = ctx.owner.get(b)
         civ = ctx.civ.get(player)
-        cutoff = ctx.resign.get(player, float("inf"))   # stop producing at resign
+        # stop producing at resign AND at end of recording (queue-ledger: production
+        # completing after the recording stopped never spawned -- spam-queued phantoms)
+        cutoff = min(ctx.resign.get(player, float("inf")),
+                     ctx.end_t if FP_END_CUTOFF else float("inf"))
         q = _apply_unqueues(sorted(q), ctx.unqueues.get(b, []), civ)
         done = 0.0
         for ts, u in q:
@@ -803,6 +1035,7 @@ def align_production(ctx, TOL=4.0, SKIP=22.0, EPS=0.5, BIG=1e9):
     sets a unit's class, so a slinger from an archery range is military even with a
     phantom gather. Returns the set of matched cids."""
     matched_all = set()
+    dbg = globals().get("UC_DEBUG_CLAIMS")
     players = set(g.player for g in ctx.guesses.values() if g.player)
     for player in players:
         fifo = sorted(ctx.prod_mil.get(player, []))
@@ -821,6 +1054,8 @@ def align_production(ctx, TOL=4.0, SKIP=22.0, EPS=0.5, BIG=1e9):
                 continue
             if g.behavior.get("hard_build"):
                 continue                       # confirmed villager: never military
+            if c in ctx.pins or c in ctx.excl_vil:
+                continue                       # behaviour-pinned / fingerprinted-economic
             cand.append(c)
         cand.sort()                            # instance_id == spawn order
         if not cand:
@@ -835,12 +1070,104 @@ def align_production(ctx, TOL=4.0, SKIP=22.0, EPS=0.5, BIG=1e9):
         lines = defaultdict(list)
         for t, u in fifo:
             lines[_line_of(u)].append((t, u))
+        # A behaviour-pinned unit (pack-treb / relic-monk) consumes its own FIFO slot,
+        # so the alignment can't hand that slot to someone else (e.g. a mass-selected
+        # villager stealing the trebuchet slot the pinned treb actually filled).
+        for pc, ptype in (ctx.pins.items() if FP_PIN_SLOT else ()):
+            if ctx.guesses[pc].player != player:
+                continue
+            L = _line_of(ptype)
+            fs = ctx.guesses[pc].behavior.get("first_seen")
+            slots = [i for i, (st, su) in enumerate(lines.get(L, ())) if su == ptype]
+            if not slots:
+                continue
+            if fs is not None:
+                valid = [i for i in slots if lines[L][i][0] <= fs + TOL]
+                best = valid[-1] if valid else slots[0]
+            else:
+                best = slots[0]
+            lines[L].pop(best)
+        # Snapshot per-line slots for phase 2 BEFORE batch claiming consumes any:
+        # batch members still need their slots for within-line typing.
+        lines_full = {L: list(fifo_L) for L, fifo_L in lines.items()}
+        if FP_PIN_SLOT_P2 and not FP_PIN_SLOT:
+            # phase-2-only slot consumption: a pinned treb/monk keeps others from
+            # being TYPED onto its slot without shifting the phase-1 line claims.
+            for pc, ptype in ctx.pins.items():
+                if ctx.guesses[pc].player != player:
+                    continue
+                L = _line_of(ptype)
+                fs = ctx.guesses[pc].behavior.get("first_seen")
+                slots = [i for i, (st, su) in enumerate(lines_full.get(L, ())) if su == ptype]
+                if not slots:
+                    continue
+                if fs is not None:
+                    valid = [i for i in slots if lines_full[L][i][0] <= fs + TOL]
+                    best = valid[-1] if valid else slots[0]
+                else:
+                    best = slots[0]
+                lines_full[L].pop(best)
+        claimed = {}
+        if FP_BATCH_CLAIM and len(cand) >= 3:
+            # Units with ADJACENT instance ids (<=3 apart -- nothing else spawned
+            # globally in between) that received their first command TOGETHER
+            # (within 4s) are a production BATCH: queued across several buildings
+            # of the same line and spawned near-simultaneously. The whole batch
+            # must therefore claim ONE line, in a slot window whose time-span is
+            # coverable by the global production cadence (a few interleaved ids =
+            # a few seconds), not scattered over lines by per-unit command lag --
+            # which is exactly how a held melee batch steals a ranged line's slots.
+            allt = sorted(t for pp in ctx.prod_full.values() for t, _ in pp)
+            deltas = [b - a for a, b in zip(allt, allt[1:])]
+            gint = sorted(deltas)[len(deltas) // 2] if deltas else 5.0
+            gint = min(10.0, max(2.0, gint))
+            batches, cur = [], [cand[0]]
+            for a, b in zip(cand, cand[1:]):
+                if b - a <= 3 and abs(fsmap[b] - fsmap[a]) <= 4.0:
+                    cur.append(b)
+                else:
+                    batches.append(cur)
+                    cur = [b]
+            batches.append(cur)
+            for batch in batches:
+                k = len(batch)
+                if k < 3:
+                    # allow PAIRS only with the strictest evidence: strictly
+                    # consecutive ids and the identical first command
+                    if not (FP_BATCH_PAIRS and k == 2 and batch[1] - batch[0] <= 1
+                            and fsmap[batch[0]] == fsmap[batch[1]]):
+                        continue
+                extras = (batch[-1] - batch[0]) - (k - 1)
+                allowed = 2.0 + gint * (extras + 1)
+                fsb = min(fsmap[c] for c in batch)
+                best = None
+                for L, fifo_L in lines.items():
+                    S = [t for t, _ in fifo_L]
+                    for w in range(0, len(S) - k + 1):
+                        if S[w + k - 1] - S[w] > allowed:
+                            continue
+                        if S[w + k - 1] > fsb + TOL:
+                            continue          # spawn must precede first command
+                        cost = sum(max(0.0, fsb - S[w + j]) for j in range(k))
+                        if best is None or cost < best[0]:
+                            best = (cost, L, w)
+                if best is None:
+                    continue
+                _, L, w = best
+                for c in batch:
+                    claimed[c] = L
+                    ctx.guesses[c].behavior["batch_line"] = L
+                del lines[L][w:w + k]
         # Phase 1 -- LINE: claim units to lines SMALLEST-FIRST with STRICT lag, so the
         # exact-spawn owner wins each slot and a distinctive line is not absorbed by
         # archery. This decides which building-line each unit came from (and its class).
-        claimed = {}
         raider_pool = len(lines.get("cav", [])) + len(lines.get("inf", []))
-        for L in sorted(lines, key=lambda L: len(lines[L])):
+        if FP_CLAIM_ORDER:
+            _ord = lambda L: (0 if L in ("siege", "monk") else (1 if L == "cav" else 2),
+                              len(lines[L]))
+        else:
+            _ord = lambda L: len(lines[L])
+        for L in sorted(lines, key=_ord):
             fifo_L = lines[L]
             ftL = [t for t, _ in fifo_L]
             fuL = [u for _, u in fifo_L]
@@ -852,13 +1179,34 @@ def align_production(ctx, TOL=4.0, SKIP=22.0, EPS=0.5, BIG=1e9):
             # from the cav/inf line they belong to. (Unified, no per-player branch.)
             if L in ("siege", "monk") and len(fifo_L) >= 4 and raider_pool > len(fifo_L):
                 pool = [c for c in pool if not patmap[c]]
+            if L == "siege" and FP_SIEGE_FENCE:
+                # Siege can NEVER garrison (physically impossible), and a unit that
+                # repeatedly orders onto its OWN buildings with a small selection
+                # (garrison/repair/drop-off) without a single combat order is an
+                # economic/monk pattern -- fence both out of the siege line so a
+                # fleeing villager can't claim a trebuchet slot.
+                def _not_siege(c):
+                    b = ctx.guesses[c].behavior
+                    if b.get("garrison"):
+                        return True
+                    # ORDER onto an OWN building is garrison/repair/drop-off -- all
+                    # physically impossible for siege (it cannot garrison and does not
+                    # repair). One such order with NO combat order ever is enough.
+                    return (len(b.get("own_bld_times", ())) >= 1
+                            and not b.get("atk_enemy") and not b.get("attacks_building"))
+                pool = [c for c in pool if not _not_siege(c)]
             if not pool:
                 continue
             fsL = [fsmap[c] for c in pool]
             hmL = [hmmap[c] for c in pool]
-            mm = _match_dp(pool, fsL, hmL, ftL, fuL, TOL, SKIP, EPS, BIG, pack=False, strict=True)
+            skL = [_vil_skip_cost(ctx.guesses[c], SKIP) for c in pool] \
+                if FP_VIL_SKIP else None
+            mm = _match_dp(pool, fsL, hmL, ftL, fuL, TOL, SKIP, EPS, BIG, pack=False,
+                           strict=True, skips=skL)
             for c in mm:
                 claimed[c] = L
+            if dbg is not None:
+                dbg.append(("phase1", player, L, dict(mm)))
         # Phase 2 -- TYPE: within each line, re-align its claimed units by EARLIEST-
         # PACKING (every time-valid slot equal), so a held unit takes its true early
         # slot instead of stealing a later same-line slot of another type via low lag.
@@ -866,13 +1214,17 @@ def align_production(ctx, TOL=4.0, SKIP=22.0, EPS=0.5, BIG=1e9):
         for c, L in claimed.items():
             byline[L].append(c)
         for L, cids in byline.items():
-            fifo_L = lines[L]
+            fifo_L = lines_full[L]      # full slot list: batch claiming consumed slots
+            if not fifo_L:
+                continue
             ftL = [t for t, _ in fifo_L]
             fuL = [u for _, u in fifo_L]
             cs = sorted(cids)
             fsL = [fsmap[c] for c in cs]
             hmL = [True] * len(cs)
             mm = _match_dp(cs, fsL, hmL, ftL, fuL, TOL, SKIP, EPS, BIG, pack=True)
+            if dbg is not None:
+                dbg.append(("phase2", player, L, dict(mm)))
             for c in cs:
                 g = ctx.guesses[c]
                 g.type = mm.get(c, fuL[0])
@@ -944,11 +1296,34 @@ def align_production(ctx, TOL=4.0, SKIP=22.0, EPS=0.5, BIG=1e9):
     return matched_all
 
 
-def _match_dp(cand, fs, hardmil, ft, fu, TOL, SKIP, EPS, BIG, pack, strict=False):
+def _vil_skip_cost(g, SKIP):
+    """Per-unit DP skip cost (merged from the ensemble-arbiter angle). The flat SKIP
+    treats every soft unit as equally likely to be a villager; in truth a unit with
+    RECORDED gathers, few moves, and no more attack-orders than gathers is villager-
+    leaning (its rare phantom gather came from a co-select), so skipping it should be
+    cheaper -- this stops the DP from pulling lumberjacks into military slots just
+    because a slot finished nearby. Military behavior keeps the full skip cost."""
+    b = g.behavior
+    if b.get("hard_mil") or b.get("patrols"):
+        return SKIP
+    gh = b.get("gathers", 0)
+    if not gh:
+        return SKIP
+    ab = b.get("attacks_building", 0)
+    mv = b.get("moves", 0)
+    if ab <= gh and mv <= 8:
+        # gather evidence dominates; more gathers -> stronger villager prior
+        return SKIP * (0.5 if gh == 1 else 0.25)
+    return SKIP
+
+
+def _match_dp(cand, fs, hardmil, ft, fu, TOL, SKIP, EPS, BIG, pack, strict=False,
+              skips=None):
     """Order-preserving match/skip DP. Returns {cid: slot_type}.
       - match unit i -> slot j: cost 0 if pack-or-hardmil (earliest slot wins via the
         EPS skip cost), else the command lag (gates ambiguous units to nearby slots).
-      - skip unit i: cost SKIP (BIG for a hard-military unit that must occupy a slot).
+      - skip unit i: cost SKIP (BIG for a hard-military unit that must occupy a slot;
+        skips[i] overrides per unit -- lower for villager-leaning behavior).
       - skip slot j: cost EPS (favours packing units onto their earliest valid slots)."""
     N, M = len(cand), len(ft)
     if N == 0 or M == 0:
@@ -960,7 +1335,7 @@ def _match_dp(cand, fs, hardmil, ft, fu, TOL, SKIP, EPS, BIG, pack, strict=False
     for j in range(1, M + 1):
         dp[0][j] = j * EPS
     for i in range(1, N + 1):
-        su = BIG if hardmil[i - 1] else SKIP
+        su = BIG if hardmil[i - 1] else (skips[i - 1] if skips is not None else SKIP)
         fsi = fs[i - 1]
         # strict: cost is the command lag for EVERYONE, so the unit that spawned just
         # before a slot (lowest lag) wins it -- the exact-spawn true owner beats a
@@ -1035,11 +1410,19 @@ def refine_military(ctx, iso_gate=14.0, TOL=4.0, smooth_thresh=0.6):
         for c in matched:
             if ctx.guesses[c].player != player:
                 continue
+            if ctx.guesses[c].behavior.get("batch_line"):
+                continue   # batch-claimed: its first command is LATE by construction,
+                           # so the fs-isolation lookup would land on the wrong slot
             fs = ctx.guesses[c].behavior.get("first_seen")
             if fs is None:
                 continue
             k = bisect.bisect_right(PT, fs + TOL) - 1
-            if 0 <= k < len(PU) and iso[k] >= iso_gate:
+            if 0 <= k < len(PU) and iso[k] >= iso_gate and (
+                    not FP_ISO_LAG_GATE or (fs - PT[k]) <= iso[k]):
+                # LAG GATE (ensemble-arbiter): the unit spawned somewhere in
+                # [fs - lag, fs]; the slot at fs is only trustworthy if the run's
+                # isolation exceeds the command lag, else a unit first commanded
+                # minutes after spawning gets retyped to whatever finished nearby.
                 ctx.guesses[c].type = PU[k]
                 ctx.guesses[c].type_conf = CONF["hard_class"]
 
@@ -1143,7 +1526,14 @@ def refine_separable_military(ctx, threshold=0.3):
 
 def finalize(ctx):
     """Stage 5: class-aware fallback -- a unit we know is MILITARY but couldn't
-    type still gets the player's dominant military type, never bare 'unit'."""
+    type still gets the player's dominant military type, never bare 'unit'.
+
+    AVAILABILITY VETO (merged from the civ-tech-prior angle): a specific predicted
+    type that the owning player NEVER produced (not in their queue stream) and that
+    is not one of their starting units is impossible -- it can only arise from a
+    cross-player type leak (e.g. a mixed-player blob handing an Aztec unit the
+    Armenian composite bowman). Re-type from the unit's own class: villager, or the
+    player's dominant military production."""
     dom = {}
     for player, comp in ctx.prod_mil.items():
         c = Counter(t for _, t in comp)
@@ -1155,18 +1545,278 @@ def finalize(ctx):
                 _set_type(g, "villager", CONF["fallback"], "fallback")
             elif g.cls == "military" and g.player in dom:
                 _set_type(g, dom[g.player], CONF["fallback"], "fallback")
+    if FP_AVAIL_VETO:
+        prod = {}
+        for b, q in ctx.queues.items():
+            prod.setdefault(ctx.owner.get(b), set()).update(u for _, u in q)
+        start_types = {}
+        for p in ctx.match.players:
+            st = set()
+            for o in (p.objects or []):
+                nm = _norm(getattr(o, "name", None))
+                if nm:
+                    st.add(nm)
+            start_types[p.name] = st
+        for g in ctx.guesses.values():
+            if (g.type in GENERIC_TYPES or g.type == "villager" or g.player is None):
+                continue
+            if (g.type in prod.get(g.player, ()) or g.type in start_types.get(g.player, ())):
+                continue
+            g.type = "villager" if g.cls == "villager" else dom.get(g.player, "unit")
+            g.type_conf = CONF["fallback"]
+            g.signals.append("avail_veto")
+
+
+# scout-line tokens: the "exploration" unit of each civ's stable/barracks opening.
+_SCOUT_TOKENS = {"scoutcavalry", "lightcavalry", "hussar", "winghussar", "eaglescout",
+                 "eaglewarrior", "eliteeaglewarrior", "champiscout", "camelscout",
+                 "shrivamsharider"}
+
+
+def apply_fingerprints(ctx):
+    """Final fingerprint enforcement (after every alignment/refinement stage):
+    behaviour pins take the type outright; fingerprinted-economic units are forced
+    back to villager (they were excluded from the FIFO, but blob/squad typing may
+    still have painted them with a military type); a scouting pair (moves-only,
+    always selected n<=3) is the player's scout-line unit unless a hard signal
+    already typed it."""
+    # scout fingerprint: most-produced scout-line token per player (else dominant mil)
+    scout_t, dom_t = {}, {}
+    for player, comp in ctx.prod_mil.items():
+        c = Counter(t for _, t in comp)
+        if c:
+            dom_t[player] = c.most_common(1)[0][0]
+        sc = Counter({t: n for t, n in c.items() if t in _SCOUT_TOKENS})
+        if sc:
+            scout_t[player] = sc.most_common(1)[0][0]
+    for cid, g in ctx.guesses.items():
+        if not g.behavior.get("scout_fp") or cid in ctx.pins:
+            continue
+        if g.type_conf >= CONF["hard_class"]:
+            continue                     # FIFO-isolation / hard pin already typed it
+        t = scout_t.get(g.player) or dom_t.get(g.player)
+        if t:
+            g.type = t
+            g.type_conf = CONF["squad_type"]
+            g.cls = "military"
+            g.cls_conf = max(g.cls_conf, CONF["cocmd_class"])
+            if "fp_scout" not in g.signals:
+                g.signals.append("fp_scout")
+    for cid, t in ctx.pins.items():
+        g = ctx.guesses[cid]
+        g.type = t
+        g.type_conf = CONF["hard_class"]
+        g.cls = "military"
+        g.cls_conf = max(g.cls_conf, CONF["hard_class"])
+    for cid in ctx.excl_vil:
+        if cid in ctx.pins:
+            continue
+        g = ctx.guesses[cid]
+        g.type = "villager"
+        g.type_conf = CONF["squad_type"]
+        g.cls = "villager"
+        g.cls_conf = max(g.cls_conf, CONF["squad_type"])
+
+
+def arbiter_monk_quota(ctx):
+    """(Merged from the ensemble-arbiter angle.) A unit that ordered its OWN building
+    (bld_order: relic/heal garrison) but never gathered or built is monk-like, not
+    villager-like -- a real eco villager always accumulates gathers. If its player
+    still has unassigned monk production, claim it. Gated on: zero eco evidence, no
+    hard military signal, and either the unit barely moved (a stay-home monk) or its
+    first command sits in a clean monk completion run."""
+    by_player = defaultdict(list)
+    for c, g in ctx.guesses.items():
+        if c in ctx.building_ids or c in ctx.gaia_all or c in ctx.start_ids:
+            continue
+        by_player[g.player].append(c)
+    for player, cids in by_player.items():
+        fifo = sorted(ctx.prod_mil.get(player, []))
+        monk_slots = [t for t, u in fifo if u == "monk"]
+        if not monk_slots:
+            continue
+        room = len(monk_slots) - sum(1 for c in cids if ctx.guesses[c].type == "monk")
+        if room <= 0:
+            continue
+        PT = [t for t, _ in fifo]
+        PU = [u for _, u in fifo]
+        iso = [min((abs(PT[x] - PT[k]) for x in range(len(PT)) if PU[x] != PU[k]),
+                   default=float("inf")) for k in range(len(PT))]
+        cand = []
+        for c in cids:
+            g = ctx.guesses[c]
+            b = g.behavior
+            if g.type == "monk" or b.get("first_seen") is None or c in ctx.pins:
+                continue
+            if (not b.get("bld_order") or b.get("gathers") or b.get("builds")
+                    or b.get("hard_build") or b.get("hard_mil")):
+                continue
+            fs = b["first_seen"]
+            k = bisect.bisect_right(PT, fs + 4.0) - 1
+            slot_monk = (0 <= k < len(PU) and PU[k] == "monk"
+                         and iso[k] >= 14.0
+                         and (fs - PT[k]) <= min(iso[k], 30.0))
+            if b.get("moves", 0) <= 2 or slot_monk:
+                cand.append(c)
+        for c in cand[:room]:
+            g = ctx.guesses[c]
+            g.type = "monk"
+            g.type_conf = CONF["squad_type"]
+            g.cls = "military"
+            g.cls_conf = max(g.cls_conf, CONF["squad_type"])
+            if "arb_monk" not in g.signals:
+                g.signals.append("arb_monk")
+
+
+def arbiter_reclaim(ctx, TOL=4.0):
+    """(Merged from the ensemble-arbiter angle.) A unit finalized as a SOFT villager
+    that shows ZERO economic evidence (never gathered, never built) and whose first
+    command lands inside a clean single-type military completion run is far more
+    likely that military unit than a villager -- real eco villagers accumulate
+    gathers almost immediately. Only claims types with unused production quota, so
+    it cannot inflate a type beyond what the log proves. Dominant-producer fallback:
+    a qualified unit whose slot type is fully assigned still gets the player's
+    dominant production type (>= half of all training) if that has unused quota."""
+    HARD = CONF["hard_class"]
+    by_player = defaultdict(list)
+    for c, g in ctx.guesses.items():
+        if c in ctx.building_ids or c in ctx.gaia_all or c in ctx.start_ids:
+            continue
+        by_player[g.player].append(c)
+    for player, cids in by_player.items():
+        fifo = sorted(ctx.prod_mil.get(player, []))
+        if not fifo:
+            continue
+        prod = Counter(u for _, u in fifo)
+        assigned = Counter(ctx.guesses[c].type for c in cids
+                           if ctx.guesses[c].cls == "military"
+                           and ctx.guesses[c].type not in GENERIC_TYPES)
+        PT = [t for t, _ in fifo]
+        PU = [u for _, u in fifo]
+        iso = [min((abs(PT[x] - PT[k]) for x in range(len(PT)) if PU[x] != PU[k]),
+                   default=float("inf")) for k in range(len(PT))]
+        claims = []  # (lag, c, U)
+        for c in cids:
+            g = ctx.guesses[c]
+            b = g.behavior
+            if g.cls != "villager" or g.cls_conf >= HARD or c in ctx.pins \
+                    or c in ctx.excl_vil:
+                continue
+            if (b.get("gathers") or b.get("builds") or b.get("hard_build")
+                    or b.get("bld_order") or b.get("first_seen") is None):
+                continue
+            if b.get("moves", 0) > 6:
+                continue
+            fs = b["first_seen"]
+            k = bisect.bisect_right(PT, fs + TOL) - 1
+            if k < 0 or k >= len(PU):
+                continue
+            lag = max(fs - PT[k], 0.0)
+            if iso[k] >= 14.0 and lag <= min(iso[k], 30.0):
+                claims.append((lag, c, PU[k]))
+        claims.sort()
+        blocked = []  # qualified on behavior+clean run, but slot type quota full
+        for lag, c, U in claims:
+            if assigned[U] >= prod.get(U, 0):
+                blocked.append((lag, c))
+                continue  # no unused quota for this type
+            g = ctx.guesses[c]
+            assigned[U] += 1
+            g.type = U
+            g.type_conf = CONF["idrank_type"]
+            g.cls = "military"
+            g.cls_conf = max(g.cls_conf, CONF["idrank_type"])
+            if "arb_reclaim" not in g.signals:
+                g.signals.append("arb_reclaim")
+        if blocked and FP_ARB_RECLAIM_DOM:
+            total = sum(prod.values())
+            dom, dn = prod.most_common(1)[0]
+            if total and dn >= 0.5 * total:
+                for lag, c in blocked:
+                    if assigned[dom] >= prod[dom]:
+                        break
+                    g = ctx.guesses[c]
+                    if g.behavior.get("moves", 0) < 1:
+                        continue  # a never-moving unit is too thin to claim
+                    assigned[dom] += 1
+                    g.type = dom
+                    g.type_conf = CONF["fallback"]
+                    g.cls = "military"
+                    g.cls_conf = max(g.cls_conf, CONF["idrank_type"])
+                    if "arb_reclaim" not in g.signals:
+                        g.signals.append("arb_reclaim")
+
+
+def arbiter_vil_abstain(ctx):
+    """(Merged from the ensemble-arbiter angle.) Abstain path for eco-dominant
+    behavior: a unit the ladder typed as military purely on TIME evidence, whose
+    recorded behavior is economic (it gathered, never showed a hard military signal,
+    barely moved, and didn't attack more than it gathered) is overwhelmingly a
+    villager that got co-selected near a completion. Military units cannot gather;
+    the reverse evidence wins regardless of which stage typed it."""
+    for c, g in ctx.guesses.items():
+        if c in ctx.building_ids or c in ctx.gaia_all or c in ctx.start_ids \
+                or c in ctx.pins:
+            continue
+        if g.cls != "military" or g.type in GENERIC_TYPES or g.type == "villager":
+            continue
+        b = g.behavior
+        if b.get("hard_mil") or b.get("patrols"):
+            continue
+        gh = b.get("gathers", 0) + b.get("builds", 0)
+        if gh < 1 or b.get("attacks_building", 0) > gh or b.get("moves", 0) > 2:
+            continue
+        g.cls = "villager"
+        g.cls_conf = CONF["squad_type"]
+        g.type = "villager"
+        g.type_conf = CONF["squad_type"]
+        if "arb_vil" not in g.signals:
+            g.signals.append("arb_vil")
+
+
+def arbiter_garrison_vil(ctx):
+    """(Merged from the id-spine-solver angle.) Deposit/garrison-only unit: orders
+    its OWN buildings repeatedly, never gathers, near-zero movement -- a tasked-to-
+    garrison villager, not the siege/military type the FIFO snap claims (real monks
+    move 70+ times)."""
+    for c, g in ctx.guesses.items():
+        if c in ctx.building_ids or c in ctx.gaia_all or c in ctx.start_ids                 or c in ctx.pins:
+            continue
+        if g.type in GENERIC_TYPES or g.type in ("villager", "monk"):
+            continue
+        b = g.behavior
+        if b.get("hard_mil") or b.get("patrols"):
+            continue
+        if (b.get("bld_order", 0) >= 2 and not b.get("gathers")
+                and b.get("moves", 0) <= 6):
+            g.type = "villager"
+            g.type_conf = CONF["squad_type"]
+            g.cls = "villager"
+            g.cls_conf = max(g.cls_conf, CONF["squad_type"])
+            if "arb_garr" not in g.signals:
+                g.signals.append("arb_garr")
 
 
 def _run(match):
     """Run the full pipeline; returns the Context."""
     ctx = build_context(match)
     behavioral_labels(ctx)
+    fingerprint_labels(ctx)
     weight = cocommand_graph(ctx)
     propagate_class(ctx, weight)
     production_timeline(ctx)
     squads = form_squads(ctx, weight)
     assign_types(ctx, squads)
     refine_military(ctx)
+    apply_fingerprints(ctx)
+    if FP_ARB_MONK:
+        arbiter_monk_quota(ctx)
+    if FP_ARB_RECLAIM:
+        arbiter_reclaim(ctx)
+    if FP_ARB_VIL:
+        arbiter_vil_abstain(ctx)
+    if FP_ARB_GARR:
+        arbiter_garrison_vil(ctx)
     finalize(ctx)
     return ctx
 

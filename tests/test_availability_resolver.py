@@ -72,9 +72,24 @@ derivation, the 655/656 interlock, and the type-2 militia-line removal for
 the four American civs.
 """
 
+import os
+
 import pytest
 
-from analysis.availability_resolver import AvailabilityResolver, build_report
+# The resolver reads extraction/extracted_data/*.json, which is gitignored
+# (regenerated locally from the .dat, like the dat itself) — absent on CI.
+# The census is a local guard, same policy as the extraction toolchain.
+_EXTRACTED = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "extraction", "extracted_data", "units.json",
+)
+pytestmark = pytest.mark.skipif(
+    not os.path.exists(_EXTRACTED),
+    reason="requires local extraction outputs (extraction/extracted_data/, gitignored)",
+)
+
+if os.path.exists(_EXTRACTED):
+    from analysis.availability_resolver import AvailabilityResolver, build_report
 
 # ---------------------------------------------------------------------------
 # Pinned report (2026-06-11, build 177723, Imperial-only ref DB).

@@ -288,14 +288,19 @@ def _containment_trigger(scn, new1, new2):
 
 def _set_camera(scn, ranged, c1, c2):
     """Recenter the spectator (P1) camera. In a RANGED-vs-MELEE fight the action collects
-    around the ranged army (it kites back while the melee piles in), so center the view on
-    THAT army's centroid. If both sides are the same kind (both ranged / both melee) keep
-    the template's default midpoint view."""
+    around the ranged army (it kites back while the melee piles in), so center the view
+    on THAT army's centroid. In a SAME-KIND fight (ranged-vs-ranged stands off between
+    the spawns; melee-vs-melee collapses centrally) center on the MIDPOINT of the two
+    armies — the template's authored view is tuned for the template's own matchup and
+    can miss this one's fight entirely (seen live: Guecha vs Blackwood, both ranged)."""
     from AoE2ScenarioParser.datasets.effects import EffectId
     r1, r2 = ranged
-    if r1 == r2 or c1 is None or c2 is None:
+    if c1 is None or c2 is None:
         return None
-    target = c1 if r1 else c2                            # the ranged army
+    if r1 == r2:
+        target = ((c1[0] + c2[0]) / 2.0, (c1[1] + c2[1]) / 2.0)   # the clash midpoint
+    else:
+        target = c1 if r1 else c2                        # the ranged army
     vx, vy = int(round(target[0])), int(round(target[1]))
     CHANGE_VIEW = int(EffectId.CHANGE_VIEW)
     for trig in scn.trigger_manager.triggers:
@@ -343,7 +348,8 @@ def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
                       _army_centroid(um, P_SIDE2, new2))
     if cam:
         moved = _open_lower_left(um, cam)
-        print(f"[build_run] ranged-vs-melee: camera on ranged army at {cam}; "
+        kind = "midpoint" if ranged[0] == ranged[1] else "ranged army"
+        print(f"[build_run] camera on the {kind} at {cam}; "
               f"pushed {moved} lower-left boundary trees back")
     nb = _containment_trigger(scn, new1, new2)
     if nb:

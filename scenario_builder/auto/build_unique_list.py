@@ -21,7 +21,6 @@ HERE = Path(__file__).resolve().parent
 SB = HERE.parent
 REPO = SB.parent
 sys.path.insert(0, str(SB))
-sys.path.insert(0, str(SB / "overlay"))
 
 from auto.orchestrate_matchup import resolve_side   # noqa: E402
 from build_run import unit_const                     # noqa: E402
@@ -40,6 +39,16 @@ DROP_DUP = ("(ranged)",)
 SIEGE_CLASSES = ("siege", "ballista")
 SIEGE_NAMES = ("trebuchet", "ballista", "organ gun", "hussite")
 
+# civ-specific uniques the suffix scan can't see: shared/team units whose DB slug
+# carries no civ suffix, plus units with NO reference-DB row at all that resolve via
+# overlay_data.HARDCODED_CARDS (the Flaming Camel — wiki-transcribed stats). Values
+# are an optional unit-class override for entries without a DB row.
+EXTRA_SLUGS = {
+    "Italians": {"condottiero": None},
+    "Berbers": {"elite_genitour": None},
+    "Tatars": {"flaming_camel_tatars": "Suicide Unit"},
+}
+
 
 def enumerate_uniques():
     db = sqlite3.connect(str(REF_DB))
@@ -52,6 +61,14 @@ def enumerate_uniques():
             "SELECT unit_slug, unit_name, unit_class_name FROM ref_units "
             "WHERE civ_name=? AND age='Imperial' AND unit_slug LIKE '%'||? ORDER BY unit_slug",
             (civ, suffix)).fetchall()
+        for extra, cls_override in EXTRA_SLUGS.get(civ, {}).items():
+            r = db.execute(
+                "SELECT unit_slug, unit_name, unit_class_name FROM ref_units "
+                "WHERE civ_name=? AND unit_slug=? ORDER BY age DESC LIMIT 1",
+                (civ, extra)).fetchone()
+            rows.append(r if r is not None
+                        else {"unit_slug": extra, "unit_name": extra,
+                              "unit_class_name": cls_override or ""})
         for r in rows:
             slug, name, cls = r["unit_slug"], r["unit_name"], (r["unit_class_name"] or "")
             nl = name.lower()

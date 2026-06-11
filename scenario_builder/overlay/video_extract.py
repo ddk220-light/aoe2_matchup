@@ -23,7 +23,8 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-from results import MatchResult
+from overlay.results import MatchResult
+from overlay.readout import parse_counts as _parse_counts
 
 # Cross-platform font dir for the mock-video generator (cosmetic only).
 _FONTS = next((Path(p) for p in (
@@ -39,18 +40,6 @@ READOUT_BAND = (0.28, 0.13, 0.74, 0.22)   # fractional x0,y0,x1,y1
 # Legacy two-panel ROIs — used ONLY by the synthetic mock readout video below.
 ROI_LEFT = (0.255, 0.035, 0.455, 0.150)
 ROI_RIGHT = (0.545, 0.035, 0.745, 0.150)
-
-
-def _parse_counts(text: str):
-    """Parse 'Unit A: N  VS  Unit B: M' -> (N, M); None if it doesn't match."""
-    parts = re.split(r"\bvs\b", text, flags=re.IGNORECASE)
-    if len(parts) != 2:
-        return None
-    left = re.findall(r"\d+", parts[0])
-    right = re.findall(r"\d+", parts[1])
-    if not left or not right:
-        return None
-    return int(left[0]), int(right[0])
 
 
 @lru_cache(maxsize=1)
@@ -89,18 +78,30 @@ def _read_int(crop_rgb: np.ndarray) -> int | None:
     return int(m[0]) if m else None
 
 
-def _clean_monotonic(series: list[int]) -> list[int]:
-    """Survivors can only decrease. Lift too-low misreads to >= the next value
-    (backward max), then clamp any upward blips (forward min). Removes the gross
-    OCR errors (e.g. 27 read as 2) using the domain constraint."""
+def _clean_monotonic(series: list[int], cap: int | None = None) -> list[int]:
+    """Survivor counts only ever DECREASE and never exceed the starting count `cap`.
+
+    Robust to SINGLE-FRAME OCR errors in BOTH directions: a digit split ('4' OCR'd as
+    '4 4' => 44), a stray/dropped digit, or a low misread (27 read as 2). Pipeline:
+      1. clamp to [0, cap]   (counts can't exceed the start; kills impossible highs)
+      2. first-sample repair (counts only ever DECREASE, so the first sample must be
+         the series max; a low FIRST misread ('30' read as '3') would otherwise be
+         propagated over EVERYTHING by the forward-min — lift it to max(first 3))
+      3. median-of-3 filter  (a lone outlier high or low is replaced by its neighbours)
+      4. forward min          (enforce non-increasing on what remains)
+    The OLD backward-max step is gone — it propagated a single HIGH misread backward
+    across the whole series (e.g. one '44' frame poisoned every earlier count)."""
     if not series:
         return series
-    s = list(series)
-    for i in range(len(s) - 2, -1, -1):       # backward: fix too-low reads
-        s[i] = max(s[i], s[i + 1])
-    for i in range(1, len(s)):                 # forward: no increases allowed
-        s[i] = min(s[i], s[i - 1])
-    return s
+    s = [max(0, min(v, cap) if cap is not None else max(0, v)) for v in series]
+    n = len(s)
+    m = list(s)
+    m[0] = max(s[:3])                                     # repair a low first misread
+    for i in range(1, n - 1):
+        m[i] = sorted((s[i - 1], s[i], s[i + 1]))[1]     # median of 3
+    for i in range(1, n):
+        m[i] = min(m[i], m[i - 1])                        # non-increasing
+    return m
 
 
 def _crop(frame_rgb: np.ndarray, roi) -> np.ndarray:
@@ -109,15 +110,84 @@ def _crop(frame_rgb: np.ndarray, roi) -> np.ndarray:
     return frame_rgb[int(y0 * h):int(y1 * h), int(x0 * w):int(x1 * w)]
 
 
+# Every recording shares one deterministic visual structure (same template, same
+# navigation): editor (~32 mean luma) -> Test-click flash -> dark LOADING screen
+# (~22) -> the bright arena appears (~120-140) the instant the scenario starts.
+# That load->game luma jump IS game-time zero, and it's detectable frame-accurately
+# from pixel statistics alone — no OCR. Measured identical across all archived raws.
+_GAME_LUMA = 90.0          # in-game frames measure ~120-140; menu/load ~22-33; flash <70
+_DARK_LUMA = 50.0          # the load screen / menu band
+
+
+def _luma_at(cap, t: float):
+    import cv2
+    cap.set(cv2.CAP_PROP_POS_MSEC, max(0.0, t) * 1000.0)
+    ok, fr = cap.read()
+    if not ok:
+        return None
+    small = cv2.resize(fr, (160, 90))
+    return float(cv2.cvtColor(small, cv2.COLOR_BGR2GRAY).mean())
+
+
+def find_game_start(video_path, t_from=1.0, t_to=25.0, coarse=0.5):
+    """FRAME-ACCURATE game-start (the first in-game frame) from the load->game luma
+    jump. Coarse 0.5s scan brackets the first bright frame that FOLLOWS a dark one
+    (debounced against the Test-click flash by requiring the next sample bright too),
+    then a frame-step scan inside the bracket pins it. Returns seconds, or None
+    (caller falls back to the OCR readout scan)."""
+    import cv2
+    cap = cv2.VideoCapture(str(video_path))
+    if not cap.isOpened():
+        return None
+    try:
+        fps = cap.get(cv2.CAP_PROP_FPS) or 60.0
+        seen_dark, bracket = False, None
+        t = t_from
+        while t <= t_to:
+            m = _luma_at(cap, t)
+            if m is None:
+                return None
+            if m < _DARK_LUMA:
+                seen_dark = True
+            elif m >= _GAME_LUMA and seen_dark:
+                nxt = _luma_at(cap, t + coarse)
+                if nxt is not None and nxt >= _GAME_LUMA:   # debounce the click flash
+                    bracket = t
+                    break
+            t += coarse
+        if bracket is None:
+            return None
+        # frame-step refine inside (bracket - coarse, bracket]: ONE seek, then decode
+        # sequentially (per-frame seeks on long-GOP H.264 are what made this slow)
+        cap.set(cv2.CAP_PROP_POS_MSEC, max(t_from, bracket - coarse) * 1000.0)
+        base_t = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
+        for i in range(int(fps * (coarse + 0.2)) + 2):
+            ok, fr = cap.read()
+            if not ok:
+                break
+            t = base_t + i / fps
+            small = cv2.resize(fr, (160, 90))
+            if float(cv2.cvtColor(small, cv2.COLOR_BGR2GRAY).mean()) >= _GAME_LUMA:
+                return round(t, 3)
+            if t > bracket + 0.1:
+                break
+        return round(bracket, 3)
+    finally:
+        cap.release()
+
+
 def extract_video_results(video_path, *, band=READOUT_BAND, sample_hz=2.0,
                           civ1="", slug1="", civ2="", slug2="",
-                          start1=None, start2=None) -> MatchResult:
+                          start1=None, start2=None, t_from=0.0, t_to=None) -> MatchResult:
     """OCR a recording's centered 'Unit A: N  VS  Unit B: M' readout into a MatchResult.
 
-    Samples the whole clip, keeps only frames where BOTH counts parse (so pre-fight
-    menu/countdown frames are skipped), re-bases the timeline to the first readable
-    frame, clamps counts to monotonic-decrease, and records the absolute fight window
-    (fight_start_s/fight_end_s) so the caller can trim the source clip to the fight.
+    Samples [`t_from`, `t_to`] (whole clip if t_to is None), keeps only frames where BOTH
+    counts parse (so pre-fight menu/countdown frames are skipped), re-bases the timeline to
+    the first readable frame, clamps counts to monotonic-decrease, and records the absolute
+    fight window (fight_start_s/fight_end_s). Bounding the scan to the known fight window
+    avoids OCR-ing the (slow, useless) menu/load/post-result frames; once one side reads 0
+    for a few consecutive samples the battle is over and the scan stops early (the readout
+    keeps displaying through the long WINS hold — no point OCR-ing that tail).
     """
     import cv2
     cap = cv2.VideoCapture(str(video_path))
@@ -125,30 +195,41 @@ def extract_video_results(video_path, *, band=READOUT_BAND, sample_hz=2.0,
         raise RuntimeError(f"Cannot open {video_path}")
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     duration = (cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0) / fps
+    end = duration if t_to is None else min(duration, t_to)
 
     samples = []  # (abs_t, raw_s1, raw_s2)
-    t = 0.0
+    t = max(0.0, t_from)
     step = 1.0 / sample_hz
-    while t <= duration + 1e-6:
+    started, gap, wiped = False, 0, 0
+    max_gap = max(2, int(round(4.0 * sample_hz)))   # stop ~4s after the readout disappears
+    while t <= end + 1e-6:
         cap.set(cv2.CAP_PROP_POS_MSEC, t * 1000.0)
         ok, frame = cap.read()
         if not ok:
             break
         crop = _crop(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), band)
         res, _ = _ocr()(crop)        # rapidocr on the raw color crop (no preprocess)
-        if res:
-            counts = _parse_counts(" ".join(line[1] for line in res))
-            if counts:
-                samples.append((round(t, 2), counts[0], counts[1]))
+        counts = _parse_counts(" ".join(line[1] for line in res)) if res else None
+        if counts:
+            samples.append((round(t, 2), counts[0], counts[1]))
+            started, gap = True, 0
+            # an army at 0 = battle over; require 3 consecutive zero-reads (misread guard)
+            wiped = wiped + 1 if min(counts) == 0 else 0
+            if wiped >= 3:
+                break
+        elif started:               # readout gone -> the fight's over; don't OCR the tail
+            gap += 1
+            if gap >= max_gap:
+                break
         t += step
     cap.release()
 
     if not samples:
         raise RuntimeError("OCR produced no readable readout — check the band/footage.")
 
-    # domain cleanup: survivor counts only ever decrease
-    s1 = _clean_monotonic([s[1] for s in samples])
-    s2 = _clean_monotonic([s[2] for s in samples])
+    # domain cleanup: survivor counts only ever decrease and never exceed the start count
+    s1 = _clean_monotonic([s[1] for s in samples], cap=start1)
+    s2 = _clean_monotonic([s[2] for s in samples], cap=start2)
     st1 = start1 if start1 is not None else max(s1)
     st2 = start2 if start2 is not None else max(s2)
     t0 = samples[0][0]
@@ -165,6 +246,28 @@ def extract_video_results(video_path, *, band=READOUT_BAND, sample_hz=2.0,
         duration_s=round(timeline[-1]["t"], 2), end_reason="ocr_video",
         engine="video_ocr", timeline=timeline,
         fight_start_s=t0, fight_end_s=samples[-1][0])
+
+
+def read_winner_text(video_path, ts, band=(0.10, 0.18, 0.90, 0.52)):
+    """OCR the centre band at the given video times; return the first text containing
+    'wins' (the scenario's '<unit> WINS!' hold — the game's own verdict), else None.
+    Lowercased with spaces stripped."""
+    import cv2
+    cap = cv2.VideoCapture(str(video_path))
+    try:
+        for t in ts:
+            cap.set(cv2.CAP_PROP_POS_MSEC, max(0.0, t) * 1000.0)
+            ok, fr = cap.read()
+            if not ok:
+                continue
+            crop = _crop(cv2.cvtColor(fr, cv2.COLOR_BGR2RGB), band)
+            res, _ = _ocr()(crop)
+            txt = "".join(line[1] for line in res).lower().replace(" ", "") if res else ""
+            if "wins" in txt:
+                return txt
+    finally:
+        cap.release()
+    return None
 
 
 # --------------------------------------------------------------------------- #
@@ -202,8 +305,8 @@ def make_mock_readout_video(result: MatchResult, out_path, name1, name2,
 
 if __name__ == "__main__":
     import sys
-    sys.path.insert(0, str(Path(__file__).parent))
-    from results import extract_sim_results
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))   # scenario_builder/
+    from overlay.results import extract_sim_results
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except Exception:

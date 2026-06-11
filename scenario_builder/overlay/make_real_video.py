@@ -15,10 +15,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
-from overlay_data import get_unit_card          # noqa: E402
-from video_extract import extract_video_results  # noqa: E402
-from compose import make_matchup_video, _ffmpeg   # noqa: E402
+from overlay.overlay_data import get_unit_card
+from overlay.video_extract import extract_video_results
+from overlay.compose import make_matchup_video, _ffmpeg
 
 SIZE = (1920, 1248)  # everything (cards, HUD, fight) normalized to this.
 # 1920x1248 keeps the 2940x1912 capture aspect (1.538) — no squish — and is a big

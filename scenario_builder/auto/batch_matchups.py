@@ -37,15 +37,15 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 SB = HERE.parent
 sys.path.insert(0, str(SB))
-sys.path.insert(0, str(SB / "overlay"))
 
-from auto import input_driver as ui                          # noqa: E402
+from auto import input_driver as ui, platform_io             # noqa: E402
+from auto.config import DEFAULT_COPY_TO                       # noqa: E402
 from auto.orchestrate_matchup import (                       # noqa: E402
     run_matchup, resolve_side, equal_resource_counts, RUN_DIR)
-from auto.record_until_end import log, RECORDER              # noqa: E402
+from auto.record_until_end import log                        # noqa: E402
 from build_run import TEMPLATE, unit_const                   # noqa: E402
 
-DEFAULT_COPY_TO = "/Volumes/Orchid/AOEII_videos/3kResMatchUpVideos"
+TMP = platform_io.TMP_DIR                          # /tmp on mac, %TEMP% on windows
 
 
 def _parse_matchup(s: str) -> dict:
@@ -117,8 +117,8 @@ def preflight(matchups, copy_to, mode="count", unit_cap=30, logfile=None):
     # environment
     if not TEMPLATE.exists():
         errors.append(f"golden template missing: {TEMPLATE}")
-    if not RECORDER.exists():
-        errors.append(f"recorder not built: {RECORDER} (run recorder/build.sh)")
+    if not platform_io.recorder_available():
+        errors.append(platform_io.recorder_hint())
     if copy_to:
         cp = Path(copy_to)
         if not cp.exists() and not cp.parent.exists():
@@ -163,7 +163,7 @@ def main():
     ap.add_argument("--copy-to", default=DEFAULT_COPY_TO,
                     help=f"output folder (default: {DEFAULT_COPY_TO})")
     ap.add_argument("--cap", type=int, default=240, help="per-fight recording safety cap (s)")
-    ap.add_argument("--log", default="/tmp/auto_matchup.log")
+    ap.add_argument("--log", default=str(Path(TMP) / "auto_matchup.log"))
     ap.add_argument("--dry-run", action="store_true",
                     help="validate matchups + environment and print the plan, then exit")
     a = ap.parse_args()
@@ -211,9 +211,11 @@ def main():
         try:
             final = run_matchup(
                 m["civ1"], m["slug1"], m["civ2"], m["slug2"],
-                name=f"{m['name']}.mp4", copy_to=per_run_copy_to, cap=a.cap,
+                name=f"{m['name']}.mp4", copy_to=per_run_copy_to,
+                raw_copy_to=a.copy_to, cap=a.cap,    # archive the raw for EVERY run
                 mode=mode, unit_cap=a.unit_cap,
-                out_mov=f"/tmp/auto_fight_{i}.mov", final=f"/tmp/auto_matchup_{i}.mp4",
+                out_mov=str(Path(TMP) / f"auto_fight_{i}.mov"),
+                final=str(Path(TMP) / f"auto_matchup_{i}.mp4"),
                 dismiss_after=True, logfile=a.log)
             log(f"[{i}/{n}] DONE -> {final}", a.log)
             results.append((m["name"], "OK", str(final)))
@@ -227,9 +229,9 @@ def main():
 
     # ---- JOIN (one combined video) + CHAPTERS ---------------------------
     if join_mode and clips:
-        from compose import concat_videos, _duration
+        from overlay.compose import concat_videos, _duration
         log(f"[join] concatenating {len(clips)} clip(s) -> {a.join} ...", a.log)
-        joined = concat_videos(clips, "/tmp/joined_matchups.mp4")
+        joined = concat_videos(clips, str(Path(TMP) / "joined_matchups.mp4"))
         Path(a.copy_to).mkdir(parents=True, exist_ok=True)
         dest = Path(a.copy_to) / a.join
         shutil.copy2(joined, dest)

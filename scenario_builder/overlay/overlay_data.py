@@ -27,10 +27,33 @@ ICON_DIR = _REPO / "webapp" / "static" / "img" / "units"
 # class ids that represent the *base* attack, not a bonus
 _BASE_ATTACK_CLASSES = {3, 4}  # Base Pierce, Base Melee
 
+# Resource weights for collapsing (food, wood, gold) into one scalar — MUST match
+# webapp/simulation_real.py COST_WEIGHT_* (the website's position-aware sim is the
+# reference for what "equal resources" means). tests/test_pure.py parses that file
+# and fails if these drift.
+COST_WEIGHT_FOOD = 1.0
+COST_WEIGHT_WOOD = 0.7
+COST_WEIGHT_GOLD = 1.5
+
+# Units the game trains in BATCHES — the dat's listed cost buys `batch` units, so
+# per-unit cost (what equal-resources math and army totals need) is cost / batch.
+TRAIN_BATCH = {
+    "blackwood_archer_tupi": 2,
+    "elite_blackwood_archer_tupi": 2,
+}
+
+# DB unit name -> icon filename stem, where the asset pack names a unit differently
+# (the Shu White Feather Guard's icon shipped as "White Feather Crossbowman").
+_ICON_NAME_ALIAS = {
+    "White Feather Guard": "White_Feather_Crossbowman",
+    "Elite White Feather Guard": "Elite_White_Feather_Crossbowman",
+}
+
 
 def _icon_path(unit_name: str) -> str:
     """Resolve a unit icon. The webapp maps names to files by spaces->underscores."""
-    candidate = ICON_DIR / f"{unit_name.replace(' ', '_')}.png"
+    stem = _ICON_NAME_ALIAS.get(unit_name, unit_name.replace(" ", "_"))
+    candidate = ICON_DIR / f"{stem}.png"
     if candidate.exists():
         return str(candidate)
     return ""  # caller can fall back to a placeholder
@@ -40,9 +63,44 @@ def _armor_class_map(conn) -> dict[int, str]:
     return {r["id"]: r["name"] for r in conn.execute("SELECT id, name FROM armor_classes")}
 
 
+# Units the extraction/reference DB doesn't carry (odd one-offs the dat pipeline
+# skips) but that make fun matchup videos. Shape mirrors get_unit_card's return;
+# stats transcribed from the AoE2 wiki (DE, checked 2026-06). The Flaming Camel is a
+# one-shot mounted petard: it detonates on its first attack (blast radius 2), so it
+# has no reload/DPS — the duel block degrades gracefully on reload_s=None.
+HARDCODED_CARDS = {
+    ("Tatars", "flaming_camel_tatars"): {
+        "name": "Flaming Camel", "civ": "Tatars", "age": "Imperial",
+        "unit_type": "Suicide Unit (one-shot blast)", "is_ranged": False,
+        "stats": [("HP", 55), ("Attack", 20), ("Melee Armor", 0),
+                  ("Pierce Armor", 0), ("Speed", 1.3)],
+        "attack_bonuses": [
+            {"vs": "All Buildings", "amount": 200, "vs_id": 11},
+            {"vs": "War Elephants", "amount": 130, "vs_id": 5},
+            {"vs": "Cavalry", "amount": 50, "vs_id": 8},
+            {"vs": "Camels", "amount": 50, "vs_id": 30},
+            {"vs": "Siege Weapons", "amount": 25, "vs_id": 20},
+        ],
+        "armor_class_ids": [3, 4, 19, 30],          # base + Unique Units + Camels
+        "cost": {"food": 75, "wood": 0, "gold": 30, "total": 105,
+                 "weighted": round(75 * COST_WEIGHT_FOOD + 30 * COST_WEIGHT_GOLD, 2),
+                 "batch": 1},
+        "upgrades": [], "civ_bonuses": [], "unique_techs": [],
+        "bonuses_summary": "Detonates on impact: 20 melee blast (radius 2), one shot.",
+        "attacks": {4: 20.0, 11: 200.0, 5: 130.0, 8: 50.0, 30: 50.0, 20: 25.0},
+        "armors": {4: 0.0, 3: 0.0, 19: 0.0, 30: 0.0},
+        "hp": 55.0, "speed": 1.3, "range": 0, "reload_s": None,
+        "accuracy_pct": None, "melee_armor": 0, "pierce_armor": 0, "charge": None,
+    },
+}
+
+
 def get_unit_card(civ: str, slug: str, age: str = "Imperial",
                   db_path: str | os.PathLike = REF_DB) -> dict:
     """Return a dict describing a fully-upgraded unit for the overlay card."""
+    hc = HARDCODED_CARDS.get((civ, slug))
+    if hc:
+        return {**hc, "icon": _icon_path(hc["name"])}
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
     try:
@@ -118,6 +176,20 @@ def get_unit_card(civ: str, slug: str, age: str = "Imperial",
 
         is_ranged = bool(g("is_ranged"))
         f, w, gd = g("final_cost_food"), g("final_cost_wood"), g("final_cost_gold")
+        # the dat's cost buys `batch` units for batch-trained lines; the card's cost
+        # dict is PER-UNIT so count*cost totals stay correct everywhere downstream
+        batch = TRAIN_BATCH.get(slug, 1)
+        fu, wu, gu = (f or 0) / batch, (w or 0) / batch, (gd or 0) / batch
+        cost = {
+            "food": _num(fu), "wood": _num(wu), "gold": _num(gu),
+            "total": _num(fu + wu + gu),
+            "weighted": round(COST_WEIGHT_FOOD * fu + COST_WEIGHT_WOOD * wu
+                              + COST_WEIGHT_GOLD * gu, 2),
+            "batch": batch,
+        }
+        if batch > 1:    # the listed (per-train) price, for card display
+            cost["train"] = {"food": _num(f), "wood": _num(w), "gold": _num(gd),
+                             "total": _num((f or 0) + (w or 0) + (gd or 0))}
 
         # ordered stat list (only show range/accuracy for ranged units)
         stats = [
@@ -134,6 +206,8 @@ def get_unit_card(civ: str, slug: str, age: str = "Imperial",
         if g("final_reload_time"):
             stats.append(("Reload", f"{_num(g('final_reload_time'))}s"))
 
+        # raw combat numbers for overlay.combat_math (duel block on the live cards)
+        charge_amt = g("charge_attack_melee") or 0
         return {
             "name": row["unit_name"],
             "civ": civ,
@@ -144,12 +218,25 @@ def get_unit_card(civ: str, slug: str, age: str = "Imperial",
             "stats": stats,
             "attack_bonuses": bonuses,
             "armor_class_ids": armor_class_ids,
-            "cost": {"food": _num(f), "wood": _num(w), "gold": _num(gd),
-                     "total": _num((f or 0) + (w or 0) + (gd or 0))},
+            "cost": cost,
             "upgrades": [u["name"] for u in upgrades],
             "civ_bonuses": [c["name"] for c in civ_bonuses],
             "unique_techs": unique_techs,
             "bonuses_summary": g("applied_bonuses_summary") or "",
+            # raw fields (combat math / trimmed live cards)
+            "attacks": {int(k): float(v) for k, v in atk.items()},
+            "armors": {int(k): float(v) for k, v in arm.items()},
+            "hp": float(g("final_hp") or 0),
+            "speed": _num(g("final_speed")),
+            "range": _num(g("final_range")),
+            "reload_s": float(g("final_reload_time") or 0) or None,
+            "accuracy_pct": _num(g("final_accuracy")) or None,
+            "melee_armor": _num(g("final_melee_armor")),
+            "pierce_armor": _num(g("final_pierce_armor")),
+            "charge": ({"melee": float(charge_amt),
+                        "recharge_s": float(g("charge_recharge_time") or 0),
+                        "ignores_armor": bool(g("charge_ignores_armor"))}
+                       if charge_amt else None),
         }
     finally:
         conn.close()

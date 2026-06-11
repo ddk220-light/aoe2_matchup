@@ -90,10 +90,15 @@ The derivation functions (the "interpreters" the owner asked about):
 > Rocket Cart / Siege Elephant alternates and Vietnamese Imp Skirm), 104
 > `team_bonus_leak` phantoms (condottiero + elite_genitour, no in-dat
 > per-civ gate), 1 `enable_mechanism` (Flemish Revolution unit-spawn), 1
-> `mode_gating` (Wei Paphos Champion, Chronicles). Known leftover: a few
+> `mode_gating` (Wei Paphos Champion, Chronicles). ~~Known leftover: a few
 > phantom-derived rows linger in `derived_data.db`/`pool_scores.db`
 > (Shu heavy_scorpion, 3K trebuchet battle/pool scores) — out of scope this
-> pass, cleaned by the next derive run.
+> pass, cleaned by the next derive run.~~ **Resolved 2026-06-11**: phantom
+> rows purged from `battle_scores` (116 rows, both builds), `pool_scores`
+> (6), `patch_matchup_changes` (2); ranks renumbered; full 177723 re-derive
+> from the baseline (which was verified already phantom-free — trebuchet is
+> never enumerated for matchups, and the baseline's 516 (civ,slug) pairs
+> exactly match the purged ref DB). Naval rows + golden byte-identical.
 >
 > *(Historical, 2026-06-10 report against the then Castle+Imperial DB:)*
 > **Resolver report 2026-06-10 (Phase B core): 282 mismatches — swap NOT

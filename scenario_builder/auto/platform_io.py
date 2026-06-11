@@ -46,6 +46,39 @@ TMP_DIR = tempfile.gettempdir() if IS_WINDOWS else "/tmp"
 # coordinate space (DPI-aware) -> 1; override with AOE2_SCALE if clicks land off.
 SCALE = float(os.environ.get("AOE2_SCALE", "2" if IS_MAC else "1"))
 
+# Make this process DPI-aware on Windows so PIL screenshots (physical pixels) and
+# pydirectinput coordinates live in ONE coordinate space — clicks then land correctly at
+# any display scaling and SCALE can stay 1. No-op if it fails (old Windows / already set).
+if IS_WINDOWS:
+    try:
+        import ctypes
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(2)   # per-monitor DPI aware
+        except Exception:
+            ctypes.windll.user32.SetProcessDPIAware()        # system DPI aware (older)
+    except Exception:
+        pass
+
+def _primary_display_size():
+    """Physical primary-monitor size in px (the process is DPI-aware, set above)."""
+    if IS_WINDOWS:
+        try:
+            import ctypes
+            u = ctypes.windll.user32
+            return int(u.GetSystemMetrics(0)), int(u.GetSystemMetrics(1))  # SM_CXSCREEN/CYSCREEN
+        except Exception:
+            pass
+    return 1920, 1248
+
+
+# Output/canvas frame size for the recorder + compose. On Windows default to the NATIVE
+# primary-display resolution so the capture AND the final video stay full-res ("highest
+# resolution possible"); macOS keeps the 1920x1248 game-window size. Override per machine
+# with AOE2_OUT_W / AOE2_OUT_H.
+_DW, _DH = _primary_display_size()
+OUT_W = int(os.environ.get("AOE2_OUT_W", str(_DW if IS_WINDOWS else 1920)))
+OUT_H = int(os.environ.get("AOE2_OUT_H", str(_DH if IS_WINDOWS else 1248)))
+
 
 # --------------------------------------------------------------------------- #
 # macOS backend (the current, verified implementation — unchanged behavior)
@@ -88,6 +121,7 @@ _MAC_SCEN_DIR = Path(
 
 
 def _mac_recorder_start(out_mov, cap, fps, w, h):
+    # legacy backend, frozen — the pipeline is Windows-only now
     rec = Path(__file__).resolve().parent.parent / "recorder" / "sck_record"
     if not rec.exists():
         raise FileNotFoundError(f"recorder not built at {rec} (run recorder/build.sh)")
@@ -163,28 +197,138 @@ def _win_front():
     _win_activate()                                 # launch is manual on Windows (Steam)
 
 
-_WIN_SCEN_DIR = Path(os.environ.get(
-    "AOE2_SCENARIO_DIR",
-    str(Path(os.environ.get("USERPROFILE", "C:/Users/Default")) /
-        "Games" / "Age of Empires 2 DE" / "<STEAMID>" / "resources" / "_common" / "scenario")))
+def _win_ffmpeg() -> str | None:
+    """Locate ffmpeg (shared logic in overlay.ffutil — PATH, then the WinGet location)."""
+    from overlay.ffutil import find_ffmpeg
+    return find_ffmpeg()
+
+
+def _win_scenario_dir() -> Path:
+    """The AoE2:DE scenario folder. AOE2_SCENARIO_DIR overrides; otherwise auto-detect
+    <profile>\\Games\\Age of Empires 2 DE\\<steamid>\\resources\\_common\\scenario by
+    scanning for the numeric steam-id profile that actually has a scenario folder
+    (preferring a real long steam id and the most-recently-used one)."""
+    env = os.environ.get("AOE2_SCENARIO_DIR")
+    if env:
+        return Path(env)
+    base = Path(os.environ.get("USERPROFILE", "C:/Users/Default")) / "Games" / "Age of Empires 2 DE"
+    if base.is_dir():
+        cands = []
+        for d in base.iterdir():
+            if d.is_dir() and d.name.isdigit():
+                s = d / "resources" / "_common" / "scenario"
+                if s.is_dir():
+                    cands.append((len(d.name) >= 6, s.stat().st_mtime, s))
+        if cands:                                  # real steam id first, then most recent
+            cands.sort(key=lambda t: (t[0], t[1]), reverse=True)
+            return cands[0][2]
+    return base / "<STEAMID>" / "resources" / "_common" / "scenario"
+
+
+_FF_CAPS: dict | None = None
+
+
+def _win_ff_caps(ff: str) -> dict:
+    """Probe (once) whether this ffmpeg build has the GPU capture path: the ddagrab
+    source filter and the h264_nvenc encoder. nvenc can still fail at RUNTIME on a
+    non-NVIDIA box even when the encoder is compiled in — the start-probe in
+    _win_recorder_start catches that and falls back."""
+    global _FF_CAPS
+    if _FF_CAPS is None:
+        def _grep(args, needle):
+            try:
+                p = subprocess.run([ff, "-hide_banner", *args],
+                                   capture_output=True, text=True, timeout=20)
+                return needle in (p.stdout + p.stderr)
+            except Exception:
+                return False
+        _FF_CAPS = {"ddagrab": _grep(["-filters"], "ddagrab"),
+                    "nvenc": _grep(["-encoders"], "h264_nvenc")}
+    return _FF_CAPS
+
+
+_AUDIO_OK: dict = {}
+
+
+def _win_audio_ok(ff: str, device: str) -> bool:
+    """Is `device` an existing dshow audio device? Probed once per device name from
+    ffmpeg's device list, so a missing loopback filter degrades the run to video-only
+    instead of killing the whole capture (audio+video share one ffmpeg process)."""
+    if device not in _AUDIO_OK:
+        try:
+            p = subprocess.run([ff, "-hide_banner", "-list_devices", "true",
+                                "-f", "dshow", "-i", "dummy"],
+                               capture_output=True, text=True, timeout=20)
+            _AUDIO_OK[device] = device.lower() in (p.stdout + p.stderr).lower()
+        except Exception:
+            _AUDIO_OK[device] = False
+    return _AUDIO_OK[device]
+
+
+def _win_recorder_cmd(ff, out_mov, cap, fps, audio, gpu: bool) -> list:
+    """Build the capture command. gpu=True: ddagrab (Desktop Duplication) + h264_nvenc —
+    native res at high fps, encoded on the GPU. gpu=False: gdigrab + libx264 ultrafast,
+    the portable CPU fallback. Audio (optional) is a dshow loopback device."""
+    cmd = [ff, "-y", "-hide_banner", "-loglevel", "error"]
+    if audio:
+        cmd += ["-f", "dshow", "-i", f"audio={audio}"]
+    if gpu:
+        cmd += ["-filter_complex",
+                f"ddagrab=output_idx=0:framerate={fps},hwdownload,format=bgra[v]",
+                "-map", "[v]"]
+        venc = ["-c:v", "h264_nvenc", "-cq", "19"]
+    else:
+        cmd += ["-f", "gdigrab", "-framerate", str(fps), "-i", "desktop",
+                "-map", f"{1 if audio else 0}:v"]
+        venc = ["-c:v", "libx264", "-preset", "ultrafast", "-crf", "21"]
+    if audio:
+        cmd += ["-map", "0:a"]
+    cmd += ["-t", str(cap), *venc, "-pix_fmt", "yuv420p", "-r", str(fps)]
+    if audio:
+        cmd += ["-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2"]
+    return cmd + [str(out_mov)]
 
 
 def _win_recorder_start(out_mov, cap, fps, w, h):
-    """ffmpeg gdigrab desktop capture. Audio (system) needs a loopback dshow device —
-    set AOE2_AUDIO_DEVICE (e.g. 'Stereo Mix (Realtek)' or a VB-CABLE) or leave unset
-    for video-only. Captures the primary desktop (AoE2 fullscreen)."""
-    import shutil
-    ff = shutil.which("ffmpeg") or "ffmpeg"
-    cmd = [ff, "-y", "-f", "gdigrab", "-framerate", str(fps), "-i", "desktop"]
-    audio = os.environ.get("AOE2_AUDIO_DEVICE")
-    if audio:
-        cmd += ["-f", "dshow", "-i", f"audio={audio}"]
-    cmd += ["-t", str(cap), "-vf", f"scale={w}:{h}", "-c:v", "libx264",
-            "-preset", "veryfast", "-pix_fmt", "yuv420p", "-r", str(fps)]
-    if audio:
-        cmd += ["-c:a", "aac", "-ar", "48000", "-ac", "2"]
-    cmd += [str(out_mov)]
-    return subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    """Start the desktop capture, FAIL-FAST and self-healing:
+      * ffmpeg's stderr goes to <out>.ffmpeg.log (not DEVNULL) so a dead recorder is
+        diagnosable instead of silently producing an empty file 3 minutes later.
+      * the configured audio device is probed first; missing -> video-only + warning
+        (audio and video share one process, so a bad device used to kill BOTH).
+      * the GPU path (ddagrab+h264_nvenc) is probed and, if it dies within the start
+        window (e.g. nvenc present but no NVIDIA GPU), gdigrab+libx264 is tried next.
+    Raises RuntimeError with the log tail if no capture config survives."""
+    ff = _win_ffmpeg()
+    if not ff:
+        raise FileNotFoundError(recorder_hint())
+    audio = os.environ.get("AOE2_AUDIO_DEVICE", "virtual-audio-capturer")
+    if audio and not _win_audio_ok(ff, audio):
+        print(f"[rec] WARNING: dshow audio device {audio!r} not found — recording "
+              "video-only (set AOE2_AUDIO_DEVICE, or '' to silence this)", flush=True)
+        audio = ""
+    caps = _win_ff_caps(ff)
+    attempts = ([("ddagrab+h264_nvenc", True)] if caps["ddagrab"] and caps["nvenc"] else [])
+    attempts.append(("gdigrab+libx264", False))
+    log_path = str(out_mov) + ".ffmpeg.log"
+    for name, gpu in attempts:
+        cmd = _win_recorder_cmd(ff, out_mov, cap, fps, audio, gpu)
+        with open(log_path, "a") as errf:
+            errf.write(f"--- attempt: {name} ---\n{' '.join(cmd)}\n")
+            errf.flush()
+            proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=errf)
+        time.sleep(1.5)                      # start-probe: catch an instant death NOW
+        if proc.poll() is None:
+            proc.stderr_log = log_path
+            return proc
+        print(f"[rec] {name} failed at start (exit {proc.returncode}) — "
+              f"see {log_path}", flush=True)
+    tail = ""
+    try:
+        tail = Path(log_path).read_text(errors="replace")[-800:]
+    except OSError:
+        pass
+    raise RuntimeError(f"screen recorder failed to start (all configs). "
+                       f"ffmpeg log {log_path}:\n{tail}")
 
 
 def _win_recorder_stop(proc, out_mov, timeout=20):
@@ -210,19 +354,21 @@ def key(chord):                   (_win_key(chord) if IS_WINDOWS else _mac_run(*
 
 
 def scenario_dir() -> Path:
-    return _WIN_SCEN_DIR if IS_WINDOWS else _MAC_SCEN_DIR
+    # re-resolve on Windows so a late AOE2_SCENARIO_DIR (set after import) still applies
+    return _win_scenario_dir() if IS_WINDOWS else _MAC_SCEN_DIR
 
 
 def recorder_available() -> bool:
-    """Is the screen recorder present? (Windows: ffmpeg on PATH; macOS: the built SCK binary.)"""
+    """Is the screen recorder present? (Windows: ffmpeg on PATH or WinGet; macOS: the
+    built SCK binary.)"""
     if IS_WINDOWS:
-        import shutil
-        return shutil.which("ffmpeg") is not None
+        return _win_ffmpeg() is not None
     return (Path(__file__).resolve().parent.parent / "recorder" / "sck_record").exists()
 
 
 def recorder_hint() -> str:
-    return ("ffmpeg not on PATH (needed for gdigrab capture)" if IS_WINDOWS
+    return ("ffmpeg not found (needed for gdigrab capture) — "
+            "`winget install Gyan.FFmpeg`" if IS_WINDOWS
             else "recorder not built — run recorder/build.sh")
 
 

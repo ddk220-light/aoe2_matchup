@@ -37,15 +37,14 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 SB = HERE.parent
 sys.path.insert(0, str(SB))
-sys.path.insert(0, str(SB / "overlay"))
 
 from auto import input_driver as ui, platform_io             # noqa: E402
+from auto.config import DEFAULT_COPY_TO                       # noqa: E402
 from auto.orchestrate_matchup import (                       # noqa: E402
     run_matchup, resolve_side, equal_resource_counts, RUN_DIR)
 from auto.record_until_end import log                        # noqa: E402
 from build_run import TEMPLATE, unit_const                   # noqa: E402
 
-DEFAULT_COPY_TO = "/Volumes/Orchid/AOEII_videos/3kResMatchUpVideos"
 TMP = platform_io.TMP_DIR                          # /tmp on mac, %TEMP% on windows
 
 
@@ -230,7 +229,7 @@ def main():
 
     # ---- JOIN (one combined video) + CHAPTERS ---------------------------
     if join_mode and clips:
-        from compose import concat_videos, _duration
+        from overlay.compose import concat_videos, _duration
         log(f"[join] concatenating {len(clips)} clip(s) -> {a.join} ...", a.log)
         joined = concat_videos(clips, str(Path(TMP) / "joined_matchups.mp4"))
         Path(a.copy_to).mkdir(parents=True, exist_ok=True)

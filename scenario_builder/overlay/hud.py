@@ -65,7 +65,8 @@ def _hp_color(pct: float):
 
 
 def _draw_side(draw: ImageDraw.ImageDraw, base: Image.Image, *, x, w, cy,
-               name, icon_path, cur, start, hp, align_left=True, dead=False):
+               name, icon_path, cur, start, hp, align_left=True, dead=False,
+               show_bar=True):
     icon_px = 72
     pad = 16
     if icon_path:
@@ -106,6 +107,8 @@ def _draw_side(draw: ImageDraw.ImageDraw, base: Image.Image, *, x, w, cy,
         bar_x0 = txt_x0
         bar_x1 = anchor_x
 
+    if not show_bar:
+        return
     # HP bar
     by = cy + 50
     bh = 9
@@ -120,42 +123,179 @@ def _draw_side(draw: ImageDraw.ImageDraw, base: Image.Image, *, x, w, cy,
                                    radius=4, fill=_hp_color(hp))
 
 
+def _draw_top_hpbar(draw, img, *, x0, x1, name1, hp1, cur1, start1,
+                    name2, hp2, cur2, start2, t, scale=1.0,
+                    icon1=None, icon2=None, trend=(0, 0)):
+    """A prominent fighting-game style dual army-HP bar across the TOP. Each side's
+    bar fills its half and DRAINS from the centre outward as the army's total HP falls
+    (full health meets in the middle, damage recedes toward the outer edge). The bars
+    carry quarter tick-marks and a live HP%% label at their outer end; the central
+    plate shows each side's remaining units as "cur/start"; the name tabs cap the
+    outer ends with the unit's ICON + name."""
+    s = scale
+    top_y = int(82 * s)                     # headroom above the bar for the name tabs
+    bar_h = int(46 * s)
+    gap = int(150 * s)                      # half-width of the centre count plate
+    skew = int(16 * s)                      # parallelogram slant for an angular look
+    center = (x0 + x1) // 2
+    nm_font = _font("georgiab.ttf", int(40 * s))     # unit names in the tabs
+    cnt_font = _font("arialbd.ttf", int(34 * s))     # centre plate: live count
+    of_font = _font("arialbd.ttf", int(21 * s))      # centre plate: "/start"
+    pct_font = _font("arialbd.ttf", int(24 * s))     # HP% at the bar's outer end
+    by0, by1 = top_y, top_y + bar_h
+
+    def _bar(bx0, bx1, hp, left_anchored):
+        # outer shadow plate + dark track, then the coloured fill
+        draw.rectangle([bx0 - 3, by0 - 3, bx1 + 3, by1 + 3], fill=PANEL)
+        draw.rectangle([bx0, by0, bx1, by1], fill=HP_TRACK, outline=PANEL_BORDER, width=2)
+        span = bx1 - bx0
+        fw = int(span * max(0.0, min(1.0, hp)))
+        if fw > 2:
+            col = _hp_color(hp)
+            if left_anchored:               # fill from the OUTER (left) edge inward
+                draw.rectangle([bx0, by0, bx0 + fw, by1], fill=col)
+                edge = bx0 + fw
+                draw.polygon([(edge, by0), (edge + skew, by0), (edge, by1)], fill=col)
+                draw.line([(edge, by0), (edge, by1)], fill=GOLD_LIGHT, width=2)
+            else:                           # fill from the OUTER (right) edge inward
+                draw.rectangle([bx1 - fw, by0, bx1, by1], fill=col)
+                edge = bx1 - fw
+                draw.polygon([(edge, by0), (edge - skew, by1), (edge, by1)], fill=col)
+                draw.line([(edge, by0), (edge, by1)], fill=GOLD_LIGHT, width=2)
+        # quarter ticks over fill + track (subtle scale reference)
+        for q in (0.25, 0.5, 0.75):
+            tx = int(bx0 + span * q) if left_anchored else int(bx1 - span * q)
+            draw.line([(tx, by0 + 2), (tx, by1 - 2)], fill=(0, 0, 0, 90), width=max(1, int(2 * s)))
+        # live HP% at the OUTER end, stroked for legibility on fill or empty track
+        pct = f"{max(0.0, min(1.0, hp)):.0%}"
+        px = bx0 + int(12 * s) if left_anchored else bx1 - int(12 * s)
+        draw.text((px, (by0 + by1) // 2), pct, font=pct_font,
+                  fill=(255, 255, 255, 235), anchor=("lm" if left_anchored else "rm"),
+                  stroke_width=max(1, int(2 * s)), stroke_fill=(10, 8, 5, 220))
+
+    l_x0, l_x1 = x0, center - gap
+    r_x0, r_x1 = center + gap, x1
+    _bar(l_x0, l_x1, hp1, left_anchored=True)
+    _bar(r_x0, r_x1, hp2, left_anchored=False)
+
+    # centre plate: LIVE remaining units of each side as "cur/start · cur/start"
+    draw.rectangle([center - gap + 4, by0 - 4, center + gap - 4, by1 + 4],
+                   fill=PANEL, outline=PANEL_BORDER, width=2)
+    cy = (by0 + by1) // 2
+    sep = int(14 * s)
+
+    def _count_group(cur, start, left):
+        cur_s, of_s = str(int(cur)), f"/{int(start)}"
+        of_w = draw.textbbox((0, 0), of_s, font=of_font)[2]
+        if left:        # ends at center - sep:  [cur][/start]
+            draw.text((center - sep - of_w, cy + int(4 * s)), of_s, font=of_font,
+                      fill=MUTED, anchor="lm")
+            draw.text((center - sep - of_w - int(2 * s), cy), cur_s, font=cnt_font,
+                      fill=TEXT, anchor="rm")
+        else:           # starts at center + sep
+            cur_w = draw.textbbox((0, 0), cur_s, font=cnt_font)[2]
+            draw.text((center + sep, cy), cur_s, font=cnt_font, fill=TEXT, anchor="lm")
+            draw.text((center + sep + cur_w + int(2 * s), cy + int(4 * s)), of_s,
+                      font=of_font, fill=MUTED, anchor="lm")
+
+    _count_group(cur1, start1, left=True)
+    draw.text((center, cy), "·", font=cnt_font, fill=MUTED, anchor="mm")
+    _count_group(cur2, start2, left=False)
+
+    # momentum arrows at the plate's edges: ▲ green = winning the trade right now,
+    # ▼ red = losing it (computed from each side's losses over the last few seconds)
+    t1, t2 = trend
+    ah, aw = int(15 * s), int(18 * s)
+
+    def _arrow(cx_, tr):
+        if not tr:
+            return
+        up = tr > 0
+        col = (110, 190, 80, 240) if up else (210, 70, 60, 240)
+        y0a, y1a = cy - ah // 2, cy + ah // 2
+        pts = ([(cx_ - aw // 2, y1a), (cx_ + aw // 2, y1a), (cx_, y0a)] if up
+               else [(cx_ - aw // 2, y0a), (cx_ + aw // 2, y0a), (cx_, y1a)])
+        draw.polygon(pts, fill=col)
+
+    _arrow(center - gap + int(22 * s), t1)
+    _arrow(center + gap - int(22 * s), t2)
+
+    # name TABS that read as PART of the bar: a light semi-transparent plate at the bar's
+    # outer end, rounded on TOP only, bottom flush with the bar, carrying the unit's ICON
+    # (outer side) + name. Black text for legibility over the bright sky/terrain.
+    padx = int(16 * s)
+    tab_h = int(64 * s)
+    ic_px = int(50 * s)
+    bytop = by0 - tab_h
+
+    def _name_tab(name, icon_path, left):
+        icon = _icon(icon_path, ic_px) if icon_path else None
+        ic_w = (ic_px + int(10 * s)) if icon is not None else 0
+        tw = draw.textbbox((0, 0), name, font=nm_font)[2]
+        w = tw + ic_w + 2 * padx
+        bx0, bx1 = (l_x0, l_x0 + w) if left else (r_x1 - w, r_x1)
+        try:
+            draw.rounded_rectangle([bx0, bytop, bx1, by0], radius=int(10 * s),
+                                   fill=(239, 232, 213, 188), outline=PANEL_BORDER, width=2,
+                                   corners=(True, True, False, False))
+        except TypeError:                    # older Pillow without per-corner control
+            draw.rectangle([bx0, bytop, bx1, by0], fill=(239, 232, 213, 188),
+                           outline=PANEL_BORDER, width=2)
+        cyt = (bytop + by0) // 2
+        if icon is not None:                 # icon hugs the OUTER edge of the tab
+            iy = cyt - ic_px // 2
+            ix = bx0 + padx if left else bx1 - padx - ic_px
+            img.alpha_composite(icon, (ix, iy))
+            draw.rectangle([ix, iy, ix + ic_px, iy + ic_px],
+                           outline=PANEL_BORDER, width=max(1, int(2 * s)))
+            tx = ix + ic_px + int(10 * s) if left else ix - int(10 * s)
+        else:
+            tx = bx0 + padx if left else bx1 - padx
+        draw.text((tx, cyt), name, font=nm_font, fill=(12, 10, 8, 255),
+                  anchor=("lm" if left else "rm"))
+
+    _name_tab(name1, icon1, True)
+    _name_tab(name2, icon2, False)
+
+
+def hud_band_height(H: int) -> int:
+    """Height (px) of the band at the top of a `H`-tall canvas that the HUD actually
+    occupies: bar bottom = (82+46)*sc, plus the centre plate (+4), borders and shadow.
+    Rendering ONLY this band (instead of a full transparent frame) cuts the PNG
+    encode/decode work ~85% — the overlay anchors at 0:0 either way."""
+    return int(140 * (H / 1440.0)) + 4
+
+
 def render_hud_frame(name1, icon1, start1, cur1, hp1,
                      name2, icon2, start2, cur2, hp2,
-                     t=None, size=(1280, 720)) -> Image.Image:
-    """Return an RGBA frame (full video size, transparent except the HUD strip)."""
+                     t=None, size=(1280, 720), band_only=False,
+                     trend=(0, 0)) -> Image.Image:
+    """Return an RGBA frame (transparent except the HUD). `size` is the FULL video
+    canvas the HUD is scaled for; with band_only=True the returned image is cropped
+    to the top hud_band_height() strip (composite it at 0:0).
+
+    Layout: ONLY a prominent dual army-HP bar across the TOP (drains from the centre as
+    each army loses HP). The unit DETAIL cards live at the bottom and are composited
+    separately (compose.make_live_overlay_video) so they can be wider/shorter/more
+    transparent — there's no bottom count strip anymore.
+    """
     W, H = size
-    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    img = Image.new("RGBA", (W, hud_band_height(H) if band_only else H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
+    sc = H / 1440.0                          # all sizes tuned at 1440p
 
-    strip_h = 132
-    margin = 26
-    y0 = H - strip_h - margin
-    x0, x1 = margin, W - margin
-    draw.rounded_rectangle([x0, y0, x1, y0 + strip_h], radius=16,
-                           fill=PANEL, outline=PANEL_BORDER, width=2)
-    cy = y0 + strip_h // 2
-
-    half = (x1 - x0) // 2
-    center = (x0 + x1) // 2
-    _draw_side(draw, img, x=x0, w=half - 30, cy=cy, name=name1, icon_path=icon1,
-               cur=cur1, start=start1, hp=hp1, align_left=True, dead=cur1 == 0)
-    _draw_side(draw, img, x=center + 30, w=half - 30, cy=cy, name=name2, icon_path=icon2,
-               cur=cur2, start=start2, hp=hp2, align_left=False, dead=cur2 == 0)
-
-    # center VS + timer
-    vs_font = _font("georgiab.ttf", 34)
-    draw.text((center, cy - 6), "VS", font=vs_font, fill=GOLD, anchor="mm")
-    if t is not None:
-        draw.text((center, cy + 30), f"{t:0.0f}s", font=_font("georgia.ttf", 16),
-                  fill=MUTED, anchor="mm")
+    bar_margin = int(46 * sc)
+    _draw_top_hpbar(draw, img, x0=bar_margin, x1=W - bar_margin,
+                    name1=name1, hp1=hp1, cur1=cur1, start1=start1,
+                    name2=name2, hp2=hp2, cur2=cur2, start2=start2, t=t, scale=sc,
+                    icon1=icon1, icon2=icon2, trend=trend)
     return img
 
 
 if __name__ == "__main__":
     import sys
-    sys.path.insert(0, str(Path(__file__).parent))
-    from overlay_data import get_unit_card
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))   # scenario_builder/
+    from overlay.overlay_data import get_unit_card
     u1 = get_unit_card("Wu", "elite_fire_archer_wu")
     u2 = get_unit_card("Wu", "jian_swordsman_wu")
     frame = render_hud_frame(u1["name"], u1["icon"], 30, 30, 1.0,

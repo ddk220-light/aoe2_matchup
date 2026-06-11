@@ -1,5 +1,9 @@
 # auto/ — hands-off matchup-video automation
 
+> **Windows is the supported platform** — see [README_WINDOWS.md](README_WINDOWS.md)
+> for setup, env vars and the current run commands. Parts of this document describe
+> the original macOS pipeline and are kept for reference; the macOS backend is frozen.
+
 Turn a list of unit matchups into titled battle videos with **one command**. For
 each matchup it builds a scenario from a golden template, drives the AoE2:DE
 Scenario Editor to record a real AI-vs-AI fight, and composes a titled video —

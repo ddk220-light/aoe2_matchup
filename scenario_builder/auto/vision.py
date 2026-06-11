@@ -13,10 +13,6 @@ handled in input_driver.py.
 """
 from __future__ import annotations
 
-import os
-import re
-import subprocess
-import tempfile
 from functools import lru_cache
 
 import numpy as np
@@ -29,6 +25,15 @@ from auto import platform_io
 def _ocr():
     from rapidocr_onnxruntime import RapidOCR
     return RapidOCR()
+
+
+def warmup() -> None:
+    """Force the (lazy) rapidocr model load NOW, on a tiny dummy image, so the first real
+    OCR during navigation isn't a ~15-20s cold-start. Idempotent (the model is cached)."""
+    try:
+        _ocr()(np.zeros((48, 96, 3), dtype=np.uint8))
+    except Exception:
+        pass
 
 
 def grab() -> Image.Image:
@@ -73,18 +78,24 @@ def find_text(img: Image.Image, pattern: str, region=(0.0, 0.0, 1.0, 1.0)):
 
 
 def read_counts(img: Image.Image | None = None, band=(0.28, 0.12, 0.74, 0.22)):
-    """Read the in-game live readout 'Unit A: N vs Unit B: M' -> (N, M) or None."""
+    """Read the in-game live readout 'Unit A: N vs Unit B: M' -> (N, M) or None.
+
+    Parsing lives in overlay.readout.parse_counts (shared with the footage OCR):
+    counts are the tokens right after the colons, robust to OCR dropping the spaces
+    around 'vs' and to digit-lookalike misreads like '3o' for '30'."""
+    from overlay.readout import parse_counts
     if img is None:
         img = grab()
-    txt = ocr_text(img, band)
-    parts = re.split(r"\bvs\b", txt, maxsplit=1)
-    if len(parts) != 2:
-        return None
-    a = re.findall(r"\d+", parts[0])
-    b = re.findall(r"\d+", parts[1])
-    if not a or not b:
-        return None
-    return int(a[0]), int(b[0])
+    return parse_counts(ocr_text(img, band))
+
+
+def screen_luma(img: Image.Image | None = None) -> float:
+    """Mean luma of the (downscaled) screen — the cheap live signal for the
+    load->game transition (same constants as the footage anchor:
+    editor ~32, load screen ~22, in-game arena ~120-140)."""
+    if img is None:
+        img = grab()
+    return float(np.asarray(img.convert("L").resize((160, 90))).mean())
 
 
 def detect_end(img: Image.Image | None = None) -> bool:
@@ -107,6 +118,41 @@ def detect_result(img: Image.Image | None = None) -> bool:
     return "wins" in txt
 
 
+class ResultWatcher:
+    """Change-gated detect_result for the watch loop: the OCR (~1s of CPU per call,
+    alongside the recording) only runs when the centre band has visibly CHANGED since
+    the frame last OCR'd — the WINS line appearing is such a change (measured ~5 mean
+    px diff vs ~1.3-2 for an idle post-battle scene; mid-combat churns at 10-27 and
+    always OCRs). A force-OCR after `force_every` consecutive skips bounds the
+    worst-case detection latency to (force_every+1) * poll even if a change slips
+    under the threshold."""
+    BAND = (0.10, 0.18, 0.90, 0.52)        # same band detect_result reads
+
+    def __init__(self, thresh=3.0, force_every=3):
+        self.thresh, self.force_every = thresh, force_every
+        self._ref = None
+        self._skips = 0
+
+    def _band_gray(self, img):
+        w, h = img.size
+        x0, y0, x1, y1 = self.BAND
+        crop = img.crop((int(x0 * w), int(y0 * h), int(x1 * w), int(y1 * h)))
+        return np.asarray(crop.convert("L").resize((128, 72)), dtype=np.float32)
+
+    def check(self, img: Image.Image | None = None) -> bool:
+        if img is None:
+            img = grab()
+        arr = self._band_gray(img)
+        if (self._ref is not None
+                and float(np.abs(arr - self._ref).mean()) < self.thresh
+                and self._skips < self.force_every):
+            self._skips += 1
+            return False                   # band unchanged since last OCR -> skip the OCR
+        self._skips = 0
+        self._ref = arr
+        return detect_result(img)
+
+
 # OCR cue -> screen name. Order matters (most specific first).
 def detect_state(img: Image.Image | None = None) -> str:
     """Best-effort identification of the current screen, for navigation gating.
@@ -116,7 +162,9 @@ def detect_state(img: Image.Image | None = None) -> str:
         img = grab()
     if "main menu" in ocr_text(img, (0.30, 0.34, 0.70, 0.46)):
         return "main_menu"
-    if "load scenario" in ocr_text(img, (0.30, 0.15, 0.70, 0.24)):
+    # the Load Scenario list: its title banner sits near the top; OCR drops the space
+    # inconsistently ('loadscenario'), so compare space-insensitively.
+    if "loadscenario" in ocr_text(img, (0.25, 0.06, 0.75, 0.16)).replace(" ", ""):
         return "load_dialog"
     if "save your changes" in ocr_text(img, (0.28, 0.40, 0.72, 0.54)):
         return "save_dialog"

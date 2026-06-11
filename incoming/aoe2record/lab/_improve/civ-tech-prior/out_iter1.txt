@@ -1,0 +1,105 @@
+== g0 ==  SCORES coverage=93.5 overall=88.9 military=80.9  (mil 106/131, all 295/332)
+confusion truth->pred:
+   archer          ->skirmisher       x4
+   slinger         ->skirmisher       x4
+   villager        ->archer           x3
+   spearman        ->skirmisher       x3
+   skirmisher      ->spearman         x3
+   villager        ->skirmisher       x3
+   villager        ->slinger          x3
+   villager        ->spearman         x3
+   champiscout     ->villager         x2
+   knight          ->archer           x2
+   skirmisher      ->archer           x1
+   champiscout     ->skirmisher       x1
+   skirmisher      ->champiscout      x1
+   archer          ->knight           x1
+   spearman        ->villager         x1
+   monk            ->villager         x1
+   slinger         ->spearman         x1
+error detail:
+ id=  5102 truth=              Archer(archer) pred=skirmisher->skirmisher ply=ddk220 cls=military/0.95 tc=0.95 sig=behavior,group created=12.11m fs=15.03m beh={'moves': 81, 'patrols': 4, 'attacks_building': 4, 'hard_mil': 4}
+ id=  5116 truth=              Archer(archer) pred=skirmisher->skirmisher ply=ddk220 cls=military/0.95 tc=0.95 sig=behavior,group created=12.75m fs=15.03m beh={'moves': 51, 'patrols': 4, 'attacks_building': 1, 'hard_mil': 4}
+ id=  5139 truth=              Archer(archer) pred=skirmisher->skirmisher ply=ddk220 cls=military/0.95 tc=0.95 sig=behavior,group created=13.78m fs=15.03m beh={'moves': 100, 'patrols': 4, 'attacks_building': 4, 'hard_mil': 4}
+ id=  5141 truth=          Lumberjack(villager) pred=archer->archer ply=munq cls=military/0.80 tc=0.95 sig=gather,group created=13.90m fs=14.71m beh={'gathers': 3, 'attacks_building': 1}
+ id=  5202 truth=            Spearman(spearman) pred=skirmisher->skirmisher ply=ddk220 cls=military/0.90 tc=0.55 sig=cocmd,group created=15.58m fs=16.24m beh={'attacks_building': 3, 'moves': 1}
+ id=  5229 truth=          Lumberjack(villager) pred=archer->archer ply=ddk220 cls=military/0.80 tc=0.80 sig=gather,group created=15.72m fs=15.95m beh={'gathers': 1, 'attacks_building': 1, 'moves': 1}
+ id=  5335 truth=              Archer(archer) pred=skirmisher->skirmisher ply=ddk220 cls=military/0.95 tc=0.95 sig=behavior,group created=16.92m fs=17.30m beh={'moves': 17, 'patrols': 1, 'attacks_building': 2, 'hard_mil': 1}
+ id=  5523 truth=          Skirmisher(skirmisher) pred=archer->archer ply=ddk220 cls=military/0.95 tc=0.95 sig=behavior,group created=19.32m fs=19.42m beh={'moves': 65, 'patrols': 1, 'attacks_building': 6, 'hard_mil': 1}
+ id=  5697 truth=        Champi Scout(champiscout) pred=skirmisher->skirmisher ply=ddk220 cls=military/0.80 tc=0.95 sig=group created=21.37m fs=23.21m beh={'moves': 18}
+ id=  5721 truth=          Skirmisher(skirmisher) pred=champiscout->champiscout ply=ddk220 cls=military/0.95 tc=0.80 sig=behavior,group created=21.72m fs=21.92m beh={'moves': 93, 'attacks_building': 3, 'gathers': 2, 'patrols': 11, 'hard_mil': 12}
+ id=  5726 truth=        Champi Scout(champiscout) pred=villager->villager ply=ddk220 cls=villager/0.55 tc=0.55 sig=group created=21.93m fs=23.21m beh={'moves': 24}
+ id=  5731 truth=          Skirmisher(skirmisher) pred=spearman->spearman ply=ddk220 cls=military/0.95 tc=0.80 sig=behavior,group created=22.15m fs=22.72m beh={'moves': 93, 'attacks_building': 2, 'gathers': 1, 'patrols': 11, 'hard_mil': 12}
+ id=  5750 truth=            Spearman(spearman) pred=skirmisher->skirmisher ply=ddk220 cls=military/0.80 tc=0.95 sig=group created=22.30m fs=23.21m beh={'moves': 19, 'attacks_building': 2}
+ id=  5927 truth=        Champi Scout(champiscout) pred=villager->villager ply=ddk220 cls=villager/0.95 tc=0.80 sig=behavior,group created=22.87m fs=23.21m beh={'moves': 22, 'builds': 1, 'hard_build': 1}
+ id=  6436 truth=              Archer(archer) pred=knight->knight ply=munq cls=military/0.95 tc=0.95 sig=behavior,group created=29.28m fs=33.01m beh={'moves': 51, 'attacks_building': 1, 'patrols': 1, 'hard_mil': 2}
+ id=  6676 truth=             Slinger(slinger) pred=skirmisher->skirmisher ply=ddk220 cls=military/0.90 tc=0.80 sig=cocmd,group created=30.21m fs=30.24m beh={'moves': 5}
+ id=  6866 truth=             Slinger(slinger) pred=skirmisher->skirmisher ply=ddk220 cls=military/0.90 tc=0.95 sig=cocmd,group created=30.63m fs=31.90m beh={'moves': 25, 'attacks_building': 4}
+ id=  6911 truth=             Slinger(slinger) pred=skirmisher->skirmisher ply=ddk220 cls=military/0.90 tc=0.95 sig=cocmd,group created=30.94m fs=31.90m beh={'moves': 29, 'attacks_building': 9}
+ id=  6918 truth=            Villager(villager) pred=skirmisher->skirmisher ply=ddk220 cls=villager/0.55 tc=0.55 sig=gather,group created=31.01m fs=32.16m beh={'gathers': 3}
+ id=  7437 truth=            Villager(villager) pred=skirmisher->skirmisher ply=ddk220 cls=military/0.80 tc=0.95 sig=group created=32.67m fs=32.98m beh={}
+ id=  7484 truth=          Skirmisher(skirmisher) pred=spearman->spearman ply=ddk220 cls=military/0.95 tc=0.95 sig=behavior,group created=33.21m fs=33.76m beh={'moves': 13, 'patrols': 2, 'attacks_building': 6, 'hard_mil': 2}
+ id=  7485 truth=          Skirmisher(skirmisher) pred=spearman->spearman ply=ddk220 cls=military/0.95 tc=0.95 sig=behavior,group created=33.21m fs=33.76m beh={'moves': 13, 'patrols': 2, 'attacks_building': 6, 'hard_mil': 2}
+ id=  7495 truth=            Villager(villager) pred=slinger->slinger ply=ddk220 cls=villager/0.55 tc=0.55 sig=gather,group created=33.49m fs=36.67m beh={'gathers': 1}
+ id=  7496 truth=            Villager(villager) pred=slinger->slinger ply=ddk220 cls=villager/0.55 tc=0.55 sig=gather,group created=33.51m fs=33.87m beh={'gathers': 3, 'moves': 1, 'attacks_building': 1}
+ id=  7500 truth=            Spearman(spearman) pred=villager->villager ply=ddk220 cls=military/0.90 tc=0.55 sig=cocmd,group created=33.60m fs=33.96m beh={'moves': 7}
+ id=  7570 truth=            Villager(villager) pred=slinger->slinger ply=ddk220 cls=villager/0.55 tc=0.55 sig=gather,group created=33.91m fs=35.38m beh={'gathers': 2, 'moves': 1, 'attacks_building': 1}
+ id=  7572 truth=                Monk(monk) pred=villager->villager ply=munq cls=villager/0.55 tc=0.55 sig=group created=33.92m fs=39.84m beh={'bld_order': 1}
+ id=  7573 truth=            Villager(villager) pred=spearman->spearman ply=ddk220 cls=military/0.80 tc=0.95 sig=gather,group created=33.92m fs=34.35m beh={'gathers': 3, 'attacks_building': 2, 'moves': 1}
+ id=  7618 truth=              Knight(knight) pred=archer->archer ply=munq cls=military/0.90 tc=0.55 sig=cocmd,group created=34.28m fs=36.77m beh={'moves': 2, 'attacks_building': 1}
+ id=  7619 truth=              Knight(knight) pred=archer->archer ply=munq cls=military/0.90 tc=0.55 sig=cocmd,group created=34.28m fs=34.80m beh={'attacks_building': 1, 'moves': 3}
+ id=  7741 truth=          Lumberjack(villager) pred=spearman->spearman ply=ddk220 cls=military/0.90 tc=0.55 sig=cocmd,group created=34.74m fs=37.55m beh={'attacks_building': 2}
+ id=  7870 truth=          Gold Miner(villager) pred=archer->archer ply=munq cls=military/0.80 tc=0.80 sig=gather,group created=34.96m fs=36.38m beh={'gathers': 1}
+ id=  7972 truth=          Lumberjack(villager) pred=skirmisher->skirmisher ply=ddk220 cls=villager/0.55 tc=0.55 sig=gather,group created=35.16m fs=36.30m beh={'gathers': 1}
+ id=  8041 truth=             Slinger(slinger) pred=spearman->spearman ply=ddk220 cls=military/0.90 tc=0.80 sig=cocmd,group created=35.58m fs=35.67m beh={'moves': 25, 'attacks_building': 9}
+ id=  8042 truth=             Slinger(slinger) pred=skirmisher->skirmisher ply=ddk220 cls=military/0.90 tc=0.80 sig=cocmd,group created=35.58m fs=35.67m beh={'moves': 19, 'attacks_building': 3}
+ id=  8690 truth=          Lumberjack(villager) pred=spearman->spearman ply=ddk220 cls=military/0.90 tc=0.80 sig=cocmd,group created=36.83m fs=37.55m beh={'attacks_building': 2}
+ id=  9104 truth=            Spearman(spearman) pred=skirmisher->skirmisher ply=ddk220 cls=military/0.80 tc=0.95 sig=group created=37.49m fs=38.38m beh={'attacks_building': 2, 'moves': 2}
+== train ==  SCORES coverage=76.8 overall=90.1 military=78.9  (mil 86/109, all 274/304)
+confusion truth->pred:
+   militia         ->compositebowman  x6
+   unit            ->villager         x3
+   scoutcavalry    ->villager         x3
+   villager        ->trebuchet        x3
+   scorpion        ->scoutcavalry     x2
+   scoutcavalry    ->compositebowman  x2
+   militia         ->scoutcavalry     x2
+   villager        ->scoutcavalry     x2
+   monk            ->villager         x1
+   villager        ->compositebowman  x1
+   mangonel        ->scoutcavalry     x1
+   villager        ->militia          x1
+   trebuchet       ->jaguarwarrior    x1
+   monk            ->scoutcavalry     x1
+   jaguarwarrior   ->scoutcavalry     x1
+error detail:
+ id=  3907 truth=           Mule Cart(unit) pred=villager->villager ply=wR.Baxter cls=villager/0.80 tc=0.80 sig=gather,group created= 1.84m fs=26.22m beh={'moves': 5, 'gathers': 1}
+ id=  4204 truth=           Mule Cart(unit) pred=villager->villager ply=wR.Baxter cls=villager/0.80 tc=0.80 sig=gather,group created=14.71m fs=24.66m beh={'gathers': 2, 'moves': 1}
+ id=  4597 truth=         Eagle Scout(scoutcavalry) pred=villager->villager ply=ddk220 cls=villager/0.55 tc=0.55 sig=group created=25.46m fs=26.51m beh={'moves': 3}
+ id=  4598 truth=         Eagle Scout(scoutcavalry) pred=villager->villager ply=ddk220 cls=villager/0.55 tc=0.55 sig=group created=25.46m fs=26.51m beh={'moves': 3}
+ id=  4617 truth=                Monk(monk) pred=villager->villager ply=ddk220 cls=villager/0.90 tc=0.55 sig=cocmd,group created=25.95m fs=27.10m beh={'moves': 59, 'bld_order': 1}
+ id=  4850 truth=           Mule Cart(unit) pred=villager->villager ply=wR.Baxter cls=villager/0.80 tc=0.80 sig=gather,group created=29.11m fs=30.56m beh={'gathers': 3, 'moves': 6}
+ id=  4859 truth=          Lumberjack(villager) pred=trebuchet->trebuchet ply=wR.Baxter cls=military/0.90 tc=0.95 sig=cocmd,group created=29.14m fs=39.67m beh={'bld_order': 4, 'attacks_building': 1, 'moves': 4}
+ id=  5117 truth=            Scorpion(scorpion) pred=eaglescout->scoutcavalry ply=ddk220 cls=military/0.80 tc=0.95 sig=group created=30.83m fs=31.22m beh={'moves': 12, 'attacks_building': 1}
+ id=  5180 truth=            Villager(villager) pred=compositebowman->compositebowman ply=wR.Baxter cls=villager/0.55 tc=0.55 sig=gather,group created=31.31m fs=33.54m beh={'gathers': 1, 'bld_order': 5, 'attacks_building': 1, 'moves': 4}
+ id=  5318 truth=       Scout Cavalry(scoutcavalry) pred=compositebowman->compositebowman ply=wR.Baxter cls=military/0.95 tc=0.80 sig=behavior,group created=31.83m fs=32.89m beh={'moves': 52, 'attacks_building': 25, 'hard_mil': 1}
+ id=  5340 truth=            Scorpion(scorpion) pred=eaglescout->scoutcavalry ply=ddk220 cls=military/0.80 tc=0.80 sig=gather,group created=31.89m fs=35.52m beh={'gathers': 1, 'moves': 3}
+ id=  5679 truth=             Militia(militia) pred=scoutcavalry->scoutcavalry ply=wR.Baxter cls=military/0.95 tc=0.80 sig=behavior,group created=32.64m fs=33.27m beh={'moves': 12, 'attacks_building': 11, 'gathers': 1, 'hard_mil': 1}
+ id=  5680 truth=             Militia(militia) pred=compositebowman->compositebowman ply=wR.Baxter cls=military/0.95 tc=0.80 sig=behavior,group created=32.64m fs=33.23m beh={'moves': 14, 'attacks_building': 11, 'gathers': 1, 'hard_mil': 1}
+ id=  5682 truth=             Militia(militia) pred=compositebowman->compositebowman ply=wR.Baxter cls=military/0.95 tc=0.80 sig=behavior,group created=32.65m fs=33.23m beh={'moves': 14, 'attacks_building': 11, 'gathers': 1, 'hard_mil': 1}
+ id=  5751 truth=             Militia(militia) pred=scoutcavalry->scoutcavalry ply=wR.Baxter cls=military/0.95 tc=0.95 sig=behavior,group created=32.99m fs=33.94m beh={'attacks_building': 11, 'moves': 9, 'gathers': 1, 'hard_mil': 1}
+ id=  5785 truth=            Mangonel(mangonel) pred=eaglescout->scoutcavalry ply=ddk220 cls=military/0.80 tc=0.95 sig=group created=33.21m fs=33.58m beh={'moves': 2}
+ id=  5801 truth=       Scout Cavalry(scoutcavalry) pred=compositebowman->compositebowman ply=wR.Baxter cls=military/0.95 tc=0.80 sig=behavior,group created=33.33m fs=33.57m beh={'attacks_building': 20, 'moves': 33, 'hard_mil': 1}
+ id=  5832 truth=         Eagle Scout(scoutcavalry) pred=villager->villager ply=ddk220 cls=villager/0.55 tc=0.55 sig=group created=33.51m fs=33.58m beh={'moves': 2}
+ id=  5985 truth=            Villager(villager) pred=militia->militia ply=wR.Baxter cls=military/0.80 tc=0.95 sig=group created=34.16m fs=37.06m beh={}
+ id=  6043 truth=            Villager(villager) pred=eaglescout->scoutcavalry ply=ddk220 cls=military/0.80 tc=0.80 sig=gather,group created=34.37m fs=35.52m beh={'gathers': 2}
+ id=  6199 truth=            Villager(villager) pred=eaglescout->scoutcavalry ply=ddk220 cls=military/0.80 tc=0.80 sig=gather,group created=34.79m fs=36.04m beh={'moves': 1, 'gathers': 3, 'attacks_building': 2}
+ id=  6435 truth=           Trebuchet(trebuchet) pred=jaguarwarrior->jaguarwarrior ply=ddk220 cls=military/0.80 tc=0.95 sig=gather,group created=36.69m fs=37.13m beh={'moves': 12, 'attacks_building': 10, 'gathers': 4}
+ id=  6444 truth=             Militia(militia) pred=compositebowman->compositebowman ply=wR.Baxter cls=military/0.80 tc=0.95 sig=gather,group created=36.76m fs=38.02m beh={'moves': 36, 'attacks_building': 6, 'gathers': 1}
+ id=  6445 truth=             Militia(militia) pred=compositebowman->compositebowman ply=wR.Baxter cls=military/0.90 tc=0.95 sig=cocmd,group created=36.77m fs=38.02m beh={'moves': 29, 'attacks_building': 6}
+ id=  6446 truth=             Militia(militia) pred=compositebowman->compositebowman ply=wR.Baxter cls=military/0.90 tc=0.95 sig=cocmd,group created=36.77m fs=38.02m beh={'moves': 29, 'attacks_building': 6}
+ id=  6492 truth=             Militia(militia) pred=compositebowman->compositebowman ply=wR.Baxter cls=military/0.80 tc=0.95 sig=gather,group created=37.11m fs=38.02m beh={'moves': 36, 'attacks_building': 7, 'gathers': 1}
+ id=  6641 truth=            Villager(villager) pred=trebuchet->trebuchet ply=wR.Baxter cls=military/0.90 tc=0.95 sig=cocmd,group created=38.49m fs=39.72m beh={'bld_order': 5, 'attacks_building': 1, 'moves': 2}
+ id=  6661 truth=                Monk(monk) pred=eaglescout->scoutcavalry ply=ddk220 cls=military/0.90 tc=0.95 sig=cocmd,group created=38.80m fs=40.22m beh={'moves': 2}
+ id=  6679 truth=      Jaguar Warrior(jaguarwarrior) pred=eaglescout->scoutcavalry ply=ddk220 cls=military/0.80 tc=0.80 sig=group created=39.03m fs=39.13m beh={'moves': 2, 'attacks_building': 5}
+ id=  6683 truth=            Villager(villager) pred=trebuchet->trebuchet ply=wR.Baxter cls=military/0.90 tc=0.95 sig=cocmd,group created=39.08m fs=39.72m beh={'bld_order': 5, 'attacks_building': 1, 'moves': 2}

@@ -1,0 +1,46 @@
+version = 1
+revision = 3
+requires-python = ">=3.12"
+
+[[package]]
+name = "aocref"
+version = "2.0.34"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/53/fa/82085460e7ef6aaa68ae67a174bc6a078915f1ff9a60420f444e83e17b65/aocref-2.0.34.tar.gz", hash = "sha256:ee8ae1c1c5a02ca5c4e44f65d32f4490256e28177fa5b9262d13080e92979897", size = 67101, upload-time = "2026-01-27T23:38:41.285Z" }
+
+[[package]]
+name = "aoe2-replay-visualizer"
+version = "1.0.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "mgz" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "mgz", specifier = ">=1.8.0" }]
+
+[[package]]
+name = "construct"
+version = "2.8.16"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/60/92/285d9a28ac6a80174111d2b3c2e640099eaae642b748d76699ae420dd3d4/construct-2.8.16.tar.gz", hash = "sha256:9a5dbd459e26933bd572389d99c26a0db180b3e2f5fd06950a38b1944cff2548", size = 63629, upload-time = "2017-10-01T07:48:01.696Z" }
+
+[[package]]
+name = "mgz"
+version = "1.8.47"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aocref" },
+    { name = "construct" },
+    { name = "tabulate" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0e/ab/b1edb9e95237ff7639887411bed9eef56bd328cd5d9d72357b5c460c860e/mgz-1.8.47.tar.gz", hash = "sha256:af1e62a3f4393c2afd8260e3f77ffba4d3f2ad4a69abc8a7fec106f03322e0ab", size = 65638, upload-time = "2026-01-27T23:39:18.793Z" }
+
+[[package]]
+name = "tabulate"
+version = "0.9.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ec/fe/802052aecb21e3797b8f7902564ab6ea0d60ff8ca23952079064155d1ae1/tabulate-0.9.0.tar.gz", hash = "sha256:0095b12bf5966de529c0feb1fa08671671b3368eec77d7ef7ab114be2c068b3c", size = 81090, upload-time = "2022-10-06T17:21:48.54Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/40/44/4a5f08c96eb108af5cb50b41f76142f0afa346dfa99d5296fe7202a11854/tabulate-0.9.0-py3-none-any.whl", hash = "sha256:024ca478df22e9340661486f85298cff5f6dcdba14f3813e8830015b9ed1948f", size = 35252, upload-time = "2022-10-06T17:21:44.262Z" },
+]

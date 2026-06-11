@@ -1,0 +1,112 @@
+== g0: coverage=93.5 overall=91.3 (303/332) military=81.7 (107/131)
+   source                 all       mil   top confusions (truth->pred)
+   sq_hardvil       155/156     0/1       champiscout->villager x1
+   dp_line           64/76     64/72      skirmisher->spearman x2, slinger->skirmisher x2, villager->spearman x2, skirmisher->archer x1
+   sq_base           29/30      3/4       monk->villager x1
+   iso               19/24     19/24      archer->skirmisher x4, skirmisher->spearman x1
+   sq_hetero         14/16      2/4       champiscout->villager x1, spearman->villager x1
+   smooth            13/15     13/15      knight->archer x2
+   rescue_raider      4/10      4/9       spearman->skirmisher x3, slinger->skirmisher x2, villager->spearman x1
+   fallback           3/3       0/0       
+   header             2/2       2/2       
+   -- military errors by (truth->pred): id list --
+     archer->skirmisher x4: [(5102, 'iso'), (5116, 'iso'), (5139, 'iso'), (5335, 'iso')]
+     slinger->skirmisher x4: [(6676, 'dp_line'), (6866, 'rescue_raider'), (6911, 'rescue_raider'), (8042, 'dp_line')]
+     spearman->skirmisher x3: [(5202, 'rescue_raider'), (5750, 'rescue_raider'), (9104, 'rescue_raider')]
+     skirmisher->spearman x3: [(5731, 'dp_line'), (7484, 'dp_line'), (7485, 'iso')]
+     villager->spearman x3: [(7573, 'dp_line'), (7741, 'rescue_raider'), (8690, 'dp_line')]
+     champiscout->villager x2: [(5726, 'sq_hetero'), (5927, 'sq_hardvil')]
+     knight->archer x2: [(7618, 'smooth'), (7619, 'smooth')]
+     skirmisher->archer x1: [(5523, 'dp_line')]
+     champiscout->skirmisher x1: [(5697, 'dp_line')]
+     skirmisher->champiscout x1: [(5721, 'dp_line')]
+     villager->skirmisher x1: [(7437, 'dp_line')]
+     spearman->villager x1: [(7500, 'sq_hetero')]
+     monk->villager x1: [(7572, 'sq_base')]
+     villager->archer x1: [(7870, 'dp_line')]
+     slinger->spearman x1: [(8041, 'dp_line')]
+   -- overwrite flow (prev_src -> last_src: fix/break/same) --
+     dp_line      ->iso           break x3
+     dp_line      ->iso           fix   x13
+     dp_line      ->iso           same  x2
+     dp_line      ->smooth        fix   x13
+     rescue_raider->smooth        same  x2
+     smooth       ->iso           fix   x6
+     sq_base      ->dp_line       break x2
+     sq_base      ->dp_line       same  x3
+     sq_base      ->rescue_raider fix   x1
+     sq_base      ->rescue_raider same  x4
+     sq_hardmil   ->dp_line       break x2
+     sq_hardmil   ->dp_line       fix   x13
+     sq_hardmil   ->dp_line       same  x46
+     sq_hetero    ->dp_line       break x1
+     sq_hetero    ->dp_line       fix   x3
+     sq_hetero    ->dp_line       same  x6
+     sq_hetero    ->rescue_raider same  x5
+       BROKE id=5139 dp_line:archer -> iso:skirmisher  truth=archer
+       BROKE id=5335 dp_line:archer -> iso:skirmisher  truth=archer
+       BROKE id=5523 sq_hardmil:skirmisher -> dp_line:archer  truth=skirmisher
+       BROKE id=5731 sq_hardmil:skirmisher -> dp_line:spearman  truth=skirmisher
+       BROKE id=7437 sq_base:villager -> dp_line:skirmisher  truth=villager
+       BROKE id=7485 dp_line:skirmisher -> iso:spearman  truth=skirmisher
+       BROKE id=7573 sq_hetero:villager -> dp_line:spearman  truth=villager
+       BROKE id=7870 sq_base:villager -> dp_line:archer  truth=villager
+== train: coverage=76.8 overall=90.5 (275/304) military=78.9 (86/109)
+   source                 all       mil   top confusions (truth->pred)
+   sq_hardvil       157/157     0/0       
+   dp_line           46/56     46/55      militia->compositebowman x4, scoutcavalry->compositebowman x2, militia->scoutcavalry x2, villager->militia x1
+   sq_base           18/27      0/7       unit->villager x3, scoutcavalry->villager x3, villager->scoutcavalry x2, scorpion->scoutcavalry x1
+   iso               19/22     19/22      scorpion->scoutcavalry x1, mangonel->scoutcavalry x1, trebuchet->jaguarwarrior x1
+   rescue_raider      8/13      8/10      villager->trebuchet x3, militia->compositebowman x2
+   sq_hetero          8/9       0/1       monk->villager x1
+   monk_ovr           8/8       8/8       
+   fallback           6/6       0/0       
+   smooth             2/3       2/3       jaguarwarrior->scoutcavalry x1
+   header             2/2       2/2       
+   rescue_scout       1/1       1/1       
+   -- military errors by (truth->pred): id list --
+     militia->compositebowman x6: [(5680, 'dp_line'), (5682, 'dp_line'), (6444, 'dp_line'), (6445, 'dp_line'), (6446, 'rescue_raider'), (6492, 'rescue_raider')]
+     unit->villager x3: [(3907, 'sq_base'), (4204, 'sq_base'), (4850, 'sq_base')]
+     scoutcavalry->villager x3: [(4597, 'sq_base'), (4598, 'sq_base'), (5832, 'sq_base')]
+     villager->trebuchet x3: [(4859, 'rescue_raider'), (6641, 'rescue_raider'), (6683, 'rescue_raider')]
+     scorpion->scoutcavalry x2: [(5117, 'iso'), (5340, 'sq_base')]
+     scoutcavalry->compositebowman x2: [(5318, 'dp_line'), (5801, 'dp_line')]
+     militia->scoutcavalry x2: [(5679, 'dp_line'), (5751, 'dp_line')]
+     villager->scoutcavalry x2: [(6043, 'sq_base'), (6199, 'sq_base')]
+     monk->villager x1: [(4617, 'sq_hetero')]
+     mangonel->scoutcavalry x1: [(5785, 'iso')]
+     villager->militia x1: [(5985, 'dp_line')]
+     trebuchet->jaguarwarrior x1: [(6435, 'iso')]
+     monk->scoutcavalry x1: [(6661, 'dp_line')]
+     jaguarwarrior->scoutcavalry x1: [(6679, 'smooth')]
+   -- overwrite flow (prev_src -> last_src: fix/break/same) --
+     dp_line      ->iso           break x1
+     dp_line      ->iso           fix   x16
+     dp_line      ->iso           same  x2
+     dp_line      ->monk_ovr      same  x3
+     dp_line      ->smooth        fix   x2
+     dp_line      ->smooth        same  x1
+     rescue_raider->monk_ovr      same  x5
+     rescue_scout ->iso           fix   x2
+     smooth       ->iso           fix   x1
+     sq_base      ->dp_line       break x1
+     sq_base      ->dp_line       fix   x6
+     sq_base      ->dp_line       same  x2
+     sq_base      ->rescue_raider fix   x3
+     sq_base      ->rescue_raider same  x4
+     sq_base      ->rescue_scout  fix   x1
+     sq_hardmil   ->dp_line       break x3
+     sq_hardmil   ->dp_line       fix   x17
+     sq_hardmil   ->dp_line       same  x21
+     sq_hetero    ->dp_line       fix   x3
+     sq_hetero    ->dp_line       same  x3
+     sq_hetero    ->rescue_raider break x1
+     sq_hetero    ->rescue_raider fix   x1
+     sq_hetero    ->rescue_raider same  x4
+       BROKE id=5117 dp_line:scorpion -> iso:eaglescout  truth=scorpion
+       BROKE id=5679 sq_hardmil:militia -> dp_line:scoutcavalry  truth=militia
+       BROKE id=5680 sq_hardmil:militia -> dp_line:compositebowman  truth=militia
+       BROKE id=5751 sq_hardmil:militia -> dp_line:scoutcavalry  truth=militia
+       BROKE id=5985 sq_base:villager -> dp_line:militia  truth=villager
+       BROKE id=6641 sq_hetero:villager -> rescue_raider:trebuchet  truth=villager
+SUMMARY g0: mil=81.7 ovr=91.3  train: mil=78.9 ovr=90.5

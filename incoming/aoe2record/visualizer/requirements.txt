@@ -1,0 +1,13 @@
+flask>=3.0.0
+flask-cors>=4.0.0
+# mgz pinned to sanduckhan's fork: adds AoE2 DE save-version 67.x support
+# (game build 101.103.38580+, incl. current 44206) — not yet in upstream mgz.
+# See https://github.com/happyleavesaoc/aoc-mgz/pull/141
+mgz @ https://github.com/sanduckhan/aoc-mgz/archive/a1683d8eeca67796ced0d0c05b145420c97d862d.tar.gz
+gunicorn>=21.0.0
+requests>=2.31.0
+# Required for AoE2 Companion API calls
+# Server-side WebM clip export (clip_export.py): Pillow renders frames, the
+# imageio-ffmpeg wheel bundles an ffmpeg binary so no apt install is needed.
+Pillow>=10.0.0
+imageio-ffmpeg>=0.4.9

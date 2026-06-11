@@ -1,0 +1,20 @@
+[score_game] UC_DIR=C:\dev\aoe2\aoe2grpc\_improve\queue-ledger -> unit_classifier from C:\dev\aoe2\aoe2grpc\_improve\queue-ledger\unit_classifier.py
+replay=fresh_newpatch.aoe2record  end=42.6min  (scoring spawn<37.6min)
+truth nameable mil/vil units in-window: 355; with a classifier prediction (id-linked): 332 (94% coverage)
+
+-- OVERALL vil+mil: 88.9% (295/332) --
+
+-- MILITARY only: 80.9% (106/131) --
+   archer         40/45  {'skirmisher': 4, 'knight': 1}
+   skirmisher     38/43  {'archer': 1, 'champiscout': 1, 'spearman': 3}
+   slinger        5/10  {'skirmisher': 4, 'spearman': 1}
+   hussitewagon   8/8  
+   champiscout    4/7  {'skirmisher': 1, 'villager': 2}
+   spearman       3/7  {'skirmisher': 3, 'villager': 1}
+   knight         3/5  {'archer': 2}
+   militia        3/3  
+   monk           0/1  {'villager': 1}
+   trebuchet      1/1  
+   scoutcavalry   1/1  
+
+SCORES coverage=93.5 overall=88.9 military=80.9

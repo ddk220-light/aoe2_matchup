@@ -1,0 +1,369 @@
+--- prod
++++ work
+@@ -85,8 +85,10 @@
+ # final_train_time (which only reflects tech upgrades), so they must be applied here as
+ # a multiplier on military train time. Without this the per-building FIFO mis-times (and
+-# thus mis-orders) a civ's whole army -- e.g. Aztec military trains 11% faster, so the
+-# base-time model runs ~11% slow and drifts later as the queue deepens.
++# thus mis-orders) a civ's whole army.
++# Aztec factor CALIBRATED from gRPC truth spawn gaps on the current patch: jaguar
++# warriors spawn exactly 10.0s apart (base 12) and castle-age eagle scouts exactly
++# 30.0s apart (base 36) => factor 1/1.2 ("military created 20% faster"); both tick-exact.
+ CIV_MIL_SPEED = {
+-    "Aztecs": 0.89,   # "Military units created 11% faster"
++    "Aztecs": 1 / 1.2,
+ }
+ 
+@@ -151,4 +153,8 @@
+     unqueues: dict = field(default_factory=lambda: defaultdict(list))  # building -> [(t, slot)]
+     civ: dict = field(default_factory=dict)         # player name -> civilization
++    # --- queue-ledger raw command capture (consumed by production_timeline) ---
++    queue_cmds: list = field(default_factory=list)     # (t, player, token, amount, [bldg ids])
++    research_cmds: list = field(default_factory=list)  # (t, player, tech_name, tech_id, bldg)
++    end_t: float = float("inf")                        # recorded game duration (sec)
+ 
+     def canon(self, oid):
+@@ -228,6 +234,11 @@
+                     _set_type(g, _norm(onm), CONF["header"], "header")
+ 
++    # recorded game length: production completing after this never spawned
++    try:
++        ctx.end_t = match.duration.total_seconds()
++    except Exception:
++        pass
++
+     # walk actions: owner, behavior, group commands, queues, building ids
+-    building_free = defaultdict(float)   # building -> time its queue next goes idle
+     for a in match.actions:
+         if not a.player:
+@@ -258,15 +269,16 @@
+                 ctx.owner.setdefault(b, a.player.name)
+             if at == "DE_QUEUE" and ids:
++                # raw capture only -- the discrete-event ledger in
++                # production_timeline does allocation/timing faithfully.
+                 u = _norm(payload.get("unit"))
+                 amt = payload.get("amount", 1) or 1
+-                tt = _tt(u, ctx.civ.get(a.player.name))
+-                # MULTIQUEUE: object_ids is the full set of selected production
+-                # buildings; the game load-balances each unit to the one that
+-                # becomes free soonest. Simulate that so per-building queues are
+-                # realistic (not all dumped on ids[0]).
+-                for _ in range(amt):
+-                    b = min(ids, key=lambda bb: max(building_free[bb], t))
+-                    building_free[b] = max(building_free[b], t) + tt
+-                    ctx.queues[b].append((t, u))
++                ctx.queue_cmds.append((t, a.player.name, u, amt, list(ids)))
++            elif at == "RESEARCH" and ids:
++                # research occupies its building's production queue (age-ups and
++                # unit upgrades BLOCK villager/military production) and its
++                # completion changes train times (upgrades, Conscription).
++                ctx.research_cmds.append((t, a.player.name,
++                                          payload.get("technology"),
++                                          payload.get("technology_id"), ids[0]))
+             continue
+ 
+@@ -491,49 +503,258 @@
+ 
+ 
+-def _apply_unqueues(queue, unqs, civ=None):
+-    """Remove unqueued units from a building's queue. Each Unqueue(t) cancels the
+-    most-recently-queued unit still PENDING (completion > t) at that moment -- players
+-    cancel from the BACK of the queue (the excess they just over-queued), which matches
+-    the gRPC spawns far better than honouring the raw slot index. Removing a unit also
+-    speeds up everything behind it, so completion is recomputed between unqueues."""
+-    if not unqs:
+-        return queue
+-    q = list(queue)
+-    for utime, _slot in sorted(unqs):
+-        if not q:
+-            break
++# --- queue-ledger: research durations (DE game constants, seconds) ------------
++# Only research that occupies a PRODUCTION building's queue matters (it blocks
++# unit production there): TC techs + age-ups, military-building unit upgrades,
++# monastery/castle techs. Techs at non-production buildings are harmless no-ops.
++RESEARCH_TIME = {
++    "Loom": 25, "Feudal Age": 130, "Castle Age": 160, "Imperial Age": 190,
++    "Wheelbarrow": 75, "Hand Cart": 55, "Town Watch": 25, "Town Patrol": 40,
++    # barracks
++    "Man-at-Arms": 40, "Long Swordsman": 45, "Two-Handed Swordsman": 75,
++    "Champion": 100, "Pikeman": 45, "Halberdier": 50,
++    "Eagle Warrior": 50, "Elite Eagle Warrior": 40,
++    "Squires": 40, "Arson": 25, "Supplies": 35, "Gambesons": 25,
++    # archery range
++    "Crossbowman": 35, "Arbalester": 50, "Elite Skirmisher": 50,
++    "Imperial Skirmisher": 65, "Thumb Ring": 45, "Parthian Tactics": 65,
++    "Heavy Cav Archer": 50, "Heavy Cavalry Archer": 50, "Elite Elephant Archer": 80,
++    # stable
++    "Bloodlines": 50, "Husbandry": 35, "Light Cavalry": 45, "Hussar": 50,
++    "Winged Hussar": 75, "Cavalier": 100, "Paladin": 170,
++    "Heavy Camel Rider": 125, "Elite Battle Elephant": 80, "Elite Steppe Lancer": 45,
++    # siege workshop
++    "Capped Ram": 50, "Siege Ram": 75, "Onager": 75, "Siege Onager": 150,
++    "Heavy Scorpion": 75, "Houfnice": 105,
++    # monastery
++    "Redemption": 50, "Atonement": 40, "Herbal Medicine": 35, "Heresy": 60,
++    "Sanctity": 60, "Fervor": 50, "Faith": 60, "Illumination": 65,
++    "Block Printing": 55, "Theocracy": 75, "Devotion": 40,
++    # castle
++    "Conscription": 60, "Sappers": 30, "Hoardings": 75,
++}
++RESEARCH_DEFAULT = 40.0   # unknown techs (new-DLC ids the dataset can't name)
++
++# Unit-line upgrades: DE_QUEUE keeps emitting the BASE token after the upgrade
++# (confirmed in captures: 'archer' commands continue after Crossbowman research,
++# 'skirmisher' after Elite Skirmisher), but the unit actually trained is the
++# upgraded one with ITS train time. tech name -> (queued token, new base seconds).
++UPGRADE_EFFECT = {
++    "Man-at-Arms": ("militia", 21), "Long Swordsman": ("militia", 21),
++    "Two-Handed Swordsman": ("militia", 21), "Champion": ("militia", 21),
++    "Pikeman": ("spearman", 22), "Halberdier": ("spearman", 22),
++    "Crossbowman": ("archer", 27), "Arbalester": ("archer", 27),
++    "Elite Skirmisher": ("skirmisher", 22), "Imperial Skirmisher": ("skirmisher", 22),
++    # Eagle Warrior upgrade does NOT change the castle-age eagle time (gRPC gaps
++    # stay exactly 30.0s for Aztecs through the upgrade); Elite does (DB: 20).
++    "Elite Eagle Warrior": ("eaglescout", 20),
++    "Cavalier": ("knight", 30), "Paladin": ("knight", 30),
++    "Light Cavalry": ("scoutcavalry", 30), "Hussar": ("scoutcavalry", 30),
++    "Onager": ("mangonel", 46), "Siege Onager": ("mangonel", 46),
++    "Capped Ram": ("batteringram", 36), "Siege Ram": ("batteringram", 36),
++    "Heavy Scorpion": ("scorpion", 30),
++}
++
++# Eagle-line units change train time by AGE, not by research (gRPC-calibrated):
++# eagle scout 60s dark/feudal -> 36s castle (Aztec x(1/1.2) => the observed 30.0);
++# Inca champi scout 42.0s dark -> 34.0s feudal+ (exact spawn gaps in capture).
++_AGE_TIME = {
++    "eaglescout": [("dark", 60.0), ("castle", 36.0)],
++    "champiscout": [("dark", 42.0), ("feudal", 34.0)],
++}
++_AGE_ORDER = {"dark": 0, "feudal": 1, "castle": 2, "imperial": 3}
++
++CONSC_FACTOR = 1 / 1.33   # Conscription: units created 33% faster
++# Conscription covers Barracks/Range/Stable/Castle. Trebuchet/hussite wagon are
++# castle-produced (their _TYPE_LINE 'siege' is about FIFO line-claiming, not the
++# building), so include them explicitly.
++_CONSC_TOKENS = {"trebuchet", "hussitewagon", "petard", "flamingcamel"}
++QUEUE_CAP = 15            # DE per-building production queue capacity
++
++
++def _job_duration(token, civ, start, eff):
++    """Train time (sec, tick-quantised) for a unit STARTING at `start`, given the
++    player's effect schedule `eff` = dict(overrides={token: [(t, base)...]},
++    ages=[(t, age)...], consc=t)."""
++    base = TRAIN_TIMES.get(token, 30)
++    if token in _AGE_TIME:
++        age = "dark"
++        for t_a, a in eff.get("ages", ()):
++            if t_a <= start:
++                age = a
++        lvl = _AGE_ORDER.get(age, 0)
++        for a, v in _AGE_TIME[token]:
++            if _AGE_ORDER[a] <= lvl:
++                base = v
++    for t_e, v in eff.get("overrides", {}).get(token, ()):
++        if t_e <= start:
++            base = v
++    line = _line_of(token)
++    if civ in CIV_MIL_SPEED and token != "villager" and line in _SPEED_BONUS_LINES:
++        base *= CIV_MIL_SPEED[civ]
++    if eff.get("consc") is not None and eff["consc"] <= start and (
++            line in ("inf", "arch", "cav", "unique") or token in _CONSC_TOKENS):
++        base *= CONSC_FACTOR
++    return round(base * TICKS_PER_SEC) / TICKS_PER_SEC
++
++
++class _Building:
++    """Serial production queue of one building: unit jobs + research jobs."""
++    __slots__ = ("jobs", "starts", "dones")
++
++    def __init__(self):
++        self.jobs = []     # (kind, token, t_cmd, dur_or_None)
++        self.starts = []
++        self.dones = []
++
++    def _dur(self, job, start, civ, eff):
++        kind, token, _t, dur = job
++        return dur if kind == "research" else _job_duration(token, civ, start, eff)
++
++    def recompute(self, civ, eff):
+         done = 0.0
+-        comp = []
+-        for qt, u in q:
+-            done = max(qt, done) + _tt(u, civ)
+-            comp.append(done)
+-        pend = [i for i, c in enumerate(comp) if c > utime]   # not yet completed
+-        if not pend:
+-            continue
+-        q = q[:pend[-1]] + q[pend[-1] + 1:]                   # cancel the newest pending
+-    return q
++        self.starts, self.dones = [], []
++        for job in self.jobs:
++            start = max(job[2], done)
++            done = start + self._dur(job, start, civ, eff)
++            self.starts.append(start)
++            self.dones.append(done)
++
++    def append(self, kind, token, t_cmd, dur, civ, eff):
++        prev_done = self.dones[-1] if self.dones else 0.0
++        start = max(t_cmd, prev_done)
++        self.jobs.append((kind, token, t_cmd, dur))
++        d = self._dur(self.jobs[-1], start, civ, eff)
++        self.starts.append(start)
++        self.dones.append(start + d)
++
++    def pending_units(self, t):
++        return sum(1 for j, d in zip(self.jobs, self.dones) if j[0] == "unit" and d > t)
++
++    def next_free(self, t):
++        return max(self.dones[-1] if self.dones else 0.0, t)
++
++    def cancel_newest_pending(self, t, civ, eff):
++        """Unqueue: players cancel the BACK of the queue (the over-queued excess)."""
++        for i in range(len(self.jobs) - 1, -1, -1):
++            if self.jobs[i][0] == "unit" and self.dones[i] > t:
++                del self.jobs[i]
++                self.recompute(civ, eff)
++                return True
++        return False
++
++
++def _simulate_player(ctx, player, eff):
++    """One chronological pass of the discrete-event ledger for `player` with the
++    given effect schedule. Returns (completions, research_done, bqueues):
++    completions = [(done_t, building, token)] for unit jobs;
++    research_done = {techkey: completion_t}."""
++    civ = ctx.civ.get(player)
++    events = []   # (t, prio, kind, payload)
++    for t, p, u, amt, ids in ctx.queue_cmds:
++        if p == player:
++            events.append((t, 1, "queue", (u, amt, ids)))
++    seen_tech = {}
++    for t, p, name, tid, b in ctx.research_cmds:
++        if p != player:
++            continue
++        key = tid if tid is not None else name
++        # dedupe re-issues (double-clicks and failed/cancelled re-buys): first wins
++        if key in seen_tech:
++            continue
++        seen_tech[key] = t
++        events.append((t, 0, "research", (name, tid, b)))
++    for b, lst in ctx.unqueues.items():
++        if ctx.owner.get(b) == player:
++            for t, slot in lst:
++                events.append((t, 2, "unqueue", (b, slot)))
++    events.sort(key=lambda e: (e[0], e[1]))
++
++    bld = defaultdict(_Building)
++    research_done = {}
++    completions = []
++    for t, _prio, kind, pl in events:
++        if kind == "research":
++            name, tid, b = pl
++            dur = RESEARCH_TIME.get(name, RESEARCH_DEFAULT)
++            B = bld[b]
++            B.append("research", name, t, float(dur), civ, eff)
++            key = tid if tid is not None else name
++            research_done[key] = (name, B.dones[-1])
++        elif kind == "queue":
++            u, amt, ids = pl
++            for _ in range(amt):
++                cand = [b for b in ids if bld[b].pending_units(t) < QUEUE_CAP]
++                if not cand:
++                    break          # every selected building at queue cap: rejected
++                b = min(cand, key=lambda bb: (bld[bb].pending_units(t),
++                                              bld[bb].next_free(t), bb))
++                bld[b].append("unit", u, t, None, civ, eff)
++        else:
++            b, _slot = pl
++            if b in bld:
++                bld[b].cancel_newest_pending(t, civ, eff)
++
++    cutoff = min(ctx.resign.get(player, float("inf")), ctx.end_t)
++    bq = {}
++    for b, B in bld.items():
++        for job, done in zip(B.jobs, B.dones):
++            if job[0] == "unit" and done <= cutoff:
++                completions.append((done, b, job[1]))
++        bq[b] = [(job[2], job[1]) for job in B.jobs if job[0] == "unit"]
++    return completions, research_done, bq
++
++
++def _effects_from_research(research_done):
++    """Build the effect schedule from simulated research completion times."""
++    eff = {"overrides": defaultdict(list), "ages": [], "consc": None}
++    for key, (name, t_done) in research_done.items():
++        if name == "Feudal Age":
++            eff["ages"].append((t_done, "feudal"))
++        elif name == "Castle Age":
++            eff["ages"].append((t_done, "castle"))
++        elif name == "Imperial Age":
++            eff["ages"].append((t_done, "imperial"))
++        elif name == "Conscription":
++            eff["consc"] = t_done
++        elif name in UPGRADE_EFFECT:
++            tok, newbase = UPGRADE_EFFECT[name]
++            eff["overrides"][tok].append((t_done, newbase))
++    eff["ages"].sort()
++    for v in eff["overrides"].values():
++        v.sort()
++    return eff
+ 
+ 
+ def production_timeline(ctx):
+-    """Stage 3: per-building serial completion (max(queue,prev_done)+train_time).
+-
+-    Returns (full, mil): per-player lists of (completion_time, type), full
+-    including villagers, mil military-only.
++    """Stage 3 (queue-ledger rebuild): faithful discrete-event simulation of every
++    production building. Per-building serial queues from DE_QUEUE (multi-building
++    selections allocated to the least-loaded building, queue cap respected),
++    GATED by research occupying the same queue (age-ups/loom/wheelbarrow stall
++    villager production; unit upgrades stall military buildings), with research-
++    and age-dependent train times (crossbow 27 vs archer 35; elite skirm 22 vs 26;
++    castle-age eagles), Conscription, civ creation-speed bonuses, back-of-queue
++    cancellations, and resign/game-end cutoffs.
++
++    Effect times depend on research completion which depends on queue state, so
++    the sim runs a short fixed-point iteration (2 passes converge in practice).
++
++    Returns (full, mil): per-player lists of (completion_time, type).
+     """
+     full = defaultdict(list)
+     mil = defaultdict(list)
+-    for b, q in ctx.queues.items():
+-        player = ctx.owner.get(b)
+-        civ = ctx.civ.get(player)
+-        cutoff = ctx.resign.get(player, float("inf"))   # stop producing at resign
+-        q = _apply_unqueues(sorted(q), ctx.unqueues.get(b, []), civ)
+-        done = 0.0
+-        for ts, u in q:
+-            done = max(ts, done) + _tt(u, civ)
+-            if done > cutoff:
+-                break       # FIFO: this + every later unit in this building never trains
+-            # carry the building id so units completing on the SAME tick are ordered by
+-            # building (the engine processes buildings in id order within a tick) -- this
+-            # resolves sub-tick ties the completion time alone can't.
++    ctx.queues = defaultdict(list)
++    players = {p for _, p, _, _, _ in ctx.queue_cmds} | {p for _, p, _, _, _ in ctx.research_cmds}
++    for player in players:
++        # pass 1: effects assumed at command time + duration (research starts now)
++        eff = _effects_from_research({
++            (tid if tid is not None else name): (name, t + RESEARCH_TIME.get(name, RESEARCH_DEFAULT))
++            for t, p, name, tid, b in ctx.research_cmds if p == player})
++        comps, rdone, bq = _simulate_player(ctx, player, eff)
++        for _ in range(2):   # fixed-point on research completion times
++            eff = _effects_from_research(rdone)
++            comps, rdone, bq = _simulate_player(ctx, player, eff)
++        for b, q in bq.items():
++            ctx.queues[b] = q
++        for done, b, u in comps:
+             full[player].append((done, b, u))
+             if u != "villager":
+@@ -541,5 +762,6 @@
+     for d in (full, mil):
+         for player in d:
+-            d[player].sort()                       # (completion, building_id) order
++            # tick ties resolved by building id (engine processes buildings in id order)
++            d[player].sort()
+             d[player][:] = [(t, u) for t, _b, u in d[player]]
+     ctx.prod_full, ctx.prod_mil = full, mil

@@ -1,0 +1,1213 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+        sans-serif;
+    background-color: #1a1a2e;
+    color: #eee;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh; /* dvh excludes the mobile address bar so the bottom controls stay on-screen */
+    padding: 10px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: #252538;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+header h1 {
+    font-size: 1.2rem;
+    color: #ffd700;
+}
+
+#match-info {
+    color: #888;
+    font-size: 0.85rem;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.upload-btn {
+    background-color: #4a90d9;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background-color 0.2s;
+}
+
+.upload-btn:hover {
+    background-color: #357abd;
+}
+
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* Map Container - Takes all available space */
+.map-container {
+    position: relative;
+    background-color: #0d1b0d;
+    border: 2px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+}
+
+#map-canvas {
+    cursor: grab;
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none; /* let JS handle finger pan/pinch instead of the browser scrolling */
+}
+
+#map-canvas:active {
+    cursor: grabbing;
+}
+
+.zoom-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.zoom-controls button {
+    width: 30px;
+    height: 30px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border: none;
+    background: #444;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.zoom-controls button:hover {
+    background: #666;
+}
+
+#zoom-level {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #aaa;
+}
+
+/* Controls Panel - Fixed at bottom */
+.controls-panel {
+    background: #252538;
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin-top: 10px;
+    flex-shrink: 0;
+}
+
+.playback-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.playback-controls button {
+    padding: 6px 14px;
+    font-size: 0.9rem;
+    border: none;
+    background: #444;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.playback-controls button:hover {
+    background: #666;
+}
+
+#btn-play {
+    background: #4a9f4a;
+    min-width: 70px;
+}
+
+#btn-play:hover {
+    background: #5cb85c;
+}
+
+#btn-play.playing {
+    background: #c9302c;
+}
+
+#btn-play.playing:hover {
+    background: #d9534f;
+}
+
+.time-display {
+    margin-left: 15px;
+    font-family: monospace;
+    font-size: 1rem;
+    color: #ffd700;
+}
+
+.speed-controls {
+    margin-left: auto;
+    display: flex;
+    gap: 5px;
+}
+
+.speed-btn {
+    padding: 5px 10px !important;
+    font-size: 0.8rem !important;
+    background: #333 !important;
+}
+
+.speed-btn.active {
+    background: #4a9f4a !important;
+}
+
+.timeline-container {
+    width: 100%;
+}
+
+#timeline {
+    width: 100%;
+    height: 8px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #333;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+}
+
+#timeline::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #ffd700;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+#timeline::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #ffd700;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+/* Info Panel - Overlay on map */
+.info-panel {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 10;
+    max-width: 250px;
+}
+
+.player-legend {
+    background: rgba(37, 37, 56, 0.9);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.player-legend h3 {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+.player-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 0.8rem;
+}
+
+.player-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.player-item label {
+    cursor: pointer;
+    flex: 1;
+}
+
+.player-item input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.team-divider {
+    height: 1px;
+    background: #555;
+    margin: 8px 0;
+}
+
+.team-label {
+    font-size: 0.75rem;
+    color: #888;
+    font-weight: 600;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Player Tracker - Production rates panel */
+.player-tracker-container {
+    background: rgba(37, 37, 56, 0.9);
+    border-radius: 8px;
+    padding: 12px;
+    max-height: 350px;
+    display: flex;
+    flex-direction: column;
+}
+
+.player-tracker-container h3 {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+.player-tracker {
+    flex: 1;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.75rem;
+}
+
+.tracker-header {
+    display: grid;
+    grid-template-columns: 1fr 70px 70px;
+    gap: 8px;
+    padding: 4px 8px;
+    border-bottom: 1px solid #555;
+    color: #888;
+    font-size: 0.7rem;
+}
+
+.tracker-row {
+    display: grid;
+    grid-template-columns: 1fr 70px 70px;
+    gap: 8px;
+    padding: 4px 8px;
+    border-bottom: 1px solid #333;
+}
+
+.tracker-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tracker-player {
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tracker-rate {
+    text-align: right;
+}
+
+.rate-top {
+    color: #4ade80;
+}
+
+.rate-top-1 {
+    color: #22c55e;
+    font-weight: bold;
+}
+
+.rate-bottom {
+    color: #f87171;
+}
+
+.rate-bottom-1 {
+    color: #ef4444;
+    font-weight: bold;
+}
+
+/* Technology Tracker Panel - Right side */
+.tech-panel {
+    position: absolute;
+    top: 10px;
+    right: 50px;
+    background: rgba(37, 37, 56, 0.9);
+    border-radius: 8px;
+    padding: 12px;
+    z-index: 10;
+}
+
+.tech-panel h3 {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+.tech-tracker {
+    display: flex;
+    gap: 16px;
+    font-size: 0.75rem;
+}
+
+.tech-team-section {
+    min-width: 200px;
+}
+
+.tech-team-label {
+    font-size: 0.7rem;
+    color: #888;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #444;
+}
+
+.tech-player-row {
+    margin-bottom: 8px;
+}
+
+.tech-player-name {
+    font-weight: 600;
+    font-size: 0.75rem;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tech-player-age {
+    font-size: 0.65rem;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #aaa;
+}
+
+.tech-player-age.feudal {
+    background: rgba(76, 175, 80, 0.2);
+    color: #81c784;
+}
+
+.tech-player-age.castle {
+    background: rgba(33, 150, 243, 0.2);
+    color: #64b5f6;
+}
+
+.tech-player-age.imperial {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffd54f;
+}
+
+.tech-list {
+    font-size: 0.7rem;
+    color: #aaa;
+    padding-left: 4px;
+    min-height: 75px; /* Space for 5 tech items */
+}
+
+.tech-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 1px 0;
+    line-height: 1.3;
+}
+
+.tech-name {
+    color: #ccc;
+}
+
+.tech-time {
+    color: #888;
+    font-family: monospace;
+}
+
+/* Player age badge in legend */
+.player-age-badge {
+    font-size: 0.6rem;
+    padding: 1px 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #888;
+    margin-left: 4px;
+}
+
+.player-age-badge.dark {
+    background: rgba(100, 100, 100, 0.2);
+    color: #888;
+}
+
+.player-age-badge.feudal {
+    background: rgba(76, 175, 80, 0.2);
+    color: #81c784;
+}
+
+.player-age-badge.castle {
+    background: rgba(33, 150, 243, 0.2);
+    color: #64b5f6;
+}
+
+.player-age-badge.imperial {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffd54f;
+}
+
+/* Story Captions */
+.captions-container {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    z-index: 100;
+    pointer-events: none;
+    max-width: 80%;
+}
+
+.caption {
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    animation: captionFadeIn 0.3s ease-out;
+    max-width: 600px;
+}
+
+.caption.fading {
+    animation: captionFadeOut 0.5s ease-out forwards;
+}
+
+.caption .player-name {
+    font-weight: 600;
+}
+
+@keyframes captionFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes captionFadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+/* Loading overlay (old) */
+.loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    color: #ffd700;
+    z-index: 1000;
+}
+
+/* Browse Matches Button */
+.browse-btn {
+    background-color: #4a90d9;
+    color: white;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background-color 0.2s;
+}
+
+.browse-btn:hover {
+    background-color: #357abd;
+}
+
+.browse-btn:disabled {
+    background-color: #3a4150;
+    color: #8089a0;
+    cursor: not-allowed;
+}
+
+/* Share-clip modal */
+.clip-panel {
+    max-width: 720px;
+}
+
+.clip-hint {
+    color: #aab2c5;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin: 0 0 14px;
+}
+
+.clip-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.clip-controls label {
+    color: #d4d9e6;
+    font-size: 0.9rem;
+}
+
+.clip-controls select {
+    background: #1c1c2b;
+    color: #fff;
+    border: 1px solid #3a4150;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 0.9rem;
+    min-width: 160px;
+}
+
+.clip-status {
+    color: #ffd166;
+    font-size: 0.9rem;
+    padding: 10px 0;
+}
+
+.clip-status.hidden,
+.clip-result.hidden {
+    display: none;
+}
+
+.clip-result video {
+    width: 100%;
+    border-radius: 8px;
+    background: #000;
+    display: block;
+    margin-bottom: 14px;
+}
+
+.clip-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.clip-links label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: #aab2c5;
+    font-size: 0.8rem;
+}
+
+.clip-copy-row {
+    display: flex;
+    gap: 8px;
+}
+
+.clip-copy-row input {
+    flex: 1;
+    background: #1c1c2b;
+    color: #fff;
+    border: 1px solid #3a4150;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-overlay.hidden {
+    display: none;
+}
+
+/* Modal Panel */
+.modal-panel {
+    background: #252538;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #333;
+}
+
+.panel-header h2 {
+    font-size: 1.1rem;
+    color: #ffd700;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    color: #fff;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    color: #4a90d9;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.back-btn:hover {
+    color: #6ab0f3;
+}
+
+.panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+}
+
+.panel-footer {
+    padding: 16px 20px;
+    border-top: 1px solid #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Match List */
+.match-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.match-item {
+    background: #1a1a2e;
+    border-radius: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition:
+        background 0.2s,
+        transform 0.1s;
+    border: 1px solid transparent;
+}
+
+.match-item:hover {
+    background: #2a2a4e;
+    border-color: #4a90d9;
+}
+
+.match-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.match-map {
+    font-weight: 600;
+    color: #fff;
+}
+
+.match-date {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.match-item-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.match-teams {
+    display: flex;
+    gap: 12px;
+    font-size: 0.85rem;
+}
+
+.match-team {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.match-team.winner {
+    color: #4a9f4a;
+}
+
+.match-team.loser {
+    color: #888;
+}
+
+.match-vs {
+    color: #555;
+    font-size: 0.75rem;
+}
+
+.match-duration {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.match-id {
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #9ab;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 1px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: all;
+}
+
+.match-id:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #cde;
+}
+
+.match-result-indicator {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.match-result-indicator.win {
+    background: rgba(74, 159, 74, 0.2);
+    color: #4a9f4a;
+}
+
+.match-result-indicator.loss {
+    background: rgba(201, 48, 44, 0.2);
+    color: #c9302c;
+}
+
+/* Match Detail Panel */
+.match-detail-panel {
+    max-width: 700px;
+}
+
+.match-detail-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.match-detail-header h3 {
+    font-size: 1.2rem;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.match-detail-header .match-meta {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.match-teams-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.team-section {
+    background: #1a1a2e;
+    border-radius: 8px;
+    padding: 12px 16px;
+}
+
+.team-header {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #333;
+}
+
+.team-header.winner {
+    color: #4a9f4a;
+}
+
+.player-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 0;
+}
+
+.player-civ-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    background: #333;
+    object-fit: cover;
+}
+
+.player-info {
+    flex: 1;
+}
+
+.player-name {
+    font-weight: 500;
+    color: #fff;
+}
+
+.player-name.target {
+    color: #ffd700;
+}
+
+.player-civ {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.player-rating {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+/* Primary Button */
+.primary-btn {
+    background: #4a9f4a;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.primary-btn:hover {
+    background: #5cb85c;
+}
+
+.primary-btn:disabled {
+    background: #333;
+    color: #666;
+    cursor: not-allowed;
+}
+
+/* Player Search (find-a-player step) */
+.player-search-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.player-search-bar input[type="text"] {
+    flex: 1;
+    background: #1a1a2e;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: #fff;
+    font-size: 0.95rem;
+}
+
+.player-search-bar input[type="text"]:focus {
+    outline: none;
+    border-color: #4a90d9;
+}
+
+.player-search-hint {
+    color: #888;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 24px 12px;
+}
+
+.player-results {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.player-result {
+    background: #1a1a2e;
+    border-radius: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition:
+        background 0.2s,
+        transform 0.1s;
+    border: 1px solid transparent;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.player-result:hover {
+    background: #2a2a4e;
+    border-color: #4a90d9;
+}
+
+.player-result-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.player-result-clan {
+    color: #888;
+    font-size: 0.85rem;
+}
+
+.player-result-name {
+    font-weight: 600;
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.player-result-verified {
+    color: #4a9f4a;
+    font-size: 0.85rem;
+}
+
+.player-result-country {
+    color: #888;
+    font-size: 0.75rem;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+.player-result-meta {
+    color: #888;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.selected-player-header {
+    margin-bottom: 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.selected-player-label {
+    color: #888;
+    font-size: 0.85rem;
+}
+
+.selected-player-name {
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+#back-to-player-search {
+    margin-bottom: 12px;
+}
+
+/* Upload Fallback */
+.upload-fallback {
+    font-size: 0.85rem;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.upload-fallback input[type="file"] {
+    color: #888;
+    font-size: 0.85rem;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    color: #888;
+}
+
+.loading-spinner.large {
+    font-size: 1.2rem;
+}
+
+.loading-spinner::before {
+    content: "";
+    width: 24px;
+    height: 24px;
+    border: 3px solid #333;
+    border-top-color: #ffd700;
+    border-radius: 50%;
+    margin-right: 12px;
+    animation: spin 0.8s linear infinite;
+}
+
+.loading-spinner.large::before {
+    width: 40px;
+    height: 40px;
+    border-width: 4px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-panel {
+    text-align: center;
+    color: #ffd700;
+}
+
+.loading-panel p {
+    margin-top: 16px;
+    font-size: 1rem;
+}
+
+/* Hidden utility class */
+.hidden {
+    display: none !important;
+}
+
+/* ---- Mobile / narrow screens ---- */
+/* The playback row (transport buttons + time + speed buttons) is a no-wrap
+   flexbox; on a phone it overflows off the right edge, hiding Play and the
+   speed buttons. Let it wrap and center so every control stays on-screen. */
+@media (max-width: 768px) {
+    /* Let the page scroll on phones instead of clipping the bottom controls. */
+    html,
+    body {
+        overflow: auto;
+    }
+
+    .container {
+        height: auto;
+        min-height: 100dvh;
+    }
+
+    /* Give the map a fixed share of the screen so the controls flow below it
+       and are always reachable by scrolling. */
+    .map-container {
+        flex: none;
+        height: 60vh;
+    }
+
+    .controls-panel {
+        padding: 10px;
+    }
+
+    .playback-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .time-display {
+        margin-left: 0;
+        width: 100%;
+        text-align: center;
+        order: -1; /* show the clock above the buttons */
+    }
+
+    .speed-controls {
+        margin-left: 0; /* don't push speed buttons off the right edge */
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .playback-controls button {
+        padding: 8px 12px; /* a bit larger tap targets */
+    }
+}

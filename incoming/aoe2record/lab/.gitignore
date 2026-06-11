@@ -1,0 +1,20 @@
+# --- huge binary captures / dumps (GB-scale; GitHub rejects files >100MB) ---
+*.bin
+captures/
+*.aoe2record
+
+# --- private keys & certs (gRPC client credentials — never publish) ---
+*.key
+*.pem
+
+# --- python cache ---
+__pycache__/
+*.pyc
+
+# --- per-run outputs & logs (regenerable) ---
+*.jsonl
+*.log
+*.pkl
+
+# Note: small derived .json artifacts (labels*.json, ground_truth.json, etc.)
+# are intentionally tracked. To force-add an ignored file: git add -f <file>

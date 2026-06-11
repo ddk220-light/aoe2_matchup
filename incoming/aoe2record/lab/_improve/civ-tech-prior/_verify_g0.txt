@@ -1,0 +1,20 @@
+[score_game] UC_DIR=C:\dev\aoe2\aoe2grpc\_improve\civ-tech-prior -> unit_classifier from C:\dev\aoe2\aoe2grpc\_improve\civ-tech-prior\unit_classifier.py
+replay=fresh_newpatch.aoe2record  end=42.6min  (scoring spawn<37.6min)
+truth nameable mil/vil units in-window: 355; with a classifier prediction (id-linked): 332 (94% coverage)
+
+-- OVERALL vil+mil: 89.2% (296/332) --
+
+-- MILITARY only: 81.7% (107/131) --
+   archer         40/45  {'skirmisher': 4, 'knight': 1}
+   skirmisher     38/43  {'archer': 1, 'champiscout': 1, 'spearman': 3}
+   slinger        5/10  {'skirmisher': 4, 'spearman': 1}
+   hussitewagon   8/8  
+   champiscout    4/7  {'skirmisher': 2, 'villager': 1}
+   spearman       3/7  {'skirmisher': 3, 'villager': 1}
+   knight         3/5  {'archer': 2}
+   militia        3/3  
+   monk           1/1  
+   trebuchet      1/1  
+   scoutcavalry   1/1  
+
+SCORES coverage=93.5 overall=89.2 military=81.7

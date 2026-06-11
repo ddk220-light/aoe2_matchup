@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>AoE2 Replay Visualizer</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>AoE2 Replay Visualizer</h1>
+                <div class="header-controls">
+                    <span id="match-info">Loading...</span>
+                    <button class="browse-btn" id="browse-matches-btn">
+                        Find Player
+                    </button>
+                    <button
+                        class="browse-btn"
+                        id="save-record-btn"
+                        title="Save this processed replay as a .aoe2ddkrecord file you can reload later"
+                    >
+                        Save
+                    </button>
+                    <button
+                        class="browse-btn"
+                        id="share-clip-btn"
+                        title="Generate a short shareable WebM highlight clip of this match"
+                        disabled
+                    >
+                        Share Clip
+                    </button>
+                </div>
+            </header>
+
+            <main>
+                <div class="map-container" id="map-container">
+                    <canvas id="map-canvas"></canvas>
+                    <div class="zoom-controls">
+                        <button id="zoom-in" title="Zoom In">+</button>
+                        <span id="zoom-level">1x</span>
+                        <button id="zoom-out" title="Zoom Out">-</button>
+                    </div>
+                    <div class="info-panel hidden">
+                        <div class="player-legend" id="player-legend">
+                            <!-- Player colors populated by JS -->
+                        </div>
+                        <div class="player-tracker-container">
+                            <h3>Production Rates (per min)</h3>
+                            <div class="player-tracker" id="player-tracker">
+                                <!-- Player rates populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tech-panel hidden" id="tech-panel">
+                        <h3>Recent Technologies</h3>
+                        <div class="tech-tracker" id="tech-tracker">
+                            <!-- Technology research populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Story Captions Overlay -->
+                <div class="captions-container" id="captions-container">
+                    <!-- Captions populated by storyteller.js -->
+                </div>
+
+                <div class="controls-panel">
+                    <div class="playback-controls">
+                        <button id="btn-start" title="Go to Start">
+                            |&lt;
+                        </button>
+                        <button id="btn-step-back" title="Step Back">
+                            &lt;
+                        </button>
+                        <button id="btn-play" title="Play/Pause">Play</button>
+                        <button id="btn-step-forward" title="Step Forward">
+                            &gt;
+                        </button>
+                        <button id="btn-end" title="Go to End">&gt;|</button>
+                        <span class="time-display">
+                            <span id="current-time">0:00</span> /
+                            <span id="total-time">0:00</span>
+                        </span>
+                        <div class="speed-controls">
+                            <button class="speed-btn" data-speed="1">1x</button>
+                            <button class="speed-btn" data-speed="2">2x</button>
+                            <button class="speed-btn" data-speed="4">4x</button>
+                            <button class="speed-btn" data-speed="8">8x</button>
+                            <button class="speed-btn" data-speed="12">
+                                12x
+                            </button>
+                            <button class="speed-btn" data-speed="16">
+                                16x
+                            </button>
+                        </div>
+                    </div>
+                    <div class="timeline-container">
+                        <input
+                            type="range"
+                            id="timeline"
+                            min="0"
+                            max="100"
+                            value="0"
+                            step="0.1"
+                        />
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Match List Panel Overlay -->
+        <div id="match-list-overlay" class="modal-overlay hidden">
+            <div class="modal-panel match-list-panel">
+                <div class="panel-header">
+                    <h2 id="match-list-title">Find a Player</h2>
+                    <button class="close-btn" id="close-match-list">
+                        &times;
+                    </button>
+                </div>
+                <div class="panel-content">
+                    <!-- Step 1: search for a player by name -->
+                    <div id="player-search-step">
+                        <form id="player-search-form" class="player-search-bar">
+                            <input
+                                type="text"
+                                id="player-search-input"
+                                placeholder="Enter a player name…"
+                                autocomplete="off"
+                                spellcheck="false"
+                            />
+                            <button
+                                type="submit"
+                                class="primary-btn"
+                                id="player-search-btn"
+                            >
+                                Search
+                            </button>
+                        </form>
+                        <div
+                            id="player-search-loading"
+                            class="loading-spinner hidden"
+                        >
+                            Searching players…
+                        </div>
+                        <div id="player-results" class="player-results">
+                            <div class="player-search-hint">
+                                Type a player name and hit Search to find their
+                                profile.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: that player's recent games -->
+                    <div id="player-matches-step" class="hidden">
+                        <button class="back-btn" id="back-to-player-search">
+                            &larr; Back to search
+                        </button>
+                        <div
+                            id="selected-player-header"
+                            class="selected-player-header"
+                        ></div>
+                        <div
+                            id="match-list-loading"
+                            class="loading-spinner hidden"
+                        >
+                            Loading matches…
+                        </div>
+                        <div id="match-list" class="match-list">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <label class="upload-fallback">
+                        Or load a replay / saved game file directly:
+                        <input
+                            type="file"
+                            id="file-input"
+                            accept=".aoe2record,.aoe2ddkrecord,.json"
+                        />
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Match Detail Panel Overlay -->
+        <div id="match-detail-overlay" class="modal-overlay hidden">
+            <div class="modal-panel match-detail-panel">
+                <div class="panel-header">
+                    <button class="back-btn" id="back-to-list">
+                        &larr; Back
+                    </button>
+                    <h2>Match Details</h2>
+                    <button class="close-btn" id="close-match-detail">
+                        &times;
+                    </button>
+                </div>
+                <div class="panel-content" id="match-detail-content">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="panel-footer">
+                    <button class="primary-btn" id="load-match-btn">
+                        Load Replay
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Share Clip Panel Overlay -->
+        <div id="clip-overlay" class="modal-overlay hidden">
+            <div class="modal-panel clip-panel">
+                <div class="panel-header">
+                    <h2>Share Highlight Clip</h2>
+                    <button class="close-btn" id="close-clip">&times;</button>
+                </div>
+                <div class="panel-content" id="clip-content">
+                    <p class="clip-hint">
+                        Generates a short (≤30s, 8× speed) WebM that auto-clips
+                        to the biggest engagements — perfect for Discord or the
+                        web. A timeline at the bottom shows what was skipped.
+                    </p>
+                    <div class="clip-controls">
+                        <label for="clip-player-select">Focus player:</label>
+                        <select id="clip-player-select"></select>
+                        <button class="primary-btn" id="clip-generate-btn">
+                            Generate Clip
+                        </button>
+                    </div>
+                    <div id="clip-status" class="clip-status hidden"></div>
+                    <div id="clip-result" class="clip-result hidden">
+                        <video
+                            id="clip-video"
+                            controls
+                            autoplay
+                            loop
+                            muted
+                            playsinline
+                        ></video>
+                        <div class="clip-links">
+                            <label>
+                                Clip URL
+                                <span class="clip-copy-row">
+                                    <input
+                                        type="text"
+                                        id="clip-url-input"
+                                        readonly
+                                    />
+                                    <button
+                                        class="browse-btn"
+                                        id="copy-clip-url"
+                                    >
+                                        Copy
+                                    </button>
+                                </span>
+                            </label>
+                            <label>
+                                Watch in UI
+                                <span class="clip-copy-row">
+                                    <input
+                                        type="text"
+                                        id="clip-view-input"
+                                        readonly
+                                    />
+                                    <button
+                                        class="browse-btn"
+                                        id="copy-clip-view"
+                                    >
+                                        Copy
+                                    </button>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="modal-overlay hidden">
+            <div class="loading-panel">
+                <div class="loading-spinner large"></div>
+                <p id="loading-message">Loading replay...</p>
+            </div>
+        </div>
+
+        <script src="renderer.js"></script>
+        <script src="playback.js"></script>
+        <script src="storyteller.js"></script>
+        <script src="app.js"></script>
+    </body>
+</html>

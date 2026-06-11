@@ -1,0 +1,79 @@
+=== produced vs ASSIGNED military type multisets (quota violations flagged) ===
+-- ddk220
+     eaglescout         prod=82   assigned=67  
+     jaguarwarrior      prod=9    assigned=1   
+     mangonel           prod=7    assigned=4   
+     militia            prod=5    assigned=4   
+     monk               prod=12   assigned=10  
+     scorpion           prod=2    assigned=0   
+     spearman           prod=4    assigned=1   
+     trebuchet          prod=3    assigned=1   
+-- wR.Baxter
+     archer             prod=1    assigned=0   
+     compositebowman    prod=8    assigned=16    <-- OVER-QUOTA
+     militia            prod=41   assigned=25  
+     scoutcavalry       prod=9    assigned=9   
+     skirmisher         prod=5    assigned=7     <-- OVER-QUOTA
+     trebuchet          prod=3    assigned=6     <-- OVER-QUOTA
+
+=== ERROR EVIDENCE (military errors + villager->mil flips) ===
+id=  3907 truth=Mule Cart          pred=villager         src=sq_base       fs=1573 hist=[('sq_base', 'villager')]
+        behav={'moves': 5, 'gathers': 1} iso_slot=militia@1469s iso=440 lag=104 
+id=  4204 truth=Mule Cart          pred=villager         src=sq_base       fs=1480 hist=[('sq_base', 'villager')]
+        behav={'gathers': 2, 'moves': 1} iso_slot=militia@1469s iso=440 lag=11 
+id=  4597 truth=Eagle Scout        pred=villager         src=sq_base       fs=1591 hist=[('sq_base', 'villager')]
+        behav={'moves': 3} iso_slot=monk@1570s iso=41 lag=21 
+id=  4598 truth=Eagle Scout        pred=villager         src=sq_base       fs=1591 hist=[('sq_base', 'villager')]
+        behav={'moves': 3} iso_slot=monk@1570s iso=41 lag=21 
+id=  4617 truth=Monk               pred=villager         src=sq_hetero     fs=1626 hist=[('sq_hetero', 'villager')]
+        behav={'moves': 59, 'bld_order': 1} iso_slot=monk@1621s iso=92 lag=5 squad#0(n=148) milvotes={'eaglescout': 9, 'militia': 8, 'scoutcavalry': 8, 'compositebowman': 8}
+id=  4850 truth=Mule Cart          pred=villager         src=sq_base       fs=1833 hist=[('sq_base', 'villager')]
+        behav={'gathers': 3, 'moves': 6} iso_slot=militia@1585s iso=324 lag=248 squad#4(n=15) milvotes={}
+id=  4859 truth=Lumberjack         pred=trebuchet        src=rescue_raider fs=2380 hist=[('sq_hetero', 'scoutcavalry'), ('rescue_raider', 'trebuchet')]
+        behav={'bld_order': 4, 'attacks_building': 1, 'moves': 4} iso_slot=trebuchet@2364s iso=88 lag=16 squad#0(n=148) milvotes={'eaglescout': 9, 'militia': 8, 'scoutcavalry': 8, 'compositebowman': 8}
+id=  5117 truth=Scorpion           pred=eaglescout       src=iso           fs=1873 hist=[('sq_hetero', 'villager'), ('dp_line', 'scorpion'), ('iso', 'eaglescout')]
+        behav={'moves': 12, 'attacks_building': 1} iso_slot=eaglescout@1871s iso=20 lag=2 squad#0(n=148) milvotes={'eaglescout': 9, 'militia': 8, 'scoutcavalry': 8, 'compositebowman': 8}
+id=  5180 truth=Villager           pred=compositebowman  src=sq_hetero     fs=2013 hist=[('sq_hetero', 'compositebowman')]
+        behav={'gathers': 1, 'bld_order': 5, 'attacks_building': 1, 'moves': 4} iso_slot=compositebowman@2006s iso=2 lag=7 squad#0(n=148) milvotes={'eaglescout': 9, 'militia': 8, 'scoutcavalry': 8, 'compositebowman': 8}
+id=  5318 truth=Scout Cavalry      pred=compositebowman  src=dp_line       fs=1973 hist=[('sq_hardmil', 'militia'), ('dp_line', 'compositebowman')]
+        behav={'moves': 52, 'attacks_building': 25, 'hard_mil': 1} iso_slot=scoutcavalry@1974s iso=4 lag=-1 squad#0(n=148) milvotes={'eaglescout': 9, 'militia': 8, 'scoutcavalry': 8, 'compositebowman': 8}
+id=  5340 truth=Scorpion           pred=eaglescout       src=sq_base       fs=2131 hist=[('sq_base', 'eaglescout')]
+        behav={'gathers': 1, 'moves': 3} iso_slot=eaglescout@2055s iso=61 lag=76 squad#7(n=16) milvotes={'eaglescout': 16}
+id=  5679 truth=Militia            pred=scoutcavalry     src=dp_line       fs=1996 hist=[('sq_hardmil', 'militia'), ('dp_line', 'scoutcavalry')]
+        behav={'moves': 12, 'attacks_building': 11, 'gathers': 1, 'hard_mil': 1} iso_slot=compositebowman@1994s iso=10 lag=2 squad#0(n=148) milvotes={'eaglescout': 9, 'militia': 8, 'scoutcavalry': 8, 'compositebowman': 8}
+id=  5680 truth=Militia            pred=compositebowman  src=dp_line       fs=1994 hist=[('sq_hardmil', 'militia'), ('dp_line', 'compositebowman')]
+        behav={'moves': 14, 'attacks_building': 11, 'gathers': 1, 'hard_mil': 1} iso_slot=compositebowman@1994s iso=10 lag=-0 squad#0(n=148) milvotes={'eaglescout': 9, 'militia': 8, 'scoutcavalry': 8, 'compositebowman': 8}
+id=  5682 truth=Militia            pred=compositebowman  src=dp_line       fs=1994 hist=[('sq_hardmil', 'scoutcavalry'), ('dp_line', 'compositebowman')]
+        behav={'moves': 14, 'attacks_building': 11, 'gathers': 1, 'hard_mil': 1} iso_slot=compositebowman@1994s iso=10 lag=-0 squad#0(n=148) milvotes={'eaglescout': 9, 'militia': 8, 'scoutcavalry': 8, 'compositebowman': 8}
+id=  5751 truth=Militia            pred=scoutcavalry     src=dp_line       fs=2036 hist=[('sq_hardmil', 'scoutcavalry'), ('dp_line', 'scoutcavalry')]
+        behav={'attacks_building': 11, 'moves': 9, 'gathers': 1, 'hard_mil': 1} iso_slot=scoutcavalry@2034s iso=28 lag=2 squad#0(n=148) milvotes={'eaglescout': 9, 'militia': 8, 'scoutcavalry': 8, 'compositebowman': 8}
+id=  5785 truth=Mangonel           pred=eaglescout       src=iso           fs=2015 hist=[('sq_base', 'mangonel'), ('dp_line', 'scorpion'), ('iso', 'eaglescout')]
+        behav={'moves': 2} iso_slot=eaglescout@2012s iso=18 lag=3 
+id=  5801 truth=Scout Cavalry      pred=compositebowman  src=dp_line       fs=2014 hist=[('sq_hardmil', 'militia'), ('dp_line', 'compositebowman')]
+        behav={'attacks_building': 20, 'moves': 33, 'hard_mil': 1} iso_slot=compositebowman@2006s iso=2 lag=8 squad#0(n=148) milvotes={'eaglescout': 9, 'militia': 8, 'scoutcavalry': 8, 'compositebowman': 8}
+id=  5832 truth=Eagle Scout        pred=villager         src=sq_base       fs=2015 hist=[('sq_base', 'villager')]
+        behav={'moves': 2} iso_slot=eaglescout@2012s iso=18 lag=3 
+id=  5985 truth=Villager           pred=militia          src=dp_line       fs=2224 hist=[('sq_base', 'villager'), ('dp_line', 'militia')]
+        behav={} iso_slot=militia@2227s iso=37 lag=-3 
+id=  6043 truth=Villager           pred=eaglescout       src=sq_base       fs=2131 hist=[('sq_base', 'eaglescout')]
+        behav={'gathers': 2} iso_slot=eaglescout@2055s iso=61 lag=76 squad#7(n=16) milvotes={'eaglescout': 16}
+id=  6199 truth=Villager           pred=eaglescout       src=sq_base       fs=2163 hist=[('sq_base', 'eaglescout')]
+        behav={'moves': 1, 'gathers': 3, 'attacks_building': 2} iso_slot=eaglescout@2158s iso=29 lag=5 squad#7(n=16) milvotes={'eaglescout': 16}
+id=  6435 truth=Trebuchet          pred=jaguarwarrior    src=iso           fs=2228 hist=[('sq_base', 'villager'), ('dp_line', 'eaglescout'), ('iso', 'jaguarwarrior')]
+        behav={'moves': 12, 'attacks_building': 10, 'gathers': 4} iso_slot=jaguarwarrior@2224s iso=18 lag=4 squad#9(n=3) milvotes={'jaguarwarrior': 1, 'trebuchet': 1, 'eaglescout': 1}
+id=  6444 truth=Militia            pred=compositebowman  src=dp_line       fs=2281 hist=[('sq_hetero', 'villager'), ('dp_line', 'compositebowman')]
+        behav={'moves': 36, 'attacks_building': 6, 'gathers': 1} iso_slot=compositebowman@2276s iso=49 lag=6 squad#0(n=148) milvotes={'eaglescout': 9, 'militia': 8, 'scoutcavalry': 8, 'compositebowman': 8}
+id=  6445 truth=Militia            pred=compositebowman  src=dp_line       fs=2281 hist=[('sq_hetero', 'villager'), ('dp_line', 'compositebowman')]
+        behav={'moves': 29, 'attacks_building': 6} iso_slot=compositebowman@2276s iso=49 lag=6 squad#0(n=148) milvotes={'eaglescout': 9, 'militia': 8, 'scoutcavalry': 8, 'compositebowman': 8}
+id=  6446 truth=Militia            pred=compositebowman  src=rescue_raider fs=2281 hist=[('sq_hetero', 'villager'), ('rescue_raider', 'compositebowman')]
+        behav={'moves': 29, 'attacks_building': 6} iso_slot=compositebowman@2276s iso=49 lag=6 squad#0(n=148) milvotes={'eaglescout': 9, 'militia': 8, 'scoutcavalry': 8, 'compositebowman': 8}
+id=  6492 truth=Militia            pred=compositebowman  src=rescue_raider fs=2281 hist=[('sq_hetero', 'villager'), ('rescue_raider', 'compositebowman')]
+        behav={'moves': 36, 'attacks_building': 7, 'gathers': 1} iso_slot=compositebowman@2276s iso=49 lag=6 squad#0(n=148) milvotes={'eaglescout': 9, 'militia': 8, 'scoutcavalry': 8, 'compositebowman': 8}
+id=  6641 truth=Villager           pred=trebuchet        src=rescue_raider fs=2383 hist=[('sq_hetero', 'villager'), ('rescue_raider', 'trebuchet')]
+        behav={'bld_order': 5, 'attacks_building': 1, 'moves': 2} iso_slot=trebuchet@2364s iso=88 lag=20 squad#0(n=148) milvotes={'eaglescout': 9, 'militia': 8, 'scoutcavalry': 8, 'compositebowman': 8}
+id=  6661 truth=Monk               pred=eaglescout       src=dp_line       fs=2413 hist=[('sq_hetero', 'villager'), ('dp_line', 'eaglescout')]
+        behav={'moves': 2} iso_slot=eaglescout@2413s iso=16 lag=-0 squad#0(n=148) milvotes={'eaglescout': 9, 'militia': 8, 'scoutcavalry': 8, 'compositebowman': 8}
+id=  6679 truth=Jaguar Warrior     pred=eaglescout       src=smooth        fs=2348 hist=[('sq_base', 'villager'), ('dp_line', 'monk'), ('smooth', 'eaglescout')]
+        behav={'moves': 2, 'attacks_building': 5} iso_slot=eaglescout@2351s iso=1 lag=-3 squad#10(n=6) milvotes={'eaglescout': 6}
+id=  6683 truth=Villager           pred=trebuchet        src=rescue_raider fs=2383 hist=[('sq_hetero', 'militia'), ('rescue_raider', 'trebuchet')]
+        behav={'bld_order': 5, 'attacks_building': 1, 'moves': 2} iso_slot=trebuchet@2364s iso=88 lag=20 squad#0(n=148) milvotes={'eaglescout': 9, 'militia': 8, 'scoutcavalry': 8, 'compositebowman': 8}

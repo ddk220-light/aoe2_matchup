@@ -1,0 +1,91 @@
+=== produced vs ASSIGNED military type multisets (quota violations flagged) ===
+-- ddk220
+     archer             prod=10   assigned=3   
+     champiscout        prod=7    assigned=4   
+     skirmisher         prod=114  assigned=117   <-- OVER-QUOTA
+     slinger            prod=42   assigned=6   
+     spearman           prod=20   assigned=16  
+     villager           prod=0    assigned=3     <-- OVER-QUOTA
+-- munq
+     archer             prod=58   assigned=59    <-- OVER-QUOTA
+     hussitewagon       prod=21   assigned=15  
+     knight             prod=6    assigned=4   
+     militia            prod=3    assigned=4     <-- OVER-QUOTA
+     monk               prod=2    assigned=0   
+     trebuchet          prod=3    assigned=3   
+
+=== ERROR EVIDENCE (military errors + villager->mil flips) ===
+id=  5102 truth=Archer             pred=skirmisher       src=iso           fs=902 hist=[('sq_hardmil', 'skirmisher'), ('dp_line', 'champiscout'), ('iso', 'skirmisher')]
+        behav={'moves': 81, 'patrols': 4, 'attacks_building': 4, 'hard_mil': 4} iso_slot=skirmisher@883s iso=35 lag=18 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  5116 truth=Archer             pred=skirmisher       src=iso           fs=902 hist=[('sq_hardmil', 'slinger'), ('dp_line', 'champiscout'), ('iso', 'skirmisher')]
+        behav={'moves': 51, 'patrols': 4, 'attacks_building': 1, 'hard_mil': 4} iso_slot=skirmisher@883s iso=35 lag=18 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  5139 truth=Archer             pred=skirmisher       src=iso           fs=902 hist=[('sq_hardmil', 'spearman'), ('dp_line', 'archer'), ('iso', 'skirmisher')]
+        behav={'moves': 100, 'patrols': 4, 'attacks_building': 4, 'hard_mil': 4} iso_slot=skirmisher@883s iso=35 lag=18 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  5141 truth=Lumberjack         pred=archer           src=dp_line       fs=883 hist=[('sq_base', 'villager'), ('dp_line', 'archer')]
+        behav={'gathers': 3, 'attacks_building': 1} iso_slot=archer@870s iso=286 lag=13 squad#1(n=43) milvotes={'archer': 1}
+id=  5202 truth=Spearman           pred=skirmisher       src=rescue_raider fs=974 hist=[('sq_hetero', 'villager'), ('rescue_raider', 'skirmisher')]
+        behav={'attacks_building': 3, 'moves': 1} iso_slot=skirmisher@944s iso=10 lag=30 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  5229 truth=Lumberjack         pred=archer           src=dp_line       fs=957 hist=[('sq_hetero', 'skirmisher'), ('dp_line', 'archer')]
+        behav={'gathers': 1, 'attacks_building': 1, 'moves': 1} iso_slot=skirmisher@944s iso=10 lag=12 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  5335 truth=Archer             pred=skirmisher       src=dp_line       fs=1038 hist=[('sq_hardmil', 'slinger'), ('dp_line', 'skirmisher')]
+        behav={'moves': 17, 'patrols': 1, 'attacks_building': 2, 'hard_mil': 1} iso_slot=skirmisher@1027s iso=26 lag=12 
+id=  5523 truth=Skirmisher         pred=archer           src=iso           fs=1165 hist=[('sq_hardmil', 'spearman'), ('dp_line', 'skirmisher'), ('iso', 'archer')]
+        behav={'moves': 65, 'patrols': 1, 'attacks_building': 6, 'hard_mil': 1} iso_slot=archer@1149s iso=26 lag=16 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  5697 truth=Champi Scout       pred=skirmisher       src=iso           fs=1392 hist=[('sq_hetero', 'villager'), ('dp_line', 'archer'), ('iso', 'skirmisher')]
+        behav={'moves': 18} iso_slot=skirmisher@1375s iso=27 lag=18 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  5721 truth=Skirmisher         pred=champiscout      src=dp_line       fs=1315 hist=[('sq_hardmil', 'skirmisher'), ('dp_line', 'champiscout')]
+        behav={'moves': 93, 'attacks_building': 3, 'gathers': 2, 'patrols': 11, 'hard_mil': 12} iso_slot=champiscout@1300s iso=12 lag=15 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  5726 truth=Champi Scout       pred=villager         src=sq_hetero     fs=1392 hist=[('sq_hetero', 'villager')]
+        behav={'moves': 24} iso_slot=skirmisher@1375s iso=27 lag=18 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  5731 truth=Skirmisher         pred=spearman         src=dp_line       fs=1363 hist=[('sq_hardmil', 'skirmisher'), ('dp_line', 'spearman')]
+        behav={'moves': 93, 'attacks_building': 2, 'gathers': 1, 'patrols': 11, 'hard_mil': 12} iso_slot=skirmisher@1349s iso=1 lag=14 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  5750 truth=Spearman           pred=skirmisher       src=rescue_raider fs=1392 hist=[('sq_hetero', 'villager'), ('rescue_raider', 'skirmisher')]
+        behav={'moves': 19, 'attacks_building': 2} iso_slot=skirmisher@1375s iso=27 lag=18 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  5927 truth=Champi Scout       pred=villager         src=sq_hardvil    fs=1392 hist=[('sq_hardvil', 'villager')]
+        behav={'moves': 22, 'builds': 1, 'hard_build': 1} iso_slot=skirmisher@1375s iso=27 lag=18 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  6436 truth=Archer             pred=knight           src=iso           fs=1981 hist=[('sq_hardmil', 'archer'), ('dp_line', 'archer'), ('iso', 'knight')]
+        behav={'moves': 51, 'attacks_building': 1, 'patrols': 1, 'hard_mil': 2} iso_slot=knight@1792s iso=27 lag=188 squad#2(n=60) milvotes={'archer': 53, 'knight': 4, 'militia': 3}
+id=  6676 truth=Slinger            pred=skirmisher       src=dp_line       fs=1814 hist=[('sq_hetero', 'villager'), ('dp_line', 'skirmisher')]
+        behav={'moves': 5} iso_slot=skirmisher@1814s iso=1 lag=1 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  6866 truth=Slinger            pred=skirmisher       src=rescue_raider fs=1914 hist=[('sq_hetero', 'villager'), ('rescue_raider', 'skirmisher')]
+        behav={'moves': 25, 'attacks_building': 4} iso_slot=skirmisher@1917s iso=53 lag=-2 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  6911 truth=Slinger            pred=skirmisher       src=rescue_raider fs=1914 hist=[('sq_hetero', 'skirmisher'), ('rescue_raider', 'skirmisher')]
+        behav={'moves': 29, 'attacks_building': 9} iso_slot=skirmisher@1917s iso=53 lag=-2 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  6918 truth=Villager           pred=skirmisher       src=sq_hetero     fs=1929 hist=[('sq_hetero', 'skirmisher')]
+        behav={'gathers': 3} iso_slot=skirmisher@1917s iso=53 lag=13 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  7437 truth=Villager           pred=skirmisher       src=dp_line       fs=1979 hist=[('sq_base', 'villager'), ('dp_line', 'skirmisher')]
+        behav={} iso_slot=skirmisher@1969s iso=47 lag=10 
+id=  7484 truth=Skirmisher         pred=spearman         src=dp_line       fs=2026 hist=[('sq_hardmil', 'spearman'), ('dp_line', 'spearman')]
+        behav={'moves': 13, 'patrols': 2, 'attacks_building': 6, 'hard_mil': 2} iso_slot=spearman@2016s iso=19 lag=10 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  7485 truth=Skirmisher         pred=spearman         src=iso           fs=2026 hist=[('sq_hardmil', 'skirmisher'), ('dp_line', 'skirmisher'), ('iso', 'spearman')]
+        behav={'moves': 13, 'patrols': 2, 'attacks_building': 6, 'hard_mil': 2} iso_slot=spearman@2016s iso=19 lag=10 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  7495 truth=Villager           pred=slinger          src=sq_hetero     fs=2200 hist=[('sq_hetero', 'slinger')]
+        behav={'gathers': 1} iso_slot=skirmisher@2186s iso=1 lag=14 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  7496 truth=Villager           pred=slinger          src=sq_hetero     fs=2032 hist=[('sq_hetero', 'slinger')]
+        behav={'gathers': 3, 'moves': 1, 'attacks_building': 1} iso_slot=spearman@2016s iso=19 lag=16 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  7500 truth=Spearman           pred=villager         src=sq_hetero     fs=2038 hist=[('sq_hetero', 'villager')]
+        behav={'moves': 7} iso_slot=spearman@2016s iso=19 lag=22 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  7570 truth=Villager           pred=slinger          src=sq_hetero     fs=2123 hist=[('sq_hetero', 'slinger')]
+        behav={'gathers': 2, 'moves': 1, 'attacks_building': 1} iso_slot=spearman@2123s iso=12 lag=0 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  7572 truth=Monk               pred=villager         src=sq_base       fs=2391 hist=[('sq_base', 'villager')]
+        behav={'bld_order': 1} iso_slot=archer@2392s iso=5 lag=-1 
+id=  7573 truth=Villager           pred=spearman         src=dp_line       fs=2061 hist=[('sq_hetero', 'villager'), ('dp_line', 'spearman')]
+        behav={'gathers': 3, 'attacks_building': 2, 'moves': 1} iso_slot=spearman@2057s iso=17 lag=4 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  7618 truth=Knight             pred=archer           src=smooth        fs=2206 hist=[('sq_base', 'archer'), ('rescue_raider', 'hussitewagon'), ('smooth', 'archer')]
+        behav={'moves': 2, 'attacks_building': 1} iso_slot=hussitewagon@2198s iso=13 lag=8 squad#2(n=60) milvotes={'archer': 53, 'knight': 4, 'militia': 3}
+id=  7619 truth=Knight             pred=archer           src=smooth        fs=2088 hist=[('sq_base', 'archer'), ('rescue_raider', 'hussitewagon'), ('smooth', 'archer')]
+        behav={'attacks_building': 1, 'moves': 3} iso_slot=hussitewagon@2067s iso=10 lag=21 squad#2(n=60) milvotes={'archer': 53, 'knight': 4, 'militia': 3}
+id=  7741 truth=Lumberjack         pred=spearman         src=rescue_raider fs=2253 hist=[('sq_hetero', 'skirmisher'), ('rescue_raider', 'spearman')]
+        behav={'attacks_building': 2} iso_slot=spearman@2249s iso=6 lag=4 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  7870 truth=Gold Miner         pred=archer           src=dp_line       fs=2183 hist=[('sq_base', 'villager'), ('dp_line', 'archer')]
+        behav={'gathers': 1} iso_slot=archer@2185s iso=13 lag=-2 
+id=  7972 truth=Lumberjack         pred=skirmisher       src=sq_hetero     fs=2178 hist=[('sq_hetero', 'skirmisher')]
+        behav={'gathers': 1} iso_slot=slinger@2160s iso=26 lag=18 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  8041 truth=Slinger            pred=spearman         src=dp_line       fs=2140 hist=[('sq_hetero', 'villager'), ('dp_line', 'spearman')]
+        behav={'moves': 25, 'attacks_building': 9} iso_slot=slinger@2135s iso=12 lag=5 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  8042 truth=Slinger            pred=skirmisher       src=dp_line       fs=2140 hist=[('sq_hetero', 'villager'), ('dp_line', 'skirmisher')]
+        behav={'moves': 19, 'attacks_building': 3} iso_slot=slinger@2135s iso=12 lag=5 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  8690 truth=Lumberjack         pred=spearman         src=dp_line       fs=2253 hist=[('sq_hetero', 'skirmisher'), ('dp_line', 'spearman')]
+        behav={'attacks_building': 2} iso_slot=spearman@2249s iso=6 lag=4 squad#0(n=172) milvotes={'skirmisher': 41, 'spearman': 14, 'slinger': 5, 'champiscout': 4}
+id=  9104 truth=Spearman           pred=skirmisher       src=rescue_raider fs=2303 hist=[('sq_base', 'skirmisher'), ('rescue_raider', 'skirmisher')]
+        behav={'attacks_building': 2, 'moves': 2} iso_slot=skirmisher@2295s iso=24 lag=7 squad#5(n=3) milvotes={'skirmisher': 3}

@@ -32,6 +32,10 @@ Pipeline inside the script:
 2. **Pair** them with mirror symmetry (A-vs-B computed once, B-vs-A is its flip) and
    **fingerprint dedup** — units with identical stats collapse to ONE sim group
    (`sim_outcome_cache.unit_fingerprint`). 515 units → **67,654 unique dedup groups**.
+   *Note (2026-06-11): a fingerprint dead-key bug (fixed; see
+   `docs/architecture/derived-data.md`) made this dedup over-aggressive — the corrected
+   fingerprint yields ~111,664 groups, so the next full rebuild at `sim_version
+   e221c8a3a0437bd8` simulates ~63% more groups than this baseline did.*
 3. **Exclude same-unit mirrors** (`my_slug == opp_slug`, e.g. halb-vs-halb): inherently
    ~50/50, pure noise, not worth sims.
 4. **Escalating sampler** per group (`_escalating`): run seeds in batches, stop when the

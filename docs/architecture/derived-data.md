@@ -61,11 +61,21 @@ Two provenance mechanisms matter everywhere downstream:
   a stale version are re-simulated on the next batch run; current-version rows are skipped.
 - **`dedup_group`** — 16-hex MD5 of the dedup-group key. Units with identical
   simulation-relevant stats get the same fingerprint
-  (`webapp/sim_outcome_cache.py` `unit_fingerprint()`: rounded final stats, costs,
-  `outline_size`, bonus-damage table, armors, special properties), so e.g. 20 civs' generic
+  (`webapp/sim_outcome_cache.py` `unit_fingerprint()`: rounded core final stats incl.
+  attack/movement speed, delay, range, accuracy; costs; `outline_size`; bonus-damage
+  attacks/armors tables; every `analysis/ability_registry.py` param that differs from its
+  registry default; dismount/transform form blocks), so e.g. a dozen civs' truly generic
   Halberdier collapse into one sim whose result is copied to every member row. Downstream
   consumers that average scores collapse by `dedup_group` first so stat-clones do not get
   double-weighted.
+  **2026-06-11 fix:** before then `unit_fingerprint` read keys that don't exist in the
+  prepared combat-dict contract (`speed`/`reload_time`/`max_range`/`min_range`/
+  `projectile_count`/`special_properties`), silently collapsing genuinely different units
+  (all 33 generic champions — Celts speed, Japanese reload, Dravidians Wootz Steel, Slavs
+  trample — shared ONE group). The registry-driven rewrite is contract-tested in
+  `tests/test_sim_outcome_cache.py`; baseline-path dedup goes 269→345 distinct fingerprints
+  and 68,694→111,664 expected groups, so the pending full re-sim (already required by
+  `sim_version` `e221c8a3a0437bd8`) is ~63% larger than the old group count suggested.
 
 ### `run_matchup_battles.py` — the incremental batch runner
 

@@ -338,6 +338,7 @@ automated assertion against the thing it summarizes.** Concretely (all cheap):
 - `UNIT_LINES` (py) ↔ rankings.js copy ↔ derived lines.json
 - ABILITY_REGISTRY ↔ engine HANDLERS tables ↔ JS manifest
 - `config_units` upgrade chains ↔ dat type-3 graph
+- combat-dict contract ↔ its consumers' key reads — vindicated 2026-06-11: `sim_outcome_cache.unit_fingerprint` read six keys that exist in no prepared dict (no assertion → dedup silently collapsed distinct units for months); fixed with a contract test in `tests/test_sim_outcome_cache.py`
 
 ## 4. Smaller findings
 

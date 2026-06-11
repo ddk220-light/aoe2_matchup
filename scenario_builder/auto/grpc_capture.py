@@ -141,6 +141,16 @@ def write_sidecar(prefix, t_rec, logfile=None):
         "clock": "video", "game_speed": GAME_SPEED,
         "rows": rows,
     }
+    # The live tailer's .END stamps the WALL moment the fight resolved — the robust
+    # timeline anchor: it holds even when the Test ran in the SAME game instance
+    # (continuous clock, where rows' game_s 0 is the recorder start, NOT game start).
+    try:
+        with open(prefix + ".END") as f:
+            end_info = json.load(f)
+        if end_info.get("wall_epoch"):
+            sidecar["end_video_s"] = round(end_info["wall_epoch"] - t_rec, 3)
+    except Exception:
+        pass
     out = prefix + ".hp.json"
     with open(out, "w") as f:
         json.dump(sidecar, f)
@@ -172,7 +182,7 @@ def archive_stream(prefix, dest_video, logfile=None):
     import shutil
     stem = str(Path(dest_video).with_suffix(""))
     copied = False
-    for ext in (".frames.bin", ".meta.json"):
+    for ext in (".frames.bin", ".meta.json", ".END"):
         src = prefix + ext
         if os.path.exists(src):
             try:

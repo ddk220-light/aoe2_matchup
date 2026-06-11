@@ -20,14 +20,15 @@ VIDEOS_DIR = _env_path("AOE2_VIDEOS_DIR", Path.home() / "Videos" / "aoe2_matchup
 DEFAULT_COPY_TO = _env_path("AOE2_COPY_TO", VIDEOS_DIR)
 GUECHA_OUT = _env_path("GUECHA_OUT", VIDEOS_DIR / "guecha_sweep")
 
-# The gRPC stream recorder + offline redecoder (separate checkout; need grpcio + the
-# cade_api stubs, which live in the SYSTEM python, not the scenario_builder venv — so
-# they run as their own processes).
+# The gRPC stream recorder + offline redecoder live IN THE REPO now
+# (scenario_builder/grpc/ — recorder, redecoder, decoder, schema, protobuf stubs and
+# the CadeRemote mTLS certs), and the scenario_builder venv carries grpcio+protobuf,
+# so the pipeline is self-sufficient. Env overrides remain for external checkouts
+# (e.g. the research copy at C:\dev\aoe2\aoe2grpc).
+_SB = Path(__file__).resolve().parents[1]
 GRPC_PYTHON = os.environ.get(
-    "AOE2_GRPC_PYTHON",
-    str(Path.home() / "AppData" / "Local" / "Programs" / "Python" / "Python312"
-        / "python.exe"))
-GRPC_LOGGER = os.environ.get("AOE2_GRPC_LOGGER", r"C:\dev\aoe2grpc\grpc_hp_log.py")
+    "AOE2_GRPC_PYTHON", str(_SB / ".venv" / "Scripts" / "python.exe"))
+GRPC_LOGGER = os.environ.get("AOE2_GRPC_LOGGER", str(_SB / "grpc" / "grpc_hp_log.py"))
 GRPC_REDECODE = os.environ.get(
     "AOE2_GRPC_REDECODE", str(Path(GRPC_LOGGER).parent / "redecode_hp.py"))
 

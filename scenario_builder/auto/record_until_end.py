@@ -348,17 +348,25 @@ def select_sidecar(out_mov, gs, grpc_sidecar, civ1, slug1, civ2, slug2, counts,
                 log("[sidecar] gRPC sidecar predates the clock fix (game-sim seconds) "
                     "— OCR fallback", logfile)
             elif grpc_sane(d, counts):
-                if gs is not None:
-                    d["video_game_start_s"] = round(gs, 3)     # V0 anchors the game clock
-                d["source"] = "grpc_redecode"
-                # the game's WINS verdict still rules the END state (decode/chase can
-                # leave the loser hanging above zero)
                 prev, last_chg = None, d["rows"][0]["game_s"]
                 for r in d["rows"]:
                     cur = (r["side1"]["count"], r["side2"]["count"])
                     if prev is not None and cur != prev:
                         last_chg = r["game_s"]
                     prev = cur
+                if d.get("end_video_s") is not None:
+                    # END-ANCHOR (preferred): align the timeline so its last count
+                    # change lands at the live tailer's measured fight-end moment.
+                    # Correct for BOTH stream shapes — including the continuous one
+                    # where the Test ran in the same instance and rows' game_s 0 is
+                    # the recorder start (~10-15s before the game start), which a V0
+                    # anchor would silently shift the whole HP bar by.
+                    d["video_game_start_s"] = round(d["end_video_s"] - last_chg, 3)
+                elif gs is not None:
+                    d["video_game_start_s"] = round(gs, 3)     # V0 anchors the clock
+                d["source"] = "grpc_redecode"
+                # the game's WINS verdict still rules the END state (decode/chase can
+                # leave the loser hanging above zero)
                 vs = d.get("video_game_start_s") or 0.0
                 _zero_loser_from_banner(d["rows"], out_mov,
                                         (vs + last_chg + 2.0, vs + last_chg + 5.0),

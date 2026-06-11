@@ -1,7 +1,8 @@
 """Role: derive — pool scores for every (civ, unit_slug, scale) in a matchup DB.
 
 `--matchup-db` is REQUIRED — point it at the external baseline-of-record
-(the committed webapp/matchup_db.db is an Armenians-only stub):
+(matchup DBs live outside the repo; the old committed webapp/matchup_db.db
+Armenians-only stub was removed 2026-06-11):
 
     python -m webapp.derive_pool_scores \\
         --matchup-db D:/AI/matchup_baseline_<build>.db --out webapp/pool_scores.db
@@ -100,8 +101,8 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--matchup-db", required=True,
                    help="Path to the matchup DB to derive from (REQUIRED — "
-                        "e.g. D:/AI/matchup_baseline_<build>.db; the committed "
-                        "webapp/matchup_db.db is an Armenians-only stub).")
+                        "e.g. D:/AI/matchup_baseline_<build>.db; matchup DBs "
+                        "live outside the repo).")
     p.add_argument("--out", default=DEFAULT_OUT_DB)
     p.add_argument("--build", default=None)
     p.add_argument("--allow-small-db", action="store_true",

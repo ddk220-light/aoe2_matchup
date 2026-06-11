@@ -327,8 +327,8 @@ def main():
     parser.add_argument("--matchup-db", dest="matchup_db", required=True,
                         help="Path to the matchup DB to derive from (REQUIRED — "
                              "point it at the external baseline, e.g. "
-                             "D:/AI/matchup_baseline_<build>.db; the committed "
-                             "webapp/matchup_db.db is an Armenians-only stub).")
+                             "D:/AI/matchup_baseline_<build>.db; matchup DBs "
+                             "live outside the repo).")
     parser.add_argument("--build", dest="build", default=None,
                         help="Build number to tag rows with (default: current).")
     parser.add_argument("--allow-small-db", action="store_true",

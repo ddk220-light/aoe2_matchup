@@ -70,7 +70,6 @@ These binary/data files are committed **on purpose** — they are how the deploy
 | `webapp/aoe2_units.db` | 2.0 MB | Main flat `unit_stats` DB (stage 3 output) |
 | `webapp/aoe2_reference.db` | 4.5 MB | Audit-trail reference DB (stage 2 output) |
 | `webapp/derived_data.db` | 14.5 MB | Derived rankings/advisor recommendations (battle scores live here now) |
-| `webapp/matchup_db.db` | 3.9 MB | Raw 1v1 matchup outcomes (multi-seed baseline) |
 | `webapp/pool_scores.db` | 4.4 MB | Pool-score data |
 | `webapp/patches.db` | 6.3 MB | Patch/build history for the patches pages |
 | `webapp/civ_power_units/{170934,177723}.json` | ~1.8 MB each | Per-build civ power-unit data (the legacy flat `civ_power_units.json` was deleted — no fallback) |
@@ -79,7 +78,7 @@ These binary/data files are committed **on purpose** — they are how the deploy
 | `tests/fixtures/berserker_matchups.db` | test fixture | |
 | `scenario_builder/auto/unique_units.json`, `marketing/responded-threads.json` | small | Tooling state |
 
-**Stale-doc warning:** `CLAUDE.md` rule 6 says "Don't commit `webapp/matchup_db.db` (200+ MB sim cache)". That described an older incarnation; the current `webapp/matchup_db.db` **is committed** (3.9 MB) and is required serving data. Treat the file like the other committed DBs.
+**Note (2026-06-11):** the 3.9 MB Armenians-only `webapp/matchup_db.db` stub was removed from the repo — no route ever read it, and the derive scripts pre-flight-reject partial DBs. Matchup DBs are always local/external (`D:/AI/matchup_baseline_<build>.db`), passed via `--matchup-db`.
 
 Deliberately **not** committed (`.gitignore`): `extraction/empires2_x2_p1.dat` and `extraction/extracted_data/`, `graphics/game_raw_files/` (19 GB raw sprite dump), `webapp/battle_cache.json`, `webapp/battle_scores.db`, `webapp/matchup_votes.jsonl`, patch-pipeline intermediates (`webapp/aoe2_reference_*.db`, `webapp/changed_units_*.json`, `webapp/*.db.bak`, `extraction/extracted_data_prev/`), and scratch dirs (`.scratch/`, `tmp/`, `.old/`).
 

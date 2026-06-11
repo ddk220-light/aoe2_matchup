@@ -22,7 +22,7 @@ simulation_real.py (position-based engine, seeded, non-deterministic across seed
         │
         ▼
 matchup_battles table  ←─ run_matchup_battles.py (incremental) / rebuild_matchup_baseline.py (full)
-  (webapp/matchup_db.db committed stub · D:/AI/matchup_baseline_177723.db = real baseline)
+  (local working DBs only — D:/AI/matchup_baseline_177723.db = real baseline; in-repo stub removed 2026-06-11)
         │
         ├─ derive_unit_rankings.py ──► derived_data.db · battle_scores      ─┐
         ├─ derive_pool_scores.py   ──► pool_scores.db  · pool_scores        ─┤
@@ -116,11 +116,11 @@ same-unit mirrors** (`my_slug == opp_slug`) and replaces the 1-or-3-seed rule wi
   — `verdict` is `tossup` when `|mean| <= 10` or `SD > |mean|`, else `win`/`loss` by sign.
 - `groups_done(dg, scale, n)` — resume checkpoint; re-running skips completed groups.
 
-### Committed stub vs. external baseline (verified 2026-06-09)
+### External baseline (the committed stub was removed 2026-06-11)
 
 | File | Size | Tables | Contents |
 |---|---|---|---|
-| `webapp/matchup_db.db` (committed) | 3.9 MB | `matchup_battles` only | **10,340 rows, my-side = Armenians only** (10 units × 517 opponents × 2 scales), single `sim_version`, `runs_count` 1 (10,146 rows) or 3 (194). A leftover snapshot from the per-civ batching era (commit `b9685ab` "snapshot matchup_db + derived_data after Armenian batch"). Nothing in the app reads it; derive scripts only hit it if you forget `--matchup-db`. |
+| `webapp/matchup_db.db` (REMOVED from git 2026-06-11) | — | — | Was a 3.9 MB Armenians-only leftover snapshot from the per-civ batching era (commit `b9685ab`). Nothing in the app ever read it; it existed only as a foot-gun for derive scripts run without `--matchup-db` (now guarded by `preflight_derive_guard`). |
 | `D:/AI/matchup_baseline_177723.db` (local, NOT in git) | 276 MB | `matchup_battles`, `matchup_means`, `groups_done` | The build-177723 **baseline-of-record**: 491,384 rows in both battle and means tables, 67,654 dedup groups. Verdicts: 234,820 win / 234,820 loss (exactly symmetric) / 21,744 tossup (4.4%). Seed counts: 460,376 rows at n=8 escalating up to 1,726 at n=40. |
 
 Practical consequence: **every derive command below must be pointed at the external

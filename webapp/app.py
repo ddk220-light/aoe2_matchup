@@ -4,7 +4,7 @@ All page + API routes (battle sim home, rankings, civ pages, matchup advisor,
 patch tracker, SEO landing pages, sitemap) plus the /replay/* blueprint
 mounted from replay_core. Serves the committed data artifacts —
 aoe2_reference.db, derived_data.db, pool_scores.db, patches.db,
-matchup_db.db, civ_power_units/<build>.json — and only simulates at serve
+civ_power_units/<build>.json — and only simulates at serve
 time for the live Matchup Advisor endpoints (best_units.get_matchup_sims /
 get_matchup_recommendations).
 """

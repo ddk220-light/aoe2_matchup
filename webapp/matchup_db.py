@@ -18,6 +18,9 @@ import sqlite3
 
 from battle_outcome import BattleOutcome
 
+# Default for the batch runners' local working DB. Not tracked in git —
+# the in-repo Armenians-only stub was removed 2026-06-11; real baselines
+# live outside the repo (D:/AI/matchup_baseline_<build>.db).
 DEFAULT_DB_PATH = os.path.join(os.path.dirname(__file__), "matchup_db.db")
 
 SCHEMA = """
@@ -92,8 +95,9 @@ def preflight_derive_guard(db_path, *, allow_small_db=False, allow_stale=False,
     data from it. Aborts via SystemExit when:
 
       * the DB covers fewer than `min_civs` distinct `my_civ` values — this
-        catches the committed Armenians-only stub `webapp/matchup_db.db`
-        (the real baseline lives at D:/AI/matchup_baseline_<build>.db).
+        catches partial/stub DBs (like the Armenians-only stub that was
+        tracked as webapp/matchup_db.db until 2026-06-11; the real baseline
+        lives at D:/AI/matchup_baseline_<build>.db).
         Override with --allow-small-db.
       * any rows carry a sim_version other than the current
         `sim_version.compute_sim_version()` — the engine changed since those
@@ -124,11 +128,10 @@ def preflight_derive_guard(db_path, *, allow_small_db=False, allow_stale=False,
         if n_civs < min_civs and not allow_small_db:
             raise SystemExit(
                 f"ERROR: {db_path} has rows for only {n_civs} distinct civ(s) "
-                f"(expected >= {min_civs}). This looks like the committed "
-                "Armenians-only stub (webapp/matchup_db.db), not the real "
-                "baseline (D:/AI/matchup_baseline_<build>.db). Deriving from "
-                "it would publish partial/stale data. Pass --allow-small-db "
-                "to proceed anyway.")
+                f"(expected >= {min_civs}). This looks like a partial/stub DB, "
+                "not the real baseline (D:/AI/matchup_baseline_<build>.db). "
+                "Deriving from it would publish partial/stale data. Pass "
+                "--allow-small-db to proceed anyway.")
         current = compute_sim_version()
         n_stale = conn.execute(
             "SELECT COUNT(*) FROM matchup_battles "

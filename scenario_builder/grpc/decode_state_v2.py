@@ -474,16 +474,30 @@ def seed_from_snapshot(snap_path, doc, entity_store):
     world_id = doc.register(1)
     doc.models[doc.root][0] = world_id
 
-    # Locate the entity band: first occurrence of op8 field=1 modeltype in ENTITY_TYPES
-    # Pattern: 0x08 0x01 <mt> where mt in {9,10,11,12,13,14}
+    # Locate the entity band: an op8 field=1 EntityType marker with MORE such markers
+    # close behind. The band is hundreds of entities back-to-back (one every ~10KB),
+    # while blob regions throw ISOLATED false positives — the Genitour snapshot has a
+    # lone false marker at byte 1.66M that hijacked the seed (1 entity, 582 resyncs)
+    # when the first plausible match was trusted blindly.
     entity_mt_bytes = bytes(ENTITY_TYPES)
     band_start = None
-    for i in range(len(data) - 3):
+    n = len(data)
+    for i in range(n - 3):
         if data[i] == 8 and data[i + 1] == 1 and data[i + 2] in entity_mt_bytes:
             # Validate: following 4 bytes = plausible i32 entity key (positive, < 1_000_000)
-            if i + 6 < len(data):
+            if i + 6 < n:
                 key = struct.unpack_from("<i", data, i + 3)[0]
                 if 0 < key < 1_000_000:
+                    hits, j, lim = 0, i + 7, min(n - 6, i + 80_000)
+                    while j < lim and hits < 3:        # density check
+                        if (data[j] == 8 and data[j + 1] == 1
+                                and data[j + 2] in entity_mt_bytes
+                                and 0 < struct.unpack_from("<i", data, j + 3)[0]
+                                < 1_000_000):
+                            hits += 1
+                        j += 1
+                    if hits < 3:
+                        continue                       # isolated false positive
                     band_start = i
                     print(f"  entity band start: byte {band_start:,} (key={key})")
                     break

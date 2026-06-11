@@ -21,7 +21,9 @@ MATCHUPS = [
     ("Celts", "Koreans"),
     ("Spanish", "Berbers"),
 ]
-AGES = ["castle", "imperial"]
+# Imperial-only data model (2026-06-11): the golden baseline carries only
+# Imperial entries (10 pairs x 1 age).
+AGES = ["imperial"]
 
 SCHEMA_PAIRS = [
     (civ_a, civ_b, age)
@@ -51,11 +53,11 @@ def _normalize(obj):
 
 # --- Sanity test ---
 
-def test_baseline_exists_and_has_20_entries():
+def test_baseline_exists_and_has_10_entries():
     assert os.path.exists(BASELINE_PATH), f"Baseline not found at {BASELINE_PATH}"
     with open(BASELINE_PATH) as f:
         data = json.load(f)
-    assert len(data["matchup_sims"]) == 20
+    assert len(data["matchup_sims"]) == 10
 
 
 # --- Schema tests ---

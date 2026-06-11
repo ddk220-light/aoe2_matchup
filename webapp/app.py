@@ -92,10 +92,9 @@ REF_DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
 DERIVED_DB_PATH = os.path.join(os.path.dirname(__file__), "derived_data.db")
 PATCHES_DB_PATH = os.path.join(os.path.dirname(__file__), "patches.db")
 
-# Age definitions
+# Age definitions — the site is Imperial-only (2026-06-11): the DBs carry
+# only fully-upgraded Imperial rows, so Imperial is the only servable age.
 AGES = {
-    "feudal": {"id": 2, "name": "Feudal Age"},
-    "castle": {"id": 3, "name": "Castle Age"},
     "imperial": {"id": 4, "name": "Imperial Age"},
 }
 
@@ -880,8 +879,8 @@ def api_ref_civ(civ_name):
 
     ref_conn.close()
 
-    # Group by age
-    by_age = {"Castle": [], "Imperial": []}
+    # Group by age (Imperial-only data model)
+    by_age = {"Imperial": []}
     for u in units:
         if u["age"] in by_age:
             by_age[u["age"]].append(u)
@@ -1019,7 +1018,6 @@ def api_ref_unit_line(line_slug):
     result = {
         "line_name": line["name"],
         "building": line["building"],
-        "castle": [],
         "imperial": [],
     }
 
@@ -1188,9 +1186,8 @@ def api_ref_unit_line(line_slug):
     for sub_slug in sub_lines:
         sub_line = UNIT_LINES[sub_slug]
 
-        # Standard units for each age
+        # Standard units (Imperial only)
         for age_key, slug_key, slugs_key, db_age in [
-            ("castle", "castle_slug", "castle_slugs", "Castle"),
             ("imperial", "imperial_slug", "imperial_slugs", "Imperial"),
         ]:
             slugs = sub_line.get(
@@ -1212,21 +1209,6 @@ def api_ref_unit_line(line_slug):
                     result[age_key].append(entry)
 
         # Extra standard units
-        for extra_slug in sub_line.get("extra_castle_slugs", []):
-            rc.execute(
-                f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND age=? ORDER BY civ_name",
-                (extra_slug, "Castle"),
-            )
-            for row in rc.fetchall():
-                if (row["civ_name"], extra_slug) in CIV_MISSING_UNITS:
-                    continue
-                entry = dict(row)
-                entry["is_unique"] = False
-                entry["line_slug"] = sub_slug
-                _attach_scores(entry, "castle", sub_slug)
-                _attach_special(entry)
-                result["castle"].append(entry)
-
         for extra_slug in sub_line.get("extra_imperial_slugs", []):
             rc.execute(
                 f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND age=? ORDER BY civ_name",
@@ -1242,12 +1224,12 @@ def api_ref_unit_line(line_slug):
                 _attach_special(entry)
                 result["imperial"].append(entry)
 
-        # Unique units (value may be a single (castle, imperial) tuple or a list of such tuples)
+        # Unique units (value may be a single (castle, imperial) tuple or a list
+        # of such tuples — only the imperial slug is served)
         for civ_name, entries in sub_line.get("unique_units", {}).items():
             entries = entries if isinstance(entries, list) else [entries]
-            for castle_uu, imperial_uu in entries:
+            for _castle_uu, imperial_uu in entries:
                 for uu_slug, age_key, db_age in [
-                    (castle_uu, "castle", "Castle"),
                     (imperial_uu, "imperial", "Imperial"),
                 ]:
                     if not uu_slug:
@@ -1267,7 +1249,6 @@ def api_ref_unit_line(line_slug):
 
     # Exclude Elephant Archers from stable (ranged, already in archery rankings)
     if line_slug == "stable":
-        result["castle"] = [u for u in result["castle"] if "ele_archer" not in u["unit_slug"]]
         result["imperial"] = [u for u in result["imperial"] if "ele_archer" not in u["unit_slug"]]
 
     # Attach pool_scores payload for units covered by pool_scores.db.
@@ -1275,16 +1256,14 @@ def api_ref_unit_line(line_slug):
     pool_scores_db_path = os.path.join(os.path.dirname(__file__), "pool_scores.db")
     all_unit_pairs = [
         (entry["civ_name"], entry["unit_slug"])
-        for age_key in ("castle", "imperial")
-        for entry in result[age_key]
+        for entry in result["imperial"]
     ]
     pool_scores_by_unit = load_pool_scores(pool_scores_db_path, all_unit_pairs,
                                            build_number=current_build())
-    for age_key in ("castle", "imperial"):
-        for entry in result[age_key]:
-            key = (entry["civ_name"], entry["unit_slug"])
-            if key in pool_scores_by_unit:
-                entry["pool_scores"] = pool_scores_by_unit[key]
+    for entry in result["imperial"]:
+        key = (entry["civ_name"], entry["unit_slug"])
+        if key in pool_scores_by_unit:
+            entry["pool_scores"] = pool_scores_by_unit[key]
 
     ref_conn.close()
     return jsonify(result)
@@ -1305,7 +1284,7 @@ def _get_ref_civs():
 
 # ============== Input validation ==============
 
-_VALID_AGES = frozenset({"castle", "imperial"})
+_VALID_AGES = frozenset({"imperial"})
 
 
 @lru_cache(maxsize=1)
@@ -1331,7 +1310,7 @@ def _validate_age(age):
     original case after this call returns None."""
     if not isinstance(age, str) or age.lower() not in _VALID_AGES:
         return (
-            jsonify({"error": f"Invalid age: {age!r}. Must be 'castle' or 'imperial'."}),
+            jsonify({"error": f"Invalid age: {age!r}. Must be 'imperial'."}),
             400,
         )
     return None

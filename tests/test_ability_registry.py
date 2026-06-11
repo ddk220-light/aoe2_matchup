@@ -105,9 +105,19 @@ def ref_columns():
 # ---------------------------------------------------------------------------
 
 ALLOWED_ORPHANS_COMBAT = {
-    "skirm": "Feudal-only line stage; ref DB materializes Castle+Imperial rows only",
-    "spearman": "Feudal-only line stage; ref DB materializes Castle+Imperial rows only",
-    "scout": "Feudal-only line stage; ref DB materializes Castle+Imperial rows only",
+    "skirm": "Feudal-only line stage; ref DB materializes Imperial rows only",
+    "spearman": "Feudal-only line stage; ref DB materializes Imperial rows only",
+    "scout": "Feudal-only line stage; ref DB materializes Imperial rows only",
+    # Castle-only line-stage slugs orphaned by the Imperial-only purge
+    # (2026-06-11). Their values are dead, but config_combat.py is frozen
+    # outside a bundled re-sim window (sim_version hash) — delete these keys
+    # there in the next such window and drop the entries here.
+    "elite_skirm": "Castle-only line stage; ref DB is Imperial-only (imp_elite_skirm / imperial slugs)",
+    "light_cav": "Castle-only line stage; Imperial slug is 'hussar'",
+    "mangonel": "Castle-only line stage; Imperial slug is 'siege_onager'",
+    "pikeman": "Castle-only line stage; Imperial slug is 'halberdier'",
+    "ram": "Castle-only line stage; Imperial slug is 'siege_ram'",
+    "scorpion": "Castle-only line stage; Imperial slug is 'heavy_scorpion'",
     "winged_hussar": "roster models the Imperial light-cav of all civs as 'hussar'; no winged_hussar slug exists",
     "organ_gun": "unique unit is civ-suffixed (organ_gun_portuguese); COMBAT_PROPERTIES is exact-match so this never fires",
     "elite_organ_gun": "civ-suffixed (elite_organ_gun_portuguese); exact-match never fires",
@@ -122,12 +132,34 @@ ALLOWED_ORPHANS_COMBAT = {
     "jian_swordsman": "civ-suffixed (jian_swordsman_wu); exact-match never fires",
 }
 
+# Castle-only feeder keys orphaned by the Imperial-only purge (2026-06-11):
+# each fed ONLY the Castle-age row of a unique/line unit whose Imperial slug
+# differs (elite_<slug>_<civ>, heavy_camel, arbalester, ...). The Imperial
+# rows were verified byte-identical across the purge, so these values are
+# dead by construction. config_combat.py is frozen outside a bundled re-sim
+# window (sim_version hash) — delete the keys there in the next such window.
+_CASTLE_ONLY_REASON = (
+    "Castle-only feeder; ref DB is Imperial-only (2026-06-11), Imperial slug "
+    "differs — dead value pending config_combat cleanup in a re-sim window"
+)
+
 ALLOWED_ORPHANS_UNIQUE = {
     "elite_xianbei_raider": (
-        "elite shares the non-elite slug (xianbei_raider_wei at Castle AND "
-        "Imperial), so the elite_ key can never prefix-match; its values are "
-        "identical to the live 'xianbei_raider' entry"
+        "elite shares the non-elite slug (xianbei_raider_wei), so the "
+        "elite_ key can never prefix-match; its values are identical to the "
+        "live 'xianbei_raider' entry"
     ),
+    **{
+        k: _CASTLE_ONLY_REASON
+        for k in (
+            "arambai", "ballista_elephant", "blackwood_archer", "bolas_rider",
+            "chakram_thrower", "composite_bowman", "coustillier", "fire_archer",
+            "fire_lancer", "guecha_warrior", "ibirapema_warrior", "iron_pagoda",
+            "jaguar_warrior", "karambit_warrior", "kona", "konnik", "leitis",
+            "liao_dao", "monaspa", "obuch", "organ_gun", "temple_guard",
+            "tiger_cavalry", "urumi_swordsman",
+        )
+    },
 }
 
 ALLOWED_ORPHANS_CIV = {
@@ -135,6 +167,29 @@ ALLOWED_ORPHANS_CIV = {
     ("Sicilians", "hand_cannoneer"): "Sicilians have no hand cannoneer in the roster (tech tree)",
     ("Poles", "winged_hussar"): "Poles imperial light-cav is modeled as 'hussar' (which carries the live Lechitic Legacy entry)",
     ("Romans", "legionary"): "Romans imperial militia line is modeled under the generic 'champion' slug (which carries the live Comitatenses entry)",
+    **{
+        pair: _CASTLE_ONLY_REASON
+        for pair in (
+            ("Bengalis", "elephant"), ("Bengalis", "elephant_archer"),
+            ("Bengalis", "ratha_(melee)"), ("Bengalis", "ratha_(ranged)"),
+            ("Byzantines", "cataphract"), ("Japanese", "samurai_japanese"),
+            ("Jurchens", "mangonel"), ("Khitans", "camel"),
+            ("Khitans", "cav_archer"), ("Khitans", "elite_skirm"),
+            ("Khitans", "fire_lancer"), ("Khitans", "liao_dao"),
+            ("Khitans", "light_cav"), ("Khitans", "pikeman"),
+            ("Khitans", "steppe_lancer"), ("Khitans", "swordsmen"),
+            ("Mapuche", "bolas_rider"), ("Mapuche", "elite_skirm"),
+            ("Mapuche", "kona"), ("Mapuche", "slinger"),
+            ("Mayans", "elite_skirm"), ("Romans", "centurion"),
+            ("Shu", "crossbow"), ("Shu", "pikeman"),
+            ("Shu", "white_feather_guard"), ("Sicilians", "cav_archer"),
+            ("Sicilians", "crossbow"), ("Sicilians", "elite_skirm"),
+            ("Sicilians", "knight"), ("Sicilians", "light_cav"),
+            ("Sicilians", "pikeman"), ("Sicilians", "scorpion"),
+            ("Sicilians", "serjeant"), ("Sicilians", "swordsmen"),
+            ("Slavs", "swordsmen"),
+        )
+    },
 }
 
 

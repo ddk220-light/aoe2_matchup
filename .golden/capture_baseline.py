@@ -7,9 +7,10 @@ so refactors of the abstract engine path (simulation.py / best_units.py) can't
 silently change behavior. Deliberately does NOT print timing — it produces
 stable, byte-comparable JSON.
 
-Coverage: 10 civ pairs × 2 ages of get_matchup_sims (top/sidekick sections) —
-a wide-but-cheap oracle (~30s total runtime). After any INTENDED sim-behavior
-change, regenerate and commit on staging:  python .golden/capture_baseline.py
+Coverage: 10 civ pairs (Imperial only — the data model dropped Castle on
+2026-06-11) of get_matchup_sims (top/sidekick sections) — a wide-but-cheap
+oracle (~15s total runtime). After any INTENDED sim-behavior change,
+regenerate and commit on staging:  python .golden/capture_baseline.py
 """
 import json
 import os
@@ -47,7 +48,7 @@ MATCHUPS = [
     ("Celts", "Koreans"),
     ("Spanish", "Berbers"),
 ]
-AGES = ["castle", "imperial"]
+AGES = ["imperial"]
 
 
 def _normalize(obj):
@@ -67,7 +68,7 @@ def _normalize(obj):
 
 
 def capture_matchup_sims():
-    """Snapshot get_matchup_sims() for 10 civ pairs x 2 ages."""
+    """Snapshot get_matchup_sims() for 10 civ pairs (Imperial only)."""
     results = {}
     for civ_a, civ_b in MATCHUPS:
         for age in AGES:

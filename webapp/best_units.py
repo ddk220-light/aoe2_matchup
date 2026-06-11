@@ -820,9 +820,9 @@ def generate_naval_column(civ_name, conn, age_key="imperial", techs_by_slug=None
          "hulk":    [...] or None,
          "demo":    [...] or None}
     """
-    db_age = "Imperial" if age_key == "imperial" else "Castle"
-    # Index 1 = imperial slug, index 0 = castle slug in the (castle, imperial) tuple
-    unique_idx = 1 if age_key == "imperial" else 0
+    db_age = "Imperial"  # Imperial-only data model
+    # Index 1 = imperial slug in the (castle, imperial) tuple
+    unique_idx = 1
 
     rc = conn.cursor()
     col_data = {}
@@ -858,8 +858,8 @@ def generate_cannon_galleon_entry(civ_name, conn, age_key="imperial", techs_by_s
     Uses civ-specific unique replacement if defined (Dromon, Lou Chuan,
     Catapult Galleon). Falls back to standard Cannon Galleon / Elite CG.
     """
-    db_age = "Imperial" if age_key == "imperial" else "Castle"
-    unique_idx = 1 if age_key == "imperial" else 0
+    db_age = "Imperial"  # Imperial-only data model
+    unique_idx = 1
 
     unique_slugs = CANNON_GALLEON_LINE["unique_slug_by_civ"].get(civ_name)
     if unique_slugs:
@@ -898,13 +898,13 @@ def compute_civ_power_units(build_number=None):
     rc.execute("SELECT DISTINCT civ_name FROM ref_units ORDER BY civ_name")
     all_civs = [row["civ_name"] for row in rc.fetchall()]
 
+    # Imperial-only data model (2026-06-11): the castle age key is gone from
+    # the payload — the ref DB carries Imperial rows only.
     reference_techs_by_age = {
         "imperial": _build_reference_techs(conn, "Imperial"),
-        "castle": _build_reference_techs(conn, "Castle"),
     }
     line_counts_by_age = {
         "imperial": _compute_line_counts(derived_conn, "imperial", build_number),
-        "castle": _compute_line_counts(derived_conn, "castle", build_number),
     }
 
     # Demo line and cannon_galleon for civs without battle_scores fall back
@@ -915,10 +915,10 @@ def compute_civ_power_units(build_number=None):
     result = {}
 
     for civ in all_civs:
-        civ_data = {"imperial": None, "castle": None}
+        civ_data = {"imperial": None}
 
-        for age_key in ["imperial", "castle"]:
-            db_age = "Imperial" if age_key == "imperial" else "Castle"
+        for age_key in ["imperial"]:
+            db_age = "Imperial"
             reference_techs = reference_techs_by_age[age_key]
             line_counts = line_counts_by_age[age_key]
             power_units = {}
@@ -1290,7 +1290,7 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
     build_number = get_current_build() or "170934"
     derived_conn = _get_derived_db()
     drc = derived_conn.cursor()
-    db_age = "Imperial" if age == "imperial" else "Castle"
+    db_age = "Imperial"  # Imperial-only data model (age validated upstream)
 
     counter_candidates = []  # list of (unit_slug, line_slug, score, vs_role)
     seen_slugs = set()
@@ -1447,7 +1447,7 @@ def get_matchup_sims(civ_left, civ_right, age="imperial", sim_func=None):
     if not left_data or not right_data:
         return {"left": {}, "right": {}, "name_map": {}}
 
-    db_age = "Imperial" if age == "imperial" else "Castle"
+    db_age = "Imperial"  # Imperial-only data model (age validated upstream)
 
     # --- Collect unit entries from power_units ---------------------------------
     def _collect_units(pu_data):

@@ -65,6 +65,51 @@ The derivation functions (the "interpreters" the owner asked about):
 
 ### 3.1 Availability: four mechanisms, none of them the game's
 
+> **Resolver report 2026-06-10 (Phase B core): 282 mismatches — swap NOT
+> performed.** `analysis/availability_resolver.py` implements the full
+> fixed-point resolution (per-tech civ binding, `required_tech_count`,
+> dynamic type-102 disables from fired techs, type-2 enables / type-3
+> upgrade-edge walking, age-phase staging, `full_tech_mode == -1` as the
+> Full-Tech-Tree-only marker, default-enabled seed {74 Militia, 545
+> Transport Ship} probed from the per-civ unit tables). Against the
+> committed ref DB standard rosters it scores **2,050 / 2,332 agree** and
+> the Phase B gate required exactly 0 mismatches, so generate_reference
+> still uses the blocklist + `_AVAILABILITY_OVERRIDES`.
+> `tests/test_availability_resolver.py` pins the full 282-row census (and
+> keeps the 2,050-row agreement green; the gate itself is an xfail).
+>
+> **The "New evidence" paragraph below is REFUTED for the 17 allowlist
+> lines** — written before `required_tech_count` semantics were checked
+> against the dat. Tech 235's prereqs `[102, 858]` with `count=1` mean
+> "Castle Age OR the Gurjaras early-camel slot": it fires for **every**
+> civ, there is no "one slot per enabling civ". The actual in-dat regional
+> mechanism is the reverse: tech **79 "Disable Regionals"** (civ −1, no
+> prereqs) fires for every civ at game start and 102-disables every
+> regional make-avail/upgrade tech (camels, battle/armored elephants,
+> eagles, steppe lancers, slingers, fire lancers, elephant archers, rocket
+> carts, hei-kuang, champi, traction treb, dromon…); the only counter is
+> tech 78 "[FTT] Enable Regionals" with `full_tech_mode = -1` (fires only
+> in Full-Tech-Tree games). **The per-civ regional grants are not in the
+> dat at all** — they ship in the game's per-civ
+> `resources/_common/dat/CivTechTrees/<CIV>.json` (verified locally:
+> Berbers' file carries node 329 Camel Rider `RegionalUnit /
+> ResearchedCompleted`), and aoe2techtree.net's generator reads exactly
+> those files rather than resolving the dat. So the curated lists are
+> irreducible **until the pipeline extracts CivTechTrees JSON**, which is
+> the real Phase B successor task.
+>
+> What the resolver derives correctly today (all pinned green): every
+> default-roster line and tier for all 53 civs, Burgundians Castle-age
+> Cavalier, Winged Hussar via the 786 OR-slots (788/789 civ-bound), the
+> 655/656 Imperial Skirmisher interlock, and four genuine early-tier civ
+> bonuses the config age-gating cannot express (Cumans Capped Ram @Castle,
+> Khitans Heavy Cav Archer @Castle, Armenians Halberdier + Champion
+> @Castle). It also exposed four likely **phantom ref rows**: the
+> Incas/Muisca/Mapuche/Tupi militia lines (their tech trees type-2-disable
+> unit 74; Incas' CivTechTrees JSON confirms Militia/M@A/Champion
+> NotAvailable) plus suspect 3K trebuchet/scorpion rows — worth a
+> follow-up pass against SiegeEngineers data.
+
 Today a unit's per-civ existence is decided by **four cooperating mechanisms**:
 `disabled_techs` blocklist + per-line `availability_tech` + `civ_only` /
 `_AVAILABILITY_OVERRIDES` allowlists (17 lines, hand-synced from SiegeEngineers) +
@@ -283,15 +328,15 @@ else regenerates from the dat.
 | Claim | Verdict | Evidence |
 |---|---|---|
 | "Civ cost discounts are skipped (type-1 commands unhandled) — costs never discounted" | **REFUTED** | `ref_units` finals: Berbers paladin 48/60 vs Franks 60/75 (−20% exact); Goths champion −30%; Berbers hussar −20%. The type-1 tech the reviewer found was not the operative mechanism; discounts arrive via multiply commands on cost attributes. The Mayan surgical patch fixes one special case, not systemic breakage. |
-| "Availability is irreducibly non-derivable for the 17 allowlist lines" | **Half-refuted** | Not derivable *from what we currently extract* — but the dat has it: civ-bound enabler techs + `required_tech_count` (not extracted). With both + a resolver it is fully derivable (§3.1). |
+| "Availability is irreducibly non-derivable for the 17 allowlist lines" | **CONFIRMED** *(the 2026-06-10 "half-refutation" was itself wrong — resolver built and run, §3.1 status)* | Tech 79 "Disable Regionals" locks all regional lines for every civ in normal games (counter tech 78 is `full_tech_mode=-1`, FTT-only); the per-civ grants live in the game's `CivTechTrees/<CIV>.json`, not in `empires2_x2_p1.dat`. No dat-only resolver can derive them — extraction of CivTechTrees JSON is the path. |
 | "Konnik dismount stats are just stored config" | **Confirmed, and it's a bug** *(fixed 2026-06-10 — see §3.3 status)* | Stored dismount attack 13 / armor 2/2 == dat base of unit 1253; mounted final 18 / 5/6; in-game blacksmith applies to both forms (§3.3). |
 
 ## 7. Migration plan (re-sim-aware)
 
 | Phase | Work | Regen/re-sim impact |
 |---|---|---|
-| **A — additive, zero risk** | `ABILITY_REGISTRY` module + parity/orphan-key tests (**done 2026-06-10**, §3.2 status); lines/availability tests in *report mode*; extract `required_tech_count`; build resolver + line graph alongside current code and **diff their output against current rosters** (expected: exact match incl. the 2026-06-10 Cumans fix; any diff = investigate before proceeding) | none |
-| **B — swap sources, stat-neutral** | availability from resolver; `abilities_json` storage + generated loaders; delete `_AVAILABILITY_OVERRIDES`/`CIV_MISSING_UNITS` as data (keep as assertions) | ref regen with scratch-diff neutrality gate (the proven procedure); **no re-sim** if neutral |
+| **A — additive, zero risk** | `ABILITY_REGISTRY` module + parity/orphan-key tests (**done 2026-06-10**, §3.2 status); lines/availability tests in *report mode*; extract `required_tech_count` (**done**, cb979b1); build resolver + line graph alongside current code and **diff their output against current rosters** (resolver **done 2026-06-10**: 282 mismatches, NOT the expected exact match — §3.1 status) | none |
+| **B — swap sources, stat-neutral** | ~~availability from resolver~~ **blocked 2026-06-10** (282-mismatch report, §3.1: the dat cannot express regional availability; prerequisite is a CivTechTrees JSON extractor, then re-run the gate); `abilities_json` storage + generated loaders; delete `_AVAILABILITY_OVERRIDES`/`CIV_MISSING_UNITS` as data (keep as assertions) | ref regen with scratch-diff neutrality gate (the proven procedure); **no re-sim** if neutral |
 | **C — accuracy fixes (stat-changing)** | derive multi-form stats through the tech chain (Konnik/Jian); apply any missing team bonuses | fingerprint-driven scoped re-sim via `rebuild_matchup_baseline` resume (~minutes, not hours); golden regen; re-derive |
 
 ## 8. What NOT to do
@@ -308,7 +353,8 @@ else regenerates from the dat.
 
 | If this changes | Update |
 |---|---|
-| Extraction gains required_tech_count / resolver lands | §3.1 status, §5 diagram |
+| CivTechTrees JSON extractor lands (re-run the resolver gate) | §3.1 status, §5 diagram, §6 row 2, test pin in `tests/test_availability_resolver.py` |
+| New dat build (regenerate extraction) | re-run `python -m analysis.availability_resolver`; re-probe `DEFAULT_ENABLED_UNIT_IDS`; update the 282-row pin |
 | Ability registry implemented | §3.2 status, §7 phase A |
 | Multi-form derivation lands | §3.3 (close the bug), improvements.md ledger |
 | New ability families appear in DE dats | §4 irreducible-core list |

@@ -36,7 +36,7 @@ The `.dat` file lives at `extraction/empires2_x2_p1.dat` and is **not** committe
 
 ## Stage 2 — Reference DB (`analysis/generate_reference.py`)
 
-`generate_reference.py` instantiates `analysis/unit_analyzer.py::UnitAnalyzer` (which loads all 8 JSONs), deletes and recreates `webapp/aoe2_reference.db`, and for each of the 53 civs processes every unit roster entry with a full audit trail. Current DB contents: 1,849 `ref_units` rows (1,189 standard + 496 naval + 164 unique), ages `Castle` and `Imperial` only.
+`generate_reference.py` instantiates `analysis/unit_analyzer.py::UnitAnalyzer` (which loads all 8 JSONs), deletes and recreates `webapp/aoe2_reference.db`, and for each of the 53 civs processes every unit roster entry with a full audit trail. Current DB contents: 972 `ref_units` rows, age `Imperial` **only** (the Imperial-only purge, 2026-06-11 — Castle rows are no longer emitted; Castle-age *techs* still apply inside the Imperial stat chain).
 
 ### How armor and attack values are derived
 
@@ -85,7 +85,7 @@ Availability is a **blocklist with allowlist patches**, resolved per (civ, line)
 - **Unique units:** `UNIQUE_UNITS` in `analysis/config_units.py` maps each of the 53 civs to its unique-unit configs (64 total) with `base_id`/`elite_id`; `NAVAL_UNIQUE_UNITS` adds 18 naval uniques. Unique slugs get a civ suffix (`huskarl_goths`).
 - `CIV_MISSING_UNITS` in `webapp/unit_lines.py` is a **stage-4** declarative filter on top of this (rows the pipeline still emits); see [webapp.md](webapp.md).
 
-**Ages.** Only Castle (3) and Imperial (4) are generated: the rosters are `CASTLE_UNITS` (19 lines) and `IMPERIAL_UNITS` (25 lines), plus `NAVAL_LINE_CONFIGS` (5 lines, processed at both ages) and the unique units (base form at Castle, elite at Imperial). `FEUDAL_UNITS` exists in config but is never processed by `generate_reference.py`, and there is no Dark Age. Unique units **without an elite** (Grenadier, Warrior Priest, Jian Swordsman, Houfnice, etc.) are processed twice under the **same slug** — once per age with that age's techs; consumers disambiguate by filtering on the `age` column. (Do not confuse this with the `imp_`-prefixed line slugs `imp_elite_skirm`/`imp_slinger`, which are real Imperial upgrade tiers. The dead `NO_ELITE_UNITS` dict that described a never-implemented `_imp`-suffix scheme was deleted from `generate_main_db.py`.)
+**Ages.** Only Imperial (4) ROWS are generated (Imperial-only purge, 2026-06-11): the roster is `IMPERIAL_UNITS` (25 lines) plus `NAVAL_LINE_CONFIGS` (5 lines) and the unique units (elite form, or the base unit with Imperial techs when no elite exists). Age constants below Imperial still matter for **tech staging** — `calculate_unit_stats_for_civ(…, IMPERIAL_AGE)` applies Feudal/Castle-age techs on the way up — and `CASTLE_UNITS`/`FEUDAL_UNITS` still exist in config (`_PREVIOUS_AGE_NAMES`, the availability-resolver override comparison) but are never emitted as rows. Two derivational availability gates were added with the purge: (1) `AvailabilityResolver.tech_tree_disabled_unit_closure(civ)` — a line whose `base_id` is type-2-disabled by the civ's tech-tree effect (expanded through the dat's type-3 upgrade edges) never emits, which is what kills the Incas/Mapuche/Muisca/Tupi militia-line ghosts and the bug class for future DLCs; (2) `availability_tech` was set on `trebuchet` (tech 256) and `heavy_scorpion` (tech 94), pruning the phantom Shu/Wei/Wu Trebuchet and Shu Scorpion rows (CivTechTrees-verified). (Do not confuse the `imp_`-prefixed line slugs `imp_elite_skirm`/`imp_slinger` with anything age-related — they are real Imperial upgrade tiers. The dead `NO_ELITE_UNITS` dict that described a never-implemented `_imp`-suffix scheme was deleted from `generate_main_db.py`.)
 
 ### Config patch registries (`analysis/config_constants.py`, `analysis/config_units.py`)
 
@@ -117,11 +117,11 @@ The merged result is written three ways into the reference DB: as inline columns
 
 | Table | Rows | Cols | Contents |
 |---|---|---|---|
-| `ref_units` | 1,849 | 121 | One row per civ × slug × age: identity (civ_name, unit_slug, unit_type ∈ standard/naval/unique, age, class), `base_*` and `final_*` stat sets (15 each, incl. `*_attacks_json`/`*_armors_json` per-class dicts), upgrade costs, and ~70 inline combat-property columns (incl. 9 `dismount_*` and 9 `transform_*`). |
-| `ref_techs_applied` | 10,660 | 11 | Per unit: every applied tech with type (`standard`/`civ_bonus`/`unique_tech`/`work_rate`), building, age, effect description, cost. |
-| `ref_stat_chain` | 12,495 | 20 | Step-ordered full stat snapshots; step 0 = base. The audit trail behind every final number. |
-| `ref_special_effects` | 2,404 | 6 | property_name/value pairs with `source` (extracted_data / UNIQUE_COMBAT_PROPERTIES / CIV_COMBAT_PROPERTIES) and description. |
-| `ref_projectiles` | 1,898 | 8 | `primary`/`extra`/`charge` projectile rows: count, speed, attacks_json, blast radius, siege flag. |
+| `ref_units` | 972 | 121 | One row per civ × slug (age = `Imperial` for every row since the 2026-06-11 purge): identity (civ_name, unit_slug, unit_type ∈ standard/naval/unique, age, class), `base_*` and `final_*` stat sets (15 each, incl. `*_attacks_json`/`*_armors_json` per-class dicts), upgrade costs, and ~70 inline combat-property columns (incl. 9 `dismount_*` and 9 `transform_*`). |
+| `ref_techs_applied` | 6,791 | 11 | Per unit: every applied tech with type (`standard`/`civ_bonus`/`unique_tech`/`work_rate`), building, age, effect description, cost. |
+| `ref_stat_chain` | 7,749 | 20 | Step-ordered full stat snapshots; step 0 = base. The audit trail behind every final number. |
+| `ref_special_effects` | 1,278 | 6 | property_name/value pairs with `source` (extracted_data / UNIQUE_COMBAT_PROPERTIES / CIV_COMBAT_PROPERTIES) and description. |
+| `ref_projectiles` | 1,001 | 8 | `primary`/`extra`/`charge` projectile rows: count, speed, attacks_json, blast radius, siege flag. |
 | `armor_classes` | 40 | 2 | Copied from `armor_classes.json`. |
 | `battle_scores` | 0 at generation | 9 | Created empty; only the retired `compute_battle_scores.py` `main()` writes it (0 rows today — see [derived-data.md](derived-data.md) §5). |
 
@@ -132,9 +132,9 @@ The merged result is written three ways into the reference DB: as inline columns
 | Table | Rows | Notes |
 |---|---|---|
 | `civilizations` | 53 | Alphabetical; ids are local autoincrements, not dat ids. |
-| `ages` | 3 | 2=Feudal, 3=Castle, 4=Imperial — but no Feudal `unit_stats` rows are ever written (the loop skips age 2). |
-| `units` | 218 | Distinct (slug, age): 106 Castle + 112 Imperial; 44 standard + 10 naval + 164 unique definitions. Unique units carry `civ_id`. |
-| `unit_stats` | 11,554 | **218 definitions × all 53 civs.** `has_unit=1` where a ref row exists (final stats copied in), `has_unit=0` stub otherwise — so "does civ X have unit Y" is answered by this flag, and webapp queries never need an outer join. |
+| `ages` | 3 | 2=Feudal, 3=Castle, 4=Imperial — but only Imperial (4) `unit_stats` rows exist since the Imperial-only purge. |
+| `units` | 112 | Distinct (slug, age): all Imperial. Unique units carry `civ_id`. |
+| `unit_stats` | 5,936 | **112 definitions × all 53 civs.** `has_unit=1` where a ref row exists (final stats copied in, 972 rows), `has_unit=0` stub otherwise — so "does civ X have unit Y" is answered by this flag, and webapp queries never need an outer join. |
 | `armor_classes` | 40 | Same as reference DB. |
 | `combat_results`, `comments`, `simulation_comments`, `unit_verifications` | user/runtime data | Created empty; preserved rows restored. |
 

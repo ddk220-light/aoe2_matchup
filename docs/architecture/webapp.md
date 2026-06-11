@@ -56,7 +56,7 @@ All three use `SITE_URL` for absolute URLs.
 | `/api/matchup-recommendations/<civ_a>/<civ_b>` | GET | `best_units.py` (reads `aoe2_reference.db`, `derived_data.db`, `pool_scores.db`) + on-the-fly sims | `matchup_advisor.js` |
 | `/api/matchup-sims` | POST | same as above; runs live `simulate_battle()` cross-sims | `matchup_advisor.js` |
 
-Input validation: `_validate_civ_name()` checks against `_valid_civs()` — an `lru_cache`d frozenset of `DISTINCT civ_name` from `aoe2_reference.db` (53 civs at build 177723). `_validate_age()` accepts only `castle`/`imperial`. Civ names are case-sensitive title-case.
+Input validation: `_validate_civ_name()` checks against `_valid_civs()` — an `lru_cache`d frozenset of `DISTINCT civ_name` from `aoe2_reference.db` (53 civs at build 177723). `_validate_age()` accepts only `imperial` (Imperial-only data model since 2026-06-11; `age=castle` is a clean 400). Civ names are case-sensitive title-case.
 
 ### Replay blueprint (7)
 

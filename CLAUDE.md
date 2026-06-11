@@ -72,7 +72,7 @@ analysis/config_combat.py (+ config_units.py)
 
 ## Conventions
 
-- **Civ names** are title-case strings (`"Franks"`). **Unit slugs** are lowercase; standard units use the plain name (`"knight"`), unique units carry the civ suffix (`"huskarl_goths"`). Non-elite uniques use the same slug in Castle and Imperial — filter by age.
+- **Civ names** are title-case strings (`"Franks"`). **Unit slugs** are lowercase; standard units use the plain name (`"knight"`), unique units carry the civ suffix (`"huskarl_goths"`). **The data model is Imperial-only** (2026-06-11): every `ref_units`/`unit_stats` row is age `Imperial`; `age=castle` API requests get a clean 400. Castle-age techs still apply *inside* the Imperial stat chain.
 - **Determinism:** single sims are deterministic given a seed — run each scenario once, not in a loop. Batch matchup data uses explicit multi-seed sampling (8→40 escalating); golden tests pin `GOLDEN_SEED=20260411`.
 - When comparing units, run **both** equal-count and equal-resources sims; they test different things (raw strength vs. cost-efficiency).
 

@@ -1,6 +1,6 @@
 # Data Model Review — how stage 1–3 stores and derives, and the target architecture
 
-*Last verified: 2026-06-10 · game build 177723 · branch `staging`*
+*Last verified: 2026-06-11 · game build 177723 · branch `staging`*
 
 A deep critique of the extraction/analysis data model: what is stored, what is derived,
 where the model is right, and where curation has crept in that should be derivation.
@@ -21,7 +21,10 @@ collateral (fixed 2026-06-10), and the 21 orphan config keys.
 
 ## 1. What is stored today (the factual map)
 
-Per `(civ × unit_slug × age)` — 1,851 rows in `ref_units`:
+Per `(civ × unit_slug)` — 972 Imperial-only rows in `ref_units` (the
+2026-06-11 Imperial-only purge deleted the 871 Castle rows, the 4 militia
+ghost rows and the 4 phantom 3K siege rows; ages below Imperial exist only
+as tech-staging inside the Imperial chain):
 
 | Group | Storage | Origin |
 |---|---|---|
@@ -65,6 +68,34 @@ The derivation functions (the "interpreters" the owner asked about):
 
 ### 3.1 Availability: four mechanisms, none of them the game's
 
+> **Census re-pinned 2026-06-11 (Imperial-only purge): 163 mismatches over
+> 1,325 Imperial cells (1,162 agree) — ref DB side CLEAN, swap still NOT
+> performed.** The site's data model went Imperial-only: Castle rows were
+> deleted from `ref_units` (and `aoe2_units.db`), and `generate_reference`
+> stopped emitting them (tech staging through Castle untouched). Both
+> ref-DB-side mismatch classes the 2026-06-10 report exposed are now fixed
+> derivationally: the 4 militia ghost rows (Incas/Mapuche/Muisca/Tupi
+> `champion`) die via the new
+> `AvailabilityResolver.tech_tree_disabled_unit_closure()` gate that
+> `generate_reference` consults (type-2 tech-tree unit disables expanded
+> through type-3 upgrade edges — kills the bug class for future DLCs), and
+> the suspect 3K siege rows were confirmed phantom against the game's
+> CivTechTrees JSON (Trebuchet NotAvailable for Shu/Wei/Wu — they field the
+> Traction Trebuchet; Scorpion/Heavy Scorpion NotAvailable for Shu) and
+> pruned via the existing `availability_tech` mechanism (trebuchet → tech
+> 256, heavy_scorpion → tech 94; both tree-disabled for exactly those
+> civs). Every remaining mismatch is a categorized RESOLVER-side limitation
+> pinned in `tests/test_availability_resolver.py`: 56 `regional_grant`
+> missing + 1 tier (CivTechTrees-external grants incl. the Hei-Kuang /
+> Rocket Cart / Siege Elephant alternates and Vietnamese Imp Skirm), 104
+> `team_bonus_leak` phantoms (condottiero + elite_genitour, no in-dat
+> per-civ gate), 1 `enable_mechanism` (Flemish Revolution unit-spawn), 1
+> `mode_gating` (Wei Paphos Champion, Chronicles). Known leftover: a few
+> phantom-derived rows linger in `derived_data.db`/`pool_scores.db`
+> (Shu heavy_scorpion, 3K trebuchet battle/pool scores) — out of scope this
+> pass, cleaned by the next derive run.
+>
+> *(Historical, 2026-06-10 report against the then Castle+Imperial DB:)*
 > **Resolver report 2026-06-10 (Phase B core): 282 mismatches — swap NOT
 > performed.** `analysis/availability_resolver.py` implements the full
 > fixed-point resolution (per-tech civ binding, `required_tech_count`,
@@ -378,7 +409,7 @@ else regenerates from the dat.
 | If this changes | Update |
 |---|---|
 | CivTechTrees JSON extractor lands (re-run the resolver gate) | §3.1 status, §5 diagram, §6 row 2, test pin in `tests/test_availability_resolver.py` |
-| New dat build (regenerate extraction) | re-run `python -m analysis.availability_resolver`; re-probe `DEFAULT_ENABLED_UNIT_IDS`; update the 282-row pin |
+| New dat build (regenerate extraction) | re-run `python -m analysis.availability_resolver`; re-probe `DEFAULT_ENABLED_UNIT_IDS`; update the 163-row pin (Imperial-only universe) |
 | Ability registry generation changes (new generated artifact, or abilities_json adopted after all) | §3.2 status, §7 phase B, runbooks §3 |
 | Multi-form derivation lands | §3.3 (close the bug), improvements.md ledger |
 | New ability families appear in DE dats | §4 irreducible-core list |

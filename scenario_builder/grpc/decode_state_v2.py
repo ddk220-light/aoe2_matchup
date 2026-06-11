@@ -646,7 +646,12 @@ def seed_from_snapshot(snap_path, doc, entity_store):
                 stack = [world_id]
                 ctx_stack = [("world",)]
             else:
-                r.p = op_pos + 1
+                # No marker in the scan window. Byte-stepping a marker-free stretch
+                # costs a full window scan PER BYTE — a multi-MB blob region turns
+                # that quadratic (seen live: the Genitour snapshot hung the seed and
+                # the live tailer for 240s+). The window is proven marker-free, so
+                # skip past it wholesale; markers resume in the entity band anyway.
+                r.p = min(len(data) - 1, op_pos + 1 + 200_000)
                 while len(stack) > len(ctx_stack):
                     ctx_stack.append(None)
                 while len(ctx_stack) > len(stack):

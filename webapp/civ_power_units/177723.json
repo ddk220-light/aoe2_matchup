@@ -1593,7 +1593,7 @@
               "median_delta": -5.3,
               "missing_techs": [],
               "percentile": 12.5,
-              "rank": 9,
+              "rank": 8,
               "score": 64.0,
               "special_effects": [],
               "speed": 1.43,
@@ -3709,7 +3709,7 @@
               "median_delta": -3.6,
               "missing_techs": [],
               "percentile": 27.8,
-              "rank": 34,
+              "rank": 35,
               "score": 62.8,
               "special_effects": [],
               "speed": 1.49,
@@ -6870,12 +6870,41 @@
                 "Khmer UT"
               ],
               "ease": null,
+              "is_signature": true,
+              "line_slug": "knight",
+              "median_delta": 11.0,
+              "missing_techs": [],
+              "percentile": 94.4,
+              "rank": 12,
+              "score": 77.4,
+              "special_effects": [],
+              "speed": 1.49,
+              "stats": {
+                "attack": 18.0,
+                "cost_food": 60.0,
+                "cost_gold": 70.0,
+                "cost_wood": 0,
+                "hp": 140.0,
+                "melee_armor": 5.0,
+                "pierce_armor": 6.0,
+                "range": 0,
+                "speed": 1.49
+              },
+              "strength": "signature",
+              "unit_name": "Elite Konnik",
+              "unit_slug": "elite_konnik_bulgarians"
+            },
+            {
+              "bonus_abilities": [
+                "Khmer UT"
+              ],
+              "ease": null,
               "is_signature": false,
               "line_slug": "knight",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 48.1,
-              "rank": 23,
+              "percentile": 50.0,
+              "rank": 24,
               "score": 66.4,
               "special_effects": [],
               "speed": 1.49,
@@ -6893,35 +6922,6 @@
               "strength": "average",
               "unit_name": "Cavalier",
               "unit_slug": "paladin"
-            },
-            {
-              "bonus_abilities": [
-                "Khmer UT"
-              ],
-              "ease": null,
-              "is_signature": false,
-              "line_slug": "knight",
-              "median_delta": -12.2,
-              "missing_techs": [],
-              "percentile": 61.1,
-              "rank": 41,
-              "score": 54.2,
-              "special_effects": [],
-              "speed": 1.49,
-              "stats": {
-                "attack": 18.0,
-                "cost_food": 60.0,
-                "cost_gold": 70.0,
-                "cost_wood": 0,
-                "hp": 140.0,
-                "melee_armor": 5.0,
-                "pierce_armor": 6.0,
-                "range": 0,
-                "speed": 1.49
-              },
-              "strength": "average",
-              "unit_name": "Elite Konnik",
-              "unit_slug": "elite_konnik_bulgarians"
             }
           ],
           "light_cav": [
@@ -7354,10 +7354,12 @@
         "primary_strength": "cavalry",
         "signature_areas": [
           "light_cav",
+          "knight",
           "ram"
         ],
         "strong_areas": [
           "light_cav",
+          "knight",
           "scorpion",
           "militia",
           "spear",
@@ -7392,7 +7394,7 @@
         "galleon": "weak",
         "gunpowder": null,
         "hulk": "weak",
-        "knight": "average",
+        "knight": "signature",
         "light_cav": "signature",
         "militia": "strong",
         "ram": "signature",
@@ -7902,8 +7904,8 @@
               "missing_techs": [
                 "Bloodlines"
               ],
-              "percentile": 66.7,
-              "rank": 12,
+              "percentile": 61.1,
+              "rank": 13,
               "score": 76.4,
               "special_effects": [],
               "speed": 1.49,
@@ -7918,7 +7920,7 @@
                 "range": 0,
                 "speed": 1.49
               },
-              "strength": "strong",
+              "strength": "average",
               "unit_name": "Paladin",
               "unit_slug": "paladin"
             },
@@ -7929,8 +7931,8 @@
               "line_slug": "knight",
               "median_delta": 1.1,
               "missing_techs": [],
-              "percentile": 88.9,
-              "rank": 21,
+              "percentile": 87.0,
+              "rank": 22,
               "score": 67.5,
               "special_effects": [
                 "Charge +25 melee"
@@ -8476,21 +8478,19 @@
           ]
         }
       },
-      "strategic_description": "This civ is versatile, with strength across Cavalry, Ranged and Infantry -- allowing flexible strategies that adapt to any opponent. Strong anti-cavalry defense with Halberdier to hold positions against cavalry pushes. Vulnerable to massed archers -- consider aggressive play before ranged compositions develop. Bombard Cannons provide long-range siege power for breaking through fortified positions.",
+      "strategic_description": "This civ is versatile, with strength across Ranged and Infantry -- allowing flexible strategies that adapt to any opponent. Strong anti-cavalry defense with Halberdier to hold positions against cavalry pushes. Vulnerable to massed archers -- consider aggressive play before ranged compositions develop. Bombard Cannons provide long-range siege power for breaking through fortified positions.",
       "strategic_summary": {
-        "primary_strength": "cavalry",
+        "primary_strength": "ranged",
         "signature_areas": [
           "cannon_galleon"
         ],
         "strong_areas": [
-          "knight",
           "gunpowder",
           "spear",
           "bombard_cannon",
           "cannon_galleon"
         ],
         "strong_columns": [
-          "cavalry",
           "ranged",
           "infantry",
           "siege"
@@ -8519,7 +8519,7 @@
         "galleon": "average",
         "gunpowder": "strong",
         "hulk": "average",
-        "knight": "strong",
+        "knight": "average",
         "light_cav": "weak",
         "militia": "weak",
         "ram": "poor",
@@ -9109,8 +9109,8 @@
               "line_slug": "knight",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 46.3,
-              "rank": 24,
+              "percentile": 48.1,
+              "rank": 25,
               "score": 66.4,
               "special_effects": [],
               "speed": 1.49,
@@ -10235,8 +10235,8 @@
                 "Blast Furnace",
                 "Bloodlines"
               ],
-              "percentile": 55.6,
-              "rank": 19,
+              "percentile": 57.4,
+              "rank": 20,
               "score": 70.5,
               "special_effects": [],
               "speed": 1.49,
@@ -10265,7 +10265,7 @@
               "median_delta": -6.7,
               "missing_techs": [],
               "percentile": 63.0,
-              "rank": 37,
+              "rank": 38,
               "score": 59.7,
               "special_effects": [
                 "Trample (0.5 radius)",
@@ -11344,8 +11344,8 @@
                 "Bloodlines",
                 "Plate Barding Armor"
               ],
-              "percentile": 57.4,
-              "rank": 20,
+              "percentile": 55.6,
+              "rank": 21,
               "score": 68.3,
               "special_effects": [],
               "speed": 1.49,
@@ -12408,8 +12408,8 @@
               "line_slug": "knight",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 44.4,
-              "rank": 25,
+              "percentile": 46.3,
+              "rank": 26,
               "score": 66.4,
               "special_effects": [],
               "speed": 1.49,
@@ -13570,7 +13570,7 @@
               "missing_techs": [
                 "Husbandry"
               ],
-              "percentile": 77.8,
+              "percentile": 74.1,
               "rank": 4,
               "score": 82.6,
               "special_effects": [],
@@ -14734,7 +14734,7 @@
               "line_slug": "militia",
               "median_delta": 15.3,
               "missing_techs": [],
-              "percentile": 75.4,
+              "percentile": 73.9,
               "rank": 19,
               "score": 58.7,
               "special_effects": [
@@ -16906,7 +16906,7 @@
               "missing_techs": [
                 "Bloodlines"
               ],
-              "percentile": 83.3,
+              "percentile": 79.6,
               "rank": 6,
               "score": 80.8,
               "special_effects": [],
@@ -18033,8 +18033,8 @@
               "line_slug": "knight",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 42.6,
-              "rank": 26,
+              "percentile": 44.4,
+              "rank": 27,
               "score": 66.4,
               "special_effects": [
                 "+14.0 HP/min regen"
@@ -22445,7 +22445,7 @@
               "line_slug": "knight",
               "median_delta": 12.5,
               "missing_techs": [],
-              "percentile": 75.9,
+              "percentile": 72.2,
               "rank": 9,
               "score": 78.9,
               "special_effects": [],
@@ -22474,8 +22474,8 @@
               "line_slug": "knight",
               "median_delta": -8.5,
               "missing_techs": [],
-              "percentile": 68.5,
-              "rank": 38,
+              "percentile": 66.7,
+              "rank": 39,
               "score": 57.9,
               "special_effects": [],
               "speed": 1.54,
@@ -23422,7 +23422,7 @@
               "line_slug": "militia",
               "median_delta": 24.6,
               "missing_techs": [],
-              "percentile": 73.9,
+              "percentile": 75.4,
               "rank": 12,
               "score": 68.0,
               "special_effects": [],
@@ -24317,8 +24317,8 @@
               "line_slug": "knight",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 40.7,
-              "rank": 27,
+              "percentile": 42.6,
+              "rank": 28,
               "score": 66.4,
               "special_effects": [],
               "speed": 1.49,
@@ -26545,7 +26545,7 @@
               "line_slug": "knight",
               "median_delta": 12.8,
               "missing_techs": [],
-              "percentile": 94.4,
+              "percentile": 92.6,
               "rank": 7,
               "score": 79.2,
               "special_effects": [
@@ -29023,8 +29023,8 @@
               "line_slug": "knight",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 38.9,
-              "rank": 28,
+              "percentile": 40.7,
+              "rank": 29,
               "score": 66.4,
               "special_effects": [],
               "speed": 1.49,
@@ -31318,13 +31318,13 @@
                 "Relic +1 cav attack 4"
               ],
               "ease": null,
-              "is_signature": true,
+              "is_signature": false,
               "line_slug": "knight",
               "median_delta": 12.7,
               "missing_techs": [
                 "Blast Furnace"
               ],
-              "percentile": 90.7,
+              "percentile": 88.9,
               "rank": 8,
               "score": 79.1,
               "special_effects": [],
@@ -31340,7 +31340,7 @@
                 "range": 0,
                 "speed": 1.49
               },
-              "strength": "signature",
+              "strength": "strong",
               "unit_name": "Paladin",
               "unit_slug": "paladin"
             }
@@ -31427,7 +31427,7 @@
                 "Blast Furnace",
                 "Plate Mail Armor"
               ],
-              "percentile": 29.4,
+              "percentile": 27.5,
               "rank": 31,
               "score": 28.7,
               "special_effects": [],
@@ -32367,7 +32367,7 @@
               "line_slug": "knight",
               "median_delta": 12.5,
               "missing_techs": [],
-              "percentile": 74.1,
+              "percentile": 70.4,
               "rank": 10,
               "score": 78.9,
               "special_effects": [],
@@ -34523,8 +34523,8 @@
               "missing_techs": [
                 "Blast Furnace"
               ],
-              "percentile": 50.0,
-              "rank": 22,
+              "percentile": 29.6,
+              "rank": 23,
               "score": 67.2,
               "special_effects": [],
               "speed": 1.49,
@@ -34539,7 +34539,7 @@
                 "range": 0,
                 "speed": 1.49
               },
-              "strength": "average",
+              "strength": "weak",
               "unit_name": "Cavalier",
               "unit_slug": "paladin"
             }
@@ -35085,6 +35085,7 @@
         ],
         "summary_key": "multi_flexible",
         "weak_areas": [
+          "knight",
           "skirmisher",
           "archer",
           "cav_archer",
@@ -35110,7 +35111,7 @@
         "galleon": "poor",
         "gunpowder": "signature",
         "hulk": "poor",
-        "knight": "average",
+        "knight": "weak",
         "light_cav": "strong",
         "militia": "strong",
         "ram": "poor",
@@ -39571,7 +39572,7 @@
               "line_slug": "knight",
               "median_delta": 15.6,
               "missing_techs": [],
-              "percentile": 85.2,
+              "percentile": 83.3,
               "rank": 5,
               "score": 82.0,
               "special_effects": [],
@@ -40608,7 +40609,7 @@
                 "Plate Barding Armor"
               ],
               "percentile": 53.7,
-              "rank": 17,
+              "rank": 18,
               "score": 70.8,
               "special_effects": [],
               "speed": 1.49,
@@ -41723,7 +41724,7 @@
               "median_delta": -3.6,
               "missing_techs": [],
               "percentile": 25.9,
-              "rank": 35,
+              "rank": 36,
               "score": 62.8,
               "special_effects": [],
               "speed": 1.49,
@@ -42895,8 +42896,8 @@
               "line_slug": "knight",
               "median_delta": 8.9,
               "missing_techs": [],
-              "percentile": 92.6,
-              "rank": 13,
+              "percentile": 90.7,
+              "rank": 14,
               "score": 75.3,
               "special_effects": [
                 "Charge +5 melee"
@@ -42926,8 +42927,8 @@
               "line_slug": "knight",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 37.0,
-              "rank": 29,
+              "percentile": 38.9,
+              "rank": 30,
               "score": 66.4,
               "special_effects": [
                 "Charge +5 melee"
@@ -45068,7 +45069,7 @@
                 "Iron casting"
               ],
               "percentile": 11.1,
-              "rank": 39,
+              "rank": 40,
               "score": 56.5,
               "special_effects": [],
               "speed": 1.49,
@@ -46148,8 +46149,8 @@
               "line_slug": "knight",
               "median_delta": 7.6,
               "missing_techs": [],
-              "percentile": 29.6,
-              "rank": 14,
+              "percentile": 31.5,
+              "rank": 15,
               "score": 74.0,
               "special_effects": [
                 "0% bonus damage reduction"
@@ -47208,8 +47209,8 @@
               "line_slug": "knight",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 35.2,
-              "rank": 30,
+              "percentile": 37.0,
+              "rank": 31,
               "score": 66.4,
               "special_effects": [],
               "speed": 1.49,
@@ -48188,7 +48189,7 @@
               "line_slug": "knight",
               "median_delta": 12.5,
               "missing_techs": [],
-              "percentile": 72.2,
+              "percentile": 68.5,
               "rank": 11,
               "score": 78.9,
               "special_effects": [],
@@ -49324,8 +49325,8 @@
               "line_slug": "knight",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 33.3,
-              "rank": 31,
+              "percentile": 35.2,
+              "rank": 32,
               "score": 66.4,
               "special_effects": [],
               "speed": 1.49,
@@ -49340,7 +49341,7 @@
                 "range": 0,
                 "speed": 1.49
               },
-              "strength": "weak",
+              "strength": "average",
               "unit_name": "Cavalier",
               "unit_slug": "paladin"
             },
@@ -49351,8 +49352,8 @@
               "line_slug": "knight",
               "median_delta": -5.0,
               "missing_techs": [],
-              "percentile": 70.4,
-              "rank": 36,
+              "percentile": 75.9,
+              "rank": 37,
               "score": 61.4,
               "special_effects": [],
               "speed": 1.54,
@@ -49866,7 +49867,6 @@
         ],
         "summary_key": "multi_flexible",
         "weak_areas": [
-          "knight",
           "gunpowder",
           "militia",
           "spear"
@@ -49884,7 +49884,7 @@
         "galleon": "average",
         "gunpowder": "weak",
         "hulk": "average",
-        "knight": "weak",
+        "knight": "average",
         "light_cav": "average",
         "militia": "poor",
         "ram": "strong",
@@ -50405,8 +50405,8 @@
               "missing_techs": [
                 "Husbandry"
               ],
-              "percentile": 87.0,
-              "rank": 16,
+              "percentile": 85.2,
+              "rank": 17,
               "score": 71.9,
               "special_effects": [],
               "speed": 1.35,
@@ -52487,8 +52487,8 @@
               "line_slug": "knight",
               "median_delta": 0.0,
               "missing_techs": [],
-              "percentile": 31.5,
-              "rank": 32,
+              "percentile": 33.3,
+              "rank": 33,
               "score": 66.4,
               "special_effects": [],
               "speed": 1.49,
@@ -53660,7 +53660,7 @@
                 "Blast Furnace"
               ],
               "percentile": 13.0,
-              "rank": 40,
+              "rank": 41,
               "score": 54.5,
               "special_effects": [],
               "speed": 1.49,
@@ -54925,7 +54925,7 @@
               "line_slug": "spear",
               "median_delta": -1.5,
               "missing_techs": [],
-              "percentile": 27.5,
+              "percentile": 29.4,
               "rank": 38,
               "score": 28.0,
               "special_effects": [],
@@ -55840,8 +55840,8 @@
               "missing_techs": [
                 "Plate Barding Armor"
               ],
-              "percentile": 79.6,
-              "rank": 18,
+              "percentile": 77.8,
+              "rank": 19,
               "score": 70.6,
               "special_effects": [],
               "speed": 1.49,
@@ -55870,7 +55870,7 @@
               "median_delta": -1.7,
               "missing_techs": [],
               "percentile": 81.5,
-              "rank": 33,
+              "rank": 34,
               "score": 64.7,
               "special_effects": [
                 "+4 attack per kill",
@@ -56881,7 +56881,7 @@
               "median_delta": 7.1,
               "missing_techs": [],
               "percentile": 59.3,
-              "rank": 15,
+              "rank": 16,
               "score": 73.5,
               "special_effects": [],
               "speed": 1.49,
@@ -56981,11 +56981,11 @@
               "ease": null,
               "is_signature": false,
               "line_slug": "shock_infantry",
-              "median_delta": -5.2,
+              "median_delta": -5.3,
               "missing_techs": [],
               "percentile": 0.0,
-              "rank": 8,
-              "score": 64.1,
+              "rank": 9,
+              "score": 64.0,
               "special_effects": [
                 "+30.0 HP/min regen"
               ],

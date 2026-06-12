@@ -27,7 +27,7 @@ from aoe2x.sim.sim_outcome_cache import unit_fingerprint
 from aoe2x.sim.sim_version import compute_sim_version
 from aoe2x.sim.unit_lines import UNIT_LINES, CIV_MISSING_UNITS
 
-from aoe2x.paths import WEBAPP_DIR as _DATA_DIR
+from aoe2x.paths import GOLDEN_DIR as _DATA_DIR
 
 REF_DB_PATH = os.path.join(str(_DATA_DIR), "aoe2_reference.db")
 

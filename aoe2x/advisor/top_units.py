@@ -28,7 +28,7 @@ import sqlite3
 import sys
 
 from aoe2x.sim.unit_lines import UNIT_LINES
-from aoe2x.paths import WEBAPP_DIR as _DATA_DIR
+from aoe2x.paths import GOLDEN_DIR as _DATA_DIR
 
 REF_DB = os.path.join(str(_DATA_DIR), "aoe2_reference.db")
 OUT_JSON = os.path.join(str(_DATA_DIR), "civ_top_units.json")

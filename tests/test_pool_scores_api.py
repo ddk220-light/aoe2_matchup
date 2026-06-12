@@ -6,7 +6,7 @@ import pytest
 @pytest.fixture(autouse=True)
 def _require_real_dbs():
     """Skip if the live pool_scores.db isn't generated yet."""
-    p = os.path.join(os.path.dirname(__file__), "..", "webapp", "pool_scores.db")
+    p = os.path.join(os.path.dirname(__file__), "..", "data", "golden", "pool_scores.db")
     if not os.path.exists(p):
         pytest.skip(f"{p} not present — run derive_pool_scores.py first")
 

@@ -9,7 +9,7 @@ from aoe2x.sim.simulation import prepare_combat_unit
 from aoe2x.sim.simulation_real import simulate_real_battle
 
 
-REF_DB = os.path.join(os.path.dirname(__file__), "..", "webapp", "aoe2_reference.db")
+REF_DB = os.path.join(os.path.dirname(__file__), "..", "data", "golden", "aoe2_reference.db")
 
 
 def _load(civ, slug, age="Imperial"):

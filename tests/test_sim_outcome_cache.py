@@ -22,7 +22,7 @@ from aoe2x.sim.sim_outcome_cache import (
 from aoe2x.sim.simulation import prepare_combat_unit as prep_abstract
 from aoe2x.sim.simulation_real import prepare_combat_unit as prep_position
 
-REF_DB = os.path.join(os.path.dirname(__file__), "..", "webapp", "aoe2_reference.db")
+REF_DB = os.path.join(os.path.dirname(__file__), "..", "data", "golden", "aoe2_reference.db")
 
 
 def _ref_unit(civ, slug):

@@ -15,7 +15,7 @@ formulas change.
 import os
 import sqlite3
 
-from aoe2x.paths import WEBAPP_DIR as _DATA_DIR
+from aoe2x.paths import GOLDEN_DIR as _DATA_DIR
 
 DEFAULT_DB_PATH = os.path.join(str(_DATA_DIR), "derived_data.db")
 

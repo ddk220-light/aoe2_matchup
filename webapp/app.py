@@ -86,11 +86,13 @@ def inject_replay_enabled():
     return {"replay_enabled": REPLAY_ENABLED}
 
 
-# Database paths
-DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_units.db")
-REF_DB_PATH = os.path.join(os.path.dirname(__file__), "aoe2_reference.db")
-DERIVED_DB_PATH = os.path.join(os.path.dirname(__file__), "derived_data.db")
-PATCHES_DB_PATH = os.path.join(os.path.dirname(__file__), "patches.db")
+# Database paths — committed golden artifacts (see aoe2x/paths.py)
+from aoe2x.paths import GOLDEN_DIR as _GOLDEN_DIR
+
+DB_PATH = os.path.join(str(_GOLDEN_DIR), "aoe2_units.db")
+REF_DB_PATH = os.path.join(str(_GOLDEN_DIR), "aoe2_reference.db")
+DERIVED_DB_PATH = os.path.join(str(_GOLDEN_DIR), "derived_data.db")
+PATCHES_DB_PATH = os.path.join(str(_GOLDEN_DIR), "patches.db")
 
 # Age definitions — the site is Imperial-only (2026-06-11): the DBs carry
 # only fully-upgraded Imperial rows, so Imperial is the only servable age.
@@ -1253,7 +1255,7 @@ def api_ref_unit_line(line_slug):
 
     # Attach pool_scores payload for units covered by pool_scores.db.
     # Out-of-pool units (siege/naval) simply don't get the field.
-    pool_scores_db_path = os.path.join(os.path.dirname(__file__), "pool_scores.db")
+    pool_scores_db_path = os.path.join(str(_GOLDEN_DIR), "pool_scores.db")
     all_unit_pairs = [
         (entry["civ_name"], entry["unit_slug"])
         for entry in result["imperial"]

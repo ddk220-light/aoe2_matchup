@@ -16,16 +16,7 @@ range/kiting advantages. No XY positions or unit movement.
 import json
 import random
 
-try:
-    from analysis.ability_registry import combat_dict_defaults
-except ImportError:  # pragma: no cover - launch dir on sys.path, repo root not
-    import sys
-    from pathlib import Path
-
-    _ROOT = str(Path(__file__).resolve().parents[2])
-    if _ROOT not in sys.path:
-        sys.path.insert(0, _ROOT)
-    from analysis.ability_registry import combat_dict_defaults
+from aoe2x.dbgen.ability_registry import combat_dict_defaults
 
 # Simulation constants
 DT = 0.1  # 100ms time step

@@ -30,7 +30,7 @@ from statistics import median as _median
 
 from aoe2x.rank.compute_battle_scores import compute_siege_antibuilding_scores, SIEGE_LINE_SLUGS
 from aoe2x.batch.patches_db import get_current_build
-from aoe2x.paths import WEBAPP_DIR as _DATA_DIR
+from aoe2x.paths import GOLDEN_DIR as _DATA_DIR
 
 DEFAULT_DERIVED = os.path.join(str(_DATA_DIR), "derived_data.db")
 

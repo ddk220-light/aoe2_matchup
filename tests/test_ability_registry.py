@@ -5,7 +5,7 @@ Five assertion layers, all against COMMITTED artifacts (no regeneration):
   (a) orphan keys      — config_combat.py keys vs the ref-DB roster
   (b) registry<->config — property-name parity with config_combat.py values
   (c) registry<->schema/loader — declared columns exist in
-                          webapp/aoe2_reference.db, and the loaders' key sets
+                          data/golden/aoe2_reference.db, and the loaders' key sets
                           track the registry. Since Phase B (2026-06-10) the
                           generate_reference DDL/writer and the webapp loader
                           mapping are GENERATED from the registry, so most of
@@ -40,21 +40,21 @@ from pathlib import Path
 
 import pytest
 
-from analysis.ability_registry import (
+from aoe2x.dbgen.ability_registry import (
     ABILITIES,
     ALL_ENGINES,
     FAMILIES,
     iter_params,
     param_names,
 )
-from analysis.config_combat import (
+from aoe2x.dbgen.config_combat import (
     CIV_COMBAT_PROPERTIES,
     COMBAT_PROPERTIES,
     UNIQUE_COMBAT_PROPERTIES,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-REF_DB = ROOT / "webapp" / "aoe2_reference.db"
+REF_DB = ROOT / "data" / "golden" / "aoe2_reference.db"
 ENGINE_SOURCES = {
     "abstract": (ROOT / "aoe2x" / "sim" / "simulation.py").read_text(encoding="utf-8"),
     "position": (ROOT / "aoe2x" / "sim" / "simulation_real.py").read_text(encoding="utf-8"),
@@ -303,7 +303,7 @@ def test_every_declared_column_exists_in_ref_db(ref_columns):
     ]
     assert not missing, (
         f"Registry declares ref_units columns that do not exist in the "
-        f"committed webapp/aoe2_reference.db: {missing}"
+        f"committed data/golden/aoe2_reference.db: {missing}"
     )
 
 
@@ -356,7 +356,7 @@ def test_loader_emits_exactly_core_plus_registry_params(ref_rows):
 # ---------------------------------------------------------------------------
 
 def _maindb_loader_and_cursor():
-    from analysis.generate_main_db import build_combat_dict_from_ref as maindb_loader
+    from aoe2x.dbgen.generate_main_db import build_combat_dict_from_ref as maindb_loader
 
     conn = sqlite3.connect(f"file:{REF_DB.as_posix()}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row

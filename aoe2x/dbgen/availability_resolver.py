@@ -91,7 +91,8 @@ DEFAULT_ENABLED_UNIT_IDS = frozenset({74, 545})
 TREBUCHET_UNPACKED_ID = 42
 TREBUCHET_PACKED_ID = 331
 
-_REF_DB_DEFAULT = Path(__file__).parent.parent / "webapp" / "aoe2_reference.db"
+from aoe2x.paths import GOLDEN_DIR as _GOLDEN_DIR
+_REF_DB_DEFAULT = _GOLDEN_DIR / "aoe2_reference.db"
 
 
 @dataclass

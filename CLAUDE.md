@@ -11,12 +11,12 @@ Flask web app ([aoe2matchup.com](https://aoe2matchup.com)) that extracts Age of 
 ## Build Pipeline (stats)
 
 ```bash
-python -m extraction.run                  # ~10s — empires2_x2_p1.dat -> extraction/extracted_data/*.json (needs genieutils-py)
-python -m analysis.generate_reference     # ~30s -> webapp/aoe2_reference.db (audit trail; THE DB the app serves)
-python -m analysis.generate_main_db       # ~2s  -> webapp/aoe2_units.db (flat unit_stats; legacy, no app route reads it)
+python -m aoe2x.extract.run               # ~10s — data/inputs/empires2_x2_p1.dat -> data/inputs/extracted_data/*.json (needs genieutils-py)
+python -m aoe2x.dbgen.generate_reference   # ~30s -> data/golden/aoe2_reference.db (audit trail; THE DB the app serves)
+python -m aoe2x.dbgen.generate_main_db     # ~2s  -> data/golden/aoe2_units.db (flat unit_stats; /units page + unit_verifications read it)
 ```
 
-The `.dat` file is not in the repo — copy it from a local AoE2:DE install into `extraction/`. `genieutils-py` is in neither requirements file (use the conda python, which has it).
+The `.dat` file is not in the repo — copy it from a local AoE2:DE install into `data/inputs/`. `genieutils-py` is in neither requirements file (use the conda python, which has it).
 
 Rankings/matchup data is **not** produced by the above. It comes from the sim-data chain (PyPy + `simulation_real.py`): batch matchup sims → `derive_unit_rankings.py` / `derive_pool_scores.py` / `best_units.py` → `derived_data.db` / `pool_scores.db` / `civ_power_units/<build>.json`. Exact commands: `docs/architecture/runbooks.md` §1. (`compute_battle_scores.py` is **retired** — don't run it; its `battle_scores.json` output and the `app.py` loader were deleted, scores live in `derived_data.db`.)
 

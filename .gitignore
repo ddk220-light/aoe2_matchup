@@ -24,8 +24,10 @@ wheels/
 # Game data file (too large, users should copy from their own installation)
 empires2_x2_p1.dat
 
-# Extracted data (regenerated from dat file via python3 -m extraction.run)
-extraction/extracted_data/
+# Extracted data + layer-1 inputs live under data/inputs/ (own .gitignore);
+# machine-local working artifacts (sim caches, patch intermediates, local
+# matchup DBs) live under data/local/
+data/local/
 
 # IDE
 .idea/
@@ -51,7 +53,7 @@ ANALYSIS.md
 # User data
 webapp/matchup_votes.jsonl
 
-# Battle score cache and DB (machine-local build artifacts)
+# Battle score cache and DB (legacy locations; now under data/local/)
 webapp/battle_cache.json
 webapp/battle_scores.db
 
@@ -89,13 +91,10 @@ tmp/
 .claude/settings.local.json
 
 # Patch-pipeline local artifacts (pre-patch archives + intermediates;
-# created by webapp/patch_pipeline.py, never committed)
-extraction/extracted_data_prev/
-webapp/aoe2_reference_*.db
-webapp/changed_units_*.json
+# created by aoe2x/batch/patch_pipeline.py into data/local/, never committed)
+data/golden/*.db.bak
 webapp/*.db.bak
 
 # Local matchup working DB (in-repo Armenians-only stub removed 2026-06-11;
 # real baselines live outside the repo, e.g. D:/AI/matchup_baseline_<build>.db)
 webapp/matchup_db.db
-aoe2x/batch/matchup_db.db

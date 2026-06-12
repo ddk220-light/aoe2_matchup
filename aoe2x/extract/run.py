@@ -110,20 +110,20 @@ def extract_all(dat_path, output_dir):
 
 
 def main():
-    base_dir = Path(__file__).parent
-    dat_path = base_dir / "empires2_x2_p1.dat"
-    output_dir = base_dir / "extracted_data"
+    from aoe2x.paths import INPUTS_DIR, EXTRACTED_DIR
+    dat_path = INPUTS_DIR / "empires2_x2_p1.dat"
+    output_dir = EXTRACTED_DIR
 
     if not dat_path.exists():
         print(f"ERROR: dat file not found at {dat_path}")
-        print("Copy empires2_x2_p1.dat into the extraction/ folder.")
+        print("Copy empires2_x2_p1.dat from your AoE2:DE install into data/inputs/.")
         sys.exit(1)
 
     print("=" * 60)
     print("Extracting data from dat file...")
     print("=" * 60)
     extract_all(dat_path, output_dir)
-    print("\nDone! JSON files written to extraction/extracted_data/")
+    print(f"\nDone! JSON files written to {output_dir}/")
 
 
 if __name__ == "__main__":

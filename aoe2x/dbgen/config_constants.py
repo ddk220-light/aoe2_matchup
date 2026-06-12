@@ -6,12 +6,12 @@ and analysis modules depend on. It has no dependencies on other config sub-modul
 
 from pathlib import Path
 
-from extraction.extract_constants import CIV_NAMES
+from aoe2x.extract.extract_constants import CIV_NAMES
+from aoe2x.paths import REPO_ROOT as PROJECT_ROOT
+from aoe2x.paths import EXTRACTED_DIR as OUTPUT_DIR
+from aoe2x.paths import GOLDEN_DIR as _GOLDEN_DIR
 
-# Paths - relative to project root
-PROJECT_ROOT = Path(__file__).parent.parent
-OUTPUT_DIR = Path(__file__).parent.parent / "extraction" / "extracted_data"
-REF_DB_PATH = PROJECT_ROOT / "webapp" / "aoe2_reference.db"
+REF_DB_PATH = _GOLDEN_DIR / "aoe2_reference.db"
 
 # Age constants
 FEUDAL_AGE = 2

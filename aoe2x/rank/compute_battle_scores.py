@@ -26,10 +26,11 @@ from aoe2x.sim.combat_unit_loader import build_combat_dict_from_ref
 from aoe2x.sim.simulation import prepare_combat_unit, simulate_battle
 from aoe2x.sim.unit_lines import UNIT_LINES, CIV_MISSING_UNITS
 
-from aoe2x.paths import WEBAPP_DIR as _DATA_DIR
+from aoe2x.paths import GOLDEN_DIR as _DATA_DIR
+from aoe2x.paths import LOCAL_DIR as _LOCAL_DIR
 
 DB_PATH = os.path.join(str(_DATA_DIR), "aoe2_reference.db")
-CACHE_PATH = os.path.join(str(_DATA_DIR), "battle_cache.json")
+CACHE_PATH = os.path.join(str(_LOCAL_DIR), "battle_cache.json")
 CACHE_VERSION = 11
 
 BENCHMARKS = [
@@ -2440,7 +2441,7 @@ def main():
     print(f"Rankings: {ranking_time:.1f}s")
 
     # Write output (round-robin + benchmarks only, no militia)
-    out_path = os.path.join(str(_DATA_DIR), "battle_scores.json")
+    out_path = os.path.join(str(_LOCAL_DIR), "battle_scores.json")
     with open(out_path, "w") as f:
         json.dump(output, f, separators=(",", ":"))
 

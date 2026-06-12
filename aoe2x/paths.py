@@ -16,7 +16,10 @@ GOLDEN_DIR = DATA_DIR / "golden"
 # Layer-1 external inputs (gitignored content + committed MANIFEST.md).
 INPUTS_DIR = DATA_DIR / "inputs"
 EXTRACTED_DIR = INPUTS_DIR / "extracted_data"
+# Machine-local working artifacts (sim caches, patch-pipeline intermediates,
+# local matchup DBs) — gitignored wholesale.
+LOCAL_DIR = DATA_DIR / "local"
 
-# Transitional anchor while the Flask app + golden DBs still live in webapp/
+# Transitional anchor while the Flask app still lives in webapp/
 # (removed at the end of the migration).
 WEBAPP_DIR = REPO_ROOT / "webapp"

@@ -34,7 +34,7 @@ if str(_REPO) not in sys.path:
 
 from aoe2x.sim import simulation_real as SR  # noqa: E402
 
-UNITS_DB = _WEBAPP / "aoe2_units.db"
+UNITS_DB = _REPO / "data" / "golden" / "aoe2_units.db"
 
 
 @dataclass

@@ -68,7 +68,7 @@ def test_committed_patches_have_ranking_rows():
     patches.db that records unit changes must also carry ranking-diff rows
     (patch_unit_ranking sat empty for build 177723 because the data was
     written by an ad-hoc finalize script that skipped pipeline step 8)."""
-    db = os.path.join(os.path.dirname(__file__), "..", "webapp", "patches.db")
+    db = os.path.join(os.path.dirname(__file__), "..", "data", "golden", "patches.db")
     if not os.path.exists(db):
         import pytest
         pytest.skip("committed patches.db not present")

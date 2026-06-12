@@ -28,7 +28,7 @@ from pathlib import Path
 # --- CONSTANTS ---
 TECHTREE_URL = "https://raw.githubusercontent.com/SiegeEngineers/aoe2techtree/master/data/data.json"
 WIKI_API = "https://ageofempires.fandom.com/api.php"
-DB_PATH = Path("webapp/aoe2_reference.db")
+DB_PATH = Path("data/golden/aoe2_reference.db")
 REF_DIR = Path("reference")
 FLOAT_TOL = 0.01
 MATCH = "✅"
@@ -1524,7 +1524,7 @@ Regenerate the corpus after:
 
 - **Stats:** [SiegeEngineers/aoe2techtree](https://github.com/SiegeEngineers/aoe2techtree)
 - **Civ bonuses + unique techs:** [Fandom Wiki](https://ageofempires.fandom.com/wiki/Age_of_Empires_II)
-- **DB:** `webapp/aoe2_reference.db` (local SQLite, queried directly)
+- **DB:** `data/golden/aoe2_reference.db` (local SQLite, queried directly)
 """.format(today=TODAY)
     readme_path = REF_DIR / "README.md"
     readme_path.parent.mkdir(parents=True, exist_ok=True)

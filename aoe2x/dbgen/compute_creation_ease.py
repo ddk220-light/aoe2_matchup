@@ -14,7 +14,8 @@ Output: unit_creation_ease table in aoe2_reference.db
 import sqlite3
 import os
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "..", "webapp", "aoe2_reference.db")
+from aoe2x.paths import GOLDEN_DIR as _GOLDEN_DIR
+DB_PATH = os.path.join(str(_GOLDEN_DIR), "aoe2_reference.db")
 
 # Building ID 82 = Castle
 CASTLE_BUILDING_ID = 82

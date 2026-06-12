@@ -7,7 +7,7 @@ from aoe2x.batch.patches_db import get_current_build
 
 def _db_path():
     """Battle scores live in derived_data.db now (app.py reads from there)."""
-    return os.path.join(os.path.dirname(__file__), "..", "webapp", "derived_data.db")
+    return os.path.join(os.path.dirname(__file__), "..", "data", "golden", "derived_data.db")
 
 
 def _inject_naval_score(score_value):

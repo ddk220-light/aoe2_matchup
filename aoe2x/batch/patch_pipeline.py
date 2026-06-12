@@ -24,17 +24,18 @@ import sqlite3
 import subprocess
 import sys
 
-from aoe2x.paths import REPO_ROOT, WEBAPP_DIR
+from aoe2x.paths import REPO_ROOT, GOLDEN_DIR, EXTRACTED_DIR, LOCAL_DIR
 
 _ROOT = str(REPO_ROOT)
-_WEBAPP = str(WEBAPP_DIR)
-DERIVED_DB = os.path.join(_WEBAPP, "derived_data.db")
-POOL_DB = os.path.join(_WEBAPP, "pool_scores.db")
-REF_DB = os.path.join(_WEBAPP, "aoe2_reference.db")
-PATCHES_DB = os.path.join(_WEBAPP, "patches.db")
-EXTRACTED = os.path.join(_ROOT, "extraction", "extracted_data")
-EXTRACTED_PREV = os.path.join(_ROOT, "extraction", "extracted_data_prev")
-REF_PREV = os.path.join(_WEBAPP, "aoe2_reference_prev.db")
+_GOLDEN = str(GOLDEN_DIR)
+_LOCAL = str(LOCAL_DIR)
+DERIVED_DB = os.path.join(_GOLDEN, "derived_data.db")
+POOL_DB = os.path.join(_GOLDEN, "pool_scores.db")
+REF_DB = os.path.join(_GOLDEN, "aoe2_reference.db")
+PATCHES_DB = os.path.join(_GOLDEN, "patches.db")
+EXTRACTED = str(EXTRACTED_DIR)
+EXTRACTED_PREV = os.path.join(_LOCAL, "extracted_data_prev")
+REF_PREV = os.path.join(_LOCAL, "aoe2_reference_prev.db")
 
 
 def carry_forward_battle_scores(derived_db_path, old_build, new_build):
@@ -95,10 +96,10 @@ def run(*, build, release_date, source_url, summary_md, baseline_build,
     print("[1/8] Archived extracted_data + aoe2_reference.db (before).")
 
     # 2. Re-extract + rebuild
-    _run([sys.executable, "-m", "extraction.run"], cwd=_ROOT)
-    _run([sys.executable, "-m", "analysis.generate_reference"], cwd=_ROOT)
-    _run([sys.executable, "-m", "analysis.generate_main_db"], cwd=_ROOT)
-    _run([sys.executable, os.path.join("analysis", "patches",
+    _run([sys.executable, "-m", "aoe2x.extract.run"], cwd=_ROOT)
+    _run([sys.executable, "-m", "aoe2x.dbgen.generate_reference"], cwd=_ROOT)
+    _run([sys.executable, "-m", "aoe2x.dbgen.generate_main_db"], cwd=_ROOT)
+    _run([sys.executable, os.path.join("aoe2x", "dbgen", "patches",
           "patch_mayan_archer_cost.py")], cwd=_ROOT)
     print("[2/8] Re-extracted + rebuilt ref/main DBs.")
 
@@ -110,7 +111,7 @@ def run(*, build, release_date, source_url, summary_md, baseline_build,
         print("[3/8] WARNING: no unit stat changes detected. If you expected combat "
               "changes, verify the new .dat is actually the new patch. Continuing — "
               "the patch will still be recorded (notes only, no re-sim impact).")
-    cu_file = os.path.join(_WEBAPP, f"changed_units_{build}.json")
+    cu_file = os.path.join(_LOCAL, f"changed_units_{build}.json")
     with open(cu_file, "w") as f:
         json.dump(sorted(changed_slugs), f)
 

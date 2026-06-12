@@ -3,7 +3,7 @@
 Used as a row-level cache key in matchup_db: rows with a different
 sim_version are re-simulated on the next run, others are skipped.
 
-Hashes simulation_real.py + analysis/config_combat.py BYTE content — never
+Hashes simulation_real.py + aoe2x/dbgen/config_combat.py BYTE content — never
 edit those two files (even a comment) outside a planned full re-sim.
 simulation.py (the abstract engine) is deliberately NOT hashed; its only
 regression guard is the golden-baseline test (tests/test_simulations.py).
@@ -12,11 +12,10 @@ regression guard is the golden-baseline test (tests/test_simulations.py).
 import hashlib
 import os
 
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
 DEFAULT_FILES = [
     os.path.join(os.path.dirname(__file__), "simulation_real.py"),
-    os.path.join(_REPO_ROOT, "analysis", "config_combat.py"),
+    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                 "dbgen", "config_combat.py"),
 ]
 
 

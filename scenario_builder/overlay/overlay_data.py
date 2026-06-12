@@ -5,7 +5,7 @@ unique techs) from the project's reference DB, shaped for a video overlay card.
 Mirrors what the aoe2matchup webapp shows for a unit in a unit-vs-unit sim:
 final fully-upgraded stats + cost + the techs/bonuses that were applied.
 
-Source of truth: webapp/aoe2_reference.db
+Source of truth: data/golden/aoe2_reference.db
     ref_units          - base + final stats, cost, attacks/armors json
     ref_techs_applied  - every tech/bonus applied (tech_type: standard / civ_bonus
                          / unique_tech / work_rate), with building/age/cost
@@ -21,7 +21,7 @@ from pathlib import Path
 # repo-root-relative paths
 _HERE = Path(__file__).resolve()
 _REPO = _HERE.parents[2]  # scenario_builder/overlay/ -> repo root
-REF_DB = _REPO / "webapp" / "aoe2_reference.db"
+REF_DB = _REPO / "data" / "golden" / "aoe2_reference.db"
 ICON_DIR = _REPO / "webapp" / "static" / "img" / "units"
 
 # class ids that represent the *base* attack, not a bonus

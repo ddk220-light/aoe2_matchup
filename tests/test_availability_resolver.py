@@ -76,12 +76,12 @@ import os
 
 import pytest
 
-# The resolver reads extraction/extracted_data/*.json, which is gitignored
+# The resolver reads data/inputs/extracted_data/*.json, which is gitignored
 # (regenerated locally from the .dat, like the dat itself) — absent on CI.
 # The census is a local guard, same policy as the extraction toolchain.
 _EXTRACTED = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "extraction", "extracted_data", "units.json",
+    "data", "inputs", "extracted_data", "units.json",
 )
 pytestmark = pytest.mark.skipif(
     not os.path.exists(_EXTRACTED),
@@ -89,11 +89,11 @@ pytestmark = pytest.mark.skipif(
 )
 
 if os.path.exists(_EXTRACTED):
-    from analysis.availability_resolver import AvailabilityResolver, build_report
+    from aoe2x.dbgen.availability_resolver import AvailabilityResolver, build_report
 
 # ---------------------------------------------------------------------------
 # Pinned report (2026-06-11, build 177723, Imperial-only ref DB).
-# Regenerate the literals with:  python -m analysis.availability_resolver
+# Regenerate the literals with:  python -m aoe2x.dbgen.availability_resolver
 # ---------------------------------------------------------------------------
 EXPECTED_TOTAL = 1325
 EXPECTED_AGREE = 1162

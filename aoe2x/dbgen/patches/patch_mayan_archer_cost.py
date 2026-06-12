@@ -42,7 +42,8 @@ import os
 import sqlite3
 import sys
 
-DB = os.path.join(os.path.dirname(__file__), "..", "..", "webapp", "aoe2_reference.db")
+from aoe2x.paths import GOLDEN_DIR as _GOLDEN_DIR
+DB = os.path.join(str(_GOLDEN_DIR), "aoe2_reference.db")
 
 # (unit_slug, age) -> cumulative cost multiplier (full Mayan archer tier chain
 # up to and including that age). Castle = 0.90*0.89; Imperial = 0.90*0.89*0.88.

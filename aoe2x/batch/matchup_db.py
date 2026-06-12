@@ -18,10 +18,12 @@ import sqlite3
 
 from aoe2x.sim.battle_outcome import BattleOutcome
 
-# Default for the batch runners' local working DB. Not tracked in git —
-# the in-repo Armenians-only stub was removed 2026-06-11; real baselines
-# live outside the repo (D:/AI/matchup_baseline_<build>.db).
-DEFAULT_DB_PATH = os.path.join(os.path.dirname(__file__), "matchup_db.db")
+# Default for the batch runners' local working DB (data/local is gitignored
+# wholesale — the old in-repo Armenians-only stub was removed 2026-06-11;
+# real baselines live outside the repo, e.g. D:/AI/matchup_baseline_<build>.db).
+from aoe2x.paths import LOCAL_DIR as _LOCAL_DIR
+
+DEFAULT_DB_PATH = os.path.join(str(_LOCAL_DIR), "matchup_db.db")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS matchup_battles (

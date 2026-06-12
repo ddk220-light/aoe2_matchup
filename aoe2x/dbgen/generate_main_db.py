@@ -14,16 +14,17 @@ import sqlite3
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).parent.parent
-REF_DB_PATH = PROJECT_ROOT / "webapp" / "aoe2_reference.db"
-MAIN_DB_PATH = PROJECT_ROOT / "webapp" / "aoe2_units.db"
+from aoe2x.paths import GOLDEN_DIR as _GOLDEN_DIR
+
+REF_DB_PATH = _GOLDEN_DIR / "aoe2_reference.db"
+MAIN_DB_PATH = _GOLDEN_DIR / "aoe2_units.db"
 # Import config for COMBAT_PROPERTIES, PAIRED_UNITS, etc.
 # When run as module, use relative import; when run as script, add parent to path
 try:
     from .config import COMBAT_PROPERTIES, PAIRED_UNITS
 except ImportError:
     sys.path.insert(0, str(Path(__file__).parent.parent))
-    from analysis.config import COMBAT_PROPERTIES, PAIRED_UNITS
+    from aoe2x.dbgen.config import COMBAT_PROPERTIES, PAIRED_UNITS
 
 # Age mapping: ref DB uses "Castle"/"Imperial" strings, main DB uses integer IDs
 AGE_MAP = {
@@ -523,7 +524,8 @@ def generate_main_database():
     print(f"  Inserted {len(civ_id_map)} civilizations")
 
     # --- Populate armor_classes from reference DB extracted data ---
-    armor_classes_file = Path(__file__).parent.parent / "extraction" / "extracted_data" / "armor_classes.json"
+    from aoe2x.paths import EXTRACTED_DIR
+    armor_classes_file = EXTRACTED_DIR / "armor_classes.json"
     if armor_classes_file.exists():
         armor_classes = json.load(open(armor_classes_file))
         for ac in armor_classes:

@@ -31,16 +31,7 @@ analysis/ability_registry.py — the canonical list of ability params.
 
 import json
 
-try:
-    from analysis.ability_registry import iter_params
-except ImportError:  # pragma: no cover - launch dir on sys.path, repo root not
-    import sys
-    from pathlib import Path
-
-    _ROOT = str(Path(__file__).resolve().parents[2])
-    if _ROOT not in sys.path:
-        sys.path.insert(0, _ROOT)
-    from analysis.ability_registry import iter_params
+from aoe2x.dbgen.ability_registry import iter_params
 
 
 # Core final stats present (same key) in both prepared shapes: (key, ndigits).

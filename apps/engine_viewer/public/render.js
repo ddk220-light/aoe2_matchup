@@ -70,29 +70,37 @@ export function createRenderer(canvas, scenario) {
     for (let x = Math.floor(minX); x <= Math.ceil(maxX); x++) {
       for (let y = Math.floor(minY); y <= Math.ceil(maxY); y++) {
         tilePath(x, y);
-        ctx.fillStyle = ((x + y) & 1) ? "#3c4a26" : "#41502a";
+        ctx.fillStyle = ((x + y) & 1) ? "#5a4632" : "#52402d";   // brown ground
         ctx.fill();
-        ctx.strokeStyle = "rgba(0,0,0,.18)";
+        ctx.strokeStyle = "rgba(0,0,0,.15)";
         ctx.stroke();
       }
     }
   }
 
+  // seed wood per tree (for the wood-left circle fraction)
+  const seedWood = new Map(
+    scenario.entities.filter((e) => e.type === "tree").map((e) => [e.id, e.wood]));
+
   function drawTree(e) {
     tilePath(e.x, e.y);
     const base = SPECIES_COLOR[e.species] || SPECIES_COLOR.default;
-    ctx.fillStyle = e.wood <= 0 ? "#5b4a2e" : base;   // stump brown when empty
+    ctx.fillStyle = e.wood <= 0 ? "#6b5638" : base;   // stump brown when empty
     ctx.fill();
     ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.stroke();
     if (e.wood > 0) {
-      // wood-remaining inner diamond (shrinks as depleted)
-      const f = Math.max(0.12, e.wood / 100);
+      // wood-left circle: ring fills proportionally to remaining wood
+      const f = e.wood / (seedWood.get(e.id) || 100);
       const [sx, sy] = px(e.x, e.y);
-      const w = cam.k * 0.62 * f, h = cam.k * 0.31 * f;
+      const r = cam.k * 0.30;
+      ctx.lineWidth = Math.max(2, cam.k * 0.14);
+      ctx.strokeStyle = "rgba(0,0,0,.45)";
+      ctx.beginPath(); ctx.arc(sx, sy, r, 0, 2 * Math.PI); ctx.stroke();
+      ctx.strokeStyle = "#b6f09a";
       ctx.beginPath();
-      ctx.moveTo(sx, sy - h); ctx.lineTo(sx + w, sy);
-      ctx.lineTo(sx, sy + h); ctx.lineTo(sx - w, sy); ctx.closePath();
-      ctx.fillStyle = "rgba(20,40,16,.55)"; ctx.fill();
+      ctx.arc(sx, sy, r, -Math.PI / 2, -Math.PI / 2 + f * 2 * Math.PI);
+      ctx.stroke();
+      ctx.lineWidth = 1;
     }
   }
 

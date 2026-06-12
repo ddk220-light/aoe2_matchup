@@ -18,6 +18,8 @@ export function createGame(scenario) {
     if (e.type === "town_center") Object.assign(e, { queue: [], rally: null });
     if (e.type === "tree") Object.assign(e, { gatherers: 0, felled: false });
   }
+  const xs = scenario.entities.map((e) => e.x);
+  const ys = scenario.entities.map((e) => e.y);
   const g = {
     t: 0,
     ents,
@@ -27,15 +29,20 @@ export function createGame(scenario) {
     events: [],
     ended: false,
     nextId: 10000,
+    blocked: new Set(),
+    bounds: { minX: Math.floor(Math.min(...xs)) - 6, maxX: Math.ceil(Math.max(...xs)) + 6,
+              minY: Math.floor(Math.min(...ys)) - 6, maxY: Math.ceil(Math.max(...ys)) + 6 },
   };
-  recomputeTreeSpots(g);
+  recomputeObstacles(g);
   return g;
 }
 
-// A tree's gather capacity = its free orthogonal neighbor tiles (capture:
-// trees walled in by forest + the camp footprint were never harvested; the
-// rally tree capped at 2 because the camp blocks its east face).
-function recomputeTreeSpots(g) {
+// Immovable obstacles: trees with wood left, and building footprints from
+// the moment construction starts (farms, when they exist, will be exempt —
+// walkable). A tree's gather capacity = its free orthogonal neighbor tiles
+// (capture: trees walled in by forest + the camp footprint were never
+// harvested; the rally tree capped at 2 because the camp blocks its east face).
+function recomputeObstacles(g) {
   const blocked = new Set();
   const tile = (x, y) => `${Math.floor(x)},${Math.floor(y)}`;
   for (const e of g.ents.values()) {
@@ -47,6 +54,7 @@ function recomputeTreeSpots(g) {
           blocked.add(`${tx},${ty}`);
     }
   }
+  g.blocked = blocked;
   for (const e of g.ents.values()) {
     if (e.type !== "tree") continue;
     const tx = Math.floor(e.x), ty = Math.floor(e.y);
@@ -56,6 +64,74 @@ function recomputeTreeSpots(g) {
     }
     e.spots = spots;
   }
+}
+
+// ----------------------------------------------------------------- pathing
+function losClear(g, x0, y0, x1, y1) {
+  const d = Math.hypot(x1 - x0, y1 - y0);
+  const steps = Math.max(1, Math.ceil(d / 0.3));
+  for (let i = 1; i <= steps; i++) {
+    const x = x0 + ((x1 - x0) * i) / steps;
+    const y = y0 + ((y1 - y0) * i) / steps;
+    if (g.blocked.has(`${Math.floor(x)},${Math.floor(y)}`)) return false;
+  }
+  return true;
+}
+
+// Tile A* (8-dir, no corner cutting), returns waypoints in world coords or
+// null when unreachable. Greedy line-of-sight smoothing afterwards.
+function findPath(g, x0, y0, x1, y1) {
+  if (losClear(g, x0, y0, x1, y1)) return [[x1, y1]];
+  const { minX, maxX, minY, maxY } = g.bounds;
+  const sx = Math.floor(x0), sy = Math.floor(y0);
+  const gx = Math.floor(x1), gy = Math.floor(y1);
+  const key = (x, y) => `${x},${y}`;
+  const free = (x, y) =>
+    x >= minX && x <= maxX && y >= minY && y <= maxY && !g.blocked.has(key(x, y));
+  if (!free(gx, gy)) return null;
+  const open = [[Math.hypot(gx - sx, gy - sy), 0, sx, sy]];
+  const came = new Map([[key(sx, sy), null]]);
+  const gcost = new Map([[key(sx, sy), 0]]);
+  const DIRS = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1],
+                [1, 1, 1.41], [1, -1, 1.41], [-1, 1, 1.41], [-1, -1, 1.41]];
+  let found = false;
+  while (open.length) {
+    open.sort((a, b) => a[0] - b[0]);
+    const [, gc, cx, cy] = open.shift();
+    if (cx === gx && cy === gy) { found = true; break; }
+    for (const [dx, dy, w] of DIRS) {
+      const nx = cx + dx, ny = cy + dy;
+      if (!free(nx, ny)) continue;
+      if (dx && dy && (!free(cx + dx, cy) || !free(cx, cy + dy))) continue;
+      const nk = key(nx, ny), ng = gc + w;
+      if (gcost.has(nk) && gcost.get(nk) <= ng) continue;
+      gcost.set(nk, ng);
+      came.set(nk, key(cx, cy));
+      open.push([ng + Math.hypot(gx - nx, gy - ny), ng, nx, ny]);
+    }
+  }
+  if (!found) return null;
+  const tiles = [];
+  let cur = key(gx, gy);
+  while (cur) { tiles.push(cur); cur = came.get(cur); }
+  tiles.reverse();
+  let pts = tiles.slice(1).map((k) => {
+    const [tx, ty] = k.split(",").map(Number);
+    return [tx + 0.5, ty + 0.5];
+  });
+  pts[pts.length - 1] = [x1, y1];
+  // greedy LOS smoothing
+  const out = [];
+  let from = [x0, y0];
+  let i = 0;
+  while (i < pts.length) {
+    let j = pts.length - 1;
+    while (j > i && !losClear(g, from[0], from[1], pts[j][0], pts[j][1])) j--;
+    out.push(pts[j]);
+    from = pts[j];
+    i = j + 1;
+  }
+  return out;
 }
 
 export function step(g) {
@@ -89,7 +165,7 @@ function applyCommands(g) {
       g.ents.set(camp.id, camp);
       g.wood -= C.CAMP_COST_WOOD;
       emit(g, "foundation", { eid: camp.id, building: c.building });
-      recomputeTreeSpots(g);       // the footprint blocks adjacent gather spots
+      recomputeObstacles(g);       // footprint blocks tiles + gather spots
       for (const id of c.unit_ids) {
         const u = g.ents.get(id);
         if (u) { u.task = "to_build"; u.target = camp.id; assignBuildSpot(g, u, camp); }
@@ -181,12 +257,23 @@ function nearestTree(g, x, y, crowdPenalty = C.CROWD_PENALTY) {
   return best;
 }
 
-function moveToward(e, tx, ty) {
-  const dx = tx - e.x, dy = ty - e.y;
-  const d = Math.hypot(dx, dy), s = C.VILL_SPEED * C.TICK;
-  if (d <= s) { e.x = tx; e.y = ty; return true; }
-  e.x += (dx / d) * s; e.y += (dy / d) * s;
-  return false;
+// Path-following movement: (re)plans via findPath when the target changes,
+// then walks the waypoints. Falls back to a straight line if unreachable so
+// units never freeze.
+function moveAlong(g, v, tx, ty) {
+  const key = `${tx.toFixed(2)},${ty.toFixed(2)}`;
+  if (v.pathKey !== key) {
+    v.path = findPath(g, v.x, v.y, tx, ty) || [[tx, ty]];
+    v.pathKey = key;
+  }
+  let budget = C.VILL_SPEED * C.TICK;
+  while (budget > 1e-9 && v.path.length) {
+    const [wx, wy] = v.path[0];
+    const d = Math.hypot(wx - v.x, wy - v.y);
+    if (d <= budget) { v.x = wx; v.y = wy; v.path.shift(); budget -= d; }
+    else { v.x += ((wx - v.x) / d) * budget; v.y += ((wy - v.y) / d) * budget; budget = 0; }
+  }
+  return !v.path.length;
 }
 
 // Builders line up on the foundation face they approach from (capture:
@@ -207,29 +294,50 @@ function assignBuildSpot(g, v, camp) {
 // Assign villager to gather a specific tree (or nearest if id missing/empty).
 // A directly-targeted tree that is already crowded also falls through to the
 // nearest-with-space choice (rally tree behavior seen in the capture).
+// Stand on a free, unoccupied face tile of the tree (orthogonal neighbor),
+// pulled in to gather reach. Faces are exclusive — the physical spot model.
+function takeFace(g, v, tree) {
+  const tx0 = Math.floor(tree.x), ty0 = Math.floor(tree.y);
+  tree.faceUsed ??= new Set();
+  const faces = [];
+  [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy], i) => {
+    if (g.blocked.has(`${tx0 + dx},${ty0 + dy}`)) return;
+    if (tree.faceUsed.has(i)) return;
+    faces.push({ i, x: tree.x + dx * C.GATHER_REACH, y: tree.y + dy * C.GATHER_REACH });
+  });
+  if (!faces.length) return false;
+  faces.sort((a, b) => dist(a.x, a.y, v.x, v.y) - dist(b.x, b.y, v.x, v.y));
+  tree.faceUsed.add(faces[0].i);
+  v.face = faces[0].i;
+  v.tx = faces[0].x;
+  v.ty = faces[0].y;
+  return true;
+}
+
 function assignGather(g, v, treeId) {
+  releaseTree(g, v);
   let tree = treeId != null ? g.ents.get(treeId) : null;
   if (!tree || tree.type !== "tree" || tree.wood <= 0
       || tree.gatherers >= treeCap(tree))
     tree = nearestTree(g, v.x, v.y);
   if (!tree) { v.task = v.carry > 0 ? "to_drop" : "idle"; return; }
-  if (v.target != null) {
-    const old = g.ents.get(v.target);
-    if (old && old.type === "tree" && old.gatherers > 0) old.gatherers--;
-  }
+  if (!takeFace(g, v, tree)) { v.task = v.carry > 0 ? "to_drop" : "idle"; return; }
   tree.gatherers++;
   v.target = tree.id;
   v.task = "to_tree";
-  const ang = (tree.gatherers * 90 + (v.id % 4) * 25) * Math.PI / 180;
-  v.tx = tree.x + Math.cos(ang) * C.GATHER_REACH;
-  v.ty = tree.y + Math.sin(ang) * C.GATHER_REACH;
+  v.dropT = null;
 }
 
 function releaseTree(g, v) {
   if (v.target != null) {
     const tr = g.ents.get(v.target);
-    if (tr && tr.type === "tree" && tr.gatherers > 0) tr.gatherers--;
+    if (tr && tr.type === "tree") {
+      if (tr.gatherers > 0) tr.gatherers--;
+      if (v.face != null) tr.faceUsed?.delete(v.face);
+    }
   }
+  v.target = null;
+  v.face = null;
 }
 
 // --------------------------------------------------------------- villager FSM
@@ -243,7 +351,7 @@ function stepVill(g, v) {
         assignGather(g, v, tr ? tr.id : null);
         return;
       }
-      if (moveToward(v, v.tx, v.ty)) v.task = "building";
+      if (moveAlong(g, v, v.tx, v.ty)) v.task = "building";
       return;
     }
     case "building": {
@@ -263,13 +371,13 @@ function stepVill(g, v) {
       return;
     }
     case "to_rally": {
-      if (moveToward(v, v.tx, v.ty)) assignGather(g, v, v.rallyTarget);
+      if (moveAlong(g, v, v.tx, v.ty)) assignGather(g, v, v.rallyTarget);
       return;
     }
     case "to_tree": {
       const tree = g.ents.get(v.target);
-      if (!tree || tree.wood <= 0) { releaseTree(g, v); assignGather(g, v, null); return; }
-      if (moveToward(v, v.tx, v.ty)) { v.task = "settle"; v.phase = C.SETTLE_TIME; }
+      if (!tree || tree.wood <= 0) { assignGather(g, v, null); return; }
+      if (moveAlong(g, v, v.tx, v.ty)) { v.task = "settle"; v.phase = C.SETTLE_TIME; }
       return;
     }
     case "settle": {
@@ -286,7 +394,7 @@ function stepVill(g, v) {
     }
     case "fell": {
       const tree = g.ents.get(v.target);
-      if (!tree || tree.wood <= 0) { releaseTree(g, v); assignGather(g, v, null); return; }
+      if (!tree || tree.wood <= 0) { assignGather(g, v, null); return; }
       if (tree.felled) { v.task = "gather"; return; }
       v.phase -= C.TICK;
       if (v.phase <= 0) { tree.felled = true; emit(g, "tree_felled", { eid: tree.id }); v.task = "gather"; }
@@ -304,20 +412,27 @@ function stepVill(g, v) {
       if (tree.wood <= 1e-9) {
         tree.wood = 0;
         emit(g, "tree_empty", { eid: tree.id });
+        recomputeObstacles(g);       // empty tree stops blocking movement/spots
       }
       if (v.carry >= C.CARRY_CAP - 1e-9) { v.carry = C.CARRY_CAP; v.task = "to_drop"; }
       return;
     }
     case "to_tree_next": {           // tree emptied with no load: find a new one
-      releaseTree(g, v);
       assignGather(g, v, null);
       return;
     }
     case "to_drop": {
-      const d = nearestDrop(g, v.x, v.y);
-      if (!d) return;                // no dropsite yet (camp still building)
-      const [px, py] = dropPoint(d, v.x, v.y);
-      if (Math.hypot(px - v.x, py - v.y) <= C.DEPOSIT_REACH) {
+      if (!v.dropT) {
+        const d = nearestDrop(g, v.x, v.y);
+        if (!d) return;              // no dropsite yet (camp still building)
+        const [px, py] = dropPoint(d, v.x, v.y);
+        let ox = px - d.e.x, oy = py - d.e.y;
+        const n = Math.hypot(ox, oy) || 1;
+        v.dropT = [px + (ox / n) * C.DEPOSIT_REACH,
+                   py + (oy / n) * C.DEPOSIT_REACH];
+      }
+      if (moveAlong(g, v, v.dropT[0], v.dropT[1])) {
+        v.dropT = null;
         g.wood += v.carry; g.collected += v.carry;
         emit(g, "deposit", { eid: v.id, amount: +v.carry.toFixed(2) });
         v.carry = 0;
@@ -327,7 +442,7 @@ function stepVill(g, v) {
         } else {
           assignGather(g, v, null);  // retarget to nearest non-empty tree
         }
-      } else moveToward(v, px, py);
+      }
       return;
     }
     default: return;                 // idle

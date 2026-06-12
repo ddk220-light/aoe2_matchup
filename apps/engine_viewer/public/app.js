@@ -22,6 +22,7 @@ function rebuildTo(t) {
   g = createGame(scen);
   run(g, Math.max(0, Math.min(t, DUR)));
   updateHud();
+  renderer.draw(g);    // repaint immediately (don't depend on RAF timing)
 }
 
 function updateHud() {

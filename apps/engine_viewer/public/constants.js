@@ -10,7 +10,9 @@ export const TREE_WOOD = 100;          // [dat]                [cap] confirms 10
 export const FELL_TIME = 1.2;          // [cal] per-tree cut-down delay before wood flows
 export const SETTLE_TIME = 0.7;        // [cap] arrive -> first-wood-tick lag
 export const GATHER_REACH = 0.9;       // [cap] stand distance from tree center
-export const TREE_CAP = 4;             // [cal] max villagers gathering one tile-tree
+export const TREE_CAP = 3;             // [cap] max seen on one tree (3 builders on 658)
+export const CROWD_PENALTY = 1.3;      // [cal] tiles of extra distance per gatherer
+                                       //       already on a tree (prefer free trees)
 
 // Town Center
 export const TC_SIZE = 4;              // [dat] 4x4 tile footprint

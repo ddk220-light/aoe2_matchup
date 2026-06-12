@@ -25,6 +25,11 @@ OUT = ROOT / "data" / SCEN / "commands.json"
 TYPE_BY_NAME = {"villager": "villager", "town center": "town_center",
                 "scout cavalry": "scout"}
 TREE_RADIUS = 9.0   # gather trees within this many tiles of the build/gather focus
+# Unnamed-in-aocref gaia masters that are trees (verified vs gRPC capture:
+# both seed a wood pool and got harvested in camp300).
+TREE_MASTERS_UNNAMED = {2567, 2570}
+# Per-species wood pools measured from the capture seed (default 100).
+TREE_WOOD_BY_MASTER = {1063: 150.0}
 
 
 def main():
@@ -87,13 +92,18 @@ def main():
     for g in getattr(match, "gaia", None) or []:
         name = (getattr(g, "name", None) or "").lower()
         pos = getattr(g, "position", None)
-        if pos is None or "tree" not in name:
+        master = getattr(g, "object_id", None)
+        if pos is None:
+            continue
+        is_tree = "tree" in name or master in TREE_MASTERS_UNNAMED
+        if not is_tree:
             continue
         if math.hypot(pos.x - focus[0], pos.y - focus[1]) <= TREE_RADIUS:
             trees.append({"id": g.instance_id, "type": "tree", "owner": 0,
                           "x": round(pos.x, 2), "y": round(pos.y, 2),
-                          "wood": 100.0, "hp": 20.0,
-                          "species": (g.name or "").replace("Tree (", "").rstrip(")")})
+                          "wood": TREE_WOOD_BY_MASTER.get(master, 100.0),
+                          "hp": 20.0, "master": master,
+                          "species": (g.name or "Straggler").replace("Tree (", "").rstrip(")")})
     entities += trees
 
     doc = {

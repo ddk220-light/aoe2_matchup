@@ -18,6 +18,12 @@ export function createGame(scenario) {
     if (e.type === "town_center") Object.assign(e, { queue: [], rally: null });
     if (e.type === "tree") Object.assign(e, { gatherers: 0, felled: false });
   }
+  // debug numbering: starting villagers 1..n (by id), trained continue
+  let num = 1;
+  for (const e of [...ents.values()]
+      .filter((e) => e.type === "villager").sort((a, b) => a.id - b.id)) {
+    e.num = num++;
+  }
   const xs = scenario.entities.map((e) => e.x);
   const ys = scenario.entities.map((e) => e.y);
   const g = {
@@ -29,6 +35,7 @@ export function createGame(scenario) {
     events: [],
     ended: false,
     nextId: 10000,
+    nextNum: num,
     blocked: new Set(),
     bounds: { minX: Math.floor(Math.min(...xs)) - 6, maxX: Math.ceil(Math.max(...xs)) + 6,
               minY: Math.floor(Math.min(...ys)) - 6, maxY: Math.ceil(Math.max(...ys)) + 6 },
@@ -197,7 +204,7 @@ function stepTC(g, tc) {
   const v = {
     id: g.nextId++, type: "villager", owner: 1, task: "idle", carry: 0,
     x: tc.x - C.TC_SIZE / 2 - 0.2, y: tc.y + C.TC_SIZE / 2 + 0.2,
-    target: null, phase: 0,
+    target: null, phase: 0, num: g.nextNum++,
   };
   g.ents.set(v.id, v);
   emit(g, "spawn", { eid: v.id });
@@ -236,10 +243,26 @@ function nearestDrop(g, x, y) {
   return best;
 }
 
-function dropPoint(d, x, y) {
-  const px = Math.max(d.e.x - d.half, Math.min(x, d.e.x + d.half));
-  const py = Math.max(d.e.y - d.half, Math.min(y, d.e.y + d.half));
-  return [px, py];
+// Deposit stand point: nearest FREE tile on the dropsite's perimeter ring —
+// always a legal pathfinding destination (the old geometric edge point could
+// land inside an adjacent tree tile, defeating the path planner).
+function dropStand(g, d, v) {
+  const x0 = Math.floor(d.e.x - d.half), x1 = Math.ceil(d.e.x + d.half) - 1;
+  const y0 = Math.floor(d.e.y - d.half), y1 = Math.ceil(d.e.y + d.half) - 1;
+  let best = null, bd = Infinity;
+  for (let tx = x0 - 1; tx <= x1 + 1; tx++) {
+    for (let ty = y0 - 1; ty <= y1 + 1; ty++) {
+      if (tx >= x0 && tx <= x1 && ty >= y0 && ty <= y1) continue; // inside
+      if (g.blocked.has(`${tx},${ty}`)) continue;
+      // nearest legal point WITHIN this free tile (not its center) — keeps
+      // the walk as short as the old geometric edge point allowed
+      const sx = Math.max(tx + 0.15, Math.min(v.x, tx + 0.85));
+      const sy = Math.max(ty + 0.15, Math.min(v.y, ty + 0.85));
+      const dd = Math.hypot(sx - v.x, sy - v.y);
+      if (dd < bd) { bd = dd; best = [sx, sy]; }
+    }
+  }
+  return best;
 }
 
 // Tree choice with soft crowding: villagers prefer a free tree nearby over
@@ -425,11 +448,8 @@ function stepVill(g, v) {
       if (!v.dropT) {
         const d = nearestDrop(g, v.x, v.y);
         if (!d) return;              // no dropsite yet (camp still building)
-        const [px, py] = dropPoint(d, v.x, v.y);
-        let ox = px - d.e.x, oy = py - d.e.y;
-        const n = Math.hypot(ox, oy) || 1;
-        v.dropT = [px + (ox / n) * C.DEPOSIT_REACH,
-                   py + (oy / n) * C.DEPOSIT_REACH];
+        v.dropT = dropStand(g, d, v);
+        if (!v.dropT) return;        // dropsite fully walled in
       }
       if (moveAlong(g, v, v.dropT[0], v.dropT[1])) {
         v.dropT = null;

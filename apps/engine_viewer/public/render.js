@@ -113,8 +113,22 @@ export function createRenderer(canvas, scenario) {
   }
 
   function drawUnit(e) {
+    // active path (debug): faint line from the unit through its waypoints
+    if (e.path && e.path.length) {
+      ctx.strokeStyle = "rgba(255,255,255,.30)";
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      const [ux, uy] = px(e.x, e.y);
+      ctx.moveTo(ux, uy);
+      for (const [wx, wy] of e.path) {
+        const [sx2, sy2] = px(wx, wy);
+        ctx.lineTo(sx2, sy2);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
     const [sx, sy] = px(e.x, e.y);
-    const s = cam.k * 0.5;
+    const s = cam.k * 0.55;
     ctx.fillStyle = "rgba(0,0,0,.25)";
     ctx.fillRect(sx - s / 2, sy - s / 2 + 2, s, s);
     ctx.fillStyle = e.type === "scout" ? "#6f8fd9" : "#4f7fd9";
@@ -127,6 +141,14 @@ export function createRenderer(canvas, scenario) {
       ctx.fillStyle = "#c98a3a";
       ctx.fillRect(sx + s / 2 - 4, sy - s / 2 - 4, 6, 6);
     }
+    // debug number (scout gets "S")
+    ctx.fillStyle = "#fff";
+    ctx.font = `bold ${Math.max(9, Math.round(s * 0.72))}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(e.type === "scout" ? "S" : String(e.num ?? "?"), sx, sy + 0.5);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
   }
 
   function draw(g) {

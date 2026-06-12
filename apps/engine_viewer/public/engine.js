@@ -216,10 +216,20 @@ function stepTC(g, tc) {
   }
 }
 
+// Construction: count active builders each tick, accrue points by the real
+// multi-builder formula (3*T1/(n+2) total time), complete at T1 points.
 function stepCamp(g, camp) {
-  // Construction advances by the number of builders currently adjacent.
   if (camp.built) return;
-  // builders are counted in stepVill via camp.buildContrib accumulation
+  let n = 0;
+  for (const e of g.ents.values()) {
+    if (e.type === "villager" && e.task === "building" && e.target === camp.id) n++;
+  }
+  if (!n) return;
+  camp.progress += C.BUILD_RATE(n) * C.TICK;
+  if (camp.progress >= C.BUILD_TIME_LUMBER_CAMP) {
+    camp.built = true;
+    emit(g, "built", { eid: camp.id, n });
+  }
 }
 
 // --------------------------------------------------------------- helpers
@@ -270,11 +280,14 @@ function dropStand(g, d, v) {
 // bounced off the occupied rally tree to the free straggler next to it).
 function treeCap(e) { return Math.min(e.spots ?? 4, C.TREE_CAP); }
 
-function nearestTree(g, x, y, crowdPenalty = C.CROWD_PENALTY) {
+// Nearest tree with a free gather spot. Crowding is handled physically by
+// the face/spot capacity model — no artificial distance penalty (one caused
+// endgame villagers to skip near half-occupied trees for far empty ones).
+function nearestTree(g, x, y) {
   let best = null, bs = Infinity;
   for (const e of g.ents.values()) {
     if (e.type !== "tree" || e.wood <= 0 || e.gatherers >= treeCap(e)) continue;
-    const score = dist(e.x, e.y, x, y) + crowdPenalty * e.gatherers;
+    const score = dist(e.x, e.y, x, y);
     if (score < bs) { bs = score; best = e; }
   }
   return best;
@@ -340,9 +353,17 @@ function takeFace(g, v, tree) {
 function assignGather(g, v, treeId) {
   releaseTree(g, v);
   let tree = treeId != null ? g.ents.get(treeId) : null;
-  if (!tree || tree.type !== "tree" || tree.wood <= 0
-      || tree.gatherers >= treeCap(tree))
+  const direct = tree && tree.type === "tree" && tree.wood > 0
+                 && tree.gatherers < treeCap(tree);
+  if (!direct) {
     tree = nearestTree(g, v.x, v.y);
+    if (tree) {
+      emit(g, "retarget", { eid: v.id, num: v.num,
+                            from: [+v.x.toFixed(1), +v.y.toFixed(1)],
+                            tree: tree.id,
+                            d: +dist(tree.x, tree.y, v.x, v.y).toFixed(2) });
+    }
+  }
   if (!tree) { v.task = v.carry > 0 ? "to_drop" : "idle"; return; }
   if (!takeFace(g, v, tree)) { v.task = v.carry > 0 ? "to_drop" : "idle"; return; }
   tree.gatherers++;
@@ -369,8 +390,8 @@ function stepVill(g, v) {
     case "to_build": {
       const camp = g.ents.get(v.target);
       if (!camp) { v.task = "idle"; return; }
-      if (camp.built) {                 // group auto-gather: nearest by pure
-        const tr = nearestTree(g, v.x, v.y, 0);   // distance, no spread penalty
+      if (camp.built) {                 // group auto-gather: nearest available
+        const tr = nearestTree(g, v.x, v.y);
         assignGather(g, v, tr ? tr.id : null);
         return;
       }
@@ -381,16 +402,11 @@ function stepVill(g, v) {
       const camp = g.ents.get(v.target);
       if (!camp) { v.task = "idle"; return; }
       if (camp.built) {
-        const tr = nearestTree(g, v.x, v.y, 0);
+        const tr = nearestTree(g, v.x, v.y);
         assignGather(g, v, tr ? tr.id : null);
         return;
       }
-      camp.progress += C.TICK;                    // one builder-second per tick-second
-      if (camp.progress >= C.CAMP_BUILD_POINTS) {
-        camp.built = true;
-        camp.autoTreeId = null;   // each builder picks from its own stand spot
-        emit(g, "built", { eid: camp.id });
-      }
+      // construction points accrue in stepCamp (multi-builder formula)
       return;
     }
     case "to_rally": {

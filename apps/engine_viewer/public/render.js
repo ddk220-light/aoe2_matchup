@@ -141,6 +141,16 @@ export function createRenderer(canvas, scenario) {
       ctx.fillStyle = "#c98a3a";
       ctx.fillRect(sx + s / 2 - 4, sy - s / 2 - 4, 6, 6);
     }
+    if (e.task === "to_build" || e.task === "building") {
+      // hammer badge: grey head + angled wooden handle
+      const bx = sx + s / 2 - 2, by = sy - s / 2 - 3;
+      ctx.strokeStyle = "#8a6230";
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(bx - 4, by + 5); ctx.lineTo(bx + 2, by - 2); ctx.stroke();
+      ctx.fillStyle = "#cfd2d6";
+      ctx.fillRect(bx - 1, by - 4, 6, 4);
+      ctx.lineWidth = 1;
+    }
     // debug number (scout gets "S")
     ctx.fillStyle = "#fff";
     ctx.font = `bold ${Math.max(9, Math.round(s * 0.72))}px sans-serif`;

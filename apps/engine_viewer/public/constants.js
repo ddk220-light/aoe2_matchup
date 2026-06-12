@@ -10,9 +10,7 @@ export const TREE_WOOD = 100;          // [dat]                [cap] confirms 10
 export const FELL_TIME = 1.2;          // [cal] per-tree cut-down delay before wood flows
 export const SETTLE_TIME = 0.7;        // [cap] arrive -> first-wood-tick lag
 export const GATHER_REACH = 0.9;       // [cap] stand distance from tree center
-export const TREE_CAP = 3;             // [cap] max seen on one tree (3 builders on 658)
-export const CROWD_PENALTY = 1.3;      // [cal] tiles of extra distance per gatherer
-                                       //       already on a tree (prefer free trees)
+export const TREE_CAP = 3;             // [cap] max simultaneous gatherers on one tree
 
 // Town Center
 export const TC_SIZE = 4;              // [dat] 4x4 tile footprint
@@ -21,5 +19,11 @@ export const DEPOSIT_REACH = 0.5;      // [cap] deposit distance from a dropsite
 // Lumber Camp construction
 export const CAMP_SIZE = 2;            // [dat] 2x2 footprint
 export const CAMP_COST_WOOD = 100;     // [dat] lumber camp cost
-export const CAMP_BUILD_POINTS = 54;   // [cal] builder-seconds; camp done ~44s (1st deposit ~75s matches cap)
+export const BUILD_TIME_LUMBER_CAMP = 35; // [dat] single-villager build time
+// Multi-builder rule (AoEZone "Mechanics of Building and Repairing"):
+//   time with n builders = 3*T1/(n+2)  ==> points accrue at (n+2)/3 per sec
+// n=1 -> T1; n=0 -> 1.5*T1; n→∞ -> 0 with 3*T1 villager-seconds total.
+// Validated vs capture: staggered arrivals (~20.5/29/32s) integrate to
+// completion ~45.5s; capture shows ~44-45s.
+export const BUILD_RATE = (n) => (n + 2) / 3;  // points/sec while n>0
 export const BUILD_REACH = 1.6;        // [cal] builder stand distance from camp center

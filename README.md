@@ -1,123 +1,88 @@
-# AoE2 Unit Analyzer
+# aoe2_comprehensive
 
-A web application for analyzing Age of Empires II: Definitive Edition unit matchups. Extracts unit stats directly from the game's binary data file, computes fully-upgraded stats for all 50 civilizations, and provides interactive tools for comparing units and simulating battles.
-
-**Live:** Deployed on Railway.
-
-## What It Does
-
-- **Unit Browser** (`/units`) -- Compare any unit line across all 50 civilizations with pre-computed round-robin battle scores
-- **Civilization Browser** (`/civ`) -- See every unit available to a civ with full stats
-- **Battle Simulator** (`/simulate`) -- Interactive 2D canvas battle visualization with tick-based combat (20 mechanics: trample, charge, bleed, dodge, etc.)
-- **Matchup Advisor** (`/matchup-advisor`) -- Civ vs civ matchup analysis with army composition suggestions
-
-## How It Works
-
-The pipeline has 4 steps:
+The AoE2:DE data + tooling monorepo behind **[aoe2matchup.com](https://aoe2matchup.com)**
+and the **replay visualizer** — organized as five independently-improvable
+layers. Each layer can be consumed on its own; downstream layers only *refer*
+to upstream ones.
 
 ```
-empires2_x2_p1.dat
-       |
-       v
- [extraction/]     python3 -m extraction.run
-   dat -> JSON        8 JSON files (units, techs, civs, effects, ...)
-       |
-       v
- [analysis/]       python3 -m analysis.generate_reference
-   JSON -> ref DB     Computes fully-upgraded stats for every unit x civ combo
-       |
-       v
- [analysis/]       python3 -m analysis.generate_main_db
-   ref DB -> main DB  Flattens into webapp-ready unit_stats table
+┌ L1  data/inputs/      external inputs (game .dat, replays, captures, scraped art)
+│                       → gitignored content; data/inputs/MANIFEST.md says how to fetch
+├ L2  aoe2x/extract/    .dat → JSON extraction          (patch-dependent)
+│     aoe2x/grpc/       live-game gRPC capture/decode   (patch-dependent)
+│     (replay parsing = the pinned sanduckhan/aoc-mgz fork, see requirements)
+├ L3  aoe2x/dbgen/      golden-database generators
+│     data/golden/      the committed golden artifacts  (also published as
+│                       GitHub Releases: data-v<build>)
+├ L4  aoe2x/sim/        battle engines (abstract + positional 2D + frontend JS)
+│     aoe2x/advisor/    matchup advisor
+│     aoe2x/rank/       unit ranking / pool scoring
+│     aoe2x/batch/      batch sim runners + patch pipeline (PyPy3)
+│     aoe2x/replay/     replay-understanding classifier + THE viewer (blueprint + SPA)
+└ L5  apps/website/     aoe2matchup.com (Flask; mounts the viewer at /replay)
+      apps/viewer/      standalone replay viewer deployment (mounts it at /)
+      apps/video/       YouTube matchup-video automation (runs the real game)
 ```
 
-The webapp reads the final `aoe2_units.db` and `aoe2_reference.db` databases, plus the pre-derived ranking/matchup DBs (`derived_data.db`, `pool_scores.db` — see `docs/architecture/derived-data.md`).
+Supporting directories: `lab/` (gRPC ground-truth research + classifier
+scoring harness), `tools/` (replay analyzers, downloaders, release
+publishing), `scripts/` + `reference/` (reference-doc corpus), `graphics/`
+(sprite tooling), `docs/` (architecture docs; `docs/aoe2record/` preserves
+the absorbed aoe2record repo's docs), `tests/` + `.golden/` (golden
+regression suite).
 
-## Setup
+## Lineage
+
+Merged 2026-06-11 from three repos, with full history (`git log --follow`
+works across the moves): **aoe2-unit-analyzer** (this repo's trunk) ←
+**aoe2record** (replay engine + lab, absorbed via subtree) ← **aoe2grpc**
+(gRPC toolkit, previously absorbed into aoe2record). The old GitHub repos
+remain as frozen archives; production still deploys from them until cutover.
+
+## Quick start
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+pip install -e .                      # the aoe2x library (stdlib-only core)
+pip install -r apps/website/requirements.txt   # website/viewer extras
+
+PORT=5002 python apps/website/app.py  # the matchup website
+python apps/viewer/server.py          # the standalone replay viewer
+pytest                                # golden regression suite
 ```
 
-### Get the Game Data File
-
-Copy `empires2_x2_p1.dat` from your AoE2:DE installation into `extraction/`:
+Rebuilding data (per game patch — see `docs/architecture/runbooks.md`):
 
 ```bash
-# macOS (Steam)
-cp ~/Library/Application\ Support/Steam/steamapps/common/AoE2DE/resources/_common/dat/empires2_x2_p1.dat extraction/
-
-# Windows (Steam)
-copy "C:\Program Files (x86)\Steam\steamapps\common\AoE2DE\resources\_common\dat\empires2_x2_p1.dat" extraction\
+python -m aoe2x.extract.run               # data/inputs/empires2_x2_p1.dat → extracted JSONs
+python -m aoe2x.dbgen.generate_reference  # → data/golden/aoe2_reference.db
+pypy3 -m aoe2x.batch.rebuild_matchup_baseline --out D:/AI/matchup_baseline.db  # ~4.5h
+python -m aoe2x.rank.derive_unit_rankings --matchup-db <baseline> --build <N>
 ```
 
-### Build Databases
+## Consuming a single layer
 
-```bash
-python3 -m extraction.run               # ~10s, writes JSON to extraction/extracted_data/
-python3 -m analysis.generate_reference   # ~30s, writes webapp/aoe2_reference.db
-python3 -m analysis.generate_main_db     # ~2s,  writes webapp/aoe2_units.db
-```
+- **Just the data** → download a `data-v<build>` GitHub Release (reference,
+  derived, pool-score and patch DBs + civ power units + optionally the full
+  491k-row matchup baseline). Every artifact's producer/consumer/regen
+  command: `data/golden/README.md`.
+- **Just the replay viewer** → `aoe2x/replay/` is a mountable Flask
+  blueprint + SPA; `apps/viewer/server.py` is a 25-line example host. The
+  classifier (`unit_classifier.py`) works standalone on a parsed mgz match
+  via `build_type_map(match)`.
+- **Just the sims** → `aoe2x/sim/` is stdlib-only; feed it combat dicts via
+  `combat_unit_loader.build_combat_dict_from_ref()` from the reference DB.
+- **Ground truth for classifiers** → `lab/README.md` documents the gRPC
+  capture → decode → label → score loop and its verified accuracy numbers.
 
-Ranking/matchup data ships pre-derived in the repo (`derived_data.db`, `pool_scores.db`); regenerating it requires the batch sim chain (`docs/architecture/runbooks.md` §1).
+Each layer directory carries its own README with the full contract.
 
-### Run
+## Invariants (the ones that bite)
 
-```bash
-PORT=5002 python3 webapp/app.py
-```
-
-Visit `http://localhost:5002`.
-
-## Project Structure
-
-```
-extraction/                  # Step 1: dat -> JSON
-  run.py                     # Entry point
-  extract_units.py           # Units, armor classes, projectiles
-  extract_techs.py           # Technologies, tech ages
-  extract_effects.py         # Effects, civ tech trees
-  extract_constants.py       # Shared constants (armor classes, civ names)
-
-analysis/                    # Steps 2-3: JSON -> databases
-  config.py                  # Unit definitions, combat properties, civ bonuses
-  unit_analyzer.py           # Stat computation (base stats + tech effects)
-  combat_properties.py       # Combat property layering (defaults -> extracted -> config)
-  generate_reference.py      # Builds reference DB (full audit trail)
-  generate_main_db.py        # Builds main DB (flat unit_stats for webapp)
-
-webapp/                      # Step 4 + serving
-  app.py                     # Flask app + all API endpoints
-  simulation.py              # Tick-based battle simulator (pure Python, ~1.3ms/sim)
-  compute_battle_scores.py   # Retired round-robin scorer (library only — do not run)
-  templates/                 # HTML templates (7 pages)
-```
-
-## 50 Civilizations
-
-Britons, Byzantines, Celts, Chinese, Franks, Goths, Japanese, Mongols, Persians, Saracens, Teutons, Turks, Vikings, Aztecs, Huns, Koreans, Mayans, Spanish, Incas, Italians, Magyars, Slavs, Berbers, Ethiopians, Malians, Portuguese, Burmese, Khmer, Malay, Vietnamese, Bulgarians, Cumans, Lithuanians, Tatars, Burgundians, Sicilians, Bohemians, Poles, Bengalis, Dravidians, Gurjaras, Hindustanis, Romans, Armenians, Georgians, Jurchens, Khitans, Shu, Wei, Wu
-
-## Requirements
-
-- Python 3.8+
-- [genieutils-py](https://github.com/SiegeEngineers/genieutils-py) -- for parsing .dat files
-- Flask, gunicorn (see `requirements.txt`)
-- Age of Empires II: Definitive Edition (for the data file)
-
-## Environment variables
-
-| Variable | Purpose | If unset |
-|---|---|---|
-| `SITE_URL` | Public origin for canonical / OG / sitemap URLs | Defaults to `https://aoe2matchup.com` |
-| `CONTACT_FORM_ENDPOINT` | Formspree endpoint URL (e.g. `https://formspree.io/f/xxxx`) -- backs the footer Contact modal | Contact button + modal are hidden |
-| `SOCIAL_DISCORD_URL` | Public Discord invite shown in footer + JSON-LD `sameAs` | Discord link is hidden |
-| `SOCIAL_YOUTUBE_URL` | YouTube channel URL shown in footer + JSON-LD `sameAs` | YouTube link is hidden |
-| `SOCIAL_INSTAGRAM_URL` | Instagram profile URL shown in footer + JSON-LD `sameAs` | Instagram link is hidden |
-
-For Railway: set these in the project's Variables tab. For local dev: prepend to the `python3 webapp/app.py` command, or use a `.env` loader of your choice.
-
-## License
-
-Code is MIT licensed. Game data extracted from Age of Empires II: Definitive Edition is subject to Microsoft's Game Content Usage Rules.
+1. `aoe2x/sim/simulation_real.py` + `aoe2x/dbgen/config_combat.py` are
+   byte-hashed into `sim_version` — the matchup-baseline cache key. Never
+   edit them (even comments) outside a planned full re-sim.
+2. Three sim engines must stay behavior-synced (abstract / positional /
+   `apps/website/static/js/simulate.js`); golden tests pin them.
+3. Committed data in `data/golden/` IS the deployment mechanism.
+4. `aoe2x/replay/train_times.json` must sit beside `unit_classifier.py`.
+5. gRPC mTLS certs live beside `aoe2x/grpc/` and are NEVER committed.

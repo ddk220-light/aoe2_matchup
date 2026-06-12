@@ -2,7 +2,7 @@
 
 All page + API routes (battle sim home, rankings, civ pages, matchup advisor,
 patch tracker, SEO landing pages, sitemap) plus the /replay/* blueprint
-mounted from replay_core. Serves the committed data artifacts —
+mounted from aoe2x.replay.blueprint. Serves the committed data artifacts —
 aoe2_reference.db, derived_data.db, pool_scores.db, patches.db,
 civ_power_units/<build>.json — and only simulates at serve
 time for the live Matchup Advisor endpoints (best_units.get_matchup_sims /
@@ -63,13 +63,16 @@ def inject_footer_config():
     }
 
 
-# ---- Replay Analyzer (ported from the standalone visualizer) -----------------
-# Mounts the AoE2 replay browser/visualizer + WebM clip exporter under /replay/*.
+# ---- Replay Analyzer (the shared aoe2x.replay viewer) -------------------------
+# Mounts the canonical AoE2 replay viewer (SPA + API + WebM clip exporter)
+# under /replay/* — the same blueprint the standalone viewer app serves at /.
 # It pulls heavy optional deps (mgz, Pillow, imageio-ffmpeg, requests); if any
 # are missing we skip registration so the core simulator site still boots.
 try:
-    from replay_core import replay_bp
-    app.register_blueprint(replay_bp)
+    from aoe2x.replay.blueprint import replay_bp
+    app.register_blueprint(replay_bp, url_prefix="/replay")
+    # Share links point at the website's /replay shell page (keeps site nav).
+    app.config["REPLAY_VIEW_URL"] = "/replay"
     REPLAY_ENABLED = True
 except Exception as _replay_err:  # pragma: no cover
     import logging

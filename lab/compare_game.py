@@ -4,7 +4,11 @@ flares / dataset-missing id#### / gaia). Ignores the last 5 minutes."""
 import sys, types, json
 for m in ("flask", "flask_cors", "requests"):
     sys.modules.setdefault(m, types.ModuleType(m))
-sys.path[:0] = ["C:/dev/aoe2/aoc-mgz-67x", "C:/dev/aoe2/aoe2record/visualizer", "C:/dev/aoe2/aoe2record/lab"]
+import os
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path[:0] = [os.environ.get("MGZ_PATH", "C:/dev/aoe2/aoc-mgz-67x"),
+                os.path.join(_ROOT, "aoe2x", "replay"),
+                os.path.join(_ROOT, "lab")]
 from collections import Counter, defaultdict
 import mgz.model
 import unit_classifier as uc

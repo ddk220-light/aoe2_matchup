@@ -1,14 +1,26 @@
 # lab/ — ground-truth extraction & unit-classifier training for AoE2:DE replays
 
-The research lab of the aoe2record repo (formerly the standalone `aoe2grpc` repo;
-github.com/ddk220-light/aoe2grpc is now a frozen archive of its pre-merge history).
+The research lab of the aoe2_comprehensive monorepo. Lineage: standalone
+`aoe2grpc` repo -> aoe2record's lab/ (2026-06-10) -> here (2026-06-11); the
+old GitHub repos are frozen archives of the pre-merge history.
+
+> **Paths note (2026-06-11):** the gRPC core (cade_api stubs, decode_state_v2,
+> grpc_hp_log, redecode_hp) now lives in `../aoe2x/grpc/` — the copies that
+> used to sit in this folder were deleted (the `*.bak.py` files remain as
+> paper trail). The live scoring chain (`compare_game.py`,
+> `eval_against_truth.py`, `_improve/score_game.py`) is repo-anchored, but
+> the ~40 one-off `_*.py` diagnostics are FROZEN with their historical
+> hardcoded `C:/dev/aoe2/aoe2record/...` / `C:/dev/aoe2grpc/...` paths —
+> they are a paper trail, not maintained tools. Raw captures and the eval
+> replays remain gitignored on local disk (savegame folder /
+> `C:/dev/_tmp_replay/` / the frozen aoe2record checkout).
 
 Part of the larger goal to **recreate an Age of Empires 2 game in the browser from
 just the `.aoe2record` replay file**. Record files contain player *commands*, not game
 state — so you cannot directly know which units existed or what type each one was.
 This lab solves that by capturing the live game's internal state through its gRPC
 spectator API, decoding it into per-unit ground-truth labels, and using those labels
-to score and improve the classifier in `../visualizer/unit_classifier.py` — which
+to score and improve the classifier in `../aoe2x/replay/unit_classifier.py` — which
 works from the record file *alone*.
 
 **The foundational unlock (verified 2026-06-02):** gRPC `entity_id` == mgz
@@ -44,7 +56,7 @@ answer key for the replay, no positional correlation needed.
 5. **HP-over-time (side track)** — `grpc_hp_log.py`: live HP logger + `LiveEnd`
    fight-end tailer for staged army-vs-army fights (validated offline against a
    golden Jaguar Warrior dump via `_replay_live_end.py`); feeds combat-sim
-   validation in the sibling `aoe2-unit-analyzer` project.
+   validation in the combat simulator (`../aoe2x/sim/`).
 
 ## Games & labels in this repo
 
@@ -59,7 +71,7 @@ gitignored). Label JSONs are small and tracked.
 
 ## Classifier & the multi-agent improvement run (2026-06-10)
 
-The classifier itself lives in this repo at `../visualizer/unit_classifier.py` —
+The classifier itself lives in this repo at `../aoe2x/replay/unit_classifier.py` —
 a staged, confidence-ladder design (behavioral hard pins → co-command propagation →
 production timeline → squad typing → id-rank fallback). The improved version from
 the run below was adopted there on 2026-06-10. This lab holds the scoring harness

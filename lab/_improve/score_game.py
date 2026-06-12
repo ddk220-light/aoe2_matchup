@@ -2,8 +2,8 @@
 and compare to gRPC ground-truth labels, on the units BOTH sides can name (exclude
 flares / dataset-missing id#### / gaia). Ignores the last 5 minutes.
 
-Patched copy of C:/dev/aoe2/aoe2record/lab/compare_game.py:
-  - sys.path fixed for the moved project root (C:/dev/aoe2/aoe2record/lab)
+Patched copy of lab/compare_game.py (paths repo-anchored 2026-06-11):
+  - default classifier = aoe2x/replay/unit_classifier.py (the canonical one)
   - if env var UC_DIR is set, it is inserted at sys.path[0] BEFORE importing
     unit_classifier, so a modified classifier copy in that dir is used.
     (NOTE: unit_classifier loads train_times.json relative to its own file --
@@ -14,7 +14,10 @@ Patched copy of C:/dev/aoe2/aoe2record/lab/compare_game.py:
 import sys, types, json, os
 for m in ("flask", "flask_cors", "requests"):
     sys.modules.setdefault(m, types.ModuleType(m))
-sys.path[:0] = ["C:/dev/aoe2/aoc-mgz-67x", "C:/dev/aoe2/aoe2record/visualizer", "C:/dev/aoe2/aoe2record/lab"]
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path[:0] = [os.environ.get("MGZ_PATH", "C:/dev/aoe2/aoc-mgz-67x"),
+                os.path.join(_ROOT, "aoe2x", "replay"),    # default classifier
+                os.path.join(_ROOT, "lab")]
 _uc_dir = os.environ.get("UC_DIR")
 if _uc_dir:
     sys.path.insert(0, _uc_dir)

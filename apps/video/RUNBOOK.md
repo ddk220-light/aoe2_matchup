@@ -2,7 +2,7 @@
 
 How to run a recording sweep smoothly, end to end, with everything we learned the
 hard way baked in. The system is **self-sufficient**: the gRPC capture stack lives in
-`scenario_builder/grpc/` (recorder + live fight-end tailer, offline redecoder, fixed
+`aoe2x/grpc/` (recorder + live fight-end tailer, offline redecoder, fixed
 delta decoder + schema, protobuf stubs, mTLS certs) and the `.venv` carries
 `grpcio`/`protobuf`. No external checkouts needed.
 
@@ -80,7 +80,7 @@ never overwrite it (re-runs overwrite the raw-recordings copy of the same matchu
 
 ## Decoder changes: how to validate before trusting
 
-Any change to `scenario_builder/grpc/` must pass, in order:
+Any change to `aoe2x/grpc/` must pass, in order:
 1. **Golden regression**: `.venv\Scripts\python.exe grpc\redecode_hp.py <copy of golden pair>` →
    24v30, side1 zero at stream t≈28, side2 ends 24u/1644hp.
 2. The **scorer** (footage-OCR rmse harness) lives in the research checkout

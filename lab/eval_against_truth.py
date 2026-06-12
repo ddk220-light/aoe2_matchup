@@ -5,7 +5,10 @@ can drive the classifier toward 99% on the units we have truth for.
 import sys, types, json, os
 for m in ("flask", "flask_cors", "requests"):
     sys.modules.setdefault(m, types.ModuleType(m))
-sys.path[:0] = ["C:/dev/aoe2/aoc-mgz-67x", "C:/dev/aoe2/aoe2record/visualizer"]
+import os
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path[:0] = [os.environ.get("MGZ_PATH", "C:/dev/aoe2/aoc-mgz-67x"),
+                os.path.join(_ROOT, "aoe2x", "replay")]
 from collections import Counter, defaultdict
 import mgz.model
 import unit_classifier

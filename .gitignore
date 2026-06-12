@@ -98,3 +98,7 @@ webapp/*.db.bak
 # Local matchup working DB (in-repo Armenians-only stub removed 2026-06-11;
 # real baselines live outside the repo, e.g. D:/AI/matchup_baseline_<build>.db)
 webapp/matchup_db.db
+
+# gRPC mTLS client credentials (CadeRemote) — NEVER commit; live beside aoe2x/grpc/
+aoe2x/grpc/*.key
+aoe2x/grpc/*.pem

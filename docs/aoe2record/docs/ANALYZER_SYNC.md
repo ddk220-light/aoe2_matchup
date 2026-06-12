@@ -1,3 +1,14 @@
+# RETIRED (2026-06-11) — the fork this guide synced no longer exists
+
+The replay viewer became ONE shared package, `aoe2x/replay/` (blueprint +
+SPA + classifier), mounted by both the website (`webapp/app.py`, prefix
+/replay) and the standalone viewer (`apps/viewer/server.py`, root). There
+is nothing left to sync; develop in `aoe2x/replay/` directly.
+
+The original guide is preserved below for history.
+
+---
+
 # Syncing replay features into aoe2-unit-analyzer
 
 **Audience:** anyone (human or Claude session) working in the `aoe2-unit-analyzer`

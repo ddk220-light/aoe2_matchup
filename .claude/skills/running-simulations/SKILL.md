@@ -9,16 +9,16 @@ Quick reference for querying unit stats, running backend simulations, and interp
 
 ## 1. Look Up Unit Stats
 
-Query `ref_units` in `webapp/aoe2_reference.db` (the DB the app serves — NOT
+Query `ref_units` in `data/golden/aoe2_reference.db` (the DB the app serves — NOT
 the legacy `aoe2_units.db`). Run from the repo root:
 
 ```python
 import sqlite3, sys
-sys.path.insert(0, "webapp")
+sys.path.insert(0, ".")  # repo root: aoe2x package
 from simulation import prepare_combat_unit, simulate_battle
 from combat_unit_loader import build_combat_dict_from_ref
 
-db = sqlite3.connect("webapp/aoe2_reference.db")
+db = sqlite3.connect("data/golden/aoe2_reference.db")
 db.row_factory = sqlite3.Row
 
 def get_unit(civ_name, slug, age="Imperial"):

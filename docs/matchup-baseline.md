@@ -17,12 +17,12 @@ decisive fights, many seeds on contested ones), record the **mean, standard devi
 seed count, and a verdict** (`win` / `loss` / `tossup`), and derive everything downstream
 from that. Coin-flips are now reported as coin-flips instead of a confident W/L.
 
-## How it was built — `webapp/rebuild_matchup_baseline.py`
+## How it was built — `aoe2x/batch/rebuild_matchup_baseline.py`
 
 Run (PyPy 3 required):
 
 ```
-pypy3 -m webapp.rebuild_matchup_baseline --out D:/AI/matchup_baseline.db --workers 12
+pypy3 -m aoe2x.batch.rebuild_matchup_baseline --out D:/AI/matchup_baseline.db --workers 12
 ```
 
 Pipeline inside the script:
@@ -83,8 +83,8 @@ The deployed app reads `pool_scores.db`, `derived_data.db` (battle_scores), and
 baseline (regular python, build-versioned):
 
 ```
-python3 -m webapp.derive_pool_scores  --matchup-db D:/AI/matchup_baseline_177723.db --out webapp/pool_scores.db --build 177723
-python3 -m webapp.derive_unit_rankings --matchup-db D:/AI/matchup_baseline_177723.db --build 177723
+python3 -m aoe2x.rank.derive_pool_scores  --matchup-db D:/AI/matchup_baseline_177723.db --out data/golden/pool_scores.db --build 177723
+python3 -m aoe2x.rank.derive_unit_rankings --matchup-db D:/AI/matchup_baseline_177723.db --build 177723
 python3 -c "import sys; sys.path.insert(0,'webapp'); import best_units; best_units.save_civ_power_units('177723')"
 ```
 
@@ -122,11 +122,11 @@ The baseline is only trustworthy because two earlier fixes landed first:
 - **Phantom-unit fix** — the availability model is a *blocklist* (a civ has a unit unless
   its make-avail tech is disabled); the 177723 `.dat` doesn't disable ~9 "allowlist" unit
   lines, so every civ wrongly got them (776 phantom rows). Fixed with authoritative
-  `civ_only` overrides in `analysis/config_units.py` (`_AVAILABILITY_OVERRIDES`), sourced
+  `civ_only` overrides in `aoe2x/dbgen/config_units.py` (`_AVAILABILITY_OVERRIDES`), sourced
   from SiegeEngineers per-civ availability verified per upgrade-tier.
 - **Imperial-only** — the app deals only with fully-upgraded Imperial units; the baseline
   enumerates Imperial units, with each civ's actual top tier (e.g. Koreans knight line =
-  Cavalier, Persians = Savar) resolved via `webapp/top_units.py` / `civ_top_units.json`.
+  Cavalier, Persians = Savar) resolved via `aoe2x/advisor/top_units.py` / `civ_top_units.json`.
 
 ## Open item
 

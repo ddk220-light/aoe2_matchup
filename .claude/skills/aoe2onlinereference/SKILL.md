@@ -7,7 +7,7 @@ description: Use when pulling unit stats, civ bonuses, unique techs, armor class
 
 Four external sources are used for AoE2 data. Each has different strengths. Always cross-reference at least two sources before drawing conclusions.
 
-**Important:** These sources are for pulling EXTERNAL data to compare against our local database (`webapp/aoe2_reference.db`, `webapp/aoe2_units.db`). Do NOT use our own Railway API (aoe2.up.railway.app) as the source — that only reflects what we already have. The goal is to validate our DB against the authoritative external sources.
+**Important:** These sources are for pulling EXTERNAL data to compare against our local database (`data/golden/aoe2_reference.db`, `data/golden/aoe2_units.db`). Do NOT use our own Railway API (aoe2.up.railway.app) as the source — that only reflects what we already have. The goal is to validate our DB against the authoritative external sources.
 
 ---
 
@@ -220,13 +220,13 @@ se_url = "https://raw.githubusercontent.com/SiegeEngineers/aoe2techtree/master/d
 
 ```bash
 # Units for a specific civ
-sqlite3 webapp/aoe2_reference.db "
+sqlite3 data/golden/aoe2_reference.db "
   SELECT unit_slug, unit_name, age, base_hp, base_attack, base_melee_armor, base_pierce_armor, base_speed, base_range, base_reload_time
   FROM ref_units WHERE civ_name='Muisca' ORDER BY age, unit_slug;
 "
 
 # Special effects for a unit
-sqlite3 webapp/aoe2_reference.db "
+sqlite3 data/golden/aoe2_reference.db "
   SELECT ru.unit_slug, rs.property_name, rs.property_value, rs.source
   FROM ref_special_effects rs
   JOIN ref_units ru ON rs.ref_unit_id = ru.id
@@ -234,7 +234,7 @@ sqlite3 webapp/aoe2_reference.db "
 "
 
 # Techs applied to a unit
-sqlite3 webapp/aoe2_reference.db "
+sqlite3 data/golden/aoe2_reference.db "
   SELECT ru.unit_slug, rt.tech_name, rt.effect_description
   FROM ref_techs_applied rt
   JOIN ref_units ru ON rt.ref_unit_id = ru.id

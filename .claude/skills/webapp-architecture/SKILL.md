@@ -7,7 +7,7 @@ description: Use when modifying the AoE2 unit analyzer webapp — adding simulat
 
 ## Overview
 
-Flask app serving aoe2matchup.com. All serving data is committed SQLite/JSON (committing on a branch = deploying). Shared CSS/JS lives in `webapp/static/` — templates are thin Jinja shells over `base.html`.
+Flask app serving aoe2matchup.com. All serving data is committed SQLite/JSON (committing on a branch = deploying). Shared CSS/JS lives in `apps/website/static/` — templates are thin Jinja shells over `base.html`.
 
 **Canonical docs (verified 2026-06-09):** `docs/architecture/README.md` (system map + single-sources-of-truth table) and `docs/architecture/runbooks.md` (when-X-changes-update-Y checklists). This skill is the working summary; when in doubt, trust those docs.
 
@@ -15,14 +15,14 @@ Flask app serving aoe2matchup.com. All serving data is committed SQLite/JSON (co
 
 | File | Role |
 |------|------|
-| `webapp/app.py` | Flask routes (24 + 7-route replay blueprint), DB queries, SEO endpoints |
-| `webapp/simulation.py` | Abstract tick-based engine (no positions). Backs `/api/matchup-sims` via `best_units.get_matchup_sims` |
-| `webapp/simulation_real.py` | Position-based 2D engine. Backs ALL batch matchup data (`run_matchup_battles.py`, `rebuild_matchup_baseline.py`, `patch_resim.py`). Hashed into `sim_version` |
-| `webapp/static/js/simulate.js` | Frontend canvas engine (`BattleUnit`). The interactive Battle Sim page at `/` runs entirely client-side |
-| `webapp/combat_unit_loader.py` | `build_combat_dict_from_ref()` — canonical ref_units row → combat dict, shared by all backend sim callers |
-| `webapp/unit_lines.py` | `UNIT_LINES` + `CIV_MISSING_UNITS` — single Python source for unit lines (JS copy in `static/js/rankings.js`) |
-| `webapp/best_units.py` | Civ power units, matchup recommendations, live matchup sims |
-| `webapp/replay_core.py` | Replay analyzer blueprint (mgz parsing, gracefully disabled if deps missing) |
+| `apps/website/app.py` | Flask routes (24 + 7-route replay blueprint), DB queries, SEO endpoints |
+| `aoe2x/sim/simulation.py` | Abstract tick-based engine (no positions). Backs `/api/matchup-sims` via `best_units.get_matchup_sims` |
+| `aoe2x/sim/simulation_real.py` | Position-based 2D engine. Backs ALL batch matchup data (`run_matchup_battles.py`, `rebuild_matchup_baseline.py`, `patch_resim.py`). Hashed into `sim_version` |
+| `apps/website/static/js/simulate.js` | Frontend canvas engine (`BattleUnit`). The interactive Battle Sim page at `/` runs entirely client-side |
+| `aoe2x/sim/combat_unit_loader.py` | `build_combat_dict_from_ref()` — canonical ref_units row → combat dict, shared by all backend sim callers |
+| `aoe2x/sim/unit_lines.py` | `UNIT_LINES` + `CIV_MISSING_UNITS` — single Python source for unit lines (JS copy in `static/js/rankings.js`) |
+| `aoe2x/advisor/best_units.py` | Civ power units, matchup recommendations, live matchup sims |
+| `aoe2x/replay/blueprint.py` | Replay analyzer blueprint (mgz parsing, gracefully disabled if deps missing) |
 
 **Databases the app reads:** `aoe2_reference.db` (combat data — NOT `aoe2_units.db`), `derived_data.db` (rankings), `pool_scores.db`, `patches.db`, plus `civ_power_units/<build>.json`. `aoe2_units.db` `unit_stats` has no app route consumer (legacy).
 
@@ -40,9 +40,9 @@ Flask app serving aoe2matchup.com. All serving data is committed SQLite/JSON (co
 
 ## Sync Rules (MUST check before completing any task)
 
-1. **New combat column/ability** — chain: `analysis/config_combat.py` (or `generate_reference.py` schema) → `analysis/generate_main_db.py` → `webapp/combat_unit_loader.py` → `simulation.py prepare_combat_unit()` → `simulation_real.py` → `static/js/simulate.js`. Full checklist: runbooks §3.
-2. **`UNIT_LINES`** — `webapp/unit_lines.py` (Python) ↔ JS copy in `static/js/rankings.js`.
-3. **Frontend constants** — `ENABLED_CIVS`, `NAME_TO_ICON` (218 entries), `UNIQUE_BUILDING` live ONLY in `static/js/constants.js`. No template copies. Server-side civ validation derives from the reference DB; the pipeline civ list (`ORIGINAL_13_CIVS` in `analysis/config_constants.py`) is derived from `CIV_NAMES`.
+1. **New combat column/ability** — chain: `aoe2x/dbgen/config_combat.py` (or `generate_reference.py` schema) → `aoe2x/dbgen/generate_main_db.py` → `aoe2x/sim/combat_unit_loader.py` → `simulation.py prepare_combat_unit()` → `simulation_real.py` → `static/js/simulate.js`. Full checklist: runbooks §3.
+2. **`UNIT_LINES`** — `aoe2x/sim/unit_lines.py` (Python) ↔ JS copy in `static/js/rankings.js`.
+3. **Frontend constants** — `ENABLED_CIVS`, `NAME_TO_ICON` (218 entries), `UNIQUE_BUILDING` live ONLY in `static/js/constants.js`. No template copies. Server-side civ validation derives from the reference DB; the pipeline civ list (`ORIGINAL_13_CIVS` in `aoe2x/dbgen/config_constants.py`) is derived from `CIV_NAMES`.
 4. **Cost weights** — `simulation_real.py weighted_cost` ↔ `compute_battle_scores.calc_weighted_cost`.
 5. **`PLAYER_COLORS`** — `replay_core.py` ↔ `clip_export.py`.
 6. **Sim logic changed?** — editing `simulation_real.py`/`config_combat.py` bumps `sim_version` → matchup rows auto-stale (re-sim via batch runner, then re-derive rankings/pool scores). Editing `simulation.py` does NOT bump it. Always regenerate `.golden/baseline.json`. Checklist: runbooks §2.
@@ -51,8 +51,8 @@ Flask app serving aoe2matchup.com. All serving data is committed SQLite/JSON (co
 
 **Combat unit data (most common path):**
 ```
-analysis/config_combat.py (+ config_units.py)
-  → analysis/generate_reference.py → aoe2_reference.db (ref_units)
+aoe2x/dbgen/config_combat.py (+ config_units.py)
+  → aoe2x/dbgen/generate_reference.py → aoe2_reference.db (ref_units)
     → combat_unit_loader.build_combat_dict_from_ref()
       → app.py /api/ref/combat-unit/<civ>/<slug> → static/js/simulate.js  (interactive page)
       → simulation.py / simulation_real.py prepare_combat_unit()          (backend callers)

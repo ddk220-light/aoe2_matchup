@@ -28,12 +28,12 @@ deploys its data. **`matchup_db.db` and the matchup baseline DB are NOT committe
 
 ## 1. Get the new `.dat`
 
-Copy `empires2_x2_p1.dat` from the local AoE2:DE install into `extraction/`.
+Copy `empires2_x2_p1.dat` from the local AoE2:DE install into `aoe2x/extract/`.
 
 ## 2. Re-extract → JSON  (needs `genieutils-py`; the conda python has it)
 
 ```
-python -m extraction.run            # ~10s -> extraction/extracted_data/*.json
+python -m aoe2x.extract.run            # ~10s -> data/inputs/extracted_data/*.json
 ```
 
 The pipeline archives the previous extraction + ref as the "before" for diffing.
@@ -41,7 +41,7 @@ The pipeline archives the previous extraction + ref as the "before" for diffing.
 ## 3. Rebuild the reference DB  → `aoe2_reference.db`
 
 ```
-python -m analysis.generate_reference        # ~30s, full audit trail
+python -m aoe2x.dbgen.generate_reference        # ~30s, full audit trail
 ```
 
 Then the **two correctness guards** that the raw extraction needs:
@@ -50,7 +50,7 @@ Then the **two correctness guards** that the raw extraction needs:
   unless its make-avail tech is in `disabled_techs`). Recent `.dat`s do NOT disable
   several "allowlist" lines (eagle, camel, champi, elephant, elephant archer, slinger,
   steppe lancer, fire lancer, paladin), so the blocklist lets every civ train them.
-  `analysis/config_units.py` `_AVAILABILITY_OVERRIDES` pins each to its authoritative
+  `aoe2x/dbgen/config_units.py` `_AVAILABILITY_OVERRIDES` pins each to its authoritative
   `civ_only` list. **If a new build adds/changes units or civs, re-validate these lists
   against SiegeEngineers `data/data.json`** (per-civ `Unit` lists, checked per upgrade
   tier — Cumans have Camel Rider but not Heavy Camel, etc.).
@@ -62,7 +62,7 @@ Then the **two correctness guards** that the raw extraction needs:
 ## 4. Rebuild the main DB  → `aoe2_units.db`
 
 ```
-python -m analysis.generate_main_db          # ~2s, flat unit_stats
+python -m aoe2x.dbgen.generate_main_db          # ~2s, flat unit_stats
 ```
 
 Order note: `generate_main_db` reads the ref, so run the surgical ref patches **before**
@@ -78,7 +78,7 @@ Spot-check a few civs against SiegeEngineers: no phantom units, correct per-civ 
 - **Full rebuild (clean baseline)** — when the sim engine changed, or you want a fresh
   trustworthy baseline:
   ```
-  pypy3 -m webapp.rebuild_matchup_baseline --out D:/AI/matchup_baseline.db --workers 12
+  pypy3 -m aoe2x.batch.rebuild_matchup_baseline --out D:/AI/matchup_baseline.db --workers 12
   ```
   ~4.5 h. Use `D:/AI/baseline_runner.py` (auto-restart) + `D:/AI/baseline_watchdog.py`
   (monitor/stop) for unattended runs. Preserve the result as
@@ -86,7 +86,7 @@ Spot-check a few civs against SiegeEngineers: no phantom units, correct per-civ 
 - **Incremental (stat-only patch)** — only re-sim matchups touching changed units; keep
   the rest:
   ```
-  pypy3 -m webapp.run_matchup_battles --force --changed-units changed_units_<build>.json --db <matchup_db>
+  pypy3 -m aoe2x.batch.run_matchup_battles --force --changed-units changed_units_<build>.json --db <matchup_db>
   ```
   Much faster. The `--changed-units` JSON is the set of slugs whose stats changed
   (produced by the ref_units diff in `patch_pipeline`).
@@ -100,8 +100,8 @@ toss-up as a confident win/loss.
 Point the derive scripts at whichever matchup DB you produced in step 6:
 
 ```
-python -m webapp.derive_unit_rankings --matchup-db <db> --build <build>     # battle_scores
-python -m webapp.derive_pool_scores  --matchup-db <db> --out webapp/pool_scores.db --build <build>
+python -m aoe2x.rank.derive_unit_rankings --matchup-db <db> --build <build>     # battle_scores
+python -m aoe2x.rank.derive_pool_scores  --matchup-db <db> --out data/golden/pool_scores.db --build <build>
 python -c "import sys; sys.path.insert(0,'webapp'); import best_units; best_units.save_civ_power_units('<build>')"
 ```
 
@@ -110,7 +110,7 @@ rows forward so the new build is a complete snapshot before land rows are re-der
 
 ## 8. Patch records + patch page
 
-`webapp/patch_pipeline.py` orchestrates the diff + records:
+`aoe2x/batch/patch_pipeline.py` orchestrates the diff + records:
 
 - ref_units diff → `patch_unit_changes` (stat deltas) + the changed-slug set.
 - matchup diff (before vs after, multi-seed via the verifier) → `patch_matchup_changes`
@@ -126,7 +126,7 @@ name (resolved from `ref_units`, not the line slug).
 ## 9. Verify → ship
 
 ```
-PORT=5002 python3 webapp/app.py     # smoke-test rankings, advisor, patch page locally
+PORT=5002 python3 apps/website/app.py     # smoke-test rankings, advisor, patch page locally
 ```
 
 Commit on `staging`, push, verify on the staging URL, then promote:
@@ -135,7 +135,7 @@ Commit on `staging`, push, verify on the staging URL, then promote:
 git checkout main && git merge --ff-only staging && git push origin main && git checkout staging
 ```
 
-(Stash the noisy `webapp/matchup_db.db` modification before switching branches.)
+(Stash the noisy `apps/website/matchup_db.db` modification before switching branches.)
 
 ---
 

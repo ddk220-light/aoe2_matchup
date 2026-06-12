@@ -6,13 +6,13 @@ The project contains **three** battle-simulation implementations of the same com
 
 | Engine | File | Model | Tick | Used by |
 |---|---|---|---|---|
-| Abstract tick engine | `webapp/simulation.py` | No positions; damage phases + statistical targeting | 0.1 s fixed (`DT`), max 2500 ticks (250 s) | `/api/matchup-sims`, `compute_battle_scores.py`, `.golden` regression tests |
-| Position-based engine | `webapp/simulation_real.py` | Real 2D positions, movement, projectile flight | 1/30 s fixed (`DT`), max 600 game-seconds | `run_matchup_battles.py`, `rebuild_matchup_baseline.py`, `patch_resim.py`, `verify_flips.py` |
-| Frontend canvas sim | `webapp/static/js/simulate.js` | Same model as the position engine, in pixels | Variable (requestAnimationFrame, capped at 0.1 s) | The interactive Battle Sim page at `/` only |
+| Abstract tick engine | `aoe2x/sim/simulation.py` | No positions; damage phases + statistical targeting | 0.1 s fixed (`DT`), max 2500 ticks (250 s) | `/api/matchup-sims`, `compute_battle_scores.py`, `.golden` regression tests |
+| Position-based engine | `aoe2x/sim/simulation_real.py` | Real 2D positions, movement, projectile flight | 1/30 s fixed (`DT`), max 600 game-seconds | `run_matchup_battles.py`, `rebuild_matchup_baseline.py`, `patch_resim.py`, `verify_flips.py` |
+| Frontend canvas sim | `apps/website/static/js/simulate.js` | Same model as the position engine, in pixels | Variable (requestAnimationFrame, capped at 0.1 s) | The interactive Battle Sim page at `/` only |
 
-Historically the JS canvas sim came first; `webapp/simulation_real.py` is explicitly a Python port of it (see its module docstring). Where the engines load their data from is covered in [data-pipeline.md](data-pipeline.md); what the batch runners write is covered in [derived-data.md](derived-data.md).
+Historically the JS canvas sim came first; `aoe2x/sim/simulation_real.py` is explicitly a Python port of it (see its module docstring). Where the engines load their data from is covered in [data-pipeline.md](data-pipeline.md); what the batch runners write is covered in [derived-data.md](derived-data.md).
 
-## 1. Abstract tick engine — `webapp/simulation.py`
+## 1. Abstract tick engine — `aoe2x/sim/simulation.py`
 
 Entry point: `simulate_battle(unit1, unit2, resources, fixed_count=None, cost1_override=None, cost2_override=None, return_hp=False, return_ticks=False)`. Army sizes come either from `fixed_count / pop_space` per side, or from `resources // cost` (cost overridable per side). The battle runs in three phases (`_init_battle_state` → `_run_opening_volley` → tick loop → `_determine_winner`).
 
@@ -47,7 +47,7 @@ A unit whose only base attack class is melee (class 4) does melee damage even at
 
 ### Special abilities and their driving columns
 
-`prepare_combat_unit()` (line 87) reads these fields from the combat dict; each is sourced from the identically-named column of `ref_units` in `webapp/aoe2_reference.db` via `combat_unit_loader.build_combat_dict_from_ref()` (JSON-suffixed columns are parsed into int-keyed dicts; one exception: `min_attack_range` is stored as column `min_range`). The full ability/param/engine declaration now lives in `analysis/ability_registry.py`, validated by `tests/test_ability_registry.py`.
+`prepare_combat_unit()` (line 87) reads these fields from the combat dict; each is sourced from the identically-named column of `ref_units` in `data/golden/aoe2_reference.db` via `combat_unit_loader.build_combat_dict_from_ref()` (JSON-suffixed columns are parsed into int-keyed dicts; one exception: `min_attack_range` is stored as column `min_range`). The full ability/param/engine declaration now lives in `aoe2x/dbgen/ability_registry.py`, validated by `tests/test_ability_registry.py`.
 
 | Ability | Driving columns | Example unit |
 |---|---|---|
@@ -84,7 +84,7 @@ A unit whose only base attack class is melee (class 4) does melee damage even at
 
 Two fields are parsed by `prepare_combat_unit()` but only implemented in the position engine: `hp_regen_in_combat` (Khitan Ordo Cavalry — combat-gated regen) and the `food/wood/gold_per_kill` trio (Mapuche-style kill economy), which `simulation.py` does not read at all.
 
-## 2. Position-based engine — `webapp/simulation_real.py`
+## 2. Position-based engine — `aoe2x/sim/simulation_real.py`
 
 Entry point: `simulate_real_battle(...)` — same positional signature as `simulate_battle` plus `max_seconds`, `max_wallclock`, `seed`, `_legacy_tuple`. By default it returns a `BattleOutcome`; pass `_legacy_tuple=True` to get the old tuple shape (this is how `best_units.get_matchup_sims` can swap it in via `sim_func`).
 
@@ -109,9 +109,9 @@ Entry point: `simulate_real_battle(...)` — same positional signature as `simul
 
 Additions beyond the abstract engine: `hp_regen_in_combat` (regen only within `COMBAT_WINDOW_S = 5` s of attacking), `food/wood/gold_per_kill` tracked into `BattleOutcome` gained fields, `charge_attack_range` / `charge_ignores_armor` for melee-launched charge projectiles (Fire Lancer), and an out-of-combat reset for the Temple Guard attack-speed ramp. The abstract engine's `TRAMPLE_HIT_CHANCE` randomness does not exist here — trample uses real radii.
 
-## 3. Frontend canvas sim — `webapp/static/js/simulate.js`
+## 3. Frontend canvas sim — `apps/website/static/js/simulate.js`
 
-The Battle Sim page at `/` (legacy `/simulate` 301-redirects there; `webapp/templates/simulate.html`) loads this file with a `<script src>` tag (line 222) — it is **not** inlined in the template. It fetches both units from `GET /api/ref/combat-unit/<civ>/<slug>?age=...` (served by `app.py:api_ref_combat_unit`, which returns `build_combat_dict_from_ref()` output as JSON) and runs the battle entirely client-side in a `BattleUnit` class on a 900×600 px canvas (`TILE_SIZE = 30` ⇒ a 30×20-tile map).
+The Battle Sim page at `/` (legacy `/simulate` 301-redirects there; `apps/website/templates/simulate.html`) loads this file with a `<script src>` tag (line 222) — it is **not** inlined in the template. It fetches both units from `GET /api/ref/combat-unit/<civ>/<slug>?age=...` (served by `app.py:api_ref_combat_unit`, which returns `build_combat_dict_from_ref()` output as JSON) and runs the battle entirely client-side in a `BattleUnit` class on a 900×600 px canvas (`TILE_SIZE = 30` ⇒ a 30×20-tile map).
 
 **What it mirrors.** Mechanically it is the same model as `simulation_real.py` (which was ported *from* it): per-class damage with zero-clamped base, projectile flight, miss scatter within 2 tiles with 0.5×/`missDamagePercent` graze, primary-vs-extra accuracy split, kiting, avoidance + hard collision, and the full ability set (melee charge, charged-only Urumi trample, charge projectiles for both melee and ranged paths, armor strip, execute, auras, ally-death heal, transform, dismount-on-death (ported 2026-06-10, end-of-tick respawn like the backend), dodge shield, reflect, ramp — all present and verified by grep against the Python engine).
 
@@ -130,21 +130,21 @@ The Battle Sim page at `/` (legacy `/simulate` 301-redirects there; `webapp/temp
 |---|---|---|
 | Interactive Battle Sim page at `/` (legacy `/simulate` 301-redirects there) | Frontend JS only | `simulate.html` line 222 script tag; `app.py` imports neither Python engine |
 | `POST /api/matchup-sims` (matchup advisor "who beats whom") | Abstract (`simulate_battle`) | `app.py` → `best_units.get_matchup_sims()` called without `sim_func`; default is `simulate_battle` (`best_units.py` line 1468) |
-| `webapp/compute_battle_scores.py` (battle_scores.json + role scores) | Abstract | `from simulation import prepare_combat_unit, simulate_battle` (line 21) |
-| `webapp/run_matchup_battles.py` (matchup_db batch) | Position | `from simulation_real import simulate_real_battle, prepare_combat_unit` (line 31) |
-| `webapp/rebuild_matchup_baseline.py` (multi-seed baseline) | Position | `from simulation_real import simulate_real_battle` (line 41) |
-| `webapp/patch_resim.py`, `webapp/verify_flips.py` | Position | direct imports |
-| `webapp/best_units.py` (power-unit scoring + matchup sims) | Both imported; abstract by default | lines 1087–1088; `sim_func=simulate_real_battle` is an opt-in |
+| `aoe2x/rank/compute_battle_scores.py` (battle_scores.json + role scores) | Abstract | `from simulation import prepare_combat_unit, simulate_battle` (line 21) |
+| `aoe2x/batch/run_matchup_battles.py` (matchup_db batch) | Position | `from simulation_real import simulate_real_battle, prepare_combat_unit` (line 31) |
+| `aoe2x/batch/rebuild_matchup_baseline.py` (multi-seed baseline) | Position | `from simulation_real import simulate_real_battle` (line 41) |
+| `aoe2x/batch/patch_resim.py`, `aoe2x/batch/verify_flips.py` | Position | direct imports |
+| `aoe2x/advisor/best_units.py` (power-unit scoring + matchup sims) | Both imported; abstract by default | lines 1087–1088; `sim_func=simulate_real_battle` is an opt-in |
 | `.golden` regression (`tests/test_simulations.py`, `.golden/capture_baseline.py`) | Abstract (via `get_matchup_sims`) | seeded with `GOLDEN_SEED = 20260411` |
 | `tests/test_position_sim_abilities.py` | Position | imports `BattleUnit`, `BattleSimulation` |
 
-**`webapp/sim_version.py`** hashes exactly two files — `webapp/simulation_real.py` and `analysis/config_combat.py` — into a 16-character SHA-256 prefix. It is the row-level cache key in `matchup_db` (`matchup_battles.sim_version`): rows with a stale version get re-simulated on the next batch run. Note it does **not** hash `simulation.py` or `simulate.js`; changes to those never invalidate matchup rows. **Current:** `e221c8a3a0437bd8` — rotated from `f6ab0051d5cd4fff` on 2026-06-10 by the bundled dismount-port + config-cleanup window, so every row in the external baseline (`D:/AI/matchup_baseline_177723.db`) is stale pending the next full batch re-sim; until then the served matchup data still reflects the pre-dismount engine.
+**`aoe2x/sim/sim_version.py`** hashes exactly two files — `aoe2x/sim/simulation_real.py` and `aoe2x/dbgen/config_combat.py` — into a 16-character SHA-256 prefix. It is the row-level cache key in `matchup_db` (`matchup_battles.sim_version`): rows with a stale version get re-simulated on the next batch run. Note it does **not** hash `simulation.py` or `simulate.js`; changes to those never invalidate matchup rows. **Current:** `e221c8a3a0437bd8` — rotated from `f6ab0051d5cd4fff` on 2026-06-10 by the bundled dismount-port + config-cleanup window, so every row in the external baseline (`D:/AI/matchup_baseline_177723.db`) is stale pending the next full batch re-sim; until then the served matchup data still reflects the pre-dismount engine.
 
 ## 5. Shared contracts
 
-**The combat dict.** Every backend sim path is: `ref_units` row (`webapp/aoe2_reference.db`) → `combat_unit_loader.build_combat_dict_from_ref(row)` (96 keys: identity, final stats, costs + upgrade costs, `*_json` strings, all combat-property and ability columns, `outline_size` from `outline_size_x`) → `simulation.prepare_combat_unit(dict)` (73 keys: JSON parsed into int-keyed `attacks`/`armors` dicts, defaults applied, `transform`/`dismount` sub-dicts built) → either engine. The webapp's flat `unit_stats` table in `aoe2_units.db` is *not* on this path. `simulation_real.py` also defines its own `prepare_combat_unit()` — a thin normalizer that accepts both raw and prepared shapes (its `_stat_attacks` helpers handle either), used by `run_matchup_battles.py`.
+**The combat dict.** Every backend sim path is: `ref_units` row (`data/golden/aoe2_reference.db`) → `combat_unit_loader.build_combat_dict_from_ref(row)` (96 keys: identity, final stats, costs + upgrade costs, `*_json` strings, all combat-property and ability columns, `outline_size` from `outline_size_x`) → `simulation.prepare_combat_unit(dict)` (73 keys: JSON parsed into int-keyed `attacks`/`armors` dicts, defaults applied, `transform`/`dismount` sub-dicts built) → either engine. The webapp's flat `unit_stats` table in `aoe2_units.db` is *not* on this path. `simulation_real.py` also defines its own `prepare_combat_unit()` — a thin normalizer that accepts both raw and prepared shapes (its `_stat_attacks` helpers handle either), used by `run_matchup_battles.py`.
 
-**`battle_outcome.BattleOutcome`** (`webapp/battle_outcome.py`) is the rich result dataclass produced only by `simulate_real_battle`: winner, `end_reason`, `game_time_s`, per-team HP%, survivors, start counts, per-resource HP-weighted losses, per-kill resource gains, weighted `value_lost`, and cached per-unit costs. `signed_score(outcome)` collapses it to a single −100…+100 number: `±100 × (winner_hp_pct − loser_hp_pct)`, 0 on draw. `average_outcomes(list)` aggregates multi-seed runs (means for numerics, majority vote for winner with HP tiebreak) — both batch runners persist averaged outcomes.
+**`battle_outcome.BattleOutcome`** (`aoe2x/sim/battle_outcome.py`) is the rich result dataclass produced only by `simulate_real_battle`: winner, `end_reason`, `game_time_s`, per-team HP%, survivors, start counts, per-resource HP-weighted losses, per-kill resource gains, weighted `value_lost`, and cached per-unit costs. `signed_score(outcome)` collapses it to a single −100…+100 number: `±100 × (winner_hp_pct − loser_hp_pct)`, 0 on draw. `average_outcomes(list)` aggregates multi-seed runs (means for numerics, majority vote for winner with HP tiebreak) — both batch runners persist averaged outcomes.
 
 ## 6. Determinism rules
 
@@ -159,7 +159,7 @@ The Battle Sim page at `/` (legacy `/simulate` 301-redirects there; `webapp/temp
 |---|---|
 | `simulation.py` constants (DT, caps, engage ramp) or targeting helpers | §1; rerun `compute_battle_scores.py` and regenerate `.golden/baseline.json` |
 | A new special ability / `ref_units` combat column | ability table in §1, §5 key counts (96/73); port to all three engines and both ability test files |
-| `simulation_real.py` or `analysis/config_combat.py` | §2; `sim_version` changes ⇒ matchup rows re-sim on next batch (note in §4) |
+| `simulation_real.py` or `aoe2x/dbgen/config_combat.py` | §2; `sim_version` changes ⇒ matchup rows re-sim on next batch (note in §4) |
 | `static/js/simulate.js` `BattleUnit` | §3; keep `tests/test_frontend_projectile_miss.js` passing |
 | `sim_version.py` `DEFAULT_FILES` | §4 hashing note |
 | `BattleOutcome` fields or `signed_score` formula | §5; also `matchup_db` schema and both batch runners |

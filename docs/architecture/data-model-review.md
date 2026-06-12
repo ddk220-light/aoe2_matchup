@@ -102,7 +102,7 @@ The derivation functions (the "interpreters" the owner asked about):
 >
 > *(Historical, 2026-06-10 report against the then Castle+Imperial DB:)*
 > **Resolver report 2026-06-10 (Phase B core): 282 mismatches — swap NOT
-> performed.** `analysis/availability_resolver.py` implements the full
+> performed.** `aoe2x/dbgen/availability_resolver.py` implements the full
 > fixed-point resolution (per-tech civ binding, `required_tech_count`,
 > dynamic type-102 disables from fired techs, type-2 enables / type-3
 > upgrade-edge walking, age-phase staging, `full_tech_mode == -1` as the
@@ -149,7 +149,7 @@ The derivation functions (the "interpreters" the owner asked about):
 Today a unit's per-civ existence is decided by **four cooperating mechanisms**:
 `disabled_techs` blocklist + per-line `availability_tech` + `civ_only` /
 `_AVAILABILITY_OVERRIDES` allowlists (17 lines, hand-synced from SiegeEngineers) +
-a stage-4 `CIV_MISSING_UNITS` exclusion set in `webapp/unit_lines.py`. The blocklist
+a stage-4 `CIV_MISSING_UNITS` exclusion set in `aoe2x/sim/unit_lines.py`. The blocklist
 alone produced 776 phantom rows; the allowlist fix then silently dropped Cumans Camel
 Rider and Dravidians Battle Elephant at Imperial.
 
@@ -179,7 +179,7 @@ Then:
 > **Status: Phase A landed 2026-06-10; Phase B (registry-driven generation)
 > landed 2026-06-10 in the same window** — the §7 Phase A resolver/line-graph
 > items are separate and still open.
-> **Phase A:** `analysis/ability_registry.py` (36 abilities / 77 params across
+> **Phase A:** `aoe2x/dbgen/ability_registry.py` (36 abilities / 77 params across
 > 11 families, every pipeline property declared with type, default, ref
 > column, source, engine coverage, audit description and quirks) +
 > `tests/test_ability_registry.py` (orphan-key allowlist vs the committed ref
@@ -194,7 +194,7 @@ Then:
 > **Phase B (columns stay — `abilities_json` storage was NOT adopted, optional
 > / not planned):** the registry now *generates* (a) the ability-column DDL
 > fragment, the ref_units UPDATE writer and the `ref_special_effects` audit
-> list in `analysis/generate_reference.py` (legacy column/audit order pinned
+> list in `aoe2x/dbgen/generate_reference.py` (legacy column/audit order pinned
 > there for schema byte-stability; new params append automatically), (b) the
 > ability-key mapping of `combat_unit_loader.build_combat_dict_from_ref`, and
 > (c) `simulation.prepare_combat_unit`'s ability defaults
@@ -320,7 +320,7 @@ groups re-sim automatically via the `rebuild_matchup_baseline` `groups_done` res
 ### 3.4 Upgrade lines: hand-curated though fully present in the dat
 
 Line chains (knight→cavalier→paladin) are curated in `config_units.py`
-(`upgrades`/`civ_upgrades` lists) and again in `webapp/unit_lines.py` (+ a JS copy).
+(`upgrades`/`civ_upgrades` lists) and again in `aoe2x/sim/unit_lines.py` (+ a JS copy).
 The dat encodes them completely as type-3 UPGRADE_UNIT commands (verified: tech 209
 Cavalier 38→283, tech 265 Paladin 38→569 + 283→569); age ordering comes from
 `tech_ages.json`. **Target:** derive `lines.json` in extraction (graph walk over type-3
@@ -415,7 +415,7 @@ else regenerates from the dat.
 | If this changes | Update |
 |---|---|
 | CivTechTrees JSON extractor lands (re-run the resolver gate) | §3.1 status, §5 diagram, §6 row 2, test pin in `tests/test_availability_resolver.py` |
-| New dat build (regenerate extraction) | re-run `python -m analysis.availability_resolver`; re-probe `DEFAULT_ENABLED_UNIT_IDS`; update the 163-row pin (Imperial-only universe) |
+| New dat build (regenerate extraction) | re-run `python -m aoe2x.dbgen.availability_resolver`; re-probe `DEFAULT_ENABLED_UNIT_IDS`; update the 163-row pin (Imperial-only universe) |
 | Ability registry generation changes (new generated artifact, or abilities_json adopted after all) | §3.2 status, §7 phase B, runbooks §3 |
 | Multi-form derivation lands | §3.3 (close the bug), improvements.md ledger |
 | New ability families appear in DE dats | §4 irreducible-core list |

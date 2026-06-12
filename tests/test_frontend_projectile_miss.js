@@ -1,10 +1,10 @@
 /*
  * Frontend projectile-accuracy / miss-graze tests for the on-page battle sim.
  *
- * Extracts the LIVE `BattleUnit` class from webapp/static/js/simulate.js (rather
+ * Extracts the LIVE `BattleUnit` class from apps/website/static/js/simulate.js (rather
  * than a hand-copied snapshot) and exercises fireProjectile under mocked
  * browser globals, so it tests exactly what ships. Mirrors the backend model in
- * webapp/simulation_real.py fire_projectile + tests/test_position_sim_abilities.
+ * aoe2x/sim/simulation_real.py fire_projectile + tests/test_position_sim_abilities.
  *
  * Run:  node tests/test_frontend_projectile_miss.js
  */
@@ -14,7 +14,7 @@ const assert = require("assert");
 
 // ---- extract `class BattleUnit { ... }` from the live source by brace match
 const src = fs.readFileSync(
-    path.join(__dirname, "..", "webapp", "static", "js", "simulate.js"),
+    path.join(__dirname, "..", "apps", "website", "static", "js", "simulate.js"),
     "utf8",
 );
 const start = src.indexOf("class BattleUnit");

@@ -98,6 +98,6 @@
 
 ### Environment
 - Must `cd webapp` or `os.chdir('webapp')` before imports (relative paths in app.py)
-- DB path (linux): `/home/user/aoe2-unit-analyzer/webapp/aoe2_units.db`
+- DB path (linux): `/home/user/aoe2-unit-analyzer/data/golden/aoe2_units.db`
 - Import path: `sys.path.insert(0, 'webapp')` then `os.chdir('webapp')`
 - EXTRA_PROJ_ACCURACY (0.5) can be imported: `from simulation import EXTRA_PROJ_ACCURACY`... actually it's a local var in simulate_battle, not exported

@@ -7,7 +7,7 @@ tests/test_ability_registry.py against the four places it currently lives:
 
     analysis/config_combat.py          (curated values)
     analysis/generate_reference.py     (ref_units columns + writer)
-    webapp/combat_unit_loader.py       (the serving combat dict)
+    aoe2x/sim/combat_unit_loader.py    (the serving combat dict)
     the three engines (simulation.py / simulation_real.py / static/js/simulate.js)
 
 Phase B (landed 2026-06-10) made this registry the GENERATOR for the
@@ -18,9 +18,9 @@ storage/serving chain — the columns stayed, the hand-written lists died:
                                      ref_special_effects audit list from
                                      iter_params() (legacy column order pinned
                                      there for schema byte-stability)
-    webapp/combat_unit_loader.py     generates the ability-key mapping of
+    aoe2x/sim/combat_unit_loader.py  generates the ability-key mapping of
                                      build_combat_dict_from_ref()
-    webapp/simulation.py             prepare_combat_unit ability defaults come
+    aoe2x/sim/simulation.py          prepare_combat_unit ability defaults come
                                      from param defaults declared here
 
 Adding an ability is now: registry entry + config_combat value + one handler
@@ -60,9 +60,9 @@ Scope notes
 
 from dataclasses import dataclass
 
-ENGINE_ABSTRACT = "abstract"   # webapp/simulation.py        (tick, no positions)
-ENGINE_POSITION = "position"   # webapp/simulation_real.py   (2D, batch matchup data)
-ENGINE_JS = "js"               # webapp/static/js/simulate.js (interactive page)
+ENGINE_ABSTRACT = "abstract"   # aoe2x/sim/simulation.py      (tick, no positions)
+ENGINE_POSITION = "position"   # aoe2x/sim/simulation_real.py (2D, batch matchup data)
+ENGINE_JS = "js"               # apps/website/static/js/simulate.js (interactive page)
 
 ALL_ENGINES = (ENGINE_ABSTRACT, ENGINE_POSITION, ENGINE_JS)
 

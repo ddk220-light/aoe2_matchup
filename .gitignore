@@ -51,18 +51,18 @@ env/
 ANALYSIS.md
 
 # User data
-webapp/matchup_votes.jsonl
+apps/website/matchup_votes.jsonl
 
 # Battle score cache and DB (legacy locations; now under data/local/)
-webapp/battle_cache.json
-webapp/battle_scores.db
+apps/website/battle_cache.json
+apps/website/battle_scores.db
 
 # Downloaded wiki assets (fetched via download scripts, not source)
-webapp/static/img/units-wiki/
-webapp/static/img/units-wiki-gifs/
+apps/website/static/img/units-wiki/
+apps/website/static/img/units-wiki-gifs/
 
 # One-off download/scraping scripts
-webapp/download_wiki_*.py
+apps/website/download_wiki_*.py
 
 # Scratch design notes
 civ_detail_mockup.md
@@ -70,7 +70,7 @@ new-civ-view.md
 
 # Claude Code worktree state
 .claude/worktrees/
-webapp/backups/
+apps/website/backups/
 
 # Raw extracted game graphics (19GB local dump; never commit)
 graphics/game_raw_files/
@@ -93,11 +93,11 @@ tmp/
 # Patch-pipeline local artifacts (pre-patch archives + intermediates;
 # created by aoe2x/batch/patch_pipeline.py into data/local/, never committed)
 data/golden/*.db.bak
-webapp/*.db.bak
+apps/website/*.db.bak
 
 # Local matchup working DB (in-repo Armenians-only stub removed 2026-06-11;
 # real baselines live outside the repo, e.g. D:/AI/matchup_baseline_<build>.db)
-webapp/matchup_db.db
+data/local/matchup_db.db
 
 # gRPC mTLS client credentials (CadeRemote) — NEVER commit; live beside aoe2x/grpc/
 aoe2x/grpc/*.key

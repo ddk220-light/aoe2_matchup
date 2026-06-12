@@ -1,6 +1,6 @@
 // tests/test_sim_params.js
 const assert = require("assert");
-const { readSimParams } = require("../webapp/static/js/sim_params.js");
+const { readSimParams } = require("../apps/website/static/js/sim_params.js");
 
 const p = readSimParams("?civ1=Wei&unit1=tiger_cavalry_wei&civ2=Franks&unit2=knight&mode=count&age1=Imperial&autorun=1");
 assert.strictEqual(p.civ1, "Wei");

@@ -58,7 +58,7 @@ REF_DB = ROOT / "data" / "golden" / "aoe2_reference.db"
 ENGINE_SOURCES = {
     "abstract": (ROOT / "aoe2x" / "sim" / "simulation.py").read_text(encoding="utf-8"),
     "position": (ROOT / "aoe2x" / "sim" / "simulation_real.py").read_text(encoding="utf-8"),
-    "js": (ROOT / "webapp" / "static" / "js" / "simulate.js").read_text(encoding="utf-8"),
+    "js": (ROOT / "apps" / "website" / "static" / "js" / "simulate.js").read_text(encoding="utf-8"),
 }
 
 

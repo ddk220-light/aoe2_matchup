@@ -4,8 +4,8 @@
 - Python: `python3` (macOS, `python` not in PATH)
 - Virtual env: `venv/` (has flask + numpy), `.venv/` (flask only). Use `venv/`.
 - Port 5000: AirPlay Receiver. Ports 5001-5003 often occupied by prior Flask runs. Use 5010+.
-- Flask start: `cd webapp && PORT=5010 python3 app.py`
-- DB: `webapp/aoe2_units.db` (SQLite)
+- Flask start: `cd apps/website && PORT=5010 python3 app.py`
+- DB: `data/golden/aoe2_units.db` (SQLite)
 
 ## Simulation Testing
 - No direct simulation API endpoint. Backend `simulate_battle()` is used internally only.
@@ -26,7 +26,7 @@
 - Server responds at `/` with 200
 
 ## Unit Rankings Page (`/units`)
-- Route: `/units` -> `webapp/templates/rankings.html` (renamed from index.html 2026-06-10), title "Unit Rankings"
+- Route: `/units` -> `apps/website/templates/rankings.html` (renamed from index.html 2026-06-10), title "Unit Rankings"
 - Client-side SPA: JS fetches `/api/ref/unit-line/{slug}` on click (no auto-load)
 - 18 lines in frontend UNIT_LINES; 21 in backend (militia/spear/shock_infantry are sub_lines of infantry aggregates)
 - Knight line imperial_slug=paladin: only Paladin-tier civs in imperial (by design)
@@ -53,7 +53,7 @@
 - Formula: stable_power = 0.6*attack + 0.2*speed + 0.2*survivability (max rounding error 0.04)
 - Ranges: stable_power 22.7-70.2, attack_power 9.1-85.3, speed 0-100, survivability 6.3-71.5
 - Top: Ratha (70.2), Leitis (68.9), Monaspa (67.6), Konnik (66.6). Bottom: Viking Hussar (22.7)
-- Scoring DB: `webapp/aoe2_reference.db` (NOT aoe2_units.db)
+- Scoring DB: `data/golden/aoe2_reference.db` (NOT aoe2_units.db)
 - compute_battle_scores.py --roles-only: runs infantry(~6s) + archery(~9s) + stable(~4.6s) = ~20s total
 - Stale .pyc files can cause errors after code changes; if you see unexpected KeyErrors, try `find webapp -name '*.pyc' -delete`
 

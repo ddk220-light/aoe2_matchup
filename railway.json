@@ -1,11 +1,11 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "buildCommand": "pip install -e . -r webapp/requirements.txt",
-    "watchPatterns": ["webapp/**", "aoe2x/**", "data/golden/**"]
+    "buildCommand": "pip install -e . -r apps/website/requirements.txt",
+    "watchPatterns": ["apps/website/**", "aoe2x/**", "data/golden/**"]
   },
   "deploy": {
-    "startCommand": "cd webapp && gunicorn app:app --workers 2 --timeout 300 --graceful-timeout 300",
+    "startCommand": "cd apps/website && gunicorn app:app --workers 2 --timeout 300 --graceful-timeout 300",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }

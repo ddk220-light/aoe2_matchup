@@ -12,14 +12,14 @@ The app is a Flask + gunicorn service deployed on Railway behind `aoe2matchup.co
 
 | Key | Value |
 |-----|-------|
-| `build.buildCommand` | `pip install -r webapp/requirements.txt` |
-| `build.watchPatterns` | `["webapp/**"]` — pushes that touch only files outside `webapp/` do **not** trigger a redeploy |
-| `deploy.startCommand` | `cd webapp && gunicorn app:app --workers 2 --timeout 300 --graceful-timeout 300` |
+| `build.buildCommand` | `pip install -r apps/website/requirements.txt` |
+| `build.watchPatterns` | `["apps/website/**"]` — pushes that touch only files outside `apps/website/` do **not** trigger a redeploy |
+| `deploy.startCommand` | `cd apps/website && gunicorn app:app --workers 2 --timeout 300 --graceful-timeout 300` |
 | `deploy.restartPolicyType` | `ON_FAILURE`, max 10 retries |
 
-The long timeouts exist because some API endpoints run batches of battle simulations synchronously. Note the `watchPatterns` consequence: changes to `analysis/`, `extraction/`, `tests/`, or `docs/` alone will not redeploy — the deployed app only changes when something under `webapp/` changes (which includes the committed databases, see below).
+The long timeouts exist because some API endpoints run batches of battle simulations synchronously. Note the `watchPatterns` consequence: changes to `aoe2x/dbgen/`, `aoe2x/extract/`, `tests/`, or `docs/` alone will not redeploy — the deployed app only changes when something under `apps/website/` changes (which includes the committed databases, see below).
 
-### `webapp/Procfile`
+### `apps/website/Procfile`
 
 Contains a single line, `web: gunicorn app:app`. Railway's `startCommand` in `railway.json` takes precedence, so the Procfile is a fallback/legacy artifact (no `--workers`/`--timeout` flags). If you change gunicorn flags, change them in `railway.json`; the Procfile is not what production runs.
 
@@ -30,7 +30,7 @@ There are two requirements files with different purposes:
 | File | Contents | Used by |
 |------|----------|---------|
 | `requirements.txt` (root) | `flask==3.0.0`, `gunicorn==21.2.0` | Minimal local install; **not** what Railway installs |
-| `webapp/requirements.txt` | `flask==3.0.0`, `gunicorn==21.2.0`, `numpy`, `requests>=2.31.0`, `flask-cors>=4.0.0`, `mgz` (pinned fork, see below), `Pillow>=10.0.0`, `imageio-ffmpeg>=0.4.9` | Railway build (`railway.json` buildCommand) |
+| `apps/website/requirements.txt` | `flask==3.0.0`, `gunicorn==21.2.0`, `numpy`, `requests>=2.31.0`, `flask-cors>=4.0.0`, `mgz` (pinned fork, see below), `Pillow>=10.0.0`, `imageio-ffmpeg>=0.4.9` | Railway build (`railway.json` buildCommand) |
 
 The `mgz` dependency is pinned to a fork tarball, not PyPI: `mgz @ https://github.com/sanduckhan/aoc-mgz/archive/a1683d8eeca67796ced0d0c05b145420c97d862d.tar.gz`. The fork adds AoE2:DE save-version 67.x support (current game builds) that is not yet upstream (aoc-mgz PR #141). It powers the replay analyzer feature — see [replay.md](replay.md). `Pillow` + `imageio-ffmpeg` support server-side WebM clip export (the imageio-ffmpeg wheel bundles an ffmpeg binary, so the slim Railway image needs no `apt install`).
 
@@ -47,11 +47,11 @@ Two long-lived branches map to two Railway environments. The mapping itself is R
 
 ### How data ships
 
-There is no database server. All data the app serves is **SQLite files and JSON committed to git inside `webapp/`** — each environment deploys whatever data files are on its branch. Shipping new data means: regenerate locally → commit on `staging` → smoke-test on the staging URL → promote. Because of `watchPatterns`, committing a regenerated `webapp/*.db` is itself enough to trigger a redeploy.
+There is no database server. All data the app serves is **SQLite files and JSON committed to git inside `apps/website/`** — each environment deploys whatever data files are on its branch. Shipping new data means: regenerate locally → commit on `staging` → smoke-test on the staging URL → promote. Because of `watchPatterns`, committing a regenerated `apps/website/*.db` is itself enough to trigger a redeploy.
 
 ### Environment variables
 
-All optional, read in `webapp/app.py`: `PORT` (dev server; Railway injects its own — local convention `PORT=5002 python webapp/app.py`), `SITE_URL`, `CONTACT_FORM_ENDPOINT`, and the `SOCIAL_*` footer links (behavior covered by `tests/test_footer.py`). The full table with `app.py` line numbers is in [webapp.md](webapp.md), "Environment variables and config".
+All optional, read in `apps/website/app.py`: `PORT` (dev server; Railway injects its own — local convention `PORT=5002 python apps/website/app.py`), `SITE_URL`, `CONTACT_FORM_ENDPOINT`, and the `SOCIAL_*` footer links (behavior covered by `tests/test_footer.py`). The full table with `app.py` line numbers is in [webapp.md](webapp.md), "Environment variables and config".
 
 ## 2. Git workflow and committed artifacts
 
@@ -67,37 +67,37 @@ These binary/data files are committed **on purpose** — they are how the deploy
 
 | File | Size | What it is |
 |------|------|------------|
-| `webapp/aoe2_units.db` | 2.0 MB | Main flat `unit_stats` DB (stage 3 output) |
-| `webapp/aoe2_reference.db` | 4.5 MB | Audit-trail reference DB (stage 2 output) |
-| `webapp/derived_data.db` | 14.5 MB | Derived rankings/advisor recommendations (battle scores live here now) |
-| `webapp/pool_scores.db` | 4.4 MB | Pool-score data |
-| `webapp/patches.db` | 6.3 MB | Patch/build history for the patches pages |
-| `webapp/civ_power_units/{170934,177723}.json` | ~1.8 MB each | Per-build civ power-unit data (the legacy flat `civ_power_units.json` was deleted — no fallback) |
-| `webapp/civ_top_units.json`, `webapp/train_times.json` | small | Misc serving data (`battle_scores.json` was deleted — scores moved into `derived_data.db`) |
+| `data/golden/aoe2_units.db` | 2.0 MB | Main flat `unit_stats` DB (stage 3 output) |
+| `data/golden/aoe2_reference.db` | 4.5 MB | Audit-trail reference DB (stage 2 output) |
+| `data/golden/derived_data.db` | 14.5 MB | Derived rankings/advisor recommendations (battle scores live here now) |
+| `data/golden/pool_scores.db` | 4.4 MB | Pool-score data |
+| `data/golden/patches.db` | 6.3 MB | Patch/build history for the patches pages |
+| `data/golden/civ_power_units/{170934,177723}.json` | ~1.8 MB each | Per-build civ power-unit data (the legacy flat `civ_power_units.json` was deleted — no fallback) |
+| `data/golden/civ_top_units.json`, `aoe2x/replay/train_times.json` | small | Misc serving data (`battle_scores.json` was deleted — scores moved into `derived_data.db`) |
 | `.golden/baseline.json` | 208 KB | Golden sim regression baseline (section 3) |
 | `tests/fixtures/berserker_matchups.db` | test fixture | |
-| `scenario_builder/auto/unique_units.json`, `marketing/responded-threads.json` | small | Tooling state |
+| `apps/video/auto/unique_units.json`, `marketing/responded-threads.json` | small | Tooling state |
 
-**Note (2026-06-11):** the 3.9 MB Armenians-only `webapp/matchup_db.db` stub was removed from the repo — no route ever read it, and the derive scripts pre-flight-reject partial DBs. Matchup DBs are always local/external (`D:/AI/matchup_baseline_<build>.db`), passed via `--matchup-db`.
+**Note (2026-06-11):** the 3.9 MB Armenians-only `apps/website/matchup_db.db` stub was removed from the repo — no route ever read it, and the derive scripts pre-flight-reject partial DBs. Matchup DBs are always local/external (`D:/AI/matchup_baseline_<build>.db`), passed via `--matchup-db`.
 
-Deliberately **not** committed (`.gitignore`): `extraction/empires2_x2_p1.dat` and `extraction/extracted_data/`, `graphics/game_raw_files/` (19 GB raw sprite dump), `webapp/battle_cache.json`, `webapp/battle_scores.db`, `webapp/matchup_votes.jsonl`, patch-pipeline intermediates (`webapp/aoe2_reference_*.db`, `webapp/changed_units_*.json`, `webapp/*.db.bak`, `extraction/extracted_data_prev/`), and scratch dirs (`.scratch/`, `tmp/`, `.old/`).
+Deliberately **not** committed (`.gitignore`): `data/inputs/empires2_x2_p1.dat` and `data/inputs/extracted_data/`, `graphics/game_raw_files/` (19 GB raw sprite dump), `apps/website/battle_cache.json`, `apps/website/battle_scores.db`, `apps/website/matchup_votes.jsonl`, patch-pipeline intermediates (`apps/website/aoe2_reference_*.db`, `apps/website/changed_units_*.json`, `apps/website/*.db.bak`, `data/local/extracted_data_prev/`), and scratch dirs (`.scratch/`, `tmp/`, `.old/`).
 
 ## 3. Testing
 
 ### pytest
 
-Config is `pytest.ini`: `testpaths = tests`, `python_files = test_*.py`. `tests/conftest.py` prepends `webapp/` to `sys.path` (tests import webapp modules bare, e.g. `from best_units import ...`) and provides a Flask test `client` fixture. Run with `pytest` from the repo root. There are 25 Python test files plus 2 Node.js test files:
+Config is `pytest.ini`: `testpaths = tests`, `python_files = test_*.py`. `tests/conftest.py` prepends `apps/website/` to `sys.path` (tests import webapp modules bare, e.g. `from best_units import ...`) and provides a Flask test `client` fixture. Run with `pytest` from the repo root. There are 25 Python test files plus 2 Node.js test files:
 
 | File | Covers |
 |------|--------|
 | `test_simulations.py` | Golden regression: `get_matchup_sims()` vs `.golden/baseline.json` (see below) |
-| `test_position_sim_abilities.py` | Special abilities in the position-based engine `webapp/simulation_real.py` |
+| `test_position_sim_abilities.py` | Special abilities in the position-based engine `aoe2x/sim/simulation_real.py` |
 | `test_battle_outcome.py` | `BattleOutcome` contract: `signed_score`, `average_outcomes`, `simulate_real_battle` return shape |
 | `test_resource_per_kill.py` | Per-resource kill-bonus accounting in `simulation_real.py` |
 | `test_value_lost.py` | HP-weighted value-lost computation in `simulation_real.py` |
-| `test_sim_outcome_cache.py` | Outcome cache + unit fingerprinting (`webapp/sim_outcome_cache.py`) |
+| `test_sim_outcome_cache.py` | Outcome cache + unit fingerprinting (`aoe2x/sim/sim_outcome_cache.py`) |
 | `test_sim_version.py` | `compute_sim_version()` hash changes when sim source changes |
-| `test_matchup_db.py` | `webapp/matchup_db.py` schema/insert/upsert/version checks |
+| `test_matchup_db.py` | `aoe2x/batch/matchup_db.py` schema/insert/upsert/version checks |
 | `test_matchup_diff.py` | `matchup_diff` snapshot/diff detects verdict flips between builds |
 | `test_ref_diff.py` | `ref_diff` detects changed unit fields between reference DBs |
 | `test_unit_ranking_derive.py` | `derive_unit_rankings` writes role/composite scores to `derived_data.db` |
@@ -107,7 +107,7 @@ Config is `pytest.ini`: `testpaths = tests`, `python_files = test_*.py`. `tests/
 | `test_pool_scores_db.py` / `_lib.py` / `_query.py` | Unit tests for the three pool-score modules |
 | `test_pool_scores_api.py` | `/api/ref/unit-line` pool-score attachment (skips if `pool_scores.db` missing) |
 | `test_pool_scores_integration.py` | End-to-end derived-score regression (Viking Elite Berserk) |
-| `test_infantry_scoring.py` | Militia-line role benchmarks in `webapp/compute_battle_scores.py` |
+| `test_infantry_scoring.py` | Militia-line role benchmarks in `aoe2x/rank/compute_battle_scores.py` |
 | `test_siege_scoring.py` | Siege-vs-castle scoring helpers (`_simulate_siege_vs_castle`, TTK math, castle target table) |
 | `test_patches_db.py` / `test_patch_routes.py` | `patches_db` helpers and the `/patches` pages |
 | `test_reference_builder.py` | Pure functions of `scripts/build_reference_docs.py` (section 6) |
@@ -115,7 +115,7 @@ Config is `pytest.ini`: `testpaths = tests`, `python_files = test_*.py`. `tests/
 
 ### Golden baseline (`.golden/`)
 
-`.golden/capture_baseline.py` snapshots `get_matchup_sims()` (from `webapp/best_units.py`) for 10 fixed civ pairs × 2 ages = **20 entries** into `.golden/baseline.json` (committed). Determinism comes from `random.seed(GOLDEN_SEED)` — `GOLDEN_SEED = 20260411`, re-seeded before *each* matchup so entries are insensitive to iteration order. A `_normalize` pass drops non-deterministic keys (`elapsed_ms`, `timing`, `generated_at`) and rounds floats to 6 decimal places. `tests/test_simulations.py` re-runs each entry with the same seed and asserts byte-equality with the baseline.
+`.golden/capture_baseline.py` snapshots `get_matchup_sims()` (from `aoe2x/advisor/best_units.py`) for 10 fixed civ pairs × 2 ages = **20 entries** into `.golden/baseline.json` (committed). Determinism comes from `random.seed(GOLDEN_SEED)` — `GOLDEN_SEED = 20260411`, re-seeded before *each* matchup so entries are insensitive to iteration order. A `_normalize` pass drops non-deterministic keys (`elapsed_ms`, `timing`, `generated_at`) and rounds floats to 6 decimal places. `tests/test_simulations.py` re-runs each entry with the same seed and asserts byte-equality with the baseline.
 
 **Regenerate** (`python .golden/capture_baseline.py`, ~30 s, CPython is fine) whenever simulation behavior changes *intentionally* — any sim-logic, stat, or config change makes `test_golden_regression` fail until you do. Commit the regenerated `baseline.json` on `staging` like source. (The script docstring still mentions a direct `simulate_battle()` section; `main()` only captures `matchup_sims` — the docstring is stale.)
 
@@ -123,10 +123,10 @@ Config is `pytest.ini`: `testpaths = tests`, `python_files = test_*.py`. `tests/
 
 Not collected by pytest; run manually with Node (v20 available locally):
 
-- `node tests/test_frontend_projectile_miss.js` — brace-matches the **live** `BattleUnit` class out of `webapp/static/js/simulate.js` (no hand-copied snapshot) and exercises `fireProjectile` under mocked browser globals, asserting the frontend canvas sim mirrors the backend miss/graze model in `webapp/simulation_real.py`.
-- `node tests/test_sim_params.js` — URL-parameter parsing in `webapp/static/js/sim_params.js` (deep-link autorun).
+- `node tests/test_frontend_projectile_miss.js` — brace-matches the **live** `BattleUnit` class out of `apps/website/static/js/simulate.js` (no hand-copied snapshot) and exercises `fireProjectile` under mocked browser globals, asserting the frontend canvas sim mirrors the backend miss/graze model in `aoe2x/sim/simulation_real.py`.
+- `node tests/test_sim_params.js` — URL-parameter parsing in `apps/website/static/js/sim_params.js` (deep-link autorun).
 
-## 4. `scenario_builder/` — validating the sim against the real game
+## 4. `apps/video/` — validating the sim against the real game
 
 Purpose: generate real `.aoe2scenario` files, run them in AoE2:DE as AI-vs-AI fights, record the screen, and compose titled matchup videos — both to **cross-check the simulator against the actual game** and to produce shareable video content. The sim engines being validated are described in [simulation-engines.md](simulation-engines.md).
 
@@ -143,12 +143,12 @@ Purpose: generate real `.aoe2scenario` files, run them in AoE2:DE as AI-vs-AI fi
 | `auto/input_driver.py` | Scripted mouse/keyboard via `cliclick` (`/opt/homebrew/bin/cliclick`); game-safe move→settle→down/up click pattern |
 | `auto/vision.py` | `screencapture` + rapidocr OCR of fractional screen regions: "which screen is the game on / has the fight ended" |
 | `auto/record_until_end.py` | Start recorder → watch for the end-of-game banner → stop → compose → copy |
-| `overlay/` | Video composition: `overlay_data.py` (stats from `webapp/aoe2_reference.db`), `render_card.py` (HTML → headless Chrome → PNG intro/outro cards), `hud.py` (Pillow live HUD), `results.py` (sim-predicted timeline), `video_extract.py` (OCR survivor counts from footage), `compose.py` (ffmpeg assembly), `make_real_video.py` (one recording → titled video) |
+| `overlay/` | Video composition: `overlay_data.py` (stats from `data/golden/aoe2_reference.db`), `render_card.py` (HTML → headless Chrome → PNG intro/outro cards), `hud.py` (Pillow live HUD), `results.py` (sim-predicted timeline), `video_extract.py` (OCR survivor counts from footage), `compose.py` (ffmpeg assembly), `make_real_video.py` (one recording → titled video) |
 | `recorder/` | `sck_record.swift` — macOS ScreenCaptureKit recorder (video + system audio, 1920×1248@60) with `build.sh`/`record.sh` |
 
-**Status:** past the original de-risk spike (the Fire Archer vs Jian spike scenarios are still committed at the top level, plus `spike_runs/` outputs). Per `scenario_builder/auto/README.md` the hands-off pipeline is verified: a 2-matchup batch produced both titled videos with no human interaction, ~4 min each. The composition is now template-based and OCR-free for results (OCR is only used for screen-state detection).
+**Status:** past the original de-risk spike (the Fire Archer vs Jian spike scenarios are still committed at the top level, plus `spike_runs/` outputs). Per `apps/video/auto/README.md` the hands-off pipeline is verified: a 2-matchup batch produced both titled videos with no human interaction, ~4 min each. The composition is now template-based and OCR-free for results (OCR is only used for screen-state detection).
 
-**Platform constraints:** the automation half is **macOS-only** — it depends on `cliclick` (Homebrew), `screencapture`, ScreenCaptureKit, and the Mac-native AoE2:DE install. The launching Terminal needs **both** Screen Recording and Accessibility permission (System Settings → Privacy & Security); Screen Recording alone does not allow input injection. The game's scenario folder is dedicated to staged runs (exactly one file at a time, so UI navigation needs no search). The game launches via Steam app id 813780. Scenario *generation* (`make_scenario.py`, `build_run.py`) is cross-platform Python. Setup/handoff notes: `scenario_builder/MAC_SETUP.md`.
+**Platform constraints:** the automation half is **macOS-only** — it depends on `cliclick` (Homebrew), `screencapture`, ScreenCaptureKit, and the Mac-native AoE2:DE install. The launching Terminal needs **both** Screen Recording and Accessibility permission (System Settings → Privacy & Security); Screen Recording alone does not allow input injection. The game's scenario folder is dedicated to staged runs (exactly one file at a time, so UI navigation needs no search). The game launches via Steam app id 813780. Scenario *generation* (`make_scenario.py`, `build_run.py`) is cross-platform Python. Setup/handoff notes: `apps/video/MAC_SETUP.md`.
 
 ## 5. `graphics/` — sprites, upscaling, and FLUX.2 art
 
@@ -162,19 +162,19 @@ Halo-free 4× upscaler for the extracted sprites: edge-bleeds opaque RGB into tr
 
 ### FLUX.2 hybrid art
 
-`docs/flux2-unit-art-workflow.md` is the full, battle-tested recipe for generating pose-faithful character renders of unique units with FLUX.2-dev (4-bit): dir05 sprite frame (pose anchor) + the in-game icon (color/identity) as the only two references, a researched-then-critiqued short prompt, a self-critique loop, then rembg background removal. Outputs land in `graphics/art/flux2_hybrid/` as three files per unit (`<slug>_idle_dir05_{bg,nobg,icon}.png`; 195 files at last count, 65 units). This directory is **git-tracked** (briefly untracked on 2026-06-10 for repo size; re-tracked 2026-06-11 by owner decision — the repo doubles as the art backup). **These renders are not yet wired into the webapp** — they are an art asset pipeline awaiting a consumer; when units get wired in, copy the chosen PNGs into `webapp/static/img/` and commit them there.
+`docs/flux2-unit-art-workflow.md` is the full, battle-tested recipe for generating pose-faithful character renders of unique units with FLUX.2-dev (4-bit): dir05 sprite frame (pose anchor) + the in-game icon (color/identity) as the only two references, a researched-then-critiqued short prompt, a self-critique loop, then rembg background removal. Outputs land in `graphics/art/flux2_hybrid/` as three files per unit (`<slug>_idle_dir05_{bg,nobg,icon}.png`; 195 files at last count, 65 units). This directory is **git-tracked** (briefly untracked on 2026-06-10 for repo size; re-tracked 2026-06-11 by owner decision — the repo doubles as the art backup). **These renders are not yet wired into the webapp** — they are an art asset pipeline awaiting a consumer; when units get wired in, copy the chosen PNGs into `apps/website/static/img/` and commit them there.
 
 ### How a new unit icon reaches the site
 
 The icons the site actually serves are a separate, simpler chain (documented in `docs/superpowers/specs/2026-04-13-navy-column-design.md`, "Icons" section):
 
-In short: look up the unit's `icon_id` in the dat, fetch the PNG from aoe2techtree.net, save it under `webapp/static/img/units/`, and register it in `NAME_TO_ICON` — the step-by-step checklist is [runbooks.md](runbooks.md) §5. Environment note the runbook glosses over: the dat lookup needs `genieutils-py`, which on this machine lives only in the conda base `python` (not the git-bash Python) — see section 8.
+In short: look up the unit's `icon_id` in the dat, fetch the PNG from aoe2techtree.net, save it under `apps/website/static/img/units/`, and register it in `NAME_TO_ICON` — the step-by-step checklist is [runbooks.md](runbooks.md) §5. Environment note the runbook glosses over: the dat lookup needs `genieutils-py`, which on this machine lives only in the conda base `python` (not the git-bash Python) — see section 8.
 
 Both `CLAUDE.md` and `.claude/skills/webapp-architecture/SKILL.md` still claim `NAME_TO_ICON` is duplicated across four HTML templates — that is obsolete; the templates contain no copy of it.
 
 ## 6. `reference/` corpus and `scripts/build_reference_docs.py`
 
-`scripts/build_reference_docs.py` generates a markdown **validation corpus** under `reference/`: 189 `.md` files (53 civ files under `reference/civs/`, unit files under `reference/units/{generic,naval,unique}/`, plus `armor-classes.md` and `README.md`). Each file embeds a **DB Comparison table** cross-checking `webapp/aoe2_reference.db` against two external sources: the SiegeEngineers `aoe2techtree` `data.json` (stats) and the Fandom wiki API (civ bonuses, unique techs), with ✅/❌/⚠️ markers per field. Its purpose is auditing — spotting where the local pipeline disagrees with authoritative external data after a patch.
+`scripts/build_reference_docs.py` generates a markdown **validation corpus** under `reference/`: 189 `.md` files (53 civ files under `reference/civs/`, unit files under `reference/units/{generic,naval,unique}/`, plus `armor-classes.md` and `README.md`). Each file embeds a **DB Comparison table** cross-checking `data/golden/aoe2_reference.db` against two external sources: the SiegeEngineers `aoe2techtree` `data.json` (stats) and the Fandom wiki API (civ bonuses, unique techs), with ✅/❌/⚠️ markers per field. Its purpose is auditing — spotting where the local pipeline disagrees with authoritative external data after a patch.
 
 Flags: no args = generate missing files only; `--force` = regenerate all; `--civ <Name>` / `--unit "<Name>"` = single target; `--dry-run` = report only. Wiki calls are rate-limited (0.5 s delay). Regenerate after a dat-file patch, new civs, or new combat mechanics. Pure helper functions are covered by `tests/test_reference_builder.py`.
 
@@ -186,27 +186,27 @@ Flags: no args = generate missing files only; `--force` = regenerate all; `--civ
 
 | Tool | Needed for | Notes |
 |------|-----------|-------|
-| `empires2_x2_p1.dat` | Stage-1 extraction | Not in the repo (gitignored). Copy from a local AoE2:DE install: Windows Steam `C:\Program Files (x86)\Steam\steamapps\common\AoE2DE\resources\_common\dat\empires2_x2_p1.dat` → `extraction/` (macOS path in `README.md`) |
+| `empires2_x2_p1.dat` | Stage-1 extraction | Not in the repo (gitignored). Copy from a local AoE2:DE install: Windows Steam `C:\Program Files (x86)\Steam\steamapps\common\AoE2DE\resources\_common\dat\empires2_x2_p1.dat` → `aoe2x/extract/` (macOS path in `README.md`) |
 | `genieutils-py` | Parsing the dat (extraction, icon lookups, sprite lookups) | In **neither** requirements file — install manually. On this machine it lives in the conda base `python`, not the git-bash Python |
-| PyPy 3 | Matchup batch sims: `webapp/run_matchup_battles.py` (hard `_require_pypy()` guard) and `webapp/rebuild_matchup_baseline.py` | CPython is ~10× too slow for the 491k-matchup baseline. The `.golden` capture does **not** need PyPy |
+| PyPy 3 | Matchup batch sims: `aoe2x/batch/run_matchup_battles.py` (hard `_require_pypy()` guard) and `aoe2x/batch/rebuild_matchup_baseline.py` | CPython is ~10× too slow for the 491k-matchup baseline. The `.golden` capture does **not** need PyPy |
 | Node.js | The two JS tests (section 3) | v20 verified locally |
-| ffmpeg | `scenario_builder/overlay/compose.py` video assembly | `brew install ffmpeg` on the Mac; the *server* needs none (imageio-ffmpeg wheel bundles one) |
+| ffmpeg | `apps/video/overlay/compose.py` video assembly | `brew install ffmpeg` on the Mac; the *server* needs none (imageio-ffmpeg wheel bundles one) |
 | Real-ESRGAN ncnn-vulkan | `graphics/upscale_sprites.py` | Local exe under `.scratch/tools/re/` |
 | FLUX.2 diffusion env | FLUX.2 art workflow | Separate conda env (`visomaster`), RTX-class GPU; see `docs/flux2-unit-art-workflow.md` |
-| AoE2ScenarioParser, rapidocr, cliclick, headless Chrome | `scenario_builder/` automation | macOS; see `scenario_builder/MAC_SETUP.md` |
+| AoE2ScenarioParser, rapidocr, cliclick, headless Chrome | `apps/video/` automation | macOS; see `apps/video/MAC_SETUP.md` |
 
 ## Update triggers
 
 | If this changes | Update these sections |
 |-----------------|----------------------|
 | `railway.json` (build/start command, watchPatterns) | §1 Deployment |
-| `webapp/requirements.txt` (esp. the mgz fork pin) | §1 Requirements files |
-| New committed DB/JSON under `webapp/`, or one removed | §2 Committed artifacts table |
+| `apps/website/requirements.txt` (esp. the mgz fork pin) | §1 Requirements files |
+| New committed DB/JSON under `apps/website/`, or one removed | §2 Committed artifacts table |
 | Branch strategy / Railway env mapping | §1 Environments, §2 Git workflow |
 | Files added/removed in `tests/` | §3 test table |
 | Sim behavior change (any engine/config/stat) | §3 Golden baseline — regenerate `.golden/baseline.json` |
 | `capture_baseline.py` matchup list or seed | §3 Golden baseline |
-| `scenario_builder/auto/` pipeline changes or new platform | §4 module map + status |
+| `apps/video/auto/` pipeline changes or new platform | §4 module map + status |
 | Icon pipeline or `NAME_TO_ICON` location | §5 icon chain |
 | FLUX.2 renders get wired into the webapp | §5 FLUX.2 (remove the "not yet wired" caveat) |
 | `scripts/build_reference_docs.py` sources/flags or corpus size | §6 |

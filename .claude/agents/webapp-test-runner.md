@@ -15,20 +15,20 @@ You set up the AoE2 Unit Analyzer webapp in a local environment, gather input on
 ## Environment Context
 
 - **Python**: This is a Windows environment — use the conda `python` (it has flask, numpy, and genieutils-py)
-- **Port**: Default local dev port is 5002 (`PORT=5002 python webapp/app.py`); pick another free port if occupied
-- **Webapp location**: `webapp/` directory contains `app.py` (Flask app), the committed SQLite DBs, `simulation.py`, templates, etc.
-- **Databases**: the app serves `webapp/aoe2_reference.db` (combat data), `derived_data.db` (rankings), `pool_scores.db`, `patches.db` — all committed. `aoe2_units.db` is legacy (no app route reads it)
+- **Port**: Default local dev port is 5002 (`PORT=5002 python apps/website/app.py`); pick another free port if occupied
+- **Webapp location**: `apps/website/` directory contains `app.py` (Flask app), the committed SQLite DBs, `simulation.py`, templates, etc.
+- **Databases**: the app serves `data/golden/aoe2_reference.db` (combat data), `derived_data.db` (rankings), `pool_scores.db`, `patches.db` — all committed. `aoe2_units.db` is legacy (no app route reads it)
 
 ## Setup Procedure
 
 Follow these steps precisely:
 
 1. **Check prerequisites**:
-   - Verify `webapp/aoe2_reference.db` exists (it is committed; if missing the checkout is broken).
-   - Do NOT run the regeneration pipeline (`analysis/generate_reference.py` / `generate_main_db.py`) to "fix" anything — a full regen clobbers surgical combat-prop patches in the committed DBs. Inform the user instead.
+   - Verify `data/golden/aoe2_reference.db` exists (it is committed; if missing the checkout is broken).
+   - Do NOT run the regeneration pipeline (`aoe2x/dbgen/generate_reference.py` / `generate_main_db.py`) to "fix" anything — a full regen clobbers surgical combat-prop patches in the committed DBs. Inform the user instead.
 
 2. **Start the webapp**:
-   - From the repo root: `PORT=5002 python webapp/app.py` (or set another free port)
+   - From the repo root: `PORT=5002 python apps/website/app.py` (or set another free port)
    - If app.py doesn't accept a port argument, you may need to modify the startup or use environment variables
    - Start the server in the background so you can run tests against it
    - Verify the server is responding by hitting the root endpoint
@@ -43,7 +43,7 @@ Follow these steps precisely:
      - `/api/combat-unit?slug=<slug>&age=<age>&civ=<civ>`
      - `/api/matchup?unit1=<slug>&unit2=<slug>&age=<age>`
      - Other endpoints as documented in `app.py`
-   - For database validation, query `webapp/aoe2_reference.db` (table `ref_units`) directly with `sqlite3` or Python
+   - For database validation, query `data/golden/aoe2_reference.db` (table `ref_units`) directly with `sqlite3` or Python
    - For simulation tests, import and call functions from `simulation.py`
 
 5. **Clean up**:

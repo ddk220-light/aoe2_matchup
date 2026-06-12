@@ -2,13 +2,13 @@
 
 *Last verified: 2026-06-09 · game build 177723 · branch `staging`*
 
-This document covers the Flask application in `webapp/app.py`, its routes, the templates, the shared static assets, and the central registries the frontend depends on. The replay subsystem is only summarized here — see [replay.md](replay.md). Simulation engine internals (`webapp/simulation.py`, `webapp/simulation_real.py`) are covered in [simulation-engines.md](simulation-engines.md), the offline scoring jobs that produce `derived_data.db` / `pool_scores.db` in [derived-data.md](derived-data.md), and the DB-building pipeline in [data-pipeline.md](data-pipeline.md).
+This document covers the Flask application in `apps/website/app.py`, its routes, the templates, the shared static assets, and the central registries the frontend depends on. The replay subsystem is only summarized here — see [replay.md](replay.md). Simulation engine internals (`aoe2x/sim/simulation.py`, `aoe2x/sim/simulation_real.py`) are covered in [simulation-engines.md](simulation-engines.md), the offline scoring jobs that produce `derived_data.db` / `pool_scores.db` in [derived-data.md](derived-data.md), and the DB-building pipeline in [data-pipeline.md](data-pipeline.md).
 
 ## Overview
 
-`webapp/app.py` (1,516 lines) defines **24 routes**: 8 HTML pages, 3 permanent redirects, 3 SEO endpoints, and 10 JSON APIs. The replay blueprint (`webapp/replay_core.py`, registered at import time when its optional dependencies are available) adds 7 more routes under `/replay/api/*`, for 31 total in a fully-enabled deployment. There is no login, no sessions, and no write path except the replay upload API — every core route is a read against committed SQLite databases and JSON artifacts.
+`apps/website/app.py` (1,516 lines) defines **24 routes**: 8 HTML pages, 3 permanent redirects, 3 SEO endpoints, and 10 JSON APIs. The replay blueprint (`aoe2x/replay/blueprint.py`, registered at import time when its optional dependencies are available) adds 7 more routes under `/replay/api/*`, for 31 total in a fully-enabled deployment. There is no login, no sessions, and no write path except the replay upload API — every core route is a read against committed SQLite databases and JSON artifacts.
 
-The frontend is plain JavaScript, no framework and no build step. Shared CSS/JS lives in `webapp/static/css/` and `webapp/static/js/` and is loaded with ordinary `<link>`/`<script>` tags. (Older docs claim all CSS/JS is inlined per template — that has not been true since the assets were extracted to `static/`.)
+The frontend is plain JavaScript, no framework and no build step. Shared CSS/JS lives in `apps/website/static/css/` and `apps/website/static/js/` and is loaded with ordinary `<link>`/`<script>` tags. (Older docs claim all CSS/JS is inlined per template — that has not been true since the assets were extracted to `static/`.)
 
 ## Route inventory
 
@@ -60,7 +60,7 @@ Input validation: `_validate_civ_name()` checks against `_valid_civs()` — an `
 
 ### Replay blueprint (7)
 
-`webapp/replay_core.py` registers `/replay/api/upload` (POST), `/replay/api/matches`, `/replay/api/matches/<player_name>`, `/replay/api/players`, `/replay/api/player/<int:profile_id>/matches`, `/replay/api/load-match` (POST), and `/replay/api/clip`. The `/replay` page embeds the static SPA at `webapp/static/replay/index.html` in an iframe. If the blueprint's heavy deps (`mgz`, Pillow, etc.) fail to import, registration is skipped and the rest of the site still boots. Details in [replay.md](replay.md).
+`aoe2x/replay/blueprint.py` registers `/replay/api/upload` (POST), `/replay/api/matches`, `/replay/api/matches/<player_name>`, `/replay/api/players`, `/replay/api/player/<int:profile_id>/matches`, `/replay/api/load-match` (POST), and `/replay/api/clip`. The `/replay` page embeds the static SPA at `aoe2x/replay/public/index.html` in an iframe. If the blueprint's heavy deps (`mgz`, Pillow, etc.) fail to import, registration is skipped and the rest of the site still boots. Details in [replay.md](replay.md).
 
 ## Central registries
 
@@ -68,15 +68,15 @@ These are the single-source-of-truth files. Each was previously duplicated acros
 
 | Registry | Lives in | Contents | Consumers | If you forget to update it |
 |---|---|---|---|---|
-| `UNIT_LINES` | `webapp/unit_lines.py` | 26 keys: 21 unit lines (with per-civ `unique_units` slug pairs) + 5 aggregate pseudo-lines (`archery`, `infantry`, `stable`, `siege`, `naval`) | 8 modules: `app.py`, `best_units.py`, `compute_battle_scores.py`, `derive_pool_scores.py`, `derive_unit_rankings.py`, `pool_scores_lib.py`, `run_matchup_battles.py`, `top_units.py` | New unit never appears in rankings, matchup advisor, top-units, or any derived score |
-| `CIV_MISSING_UNITS` | `webapp/unit_lines.py` | 14 `(civ, slug)` pairs the extraction pipeline emits but the civ cannot actually build | `app.py` (`/api/ref/unit-line`), `compute_battle_scores.py`, `derive_unit_rankings.py`, `run_matchup_battles.py` | Phantom units (e.g. Inca Champion) show up in rankings and get sim-scored |
-| `NAVAL_UNIT_LINES`, `CANNON_GALLEON_LINE`, `TREBUCHET_SLUGS` | `webapp/unit_lines.py` | Navy-column mappings and treb exclusion set | `best_units.py` | Navy column in the advisor misses/mis-maps a civ's ship |
-| `ENABLED_CIVS` | `webapp/static/js/constants.js` | 53 civ names shown in frontend pickers | `simulate.js`, `rankings.js` | New civ invisible in the Battle Sim civ dropdown even though APIs serve it |
-| `NAME_TO_ICON` | `webapp/static/js/constants.js` | 218 display-name → icon-filename entries | `simulate.js`, `rankings.js`, `matchup.js`, `matchup_advisor.js`, `civ-detail.js` (all via `getIconUrl()`) | Unit renders without an icon everywhere |
-| `UNIQUE_BUILDING` | `webapp/static/js/constants.js` | 13 overrides mapping non-Castle unique units to their building | same JS files | Unit grouped under Castle instead of its real building |
-| Civ emblems | `webapp/static/js/constants.js` (`CIV_EMBLEM_BASE`) | External CDN: `https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/` | `matchup.js`, `matchup_advisor.js`, `rankings.js` | n/a (third-party hosted; a new civ missing from the CDN shows a broken emblem) |
+| `UNIT_LINES` | `aoe2x/sim/unit_lines.py` | 26 keys: 21 unit lines (with per-civ `unique_units` slug pairs) + 5 aggregate pseudo-lines (`archery`, `infantry`, `stable`, `siege`, `naval`) | 8 modules: `app.py`, `best_units.py`, `compute_battle_scores.py`, `derive_pool_scores.py`, `derive_unit_rankings.py`, `pool_scores_lib.py`, `run_matchup_battles.py`, `top_units.py` | New unit never appears in rankings, matchup advisor, top-units, or any derived score |
+| `CIV_MISSING_UNITS` | `aoe2x/sim/unit_lines.py` | 14 `(civ, slug)` pairs the extraction pipeline emits but the civ cannot actually build | `app.py` (`/api/ref/unit-line`), `compute_battle_scores.py`, `derive_unit_rankings.py`, `run_matchup_battles.py` | Phantom units (e.g. Inca Champion) show up in rankings and get sim-scored |
+| `NAVAL_UNIT_LINES`, `CANNON_GALLEON_LINE`, `TREBUCHET_SLUGS` | `aoe2x/sim/unit_lines.py` | Navy-column mappings and treb exclusion set | `best_units.py` | Navy column in the advisor misses/mis-maps a civ's ship |
+| `ENABLED_CIVS` | `apps/website/static/js/constants.js` | 53 civ names shown in frontend pickers | `simulate.js`, `rankings.js` | New civ invisible in the Battle Sim civ dropdown even though APIs serve it |
+| `NAME_TO_ICON` | `apps/website/static/js/constants.js` | 218 display-name → icon-filename entries | `simulate.js`, `rankings.js`, `matchup.js`, `matchup_advisor.js`, `civ-detail.js` (all via `getIconUrl()`) | Unit renders without an icon everywhere |
+| `UNIQUE_BUILDING` | `apps/website/static/js/constants.js` | 13 overrides mapping non-Castle unique units to their building | same JS files | Unit grouped under Castle instead of its real building |
+| Civ emblems | `apps/website/static/js/constants.js` (`CIV_EMBLEM_BASE`) | External CDN: `https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/` | `matchup.js`, `matchup_advisor.js`, `rankings.js` | n/a (third-party hosted; a new civ missing from the CDN shows a broken emblem) |
 | Unit display names | `aoe2_reference.db` `ref_units.unit_name` (generated by the analysis stage) | The actual unit a civ fields per slug/age (Koreans `paladin` → "Cavalier") | `_ref_unit_name()` in `app.py`, all API payloads; the `/units` page list uses `aoe2_units.db` `units.display_name` | Wrong/stale names; fix in the pipeline, not here — see [data-pipeline.md](data-pipeline.md) |
-| Server-side civ list | `aoe2_reference.db` via `_valid_civs()` in `app.py` | Authoritative civ set for validation and the sitemap | every validated route | n/a — derived from the DB. The pipeline civ list (`ORIGINAL_13_CIVS` in `analysis/config_constants.py`) is derived from `extraction.extract_constants.CIV_NAMES`; the old dead copy in `app.py` was deleted |
+| Server-side civ list | `aoe2_reference.db` via `_valid_civs()` in `app.py` | Authoritative civ set for validation and the sitemap | every validated route | n/a — derived from the DB. The pipeline civ list (`ORIGINAL_13_CIVS` in `aoe2x/dbgen/config_constants.py`) is derived from `extraction.extract_constants.CIV_NAMES`; the old dead copy in `app.py` was deleted |
 
 `ENABLED_CIVS` and the DB civ set must agree (both 53 today). There is no automated check; a civ added to the DB but not to `constants.js` is simply unselectable in the frontend.
 
@@ -90,7 +90,7 @@ These are the single-source-of-truth files. Each was previously duplicated acros
 
 ## Templates
 
-All templates extend `webapp/templates/base.html` except the included `_footer.html` fragment.
+All templates extend `apps/website/templates/base.html` except the included `_footer.html` fragment.
 
 | Template | Route(s) | Page CSS | Page JS |
 |---|---|---|---|
@@ -108,7 +108,7 @@ All templates extend `webapp/templates/base.html` except the included `_footer.h
 
 `base.html` provides, for every page: Google Analytics (gtag, ID `G-MYNEW08LBR`, hardcoded), title/meta-description/robots/canonical blocks, Open Graph + Twitter Card tags, a default `WebApplication` JSON-LD block (overridable via `{% block structured_data %}`), Google Fonts, a pre-paint theme script (reads `localStorage['aoe2-theme']` to avoid flash), the six-tab site nav driven by the `active_nav` template variable, and the dark/light theme toggle. Canonical URLs default to `site_url + request.path` unless the view passes `canonical_url` (only `/vs/...` does).
 
-Known issue: `base.html` references `/static/img/favicon.png` and `/static/img/og-default.png`, but `webapp/static/img/` contains only the `units/` directory — both files are missing from the repo, so the favicon and default OG image 404.
+Known issue: `base.html` references `/static/img/favicon.png` and `/static/img/og-default.png`, but `apps/website/static/img/` contains only the `units/` directory — both files are missing from the repo, so the favicon and default OG image 404.
 
 ## Static assets
 
@@ -132,11 +132,11 @@ All connections are short-lived `sqlite3.connect()` calls with `Row` factory; th
 
 | Helper | DB file | Tables read by routes |
 |---|---|---|
-| `get_db()` (`app.py`) | `webapp/aoe2_units.db` | `units` (the `/units` page list), `unit_verifications` (verified badges in `/api/ref/civ`) |
-| `get_ref_db()` (`app.py`) | `webapp/aoe2_reference.db` | `ref_units`, `ref_techs_applied`, `ref_stat_chain`, `ref_special_effects`, `ref_projectiles`, `armor_classes` — the workhorse runtime DB |
-| `get_derived_db()` (`app.py`) | `webapp/derived_data.db` | `battle_scores` (rankings role scores; see [derived-data.md](derived-data.md)) |
-| `_patches_conn()` / `patches_db.get_current_build()` | `webapp/patches.db` | `patches`, `patch_unit_changes`, `patch_unit_ranking`, `patch_matchup_changes`. `get_current_build()` is the single build resolver every score lookup goes through |
-| `pool_scores_query.load_pool_scores()` | `webapp/pool_scores.db` | `pool_scores` (per-unit pool payloads on the rankings page) |
+| `get_db()` (`app.py`) | `data/golden/aoe2_units.db` | `units` (the `/units` page list), `unit_verifications` (verified badges in `/api/ref/civ`) |
+| `get_ref_db()` (`app.py`) | `data/golden/aoe2_reference.db` | `ref_units`, `ref_techs_applied`, `ref_stat_chain`, `ref_special_effects`, `ref_projectiles`, `armor_classes` — the workhorse runtime DB |
+| `get_derived_db()` (`app.py`) | `data/golden/derived_data.db` | `battle_scores` (rankings role scores; see [derived-data.md](derived-data.md)) |
+| `_patches_conn()` / `patches_db.get_current_build()` | `data/golden/patches.db` | `patches`, `patch_unit_changes`, `patch_unit_ranking`, `patch_matchup_changes`. `get_current_build()` is the single build resolver every score lookup goes through |
+| `pool_scores_query.load_pool_scores()` | `data/golden/pool_scores.db` | `pool_scores` (per-unit pool payloads on the rankings page) |
 | `best_units.py` module paths | `aoe2_reference.db`, `derived_data.db`, `pool_scores.db` | advisor recommendations and percentiles |
 
 JSON artifacts read at runtime: `civ_power_units/<build>.json` (per-build only — the legacy flat `civ_power_units.json` fallback was removed) and `civ_top_units.json`. (`battle_scores.json` and its `app.py` loader were deleted — role scores come from `derived_data.db`.) Matchup DBs live outside the repo at `D:/AI/` (the committed 3.9 MB stub was removed 2026-06-11); they and `battle_cache.json` are **not** read by any route — they feed the offline derive jobs only.
@@ -152,7 +152,7 @@ There is **no `app_data.db`** — older docs mention it, but the file does not e
 | `SOCIAL_DISCORD_URL`, `SOCIAL_YOUTUBE_URL`, `SOCIAL_INSTAGRAM_URL` | `app.py:47-49` | unset → footer icon hidden; also feed the JSON-LD `sameAs` array |
 | `PORT` | `app.py:1515` | dev server only (default 5000); production port handling is gunicorn's |
 
-Production start (Railway): `cd webapp && gunicorn app:app --workers 2 --timeout 300 --graceful-timeout 300` per `railway.json`; `webapp/Procfile` has the plain `gunicorn app:app` variant. Deployment/branch mechanics are in [operations.md](operations.md). The Google Analytics ID is hardcoded in `base.html`, not env-driven.
+Production start (Railway): `cd apps/website && gunicorn app:app --workers 2 --timeout 300 --graceful-timeout 300` per `railway.json`; `apps/website/Procfile` has the plain `gunicorn app:app` variant. Deployment/branch mechanics are in [operations.md](operations.md). The Google Analytics ID is hardcoded in `base.html`, not env-driven.
 
 ## Cross-file sync rules (verified 2026-06-09)
 
@@ -160,11 +160,11 @@ The six sync rules in `CLAUDE.md` were written before several consolidations. Cu
 
 | Old rule | Status now |
 |---|---|
-| `UNIT_LINES` duplicated in `app.py` + `compute_battle_scores.py` | **Retired** — single source `webapp/unit_lines.py`. Residual drift: the supplementary `*_LINE_SLUGS` sets are still defined separately in `app.py` and `compute_battle_scores.py` (585+), and disagree on mangonel (`SIEGE_LINE_SLUGS` vs `HIDDEN_LINE_SLUGS`) — documented as a TODO in `unit_lines.py` |
+| `UNIT_LINES` duplicated in `app.py` + `compute_battle_scores.py` | **Retired** — single source `aoe2x/sim/unit_lines.py`. Residual drift: the supplementary `*_LINE_SLUGS` sets are still defined separately in `app.py` and `compute_battle_scores.py` (585+), and disagree on mangonel (`SIEGE_LINE_SLUGS` vs `HIDDEN_LINE_SLUGS`) — documented as a TODO in `unit_lines.py` |
 | `NAME_TO_ICON` in 4 templates | **Retired** — single source `static/js/constants.js`. New unit still needs both the dict entry and a PNG in `static/img/units/` |
 | `UNIQUE_BUILDING` in 2 templates | **Retired** — single source `static/js/constants.js` |
 | `ENABLED_CIVS` in 2 templates matching `ORIGINAL_13_CIVS` | **Changed** — one copy in `constants.js`; must match the civ set in `aoe2_reference.db` (the server validates against the DB, not any Python list). The dead `ORIGINAL_13_CIVS` copy in `app.py` was deleted |
-| New `unit_stats` column touches 4 files | **Changed** — new combat property now flows `ref_units` column (analysis stage) → `webapp/combat_unit_loader.py` `build_combat_dict_from_ref()` → `simulation.py` `prepare_combat_unit()` (and `simulation_real.py`) → `simulate.js` `BattleUnit` if the canvas sim needs it. `unit_stats` is out of the loop |
+| New `unit_stats` column touches 4 files | **Changed** — new combat property now flows `ref_units` column (analysis stage) → `aoe2x/sim/combat_unit_loader.py` `build_combat_dict_from_ref()` → `simulation.py` `prepare_combat_unit()` (and `simulation_real.py`) → `simulate.js` `BattleUnit` if the canvas sim needs it. `unit_stats` is out of the loop |
 | Battle scores stale after sim changes | **Still true, different artifacts** — regenerate `derived_data.db`, `pool_scores.db`, `civ_power_units/` via the patch pipeline ([derived-data.md](derived-data.md)); `battle_scores.json` no longer exists |
 
 Sync rules that are live today:

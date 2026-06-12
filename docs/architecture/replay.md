@@ -2,13 +2,13 @@
 
 *Last verified: 2026-06-09 · game build 177723 · branch `staging`*
 
-The Replay Analyzer is a self-contained subsystem that downloads or accepts AoE2:DE recorded games (`.aoe2record`), parses them server-side with the `mgz` library, reconstructs unit identities and a map backdrop, and plays the match back in an isometric canvas SPA. It also exports short shareable WebM highlight clips. It shares no data with the simulation engines (see [simulation-engines.md](simulation-engines.md)) or the data pipeline (see [data-pipeline.md](data-pipeline.md)); its only tie to the rest of the webapp is the `/replay` page route and nav entry in `webapp/app.py` (see [webapp.md](webapp.md)).
+The Replay Analyzer is a self-contained subsystem that downloads or accepts AoE2:DE recorded games (`.aoe2record`), parses them server-side with the `mgz` library, reconstructs unit identities and a map backdrop, and plays the match back in an isometric canvas SPA. It also exports short shareable WebM highlight clips. It shares no data with the simulation engines (see [simulation-engines.md](simulation-engines.md)) or the data pipeline (see [data-pipeline.md](data-pipeline.md)); its only tie to the rest of the webapp is the `/replay` page route and nav entry in `apps/website/app.py` (see [webapp.md](webapp.md)).
 
 ## Mounting and routes
 
-`webapp/replay_core.py` defines a Flask `Blueprint` named `replay` (line 38). `webapp/app.py` registers it at import time inside a `try/except` (lines 54–67): the blueprint pulls heavy optional dependencies (`mgz`, `requests`, and — transitively through `clip_export.py` — Pillow and imageio-ffmpeg), so if any import fails the blueprint is simply not registered, a warning is logged, and the core simulator site boots without it. `REPLAY_ENABLED` gates the rest of the integration: a context processor (`inject_replay_enabled`) exposes it to every template so `base.html` hides the Replay nav tab when False, and the `/replay` page route (a plain `@app.route` in `app.py`, not part of the blueprint) returns a 503 notice (`templates/replay_disabled.html`) instead of rendering an SPA whose API calls would all 404.
+`aoe2x/replay/blueprint.py` defines a Flask `Blueprint` named `replay` (line 38). `apps/website/app.py` registers it at import time inside a `try/except` (lines 54–67): the blueprint pulls heavy optional dependencies (`mgz`, `requests`, and — transitively through `clip_export.py` — Pillow and imageio-ffmpeg), so if any import fails the blueprint is simply not registered, a warning is logged, and the core simulator site boots without it. `REPLAY_ENABLED` gates the rest of the integration: a context processor (`inject_replay_enabled`) exposes it to every template so `base.html` hides the Replay nav tab when False, and the `/replay` page route (a plain `@app.route` in `app.py`, not part of the blueprint) returns a 503 notice (`templates/replay_disabled.html`) instead of rendering an SPA whose API calls would all 404.
 
-The dependencies live in `webapp/requirements.txt` (what Railway installs): `requests`, Pillow, `imageio-ffmpeg`, and `mgz` pinned to the `sanduckhan/aoc-mgz` fork at a specific commit for DE save-version 67.x support. `aocref` (object/terrain name tables) arrives transitively with `mgz`; every use of it is wrapped in try/except and degrades to empty name maps.
+The dependencies live in `apps/website/requirements.txt` (what Railway installs): `requests`, Pillow, `imageio-ffmpeg`, and `mgz` pinned to the `sanduckhan/aoc-mgz` fork at a specific commit for DE save-version 67.x support. `aocref` (object/terrain name tables) arrives transitively with `mgz`; every use of it is wrapped in try/except and degrades to empty name maps.
 
 | Route | Method | Handler | Purpose |
 |---|---|---|---|
@@ -21,11 +21,11 @@ The dependencies live in `webapp/requirements.txt` (what Railway installs): `req
 | `/replay/api/load-match` | POST | `load_match()` | Download replay from aoe.ms (cached), parse, return processed JSON |
 | `/replay/api/clip` | GET | `make_clip()` | Generate or reuse a cached WebM highlight clip |
 
-The two `matches` endpoints marked legacy are not called by the current SPA (verified by grepping `webapp/static/replay/`); the frontend uses the `players` → `player/<id>/matches` → `load-match` flow.
+The two `matches` endpoints marked legacy are not called by the current SPA (verified by grepping `aoe2x/replay/public/`); the frontend uses the `players` → `player/<id>/matches` → `load-match` flow.
 
 ## Server-side parsing: `process_replay()`
 
-`process_replay(file)` in `webapp/replay_core.py` runs `mgz.model.parse_match()` and assembles one JSON document the SPA runs on entirely client-side. Its top-level keys:
+`process_replay(file)` in `aoe2x/replay/blueprint.py` runs `mgz.model.parse_match()` and assembles one JSON document the SPA runs on entirely client-side. Its top-level keys:
 
 | Key | Content |
 |---|---|
@@ -48,7 +48,7 @@ Key reconstruction logic, all in `replay_core.py`:
 - **Building events** (`_analyze_buildings`): production and research actions name a building only by `instance_id` with no position. Because instance ids are assigned in creation order, the k-th producing id of a building class is paired with that player's k-th surviving BUILD order of the same class (class inferred from what the id trains/researches via `_unit_class`/`_tech_class`). A DELETE of an id that never produced is matched to the player's most recent unclaimed BUILD — an abandoned foundation; DELETEs of located buildings become razes. Interactions re-brighten buildings in the UI; deletions remove them.
 - **Death heuristic**: `DEATH_THRESHOLD = 3 * 60` (180 s). A non-villager unit whose last action is more than 180 s before game end is assigned `unit_deaths[name] = last_action_time + 180`. Villagers are exempt server-side; the client (`playback.js getState()`) layers more rules on top: non-villager, non-siege units disappear immediately after their final command (except in the last 3 minutes of the game), villagers fade at 30 s idle and are dropped after 5 minutes idle, and siege is exempt because trebuchets keep firing after a single command.
 
-## Unit classification: `webapp/unit_classifier.py`
+## Unit classification: `aoe2x/replay/unit_classifier.py`
 
 Recorded games never state a produced unit's type — only starting (header) units are named — so types are reconstructed. `process_replay()` calls `unit_classifier.build_type_map(match)` (the "v2" classifier); if that raises, it falls back to the legacy single-function matcher `_classify_units()` inside `replay_core.py`, and if that also fails, to an empty map. (Both code paths now cite this document as the design reference; an earlier `CLASSIFIER_REWORK.md` design doc never made it into the repo.)
 
@@ -70,11 +70,11 @@ The legacy fallback (`_classify_units`) is a simpler three-step version: behavio
 - **Download**: `_fetch_replay_to_cache()` pulls `https://aoe.ms/replay/?gameId=<matchId>&profileId=<profileId>`, which returns a ZIP containing the `.aoe2record`. The record is extracted and atomically moved into the cache.
 - **Cache**: `{tempdir}/aoe2_replay_cache/<matchId>.aoe2record`. Cache hits skip the download entirely, because aoe.ms rate-limits per IP.
 - **Rate limiting**: on HTTP 429 the fetch retries up to 3 attempts, honoring `Retry-After` clamped to 1–5 s. A final 429 surfaces to the client as HTTP 429 with a user-facing "wait a minute" message (`load_match` and `make_clip` both map it).
-- **Watchlist**: `webapp/players.csv` (21 players, `name,profileId`) feeds only the legacy `/replay/api/matches` endpoint, which batch-queries Companion in groups of 10 profile ids and filters to Land Nomad maps. The current SPA does not call it. The profile id `612690` (ddk220) is also the hardcoded fallback download perspective in `app.js`.
+- **Watchlist**: `aoe2x/replay/players.csv` (21 players, `name,profileId`) feeds only the legacy `/replay/api/matches` endpoint, which batch-queries Companion in groups of 10 profile ids and filters to Land Nomad maps. The current SPA does not call it. The profile id `612690` (ddk220) is also the hardcoded fallback download perspective in `app.js`.
 
-## Frontend SPA: `webapp/static/replay/`
+## Frontend SPA: `aoe2x/replay/public/`
 
-The `/replay` page (`webapp/templates/replay.html`) embeds `/static/replay/index.html` in an iframe sized to fill the viewport below the nav. The iframe exists purely for CSS isolation — the SPA is full-screen with its own stylesheet (`style.css`) and would collide with the analyzer's per-template styles. `app.py replay()` whitelists and forwards the `match`, `profile`, and `t` query params into the iframe `src`.
+The `/replay` page (`apps/website/templates/replay.html`) embeds `/static/replay/index.html` in an iframe sized to fill the viewport below the nav. The iframe exists purely for CSS isolation — the SPA is full-screen with its own stylesheet (`style.css`) and would collide with the analyzer's per-template styles. `app.py replay()` whitelists and forwards the `match`, `profile`, and `t` query params into the iframe `src`.
 
 | File | Lines | Role |
 |---|---|---|
@@ -90,7 +90,7 @@ The `/replay` page (`webapp/templates/replay.html`) embeds `/static/replay/index
 
 **Controls and deep links**: play/pause, step, start/end, speeds 1/2/4/8/12/16×, a scrub timeline that pauses the engine while dragging, zoom buttons, and keyboard shortcuts (Space, arrows, Home/End, 1/2/4/8 for speed, P for the production-rates panel, T for the tech panel — both panels are hidden by default). `app.js init()` reads `?match=&profile=` and auto-loads via `load-match` (profile defaults to `612690`); `?t=` accepts plain seconds or `mm:ss`/`hh:mm:ss`, seeks there and starts playing on first load. Without deep-link params, the SPA tries to fetch a `replay_data.json` default (not present in the repo, so it 404s) and falls through to the Find Player modal.
 
-## Clip export: `webapp/clip_export.py`
+## Clip export: `aoe2x/replay/clip_export.py`
 
 `build_clip(match, focus_player, out_path)` renders a shareable WebM with pure Python (Pillow frames piped to ffmpeg) — no headless browser, so it runs on the python-slim Railway image.
 
@@ -98,7 +98,7 @@ The `/replay` page (`webapp/templates/replay.html`) embeds `/static/replay/index
 - **Camera** (`_focus_points` + `_camera`): each window frames the *engagement*, not the whole map — seeded on the focus player's attack locations (or all attacks if they issued fewer than 3), keeping only units near the battle centroid, projected isometrically with 4/96-percentile bounds and a zoom ceiling of `MAX_TW = 17` px/tile.
 - **Rendering**: 960×540 at 20 fps; terrain re-uses `_terrain_hex`/`_load_terrain_names` imported from `replay_core`; units use the same `sprites.json` assets as the web UI (player-colored disc + sprite, focus player outlined white, villagers smaller); attack flashes decay over 1.2 s; a skip-aware timeline bar at the bottom shows the selected windows. Unit positions come from a clip-local rebuild (`_build`) that re-runs `unit_classifier.build_type_map`.
 - **Encoding** (`_encode`): PNG frames → `libvpx-vp9` (`-crf 34`), via the `imageio_ffmpeg` bundled binary (system `ffmpeg` as fallback), written to a `.tmp.webm` and atomically renamed so a killed worker never leaves a half-written file in cache.
-- **Caching**: `make_clip` writes `webapp/static/replay/clips/{matchId}_{sanitized_player}.webm` and reuses it on later requests. The response returns `clip_url` (the static file) and `view_url` (`/replay?match=&profile=` deep link), honoring `X-Forwarded-Proto` so shared links are https behind Railway.
+- **Caching**: `make_clip` writes `aoe2x/replay/public/clips/{matchId}_{sanitized_player}.webm` and reuses it on later requests. The response returns `clip_url` (the static file) and `view_url` (`/replay?match=&profile=` deep link), honoring `X-Forwarded-Proto` so shared links are https behind Railway.
 - Note a cosmetic inconsistency: the route docstring and the SPA modal text say "8× speed" but `SPEED = 4.0` in `clip_export.py` — clips are actually 4×.
 
 The clip button is only enabled for replays loaded by match id (browser or deep link), because the server re-downloads the replay by id; uploads and local files cannot generate clips.
@@ -109,10 +109,10 @@ The clip button is only enabled for replays loaded by match id (browser or deep 
 
 ## Integration boundaries (verified)
 
-- `unit_classifier.py` is imported only by `replay_core.py` and `clip_export.py` (grep over all `*.py`). Nothing in the simulation engines, analysis pipeline, or other webapp routes uses it. Its one inbound data dependency on the rest of the project is `webapp/train_times.json`, which was extracted from the .dat database offline.
+- `unit_classifier.py` is imported only by `replay_core.py` and `clip_export.py` (grep over all `*.py`). Nothing in the simulation engines, analysis pipeline, or other webapp routes uses it. Its one inbound data dependency on the rest of the project is `aoe2x/replay/train_times.json`, which was extracted from the .dat database offline.
 - Nothing flows from the replay subsystem into the sims, the databases, or the derived-data jobs. The replay JSON is ephemeral (returned to the browser, never stored server-side except the raw-replay temp cache and the clips directory).
 - `clip_export.py` imports two color/name helpers from `replay_core.py`; otherwise the three replay modules are self-contained.
-- `webapp/static/replay/assets/` (sprites, civ emblems) is private to this subsystem; the rest of the site uses `webapp/static/img/units/` icons instead.
+- `aoe2x/replay/public/assets/` (sprites, civ emblems) is private to this subsystem; the rest of the site uses `apps/website/static/img/units/` icons instead.
 
 ## Update triggers
 
@@ -124,6 +124,6 @@ The clip button is only enabled for replays loaded by match id (browser or deep 
 | `DEATH_THRESHOLD` or `playback.js getState()` idle rules | Death heuristic paragraphs (server and client) |
 | aoe.ms URL, cache location, or retry policy | Replay sources, cache, and rate limiting |
 | Clip constants (`W/H`, `FPS`, `SPEED`, `MAX_OUT_SEC`, codec) | Clip export (and fix the 8×/4× UI text if touched) |
-| `mgz` fork pin or new optional dependency in `webapp/requirements.txt` | Mounting and routes (dependency paragraph) |
+| `mgz` fork pin or new optional dependency in `apps/website/requirements.txt` | Mounting and routes (dependency paragraph) |
 | SPA file roles or storyteller re-enabled | Frontend SPA table |
 | `players.csv` usage changes (endpoint adopted or deleted) | Replay sources (watchlist) and the legacy-route note |

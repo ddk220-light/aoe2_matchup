@@ -1,21 +1,21 @@
-# Data Pipeline — Stages 1–3 (`extraction/`, `analysis/`)
+# Data Pipeline — Stages 1–3 (`aoe2x/extract/`, `aoe2x/dbgen/`)
 
 *Last verified: 2026-06-09 · game build 177723 · branch `staging`*
 
-This document covers the first three stages of the four-stage pipeline: parsing the game's binary `.dat` file into JSON, computing fully-upgraded per-civ stats into `webapp/aoe2_reference.db`, and flattening that into `webapp/aoe2_units.db`. Stage 4 (the Flask app and simulators) is documented in [webapp.md](webapp.md) and [simulation-engines.md](simulation-engines.md); offline derived artifacts (battle scores, pool scores) are in [derived-data.md](derived-data.md).
+This document covers the first three stages of the four-stage pipeline: parsing the game's binary `.dat` file into JSON, computing fully-upgraded per-civ stats into `data/golden/aoe2_reference.db`, and flattening that into `data/golden/aoe2_units.db`. Stage 4 (the Flask app and simulators) is documented in [webapp.md](webapp.md) and [simulation-engines.md](simulation-engines.md); offline derived artifacts (battle scores, pool scores) are in [derived-data.md](derived-data.md).
 
 ```
 empires2_x2_p1.dat
-  └─ python3 -m extraction.run            → extraction/extracted_data/*.json   (8 files)
-       └─ python3 -m analysis.generate_reference → webapp/aoe2_reference.db   (audit DB)
-            └─ python3 -m analysis.generate_main_db → webapp/aoe2_units.db    (flat unit_stats)
+  └─ python3 -m aoe2x.extract.run            → data/inputs/extracted_data/*.json   (8 files)
+       └─ python3 -m aoe2x.dbgen.generate_reference → data/golden/aoe2_reference.db   (audit DB)
+            └─ python3 -m aoe2x.dbgen.generate_main_db → data/golden/aoe2_units.db    (flat unit_stats)
 ```
 
-The `.dat` file lives at `extraction/empires2_x2_p1.dat` and is **not** committed; copy it from a local AoE2:DE install. Parsing requires `genieutils-py` (`from genieutils.datfile import DatFile`), which is in neither `requirements.txt` nor `webapp/requirements.txt` — install it manually before rebuilding, and note no version is pinned anywhere.
+The `.dat` file lives at `data/inputs/empires2_x2_p1.dat` and is **not** committed; copy it from a local AoE2:DE install. Parsing requires `genieutils-py` (`from genieutils.datfile import DatFile`), which is in neither `requirements.txt` nor `apps/website/requirements.txt` — install it manually before rebuilding, and note no version is pinned anywhere.
 
-## Stage 1 — Extraction (`extraction/`)
+## Stage 1 — Extraction (`aoe2x/extract/`)
 
-`extraction/run.py` calls `DatFile.parse()` once, then delegates to three modules and writes 8 JSON files into `extraction/extracted_data/`. Counts below are from the committed build-177723 output.
+`extraction/run.py` calls `DatFile.parse()` once, then delegates to three modules and writes 8 JSON files into `data/inputs/extracted_data/`. Counts below are from the committed build-177723 output.
 
 | File | Entries | Producer | Contents |
 |---|---|---|---|
@@ -32,11 +32,11 @@ The `.dat` file lives at `extraction/empires2_x2_p1.dat` and is **not** committe
 
 ### The 53-civ mapping
 
-`extract_constants.CIV_NAMES` is a 60-slot list matching dat civ ids. Skipped slots: index 0 (Gaia) and the six `None` slots — 46–48 (Achaemenids, Athenians, Spartans; Chronicles: Age of Antiquity) and 54–56 (Macedonians, Thracians, Puru; Chronicles: Alexander). That leaves **53 playable civs**, which is the count everywhere downstream (`civilizations.json`, `ORIGINAL_13_CIVS`, the `civilizations` table). The pipeline's civ list constant is `ORIGINAL_13_CIVS` in `analysis/config_constants.py` — the name is historical; it is now **derived** from `CIV_NAMES` (`sorted(c for c in CIV_NAMES[1:] if c)`), so a new civ added at its dat slot flows through automatically. (The old duplicate copy in `webapp/app.py` was deleted.)
+`extract_constants.CIV_NAMES` is a 60-slot list matching dat civ ids. Skipped slots: index 0 (Gaia) and the six `None` slots — 46–48 (Achaemenids, Athenians, Spartans; Chronicles: Age of Antiquity) and 54–56 (Macedonians, Thracians, Puru; Chronicles: Alexander). That leaves **53 playable civs**, which is the count everywhere downstream (`civilizations.json`, `ORIGINAL_13_CIVS`, the `civilizations` table). The pipeline's civ list constant is `ORIGINAL_13_CIVS` in `aoe2x/dbgen/config_constants.py` — the name is historical; it is now **derived** from `CIV_NAMES` (`sorted(c for c in CIV_NAMES[1:] if c)`), so a new civ added at its dat slot flows through automatically. (The old duplicate copy in `apps/website/app.py` was deleted.)
 
-## Stage 2 — Reference DB (`analysis/generate_reference.py`)
+## Stage 2 — Reference DB (`aoe2x/dbgen/generate_reference.py`)
 
-`generate_reference.py` instantiates `analysis/unit_analyzer.py::UnitAnalyzer` (which loads all 8 JSONs), deletes and recreates `webapp/aoe2_reference.db`, and for each of the 53 civs processes every unit roster entry with a full audit trail. Current DB contents: 972 `ref_units` rows, age `Imperial` **only** (the Imperial-only purge, 2026-06-11 — Castle rows are no longer emitted; Castle-age *techs* still apply inside the Imperial stat chain).
+`generate_reference.py` instantiates `analysis/unit_analyzer.py::UnitAnalyzer` (which loads all 8 JSONs), deletes and recreates `data/golden/aoe2_reference.db`, and for each of the 53 civs processes every unit roster entry with a full audit trail. Current DB contents: 972 `ref_units` rows, age `Imperial` **only** (the Imperial-only purge, 2026-06-11 — Castle rows are no longer emitted; Castle-age *techs* still apply inside the Imperial stat chain).
 
 ### How armor and attack values are derived
 
@@ -57,7 +57,7 @@ Targeting: command field `a` is a unit id (or −1) and `b` is a unit class; `ef
 1. **Base stats** from `units.json`, then `UNIT_STAT_OVERRIDES` patches (see below).
 2. **Standard techs** — generic techs (`civ == -1`), researchable (`research_location != -1` unless in `ALLOWED_SHADOW_TECHS`), age-gated, applied in tech-id order. Additive first matters: Bloodlines' +20 HP lands before multiplicative civ bonuses.
 3. **Civ bonus techs** — free techs with `civ >= 0` (named `C-Bonus, …`), with special handling: Lithuanian relic bonuses capped by `LITHUANIAN_RELIC_COUNT = 4`, conditional "`+ BL`" variants preferred when Bloodlines is available, and unit-specific armor commands that exactly cancel a class-wide bonus in the same effect are skipped (`_is_class_cancellation_cmd`).
-4. **Team bonus attack** — from the hardcoded `CIV_TEAM_BONUS_ATTACK` dict in `analysis/config_units.py` (currently Persians knight-line +2 vs Archers, Saracens foot archers +3 vs Standard Buildings). Note the dat team-bonus effect is extracted into `civ_tech_trees.json` but is **not** generically applied; only these hardcoded entries and `CIV_TEAM_BONUS_WORK_RATE` are.
+4. **Team bonus attack** — from the hardcoded `CIV_TEAM_BONUS_ATTACK` dict in `aoe2x/dbgen/config_units.py` (currently Persians knight-line +2 vs Archers, Saracens foot archers +3 vs Standard Buildings). Note the dat team-bonus effect is extracted into `civ_tech_trees.json` but is **not** generically applied; only these hardcoded entries and `CIV_TEAM_BONUS_WORK_RATE` are.
 5. **Unique techs** — civ-specific techs that have a research cost (e.g. Garland Wars).
 6. **Building work rate** — divides train time only, via `BUILDING_WORK_RATE_TECHS` (Conscription, Perfusion, Chivalry) and `CIV_TEAM_BONUS_WORK_RATE`.
 
@@ -80,14 +80,14 @@ Melee armor 2→5 is exactly three +1 class-4 ADDs from the barding line (Plate 
 Availability is a **blocklist with allowlist patches**, resolved per (civ, line) in `calculate_unit_stats_for_civ`:
 
 - **Blocklist (dat-driven):** a civ lacks a line if its config's `availability_tech` (e.g. 166 "Knight (make avail)") appears in that civ's `disabled_techs` from `civ_tech_trees.json`; upgrade tiers (`upgrades` list of `(tech_id, unit_id, name)`) are likewise skipped when their tech is disabled or above the target age. Disabled-unit ids (type 103) are also extracted but the tech check is what gates lines.
-- **Allowlist patch (`_AVAILABILITY_OVERRIDES`, `analysis/config_units.py` line 1730):** 17 slugs (eagle line, camels, battle elephants, elephant archers, slinger, champi warrior, steppe lancer, fire lancer, paladin) are auto-enabled in the dat via tech-tree resolution the pipeline does not replicate, so they are pinned to explicit civ lists (sourced from SiegeEngineers data.json) by injecting `civ_only` into `CASTLE_UNITS`/`IMPERIAL_UNITS`. Without this, ~776 phantom rows appear.
+- **Allowlist patch (`_AVAILABILITY_OVERRIDES`, `aoe2x/dbgen/config_units.py` line 1730):** 17 slugs (eagle line, camels, battle elephants, elephant archers, slinger, champi warrior, steppe lancer, fire lancer, paladin) are auto-enabled in the dat via tech-tree resolution the pipeline does not replicate, so they are pinned to explicit civ lists (sourced from SiegeEngineers data.json) by injecting `civ_only` into `CASTLE_UNITS`/`IMPERIAL_UNITS`. Without this, ~776 phantom rows appear.
 - **Alternates:** a config's `alternate` block swaps the line when the main unit is disabled but the alternate's tech is not (Battering Ram → Armored Elephant, tech 162 vs 837; similar for capped/siege ram tiers). **`civ_upgrades`** grants civ-specific tiers outside the age gate (Burgundian Castle-age Cavalier; Rocket Cart replacing Mangonel for Chinese/Koreans/Jurchens/Khitans).
-- **Unique units:** `UNIQUE_UNITS` in `analysis/config_units.py` maps each of the 53 civs to its unique-unit configs (64 total) with `base_id`/`elite_id`; `NAVAL_UNIQUE_UNITS` adds 18 naval uniques. Unique slugs get a civ suffix (`huskarl_goths`).
-- `CIV_MISSING_UNITS` in `webapp/unit_lines.py` is a **stage-4** declarative filter on top of this (rows the pipeline still emits); see [webapp.md](webapp.md).
+- **Unique units:** `UNIQUE_UNITS` in `aoe2x/dbgen/config_units.py` maps each of the 53 civs to its unique-unit configs (64 total) with `base_id`/`elite_id`; `NAVAL_UNIQUE_UNITS` adds 18 naval uniques. Unique slugs get a civ suffix (`huskarl_goths`).
+- `CIV_MISSING_UNITS` in `aoe2x/sim/unit_lines.py` is a **stage-4** declarative filter on top of this (rows the pipeline still emits); see [webapp.md](webapp.md).
 
 **Ages.** Only Imperial (4) ROWS are generated (Imperial-only purge, 2026-06-11): the roster is `IMPERIAL_UNITS` (25 lines) plus `NAVAL_LINE_CONFIGS` (5 lines) and the unique units (elite form, or the base unit with Imperial techs when no elite exists). Age constants below Imperial still matter for **tech staging** — `calculate_unit_stats_for_civ(…, IMPERIAL_AGE)` applies Feudal/Castle-age techs on the way up — and `CASTLE_UNITS`/`FEUDAL_UNITS` still exist in config (`_PREVIOUS_AGE_NAMES`, the availability-resolver override comparison) but are never emitted as rows. Two derivational availability gates were added with the purge: (1) `AvailabilityResolver.tech_tree_disabled_unit_closure(civ)` — a line whose `base_id` is type-2-disabled by the civ's tech-tree effect (expanded through the dat's type-3 upgrade edges) never emits, which is what kills the Incas/Mapuche/Muisca/Tupi militia-line ghosts and the bug class for future DLCs; (2) `availability_tech` was set on `trebuchet` (tech 256) and `heavy_scorpion` (tech 94), pruning the phantom Shu/Wei/Wu Trebuchet and Shu Scorpion rows (CivTechTrees-verified). (Do not confuse the `imp_`-prefixed line slugs `imp_elite_skirm`/`imp_slinger` with anything age-related — they are real Imperial upgrade tiers. The dead `NO_ELITE_UNITS` dict that described a never-implemented `_imp`-suffix scheme was deleted from `generate_main_db.py`.)
 
-### Config patch registries (`analysis/config_constants.py`, `analysis/config_units.py`)
+### Config patch registries (`aoe2x/dbgen/config_constants.py`, `aoe2x/dbgen/config_units.py`)
 
 | Registry | Entries | Purpose |
 |---|---|---|
@@ -107,9 +107,9 @@ defaults (zeros) → extracted dat data → COMBAT_PROPERTIES → UNIQUE_COMBAT_
 | Layer | Where | Entries | What lives there |
 |---|---|---|---|
 | Extracted (`get_extracted_combat_properties`) | `analysis/combat_properties.py` | data-driven | min range, projectile speed, siege splash (class 13 + blast fields), extra projectiles (`total_projectiles`, charge types 6/7), trample percent/radius (blast level 2), Grenadier splash (level 11), Shrivamsha dodge shield (charge type 4), scorpion pass-through ratio, bonus-damage resistance, HP regen. |
-| `COMBAT_PROPERTIES` | `analysis/config_combat.py` | 30 slugs | Mostly `unit_category` tags (`siege`/`trash`/`infantry`) plus scorpion `pass_through_count`. Keyed by standard-unit slug. |
-| `UNIQUE_COMBAT_PROPERTIES` | `analysis/config_combat.py` | 52 base slugs | Ability flags not in the dat: Konnik dismount stat block, Leitis/Composite Bowman armor-ignore, charge recharge times, Liao Dao bleed, Obuch armor strip, Monaspa nearby bonus, pop-space 0.5 units, etc. Matched after stripping the civ suffix. |
-| `CIV_COMBAT_PROPERTIES` | `analysis/config_combat.py` | 89 (civ, slug) keys | Civ-conditional effects of unique techs and civ bonuses: Logistica trample, Wootz Steel armor-ignore, Sicilian 40% bonus-damage reduction, Khitan Ordo regen / Lamellar reflect, Tupi Curare bleed, etc. |
+| `COMBAT_PROPERTIES` | `aoe2x/dbgen/config_combat.py` | 30 slugs | Mostly `unit_category` tags (`siege`/`trash`/`infantry`) plus scorpion `pass_through_count`. Keyed by standard-unit slug. |
+| `UNIQUE_COMBAT_PROPERTIES` | `aoe2x/dbgen/config_combat.py` | 52 base slugs | Ability flags not in the dat: Konnik dismount stat block, Leitis/Composite Bowman armor-ignore, charge recharge times, Liao Dao bleed, Obuch armor strip, Monaspa nearby bonus, pop-space 0.5 units, etc. Matched after stripping the civ suffix. |
+| `CIV_COMBAT_PROPERTIES` | `aoe2x/dbgen/config_combat.py` | 89 (civ, slug) keys | Civ-conditional effects of unique techs and civ bonuses: Logistica trample, Wootz Steel armor-ignore, Sicilian 40% bonus-damage reduction, Khitan Ordo regen / Lamellar reflect, Tupi Curare bleed, etc. |
 
 The merged result is written three ways into the reference DB: as inline columns on `ref_units`, as rows in `ref_special_effects` (with a `source` column recording which layer supplied each value), and as `ref_projectiles` rows.
 
@@ -125,9 +125,9 @@ The merged result is written three ways into the reference DB: as inline columns
 | `armor_classes` | 40 | 2 | Copied from `armor_classes.json`. |
 | `battle_scores` | 0 at generation | 9 | Created empty; only the retired `compute_battle_scores.py` `main()` writes it (0 rows today — see [derived-data.md](derived-data.md) §5). |
 
-## Stage 3 — Main DB (`analysis/generate_main_db.py`)
+## Stage 3 — Main DB (`aoe2x/dbgen/generate_main_db.py`)
 
-`generate_main_db.py` reads **only** the reference DB (plus `armor_classes.json` and `COMBAT_PROPERTIES`/`PAIRED_UNITS` for category and pairing tags), preserves any user rows from `comments`/`simulation_comments`/`unit_verifications`, deletes `webapp/aoe2_units.db`, and rebuilds it:
+`generate_main_db.py` reads **only** the reference DB (plus `armor_classes.json` and `COMBAT_PROPERTIES`/`PAIRED_UNITS` for category and pairing tags), preserves any user rows from `comments`/`simulation_comments`/`unit_verifications`, deletes `data/golden/aoe2_units.db`, and rebuilds it:
 
 | Table | Rows | Notes |
 |---|---|---|
@@ -138,7 +138,7 @@ The merged result is written three ways into the reference DB: as inline columns
 | `armor_classes` | 40 | Same as reference DB. |
 | `combat_results`, `comments`, `simulation_comments`, `unit_verifications` | user/runtime data | Created empty; preserved rows restored. |
 
-`unit_stats` has exactly **100 columns**, in these groups: identity (3: `civ_id`, `unit_id`, `unit_name`) · core final stats (8: hp, attack, attack_range — NULL for melee, attack_speed = 1/reload, attack_delay, melee/pierce armor, movement_speed) · cost/economy (5: food/wood/gold, creation_time, upgrade_cost) · metadata (2: `civ_bonuses` summary string, `has_unit`) · per-class JSON (2: `attacks_json`, `armors_json`) · legacy combat counters (4, always 0) · combat properties (57: everything from the override chain, `unit_category`, `paired_unit_slug`) · `transform_*` (9) · `dismount_*` (9), plus `id`. `build_combat_dict_from_ref()` (line 78) is the function that maps `ref_special_effects` + `ref_projectiles` + inline `ref_units` columns into these fields; it deliberately mirrors the webapp-side canonical mapping, `build_combat_dict_from_ref()` in `webapp/combat_unit_loader.py`, so the two must stay in sync when columns are added. The script ends with hard-coded sanity checks (Byzantine Knight stats, Eagle Warrior availability, Cataphract trample, Chu Ko Nu projectiles, Fire Lancer charge, Berserk regen).
+`unit_stats` has exactly **100 columns**, in these groups: identity (3: `civ_id`, `unit_id`, `unit_name`) · core final stats (8: hp, attack, attack_range — NULL for melee, attack_speed = 1/reload, attack_delay, melee/pierce armor, movement_speed) · cost/economy (5: food/wood/gold, creation_time, upgrade_cost) · metadata (2: `civ_bonuses` summary string, `has_unit`) · per-class JSON (2: `attacks_json`, `armors_json`) · legacy combat counters (4, always 0) · combat properties (57: everything from the override chain, `unit_category`, `paired_unit_slug`) · `transform_*` (9) · `dismount_*` (9), plus `id`. `build_combat_dict_from_ref()` (line 78) is the function that maps `ref_special_effects` + `ref_projectiles` + inline `ref_units` columns into these fields; it deliberately mirrors the webapp-side canonical mapping, `build_combat_dict_from_ref()` in `aoe2x/sim/combat_unit_loader.py`, so the two must stay in sync when columns are added. The script ends with hard-coded sanity checks (Byzantine Knight stats, Eagle Warrior availability, Cataphract trample, Chu Ko Nu projectiles, Fire Lancer charge, Berserk regen).
 
 ## Update triggers
 
@@ -147,8 +147,8 @@ The merged result is written three ways into the reference DB: as inline columns
 | New game build / `.dat` patch | All counts (JSON entries, ref/main DB rows), 53-civ mapping if a DLC adds civs, worked example values |
 | `extraction/extract_units.py` `UNIT_NAMES` or new extracted fields | Stage 1 table, units.json count |
 | `extract_constants.CIV_NAMES` slots | "The 53-civ mapping" |
-| `analysis/config_combat.py` dict entries | Override-chain table entry counts |
-| `analysis/config_constants.py` (`UNIT_STAT_OVERRIDES` is in `config_units.py`, `ALLOWED_SHADOW_TECHS`/`REMOVED_TECHS` here) | "Config patch registries" table |
+| `aoe2x/dbgen/config_combat.py` dict entries | Override-chain table entry counts |
+| `aoe2x/dbgen/config_constants.py` (`UNIT_STAT_OVERRIDES` is in `config_units.py`, `ALLOWED_SHADOW_TECHS`/`REMOVED_TECHS` here) | "Config patch registries" table |
 | `_AVAILABILITY_OVERRIDES`, `CASTLE_UNITS`/`IMPERIAL_UNITS`/`UNIQUE_UNITS` rosters | "Which unit is available for which civ", roster counts |
 | `ref_units` / `unit_stats` schema (new combat property) | Both schema tables, the 100-column breakdown, and the 5-file sync chain in [webapp.md](webapp.md) |
 | Effect application order in `unit_analyzer.py` / `generate_reference.py` | "Order of application", worked example |

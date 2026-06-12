@@ -16,7 +16,7 @@ Conventions for every runbook below:
 - "CPython" means a regular Python with `genieutils-py` installed (the conda `python` on this
   machine); "PyPy" means `pypy3` — the matchup sim runners hard-exit if not run under PyPy.
 - The working matchup DB lives **outside the repo** (e.g. `D:/AI/matchup_db.db`,
-  `D:/AI/matchup_baseline_177723.db`). A small `webapp/matchup_db.db` is tracked in git, but the
+  `D:/AI/matchup_baseline_177723.db`). A small `apps/website/matchup_db.db` is tracked in git, but the
   patch and baseline pipelines should be pointed at the external copy via `--matchup-db`/`--db`.
 - `derive_unit_rankings.py` / `derive_pool_scores.py` now **require** `--matchup-db` and
   pre-flight the source DB (`matchup_db.preflight_derive_guard`): <40 distinct `my_civ`
@@ -28,72 +28,72 @@ Conventions for every runbook below:
 
 ## 1. A new game patch lands
 
-`webapp/patch_pipeline.py` automates the middle of this runbook (steps 4 below); the head and
+`aoe2x/batch/patch_pipeline.py` automates the middle of this runbook (steps 4 below); the head and
 tail are manual. Deep detail: [`docs/patch-workflow.md`](../patch-workflow.md).
 
-1. **Get the `.dat`.** Copy `empires2_x2_p1.dat` from the AoE2:DE install into `extraction/`.
-   The path is hardcoded in `extraction/run.py` (`main()` expects `extraction/empires2_x2_p1.dat`).
+1. **Get the `.dat`.** Copy `empires2_x2_p1.dat` from the AoE2:DE install into `aoe2x/extract/`.
+   The path is hardcoded in `extraction/run.py` (`main()` expects `data/inputs/empires2_x2_p1.dat`).
 2. **Write the notes file.** Save the relevant patch notes as markdown, e.g. `notes_<build>.md`
    (repo root, untracked). The pipeline stores it verbatim as the patch page summary.
 3. **If the patch adds or changes units/civs**, re-validate availability *before* running the
-   pipeline: `_AVAILABILITY_OVERRIDES` in `analysis/config_units.py` (the anti-phantom-unit
-   allowlists) and `CIV_MISSING_UNITS` in `webapp/unit_lines.py`, both against SiegeEngineers
+   pipeline: `_AVAILABILITY_OVERRIDES` in `aoe2x/dbgen/config_units.py` (the anti-phantom-unit
+   allowlists) and `CIV_MISSING_UNITS` in `aoe2x/sim/unit_lines.py`, both against SiegeEngineers
    `data/data.json`. For a pure balance patch, skip this.
 4. **Run the pipeline** (CPython with `genieutils-py`; `pypy3` must be resolvable or passed):
 
    ```
-   python -m webapp.patch_pipeline --build 178000 --release-date 2026-07-01 \
+   python -m aoe2x.batch.patch_pipeline --build 178000 --release-date 2026-07-01 \
        --source-url https://www.ageofempires.com/news/...update-178000/ \
        --summary-file notes_178000.md --matchup-db D:/AI/matchup_db.db
    ```
 
-   Optional flags: `--baseline-build` (defaults to the current build in `webapp/patches.db`)
+   Optional flags: `--baseline-build` (defaults to the current build in `data/golden/patches.db`)
    and `--pypy` (defaults to `pypy3` on PATH). It runs, in order:
 
-   1. Archives `extraction/extracted_data/` → `extraction/extracted_data_prev/` and
-      `webapp/aoe2_reference.db` → `webapp/aoe2_reference_prev.db` (both untracked "before" snapshots).
-   2. `python -m extraction.run` → `python -m analysis.generate_reference` →
-      `python -m analysis.generate_main_db` → `analysis/patches/patch_mayan_archer_cost.py`
+   1. Archives `data/inputs/extracted_data/` → `data/local/extracted_data_prev/` and
+      `data/golden/aoe2_reference.db` → `apps/website/aoe2_reference_prev.db` (both untracked "before" snapshots).
+   2. `python -m aoe2x.extract.run` → `python -m aoe2x.dbgen.generate_reference` →
+      `python -m aoe2x.dbgen.generate_main_db` → `aoe2x/dbgen/patches/patch_mayan_archer_cost.py`
       (the surgical ref patch; idempotent).
-   3. Diffs `ref_units` before/after → stat deltas + `webapp/changed_units_<build>.json`.
+   3. Diffs `ref_units` before/after → stat deltas + `apps/website/changed_units_<build>.json`.
    4. Snapshots before-outcomes from the matchup DB for the changed slugs.
-   5. `pypy3 -m webapp.run_matchup_battles --force --changed-units webapp/changed_units_<build>.json --db <matchup-db>`
+   5. `pypy3 -m aoe2x.batch.run_matchup_battles --force --changed-units apps/website/changed_units_<build>.json --db <matchup-db>`
       — the **incremental** re-sim (only matchups touching a changed slug).
    6. Diffs matchup outcomes → `patch_matchup_changes`.
    7. `carry_forward_battle_scores` (copies the prior build's `battle_scores` rows — including
       naval/siege rows the land derive does not own — to the new build), then
-      `python -m webapp.derive_unit_rankings --matchup-db <db> --build <build> --allow-stale` (→ `webapp/derived_data.db`),
-      `python -m webapp.derive_pool_scores --matchup-db <db> --out webapp/pool_scores.db --build <build> --allow-stale`
+      `python -m aoe2x.rank.derive_unit_rankings --matchup-db <db> --build <build> --allow-stale` (→ `data/golden/derived_data.db`),
+      `python -m aoe2x.rank.derive_pool_scores --matchup-db <db> --out data/golden/pool_scores.db --build <build> --allow-stale`
       (`--allow-stale` because the incremental re-sim leaves mixed `sim_version` rows),
       inserts the `patches` row, flips `is_current` to the new build, then
-      `best_units.save_civ_power_units('<build>')` (→ `webapp/civ_power_units/<build>.json`).
+      `best_units.save_civ_power_units('<build>')` (→ `data/golden/civ_power_units/<build>.json`).
       The order matters: `save_civ_power_units` reads the *current* build's pool/battle scores.
-   8. Diffs rankings → `patch_unit_ranking`; writes all patch records into `webapp/patches.db`.
+   8. Diffs rankings → `patch_unit_ranking`; writes all patch records into `data/golden/patches.db`.
 
 5. **Decide: incremental vs full re-sim.** The pipeline's step 5 is incremental. If the patch
    notes mention engine-relevant mechanics (or you want a fresh baseline-of-record), do a full
    rebuild instead and preserve it under the build number:
 
    ```
-   pypy3 -m webapp.rebuild_matchup_baseline --out D:/AI/matchup_baseline_<build>.db --workers 12
+   pypy3 -m aoe2x.batch.rebuild_matchup_baseline --out D:/AI/matchup_baseline_<build>.db --workers 12
    ```
 
    (~4.5 h; flags verified: `--out`, `--workers`, `--dry-run`, `--sample N`.) Then re-run the
    three derive commands from step 4.7 pointed at the new baseline DB. See
    [`docs/matchup-baseline.md`](../matchup-baseline.md) for the unattended runner/watchdog setup.
 6. **Manual follow-ups the pipeline does NOT do:**
-   - `python -m webapp.top_units` if any civ's top tier per line could have changed (regenerates
-     the committed `webapp/civ_top_units.json`).
-   - `python -m webapp.derive_siege_scores --build <build>` only if siege/anti-building stats
+   - `python -m aoe2x.advisor.top_units` if any civ's top tier per line could have changed (regenerates
+     the committed `data/golden/civ_top_units.json`).
+   - `python -m aoe2x.rank.derive_siege_scores --build <build>` only if siege/anti-building stats
      changed (otherwise the carry-forward keeps the prior rows; flags: `--build`, `--derived-db`).
    - Regenerate the golden baseline if `pytest tests/test_simulations.py` fails on golden keys —
      a stat change legitimately alters `get_matchup_sims` output:
      `python .golden/capture_baseline.py`, then commit `.golden/baseline.json`.
 7. **Verify.** `pytest`; spot-check availability (`/api/top-unit/Koreans/knight` → Cavalier);
-   `PORT=5002 python webapp/app.py` and smoke-test `/patches`, `/matchup-advisor`, rankings.
-8. **Commit on `staging` and promote.** Commit set: `webapp/aoe2_reference.db`,
-   `webapp/aoe2_units.db`, `webapp/derived_data.db`, `webapp/pool_scores.db`,
-   `webapp/patches.db`, `webapp/civ_power_units/<build>.json`, plus `webapp/civ_top_units.json`
+   `PORT=5002 python apps/website/app.py` and smoke-test `/patches`, `/matchup-advisor`, rankings.
+8. **Commit on `staging` and promote.** Commit set: `data/golden/aoe2_reference.db`,
+   `data/golden/aoe2_units.db`, `data/golden/derived_data.db`, `data/golden/pool_scores.db`,
+   `data/golden/patches.db`, `data/golden/civ_power_units/<build>.json`, plus `data/golden/civ_top_units.json`
    and `.golden/baseline.json` if regenerated. Verify on the staging URL, then
    `git checkout main && git merge --ff-only staging && git push origin main && git checkout staging`.
 
@@ -102,11 +102,11 @@ tail are manual. Deep detail: [`docs/patch-workflow.md`](../patch-workflow.md).
 
 | Artifact | Where the build number lives |
 |---|---|
-| `webapp/patches.db` | `patches` row + `is_current` flag (set by the pipeline) |
-| `webapp/derived_data.db` | `battle_scores.build_number` column |
-| `webapp/pool_scores.db` | build column written by `derive_pool_scores --build` |
-| `webapp/civ_power_units/<build>.json` | filename |
-| `webapp/changed_units_<build>.json` | filename (input for incremental re-sims) |
+| `data/golden/patches.db` | `patches` row + `is_current` flag (set by the pipeline) |
+| `data/golden/derived_data.db` | `battle_scores.build_number` column |
+| `data/golden/pool_scores.db` | build column written by `derive_pool_scores --build` |
+| `data/golden/civ_power_units/<build>.json` | filename |
+| `apps/website/changed_units_<build>.json` | filename (input for incremental re-sims) |
 | `D:/AI/matchup_baseline_<build>.db` | filename (local baseline-of-record, not committed) |
 
 ---
@@ -118,9 +118,9 @@ Three engines exist; decide which ones the change applies to (details:
 
 | Engine | File | Consumed by |
 |---|---|---|
-| Abstract tick sim | `webapp/simulation.py` | `best_units.get_matchup_sims` (default `sim_func`) → the live `/api/matchup-sims` advisor endpoint; `webapp/compute_battle_scores.py`; the golden baseline |
-| Position-based sim | `webapp/simulation_real.py` | `webapp/run_matchup_battles.py`, `webapp/rebuild_matchup_baseline.py`, `webapp/patch_resim.py`, `webapp/verify_flips.py` → matchup DB → all derive scripts |
-| Frontend canvas sim | `webapp/static/js/simulate.js` (`BattleUnit`, line ~345) | the Battle Sim page at `/` only (legacy `/simulate` 301-redirects there); fetches stats from `/api/ref/combat-unit/<civ>/<slug>` |
+| Abstract tick sim | `aoe2x/sim/simulation.py` | `best_units.get_matchup_sims` (default `sim_func`) → the live `/api/matchup-sims` advisor endpoint; `aoe2x/rank/compute_battle_scores.py`; the golden baseline |
+| Position-based sim | `aoe2x/sim/simulation_real.py` | `aoe2x/batch/run_matchup_battles.py`, `aoe2x/batch/rebuild_matchup_baseline.py`, `aoe2x/batch/patch_resim.py`, `aoe2x/batch/verify_flips.py` → matchup DB → all derive scripts |
+| Frontend canvas sim | `apps/website/static/js/simulate.js` (`BattleUnit`, line ~345) | the Battle Sim page at `/` only (legacy `/simulate` 301-redirects there); fetches stats from `/api/ref/combat-unit/<civ>/<slug>` |
 
 *Condensed from [simulation-engines.md](simulation-engines.md) §4 — update both together.*
 
@@ -128,8 +128,8 @@ Steps:
 
 1. Apply the change to the relevant engine(s). A mechanic that affects real battles usually
    needs all three (the JS sim mirrors but does not share code with the backend).
-2. **Know the `sim_version` consequence.** `webapp/sim_version.py` hashes exactly two files:
-   `webapp/simulation_real.py` and `analysis/config_combat.py`. Every `matchup_db` row stores
+2. **Know the `sim_version` consequence.** `aoe2x/sim/sim_version.py` hashes exactly two files:
+   `aoe2x/sim/simulation_real.py` and `aoe2x/dbgen/config_combat.py`. Every `matchup_db` row stores
    the hash; on the next `run_matchup_battles` run, rows with a stale hash are re-simulated
    automatically (no `--force` needed). Changing **`simulation.py` does not bump `sim_version`**
    — nothing in the matchup DB goes stale from it; only the live advisor sims and golden change.
@@ -154,7 +154,7 @@ Since the Phase B registry refactor (2026-06-10, data-model-review §3.2), the s
 chain is GENERATED from the ability registry — the old 6-file hand-sync is gone. The chain is:
 **registry entry + config value + one handler per engine**, then regenerate.
 
-1. **`analysis/ability_registry.py`** — declare the ability/params: name (= combat-dict key),
+1. **`aoe2x/dbgen/ability_registry.py`** — declare the ability/params: name (= combat-dict key),
    python type (drives the SQL column type), default (drives the DDL `DEFAULT` and every
    loader's null-coalesce), `ref_column` if it differs from the name, `audit` description
    (the `ref_special_effects` row text), `engines`, source, quirks. This single entry makes
@@ -163,22 +163,22 @@ chain is GENERATED from the ability registry — the old 6-file hand-sync is gon
    `combat_unit_loader.build_combat_dict_from_ref` emit the key. The Flask endpoint needs no
    change either: `/api/ref/combat-unit` does `SELECT * FROM ref_units` and delegates to that
    loader.
-2. **`analysis/config_combat.py`** — the curated value: `COMBAT_PROPERTIES` (standard units),
+2. **`aoe2x/dbgen/config_combat.py`** — the curated value: `COMBAT_PROPERTIES` (standard units),
    `UNIQUE_COMBAT_PROPERTIES` (unique-unit abilities), or `CIV_COMBAT_PROPERTIES`
    (civ-conditional overrides). Later dicts win; the dat-extracted value is the base layer.
    (Skip if the value is dat-extracted — then extend `combat_properties.py` instead.)
-3. **One handler per engine that models it** — `webapp/simulation.py` (also add the key to its
+3. **One handler per engine that models it** — `aoe2x/sim/simulation.py` (also add the key to its
    `_PREPARE_SCALAR_KEYS` pin in the same file: the abstract engine consumes a deliberate
-   subset of the registry), `webapp/simulation_real.py`, `webapp/static/js/simulate.js`
+   subset of the registry), `aoe2x/sim/simulation_real.py`, `apps/website/static/js/simulate.js`
    `BattleUnit`. Declare non-implementing engines honestly in the registry `engines` tuple and
    `tests/test_ability_registry.py::KNOWN_ENGINE_GAPS` — the presence-parity test fails on
    undeclared gaps.
-4. **Legacy `analysis/generate_main_db.py`** (only if you care about `aoe2_units.db` — no app
+4. **Legacy `aoe2x/dbgen/generate_main_db.py`** (only if you care about `aoe2_units.db` — no app
    route reads it): its `unit_stats` `CREATE TABLE` + INSERT + bespoke
    `build_combat_dict_from_ref` still need hand edits;
    `tests/test_ability_registry.py::test_maindb_dict_keys_track_registry` fails until the new
    param is carried (or consciously excluded there).
-5. Rebuild and re-sim: `python -m analysis.generate_reference`, `python -m analysis.generate_main_db`.
+5. Rebuild and re-sim: `python -m aoe2x.dbgen.generate_reference`, `python -m aoe2x.dbgen.generate_main_db`.
    Because `config_combat.py` is hashed into `sim_version`, **every** matchup row goes stale —
    plan a full re-sim (runbook 2, step 5), then re-derive and regenerate golden.
 
@@ -188,43 +188,43 @@ chain is GENERATED from the ability registry — the old 6-file hand-sync is gon
 
 1. **`extraction/extract_constants.py`** — `CIV_NAMES` is a positional list where the index is
    the dat civ ID (`None` for unused slots). A new civ must be added at its exact dat slot.
-2. **`analysis/config_units.py`** — add the unit to the age dicts (`FEUDAL_UNITS`,
+2. **`aoe2x/dbgen/config_units.py`** — add the unit to the age dicts (`FEUDAL_UNITS`,
    `CASTLE_UNITS`, `IMPERIAL_UNITS`, `UNIQUE_UNITS`) and re-validate `_AVAILABILITY_OVERRIDES`
    against SiegeEngineers (a module-level warning fires if an override slug no longer exists).
-3. **`analysis/config_combat.py`** — abilities the dat cannot express (runbook 3).
-4. **`webapp/unit_lines.py`** — register the unit in `UNIT_LINES` (line membership,
+3. **`aoe2x/dbgen/config_combat.py`** — abilities the dat cannot express (runbook 3).
+4. **`aoe2x/sim/unit_lines.py`** — register the unit in `UNIT_LINES` (line membership,
    `unique_units` per civ) and add any tech-tree gaps to `CIV_MISSING_UNITS`. This module is the
    single Python source for line definitions (imported by `app.py`, all derive scripts, and the
    sim runners).
-5. **`webapp/static/js/constants.js`** — `ENABLED_CIVS` (new civ), `NAME_TO_ICON` (new units),
+5. **`apps/website/static/js/constants.js`** — `ENABLED_CIVS` (new civ), `NAME_TO_ICON` (new units),
    `UNIQUE_BUILDING` (only for unique units not trained at the Castle).
 6. **Icons/art** — runbook 5.
 7. Rebuild everything (runbook 1 steps 4–8: extraction → ref → main → full baseline re-sim,
    since a new roster invalidates the matchup universe → derive at the current/new build), then
-   `python -m webapp.top_units` to refresh `webapp/civ_top_units.json`.
+   `python -m aoe2x.advisor.top_units` to refresh `data/golden/civ_top_units.json`.
 8. SEO pages need **no manual step**: `/sitemap.xml` and the `/vs/...` landing pages are derived
-   live from `ref_units` unique-unit rows (`webapp/app.py` `_matchup_seed_pairs`).
+   live from `ref_units` unique-unit rows (`apps/website/app.py` `_matchup_seed_pairs`).
 
-Note: the pipeline civ list (`ORIGINAL_13_CIVS` in `analysis/config_constants.py`) is now
+Note: the pipeline civ list (`ORIGINAL_13_CIVS` in `aoe2x/dbgen/config_constants.py`) is now
 derived from `extraction.extract_constants.CIV_NAMES`, so step 1 covers it automatically —
 no separate `config_constants.py` edit. Webapp civ validation reads the reference DB via
-`_valid_civs()`; the old dead copy in `webapp/app.py` was deleted.
+`_valid_civs()`; the old dead copy in `apps/website/app.py` was deleted.
 
 ---
 
 ## 5. New unit icon / art
 
-Icon files are flat PNGs in `webapp/static/img/units/` (213 files), named by display name with
+Icon files are flat PNGs in `apps/website/static/img/units/` (213 files), named by display name with
 underscores (`Long_Swordsman.png`). The **single registry** is `NAME_TO_ICON` in
-`webapp/static/js/constants.js` (218 entries, display name → file basename); no template carries
+`apps/website/static/js/constants.js` (218 entries, display name → file basename); no template carries
 its own copy. `getIconUrl()` in the same file builds the URL, and every page's JS
 (`rankings.js`, `simulate.js`, `civ-detail.js`, `matchup.js`, `matchup_advisor.js`) consumes it.
 
 1. Find the icon ID from the dat via genieutils (conda python):
    `dat.civs[0].units[UNIT_ID].icon_id`.
 2. Fetch `https://aoe2techtree.net/img/Unit/{icon_id}.png` (fallback: Fandom wiki API).
-3. Save as `webapp/static/img/units/<Display_Name>.png` (underscores for spaces).
-4. Add the entry to `NAME_TO_ICON` in `webapp/static/js/constants.js`. The key is the
+3. Save as `apps/website/static/img/units/<Display_Name>.png` (underscores for spaces).
+4. Add the entry to `NAME_TO_ICON` in `apps/website/static/js/constants.js`. The key is the
    **display name** as it appears in `ref_units.unit_name` (e.g. `"Elite Plumed Archer"`).
 5. Verify on `/simulate` (unit picker) and a civ detail page — a missing entry renders no image
    (`getIconUrl` returns `null`).
@@ -241,13 +241,13 @@ The old "keep four templates in sync" rule is obsolete. Today's single sources:
 
 | Constant | Single source | Consumers |
 |---|---|---|
-| `ENABLED_CIVS` (53) | `webapp/static/js/constants.js` | civ dropdowns in `simulate.js`, `rankings.js` |
-| `NAME_TO_ICON` (218) | `webapp/static/js/constants.js` | all page JS via `getIconUrl()` |
-| `UNIQUE_BUILDING` (13) | `webapp/static/js/constants.js` | `simulate.js`, `civ-detail.js` |
-| `UNIT_LINES` / `CIV_MISSING_UNITS` / `NAVAL_UNIT_LINES` | `webapp/unit_lines.py` | `app.py`, `compute_battle_scores.py`, `derive_*`, `run_matchup_battles.py`, `top_units.py`, `best_units.py` |
+| `ENABLED_CIVS` (53) | `apps/website/static/js/constants.js` | civ dropdowns in `simulate.js`, `rankings.js` |
+| `NAME_TO_ICON` (218) | `apps/website/static/js/constants.js` | all page JS via `getIconUrl()` |
+| `UNIQUE_BUILDING` (13) | `apps/website/static/js/constants.js` | `simulate.js`, `civ-detail.js` |
+| `UNIT_LINES` / `CIV_MISSING_UNITS` / `NAVAL_UNIT_LINES` | `aoe2x/sim/unit_lines.py` | `app.py`, `compute_battle_scores.py`, `derive_*`, `run_matchup_battles.py`, `top_units.py`, `best_units.py` |
 
 The one cross-language sync that remains: `ENABLED_CIVS` (JS) must match the civs present in
-`webapp/aoe2_reference.db` (which come from `extraction/extract_constants.py` `CIV_NAMES`).
+`data/golden/aoe2_reference.db` (which come from `extraction/extract_constants.py` `CIV_NAMES`).
 There is no automated check — after changing either side, load `/simulate` and confirm the civ
 list, and run `pytest tests/test_footer.py` plus a quick `/api/ref/civ/<NewCiv>` call.
 
@@ -261,29 +261,29 @@ combat-property columns on every row** of `aoe2_reference.db`/`aoe2_units.db`, s
 
 **Path A — config fix + full rebuild** (fine when you intend a clean rebuild anyway):
 
-1. Edit `analysis/config_combat.py` (or `config_units.py` for stat overrides).
-2. `python -m analysis.generate_reference && python -m analysis.generate_main_db`
+1. Edit `aoe2x/dbgen/config_combat.py` (or `config_units.py` for stat overrides).
+2. `python -m aoe2x.dbgen.generate_reference && python -m aoe2x.dbgen.generate_main_db`
    (then re-apply `python -m analysis.patches.patch_mayan_archer_cost`).
 3. **Diff the result** before committing — only the intended rows should change. The
-   `ref_diff.diff()` helper used by the patch pipeline (`webapp/ref_diff.py`) is the tool.
+   `ref_diff.diff()` helper used by the patch pipeline (`aoe2x/batch/ref_diff.py`) is the tool.
 4. Because `config_combat.py` is in the `sim_version` hash, all matchup rows are now stale.
    Either accept a full re-sim, or scope it:
-   `pypy3 -m webapp.run_matchup_battles --force --changed-units <slugs.json> --db <matchup_db>`
+   `pypy3 -m aoe2x.batch.run_matchup_battles --force --changed-units <slugs.json> --db <matchup_db>`
    — knowing this leaves the DB a mixed-`sim_version` patchwork (acceptable for a cosmetic hash
    bump where unchanged units genuinely sim identically).
 5. Re-derive (runbook 1, step 4.7 commands) and regenerate golden if outputs moved.
 
 **Path B — surgical DB patch** (when the pipeline itself can't produce the right value, or you
-must not touch other rows): write an idempotent script in `analysis/patches/` following
-`analysis/patches/patch_mayan_archer_cost.py` (recompute from base values so re-running is a
-no-op; support a `--dry` preview). Patch `webapp/aoe2_reference.db`, then re-run
-`python -m analysis.generate_main_db` so `aoe2_units.db` matches, and register the script in
-`webapp/patch_pipeline.py` step 2 so future full regens re-apply it. Then re-sim only the
+must not touch other rows): write an idempotent script in `aoe2x/dbgen/patches/` following
+`aoe2x/dbgen/patches/patch_mayan_archer_cost.py` (recompute from base values so re-running is a
+no-op; support a `--dry` preview). Patch `data/golden/aoe2_reference.db`, then re-run
+`python -m aoe2x.dbgen.generate_main_db` so `aoe2_units.db` matches, and register the script in
+`aoe2x/batch/patch_pipeline.py` step 2 so future full regens re-apply it. Then re-sim only the
 affected slugs as in Path A step 4.
 
-For before/after impact analysis of either path, `pypy3 -m webapp.patch_resim --my-units
+For before/after impact analysis of either path, `pypy3 -m aoe2x.batch.patch_resim --my-units
 <units.json> --out <means.db> [--ref <ref.db>] [--seeds 15] [--workers N]` runs the changed
-units against the full pool with multi-seed means, and `webapp/verify_flips.py` adversarially
+units against the full pool with multi-seed means, and `aoe2x/batch/verify_flips.py` adversarially
 re-checks candidate flips (both PyPy-only).
 
 ---
@@ -292,12 +292,12 @@ re-checks candidate flips (both PyPy-only).
 
 | If this changes | Update these sections |
 |---|---|
-| `webapp/patch_pipeline.py` steps or flags | §1 (and `docs/patch-workflow.md`) |
-| `webapp/sim_version.py` `DEFAULT_FILES` | §2, §3, §7 |
-| `webapp/combat_unit_loader.py` or either `prepare_combat_unit` | §3 |
-| `webapp/static/js/constants.js` structure (registries move/split) | §5, §6 |
-| `webapp/unit_lines.py` location or shape | §4, §6 |
+| `aoe2x/batch/patch_pipeline.py` steps or flags | §1 (and `docs/patch-workflow.md`) |
+| `aoe2x/sim/sim_version.py` `DEFAULT_FILES` | §2, §3, §7 |
+| `aoe2x/sim/combat_unit_loader.py` or either `prepare_combat_unit` | §3 |
+| `apps/website/static/js/constants.js` structure (registries move/split) | §5, §6 |
+| `aoe2x/sim/unit_lines.py` location or shape | §4, §6 |
 | Derive scripts gain/lose argparse flags | §1, §2 (re-verify every command) |
 | `.golden/capture_baseline.py` coverage or seed | §1, §2 |
-| `analysis/patches/` gains a new surgical patch | §1 step 4.2, §7 (and `patch_pipeline.py` itself) |
+| `aoe2x/dbgen/patches/` gains a new surgical patch | §1 step 4.2, §7 (and `patch_pipeline.py` itself) |
 | Matchup DB schema or baseline workflow | §1, §7 (and `docs/matchup-baseline.md`) |

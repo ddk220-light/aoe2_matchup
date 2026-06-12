@@ -9,7 +9,7 @@ those artifacts consistent across game patches.
 
 Neighboring subsystems: the `.dat` → `aoe2_reference.db` → `aoe2_units.db` pipeline is in
 [data-pipeline.md](data-pipeline.md); the engines that produce the outcomes
-(`webapp/simulation.py`, `webapp/simulation_real.py`) are in
+(`aoe2x/sim/simulation.py`, `aoe2x/sim/simulation_real.py`) are in
 [simulation-engines.md](simulation-engines.md); the routes that serve the derived data are
 in [webapp.md](webapp.md). Two procedure docs are linked rather than duplicated here:
 [docs/matchup-baseline.md](../matchup-baseline.md) (how the 491k-row baseline was built and
@@ -32,7 +32,7 @@ matchup_battles table  ←─ run_matchup_battles.py (incremental) / rebuild_mat
                                                                               │
                        patches.db (build registry, is_current) ◄── patch_pipeline.py
                                                                               │
-                                                              webapp/app.py reads these
+                                                              apps/website/app.py reads these
 ```
 
 The webapp never queries a matchup DB at serve time. Everything it shows comes from
@@ -42,7 +42,7 @@ their data.
 
 ## 1. The raw outcome store: `matchup_battles`
 
-Schema lives in `webapp/matchup_db.py`. One row per
+Schema lives in `aoe2x/batch/matchup_db.py`. One row per
 `(my_civ, my_unit_slug, opp_civ, opp_unit_slug, scale)` (UNIQUE constraint; upsert on
 conflict). 41 columns:
 
@@ -56,14 +56,14 @@ conflict). 41 columns:
 
 Two provenance mechanisms matter everywhere downstream:
 
-- **`sim_version`** (`webapp/sim_version.py`) — 16-hex SHA-256 prefix of
-  `webapp/simulation_real.py` + `analysis/config_combat.py` concatenated. Rows stamped with
+- **`sim_version`** (`aoe2x/sim/sim_version.py`) — 16-hex SHA-256 prefix of
+  `aoe2x/sim/simulation_real.py` + `aoe2x/dbgen/config_combat.py` concatenated. Rows stamped with
   a stale version are re-simulated on the next batch run; current-version rows are skipped.
 - **`dedup_group`** — 16-hex MD5 of the dedup-group key. Units with identical
   simulation-relevant stats get the same fingerprint
-  (`webapp/sim_outcome_cache.py` `unit_fingerprint()`: rounded core final stats incl.
+  (`aoe2x/sim/sim_outcome_cache.py` `unit_fingerprint()`: rounded core final stats incl.
   attack/movement speed, delay, range, accuracy; costs; `outline_size`; bonus-damage
-  attacks/armors tables; every `analysis/ability_registry.py` param that differs from its
+  attacks/armors tables; every `aoe2x/dbgen/ability_registry.py` param that differs from its
   registry default; dismount/transform form blocks), so e.g. a dozen civs' truly generic
   Halberdier collapse into one sim whose result is copied to every member row. Downstream
   consumers that average scores collapse by `dedup_group` first so stat-clones do not get
@@ -79,7 +79,7 @@ Two provenance mechanisms matter everywhere downstream:
 
 ### `run_matchup_battles.py` — the incremental batch runner
 
-`pypy3 -m webapp.run_matchup_battles [--db <path>] [--civs ...] [--my-civs ...]
+`pypy3 -m aoe2x.batch.run_matchup_battles [--db <path>] [--civs ...] [--my-civs ...]
 [--changed-units <slugs.json>] [--force] [--reset] [--workers N]` (refuses to run on
 CPython — PyPy 3 is a hard requirement).
 
@@ -120,7 +120,7 @@ same-unit mirrors** (`my_slug == opp_slug`) and replaces the 1-or-3-seed rule wi
 
 | File | Size | Tables | Contents |
 |---|---|---|---|
-| `webapp/matchup_db.db` (REMOVED from git 2026-06-11) | — | — | Was a 3.9 MB Armenians-only leftover snapshot from the per-civ batching era (commit `b9685ab`). Nothing in the app ever read it; it existed only as a foot-gun for derive scripts run without `--matchup-db` (now guarded by `preflight_derive_guard`). |
+| `apps/website/matchup_db.db` (REMOVED from git 2026-06-11) | — | — | Was a 3.9 MB Armenians-only leftover snapshot from the per-civ batching era (commit `b9685ab`). Nothing in the app ever read it; it existed only as a foot-gun for derive scripts run without `--matchup-db` (now guarded by `preflight_derive_guard`). |
 | `D:/AI/matchup_baseline_177723.db` (local, NOT in git) | 276 MB | `matchup_battles`, `matchup_means`, `groups_done` | The build-177723 **baseline-of-record**: 491,384 rows in both battle and means tables, 67,654 dedup groups. Verdicts: 234,820 win / 234,820 loss (exactly symmetric) / 21,744 tossup (4.4%). Seed counts: 460,376 rows at n=8 escalating up to 1,726 at n=40. |
 
 Practical consequence: **every derive command below must be pointed at the external
@@ -131,18 +131,18 @@ with <40 distinct `my_civ` values aborts (it looks like the Armenians-only stub;
 with `--allow-small-db`), and rows simmed under a non-current `sim_version` abort unless
 `--allow-stale` (legitimate after scoped `--changed-units` re-sims — `patch_pipeline`
 passes it). Guards live at the CLI layer only; the library functions stay unguarded for
-tests. (`derive_advisor_recs.py`, which had no flag at all, is archived in `.old/webapp/`.)
+tests. (`derive_advisor_recs.py`, which had no flag at all, is archived in `.old/apps/website/`.)
 
 ## 2. The derive chain
 
 | Script | Reads | Writes | Rerun command (from repo root) |
 |---|---|---|---|
-| `webapp/derive_unit_rankings.py` | `matchup_battles` (yardstick rows only) + `ref_units` | `derived_data.db` · `battle_scores` (land lines) | `python -m webapp.derive_unit_rankings --matchup-db D:/AI/matchup_baseline_177723.db --build 177723` |
-| `webapp/derive_pool_scores.py` (+ `pool_scores_lib.py`) | `matchup_battles` (all rows) | `pool_scores.db` · `pool_scores` | `python -m webapp.derive_pool_scores --matchup-db D:/AI/matchup_baseline_177723.db --out webapp/pool_scores.db --build 177723` |
-| `webapp/derive_advisor_recs.py` — **archived to `.old/webapp/`** (output read by nothing; no `--matchup-db` flag) | `webapp/matchup_db.db` (path not overridable) | `derived_data.db` · `advisor_recommendations` (rows kept, table DDL parked) | n/a — do not run |
-| `webapp/derive_siege_scores.py` | `compute_battle_scores.compute_siege_antibuilding_scores()` (fresh sims, not matchup_db) | `derived_data.db` · `battle_scores` (siege lines) | `python -m webapp.derive_siege_scores --build 177723` |
-| `webapp/best_units.py` `save_civ_power_units()` | `derived_data.db` + `pool_scores.db` + `ref_units` | `webapp/civ_power_units/<build>.json` | `python -c "import sys; sys.path.insert(0,'webapp'); import best_units; best_units.save_civ_power_units('177723')"` |
-| `webapp/top_units.py` | `ref_units` only (no sim data) | `webapp/civ_top_units.json` | `python -m webapp.top_units` |
+| `aoe2x/rank/derive_unit_rankings.py` | `matchup_battles` (yardstick rows only) + `ref_units` | `derived_data.db` · `battle_scores` (land lines) | `python -m aoe2x.rank.derive_unit_rankings --matchup-db D:/AI/matchup_baseline_177723.db --build 177723` |
+| `aoe2x/rank/derive_pool_scores.py` (+ `pool_scores_lib.py`) | `matchup_battles` (all rows) | `pool_scores.db` · `pool_scores` | `python -m aoe2x.rank.derive_pool_scores --matchup-db D:/AI/matchup_baseline_177723.db --out data/golden/pool_scores.db --build 177723` |
+| `apps/website/derive_advisor_recs.py` — **archived to `.old/apps/website/`** (output read by nothing; no `--matchup-db` flag) | `apps/website/matchup_db.db` (path not overridable) | `derived_data.db` · `advisor_recommendations` (rows kept, table DDL parked) | n/a — do not run |
+| `aoe2x/rank/derive_siege_scores.py` | `compute_battle_scores.compute_siege_antibuilding_scores()` (fresh sims, not matchup_db) | `derived_data.db` · `battle_scores` (siege lines) | `python -m aoe2x.rank.derive_siege_scores --build 177723` |
+| `aoe2x/advisor/best_units.py` `save_civ_power_units()` | `derived_data.db` + `pool_scores.db` + `ref_units` | `data/golden/civ_power_units/<build>.json` | `python -c "import sys; sys.path.insert(0,'webapp'); import best_units; best_units.save_civ_power_units('177723')"` |
+| `aoe2x/advisor/top_units.py` | `ref_units` only (no sim data) | `data/golden/civ_top_units.json` | `python -m aoe2x.advisor.top_units` |
 
 ### `derive_unit_rankings.py` → `battle_scores`
 
@@ -191,7 +191,7 @@ the whole pool, so a strong cav-archer is not drowned by stacked arbalester vari
 emit percentile 0–100. `_classify_strength()` then maps percentile to
 signature (≥90) / strong (≥65) / average (≥35) / weak (≥15) / poor.
 
-The webapp reads `pool_scores` via `webapp/pool_scores_query.py` `load_pool_scores()`
+The webapp reads `pool_scores` via `aoe2x/rank/pool_scores_query.py` `load_pool_scores()`
 (attached to `/api/ref/unit-line/<line>` responses, filtered by current build).
 
 ### `derive_advisor_recs.py` → `advisor_recommendations`
@@ -199,7 +199,7 @@ The webapp reads `pool_scores` via `webapp/pool_scores_query.py` `load_pool_scor
 For each (my_civ, opp_civ) pair, ranks my units by mean signed score against **all** of the
 opponent civ's units across both scales, and writes the top 2 as `rec_type='top'`. The
 table (in `derived_data.db`, 5,618 rows) has **no `build_number` column** and — verified by
-grep — **nothing in `webapp/app.py` or any template reads it**; only
+grep — **nothing in `apps/website/app.py` or any template reads it**; only
 `tests/test_advisor_derive.py` exercises it. The live Matchup Advisor instead runs on-the-fly
 sims (`best_units.get_matchup_recommendations` / `get_matchup_sims`, fed by
 `civ_power_units/<build>.json`). Treat this table as parked output awaiting a consumer.
@@ -220,9 +220,9 @@ standing derive script into `derived_data.db` — they survive via carry-forward
 `compute_civ_power_units()` joins `battle_scores` (per line/score_type/build) with pool-score
 percentiles and ref stats into a per-civ, per-age "power units" payload (strength profile,
 strategic summary, per-line entries). `save_civ_power_units(build)` writes
-`webapp/civ_power_units/<build>.json` (~1.8 MB each; `170934.json` and `177723.json` are
+`data/golden/civ_power_units/<build>.json` (~1.8 MB each; `170934.json` and `177723.json` are
 committed). `load_civ_power_units()` resolves the current build via `patches.db` and loads
-the per-build file **only** — the legacy flat `webapp/civ_power_units.json` (a frozen
+the per-build file **only** — the legacy flat `data/golden/civ_power_units.json` (a frozen
 170934 snapshot) and its silent fallback were removed; a missing per-build file now logs an
 ERROR and returns None (the API surfaces a 500). Consumed by
 `/api/civ-power-units/<civ>` and the Matchup Advisor sim helpers.
@@ -233,8 +233,8 @@ Not sim-derived (input is `ref_units` + `UNIT_LINES` only) but lives in this lay
 each civ's actual highest Imperial tier per line (Koreans knight → Cavalier, Persians →
 Savar). Read by `/api/top-units/<civ>` and `/api/top-unit/<civ>/<line>` via `load_top_units()`.
 
-`webapp/unit_lines.py` is the single Python source of the `UNIT_LINES` registry that every
-script above imports (a parallel JS copy exists in `webapp/static/js/rankings.js`).
+`aoe2x/sim/unit_lines.py` is the single Python source of the `UNIT_LINES` registry that every
+script above imports (a parallel JS copy exists in `apps/website/static/js/rankings.js`).
 
 ## 3. Build-number versioning
 
@@ -269,7 +269,7 @@ It is idempotent and is still the documented bootstrap if `patches.db` is missin
 
 ## 4. `patches.db` and the patch pipeline
 
-Schema (`webapp/patches_db.py`):
+Schema (`aoe2x/batch/patches_db.py`):
 
 | Table | Columns | Current rows |
 |---|---|---|
@@ -282,14 +282,14 @@ Read by the `/patches` page and `/patches/<build>/<civ>/<unit>` per-unit pages (
 ranking moves, "now beats / now loses / shifted" matchup buckets, cross-patch timeline).
 
 **`patch_pipeline.py`** — run once per patch
-(`python -m webapp.patch_pipeline --build <b> --release-date <d> --source-url <u>
+(`python -m aoe2x.batch.patch_pipeline --build <b> --release-date <d> --source-url <u>
 --summary-file <md> --pypy <pypy3> --matchup-db <path>`). Architecturally it chains six
 phases:
 
 - **Archive** — snapshot the previous extraction output and `aoe2_reference.db` as the
   untracked "before" copies.
 - **Extract/rebuild** — re-run stages 1–3 on the new `.dat` and re-apply the surgical
-  `analysis/patches/` scripts.
+  `aoe2x/dbgen/patches/` scripts.
 - **Diff** — `ref_diff.py` (stat deltas → `changed_units_<build>.json`) and
   `matchup_diff.snapshot()` (the "before" outcomes for changed slugs).
 - **Re-sim** — incremental `run_matchup_battles --force --changed-units`, then
@@ -325,9 +325,9 @@ pipeline:
 
 | Artifact | Status |
 |---|---|
-| `webapp/battle_scores.json` | **Deleted** (2026-06-10) along with its `app.py` startup loader and the `-999`-sentinel `else` branch of `_attach_scores()` in `/api/ref/unit-line`. The branch was unreachable (every real line in `UNIT_LINES` is inside the infantry/archery/stable/siege/naval score sets), and `rankings.js` treats missing score keys the same as the old sentinels. Role scores come solely from `derived_data.db`. |
-| `webapp/compute_battle_scores.py` (committed) | Dead as a pipeline, alive as a library. Its `main()` writes role scores to the `battle_scores` table in **`aoe2_reference.db`** — which currently has **0 rows** and is only read as a last-resort fallback when `derived_data.db` returns nothing — plus a `battle_scores.json` that nothing loads anymore. But `derive_siege_scores.py` imports `compute_siege_antibuilding_scores()` and `SIEGE_LINE_SLUGS` from it, so the module cannot be deleted without extracting those. Do **not** run its `main()` as part of any current workflow. |
-| `webapp/battle_cache.json` (1 KB, gitignored) | Sim-result cache used only by `compute_battle_scores.main()`. Dead weight while that script is retired. |
+| `apps/website/battle_scores.json` | **Deleted** (2026-06-10) along with its `app.py` startup loader and the `-999`-sentinel `else` branch of `_attach_scores()` in `/api/ref/unit-line`. The branch was unreachable (every real line in `UNIT_LINES` is inside the infantry/archery/stable/siege/naval score sets), and `rankings.js` treats missing score keys the same as the old sentinels. Role scores come solely from `derived_data.db`. |
+| `aoe2x/rank/compute_battle_scores.py` (committed) | Dead as a pipeline, alive as a library. Its `main()` writes role scores to the `battle_scores` table in **`aoe2_reference.db`** — which currently has **0 rows** and is only read as a last-resort fallback when `derived_data.db` returns nothing — plus a `battle_scores.json` that nothing loads anymore. But `derive_siege_scores.py` imports `compute_siege_antibuilding_scores()` and `SIEGE_LINE_SLUGS` from it, so the module cannot be deleted without extracting those. Do **not** run its `main()` as part of any current workflow. |
+| `apps/website/battle_cache.json` (1 KB, gitignored) | Sim-result cache used only by `compute_battle_scores.main()`. Dead weight while that script is retired. |
 
 ## 6. Committed vs. local artifacts (git ls-files is ground truth)
 
@@ -338,8 +338,8 @@ this layer:
 | Artifact | In git? | Role |
 |---|---|---|
 | `D:/AI/matchup_baseline_177723.db` (276 MB) | no | baseline-of-record; input to all derives |
-| `webapp/aoe2_reference_prev.db`, `webapp/aoe2_reference_177723.db`, `webapp/aoe2_reference_170934_clean.db` | no (untracked) | before-snapshots for diffing |
-| `webapp/derived_data.db.bak`, `webapp/pool_scores.db.bak` | no (untracked) | manual backups |
+| `apps/website/aoe2_reference_prev.db`, `apps/website/aoe2_reference_177723.db`, `apps/website/aoe2_reference_170934_clean.db` | no (untracked) | before-snapshots for diffing |
+| `data/golden/derived_data.db.bak`, `data/golden/pool_scores.db.bak` | no (untracked) | manual backups |
 
 ## Update triggers
 
@@ -353,5 +353,5 @@ this layer:
 | `advisor_recommendations` gains a consumer or a `build_number` column | §2 advisor subsection, §3 table |
 | `patch_pipeline.py` steps or new supporting modules | §4 |
 | A script starts/stops reading `battle_scores.json` or `compute_battle_scores.py` | §5 |
-| Files added to / removed from git in `webapp/` (`git ls-files webapp/`) | §6 |
+| Files added to / removed from git in `apps/website/` (`git ls-files apps/website/`) | §6 |
 | A new `patches` row / `is_current` flip | §3, §4 current-rows column |

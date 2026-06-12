@@ -105,7 +105,8 @@ deposit markers vs sim deposit markers on the timeline, wood-over-time chart
 | Check | Tolerance |
 |---|---|
 | 4th villager spawn time | ± 0.5 s |
-| Each of the 11 deposit events (time, amount) | ± 1.5 s, amount ± 0.5 |
+| Each full-load deposit (8×10.0), paired by villager id + ordinal | ± 1.5 s, amount ± 0.5 |
+| Post-depletion partial deposits (3×) | ± 4 s, amount ± 0.5 — wider window because the real engine auto-retargets lumberjacks to neighboring trees after depletion before they head home (visible in the capture; retargeting is out of scope in v1) |
 | Tree-empty time | ± 3 s |
 | Total wood delivered | within 1 of 100.3 |
 | Final villager count | exactly 4 |

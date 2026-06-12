@@ -66,10 +66,13 @@ export function createRenderer(canvas, scenario) {
   }
 
   function drawGrid() {
+    // Cells span [n, n+1] (centers at n+0.5) — the AoE2 tile lattice. Trees
+    // sit at *.5 coords = cell centers; building centers sit on lattice
+    // corners so their 2x2 / 4x4 footprints cover whole cells exactly.
     ctx.lineWidth = 1;
     for (let x = Math.floor(minX); x <= Math.ceil(maxX); x++) {
       for (let y = Math.floor(minY); y <= Math.ceil(maxY); y++) {
-        tilePath(x, y);
+        tilePath(x + 0.5, y + 0.5);
         ctx.fillStyle = ((x + y) & 1) ? "#5a4632" : "#52402d";   // brown ground
         ctx.fill();
         ctx.strokeStyle = "rgba(0,0,0,.15)";

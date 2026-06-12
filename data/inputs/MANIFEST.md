@@ -54,6 +54,6 @@ gRPC mTLS keypair — files beside `aoe2x/grpc/`.
 
 ## Generated-but-external (size)
 
-`D:/AI/matchup_baseline_<build>.db` (~276 MB, 491k rows) — produced by
+`D:/AI/matchup_baseline_<build>.db` (~280 MB, ~494k rows) — produced by
 `pypy3 -m aoe2x.batch.rebuild_matchup_baseline`, kept outside the repo;
 published zipped as a `data-v<build>` release asset.

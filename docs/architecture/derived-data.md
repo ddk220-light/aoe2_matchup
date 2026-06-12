@@ -12,7 +12,7 @@ Neighboring subsystems: the `.dat` → `aoe2_reference.db` → `aoe2_units.db` p
 (`aoe2x/sim/simulation.py`, `aoe2x/sim/simulation_real.py`) are in
 [simulation-engines.md](simulation-engines.md); the routes that serve the derived data are
 in [webapp.md](webapp.md). Two procedure docs are linked rather than duplicated here:
-[docs/matchup-baseline.md](../matchup-baseline.md) (how the 491k-row baseline was built and
+[docs/matchup-baseline.md](../matchup-baseline.md) (how the ~494k-row baseline was built and
 operated) and [docs/patch-workflow.md](../patch-workflow.md) (the end-to-end patch checklist).
 
 ## The big picture
@@ -74,7 +74,7 @@ Two provenance mechanisms matter everywhere downstream:
   (all 33 generic champions — Celts speed, Japanese reload, Dravidians Wootz Steel, Slavs
   trample — shared ONE group). The registry-driven rewrite is contract-tested in
   `tests/test_sim_outcome_cache.py`; baseline-path dedup goes 269→345 distinct fingerprints
-  and 68,694→111,664 expected groups, so the pending full re-sim (already required by
+  and 68,694→111,664 expected groups, so the full re-sim (done 2026-06-11; already required by
   `sim_version` `e221c8a3a0437bd8`) is ~63% larger than the old group count suggested.
 
 ### `run_matchup_battles.py` — the incremental batch runner
@@ -105,7 +105,7 @@ What it does, in order:
 
 ### `rebuild_matchup_baseline.py` — the full multi-seed baseline builder
 
-This is what produced the 491k-matchup baseline; methodology and run-management details are
+This is what produced the ~494k-matchup baseline; methodology and run-management details are
 in [docs/matchup-baseline.md](../matchup-baseline.md). Architecturally: it reuses
 `run_matchup_battles`' enumeration, fingerprint dedup, and mirror flip, but **excludes
 same-unit mirrors** (`my_slug == opp_slug`) and replaces the 1-or-3-seed rule with an
@@ -121,7 +121,7 @@ same-unit mirrors** (`my_slug == opp_slug`) and replaces the 1-or-3-seed rule wi
 | File | Size | Tables | Contents |
 |---|---|---|---|
 | `apps/website/matchup_db.db` (REMOVED from git 2026-06-11) | — | — | Was a 3.9 MB Armenians-only leftover snapshot from the per-civ batching era (commit `b9685ab`). Nothing in the app ever read it; it existed only as a foot-gun for derive scripts run without `--matchup-db` (now guarded by `preflight_derive_guard`). |
-| `D:/AI/matchup_baseline_177723.db` (local, NOT in git) | 276 MB | `matchup_battles`, `matchup_means`, `groups_done` | The build-177723 **baseline-of-record**: 491,384 rows in both battle and means tables, 67,654 dedup groups. Verdicts: 234,820 win / 234,820 loss (exactly symmetric) / 21,744 tossup (4.4%). Seed counts: 460,376 rows at n=8 escalating up to 1,726 at n=40. |
+| `D:/AI/matchup_baseline_177723.db` (local, NOT in git) | ~280 MB | `matchup_battles`, `matchup_means`, `groups_done` | The build-177723 **baseline-of-record**, REBUILT 2026-06-11 after the fingerprint dead-key fix: 493,584 rows, 111,664 distinct dedup groups (was 491,384 rows / 67,654 groups — dead keys had collapsed distinct units), single sim_version `e221c8a3a0437bd8`, perfect win/loss symmetry. |
 
 Practical consequence: **every derive command below must be pointed at the external
 baseline** (`--matchup-db D:/AI/matchup_baseline_177723.db`). The flag is now **required**

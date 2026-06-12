@@ -63,7 +63,7 @@ python -m aoe2x.rank.derive_unit_rankings --matchup-db <baseline> --build <N>
 
 - **Just the data** → download a `data-v<build>` GitHub Release (reference,
   derived, pool-score and patch DBs + civ power units + optionally the full
-  491k-row matchup baseline). Every artifact's producer/consumer/regen
+  ~494k-row matchup baseline). Every artifact's producer/consumer/regen
   command: `data/golden/README.md`.
 - **Just the replay viewer** → `aoe2x/replay/` is a mountable Flask
   blueprint + SPA; `apps/viewer/server.py` is a 25-line example host. The

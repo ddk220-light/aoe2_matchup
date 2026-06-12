@@ -45,7 +45,7 @@ data/golden/aoe2_units.db          │                            │
                               │                       │ (multi-seed, sim_version-stamped)
                               │                       ▼
                               │            D:/AI/matchup_baseline_<build>.db
-                              │            (~491k matchups; local, NOT committed)
+                              │            (~494k matchups; local, NOT committed)
                               │                       │
                               │     ┌─────────────────┼──────────────────────┐
                               │     ▼                 ▼                      ▼
@@ -80,7 +80,7 @@ data/golden/aoe2_units.db          │                            │
 
 Procedure deep-dives that predate this set and remain canonical:
 [../patch-workflow.md](../patch-workflow.md) (end-to-end patch procedure) and
-[../matchup-baseline.md](../matchup-baseline.md) (how the 491k-matchup baseline was built).
+[../matchup-baseline.md](../matchup-baseline.md) (how the ~494k-matchup baseline was built).
 
 ## Single sources of truth
 

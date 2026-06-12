@@ -23,14 +23,16 @@
   header h1 { font-size: 15px; margin: 0 8px 0 0; color: var(--gold); font-weight: 600; }
   header .stat { color: var(--dim); }
   header .stat b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  header .dim, .dim { color: var(--dim); }
   button, select {
     background: #2c2718; color: var(--ink); border: 1px solid var(--line);
     border-radius: 4px; padding: 4px 12px; font: inherit; cursor: pointer;
   }
   button:hover { border-color: var(--gold); }
   #scrub { flex: 1; accent-color: var(--gold); }
-  main { display: grid; grid-template-columns: 1fr 340px; min-height: 0; }
-  #view { width: 100%; height: 100%; display: block; cursor: grab; }
+  main { display: grid; grid-template-columns: 1fr 340px; min-height: 0; overflow: hidden; }
+  #stage { position: relative; overflow: hidden; min-height: 0; }
+  #view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
   aside {
     border-left: 1px solid var(--line); background: var(--panel);
     padding: 12px; overflow-y: auto;
@@ -56,37 +58,38 @@
 </head>
 <body>
 <header>
-  <h1>⚙ AoE2 Engine — 4_lumber</h1>
+  <h1 id="title">⚙ AoE2 Engine</h1>
   <button id="play">▶ Play</button>
   <select id="speed">
     <option value="1">1×</option>
-    <option value="2" selected>2×</option>
+    <option value="2">2×</option>
     <option value="4">4×</option>
     <option value="8">8×</option>
   </select>
-  <input id="scrub" type="range" min="0" max="116" step="0.05" value="0">
+  <input id="scrub" type="range" min="0" max="210" step="0.05" value="0">
   <span class="stat">⏱ <b id="clock">0:00</b></span>
-  <span class="stat">🪵 <b id="wood">150</b></span>
+  <span class="stat">🪵 collected <b id="wood">0</b> <span id="goal" class="dim"></span></span>
   <span class="stat" id="status"></span>
 </header>
 <main>
-  <canvas id="view"></canvas>
+  <div id="stage"><canvas id="view"></canvas></div>
   <aside>
     <h2>Verification vs real game (gRPC)</h2>
     <div id="scorecard">loading…</div>
-    <h2>Wood over time — sim vs truth</h2>
+    <h2>Wood collected — sim vs truth</h2>
     <canvas id="chart" width="316" height="180"></canvas>
     <div class="legend">
-      <span><i style="background:var(--gold)"></i>sim stockpile</span>
-      <span><i style="background:var(--blue)"></i>truth stockpile</span>
-      <span><i style="background:var(--ok)"></i>tree (truth)</span>
+      <span><i style="background:var(--gold)"></i>sim collected</span>
+      <span><i style="background:var(--blue)"></i>truth collected</span>
+      <span><i style="background:var(--dim)"></i>goal</span>
     </div>
     <h2>About</h2>
     <div id="summary">
       This page <b>re-simulates</b> the recorded game from its replay
-      commands alone — nothing is played back. The scorecard compares the
-      simulation against the real engine state captured live over the
-      CadeRemote gRPC API.
+      commands alone — nothing is played back. Villagers build the lumber
+      camp, then gather the forest, switching trees as needed. The scorecard
+      compares the simulation against the real engine state captured live
+      over the CadeRemote gRPC API.
     </div>
   </aside>
 </main>

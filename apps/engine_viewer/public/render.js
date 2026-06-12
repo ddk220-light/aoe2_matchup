@@ -1,215 +1,158 @@
-// Isometric canvas renderer for the engine viewer. Pure drawing — reads the
-// engine state each frame, owns only camera/sprite concerns.
-const TILE_W = 2;   // screen px per tile unit at zoom 1 (scaled by cam.zoom)
+// Flat 2D grid renderer. The world is a grid of diamond (isometric) tiles;
+// units are axis-aligned squares occupying one tile; resources occupy one
+// tile; buildings span their footprint. Orientation matches the production
+// replay SPA: screenX = (x+y)·k, screenY = (y-x)·k.
+const SPECIES_COLOR = {
+  default: "#3f7a34", Olive: "#5a7d3a", Acacia: "#4a7a2e",
+  "Italian Pine": "#2f6a3a", Pine: "#2f6a3a",
+};
 
 export function createRenderer(canvas, scenario) {
   const ctx = canvas.getContext("2d");
-  const sprites = {};
-  for (const [key, file] of Object.entries({
-    villager: "assets/villager.png",
-    scout: "assets/scoutcavalry.webp",
-  })) {
-    const img = new Image();
-    img.src = file;
-    img.onload = () => (sprites[key] = img);
+
+  // World bounds from all entities (+ margin) to frame the camera/grid.
+  const xs = scenario.entities.map((e) => e.x);
+  const ys = scenario.entities.map((e) => e.y);
+  const minX = Math.min(...xs) - 3, maxX = Math.max(...xs) + 3;
+  const minY = Math.min(...ys) - 3, maxY = Math.max(...ys) + 3;
+  const cx0 = (minX + maxX) / 2, cy0 = (minY + maxY) / 2;
+
+  const cam = { cx: cx0, cy: cy0, k: 17 };  // k = screen px per tile half-step
+
+  // world -> screen (production-SPA orientation)
+  function px(x, y) {
+    const sx = (x + y - cam.cx - cam.cy) * cam.k;
+    const sy = (y - x - (cam.cy - cam.cx)) * cam.k;
+    return [canvas.width / 2 + sx, canvas.height / 2 + sy];
   }
 
-  // Camera centered between TC and tree.
-  const tc = scenario.entities.find((e) => e.type === "town_center");
-  const tree = scenario.entities.find((e) => e.type === "tree");
-  const cam = {
-    cx: (tc.x + tree.x) / 2, cy: (tc.y + tree.y) / 2 - 1,
-    zoom: 26,
-    px(x, y) {  // world -> screen
-      const sx = (x - y) * 0.5 * this.zoom * TILE_W;
-      const sy = (x + y) * 0.25 * this.zoom * TILE_W;
-      const cx0 = (this.cx - this.cy) * 0.5 * this.zoom * TILE_W;
-      const cy0 = (this.cx + this.cy) * 0.25 * this.zoom * TILE_W;
-      return [canvas.width / 2 + sx - cx0, canvas.height / 2 + sy - cy0];
-    },
-  };
-
-  // Pan / zoom
+  // pan / zoom
   let drag = null;
-  canvas.addEventListener("mousedown", (e) => {
-    drag = { x: e.clientX, y: e.clientY };
-    canvas.style.cursor = "grabbing";
-  });
-  window.addEventListener("mouseup", () => {
-    drag = null;
-    canvas.style.cursor = "grab";
-  });
+  canvas.addEventListener("mousedown", (e) => { drag = { x: e.clientX, y: e.clientY }; canvas.style.cursor = "grabbing"; });
+  window.addEventListener("mouseup", () => { drag = null; canvas.style.cursor = "grab"; });
   window.addEventListener("mousemove", (e) => {
     if (!drag) return;
-    const dx = (e.clientX - drag.x) / (cam.zoom * TILE_W);
-    const dy = (e.clientY - drag.y) / (cam.zoom * TILE_W);
-    cam.cx -= dx - 2 * dy;
-    cam.cy += dx + 2 * dy;
+    const dxp = (e.clientX - drag.x) / cam.k, dyp = (e.clientY - drag.y) / cam.k;
+    // invert the projection deltas
+    cam.cx -= (dxp - dyp) / 2;
+    cam.cy -= (dxp + dyp) / 2;
     drag = { x: e.clientX, y: e.clientY };
   });
   canvas.addEventListener("wheel", (e) => {
     e.preventDefault();
-    cam.zoom = Math.max(8, Math.min(64, cam.zoom * (e.deltaY < 0 ? 1.12 : 0.89)));
+    cam.k = Math.max(7, Math.min(48, cam.k * (e.deltaY < 0 ? 1.12 : 0.89)));
   }, { passive: false });
 
-  function diamond(x, y, w, h, fill, stroke) {
-    const [sx, sy] = cam.px(x, y);
+  // a 1x1 tile diamond centered on (x,y)
+  function tilePath(x, y) {
+    const [ax, ay] = px(x, y - 0.5);
+    const [bx, by] = px(x + 0.5, y);
+    const [cx, cy] = px(x, y + 0.5);
+    const [dx, dy] = px(x - 0.5, y);
     ctx.beginPath();
-    ctx.moveTo(sx, sy - h);
-    ctx.lineTo(sx + w, sy);
-    ctx.lineTo(sx, sy + h);
-    ctx.lineTo(sx - w, sy);
+    ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.lineTo(cx, cy); ctx.lineTo(dx, dy);
     ctx.closePath();
-    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
-    if (stroke) { ctx.strokeStyle = stroke; ctx.stroke(); }
   }
 
-  function drawPropTree(x, y, big = false) {
-    const [sx, sy] = cam.px(x, y);
-    const s = cam.zoom / 26 * (big ? 1.35 : 1);
-    ctx.fillStyle = "#4a3520";
-    ctx.fillRect(sx - 1.5 * s, sy - 8 * s, 3 * s, 9 * s);
-    ctx.fillStyle = big ? "#3f7a2e" : "#2f5a24";
-    ctx.beginPath(); ctx.arc(sx, sy - 12 * s, 7.5 * s, 0, 7); ctx.fill();
-    ctx.fillStyle = big ? "#5a9c3f" : "#3c6e2d";
-    ctx.beginPath(); ctx.arc(sx - 3 * s, sy - 9 * s, 5.5 * s, 0, 7); ctx.fill();
-  }
-
-  function drawStump(x, y) {
-    const [sx, sy] = cam.px(x, y);
-    const s = cam.zoom / 26;
-    ctx.fillStyle = "#6b5230";
+  // a footprint diamond spanning n×n tiles centered on (x,y)
+  function footPath(x, y, half) {
+    const [ax, ay] = px(x, y - half);
+    const [bx, by] = px(x + half, y);
+    const [cx, cy] = px(x, y + half);
+    const [dx, dy] = px(x - half, y);
     ctx.beginPath();
-    ctx.ellipse(sx, sy - 1.5 * s, 4.5 * s, 2.5 * s, 0, 0, 7);
-    ctx.fill();
+    ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.lineTo(cx, cy); ctx.lineTo(dx, dy);
+    ctx.closePath();
   }
 
-  // Procedural isometric Dark Age town center: stone base, timber walls,
-  // thatched roof. (No usable TC sprite exists in the borrowed asset set.)
-  function drawTownCenter(e) {
-    const k = cam.zoom * TILE_W * 0.5;       // half-tile in screen px
-    const [sx, sy] = cam.px(e.x, e.y);
-    const P = (wx, wy, lift = 0) => {
-      const [a, b] = cam.px(wx, wy);
-      return [a, b - lift];
-    };
-    const H = 1.5 * k;                       // wall height (screen px)
-    const R = 2.6 * k;                       // roof peak height
-    const c = { x: e.x, y: e.y };
-    const corner = {
-      top: [c.x - 2, c.y - 2], right: [c.x + 2, c.y - 2],
-      bot: [c.x + 2, c.y + 2], left: [c.x - 2, c.y + 2],
-    };
-    const poly = (pts, fill, stroke) => {
-      ctx.beginPath();
-      pts.forEach(([px2, py2], i) => (i ? ctx.lineTo(px2, py2) : ctx.moveTo(px2, py2)));
-      ctx.closePath();
-      ctx.fillStyle = fill;
-      ctx.fill();
-      if (stroke) { ctx.strokeStyle = stroke; ctx.stroke(); }
-    };
-    // shadow + stone base pad
-    poly([P(...corner.top), P(...corner.right), P(...corner.bot), P(...corner.left)],
-         "rgba(0,0,0,.30)");
-    poly([P(c.x - 1.7, c.y - 1.7), P(c.x + 1.7, c.y - 1.7),
-          P(c.x + 1.7, c.y + 1.7), P(c.x - 1.7, c.y + 1.7)], "#8d8474", "#5d574b");
-    // walls (two visible faces)
-    const w = 1.45;
-    const wt = P(c.x - w, c.y - w), wr = P(c.x + w, c.y - w);
-    const wb = P(c.x + w, c.y + w), wl = P(c.x - w, c.y + w);
-    const wrU = [wr[0], wr[1] - H], wbU = [wb[0], wb[1] - H], wlU = [wl[0], wl[1] - H];
-    poly([wl, wb, wbU, wlU], "#6e5634", "#46361e");          // left face
-    poly([wb, wr, wrU, wbU], "#8a6c41", "#46361e");          // right face
-    // door on right face
-    const dx = (wb[0] + wr[0]) / 2, dy = (wb[1] + wr[1]) / 2;
-    poly([[dx - 0.25 * k, dy - 0.1 * k], [dx + 0.25 * k, dy - 0.22 * k],
-          [dx + 0.25 * k, dy - 1.0 * k], [dx - 0.25 * k, dy - 0.9 * k]], "#3a2b15");
-    // thatched roof: peak ridge over the diamond
-    const peakT = [sx - 0.9 * k, sy - R], peakB = [sx + 0.9 * k, sy - R + 0.45 * k];
-    poly([wlU, wbU, peakB, peakT], "#b89552", "#7d6231");    // left slope
-    poly([wbU, wrU, peakT, peakB], "#cfa95e", "#7d6231");    // right slope
-    // banner pole
-    ctx.strokeStyle = "#3c2f18";
-    ctx.beginPath(); ctx.moveTo(sx, sy - R - 0.1 * k); ctx.lineTo(sx, sy - R - 1.1 * k); ctx.stroke();
-    ctx.fillStyle = "#4f7fd9";
-    poly([[sx, sy - R - 1.1 * k], [sx + 0.7 * k, sy - R - 0.95 * k], [sx, sy - R - 0.78 * k]],
-         "#4f7fd9");
-  }
-
-  function drawUnit(e, color) {
-    const [sx, sy] = cam.px(e.x, e.y);
-    const s = cam.zoom / 26;
-    ctx.fillStyle = "rgba(0,0,0,.35)";
-    ctx.beginPath(); ctx.ellipse(sx, sy, 7 * s, 3.5 * s, 0, 0, 7); ctx.fill();
-    ctx.fillStyle = color;
-    ctx.beginPath(); ctx.ellipse(sx, sy + 1 * s, 6 * s, 3 * s, 0, 0, 7); ctx.fill();
-    const img = sprites[e.type];
-    const H = (e.type === "scout" ? 30 : 24) * s;
-    if (img) {
-      const W = H * (img.width / img.height);
-      ctx.drawImage(img, sx - W / 2, sy - H + 2 * s, W, H);
-    } else {
-      ctx.fillStyle = "#d8c9a0";
-      ctx.fillRect(sx - 2.5 * s, sy - 12 * s, 5 * s, 12 * s);
-    }
-    if (e.carry > 2) {  // carrying wood: small log bundle
-      ctx.fillStyle = "#8a6230";
-      ctx.fillRect(sx + 4 * s, sy - 10 * s, 7 * s, 3 * s);
-      ctx.strokeStyle = "#5d401c";
-      ctx.strokeRect(sx + 4 * s, sy - 10 * s, 7 * s, 3 * s);
-    }
-  }
-
-  function draw(g, scen) {
-    const W = canvas.clientWidth, H = canvas.clientHeight;
-    if (canvas.width !== W || canvas.height !== H) {
-      canvas.width = W; canvas.height = H;
-    }
-    const grd = ctx.createLinearGradient(0, 0, 0, H);
-    grd.addColorStop(0, "#2a3417");
-    grd.addColorStop(1, "#222a13");
-    ctx.fillStyle = grd;
-    ctx.fillRect(0, 0, W, H);
-
-    // subtle tile grid around the action
-    ctx.strokeStyle = "rgba(255,255,255,.04)";
-    for (let gx = 8; gx <= 30; gx++)
-      for (let gy = 58; gy <= 84; gy++) {
-        diamond(gx, gy, cam.zoom * TILE_W * 0.5, cam.zoom * TILE_W * 0.25,
-                null, "rgba(255,255,255,.03)");
-      }
-
-    // draw order: far -> near by (x+y)
-    const items = [];
-    for (const p of scen.props) items.push({ k: "prop", x: p.x, y: p.y });
-    for (const e of g.ents.values()) items.push({ k: e.type, e, x: e.x, y: e.y });
-    if (!g.ents.has(scen.treeId) && g.treeWasRemoved) {
-      items.push({ k: "stump", x: scen.treeX, y: scen.treeY });
-    }
-    items.sort((a, b) => a.x + a.y - (b.x + b.y));
-
-    for (const it of items) {
-      if (it.k === "prop") drawPropTree(it.x, it.y);
-      else if (it.k === "stump") drawStump(it.x, it.y);
-      else if (it.k === "tree") {
-        drawPropTree(it.e.x, it.e.y, true);
-        // remaining-wood ring
-        const [sx, sy] = cam.px(it.e.x, it.e.y);
-        const s = cam.zoom / 26;
-        const frac = it.e.wood / 100;
-        ctx.strokeStyle = "rgba(0,0,0,.5)";
-        ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(sx, sy - 12 * s, 11 * s, 0, 7); ctx.stroke();
-        ctx.strokeStyle = "#6fbf5f";
-        ctx.beginPath();
-        ctx.arc(sx, sy - 12 * s, 11 * s, -Math.PI / 2, -Math.PI / 2 + frac * 2 * Math.PI);
+  function drawGrid() {
+    ctx.lineWidth = 1;
+    for (let x = Math.floor(minX); x <= Math.ceil(maxX); x++) {
+      for (let y = Math.floor(minY); y <= Math.ceil(maxY); y++) {
+        tilePath(x, y);
+        ctx.fillStyle = ((x + y) & 1) ? "#3c4a26" : "#41502a";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(0,0,0,.18)";
         ctx.stroke();
-        ctx.lineWidth = 1;
-      } else if (it.k === "town_center") {
-        drawTownCenter(it.e);
-      } else if (it.k === "villager" || it.k === "scout") {
-        drawUnit(it.e, "rgba(79,127,217,.85)");
       }
+    }
+  }
+
+  function drawTree(e) {
+    tilePath(e.x, e.y);
+    const base = SPECIES_COLOR[e.species] || SPECIES_COLOR.default;
+    ctx.fillStyle = e.wood <= 0 ? "#5b4a2e" : base;   // stump brown when empty
+    ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.stroke();
+    if (e.wood > 0) {
+      // wood-remaining inner diamond (shrinks as depleted)
+      const f = Math.max(0.12, e.wood / 100);
+      const [sx, sy] = px(e.x, e.y);
+      const w = cam.k * 0.62 * f, h = cam.k * 0.31 * f;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy - h); ctx.lineTo(sx + w, sy);
+      ctx.lineTo(sx, sy + h); ctx.lineTo(sx - w, sy); ctx.closePath();
+      ctx.fillStyle = "rgba(20,40,16,.55)"; ctx.fill();
+    }
+  }
+
+  function drawBuilding(e) {
+    const half = e.type === "town_center" ? 2 : 1;
+    const built = e.type !== "lumber_camp" || e.built;
+    footPath(e.x, e.y, half);
+    if (!built) {
+      ctx.fillStyle = "rgba(150,120,70,.35)";          // foundation
+      ctx.fill();
+      ctx.setLineDash([4, 3]); ctx.strokeStyle = "#b8954f"; ctx.stroke();
+      ctx.setLineDash([]);
+    } else {
+      ctx.fillStyle = e.type === "town_center" ? "#8a6c41" : "#7a5a34";
+      ctx.fill();
+      ctx.strokeStyle = "#2e2412"; ctx.lineWidth = 2; ctx.stroke(); ctx.lineWidth = 1;
+      // roof highlight diamond
+      footPath(e.x, e.y, half * 0.55);
+      ctx.fillStyle = e.type === "town_center" ? "#a8854f" : "#9a7240"; ctx.fill();
+      // label
+      const [sx, sy] = px(e.x, e.y);
+      ctx.fillStyle = "#1c1408"; ctx.font = `${Math.round(cam.k * 0.5)}px sans-serif`;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(e.type === "town_center" ? "TC" : "LC", sx, sy);
+    }
+  }
+
+  function drawUnit(e) {
+    const [sx, sy] = px(e.x, e.y);
+    const s = cam.k * 0.6;                              // square side
+    // shadow
+    ctx.fillStyle = "rgba(0,0,0,.25)";
+    ctx.fillRect(sx - s / 2, sy - s / 2 + 2, s, s);
+    // body — player blue; scout slightly different
+    ctx.fillStyle = e.type === "scout" ? "#6f8fd9" : "#4f7fd9";
+    ctx.fillRect(sx - s / 2, sy - s / 2, s, s);
+    ctx.strokeStyle = "#15233f"; ctx.lineWidth = 1.5;
+    ctx.strokeRect(sx - s / 2, sy - s / 2, s, s);
+    ctx.lineWidth = 1;
+    // carrying-wood pip
+    if (e.carry > 2) {
+      ctx.fillStyle = "#c98a3a";
+      ctx.fillRect(sx + s / 2 - 4, sy - s / 2 - 4, 6, 6);
+    }
+  }
+
+  function draw(g) {
+    const W = canvas.clientWidth, H = canvas.clientHeight;
+    if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+    ctx.fillStyle = "#1a2010"; ctx.fillRect(0, 0, W, H);
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+
+    drawGrid();
+
+    // depth-sorted entities (far first: smaller x+y on top-back)
+    const items = [...g.ents.values()].sort((a, b) => (a.x + a.y) - (b.x + b.y));
+    for (const e of items) {
+      if (e.type === "tree") drawTree(e);
+      else if (e.type === "town_center" || e.type === "lumber_camp") drawBuilding(e);
+      else if (e.type === "villager" || e.type === "scout") drawUnit(e);
     }
   }
 

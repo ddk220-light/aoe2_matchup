@@ -1,11 +1,12 @@
-"""gRPC capture -> data/4_lumber/truth.json (ground-truth economy timeline).
+"""gRPC capture -> data/<scenario>/truth.json (ground-truth economy timeline).
 
-Reads the raw CadeRemote stream dump (lab/captures/4_lumber.frames.bin),
-segments it on full snapshots / clock resets, picks the game segment, and
-extracts frame-accurate economy events: spawns, deposits (carry reset),
-tree felled/empty/removed, plus 1 Hz rows for charting.
+Generalized over scenarios. Reads the raw CadeRemote stream dump, segments it
+on full snapshots / clock resets, picks the game segment, and extracts
+frame-accurate economy events: owner-1 spawns (incl. buildings), deposits
+(villager carry reset to ~0), and a 1 Hz wood-collected curve.
 
-Run: apps/video/.venv python (has grpcio/protobuf; decoder is repo-local).
+Usage: extract_truth.py <scenario>   (default: camp300)
+Run with apps/video/.venv python (grpcio/protobuf; decoder is repo-local).
 """
 import json
 import struct
@@ -17,12 +18,15 @@ sys.path.insert(0, r"D:\AI\aoe2_matchup\aoe2x\grpc")
 import decode_state_v2 as D  # noqa: E402
 import cade_api_pb2 as pb  # noqa: E402
 
-FRAMES = Path(r"D:\AI\aoe2_matchup\lab\captures\4_lumber.frames.bin")
-OUT = Path(__file__).resolve().parents[1] / "data" / "4_lumber" / "truth.json"
+SCEN = sys.argv[1] if len(sys.argv) > 1 else "camp300"
+ROOT = Path(__file__).resolve().parents[1]
+FRAMES = Path(r"D:\AI\aoe2_matchup\lab\captures") / f"{SCEN}.frames.bin"
+OUT = ROOT / "data" / SCEN / "truth.json"
 SNAP_RESEED = 400_000
 F_MASTER, F_OWNER, F_X, F_Y, F_CARRY, F_HP = 1, 2, 3, 4, 6, 12
-TREE_ID = 3662
-START_TRACKED = [3652, 3654, 3656]
+# master ids: villagers carry a resource; buildings/dopples don't gather.
+BUILDING_MASTERS = {562, 109, 70, 68, 79, 12, 87, 101, 49, 84}  # camp/tc/house...
+DOPPLE_MASTER = 243
 
 
 def read_seqs(path):
@@ -72,15 +76,15 @@ def segment(path):
 
 def main():
     seg = segment(FRAMES)
-    tmp = Path(tempfile.gettempdir()) / "lumber_truth_seed.bin"
+    tmp = Path(tempfile.gettempdir()) / f"{SCEN}_truth_seed.bin"
     tmp.write_bytes(seg["snap"])
     doc, es = D.Doc(), {}
     _, world_id = D.seed_from_snapshot(str(tmp), doc, es)
 
-    tracked = list(START_TRACKED)
-    deposits, spawns, rows = [], [], []
-    prev_carry, known = {}, set(es)
-    felled_t = empty_t = removed_t = None
+    known = set(es)
+    owner1 = set(eid for eid, e in es.items() if e.get(F_OWNER) == 1)
+    prev_carry = {}
+    spawns, buildings, deposits, rows = [], [], [], []
     next_row = 0
 
     for t, patch, events in seg["frames"]:
@@ -92,64 +96,52 @@ def main():
         for eid in set(es) - known:
             e = es[eid]
             if e.get(F_OWNER) == 1:
-                spawns.append({"eid": eid, "t": round(t / 1000, 2),
-                               "master": e.get(F_MASTER)})
-                tracked.append(eid)
+                owner1.add(eid)
+                m = e.get(F_MASTER)
+                ts = round(t / 1000, 2)
+                if m in BUILDING_MASTERS:
+                    buildings.append({"t": ts, "eid": eid, "master": m})
+                elif m != DOPPLE_MASTER and eid > 0:
+                    spawns.append({"t": ts, "eid": eid, "master": m})
         known |= set(es)
-        for eid in tracked:
+        for eid in list(owner1):
             e = es.get(eid)
             c = e.get(F_CARRY) if e else None
+            if not isinstance(c, float):
+                continue
             p = prev_carry.get(eid)
-            if p is not None and c is not None and p > 5 and c < 1:
+            if p is not None and p > 5 and c < 1:
                 deposits.append({"t": round(t / 1000, 2), "eid": eid,
                                  "amount": round(p, 2)})
-            if c is not None:
-                prev_carry[eid] = c
-        tree = es.get(TREE_ID)
-        if tree:
-            hp, w = tree.get(F_HP), tree.get(F_CARRY)
-            if felled_t is None and hp is not None and hp <= 0:
-                felled_t = round(t / 1000, 2)
-            if empty_t is None and w is not None and w <= 0:
-                empty_t = round(t / 1000, 2)
-        elif removed_t is None and felled_t is not None:
-            removed_t = round(t / 1000, 2)
+            prev_carry[eid] = c
         if t and t >= next_row:
             next_row = (t // 1000 + 1) * 1000
-            rows.append({
-                "t": round(t / 1000, 1),
-                "vills": {str(eid): [round(es[eid][F_X], 2),
-                                     round(es[eid][F_Y], 2),
-                                     round(es[eid].get(F_CARRY) or 0, 2)]
-                          for eid in tracked if eid in es},
-                "tree_wood": round(tree.get(F_CARRY), 2) if tree else 0.0,
-            })
+            rows.append({"t": round(t / 1000, 1),
+                         "collected": round(sum(d["amount"] for d in deposits), 1)})
 
+    total = round(sum(d["amount"] for d in deposits), 2)
     out = {
-        "scenario": "4_lumber",
+        "scenario": SCEN,
         "capture": {"file": FRAMES.name, "game_version": 178524},
-        "spawn": spawns[0] if spawns else None,
+        "buildings": buildings,
         "spawns": spawns,
         "deposits": deposits,
-        "tree": {"start_wood": 100.0, "hp": 20.0, "felled_t": felled_t,
-                 "empty_t": empty_t, "removed_t": removed_t},
-        "total_delivered": round(sum(d["amount"] for d in deposits), 2),
+        "total_collected": total,
         "rows": rows,
     }
 
-    # ---- self-check: the known shape of this capture ----
-    assert len(deposits) == 11, f"expected 11 deposits, got {len(deposits)}"
-    assert spawns and abs(spawns[0]["t"] - 35.26) < 0.1, spawns
-    assert empty_t and 100 <= empty_t <= 104, empty_t
-    assert abs(out["total_delivered"] - 100.3) < 1.0, out["total_delivered"]
+    # ---- self-check ----
+    assert buildings, "no owner-1 building (lumber camp) detected"
+    assert len(spawns) >= 3, f"expected trained villagers, got {len(spawns)}"
+    assert 250 <= total <= 320, f"collected wood {total} out of expected range"
 
+    OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(out, indent=1))
     print(f"OK {OUT}")
-    print(f"  deposits={len(deposits)} spawn={spawns[0]['t']}"
-          f" felled={felled_t} empty={empty_t} removed={removed_t}"
-          f" total={out['total_delivered']}")
-    for d in deposits:
-        print(f"  deposit t={d['t']:7.2f} eid={d['eid']} amount={d['amount']}")
+    print(f"  buildings={len(buildings)} spawns={len(spawns)} "
+          f"deposits={len(deposits)} total={total}")
+    print(f"  camp t={buildings[0]['t']}  "
+          f"spawn times={[s['t'] for s in spawns]}")
 
 
 if __name__ == "__main__":

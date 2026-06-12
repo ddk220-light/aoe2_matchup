@@ -1,5 +1,10 @@
 // Deterministic AoE2 economy engine — pure logic, no DOM. Consumed by the
 // browser viewer (app.js) and the headless verifier (verify/verify.mjs).
+//
+// Supports two scenario shapes from commands.json:
+//   - order/gather_point on a single tree (4_lumber)
+//   - build a lumber camp, then auto-gather a forest with retargeting and
+//     nearest-dropsite deposits (camp300)
 import * as C from "./constants.js";
 
 export function createGame(scenario) {
@@ -7,15 +12,17 @@ export function createGame(scenario) {
   for (const e of scenario.entities) ents.set(e.id, structuredClone(e));
   for (const e of ents.values()) {
     if (e.type === "villager" || e.type === "scout") {
-      Object.assign(e, { task: "idle", carry: 0, tx: e.x, ty: e.y });
+      Object.assign(e, { task: "idle", carry: 0, tx: e.x, ty: e.y,
+                         target: null, phase: 0 });
     }
     if (e.type === "town_center") Object.assign(e, { queue: [], rally: null });
-    if (e.type === "tree") Object.assign(e, { felled: false });
+    if (e.type === "tree") Object.assign(e, { gatherers: 0 });
   }
   return {
     t: 0,
     ents,
     wood: scenario.players[0].start_wood,
+    collected: 0,                  // cumulative wood delivered (the headline metric)
     pending: [...scenario.commands].sort((a, b) => a.t - b.t),
     events: [],
     ended: false,
@@ -28,6 +35,7 @@ export function step(g) {
   applyCommands(g);
   for (const e of [...g.ents.values()]) {
     if (e.type === "town_center") stepTC(g, e);
+    else if (e.type === "lumber_camp") stepCamp(g, e);
     else if (e.type === "villager") stepVill(g, e);
   }
 }
@@ -41,17 +49,30 @@ function emit(g, kind, data) {
   g.events.push({ t: +g.t.toFixed(2), kind, ...data });
 }
 
+// --------------------------------------------------------------- commands
 function applyCommands(g) {
   while (g.pending.length && g.pending[0].t <= g.t) {
     const c = g.pending.shift();
-    if (c.type === "order") {
+    if (c.type === "build") {
+      const camp = {
+        id: g.nextId++, type: "lumber_camp", owner: 1,
+        x: c.x, y: c.y, built: false, progress: 0,
+      };
+      g.ents.set(camp.id, camp);
+      g.wood -= C.CAMP_COST_WOOD;
+      emit(g, "foundation", { eid: camp.id, building: c.building });
+      for (const id of c.unit_ids) {
+        const u = g.ents.get(id);
+        if (u) { u.task = "to_build"; u.target = camp.id; assignBuildSpot(g, u, camp); }
+      }
+    } else if (c.type === "order") {
       for (const id of c.unit_ids) {
         const u = g.ents.get(id);
         if (u) assignGather(g, u, c.target_id);
       }
     } else if (c.type === "gather_point") {
       const b = g.ents.get(c.building_id);
-      if (b) b.rally = c.target_id;
+      if (b) b.rally = { x: c.x, y: c.y, target_id: c.target_id };
     } else if (c.type === "queue") {
       const b = g.ents.get(c.building_id);
       if (b) b.queue.push({ remaining: c.train_time });
@@ -62,120 +83,190 @@ function applyCommands(g) {
   }
 }
 
+// --------------------------------------------------------------- buildings
 function stepTC(g, tc) {
   if (!tc.queue.length) return;
   tc.queue[0].remaining -= C.TICK;
   if (tc.queue[0].remaining > 0) return;
   tc.queue.shift();
   const v = {
-    id: g.nextId++, type: "villager", owner: 1,
-    task: "idle", carry: 0,
+    id: g.nextId++, type: "villager", owner: 1, task: "idle", carry: 0,
     x: tc.x - C.TC_SIZE / 2 - 0.2, y: tc.y + C.TC_SIZE / 2 + 0.2,
+    target: null, phase: 0,
   };
   g.ents.set(v.id, v);
   emit(g, "spawn", { eid: v.id });
-  const rallyTarget = tc.rally != null ? g.ents.get(tc.rally) : null;
-  if (rallyTarget && rallyTarget.type === "tree") assignGather(g, v, tc.rally);
+  // Trained villagers walk to the rally point, then gather the forest there.
+  if (tc.rally) {
+    v.task = "to_rally";
+    v.tx = tc.rally.x; v.ty = tc.rally.y;
+    v.rallyTarget = tc.rally.target_id;
+  }
 }
 
-function angDiff(a, b) {
-  const d = Math.abs(a - b) % (2 * Math.PI);
-  return d > Math.PI ? 2 * Math.PI - d : d;
+function stepCamp(g, camp) {
+  // Construction advances by the number of builders currently adjacent.
+  if (camp.built) return;
+  // builders are counted in stepVill via camp.buildContrib accumulation
 }
 
-// Stand at the gather-reach circle point nearest the approach direction,
-// zigzag-stepped 30° away from occupied slots (matches observed behavior:
-// all gatherers end up on their walk-in side of the tree).
-function assignGather(g, v, treeId) {
-  const tree = g.ents.get(treeId);
-  if (!tree || tree.type !== "tree") {
-    v.task = v.carry > 0 ? "to_tc" : "idle";
-    return;
+// --------------------------------------------------------------- helpers
+function dist(a, b, x, y) { return Math.hypot(a - x, b - y); }
+
+function dropsites(g) {
+  const out = [];
+  for (const e of g.ents.values()) {
+    if (e.type === "town_center") out.push({ e, half: C.TC_SIZE / 2 });
+    else if (e.type === "lumber_camp" && e.built) out.push({ e, half: C.CAMP_SIZE / 2 });
   }
-  v.target = treeId;
-  v.task = "to_tree";
-  const base = Math.atan2(v.y - tree.y, v.x - tree.x);
-  const taken = [...g.ents.values()]
-    .filter((o) => o !== v && o.type === "villager"
-                   && o.target === treeId && o.slotAng != null)
-    .map((o) => o.slotAng);
-  const SEP = (25 * Math.PI) / 180;
-  const STEP = (30 * Math.PI) / 180;
-  let ang = base;
-  for (let k = 1; taken.some((a) => angDiff(a, ang) < SEP) && k < 13; k++) {
-    ang = base + (k % 2 ? Math.ceil(k / 2) : -Math.ceil(k / 2)) * STEP;
+  return out;
+}
+
+function nearestDrop(g, x, y) {
+  let best = null, bd = Infinity;
+  for (const d of dropsites(g)) {
+    const dd = dist(d.e.x, d.e.y, x, y);
+    if (dd < bd) { bd = dd; best = d; }
   }
-  v.slotAng = ang;
-  v.tx = tree.x + Math.cos(ang) * C.GATHER_REACH;
-  v.ty = tree.y + Math.sin(ang) * C.GATHER_REACH;
+  return best;
+}
+
+function dropPoint(d, x, y) {
+  const px = Math.max(d.e.x - d.half, Math.min(x, d.e.x + d.half));
+  const py = Math.max(d.e.y - d.half, Math.min(y, d.e.y + d.half));
+  return [px, py];
+}
+
+function nearestTree(g, x, y) {
+  let best = null, bd = Infinity;
+  for (const e of g.ents.values()) {
+    if (e.type !== "tree" || e.wood <= 0 || e.gatherers >= C.TREE_CAP) continue;
+    const dd = dist(e.x, e.y, x, y);
+    if (dd < bd) { bd = dd; best = e; }
+  }
+  return best;
 }
 
 function moveToward(e, tx, ty) {
   const dx = tx - e.x, dy = ty - e.y;
   const d = Math.hypot(dx, dy), s = C.VILL_SPEED * C.TICK;
   if (d <= s) { e.x = tx; e.y = ty; return true; }
-  e.x += (dx / d) * s;
-  e.y += (dy / d) * s;
+  e.x += (dx / d) * s; e.y += (dy / d) * s;
   return false;
 }
 
-function tcDropPoint(g, e) {
-  const tc = [...g.ents.values()].find((x) => x.type === "town_center");
-  const h = C.TC_SIZE / 2;
-  const px = Math.max(tc.x - h, Math.min(e.x, tc.x + h));
-  const py = Math.max(tc.y - h, Math.min(e.y, tc.y + h));
-  return { px, py };
+function assignBuildSpot(g, v, camp) {
+  const ang = (v.id * 73 % 360) * Math.PI / 180;
+  v.tx = camp.x + Math.cos(ang) * C.BUILD_REACH;
+  v.ty = camp.y + Math.sin(ang) * C.BUILD_REACH;
 }
 
+// Assign villager to gather a specific tree (or nearest if id missing/empty).
+function assignGather(g, v, treeId) {
+  let tree = treeId != null ? g.ents.get(treeId) : null;
+  if (!tree || tree.type !== "tree" || tree.wood <= 0)
+    tree = nearestTree(g, v.x, v.y);
+  if (!tree) { v.task = v.carry > 0 ? "to_drop" : "idle"; return; }
+  if (v.target != null) {
+    const old = g.ents.get(v.target);
+    if (old && old.type === "tree" && old.gatherers > 0) old.gatherers--;
+  }
+  tree.gatherers++;
+  v.target = tree.id;
+  v.task = "to_tree";
+  const ang = (tree.gatherers * 90 + (v.id % 4) * 25) * Math.PI / 180;
+  v.tx = tree.x + Math.cos(ang) * C.GATHER_REACH;
+  v.ty = tree.y + Math.sin(ang) * C.GATHER_REACH;
+}
+
+function releaseTree(g, v) {
+  if (v.target != null) {
+    const tr = g.ents.get(v.target);
+    if (tr && tr.type === "tree" && tr.gatherers > 0) tr.gatherers--;
+  }
+}
+
+// --------------------------------------------------------------- villager FSM
 function stepVill(g, v) {
-  const tree = v.target != null ? g.ents.get(v.target) : null;
-  if (v.task === "to_tree") {
-    if (!tree) { v.task = v.carry > 0 ? "to_tc" : "idle"; return; }
-    if (moveToward(v, v.tx, v.ty)) {
-      v.task = "settle";
-      v.settleLeft = C.SETTLE_TIME;
+  switch (v.task) {
+    case "to_build": {
+      const camp = g.ents.get(v.target);
+      if (!camp) { v.task = "idle"; return; }
+      if (camp.built) { assignGather(g, v, null); return; }
+      if (moveToward(v, v.tx, v.ty)) v.task = "building";
+      return;
     }
-  } else if (v.task === "settle") {
-    if (!tree) { v.task = v.carry > 0 ? "to_tc" : "idle"; return; }
-    v.settleLeft -= C.TICK;
-    if (v.settleLeft <= 0) v.task = tree.felled ? "gather" : "fell";
-  } else if (v.task === "fell") {
-    if (!tree) { v.task = "idle"; return; }
-    if (tree.felled) { v.task = "gather"; return; }
-    tree.hp -= C.FELL_DPS * C.TICK;
-    if (tree.hp <= 0) {
-      tree.felled = true;
-      emit(g, "tree_felled", { eid: tree.id });
-      v.task = "gather";
-    }
-  } else if (v.task === "gather") {
-    if (!tree || tree.wood <= 0) { v.task = v.carry > 0 ? "to_tc" : "idle"; return; }
-    const take = Math.min(C.GATHER_RATE * C.TICK, C.CARRY_CAP - v.carry, tree.wood);
-    v.carry += take;
-    tree.wood -= take;
-    if (tree.wood <= 1e-9) {
-      tree.wood = 0;
-      emit(g, "tree_empty", { eid: tree.id });
-      g.ents.delete(tree.id);
-      for (const o of g.ents.values()) {
-        if (o.type === "villager" && o.target === tree.id) {
-          o.task = o.carry > 0 ? "to_tc" : "idle";
-          o.slotAng = null;
-        }
+    case "building": {
+      const camp = g.ents.get(v.target);
+      if (!camp) { v.task = "idle"; return; }
+      if (camp.built) { assignGather(g, v, null); return; }
+      camp.progress += C.TICK;                    // one builder-second per tick-second
+      if (camp.progress >= C.CAMP_BUILD_POINTS) {
+        camp.built = true;
+        emit(g, "built", { eid: camp.id });
       }
       return;
     }
-    if (v.carry >= C.CARRY_CAP - 1e-9) { v.carry = C.CARRY_CAP; v.task = "to_tc"; }
-  } else if (v.task === "to_tc") {
-    const { px, py } = tcDropPoint(g, v);
-    if (Math.hypot(px - v.x, py - v.y) <= C.DEPOSIT_REACH) {
-      g.wood += v.carry;
-      emit(g, "deposit", { eid: v.id, amount: +v.carry.toFixed(2) });
-      v.carry = 0;
-      if (v.target != null && g.ents.get(v.target)) assignGather(g, v, v.target);
-      else v.task = "idle";
-    } else {
-      moveToward(v, px, py);
+    case "to_rally": {
+      if (moveToward(v, v.tx, v.ty)) assignGather(g, v, v.rallyTarget);
+      return;
     }
+    case "to_tree": {
+      const tree = g.ents.get(v.target);
+      if (!tree || tree.wood <= 0) { releaseTree(g, v); assignGather(g, v, null); return; }
+      if (moveToward(v, v.tx, v.ty)) { v.task = "settle"; v.phase = C.SETTLE_TIME; }
+      return;
+    }
+    case "settle": {
+      v.phase -= C.TICK;
+      if (v.phase <= 0) { v.task = "fell"; v.phase = C.FELL_TIME; }
+      return;
+    }
+    case "fell": {
+      const tree = g.ents.get(v.target);
+      if (!tree || tree.wood <= 0) { releaseTree(g, v); assignGather(g, v, null); return; }
+      v.phase -= C.TICK;
+      if (v.phase <= 0) v.task = "gather";
+      return;
+    }
+    case "gather": {
+      const tree = g.ents.get(v.target);
+      if (!tree || tree.wood <= 0) {
+        releaseTree(g, v);
+        v.task = v.carry > 0 ? "to_drop" : "to_tree_next";
+        return;
+      }
+      const take = Math.min(C.GATHER_RATE * C.TICK, C.CARRY_CAP - v.carry, tree.wood);
+      v.carry += take; tree.wood -= take;
+      if (tree.wood <= 1e-9) {
+        tree.wood = 0;
+        emit(g, "tree_empty", { eid: tree.id });
+      }
+      if (v.carry >= C.CARRY_CAP - 1e-9) { v.carry = C.CARRY_CAP; v.task = "to_drop"; }
+      return;
+    }
+    case "to_tree_next": {           // tree emptied with no load: find a new one
+      releaseTree(g, v);
+      assignGather(g, v, null);
+      return;
+    }
+    case "to_drop": {
+      const d = nearestDrop(g, v.x, v.y);
+      if (!d) return;                // no dropsite yet (camp still building)
+      const [px, py] = dropPoint(d, v.x, v.y);
+      if (Math.hypot(px - v.x, py - v.y) <= C.DEPOSIT_REACH) {
+        g.wood += v.carry; g.collected += v.carry;
+        emit(g, "deposit", { eid: v.id, amount: +v.carry.toFixed(2) });
+        v.carry = 0;
+        const tree = v.target != null ? g.ents.get(v.target) : null;
+        if (tree && tree.type === "tree" && tree.wood > 0) {
+          v.task = "to_tree";        // same tree still has wood: go back
+        } else {
+          assignGather(g, v, null);  // retarget to nearest non-empty tree
+        }
+      } else moveToward(v, px, py);
+      return;
+    }
+    default: return;                 // idle
   }
 }

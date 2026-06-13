@@ -115,11 +115,20 @@ function renderSelection(teamNum) {
                             <h4><img src="${iconUrl(bIconId)}" alt="${bldgSafe}" onerror="this.style.display='none'" /> ${bldgSafe}</h4>
                             <div class="unit-grid">`;
                 for (const u of bUnits) {
-                    const iUrl = unitIconUrl(u.unit_name);
+                    // Transparent in-game sprite when available (red default);
+                    // spriteless units (naval) keep the boxed portrait. The
+                    // `sprite` class drops the circular frame in CSS.
+                    const useSprite =
+                        typeof hasSprite === "function" &&
+                        hasSprite(u.unit_name);
+                    const iUrl = useSprite
+                        ? spriteFor(u.unit_name)
+                        : unitIconUrl(u.unit_name);
+                    const imgCls = useSprite ? ' class="sprite"' : "";
                     const nameSafe = escapeHtml(u.unit_name);
                     const slugSafe = escapeHtml(u.unit_slug);
                     html += `<div class="unit-pick" data-action="selectUnit" data-team="${teamNum}" data-slug="${slugSafe}" data-name="${nameSafe}">
-                                <img src="${iUrl}" alt="${nameSafe}" onerror="this.style.display='none'" />
+                                <img${imgCls} src="${iUrl}" alt="${nameSafe}" onerror="this.style.display='none'" />
                                 <span>${nameSafe}</span>
                             </div>`;
                 }
@@ -130,11 +139,18 @@ function renderSelection(teamNum) {
                 '<div style="color:var(--text-muted);font-size:0.8rem;padding:8px">Loading units...</div>';
         }
     } else {
-        // Unit selected badge
-        const iUrl = unitIconUrl(state.unitName);
+        // Unit selected badge — transparent sprite when available (red default),
+        // boxed portrait otherwise. `sprite` class drops the circular frame.
+        const useSprite =
+            typeof hasSprite === "function" &&
+            hasSprite(state.unitName);
+        const iUrl = useSprite
+            ? spriteFor(state.unitName)
+            : unitIconUrl(state.unitName);
+        const imgCls = useSprite ? ' class="sprite"' : "";
         const unitNameSafe = escapeHtml(state.unitName);
         html += `<div class="selection-badge">
-                    <img src="${iUrl}" alt="${unitNameSafe}" onerror="this.style.display='none'" />
+                    <img${imgCls} src="${iUrl}" alt="${unitNameSafe}" onerror="this.style.display='none'" />
                     <span class="badge-text">${unitNameSafe}</span>
                     <span class="change-btn" data-action="clearUnit" data-team="${teamNum}">change</span>
                 </div>`;
@@ -1685,10 +1701,12 @@ class BattleUnit {
 
         if (this.isSprite && imgReady) {
             // Sprite mode: no circle/ring — team color is baked into the sprite
-            // (team 1 red, team 2 blue). Contain the whole sprite within the unit's
-            // 2*radius footprint so it never crops or bleeds into neighbours. A small
-            // scale-up on attack replaces the old white ring flash.
-            const box = this.radius * 2;
+            // (team 1 red, team 2 blue). Contain the whole sprite within a box of
+            // 2.8*radius (a bit bigger than the unit footprint for readability),
+            // scaling by the LARGER sprite dimension so wide/tall off-shapes stay
+            // fully contained and never explode in one axis. A small scale-up on
+            // attack replaces the old white ring flash.
+            const box = this.radius * 2.8;
             let s = box / Math.max(img.naturalWidth, img.naturalHeight);
             if (this.attackAnimTimer > 0) s *= 1.12;
             const dw = img.naturalWidth * s;
@@ -2715,10 +2733,12 @@ async function startBattle() {
         const icon2 = document.getElementById("prog2Icon");
         if (unitImages[1]?.src) {
             icon1.src = unitImages[1].src;
+            icon1.classList.toggle("sprite", !!unitIsSprite[1]);
             icon1.style.display = "";
         }
         if (unitImages[2]?.src) {
             icon2.src = unitImages[2].src;
+            icon2.classList.toggle("sprite", !!unitIsSprite[2]);
             icon2.style.display = "";
         }
 

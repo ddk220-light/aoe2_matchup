@@ -850,13 +850,18 @@ function renderLineSelector() {
         const hasCastle = line.castle !== null;
         const unavailable =
             currentAge === "Castle" && !hasCastle;
-        const iUrl = unitIconUrl(displayName || line.imperial);
+        const tabName = displayName || line.imperial;
+        // Transparent in-game sprite when available; spriteless units (naval) keep the
+        // small boxed portrait. The `sprite` class drives the no-crop CSS path.
+        const tabUseSprite = typeof hasSprite === "function" && hasSprite(tabName);
+        const iUrl = tabUseSprite ? spriteFor(tabName) : unitIconUrl(tabName);
+        const tabImgClass = tabUseSprite ? "sprite" : "";
         const activeClass =
             currentLine === slug ? " active" : "";
         const unavailClass = unavailable ? " unavailable" : "";
 
         html += `<button class="unit-tab${activeClass}${unavailClass}" onclick="selectLine('${slug}')">
-            <img src="${iUrl}" alt="${line.name}" onerror="this.style.display='none'" />
+            <img class="${tabImgClass}" src="${iUrl}" alt="${line.name}" onerror="this.style.display='none'" />
             ${line.name}
         </button>`;
     }
@@ -1532,11 +1537,14 @@ function renderTable() {
     }
 
     const lineInfo = UNIT_LINES[currentLine];
-    const titleIcon = unitIconUrl(
+    const titleName =
         currentAge === "Castle"
             ? lineInfo?.castle || lineInfo?.imperial
-            : lineInfo?.imperial,
-    );
+            : lineInfo?.imperial;
+    const titleUseSprite =
+        typeof hasSprite === "function" && hasSprite(titleName);
+    const titleIcon = titleUseSprite ? spriteFor(titleName) : unitIconUrl(titleName);
+    const titleImgClass = titleUseSprite ? "sprite" : "";
 
     const allExpanded = ["GC", "AC", "AT", "AA", "Special"]
         .filter((g) => _groupExistsForCurrentPool(g))
@@ -1560,7 +1568,7 @@ function renderTable() {
     html += `</div>`;
 
     html += `<div class="table-title">
-        <img src="${titleIcon}" alt="" onerror="this.style.display='none'" />
+        <img class="${titleImgClass}" src="${titleIcon}" alt="" onerror="this.style.display='none'" />
         ${currentData.line_name} — ${currentAge} Age (${filtered.length} units)
     </div>`;
 
@@ -1608,9 +1616,12 @@ function renderTable() {
             </div></td>`;
         }
         if (k === "unit_name") {
-            const unitImg = unitIconUrl(v);
+            const cellUseSprite =
+                typeof hasSprite === "function" && hasSprite(v);
+            const unitImg = cellUseSprite ? spriteFor(v) : unitIconUrl(v);
+            const cellImgClass = cellUseSprite ? "sprite" : "";
             return `<td class="${expandableClass}"><div class="unit-cell">
-                <img src="${unitImg}" alt="${v}" onerror="this.style.display='none'" />
+                <img class="${cellImgClass}" src="${unitImg}" alt="${v}" onerror="this.style.display='none'" />
                 ${v}${row.is_unique ? " *" : ""}
             </div></td>`;
         }

@@ -332,6 +332,29 @@ main {
     font-size: 0.7rem;
 }
 
+/* "Mil/min" header: neutral RED unit sprite + label, right-aligned to match the
+   numeric column below it. The sprite sits in a FIXED 16x16 box with
+   object-fit: contain so an off-shape figure is letterboxed inside the box
+   (never cropped, never overflowing). 16px < the 70px column and < the row's
+   text line, so it cannot bleed into the Vill/min column or the rows. */
+.tracker-mil-head {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.tracker-mil-icon {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    padding: 1px;
+    box-sizing: border-box;
+}
+
 .tracker-row {
     display: grid;
     grid-template-columns: 1fr 70px 70px;

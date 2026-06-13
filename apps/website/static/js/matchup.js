@@ -215,8 +215,11 @@ function renderAnalysis(civName, data) {
 /* ---- Unit badge renderer ---- */
 function renderUnitBadge(unit, colKey) {
     var name = unit.unit_name || slugToName(unit.unit_slug);
-    // Use the transparent in-game sprite when the unit has a square one; spriteless
-    // units (naval) fall back to the boxed portrait. `.sprite` class drives the CSS.
+    // Use the transparent in-game sprite whenever the unit has one — hasSprite() now
+    // includes off-shape (tall/wide) units, not just square ones, so signature units
+    // like Elite Skirmisher / Elite Leitis get the `.sprite` treatment too. Spriteless
+    // units (naval) fall back to the boxed portrait. The `.sprite` class drives the CSS,
+    // where a fixed box + object-fit: contain keeps every aspect ratio inside the badge.
     var useSprite = typeof hasSprite === "function" && hasSprite(name);
     var iconUrl = useSprite ? spriteFor(name) : getIconUrl(name);
     var hasScore = unit.percentile != null && unit.strength != null;

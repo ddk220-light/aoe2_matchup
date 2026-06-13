@@ -75,6 +75,17 @@
     border-radius: 50%;
     object-fit: cover;
 }
+/* Transparent in-game sprite (set via `sprite` class on unit badges only —
+   the civ-emblem img in this badge never gets it). Fixed 32x32 box matches the
+   row height; object-fit: contain + inner padding keeps off-shape sprites
+   (tall pikes / wide cavalry) fully inside the box, no frame, no bleed. */
+.selection-badge img.sprite {
+    border-radius: 0;
+    object-fit: contain;
+    background: none;
+    padding: 1px;
+    box-sizing: border-box;
+}
 .selection-badge .badge-text {
     font-weight: 600;
     font-size: 0.85rem;
@@ -216,6 +227,21 @@
     border: 2px solid var(--card-border);
     object-fit: cover;
     background: var(--bg);
+}
+/* Transparent in-game sprite (set via `sprite` class). The pick card is 64px
+   wide with 4px padding -> 56px content; a fixed 48x48 box (border-box, 2px
+   inner padding) fits inside with margin to spare on every side. No frame,
+   object-fit: contain so wide/tall off-shapes are contained, never cropped or
+   bleeding into neighbouring picks. */
+.unit-pick img.sprite {
+    width: 48px;
+    height: 48px;
+    border: none;
+    border-radius: 0;
+    background: none;
+    object-fit: contain;
+    padding: 2px;
+    box-sizing: border-box;
 }
 .unit-pick span {
     font-size: 0.55rem;
@@ -377,6 +403,14 @@
     height: 28px;
     border-radius: 50%;
     object-fit: cover;
+}
+/* Transparent sprite: no circle crop, contained, a touch bigger (sim UI). */
+.progress-header img.sprite {
+    width: 40px;
+    height: 40px;
+    border-radius: 0;
+    object-fit: contain;
+    background: none;
 }
 .progress-header .prog-name {
     font-family: "Cinzel", serif;

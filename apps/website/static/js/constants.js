@@ -346,17 +346,26 @@ function getIconUrl(name) {
    UI degrades cleanly. team===2 -> blue, otherwise red (team 1 / neutral display). */
 function spriteFor(name, team) {
     const s = (typeof UNIT_SPRITES !== "undefined") ? UNIT_SPRITES[name] : null;
-    if (s && s.cat === "square") {
+    if (s && s.url) {
         return team === 2 && s.url_blue ? s.url_blue : s.url;
     }
     return getIconUrl(name);
 }
 
-/* Does this unit have a usable square sprite? (lets call sites tweak layout —
-   e.g. drop the circle clip — only when a real sprite is shown.) */
+/* Does this unit have a usable sprite at all? Includes off-shape (borderline /
+   extreme) sprites, not just square — only truly spriteless units (naval) miss.
+   Call sites use this to switch layout (drop the circle/frame) when a real sprite
+   shows; aspect is handled per-view with object-fit: contain + sane bounds. */
 function hasSprite(name) {
     const s = (typeof UNIT_SPRITES !== "undefined") ? UNIT_SPRITES[name] : null;
-    return !!(s && s.cat === "square");
+    return !!(s && s.url);
+}
+
+/* Sprite aspect ratio (longer:shorter side) or null — lets a view clamp the
+   off-shape sprites (tall pikes, wide cavalry) so they never bleed their box. */
+function spriteRatio(name) {
+    const s = (typeof UNIT_SPRITES !== "undefined") ? UNIT_SPRITES[name] : null;
+    return s && s.ratio ? s.ratio : null;
 }
 
 /* --- Building Config --- */

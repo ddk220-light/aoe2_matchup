@@ -346,9 +346,17 @@
     background: rgba(255, 255, 255, 0.04);
 }
 
-/* In-game sprite variant — transparent, unframed, larger. Set (via the `sprite`
-   class) only on units that have a square sprite; spriteless fallbacks keep the
-   boxed portrait above. */
+/* In-game sprite variant — transparent, unframed. Set (via the `sprite` class) on
+   any unit that has a sprite, including off-shape (tall/wide) ones; spriteless
+   fallbacks keep the boxed portrait above.
+
+   Bleed-proofing is STRUCTURAL, not by guessing:
+     - fixed width AND height define a box that fits the badge's content area
+       (box height <= the info-block height, so the icon never forces the row taller);
+     - object-fit: contain letterboxes the whole figure inside the box (no crop,
+       no overflow) whatever the sprite's aspect ratio;
+     - a few px of inner padding keeps the figure off the box edge;
+     - overflow: hidden is a final backstop so nothing can ever escape the box. */
 .unit-badge-icon.sprite,
 .signature-icon.sprite {
     border: none;
@@ -356,9 +364,12 @@
     box-shadow: none;
     border-radius: 0;
     object-fit: contain;
+    overflow: hidden;
+    padding: 2px;
+    box-sizing: border-box;
 }
-.unit-badge-icon.sprite { width: 112px; height: 112px; }
-.signature-icon.sprite { width: 124px; height: 124px; }
+.unit-badge-icon.sprite { width: 56px; height: 56px; }
+.signature-icon.sprite { width: 64px; height: 64px; }
 
 /* --- Unit Badge Info (name + score stack) --- */
 .unit-badge-info {

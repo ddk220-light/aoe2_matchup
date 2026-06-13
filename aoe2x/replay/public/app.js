@@ -2,6 +2,15 @@
  * Main application - wires together renderer and playback
  */
 
+// The replay SPA is mounted as a Flask blueprint on the website origin
+// (e.g. /replay), so the website's transparent unit sprites are reachable by
+// absolute URL. The on-map unit markers stay per-player-coloured (renderer.js);
+// these are only used for the neutral RED legend icon in DOM panels.
+const WEB_UNIT_SPRITE_BASE = "/static/img/unit_sprites";
+// Neutral military icon for the "Mil/min" production column header. RED sprite
+// = neutral unit icon per the shared sprite convention (blue is player-1-only).
+const MIL_LEGEND_SPRITE = `${WEB_UNIT_SPRITE_BASE}/militia.png`;
+
 class App {
   constructor() {
     this.renderer = null;
@@ -1699,7 +1708,11 @@ class App {
       <div class="tracker-header">
         <span>Player</span>
         <span>Vill/min</span>
-        <span>Mil/min</span>
+        <span class="tracker-mil-head">
+          <img class="tracker-mil-icon" src="${MIL_LEGEND_SPRITE}"
+               alt="" aria-hidden="true"
+               onerror="this.style.display='none'">Mil/min
+        </span>
       </div>
     `;
 

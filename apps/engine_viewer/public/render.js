@@ -3,9 +3,17 @@
 // trees (1 cell), building footprints (2x2 / 4x4 cells) — are drawn by
 // projecting their WORLD CORNERS, so footprints cover their cells exactly.
 // Orientation matches the production replay SPA: sx=(x+y)k, sy=(y-x)k/2.
+import { BUILDINGS } from "./constants.js";
+
 const SPECIES_COLOR = {
   default: "#3f7a34", Olive: "#5a7d3a", Acacia: "#4a7a2e",
   "Italian Pine": "#2f6a3a", Pine: "#2f6a3a", Straggler: "#4d8a3c",
+};
+const BUILDING_STYLE = {
+  town_center: { fill: "#8a6c41", inner: "#a8854f", label: "TC" },
+  lumber_camp: { fill: "#7a5a34", inner: "#9a7240", label: "LC" },
+  mill:        { fill: "#86683a", inner: "#a3854a", label: "M" },
+  house:       { fill: "#7d6248", inner: "#97785a", label: "H" },
 };
 
 export function createRenderer(canvas, scenario) {
@@ -65,49 +73,57 @@ export function createRenderer(canvas, scenario) {
     }
   }
 
-  const seedWood = new Map(
-    scenario.entities.filter((e) => e.type === "tree").map((e) => [e.id, e.wood]));
+  const seedPool = new Map(scenario.entities
+    .filter((e) => e.type === "tree" || e.type === "bush")
+    .map((e) => [e.id, e.wood ?? e.food]));
+
+  // remaining-stock ring shared by trees (pale green) and bushes (pink)
+  function stockRing(e, left, color) {
+    const f = left / (seedPool.get(e.id) || 100);
+    const [sx, sy] = px(e.x, e.y);
+    const r = cam.k * 0.30;
+    ctx.lineWidth = Math.max(2, cam.k * 0.13);
+    ctx.strokeStyle = "rgba(0,0,0,.45)";
+    ctx.beginPath(); ctx.arc(sx, sy, r, 0, 2 * Math.PI); ctx.stroke();
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.arc(sx, sy, r, -Math.PI / 2, -Math.PI / 2 + f * 2 * Math.PI);
+    ctx.stroke();
+    ctx.lineWidth = 1;
+  }
 
   function drawTree(e) {
-    const n = Math.floor(e.x), m = Math.floor(e.y);
     const base = SPECIES_COLOR[e.species] || SPECIES_COLOR.default;
-    poly(cell(n, m), e.wood <= 0 ? "#6b5638" : base, "rgba(0,0,0,.35)");
-    if (e.wood > 0) {
-      // wood-left circle: ring fills proportionally to remaining wood
-      const f = e.wood / (seedWood.get(e.id) || 100);
-      const [sx, sy] = px(e.x, e.y);
-      const r = cam.k * 0.30;
-      ctx.lineWidth = Math.max(2, cam.k * 0.13);
-      ctx.strokeStyle = "rgba(0,0,0,.45)";
-      ctx.beginPath(); ctx.arc(sx, sy, r, 0, 2 * Math.PI); ctx.stroke();
-      ctx.strokeStyle = "#b6f09a";
-      ctx.beginPath();
-      ctx.arc(sx, sy, r, -Math.PI / 2, -Math.PI / 2 + f * 2 * Math.PI);
-      ctx.stroke();
-      ctx.lineWidth = 1;
-    }
+    poly(cell(Math.floor(e.x), Math.floor(e.y)),
+         e.wood <= 0 ? "#6b5638" : base, "rgba(0,0,0,.35)");
+    if (e.wood > 0) stockRing(e, e.wood, "#b6f09a");
+  }
+
+  function drawBush(e) {
+    poly(cell(Math.floor(e.x), Math.floor(e.y)),
+         e.food <= 0 ? "#6b5638" : "#8e3b46", "rgba(0,0,0,.35)");
+    if (e.food > 0) stockRing(e, e.food, "#ff9aa8");
   }
 
   function drawBuilding(e) {
-    const half = e.type === "town_center" ? 2 : 1;
-    const built = e.type !== "lumber_camp" || e.built;
+    const half = (BUILDINGS[e.type]?.size ?? 2) / 2;
     const fp = rect(e.x - half, e.y - half, e.x + half, e.y + half);
-    if (!built) {
+    if (!e.built) {
       poly(fp, "rgba(150,120,70,.35)");
       ctx.setLineDash([4, 3]);
       poly(fp, null, "#b8954f", 1.5);
       ctx.setLineDash([]);
     } else {
-      poly(fp, e.type === "town_center" ? "#8a6c41" : "#7a5a34", "#2e2412", 2);
+      const st = BUILDING_STYLE[e.type] || BUILDING_STYLE.lumber_camp;
+      poly(fp, st.fill, "#2e2412", 2);
       const ih = half * 0.55;
-      poly(rect(e.x - ih, e.y - ih, e.x + ih, e.y + ih),
-           e.type === "town_center" ? "#a8854f" : "#9a7240");
+      poly(rect(e.x - ih, e.y - ih, e.x + ih, e.y + ih), st.inner);
       const [sx, sy] = px(e.x, e.y);
       ctx.fillStyle = "#1c1408";
       ctx.font = `${Math.round(cam.k * 0.55)}px sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(e.type === "town_center" ? "TC" : "LC", sx, sy);
+      ctx.fillText(st.label, sx, sy);
       ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
     }
   }
@@ -137,8 +153,8 @@ export function createRenderer(canvas, scenario) {
     ctx.lineWidth = 1.5;
     ctx.strokeRect(sx - s / 2, sy - s / 2, s, s);
     ctx.lineWidth = 1;
-    if (e.carry > 2) {
-      ctx.fillStyle = "#c98a3a";
+    if (e.carry > 2) {        // carry pip: orange = wood, pink = food
+      ctx.fillStyle = e.carryRes === "food" ? "#d9536a" : "#c98a3a";
       ctx.fillRect(sx + s / 2 - 4, sy - s / 2 - 4, 6, 6);
     }
     if (e.task === "to_build" || e.task === "building") {
@@ -172,7 +188,8 @@ export function createRenderer(canvas, scenario) {
     const items = [...g.ents.values()].sort((a, b) => (a.x + a.y) - (b.x + b.y));
     for (const e of items) {
       if (e.type === "tree") drawTree(e);
-      else if (e.type === "town_center" || e.type === "lumber_camp") drawBuilding(e);
+      else if (e.type === "bush") drawBush(e);
+      else if (BUILDINGS[e.type]) drawBuilding(e);
       else if (e.type === "villager" || e.type === "scout") drawUnit(e);
     }
   }

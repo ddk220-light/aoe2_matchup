@@ -1,17 +1,19 @@
 // Viewer wiring: load scenario, drive the engine in real time, render the 2D
 // grid, and show the verification overlay (scorecard + wood-collected chart).
-import { createGame, step, run } from "./engine.js";
+import { createGame, step, run, popCount, popCap } from "./engine.js";
+import { BUILDINGS } from "./constants.js";
 import { createRenderer } from "./render.js";
 
 const $ = (id) => document.getElementById(id);
 const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
 
 const params = new URLSearchParams(location.search);
-const SCEN = params.get("scenario") || "camp300";
+const SCEN = params.get("scenario") || "millpop";
 
 const scen = await (await fetch(`data/${SCEN}/commands.json`)).json();
 const truth = await (await fetch(`data/${SCEN}/truth.json`)).json();
-const GOAL = scen.players[0].goal_wood_collected || null;
+const GOAL = scen.players[0].goal_wood_collected
+          || scen.players[0].goal_collected || null;
 const DUR = Math.ceil(scen.duration);
 
 let g = createGame(scen);
@@ -28,10 +30,16 @@ function rebuildTo(t) {
 function updateHud() {
   $("clock").textContent = fmt(g.t);
   $("wood").textContent = Math.round(g.collected);
-  const camp = [...g.ents.values()].find((e) => e.type === "lumber_camp");
-  $("status").textContent = camp
-    ? (camp.built ? "lumber camp: built" : `lumber camp: building ${Math.round(camp.progress / 0.54)}%`)
-    : "";
+  const cap = popCap(g);
+  $("pop").textContent = `${popCount(g)}/${cap === Infinity ? "∞" : cap}`;
+  const status = [];
+  for (const e of g.ents.values()) {
+    const spec = BUILDINGS[e.type];
+    if (spec && spec.t1 && !e.built) {
+      status.push(`${e.type.replace("_", " ")}: ${Math.round((e.progress / spec.t1) * 100)}%`);
+    }
+  }
+  $("status").textContent = status.join("  ");
 }
 
 // ------------------------------------------------------------ verification
@@ -47,10 +55,18 @@ function scorecard() {
   const checks = [];
   const add = (name, ok, detail) => checks.push({ name, ok, detail });
 
-  if (truth.buildings && truth.buildings.length) {
-    const b = full.events.find((e) => e.kind === "built");
-    add("lumber camp constructed", !!b, b ? `done ${b.t}s` : "never");
-  }
+  const simBuilt = full.events.filter((e) => e.kind === "built");
+  const truthBuilt = (truth.buildings || []).filter((b) => b.eid > 0);
+  truthBuilt.forEach((tb, i) => {
+    const sb = simBuilt[i];
+    if (tb.completed_t != null) {
+      add(`building #${i + 1} done ±3s`,
+          !!sb && Math.abs(sb.t - tb.completed_t) <= 3.0,
+          `${tb.completed_t} → ${sb ? `${sb.t} (${sb.building})` : "never"}`);
+    } else {
+      add(`building #${i + 1} constructed`, !!sb, sb ? `done ${sb.t}s` : "never");
+    }
+  });
   add(`trained villagers = ${truthSpawns.length}`, simSpawns.length === truthSpawns.length,
       `${truthSpawns.length} → ${simSpawns.length}`);
   truthSpawns.forEach((ts, i) => {

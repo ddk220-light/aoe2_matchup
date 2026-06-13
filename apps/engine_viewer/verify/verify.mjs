@@ -13,7 +13,7 @@ const truth = JSON.parse(readFileSync(new URL("truth.json", dir)));
 const g = run(createGame(scen), scen.duration + 1);
 const dep = g.events.filter((e) => e.kind === "deposit");
 const simSpawns = g.events.filter((e) => e.kind === "spawn");
-const built = g.events.find((e) => e.kind === "built" || e.kind === "tree_empty");
+const simBuilt = g.events.filter((e) => e.kind === "built");
 
 const truthSpawns = truth.spawns ?? (truth.spawn ? [truth.spawn] : []);
 const truthTotal = truth.total_collected ?? truth.total_delivered;
@@ -22,14 +22,24 @@ const simTotal = dep.reduce((s, d) => s + d.amount, 0);
 const checks = [];
 const add = (name, ok, detail) => checks.push({ name, ok, detail });
 
-// 1. Building / construction
-if (truth.buildings && truth.buildings.length) {
-  const simBuilt = g.events.find((e) => e.kind === "built");
-  add("lumber camp constructed", !!simBuilt,
-      simBuilt ? `done t=${simBuilt.t}` : "never built");
-}
+// 1. Buildings: every truth building must be constructed; where the capture
+// pinned a completion time (HP ramp), match it ±3s — this is the pop-cap
+// critical path (house completion unfreezes the TC train timer).
+const truthBuilt = (truth.buildings || []).filter((b) => b.eid > 0);
+truthBuilt.forEach((tb, i) => {
+  const sb = simBuilt[i];
+  if (tb.completed_t != null) {
+    add(`building #${i + 1} completed ±3s`,
+        !!sb && Math.abs(sb.t - tb.completed_t) <= 3.0,
+        `truth ${tb.completed_t}  sim ${sb ? `${sb.t} (${sb.building})` : "never"}`);
+  } else {
+    add(`building #${i + 1} constructed`, !!sb,
+        sb ? `done t=${sb.t}` : "never built");
+  }
+});
 
-// 2. Trained-villager count + spawn timing (±1s; sequential train queue)
+// 2. Trained-villager count + spawn timing (±1s). With a pop cap in play the
+// spawn gaps encode the housed-freeze: spawn #2 = house_complete + 25.0.
 add(`trained villager count = ${truthSpawns.length}`,
     simSpawns.length === truthSpawns.length,
     `truth ${truthSpawns.length}  sim ${simSpawns.length}`);
@@ -39,15 +49,14 @@ truthSpawns.forEach((ts, i) => {
       `truth ${ts.t}  sim ${sp?.t ?? "—"}`);
 });
 
-// 3. Total wood collected — the headline metric. Tolerance ~1.5 loads: the
-// last seconds before RESIGN deposit in-transit loads, and the sim's villagers
+// 3. Total collected — the headline metric. Tolerance ~1.5 loads: the last
+// seconds before RESIGN deposit in-transit loads, and the sim's villagers
 // finish slightly more synchronized than the real (desynced) ones.
-add("total wood collected ±15", Math.abs(simTotal - truthTotal) <= 15,
+add("total collected ±15", Math.abs(simTotal - truthTotal) <= 15,
     `truth ${truthTotal}  sim ${simTotal.toFixed(1)}  (${((simTotal/truthTotal-1)*100).toFixed(1)}%)`);
 
-// 4. Collection curve at 20s checkpoints (camp300 rows carry `collected`)
+// 4. Collection curve at 40s checkpoints
 if (truth.rows && truth.rows[0] && "collected" in truth.rows[0]) {
-  // build a sim collected-by-time series from deposit events
   const simCurve = (t) => dep.filter((d) => d.t <= t).reduce((s, d) => s + d.amount, 0);
   for (const r of truth.rows) {
     if (Math.round(r.t) % 40 !== 0 || r.t === 0) continue;

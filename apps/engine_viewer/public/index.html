@@ -68,7 +68,8 @@
   </select>
   <input id="scrub" type="range" min="0" max="210" step="0.05" value="0">
   <span class="stat">⏱ <b id="clock">0:00</b></span>
-  <span class="stat">🪵 collected <b id="wood">0</b> <span id="goal" class="dim"></span></span>
+  <span class="stat">📦 collected <b id="wood">0</b> <span id="goal" class="dim"></span></span>
+  <span class="stat">👥 pop <b id="pop">0/0</b></span>
   <span class="stat" id="status"></span>
 </header>
 <main>
@@ -76,7 +77,7 @@
   <aside>
     <h2>Verification vs real game (gRPC)</h2>
     <div id="scorecard">loading…</div>
-    <h2>Wood collected — sim vs truth</h2>
+    <h2>Resources collected — sim vs truth</h2>
     <canvas id="chart" width="316" height="180"></canvas>
     <div class="legend">
       <span><i style="background:var(--gold)"></i>sim collected</span>
@@ -86,10 +87,11 @@
     <h2>About</h2>
     <div id="summary">
       This page <b>re-simulates</b> the recorded game from its replay
-      commands alone — nothing is played back. Villagers build the lumber
-      camp, then gather the forest, switching trees as needed. The scorecard
-      compares the simulation against the real engine state captured live
-      over the CadeRemote gRPC API.
+      commands alone — nothing is played back. Villagers build, gather
+      wood and berries, and train at the TC under the <b>population cap</b>
+      (training freezes while housed). The scorecard compares the simulation
+      against the real engine state captured live over the CadeRemote
+      gRPC API.
     </div>
   </aside>
 </main>

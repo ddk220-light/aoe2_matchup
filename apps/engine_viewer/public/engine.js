@@ -1,22 +1,28 @@
 // Deterministic AoE2 economy engine — pure logic, no DOM. Consumed by the
 // browser viewer (app.js) and the headless verifier (verify/verify.mjs).
 //
-// Supports two scenario shapes from commands.json:
+// Scenario shapes supported (commands.json):
 //   - order/gather_point on a single tree (4_lumber)
-//   - build a lumber camp, then auto-gather a forest with retargeting and
-//     nearest-dropsite deposits (camp300)
+//   - build a lumber camp, auto-gather a forest, train villagers (camp300)
+//   - build mill + house, forage berries, POPULATION CAP gating the TC
+//     queue — training timer is FROZEN while housed (millpop)
 import * as C from "./constants.js";
+
+const NODE_TYPES = new Set(["tree", "bush"]);
+const isNode = (e) => NODE_TYPES.has(e.type);
+const nodePool = (e) => (e.type === "tree" ? e.wood : e.food);
+const drainNode = (e, amt) => { if (e.type === "tree") e.wood -= amt; else e.food -= amt; };
 
 export function createGame(scenario) {
   const ents = new Map();
   for (const e of scenario.entities) ents.set(e.id, structuredClone(e));
   for (const e of ents.values()) {
     if (e.type === "villager" || e.type === "scout") {
-      Object.assign(e, { task: "idle", carry: 0, tx: e.x, ty: e.y,
+      Object.assign(e, { task: "idle", carry: 0, carryRes: null, tx: e.x, ty: e.y,
                          target: null, phase: 0 });
     }
-    if (e.type === "town_center") Object.assign(e, { queue: [], rally: null });
-    if (e.type === "tree") Object.assign(e, { gatherers: 0, felled: false });
+    if (e.type === "town_center") Object.assign(e, { queue: [], rally: null, built: true });
+    if (isNode(e)) Object.assign(e, { gatherers: 0, felled: e.type !== "tree" });
   }
   // debug numbering: starting villagers 1..n (by id), trained continue
   let num = 1;
@@ -28,9 +34,11 @@ export function createGame(scenario) {
   const ys = scenario.entities.map((e) => e.y);
   const g = {
     t: 0,
+    civ: scenario.players[0].civ,
     ents,
     wood: scenario.players[0].start_wood,
-    collected: 0,                  // cumulative wood delivered (the headline metric)
+    food: scenario.players[0].start_food ?? 0,
+    collected: 0,                  // cumulative resources delivered (headline metric)
     pending: [...scenario.commands].sort((a, b) => a.t - b.t),
     events: [],
     ended: false,
@@ -44,34 +52,65 @@ export function createGame(scenario) {
   return g;
 }
 
-// Immovable obstacles: trees with wood left, and building footprints from
-// the moment construction starts (farms, when they exist, will be exempt —
-// walkable). A tree's gather capacity = its free orthogonal neighbor tiles
-// (capture: trees walled in by forest + the camp footprint were never
-// harvested; the rally tree capped at 2 because the camp blocks its east face).
+// ------------------------------------------------------------- population
+// Pop = every living unit; cap = pop room of COMPLETED buildings only.
+// While pop >= cap the TC queue head's timer is FROZEN (capture: spawn #2
+// landed at house_complete + exactly 25.0s, not earlier).
+export function popCount(g) {
+  let n = 0;
+  for (const e of g.ents.values()) {
+    if (e.type === "villager" || e.type === "scout") n++;
+  }
+  return n;
+}
+
+export function popCap(g) {
+  if (C.CIV_NO_HOUSES.has(g.civ)) return Infinity;   // Huns: no houses needed
+  let cap = 0;
+  for (const e of g.ents.values()) {
+    const spec = C.BUILDINGS[e.type];
+    if (spec && spec.pop && e.built) cap += spec.pop;
+  }
+  return cap;
+}
+
+// Immovable obstacles: resource nodes with pool left (trees AND berry
+// bushes), and building footprints from the moment construction starts.
+// A node's gather capacity = its free orthogonal neighbor tiles (capture:
+// bush 3143, walled in by 3 bushes + the mill footprint, was never touched).
 function recomputeObstacles(g) {
   const blocked = new Set();
   const tile = (x, y) => `${Math.floor(x)},${Math.floor(y)}`;
   for (const e of g.ents.values()) {
-    if (e.type === "tree" && e.wood > 0) blocked.add(tile(e.x, e.y));
-    if (e.type === "town_center" || e.type === "lumber_camp") {
-      const half = e.type === "town_center" ? C.TC_SIZE / 2 : C.CAMP_SIZE / 2;
+    if (isNode(e) && nodePool(e) > 0) blocked.add(tile(e.x, e.y));
+    const spec = C.BUILDINGS[e.type];
+    if (spec) {
+      const half = spec.size / 2;
       for (let tx = Math.floor(e.x - half); tx < e.x + half; tx++)
         for (let ty = Math.floor(e.y - half); ty < e.y + half; ty++)
           blocked.add(`${tx},${ty}`);
     }
   }
   g.blocked = blocked;
+  // Gather capacity. Trees: 1 villager per free orthogonal face (max 3).
+  // Bushes: villagers PACK — capture shows 2 per orth face tile (0.4 apart)
+  // plus diagonal-corner stands; 6 worked one bush simultaneously.
   for (const e of g.ents.values()) {
-    if (e.type !== "tree") continue;
+    if (!isNode(e)) continue;
     const tx = Math.floor(e.x), ty = Math.floor(e.y);
-    let spots = 0;
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      if (!blocked.has(`${tx + dx},${ty + dy}`)) spots++;
+    let orth = 0, diag = 0;
+    for (const [dx, dy] of ORTH) {
+      if (!blocked.has(`${tx + dx},${ty + dy}`)) orth++;
     }
-    e.spots = spots;
+    for (const [dx, dy] of DIAG) {
+      if (!blocked.has(`${tx + dx},${ty + dy}`)) diag++;
+    }
+    e.spots = e.type === "tree" ? orth : 2 * orth + diag;
   }
 }
+
+const ORTH = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+const DIAG = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
 
 // ----------------------------------------------------------------- pathing
 function losClear(g, x0, y0, x1, y1) {
@@ -146,7 +185,7 @@ export function step(g) {
   applyCommands(g);
   for (const e of [...g.ents.values()]) {
     if (e.type === "town_center") stepTC(g, e);
-    else if (e.type === "lumber_camp") stepCamp(g, e);
+    else if (C.BUILDINGS[e.type]) stepBuilding(g, e);
     else if (e.type === "villager") stepVill(g, e);
   }
 }
@@ -165,26 +204,39 @@ function applyCommands(g) {
   while (g.pending.length && g.pending[0].t <= g.t) {
     const c = g.pending.shift();
     if (c.type === "build") {
-      const camp = {
-        id: g.nextId++, type: "lumber_camp", owner: 1,
+      const btype = C.BUILDING_BY_NAME[c.building] || "lumber_camp";
+      const spec = C.BUILDINGS[btype];
+      const b = {
+        id: g.nextId++, type: btype, owner: 1,
         x: c.x, y: c.y, built: false, progress: 0,
       };
-      g.ents.set(camp.id, camp);
-      g.wood -= C.CAMP_COST_WOOD;
-      emit(g, "foundation", { eid: camp.id, building: c.building });
+      g.ents.set(b.id, b);
+      g.wood -= spec.cost || 0;
+      emit(g, "foundation", { eid: b.id, building: btype });
       recomputeObstacles(g);       // footprint blocks tiles + gather spots
       for (const id of c.unit_ids) {
         const u = g.ents.get(id);
-        if (u) { u.task = "to_build"; u.target = camp.id; assignBuildSpot(g, u, camp); }
+        if (u) {
+          releaseNode(g, u);
+          u.task = "to_build"; u.target = b.id; u.queuedOrder = null;
+          assignBuildSpot(g, u, b);
+        }
       }
     } else if (c.type === "order") {
       for (const id of c.unit_ids) {
         const u = g.ents.get(id);
-        if (u) assignGather(g, u, c.target_id);
+        if (!u) continue;
+        // An order issued while the unit is constructing is a shift-queued
+        // follow-up (millpop: build house, THEN return to bush 3153) —
+        // defer it to building completion instead of cancelling the build.
+        if (u.task === "to_build" || u.task === "building") u.queuedOrder = c.target_id;
+        else assignGather(g, u, c.target_id);
       }
     } else if (c.type === "gather_point") {
       const b = g.ents.get(c.building_id);
-      if (b) b.rally = { x: c.x, y: c.y, target_id: c.target_id };
+      const tgt = g.ents.get(c.target_id);
+      const rx = c.x ?? tgt?.x, ry = c.y ?? tgt?.y;   // older commands.json lack coords
+      if (b && rx != null) b.rally = { x: rx, y: ry, target_id: c.target_id };
     } else if (c.type === "queue") {
       const b = g.ents.get(c.building_id);
       if (b) b.queue.push({ remaining: c.train_time });
@@ -198,17 +250,29 @@ function applyCommands(g) {
 // --------------------------------------------------------------- buildings
 function stepTC(g, tc) {
   if (!tc.queue.length) return;
+  if (popCount(g) + 1 > popCap(g)) return;   // housed: timer frozen
   tc.queue[0].remaining -= C.TICK;
   if (tc.queue[0].remaining > 0) return;
   tc.queue.shift();
+  // Spawn on the rally-facing side of the TC (capture: trained villagers
+  // appeared at (67.5,16.5), the berry-side edge — not a fixed corner).
+  const half = C.BUILDINGS.town_center.size / 2 + 0.5;
+  let sx = tc.x - half, sy = tc.y + half;
+  if (tc.rally) {
+    const dx = tc.rally.x - tc.x, dy = tc.rally.y - tc.y;
+    const m = Math.max(Math.abs(dx), Math.abs(dy)) || 1;
+    sx = tc.x + (dx / m) * half;
+    sy = tc.y + (dy / m) * half;
+  }
   const v = {
     id: g.nextId++, type: "villager", owner: 1, task: "idle", carry: 0,
-    x: tc.x - C.TC_SIZE / 2 - 0.2, y: tc.y + C.TC_SIZE / 2 + 0.2,
+    carryRes: null,
+    x: sx, y: sy,
     target: null, phase: 0, num: g.nextNum++,
   };
   g.ents.set(v.id, v);
   emit(g, "spawn", { eid: v.id });
-  // Trained villagers walk to the rally point, then gather the forest there.
+  // Trained villagers walk to the rally point, then gather there.
   if (tc.rally) {
     v.task = "to_rally";
     v.tx = tc.rally.x; v.ty = tc.rally.y;
@@ -218,35 +282,37 @@ function stepTC(g, tc) {
 
 // Construction: count active builders each tick, accrue points by the real
 // multi-builder formula (3*T1/(n+2) total time), complete at T1 points.
-function stepCamp(g, camp) {
-  if (camp.built) return;
+function stepBuilding(g, b) {
+  if (b.built) return;
   let n = 0;
   for (const e of g.ents.values()) {
-    if (e.type === "villager" && e.task === "building" && e.target === camp.id) n++;
+    if (e.type === "villager" && e.task === "building" && e.target === b.id) n++;
   }
   if (!n) return;
-  camp.progress += C.BUILD_RATE(n) * C.TICK;
-  if (camp.progress >= C.BUILD_TIME_LUMBER_CAMP) {
-    camp.built = true;
-    emit(g, "built", { eid: camp.id, n });
+  b.progress += C.BUILD_RATE(n) * C.TICK;
+  if (b.progress >= C.BUILDINGS[b.type].t1) {
+    b.built = true;
+    emit(g, "built", { eid: b.id, building: b.type, n });
   }
 }
 
 // --------------------------------------------------------------- helpers
 function dist(a, b, x, y) { return Math.hypot(a - x, b - y); }
 
-function dropsites(g) {
+function dropsites(g, res) {
   const out = [];
   for (const e of g.ents.values()) {
-    if (e.type === "town_center") out.push({ e, half: C.TC_SIZE / 2 });
-    else if (e.type === "lumber_camp" && e.built) out.push({ e, half: C.CAMP_SIZE / 2 });
+    const spec = C.BUILDINGS[e.type];
+    if (spec && spec.drop && e.built && spec.drop.includes(res)) {
+      out.push({ e, half: spec.size / 2 });
+    }
   }
   return out;
 }
 
-function nearestDrop(g, x, y) {
+function nearestDrop(g, x, y, res) {
   let best = null, bd = Infinity;
-  for (const d of dropsites(g)) {
+  for (const d of dropsites(g, res)) {
     const dd = dist(d.e.x, d.e.y, x, y);
     if (dd < bd) { bd = dd; best = d; }
   }
@@ -275,18 +341,17 @@ function dropStand(g, d, v) {
   return best;
 }
 
-// Tree choice with soft crowding: villagers prefer a free tree nearby over
-// sharing an occupied one (observed in the capture: trained villager #2
-// bounced off the occupied rally tree to the free straggler next to it).
-function treeCap(e) { return Math.min(e.spots ?? 4, C.TREE_CAP); }
+function nodeCap(e) {
+  return e.spots ?? 4;       // free-face slots; bushes pack 2/face + corners
+}
 
-// Nearest tree with a free gather spot. Crowding is handled physically by
-// the face/spot capacity model — no artificial distance penalty (one caused
-// endgame villagers to skip near half-occupied trees for far empty ones).
-function nearestTree(g, x, y) {
+// Nearest node of the SAME resource with a free gather spot. Crowding is
+// handled physically by the face/spot capacity model — no distance penalty.
+function nearestNode(g, x, y, res) {
   let best = null, bs = Infinity;
   for (const e of g.ents.values()) {
-    if (e.type !== "tree" || e.wood <= 0 || e.gatherers >= treeCap(e)) continue;
+    if (!isNode(e) || C.NODE_RES[e.type] !== res) continue;
+    if (nodePool(e) <= 0 || e.gatherers >= nodeCap(e)) continue;
     const score = dist(e.x, e.y, x, y);
     if (score < bs) { bs = score; best = e; }
   }
@@ -314,169 +379,208 @@ function moveAlong(g, v, tx, ty) {
 
 // Builders line up on the foundation face they approach from (capture:
 // 3 builders stood in a row on the camp's north face at ~0.4 spacing).
-function assignBuildSpot(g, v, camp) {
-  const dx = v.x - camp.x, dy = v.y - camp.y;
-  const n = (camp.builders = (camp.builders ?? 0) + 1);
+function assignBuildSpot(g, v, b) {
+  const dx = v.x - b.x, dy = v.y - b.y;
+  const n = (b.builders = (b.builders ?? 0) + 1);
   const off = (n - 1 - 1) * 0.45;               // -0.45, 0, +0.45 ...
   if (Math.abs(dy) >= Math.abs(dx)) {
-    v.ty = camp.y + Math.sign(dy || -1) * C.BUILD_REACH;
-    v.tx = camp.x + off;
+    v.ty = b.y + Math.sign(dy || -1) * C.BUILD_REACH;
+    v.tx = b.x + off;
   } else {
-    v.tx = camp.x + Math.sign(dx) * C.BUILD_REACH;
-    v.ty = camp.y + off;
+    v.tx = b.x + Math.sign(dx) * C.BUILD_REACH;
+    v.ty = b.y + off;
   }
 }
 
-// Assign villager to gather a specific tree (or nearest if id missing/empty).
-// A directly-targeted tree that is already crowded also falls through to the
-// nearest-with-space choice (rally tree behavior seen in the capture).
-// Stand on a free, unoccupied face tile of the tree (orthogonal neighbor),
-// pulled in to gather reach. Faces are exclusive — the physical spot model.
-function takeFace(g, v, tree) {
-  const tx0 = Math.floor(tree.x), ty0 = Math.floor(tree.y);
-  tree.faceUsed ??= new Set();
-  const faces = [];
-  [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy], i) => {
+// Stand slots around a node. Trees: one exclusive slot per free orthogonal
+// face at GATHER_REACH. Bushes: villagers pack — 2 slots per free orth face
+// (±0.22 along the face at 0.7 reach) plus 1 per free diagonal corner
+// (matches capture positions: (63.4,11.2)/(63.8,11.2) shared a face tile of
+// bush 3153 while (64.2,11.3) stood on the corner).
+function nodeSlots(g, node) {
+  const tx0 = Math.floor(node.x), ty0 = Math.floor(node.y);
+  const slots = [];
+  ORTH.forEach(([dx, dy], i) => {
     if (g.blocked.has(`${tx0 + dx},${ty0 + dy}`)) return;
-    if (tree.faceUsed.has(i)) return;
-    faces.push({ i, x: tree.x + dx * C.GATHER_REACH, y: tree.y + dy * C.GATHER_REACH });
+    if (node.type === "tree") {
+      slots.push({ id: `o${i}`, x: node.x + dx * C.GATHER_REACH,
+                   y: node.y + dy * C.GATHER_REACH });
+    } else {
+      for (const s of [-0.22, 0.22]) {
+        slots.push({ id: `o${i}${s > 0 ? "+" : "-"}`,
+                     x: node.x + dx * 0.7 + (dy ? s : 0),
+                     y: node.y + dy * 0.7 + (dx ? s : 0) });
+      }
+    }
   });
-  if (!faces.length) return false;
-  faces.sort((a, b) => dist(a.x, a.y, v.x, v.y) - dist(b.x, b.y, v.x, v.y));
-  tree.faceUsed.add(faces[0].i);
-  v.face = faces[0].i;
-  v.tx = faces[0].x;
-  v.ty = faces[0].y;
+  if (node.type === "bush") {
+    DIAG.forEach(([dx, dy], i) => {
+      if (g.blocked.has(`${tx0 + dx},${ty0 + dy}`)) return;
+      slots.push({ id: `d${i}`, x: node.x + dx * 0.7, y: node.y + dy * 0.7 });
+    });
+  }
+  return slots;
+}
+
+function takeFace(g, v, node) {
+  node.faceUsed ??= new Set();
+  const free = nodeSlots(g, node).filter((s) => !node.faceUsed.has(s.id));
+  if (!free.length) return false;
+  free.sort((a, b) => dist(a.x, a.y, v.x, v.y) - dist(b.x, b.y, v.x, v.y));
+  node.faceUsed.add(free[0].id);
+  v.face = free[0].id;
+  v.tx = free[0].x;
+  v.ty = free[0].y;
   return true;
 }
 
-function assignGather(g, v, treeId) {
-  releaseTree(g, v);
-  let tree = treeId != null ? g.ents.get(treeId) : null;
-  const direct = tree && tree.type === "tree" && tree.wood > 0
-                 && tree.gatherers < treeCap(tree);
+// Assign villager to gather a specific node (or nearest if id missing/empty/
+// crowded — rally-overflow behavior seen in both captures). Falls back to the
+// resource the villager was last gathering, default wood.
+function assignGather(g, v, nodeId, resHint) {
+  releaseNode(g, v);
+  let node = nodeId != null ? g.ents.get(nodeId) : null;
+  let res = node && isNode(node) ? C.NODE_RES[node.type] : (resHint || v.lastRes || "wood");
+  const direct = node && isNode(node) && nodePool(node) > 0
+                 && node.gatherers < nodeCap(node);
   if (!direct) {
-    tree = nearestTree(g, v.x, v.y);
-    if (tree) {
+    node = nearestNode(g, v.x, v.y, res);
+    if (node) {
       emit(g, "retarget", { eid: v.id, num: v.num,
                             from: [+v.x.toFixed(1), +v.y.toFixed(1)],
-                            tree: tree.id,
-                            d: +dist(tree.x, tree.y, v.x, v.y).toFixed(2) });
+                            tree: node.id,
+                            d: +dist(node.x, node.y, v.x, v.y).toFixed(2) });
     }
   }
-  if (!tree) { v.task = v.carry > 0 ? "to_drop" : "idle"; return; }
-  if (!takeFace(g, v, tree)) { v.task = v.carry > 0 ? "to_drop" : "idle"; return; }
-  tree.gatherers++;
-  v.target = tree.id;
-  v.task = "to_tree";
+  if (!node) { v.task = v.carry > 0 ? "to_drop" : "idle"; return; }
+  if (!takeFace(g, v, node)) { v.task = v.carry > 0 ? "to_drop" : "idle"; return; }
+  node.gatherers++;
+  v.target = node.id;
+  v.lastRes = C.NODE_RES[node.type];
+  v.task = "to_node";
   v.dropT = null;
 }
 
-function releaseTree(g, v) {
+function releaseNode(g, v) {
   if (v.target != null) {
-    const tr = g.ents.get(v.target);
-    if (tr && tr.type === "tree") {
-      if (tr.gatherers > 0) tr.gatherers--;
-      if (v.face != null) tr.faceUsed?.delete(v.face);
+    const n = g.ents.get(v.target);
+    if (n && isNode(n)) {
+      if (n.gatherers > 0) n.gatherers--;
+      if (v.face != null) n.faceUsed?.delete(v.face);
     }
   }
   v.target = null;
   v.face = null;
 }
 
+// After finishing a build: queued order wins; else if the building is a
+// dropsite, auto-gather the nearest node it accepts (mill -> berries,
+// lumber camp -> trees); else (house) go idle.
+function afterBuild(g, v, b) {
+  if (v.queuedOrder != null) {
+    const q = v.queuedOrder; v.queuedOrder = null;
+    assignGather(g, v, q);
+    return;
+  }
+  const spec = C.BUILDINGS[b.type];
+  for (const res of spec.drop || []) {
+    const node = nearestNode(g, v.x, v.y, res);
+    if (node) { assignGather(g, v, node.id); return; }
+  }
+  v.task = "idle";
+}
+
 // --------------------------------------------------------------- villager FSM
 function stepVill(g, v) {
   switch (v.task) {
     case "to_build": {
-      const camp = g.ents.get(v.target);
-      if (!camp) { v.task = "idle"; return; }
-      if (camp.built) {                 // group auto-gather: nearest available
-        const tr = nearestTree(g, v.x, v.y);
-        assignGather(g, v, tr ? tr.id : null);
-        return;
-      }
+      const b = g.ents.get(v.target);
+      if (!b) { v.task = "idle"; return; }
+      if (b.built) { afterBuild(g, v, b); return; }
       if (moveAlong(g, v, v.tx, v.ty)) v.task = "building";
       return;
     }
     case "building": {
-      const camp = g.ents.get(v.target);
-      if (!camp) { v.task = "idle"; return; }
-      if (camp.built) {
-        const tr = nearestTree(g, v.x, v.y);
-        assignGather(g, v, tr ? tr.id : null);
-        return;
-      }
-      // construction points accrue in stepCamp (multi-builder formula)
+      const b = g.ents.get(v.target);
+      if (!b) { v.task = "idle"; return; }
+      if (b.built) { afterBuild(g, v, b); return; }
+      // construction points accrue in stepBuilding (multi-builder formula)
       return;
     }
     case "to_rally": {
       if (moveAlong(g, v, v.tx, v.ty)) assignGather(g, v, v.rallyTarget);
       return;
     }
-    case "to_tree": {
-      const tree = g.ents.get(v.target);
-      if (!tree || tree.wood <= 0) { assignGather(g, v, null); return; }
+    case "to_node": {
+      const node = g.ents.get(v.target);
+      if (!node || nodePool(node) <= 0) { assignGather(g, v, null); return; }
       if (moveAlong(g, v, v.tx, v.ty)) { v.task = "settle"; v.phase = C.SETTLE_TIME; }
       return;
     }
     case "settle": {
-      const tree = g.ents.get(v.target);
-      if (!tree) { v.task = v.carry > 0 ? "to_drop" : "idle"; return; }
+      const node = g.ents.get(v.target);
+      if (!node) { v.task = v.carry > 0 ? "to_drop" : "idle"; return; }
       v.phase -= C.TICK;
       if (v.phase <= 0) {
         // Felling happens once per TREE (first villager cuts it down);
-        // later arrivals and repeat trips gather immediately.
-        if (tree.felled) { v.task = "gather"; }
+        // bushes and repeat trips gather immediately.
+        if (node.felled) { v.task = "gather"; }
         else { v.task = "fell"; v.phase = C.FELL_TIME; }
       }
       return;
     }
     case "fell": {
-      const tree = g.ents.get(v.target);
-      if (!tree || tree.wood <= 0) { assignGather(g, v, null); return; }
-      if (tree.felled) { v.task = "gather"; return; }
+      const node = g.ents.get(v.target);
+      if (!node || nodePool(node) <= 0) { assignGather(g, v, null); return; }
+      if (node.felled) { v.task = "gather"; return; }
       v.phase -= C.TICK;
-      if (v.phase <= 0) { tree.felled = true; emit(g, "tree_felled", { eid: tree.id }); v.task = "gather"; }
+      if (v.phase <= 0) { node.felled = true; emit(g, "tree_felled", { eid: node.id }); v.task = "gather"; }
       return;
     }
     case "gather": {
-      const tree = g.ents.get(v.target);
-      if (!tree || tree.wood <= 0) {
-        releaseTree(g, v);
-        v.task = v.carry > 0 ? "to_drop" : "to_tree_next";
+      const node = g.ents.get(v.target);
+      if (!node || nodePool(node) <= 0) {
+        releaseNode(g, v);
+        // Node ran dry mid-load: keep a partial carry and top up at the next
+        // node; only a NEARLY FULL load goes straight to the dropsite
+        // (capture: 9.14/9.49 deposited at bush-empty, 2-4 carried on).
+        v.task = v.carry >= C.CARRY_CAP - 1 ? "to_drop" : "to_node_next";
         return;
       }
-      const take = Math.min(C.GATHER_RATE * C.TICK, C.CARRY_CAP - v.carry, tree.wood);
-      v.carry += take; tree.wood -= take;
-      if (tree.wood <= 1e-9) {
-        tree.wood = 0;
-        emit(g, "tree_empty", { eid: tree.id });
-        recomputeObstacles(g);       // empty tree stops blocking movement/spots
+      const rate = C.NODE_RATE[node.type];
+      const take = Math.min(rate * C.TICK, C.CARRY_CAP - v.carry, nodePool(node));
+      v.carry += take; v.carryRes = C.NODE_RES[node.type];
+      drainNode(node, take);
+      if (nodePool(node) <= 1e-9) {
+        if (node.type === "tree") node.wood = 0; else node.food = 0;
+        emit(g, "node_empty", { eid: node.id });
+        recomputeObstacles(g);       // empty node stops blocking movement/spots
       }
       if (v.carry >= C.CARRY_CAP - 1e-9) { v.carry = C.CARRY_CAP; v.task = "to_drop"; }
       return;
     }
-    case "to_tree_next": {           // tree emptied with no load: find a new one
+    case "to_node_next": {           // node emptied with no load: find a new one
       assignGather(g, v, null);
       return;
     }
     case "to_drop": {
       if (!v.dropT) {
-        const d = nearestDrop(g, v.x, v.y);
-        if (!d) return;              // no dropsite yet (camp still building)
+        const d = nearestDrop(g, v.x, v.y, v.carryRes || "wood");
+        if (!d) return;              // no dropsite yet (still building)
         v.dropT = dropStand(g, d, v);
         if (!v.dropT) return;        // dropsite fully walled in
       }
       if (moveAlong(g, v, v.dropT[0], v.dropT[1])) {
         v.dropT = null;
-        g.wood += v.carry; g.collected += v.carry;
-        emit(g, "deposit", { eid: v.id, amount: +v.carry.toFixed(2) });
+        g[v.carryRes || "wood"] += v.carry;
+        g.collected += v.carry;
+        emit(g, "deposit", { eid: v.id, amount: +v.carry.toFixed(2), res: v.carryRes });
         v.carry = 0;
-        const tree = v.target != null ? g.ents.get(v.target) : null;
-        if (tree && tree.type === "tree" && tree.wood > 0) {
-          v.task = "to_tree";        // same tree still has wood: go back
+        const node = v.target != null ? g.ents.get(v.target) : null;
+        if (node && isNode(node) && nodePool(node) > 0) {
+          v.task = "to_node";        // same node still has stock: go back
         } else {
-          assignGather(g, v, null);  // retarget to nearest non-empty tree
+          assignGather(g, v, null);  // retarget to nearest same-resource node
         }
       }
       return;

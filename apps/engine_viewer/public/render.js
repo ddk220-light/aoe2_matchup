@@ -116,6 +116,56 @@ export function createRenderer(canvas, scenario) {
     if (e.food > 0) stockRing(e, e.food, "#ff9aa8");
   }
 
+  // Town Center quadrants (4x4 split into four 2x2). In this projection the
+  // diamond's top corner is (max x, min y), so the BACK/solid quadrant is
+  // high-x/low-y. Centre sits on a tile corner (integer).
+  function tcParts(e) {
+    const cx = Math.round(e.x), cy = Math.round(e.y);
+    return {
+      cx, cy,
+      top:    rect(cx, cy - 2, cx + 2, cy),       // solid building mass (opaque)
+      bottom: rect(cx - 2, cy, cx, cy + 2),       // open courtyard (no roof)
+      left:   rect(cx - 2, cy - 2, cx, cy),        // transparent roof
+      right:  rect(cx, cy, cx + 2, cy + 2),        // transparent roof
+      fp:     rect(cx - 2, cy - 2, cx + 2, cy + 2),
+    };
+  }
+
+  // BELOW units: the TC platform/floor. Units standing on the passable
+  // quadrants (front courtyard + side overhangs) are drawn on top of this.
+  function drawTCFloor(e) {
+    const p = tcParts(e);
+    if (!e.built) {
+      poly(p.fp, "rgba(150,120,70,.35)");
+      ctx.setLineDash([4, 3]); poly(p.fp, null, "#b8954f", 1.5); ctx.setLineDash([]);
+      return;
+    }
+    poly(p.fp, "#574a34", "#2e2412", 2);          // stone base under the whole TC
+    poly(p.bottom, "#6f6044");                     // open courtyard, slightly lighter
+    poly(p.bottom, null, "rgba(0,0,0,.25)", 1);
+  }
+
+  // ABOVE units: the roofs. Top quadrant is the solid opaque building (hides
+  // anything behind it); the two side quadrants are translucent overhangs so
+  // villagers packed under them stay visible; the front courtyard has none.
+  function drawTCRoof(e) {
+    if (!e.built) return;
+    const p = tcParts(e);
+    ctx.globalAlpha = 0.5;                          // translucent side overhangs
+    poly(p.left, "#8a6c41", "#3a2e16", 1.5);
+    poly(p.right, "#8a6c41", "#3a2e16", 1.5);
+    ctx.globalAlpha = 1;
+    poly(p.top, "#8a6c41", "#2e2412", 2);          // opaque solid building
+    const [ix, iy] = [p.cx + 1, p.cy - 1];          // top-quadrant centre
+    poly(rect(ix - 0.6, iy - 0.6, ix + 0.6, iy + 0.6), "#a8854f");
+    const [sx, sy] = px(ix, iy);
+    ctx.fillStyle = "#1c1408";
+    ctx.font = `${Math.round(cam.k * 0.5)}px sans-serif`;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("TC", sx, sy);
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  }
+
   function drawBuilding(e) {
     const half = (BUILDINGS[e.type]?.size ?? 2) / 2;
     const fp = rect(e.x - half, e.y - half, e.x + half, e.y + half);
@@ -238,7 +288,15 @@ export function createRenderer(canvas, scenario) {
 
     drawGrid();
 
-    const items = [...g.ents.values()].sort((a, b) => (a.x + a.y) - (b.x + b.y));
+    // The Town Center renders in two layers AROUND the units: its floor
+    // below them (units stand visibly on the courtyard / under the overhangs)
+    // and its roofs above them (opaque back, translucent sides). Everything
+    // else is a single painter pass sorted back-to-front.
+    for (const e of g.ents.values()) if (e.type === "town_center") drawTCFloor(e);
+
+    const items = [...g.ents.values()]
+      .filter((e) => e.type !== "town_center")
+      .sort((a, b) => (a.x + a.y) - (b.x + b.y));
     for (const e of items) {
       if (e.type === "tree") drawTree(e);
       else if (e.type === "bush") drawBush(e);
@@ -246,6 +304,8 @@ export function createRenderer(canvas, scenario) {
       else if (BUILDINGS[e.type]) drawBuilding(e);
       else if (e.type === "villager" || e.type === "scout") drawUnit(e);
     }
+
+    for (const e of g.ents.values()) if (e.type === "town_center") drawTCRoof(e);
   }
 
   return { draw, cam };

@@ -95,13 +95,7 @@ function recomputeObstacles(g) {
   const tile = (x, y) => `${Math.floor(x)},${Math.floor(y)}`;
   for (const e of g.ents.values()) {
     if (isNode(e) && nodePool(e) > 0) blocked.add(tile(e.x, e.y));
-    const spec = C.BUILDINGS[e.type];
-    if (spec) {
-      const half = spec.size / 2;
-      for (let tx = Math.floor(e.x - half); tx < e.x + half; tx++)
-        for (let ty = Math.floor(e.y - half); ty < e.y + half; ty++)
-          blocked.add(`${tx},${ty}`);
-    }
+    if (C.BUILDINGS[e.type]) for (const t of buildingBlockedTiles(e)) blocked.add(t);
   }
   g.blocked = blocked;
   // Gather capacity. Trees: 1 villager per free orthogonal face (max 3).
@@ -123,6 +117,26 @@ function recomputeObstacles(g) {
 
 const ORTH = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 const DIAG = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+
+// Building collision tiles. The Town Center is NOT a solid 4x4 — only its
+// back 2x2 quadrant (the solid building mass, screen-top = high x / low y)
+// blocks movement. The two side quadrants are passable under transparent
+// roof overhangs and the front quadrant is an open courtyard; units walk
+// freely through all three (this is how 9-10 villagers pack a carcass herded
+// to the TC front). Other buildings block their whole footprint.
+export function buildingBlockedTiles(e) {
+  const out = [];
+  if (e.type === "town_center") {
+    const cx = Math.round(e.x), cy = Math.round(e.y);  // 4x4 centre is on a tile corner
+    for (let tx = cx; tx <= cx + 1; tx++)
+      for (let ty = cy - 2; ty <= cy - 1; ty++) out.push(`${tx},${ty}`);
+    return out;
+  }
+  const half = C.BUILDINGS[e.type].size / 2;
+  for (let tx = Math.floor(e.x - half); tx < e.x + half; tx++)
+    for (let ty = Math.floor(e.y - half); ty < e.y + half; ty++) out.push(`${tx},${ty}`);
+  return out;
+}
 
 // ----------------------------------------------------------------- pathing
 function losClear(g, x0, y0, x1, y1) {

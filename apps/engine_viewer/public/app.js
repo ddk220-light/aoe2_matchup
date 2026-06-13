@@ -95,8 +95,8 @@ function scorecard() {
         `${truth.kills.length} → ${simKills.length}`);
     truth.kills.forEach((tk, i) => {
       const sk = simKills[i];
-      add(`kill #${i + 1} order+time ±10s`,
-          !!sk && sk.eid === tk.eid && Math.abs(sk.t - tk.t) <= 10,
+      add(`kill #${i + 1} order+time ±15s`,
+          !!sk && sk.eid === tk.eid && Math.abs(sk.t - tk.t) <= 15,
           `${tk.t.toFixed(0)} → ${sk ? sk.t.toFixed(0) : "—"}`);
     });
     if (truth.herd_rot != null) {

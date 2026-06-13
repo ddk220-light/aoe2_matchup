@@ -15,9 +15,10 @@ function iconUrl(id) {
 }
 
 function unitIconUrl(name) {
-    const id = NAME_TO_ICON[name];
-    if (!id) return "";
-    return iconUrl(id);
+    // Prefer the in-game idle sprite (red) for square units; spriteFor() falls back
+    // to the portrait for borderline/extreme/naval units. "" if neither (PLACEHOLDER
+    // shows via the <img> onerror handler).
+    return spriteFor(name) || "";
 }
 
 // SVG stat icons (tiny inline)

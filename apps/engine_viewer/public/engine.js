@@ -6,10 +6,14 @@
 //   - build a lumber camp, auto-gather a forest, train villagers (camp300)
 //   - build mill + house, forage berries, POPULATION CAP gating the TC
 //     queue — training timer is FROZEN while housed (millpop)
+//   - convert + herd geese, KILL them, gather the carcass while it ROTS at a
+//     fixed rate, moving-unit retargeting + sequential consumption (sheep)
 import * as C from "./constants.js";
 
-const NODE_TYPES = new Set(["tree", "bush"]);
-const isNode = (e) => NODE_TYPES.has(e.type);
+// A herdable is a gatherable food node only once it is SLAIN (a carcass).
+// Live herdables are mobile units that must be killed first.
+const isNode = (e) =>
+  e.type === "tree" || e.type === "bush" || (e.type === "herdable" && e.dead);
 const nodePool = (e) => (e.type === "tree" ? e.wood : e.food);
 const drainNode = (e, amt) => { if (e.type === "tree") e.wood -= amt; else e.food -= amt; };
 
@@ -19,10 +23,17 @@ export function createGame(scenario) {
   for (const e of ents.values()) {
     if (e.type === "villager" || e.type === "scout") {
       Object.assign(e, { task: "idle", carry: 0, carryRes: null, tx: e.x, ty: e.y,
-                         target: null, phase: 0 });
+                         target: null, phase: 0, moveTarget: null });
     }
     if (e.type === "town_center") Object.assign(e, { queue: [], rally: null, built: true });
-    if (isNode(e)) Object.assign(e, { gatherers: 0, felled: e.type !== "tree" });
+    if (e.type === "tree" || e.type === "bush") {
+      Object.assign(e, { gatherers: 0, felled: e.type !== "tree" });
+    }
+    if (e.type === "herdable") {
+      // alive food unit; dead=carcass(gatherable). felled=true: no fell delay.
+      Object.assign(e, { gatherers: 0, felled: true, dead: false, alive: true,
+                         hp: 7, moveTarget: null });
+    }
   }
   // debug numbering: starting villagers 1..n (by id), trained continue
   let num = 1;
@@ -39,6 +50,7 @@ export function createGame(scenario) {
     wood: scenario.players[0].start_wood,
     food: scenario.players[0].start_food ?? 0,
     collected: 0,                  // cumulative resources delivered (headline metric)
+    rotted: 0,                     // food lost to carcass decay (sheep scenario)
     pending: [...scenario.commands].sort((a, b) => a.t - b.t),
     events: [],
     ended: false,
@@ -183,10 +195,65 @@ function findPath(g, x0, y0, x1, y1) {
 export function step(g) {
   g.t += C.TICK;
   applyCommands(g);
+  convertHerdables(g);
   for (const e of [...g.ents.values()]) {
     if (e.type === "town_center") stepTC(g, e);
     else if (C.BUILDINGS[e.type]) stepBuilding(g, e);
     else if (e.type === "villager") stepVill(g, e);
+    else if (e.type === "scout") stepScout(g, e);
+    else if (e.type === "herdable") stepHerdable(g, e);
+  }
+}
+
+// Gaia herdables within CONVERT_RANGE of an owned unit flip to the player
+// (capture: the 4 geese near the scout's path converted; the 4 far ones
+// stayed gaia). Conversion is permanent and emits a visual event.
+function convertHerdables(g) {
+  const owned = [];
+  for (const e of g.ents.values()) {
+    if ((e.type === "scout" || e.type === "villager") && e.owner === 1)
+      owned.push(e);
+  }
+  for (const h of g.ents.values()) {
+    if (h.type !== "herdable" || h.owner === 1 || !h.alive) continue;
+    for (const u of owned) {
+      if (dist(h.x, h.y, u.x, u.y) <= C.CONVERT_RANGE) {
+        h.owner = 1;
+        h.convertedAt = g.t;       // render: brief conversion pulse
+        emit(g, "convert", { eid: h.id, by: u.id });
+        break;
+      }
+    }
+  }
+}
+
+// Scout: walk to its MOVE target (visual / conversion driver only).
+function stepScout(g, s) {
+  if (s.moveTarget) {
+    if (moveAlong(g, s, s.moveTarget[0], s.moveTarget[1])) s.moveTarget = null;
+  }
+}
+
+// Herdable: while alive + herded, walk toward its MOVE target at herd speed.
+// Once slain, the carcass DECAYS at a fixed rate (independent of gatherers);
+// the rotted food is lost, never banked.
+function stepHerdable(g, h) {
+  if (h.alive && h.moveTarget) {
+    const [tx, ty] = h.moveTarget;
+    const d = Math.hypot(tx - h.x, ty - h.y);
+    const budget = C.HERD_SPEED * C.TICK;
+    if (d <= budget) { h.x = tx; h.y = ty; h.moveTarget = null; }
+    else { h.x += ((tx - h.x) / d) * budget; h.y += ((ty - h.y) / d) * budget; }
+  }
+  if (h.dead && h.food > 0) {
+    const rot = Math.min(C.ROT_RATE * C.TICK, h.food);
+    h.food -= rot;
+    g.rotted += rot;
+    if (h.food <= 1e-9) {
+      h.food = 0;
+      emit(g, "node_empty", { eid: h.id });
+      recomputeObstacles(g);
+    }
   }
 }
 
@@ -231,6 +298,14 @@ function applyCommands(g) {
         // defer it to building completion instead of cancelling the build.
         if (u.task === "to_build" || u.task === "building") u.queuedOrder = c.target_id;
         else assignGather(g, u, c.target_id);
+      }
+    } else if (c.type === "move") {
+      // MOVE retargets a scout (visual) or HERDS owned herdables to a point.
+      for (const id of c.unit_ids) {
+        const u = g.ents.get(id);
+        if (!u) continue;
+        if (u.type === "herdable") { if (u.alive) u.moveTarget = [c.x, c.y]; }
+        else if (u.type === "scout") u.moveTarget = [c.x, c.y];
       }
     } else if (c.type === "gather_point") {
       const b = g.ents.get(c.building_id);
@@ -342,6 +417,7 @@ function dropStand(g, d, v) {
 }
 
 function nodeCap(e) {
+  if (e.type === "herdable") return C.HERD_CAP;  // carcass swarmed at the TC
   return e.spots ?? 4;       // free-face slots; bushes pack 2/face + corners
 }
 
@@ -405,7 +481,7 @@ function nodeSlots(g, node) {
     if (node.type === "tree") {
       slots.push({ id: `o${i}`, x: node.x + dx * C.GATHER_REACH,
                    y: node.y + dy * C.GATHER_REACH });
-    } else {
+    } else {                       // bush + carcass: villagers pack the faces
       for (const s of [-0.22, 0.22]) {
         slots.push({ id: `o${i}${s > 0 ? "+" : "-"}`,
                      x: node.x + dx * 0.7 + (dy ? s : 0),
@@ -413,7 +489,7 @@ function nodeSlots(g, node) {
       }
     }
   });
-  if (node.type === "bush") {
+  if (node.type !== "tree") {
     DIAG.forEach(([dx, dy], i) => {
       if (g.blocked.has(`${tx0 + dx},${ty0 + dy}`)) return;
       slots.push({ id: `d${i}`, x: node.x + dx * 0.7, y: node.y + dy * 0.7 });
@@ -422,7 +498,30 @@ function nodeSlots(g, node) {
   return slots;
 }
 
+// Carcass stand placement: villagers pack the OPEN side of a slain herdable
+// (capture: 9-10 overlapping near the TC). Non-exclusive — they fan out in
+// rows on whatever neighbor tiles aren't a building, so a TC-jammed carcass
+// still feeds a full swarm.
+function herdStand(g, v, node) {
+  const tx0 = Math.floor(node.x), ty0 = Math.floor(node.y);
+  let dir = null;
+  for (const [dx, dy] of [...ORTH, ...DIAG]) {
+    if (!g.blocked.has(`${tx0 + dx},${ty0 + dy}`)) { dir = [dx, dy]; break; }
+  }
+  if (!dir) dir = [-1, 0];
+  const len = Math.hypot(dir[0], dir[1]) || 1;
+  const ux = dir[0] / len, uy = dir[1] / len;
+  const n = node.gatherers;                 // 0-based index of this gatherer
+  const lane = ((n % 4) - 1.5) * 0.28;       // fan across the open side
+  const depth = 0.7 + Math.floor(n / 4) * 0.42;  // back rows
+  v.face = `h${n}`;
+  v.tx = node.x + ux * depth - uy * lane;
+  v.ty = node.y + uy * depth + ux * lane;
+  return true;
+}
+
 function takeFace(g, v, node) {
+  if (node.type === "herdable") return herdStand(g, v, node);
   node.faceUsed ??= new Set();
   const free = nodeSlots(g, node).filter((s) => !node.faceUsed.has(s.id));
   if (!free.length) return false;
@@ -434,17 +533,55 @@ function takeFace(g, v, node) {
   return true;
 }
 
+// Nearest live owned herdable with food left (a hunt target to be killed).
+// When `avail` is set, only herdables the player has HERDED IN (within
+// HERD_AVAIL of a dropsite) qualify — villagers wait near the TC instead of
+// running out to slay sheep still parked at the cluster (capture: kills
+// followed the herding order, not raw distance).
+function nearestLiveHerd(g, x, y, avail) {
+  const drops = avail ? dropsites(g, "food") : null;
+  let best = null, bs = Infinity;
+  for (const e of g.ents.values()) {
+    if (e.type !== "herdable" || e.dead || e.owner !== 1 || e.food <= 0) continue;
+    if (drops && !drops.some((d) => dist(d.e.x, d.e.y, e.x, e.y) <= C.HERD_AVAIL))
+      continue;
+    const d = dist(e.x, e.y, x, y);
+    if (d < bs) { bs = d; best = e; }
+  }
+  return best;
+}
+
+// Send a villager to slay a live herdable (then it gathers the carcass).
+function goHerd(g, v, h) {
+  v.target = h.id;
+  v.task = "to_herd";
+  v.dropT = null;
+}
+
 // Assign villager to gather a specific node (or nearest if id missing/empty/
-// crowded — rally-overflow behavior seen in both captures). Falls back to the
-// resource the villager was last gathering, default wood.
+// crowded — rally-overflow behavior seen in the captures). A live owned
+// herdable target is hunted first; food with no ready carcass falls through
+// to the nearest live herdable (sequential sheep consumption).
+// `direct` (an explicit command target) bypasses the herding-availability
+// gate — the player ordered this unit onto that herdable. Auto-retargets
+// (nodeId == null) respect the gate so sheep are eaten in herding order.
 function assignGather(g, v, nodeId, resHint) {
   releaseNode(g, v);
-  let node = nodeId != null ? g.ents.get(nodeId) : null;
+  const explicit = nodeId != null;
+  let node = explicit ? g.ents.get(nodeId) : null;
+  if (node && node.type === "herdable" && !node.dead && node.owner === 1) {
+    goHerd(g, v, node); return;
+  }
   let res = node && isNode(node) ? C.NODE_RES[node.type] : (resHint || v.lastRes || "wood");
+  v.lastRes = res;             // remember so a parked seeker retries the right resource
   const direct = node && isNode(node) && nodePool(node) > 0
                  && node.gatherers < nodeCap(node);
   if (!direct) {
     node = nearestNode(g, v.x, v.y, res);
+    if (!node && res === "food") {
+      const live = nearestLiveHerd(g, v.x, v.y, !explicit);
+      if (live) { goHerd(g, v, live); return; }
+    }
     if (node) {
       emit(g, "retarget", { eid: v.id, num: v.num,
                             from: [+v.x.toFixed(1), +v.y.toFixed(1)],
@@ -452,13 +589,21 @@ function assignGather(g, v, nodeId, resHint) {
                             d: +dist(node.x, node.y, v.x, v.y).toFixed(2) });
     }
   }
-  if (!node) { v.task = v.carry > 0 ? "to_drop" : "idle"; return; }
-  if (!takeFace(g, v, node)) { v.task = v.carry > 0 ? "to_drop" : "idle"; return; }
+  if (!node || !takeFace(g, v, node)) { parkSeeker(g, v); return; }
   node.gatherers++;
   v.target = node.id;
   v.lastRes = C.NODE_RES[node.type];
   v.task = "to_node";
   v.dropT = null;
+}
+
+// No work right now: deliver any load, else WAIT and retry shortly. Idle must
+// never be terminal — a villager parks near the TC until the next sheep is
+// herded in, then picks it up (capture: spare villagers waited, then swarmed).
+function parkSeeker(g, v) {
+  if (v.carry > 0) { v.task = "to_drop"; return; }
+  v.task = "seek";
+  v.seekTimer = 0.5;
 }
 
 function releaseNode(g, v) {
@@ -511,6 +656,31 @@ function stepVill(g, v) {
       if (moveAlong(g, v, v.tx, v.ty)) assignGather(g, v, v.rallyTarget);
       return;
     }
+    case "seek": {                   // parked: retry for work every 0.5s
+      v.seekTimer -= C.TICK;
+      if (v.seekTimer <= 0) assignGather(g, v, null);
+      return;
+    }
+    case "to_herd": {                // walk to a live herdable to slay it
+      const h = g.ents.get(v.target);
+      if (!h || h.type !== "herdable") { assignGather(g, v, null); return; }
+      if (h.dead) { assignGather(g, v, h.id); return; }   // already slain → eat
+      if (moveAlong(g, v, h.x, h.y)) { v.task = "kill"; v.phase = C.KILL_TIME; }
+      return;
+    }
+    case "kill": {
+      const h = g.ents.get(v.target);
+      if (!h || h.type !== "herdable") { assignGather(g, v, null); return; }
+      if (h.dead) { assignGather(g, v, h.id); return; }
+      v.phase -= C.TICK;
+      if (v.phase <= 0) {
+        h.dead = true; h.alive = false; h.moveTarget = null; h.hp = 0;
+        emit(g, "kill", { eid: h.id, by: v.id });
+        recomputeObstacles(g);       // carcass now blocks its tile + gives slots
+        assignGather(g, v, h.id);     // start eating the carcass
+      }
+      return;
+    }
     case "to_node": {
       const node = g.ents.get(v.target);
       if (!node || nodePool(node) <= 0) { assignGather(g, v, null); return; }
@@ -519,7 +689,7 @@ function stepVill(g, v) {
     }
     case "settle": {
       const node = g.ents.get(v.target);
-      if (!node) { v.task = v.carry > 0 ? "to_drop" : "idle"; return; }
+      if (!node) { parkSeeker(g, v); return; }
       v.phase -= C.TICK;
       if (v.phase <= 0) {
         // Felling happens once per TREE (first villager cuts it down);

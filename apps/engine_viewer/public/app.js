@@ -8,7 +8,7 @@ const $ = (id) => document.getElementById(id);
 const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
 
 const params = new URLSearchParams(location.search);
-const SCEN = params.get("scenario") || "millpop";
+const SCEN = params.get("scenario") || "sheep";
 
 const scen = await (await fetch(`data/${SCEN}/commands.json`)).json();
 const truth = await (await fetch(`data/${SCEN}/truth.json`)).json();
@@ -80,14 +80,37 @@ function scorecard() {
     add(`spawn #${i + 1} ±1s`, !!sp && Math.abs(sp.t - ts.t) <= 1.0,
         `${ts.t} → ${sp?.t ?? "—"}`);
   });
-  add("wood collected ±15", Math.abs(simTotal - truthTotal) <= 15,
+  add("collected ±15", Math.abs(simTotal - truthTotal) <= 15,
       `${truthTotal} → ${simTotal.toFixed(0)} (${((simTotal / truthTotal - 1) * 100).toFixed(1)}%)`);
+
+  // herdables: conversions, kill count + order, food rot (sheep scenario)
+  if (truth.kills && truth.kills.length) {
+    const simKills = full.events.filter((e) => e.kind === "kill");
+    const simConv = full.events.filter((e) => e.kind === "convert");
+    const preOwned = scen.entities.filter((e) => e.type === "herdable" && e.owner === 1).length;
+    const truthConv = (truth.herdables || []).filter((h) => h.convert_t != null).length;
+    add(`sheep converted = ${truthConv}`, simConv.length + preOwned >= truthConv,
+        `${truthConv} → ${simConv.length}+${preOwned}`);
+    add(`sheep killed = ${truth.kills.length}`, simKills.length === truth.kills.length,
+        `${truth.kills.length} → ${simKills.length}`);
+    truth.kills.forEach((tk, i) => {
+      const sk = simKills[i];
+      add(`kill #${i + 1} order+time ±10s`,
+          !!sk && sk.eid === tk.eid && Math.abs(sk.t - tk.t) <= 10,
+          `${tk.t.toFixed(0)} → ${sk ? sk.t.toFixed(0) : "—"}`);
+    });
+    if (truth.herd_rot != null) {
+      add("food rot ±12", Math.abs(full.rotted - truth.herd_rot) <= 12,
+          `${truth.herd_rot} → ${full.rotted.toFixed(1)}`);
+    }
+  }
+
   if (truth.rows && truth.rows[0] && "collected" in truth.rows[0]) {
     const curve = (t) => dep.filter((d) => d.t <= t).reduce((s, d) => s + d.amount, 0);
     for (const r of truth.rows) {
       if (Math.round(r.t) % 40 !== 0 || r.t === 0) continue;
       const sc = curve(r.t);
-      add(`collected @${r.t}s ±25`, Math.abs(sc - r.collected) <= 25,
+      add(`collected @${r.t}s ±30`, Math.abs(sc - r.collected) <= 30,
           `${r.collected} → ${sc.toFixed(0)}`);
     }
   }

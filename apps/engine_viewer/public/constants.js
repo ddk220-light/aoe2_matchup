@@ -5,10 +5,23 @@ export const TICK = 1 / 20;            // [engine] 20 Hz sim tick (game clock ra
 export const VILL_SPEED = 0.8;         // [dat] tiles/s        [cap] confirms 0.8
 export const GATHER_RATE = 0.39;       // [dat] wood/s         [cap] measured 0.391
 export const FORAGE_RATE = 0.31;       // [dat] food/s from forage bushes
+export const HERD_GATHER_RATE = 0.33;  // [dat] food/s eating a slain herdable [cap]
 export const CARRY_CAP = 10;           // [dat]                [cap] confirms 10.0
 export const TRAIN_TIME_VILLAGER = 25; // [dat]  spawn #1 = queue_t + 25.0 in every capture
 export const TREE_WOOD = 100;          // [dat]                [cap] confirms 100.0
 export const BUSH_FOOD = 125;          // [dat] forage bush    [cap] confirms 125.0
+export const HERD_FOOD = 100;          // [dat] sheep/goose    [cap] confirms 100.0
+
+// Herdable (sheep/goose) mechanics — all [cap] from the sheep capture.
+export const CONVERT_RANGE = 5.0;      // gaia herdable within this of an owned unit converts
+export const HERD_SPEED = 0.95;        // herdable walk speed when herded (MOVE)
+export const KILL_TIME = 0.3;          // arrive at a live herdable -> carcass (7 HP, dies fast)
+export const HERD_CAP = 10;            // [cap] villagers swarm a carcass at the TC (peak 9-10)
+export const HERD_AVAIL = 4.5;         // auto-hunt only herds herded within this of a dropsite
+// A slain carcass DECAYS at a fixed rate independent of gatherers: measured
+// 0.245 food/s across 4 carcasses (rot 13.0/10.3/7.5/2.6 over 53/42/30/12s).
+// The faster villagers swarm it, the less total rot. ~10% lost here.
+export const ROT_RATE = 0.245;         // [cap] food/s lost to decay while a carcass exists
 export const FELL_TIME = 1.2;          // [cal] per-tree cut-down delay before wood flows
 export const SETTLE_TIME = 0.7;        // [cap] arrive -> first-resource-tick lag
 export const GATHER_REACH = 0.9;       // [cap] stand distance from node center
@@ -44,6 +57,6 @@ export const BUILDING_BY_NAME = {
 // house finished.
 export const CIV_NO_HOUSES = new Set(["Huns"]);
 
-// resource carried per node type
-export const NODE_RES = { tree: "wood", bush: "food" };
-export const NODE_RATE = { tree: GATHER_RATE, bush: FORAGE_RATE };
+// resource carried per node type (herdable = a slain carcass yields food)
+export const NODE_RES = { tree: "wood", bush: "food", herdable: "food" };
+export const NODE_RATE = { tree: GATHER_RATE, bush: FORAGE_RATE, herdable: HERD_GATHER_RATE };

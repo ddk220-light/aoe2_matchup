@@ -31,9 +31,11 @@ BUILDING_MASTERS = {562, 109, 70, 68, 79, 12, 87, 101, 49, 84}  # camp/tc/house/
 # Villagers mutate master by profession (forager/lumberjack/builder/...):
 # include all task variants so trained-villager spawns are caught.
 UNIT_MASTERS = {83, 293, 448, 118, 212, 120, 354, 123, 218, 122, 216,
-                124, 220, 579, 581, 259, 214, 156, 222}
+                124, 220, 579, 581, 259, 214, 156, 222,
+                590, 591, 592, 593}   # hunter/shepherd villager variants
 DOPPLE_MASTER = 243
 BUSH_MASTER = 1059
+HERDABLE_MASTERS = {594, 1243, 705, 833, 1142}  # sheep, goose, turkey, cow...
 
 
 def read_seqs(path):
@@ -101,6 +103,15 @@ def main():
     node_seen = {}      # eid -> {"first_drop": t, "empty": t|None, "last": pool}
     next_row = 0
 
+    # ---- herdables (sheep/goose): conversion, kill, carcass drain + rot ----
+    herd = {eid: {"m": e.get(F_MASTER), "owner0": e.get(F_OWNER),
+                  "convert_t": (0.0 if e.get(F_OWNER) == 1 else None),
+                  "kill_t": None, "pool_last": e.get(F_CARRY) or 0.0,
+                  "consumed": 0.0, "x": e.get(F_X), "y": e.get(F_Y)}
+            for eid, e in es.items() if e.get(F_MASTER) in HERDABLE_MASTERS}
+    herd_gathered = 0.0     # food that entered villager hands (carry increases)
+    prev_carry_any = {}
+
     for t, patch, events in seg["frames"]:
         if patch:
             D.apply_patch(doc, patch, es, world_id)
@@ -140,6 +151,31 @@ def main():
             if pool < 1e-6 and st["last"] > 1e-6:
                 st["empty"] = ts
             st["last"] = pool
+        # herdables: track conversion, kill, carcass consumption
+        for eid, h in herd.items():
+            e = es.get(eid)
+            if not e or ts is None:
+                continue
+            if h["convert_t"] is None and e.get(F_OWNER) == 1:
+                h["convert_t"] = ts
+            hp = e.get(F_HP)
+            if h["kill_t"] is None and isinstance(hp, float) and hp <= 0:
+                h["kill_t"] = ts
+                h["x"], h["y"] = e.get(F_X), e.get(F_Y)
+            pool = e.get(F_CARRY)
+            if isinstance(pool, float):
+                if pool < h["pool_last"] - 1e-6:
+                    h["consumed"] += h["pool_last"] - pool
+                h["pool_last"] = pool
+        # food that entered villager hands this tick (carry increases)
+        for eid in owner1:
+            e = es.get(eid)
+            c = e.get(F_CARRY) if e else None
+            if isinstance(c, float):
+                pc = prev_carry_any.get(eid)
+                if pc is not None and c > pc:
+                    herd_gathered += c - pc
+                prev_carry_any[eid] = c
         # deposits
         for eid in list(owner1):
             e = es.get(eid)
@@ -172,6 +208,19 @@ def main():
              if eid in node_seen and node_seen[eid]["first_drop"] is not None]
 
     total = round(sum(d["amount"] for d in deposits), 2)
+
+    # herdable summary: conversions, kills (in order), consumed/rot accounting
+    herds_out = []
+    for eid, h in sorted(herd.items()):
+        if h["consumed"] < 0.5 and h["kill_t"] is None and h["convert_t"] in (None, 0.0):
+            continue   # an untouched far gaia herdable — skip
+        herds_out.append({"eid": eid, "master": h["m"],
+                          "convert_t": h["convert_t"], "kill_t": h["kill_t"],
+                          "consumed": round(h["consumed"], 2),
+                          "x": h["x"], "y": h["y"]})
+    herd_consumed = round(sum(h["consumed"] for h in herd.values()), 2)
+    kills = sorted([h for h in herds_out if h["kill_t"] is not None],
+                   key=lambda h: h["kill_t"])
     out = {
         "scenario": SCEN,
         "capture": {"file": FRAMES.name, "game_version": 178524},
@@ -179,6 +228,11 @@ def main():
         "spawns": spawns,
         "deposits": deposits,
         "nodes": nodes,
+        "herdables": herds_out,
+        "kills": [{"eid": k["eid"], "t": k["kill_t"]} for k in kills],
+        "herd_consumed": herd_consumed,
+        "herd_gathered": round(herd_gathered, 2),
+        "herd_rot": round(herd_consumed - herd_gathered, 2),
         "total_collected": total,
         "rows": rows,
     }
@@ -199,6 +253,10 @@ def main():
               f"pos=({b.get('x')},{b.get('y')})")
     print(f"  spawn times={[s['t'] for s in spawns]}")
     print(f"  nodes touched={[(n['eid'], n['pool0'], n['taken'], n['empty']) for n in nodes]}")
+    if herds_out:
+        print(f"  herdables={len(herds_out)} kills={[(k['eid'], k['kill_t']) for k in kills]}")
+        print(f"  herd consumed={herd_consumed} gathered={out['herd_gathered']} "
+              f"rot={out['herd_rot']} ({100*out['herd_rot']/max(herd_consumed,1):.1f}%)")
 
 
 if __name__ == "__main__":

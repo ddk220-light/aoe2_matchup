@@ -31,6 +31,9 @@ TREE_MASTERS_UNNAMED = {2567, 2570}
 TREE_WOOD_BY_MASTER = {1063: 150.0}
 BUSH_MASTERS = {1059}            # Fruit/Forage Bush [cap: pool 125 food]
 BUSH_FOOD = 125.0
+# Herdables (sheep/goose/turkey/...): mobile food, can be converted + herded.
+HERDABLE_MASTERS = {594, 1243, 705, 833, 1142}  # sheep, goose, turkey, cow...
+HERDABLE_FOOD = 100.0
 
 
 def main():
@@ -40,12 +43,21 @@ def main():
 
     # ---- starting entities (dedupe multi-part TC to the commanded one) ----
     raw = []
+    owned_herd_ids = set()
     for o in p1.objects or []:
         etype = TYPE_BY_NAME.get((o.name or "").lower())
         pos = getattr(o, "position", None)
+        master = getattr(o, "object_id", None)
         if etype and pos is not None:
             raw.append({"id": o.instance_id, "type": etype, "owner": 1,
                         "x": round(pos.x, 2), "y": round(pos.y, 2)})
+        elif master in HERDABLE_MASTERS and pos is not None:
+            # a herdable already owned at game start (no conversion needed)
+            owned_herd_ids.add(o.instance_id)
+            raw.append({"id": o.instance_id, "type": "herdable", "owner": 1,
+                        "x": round(pos.x, 2), "y": round(pos.y, 2),
+                        "food": HERDABLE_FOOD, "master": master,
+                        "species": (o.name or "Sheep")})
 
     cmds = []
     build_sites = []
@@ -73,6 +85,10 @@ def main():
             cmds.append({"t": ts, "type": "order",
                          "unit_ids": pl["object_ids"],
                          "target_id": pl["target_id"]})
+        elif ty == "MOVE" and apos is not None:
+            cmds.append({"t": ts, "type": "move",
+                         "unit_ids": pl["object_ids"],
+                         "x": round(apos.x, 2), "y": round(apos.y, 2)})
         elif ty == "DE_QUEUE" and pl.get("unit_id") == 83:
             cmds.append({"t": ts, "type": "queue",
                          "building_id": pl["object_ids"][0],
@@ -84,11 +100,13 @@ def main():
     tcs = [e for e in raw if e["type"] == "town_center"]
     keep_tc = next((e for e in tcs if e["id"] in cmd_bids), tcs[0] if tcs else None)
     entities = [e for e in raw if e["type"] != "town_center" or e is keep_tc]
+    raw_herd_ids = {e["id"] for e in entities if e["type"] == "herdable"}
 
-    # focus points for resource harvesting = every build site + gather points
+    # focus points for resource harvesting = build sites + gather points +
+    # every MOVE target (herding routes pass through the resource cluster).
     focuses = list(build_sites)
     for c in cmds:
-        if c["type"] == "gather_point" and c.get("x") is not None:
+        if c.get("x") is not None and c["type"] in ("gather_point", "move"):
             focuses.append([c["x"], c["y"]])
     if not focuses:
         focuses = [[keep_tc["x"], keep_tc["y"]]]
@@ -96,12 +114,29 @@ def main():
     def near_focus(x, y):
         return any(math.hypot(x - fx, y - fy) <= RES_RADIUS for fx, fy in focuses)
 
-    trees, bushes = [], []
+    # herdables that the player commands (MOVE/ORDER target) are theirs; the
+    # engine still performs the conversion visually via scout proximity.
+    moved_ids = {i for c in cmds if c["type"] == "move" for i in c["unit_ids"]}
+
+    trees, bushes, herds = [], [], []
     for g in getattr(match, "gaia", None) or []:
         name = (getattr(g, "name", None) or "").lower()
         pos = getattr(g, "position", None)
         master = getattr(g, "object_id", None)
-        if pos is None or not near_focus(pos.x, pos.y):
+        if pos is None:
+            continue
+        if master in HERDABLE_MASTERS:
+            # skip herdables already added from player objects (owned at start)
+            if g.instance_id in raw_herd_ids:
+                continue
+            # include herdables that are commanded OR near a focus cluster
+            if g.instance_id in moved_ids or near_focus(pos.x, pos.y):
+                herds.append({"id": g.instance_id, "type": "herdable", "owner": 0,
+                              "x": round(pos.x, 2), "y": round(pos.y, 2),
+                              "food": HERDABLE_FOOD, "master": master,
+                              "species": (getattr(g, "name", None) or "Sheep")})
+            continue
+        if not near_focus(pos.x, pos.y):
             continue
         if "tree" in name or master in TREE_MASTERS_UNNAMED:
             trees.append({"id": g.instance_id, "type": "tree", "owner": 0,
@@ -113,7 +148,7 @@ def main():
             bushes.append({"id": g.instance_id, "type": "bush", "owner": 0,
                            "x": round(pos.x, 2), "y": round(pos.y, 2),
                            "food": BUSH_FOOD, "master": master})
-    entities += trees + bushes
+    entities += trees + bushes + herds
 
     doc = {
         "scenario": SCEN,
@@ -129,17 +164,18 @@ def main():
     }
 
     kinds = [c["type"] for c in cmds]
-    assert "build" in kinds, kinds
-    assert build_sites, "no BUILD position"
     assert sum(1 for e in entities if e["type"] == "villager") == 3
+    assert trees or bushes or herds, "no resource source near the action"
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(doc, indent=1))
     print(f"OK {OUT}")
-    print(f"  entities={len(entities)} trees={len(trees)} bushes={len(bushes)} cmds={kinds}")
+    print(f"  entities={len(entities)} trees={len(trees)} bushes={len(bushes)} "
+          f"herds={len(herds)} cmds={kinds}")
     print(f"  build_sites={build_sites}")
     print(f"  builds: {[(c['t'], c['building'], c['x'], c['y']) for c in cmds if c['type']=='build']}")
-    print(f"  bushes: {[(b['id'], b['x'], b['y']) for b in bushes]}")
+    print(f"  herds: {[(h['id'], h['x'], h['y']) for h in herds]}")
+    print(f"  moves: {[(c['t'], c['unit_ids'], c['x'], c['y']) for c in cmds if c['type']=='move']}")
 
 
 if __name__ == "__main__":

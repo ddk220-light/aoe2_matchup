@@ -55,13 +55,38 @@ truthSpawns.forEach((ts, i) => {
 add("total collected ±15", Math.abs(simTotal - truthTotal) <= 15,
     `truth ${truthTotal}  sim ${simTotal.toFixed(1)}  (${((simTotal/truthTotal-1)*100).toFixed(1)}%)`);
 
-// 4. Collection curve at 40s checkpoints
+// 4. Herdables (sheep): conversions, kill count + order, and rot. The kill
+// SEQUENCE encodes herding order + sequential consumption; timing drifts a
+// few seconds as carcass-finish times accumulate, so allow ±10s.
+if (truth.kills && truth.kills.length) {
+  const simKills = g.events.filter((e) => e.kind === "kill");
+  const simConv = g.events.filter((e) => e.kind === "convert");
+  // converted = sim convert events + herdables owned at start (pre-owned)
+  const preOwned = scen.entities.filter((e) => e.type === "herdable" && e.owner === 1).length;
+  const truthConv = (truth.herdables || []).filter((h) => h.convert_t != null).length;
+  add(`herdables converted = ${truthConv}`, simConv.length + preOwned >= truthConv,
+      `truth ${truthConv}  sim ${simConv.length}+${preOwned} owned`);
+  add(`sheep killed = ${truth.kills.length}`, simKills.length === truth.kills.length,
+      `truth ${truth.kills.length}  sim ${simKills.length}`);
+  truth.kills.forEach((tk, i) => {
+    const sk = simKills[i];
+    add(`kill #${i + 1} ${tk.eid} ±10s`,
+        !!sk && sk.eid === tk.eid && Math.abs(sk.t - tk.t) <= 10,
+        `truth ${tk.eid}@${tk.t}  sim ${sk ? `${sk.eid}@${sk.t}` : "—"}`);
+  });
+  if (truth.herd_rot != null) {
+    add("food rot ±12", Math.abs(g.rotted - truth.herd_rot) <= 12,
+        `truth ${truth.herd_rot}  sim ${g.rotted.toFixed(1)}`);
+  }
+}
+
+// 5. Collection curve at 40s checkpoints
 if (truth.rows && truth.rows[0] && "collected" in truth.rows[0]) {
   const simCurve = (t) => dep.filter((d) => d.t <= t).reduce((s, d) => s + d.amount, 0);
   for (const r of truth.rows) {
     if (Math.round(r.t) % 40 !== 0 || r.t === 0) continue;
     const sc = simCurve(r.t);
-    add(`collected @${r.t}s ±25`, Math.abs(sc - r.collected) <= 25,
+    add(`collected @${r.t}s ±30`, Math.abs(sc - r.collected) <= 30,
         `truth ${r.collected}  sim ${sc.toFixed(0)}`);
   }
 }

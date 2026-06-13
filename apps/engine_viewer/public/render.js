@@ -49,6 +49,17 @@ export function createRenderer(canvas, scenario) {
     cam.k = Math.max(8, Math.min(64, cam.k * (e.deltaY < 0 ? 1.12 : 0.89)));
   }, { passive: false });
 
+  // rounded-rect path in screen space (sheep bodies, etc.)
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
   // polygon through projected world points
   function poly(pts, fill, stroke, lw = 1) {
     ctx.beginPath();
@@ -74,7 +85,7 @@ export function createRenderer(canvas, scenario) {
   }
 
   const seedPool = new Map(scenario.entities
-    .filter((e) => e.type === "tree" || e.type === "bush")
+    .filter((e) => e.type === "tree" || e.type === "bush" || e.type === "herdable")
     .map((e) => [e.id, e.wood ?? e.food]));
 
   // remaining-stock ring shared by trees (pale green) and bushes (pink)
@@ -126,6 +137,48 @@ export function createRenderer(canvas, scenario) {
       ctx.fillText(st.label, sx, sy);
       ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
     }
+  }
+
+  // Herdable: alive = a sheep/goose body (gaia grey vs converted cream with a
+  // player-blue outline + brief conversion pulse); dead = a carcass with a
+  // pink food ring that shrinks as it's eaten and rots.
+  function drawHerdable(e, nowT) {
+    const [sx, sy] = px(e.x, e.y);
+    const s = cam.k * 0.5;
+    if (e.dead) {
+      ctx.fillStyle = "rgba(0,0,0,.25)";
+      ctx.beginPath(); ctx.ellipse(sx, sy + 2, s * 0.58, s * 0.4, 0, 0, 2 * Math.PI); ctx.fill();
+      ctx.fillStyle = "#7c3030";              // carcass
+      ctx.beginPath(); ctx.ellipse(sx, sy, s * 0.54, s * 0.36, 0, 0, 2 * Math.PI); ctx.fill();
+      const seed = seedPool.get(e.id) || 100;
+      const f = Math.max(0, (e.food ?? 0) / seed);
+      const r = cam.k * 0.33;
+      ctx.lineWidth = Math.max(2, cam.k * 0.12);
+      ctx.strokeStyle = "rgba(0,0,0,.4)";
+      ctx.beginPath(); ctx.arc(sx, sy, r, 0, 2 * Math.PI); ctx.stroke();
+      ctx.strokeStyle = "#ff9aa8";
+      ctx.beginPath(); ctx.arc(sx, sy, r, -Math.PI / 2, -Math.PI / 2 + f * 2 * Math.PI); ctx.stroke();
+      ctx.lineWidth = 1;
+      return;
+    }
+    // conversion pulse (≈1.5s yellow ring after the scout flips it)
+    if (e.convertedAt != null && nowT - e.convertedAt < 1.5) {
+      const a = 1 - (nowT - e.convertedAt) / 1.5;
+      ctx.strokeStyle = `rgba(240,210,90,${a.toFixed(2)})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(sx, sy, s * (0.7 + (1 - a) * 0.6), 0, 2 * Math.PI); ctx.stroke();
+      ctx.lineWidth = 1;
+    }
+    ctx.fillStyle = "rgba(0,0,0,.22)";
+    roundRect(sx - s / 2, sy - s / 2 + 2, s, s, 4); ctx.fill();
+    ctx.fillStyle = e.owner === 1 ? "#f1e8cf" : "#cdccc6";   // owned cream vs gaia grey
+    roundRect(sx - s / 2, sy - s / 2, s, s, 4); ctx.fill();
+    ctx.strokeStyle = e.owner === 1 ? "#4f7fd9" : "#6b6b64"; // converted = blue outline
+    ctx.lineWidth = e.owner === 1 ? 2 : 1.2;
+    roundRect(sx - s / 2, sy - s / 2, s, s, 4); ctx.stroke();
+    ctx.lineWidth = 1;
+    ctx.fillStyle = "#46443e";              // head dot
+    ctx.beginPath(); ctx.arc(sx, sy - s * 0.12, s * 0.13, 0, 2 * Math.PI); ctx.fill();
   }
 
   function drawUnit(e) {
@@ -189,6 +242,7 @@ export function createRenderer(canvas, scenario) {
     for (const e of items) {
       if (e.type === "tree") drawTree(e);
       else if (e.type === "bush") drawBush(e);
+      else if (e.type === "herdable") drawHerdable(e, g.t);
       else if (BUILDINGS[e.type]) drawBuilding(e);
       else if (e.type === "villager" || e.type === "scout") drawUnit(e);
     }

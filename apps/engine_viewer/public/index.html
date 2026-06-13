@@ -23,6 +23,8 @@
   header h1 { font-size: 15px; margin: 0 8px 0 0; color: var(--gold); font-weight: 600; }
   header .stat { color: var(--dim); }
   header .stat b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  #housed { color: var(--bad); font-weight: 700; font-size: 12px; }
+  #popWrap.full b { color: var(--bad); }
   header .dim, .dim { color: var(--dim); }
   button, select {
     background: #2c2718; color: var(--ink); border: 1px solid var(--line);
@@ -69,7 +71,7 @@
   <input id="scrub" type="range" min="0" max="210" step="0.05" value="0">
   <span class="stat">⏱ <b id="clock">0:00</b></span>
   <span class="stat">📦 collected <b id="wood">0</b> <span id="goal" class="dim"></span></span>
-  <span class="stat">👥 pop <b id="pop">0/0</b></span>
+  <span class="stat" id="popWrap">👥 pop <b id="pop">0/0</b> <span id="housed"></span></span>
   <span class="stat" id="status"></span>
 </header>
 <main>

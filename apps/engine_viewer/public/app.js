@@ -31,7 +31,13 @@ function updateHud() {
   $("clock").textContent = fmt(g.t);
   $("wood").textContent = Math.round(g.collected);
   const cap = popCap(g);
-  $("pop").textContent = `${popCount(g)}/${cap === Infinity ? "∞" : cap}`;
+  const pop = popCount(g);
+  $("pop").textContent = `${pop}/${cap === Infinity ? "∞" : cap}`;
+  // housed = the cap is actively blocking a queued unit right now
+  const tc = [...g.ents.values()].find((e) => e.type === "town_center");
+  const housed = tc && tc.queue.length > 0 && pop + 1 > cap;
+  $("housed").textContent = housed ? "HOUSED" : "";
+  $("popWrap").classList.toggle("full", !!housed);
   const status = [];
   for (const e of g.ents.values()) {
     const spec = BUILDINGS[e.type];

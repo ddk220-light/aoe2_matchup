@@ -215,12 +215,15 @@ function renderAnalysis(civName, data) {
 /* ---- Unit badge renderer ---- */
 function renderUnitBadge(unit, colKey) {
     var name = unit.unit_name || slugToName(unit.unit_slug);
-    var iconUrl = getIconUrl(name);
+    // Use the transparent in-game sprite when the unit has a square one; spriteless
+    // units (naval) fall back to the boxed portrait. `.sprite` class drives the CSS.
+    var useSprite = typeof hasSprite === "function" && hasSprite(name);
+    var iconUrl = useSprite ? spriteFor(name) : getIconUrl(name);
     var hasScore = unit.percentile != null && unit.strength != null;
     var strength = STRENGTH_COLORS[unit.strength] || STRENGTH_COLORS.average;
     var isSig = !!unit.is_signature;
     var badgeClass = "unit-badge" + (isSig ? " signature" : "") + (!hasScore ? " no-strength" : "");
-    var iconSize = isSig ? "signature-icon" : "unit-badge-icon";
+    var iconSize = (isSig ? "signature-icon" : "unit-badge-icon") + (useSprite ? " sprite" : "");
 
     var borderColor = hasScore ? strength.text : "var(--text-muted)";
     var html = '<div class="' + badgeClass + '" style="border-left-color: ' + borderColor + '">';

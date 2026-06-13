@@ -346,6 +346,20 @@
     background: rgba(255, 255, 255, 0.04);
 }
 
+/* In-game sprite variant — transparent, unframed, larger. Set (via the `sprite`
+   class) only on units that have a square sprite; spriteless fallbacks keep the
+   boxed portrait above. */
+.unit-badge-icon.sprite,
+.signature-icon.sprite {
+    border: none;
+    background: none;
+    box-shadow: none;
+    border-radius: 0;
+    object-fit: contain;
+}
+.unit-badge-icon.sprite { width: 76px; height: 76px; }
+.signature-icon.sprite { width: 88px; height: 88px; }
+
 /* --- Unit Badge Info (name + score stack) --- */
 .unit-badge-info {
     display: flex;

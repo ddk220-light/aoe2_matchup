@@ -556,10 +556,9 @@ def civ_view():
 
 @app.route("/civilizations/<civ_name>")
 def civ_detail(civ_name):
-    """Civilization unit detail page."""
-    if civ_name not in _valid_civs():
-        return redirect("/civilizations")
-    return render_template("civ_detail.html", civ_name=civ_name, active_nav="civ_detail")
+    """The per-civ detail page was retired — the civilizations index now shows each
+    civ's units inline. Redirect old per-civ URLs (and any inbound links) to it."""
+    return redirect("/civilizations", code=301)
 
 
 @app.route("/civ")
@@ -571,7 +570,7 @@ def civ_redirect():
 @app.route("/civ/<civ_name>")
 def civ_detail_redirect(civ_name):
     """Backward compat redirect."""
-    return redirect(f"/civilizations/{civ_name}", code=301)
+    return redirect("/civilizations", code=301)
 
 
 @app.route("/simulate")
@@ -636,8 +635,6 @@ def _matchup_seed_pairs(limit_per_side=200):
 @app.route("/sitemap.xml")
 def sitemap_xml():
     urls = ["/", "/units", "/civilizations", "/matchup-advisor"]
-    for civ in sorted(_valid_civs()):
-        urls.append(f"/civilizations/{civ}")
 
     # Per-matchup landing pages — every unique-unit pair.
     for civ_a, slug_a, civ_b, slug_b in _matchup_seed_pairs():

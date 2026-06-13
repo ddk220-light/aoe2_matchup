@@ -130,10 +130,10 @@
 }
 
 .unit-card {
-    width: 120px;
+    width: 150px;
     padding: 10px 8px;
-    background: var(--bg-warm);
-    border: 1px solid var(--border-light);
+    background: transparent;
+    border: 1px solid transparent;
     border-radius: 8px;
     text-align: center;
     cursor: pointer;
@@ -142,19 +142,19 @@
 }
 
 .unit-card:hover {
+    background: var(--bg-warm);
     border-color: var(--gold-dark);
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
+/* Transparent in-game sprite — no frame/background, sized large. (Fallback
+   portraits for spriteless units still carry their own baked background.) */
 .unit-icon {
-    width: 88px;
-    height: 88px;
-    border-radius: 8px;
-    border: 2px solid var(--gold-dark);
+    width: 120px;
+    height: 120px;
     object-fit: contain;
-    background: var(--bg);
-    margin: 0 auto 6px;
+    margin: 0 auto 4px;
     display: block;
 }
 
@@ -241,12 +241,9 @@
 }
 
 .modal-unit-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 8px;
-    border: 2px solid var(--gold-dark);
+    width: 96px;
+    height: 96px;
     object-fit: contain;
-    background: var(--bg);
 }
 
 .modal-unit-info h3 {
@@ -457,12 +454,12 @@
     }
 
     .unit-card {
-        width: 100px;
+        width: 120px;
     }
 
     .unit-icon {
-        width: 72px;
-        height: 72px;
+        width: 96px;
+        height: 96px;
     }
 
     .classes-grid {

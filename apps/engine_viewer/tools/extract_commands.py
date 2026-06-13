@@ -36,6 +36,48 @@ HERDABLE_MASTERS = {594, 1243, 705, 833, 1142}  # sheep, goose, turkey, cow...
 HERDABLE_FOOD = 100.0
 
 
+def scenery_type(name, master):
+    """Classify a gaia object for full-map DECOR (drawn, not simulated).
+    Returns an engine-agnostic kind, or None to skip pure terrain clutter."""
+    n = (name or "").lower()
+    if "tree" in n or master in TREE_MASTERS_UNNAMED:
+        return "tree"
+    if master == 66 or "gold mine" in n:
+        return "gold"
+    if master == 102 or "stone mine" in n:
+        return "stone"
+    if master in HERDABLE_MASTERS or n in ("goose", "sheep") or n.startswith("cow"):
+        return "herdable"
+    if master == 48 or "boar" in n:
+        return "boar"
+    if master in (126, 812) or "wolf" in n or "jaguar" in n:
+        return "predator"        # this map's hunters are jaguars, not wolves
+    if "deer" in n:
+        return "deer"
+    if master == 285 or "relic" in n:
+        return "relic"
+    if "forage bush" in n or "fruit bush" in n:
+        return "bush"
+    return None                  # grass / plants / flowers / rocks / fish / unnamed
+
+
+def build_scenery(match, skip_ids):
+    """Every renderable gaia object across the whole map, minus the ids that
+    are already live sim entities (so they animate instead of sitting static)."""
+    out = []
+    for g in getattr(match, "gaia", None) or []:
+        if g.instance_id in skip_ids:
+            continue
+        pos = getattr(g, "position", None)
+        if pos is None:
+            continue
+        kind = scenery_type(getattr(g, "name", None), getattr(g, "object_id", None))
+        if kind:
+            out.append({"id": g.instance_id, "type": kind,
+                        "x": round(pos.x, 2), "y": round(pos.y, 2)})
+    return out
+
+
 def main():
     with open(REPLAY, "rb") as f:
         match = mgz.model.parse_match(f)
@@ -159,6 +201,7 @@ def main():
         "duration": round(match.duration.total_seconds(), 3),
         "entities": entities,
         "build_sites": build_sites,
+        "scenery": build_scenery(match, {e["id"] for e in entities}),
         "props": [],
         "commands": cmds,
     }
@@ -176,6 +219,9 @@ def main():
     print(f"  builds: {[(c['t'], c['building'], c['x'], c['y']) for c in cmds if c['type']=='build']}")
     print(f"  herds: {[(h['id'], h['x'], h['y']) for h in herds]}")
     print(f"  moves: {[(c['t'], c['unit_ids'], c['x'], c['y']) for c in cmds if c['type']=='move']}")
+    from collections import Counter
+    sc = Counter(s["type"] for s in doc["scenery"])
+    print(f"  scenery={len(doc['scenery'])} {dict(sc)}")
 
 
 if __name__ == "__main__":

@@ -19,10 +19,19 @@ const BUILDING_STYLE = {
 export function createRenderer(canvas, scenario) {
   const ctx = canvas.getContext("2d");
 
+  // The DEFAULT camera frames the action (sim entities) at the close zoom.
+  // The ground/grid + scenery span the WHOLE map so you can zoom out to it.
   const xs = scenario.entities.map((e) => e.x);
   const ys = scenario.entities.map((e) => e.y);
   const minX = Math.floor(Math.min(...xs)) - 3, maxX = Math.ceil(Math.max(...xs)) + 3;
   const minY = Math.floor(Math.min(...ys)) - 3, maxY = Math.ceil(Math.max(...ys)) + 3;
+
+  const scenery = (scenario.scenery || []).slice().sort((a, b) => (a.x + a.y) - (b.x + b.y));
+  const dim = scenario.map?.dimension || Math.max(maxX, maxY) + 3;
+  // ground extent: full map when we have scenery, else just the action area
+  const G = scenery.length
+    ? { x0: 0, y0: 0, x1: dim, y1: dim }
+    : { x0: minX, y0: minY, x1: maxX, y1: maxY };
 
   const cam = { cx: (minX + maxX) / 2, cy: (minY + maxY) / 2, k: 22 };
 
@@ -46,7 +55,8 @@ export function createRenderer(canvas, scenario) {
   });
   canvas.addEventListener("wheel", (e) => {
     e.preventDefault();
-    cam.k = Math.max(8, Math.min(64, cam.k * (e.deltaY < 0 ? 1.12 : 0.89)));
+    // min 3 = whole 120-tile map fits; max 80 = closer than the default view
+    cam.k = Math.max(3, Math.min(80, cam.k * (e.deltaY < 0 ? 1.12 : 0.89)));
   }, { passive: false });
 
   // rounded-rect path in screen space (sheep bodies, etc.)
@@ -76,9 +86,23 @@ export function createRenderer(canvas, scenario) {
   const rect = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
   const cell = (n, m) => rect(n, m, n + 1, m + 1);
 
+  // Is a tile's screen position within the canvas (with a margin)? Used to
+  // cull the grid + scenery so any zoom level draws only what's visible.
+  function onScreen(wx, wy, margin) {
+    const [sx, sy] = px(wx, wy);
+    return sx >= -margin && sx <= canvas.width + margin
+        && sy >= -margin && sy <= canvas.height + margin;
+  }
+
   function drawGrid() {
-    for (let x = minX; x <= maxX; x++) {
-      for (let y = minY; y <= maxY; y++) {
+    // a flat base over the whole ground extent (one cheap diamond)
+    poly(rect(G.x0, G.y0, G.x1, G.y1), "#52402d");
+    // crisp per-tile checker only when zoomed in enough to read it; culled
+    if (cam.k < 7) return;
+    const m = cam.k * 1.5;
+    for (let x = G.x0; x < G.x1; x++) {
+      for (let y = G.y0; y < G.y1; y++) {
+        if (!onScreen(x + 0.5, y + 0.5, m)) continue;
         poly(cell(x, y), ((x + y) & 1) ? "#5a4632" : "#52402d", "rgba(0,0,0,.15)");
       }
     }
@@ -280,6 +304,43 @@ export function createRenderer(canvas, scenario) {
     ctx.textBaseline = "alphabetic";
   }
 
+  function disc(sx, sy, r, fill, stroke) {
+    ctx.beginPath(); ctx.arc(sx, sy, r, 0, 2 * Math.PI);
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+  }
+  function animalBlob(sx, sy, s, fill, stroke) {
+    ctx.fillStyle = "rgba(0,0,0,.22)";
+    ctx.beginPath(); ctx.ellipse(sx, sy + 1.5, s * 0.55, s * 0.36, 0, 0, 2 * Math.PI); ctx.fill();
+    ctx.fillStyle = fill;
+    ctx.beginPath(); ctx.ellipse(sx, sy, s * 0.5, s * 0.32, 0, 0, 2 * Math.PI); ctx.fill();
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+  }
+
+  // Static full-map decor: forests, gold/stone mines, forage, relics, and the
+  // wildlife (far sheep/geese, boars, jaguars). Not part of the sim — drawn
+  // beneath the live action, viewport-culled so any zoom stays cheap.
+  function drawScenery() {
+    const m = cam.k * 1.4;
+    for (const o of scenery) {
+      if (!onScreen(o.x, o.y, m)) continue;
+      const [sx, sy] = px(o.x, o.y);
+      const s = cam.k * 0.5;
+      const c = cell(Math.floor(o.x), Math.floor(o.y));
+      switch (o.type) {
+        case "tree":   poly(c, SPECIES_COLOR.default, "rgba(0,0,0,.28)"); break;
+        case "gold":   poly(c, "#5a4a22"); disc(sx, sy, cam.k * 0.22, "#e8c24a", "#7a5e18"); break;
+        case "stone":  poly(c, "#494a4d"); disc(sx, sy, cam.k * 0.22, "#b8bcc0", "#5a5c5e"); break;
+        case "bush":   poly(c, "#8e3b46", "rgba(0,0,0,.3)"); disc(sx, sy, cam.k * 0.16, "#ff9aa8"); break;
+        case "herdable": animalBlob(sx, sy, s, "#cdccc6", "#6b6b64"); break;   // wild sheep/geese
+        case "boar":   animalBlob(sx, sy, s * 1.3, "#2c2216", "#140e08"); break;
+        case "predator": animalBlob(sx, sy, s * 1.05, "#b87a36", "#5a3a16"); break; // jaguar
+        case "deer":   animalBlob(sx, sy, s, "#c8a368", "#7a5a30"); break;
+        case "relic":  disc(sx, sy, cam.k * 0.26, "#d8b23c", "#7a5e10"); break;
+      }
+    }
+  }
+
   function draw(g) {
     const W = canvas.clientWidth, H = canvas.clientHeight;
     if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
@@ -287,6 +348,7 @@ export function createRenderer(canvas, scenario) {
     ctx.fillRect(0, 0, W, H);
 
     drawGrid();
+    drawScenery();
 
     // The Town Center renders in two layers AROUND the units: its floor
     // below them (units stand visibly on the courtyard / under the overhangs)

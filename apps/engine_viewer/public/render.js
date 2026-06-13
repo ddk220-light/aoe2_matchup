@@ -440,21 +440,79 @@ export function createRenderer(canvas, scenario) {
     if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
   }
 
+  // ---- gaia idle-wander (render-only, deterministic). Boars demonstrably
+  // wander in the gRPC capture (Genie wander task): idle a random while, then
+  // walk a straight line at the type's speed to a random spot within radius of
+  // SPAWN, repeat — never leaving the radius. position is a pure function of
+  // (id, type, home, t), so scrubbing reproduces identical motion. Params
+  // calibrated to the boar capture (speed 0.80, radius 4, idle 6-36s, step
+  // 1.0-2.5) + AoE2:DE wiki per-type speeds; adversarially verified (leashed,
+  // no teleports, byte-identical forward/reverse scrub). See memory.
+  const WANDER = {
+    boar:     { speed: 0.80, idleMin: 6,  idleMax: 36, stepMin: 1.0, stepMax: 2.5, radius: 4 },
+    deer:     { speed: 1.40, idleMin: 8,  idleMax: 30, stepMin: 1.5, stepMax: 3.5, radius: 6 },
+    predator: { speed: 1.19, idleMin: 10, idleMax: 45, stepMin: 1.0, stepMax: 3.0, radius: 5 },
+    chicken:  { speed: 0.75, idleMin: 4,  idleMax: 18, stepMin: 0.4, stepMax: 1.0, radius: 1.5 },
+  };
+  const mulberry32 = (a) => () => {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), a | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const seedFromId = (id, salt) => {           // FNV-1a, salted per type
+    let h = 2166136261 >>> 0; const s = String(id) + "|" + salt;
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return (h >>> 0) || 1;
+  };
+  const skewHigh = (u) => { const v = 1 - u; return 1 - v * v; };  // idles bunch high
+  function wanderPos(o, t) {
+    const P = WANDER[o.type];
+    if (!P || !(t > 0)) return [o.x, o.y];
+    const rng = mulberry32(seedFromId(o.id, o.type));
+    const hx = o.x, hy = o.y;
+    let px2 = hx, py2 = hy, clock = 0;
+    let idle = P.idleMin + skewHigh(rng()) * (P.idleMax - P.idleMin);
+    const pick = () => {                        // uniform-in-disk target near home
+      for (let i = 0; i < 24; i++) {
+        const ang = rng() * 2 * Math.PI, r = P.radius * Math.sqrt(rng());
+        const tx = hx + r * Math.cos(ang), ty = hy + r * Math.sin(ang);
+        const d = Math.hypot(tx - px2, ty - py2);
+        if (d >= P.stepMin && d <= P.stepMax) return [tx, ty, d];
+      }
+      return [px2, py2, 0];
+    };
+    for (let guard = 0; guard < 5000; guard++) {
+      const [tx, ty, d] = pick();
+      const dur = d > 0 ? d / P.speed : 1e6;
+      if (t < clock + idle || d === 0) return [px2, py2];          // idling
+      if (t < clock + idle + dur) {                                // walking
+        const f = (t - clock - idle) / dur;
+        return [px2 + (tx - px2) * f, py2 + (ty - py2) * f];
+      }
+      clock += idle + dur; px2 = tx; py2 = ty;
+      idle = P.idleMin + skewHigh(rng()) * (P.idleMax - P.idleMin);
+    }
+    return [px2, py2];
+  }
+
   // Static full-map decor: forests, gold/stone mines, forage, relics, and the
-  // wildlife (far sheep/geese, boars, jaguars). Not part of the sim — drawn
-  // beneath the live action, viewport-culled so any zoom stays cheap.
+  // wildlife (far sheep/geese static; boars/jaguars idle-wander). Not part of
+  // the sim — drawn beneath the live action, viewport-culled.
   // Resources/relics are STATIC (revealed once explored); animals are LIVE
   // (only shown in current LOS — their movement isn't seen in explored fog).
   const SCENERY_LIVE = new Set(["herdable", "boar", "predator", "deer"]);
-  function drawScenery() {
+  function drawScenery(nowT) {
     const m = cam.k * 1.4;
     for (const o of scenery) {
-      if (!onScreen(o.x, o.y, m)) continue;
-      if (SCENERY_LIVE.has(o.type) ? !seeUnit(o.x, o.y) : !seeStatic(o.x, o.y)) continue;
-      elevPxOff = entElev(o);
-      const [sx, sy] = px(o.x, o.y);
+      let ox = o.x, oy = o.y;
+      if (WANDER[o.type]) { const p = wanderPos(o, nowT); ox = p[0]; oy = p[1]; }
+      if (!onScreen(ox, oy, m)) continue;
+      if (SCENERY_LIVE.has(o.type) ? !seeUnit(ox, oy) : !seeStatic(ox, oy)) continue;
+      elevPxOff = showElev ? elevAt(Math.floor(ox), Math.floor(oy)) * eStep() : 0;
+      const [sx, sy] = px(ox, oy);
       const s = cam.k * 0.5;
-      const c = cell(Math.floor(o.x), Math.floor(o.y));
+      const c = cell(Math.floor(ox), Math.floor(oy));
       switch (o.type) {
         case "tree":   poly(c, SPECIES_COLOR.default, "rgba(0,0,0,.28)"); break;
         case "gold":   poly(c, "#5a4a22"); disc(sx, sy, cam.k * 0.22, "#e8c24a", "#7a5e18"); break;
@@ -478,7 +536,7 @@ export function createRenderer(canvas, scenario) {
     ctx.fillRect(0, 0, W, H);
 
     drawGrid();
-    drawScenery();
+    drawScenery(g.t);
 
     // The Town Center renders in two layers AROUND the units: its floor
     // below them (units stand visibly on the courtyard / under the overhangs)

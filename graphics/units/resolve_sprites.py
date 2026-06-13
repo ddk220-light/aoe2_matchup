@@ -19,8 +19,8 @@ DRS = os.path.join(GAME, 'resources', '_common', 'drs', 'graphics')
 # Ships: the dat's standing_graphic.file_name is a placeholder ("W"/"X"), so they
 # can't be resolved the normal way. Their real art lives under u_shp_<name> SLDs
 # (16 directions, 1 static frame each — no _idle suffix). Map slug -> SLD basename.
-# Hulk / War Hulk have NO dedicated u_shp_ SLD (they share the Carrack line art),
-# so they stay on the portrait fallback.
+# Note the Hulk line is spelled "holk" in the asset files (u_shp_holk / u_shp_war_holk),
+# even though the dat graphic names are HULK_FNW / WARHULK_FNW.
 NAVAL_SLD = {
     'galley': 'u_shp_galley', 'war_galley': 'u_shp_war_galley', 'galleon': 'u_shp_galleon',
     'fire_galley': 'u_shp_fire_galley', 'fire_ship': 'u_shp_fire_ship',
@@ -28,6 +28,7 @@ NAVAL_SLD = {
     'demo_ship': 'u_shp_demo_ship', 'heavy_demo_ship': 'u_shp_heavy_demo_ship',
     'cannon_galleon': 'u_shp_cannon_galleon', 'elite_cannon_galleon': 'u_shp_elite_cannon_galleon',
     'carrack': 'u_shp_carrack', 'catapult_galleon': 'u_shp_catapult_galleon_idle',
+    'hulk': 'u_shp_holk', 'war_hulk': 'u_shp_war_holk',
 }
 
 

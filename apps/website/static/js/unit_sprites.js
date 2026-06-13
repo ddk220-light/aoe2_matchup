@@ -1236,6 +1236,15 @@ const UNIT_SPRITES = {
   "url_blue": "/static/img/unit_sprites/houfnice_blue.png",
   "w": 384
  },
+ "Hulk": {
+  "cat": "square",
+  "h": 268,
+  "ratio": 1.43,
+  "slug": "hulk",
+  "url": "/static/img/unit_sprites/hulk.png",
+  "url_blue": "/static/img/unit_sprites/hulk_blue.png",
+  "w": 384
+ },
  "Huskarl": {
   "cat": "square",
   "h": 372,
@@ -1927,6 +1936,15 @@ const UNIT_SPRITES = {
   "slug": "war_galley",
   "url": "/static/img/unit_sprites/war_galley.png",
   "url_blue": "/static/img/unit_sprites/war_galley_blue.png",
+  "w": 384
+ },
+ "War Hulk": {
+  "cat": "borderline",
+  "h": 256,
+  "ratio": 1.503,
+  "slug": "war_hulk",
+  "url": "/static/img/unit_sprites/war_hulk.png",
+  "url_blue": "/static/img/unit_sprites/war_hulk_blue.png",
   "w": 384
  },
  "War Wagon": {

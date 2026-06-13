@@ -16,6 +16,20 @@ from aoe2x.extract.extract_units import UNIT_NAMES
 DAT = 'D:/SteamLibrary/steamapps/common/AoE2DE/resources/_common/dat/empires2_x2_p1.dat'
 DRS = os.path.join(GAME, 'resources', '_common', 'drs', 'graphics')
 
+# Ships: the dat's standing_graphic.file_name is a placeholder ("W"/"X"), so they
+# can't be resolved the normal way. Their real art lives under u_shp_<name> SLDs
+# (16 directions, 1 static frame each — no _idle suffix). Map slug -> SLD basename.
+# Hulk / War Hulk have NO dedicated u_shp_ SLD (they share the Carrack line art),
+# so they stay on the portrait fallback.
+NAVAL_SLD = {
+    'galley': 'u_shp_galley', 'war_galley': 'u_shp_war_galley', 'galleon': 'u_shp_galleon',
+    'fire_galley': 'u_shp_fire_galley', 'fire_ship': 'u_shp_fire_ship',
+    'fast_fire_ship': 'u_shp_fast_fire_ship', 'demo_raft': 'u_shp_demo_raft',
+    'demo_ship': 'u_shp_demo_ship', 'heavy_demo_ship': 'u_shp_heavy_demo_ship',
+    'cannon_galleon': 'u_shp_cannon_galleon', 'elite_cannon_galleon': 'u_shp_elite_cannon_galleon',
+    'carrack': 'u_shp_carrack', 'catapult_galleon': 'u_shp_catapult_galleon_idle',
+}
+
 
 def slugify(name):
     return re.sub(r'[^a-z0-9]+', '_', name.lower()).strip('_')
@@ -55,6 +69,12 @@ def main():
     for name, ids in name_ids.items():
         slug = slugify(name)
         found = None
+        # Ships first: resolve directly from the u_shp_ name map (dat pointer is broken).
+        if slug in NAVAL_SLD:
+            found = find_on_disk(NAVAL_SLD[slug])
+            if found:
+                out[slug] = found
+                continue
         for uid in ids:
             u = g.units[uid] if uid < len(g.units) else None
             sg = getattr(u, 'standing_graphic', None) if u else None

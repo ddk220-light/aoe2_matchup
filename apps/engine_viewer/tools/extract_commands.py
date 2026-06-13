@@ -61,6 +61,25 @@ def scenery_type(name, master):
     return None                  # grass / plants / flowers / rocks / fish / unnamed
 
 
+def build_elevation(match):
+    """Per-tile elevation (0-9) as a flat row-major string, index = y*dim + x.
+    This DOES come from the replay (the map header carries terrain+elevation)."""
+    mp = match.map
+    dim = mp.dimension
+    grid = [["0"] * dim for _ in range(dim)]
+    hi = 0
+    for t in getattr(mp, "tiles", None) or []:
+        pos = getattr(t, "position", None)
+        if pos is None:
+            continue
+        h = int(getattr(t, "elevation", 0) or 0)
+        h = max(0, min(9, h))
+        hi = max(hi, h)
+        if 0 <= pos.y < dim and 0 <= pos.x < dim:
+            grid[pos.y][pos.x] = str(h)
+    return {"dim": dim, "max": hi, "data": "".join("".join(r) for r in grid)}
+
+
 def build_scenery(match, skip_ids):
     """Every renderable gaia object across the whole map, minus the ids that
     are already live sim entities (so they animate instead of sitting static)."""
@@ -202,6 +221,7 @@ def main():
         "entities": entities,
         "build_sites": build_sites,
         "scenery": build_scenery(match, {e["id"] for e in entities}),
+        "elevation": build_elevation(match),
         "props": [],
         "commands": cmds,
     }
@@ -222,6 +242,8 @@ def main():
     from collections import Counter
     sc = Counter(s["type"] for s in doc["scenery"])
     print(f"  scenery={len(doc['scenery'])} {dict(sc)}")
+    el = doc["elevation"]
+    print(f"  elevation: dim={el['dim']} max={el['max']} chars={len(el['data'])}")
 
 
 if __name__ == "__main__":

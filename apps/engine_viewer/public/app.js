@@ -198,10 +198,13 @@ $("scrub").addEventListener("input", (e) => {
 function applyFog() {
   const reveal = $("reveal")?.checked, showAll = $("showall")?.checked;
   renderer.setFog(showAll ? "all" : reveal ? "nofog" : "fog");
+  renderer.setElev($("elev")?.checked);
   renderer.draw(g);
 }
 $("reveal")?.addEventListener("change", applyFog);
 $("showall")?.addEventListener("change", applyFog);
+$("elev")?.addEventListener("change", applyFog);
+if (!renderer.hasElev()) { const el = $("elev"); if (el) el.closest("label").style.display = "none"; }
 applyFog();
 
 if (GOAL) $("goal").textContent = `/ ${GOAL} goal`;

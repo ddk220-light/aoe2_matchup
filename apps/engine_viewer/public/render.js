@@ -28,6 +28,20 @@ export function createRenderer(canvas, scenario) {
 
   const scenery = (scenario.scenery || []).slice().sort((a, b) => (a.x + a.y) - (b.x + b.y));
   const dim = scenario.map?.dimension || Math.max(maxX, maxY) + 3;
+
+  // Per-tile elevation (from the replay map header). Blocky Minecraft-style:
+  // each tile is a flat plateau at its own height with vertical step walls.
+  const elevData = scenario.elevation || null;
+  const eDim = elevData?.dim || dim;
+  const eStr = elevData?.data || "";
+  const eMax = elevData?.max || 0;
+  let showElev = !!elevData;                 // toggle; on when the map has data
+  const elevAt = (tx, ty) => {
+    if (!eStr || tx < 0 || ty < 0 || tx >= eDim || ty >= eDim) return 0;
+    return eStr.charCodeAt(ty * eDim + tx) - 48;   // single-digit char -> int
+  };
+  const eStep = () => cam.k * 0.5;           // screen px raised per elevation level
+  let elevPxOff = 0;                          // current entity's elevation offset
   // ground extent: full map when we have scenery, else just the action area
   const G = scenery.length
     ? { x0: 0, y0: 0, x1: dim, y1: dim }
@@ -45,10 +59,25 @@ export function createRenderer(canvas, scenario) {
   // can the player see LIVE units/animals at a tile? only where currently in LOS
   const seeUnit = (wx, wy) => fogMode === "all" || VIS.has(tkey(wx, wy));
 
+  // project a world point; entities sit on their tile, raised by elevPxOff
   function px(wx, wy) {
     const sx = (wx + wy - cam.cx - cam.cy) * cam.k;
     const sy = (wy - wx - (cam.cy - cam.cx)) * cam.k * 0.5;
-    return [canvas.width / 2 + sx, canvas.height / 2 + sy];
+    return [canvas.width / 2 + sx, canvas.height / 2 + sy - elevPxOff];
+  }
+  // project with an EXPLICIT pixel height (for terrain tops/walls)
+  function pxe(wx, wy, hpix) {
+    const sx = (wx + wy - cam.cx - cam.cy) * cam.k;
+    const sy = (wy - wx - (cam.cy - cam.cx)) * cam.k * 0.5;
+    return [canvas.width / 2 + sx, canvas.height / 2 + sy - hpix];
+  }
+  // polygon through already-projected screen points
+  function polyAbs(pts, fill, stroke, lw = 1) {
+    ctx.beginPath();
+    pts.forEach(([sx, sy], i) => { if (i) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); });
+    ctx.closePath();
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+    if (stroke) { ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.stroke(); ctx.lineWidth = 1; }
   }
 
   // pan / zoom (inverse of px for drag deltas)
@@ -106,7 +135,63 @@ export function createRenderer(canvas, scenario) {
 
   const groundFill = (x, y) => ((x + y) & 1) ? "#5a4632" : "#52402d";
 
+  // ground colour lightened with elevation (sun on the hilltops); precomputed
+  function brighten(hex, f) {
+    const c = (i) => Math.min(255, Math.round(parseInt(hex.slice(i, i + 2), 16) * f));
+    return `rgb(${c(1)},${c(3)},${c(5)})`;
+  }
+  const GROUND_ELEV = [];
+  for (let h = 0; h <= 9; h++) {
+    const f = 1 + Math.min(h, 6) * 0.09;
+    GROUND_ELEV[h] = [brighten("#52402d", f), brighten("#5a4632", f)];
+  }
+  const WALL_W = "#241b0f", WALL_S = "#342817"; // west face darker, south face medium
+
+  // One blocky tile: a flat top plateau at its height plus the two front step
+  // walls (west + south faces) dropping to the lower neighbour. Minecraft-ish.
+  function drawTile(n, m) {
+    const h = elevAt(n, m), hp = h * eStep();
+    if (cam.k >= 4 && h > 0) {
+      const hw = elevAt(n - 1, m);
+      if (h > hw) {
+        const b = hw * eStep();
+        polyAbs([pxe(n, m, hp), pxe(n, m + 1, hp), pxe(n, m + 1, b), pxe(n, m, b)], WALL_W);
+      }
+      const hs = elevAt(n, m + 1);
+      if (h > hs) {
+        const b = hs * eStep();
+        polyAbs([pxe(n, m + 1, hp), pxe(n + 1, m + 1, hp), pxe(n + 1, m + 1, b), pxe(n, m + 1, b)], WALL_S);
+      }
+    }
+    const stroke = cam.k >= 7 ? "rgba(0,0,0,.12)" : null;
+    polyAbs([pxe(n, m, hp), pxe(n + 1, m, hp), pxe(n + 1, m + 1, hp), pxe(n, m + 1, hp)],
+            GROUND_ELEV[Math.min(h, 9)][(n + m) & 1], stroke);
+  }
+
+  // Blocky terrain, painter-ordered (back-to-front by x+y) so step walls
+  // occlude correctly. Fog gates it to explored tiles; reveal/all sweep the
+  // extent. Culled by the raised tile centre.
+  function drawTerrain() {
+    const margin = cam.k * 2 + eMax * eStep();
+    const draw1 = (x, y) => {
+      const [csx, csy] = pxe(x + 0.5, y + 0.5, elevAt(x, y) * eStep());
+      if (csx < -margin || csx > canvas.width + margin
+          || csy < -margin || csy > canvas.height + margin) return;
+      drawTile(x, y);
+    };
+    if (fogMode === "fog") {
+      const ts = [...EXP].map((k) => k.split(",").map(Number)).sort((a, b) => (a[0] + a[1]) - (b[0] + b[1]));
+      for (const [x, y] of ts) draw1(x, y);
+    } else {
+      const s0 = G.x0 + G.y0, s1 = (G.x1 - 1) + (G.y1 - 1);
+      for (let s = s0; s <= s1; s++)
+        for (let x = Math.max(G.x0, s - (G.y1 - 1)); x <= Math.min(G.x1 - 1, s - G.y0); x++)
+          draw1(x, s - x);
+    }
+  }
+
   function drawGrid() {
+    if (showElev) { drawTerrain(); return; }
     if (fogMode === "fog") {
       // only EXPLORED ground exists; unexplored stays the dark fog backdrop.
       // Iterate the bounded explored set (cheap at any zoom), not the map.
@@ -137,9 +222,14 @@ export function createRenderer(canvas, scenario) {
       if (VIS.has(k)) continue;
       const [x, y] = k.split(",").map(Number);
       if (!onScreen(x + 0.5, y + 0.5, cam.k)) continue;
+      elevPxOff = showElev ? elevAt(x, y) * eStep() : 0;   // dim sits on the tile top
       poly(cell(x, y), "rgba(8,10,12,0.5)");
     }
+    elevPxOff = 0;
   }
+
+  // an entity's screen-height offset = the elevation of the tile it stands on
+  const entElev = (e) => (showElev ? elevAt(Math.floor(e.x), Math.floor(e.y)) * eStep() : 0);
 
   const seedPool = new Map(scenario.entities
     .filter((e) => e.type === "tree" || e.type === "bush" || e.type === "herdable")
@@ -361,6 +451,7 @@ export function createRenderer(canvas, scenario) {
     for (const o of scenery) {
       if (!onScreen(o.x, o.y, m)) continue;
       if (SCENERY_LIVE.has(o.type) ? !seeUnit(o.x, o.y) : !seeStatic(o.x, o.y)) continue;
+      elevPxOff = entElev(o);
       const [sx, sy] = px(o.x, o.y);
       const s = cam.k * 0.5;
       const c = cell(Math.floor(o.x), Math.floor(o.y));
@@ -376,6 +467,7 @@ export function createRenderer(canvas, scenario) {
         case "relic":  disc(sx, sy, cam.k * 0.26, "#d8b23c", "#7a5e10"); break;
       }
     }
+    elevPxOff = 0;
   }
 
   function draw(g) {
@@ -394,12 +486,13 @@ export function createRenderer(canvas, scenario) {
     // else is a single painter pass sorted back-to-front. Static content is
     // gated by `seeStatic`, live units/animals by `seeUnit`.
     for (const e of g.ents.values())
-      if (e.type === "town_center" && seeStatic(e.x, e.y)) drawTCFloor(e);
+      if (e.type === "town_center" && seeStatic(e.x, e.y)) { elevPxOff = entElev(e); drawTCFloor(e); }
 
     const items = [...g.ents.values()]
       .filter((e) => e.type !== "town_center")
       .sort((a, b) => (a.x + a.y) - (b.x + b.y));
     for (const e of items) {
+      elevPxOff = entElev(e);                 // sit each entity on its tile's height
       if (e.type === "tree") { if (seeStatic(e.x, e.y)) drawTree(e); }
       else if (e.type === "bush") { if (seeStatic(e.x, e.y)) drawBush(e); }
       else if (e.type === "herdable") { if (seeUnit(e.x, e.y)) drawHerdable(e, g.t); }
@@ -408,10 +501,15 @@ export function createRenderer(canvas, scenario) {
     }
 
     for (const e of g.ents.values())
-      if (e.type === "town_center" && seeStatic(e.x, e.y)) drawTCRoof(e);
+      if (e.type === "town_center" && seeStatic(e.x, e.y)) { elevPxOff = entElev(e); drawTCRoof(e); }
 
+    elevPxOff = 0;
     drawFogDim();
   }
 
-  return { draw, cam, setFog: (m) => { fogMode = m; }, getFog: () => fogMode };
+  return {
+    draw, cam,
+    setFog: (m) => { fogMode = m; }, getFog: () => fogMode,
+    setElev: (on) => { showElev = on && !!elevData; }, hasElev: () => !!elevData,
+  };
 }

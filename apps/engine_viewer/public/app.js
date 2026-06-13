@@ -16,12 +16,12 @@ const GOAL = scen.players[0].goal_wood_collected
           || scen.players[0].goal_collected || null;
 const DUR = Math.ceil(scen.duration);
 
-let g = createGame(scen);
+let g = createGame(scen, { vision: true });   // viewer tracks fog of war
 let playing = false;
 let speed = 4;
 
 function rebuildTo(t) {
-  g = createGame(scen);
+  g = createGame(scen, { vision: true });
   run(g, Math.max(0, Math.min(t, DUR)));
   updateHud();
   renderer.draw(g);    // repaint immediately (don't depend on RAF timing)
@@ -190,6 +190,20 @@ $("scrub").max = DUR;
 $("scrub").addEventListener("input", (e) => {
   playing = false; $("play").textContent = "▶ Play"; rebuildTo(+e.target.value);
 });
+
+// Fog-of-war toggles. Two checkboxes drive three modes:
+//   neither = fog of war (explore as you go)
+//   "reveal map" = whole map's static content shown, units only in LOS
+//   "show all" = everything visible everywhere (the old spectator view)
+function applyFog() {
+  const reveal = $("reveal")?.checked, showAll = $("showall")?.checked;
+  renderer.setFog(showAll ? "all" : reveal ? "nofog" : "fog");
+  renderer.draw(g);
+}
+$("reveal")?.addEventListener("change", applyFog);
+$("showall")?.addEventListener("change", applyFog);
+applyFog();
+
 if (GOAL) $("goal").textContent = `/ ${GOAL} goal`;
 $("title").textContent = `⚙ AoE2 Engine — ${SCEN}`;
 

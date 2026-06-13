@@ -35,6 +35,16 @@ export function createRenderer(canvas, scenario) {
 
   const cam = { cx: (minX + maxX) / 2, cy: (minY + maxY) / 2, k: 22 };
 
+  // Fog of war mode: "fog" (explore as you go), "nofog" (whole map revealed,
+  // live units only in LOS), "all" (everything visible — the old view).
+  let fogMode = "fog";
+  let EXP = new Set(), VIS = new Set();   // refreshed from g each draw
+  const tkey = (wx, wy) => `${Math.floor(wx)},${Math.floor(wy)}`;
+  // can the player see STATIC content (terrain, trees, buildings) at a tile?
+  const seeStatic = (wx, wy) => fogMode !== "fog" || EXP.has(tkey(wx, wy));
+  // can the player see LIVE units/animals at a tile? only where currently in LOS
+  const seeUnit = (wx, wy) => fogMode === "all" || VIS.has(tkey(wx, wy));
+
   function px(wx, wy) {
     const sx = (wx + wy - cam.cx - cam.cy) * cam.k;
     const sy = (wy - wx - (cam.cy - cam.cx)) * cam.k * 0.5;
@@ -94,17 +104,40 @@ export function createRenderer(canvas, scenario) {
         && sy >= -margin && sy <= canvas.height + margin;
   }
 
+  const groundFill = (x, y) => ((x + y) & 1) ? "#5a4632" : "#52402d";
+
   function drawGrid() {
-    // a flat base over the whole ground extent (one cheap diamond)
+    if (fogMode === "fog") {
+      // only EXPLORED ground exists; unexplored stays the dark fog backdrop.
+      // Iterate the bounded explored set (cheap at any zoom), not the map.
+      const stroke = cam.k >= 7 ? "rgba(0,0,0,.15)" : null;
+      for (const k of EXP) {
+        const [x, y] = k.split(",").map(Number);
+        if (!onScreen(x + 0.5, y + 0.5, cam.k)) continue;
+        poly(cell(x, y), groundFill(x, y), stroke);
+      }
+      return;
+    }
+    // revealed: flat base over the whole extent + culled checker when zoomed in
     poly(rect(G.x0, G.y0, G.x1, G.y1), "#52402d");
-    // crisp per-tile checker only when zoomed in enough to read it; culled
     if (cam.k < 7) return;
     const m = cam.k * 1.5;
-    for (let x = G.x0; x < G.x1; x++) {
+    for (let x = G.x0; x < G.x1; x++)
       for (let y = G.y0; y < G.y1; y++) {
         if (!onScreen(x + 0.5, y + 0.5, m)) continue;
-        poly(cell(x, y), ((x + y) & 1) ? "#5a4632" : "#52402d", "rgba(0,0,0,.15)");
+        poly(cell(x, y), groundFill(x, y), "rgba(0,0,0,.15)");
       }
+  }
+
+  // Dim the EXPLORED-but-not-visible tiles (objects last-seen, no live units).
+  // Iterating the explored set keeps this bounded regardless of zoom.
+  function drawFogDim() {
+    if (fogMode !== "fog") return;
+    for (const k of EXP) {
+      if (VIS.has(k)) continue;
+      const [x, y] = k.split(",").map(Number);
+      if (!onScreen(x + 0.5, y + 0.5, cam.k)) continue;
+      poly(cell(x, y), "rgba(8,10,12,0.5)");
     }
   }
 
@@ -320,10 +353,14 @@ export function createRenderer(canvas, scenario) {
   // Static full-map decor: forests, gold/stone mines, forage, relics, and the
   // wildlife (far sheep/geese, boars, jaguars). Not part of the sim — drawn
   // beneath the live action, viewport-culled so any zoom stays cheap.
+  // Resources/relics are STATIC (revealed once explored); animals are LIVE
+  // (only shown in current LOS — their movement isn't seen in explored fog).
+  const SCENERY_LIVE = new Set(["herdable", "boar", "predator", "deer"]);
   function drawScenery() {
     const m = cam.k * 1.4;
     for (const o of scenery) {
       if (!onScreen(o.x, o.y, m)) continue;
+      if (SCENERY_LIVE.has(o.type) ? !seeUnit(o.x, o.y) : !seeStatic(o.x, o.y)) continue;
       const [sx, sy] = px(o.x, o.y);
       const s = cam.k * 0.5;
       const c = cell(Math.floor(o.x), Math.floor(o.y));
@@ -344,7 +381,8 @@ export function createRenderer(canvas, scenario) {
   function draw(g) {
     const W = canvas.clientWidth, H = canvas.clientHeight;
     if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
-    ctx.fillStyle = "#1a2010";
+    EXP = g.explored || EXP; VIS = g.visible || VIS;
+    ctx.fillStyle = fogMode === "fog" ? "#0b0d09" : "#1a2010";  // unexplored backdrop
     ctx.fillRect(0, 0, W, H);
 
     drawGrid();
@@ -353,22 +391,27 @@ export function createRenderer(canvas, scenario) {
     // The Town Center renders in two layers AROUND the units: its floor
     // below them (units stand visibly on the courtyard / under the overhangs)
     // and its roofs above them (opaque back, translucent sides). Everything
-    // else is a single painter pass sorted back-to-front.
-    for (const e of g.ents.values()) if (e.type === "town_center") drawTCFloor(e);
+    // else is a single painter pass sorted back-to-front. Static content is
+    // gated by `seeStatic`, live units/animals by `seeUnit`.
+    for (const e of g.ents.values())
+      if (e.type === "town_center" && seeStatic(e.x, e.y)) drawTCFloor(e);
 
     const items = [...g.ents.values()]
       .filter((e) => e.type !== "town_center")
       .sort((a, b) => (a.x + a.y) - (b.x + b.y));
     for (const e of items) {
-      if (e.type === "tree") drawTree(e);
-      else if (e.type === "bush") drawBush(e);
-      else if (e.type === "herdable") drawHerdable(e, g.t);
-      else if (BUILDINGS[e.type]) drawBuilding(e);
-      else if (e.type === "villager" || e.type === "scout") drawUnit(e);
+      if (e.type === "tree") { if (seeStatic(e.x, e.y)) drawTree(e); }
+      else if (e.type === "bush") { if (seeStatic(e.x, e.y)) drawBush(e); }
+      else if (e.type === "herdable") { if (seeUnit(e.x, e.y)) drawHerdable(e, g.t); }
+      else if (BUILDINGS[e.type]) { if (seeStatic(e.x, e.y)) drawBuilding(e); }
+      else if (e.type === "villager" || e.type === "scout") { if (seeUnit(e.x, e.y)) drawUnit(e); }
     }
 
-    for (const e of g.ents.values()) if (e.type === "town_center") drawTCRoof(e);
+    for (const e of g.ents.values())
+      if (e.type === "town_center" && seeStatic(e.x, e.y)) drawTCRoof(e);
+
+    drawFogDim();
   }
 
-  return { draw, cam };
+  return { draw, cam, setFog: (m) => { fogMode = m; }, getFog: () => fogMode };
 }

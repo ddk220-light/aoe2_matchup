@@ -26,6 +26,9 @@
   #housed { color: var(--bad); font-weight: 700; font-size: 12px; }
   #popWrap.full b { color: var(--bad); }
   header .dim, .dim { color: var(--dim); }
+  header .fog { margin-left: auto; display: flex; gap: 12px; color: var(--dim); font-size: 12.5px; }
+  header .fog label { display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; }
+  header .fog input { accent-color: var(--gold); cursor: pointer; }
   button, select {
     background: #2c2718; color: var(--ink); border: 1px solid var(--line);
     border-radius: 4px; padding: 4px 12px; font: inherit; cursor: pointer;
@@ -73,6 +76,10 @@
   <span class="stat">📦 collected <b id="wood">0</b> <span id="goal" class="dim"></span></span>
   <span class="stat" id="popWrap">👥 pop <b id="pop">0/0</b> <span id="housed"></span></span>
   <span class="stat" id="status"></span>
+  <span class="fog">
+    <label title="Reveal the whole map's terrain & objects (units still only in line of sight)"><input type="checkbox" id="reveal"> reveal map</label>
+    <label title="Make everything visible everywhere (no fog)"><input type="checkbox" id="showall"> show all</label>
+  </span>
 </header>
 <main>
   <div id="stage"><canvas id="view"></canvas></div>

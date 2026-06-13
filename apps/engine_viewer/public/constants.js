@@ -60,3 +60,12 @@ export const CIV_NO_HOUSES = new Set(["Huns"]);
 // resource carried per node type (herdable = a slain carcass yields food)
 export const NODE_RES = { tree: "wood", bush: "food", herdable: "food" };
 export const NODE_RATE = { tree: GATHER_RATE, bush: FORAGE_RATE, herdable: HERD_GATHER_RATE };
+
+// Line of sight (tiles) — NOT in the replay; these are known AoE2:DE unit/
+// building sight ranges, supplied so the viewer can recreate fog of war.
+// Only the player's OWN units/buildings (+ converted herdables) reveal.
+export const LOS = {
+  villager: 4, scout: 6,                 // the scout is the explorer (wide LOS)
+  town_center: 5, house: 4, mill: 6, lumber_camp: 6,
+  herdable: 3,                            // a herded sheep reveals a little around it
+};

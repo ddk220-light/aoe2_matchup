@@ -17,7 +17,7 @@ const isNode = (e) =>
 const nodePool = (e) => (e.type === "tree" ? e.wood : e.food);
 const drainNode = (e, amt) => { if (e.type === "tree") e.wood -= amt; else e.food -= amt; };
 
-export function createGame(scenario) {
+export function createGame(scenario, opts = {}) {
   const ents = new Map();
   for (const e of scenario.entities) ents.set(e.id, structuredClone(e));
   for (const e of ents.values()) {
@@ -57,11 +57,48 @@ export function createGame(scenario) {
     nextId: 10000,
     nextNum: num,
     blocked: new Set(),
+    // Fog of war: `explored` accumulates every tile ever seen; `visible` is
+    // the current line-of-sight union. Only tracked when opts.vision (the
+    // viewer) asks — the headless verifier leaves it off (zero overhead).
+    trackVision: !!opts.vision,
+    explored: new Set(),
+    visible: new Set(),
     bounds: { minX: Math.floor(Math.min(...xs)) - 6, maxX: Math.ceil(Math.max(...xs)) + 6,
               minY: Math.floor(Math.min(...ys)) - 6, maxY: Math.ceil(Math.max(...ys)) + 6 },
   };
   recomputeObstacles(g);
+  if (g.trackVision) updateVision(g);   // seed initial line of sight at t=0
   return g;
+}
+
+// ------------------------------------------------------------- fog of war
+// A tile is revealed if its centre is within an owned unit/building's LOS.
+function visionRadius(e) {
+  if (e.owner !== 1) return 0;
+  if (e.type === "villager") return C.LOS.villager;
+  if (e.type === "scout") return C.LOS.scout;
+  if (e.type === "herdable") return e.alive ? C.LOS.herdable : 0;
+  if (C.BUILDINGS[e.type]) return C.LOS[e.type] ?? 5;
+  return 0;
+}
+
+function stampVision(set, cx, cy, r) {
+  const r2 = r * r;
+  for (let tx = Math.floor(cx - r); tx <= cx + r; tx++)
+    for (let ty = Math.floor(cy - r); ty <= cy + r; ty++) {
+      const dx = tx + 0.5 - cx, dy = ty + 0.5 - cy;
+      if (dx * dx + dy * dy <= r2) set.add(`${tx},${ty}`);
+    }
+}
+
+export function updateVision(g) {
+  const vis = new Set();
+  for (const e of g.ents.values()) {
+    const r = visionRadius(e);
+    if (r > 0) stampVision(vis, e.x, e.y, r);
+  }
+  g.visible = vis;
+  for (const k of vis) g.explored.add(k);   // explored is cumulative
 }
 
 // ------------------------------------------------------------- population
@@ -217,6 +254,8 @@ export function step(g) {
     else if (e.type === "scout") stepScout(g, e);
     else if (e.type === "herdable") stepHerdable(g, e);
   }
+  // refresh line of sight a few times a second (cheap; viewer-only)
+  if (g.trackVision) { g._vtick = (g._vtick | 0) + 1; if (g._vtick % 3 === 0) updateVision(g); }
 }
 
 // Gaia herdables within CONVERT_RANGE of an owned unit flip to the player

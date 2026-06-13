@@ -52,6 +52,9 @@ const teamState = {
 
 // Preloaded unit images for canvas
 const unitImages = { 1: null, 2: null };
+// Whether the preloaded image is a real (square) sprite vs a portrait fallback —
+// drives the no-circle sprite rendering in BattleUnit.render().
+const unitIsSprite = { 1: false, 2: false };
 
 // ===== SELECTION UI =====
 // Click handlers are bound once via delegation in DOMContentLoaded (see
@@ -211,13 +214,17 @@ function setTeamAge(teamNum, age) {
 function selectUnit(teamNum, slug, name) {
     teamState[teamNum].unitSlug = slug;
     teamState[teamNum].unitName = name;
-    // Preload image for canvas with fallback
-    const iconId = NAME_TO_ICON[name];
-    if (iconId) {
+    // Preload canvas image: team-colored sprite (team 1 red, team 2 blue) when the
+    // unit has a square sprite, else the portrait. unitIsSprite drives no-circle render.
+    const url = spriteFor(name, teamNum);
+    if (url) {
         const img = new Image();
-        img.src = ICON_BASE + iconId + ".png";
+        img.src = url;
         unitImages[teamNum] = img;
+    } else {
+        unitImages[teamNum] = null;
     }
+    unitIsSprite[teamNum] = hasSprite(name);
     renderSelection(teamNum);
 }
 
@@ -1676,36 +1683,47 @@ class BattleUnit {
         const imgReady =
             img && img.complete && img.naturalWidth > 0;
 
-        // Team colored ring
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius + 2, 0, Math.PI * 2);
-        let ringColor = this.team === 1 ? "#e74c3c" : "#3498db";
-        if (this.attackAnimTimer > 0) ringColor = "#ffffff";
-        else if (this.state === "kiting")
-            ringColor = this.team === 1 ? "#9b59b6" : "#1abc9c";
-        ctx.fillStyle = ringColor;
-        ctx.fill();
-
-        if (imgReady) {
-            // Clip circle and draw sprite
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.clip();
-            ctx.drawImage(
-                img,
-                this.x - this.radius,
-                this.y - this.radius,
-                this.radius * 2,
-                this.radius * 2,
-            );
-            ctx.restore();
+        if (this.isSprite && imgReady) {
+            // Sprite mode: no circle/ring — team color is baked into the sprite
+            // (team 1 red, team 2 blue). Contain the whole sprite within the unit's
+            // 2*radius footprint so it never crops or bleeds into neighbours. A small
+            // scale-up on attack replaces the old white ring flash.
+            const box = this.radius * 2;
+            let s = box / Math.max(img.naturalWidth, img.naturalHeight);
+            if (this.attackAnimTimer > 0) s *= 1.12;
+            const dw = img.naturalWidth * s;
+            const dh = img.naturalHeight * s;
+            ctx.drawImage(img, this.x - dw / 2, this.y - dh / 2, dw, dh);
         } else {
-            // Fallback: colored circle
+            // Legacy ring + circular portrait (fallback units / image not loaded yet)
             ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = this.team === 1 ? "#c0392b" : "#2980b9";
+            ctx.arc(this.x, this.y, this.radius + 2, 0, Math.PI * 2);
+            let ringColor = this.team === 1 ? "#e74c3c" : "#3498db";
+            if (this.attackAnimTimer > 0) ringColor = "#ffffff";
+            else if (this.state === "kiting")
+                ringColor = this.team === 1 ? "#9b59b6" : "#1abc9c";
+            ctx.fillStyle = ringColor;
             ctx.fill();
+
+            if (imgReady) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.drawImage(
+                    img,
+                    this.x - this.radius,
+                    this.y - this.radius,
+                    this.radius * 2,
+                    this.radius * 2,
+                );
+                ctx.restore();
+            } else {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.team === 1 ? "#c0392b" : "#2980b9";
+                ctx.fill();
+            }
         }
 
         ctx.globalAlpha = 1.0;
@@ -1817,6 +1835,7 @@ class BattleSimulation {
             unit.y = startY + i * spacing;
             // Assign preloaded sprite image
             unit.spriteImg = unitImages[teamNum];
+            unit.isSprite = unitIsSprite[teamNum];
             team.push(unit);
         }
 

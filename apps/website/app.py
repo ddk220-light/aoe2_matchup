@@ -13,9 +13,16 @@ import json
 import os
 import re as _re
 import sqlite3
+import sys
 from collections import defaultdict
 from functools import lru_cache
 from urllib.parse import urlencode
+
+# Make the repo root importable so `aoe2x.*` resolves when this file is run
+# directly (`python apps/website/app.py`) and not just under gunicorn's path.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 from flask import Flask, Response, abort, jsonify, redirect, render_template, request
 from aoe2x.advisor.best_units import (

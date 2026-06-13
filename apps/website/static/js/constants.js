@@ -340,6 +340,25 @@ function getIconUrl(name) {
     return `${ICON_BASE}${id}.png`;
 }
 
+/* Generated in-game idle sprite (red player-2 / blue player-1), transparent.
+   Returns a sprite URL only for units with a square-enough sprite (UNIT_SPRITES,
+   loaded from unit_sprites.js); everything else falls back to the portrait so the
+   UI degrades cleanly. team===2 -> blue, otherwise red (team 1 / neutral display). */
+function spriteFor(name, team) {
+    const s = (typeof UNIT_SPRITES !== "undefined") ? UNIT_SPRITES[name] : null;
+    if (s && s.cat === "square") {
+        return team === 2 && s.url_blue ? s.url_blue : s.url;
+    }
+    return getIconUrl(name);
+}
+
+/* Does this unit have a usable square sprite? (lets call sites tweak layout —
+   e.g. drop the circle clip — only when a real sprite is shown.) */
+function hasSprite(name) {
+    const s = (typeof UNIT_SPRITES !== "undefined") ? UNIT_SPRITES[name] : null;
+    return !!(s && s.cat === "square");
+}
+
 /* --- Building Config --- */
 const CLASS_TO_BUILDING = {
     Infantry: "Barracks",

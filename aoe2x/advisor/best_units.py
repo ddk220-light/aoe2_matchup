@@ -854,52 +854,6 @@ def generate_naval_column(civ_name, conn, age_key="imperial", techs_by_slug=None
     return col_data
 
 
-def generate_land_line_fallback(civ_name, line_slug, conn, db_age="Imperial",
-                                techs_by_slug=None, effects_by_slug=None,
-                                reference_techs=None):
-    """Stat-only entry for a land line the civ fields but that has NO battle
-    sims, because its top tier was gated out of the matchup roster by
-    CIV_MISSING_UNITS. This happens for civs that cap a line below the standard
-    top unit — e.g. Mapuche's archer line caps at Crossbowman (no Arbalester),
-    the four Andean civs' skirmisher line caps at Elite Skirmisher (no Imperial
-    Skirmisher), Muisca's spear line caps at Pikeman (no Halberdier). The
-    reference DB already models the capped unit under the line's slug, so
-    ref_units is the authority on whether the civ fields the line at all:
-      - row found  -> surface it stat-only (stats + techs, no win-rate score or
-        strength tier — mirrors the naval/demo fallback);
-      - no row     -> the civ genuinely lacks the line, return None.
-
-    Mirrors generate_naval_column()'s shape so the civ page renders it the same
-    way as a spriteless naval entry.
-    """
-    from aoe2x.sim.unit_lines import UNIT_LINES
-    line_def = UNIT_LINES.get(line_slug)
-    if not line_def:
-        return None
-
-    # Prefer a civ-specific unique imperial unit, else the standard imperial unit.
-    candidates = []
-    unique = (line_def.get("unique_units") or {}).get(civ_name)
-    if isinstance(unique, (list, tuple)) and len(unique) > 1 and isinstance(unique[1], str):
-        candidates.append(unique[1])
-    imp = line_def.get("imperial_slug")
-    if isinstance(imp, str):
-        candidates.append(imp)
-
-    rc = conn.cursor()
-    for slug in candidates:
-        rc.execute(
-            "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=? AND age=?",
-            (civ_name, slug, db_age),
-        )
-        row = rc.fetchone()
-        if row:
-            return [_build_naval_unit_entry(
-                row, civ_name, conn, db_age, techs_by_slug, effects_by_slug, reference_techs
-            )]
-    return None
-
-
 def generate_cannon_galleon_entry(civ_name, conn, age_key="imperial", techs_by_slug=None, effects_by_slug=None, reference_techs=None):
     """Return cannon_galleon entry for one civ at one age, or None if unavailable.
 
@@ -1029,16 +983,6 @@ def compute_civ_power_units(build_number=None):
                         # Navy lines without battle_scores (e.g. civ has no fire ship):
                         # fall back to stat-only entry so the slot still renders.
                         col_data[line_slug] = naval_fallback.get(line_slug)
-                    elif col_key in ("cavalry", "ranged", "infantry"):
-                        # Land line the civ fields but with no battle sims, because
-                        # its top tier was excluded from the matchup roster by
-                        # CIV_MISSING_UNITS (a civ that caps below the standard top
-                        # unit). Surface a stat-only entry from ref_units so the line
-                        # isn't silently dropped; None if the civ truly lacks it.
-                        col_data[line_slug] = generate_land_line_fallback(
-                            civ, line_slug, conn, db_age,
-                            techs_by_slug, effects_by_slug, reference_techs,
-                        )
                     else:
                         col_data[line_slug] = None
 

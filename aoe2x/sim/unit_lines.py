@@ -28,25 +28,28 @@ a future task to avoid unintended behavior changes to role-scoring logic.
 # filtered out of rankings and battle-score computation. The extraction
 # pipeline emits these rows regardless of tech-tree availability, so we gate
 # them declaratively here based on the authoritative Fandom tech trees.
+#
+# ONLY list a unit when the civ cannot field its line AT ALL (an entire line the
+# tech tree disables). Do NOT list a unit merely because the civ caps a line
+# below the standard top tier: the reference-DB stat chain already models a cap
+# correctly — it leaves the missing upgrade unapplied and relabels the unit
+# (e.g. a civ without the Arbalester upgrade gets a "Crossbowman" row under the
+# `arbalester` slug, exactly like Turks). Because that reused imperial slug is
+# the line's ONLY imperial representative, excluding it here deletes the civ's
+# WHOLE line from the sims, rankings, and civ page. That is precisely what
+# wrongly hid Mapuche's archers, the Andean civs' skirmishers, and Muisca's
+# pikemen — capped units those civs really field, just like Turks' Crossbowman /
+# Spearman and Spanish's capped archers, which were never listed here and worked
+# fine. Those capped-line entries were removed 2026-06-14; keep it that way.
 CIV_MISSING_UNITS = {
     # Incas / Mapuche / Muisca / Tupi: entire Militia line disabled
     # (|Militia=0 in Barracks Tech Tree template). Champi Warrior is their
-    # only Barracks "infantry line" unit.
+    # only Barracks "infantry line" unit. This is the correct kind of gate —
+    # a genuinely absent line (ref_units carries no militia row for these civs).
     ("Incas", "swordsmen"), ("Incas", "champion"),
     ("Mapuche", "swordsmen"), ("Mapuche", "champion"),
     ("Muisca", "swordsmen"), ("Muisca", "champion"),
     ("Tupi", "swordsmen"), ("Tupi", "champion"),
-    # Muisca additionally lacks Halberdier (|Halberdier=0); Pikeman only.
-    ("Muisca", "halberdier"),
-    # Mapuche lacks Arbalester (and Bracer) — archer line caps at Crossbowman.
-    # Source: SiegeEngineers data.json civs.Mapuche.Unit (Arbalester id 492 absent).
-    ("Mapuche", "arbalester"),
-    # All four Andean/Amazonian civs lack Imperial Skirmisher (cap at Elite Skirm).
-    # Source: SiegeEngineers data.json civs.{Civ}.Unit (Imperial Skirm id 1155 absent).
-    ("Incas", "imp_elite_skirm"),
-    ("Mapuche", "imp_elite_skirm"),
-    ("Muisca", "imp_elite_skirm"),
-    ("Tupi", "imp_elite_skirm"),
 }
 
 

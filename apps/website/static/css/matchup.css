@@ -200,28 +200,16 @@
 }
 
 /* --- Role Column ---
-   Strength/signature signalled by a calm 2px tinted top edge + coloured header,
-   not a saturated neon bar. */
+   Uniform across all roles: no per-column background colour. Each column is a
+   plain card with the same neutral top edge and surface; per-unit strength is
+   shown on the individual badge (its tinted left edge), so the column itself
+   carries no strength/signature colour. */
 .role-column {
     padding: 10px 6px;
     border-top: 2px solid var(--border);
     border-radius: 0 0 8px 8px;
     background: var(--bg-warm);
     min-width: 0;
-}
-.role-column.col-strong {
-    border-top-color: color-mix(in srgb, var(--strong) 55%, var(--border));
-    background: var(--strong-tint);
-}
-.role-column.col-strong .role-header {
-    color: var(--strong);
-}
-.role-column.has-signature {
-    border-top-color: color-mix(in srgb, var(--gold) 55%, var(--border));
-    background: var(--gold-tint);
-}
-.role-column.has-signature .role-header {
-    color: var(--gold);
 }
 
 /* --- Role Header --- */
@@ -249,13 +237,6 @@
     letter-spacing: 0.5px;
     margin-bottom: 3px;
     padding-left: 2px;
-}
-
-.line-unavailable {
-    color: var(--text-dim);
-    font-size: var(--fs-xs);
-    padding: 4px 8px;
-    opacity: 0.4;
 }
 
 /* --- Unit Wrap (entrance animation) --- */

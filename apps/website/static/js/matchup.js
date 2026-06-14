@@ -152,7 +152,6 @@ function renderAnalysis(civName, data) {
     var strategicDescription = data.strategic_description || "";
     var civSlug = civName.toLowerCase();
     var emblemUrl = CIV_EMBLEM_BASE + civSlug + ".png";
-    var strongColumns = summary.strong_columns || [];
     var html = '';
 
     /* Hero: emblem + name + strategic description side-by-side */
@@ -164,7 +163,8 @@ function renderAnalysis(civName, data) {
     html += '</div>';
     html += '</div>';
 
-    /* Role columns grid — 4 columns with per-line sections */
+    /* Role columns grid — uniform columns; only the lines/columns this civ
+       actually has are rendered. Strength is shown per-unit, not per-column. */
     html += '<div class="role-columns">';
 
     for (var i = 0; i < COLUMN_ORDER.length; i++) {
@@ -173,43 +173,33 @@ function renderAnalysis(civName, data) {
         var colData = powerUnits[colKey] || {};
         var colLabel = COLUMN_LABELS[colKey];
 
-        /* Check if column has any strong/signature line */
-        var colHasSig = false;
-        var colIsStrong = strongColumns.indexOf(colKey) !== -1;
-        for (var k = 0; k < lineSlugs.length; k++) {
-            var entries = colData[lineSlugs[k]];
-            if (entries && entries.length > 0 && entries[0].is_signature) colHasSig = true;
-        }
-
-        var colClass = "role-column";
-        if (colIsStrong) colClass += " col-strong";
-        if (colHasSig) colClass += " has-signature";
-
-        html += '<div class="' + colClass + '">';
-        html += '<div class="role-header">' + escapeHtml(colLabel) + '</div>';
-
-        /* Render each unit line */
+        /* Build only the lines that are present for this civ. A line the civ
+           lacks is skipped entirely (no "\u2014" placeholder). */
+        var linesHtml = '';
         for (var j = 0; j < lineSlugs.length; j++) {
             var lineSlug = lineSlugs[j];
             var lineEntries = colData[lineSlug];
+            if (!lineEntries || lineEntries.length === 0) continue;
+
             var lineName = LINE_NAMES[lineSlug] || slugToName(lineSlug);
+            linesHtml += '<div class="line-section">';
+            linesHtml += '<div class="line-label">' + escapeHtml(lineName) + '</div>';
 
-            html += '<div class="line-section">';
-            html += '<div class="line-label">' + escapeHtml(lineName) + '</div>';
-
-            if (lineEntries && lineEntries.length > 0) {
-                var isMulti = lineEntries.length > 1;
-                html += '<div class="unit-wrap' + (isMulti ? ' multi-unit' : '') + '">';
-                for (var u = 0; u < lineEntries.length; u++) {
-                    html += renderUnitBadge(lineEntries[u], colKey);
-                }
-                html += '</div>';
-            } else {
-                html += '<div class="line-unavailable">\u2014</div>';
+            var isMulti = lineEntries.length > 1;
+            linesHtml += '<div class="unit-wrap' + (isMulti ? ' multi-unit' : '') + '">';
+            for (var u = 0; u < lineEntries.length; u++) {
+                linesHtml += renderUnitBadge(lineEntries[u], colKey);
             }
-            html += '</div>';
+            linesHtml += '</div>';
+            linesHtml += '</div>';
         }
 
+        /* A column with nothing in it for this civ is dropped altogether. */
+        if (!linesHtml) continue;
+
+        html += '<div class="role-column">';
+        html += '<div class="role-header">' + escapeHtml(colLabel) + '</div>';
+        html += linesHtml;
         html += '</div>';
     }
 

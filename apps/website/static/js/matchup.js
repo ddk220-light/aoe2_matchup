@@ -47,15 +47,18 @@ const LINE_NAMES = {
 
 const COLUMN_ORDER = ["cavalry", "ranged", "infantry", "siege", "navy"];
 
-/* Colours come from the central design tokens (theme-aware, de-neoned). Border
-   edges are driven by the .is-<strength> CSS classes; these tokens cover any
-   inline text/bg use (labels, tooltips). */
-const STRENGTH_COLORS = {
-    signature: { bg: "var(--gold-tint)", text: "var(--gold)", label: "Signature" },
-    strong: { bg: "var(--strong-tint)", text: "var(--strong)", label: "Strong" },
-    average: { bg: "var(--bg-hover)", text: "var(--text-muted)", label: "Average" },
-    weak: { bg: "var(--weak-tint)", text: "var(--weak)", label: "Weak" },
-    poor: { bg: "var(--poor-tint)", text: "var(--poor)", label: "Poor" },
+/* Player-facing tier ladder (best -> worst). The backend stamps `unit.tier`;
+   these supply the human label + a one-line hint for the tooltip. Border edges
+   and pill colours are driven by the .is-tier-<tier> / .tier-<tier> CSS classes
+   (theme-aware design tokens), so colour follows the theme. See best_units.py
+   (_classify_tier) for how each tier's limits are set per unit line. */
+const TIER_META = {
+    signature:   { label: "Signature",   hint: "Civ-defining: clearly the best version of this unit, and part of the civ's identity." },
+    good:        { label: "Good",        hint: "A clearly above-average version of this unit." },
+    generic:     { label: "Generic",     hint: "A standard version — the same as most civs, nothing special." },
+    bad:         { label: "Bad",         hint: "A clearly below-average version of this unit." },
+    situational: { label: "Situational", hint: "Weak overall, but still worth building for its niche (countering a specific unit)." },
+    worst:       { label: "Worst",       hint: "Among the weakest in the game — this civ effectively never builds it." },
 };
 
 const SUMMARY_TEMPLATES = {
@@ -217,13 +220,18 @@ function renderUnitBadge(unit, colKey) {
     // where a fixed box + object-fit: contain keeps every aspect ratio inside the badge.
     var useSprite = typeof hasSprite === "function" && hasSprite(name);
     var iconUrl = useSprite ? spriteFor(name) : getIconUrl(name);
-    var hasScore = unit.percentile != null && unit.strength != null;
-    var strength = STRENGTH_COLORS[unit.strength] || STRENGTH_COLORS.average;
-    var isSig = !!unit.is_signature;
-    // Strength edge is driven by the .is-<strength> CSS class (tamed color-mix tokens),
-    // not an inline neon colour — keeps it theme-aware and de-neoned.
-    var strengthKey = isSig ? "signature" : (hasScore ? (unit.strength || "average") : "average");
-    var badgeClass = "unit-badge" + (isSig ? " signature" : "") + (!hasScore ? " no-strength" : "") + " is-" + strengthKey;
+    // The backend grades each unit into one of six tiers (see TIER_META). A few
+    // stat-only naval/siege fallbacks carry no score and so no tier — those fall
+    // back to a plain, edge-less badge.
+    var tier = unit.tier || null;
+    var meta = TIER_META[tier] || null;
+    // Gold star / ring / enlarged icon track the Signature tier exactly, so the
+    // emphasis always matches the SIGNATURE pill.
+    var isSig = tier === "signature";
+    // Tier edge is driven by the .is-tier-<tier> CSS class (tamed color-mix
+    // tokens), not an inline neon colour — keeps it theme-aware and de-neoned.
+    var badgeClass = "unit-badge" + (isSig ? " signature" : "") +
+        (meta ? " is-tier-" + tier : " no-strength");
     var iconSize = (isSig ? "signature-icon" : "unit-badge-icon") + (useSprite ? " sprite" : "");
 
     var html = '<div class="' + badgeClass + '">';
@@ -243,11 +251,11 @@ function renderUnitBadge(unit, colKey) {
         html += '<div class="' + iconSize + ' icon-placeholder"></div>';
     }
 
-    /* Info block (name + score) */
+    /* Info block (name + tier) */
     html += '<div class="unit-badge-info">';
     html += '<span class="unit-badge-name">' + escapeHtml(name) + '</span>';
-    if (unit.percentile != null) {
-        html += '<span class="unit-badge-rank rank-' + (unit.strength || 'average') + '">' + unit.percentile.toFixed(0) + 'th pctl \u00b7 ' + strength.label + '</span>';
+    if (meta) {
+        html += '<span class="unit-badge-rank tier-' + tier + '">' + meta.label + '</span>';
     }
     html += '</div>';
 
@@ -260,10 +268,10 @@ function renderTooltip(unit, name) {
     var bonusAbilities = unit.bonus_abilities || [];
     var specialEffects = unit.special_effects || [];
     var missingTechs = unit.missing_techs || [];
-    var strength = STRENGTH_COLORS[unit.strength] || STRENGTH_COLORS.average;
+    var meta = TIER_META[unit.tier] || null;
 
-    /* Only show tooltip if there is special info or a score */
-    var hasContent = bonusAbilities.length > 0 || specialEffects.length > 0 || missingTechs.length > 0 || unit.score != null;
+    /* Only show tooltip if there is a tier, special info, or a score */
+    var hasContent = meta || bonusAbilities.length > 0 || specialEffects.length > 0 || missingTechs.length > 0 || unit.score != null;
     if (!hasContent) return "";
 
     var html = '<div class="unit-badge-tooltip">';
@@ -271,6 +279,12 @@ function renderTooltip(unit, name) {
     /* Close button — only visible when the tooltip is tap-pinned / shown as a
        bottom-sheet on touch (CSS hides it for the desktop hover bubble). */
     html += '<button type="button" class="unit-badge-tooltip-close" aria-label="Close">×</button>';
+
+    /* Tier header: the label + what it means for this unit line */
+    if (meta) {
+        html += '<div class="tooltip-tier tier-' + unit.tier + '">' + meta.label + '</div>';
+        html += '<div class="tooltip-tier-hint">' + escapeHtml(meta.hint) + '</div>';
+    }
 
     /* Green: bonus abilities */
     for (var i = 0; i < bonusAbilities.length; i++) {
@@ -287,9 +301,10 @@ function renderTooltip(unit, name) {
         html += '<div class="tooltip-missing">\u2717 Missing: ' + escapeHtml(missingTechs[i]) + '</div>';
     }
 
-    /* Score line */
+    /* Raw effectiveness score \u2014 a faint footer for the curious (the tier above
+       is the headline; this is the underlying number it was graded from). */
     if (unit.score != null) {
-        html += '<div class="tooltip-rank">Score: ' + unit.score.toFixed(1) + ' \u00b7 ' + strength.label + '</div>';
+        html += '<div class="tooltip-rank">Effectiveness score: ' + unit.score.toFixed(1) + ' / 100</div>';
     }
 
     html += '</div>';

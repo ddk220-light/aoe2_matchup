@@ -72,9 +72,14 @@
     --weak:             #9a5a17;
     --poor:             #9e2b22;
     --signature:        var(--gold);
+    /* Situational sits off the good/bad axis (it means "conditional / niche"),
+       so it gets a cool slate rather than another warm red — distinct from
+       --weak (Bad) and --poor (Worst). */
+    --situational:      #3f6079;
     --strong-tint:      rgba(47, 107, 52, 0.12);
     --weak-tint:        rgba(154, 90, 23, 0.12);
     --poor-tint:        rgba(158, 43, 34, 0.12);
+    --situational-tint: rgba(63, 96, 121, 0.12);
     --gold-tint:        rgba(138, 106, 18, 0.10);
 
     /* Directional aliases (collapse old neon duplicates onto strength scale) */
@@ -157,9 +162,12 @@
     --weak:             #cf9a4a;
     --poor:             #cf6a5e;
     --signature:        var(--gold);
+    /* Cool slate for the off-axis "Situational" tier (see light-mode note). */
+    --situational:      #7fa6c4;
     --strong-tint:      rgba(111, 177, 94, 0.14);
     --weak-tint:        rgba(207, 154, 74, 0.14);
     --poor-tint:        rgba(207, 106, 94, 0.14);
+    --situational-tint: rgba(127, 166, 196, 0.14);
     --gold-tint:        rgba(205, 172, 80, 0.14);
 
     /* Directional aliases */

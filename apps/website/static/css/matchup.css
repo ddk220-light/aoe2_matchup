@@ -291,13 +291,15 @@
     transform: translateX(2px);
 }
 
-/* --- Strength edges (calm tinted left border, theme-aware) ---
-   Applied by matchup.js per unit.strength so the colour follows the theme. */
-.unit-badge.is-strong   { border-left-color: color-mix(in srgb, var(--strong) 55%, var(--border)); }
-.unit-badge.is-weak     { border-left-color: color-mix(in srgb, var(--weak) 55%, var(--border)); }
-.unit-badge.is-poor     { border-left-color: color-mix(in srgb, var(--poor) 55%, var(--border)); }
-.unit-badge.is-average  { border-left-color: var(--border); }
-.unit-badge.is-signature { border-left-color: color-mix(in srgb, var(--gold) 55%, var(--border)); }
+/* --- Tier edges (calm tinted left border, theme-aware) ---
+   Applied by matchup.js per unit.tier so the colour follows the theme. The
+   six-tier ladder: signature > good > generic > bad > situational > worst. */
+.unit-badge.is-tier-signature   { border-left-color: color-mix(in srgb, var(--gold) 55%, var(--border)); }
+.unit-badge.is-tier-good        { border-left-color: color-mix(in srgb, var(--strong) 55%, var(--border)); }
+.unit-badge.is-tier-generic     { border-left-color: var(--border); }
+.unit-badge.is-tier-bad         { border-left-color: color-mix(in srgb, var(--weak) 55%, var(--border)); }
+.unit-badge.is-tier-situational { border-left-color: color-mix(in srgb, var(--situational) 60%, var(--border)); }
+.unit-badge.is-tier-worst       { border-left-color: color-mix(in srgb, var(--poor) 60%, var(--border)); }
 
 /* --- Signature Badge ---
    Calm: a 1px gold ring + gold tint fill + flat card shadow, no glow. */
@@ -423,27 +425,35 @@
     white-space: nowrap;
     border: 1px solid transparent;
 }
-.rank-signature {
+/* Tier pills — one per tier on the six-tier ladder. Tint fill + token text +
+   faint token border; no saturated fills. Shared by the badge pill and the
+   tooltip header (.tooltip-tier). */
+.tier-signature {
     background: var(--gold-tint);
     color: var(--gold);
     border-color: color-mix(in srgb, var(--gold) 35%, transparent);
 }
-.rank-strong {
+.tier-good {
     background: var(--strong-tint);
     color: var(--strong);
     border-color: color-mix(in srgb, var(--strong) 35%, transparent);
 }
-.rank-average {
+.tier-generic {
     background: var(--bg-warm);
     color: var(--text-muted);
     border-color: var(--border);
 }
-.rank-weak {
+.tier-bad {
     background: var(--weak-tint);
     color: var(--weak);
     border-color: color-mix(in srgb, var(--weak) 35%, transparent);
 }
-.rank-poor {
+.tier-situational {
+    background: var(--situational-tint);
+    color: var(--situational);
+    border-color: color-mix(in srgb, var(--situational) 35%, transparent);
+}
+.tier-worst {
     background: var(--poor-tint);
     color: var(--poor);
     border-color: color-mix(in srgb, var(--poor) 35%, transparent);
@@ -534,6 +544,27 @@
 }
 
 /* --- Tooltip content lines --- */
+/* Tier header — leads the tooltip with the unit's tier (pill) + what it means.
+   Colour comes from the shared .tier-<tier> classes. */
+.tooltip-tier {
+    display: inline-block;
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    margin-bottom: 5px;
+}
+.tooltip-tier-hint {
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-base);
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
 .tooltip-bonus {
     color: var(--strong);
     font-size: var(--fs-sm);

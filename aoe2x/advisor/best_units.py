@@ -10,6 +10,7 @@ import json
 import os
 import random
 import sqlite3
+import statistics
 import sys
 
 from aoe2x.sim.combat_unit_loader import build_combat_dict_from_ref
@@ -221,6 +222,130 @@ def _classify_strength(percentile):
     if percentile >= 15:
         return "weak"
     return "poor"
+
+
+# ---------------------------------------------------------------------------
+# Tier classification — the player-facing label shown on the Civilizations page.
+#
+# The old display number was a *rank* percentile within each unit line, so by
+# construction every line always had a "top 10%" and a "bottom 15%" — even
+# lines where every civ's version is nearly identical (spearmen, steppe lancers,
+# light cav). That made the number meaningless. Instead we grade each unit by
+# how far its effectiveness *score* sits from its line's own median, scaled by
+# that line's real spread: near-identical lines collapse to one label, and only
+# genuinely-varied lines (cav archers, archers, militia) split into good/bad.
+#
+# Ordered ladder (best → worst):
+#   signature   civ-defining: clearly the best version of its line AND carries
+#               identity (its unique unit, a real combat bonus, or rank #1–2).
+#   good        clearly above the line's typical version.
+#   generic     middle of the pack — a standard version, nothing special.
+#   bad         clearly below the line's typical version.
+#   situational weaker still, but the line keeps a niche (it counters something),
+#               so it's worth building in specific matchups — not useless.
+#   worst       the floor: a main-army unit this civ effectively never builds.
+#
+# Role only matters at the very bottom: counter/support lines (and a civ's own
+# unique unit) always retain a niche, so they floor at "situational"; main-army
+# lines a civ is bad at floor at "worst".
+# ---------------------------------------------------------------------------
+
+TIER_ORDER = ["signature", "good", "generic", "bad", "situational", "worst"]
+
+# Lines that keep a niche even when weak → bottom band is "situational", never
+# "worst" (you still build Pikemen vs cavalry, Skirmishers vs archers, siege vs
+# buildings, fire/demo ships vs ship masses).
+TIER_NICHE_LINES = {
+    "spear", "skirmisher", "camel", "scorpion", "light_cav",
+    "ram", "bombard_cannon", "trebuchet", "cannon_galleon", "fire", "demo",
+}
+
+# Per-line spread is floored so near-identical lines don't turn tiny score gaps
+# into big good/bad swings (z = delta-from-median / max(line_std, FLOOR)).
+TIER_STD_FLOOR = 10.0
+
+# z-score band edges (delta-from-line-median, spread-normalised).
+TIER_Z_SIGNATURE = 1.15   # clearly best — paired with an identity signal below
+TIER_Z_UNIQUE_SIG = 0.4   # a unique unit only needs to clear its line's median
+TIER_Z_GOOD = 0.5
+TIER_Z_BAD = -0.5
+TIER_Z_BOTTOM = -1.25
+
+
+def _iter_power_unit_entries(result):
+    """Yield (civ_name, entry) for every scored unit entry across all civs/ages."""
+    for civ_name, civ_data in result.items():
+        for age_data in civ_data.values():
+            if not isinstance(age_data, dict):
+                continue
+            for col_data in (age_data.get("power_units") or {}).values():
+                for entries in (col_data or {}).values():
+                    for entry in (entries or []):
+                        yield civ_name, entry
+
+
+def _compute_line_score_stats(result):
+    """Per-line (median, floored-spread) of the effectiveness score across civs.
+
+    Score is line-relative, so the distribution is taken per `line_slug` over
+    every civ's entry that carries a score.
+    """
+    byline = {}
+    for _civ, entry in _iter_power_unit_entries(result):
+        if entry.get("score") is not None:
+            byline.setdefault(entry.get("line_slug"), []).append(entry["score"])
+    stats = {}
+    for line, scores in byline.items():
+        if not scores:
+            continue
+        med = statistics.median(scores)
+        std = statistics.pstdev(scores) if len(scores) > 1 else 0.0
+        stats[line] = (med, max(std, TIER_STD_FLOOR))
+    return stats
+
+
+def _classify_tier(entry, civ_name, line_stats):
+    """Player-facing tier for one unit entry (see the ladder documented above)."""
+    line = entry.get("line_slug")
+    score = entry.get("score")
+    stat = line_stats.get(line)
+    if score is None or stat is None:
+        return None
+    med, std = stat
+    z = (score - med) / std
+    is_unique = entry.get("unit_slug", "").endswith(civ_name.lower())
+    rank = entry.get("rank") or 999
+    has_bonus = bool(entry.get("bonus_abilities")) or bool(entry.get("special_effects"))
+
+    # Signature = identity + clearly best. A unique unit qualifies once it clears
+    # its line's median; a shared unit must be clearly best (rank #1–2 or carries
+    # a civ combat bonus) to read as this civ's signature version of the line.
+    if is_unique and z >= TIER_Z_UNIQUE_SIG:
+        return "signature"
+    if z >= TIER_Z_SIGNATURE and (is_unique or rank <= 2 or has_bonus):
+        return "signature"
+    if z >= TIER_Z_GOOD:
+        return "good"
+    if z > TIER_Z_BAD:
+        return "generic"
+    if z > TIER_Z_BOTTOM:
+        return "bad"
+    # Bottom band: a niche line (or the civ's own unique unit) keeps a use →
+    # "situational"; a main-army unit the civ neglects → "worst".
+    if line in TIER_NICHE_LINES or is_unique:
+        return "situational"
+    return "worst"
+
+
+def _assign_tiers(result):
+    """Second pass over the built result: stamp `tier` on every entry.
+
+    Runs after all civs are built because the per-line score distribution that
+    sets each tier's limits is computed across every civ's version of the line.
+    """
+    line_stats = _compute_line_score_stats(result)
+    for civ_name, entry in _iter_power_unit_entries(result):
+        entry["tier"] = _classify_tier(entry, civ_name, line_stats)
 
 
 def _compute_line_counts(derived_conn, age_key="imperial", build_number=None):
@@ -556,6 +681,10 @@ def _strip_minimal_entries(power_units, col_key, line_slugs):
                 "line_slug": e.get("line_slug", line_slug),
                 "percentile": e.get("percentile"),
                 "strength": e.get("strength"),
+                # `score` is retained so the post-build tier pass can grade
+                # siege/navy lines too (the rest of the heavy payload is dropped).
+                "score": e.get("score"),
+                "rank": e.get("rank"),
                 "is_signature": e.get("is_signature", False),
                 "ease": e.get("ease"),
                 "stats": e.get("stats"),
@@ -1060,6 +1189,11 @@ def compute_civ_power_units(build_number=None):
 
     conn.close()
     derived_conn.close()
+
+    # Second pass: grade every unit into its player-facing tier. Deferred to
+    # here because each tier's limits come from the line's score spread across
+    # all civs, which isn't known until every civ has been built.
+    _assign_tiers(result)
     return result
 
 

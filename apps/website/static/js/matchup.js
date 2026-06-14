@@ -263,16 +263,61 @@ function renderUnitBadge(unit, colKey) {
     return html;
 }
 
+/* Stat rows shown in the card, in display order. higherBetter drives the
+   advantage/disadvantage colour vs the line baseline (lower reload = faster). */
+const STAT_ROWS = [
+    { key: "hp", label: "HP", higherBetter: true },
+    { key: "attack", label: "Attack", higherBetter: true },
+    { key: "reload_time", label: "Attack speed", higherBetter: false, suffix: "s" },
+    { key: "range", label: "Range", higherBetter: true, rangedOnly: true },
+    { key: "melee_armor", label: "Melee armor", higherBetter: true },
+    { key: "pierce_armor", label: "Pierce armor", higherBetter: true },
+];
+
+function fmtStat(v, suffix) {
+    if (v == null) return "—";
+    /* whole numbers stay integers; reload-style values keep one decimal */
+    var s = (Math.abs(v - Math.round(v)) < 0.05) ? String(Math.round(v)) : v.toFixed(1);
+    return suffix ? s + suffix : s;
+}
+
+/* One stat row, with an advantage/disadvantage marker vs the generic baseline.
+   When `baseline` is null (unique units — nothing to compare) only the value shows. */
+function renderStatRow(row, stats, baseline) {
+    var val = stats[row.key];
+    if (val == null) return "";
+    var cmp = "";
+    var base = baseline ? baseline[row.key] : null;
+    if (base != null && Math.abs(val - base) >= 0.05) {
+        var better = row.higherBetter ? (val > base) : (val < base);
+        cmp = '<span class="tt-stat-cmp ' + (better ? "tt-better" : "tt-worse") + '">'
+            + (better ? "▲" : "▼")
+            + ' <span class="tt-stat-base">vs ' + fmtStat(base, row.suffix) + '</span></span>';
+    }
+    return '<div class="tt-stat-row">'
+        + '<span class="tt-stat-label">' + row.label + '</span>'
+        + '<span class="tt-stat-val">' + fmtStat(val, row.suffix) + '</span>'
+        + cmp + '</div>';
+}
+
 /* ---- Tooltip renderer ---- */
 function renderTooltip(unit, name) {
     var bonusAbilities = unit.bonus_abilities || [];
     var specialEffects = unit.special_effects || [];
     var missingTechs = unit.missing_techs || [];
     var meta = TIER_META[unit.tier] || null;
+    var stats = unit.stats || null;
+    var isUnique = !!unit.is_unique;
+    /* Generic units compare against the line's typical fully-upgraded version;
+       unique units have no shared counterpart, so no baseline / "missing". */
+    var baseline = (!isUnique && unit.stat_baseline) ? unit.stat_baseline : null;
 
-    /* Only show tooltip if there is a tier, special info, or a score */
-    var hasContent = meta || bonusAbilities.length > 0 || specialEffects.length > 0 || missingTechs.length > 0 || unit.score != null;
+    var hasContent = meta || stats || bonusAbilities.length || specialEffects.length
+        || missingTechs.length || unit.score != null;
     if (!hasContent) return "";
+
+    var useSprite = typeof hasSprite === "function" && hasSprite(name);
+    var iconUrl = useSprite ? spriteFor(name) : getIconUrl(name);
 
     var html = '<div class="unit-badge-tooltip">';
 
@@ -280,10 +325,35 @@ function renderTooltip(unit, name) {
        bottom-sheet on touch (CSS hides it for the desktop hover bubble). */
     html += '<button type="button" class="unit-badge-tooltip-close" aria-label="Close">×</button>';
 
-    /* Tier header: the label + what it means for this unit line */
+    /* Header: big icon + name + tier. */
+    html += '<div class="tt-head">';
+    html += '<img class="tt-icon" src="' + iconUrl + '" alt="' + escapeHtml(name)
+        + '" onerror="this.style.display=\'none\'">';
+    html += '<div class="tt-head-text"><div class="tt-name">' + escapeHtml(name) + '</div>';
     if (meta) {
-        html += '<div class="tooltip-tier tier-' + unit.tier + '">' + meta.label + '</div>';
+        html += '<span class="tooltip-tier tier-' + unit.tier + '">' + meta.label + '</span>';
+    }
+    html += '</div></div>';
+
+    if (meta) {
         html += '<div class="tooltip-tier-hint">' + escapeHtml(meta.hint) + '</div>';
+    }
+
+    /* Stats grid (with vs-generic comparison for non-unique units). */
+    if (stats) {
+        var rows = "";
+        for (var s = 0; s < STAT_ROWS.length; s++) {
+            var srow = STAT_ROWS[s];
+            if (srow.rangedOnly && !(stats.is_ranged || stats.range > 0)) continue;
+            rows += renderStatRow(srow, stats, baseline);
+        }
+        if (rows) {
+            html += '<div class="tt-stats">' + rows + '</div>';
+            if (baseline) {
+                html += '<div class="tt-stats-note">▲ / ▼ vs a typical fully-upgraded '
+                    + (LINE_NAMES[unit.line_slug] || "unit").toLowerCase() + '</div>';
+            }
+        }
     }
 
     /* Green: bonus abilities */
@@ -296,9 +366,12 @@ function renderTooltip(unit, name) {
         html += '<div class="tooltip-bonus">\u2726 ' + escapeHtml(specialEffects[i]) + '</div>';
     }
 
-    /* Red: missing techs */
-    for (var i = 0; i < missingTechs.length; i++) {
-        html += '<div class="tooltip-missing">\u2717 Missing: ' + escapeHtml(missingTechs[i]) + '</div>';
+    /* Red: upgrades this civ is missing \u2014 only meaningful for shared units
+       (a unique unit has no generic counterpart to fall short of). */
+    if (!isUnique) {
+        for (var i = 0; i < missingTechs.length; i++) {
+            html += '<div class="tooltip-missing">\u2717 Missing: ' + escapeHtml(missingTechs[i]) + '</div>';
+        }
     }
 
     /* Raw effectiveness score \u2014 a faint footer for the curious (the tier above

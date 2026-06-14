@@ -478,9 +478,9 @@
     border: 1px solid var(--border-light);
     border-radius: 8px;
     padding: 10px 12px;
-    min-width: 180px;
+    min-width: 240px;
     /* Never wider than the viewport (minus side gutters). */
-    max-width: min(260px, calc(100vw - 2 * var(--gutter, 16px)));
+    max-width: min(300px, calc(100vw - 2 * var(--gutter, 16px)));
     box-shadow: var(--shadow-card);
     pointer-events: none;
     white-space: normal;
@@ -587,6 +587,76 @@
 }
 
 /* --- Tooltip content lines --- */
+/* Card header: big icon + unit name + tier pill. */
+.tt-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+.tt-icon {
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    border: 2px solid var(--border-light);
+    background: var(--bg-deep);
+    object-fit: cover;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.tt-head-text {
+    min-width: 0;
+}
+.tt-name {
+    font-weight: 700;
+    font-size: var(--fs-base);
+    color: var(--text);
+    margin-bottom: 4px;
+    line-height: 1.2;
+}
+.tt-head-text .tooltip-tier {
+    margin-bottom: 0;
+}
+
+/* Stats grid: label | value | (advantage vs the generic norm). */
+.tt-stats {
+    margin-bottom: 6px;
+}
+.tt-stat-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: var(--fs-sm);
+    line-height: 1.5;
+}
+.tt-stat-label {
+    color: var(--text-muted);
+    flex: 0 0 96px;
+}
+.tt-stat-val {
+    color: var(--text);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.tt-stat-cmp {
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    white-space: nowrap;
+}
+.tt-stat-cmp.tt-better { color: var(--strong); }
+.tt-stat-cmp.tt-worse  { color: var(--poor); }
+.tt-stat-base {
+    color: var(--text-dim);
+    font-weight: 400;
+}
+.tt-stats-note {
+    color: var(--text-dim);
+    font-size: var(--fs-xs);
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
 /* Tier header — leads the tooltip with the unit's tier (pill) + what it means.
    Colour comes from the shared .tier-<tier> classes. */
 .tooltip-tier {

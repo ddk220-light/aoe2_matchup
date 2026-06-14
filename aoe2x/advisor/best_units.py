@@ -142,8 +142,8 @@ def _fetch_unit_stats(conn, civ_name, unit_slug, age="Imperial"):
     rc = conn.cursor()
     rc.execute(
         """SELECT unit_name, final_hp, final_attack, final_melee_armor,
-                  final_pierce_armor, final_speed, final_range,
-                  final_cost_food, final_cost_wood, final_cost_gold
+                  final_pierce_armor, final_speed, final_range, final_reload_time,
+                  is_ranged, final_cost_food, final_cost_wood, final_cost_gold
            FROM ref_units WHERE civ_name=? AND unit_slug=? AND age=?""",
         (civ_name, unit_slug, age),
     )
@@ -157,6 +157,9 @@ def _fetch_unit_stats(conn, civ_name, unit_slug, age="Imperial"):
         "pierce_armor": row["final_pierce_armor"],
         "speed": row["final_speed"],
         "range": row["final_range"] or 0,
+        # Attack speed = reload time (seconds between attacks); lower is faster.
+        "reload_time": row["final_reload_time"],
+        "is_ranged": bool(row["is_ranged"]),
         "cost_food": row["final_cost_food"] or 0,
         "cost_wood": row["final_cost_wood"] or 0,
         "cost_gold": row["final_cost_gold"] or 0,
@@ -350,6 +353,38 @@ def _assign_tiers(result):
     line_stats = _compute_line_score_stats(result)
     for civ_name, entry in _iter_power_unit_entries(result):
         entry["tier"] = _classify_tier(entry, civ_name, line_stats)
+
+
+# Stats the card compares against the line's generic norm.
+_BASELINE_STATS = ("hp", "attack", "melee_armor", "pierce_armor", "reload_time", "range")
+
+
+def _assign_stat_baselines(result):
+    """Attach a per-line `stat_baseline` (the median of the standard, non-unique
+    unit across civs) to each generic entry, so the card can show how this civ's
+    fully-upgraded version compares to the typical one. Unique units get none —
+    there is no shared version to compare against.
+    """
+    byline = {}  # line_slug -> {stat -> [values across civs]}
+    for _civ, entry in _iter_power_unit_entries(result):
+        if entry.get("is_unique"):
+            continue
+        stats = entry.get("stats") or {}
+        acc = byline.setdefault(entry.get("line_slug"), {})
+        for k in _BASELINE_STATS:
+            v = stats.get(k)
+            if v is not None:
+                acc.setdefault(k, []).append(v)
+    baseline = {
+        line: {k: round(statistics.median(vs), 2) for k, vs in statvals.items() if vs}
+        for line, statvals in byline.items()
+    }
+    for _civ, entry in _iter_power_unit_entries(result):
+        if entry.get("is_unique"):
+            continue
+        bl = baseline.get(entry.get("line_slug"))
+        if bl:
+            entry["stat_baseline"] = bl
 
 
 def _compute_line_counts(derived_conn, age_key="imperial", build_number=None):
@@ -658,6 +693,9 @@ def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slu
         "median_delta": round(row["median_delta"], 1) if row["median_delta"] is not None else None,
         "strength": strength,
         "is_signature": strength == "signature",
+        # Unique units carry their civ name as a slug suffix; the card skips the
+        # "vs generic" comparison for them (there's no shared version to compare).
+        "is_unique": slug.endswith(civ_name.lower()),
         "stats": stats,
         "speed": speed,
         "missing_techs": missing,
@@ -690,6 +728,8 @@ def _strip_minimal_entries(power_units, col_key, line_slugs):
                 "score": e.get("score"),
                 "rank": e.get("rank"),
                 "is_signature": e.get("is_signature", False),
+                "is_unique": e.get("is_unique", False),
+                "stat_baseline": e.get("stat_baseline"),
                 "ease": e.get("ease"),
                 "stats": e.get("stats"),
                 "missing_techs": e.get("missing_techs", []),
@@ -1198,6 +1238,9 @@ def compute_civ_power_units(build_number=None):
     # here because each tier's limits come from the line's score spread across
     # all civs, which isn't known until every civ has been built.
     _assign_tiers(result)
+    # Third pass: per-line stat baselines (the generic norm) for the card's
+    # "vs typical" comparison — also needs all civs built first.
+    _assign_stat_baselines(result)
     return result
 
 

@@ -310,7 +310,11 @@ def _classify_tier(entry, civ_name, line_stats):
     score = entry.get("score")
     stat = line_stats.get(line)
     if score is None or stat is None:
-        return None
+        # Some units carry no battle score (demo ships aren't simulated like a
+        # normal line). A niche line with no score still has a defined role, so
+        # label it "situational" rather than leaving the card blank; anything
+        # else genuinely has no basis for a tier.
+        return "situational" if line in TIER_NICHE_LINES else None
     med, std = stat
     z = (score - med) / std
     is_unique = entry.get("unit_slug", "").endswith(civ_name.lower())

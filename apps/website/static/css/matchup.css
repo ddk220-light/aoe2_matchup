@@ -504,6 +504,32 @@
     padding-top: 26px;
 }
 
+/* Selection focus — while a tooltip is pinned, #results carries .tooltip-focus.
+   Fade every other card so the selected one stands out (a contained, transform-
+   safe alternative to a full-screen dim overlay; see matchup.js). */
+.tooltip-focus .unit-badge {
+    transition: opacity 0.18s ease, background 0.2s ease,
+                box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.tooltip-focus .unit-badge:not(.tooltip-pinned) {
+    opacity: 0.4;
+}
+/* The selected card: bright elevated surface + a gold ring so it clearly reads
+   as the active selection. Raised so its tooltip overlaps neighbouring cards. */
+.unit-badge.tooltip-pinned {
+    position: relative;
+    z-index: 5;
+    opacity: 1;
+    background: var(--surface-elevated);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 45%, transparent), var(--shadow-card);
+}
+/* Keep it steady when pinned — don't apply the hover nudge to the active card. */
+.unit-badge.tooltip-pinned:hover {
+    background: var(--surface-elevated);
+    transform: none;
+}
+
 /* Tooltip arrow */
 .unit-badge-tooltip::after {
     content: "";
@@ -750,34 +776,13 @@
     }
 }
 
-/* Dimmed backdrop behind the bottom-sheet (element injected by matchup.js,
-   only shown at phone widths). Tapping it dismisses the pinned tooltip. */
-.unit-tooltip-backdrop {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-    z-index: 1090;
-    animation: tooltipBackdropIn 0.2s ease both;
-}
-@media (max-width: 480px) {
-    .unit-tooltip-backdrop.active {
-        display: block;
-    }
-}
-
 @keyframes tooltipSheetUp {
     from { transform: translateY(12px); opacity: 0; }
     to   { transform: translateY(0); opacity: 1; }
 }
-@keyframes tooltipBackdropIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
 
 @media (prefers-reduced-motion: reduce) {
-    .unit-badge-tooltip.pinned,
-    .unit-tooltip-backdrop {
+    .unit-badge-tooltip.pinned {
         animation: none;
     }
 }

@@ -346,37 +346,30 @@ function renderStrategicSummaryInline(summary, strategicDescription) {
    The unit tooltips are CSS hover bubbles on desktop, but hover doesn't exist
    on touch, so the breakdown is unreachable there. This adds a tap/click that
    pins a badge's tooltip (toggling a `.pinned` class the CSS reveals), with a
-   visible × close, outside-tap / Escape dismiss, and a dimmed backdrop that on
-   phones (<=480px, where the pinned tooltip becomes a bottom-sheet) gives a
-   tap-target to close it. Only one tooltip is pinned at a time.
+   visible × close and outside-tap / Escape dismiss. Only one tooltip is pinned
+   at a time. To focus the selection we highlight the pinned card and fade the
+   rest (a `.tooltip-focus` class on #results) rather than laying a full-screen
+   overlay over the cards — the results grid sits inside transformed containers
+   (animation wrappers), so an overlay would paint on top of and dim the very
+   card it's meant to spotlight, and swallow taps on the open sheet.
    Uses event delegation on #results so it survives every re-render.
    ========================================================================== */
 (function () {
     if (!resultsEl) return;
 
-    var PHONE_MQ = window.matchMedia ? window.matchMedia("(max-width: 480px)") : null;
     var pinnedTooltip = null;
-    var backdrop = null;
-
-    function ensureBackdrop() {
-        if (backdrop) return backdrop;
-        backdrop = document.createElement("div");
-        backdrop.className = "unit-tooltip-backdrop";
-        backdrop.addEventListener("click", unpin);
-        document.body.appendChild(backdrop);
-        return backdrop;
-    }
-
-    function isPhone() {
-        return PHONE_MQ ? PHONE_MQ.matches : window.innerWidth <= 480;
-    }
+    var pinnedBadge = null;
 
     function unpin() {
         if (pinnedTooltip) {
             pinnedTooltip.classList.remove("pinned");
             pinnedTooltip = null;
         }
-        if (backdrop) backdrop.classList.remove("active");
+        if (pinnedBadge) {
+            pinnedBadge.classList.remove("tooltip-pinned");
+            pinnedBadge = null;
+        }
+        resultsEl.classList.remove("tooltip-focus");
     }
 
     function pin(tooltip) {
@@ -387,10 +380,11 @@ function renderStrategicSummaryInline(summary, strategicDescription) {
         unpin();
         tooltip.classList.add("pinned");
         pinnedTooltip = tooltip;
-        /* Phone bottom-sheet gets a dimmed backdrop to tap-dismiss. */
-        if (isPhone()) {
-            ensureBackdrop().classList.add("active");
-        }
+        /* Highlight the owning card and fade the rest so the selected unit
+           stands out instead of every card looking the same (or dimmed). */
+        pinnedBadge = tooltip.closest(".unit-badge");
+        if (pinnedBadge) pinnedBadge.classList.add("tooltip-pinned");
+        resultsEl.classList.add("tooltip-focus");
     }
 
     /* Tap / click on a badge toggles its pinned tooltip. */
@@ -433,8 +427,8 @@ function renderStrategicSummaryInline(summary, strategicDescription) {
     });
 
     /* A re-render (selecting a different civ, or deselecting) destroys the
-       pinned tooltip node; this lets those paths clear our reference + backdrop
-       so nothing dangles. */
+       pinned tooltip node; this lets those paths clear our reference + focus
+       state so nothing dangles. */
     resultsEl.addEventListener("unit-tooltip-reset", unpin);
 })();
 

@@ -98,6 +98,7 @@ function onCivClick(name) {
         selectedCiv = null;
         stepLabel.textContent = "Click a civilization to analyze";
         stepLabel.className = "step-label step-civ1";
+        resetPinnedTooltips();
         resultsEl.className = "results-container";
         resultsEl.innerHTML = "";
     } else {
@@ -121,6 +122,7 @@ function updateGrid() {
 
 /* ---- Load analysis from API ---- */
 async function loadAnalysis(civName) {
+    resetPinnedTooltips();
     resultsEl.className = "results-container visible";
     resultsEl.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><div>Loading analysis\u2026</div></div>';
 
@@ -276,6 +278,10 @@ function renderTooltip(unit, name) {
 
     var html = '<div class="unit-badge-tooltip">';
 
+    /* Close button — only visible when the tooltip is tap-pinned / shown as a
+       bottom-sheet on touch (CSS hides it for the desktop hover bubble). */
+    html += '<button type="button" class="unit-badge-tooltip-close" aria-label="Close">×</button>';
+
     /* Green: bonus abilities */
     for (var i = 0; i < bonusAbilities.length; i++) {
         html += '<div class="tooltip-bonus">\u2726 ' + escapeHtml(bonusAbilities[i]) + '</div>';
@@ -328,4 +334,109 @@ function renderStrategicSummaryInline(summary, strategicDescription) {
     }
 
     return html;
+}
+
+/* ==========================================================================
+   Tap-to-pin tooltips (touch + viewport-safe)
+   The unit tooltips are CSS hover bubbles on desktop, but hover doesn't exist
+   on touch, so the breakdown is unreachable there. This adds a tap/click that
+   pins a badge's tooltip (toggling a `.pinned` class the CSS reveals), with a
+   visible × close, outside-tap / Escape dismiss, and a dimmed backdrop that on
+   phones (<=480px, where the pinned tooltip becomes a bottom-sheet) gives a
+   tap-target to close it. Only one tooltip is pinned at a time.
+   Uses event delegation on #results so it survives every re-render.
+   ========================================================================== */
+(function () {
+    if (!resultsEl) return;
+
+    var PHONE_MQ = window.matchMedia ? window.matchMedia("(max-width: 480px)") : null;
+    var pinnedTooltip = null;
+    var backdrop = null;
+
+    function ensureBackdrop() {
+        if (backdrop) return backdrop;
+        backdrop = document.createElement("div");
+        backdrop.className = "unit-tooltip-backdrop";
+        backdrop.addEventListener("click", unpin);
+        document.body.appendChild(backdrop);
+        return backdrop;
+    }
+
+    function isPhone() {
+        return PHONE_MQ ? PHONE_MQ.matches : window.innerWidth <= 480;
+    }
+
+    function unpin() {
+        if (pinnedTooltip) {
+            pinnedTooltip.classList.remove("pinned");
+            pinnedTooltip = null;
+        }
+        if (backdrop) backdrop.classList.remove("active");
+    }
+
+    function pin(tooltip) {
+        if (pinnedTooltip === tooltip) {
+            unpin();
+            return;
+        }
+        unpin();
+        tooltip.classList.add("pinned");
+        pinnedTooltip = tooltip;
+        /* Phone bottom-sheet gets a dimmed backdrop to tap-dismiss. */
+        if (isPhone()) {
+            ensureBackdrop().classList.add("active");
+        }
+    }
+
+    /* Tap / click on a badge toggles its pinned tooltip. */
+    resultsEl.addEventListener("click", function (e) {
+        /* Close button inside a pinned tooltip. */
+        if (e.target.closest(".unit-badge-tooltip-close")) {
+            e.preventDefault();
+            e.stopPropagation();
+            unpin();
+            return;
+        }
+
+        var badge = e.target.closest(".unit-badge");
+        if (!badge) return;
+
+        var tooltip = badge.querySelector(".unit-badge-tooltip");
+        if (!tooltip) return; /* badge with no special info -> no tooltip */
+
+        /* Don't swallow taps that land inside an already-pinned tooltip
+           (e.g. selecting text or scrolling the sheet). */
+        if (pinnedTooltip === tooltip && e.target.closest(".unit-badge-tooltip")) {
+            return;
+        }
+
+        e.stopPropagation();
+        pin(tooltip);
+    });
+
+    /* Outside tap anywhere on the document dismisses the pinned tooltip. */
+    document.addEventListener("click", function (e) {
+        if (!pinnedTooltip) return;
+        if (e.target.closest(".unit-badge-tooltip")) return; /* tap inside sheet */
+        if (e.target.closest(".unit-badge")) return;         /* handled above */
+        unpin();
+    });
+
+    /* Escape closes it. */
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && pinnedTooltip) unpin();
+    });
+
+    /* A re-render (selecting a different civ, or deselecting) destroys the
+       pinned tooltip node; this lets those paths clear our reference + backdrop
+       so nothing dangles. */
+    resultsEl.addEventListener("unit-tooltip-reset", unpin);
+})();
+
+/* Fired before #results is re-rendered so the pinned-tooltip controller can
+   tear down cleanly (see loadAnalysis / onCivClick). */
+function resetPinnedTooltips() {
+    if (resultsEl) {
+        resultsEl.dispatchEvent(new CustomEvent("unit-tooltip-reset"));
+    }
 }

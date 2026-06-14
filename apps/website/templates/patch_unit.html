@@ -2,19 +2,56 @@
 {% block title %}{{ civ }} {{ unit_title }} — {{ patch.title }}{% endblock %}
 {% block content %}
 <style>
-  .pu-wrap { max-width: 920px; margin:0 auto; padding:24px 16px; }
+  /* DATA container token (fallback to old cap if base.css token absent) */
+  .pu-wrap { max-width: var(--container-data, 1100px); margin:0 auto;
+    padding:24px var(--gutter, 16px); }
   .pu-wrap h1 { margin-bottom:4px; }
-  .pu-sub { color:#8b93a7; margin-bottom:24px; }
-  .pu-sec { background:#1c1f26; border:1px solid #2c313c; border-radius:10px;
-    padding:18px 22px; margin-bottom:20px; }
+  .pu-sub { color:var(--text-muted); margin-bottom:24px; }
+  .pu-sec { background:var(--bg-warm); border:1px solid var(--border); border-radius:10px;
+    padding:18px 22px; margin-bottom:20px; box-shadow:var(--shadow-card); }
   .pu-sec h3 { margin-top:0; }
+
+  /* Horizontal-scroll safety net so no table ever pushes the page width.
+     Pairs with the shared .scroll-x utility from base.css (inline fallback here). */
+  .table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain; max-width:100%; }
+
   table.pu { width:100%; border-collapse:collapse; }
-  table.pu td, table.pu th { padding:7px 10px; text-align:left; border-bottom:1px solid #2c313c; }
-  .up { color:#5ed18b; } .down { color:#e8736b; }
-  .mlist a { color:#7fb2ff; text-decoration:none; }
+  table.pu td, table.pu th { padding:7px 10px; text-align:left;
+    border-bottom:1px solid var(--border); }
+  table.pu th { color:var(--text-muted); font-weight:500; }
+  .up { color:var(--up); } .down { color:var(--down); }
+  .mlist a { color:var(--link-data); text-decoration:none;
+    display:inline-block; min-height:44px; line-height:44px; }
   .mlist a:hover { text-decoration:underline; }
   .swing { font-variant-numeric: tabular-nums; }
-  .back { font-size:.85rem; }
+  .back { font-size:.85rem; display:inline-block; min-height:44px; line-height:44px; }
+
+  /* Tablet / large phone: tighten section padding */
+  @media (max-width: 768px) {
+    .pu-sec { padding:16px 16px; }
+    table.pu td, table.pu th { padding:7px 8px; }
+  }
+
+  /* True phone: stacked-card reflow for the long-label matchup tables (.mlist).
+     thead hidden; each row becomes a card; each cell is a labelled flex row.
+     The 3/4-col stat/rank/timeline tables stay as scrollable tables (narrow). */
+  @media (max-width: 480px) {
+    .pu-wrap { padding-top:16px; }
+    .pu-sec { padding:14px 12px; margin-bottom:16px; }
+
+    table.pu.mlist { border-collapse:separate; border-spacing:0; }
+    table.pu.mlist tr:first-child { display:none; }            /* header (th) row */
+    table.pu.mlist tr { display:block; border:1px solid var(--border);
+      border-radius:8px; margin-bottom:8px; padding:6px 10px; background:var(--bg-deep); }
+    table.pu.mlist td { display:flex; justify-content:space-between; align-items:baseline;
+      gap:12px; border:0; padding:6px 0; white-space:normal; text-align:right; }
+    table.pu.mlist td::before { content:attr(data-label); color:var(--text-muted);
+      font-size:.78rem; font-weight:500; text-align:left; flex:0 0 auto; }
+    table.pu.mlist td:last-child { justify-content:flex-end; }
+    table.pu.mlist td:last-child::before { content:""; }
+    .mlist a { white-space:normal; min-height:0; line-height:1.4; padding:6px 0; }
+  }
 </style>
 <div class="pu-wrap">
   <a class="back" href="/patches">&#8592; All patches</a>
@@ -24,6 +61,7 @@
   <div class="pu-sec">
     <h3>Stat changes</h3>
     {% if stat_changes %}
+    <div class="table-scroll scroll-x">
     <table class="pu"><tr><th>Field</th><th>Before</th><th>After</th></tr>
     {% for s in stat_changes %}
       <tr><td>{{ s.field.replace('base_','').replace('_',' ') }}</td>
@@ -32,12 +70,14 @@
           {{ s.new_value }}{% if s.note %} <em>({{ s.note }})</em>{% endif %}</td></tr>
     {% endfor %}
     </table>
+    </div>
     {% else %}<p>No direct stat changes recorded.</p>{% endif %}
   </div>
 
   <div class="pu-sec">
     <h3>Ranking move</h3>
     {% if ranking %}
+    <div class="table-scroll scroll-x">
     <table class="pu"><tr><th>Score</th><th>Before</th><th>After</th><th>Rank</th></tr>
     {% for r in ranking %}
       <tr><td>{{ r.score_type.replace('_',' ') }}</td>
@@ -46,33 +86,36 @@
         <td>#{{ r.old_rank }} &#8594; #{{ r.new_rank }}</td></tr>
     {% endfor %}
     </table>
+    </div>
     {% else %}<p>Ranking unchanged.</p>{% endif %}
   </div>
 
   {% macro mtable(items) %}
     <table class="pu mlist"><tr><th>Opponent</th><th>Scale</th><th>Score</th><th>Swing</th><th></th></tr>
     {% for m in items %}
-      <tr><td>{{ m.opp }}</td>
-        <td>{{ m.scale }}</td>
-        <td>{{ m.old_score }} &#8594; {{ m.new_score }}</td>
-        <td class="swing {{ 'up' if m.swing >= 0 else 'down' }}">{{ '%+.0f'|format(m.swing) }}</td>
-        <td><a href="{{ m.link }}">&#9654; View fight</a></td></tr>
+      <tr><td data-label="Opponent">{{ m.opp }}</td>
+        <td data-label="Scale">{{ m.scale }}</td>
+        <td data-label="Score">{{ m.old_score }} &#8594; {{ m.new_score }}</td>
+        <td data-label="Swing" class="swing {{ 'up' if m.swing >= 0 else 'down' }}">{{ '%+.0f'|format(m.swing) }}</td>
+        <td data-label="Fight"><a href="{{ m.link }}">&#9654; View fight</a></td></tr>
     {% endfor %}
     </table>
   {% endmacro %}
 
-  {% if now_beats %}<div class="pu-sec"><h3>Now beats</h3>{{ mtable(now_beats) }}</div>{% endif %}
-  {% if now_loses %}<div class="pu-sec"><h3>Now loses to</h3>{{ mtable(now_loses) }}</div>{% endif %}
-  {% if shifted %}<div class="pu-sec"><h3>Shifted margins</h3>{{ mtable(shifted) }}</div>{% endif %}
+  {% if now_beats %}<div class="pu-sec"><h3>Now beats</h3><div class="table-scroll scroll-x">{{ mtable(now_beats) }}</div></div>{% endif %}
+  {% if now_loses %}<div class="pu-sec"><h3>Now loses to</h3><div class="table-scroll scroll-x">{{ mtable(now_loses) }}</div></div>{% endif %}
+  {% if shifted %}<div class="pu-sec"><h3>Shifted margins</h3><div class="table-scroll scroll-x">{{ mtable(shifted) }}</div></div>{% endif %}
 
   {% if timeline|length > 1 %}
   <div class="pu-sec"><h3>Timeline</h3>
+    <div class="table-scroll scroll-x">
     <table class="pu"><tr><th>Patch</th><th>Field</th><th>Change</th></tr>
     {% for t in timeline %}
       <tr><td>{{ t.build_number }}</td><td>{{ t.field.replace('base_','').replace('_',' ') }}</td>
         <td>{{ t.old_value }} &#8594; {{ t.new_value }}</td></tr>
     {% endfor %}
     </table>
+    </div>
   </div>
   {% endif %}
 </div>

@@ -5,13 +5,17 @@
 /* Page-local :root aliases removed — consume canonical tokens directly:
    --card-bg -> var(--bg-warm), --card-border -> var(--border-light). */
 
-/* ---------- Main layout ---------- */
+/* ---------- Main layout ----------
+   3-panel app layout: stats rail | fluid canvas | debug rail.
+   Side panels are fluid (clamp) at >=1025px so wide monitors widen the panels
+   instead of only stretching the canvas; below 1024 the whole thing stacks
+   (see Responsive section). */
 .main-layout {
     display: flex;
     gap: 12px;
 }
 .stats-panel {
-    width: 200px;
+    width: clamp(180px, 16vw, 240px);
     flex-shrink: 0;
 }
 .center-panel {
@@ -19,7 +23,7 @@
     min-width: 0;
 }
 .right-panel {
-    width: 320px;
+    width: clamp(280px, 22vw, 360px);
     flex-shrink: 0;
 }
 
@@ -354,13 +358,18 @@
     accent-color: var(--gold);
 }
 
-/* ---------- Canvas ---------- */
+/* ---------- Canvas ----------
+   width:100% + aspect-ratio:3/2 (matches the 900x600 backing store) keeps the
+   canvas box at a stable height before/after JS draws, preventing layout shift
+   on load and on stack/unstack. height:auto lets the ratio drive the height. */
 #battleCanvas {
     display: block;
     border: 2px solid var(--gold-dark);
     border-radius: 8px;
     background: var(--canvas-bg);
     width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 2;
 }
 
 /* ---------- Live battle progress (left sidebar) ---------- */
@@ -536,10 +545,23 @@
    attack-val colour are now token-driven (--bg-warm/--bg-hover/--canvas-bg/--weak)
    and theme correctly in both light (default) and dark. */
 
-/* ---------- Responsive ---------- */
-@media (max-width: 1100px) {
+/* ==========================================================================
+   Responsive — aligned to the shared site scale {480, 768, 1024, 1600, 1920}.
+   md  <=1024  — tablet/small-laptop: stack the 3 panels into one column.
+   sm  <=768   — large phone / small tablet: team cards stack.
+   xs  <=480   — phone (PRIMARY): full-width controls, 44px touch targets,
+                 mode-toggle goes column, inputs go full-width.
+   ========================================================================== */
+
+/* md — stack the 3-panel app layout (was 1100). Both side rails must un-fix
+   their width when stacked: the right-panel already did, but .stats-panel was
+   never released from its fixed width — add it here so it spans full width. */
+@media (max-width: 1024px) {
     .main-layout {
         flex-direction: column;
+    }
+    .stats-panel {
+        width: 100%;
     }
     .right-panel {
         width: 100%;
@@ -547,19 +569,100 @@
     .debug-panel {
         max-height: none;
     }
+    /* Stacked battle-progress reads better as side-by-side team cards than a
+       tall single column on a wide tablet. */
+    .battle-progress {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    .battle-timer {
+        flex-basis: 100%;
+    }
+    .progress-card {
+        flex: 1 1 240px;
+    }
 }
-@media (max-width: 700px) {
+
+/* sm — large phone / small tablet portrait: team config cards stack. */
+@media (max-width: 768px) {
     .config-panel {
         flex-direction: column;
     }
+    .civ-grid {
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    }
+    /* Touch targets: pickers and number inputs reach ~44px so they are tappable. */
+    .civ-card,
+    .unit-pick {
+        min-height: 44px;
+    }
+    .count-inputs input,
+    .resource-input input {
+        min-height: 44px;
+        padding: 8px;
+    }
+    .controls button {
+        min-height: 44px;
+    }
+}
+
+/* xs — phone (PRIMARY TARGET). Full-width controls, single-column mode toggle,
+   inputs span the row, battle-progress back to a single stacked column. */
+@media (max-width: 480px) {
+    .battle-progress {
+        flex-direction: column;
+    }
+    .progress-card {
+        flex: 1 1 auto;
+    }
+    /* Mode toggle: stack the three options as full-width tappable rows. */
+    .mode-toggle {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .mode-option {
+        justify-content: center;
+        min-height: 44px;
+        padding: 6px 10px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--bg);
+    }
+    /* Count / resource inputs: full-width, comfortable rows. */
+    .count-inputs {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .count-inputs > div {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+    .count-inputs input,
+    .resource-input input {
+        width: 120px;
+    }
+    .resource-input {
+        flex-direction: column;
+        gap: 6px;
+    }
+    /* Controls: full-width buttons, speed control on its own row. */
     .controls {
         flex-direction: column;
+        align-items: stretch;
         gap: 8px;
     }
     .controls button {
         width: 100%;
     }
-    .civ-grid {
-        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    .speed-control {
+        justify-content: center;
+    }
+    #speedSlider {
+        flex: 1;
+        width: auto;
+        max-width: 200px;
     }
 }

@@ -73,12 +73,15 @@
 }
 
 /* --- Civ Grid --- */
+/* Cap dropped (was 900) so the grid fills the app container on wide screens
+   while auto-fill keeps cards a sane size; the page container caps the width. */
 .ma-civ-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
     gap: 6px;
-    max-width: 900px;
     margin: 0 auto 24px;
+    width: 100%;
+    min-width: 0;
 }
 .ma-civ-card {
     display: flex;
@@ -170,12 +173,16 @@
 }
 
 /* --- Section Cards (Cavalry, Ranged, Infantry, Siege) --- */
+/* auto-fit minmax: 4-up on ultrawide, 2-up on laptop/tablet, 1-up on phone —
+   no fixed 2-col stranding. Cap raised 1100 -> app container (fluid via min()). */
 .ma-sections {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 16px;
-    max-width: 1100px;
+    max-width: var(--container-app, 1760px);
     margin: 0 auto;
+    width: 100%;
+    min-width: 0;
 }
 .ma-section {
     border: 1px solid var(--border);
@@ -234,14 +241,38 @@
     border: 1px solid var(--border);
     transition: background 0.2s ease;
 }
+
+/* Per-side civ label — only meaningful once a row stacks into one column
+   (otherwise the two sides are spatially obvious). Hidden by default. */
+.ma-side-civ {
+    display: none;
+    align-items: center;
+    gap: 5px;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+}
+.ma-side-civ-emblem {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid var(--border-light);
+    object-fit: cover;
+    flex-shrink: 0;
+}
 .ma-unit-side.winner {
     background: var(--strong-tint);
     border-color: color-mix(in srgb, var(--strong) 35%, transparent);
 }
 .ma-unit-side.na {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 4px;
     opacity: 0.55;
 }
 .ma-na-text {
@@ -378,10 +409,16 @@
     object-fit: cover;
     background: var(--bg-deep);
     transition: transform 0.15s ease;
+    cursor: pointer;
 }
-.ma-beats-icon:hover {
-    transform: scale(1.3);
-    z-index: 1;
+/* Hover-zoom is desktop polish only — on touch it can't be reached and the
+   scale(1.3) clips inside overflow:hidden cards. Identity is delivered by the
+   tap sheet (see matchup_advisor.js) instead. */
+@media (hover: hover) and (pointer: fine) {
+    .ma-beats-icon:hover {
+        transform: scale(1.3);
+        z-index: 1;
+    }
 }
 .ma-beats-icon.exclusive {
     border: 1px solid var(--gold);
@@ -439,10 +476,13 @@
     object-fit: cover;
     background: var(--bg-deep);
     transition: transform 0.15s ease;
+    cursor: pointer;
 }
-.ma-gap-icon:hover {
-    transform: scale(1.3);
-    z-index: 1;
+@media (hover: hover) and (pointer: fine) {
+    .ma-gap-icon:hover {
+        transform: scale(1.3);
+        z-index: 1;
+    }
 }
 .ma-gap-icon.gap-loss {
     border-color: color-mix(in srgb, var(--loss) 55%, var(--border));
@@ -465,13 +505,15 @@
 }
 
 /* --- Top Units Section --- */
+/* Cap raised 1100 -> app container (fluid via min()) so it lines up with sections. */
 .ma-top-units {
-    max-width: 1100px;
+    max-width: var(--container-app, 1760px);
     margin: 0 auto 20px;
     border: 1px solid var(--gold);
     border-radius: 10px;
     background: var(--gold-tint);
     overflow: hidden;
+    width: 100%;
 }
 .ma-top-units-header {
     padding: 8px 14px;
@@ -574,11 +616,108 @@
     border-left: 1px solid var(--border);
 }
 
-/* --- Responsive: 768px — single column sections --- */
-@media (max-width: 768px) {
-    .ma-sections {
-        grid-template-columns: 1fr;
+/* ==========================================================================
+   TAP SHEET — touch identity affordance for beats / pop / eco / loss / gap icons.
+   On touch, native title= tooltips are invisible, so a tap on any icon opens a
+   small pinned card naming the unit. On phones (<=480px) it becomes a bottom
+   sheet. Built/positioned by matchup_advisor.js; styled here.
+   Tokens (--nav-h / --gutter) fall back gracefully if base.css hasn't defined
+   them, so this file works standalone and upgrades when the shared tokens land.
+   ========================================================================== */
+.ma-sheet {
+    position: fixed;
+    z-index: 1200;
+    display: none;
+    max-width: min(300px, calc(100vw - 2 * var(--gutter, 16px)));
+    max-height: min(60vh, calc(100vh - var(--nav-h, 56px) - 16px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: 12px 14px 12px;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    box-shadow: var(--shadow-card);
+    color: var(--text);
+}
+.ma-sheet.visible {
+    display: block;
+}
+.ma-sheet-close {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 0;
+    color: var(--text-muted);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 50%;
+}
+.ma-sheet-close:hover {
+    color: var(--text);
+    background: var(--bg-hover);
+}
+.ma-sheet-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-dim);
+    margin: 0 24px 8px 0;
+}
+.ma-sheet-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+}
+.ma-sheet-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    object-fit: cover;
+    background: var(--bg-deep);
+    flex-shrink: 0;
+}
+.ma-sheet-name {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text);
+    line-height: var(--lh-tight);
+}
+.ma-sheet-note {
+    display: block;
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* ==========================================================================
+   RESPONSIVE — aligned to the shared scale {480, 768, 1024, 1600}.
+   ========================================================================== */
+
+/* --- md (<=1024px): tablet / small laptop --- */
+@media (max-width: 1024px) {
+    /* auto-fit handles section column count; nothing forced here so 2-up holds
+       as long as cards fit, then collapses naturally. */
+    .ma-picker {
+        gap: 14px;
     }
+}
+
+/* --- sm (<=768px): large phone / small tablet --- */
+@media (max-width: 768px) {
     .ma-picker {
         gap: 12px;
     }
@@ -587,10 +726,18 @@
         min-height: 86px;
         padding: 10px;
     }
+    /* 44px touch targets for the interactive pickers */
+    .ma-civ-card {
+        min-height: 44px;
+    }
+    .ma-age-btn {
+        min-height: 44px;
+        padding: 8px 18px;
+    }
 }
 
-/* --- Responsive: 600px — compact civ grid --- */
-@media (max-width: 600px) {
+/* --- xs (<=480px): phone (PRIMARY TARGET) --- */
+@media (max-width: 480px) {
     .ma-top-units-body {
         flex-direction: column;
         gap: 10px;
@@ -606,9 +753,13 @@
     .ma-civ-card-name {
         font-size: var(--fs-xs);
     }
+    /* Unit row stacks; show the per-side civ label so context isn't lost. */
     .ma-row {
         flex-direction: column;
-        gap: 4px;
+        gap: 6px;
+    }
+    .ma-side-civ {
+        display: flex;
     }
     .ma-slot {
         width: 90px;
@@ -616,5 +767,21 @@
     }
     .ma-vs {
         font-size: var(--fs-base);
+    }
+    .ma-section-body {
+        padding: 10px 8px;
+    }
+
+    /* Pinned identity cards become a bottom sheet on phones. */
+    .ma-sheet {
+        left: var(--gutter, 16px);
+        right: var(--gutter, 16px);
+        bottom: 0;
+        top: auto !important;
+        width: auto;
+        max-width: none;
+        max-height: 70vh;
+        border-radius: 12px 12px 0 0;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     }
 }

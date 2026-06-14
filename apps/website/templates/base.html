@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-MYNEW08LBR"></script>
     <script>
@@ -109,6 +109,29 @@
             </button>
         </div>
     </nav>
+    <script>
+        /* Measure the real sticky-nav height into --nav-h (sticky table headers,
+           floating-card max-heights and anchor scroll-margins all read it) and
+           bring the active tab into view in the mobile scroll-snap strip. */
+        (function() {
+            var nav = document.querySelector('.site-nav');
+            if (!nav) return;
+            function setNavH() {
+                document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px');
+            }
+            setNavH();
+            window.addEventListener('resize', setNavH, { passive: true });
+            window.addEventListener('orientationchange', setNavH);
+
+            var active = nav.querySelector('.nav-tab.active');
+            var strip  = nav.querySelector('.nav-links');
+            if (active && strip && strip.scrollWidth > strip.clientWidth) {
+                /* horizontal-only so we never yank the page vertically */
+                strip.scrollLeft = Math.max(0,
+                    active.offsetLeft - (strip.clientWidth - active.offsetWidth) / 2);
+            }
+        })();
+    </script>
 
     {% block content %}{% endblock %}
 

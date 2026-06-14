@@ -75,7 +75,155 @@ const resultsEl = document.getElementById("results");
     buildCivGrid();
     attachSlotHandlers();
     attachAgeHandlers();
+    attachIconSheet();
 })();
+
+/* ==========================================================================
+   TAP IDENTITY SHEET
+   On touch, the native title= on beats/pop/eco/loss/gap icons is invisible, so
+   a tap opens a small pinned card naming the unit (becomes a bottom sheet on
+   phones via CSS). title= is kept for desktop hover. One delegated listener
+   covers all current and future icons (results re-render on every comparison).
+   ========================================================================== */
+let maSheetAnchor = null; // the icon currently pinned
+
+function getSheetEl() {
+    let el = document.getElementById("ma-sheet");
+    if (!el) {
+        el = document.createElement("div");
+        el.id = "ma-sheet";
+        el.className = "ma-sheet";
+        el.setAttribute("role", "dialog");
+        el.setAttribute("aria-label", "Unit details");
+        document.body.appendChild(el);
+    }
+    return el;
+}
+
+function closeIconSheet() {
+    maSheetAnchor = null;
+    const el = getSheetEl();
+    el.classList.remove("visible");
+}
+
+/* Split an icon's title="Knight (pop win only)" into name + note. */
+function _splitIconTitle(text) {
+    if (!text) return { name: "", note: "" };
+    const m = text.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
+    if (m) return { name: m[1].trim(), note: m[2].trim() };
+    return { name: text.trim(), note: "" };
+}
+
+/* Human label for the row group the icon belongs to (Beats / Loses / Gap…). */
+function _sheetTitleForIcon(icon) {
+    if (icon.classList.contains("ma-gap-icon")) return "Can't beat";
+    if (icon.classList.contains("pop-win")) return "Pop-efficient win";
+    if (icon.classList.contains("eco-win")) return "Eco-efficient win";
+    if (icon.classList.contains("loss")) return "Loses to";
+    if (icon.classList.contains("exclusive")) return "Beats (exclusive)";
+    return "Beats";
+}
+
+function openIconSheet(icon) {
+    const el = getSheetEl();
+    const { name, note } = _splitIconTitle(icon.getAttribute("title") || icon.alt || "");
+    if (!name) return;
+
+    // Toggle off if tapping the already-pinned icon.
+    if (maSheetAnchor === icon) {
+        closeIconSheet();
+        return;
+    }
+    maSheetAnchor = icon;
+
+    el.innerHTML = "";
+
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "ma-sheet-close";
+    close.setAttribute("aria-label", "Close");
+    close.innerHTML = "&times;";
+    close.addEventListener("click", (e) => { e.stopPropagation(); closeIconSheet(); });
+    el.appendChild(close);
+
+    const title = document.createElement("div");
+    title.className = "ma-sheet-title";
+    title.textContent = _sheetTitleForIcon(icon);
+    el.appendChild(title);
+
+    const row = document.createElement("div");
+    row.className = "ma-sheet-row";
+    const img = document.createElement("img");
+    img.className = "ma-sheet-icon";
+    if (icon.src) img.src = icon.src;
+    img.alt = name;
+    row.appendChild(img);
+
+    const nameWrap = document.createElement("div");
+    const nameEl = document.createElement("span");
+    nameEl.className = "ma-sheet-name";
+    nameEl.textContent = name;
+    nameWrap.appendChild(nameEl);
+    if (note) {
+        const noteEl = document.createElement("span");
+        noteEl.className = "ma-sheet-note";
+        noteEl.textContent = note;
+        nameWrap.appendChild(noteEl);
+    }
+    row.appendChild(nameWrap);
+    el.appendChild(row);
+
+    el.classList.add("visible");
+    positionSheet(icon);
+}
+
+/* Position the pinned card near the icon, clamped to the viewport on all four
+   edges. On phones CSS pins it as a bottom sheet, so skip JS positioning there. */
+function positionSheet(icon) {
+    const el = getSheetEl();
+    if (window.matchMedia("(max-width: 480px)").matches) {
+        el.style.top = "";
+        el.style.left = "";
+        return;
+    }
+    const r = icon.getBoundingClientRect();
+    const sr = el.getBoundingClientRect();
+    const pad = 6;
+    let top = r.bottom + 8;
+    if (top + sr.height > window.innerHeight - pad) {
+        top = r.top - sr.height - 8;
+    }
+    if (top < pad) top = Math.max(pad, window.innerHeight - sr.height - pad);
+    let left = r.left + r.width / 2 - sr.width / 2;
+    if (left < pad) left = pad;
+    if (left + sr.width > window.innerWidth - pad) {
+        left = window.innerWidth - sr.width - pad;
+    }
+    el.style.top = top + "px";
+    el.style.left = left + "px";
+}
+
+function attachIconSheet() {
+    // Delegated: works for icons rendered now and after every re-render.
+    document.addEventListener("click", (e) => {
+        const icon = e.target.closest(".ma-beats-icon, .ma-gap-icon");
+        if (icon) {
+            e.stopPropagation();
+            openIconSheet(icon);
+            return;
+        }
+        // Outside tap (and not on the sheet itself) dismisses.
+        if (maSheetAnchor && !e.target.closest("#ma-sheet")) {
+            closeIconSheet();
+        }
+    });
+    window.addEventListener("resize", () => {
+        if (maSheetAnchor) positionSheet(maSheetAnchor);
+    });
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && maSheetAnchor) closeIconSheet();
+    });
+}
 
 function buildCivGrid() {
     civGrid.innerHTML = "";
@@ -218,6 +366,7 @@ function clearResults() {
     savedDataL = null;
     savedDataR = null;
     topUnitsEl.innerHTML = "";
+    closeIconSheet();
 }
 
 /* ---- Data Loading ---- */
@@ -284,6 +433,7 @@ function _renderIconRow(row, slugs, labelText, labelClass, iconClass) {
 
 function renderSimOverlays() {
     if (!simData) return;
+    closeIconSheet(); // icons are about to be re-rendered; drop any stale pin
     // Render "Beats" row (wins both v30 + 3k)
     document.querySelectorAll(".ma-beats-row").forEach((row) => {
         const slug = row.dataset.unitSlug;
@@ -1161,6 +1311,23 @@ function buildRow(lineSlug, entriesL, entriesR) {
 function buildUnitSide(entry, civName, isWinner) {
     const side = document.createElement("div");
     side.className = "ma-unit-side";
+
+    // Per-side civ label — hidden on desktop (CSS), shown only when the row
+    // stacks into one column on phones so each side keeps its civ context.
+    if (civName) {
+        const civTag = document.createElement("div");
+        civTag.className = "ma-side-civ";
+        const civImg = document.createElement("img");
+        civImg.className = "ma-side-civ-emblem";
+        civImg.src = CIV_EMBLEM_BASE + civName.toLowerCase() + ".png";
+        civImg.alt = civName;
+        civImg.loading = "lazy";
+        const civSpan = document.createElement("span");
+        civSpan.textContent = civName;
+        civTag.appendChild(civImg);
+        civTag.appendChild(civSpan);
+        side.appendChild(civTag);
+    }
 
     if (!entry) {
         side.classList.add("na");

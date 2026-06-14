@@ -29,11 +29,13 @@
     color: var(--gold);
 }
 
+/* civ-grid: auto-fill fills whatever the container allows; the old 900px
+   self-cap stranded width on big monitors, so it's gone — the container token
+   (.container) is now the only width limit. */
 .civ-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
     gap: 10px;
-    max-width: 900px;
     margin: 0 auto;
 }
 .civ-card {
@@ -52,6 +54,8 @@
         box-shadow 0.28s ease;
     color: var(--text);
     will-change: transform;
+    /* Comfortable touch target on phones (emblem shrinks at small sizes). */
+    min-height: 44px;
 }
 .civ-card:hover {
     transform: translateY(-2px) scale(1.025);
@@ -137,6 +141,9 @@
     font-size: var(--fs-base);
     line-height: var(--lh-base);
     margin-bottom: 10px;
+    /* Cap the measure so the narrative stays readable when the hero stretches
+       to full container width on large monitors. */
+    max-width: 70ch;
 }
 .analysis-hero-body .pill-row {
     margin-bottom: 4px;
@@ -180,10 +187,14 @@
     border-color: color-mix(in srgb, var(--poor) 35%, transparent);
 }
 
-/* --- Role Columns Grid (4 columns: cav, ranged, inf, siege) --- */
+/* --- Role Columns Grid (cav, ranged, inf, siege, navy) ---
+   auto-fit + minmax replaces the rigid repeat(5,1fr): 5 columns on wide
+   desktop, smoothly stepping 4 -> 3 -> 2 -> 1 as width shrinks, with no
+   coarse hardcoded breakpoint jumps. On big monitors it stays at 5 and the
+   columns simply widen. */
 .role-columns {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 8px;
     margin-bottom: 24px;
 }
@@ -457,7 +468,14 @@
     border-color: color-mix(in srgb, var(--poor) 35%, transparent);
 }
 
-/* --- Hover Tooltip (CSS-only, positioned above badge) --- */
+/* --- Unit tooltip (hover on desktop, tap-pinned on touch) ---
+   Two ways to surface it:
+     • desktop pointers get the classic hover-above-badge bubble;
+     • touch / any device gets a JS-toggled `.pinned` state (matchup.js) with a
+       visible × close and outside-tap dismiss, so the info is reachable without
+       a hover that doesn't exist on phones.
+   Viewport-clamped width keeps it on-screen; at <=480px it becomes a
+   bottom-sheet (rules further down). */
 .unit-badge-tooltip {
     display: none;
     position: absolute;
@@ -470,14 +488,31 @@
     border-radius: 8px;
     padding: 10px 12px;
     min-width: 180px;
-    max-width: 260px;
+    /* Never wider than the viewport (minus side gutters). */
+    max-width: min(260px, calc(100vw - 2 * var(--gutter, 16px)));
     box-shadow: var(--shadow-card);
     pointer-events: none;
     white-space: normal;
     text-align: left;
+    /* Tall breakdowns scroll instead of clipping off-screen. */
+    max-height: min(60vh, calc(100vh - var(--nav-h, 56px) - 16px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
 }
-.unit-badge:hover .unit-badge-tooltip {
+/* Hover only when the device actually has a hover-capable pointer, so phones
+   don't get a sticky bubble on tap-through. */
+@media (hover: hover) {
+    .unit-badge:hover .unit-badge-tooltip {
+        display: block;
+    }
+}
+/* Pinned (tap) state — works on every device; pointer-events on so the close
+   button and inner scroll are usable. Extra top padding clears the × button. */
+.unit-badge-tooltip.pinned {
     display: block;
+    pointer-events: auto;
+    padding-top: 26px;
 }
 
 /* Tooltip arrow */
@@ -489,6 +524,34 @@
     transform: translateX(-50%);
     border: 6px solid transparent;
     border-top-color: var(--surface-elevated);
+}
+
+/* Close button — only meaningful for the tap-pinned / bottom-sheet state.
+   Hidden by default (hover bubble doesn't need it); shown when .pinned. */
+.unit-badge-tooltip-close {
+    display: none;
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    width: 28px;
+    height: 28px;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 0;
+    color: var(--text-muted);
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 50%;
+    z-index: 1;
+}
+.unit-badge-tooltip-close:hover {
+    color: var(--text);
+    background: var(--bg-hover);
+}
+.unit-badge-tooltip.pinned .unit-badge-tooltip-close {
+    display: flex;
 }
 
 /* --- Tooltip content lines --- */
@@ -548,7 +611,14 @@
    covered by the shared tokens in base.css. The dead .rank-good rule went
    with this block. */
 
-/* --- Responsive: 768px — 2 columns --- */
+/* ==========================================================================
+   Responsive — aligned to the shared scale {480, 768, 1024}.
+   role-columns reflow is handled by auto-fit minmax() above (no per-tier grid
+   overrides needed); these queries only tune spacing, type, and the hero/grid
+   reflow + the touch-friendly tooltip.
+   ========================================================================== */
+
+/* --- sm/md: large phone — small laptop --- */
 @media (max-width: 768px) {
     .analysis-hero {
         gap: 16px;
@@ -561,22 +631,23 @@
         width: 56px;
         height: 56px;
     }
-    .role-columns {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-    }
     .unit-badge-name {
         font-size: var(--fs-xs);
     }
+    /* Tap-pinned tooltip: keep it anchored but left-aligned so the clamp keeps
+       it on-screen near the edges. The arrow re-centres on the badge below. */
     .unit-badge-tooltip {
         left: 0;
         transform: none;
         min-width: 160px;
     }
+    .unit-badge-tooltip::after {
+        left: 24px;
+    }
 }
 
-/* --- Responsive: 600px — 1 column, hero stacks --- */
-@media (max-width: 600px) {
+/* --- xs: true phone (360–480) — single column, hero stacks, bottom-sheet --- */
+@media (max-width: 480px) {
     .civ-grid {
         grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
         gap: 8px;
@@ -595,6 +666,13 @@
         gap: 12px;
         padding: 16px;
     }
+    .analysis-hero-body {
+        width: 100%;
+    }
+    .analysis-hero-narrative {
+        /* Centred hero: don't strand the measure off to the left. */
+        max-width: 100%;
+    }
     .analysis-hero-body .pill-row {
         justify-content: center;
     }
@@ -604,10 +682,6 @@
     .analysis-emblem {
         width: 56px;
         height: 56px;
-    }
-    .role-columns {
-        grid-template-columns: 1fr;
-        gap: 8px;
     }
     .unit-badge-icon {
         width: 52px;
@@ -629,5 +703,71 @@
     }
     .line-label {
         font-size: var(--fs-xs);
+    }
+
+    /* Bottom-sheet: the pinned tooltip detaches from the badge and pins to the
+       bottom of the viewport, full-width (minus gutters), so it can never clip
+       off-screen on a phone. Hover bubbles never appear here (no hover pointer),
+       so only .pinned is affected. */
+    .unit-badge-tooltip.pinned {
+        position: fixed;
+        left: var(--gutter, 16px);
+        right: var(--gutter, 16px);
+        bottom: calc(env(safe-area-inset-bottom, 0px));
+        top: auto;
+        transform: none;
+        width: auto;
+        min-width: 0;
+        max-width: none;
+        max-height: 70vh;
+        overflow-y: auto;
+        z-index: 1100;
+        border-radius: 12px 12px 0 0;
+        padding: 28px 16px 16px;
+        box-shadow: var(--shadow-card);
+        animation: tooltipSheetUp 0.2s ease both;
+    }
+    /* No arrow when detached as a sheet. */
+    .unit-badge-tooltip.pinned::after {
+        display: none;
+    }
+    .unit-badge-tooltip-close {
+        top: 6px;
+        right: 8px;
+        width: 36px;
+        height: 36px;
+        font-size: 1.5rem;
+    }
+}
+
+/* Dimmed backdrop behind the bottom-sheet (element injected by matchup.js,
+   only shown at phone widths). Tapping it dismisses the pinned tooltip. */
+.unit-tooltip-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1090;
+    animation: tooltipBackdropIn 0.2s ease both;
+}
+@media (max-width: 480px) {
+    .unit-tooltip-backdrop.active {
+        display: block;
+    }
+}
+
+@keyframes tooltipSheetUp {
+    from { transform: translateY(12px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}
+@keyframes tooltipBackdropIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .unit-badge-tooltip.pinned,
+    .unit-tooltip-backdrop {
+        animation: none;
     }
 }

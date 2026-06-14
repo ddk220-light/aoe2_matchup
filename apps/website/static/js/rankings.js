@@ -380,13 +380,34 @@ function getHoverCardEl() {
     return el;
 }
 
+// Phones (<=480px) render the PINNED card as a CSS bottom-sheet. JS must not
+// write inline top/left there or it would override the sheet positioning.
+function isPhoneViewport() {
+    return (
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(max-width: 480px)").matches
+    );
+}
+
 function positionHoverCard(targetEl) {
     const hc = getHoverCardEl();
+    // On phones, a pinned card is a bottom sheet (CSS-positioned). Clear any
+    // stale inline coords so the stylesheet rules take effect, then bail.
+    if (isPhoneViewport() && hc.classList.contains("pinned")) {
+        hc.style.top = "";
+        hc.style.left = "";
+        return;
+    }
     const rect = targetEl.getBoundingClientRect();
     const hcRect = hc.getBoundingClientRect();
     let top = rect.top - hcRect.height - 8;
     let left = rect.left + rect.width / 2 - hcRect.width / 2;
     if (top < 4) top = rect.bottom + 8;
+    // Clamp the bottom edge too: a tall breakdown opened low on the page would
+    // otherwise run off the bottom of the viewport (the card has no fixed
+    // height). Keep it fully on-screen, scrolling internally if needed.
+    if (top + hcRect.height > window.innerHeight - 4)
+        top = Math.max(4, window.innerHeight - hcRect.height - 4);
     if (left < 4) left = 4;
     if (left + hcRect.width > window.innerWidth - 4)
         left = window.innerWidth - hcRect.width - 4;
@@ -429,13 +450,70 @@ function unpinHoverCard() {
     hc.classList.remove("visible", "pinned");
 }
 
+// Swap the content of an already-pinned card WITHOUT toggling it. Used to fill
+// in async breakdowns (e.g. stat chain) after a tap pins a "Loading…" card —
+// re-calling pinHoverCard(sameEl) would treat it as a second tap and close it,
+// which on touch (no preceding hover to warm the cache) hid the card entirely.
+function updatePinnedCard(targetEl, html) {
+    if (pinnedCell !== targetEl) return;
+    const hc = getHoverCardEl();
+    hc.innerHTML =
+        `<span class="hc-close" onclick="unpinHoverCard()">&times;</span>` +
+        html;
+    positionHoverCard(targetEl);
+}
+
 document.addEventListener("click", (e) => {
     if (!pinnedCell) return;
     const hc = getHoverCardEl();
     if (hc.contains(e.target)) return;
     if (e.target.closest("td.hc-cell")) return;
+    if (e.target.closest("[data-info-pin]")) return;  // its own handler manages it
     unpinHoverCard();
 });
+
+// Touch reachability for native title= tooltips. The `.info-icon` (column help)
+// and `.special-cell` lines carry their full text in title=, which is invisible
+// on touch (no hover). On coarse pointers, surface that text via the shared
+// pinned card (a bottom sheet at <=480px). Desktop keeps the native tooltip.
+function pinTitleText(targetEl, title) {
+    const safe = String(title)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    pinHoverCard(targetEl, `<div class="hc-title">Details</div>
+        <div style="white-space:pre-line;line-height:1.4">${safe}</div>`);
+}
+
+function _isCoarsePointer() {
+    return (
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(hover: none), (pointer: coarse)").matches
+    );
+}
+
+document.addEventListener(
+    "click",
+    (e) => {
+        if (!_isCoarsePointer()) return;
+        // Column info icon: explicit, always tappable.
+        const icon = e.target.closest(".info-icon[title]");
+        if (icon) {
+            e.stopPropagation();
+            icon.setAttribute("data-info-pin", "");
+            pinTitleText(icon, icon.getAttribute("title"));
+            return;
+        }
+        // A truncated Special-column line: its title holds the full text.
+        const sp = e.target.closest(".special-cell [title]");
+        if (sp && sp.getAttribute("title")) {
+            e.stopPropagation();
+            sp.setAttribute("data-info-pin", "");
+            pinTitleText(sp, sp.getAttribute("title"));
+        }
+    },
+    true,  // capture: run before the outside-tap dismiss handler above
+);
 
 // ===== HOVER CARD BUILDERS =====
 function scoreColor(v) {
@@ -797,7 +875,9 @@ async function onStatCellClick(e, rowIdx, key) {
     const td = e.currentTarget;
     pinHoverCard(td, `<div class="hc-loading">Loading...</div>`);
     const chain = await getStatChain(row.id);
-    pinHoverCard(td, buildStatHoverHtml(row, key, chain));
+    // Update in place — don't re-call pinHoverCard, which would toggle this
+    // same cell's card closed (and on touch there's no warm cache to dodge it).
+    updatePinnedCard(td, buildStatHoverHtml(row, key, chain));
 }
 
 // ===== RENDERING =====

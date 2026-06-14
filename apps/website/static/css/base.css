@@ -10,8 +10,36 @@
    here. Page CSS should reference these tokens, never raw hex / family strings.
    ========================================================================== */
 
+/* ==========================================================================
+   RESPONSIVE BREAKPOINT SCALE  (mobile-first; ONE shared scale, site-wide)
+   CSS custom-media isn't natively supported, so these are documented literals.
+   Every page must use these exact values — do not reintroduce 600/640/700/900/1100.
+
+     xs   <= 480px   small phone (360-430 real). PRIMARY TARGET. 1 column, full-width
+                     controls, card/stacked table reflow, bottom-sheet popups.
+     sm   <= 768px   large phone / small tablet portrait. 1 data column (2-up small
+                     cards), nav collapses to a scroll strip, tables scroll-with-
+                     sticky-first-col or reflow.
+     md   <= 1024px  tablet landscape / small laptop. 2-3 columns, sections 2-up.
+     lg   >= 1025px  laptop/desktop default — the base layout, no query needed.
+     xl   >= 1600px  large monitor — raise caps / go fluid so content fills width.
+     xxl  >= 1920px  ultrawide — widest data layouts allowed.
+
+   The ONE allowed off-scale value is the nav's 900px squeeze breakpoint
+   (documented at that rule). Everything else snaps to {480,768,1024,1600,1920}.
+   ========================================================================== */
+
 /* ---------- LIGHT MODE (default) ---------- */
 :root {
+    /* ---- Responsive layout tokens (theme-agnostic; live here so every page
+            shares ONE fluid container system instead of fixed narrow caps) ---- */
+    --gutter:           clamp(12px, 4vw, 24px);                  /* fluid side padding */
+    --container-prose:  min(100% - 2 * var(--gutter), 820px);    /* readable text measure */
+    --container-max:    min(100% - 2 * var(--gutter), 1500px);   /* standard pages */
+    --container-data:   min(100% - 2 * var(--gutter), 1760px);   /* table / grid-heavy pages */
+    --container-app:    min(100% - 2 * var(--gutter), 1920px);   /* dense multi-panel tools */
+    --nav-h:            56px;                                    /* sticky-nav height; refined at runtime by base.html */
+
     /* Backgrounds / surfaces — warm parchment, never pure white */
     --bg-deep:          #efe9dc;
     --bg:               #f6f1e7;
@@ -169,11 +197,36 @@
     box-sizing: border-box;
 }
 
-/* ---------- Font Smoothing (global) ---------- */
+/* ---------- Font Smoothing + global scroll guards ---------- */
 html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /* Anchor jumps land below the sticky nav, not under it */
+    scroll-padding-top: var(--nav-h);
+}
+
+/* Kill horizontal page overflow (the #1 mobile jank cause) and stop the
+   vertical rubber-band from chaining to parent scrollers. */
+html,
+body {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+body {
+    overscroll-behavior-y: none;
+}
+
+/* ---------- Reusable horizontal-scroller utility ----------
+   Apply to every horizontal scroll region (wide tables, tab bars, the mobile
+   nav strip): momentum on iOS, contained overscroll (no browser back-swipe),
+   and a hard width cap so it never pushes the page wider than the viewport. */
+.scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    max-width: 100%;
+    min-width: 0;
 }
 
 /* ---------- Base Typography ---------- */
@@ -266,7 +319,9 @@ a:hover {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 0 24px;
+    /* sides clear the notch on landscape phones; --gutter is the floor */
+    padding-left: max(24px, env(safe-area-inset-left));
+    padding-right: max(24px, env(safe-area-inset-right));
     background: linear-gradient(180deg, var(--bg-warm) 0%, var(--bg) 100%);
     border-bottom: 2px solid var(--border);
     position: sticky;
@@ -453,17 +508,19 @@ a:hover {
     }
 }
 
-/* ---------- Container ---------- */
+/* ---------- Container ----------
+   Fluid min() caps so big monitors fill and small screens never overflow.
+   The flat @768 padding override is gone — the --gutter clamp handles it. */
 .container {
-    max-width: 1400px;
+    width: var(--container-max);
     margin: 0 auto;
-    padding: 16px 20px;
+    padding: 16px 0;
 }
 
 .container-wide {
-    max-width: 1600px;
+    width: var(--container-app);
     margin: 0 auto;
-    padding: 16px 20px;
+    padding: 16px 0;
 }
 
 /* ---------- Cards ---------- */
@@ -632,10 +689,12 @@ a:hover {
     letter-spacing: 0.02em;
 }
 
-/* ---------- Responsive ---------- */
+/* ---------- Responsive navigation ----------
+   NOTE: 900px is the ONE documented off-scale breakpoint in the whole site.
+   It exists only to relieve the single-row nav squeeze before the tab strip
+   kicks in at 768px — keeping the desc lines from wrapping mid-tablet. */
 @media (max-width: 900px) {
     .site-nav {
-        padding: 0 12px;
         gap: 8px;
     }
 
@@ -656,14 +715,6 @@ a:hover {
         display: none;
     }
 
-    .nav-tab-icon {
-        font-size: 0.95rem;
-    }
-
-    .nav-tab-label {
-        font-size: 0.75rem;
-    }
-
     .theme-toggle-label {
         display: none;
     }
@@ -673,43 +724,60 @@ a:hover {
     }
 }
 
-@media (max-width: 600px) {
+/* sm and below: the tab row becomes a horizontal scroll-snap strip so all six
+   tabs stay one tap away (no hamburger / no new markup), each a 44px target. */
+@media (max-width: 768px) {
     .site-nav {
-        flex-wrap: wrap;
-        padding: 8px 12px 0;
+        gap: 8px;
+        /* keep tabs clear of the notch; --gutter is the floor */
+        padding-left: max(var(--gutter), env(safe-area-inset-left));
+        padding-right: max(var(--gutter), env(safe-area-inset-right));
     }
 
     .nav-brand {
-        width: 100%;
-        padding: 0 0 6px;
-        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
     }
 
     .nav-links {
-        width: 100%;
-        margin-left: 0;
-        justify-content: space-around;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+        scroll-snap-type: x proximity;
+        max-width: 100%;
+        min-width: 0;
+        /* hide the scrollbar — the strip reads as a clean tab row */
+        scrollbar-width: none;
+    }
+    .nav-links::-webkit-scrollbar {
+        display: none;
     }
 
     .nav-tab {
-        padding: 6px 8px 4px;
-        flex: 1;
-        min-width: 0;
+        flex: 0 0 auto;
+        scroll-snap-align: start;
+        flex-direction: row;
+        gap: 6px;
+        min-height: 44px;
+        justify-content: center;
+        padding: 10px 14px;
+        border-radius: 8px;
     }
 
     .nav-tab-icon {
         font-size: 1rem;
+        margin-bottom: 0;
     }
 
     .nav-tab-label {
-        font-size: 0.7rem;
+        font-size: 0.8rem;
     }
-}
 
-@media (max-width: 768px) {
-    .container,
-    .container-wide {
-        padding: 12px;
+    .theme-toggle {
+        flex-shrink: 0;
+    }
+    .theme-toggle-btn {
+        min-height: 44px;
     }
 }
 
@@ -718,7 +786,9 @@ a:hover {
    ============================================================ */
 .site-footer {
     margin-top: 4rem;
-    padding: 2.5rem 1.5rem 1.25rem;
+    padding: 2.5rem var(--gutter) 1.25rem;
+    /* clear the home-indicator on notched phones */
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
     background: linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
     border-top: 2px solid var(--border);
     color: var(--text-muted);
@@ -727,7 +797,7 @@ a:hover {
     line-height: var(--lh-base);
 }
 .site-footer-inner {
-    max-width: 1280px;
+    max-width: var(--container-max);
     margin: 0 auto;
     display: grid;
     grid-template-columns: 1.4fr 1fr 1fr 1fr;
@@ -796,7 +866,7 @@ a:hover {
 }
 
 .site-footer-legal {
-    max-width: 1280px;
+    max-width: var(--container-max);
     margin: 0 auto;
     padding-top: 1.25rem;
     border-top: 1px solid var(--border);
@@ -811,10 +881,14 @@ a:hover {
     max-width: 60ch;
 }
 
-@media (max-width: 640px) {
-    .site-footer { padding: 2rem 1rem 1rem; margin-top: 2.5rem; }
+@media (max-width: 768px) {
+    .site-footer {
+        margin-top: 2.5rem;
+        padding-top: 2rem;
+        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
     .site-footer-inner {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
         gap: 1.75rem;
         padding-bottom: 1.5rem;
     }
@@ -825,7 +899,96 @@ a:hover {
     .site-footer-list a,
     .site-footer-contact-btn {
         min-height: 44px;
+        align-items: center;
     }
+}
+
+@media (max-width: 480px) {
+    .site-footer-inner {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================
+   Shared floating-card primitive  (tooltips / hovercards / pinned info)
+   Page systems (rankings .hover-card, matchup .unit-badge-tooltip,
+   matchup_advisor identity cards) should adopt .floating-card so the
+   viewport-clamp + touch + bottom-sheet behaviour lives in ONE place.
+   ============================================================ */
+.floating-card {
+    /* never wider than the viewport minus gutters; caps at a readable 340px */
+    max-width: min(340px, calc(100vw - 2 * var(--gutter)));
+    /* tall breakdowns scroll instead of clipping off the bottom edge */
+    max-height: min(60vh, calc(100vh - var(--nav-h) - 16px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
+/* A small close affordance for tap-pinned cards (hidden until pinned on touch). */
+.floating-card-close {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    width: 32px;
+    height: 32px;
+    display: none;               /* shown by pages when a card is pinned on touch */
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 0;
+    color: var(--text-muted);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 50%;
+}
+.floating-card-close:hover {
+    color: var(--text);
+    background: var(--bg-hover);
+}
+
+/* Optional dimmed backdrop behind a phone bottom-sheet (pages may toggle it). */
+.sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1099;
+    background: rgba(0, 0, 0, 0.45);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+}
+
+@keyframes sheetSlideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+}
+
+/* xs: pinned cards become a bottom sheet — reachable, dismissible, never
+   clipped. Pages add the .is-pinned hook; the base geometry lives here. */
+@media (max-width: 480px) {
+    .floating-card.is-pinned {
+        position: fixed;
+        left: var(--gutter);
+        right: var(--gutter);
+        bottom: 0;
+        top: auto;
+        width: auto;
+        max-width: none;
+        max-height: 70vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        z-index: 1100;
+        border-radius: 12px 12px 0 0;
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+        animation: sheetSlideUp 0.2s ease-out both;
+    }
+    .floating-card.is-pinned .floating-card-close {
+        display: flex;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .floating-card.is-pinned { animation: none; }
 }
 
 /* ============================================================
@@ -948,8 +1111,28 @@ a:hover {
     overflow: hidden;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
     .contact-modal-panel { padding: 1.5rem 1.1rem 1.25rem; }
+}
+
+/* xs: the contact modal becomes a full-width bottom sheet, consistent with the
+   shared floating-card phone treatment. */
+@media (max-width: 480px) {
+    .contact-modal {
+        align-items: flex-end;
+        padding: 0;
+    }
+    .contact-modal-panel {
+        max-width: none;
+        border-radius: 12px 12px 0 0;
+        max-height: calc(100vh - var(--nav-h) - 8px);
+        padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+        animation: sheetSlideUp 0.2s ease-out both;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .contact-modal-panel { animation: none; }
 }
 
 /* ==========================================================================
@@ -1004,5 +1187,18 @@ a:hover {
     .container > *,
     .container-wide > * {
         animation: none;
+    }
+    /* Neutralise the global transform/filter transition (the theme-transition
+       rule applies it to nearly every element and was previously ungated). */
+    body,
+    body *:not(#battleCanvas):not(.spinner):not(img) {
+        transition:
+            background-color 0.3s ease,
+            color 0.3s ease,
+            border-color 0.3s ease,
+            box-shadow 0.3s ease;
+    }
+    html {
+        scroll-behavior: auto;
     }
 }

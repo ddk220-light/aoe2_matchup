@@ -1,6 +1,40 @@
 /* ==========================================================================
    AoE2 Unit Analyzer - Rankings Page Styles
+   ==========================================================================
+
+   RESPONSIVE SCALE (shared site-wide, mobile-first; align all queries to these):
+     xs  <= 480px  small phone (PRIMARY TARGET) — 1 col, full-width controls,
+                   stacked controls, bottom-sheet hover-cards.
+     sm  <= 768px  large phone / small tablet — table = scroll+sticky-first-col,
+                   filters/tabs wrap, 44px touch targets.
+     md  <= 1024px tablet landscape / small laptop.
+     lg  >= 1025px desktop default (base, no query).
+     xl  >= 1600px large monitor — use more width (data container).
+     xxl >= 1920px ultrawide — widest data layout.
+
+   Container/scroll tokens (--gutter, --container-data, --nav-h) and the .scroll-x
+   utility are defined canonically in base.css; the var() fallbacks here keep this
+   page correct even if loaded standalone.
    ========================================================================== */
+
+/* This page is DATA-heavy: let the rankings region use the wide data container.
+   rankings.css only loads on this page, so scoping the cap to .container here
+   does not affect other pages. min() keeps it fluid so it never overflows. */
+.container {
+    max-width: var(--container-data, min(100% - 2 * var(--gutter, 24px), 1760px));
+    padding-left: var(--gutter, 24px);
+    padding-right: var(--gutter, 24px);
+}
+
+/* Reusable horizontal scroller (momentum + no page-overflow + no back-gesture
+   hijack). Mirrors base.css .scroll-x; self-contained so it works standalone. */
+.scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    max-width: 100%;
+    min-width: 0;
+}
 
 /* Age toggle: .age-toggle / .age-btn live in base.css now (single source). */
 .age-toggle {
@@ -75,6 +109,9 @@
     border-bottom: 2px solid var(--border-light);
     margin-bottom: 16px;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    max-width: 100%;
     scrollbar-width: thin;
 }
 .unit-tab {
@@ -136,10 +173,16 @@
     flex-shrink: 0;
 }
 
-/* Table container */
+/* Table container — momentum scroll, contained overscroll (no browser back-swipe
+   on horizontal drag), and max-width:100%/min-width:0 so a wide table can never
+   push the page width and cause horizontal page jank. */
 .table-container {
     margin-top: 20px;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    max-width: 100%;
+    min-width: 0;
 }
 .table-title {
     font-family: var(--font-display);
@@ -187,8 +230,34 @@
     user-select: none;
     white-space: nowrap;
     position: sticky;
-    top: 0;
+    /* Offset by the sticky site-nav height so the header row doesn't slide
+       under the nav while scrolling the page. Falls back to 0 if --nav-h is
+       not yet defined in base.css. */
+    top: var(--nav-h, 0px);
     z-index: 1;
+}
+
+/* Sticky FIRST COLUMN (Civ identity): keeps the row's identity visible while
+   the wide numeric columns scroll horizontally on small screens. The header
+   corner cell stacks above both axes (z above the sticky header and column). */
+.stats-table th:first-child,
+.stats-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--bg-deep);
+}
+.stats-table th:first-child {
+    z-index: 3;
+    background: var(--bg-warm);
+}
+/* Preserve the unique-row / hover backgrounds on the sticky first cell so it
+   doesn't show the default --bg-deep over a tinted/hovered row. */
+.stats-table tr.unique-row td:first-child {
+    background: var(--gold-tint);
+}
+.stats-table tr:hover td:first-child {
+    background: var(--gold-glow);
 }
 .stats-table th:hover {
     background: var(--gold-tint);
@@ -303,7 +372,13 @@
     color: var(--text);
     white-space: normal;
     min-width: 230px;
-    max-width: 340px;
+    /* Viewport-clamped width + scrollable height: never wider than the screen,
+       never clipped off the bottom — tall breakdowns scroll inside the card. */
+    max-width: min(340px, calc(100vw - 2 * var(--gutter, 24px)));
+    max-height: min(60vh, calc(100vh - var(--nav-h, 0px) - 16px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     z-index: 200;
     box-shadow: var(--shadow-card);
     pointer-events: none;
@@ -432,10 +507,15 @@ td.hc-cell {
     height: 14px;
 }
 
+/* ---- sm: <=768px — large phone / small tablet ---- */
 @media (max-width: 768px) {
     .unit-tab {
-        padding: 8px 12px;
+        /* Keep the label legible and the touch target tall enough. */
+        padding: 10px 12px;
         font-size: var(--fs-xs);
+        min-height: 44px;
+        scroll-snap-align: start;
+        flex: 0 0 auto;
     }
     .unit-tab img {
         width: 20px;
@@ -445,6 +525,88 @@ td.hc-cell {
     .unit-tab img.sprite {
         width: 24px;
         height: 24px;
+    }
+    /* Tabs scroll as a snap strip so all lines stay one tap away. */
+    .tab-bar {
+        scroll-snap-type: x proximity;
+    }
+
+    /* Controls wrap and grow touch targets. The filter input goes full width
+       so it's easy to tap and type on a phone. */
+    .civ-filter-wrap {
+        gap: 10px;
+    }
+    .civ-filter-wrap input[type="text"] {
+        width: 100%;
+        flex: 1 1 100%;
+        min-height: 44px;
+    }
+    .line-filters {
+        flex-wrap: wrap;
+        gap: 8px 12px;
+    }
+    .line-checkbox {
+        min-height: 44px;
+        padding: 4px 2px;
+    }
+    .line-checkbox input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+    }
+    /* Toggle / action buttons reach the 44px touch minimum. */
+    .score-btn,
+    .export-btn,
+    .expand-btn {
+        min-height: 44px;
+    }
+    .score-toggles {
+        gap: 10px 12px;
+    }
+    .score-toggle-group {
+        flex-wrap: wrap;
+    }
+}
+
+/* ---- xs: <=480px — small phone (PRIMARY TARGET) ---- */
+@media (max-width: 480px) {
+    /* Stack the filter/controls bar into a single column so nothing squishes. */
+    .civ-filter-wrap {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .civ-filter-wrap .export-btn,
+    .civ-filter-wrap .expand-btn {
+        width: 100%;
+    }
+
+    /* Pinned hover-card / breakdown becomes a bottom sheet: full-width above the
+       safe-area, scrollable, dismissed via its × (JS) or an outside tap. Only
+       PINNED cards become sheets — transient hover previews are suppressed on
+       touch by the JS, so this never fires on a stray pointer event. */
+    .hover-card.pinned {
+        position: fixed;
+        left: var(--gutter, 16px);
+        right: var(--gutter, 16px);
+        bottom: 0;
+        top: auto !important;
+        width: auto;
+        min-width: 0;
+        max-width: none;
+        max-height: 70vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.35);
+        z-index: 300;
+    }
+    .hover-card.pinned .hc-close {
+        /* Bigger, easier-to-tap close affordance in sheet mode. */
+        font-size: var(--fs-md);
+        top: 8px;
+        right: 12px;
+        padding: 4px;
     }
 }
 

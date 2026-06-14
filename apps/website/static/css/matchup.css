@@ -10,22 +10,23 @@
 }
 .civ-selector h3 {
     margin-bottom: 12px;
-    font-size: 1.1rem;
+    font-size: var(--fs-md);
+    font-family: var(--font-display);
 }
 .step-label {
     display: inline-block;
     padding: 4px 14px;
     border-radius: 12px;
-    font-size: 0.85rem;
+    font-size: var(--fs-sm);
     margin-bottom: 10px;
 }
 .step-civ1 {
-    background: rgba(201, 168, 76, 0.15);
+    background: var(--gold-tint);
     color: var(--gold);
 }
 .step-selected {
-    background: rgba(46, 204, 113, 0.15);
-    color: #2ecc71;
+    background: var(--gold-tint);
+    color: var(--gold);
 }
 
 .civ-grid {
@@ -40,8 +41,8 @@
     flex-direction: column;
     align-items: center;
     padding: 12px 6px 10px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--bg-warm);
+    border: 1px solid var(--border);
     border-radius: 10px;
     cursor: pointer;
     transition:
@@ -54,21 +55,21 @@
 }
 .civ-card:hover {
     transform: translateY(-2px) scale(1.025);
-    border-color: rgba(201, 168, 76, 0.35);
-    background: linear-gradient(180deg, rgba(201, 168, 76, 0.08) 0%, rgba(201, 168, 76, 0.02) 100%);
-    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.42);
+    border-color: var(--border-light);
+    background: var(--bg-hover);
+    box-shadow: var(--shadow-sm);
 }
 .civ-card:hover .civ-emblem {
     transform: scale(1.04);
-    border-color: rgba(201, 168, 76, 0.6);
+    border-color: var(--gold);
 }
 .civ-card:hover .civ-card-name {
     color: var(--gold-light);
 }
 .civ-card.selected-civ1 {
-    border-color: rgba(201, 168, 76, 0.65);
-    background: linear-gradient(180deg, rgba(201, 168, 76, 0.14) 0%, rgba(201, 168, 76, 0.05) 100%);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    border-color: var(--gold);
+    background: var(--gold-tint);
+    box-shadow: var(--shadow-sm);
 }
 .civ-card.disabled {
     opacity: 0.35;
@@ -78,16 +79,16 @@
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    border: 1px solid rgba(201, 168, 76, 0.35);
+    border: 1px solid var(--border-light);
     object-fit: cover;
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--bg-deep);
     margin-bottom: 6px;
     transition: transform 0.28s ease, border-color 0.28s ease;
 }
 .civ-card-name {
-    font-size: 0.78rem;
+    font-size: var(--fs-xs);
     text-align: center;
-    line-height: 1.25;
+    line-height: var(--lh-tight);
     letter-spacing: 0.015em;
     color: var(--text-muted);
     transition: color 0.25s ease;
@@ -108,17 +109,17 @@
     gap: 24px;
     padding: 20px 24px;
     margin-bottom: 16px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(201, 168, 76, 0.15);
+    background: var(--bg-warm);
+    border: 1px solid var(--border);
     border-radius: 12px;
 }
 .analysis-emblem {
     width: 72px;
     height: 72px;
     border-radius: 50%;
-    border: 3px solid rgba(201, 168, 76, 0.5);
+    border: 3px solid var(--gold);
     object-fit: cover;
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--bg-deep);
     flex-shrink: 0;
 }
 .analysis-hero-body {
@@ -126,14 +127,15 @@
     min-width: 0;
 }
 .analysis-civ-name {
-    font-size: 1.6rem;
+    font-size: var(--fs-lg);
+    font-family: var(--font-display);
     color: var(--gold);
     margin: 0 0 4px;
 }
 .analysis-hero-narrative {
     color: var(--text-muted);
-    font-size: 0.9rem;
-    line-height: 1.5;
+    font-size: var(--fs-base);
+    line-height: var(--lh-base);
     margin-bottom: 10px;
 }
 .analysis-hero-body .pill-row {
@@ -154,25 +156,28 @@
     margin-bottom: 6px;
 }
 .pill-label {
-    font-size: 0.8rem;
+    font-size: var(--fs-sm);
     color: var(--text-muted);
     margin-right: 4px;
 }
 .pill {
     display: inline-block;
-    font-size: 0.75rem;
+    font-size: var(--fs-xs);
     font-weight: 600;
     padding: 3px 10px;
     border-radius: 12px;
     letter-spacing: 0.3px;
+    border: 1px solid transparent;
 }
 .pill-strong {
-    background: rgba(46, 204, 113, 0.15);
-    color: #2ecc71;
+    background: var(--strong-tint);
+    color: var(--strong);
+    border-color: color-mix(in srgb, var(--strong) 35%, transparent);
 }
 .pill-weak {
-    background: rgba(231, 76, 60, 0.15);
-    color: #e74c3c;
+    background: var(--poor-tint);
+    color: var(--poor);
+    border-color: color-mix(in srgb, var(--poor) 35%, transparent);
 }
 
 /* --- Role Columns Grid (4 columns: cav, ranged, inf, siege) --- */
@@ -183,24 +188,26 @@
     margin-bottom: 24px;
 }
 
-/* --- Role Column --- */
+/* --- Role Column ---
+   Strength/signature signalled by a calm 2px tinted top edge + coloured header,
+   not a saturated neon bar. */
 .role-column {
     padding: 10px 6px;
-    border-top: 3px solid rgba(255, 255, 255, 0.1);
+    border-top: 2px solid var(--border);
     border-radius: 0 0 8px 8px;
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--bg-warm);
     min-width: 0;
 }
 .role-column.col-strong {
-    border-top-color: #2ecc71;
-    background: rgba(46, 204, 113, 0.05);
+    border-top-color: color-mix(in srgb, var(--strong) 55%, var(--border));
+    background: var(--strong-tint);
 }
 .role-column.col-strong .role-header {
-    color: #2ecc71;
+    color: var(--strong);
 }
 .role-column.has-signature {
-    border-top-color: var(--gold);
-    background: rgba(201, 168, 76, 0.06);
+    border-top-color: color-mix(in srgb, var(--gold) 55%, var(--border));
+    background: var(--gold-tint);
 }
 .role-column.has-signature .role-header {
     color: var(--gold);
@@ -209,12 +216,13 @@
 /* --- Role Header --- */
 .role-header {
     color: var(--gold);
-    font-size: 0.75rem;
+    font-size: var(--fs-xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 6px;
     text-align: center;
+    font-family: var(--font-display);
 }
 
 /* --- Line Section (individual unit line within a column) --- */
@@ -224,7 +232,7 @@
 
 .line-label {
     color: var(--text-muted);
-    font-size: 0.68rem;
+    font-size: var(--fs-xs);
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -234,7 +242,7 @@
 
 .line-unavailable {
     color: var(--text-dim);
-    font-size: 0.75rem;
+    font-size: var(--fs-xs);
     padding: 4px 8px;
     opacity: 0.4;
 }
@@ -263,17 +271,21 @@
     }
 }
 
-/* --- Unit Badge (horizontal card: icon left, info right) --- */
+/* --- Unit Badge (horizontal card: icon left, info right) ---
+   Default left edge is a neutral 2px; strength is layered on via the
+   .is-* classes below as a calm tinted edge (color-mix onto --border),
+   never a saturated neon bar. The strength classes let matchup.js theme
+   the edge through CSS instead of writing inline neon hex. */
 .unit-badge {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 8px;
     padding: 6px 8px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-left: 3px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--border);
     border-radius: 6px;
-    background: rgba(0, 0, 0, 0.15);
+    background: var(--bg);
     text-align: left;
     position: relative;
     transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
@@ -282,32 +294,41 @@
     min-width: 0;
 }
 .unit-badge:hover {
-    background: rgba(0, 0, 0, 0.3);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    background: var(--bg-hover);
+    box-shadow: var(--shadow-sm);
     transform: translateX(2px);
 }
 
-/* --- Signature Badge --- */
+/* --- Strength edges (calm tinted left border, theme-aware) ---
+   Applied by matchup.js per unit.strength so the colour follows the theme. */
+.unit-badge.is-strong   { border-left-color: color-mix(in srgb, var(--strong) 55%, var(--border)); }
+.unit-badge.is-weak     { border-left-color: color-mix(in srgb, var(--weak) 55%, var(--border)); }
+.unit-badge.is-poor     { border-left-color: color-mix(in srgb, var(--poor) 55%, var(--border)); }
+.unit-badge.is-average  { border-left-color: var(--border); }
+.unit-badge.is-signature { border-left-color: color-mix(in srgb, var(--gold) 55%, var(--border)); }
+
+/* --- Signature Badge ---
+   Calm: a 1px gold ring + gold tint fill + flat card shadow, no glow. */
 .unit-badge.signature {
-    border-color: rgba(201, 168, 76, 0.3);
+    border-color: var(--gold);
     border-left-color: var(--gold);
-    border-left-width: 3px;
-    background: linear-gradient(135deg, rgba(201, 168, 76, 0.1) 0%, rgba(201, 168, 76, 0.03) 100%);
-    box-shadow: 0 0 12px rgba(201, 168, 76, 0.1);
+    border-left-width: 2px;
+    background: var(--gold-tint);
+    box-shadow: var(--shadow-card);
     padding: 10px 12px;
 }
 .unit-badge.signature:hover {
-    background: linear-gradient(135deg, rgba(201, 168, 76, 0.16) 0%, rgba(201, 168, 76, 0.06) 100%);
-    box-shadow: 0 2px 16px rgba(201, 168, 76, 0.2);
+    background: var(--gold-tint);
+    box-shadow: var(--shadow-sm);
 }
-.unit-badge.no-strength { border-left-color: var(--text-muted); }
+.unit-badge.no-strength { border-left-color: var(--border); }
 
 /* --- Signature Star --- */
 .signature-star {
     position: absolute;
     top: -6px;
     right: -6px;
-    font-size: 0.7rem;
+    font-size: var(--fs-xs);
     color: var(--gold);
     background: var(--bg-deep);
     border-radius: 50%;
@@ -318,32 +339,33 @@
     justify-content: center;
     border: 1.5px solid var(--gold);
     line-height: 1;
-    box-shadow: 0 0 6px rgba(201, 168, 76, 0.3);
 }
 
-/* --- Unit Badge Icon --- */
+/* --- Unit Badge Icon ---
+   NOTE: .sprite sizing/markup is frozen — only surrounding colours/borders
+   are tuned here for cohesion. */
 .unit-badge-icon {
     width: 48px;
     height: 48px;
     border-radius: 6px;
-    border: 2px solid rgba(201, 168, 76, 0.25);
-    background: rgba(0, 0, 0, 0.35);
+    border: 2px solid var(--border-light);
+    background: var(--bg-deep);
     object-fit: cover;
     flex-shrink: 0;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 .signature-icon {
     width: 56px;
     height: 56px;
     border-radius: 8px;
-    border: 2px solid rgba(201, 168, 76, 0.5);
-    background: rgba(0, 0, 0, 0.35);
+    border: 2px solid var(--gold);
+    background: var(--bg-deep);
     object-fit: cover;
     flex-shrink: 0;
-    box-shadow: 0 0 8px rgba(201, 168, 76, 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.4);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 .icon-placeholder {
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--bg-warm);
 }
 
 /* In-game sprite variant — transparent, unframed. Set (via the `sprite` class) on
@@ -383,22 +405,23 @@
 
 /* --- Unit Badge Name --- */
 .unit-badge-name {
-    font-size: 0.72rem;
+    font-size: var(--fs-xs);
     font-weight: 600;
     color: var(--text);
-    line-height: 1.2;
+    line-height: var(--lh-tight);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 .unit-badge.signature .unit-badge-name {
     color: var(--gold-light);
-    font-size: 0.76rem;
+    font-size: var(--fs-xs);
 }
 
-/* --- Unit Badge Rank (pill style) --- */
+/* --- Unit Badge Rank (pill style) ---
+   Tint fill + solid token text + faint token border; no saturated fills. */
 .unit-badge-rank {
-    font-size: 0.58rem;
+    font-size: var(--fs-xs);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -406,26 +429,32 @@
     border-radius: 10px;
     width: fit-content;
     white-space: nowrap;
+    border: 1px solid transparent;
 }
 .rank-signature {
-    background: rgba(201, 168, 76, 0.2);
+    background: var(--gold-tint);
     color: var(--gold);
+    border-color: color-mix(in srgb, var(--gold) 35%, transparent);
 }
 .rank-strong {
-    background: rgba(46, 204, 113, 0.18);
-    color: #2ecc71;
+    background: var(--strong-tint);
+    color: var(--strong);
+    border-color: color-mix(in srgb, var(--strong) 35%, transparent);
 }
 .rank-average {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--bg-warm);
     color: var(--text-muted);
+    border-color: var(--border);
 }
 .rank-weak {
-    background: rgba(230, 126, 34, 0.18);
-    color: #e67e22;
+    background: var(--weak-tint);
+    color: var(--weak);
+    border-color: color-mix(in srgb, var(--weak) 35%, transparent);
 }
 .rank-poor {
-    background: rgba(231, 76, 60, 0.18);
-    color: #e74c3c;
+    background: var(--poor-tint);
+    color: var(--poor);
+    border-color: color-mix(in srgb, var(--poor) 35%, transparent);
 }
 
 /* --- Hover Tooltip (CSS-only, positioned above badge) --- */
@@ -436,13 +465,13 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 100;
-    background: rgba(18, 13, 7, 0.96);
-    border: 1px solid rgba(201, 168, 76, 0.3);
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-light);
     border-radius: 8px;
     padding: 10px 12px;
     min-width: 180px;
     max-width: 260px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--shadow-card);
     pointer-events: none;
     white-space: normal;
     text-align: left;
@@ -459,28 +488,28 @@
     left: 50%;
     transform: translateX(-50%);
     border: 6px solid transparent;
-    border-top-color: rgba(18, 13, 7, 0.96);
+    border-top-color: var(--surface-elevated);
 }
 
 /* --- Tooltip content lines --- */
 .tooltip-bonus {
-    color: #2ecc71;
-    font-size: 0.8rem;
-    line-height: 1.4;
+    color: var(--strong);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-base);
     margin-bottom: 3px;
 }
 .tooltip-missing {
-    color: #e74c3c;
-    font-size: 0.8rem;
-    line-height: 1.4;
+    color: var(--poor);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-base);
     margin-bottom: 3px;
 }
 .tooltip-rank {
     color: var(--text-dim);
-    font-size: 0.75rem;
+    font-size: var(--fs-xs);
     margin-top: 6px;
     padding-top: 6px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--border);
 }
 
 /* --- Loading / Spinner --- */
@@ -494,7 +523,7 @@
 .loading-spinner .spinner {
     width: 32px;
     height: 32px;
-    border: 3px solid rgba(201, 168, 76, 0.2);
+    border: 3px solid var(--gold-tint);
     border-top-color: var(--gold);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
@@ -514,98 +543,10 @@
     text-align: center;
 }
 
-/* --- Light Mode Overrides --- */
-[data-theme="light"] .civ-card {
-    background: rgba(0, 0, 0, 0.03);
-    border-color: rgba(0, 0, 0, 0.12);
-}
-[data-theme="light"] .civ-card:hover {
-    border-color: rgba(139, 105, 20, 0.4);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-[data-theme="light"] .civ-card.selected-civ1 {
-    background: rgba(139, 105, 20, 0.1);
-}
-[data-theme="light"] .analysis-hero {
-    background: rgba(0, 0, 0, 0.03);
-    border-color: rgba(139, 105, 20, 0.2);
-}
-[data-theme="light"] .role-column {
-    background: rgba(0, 0, 0, 0.02);
-    border-top-color: rgba(0, 0, 0, 0.15);
-}
-[data-theme="light"] .role-column.col-strong {
-    border-top-color: #2a9a50;
-    background: rgba(42, 154, 80, 0.06);
-}
-[data-theme="light"] .role-column.has-signature {
-    border-top-color: var(--gold);
-    background: rgba(139, 105, 20, 0.06);
-}
-[data-theme="light"] .unit-badge {
-    background: rgba(0, 0, 0, 0.04);
-    border-color: rgba(0, 0, 0, 0.1);
-    border-left-color: rgba(0, 0, 0, 0.15);
-}
-[data-theme="light"] .unit-badge:hover {
-    background: rgba(0, 0, 0, 0.07);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
-[data-theme="light"] .unit-badge.signature {
-    border-color: rgba(139, 105, 20, 0.3);
-    border-left-color: var(--gold);
-    background: linear-gradient(135deg, rgba(139, 105, 20, 0.08) 0%, rgba(139, 105, 20, 0.03) 100%);
-    box-shadow: 0 0 12px rgba(139, 105, 20, 0.08);
-}
-[data-theme="light"] .unit-badge-tooltip {
-    background: rgba(244, 240, 232, 0.97);
-    border-color: rgba(139, 105, 20, 0.3);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-[data-theme="light"] .unit-badge-tooltip::after {
-    border-top-color: rgba(244, 240, 232, 0.97);
-}
-[data-theme="light"] .unit-badge-icon {
-    background: rgba(0, 0, 0, 0.08);
-}
-[data-theme="light"] .signature-icon {
-    background: rgba(0, 0, 0, 0.08);
-}
-[data-theme="light"] .signature-star {
-    background: var(--bg-deep);
-}
-[data-theme="light"] .pill-strong {
-    background: rgba(42, 154, 80, 0.12);
-    color: #1f7a3a;
-}
-[data-theme="light"] .pill-weak {
-    background: rgba(200, 60, 50, 0.1);
-    color: #b83030;
-}
-[data-theme="light"] .rank-good {
-    background: rgba(42, 154, 80, 0.12);
-    color: #1f7a3a;
-}
-[data-theme="light"] .rank-weak {
-    background: rgba(200, 60, 50, 0.1);
-    color: #b83030;
-}
-[data-theme="light"] .rank-average {
-    background: rgba(0, 0, 0, 0.05);
-}
-[data-theme="light"] .rank-signature {
-    background: rgba(139, 105, 20, 0.12);
-}
-[data-theme="light"] .loading-spinner .spinner {
-    border-color: rgba(139, 105, 20, 0.15);
-    border-top-color: var(--gold);
-}
-[data-theme="light"] .tooltip-bonus {
-    color: #1f7a3a;
-}
-[data-theme="light"] .tooltip-missing {
-    color: #b83030;
-}
+/* Theme overrides removed — surfaces, borders, strength colours and tooltips
+   are now fully token-driven, so both light (default) and dark themes are
+   covered by the shared tokens in base.css. The dead .rank-good rule went
+   with this block. */
 
 /* --- Responsive: 768px — 2 columns --- */
 @media (max-width: 768px) {
@@ -614,7 +555,7 @@
         padding: 16px 20px;
     }
     .analysis-civ-name {
-        font-size: 1.3rem;
+        font-size: var(--fs-md);
     }
     .analysis-emblem {
         width: 56px;
@@ -625,7 +566,7 @@
         gap: 10px;
     }
     .unit-badge-name {
-        font-size: 0.72rem;
+        font-size: var(--fs-xs);
     }
     .unit-badge-tooltip {
         left: 0;
@@ -645,7 +586,7 @@
         height: 36px;
     }
     .civ-card-name {
-        font-size: 0.7rem;
+        font-size: var(--fs-xs);
     }
     .analysis-hero {
         flex-direction: column;
@@ -658,7 +599,7 @@
         justify-content: center;
     }
     .analysis-civ-name {
-        font-size: 1.2rem;
+        font-size: var(--fs-md);
     }
     .analysis-emblem {
         width: 56px;
@@ -677,16 +618,16 @@
         height: 60px;
     }
     .unit-badge-name {
-        font-size: 0.7rem;
+        font-size: var(--fs-xs);
     }
     .unit-badge-rank {
-        font-size: 0.55rem;
+        font-size: var(--fs-xs);
         padding: 1px 6px;
     }
     .role-header {
-        font-size: 0.7rem;
+        font-size: var(--fs-xs);
     }
     .line-label {
-        font-size: 0.62rem;
+        font-size: var(--fs-xs);
     }
 }

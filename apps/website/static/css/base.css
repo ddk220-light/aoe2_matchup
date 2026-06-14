@@ -3,50 +3,163 @@
    Shared foundation for all pages. Page-specific styles go in separate files.
    ========================================================================== */
 
-/* ---------- CSS Variables ---------- */
+/* ==========================================================================
+   CANONICAL DESIGN TOKENS
+   LIGHT is the default (bare :root). DARK is opt-in via [data-theme="dark"].
+   Every colour, font, size, line-height and shadow other files consume lives
+   here. Page CSS should reference these tokens, never raw hex / family strings.
+   ========================================================================== */
+
+/* ---------- LIGHT MODE (default) ---------- */
 :root {
-    --gold:            #c9a84c;
-    --gold-light:      #dbb960;
-    --gold-dark:       #8b6914;
-    --gold-glow:       rgba(201, 168, 76, 0.15);
-    --bg-deep:         #120d07;
-    --bg:              #1e1610;
-    --bg-warm:         #2a1f14;
-    --bg-hover:        #342618;
-    --border:          #3d2e1e;
-    --border-light:    #5a4228;
-    --text:            #e8dcc8;
-    --text-muted:      #a89878;
-    --text-dim:        #6d5d48;
-    --red-accent:      #7a1a1a;
-    --red-deep:        #3a0e0e;
-    --green:           #5a9a3a;
-    --red:             #a83030;
-    --team1:           #c0392b;
-    --team2:           #2980b9;
+    /* Backgrounds / surfaces — warm parchment, never pure white */
+    --bg-deep:          #efe9dc;
+    --bg:               #f6f1e7;
+    --bg-warm:          #ece4d4;
+    --bg-hover:         #e1d7c4;
+    --surface:          var(--bg);
+    --surface-elevated: #fbf7ee;
+
+    /* Borders */
+    --border:           #c9bda3;
+    --border-light:     #b7a986;
+
+    /* Text */
+    --text:             #241d10;
+    --text-muted:       #5f5235;
+    --text-dim:         #6f6346;
+
+    /* Gold (accent). --gold darkened to clear AA (4.5:1) as heading/nav/link text
+       on card surfaces; --gold-cta brightened so dark text on the CTA fill clears AA. */
+    --gold:             #7a5c0c;
+    --gold-light:       #a07e1f;
+    --gold-dark:        #6b4f0e;
+    --gold-glow:        rgba(138, 106, 18, 0.12);
+    --gold-cta:         #a37d15;
+    --text-on-gold:     #1a1408;
+
+    /* Tamed strength scale (semantic, not neon) */
+    --strong:           #2f6b34;
+    --average:          #6f6346;
+    --weak:             #9a5a17;
+    --poor:             #9e2b22;
+    --signature:        var(--gold);
+    --strong-tint:      rgba(47, 107, 52, 0.12);
+    --weak-tint:        rgba(154, 90, 23, 0.12);
+    --poor-tint:        rgba(158, 43, 34, 0.12);
+    --gold-tint:        rgba(138, 106, 18, 0.10);
+
+    /* Directional aliases (collapse old neon duplicates onto strength scale) */
+    --win:              var(--strong);
+    --loss:             var(--poor);
+    --eco:              var(--weak);
+    --pop:              var(--team2);
+    --up:               var(--strong);
+    --down:             var(--poor);
+    --link-data:        var(--gold);
+
+    /* Team identity (player colour only — never used for stat data) */
+    --team1:            #a23226;
+    --team2:            #1c6796;
+
+    /* Header banner glow (single themed token, no cross-theme semantic flip) */
+    --header-glow:      rgba(162, 50, 38, 0.10);
+
+    /* Themed simulate canvas backdrop */
+    --canvas-bg:        #dfe4cf;
+
+    /* Deprecated aliases kept so legacy refs still resolve */
+    --red:              var(--poor);
+    --green:            var(--strong);
+
+    /* Typography — families */
+    --font-display:     "Cinzel", Georgia, serif;
+    --font-body:        "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono:        "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+    /* Typography — size ramp (16px root, hard floor 0.75rem) */
+    --fs-xs:            0.75rem;
+    --fs-sm:            0.8125rem;
+    --fs-base:          0.9375rem;
+    --fs-md:            1.0625rem;
+    --fs-lg:            1.375rem;
+    --fs-xl:            2.125rem;
+    --fs-2xl:           2.75rem;
+
+    /* Line-height tokens */
+    --lh-tight:         1.2;
+    --lh-base:          1.55;
+    --lh-loose:         1.65;
+
+    /* Shadows — calm, standardised */
+    --shadow-sm:        0 2px 8px rgba(0, 0, 0, 0.10);
+    --shadow-card:      0 2px 10px rgba(0, 0, 0, 0.12);
 }
 
-/* ---------- Light Theme ---------- */
-[data-theme="light"] {
-    --gold:            #8b6914;
-    --gold-light:      #a07a1a;
-    --gold-dark:       #6b4f0e;
-    --gold-glow:       rgba(139, 105, 20, 0.12);
-    --bg-deep:         #f4f0e8;
-    --bg:              #ece6da;
-    --bg-warm:         #e3dbd0;
-    --bg-hover:        #d9d0c2;
-    --border:          #c8bda8;
-    --border-light:    #b5a88e;
-    --text:            #2c2416;
-    --text-muted:      #6b5d48;
-    --text-dim:        #9a8b74;
-    --red-accent:      #f5e8e8;
-    --red-deep:        #faf2f0;
-    --green:           #3a7a22;
-    --red:             #b83030;
-    --team1:           #b0291c;
-    --team2:           #1a6ca0;
+/* ---------- DARK MODE (opt-in) ---------- */
+[data-theme="dark"] {
+    /* Backgrounds / surfaces — warm brown shell */
+    --bg-deep:          #120d07;
+    --bg:               #1e1610;
+    --bg-warm:          #2a1f14;
+    --bg-hover:         #342618;
+    --surface:          var(--bg);
+    --surface-elevated: #251c12;
+
+    /* Borders */
+    --border:           #3d2e1e;
+    --border-light:     #5a4228;
+
+    /* Text */
+    --text:             #ece1cd;
+    --text-muted:       #b3a484;
+    --text-dim:         #8c7c5e;
+
+    /* Gold */
+    --gold:             #cdac50;
+    --gold-light:       #ddbd66;
+    --gold-dark:        #8b6914;
+    --gold-glow:        rgba(205, 172, 80, 0.15);
+    --gold-cta:         #cdac50;
+    --text-on-gold:     #1a1408;
+
+    /* Tamed strength scale */
+    --strong:           #6fb15e;
+    --average:          #b3a484;
+    --weak:             #cf9a4a;
+    --poor:             #cf6a5e;
+    --signature:        var(--gold);
+    --strong-tint:      rgba(111, 177, 94, 0.14);
+    --weak-tint:        rgba(207, 154, 74, 0.14);
+    --poor-tint:        rgba(207, 106, 94, 0.14);
+    --gold-tint:        rgba(205, 172, 80, 0.14);
+
+    /* Directional aliases */
+    --win:              var(--strong);
+    --loss:             var(--poor);
+    --eco:              var(--weak);
+    --pop:              var(--team2);
+    --up:               var(--strong);
+    --down:             var(--poor);
+    --link-data:        var(--gold);
+
+    /* Team identity (brightened for dark AA) */
+    --team1:            #cf5a4b;
+    --team2:            #4a9fd4;
+
+    /* Header banner glow */
+    --header-glow:      rgba(122, 26, 26, 0.38);
+
+    /* Themed simulate canvas backdrop */
+    --canvas-bg:        #26301a;
+
+    /* Deprecated aliases */
+    --red:              var(--poor);
+    --green:            var(--strong);
+
+    /* Shadows — deeper for dark surfaces */
+    --shadow-sm:        0 2px 8px rgba(0, 0, 0, 0.22);
+    --shadow-card:      0 2px 10px rgba(0, 0, 0, 0.28);
 }
 
 /* ---------- Reset ---------- */
@@ -65,14 +178,15 @@ html {
 
 /* ---------- Base Typography ---------- */
 body {
-    font-family: "Source Sans 3", "Alegreya Sans", sans-serif;
+    font-family: var(--font-body);
     background: var(--bg-deep);
+    /* LIGHT default gradients (warm parchment wash) */
     background-image:
-        radial-gradient(ellipse at top, rgba(58, 14, 14, 0.35) 0%, transparent 55%),
-        radial-gradient(ellipse at center, rgba(42, 31, 20, 0.4) 0%, transparent 70%);
+        radial-gradient(ellipse at top, rgba(200, 189, 168, 0.35) 0%, transparent 55%),
+        radial-gradient(ellipse at center, rgba(200, 189, 168, 0.3) 0%, transparent 70%);
     color: var(--text);
     min-height: 100vh;
-    line-height: 1.55;
+    line-height: var(--lh-base);
     letter-spacing: 0.005em;
     position: relative;
 }
@@ -84,20 +198,21 @@ body::before {
     inset: 0;
     pointer-events: none;
     z-index: 0;
-    opacity: 0.35;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.78  0 0 0 0 0.66  0 0 0 0 0.30  0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-    mix-blend-mode: overlay;
-}
-
-[data-theme="light"] body {
-    background-image:
-        radial-gradient(ellipse at top, rgba(200, 189, 168, 0.35) 0%, transparent 55%),
-        radial-gradient(ellipse at center, rgba(200, 189, 168, 0.3) 0%, transparent 70%);
-}
-
-[data-theme="light"] body::before {
+    /* LIGHT default — gentle multiply */
     opacity: 0.18;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.78  0 0 0 0 0.66  0 0 0 0 0.30  0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
     mix-blend-mode: multiply;
+}
+
+[data-theme="dark"] body {
+    background-image:
+        radial-gradient(ellipse at top, rgba(58, 14, 14, 0.35) 0%, transparent 55%),
+        radial-gradient(ellipse at center, rgba(42, 31, 20, 0.4) 0%, transparent 70%);
+}
+
+[data-theme="dark"] body::before {
+    opacity: 0.35;
+    mix-blend-mode: overlay;
 }
 
 /* Lift content above the texture overlay */
@@ -123,7 +238,7 @@ body *:not(#battleCanvas):not(.spinner):not(img) {
 }
 
 h1, h2, h3 {
-    font-family: "Cinzel", serif;
+    font-family: var(--font-display);
     color: var(--gold);
 }
 
@@ -162,9 +277,9 @@ a:hover {
 }
 
 .nav-brand {
-    font-family: "Cinzel", serif;
+    font-family: var(--font-display);
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: var(--fs-base);
     color: var(--gold);
     text-decoration: none;
     display: flex;
@@ -215,16 +330,16 @@ a:hover {
 }
 
 .nav-tab-label {
-    font-family: "Cinzel", serif;
+    font-family: var(--font-display);
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: var(--fs-sm);
     color: var(--text-muted);
     letter-spacing: 0.02em;
     transition: color 0.25s;
 }
 
 .nav-tab-desc {
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
     color: var(--text-dim);
     margin-top: 1px;
     letter-spacing: 0.03em;
@@ -234,7 +349,7 @@ a:hover {
 
 /* Hover state */
 .nav-tab:hover {
-    background: rgba(201, 168, 76, 0.06);
+    background: var(--gold-tint);
     border-color: var(--border);
 }
 
@@ -284,10 +399,10 @@ a:hover {
 .page-header {
     padding: 36px 24px 32px;
     background:
-        radial-gradient(ellipse at center top, rgba(122, 26, 26, 0.45) 0%, transparent 60%),
-        linear-gradient(180deg, var(--red-deep) 0%, var(--bg-warm) 60%, var(--bg) 100%);
+        radial-gradient(ellipse at center top, var(--header-glow) 0%, transparent 60%),
+        linear-gradient(180deg, var(--bg-warm) 0%, var(--bg-warm) 60%, var(--bg) 100%);
     border-bottom: 1px solid;
-    border-image: linear-gradient(90deg, transparent 8%, rgba(139, 105, 20, 0.45) 30%, rgba(201, 168, 76, 0.7) 50%, rgba(139, 105, 20, 0.45) 70%, transparent 92%) 1;
+    border-image: linear-gradient(90deg, transparent 8%, var(--gold-glow) 30%, var(--gold) 50%, var(--gold-glow) 70%, transparent 92%) 1;
     text-align: center;
     overflow: hidden;
 }
@@ -299,25 +414,26 @@ a:hover {
     width: 120px;
     height: 1px;
     margin: 0 auto 14px;
-    background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.55), transparent);
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0.55;
 }
 
 .page-header h1 {
-    font-size: 2.1rem;
+    font-size: var(--fs-xl);
     margin-bottom: 8px;
     letter-spacing: 0.08em;
-    line-height: 1.1;
-    color: var(--gold-light);
+    line-height: var(--lh-tight);
+    color: var(--gold);
 }
 
 .page-header .subtitle {
-    font-size: 0.92rem;
+    font-size: var(--fs-base);
     color: var(--text-muted);
     letter-spacing: 0.03em;
     font-style: italic;
     max-width: 640px;
     margin: 0 auto;
-    line-height: 1.5;
+    line-height: var(--lh-base);
 }
 
 @media (max-width: 768px) {
@@ -355,13 +471,13 @@ a:hover {
     background: var(--bg-warm);
     border: 1px solid var(--border);
     border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+    box-shadow: var(--shadow-card);
     transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .card:hover {
-    border-color: rgba(139, 105, 20, 0.55);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    border-color: var(--gold-dark);
+    box-shadow: var(--shadow-sm);
     transform: translateY(-1px);
 }
 
@@ -372,27 +488,37 @@ a:hover {
     justify-content: center;
     gap: 6px;
     padding: 8px 20px;
-    border: none;
+    border: 1px solid var(--border);
     border-radius: 6px;
-    font-family: "Cinzel", serif;
+    background: var(--bg-warm);
+    color: var(--text);
+    font-family: var(--font-display);
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: var(--fs-sm);
     cursor: pointer;
     transition: all 0.2s;
 }
 
+.btn:hover {
+    border-color: var(--border-light);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
 .btn-gold {
-    background: linear-gradient(135deg, var(--gold-dark), var(--gold));
-    color: var(--bg-deep);
+    border: none;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold-cta));
+    color: var(--text-on-gold);
 }
 
 .btn-gold:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+    box-shadow: var(--shadow-sm);
     filter: brightness(1.06);
 }
 
-.btn-gold:disabled {
+.btn-gold:disabled,
+.btn:disabled {
     opacity: 0.5;
     pointer-events: none;
 }
@@ -410,8 +536,8 @@ a:hover {
     border-radius: 6px;
     background: transparent;
     color: var(--text-muted);
-    font-family: "Source Sans 3", "Alegreya Sans", sans-serif;
-    font-size: 0.85rem;
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
@@ -424,24 +550,46 @@ a:hover {
 
 .age-btn.active {
     background: var(--gold-dark);
-    color: var(--bg-deep);
+    color: var(--text-on-gold);
     border-color: var(--gold-dark);
     font-weight: 600;
 }
 
-/* ---------- Light Mode Card Overrides ---------- */
-[data-theme="light"] .card {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+/* ---------- Dark Mode tweaks (re-keyed from the old light overrides) ---------- */
+[data-theme="dark"] .nav-tab.active .nav-tab-icon {
+    filter: sepia(1) saturate(3) hue-rotate(10deg) brightness(1.2);
 }
-[data-theme="light"] .card:hover {
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12), 0 0 8px var(--gold-glow);
-}
-[data-theme="light"] .nav-tab:hover {
-    background: rgba(139, 105, 20, 0.06);
-}
-[data-theme="light"] .nav-tab.active .nav-tab-icon {
+
+/* LIGHT default active-icon filter (darker so the gold reads on parchment) */
+.nav-tab.active .nav-tab-icon {
     filter: sepia(1) saturate(4) hue-rotate(10deg) brightness(0.7);
 }
+
+/* ---------- De-neon accent utilities ---------- */
+/* A small calm strength cue: a 6px round leading dot instead of a neon edge. */
+.accent-dot::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    background: var(--border);
+}
+.accent-dot.is-strong::before { background: var(--strong); }
+.accent-dot.is-weak::before   { background: var(--weak); }
+.accent-dot.is-poor::before   { background: var(--poor); }
+.accent-dot.is-signature::before { background: var(--gold); }
+
+/* A neutral edge that pages tint via color-mix when they need direction. */
+.accent-edge {
+    border-left: 2px solid var(--border);
+}
+.accent-edge.is-strong { border-left-color: color-mix(in srgb, var(--strong) 55%, var(--border)); }
+.accent-edge.is-weak   { border-left-color: color-mix(in srgb, var(--weak) 55%, var(--border)); }
+.accent-edge.is-poor   { border-left-color: color-mix(in srgb, var(--poor) 55%, var(--border)); }
+.accent-edge.is-signature { border-left-color: var(--gold); }
 
 /* ---------- Theme Toggle ---------- */
 .theme-toggle {
@@ -461,8 +609,8 @@ a:hover {
     align-items: center;
     gap: 6px;
     color: var(--text-muted);
-    font-size: 0.75rem;
-    font-family: "Source Sans 3", "Alegreya Sans", sans-serif;
+    font-size: var(--fs-xs);
+    font-family: var(--font-body);
     font-weight: 500;
     transition: all 0.25s ease;
     white-space: nowrap;
@@ -480,7 +628,7 @@ a:hover {
 }
 
 .theme-toggle-label {
-    font-size: 0.7rem;
+    font-size: var(--fs-xs);
     letter-spacing: 0.02em;
 }
 
@@ -574,9 +722,9 @@ a:hover {
     background: linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
     border-top: 2px solid var(--border);
     color: var(--text-muted);
-    font-family: 'Source Sans 3', sans-serif;
-    font-size: 0.95rem;
-    line-height: 1.5;
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
+    line-height: var(--lh-base);
 }
 .site-footer-inner {
     max-width: 1280px;
@@ -597,9 +745,9 @@ a:hover {
     margin-bottom: 0.75rem;
 }
 .site-footer-brand-name {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-display);
     font-weight: 700;
-    font-size: 1.15rem;
+    font-size: var(--fs-md);
     letter-spacing: 0.02em;
 }
 .site-footer-tagline {
@@ -608,8 +756,8 @@ a:hover {
     max-width: 28ch;
 }
 .site-footer-heading {
-    font-family: 'Cinzel', serif;
-    font-size: 0.85rem;
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -656,7 +804,7 @@ a:hover {
     flex-wrap: wrap;
     justify-content: space-between;
     gap: 0.75rem 2rem;
-    font-size: 0.82rem;
+    font-size: var(--fs-sm);
     color: var(--text-dim);
 }
 .site-footer-disclaimer {
@@ -710,8 +858,8 @@ a:hover {
     border-radius: 12px;
     padding: 1.75rem 1.5rem 1.5rem;
     color: var(--text);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-    font-family: 'Source Sans 3', sans-serif;
+    box-shadow: var(--shadow-card);
+    font-family: var(--font-body);
     max-height: calc(100vh - 2rem);
     overflow-y: auto;
 }
@@ -734,14 +882,14 @@ a:hover {
     background: var(--bg-hover);
 }
 .contact-modal-title {
-    font-family: 'Cinzel', serif;
-    font-size: 1.4rem;
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
     margin: 0 0 0.4rem;
 }
 .contact-modal-intro {
     color: var(--text-muted);
     margin: 0 0 1.25rem;
-    font-size: 0.95rem;
+    font-size: var(--fs-base);
 }
 .contact-modal-form {
     display: flex;
@@ -752,7 +900,7 @@ a:hover {
     display: flex;
     flex-direction: column;
     gap: 0.3rem;
-    font-size: 0.85rem;
+    font-size: var(--fs-sm);
     color: var(--text-muted);
 }
 .contact-modal-label input,
@@ -763,7 +911,7 @@ a:hover {
     padding: 0.55rem 0.7rem;
     color: var(--text);
     font: inherit;
-    font-size: 0.95rem;
+    font-size: var(--fs-base);
     resize: vertical;
 }
 .contact-modal-label input:focus,
@@ -786,11 +934,11 @@ a:hover {
 .contact-modal-submit:hover { opacity: 0.9; }
 .contact-modal-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 .contact-modal-status {
-    font-size: 0.9rem;
+    font-size: var(--fs-sm);
     min-height: 1.2em;
 }
-.contact-modal-status.is-success { color: #6fbe6f; }
-.contact-modal-status.is-error   { color: #d97a7a; }
+.contact-modal-status.is-success { color: var(--strong); }
+.contact-modal-status.is-error   { color: var(--poor); }
 
 .contact-modal-honeypot {
     position: absolute;

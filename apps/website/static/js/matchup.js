@@ -47,12 +47,15 @@ const LINE_NAMES = {
 
 const COLUMN_ORDER = ["cavalry", "ranged", "infantry", "siege", "navy"];
 
+/* Colours come from the central design tokens (theme-aware, de-neoned). Border
+   edges are driven by the .is-<strength> CSS classes; these tokens cover any
+   inline text/bg use (labels, tooltips). */
 const STRENGTH_COLORS = {
-    signature: { bg: "rgba(201, 168, 76, 0.2)", text: "var(--gold)", label: "Signature" },
-    strong: { bg: "rgba(46, 204, 113, 0.15)", text: "#2ecc71", label: "Strong" },
-    average: { bg: "rgba(255, 255, 255, 0.05)", text: "var(--text-muted)", label: "Average" },
-    weak: { bg: "rgba(230, 126, 34, 0.15)", text: "#e67e22", label: "Weak" },
-    poor: { bg: "rgba(231, 76, 60, 0.15)", text: "#e74c3c", label: "Poor" },
+    signature: { bg: "var(--gold-tint)", text: "var(--gold)", label: "Signature" },
+    strong: { bg: "var(--strong-tint)", text: "var(--strong)", label: "Strong" },
+    average: { bg: "var(--bg-hover)", text: "var(--text-muted)", label: "Average" },
+    weak: { bg: "var(--weak-tint)", text: "var(--weak)", label: "Weak" },
+    poor: { bg: "var(--poor-tint)", text: "var(--poor)", label: "Poor" },
 };
 
 const SUMMARY_TEMPLATES = {
@@ -225,11 +228,13 @@ function renderUnitBadge(unit, colKey) {
     var hasScore = unit.percentile != null && unit.strength != null;
     var strength = STRENGTH_COLORS[unit.strength] || STRENGTH_COLORS.average;
     var isSig = !!unit.is_signature;
-    var badgeClass = "unit-badge" + (isSig ? " signature" : "") + (!hasScore ? " no-strength" : "");
+    // Strength edge is driven by the .is-<strength> CSS class (tamed color-mix tokens),
+    // not an inline neon colour — keeps it theme-aware and de-neoned.
+    var strengthKey = isSig ? "signature" : (hasScore ? (unit.strength || "average") : "average");
+    var badgeClass = "unit-badge" + (isSig ? " signature" : "") + (!hasScore ? " no-strength" : "") + " is-" + strengthKey;
     var iconSize = (isSig ? "signature-icon" : "unit-badge-icon") + (useSprite ? " sprite" : "");
 
-    var borderColor = hasScore ? strength.text : "var(--text-muted)";
-    var html = '<div class="' + badgeClass + '" style="border-left-color: ' + borderColor + '">';
+    var html = '<div class="' + badgeClass + '">';
 
     /* Tooltip */
     html += renderTooltip(unit, name);

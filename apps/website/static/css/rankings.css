@@ -2,33 +2,9 @@
    AoE2 Unit Analyzer - Rankings Page Styles
    ========================================================================== */
 
-/* Age toggle */
+/* Age toggle: .age-toggle / .age-btn live in base.css now (single source). */
 .age-toggle {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
     margin-bottom: 16px;
-}
-.age-btn {
-    font-family: "Cinzel", serif;
-    font-size: 0.85rem;
-    padding: 8px 24px;
-    border: 1px solid var(--border-light);
-    border-radius: 6px;
-    background: var(--bg-warm);
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.age-btn:hover {
-    border-color: var(--gold-dark);
-    color: var(--text);
-}
-.age-btn.active {
-    background: var(--gold-dark);
-    color: var(--bg-deep);
-    border-color: var(--gold);
-    font-weight: 600;
 }
 
 /* Score axis + scale toggles */
@@ -51,19 +27,20 @@
 }
 
 .score-toggle-label {
-    font-family: "Cinzel", serif;
-    font-size: 0.75rem;
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
     color: var(--text-muted);
     margin-right: 6px;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 .score-btn {
-    font-family: "Cinzel", serif;
+    font-family: var(--font-display);
     background: transparent;
     border: 1px solid transparent;
     color: var(--text-muted);
-    font-size: 0.75rem;
+    font-size: var(--fs-xs);
     padding: 4px 10px;
     border-radius: 4px;
     cursor: pointer;
@@ -77,14 +54,14 @@
 
 .score-btn.active {
     background: var(--gold-dark);
-    color: var(--bg-deep);
+    color: var(--text-on-gold);
     border-color: var(--gold);
     font-weight: 600;
 }
 
 .score-toggle-note {
-    font-family: "Cinzel", serif;
-    font-size: 0.7rem;
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
     color: var(--text-muted);
     font-style: italic;
     flex-basis: 100%;
@@ -110,8 +87,8 @@
     border-bottom: 3px solid transparent;
     color: var(--text-muted);
     cursor: pointer;
-    font-family: "Source Sans 3", "Alegreya Sans", sans-serif;
-    font-size: 0.8rem;
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
     font-weight: 500;
     white-space: nowrap;
     transition: all 0.2s;
@@ -119,7 +96,7 @@
 }
 .unit-tab:hover {
     color: var(--text);
-    background: rgba(201, 168, 76, 0.05);
+    background: var(--gold-glow);
 }
 .unit-tab.active {
     color: var(--gold);
@@ -165,8 +142,8 @@
     overflow-x: auto;
 }
 .table-title {
-    font-family: "Cinzel", serif;
-    font-size: 1.1rem;
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
     color: var(--gold);
     margin-bottom: 10px;
     display: flex;
@@ -194,7 +171,7 @@
 .stats-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.85rem;
+    font-size: var(--fs-sm);
     min-width: 900px;
     font-variant-numeric: tabular-nums;
 }
@@ -203,8 +180,8 @@
     border: 1px solid var(--border-light);
     padding: 8px 10px;
     text-align: left;
-    font-family: "Cinzel", serif;
-    font-size: 0.75rem;
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
     color: var(--gold);
     cursor: pointer;
     user-select: none;
@@ -214,10 +191,10 @@
     z-index: 1;
 }
 .stats-table th:hover {
-    background: rgba(201, 168, 76, 0.15);
+    background: var(--gold-tint);
 }
 .stats-table th .sort-arrow {
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
     margin-left: 4px;
     opacity: 0.4;
 }
@@ -226,7 +203,7 @@
     color: var(--gold-light);
 }
 .info-icon {
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
     margin-left: 3px;
     opacity: 0.6;
     cursor: help;
@@ -240,17 +217,18 @@
     padding: 7px 10px;
     white-space: nowrap;
     letter-spacing: 0.01em;
+    font-family: var(--font-mono);
 }
 .stats-table tr {
     background: var(--bg-deep);
     transition: background 0.15s;
 }
 .stats-table tr:hover {
-    background: rgba(201, 168, 76, 0.08);
+    background: var(--gold-glow);
 }
 .stats-table tr.unique-row {
-    border-left: 3px solid var(--gold);
-    background: rgba(201, 168, 76, 0.05);
+    border-left: 2px solid color-mix(in srgb, var(--gold) 55%, var(--border));
+    background: var(--gold-tint);
 }
 .stats-table tr.unique-row td:first-child {
     padding-left: 20px;
@@ -259,19 +237,20 @@
     opacity: 0.35;
 }
 
-/* Cell coloring */
+/* Cell coloring — tamed strength scale (single source of truth). */
 .val-high {
-    color: #6fbf6f;
+    color: var(--strong);
 }
 .val-low {
-    color: #bf6f6f;
+    color: var(--poor);
 }
 
-/* Civ cell */
+/* Civ cell — name text stays body font (td defaults to mono for numbers). */
 .civ-cell {
     display: flex;
     align-items: center;
     gap: 6px;
+    font-family: var(--font-body);
 }
 .civ-cell img {
     width: 22px;
@@ -280,12 +259,13 @@
     object-fit: cover;
 }
 
-/* Unit cell */
+/* Unit cell — name text stays body font (td defaults to mono for numbers). */
 .unit-cell {
     display: flex;
     align-items: center;
     gap: 6px;
     position: relative;
+    font-family: var(--font-body);
 }
 .unit-cell img {
     width: 24px;
@@ -315,17 +295,17 @@
 .hover-card {
     display: none;
     position: fixed;
-    background: var(--bg);
+    background: var(--surface-elevated);
     border: 1px solid var(--gold-dark);
     border-radius: 8px;
     padding: 10px 14px;
-    font-size: 0.72rem;
+    font-size: var(--fs-xs);
     color: var(--text);
     white-space: normal;
     min-width: 230px;
     max-width: 340px;
     z-index: 200;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+    box-shadow: var(--shadow-card);
     pointer-events: none;
 }
 .hover-card.visible {
@@ -335,8 +315,8 @@
     pointer-events: auto;
 }
 .hover-card .hc-title {
-    font-family: "Cinzel", serif;
-    font-size: 0.8rem;
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
     color: var(--gold);
     margin-bottom: 6px;
     border-bottom: 1px solid var(--border-light);
@@ -344,7 +324,7 @@
 }
 .hover-card .hc-formula {
     color: var(--text-muted);
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
     margin-bottom: 6px;
 }
 .hover-card .hc-row {
@@ -372,7 +352,7 @@
     color: var(--gold);
     text-decoration: underline;
     cursor: pointer;
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
     display: inline-block;
     margin-bottom: 4px;
 }
@@ -385,7 +365,7 @@
     right: 8px;
     cursor: pointer;
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: var(--fs-base);
     line-height: 1;
 }
 .hover-card .hc-close:hover {
@@ -416,7 +396,8 @@ td.hc-cell {
     border: 1px solid var(--border-light);
     color: var(--text);
     border-radius: 6px;
-    font-size: 0.8rem;
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
 }
 .civ-filter-wrap input[type="text"]::placeholder {
     color: var(--text-muted);
@@ -427,7 +408,7 @@ td.hc-cell {
     gap: 10px;
 }
 .line-filters-label {
-    font-size: 0.75rem;
+    font-size: var(--fs-xs);
     color: var(--text-muted);
     font-weight: 500;
 }
@@ -435,7 +416,7 @@ td.hc-cell {
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 0.78rem;
+    font-size: var(--fs-sm);
     color: var(--text-muted);
     cursor: pointer;
     user-select: none;
@@ -454,7 +435,7 @@ td.hc-cell {
 @media (max-width: 768px) {
     .unit-tab {
         padding: 8px 12px;
-        font-size: 0.75rem;
+        font-size: var(--fs-xs);
     }
     .unit-tab img {
         width: 20px;
@@ -467,34 +448,14 @@ td.hc-cell {
     }
 }
 
-/* ---------- Light Mode Overrides ---------- */
-[data-theme="light"] .stats-table tr {
-    background: var(--bg-deep);
-}
-[data-theme="light"] .stats-table tr:hover {
-    background: rgba(139, 105, 20, 0.08);
-}
-[data-theme="light"] .stats-table tr.unique-row {
-    background: rgba(139, 105, 20, 0.06);
-}
-[data-theme="light"] .unit-tab:hover {
-    background: rgba(139, 105, 20, 0.06);
-}
-[data-theme="light"] .hover-card {
-    background: var(--bg-deep);
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
-}
-[data-theme="light"] .val-high {
-    color: #2a7a2a;
-}
-[data-theme="light"] .val-low {
-    color: #a83030;
-}
+/* Light-mode overrides removed: theme tokens (--strong/--poor/--gold-tint/
+   --gold-glow/--surface-elevated/--shadow-card) now resolve per theme from
+   base.css, so light/dark are driven by one token-based ruleset. */
 
 /* Export CSV button */
 .export-btn {
-    font-family: "Cinzel", serif;
-    font-size: 0.75rem;
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
     padding: 6px 14px;
     border: 1px solid var(--border-light);
     border-radius: 6px;
@@ -512,8 +473,8 @@ td.hc-cell {
 
 /* Pool-score hover cards */
 .hover-pool-score, .hover-pool-role {
-    font-size: 12px;
-    line-height: 1.5;
+    font-size: var(--fs-sm);
+    line-height: var(--lh-base);
     max-width: 360px;
 }
 .hover-pool-score .hover-title,
@@ -523,7 +484,7 @@ td.hc-cell {
 }
 .hover-pool-score .hover-final,
 .hover-pool-role .hover-final {
-    font-size: 14px;
+    font-size: var(--fs-base);
     margin-bottom: 4px;
 }
 .hover-pool-score .hover-roles .role {
@@ -533,7 +494,7 @@ td.hc-cell {
 }
 .hover-pool-score .hover-note,
 .hover-pool-role .hover-note {
-    font-size: 11px;
+    font-size: var(--fs-xs);
     color: var(--text-muted);
     font-style: italic;
     margin-top: 6px;
@@ -549,7 +510,8 @@ td.hc-cell {
 /* === Special column two-line layout === */
 .special-cell {
     max-width: 220px;
-    font-size: 0.7rem;
+    font-family: var(--font-body);
+    font-size: var(--fs-xs);
     line-height: 1.3;
     /* Each line truncates to a single line; full text on hover via title attr. */
 }
@@ -563,13 +525,13 @@ td.hc-cell {
     color: var(--text);
 }
 .special-cell .special-bonuses {
-    color: var(--gold-dark);
-    font-size: 0.65rem;
+    color: var(--gold);
+    font-size: var(--fs-xs);
     margin-top: 2px;
 }
 .special-cell .special-missing {
     color: var(--text-muted);
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
     margin-top: 2px;
 }
 
@@ -580,7 +542,8 @@ td.hc-cell {
     color: var(--text);
     border: 1px solid var(--border-light);
     border-radius: 4px;
-    font-size: 0.85rem;
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
     cursor: pointer;
 }
 .expand-btn:hover {

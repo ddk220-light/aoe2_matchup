@@ -2,12 +2,8 @@
    Battle Simulation — Page-specific styles
    ========================================================================== */
 
-/* ---------- Simulate-specific variable aliases ---------- */
-:root {
-    --card-bg: var(--bg-warm);
-    --card-border: var(--border-light);
-    --parchment: #d4c4a0;
-}
+/* Page-local :root aliases removed — consume canonical tokens directly:
+   --card-bg -> var(--bg-warm), --card-border -> var(--border-light). */
 
 /* ---------- Main layout ---------- */
 .main-layout {
@@ -35,28 +31,34 @@
 }
 .team-config {
     flex: 1;
-    background: var(--card-bg);
-    border: 2px solid var(--card-border);
+    background: var(--bg-warm);
+    border: 1px solid var(--border);
     border-radius: 10px;
     padding: 14px;
     min-height: 120px;
 }
-.team-config.team1 {
-    border-color: var(--team1);
-}
-.team-config.team2 {
-    border-color: var(--team2);
-}
+/* De-neon: neutral card border + a small team-colour dot on the heading,
+   not a full saturated frame. */
 .team-config h3 {
-    font-family: "Cinzel", serif;
-    font-size: 1rem;
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
     margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
 }
-.team-config.team1 h3 {
-    color: var(--team1);
+.team-config h3::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
 }
-.team-config.team2 h3 {
-    color: var(--team2);
+.team-config.team1 h3::before {
+    background: var(--team1);
+}
+.team-config.team2 h3::before {
+    background: var(--team2);
 }
 
 /* ---------- Selection badge ---------- */
@@ -64,7 +66,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--bg-hover);
     border-radius: 6px;
     padding: 6px 10px;
     margin-bottom: 8px;
@@ -88,12 +90,12 @@
 }
 .selection-badge .badge-text {
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: var(--fs-sm);
 }
 .selection-badge .change-btn {
     margin-left: auto;
     color: var(--gold);
-    font-size: 0.75rem;
+    font-size: var(--fs-xs);
     cursor: pointer;
     text-decoration: underline;
 }
@@ -113,8 +115,8 @@
     align-items: center;
     gap: 4px;
     padding: 8px 4px;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0.08) 100%);
-    border: 1px solid var(--card-border);
+    background: var(--bg-warm);
+    border: 1px solid var(--border);
     border-radius: 8px;
     cursor: pointer;
     transition:
@@ -125,9 +127,9 @@
 }
 .civ-card:hover {
     transform: translateY(-2px) scale(1.04);
-    border-color: rgba(139, 105, 20, 0.6);
-    background: linear-gradient(180deg, rgba(201, 168, 76, 0.1) 0%, rgba(201, 168, 76, 0.03) 100%);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    border-color: var(--gold-dark);
+    background: var(--bg-hover);
+    box-shadow: var(--shadow-sm);
 }
 .civ-card:hover img {
     transform: scale(1.06);
@@ -143,41 +145,22 @@
     transition: transform 0.25s ease;
 }
 .civ-card span {
-    font-size: 0.62rem;
+    font-size: var(--fs-xs);
     text-align: center;
     color: var(--text-muted);
     letter-spacing: 0.02em;
     transition: color 0.25s ease;
 }
 
-/* ---------- Age toggle (simulate-specific overrides) ---------- */
+/* Age toggle: base.css is the single source of truth (.age-toggle/.age-btn).
+   Only the simulate-specific layout tweak (full-width buttons) is kept. */
 .age-toggle {
-    display: flex;
     gap: 6px;
     margin-bottom: 8px;
 }
 .age-btn {
     flex: 1;
-    font-family: "Cinzel", serif;
-    font-size: 0.75rem;
-    padding: 6px 10px;
-    border: 1px solid var(--card-border);
-    border-radius: 6px;
-    background: var(--card-bg);
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: all 0.2s;
     text-align: center;
-}
-.age-btn:hover {
-    border-color: var(--gold-dark);
-    color: var(--text);
-}
-.age-btn.active {
-    background: var(--gold-dark);
-    color: var(--bg-deep);
-    border-color: var(--gold);
-    font-weight: 600;
 }
 
 /* ---------- Unit grid ---------- */
@@ -185,8 +168,8 @@
     margin-bottom: 6px;
 }
 .unit-grid-section h4 {
-    font-family: "Cinzel", serif;
-    font-size: 0.7rem;
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
     color: var(--gold);
     margin-bottom: 4px;
     display: flex;
@@ -209,8 +192,8 @@
     align-items: center;
     gap: 2px;
     padding: 4px;
-    background: rgba(0, 0, 0, 0.15);
-    border: 1px solid var(--card-border);
+    background: var(--bg-warm);
+    border: 1px solid var(--border);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
@@ -218,13 +201,13 @@
 }
 .unit-pick:hover {
     border-color: var(--gold-dark);
-    background: rgba(201, 168, 76, 0.1);
+    background: var(--bg-hover);
 }
 .unit-pick img {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    border: 2px solid var(--card-border);
+    border: 2px solid var(--border-light);
     object-fit: cover;
     background: var(--bg);
 }
@@ -244,16 +227,16 @@
     box-sizing: border-box;
 }
 .unit-pick span {
-    font-size: 0.55rem;
+    font-size: var(--fs-xs);
     text-align: center;
     color: var(--text-muted);
-    line-height: 1.1;
+    line-height: var(--lh-tight);
 }
 
 /* ---------- Army config ---------- */
 .army-config {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
+    background: var(--bg-warm);
+    border: 1px solid var(--border);
     border-radius: 8px;
     padding: 12px;
     margin-bottom: 12px;
@@ -270,7 +253,7 @@
     align-items: center;
     gap: 6px;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: var(--fs-sm);
 }
 .mode-option input {
     accent-color: var(--gold);
@@ -280,7 +263,7 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    font-size: 0.85rem;
+    font-size: var(--fs-sm);
 }
 .resource-input label {
     color: var(--text-muted);
@@ -289,10 +272,10 @@
     width: 100px;
     padding: 6px;
     background: var(--bg);
-    border: 1px solid var(--card-border);
+    border: 1px solid var(--border);
     color: var(--text);
     border-radius: 4px;
-    font-size: 0.85rem;
+    font-size: var(--fs-sm);
     text-align: center;
 }
 .count-inputs {
@@ -302,16 +285,16 @@
 }
 .count-inputs label {
     color: var(--text-muted);
-    font-size: 0.85rem;
+    font-size: var(--fs-sm);
 }
 .count-inputs input {
     width: 60px;
     padding: 6px;
     background: var(--bg);
-    border: 1px solid var(--card-border);
+    border: 1px solid var(--border);
     color: var(--text);
     border-radius: 4px;
-    font-size: 0.85rem;
+    font-size: var(--fs-sm);
     text-align: center;
 }
 
@@ -324,26 +307,32 @@
     margin-bottom: 12px;
     flex-wrap: wrap;
 }
+/* One button system (de-neon traffic lights):
+   Start = gold CTA; Pause/Reset = neutral warm. */
 .controls button {
     padding: 8px 24px;
-    font-size: 0.85rem;
-    font-family: "Cinzel", serif;
+    font-size: var(--fs-sm);
+    font-family: var(--font-display);
+    font-weight: 600;
     cursor: pointer;
-    border: none;
+    border: 1px solid var(--border);
     border-radius: 6px;
     transition: all 0.2s;
 }
 #startBtn {
-    background: var(--green);
-    color: white;
+    background: var(--gold-cta);
+    color: var(--text-on-gold);
+    border-color: var(--gold-cta);
 }
-#pauseBtn {
-    background: var(--gold-dark);
-    color: var(--bg-deep);
-}
+#pauseBtn,
 #resetBtn {
-    background: var(--red);
-    color: white;
+    background: var(--bg-warm);
+    color: var(--text);
+    border-color: var(--border);
+}
+#resetBtn:hover:not(:disabled) {
+    color: var(--poor);
+    border-color: var(--poor);
 }
 .controls button:disabled {
     opacity: 0.4;
@@ -351,13 +340,13 @@
 }
 .controls button:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-sm);
 }
 .speed-control {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.8rem;
+    font-size: var(--fs-sm);
     color: var(--text-muted);
 }
 #speedSlider {
@@ -370,7 +359,7 @@
     display: block;
     border: 2px solid var(--gold-dark);
     border-radius: 8px;
-    background: #2a3a1a;
+    background: var(--canvas-bg);
     width: 100%;
 }
 
@@ -381,16 +370,18 @@
     gap: 8px;
 }
 .progress-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
+    background: var(--bg-warm);
+    border: 1px solid var(--border);
     border-radius: 8px;
     padding: 8px 10px;
 }
+/* De-neon: neutral border + a thin team-tinted left edge instead of a 3px
+   saturated bar. The team colour also reads on the dot in .prog-name. */
 .progress-card.team1 {
-    border-left: 3px solid var(--team1);
+    border-left: 2px solid color-mix(in srgb, var(--team1) 55%, var(--border));
 }
 .progress-card.team2 {
-    border-left: 3px solid var(--team2);
+    border-left: 2px solid color-mix(in srgb, var(--team2) 55%, var(--border));
 }
 .progress-header {
     display: flex;
@@ -413,8 +404,8 @@
     background: none;
 }
 .progress-header .prog-name {
-    font-family: "Cinzel", serif;
-    font-size: 0.8rem;
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
     font-weight: 600;
 }
 .progress-header.team1 .prog-name {
@@ -426,7 +417,7 @@
 .progress-row {
     display: flex;
     justify-content: space-between;
-    font-size: 0.75rem;
+    font-size: var(--fs-xs);
     margin-bottom: 2px;
 }
 .progress-row .prog-label {
@@ -437,42 +428,43 @@
 }
 .battle-timer {
     text-align: center;
-    font-family: "Cinzel", serif;
-    font-size: 1.1rem;
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
     color: var(--gold);
     padding: 6px;
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
+    background: var(--bg-warm);
+    border: 1px solid var(--border);
     border-radius: 8px;
 }
 
 /* ---------- Debug panel ---------- */
 .debug-panel {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
+    background: var(--bg-warm);
+    border: 1px solid var(--border);
     border-radius: 8px;
     padding: 12px;
-    font-size: 0.8rem;
+    font-size: var(--fs-sm);
     max-height: calc(100vh - 120px);
     overflow-y: auto;
     font-variant-numeric: tabular-nums;
 }
 .debug-panel h3 {
-    font-family: "Cinzel", serif;
+    font-family: var(--font-display);
     color: var(--gold);
     margin-bottom: 10px;
-    font-size: 0.9rem;
+    font-size: var(--fs-md);
 }
 .debug-section {
     margin-bottom: 14px;
     padding-bottom: 10px;
-    border-bottom: 1px solid rgba(90, 66, 40, 0.3);
+    border-bottom: 1px solid var(--border);
 }
 .debug-section:last-child {
     border-bottom: none;
 }
 .debug-section h4 {
-    font-size: 0.8rem;
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
     margin-bottom: 6px;
 }
 .debug-section.team1 h4 {
@@ -486,7 +478,7 @@
 }
 .formula-label {
     color: var(--text-muted);
-    font-size: 0.7rem;
+    font-size: var(--fs-xs);
     margin-bottom: 2px;
 }
 .formula-value {
@@ -495,68 +487,54 @@
     gap: 6px;
     flex-wrap: wrap;
 }
+/* Data numbers, not team/neon colours: attack reads on the calm amber
+   strength token; armor stays neutral text so it is not mistaken for a team. */
 .formula-value .attack-val {
-    color: #f39c12;
-    font-size: 1.1rem;
+    color: var(--weak);
+    font-size: var(--fs-md);
+    font-family: var(--font-mono);
     font-weight: bold;
 }
 .formula-value .armor-val {
-    color: var(--team2);
-    font-size: 1.1rem;
+    color: var(--text);
+    font-size: var(--fs-md);
+    font-family: var(--font-mono);
     font-weight: bold;
 }
 .formula-note {
     color: var(--text-muted);
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
 }
 .bonus-item {
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    color: var(--green);
+    color: var(--strong);
     font-weight: 600;
 }
 .class-tag {
-    background: rgba(90, 154, 58, 0.2);
-    color: var(--green);
+    background: var(--strong-tint);
+    color: var(--strong);
     padding: 1px 5px;
     border-radius: 3px;
-    font-size: 0.6rem;
+    font-size: var(--fs-xs);
     font-weight: normal;
 }
 .formula-result {
     margin-top: 8px;
     padding-top: 8px;
-    border-top: 1px solid rgba(90, 66, 40, 0.3);
+    border-top: 1px solid var(--border);
 }
 .formula-total {
     color: var(--gold);
-    font-size: 1.4rem;
+    font-size: var(--fs-lg);
+    font-family: var(--font-mono);
     font-weight: bold;
 }
 
-/* ---------- Light Mode Overrides ---------- */
-[data-theme="light"] .selection-badge {
-    background: rgba(0, 0, 0, 0.06);
-}
-[data-theme="light"] .civ-card {
-    background: rgba(0, 0, 0, 0.04);
-}
-[data-theme="light"] .civ-card:hover {
-    background: rgba(139, 105, 20, 0.1);
-}
-[data-theme="light"] .unit-pick {
-    background: rgba(0, 0, 0, 0.04);
-}
-[data-theme="light"] .unit-pick:hover {
-    background: rgba(139, 105, 20, 0.1);
-}
-[data-theme="light"] #battleCanvas {
-    background: #8aab6a;
-}
-[data-theme="light"] .formula-value .attack-val {
-    color: #b07a08;
-}
+/* Per-page [data-theme="light"] overrides removed — surfaces, canvas bg and the
+   attack-val colour are now token-driven (--bg-warm/--bg-hover/--canvas-bg/--weak)
+   and theme correctly in both light (default) and dark. */
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1100px) {

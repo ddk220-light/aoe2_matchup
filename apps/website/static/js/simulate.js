@@ -17,6 +17,40 @@
 const CANVAS_WIDTH = 900;
 const CANVAS_HEIGHT = 600;
 const TILE_SIZE = 30;
+
+// Canvas palette — read from the central design tokens so the battlefield matches
+// the active theme (light default / dark toggle). Refreshed on load + theme change.
+let CANVAS_PAL = {
+    bg: "#26301a", grid: "rgba(128,128,128,0.10)", text: "#ece1cd", gold: "#cdac50",
+    hpStrong: "#6fb15e", hpWeak: "#cf9a4a", hpPoor: "#cf6a5e",
+    team1: "#cf5a4b", team2: "#4a9fd4",
+};
+function refreshCanvasPalette() {
+    try {
+        const cs = getComputedStyle(document.documentElement);
+        const g = (n, fb) => cs.getPropertyValue(n).trim() || fb;
+        CANVAS_PAL = {
+            bg: g("--canvas-bg", CANVAS_PAL.bg),
+            grid: "rgba(128,128,128,0.10)",
+            text: g("--text", CANVAS_PAL.text),
+            gold: g("--gold", CANVAS_PAL.gold),
+            hpStrong: g("--strong", CANVAS_PAL.hpStrong),
+            hpWeak: g("--weak", CANVAS_PAL.hpWeak),
+            hpPoor: g("--poor", CANVAS_PAL.hpPoor),
+            team1: g("--team1", CANVAS_PAL.team1),
+            team2: g("--team2", CANVAS_PAL.team2),
+        };
+    } catch (e) { /* keep last palette */ }
+}
+if (typeof document !== "undefined") {
+    refreshCanvasPalette();
+    // Re-read when the theme toggles (data-theme attribute on <html>).
+    try {
+        new MutationObserver(refreshCanvasPalette).observe(document.documentElement, {
+            attributes: true, attributeFilter: ["data-theme"],
+        });
+    } catch (e) {}
+}
 const MELEE_RANGE_BUFFER = 5;
 
 // ENABLED_CIVS, NAME_TO_ICON, UNIQUE_BUILDING, ICON_BASE,
@@ -1752,15 +1786,15 @@ class BattleUnit {
             const barHeight = 4;
             const barX = this.x - this.radius;
             const barY = this.y - this.radius - 10;
-            ctx.fillStyle = "#333";
+            ctx.fillStyle = "rgba(0,0,0,0.45)";
             ctx.fillRect(barX, barY, barWidth, barHeight);
             const hpPercent = this.currentHp / this.maxHp;
             ctx.fillStyle =
                 hpPercent > 0.5
-                    ? "#2ecc71"
+                    ? CANVAS_PAL.hpStrong
                     : hpPercent > 0.25
-                      ? "#f39c12"
-                      : "#e74c3c";
+                      ? CANVAS_PAL.hpWeak
+                      : CANVAS_PAL.hpPoor;
             ctx.fillRect(
                 barX,
                 barY,
@@ -2045,7 +2079,7 @@ class BattleSimulation {
 
     render() {
         const ctx = this.ctx;
-        ctx.fillStyle = "#2a3a1a";
+        ctx.fillStyle = CANVAS_PAL.bg;
         ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.drawGrid(ctx);
 
@@ -2064,7 +2098,7 @@ class BattleSimulation {
     }
 
     drawGrid(ctx) {
-        ctx.strokeStyle = "rgba(255,255,255,0.04)";
+        ctx.strokeStyle = CANVAS_PAL.grid;
         ctx.lineWidth = 1;
         for (let x = 0; x <= this.canvas.width; x += 50) {
             ctx.beginPath();
@@ -2089,17 +2123,17 @@ class BattleSimulation {
             const unit = currentBattle?.team1_unit_name || "";
             text = `${civ} ${unit}`;
             subtext = "Victory!";
-            color = "#e74c3c";
+            color = CANVAS_PAL.team1;
         } else if (this.winner === 2) {
             const civ = currentBattle?.team2_civ || "Team 2";
             const unit = currentBattle?.team2_unit_name || "";
             text = `${civ} ${unit}`;
             subtext = "Victory!";
-            color = "#3498db";
+            color = CANVAS_PAL.team2;
         } else {
             text = "Draw!";
             subtext = "";
-            color = "#c9a84c";
+            color = CANVAS_PAL.gold;
         }
         ctx.fillStyle = color;
         ctx.font = "bold 34px Cinzel, serif";
@@ -2110,7 +2144,7 @@ class BattleSimulation {
             this.canvas.height / 2 - 10,
         );
         if (subtext) {
-            ctx.fillStyle = "#c9a84c";
+            ctx.fillStyle = CANVAS_PAL.gold;
             ctx.font = "bold 22px Cinzel, serif";
             ctx.fillText(
                 subtext,
@@ -2118,8 +2152,8 @@ class BattleSimulation {
                 this.canvas.height / 2 + 22,
             );
         }
-        ctx.fillStyle = "#e8dcc8";
-        ctx.font = "16px Alegreya Sans";
+        ctx.fillStyle = "#ece1cd";
+        ctx.font = "16px 'Source Sans 3', sans-serif";
         ctx.fillText(
             `Battle time: ${this.battleTime.toFixed(1)}s`,
             this.canvas.width / 2,

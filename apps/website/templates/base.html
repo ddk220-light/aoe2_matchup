@@ -104,8 +104,8 @@
         </div>
         <div class="theme-toggle">
             <button class="theme-toggle-btn" id="themeToggle" title="Toggle light/dark mode">
-                <span class="toggle-icon" id="themeIcon">&#9790;</span>
-                <span class="theme-toggle-label" id="themeLabel">Light</span>
+                <span class="toggle-icon" id="themeIcon">&#9728;</span>
+                <span class="theme-toggle-label" id="themeLabel">Dark</span>
             </button>
         </div>
     </nav>
@@ -124,23 +124,23 @@
             var label = document.getElementById('themeLabel');
 
             function applyTheme(theme) {
-                if (theme === 'light') {
-                    document.documentElement.setAttribute('data-theme', 'light');
-                    icon.innerHTML  = '&#9728;';
-                    label.textContent = 'Dark';
+                if (theme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    icon.innerHTML  = '&#9790;';      /* moon */
+                    label.textContent = 'Light';
                 } else {
                     document.documentElement.removeAttribute('data-theme');
-                    icon.innerHTML  = '&#9790;';
-                    label.textContent = 'Light';
+                    icon.innerHTML  = '&#9728;';      /* sun */
+                    label.textContent = 'Dark';
                 }
             }
 
-            /* Set correct icon on load */
-            applyTheme(localStorage.getItem('aoe2-theme') || 'dark');
+            /* Set correct icon on load — light is the default */
+            applyTheme(localStorage.getItem('aoe2-theme') || 'light');
 
             btn.addEventListener('click', function() {
                 var current = document.documentElement.getAttribute('data-theme');
-                var next    = current === 'light' ? 'dark' : 'light';
+                var next    = current === 'dark' ? 'light' : 'dark';
                 localStorage.setItem('aoe2-theme', next);
                 applyTheme(next);
             });

@@ -43,12 +43,13 @@ const MA_COLUMN_ORDER = ["cavalry", "ranged", "infantry", "siege"];
 // Siege lines only show percentile — no sim overlays.
 const MA_SIEGE_LINES = new Set(["ram", "bombard_cannon", "trebuchet"]);
 
+/* Theme-aware, de-neoned strength colours from the central design tokens. */
 const MA_STRENGTH_COLORS = {
-    signature: { bg: "rgba(201, 168, 76, 0.2)", text: "var(--gold)", bar: "#c9a84c" },
-    strong:    { bg: "rgba(46, 204, 113, 0.15)", text: "#2ecc71", bar: "#2ecc71" },
-    average:   { bg: "rgba(255, 255, 255, 0.05)", text: "var(--text-muted)", bar: "rgba(255,255,255,0.3)" },
-    weak:      { bg: "rgba(230, 126, 34, 0.15)", text: "#e67e22", bar: "#e67e22" },
-    poor:      { bg: "rgba(231, 76, 60, 0.15)", text: "#e74c3c", bar: "#e74c3c" },
+    signature: { bg: "var(--gold-tint)", text: "var(--gold)", bar: "var(--gold)" },
+    strong:    { bg: "var(--strong-tint)", text: "var(--strong)", bar: "var(--strong)" },
+    average:   { bg: "var(--bg-hover)", text: "var(--text-muted)", bar: "var(--border-light)" },
+    weak:      { bg: "var(--weak-tint)", text: "var(--weak)", bar: "var(--weak)" },
+    poor:      { bg: "var(--poor-tint)", text: "var(--poor)", bar: "var(--poor)" },
 };
 
 /* ---- State ---- */
@@ -1225,7 +1226,7 @@ function buildUnitSide(entry, civName, isWinner) {
     const strength = document.createElement("div");
     strength.className = "ma-strength";
     strength.style.color = sc.text;
-    strength.textContent = sc.bar === "#c9a84c" ? "Signature" :
+    strength.textContent = entry.strength === "signature" ? "Signature" :
         entry.strength.charAt(0).toUpperCase() + entry.strength.slice(1);
     side.appendChild(strength);
 

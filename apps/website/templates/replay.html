@@ -14,7 +14,9 @@
         display: block;
         width: 100%;
         border: 0;
-        background: #1a1a2e;
+        /* Match the replay app's themed background so there's no dark flash
+           while the iframe loads (base.css tokens are available here). */
+        background: var(--bg-deep);
     }
 </style>
 {% endblock %}

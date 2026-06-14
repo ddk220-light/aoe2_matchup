@@ -4,6 +4,42 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>AoE2 Replay Visualizer</title>
+        <!-- Match the main site theme (synced from the parent via localStorage).
+             Applied before paint to avoid a flash of the wrong theme. -->
+        <script>
+            (function () {
+                try {
+                    var t = localStorage.getItem("aoe2-theme");
+                    if (t === "dark") {
+                        document.documentElement.setAttribute(
+                            "data-theme",
+                            "dark",
+                        );
+                    }
+                    // Live-sync when the parent site toggles the theme: the
+                    // `storage` event fires in this same-origin iframe.
+                    window.addEventListener("storage", function (e) {
+                        if (e.key !== "aoe2-theme") return;
+                        if (e.newValue === "dark") {
+                            document.documentElement.setAttribute(
+                                "data-theme",
+                                "dark",
+                            );
+                        } else {
+                            document.documentElement.removeAttribute(
+                                "data-theme",
+                            );
+                        }
+                    });
+                } catch (err) {
+                    /* localStorage may be blocked; fall back to light. */
+                }
+            })();
+        </script>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+            rel="stylesheet"
+        />
         <link rel="stylesheet" href="style.css" />
     </head>
     <body>

@@ -206,6 +206,15 @@ html {
     scroll-padding-top: var(--nav-h);
 }
 
+/* ---------- Fluid root scale: ONE lever for big screens ----------
+   The type ramp (--fs-*) and unit-icon boxes are all rem, so growing the root
+   font-size on large monitors scales text AND icons together — the layout
+   "zooms" to fill the extra real estate instead of looking tiny in a wide page.
+   Laptops/phones (<1600) keep the 16px base untouched. */
+@media (min-width: 1600px) { html { font-size: 17px; } }
+@media (min-width: 1920px) { html { font-size: 18px; } }
+@media (min-width: 2560px) { html { font-size: 20px; } }
+
 /* Kill horizontal page overflow (the #1 mobile jank cause) and stop the
    vertical rubber-band from chaining to parent scrollers. */
 html,
@@ -918,11 +927,17 @@ a:hover {
 .floating-card {
     /* never wider than the viewport minus gutters; caps at a readable 340px */
     max-width: min(340px, calc(100vw - 2 * var(--gutter)));
-    /* tall breakdowns scroll instead of clipping off the bottom edge */
-    max-height: min(60vh, calc(100vh - var(--nav-h) - 16px));
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+}
+/* On phones/tablets a pinned card can be taller than the screen, so it scrolls
+   internally. On desktop it floats and sizes to content — NO inner scrollbar,
+   so the mouse wheel always scrolls the page, never gets trapped in the card. */
+@media (max-width: 768px) {
+    .floating-card {
+        max-height: min(70vh, calc(100vh - var(--nav-h) - 16px));
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
 }
 
 /* A small close affordance for tap-pinned cards (hidden until pinned on touch). */

@@ -145,8 +145,8 @@
     pointer-events: none;
 }
 .unit-tab img {
-    width: 24px;
-    height: 24px;
+    width: 1.5rem;
+    height: 1.5rem;
     border-radius: 50%;
     border: 1px solid var(--border-light);
     object-fit: cover;
@@ -157,8 +157,8 @@
    content height, so a tall/wide off-shape sprite can never bleed the tab or its
    neighbours; flex-shrink:0 keeps the flex row from squeezing the box. */
 .unit-tab img.sprite {
-    width: 28px;
-    height: 28px;
+    width: 1.75rem;
+    height: 1.75rem;
     border: none;
     border-radius: 0;
     background: none;
@@ -194,16 +194,16 @@
     gap: 8px;
 }
 .table-title img {
-    width: 28px;
-    height: 28px;
+    width: 1.75rem;
+    height: 1.75rem;
     border-radius: 50%;
 }
 /* Transparent sprite in the title: no circle crop, whole figure contained in a
    fixed 32px box. The row is a centred flex line, so an off-shape sprite stays
    inside its box and the box stays inside the title row. */
 .table-title img.sprite {
-    width: 32px;
-    height: 32px;
+    width: 2rem;
+    height: 2rem;
     border-radius: 0;
     object-fit: contain;
     padding: 1px;
@@ -322,8 +322,8 @@
     font-family: var(--font-body);
 }
 .civ-cell img {
-    width: 22px;
-    height: 22px;
+    width: 1.375rem;
+    height: 1.375rem;
     border-radius: 50%;
     object-fit: cover;
 }
@@ -337,8 +337,8 @@
     font-family: var(--font-body);
 }
 .unit-cell img {
-    width: 24px;
-    height: 24px;
+    width: 1.5rem;
+    height: 1.5rem;
     border-radius: 50%;
     border: 1px solid var(--border-light);
     object-fit: cover;
@@ -350,8 +350,8 @@
    sprite inside the box, flex-shrink:0 stops the unit name from squeezing it, and the
    box stays well inside the cell's content width so it never crosses into neighbours. */
 .unit-cell img.sprite {
-    width: 26px;
-    height: 26px;
+    width: 1.625rem;
+    height: 1.625rem;
     border: none;
     border-radius: 0;
     background: none;
@@ -372,13 +372,10 @@
     color: var(--text);
     white-space: normal;
     min-width: 230px;
-    /* Viewport-clamped width + scrollable height: never wider than the screen,
-       never clipped off the bottom — tall breakdowns scroll inside the card. */
+    /* Viewport-clamped width so it's never wider than the screen. On desktop the
+       card floats and sizes to its content — no inner scrollbar, so the wheel
+       always scrolls the page. (Phones get an internal scroll below.) */
     max-width: min(340px, calc(100vw - 2 * var(--gutter, 24px)));
-    max-height: min(60vh, calc(100vh - var(--nav-h, 0px) - 16px));
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
     z-index: 200;
     box-shadow: var(--shadow-card);
     pointer-events: none;

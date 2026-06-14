@@ -76,8 +76,8 @@
     margin-bottom: 8px;
 }
 .selection-badge img {
-    width: 32px;
-    height: 32px;
+    width: 2rem;
+    height: 2rem;
     border-radius: 50%;
     object-fit: cover;
 }
@@ -110,7 +110,7 @@
 /* ---------- Civ grid ---------- */
 .civ-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(4.375rem, 1fr));
     gap: 6px;
 }
 .civ-card {
@@ -142,8 +142,8 @@
     color: var(--text);
 }
 .civ-card img {
-    width: 36px;
-    height: 36px;
+    width: 2.25rem;
+    height: 2.25rem;
     border-radius: 50%;
     object-fit: cover;
     transition: transform 0.25s ease;
@@ -181,8 +181,8 @@
     gap: 4px;
 }
 .unit-grid-section h4 img {
-    width: 18px;
-    height: 18px;
+    width: 1.125rem;
+    height: 1.125rem;
     border-radius: 3px;
 }
 .unit-grid {
@@ -201,15 +201,15 @@
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
-    width: 64px;
+    width: 4rem;
 }
 .unit-pick:hover {
     border-color: var(--gold-dark);
     background: var(--bg-hover);
 }
 .unit-pick img {
-    width: 40px;
-    height: 40px;
+    width: 2.5rem;
+    height: 2.5rem;
     border-radius: 50%;
     border: 2px solid var(--border-light);
     object-fit: cover;
@@ -221,8 +221,8 @@
    object-fit: contain so wide/tall off-shapes are contained, never cropped or
    bleeding into neighbouring picks. */
 .unit-pick img.sprite {
-    width: 48px;
-    height: 48px;
+    width: 3rem;
+    height: 3rem;
     border: none;
     border-radius: 0;
     background: none;
@@ -399,15 +399,15 @@
     margin-bottom: 6px;
 }
 .progress-header img {
-    width: 28px;
-    height: 28px;
+    width: 1.75rem;
+    height: 1.75rem;
     border-radius: 50%;
     object-fit: cover;
 }
 /* Transparent sprite: no circle crop, contained, a touch bigger (sim UI). */
 .progress-header img.sprite {
-    width: 40px;
-    height: 40px;
+    width: 2.5rem;
+    height: 2.5rem;
     border-radius: 0;
     object-fit: contain;
     background: none;

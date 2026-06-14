@@ -242,7 +242,11 @@
 /* --- Unit Wrap (entrance animation) --- */
 .unit-wrap {
     margin-bottom: 8px;
-    animation: cardSlideIn 0.35s ease both;
+    /* `backwards` (not `both`): play the slide-in, but don't retain its end
+       transform afterward — a lingering transform: translateY(0) would make the
+       wrapper the containing block for the card's position:fixed (see the card
+       positioning notes below). */
+    animation: cardSlideIn 0.35s ease backwards;
 }
 
 /* --- Multi-unit layout (2+ units in same line) --- */
@@ -288,7 +292,9 @@
 .unit-badge:hover {
     background: var(--bg-hover);
     box-shadow: var(--shadow-sm);
-    transform: translateX(2px);
+    /* No transform nudge: a transformed badge becomes the containing block for
+       its position:fixed tooltip, which would anchor the centred hover card to
+       the badge instead of the viewport. */
 }
 
 /* --- Tier edges (calm tinted left border, theme-aware) ---
@@ -504,12 +510,13 @@
     padding-top: 26px;
 }
 
-/* Desktop/tablet pinned: detach into a centred, viewport-clamped card so the
-   whole card — the big icon included — is always on-screen. The hover bubble
-   opens upward and clipped off the top for tall cards near the top of the page.
-   (#results.tooltip-focus clears the wrapper transforms, so fixed resolves to
-   the viewport here.) Phones keep the bottom-sheet rules further down. */
+/* Desktop/tablet: both the hover preview and the pinned card detach into the
+   SAME centred, viewport-clamped panel, so the whole card — big icon included —
+   is always on-screen and hover/click look identical. (The wrapper transforms
+   are cleared above, so position:fixed resolves to the viewport.) Phones keep
+   the bottom-sheet rules further down. */
 @media (min-width: 481px) {
+    .unit-badge:hover .unit-badge-tooltip,
     .unit-badge-tooltip.pinned {
         position: fixed;
         top: 50%;
@@ -522,6 +529,7 @@
         z-index: 1100;
         animation: tooltipPop 0.16s ease both;
     }
+    .unit-badge:hover .unit-badge-tooltip::after,
     .unit-badge-tooltip.pinned::after { display: none; }
 }
 @keyframes tooltipPop {
@@ -561,15 +569,15 @@
 /* True bottom-sheet on phones: the entrance animations (.unit-wrap cardSlideIn,
    the global .container-wide > * pageFadeUp) use animation-fill-mode: both, which
    permanently holds their end transform: translateY(0). A non-none transform makes
-   the wrapper the containing block for position:fixed, so the pinned sheet would
-   anchor to the wrapper instead of the viewport. While a sheet is pinned we drop
-   those finished animations on the sheet's ancestors (animation wins over a plain
-   `transform: none`, so we clear the animation itself) — no visual change since
-   they ended at translateY(0), but position:fixed now resolves to the viewport. */
-.results-container.tooltip-focus,
-.results-container.tooltip-focus .unit-wrap {
+   the wrapper the containing block for position:fixed, anchoring the card's
+   centred/fixed layout to the wrapper instead of the viewport. We clear those
+   finished transforms so the card (hover OR pinned) always centres on the
+   viewport: .unit-wrap uses fill-mode: backwards (above), and the
+   results-container page-load fade is dropped here (it's never seen — the panel
+   starts hidden). animation wins over a plain `transform: none`, so we clear the
+   animation itself; no visual change (they ended at translateY(0)). */
+#results.results-container {
     animation: none;
-    transform: none;
 }
 
 /* Tooltip arrow */

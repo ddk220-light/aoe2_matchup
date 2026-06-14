@@ -11,6 +11,7 @@ Usage: extract_truth.py <scenario>   (default: camp300)
 Run with apps/video/.venv python (grpcio/protobuf; decoder is repo-local).
 """
 import json
+import math
 import struct
 import sys
 import tempfile
@@ -36,6 +37,8 @@ UNIT_MASTERS = {83, 293, 448, 118, 212, 120, 354, 123, 218, 122, 216,
 DOPPLE_MASTER = 243
 BUSH_MASTER = 1059
 HERDABLE_MASTERS = {594, 1243, 705, 833, 1142}  # sheep, goose, turkey, cow...
+# Huntables (deer/boar): killed in place (not herded/converted) then gathered.
+HUNTABLE_MASTERS = {1796, 48}                   # deer (this map), wild boar
 
 
 def read_seqs(path):
@@ -103,14 +106,30 @@ def main():
     node_seen = {}      # eid -> {"first_drop": t, "empty": t|None, "last": pool}
     next_row = 0
 
-    # ---- herdables (sheep/goose): conversion, kill, carcass drain + rot ----
+    # town-center position (for filtering which deer were pushed to the base)
+    tc_seed = next((e for e in es.values()
+                    if e.get(F_OWNER) == 1 and e.get(F_MASTER) == 109), None)
+    tcx = tc_seed.get(F_X) if tc_seed else 68.0
+    tcy = tc_seed.get(F_Y) if tc_seed else 18.0
+
+    # ---- herdables (sheep/goose) + huntables (deer): conversion/kill, carcass
+    # drain + rot, and for huntables a sampled position trajectory (the push). --
     herd = {eid: {"m": e.get(F_MASTER), "owner0": e.get(F_OWNER),
+                  "hunt": e.get(F_MASTER) in HUNTABLE_MASTERS,
                   "convert_t": (0.0 if e.get(F_OWNER) == 1 else None),
                   "kill_t": None, "pool_last": e.get(F_CARRY) or 0.0,
-                  "consumed": 0.0, "x": e.get(F_X), "y": e.get(F_Y)}
-            for eid, e in es.items() if e.get(F_MASTER) in HERDABLE_MASTERS}
+                  "consumed": 0.0, "x": e.get(F_X), "y": e.get(F_Y),
+                  "home": [round(e.get(F_X), 2), round(e.get(F_Y), 2)],
+                  "traj": [], "last_samp": -1e9}
+            for eid, e in es.items()
+            if e.get(F_MASTER) in (HERDABLE_MASTERS | HUNTABLE_MASTERS)}
     herd_gathered = 0.0     # food that entered villager hands (carry increases)
     prev_carry_any = {}
+    # villager DEATHS: a real villager (not a dopple) that vanishes at low HP is
+    # a combat death (boar2's first kill). Garrisoned units vanish at FULL HP, so
+    # a low-HP vanish is unambiguous.
+    DOPPLE = 243
+    vil_last, vil_present, deaths = {}, set(), []
 
     for t, patch, events in seg["frames"]:
         if patch:
@@ -167,6 +186,24 @@ def main():
                 if pool < h["pool_last"] - 1e-6:
                     h["consumed"] += h["pool_last"] - pool
                 h["pool_last"] = pool
+            # huntable trajectory: sample position ~every 2s while still alive
+            if h["hunt"] and h["kill_t"] is None:
+                x, y = e.get(F_X), e.get(F_Y)
+                if isinstance(x, float) and ts - h["last_samp"] >= 2.0:
+                    h["traj"].append([ts, round(x, 2), round(y, 2)])
+                    h["last_samp"] = ts
+        # villager deaths (vanished at low HP)
+        if ts is not None:
+            present = {eid for eid, e in es.items()
+                       if e.get(F_OWNER) == 1 and e.get(F_MASTER) in UNIT_MASTERS
+                       and e.get(F_MASTER) != DOPPLE and isinstance(e.get(F_HP), (int, float))}
+            for eid in vil_present - present:
+                lh = vil_last.get(eid)
+                if lh is not None and lh < 15:
+                    deaths.append({"t": ts, "eid": eid, "hp": round(lh, 1)})
+            for eid in present:
+                vil_last[eid] = es[eid].get(F_HP)
+            vil_present = present
         # food that entered villager hands this tick (carry increases)
         for eid in owner1:
             e = es.get(eid)
@@ -221,6 +258,23 @@ def main():
     herd_consumed = round(sum(h["consumed"] for h in herd.values()), 2)
     kills = sorted([h for h in herds_out if h["kill_t"] is not None],
                    key=lambda h: h["kill_t"])
+
+    # pushed deer: huntables whose trajectory reached the base (or were killed).
+    # Far idle herds the scout merely explored past are excluded.
+    deer_out = []
+    for eid, h in sorted(herd.items()):
+        if h["m"] != 1796 or not h["traj"]:   # deer only; boars = boar phase
+            continue
+        mind = min(math.hypot(x - tcx, y - tcy) for _, x, y in h["traj"])
+        if mind > 20 and h["kill_t"] is None:
+            continue
+        deer_out.append({"eid": eid, "home": h["home"], "kill_t": h["kill_t"],
+                         "consumed": round(h["consumed"], 2),
+                         "end": h["traj"][-1][1:], "min_tc": round(mind, 1),
+                         "traj": h["traj"]})
+    boars_out = [{"eid": eid, "home": h["home"], "kill_t": h["kill_t"],
+                 "consumed": round(h["consumed"], 2)}
+                 for eid, h in sorted(herd.items()) if h["m"] == 48 and h["kill_t"] is not None]
     out = {
         "scenario": SCEN,
         "capture": {"file": FRAMES.name, "game_version": 178524},
@@ -229,6 +283,9 @@ def main():
         "deposits": deposits,
         "nodes": nodes,
         "herdables": herds_out,
+        "deer": deer_out,
+        "boars": boars_out,
+        "deaths": deaths,
         "kills": [{"eid": k["eid"], "t": k["kill_t"]} for k in kills],
         "herd_consumed": herd_consumed,
         "herd_gathered": round(herd_gathered, 2),
@@ -237,8 +294,7 @@ def main():
         "rows": rows,
     }
 
-    # ---- self-check ----
-    assert buildings, "no owner-1 building detected"
+    # ---- self-check (buildings optional: the deer scenario builds nothing) ----
     assert spawns, "no trained units detected"
     assert total > 50, f"implausibly low collected total {total}"
 
@@ -257,6 +313,12 @@ def main():
         print(f"  herdables={len(herds_out)} kills={[(k['eid'], k['kill_t']) for k in kills]}")
         print(f"  herd consumed={herd_consumed} gathered={out['herd_gathered']} "
               f"rot={out['herd_rot']} ({100*out['herd_rot']/max(herd_consumed,1):.1f}%)")
+    if deer_out:
+        print(f"  pushed deer={len(deer_out)}:")
+        for d in deer_out:
+            print(f"    eid={d['eid']} home={d['home']} kill_t={d['kill_t']} "
+                  f"end={d['end']} min_tc={d['min_tc']} samples={len(d['traj'])} "
+                  f"consumed={d['consumed']}")
 
 
 if __name__ == "__main__":

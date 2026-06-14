@@ -22,8 +22,10 @@ export function createGame(scenario, opts = {}) {
   for (const e of scenario.entities) ents.set(e.id, structuredClone(e));
   for (const e of ents.values()) {
     if (e.type === "villager" || e.type === "scout") {
+      const hp = e.type === "scout" ? 45 : C.VILLAGER_HP;
       Object.assign(e, { task: "idle", carry: 0, carryRes: null, tx: e.x, ty: e.y,
-                         target: null, phase: 0, moveTarget: null });
+                         target: null, phase: 0, moveTarget: null,
+                         hp, maxHp: hp, atkT: 0 });
     }
     if (e.type === "town_center") Object.assign(e, { queue: [], rally: null, built: true });
     if (e.type === "tree" || e.type === "bush") {
@@ -31,8 +33,15 @@ export function createGame(scenario, opts = {}) {
     }
     if (e.type === "herdable") {
       // alive food unit; dead=carcass(gatherable). felled=true: no fell delay.
+      // A WILD herdable (deer) is never converted/herded: it flees threats and
+      // ambles back to `home`, and is killed in place. A tame one (sheep/goose)
+      // converts + is MOVE-herded. hp 7 = the fast herdable slay; deer use DEER_HP.
       Object.assign(e, { gatherers: 0, felled: true, dead: false, alive: true,
-                         hp: 7, moveTarget: null });
+                         hp: (e.wild || e.aggro) ? (e.hp ?? 7) : 7, moveTarget: null });
+      if (e.wild) Object.assign(e, { home: e.home || [e.x, e.y],
+                                     flee: "idle", fleeT: 0, killing: false });
+      if (e.aggro) Object.assign(e, { home: e.home || [e.x, e.y], maxHp: e.hp ?? C.BOAR_HP,
+                                      aggroTarget: null, atkT: 0, killing: false });
     }
   }
   // debug numbering: starting villagers 1..n (by id), trained continue
@@ -56,6 +65,9 @@ export function createGame(scenario, opts = {}) {
     ended: false,
     nextId: 10000,
     nextNum: num,
+    // real instance-ids for trained villagers (in spawn order), so the replay's
+    // later commands (boar bait/swarm) reference the right units.
+    trainedIds: [...(scenario.trained_ids || [])],
     blocked: new Set(),
     // Fog of war: `explored` accumulates every tile ever seen; `visible` is
     // the current line-of-sight union. Only tracked when opts.vision (the
@@ -268,7 +280,7 @@ function convertHerdables(g) {
       owned.push(e);
   }
   for (const h of g.ents.values()) {
-    if (h.type !== "herdable" || h.owner === 1 || !h.alive) continue;
+    if (h.type !== "herdable" || h.owner === 1 || !h.alive || h.wild) continue;  // deer never convert
     for (const u of owned) {
       if (dist(h.x, h.y, u.x, u.y) <= C.CONVERT_RANGE) {
         h.owner = 1;
@@ -280,18 +292,166 @@ function convertHerdables(g) {
   }
 }
 
-// Scout: walk to its MOVE target (visual / conversion driver only).
+// Scout: walk to its MOVE target at scout-cavalry speed (faster than a
+// villager — this is what lets it reposition between deer flee-dashes and herd
+// the deer to the TC). Conversion/push driver only; no economy role.
 function stepScout(g, s) {
   if (s.moveTarget) {
-    if (moveAlong(g, s, s.moveTarget[0], s.moveTarget[1])) s.moveTarget = null;
+    if (moveAlong(g, s, s.moveTarget[0], s.moveTarget[1], C.SCOUT_SPEED)) s.moveTarget = null;
   }
 }
 
-// Herdable: while alive + herded, walk toward its MOVE target at herd speed.
-// Once slain, the carcass DECAYS at a fixed rate (independent of gatherers);
-// the rotted food is lost, never banked.
+// Nearest mobile owner-1 unit that would SCARE this deer. A unit already
+// assigned to hunt THIS deer (or a garrisoned one) is an attacker, not a
+// scare source — that exclusion is how an ordered hunt actually catches the
+// deer (villager 0.8 t/s could never run down a 1.4 t/s deer otherwise).
+function nearestThreat(g, d) {
+  let best = null, bd = Infinity;
+  for (const e of g.ents.values()) {
+    if (e.owner !== 1 || e.garrisoned) continue;
+    if (e.type !== "scout" && e.type !== "villager") continue;
+    if ((e.task === "to_herd" || e.task === "kill") && e.target === d.id) continue;
+    const dd = dist(e.x, e.y, d.x, d.y);
+    if (dd < bd) { bd = dd; best = e; }
+  }
+  return best;
+}
+
+// The point a pushed deer is herded toward = the player's Town Center (the
+// dropsite the scout drives it to). Aiming at the centre is robust; the back
+// 2x2 is solid so a deer pushed in from the NE stalls a couple tiles short and
+// is arrow-/villager-killed there (the player would micro it around to the open
+// front courtyard — an open-loop push can't, so it dies a few tiles off).
+function herdDest(g) {
+  for (const e of g.ents.values()) if (e.type === "town_center") return e;
+  return null;
+}
+
+// Is `d` the deer the scout is actively herding right now (the nearest live
+// wild deer to it)? Only that one gets the toward-TC pull — the scout drives
+// one deer at a time, so a clustered neighbour isn't dragged along.
+function nearestHerded(g, d, scout) {
+  const dd = dist(d.x, d.y, scout.x, scout.y);
+  for (const o of g.ents.values()) {
+    if (o === d || o.type !== "herdable" || !o.wild || !o.alive || o.killing) continue;
+    if (dist(o.x, o.y, scout.x, scout.y) < dd) return false;
+  }
+  return true;
+}
+
+// Move a deer toward (tx,ty) at `speed`, stopping short of a blocked tile so it
+// never walks into the TC mass / a resource node.
+function moveDeer(g, d, tx, ty, speed) {
+  const dd = Math.hypot(tx - d.x, ty - d.y);
+  if (dd < 1e-9) return;
+  const step = Math.min(speed * C.TICK, dd);
+  const nx = d.x + ((tx - d.x) / dd) * step, ny = d.y + ((ty - d.y) / dd) * step;
+  if (g.blocked.has(`${Math.floor(nx)},${Math.floor(ny)}`)) return;
+  d.x = nx; d.y = ny;
+}
+
+// Wild deer flee/return FSM (capture-derived). A threat within FLEE_TRIGGER
+// makes the deer ALERT; after REACT_DELAY it DASHES directly away from the
+// threat's position at that instant (the delay lets the scout reach the deer's
+// far side, so it flees toward the TC — a push, not a scatter), for ~FLEE_DASH
+// seconds at FLEE_SPEED, then a brief settle. With no threat near it AMBLES home
+// at DEER_WALK. dash+settle paced by the scout's repositioning = the deer push.
+function stepDeer(g, d) {
+  if (d.killing) return;                       // pinned: being killed in place
+  const threat = nearestThreat(g, d);
+  const td = threat ? dist(threat.x, threat.y, d.x, d.y) : Infinity;
+  if (threat && td < C.FLEE_TRIGGER) {
+    d.flee = "flee";
+    let ax = (d.x - threat.x) / (td || 1), ay = (d.y - threat.y) / (td || 1);
+    // The scout herds ONE deer at a time — the one it's actively following (the
+    // nearest to it). Only that deer gets PULLED toward the herd destination (the
+    // TC); the rest just flee aside and amble home. This reproduces the real
+    // "push one, then come back for the next" without over-driving the cluster.
+    if (threat.type === "scout" && nearestHerded(g, d, threat)) {
+      const dest = herdDest(g);
+      if (dest) {
+        const dx = dest.x - d.x, dy = dest.y - d.y, dn = Math.hypot(dx, dy) || 1;
+        ax += C.HERD_PULL * dx / dn; ay += C.HERD_PULL * dy / dn;
+      }
+    }
+    const an = Math.hypot(ax, ay) || 1;
+    moveDeer(g, d, d.x + ax / an, d.y + ay / an, C.FLEE_SPEED);
+    return;
+  }
+  d.flee = "idle";
+  const [hx, hy] = d.home;
+  if (dist(hx, hy, d.x, d.y) > C.HOME_EPS && (!threat || td > C.RETURN_CLEAR)) {
+    moveDeer(g, d, hx, hy, C.DEER_WALK);       // amble back to spawn
+  }
+}
+
+// A wild BOAR does not flee — it AGGROS whoever attacks it, chases, and fights
+// back (real HP combat). Baited toward the TC it walks into arrow range; or a
+// villager swarm kills it (and it can kill a villager first). With no aggro
+// target it ambles home.
+function stepBoar(g, b) {
+  // Aggro a villager attacking me only once it's CLOSE (provoke range) — the
+  // boar engages the bait as it arrives/retreats, not in a head-on collision
+  // while it's still approaching (which would let the boar kill the bait).
+  if (b.aggroTarget == null) {
+    let best = null, bd = C.PROVOKE_RANGE;
+    for (const e of g.ents.values()) {
+      if (e.type !== "villager" || e.task !== "attack" || e.target !== b.id) continue;
+      const d = dist(e.x, e.y, b.x, b.y);
+      if (d < bd) { bd = d; best = e.id; }
+    }
+    b.aggroTarget = best;
+  }
+  if (b.aggroTarget != null) {
+    const tgt = g.ents.get(b.aggroTarget);
+    if (!tgt || (tgt.hp ?? 1) <= 0) { b.aggroTarget = nextAttacker(g, b); return; }
+    const d = dist(b.x, b.y, tgt.x, tgt.y);
+    if (d > C.MELEE_RANGE) { moveDeer(g, b, tgt.x, tgt.y, C.BOAR_SPEED); b.atkT = C.BOAR_ATTACK_INT; }
+    else if ((b.atkT -= C.TICK) <= 0) {
+      b.atkT = C.BOAR_ATTACK_INT;
+      tgt.hp -= C.BOAR_ATTACK;
+      if (tgt.hp <= 0) { killUnit(g, tgt); b.aggroTarget = nextAttacker(g, b); }
+    }
+    return;
+  }
+  const [hx, hy] = b.home;
+  if (dist(hx, hy, b.x, b.y) > C.HOME_EPS) moveDeer(g, b, hx, hy, C.DEER_WALK);
+}
+
+// A villager attacking THIS boar (to retarget the boar when its victim dies).
+function nextAttacker(g, b) {
+  for (const e of g.ents.values())
+    if (e.type === "villager" && e.task === "attack" && e.target === b.id) return e.id;
+  return null;
+}
+
+// Boar slain -> carcass (gatherable food node). Attacking villagers switch to
+// eating it; rallied villagers find it via the normal food seek.
+function killBoar(g, b) {
+  b.dead = true; b.alive = false; b.hp = 0; b.aggroTarget = null; b.killing = false;
+  emit(g, "kill", { eid: b.id });
+  recomputeObstacles(g);
+  for (const e of g.ents.values())
+    if (e.type === "villager" && e.task === "attack" && e.target === b.id) assignGather(g, e, b.id);
+}
+
+// A unit dies (HP<=0): remove it, free its node slot, and re-aim any boar that
+// was attacking it. The capture's FIRST unit death is villager 3619 to boar2.
+function killUnit(g, u) {
+  releaseNode(g, u);
+  g.ents.delete(u.id);
+  emit(g, "death", { eid: u.id, num: u.num });
+  for (const b of g.ents.values())
+    if (b.aggro && b.aggroTarget === u.id) b.aggroTarget = nextAttacker(g, b);
+}
+
+// Herdable step: a WILD deer runs its flee FSM; a tame herdable walks its MOVE
+// target at herd speed. Once slain, the carcass DECAYS at a fixed rate
+// (independent of gatherers); the rotted food is lost, never banked.
 function stepHerdable(g, h) {
-  if (h.alive && h.moveTarget) {
+  if (h.alive && h.wild) stepDeer(g, h);
+  else if (h.alive && h.aggro) stepBoar(g, h);
+  else if (h.alive && h.moveTarget) {
     const [tx, ty] = h.moveTarget;
     const d = Math.hypot(tx - h.x, ty - h.y);
     const budget = C.HERD_SPEED * C.TICK;
@@ -346,19 +506,56 @@ function applyCommands(g) {
       for (const id of c.unit_ids) {
         const u = g.ents.get(id);
         if (!u) continue;
+        // A Town Center ordered onto a deer/boar = garrisoned-TC arrow fire.
+        if (u.type === "town_center") { tcAttack(g, u, c.target_id); continue; }
+        if (u.type !== "villager") continue;   // scout swept up in a hunt order: ignore
+        // Ordered onto a BOAR = melee ATTACK (HP combat); the boar fights back.
+        const tgt = g.ents.get(c.target_id);
+        if (tgt && tgt.type === "herdable" && tgt.aggro && !tgt.dead) {
+          releaseNode(g, u); u.task = "attack"; u.target = c.target_id; u.atkT = 0; u.queuedOrder = null;
+          continue;
+        }
         // An order issued while the unit is constructing is a shift-queued
         // follow-up (millpop: build house, THEN return to bush 3153) —
         // defer it to building completion instead of cancelling the build.
         if (u.task === "to_build" || u.task === "building") u.queuedOrder = c.target_id;
         else assignGather(g, u, c.target_id);
       }
+    } else if (c.type === "garrison") {
+      const b = g.ents.get(c.building_id);
+      if (b) {
+        b.garrisoned = c.n;                     // boosts TC arrow fire (boar phase)
+        // the n nearest free villagers step inside (capture: ~7 to boost fire) —
+        // hidden, not threats, so a deer pushed to the TC front isn't scared off.
+        const vils = [...g.ents.values()]
+          .filter((e) => e.type === "villager" && !e.garrisoned)
+          .sort((a, z) => dist(a.x, a.y, b.x, b.y) - dist(z.x, z.y, b.x, b.y));
+        for (const v of vils.slice(0, c.n)) { releaseNode(g, v); v.garrisoned = true; v.task = "garrison"; }
+      }
+    } else if (c.type === "ungarrison") {
+      const b = g.ents.get(c.building_id);
+      if (b) {
+        b.garrisoned = 0;
+        for (const v of g.ents.values())
+          if (v.type === "villager" && v.garrisoned) { v.garrisoned = false; v.task = "seek"; v.seekTimer = 0.3; }
+      }
+    } else if (c.type === "research") {
+      // Loom: +15 villager HP (25 -> 40). Bumps current villagers; later spawns
+      // get it at train time. Survives the boar that killed the un-Loomed one.
+      if (c.tech === C.LOOM_TECH && !g.loom) {
+        g.loom = true;
+        for (const e of g.ents.values())
+          if (e.type === "villager") { e.maxHp += C.LOOM_HP; e.hp += C.LOOM_HP; }
+      }
     } else if (c.type === "move") {
-      // MOVE retargets a scout (visual) or HERDS owned herdables to a point.
+      // MOVE retargets a scout, HERDS owned herdables, or RETREATS a villager
+      // (the boar-bait runs back to the TC, with the boar chasing).
       for (const id of c.unit_ids) {
         const u = g.ents.get(id);
         if (!u) continue;
         if (u.type === "herdable") { if (u.alive) u.moveTarget = [c.x, c.y]; }
         else if (u.type === "scout") u.moveTarget = [c.x, c.y];
+        else if (u.type === "villager") { releaseNode(g, u); u.task = "move"; u.tx = c.x; u.ty = c.y; }
       }
     } else if (c.type === "gather_point") {
       const b = g.ents.get(c.building_id);
@@ -376,7 +573,43 @@ function applyCommands(g) {
 }
 
 // --------------------------------------------------------------- buildings
+// A garrisoned TC ordered onto a deer fires arrows until it dies (deer2). The
+// deer stops fleeing the moment the TC locks on. Arrow-count scaling with the
+// garrison is a boar-phase detail; here the ordered deer simply dies in ~the
+// captured time (0.3s after the order — the garrisoned TC had been firing).
+function tcAttack(g, tc, targetId) {
+  const tgt = g.ents.get(targetId);
+  if (!tgt || tgt.type !== "herdable" || tgt.dead) return;
+  tc.attackTarget = targetId;
+  tc.fireT = tgt.aggro ? C.TC_RELOAD : C.TC_FIRE_KILL;   // boar = volleys; deer = burst
+}
+
 function stepTC(g, tc) {
+  if (tc.attackTarget != null) {
+    const tgt = g.ents.get(tc.attackTarget);
+    if (!tgt || tgt.dead) { tc.attackTarget = null; }
+    else if (dist(tgt.x, tgt.y, tc.x, tc.y) > C.TC_RANGE) {
+      if (!tgt.aggro) tgt.killing = false;     // deer not in range yet: let it keep fleeing
+      tc.fireT = tgt.aggro ? C.TC_RELOAD : C.TC_FIRE_KILL;
+    } else if (tgt.aggro) {
+      // BOAR: fire a volley of (garrisoned) arrows × ARROW_DMG every reload.
+      if ((tc.fireT -= C.TICK) <= 0) {
+        tc.fireT = C.TC_RELOAD;
+        const arrows = C.TC_BASE_ARROWS + (tc.garrisoned || 0);
+        tgt.hp -= arrows * C.ARROW_DMG;
+        emit(g, "tc_fire", { eid: tgt.id, arrows });
+        if (tgt.hp <= 0) { killBoar(g, tgt); tc.attackTarget = null; }
+      }
+    } else {
+      tgt.killing = true;                      // DEER: garrisoned TC bursts it
+      if ((tc.fireT -= C.TICK) <= 0) {
+        tgt.dead = true; tgt.alive = false; tgt.moveTarget = null; tgt.hp = 0; tgt.killing = false;
+        emit(g, "kill", { eid: tgt.id, by: tc.id, tc: true });
+        recomputeObstacles(g);
+        tc.attackTarget = null;
+      }
+    }
+  }
   if (!tc.queue.length) return;
   if (popCount(g) + 1 > popCap(g)) return;   // housed: timer frozen
   tc.queue[0].remaining -= C.TICK;
@@ -392,11 +625,14 @@ function stepTC(g, tc) {
     sx = tc.x + (dx / m) * half;
     sy = tc.y + (dy / m) * half;
   }
+  const hp = g.loom ? C.VILLAGER_HP + C.LOOM_HP : C.VILLAGER_HP;
   const v = {
-    id: g.nextId++, type: "villager", owner: 1, task: "idle", carry: 0,
+    id: g.trainedIds.length ? g.trainedIds.shift() : g.nextId++,
+    type: "villager", owner: 1, task: "idle", carry: 0,
     carryRes: null,
     x: sx, y: sy,
     target: null, phase: 0, num: g.nextNum++,
+    hp, maxHp: hp, atkT: 0,
   };
   g.ents.set(v.id, v);
   emit(g, "spawn", { eid: v.id });
@@ -490,13 +726,13 @@ function nearestNode(g, x, y, res) {
 // Path-following movement: (re)plans via findPath when the target changes,
 // then walks the waypoints. Falls back to a straight line if unreachable so
 // units never freeze.
-function moveAlong(g, v, tx, ty) {
+function moveAlong(g, v, tx, ty, speed = C.VILL_SPEED) {
   const key = `${tx.toFixed(2)},${ty.toFixed(2)}`;
   if (v.pathKey !== key) {
     v.path = findPath(g, v.x, v.y, tx, ty) || [[tx, ty]];
     v.pathKey = key;
   }
-  let budget = C.VILL_SPEED * C.TICK;
+  let budget = speed * C.TICK;
   while (budget > 1e-9 && v.path.length) {
     const [wx, wy] = v.path[0];
     const d = Math.hypot(wx - v.x, wy - v.y);
@@ -622,10 +858,23 @@ function assignGather(g, v, nodeId, resHint) {
   releaseNode(g, v);
   const explicit = nodeId != null;
   let node = explicit ? g.ents.get(nodeId) : null;
-  if (node && node.type === "herdable" && !node.dead && node.owner === 1) {
+  // A live herdable target is hunted first — owned (herded sheep) OR wild (a
+  // deer the player explicitly ordered villagers onto).
+  if (node && node.type === "herdable" && !node.dead && (node.owner === 1 || node.wild)) {
     goHerd(g, v, node); return;
   }
-  let res = node && isNode(node) ? C.NODE_RES[node.type] : (resHint || v.lastRes || "wood");
+  // Resource context: the node's, else a hint, else what this villager last
+  // gathered. A villager with NO context (a fresh hunter whose rally carcass is
+  // already gone) stays IDLE rather than defaulting to chopping the nearest tree
+  // — the capture's spare villagers waited for the next kill, they didn't farm.
+  let res = node && isNode(node) ? C.NODE_RES[node.type] : (resHint || v.lastRes || null);
+  if (!res) {
+    // No resource context: a hunter with idle hands joins the nearest CARCASS
+    // (the swarm). If none yet, it PARKS and keeps polling (res stays null so it
+    // never wanders off to chop a tree) — so it joins the next kill's carcass.
+    if (!nearestNode(g, v.x, v.y, "food", "herdable")) { parkSeeker(g, v); return; }
+    res = "food";
+  }
   v.lastRes = res;             // remember so a parked seeker retries the right resource
   const direct = node && isNode(node) && nodePool(node) > 0
                  && node.gatherers < nodeCap(node);
@@ -714,11 +963,31 @@ function stepVill(g, v) {
       if (v.seekTimer <= 0) assignGather(g, v, null);
       return;
     }
+    case "garrison": return;         // hidden inside the TC (boosts arrow fire)
+    case "move": {                   // retreat / reposition; then rejoin the economy
+      if (moveAlong(g, v, v.tx, v.ty)) assignGather(g, v, null);
+      return;
+    }
+    case "attack": {                 // melee a boar (it fights back); eat once slain
+      const b = g.ents.get(v.target);
+      if (!b || b.type !== "herdable" || !b.aggro) { assignGather(g, v, null); return; }
+      if (b.dead) { assignGather(g, v, b.id); return; }
+      if (dist(v.x, v.y, b.x, b.y) > C.MELEE_RANGE) { moveAlong(g, v, b.x, b.y); v.atkT = 0; return; }
+      if ((v.atkT -= C.TICK) <= 0) {
+        v.atkT = C.VIL_ATTACK_INT;
+        b.hp -= C.VILLAGER_ATTACK;
+        if (b.aggroTarget == null) b.aggroTarget = v.id;   // the boar aggros its attacker
+        if (b.hp <= 0) killBoar(g, b);
+      }
+      return;
+    }
     case "to_herd": {                // walk to a live herdable to slay it
       const h = g.ents.get(v.target);
       if (!h || h.type !== "herdable") { assignGather(g, v, null); return; }
       if (h.dead) { assignGather(g, v, h.id); return; }   // already slain → eat
-      if (moveAlong(g, v, h.x, h.y)) { v.task = "kill"; v.phase = C.KILL_TIME; }
+      // a wild deer stops fleeing the moment a hunter reaches kill range
+      if (h.wild && dist(h.x, h.y, v.x, v.y) <= 1.0) h.killing = true;
+      if (moveAlong(g, v, h.x, h.y)) { v.task = "kill"; v.phase = C.KILL_TIME; h.killing = h.wild ? true : h.killing; }
       return;
     }
     case "kill": {
@@ -770,7 +1039,7 @@ function stepVill(g, v) {
         v.task = v.carry >= C.CARRY_CAP - 1 ? "to_drop" : "to_node_next";
         return;
       }
-      const rate = C.NODE_RATE[node.type];
+      const rate = (node.wild || node.aggro) ? C.HUNT_GATHER_RATE : C.NODE_RATE[node.type];
       const take = Math.min(rate * C.TICK, C.CARRY_CAP - v.carry, nodePool(node));
       v.carry += take; v.carryRes = C.NODE_RES[node.type];
       drainNode(node, take);

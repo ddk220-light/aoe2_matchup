@@ -34,6 +34,15 @@ BUSH_FOOD = 125.0
 # Herdables (sheep/goose/turkey/...): mobile food, can be converted + herded.
 HERDABLE_MASTERS = {594, 1243, 705, 833, 1142}  # sheep, goose, turkey, cow...
 HERDABLE_FOOD = 100.0
+# Huntables: deer (wild, flees, scout-pushed) + boar (aggros, fights back).
+DEER_MASTERS = {1796}            # deer (this map)
+BOAR_MASTERS = {48}              # wild boar
+HUNTABLE_MASTERS = DEER_MASTERS | BOAR_MASTERS
+DEER_FOOD = 140.0                # [cap] pool 140.0 per deer
+DEER_HP = 40.0
+BOAR_FOOD = 340.0               # [cap] pool 340.0 per boar
+BOAR_HP = 75.0                  # [cap] Wild Boar HP
+HUNT_ZONE = 32.0                 # base/action radius from the TC (excludes far herds)
 
 
 def scenery_type(name, master):
@@ -122,6 +131,7 @@ def main():
 
     cmds = []
     build_sites = []
+    tc_ids = {e["id"] for e in raw if e["type"] == "town_center"}
     for a in match.actions:
         ty = str(a.type).replace("Action.", "")
         pl = a.payload or {}
@@ -150,6 +160,15 @@ def main():
             cmds.append({"t": ts, "type": "move",
                          "unit_ids": pl["object_ids"],
                          "x": round(apos.x, 2), "y": round(apos.y, 2)})
+        elif ty == "SPECIAL" and pl.get("target_id") in tc_ids:
+            # garrison units into the TC (boosts its arrow fire — deer2/boars)
+            cmds.append({"t": ts, "type": "garrison", "building_id": pl["target_id"],
+                         "n": len(pl.get("object_ids") or [])})
+        elif ty == "UNGARRISON":
+            cmds.append({"t": ts, "type": "ungarrison", "building_id": None})
+        elif ty == "RESEARCH":
+            cmds.append({"t": ts, "type": "research",
+                         "tech": pl.get("technology_id", pl.get("technology"))})
         elif ty == "DE_QUEUE" and pl.get("unit_id") == 83:
             cmds.append({"t": ts, "type": "queue",
                          "building_id": pl["object_ids"][0],
@@ -162,15 +181,24 @@ def main():
     keep_tc = next((e for e in tcs if e["id"] in cmd_bids), tcs[0] if tcs else None)
     entities = [e for e in raw if e["type"] != "town_center" or e is keep_tc]
     raw_herd_ids = {e["id"] for e in entities if e["type"] == "herdable"}
+    # garrison/ungarrison target the one commanded TC
+    for c in cmds:
+        if c["type"] in ("garrison", "ungarrison"):
+            c["building_id"] = keep_tc["id"]
 
+    tcx, tcy = keep_tc["x"], keep_tc["y"]
     # focus points for resource harvesting = build sites + gather points +
-    # every MOVE target (herding routes pass through the resource cluster).
+    # every MOVE target (herding/push routes pass through the resource cluster),
+    # but ONLY within the base action zone — the deer scout explores the whole
+    # map late-game; without this clamp every far forest/herd would be pulled in
+    # (huge sim bounds, wrong deer simmed). Localized scenarios are unaffected.
     focuses = list(build_sites)
     for c in cmds:
         if c.get("x") is not None and c["type"] in ("gather_point", "move"):
             focuses.append([c["x"], c["y"]])
+    focuses = [f for f in focuses if math.hypot(f[0] - tcx, f[1] - tcy) <= HUNT_ZONE]
     if not focuses:
-        focuses = [[keep_tc["x"], keep_tc["y"]]]
+        focuses = [[tcx, tcy]]
 
     def near_focus(x, y):
         return any(math.hypot(x - fx, y - fy) <= RES_RADIUS for fx, fy in focuses)
@@ -179,12 +207,29 @@ def main():
     # engine still performs the conversion visually via scout proximity.
     moved_ids = {i for c in cmds if c["type"] == "move" for i in c["unit_ids"]}
 
-    trees, bushes, herds = [], [], []
+    trees, bushes, herds, hunt = [], [], [], []
     for g in getattr(match, "gaia", None) or []:
         name = (getattr(g, "name", None) or "").lower()
         pos = getattr(g, "position", None)
         master = getattr(g, "object_id", None)
         if pos is None:
+            continue
+        if master in HUNTABLE_MASTERS or "deer" in name or "boar" in name:
+            # huntables in the base zone are simmed; far herds (the scout merely
+            # explores past them) stay render decor. Boars AGGRO + fight back;
+            # deer FLEE and are pushed. Both reuse the carcass once slain.
+            if math.hypot(pos.x - tcx, pos.y - tcy) <= HUNT_ZONE:
+                xy = {"x": round(pos.x, 2), "y": round(pos.y, 2)}
+                if master in BOAR_MASTERS or "boar" in name:
+                    hunt.append({"id": g.instance_id, "type": "herdable", "species": "boar",
+                                 "aggro": True, "owner": 0, **xy,
+                                 "food": BOAR_FOOD, "hp": BOAR_HP, "master": master,
+                                 "home": [xy["x"], xy["y"]]})
+                else:
+                    hunt.append({"id": g.instance_id, "type": "herdable", "species": "deer",
+                                 "wild": True, "owner": 0, **xy,
+                                 "food": DEER_FOOD, "hp": DEER_HP, "master": master,
+                                 "home": [xy["x"], xy["y"]]})
             continue
         if master in HERDABLE_MASTERS:
             # skip herdables already added from player objects (owned at start)
@@ -209,11 +254,30 @@ def main():
             bushes.append({"id": g.instance_id, "type": "bush", "owner": 0,
                            "x": round(pos.x, 2), "y": round(pos.y, 2),
                            "food": BUSH_FOOD, "master": master})
-    entities += trees + bushes + herds
+    # A HUNT scenario (deer/boar) doesn't FORAGE: the capture shows the villagers
+    # only ate carcasses, never a bush. Drop bushes as gatherables so idle
+    # villagers wait for the next kill instead of berry-farming. Trees STAY —
+    # they're obstacles the scout paths around, and that detour is what makes its
+    # path match the real scout (they still aren't gathered: wood != carcass food).
+    if hunt:
+        bushes = []
+    entities += trees + bushes + herds + hunt
+
+    # Trained-villager ids the LATER commands reference (ORDER/MOVE a villager
+    # that isn't a starting unit/scout/TC). DE assigns spawned units sequential
+    # instance_ids, so sorting gives spawn order — the engine assigns these to
+    # its trained villagers so those commands (boar bait/swarm) hit real units.
+    start_ids = {e["id"] for e in entities if e["type"] in ("villager", "scout")}
+    referenced = set()
+    for c in cmds:
+        for i in c.get("unit_ids", []) or []:
+            referenced.add(i)
+    trained_ids = sorted(i for i in referenced if i not in start_ids and i not in tc_ids)
 
     doc = {
         "scenario": SCEN,
         "map": {"dimension": match.map.dimension},
+        "trained_ids": trained_ids,
         "players": [{"id": 1, "name": p1.name, "civ": str(p1.civilization),
                      "start_wood": 200.0, "start_food": 200.0,
                      "start_source": "standard_dark_age"}],
@@ -228,13 +292,14 @@ def main():
 
     kinds = [c["type"] for c in cmds]
     assert sum(1 for e in entities if e["type"] == "villager") == 3
-    assert trees or bushes or herds, "no resource source near the action"
+    assert trees or bushes or herds or hunt, "no resource source near the action"
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(doc, indent=1))
     print(f"OK {OUT}")
     print(f"  entities={len(entities)} trees={len(trees)} bushes={len(bushes)} "
-          f"herds={len(herds)} cmds={kinds}")
+          f"herds={len(herds)} hunt={len(hunt)} cmds={kinds}")
+    print(f"  hunt: {[(d['id'], d['species'], d['x'], d['y']) for d in hunt]}")
     print(f"  build_sites={build_sites}")
     print(f"  builds: {[(c['t'], c['building'], c['x'], c['y']) for c in cmds if c['type']=='build']}")
     print(f"  herds: {[(h['id'], h['x'], h['y']) for h in herds]}")

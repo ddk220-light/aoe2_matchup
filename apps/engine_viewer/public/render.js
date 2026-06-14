@@ -342,6 +342,22 @@ export function createRenderer(canvas, scenario) {
   function drawHerdable(e, nowT) {
     const [sx, sy] = px(e.x, e.y);
     const s = cam.k * 0.5;
+    // Live wild deer: a tan animal body (vs the sheep/goose square). Reddens
+    // briefly while panic-fleeing so the "push" reads at a glance.
+    if (e.wild && !e.dead) {
+      const fleeing = e.flee === "flee";
+      animalBlob(sx, sy, s * 1.1, fleeing ? "#d98a5a" : "#c8a368", "#7a5a30");
+      ctx.fillStyle = "#46443e";
+      ctx.beginPath(); ctx.arc(sx, sy - s * 0.18, s * 0.14, 0, 2 * Math.PI); ctx.fill();
+      return;
+    }
+    if (e.aggro && !e.dead) {              // wild boar — reddens when enraged
+      animalBlob(sx, sy, s * 1.35, e.aggroTarget != null ? "#3a2016" : "#2c2216", "#140e08");
+      ctx.fillStyle = "#1a120a";
+      ctx.beginPath(); ctx.arc(sx, sy - s * 0.2, s * 0.16, 0, 2 * Math.PI); ctx.fill();
+      if (e.hp < (e.maxHp ?? e.hp)) hpBar(sx, sy - s * 0.95, cam.k, e.hp / e.maxHp, "#c0392b");
+      return;
+    }
     if (e.dead) {
       ctx.fillStyle = "rgba(0,0,0,.25)";
       ctx.beginPath(); ctx.ellipse(sx, sy + 2, s * 0.58, s * 0.4, 0, 0, 2 * Math.PI); ctx.fill();
@@ -417,6 +433,8 @@ export function createRenderer(canvas, scenario) {
       ctx.fillRect(bx - 1, by - 4, 6, 4);
       ctx.lineWidth = 1;
     }
+    // HP bar while wounded (the boar-bait / dying attacker reads at a glance)
+    if (e.hp != null && e.maxHp && e.hp < e.maxHp) hpBar(sx, sy - s * 0.72, cam.k * 0.8, e.hp / e.maxHp, "#5fd35f");
     // debug number (scout gets "S")
     ctx.fillStyle = "#fff";
     ctx.font = `bold ${Math.max(9, Math.round(s * 0.72))}px sans-serif`;
@@ -431,6 +449,11 @@ export function createRenderer(canvas, scenario) {
     ctx.beginPath(); ctx.arc(sx, sy, r, 0, 2 * Math.PI);
     if (fill) { ctx.fillStyle = fill; ctx.fill(); }
     if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+  }
+  function hpBar(sx, sy, w, frac, fill) {
+    const h = Math.max(2, w * 0.12);
+    ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.fillRect(sx - w / 2, sy, w, h);
+    ctx.fillStyle = fill; ctx.fillRect(sx - w / 2, sy, w * Math.max(0, frac), h);
   }
   function animalBlob(sx, sy, s, fill, stroke) {
     ctx.fillStyle = "rgba(0,0,0,.22)";
@@ -555,7 +578,7 @@ export function createRenderer(canvas, scenario) {
       else if (e.type === "bush") { if (seeStatic(e.x, e.y)) drawBush(e); }
       else if (e.type === "herdable") { if (seeUnit(e.x, e.y)) drawHerdable(e, g.t); }
       else if (BUILDINGS[e.type]) { if (seeStatic(e.x, e.y)) drawBuilding(e); }
-      else if (e.type === "villager" || e.type === "scout") { if (seeUnit(e.x, e.y)) drawUnit(e); }
+      else if (e.type === "villager" || e.type === "scout") { if (!e.garrisoned && seeUnit(e.x, e.y)) drawUnit(e); }
     }
 
     for (const e of g.ents.values())

@@ -325,10 +325,11 @@ function renderTooltip(unit, name) {
        bottom-sheet on touch (CSS hides it for the desktop hover bubble). */
     html += '<button type="button" class="unit-badge-tooltip-close" aria-label="Close">×</button>';
 
-    /* Header: big icon + name + tier. */
-    html += '<div class="tt-head">';
-    html += '<img class="tt-icon" src="' + iconUrl + '" alt="' + escapeHtml(name)
-        + '" onerror="this.style.display=\'none\'">';
+    /* Header: big icon + name + tier. The high-res unit sprite gets the large
+       treatment; the fallback game icon stays smaller so it isn't upscaled. */
+    html += '<div class="tt-head' + (useSprite ? ' tt-head--sprite' : '') + '">';
+    html += '<img class="tt-icon' + (useSprite ? ' tt-icon--sprite' : '') + '" src="' + iconUrl
+        + '" alt="' + escapeHtml(name) + '" onerror="this.style.display=\'none\'">';
     html += '<div class="tt-head-text"><div class="tt-name">' + escapeHtml(name) + '</div>';
     if (meta) {
         html += '<span class="tooltip-tier tier-' + unit.tier + '">' + meta.label + '</span>';

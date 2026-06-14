@@ -587,7 +587,7 @@
 }
 
 /* --- Tooltip content lines --- */
-/* Card header: big icon + unit name + tier pill. */
+/* Card header: icon + unit name + tier pill. */
 .tt-head {
     display: flex;
     align-items: center;
@@ -604,8 +604,30 @@
     object-fit: cover;
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
 }
+/* High-res unit render: show it off big. Stack it centred above the name so it
+   gets the full card width, and `contain` so the whole unit shows (the sprites
+   are tall, transparent portraits — `cover` would crop them). */
+.tt-head--sprite {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+}
+.tt-icon--sprite {
+    width: 100%;
+    height: 168px;
+    border: none;
+    border-radius: 10px;
+    object-fit: contain;
+    background: radial-gradient(ellipse at 50% 78%,
+        color-mix(in srgb, var(--gold) 12%, transparent), transparent 70%);
+    box-shadow: none;
+}
 .tt-head-text {
     min-width: 0;
+}
+.tt-head--sprite .tt-head-text {
+    width: 100%;
 }
 .tt-name {
     font-weight: 700;

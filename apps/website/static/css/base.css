@@ -215,14 +215,22 @@ html {
 @media (min-width: 1920px) { html { font-size: 18px; } }
 @media (min-width: 2560px) { html { font-size: 20px; } }
 
-/* Kill horizontal page overflow (the #1 mobile jank cause) and stop the
-   vertical rubber-band from chaining to parent scrollers. */
+/* Kill horizontal page overflow (the #1 mobile jank cause). This MUST live on
+   <html> only — NOT on <body>. Putting overflow-x:hidden on <body> makes the
+   browser compute body's overflow-y to `auto`, turning the body into a scroll
+   container that is exactly as tall as its content (so it can never scroll
+   itself). Combined with overscroll-behavior on the body, a mouse wheel over
+   the page content then gets swallowed instead of scrolling the viewport — the
+   scrollbar still drags, but the wheel does nothing. Keeping the clip + the
+   overscroll guard on the real viewport scroller (<html>) avoids that trap. */
 html,
 body {
-    overflow-x: hidden;
     max-width: 100%;
 }
-body {
+html {
+    overflow-x: hidden;
+    /* Prevent the vertical rubber-band / pull-to-refresh from chaining past the
+       viewport. Safe here because <html> is the element that actually scrolls. */
     overscroll-behavior-y: none;
 }
 

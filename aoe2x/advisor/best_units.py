@@ -467,13 +467,13 @@ _EFFECT_LABELS = {
     "pass_through_count": "Pass-through x{v:.0f}",
     "ignores_melee_armor": "Ignores melee armor",
     "ignores_pierce_armor": "Ignores pierce armor",
-    "bleed_dps": "Bleed {v:.0f} dps",
+    "bleed_dps": "Bleed {v:.1f} dps",
     "dodge_shield_max": "Dodge shield ({v:.0f} charges)",
     "block_first_melee": "Blocks first melee hit",
     "hp_regen": "+{v:.1f} HP/min regen",
     "charge_attack_melee": "Charge +{v:.0f} melee",
     "attack_bonus_per_kill": "+{v:.0f} attack per kill",
-    "bonus_damage_reduction": "{v:.0f}% bonus damage reduction",
+    "bonus_damage_reduction": "Takes {v:.0f}% less bonus damage",  # stored as fraction, x100 below
     "splash_radius": "Splash damage ({v:.1f} radius)",
     "extra_projectiles": "+{v:.0f} extra projectiles",
     "splash_on_hit_radius": "Splash on hit ({v:.1f} radius)",
@@ -538,8 +538,12 @@ def _get_unit_techs_and_bonuses(conn, civ_name, unit_slug, age="Imperial"):
     )
     effects_list = [(r["property_name"], r["property_value"]) for r in rc.fetchall()]
 
-    # Delegate to shared parser
-    standard_techs, bonus_abilities, special_effects = _parse_techs_and_bonuses(techs_list, effects_list)
+    # Delegate to shared parser (filter intrinsic effects for shared units)
+    standard_techs, bonus_abilities, special_effects = _parse_techs_and_bonuses(
+        techs_list, effects_list, slug=unit_slug,
+        is_unique=unit_slug.endswith(civ_name.lower()),
+        intrinsic_effects=_get_intrinsic_effects(conn),
+    )
 
     return standard_techs, bonus_abilities, special_effects
 
@@ -596,30 +600,153 @@ def _batch_fetch_civ_tech_data(conn, civ_name, age="Imperial"):
     return techs_by_slug, effects_by_slug
 
 
-def _parse_techs_and_bonuses(techs_list, effects_list):
+import re as _re
+
+# Civ-bonus labels in the dat are dev shorthand. Expand the common abbreviations
+# for display (word-boundary anchored; longer/compound forms come first so e.g.
+# "Battle Ele" wins over "Ele" and "Heavy Cav" over "Cav").
+_BONUS_ABBREV = [
+    (r"\bBattle Ele\b", "Battle Elephant"),
+    (r"\bHeavy Cav\b", "Heavy Cavalry"),
+    (r"\bLcav\b", "Light Cavalry"),
+    (r"\bChampi\b", "Champion"),
+    (r"\bSkirms?\b", "Skirmishers"),
+    (r"\bArch\b", "Archers"),
+    (r"\bCA\b", "Cavalry Archers"),
+    (r"\bEA\b", "Elephant Archers"),
+    (r"\bBL\b", "Bloodlines"),
+    (r"\bEle\b", "Elephant"),
+    (r"\bInf\b", "Infantry"),
+    (r"\binf\b", "infantry"),
+    (r"\bCav\b", "Cavalry"),
+    (r"\bcav\b", "cavalry"),
+    (r"\bv Building\b", "vs Buildings"),
+    (r"\bTreb\b", "Trebuchet"),
+    (r"\bfas\b", "firing speed"),
+    (r"\bSpd\b", "Speed"),
+]
+
+# Trailing per-age / per-tier tokens that mark progressive bonuses (the same
+# bonus repeated for Castle/Imperial etc.). Stripped so the variants collapse to
+# one — the stats grid already shows the cumulative value. Covers a couple of
+# data typos ("Imperia;", trailing "che" for "cheaper").
+_AGE_TIER_TOKEN = _re.compile(r"^(age[234]|castle|feudal|imperial|imperia[.;:,]?|imp|[1-4])$", _re.I)
+
+
+def _clean_bonus_label(name, tech_type):
+    """Turn a raw tech/civ-bonus name into a clean display label, or None to drop.
+
+    - unique_tech: keep the real name; drop unnamed "<Civ> UT" placeholders.
+    - civ_bonus: strip the "C-Bonus" prefix, drop unnamed "Tech N", collapse the
+      per-age progressive variants, and expand dev abbreviations.
+    """
+    s = (name or "").strip()
+    if tech_type == "unique_tech":
+        return None if _re.search(r"\bUT\d?\b", s) else (s or None)
+    # civ_bonus
+    s = _re.sub(r"^C-Bonus\s*,?\s*", "", s).strip()
+    if not s or _re.match(r"^\(?Tech \d+\)?$", s):
+        return None
+    # drop trailing age/tier tokens (progressive variants collapse via dedup)
+    toks = s.split()
+    while toks and _AGE_TIER_TOKEN.match(toks[-1]):
+        toks.pop()
+    s = " ".join(toks)
+    if s.endswith(" che"):
+        s = s[:-4] + " cheaper"
+    for pat, rep in _BONUS_ABBREV:
+        s = _re.sub(pat, rep, s)
+    s = _re.sub(r"\s+", " ", s).strip()
+    return s or None
+
+
+def _bonus_dedup_key(label):
+    """Order-insensitive key so "+1 Archer range" and "archer range +1" collapse,
+    while different magnitudes ("+1 armor" vs "+2 armor") stay distinct."""
+    return tuple(sorted(_re.findall(r"[a-z0-9]+", label.lower())))
+
+
+def _dedup_keep_order(items, key=lambda x: x):
+    seen, out = set(), []
+    for it in items:
+        k = key(it)
+        if k in seen:
+            continue
+        seen.add(k)
+        out.append(it)
+    return out
+
+
+_INTRINSIC_EFFECTS_CACHE = None
+
+
+def _get_intrinsic_effects(conn):
+    """Set of (unit_slug, property_name) special effects that are intrinsic to the
+    unit — present on (nearly) every civ's version, so NOT a civ bonus (e.g. a
+    Scorpion's pass-through, a Bombard Cannon's splash, a Battle Elephant's
+    trample). These are the unit's own attack, not a civ advantage, so the card
+    drops them for shared units. Memoised for the generation run.
+    """
+    global _INTRINSIC_EFFECTS_CACHE
+    if _INTRINSIC_EFFECTS_CACHE is not None:
+        return _INTRINSIC_EFFECTS_CACHE
+    rc = conn.cursor()
+    unit_civs = {}
+    for r in rc.execute("SELECT unit_slug, civ_name FROM ref_units WHERE age='Imperial'"):
+        unit_civs.setdefault(r["unit_slug"], set()).add(r["civ_name"])
+    eff_civs = {}
+    for r in rc.execute(
+        """SELECT ru.unit_slug, rse.property_name, ru.civ_name
+           FROM ref_special_effects rse JOIN ref_units ru ON ru.id = rse.ref_unit_id
+           WHERE ru.age='Imperial' AND CAST(rse.property_value AS REAL) != 0"""
+    ):
+        eff_civs.setdefault((r["unit_slug"], r["property_name"]), set()).add(r["civ_name"])
+    intrinsic = set()
+    for (slug, pname), civs in eff_civs.items():
+        total = len(unit_civs.get(slug, ())) or 1
+        if len(civs) / total >= 0.6:
+            intrinsic.add((slug, pname))
+    _INTRINSIC_EFFECTS_CACHE = intrinsic
+    return intrinsic
+
+
+def _parse_techs_and_bonuses(techs_list, effects_list, slug="", is_unique=False,
+                             intrinsic_effects=None):
     """Parse raw tech/effect lists into (standard_techs, bonus_abilities, special_effects).
 
+    bonus_abilities: civ-specific advantages — unique techs + civ bonuses, labels
+        cleaned (see _clean_bonus_label) and per-age duplicates collapsed.
+    special_effects: special combat mechanics. For shared units, effects that are
+        intrinsic to the unit (on ~every civ — e.g. Scorpion pass-through) are
+        dropped; unique units keep all of theirs (the abilities define the unit).
+
     Args:
-        techs_list: list of (tech_name, tech_type) tuples from ref_techs_applied
-        effects_list: list of (property_name, property_value) tuples from ref_special_effects
+        techs_list: list of (tech_name, tech_type) from ref_techs_applied
+        effects_list: list of (property_name, property_value) from ref_special_effects
+        slug, is_unique, intrinsic_effects: used to drop intrinsic effects for
+            shared units (see _get_intrinsic_effects). When intrinsic_effects is
+            None, no filtering is applied.
     """
-    # Classify techs by tech_type from the database
+    # Classify techs by tech_type; clean + dedupe the civ-bonus / unique-tech labels.
     bonus_abilities = []
     standard_tech_names = set()
     for tech_name, tech_type in (techs_list or []):
-        if tech_type == "unique_tech":
-            bonus_abilities.append(tech_name)
-        elif tech_type == "civ_bonus":
-            # Strip "C-Bonus, " prefix if present for cleaner display
-            display = tech_name[len("C-Bonus, "):] if tech_name.startswith("C-Bonus, ") else tech_name
-            bonus_abilities.append(display)
+        if tech_type in ("unique_tech", "civ_bonus"):
+            label = _clean_bonus_label(tech_name, tech_type)
+            if label:
+                bonus_abilities.append(label)
         else:
             # standard, work_rate, etc. — these are standard techs
             standard_tech_names.add(tech_name)
+    bonus_abilities = _dedup_keep_order(bonus_abilities, key=_bonus_dedup_key)
 
     # Special effects
     special_effects = []
     for pname, pval in (effects_list or []):
+        # Drop effects intrinsic to the unit (not a civ bonus) for shared units.
+        if (intrinsic_effects is not None and not is_unique
+                and (slug, pname) in intrinsic_effects):
+            continue
         label = _EFFECT_LABELS.get(pname)
         if not label:
             continue
@@ -632,14 +759,15 @@ def _parse_techs_and_bonuses(techs_list, effects_list):
         # pass_through_count of 1 is default (single target), skip it
         if pname == "pass_through_count" and v <= 1:
             continue
-        # trample_percent is stored as fraction (0.25 = 25%)
-        if pname == "trample_percent":
+        # percent-style effects are stored as fractions (0.25 = 25%)
+        if pname in ("trample_percent", "bonus_damage_reduction"):
             v = v * 100
         if pname in ("ignores_melee_armor", "ignores_pierce_armor",
                       "block_first_melee", "pass_through_percent"):
             special_effects.append(label.split("{")[0].strip())
         else:
             special_effects.append(label.format(v=v))
+    special_effects = _dedup_keep_order(special_effects)
 
     # Standard techs sorted for missing_techs comparison
     standard_techs = sorted(standard_tech_names)
@@ -661,7 +789,9 @@ def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slu
     slug = row["unit_slug"]
     unit_name, stats = _fetch_unit_stats(conn, civ_name, slug, db_age)
     standard_techs, bonus_abilities, special_effects = _parse_techs_and_bonuses(
-        techs_by_slug.get(slug, []), effects_by_slug.get(slug, [])
+        techs_by_slug.get(slug, []), effects_by_slug.get(slug, []),
+        slug=slug, is_unique=slug.endswith(civ_name.lower()),
+        intrinsic_effects=_get_intrinsic_effects(conn),
     )
     # Only apply tech exclusions for actual rams, not siege elephants sharing the slug
     excl_slug = slug if not (unit_name and "Elephant" in unit_name) else ""
@@ -959,7 +1089,9 @@ def _build_naval_unit_entry(row, civ_name, conn, db_age, techs_by_slug=None, eff
         techs_list = techs_by_slug.get(slug, [])
         effects_list = effects_by_slug.get(slug, [])
         standard_techs, bonus_abilities, special_effects = _parse_techs_and_bonuses(
-            techs_list, effects_list
+            techs_list, effects_list, slug=slug,
+            is_unique=slug.endswith(civ_name.lower()),
+            intrinsic_effects=_get_intrinsic_effects(conn),
         )
     else:
         standard_techs, bonus_abilities, special_effects = _get_unit_techs_and_bonuses(

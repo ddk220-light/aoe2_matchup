@@ -1,0 +1,269 @@
+{
+ "scenario": "4_lumber",
+ "map": {
+  "dimension": 120
+ },
+ "players": [
+  {
+   "id": 1,
+   "name": "ddk220",
+   "civ": "Vikings",
+   "start_wood": 150.0,
+   "start_wood_source": "ui_observed"
+  }
+ ],
+ "duration": 114.995,
+ "entities": [
+  {
+   "id": 3641,
+   "type": "town_center",
+   "owner": 1,
+   "x": 19.0,
+   "y": 69.0
+  },
+  {
+   "id": 3652,
+   "type": "villager",
+   "owner": 1,
+   "x": 18.0,
+   "y": 64.0
+  },
+  {
+   "id": 3654,
+   "type": "villager",
+   "owner": 1,
+   "x": 20.0,
+   "y": 64.0
+  },
+  {
+   "id": 3656,
+   "type": "villager",
+   "owner": 1,
+   "x": 19.0,
+   "y": 74.0
+  },
+  {
+   "id": 3658,
+   "type": "scout",
+   "owner": 1,
+   "x": 14.0,
+   "y": 69.0
+  },
+  {
+   "id": 3662,
+   "type": "tree",
+   "owner": 0,
+   "x": 16.5,
+   "y": 74.5,
+   "wood": 100.0,
+   "hp": 20.0
+  }
+ ],
+ "props": [
+  {
+   "x": 3.5,
+   "y": 60.5,
+   "kind": "tree"
+  },
+  {
+   "x": 4.5,
+   "y": 62.5,
+   "kind": "tree"
+  },
+  {
+   "x": 5.5,
+   "y": 62.5,
+   "kind": "tree"
+  },
+  {
+   "x": 6.5,
+   "y": 62.5,
+   "kind": "tree"
+  },
+  {
+   "x": 2.5,
+   "y": 64.5,
+   "kind": "tree"
+  },
+  {
+   "x": 3.5,
+   "y": 64.5,
+   "kind": "tree"
+  },
+  {
+   "x": 4.5,
+   "y": 64.5,
+   "kind": "tree"
+  },
+  {
+   "x": 1.5,
+   "y": 65.5,
+   "kind": "tree"
+  },
+  {
+   "x": 2.5,
+   "y": 65.5,
+   "kind": "tree"
+  },
+  {
+   "x": 3.5,
+   "y": 65.5,
+   "kind": "tree"
+  },
+  {
+   "x": 4.5,
+   "y": 65.5,
+   "kind": "tree"
+  },
+  {
+   "x": 1.5,
+   "y": 66.5,
+   "kind": "tree"
+  },
+  {
+   "x": 2.5,
+   "y": 66.5,
+   "kind": "tree"
+  },
+  {
+   "x": 3.5,
+   "y": 66.5,
+   "kind": "tree"
+  },
+  {
+   "x": 17.5,
+   "y": 82.5,
+   "kind": "tree"
+  },
+  {
+   "x": 18.5,
+   "y": 82.5,
+   "kind": "tree"
+  },
+  {
+   "x": 21.5,
+   "y": 83.5,
+   "kind": "tree"
+  },
+  {
+   "x": 18.5,
+   "y": 84.5,
+   "kind": "tree"
+  },
+  {
+   "x": 21.5,
+   "y": 84.5,
+   "kind": "tree"
+  },
+  {
+   "x": 22.5,
+   "y": 84.5,
+   "kind": "tree"
+  },
+  {
+   "x": 23.5,
+   "y": 84.5,
+   "kind": "tree"
+  },
+  {
+   "x": 24.5,
+   "y": 84.5,
+   "kind": "tree"
+  },
+  {
+   "x": 25.5,
+   "y": 84.5,
+   "kind": "tree"
+  },
+  {
+   "x": 26.5,
+   "y": 84.5,
+   "kind": "tree"
+  },
+  {
+   "x": 18.5,
+   "y": 85.5,
+   "kind": "tree"
+  },
+  {
+   "x": 19.5,
+   "y": 85.5,
+   "kind": "tree"
+  },
+  {
+   "x": 20.5,
+   "y": 85.5,
+   "kind": "tree"
+  },
+  {
+   "x": 21.5,
+   "y": 85.5,
+   "kind": "tree"
+  },
+  {
+   "x": 22.5,
+   "y": 85.5,
+   "kind": "tree"
+  },
+  {
+   "x": 23.5,
+   "y": 85.5,
+   "kind": "tree"
+  },
+  {
+   "x": 24.5,
+   "y": 85.5,
+   "kind": "tree"
+  },
+  {
+   "x": 24.5,
+   "y": 69.5,
+   "kind": "tree"
+  },
+  {
+   "x": 21.5,
+   "y": 74.5,
+   "kind": "tree"
+  },
+  {
+   "x": 14.5,
+   "y": 67.5,
+   "kind": "tree"
+  },
+  {
+   "x": 24.5,
+   "y": 66.5,
+   "kind": "tree"
+  }
+ ],
+ "commands": [
+  {
+   "t": 6.975,
+   "type": "order",
+   "unit_ids": [
+    3652,
+    3654,
+    3656
+   ],
+   "target_id": 3662
+  },
+  {
+   "t": 8.636,
+   "type": "gather_point",
+   "building_id": 3641,
+   "target_id": 3662
+  },
+  {
+   "t": 10.269,
+   "type": "queue",
+   "building_id": 3641,
+   "unit": "villager",
+   "train_time": 25.0
+  },
+  {
+   "t": 114.995,
+   "type": "resign",
+   "player": 1
+  }
+ ]
+}

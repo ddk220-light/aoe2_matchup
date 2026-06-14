@@ -518,7 +518,10 @@
    as the active selection. Raised so its tooltip overlaps neighbouring cards. */
 .unit-badge.tooltip-pinned {
     position: relative;
-    z-index: 5;
+    /* In the tooltip layer (page content is <=1000) so the pinned card's
+       fixed bottom-sheet renders above the floating widgets; its own sheet
+       (z 1100) stacks within, still below any modal (1200). */
+    z-index: 1090;
     opacity: 1;
     background: var(--surface-elevated);
     border-color: var(--gold);
@@ -527,6 +530,20 @@
 /* Keep it steady when pinned — don't apply the hover nudge to the active card. */
 .unit-badge.tooltip-pinned:hover {
     background: var(--surface-elevated);
+    transform: none;
+}
+
+/* True bottom-sheet on phones: the entrance animations (.unit-wrap cardSlideIn,
+   the global .container-wide > * pageFadeUp) use animation-fill-mode: both, which
+   permanently holds their end transform: translateY(0). A non-none transform makes
+   the wrapper the containing block for position:fixed, so the pinned sheet would
+   anchor to the wrapper instead of the viewport. While a sheet is pinned we drop
+   those finished animations on the sheet's ancestors (animation wins over a plain
+   `transform: none`, so we clear the animation itself) — no visual change since
+   they ended at translateY(0), but position:fixed now resolves to the viewport. */
+.results-container.tooltip-focus,
+.results-container.tooltip-focus .unit-wrap {
+    animation: none;
     transform: none;
 }
 

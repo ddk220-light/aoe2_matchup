@@ -65,7 +65,6 @@
 }
 .civ-card:hover .civ-emblem {
     transform: scale(1.04);
-    border-color: var(--gold);
 }
 .civ-card:hover .civ-card-name {
     color: var(--gold-light);
@@ -82,12 +81,11 @@
 .civ-emblem {
     width: 2.75rem;
     height: 2.75rem;
-    border-radius: 50%;
-    border: 1px solid var(--border-light);
-    object-fit: cover;
-    background: var(--bg-deep);
+    /* Show the civ emblem as-is — no circular crop/ring. `contain` keeps the
+       whole heraldic crest visible. */
+    object-fit: contain;
     margin-bottom: 6px;
-    transition: transform 0.28s ease, border-color 0.28s ease;
+    transition: transform 0.28s ease;
 }
 .civ-card-name {
     font-size: var(--fs-xs);

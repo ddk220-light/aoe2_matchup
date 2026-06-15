@@ -714,6 +714,42 @@ a:hover {
     letter-spacing: 0.02em;
 }
 
+/* --- Hamburger (phones only; toggles the labelled nav drop-down) --- */
+.nav-hamburger {
+    display: none;            /* shown at <=768px */
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+.nav-hamburger:hover { background: var(--gold-tint); color: var(--text); }
+/* Three bars built from one element (+ ::before/::after); morphs to an × open. */
+.nav-hamburger-bars,
+.nav-hamburger-bars::before,
+.nav-hamburger-bars::after {
+    content: "";
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: currentColor;
+    border-radius: 2px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.nav-hamburger-bars { position: relative; }
+.nav-hamburger-bars::before { position: absolute; top: -6px; left: 0; }
+.nav-hamburger-bars::after  { position: absolute; top: 6px; left: 0; }
+.site-nav.nav-open .nav-hamburger { color: var(--gold); border-color: var(--gold); }
+.site-nav.nav-open .nav-hamburger-bars { background: transparent; }
+.site-nav.nav-open .nav-hamburger-bars::before { transform: translateY(6px) rotate(45deg); }
+.site-nav.nav-open .nav-hamburger-bars::after  { transform: translateY(-6px) rotate(-45deg); }
+
 /* ---------- Responsive navigation ----------
    NOTE: 900px is the ONE documented off-scale breakpoint in the whole site.
    It exists only to relieve the single-row nav squeeze before the tab strip
@@ -749,61 +785,98 @@ a:hover {
     }
 }
 
-/* sm and below: the tab row becomes a horizontal scroll-snap strip so all six
-   tabs stay one tap away (no hamburger / no new markup), each a 44px target. */
+/* sm and below: the tabs collapse to a compact icon-only row (no more horizontal
+   scroll strip); the hamburger expands them into a labelled drop-down. */
 @media (max-width: 768px) {
     .site-nav {
-        gap: 8px;
+        gap: 6px;
         /* keep tabs clear of the notch; --gutter is the floor */
         padding-left: max(var(--gutter), env(safe-area-inset-left));
         padding-right: max(var(--gutter), env(safe-area-inset-right));
     }
 
+    /* Compact to the logo mark so the icon row + controls fit one line. */
     .nav-brand {
         flex-shrink: 0;
+        font-size: 0;            /* hide the wordmark text, keep the icon */
+        gap: 0;
+        padding: 8px 0;
+    }
+    .nav-brand-icon {
+        display: inline-block;
+        width: 22px;
+        height: 22px;
+        opacity: 0.85;
     }
 
     .nav-links {
+        margin-left: auto;       /* push the icon row + controls to the right */
+        display: flex;
         flex-wrap: nowrap;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior-x: contain;
-        scroll-snap-type: x proximity;
-        max-width: 100%;
-        min-width: 0;
-        /* hide the scrollbar — the strip reads as a clean tab row */
-        scrollbar-width: none;
+        gap: 2px;
+        overflow: visible;       /* no scroll strip */
     }
-    .nav-links::-webkit-scrollbar {
-        display: none;
-    }
+    /* When the row detaches into the drop-down, keep the controls right-aligned. */
+    .site-nav.nav-open .theme-toggle { margin-left: auto; }
 
+    /* Icon-only tab button */
     .nav-tab {
         flex: 0 0 auto;
-        scroll-snap-align: start;
         flex-direction: row;
-        gap: 6px;
-        min-height: 44px;
+        gap: 0;
+        min-width: 0;
+        min-height: 40px;
         justify-content: center;
-        padding: 10px 14px;
+        padding: 8px 9px;
         border-radius: 8px;
+        border-bottom: 1px solid transparent;
     }
-
     .nav-tab-icon {
-        font-size: 1rem;
+        font-size: 1.2rem;
         margin-bottom: 0;
     }
+    .nav-tab-label,
+    .nav-tab-desc {
+        display: none;           /* labels live in the drop-down */
+    }
+    .nav-tab.active::after { display: none; }
 
-    .nav-tab-label {
-        font-size: 0.8rem;
-    }
+    .nav-hamburger { display: inline-flex; }
 
-    .theme-toggle {
-        flex-shrink: 0;
+    .theme-toggle { flex-shrink: 0; }
+    .theme-toggle-btn { min-height: 40px; }
+
+    /* --- Expanded: labelled drop-down (icon + name + description) --- */
+    .site-nav.nav-open .nav-links {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        gap: 2px;
+        margin: 0;
+        padding: 8px;
+        background: var(--bg-warm);
+        border-bottom: 2px solid var(--border);
+        box-shadow: var(--shadow-card);
     }
-    .theme-toggle-btn {
-        min-height: 44px;
+    .site-nav.nav-open .nav-tab {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 12px;
+        text-align: left;
+        min-height: 48px;
+        padding: 10px 14px;
     }
+    .site-nav.nav-open .nav-tab-icon {
+        font-size: 1.25rem;
+        flex: 0 0 1.4rem;
+        text-align: center;
+    }
+    .site-nav.nav-open .nav-tab-label { display: block; }
+    .site-nav.nav-open .nav-tab-desc { display: block; margin-top: 0; }
 }
 
 /* ============================================================

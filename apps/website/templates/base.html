@@ -68,7 +68,7 @@
             </svg>
             AoE2 Matchup
         </a>
-        <div class="nav-links">
+        <div class="nav-links" id="navLinks">
             <a href="/" class="nav-tab {% if active_nav == 'simulate' %}active{% endif %}">
                 <span class="nav-tab-icon">&#9876;</span>
                 <span class="nav-tab-label">Battle Sim</span>
@@ -108,6 +108,10 @@
                 <span class="theme-toggle-label" id="themeLabel">Dark</span>
             </button>
         </div>
+        <button class="nav-hamburger" id="navHamburger" type="button"
+                aria-label="Show navigation labels" aria-expanded="false" aria-controls="navLinks">
+            <span class="nav-hamburger-bars" aria-hidden="true"></span>
+        </button>
     </nav>
     <script>
         /* Measure the real sticky-nav height into --nav-h (sticky table headers,
@@ -129,6 +133,31 @@
                 /* horizontal-only so we never yank the page vertically */
                 strip.scrollLeft = Math.max(0,
                     active.offsetLeft - (strip.clientWidth - active.offsetWidth) / 2);
+            }
+
+            /* Mobile: the tabs collapse to an icon row; the hamburger expands them
+               into a labelled drop-down. Toggle a class on the nav + aria state. */
+            var burger = document.getElementById('navHamburger');
+            if (burger) {
+                function setOpen(open) {
+                    nav.classList.toggle('nav-open', open);
+                    burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    setNavH();
+                }
+                burger.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    setOpen(!nav.classList.contains('nav-open'));
+                });
+                /* Tapping a destination or anywhere outside closes the menu. */
+                strip && strip.addEventListener('click', function (e) {
+                    if (e.target.closest('.nav-tab')) setOpen(false);
+                });
+                document.addEventListener('click', function (e) {
+                    if (nav.classList.contains('nav-open') && !e.target.closest('.site-nav')) setOpen(false);
+                });
+                document.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape' && nav.classList.contains('nav-open')) setOpen(false);
+                });
             }
         })();
     </script>

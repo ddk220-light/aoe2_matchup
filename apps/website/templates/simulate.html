@@ -10,10 +10,17 @@
 {% block content %}
 <div class="page-header">
     <h1>Battle Simulation</h1>
-    <p class="subtitle">Watch two armies clash in real-time</p>
+    <p class="subtitle">Pick a unit for each side, then watch who wins</p>
 </div>
 
 <div class="container-wide">
+    <!-- How it works (first-visit guide; hides once a battle starts) -->
+    <ol class="sim-howto" id="simHowto">
+        <li><span class="howto-num">1</span><span>Pick a <strong>civilization</strong>, then a <strong>unit</strong> — for <strong>both</strong> teams below.</span></li>
+        <li><span class="howto-num">2</span><span>Tap <strong>Start Battle</strong> — 30 vs 30 by default (use <em>Change options</em> to adjust).</span></li>
+        <li><span class="howto-num">3</span><span>Watch the two armies clash and see who wins.</span></li>
+    </ol>
+
     <!-- Team Selection -->
     <div class="config-panel">
         <div class="team-config team1">
@@ -26,101 +33,114 @@
         </div>
     </div>
 
-    <!-- Army Size Config -->
-    <div class="army-config">
-        <div
-            class="formula-note"
-            style="
-                text-align: center;
-                margin-bottom: 8px;
-                font-size: 0.75rem;
-            "
-        >
-            Resource cost per unit =
-            <strong style="color: var(--gold)">Wood + Food + Gold</strong>
-        </div>
-        <div class="mode-toggle">
-            <label class="mode-option">
-                <input
-                    type="radio"
-                    name="armyMode"
-                    value="count"
-                    checked
-                />
-                <span>30 vs 30</span>
-            </label>
-            <label class="mode-option">
-                <input type="radio" name="armyMode" value="resources" />
-                <span>3,000 Resources</span>
-            </label>
-            <label class="mode-option">
-                <input
-                    type="radio"
-                    name="armyMode"
-                    value="resources_upgrades"
-                />
-                <span>5,000 incl. Upgrades</span>
-            </label>
-        </div>
-        <div class="count-inputs" id="countInputs">
-            <div>
-                <label>Team 1:</label>
-                <input
-                    type="number"
-                    id="team1Count"
-                    value="30"
-                    min="1"
-                    max="200"
-                />
-            </div>
-            <div>
-                <label>Team 2:</label>
-                <input
-                    type="number"
-                    id="team2Count"
-                    value="30"
-                    min="1"
-                    max="200"
-                />
-            </div>
-        </div>
-        <div
-            class="resource-input"
-            id="resourceInput"
-            style="display: none"
-        >
-            <label>Resources per team:</label>
-            <input
-                type="number"
-                id="totalResources"
-                value="3000"
-                min="100"
-                max="20000"
-                step="100"
-            />
-        </div>
+    <!-- Primary action: Start (above the options) -->
+    <div class="start-row">
+        <button id="startBtn" disabled>Start Battle</button>
+        <p class="start-hint" id="startHint">Pick a civ &amp; unit for both teams to start</p>
     </div>
 
-    <!-- Controls -->
-    <div class="controls">
-        <button id="startBtn">Start Battle</button>
-        <button id="pauseBtn" disabled>Pause</button>
-        <button id="resetBtn" disabled>Reset</button>
-        <div class="speed-control">
-            <label>Speed:</label>
-            <input
-                type="range"
-                id="speedSlider"
-                min="0.5"
-                max="3"
-                step="0.5"
-                value="1"
-            />
-            <span id="speedLabel">1x</span>
+    <!-- Army Size Config (collapsed by default) -->
+    <details class="sim-options" id="simOptions">
+        <summary>
+            <span class="sim-options-toggle">Change options</span>
+            <span class="sim-options-current" id="optionsCurrent">30 vs 30</span>
+        </summary>
+        <div class="army-config">
+            <div
+                class="formula-note"
+                style="
+                    text-align: center;
+                    margin-bottom: 8px;
+                    font-size: 0.75rem;
+                "
+            >
+                Resource cost per unit =
+                <strong style="color: var(--gold)">Wood + Food + Gold</strong>
+            </div>
+            <div class="mode-toggle">
+                <label class="mode-option">
+                    <input
+                        type="radio"
+                        name="armyMode"
+                        value="count"
+                        checked
+                    />
+                    <span>30 vs 30</span>
+                </label>
+                <label class="mode-option">
+                    <input type="radio" name="armyMode" value="resources" />
+                    <span>3,000 Resources</span>
+                </label>
+                <label class="mode-option">
+                    <input
+                        type="radio"
+                        name="armyMode"
+                        value="resources_upgrades"
+                    />
+                    <span>5,000 incl. Upgrades</span>
+                </label>
+            </div>
+            <div class="count-inputs" id="countInputs">
+                <div>
+                    <label>Team 1:</label>
+                    <input
+                        type="number"
+                        id="team1Count"
+                        value="30"
+                        min="1"
+                        max="200"
+                    />
+                </div>
+                <div>
+                    <label>Team 2:</label>
+                    <input
+                        type="number"
+                        id="team2Count"
+                        value="30"
+                        min="1"
+                        max="200"
+                    />
+                </div>
+            </div>
+            <div
+                class="resource-input"
+                id="resourceInput"
+                style="display: none"
+            >
+                <label>Resources per team:</label>
+                <input
+                    type="number"
+                    id="totalResources"
+                    value="3000"
+                    min="100"
+                    max="20000"
+                    step="100"
+                />
+            </div>
         </div>
-    </div>
+    </details>
 
-    <div class="main-layout">
+    <!-- Simulation (scroll target after Start) -->
+    <div class="sim-section" id="simSection">
+        <!-- Playback controls -->
+        <div class="controls sim-controls">
+            <button id="pauseBtn" disabled>Pause</button>
+            <button id="resetBtn" disabled>Reset</button>
+            <div class="speed-control">
+                <label>Speed:</label>
+                <input
+                    type="range"
+                    id="speedSlider"
+                    min="0.5"
+                    max="3"
+                    step="0.5"
+                    value="1"
+                />
+                <span id="speedLabel">1x</span>
+            </div>
+        </div>
+
+        <div class="main-layout">
         <div class="stats-panel">
             <div class="battle-progress" id="battleProgress">
                 <div class="battle-timer" id="battleTimer">0.0s</div>
@@ -212,6 +232,7 @@
                     </p>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 </div>

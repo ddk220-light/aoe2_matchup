@@ -96,6 +96,38 @@ const unitIsSprite = { 1: false, 2: false };
 // [data-action] + sibling data attributes rather than using inline
 // onclick= handlers, so user-controllable strings (unit name, civ name)
 // never land inside an attribute that becomes executable JavaScript.
+// Start is enabled only once both teams have a civ + unit; otherwise the hint
+// tells first-time visitors exactly what's missing.
+function updateStartReady() {
+    const ready = !!(
+        teamState[1].civ && teamState[1].unitSlug &&
+        teamState[2].civ && teamState[2].unitSlug
+    );
+    const btn = document.getElementById("startBtn");
+    const hint = document.getElementById("startHint");
+    if (btn) btn.disabled = !ready;
+    if (hint) hint.style.display = ready ? "none" : "";
+    return ready;
+}
+
+// Keep the "Change options" summary showing the current army setup.
+function updateOptionsCurrent() {
+    const el = document.getElementById("optionsCurrent");
+    if (!el) return;
+    const checked = document.querySelector('input[name="armyMode"]:checked');
+    const mode = checked ? checked.value : "count";
+    const res = (document.getElementById("totalResources") || {}).value;
+    if (mode === "resources") {
+        el.textContent = `${res || "3000"} Resources`;
+    } else if (mode === "resources_upgrades") {
+        el.textContent = `${res || "5000"} incl. Upgrades`;
+    } else {
+        const c1 = (document.getElementById("team1Count") || {}).value || "30";
+        const c2 = (document.getElementById("team2Count") || {}).value || "30";
+        el.textContent = `${c1} vs ${c2}`;
+    }
+}
+
 function renderSelection(teamNum) {
     const container = document.getElementById(
         `team${teamNum}Selection`,
@@ -114,6 +146,7 @@ function renderSelection(teamNum) {
         }
         html += "</div>";
         container.innerHTML = html;
+        updateStartReady();
         return;
     }
 
@@ -191,6 +224,7 @@ function renderSelection(teamNum) {
     }
 
     container.innerHTML = html;
+    updateStartReady();
 }
 
 function initSelectionDelegation() {
@@ -2509,7 +2543,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             document.getElementById("pauseBtn").textContent =
                 "Pause";
             document.getElementById("resetBtn").disabled = true;
-            document.getElementById("startBtn").disabled = false;
+            updateStartReady();
         });
     document
         .getElementById("speedSlider")
@@ -2553,8 +2587,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                         "totalResources",
                     ).value = "5000";
                 }
+                updateOptionsCurrent();
             });
         });
+
+    // Keep the collapsed-options summary in sync as numbers change.
+    ["team1Count", "team2Count", "totalResources"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("input", updateOptionsCurrent);
+    });
+    updateOptionsCurrent();
 
     simulation.render();
 
@@ -2781,6 +2823,16 @@ async function startBattle() {
         document.getElementById("pauseBtn").disabled = false;
         document.getElementById("resetBtn").disabled = false;
         simulation.start();
+
+        // The first-visit guide has done its job once a battle is running.
+        const howto = document.getElementById("simHowto");
+        if (howto) howto.style.display = "none";
+        // Bring the battlefield itself into view — on a phone it's below the
+        // fold, so centre the canvas so players see the fight straight away.
+        const canvasEl = document.getElementById("battleCanvas");
+        if (canvasEl && typeof canvasEl.scrollIntoView === "function") {
+            canvasEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
     } catch (error) {
         alert(`Error: ${error.message}`);
         document.getElementById("startBtn").disabled = false;

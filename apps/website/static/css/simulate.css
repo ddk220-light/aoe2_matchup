@@ -358,6 +358,130 @@
     accent-color: var(--gold);
 }
 
+/* ============================================================
+   First-visit guide ("how it works")
+   ============================================================ */
+.sim-howto {
+    list-style: none;
+    margin: 0 0 16px;
+    padding: 14px 16px;
+    background: var(--bg-warm);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.sim-howto li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    line-height: var(--lh-base);
+}
+.sim-howto li strong { color: var(--text); font-weight: 700; }
+.sim-howto li em { color: var(--gold); font-style: normal; }
+.howto-num {
+    flex: 0 0 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--gold-tint);
+    color: var(--gold);
+    border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--fs-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ============================================================
+   Primary action — Start Battle (prominent, above the options)
+   ============================================================ */
+.start-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+.start-row #startBtn {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--fs-base);
+    padding: 12px 40px;
+    min-height: 48px;
+    border-radius: 8px;
+    background: var(--gold-cta);
+    color: var(--text-on-gold);
+    border: 1px solid var(--gold-cta);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+.start-row #startBtn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-card);
+}
+.start-row #startBtn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+.start-hint {
+    margin: 0;
+    font-size: var(--fs-xs);
+    color: var(--text-dim);
+}
+
+/* ============================================================
+   Collapsible options ("Change options")
+   ============================================================ */
+.sim-options {
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-warm);
+    overflow: hidden;
+}
+.sim-options > summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    user-select: none;
+}
+.sim-options > summary::-webkit-details-marker { display: none; }
+.sim-options > summary::before {
+    content: "\25B8";              /* ▸ collapsed */
+    color: var(--gold);
+    transition: transform 0.2s ease;
+}
+.sim-options[open] > summary::before { transform: rotate(90deg); }
+.sim-options[open] > summary { border-bottom: 1px solid var(--border); }
+.sim-options > summary:hover { color: var(--text); }
+.sim-options-current {
+    color: var(--gold);
+    font-weight: 700;
+}
+.sim-options .army-config {
+    margin: 0;
+}
+
+/* Scroll target: clear the sticky nav when we jump to the battle on Start. */
+.sim-section {
+    scroll-margin-top: calc(var(--nav-h, 56px) + 8px);
+}
+
 /* ---------- Canvas ----------
    width:100% + aspect-ratio:3/2 (matches the 900x600 backing store) keeps the
    canvas box at a stable height before/after JS draws, preventing layout shift
@@ -657,6 +781,10 @@
     .controls button {
         width: 100%;
     }
+    /* Start Battle spans the row so it's the obvious next tap. */
+    .start-row { align-items: stretch; }
+    .start-row #startBtn { width: 100%; }
+    .start-hint { text-align: center; }
     .speed-control {
         justify-content: center;
     }

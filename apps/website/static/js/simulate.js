@@ -1861,7 +1861,7 @@ class BattleSimulation {
         this.running = false;
         this.paused = false;
         this.battleTime = 0;
-        this.speedMultiplier = 1.0;
+        this.speedMultiplier = 5.0;
         this.lastTimestamp = 0;
         this.winner = null;
         this.projectiles = [];
@@ -1979,13 +1979,21 @@ class BattleSimulation {
     loop() {
         if (!this.running || this.paused) return;
         const now = performance.now();
-        const dt = Math.min(
-            ((now - this.lastTimestamp) / 1000) *
-                this.speedMultiplier,
-            0.1,
+        // Total sim-time to advance this frame. Clamp to avoid a huge catch-up
+        // after a tab stall, then step it in small fixed increments so fast
+        // speeds (5x/10x) stay accurate without large per-step movement that
+        // would let units tunnel past each other or skip attack ticks.
+        let remaining = Math.min(
+            ((now - this.lastTimestamp) / 1000) * this.speedMultiplier,
+            0.25,
         );
         this.lastTimestamp = now;
-        this.update(dt);
+        const STEP = 1 / 60; // ~one 60fps tick per sub-step
+        while (remaining > 1e-6 && !this.winner) {
+            const dt = Math.min(remaining, STEP);
+            this.update(dt);
+            remaining -= dt;
+        }
         this.render();
         if (!this.winner) requestAnimationFrame(() => this.loop());
     }
@@ -2545,13 +2553,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             document.getElementById("resetBtn").disabled = true;
             updateStartReady();
         });
-    document
-        .getElementById("speedSlider")
-        .addEventListener("input", (e) => {
-            simulation.speedMultiplier = parseFloat(e.target.value);
-            document.getElementById("speedLabel").textContent =
-                `${e.target.value}x`;
-        });
+    const speedSlider = document.getElementById("speedSlider");
+    speedSlider.addEventListener("input", (e) => {
+        simulation.speedMultiplier = parseFloat(e.target.value);
+        document.getElementById("speedLabel").textContent =
+            `${e.target.value}x`;
+    });
+    // Sync the sim + label to the slider's initial value (defaults to 5x).
+    simulation.speedMultiplier = parseFloat(speedSlider.value);
+    document.getElementById("speedLabel").textContent = `${speedSlider.value}x`;
 
     // Army mode toggle
     document

@@ -5,6 +5,21 @@
 /* Page-local :root aliases removed — consume canonical tokens directly:
    --card-bg -> var(--bg-warm), --card-border -> var(--border-light). */
 
+/* Battle Sim uses the standard AoE player colours — Team 1 = blue, Team 2 = red
+   — which is the opposite of the global --team1/--team2 tokens. Override them
+   scoped to this page only (this stylesheet loads after base.css and only here,
+   so other pages and --pop are unaffected). The canvas reads these same :root
+   tokens via getComputedStyle, so sprites/rings/HP bars flip in lockstep with
+   the side panels and rails. Values are swapped per theme to match base.css. */
+:root {
+    --team1: #1c6796;   /* blue (was --team2) */
+    --team2: #a23226;   /* red  (was --team1) */
+}
+[data-theme="dark"] {
+    --team1: #4a9fd4;   /* blue */
+    --team2: #cf5a4b;   /* red  */
+}
+
 /* ---------- Main layout ----------
    3-panel app layout: stats rail | fluid canvas | debug rail.
    Side panels are fluid (clamp) at >=1025px so wide monitors widen the panels

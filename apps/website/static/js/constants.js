@@ -343,11 +343,11 @@ function getIconUrl(name) {
 /* Generated in-game idle sprite (red player-2 / blue player-1), transparent.
    Returns a sprite URL only for units with a square-enough sprite (UNIT_SPRITES,
    loaded from unit_sprites.js); everything else falls back to the portrait so the
-   UI degrades cleanly. team===2 -> blue, otherwise red (team 1 / neutral display). */
+   UI degrades cleanly. team===1 -> blue, otherwise red (team 2 / neutral display). */
 function spriteFor(name, team) {
     const s = (typeof UNIT_SPRITES !== "undefined") ? UNIT_SPRITES[name] : null;
     if (s && s.url) {
-        return team === 2 && s.url_blue ? s.url_blue : s.url;
+        return team === 1 && s.url_blue ? s.url_blue : s.url;
     }
     return getIconUrl(name);
 }

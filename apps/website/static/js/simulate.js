@@ -23,7 +23,7 @@ const TILE_SIZE = 30;
 let CANVAS_PAL = {
     bg: "#26301a", grid: "rgba(128,128,128,0.10)", text: "#ece1cd", gold: "#cdac50",
     hpStrong: "#6fb15e", hpWeak: "#cf9a4a", hpPoor: "#cf6a5e",
-    team1: "#cf5a4b", team2: "#4a9fd4",
+    team1: "#4a9fd4", team2: "#cf5a4b",
 };
 function refreshCanvasPalette() {
     try {
@@ -516,8 +516,8 @@ class Projectile {
         const color = this.isSiege
             ? "#f59e0b"
             : this.team === 1
-              ? "#f87171"
-              : "#60a5fa";
+              ? "#60a5fa"
+              : "#f87171";
 
         // Trail
         ctx.globalAlpha = 0.3;
@@ -572,20 +572,20 @@ class MeleeEffect {
             ctx.lineWidth = 2;
             ctx.stroke();
         } else {
-            // Melee hit: small arc
-            const radius = 8 + progress * 16;
-            ctx.globalAlpha = alpha * 0.7;
+            // Melee / ranged hit: a bright gold impact burst — a soft filled
+            // core under a fast-expanding ring — so a landed attack pops out
+            // clearly, regardless of which team landed it.
+            const r = 6 + progress * 18;
+            ctx.globalAlpha = alpha * 0.5;
             ctx.beginPath();
-            ctx.arc(
-                this.x,
-                this.y,
-                radius,
-                -Math.PI * 0.3,
-                Math.PI * 0.3,
-            );
-            ctx.strokeStyle =
-                this.team === 1 ? "#fca5a5" : "#93c5fd";
-            ctx.lineWidth = 3;
+            ctx.arc(this.x, this.y, r * 0.55, 0, Math.PI * 2);
+            ctx.fillStyle = "#ffe8a3";
+            ctx.fill();
+            ctx.globalAlpha = alpha;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+            ctx.strokeStyle = "#ffd14a";
+            ctx.lineWidth = 2.5;
             ctx.stroke();
         }
         ctx.globalAlpha = 1.0;
@@ -1914,33 +1914,42 @@ class BattleUnit {
 
         if (this.isSprite && imgReady) {
             // Sprite mode: no circle/ring — team color is baked into the sprite
-            // (team 1 red, team 2 blue). Contain the whole sprite within a box of
+            // (team 1 blue, team 2 red). Contain the whole sprite within a box of
             // 2.8*radius (a bit bigger than the unit footprint for readability),
             // scaling by the LARGER sprite dimension so wide/tall off-shapes stay
-            // fully contained and never explode in one axis. A small scale-up on
-            // attack replaces the old white ring flash.
+            // fully contained and never explode in one axis.
             const box = this.radius * 2.8;
             let s = box / Math.max(img.naturalWidth, img.naturalHeight);
-            if (this.attackAnimTimer > 0) s *= 1.12;
+            // Attack tell: a warm glow + slight lunge that pulses out over the
+            // attack timer, so a swing/shot is unmistakable. atk goes 1 -> 0.
+            const atk =
+                this.attackAnimTimer > 0
+                    ? Math.min(1, this.attackAnimTimer / 0.18)
+                    : 0;
+            if (atk > 0) s *= 1 + 0.1 * atk;
             const dw = img.naturalWidth * s;
             const dh = img.naturalHeight * s;
+            ctx.save();
+            if (atk > 0) {
+                ctx.shadowColor = `rgba(255, 209, 74, ${0.95 * atk})`;
+                ctx.shadowBlur = 22 * atk;
+            }
             if (this.team === 1) {
                 // Sprites are drawn facing left by default. Team 1 spawns on the
                 // left and fights rightward, so mirror its sprite horizontally
                 // about the unit center to face the enemy.
-                ctx.save();
                 ctx.translate(this.x, 0);
                 ctx.scale(-1, 1);
                 ctx.drawImage(img, -dw / 2, this.y - dh / 2, dw, dh);
-                ctx.restore();
             } else {
                 ctx.drawImage(img, this.x - dw / 2, this.y - dh / 2, dw, dh);
             }
+            ctx.restore();
         } else {
             // Legacy ring + circular portrait (fallback units / image not loaded yet)
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius + 2, 0, Math.PI * 2);
-            let ringColor = this.team === 1 ? "#e74c3c" : "#3498db";
+            let ringColor = this.team === 1 ? "#3498db" : "#e74c3c";
             if (this.attackAnimTimer > 0) ringColor = "#ffffff";
             else if (this.state === "kiting")
                 ringColor = this.team === 1 ? "#9b59b6" : "#1abc9c";
@@ -1963,7 +1972,7 @@ class BattleUnit {
             } else {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = this.team === 1 ? "#c0392b" : "#2980b9";
+                ctx.fillStyle = this.team === 1 ? "#2980b9" : "#c0392b";
                 ctx.fill();
             }
         }
@@ -1979,12 +1988,10 @@ class BattleUnit {
             ctx.fillStyle = "rgba(0,0,0,0.45)";
             ctx.fillRect(barX, barY, barWidth, barHeight);
             const hpPercent = this.currentHp / this.maxHp;
+            // Team-coloured bar (team 1 blue, team 2 red) so it's obvious whose
+            // unit is whose at a glance; remaining HP is shown by the fill width.
             ctx.fillStyle =
-                hpPercent > 0.5
-                    ? CANVAS_PAL.hpStrong
-                    : hpPercent > 0.25
-                      ? CANVAS_PAL.hpWeak
-                      : CANVAS_PAL.hpPoor;
+                this.team === 1 ? CANVAS_PAL.team1 : CANVAS_PAL.team2;
             ctx.fillRect(
                 barX,
                 barY,
@@ -2010,6 +2017,15 @@ class BattleSimulation {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
+        // Logical (CSS-pixel) coordinate space the whole sim works in. The canvas
+        // backing store is sized larger (display size * devicePixelRatio) and the
+        // context is scaled to match each frame, so sprites stay crisp on HiDPI /
+        // upscaled displays instead of being blurred by the browser stretching a
+        // fixed 900x600 bitmap. All layout/spawn math uses this.W / this.H.
+        this.W = canvas.width || CANVAS_WIDTH;
+        this.H = canvas.height || CANVAS_HEIGHT;
+        this.renderScaleX = 1;
+        this.renderScaleY = 1;
         this.team1 = [];
         this.team2 = [];
         this.team1Stats = null;
@@ -2022,6 +2038,38 @@ class BattleSimulation {
         this.winner = null;
         this.projectiles = [];
         this.effects = [];
+        this.resizeBackingStore();
+        // Re-fit the backing store whenever the canvas's displayed size changes
+        // (window resize, the pick->battle arena transition, mobile stacking) and
+        // repaint so a static (paused / pre-battle) frame stays sharp too.
+        try {
+            new ResizeObserver(() => {
+                this.resizeBackingStore();
+                this.render();
+            }).observe(canvas);
+        } catch (e) {
+            /* ResizeObserver unsupported: keep the initial backing-store size */
+        }
+    }
+
+    // Match the backing store to the on-screen size * devicePixelRatio. Setting
+    // canvas.width/height does NOT change the CSS layout box (width:100% drives
+    // that), so this never re-triggers the ResizeObserver into a loop.
+    resizeBackingStore() {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = this.canvas.getBoundingClientRect();
+        const cssW = rect.width || this.W;
+        const cssH = rect.height || this.H;
+        const pxW = Math.max(1, Math.round(cssW * dpr));
+        const pxH = Math.max(1, Math.round(cssH * dpr));
+        if (this.canvas.width !== pxW || this.canvas.height !== pxH) {
+            this.canvas.width = pxW;
+            this.canvas.height = pxH;
+        }
+        // Map the logical W x H space onto the full backing store. aspect-ratio:3/2
+        // is locked in CSS, so these scales stay ~equal (no stretch).
+        this.renderScaleX = this.canvas.width / this.W;
+        this.renderScaleY = this.canvas.height / this.H;
     }
 
     async setupTeam(teamNum, unitSlug, civName, count, age) {
@@ -2048,11 +2096,11 @@ class BattleSimulation {
         const startX =
             teamNum === 1
                 ? 30 + unitRadius
-                : this.canvas.width - 30 - unitRadius;
+                : this.W - 30 - unitRadius;
         const minSpacing = unitRadius * 2.2;
         const naturalSpacing =
             count > 1
-                ? (this.canvas.height - 2 * unitRadius) /
+                ? (this.H - 2 * unitRadius) /
                   (count - 1)
                 : 0;
         const spacing = Math.max(naturalSpacing, minSpacing);
@@ -2061,9 +2109,9 @@ class BattleSimulation {
             count > 1
                 ? Math.max(
                       unitRadius,
-                      (this.canvas.height - totalHeight) / 2,
+                      (this.H - totalHeight) / 2,
                   )
-                : this.canvas.height / 2;
+                : this.H / 2;
 
         for (let i = 0; i < count; i++) {
             const unit = new BattleUnit(
@@ -2277,8 +2325,13 @@ class BattleSimulation {
 
     render() {
         const ctx = this.ctx;
+        // Draw in logical (W x H) space; the transform scales it up to the HiDPI
+        // backing store. High-quality smoothing keeps the downscaled sprites sharp.
+        ctx.setTransform(this.renderScaleX, 0, 0, this.renderScaleY, 0, 0);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
         ctx.fillStyle = CANVAS_PAL.bg;
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        ctx.fillRect(0, 0, this.W, this.H);
         this.drawGrid(ctx);
 
         const allUnits = [...this.team1, ...this.team2];
@@ -2298,23 +2351,23 @@ class BattleSimulation {
     drawGrid(ctx) {
         ctx.strokeStyle = CANVAS_PAL.grid;
         ctx.lineWidth = 1;
-        for (let x = 0; x <= this.canvas.width; x += 50) {
+        for (let x = 0; x <= this.W; x += 50) {
             ctx.beginPath();
             ctx.moveTo(x, 0);
-            ctx.lineTo(x, this.canvas.height);
+            ctx.lineTo(x, this.H);
             ctx.stroke();
         }
-        for (let y = 0; y <= this.canvas.height; y += 50) {
+        for (let y = 0; y <= this.H; y += 50) {
             ctx.beginPath();
             ctx.moveTo(0, y);
-            ctx.lineTo(this.canvas.width, y);
+            ctx.lineTo(this.W, y);
             ctx.stroke();
         }
     }
 
     drawWinner(ctx) {
         ctx.fillStyle = "rgba(0,0,0,0.7)";
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        ctx.fillRect(0, 0, this.W, this.H);
         let text, subtext, color;
         if (this.winner === 1) {
             const civ = currentBattle?.team1_civ || "Team 1";
@@ -2338,24 +2391,24 @@ class BattleSimulation {
         ctx.textAlign = "center";
         ctx.fillText(
             text,
-            this.canvas.width / 2,
-            this.canvas.height / 2 - 10,
+            this.W / 2,
+            this.H / 2 - 10,
         );
         if (subtext) {
             ctx.fillStyle = CANVAS_PAL.gold;
             ctx.font = "bold 22px Cinzel, serif";
             ctx.fillText(
                 subtext,
-                this.canvas.width / 2,
-                this.canvas.height / 2 + 22,
+                this.W / 2,
+                this.H / 2 + 22,
             );
         }
         ctx.fillStyle = "#ece1cd";
         ctx.font = "16px 'Source Sans 3', sans-serif";
         ctx.fillText(
             `Battle time: ${this.battleTime.toFixed(1)}s`,
-            this.canvas.width / 2,
-            this.canvas.height / 2 + 50,
+            this.W / 2,
+            this.H / 2 + 50,
         );
     }
 

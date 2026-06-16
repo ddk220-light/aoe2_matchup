@@ -1924,7 +1924,18 @@ class BattleUnit {
             if (this.attackAnimTimer > 0) s *= 1.12;
             const dw = img.naturalWidth * s;
             const dh = img.naturalHeight * s;
-            ctx.drawImage(img, this.x - dw / 2, this.y - dh / 2, dw, dh);
+            if (this.team === 1) {
+                // Sprites are drawn facing left by default. Team 1 spawns on the
+                // left and fights rightward, so mirror its sprite horizontally
+                // about the unit center to face the enemy.
+                ctx.save();
+                ctx.translate(this.x, 0);
+                ctx.scale(-1, 1);
+                ctx.drawImage(img, -dw / 2, this.y - dh / 2, dw, dh);
+                ctx.restore();
+            } else {
+                ctx.drawImage(img, this.x - dw / 2, this.y - dh / 2, dw, dh);
+            }
         } else {
             // Legacy ring + circular portrait (fallback units / image not loaded yet)
             ctx.beginPath();
@@ -2006,7 +2017,7 @@ class BattleSimulation {
         this.running = false;
         this.paused = false;
         this.battleTime = 0;
-        this.speedMultiplier = 5.0;
+        this.speedMultiplier = 3.0;
         this.lastTimestamp = 0;
         this.winner = null;
         this.projectiles = [];
@@ -2716,7 +2727,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("speedLabel").textContent =
             `${e.target.value}x`;
     });
-    // Sync the sim + label to the slider's initial value (defaults to 5x).
+    // Sync the sim + label to the slider's initial value (defaults to 3x).
     simulation.speedMultiplier = parseFloat(speedSlider.value);
     document.getElementById("speedLabel").textContent = `${speedSlider.value}x`;
 

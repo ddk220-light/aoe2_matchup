@@ -517,7 +517,8 @@ def get_units_by_age():
 @app.route("/")
 def home():
     """Battle Sim is the homepage."""
-    return render_template("simulate.html", active_nav="simulate")
+    return render_template("simulate.html", active_nav="simulate",
+                           unit_search=_unit_search_index())
 
 
 @app.route("/replay")
@@ -1289,6 +1290,28 @@ def _get_ref_civs():
     civs = [row["civ_name"] for row in rc.fetchall()]
     ref_conn.close()
     return civs
+
+
+@lru_cache(maxsize=1)
+def _unit_search_index():
+    """Compact search index for the Battle Sim picker search box: every civ's
+    Imperial-age unique units (display name + slug + civ). Lets a search jump
+    straight to a unique unit, which selects its civ + that unit. Standard units
+    stay reachable via the civ -> unit grid. Cached for the process lifetime
+    (restart Flask if the unit roster changes)."""
+    ref_conn = get_ref_db()
+    rc = ref_conn.cursor()
+    rc.execute(
+        "SELECT civ_name, unit_name, unit_slug FROM ref_units "
+        "WHERE unit_type = 'unique' AND age = 'Imperial' "
+        "ORDER BY civ_name, unit_name"
+    )
+    out = [
+        {"civ": row["civ_name"], "name": row["unit_name"], "slug": row["unit_slug"]}
+        for row in rc.fetchall()
+    ]
+    ref_conn.close()
+    return out
 
 
 # ============== Input validation ==============

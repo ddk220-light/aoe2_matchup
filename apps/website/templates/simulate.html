@@ -13,232 +13,144 @@
     <p class="subtitle">Pick a unit for each side, then watch who wins</p>
 </div>
 
-<div class="container-wide">
-    <!-- How it works (first-visit guide; hides once a battle starts) -->
-    <ol class="sim-howto" id="simHowto">
-        <li><span class="howto-num">1</span><span>Pick a <strong>civilization</strong>, then a <strong>unit</strong> — for <strong>both</strong> teams below.</span></li>
-        <li><span class="howto-num">2</span><span>Tap <strong>Start Battle</strong> — 30 vs 30 by default (use <em>Change options</em> to adjust).</span></li>
-        <li><span class="howto-num">3</span><span>Watch the two armies clash and see who wins.</span></li>
-    </ol>
-
-    <!-- Team Selection -->
-    <div class="config-panel">
-        <div class="team-config team1">
-            <h3>Team 1 (Red)</h3>
-            <div id="team1Selection"></div>
-        </div>
-        <div class="team-config team2">
-            <h3>Team 2 (Blue)</h3>
-            <div id="team2Selection"></div>
-        </div>
-    </div>
-
-    <!-- Primary action: Start (above the options) -->
-    <div class="start-row">
-        <button id="startBtn" disabled>Start Battle</button>
-        <p class="start-hint" id="startHint">Pick a civ &amp; unit for both teams to start</p>
-    </div>
-
-    <!-- Army Size Config (collapsed by default) -->
-    <details class="sim-options" id="simOptions">
-        <summary>
-            <span class="sim-options-toggle">Change options</span>
-            <span class="sim-options-current" id="optionsCurrent">30 vs 30</span>
-        </summary>
-        <div class="army-config">
-            <div
-                class="formula-note"
-                style="
-                    text-align: center;
-                    margin-bottom: 8px;
-                    font-size: 0.75rem;
-                "
-            >
-                Resource cost per unit =
-                <strong style="color: var(--gold)">Wood + Food + Gold</strong>
-            </div>
-            <div class="mode-toggle">
-                <label class="mode-option">
-                    <input
-                        type="radio"
-                        name="armyMode"
-                        value="count"
-                        checked
-                    />
-                    <span>30 vs 30</span>
-                </label>
-                <label class="mode-option">
-                    <input type="radio" name="armyMode" value="resources" />
-                    <span>3,000 Resources</span>
-                </label>
-                <label class="mode-option">
-                    <input
-                        type="radio"
-                        name="armyMode"
-                        value="resources_upgrades"
-                    />
-                    <span>5,000 incl. Upgrades</span>
-                </label>
-            </div>
-            <div class="count-inputs" id="countInputs">
-                <div>
-                    <label>Team 1:</label>
-                    <input
-                        type="number"
-                        id="team1Count"
-                        value="30"
-                        min="1"
-                        max="200"
-                    />
+<div class="container-wide sim-page" id="simPage">
+    <!-- ===== Top action bar: Start (pick phase) <-> playback (battle phase) ===== -->
+    <div class="sim-topbar">
+        <!-- Left: army-size options (collapsed by default) -->
+        <details class="sim-options" id="simOptions">
+            <summary>
+                <span class="sim-options-toggle">Options</span>
+                <span class="sim-options-current" id="optionsCurrent">30 vs 30</span>
+            </summary>
+            <div class="army-config">
+                <div class="formula-note" style="text-align:center;margin-bottom:8px;font-size:0.75rem;">
+                    Resource cost per unit =
+                    <strong style="color: var(--gold)">Wood + Food + Gold</strong>
                 </div>
-                <div>
-                    <label>Team 2:</label>
-                    <input
-                        type="number"
-                        id="team2Count"
-                        value="30"
-                        min="1"
-                        max="200"
-                    />
+                <div class="mode-toggle">
+                    <label class="mode-option">
+                        <input type="radio" name="armyMode" value="count" checked />
+                        <span>30 vs 30</span>
+                    </label>
+                    <label class="mode-option">
+                        <input type="radio" name="armyMode" value="resources" />
+                        <span>3,000 Resources</span>
+                    </label>
+                    <label class="mode-option">
+                        <input type="radio" name="armyMode" value="resources_upgrades" />
+                        <span>5,000 incl. Upgrades</span>
+                    </label>
+                </div>
+                <div class="count-inputs" id="countInputs">
+                    <div>
+                        <label>Team 1:</label>
+                        <input type="number" id="team1Count" value="30" min="1" max="200" />
+                    </div>
+                    <div>
+                        <label>Team 2:</label>
+                        <input type="number" id="team2Count" value="30" min="1" max="200" />
+                    </div>
+                </div>
+                <div class="resource-input" id="resourceInput" style="display: none">
+                    <label>Resources per team:</label>
+                    <input type="number" id="totalResources" value="3000" min="100" max="20000" step="100" />
                 </div>
             </div>
-            <div
-                class="resource-input"
-                id="resourceInput"
-                style="display: none"
-            >
-                <label>Resources per team:</label>
-                <input
-                    type="number"
-                    id="totalResources"
-                    value="3000"
-                    min="100"
-                    max="20000"
-                    step="100"
-                />
-            </div>
-        </div>
-    </details>
+        </details>
 
-    <!-- Simulation (scroll target after Start) -->
-    <div class="sim-section" id="simSection">
-        <!-- Playback controls -->
-        <div class="controls sim-controls">
-            <button id="pauseBtn" disabled>Pause</button>
-            <button id="resetBtn" disabled>Reset</button>
-            <div class="speed-control">
-                <label>Speed:</label>
-                <input
-                    type="range"
-                    id="speedSlider"
-                    min="0.5"
-                    max="10"
-                    step="0.5"
-                    value="5"
-                />
-                <span id="speedLabel">5x</span>
+        <!-- Center: primary action morphs into playback once a battle is running -->
+        <div class="sim-topbar-center">
+            <button id="startBtn" disabled>Start Battle</button>
+            <div class="battle-timer" id="battleTimer" hidden>0.0s</div>
+            <div class="sim-controls" id="simControls" hidden>
+                <button id="pauseBtn">Pause</button>
+                <button id="resetBtn">New Battle</button>
+                <div class="speed-control">
+                    <label>Speed</label>
+                    <input type="range" id="speedSlider" min="0.5" max="10" step="0.5" value="5" />
+                    <span id="speedLabel">5x</span>
+                </div>
             </div>
         </div>
 
-        <div class="main-layout">
-        <div class="stats-panel">
-            <div class="battle-progress" id="battleProgress">
-                <div class="battle-timer" id="battleTimer">0.0s</div>
+        <!-- Right: damage-breakdown toggle (battle phase only) -->
+        <div class="sim-topbar-right">
+            <button class="dmg-toggle" id="dmgToggle" aria-expanded="false" hidden>Damage breakdown</button>
+        </div>
+    </div>
+    <p class="start-hint" id="startHint">Pick a civ &amp; unit for both teams to start</p>
+
+    <!-- ===== 3-area stage: picker | arena | picker ===== -->
+    <div class="sim-stage" id="simStage">
+        <!-- LEFT rail — Team 1 -->
+        <aside class="team-rail team1" id="team1Rail">
+            <div class="rail-head"><span class="rail-title">Team 1</span></div>
+            <div class="rail-search">
+                <input type="search" class="rail-search-input" id="team1Search"
+                       placeholder="Search civ or unique unit…" autocomplete="off"
+                       spellcheck="false" aria-label="Search Team 1 civ or unit" />
+                <div class="rail-search-results" id="team1SearchResults" hidden></div>
+            </div>
+            <div class="rail-picker" id="team1Selection"></div>
+            <!-- Live readout (battle phase) -->
+            <div class="rail-live" id="team1Live" hidden>
                 <div class="progress-card team1">
                     <div class="progress-header team1">
-                        <img
-                            id="prog1Icon"
-                            src=""
-                            alt=""
-                            style="display: none"
-                        />
-                        <span class="prog-name" id="prog1Name"
-                            >Team 1 (Red)</span
-                        >
+                        <img id="prog1Icon" src="" alt="" style="display:none" />
+                        <span class="prog-name" id="prog1Name">Team 1 (Red)</span>
                     </div>
-                    <div class="progress-row">
-                        <span class="prog-label">Units</span
-                        ><span class="prog-value" id="prog1Units"
-                            >—</span
-                        >
-                    </div>
-                    <div class="progress-row">
-                        <span class="prog-label">HP</span
-                        ><span class="prog-value" id="prog1Hp">—</span>
-                    </div>
-                    <div class="progress-row">
-                        <span class="prog-label">Resources</span
-                        ><span class="prog-value" id="prog1Res">—</span>
-                    </div>
-                    <div class="progress-row">
-                        <span class="prog-label">Res Lost</span
-                        ><span
-                            class="prog-value"
-                            id="prog1Lost"
-                            style="color: var(--red)"
-                            >—</span
-                        >
-                    </div>
-                </div>
-                <div class="progress-card team2">
-                    <div class="progress-header team2">
-                        <img
-                            id="prog2Icon"
-                            src=""
-                            alt=""
-                            style="display: none"
-                        />
-                        <span class="prog-name" id="prog2Name"
-                            >Team 2 (Blue)</span
-                        >
-                    </div>
-                    <div class="progress-row">
-                        <span class="prog-label">Units</span
-                        ><span class="prog-value" id="prog2Units"
-                            >—</span
-                        >
-                    </div>
-                    <div class="progress-row">
-                        <span class="prog-label">HP</span
-                        ><span class="prog-value" id="prog2Hp">—</span>
-                    </div>
-                    <div class="progress-row">
-                        <span class="prog-label">Resources</span
-                        ><span class="prog-value" id="prog2Res">—</span>
-                    </div>
-                    <div class="progress-row">
-                        <span class="prog-label">Res Lost</span
-                        ><span
-                            class="prog-value"
-                            id="prog2Lost"
-                            style="color: var(--red)"
-                            >—</span
-                        >
-                    </div>
+                    <div class="progress-row"><span class="prog-label">Units</span><span class="prog-value" id="prog1Units">—</span></div>
+                    <div class="progress-row"><span class="prog-label">HP</span><span class="prog-value" id="prog1Hp">—</span></div>
+                    <div class="progress-row"><span class="prog-label">Resources</span><span class="prog-value" id="prog1Res">—</span></div>
+                    <div class="progress-row"><span class="prog-label">Res Lost</span><span class="prog-value" id="prog1Lost" style="color: var(--red)">—</span></div>
                 </div>
             </div>
-        </div>
+        </aside>
 
-        <div class="center-panel">
+        <!-- CENTER — arena -->
+        <div class="arena" id="arena">
             <canvas id="battleCanvas" width="900" height="600"></canvas>
         </div>
 
-        <div class="right-panel">
-            <div class="debug-panel" id="debugPanel">
-                <h3>Damage Breakdown</h3>
-                <div id="debugContent">
-                    <p style="color: var(--text-muted)">
-                        Start a battle to see damage breakdown
-                    </p>
+        <!-- RIGHT rail — Team 2 -->
+        <aside class="team-rail team2" id="team2Rail">
+            <div class="rail-head"><span class="rail-title">Team 2</span></div>
+            <div class="rail-search">
+                <input type="search" class="rail-search-input" id="team2Search"
+                       placeholder="Search civ or unique unit…" autocomplete="off"
+                       spellcheck="false" aria-label="Search Team 2 civ or unit" />
+                <div class="rail-search-results" id="team2SearchResults" hidden></div>
+            </div>
+            <div class="rail-picker" id="team2Selection"></div>
+            <div class="rail-live" id="team2Live" hidden>
+                <div class="progress-card team2">
+                    <div class="progress-header team2">
+                        <img id="prog2Icon" src="" alt="" style="display:none" />
+                        <span class="prog-name" id="prog2Name">Team 2 (Blue)</span>
+                    </div>
+                    <div class="progress-row"><span class="prog-label">Units</span><span class="prog-value" id="prog2Units">—</span></div>
+                    <div class="progress-row"><span class="prog-label">HP</span><span class="prog-value" id="prog2Hp">—</span></div>
+                    <div class="progress-row"><span class="prog-label">Resources</span><span class="prog-value" id="prog2Res">—</span></div>
+                    <div class="progress-row"><span class="prog-label">Res Lost</span><span class="prog-value" id="prog2Lost" style="color: var(--red)">—</span></div>
                 </div>
             </div>
-        </div>
+        </aside>
+    </div>
+
+    <!-- Damage breakdown — toggled open from the top bar during a battle -->
+    <div class="debug-panel" id="debugPanel" hidden>
+        <h3>Damage Breakdown</h3>
+        <div id="debugContent">
+            <p style="color: var(--text-muted)">Start a battle to see damage breakdown</p>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block page_js %}
+<script>
+    const UNIT_SEARCH = {{ unit_search | tojson }};
+</script>
 <script src="{{ url_for('static', filename='js/sim_params.js') }}"></script>
 <script src="{{ url_for('static', filename='js/simulate.js') }}"></script>
 {% endblock %}

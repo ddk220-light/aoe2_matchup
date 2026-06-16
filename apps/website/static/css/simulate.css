@@ -794,3 +794,232 @@
         max-width: 200px;
     }
 }
+
+/* ==========================================================================
+   ONE-SCREEN REDESIGN
+   Layout: [picker rail] | [arena] | [picker rail] with a top action bar.
+   Pick phase: rails wide (search + grid), arena shrunk + centered.
+   Battle phase (.sim-stage.battle-active): rails shrink to the picked unit +
+   live team stats, the arena expands to fill. Everything stays on one screen;
+   on phones the stage becomes a 3-row stack (picker / arena / picker).
+   ========================================================================== */
+
+/* ---- Top action bar ---- */
+.sim-topbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+.sim-topbar .sim-options { flex: 0 0 auto; margin-bottom: 0; min-width: 0; }
+.sim-topbar-center {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+.sim-topbar-right { flex: 0 0 auto; }
+
+/* Start = prominent gold CTA. */
+.sim-topbar-center #startBtn {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--fs-base);
+    padding: 11px 36px;
+    min-height: 46px;
+    border-radius: 8px;
+    background: var(--gold-cta);
+    color: var(--text-on-gold);
+    border: 1px solid var(--gold-cta);
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+.sim-topbar-center #startBtn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-card);
+}
+.sim-topbar-center #startBtn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+/* Playback controls (battle phase) live in the bar. */
+.sim-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.sim-controls[hidden] { display: none; }
+.sim-controls button {
+    padding: 8px 18px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--fs-sm);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-warm);
+    color: var(--text);
+    transition: all 0.2s;
+}
+.sim-controls button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.sim-controls #resetBtn:hover:not(:disabled) { color: var(--poor); border-color: var(--poor); }
+.sim-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.battle-timer[hidden] { display: none; }
+
+.dmg-toggle {
+    padding: 8px 14px;
+    font-size: var(--fs-xs);
+    font-family: var(--font-display);
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-warm);
+    color: var(--text-muted);
+    transition: all 0.2s;
+}
+.dmg-toggle[hidden] { display: none; }
+.dmg-toggle[aria-expanded="true"] { color: var(--gold); border-color: var(--gold-light); }
+
+/* ---- 3-area stage ---- */
+.sim-stage {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.team-rail {
+    flex: 0 0 clamp(260px, 28vw, 380px);
+    min-width: 0;
+    background: var(--bg-warm);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    transition: flex-basis 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.team-rail.team1 { border-top: 2px solid color-mix(in srgb, var(--team1) 55%, var(--border)); }
+.team-rail.team2 { border-top: 2px solid color-mix(in srgb, var(--team2) 55%, var(--border)); }
+.rail-head { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+.rail-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.rail-title::before { content: ""; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.team-rail.team1 .rail-title::before { background: var(--team1); }
+.team-rail.team2 .rail-title::before { background: var(--team2); }
+
+/* ---- Rail search ---- */
+.rail-search { position: relative; margin-bottom: 8px; }
+.rail-search-input {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: var(--fs-sm);
+}
+.rail-search-input:focus { outline: none; border-color: var(--gold); }
+.rail-search-results {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 4px);
+    z-index: 30;
+    max-height: 320px;
+    overflow-y: auto;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    box-shadow: var(--shadow-card);
+    overscroll-behavior: contain;
+}
+.rail-search-results[hidden] { display: none; }
+.search-result {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+}
+.search-result:last-child { border-bottom: none; }
+.search-result:hover,
+.search-result.active { background: var(--gold-tint); }
+.search-result img { width: 1.75rem; height: 1.75rem; object-fit: contain; flex-shrink: 0; }
+.search-result img.emblem { border-radius: 50%; object-fit: cover; }
+.search-result .sr-name { font-size: var(--fs-sm); font-weight: 600; color: var(--text); }
+.search-result .sr-sub { font-size: var(--fs-xs); color: var(--text-muted); margin-left: auto; }
+.search-empty { padding: 10px; font-size: var(--fs-xs); color: var(--text-muted); text-align: center; }
+
+/* ---- Rail picker (civ grid / unit grid / selected badges) ---- */
+.rail-picker {
+    max-height: 58vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* ---- Live readout (battle phase) ---- */
+.rail-live { margin-top: 10px; }
+.rail-live[hidden] { display: none; }
+
+/* ---- Arena ---- */
+.arena {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+/* The canvas fills the arena (width:100% from the base #battleCanvas rule).
+   The "shrink a little / expand" is driven entirely by the rails' flex-basis
+   transition: wide rails in pick phase keep the arena (and canvas) narrower,
+   and when the rails shrink on Start the arena widens smoothly — so the canvas
+   grows with it, no per-element max-width transition (which Chrome leaves stuck
+   while the canvas repaints every frame). */
+
+/* ===== Battle phase ===== */
+.sim-stage.battle-active .team-rail { flex-basis: clamp(150px, 16vw, 190px); }
+.sim-stage.battle-active .rail-search { display: none; }
+.sim-stage.battle-active .rail-live { display: block; }
+/* The picked civ/unit badges stay (they ARE the "picked items"); drop the
+   inline "change" affordance so a running battle isn't mutated mid-flight. */
+.sim-stage.battle-active .change-btn { display: none; }
+/* (No canvas cap to lift — the arena widens via the rail transition below.) */
+
+/* ---- Damage breakdown panel (toggled) ---- */
+#debugPanel { margin-top: 12px; }
+#debugPanel[hidden] { display: none; }
+
+/* ==========================================================================
+   Responsive — stage stacks to a 3-row (picker / arena / picker) layout.
+   ========================================================================== */
+@media (max-width: 1024px) {
+    .sim-stage { flex-direction: column; }
+    .team-rail { flex: 1 1 auto; width: 100%; }
+    /* Stacked rails: cap the picker so each row stays compact and the whole
+       page still fits roughly one screen; search leads. */
+    .rail-picker { max-height: 42vh; }
+    .arena #battleCanvas { max-width: 100%; }   /* full width when stacked */
+    .sim-stage.battle-active .team-rail { flex-basis: auto; }
+}
+
+@media (max-width: 768px) {
+    /* Search-first on phones: keep the search box prominent and the browse grid
+       a compact scroll area beneath it. */
+    .rail-picker { max-height: 34vh; }
+    .rail-search-input { min-height: 44px; }
+    .sim-topbar { justify-content: center; }
+    .sim-topbar-center #startBtn { width: 100%; }
+}

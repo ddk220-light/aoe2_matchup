@@ -318,6 +318,151 @@ function clearUnit(teamNum) {
     renderSelection(teamNum);
 }
 
+// ===== RAIL SEARCH (civ + unique unit) =====
+// Index = every enabled civ + every unique unit (embedded as UNIT_SEARCH by the
+// template). Typing filters; clicking a civ opens its unit grid, clicking a
+// unique unit picks that civ + unit directly. Standard units stay reachable via
+// the civ -> unit grid.
+const _UNIT_SEARCH =
+    typeof UNIT_SEARCH !== "undefined" && Array.isArray(UNIT_SEARCH)
+        ? UNIT_SEARCH
+        : [];
+const SEARCH_ITEMS = (() => {
+    const items = [];
+    const enabled = new Set(ENABLED_CIVS);
+    for (const civ of ENABLED_CIVS) {
+        items.push({ type: "civ", civ, name: civ, _search: civ.toLowerCase() });
+    }
+    for (const u of _UNIT_SEARCH) {
+        if (!enabled.has(u.civ)) continue;
+        items.push({
+            type: "unit",
+            civ: u.civ,
+            slug: u.slug,
+            name: u.name,
+            _search: `${u.name} ${u.civ}`.toLowerCase(),
+        });
+    }
+    return items;
+})();
+const _searchResults = { 1: [], 2: [] };
+
+function renderSearchResults(teamNum, raw) {
+    const box = document.getElementById(`team${teamNum}SearchResults`);
+    if (!box) return;
+    const q = (raw || "").trim().toLowerCase();
+    if (!q) {
+        box.hidden = true;
+        _searchResults[teamNum] = [];
+        return;
+    }
+    const matches = SEARCH_ITEMS.filter((it) => it._search.includes(q)).slice(0, 40);
+    _searchResults[teamNum] = matches;
+    if (!matches.length) {
+        box.innerHTML = '<div class="search-empty">No civ or unit matches</div>';
+        box.hidden = false;
+        return;
+    }
+    let html = "";
+    matches.forEach((it, idx) => {
+        if (it.type === "civ") {
+            html += `<div class="search-result" data-idx="${idx}">
+                <img class="emblem" src="${CIV_EMBLEM_BASE}${it.civ.toLowerCase()}.png" alt="" onerror="this.style.display='none'" />
+                <span class="sr-name">${escapeHtml(it.name)}</span>
+                <span class="sr-sub">Civ</span>
+            </div>`;
+        } else {
+            const useSprite =
+                typeof hasSprite === "function" && hasSprite(it.name);
+            const iUrl = useSprite ? spriteFor(it.name) : unitIconUrl(it.name);
+            html += `<div class="search-result" data-idx="${idx}">
+                <img class="${useSprite ? "" : "emblem"}" src="${iUrl}" alt="" onerror="this.style.display='none'" />
+                <span class="sr-name">${escapeHtml(it.name)}</span>
+                <span class="sr-sub">${escapeHtml(it.civ)}</span>
+            </div>`;
+        }
+    });
+    box.innerHTML = html;
+    box.hidden = false;
+}
+
+function clearSearch(teamNum) {
+    const input = document.getElementById(`team${teamNum}Search`);
+    const box = document.getElementById(`team${teamNum}SearchResults`);
+    if (input) input.value = "";
+    if (box) {
+        box.hidden = true;
+        box.innerHTML = "";
+    }
+    _searchResults[teamNum] = [];
+}
+
+async function pickFromSearch(teamNum, item) {
+    clearSearch(teamNum);
+    await selectCiv(teamNum, item.civ); // also loads civData for the grid
+    if (item.type === "unit") {
+        selectUnit(teamNum, item.slug, item.name);
+    }
+}
+
+function initRailSearch() {
+    [1, 2].forEach((teamNum) => {
+        const input = document.getElementById(`team${teamNum}Search`);
+        const box = document.getElementById(`team${teamNum}SearchResults`);
+        if (!input || !box) return;
+        input.addEventListener("input", () =>
+            renderSearchResults(teamNum, input.value),
+        );
+        input.addEventListener("focus", () => {
+            if (input.value.trim()) renderSearchResults(teamNum, input.value);
+        });
+        // Delay hide so a result click registers before blur dismisses the list.
+        input.addEventListener("blur", () =>
+            setTimeout(() => {
+                box.hidden = true;
+            }, 160),
+        );
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") clearSearch(teamNum);
+        });
+        // mousedown fires before the input's blur, so the pick still registers.
+        box.addEventListener("mousedown", (e) => {
+            const el = e.target.closest("[data-idx]");
+            if (!el) return;
+            e.preventDefault();
+            const item = _searchResults[teamNum][parseInt(el.dataset.idx, 10)];
+            if (item) pickFromSearch(teamNum, item);
+        });
+    });
+}
+
+// ===== PHASE TRANSITION (pick <-> battle) =====
+// Battle expands the arena and shrinks the rails to the picked unit + live team
+// stats; pick phase restores the full pickers + Start button.
+function setSimPhase(battle) {
+    const stage = document.getElementById("simStage");
+    if (stage) stage.classList.toggle("battle-active", battle);
+    const hide = (id, h) => {
+        const el = document.getElementById(id);
+        if (el) el.hidden = h;
+    };
+    hide("startBtn", battle);
+    hide("simControls", !battle);
+    hide("battleTimer", !battle);
+    hide("dmgToggle", !battle);
+    hide("team1Live", !battle);
+    hide("team2Live", !battle);
+    const hint = document.getElementById("startHint");
+    if (battle) {
+        if (hint) hint.style.display = "none";
+    } else {
+        hide("debugPanel", true);
+        const t = document.getElementById("dmgToggle");
+        if (t) t.setAttribute("aria-expanded", "false");
+        updateStartReady(); // restores Start button + hint state
+    }
+}
+
 // ===== PROJECTILE & EFFECT CLASSES =====
 
 class Projectile {
@@ -2529,6 +2674,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Render initial selection UI
     initSelectionDelegation();
+    initRailSearch();
     renderSelection(1);
     renderSelection(2);
 
@@ -2547,12 +2693,23 @@ document.addEventListener("DOMContentLoaded", async () => {
         .getElementById("resetBtn")
         .addEventListener("click", () => {
             simulation.reset();
-            document.getElementById("pauseBtn").disabled = true;
-            document.getElementById("pauseBtn").textContent =
-                "Pause";
-            document.getElementById("resetBtn").disabled = true;
-            updateStartReady();
+            document.getElementById("pauseBtn").textContent = "Pause";
+            // Return to the pick phase: rails expand, search returns, arena
+            // shrinks, Start button comes back.
+            setSimPhase(false);
         });
+
+    // Damage-breakdown toggle (battle phase only).
+    const dmgToggle = document.getElementById("dmgToggle");
+    if (dmgToggle) {
+        dmgToggle.addEventListener("click", () => {
+            const panel = document.getElementById("debugPanel");
+            if (!panel) return;
+            const willOpen = panel.hidden;
+            panel.hidden = !willOpen;
+            dmgToggle.setAttribute("aria-expanded", String(willOpen));
+        });
+    }
     const speedSlider = document.getElementById("speedSlider");
     speedSlider.addEventListener("input", (e) => {
         simulation.speedMultiplier = parseFloat(e.target.value);
@@ -2834,14 +2991,12 @@ async function startBattle() {
         document.getElementById("resetBtn").disabled = false;
         simulation.start();
 
-        // The first-visit guide has done its job once a battle is running.
-        const howto = document.getElementById("simHowto");
-        if (howto) howto.style.display = "none";
-        // Bring the battlefield itself into view — on a phone it's below the
-        // fold, so centre the canvas so players see the fight straight away.
-        const canvasEl = document.getElementById("battleCanvas");
-        if (canvasEl && typeof canvasEl.scrollIntoView === "function") {
-            canvasEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        // Expand the arena, shrink the rails to the picked unit + live stats.
+        setSimPhase(true);
+        // On a phone (3-row stack) the arena is the middle row — bring it up.
+        const stageEl = document.getElementById("simStage");
+        if (stageEl && typeof stageEl.scrollIntoView === "function") {
+            stageEl.scrollIntoView({ behavior: "smooth", block: "start" });
         }
     } catch (error) {
         alert(`Error: ${error.message}`);

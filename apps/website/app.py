@@ -717,22 +717,34 @@ def api_armor_classes():
 
 @lru_cache(maxsize=1)
 def _catalog_payload():
-    """Built once per process. In R2 mode reads Postgres; else synthesizes from
-    the in-repo manifest. Restart/redeploy refreshes it (acceptable: catalog
-    changes only at publish time)."""
+    """Built once per process. With a catalog DB, reads Postgres (URLs already
+    stored); else synthesizes from the in-repo manifest, pointing media at the
+    /assets bucket-broker route when the bucket is configured, otherwise /static.
+    Restart/redeploy refreshes it (catalog changes only at publish time)."""
     try:
         build = get_current_build() or "local"
     except Exception:
         build = "local"
-    if _assets_cfg.assets_enabled():
+    if _assets_cfg.database_url():
         from aoe2x.assets import catalog_pg
-        return catalog_pg.load_catalog(build, _assets_cfg.cdn_base_url())
-    return _assets_catalog.synthesize_local(cdn_base="", build=str(build))
+        return catalog_pg.load_catalog(build, "")
+    base = _assets_cfg.ASSET_ROUTE_PREFIX if _assets_cfg.assets_enabled() else ""
+    return _assets_catalog.synthesize_local(asset_base=base, build=str(build))
 
 
 @app.route("/api/assets/catalog")
 def assets_catalog():
     return jsonify(_catalog_payload())
+
+
+@app.route("/assets/<path:key>")
+def asset_redirect(key):
+    """Broker access to the private Railway Bucket: 302 -> short-lived presigned
+    URL so the browser fetches bytes straight from the bucket (free egress)."""
+    if not _assets_cfg.assets_enabled():
+        abort(404)
+    from aoe2x.assets import bucket as _assets_bucket
+    return redirect(_assets_bucket.presigned_get(key), code=302)
 
 
 @app.route("/api/ref/civ/<civ_name>")

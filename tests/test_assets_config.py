@@ -1,10 +1,18 @@
 import importlib
 from aoe2x.assets import config as cfg
 
+_BUCKET_KEYS = ("BUCKET_ENDPOINT", "BUCKET_ACCESS_KEY_ID", "BUCKET_SECRET_ACCESS_KEY",
+                "BUCKET_NAME", "BUCKET_REGION")
+_FULL_BUCKET = {
+    "BUCKET_ENDPOINT": "https://storage.railway.app",
+    "BUCKET_ACCESS_KEY_ID": "key",
+    "BUCKET_SECRET_ACCESS_KEY": "secret",
+    "BUCKET_NAME": "aoe2-assets-abc123",
+}
+
 
 def _reload(monkeypatch, **env):
-    for k in ("CDN_BASE_URL", "DATABASE_URL", "ASSET_ENV", "R2_BUCKET",
-              "R2_ENDPOINT", "R2_ACCESS_KEY", "R2_SECRET"):
+    for k in _BUCKET_KEYS + ("DATABASE_URL", "ASSET_ENV"):
         monkeypatch.delenv(k, raising=False)
     for k, v in env.items():
         monkeypatch.setenv(k, v)
@@ -14,17 +22,18 @@ def _reload(monkeypatch, **env):
 def test_disabled_when_unset(monkeypatch):
     c = _reload(monkeypatch)
     assert c.assets_enabled() is False
-    assert c.cdn_base_url() == ""
     assert c.asset_env() == "local"
 
 
-def test_enabled_requires_cdn_and_db(monkeypatch):
-    c = _reload(monkeypatch, CDN_BASE_URL="https://cdn.example.com/")
-    assert c.assets_enabled() is False  # DATABASE_URL missing
-    c = _reload(monkeypatch, CDN_BASE_URL="https://cdn.example.com/",
-                DATABASE_URL="postgresql://x")
+def test_enabled_requires_all_bucket_creds(monkeypatch):
+    # Missing the secret -> still disabled
+    partial = dict(_FULL_BUCKET)
+    del partial["BUCKET_SECRET_ACCESS_KEY"]
+    c = _reload(monkeypatch, **partial)
+    assert c.assets_enabled() is False
+    # All four present -> enabled
+    c = _reload(monkeypatch, **_FULL_BUCKET)
     assert c.assets_enabled() is True
-    assert c.cdn_base_url() == "https://cdn.example.com"  # trailing slash stripped
 
 
 def test_asset_env(monkeypatch):
@@ -32,11 +41,11 @@ def test_asset_env(monkeypatch):
     assert c.asset_env() == "staging"
 
 
-def test_r2_settings(monkeypatch):
-    c = _reload(monkeypatch, R2_ENDPOINT="https://abc.r2.cloudflarestorage.com",
-                R2_BUCKET="aoe2-assets", R2_ACCESS_KEY="key", R2_SECRET="secret")
-    s = c.r2_settings()
-    assert s["endpoint_url"] == "https://abc.r2.cloudflarestorage.com"
-    assert s["bucket"] == "aoe2-assets"
+def test_bucket_settings(monkeypatch):
+    c = _reload(monkeypatch, **_FULL_BUCKET)
+    s = c.bucket_settings()
+    assert s["endpoint_url"] == "https://storage.railway.app"
+    assert s["bucket"] == "aoe2-assets-abc123"
     assert s["aws_access_key_id"] == "key"
     assert s["aws_secret_access_key"] == "secret"
+    assert s["region"] == "auto"  # default when BUCKET_REGION unset

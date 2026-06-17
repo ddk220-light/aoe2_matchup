@@ -1,7 +1,18 @@
 # Asset Storage — R2 + CDN + Queryable Catalog — Design Spec
 
 **Date:** 2026-06-15
-**Status:** Draft for review
+**Status:** Superseded storage backend (2026-06-17)
+
+> **UPDATE 2026-06-17 — backend changed to Railway Bucket.** R2 + a custom CDN
+> domain required migrating `aoe2matchup.com`'s DNS to Cloudflare (it's on Name.com),
+> and Railway has no public buckets/CDN. We switched to an all-Railway design:
+> media lives in a **private Railway Bucket** (S3-compatible, free bucket egress),
+> served via a same-origin **`/assets/<key>` route that 302-redirects to a presigned
+> URL** (browser pulls bytes straight from the bucket). The Postgres catalog, publish
+> CLI, and frontend are unchanged in shape — only the storage creds (`BUCKET_*` instead
+> of `R2_*`/`CDN_BASE_URL`) and the URL base (`/assets` instead of a CDN host) differ.
+> Tradeoff: no global CDN edge (acceptable at current scale). Everything below that
+> references R2/CDN now reads as Railway Bucket / the `/assets` route.
 
 ## Goal
 

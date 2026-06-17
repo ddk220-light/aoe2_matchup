@@ -30,3 +30,13 @@ def test_enabled_requires_cdn_and_db(monkeypatch):
 def test_asset_env(monkeypatch):
     c = _reload(monkeypatch, ASSET_ENV="staging")
     assert c.asset_env() == "staging"
+
+
+def test_r2_settings(monkeypatch):
+    c = _reload(monkeypatch, R2_ENDPOINT="https://abc.r2.cloudflarestorage.com",
+                R2_BUCKET="aoe2-assets", R2_ACCESS_KEY="key", R2_SECRET="secret")
+    s = c.r2_settings()
+    assert s["endpoint_url"] == "https://abc.r2.cloudflarestorage.com"
+    assert s["bucket"] == "aoe2-assets"
+    assert s["aws_access_key_id"] == "key"
+    assert s["aws_secret_access_key"] == "secret"

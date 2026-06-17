@@ -29,7 +29,8 @@ def _upload_dir(client, bucket, local_dir, key_prefix, dry):
             if not fn.lower().endswith(".png"):
                 continue
             local = os.path.join(root, fn)
-            key = f"{key_prefix}/{os.path.relpath(local, local_dir)}"
+            rel = os.path.relpath(local, local_dir).replace(os.sep, "/")
+            key = f"{key_prefix}/{rel}"
             if dry:
                 print(f"PUT s3://{bucket or '<R2_BUCKET>'}/{key}")
             else:

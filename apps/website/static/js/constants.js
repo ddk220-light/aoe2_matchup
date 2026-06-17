@@ -335,9 +335,11 @@ const UNIQUE_BUILDING = {
 
 /* --- Icon Helpers --- */
 function getIconUrl(name) {
-    const icons = (typeof window !== "undefined") ? window._ASSET_ICONS : null;
-    if (icons && icons[name]) return icons[name];
     const id = NAME_TO_ICON[name];
+    // The catalog `icons` map is keyed by icon id (the file stem), which also
+    // de-dupes display names that share one icon (e.g. Ratha (Melee)/(Ranged)).
+    const icons = (typeof window !== "undefined") ? window._ASSET_ICONS : null;
+    if (id && icons && icons[id]) return icons[id];
     return id ? `${ICON_BASE}${id}.png` : "";
 }
 
@@ -355,6 +357,8 @@ function spriteFor(name, team) {
     return getIconUrl(name);
 }
 
+// NOTE: hasSprite/spriteRatio read the static UNIT_SPRITES (not the catalog
+// override). The committed UNIT_SPRITES must stay a superset of the PG catalog.
 /* Does this unit have a usable sprite at all? Includes off-shape (borderline /
    extreme) sprites, not just square — only truly spriteless units (naval) miss.
    Call sites use this to switch layout (drop the circle/frame) when a real sprite

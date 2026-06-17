@@ -38,6 +38,8 @@ from aoe2x.advisor.top_units import load_top_units, compute_top_units
 from aoe2x.sim.unit_lines import UNIT_LINES, TREBUCHET_SLUGS, CIV_MISSING_UNITS
 from aoe2x.rank.pool_scores_query import load_pool_scores
 from aoe2x.batch.patches_db import get_current_build
+from aoe2x.assets import config as _assets_cfg
+from aoe2x.assets import catalog as _assets_catalog
 
 
 app = Flask(__name__)
@@ -711,6 +713,26 @@ def api_armor_classes():
     classes = {str(row["id"]): row["name"] for row in cursor.fetchall()}
     conn.close()
     return jsonify(classes)
+
+
+@lru_cache(maxsize=1)
+def _catalog_payload():
+    """Built once per process. In R2 mode reads Postgres; else synthesizes from
+    the in-repo manifest. Restart/redeploy refreshes it (acceptable: catalog
+    changes only at publish time)."""
+    try:
+        build = get_current_build()
+    except Exception:
+        build = "local"
+    if _assets_cfg.assets_enabled():
+        from aoe2x.assets import catalog_pg
+        return catalog_pg.load_catalog(build, _assets_cfg.cdn_base_url())
+    return _assets_catalog.synthesize_local(cdn_base="", build=str(build))
+
+
+@app.route("/api/assets/catalog")
+def assets_catalog():
+    return jsonify(_catalog_payload())
 
 
 @app.route("/api/ref/civ/<civ_name>")

@@ -721,7 +721,7 @@ def _catalog_payload():
     the in-repo manifest. Restart/redeploy refreshes it (acceptable: catalog
     changes only at publish time)."""
     try:
-        build = get_current_build()
+        build = get_current_build() or "local"
     except Exception:
         build = "local"
     if _assets_cfg.assets_enabled():

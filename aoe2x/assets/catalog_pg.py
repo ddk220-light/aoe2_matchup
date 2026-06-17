@@ -1,6 +1,7 @@
 """Postgres-backed asset catalog (R2 mode). Source of truth populated by
 publish.py; read by the app via load_catalog()."""
 import psycopg
+from psycopg.types.json import Jsonb
 
 from aoe2x.assets import config
 
@@ -51,7 +52,7 @@ def upsert_catalog(catalog: dict):
                DO UPDATE SET url=EXCLUDED.url, width=EXCLUDED.width,
                              height=EXCLUDED.height, meta=EXCLUDED.meta""",
             [(r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7],
-              psycopg.types.json.Jsonb(r[8]) if r[8] is not None else None)
+              Jsonb(r[8]) if r[8] is not None else None)
              for r in rows])
 
 

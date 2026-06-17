@@ -1,6 +1,9 @@
 flask==3.0.0
 gunicorn==21.2.0
 numpy
+# Asset storage (Phase 1): R2 (S3-compatible) uploads + Postgres asset catalog
+boto3>=1.34.0
+psycopg[binary]>=3.1.0
 # ---- Replay Analyzer feature (aoe2x/replay: blueprint.py, clip_export.py) ----
 requests>=2.31.0
 flask-cors>=4.0.0

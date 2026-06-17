@@ -4,6 +4,28 @@
  * No module system — loaded via <script> in base.html before page scripts.
  */
 
+// Asset catalog: fetch once, expose sprite/icon URL overrides on window so
+// constants.js (which loads BEFORE this file) can read them once page scripts run.
+// Until it resolves (or in fallback), the resolvers use the static UNIT_SPRITES /
+// NAME_TO_ICON maps, so behavior is unchanged.
+let _assetCatalogPromise = null;
+function loadAssetCatalog() {
+  if (!_assetCatalogPromise) {
+    _assetCatalogPromise = fetch("/api/assets/catalog")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((cat) => {
+        if (cat) {
+          window._ASSET_SPRITES = cat.sprites;
+          window._ASSET_ICONS = cat.icons;
+        }
+        return cat;
+      })
+      .catch(() => null);
+  }
+  return _assetCatalogPromise;
+}
+loadAssetCatalog();
+
 var DEFAULT_TIMEOUT_MS = 10000;
 
 function ApiError(message, status, body) {

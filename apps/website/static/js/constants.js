@@ -335,9 +335,10 @@ const UNIQUE_BUILDING = {
 
 /* --- Icon Helpers --- */
 function getIconUrl(name) {
+    const icons = (typeof window !== "undefined") ? window._ASSET_ICONS : null;
+    if (icons && icons[name]) return icons[name];
     const id = NAME_TO_ICON[name];
-    if (!id) return null;
-    return `${ICON_BASE}${id}.png`;
+    return id ? `${ICON_BASE}${id}.png` : "";
 }
 
 /* Generated in-game idle sprite (red player-2 / blue player-1), transparent.
@@ -345,7 +346,9 @@ function getIconUrl(name) {
    loaded from unit_sprites.js); everything else falls back to the portrait so the
    UI degrades cleanly. team===1 -> blue, otherwise red (team 2 / neutral display). */
 function spriteFor(name, team) {
-    const s = (typeof UNIT_SPRITES !== "undefined") ? UNIT_SPRITES[name] : null;
+    const map = (typeof window !== "undefined" && window._ASSET_SPRITES)
+        || (typeof UNIT_SPRITES !== "undefined" ? UNIT_SPRITES : null);
+    const s = map ? map[name] : null;
     if (s && s.url) {
         return team === 1 && s.url_blue ? s.url_blue : s.url;
     }

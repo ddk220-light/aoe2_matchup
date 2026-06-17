@@ -28,6 +28,7 @@
 - **Fallback mode** (`assets_enabled == False`): `url`/`url_blue`/icon are same-origin `/static/img/...` (identical to today).
 - **R2 mode**: they are absolute `CDN_BASE_URL` URLs.
 - Team→color (established): the frontend keeps `spriteFor(name, team)` logic — team 1 → `url_blue` (blue), team 2 → `url` (red).
+- `sprites` is keyed by unit **display name**; `icons` is keyed by **icon id** (the file stem, e.g. `"Elite_Huskarl"`, `"Ratha"`). The frontend resolves a display name to its icon id via `NAME_TO_ICON`, then looks up the catalog by id — this de-dupes display names that share one icon (e.g. Ratha Melee/Ranged).
 
 ## File structure
 
@@ -666,7 +667,7 @@ git commit -m "feat(assets): frontend reads sprite/icon URLs from the catalog (s
 
 - [ ] **Step 1:** Confirm staging env vars set: `R2_ENDPOINT`, `R2_ACCESS_KEY`, `R2_SECRET`, `R2_BUCKET`, `CDN_BASE_URL`, `DATABASE_URL`, `ASSET_ENV=staging`.
 - [ ] **Step 2:** Run the publish against staging (from a shell with the staging env): `python -m aoe2x.assets.publish --build $(python -c "from aoe2x.batch.patches_db import get_current_build; print(get_current_build())")`. Expected: media uploaded, catalog upserted.
-- [ ] **Step 3:** Push branch to `staging`; after Railway deploys, load the Battle Sim on the staging URL. In the browser Network panel, confirm sprite/icon requests hit `CDN_BASE_URL` (not the container). Confirm `/api/assets/catalog` returns absolute CDN URLs.
+- [ ] **Step 3:** Push branch to `staging`; after Railway deploys, load the Battle Sim on the staging URL. In the browser Network panel, confirm **both sprite AND icon** requests hit `CDN_BASE_URL` (not the container) — check icons specifically, since they resolve via `NAME_TO_ICON` display→id then a catalog lookup by id (the catalog `icons` map is keyed by icon id / file stem, not display name). Confirm `/api/assets/catalog` returns absolute CDN URLs.
 - [ ] **Step 4:** Visual parity check (sprites render, team colors correct) and run a battle.
 - [ ] **Step 5:** Fallback check: temporarily unset `CDN_BASE_URL` on staging → confirm app falls back to `/static/img` cleanly (no broken images). Restore it.
 - [ ] **Step 6:** Only then promote (provision prod R2 prefix + prod Postgres + prod env vars first, publish to prod, then fast-forward `staging → main`).

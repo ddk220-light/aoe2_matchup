@@ -10,7 +10,9 @@ import os
 import boto3
 from botocore.client import Config as _BotoConfig
 
-from aoe2x.assets import catalog, catalog_pg, config
+from aoe2x.assets import catalog, config
+# catalog_pg (psycopg) imported lazily in main() so media-only publishing works
+# on a machine without psycopg installed.
 from aoe2x.paths import WEBAPP_DIR
 
 STATIC = str(WEBAPP_DIR / "static")
@@ -74,9 +76,16 @@ def main():
         print(f"catalog: {len(cat['sprites'])} sprites, {len(cat['icons'])} icons "
               f"(env={config.asset_env()}) [dry-run]")
     elif config.database_url():
-        catalog_pg.ensure_schema()
-        catalog_pg.upsert_catalog(cat)
-        print(f"catalog: upserted to Postgres for build {args.build} (env={config.asset_env()})")
+        try:
+            from aoe2x.assets import catalog_pg
+        except ImportError:
+            print("catalog: psycopg not installed — skipped Postgres write (media "
+                  "uploaded; the app synthesizes the catalog from the in-repo "
+                  "manifest at runtime, and these slugs' URLs are unchanged)")
+        else:
+            catalog_pg.ensure_schema()
+            catalog_pg.upsert_catalog(cat)
+            print(f"catalog: upserted to Postgres for build {args.build} (env={config.asset_env()})")
     else:
         print("catalog: no DATABASE_URL — skipped Postgres; app will synthesize "
               "the catalog from the in-repo manifest at runtime")

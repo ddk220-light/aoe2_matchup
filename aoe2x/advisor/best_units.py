@@ -40,7 +40,10 @@ CIVS_WITHOUT_TREBUCHET = {"Wu", "Wei", "Shu"}
 
 # Siege line slugs — these only show percentile scores in match-advisor (no sims).
 # Naval line slugs — same: percentile-only display, no on-the-fly sims yet.
-SIEGE_LINE_SLUGS = {"ram", "bombard_cannon", "trebuchet", "cannon_galleon"}
+# `mangonel` (the Mangonel/Onager/Siege Onager/Rocket Cart workshop line, slug
+# `siege_onager`) carries no battle sims at all, so it renders as a stat-only
+# entry (see SIEGE_STATIC_LINES) — but it's still stripped to minimal display.
+SIEGE_LINE_SLUGS = {"ram", "mangonel", "bombard_cannon", "trebuchet", "cannon_galleon"}
 NAVAL_LINE_SLUGS = {"galleon", "fire", "hulk"}
 
 
@@ -173,7 +176,7 @@ COLUMN_DEFS = {
     "cavalry": ["light_cav", "knight", "camel", "steppe_lancer", "elephant"],
     "ranged": ["skirmisher", "archer", "cav_archer", "gunpowder", "scorpion"],
     "infantry": ["militia", "spear", "shock_infantry"],
-    "siege": ["ram", "bombard_cannon", "trebuchet", "cannon_galleon"],
+    "siege": ["ram", "mangonel", "bombard_cannon", "trebuchet", "cannon_galleon"],
     "navy": ["galleon", "fire", "hulk", "demo"],
 }
 
@@ -1159,6 +1162,29 @@ def generate_naval_column(civ_name, conn, age_key="imperial", techs_by_slug=None
     return col_data
 
 
+def generate_siege_static_column(civ_name, conn, age_key="imperial", techs_by_slug=None, effects_by_slug=None, reference_techs=None):
+    """Return the stat-only siege lines for one civ (currently just the mangonel
+    line: Mangonel / Onager / Siege Onager / Heavy Rocket Cart, all slug
+    `siege_onager`). This line has no battle sims, so — like the demo ship line —
+    it gets a stat-only entry sourced from ref_units (strength=None, no tier).
+    Returns {"mangonel": [entry] or None}; None if the civ can't build it.
+    """
+    db_age = "Imperial"  # Imperial-only data model
+    rc = conn.cursor()
+    col_data = {}
+    for line_slug, query_slug in (("mangonel", "siege_onager"),):
+        rc.execute(
+            "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=? AND age=?",
+            (civ_name, query_slug, db_age),
+        )
+        row = rc.fetchone()
+        col_data[line_slug] = (
+            [_build_naval_unit_entry(row, civ_name, conn, db_age, techs_by_slug, effects_by_slug, reference_techs)]
+            if row else None
+        )
+    return col_data
+
+
 def generate_cannon_galleon_entry(civ_name, conn, age_key="imperial", techs_by_slug=None, effects_by_slug=None, reference_techs=None):
     """Return cannon_galleon entry for one civ at one age, or None if unavailable.
 
@@ -1218,6 +1244,9 @@ def compute_civ_power_units(build_number=None):
     # to a stat-only entry sourced from ref_units. The other naval/siege lines
     # use their battle_scores-derived percentile.
     NAVAL_STATIC_LINES = {"demo"}
+    # The mangonel line (Mangonel/Onager/Siege Onager/Rocket Cart) is never
+    # simulated, so it's always a stat-only entry from ref_units.
+    SIEGE_STATIC_LINES = {"mangonel"}
 
     result = {}
 
@@ -1237,6 +1266,10 @@ def compute_civ_power_units(build_number=None):
             naval_fallback = generate_naval_column(
                 civ, conn, age_key, techs_by_slug, effects_by_slug, reference_techs
             )
+            # Pre-compute the stat-only mangonel-line entry (also no battle_scores).
+            siege_fallback = generate_siege_static_column(
+                civ, conn, age_key, techs_by_slug, effects_by_slug, reference_techs
+            )
 
             for col_key, line_slugs in COLUMN_DEFS.items():
                 col_data = {}
@@ -1244,6 +1277,9 @@ def compute_civ_power_units(build_number=None):
                     # Lines with no sim data: use stat-only fallback from ref_units
                     if line_slug in NAVAL_STATIC_LINES:
                         col_data[line_slug] = naval_fallback.get(line_slug)
+                        continue
+                    if line_slug in SIEGE_STATIC_LINES:
+                        col_data[line_slug] = siege_fallback.get(line_slug)
                         continue
 
                     score_type = LINE_SCORE_TYPE.get(line_slug)

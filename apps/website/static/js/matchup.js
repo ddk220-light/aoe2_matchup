@@ -9,7 +9,7 @@ const COLUMN_DEFS = {
     cavalry: ["light_cav", "knight", "camel", "steppe_lancer", "elephant"],
     ranged: ["skirmisher", "archer", "cav_archer", "gunpowder", "scorpion"],
     infantry: ["militia", "spear", "shock_infantry"],
-    siege: ["ram", "bombard_cannon", "trebuchet", "cannon_galleon"],
+    siege: ["ram", "mangonel", "bombard_cannon", "trebuchet", "cannon_galleon"],
     navy: ["galleon", "fire", "hulk", "demo"],
 };
 
@@ -36,6 +36,7 @@ const LINE_NAMES = {
     spear: "Spear Line",
     shock_infantry: "Shock Infantry",
     ram: "Rams",
+    mangonel: "Mangonel Line",
     bombard_cannon: "Bombard Cannon",
     trebuchet: "Trebuchet",
     cannon_galleon: "Cannon Galleon",

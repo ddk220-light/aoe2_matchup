@@ -390,16 +390,20 @@ function sheetFor(name) {
     });
 })();
 
-/* Generated in-game idle sprite (red player-2 / blue player-1), transparent.
-   Returns a sprite URL only for units with a square-enough sprite (UNIT_SPRITES,
-   loaded from unit_sprites.js); everything else falls back to the portrait so the
-   UI degrades cleanly. team===1 -> blue, otherwise red (team 2 / neutral display). */
+/* Generated in-game idle sprite (transparent). Returns a sprite URL only for
+   units with a square-enough sprite (UNIT_SPRITES, loaded from unit_sprites.js);
+   everything else falls back to the portrait so the UI degrades cleanly.
+   Always returns the RED sprite for both teams: the attack ANIMATIONS are
+   red-only, so a blue idle sprite would visibly flip colour the moment a unit
+   attacks. Teams are told apart by HP-bar colour instead. (The `team` param is
+   kept for call-site compatibility but is intentionally unused; the blue
+   `url_blue` variant is no longer rendered.) */
 function spriteFor(name, team) {
     const map = (typeof window !== "undefined" && window._ASSET_SPRITES)
         || (typeof UNIT_SPRITES !== "undefined" ? UNIT_SPRITES : null);
     const s = map ? map[name] : null;
     if (s && s.url) {
-        return team === 1 && s.url_blue ? s.url_blue : s.url;
+        return s.url;
     }
     return getIconUrl(name);
 }

@@ -301,8 +301,10 @@ function setTeamAge(teamNum, age) {
 function selectUnit(teamNum, slug, name) {
     teamState[teamNum].unitSlug = slug;
     teamState[teamNum].unitName = name;
-    // Preload canvas image: team-colored sprite (team 1 red, team 2 blue) when the
-    // unit has a square sprite, else the portrait. unitIsSprite drives no-circle render.
+    // Preload canvas image: the red idle sprite (both teams) when the unit has a
+    // square sprite, else the portrait. Teams are told apart by HP-bar colour, not
+    // sprite colour, so the unit doesn't flip colour when its (red) attack anim
+    // plays. unitIsSprite drives no-circle render.
     const url = spriteFor(name, teamNum);
     if (url) {
         const img = new Image();

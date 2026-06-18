@@ -351,6 +351,14 @@ function animFor(name) {
     return (anims && anims[name]) || null;
 }
 
+/* Attack sprite-sheet for a unit: {url, frames, fw, fh, dur} or null. Used by
+   the battle-sim canvas to play the attack animation frame-by-frame (canvas
+   can't auto-play a WebP). Present only in bucket mode. */
+function sheetFor(name) {
+    const sheets = (typeof window !== "undefined") ? window._ASSET_SHEETS : null;
+    return (sheets && sheets[name]) || null;
+}
+
 /* Hover-to-animate. Any element with [data-anim-name] animates a target <img>
    on hover and reverts on leave. The target is the element's `.anim-slot` child
    (used by hover cards) or the element itself if it's an <img> (table icons).

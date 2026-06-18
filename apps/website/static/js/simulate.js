@@ -89,6 +89,9 @@ const unitImages = { 1: null, 2: null };
 // Whether the preloaded image is a real (square) sprite vs a portrait fallback —
 // drives the no-circle sprite rendering in BattleUnit.render().
 const unitIsSprite = { 1: false, 2: false };
+// Preloaded attack sprite-sheet per team: { img, meta:{frames,fw,fh,dur} } or null.
+// Played frame-by-frame in the canvas while a unit is attacking.
+const unitSheets = { 1: null, 2: null };
 
 // ===== SELECTION UI =====
 // Click handlers are bound once via delegation in DOMContentLoaded (see
@@ -309,6 +312,15 @@ function selectUnit(teamNum, slug, name) {
         unitImages[teamNum] = null;
     }
     unitIsSprite[teamNum] = hasSprite(name);
+    // Preload the attack sprite-sheet (animated frames) if this unit has one.
+    const sheet = (typeof sheetFor === "function") ? sheetFor(name) : null;
+    if (sheet && sheet.url) {
+        const sImg = new Image();
+        sImg.src = sheet.url;
+        unitSheets[teamNum] = { img: sImg, meta: sheet };
+    } else {
+        unitSheets[teamNum] = null;
+    }
     renderSelection(teamNum);
 }
 
@@ -769,6 +781,7 @@ class BattleUnit {
 
         // Sprite image ref (set externally)
         this.spriteImg = null;
+        this.attackSheet = null;
     }
 
     isRanged() {
@@ -1919,16 +1932,31 @@ class BattleUnit {
             // scaling by the LARGER sprite dimension so wide/tall off-shapes stay
             // fully contained and never explode in one axis.
             const box = this.radius * 2.8;
-            let s = box / Math.max(img.naturalWidth, img.naturalHeight);
             // Attack tell: a warm glow + slight lunge that pulses out over the
             // attack timer, so a swing/shot is unmistakable. atk goes 1 -> 0.
             const atk =
                 this.attackAnimTimer > 0
                     ? Math.min(1, this.attackAnimTimer / 0.18)
                     : 0;
+            // Attack sprite-sheet playback: while a unit is attacking, play its
+            // attack animation frame-by-frame off a horizontal strip (canvas can't
+            // auto-play a WebP); otherwise draw the static idle sprite. The strip
+            // is single-colour (red) for both teams by design. Source rect picks
+            // the current frame; the static path uses the whole image.
+            const sheet = this.attackSheet;
+            const playing = this.state === "attacking" && sheet && sheet.img
+                && sheet.img.complete && sheet.img.naturalWidth > 0;
+            let src = img, sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight;
+            if (playing) {
+                const m = sheet.meta;
+                const phase = parseInt(String(this.id).split("-")[1], 10) || 0;
+                const frame = (Math.floor((simulation.battleTime * 1000) / m.dur) + phase) % m.frames;
+                src = sheet.img; sx = frame * m.fw; sy = 0; sw = m.fw; sh = m.fh;
+            }
+            let s = box / Math.max(sw, sh);
             if (atk > 0) s *= 1 + 0.1 * atk;
-            const dw = img.naturalWidth * s;
-            const dh = img.naturalHeight * s;
+            const dw = sw * s;
+            const dh = sh * s;
             ctx.save();
             if (atk > 0) {
                 ctx.shadowColor = `rgba(255, 209, 74, ${0.95 * atk})`;
@@ -1936,13 +1964,12 @@ class BattleUnit {
             }
             if (this.team === 1) {
                 // Sprites are drawn facing left by default. Team 1 spawns on the
-                // left and fights rightward, so mirror its sprite horizontally
-                // about the unit center to face the enemy.
+                // left and fights rightward, so mirror horizontally to face the enemy.
                 ctx.translate(this.x, 0);
                 ctx.scale(-1, 1);
-                ctx.drawImage(img, -dw / 2, this.y - dh / 2, dw, dh);
+                ctx.drawImage(src, sx, sy, sw, sh, -dw / 2, this.y - dh / 2, dw, dh);
             } else {
-                ctx.drawImage(img, this.x - dw / 2, this.y - dh / 2, dw, dh);
+                ctx.drawImage(src, sx, sy, sw, sh, this.x - dw / 2, this.y - dh / 2, dw, dh);
             }
             ctx.restore();
         } else {
@@ -2126,6 +2153,7 @@ class BattleSimulation {
             // Assign preloaded sprite image
             unit.spriteImg = unitImages[teamNum];
             unit.isSprite = unitIsSprite[teamNum];
+            unit.attackSheet = unitSheets[teamNum];
             team.push(unit);
         }
 

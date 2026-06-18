@@ -59,6 +59,11 @@ class MeleeEffect {
     }
     update() {}
 }
+// Collaborator the BattleUnit constructor calls to pick a projectile shape.
+// Kind doesn't affect accuracy/miss logic, so a constant stub is fine here.
+function classifyProjectile() {
+    return "arrow";
+}
 
 const BattleUnit = eval(`(${classSrc})`);
 

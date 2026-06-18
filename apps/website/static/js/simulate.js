@@ -479,6 +479,23 @@ function setSimPhase(battle) {
 
 // ===== PROJECTILE & EFFECT CLASSES =====
 
+// Classify a firing unit (by slug) into a projectile KIND, so each unit line
+// gets a realistic, recognisable projectile (NOT team-tinted — projectiles are
+// coloured by what they are). Order matters: bombard before gunpowder.
+function classifyProjectile(slug) {
+    const s = slug || "";
+    if (s.indexOf("bombard_cannon") !== -1) return "cannonball"; // big black ball
+    if (s.indexOf("siege_onager") !== -1) return "stone";        // onager boulder
+    if (s.indexOf("hand_cannoneer") !== -1 || s.indexOf("janissary") !== -1
+        || s.indexOf("conquistador") !== -1 || s.indexOf("organ_gun") !== -1)
+        return "bullet";                                          // gunpowder shot
+    if (s.indexOf("scorpion") !== -1 || s.indexOf("ballista_elephant") !== -1)
+        return "bolt";                                            // heavy ballista bolt
+    if (s.indexOf("skirm") !== -1 || s.indexOf("genitour") !== -1)
+        return "javelin";                                         // thrown javelin
+    return "arrow";                                               // archers / default
+}
+
 class Projectile {
     constructor(
         startX,
@@ -487,7 +504,7 @@ class Projectile {
         targetY,
         speed,
         team,
-        isSiege,
+        kind,
         onHit,
     ) {
         this.x = startX;
@@ -496,7 +513,10 @@ class Projectile {
         this.targetY = targetY;
         this.speed = speed || 7 * TILE_SIZE; // default fallback
         this.team = team;
-        this.isSiege = isSiege;
+        // Projectile kind drives the shape/colour: arrow | javelin | bolt |
+        // bullet | cannonball | stone. (Back-compat: a truthy non-string — the
+        // old is_siege_projectile flag — maps to a generic siege "stone".)
+        this.kind = typeof kind === "string" ? kind : (kind ? "stone" : "arrow");
         this.onHit = onHit; // callback when projectile arrives
         this.done = false;
         this.prevX = startX;
@@ -527,64 +547,104 @@ class Projectile {
         }
     }
 
+    // Round projectiles (bullet / cannonball / stone): a filled ball with a faint
+    // motion trail and a small specular highlight. No team tint — coloured by what
+    // the projectile is.
+    _renderBall(ctx, r, fill, trail) {
+        ctx.globalAlpha = 0.25;
+        ctx.beginPath();
+        ctx.moveTo(this.prevX, this.prevY);
+        ctx.lineTo(this.x, this.y);
+        ctx.strokeStyle = trail;
+        ctx.lineWidth = r;
+        ctx.lineCap = "round";
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(this.x - r * 0.3, this.y - r * 0.3, r * 0.32, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,0.4)";
+        ctx.fill();
+    }
+
     render(ctx) {
         if (this.done) return;
-        const color = this.isSiege
-            ? "#f59e0b"
-            : this.team === 1
-              ? "#60a5fa"
-              : "#f87171";
+        const k = this.kind;
 
-        if (this.isSiege) {
-            // Siege shot stays a round stone/ball with a faint motion trail.
-            ctx.globalAlpha = 0.3;
-            ctx.beginPath();
-            ctx.moveTo(this.prevX, this.prevY);
-            ctx.lineTo(this.x, this.y);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 5;
-            ctx.stroke();
-            ctx.globalAlpha = 1.0;
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
-            ctx.fillStyle = color;
-            ctx.fill();
-            return;
-        }
+        // --- Round shots ---
+        if (k === "bullet") { this._renderBall(ctx, 2.6, "#141414", "#333"); return; }
+        if (k === "cannonball") { this._renderBall(ctx, 5.5, "#0d0d0d", "#000"); return; }
+        if (k === "stone") { this._renderBall(ctx, 5, "#867c6e", "#6f665a"); return; }
 
-        // Arrow: a thin vector shaft + filled head + small fletching, oriented
-        // along the flight path and tinted by team (blue = team 1, red = team 2).
-        // The tip leads at (this.x, this.y); the shaft trails behind. Sized to read
-        // clearly at unit scale (~18px long) without dominating the field.
-        const HEAD = 5, HEADW = 3, SHAFT = 10, FLETCH = 3.5;
+        // --- Elongated shots (arrow / javelin / bolt): oriented along flight ---
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
-        ctx.strokeStyle = color;
-        ctx.fillStyle = color;
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
-        // shaft (from just behind the head back to the tail)
-        ctx.lineWidth = 1.7;
-        ctx.beginPath();
-        ctx.moveTo(-HEAD + 1, 0);
-        ctx.lineTo(-HEAD - SHAFT, 0);
-        ctx.stroke();
-        // fletching: two short barbs flaring back at the tail
-        ctx.lineWidth = 1.3;
-        ctx.beginPath();
-        ctx.moveTo(-HEAD - SHAFT, 0);
-        ctx.lineTo(-HEAD - SHAFT - FLETCH, -2.6);
-        ctx.moveTo(-HEAD - SHAFT, 0);
-        ctx.lineTo(-HEAD - SHAFT - FLETCH, 2.6);
-        ctx.stroke();
-        // arrowhead: filled triangle, tip leading forward (+x)
-        ctx.beginPath();
-        ctx.moveTo(2, 0);
-        ctx.lineTo(-HEAD + 2, -HEADW);
-        ctx.lineTo(-HEAD + 2, HEADW);
-        ctx.closePath();
-        ctx.fill();
+
+        if (k === "javelin") {
+            // Longer + thicker than an arrow, brown wooden shaft, sharp metal tip,
+            // NO fletching.
+            const TIP = 5, TIPW = 2.5, SHAFT = 18;
+            ctx.strokeStyle = "#7a5230";
+            ctx.lineWidth = 2.6;
+            ctx.beginPath();
+            ctx.moveTo(-TIP, 0);
+            ctx.lineTo(-TIP - SHAFT, 0);
+            ctx.stroke();
+            ctx.fillStyle = "#cfd4da"; // steel tip
+            ctx.beginPath();
+            ctx.moveTo(3, 0);
+            ctx.lineTo(-TIP + 1, -TIPW);
+            ctx.lineTo(-TIP + 1, TIPW);
+            ctx.closePath();
+            ctx.fill();
+        } else if (k === "bolt") {
+            // Ballista bolt: much thicker + bigger, heavy dark-wood shaft + broad
+            // steel head (reads as a bolt that punches through).
+            const HEAD = 6, HEADW = 4, SHAFT = 14;
+            ctx.strokeStyle = "#4f3f28";
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(-HEAD, 0);
+            ctx.lineTo(-HEAD - SHAFT, 0);
+            ctx.stroke();
+            ctx.fillStyle = "#aeb4bd";
+            ctx.beginPath();
+            ctx.moveTo(4, 0);
+            ctx.lineTo(-HEAD + 1, -HEADW);
+            ctx.lineTo(-HEAD + 1, HEADW);
+            ctx.closePath();
+            ctx.fill();
+        } else {
+            // Arrow: brown shaft, black head, white feathers. ~18px long.
+            const HEAD = 5, HEADW = 3, SHAFT = 10, FLETCH = 3.5;
+            ctx.strokeStyle = "#6b4a2b"; // wooden shaft
+            ctx.lineWidth = 1.7;
+            ctx.beginPath();
+            ctx.moveTo(-HEAD + 1, 0);
+            ctx.lineTo(-HEAD - SHAFT, 0);
+            ctx.stroke();
+            ctx.strokeStyle = "#f0f0f0"; // white feathers
+            ctx.lineWidth = 1.3;
+            ctx.beginPath();
+            ctx.moveTo(-HEAD - SHAFT, 0);
+            ctx.lineTo(-HEAD - SHAFT - FLETCH, -2.6);
+            ctx.moveTo(-HEAD - SHAFT, 0);
+            ctx.lineTo(-HEAD - SHAFT - FLETCH, 2.6);
+            ctx.stroke();
+            ctx.fillStyle = "#15110d"; // black arrowhead
+            ctx.beginPath();
+            ctx.moveTo(2, 0);
+            ctx.lineTo(-HEAD + 2, -HEADW);
+            ctx.lineTo(-HEAD + 2, HEADW);
+            ctx.closePath();
+            ctx.fill();
+        }
         ctx.restore();
     }
 }
@@ -651,6 +711,8 @@ class BattleUnit {
         this.team = team;
         this.stats = stats;
         this.slug = slug;
+        // Realistic per-line projectile shape (arrow/javelin/bolt/bullet/cannonball/stone).
+        this.projectileKind = classifyProjectile(slug);
         this.civName = civName;
 
         this.maxHp = stats.hp;
@@ -1346,7 +1408,7 @@ class BattleUnit {
             target.y,
             speed,
             this.team,
-            this.isSiegeProjectile,
+            this.projectileKind,
             () => {
                 const targetWasAlive = target.state !== "dead";
                 if (target.state !== "dead" && willHit) {
@@ -1548,7 +1610,7 @@ class BattleUnit {
             target.y,
             speed,
             this.team,
-            false,
+            this.projectileKind,
             () => {
                 if (target.state === "dead") return;
                 target.takeDamage(chargeDmg, this);

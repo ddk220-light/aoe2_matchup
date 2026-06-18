@@ -17,6 +17,7 @@ function loadAssetCatalog() {
         if (cat) {
           window._ASSET_SPRITES = cat.sprites;
           window._ASSET_ICONS = cat.icons;
+          window._ASSET_ANIMS = cat.anims || {};
         }
         return cat;
       })

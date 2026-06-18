@@ -343,6 +343,45 @@ function getIconUrl(name) {
     return id ? `${ICON_BASE}${id}.png` : "";
 }
 
+/* Attack-animation URL (animated WebP in the bucket) for a unit display name,
+   or null. Populated only in bucket mode (anims live only in the bucket); used
+   for hover-to-animate on table icons and hover cards. */
+function animFor(name) {
+    const anims = (typeof window !== "undefined") ? window._ASSET_ANIMS : null;
+    return (anims && anims[name]) || null;
+}
+
+/* Hover-to-animate. Any element with [data-anim-name] animates a target <img>
+   on hover and reverts on leave. The target is the element's `.anim-slot` child
+   (used by hover cards) or the element itself if it's an <img> (table icons).
+   The WebP loads lazily on first hover; if the unit has no animation, nothing
+   happens. One delegated listener covers every page. */
+(function () {
+    if (typeof document === "undefined") return;
+    function targetImg(el) {
+        const slot = el.querySelector && el.querySelector(".anim-slot");
+        if (slot) return slot;
+        return el.tagName === "IMG" ? el : null;
+    }
+    document.addEventListener("mouseover", function (e) {
+        const el = e.target.closest && e.target.closest("[data-anim-name]");
+        if (!el) return;
+        const url = (typeof animFor === "function") && animFor(el.dataset.animName);
+        if (!url) return;
+        const img = targetImg(el);
+        if (!img) return;
+        if (img.dataset.staticSrc === undefined)
+            img.dataset.staticSrc = img.getAttribute("src") || "";
+        if (img.getAttribute("src") !== url) img.src = url;
+    });
+    document.addEventListener("mouseout", function (e) {
+        const el = e.target.closest && e.target.closest("[data-anim-name]");
+        if (!el || el.contains(e.relatedTarget)) return;
+        const img = targetImg(el);
+        if (img && img.dataset.staticSrc !== undefined) img.src = img.dataset.staticSrc;
+    });
+})();
+
 /* Generated in-game idle sprite (red player-2 / blue player-1), transparent.
    Returns a sprite URL only for units with a square-enough sprite (UNIT_SPRITES,
    loaded from unit_sprites.js); everything else falls back to the portrait so the

@@ -941,7 +941,7 @@ function renderLineSelector() {
         const unavailClass = unavailable ? " unavailable" : "";
 
         html += `<button class="unit-tab${activeClass}${unavailClass}" onclick="selectLine('${slug}')">
-            <img class="${tabImgClass}" src="${iUrl}" alt="${line.name}" onerror="this.style.display='none'" />
+            <img class="${tabImgClass}" src="${iUrl}" alt="${line.name}" data-anim-name="${tabName}" onerror="this.style.display='none'" />
             ${line.name}
         </button>`;
     }
@@ -1648,7 +1648,7 @@ function renderTable() {
     html += `</div>`;
 
     html += `<div class="table-title">
-        <img class="${titleImgClass}" src="${titleIcon}" alt="" onerror="this.style.display='none'" />
+        <img class="${titleImgClass}" src="${titleIcon}" alt="" data-anim-name="${titleName}" onerror="this.style.display='none'" />
         ${currentData.line_name} — ${currentAge} Age (${filtered.length} units)
     </div>`;
 
@@ -1701,7 +1701,7 @@ function renderTable() {
             const unitImg = cellUseSprite ? spriteFor(v) : unitIconUrl(v);
             const cellImgClass = cellUseSprite ? "sprite" : "";
             return `<td class="${expandableClass}"><div class="unit-cell">
-                <img class="${cellImgClass}" src="${unitImg}" alt="${v}" onerror="this.style.display='none'" />
+                <img class="${cellImgClass}" src="${unitImg}" alt="${v}" data-anim-name="${v}" onerror="this.style.display='none'" />
                 ${v}${row.is_unique ? " *" : ""}
             </div></td>`;
         }

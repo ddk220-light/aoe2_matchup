@@ -1492,5 +1492,17 @@ def api_matchup_sims():
 
 
 if __name__ == "__main__":
+    # Local dev convenience: load a gitignored .env so the dev server picks up
+    # BUCKET_*/ASSET_ENV/etc. On Railway there is no .env file and real service
+    # env vars win (setdefault never overrides). Tests import this module without
+    # running __main__, so they are unaffected.
+    _envf = os.path.join(_REPO_ROOT, ".env")
+    if os.path.exists(_envf):
+        with open(_envf) as _f:
+            for _line in _f:
+                _line = _line.strip()
+                if _line and not _line.startswith("#") and "=" in _line:
+                    _k, _v = _line.split("=", 1)
+                    os.environ.setdefault(_k.strip(), _v.strip())
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)

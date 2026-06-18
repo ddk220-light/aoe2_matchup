@@ -234,7 +234,7 @@ function renderUnitBadge(unit, colKey) {
         (meta ? " is-tier-" + tier : " no-strength");
     var iconSize = (isSig ? "signature-icon" : "unit-badge-icon") + (useSprite ? " sprite" : "");
 
-    var html = '<div class="' + badgeClass + '">';
+    var html = '<div class="' + badgeClass + '" data-anim-name="' + escapeHtml(name) + '">';
 
     /* Tooltip */
     html += renderTooltip(unit, name);
@@ -328,7 +328,7 @@ function renderTooltip(unit, name) {
     /* Header: big icon + name + tier. The high-res unit sprite gets the large
        treatment; the fallback game icon stays smaller so it isn't upscaled. */
     html += '<div class="tt-head' + (useSprite ? ' tt-head--sprite' : '') + '">';
-    html += '<img class="tt-icon' + (useSprite ? ' tt-icon--sprite' : '') + '" src="' + iconUrl
+    html += '<img class="tt-icon anim-slot' + (useSprite ? ' tt-icon--sprite' : '') + '" src="' + iconUrl
         + '" alt="' + escapeHtml(name) + '" onerror="this.style.display=\'none\'">';
     html += '<div class="tt-head-text"><div class="tt-name">' + escapeHtml(name) + '</div>';
     if (meta) {

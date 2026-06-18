@@ -769,6 +769,10 @@ class BattleUnit {
         this.wasMoving = true;
         this.committedAttack = null;
         this.attackAnimTimer = 0;
+        // Seconds the attack sprite-sheet keeps playing after a swing/shot fires,
+        // independent of state — so the animation completes even once the unit
+        // starts moving/kiting away (set to one full sheet cycle on each attack).
+        this.animHold = 0;
         this.damageNumbers = [];
 
         // Movement smoothing -- prevents vibration
@@ -786,6 +790,16 @@ class BattleUnit {
 
     isRanged() {
         return this.rawAttackRange >= 1.0;
+    }
+
+    // Latch the attack sprite-sheet to keep playing for one full cycle from now,
+    // so a swing/shot finishes on-screen even if the unit immediately moves or
+    // kites away. Frames are sampled off the global clock, so this just extends
+    // how long playback stays on past the brief "attacking" state.
+    triggerAttackAnim() {
+        const sh = this.attackSheet;
+        this.animHold =
+            sh && sh.meta ? (sh.meta.frames * sh.meta.dur) / 1000 : 0.4;
     }
 
     getDamageAgainst(target, detailed = false) {
@@ -947,6 +961,7 @@ class BattleUnit {
             0,
             this.attackAnimTimer - dt,
         );
+        this.animHold = Math.max(0, this.animHold - dt);
 
         this.damageNumbers = this.damageNumbers.filter((dn) => {
             dn.y -= 40 * dt;
@@ -1152,6 +1167,7 @@ class BattleUnit {
                     this.hasUsedCharge = true;
                     this.state = "attacking";
                     this.attackAnimTimer = 0.3;
+                    this.triggerAttackAnim();
                     for (
                         let cp = 0;
                         cp < this.chargeProjectileCount;
@@ -1455,6 +1471,7 @@ class BattleUnit {
         );
         simulation.projectiles.push(proj);
         this.attackAnimTimer = 0.15;
+        this.triggerAttackAnim();
     }
 
     fireChargeProjectile(target) {
@@ -1500,6 +1517,7 @@ class BattleUnit {
         );
         simulation.projectiles.push(proj);
         this.attackAnimTimer = 0.3;
+        this.triggerAttackAnim();
     }
 
     performAttackOn(target) {
@@ -1672,6 +1690,7 @@ class BattleUnit {
         }
 
         this.attackAnimTimer = 0.15;
+        this.triggerAttackAnim();
 
         // Spawn melee visual effect
         simulation.effects.push(
@@ -1944,7 +1963,12 @@ class BattleUnit {
             // is single-colour (red) for both teams by design. Source rect picks
             // the current frame; the static path uses the whole image.
             const sheet = this.attackSheet;
-            const playing = this.state === "attacking" && sheet && sheet.img
+            // Play while actively attacking OR while the post-attack latch is still
+            // running (animHold), so a swing/shot completes even as the unit moves
+            // or kites away. Dead units never play attack frames.
+            const playing = this.state !== "dead"
+                && (this.state === "attacking" || this.animHold > 0)
+                && sheet && sheet.img
                 && sheet.img.complete && sheet.img.naturalWidth > 0;
             let src = img, sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight;
             if (playing) {

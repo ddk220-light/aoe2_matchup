@@ -778,6 +778,11 @@ class BattleUnit {
         // Movement smoothing -- prevents vibration
         this.vx = 0;
         this.vy = 0;
+        // Horizontal facing: sprites are authored facing LEFT, so faceRight=true
+        // means mirror. At spawn, team 1 (left) faces its enemies on the right and
+        // team 2 (right) faces left; during battle it tracks the target/movement
+        // direction (see render) so a unit always faces what it's attacking.
+        this.faceRight = this.team === 1;
         // Stuck detection -- switch targets when blocked
         this.stuckTimer = 0;
         this.lastDistToTarget = Infinity;
@@ -1986,14 +1991,24 @@ class BattleUnit {
             if (atk > 0) s *= 1 + 0.1 * atk;
             const dw = sw * s;
             const dh = sh * s;
+            // Face toward what the unit is fighting: its target if engaged (so it
+            // faces where it attacks even after maneuvering past the enemy), else
+            // its movement direction. A deadzone avoids flicker on near-vertical
+            // alignment (target dx is in px; vx is normalized ~-1..1).
+            if (this.target && this.target.state !== "dead") {
+                const fdx = this.target.x - this.x;
+                if (Math.abs(fdx) > 4) this.faceRight = fdx > 0;
+            } else if (Math.abs(this.vx) > 0.05) {
+                this.faceRight = this.vx > 0;
+            }
             ctx.save();
             if (atk > 0) {
                 ctx.shadowColor = `rgba(255, 209, 74, ${0.95 * atk})`;
                 ctx.shadowBlur = 22 * atk;
             }
-            if (this.team === 1) {
-                // Sprites are drawn facing left by default. Team 1 spawns on the
-                // left and fights rightward, so mirror horizontally to face the enemy.
+            if (this.faceRight) {
+                // Sprites are authored facing left, so mirror horizontally about
+                // the unit's center to make it face right.
                 ctx.translate(this.x, 0);
                 ctx.scale(-1, 1);
                 ctx.drawImage(src, sx, sy, sw, sh, -dw / 2, this.y - dh / 2, dw, dh);

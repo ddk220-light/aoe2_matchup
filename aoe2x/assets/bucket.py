@@ -23,7 +23,8 @@ def _client():
             aws_access_key_id=s["aws_access_key_id"],
             aws_secret_access_key=s["aws_secret_access_key"],
             region_name=s["region"] or "auto",
-            config=_BotoConfig(signature_version="s3v4"),
+            config=_BotoConfig(signature_version="s3v4",
+                               s3={"addressing_style": "virtual"}),
         )
     return _client_cache
 

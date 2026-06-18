@@ -501,6 +501,9 @@ class Projectile {
         this.done = false;
         this.prevX = startX;
         this.prevY = startY;
+        // Constant flight heading (straight line start->target), used to orient
+        // the arrow so it always points the way it's travelling.
+        this.angle = Math.atan2(targetY - startY, targetX - startX);
     }
 
     update(dt) {
@@ -526,28 +529,63 @@ class Projectile {
 
     render(ctx) {
         if (this.done) return;
-        const size = this.isSiege ? 5 : 3;
         const color = this.isSiege
             ? "#f59e0b"
             : this.team === 1
               ? "#60a5fa"
               : "#f87171";
 
-        // Trail
-        ctx.globalAlpha = 0.3;
-        ctx.beginPath();
-        ctx.moveTo(this.prevX, this.prevY);
-        ctx.lineTo(this.x, this.y);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = size;
-        ctx.stroke();
-        ctx.globalAlpha = 1.0;
+        if (this.isSiege) {
+            // Siege shot stays a round stone/ball with a faint motion trail.
+            ctx.globalAlpha = 0.3;
+            ctx.beginPath();
+            ctx.moveTo(this.prevX, this.prevY);
+            ctx.lineTo(this.x, this.y);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 5;
+            ctx.stroke();
+            ctx.globalAlpha = 1.0;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            return;
+        }
 
-        // Dot
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, size, 0, Math.PI * 2);
+        // Arrow: a thin vector shaft + filled head + small fletching, oriented
+        // along the flight path and tinted by team (blue = team 1, red = team 2).
+        // The tip leads at (this.x, this.y); the shaft trails behind. Sized to read
+        // clearly at unit scale (~18px long) without dominating the field.
+        const HEAD = 5, HEADW = 3, SHAFT = 10, FLETCH = 3.5;
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.strokeStyle = color;
         ctx.fillStyle = color;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        // shaft (from just behind the head back to the tail)
+        ctx.lineWidth = 1.7;
+        ctx.beginPath();
+        ctx.moveTo(-HEAD + 1, 0);
+        ctx.lineTo(-HEAD - SHAFT, 0);
+        ctx.stroke();
+        // fletching: two short barbs flaring back at the tail
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(-HEAD - SHAFT, 0);
+        ctx.lineTo(-HEAD - SHAFT - FLETCH, -2.6);
+        ctx.moveTo(-HEAD - SHAFT, 0);
+        ctx.lineTo(-HEAD - SHAFT - FLETCH, 2.6);
+        ctx.stroke();
+        // arrowhead: filled triangle, tip leading forward (+x)
+        ctx.beginPath();
+        ctx.moveTo(2, 0);
+        ctx.lineTo(-HEAD + 2, -HEADW);
+        ctx.lineTo(-HEAD + 2, HEADW);
+        ctx.closePath();
         ctx.fill();
+        ctx.restore();
     }
 }
 
@@ -1764,12 +1802,10 @@ class BattleUnit {
             }
         }
         this.currentHp -= amount;
-        this.damageNumbers.push({
-            value: amount,
-            x: this.x,
-            y: this.y - this.radius - 5,
-            alpha: 1.0,
-        });
+        // Floating per-hit damage numbers were removed — at 30v30 they spawn
+        // dozens/sec and just clutter the field; live damage is read from the
+        // team side panels (HP + Res Lost) instead. DODGE/BLOCK event labels
+        // (rare, word-based) still use damageNumbers above.
         if (this.currentHp <= 0) {
             this.currentHp = 0;
             this.state = "dead";

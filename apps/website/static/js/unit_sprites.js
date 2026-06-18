@@ -897,11 +897,11 @@ const UNIT_SPRITES = {
  "Elite Steppe Lancer": {
   "cat": "square",
   "h": 384,
-  "ratio": 1.053,
+  "ratio": 1.158,
   "slug": "elite_steppe_lancer",
   "url": "/static/img/unit_sprites/elite_steppe_lancer.png",
   "url_blue": "/static/img/unit_sprites/elite_steppe_lancer_blue.png",
-  "w": 365
+  "w": 332
  },
  "Elite Tarkan": {
   "cat": "square",
@@ -1067,12 +1067,12 @@ const UNIT_SPRITES = {
  },
  "Flemish Militia": {
   "cat": "square",
-  "h": 384,
-  "ratio": 1.114,
+  "h": 278,
+  "ratio": 1.383,
   "slug": "flemish_militia",
   "url": "/static/img/unit_sprites/flemish_militia.png",
   "url_blue": "/static/img/unit_sprites/flemish_militia_blue.png",
-  "w": 345
+  "w": 384
  },
  "Galleon": {
   "cat": "square",
@@ -1409,12 +1409,12 @@ const UNIT_SPRITES = {
  },
  "Konnik (Dismounted)": {
   "cat": "square",
-  "h": 384,
-  "ratio": 1.125,
+  "h": 368,
+  "ratio": 1.227,
   "slug": "konnik_dismounted",
   "url": "/static/img/unit_sprites/konnik_dismounted.png",
   "url_blue": "/static/img/unit_sprites/konnik_dismounted_blue.png",
-  "w": 341
+  "w": 300
  },
  "Legionary": {
   "cat": "square",
@@ -1454,12 +1454,12 @@ const UNIT_SPRITES = {
  },
  "Long Swordsman": {
   "cat": "square",
-  "h": 372,
-  "ratio": 1.31,
+  "h": 321,
+  "ratio": 1.195,
   "slug": "long_swordsman",
   "url": "/static/img/unit_sprites/long_swordsman.png",
   "url_blue": "/static/img/unit_sprites/long_swordsman_blue.png",
-  "w": 284
+  "w": 384
  },
  "Longboat": {
   "cat": "square",
@@ -1509,11 +1509,11 @@ const UNIT_SPRITES = {
  "Man-at-Arms": {
   "cat": "square",
   "h": 324,
-  "ratio": 1.095,
+  "ratio": 1.037,
   "slug": "man_at_arms",
   "url": "/static/img/unit_sprites/man_at_arms.png",
   "url_blue": "/static/img/unit_sprites/man_at_arms_blue.png",
-  "w": 296
+  "w": 336
  },
  "Mangonel": {
   "cat": "square",
@@ -1535,12 +1535,12 @@ const UNIT_SPRITES = {
  },
  "Militia": {
   "cat": "square",
-  "h": 321,
-  "ratio": 1.195,
+  "h": 324,
+  "ratio": 1.095,
   "slug": "militia",
   "url": "/static/img/unit_sprites/militia.png",
   "url_blue": "/static/img/unit_sprites/militia_blue.png",
-  "w": 384
+  "w": 296
  },
  "Monaspa": {
   "cat": "square",
@@ -1742,12 +1742,12 @@ const UNIT_SPRITES = {
  },
  "Siege Tower": {
   "cat": "square",
-  "h": 275,
-  "ratio": 1.398,
+  "h": 384,
+  "ratio": 1.071,
   "slug": "siege_tower",
   "url": "/static/img/unit_sprites/siege_tower.png",
   "url_blue": "/static/img/unit_sprites/siege_tower_blue.png",
-  "w": 384
+  "w": 358
  },
  "Skirmisher": {
   "cat": "square",
@@ -1778,12 +1778,12 @@ const UNIT_SPRITES = {
  },
  "Steppe Lancer": {
   "cat": "square",
-  "h": 298,
-  "ratio": 1.288,
+  "h": 384,
+  "ratio": 1.22,
   "slug": "steppe_lancer",
   "url": "/static/img/unit_sprites/steppe_lancer.png",
   "url_blue": "/static/img/unit_sprites/steppe_lancer_blue.png",
-  "w": 384
+  "w": 315
  },
  "Tarkan": {
   "cat": "square",

@@ -40,14 +40,19 @@ _GENERATED_DIRS = ("flux2", "nanobanana", "youtube")
 CATEGORIES = ("gifs", "transparent", "sprites_full", "flux2", "nanobanana", "youtube")
 
 
-def plan(only=None):
+def plan(only=None, slugs=None):
     """Return [(local_path, bucket_key), ...] to upload. Pure — no network/creds,
-    so `--dry-run` works without the bucket configured."""
+    so `--dry-run` works without the bucket configured. `slugs` limits the
+    unit-folder categories to those unit slugs (and skips the non-per-unit
+    generated/ dirs) — used to re-push just the units whose art was fixed."""
     cats = set(only) if only else set(CATEGORIES)
+    slug_filter = set(slugs) if slugs else None
     jobs = []
 
     if UNITS.is_dir() and (cats & {"gifs", "transparent", "sprites_full"}):
         for slug in sorted(os.listdir(UNITS)):
+            if slug_filter and slug not in slug_filter:
+                continue
             d = UNITS / slug
             if not d.is_dir():
                 continue
@@ -68,6 +73,8 @@ def plan(only=None):
                     jobs.append((str(blue), f"img/unit_sprites_full/{slug}_blue.png"))
 
     for cat in _GENERATED_DIRS:
+        if slug_filter:            # per-unit re-push: skip the non-unit generated dirs
+            continue
         if cat not in cats:
             continue
         base = GRAPHICS / cat
@@ -100,6 +107,8 @@ def main():
     ap.add_argument("--dry-run", action="store_true",
                     help="List what would upload (no creds needed).")
     ap.add_argument("--only", help="Comma list of categories: " + ",".join(CATEGORIES))
+    ap.add_argument("--slugs", nargs="*", help="Limit unit categories to these slugs "
+                    "(skips flux2/nanobanana/youtube) — e.g. re-push fixed units.")
     args = ap.parse_args()
 
     only = None
@@ -109,7 +118,7 @@ def main():
         if bad:
             raise SystemExit(f"unknown --only category {bad}; choices: {list(CATEGORIES)}")
 
-    jobs = plan(only)
+    jobs = plan(only, slugs=args.slugs)
     _summary(jobs)
 
     if args.dry_run:

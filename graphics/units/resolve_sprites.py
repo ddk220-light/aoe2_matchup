@@ -31,6 +31,24 @@ NAVAL_SLD = {
     'hulk': 'u_shp_holk', 'war_hulk': 'u_shp_war_holk',
 }
 
+# Land units the name-based resolver mis-maps: UNIT_NAMES assigns the display
+# name to the wrong dat id (several ids share a name, and the first one tried
+# owns a neighbour's / placeholder's idle — e.g. "Steppe Lancer" lands on a
+# battering-ram id, "Flemish Militia" on an iroquois id, the militia line is
+# shifted). Pin these to the correct idle SLD directly, verified against each
+# unit's standing_graphic in the dat. (NOTE: White Feather Guard -> ji_infantry
+# and Xebec -> longboat_elite are dat-intended reuses, so they are NOT listed.)
+LAND_SLD = {
+    'militia': 'u_inf_militia_idleA',
+    'man_at_arms': 'u_inf_manatarms_idleA',
+    'long_swordsman': 'u_inf_longswordsman_idleA',
+    'steppe_lancer': 'u_cav_steppe_lancer_idleA',
+    'elite_steppe_lancer': 'u_cav_steppe_lancer_elite_idleA',
+    'flemish_militia': 'u_inf_flemish_pikeman_idleA',
+    'siege_tower': 'u_sie_siege_tower_idleA',
+    'konnik_dismounted': 'u_inf_konnik_idleA',
+}
+
 
 def slugify(name):
     return re.sub(r'[^a-z0-9]+', '_', name.lower()).strip('_')
@@ -73,6 +91,12 @@ def main():
         # Ships first: resolve directly from the u_shp_ name map (dat pointer is broken).
         if slug in NAVAL_SLD:
             found = find_on_disk(NAVAL_SLD[slug])
+            if found:
+                out[slug] = found
+                continue
+        # Land overrides for units the name->id heuristic mis-maps.
+        if slug in LAND_SLD:
+            found = find_on_disk(LAND_SLD[slug])
             if found:
                 out[slug] = found
                 continue

@@ -80,7 +80,8 @@ def build_catalog(manifest: dict, icon_names: list, asset_base: str, build: str,
             if m:
                 sheets[name] = {"url": f"{asset_base}/sheets/{slug}.webp",
                                 "frames": m["frames"], "fw": m["fw"],
-                                "fh": m["fh"], "dur": m["dur"]}
+                                "fh": m["fh"], "dur": m["dur"],
+                                "scale": m.get("scale", 1)}
     return {"build": build, "sprites": sprites, "icons": icons,
             "anims": anims, "sheets": sheets}
 

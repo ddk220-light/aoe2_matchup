@@ -1954,6 +1954,11 @@ class BattleUnit {
                 src = sheet.img; sx = frame * m.fw; sy = 0; sw = m.fw; sh = m.fh;
             }
             let s = box / Math.max(sw, sh);
+            // Per-unit calibration: the attack frames are sized for the full swing
+            // arc, so the figure fills a smaller fraction than the tight idle sprite.
+            // scale (from the catalog) makes the typical attack pose match the idle
+            // unit's on-screen size so it doesn't appear to shrink mid-attack.
+            if (playing && sheet.meta.scale) s *= sheet.meta.scale;
             if (atk > 0) s *= 1 + 0.1 * atk;
             const dw = sw * s;
             const dh = sh * s;

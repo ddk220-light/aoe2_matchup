@@ -8,6 +8,11 @@ civ_power_units/<build>.json — and only simulates at serve
 time for the live Matchup Advisor endpoints (best_units.get_matchup_sims /
 get_matchup_recommendations).
 """
+
+# Deploy marker: 2026-06-19 — promote 6691828 to production via PR merge
+# (per-line projectiles, red-sprite battle animations, civ-page siege/Mangonel
+# line, regenerated unit animations). No-op comment; exists to give `main` a
+# fresh commit so Railway's production build retriggers.
 import html as _html
 import json
 import os

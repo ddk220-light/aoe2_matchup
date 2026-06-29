@@ -3,6 +3,10 @@
 {% block title %}AoE2 Unit Matchups — Every unique-unit battle, simulated{% endblock %}
 {% block meta_description %}Browse simulated Age of Empires II unit matchups across all 53 civilizations — every unique unit versus every other, with full-upgrade stat comparisons and a live battle simulator.{% endblock %}
 
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/matchups.css') }}" />
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
     <h1>AoE2 Unit Matchups</h1>

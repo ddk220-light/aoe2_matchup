@@ -1,0 +1,71 @@
+/* Matchups crawl-hub page — civ-grouped index of every unique-unit matchup.
+   A dense link page by design (it's a crawl entry point), so the goal here is
+   to make ~1,378 links scannable: each civ is a card, links flow in a
+   responsive multi-column grid. */
+
+.matchup-group {
+    background: var(--bg-warm);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px 20px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-sm);
+}
+
+.matchup-group > h2 {
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
+    color: var(--gold);
+    letter-spacing: 0.04em;
+    margin: 0 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid;
+    border-image: linear-gradient(90deg, var(--gold-glow) 0%, var(--border) 60%, transparent 100%) 1;
+}
+
+.matchup-group-civ {
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+}
+
+.matchup-link-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 4px 18px;
+}
+
+.matchup-link-list li {
+    margin: 0;
+}
+
+.matchup-link-list a {
+    display: block;
+    padding: 5px 8px;
+    border-radius: 6px;
+    color: var(--text);
+    font-size: var(--fs-sm);
+    text-decoration: none;
+    line-height: var(--lh-tight);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.matchup-link-list a:hover,
+.matchup-link-list a:focus-visible {
+    background: var(--bg-hover);
+    color: var(--gold);
+}
+
+@media (max-width: 600px) {
+    .matchup-link-list {
+        grid-template-columns: 1fr;
+    }
+    .matchup-group {
+        padding: 14px 14px 16px;
+    }
+}

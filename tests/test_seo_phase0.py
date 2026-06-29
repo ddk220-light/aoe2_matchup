@@ -45,3 +45,8 @@ def test_matchups_hub_linked_from_footer(client):
 def test_matchups_hub_in_sitemap(client):
     body = client.get("/sitemap.xml").data.decode()
     assert "/matchups</loc>" in body
+
+
+def test_matchups_hub_loads_its_stylesheet(client):
+    body = client.get("/matchups").data.decode()
+    assert "css/matchups.css" in body

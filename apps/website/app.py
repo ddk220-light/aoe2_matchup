@@ -575,8 +575,9 @@ def home():
 
 @app.route("/replay")
 def replay():
-    """Replay Analyzer tab. Embeds the full-screen visualizer in an isolated
-    iframe so the analyzer nav + theme stay on top with no CSS conflicts.
+    """Replay Analyzer tab. Renders a described page (intro + feature list +
+    how-to) above the visualizer embedded in an isolated iframe, so the page has
+    crawlable text and the analyzer's CSS/theme stay isolated.
     Forwards deep-link params (?match=&profile=&t=) into the iframe so shared
     links auto-load a replay (and optionally jump to a timestamp).
 
@@ -1535,8 +1536,10 @@ def _ranking_default_score(unit):
             f = v.get("final")
             if isinstance(f, (int, float)):
                 vals.append(f)
-        if vals:
-            return sum(vals) / len(vals)
+        # Match the interactive table: the 'Average' view needs BOTH scales — a
+        # pool unit missing either is excluded (return None) rather than scored
+        # on one scale or falling through to a role metric.
+        return sum(vals) / 2 if len(vals) == 2 else None
     for k in _RANKING_FALLBACK_SCORE_KEYS:
         v = unit.get(k)
         if isinstance(v, (int, float)) and v != -999:

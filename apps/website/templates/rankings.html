@@ -37,7 +37,7 @@
   "itemListElement": [
     {% set ns = namespace(pos=0) %}
     {% for group in rankings_overview %}{% for u in group.units %}{% set ns.pos = ns.pos + 1 %}{{ "," if ns.pos > 1 else "" }}
-    { "@type": "ListItem", "position": {{ ns.pos }}, "name": "{{ u.name }} ({{ u.civ }})" }{% endfor %}{% endfor %}
+    { "@type": "ListItem", "position": {{ ns.pos }}, "name": {{ (u.name ~ " (" ~ u.civ ~ ")") | tojson }} }{% endfor %}{% endfor %}
   ]
 }
 </script>

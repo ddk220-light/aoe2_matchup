@@ -573,6 +573,13 @@ def home():
                            unit_search=_unit_search_index())
 
 
+@app.route("/about")
+def about():
+    """Methodology / how-it-works page — the authoritative explanation of the data
+    and simulation behind the site."""
+    return render_template("about.html", active_nav=None)
+
+
 @app.route("/replay")
 def replay():
     """Replay Analyzer tab. Renders a described page (intro + feature list +
@@ -725,6 +732,7 @@ def sitemap_xml():
         ("/units", "weekly", "0.9"),
         ("/civilizations", "weekly", "0.9"),
         ("/matchups", "weekly", "0.6"),
+        ("/about", "monthly", "0.5"),
         ("/patches", "weekly", "0.7"),
     ]
     if REPLAY_ENABLED:

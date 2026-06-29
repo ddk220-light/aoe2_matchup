@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}How AoE2 Matchup works — data &amp; simulation methodology{% endblock %}
+{% block meta_description %}How AoE2 Matchup works: unit data extracted from the Age of Empires II:DE game files, fully-upgraded stats for all 53 civilizations, and ~500,000 simulated battles deciding every matchup.{% endblock %}
+
+{% block page_css %}
+<style>
+.about-page { max-width: 820px; margin: 0 auto; padding: 8px var(--gutter) 64px; }
+.about-page h2 { font-family: var(--font-display); color: var(--gold); font-size: var(--fs-lg); margin: 32px 0 10px; }
+.about-page p, .about-page li { color: var(--text); font-size: var(--fs-base); line-height: var(--lh-base); }
+.about-page p { margin: 0 0 12px; max-width: 760px; }
+.about-page ul { margin: 0 0 16px; padding-left: 20px; }
+.about-page a { color: var(--gold); }
+.about-faq dt { font-weight: 600; color: var(--gold); margin-top: 16px; }
+.about-faq dd { margin: 4px 0 0; color: var(--text-muted); }
+</style>
+{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  "name": "How AoE2 Matchup works",
+  "url": "{{ site_url }}/about",
+  "description": "Methodology behind AoE2 Matchup: data extracted from the Age of Empires II:DE game files, fully-upgraded stats for all 53 civilizations, and ~500,000 simulated battles."
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "Where does the data come from?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Unit stats are extracted directly from the Age of Empires II: Definitive Edition game files (the .dat), then fully upgraded for each of the 53 civilizations using every blacksmith, university and unique-tech upgrade plus that civ's bonuses." } },
+    { "@type": "Question", "name": "How is the winner of a matchup decided?",
+      "acceptedAnswer": { "@type": "Answer", "text": "A deterministic, tick-by-tick battle simulation models armor classes, attack delays, projectile travel time and accuracy, charge attacks, trample, bleed and healing. About 500,000 matchups are pre-simulated." } },
+    { "@type": "Question", "name": "What do the 30v30 and 3k scores mean?",
+      "acceptedAnswer": { "@type": "Answer", "text": "30v30 is an equal-population fight (30 units a side); 3k is an equal-resources, cost-parity fight (3,000 resources a side). The Average score blends both, so it rewards raw strength and cost-efficiency together." } },
+    { "@type": "Question", "name": "Is this an official Microsoft site?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. AoE2 Matchup is a free fan-made tool and is not affiliated with or endorsed by Microsoft, Forgotten Empires, or World's Edge." } }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>How AoE2 Matchup works</h1>
+    <p class="subtitle">The data and the simulation behind every stat, score, and matchup.</p>
+</div>
+
+<article class="about-page">
+    <p>
+        <strong>AoE2 Matchup</strong> is a free, fan-made analysis suite for
+        <em>Age of Empires II: Definitive Edition</em>. It turns the game's own data into
+        battle simulations, unit rankings, and civilization breakdowns you can explore.
+    </p>
+
+    <h2>Where the data comes from</h2>
+    <p>
+        Every unit's stats are extracted directly from the game's binary data file
+        (the <code>.dat</code>) — the same source the game itself reads. We then compute
+        <strong>fully-upgraded Imperial-age stats</strong> for all <strong>53 civilizations</strong>
+        (including every unique unit and the Three Kingdoms civs), applying all the blacksmith,
+        university and unique-technology upgrades a civilization can reach, plus its civ bonuses.
+        So the numbers you see are what a unit actually looks like late-game for that civ — not the base stat card.
+    </p>
+
+    <h2>How a matchup is decided</h2>
+    <p>
+        Who wins isn't guessed from a formula — it's <strong>simulated</strong>. A deterministic,
+        tick-by-tick model fights the units against each other, accounting for armor classes,
+        attack reload and delays, projectile travel time and accuracy, charge attacks, trample,
+        bleed, healing, and the other special mechanics in the game. Roughly
+        <strong>500,000 unit matchups</strong> are pre-simulated so the rankings and matchup pages load instantly.
+    </p>
+
+    <h2>What the scores mean</h2>
+    <p>Each unit is scored from two kinds of fight, because they test different things:</p>
+    <ul>
+        <li><strong>30v30 (population)</strong> — 30 units a side. This rewards raw, per-unit strength at the population cap.</li>
+        <li><strong>3k (cost-parity)</strong> — 3,000 resources a side. This rewards cost-efficiency: cheap units field bigger armies.</li>
+        <li><strong>Average</strong> — blends the two, so a unit has to be both strong and cost-effective to top the list. Higher is better.</li>
+    </ul>
+
+    <h2>The tools</h2>
+    <ul>
+        <li><a href="/">Battle Simulator</a> — pit any units from any civs against each other and watch the fight.</li>
+        <li><a href="/units">Unit Rankings</a> — every unit scored and ranked across all civs.</li>
+        <li><a href="/civilizations">Civilizations</a> — each civ's strategic identity and strongest units.</li>
+        <li><a href="/matchup-advisor">Matchup Advisor</a> — what to build against a given civ.</li>
+        <li><a href="/matchups">Unit Matchups</a> — head-to-head pages for every unique-unit pairing.</li>
+        <li><a href="/patches">Patch Tracker</a> — how each balance update changed the numbers.</li>
+        <li><a href="/replay">Replay Analyzer</a> — watch and share recorded games on an isometric map.</li>
+    </ul>
+
+    <h2>Keeping current</h2>
+    <p>
+        When Age of Empires II ships a balance patch, the stats and simulations are re-derived and the
+        <a href="/patches">Patch Tracker</a> shows exactly which units and matchups moved.
+    </p>
+
+    <h2>Frequently asked</h2>
+    <dl class="about-faq">
+        <dt>Is this an official Microsoft site?</dt>
+        <dd>No — it's a free fan project, not affiliated with or endorsed by Microsoft, Forgotten Empires, or World's Edge.</dd>
+        <dt>Why might a result differ from my own game?</dt>
+        <dd>Simulations assume fully-upgraded Imperial-age units fighting head-on; real games add micro, terrain, and tech timing the sim doesn't model.</dd>
+    </dl>
+</article>
+{% endblock %}

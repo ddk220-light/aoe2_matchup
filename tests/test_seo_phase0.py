@@ -27,3 +27,21 @@ def test_vs_page_has_breadcrumb_jsonld(client):
     assert '"@type": "BreadcrumbList"' in body
     assert '"name": "Matchups"' in body
     assert '/matchups' in body
+
+
+def test_matchups_hub_renders(client):
+    resp = client.get("/matchups")
+    assert resp.status_code == 200
+    body = resp.data.decode()
+    assert "AoE2 Unit Matchups" in body
+    assert "/vs/" in body  # links into landing pages
+
+
+def test_matchups_hub_linked_from_footer(client):
+    body = client.get("/").data.decode()
+    assert 'href="/matchups"' in body
+
+
+def test_matchups_hub_in_sitemap(client):
+    body = client.get("/sitemap.xml").data.decode()
+    assert "/matchups</loc>" in body

@@ -679,6 +679,7 @@ def sitemap_xml():
         ("/matchup-advisor", "weekly", "0.9"),
         ("/units", "weekly", "0.9"),
         ("/civilizations", "weekly", "0.9"),
+        ("/matchups", "weekly", "0.6"),
         ("/patches", "weekly", "0.7"),
     ]
     if REPLAY_ENABLED:
@@ -799,6 +800,29 @@ def matchup_landing(civ_a, unit_a, civ_b, unit_b):
         related=related,
         active_nav="simulate",
     )
+
+
+@app.route("/matchups")
+def matchups_hub():
+    """Crawlable index into every /vs/ landing page.
+
+    Lists each unordered unique-unit matchup exactly once (civ A vs civ B where
+    A precedes B), grouped by the first civ. A permanent internal entry point so
+    the long-tail /vs/ pages aren't reachable only through the sitemap."""
+    uniques = _unique_units_list()  # [(civ, slug, name), ...] sorted by civ
+    groups = []
+    for i, (civ_a, slug_a, name_a) in enumerate(uniques):
+        links = []
+        for j, (civ_b, slug_b, name_b) in enumerate(uniques):
+            if j <= i:
+                continue
+            links.append({
+                "url": f"/vs/{civ_a}/{slug_a}/{civ_b}/{slug_b}",
+                "label": f"{name_a} vs {name_b}",
+            })
+        if links:
+            groups.append({"civ": civ_a, "unit": name_a, "links": links})
+    return render_template("matchups.html", groups=groups, active_nav="simulate")
 
 
 @app.route("/api/armor-classes")

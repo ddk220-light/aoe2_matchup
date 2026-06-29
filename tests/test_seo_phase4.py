@@ -11,3 +11,29 @@ def test_get_patch_overview(client):
     t = data["unit_tables"][0]
     assert {"civ", "slug", "title", "detail_url"}.issubset(t.keys())
     assert app.get_patch_overview("000000") is None
+
+
+def test_patch_build_page_renders(client):
+    import app
+    data = app.get_patch_overview("177723")
+    body = client.get("/patches/177723").data.decode()
+    assert "177723" in body
+    assert data["release_date"] in body
+    assert data["unit_tables"][0]["title"].split()[-1] in body  # a changed-unit word
+
+
+def test_patch_build_newsarticle_jsonld(client):
+    import app
+    data = app.get_patch_overview("177723")
+    body = client.get("/patches/177723").data.decode()
+    assert '"@type": "NewsArticle"' in body
+    assert f'"datePublished": "{data["release_date"]}"' in body
+
+
+def test_patch_build_404(client):
+    assert client.get("/patches/000000").status_code == 404
+
+
+def test_patches_hub_links_to_build_pages(client):
+    body = client.get("/patches").data.decode()
+    assert 'href="/patches/177723"' in body

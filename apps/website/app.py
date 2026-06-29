@@ -471,6 +471,15 @@ def patches_page():
     return render_template("patches.html", patches=patches, active_nav="patches")
 
 
+@app.route("/patches/<build>")
+def patch_build_page(build):
+    """Canonical per-patch landing page — the 'AoE2 Update <build> patch notes' target."""
+    data = get_patch_overview(build)
+    if data is None:
+        abort(404)
+    return render_template("patch_build.html", active_nav="patches", **data)
+
+
 def battle_sim_deep_link(my_civ, my_slug, opp_civ, opp_slug, scale,
                          age1="Imperial", age2="Imperial"):
     """Build a Battle Sim URL that pre-loads + auto-runs this exact matchup."""

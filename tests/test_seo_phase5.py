@@ -22,3 +22,11 @@ def test_about_in_footer(client):
 def test_about_in_sitemap(client):
     body = client.get("/sitemap.xml").data.decode()
     assert "/about</loc>" in body
+
+
+def test_homepage_has_flagship_content(client):
+    body = client.get("/").data.decode()
+    assert 'id="home-about"' in body
+    assert "53 civ" in body.lower()
+    assert 'href="/about"' in body
+    assert 'href="/units"' in body and 'href="/civilizations"' in body

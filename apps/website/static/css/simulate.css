@@ -1038,3 +1038,15 @@
     .sim-topbar { justify-content: center; }
     .sim-topbar-center #startBtn { width: 100%; }
 }
+
+/* Homepage flagship "about" section — crawlable site description + tool links. */
+.home-about { border-top: 1px solid var(--border); margin-top: 32px; padding: 32px var(--gutter) 8px; }
+.home-about-inner { max-width: var(--container-max); margin: 0 auto; }
+.home-about h2 { font-family: var(--font-display); color: var(--gold); font-size: var(--fs-lg); margin: 0 0 12px; letter-spacing: 0.03em; }
+.home-about p { color: var(--text-muted); font-size: var(--fs-base); line-height: var(--lh-base); max-width: 820px; margin: 0 0 20px; }
+.home-about p a { color: var(--gold); white-space: nowrap; }
+.home-about-tools { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.home-about-tools a { display: block; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-warm); color: var(--text); text-decoration: none; transition: border-color 0.15s ease, background 0.15s ease; }
+.home-about-tools a:hover { border-color: var(--gold); background: var(--bg-hover); }
+.home-about-tools strong { display: block; color: var(--gold); font-size: var(--fs-md); margin-bottom: 2px; }
+.home-about-tools span { color: var(--text-muted); font-size: var(--fs-sm); }

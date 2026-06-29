@@ -47,7 +47,7 @@
             {% if civ.description %}<p class="civ-ssr-desc">{{ civ.description }}</p>{% endif %}
             {% for role in civ.roles %}
             <p class="civ-ssr-role"><span class="civ-ssr-role-label">{{ role.label }}:</span>
-                {% for unit in role.units %}{{ unit.name }}{% if unit.tier %} ({{ unit.tier }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+                {% for unit in role.units %}{% if unit.is_unique %}<strong class="civ-ssr-unique" title="Unique unit">{{ unit.name }}</strong>{% else %}{{ unit.name }}{% endif %}{% if unit.tier %} ({{ unit.tier }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
             </p>
             {% endfor %}
         </article>

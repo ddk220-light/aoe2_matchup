@@ -1475,6 +1475,8 @@ def get_civ_overview_data():
                     units.append({
                         "name": e.get("unit_name") or slug.replace("_", " ").title(),
                         "slug": slug,
+                        # `tier` is the real field; `strength` is a legacy synonym
+                        # kept only as a defensive fallback (absent in current data).
                         "tier": (e.get("tier") or e.get("strength") or "").title(),
                         "is_unique": bool(e.get("is_unique")),
                     })

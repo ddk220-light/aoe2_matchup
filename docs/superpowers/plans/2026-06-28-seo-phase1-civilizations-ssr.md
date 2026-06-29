@@ -23,7 +23,7 @@
 | File | Create/Modify | Responsibility |
 |---|---|---|
 | `apps/website/app.py` | Modify | Add `_CIV_ROLE_LABELS` + `get_civ_overview_data()`; pass it from the `/civilizations` route. |
-| `apps/website/templates/civ_overview.html` | Modify | Render the `#civ-ssr` crawlable section + inline hide script + `ItemList` JSON-LD. |
+| `apps/website/templates/civ_overview.html` | Modify | Render the visible `#civ-ssr` reference section + `ItemList` JSON-LD. |
 | `apps/website/static/css/matchup.css` | Modify | Minimal readable styling for the SSR section (only seen by no-JS visitors). |
 | `tests/test_seo_phase1.py` | Create | Phase 1 regression tests. |
 

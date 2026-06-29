@@ -20,6 +20,7 @@ import re as _re
 import sqlite3
 import sys
 from collections import defaultdict
+from datetime import date
 from functools import lru_cache
 from urllib.parse import urlencode
 
@@ -59,8 +60,18 @@ SITE_URL = os.environ.get("SITE_URL", "https://aoe2matchup.com").rstrip("/")
 
 @app.context_processor
 def inject_site_url():
-    """Make site_url and canonical_url available in every template."""
-    return {"site_url": SITE_URL, "canonical_url": None}
+    """Make site_url, canonical_url and search-engine verification tokens
+    available in every template.
+
+    GOOGLE_SITE_VERIFICATION / BING_SITE_VERIFICATION are the HTML-tag
+    verification tokens from Google Search Console / Bing Webmaster Tools.
+    Unset -> None so base.html simply omits the meta tag."""
+    return {
+        "site_url": SITE_URL,
+        "canonical_url": None,
+        "google_site_verification": os.environ.get("GOOGLE_SITE_VERIFICATION") or None,
+        "bing_site_verification": os.environ.get("BING_SITE_VERIFICATION") or None,
+    }
 
 
 @app.context_processor
@@ -642,16 +653,35 @@ def _matchup_seed_pairs(limit_per_side=200):
 
 @app.route("/sitemap.xml")
 def sitemap_xml():
-    urls = ["/", "/units", "/civilizations", "/matchup-advisor"]
+    today = date.today().isoformat()
 
-    # Per-matchup landing pages — every unique-unit pair.
-    for civ_a, slug_a, civ_b, slug_b in _matchup_seed_pairs():
-        urls.append(f"/vs/{civ_a}/{slug_a}/{civ_b}/{slug_b}")
+    # (path, changefreq, priority) for the hand-curated hub pages.
+    hub = [
+        ("/", "weekly", "1.0"),
+        ("/matchup-advisor", "weekly", "0.9"),
+        ("/units", "weekly", "0.9"),
+        ("/civilizations", "weekly", "0.9"),
+        ("/patches", "weekly", "0.7"),
+    ]
+    if REPLAY_ENABLED:
+        hub.append(("/replay", "monthly", "0.5"))
+
+    def _url(path, changefreq, priority):
+        return (f"<url><loc>{SITE_URL}{path}</loc>"
+                f"<lastmod>{today}</lastmod>"
+                f"<changefreq>{changefreq}</changefreq>"
+                f"<priority>{priority}</priority></url>")
 
     xml_parts = ['<?xml version="1.0" encoding="UTF-8"?>',
                  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-    for u in urls:
-        xml_parts.append(f"<url><loc>{SITE_URL}{u}</loc></url>")
+    for path, cf, pr in hub:
+        xml_parts.append(_url(path, cf, pr))
+
+    # Per-matchup landing pages — every unique-unit pair. These are long-tail
+    # SEO targets ("X vs Y who wins"), so a lower priority than the hubs.
+    for civ_a, slug_a, civ_b, slug_b in _matchup_seed_pairs():
+        xml_parts.append(_url(f"/vs/{civ_a}/{slug_a}/{civ_b}/{slug_b}", "monthly", "0.4"))
+
     xml_parts.append("</urlset>")
     return Response("\n".join(xml_parts), mimetype="application/xml")
 
@@ -675,6 +705,48 @@ def _load_unit_for_landing(civ_name, unit_slug):
     return dict(row) if row else None
 
 
+@lru_cache(maxsize=1)
+def _unique_units_list():
+    """Cached [(civ, slug, name)] — one unique unit per civ (Elite preferred).
+
+    Shared by the related-matchups cross-linker so every /vs/ landing page links
+    to a handful of siblings. Without these internal links the landing pages are
+    orphans (reachable only via sitemap.xml), which crawlers heavily deprioritize."""
+    conn = get_ref_db()
+    cur = conn.cursor()
+    cur.execute(
+        """SELECT civ_name, unit_slug, unit_name FROM ref_units
+           WHERE age='Imperial' AND unit_slug LIKE '%\\_%' ESCAPE '\\'
+           ORDER BY civ_name, unit_slug"""
+    )
+    rows = cur.fetchall()
+    conn.close()
+    by_civ = {}  # civ -> (slug, name), elite_* taking precedence
+    for r in rows:
+        civ, slug, name = r["civ_name"], r["unit_slug"], r["unit_name"]
+        if not slug.endswith("_" + civ.lower()):
+            continue
+        existing = by_civ.get(civ)
+        if existing is None or (slug.startswith("elite_") and not existing[0].startswith("elite_")):
+            by_civ[civ] = (slug, name or slug.replace("_", " ").title())
+    return [(civ, slug, name) for civ, (slug, name) in sorted(by_civ.items())]
+
+
+def _related_matchups(civ_a, unit_a, a_name, civ_b, unit_b, b_name, limit=12):
+    """Build internal links to sibling /vs/ pages so landing pages aren't orphans.
+
+    Alternates "A vs other" and "other vs B" so every page is reachable through a
+    densely-connected graph of internal links that crawlers can follow."""
+    out = []
+    pool = [u for u in _unique_units_list() if u[0] not in (civ_a, civ_b)]
+    for civ, slug, name in pool:
+        out.append((f"/vs/{civ_a}/{unit_a}/{civ}/{slug}", f"{a_name} vs {name}"))
+        out.append((f"/vs/{civ}/{slug}/{civ_b}/{unit_b}", f"{name} vs {b_name}"))
+        if len(out) >= limit:
+            break
+    return out[:limit]
+
+
 @app.route("/vs/<civ_a>/<unit_a>/<civ_b>/<unit_b>")
 def matchup_landing(civ_a, unit_a, civ_b, unit_b):
     """SEO landing page for a unit-vs-unit matchup. Stat comparison + CTA to live sim."""
@@ -695,6 +767,7 @@ def matchup_landing(civ_a, unit_a, civ_b, unit_b):
         f"and a live battle simulator to test it yourself."
     )
     canonical = f"{SITE_URL}/vs/{civ_a}/{unit_a}/{civ_b}/{unit_b}"
+    related = _related_matchups(civ_a, unit_a, a_name, civ_b, unit_b, b_name)
 
     return render_template(
         "matchup_landing.html",
@@ -705,6 +778,7 @@ def matchup_landing(civ_a, unit_a, civ_b, unit_b):
         page_title=page_title,
         meta_description=meta_description,
         canonical_url=canonical,
+        related=related,
         active_nav="simulate",
     )
 

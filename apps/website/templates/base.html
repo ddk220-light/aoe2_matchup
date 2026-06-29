@@ -15,7 +15,10 @@
     <title>{% block title %}AoE2 Matchup — Simulate any matchup, fully upgraded{% endblock %}</title>
     {# ---- SEO meta ---- #}
     <meta name="description" content="{% block meta_description %}Free Age of Empires II matchup simulator. Every unit, fully upgraded, all 53 civilizations — tick-by-tick battle simulations to settle who actually wins.{% endblock %}" />
-    <meta name="robots" content="{% block meta_robots %}index,follow{% endblock %}" />
+    <meta name="robots" content="{% block meta_robots %}index,follow,max-image-preview:large,max-snippet:-1{% endblock %}" />
+    {# ---- Search-engine ownership verification (Search Console / Bing) ---- #}
+    {% if google_site_verification %}<meta name="google-site-verification" content="{{ google_site_verification }}" />{% endif %}
+    {% if bing_site_verification %}<meta name="msvalidate.01" content="{{ bing_site_verification }}" />{% endif %}
     <link rel="canonical" href="{{ canonical_url or (site_url ~ request.path) }}" />
     {# ---- Open Graph (Reddit / Discord / Facebook link previews) ---- #}
     <meta property="og:site_name" content="AoE2 Matchup" />

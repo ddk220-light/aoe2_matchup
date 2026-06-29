@@ -651,9 +651,27 @@ def _matchup_seed_pairs(limit_per_side=200):
     return pairs
 
 
+@lru_cache(maxsize=1)
+def _data_lastmod():
+    """ISO date of the newest committed data artifact.
+
+    Used as the sitemap <lastmod> so it reflects real data builds rather than
+    the deploy day — a stable signal that only moves when the data actually
+    changes. Falls back to today if no artifact is present (fresh checkout)."""
+    candidates = [
+        os.path.join(str(_GOLDEN_DIR), "derived_data.db"),
+        os.path.join(str(_GOLDEN_DIR), "aoe2_reference.db"),
+        os.path.join(str(_GOLDEN_DIR), "pool_scores.db"),
+    ]
+    mtimes = [os.path.getmtime(p) for p in candidates if os.path.exists(p)]
+    if not mtimes:
+        return date.today().isoformat()
+    return date.fromtimestamp(max(mtimes)).isoformat()
+
+
 @app.route("/sitemap.xml")
 def sitemap_xml():
-    today = date.today().isoformat()
+    lastmod = _data_lastmod()
 
     # (path, changefreq, priority) for the hand-curated hub pages.
     hub = [
@@ -668,7 +686,7 @@ def sitemap_xml():
 
     def _url(path, changefreq, priority):
         return (f"<url><loc>{SITE_URL}{path}</loc>"
-                f"<lastmod>{today}</lastmod>"
+                f"<lastmod>{lastmod}</lastmod>"
                 f"<changefreq>{changefreq}</changefreq>"
                 f"<priority>{priority}</priority></url>")
 

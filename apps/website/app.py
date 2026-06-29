@@ -665,6 +665,45 @@ def robots_txt():
     return Response(body, mimetype="text/plain")
 
 
+# Hand-curated high-traffic "generic" matchups. Each uses a representative civ
+# that reaches the canonical fully-upgraded unit (verified against ref_units).
+# Surfaced on /matchups with the search-term label as anchor text; small set by
+# design (avoids thin/doorway pages).
+_POPULAR_MATCHUPS = [
+    {"label": "Knight vs Pikeman",            "a": ("Franks", "paladin"),       "b": ("Bulgarians", "halberdier")},
+    {"label": "Knight vs Camel",              "a": ("Franks", "paladin"),       "b": ("Berbers", "heavy_camel")},
+    {"label": "Knight vs Archer",             "a": ("Franks", "paladin"),       "b": ("Britons", "arbalester")},
+    {"label": "Knight vs Skirmisher",         "a": ("Franks", "paladin"),       "b": ("Mayans", "imp_elite_skirm")},
+    {"label": "Knight vs Hand Cannoneer",     "a": ("Franks", "paladin"),       "b": ("Turks", "hand_cannoneer")},
+    {"label": "Archer vs Skirmisher",         "a": ("Britons", "arbalester"),   "b": ("Mayans", "imp_elite_skirm")},
+    {"label": "Archer vs Pikeman",            "a": ("Britons", "arbalester"),   "b": ("Bulgarians", "halberdier")},
+    {"label": "Crossbowman vs Eagle Warrior", "a": ("Mayans", "arbalester"),    "b": ("Aztecs", "elite_eagle")},
+    {"label": "Champion vs Pikeman",          "a": ("Aztecs", "champion"),      "b": ("Bulgarians", "halberdier")},
+    {"label": "Champion vs Eagle Warrior",    "a": ("Teutons", "champion"),     "b": ("Aztecs", "elite_eagle")},
+    {"label": "Champion vs Skirmisher",       "a": ("Aztecs", "champion"),      "b": ("Mayans", "imp_elite_skirm")},
+    {"label": "Hand Cannoneer vs Pikeman",    "a": ("Turks", "hand_cannoneer"), "b": ("Bulgarians", "halberdier")},
+    {"label": "Hand Cannoneer vs Skirmisher", "a": ("Turks", "hand_cannoneer"), "b": ("Mayans", "imp_elite_skirm")},
+    {"label": "Cavalry Archer vs Skirmisher", "a": ("Tatars", "heavy_cav_archer"), "b": ("Mayans", "imp_elite_skirm")},
+    {"label": "Cavalry Archer vs Pikeman",    "a": ("Tatars", "heavy_cav_archer"), "b": ("Bulgarians", "halberdier")},
+    {"label": "Hussar vs Skirmisher",         "a": ("Byzantines", "hussar"),    "b": ("Mayans", "imp_elite_skirm")},
+    {"label": "Hussar vs Archer",             "a": ("Byzantines", "hussar"),    "b": ("Britons", "arbalester")},
+    {"label": "Camel vs Cavalry Archer",      "a": ("Saracens", "heavy_camel"), "b": ("Tatars", "heavy_cav_archer")},
+    {"label": "Mangonel vs Archers",          "a": ("Celts", "siege_onager"),   "b": ("Britons", "arbalester")},
+    {"label": "Mangonel vs Skirmishers",      "a": ("Celts", "siege_onager"),   "b": ("Mayans", "imp_elite_skirm")},
+    {"label": "Scorpion vs Champion",         "a": ("Bengalis", "heavy_scorpion"), "b": ("Aztecs", "champion")},
+    {"label": "Eagle Warrior vs Pikeman",     "a": ("Aztecs", "elite_eagle"),   "b": ("Bulgarians", "halberdier")},
+]
+
+
+def _popular_matchup_links():
+    """[(label, url)] for the curated popular matchups."""
+    out = []
+    for m in _POPULAR_MATCHUPS:
+        (ca, ua), (cb, ub) = m["a"], m["b"]
+        out.append((m["label"], f"/vs/{ca}/{ua}/{cb}/{ub}"))
+    return out
+
+
 def _matchup_seed_pairs(limit_per_side=200):
     """Return a list of (civ_a, slug_a, civ_b, slug_b) tuples for the sitemap.
 
@@ -748,6 +787,10 @@ def sitemap_xml():
                  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for path, cf, pr in hub:
         xml_parts.append(_url(path, cf, pr))
+
+    # Curated popular matchups — higher priority than the long-tail pairs.
+    for _label, _path in _popular_matchup_links():
+        xml_parts.append(_url(_path, "monthly", "0.6"))
 
     # Per-matchup landing pages — every unique-unit pair. These are long-tail
     # SEO targets ("X vs Y who wins"), so a lower priority than the hubs.
@@ -902,7 +945,8 @@ def matchups_hub():
             })
         if links:
             groups.append({"civ": civ_a, "unit": name_a, "links": links})
-    return render_template("matchups.html", groups=groups, active_nav="simulate")
+    return render_template("matchups.html", groups=groups, active_nav="simulate",
+                           popular=_popular_matchup_links())
 
 
 @app.route("/api/armor-classes")

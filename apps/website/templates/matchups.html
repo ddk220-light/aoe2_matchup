@@ -13,6 +13,19 @@
     <p class="subtitle">Every civilization's unique unit, simulated against every other — pick a matchup to see who wins at full upgrades.</p>
 </div>
 
+{% if popular %}
+<div class="container">
+    <section class="popular-matchups">
+        <h2>Popular matchups</h2>
+        <ul class="popular-matchups-list">
+            {% for label, url in popular %}
+            <li><a href="{{ url }}">{{ label }}</a></li>
+            {% endfor %}
+        </ul>
+    </section>
+</div>
+{% endif %}
+
 <div class="container">
     {% for group in groups %}
     <section class="matchup-group">

@@ -1165,11 +1165,14 @@ STABLE_LINE_SLUGS = {"knight", "light_cav", "camel", "steppe_lancer", "elephant"
 SIEGE_LINE_SLUGS = {"ram", "mangonel", "trebuchet", "bombard_cannon", "cannon_galleon"}
 NAVAL_LINE_SLUGS = {"galleon", "fire", "hulk", "naval"}
 
-@app.route("/api/ref/unit-line/<line_slug>")
-def api_ref_unit_line(line_slug):
-    """Get comparison data for a unit line across all civs."""
+def get_unit_line_data(line_slug):
+    """Return comparison data for a unit line across all civs as a plain dict.
+
+    Returns None if line_slug is not a known unit line.
+    Used by api_ref_unit_line and server-side rendering tasks.
+    """
     if line_slug not in UNIT_LINES:
-        return jsonify({"error": "Unknown unit line"}), 404
+        return None
 
     line = UNIT_LINES[line_slug]
     ref_conn = get_ref_db()
@@ -1436,7 +1439,16 @@ def api_ref_unit_line(line_slug):
             entry["pool_scores"] = pool_scores_by_unit[key]
 
     ref_conn.close()
-    return jsonify(result)
+    return result
+
+
+@app.route("/api/ref/unit-line/<line_slug>")
+def api_ref_unit_line(line_slug):
+    """Get comparison data for a unit line across all civs."""
+    data = get_unit_line_data(line_slug)
+    if data is None:
+        return jsonify({"error": "Unknown unit line"}), 404
+    return jsonify(data)
 
 
 # ============== Civ Matchup ==============

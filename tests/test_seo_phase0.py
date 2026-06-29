@@ -10,3 +10,10 @@ def test_sitemap_lastmod_reflects_data_build(client):
     assert f"<lastmod>{expected}</lastmod>" in body
     # And it is a valid ISO date.
     datetime.date.fromisoformat(expected)
+
+
+def test_fonts_preconnect_present(client):
+    body = client.get("/").data.decode()
+    assert '<link rel="preconnect" href="https://fonts.googleapis.com"' in body
+    assert '<link rel="preconnect" href="https://fonts.gstatic.com"' in body
+    assert 'crossorigin' in body  # gstatic preconnect must be crossorigin

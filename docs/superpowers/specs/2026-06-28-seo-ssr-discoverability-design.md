@@ -62,7 +62,8 @@ A small set of reusable, server-rendered descriptive blocks so a crawler/AI unde
 | Civilizations | `/civilizations` | All 53 civs as `<section>`s: name, power units, one-line identity | Yes — what the page shows | `ItemList` of civs |
 | Matchup Advisor | `/matchup-advisor` | Civ-selection grid + static intro; recommendation engine stays interactive | Yes — what it recommends and how | `WebApplication`/`BreadcrumbList` |
 | Replay Analyzer | `/replay` | Descriptive section: what it analyzes (build order, military timeline, APM, eco), how to upload/use; SPA stays JS | Yes — full tool description (no data to render) | `SoftwareApplication` + `HowTo` |
-| Patch tracker hub | `/patches` | Server-rendered list of builds/patches it tracks | Yes — what patch tracking shows | `ItemList` / `BreadcrumbList` |
+| Patch tracker hub | `/patches` | Already SSR (summary_html); enrich + cross-link to per-patch pages | Yes — what patch tracking shows | `ItemList` / `BreadcrumbList` |
+| Per-patch landing *(new)* | `/patches/<build>` | **The page that serves "AoE2 new patch" searches.** Full server-rendered notes for one update: title, release date, complete unit/civ change list, links into per-unit pages | Yes — "Age of Empires II Update `<build>` — balance changes & patch notes" | `NewsArticle` (`datePublished`=release_date) + `BreadcrumbList` |
 | Patch unit page | `/patches/<build>/<civ>/<unit>` | Server-rendered stat-delta summary for that unit across the patch | Yes — verdict sentence ("Buffed/Nerfed in <build>: …") | `BreadcrumbList` |
 | Matchup landing | `/vs/<a>/<ua>/<b>/<ub>` | Server-rendered verdict sentence ("In a 30v30 sim, X beats Y …") + existing related-matchup links | Already has title/desc; add verdict | `BreadcrumbList` (extends existing JSON-LD) |
 | Matchups hub *(new)* | `/matchups` | Real, curated/paginated index into the `/vs/` pages; linked from footer + nav | Yes — "AoE2 unit matchups" keyword page | `CollectionPage` / `ItemList` |
@@ -74,14 +75,14 @@ A small set of reusable, server-rendered descriptive blocks so a crawler/AI unde
 ## 6. Sitemap, robots, crawl hygiene
 
 1. Drive each URL's `lastmod` from the real data/patch build date (or git mtime of the underlying artifact), not "today".
-2. Add `/matchups` hub, `/about`, and all `/patches/<build>/<civ>/<unit>` pages (enumerated from `patches.db`) to the sitemap.
+2. Add `/matchups` hub, `/about`, every `/patches/<build>` per-patch page, and all `/patches/<build>/<civ>/<unit>` pages (enumerated from `patches.db`) to the sitemap. Per-patch `lastmod` = the patch `release_date`.
 3. Add a `<sitemapindex>` split **only if** total URLs cross ~50k / 50 MB.
 4. Confirm `SITE_URL` / canonical host is `https://aoe2matchup.com` in production (already wired via `inject_site_url`; verify in deploy).
 
 ## 7. Structured data (JSON-LD) summary
 
 - Enrich the existing site-wide `WebApplication` ([base.html:40](../../../apps/website/templates/base.html)) with `featureList`, `screenshot`, and `aggregateRating` only if a real rating source exists (else omit — no fake ratings).
-- Add `ItemList` (rankings, civs, matchups hub), `BreadcrumbList` (vs / civ / patch / advisor), `SoftwareApplication` + `HowTo` (replay), `CollectionPage` (matchups hub).
+- Add `ItemList` (rankings, civs, matchups hub), `BreadcrumbList` (vs / civ / patch / advisor), `SoftwareApplication` + `HowTo` (replay), `CollectionPage` (matchups hub), `NewsArticle` (per-patch landing pages, `datePublished`=release_date — the freshness signal for "new patch" queries), `AboutPage` (`/about`).
 - All blocks validated against the rendered HTML they describe.
 
 ## 8. Phasing
@@ -94,7 +95,7 @@ Ordered so the live crawler sees real content fastest, lowest-risk first. Every 
 - **Phase 3 — Rankings SSR** (default table) + score-explainer copy + `ItemList`.
 - **Phase 4 — Matchup Advisor SSR** (grid + intro).
 - **Phase 5 — Replay Analyzer description** + `SoftwareApplication`/`HowTo`.
-- **Phase 6 — Patch tracker SSR** (`/patches` + per-unit) + sitemap completion.
+- **Phase 6 — Patch tracker** — add the new `/patches/<build>` per-patch landing page (the "AoE2 new patch" target) with `NewsArticle`/`datePublished`, enrich the `/patches` hub + per-unit pages, link them together, and add every patch URL to the sitemap. High priority within the run: patch queries are high-volume and time-sensitive.
 - **Phase 7 — Homepage flagship content + methodology/About layer** + `WebApplication` enrichment + final site-wide crawl audit.
 - **Phase 8 — `/vs/` coverage expansion** (generic high-traffic pairs) — last because it enlarges the sitemap and benefits from all prior verdict/SSR work.
 

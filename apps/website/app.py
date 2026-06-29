@@ -428,6 +428,31 @@ def _patch_unit_tables(conn, pid, build):
     return tables
 
 
+def get_patch_overview(build):
+    """Assemble one patch's full landing-page data: metadata + rendered summary
+    (notes with inlined matchup tables) + per-unit headline tables. Reuses the
+    same render_patch_summary / _patch_unit_tables the hub uses, so the per-patch
+    page and the hub can't diverge. Returns None for an unknown/absent build."""
+    if not os.path.exists(PATCHES_DB_PATH):
+        return None
+    conn = _patches_conn()
+    p = conn.execute("SELECT * FROM patches WHERE build_number=?", (build,)).fetchone()
+    if p is None:
+        conn.close()
+        return None
+    tables = _patch_unit_tables(conn, p["id"], p["build_number"])
+    summary_html = render_patch_summary(p["summary_md"], tables)
+    conn.close()
+    return {
+        "build_number": p["build_number"],
+        "title": p["title"],
+        "release_date": p["release_date"],
+        "source_url": p["source_url"],
+        "summary_html": summary_html,
+        "unit_tables": tables,
+    }
+
+
 @app.route("/patches")
 def patches_page():
     if not os.path.exists(PATCHES_DB_PATH):

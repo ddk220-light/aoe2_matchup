@@ -4,14 +4,14 @@
 
 **Goal:** Server-render all 53 civilizations — name, the auto-generated strategic description, and power units grouped by role — as crawlable HTML on `/civilizations`, so crawlers and JS-less AI sources can read every civ's identity and key units. The interactive click-to-analyze selector is untouched.
 
-**Architecture:** Add a `get_civ_overview_data()` helper that shapes the existing `load_civ_power_units()` data for server rendering (same data source as `/api/civ-power-units`, so SSR and API never diverge). The `/civilizations` route passes it to the template, which renders an always-present, crawlable "all civs" `<section id="civ-ssr">`. An inline `<script>` hides that section the instant it parses, so JS users see only the existing interactive UI (zero changes to `matchup.js`); crawlers and no-JS visitors get the full content. Add `ItemList` JSON-LD listing all civs.
+**Architecture:** Add a `get_civ_overview_data()` helper that shapes the existing `load_civ_power_units()` data for server rendering (same data source as `/api/civ-power-units`, so SSR and API never diverge). The `/civilizations` route passes it to the template, which renders a **visible, styled "All civilizations at a glance" reference** `<section id="civ-ssr">` below the interactive selector. This serves both audiences at once: it's a genuine user-facing text reference (each civ's identity + power units, browsable without clicking) AND fully crawlable HTML for JS-less AI sources. The existing interactive click-to-analyze selector stays at the top, unchanged — `matchup.js` is not touched. Add `ItemList` JSON-LD listing all civs.
 
 **Tech Stack:** Flask, Jinja2, pytest (`client` fixture in `tests/conftest.py`). Data: `data/golden/civ_power_units/<build>.json` (current build `177723`, 53 civs), read via `load_civ_power_units` (`aoe2x/advisor/best_units.py`).
 
 **Key design decisions (from the Phase-1 investigation):**
 - **No net-new content corpus.** The spec floated authoring a `civ_identity.json`. Unnecessary — `civ_power_units/<build>.json` already contains a per-civ `strategic_description` (a real narrative: strengths, what to build, vulnerabilities). That IS the identity text. The spec's `civ_identity.json` task is dropped.
-- **Hydration = "visible SSR, hide-on-parse."** The SSR section renders visible by default (so JS-less crawlers see it); an inline script immediately after it sets `hidden = true` (runs only in JS browsers, before paint → no flash, no UX change). This avoids touching the interactive render path (`matchup.js` is not modified). It is NOT cloaking: identical HTML is served to everyone; JS in the user's browser hides a redundant section.
-- **Streamlined semantic SSR, not full badge fidelity.** Crawlers need the civ name, description, and power-unit names grouped by role — not the interactive tooltips/sprites. The SSR is a clean semantic subset; the interactive UI remains the rich human view.
+- **Visible reference, dual-purpose.** The server-rendered section stays visible for everyone — it's a real user-facing "browse all civs" text reference AND the crawlable layer. Per the user's directive ("use the data to also improve the user-facing side"), we don't hide it. `matchup.js` is still not modified — the section simply renders as static content below the interactive tool. The interactive selector remains the primary visual analysis view; the reference is the scannable text view.
+- **Streamlined semantic SSR, not full badge fidelity.** The reference shows civ name, description, and power-unit names grouped by role — not the interactive tooltips/sprites. Clean, readable text; the interactive UI remains the rich visual view.
 
 **Test command (exact interpreter — bare `python`/`pytest` are the wrong env):**
 `.venv/bin/python -m pytest tests/test_seo_phase1.py -v` (run from repo root). "Replay Analyzer disabled (no mgz)" on import is expected/harmless.
@@ -166,12 +166,6 @@ def test_civ_overview_ssr_has_descriptions_and_units(client):
     # A power-unit name renders as crawlable text.
     sample = next(c for c in data if c["roles"])
     assert sample["roles"][0]["units"][0]["name"] in body
-
-
-def test_civ_overview_ssr_hidden_for_js(client):
-    # The inline hide-on-parse script must be present so JS users don't see it.
-    body = client.get("/civilizations").data.decode()
-    assert "getElementById('civ-ssr')" in body
 ```
 
 - [ ] **Step 2: Run to verify they fail**
@@ -207,12 +201,12 @@ and replace with:
 ```html
     <div id="results" class="results-container"></div>
 
-    {# Server-rendered, crawlable fallback: every civ's identity + power units.
-       Hidden the instant it parses for JS users (the interactive selector above
-       is the rich view); remains for crawlers and no-JS visitors. Same data as
-       /api/civ-power-units via get_civ_overview_data(). #}
-    <section id="civ-ssr" class="civ-ssr" aria-label="All civilizations">
+    {# Visible "browse all civs" text reference: every civ's identity + power
+       units. A user-facing scannable view AND fully crawlable HTML. Same data
+       as /api/civ-power-units via get_civ_overview_data(). #}
+    <section id="civ-ssr" class="civ-ssr" aria-label="All civilizations at a glance">
         <h2 class="civ-ssr-title">All {{ civ_overview | length }} civilizations at a glance</h2>
+        <p class="civ-ssr-intro">Each civilization's strategic identity and its strongest fully-upgraded units, by role. Use the selector above for the full interactive breakdown.</p>
         {% for civ in civ_overview %}
         <article class="civ-ssr-civ" id="civ-{{ civ.slug }}">
             <h3>{{ civ.name }}</h3>
@@ -225,7 +219,6 @@ and replace with:
         </article>
         {% endfor %}
     </section>
-    <script>var _ssr = document.getElementById('civ-ssr'); if (_ssr) _ssr.hidden = true;</script>
 </div>
 {% endblock %}
 ```
@@ -233,19 +226,26 @@ and replace with:
 - [ ] **Step 3c: Minimal CSS.** Append to `apps/website/static/css/matchup.css`:
 
 ```css
-/* Server-rendered civ fallback — hidden for JS users (see civ_overview.html).
-   Styled lightly so no-JS visitors still get a readable page. */
+/* "All civilizations at a glance" — a visible, browsable text reference that
+   doubles as the crawlable layer (see civ_overview.html). */
 .civ-ssr {
     max-width: var(--container-max);
-    margin: 0 auto;
-    padding: 8px var(--gutter) 48px;
+    margin: 40px auto 0;
+    padding: 28px var(--gutter) 48px;
+    border-top: 1px solid var(--border);
 }
 .civ-ssr-title {
     font-family: var(--font-display);
     color: var(--gold);
     font-size: var(--fs-lg);
     letter-spacing: 0.04em;
-    margin: 0 0 18px;
+    margin: 0 0 6px;
+}
+.civ-ssr-intro {
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    font-style: italic;
+    margin: 0 0 20px;
 }
 .civ-ssr-civ {
     border-top: 1px solid var(--border);
@@ -354,8 +354,8 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 Expected: PASS — all prior tests (Phase 0 included) plus the new Phase 1 tests; no regressions. The existing `/api/civ-power-units/<civ>` JSON is unchanged (the route was not modified), confirming SSR and API share the data source without divergence.
 
 - [ ] **Step 2: Render + interactivity smoke test.** Start the server (`launch.json` config `aoe2-flask` via the preview tool, or `PORT=5002 .venv/bin/python apps/website/app.py`). Then:
-  - Load `/civilizations` with **JavaScript disabled** (or `curl`): confirm all 53 civ names + descriptions + power-unit names are in the raw HTML inside `#civ-ssr`.
-  - Load `/civilizations` with JS **enabled**: confirm `#civ-ssr` is hidden (not visible), the interactive civ grid still works, and clicking a civ still loads its analysis. No duplicated/doubled content, no console errors.
+  - `curl` (no JS): confirm all 53 civ names + descriptions + power-unit names are in the raw HTML inside `#civ-ssr`.
+  - Load `/civilizations` in the browser preview: confirm the interactive civ grid still works and clicking a civ still loads its analysis, AND the visible "All civilizations at a glance" reference renders cleanly below it (readable styling, no layout breakage). Screenshot it. No console errors.
 
 - [ ] **Step 3: Confirm branch + push.**
 
@@ -373,11 +373,12 @@ Then ask the user to verify on the staging URL. **Do not** push to `main`.
 
 **Spec coverage (Phase 2 "Civilizations SSR" slice of the design spec):**
 - Server-render all 53 civs (name, power units, identity) → Tasks 1–2 ✓
-- Progressive enhancement, interactive UI preserved → hide-on-parse, `matchup.js` untouched ✓
+- Progressive enhancement, interactive UI preserved → visible reference below the interactive selector, `matchup.js` untouched ✓
+- User-facing enrichment (user directive: use the data to improve the visible UI) → the reference is a real browsable text view, not a hidden crawler-only block ✓
 - `ItemList` JSON-LD → Task 3 ✓
 - Single shared data source (SSR ↔ API) → `get_civ_overview_data` wraps `load_civ_power_units`, the same loader the API uses ✓
 - Civ identity text → resolved to the existing `strategic_description` (no `civ_identity.json` authored) ✓
 
 **Placeholder scan:** none — every step has exact code, paths, and commands.
 
-**Type/name consistency:** `get_civ_overview_data()` returns dicts with keys `{name, slug, description, roles}`; each role `{label, units}`; each unit `{name, slug, tier, is_unique}`. The template iterates exactly these (`civ.name`, `civ.slug`, `civ.description`, `civ.roles`, `role.label`, `role.units`, `unit.name`, `unit.tier`). Tests assert the same key sets. The route passes `civ_overview=get_civ_overview_data()`; template and JSON-LD both read `civ_overview`. The hide script targets `id="civ-ssr"`, which the section defines and the test asserts.
+**Type/name consistency:** `get_civ_overview_data()` returns dicts with keys `{name, slug, description, roles}`; each role `{label, units}`; each unit `{name, slug, tier, is_unique}`. The template iterates exactly these (`civ.name`, `civ.slug`, `civ.description`, `civ.roles`, `role.label`, `role.units`, `unit.name`, `unit.tier`). Tests assert the same key sets. The route passes `civ_overview=get_civ_overview_data()`; template and JSON-LD both read `civ_overview`. The reference section uses `id="civ-ssr"`, which `test_civ_overview_ssr_renders_all_civs` asserts is present.

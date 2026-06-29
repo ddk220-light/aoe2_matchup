@@ -1436,6 +1436,53 @@ def api_ref_unit_line(line_slug):
 
 # ============== Civ Matchup ==============
 
+# Role columns shown on the civilizations overview, in display order.
+# Keys match the top-level groups of power_units in civ_power_units/<build>.json.
+_CIV_ROLE_LABELS = [
+    ("cavalry", "Cavalry"),
+    ("ranged", "Ranged"),
+    ("infantry", "Infantry"),
+    ("siege", "Siege"),
+    ("navy", "Navy"),
+]
+
+
+def get_civ_overview_data():
+    """Server-renderable overview for every civ: name, the auto-generated
+    strategic description, and power units grouped by role.
+
+    Shares its data source (load_civ_power_units) with the /api/civ-power-units
+    route, so the server-rendered page and the JSON API never diverge. Degrades
+    to empty descriptions/roles if the power-units file is missing, so the page
+    still renders the civ list rather than 500ing."""
+    civs = _get_ref_civs()
+    power = load_civ_power_units(build_number=current_build()) or {}
+    out = []
+    for civ in civs:
+        civ_age = (power.get(civ) or {}).get("imperial") or {}
+        power_units = civ_age.get("power_units") or {}
+        roles = []
+        for role_key, role_label in _CIV_ROLE_LABELS:
+            units = []
+            for _line_slug, entries in (power_units.get(role_key) or {}).items():
+                for e in (entries or []):
+                    slug = e.get("unit_slug") or ""
+                    units.append({
+                        "name": e.get("unit_name") or slug.replace("_", " ").title(),
+                        "slug": slug,
+                        "tier": (e.get("tier") or e.get("strength") or "").title(),
+                        "is_unique": bool(e.get("is_unique")),
+                    })
+            if units:
+                roles.append({"label": role_label, "units": units})
+        out.append({
+            "name": civ,
+            "slug": civ.lower(),
+            "description": civ_age.get("strategic_description") or "",
+            "roles": roles,
+        })
+    return out
+
 
 def _get_ref_civs():
     """Get list of civilizations from the reference DB."""

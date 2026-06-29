@@ -729,3 +729,45 @@ td.hc-cell {
         transition: none;
     }
 }
+
+/* "Rankings at a glance" — visible, crawlable top-units-per-category summary. */
+.rankings-ssr {
+    max-width: var(--container-max);
+    margin: 40px auto 0;
+    padding: 28px var(--gutter) 56px;
+    border-top: 1px solid var(--border);
+}
+.rankings-ssr-title {
+    font-family: var(--font-display);
+    color: var(--gold);
+    font-size: var(--fs-lg);
+    letter-spacing: 0.04em;
+    margin: 0 0 8px;
+}
+.rankings-ssr-intro {
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-base);
+    max-width: 760px;
+    margin: 0 0 24px;
+}
+.rankings-ssr-group { margin-bottom: 28px; }
+.rankings-ssr-group h3 {
+    color: var(--gold);
+    font-size: var(--fs-md);
+    margin: 0 0 8px;
+}
+.rankings-ssr-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+}
+.rankings-ssr-table th,
+.rankings-ssr-table td {
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+}
+.rankings-ssr-table th { color: var(--text-muted); font-weight: 600; }
+.rankings-ssr-table td:last-child,
+.rankings-ssr-table th:last-child { text-align: right; }

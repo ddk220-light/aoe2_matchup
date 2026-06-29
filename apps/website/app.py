@@ -563,7 +563,12 @@ def replay():
 def units():
     units_by_age = get_units_by_age()
     ages = {k: v["name"] for k, v in AGES.items()}
-    return render_template("rankings.html", units_by_age=units_by_age, ages=ages, active_nav="rankings")
+    return render_template(
+        "rankings.html",
+        units_by_age=units_by_age, ages=ages,
+        rankings_overview=get_rankings_overview_data(),
+        active_nav="rankings",
+    )
 
 
 @app.route("/civilizations")

@@ -28,6 +28,42 @@
     <div id="lineSelector"></div>
     <div class="table-container" id="tableContainer"></div>
 </div>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "Age of Empires II top units by category",
+  "itemListElement": [
+    {% set ns = namespace(pos=0) %}
+    {% for group in rankings_overview %}{% for u in group.units %}{% set ns.pos = ns.pos + 1 %}{{ "," if ns.pos > 1 else "" }}
+    { "@type": "ListItem", "position": {{ ns.pos }}, "name": "{{ u.name }} ({{ u.civ }})" }{% endfor %}{% endfor %}
+  ]
+}
+</script>
+
+<section id="rankings-ssr" class="rankings-ssr" aria-label="Rankings at a glance">
+    <h2 class="rankings-ssr-title">Rankings at a glance</h2>
+    <p class="rankings-ssr-intro">
+        Every unit is scored from thousands of simulated battles at full upgrades.
+        The <strong>Average</strong> score blends two scenarios: a 30-vs-30 population fight
+        (<em>30v30</em>) and a 3,000-resource cost-parity fight (<em>3k</em>). Higher is stronger.
+        Below are the top units in each category; use the interactive table above to explore every line, civ, and matchup.
+    </p>
+    {% for group in rankings_overview %}
+    <div class="rankings-ssr-group">
+        <h3>Best {{ group.label }}</h3>
+        <table class="rankings-ssr-table">
+            <thead><tr><th>#</th><th>Unit</th><th>Civilization</th><th>Score</th></tr></thead>
+            <tbody>
+                {% for u in group.units %}
+                <tr><td>{{ loop.index }}</td><td>{{ u.name }}</td><td>{{ u.civ }}</td><td>{{ u.score }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+</section>
 {% endblock %}
 
 {% block page_js %}

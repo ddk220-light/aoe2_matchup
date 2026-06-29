@@ -31,3 +31,18 @@ def test_rankings_overview_shape(client):
         u = g["units"][0]
         assert set(u.keys()) == {"civ", "name", "slug", "score"}
         assert isinstance(u["score"], (int, float))
+
+
+def test_rankings_ssr_renders(client):
+    import app
+    body = client.get("/units").data.decode()
+    assert 'id="rankings-ssr"' in body
+    assert "Average" in body and "30v30" in body
+    ov = app.get_rankings_overview_data()
+    top = next(g["units"][0]["name"] for g in ov if g["units"])
+    assert top in body
+
+
+def test_rankings_ssr_itemlist_jsonld(client):
+    body = client.get("/units").data.decode()
+    assert '"@type": "ItemList"' in body

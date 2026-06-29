@@ -17,3 +17,13 @@ def test_fonts_preconnect_present(client):
     assert '<link rel="preconnect" href="https://fonts.googleapis.com"' in body
     assert '<link rel="preconnect" href="https://fonts.gstatic.com"' in body
     assert 'crossorigin' in body  # gstatic preconnect must be crossorigin
+
+
+def test_vs_page_has_breadcrumb_jsonld(client):
+    import app
+    pairs = app._unique_units_list()  # [(civ, slug, name), ...]
+    (civ_a, slug_a, _), (civ_b, slug_b, _) = pairs[0], pairs[1]
+    body = client.get(f"/vs/{civ_a}/{slug_a}/{civ_b}/{slug_b}").data.decode()
+    assert '"@type": "BreadcrumbList"' in body
+    assert '"name": "Matchups"' in body
+    assert '/matchups' in body

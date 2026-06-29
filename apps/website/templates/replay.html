@@ -3,48 +3,82 @@
 {% block title %}Replay Analyzer — watch &amp; share AoE2 replays | AoE2 Matchup{% endblock %}
 {% block meta_description %}Browse and watch Age of Empires II replays on an isometric map, classify every unit, and export a short shareable WebM highlight clip of the biggest engagements.{% endblock %}
 
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "AoE2 Replay Analyzer",
+  "applicationCategory": "GameApplication",
+  "operatingSystem": "Web",
+  "description": "Watch Age of Empires II replays on an isometric map with auto-classified units, full build-order and tech timelines, and one-click WebM highlight-clip export.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to analyze an Age of Empires II replay",
+  "step": [
+    { "@type": "HowToStep", "name": "Load a replay", "text": "Upload an .aoe2record file or search a player and pick a recent match." },
+    { "@type": "HowToStep", "name": "Watch the game", "text": "Press play, scrub the timeline, and change speed to study build orders and fights." },
+    { "@type": "HowToStep", "name": "Export a clip", "text": "Generate a shareable WebM highlight of the biggest engagement." }
+  ]
+}
+</script>
+{% endblock %}
+
 {% block page_css %}
 <style>
-    /* Full-screen replay app sits below the sticky nav. The visualizer is a
-       self-contained full-screen SPA, so we isolate it in an iframe to avoid
-       any CSS collisions with the analyzer's styles. */
-    html, body { overflow: hidden; }
-    #replay-host { width: 100%; }
-    #replay-frame {
-        display: block;
-        width: 100%;
-        border: 0;
-        /* Match the replay app's themed background so there's no dark flash
-           while the iframe loads (base.css tokens are available here). */
-        background: var(--bg-deep);
-    }
+    .replay-page { max-width: 1200px; margin: 0 auto; padding: 20px 16px 64px; }
+    .replay-intro h1 { font-family: 'Cinzel', serif; color: var(--gold); font-size: 1.8rem; margin: 4px 0 8px; }
+    .replay-intro p { color: var(--text-muted); max-width: 820px; line-height: 1.6; margin: 0 0 14px; }
+    .replay-features { list-style: none; padding: 0; margin: 0 0 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 18px; }
+    .replay-features li { font-size: 0.92rem; padding-left: 18px; position: relative; }
+    .replay-features li::before { content: "▸"; color: var(--gold); position: absolute; left: 0; }
+    #replay-host { width: 100%; height: min(78vh, 760px); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    #replay-frame { width: 100%; height: 100%; border: 0; display: block; }
+    .replay-howto { margin-top: 24px; color: var(--text-muted); font-size: 0.92rem; line-height: 1.6; max-width: 820px; }
+    .replay-howto h2 { font-family: 'Cinzel', serif; color: var(--gold); font-size: 1.2rem; }
+    .replay-howto kbd { background: var(--bg-warm); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; font-size: 0.85em; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div id="replay-host">
-    <iframe
-        id="replay-frame"
-        title="AoE2 Replay Analyzer"
-        src="/replay/index.html{{ replay_qs }}"
-        allow="clipboard-write"
-    ></iframe>
-</div>
+<main class="replay-page">
+  <div class="replay-intro">
+    <h1>AoE2 Replay Analyzer</h1>
+    <p>
+      Watch any Age of Empires II match play back on an isometric map — every unit
+      auto-classified and player-coloured, with the full build order, tech timeline,
+      and army movements reconstructed from the recorded game. Upload an
+      <code>.aoe2record</code> file or pull a match straight from a player's recent games.
+    </p>
+    <ul class="replay-features">
+      <li>Isometric playback with classified unit sprites, terrain, resources &amp; buildings</li>
+      <li>Full build-order and technology timeline</li>
+      <li>Military, economy, APM and production trackers</li>
+      <li>Play/pause, step, 1×–16× speed, scrub, zoom &amp; pan</li>
+      <li>Search players &amp; load matches from the AoE2 Companion API</li>
+      <li>One-click WebM highlight clip of the biggest engagement</li>
+      <li>Deep-link sharing to an exact match and timestamp</li>
+    </ul>
+  </div>
+
+  <div id="replay-host">
+    <iframe id="replay-frame" title="AoE2 Replay Analyzer" src="/replay/index.html{{ replay_qs }}" allow="clipboard-write"></iframe>
+  </div>
+
+  <section class="replay-howto">
+    <h2>How to use it</h2>
+    <ol>
+      <li>Click <strong>Upload</strong> and choose an <code>.aoe2record</code> file, or search a player and pick a recent match.</li>
+      <li>Press play (or <kbd>Space</kbd>) to watch the game; scrub the timeline or change speed to focus on key fights.</li>
+      <li>Hit <strong>Export clip</strong> to generate a shareable WebM of the biggest engagement.</li>
+    </ol>
+  </section>
+</main>
 {% endblock %}
 
-{% block page_js %}
-<script>
-    // Size the iframe to fill from its top to the bottom of the viewport, so it
-    // works regardless of the (sticky, sometimes wrapping) nav's height.
-    (function () {
-        var frame = document.getElementById('replay-frame');
-        function size() {
-            var top = frame.getBoundingClientRect().top;
-            frame.style.height = Math.max(360, window.innerHeight - top) + 'px';
-        }
-        window.addEventListener('resize', size);
-        window.addEventListener('load', size);
-        size();
-    })();
-</script>
-{% endblock %}
+{% block page_js %}{% endblock %}

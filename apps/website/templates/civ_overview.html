@@ -8,6 +8,18 @@
 {% endblock %}
 
 {% block content %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "Age of Empires II civilizations",
+  "numberOfItems": {{ civ_overview | length }},
+  "itemListElement": [
+    {% for civ in civ_overview %}{ "@type": "ListItem", "position": {{ loop.index }}, "name": "{{ civ.name }}", "url": "{{ site_url }}/civilizations#civ-{{ civ.slug }}" }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
 <div class="page-header">
     <h1>Civilizations</h1>
     <p class="subtitle">Select a civilization to see its strengths, weaknesses, and strategic identity</p>

@@ -37,3 +37,11 @@ def test_civ_overview_ssr_has_descriptions_and_units(client):
     # A power-unit name renders as crawlable text.
     sample = next(c for c in data if c["roles"])
     assert sample["roles"][0]["units"][0]["name"] in body
+
+
+def test_civ_overview_itemlist_jsonld(client):
+    import app
+    n = len(app._get_ref_civs())
+    body = client.get("/civilizations").data.decode()
+    assert '"@type": "ItemList"' in body
+    assert f'"numberOfItems": {n}' in body

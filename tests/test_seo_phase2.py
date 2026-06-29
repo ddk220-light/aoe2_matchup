@@ -16,3 +16,18 @@ def test_get_unit_line_data_matches_api(client):
     api = client.get("/api/ref/unit-line/infantry").get_json()
     helper = app.get_unit_line_data("infantry")
     assert helper == api
+
+
+def test_rankings_overview_shape(client):
+    import app
+    data = app.get_rankings_overview_data(top_n=8)
+    labels = [g["label"] for g in data]
+    assert labels == ["Infantry", "Archers & Gunpowder", "Cavalry", "Siege", "Naval"]
+    for g in data:
+        assert g["units"], f"{g['label']} has no ranked units"
+        assert len(g["units"]) <= 8
+        scores = [u["score"] for u in g["units"]]
+        assert scores == sorted(scores, reverse=True)
+        u = g["units"][0]
+        assert set(u.keys()) == {"civ", "name", "slug", "score"}
+        assert isinstance(u["score"], (int, float))

@@ -1442,6 +1442,64 @@ def get_unit_line_data(line_slug):
     return result
 
 
+# Headline categories for the server-rendered "Rankings at a glance" section.
+_RANKINGS_HEADLINE_LINES = [
+    ("infantry", "Infantry"),
+    ("archery", "Archers & Gunpowder"),
+    ("stable", "Cavalry"),
+    ("siege", "Siege"),
+    ("naval", "Naval"),
+]
+# Role-score keys to fall back on when a unit has no pool_scores (siege/naval).
+_RANKING_FALLBACK_SCORE_KEYS = (
+    "anti_building_score", "naval_effectiveness",
+    "general_combat", "ranged_effectiveness", "stable_effectiveness",
+)
+
+
+def _ranking_default_score(unit):
+    """A unit's default 'Average' score: mean of its 30v30 and 3k pool HP-scores,
+    or a role score for siege/naval. Mirrors the interactive table's default view.
+    Returns None if the unit has no usable score."""
+    ps = unit.get("pool_scores")
+    if ps:
+        vals = []
+        for scale in ("30v30", "3k"):
+            v = ((ps.get("scales", {}) or {}).get(scale, {}) or {}).get("hp", {}) or {}
+            f = v.get("final")
+            if isinstance(f, (int, float)):
+                vals.append(f)
+        if vals:
+            return sum(vals) / len(vals)
+    for k in _RANKING_FALLBACK_SCORE_KEYS:
+        v = unit.get(k)
+        if isinstance(v, (int, float)) and v != -999:
+            return v
+    return None
+
+
+def get_rankings_overview_data(top_n=8):
+    """Top units per headline category by default 'Average' score, for SSR.
+    Reuses get_unit_line_data so the overview can't diverge from the API."""
+    out = []
+    for line_slug, label in _RANKINGS_HEADLINE_LINES:
+        line = get_unit_line_data(line_slug) or {}
+        scored = []
+        for u in line.get("imperial", []):
+            s = _ranking_default_score(u)
+            if s is None:
+                continue
+            scored.append({
+                "civ": u["civ_name"],
+                "name": u.get("unit_name") or u["unit_slug"],
+                "slug": u["unit_slug"],
+                "score": round(s, 1),
+            })
+        scored.sort(key=lambda x: x["score"], reverse=True)
+        out.append({"line_slug": line_slug, "label": label, "units": scored[:top_n]})
+    return out
+
+
 @app.route("/api/ref/unit-line/<line_slug>")
 def api_ref_unit_line(line_slug):
     """Get comparison data for a unit line across all civs."""

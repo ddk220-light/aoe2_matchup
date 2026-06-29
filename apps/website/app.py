@@ -570,7 +570,12 @@ def units():
 def civ_view():
     """Civilization analysis page — shows power units, strengths, and strategic identity."""
     civs = _get_ref_civs()
-    return render_template("civ_overview.html", civs=civs, active_nav="civ_select")
+    return render_template(
+        "civ_overview.html",
+        civs=civs,
+        civ_overview=get_civ_overview_data(),
+        active_nav="civ_select",
+    )
 
 
 @app.route("/civilizations/<civ_name>")

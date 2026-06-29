@@ -926,3 +926,49 @@
         animation: none;
     }
 }
+
+/* "All civilizations at a glance" — a visible, browsable text reference that
+   doubles as the crawlable layer (see civ_overview.html). */
+.civ-ssr {
+    max-width: var(--container-max);
+    margin: 40px auto 0;
+    padding: 28px var(--gutter) 48px;
+    border-top: 1px solid var(--border);
+}
+.civ-ssr-title {
+    font-family: var(--font-display);
+    color: var(--gold);
+    font-size: var(--fs-lg);
+    letter-spacing: 0.04em;
+    margin: 0 0 6px;
+}
+.civ-ssr-intro {
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    font-style: italic;
+    margin: 0 0 20px;
+}
+.civ-ssr-civ {
+    border-top: 1px solid var(--border);
+    padding: 16px 0;
+}
+.civ-ssr-civ h3 {
+    color: var(--gold);
+    font-size: var(--fs-md);
+    margin: 0 0 6px;
+}
+.civ-ssr-desc {
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    margin: 0 0 8px;
+    line-height: var(--lh-base);
+}
+.civ-ssr-role {
+    font-size: var(--fs-sm);
+    margin: 2px 0;
+}
+.civ-ssr-role-label {
+    color: var(--gold);
+    font-weight: 600;
+    margin-right: 4px;
+}

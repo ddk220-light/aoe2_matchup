@@ -22,6 +22,25 @@
     </div>
 
     <div id="results" class="results-container"></div>
+
+    {# Visible "browse all civs" text reference: every civ's identity + power
+       units. A user-facing scannable view AND fully crawlable HTML. Same data
+       as /api/civ-power-units via get_civ_overview_data(). #}
+    <section id="civ-ssr" class="civ-ssr" aria-label="All civilizations at a glance">
+        <h2 class="civ-ssr-title">All {{ civ_overview | length }} civilizations at a glance</h2>
+        <p class="civ-ssr-intro">Each civilization's strategic identity and its strongest fully-upgraded units, by role. Use the selector above for the full interactive breakdown.</p>
+        {% for civ in civ_overview %}
+        <article class="civ-ssr-civ" id="civ-{{ civ.slug }}">
+            <h3>{{ civ.name }}</h3>
+            {% if civ.description %}<p class="civ-ssr-desc">{{ civ.description }}</p>{% endif %}
+            {% for role in civ.roles %}
+            <p class="civ-ssr-role"><span class="civ-ssr-role-label">{{ role.label }}:</span>
+                {% for unit in role.units %}{{ unit.name }}{% if unit.tier %} ({{ unit.tier }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+            </p>
+            {% endfor %}
+        </article>
+        {% endfor %}
+    </section>
 </div>
 {% endblock %}
 

@@ -745,6 +745,33 @@ def sitemap_xml():
     for civ_a, slug_a, civ_b, slug_b in _matchup_seed_pairs():
         xml_parts.append(_url(f"/vs/{civ_a}/{slug_a}/{civ_b}/{slug_b}", "monthly", "0.4"))
 
+    # Per-patch landing pages + per-unit patch pages, each dated by release.
+    if os.path.exists(PATCHES_DB_PATH):
+        pconn = _patches_conn()
+        prows = pconn.execute(
+            "SELECT id, build_number, release_date FROM patches").fetchall()
+        for pr in prows:
+            rd = pr["release_date"] or lastmod
+            xml_parts.append(
+                f"<url><loc>{SITE_URL}/patches/{pr['build_number']}</loc>"
+                f"<lastmod>{rd}</lastmod><changefreq>monthly</changefreq>"
+                f"<priority>0.6</priority></url>")
+            seen = set()
+            for ur in pconn.execute(
+                "SELECT DISTINCT civ_name, unit_slug FROM patch_unit_changes WHERE patch_id=? "
+                "UNION SELECT DISTINCT my_civ, my_unit_slug FROM patch_matchup_changes WHERE patch_id=?",
+                (pr["id"], pr["id"]),
+            ).fetchall():
+                key = (ur[0], ur[1])
+                if key in seen:
+                    continue
+                seen.add(key)
+                xml_parts.append(
+                    f"<url><loc>{SITE_URL}/patches/{pr['build_number']}/{ur[0]}/{ur[1]}</loc>"
+                    f"<lastmod>{rd}</lastmod><changefreq>monthly</changefreq>"
+                    f"<priority>0.3</priority></url>")
+        pconn.close()
+
     xml_parts.append("</urlset>")
     return Response("\n".join(xml_parts), mimetype="application/xml")
 

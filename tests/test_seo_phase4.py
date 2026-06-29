@@ -37,3 +37,11 @@ def test_patch_build_404(client):
 def test_patches_hub_links_to_build_pages(client):
     body = client.get("/patches").data.decode()
     assert 'href="/patches/177723"' in body
+
+
+def test_sitemap_includes_patch_pages(client):
+    import app
+    body = client.get("/sitemap.xml").data.decode()
+    assert "/patches/177723</loc>" in body
+    rd = app.get_patch_overview("177723")["release_date"]
+    assert f"<loc>{app.SITE_URL}/patches/177723</loc><lastmod>{rd}</lastmod>" in body

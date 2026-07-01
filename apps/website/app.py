@@ -609,8 +609,111 @@ def units():
         "rankings.html",
         units_by_age=units_by_age, ages=ages,
         rankings_overview=get_rankings_overview_data(),
+        unit_line_pages=[(p["url"], p["short"]) for p in _UNIT_LINE_PAGES],
         active_nav="rankings",
     )
+
+
+# Per-unit-line landing pages ("aoe2 fire lancer", "aoe2 paladin", ...).
+# url = hyphenated URL slug; line = UNIT_LINES key; short = link-list label.
+_UNIT_LINE_PAGES = [
+    {"url": "militia", "line": "militia", "short": "Militia / Champion",
+     "title": "Militia Line — AoE2 Champion Rankings by Civilization",
+     "desc": "Champion and infantry unique-unit rankings for Age of Empires II: every civilization's militia line at full Imperial upgrades, scored by round-robin battle simulations."},
+    {"url": "spearman", "line": "spear", "short": "Spearman / Halberdier",
+     "title": "Spearman Line — AoE2 Pikeman & Halberdier Rankings by Civ",
+     "desc": "Pikeman and Halberdier rankings for Age of Empires II: which civilizations field the best anti-cavalry spearmen at full upgrades, simulated head-to-head."},
+    {"url": "shock-infantry", "line": "shock_infantry", "short": "Fire Lancer & Eagles",
+     "title": "Fire Lancer & Eagle Warrior — AoE2 Shock Infantry Rankings",
+     "desc": "Fire Lancer and Eagle Warrior rankings for Age of Empires II: every civilization's shock infantry at full upgrades, scored by round-robin battle simulations."},
+    {"url": "archer", "line": "archer", "short": "Archer / Arbalester",
+     "title": "Archer Line — AoE2 Crossbowman & Arbalester Rankings by Civ",
+     "desc": "Crossbowman and Arbalester rankings for Age of Empires II: the best foot-archer civilizations at full upgrades, simulated head-to-head across all 53 civs."},
+    {"url": "skirmisher", "line": "skirmisher", "short": "Skirmisher",
+     "title": "Skirmisher Line — AoE2 Elite Skirmisher Rankings by Civ",
+     "desc": "Elite and Imperial Skirmisher rankings for Age of Empires II: the best anti-archer skirmishers at full upgrades, scored by battle simulations."},
+    {"url": "cavalry-archer", "line": "cav_archer", "short": "Cavalry Archer",
+     "title": "Cavalry Archer — AoE2 Heavy Cavalry Archer Rankings by Civ",
+     "desc": "Heavy Cavalry Archer and Elephant Archer rankings for Age of Empires II: the best mounted-archer civilizations at full upgrades, simulated head-to-head."},
+    {"url": "knight", "line": "knight", "short": "Knight / Paladin",
+     "title": "Knight Line — AoE2 Cavalier & Paladin Rankings by Civ",
+     "desc": "Knight, Cavalier and Paladin rankings for Age of Empires II: which civilizations have the strongest heavy cavalry at full upgrades, simulated head-to-head."},
+    {"url": "light-cavalry", "line": "light_cav", "short": "Light Cav / Hussar",
+     "title": "Light Cavalry — AoE2 Hussar Rankings by Civilization",
+     "desc": "Light Cavalry and Hussar rankings for Age of Empires II: the best raiding and trash cavalry at full upgrades, scored by round-robin battle simulations."},
+    {"url": "camel", "line": "camel", "short": "Camel Rider",
+     "title": "Camel Rider — AoE2 Heavy Camel Rankings by Civilization",
+     "desc": "Camel Rider and Heavy Camel rankings for Age of Empires II: the best anti-cavalry camels at full upgrades, simulated head-to-head across all civilizations."},
+    {"url": "steppe-lancer", "line": "steppe_lancer", "short": "Steppe Lancer",
+     "title": "Steppe Lancer — AoE2 Elite Steppe Lancer Rankings by Civ",
+     "desc": "Steppe Lancer and Elite Steppe Lancer rankings for Age of Empires II at full upgrades, scored by round-robin battle simulations."},
+    {"url": "battle-elephant", "line": "elephant", "short": "Battle Elephant",
+     "title": "Battle Elephant — AoE2 Elite Battle Elephant Rankings by Civ",
+     "desc": "Battle Elephant and Elite Battle Elephant rankings for Age of Empires II: the strongest elephant civilizations at full upgrades, simulated head-to-head."},
+    {"url": "ram", "line": "ram", "short": "Battering Ram",
+     "title": "Battering Ram — AoE2 Siege Ram Rankings by Civilization",
+     "desc": "Battering Ram, Capped Ram and Siege Ram rankings for Age of Empires II: the best ram civilizations at full upgrades, scored by battle simulations."},
+    {"url": "mangonel", "line": "mangonel", "short": "Mangonel / Onager",
+     "title": "Mangonel — AoE2 Onager & Siege Onager Rankings by Civ",
+     "desc": "Mangonel, Onager and Siege Onager rankings for Age of Empires II: the best splash-damage siege at full upgrades, simulated head-to-head."},
+    {"url": "hand-cannoneer", "line": "gunpowder", "short": "Hand Cannoneer",
+     "title": "Hand Cannoneer — AoE2 Gunpowder Rankings by Civilization",
+     "desc": "Hand Cannoneer and gunpowder unique-unit rankings for Age of Empires II at full upgrades, scored by round-robin battle simulations."},
+    {"url": "scorpion", "line": "scorpion", "short": "Scorpion",
+     "title": "Scorpion — AoE2 Heavy Scorpion Rankings by Civilization",
+     "desc": "Scorpion and Heavy Scorpion rankings for Age of Empires II: the best scorpion civilizations at full upgrades, simulated head-to-head."},
+    {"url": "trebuchet", "line": "trebuchet", "short": "Trebuchet",
+     "title": "Trebuchet — AoE2 Trebuchet Rankings by Civilization",
+     "desc": "Trebuchet rankings for Age of Empires II: which civilizations field the best trebuchets at full upgrades, scored by battle simulations."},
+    {"url": "bombard-cannon", "line": "bombard_cannon", "short": "Bombard Cannon",
+     "title": "Bombard Cannon — AoE2 Rankings by Civilization",
+     "desc": "Bombard Cannon and Traction Trebuchet rankings for Age of Empires II at full upgrades, scored by round-robin battle simulations."},
+    {"url": "galleon", "line": "galleon", "short": "Galleon",
+     "title": "Galleon — AoE2 War Galley & Galleon Rankings by Civ",
+     "desc": "War Galley and Galleon rankings for Age of Empires II: the best warship civilizations at full upgrades, simulated head-to-head."},
+    {"url": "fire-ship", "line": "fire", "short": "Fire Ship",
+     "title": "Fire Ship — AoE2 Fast Fire Ship Rankings by Civilization",
+     "desc": "Fire Ship and Fast Fire Ship rankings for Age of Empires II at full upgrades, scored by round-robin battle simulations."},
+    {"url": "hulk", "line": "hulk", "short": "Hulk",
+     "title": "Hulk — AoE2 Warship Rankings by Civilization",
+     "desc": "Hulk warship rankings for Age of Empires II at full upgrades, scored by round-robin battle simulations across all naval civilizations."},
+    {"url": "cannon-galleon", "line": "cannon_galleon", "short": "Cannon Galleon",
+     "title": "Cannon Galleon — AoE2 Elite Cannon Galleon Rankings by Civ",
+     "desc": "Cannon Galleon and Elite Cannon Galleon rankings for Age of Empires II at full upgrades, scored by battle simulations."},
+]
+_UNIT_LINE_PAGE_BY_URL = {p["url"]: p for p in _UNIT_LINE_PAGES}
+
+# Score keys checked (in order) for the SSR table's single "Sim score" column.
+_LINE_PAGE_SCORE_KEYS = ("general_combat", "ranged_effectiveness",
+                         "stable_effectiveness", "anti_building_score",
+                         "naval_effectiveness")
+
+
+@app.route("/units/<line_url>")
+def unit_line_page(line_url):
+    """Per-unit-line landing page ("aoe2 fire lancer" searches): SSR ranked
+    table for the line plus a deep link into the interactive rankings."""
+    page = _UNIT_LINE_PAGE_BY_URL.get(line_url.lower())
+    if page is None:
+        abort(404)
+    if line_url != line_url.lower():
+        return redirect(f"/units/{line_url.lower()}", code=301)
+    data = get_unit_line_data(page["line"])
+    if data is None:
+        abort(404)
+
+    def _row_score(r):
+        for k in _LINE_PAGE_SCORE_KEYS:
+            v = r.get(k)
+            if isinstance(v, (int, float)):
+                return v
+        return None
+
+    rows = [(r, _row_score(r)) for r in data["imperial"]]
+    rows.sort(key=lambda t: (-(t[1] if t[1] is not None else float("-inf")),
+                             t[0]["civ_name"]))
+    return render_template("unit_line.html", page=page, line=data, rows=rows,
+                           active_nav="rankings")
 
 
 @app.route("/civilizations")
@@ -820,6 +923,10 @@ def sitemap_xml():
     # Per-civ landing pages ("aoe2 <civ>" searches).
     for _c in _get_ref_civs():
         xml_parts.append(_url(f"/civilizations/{_c.lower()}", "weekly", "0.7"))
+
+    # Per-unit-line landing pages ("aoe2 fire lancer", "aoe2 paladin", ...).
+    for _p in _UNIT_LINE_PAGES:
+        xml_parts.append(_url(f"/units/{_p['url']}", "weekly", "0.7"))
 
     # Curated popular matchups — higher priority than the long-tail pairs.
     for _label, _path in _popular_matchup_links():

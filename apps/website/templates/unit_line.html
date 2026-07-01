@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page.title }}{% endblock %}
+{% block meta_description %}{{ page.desc }}{% endblock %}
+{% block structured_data %}
+{{ super() }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ site_url }}/" },
+    { "@type": "ListItem", "position": 2, "name": "Unit Rankings", "item": "{{ site_url }}/units" },
+    { "@type": "ListItem", "position": 3, "name": {{ line.line_name | tojson }}, "item": "{{ site_url }}/units/{{ page.url }}" }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/rankings.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ page.title.split(" — ")[0] }} Rankings</h1>
+    <p class="subtitle">{{ line.line_name }} ({{ line.building }}) — every civilization at full Imperial upgrades</p>
+</div>
+
+<div class="container">
+    <p class="line-page-nav">
+        <a href="/units?line={{ page.line }}" class="line-page-cta">Open in interactive rankings &rarr;</a>
+        &middot; <a href="/units">All unit rankings</a>
+    </p>
+    <p class="line-page-desc">{{ page.desc }}</p>
+
+    <div class="table-container line-page-table">
+        <table class="stats-table">
+            <thead><tr>
+                <th>#</th><th>Civilization</th><th>Unit</th><th>HP</th><th>Attack</th>
+                <th>Armor</th><th>Sim score</th>
+            </tr></thead>
+            <tbody>
+            {% for row, score in rows %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><a href="/civilizations/{{ row.civ_name | lower }}">{{ row.civ_name }}</a></td>
+                <td><a href="/units?line={{ page.line }}&unit={{ row.unit_slug }}">{{ row.unit_name }}</a></td>
+                <td>{{ row.final_hp }}</td>
+                <td>{{ row.final_attack }}</td>
+                <td>{{ row.final_melee_armor }}/{{ row.final_pierce_armor }}</td>
+                <td>{% if score is not none %}{{ "%.1f" | format(score) }}{% else %}&mdash;{% endif %}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <p class="line-page-method">Scores come from full round-robin battle simulations
+       (equal numbers and equal resources) at Imperial-age upgrades —
+       <a href="/about">methodology</a>. Rows without a score are outside this
+       line's simulated pool.</p>
+</div>
+{% endblock %}

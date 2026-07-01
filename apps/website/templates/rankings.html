@@ -63,6 +63,14 @@
         </table>
     </div>
     {% endfor %}
+    <nav class="rankings-ssr-lines" aria-label="Unit line guides">
+        <h3>Unit line guides</h3>
+        <ul>
+            {% for url, label in unit_line_pages %}
+            <li><a href="/units/{{ url }}">{{ label }}</a></li>
+            {% endfor %}
+        </ul>
+    </nav>
 </section>
 {% endblock %}
 

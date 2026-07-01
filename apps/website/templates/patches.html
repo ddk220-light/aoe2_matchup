@@ -1,5 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Patches{% endblock %}
+{% block title %}AoE2 Patch Notes — Age of Empires II Balance Changes by Update{% endblock %}
+{% block meta_description %}Age of Empires II patch notes tracker: every balance update with per-unit stat changes, ranking shifts, and simulated matchup swings.{% if patches %} Latest: {{ patches[0].title }} ({{ patches[0].release_date }}).{% endif %}{% endblock %}
+{% block structured_data %}
+{{ super() }}
+{% if patches %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "Age of Empires II patch notes",
+  "itemListElement": [
+    {% for p in patches %}{ "@type": "ListItem", "position": {{ loop.index }}, "name": {{ p.title | tojson }}, "url": "{{ site_url }}/patches/{{ p.build_number }}" }{{ "," if not loop.last }}
+    {% endfor %}]
+}
+</script>
+{% endif %}
+{% endblock %}
 {% block content %}
 <style>
   /* DATA container token (falls back to old cap if base.css token absent) */
@@ -69,7 +85,7 @@
   }
 </style>
 <div class="patch-wrap">
-  <h1>Game Patches</h1>
+  <h1>AoE2 Patch Notes &amp; Balance Changes</h1>
   <p class="patch-date">How each balance update reshaped unit rankings and matchups in our simulator.</p>
   {% if not patches %}
     <div class="empty">No patches recorded yet.</div>

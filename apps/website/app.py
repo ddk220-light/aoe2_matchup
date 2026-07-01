@@ -654,6 +654,24 @@ def simulate_redirect():
 # SEO: robots.txt, sitemap.xml, and per-matchup landing pages
 # =====================================================================
 
+@app.before_request
+def _seo_canonical_redirects():
+    """301 duplicate-URL variants to the canonical URL (one URL per page).
+
+    - www.aoe2matchup.com -> apex (takes effect once the www DNS record exists;
+      local/staging hosts are untouched because we match the www host exactly).
+    - Trailing-slash variants (/matchups/ -> /matchups), which would otherwise
+      404 and drop the link equity of external links written with a slash.
+    """
+    qs = request.query_string.decode()
+    suffix = f"?{qs}" if qs else ""
+    www_host = "www." + SITE_URL.split("://", 1)[-1]
+    if request.host.partition(":")[0] == www_host:
+        return redirect(f"{SITE_URL}{request.path}{suffix}", code=301)
+    if request.path != "/" and request.path.endswith("/"):
+        return redirect(request.path.rstrip("/") + suffix, code=301)
+
+
 @app.route("/robots.txt")
 def robots_txt():
     body = (

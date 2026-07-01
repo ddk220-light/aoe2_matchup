@@ -1,5 +1,21 @@
 {% extends "base.html" %}
 {% block title %}{{ civ }} {{ unit_title }} — {{ patch.title }}{% endblock %}
+{% block meta_description %}How {{ patch.title }} changed the {{ civ }} {{ unit_title }} in Age of Empires II — exact stat changes, ranking movement, and which simulated matchups flipped.{% endblock %}
+{% block structured_data %}
+{{ super() }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ site_url }}/" },
+    { "@type": "ListItem", "position": 2, "name": "Patches", "item": "{{ site_url }}/patches" },
+    { "@type": "ListItem", "position": 3, "name": "Update {{ build }}", "item": "{{ site_url }}/patches/{{ build }}" },
+    { "@type": "ListItem", "position": 4, "name": {{ (civ ~ " " ~ unit_title) | tojson }}, "item": "{{ site_url }}/patches/{{ build }}/{{ civ }}/{{ unit }}" }
+  ]
+}
+</script>
+{% endblock %}
 {% block content %}
 <style>
   /* DATA container token (fallback to old cap if base.css token absent) */

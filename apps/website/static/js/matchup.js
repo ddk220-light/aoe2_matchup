@@ -95,6 +95,11 @@ CIVS.forEach(function (name) {
     civGrid.appendChild(card);
 });
 
+/* ---- Per-civ landing page preselect (set by civ_detail.html) ---- */
+if (window.PRESELECT_CIV && CIVS.indexOf(window.PRESELECT_CIV) !== -1) {
+    onCivClick(window.PRESELECT_CIV);
+}
+
 /* ---- Civ click handler ---- */
 function onCivClick(name) {
     if (selectedCiv === name) {

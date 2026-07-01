@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ civ.name }} — AoE2 Civilization: Best Units & Strategy{% endblock %}
+{% block meta_description %}{{ meta_desc }}{% endblock %}
+{% block structured_data %}
+{{ super() }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ site_url }}/" },
+    { "@type": "ListItem", "position": 2, "name": "Civilizations", "item": "{{ site_url }}/civilizations" },
+    { "@type": "ListItem", "position": 3, "name": "{{ civ.name }}", "item": "{{ site_url }}/civilizations/{{ civ.slug }}" }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/matchup.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ civ.name }}</h1>
+    <p class="subtitle">Age of Empires II civilization analysis — power units, tiers, and strategic identity</p>
+</div>
+
+<div class="container-wide">
+    <p class="civ-detail-nav"><a href="/civilizations">&larr; All civilizations</a>
+       &middot; <a href="/matchup-advisor">Matchup Advisor</a></p>
+
+    <div class="civ-selector">
+        <div class="step-label step-civ1" id="step-label">Loading {{ civ.name }} analysis&hellip;</div>
+        <div class="civ-grid" id="civ-grid"></div>
+    </div>
+
+    <div id="results" class="results-container"></div>
+
+    <section class="civ-ssr" aria-label="{{ civ.name }} overview">
+        <h2 class="civ-ssr-title">{{ civ.name }} at a glance</h2>
+        {% if civ.description %}<p class="civ-ssr-desc">{{ civ.description }}</p>{% endif %}
+        {% for role in civ.roles %}
+        <p class="civ-ssr-role"><span class="civ-ssr-role-label">{{ role.label }}:</span>
+            {% for unit in role.units %}{% if unit.is_unique %}<strong class="civ-ssr-unique" title="Unique unit">{{ unit.name }}</strong>{% else %}{{ unit.name }}{% endif %}{% if unit.tier %} ({{ unit.tier }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+        </p>
+        {% endfor %}
+        <p class="civ-ssr-intro">Tiers come from full round-robin battle simulations at Imperial-age upgrades — see <a href="/about">how it works</a>.</p>
+    </section>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+    const CIVS = {{ civs | tojson }};
+    window.PRESELECT_CIV = {{ civ.name | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/matchup.js') }}"></script>
+{% endblock %}

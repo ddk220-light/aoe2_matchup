@@ -627,9 +627,20 @@ def civ_view():
 
 @app.route("/civilizations/<civ_name>")
 def civ_detail(civ_name):
-    """The per-civ detail page was retired — the civilizations index now shows each
-    civ's units inline. Redirect old per-civ URLs (and any inbound links) to it."""
-    return redirect("/civilizations", code=301)
+    """Per-civ landing page ("aoe2 <civ>" searches) — SSR identity + power
+    units, with the interactive analyzer preselected. Canonical is lowercase."""
+    slug = civ_name.lower()
+    if civ_name != slug:
+        return redirect(f"/civilizations/{slug}", code=301)
+    civ = get_civ_detail(slug)
+    if civ is None:
+        abort(404)
+    first_sentence = (civ["description"].split(". ")[0].strip().rstrip(".") + ".") \
+        if civ["description"] else ""
+    meta_desc = (f"{civ['name']} in Age of Empires II — strongest fully-upgraded "
+                 f"units by role, tiers, and strategy. {first_sentence}").strip()[:250]
+    return render_template("civ_detail.html", civ=civ, civs=_get_ref_civs(),
+                           meta_desc=meta_desc, active_nav="civ_select")
 
 
 @app.route("/civ")
@@ -641,7 +652,7 @@ def civ_redirect():
 @app.route("/civ/<civ_name>")
 def civ_detail_redirect(civ_name):
     """Backward compat redirect."""
-    return redirect("/civilizations", code=301)
+    return redirect(f"/civilizations/{civ_name.lower()}", code=301)
 
 
 @app.route("/simulate")
@@ -805,6 +816,10 @@ def sitemap_xml():
                  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for path, cf, pr in hub:
         xml_parts.append(_url(path, cf, pr))
+
+    # Per-civ landing pages ("aoe2 <civ>" searches).
+    for _c in _get_ref_civs():
+        xml_parts.append(_url(f"/civilizations/{_c.lower()}", "weekly", "0.7"))
 
     # Curated popular matchups — higher priority than the long-tail pairs.
     for _label, _path in _popular_matchup_links():
@@ -1698,6 +1713,15 @@ def get_civ_overview_data():
             "roles": roles,
         })
     return out
+
+
+def get_civ_detail(slug):
+    """Single-civ entry from get_civ_overview_data() for the per-civ landing
+    page. slug is the lowercase civ name; returns None if unknown."""
+    for civ in get_civ_overview_data():
+        if civ["slug"] == slug:
+            return civ
+    return None
 
 
 def _get_ref_civs():

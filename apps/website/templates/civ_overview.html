@@ -15,7 +15,7 @@
   "name": "Age of Empires II civilizations",
   "numberOfItems": {{ civ_overview | length }},
   "itemListElement": [
-    {% for civ in civ_overview %}{ "@type": "ListItem", "position": {{ loop.index }}, "name": "{{ civ.name }}", "url": "{{ site_url }}/civilizations#civ-{{ civ.slug }}" }{% if not loop.last %},{% endif %}
+    {% for civ in civ_overview %}{ "@type": "ListItem", "position": {{ loop.index }}, "name": "{{ civ.name }}", "url": "{{ site_url }}/civilizations/{{ civ.slug }}" }{% if not loop.last %},{% endif %}
     {% endfor %}
   ]
 }
@@ -43,7 +43,7 @@
         <p class="civ-ssr-intro">Each civilization's strategic identity and its strongest fully-upgraded units, by role. Use the selector above for the full interactive breakdown.</p>
         {% for civ in civ_overview %}
         <article class="civ-ssr-civ" id="civ-{{ civ.slug }}">
-            <h3>{{ civ.name }}</h3>
+            <h3><a href="/civilizations/{{ civ.slug }}">{{ civ.name }}</a></h3>
             {% if civ.description %}<p class="civ-ssr-desc">{{ civ.description }}</p>{% endif %}
             {% for role in civ.roles %}
             <p class="civ-ssr-role"><span class="civ-ssr-role-label">{{ role.label }}:</span>

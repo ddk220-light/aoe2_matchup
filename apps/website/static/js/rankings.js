@@ -2114,9 +2114,25 @@ renderLineSelector();
     const params = new URLSearchParams(window.location.search);
     const lineParam = params.get("line");
     const unitParam = params.get("unit");
-    const startLine = (lineParam && UNIT_LINES[lineParam]) ? lineParam : "infantry";
+    // Valid deep-link lines: the 5 group tabs, their sub-lines (dedicated
+    // filtered tables without a tab of their own), and mangonel (backend-only
+    // line absent from the JS tab structure).
+    const validLines = new Set(Object.keys(UNIT_LINES));
+    Object.values(UNIT_LINES).forEach(function (l) {
+        (l.subLines || []).forEach(function (x) { validLines.add(x); });
+    });
+    validLines.add("mangonel");
+    const startLine = (lineParam && validLines.has(lineParam)) ? lineParam : "infantry";
     await selectLine(startLine);
-    if (unitParam) highlightUnitRows(unitParam);
+    if (unitParam) {
+        highlightUnitRows(unitParam);
+        // selectLine's URL sync drops &unit=; restore it so the landed
+        // deep link stays shareable as-is.
+        if (window.history && history.replaceState) {
+            history.replaceState(null, "",
+                "?line=" + startLine + "&unit=" + encodeURIComponent(unitParam));
+        }
+    }
 })();
 
 function highlightUnitRows(unitSlug) {

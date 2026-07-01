@@ -781,3 +781,7 @@ td.hc-cell {
 .line-page-desc { color: var(--text-muted); max-width: 820px; line-height: 1.6; margin: 0 0 16px; }
 .line-page-method { color: var(--text-muted); font-size: var(--fs-sm, 0.9rem); margin-top: 14px; max-width: 820px; }
 .line-page-table { overflow-x: auto; }
+
+/* Deep-link row highlight (/units?line=&unit=) */
+tr.row-deeplink-highlight > td { background: var(--bg-hover) !important; }
+tr.row-deeplink-highlight { outline: 2px solid var(--gold); outline-offset: -2px; }

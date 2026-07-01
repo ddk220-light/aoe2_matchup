@@ -1027,6 +1027,11 @@ async function selectLine(slug) {
         sortDir = "desc";
     }
     renderTable();
+    // Keep the address bar shareable (/units?line=<slug>) without polluting
+    // browser history. The default tab keeps the clean /units URL.
+    if (window.history && history.replaceState) {
+        history.replaceState(null, "", slug === "infantry" ? window.location.pathname : "?line=" + slug);
+    }
 }
 
 const LINE_LABELS = {
@@ -1783,7 +1788,7 @@ function renderTable() {
     for (let i = 0; i < filtered.length; i++) {
         const row = filtered[i];
         const rowClass = row.is_unique ? "unique-row" : "";
-        html += `<tr class="${rowClass}">`;
+        html += `<tr class="${rowClass}" data-unit-slug="${(row.unit_slug || "")}">`;
         for (const col of columns) {
             html += fmtCell(col, row, i);
         }
@@ -2101,4 +2106,28 @@ function exportCSV() {
 
 // ===== INIT =====
 renderLineSelector();
-selectLine("infantry");
+
+/* ---- Deep-link boot: /units?line=<line>&unit=<slug> ----
+   Selects the tab from the URL and highlights + scrolls to the unit's rows.
+   Falls back to the default tab for missing/unknown params. */
+(async function initFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const lineParam = params.get("line");
+    const unitParam = params.get("unit");
+    const startLine = (lineParam && UNIT_LINES[lineParam]) ? lineParam : "infantry";
+    await selectLine(startLine);
+    if (unitParam) highlightUnitRows(unitParam);
+})();
+
+function highlightUnitRows(unitSlug) {
+    const want = unitSlug.toLowerCase();
+    let first = null;
+    document.querySelectorAll("#tableContainer tr[data-unit-slug]").forEach(function (tr) {
+        const s = (tr.dataset.unitSlug || "").toLowerCase();
+        if (s === want || s === "elite_" + want || s.indexOf(want) !== -1) {
+            tr.classList.add("row-deeplink-highlight");
+            if (!first) first = tr;
+        }
+    });
+    if (first) first.scrollIntoView({ behavior: "smooth", block: "center" });
+}

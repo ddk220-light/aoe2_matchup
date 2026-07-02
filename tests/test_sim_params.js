@@ -18,4 +18,10 @@ assert.strictEqual(empty.autorun, false);
 const r = readSimParams("?civ1=A&unit1=b&civ2=C&unit2=d&mode=resources&resources=3000");
 assert.strictEqual(r.mode, "resources");
 assert.strictEqual(r.resources, "3000");
+
+const c = readSimParams("?civ1=Lithuanians&unit1=paladin&relics1=2&civ2=Aztecs&unit2=elite_jaguar_warrior_aztecs&kills2=3");
+assert.strictEqual(c.relics1, "2");
+assert.strictEqual(c.relics2, null);
+assert.strictEqual(c.kills1, null);
+assert.strictEqual(c.kills2, "3");
 console.log("sim_params tests passed");

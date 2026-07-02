@@ -66,6 +66,30 @@ function unitIconUrl(name) {
 
 let armorClassNames = {};
 
+// ===== ADJUSTABLE PRE-BATTLE CONDITIONS =====
+// Lithuanian relic bonus: the reference DB bakes in all 4 relics (+1 base
+// melee attack each) for these units. The rail picker lets the user dial
+// 0-4; setupTeam applies the delta vs the baked-in 4 client-side.
+const RELIC_MAX = 4;
+const RELIC_BONUS_UNITS = new Set(["paladin", "elite_leitis_lithuanians"]);
+// Units that snowball +1 attack per kill up to attack_bonus_per_kill (cap 4):
+// Jaguar Warrior (Aztecs), Tiger Cavalry (Wei). "Starting kills" pre-loads
+// that counter so the battle can start mid-rampage.
+const KILL_BONUS_MAX = 4;
+const KILL_BONUS_UNITS = new Set([
+    "elite_jaguar_warrior_aztecs",
+    "elite_tiger_cavalry_wei",
+]);
+function hasRelicOption(state) {
+    return (
+        state.civ === "Lithuanians" &&
+        RELIC_BONUS_UNITS.has(state.unitSlug)
+    );
+}
+function hasKillOption(state) {
+    return KILL_BONUS_UNITS.has(state.unitSlug);
+}
+
 // ===== SELECTION STATE =====
 const teamState = {
     1: {
@@ -74,6 +98,8 @@ const teamState = {
         unitSlug: null,
         unitName: null,
         civData: null,
+        relics: RELIC_MAX,
+        startKills: 0,
     },
     2: {
         civ: null,
@@ -81,6 +107,8 @@ const teamState = {
         unitSlug: null,
         unitName: null,
         civData: null,
+        relics: RELIC_MAX,
+        startKills: 0,
     },
 };
 
@@ -224,10 +252,39 @@ function renderSelection(teamNum) {
                     <span class="badge-text">${unitNameSafe}</span>
                     <span class="change-btn" data-action="clearUnit" data-team="${teamNum}">change</span>
                 </div>`;
+        html += renderUnitOptions(teamNum, state);
     }
 
     container.innerHTML = html;
     updateStartReady();
+}
+
+// Contextual pre-battle condition pickers, shown under the unit badge only
+// when the picked unit has an adjustable mechanic (Lithuanian relic count,
+// starting kills for per-kill snowball units).
+function renderUnitOptions(teamNum, state) {
+    const pills = (action, max, current) => {
+        let s = '<div class="opt-pills">';
+        for (let n = 0; n <= max; n++) {
+            s += `<span class="opt-pill${n === current ? " active" : ""}" data-action="${action}" data-team="${teamNum}" data-value="${n}">${n}</span>`;
+        }
+        return s + "</div>";
+    };
+    let html = "";
+    if (hasRelicOption(state)) {
+        html += `<div class="unit-opts">
+                <div class="opt-label">Relics captured <span class="opt-effect">+${state.relics} attack</span></div>
+                ${pills("setRelics", RELIC_MAX, state.relics)}
+            </div>`;
+    }
+    if (hasKillOption(state)) {
+        const bonus = Math.min(KILL_BONUS_MAX, state.startKills);
+        html += `<div class="unit-opts">
+                <div class="opt-label">Starting kills <span class="opt-effect">+${bonus} attack</span></div>
+                ${pills("setKills", KILL_BONUS_MAX, state.startKills)}
+            </div>`;
+    }
+    return html;
 }
 
 function initSelectionDelegation() {
@@ -261,9 +318,31 @@ function initSelectionDelegation() {
                 case "clearUnit":
                     clearUnit(team);
                     break;
+                case "setRelics":
+                    setRelics(team, target.dataset.value);
+                    break;
+                case "setKills":
+                    setStartKills(team, target.dataset.value);
+                    break;
             }
         });
     });
+}
+
+function clampInt(n, lo, hi, dflt) {
+    n = parseInt(n, 10);
+    if (isNaN(n)) return dflt;
+    return Math.max(lo, Math.min(hi, n));
+}
+
+function setRelics(teamNum, n) {
+    teamState[teamNum].relics = clampInt(n, 0, RELIC_MAX, RELIC_MAX);
+    renderSelection(teamNum);
+}
+
+function setStartKills(teamNum, n) {
+    teamState[teamNum].startKills = clampInt(n, 0, KILL_BONUS_MAX, 0);
+    renderSelection(teamNum);
 }
 
 async function selectCiv(teamNum, civName) {
@@ -2243,7 +2322,7 @@ class BattleSimulation {
         this.renderScaleY = this.canvas.height / this.H;
     }
 
-    async setupTeam(teamNum, unitSlug, civName, count, age) {
+    async setupTeam(teamNum, unitSlug, civName, count, age, opts = {}) {
         const ageParam = age
             ? `?age=${encodeURIComponent(age)}`
             : "";
@@ -2258,6 +2337,26 @@ class BattleSimulation {
             );
         }
         const stats = await response.json();
+
+        // Lithuanian relic picker: the served stats bake in all RELIC_MAX
+        // relics (+1 base melee attack each), so apply the user-picked delta
+        // to both the flat attack and the base-melee armor class ("4").
+        const relics =
+            opts.relics != null ? opts.relics : RELIC_MAX;
+        if (
+            relics !== RELIC_MAX &&
+            civName === "Lithuanians" &&
+            RELIC_BONUS_UNITS.has(unitSlug)
+        ) {
+            const delta = relics - RELIC_MAX;
+            stats.attack = Math.max(0, (stats.attack || 0) + delta);
+            if (stats.attacks_json) {
+                const atk = JSON.parse(stats.attacks_json);
+                if (atk["4"] != null)
+                    atk["4"] = Math.max(0, atk["4"] + delta);
+                stats.attacks_json = JSON.stringify(atk);
+            }
+        }
 
         const team = [];
         const outlineSize = stats.outline_size || 0.2;
@@ -2294,6 +2393,14 @@ class BattleSimulation {
             );
             unit.x = startX + (Math.random() - 0.5) * 10;
             unit.y = startY + i * spacing;
+            // Starting-kills picker: pre-load the per-kill snowball counter
+            // (capped at attackBonusPerKill, same as kills earned in-battle).
+            if (opts.startKills > 0 && unit.attackBonusPerKill > 0) {
+                unit.killBonusAttack = Math.min(
+                    unit.attackBonusPerKill,
+                    opts.startKills,
+                );
+            }
             // Assign preloaded sprite image
             unit.spriteImg = unitImages[teamNum];
             unit.isSprite = unitIsSprite[teamNum];
@@ -3021,6 +3128,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (found)
                 selectUnit(1, found.unit_slug, found.unit_name);
         }
+        if (dl && dl.relics1 != null) setRelics(1, dl.relics1);
+        if (dl && dl.kills1 != null) setStartKills(1, dl.kills1);
     }
     if (params.has("civ2") && params.has("unit2")) {
         const civ2 = params.get("civ2");
@@ -3036,6 +3145,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (found)
                 selectUnit(2, found.unit_slug, found.unit_name);
         }
+        if (dl && dl.relics2 != null) setRelics(2, dl.relics2);
+        if (dl && dl.kills2 != null) setStartKills(2, dl.kills2);
     }
     if (params.has("mode")) {
         const mode = params.get("mode");
@@ -3172,6 +3283,7 @@ async function startBattle() {
             s1.civ,
             team1Count,
             s1.age,
+            { relics: s1.relics, startKills: s1.startKills },
         );
         await simulation.setupTeam(
             2,
@@ -3179,6 +3291,7 @@ async function startBattle() {
             s2.civ,
             team2Count,
             s2.age,
+            { relics: s2.relics, startKills: s2.startKills },
         );
 
         currentBattle = {

@@ -122,6 +122,52 @@
     color: var(--gold-light);
 }
 
+/* ---------- Pre-battle condition pickers (relics / starting kills) ---------- */
+.unit-opts {
+    background: var(--bg-hover);
+    border-radius: 6px;
+    padding: 6px 10px 8px;
+    margin-bottom: 8px;
+}
+.unit-opts .opt-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
+.unit-opts .opt-effect {
+    color: var(--gold);
+    font-weight: 600;
+}
+.opt-pills {
+    display: flex;
+    gap: 4px;
+}
+.opt-pill {
+    flex: 1;
+    text-align: center;
+    padding: 3px 0;
+    min-width: 1.6rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    font-size: var(--fs-xs);
+    cursor: pointer;
+    user-select: none;
+}
+.opt-pill:hover {
+    border-color: var(--gold);
+}
+.opt-pill.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--text-on-gold);
+    font-weight: 600;
+}
+
 /* ---------- Civ grid ---------- */
 .civ-grid {
     display: grid;

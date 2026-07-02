@@ -10,6 +10,8 @@
       mode: get("mode"),
       resources: get("resources"),
       count1: get("count1"), count2: get("count2"),
+      relics1: get("relics1"), relics2: get("relics2"),
+      kills1: get("kills1"), kills2: get("kills2"),
       autorun: q.get("autorun") === "1",
     };
   }

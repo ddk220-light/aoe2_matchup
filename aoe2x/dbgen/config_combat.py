@@ -325,9 +325,28 @@ CIV_COMBAT_PROPERTIES = {
         "extra_projectile_attacks_json": '{"3": 1}',
     },
     ("Shu", "war_chariot"): {"extra_projectiles": 6},
-    # Jurchens Thunderclap Bombs (Imp UT) — additional projectiles for Rocket Carts, Grenadiers
-    ("Jurchens", "mangonel"): {"extra_projectiles": 1},
-    ("Jurchens", "siege_onager"): {"extra_projectiles": 1},
+    # Rocket Carts (Chinese/Koreans/Jurchens/Khitans mangonel-line replacement,
+    # slug stays siege_onager). Unlike the Mangonel their volley is ALL-primary
+    # (dat secondary_projectile_unit = -1): every rocket deals its full attack,
+    # so the projectile count is data-driven (total_projectiles-1 = 9 ->
+    # extra_projectiles, see combat_properties.py). The dat combat-ability
+    # bitfield is 11 = ignore armor (1) + resist armor-ignoring (2) + attack
+    # ground (8): rockets ignore target armor except vs armor-ignore resisters.
+    # Ability bitfields aren't extracted, so the ignore flags are curated here
+    # (blanket, no resist exception — the few resisting targets are siege with
+    # ~0 melee armor, so the error is nil).
+    ("Chinese", "siege_onager"): {"ignores_pierce_armor": 1, "ignores_melee_armor": 1},
+    ("Koreans", "siege_onager"): {"ignores_pierce_armor": 1, "ignores_melee_armor": 1},
+    ("Khitans", "siege_onager"): {"ignores_pierce_armor": 1, "ignores_melee_armor": 1},
+    # Jurchens Thunderclap Bombs (Imp UT) — one additional projectile for Rocket
+    # Carts and Grenadiers. CIV_COMBAT_PROPERTIES overrides (not adds to) the
+    # extracted extra_projectiles, so the Heavy Rocket Cart entry is 9 (volley)
+    # + 1 (UT) = 10. The "mangonel" (castle Rocket Cart, 8-rocket volley) entry
+    # is inert under the Imperial-only data model; kept correct at 7 + 1 = 8.
+    ("Jurchens", "mangonel"): {"extra_projectiles": 8,
+                               "ignores_pierce_armor": 1, "ignores_melee_armor": 1},
+    ("Jurchens", "siege_onager"): {"extra_projectiles": 10,
+                                   "ignores_pierce_armor": 1, "ignores_melee_armor": 1},
     ("Jurchens", "grenadier"): {"extra_projectiles": 1},
     # Mapuche Malon (Castle UT) — Bolas Riders, Slingers, Skirmishers deal 30% pass-through damage
     ("Mapuche", "bolas_rider"): {"pass_through_percent": 0.30, "pass_through_count": 1, "gold_per_kill": 3},

@@ -53,8 +53,9 @@ tail are manual. Deep detail: [`docs/patch-workflow.md`](../patch-workflow.md).
    1. Archives `data/inputs/extracted_data/` → `data/local/extracted_data_prev/` and
       `data/golden/aoe2_reference.db` → `apps/website/aoe2_reference_prev.db` (both untracked "before" snapshots).
    2. `python -m aoe2x.extract.run` → `python -m aoe2x.dbgen.generate_reference` →
-      `python -m aoe2x.dbgen.generate_main_db` → `aoe2x/dbgen/patches/patch_mayan_archer_cost.py`
-      (the surgical ref patch; idempotent).
+      the surgical ref patches (idempotent: `aoe2x/dbgen/patches/patch_mayan_archer_cost.py`,
+      `patch_rocket_cart_volley.py`) → `python -m aoe2x.dbgen.generate_main_db`
+      (patches run BEFORE the main-db flatten so `aoe2_units.db` picks them up).
    3. Diffs `ref_units` before/after → stat deltas + `apps/website/changed_units_<build>.json`.
    4. Snapshots before-outcomes from the matchup DB for the changed slugs.
    5. `pypy3 -m aoe2x.batch.run_matchup_battles --force --changed-units apps/website/changed_units_<build>.json --db <matchup-db>`
@@ -262,8 +263,10 @@ combat-property columns on every row** of `aoe2_reference.db`/`aoe2_units.db`, s
 **Path A — config fix + full rebuild** (fine when you intend a clean rebuild anyway):
 
 1. Edit `aoe2x/dbgen/config_combat.py` (or `config_units.py` for stat overrides).
-2. `python -m aoe2x.dbgen.generate_reference && python -m aoe2x.dbgen.generate_main_db`
-   (then re-apply `python -m analysis.patches.patch_mayan_archer_cost`).
+2. `python -m aoe2x.dbgen.generate_reference`, re-apply the surgical patches
+   (`python -m aoe2x.dbgen.patches.patch_mayan_archer_cost`,
+   `python -m aoe2x.dbgen.patches.patch_rocket_cart_volley`), then
+   `python -m aoe2x.dbgen.generate_main_db`.
 3. **Diff the result** before committing — only the intended rows should change. The
    `ref_diff.diff()` helper used by the patch pipeline (`aoe2x/batch/ref_diff.py`) is the tool.
 4. Because `config_combat.py` is in the `sim_version` hash, all matchup rows are now stale.

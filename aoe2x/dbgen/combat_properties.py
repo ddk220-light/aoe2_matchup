@@ -71,11 +71,16 @@ def get_extracted_combat_properties(unit_id, units_data):
 
     # --- Extra projectiles from total_projectiles ---
     # Units with total_projectiles > 1 fire extra arrows per attack.
-    # Siege class (13) with blast_width > 0 fires stones (handled as splash above).
+    # Siege class (13) with blast_width > 0 fires stones (handled as splash above)
+    # — UNLESS secondary_projectile_unit == -1: then every projectile is the
+    # primary and each one deals damage (Rocket Cart / Heavy Rocket Cart, whose
+    # 8/10 rockets each carry the full attack; the Mangonel line instead points
+    # its secondaries at a damage-less visual projectile, id 369).
     # Organ Gun (class 13, blast_width=0) fires real extra projectiles like archers.
     total_proj = unit.get("total_projectiles", 1)
     is_siege_splash = unit_class == 13 and blast_width > 0 and blast_damage >= 1.0
-    if total_proj and total_proj > 1 and not is_siege_splash:
+    all_primary = unit.get("secondary_projectile_unit", -1) == -1
+    if total_proj and total_proj > 1 and (not is_siege_splash or all_primary):
         props["extra_projectiles"] = int(total_proj) - 1
 
     # --- Fire Archer extra projectiles from charge_type=6 ---

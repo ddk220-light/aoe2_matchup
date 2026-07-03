@@ -95,12 +95,15 @@ def run(*, build, release_date, source_url, summary_md, baseline_build,
     shutil.copyfile(REF_DB, REF_PREV)
     print("[1/8] Archived extracted_data + aoe2_reference.db (before).")
 
-    # 2. Re-extract + rebuild
+    # 2. Re-extract + rebuild. Surgical ref patches run BEFORE generate_main_db
+    # so the flattened aoe2_units.db picks their values up (runbooks §7 Path B).
     _run([sys.executable, "-m", "aoe2x.extract.run"], cwd=_ROOT)
     _run([sys.executable, "-m", "aoe2x.dbgen.generate_reference"], cwd=_ROOT)
-    _run([sys.executable, "-m", "aoe2x.dbgen.generate_main_db"], cwd=_ROOT)
     _run([sys.executable, os.path.join("aoe2x", "dbgen", "patches",
           "patch_mayan_archer_cost.py")], cwd=_ROOT)
+    _run([sys.executable, os.path.join("aoe2x", "dbgen", "patches",
+          "patch_rocket_cart_volley.py")], cwd=_ROOT)
+    _run([sys.executable, "-m", "aoe2x.dbgen.generate_main_db"], cwd=_ROOT)
     print("[2/8] Re-extracted + rebuilt ref/main DBs.")
 
     # 3. ref_units diff

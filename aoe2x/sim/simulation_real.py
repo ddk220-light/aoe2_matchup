@@ -1041,8 +1041,15 @@ class BattleUnit:
         will_hit = random.random() < accuracy if accuracy < 1.0 else True
 
         speed = self.projectile_speed if self.projectile_speed > 0 else DEFAULT_PROJECTILE_SPEED
-        # Mangonel-style splash: scale up if too small (matches JS heuristic)
-        splash_r = max(self.splash_radius, 2.5) if self.splash_radius > 0 else 0
+        # Mangonel-style splash: scale up if too small (matches JS heuristic).
+        # The upscale compensates single-stone units for the sim's spread-out
+        # formations; volley units (Rocket Cart: every projectile blasts) keep
+        # their true per-projectile radius or the volley would nuke the map.
+        if self.splash_radius > 0:
+            splash_r = (self.splash_radius if self.extra_projectiles > 0
+                        else max(self.splash_radius, 2.5))
+        else:
+            splash_r = 0
         impact_x = target.x
         impact_y = target.y
         attacker = self

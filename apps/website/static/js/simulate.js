@@ -561,8 +561,12 @@ function setSimPhase(battle) {
 // Classify a firing unit (by slug) into a projectile KIND, so each unit line
 // gets a realistic, recognisable projectile (NOT team-tinted — projectiles are
 // coloured by what they are). Order matters: bombard before gunpowder.
-function classifyProjectile(slug) {
+// unitName disambiguates civ variants that share a slug: the Rocket Cart line
+// (Chinese/Koreans/Jurchens/Khitans) rides the siege_onager slug but fires
+// rockets, not boulders.
+function classifyProjectile(slug, unitName) {
     const s = slug || "";
+    if ((unitName || "").indexOf("Rocket") !== -1) return "rocket"; // fiery rocket
     if (s.indexOf("bombard_cannon") !== -1) return "cannonball"; // big black ball
     if (s.indexOf("siege_onager") !== -1) return "stone";        // onager boulder
     if (s.indexOf("hand_cannoneer") !== -1 || s.indexOf("janissary") !== -1
@@ -665,7 +669,50 @@ class Projectile {
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
 
-        if (k === "javelin") {
+        if (k === "rocket") {
+            // Rocket: exhaust trail behind, dark shaft, red-banded head and a
+            // bright flame at the tail. Reads as a streak of fire in flight.
+            const SHAFT = 12, TAIL = -SHAFT - 1;
+            // Smoke/fire trail along the recent flight path.
+            ctx.globalAlpha = 0.35;
+            ctx.strokeStyle = "#ffb347";
+            ctx.lineWidth = 2.4;
+            ctx.beginPath();
+            ctx.moveTo(TAIL, 0);
+            ctx.lineTo(TAIL - 10, 0);
+            ctx.stroke();
+            ctx.globalAlpha = 1.0;
+            // Shaft
+            ctx.strokeStyle = "#5a4632";
+            ctx.lineWidth = 2.4;
+            ctx.beginPath();
+            ctx.moveTo(-2, 0);
+            ctx.lineTo(TAIL, 0);
+            ctx.stroke();
+            // Warhead (red-banded tip)
+            ctx.fillStyle = "#b3382e";
+            ctx.beginPath();
+            ctx.moveTo(4, 0);
+            ctx.lineTo(-3, -2.4);
+            ctx.lineTo(-3, 2.4);
+            ctx.closePath();
+            ctx.fill();
+            // Tail flame: outer orange + inner yellow
+            ctx.fillStyle = "#ff7a1a";
+            ctx.beginPath();
+            ctx.moveTo(TAIL, -2.6);
+            ctx.lineTo(TAIL - 7, 0);
+            ctx.lineTo(TAIL, 2.6);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = "#ffd54a";
+            ctx.beginPath();
+            ctx.moveTo(TAIL, -1.3);
+            ctx.lineTo(TAIL - 4, 0);
+            ctx.lineTo(TAIL, 1.3);
+            ctx.closePath();
+            ctx.fill();
+        } else if (k === "javelin") {
             // Longer + thicker than an arrow, brown wooden shaft, sharp metal tip,
             // NO fletching.
             const TIP = 5, TIPW = 2.5, SHAFT = 18;
@@ -790,8 +837,8 @@ class BattleUnit {
         this.team = team;
         this.stats = stats;
         this.slug = slug;
-        // Realistic per-line projectile shape (arrow/javelin/bolt/bullet/cannonball/stone).
-        this.projectileKind = classifyProjectile(slug);
+        // Realistic per-line projectile shape (arrow/javelin/bolt/bullet/cannonball/stone/rocket).
+        this.projectileKind = classifyProjectile(slug, stats.unit_name);
         this.civName = civName;
 
         this.maxHp = stats.hp;
@@ -1473,10 +1520,14 @@ class BattleUnit {
                 ? this.projectileSpeed
                 : 7 * TILE_SIZE;
         const attacker = this;
-        // Siege splash: scale up radius so mangonel/onager can hit clusters
+        // Siege splash: scale up radius so mangonel/onager can hit clusters.
+        // Volley units (Rocket Cart: every projectile blasts) keep their true
+        // per-projectile radius — the upscale only compensates single stones.
         const splashR =
             attacker.splashRadius > 0
-                ? Math.max(attacker.splashRadius, 2.5 * TILE_SIZE)
+                ? attacker.extraProjectiles > 0
+                    ? attacker.splashRadius
+                    : Math.max(attacker.splashRadius, 2.5 * TILE_SIZE)
                 : 0;
         const impactX = target.x;
         const impactY = target.y;

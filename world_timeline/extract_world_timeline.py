@@ -76,6 +76,58 @@ def strip_markers(text: str) -> str:
 SMALL_WORDS = {"and", "of", "the", "in", "on", "to", "a", "an"}
 ACRONYMS = {"usa": "USA", "uk": "UK"}
 
+# "(3100–2686 BC)", "(AD 641–969)", "(30 BC–641 AD)", "(c. 1800 BC - AD 1546)",
+# "(1000BC to AD 1000)", "(1515-47)", "(AD 1517 - present)" ...
+LABEL_RANGE = re.compile(
+    r"\(\s*(?:r\.\s*|reigned\s*)?(?:c\.?\s*)?(?:(AD|CE)\s*)?(\d{1,4})\s*(BC|BCE|AD|CE)?\s*"
+    r"(?:–|—|-|−|\bto\b|/)\s*"
+    r"(?:(AD|CE)\s*|c\.?\s*)*(?:(AD|CE)\s*)?(?:(\d{1,4})\s*(BC|BCE|AD|CE)?|(present))\s*\)",
+    re.I,
+)
+
+
+def parse_label_ranges(label):
+    """All (start, end) year ranges the author wrote into the label.
+    end is None for '- present'. Years negative = BC."""
+    out = []
+    for m in LABEL_RANGE.finditer(label):
+        pre_a, a, post_a, pre_b1, pre_b2, b, post_b, present = m.groups()
+        a = int(a)
+        ea = (pre_a or post_a or "").upper()
+        if present:
+            out.append((-a if ea in ("BC", "BCE") else a, None))
+            continue
+        b = int(b)
+        eb = (pre_b1 or pre_b2 or post_b or "").upper()
+        if ea in ("BC", "BCE") and not eb:
+            eb = "AD" if b < a else "BC"
+        if eb in ("BC", "BCE") and not ea:
+            ea = "BC"
+        if not ea and not eb:
+            if b < a and b < 100:
+                b = (a // 100) * 100 + b  # "(1515-47)" style abbreviation
+            ea = eb = "AD"
+        ya = -a if ea in ("BC", "BCE") else a
+        yb = -b if eb in ("BC", "BCE") else b
+        if yb >= ya:
+            out.append((ya, yb))
+    return out
+
+
+def best_label_range(ranges, y0, y1):
+    """The label range most consistent with the drawn span (labels with two
+    reigns — 'X (285 BC–431 AD and again (533–698 AD))' — carry several)."""
+    if not ranges:
+        return None
+    def cost(r):
+        s = abs(y0 - r[0])
+        e = 0 if r[1] is None else abs(y1 - r[1])
+        return s + e
+    return min(ranges, key=cost)
+
+
+KEY_HEADER = re.compile(r"^(key\b|key[:\-]|key to|list of|legend\b)", re.I)
+
 
 def prettify_heading(caps: str) -> str:
     words = clean(caps).split(" ")
@@ -474,8 +526,11 @@ def main():
                 sec = section_for(r)
                 # layout artifacts: section "key" tables drawn in the empty
                 # pre-3250 BC corner, and numbered reference lists — their
-                # x-position is page layout, not a date
+                # x-position is page layout, not a date (mid-timeline key
+                # boxes are flagged in a later pass)
                 is_layout = y1 <= -3250 or bool(re.match(r"^\d+\.\s", label))
+                ranges = parse_label_ranges(label)
+                lr = best_label_range(ranges, y0, y1)
                 entries.append(
                     {
                         "section": sec or "General",
@@ -486,8 +541,12 @@ def main():
                         "label": label,
                         "year_start": y0,
                         "year_end": y1,
-                        "continues_left": part["start"] <= ANCHOR_COL - 1
-                        and "←" in raw,
+                        # authoritative dates the author wrote into the label
+                        # (position on the sheet is quantised / clipped)
+                        "label_year_start": lr[0] if lr else None,
+                        "label_year_end": lr[1] if lr else None,
+                        "continues_left": part["start"] <= ANCHOR_COL + 2
+                        and ("←" in raw or bool(lr and lr[0] < ANCHOR_YEAR)),
                         "continues_right": part["end"] >= max_col - 12
                         and ("→" in raw or "present" in raw.lower()),
                         "uncertain": raw.lstrip().startswith("?"),
@@ -496,14 +555,93 @@ def main():
                         "note": None,
                         "link": None,
                         "_cols": (part["start"], part["end"]),
+                        "_ranges": ranges,
                     }
                 )
 
-    # attach comments + article links to the entry covering (or adjacent to)
-    # the annotated cell on the same row
+    # --- pass: merge end-repetition fragments -----------------------------
+    # Very long bars repeat their label near the right end ("...the WHT
+    # includes the name of the entry at the start and end"). When the bar's
+    # interior is interrupted by differently-filled sub-bars, that trailing
+    # label becomes a separate tiny segment. Merge fragments back into the
+    # main entry when the merged span matches the label's own date range.
     by_row = {}
     for e in entries:
         by_row.setdefault(e["row"], []).append(e)
+    def union_matches(m0, m1, ranges, cont_right):
+        """Does the merged span match one of the ranges written in a label?
+        A span clipped at the 3400 BC sheet edge matches an earlier start."""
+        for r0, r1 in ranges:
+            start_ok = abs(m0 - r0) <= 6 or (m0 <= ANCHOR_YEAR and r0 <= ANCHOR_YEAR)
+            end_ok = (r1 is None and cont_right) or (
+                r1 is not None and abs(m1 - r1) <= 6
+            )
+            if start_ok and end_ok:
+                return True
+        return False
+
+    def merge_key(label):
+        return strip_markers(label).lower().lstrip("-–—• ")
+
+    dropped = set()
+    for r, es in by_row.items():
+        es.sort(key=lambda e: e["_cols"][0])
+        for i, a in enumerate(es):
+            if id(a) in dropped:
+                continue
+            la = merge_key(a["label"])
+            for b in es[i + 1 :]:
+                if id(b) in dropped:
+                    continue
+                lb = merge_key(b["label"])
+                common = os.path.commonprefix([la, lb])
+                if len(common.strip()) < 8:
+                    continue
+                m0 = min(a["year_start"], b["year_start"])
+                m1 = max(a["year_end"], b["year_end"])
+                cr = a["continues_right"] or b["continues_right"]
+                if union_matches(m0, m1, a["_ranges"] + b["_ranges"], cr):
+                    a["year_start"], a["year_end"] = m0, m1
+                    a["_cols"] = (
+                        min(a["_cols"][0], b["_cols"][0]),
+                        max(a["_cols"][1], b["_cols"][1]),
+                    )
+                    if len(b["label"]) > len(a["label"]):
+                        a["label"] = b["label"]
+                    lr = best_label_range(a["_ranges"] + b["_ranges"], m0, m1)
+                    a["label_year_start"], a["label_year_end"] = lr
+                    a["continues_right"] = cr
+                    a["note"] = a["note"] or b["note"]
+                    a["link"] = a["link"] or b["link"]
+                    dropped.add(id(b))
+    if dropped:
+        entries = [e for e in entries if id(e) not in dropped]
+        by_row = {}
+        for e in entries:
+            by_row.setdefault(e["row"], []).append(e)
+
+    # --- pass: flag mid-timeline key/legend boxes -------------------------
+    # "Key to list of Popes", "List of Chemical Elements"... are reference
+    # tables drawn in empty areas of the grid; their cells inherit fake
+    # dates from their x-position. Flag everything in the rectangle under a
+    # key header: rows walk downward while they still contain cells inside
+    # the header's column range (+ margin).
+    headers = [e for e in entries if KEY_HEADER.match(e["label"])]
+    for h in headers:
+        c0, c1 = h["_cols"][0] - 5, h["_cols"][1] + 25
+        h["is_layout"] = True
+        row, misses = h["row"], 0
+        while misses <= 4 and row <= h["row"] + 60:
+            row += 1
+            hit = False
+            for e in by_row.get(row, []):
+                if e["_cols"][0] >= c0 and e["_cols"][1] <= c1:
+                    e["is_layout"] = True
+                    hit = True
+            misses = 0 if hit else misses + 1
+
+    # attach comments + article links to the entry covering (or adjacent to)
+    # the annotated cell on the same row
     unmatched_notes = []
     for (r, c), txt in notes.items():
         target = None
@@ -527,6 +665,7 @@ def main():
 
     for e in entries:
         del e["_cols"]
+        del e["_ranges"]
     entries.sort(key=lambda e: (e["row"], e["year_start"]))
 
     section_list = [
@@ -561,6 +700,7 @@ def main():
     cpath = os.path.join(outdir, "world_timeline_entries.csv")
     fields = [
         "section", "group", "row", "label", "year_start", "year_end",
+        "label_year_start", "label_year_end",
         "continues_left", "continues_right", "uncertain", "is_layout",
         "color", "note", "link",
     ]

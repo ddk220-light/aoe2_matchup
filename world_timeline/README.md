@@ -35,16 +35,19 @@ Stdlib only (parses the xlsx XML directly — no openpyxl needed, runs in ~25 s)
 
 ```jsonc
 {
-  "meta":     { "entry_count": 20021, "year_range": [-3412, 2028], ... },
+  "meta":     { "entry_count": 19992, "year_range": [-3412, 2028], ... },
   "sections": [ { "name": "Egypt", "row_start": 11, "row_end": 44, "entry_count": 223 }, ... ],
   "entries":  [ {
       "section": "Egypt",
       "group": "Period",              // best-effort row-group label, may be null
-      "row": 15,                      // sheet row = vertical lane; entries sharing a row never overlap in time
+      "row": 15,                      // sheet row = vertical lane
       "label": "Old Kingdom (2686–2181 BC)",
-      "year_start": -2686,            // negative = BC, 2-year resolution
-      "year_end": -2182,              // year the bar stops (exclusive-ish end)
-      "continues_left": false,        // bar runs off the 3400 BC edge
+      "year_start": -2686,            // positional: negative = BC, 2-year resolution
+      "year_end": -2182,              // positional: year the bar stops
+      "label_year_start": -2686,      // authoritative: parsed from the label, if present
+      "label_year_end": -2181,        //   (null when the label has no date range;
+                                      //    end null also means "- present")
+      "continues_left": false,        // bar clipped at the 3400 BC edge
       "continues_right": false,       // bar runs to "present" / off the right edge
       "uncertain": false,             // label carried a leading '?'
       "is_layout": false,             // see caveats
@@ -56,19 +59,29 @@ Stdlib only (parses the xlsx XML directly — no openpyxl needed, runs in ~25 s)
 }
 ```
 
+**Prefer `label_year_*` over `year_start`/`year_end` when present** — they are
+the dates the author wrote; the positional years are what the sheet draws
+(quantised to the grid, clipped at the sheet edge, and sometimes stopping
+where a parent bar hands over to its sub-periods). Accuracy audit, fixes,
+and residual limitations: **`ACCURACY.md`** (re-runnable via
+`python world_timeline/audit_accuracy.py` — 87% of the 718 self-dated labels
+agree with the drawn position within ±4 years; the rest are explained there).
+
 `world_timeline_entries.csv` is the same `entries` array flattened.
 
 ## Caveats for website use
 
 - **Dates are grid-quantised**: everything is ±2 years (the column width). The
   sheet's own convention — dates before ~1000 BC are often speculative.
-- **`is_layout: true`** (643 entries) marks cells whose x-position is page layout,
-  not a date: the per-section "key" tables drawn in the empty pre-3250 BC corner,
-  and numbered reference lists (e.g. "4. Hesiod" in Philosophy). Filter these out
-  when plotting by time; they still carry useful text/notes.
+- **`is_layout: true`** (1,071 entries) marks cells whose x-position is page
+  layout, not a date: the per-section "key" tables drawn in the empty
+  pre-3250 BC corner, numbered reference lists (e.g. "4. Hesiod" in
+  Philosophy), and mid-timeline key/legend boxes ("List of Chemical
+  Elements", "Key to list of Popes"). Filter these out when plotting by
+  time; they still carry useful text/notes (and sometimes `label_year_*`).
 - **Point events** (a single 2-year column, e.g. "Suez Crisis") have
   `year_end - year_start == 2`; render as a point/diamond rather than a bar.
 - **`row` is the vertical lane**: rendering entries of a section grouped by `row`
   reproduces the original stacked layout with no time-overlap within a lane.
-- Entry count (20,021) is ~1.4 % above the sheet's own count (19,741): the
+- Entry count (19,992) is ~1.3 % above the sheet's own count (19,741): the
   splitting/merging heuristics and key-table cells account for the difference.

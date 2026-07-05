@@ -54,6 +54,7 @@ gRPC mTLS keypair — files beside `aoe2x/grpc/`.
 
 ## Generated-but-external (size)
 
-`D:/AI/matchup_baseline_<build>.db` (~280 MB, ~494k rows) — produced by
-`pypy3 -m aoe2x.batch.rebuild_matchup_baseline`, kept outside the repo;
-published zipped as a `data-v<build>` release asset.
+`D:/AI/archive/matchup_baseline_<build>.db` (~288 MB, ~522k rows) — produced by
+`pypy3 -m aoe2x.batch.rebuild_matchup_baseline`, kept outside the repo. Backed
+up (2026-07-05) to BOTH Railway buckets (`aoe2-assets` staging /
+`aoe2-assets-prod` production) under `data/matchup_baseline_<build>.db`.

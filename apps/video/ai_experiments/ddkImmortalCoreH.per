@@ -1,0 +1,1450 @@
+;=============================================================================
+; ddkImmortalCore.per -- 1:1 TRANSCRIPTION of Immortal v0d10f's cavalry-archer
+; control pipeline (extracted + line-verified 2026-07-02), reduced to: ONE ball,
+; tag 1, enemy = player 3, cavalry-archer line. NOT a reinterpretation -- every
+; rule cites its Immortal source; deviations are marked "; DEVIATION".
+;
+; RULE NUMBERING IS LOAD-BEARING: up-jump-direct targets are absolute defrule
+; indices (0-based). Rules 0-77 are jump-target-exact; rules 78+ (diagnostics +
+; the CoreG parameterization appendix) are numbering-free -- nothing jumps there.
+;
+; CoreH = CoreG + OBSTACLE & MAP-EDGE HANDLING (appendix probe of the issued kite
+;   point: point-contains tree/wall/gate, path-distance unreachable, pinned-on-edge
+;   -> strafe-sign flip w/ 2.5s cooldown + 1.6s lateral evade boost; chats FLIP).
+; CoreG = CoreF + per-unit kiting character; ALL VALUES FROM the repo DB
+; data/golden/aoe2_reference.db (current patch, 2026-07-02):
+;   * W_fire = final_attack_delay(ms) + 60ms release margin, keyed on the ball's
+;     median ACTUAL type (obj1), class fallback. Same mechanism as Immortal
+;     #1600-1605, but Immortal's values are stale AoC-era delays (CA 1000 vs
+;     DE's 583+60) -- the DB supplies current-patch truth per unit.
+;   * kite dwell = clamp(liveReload - 1400, 400, 2200): mangudai (1428ms) snaps
+;     back to volleys in 400ms; hand cannoneers (3450ms) commit 2s arcs.
+;   * kite ONLY when out-ranging (gRange > gERange+1); equal/out-ranged ranged
+;     fights hold VOLLEY = stand-and-focus-fire (normal fight).
+;   * strafe/step speed-tiered: >=1.35 tiles/s wide arcs, <=1.15 short hops.
+;
+; Pipeline: TIME (real ms via timer idiom) -> SN blocks (engine AI off) ->
+; CLUSTERING beat ~4s (groups 8/9 snapshot + tag-write trio) -> STATE MACHINE
+; every pass (tag filter, group stats incl. %fired/%ready loops, enemy scan,
+; %in-range, farthest-first sort) -> transitions 22<->18 (verbatim thresholds)
+; -> KITE (verbatim point math + double-issued formation-line patrol/move) ->
+; VOLLEY (verbatim round-robin focus fire with arrow budgeting).
+;=============================================================================
+
+; --- sn defconsts mirrored from Immortal (parser needs them; not all builtin —
+;     "invalid identifier" at load = a name the engine doesn't know) ---
+(defconst sn-attack-group-gather-spacing 41)
+(defconst sn-attack-group-size-randomness 98)
+(defconst sn-attack-intelligence 103)
+(defconst sn-attack-separation-time-randomness 102)
+(defconst sn-disable-attack-groups 271)
+(defconst sn-disable-defend-groups 277)
+(defconst sn-disable-sighted-response-cap 284)
+(defconst sn-disable-tower-priority 267)
+(defconst sn-do-not-scale-for-difficulty-level 229)
+(defconst sn-enable-offensive-priority 254)
+(defconst sn-enable-patrol-attack 247)
+(defconst sn-enemy-sighted-response-distance 20)
+(defconst sn-filter-under-attack 276)
+(defconst sn-gather-defense-units 232)
+(defconst sn-group-form-distance 230)
+(defconst sn-ignore-attack-group-under-attack 231)
+(defconst sn-initial-attack-delay 104)
+(defconst sn-maximum-attack-group-size 26)
+(defconst sn-maximum-boat-attack-group-size 60)
+(defconst sn-maximum-boat-defend-group-size 69)
+(defconst sn-maximum-defend-group-size 28)
+(defconst sn-maximum-gaia-attack-response 100)
+(defconst sn-minimum-attack-group-size 16)
+(defconst sn-minimum-boat-attack-group-size 59)
+(defconst sn-minimum-boat-defend-group-size 68)
+(defconst sn-number-attack-groups 36)
+(defconst sn-number-boat-attack-groups 58)
+(defconst sn-number-boat-defend-groups 67)
+(defconst sn-percent-attack-boats 228)
+(defconst sn-percent-attack-soldiers 227)
+(defconst sn-percent-enemy-sighted-response 19)
+(defconst sn-scale-maximum-attack-group-size 94)
+(defconst sn-scale-minimum-attack-group-size 93)
+(defconst sn-scaling-frequency 99)
+(defconst sn-special-attack-influence1 109)
+(defconst sn-special-attack-influence2 110)
+(defconst sn-special-attack-influence3 111)
+(defconst sn-target-player 249)
+(defconst sn-target-point-adjustment 292)
+(defconst sn-task-ungrouped-soldiers 143)
+
+; --- constants mirrored from Immortal's own block (it defines these too) ---
+(defconst _true 1)
+(defconst _false 0)
+(defconst search_order-none 0)
+(defconst search_order-ascending 1)
+(defconst search_order-descending 2)
+(defconst formation-line 2)
+(defconst formation-ignore -1)
+(defconst stance-ignore -1)
+(defconst stance-aggressive 0)
+(defconst stance-defensive 1)
+(defconst stance-stand-ground 2)
+(defconst actionid-attack 600)
+(defconst actionid-build 602)
+(defconst actionid-heal 603)
+(defconst actionid-convert 604)
+(defconst actionid-gather 609)
+(defconst actionid-hunt 613)
+(defconst actionid-repair 618)
+(defconst object_data-index -1)
+(defconst object_data-unique-id 0)
+(defconst object_data-object-id 1)
+(defconst object_data-class-id 2)
+(defconst object_data-category 3)
+(defconst object_data-action 5)
+(defconst object_data-hitpoints 10)
+(defconst object_data-range 12)
+(defconst object_data-speed 13)
+(defconst object_data-attack-stance 21)
+(defconst object_data-target-unique-id 23)
+(defconst object_data-pierce-armor 27)
+(defconst object_data-base-attack 28)
+(defconst object_data-precise-x 38)
+(defconst object_data-precise-y 39)
+(defconst object_data-precise-distance 45)
+(defconst object_data-reload-time 54)
+(defconst object_data-next-attack 55)
+(defconst object_data-tag 73)
+(defconst object_data-to-precise 80)
+(defconst category-building 80)
+(defconst class-villager 904)
+(defconst class-archery 900)
+(defconst class-conquistador 923)
+(defconst class-cavalry-archer 936)
+(defconst class-hand-cannoneer 944)
+(defconst ri-ballistics 93)
+
+; --- goal map (all >= 100; vecSS block 110..113) ---
+(defconst gTimeMilli 100)
+(defconst gPtimeMilli 101)
+(defconst gMsecPerLoop 102)
+(defconst gLoopCounter 103)
+(defconst gTmpA 104)
+(defconst gTmpB 105)
+(defconst gRunOnce 108)
+(defconst vecSS 110)
+(defconst vecSS_L 110)
+(defconst vecSS_R 112)
+(defconst gState 115)
+(defconst gStateT 116)
+(defconst gStateAge 117)
+(defconst gSize 118)
+(defconst gRange 119)
+(defconst gAttack 120)
+(defconst gReload 121)
+(defconst gWfire 122)
+(defconst gFireWin 123)
+(defconst gPctFired 124)
+(defconst gPctReady 125)
+(defconst gReadyWin 126)
+(defconst gSpeed 127)
+(defconst vecMed 128)
+(defconst vecMed_x 128)
+(defconst vecMed_y 129)
+(defconst vecEC 130)
+(defconst vecEC_x 130)
+(defconst vecEC_y 131)
+(defconst vecKite 132)
+(defconst vecKite_x 132)
+(defconst vecKite_y 133)
+(defconst gDistMedE 134)
+(defconst gDistClosE 135)
+(defconst gPctInRange 136)
+(defconst gStrafeSign 137)
+(defconst gStrafeMag 138)
+(defconst gKiteDist 139)
+(defconst gKiteDistC 140)
+(defconst gJustChanged 141)
+(defconst gLatch 142)
+(defconst gECount 143)
+(defconst gERange 144)
+(defconst gEAction 145)
+(defconst gMedNext 146)
+(defconst gEnemySync 147)
+(defconst gWinPct 148)
+(defconst vecZero 152)
+(defconst vecZero_x 152)
+(defconst vecZero_y 153)
+(defconst vecRetreat 154)
+(defconst vecNearE 156)
+(defconst vecNearE_x 156)
+(defconst vecNearE_y 157)
+(defconst vecFarOwn 158)
+(defconst vecFarOwn_x 158)
+(defconst vecFarOwn_y 159)
+(defconst gI 160)
+(defconst gCnt 161)
+(defconst gT55 162)
+(defconst gUid 163)
+(defconst gKiteLen 164)
+(defconst gNormLen 165)
+(defconst gMod24 166)
+(defconst gMod12 167)
+(defconst gTgtIdx 168)
+(defconst gAsgCnt 169)
+(defconst gTgtUid 170)
+(defconst gTgtHP 171)
+(defconst gTgtPA 172)
+(defconst gDmg 173)
+(defconst gArrows 174)
+(defconst gArrowCap 175)
+(defconst gHPFactor 176)
+(defconst gNeed 177)
+(defconst gPruneR 178)
+(defconst gFarD 179)
+(defconst gBonus1 180)
+(defconst gBonus2 181)
+(defconst gTagged 182)
+(defconst gDiag1 183)
+(defconst gDiag2 184)
+(defconst gDiag3 185)
+(defconst gDiag4 186)
+(defconst gDiag5 187)
+(defconst gDiag6 188)
+(defconst gDiag7 189)
+(defconst gDwell 190)
+(defconst gKiteOK 191)
+(defconst gWset 192)
+(defconst gUType 193)
+(defconst gUClass 194)
+(defconst gStrafeBase 195)
+(defconst gStepPct 196)
+(defconst gFlipT 197)
+(defconst gBlocked 198)
+(defconst vecProbe 200)
+(defconst vecProbe_x 200)
+(defconst vecProbe_y 201)
+
+;--- Rule 0 -- INIT ONCE (Immortal #3573 @48613-15 + fixed values) ---
+(defrule
+	(up-compare-goal gRunOnce c:!= 1)
+	=>
+	(up-modify-goal gRunOnce c:= 1)
+	(up-modify-goal gLoopCounter c:= 0)
+	(up-modify-goal gMsecPerLoop c:= 546)
+	(up-modify-goal gPtimeMilli c:= -500)
+	(up-modify-goal gState c:= 0)
+	(up-modify-goal gStrafeSign c:= 1)
+	(up-modify-goal gEnemySync c:= 0)
+	(up-modify-goal gWinPct c:= 100)
+	(up-modify-goal gReadyWin c:= 110)
+	(up-modify-goal gWfire c:= 1000)
+	(up-modify-goal gBonus1 c:= 0)
+	(up-modify-goal gBonus2 c:= 0)
+	(up-modify-goal vecZero_x c:= 0)
+	(up-modify-goal vecZero_y c:= 0)
+	(up-modify-goal gTagged c:= 0)
+	(up-modify-goal gDiag1 c:= 0)
+	(up-modify-goal gDiag2 c:= 0)
+	(up-modify-goal gDiag3 c:= 0)
+	(up-modify-goal gDiag4 c:= 0)
+	(up-modify-goal gDiag5 c:= 0)
+	(up-modify-goal gDiag6 c:= 0)
+	(up-modify-goal gDiag7 c:= 0)
+	(up-modify-goal gDwell c:= 600)
+	(up-modify-goal gKiteOK c:= 1)
+	(up-modify-goal gWset c:= 0)
+	(up-modify-goal gStrafeBase c:= 200)
+	(up-modify-goal gStepPct c:= 390)
+	(up-modify-goal gFlipT c:= -9999)
+	(up-modify-goal gBlocked c:= 0)
+	(chat-to-player 1 "ImmortalCoreH up")
+)
+;--- Rule 1 -- TIME (Immortal #3592 @49196-49210 verbatim idiom) ---
+(defrule
+	(true)
+	=>
+	(up-set-timer c: 1 c: 0)
+	(up-get-timer c: 1 gTmpA)
+	(up-modify-goal gTimeMilli g:= gTmpA)
+	(up-modify-goal gTmpA g:= gTimeMilli)
+	(up-modify-goal gTmpA g:- gPtimeMilli)
+	(up-modify-goal gMsecPerLoop g:= gTmpA)
+)
+;--- Rule 2 -- SN BLOCK A (Immortal #8659 @103190-103205) ---
+(defrule
+	(true)
+	=>
+	(up-modify-sn sn-percent-enemy-sighted-response c:= 100)
+	(up-modify-sn sn-enemy-sighted-response-distance c:= 20)
+	(up-modify-sn sn-disable-sighted-response-cap c:= 1)
+	(up-modify-sn sn-ignore-attack-group-under-attack c:= 0)
+	(up-modify-sn sn-disable-attack-groups c:= 0)
+	(up-modify-sn sn-group-form-distance c:= 2)
+	(up-modify-sn sn-scaling-frequency c:= 30000)
+	(up-modify-sn sn-attack-separation-time-randomness c:= 0)
+	(up-modify-sn sn-scale-minimum-attack-group-size c:= 0)
+	(up-modify-sn sn-scale-maximum-attack-group-size c:= 0)
+	(up-modify-sn sn-attack-group-size-randomness c:= 0)
+	(up-modify-sn sn-number-attack-groups c:= 0)
+	(up-modify-sn sn-minimum-attack-group-size c:= 1)
+	(up-modify-sn sn-maximum-attack-group-size c:= 1)
+	(up-modify-sn sn-attack-group-gather-spacing c:= 1)
+	(up-modify-sn sn-number-boat-attack-groups c:= 0)
+)
+;--- Rule 3 -- SN BLOCK B (#8659 remainder @103207-103220) ---
+(defrule
+	(true)
+	=>
+	(up-modify-sn sn-minimum-boat-attack-group-size c:= 1)
+	(up-modify-sn sn-maximum-boat-attack-group-size c:= 1)
+	(up-modify-sn sn-disable-defend-groups c:= 0)
+	(up-modify-sn sn-maximum-defend-group-size c:= 1)
+	(up-modify-sn sn-number-boat-defend-groups c:= 0)
+	(up-modify-sn sn-minimum-boat-defend-group-size c:= 1)
+	(up-modify-sn sn-maximum-boat-defend-group-size c:= 1)
+	(up-modify-sn sn-special-attack-influence1 c:= 0)
+	(up-modify-sn sn-special-attack-influence2 c:= 0)
+	(up-modify-sn sn-special-attack-influence3 c:= 0)
+	(up-modify-sn sn-disable-tower-priority c:= 1)
+	(up-modify-sn sn-do-not-scale-for-difficulty-level c:= 1)
+	(up-modify-sn sn-enable-offensive-priority c:= 1)
+	(up-modify-sn sn-attack-intelligence c:= 0)
+)
+;--- Rule 4 -- SN BLOCK C (#8660 @103225-103232 verbatim) ---
+(defrule
+	(true)
+	=>
+	(up-modify-sn sn-task-ungrouped-soldiers c:= 0)
+	(up-modify-sn sn-gather-defense-units c:= 0)
+	(up-modify-sn sn-filter-under-attack c:= 0)
+	(up-modify-sn sn-initial-attack-delay c:= 0)
+	(up-modify-sn sn-maximum-gaia-attack-response c:= 3)
+	(up-modify-sn sn-percent-attack-soldiers c:= 100)
+	(up-modify-sn sn-percent-attack-boats c:= 100)
+	(up-modify-sn sn-enable-patrol-attack c:= 1)
+)
+;--- Rule 5 -- clustering beat gate (#8749/#8750; DEVIATION: 2020ms fast path dropped).
+;    CoreC FIX 1: never skip BEFORE the first tag succeeds -- CoreB left the ball
+;    uncontrolled (and aggressive) for up to ~4s while knights arrived. ---
+(defrule
+	(up-modify-goal gTmpA g:= gTimeMilli)
+	(up-modify-goal gTmpA c:mod 4040)
+	(up-compare-goal gTagged c:== 1)
+	(nand (up-compare-goal gTmpA g:< gMsecPerLoop)
+		(up-compare-goal gLoopCounter c:> 0))
+	=>
+	(up-jump-direct c: 12)
+)
+;--- Rule 6 -- latch clear + find + strip 8/9 + sort by tag (#8751 + #8757 @104816-20) ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gLatch c:= 0)
+	(up-full-reset-search)
+	(up-find-local c: class-archery c: 240)
+	(up-find-local c: class-cavalry-archer c: 240)
+	(up-find-local c: class-hand-cannoneer c: 240)
+	(up-find-local c: class-conquistador c: 240)
+	(up-remove-objects search-local object_data-tag c:== 8)
+	(up-remove-objects search-local object_data-tag c:== 9)
+	(up-clean-search search-local object_data-tag search_order-ascending)
+)
+;--- Rule 7 -- groups 8/9 snapshot (#1115 @27469-71 verbatim) ---
+(defrule
+	(true)
+	=>
+	(up-create-group 0 0 c: 8)
+	(up-remove-objects search-local object_data-index c:< 40)
+	(up-create-group 0 0 c: 9)
+)
+;--- Rule 8 -- bail (#1116 @27473-77 verbatim) ---
+(defrule
+	(or (up-compare-goal gLatch c:== 1)
+		(up-group-size c: 8 c:== 0))
+	=>
+	(up-jump-direct c: 12)
+)
+;--- Rule 9 -- restore 9+8, keep untagged (#1117/#1178 restore idiom) ---
+(defrule
+	(true)
+	=>
+	(up-full-reset-search)
+	(up-set-group search-local c: 9)
+	(up-set-group search-local c: 8)
+	(up-remove-objects search-local object_data-tag c:== 1)
+	(up-get-search-state vecSS)
+)
+;--- Rule 10 ---
+(defrule
+	(up-compare-goal vecSS_L c:== 0)
+	=>
+	(up-jump-direct c: 12)
+)
+;--- Rule 11 -- THE TAG WRITE (trio verbatim #1141 @27722-24; DEVIATION: no radius gates -- one ball takes everyone).
+;    CoreC FIX 2: immediately DE-AGGRO the fresh ball (Immortal's halt idiom #2793/#2794)
+;    -- the stance flip lands while units are still fresh/movable; from here on the
+;    units are never aggressive, so no stance-driven combat lock can ever form. ---
+(defrule
+	(true)
+	=>
+	(up-create-group 0 0 c: 1)
+	(up-modify-group-flag _true c: 1)
+	(up-reset-group c: 1)
+	(up-modify-goal gLatch c:= 1)
+	(up-modify-goal gTagged c:= 1)
+	(up-target-point 0 action-none formation-ignore stance-stand-ground)
+	(up-target-point 0 action-stop formation-ignore stance-ignore)
+	(chat-to-player 1 "TAGGED")
+)
+;--- Rule 12 -- SM find by CLASS (#2624 @40817-21 + dedupe #2626) ---
+(defrule
+	(true)
+	=>
+	(up-full-reset-search)
+	(up-find-local c: class-archery c: 240)
+	(up-find-local c: class-cavalry-archer c: 240)
+	(up-find-local c: class-hand-cannoneer c: 240)
+	(up-find-local c: class-conquistador c: 240)
+	(up-clean-search search-local -1 search_order-none)
+)
+;--- Rule 13 -- THE TAG FILTER (#1562 @31348-50) ---
+(defrule
+	(true)
+	=>
+	(up-remove-objects search-local object_data-tag c:!= 1)
+	(up-get-search-state vecSS)
+	(up-modify-goal gSize g:= vecSS_L)
+)
+;--- Rule 14 ---
+(defrule
+	(up-compare-goal gSize c:== 0)
+	=>
+	(up-jump-direct c: 76)
+)
+;--- Rule 15 -- adoption bootstrap (#1564; DEVIATION: states 2-17 cut).
+;    CoreC FIX 3: boot into 18 (KITE/positioning), NOT 22 -- Immortal's opening is
+;    movement-first (rally/approach); the first order fresh units receive is a
+;    stance-no-attack formation move. 18->22 flips as soon as >=91% loaded and
+;    >55% in range (Rule 46), so the first volley comes FROM position. ---
+(defrule
+	(up-compare-goal gState c:== 0)
+	=>
+	(up-modify-goal gState c:= 18)
+	(up-modify-goal gStateT g:= gTimeMilli)
+	(up-modify-goal gJustChanged c:= 1)
+)
+;--- Rule 16 -- flag clear + state age (#1572 @31431-37 semantics) ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gJustChanged c:= 0)
+	(up-modify-goal gTmpA g:= gTimeMilli)
+	(up-modify-goal gTmpA g:- gStateT)
+	(up-modify-goal gStateAge g:= gTmpA)
+)
+;--- Rule 17 -- speed(min)/range(median)/attack(median) (#1578 @31483-31502) ---
+(defrule
+	(true)
+	=>
+	(up-clean-search search-local object_data-speed search_order-ascending)
+	(up-set-target-object search-local c: 0)
+	(up-get-object-data object_data-speed gSpeed)
+	(up-clean-search search-local object_data-range search_order-ascending)
+	(up-modify-goal gTmpA g:= gSize)
+	(up-modify-goal gTmpA c:- 1)
+	(up-modify-goal gTmpA c:/ 2)
+	(up-set-target-object search-local g: gTmpA)
+	(up-get-object-data object_data-range gRange)
+	(up-modify-goal gRange c:max 4)
+	(up-clean-search search-local object_data-base-attack search_order-ascending)
+	(up-set-target-object search-local g: gTmpA)
+	(up-get-object-data object_data-base-attack gAttack)
+)
+;--- Rule 18 -- max reload + fire window (#1579 + #1607; gWfire=1000 = CA row #1603) ---
+(defrule
+	(true)
+	=>
+	(up-clean-search search-local object_data-reload-time search_order-descending)
+	(up-set-target-object search-local c: 0)
+	(up-get-object-data object_data-reload-time gReload)
+	(up-modify-goal gTmpA g:= gReload)
+	(up-modify-goal gTmpA g:- gWfire)
+	(up-modify-goal gTmpA c:- 10)
+	(up-modify-goal gFireWin g:= gTmpA)
+)
+;--- Rule 19 -- median next-attack + GROUP MEDIAN POINT (#1581 @31528-31550) ---
+(defrule
+	(true)
+	=>
+	(up-clean-search search-local object_data-next-attack search_order-ascending)
+	(up-modify-goal gTmpA g:= gSize)
+	(up-modify-goal gTmpA c:- 1)
+	(up-modify-goal gTmpA c:/ 2)
+	(up-set-target-object search-local g: gTmpA)
+	(up-get-object-data object_data-next-attack gMedNext)
+	(up-clean-search search-local object_data-precise-x search_order-ascending)
+	(up-set-target-object search-local g: gTmpA)
+	(up-get-object-data object_data-precise-x vecMed_x)
+	(up-clean-search search-local object_data-precise-y search_order-ascending)
+	(up-set-target-object search-local g: gTmpA)
+	(up-get-object-data object_data-precise-y vecMed_y)
+)
+;--- Rules 20-25 -- %just-fired loop (#1608-1612 @31755-31780) ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gCnt c:= 0)
+	(up-modify-goal gI g:= gSize)
+	(up-modify-goal gI c:- 1)
+)
+(defrule
+	(up-compare-goal gI c:< 0)
+	=>
+	(up-jump-direct c: 25)
+)
+(defrule
+	(true)
+	=>
+	(up-set-target-object search-local g: gI)
+	(up-get-object-data object_data-next-attack gT55)
+)
+(defrule
+	(up-compare-goal gT55 g:> gFireWin)
+	=>
+	(up-modify-goal gCnt c:+ 1)
+)
+(defrule
+	(true)
+	=>
+	(up-modify-goal gI c:- 1)
+	(up-jump-direct c: 21)
+)
+(defrule
+	(true)
+	=>
+	(up-modify-goal gCnt c:* 100)
+	(up-modify-goal gCnt g:/ gSize)
+	(up-modify-goal gPctFired g:= gCnt)
+)
+;--- Rules 26-31 -- %ready loop (#1618-1623 @31821-31853) ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gCnt c:= 0)
+	(up-modify-goal gI g:= gSize)
+	(up-modify-goal gI c:- 1)
+)
+(defrule
+	(up-compare-goal gI c:< 0)
+	=>
+	(up-jump-direct c: 31)
+)
+(defrule
+	(true)
+	=>
+	(up-set-target-object search-local g: gI)
+	(up-get-object-data object_data-next-attack gT55)
+)
+(defrule
+	(up-compare-goal gT55 g:<= gReadyWin)
+	=>
+	(up-modify-goal gCnt c:+ 1)
+)
+(defrule
+	(true)
+	=>
+	(up-modify-goal gI c:- 1)
+	(up-jump-direct c: 27)
+)
+(defrule
+	(true)
+	=>
+	(up-modify-goal gCnt c:* 100)
+	(up-modify-goal gCnt g:/ gSize)
+	(up-modify-goal gPctReady g:= gCnt)
+)
+;--- Rule 32 -- enemy scan (#1898 idiom; DEVIATION: single-player P3 scan) ---
+(defrule
+	(true)
+	=>
+	(up-create-group 0 0 c: 0)
+	(up-reset-search _false _false _true _true)
+	(up-set-precise-target-point vecMed)
+	(up-modify-sn sn-focus-player-number c:= 3)
+	(up-find-remote c: -1 c: 40)
+	(up-find-remote c: -1 c: 40)
+)
+;--- Rule 33 -- prune + reset filters (#1924-26 reduced: arena) ---
+(defrule
+	(true)
+	=>
+	(up-remove-objects search-remote object_data-category c:== category-building)
+	(up-remove-objects search-remote object_data-class-id c:== class-villager)
+	(up-reset-filters)
+	(up-get-search-state vecSS)
+	(up-modify-goal gECount g:= vecSS_R)
+)
+;--- Rule 34 -- no enemies -> finish (DEVIATION: roam states cut) ---
+(defrule
+	(up-compare-goal gECount c:== 0)
+	=>
+	(up-jump-direct c: 76)
+)
+;--- Rule 35 -- enemy centroid (DEVIATION: component median replaces weighted centroid) ---
+(defrule
+	(true)
+	=>
+	(up-clean-search search-remote object_data-precise-x search_order-ascending)
+	(up-modify-goal gTmpA g:= gECount)
+	(up-modify-goal gTmpA c:- 1)
+	(up-modify-goal gTmpA c:/ 2)
+	(up-set-target-object search-remote g: gTmpA)
+	(up-get-object-data object_data-precise-x vecEC_x)
+	(up-clean-search search-remote object_data-precise-y search_order-ascending)
+	(up-set-target-object search-remote g: gTmpA)
+	(up-get-object-data object_data-precise-y vecEC_y)
+)
+;--- Rule 36 -- nearest enemy + medians + nearest-first order (#2118/#2762 idioms) ---
+(defrule
+	(true)
+	=>
+	(up-set-precise-target-point vecMed)
+	(up-clean-search search-remote object_data-to-precise search_order-ascending)
+	(up-set-target-object search-remote c: 0)
+	(up-get-object-data object_data-to-precise gDistMedE)
+	(up-get-object-data object_data-precise-x vecNearE_x)
+	(up-get-object-data object_data-precise-y vecNearE_y)
+	(up-clean-search search-remote object_data-range search_order-ascending)
+	(up-set-target-object search-remote g: gTmpA)
+	(up-get-object-data object_data-range gERange)
+	(up-clean-search search-remote object_data-action search_order-ascending)
+	(up-set-target-object search-remote g: gTmpA)
+	(up-get-object-data object_data-action gEAction)
+	(up-set-precise-target-point vecMed)
+	(up-clean-search search-remote object_data-to-precise search_order-ascending)
+)
+;--- Rules 37-42 -- %in-range loop (#2128-2133 @36105-36143) ---
+(defrule
+	(true)
+	=>
+	(up-set-precise-target-point vecNearE)
+	(up-modify-goal gCnt c:= 0)
+	(up-modify-goal gI g:= gSize)
+	(up-modify-goal gI c:- 1)
+)
+(defrule
+	(up-compare-goal gI c:< 0)
+	=>
+	(up-jump-direct c: 42)
+)
+(defrule
+	(true)
+	=>
+	(up-set-target-object search-local g: gI)
+	(up-get-object-data object_data-range gTmpA)
+	(up-modify-goal gTmpA c:* 100)
+	(up-modify-goal gTmpA c:+ 70)
+	(up-get-object-data object_data-to-precise gTmpB)
+)
+(defrule
+	(up-compare-goal gTmpB g:<= gTmpA)
+	=>
+	(up-modify-goal gCnt c:+ 1)
+)
+(defrule
+	(true)
+	=>
+	(up-modify-goal gI c:- 1)
+	(up-jump-direct c: 38)
+)
+(defrule
+	(true)
+	=>
+	(up-modify-goal gCnt c:* 100)
+	(up-modify-goal gCnt g:/ gSize)
+	(up-modify-goal gPctInRange g:= gCnt)
+)
+;--- Rule 43 -- FARTHEST-FIRST SORT (persists into volley) + closest-own dist (#2134/#2681) ---
+(defrule
+	(true)
+	=>
+	(up-set-precise-target-point vecEC)
+	(up-clean-search search-local object_data-precise-distance search_order-descending)
+	(up-modify-goal gTmpA g:= gSize)
+	(up-modify-goal gTmpA c:- 1)
+	(up-set-precise-target-point vecNearE)
+	(up-set-target-object search-local g: gTmpA)
+	(up-get-object-data object_data-to-precise gDistClosE)
+)
+;--- Rule 44 -- 22->18 (#2705 @41538-41550 VERBATIM) ---
+(defrule
+	(or (and (up-compare-goal gPctFired c:< 45)
+			(or (and (up-compare-goal gPctReady c:< 75)
+					(up-compare-goal gEnemySync c:> 55))
+				(up-compare-goal gPctReady c:< 60)))
+		(up-compare-goal gStateAge c:>= 3000))
+	(up-compare-goal gKiteOK c:== 1)
+	(up-compare-goal gState c:== 22)
+	=>
+	(up-modify-goal gState c:= 18)
+	(up-modify-goal gStateT g:= gTimeMilli)
+	(up-modify-goal gStateAge c:= 0)
+	(up-modify-goal gJustChanged c:= 1)
+	(chat-to-player 1 "KITE")
+)
+;--- Rule 45 -- 22->18 enemy-close (#2706 @41552-41563 VERBATIM) ---
+(defrule
+	(or (up-compare-goal gPctReady c:< 75)
+		(up-compare-goal gStateAge c:>= 2000))
+	(up-compare-goal gPctFired c:< 55)
+	(up-compare-goal gDistClosE c:< 250)
+	(up-compare-goal gKiteOK c:== 1)
+	(up-compare-goal gState c:== 22)
+	=>
+	(up-modify-goal gState c:= 18)
+	(up-modify-goal gStateT g:= gTimeMilli)
+	(up-modify-goal gStateAge c:= 0)
+	(up-modify-goal gJustChanged c:= 1)
+	(chat-to-player 1 "KITE2")
+)
+;--- Rule 46 -- 18->22 (#2707 @41565-41579; DEVIATION: var146/bias flags fixed) ---
+(defrule
+	(up-compare-goal gPctInRange c:> 55)
+	(up-compare-goal gPctReady c:>= 91)
+	(up-compare-goal gStateAge g:>= gDwell)
+	(up-compare-goal gState c:== 18)
+	=>
+	(up-modify-goal gState c:= 22)
+	(up-modify-goal gStateT g:= gTimeMilli)
+	(up-modify-goal gStateAge c:= 0)
+	(up-modify-goal gJustChanged c:= 1)
+	(chat-to-player 1 "VOLLEY")
+)
+;--- Rule 47 ---
+(defrule
+	(up-compare-goal gState c:!= 18)
+	=>
+	(up-jump-direct c: 58)
+)
+;--- Rule 48 -- RE-ORDER THROTTLE (#2736 @41874-41886; DEVIATION: sign-flip disjunct dropped) ---
+(defrule
+	(up-modify-goal gMod24 g:= gStateAge)
+	(up-modify-goal gMod24 c:mod 2400)
+	(up-modify-goal gMod12 g:= gStateAge)
+	(up-modify-goal gMod12 c:mod 1200)
+	(nor (or (up-compare-goal gJustChanged c:== 1)
+			(and (up-compare-goal gMod12 g:< gMsecPerLoop)
+				(up-compare-goal gWinPct c:>= 60)))
+		(and (up-compare-goal gMod24 g:< gMsecPerLoop)
+			(up-compare-goal gWinPct c:< 60)))
+	=>
+	(up-jump-direct c: 58)
+)
+;--- Rule 49 -- strafe magnitude (#2737; DEVIATION: tower-pull 0) ---
+(defrule
+	(up-modify-goal gStrafeMag g:= gStrafeBase)
+	(up-compare-goal gDistClosE c:< 100)
+	=>
+	(up-modify-goal gStrafeMag c:= 0)
+)
+;--- Rule 50 -- kite distance base (#2739 @41902-41918 arithmetic verbatim) ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gKiteDist c:= 0)
+	(up-modify-goal gTmpA g:= gSize)
+	(up-modify-goal gTmpA c:* 4)
+	(up-modify-goal gTmpA c:- 10)
+	(up-modify-goal gKiteDist g:- gTmpA)
+	(up-modify-goal gTmpB c:= 100)
+	(up-modify-goal gTmpB g:- gPctInRange)
+	(up-modify-goal gKiteDist g:- gTmpB)
+)
+;--- Rule 51 -- (#2745 verbatim) ---
+(defrule
+	(up-compare-goal gMedNext c:== 0)
+	(up-compare-goal gPctReady c:== 100)
+	=>
+	(up-modify-goal gKiteDist c:- 25)
+)
+;--- Rule 52 -- (#2746 verbatim) ---
+(defrule
+	(up-modify-goal gTmpA g:= gRange)
+	(up-modify-goal gTmpA c:* 100)
+	(up-modify-goal gTmpA c:+ 85)
+	(up-compare-goal gTmpA g:< gDistMedE)
+	=>
+	(up-modify-goal gKiteDist c:- 100)
+)
+;--- Rule 53 -- clamp + rebase (#2747/#2748; CA path) ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gKiteDist c:max -500)
+	(up-modify-goal gKiteDist c:min 500)
+	(up-modify-goal gKiteDistC g:= gKiteDist)
+	(up-modify-goal gTmpA g:= gRange)
+	(up-modify-goal gTmpA c:* 100)
+	(up-modify-goal gKiteDist g:+ gTmpA)
+	(up-modify-goal gKiteDist c:max 50)
+	(up-modify-goal gKiteDist g:- gDistMedE)
+)
+;--- Rule 54 -- kite vector (#2749/#2752/#2754; DEVIATIONS: retreat-override, dot-lerp, TC-drag omitted) ---
+(defrule
+	(true)
+	=>
+	(up-copy-point vecRetreat vecEC)
+	(up-copy-point vecKite vecMed)
+	(up-modify-goal gTmpA c:= -1)
+	(up-modify-goal gTmpA g:* gKiteDist)
+	(up-lerp-tiles vecKite vecRetreat g: gTmpA)
+	(up-modify-goal gTmpB g:= gStrafeMag)
+	(up-modify-goal gTmpB g:* gStrafeSign)
+	(up-cross-tiles vecKite vecEC g: gTmpB)
+	(up-add-point vecKite vecMed c: -1)
+	(up-modify-goal gKiteLen g:= gStepPct)
+	(up-modify-goal gKiteLen g:%* gSpeed)
+)
+;--- Rule 55 -- normalize to 3.9x speed, rebase, bound (#2756 @42057-42066 VERBATIM order) ---
+(defrule
+	(true)
+	=>
+	(up-get-point-distance vecZero vecKite gNormLen)
+	(up-modify-goal vecKite_x g:* gKiteLen)
+	(up-modify-goal vecKite_y g:* gKiteLen)
+	(up-modify-goal vecKite_x g:/ gNormLen)
+	(up-modify-goal vecKite_y g:/ gNormLen)
+	(up-add-point vecKite vecMed c: 1)
+	(up-bound-precise-point vecKite _true c: 100)
+)
+;--- Rule 56 -- PATROL variant vs ranged enemies (#2757 @42068-42082 VERBATIM orders) ---
+(defrule
+	(up-compare-goal gERange c:>= 4)
+	(up-compare-goal gDistClosE c:>= 200)
+	(up-compare-goal gKiteDistC c:<= 150)
+	(up-compare-goal gKiteDistC c:>= -150)
+	=>
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point vecKite action-patrol formation-line stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point vecKite action-patrol formation-line stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+	(chat-to-player 1 "MOVE-P")
+	(up-jump-direct c: 58)
+)
+;--- Rule 57 -- THE KITE MOVE vs melee (#2758 @42084-42092 VERBATIM) ---
+(defrule
+	(true)
+	=>
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point vecKite action-move formation-line stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point vecKite action-move formation-line stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+	(chat-to-player 1 "MOVE-M")
+)
+;--- Rule 58 -- (#2759) ---
+(defrule
+	(up-compare-goal gState c:!= 22)
+	=>
+	(up-jump-direct c: 76)
+)
+;--- Rule 59 -- (#2760: group 0 := own farthest-first; clear LOCAL keep REMOTE) ---
+(defrule
+	(true)
+	=>
+	(up-create-group 0 0 c: 0)
+	(up-reset-search _true _true _false _false)
+	(up-get-search-state vecSS)
+	(up-modify-goal gI g:= vecSS_R)
+	(up-modify-goal gI c:- 1)
+)
+;--- Rule 60 -- (#2761 VERBATIM incl. up-jump-rule -1) ---
+(defrule
+	(up-compare-goal gI c:>= 0)
+	=>
+	(up-set-target-object search-remote g: gI)
+	(up-get-object-data object_data-unique-id gUid)
+	(up-add-object-by-id search-local g: gUid)
+	(up-modify-goal gI c:- 1)
+	(up-jump-rule -1)
+)
+;--- Rule 61 -- (#2762 VERBATIM) ---
+(defrule
+	(true)
+	=>
+	(up-create-group 0 0 c: 1)
+	(up-set-group search-local c: 0)
+	(up-set-target-object search-local c: 0)
+	(up-get-object-data object_data-precise-x vecFarOwn_x)
+	(up-get-object-data object_data-precise-y vecFarOwn_y)
+	(up-set-precise-target-point vecFarOwn)
+	(up-clean-search search-remote object_data-to-precise search_order-ascending)
+	(up-set-target-object search-remote c: 0)
+	(up-get-object-data object_data-to-precise gFarD)
+	(up-full-reset-search)
+	(up-set-group search-local c: 1)
+	(up-get-search-state vecSS)
+	(up-modify-goal gI g:= vecSS_L)
+	(up-modify-goal gI c:- 1)
+)
+;--- Rule 62 -- (#2763: re-reverse restores remote order) ---
+(defrule
+	(up-compare-goal gI c:>= 0)
+	=>
+	(up-set-target-object search-local g: gI)
+	(up-get-object-data object_data-unique-id gUid)
+	(up-add-object-by-id search-remote g: gUid)
+	(up-modify-goal gI c:- 1)
+	(up-jump-rule -1)
+)
+;--- Rule 63 -- (#2764 VERBATIM: prune beyond max(range*100, farD)+50 from vecFarOwn) ---
+(defrule
+	(true)
+	=>
+	(up-set-group search-local c: 0)
+	(up-modify-goal gPruneR g:= gRange)
+	(up-modify-goal gPruneR c:* 100)
+	(up-modify-goal gPruneR g:max gFarD)
+	(up-modify-goal gPruneR c:+ 50)
+	(up-remove-objects search-remote object_data-to-precise g:> gPruneR)
+	(up-get-search-state vecSS)
+)
+;--- Rule 64 -- (#2765) ---
+(defrule
+	(up-compare-goal vecSS_R c:!= 0)
+	=>
+	(up-jump-direct c: 66)
+)
+;--- Rule 65 -- (#2766/#2767 merged; DEVIATION: merged) ---
+(defrule
+	(true)
+	=>
+	(chat-to-player 1 "no targets in range")
+	(up-modify-goal gState c:= 18)
+	(up-modify-goal gStateT g:= gTimeMilli)
+	(up-modify-goal gStateAge c:= 0)
+	(up-modify-goal gJustChanged c:= 1)
+	(up-jump-direct c: 76)
+)
+;--- Rule 66 -- (#2774 VERBATIM: strip cooldown units; group 2 := ready) ---
+(defrule
+	(true)
+	=>
+	(up-remove-objects search-local object_data-next-attack g:>= gFireWin)
+	(up-create-group 0 0 c: 2)
+	(up-modify-goal gHPFactor c:= 115)
+)
+;--- Rule 67 -- (#2775 VERBATIM: 160% HP overestimate unless enemy median is working/attacking) ---
+(defrule
+	(up-compare-goal gEAction c:!= actionid-convert)
+	(up-compare-goal gEAction c:!= actionid-repair)
+	(up-compare-goal gEAction c:!= actionid-hunt)
+	(up-compare-goal gEAction c:!= actionid-gather)
+	(up-compare-goal gEAction c:!= actionid-build)
+	(up-compare-goal gEAction c:!= actionid-heal)
+	(up-compare-goal gEAction c:!= actionid-attack)
+	=>
+	(up-modify-goal gHPFactor c:= 160)
+)
+;--- Rule 68 -- (#2776 VERBATIM) ---
+(defrule
+	(up-research-status c: ri-ballistics c:== research-complete)
+	=>
+	(up-modify-goal gHPFactor c:= 100)
+)
+;--- Rule 69 -- (#2777 VERBATIM: caps + pair-zero of gTgtIdx/gAsgCnt) ---
+(defrule
+	(up-modify-goal gTmpA g:= gDistClosE)
+	=>
+	(up-modify-goal gTmpA c:/ 10)
+	(up-modify-goal gTmpA c:+ 100)
+	(up-modify-goal gHPFactor g:min gTmpA)
+	(up-modify-goal gTmpB g:= gDistClosE)
+	(up-modify-goal gTmpB c:/ 100)
+	(up-modify-goal gArrowCap c:= 18)
+	(up-modify-goal gArrowCap g:- gTmpB)
+	(up-modify-goal gArrowCap c:max 6)
+	(up-modify-goal gArrowCap c:min 17)
+	(up-add-point gTgtIdx gTgtIdx c: -1)
+	(up-get-search-state vecSS)
+)
+;--- Rule 70 -- (#2778 VERBATIM loop head) ---
+(defrule
+	(nand (up-compare-goal gAsgCnt g:< gSize)
+		(up-compare-goal vecSS_R c:!= 0))
+	=>
+	(up-jump-direct c: 76)
+)
+;--- Rule 71 -- (#2779 VERBATIM: arrows needed for current target) ---
+(defrule
+	(true)
+	=>
+	(up-set-target-object search-remote g: gTgtIdx)
+	(up-get-object-data object_data-unique-id gTgtUid)
+	(up-get-object-data object_data-hitpoints gTgtHP)
+	(up-modify-goal gTgtHP g:%* gHPFactor)
+	(up-get-object-data object_data-pierce-armor gTgtPA)
+	(up-set-group search-local c: 2)
+	(up-remove-objects search-local object_data-index g:< gAsgCnt)
+	(up-modify-goal gDmg g:= gAttack)
+	(up-modify-goal gDmg g:- gTgtPA)
+	(up-modify-goal gDmg c:max 0)
+	(up-modify-goal gDmg g:+ gBonus1)
+	(up-modify-goal gDmg c:max 1)
+	(up-modify-goal gArrows g:= gTgtHP)
+	(up-modify-goal gArrows g:/ gDmg)
+	(up-modify-goal gArrows c:max 0)
+	(up-modify-goal gArrows c:min 17)
+	(up-modify-goal gArrows c:+ 1)
+	(up-modify-goal gArrows g:min gArrowCap)
+)
+;--- Rule 72 -- (#2787 VERBATIM) ---
+(defrule
+	(up-modify-goal gNeed g:= gArrows)
+	=>
+	(up-modify-goal gNeed c:+ 2)
+	(up-get-search-state vecSS)
+)
+;--- Rule 73 -- (#2788 VERBATIM: fewer ready than needed+2 -> focus fire everyone) ---
+(defrule
+	(up-compare-goal vecSS_L g:< gNeed)
+	=>
+	(up-modify-goal gArrows c:+ 99)
+)
+;--- Rule 74 -- (#2790 -- THE VOLLEY ORDER, VERBATIM) ---
+(defrule
+	(true)
+	=>
+	(up-set-target-object search-remote g: gTgtIdx)
+	(up-remove-objects search-local object_data-index g:>= gArrows)
+	(up-remove-objects search-local object_data-target-unique-id g:== gTgtUid)
+	(up-target-objects _true action-default formation-ignore stance-ignore)
+)
+;--- Rule 75 -- (#2791 VERBATIM) ---
+(defrule
+	(up-modify-goal gAsgCnt g:+ gArrows)
+	=>
+	(up-modify-goal gTgtIdx c:+ 1)
+	(up-get-search-state vecSS)
+	(up-modify-goal gTgtIdx g:mod vecSS_R)
+	(up-jump-direct c: 70)
+)
+;--- Rule 76 -- steady-state SN override (#9732; DEVIATION: literal P3, eco sns omitted) ---
+(defrule
+	(true)
+	=>
+	(up-modify-sn sn-target-player c:= 3)
+	(up-modify-sn sn-percent-enemy-sighted-response c:= 0)
+	(up-modify-sn sn-enemy-sighted-response-distance c:= 0)
+	(up-modify-sn sn-disable-sighted-response-cap c:= 1)
+)
+;--- Rule 77 -- pass bookkeeping (#9735 VERBATIM) ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gLoopCounter c:+ 1)
+	(up-modify-goal gPtimeMilli g:= gTimeMilli)
+)
+
+;=== DIAGNOSTIC TRACE (Rules 78+; appended AFTER all jump targets <=76, so the
+;    load-bearing numbering above is untouched; each chats ONCE via a latch) ===
+;--- Rule 78 -- did the tag stick? (SM saw a non-empty tagged ball) ---
+(defrule
+	(up-compare-goal gTagged c:== 1)
+	(up-compare-goal gSize c:>= 1)
+	(up-compare-goal gDiag1 c:== 0)
+	=>
+	(up-modify-goal gDiag1 c:= 1)
+	(chat-to-player 1 "D1 SM ALIVE - tag stuck, ball found")
+)
+;--- Rule 79 -- tag did NOT stick (tagged but SM finds nothing) ---
+(defrule
+	(up-compare-goal gTagged c:== 1)
+	(up-compare-goal gSize c:== 0)
+	(up-compare-goal gDiag2 c:== 0)
+	=>
+	(up-modify-goal gDiag2 c:= 1)
+	(chat-to-player 1 "D2 SM EMPTY - tag did not stick")
+)
+;--- Rule 80 -- enemy scan found something ---
+(defrule
+	(up-compare-goal gECount c:>= 1)
+	(up-compare-goal gDiag3 c:== 0)
+	=>
+	(up-modify-goal gDiag3 c:= 1)
+	(chat-to-player 1 "D3 ENEMY SEEN")
+)
+;--- Rule 81 -- position reads broken? (ball median near map origin = garbage) ---
+(defrule
+	(up-compare-goal gTagged c:== 1)
+	(up-compare-goal gSize c:>= 1)
+	(up-compare-goal vecMed_x c:< 100)
+	(up-compare-goal gDiag4 c:== 0)
+	=>
+	(up-modify-goal gDiag4 c:= 1)
+	(chat-to-player 1 "D4 MED NEAR ZERO - reads broken")
+)
+;--- Rule 82 -- state 18 reached ---
+(defrule
+	(up-compare-goal gState c:== 18)
+	(up-compare-goal gDiag5 c:== 0)
+	=>
+	(up-modify-goal gDiag5 c:= 1)
+	(chat-to-player 1 "D5 STATE18")
+)
+;--- Rule 83 -- state 22 reached ---
+(defrule
+	(up-compare-goal gState c:== 22)
+	(up-compare-goal gDiag6 c:== 0)
+	=>
+	(up-modify-goal gDiag6 c:= 1)
+	(chat-to-player 1 "D6 STATE22")
+)
+;--- Rule 84 -- enemy scan ran but empty while tagged (scan/filter/reads issue) ---
+(defrule
+	(up-compare-goal gTagged c:== 1)
+	(up-compare-goal gSize c:>= 1)
+	(up-compare-goal gECount c:== 0)
+	(up-compare-goal gDiag7 c:== 0)
+	=>
+	(up-modify-goal gDiag7 c:= 1)
+	(chat-to-player 1 "D7 ENEMY SCAN EMPTY")
+)
+
+;=== CoreG PARAMETERIZATION APPENDIX (rules 85+; runs END of pass, values apply
+;    NEXT pass -- one-pass lag is by design so rules 0-77 numbering never moves).
+;    Every constant here is from data/golden/aoe2_reference.db (see header). ===
+
+;--- reload-scaled kite dwell (plan item 2): clamp(liveReload - 1400, 400, 2200).
+;    Live obj54 auto-reflects in-game techs; CA 2000ms -> 600 (= CoreF's floor). ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gDwell g:= gReload)
+	(up-modify-goal gDwell c:- 1400)
+	(up-modify-goal gDwell c:max 400)
+	(up-modify-goal gDwell c:min 2200)
+)
+;--- speed-tiered strafe/step (plan item 4; gSpeed = min ball speed x100, live,
+;    so un-teched scenario balls tier by their REAL speed) ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gStrafeBase c:= 200)
+	(up-modify-goal gStepPct c:= 390)
+)
+(defrule
+	(up-compare-goal gSpeed c:>= 135)
+	=>
+	(up-modify-goal gStrafeBase c:= 240)
+	(up-modify-goal gStepPct c:= 420)
+)
+(defrule
+	(up-compare-goal gSpeed c:<= 115)
+	=>
+	(up-modify-goal gStrafeBase c:= 150)
+	(up-modify-goal gStepPct c:= 350)
+)
+;--- kite gate (plan item 3): kite ONLY when we out-range the enemy median
+;    (gERange is read raw in Rule 36 -- melee reads 0). Otherwise Rules 44/45
+;    never fire and the ball holds VOLLEY = a normal stand-and-shoot fight. ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gKiteOK c:= 0)
+)
+(defrule
+	(up-modify-goal gTmpA g:= gERange)
+	(up-modify-goal gTmpA c:+ 1)
+	(up-compare-goal gRange g:> gTmpA)
+	=>
+	(up-modify-goal gKiteOK c:= 1)
+)
+;--- failsafe: not-out-ranging ball stuck in state 18 (approach) flips to VOLLEY
+;    after 2.5s even if Rule 46's in-range gate never fills ---
+(defrule
+	(up-compare-goal gState c:== 18)
+	(up-compare-goal gKiteOK c:== 0)
+	(up-compare-goal gECount c:>= 1)
+	(up-compare-goal gStateAge c:>= 2500)
+	=>
+	(up-modify-goal gState c:= 22)
+	(up-modify-goal gStateT g:= gTimeMilli)
+	(up-modify-goal gStateAge c:= 0)
+	(up-modify-goal gJustChanged c:= 1)
+	(chat-to-player 1 "HOLD")
+)
+;--- melee fallback: no ranged ball ever formed (pure-melee army) -> restore the
+;    engine's auto-fight AFTER Rule 76 zeroed it, so melee-vs-melee is normal ---
+(defrule
+	(up-compare-goal gTagged c:== 0)
+	(up-compare-goal gTimeMilli c:>= 10000)
+	=>
+	(up-modify-sn sn-percent-enemy-sighted-response c:= 100)
+	(up-modify-sn sn-enemy-sighted-response-distance c:= 20)
+	(up-modify-sn sn-task-ungrouped-soldiers c:= 1)
+)
+;--- W_FIRE DETECT (plan item 1; Immortal #1572-1578's modal base-type reduced to
+;    median ACTUAL type: obj1 = the PLACED unit id, so unresearched scenario
+;    elites resolve exactly; arena balls are homogeneous). Latched once. ---
+(defrule
+	(up-compare-goal gTagged c:== 1)
+	(up-compare-goal gSize c:>= 1)
+	(up-compare-goal gWset c:== 0)
+	=>
+	(up-full-reset-search)
+	(up-find-local c: class-archery c: 240)
+	(up-find-local c: class-cavalry-archer c: 240)
+	(up-find-local c: class-hand-cannoneer c: 240)
+	(up-find-local c: class-conquistador c: 240)
+	(up-remove-objects search-local object_data-tag c:!= 1)
+	(up-clean-search search-local object_data-object-id search_order-ascending)
+	(up-get-search-state vecSS)
+	(up-modify-goal gTmpA g:= vecSS_L)
+	(up-modify-goal gTmpA c:- 1)
+	(up-modify-goal gTmpA c:/ 2)
+	(up-set-target-object search-local g: gTmpA)
+	(up-get-object-data object_data-object-id gUType)
+	(up-get-object-data object_data-class-id gUClass)
+	(up-modify-goal gWset c:= 1)
+)
+;--- class fallbacks first (unlisted/future types), exact type rows after (later
+;    rules overwrite within the same pass) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(up-compare-goal gUClass c:== class-archery)
+	=>
+	(up-modify-goal gWfire c:= 310)
+)
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(up-compare-goal gUClass c:== class-cavalry-archer)
+	=>
+	(up-modify-goal gWfire c:= 643)
+)
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(up-compare-goal gUClass c:== class-hand-cannoneer)
+	=>
+	(up-modify-goal gWfire c:= 310)
+)
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(up-compare-goal gUClass c:== class-conquistador)
+	=>
+	(up-modify-goal gWfire c:= 277)
+)
+;--- THE W_FIRE TABLE -- aoe2_reference.db final_attack_delay(ms) + 60 ---
+;--- 60: Janissary/Elite (delay 0) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(or (up-compare-goal gUType c:== 46)
+		(up-compare-goal gUType c:== 557))
+	=>
+	(up-modify-goal gWfire c:= 60)
+)
+;--- 227: Longbowman/Elite (167), Fire Archer/Elite (167) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(or (or (or (up-compare-goal gUType c:== 8)
+		(up-compare-goal gUType c:== 530))
+		(up-compare-goal gUType c:== 1968))
+		(up-compare-goal gUType c:== 1970))
+	=>
+	(up-modify-goal gWfire c:= 227)
+)
+;--- 260: Composite Bowman/Elite (200), Genitour/Elite (200) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(or (or (or (up-compare-goal gUType c:== 1800)
+		(up-compare-goal gUType c:== 1802))
+		(up-compare-goal gUType c:== 1010))
+		(up-compare-goal gUType c:== 1012))
+	=>
+	(up-modify-goal gWfire c:= 260)
+)
+;--- 277: Conquistador/Elite (217) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(or (up-compare-goal gUType c:== 771)
+		(up-compare-goal gUType c:== 773))
+	=>
+	(up-modify-goal gWfire c:= 277)
+)
+;--- 293: Slinger (233), Grenadier (233), Ratha ranged/Elite (233) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(or (or (or (up-compare-goal gUType c:== 185)
+		(up-compare-goal gUType c:== 1911))
+		(up-compare-goal gUType c:== 1759))
+		(up-compare-goal gUType c:== 1761))
+	=>
+	(up-modify-goal gWfire c:= 293)
+)
+;--- 310: Archer (250), Crossbowman (250), Plumed/Elite (250), Genoese Xbow/Elite (250), Blackwood/Elite (250) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(or (or (or (or (or (or (or (up-compare-goal gUType c:== 4)
+		(up-compare-goal gUType c:== 24))
+		(up-compare-goal gUType c:== 763))
+		(up-compare-goal gUType c:== 765))
+		(up-compare-goal gUType c:== 866))
+		(up-compare-goal gUType c:== 868))
+		(up-compare-goal gUType c:== 2579))
+		(up-compare-goal gUType c:== 2581))
+	=>
+	(up-modify-goal gWfire c:= 310)
+)
+;--- 310: Camel Archer/Elite (250), Hand Cannoneer (250), Arambai/Elite (250) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(or (or (or (or (up-compare-goal gUType c:== 1007)
+		(up-compare-goal gUType c:== 1009))
+		(up-compare-goal gUType c:== 5))
+		(up-compare-goal gUType c:== 1126))
+		(up-compare-goal gUType c:== 1128))
+	=>
+	(up-modify-goal gWfire c:= 310)
+)
+;--- 377: Skirmisher/Elite/Imperial (317), Chu Ko Nu/Elite (317), Bolas Rider/Elite (317) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(or (or (or (or (or (or (up-compare-goal gUType c:== 7)
+		(up-compare-goal gUType c:== 6))
+		(up-compare-goal gUType c:== 1155))
+		(up-compare-goal gUType c:== 73))
+		(up-compare-goal gUType c:== 559))
+		(up-compare-goal gUType c:== 2569))
+		(up-compare-goal gUType c:== 2571))
+	=>
+	(up-modify-goal gWfire c:= 377)
+)
+;--- 393: Arbalester (333) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(up-compare-goal gUType c:== 492)
+	=>
+	(up-modify-goal gWfire c:= 393)
+)
+;--- 410: Kipchak/Elite (350) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(or (up-compare-goal gUType c:== 1231)
+		(up-compare-goal gUType c:== 1233))
+	=>
+	(up-modify-goal gWfire c:= 410)
+)
+;--- 443: Mangudai/Elite (383), Rattan Archer/Elite (383) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(or (or (or (up-compare-goal gUType c:== 11)
+		(up-compare-goal gUType c:== 561))
+		(up-compare-goal gUType c:== 1129))
+		(up-compare-goal gUType c:== 1131))
+	=>
+	(up-modify-goal gWfire c:= 443)
+)
+;--- 460: Elephant Archer/Elite (400) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(or (up-compare-goal gUType c:== 873)
+		(up-compare-goal gUType c:== 875))
+	=>
+	(up-modify-goal gWfire c:= 460)
+)
+;--- 477: Guecha Warrior/Elite (417) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(or (up-compare-goal gUType c:== 2562)
+		(up-compare-goal gUType c:== 2564))
+	=>
+	(up-modify-goal gWfire c:= 477)
+)
+;--- 593: War Wagon/Elite (533) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(or (up-compare-goal gUType c:== 827)
+		(up-compare-goal gUType c:== 829))
+	=>
+	(up-modify-goal gWfire c:= 593)
+)
+;--- 643: Cavalry Archer (583), Xianbei Raider (583) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(or (up-compare-goal gUType c:== 39)
+		(up-compare-goal gUType c:== 1952))
+	=>
+	(up-modify-goal gWfire c:= 643)
+)
+;--- 827: Heavy Cavalry Archer (767) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(up-compare-goal gUType c:== 474)
+	=>
+	(up-modify-goal gWfire c:= 827)
+)
+(defrule
+	(up-compare-goal gWset c:== 1)
+	=>
+	(up-modify-goal gWset c:= 2)
+	(chat-to-player 1 "WFIRE SET")
+)
+
+;=== CoreH OBSTACLE/EDGE APPENDIX (runs last; probes the order issued THIS pass,
+;    corrects the direction for the NEXT pass) ===
+;--- H0: reset + tile-ize the probe point (vecKite is PRECISE = tile*100) ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gBlocked c:= 0)
+	(up-modify-goal vecProbe_x g:= vecKite_x)
+	(up-modify-goal vecProbe_x c:/ 100)
+	(up-modify-goal vecProbe_y g:= vecKite_y)
+	(up-modify-goal vecProbe_y c:/ 100)
+	(up-get-point-distance vecMed vecKite gTmpA)
+)
+;--- H1: kite point tile blocked by tree/wall/gate, or unreachable ---
+(defrule
+	(up-compare-goal gState c:== 18)
+	(up-compare-goal gTagged c:== 1)
+	(up-compare-goal gSize c:>= 1)
+	(or (up-point-contains vecProbe c: 915)
+	(or (up-point-contains vecProbe c: 927)
+	(or (up-point-contains vecProbe c: 939)
+		(up-path-distance vecProbe 1 == 65535))))
+	=>
+	(up-modify-goal gBlocked c:= 1)
+)
+;--- H2: pinned -- the bounded order point collapsed onto the ball (map edge/corner);
+;    radial retreat is exhausted, only a direction change gets us out ---
+(defrule
+	(up-compare-goal gState c:== 18)
+	(up-compare-goal gTagged c:== 1)
+	(up-compare-goal gSize c:>= 1)
+	(up-compare-goal gTmpA c:< 120)
+	=>
+	(up-modify-goal gBlocked c:= 1)
+)
+;--- H3: THE FLIP (2.5s cooldown so we don't oscillate against a long wall) ---
+(defrule
+	(up-compare-goal gBlocked c:== 1)
+	(up-modify-goal gTmpB g:= gTimeMilli)
+	(up-modify-goal gTmpB g:- gFlipT)
+	(up-compare-goal gTmpB c:>= 2500)
+	=>
+	(up-modify-goal gStrafeSign c:* -1)
+	(up-modify-goal gFlipT g:= gTimeMilli)
+	(chat-to-player 1 "FLIP")
+)
+;--- H4: for 1.6s after a flip, go LATERAL (big strafe, short radial step) so the
+;    ball slides along the obstacle/edge instead of pushing into it.
+;    Runs AFTER the speed-tier rules -> overrides them while active. ---
+(defrule
+	(up-modify-goal gTmpB g:= gTimeMilli)
+	(up-modify-goal gTmpB g:- gFlipT)
+	(up-compare-goal gTmpB c:< 1600)
+	=>
+	(up-modify-goal gStrafeBase c:= 320)
+	(up-modify-goal gStepPct c:= 300)
+)

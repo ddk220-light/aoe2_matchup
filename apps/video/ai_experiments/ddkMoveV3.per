@@ -1,0 +1,45 @@
+;=============================================================================
+; ddkMoveV3.per -- FRESH-NAMED move test (forces a clean AI reload; bypasses
+; any per-name caching of the previous ddkMoveTest).
+;
+; Fix carried over: find AND issue the order in the SAME rule body, with nothing
+; resetting the search between them -- and re-issue it CONTINUOUSLY (like
+; Immortal's per-tick micro loop) so the order always acts on a freshly built
+; search-local and isn't a one-shot that can be dropped.
+;
+; Expected: the cluster of cavalry archers walks ~15 tiles EAST to tile (55,40).
+;=============================================================================
+
+(defconst gl-dest-x  250)   ; destination point: x=250, y=251 (precise = tile*100)
+(defconst gl-dest-y  251)
+(defconst gl-mil-cnt 252)   ; up-get-search-state writes a 4-goal block 252..255
+
+; 1) define destination once, PRECISE coords (tile 55,40 -> 5500,4000)
+(defrule
+	(true)
+	=>
+	(set-goal gl-dest-x 5500)
+	(set-goal gl-dest-y 4000)
+	(disable-self)
+)
+
+; 2) every pass: find my military AND order the move in the SAME rule
+(defrule
+	(true)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)               ; 4 = my military
+	(up-find-local c: -1 c: 240)                 ; whole military list into search-local
+	(up-get-search-state gl-mil-cnt)
+	(up-modify-sn sn-target-point-adjustment c:= 6)   ; precise coords
+	(up-target-point gl-dest-x action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)
+
+; 3) one-time chat (bonus signal if chat is visible)
+(defrule
+	(up-compare-goal gl-mil-cnt c:>= 1)
+	=>
+	(chat-to-all "ddkMoveV3 ordered move")
+	(disable-self)
+)

@@ -1,0 +1,51 @@
+;=============================================================================
+; ddkMoveTest.per (v3) -- THE FIX: find AND order in the SAME rule body.
+;
+; Why v1/v2 failed: up-target-point orders whatever is in search-local AT THE
+; INSTANT it runs. I had the find in one rule and the order in another, with an
+; up-full-reset-search between them -> the order hit an EMPTY list. (Confirmed
+; against DUC Raid Test 21.per 634-640, Immortal #1107 27415-27418, Advanced
+; Cav Micro 296-299: every proven move does reset->find->target-point in ONE
+; rule, nothing resetting the search in between.)
+;
+; Expected: the cluster marches to tile (55,40) -- ~15 tiles EAST -- once.
+;=============================================================================
+
+(defconst gl-dest-x  250)   ; destination point: x=250, y=251 (precise = tile*100)
+(defconst gl-dest-y  251)
+(defconst gl-mil-cnt 252)   ; up-get-search-state writes a 4-goal block 252..255
+(defconst gl-done    256)
+
+; 1) define the destination once, in PRECISE coords (tile 55,40 -> 5500,4000)
+(defrule
+	(true)
+	=>
+	(set-goal gl-dest-x 5500)
+	(set-goal gl-dest-y 4000)
+	(disable-self)
+)
+
+; 2) probe: do we have military yet?
+(defrule
+	(up-compare-goal gl-done c:== 0)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-get-search-state gl-mil-cnt)
+)
+
+; 3) THE FIX: re-find AND issue the order in the SAME rule, once.
+(defrule
+	(up-compare-goal gl-done c:== 0)
+	(up-compare-goal gl-mil-cnt c:>= 1)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)                 ; fresh list, no reset before the order
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-dest-x action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+	(chat-to-all "ddkMoveTest: ordered military to move")
+	(set-goal gl-done 1)
+)

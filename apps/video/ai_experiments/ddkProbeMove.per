@@ -1,0 +1,76 @@
+;=============================================================================
+; ddkProbeMove.per -- PROBE: "does a move order break units out of an ATTACK?"
+; Three timed stages (pass counter):
+;   Stage 1 (start .. ~5s):   the proven ddkKiteV4 attack every pass -> units
+;                             engage the knights and fire. (Proven to work.)
+;   Stage 2 (~5s .. ~15s):    STOP attacking; issue the proven SINGLE move
+;                             order every pass to tile (6,6).
+;   Stage 3 (~15s .. on):     same move but issued TWICE per pass (Immortal
+;                             double-issue idiom).
+; READ THE RESULT BY WHEN THEY WALK AWAY FROM THE FIGHT:
+;   walk away in stage 2  -> single move DOES break attacks; bug is elsewhere.
+;   walk away only in stage 3 -> the DOUBLE issue is the attack-breaker (fix!).
+;   never walk away       -> action-move can't break attacks at all; Immortal
+;                            must use a stop/none first (workflow will confirm).
+;=============================================================================
+
+(defconst enemy-player 3)
+(defconst gl-t 100)
+(defconst gl-dst-x 102)
+(defconst gl-dst-y 103)
+
+(defrule
+	(true)
+	=>
+	(set-goal gl-t 0)
+	(set-goal gl-dst-x 600)
+	(set-goal gl-dst-y 600)
+	(disable-self)
+)
+
+(defrule
+	(true)
+	=>
+	(up-modify-goal gl-t c:+ 1)
+)
+
+; Stage 1: attack (proven ddkKiteV4 chain)
+(defrule
+	(up-compare-goal gl-t c:< 40)
+	=>
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-clean-search search-remote 44 1)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-target-objects 0 action-default -1 3)
+)
+
+; Stage 2: SINGLE proven move order, every pass
+(defrule
+	(up-compare-goal gl-t c:>= 40)
+	(up-compare-goal gl-t c:< 120)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-dst-x action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)
+
+; Stage 3: DOUBLE-issued move order, every pass
+(defrule
+	(up-compare-goal gl-t c:>= 120)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-dst-x action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-dst-x action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)

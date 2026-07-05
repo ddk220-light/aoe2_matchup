@@ -1,0 +1,116 @@
+;=============================================================================
+; ddkKiteV2.per -- circle + FIRE, gated on enemy-in-RANGE (not reload).
+;
+; Why V1 never fired: SHOOT was gated on the leader's reload counter (obj 55),
+; but the units are under stance-no-attack and never attack, so obj 55 never
+; ticks to <=0 and the gate is never satisfied. Fix (per investigation): gate on
+; whether an enemy is within the leader's real attack range -- observable every
+; pass. Same proven fire command (up-target-objects 0 action-default, identical
+; to Bright Spark). Same perfect 16-waypoint ring. Radius 300 (3 tiles) so a
+; centered enemy stays inside cav-archer range (~4) while circling.
+;=============================================================================
+
+(defconst gl-cx    250)   ; orbit center: x=250, y=251 (precise = tile*100)
+(defconst gl-cy    251)
+(defconst gl-tx    252)   ; current waypoint: x=252, y=253
+(defconst gl-ty    253)
+(defconst gl-idx   254)
+(defconst gl-tick  255)
+(defconst gl-near  257)   ; 1 if an enemy is within the leader's range
+(defconst gl-rng   258)   ; leader max attack range (obj 12)
+(defconst gl-ec    260)   ; up-get-search-state -> 4-goal block 260..263
+(defconst gl-ax    265)   ; leader anchor point: x=265, y=266 (kept clear of all blocks)
+(defconst gl-ay    266)
+
+(defrule
+	(true)
+	=>
+	(set-goal gl-cx 4000)
+	(set-goal gl-cy 4000)
+	(set-goal gl-idx 0)
+	(set-goal gl-tick 0)
+	(disable-self)
+)
+
+; --- THROTTLE: advance the ring index every 6 passes ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gl-tick c:+ 1)
+)
+(defrule
+	(up-compare-goal gl-tick c:>= 6)
+	=>
+	(set-goal gl-tick 0)
+	(up-modify-goal gl-idx c:+ 1)
+	(up-modify-goal gl-idx c:mod 16)
+)
+
+; --- DISPATCH: gl-tx = center + ring offset[idx], 16 points at radius 300 ---
+(defrule (up-compare-goal gl-idx c:== 0)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 300))
+(defrule (up-compare-goal gl-idx c:== 1)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 277)(up-modify-goal gl-ty c:+ 115))
+(defrule (up-compare-goal gl-idx c:== 2)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 212)(up-modify-goal gl-ty c:+ 212))
+(defrule (up-compare-goal gl-idx c:== 3)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 115)(up-modify-goal gl-ty c:+ 277))
+(defrule (up-compare-goal gl-idx c:== 4)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-ty c:+ 300))
+(defrule (up-compare-goal gl-idx c:== 5)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 115)(up-modify-goal gl-ty c:+ 277))
+(defrule (up-compare-goal gl-idx c:== 6)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 212)(up-modify-goal gl-ty c:+ 212))
+(defrule (up-compare-goal gl-idx c:== 7)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 277)(up-modify-goal gl-ty c:+ 115))
+(defrule (up-compare-goal gl-idx c:== 8)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 300))
+(defrule (up-compare-goal gl-idx c:== 9)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 277)(up-modify-goal gl-ty c:- 115))
+(defrule (up-compare-goal gl-idx c:== 10) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 212)(up-modify-goal gl-ty c:- 212))
+(defrule (up-compare-goal gl-idx c:== 11) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 115)(up-modify-goal gl-ty c:- 277))
+(defrule (up-compare-goal gl-idx c:== 12) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-ty c:- 300))
+(defrule (up-compare-goal gl-idx c:== 13) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 115)(up-modify-goal gl-ty c:- 277))
+(defrule (up-compare-goal gl-idx c:== 14) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 212)(up-modify-goal gl-ty c:- 212))
+(defrule (up-compare-goal gl-idx c:== 15) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 277)(up-modify-goal gl-ty c:- 115))
+
+; --- SENSE A: read the leader's max range + position ---
+(defrule
+	(true)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-set-target-object search-local c: 0)
+	(up-get-object-data 12 gl-rng)          ; leader max attack range (tiles)
+	(up-get-point position-object gl-ax)    ; leader position -> gl-ax/gl-ay (tiles)
+)
+
+; --- SENSE B: is an enemy within the leader's range of the leader? ---
+(defrule
+	(true)
+	=>
+	(set-goal gl-near 0)
+	(up-full-reset-search)
+	(up-set-target-point gl-ax)             ; search around the leader (re-set after reset)
+	(up-filter-distance c: 0 g: gl-rng)     ; only enemies within the leader's real range
+	(up-find-remote c: -1 c: 50)
+	(up-get-search-state gl-ec)
+)
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	=>
+	(set-goal gl-near 1)
+)
+
+; --- SHOOT: enemy in range -> stop & volley (find local + order, SAME rule) ---
+(defrule
+	(up-compare-goal gl-near c:>= 1)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-target-objects 0 action-default -1 3)
+)
+
+; --- ORBIT: no enemy in range -> move toward the current waypoint ---
+(defrule
+	(up-compare-goal gl-near c:== 0)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-tx action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)

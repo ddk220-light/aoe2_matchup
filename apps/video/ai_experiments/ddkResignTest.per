@@ -1,0 +1,17 @@
+;=============================================================================
+; ddkResignTest.per -- DECISIVE "is my custom AI even executing?" test.
+; ONE rule, no units, no DUC, no chat, no timer. If this script runs AT ALL,
+; Player 2 resigns the instant the game starts (you'll see "Player 2 resigned"
+; / Player 2 defeated immediately).
+;
+;   * P2 INSTANTLY resigns  -> custom .per AIs DO execute in your setup, so the
+;     problem is purely in my movement logic and I will fix that.
+;   * P2 does NOT resign     -> your custom .per isn't being executed at all
+;     (editor "Test" may not run assigned personalities the way a real game
+;     does). THAT is the real blocker and explains why nothing has moved.
+;=============================================================================
+(defrule
+	(true)
+	=>
+	(resign)
+)

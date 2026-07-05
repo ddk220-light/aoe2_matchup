@@ -1,0 +1,26 @@
+;=============================================================================
+; ddkSeeTest.per -- can P2 even DETECT P3's units as a findable enemy?
+; up-find-remote searches the player named by sn-focus-player-number. We set it
+; to 3 (P3, the knights) and resign if the search returns >=1 unit.
+;   * P2 resigns        -> detection works once focus-player is set. The kite
+;                          AI just needs (up-modify-sn sn-focus-player-number c:= <enemy>)
+;                          before every up-find-remote. That was the missing piece.
+;   * P2 does NOT resign -> detection fails for another reason (vision / diplomacy
+;                          / find-remote semantics) and I dig there.
+;=============================================================================
+(defconst gl-ec 106)   ; up-get-search-state -> 4-goal block 106..109
+
+(defrule
+	(true)
+	=>
+	(up-modify-sn sn-focus-player-number c:= 3)   ; look at Player 3 (the knights)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-get-search-state gl-ec)
+)
+
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	=>
+	(resign)
+)

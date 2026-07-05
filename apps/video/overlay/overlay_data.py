@@ -20,9 +20,9 @@ from pathlib import Path
 
 # repo-root-relative paths
 _HERE = Path(__file__).resolve()
-_REPO = _HERE.parents[2]  # scenario_builder/overlay/ -> repo root
+_REPO = _HERE.parents[3]  # apps/video/overlay/ -> repo root
 REF_DB = _REPO / "data" / "golden" / "aoe2_reference.db"
-ICON_DIR = _REPO / "webapp" / "static" / "img" / "units"
+ICON_DIR = _REPO / "apps" / "website" / "static" / "img" / "units"
 
 # class ids that represent the *base* attack, not a bonus
 _BASE_ATTACK_CLASSES = {3, 4}  # Base Pierce, Base Melee

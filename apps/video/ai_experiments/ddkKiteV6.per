@@ -1,0 +1,154 @@
+;=============================================================================
+; ddkKiteV6.per -- THE KITE: orbit AROUND THE ENEMY via a TIME-BASED STUTTER.
+;
+; WHY V5 FAILED (deep-dive vs Bright Spark "Advanced Cav Archer Micro.per"):
+;   V5 gated SHOOT on (field55 <= 0) and ORBIT on (field55 > 0). field55 is the
+;   next-attack/reload countdown. The instant a unit fired, field55 jumped to ~max
+;   and V5 immediately issued a MOVE -- and a move order INTERRUPTS the engine's
+;   attack/reload cycle, FREEZING field55 at ~max. It never ticked back to 0, so
+;   ORBIT always won and it never fired again -> "circles, never fires".
+;   (ddkKiteV4 fired fine because it NEVER moved; Bright Spark only kites the TAIL
+;    of the reload -- it leaves the unit un-ordered through the early reload so the
+;    engine can tick field55 down. Both confirm: a move freezes the reload cycle.)
+;
+; THE FIX: don't gate on field55 at all. ALTERNATE on a pass counter:
+;   FIRE phase  (FIRE-PASSES):  re-issue the V4 attack -> stand & volley (proven).
+;   ORBIT phase (ORBIT-PASSES): re-issue the V3 ring move -> step around (proven).
+; Never both in the same window, so the attack cycle gets uninterrupted passes to
+; loose a shot, and the move gets uninterrupted passes to circle. Uses ONLY
+; pass-counter primitives proven to run in editor Test (the V3 throttle) -- no
+; timers (whose editor-Test behaviour is unproven here).
+;
+; CENTRE = THE ENEMY: each pass we find the nearest enemy and read its PRECISE
+; position from object_data 38/39 (the Bright Spark method, line 488 -- avoids the
+; suspect up-get-point that broke ddkCircleV1). The 16-point ring is built around
+; that, so the army orbits the enemy and keeps it boxed in the middle at range.
+; Radius 300 (3 tiles) keeps a cav archer in range while circling. tile 40,40 is
+; only a pre-first-contact fallback.
+;
+; TUNING (two knobs): FIRE-PASSES = how long it stands & fires (>= time to loose
+; one shot); ORBIT-PASSES = how long it circles (~ the reload window). If it
+; "barely fires", raise FIRE-PASSES. Circle too slow/fast -> change the gl-tick
+; threshold (6). CYCLE-PASSES MUST stay = FIRE-PASSES + ORBIT-PASSES.
+;=============================================================================
+
+(defconst gl-cx     250)   ; orbit centre x = enemy precise x (gl-cy = +1)
+(defconst gl-cy     251)
+(defconst gl-tx     252)   ; ring point x (gl-ty = gl-tx + 1, written together)
+(defconst gl-ty     253)
+(defconst gl-idx    254)
+(defconst gl-tick   255)   ; waypoint-advance counter (orbit only)
+(defconst gl-pcount 256)   ; master phase counter
+(defconst gl-ec     260)   ; up-get-search-state -> 4-goal block 260..263
+(defconst enemy-player 3)  ; tester: P3 is the opponent
+
+(defconst FIRE-PASSES  20)
+(defconst ORBIT-PASSES 40)
+(defconst CYCLE-PASSES 60) ; = FIRE-PASSES + ORBIT-PASSES (keep in sync!)
+
+; --- INIT (centre = fallback tile 40,40 until the first enemy is seen) ---
+(defrule
+	(true)
+	=>
+	(set-goal gl-cx 4000)
+	(set-goal gl-cy 4000)
+	(set-goal gl-idx 0)
+	(set-goal gl-tick 0)
+	(set-goal gl-pcount 0)
+	(disable-self)
+)
+
+; --- MASTER PHASE COUNTER: 0..FIRE-PASSES-1 = FIRE, FIRE-PASSES..CYCLE-1 = ORBIT ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gl-pcount c:+ 1)
+)
+(defrule
+	(up-compare-goal gl-pcount c:>= CYCLE-PASSES)
+	=>
+	(set-goal gl-pcount 0)
+)
+
+; --- SENSE: does an enemy exist? (focus-player MUST be set before find-remote) ---
+(defrule
+	(true)
+	=>
+	(set-goal gl-ec 0)
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-get-search-state gl-ec)
+)
+
+; --- CENTRE ON THE ENEMY: nearest enemy's precise pos (obj 38/39) -> gl-cx/gl-cy ---
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	=>
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-clean-search search-remote 44 1)
+	(up-set-target-object search-remote c: 0)
+	(up-get-object-data 38 gl-cx)
+	(up-get-object-data 39 gl-cy)
+)
+
+; --- WAYPOINT ADVANCE (orbit phase only, so the ring holds still while firing) ---
+(defrule
+	(up-compare-goal gl-pcount c:>= FIRE-PASSES)
+	=>
+	(up-modify-goal gl-tick c:+ 1)
+)
+(defrule
+	(up-compare-goal gl-pcount c:>= FIRE-PASSES)
+	(up-compare-goal gl-tick c:>= 6)
+	=>
+	(set-goal gl-tick 0)
+	(up-modify-goal gl-idx c:+ 1)
+	(up-modify-goal gl-idx c:mod 16)
+)
+
+; --- DISPATCH: 16 ring points at radius 300 around the (enemy) centre ---
+(defrule (up-compare-goal gl-idx c:== 0)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 300))
+(defrule (up-compare-goal gl-idx c:== 1)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 277)(up-modify-goal gl-ty c:+ 115))
+(defrule (up-compare-goal gl-idx c:== 2)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 212)(up-modify-goal gl-ty c:+ 212))
+(defrule (up-compare-goal gl-idx c:== 3)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 115)(up-modify-goal gl-ty c:+ 277))
+(defrule (up-compare-goal gl-idx c:== 4)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-ty c:+ 300))
+(defrule (up-compare-goal gl-idx c:== 5)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 115)(up-modify-goal gl-ty c:+ 277))
+(defrule (up-compare-goal gl-idx c:== 6)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 212)(up-modify-goal gl-ty c:+ 212))
+(defrule (up-compare-goal gl-idx c:== 7)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 277)(up-modify-goal gl-ty c:+ 115))
+(defrule (up-compare-goal gl-idx c:== 8)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 300))
+(defrule (up-compare-goal gl-idx c:== 9)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 277)(up-modify-goal gl-ty c:- 115))
+(defrule (up-compare-goal gl-idx c:== 10) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 212)(up-modify-goal gl-ty c:- 212))
+(defrule (up-compare-goal gl-idx c:== 11) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 115)(up-modify-goal gl-ty c:- 277))
+(defrule (up-compare-goal gl-idx c:== 12) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-ty c:- 300))
+(defrule (up-compare-goal gl-idx c:== 13) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 115)(up-modify-goal gl-ty c:- 277))
+(defrule (up-compare-goal gl-idx c:== 14) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 212)(up-modify-goal gl-ty c:- 212))
+(defrule (up-compare-goal gl-idx c:== 15) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 277)(up-modify-goal gl-ty c:- 115))
+
+; --- FIRE phase + enemy present -> stand & volley (the proven V4 attack) ---
+(defrule
+	(up-compare-goal gl-pcount c:< FIRE-PASSES)
+	(up-compare-goal gl-ec c:>= 1)
+	=>
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-clean-search search-remote 44 1)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-target-objects 0 action-default -1 3)
+)
+
+; --- ORBIT phase -> step the whole group toward the ring point (the proven V3 move) ---
+(defrule
+	(up-compare-goal gl-pcount c:>= FIRE-PASSES)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-tx action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)

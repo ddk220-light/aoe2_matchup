@@ -1,0 +1,143 @@
+;=============================================================================
+; ddkProbeBreak.per -- PROBE: which order form BREAKS units out of an attack?
+; (ddkProbeMove proved plain action-move -1 does NOT, single or double.)
+; Three candidates from Immortal's verified code, tested in timed stages. The
+; readout = the FIRST direction the archers leave the fight toward:
+;
+;   walk EAST  first  -> an explicit STOP order first is the breaker
+;                        (up-target-point 0 action-stop -1 -1; Immortal #2789/#2794)
+;   walk WEST  first  -> formation-line DOUBLE move is the breaker
+;                        (action-move 2 stance-no-attack x2; Immortal #2758)
+;   walk SOUTH first  -> PATROL is the breaker
+;                        (action-patrol 2 stance-no-attack x2; Immortal #2757)
+;   never leave       -> none of them break it (deeper investigation)
+;
+; ALSO: chat telemetry every stage + two obj12 reads (idle vs in-combat) --
+; if chat text is visible, relay the numbers.
+;=============================================================================
+
+(defconst gl-t 100)
+(defconst gl-dst-x 102)
+(defconst gl-dst-y 103)
+(defconst gl-r 105)
+
+(defrule
+	(true)
+	=>
+	(set-goal gl-t 0)
+	(chat-to-all "ddkProbeBreak loaded")
+	(up-chat-data-to-all "ddkProbeBreak up t=%d" g: gl-t)
+	(disable-self)
+)
+
+(defrule
+	(true)
+	=>
+	(up-modify-goal gl-t c:+ 1)
+)
+
+; obj12 read #1: units IDLE (t=2)
+(defrule
+	(up-compare-goal gl-t c:== 2)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-set-target-object search-local c: 0)
+	(up-get-object-data 12 gl-r)
+	(up-chat-data-to-all "obj12 idle = %d" g: gl-r)
+)
+
+; Stage 1 (t<40): the proven attack -- engage and fire
+(defrule
+	(up-compare-goal gl-t c:< 40)
+	=>
+	(up-modify-sn sn-focus-player-number c:= 3)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-clean-search search-remote 44 1)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-target-objects 0 action-default -1 3)
+)
+
+; obj12 read #2: units IN COMBAT (t=30)
+(defrule
+	(up-compare-goal gl-t c:== 30)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-set-target-object search-local c: 0)
+	(up-get-object-data 12 gl-r)
+	(up-chat-data-to-all "obj12 combat = %d" g: gl-r)
+)
+
+; Stage 2 (t 40..129): STOP once, then plain single move EAST
+(defrule
+	(up-compare-goal gl-t c:== 40)
+	=>
+	(chat-to-all "stage2 STOP+move -> EAST")
+	(set-goal gl-dst-x 2900)
+	(set-goal gl-dst-y 300)
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-target-point 0 action-stop -1 -1)
+)
+(defrule
+	(up-compare-goal gl-t c:> 40)
+	(up-compare-goal gl-t c:< 130)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-dst-x action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)
+
+; Stage 3 (t 130..219): formation-line DOUBLE move WEST (Immortal #2758 form)
+(defrule
+	(up-compare-goal gl-t c:== 130)
+	=>
+	(chat-to-all "stage3 formation-line x2 -> WEST")
+	(set-goal gl-dst-x 300)
+	(set-goal gl-dst-y 2900)
+)
+(defrule
+	(up-compare-goal gl-t c:>= 130)
+	(up-compare-goal gl-t c:< 220)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-dst-x action-move 2 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-dst-x action-move 2 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)
+
+; Stage 4 (t>=220): PATROL double SOUTH (Immortal #2757 form)
+(defrule
+	(up-compare-goal gl-t c:== 220)
+	=>
+	(chat-to-all "stage4 patrol x2 -> SOUTH")
+	(set-goal gl-dst-x 2900)
+	(set-goal gl-dst-y 2900)
+)
+(defrule
+	(up-compare-goal gl-t c:>= 220)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-dst-x action-patrol 2 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-dst-x action-patrol 2 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)

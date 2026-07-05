@@ -1,0 +1,24 @@
+;=============================================================================
+; ddkFindTest.per -- does up-find-local actually FIND our military units?
+; Uses the proven-visible "resign" as the signal:
+;   * P2 resigns      -> the search FOUND >= 1 of our military units. So find
+;                        works, and the bug is purely the MOVE order.
+;   * P2 does NOT resign -> the search returns 0 units (the bug is the find /
+;                        unit selection -- e.g. it needs a search origin set).
+;=============================================================================
+(defconst gl-count 106)   ; up-get-search-state writes a 4-goal block 106..109
+
+(defrule
+	(true)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)               ; cmdid 4 = military
+	(up-find-local c: -1 c: 240)                 ; -1 = any unit (filtered)
+	(up-get-search-state gl-count)
+)
+
+(defrule
+	(up-compare-goal gl-count c:>= 1)
+	=>
+	(resign)
+)

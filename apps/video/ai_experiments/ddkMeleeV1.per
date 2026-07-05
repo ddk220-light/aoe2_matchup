@@ -1,0 +1,294 @@
+;=============================================================================
+; ddkMeleeV1.per -- MELEE SPREAD-ENGAGEMENT (backlog item 3, 2026-07-02).
+;
+; Problem: default melee behavior stacks every unit onto the same nearest target --
+; they bump, queue, and surround nothing. Fix: sort OWN melee and ENEMIES left-to-
+; right (precise-x) and assign own[k] -> enemy[k mod m] on a 2s beat. The charge
+; fans out across the enemy line (a natural surround vs kiting archers) and mirror
+; melee fights engage ~1:1 without bumping.
+;
+; DESIGN CHOICES (vs the ImmortalCore ranged pipeline):
+;  * NO de-aggro at tag: melee units KEEP scenario-default aggressive stance --
+;    native pursuit + auto-re-acquire after a kill cover the gaps between beats.
+;    (The aggressive-stance move-lock gotcha only bites MOVE orders; we only ever
+;    issue attack orders.)
+;  * NO end-of-pass sighted-response zeroing (unlike ImmortalCore Rule 76): the
+;    engine's unit-level auto-engage stays healthy; SN blocks A-C still disable
+;    engine GROUP re-tasking so our assignments stick.
+;  * No absolute jumps -- every rule is gated by goals; numbering is NOT load-bearing.
+;
+; Classes: 906 infantry + 912 cavalry = every land melee unit in the game
+; (verified vs data/golden/aoe2_reference.db: champions/halbs/eagles/samurai/TK 906;
+; paladins/leitis/boyars/camels/war elephants 912).
+; Chats: "MeleeV1 up" -> "TAGGED-M" -> "ASSIGN" (first assignment beat).
+;=============================================================================
+
+; --- sn defconsts mirrored from Immortal (not all builtin; see IMMORTAL_CORE.md) ---
+(defconst sn-attack-group-gather-spacing 41)
+(defconst sn-attack-group-size-randomness 98)
+(defconst sn-attack-intelligence 103)
+(defconst sn-attack-separation-time-randomness 102)
+(defconst sn-disable-attack-groups 271)
+(defconst sn-disable-defend-groups 277)
+(defconst sn-disable-sighted-response-cap 284)
+(defconst sn-disable-tower-priority 267)
+(defconst sn-do-not-scale-for-difficulty-level 229)
+(defconst sn-enable-offensive-priority 254)
+(defconst sn-enable-patrol-attack 247)
+(defconst sn-enemy-sighted-response-distance 20)
+(defconst sn-filter-under-attack 276)
+(defconst sn-gather-defense-units 232)
+(defconst sn-group-form-distance 230)
+(defconst sn-ignore-attack-group-under-attack 231)
+(defconst sn-initial-attack-delay 104)
+(defconst sn-maximum-attack-group-size 26)
+(defconst sn-maximum-boat-attack-group-size 60)
+(defconst sn-maximum-boat-defend-group-size 69)
+(defconst sn-maximum-defend-group-size 28)
+(defconst sn-maximum-gaia-attack-response 100)
+(defconst sn-minimum-attack-group-size 16)
+(defconst sn-minimum-boat-attack-group-size 59)
+(defconst sn-minimum-boat-defend-group-size 68)
+(defconst sn-number-attack-groups 36)
+(defconst sn-number-boat-attack-groups 58)
+(defconst sn-number-boat-defend-groups 67)
+(defconst sn-percent-attack-boats 228)
+(defconst sn-percent-attack-soldiers 227)
+(defconst sn-percent-enemy-sighted-response 19)
+(defconst sn-scale-maximum-attack-group-size 94)
+(defconst sn-scale-minimum-attack-group-size 93)
+(defconst sn-scaling-frequency 99)
+(defconst sn-special-attack-influence1 109)
+(defconst sn-special-attack-influence2 110)
+(defconst sn-special-attack-influence3 111)
+(defconst sn-target-player 249)
+(defconst sn-target-point-adjustment 292)
+(defconst sn-task-ungrouped-soldiers 143)
+
+(defconst _true 1)
+(defconst _false 0)
+(defconst search_order-none 0)
+(defconst search_order-ascending 1)
+(defconst formation-ignore -1)
+(defconst stance-ignore -1)
+(defconst object_data-index -1)
+(defconst object_data-class-id 2)
+(defconst object_data-category 3)
+(defconst object_data-precise-x 38)
+(defconst object_data-precise-y 39)
+(defconst object_data-tag 73)
+(defconst category-building 80)
+(defconst class-infantry 906)
+(defconst class-cavalry 912)
+(defconst class-villager 904)
+
+; --- goals ---
+(defconst gTimeMilli 100)
+(defconst gPtimeMilli 101)
+(defconst gTmpA 104)
+(defconst gTmpB 105)
+(defconst gRunOnce 108)
+(defconst vecSS 110)
+(defconst vecSS_L 110)
+(defconst vecSS_R 112)
+(defconst gSize 118)
+(defconst vecMed 128)
+(defconst vecMed_x 128)
+(defconst vecMed_y 129)
+(defconst gECount 143)
+(defconst gAsgT 150)
+(defconst gGo 151)
+(defconst gK 152)
+(defconst gTagged 182)
+(defconst gDiag1 183)
+
+;--- Rule 0 -- INIT ONCE ---
+(defrule
+	(up-compare-goal gRunOnce c:!= 1)
+	=>
+	(up-modify-goal gRunOnce c:= 1)
+	(up-modify-goal gTagged c:= 0)
+	(up-modify-goal gAsgT c:= -9999)
+	(up-modify-goal gDiag1 c:= 0)
+	(chat-to-player 1 "MeleeV1 up")
+)
+;--- Rule 1 -- TIME (proven timer idiom) ---
+(defrule
+	(true)
+	=>
+	(up-set-timer c: 1 c: 0)
+	(up-get-timer c: 1 gTmpA)
+	(up-modify-goal gTimeMilli g:= gTmpA)
+)
+;--- Rules 2-4 -- SN BLOCKS A/B/C (verbatim ImmortalCore: engine GROUP tasking off;
+;    NOTE: no end-of-pass sighted-response zeroing anywhere in this file) ---
+(defrule
+	(true)
+	=>
+	(up-modify-sn sn-percent-enemy-sighted-response c:= 100)
+	(up-modify-sn sn-enemy-sighted-response-distance c:= 20)
+	(up-modify-sn sn-disable-sighted-response-cap c:= 1)
+	(up-modify-sn sn-ignore-attack-group-under-attack c:= 0)
+	(up-modify-sn sn-disable-attack-groups c:= 0)
+	(up-modify-sn sn-group-form-distance c:= 2)
+	(up-modify-sn sn-scaling-frequency c:= 30000)
+	(up-modify-sn sn-attack-separation-time-randomness c:= 0)
+	(up-modify-sn sn-scale-minimum-attack-group-size c:= 0)
+	(up-modify-sn sn-scale-maximum-attack-group-size c:= 0)
+	(up-modify-sn sn-attack-group-size-randomness c:= 0)
+	(up-modify-sn sn-number-attack-groups c:= 0)
+	(up-modify-sn sn-minimum-attack-group-size c:= 1)
+	(up-modify-sn sn-maximum-attack-group-size c:= 1)
+	(up-modify-sn sn-attack-group-gather-spacing c:= 1)
+	(up-modify-sn sn-number-boat-attack-groups c:= 0)
+)
+(defrule
+	(true)
+	=>
+	(up-modify-sn sn-minimum-boat-attack-group-size c:= 1)
+	(up-modify-sn sn-maximum-boat-attack-group-size c:= 1)
+	(up-modify-sn sn-disable-defend-groups c:= 0)
+	(up-modify-sn sn-maximum-defend-group-size c:= 1)
+	(up-modify-sn sn-number-boat-defend-groups c:= 0)
+	(up-modify-sn sn-minimum-boat-defend-group-size c:= 1)
+	(up-modify-sn sn-maximum-boat-defend-group-size c:= 1)
+	(up-modify-sn sn-special-attack-influence1 c:= 0)
+	(up-modify-sn sn-special-attack-influence2 c:= 0)
+	(up-modify-sn sn-special-attack-influence3 c:= 0)
+	(up-modify-sn sn-disable-tower-priority c:= 1)
+	(up-modify-sn sn-do-not-scale-for-difficulty-level c:= 1)
+	(up-modify-sn sn-enable-offensive-priority c:= 1)
+	(up-modify-sn sn-attack-intelligence c:= 0)
+)
+(defrule
+	(true)
+	=>
+	(up-modify-sn sn-task-ungrouped-soldiers c:= 0)
+	(up-modify-sn sn-gather-defense-units c:= 0)
+	(up-modify-sn sn-filter-under-attack c:= 0)
+	(up-modify-sn sn-initial-attack-delay c:= 0)
+	(up-modify-sn sn-maximum-gaia-attack-response c:= 3)
+	(up-modify-sn sn-percent-attack-soldiers c:= 100)
+	(up-modify-sn sn-percent-attack-boats c:= 100)
+	(up-modify-sn sn-enable-patrol-attack c:= 1)
+	(up-modify-sn sn-target-player c:= 3)
+)
+;--- Rule 5 -- pre-tag find ---
+(defrule
+	(up-compare-goal gTagged c:== 0)
+	=>
+	(up-full-reset-search)
+	(up-find-local c: class-infantry c: 240)
+	(up-find-local c: class-cavalry c: 240)
+	(up-clean-search search-local -1 search_order-none)
+	(up-get-search-state vecSS)
+)
+;--- Rule 6 -- THE TAG (trio verbatim; NO de-aggro: aggressive pursuit stays native) ---
+(defrule
+	(up-compare-goal gTagged c:== 0)
+	(up-compare-goal vecSS_L c:>= 1)
+	=>
+	(up-create-group 0 0 c: 1)
+	(up-modify-group-flag _true c: 1)
+	(up-reset-group c: 1)
+	(up-modify-goal gTagged c:= 1)
+	(chat-to-player 1 "TAGGED-M")
+)
+;--- Rule 7 -- SM find own by tag ---
+(defrule
+	(up-compare-goal gTagged c:== 1)
+	=>
+	(up-full-reset-search)
+	(up-find-local c: class-infantry c: 240)
+	(up-find-local c: class-cavalry c: 240)
+	(up-clean-search search-local -1 search_order-none)
+	(up-remove-objects search-local object_data-tag c:!= 1)
+	(up-get-search-state vecSS)
+	(up-modify-goal gSize g:= vecSS_L)
+)
+;--- Rule 8 -- own median position (anchor for the enemy scan) ---
+(defrule
+	(up-compare-goal gTagged c:== 1)
+	(up-compare-goal gSize c:>= 1)
+	=>
+	(up-clean-search search-local object_data-precise-x search_order-ascending)
+	(up-modify-goal gTmpA g:= gSize)
+	(up-modify-goal gTmpA c:- 1)
+	(up-modify-goal gTmpA c:/ 2)
+	(up-set-target-object search-local g: gTmpA)
+	(up-get-object-data object_data-precise-x vecMed_x)
+	(up-clean-search search-local object_data-precise-y search_order-ascending)
+	(up-set-target-object search-local g: gTmpA)
+	(up-get-object-data object_data-precise-y vecMed_y)
+)
+;--- Rule 9 -- enemy scan (P3; keep LOCAL, rebuild REMOTE; no filter-distance!) ---
+(defrule
+	(up-compare-goal gTagged c:== 1)
+	(up-compare-goal gSize c:>= 1)
+	=>
+	(up-reset-search _false _false _true _true)
+	(up-set-precise-target-point vecMed)
+	(up-modify-sn sn-focus-player-number c:= 3)
+	(up-find-remote c: -1 c: 40)
+	(up-find-remote c: -1 c: 40)
+	(up-remove-objects search-remote object_data-category c:== category-building)
+	(up-get-search-state vecSS)
+	(up-modify-goal gECount g:= vecSS_R)
+)
+;--- Rule 10 -- beat flag down ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gGo c:= 0)
+)
+;--- Rule 11 -- assignment beat: every 2000ms when both sides exist ---
+(defrule
+	(up-compare-goal gTagged c:== 1)
+	(up-compare-goal gSize c:>= 1)
+	(up-compare-goal gECount c:>= 1)
+	(up-modify-goal gTmpA g:= gTimeMilli)
+	(up-modify-goal gTmpA g:- gAsgT)
+	(up-compare-goal gTmpA c:>= 2000)
+	=>
+	(up-modify-goal gGo c:= 1)
+	(up-modify-goal gAsgT g:= gTimeMilli)
+)
+;--- Rule 12 -- sort both sides LEFT->RIGHT and snapshot own into group 3 ---
+(defrule
+	(up-compare-goal gGo c:== 1)
+	=>
+	(up-clean-search search-local object_data-precise-x search_order-ascending)
+	(up-create-group 0 0 c: 3)
+	(up-clean-search search-remote object_data-precise-x search_order-ascending)
+	(up-modify-goal gK c:= 0)
+)
+;--- Rule 13 -- THE ASSIGNMENT LOOP: own[k] attacks enemy[k mod m] (self-loop) ---
+(defrule
+	(up-compare-goal gGo c:== 1)
+	(up-compare-goal gK g:< gSize)
+	=>
+	(up-reset-search _true _true _false _false)
+	(up-set-group search-local c: 3)
+	(up-remove-objects search-local object_data-index g:< gK)
+	(up-remove-objects search-local object_data-index c:> 0)
+	(up-modify-goal gTmpA g:= gK)
+	(up-modify-goal gTmpA g:mod gECount)
+	(up-set-target-object search-remote g: gTmpA)
+	(up-target-objects _true action-default formation-ignore stance-ignore)
+	(up-modify-goal gK c:+ 1)
+	(up-jump-rule -1)
+)
+;--- Rule 14 -- one-shot diag ---
+(defrule
+	(up-compare-goal gGo c:== 1)
+	(up-compare-goal gDiag1 c:== 0)
+	=>
+	(up-modify-goal gDiag1 c:= 1)
+	(chat-to-player 1 "ASSIGN")
+)
+;--- Rule 15 -- bookkeeping ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gPtimeMilli g:= gTimeMilli)
+)

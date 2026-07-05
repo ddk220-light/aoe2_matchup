@@ -1,0 +1,308 @@
+;=============================================================================
+; ddkMicroV1.per -- from-scratch ranged-vs-melee micro AI, obstacle-aware.
+;
+; Design = the best verified mechanisms from the readable corpus (2026-06-30
+; 5-agent analysis), rebuilt inside our proven ddk skeleton:
+;   * ORBIT-not-retreat  (Rehoboam 17068-17147): move point = own front rotated
+;     sideways about the ENEMY center (up-cross-tiles +/-750), so the army circles
+;     the target at range instead of backing into map edges.
+;   * RELOAD-TAIL move gate (Bright Spark AdvCavArcherMicro 468-477): move ONLY
+;     while 0 < obj55 < reload-910 and obj73 != 1 -- never interrupt a unit
+;     mid-swing (the obj55-freeze trap that killed ddkKiteV5).
+;   * OBSTACLE LINE (Rehoboam 17425-17469): cheap up-point-contains check of the
+;     planned point for trees(915)/walls(927)/gates(939) -> flip orbit direction,
+;     ~5s pass-counter cooldown so it can't oscillate.
+;   * STUCK DETECTOR (Rehoboam idiom): every 24 passes compare the front unit's
+;     position to a snapshot; barely moved while in MOVE phase -> flip + escalate.
+;   * PATH-CHECKED FAN-OUT escape (Illuminati I-DUC 1578-1601): when stuck, verify
+;     the planned point with up-path-distance strict=1; while unreachable (65535)
+;     retry <=5 alternating sides with growing offsets. The wall/corner fix that
+;     NO kiting AI in the corpus has (escalation-only: never every-pass).
+;   * RANGED-vs-MELEE CONDITION: kite only when we out-range the enemy by >=1
+;     tile; ranged-vs-ranged / melee-vs-melee just fight (attack order only).
+;   * GENERALITY: own units found via cmdid-military + class -1 -> works for ALL
+;     ranged units incl. uniques (arambai, bolas, longbow...) by construction.
+;
+; Skeleton disciplines (hard-won, keep): find + order in the SAME rule chain, no
+; reset between; sn-focus-player-number before every up-find-remote; multi-goal
+; writers get exclusive blocks (gl-ec owns 49..52); fresh filename per iteration.
+; Enemy hardcoded = player 3 (tester convention).
+;=============================================================================
+
+(defconst enemy-player 3)
+
+; --- goals (points take g and g+1; gl-ec takes 49..52) ---
+(defconst gl-own-x 41)
+(defconst gl-own-y 42)
+(defconst gl-en-x 43)
+(defconst gl-en-y 44)
+(defconst gl-move-x 45)
+(defconst gl-move-y 46)
+(defconst gl-dir 47)        ; +1 clockwise / -1 counter-clockwise
+(defconst gl-cross 48)      ; +/-750 sideways step (precise)
+(defconst gl-ec 49)         ; up-get-search-state block 49..52
+(defconst gl-na 53)         ; front unit obj55 next-attack
+(defconst gl-reload 54)     ; front unit obj54 reload ms
+(defconst gl-range 55)      ; front unit obj12 * 100 (precise)
+(defconst gl-atk 56)        ; front unit obj73 attacking flag
+(defconst gl-erange 57)     ; enemy obj12 * 100 (precise)
+(defconst gl-phase 58)      ; 0 idle / 1 attack / 2 move / 3 settle(no order)
+(defconst gl-cool 59)       ; direction-flip cooldown (passes)
+(defconst gl-prev-x 60)
+(defconst gl-prev-y 61)
+(defconst gl-snap 62)       ; snapshot pass counter
+(defconst gl-stuck 63)
+(defconst gl-fan 64)        ; fan-out attempt count
+(defconst gl-lerp 65)       ; fan-out radial offset (precise, negative=away)
+(defconst gl-crossfan 66)   ; fan-out sideways offset (precise, alternating)
+(defconst gl-sign 67)       ; fan-out growth sign
+(defconst gl-dist 68)       ; own-front <-> enemy distance (precise)
+(defconst gl-tail 69)       ; reload-tail threshold = max(reload-910, 300)
+(defconst gl-outrng 70)     ; our range - 100 (out-range check vs gl-erange)
+(defconst gl-near 71)       ; our range + 200 (kite trigger distance)
+(defconst gl-close 72)      ; our range - 200 (too close -> also push out)
+(defconst gl-moved 73)      ; distance moved since snapshot
+
+; --- INIT ---
+(defrule
+	(true)
+	=>
+	(set-goal gl-dir 1)
+	(set-goal gl-cool 0)
+	(set-goal gl-snap 0)
+	(set-goal gl-stuck 0)
+	(set-goal gl-prev-x -1)
+	(set-goal gl-prev-y -1)
+	(disable-self)
+)
+
+; --- housekeeping counters ---
+(defrule
+	(up-compare-goal gl-cool c:> 0)
+	=>
+	(up-modify-goal gl-cool c:- 1)
+)
+(defrule
+	(true)
+	=>
+	(up-modify-goal gl-snap c:+ 1)
+)
+
+; --- SENSE A: does an enemy exist? ---
+(defrule
+	(true)
+	=>
+	(set-goal gl-ec 0)
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-get-search-state gl-ec)
+)
+
+; --- SENSE B: nearest enemy -> precise pos + its range ---
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	=>
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-set-target-point gl-own-x)
+	(up-find-remote c: -1 c: 50)
+	(up-clean-search search-remote 44 1)
+	(up-set-target-object search-remote c: 0)
+	(up-get-object-data 38 gl-en-x)
+	(up-get-object-data 39 gl-en-y)
+	(up-get-object-data 12 gl-erange)
+	(up-modify-goal gl-erange c:* 100)
+)
+
+; --- SENSE C: own army; front unit (closest to enemy) drives the ball.
+;     search-local survives to the MOVE order below -- nothing may reset it
+;     in between except the (phase-gated, non-firing) ATTACK rule. ---
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-set-target-point gl-en-x)
+	(up-clean-search search-local 44 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-object-data 38 gl-own-x)
+	(up-get-object-data 39 gl-own-y)
+	(up-get-object-data 12 gl-range)
+	(up-get-object-data 54 gl-reload)
+	(up-get-object-data 55 gl-na)
+	(up-get-object-data 73 gl-atk)
+	(up-modify-goal gl-range c:* 100)
+	(up-get-point-distance gl-own-x gl-en-x gl-dist)
+	(up-modify-goal gl-tail g:= gl-reload)
+	(up-modify-goal gl-tail c:- 910)
+	(up-modify-goal gl-tail c:max 300)
+	(up-modify-goal gl-outrng g:= gl-range)
+	(up-modify-goal gl-outrng c:- 100)
+	(up-modify-goal gl-near g:= gl-range)
+	(up-modify-goal gl-near c:+ 200)
+	(up-modify-goal gl-close g:= gl-range)
+	(up-modify-goal gl-close c:- 200)
+)
+
+; --- PHASE: 0 idle / 1 attack / 2 move / 3 settle ---
+(defrule
+	(true)
+	=>
+	(set-goal gl-phase 0)
+)
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	=>
+	(set-goal gl-phase 1)
+)
+; already swinging / engaged -> leave it alone (don't spam re-orders)
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-atk c:== 1)
+	=>
+	(set-goal gl-phase 3)
+)
+; kite mode, just fired (early reload) -> stand still, let the shot finish
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-erange g:< gl-outrng)
+	(up-compare-goal gl-na c:> 0)
+	(up-compare-goal gl-na g:>= gl-tail)
+	=>
+	(set-goal gl-phase 3)
+)
+; kite mode, reload tail, enemy pressing -> orbit step
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-erange g:< gl-outrng)
+	(up-compare-goal gl-na c:> 0)
+	(up-compare-goal gl-na g:< gl-tail)
+	(up-compare-goal gl-atk c:!= 1)
+	(up-compare-goal gl-dist g:< gl-near)
+	=>
+	(set-goal gl-phase 2)
+)
+
+; --- STUCK detector: every 24 passes, in MOVE phase, front barely moved -> flip + escalate ---
+(defrule
+	(up-compare-goal gl-snap c:>= 24)
+	(up-compare-goal gl-phase c:== 2)
+	(up-compare-goal gl-prev-x c:>= 0)
+	=>
+	(up-get-point-distance gl-own-x gl-prev-x gl-moved)
+)
+(defrule
+	(up-compare-goal gl-snap c:>= 24)
+	(up-compare-goal gl-phase c:== 2)
+	(up-compare-goal gl-prev-x c:>= 0)
+	(up-compare-goal gl-moved c:< 40)
+	=>
+	(set-goal gl-stuck 1)
+	(up-modify-goal gl-dir c:* -1)
+	(set-goal gl-cool 40)
+)
+(defrule
+	(up-compare-goal gl-snap c:>= 24)
+	=>
+	(set-goal gl-snap 0)
+	(up-copy-point gl-prev-x gl-own-x)
+)
+
+; --- MOVE 1: orbit point = own front rotated sideways about the enemy ---
+(defrule
+	(up-compare-goal gl-phase c:== 2)
+	=>
+	(up-copy-point gl-move-x gl-own-x)
+	(set-goal gl-cross 750)
+	(up-modify-goal gl-cross g:* gl-dir)
+	(up-cross-tiles gl-move-x gl-en-x g: gl-cross)
+)
+; --- MOVE 2: too close -> add an outward push while orbiting ---
+(defrule
+	(up-compare-goal gl-phase c:== 2)
+	(up-compare-goal gl-dist g:< gl-close)
+	=>
+	(up-lerp-tiles gl-move-x gl-en-x c: -300)
+)
+; --- MOVE 3: obstacle line -- planned point contains tree/wall/gate -> flip
+;     direction (cooldown-gated) and recompute inline ---
+(defrule
+	(up-compare-goal gl-phase c:== 2)
+	(up-compare-goal gl-cool c:== 0)
+	(or (up-point-contains gl-move-x c: 915)
+	(or (up-point-contains gl-move-x c: 927)
+		(up-point-contains gl-move-x c: 939)))
+	=>
+	(up-modify-goal gl-dir c:* -1)
+	(set-goal gl-cool 40)
+	(up-copy-point gl-move-x gl-own-x)
+	(set-goal gl-cross 750)
+	(up-modify-goal gl-cross g:* gl-dir)
+	(up-cross-tiles gl-move-x gl-en-x g: gl-cross)
+)
+; --- MOVE 4: stuck escalation -- arm the Illuminati fan-out ONCE per episode
+;     (gl-stuck: 1 = newly stuck -> arm; 2 = armed; 0 = clear). The state flip
+;     matters: MOVE 5's jump-rule -1 re-evaluates this rule, and without the
+;     flip it would re-zero gl-fan forever (Illuminati guards the same way). ---
+(defrule
+	(up-compare-goal gl-phase c:== 2)
+	(up-compare-goal gl-stuck c:== 1)
+	=>
+	(set-goal gl-stuck 2)
+	(set-goal gl-fan 0)
+	(set-goal gl-lerp -200)
+	(set-goal gl-crossfan 200)
+	(up-modify-goal gl-crossfan g:* gl-dir)
+	(set-goal gl-sign 100)
+	(up-modify-goal gl-sign g:* gl-dir)
+)
+; --- MOVE 5: fan-out retry -- while the point is unreachable (path 65535),
+;     alternate sides with growing offsets, <=5 tries (Illuminati 1578-1592) ---
+(defrule
+	(up-compare-goal gl-phase c:== 2)
+	(up-compare-goal gl-stuck c:== 2)
+	(up-compare-goal gl-fan c:< 5)
+	(up-path-distance gl-move-x 1 == 65535)
+	=>
+	(up-modify-goal gl-lerp c:- 100)
+	(up-modify-goal gl-crossfan c:* -1)
+	(up-modify-goal gl-sign c:* -1)
+	(up-modify-goal gl-crossfan g:+ gl-sign)
+	(up-copy-point gl-move-x gl-own-x)
+	(up-lerp-tiles gl-move-x gl-en-x g: gl-lerp)
+	(up-cross-tiles gl-move-x gl-en-x g: gl-crossfan)
+	(up-modify-goal gl-fan c:+ 1)
+	(up-jump-rule -1)
+)
+; --- MOVE 6: reachable again -> stand down the escalation ---
+(defrule
+	(up-compare-goal gl-phase c:== 2)
+	(up-compare-goal gl-stuck c:== 2)
+	(up-path-distance gl-move-x 1 != 65535)
+	=>
+	(set-goal gl-stuck 0)
+)
+; --- MOVE 7: clamp to map and step the whole ball (search-local from SENSE C) ---
+(defrule
+	(up-compare-goal gl-phase c:== 2)
+	=>
+	(up-bound-precise-point gl-move-x 1 c: 100)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-move-x action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)
+
+; --- ATTACK: loaded (or non-kite matchup) -> stop and volley (proven ddkKiteV4) ---
+(defrule
+	(up-compare-goal gl-phase c:== 1)
+	=>
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-clean-search search-remote 44 1)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-target-objects 0 action-default -1 3)
+)

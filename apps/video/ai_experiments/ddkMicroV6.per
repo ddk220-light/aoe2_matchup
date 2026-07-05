@@ -1,0 +1,185 @@
+;=============================================================================
+; ddkMicroV6.per -- V4 + two fixes from the ddkProbeBreak observations:
+;
+;   1. WINDUP RESET FIX: re-issuing an attack order every pass RESTARTS the aim
+;      animation before the arrow releases ("they tried to fire, then reloaded,
+;      never actually fired"). Immortal avoids this by stripping already-on-
+;      target units; without object reads we THROTTLE instead: the volley order
+;      is issued only TWICE per volley window (clk 0 and 7), so windups complete.
+;   2. CHAT: chat-to-all / up-chat-data-to-all are invisible in editor Test.
+;      Corpus-confirmed directed form used instead: (chat-to-player 1 "...") --
+;      in editor Test the human IS player 1.
+;
+; Everything else = ddkMicroV4 (untested, superseded):
+;   * THE PREAMBLE -- disable the engine TacticalAI (Immortal #8659/#8660);
+;     without it the engine re-tasks ungrouped soldiers onto visible enemies
+;     every tick, overriding all scripted moves (the root cause of every
+;     stand-and-fire so far).
+;   * Immortal's order invariants: permanent stance-no-attack via the moves;
+;     attacks explicit with stance-ignore; just-fired stripped (55 >= 1000).
+;   * Clock stutter VOLLEY 14 / KITE 10 passes; hardcoded 16-point ring
+;     (R=6 tiles around map centre 16,16 of the 32x32 arenas); kite move =
+;     naked DOUBLE up-target-point, formation-line(2), stance-no-attack;
+;     obstacle point-contains -> ring reversal. NO object-data reads anywhere.
+;=============================================================================
+
+(defconst enemy-player 3)
+
+(defconst gl-ec 49)        ; search-state block 49..52
+(defconst gl-clk 100)
+(defconst gl-idx 101)
+(defconst gl-dirstep 102)
+(defconst gl-cool 103)
+(defconst gl-cyc 104)
+(defconst gl-tx 110)
+(defconst gl-ty 111)
+
+(defconst VOLLEY-PASSES 14)
+(defconst CYCLE-PASSES 24)
+
+; --- THE PREAMBLE: kill the engine TacticalAI (Immortal #8659/#8660) ---
+(defrule
+	(true)
+	=>
+	(up-modify-sn sn-task-ungrouped-soldiers c:= 0)
+	(up-modify-sn sn-number-attack-groups c:= 0)
+	(up-modify-sn sn-gather-defense-units c:= 0)
+	(up-modify-sn sn-filter-under-attack c:= 0)
+	(up-modify-sn sn-initial-attack-delay c:= 0)
+	(up-modify-sn sn-percent-attack-soldiers c:= 100)
+	(up-modify-sn sn-enable-patrol-attack c:= 1)
+	(set-goal gl-clk 0)
+	(set-goal gl-idx 0)
+	(set-goal gl-dirstep 1)
+	(set-goal gl-cool 0)
+	(set-goal gl-cyc 0)
+	(chat-to-player 1 "ddkMicroV6 up - engine tasking OFF")
+	(disable-self)
+)
+
+; --- clock ---
+(defrule
+	(up-compare-goal gl-cool c:> 0)
+	=>
+	(up-modify-goal gl-cool c:- 1)
+)
+(defrule
+	(true)
+	=>
+	(up-modify-goal gl-clk c:+ 1)
+	(up-modify-goal gl-clk c:mod CYCLE-PASSES)
+)
+
+; --- SENSE: enemy present? ---
+(defrule
+	(true)
+	=>
+	(set-goal gl-ec 0)
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-get-search-state gl-ec)
+)
+
+; --- phase-entry telemetry + waypoint advance ---
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-clk c:== 0)
+	=>
+	(up-modify-goal gl-cyc c:+ 1)
+	(chat-to-player 1 "VOLLEY")
+)
+; kite entry: one-shot STOP (Immortal's halt idiom, point 0 = no destination)
+; breaks any attack action so the move below lands on IDLE units (proven movable)
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-clk c:== VOLLEY-PASSES)
+	=>
+	(chat-to-player 1 "KITE")
+	(up-modify-goal gl-idx g:+ gl-dirstep)
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-target-point 0 action-stop -1 -1)
+)
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-clk c:== 19)
+	=>
+	(up-modify-goal gl-idx g:+ gl-dirstep)
+)
+(defrule
+	(up-compare-goal gl-idx c:< 0)
+	=>
+	(up-modify-goal gl-idx c:+ 16)
+)
+(defrule
+	(up-compare-goal gl-idx c:>= 16)
+	=>
+	(up-modify-goal gl-idx c:- 16)
+)
+
+; --- DISPATCH: 16 absolute ring waypoints, radius 600 around (1600,1600) ---
+(defrule (up-compare-goal gl-idx c:== 0)  => (set-goal gl-tx 2200)(set-goal gl-ty 1600))
+(defrule (up-compare-goal gl-idx c:== 1)  => (set-goal gl-tx 2154)(set-goal gl-ty 1830))
+(defrule (up-compare-goal gl-idx c:== 2)  => (set-goal gl-tx 2024)(set-goal gl-ty 2024))
+(defrule (up-compare-goal gl-idx c:== 3)  => (set-goal gl-tx 1830)(set-goal gl-ty 2154))
+(defrule (up-compare-goal gl-idx c:== 4)  => (set-goal gl-tx 1600)(set-goal gl-ty 2200))
+(defrule (up-compare-goal gl-idx c:== 5)  => (set-goal gl-tx 1370)(set-goal gl-ty 2154))
+(defrule (up-compare-goal gl-idx c:== 6)  => (set-goal gl-tx 1176)(set-goal gl-ty 2024))
+(defrule (up-compare-goal gl-idx c:== 7)  => (set-goal gl-tx 1046)(set-goal gl-ty 1830))
+(defrule (up-compare-goal gl-idx c:== 8)  => (set-goal gl-tx 1000)(set-goal gl-ty 1600))
+(defrule (up-compare-goal gl-idx c:== 9)  => (set-goal gl-tx 1046)(set-goal gl-ty 1370))
+(defrule (up-compare-goal gl-idx c:== 10) => (set-goal gl-tx 1176)(set-goal gl-ty 1176))
+(defrule (up-compare-goal gl-idx c:== 11) => (set-goal gl-tx 1370)(set-goal gl-ty 1046))
+(defrule (up-compare-goal gl-idx c:== 12) => (set-goal gl-tx 1600)(set-goal gl-ty 1000))
+(defrule (up-compare-goal gl-idx c:== 13) => (set-goal gl-tx 1830)(set-goal gl-ty 1046))
+(defrule (up-compare-goal gl-idx c:== 14) => (set-goal gl-tx 2024)(set-goal gl-ty 1176))
+(defrule (up-compare-goal gl-idx c:== 15) => (set-goal gl-tx 2154)(set-goal gl-ty 1370))
+
+; --- OBSTACLE at the waypoint -> reverse ring direction (cooldown-gated) ---
+(defrule
+	(up-compare-goal gl-cool c:== 0)
+	(or (up-point-contains gl-tx c: 915)
+	(or (up-point-contains gl-tx c: 927)
+		(up-point-contains gl-tx c: 939)))
+	=>
+	(up-modify-goal gl-dirstep c:* -1)
+	(set-goal gl-cool 40)
+	(up-modify-goal gl-idx g:+ gl-dirstep)
+	(up-modify-goal gl-idx g:+ gl-dirstep)
+	(chat-to-player 1 "obstacle - reversing ring")
+)
+
+; --- KITE (clk >= 14): naked DOUBLE move, formation-line, stance-no-attack ---
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-clk c:>= VOLLEY-PASSES)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-tx action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-tx action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)
+
+; --- VOLLEY: attack issued ONLY at clk 0 and clk 7 (windup-reset fix),
+;     stance-IGNORE, just-fired stripped (55 >= 1000) ---
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(or (up-compare-goal gl-clk c:== 0)
+		(up-compare-goal gl-clk c:== 7))
+	=>
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-clean-search search-remote 44 1)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-remove-objects search-local 55 c:>= 1000)
+	(up-target-objects 0 action-default -1 -1)
+)

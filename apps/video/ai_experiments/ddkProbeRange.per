@@ -1,0 +1,85 @@
+;=============================================================================
+; ddkProbeRange.per -- PROBE: "what does up-get-object-data 12 (max range)
+; actually RETURN for our cav archers?" Output channel = WHICH MAP CORNER the
+; army marches to (visible; no chat needed). Uses the SIMPLEST read chain
+; (element 0, no sorting) and the proven move order.
+;
+;   TOP    corner (N, tile 3,3)    -> read returned 0        (read broken/zero)
+;   RIGHT  corner (E, tile 29,3)   -> read returned 3..8     (tiles -- EXPECTED)
+;   LEFT   corner (W, tile 3,29)   -> read returned NEGATIVE (-1/-2 = failed)
+;   BOTTOM corner (S, tile 29,29)  -> read returned > 8      (precise scale?!)
+;
+; The archers never attack (stance-no-attack) -- they just run. Knights may
+; chase; archers are faster. Just note WHICH CORNER they head for.
+;=============================================================================
+
+(defconst gl-r 100)
+(defconst gl-dst-x 102)
+(defconst gl-dst-y 103)
+(defconst gl-done 105)
+
+(defrule
+	(true)
+	=>
+	(set-goal gl-done 0)
+	(set-goal gl-r -999)
+	(disable-self)
+)
+
+; read: element 0 of the plain military find (no sort, no median)
+(defrule
+	(up-compare-goal gl-done c:== 0)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-set-target-object search-local c: 0)
+	(up-get-object-data 12 gl-r)
+	(set-goal gl-done 1)
+)
+
+; encode the value as a corner
+(defrule
+	(up-compare-goal gl-done c:== 1)
+	(up-compare-goal gl-r c:== 0)
+	=>
+	(set-goal gl-dst-x 300)
+	(set-goal gl-dst-y 300)
+	(set-goal gl-done 2)
+)
+(defrule
+	(up-compare-goal gl-done c:== 1)
+	(up-compare-goal gl-r c:>= 3)
+	(up-compare-goal gl-r c:<= 8)
+	=>
+	(set-goal gl-dst-x 2900)
+	(set-goal gl-dst-y 300)
+	(set-goal gl-done 2)
+)
+(defrule
+	(up-compare-goal gl-done c:== 1)
+	(up-compare-goal gl-r c:< 0)
+	=>
+	(set-goal gl-dst-x 300)
+	(set-goal gl-dst-y 2900)
+	(set-goal gl-done 2)
+)
+(defrule
+	(up-compare-goal gl-done c:== 1)
+	=>
+	(set-goal gl-dst-x 2900)
+	(set-goal gl-dst-y 2900)
+	(set-goal gl-done 2)
+)
+
+; march (proven order, every pass)
+(defrule
+	(up-compare-goal gl-done c:== 2)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-dst-x action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)

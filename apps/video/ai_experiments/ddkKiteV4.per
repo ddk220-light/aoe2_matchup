@@ -1,0 +1,34 @@
+;=============================================================================
+; ddkKiteV4.per -- ISOLATE THE ATTACK COMMAND. No orbit, no range filter, no
+; reload gate. Uses the EXACT enemy search that made ddkSeeTest resign
+; (focus-player set, no distance filter), then orders the volley.
+;   * Arrows fly / knights take damage -> the attack command works. I then put
+;     it back together with the orbit + the circle-while-reloading stutter.
+;   * They move toward the knights but never fire -> up-target-objects /
+;     action-default isn't the right stop-and-fire; I switch the attack form.
+;   * Nothing happens -> the enemy isn't in search-remote at order time.
+;=============================================================================
+(defconst gl-ec 106)            ; up-get-search-state -> 4-goal block 106..109
+(defconst enemy-player 3)
+
+(defrule
+	(true)
+	=>
+	(set-goal gl-ec 0)
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-get-search-state gl-ec)
+)
+
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	=>
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)                 ; enemy -> search-remote
+	(up-clean-search search-remote 44 1)         ; nearest first (44 = distance)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)                 ; my military -> search-local
+	(up-target-objects 0 action-default -1 3)    ; my units attack the enemy
+)

@@ -1,0 +1,15 @@
+;=============================================================================
+; ddkEngineKite.per -- BASELINE probe: no DUC at all, just the ENGINE's own
+; built-in kiting, discovered in the official "AI (HD version).per" (~7076-7085):
+;   ability-to-maintain-distance 0  -> 0 = kite (100 = stay)
+;   ability-to-dodge-missiles   0  -> 0 = dodge
+; A/B this against ddkMicroV1 / Immortal in the same arena: it answers "does the
+; ENGINE kite already handle walls/corners well enough?" for free.
+;=============================================================================
+(defrule
+	(true)
+	=>
+	(set-difficulty-parameter ability-to-maintain-distance 0)
+	(set-difficulty-parameter ability-to-dodge-missiles 0)
+	(disable-self)
+)

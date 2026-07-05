@@ -1,0 +1,123 @@
+;=============================================================================
+; ddkKiteV3.per -- circle + FIRE, now with the focus-player fix.
+;
+; Root cause of "never fires": up-find-remote only searches the player set by
+; sn-focus-player-number, which we never set -> every enemy search returned 0 ->
+; nothing to shoot. Confirmed by ddkSeeTest (P2 resigned once focus was set to 3).
+; Fix: set sn-focus-player-number = 3 (the enemy player) before every up-find-remote.
+;
+; Behavior: circle the 16-point ring (radius 3 tiles); whenever an enemy is within
+; the leader's attack range, STOP and volley it. (For a centered enemy it may
+; stand-and-shoot rather than circle -- that's expected; the circling-while-
+; -reloading stutter is the next step once firing is confirmed.)
+;=============================================================================
+
+(defconst gl-cx    250)
+(defconst gl-cy    251)
+(defconst gl-tx    252)
+(defconst gl-ty    253)
+(defconst gl-idx   254)
+(defconst gl-tick  255)
+(defconst gl-near  257)
+(defconst gl-rng   258)
+(defconst gl-ec    260)   ; up-get-search-state -> 4-goal block 260..263
+(defconst gl-ax    265)
+(defconst gl-ay    266)
+(defconst enemy-player 3) ; tester: P3 is the opponent
+
+(defrule
+	(true)
+	=>
+	(set-goal gl-cx 4000)
+	(set-goal gl-cy 4000)
+	(set-goal gl-idx 0)
+	(set-goal gl-tick 0)
+	(disable-self)
+)
+
+; --- THROTTLE ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gl-tick c:+ 1)
+)
+(defrule
+	(up-compare-goal gl-tick c:>= 6)
+	=>
+	(set-goal gl-tick 0)
+	(up-modify-goal gl-idx c:+ 1)
+	(up-modify-goal gl-idx c:mod 16)
+)
+
+; --- DISPATCH: 16 points at radius 300 ---
+(defrule (up-compare-goal gl-idx c:== 0)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 300))
+(defrule (up-compare-goal gl-idx c:== 1)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 277)(up-modify-goal gl-ty c:+ 115))
+(defrule (up-compare-goal gl-idx c:== 2)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 212)(up-modify-goal gl-ty c:+ 212))
+(defrule (up-compare-goal gl-idx c:== 3)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 115)(up-modify-goal gl-ty c:+ 277))
+(defrule (up-compare-goal gl-idx c:== 4)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-ty c:+ 300))
+(defrule (up-compare-goal gl-idx c:== 5)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 115)(up-modify-goal gl-ty c:+ 277))
+(defrule (up-compare-goal gl-idx c:== 6)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 212)(up-modify-goal gl-ty c:+ 212))
+(defrule (up-compare-goal gl-idx c:== 7)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 277)(up-modify-goal gl-ty c:+ 115))
+(defrule (up-compare-goal gl-idx c:== 8)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 300))
+(defrule (up-compare-goal gl-idx c:== 9)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 277)(up-modify-goal gl-ty c:- 115))
+(defrule (up-compare-goal gl-idx c:== 10) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 212)(up-modify-goal gl-ty c:- 212))
+(defrule (up-compare-goal gl-idx c:== 11) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 115)(up-modify-goal gl-ty c:- 277))
+(defrule (up-compare-goal gl-idx c:== 12) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-ty c:- 300))
+(defrule (up-compare-goal gl-idx c:== 13) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 115)(up-modify-goal gl-ty c:- 277))
+(defrule (up-compare-goal gl-idx c:== 14) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 212)(up-modify-goal gl-ty c:- 212))
+(defrule (up-compare-goal gl-idx c:== 15) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 277)(up-modify-goal gl-ty c:- 115))
+
+; --- SENSE A: leader range + position ---
+(defrule
+	(true)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-set-target-object search-local c: 0)
+	(up-get-object-data 12 gl-rng)
+	(up-get-point position-object gl-ax)
+)
+
+; --- SENSE B: enemy within the leader's range? (focus-player MUST be set) ---
+(defrule
+	(true)
+	=>
+	(set-goal gl-near 0)
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-set-target-point gl-ax)
+	(up-filter-distance c: 0 g: gl-rng)
+	(up-find-remote c: -1 c: 50)
+	(up-get-search-state gl-ec)
+)
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	=>
+	(set-goal gl-near 1)
+)
+
+; --- SHOOT: enemy in range -> volley the nearest one ---
+(defrule
+	(up-compare-goal gl-near c:>= 1)
+	=>
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-clean-search search-remote 44 1)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-target-objects 0 action-default -1 3)
+)
+
+; --- ORBIT: no enemy in range -> move toward the current waypoint ---
+(defrule
+	(up-compare-goal gl-near c:== 0)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-tx action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)

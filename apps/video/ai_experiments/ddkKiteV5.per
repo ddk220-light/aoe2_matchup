@@ -1,0 +1,121 @@
+;=============================================================================
+; ddkKiteV5.per -- THE KITE: orbit a fixed center, fire when loaded, circle
+; while reloading. All three proven pieces combined:
+;   * detection: set sn-focus-player-number, up-find-remote (made ddkSeeTest resign)
+;   * fire:      up-target-objects 0 action-default (made ddkKiteV4 stand and fire)
+;   * orbit:     16-waypoint ring move (ddkCircle/V3 circled cleanly)
+; Gate: read the leader's reload countdown (obj 55). <=0 = loaded -> STOP & volley;
+;       >0 = reloading -> step around the ring. Now that they actually fire, obj-55
+;       cycles, so this stutter (fire / circle / fire) is the kite.
+; Radius 300 (3 tiles) keeps a centered enemy inside range through the whole ring.
+;=============================================================================
+
+(defconst gl-cx    250)
+(defconst gl-cy    251)
+(defconst gl-tx    252)
+(defconst gl-ty    253)
+(defconst gl-idx   254)
+(defconst gl-tick  255)
+(defconst gl-na    256)   ; leader next-attack (obj 55); <=0 = loaded
+(defconst gl-ec    260)   ; up-get-search-state -> 4-goal block 260..263
+(defconst enemy-player 3)
+
+(defrule
+	(true)
+	=>
+	(set-goal gl-cx 4000)
+	(set-goal gl-cy 4000)
+	(set-goal gl-idx 0)
+	(set-goal gl-tick 0)
+	(disable-self)
+)
+
+; --- THROTTLE ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gl-tick c:+ 1)
+)
+(defrule
+	(up-compare-goal gl-tick c:>= 6)
+	=>
+	(set-goal gl-tick 0)
+	(up-modify-goal gl-idx c:+ 1)
+	(up-modify-goal gl-idx c:mod 16)
+)
+
+; --- DISPATCH: 16 points at radius 300 ---
+(defrule (up-compare-goal gl-idx c:== 0)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 300))
+(defrule (up-compare-goal gl-idx c:== 1)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 277)(up-modify-goal gl-ty c:+ 115))
+(defrule (up-compare-goal gl-idx c:== 2)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 212)(up-modify-goal gl-ty c:+ 212))
+(defrule (up-compare-goal gl-idx c:== 3)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 115)(up-modify-goal gl-ty c:+ 277))
+(defrule (up-compare-goal gl-idx c:== 4)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-ty c:+ 300))
+(defrule (up-compare-goal gl-idx c:== 5)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 115)(up-modify-goal gl-ty c:+ 277))
+(defrule (up-compare-goal gl-idx c:== 6)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 212)(up-modify-goal gl-ty c:+ 212))
+(defrule (up-compare-goal gl-idx c:== 7)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 277)(up-modify-goal gl-ty c:+ 115))
+(defrule (up-compare-goal gl-idx c:== 8)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 300))
+(defrule (up-compare-goal gl-idx c:== 9)  => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 277)(up-modify-goal gl-ty c:- 115))
+(defrule (up-compare-goal gl-idx c:== 10) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 212)(up-modify-goal gl-ty c:- 212))
+(defrule (up-compare-goal gl-idx c:== 11) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 115)(up-modify-goal gl-ty c:- 277))
+(defrule (up-compare-goal gl-idx c:== 12) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-ty c:- 300))
+(defrule (up-compare-goal gl-idx c:== 13) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 115)(up-modify-goal gl-ty c:- 277))
+(defrule (up-compare-goal gl-idx c:== 14) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 212)(up-modify-goal gl-ty c:- 212))
+(defrule (up-compare-goal gl-idx c:== 15) => (up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 277)(up-modify-goal gl-ty c:- 115))
+
+; --- SENSE A: does an enemy exist? (the search that worked in ddkSeeTest) ---
+(defrule
+	(true)
+	=>
+	(set-goal gl-ec 0)
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-get-search-state gl-ec)
+)
+
+; --- SENSE B: read the leader's reload countdown ---
+(defrule
+	(true)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-set-target-object search-local c: 0)
+	(up-get-object-data 55 gl-na)
+)
+
+; --- SHOOT: enemy present AND loaded -> stop and volley ---
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-na c:<= 0)
+	=>
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-clean-search search-remote 44 1)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-target-objects 0 action-default -1 3)
+)
+
+; --- ORBIT: reloading, OR no enemy -> step around the ring ---
+(defrule
+	(up-compare-goal gl-na c:> 0)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-tx action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)
+(defrule
+	(up-compare-goal gl-ec c:== 0)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-tx action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)

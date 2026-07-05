@@ -1,0 +1,93 @@
+;=============================================================================
+; ddkCircleV1.per -- army orbits a FIXED center in a tight on-screen circle.
+;
+; Built on the now-proven move foundation (find + up-target-point in one rule,
+; re-issued every pass). The destination is an 8-point ring around a center we
+; capture once (the army's start position). A throttle advances the ring index,
+; so the units continuously CHASE the moving waypoint around the circle.
+;
+; SPEED KNOB: gl-tick threshold in the "advance" rule (currently 6). Lower =
+; the waypoint runs faster around the ring (tighter, faster orbit); higher =
+; slower. We'll tune this once we see it in motion.
+; RADIUS: the 400 / 283 offsets = 4-tile radius (tight, stays on one screen).
+;=============================================================================
+
+(defconst gl-cx    250)   ; orbit center: x=250, y=251 (precise = tile*100)
+(defconst gl-cy    251)
+(defconst gl-tx    252)   ; current waypoint: x=252, y=253
+(defconst gl-ty    253)
+(defconst gl-cnt   256)   ; up-get-search-state writes a 4-goal block 256..259
+(defconst gl-idx   260)   ; ring index 0..7
+(defconst gl-tick  261)   ; pass counter for the throttle
+(defconst gl-init  262)   ; 0 until center captured
+
+; --- INIT: capture center = leader position, once units exist ---
+(defrule
+	(up-compare-goal gl-init c:== 0)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-get-search-state gl-cnt)
+)
+(defrule
+	(up-compare-goal gl-init c:== 0)
+	(up-compare-goal gl-cnt c:>= 1)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object gl-cx)         ; center = leader tile pos -> 250,251
+	(up-modify-goal gl-cx c:* 100)               ; -> precise
+	(up-modify-goal gl-cy c:* 100)
+	(set-goal gl-idx 0)
+	(set-goal gl-tick 0)
+	(set-goal gl-init 1)
+	(chat-to-all "ddkCircleV1 orbiting")
+)
+
+; --- THROTTLE: advance the ring index every N passes ---
+(defrule
+	(up-compare-goal gl-init c:== 1)
+	=>
+	(up-modify-goal gl-tick c:+ 1)
+)
+(defrule
+	(up-compare-goal gl-init c:== 1)
+	(up-compare-goal gl-tick c:>= 6)
+	=>
+	(set-goal gl-tick 0)
+	(up-modify-goal gl-idx c:+ 1)
+	(up-modify-goal gl-idx c:mod 8)
+)
+
+; --- DISPATCH: keep gl-tx = center + ring offset[idx] (every pass) ---
+(defrule (up-compare-goal gl-init c:== 1)(up-compare-goal gl-idx c:== 0) =>
+	(up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 400))
+(defrule (up-compare-goal gl-init c:== 1)(up-compare-goal gl-idx c:== 1) =>
+	(up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 283)(up-modify-goal gl-ty c:+ 283))
+(defrule (up-compare-goal gl-init c:== 1)(up-compare-goal gl-idx c:== 2) =>
+	(up-copy-point gl-tx gl-cx)(up-modify-goal gl-ty c:+ 400))
+(defrule (up-compare-goal gl-init c:== 1)(up-compare-goal gl-idx c:== 3) =>
+	(up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 283)(up-modify-goal gl-ty c:+ 283))
+(defrule (up-compare-goal gl-init c:== 1)(up-compare-goal gl-idx c:== 4) =>
+	(up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 400))
+(defrule (up-compare-goal gl-init c:== 1)(up-compare-goal gl-idx c:== 5) =>
+	(up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 283)(up-modify-goal gl-ty c:- 283))
+(defrule (up-compare-goal gl-init c:== 1)(up-compare-goal gl-idx c:== 6) =>
+	(up-copy-point gl-tx gl-cx)(up-modify-goal gl-ty c:- 400))
+(defrule (up-compare-goal gl-init c:== 1)(up-compare-goal gl-idx c:== 7) =>
+	(up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 283)(up-modify-goal gl-ty c:- 283))
+
+; --- ORDER: every pass, move the whole group toward the current waypoint ---
+(defrule
+	(up-compare-goal gl-init c:== 1)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-tx action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)

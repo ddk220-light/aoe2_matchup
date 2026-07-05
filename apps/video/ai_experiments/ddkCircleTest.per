@@ -1,0 +1,158 @@
+;=============================================================================
+; ddkCircleTest.per -- SMOKE TEST (debug markers via chat-to-all only)
+; Watch the chat log for these markers to see how far it gets:
+;   "ddk ALIVE"          -> the script loaded and runs at all
+;   "ddk FOUND-MILITARY" -> our military-unit search returned > 0 units
+;   "ddk ZERO-MILITARY"  -> the search returned 0 (selection is wrong)
+;   "ddk INIT-DONE"      -> captured center + armed the control timer
+;   "ddk TICK" (repeats) -> the timer fires each second and issues a move
+; If units still don't move while "ddk TICK" repeats, the move order is the issue.
+;=============================================================================
+
+(defconst gl-center-x      101)   ; point: x=101, y=102
+(defconst gl-center-y      102)
+(defconst gl-ring-index    103)
+(defconst gl-target-x      104)   ; point: x=104, y=105
+(defconst gl-target-y      105)
+(defconst gl-count         106)   ; up-get-search-state writes a 4-GOAL block 106..109
+(defconst gl-init-done     110)
+(defconst gl-reported      111)
+(defconst control-timer      1)
+
+
+; ---- MARK1: prove the script runs at all ----
+(defrule
+	(true)
+	=>
+	(chat-to-all "ddk ALIVE")
+	(disable-self)
+)
+
+; ---- find military once, report the result ----
+(defrule
+	(up-compare-goal gl-reported c:== 0)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-get-search-state gl-count)
+)
+(defrule
+	(up-compare-goal gl-reported c:== 0)
+	(up-compare-goal gl-count c:> 0)
+	=>
+	(chat-to-all "ddk FOUND-MILITARY")
+	(set-goal gl-reported 1)
+)
+(defrule
+	(up-compare-goal gl-reported c:== 0)
+	(up-compare-goal gl-count c:== 0)
+	=>
+	(chat-to-all "ddk ZERO-MILITARY")
+	(set-goal gl-reported 1)
+)
+
+; ---- INIT: capture center = leader position, arm the timer ----
+(defrule
+	(up-compare-goal gl-init-done c:== 0)
+	(up-compare-goal gl-reported c:== 1)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-get-search-state gl-count)
+)
+(defrule
+	(up-compare-goal gl-init-done c:== 0)
+	(up-compare-goal gl-count c:> 0)
+	=>
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object gl-center-x)
+	(up-modify-goal gl-center-x c:* 100)
+	(up-modify-goal gl-center-y c:* 100)
+	(set-goal gl-ring-index 0)
+	(enable-timer control-timer 1)
+	(chat-to-all "ddk INIT-DONE")
+	(set-goal gl-init-done 1)
+)
+
+
+; ---- WAYPOINT DISPATCH: gl-target = center + ring offset[index] ----
+(defrule
+	(timer-triggered control-timer)
+	(up-compare-goal gl-ring-index c:== 0)
+	=>
+	(up-copy-point gl-target-x gl-center-x)
+	(up-modify-goal gl-target-x c:+ 400)
+)
+(defrule
+	(timer-triggered control-timer)
+	(up-compare-goal gl-ring-index c:== 1)
+	=>
+	(up-copy-point gl-target-x gl-center-x)
+	(up-modify-goal gl-target-x c:+ 283)
+	(up-modify-goal gl-target-y c:+ 283)
+)
+(defrule
+	(timer-triggered control-timer)
+	(up-compare-goal gl-ring-index c:== 2)
+	=>
+	(up-copy-point gl-target-x gl-center-x)
+	(up-modify-goal gl-target-y c:+ 400)
+)
+(defrule
+	(timer-triggered control-timer)
+	(up-compare-goal gl-ring-index c:== 3)
+	=>
+	(up-copy-point gl-target-x gl-center-x)
+	(up-modify-goal gl-target-x c:- 283)
+	(up-modify-goal gl-target-y c:+ 283)
+)
+(defrule
+	(timer-triggered control-timer)
+	(up-compare-goal gl-ring-index c:== 4)
+	=>
+	(up-copy-point gl-target-x gl-center-x)
+	(up-modify-goal gl-target-x c:- 400)
+)
+(defrule
+	(timer-triggered control-timer)
+	(up-compare-goal gl-ring-index c:== 5)
+	=>
+	(up-copy-point gl-target-x gl-center-x)
+	(up-modify-goal gl-target-x c:- 283)
+	(up-modify-goal gl-target-y c:- 283)
+)
+(defrule
+	(timer-triggered control-timer)
+	(up-compare-goal gl-ring-index c:== 6)
+	=>
+	(up-copy-point gl-target-x gl-center-x)
+	(up-modify-goal gl-target-y c:- 400)
+)
+(defrule
+	(timer-triggered control-timer)
+	(up-compare-goal gl-ring-index c:== 7)
+	=>
+	(up-copy-point gl-target-x gl-center-x)
+	(up-modify-goal gl-target-x c:+ 283)
+	(up-modify-goal gl-target-y c:- 283)
+)
+
+
+; ---- MOVER: move whole army to the waypoint, advance, re-arm, mark ----
+(defrule
+	(timer-triggered control-timer)
+	=>
+	(enable-timer control-timer 1)
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-bound-precise-point gl-target-x 1 c: 100)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-target-x action-move -1 -1)
+	(up-modify-sn sn-target-point-adjustment c:= 0)
+	(chat-to-all "ddk TICK")
+	(up-modify-goal gl-ring-index c:+ 1)
+	(up-modify-goal gl-ring-index c:mod 8)
+)

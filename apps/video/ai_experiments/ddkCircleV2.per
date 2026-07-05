@@ -1,0 +1,74 @@
+;=============================================================================
+; ddkCircleV2.per -- circle test with a HARDCODED center (isolates the bug).
+;
+; ddkCircleV1 added a center-capture (up-set-target-object/up-get-point) and an
+; init-gate that the WORKING ddkMoveV3 never had -- one of those killed it. This
+; version drops both: it hardcodes the orbit center to tile (40,40) (where the
+; units are placed) just like ddkMoveV3 hardcodes its destination, and orders
+; every pass with no gate. Only NEW thing vs the working move test = the ring.
+;
+; If this circles -> the capture/init was the bug (I'll re-add capture properly).
+; SPEED KNOB: the gl-tick threshold (6). RADIUS: 400/283 = 4 tiles.
+;=============================================================================
+
+(defconst gl-cx    250)   ; FIXED orbit center: x=250, y=251 (precise = tile*100)
+(defconst gl-cy    251)
+(defconst gl-tx    252)   ; current waypoint: x=252, y=253
+(defconst gl-ty    253)
+(defconst gl-idx   254)
+(defconst gl-tick  255)
+
+; --- set the fixed center + state, once ---
+(defrule
+	(true)
+	=>
+	(set-goal gl-cx 4000)        ; tile 40 (precise)
+	(set-goal gl-cy 4000)        ; tile 40
+	(set-goal gl-idx 0)
+	(set-goal gl-tick 0)
+	(disable-self)
+)
+
+; --- THROTTLE: advance the ring index every 6 passes ---
+(defrule
+	(true)
+	=>
+	(up-modify-goal gl-tick c:+ 1)
+)
+(defrule
+	(up-compare-goal gl-tick c:>= 6)
+	=>
+	(set-goal gl-tick 0)
+	(up-modify-goal gl-idx c:+ 1)
+	(up-modify-goal gl-idx c:mod 8)
+)
+
+; --- DISPATCH: gl-tx = center + ring offset[idx] (every pass) ---
+(defrule (up-compare-goal gl-idx c:== 0) =>
+	(up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 400))
+(defrule (up-compare-goal gl-idx c:== 1) =>
+	(up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 283)(up-modify-goal gl-ty c:+ 283))
+(defrule (up-compare-goal gl-idx c:== 2) =>
+	(up-copy-point gl-tx gl-cx)(up-modify-goal gl-ty c:+ 400))
+(defrule (up-compare-goal gl-idx c:== 3) =>
+	(up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 283)(up-modify-goal gl-ty c:+ 283))
+(defrule (up-compare-goal gl-idx c:== 4) =>
+	(up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 400))
+(defrule (up-compare-goal gl-idx c:== 5) =>
+	(up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:- 283)(up-modify-goal gl-ty c:- 283))
+(defrule (up-compare-goal gl-idx c:== 6) =>
+	(up-copy-point gl-tx gl-cx)(up-modify-goal gl-ty c:- 400))
+(defrule (up-compare-goal gl-idx c:== 7) =>
+	(up-copy-point gl-tx gl-cx)(up-modify-goal gl-tx c:+ 283)(up-modify-goal gl-ty c:- 283))
+
+; --- ORDER: every pass, move the whole group toward the current waypoint ---
+(defrule
+	(true)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-tx action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)

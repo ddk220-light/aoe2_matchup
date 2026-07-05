@@ -1,0 +1,192 @@
+;=============================================================================
+; ddkMicroV9.per -- MOVE FIRST, FIRE FROM CONTROLLED STATES (the user's insight,
+; matching Immortal's verified life cycle). Everything prior (V1-V6) opened with
+; attack orders; the units entered the engine's sticky attack state and then
+; ignored every breaker we tried (double move, formation-line, action-stop,
+; preamble). Immortal NEVER breaks attacks -- it never lets units enter one
+; uncontrolled: stance-no-attack movement comes FIRST, shots happen from
+; controlled states only.
+;
+; V7's three changes (bundled deliberately -- get a WORKING kite, ablate later):
+;   1. CYCLE STARTS IN KITE: the very first orders (pass 1) are moves to fresh,
+;      never-engaged units -- the one state proven movable (ProbeRange).
+;   2. KITE LOCOMOTION = action-patrol (Immortal's PRIMARY kite order, #2757;
+;      action-move is only its fallback) with stance-no-attack.
+;   3. STANCE-DRIVEN VOLLEYS -- ZERO attack orders in the whole file:
+;      volley entry: (up-target-point 0 action-none -1 0)  -> stance AGGRESSIVE,
+;        engine auto-acquires and fires (no order lock is ever formed);
+;      kite entry:  (up-target-point 0 action-stop -1 3) + action-none stance 3
+;        -> stop + back to no-attack, then patrol away.
+;      (point 0 = no destination; the Immortal #2789/#2793 idioms verbatim.)
+;
+; Kept: the engine-TacticalAI-off preamble, hardcoded 16-point ring (R=6 tiles
+; around 1600,1600 = centre of the 32x32 arenas), obstacle ring-reversal,
+; zero object-data reads. TELEMETRY: chat-to-player 1 + a TAUNT at load
+; (audible + shows as chat) -- report whichever you see/hear.
+;=============================================================================
+
+(defconst enemy-player 3)
+
+(defconst gl-ec 49)        ; search-state block 49..52
+(defconst gl-clk 100)
+(defconst gl-idx 101)
+(defconst gl-dirstep 102)
+(defconst gl-cool 103)
+(defconst gl-tx 110)
+(defconst gl-ty 111)
+
+(defconst KITE-PASSES 12)  ; clk 0..11 = KITE (move), 12..23 = VOLLEY (fire)
+(defconst CYCLE-PASSES 24)
+
+; --- PREAMBLE: engine TacticalAI off (Immortal #8659/#8660) + load telemetry ---
+(defrule
+	(true)
+	=>
+	(up-modify-sn sn-task-ungrouped-soldiers c:= 0)
+	(up-modify-sn sn-number-attack-groups c:= 0)
+	(up-modify-sn sn-gather-defense-units c:= 0)
+	(up-modify-sn sn-filter-under-attack c:= 0)
+	(up-modify-sn sn-initial-attack-delay c:= 0)
+	(up-modify-sn sn-percent-attack-soldiers c:= 100)
+	(up-modify-sn sn-enable-patrol-attack c:= 1)
+	(set-goal gl-clk 23)
+	(set-goal gl-idx 11)
+	(set-goal gl-dirstep 1)
+	(set-goal gl-cool 0)
+	(taunt 11)
+	(chat-to-player 1 "ddkMicroV9 up")
+	(disable-self)
+)
+
+; --- clock (starts at 23 -> first pass wraps to 0 = KITE entry) ---
+(defrule
+	(up-compare-goal gl-cool c:> 0)
+	=>
+	(up-modify-goal gl-cool c:- 1)
+)
+(defrule
+	(true)
+	=>
+	(up-modify-goal gl-clk c:+ 1)
+	(up-modify-goal gl-clk c:mod CYCLE-PASSES)
+)
+
+; --- SENSE: enemy present? ---
+(defrule
+	(true)
+	=>
+	(set-goal gl-ec 0)
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-get-search-state gl-ec)
+)
+
+; --- KITE ENTRY (clk==0): stop + stance back to NO-ATTACK, advance waypoint ---
+(defrule
+	(up-compare-goal gl-clk c:== 0)
+	=>
+	(chat-to-player 1 "KITE")
+	(up-modify-goal gl-idx g:+ gl-dirstep)
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-target-point 0 action-stop -1 3)
+	(up-target-point 0 action-none -1 3)
+)
+; mid-kite waypoint advance
+(defrule
+	(up-compare-goal gl-clk c:== 6)
+	=>
+	(up-modify-goal gl-idx g:+ gl-dirstep)
+)
+(defrule
+	(up-compare-goal gl-idx c:< 0)
+	=>
+	(up-modify-goal gl-idx c:+ 16)
+)
+(defrule
+	(up-compare-goal gl-idx c:>= 16)
+	=>
+	(up-modify-goal gl-idx c:- 16)
+)
+
+; --- DISPATCH: 16 absolute ring waypoints, radius 600 around (1600,1600) ---
+(defrule (up-compare-goal gl-idx c:== 0)  => (set-goal gl-tx 2200)(set-goal gl-ty 1600))
+(defrule (up-compare-goal gl-idx c:== 1)  => (set-goal gl-tx 2154)(set-goal gl-ty 1830))
+(defrule (up-compare-goal gl-idx c:== 2)  => (set-goal gl-tx 2024)(set-goal gl-ty 2024))
+(defrule (up-compare-goal gl-idx c:== 3)  => (set-goal gl-tx 1830)(set-goal gl-ty 2154))
+(defrule (up-compare-goal gl-idx c:== 4)  => (set-goal gl-tx 1600)(set-goal gl-ty 2200))
+(defrule (up-compare-goal gl-idx c:== 5)  => (set-goal gl-tx 1370)(set-goal gl-ty 2154))
+(defrule (up-compare-goal gl-idx c:== 6)  => (set-goal gl-tx 1176)(set-goal gl-ty 2024))
+(defrule (up-compare-goal gl-idx c:== 7)  => (set-goal gl-tx 1046)(set-goal gl-ty 1830))
+(defrule (up-compare-goal gl-idx c:== 8)  => (set-goal gl-tx 1000)(set-goal gl-ty 1600))
+(defrule (up-compare-goal gl-idx c:== 9)  => (set-goal gl-tx 1046)(set-goal gl-ty 1370))
+(defrule (up-compare-goal gl-idx c:== 10) => (set-goal gl-tx 1176)(set-goal gl-ty 1176))
+(defrule (up-compare-goal gl-idx c:== 11) => (set-goal gl-tx 1370)(set-goal gl-ty 1046))
+(defrule (up-compare-goal gl-idx c:== 12) => (set-goal gl-tx 1600)(set-goal gl-ty 1000))
+(defrule (up-compare-goal gl-idx c:== 13) => (set-goal gl-tx 1830)(set-goal gl-ty 1046))
+(defrule (up-compare-goal gl-idx c:== 14) => (set-goal gl-tx 2024)(set-goal gl-ty 1176))
+(defrule (up-compare-goal gl-idx c:== 15) => (set-goal gl-tx 2154)(set-goal gl-ty 1370))
+
+; --- OBSTACLE at the waypoint -> reverse ring direction ---
+(defrule
+	(up-compare-goal gl-cool c:== 0)
+	(or (up-point-contains gl-tx c: 915)
+	(or (up-point-contains gl-tx c: 927)
+		(up-point-contains gl-tx c: 939)))
+	=>
+	(up-modify-goal gl-dirstep c:* -1)
+	(set-goal gl-cool 40)
+	(up-modify-goal gl-idx g:+ gl-dirstep)
+	(up-modify-goal gl-idx g:+ gl-dirstep)
+	(chat-to-player 1 "obstacle - reversing")
+)
+
+; --- KITE (clk 0..11): PATROL to the ring point, stance-no-attack, doubled ---
+(defrule
+	(up-compare-goal gl-clk c:< KITE-PASSES)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-tx action-patrol -1 3)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-tx action-patrol -1 3)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)
+
+; --- EC telemetry (clk==2): reads whether the enemy-detect chain works ---
+(defrule
+	(up-compare-goal gl-clk c:== 2)
+	(up-compare-goal gl-ec c:>= 1)
+	=>
+	(chat-to-player 1 "EC OK")
+)
+(defrule
+	(up-compare-goal gl-clk c:== 2)
+	(up-compare-goal gl-ec c:== 0)
+	=>
+	(chat-to-player 1 "EC ZERO")
+)
+
+; --- VOLLEY ENTRY (clk==12): patrol-in-place, stance STAND-GROUND -> fire.
+;     V8 bug: this rule NEVER fired (no VOLLEY chat). Both suspect conditions
+;     fixed: the gl-ec gate is DROPPED (clock alone gates; worst case a stance
+;     flip with no enemy) and the defconst comparison replaced with literal 12. ---
+(defrule
+	(up-compare-goal gl-clk c:== 12)
+	=>
+	(chat-to-player 1 "VOLLEY")
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-tx action-patrol -1 2)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-tx action-patrol -1 2)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)

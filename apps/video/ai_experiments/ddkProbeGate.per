@@ -1,0 +1,102 @@
+;=============================================================================
+; ddkProbeGate.per -- PROBE: "is ddkMicroV3c's kite-mode gate ever open?"
+; Copies V3c's sense chain VERBATIM, then RESIGNS the moment the kite gate
+; (enemy range < our range - 1 tile) evaluates true.
+;   RESIGNS within seconds -> the gate + the median read chain work; the bug is
+;                             downstream (the move order itself).
+;   NEVER resigns          -> the gate/reads are the bug (own range read fails).
+;=============================================================================
+
+(defconst enemy-player 3)
+(defconst gl-cen-x 41)
+(defconst gl-cen-y 42)
+(defconst gl-en-x 43)
+(defconst gl-en-y 44)
+(defconst gl-ec 49)
+(defconst gl-ss 53)
+(defconst gl-erange 57)
+(defconst gl-outrng 70)
+(defconst gl-mid 72)
+(defconst gl-reload 75)
+(defconst gl-range 76)
+(defconst gl-speed 77)
+(defconst gl-class 84)
+
+(defrule
+	(true)
+	=>
+	(set-goal gl-cen-x 0)
+	(set-goal gl-cen-y 0)
+	(disable-self)
+)
+
+(defrule
+	(true)
+	=>
+	(set-goal gl-ec 0)
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-get-search-state gl-ec)
+)
+
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	=>
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-set-target-point gl-cen-x)
+	(up-find-remote c: -1 c: 50)
+	(up-clean-search search-remote 44 1)
+	(up-set-target-object search-remote c: 0)
+	(up-get-object-data 38 gl-en-x)
+	(up-get-object-data 39 gl-en-y)
+	(up-get-object-data 12 gl-erange)
+	(up-modify-goal gl-erange c:* 100)
+)
+
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-get-search-state gl-ss)
+)
+
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-ss c:>= 1)
+	=>
+	(up-modify-goal gl-mid g:= gl-ss)
+	(up-modify-goal gl-mid c:- 1)
+	(up-modify-goal gl-mid c:/ 2)
+	(up-clean-search search-local 38 1)
+	(up-set-target-object search-local g: gl-mid)
+	(up-get-object-data 38 gl-cen-x)
+	(up-get-object-data 13 gl-speed)
+	(up-get-object-data 2 gl-class)
+	(up-get-object-data 54 gl-reload)
+	(up-get-object-data 12 gl-range)
+	(up-clean-search search-local 39 1)
+	(up-set-target-object search-local g: gl-mid)
+	(up-get-object-data 39 gl-cen-y)
+)
+
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-ss c:>= 1)
+	=>
+	(up-modify-goal gl-range c:* 100)
+	(up-modify-goal gl-outrng g:= gl-range)
+	(up-modify-goal gl-outrng c:- 100)
+)
+
+; THE PROBE: kite gate open -> resign (visible instantly)
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-ss c:>= 1)
+	(up-compare-goal gl-erange g:< gl-outrng)
+	=>
+	(resign)
+)

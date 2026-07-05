@@ -1,0 +1,212 @@
+;=============================================================================
+; ddkMicroV2L.per -- LITE bisect twin of ddkMicroV2. Same kite logic, but built
+; ONLY from commands already proven in our in-game-tested ddk files (plus
+; lerp/cross/bound/get-point-distance, ubiquitous in the running readable AIs).
+; EXCLUDED (the unproven trio): up-point-contains, up-path-distance,
+; up-jump-rule. Obstacle handling here = stuck-detector direction flip only.
+;
+; A/B against ddkMicroV2 in the SAME scenario:
+;   V2L moves, V2 doesn't  -> one of the exotic commands kills the V2 parse.
+;   Neither moves          -> the shared logic/gating is wrong (deeper debug).
+;   Both move              -> ship V2 (it has the real wall handling).
+;=============================================================================
+
+(defconst enemy-player 3)
+
+(defconst gl-own-x 41)
+(defconst gl-own-y 42)
+(defconst gl-en-x 43)
+(defconst gl-en-y 44)
+(defconst gl-move-x 45)
+(defconst gl-move-y 46)
+(defconst gl-dir 47)
+(defconst gl-cross 48)
+(defconst gl-ec 49)         ; search-state block 49..52
+(defconst gl-na 53)
+(defconst gl-reload 54)
+(defconst gl-range 55)
+(defconst gl-erange 57)
+(defconst gl-phase 58)      ; 0 idle / 1 attack / 2 move / 3 hold
+(defconst gl-cool 59)
+(defconst gl-prev-x 60)
+(defconst gl-prev-y 61)
+(defconst gl-snap 62)
+(defconst gl-dist 68)
+(defconst gl-tail 69)
+(defconst gl-outrng 70)
+(defconst gl-near 71)
+(defconst gl-close 72)
+(defconst gl-moved 73)
+
+; --- INIT ---
+(defrule
+	(true)
+	=>
+	(set-goal gl-dir 1)
+	(set-goal gl-cool 0)
+	(set-goal gl-snap 0)
+	(set-goal gl-prev-x -1)
+	(set-goal gl-prev-y -1)
+	(set-goal gl-own-x 0)
+	(set-goal gl-own-y 0)
+	(set-goal gl-en-x 0)
+	(set-goal gl-en-y 0)
+	(disable-self)
+)
+
+(defrule
+	(up-compare-goal gl-cool c:> 0)
+	=>
+	(up-modify-goal gl-cool c:- 1)
+)
+(defrule
+	(true)
+	=>
+	(up-modify-goal gl-snap c:+ 1)
+)
+
+; --- SENSE A: enemy present? ---
+(defrule
+	(true)
+	=>
+	(set-goal gl-ec 0)
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-get-search-state gl-ec)
+)
+
+; --- SENSE B: nearest enemy pos + range ---
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	=>
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-set-target-point gl-own-x)
+	(up-find-remote c: -1 c: 50)
+	(up-clean-search search-remote 44 1)
+	(up-set-target-object search-remote c: 0)
+	(up-get-object-data 38 gl-en-x)
+	(up-get-object-data 39 gl-en-y)
+	(up-get-object-data 12 gl-erange)
+	(up-modify-goal gl-erange c:* 100)
+)
+
+; --- SENSE C: own army; front unit drives the ball ---
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-set-target-point gl-en-x)
+	(up-clean-search search-local 44 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-object-data 38 gl-own-x)
+	(up-get-object-data 39 gl-own-y)
+	(up-get-object-data 12 gl-range)
+	(up-get-object-data 54 gl-reload)
+	(up-get-object-data 55 gl-na)
+	(up-modify-goal gl-range c:* 100)
+	(up-get-point-distance gl-own-x gl-en-x gl-dist)
+	(up-modify-goal gl-tail g:= gl-reload)
+	(up-modify-goal gl-tail c:- 910)
+	(up-modify-goal gl-tail c:max 300)
+	(up-modify-goal gl-outrng g:= gl-range)
+	(up-modify-goal gl-outrng c:- 100)
+	(up-modify-goal gl-near g:= gl-range)
+	(up-modify-goal gl-near c:+ 200)
+	(up-modify-goal gl-close g:= gl-range)
+	(up-modify-goal gl-close c:- 200)
+)
+
+; --- PHASE ---
+(defrule
+	(true)
+	=>
+	(set-goal gl-phase 0)
+)
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	=>
+	(set-goal gl-phase 1)
+)
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-erange g:< gl-outrng)
+	(up-compare-goal gl-na c:> 0)
+	(up-compare-goal gl-na g:>= gl-tail)
+	=>
+	(set-goal gl-phase 3)
+)
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-erange g:< gl-outrng)
+	(up-compare-goal gl-na c:> 0)
+	(up-compare-goal gl-na g:< gl-tail)
+	(up-compare-goal gl-dist g:< gl-near)
+	=>
+	(set-goal gl-phase 2)
+)
+
+; --- STUCK detector -> flip orbit direction (cooldown-gated) ---
+(defrule
+	(up-compare-goal gl-snap c:>= 24)
+	(up-compare-goal gl-phase c:== 2)
+	(up-compare-goal gl-prev-x c:>= 0)
+	=>
+	(up-get-point-distance gl-own-x gl-prev-x gl-moved)
+)
+(defrule
+	(up-compare-goal gl-snap c:>= 24)
+	(up-compare-goal gl-phase c:== 2)
+	(up-compare-goal gl-prev-x c:>= 0)
+	(up-compare-goal gl-moved c:< 40)
+	(up-compare-goal gl-cool c:== 0)
+	=>
+	(up-modify-goal gl-dir c:* -1)
+	(set-goal gl-cool 40)
+)
+(defrule
+	(up-compare-goal gl-snap c:>= 24)
+	=>
+	(set-goal gl-snap 0)
+	(up-copy-point gl-prev-x gl-own-x)
+)
+
+; --- MOVE: orbit point + optional outward push + clamp + ONE shared ball order ---
+(defrule
+	(up-compare-goal gl-phase c:== 2)
+	=>
+	(up-copy-point gl-move-x gl-own-x)
+	(set-goal gl-cross 750)
+	(up-modify-goal gl-cross g:* gl-dir)
+	(up-cross-tiles gl-move-x gl-en-x g: gl-cross)
+)
+(defrule
+	(up-compare-goal gl-phase c:== 2)
+	(up-compare-goal gl-dist g:< gl-close)
+	=>
+	(up-lerp-tiles gl-move-x gl-en-x c: -300)
+)
+(defrule
+	(up-compare-goal gl-phase c:== 2)
+	=>
+	(up-bound-precise-point gl-move-x 1 c: 100)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-move-x action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)
+
+; --- ATTACK (proven ddkKiteV4 chain) ---
+(defrule
+	(up-compare-goal gl-phase c:== 1)
+	=>
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-clean-search search-remote 44 1)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-target-objects 0 action-default -1 3)
+)

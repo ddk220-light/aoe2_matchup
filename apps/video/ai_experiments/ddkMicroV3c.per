@@ -1,0 +1,376 @@
+;=============================================================================
+; ddkMicroV3c.per -- V3b "stands and fires, never kites". Root cause analysis:
+;
+;   V3b's oscillator gates were tuned for a SYNCHRONIZED ball (Immortal's units
+;   align reloads because they move together first). Our ball starts COLD and
+;   ASYNCHRONOUS: 12 units firing at staggered phases means the 45th-percentile
+;   "just fired" statistic is TRUE forever (expected 5th-highest obj55 of 12
+;   staggered 2000ms reloads ~ 1230 > the 990 gate) -> VOLLEY never releases.
+;
+;   V3c FIX: a plain PASS-CLOCK stutter drives the fire/move alternation --
+;   immune to reload-phase statistics. VOLLEY ~14 passes, STEP ~10 passes.
+;   Synchronization then EMERGES: the stance-no-attack step window lets every
+;   unit finish reloading, so the next volley fires together (Immortal's own
+;   effect, achieved by the move phase itself).
+;
+;   Also de-risked: the STEP order uses the EXACTLY-PROVEN form from our
+;   in-game-tested files + Bright Spark (formation -1, single issue, re-issued
+;   every pass while stepping -- ddkCircleV3's proven continuous-chase pattern).
+;   formation-line(2) / double-issue / beat-throttle come back later, one at a
+;   time, once the kite visibly works.
+;
+; Kept from V3b: median anchor, range servo (err = range - gap, +/-500), strafe
+; +/-200 w/ persistent sign, speed-normalized step, obstacle point-contains
+; flip, stuck detector + Illuminati path fan-out, idempotent attack, all-units
+; generality (cmdid-military class -1), kite only when out-ranging (melee/equal
+; fights normally). Enemy = P3. Rules kept well under the 32-element limit.
+;=============================================================================
+
+(defconst enemy-player 3)
+
+(defconst gl-cen-x 41)
+(defconst gl-cen-y 42)
+(defconst gl-en-x 43)
+(defconst gl-en-y 44)
+(defconst gl-move-x 45)
+(defconst gl-move-y 46)
+(defconst gl-dir 47)
+(defconst gl-strafe 48)
+(defconst gl-ec 49)
+(defconst gl-ss 53)
+(defconst gl-erange 57)
+(defconst gl-state 58)      ; 0 idle / 1 fight / 2 step / 3 volley
+(defconst gl-cool 59)
+(defconst gl-prev-x 60)
+(defconst gl-prev-y 61)
+(defconst gl-snap 62)
+(defconst gl-stuck 63)
+(defconst gl-fan 64)
+(defconst gl-lerp 65)
+(defconst gl-crossfan 66)
+(defconst gl-sign 67)
+(defconst gl-gap 68)
+(defconst gl-w116 69)
+(defconst gl-outrng 70)
+(defconst gl-moved 71)
+(defconst gl-mid 72)
+(defconst gl-reload 75)
+(defconst gl-range 76)
+(defconst gl-speed 77)
+(defconst gl-step 78)
+(defconst gl-err 79)
+(defconst gl-neg 80)
+(defconst gl-sbeat 81)
+(defconst gl-entry 82)
+(defconst gl-prevstate 83)
+(defconst gl-class 84)
+(defconst gl-tid 87)
+(defconst gl-len 88)
+(defconst gl-beat 89)
+(defconst gl-clk 90)        ; the stutter clock: pass counter mod 24
+
+(defconst VOLLEY-PASSES 14) ; clk 0..13 = VOLLEY (fire), 14..23 = STEP (move)
+(defconst CYCLE-PASSES 24)
+
+; --- INIT ---
+(defrule
+	(true)
+	=>
+	(set-goal gl-dir 1)
+	(set-goal gl-cool 0)
+	(set-goal gl-snap 0)
+	(set-goal gl-stuck 0)
+	(set-goal gl-state 0)
+	(set-goal gl-prevstate 0)
+	(set-goal gl-entry 0)
+	(set-goal gl-sbeat 0)
+	(set-goal gl-clk 0)
+	(set-goal gl-prev-x -1)
+	(set-goal gl-prev-y -1)
+	(set-goal gl-cen-x 0)
+	(set-goal gl-cen-y 0)
+	(disable-self)
+)
+
+; --- counters ---
+(defrule
+	(up-compare-goal gl-cool c:> 0)
+	=>
+	(up-modify-goal gl-cool c:- 1)
+)
+(defrule
+	(true)
+	=>
+	(up-modify-goal gl-snap c:+ 1)
+	(up-modify-goal gl-sbeat c:+ 1)
+	(up-modify-goal gl-clk c:+ 1)
+	(up-modify-goal gl-clk c:mod CYCLE-PASSES)
+)
+
+; --- SENSE A: enemy present? ---
+(defrule
+	(true)
+	=>
+	(set-goal gl-ec 0)
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-find-remote c: -1 c: 50)
+	(up-get-search-state gl-ec)
+)
+
+; --- SENSE B: nearest enemy -> pos, range, unique id ---
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	=>
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-set-target-point gl-cen-x)
+	(up-find-remote c: -1 c: 50)
+	(up-clean-search search-remote 44 1)
+	(up-set-target-object search-remote c: 0)
+	(up-get-object-data 38 gl-en-x)
+	(up-get-object-data 39 gl-en-y)
+	(up-get-object-data 12 gl-erange)
+	(up-get-object-data 0 gl-tid)
+	(up-modify-goal gl-erange c:* 100)
+)
+
+; --- SENSE C: own ball (search-local SURVIVES to the STEP order) ---
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	=>
+	(up-full-reset-search)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-get-search-state gl-ss)
+)
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-ss c:>= 1)
+	=>
+	(up-modify-goal gl-mid g:= gl-ss)
+	(up-modify-goal gl-mid c:- 1)
+	(up-modify-goal gl-mid c:/ 2)
+	(up-clean-search search-local 38 1)
+	(up-set-target-object search-local g: gl-mid)
+	(up-get-object-data 38 gl-cen-x)
+	(up-get-object-data 13 gl-speed)
+	(up-get-object-data 2 gl-class)
+	(up-get-object-data 54 gl-reload)
+	(up-get-object-data 12 gl-range)
+	(up-clean-search search-local 39 1)
+	(up-set-target-object search-local g: gl-mid)
+	(up-get-object-data 39 gl-cen-y)
+)
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-ss c:>= 1)
+	=>
+	(up-modify-goal gl-range c:* 100)
+	(up-modify-goal gl-outrng g:= gl-range)
+	(up-modify-goal gl-outrng c:- 100)
+	(up-modify-goal gl-step g:= gl-speed)
+	(up-modify-goal gl-step c:* 390)
+	(up-modify-goal gl-step c:/ 100)
+	(up-get-point-distance gl-cen-x gl-en-x gl-gap)
+	(up-modify-goal gl-w116 g:= gl-reload)
+	(up-modify-goal gl-w116 c:- 350)
+	(up-modify-goal gl-w116 c:- 10)
+)
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-ss c:>= 1)
+	(up-compare-goal gl-class c:== 936)
+	=>
+	(up-modify-goal gl-w116 g:= gl-reload)
+	(up-modify-goal gl-w116 c:- 1000)
+	(up-modify-goal gl-w116 c:- 10)
+	(up-modify-goal gl-w116 c:max 100)
+)
+
+; --- TRANSITIONS: clock-driven stutter (kite mode) / fight (non-kite) ---
+(defrule
+	(up-compare-goal gl-ec c:== 0)
+	=>
+	(set-goal gl-state 0)
+)
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-erange g:>= gl-outrng)
+	=>
+	(set-goal gl-state 1)
+)
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-erange g:< gl-outrng)
+	(up-compare-goal gl-clk c:< VOLLEY-PASSES)
+	=>
+	(set-goal gl-state 3)
+)
+(defrule
+	(up-compare-goal gl-ec c:>= 1)
+	(up-compare-goal gl-erange g:< gl-outrng)
+	(up-compare-goal gl-clk c:>= VOLLEY-PASSES)
+	=>
+	(set-goal gl-state 2)
+)
+(defrule
+	(up-compare-goal gl-state g:!= gl-prevstate)
+	=>
+	(set-goal gl-entry 1)
+	(set-goal gl-sbeat 0)
+	(up-modify-goal gl-prevstate g:= gl-state)
+)
+
+; --- STUCK detector (STEP only) ---
+(defrule
+	(up-compare-goal gl-snap c:>= 24)
+	(up-compare-goal gl-state c:== 2)
+	(up-compare-goal gl-prev-x c:>= 0)
+	=>
+	(up-get-point-distance gl-cen-x gl-prev-x gl-moved)
+)
+(defrule
+	(up-compare-goal gl-snap c:>= 24)
+	(up-compare-goal gl-state c:== 2)
+	(up-compare-goal gl-prev-x c:>= 0)
+	(up-compare-goal gl-moved c:< 40)
+	=>
+	(set-goal gl-stuck 1)
+	(up-modify-goal gl-dir c:* -1)
+	(set-goal gl-cool 40)
+)
+(defrule
+	(up-compare-goal gl-snap c:>= 24)
+	=>
+	(set-goal gl-snap 0)
+	(up-copy-point gl-prev-x gl-cen-x)
+)
+
+; --- STEP 1: destination = median + range servo (radial) + strafe (lateral) ---
+(defrule
+	(up-compare-goal gl-state c:== 2)
+	=>
+	(up-modify-goal gl-err g:= gl-range)
+	(up-modify-goal gl-err g:- gl-gap)
+	(up-modify-goal gl-err c:max -500)
+	(up-modify-goal gl-err c:min 500)
+	(set-goal gl-neg 0)
+	(up-modify-goal gl-neg g:- gl-err)
+	(set-goal gl-strafe 200)
+	(up-modify-goal gl-strafe g:* gl-dir)
+	(up-copy-point gl-move-x gl-cen-x)
+	(up-lerp-tiles gl-move-x gl-en-x g: gl-neg)
+	(up-cross-tiles gl-move-x gl-en-x g: gl-strafe)
+)
+; --- STEP 2: speed-normalize (never order farther than ~3.9x unit speed) ---
+(defrule
+	(up-compare-goal gl-state c:== 2)
+	=>
+	(up-get-point-distance gl-cen-x gl-move-x gl-len)
+)
+(defrule
+	(up-compare-goal gl-state c:== 2)
+	(up-compare-goal gl-len g:> gl-step)
+	(up-compare-goal gl-len c:> 0)
+	=>
+	(up-modify-goal gl-move-x g:- gl-cen-x)
+	(up-modify-goal gl-move-x g:* gl-step)
+	(up-modify-goal gl-move-x g:/ gl-len)
+	(up-modify-goal gl-move-x g:+ gl-cen-x)
+	(up-modify-goal gl-move-y g:- gl-cen-y)
+	(up-modify-goal gl-move-y g:* gl-step)
+	(up-modify-goal gl-move-y g:/ gl-len)
+	(up-modify-goal gl-move-y g:+ gl-cen-y)
+)
+; --- STEP 3: obstacle at the planned point -> flip strafe + recompute ---
+(defrule
+	(up-compare-goal gl-state c:== 2)
+	(up-compare-goal gl-cool c:== 0)
+	(or (up-point-contains gl-move-x c: 915)
+	(or (up-point-contains gl-move-x c: 927)
+		(up-point-contains gl-move-x c: 939)))
+	=>
+	(up-modify-goal gl-dir c:* -1)
+	(set-goal gl-cool 40)
+	(set-goal gl-strafe 200)
+	(up-modify-goal gl-strafe g:* gl-dir)
+	(up-copy-point gl-move-x gl-cen-x)
+	(up-lerp-tiles gl-move-x gl-en-x g: gl-neg)
+	(up-cross-tiles gl-move-x gl-en-x g: gl-strafe)
+)
+; --- STEP 4: stuck -> arm the fan-out ONCE (1 -> 2) ---
+(defrule
+	(up-compare-goal gl-state c:== 2)
+	(up-compare-goal gl-stuck c:== 1)
+	=>
+	(set-goal gl-stuck 2)
+	(set-goal gl-fan 0)
+	(set-goal gl-lerp -200)
+	(set-goal gl-crossfan 200)
+	(up-modify-goal gl-crossfan g:* gl-dir)
+	(set-goal gl-sign 100)
+	(up-modify-goal gl-sign g:* gl-dir)
+)
+; --- STEP 5: fan-out while unreachable (Illuminati I-DUC 1578-1592) ---
+(defrule
+	(up-compare-goal gl-state c:== 2)
+	(up-compare-goal gl-stuck c:== 2)
+	(up-compare-goal gl-fan c:< 5)
+	(up-path-distance gl-move-x 1 == 65535)
+	=>
+	(up-modify-goal gl-lerp c:- 100)
+	(up-modify-goal gl-crossfan c:* -1)
+	(up-modify-goal gl-sign c:* -1)
+	(up-modify-goal gl-crossfan g:+ gl-sign)
+	(up-copy-point gl-move-x gl-cen-x)
+	(up-lerp-tiles gl-move-x gl-en-x g: gl-lerp)
+	(up-cross-tiles gl-move-x gl-en-x g: gl-crossfan)
+	(up-modify-goal gl-fan c:+ 1)
+	(up-jump-rule -1)
+)
+(defrule
+	(up-compare-goal gl-state c:== 2)
+	(up-compare-goal gl-stuck c:== 2)
+	(up-path-distance gl-move-x 1 != 65535)
+	=>
+	(set-goal gl-stuck 0)
+)
+; --- STEP 6: the PROVEN move order, re-issued every pass while stepping
+;     (ddkCircleV3 / Bright Spark form: formation -1, single issue) ---
+(defrule
+	(up-compare-goal gl-state c:== 2)
+	=>
+	(up-bound-precise-point gl-move-x 1 c: 100)
+	(up-modify-sn sn-target-point-adjustment c:= 6)
+	(up-target-point gl-move-x action-move -1 stance-no-attack)
+	(up-modify-sn sn-target-point-adjustment c:= 5)
+)
+
+; --- ATTACK (FIGHT 1 / VOLLEY 3): idempotent, throttled ---
+(defrule
+	(or (up-compare-goal gl-state c:== 1)
+		(up-compare-goal gl-state c:== 3))
+	=>
+	(up-modify-goal gl-beat g:= gl-sbeat)
+	(up-modify-goal gl-beat c:mod 8)
+)
+(defrule
+	(or (up-compare-goal gl-state c:== 1)
+		(up-compare-goal gl-state c:== 3))
+	(or (up-compare-goal gl-entry c:== 1)
+		(up-compare-goal gl-beat c:== 0))
+	=>
+	(set-goal gl-entry 0)
+	(up-modify-sn sn-focus-player-number c:= enemy-player)
+	(up-full-reset-search)
+	(up-set-target-point gl-cen-x)
+	(up-find-remote c: -1 c: 50)
+	(up-clean-search search-remote 44 1)
+	(up-set-target-object search-remote c: 0)
+	(up-filter-include 4 -1 -1 -1)
+	(up-find-local c: -1 c: 240)
+	(up-remove-objects search-local 55 g:>= gl-w116)
+	(up-remove-objects search-local 23 g:== gl-tid)
+	(up-target-objects 1 action-default -1 -1)
+)

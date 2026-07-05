@@ -75,12 +75,24 @@ apps/website/backups/
 # Raw extracted game graphics (19GB local dump; never commit)
 graphics/game_raw_files/
 
-# (2026-06-11: graphics/art + sprite upscales are TRACKED again by owner decision —
-# repo doubles as the backup for the generated art)
+# Generated art is NOT tracked (2026-07-05 owner decision): the Railway staging
+# bucket (aoe2-assets) is the backup — graphics/units 4x refs + GIFs live under
+# gifs/ + img/unit_sprites_full/, AI art under generated/. Only pipeline scripts,
+# READMEs and fonts are committed. (Supersedes the 2026-06-11 re-track decision.)
+graphics/extracted/
+graphics/art/
+graphics/nanobanana/renders/
+graphics/nanobanana/critique/
+graphics/youtube/*.png
+
 # Scratch / working files
 .scratch/
+.scratch_nb/
 tmp/
 .tmp_research/
+
+# Staging area for confirmed-then-manual deletion (user reviews, then deletes)
+delete_me/
 
 # Archived-but-kept files (see .old/README.md); local only
 .old/

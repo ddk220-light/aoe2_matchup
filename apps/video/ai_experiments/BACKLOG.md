@@ -1,5 +1,10 @@
 # Micro-AI backlog (2026-07-02, user request: "try different angles, versions to test")
 
+> **SCOPE NARROWED 2026-07-05**: focus is now ONLY ranged-vs-melee unit control (items 0-1).
+> Items 2-4 (RvR strafe, melee, siege) are descoped — the user will use the stock Immortal AI
+> for those. Their .per files moved to `ddk_backup\ai`, scenarios to `ddk_backup\scenario`;
+> sources remain in this folder + the `aoe2_ai_for_simulation` branch if ever revived.
+
 Each item ships as its OWN fresh-named .per (game caches parses by filename) with its own
 pre-wired test scenario(s) (AI picked inside the file — load in editor, hit Test).
 `ddkImmortalCoreG` stays untouched as the flat-ground baseline; every variant derives from it
@@ -9,9 +14,9 @@ by generator script + structural validator (only whitelisted rules may differ fr
 |---|---------|-------|------------------|--------|
 | 0 | ddkImmortalCoreG | flat-ground kite baseline (per-unit W_fire/dwell/tiers) | ddk TEST <unit> ×7 + Blank | **awaiting user test** |
 | 1 | ddkImmortalCoreH | obstacle + map-edge handling: probe the issued kite point with `up-point-contains` (tree 915 / wall 927 / gate 939) + `up-path-distance == 65535` + pinned-against-edge check → flip strafe direction (2.5s cooldown) + 1.6s lateral-evade boost | ddk TEST Obst Line / Block / Pillars / Choke / Pocket (all pre-pick CoreH) | built |
-| 2 | ddkImmortalCoreI | ranged-vs-ranged stutter-strafe: when NOT out-ranging, volley stays the fight but between volleys take a short alternating LATERAL hop (step 180%, dwell 400) — dodge arrows without losing DPS | ddk TEST RvR Strafe (arbs vs arbs) | built |
-| 3 | ddkMeleeV1 | melee spread-engagement: sort own + enemies left→right, assign each melee unit its own enemy (k → k mod m) on a 2s beat → the charge fans out (surround) and mirror fights engage 1:1 without bumping; keeps scenario aggressive stance (no de-aggro) so pursuit/auto-acquire stay native | ddk TEST Melee vs Archers, ddk TEST Melee Mirror | built |
-| 4 | ddkImmortalCoreS | siege micro: CoreG pipeline + siege classes (913 mangonel line, 955 scorpions) in the finds + DB W_fire rows (mangonel delay 0 → 60) — long dwell (reload 6s → 2200) gives snap volleys + slow repositioning; kite machine backs mangonels away from chargers | ddk TEST Siege (mangonels vs arbs) | built |
+| 2 | ddkImmortalCoreI | ranged-vs-ranged stutter-strafe: when NOT out-ranging, volley stays the fight but between volleys take a short alternating LATERAL hop (step 180%, dwell 400) — dodge arrows without losing DPS | ddk TEST RvR Strafe (arbs vs arbs) | **descoped** (built, in backup) |
+| 3 | ddkMeleeV1 | melee spread-engagement: sort own + enemies left→right, assign each melee unit its own enemy (k → k mod m) on a 2s beat → the charge fans out (surround) and mirror fights engage 1:1 without bumping; keeps scenario aggressive stance (no de-aggro) so pursuit/auto-acquire stay native | ddk TEST Melee vs Archers, ddk TEST Melee Mirror | **descoped** (built, in backup) |
+| 4 | ddkImmortalCoreS | siege micro: CoreG pipeline + siege classes (913 mangonel line, 955 scorpions) in the finds + DB W_fire rows (mangonel delay 0 → 60) — long dwell (reload 6s → 2200) gives snap volleys + slow repositioning; kite machine backs mangonels away from chargers | ddk TEST Siege (mangonels vs arbs) | **descoped** (built, in backup) |
 
 ## Later (need in-game feedback first)
 

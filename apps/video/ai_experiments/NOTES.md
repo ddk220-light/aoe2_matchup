@@ -263,3 +263,13 @@ verified: right AI, dirt terrain, armies, bounds):
 * ddkImmortalCoreS (siege): CoreG + class 913/955 in all three find blocks + DB W_fire
   rows (mangonel/onager/SO 60, scorpion 260, heavy scorpion 160). Long reload -> dwell
   2200 = snap volleys + long repositioning. Scenario: Siege (6 mangonels vs 10 arbs).
+
+## 2026-07-05 — scope narrowed to ranged-vs-melee only
+
+User decision: focus exclusively on ranged-vs-melee unit control; stock Immortal covers the
+other roles. Deployed set is now just ddkImmortalCoreF/G/H in the Steam ai dir and 13
+scenarios (Blank + 7 unit arenas on CoreG, 5 Obst arenas on CoreH). CoreI/CoreS/MeleeV1
+(.per+.ai) moved to ddk_backup\ai; RvR Strafe / Melee vs Archers / Melee Mirror / Siege
+scenarios moved to ddk_backup\scenario (game-regenerated "The Siege"/"default1" re-backed-up
+with a "(2)" suffix). Sources stay in this folder and on the aoe2_ai_for_simulation branch.
+tools/verify_all.py trimmed to the 13-scenario expectation table — reports ALL 13 GOOD.

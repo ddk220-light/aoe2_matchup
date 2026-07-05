@@ -23,10 +23,6 @@ EXPECT = {
     "ddk TEST Obst Pillars":     ("ddkImmortalCoreH", 39, 12, 38, 8),
     "ddk TEST Obst Choke":       ("ddkImmortalCoreH", 39, 12, 38, 8),
     "ddk TEST Obst Pocket":      ("ddkImmortalCoreH", 39, 12, 38, 8),
-    "ddk TEST RvR Strafe":       ("ddkImmortalCoreI", 492, 12, 492, 10),
-    "ddk TEST Melee vs Archers": ("ddkMeleeV1", 38, 12, 492, 10),
-    "ddk TEST Melee Mirror":     ("ddkMeleeV1", 38, 10, 38, 10),
-    "ddk TEST Siege":            ("ddkImmortalCoreS", 280, 6, 492, 10),
 }
 ok = True
 for name, (ai, c2, n2, c3, n3) in EXPECT.items():
@@ -46,4 +42,4 @@ for name, (ai, c2, n2, c3, n3) in EXPECT.items():
     ok &= good
     print(f"{'OK ' if good else 'BAD'} {name:26s} ai={pd2.ai_names[1]:18s} "
           f"P2={dict(p2)} P3={dict(p3)} terrain_bad={bad_t} oob={len(oob)}")
-print("ALL 17 GOOD" if ok else "FAILURES ABOVE")
+print(f"ALL {len(EXPECT)} GOOD" if ok else "FAILURES ABOVE")

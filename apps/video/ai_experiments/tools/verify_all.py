@@ -14,7 +14,7 @@ EXPECT = {
     "ddk TEST CavArcher":        ("ddkImmortalCoreG", 39, 12, 38, 8),
     "ddk TEST Bolas":            ("ddkImmortalCoreG", 2571, 12, 38, 8),
     "ddk TEST Longbow":          ("ddkImmortalCoreG", 530, 12, 38, 8),
-    "ddk TEST Arambai":          ("ddkImmortalCoreG", 1128, 12, 38, 8),
+    "ddk TEST Arambai":          ("ddkImmortalCoreF", 1128, 12, 38, 8),  # 16x16 half-size test
     "ddk TEST HandCannon":       ("ddkImmortalCoreG", 5, 12, 38, 8),
     "ddk TEST Elephant":         ("ddkImmortalCoreG", 875, 12, 38, 8),
     "ddk TEST Mangudai":         ("ddkImmortalCoreG", 561, 12, 38, 8),

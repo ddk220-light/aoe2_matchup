@@ -160,6 +160,13 @@ def build(out_path, map_size=32, ranged_const=CAVALRY_ARCHER, melee_const=KNIGHT
         um.remove_unit(unit=u)
         gaia_removed += 1
 
+    # The template parks P1's two INVISIBLE_OBJECT keep-alive markers at (31.5, 30.5) --
+    # off the map below --map-size 32. Tuck strays into the near corner (don't remove:
+    # a player with no objects is defeated at start).
+    for u in um.get_player_units(BR.P_SPECTATOR):
+        if not (0 <= u.x < mm.map_size and 0 <= u.y < mm.map_size):
+            u.x = u.y = 0.5
+
     # 2) RANGED kiters (P2 = side 1) -- a tight block a few tiles NORTH of centre, so they
     #    open fire immediately and Immortal starts kiting them back into the box.
     #    (--blank: place NOTHING; the user paints armies in the editor and hits Test --

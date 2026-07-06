@@ -407,7 +407,7 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
                 cap=240, mode="count", unit_cap=30, live_overlay=True, compose=True,
                 out_mov=os.path.join(TMP, "auto_fight.mov"),
                 final=os.path.join(TMP, "auto_matchup_FINAL.mp4"),
-                dismiss_after=True, logfile=None) -> Path:
+                dismiss_after=True, logfile=None, build_fn=build_run) -> Path:
     """One full matchup: build from template -> stage -> navigate -> record -> Test
     -> watch for end -> stop -> (dismiss to editor) -> compose recap -> copy.
 
@@ -430,7 +430,10 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
     from overlay.overlay_data import get_unit_card
     ranged = (bool(get_unit_card(civ1, slug1).get("is_ranged")),
               bool(get_unit_card(civ2, slug2).get("is_ranged")))
-    build_run(side1, side2, run_path, counts=counts, ranged=ranged)
+    # build_fn is swappable (default build_run = default3 template auto-fight; the
+    # unit-analysis pipeline passes a golden-template builder). All builders take the
+    # same (side1, side2, out_path, counts=, ranged=) calling convention.
+    build_fn(side1, side2, run_path, counts=counts, ranged=ranged)
     log(f"[build] {side1[2]} x{counts[0]} ({civ1}) vs {side2[2]} x{counts[1]} ({civ2}) "
         f"[{mode}] ranged={ranged} -> {run_path}", logfile)
 

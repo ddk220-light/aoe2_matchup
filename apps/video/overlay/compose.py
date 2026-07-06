@@ -60,6 +60,27 @@ def _run(cmd: list):
     return p
 
 
+def extra_overlay_filters(extra_overlays, first_input_index, upstream):
+    """Filter-graph fragments for timed PNG overlays.
+    extra_overlays: [(png_path, x_expr, y_expr, t_start, t_end, fade_s)].
+    Returns (filter_strings, n_extra_inputs); caller appends the PNGs as
+    ffmpeg inputs starting at first_input_index and chains from `upstream`."""
+    filters, cur = [], upstream
+    for i, (_, x, y, t0, t1, fade) in enumerate(extra_overlays):
+        idx = first_input_index + i
+        src = f"[{idx}:v]"
+        if fade:
+            src_lbl = f"[xf{i}]"
+            filters.append(
+                f"[{idx}:v]format=rgba,fade=t=out:st={t1 - fade}:d={fade}:alpha=1{src_lbl}")
+            src = src_lbl
+        out = f"[xo{i}]"
+        filters.append(
+            f"{cur}{src}overlay={x}:{y}:enable='between(t,{t0},{t1})'{out}")
+        cur = out
+    return filters, len(extra_overlays)
+
+
 # Output quality knobs (env-overridable for quick experiments).
 OUT_FPS = int(os.environ.get("MATCHUP_FPS", "60"))       # smoother motion
 X264_CRF = os.environ.get("MATCHUP_CRF", "17")           # lower = higher quality
@@ -102,6 +123,27 @@ def _card_segment(card_png: Path, seconds: float, out: Path, size, *,
           f"fade=t=out:st={seconds-fade}:d={fade}:alpha=1[c];"
           f"[0:v][c]overlay=(W-w)/2:(H-h)/2:format=auto[v]",
           "-map", "[v]", "-map", "2:a", *_x264(), *_AAC, str(out)])
+    return out
+
+
+def _card_segment_gif(gif_path: Path, seconds: float, out: Path, size, *,
+                      card_width_frac: float, bg="0x12100b", fade=0.4) -> Path:
+    """Like _card_segment but the centered card is an animated GIF, looped to
+    fill `seconds` (-ignore_loop 0). Codec-identical to _card_segment so the
+    result stream-copy-concats with the rest via concat_videos."""
+    w, h = size
+    target_w = int(w * card_width_frac)
+    _run([_ffmpeg(), "-y",
+          "-f", "lavfi", "-i", f"color=c={bg}:s={w}x{h}:d={seconds}:r={OUT_FPS}",
+          "-ignore_loop", "0", "-t", f"{seconds}", "-i", str(gif_path),  # loop gif
+          "-f", "lavfi", "-t", f"{seconds}", "-i", _ANULLSRC,  # silent audio track
+          "-filter_complex",
+          f"[1:v]scale={target_w}:-1:flags=lanczos,format=rgba,"
+          f"fade=t=in:st=0:d={fade}:alpha=1,"
+          f"fade=t=out:st={seconds - fade}:d={fade}:alpha=1[c];"
+          f"[0:v][c]overlay=(W-w)/2:(H-h)/2:format=auto[v]",
+          "-map", "[v]", "-map", "2:a", *_x264(), *_AAC, "-movflags", "+faststart",
+          str(out)])
     return out
 
 
@@ -404,7 +446,7 @@ def _battle_end_at(sidecar, buffer: float = 2.5):
 
 def make_live_overlay_video(u1: dict, u2: dict, out_path, battle_clip, sidecar,
                             lead_in: float, counts=(30, 30), size=(2560, 1440),
-                            work_dir=None) -> Path:
+                            work_dir=None, extra_overlays=()) -> Path:
     """Single-clip pipeline (no separate intro/outro card screens): the real fight footage
     with a TOP draining army-HP bar (icons + live "cur/start" unit counts + HP%) burned in
     from the `sidecar` timeline, the unit DETAIL cards composited over the opening 10s,
@@ -487,6 +529,15 @@ def make_live_overlay_video(u1: dict, u2: dict, out_path, battle_clip, sidecar,
     if results_png is not None:
         idx["res"] = len(inputs)
         inputs.append(["-loop", "1", "-t", f"{hold + 0.2:.2f}", "-i", str(results_png)])
+    # timed extra overlays (banner / caption cards etc.) — registered BEFORE the
+    # anull block so idx["anull"] stays the last input index (the audio map at the
+    # bottom references it by index). t0/t1 in each spec are on the FINAL clock.
+    ov_first = None
+    ov_dur = f"{max(1.0, end2 - lead_in) + 0.2:.2f}"
+    if extra_overlays:
+        ov_first = len(inputs)
+        for png, *_ in extra_overlays:
+            inputs.append(["-loop", "1", "-t", ov_dur, "-i", str(png)])
     if not has_a:
         idx["anull"] = len(inputs)
         inputs.append(["-f", "lavfi", "-t", f"{max(1.0, end2 - lead_in)}", "-i", _ANULLSRC])
@@ -548,10 +599,19 @@ def make_live_overlay_video(u1: dict, u2: dict, out_path, battle_clip, sidecar,
                          f"y=(main_h-overlay_h)*0.56[vr{i}]")
             label = f"[vr{i}]"
         vlabels.append(label)
+    # if timed extra overlays are queued, the segments reassemble into [vcat]
+    # and the overlay chain (run at 1x on the output clock) produces final [v].
+    vfinal = "[vcat]" if extra_overlays else "[v]"
     if n_seg > 1:
-        parts.append("".join(vlabels) + f"concat=n={n_seg}:v=1:a=0[v]")
+        parts.append("".join(vlabels) + f"concat=n={n_seg}:v=1:a=0{vfinal}")
     else:
-        parts.append(f"{vlabels[0]}null[v]")
+        parts.append(f"{vlabels[0]}null{vfinal}")
+    if extra_overlays:
+        ov_filters, _ = extra_overlay_filters(extra_overlays, ov_first, "[vcat]")
+        # extra_overlay_filters chains xo0->xo1->... ; retarget the final node to [v]
+        ov_filters[-1] = ov_filters[-1].replace(
+            f"[xo{len(extra_overlays) - 1}]", "[v]")
+        parts.extend(ov_filters)
 
     # ---- audio graph (trimmed/sped to match) ------------------------------------
     if has_a:

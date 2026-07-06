@@ -4,6 +4,12 @@
 > Items 2-4 (RvR strafe, melee, siege) are descoped — the user will use the stock Immortal AI
 > for those. Their .per files moved to `ddk_backup\ai`, scenarios to `ddk_backup\scenario`;
 > sources remain in this folder + the `aoe2_ai_for_simulation` branch if ever revived.
+>
+> **SINGLE-AI SETUP 2026-07-05 (later)**: CoreG is the ONE going-forward AI (now with the
+> dynamic-enemy fix — works assigned to either P2 or P3); CoreF/CoreH archived too. The test
+> bed is the user-made `golden_template` scenario (repo copy in apps/video/templates/), which
+> replaced the whole ddk TEST fleet. CoreH's obstacle appendix stays on the backlog for
+> re-layering onto CoreG once flat-ground kiting feel is signed off.
 
 Each item ships as its OWN fresh-named .per (game caches parses by filename) with its own
 pre-wired test scenario(s) (AI picked inside the file — load in editor, hit Test).

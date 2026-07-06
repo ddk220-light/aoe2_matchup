@@ -7,6 +7,8 @@ Surgical edits (load-bearing rules 0-77, whitelisted):
   Rule 46 -- 600ms dwell literal -> g:>= gDwell (reload-scaled)
   Rule 49 -- strafe 200 literal -> g:= gStrafeBase (speed-tiered)
   Rule 54 -- step 390 literal   -> g:= gStepPct   (speed-tiered)
+  Rule 32 -- enemy-scan focus c:= 3 -> g:= gEnemyPly (dynamic enemy player)
+  Rule 76 -- steady-state sn-target-player c:= 3 -> g:= gEnemyPly
 Appendix rules 85+ (nothing jumps there; numbering-free).
 
 W_fire = final_attack_delay(ms) + 60 release margin, from data/golden/aoe2_reference.db.
@@ -57,7 +59,12 @@ rep("(defconst gDiag7 189)",
     "(defconst gUType 193)\n"
     "(defconst gUClass 194)\n"
     "(defconst gStrafeBase 195)\n"
-    "(defconst gStepPct 196)")
+    "(defconst gStepPct 196)\n"
+    "(defconst gEnemyPly 197)\n"
+    "(defconst gEnemyFound 198)\n"
+    "(defconst gDiagE 199)\n"
+    "(defconst player_stance-enemy 3)\n"
+    "(defconst find-closest 2)")
 
 # --- Rule 0: init new goals (23 -> 28 elements, cap 32) ---
 rep("\t(up-modify-goal gDiag7 c:= 0)\n\t(chat-to-player 1 \"ImmortalCoreF up\")",
@@ -67,7 +74,17 @@ rep("\t(up-modify-goal gDiag7 c:= 0)\n\t(chat-to-player 1 \"ImmortalCoreF up\")"
     "\t(up-modify-goal gWset c:= 0)\n"
     "\t(up-modify-goal gStrafeBase c:= 200)\n"
     "\t(up-modify-goal gStepPct c:= 390)\n"
+    "\t(up-modify-goal gEnemyPly c:= 3)\n"
     "\t(chat-to-player 1 \"ImmortalCoreG up\")")
+
+# --- Rule 32: enemy scan focuses the DYNAMIC enemy player (fix: CoreG assigned to
+#     P3 hunted its own units via the hardcoded 3 and never kited) ---
+rep("\t(up-modify-sn sn-focus-player-number c:= 3)",
+    "\t(up-modify-sn sn-focus-player-number g:= gEnemyPly)")
+
+# --- Rule 76: steady-state engine override targets the same dynamic enemy ---
+rep("\t(up-modify-sn sn-target-player c:= 3)",
+    "\t(up-modify-sn sn-target-player g:= gEnemyPly)")
 
 # --- Rule 44/45: kite only when out-ranging ---
 rep("\t\t(up-compare-goal gStateAge c:>= 3000))\n\t(up-compare-goal gState c:== 22)",
@@ -253,6 +270,35 @@ ap.append("""(defrule
 \t=>
 \t(up-modify-goal gWset c:= 2)
 \t(chat-to-player 1 "WFIRE SET")
+)
+;=== DYNAMIC ENEMY PLAYER (2026-07-05) ==========================================
+;   Fix: assigned to P3, CoreG hunted its own units (hardcoded enemy 3) and never
+;   kited. up-find-player (Immortal's own idiom, v0d10f corpus) resolves the
+;   closest ENEMY-stance player every pass; keeps the rule-0 default (3) when
+;   diplomacy yields nobody (old one-way-ally arenas). One-pass lag by design.
+(defrule
+\t(true)
+\t=>
+\t(up-find-player player_stance-enemy find-closest gEnemyFound)
+)
+(defrule
+\t(up-compare-goal gEnemyFound c:== 2)
+\t(up-compare-goal gDiagE c:!= 1)
+\t=>
+\t(up-modify-goal gDiagE c:= 1)
+\t(chat-to-player 1 "ENEMY = P2")
+)
+(defrule
+\t(up-compare-goal gEnemyFound c:== 3)
+\t(up-compare-goal gDiagE c:!= 1)
+\t=>
+\t(up-modify-goal gDiagE c:= 1)
+\t(chat-to-player 1 "ENEMY = P3")
+)
+(defrule
+\t(up-compare-goal gEnemyFound c:> 0)
+\t=>
+\t(up-modify-goal gEnemyPly g:= gEnemyFound)
 )""")
 
 appendix = "\n".join(ap) + "\n"
@@ -262,4 +308,4 @@ text = text.rstrip("\r\n") + NL + appendix
 
 io.open(DST, "w", encoding="utf-8", newline="").write(text)
 n_rules = text.count("(defrule")
-print(f"wrote {DST}: {len(text)} chars, {n_rules} defrules (expect 115), NL={NL!r}")
+print(f"wrote {DST}: {len(text)} chars, {n_rules} defrules (expect 119), NL={NL!r}")

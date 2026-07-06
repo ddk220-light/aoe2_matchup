@@ -213,6 +213,11 @@
 (defconst gUClass 194)
 (defconst gStrafeBase 195)
 (defconst gStepPct 196)
+(defconst gEnemyPly 197)
+(defconst gEnemyFound 198)
+(defconst gDiagE 199)
+(defconst player_stance-enemy 3)
+(defconst find-closest 2)
 
 ;--- Rule 0 -- INIT ONCE (Immortal #3573 @48613-15 + fixed values) ---
 (defrule
@@ -245,6 +250,7 @@
 	(up-modify-goal gWset c:= 0)
 	(up-modify-goal gStrafeBase c:= 200)
 	(up-modify-goal gStepPct c:= 390)
+	(up-modify-goal gEnemyPly c:= 3)
 	(chat-to-player 1 "ImmortalCoreG up")
 )
 ;--- Rule 1 -- TIME (Immortal #3592 @49196-49210 verbatim idiom) ---
@@ -558,7 +564,7 @@
 	(up-create-group 0 0 c: 0)
 	(up-reset-search _false _false _true _true)
 	(up-set-precise-target-point vecMed)
-	(up-modify-sn sn-focus-player-number c:= 3)
+	(up-modify-sn sn-focus-player-number g:= gEnemyPly)
 	(up-find-remote c: -1 c: 40)
 	(up-find-remote c: -1 c: 40)
 )
@@ -1024,7 +1030,7 @@
 (defrule
 	(true)
 	=>
-	(up-modify-sn sn-target-player c:= 3)
+	(up-modify-sn sn-target-player g:= gEnemyPly)
 	(up-modify-sn sn-percent-enemy-sighted-response c:= 0)
 	(up-modify-sn sn-enemy-sighted-response-distance c:= 0)
 	(up-modify-sn sn-disable-sighted-response-cap c:= 1)
@@ -1379,4 +1385,33 @@
 	=>
 	(up-modify-goal gWset c:= 2)
 	(chat-to-player 1 "WFIRE SET")
+)
+;=== DYNAMIC ENEMY PLAYER (2026-07-05) ==========================================
+;   Fix: assigned to P3, CoreG hunted its own units (hardcoded enemy 3) and never
+;   kited. up-find-player (Immortal's own idiom, v0d10f corpus) resolves the
+;   closest ENEMY-stance player every pass; keeps the rule-0 default (3) when
+;   diplomacy yields nobody (old one-way-ally arenas). One-pass lag by design.
+(defrule
+	(true)
+	=>
+	(up-find-player player_stance-enemy find-closest gEnemyFound)
+)
+(defrule
+	(up-compare-goal gEnemyFound c:== 2)
+	(up-compare-goal gDiagE c:!= 1)
+	=>
+	(up-modify-goal gDiagE c:= 1)
+	(chat-to-player 1 "ENEMY = P2")
+)
+(defrule
+	(up-compare-goal gEnemyFound c:== 3)
+	(up-compare-goal gDiagE c:!= 1)
+	=>
+	(up-modify-goal gDiagE c:= 1)
+	(chat-to-player 1 "ENEMY = P3")
+)
+(defrule
+	(up-compare-goal gEnemyFound c:> 0)
+	=>
+	(up-modify-goal gEnemyPly g:= gEnemyFound)
 )

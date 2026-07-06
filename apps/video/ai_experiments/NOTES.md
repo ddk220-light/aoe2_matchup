@@ -273,3 +273,36 @@ scenarios (Blank + 7 unit arenas on CoreG, 5 Obst arenas on CoreH). CoreI/CoreS/
 scenarios moved to ddk_backup\scenario (game-regenerated "The Siege"/"default1" re-backed-up
 with a "(2)" suffix). Sources stay in this folder and on the aoe2_ai_for_simulation branch.
 tools/verify_all.py trimmed to the 13-scenario expectation table — reports ALL 13 GOOD.
+
+## 2026-07-05 (later) — golden_template + CoreG dynamic-enemy fix; single-AI setup
+
+User made their own test bed: scenario/golden_template.aoe2scenario (16x16, flat, no water,
+dirt + forest-floor accents, ~90 Gaia trees/bushes as scenery, 0 triggers, P1 human spectator
+w/ corner keep-alives, P2 Burmese red = ddkImmortalCoreG.ai 21x Elite Arambai, P3 Berbers
+yellow = Immortal v0d10f 21x Knights, P2<->P3 MUTUAL enemies). THE template going forward;
+reference copy committed at apps/video/templates/golden_template.aoe2scenario. Note: the
+editor stores ai_names WITH the .ai extension ('ddkImmortalCoreG.ai') vs our builder's
+bare name -- both load.
+
+BUG FIX (user-reported: CoreG assigned to P3 does not kite): CoreG hardcoded enemy=3
+(rule 32 sn-focus-player-number c:= 3, rule 76 sn-target-player c:= 3 -- straight from the
+P2-vs-P3 transcription), so on P3 it hunted itself and found nothing. Fix in make_coreG.py
+(regenerated, validated: base-rule diff exactly {0,32,44,45,46,49,54,76}, +34 appendix):
+gEnemyPly goal (197, default 3 in rule 0) feeds both sn writes via g:=; end-of-pass appendix
+resolves the real enemy with Immortal's own idiom (up-find-player player_stance-enemy
+find-closest gEnemyFound) -- diplomacy-driven, so it needs mutual-enemy stances (golden_template
+has them); falls back to 3 when nobody has enemy stance (old one-way-ally arenas). One-pass
+lag by design. One-shot chat "ENEMY = P2"/"ENEMY = P3" (latch gDiagE 199) confirms detection.
+validate_variant.py: pooling the 3.4MB ddkTesterAI.per whole breaks (chat strings contain ';'
+which poisons the comment-stripper) -> curated extra-token allowlist instead (up-find-player,
+cited). CoreG is now 119 rules.
+
+SINGLE-AI CLEANUP (user: "use CoreG going forward, archive the rest"): CoreF + CoreH
+(.per+.ai) -> ddk_backup\ai; ALL 13 ddk TEST scenarios -> ddk_backup\scenario (superseded by
+golden_template; Arambai/Obst ones referenced the archived AIs). Steam ai dir now has ONLY
+ddkImmortalCoreG + Immortal v0d10f (+ untouched non-ddk). verify_all.py rewritten for
+golden_template (flat/no-water/AIs/armies/triggers/bounds). "The Siege"/"default1" reappear
+in the scenario dir on their own -- game-generated, leave them.
+
+REMINDER for testing: the game caches .per parses by FILENAME per session -- CoreG was
+edited IN PLACE, so fully restart AoE2 before testing if it was running.

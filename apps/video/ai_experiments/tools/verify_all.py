@@ -1,5 +1,6 @@
-"""Verify EVERY ddk TEST scenario: right AI pre-picked, dirt+flat terrain, right armies,
-everything in bounds."""
+"""Verify the golden_template scenario (the user-made test bed, 2026-07-05):
+right AIs pre-picked, flat waterless terrain, right armies, no triggers, in bounds.
+The repo keeps a reference copy at apps/video/templates/golden_template.aoe2scenario."""
 from pathlib import Path
 from collections import Counter
 from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
@@ -8,38 +9,46 @@ from AoE2ScenarioParser import settings
 settings.PRINT_STATUS_UPDATES = False
 
 SC = Path(r"C:\Users\ddk22\Games\Age of Empires 2 DE\76561198690498042\resources\_common\scenario")
-# name -> (ai, p2const, p2n, p3const, p3n)
+NAME = "golden_template"
+# per-player expectations: pid -> (ai_name, ai_type, {unit_const: count} or None=don't care)
 EXPECT = {
-    "ddk TEST Blank":            ("ddkImmortalCoreG", None, 0, None, 0),
-    "ddk TEST CavArcher":        ("ddkImmortalCoreG", 39, 12, 38, 8),
-    "ddk TEST Bolas":            ("ddkImmortalCoreG", 2571, 12, 38, 8),
-    "ddk TEST Longbow":          ("ddkImmortalCoreG", 530, 12, 38, 8),
-    "ddk TEST Arambai":          ("ddkImmortalCoreF", 1128, 12, 38, 8),  # 16x16 half-size test
-    "ddk TEST HandCannon":       ("ddkImmortalCoreG", 5, 12, 38, 8),
-    "ddk TEST Elephant":         ("ddkImmortalCoreG", 875, 12, 38, 8),
-    "ddk TEST Mangudai":         ("ddkImmortalCoreG", 561, 12, 38, 8),
-    "ddk TEST Obst Line":        ("ddkImmortalCoreH", 39, 12, 38, 8),
-    "ddk TEST Obst Block":       ("ddkImmortalCoreH", 39, 12, 38, 8),
-    "ddk TEST Obst Pillars":     ("ddkImmortalCoreH", 39, 12, 38, 8),
-    "ddk TEST Obst Choke":       ("ddkImmortalCoreH", 39, 12, 38, 8),
-    "ddk TEST Obst Pocket":      ("ddkImmortalCoreH", 39, 12, 38, 8),
+    2: ("ddkImmortalCoreG.ai", 0, {1128: 21}),   # Burmese, 21 Elite Arambai
+    3: ("Immortal v0d10f.ai", 0, {38: 21}),      # Berbers, 21 Knights
 }
-ok = True
-for name, (ai, c2, n2, c3, n3) in EXPECT.items():
-    scn = AoE2DEScenario.from_file(str(SC / f"{name}.aoe2scenario"))
-    mm, um = scn.map_manager, scn.unit_manager
-    n = mm.map_size
-    bad_t = sum(1 for t in mm.terrain
-                if t.terrain_id != TerrainId.DIRT_1 or t.elevation != 0 or t.layer != -1)
-    pd2 = scn.sections["PlayerDataTwo"]
-    ai_ok = pd2.ai_names[1] == ai and pd2.ai_type[1] == 0
-    p2 = Counter(u.unit_const for u in um.get_player_units(2))
-    p3 = Counter(u.unit_const for u in um.get_player_units(3))
-    oob = [1 for p in range(0, 4) for u in um.get_player_units(p)
-           if not (0 <= u.x < n and 0 <= u.y < n)]
-    armies_ok = ((c2 is None or p2.get(c2) == n2) and (c3 is None or p3.get(c3) == n3))
-    good = bad_t == 0 and ai_ok and armies_ok and not oob
-    ok &= good
-    print(f"{'OK ' if good else 'BAD'} {name:26s} ai={pd2.ai_names[1]:18s} "
-          f"P2={dict(p2)} P3={dict(p3)} terrain_bad={bad_t} oob={len(oob)}")
-print(f"ALL {len(EXPECT)} GOOD" if ok else "FAILURES ABOVE")
+WATER = {t.value for t in TerrainId
+         if any(k in t.name for k in ("WATER", "BEACH", "SHALLOW"))}
+
+scn = AoE2DEScenario.from_file(str(SC / f"{NAME}.aoe2scenario"))
+mm, um, tm = scn.map_manager, scn.unit_manager, scn.trigger_manager
+n = mm.map_size
+fails = []
+if n != 16:
+    fails.append(f"map size {n} != 16")
+wet = sum(1 for t in mm.terrain if t.terrain_id in WATER)
+if wet:
+    fails.append(f"{wet} water/beach tiles")
+hilly = sum(1 for t in mm.terrain if t.elevation != 0)
+if hilly:
+    fails.append(f"{hilly} tiles with elevation != 0")
+if len(tm.triggers) != 0:
+    fails.append(f"{len(tm.triggers)} triggers (expect 0)")
+pd2 = scn.sections["PlayerDataTwo"]
+for pid, (ai, ai_type, army) in EXPECT.items():
+    if pd2.ai_names[pid - 1] != ai or pd2.ai_type[pid - 1] != ai_type:
+        fails.append(f"P{pid} ai={pd2.ai_names[pid - 1]!r}/{pd2.ai_type[pid - 1]} "
+                     f"(expect {ai!r}/{ai_type})")
+    have = Counter(u.unit_const for u in um.get_player_units(pid))
+    if army is not None and dict(have) != army:
+        fails.append(f"P{pid} army {dict(have)} (expect {army})")
+oob = [(pid, u.unit_const, u.x, u.y) for pid in range(0, 4)
+       for u in um.get_player_units(pid) if not (0 <= u.x < n and 0 <= u.y < n)]
+if oob:
+    fails.append(f"out of bounds: {oob}")
+
+if fails:
+    print(f"BAD {NAME}:")
+    for f in fails:
+        print("  -", f)
+else:
+    print(f"OK {NAME}: {n}x{n}, flat, no water, {len(tm.triggers)} triggers, "
+          f"P2={pd2.ai_names[1]!r} P3={pd2.ai_names[2]!r}, armies + bounds good")

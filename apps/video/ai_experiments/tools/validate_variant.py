@@ -13,6 +13,10 @@ BASE = io.open(base_p, encoding="utf-8").read()
 DER = io.open(der_p, encoding="utf-8").read()
 POOL = (BASE + io.open(r"apps\video\ai_experiments\ddkMicroV9.per", encoding="utf-8").read()
         + io.open(r"apps\video\ai_experiments\ddkMicroV1.per", encoding="utf-8").read())
+# Curated extras proven in the Immortal v0d10f corpus but absent from the small
+# pool files (the 3.4MB Immortal derivative can't be pooled whole: its chat strings
+# contain ';' which breaks the comment-stripper). Each entry cites its proof.
+POOL += " up-find-player "  # Immortal: (up-find-player player_stance-enemy find-closest var380)
 EXP_CHANGED = set() if changed_csv == "-" or changed_csv.startswith("set") else {int(x) for x in changed_csv.split(",")}
 EXP_ADDED = int(added_s)
 

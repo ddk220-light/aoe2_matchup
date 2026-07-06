@@ -16,7 +16,8 @@ POOL = (BASE + io.open(r"apps\video\ai_experiments\ddkMicroV9.per", encoding="ut
 # Curated extras proven in the Immortal v0d10f corpus but absent from the small
 # pool files (the 3.4MB Immortal derivative can't be pooled whole: its chat strings
 # contain ';' which breaks the comment-stripper). Each entry cites its proof.
-POOL += " up-find-player "  # Immortal: (up-find-player player_stance-enemy find-closest var380)
+POOL += " up-find-player "   # Immortal: (up-find-player player_stance-enemy find-closest var380)
+POOL += " players-stance "   # Immortal: (players-stance player-2 diplomacy_stance-ally)
 EXP_CHANGED = set() if changed_csv == "-" or changed_csv.startswith("set") else {int(x) for x in changed_csv.split(",")}
 EXP_ADDED = int(added_s)
 

@@ -91,9 +91,10 @@ rep("(defconst gDiag7 189)",
     "(defconst gStrafeBase 195)\n"
     "(defconst gStepPct 196)\n"
     "(defconst gEnemyPly 197)\n"
-    "(defconst gScan2 198)\n"
-    "(defconst gScan3 199)\n"
-    "(defconst gDiagE 200)")
+    "(defconst gDiagE 200)\n"
+    "(defconst diplomacy_stance-enemy 3)\n"
+    "(defconst player-2 2)\n"
+    "(defconst player-3 3)")
 
 # --- broaden the two in-pass find blocks (rule 6 clustering, rule 12 SM) ---
 rep(FIND_OLD, FIND_NEW, n=2)
@@ -292,42 +293,24 @@ ap.append("""(defrule
 \t(up-modify-goal gWset c:= 2)
 \t(chat-to-player 1 "WFIRE SET")
 )
-;=== DYNAMIC ENEMY PLAYER (2026-07-05 v2 -- self-excluding remote scan) ==========
-;   BUG this fixes: assigned to P3, the AI hunted its own units (old hardcoded 3 /
-;   the unverified up-find-player) -> all units slid to one spot and never fired.
-;   up-find-remote can NEVER return the AI's OWN units, so whichever candidate
-;   player returns military when focused is the ENEMY; the self player returns 0.
-;   Uses ONLY primitives proven in Rule 32 (focus + find-remote + get-search-state).
-;   Scans P2 then P3 (the only military slots in these arenas); prefers P2 so an
-;   AI on P3 locks P2, an AI on P2 (P2=self=0) falls through to P3. One-pass lag.
+;=== DYNAMIC ENEMY PLAYER (2026-07-05 v3 -- DIPLOMACY STANCE) =====================
+;   History: hardcoded 3 broke AI-on-P3 (hunted itself); up-find-player was a dud;
+;   the self-excluding find-remote scan was WRONG TOO -- find-remote focused on the
+;   AI's OWN player DOES return its own units, so an AI on P2 locked itself and the
+;   whole ball slid to its own centroid without attacking.
+;   v3 asks the engine's DIPLOMACY directly: (players-stance player-N
+;   diplomacy_stance-enemy) is TRUE only for players that are my ENEMY -- I am
+;   never my own enemy, so this is correct from EITHER slot by construction.
+;   Immortal's exact fact form (players-stance player-N diplomacy_stance-*).
+;   Re-evaluated every pass; falls back to the rule-0 default (3) when no player
+;   has enemy stance (old one-way-ally arenas keep working for an AI on P2).
 (defrule
-\t(true)
-\t=>
-\t(up-modify-sn sn-focus-player-number c:= 2)
-\t(up-reset-search _false _false _true _true)
-\t(up-reset-filters)
-\t(up-find-remote c: -1 c: 40)
-\t(up-get-search-state vecSS)
-\t(up-modify-goal gScan2 g:= vecSS_R)
-)
-(defrule
-\t(true)
-\t=>
-\t(up-modify-sn sn-focus-player-number c:= 3)
-\t(up-reset-search _false _false _true _true)
-\t(up-reset-filters)
-\t(up-find-remote c: -1 c: 40)
-\t(up-get-search-state vecSS)
-\t(up-modify-goal gScan3 g:= vecSS_R)
-)
-(defrule
-\t(up-compare-goal gScan2 c:>= 1)
+\t(players-stance player-2 diplomacy_stance-enemy)
 \t=>
 \t(up-modify-goal gEnemyPly c:= 2)
 )
 (defrule
-\t(up-compare-goal gScan2 c:== 0)
-\t(up-compare-goal gScan3 c:>= 1)
+\t(players-stance player-3 diplomacy_stance-enemy)
 \t=>
 \t(up-modify-goal gEnemyPly c:= 3)
 )
@@ -353,4 +336,4 @@ text = text.rstrip("\r\n") + NL + appendix
 
 io.open(DST, "w", encoding="utf-8", newline="").write(text)
 n_rules = text.count("(defrule")
-print(f"wrote {DST}: {len(text)} chars, {n_rules} defrules (expect 124), NL={NL!r}")
+print(f"wrote {DST}: {len(text)} chars, {n_rules} defrules (expect 122), NL={NL!r}")

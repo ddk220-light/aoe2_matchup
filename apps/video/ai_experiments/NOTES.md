@@ -362,3 +362,27 @@ Three changes on top of the CoreG logic (validated: base-rule diff exactly
    the "ENEMY = P2/P3" one-shot telemetry so the next test shows which player it locked.
    NOTE: if "ENEMY = ..." never chats, find-remote isn't seeing the foe (LOS) -- but on
    16x16 with armies ~5 tiles apart that shouldn't happen (CoreF already found P3 fine).
+
+## 2026-07-05 (night) — enemy detection v3: diplomacy stance (v2 self-scan was WRONG)
+
+User test result on ddkModelAI: P2 ball just moved to its own centroid and never attacked
+(P3 melee, AI=none, attacked fine). ROOT CAUSE -- v2's core assumption was FALSE:
+**up-find-remote focused on the AI's OWN player DOES return its own units.** So the
+"self-excluding" scan (focus P2 first, take whoever returns military) locked P2 = SELF when
+the AI ran on P2: enemy list = own ball -> enemy median = own median -> every kite/volley
+order pointed at its own centroid, attack orders on own units fizzle. RECORD AS ENGINE FACT:
+find-remote is focus-player-scoped, NOT enemy-scoped; never use "did find-remote return
+something" to identify the enemy.
+
+v3 (ddkModelAI regenerated, 122 rules, base diff still {0,6,12,32,44,45,46,49,54,76}):
+enemy = DIPLOMACY. Appendix rules use Immortal's exact fact form:
+  (players-stance player-2 diplomacy_stance-enemy) -> gEnemyPly = 2
+  (players-stance player-3 diplomacy_stance-enemy) -> gEnemyPly = 3
+Self is NEVER its own enemy, so this is player-slot-independent by construction; the fact
+reads live scenario diplomacy (golden_template + all matchups have mutual P2<->P3 enemy).
+No-diplomacy arenas fall back to the rule-0 default (3) = original CoreF behavior. Traces:
+AI-on-P2 pass 1 already correct (default 3); AI-on-P3 wrong for ONE pass (~0.5s no-ops)
+then locks 2. "ENEMY = P2/P3" one-shot chat retained. defconsts player-2/player-3/
+diplomacy_stance-enemy mirrored from Immortal (2/3/3). players-stance added to
+validate_variant's curated proven-token allowlist. Scenarios unchanged (name-only AI refs).
+REMINDER: same filename -> restart AoE2 fully before testing (parse cache).

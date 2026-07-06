@@ -4,8 +4,10 @@
 > `tools/make_ddkmodelai.py`, SRC still `ddkImmortalCoreF.per`). Beyond the CoreG logic below it
 > adds: (1) broader ranged recognition — Ballista Elephant + the melee-class throwers Gbeto /
 > Throwing Axeman / Mameluke are found by unit type and kite too (charge one-shots like Fire Lancer
-> are excluded); (2) a robust dynamic-enemy detector (self-excluding `up-find-remote` scan, replacing
-> the unverified `up-find-player`) so it works assigned to P2 OR P3; (3) the test scenarios pair it
+> are excluded); (2) a diplomacy-driven dynamic-enemy detector (`players-stance player-N
+> diplomacy_stance-enemy` — self is never its own enemy, so it works from EITHER slot; the earlier
+> `up-find-player` and self-excluding-find-remote attempts were both wrong — find-remote focused on
+> the AI's own player DOES return its own units); (3) the test scenarios pair it
 > against a melee side with AI = **none** (native aggressive chase). Everything in the "CoreG"
 > sections below applies to ddkModelAI under the new name. See NOTES.md 2026-07-05 (evening).
 

@@ -17,7 +17,6 @@ import os
 import subprocess
 import sys
 import time
-from datetime import datetime
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -25,6 +24,10 @@ SB = HERE.parent                       # scenario_builder/
 sys.path.insert(0, str(SB))
 
 from auto import vision, platform_io    # noqa: E402
+# log() moved to auto.pure (game-free); re-exported here for back-compat so
+# `from auto.record_until_end import log` (orchestrate_matchup, grpc_capture,
+# run_guecha_sweep, batch_matchups) keeps working.
+from auto.pure import log               # noqa: E402,F401
 
 
 def _focus_game():
@@ -83,14 +86,6 @@ def detect_game_start(mov, t_from=1.0, t_to=25.0, coarse=1.0, fine=0.2):
             s += fine
     cap.release()
     return found
-
-
-def log(msg, logfile=None):
-    line = f"[{datetime.now():%H:%M:%S}] {msg}"
-    print(line, flush=True)
-    if logfile:
-        with open(logfile, "a") as f:
-            f.write(line + "\n")
 
 
 def start_recorder(out_mov, cap=240, w=platform_io.OUT_W, h=platform_io.OUT_H,

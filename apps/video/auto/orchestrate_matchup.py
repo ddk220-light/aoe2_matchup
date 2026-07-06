@@ -90,38 +90,10 @@ FP_LOAD_BTN = (0.4961, 0.8576)           # "Load Scenario" button on the Load pa
 FP_SAVE_NO = (0.5731, 0.5542)            # "No" on the 'save your changes?' prompt (1467,798)
 
 
-def resolve_side(civ: str, slug: str):
-    """(civ, slug) -> (civ, unit_key, display_label) for build_run.
-
-    The scenario unit key is the slug minus its civ suffix (unique-unit slugs carry
-    one, e.g. 'elite_temple_guard_muisca' -> 'elite_temple_guard'); the label is the
-    unit's display name from the reference DB."""
-    from overlay.overlay_data import get_unit_card
-    suffix = "_" + civ.lower()
-    key = slug[: -len(suffix)] if slug.endswith(suffix) else slug
-    label = get_unit_card(civ, slug)["name"]
-    return (civ, key, label)
-
-
-RES_BUDGET = 3000.0   # the cheaper side's total WEIGHTED cost must stay <= this
-
-
-def equal_resource_counts(civ1, slug1, civ2, slug2, unit_cap=30):
-    """Counts for an equal-RESOURCE fight. Per-unit costs come from the unit card,
-    which already folds in civ cost bonuses (e.g. Mayan -30% archers), train
-    batches (Blackwood Archers come 2 per train), and the website's resource
-    weights (food 1.0 / wood 0.7 / gold 1.5 — webapp/simulation_real.py). The
-    cheaper unit takes `unit_cap`, shrunk so its army never exceeds RES_BUDGET;
-    the pricier unit's count is the largest that fits the same spend.
-    Returns (n1, n2)."""
-    from overlay.overlay_data import get_unit_card
-    c1 = get_unit_card(civ1, slug1)["cost"]["weighted"] or 1
-    c2 = get_unit_card(civ2, slug2)["cost"]["weighted"] or 1
-    if c1 <= c2:                                   # side 1 cheaper -> it gets the cap
-        n1 = max(1, min(unit_cap, int(RES_BUDGET // c1)))
-        return n1, max(1, int(n1 * c1 // c2))
-    n2 = max(1, min(unit_cap, int(RES_BUDGET // c2)))
-    return max(1, int(n2 * c2 // c1)), n2
+# Game-free helpers moved to auto.pure; re-imported here for back-compat so callers
+# that do `from auto.orchestrate_matchup import resolve_side, equal_resource_counts,
+# RES_BUDGET` keep working.
+from auto.pure import RES_BUDGET, resolve_side, equal_resource_counts  # noqa: E402,F401
 
 
 def stage_generated(src, scen_dir=SCEN_DIR, stage_name=STAGE_NAME, logfile=None) -> str:

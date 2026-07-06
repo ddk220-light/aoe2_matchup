@@ -16,13 +16,16 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+import sys
 from pathlib import Path
 
-# repo-root-relative paths
+# repo-layout paths live in one place — auto.config
 _HERE = Path(__file__).resolve()
-_REPO = _HERE.parents[3]  # apps/video/overlay/ -> repo root
-REF_DB = _REPO / "data" / "golden" / "aoe2_reference.db"
-ICON_DIR = _REPO / "apps" / "website" / "static" / "img" / "units"
+_SB = _HERE.parents[1]  # apps/video/overlay/ -> apps/video
+if str(_SB) not in sys.path:
+    sys.path.insert(0, str(_SB))
+
+from auto.config import REF_DB, ICON_DIR  # noqa: E402
 
 # class ids that represent the *base* attack, not a bonus
 _BASE_ATTACK_CLASSES = {3, 4}  # Base Pierce, Base Melee

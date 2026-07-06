@@ -27,14 +27,17 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
 
-_REPO = Path(__file__).resolve().parents[3]  # apps/video/overlay/ -> repo root
+_HERE = Path(__file__).resolve()
+_REPO = _HERE.parents[3]  # apps/video/overlay/ -> repo root
+_SB = _HERE.parents[1]  # apps/video/overlay/ -> apps/video
 _WEBAPP = _REPO / "apps" / "website"
 if str(_REPO) not in sys.path:
     sys.path.insert(0, str(_REPO))
+if str(_SB) not in sys.path:
+    sys.path.insert(0, str(_SB))
 
 from aoe2x.sim import simulation_real as SR  # noqa: E402
-
-UNITS_DB = _REPO / "data" / "golden" / "aoe2_units.db"
+from auto.config import UNITS_DB  # noqa: E402
 
 
 @dataclass

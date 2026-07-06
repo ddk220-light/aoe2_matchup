@@ -503,3 +503,15 @@ class TestChoosePositions:
         from build_run import _choose_positions
         out = _choose_positions([(0, 0), (2, 0)], 5)
         assert len(out) == 5
+
+
+# --------------------------------------------------------------------------- #
+# repo-layout paths (centralized in auto.config)
+# --------------------------------------------------------------------------- #
+def test_overlay_data_paths_exist():
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path("apps/video")))
+    from overlay import overlay_data
+    assert Path(overlay_data.REF_DB).exists(), overlay_data.REF_DB
+    assert Path(overlay_data.ICON_DIR).exists(), overlay_data.ICON_DIR

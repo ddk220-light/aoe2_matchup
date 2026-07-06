@@ -37,10 +37,9 @@ for name, (c2, civ2, n2, c3, civ3, n3) in EXP.items():
     if civ(2) != Civilization[civ2]: fails.append(f"P2 civ {civ(2)}")
     if civ(3) != Civilization[civ3]: fails.append(f"P3 civ {civ(3)}")
     if civ(1) != Civilization[civ3]: fails.append(f"P1 civ {civ(1)} != P3 {civ3}")
-    if pd2.ai_names[1] != "ddkModelAI.ai" or pd2.ai_type[1] != 0:
-        fails.append(f"P2 ai {pd2.ai_names[1]!r}/{pd2.ai_type[1]}")
-    if pd2.ai_names[2] != "NoneAi" or pd2.ai_type[2] != 2:
-        fails.append(f"P3 ai {pd2.ai_names[2]!r}/{pd2.ai_type[2]} (want none)")
+    for pid in (2, 3):   # ddkModelAI on BOTH slots (v3 is slot-independent)
+        if pd2.ai_names[pid - 1] != "ddkModelAI.ai" or pd2.ai_type[pid - 1] != 0:
+            fails.append(f"P{pid} ai {pd2.ai_names[pid - 1]!r}/{pd2.ai_type[pid - 1]}")
     # positions preserved (first nX of the template layout)
     for pid, nX in ((2, n2), (3, n3)):
         got = [(round(u.x,3), round(u.y,3), round(getattr(u,'rotation',0),3))

@@ -32,8 +32,11 @@ OUT_DIR = Path(r"C:\Users\ddk22\Games\Age of Empires 2 DE"
 
 MAX_COUNT = 21                       # ceiling from the template layout
 WF, WW, WG = 1.0, 0.7, 1.5           # weighted_cost weights (food, wood, gold)
-AI_RANGED = ("ddkModelAI.ai", 0)     # P2 kiter (custom personality)
-AI_MELEE  = ("NoneAi", 2)            # P3 melee: none -> native aggressive chase
+# ddkModelAI on BOTH slots (2026-07-05): the v3 diplomacy-stance enemy detection is
+# slot-independent, ranged balls kite, and pure-melee armies hit the AI's melee
+# fallback (engine auto-fight restored after ~10s of game time).
+AI_RANGED = ("ddkModelAI.ai", 0)     # P2 kiter
+AI_MELEE  = ("ddkModelAI.ai", 0)     # P3 melee
 
 def wcost(f, w, g):
     return WF * f + WW * w + WG * g
@@ -109,7 +112,7 @@ def build(fname, p2_label, p3_label):
     print(f"{fname}")
     print(f"    P2 ddkModelAI  {p2_label:17s} ({r_civ:8s}) x{got2:2d}  "
           f"unit_cost={c2:5.1f}  total={got2*c2:6.1f}")
-    print(f"    P3 none        {p3_label:17s} ({m_civ:8s}) x{got3:2d}  "
+    print(f"    P3 ddkModelAI  {p3_label:17s} ({m_civ:8s}) x{got3:2d}  "
           f"unit_cost={c3:5.1f}  total={got3*c3:6.1f}   P1 civ={m_civ}")
     print(f"    resource balance: {min(got2*c2,got3*c3)/max(got2*c2,got3*c3)*100:.1f}% "
           f"(diff {abs(got2*c2-got3*c3):.1f})")

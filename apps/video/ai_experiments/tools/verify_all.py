@@ -12,8 +12,8 @@ SC = Path(r"C:\Users\ddk22\Games\Age of Empires 2 DE\76561198690498042\resources
 NAME = "golden_template"
 # per-player expectations: pid -> (ai_name, ai_type, {unit_const: count} or None=don't care)
 EXPECT = {
-    2: ("ddkModelAI.ai", 0, {1128: 21}),   # Burmese, 21 Elite Arambai, custom kiter
-    3: ("NoneAi", 2, {38: 21}),            # Berbers, 21 Knights, AI = none (auto-fight)
+    2: ("ddkModelAI.ai", 0, {1128: 21}),   # Burmese, 21 Elite Arambai
+    3: ("ddkModelAI.ai", 0, {38: 21}),     # Berbers, 21 Knights (melee fallback path)
 }
 WATER = {t.value for t in TerrainId
          if any(k in t.name for k in ("WATER", "BEACH", "SHALLOW"))}

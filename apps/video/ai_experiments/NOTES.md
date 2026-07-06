@@ -386,3 +386,12 @@ then locks 2. "ENEMY = P2/P3" one-shot chat retained. defconsts player-2/player-
 diplomacy_stance-enemy mirrored from Immortal (2/3/3). players-stance added to
 validate_variant's curated proven-token allowlist. Scenarios unchanged (name-only AI refs).
 REMINDER: same filename -> restart AoE2 fully before testing (parse cache).
+
+## 2026-07-05 (final) — ddkModelAI on BOTH slots; pushed
+
+User confirmed the diplomacy-stance fix works. New standing scheme: ai_name
+'ddkModelAI.ai' type 0 for BOTH P2 and P3 in golden_template and all matchups
+(v3 enemy detection is slot-independent; ranged balls kite, pure-melee armies take
+the melee-fallback path -- engine auto-fight restores after ~10s of game time, so a
+melee side may stand for the first few seconds; that is expected). Template resynced
+to repo, 5 matchups regenerated, all machine-verified.

@@ -14,11 +14,18 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
-from AoE2ScenarioParser.datasets.object_support import Civilization
-from AoE2ScenarioParser.datasets.effects import EffectId
-from AoE2ScenarioParser import settings
-settings.PRINT_STATUS_UPDATES = False
+try:
+    from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
+    from AoE2ScenarioParser.datasets.object_support import Civilization
+    from AoE2ScenarioParser.datasets.effects import EffectId
+    from AoE2ScenarioParser import settings
+    settings.PRINT_STATUS_UPDATES = False
+except ImportError:  # not installed in the system python -> skip under pytest,
+    if __name__ != "__main__":  # but still runnable via apps/video/.venv (see header)
+        import pytest
+        pytest.skip("AoE2ScenarioParser unavailable (run with apps/video/.venv)",
+                    allow_module_level=True)
+    raise
 
 from build_golden_matchups import build_golden_scenario
 

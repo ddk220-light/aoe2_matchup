@@ -306,3 +306,26 @@ in the scenario dir on their own -- game-generated, leave them.
 
 REMINDER for testing: the game caches .per parses by FILENAME per session -- CoreG was
 edited IN PLACE, so fully restart AoE2 before testing if it was running.
+
+## 2026-07-05 (later still) — golden_template updated + 5 equal-resource matchups
+
+User edited golden_template (now: 1 camera-center trigger on (8,7); P1 gained 2
+MAP_REVEALER_GIANT (1775) so the spectator sees the whole 16x16; P2/P3 layouts = up to
+21 units each in a fixed formation = THE max count). Re-synced to repo
+apps/video/templates/golden_template.aoe2scenario.
+
+NEW builder apps/video/build_golden_matchups.py makes 5 test scenarios off that template,
+keeping every unit position/rotation (in-place unit_const swap + surplus trim), only
+swapping armies/civs/counts. Rules: ranged unit -> P2 (ddkImmortalCoreG kiter), melee ->
+P3 (Immortal v0d10f); P1 civ = P3 civ; EQUAL RESOURCES via weighted_cost (food 1.0/wood
+0.7/gold 1.5, the canonical aoe2x/sim weights) -- cheaper-per-unit side stays at 21, pricier
+side trimmed to match total (never above 21). Elite consts from datasets, costs from
+data/golden/aoe2_reference.db. Balances 97.8-99.8%:
+  guecha vs jaguar    : Guecha(Muisca) x18 [ddk] vs Jaguar(Aztecs) x21          2250 vs 2205
+  woad vs blackwood   : Blackwood(Tupi) x21 [ddk] vs Woad(Celts) x18            1932 vs 1935
+  ballista vs magyar  : BallistaEleph(Khmer) x10 [ddk] vs MagyarHuszar x21      2200 vs 2152
+  mangudai vs camel   : Mangudai(Mongols) x19 [ddk] vs CamelArcher(Berbers) x21 2584 vs 2625
+  temple vs gbeto     : Gbeto(Malians) x21 [ddk] vs TempleGuard(Muisca) x17     2310 vs 2337
+NOTE: mangudai vs camel archer is ranged-vs-ranged (both Cav Archer) -- the only pair that
+isn't ranged-vs-melee; first-named (mangudai) took the ddkImmortalCoreG slot. All 5
+machine-verified (units/civs/AIs/counts/positions/P1=P3 civ/revealers/trigger/bounds).

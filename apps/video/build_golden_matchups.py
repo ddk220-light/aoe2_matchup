@@ -4,8 +4,9 @@ Base = apps/video/templates/golden_template.aoe2scenario (the user's hand-made t
 bed: 16x16 flat, P1 human spectator w/ map revealers + a camera-center trigger,
 P2 = ddkImmortalCoreG kiter, P3 = stock Immortal v0d10f, up to 21 units/side in a
 fixed formation). We KEEP every position/rotation and only:
-  * swap P2's army -> the matchup's RANGED unit  (kiter, on ddkImmortalCoreG)
-  * swap P3's army -> the matchup's MELEE unit    (chaser, on Immortal v0d10f)
+  * swap P2's army -> the matchup's RANGED unit  (kiter, on ddkModelAI)
+  * swap P3's army -> the matchup's MELEE unit    (chaser, AI = none: it just
+    auto-fights/chases natively, which the user confirmed works)
   * set P2 civ = ranged unit's civ, P3 civ = melee unit's civ
   * set P1 civ = P3 civ                          (user rule)
   * trim counts for EQUAL RESOURCES (weighted food 1.0 / wood 0.7 / gold 1.5,
@@ -31,6 +32,8 @@ OUT_DIR = Path(r"C:\Users\ddk22\Games\Age of Empires 2 DE"
 
 MAX_COUNT = 21                       # ceiling from the template layout
 WF, WW, WG = 1.0, 0.7, 1.5           # weighted_cost weights (food, wood, gold)
+AI_RANGED = ("ddkModelAI.ai", 0)     # P2 kiter (custom personality)
+AI_MELEE  = ("NoneAi", 2)            # P3 melee: none -> native aggressive chase
 
 def wcost(f, w, g):
     return WF * f + WW * w + WG * g
@@ -95,12 +98,18 @@ def build(fname, p2_label, p3_label):
     player(3).civilization = Civilization[m_civ.upper()]
     player(1).civilization = Civilization[m_civ.upper()]   # P1 civ == P3 civ
 
+    pd2 = scn.sections["PlayerDataTwo"]
+    pd2.ai_names[1], pd2.ai_type[1] = AI_RANGED            # P2 = ddkModelAI
+    pd2.ai_names[2], pd2.ai_type[2] = AI_MELEE             # P3 = none
+
     out = OUT_DIR / f"{fname}.aoe2scenario"
+    if out.exists():
+        out.unlink()                                       # delete old, regenerate
     scn.write_to_file(str(out))
     print(f"{fname}")
-    print(f"    P2 ddkImmortalCoreG  {p2_label:17s} ({r_civ:8s}) x{got2:2d}  "
+    print(f"    P2 ddkModelAI  {p2_label:17s} ({r_civ:8s}) x{got2:2d}  "
           f"unit_cost={c2:5.1f}  total={got2*c2:6.1f}")
-    print(f"    P3 Immortal v0d10f   {p3_label:17s} ({m_civ:8s}) x{got3:2d}  "
+    print(f"    P3 none        {p3_label:17s} ({m_civ:8s}) x{got3:2d}  "
           f"unit_cost={c3:5.1f}  total={got3*c3:6.1f}   P1 civ={m_civ}")
     print(f"    resource balance: {min(got2*c2,got3*c3)/max(got2*c2,got3*c3)*100:.1f}% "
           f"(diff {abs(got2*c2-got3*c3):.1f})")

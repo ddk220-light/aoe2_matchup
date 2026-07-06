@@ -6,19 +6,18 @@
 ;
 ; RULE NUMBERING IS LOAD-BEARING: up-jump-direct targets are absolute defrule
 ; indices (0-based). Rules 0-77 are jump-target-exact; rules 78+ (diagnostics +
-; the CoreG parameterization appendix) are numbering-free -- nothing jumps there.
+; the ddkModelAI parameterization appendix) are numbering-free -- nothing jumps there.
 ;
-; CoreG = CoreF + per-unit kiting character; ALL VALUES FROM the repo DB
-; data/golden/aoe2_reference.db (current patch, 2026-07-02):
+; ddkModelAI = CoreF + per-unit kiting character + broad ranged recognition +
+; robust dynamic-enemy detection.  Values from data/golden/aoe2_reference.db:
 ;   * W_fire = final_attack_delay(ms) + 60ms release margin, keyed on the ball's
-;     median ACTUAL type (obj1), class fallback. Same mechanism as Immortal
-;     #1600-1605, but Immortal's values are stale AoC-era delays (CA 1000 vs
-;     DE's 583+60) -- the DB supplies current-patch truth per unit.
-;   * kite dwell = clamp(liveReload - 1400, 400, 2200): mangudai (1428ms) snaps
-;     back to volleys in 400ms; hand cannoneers (3450ms) commit 2s arcs.
-;   * kite ONLY when out-ranging (gRange > gERange+1); equal/out-ranged ranged
-;     fights hold VOLLEY = stand-and-focus-fire (normal fight).
-;   * strafe/step speed-tiered: >=1.35 tiles/s wide arcs, <=1.15 short hops.
+;     median ACTUAL type (obj1), class fallback.
+;   * kite dwell = clamp(liveReload - 1400, 400, 2200).
+;   * kite ONLY when out-ranging (gRange > gERange+1); else hold VOLLEY.
+;   * strafe/step speed-tiered.
+;   * RANGED = continuous projectile shooter: the 4 ranged classes PLUS the
+;     melee-class throwers (gbeto/throwing-axeman/mameluke) and ballista elephant,
+;     added by unit type. Charge one-shots (Fire Lancer) are NOT ranged.
 ;
 ; Pipeline: TIME (real ms via timer idiom) -> SN blocks (engine AI off) ->
 ; CLUSTERING beat ~4s (groups 8/9 snapshot + tag-write trio) -> STATE MACHINE
@@ -93,6 +92,14 @@
 (defconst object_data-index -1)
 (defconst object_data-unique-id 0)
 (defconst object_data-object-id 1)
+(defconst ballista-elephant 1120)
+(defconst elite-ballista-elephant 1122)
+(defconst gbeto 1013)
+(defconst elite-gbeto 1015)
+(defconst throwing-axeman 281)
+(defconst elite-throwing-axeman 531)
+(defconst mameluke 282)
+(defconst elite-mameluke 556)
 (defconst object_data-class-id 2)
 (defconst object_data-category 3)
 (defconst object_data-action 5)
@@ -214,10 +221,9 @@
 (defconst gStrafeBase 195)
 (defconst gStepPct 196)
 (defconst gEnemyPly 197)
-(defconst gEnemyFound 198)
-(defconst gDiagE 199)
-(defconst player_stance-enemy 3)
-(defconst find-closest 2)
+(defconst gScan2 198)
+(defconst gScan3 199)
+(defconst gDiagE 200)
 
 ;--- Rule 0 -- INIT ONCE (Immortal #3573 @48613-15 + fixed values) ---
 (defrule
@@ -251,7 +257,7 @@
 	(up-modify-goal gStrafeBase c:= 200)
 	(up-modify-goal gStepPct c:= 390)
 	(up-modify-goal gEnemyPly c:= 3)
-	(chat-to-player 1 "ImmortalCoreG up")
+	(chat-to-player 1 "ddkModelAI up")
 )
 ;--- Rule 1 -- TIME (Immortal #3592 @49196-49210 verbatim idiom) ---
 (defrule
@@ -339,6 +345,14 @@
 	(up-find-local c: class-cavalry-archer c: 240)
 	(up-find-local c: class-hand-cannoneer c: 240)
 	(up-find-local c: class-conquistador c: 240)
+	(up-find-local c: ballista-elephant c: 240)
+	(up-find-local c: elite-ballista-elephant c: 240)
+	(up-find-local c: gbeto c: 240)
+	(up-find-local c: elite-gbeto c: 240)
+	(up-find-local c: throwing-axeman c: 240)
+	(up-find-local c: elite-throwing-axeman c: 240)
+	(up-find-local c: mameluke c: 240)
+	(up-find-local c: elite-mameluke c: 240)
 	(up-remove-objects search-local object_data-tag c:== 8)
 	(up-remove-objects search-local object_data-tag c:== 9)
 	(up-clean-search search-local object_data-tag search_order-ascending)
@@ -399,6 +413,14 @@
 	(up-find-local c: class-cavalry-archer c: 240)
 	(up-find-local c: class-hand-cannoneer c: 240)
 	(up-find-local c: class-conquistador c: 240)
+	(up-find-local c: ballista-elephant c: 240)
+	(up-find-local c: elite-ballista-elephant c: 240)
+	(up-find-local c: gbeto c: 240)
+	(up-find-local c: elite-gbeto c: 240)
+	(up-find-local c: throwing-axeman c: 240)
+	(up-find-local c: elite-throwing-axeman c: 240)
+	(up-find-local c: mameluke c: 240)
+	(up-find-local c: elite-mameluke c: 240)
 	(up-clean-search search-local -1 search_order-none)
 )
 ;--- Rule 13 -- THE TAG FILTER (#1562 @31348-50) ---
@@ -1108,12 +1130,11 @@
 	(chat-to-player 1 "D7 ENEMY SCAN EMPTY")
 )
 
-;=== CoreG PARAMETERIZATION APPENDIX (rules 85+; runs END of pass, values apply
-;    NEXT pass -- one-pass lag is by design so rules 0-77 numbering never moves).
+;=== ddkModelAI PARAMETERIZATION APPENDIX (rules 78+; runs END of pass, values
+;    apply NEXT pass -- one-pass lag by design so rules 0-77 numbering never moves).
 ;    Every constant here is from data/golden/aoe2_reference.db (see header). ===
 
-;--- reload-scaled kite dwell (plan item 2): clamp(liveReload - 1400, 400, 2200).
-;    Live obj54 auto-reflects in-game techs; CA 2000ms -> 600 (= CoreF's floor). ---
+;--- reload-scaled kite dwell: clamp(liveReload - 1400, 400, 2200). ---
 (defrule
 	(true)
 	=>
@@ -1122,8 +1143,7 @@
 	(up-modify-goal gDwell c:max 400)
 	(up-modify-goal gDwell c:min 2200)
 )
-;--- speed-tiered strafe/step (plan item 4; gSpeed = min ball speed x100, live,
-;    so un-teched scenario balls tier by their REAL speed) ---
+;--- speed-tiered strafe/step (gSpeed = min ball speed x100, live) ---
 (defrule
 	(true)
 	=>
@@ -1142,9 +1162,7 @@
 	(up-modify-goal gStrafeBase c:= 150)
 	(up-modify-goal gStepPct c:= 350)
 )
-;--- kite gate (plan item 3): kite ONLY when we out-range the enemy median
-;    (gERange is read raw in Rule 36 -- melee reads 0). Otherwise Rules 44/45
-;    never fire and the ball holds VOLLEY = a normal stand-and-shoot fight. ---
+;--- kite gate: kite ONLY when we out-range the enemy median. ---
 (defrule
 	(true)
 	=>
@@ -1157,8 +1175,7 @@
 	=>
 	(up-modify-goal gKiteOK c:= 1)
 )
-;--- failsafe: not-out-ranging ball stuck in state 18 (approach) flips to VOLLEY
-;    after 2.5s even if Rule 46's in-range gate never fills ---
+;--- failsafe: not-out-ranging ball stuck in state 18 flips to VOLLEY after 2.5s ---
 (defrule
 	(up-compare-goal gState c:== 18)
 	(up-compare-goal gKiteOK c:== 0)
@@ -1181,9 +1198,8 @@
 	(up-modify-sn sn-enemy-sighted-response-distance c:= 20)
 	(up-modify-sn sn-task-ungrouped-soldiers c:= 1)
 )
-;--- W_FIRE DETECT (plan item 1; Immortal #1572-1578's modal base-type reduced to
-;    median ACTUAL type: obj1 = the PLACED unit id, so unresearched scenario
-;    elites resolve exactly; arena balls are homogeneous). Latched once. ---
+;--- W_FIRE DETECT: read the ball's median ACTUAL type (obj1) after finding all
+;    ranged units (classes + melee-class throwers). Latched once. ---
 (defrule
 	(up-compare-goal gTagged c:== 1)
 	(up-compare-goal gSize c:>= 1)
@@ -1194,6 +1210,14 @@
 	(up-find-local c: class-cavalry-archer c: 240)
 	(up-find-local c: class-hand-cannoneer c: 240)
 	(up-find-local c: class-conquistador c: 240)
+	(up-find-local c: ballista-elephant c: 240)
+	(up-find-local c: elite-ballista-elephant c: 240)
+	(up-find-local c: gbeto c: 240)
+	(up-find-local c: elite-gbeto c: 240)
+	(up-find-local c: throwing-axeman c: 240)
+	(up-find-local c: elite-throwing-axeman c: 240)
+	(up-find-local c: mameluke c: 240)
+	(up-find-local c: elite-mameluke c: 240)
 	(up-remove-objects search-local object_data-tag c:!= 1)
 	(up-clean-search search-local object_data-object-id search_order-ascending)
 	(up-get-search-state vecSS)
@@ -1257,6 +1281,16 @@
 		(up-compare-goal gUType c:== 1802))
 		(up-compare-goal gUType c:== 1010))
 		(up-compare-goal gUType c:== 1012))
+	=>
+	(up-modify-goal gWfire c:= 260)
+)
+;--- 260: Mameluke/Elite (200), Ballista Elephant/Elite (200) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(or (or (or (up-compare-goal gUType c:== 282)
+		(up-compare-goal gUType c:== 556))
+		(up-compare-goal gUType c:== 1120))
+		(up-compare-goal gUType c:== 1122))
 	=>
 	(up-modify-goal gWfire c:= 260)
 )
@@ -1357,6 +1391,22 @@
 	=>
 	(up-modify-goal gWfire c:= 477)
 )
+;--- 527: Throwing Axeman/Elite (467) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(or (up-compare-goal gUType c:== 281)
+		(up-compare-goal gUType c:== 531))
+	=>
+	(up-modify-goal gWfire c:= 527)
+)
+;--- 560: Gbeto/Elite (500) ---
+(defrule
+	(up-compare-goal gWset c:== 1)
+	(or (up-compare-goal gUType c:== 1013)
+		(up-compare-goal gUType c:== 1015))
+	=>
+	(up-modify-goal gWfire c:= 560)
+)
 ;--- 593: War Wagon/Elite (533) ---
 (defrule
 	(up-compare-goal gWset c:== 1)
@@ -1386,32 +1436,56 @@
 	(up-modify-goal gWset c:= 2)
 	(chat-to-player 1 "WFIRE SET")
 )
-;=== DYNAMIC ENEMY PLAYER (2026-07-05) ==========================================
-;   Fix: assigned to P3, CoreG hunted its own units (hardcoded enemy 3) and never
-;   kited. up-find-player (Immortal's own idiom, v0d10f corpus) resolves the
-;   closest ENEMY-stance player every pass; keeps the rule-0 default (3) when
-;   diplomacy yields nobody (old one-way-ally arenas). One-pass lag by design.
+;=== DYNAMIC ENEMY PLAYER (2026-07-05 v2 -- self-excluding remote scan) ==========
+;   BUG this fixes: assigned to P3, the AI hunted its own units (old hardcoded 3 /
+;   the unverified up-find-player) -> all units slid to one spot and never fired.
+;   up-find-remote can NEVER return the AI's OWN units, so whichever candidate
+;   player returns military when focused is the ENEMY; the self player returns 0.
+;   Uses ONLY primitives proven in Rule 32 (focus + find-remote + get-search-state).
+;   Scans P2 then P3 (the only military slots in these arenas); prefers P2 so an
+;   AI on P3 locks P2, an AI on P2 (P2=self=0) falls through to P3. One-pass lag.
 (defrule
 	(true)
 	=>
-	(up-find-player player_stance-enemy find-closest gEnemyFound)
+	(up-modify-sn sn-focus-player-number c:= 2)
+	(up-reset-search _false _false _true _true)
+	(up-reset-filters)
+	(up-find-remote c: -1 c: 40)
+	(up-get-search-state vecSS)
+	(up-modify-goal gScan2 g:= vecSS_R)
 )
 (defrule
-	(up-compare-goal gEnemyFound c:== 2)
-	(up-compare-goal gDiagE c:!= 1)
+	(true)
 	=>
-	(up-modify-goal gDiagE c:= 1)
+	(up-modify-sn sn-focus-player-number c:= 3)
+	(up-reset-search _false _false _true _true)
+	(up-reset-filters)
+	(up-find-remote c: -1 c: 40)
+	(up-get-search-state vecSS)
+	(up-modify-goal gScan3 g:= vecSS_R)
+)
+(defrule
+	(up-compare-goal gScan2 c:>= 1)
+	=>
+	(up-modify-goal gEnemyPly c:= 2)
+)
+(defrule
+	(up-compare-goal gScan2 c:== 0)
+	(up-compare-goal gScan3 c:>= 1)
+	=>
+	(up-modify-goal gEnemyPly c:= 3)
+)
+(defrule
+	(up-compare-goal gEnemyPly c:== 2)
+	(up-compare-goal gDiagE c:!= 2)
+	=>
+	(up-modify-goal gDiagE c:= 2)
 	(chat-to-player 1 "ENEMY = P2")
 )
 (defrule
-	(up-compare-goal gEnemyFound c:== 3)
-	(up-compare-goal gDiagE c:!= 1)
+	(up-compare-goal gEnemyPly c:== 3)
+	(up-compare-goal gDiagE c:!= 3)
 	=>
-	(up-modify-goal gDiagE c:= 1)
+	(up-modify-goal gDiagE c:= 3)
 	(chat-to-player 1 "ENEMY = P3")
-)
-(defrule
-	(up-compare-goal gEnemyFound c:> 0)
-	=>
-	(up-modify-goal gEnemyPly g:= gEnemyFound)
 )

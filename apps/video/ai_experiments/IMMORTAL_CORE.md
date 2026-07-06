@@ -1,5 +1,14 @@
 # ddkImmortalCore — the working Immortal-style kite AI (definitive reference)
 
+> **RENAMED 2026-07-05: `ddkImmortalCoreG` → `ddkModelAI`** (the going-forward AI; generator
+> `tools/make_ddkmodelai.py`, SRC still `ddkImmortalCoreF.per`). Beyond the CoreG logic below it
+> adds: (1) broader ranged recognition — Ballista Elephant + the melee-class throwers Gbeto /
+> Throwing Axeman / Mameluke are found by unit type and kite too (charge one-shots like Fire Lancer
+> are excluded); (2) a robust dynamic-enemy detector (self-excluding `up-find-remote` scan, replacing
+> the unverified `up-find-player`) so it works assigned to P2 OR P3; (3) the test scenarios pair it
+> against a melee side with AI = **none** (native aggressive chase). Everything in the "CoreG"
+> sections below applies to ddkModelAI under the new name. See NOTES.md 2026-07-05 (evening).
+
 **Status (2026-07-02): WORKING.** `ddkImmortalCoreE` kites + focus-volleys cavalry archers in editor
 Test ("worked! you actually did it"); `ddkImmortalCoreF` adds 4-class generality (bolas/longbow/
 arambai/hand-cannoneer) + a 600ms kite-dwell floor. **`ddkImmortalCoreG` (untested in-game)

@@ -329,3 +329,36 @@ data/golden/aoe2_reference.db. Balances 97.8-99.8%:
 NOTE: mangudai vs camel archer is ranged-vs-ranged (both Cav Archer) -- the only pair that
 isn't ranged-vs-melee; first-named (mangudai) took the ddkImmortalCoreG slot. All 5
 machine-verified (units/civs/AIs/counts/positions/P1=P3 civ/revealers/trigger/bounds).
+
+## 2026-07-05 (evening) — ddkImmortalCoreG RENAMED to ddkModelAI + 3 fixes
+
+User: "don't call it code g anymore -- the DDK model AI." Renamed. Generator is now
+tools/make_ddkmodelai.py (SRC still ddkImmortalCoreF.per; old make_coreG.py + CoreG.per
+removed). Deployed ddkModelAI.per/.ai to the Steam ai dir; CoreG moved to ddk_backup.
+Three changes on top of the CoreG logic (validated: base-rule diff exactly
+{0,6,12,32,44,45,46,49,54,76}, +39 appendix, 124 rules):
+
+1. MELEE AI = NONE. In golden_template + all 5 matchups the melee player is now ai_name
+   'NoneAi' ai_type 2 (was Immortal v0d10f). With no AI the pre-placed melee units keep
+   their aggressive stance and auto-chase/fight the kiters natively -- user confirmed this
+   works as well as Immortal, and it's simpler.
+
+2. BROADER RANGED RECOGNITION. "Ranged = shoots projectiles continuously at range." The
+   4 ranged classes (archery/cav-archer/HC/conquistador) MISS the throwers that live in
+   melee-inclusive classes: Gbeto + Throwing Axeman (Infantry cls6), Mameluke (Cavalry
+   cls12), + Ballista Elephant (Ballista cls55). Added those to the two in-pass find
+   blocks (rule 6, rule 12) AND the W_fire detect, by UNIT TYPE (base+elite consts:
+   1120/1122, 1013/1015, 281/531, 282/556) since their CLASS also holds pure melee.
+   up-find-local takes unit-type ids directly (Immortal uses c: skirmisher / c: mangonel).
+   New W_fire rows: Gbeto 560, Throwing Axeman 527, Mameluke 260, Ballista Elephant 260
+   (delay+60 from ref DB). NOT added: charge one-shots like Fire Lancer (not continuous).
+
+3. P3-ASSIGNMENT BUG ACTUALLY FIXED. The up-find-player enemy detector from the prior
+   attempt still left an AI-on-P3 hunting itself (units slide to one spot, never fire).
+   Replaced with a self-excluding find-remote scan: up-find-remote can NEVER return the
+   AI's own units, so focus P2 -> if military found, P2 is enemy; else focus P3. The self
+   player always returns 0. Uses only Rule-32-proven primitives (focus + find-remote +
+   get-search-state, remote count = vecSS_R). Works from either slot; one-pass lag. Kept
+   the "ENEMY = P2/P3" one-shot telemetry so the next test shows which player it locked.
+   NOTE: if "ENEMY = ..." never chats, find-remote isn't seeing the foe (LOS) -- but on
+   16x16 with armies ~5 tiles apart that shouldn't happen (CoreF already found P3 fine).

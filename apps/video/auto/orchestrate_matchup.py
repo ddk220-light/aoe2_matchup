@@ -385,6 +385,34 @@ def return_to_editor(logfile, retries=10) -> bool:
     return ok
 
 
+def _exit_load_page_to_editor(logfile, tries=6) -> str:
+    """Leave a (possibly STALE) Load Scenario page and return to the editor so the next
+    navigate() re-opens Load with a FRESHLY-READ folder listing.
+
+    Why this matters: the run scenario is staged (written to the game folder) and THEN we
+    navigate. If the game was already sitting on the Load page, that page shows a folder
+    listing captured when it was opened — it does NOT auto-refresh — so it predates the
+    staged file. Nav then can't find the row by name and the blind top-row fallback loads
+    the WRONG scenario (observed: filmed the old top-of-list scenario instead of the
+    matchup). Backing out to the editor forces navigate() to re-open Load and re-read the
+    folder, which now includes the staged 'Matchup Run'.
+
+    Presses ESC (the Load page's back-out) and confirms the editor tabs. Falls back to
+    returning 'load_dialog' unchanged if the editor never appears — nav then proceeds with
+    the stale list exactly as before, so this is strictly no worse than the old behavior."""
+    for _ in range(tries):
+        _focus_game()
+        if _in_editor():
+            log("[nav] backed out of stale Load page -> editor (list refreshes on re-open)",
+                logfile)
+            return "editor"
+        platform_io.key("esc")
+        time.sleep(1.0)
+    log("[nav] WARNING: couldn't confirm editor after leaving Load page; proceeding "
+        "(the list may be stale)", logfile)
+    return "load_dialog"
+
+
 def _flag_no_result(final_path, got_result: bool, logfile=None):
     """The watch loop hit the cap without seeing the 'WINS' banner — the recording is
     probably truncated mid-battle. Don't fail the run (the footage may still be usable);
@@ -446,6 +474,8 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
     if st in ("end_screen", "in_game", "unknown"):   # leftover test/banner -> editor first
         return_to_editor(logfile)
         st = bring_game_to_front(logfile)
+    if st == "load_dialog":                          # pre-opened Load page = STALE listing
+        st = _exit_load_page_to_editor(logfile)      # back to editor -> navigate re-reads folder
     log(f"[nav] starting screen: {st}", logfile)
     if st not in ("editor", "main_menu", "load_dialog"):
         raise RuntimeError(f"unexpected starting screen {st!r}")

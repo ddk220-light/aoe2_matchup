@@ -85,21 +85,36 @@ def main():
         # run_matchup writes the finished clip to <copy_to>/<name> and returns it;
         # name=<spec name>.mp4 lands it exactly where the queue's resume-skip looks
         # (out_dir/<name>.mp4). build_fn routes the scenario through the golden rig.
+        # unit_cap=21 = the golden template's MAX_COUNT. equal_resource_counts caps the
+        # cheaper unit at unit_cap; anything >21 makes build_golden RESCALE the army,
+        # which desyncs the counts the overlay was given from what's actually on the map
+        # -> the gRPC sidecar fails its sanity gate and the top HP bar drops to (here
+        # unreliable, no on-screen readout) OCR. Capping at 21 keeps them in lockstep so
+        # every fight gets the exact gRPC HP overlay.
         return run_matchup(spec["civ1"], spec["slug1"],
                            spec["civ2"], spec["slug2"],
                            name=f"{spec['name']}.mp4", copy_to=str(out_dir),
-                           mode="resources", live_overlay=True,
+                           mode="resources", unit_cap=21, live_overlay=True,
                            build_fn=build_golden_from_sides)
 
     if not args.stitch_only:
         run_matchup_queue(fights, out, run_one=run_one,
                           on_recover=return_to_editor)
-    # Card rendering + intro + stitch: compose cards per plan order, build the
-    # (label, path) list from the manifest + card segments, then
-    # overlay.compose.concat_videos + chapters.write_chapters. Implemented on
-    # the Windows checkout where ffmpeg output can actually be verified.
-    raise SystemExit("recording plan executed; stitch step runs on Windows — "
-                     "see docs/superpowers/specs/2026-07-04-unit-analysis-video-design.md")
+
+    # Card rendering + intro + stitch: render the intro/banner/ranked/even cards, turn
+    # each into a codec-matched segment, concat with the recorded fight clips in plan
+    # order, and write YouTube chapters. See auto.stitch_analysis.
+    from auto.stitch_analysis import stitch_analysis_video
+    sb = json.loads(Path(args.storyboard).read_text())
+    media_dir = Path(__file__).resolve().parents[1] / "media"      # apps/video/media
+    final = out / f"{sb['subject']['slug']}_analysis.mp4"
+    result = stitch_analysis_video(plan, sb, out, final, media_dir=str(media_dir))
+    print(f"[analysis] stitched {result['segments']} segments -> {result['out']}")
+    print(f"[analysis] chapters -> {result['chapters']}")
+    if result["missing"]:
+        print(f"[analysis] WARNING missing fight clips (skipped): {result['missing']}")
+    for label, dur in result["chapter_list"]:
+        print(f"   {dur:6.1f}s  {label}")
 
 
 if __name__ == "__main__":

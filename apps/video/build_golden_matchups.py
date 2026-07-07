@@ -162,8 +162,12 @@ def build_golden_scenario(p2_side, p3_side, out_path, *, max_count=MAX_COUNT,
     pd2.ai_names[1], pd2.ai_type[1] = AI_RANGED             # P2 = ddkModelAI
     pd2.ai_names[2], pd2.ai_type[2] = AI_MELEE              # P3 = ddkModelAI
 
-    # camera on the kiter (P2) army — where the action collects as it kites back
-    _set_camera(scn, _centroid(um, 2, r_const))
+    # KEEP the template's hand-authored camera (Trigger 0 CHANGE_VIEW, at the fixed
+    # collision center ~(8,7)). build_golden preserves the template's formation POSITIONS
+    # (only unit types swap + counts trim), so every matchup fights where the template was
+    # framed for. Retargeting to the P2 army centroid put the camera off to one corner
+    # (5.55,5.55) and framed the fight wrong (user-confirmed 2026-07-06) — so we leave the
+    # template's CHANGE_VIEW untouched. (_set_camera/_centroid kept for the general case.)
 
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -180,9 +184,16 @@ def build_golden_from_sides(side1, side2, out_path, counts=(30, 30),
                             ranged=(False, False)):
     """Adapter matching build_run's (side1, side2, out_path, counts=, ranged=) calling
     convention, so it can be passed as run_matchup(build_fn=...). side1/side2 are
-    (civ, unit_key, label) as produced by resolve_side; `ranged` = (r1, r2). The ranged
-    side takes the P2 kiter slot (both-ranged / both-melee -> side1/subject on P2); the
-    other side is P3. Delegates to build_golden_scenario (counts scaled to 21)."""
+    (civ, unit_key, label) as produced by resolve_side.
+
+    The RANGED side takes the P2 kiter slot (both-ranged / both-melee -> side1/subject on
+    P2); the other side is P3. This is empirically the RELIABLE kiting slot — a short-range
+    ranged unit (e.g. Chakram Thrower) placed on P3 gets run down instead of kiting, which
+    FLIPS the outcome. The resulting side1/side2 -> P2/P3 order mismatch with the overlay's
+    (subject, opponent) labels is corrected downstream: record_until_end.select_sidecar
+    detects the reversed start-count order and swaps the sidecar sides, so the HP bar +
+    results card stay correctly labeled AND pass the gRPC sanity gate. See the sidecar-swap
+    note there. Delegates to build_golden_scenario (counts scaled to 21)."""
     (civ1, key1, _), (civ2, key2, _) = side1, side2
     n1, n2 = counts
     r1, r2 = ranged

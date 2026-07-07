@@ -333,12 +333,31 @@ def select_sidecar(out_mov, gs, grpc_sidecar, civ1, slug1, civ2, slug2, counts,
     footage: offline rmse 0.43 (was 2.47), then a fresh live run merged at rmse 0.41 /
     offset +0.10s with the loser's end count agreeing exactly (0-25)."""
     import json
+    d = None                                   # in-memory gRPC sidecar (side-swap corrected)
     if (grpc_sidecar and Path(grpc_sidecar).exists()
             and os.environ.get("AOE2_GRPC_PRIMARY", "1").lower() not in ("0", "false", "no")):
         try:
             from overlay.hp_merge import grpc_sane
             with open(grpc_sidecar) as f:
                 d = json.load(f)
+            # The sidecar's side1/side2 map to PLAYERS P2/P3, but the caller's counts +
+            # u1/u2 are (subject, opponent). When the builder placed the OPPONENT on P2
+            # (the golden rig's ranged-unit kiter slot), side1 is the opponent, so the rows
+            # start in REVERSED order — which both mislabels the HP bar / results card
+            # (they'd show the subject winning a fight it lost) and fails grpc_sane's exact
+            # start-count check. Detect that (rows[0] == reversed counts, and NOT already
+            # forward) and swap side1<->side2 across every row so side1 realigns with
+            # u1/counts[0]. Melee fights (subject already on P2) start forward -> untouched.
+            _r = d.get("rows") or []
+            if _r:
+                _c0 = (int(_r[0].get("side1", {}).get("count", -1)),
+                       int(_r[0].get("side2", {}).get("count", -2)))
+                if (_c0 == (int(counts[1]), int(counts[0]))
+                        and _c0 != (int(counts[0]), int(counts[1]))):
+                    for _row in _r:
+                        _row["side1"], _row["side2"] = _row["side2"], _row["side1"]
+                    log("[sidecar] gRPC sides were P2/P3 (opponent-first) — swapped to "
+                        "(subject, opponent) to match the overlay labels", logfile)
             if d.get("clock") != "video":
                 log("[sidecar] gRPC sidecar predates the clock fix (game-sim seconds) "
                     "— OCR fallback", logfile)
@@ -384,7 +403,18 @@ def select_sidecar(out_mov, gs, grpc_sidecar, civ1, slug1, civ2, slug2, counts,
                                         str(ocr_path), logfile)
     if not ocr_sidecar:
         if grpc_sidecar and Path(grpc_sidecar).exists():
-            return str(grpc_sidecar), "grpc-unverified"        # last resort
+            # last resort: the gRPC timeline, unverified. Write the in-memory `d` (which
+            # carries the side-swap correction) so ranged fights aren't mislabeled on this
+            # path either; fall back to the raw file if `d` never loaded.
+            if d is not None:
+                try:
+                    out = str(Path(final).with_suffix("")) + ".grpc.hp.json"
+                    with open(out, "w") as f:
+                        json.dump(d, f)
+                    return out, "grpc-unverified"
+                except OSError:
+                    pass
+            return str(grpc_sidecar), "grpc-unverified"
         return None, None
     use, src = ocr_sidecar, "ocr"
     if grpc_sidecar and Path(grpc_sidecar).exists():

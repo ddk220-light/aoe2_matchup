@@ -36,30 +36,39 @@ SNAP_RESEED = 400_000                # mid-stream patches above this are full sn
 MIN_ARMY, MAX_ARMY = 3, 80           # plausible per-side army size
 
 
-def derive_army(es):
+def _is_army(e, o):
     # hp > 0 (not a higher floor): the Elite Blackwood Archer has 25 HP and a 30-HP
     # "decoration filter" silently dropped that whole army. Our scenarios strip camp
     # props, so owner+type+not-scout is already a tight filter.
+    return (e.get("__type__") in ARMY_MT and e.get(F_OWNER) == o
+            and e.get(F_MASTER) != SCOUT
+            and isinstance(e.get(F_HP), (int, float)) and e.get(F_HP) > 0)
+
+
+def derive_army(es):
     army = {2: set(), 3: set()}
     for k, e in es.items():
-        if (e.get("__type__") in ARMY_MT and e.get(F_OWNER) in (2, 3)
-                and e.get(F_MASTER) != SCOUT
-                and isinstance(e.get(F_HP), (int, float)) and e.get(F_HP) > 0):
+        if e.get(F_OWNER) in (2, 3) and _is_army(e, e.get(F_OWNER)):
             army[e.get(F_OWNER)].add(k)
     return army
 
 
-def totals(es, army):
+def totals(es, army=None):
+    # Re-derive membership every frame (not frozen at the seed) so units that
+    # TRANSFORM mid-fight into a new entity are counted — e.g. a mounted Konnik
+    # that dies becomes a fresh dismounted-Konnik entity with a new key/master.
+    # Freezing membership at the seed left those dismounts uncounted, so a Konnik
+    # army that won on its dismounts decoded as 0 (a false mutual wipe). The
+    # owner+type+not-scout+hp>0 filter is tight enough on the stripped arena that
+    # re-deriving can only pick up real army units. `army` is accepted+ignored for
+    # backward compatibility.
     out = {}
     for o in (2, 3):
         cnt, hp = 0, 0.0
-        for k in army[o]:
-            e = es.get(k)
-            v = e.get(F_HP) if e else None
-            if isinstance(v, (int, float)) and v > 0:
+        for e in es.values():
+            if _is_army(e, o):
                 cnt += 1
-                hp += v
-    # noqa: E501 — count/hp per side
+                hp += e.get(F_HP)
         out[o] = (cnt, round(hp, 1))
     return out
 

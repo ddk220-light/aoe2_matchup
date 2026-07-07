@@ -66,6 +66,11 @@ _KEY_CONST_OVERRIDE = {
     # the Shu War Chariot is a mode-switch unit (Focus Fire / Barrage); place its
     # default Focus Fire form
     "war_chariot": int(UnitInfo.WAR_CHARIOT_FOCUS_FIRE.ID),
+    # the project slug for the fully-upgraded camel drops the "_rider" the dataset keeps
+    "heavy_camel": int(UnitInfo.HEAVY_CAMEL_RIDER.ID),
+    # the project's generic Battle Elephant staple slug is "elite_elephant"; the
+    # dataset spells it out (ELITE_ELEPHANT would resolve to the Elephant Archer line).
+    "elite_elephant": int(UnitInfo.ELITE_BATTLE_ELEPHANT.ID),
 }
 
 

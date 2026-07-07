@@ -1,0 +1,14 @@
+{
+  "_comment": "Per-subject curation for the ETG (Elite Temple Guard) unit-analysis video. The METHOD lives in code; this file holds only the ETG-specific choices, applied by build_v2_categorization.py.",
+  "remove": ["Bengalis/elite_elephant"],
+  "_remove_note": "The generic Battle Elephant staple is modal-Bengalis; the video uses the beefier Vietnamese Elite Battle Elephant instead (see extra_results).",
+  "extra_results": {
+    "Vietnamese/elite_elephant": {"name": "Elite Battle Elephant", "cat": "elephant", "ranged": false, "n_subject": 21, "n_opp": 14, "subject_winrate": 1.0, "mean_S": 37.1, "subject_hp": 37.1, "opp_hp": 0.0, "bimodal": false},
+    "Incas/elite_champi_warrior": {"name": "Elite Champi Warrior", "cat": "infantry", "ranged": false, "n_subject": 11, "n_opp": 21, "subject_winrate": 0.0, "mean_S": -28.8, "subject_hp": 0.0, "opp_hp": 28.8, "bimodal": false}
+  },
+  "_extra_results_note": "These two were simmed separately (15 seeds, MAX_S=180) via a single-matchup V2 run rather than the batch. To re-sim them in the batch instead, move their keys into `add` and drop them here.",
+  "ingame_outcome": {"Burmese/elite_arambai_burmese": "loss", "Persians/elite_war_elephant": "loss"},
+  "_ingame_note": "V2 predicted a +10/80% ETG win for the Arambai, but 5 in-game runs were a 0/5 loss (S -72). Likewise V2 said ETG +41 vs the War Elephant, but the recorded fight was a decisive ETG loss (9 elephants wipe 21 ETG) — the trample + huge-HP blind spot. In-game ground truth wins; since ETG carries the anti-cav bonus, the War Elephant lands in UNEXPECTED LOSS.",
+  "exclude_showcase": ["Berbers/elite_genitour"],
+  "_exclude_note": "Genitour is never shown in the video (not a useful/representative unit); it still appears in the full table."
+}

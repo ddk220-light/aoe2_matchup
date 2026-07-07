@@ -137,7 +137,26 @@ if (RTRUE) {   // game-true collision radius: outline_size (tiles) * TILE_SIZE
         );`;
     if (!simSrc.includes(r1)) { console.error("!! radius formula not found"); process.exit(2); }
     simSrc = simSrc.replace(r1,
-        `        this.radius = Math.max(4, outlineSize * TILE_SIZE * ${RSCALE});`);
+        `        this.radius = Math.max(4, outlineSize * TILE_SIZE * ${RSCALE});
+        // bodyRadius = the unit's VISIBLE body (the shipped render radius). RTRUE
+        // shrinks this.radius to the pathing/collision circle, but a scattered
+        // projectile (a miss) hits the visible BODY, not the collision dot — so the
+        // graze test must keep the full render size here (see GRAZE_K below).
+        this.bodyRadius = Math.round(10 + Math.min(outlineSize, 1.0) * 20);`);
+    // GRAZE_K: miss-graze packing compensation. A missed projectile (accuracy roll
+    // fail) lands at a random point within MISS_SPREAD and grazes any unit whose
+    // body it lands on (Arambai deals FULL damage on a graze, miss_damage_percent=1
+    // — its whole identity is scattered shots devastating a packed blob). The ship
+    // test compares against enemy.radius; under RTRUE that is the tiny collision
+    // dot (~6px infantry), so scattered shots fall in the gaps and the blob-graze
+    // dies (measured: 30% connect == base accuracy, i.e. ~0 grazes). Test against
+    // bodyRadius (the visible body, ~14px) and scale by GRAZE_K for the V2 arena's
+    // looser packing vs the game's melee blob (same rationale as TRAMPLE_K).
+    const GRAZE_K = parseFloat(process.env.GRAZE_K || "1");
+    const GZ_OLD = "enemy.radius * enemy.radius";
+    if (!simSrc.includes(GZ_OLD)) { console.error("!! graze test expr not found — aborting"); process.exit(2); }
+    simSrc = simSrc.replace(GZ_OLD,
+        `(enemy.bodyRadius * ${GRAZE_K}) * (enemy.bodyRadius * ${GRAZE_K})`);
 }
 // Flanking-flow envelopment: when a melee unit is blocked (stuck building), add a
 // tangential slide around the obstruction toward the open flank so surplus

@@ -44,6 +44,17 @@ process.env.CROWDN = "6";
 //          big trampler lands on ~1 unit/swing, not several). Validated on the
 //          recorded ETG set: vs-elephant HP-margin MAE 9.5 -> 7.1, no regressions.
 process.env.TRAMPLE_K = "1.5";
+//   GRAZE_K = 1.5   the SAME packing compensation, for the miss-graze radius. A
+//          missed projectile (accuracy roll fail) grazes any unit whose body it
+//          lands on — Arambai deal FULL damage on a graze (miss_damage_percent=1),
+//          so massed Arambai melt a packed blob. RTRUE shrinks the collision dot
+//          the ship graze test used, so scattered shots fell in the gaps (measured:
+//          30% connect == base accuracy, i.e. the graze was DEAD). The fix tests
+//          the visible bodyRadius instead; GRAZE_K scales it by the same 1.5x the
+//          V2 arena packs looser (coverage is areal, so 1.5x radius restores the
+//          2.25x density drop). Validated: ETG-vs-Arambai flips +16 -> -28 (in-game
+//          'loss'), recorded suite unchanged at 27/33, MAE 30.5 -> 30.0.
+process.env.GRAZE_K = "1.5";
 process.env.BLOCK = "1";
 process.env.GAP = "160";
 process.env.BSP = "30";

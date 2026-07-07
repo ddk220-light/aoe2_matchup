@@ -13,11 +13,15 @@ and favours the SURPRISING content (see select_reel_matchups). Each fight needs 
         --raws-dir "C:/Users/ddk22/Videos/aoe2_matchups/etg_v2/raw recordings" \
         --out "C:/Users/ddk22/Videos/aoe2_matchups/etg_v2/elite_temple_guard_muisca_reel.mp4"
 
-    # manual (hand-picked fights; verdict = category name or win/loss):
-    python -m auto.build_reel --subject "Mapuche:elite_bolas_rider" \
-        --fight "<raw.mov>||loss|Byzantines:elite_cataphract" \
-        --fight "<raw.mov>||win|Slavs:elite_boyar" \
+    # manual (hand-picked fights; verdict = category name or win/loss). Unique-unit slugs
+    # carry the civ suffix; standard-unit slugs are the plain name (e.g. champion):
+    python -m auto.build_reel --subject "Mapuche:elite_bolas_rider_mapuche" \
+        --fight "<raw.mov>||loss|Byzantines:elite_cataphract_byzantines" \
+        --fight "<raw.mov>||win|Mongols:elite_mangudai_mongols" \
         --out "<out.mp4>"
+
+Auto mode is the intended path once a subject has BOTH a categorization JSON and its
+raws on disk; manual mode is for hand-curated reels / validating without categorization.
 """
 from __future__ import annotations
 

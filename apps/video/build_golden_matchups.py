@@ -9,8 +9,9 @@ fixed formation). We KEEP every position/rotation and only:
     auto-fights/chases natively, which the user confirmed works)
   * set P2 civ = ranged unit's civ, P3 civ = melee unit's civ
   * set P1 civ = P3 civ                          (user rule)
-  * trim counts for EQUAL RESOURCES (weighted food 1.0 / wood 0.7 / gold 1.5,
-    the canonical aoe2x/sim/simulation_real.weighted_cost). 21 is the ceiling from
+  * trim counts for EQUAL RESOURCES (weighted food 1.0 / wood 1.0 / gold 1.5 — the
+    video pipeline's overlay_data.COST_WEIGHT_*; NOTE this diverges from production
+    simulation_real.weighted_cost, still wood 0.7). 21 is the ceiling from
     the template; the cheaper-per-unit side stays at 21, the pricier side is trimmed
     so total weighted cost matches -- never above 21.
 
@@ -31,7 +32,7 @@ OUT_DIR = Path(r"C:\Users\ddk22\Games\Age of Empires 2 DE"
                r"\76561198690498042\resources\_common\scenario")
 
 MAX_COUNT = 21                       # ceiling from the template layout
-WF, WW, WG = 1.0, 0.7, 1.5           # weighted_cost weights (food, wood, gold)
+WF, WW, WG = 1.0, 1.0, 1.5           # weighted_cost weights (food, wood, gold)
 # ddkModelAI on BOTH slots (2026-07-05): the v3 diplomacy-stance enemy detection is
 # slot-independent, ranged balls kite, and pure-melee armies hit the AI's melee
 # fallback (engine auto-fight restored after ~10s of game time).

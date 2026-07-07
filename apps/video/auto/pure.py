@@ -45,7 +45,7 @@ def equal_resource_counts(civ1, slug1, civ2, slug2, unit_cap=30):
     """Counts for an equal-RESOURCE fight. Per-unit costs come from the unit card,
     which already folds in civ cost bonuses (e.g. Mayan -30% archers), train
     batches (Blackwood Archers come 2 per train), and the website's resource
-    weights (food 1.0 / wood 0.7 / gold 1.5 — webapp/simulation_real.py). The
+    weights (food 1.0 / wood 1.0 / gold 1.5 — overlay_data.COST_WEIGHT_*). The
     cheaper unit takes `unit_cap`, shrunk so its army never exceeds RES_BUDGET;
     the pricier unit's count is the largest that fits the same spend.
     Returns (n1, n2)."""

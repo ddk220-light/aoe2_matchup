@@ -66,12 +66,33 @@ def _ref_row(db, civ, slug):
         (civ, slug)).fetchone()
 
 
+# Units the game trains in a BATCH — the dat's listed cost buys `batch` units, so the
+# per-unit cost is cost/batch. This is NOT the same as half-population: the Blackwood
+# Archer trains 2 per order (its 35W/45G is a per-PAIR price) AND is 0.5-pop, but the
+# Karambit Warrior is 0.5-pop yet trains one at a time (its 25F/15G is already per-unit),
+# so batch must come from this explicit allowlist, not from pop_space. Kept in lockstep
+# with the recorder's TRAIN_BATCH (apps/video/overlay/overlay_data.py).
+TRAIN_BATCH = {
+    "blackwood_archer_tupi": 2,
+    "elite_blackwood_archer_tupi": 2,
+}
+
+
+def _batch(row):
+    try:
+        slug = row["unit_slug"]
+    except (KeyError, IndexError):
+        slug = None
+    return TRAIN_BATCH.get(slug, 1)
+
+
 def weighted_cost(row):
-    """Resource-weighted cost used for equal-resource army sizing (food 1.0,
-    wood 0.7, gold 1.5) — matches the recorder's equal_resource_counts weights."""
-    return ((row["final_cost_food"] or 0) * 1.0
-            + (row["final_cost_wood"] or 0) * 0.7
-            + (row["final_cost_gold"] or 0) * 1.5)
+    """Resource-weighted PER-UNIT cost used for equal-resource army sizing (food 1.0,
+    wood 1.0, gold 1.5, then /batch for pair-trained units) — matches the recorder's
+    equal_resource_counts weights (overlay_data.COST_WEIGHT_*)."""
+    return (((row["final_cost_food"] or 0) * 1.0
+            + (row["final_cost_wood"] or 0) * 1.0
+            + (row["final_cost_gold"] or 0) * 1.5) / _batch(row))
 
 
 def combat_dict(db, civ, slug):
@@ -83,8 +104,8 @@ def combat_dict(db, civ, slug):
     d = build_combat_dict_from_ref(row)
     d["name"] = row["unit_name"]
     d["civ"] = civ
-    d["total_cost"] = ((row["final_cost_food"] or 0) + (row["final_cost_wood"] or 0)
-                       + (row["final_cost_gold"] or 0))
+    d["total_cost"] = (((row["final_cost_food"] or 0) + (row["final_cost_wood"] or 0)
+                       + (row["final_cost_gold"] or 0)) / _batch(row))
     d["outline_size"] = row["outline_size_x"] or 0.2
     return d
 
@@ -285,7 +306,29 @@ def stage_categorize(subject_civ, subject_slug, workdir, overrides, *,
         })
 
     rows = SR.sort_rows(rows)
-    showcase = SR.pick_showcase(rows, max_per_cat=SHOWCASE_MAX, exclude=exclude)
+    # showcase_override (per-subject curation, like the ETG "controlled showcase"):
+    # an explicit {v2_category: [[civ, slug], ...]} that REPLACES the automatic
+    # cheapest/most-expensive pick so the video can feature specific recorded fights.
+    # Each pick keeps whatever category its row resolved to (after ingame_outcome), so
+    # place a unit under the category key it actually belongs to.
+    sc_override = overrides.get("showcase_override")
+    if sc_override:
+        by_key = {(r["civ"], r["slug"]): r for r in rows}
+        showcase, missing = {}, []
+        for cat in SR.CATEGORY_ORDER:
+            picks = []
+            for p in sc_override.get(cat, []):
+                key = tuple(p)
+                if key in by_key:
+                    picks.append(by_key[key])
+                else:
+                    missing.append((cat, "/".join(key)))
+            showcase[cat] = picks
+        if missing:
+            print(f"[categorize] WARNING showcase_override keys not found in rows: "
+                  f"{missing}", file=sys.stderr)
+    else:
+        showcase = SR.pick_showcase(rows, max_per_cat=SHOWCASE_MAX, exclude=exclude)
     show_keys = {(r["civ"], r["slug"]) for cat in showcase for r in showcase[cat]}
 
     out = {

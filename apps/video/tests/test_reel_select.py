@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from auto.build_reel import select_reel_matchups
+from auto.build_reel import select_reel_matchups, _footage_verdict
 
 REPO = Path(__file__).resolve().parents[3]
 ETG_CAT = REPO / "apps" / "video" / "sim_v2" / "results" / "elite_temple_guard_muisca.json"
@@ -58,6 +58,19 @@ def test_capped_at_two():
     cat = {"showcase": {k: [_row(k, k)] for k in
                         ("unexpected_win", "unexpected_loss", "expected_win", "expected_loss")}}
     assert len(select_reel_matchups(cat)) == 2
+
+
+def test_footage_verdict_matches_who_actually_won():
+    # subject favoured -> win is expected, loss is the surprise
+    assert _footage_verdict("subject", True) == "expected_win"
+    assert _footage_verdict("subject", False) == "unexpected_loss"
+    # opponent (or both) favoured -> a subject win is the surprise
+    assert _footage_verdict("opponent", True) == "unexpected_win"
+    assert _footage_verdict("opponent", False) == "expected_loss"
+    assert _footage_verdict("both", True) == "unexpected_win"
+    # nobody favoured -> plain win/loss
+    assert _footage_verdict("neither", True) == "win"
+    assert _footage_verdict("neither", False) == "loss"
 
 
 @pytest.mark.skipif(not ETG_CAT.exists(), reason="ETG categorization JSON not present")

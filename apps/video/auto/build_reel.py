@@ -73,6 +73,74 @@ def select_reel_matchups(cat: dict, cap: int = 2):
     return picks[:cap]
 
 
+def _outcome(sidecar) -> tuple | None:
+    """(subject_wins, subj_survivors, opp_survivors) from the last sidecar row (side1 =
+    subject in the sweep sidecars). None if unreadable or a draw."""
+    try:
+        r = (json.load(open(sidecar)).get("rows")) or []
+    except Exception:
+        return None
+    if not r:
+        return None
+    s1, s2 = int(r[-1]["side1"]["count"]), int(r[-1]["side2"]["count"])
+    if s1 > 0 and s2 <= 0:
+        return (True, s1, s2)
+    if s2 > 0 and s1 <= 0:
+        return (False, s1, s2)
+    return None
+
+
+def _footage_verdict(favored, subj_wins) -> str:
+    """verdict_kind from who was FAVORED (sim) + who actually WON (footage). Keeps the
+    chip truthful to the clip even when the sim's category disagrees with the recording."""
+    if favored == "subject":
+        return "expected_win" if subj_wins else "unexpected_loss"
+    if favored in ("opponent", "both"):
+        return "unexpected_win" if subj_wins else "expected_loss"
+    return "win" if subj_wins else "loss"                    # 'neither' — no strong prior
+
+
+def select_from_footage(cat: dict, resolve, cap: int = 2):
+    """Footage-truthful selection: for each showcase candidate, resolve its recording,
+    read the REAL outcome, and re-derive the verdict. Same preference as the sim-only rule
+    (unexpected win + unexpected loss, one of each valence, else the unit's range), but a
+    matchup only counts as an 'unexpected win' if it actually WON on tape. `resolve(row)`
+    returns a sidecar path (or None if no footage). Returns [(verdict_kind, row)]."""
+    by_key = {(r.get("civ"), r.get("slug")): r for r in (cat.get("rows") or [])}
+    seen, cands = set(), []
+    for pairs in (cat.get("showcase") or {}).values():
+        for civ, slug in pairs:
+            if (civ, slug) in seen:
+                continue
+            seen.add((civ, slug))
+            row = by_key.get((civ, slug))
+            if not row:
+                continue
+            sc = resolve(row)
+            oc = _outcome(sc) if sc else None
+            if oc is None:
+                continue
+            subj_wins, s1, s2 = oc
+            kind = _footage_verdict(row.get("favored"), subj_wins)
+            margin = s1 if subj_wins else s2                 # dominance for ranking
+            cands.append((kind, row, margin))
+
+    def top(kind):
+        c = sorted((x for x in cands if x[0] == kind), key=lambda x: x[2], reverse=True)
+        return (c[0][0], c[0][1]) if c else None
+
+    picks = [p for p in (top("unexpected_win"), top("unexpected_loss")) if p]
+    if not picks:
+        picks = [p for p in (top("expected_win"), top("expected_loss")) if p]
+    elif len(picks) == 1:
+        only = picks[0][0]
+        mate = (top("expected_loss") or top("loss")) if "win" in only \
+            else (top("expected_win") or top("win"))
+        if mate:
+            picks.append(mate)
+    return picks[:cap]
+
+
 def _sidecar_for(raw: Path) -> Path | None:
     for cand in (raw.with_suffix(".hp.json"),
                  Path(str(raw.with_suffix("")) + ".grpc.hp.json"),
@@ -151,14 +219,22 @@ def main():
     elif a.cat:
         cat = json.load(open(a.cat))
         raws_dir = Path(a.raws_dir) if a.raws_dir else None
-        for kind, row in select_reel_matchups(cat):
-            raw = _find_raw(raws_dir, row["slug"], row["name"]) if raws_dir else None
-            if raw is None:
-                print(f"[skip] no raw found for {row['name']} ({kind})")
-                continue
-            sidecar = _sidecar_for(raw)
-            if sidecar is None:
-                print(f"[skip] no sidecar for {raw.name}")
+        cache = {}                                          # (civ,slug) -> (raw, sidecar)
+
+        def resolve(row):
+            key = (row["civ"], row["slug"])
+            if key not in cache:
+                raw = _find_raw(raws_dir, row["slug"], row["name"]) if raws_dir else None
+                sc = _sidecar_for(raw) if raw else None
+                cache[key] = (raw, sc) if (raw and sc) else (None, None)
+            return cache[key][1]
+
+        # footage-truthful when raws are present; sim-only picks otherwise (no build)
+        picks = select_from_footage(cat, resolve) if raws_dir else select_reel_matchups(cat)
+        for kind, row in picks:
+            raw, sidecar = cache.get((row["civ"], row["slug"]), (None, None))
+            if raw is None or sidecar is None:
+                print(f"[skip] no footage for {row['name']} ({kind})")
                 continue
             ocard = get_unit_card(row["civ"], row["slug"])
             fights.append({
@@ -167,6 +243,7 @@ def main():
                 "verdict_kind": kind, "why": _why(scard["name"], ocard["name"], kind),
                 "lead_in": _lead_in(sidecar),
             })
+            print(f"[pick] {kind:16} {row['name']}  <- {Path(raw).name}")
     else:
         sys.exit("pass --cat (+--raws-dir) for auto mode, or one or more --fight for manual")
 

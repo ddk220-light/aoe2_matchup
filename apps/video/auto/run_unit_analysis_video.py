@@ -91,9 +91,16 @@ def main():
         # -> the gRPC sidecar fails its sanity gate and the top HP bar drops to (here
         # unreliable, no on-screen readout) OCR. Capping at 21 keeps them in lockstep so
         # every fight gets the exact gRPC HP overlay.
+        #
+        # raw_copy_to ARCHIVES the untouched native-res capture (NO overlay, NO
+        # speed-ramp) to <out_dir>/raw recordings/<name>.mov, plus its gRPC HP sidecar +
+        # stream dump right beside it. That raw is the reusable master for other video
+        # formats (e.g. the 9:16 reel cut): re-compose or re-overlay it later with
+        # auto.recompose_from_raws / redecode_hp — no game re-run needed.
         return run_matchup(spec["civ1"], spec["slug1"],
                            spec["civ2"], spec["slug2"],
                            name=f"{spec['name']}.mp4", copy_to=str(out_dir),
+                           raw_copy_to=str(out_dir),
                            mode="resources", unit_cap=21, live_overlay=True,
                            build_fn=build_golden_from_sides)
 

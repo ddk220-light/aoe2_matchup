@@ -14,10 +14,10 @@
  },
  "counts": {
   "expected_win": 23,
-  "unexpected_win": 1,
+  "unexpected_win": 0,
   "coin_flip": 6,
   "unexpected_loss": 2,
-  "expected_loss": 44
+  "expected_loss": 45
  },
  "rows": [
   {
@@ -550,29 +550,6 @@
    "opp_counter": false
   },
   {
-   "civ": "Shu",
-   "slug": "elite_white_feather_guard_shu",
-   "name": "Elite White Feather Guard",
-   "cat": "infantry",
-   "class": "infantry",
-   "cost": 75.0,
-   "n_subject": 12,
-   "n_opp": 21,
-   "subject_hp": 14.4,
-   "opp_hp": 2.2,
-   "mean_S": 12.2,
-   "wr": 0.8,
-   "bimodal": true,
-   "outcome": "win",
-   "favored": "opponent",
-   "category": "unexpected_win",
-   "ingame": false,
-   "subject_bonus": false,
-   "subject_counter": true,
-   "opp_bonus": true,
-   "opp_counter": true
-  },
-  {
    "civ": "Bulgarians",
    "slug": "elite_konnik_bulgarians",
    "name": "Elite Konnik",
@@ -981,6 +958,29 @@
    "favored": "opponent",
    "category": "expected_loss",
    "ingame": false,
+   "subject_bonus": false,
+   "subject_counter": true,
+   "opp_bonus": true,
+   "opp_counter": true
+  },
+  {
+   "civ": "Shu",
+   "slug": "elite_white_feather_guard_shu",
+   "name": "Elite White Feather Guard",
+   "cat": "infantry",
+   "class": "infantry",
+   "cost": 75.0,
+   "n_subject": 12,
+   "n_opp": 21,
+   "subject_hp": 14.4,
+   "opp_hp": 2.2,
+   "mean_S": 12.2,
+   "wr": 0.8,
+   "bimodal": true,
+   "outcome": "loss",
+   "favored": "opponent",
+   "category": "expected_loss",
+   "ingame": true,
    "subject_bonus": false,
    "subject_counter": true,
    "opp_bonus": true,
@@ -1792,12 +1792,7 @@
     "paladin"
    ]
   ],
-  "unexpected_win": [
-   [
-    "Shu",
-    "elite_white_feather_guard_shu"
-   ]
-  ],
+  "unexpected_win": [],
   "coin_flip": [],
   "unexpected_loss": [
    [

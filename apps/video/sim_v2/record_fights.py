@@ -42,7 +42,7 @@ def main(argv):
               f"{opp_civ}/{opp_slug}  -> {name} =====", flush=True)
         try:
             clip = run_matchup(subj_civ, subj_slug, opp_civ, opp_slug,
-                               name=name, copy_to=str(out),
+                               name=name, copy_to=str(out), raw_copy_to=str(out),
                                mode="resources", unit_cap=21, live_overlay=True,
                                build_fn=build_golden_from_sides)
             results.append((name, str(clip)))

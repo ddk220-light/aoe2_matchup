@@ -17,9 +17,15 @@
 //   RETARGET/JITTER = 1.5 / 0.8   ADDITIVE cooldown when switching to a new target
 //          (walk + re-face after your target dies); reproduces the t6-10s
 //          death-reshuffle stall where the coin-flip basins bifurcate.
-//   CHURN = 3.5 (crowd-scaled, CROWDN=6)   per-swing +rand[0,3.5)*min(1,neighbors/6)
+//   CHURN = 2.25 (crowd-scaled, CROWDN=6)   per-swing +rand[0,2.25)*min(1,neighbors/6)
 //          for melee only; crowd interference that decays the ETG ramp window and
-//          vanishes in the thinned-out mop-up.
+//          vanishes in the thinned-out mop-up. RECALIBRATED 3.5 -> 2.25 (2026-07-07):
+//          3.5 was tuned before the attack-ramp fix (f8cc9fe) weakened ETG, so it
+//          then OVER-penalized the ramping Temple Guard — the shipped sim was wrong
+//          on BOTH ETG-vs-Konnik (5% ETG, in-game 80% — the revive swarm out-grinds a
+//          ramp that never builds) AND ETG-vs-Huskarl (20%, in-game 55%). 2.25 lands
+//          Konnik 75% / Huskarl 60% (both bimodal, matching the game) with the
+//          recorded 33-matchup suite unchanged at 27/33 (MAE 30.0 -> 30.1).
 //   Spawn: BLOCK compact grid, GAP=160px centers, BSP=30px (1 tile) spacing —
 //          the ~16x16 arena cluster, not the ship full-height line (which prevents
 //          envelopment entirely).
@@ -36,7 +42,7 @@ process.env.ADELAY = "0.4";
 process.env.AJIT = "0.8";
 process.env.RETARGET = "1.5";
 process.env.JITTER = "0.8";
-process.env.CHURN = "3.5";
+process.env.CHURN = "2.25";
 process.env.CROWDN = "6";
 //   TRAMPLE_K = 1.5   packing compensation for the trample blast radius: the V2
 //          arena packs ~1.5x looser than the game's melee blob, so the 0.5-tile

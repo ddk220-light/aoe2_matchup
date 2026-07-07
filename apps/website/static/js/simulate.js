@@ -1824,17 +1824,25 @@ class BattleUnit {
             this.hpGainedFromKills += heal;
         }
 
-        // Attack-speed ramp (Temple Guard): shorten reload toward the floor.
+        // Attack-speed ramp (Temple Guard): each hit adds a -attackSpeedRamp
+        // stack that EXPIRES 5s later, so reload = max(min, base - ramp*stacks)
+        // where stacks = hits landed in the last 5s. This is the real game
+        // mechanic (a decaying 5s window), not a monotonic accumulator — walking
+        // between targets or being unable to attack lets the ramp decay back.
         if (this.attackSpeedRamp > 0) {
             const baseReload =
                 this.attackSpeed > 0 ? 1.0 / this.attackSpeed : 2.0;
-            this.rampReduction = Math.min(
-                this.rampReduction + this.attackSpeedRamp,
-                Math.max(0, baseReload - this.attackSpeedMin),
-            );
+            const now =
+                typeof simulation !== "undefined" && simulation
+                    ? simulation.battleTime
+                    : 0;
+            if (!this.rampHits) this.rampHits = [];
+            const cutoff = now - 5.0;
+            this.rampHits = this.rampHits.filter((h) => h > cutoff);
+            this.rampHits.push(now);
             this.reloadTime = Math.max(
                 this.attackSpeedMin,
-                baseReload - this.rampReduction,
+                baseReload - this.attackSpeedRamp * this.rampHits.length,
             );
         }
 

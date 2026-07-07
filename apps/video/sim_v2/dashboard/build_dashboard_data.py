@@ -156,9 +156,11 @@ def main():
         "weights": {"food": 1.0, "wood": 1.0, "gold": 1.5},
         "db_scale": "3k (equal resources, 3000 weighted; cap 30)",
         "note_weights": "All four V2 tabs were re-simmed 2026-07-07 at the new weights (wood 1.0) with "
-                        "the fixed sim (trample body-hull + Arambai miss-graze). The DB columns are still "
-                        "the OLD weights (wood 0.7) + pre-fix production sim (a full re-sim is a separate "
-                        "500k-matchup job) — so V2-vs-DB gaps show where the fixes moved the needle.",
+                        "the fixed sim (trample body-hull, Arambai miss-graze, CHURN 3.5->2.25 so the "
+                        "Temple Guard ramp survives revive/swarm grinds — ETG-vs-Konnik now the in-game "
+                        "coin-flip). The DB columns are still the OLD weights (wood 0.7) + pre-fix "
+                        "production sim (a full re-sim is a separate 500k-matchup job) — so V2-vs-DB gaps "
+                        "show where the fixes moved the needle.",
         "cat_order": CAT_ORDER,
         "units": units_out,
     }

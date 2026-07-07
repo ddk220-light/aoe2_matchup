@@ -1,12 +1,12 @@
 {
- "generated": "2026-07-07 13:06",
+ "generated": "2026-07-07 14:31",
  "weights": {
   "food": 1.0,
   "wood": 1.0,
   "gold": 1.5
  },
  "db_scale": "3k (equal resources, 3000 weighted; cap 30)",
- "note_weights": "All four V2 tabs were re-simmed 2026-07-07 at the new weights (wood 1.0) with the fixed sim (trample body-hull + Arambai miss-graze). The DB columns are still the OLD weights (wood 0.7) + pre-fix production sim (a full re-sim is a separate 500k-matchup job) \u2014 so V2-vs-DB gaps show where the fixes moved the needle.",
+ "note_weights": "All four V2 tabs were re-simmed 2026-07-07 at the new weights (wood 1.0) with the fixed sim (trample body-hull, Arambai miss-graze, CHURN 3.5->2.25 so the Temple Guard ramp survives revive/swarm grinds \u2014 ETG-vs-Konnik now the in-game coin-flip). The DB columns are still the OLD weights (wood 0.7) + pre-fix production sim (a full re-sim is a separate 500k-matchup job) \u2014 so V2-vs-DB gaps show where the fixes moved the needle.",
  "cat_order": [
   "expected_win",
   "unexpected_win",
@@ -29,42 +29,6 @@
    },
    "matchups": [
     {
-     "opp_civ": "Romans",
-     "opp_slug": "elite_centurion_romans",
-     "opp_name": "Elite Centurion",
-     "opp_class": "cavalry",
-     "category": "expected_win",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 14,
-      "subject_hp": 62.7,
-      "opp_hp": 0,
-      "delta": 62.7,
-      "wr": 1,
-      "outcome": "win"
-     },
-     "db": {
-      "n_subject": 26,
-      "n_opp": 18,
-      "subject_hp": 63.6,
-      "opp_hp": 0.0,
-      "delta": 63.6,
-      "outcome": "win",
-      "runs": 8
-     },
-     "ingame": {
-      "n_subject": 21,
-      "n_opp": 14,
-      "n_subject_end": 17,
-      "n_opp_end": 0,
-      "subject_hp": 57.1,
-      "opp_hp": 0.0,
-      "delta": 57.1,
-      "outcome": "win",
-      "file": "expected_win_2_elite_centurion_romans.hp.json"
-     }
-    },
-    {
      "opp_civ": "Wei",
      "opp_slug": "elite_tiger_cavalry_wei",
      "opp_name": "Elite Tiger Cavalry",
@@ -73,9 +37,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 16,
-      "subject_hp": 60.8,
+      "subject_hp": 62.4,
       "opp_hp": 0,
-      "delta": 60.8,
+      "delta": 62.4,
       "wr": 1,
       "outcome": "win"
      },
@@ -101,6 +65,42 @@
      }
     },
     {
+     "opp_civ": "Romans",
+     "opp_slug": "elite_centurion_romans",
+     "opp_name": "Elite Centurion",
+     "opp_class": "cavalry",
+     "category": "expected_win",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 14,
+      "subject_hp": 61.6,
+      "opp_hp": 0,
+      "delta": 61.6,
+      "wr": 1,
+      "outcome": "win"
+     },
+     "db": {
+      "n_subject": 26,
+      "n_opp": 18,
+      "subject_hp": 63.6,
+      "opp_hp": 0.0,
+      "delta": 63.6,
+      "outcome": "win",
+      "runs": 8
+     },
+     "ingame": {
+      "n_subject": 21,
+      "n_opp": 14,
+      "n_subject_end": 17,
+      "n_opp_end": 0,
+      "subject_hp": 57.1,
+      "opp_hp": 0.0,
+      "delta": 57.1,
+      "outcome": "win",
+      "file": "expected_win_2_elite_centurion_romans.hp.json"
+     }
+    },
+    {
      "opp_civ": "Jurchens",
      "opp_slug": "elite_iron_pagoda_jurchens",
      "opp_name": "Elite Iron Pagoda",
@@ -109,9 +109,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 17,
-      "subject_hp": 52.6,
+      "subject_hp": 51.6,
       "opp_hp": 0,
-      "delta": 52.6,
+      "delta": 51.6,
       "wr": 1,
       "outcome": "win"
      },
@@ -181,9 +181,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 19,
-      "subject_hp": 68.4,
+      "subject_hp": 75,
       "opp_hp": 0,
-      "delta": 68.4,
+      "delta": 75,
       "wr": 1,
       "outcome": "win"
      },
@@ -207,9 +207,9 @@
      "v2": {
       "n_subject": 14,
       "n_opp": 21,
-      "subject_hp": 65.1,
+      "subject_hp": 66.6,
       "opp_hp": 0,
-      "delta": 65.1,
+      "delta": 66.6,
       "wr": 1,
       "outcome": "win"
      },
@@ -233,9 +233,9 @@
      "v2": {
       "n_subject": 19,
       "n_opp": 21,
-      "subject_hp": 60,
+      "subject_hp": 66.4,
       "opp_hp": 0,
-      "delta": 60,
+      "delta": 66.4,
       "wr": 1,
       "outcome": "win"
      },
@@ -259,9 +259,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 19,
-      "subject_hp": 59.1,
+      "subject_hp": 58.1,
       "opp_hp": 0,
-      "delta": 59.1,
+      "delta": 58.1,
       "wr": 1,
       "outcome": "win"
      },
@@ -285,9 +285,9 @@
      "v2": {
       "n_subject": 19,
       "n_opp": 21,
-      "subject_hp": 54.5,
+      "subject_hp": 57.3,
       "opp_hp": 0,
-      "delta": 54.5,
+      "delta": 57.3,
       "wr": 1,
       "outcome": "win"
      },
@@ -311,9 +311,9 @@
      "v2": {
       "n_subject": 9,
       "n_opp": 21,
-      "subject_hp": 53.4,
+      "subject_hp": 55.3,
       "opp_hp": 0,
-      "delta": 53.4,
+      "delta": 55.3,
       "wr": 1,
       "outcome": "win"
      },
@@ -337,9 +337,9 @@
      "v2": {
       "n_subject": 18,
       "n_opp": 21,
-      "subject_hp": 50.6,
+      "subject_hp": 52.5,
       "opp_hp": 0,
-      "delta": 50.6,
+      "delta": 52.5,
       "wr": 1,
       "outcome": "win"
      },
@@ -363,9 +363,9 @@
      "v2": {
       "n_subject": 15,
       "n_opp": 21,
-      "subject_hp": 48.6,
+      "subject_hp": 50.3,
       "opp_hp": 0,
-      "delta": 48.6,
+      "delta": 50.3,
       "wr": 1,
       "outcome": "win"
      },
@@ -389,9 +389,9 @@
      "v2": {
       "n_subject": 18,
       "n_opp": 21,
-      "subject_hp": 40.4,
+      "subject_hp": 42.8,
       "opp_hp": 0,
-      "delta": 40.4,
+      "delta": 42.8,
       "wr": 1,
       "outcome": "win"
      },
@@ -407,6 +407,58 @@
      "ingame": null
     },
     {
+     "opp_civ": "Bulgarians",
+     "opp_slug": "hussar",
+     "opp_name": "Hussar",
+     "opp_class": "cavalry",
+     "category": "expected_win",
+     "v2": {
+      "n_subject": 12,
+      "n_opp": 21,
+      "subject_hp": 39.4,
+      "opp_hp": 0,
+      "delta": 39.4,
+      "wr": 1,
+      "outcome": "win"
+     },
+     "db": {
+      "n_subject": 20,
+      "n_opp": 30,
+      "subject_hp": 77.8,
+      "opp_hp": 0.0,
+      "delta": 77.8,
+      "outcome": "win",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Huns",
+     "opp_slug": "paladin",
+     "opp_name": "Paladin",
+     "opp_class": "cavalry",
+     "category": "expected_win",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 16,
+      "subject_hp": 38.5,
+      "opp_hp": 0,
+      "delta": 38.5,
+      "wr": 1,
+      "outcome": "win"
+     },
+     "db": {
+      "n_subject": 26,
+      "n_opp": 22,
+      "subject_hp": 57.1,
+      "opp_hp": 0.0,
+      "delta": 57.1,
+      "outcome": "win",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Armenians",
      "opp_slug": "imp_elite_skirm",
      "opp_name": "Elite Skirmisher",
@@ -415,9 +467,9 @@
      "v2": {
       "n_subject": 9,
       "n_opp": 21,
-      "subject_hp": 64,
-      "opp_hp": 25,
-      "delta": 39,
+      "subject_hp": 65.5,
+      "opp_hp": 27,
+      "delta": 38.5,
       "wr": 1,
       "outcome": "win"
      },
@@ -441,9 +493,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 21,
-      "subject_hp": 36.9,
+      "subject_hp": 37.8,
       "opp_hp": 0,
-      "delta": 36.9,
+      "delta": 37.8,
       "wr": 1,
       "outcome": "win"
      },
@@ -467,9 +519,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 17,
-      "subject_hp": 36.3,
+      "subject_hp": 37.3,
       "opp_hp": 0,
-      "delta": 36.3,
+      "delta": 37.3,
       "wr": 1,
       "outcome": "win"
      },
@@ -493,9 +545,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 19,
-      "subject_hp": 27.7,
+      "subject_hp": 29.2,
       "opp_hp": 0,
-      "delta": 27.7,
+      "delta": 29.2,
       "wr": 1,
       "outcome": "win"
      },
@@ -511,26 +563,26 @@
      "ingame": null
     },
     {
-     "opp_civ": "Bulgarians",
-     "opp_slug": "hussar",
-     "opp_name": "Hussar",
-     "opp_class": "cavalry",
+     "opp_civ": "Incas",
+     "opp_slug": "elite_kamayuk_incas",
+     "opp_name": "Elite Kamayuk",
+     "opp_class": "infantry",
      "category": "expected_win",
      "v2": {
-      "n_subject": 12,
+      "n_subject": 14,
       "n_opp": 21,
-      "subject_hp": 27.5,
+      "subject_hp": 28.9,
       "opp_hp": 0,
-      "delta": 27.5,
+      "delta": 28.9,
       "wr": 1,
       "outcome": "win"
      },
      "db": {
       "n_subject": 20,
       "n_opp": 30,
-      "subject_hp": 77.8,
+      "subject_hp": 68.0,
       "opp_hp": 0.0,
-      "delta": 77.8,
+      "delta": 68.0,
       "outcome": "win",
       "runs": 8
      },
@@ -545,10 +597,10 @@
      "v2": {
       "n_subject": 19,
       "n_opp": 21,
-      "subject_hp": 16.6,
-      "opp_hp": 1.6,
-      "delta": 15.0,
-      "wr": 0.8666666666666667,
+      "subject_hp": 25,
+      "opp_hp": 0,
+      "delta": 25,
+      "wr": 1,
       "outcome": "win"
      },
      "db": {
@@ -571,10 +623,10 @@
      "v2": {
       "n_subject": 14,
       "n_opp": 21,
-      "subject_hp": 15.4,
-      "opp_hp": 0.5,
-      "delta": 14.9,
-      "wr": 0.9333333333333333,
+      "subject_hp": 23.2,
+      "opp_hp": 0,
+      "delta": 23.2,
+      "wr": 1,
       "outcome": "win"
      },
      "db": {
@@ -597,10 +649,10 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 19,
-      "subject_hp": 15.6,
-      "opp_hp": 1.3,
-      "delta": 14.3,
-      "wr": 0.8666666666666667,
+      "subject_hp": 17.9,
+      "opp_hp": 0.6,
+      "delta": 17.3,
+      "wr": 0.9333333333333333,
       "outcome": "win"
      },
      "db": {
@@ -615,97 +667,19 @@
      "ingame": null
     },
     {
-     "opp_civ": "Huns",
-     "opp_slug": "paladin",
-     "opp_name": "Paladin",
-     "opp_class": "cavalry",
-     "category": "expected_win",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 16,
-      "subject_hp": 15.7,
-      "opp_hp": 1.6,
-      "delta": 14.1,
-      "wr": 0.8666666666666667,
-      "outcome": "win"
-     },
-     "db": {
-      "n_subject": 26,
-      "n_opp": 22,
-      "subject_hp": 57.1,
-      "opp_hp": 0.0,
-      "delta": 57.1,
-      "outcome": "win",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Italians",
-     "opp_slug": "condottiero",
-     "opp_name": "Condottiero",
-     "opp_class": "infantry",
-     "category": "coin_flip",
-     "v2": {
-      "n_subject": 15,
-      "n_opp": 21,
-      "subject_hp": 8.9,
-      "opp_hp": 4.7,
-      "delta": 4.2,
-      "wr": 0.6666666666666666,
-      "outcome": "coinflip"
-     },
-     "db": {
-      "n_subject": 22,
-      "n_opp": 30,
-      "subject_hp": 47.7,
-      "opp_hp": 0.0,
-      "delta": 47.7,
-      "outcome": "win",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Incas",
-     "opp_slug": "elite_kamayuk_incas",
-     "opp_name": "Elite Kamayuk",
-     "opp_class": "infantry",
-     "category": "coin_flip",
-     "v2": {
-      "n_subject": 14,
-      "n_opp": 21,
-      "subject_hp": 5,
-      "opp_hp": 4.2,
-      "delta": 0.8,
-      "wr": 0.5333333333333333,
-      "outcome": "coinflip"
-     },
-     "db": {
-      "n_subject": 20,
-      "n_opp": 30,
-      "subject_hp": 68.0,
-      "opp_hp": 0.0,
-      "delta": 68.0,
-      "outcome": "win",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Shu",
      "opp_slug": "elite_white_feather_guard_shu",
      "opp_name": "Elite White Feather Guard",
      "opp_class": "infantry",
-     "category": "coin_flip",
+     "category": "unexpected_win",
      "v2": {
       "n_subject": 12,
       "n_opp": 21,
-      "subject_hp": 6.7,
-      "opp_hp": 7.5,
-      "delta": -0.8,
-      "wr": 0.6,
-      "outcome": "coinflip"
+      "subject_hp": 14.4,
+      "opp_hp": 2.2,
+      "delta": 12.2,
+      "wr": 0.8,
+      "outcome": "win"
      },
      "db": {
       "n_subject": 19,
@@ -727,10 +701,10 @@
      "v2": {
       "n_subject": 17,
       "n_opp": 21,
-      "subject_hp": 4.9,
-      "opp_hp": 8.7,
-      "delta": -3.8,
-      "wr": 0.4,
+      "subject_hp": 8.6,
+      "opp_hp": 3.9,
+      "delta": 4.7,
+      "wr": 0.7333333333333333,
       "outcome": "coinflip"
      },
      "db": {
@@ -745,6 +719,84 @@
      "ingame": null
     },
     {
+     "opp_civ": "Bulgarians",
+     "opp_slug": "elite_konnik_bulgarians",
+     "opp_name": "Elite Konnik",
+     "opp_class": "cavalry",
+     "category": "coin_flip",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 17,
+      "subject_hp": 11.1,
+      "opp_hp": 7.3,
+      "delta": 3.8,
+      "wr": 0.6666666666666666,
+      "outcome": "coinflip"
+     },
+     "db": {
+      "n_subject": 26,
+      "n_opp": 23,
+      "subject_hp": 53.8,
+      "opp_hp": 0.0,
+      "delta": 53.8,
+      "outcome": "win",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Italians",
+     "opp_slug": "condottiero",
+     "opp_name": "Condottiero",
+     "opp_class": "infantry",
+     "category": "coin_flip",
+     "v2": {
+      "n_subject": 15,
+      "n_opp": 21,
+      "subject_hp": 5.3,
+      "opp_hp": 6.2,
+      "delta": -0.9,
+      "wr": 0.4666666666666667,
+      "outcome": "coinflip"
+     },
+     "db": {
+      "n_subject": 22,
+      "n_opp": 30,
+      "subject_hp": 47.7,
+      "opp_hp": 0.0,
+      "delta": 47.7,
+      "outcome": "win",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Berbers",
+     "opp_slug": "elite_genitour",
+     "opp_name": "Elite Genitour",
+     "opp_class": "ranged",
+     "category": "coin_flip",
+     "v2": {
+      "n_subject": 11,
+      "n_opp": 21,
+      "subject_hp": 31.7,
+      "opp_hp": 35.4,
+      "delta": -3.7,
+      "wr": 0.4666666666666667,
+      "outcome": "coinflip"
+     },
+     "db": {
+      "n_subject": 19,
+      "n_opp": 30,
+      "subject_hp": 57.6,
+      "opp_hp": 0.0,
+      "delta": 57.6,
+      "outcome": "win",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Goths",
      "opp_slug": "elite_huskarl_goths",
      "opp_name": "Elite Huskarl",
@@ -753,10 +805,10 @@
      "v2": {
       "n_subject": 13,
       "n_opp": 21,
-      "subject_hp": 5.4,
-      "opp_hp": 10.9,
-      "delta": -5.5,
-      "wr": 0.3333333333333333,
+      "subject_hp": 4.2,
+      "opp_hp": 9.1,
+      "delta": -4.9,
+      "wr": 0.4,
       "outcome": "coinflip"
      },
      "db": {
@@ -771,27 +823,27 @@
      "ingame": null
     },
     {
-     "opp_civ": "Ethiopians",
-     "opp_slug": "elite_shotel_warrior_ethiopians",
-     "opp_name": "Elite Shotel Warrior",
-     "opp_class": "infantry",
+     "opp_civ": "Muisca",
+     "opp_slug": "elite_guecha_warrior_muisca",
+     "opp_name": "Elite Guecha Warrior",
+     "opp_class": "ranged",
      "category": "coin_flip",
      "v2": {
-      "n_subject": 14,
-      "n_opp": 21,
-      "subject_hp": 2.4,
-      "opp_hp": 12.7,
-      "delta": -10.3,
-      "wr": 0.4,
+      "n_subject": 21,
+      "n_opp": 20,
+      "subject_hp": 20.9,
+      "opp_hp": 26.8,
+      "delta": -5.9,
+      "wr": 0.26666666666666666,
       "outcome": "coinflip"
      },
      "db": {
-      "n_subject": 20,
-      "n_opp": 30,
-      "subject_hp": 32.1,
-      "opp_hp": 0.0,
-      "delta": 32.1,
-      "outcome": "win",
+      "n_subject": 26,
+      "n_opp": 27,
+      "subject_hp": 0.0,
+      "opp_hp": 43.5,
+      "delta": -43.5,
+      "outcome": "loss",
       "runs": 8
      },
      "ingame": null
@@ -806,8 +858,8 @@
       "n_subject": 21,
       "n_opp": 9,
       "subject_hp": 0,
-      "opp_hp": 36.6,
-      "delta": -36.6,
+      "opp_hp": 33,
+      "delta": -33,
       "wr": 0,
       "outcome": "loss"
      },
@@ -842,8 +894,8 @@
       "n_subject": 21,
       "n_opp": 15,
       "subject_hp": 0,
-      "opp_hp": 64.4,
-      "delta": -64.4,
+      "opp_hp": 61.7,
+      "delta": -61.7,
       "wr": 0,
       "outcome": "loss"
      },
@@ -867,32 +919,6 @@
       "outcome": "loss",
       "file": "unexpected_counter_1_elite_cataphract_byzantines.hp.json"
      }
-    },
-    {
-     "opp_civ": "Bulgarians",
-     "opp_slug": "elite_konnik_bulgarians",
-     "opp_name": "Elite Konnik",
-     "opp_class": "cavalry",
-     "category": "unexpected_loss",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 17,
-      "subject_hp": 0.6,
-      "opp_hp": 33.1,
-      "delta": -32.5,
-      "wr": 0.06666666666666667,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 26,
-      "n_opp": 23,
-      "subject_hp": 53.8,
-      "opp_hp": 0.0,
-      "delta": 53.8,
-      "outcome": "win",
-      "runs": 8
-     },
-     "ingame": null
     },
     {
      "opp_civ": "Incas",
@@ -940,8 +966,8 @@
       "n_subject": 7,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 37.3,
-      "delta": -37.3,
+      "opp_hp": 46.1,
+      "delta": -46.1,
       "wr": 0,
       "outcome": "loss"
      },
@@ -976,8 +1002,8 @@
       "n_subject": 12,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 50.7,
-      "delta": -50.7,
+      "opp_hp": 48.4,
+      "delta": -48.4,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1012,8 +1038,8 @@
       "n_subject": 14,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 52.2,
-      "delta": -52.2,
+      "opp_hp": 51.6,
+      "delta": -51.6,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1048,8 +1074,8 @@
       "n_subject": 14,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 58.9,
-      "delta": -58.9,
+      "opp_hp": 54.8,
+      "delta": -54.8,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1075,79 +1101,27 @@
      }
     },
     {
-     "opp_civ": "Burmese",
-     "opp_slug": "elite_arambai_burmese",
-     "opp_name": "Elite Arambai",
-     "opp_class": "ranged",
+     "opp_civ": "Ethiopians",
+     "opp_slug": "elite_shotel_warrior_ethiopians",
+     "opp_name": "Elite Shotel Warrior",
+     "opp_class": "infantry",
      "category": "expected_loss",
      "v2": {
-      "n_subject": 21,
-      "n_opp": 17,
-      "subject_hp": 26.6,
-      "opp_hp": 37.1,
-      "delta": -10.5,
-      "wr": 0.2,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 26,
-      "n_opp": 22,
-      "subject_hp": 55.0,
-      "opp_hp": 0.0,
-      "delta": 55.0,
-      "outcome": "win",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Berbers",
-     "opp_slug": "elite_genitour",
-     "opp_name": "Elite Genitour",
-     "opp_class": "ranged",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 11,
+      "n_subject": 14,
       "n_opp": 21,
-      "subject_hp": 30.1,
-      "opp_hp": 41.5,
-      "delta": -11.4,
+      "subject_hp": 1.6,
+      "opp_hp": 13.9,
+      "delta": -12.3,
       "wr": 0.2,
       "outcome": "loss"
      },
      "db": {
-      "n_subject": 19,
+      "n_subject": 20,
       "n_opp": 30,
-      "subject_hp": 57.6,
+      "subject_hp": 32.1,
       "opp_hp": 0.0,
-      "delta": 57.6,
+      "delta": 32.1,
       "outcome": "win",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Muisca",
-     "opp_slug": "elite_guecha_warrior_muisca",
-     "opp_name": "Elite Guecha Warrior",
-     "opp_class": "ranged",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 20,
-      "subject_hp": 16,
-      "opp_hp": 33,
-      "delta": -17,
-      "wr": 0.06666666666666667,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 26,
-      "n_opp": 27,
-      "subject_hp": 0.0,
-      "opp_hp": 43.5,
-      "delta": -43.5,
-      "outcome": "loss",
       "runs": 8
      },
      "ingame": null
@@ -1161,10 +1135,10 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 15,
-      "subject_hp": 4.5,
-      "opp_hp": 32.7,
-      "delta": -28.2,
-      "wr": 0.13333333333333333,
+      "subject_hp": 7.7,
+      "opp_hp": 23.4,
+      "delta": -15.7,
+      "wr": 0.2,
       "outcome": "loss"
      },
      "db": {
@@ -1179,27 +1153,27 @@
      "ingame": null
     },
     {
-     "opp_civ": "Khmer",
-     "opp_slug": "elite_ballista_elephant_khmer",
-     "opp_name": "Elite Ballista Elephant",
+     "opp_civ": "Burmese",
+     "opp_slug": "elite_arambai_burmese",
+     "opp_name": "Elite Arambai",
      "opp_class": "ranged",
      "category": "expected_loss",
      "v2": {
       "n_subject": 21,
-      "n_opp": 13,
-      "subject_hp": 9.7,
-      "opp_hp": 40.8,
-      "delta": -31.1,
+      "n_opp": 17,
+      "subject_hp": 26.8,
+      "opp_hp": 43.7,
+      "delta": -16.9,
       "wr": 0.13333333333333333,
       "outcome": "loss"
      },
      "db": {
       "n_subject": 26,
-      "n_opp": 16,
-      "subject_hp": 0.0,
-      "opp_hp": 62.6,
-      "delta": -62.6,
-      "outcome": "loss",
+      "n_opp": 22,
+      "subject_hp": 55.0,
+      "opp_hp": 0.0,
+      "delta": 55.0,
+      "outcome": "win",
       "runs": 8
      },
      "ingame": null
@@ -1213,10 +1187,10 @@
      "v2": {
       "n_subject": 14,
       "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 41.5,
-      "delta": -41.5,
-      "wr": 0,
+      "subject_hp": 0.3,
+      "opp_hp": 23.9,
+      "delta": -23.6,
+      "wr": 0.06666666666666667,
       "outcome": "loss"
      },
      "db": {
@@ -1231,52 +1205,26 @@
      "ingame": null
     },
     {
-     "opp_civ": "Celts",
-     "opp_slug": "elite_woad_raider_celts",
-     "opp_name": "Elite Woad Raider",
-     "opp_class": "infantry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 16,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 44.6,
-      "delta": -44.6,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 24,
-      "n_opp": 30,
-      "subject_hp": 24.3,
-      "opp_hp": 0.0,
-      "delta": 24.3,
-      "outcome": "win",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Mongols",
-     "opp_slug": "elite_mangudai_mongols",
-     "opp_name": "Elite Mangudai",
+     "opp_civ": "Khmer",
+     "opp_slug": "elite_ballista_elephant_khmer",
+     "opp_name": "Elite Ballista Elephant",
      "opp_class": "ranged",
      "category": "expected_loss",
      "v2": {
       "n_subject": 21,
-      "n_opp": 18,
-      "subject_hp": 0,
-      "opp_hp": 44.7,
-      "delta": -44.7,
-      "wr": 0,
+      "n_opp": 13,
+      "subject_hp": 9.9,
+      "opp_hp": 34.4,
+      "delta": -24.5,
+      "wr": 0.06666666666666667,
       "outcome": "loss"
      },
      "db": {
       "n_subject": 26,
-      "n_opp": 25,
+      "n_opp": 16,
       "subject_hp": 0.0,
-      "opp_hp": 83.8,
-      "delta": -83.8,
+      "opp_hp": 62.6,
+      "delta": -62.6,
       "outcome": "loss",
       "runs": 8
      },
@@ -1292,8 +1240,8 @@
       "n_subject": 12,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 45.4,
-      "delta": -45.4,
+      "opp_hp": 39.5,
+      "delta": -39.5,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1309,6 +1257,32 @@
      "ingame": null
     },
     {
+     "opp_civ": "Celts",
+     "opp_slug": "elite_woad_raider_celts",
+     "opp_name": "Elite Woad Raider",
+     "opp_class": "infantry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 16,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 40.1,
+      "delta": -40.1,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 24,
+      "n_opp": 30,
+      "subject_hp": 24.3,
+      "opp_hp": 0.0,
+      "delta": 24.3,
+      "outcome": "win",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Berbers",
      "opp_slug": "heavy_cav_archer",
      "opp_name": "Heavy Cavalry Archer",
@@ -1318,8 +1292,8 @@
       "n_subject": 19,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 52.4,
-      "delta": -52.4,
+      "opp_hp": 46.2,
+      "delta": -46.2,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1335,26 +1309,52 @@
      "ingame": null
     },
     {
-     "opp_civ": "Berbers",
-     "opp_slug": "elite_camel_archer_berbers",
-     "opp_name": "Elite Camel Archer",
+     "opp_civ": "Spanish",
+     "opp_slug": "elite_conquistador_spanish",
+     "opp_name": "Elite Conquistador",
      "opp_class": "ranged",
      "category": "expected_loss",
      "v2": {
       "n_subject": 21,
-      "n_opp": 20,
-      "subject_hp": 0,
-      "opp_hp": 55.4,
-      "delta": -55.4,
+      "n_opp": 18,
+      "subject_hp": 0.2,
+      "opp_hp": 47.9,
+      "delta": -47.7,
       "wr": 0,
       "outcome": "loss"
      },
      "db": {
       "n_subject": 26,
-      "n_opp": 27,
+      "n_opp": 23,
       "subject_hp": 0.0,
-      "opp_hp": 92.0,
-      "delta": -92.0,
+      "opp_hp": 70.3,
+      "delta": -70.3,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Mongols",
+     "opp_slug": "elite_mangudai_mongols",
+     "opp_name": "Elite Mangudai",
+     "opp_class": "ranged",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 18,
+      "subject_hp": 0,
+      "opp_hp": 50,
+      "delta": -50,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 26,
+      "n_opp": 25,
+      "subject_hp": 0.0,
+      "opp_hp": 83.8,
+      "delta": -83.8,
       "outcome": "loss",
       "runs": 8
      },
@@ -1370,8 +1370,8 @@
       "n_subject": 14,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 56.9,
-      "delta": -56.9,
+      "opp_hp": 52,
+      "delta": -52,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1387,6 +1387,58 @@
      "ingame": null
     },
     {
+     "opp_civ": "Mapuche",
+     "opp_slug": "elite_bolas_rider_mapuche",
+     "opp_name": "Elite Bolas Rider",
+     "opp_class": "ranged",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 18,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 54.8,
+      "delta": -54.8,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 24,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 80.1,
+      "delta": -80.1,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Berbers",
+     "opp_slug": "elite_camel_archer_berbers",
+     "opp_name": "Elite Camel Archer",
+     "opp_class": "ranged",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 20,
+      "subject_hp": 0,
+      "opp_hp": 56.1,
+      "delta": -56.1,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 26,
+      "n_opp": 27,
+      "subject_hp": 0.0,
+      "opp_hp": 92.0,
+      "delta": -92.0,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Sicilians",
      "opp_slug": "elite_serjeant_sicilians",
      "opp_name": "Elite Serjeant",
@@ -1396,8 +1448,8 @@
       "n_subject": 14,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 59.3,
-      "delta": -59.3,
+      "opp_hp": 57,
+      "delta": -57,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1413,32 +1465,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Khitans",
-     "opp_slug": "elite_liao_dao_khitans",
-     "opp_name": "Elite Liao Dao",
-     "opp_class": "infantry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 15,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 61,
-      "delta": -61,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 20,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 48.0,
-      "delta": -48.0,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Vietnamese",
      "opp_slug": "elite_rattan_archer_vietnamese",
      "opp_name": "Elite Rattan Archer",
@@ -1448,8 +1474,8 @@
       "n_subject": 17,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 61.7,
-      "delta": -61.7,
+      "opp_hp": 57.5,
+      "delta": -57.5,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1465,6 +1491,58 @@
      "ingame": null
     },
     {
+     "opp_civ": "Khitans",
+     "opp_slug": "elite_liao_dao_khitans",
+     "opp_name": "Elite Liao Dao",
+     "opp_class": "infantry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 15,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 58.1,
+      "delta": -58.1,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 20,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 48.0,
+      "delta": -48.0,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Turks",
+     "opp_slug": "elite_janissary_turks",
+     "opp_name": "Elite Janissary",
+     "opp_class": "ranged",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 20,
+      "subject_hp": 0,
+      "opp_hp": 58.1,
+      "delta": -58.1,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 26,
+      "n_opp": 26,
+      "subject_hp": 0.0,
+      "opp_hp": 85.5,
+      "delta": -85.5,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Shu",
      "opp_slug": "war_chariot_shu",
      "opp_name": "War Chariot",
@@ -1474,8 +1552,8 @@
       "n_subject": 21,
       "n_opp": 14,
       "subject_hp": 0,
-      "opp_hp": 62.4,
-      "delta": -62.4,
+      "opp_hp": 61.4,
+      "delta": -61.4,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1500,8 +1578,8 @@
       "n_subject": 16,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 62.7,
-      "delta": -62.7,
+      "opp_hp": 63.4,
+      "delta": -63.4,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1517,84 +1595,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Turks",
-     "opp_slug": "elite_janissary_turks",
-     "opp_name": "Elite Janissary",
-     "opp_class": "ranged",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 20,
-      "subject_hp": 0,
-      "opp_hp": 63.5,
-      "delta": -63.5,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 26,
-      "n_opp": 26,
-      "subject_hp": 0.0,
-      "opp_hp": 85.5,
-      "delta": -85.5,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Mapuche",
-     "opp_slug": "elite_bolas_rider_mapuche",
-     "opp_name": "Elite Bolas Rider",
-     "opp_class": "ranged",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 18,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 63.8,
-      "delta": -63.8,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 24,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 80.1,
-      "delta": -80.1,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Spanish",
-     "opp_slug": "elite_conquistador_spanish",
-     "opp_name": "Elite Conquistador",
-     "opp_class": "ranged",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 18,
-      "subject_hp": 0,
-      "opp_hp": 64.2,
-      "delta": -64.2,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 26,
-      "n_opp": 23,
-      "subject_hp": 0.0,
-      "opp_hp": 70.3,
-      "delta": -70.3,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Aztecs",
      "opp_slug": "elite_jaguar_warrior_aztecs",
      "opp_name": "Elite Jaguar Warrior",
@@ -1604,8 +1604,8 @@
       "n_subject": 16,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 66.2,
-      "delta": -66.2,
+      "opp_hp": 66.8,
+      "delta": -66.8,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1621,32 +1621,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Japanese",
-     "opp_slug": "elite_samurai_japanese",
-     "opp_name": "Elite Samurai",
-     "opp_class": "infantry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 13,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 69,
-      "delta": -69,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 19,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 67.6,
-      "delta": -67.6,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Wu",
      "opp_slug": "elite_fire_archer_wu",
      "opp_name": "Elite Fire Archer",
@@ -1656,8 +1630,8 @@
       "n_subject": 17,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 70.6,
-      "delta": -70.6,
+      "opp_hp": 67.3,
+      "delta": -67.3,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1682,8 +1656,8 @@
       "n_subject": 18,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 71.2,
-      "delta": -71.2,
+      "opp_hp": 70.1,
+      "delta": -70.1,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1699,28 +1673,28 @@
      "ingame": null
     },
     {
-     "opp_civ": "Saracens",
-     "opp_slug": "elite_mameluke_saracens",
-     "opp_name": "Elite Mameluke",
-     "opp_class": "ranged",
+     "opp_civ": "Japanese",
+     "opp_slug": "elite_samurai_japanese",
+     "opp_name": "Elite Samurai",
+     "opp_class": "infantry",
      "category": "expected_loss",
      "v2": {
-      "n_subject": 21,
-      "n_opp": 15,
-      "subject_hp": 0.2,
-      "opp_hp": 72.7,
-      "delta": -72.5,
+      "n_subject": 13,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 70.4,
+      "delta": -70.4,
       "wr": 0,
       "outcome": "loss"
      },
      "db": {
-      "n_subject": 26,
-      "n_opp": 21,
+      "n_subject": 19,
+      "n_opp": 30,
       "subject_hp": 0.0,
-      "opp_hp": 40.7,
-      "delta": -40.7,
+      "opp_hp": 67.6,
+      "delta": -67.6,
       "outcome": "loss",
-      "runs": 16
+      "runs": 8
      },
      "ingame": null
     },
@@ -1734,8 +1708,8 @@
       "n_subject": 14,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 73.7,
-      "delta": -73.7,
+      "opp_hp": 75.3,
+      "delta": -75.3,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1747,6 +1721,32 @@
       "delta": -20.9,
       "outcome": "loss",
       "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Saracens",
+     "opp_slug": "elite_mameluke_saracens",
+     "opp_name": "Elite Mameluke",
+     "opp_class": "ranged",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 15,
+      "subject_hp": 0,
+      "opp_hp": 77.3,
+      "delta": -77.3,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 26,
+      "n_opp": 21,
+      "subject_hp": 0.0,
+      "opp_hp": 40.7,
+      "delta": -40.7,
+      "outcome": "loss",
+      "runs": 16
      },
      "ingame": null
     },
@@ -1786,8 +1786,8 @@
       "n_subject": 17,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 79.5,
-      "delta": -79.5,
+      "opp_hp": 78.5,
+      "delta": -78.5,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1803,32 +1803,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Wei",
-     "opp_slug": "xianbei_raider_wei",
-     "opp_name": "Xianbei Raider",
-     "opp_class": "ranged",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 15,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 81.7,
-      "delta": -81.7,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 23,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 82.0,
-      "delta": -82.0,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Armenians",
      "opp_slug": "elite_composite_bowman_armenians",
      "opp_name": "Elite Composite Bowman",
@@ -1838,8 +1812,8 @@
       "n_subject": 15,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 82.2,
-      "delta": -82.2,
+      "opp_hp": 82.6,
+      "delta": -82.6,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1855,32 +1829,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Teutons",
-     "opp_slug": "elite_teutonic_knight_teutons",
-     "opp_name": "Elite Teutonic Knight",
-     "opp_class": "infantry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 19,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 85.6,
-      "delta": -85.6,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 26,
-      "n_opp": 26,
-      "subject_hp": 0.0,
-      "opp_hp": 79.8,
-      "delta": -79.8,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Mayans",
      "opp_slug": "elite_plumed_archer_mayans",
      "opp_name": "Elite Plumed Archer",
@@ -1890,8 +1838,8 @@
       "n_subject": 14,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 85.7,
-      "delta": -85.7,
+      "opp_hp": 83,
+      "delta": -83,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1907,6 +1855,58 @@
      "ingame": null
     },
     {
+     "opp_civ": "Wei",
+     "opp_slug": "xianbei_raider_wei",
+     "opp_name": "Xianbei Raider",
+     "opp_class": "ranged",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 15,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 83.8,
+      "delta": -83.8,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 23,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 82.0,
+      "delta": -82.0,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Teutons",
+     "opp_slug": "elite_teutonic_knight_teutons",
+     "opp_name": "Elite Teutonic Knight",
+     "opp_class": "infantry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 19,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 84.8,
+      "delta": -84.8,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 26,
+      "n_opp": 26,
+      "subject_hp": 0.0,
+      "opp_hp": 79.8,
+      "delta": -79.8,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Gurjaras",
      "opp_slug": "elite_chakram_thrower_gurjaras",
      "opp_name": "Elite Chakram Thrower",
@@ -1916,8 +1916,8 @@
       "n_subject": 14,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 87,
-      "delta": -87,
+      "opp_hp": 85.4,
+      "delta": -85.4,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1933,32 +1933,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Malians",
-     "opp_slug": "elite_gbeto_malians",
-     "opp_name": "Elite Gbeto",
-     "opp_class": "ranged",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 16,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 89.1,
-      "delta": -89.1,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 23,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 94.9,
-      "delta": -94.9,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Bohemians",
      "opp_slug": "elite_hussite_wagon_bohemians",
      "opp_name": "Elite Hussite Wagon",
@@ -1968,8 +1942,8 @@
       "n_subject": 21,
       "n_opp": 13,
       "subject_hp": 0,
-      "opp_hp": 89.3,
-      "delta": -89.3,
+      "opp_hp": 85.8,
+      "delta": -85.8,
       "wr": 0,
       "outcome": "loss"
      },
@@ -1985,6 +1959,32 @@
      "ingame": null
     },
     {
+     "opp_civ": "Malians",
+     "opp_slug": "elite_gbeto_malians",
+     "opp_name": "Elite Gbeto",
+     "opp_class": "ranged",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 16,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 88.6,
+      "delta": -88.6,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 23,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 94.9,
+      "delta": -94.9,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Berbers",
      "opp_slug": "hand_cannoneer",
      "opp_name": "Hand Cannoneer",
@@ -1994,8 +1994,8 @@
       "n_subject": 18,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 89.9,
-      "delta": -89.9,
+      "opp_hp": 88.9,
+      "delta": -88.9,
       "wr": 0,
       "outcome": "loss"
      },
@@ -2020,8 +2020,8 @@
       "n_subject": 14,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 90.1,
-      "delta": -90.1,
+      "opp_hp": 89,
+      "delta": -89,
       "wr": 0,
       "outcome": "loss"
      },
@@ -2046,8 +2046,8 @@
       "n_subject": 21,
       "n_opp": 17,
       "subject_hp": 0,
-      "opp_hp": 94.4,
-      "delta": -94.4,
+      "opp_hp": 94.8,
+      "delta": -94.8,
       "wr": 0,
       "outcome": "loss"
      },
@@ -2130,32 +2130,6 @@
    },
    "matchups": [
     {
-     "opp_civ": "Gurjaras",
-     "opp_slug": "elite_chakram_thrower_gurjaras",
-     "opp_name": "Elite Chakram Thrower",
-     "opp_class": "ranged",
-     "category": "expected_win",
-     "v2": {
-      "n_subject": 15,
-      "n_opp": 21,
-      "subject_hp": 57.2,
-      "opp_hp": 6.4,
-      "delta": 50.8,
-      "wr": 1,
-      "outcome": "win"
-     },
-     "db": {
-      "n_subject": 22,
-      "n_opp": 30,
-      "subject_hp": 65.5,
-      "opp_hp": 0.0,
-      "delta": 65.5,
-      "outcome": "win",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Armenians",
      "opp_slug": "imp_elite_skirm",
      "opp_name": "Elite Skirmisher",
@@ -2164,9 +2138,9 @@
      "v2": {
       "n_subject": 10,
       "n_opp": 21,
-      "subject_hp": 56.6,
-      "opp_hp": 6.7,
-      "delta": 49.9,
+      "subject_hp": 56.3,
+      "opp_hp": 5.5,
+      "delta": 50.8,
       "wr": 1,
       "outcome": "win"
      },
@@ -2182,6 +2156,32 @@
      "ingame": null
     },
     {
+     "opp_civ": "Gurjaras",
+     "opp_slug": "elite_chakram_thrower_gurjaras",
+     "opp_name": "Elite Chakram Thrower",
+     "opp_class": "ranged",
+     "category": "expected_win",
+     "v2": {
+      "n_subject": 15,
+      "n_opp": 21,
+      "subject_hp": 57.7,
+      "opp_hp": 9.6,
+      "delta": 48.1,
+      "wr": 1,
+      "outcome": "win"
+     },
+     "db": {
+      "n_subject": 22,
+      "n_opp": 30,
+      "subject_hp": 65.5,
+      "opp_hp": 0.0,
+      "delta": 65.5,
+      "outcome": "win",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Burmese",
      "opp_slug": "elite_arambai_burmese",
      "opp_name": "Elite Arambai",
@@ -2190,9 +2190,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 15,
-      "subject_hp": 45.6,
-      "opp_hp": 2.9,
-      "delta": 42.7,
+      "subject_hp": 46.8,
+      "opp_hp": 1.1,
+      "delta": 45.7,
       "wr": 1,
       "outcome": "win"
      },
@@ -2216,9 +2216,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 13,
-      "subject_hp": 38.3,
-      "opp_hp": 0,
-      "delta": 38.3,
+      "subject_hp": 40.8,
+      "opp_hp": 3.5,
+      "delta": 37.3,
       "wr": 1,
       "outcome": "win"
      },
@@ -2242,9 +2242,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 18,
-      "subject_hp": 40.8,
-      "opp_hp": 5.6,
-      "delta": 35.2,
+      "subject_hp": 42.2,
+      "opp_hp": 6.4,
+      "delta": 35.8,
       "wr": 1,
       "outcome": "win"
      },
@@ -2260,58 +2260,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Wei",
-     "opp_slug": "elite_tiger_cavalry_wei",
-     "opp_name": "Elite Tiger Cavalry",
-     "opp_class": "cavalry",
-     "category": "expected_win",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 14,
-      "subject_hp": 25.5,
-      "opp_hp": 0,
-      "delta": 25.5,
-      "wr": 1,
-      "outcome": "win"
-     },
-     "db": {
-      "n_subject": 28,
-      "n_opp": 21,
-      "subject_hp": 0.0,
-      "opp_hp": 34.3,
-      "delta": -34.3,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Gurjaras",
-     "opp_slug": "elite_shrivamsha_rider_gurjaras",
-     "opp_name": "Elite Shrivamsha Rider",
-     "opp_class": "cavalry",
-     "category": "expected_win",
-     "v2": {
-      "n_subject": 16,
-      "n_opp": 21,
-      "subject_hp": 21.8,
-      "opp_hp": 0,
-      "delta": 21.8,
-      "wr": 1,
-      "outcome": "win"
-     },
-     "db": {
-      "n_subject": 23,
-      "n_opp": 30,
-      "subject_hp": 28.7,
-      "opp_hp": 0.0,
-      "delta": 28.7,
-      "outcome": "win",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Khmer",
      "opp_slug": "elite_ballista_elephant_khmer",
      "opp_name": "Elite Ballista Elephant",
@@ -2320,9 +2268,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 11,
-      "subject_hp": 30.7,
-      "opp_hp": 9.2,
-      "delta": 21.5,
+      "subject_hp": 37.1,
+      "opp_hp": 5.1,
+      "delta": 32.0,
       "wr": 1,
       "outcome": "win"
      },
@@ -2338,6 +2286,32 @@
      "ingame": null
     },
     {
+     "opp_civ": "Berbers",
+     "opp_slug": "elite_genitour",
+     "opp_name": "Elite Genitour",
+     "opp_class": "ranged",
+     "category": "expected_win",
+     "v2": {
+      "n_subject": 12,
+      "n_opp": 21,
+      "subject_hp": 39,
+      "opp_hp": 15.8,
+      "delta": 23.2,
+      "wr": 1,
+      "outcome": "win"
+     },
+     "db": {
+      "n_subject": 21,
+      "n_opp": 30,
+      "subject_hp": 59.1,
+      "opp_hp": 0.0,
+      "delta": 59.1,
+      "outcome": "win",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Koreans",
      "opp_slug": "elite_war_wagon_koreans",
      "opp_name": "Elite War Wagon",
@@ -2346,9 +2320,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 13,
-      "subject_hp": 27.6,
-      "opp_hp": 8.6,
-      "delta": 19.0,
+      "subject_hp": 31.5,
+      "opp_hp": 8.5,
+      "delta": 23.0,
       "wr": 1,
       "outcome": "win"
      },
@@ -2364,79 +2338,27 @@
      "ingame": null
     },
     {
-     "opp_civ": "Berbers",
-     "opp_slug": "elite_genitour",
-     "opp_name": "Elite Genitour",
-     "opp_class": "ranged",
-     "category": "expected_win",
-     "v2": {
-      "n_subject": 12,
-      "n_opp": 21,
-      "subject_hp": 35.5,
-      "opp_hp": 19,
-      "delta": 16.5,
-      "wr": 0.9333333333333333,
-      "outcome": "win"
-     },
-     "db": {
-      "n_subject": 21,
-      "n_opp": 30,
-      "subject_hp": 59.1,
-      "opp_hp": 0.0,
-      "delta": 59.1,
-      "outcome": "win",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Spanish",
-     "opp_slug": "elite_conquistador_spanish",
-     "opp_name": "Elite Conquistador",
-     "opp_class": "ranged",
-     "category": "expected_win",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 16,
-      "subject_hp": 19.6,
-      "opp_hp": 6.5,
-      "delta": 13.1,
-      "wr": 0.9333333333333333,
-      "outcome": "win"
-     },
-     "db": {
-      "n_subject": 28,
-      "n_opp": 23,
-      "subject_hp": 30.8,
-      "opp_hp": 0.0,
-      "delta": 30.8,
-      "outcome": "win",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Romans",
-     "opp_slug": "elite_centurion_romans",
-     "opp_name": "Elite Centurion",
+     "opp_civ": "Gurjaras",
+     "opp_slug": "elite_shrivamsha_rider_gurjaras",
+     "opp_name": "Elite Shrivamsha Rider",
      "opp_class": "cavalry",
      "category": "expected_win",
      "v2": {
-      "n_subject": 21,
-      "n_opp": 12,
-      "subject_hp": 14.6,
-      "opp_hp": 3.1,
-      "delta": 11.5,
-      "wr": 0.8,
+      "n_subject": 16,
+      "n_opp": 21,
+      "subject_hp": 20.2,
+      "opp_hp": 0,
+      "delta": 20.2,
+      "wr": 1,
       "outcome": "win"
      },
      "db": {
-      "n_subject": 28,
-      "n_opp": 18,
-      "subject_hp": 0.0,
-      "opp_hp": 33.7,
-      "delta": -33.7,
-      "outcome": "loss",
+      "n_subject": 23,
+      "n_opp": 30,
+      "subject_hp": 28.7,
+      "opp_hp": 0.0,
+      "delta": 28.7,
+      "outcome": "win",
       "runs": 8
      },
      "ingame": null
@@ -2450,10 +2372,10 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 18,
-      "subject_hp": 15,
-      "opp_hp": 4.1,
-      "delta": 10.9,
-      "wr": 0.8,
+      "subject_hp": 20.4,
+      "opp_hp": 1.9,
+      "delta": 18.5,
+      "wr": 0.9333333333333333,
       "outcome": "win"
      },
      "db": {
@@ -2468,6 +2390,32 @@
      "ingame": null
     },
     {
+     "opp_civ": "Spanish",
+     "opp_slug": "elite_conquistador_spanish",
+     "opp_name": "Elite Conquistador",
+     "opp_class": "ranged",
+     "category": "expected_win",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 16,
+      "subject_hp": 21.5,
+      "opp_hp": 9.7,
+      "delta": 11.8,
+      "wr": 0.8,
+      "outcome": "win"
+     },
+     "db": {
+      "n_subject": 28,
+      "n_opp": 23,
+      "subject_hp": 30.8,
+      "opp_hp": 0.0,
+      "delta": 30.8,
+      "outcome": "win",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Wu",
      "opp_slug": "jian_swordsman_wu",
      "opp_name": "Jian Swordsman",
@@ -2476,10 +2424,10 @@
      "v2": {
       "n_subject": 20,
       "n_opp": 21,
-      "subject_hp": 22.8,
-      "opp_hp": 1.5,
-      "delta": 21.3,
-      "wr": 0.8666666666666667,
+      "subject_hp": 22.9,
+      "opp_hp": 0,
+      "delta": 22.9,
+      "wr": 1,
       "outcome": "win"
      },
      "db": {
@@ -2494,6 +2442,58 @@
      "ingame": null
     },
     {
+     "opp_civ": "Wei",
+     "opp_slug": "elite_tiger_cavalry_wei",
+     "opp_name": "Elite Tiger Cavalry",
+     "opp_class": "cavalry",
+     "category": "coin_flip",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 14,
+      "subject_hp": 19.1,
+      "opp_hp": 2.6,
+      "delta": 16.5,
+      "wr": 0.7333333333333333,
+      "outcome": "coinflip"
+     },
+     "db": {
+      "n_subject": 28,
+      "n_opp": 21,
+      "subject_hp": 0.0,
+      "opp_hp": 34.3,
+      "delta": -34.3,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Romans",
+     "opp_slug": "elite_centurion_romans",
+     "opp_name": "Elite Centurion",
+     "opp_class": "cavalry",
+     "category": "coin_flip",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 12,
+      "subject_hp": 15.4,
+      "opp_hp": 3.8,
+      "delta": 11.6,
+      "wr": 0.7333333333333333,
+      "outcome": "coinflip"
+     },
+     "db": {
+      "n_subject": 28,
+      "n_opp": 18,
+      "subject_hp": 0.0,
+      "opp_hp": 33.7,
+      "delta": -33.7,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Huns",
      "opp_slug": "elite_tarkan_huns",
      "opp_name": "Elite Tarkan",
@@ -2502,10 +2502,10 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 17,
-      "subject_hp": 9.9,
-      "opp_hp": 4.2,
-      "delta": 5.7,
-      "wr": 0.6666666666666666,
+      "subject_hp": 10.6,
+      "opp_hp": 3.6,
+      "delta": 7.0,
+      "wr": 0.7333333333333333,
       "outcome": "coinflip"
      },
      "db": {
@@ -2528,10 +2528,10 @@
      "v2": {
       "n_subject": 20,
       "n_opp": 21,
-      "subject_hp": 10.5,
-      "opp_hp": 7.2,
-      "delta": 3.3,
-      "wr": 0.6666666666666666,
+      "subject_hp": 12.4,
+      "opp_hp": 6,
+      "delta": 6.4,
+      "wr": 0.7333333333333333,
       "outcome": "coinflip"
      },
      "db": {
@@ -2546,6 +2546,32 @@
      "ingame": null
     },
     {
+     "opp_civ": "Cumans",
+     "opp_slug": "elite_steppe",
+     "opp_name": "Elite Steppe Lancer",
+     "opp_class": "cavalry",
+     "category": "coin_flip",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 20,
+      "subject_hp": 9,
+      "opp_hp": 3.1,
+      "delta": 5.9,
+      "wr": 0.7333333333333333,
+      "outcome": "coinflip"
+     },
+     "db": {
+      "n_subject": 28,
+      "n_opp": 27,
+      "subject_hp": 44.0,
+      "opp_hp": 0.0,
+      "delta": 44.0,
+      "outcome": "win",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Armenians",
      "opp_slug": "arbalester",
      "opp_name": "Arbalester",
@@ -2554,10 +2580,10 @@
      "v2": {
       "n_subject": 15,
       "n_opp": 21,
-      "subject_hp": 9.1,
-      "opp_hp": 9.6,
-      "delta": -0.5,
-      "wr": 0.6,
+      "subject_hp": 11.6,
+      "opp_hp": 6.7,
+      "delta": 4.9,
+      "wr": 0.6666666666666666,
       "outcome": "coinflip"
      },
      "db": {
@@ -2580,10 +2606,10 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 20,
-      "subject_hp": 10.5,
-      "opp_hp": 13,
-      "delta": -2.5,
-      "wr": 0.4,
+      "subject_hp": 13.9,
+      "opp_hp": 11.1,
+      "delta": 2.8,
+      "wr": 0.5333333333333333,
       "outcome": "coinflip"
      },
      "db": {
@@ -2598,32 +2624,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Goths",
-     "opp_slug": "elite_huskarl_goths",
-     "opp_name": "Elite Huskarl",
-     "opp_class": "infantry",
-     "category": "coin_flip",
-     "v2": {
-      "n_subject": 15,
-      "n_opp": 21,
-      "subject_hp": 5.5,
-      "opp_hp": 8.8,
-      "delta": -3.3,
-      "wr": 0.4666666666666667,
-      "outcome": "coinflip"
-     },
-     "db": {
-      "n_subject": 22,
-      "n_opp": 30,
-      "subject_hp": 46.2,
-      "opp_hp": 0.0,
-      "delta": 46.2,
-      "outcome": "win",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Byzantines",
      "opp_slug": "elite_cataphract_byzantines",
      "opp_name": "Elite Cataphract",
@@ -2632,10 +2632,10 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 14,
-      "subject_hp": 1.6,
-      "opp_hp": 8.2,
-      "delta": -6.6,
-      "wr": 0.4,
+      "subject_hp": 1.4,
+      "opp_hp": 10.2,
+      "delta": -8.8,
+      "wr": 0.26666666666666666,
       "outcome": "coinflip"
      },
      "db": {
@@ -2650,19 +2650,45 @@
      "ingame": null
     },
     {
+     "opp_civ": "Goths",
+     "opp_slug": "elite_huskarl_goths",
+     "opp_name": "Elite Huskarl",
+     "opp_class": "infantry",
+     "category": "coin_flip",
+     "v2": {
+      "n_subject": 15,
+      "n_opp": 21,
+      "subject_hp": 2.8,
+      "opp_hp": 12.4,
+      "delta": -9.6,
+      "wr": 0.3333333333333333,
+      "outcome": "coinflip"
+     },
+     "db": {
+      "n_subject": 22,
+      "n_opp": 30,
+      "subject_hp": 46.2,
+      "opp_hp": 0.0,
+      "delta": 46.2,
+      "outcome": "win",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Britons",
      "opp_slug": "elite_longbowman_britons",
      "opp_name": "Elite Longbowman",
      "opp_class": "ranged",
-     "category": "unexpected_loss",
+     "category": "coin_flip",
      "v2": {
       "n_subject": 15,
       "n_opp": 21,
-      "subject_hp": 1.6,
-      "opp_hp": 20,
-      "delta": -18.4,
-      "wr": 0.2,
-      "outcome": "loss"
+      "subject_hp": 4.4,
+      "opp_hp": 14,
+      "delta": -9.6,
+      "wr": 0.3333333333333333,
+      "outcome": "coinflip"
      },
      "db": {
       "n_subject": 21,
@@ -2676,32 +2702,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Mongols",
-     "opp_slug": "elite_mangudai_mongols",
-     "opp_name": "Elite Mangudai",
-     "opp_class": "ranged",
-     "category": "unexpected_loss",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 17,
-      "subject_hp": 1.2,
-      "opp_hp": 22.8,
-      "delta": -21.6,
-      "wr": 0.06666666666666667,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 28,
-      "n_opp": 25,
-      "subject_hp": 0.0,
-      "opp_hp": 37.6,
-      "delta": -37.6,
-      "outcome": "loss",
-      "runs": 16
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Berbers",
      "opp_slug": "elite_camel_archer_berbers",
      "opp_name": "Elite Camel Archer",
@@ -2710,9 +2710,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 18,
-      "subject_hp": 2.8,
-      "opp_hp": 25.8,
-      "delta": -23.0,
+      "subject_hp": 5.8,
+      "opp_hp": 20.1,
+      "delta": -14.3,
       "wr": 0.13333333333333333,
       "outcome": "loss"
      },
@@ -2736,10 +2736,10 @@
      "v2": {
       "n_subject": 16,
       "n_opp": 21,
-      "subject_hp": 2.3,
-      "opp_hp": 26.2,
-      "delta": -23.9,
-      "wr": 0,
+      "subject_hp": 3.6,
+      "opp_hp": 20.4,
+      "delta": -16.8,
+      "wr": 0.06666666666666667,
       "outcome": "loss"
      },
      "db": {
@@ -2762,10 +2762,10 @@
      "v2": {
       "n_subject": 19,
       "n_opp": 21,
-      "subject_hp": 1.4,
-      "opp_hp": 29.7,
-      "delta": -28.3,
-      "wr": 0.06666666666666667,
+      "subject_hp": 0.1,
+      "opp_hp": 30.9,
+      "delta": -30.8,
+      "wr": 0,
       "outcome": "loss"
      },
      "db": {
@@ -2780,6 +2780,32 @@
      "ingame": null
     },
     {
+     "opp_civ": "Mongols",
+     "opp_slug": "elite_mangudai_mongols",
+     "opp_name": "Elite Mangudai",
+     "opp_class": "ranged",
+     "category": "unexpected_loss",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 17,
+      "subject_hp": 0,
+      "opp_hp": 33.3,
+      "delta": -33.3,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 28,
+      "n_opp": 25,
+      "subject_hp": 0.0,
+      "opp_hp": 37.6,
+      "delta": -37.6,
+      "outcome": "loss",
+      "runs": 16
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Portuguese",
      "opp_slug": "elite_organ_gun_portuguese",
      "opp_name": "Elite Organ Gun",
@@ -2789,8 +2815,8 @@
       "n_subject": 21,
       "n_opp": 16,
       "subject_hp": 0,
-      "opp_hp": 36.6,
-      "delta": -36.6,
+      "opp_hp": 39.5,
+      "delta": -39.5,
       "wr": 0,
       "outcome": "loss"
      },
@@ -2815,8 +2841,8 @@
       "n_subject": 18,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 46.6,
-      "delta": -46.6,
+      "opp_hp": 45.3,
+      "delta": -45.3,
       "wr": 0,
       "outcome": "loss"
      },
@@ -2832,6 +2858,32 @@
      "ingame": null
     },
     {
+     "opp_civ": "Wei",
+     "opp_slug": "xianbei_raider_wei",
+     "opp_name": "Xianbei Raider",
+     "opp_class": "ranged",
+     "category": "unexpected_loss",
+     "v2": {
+      "n_subject": 17,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 55.8,
+      "delta": -55.8,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 25,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 34.8,
+      "delta": -34.8,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Armenians",
      "opp_slug": "elite_composite_bowman_armenians",
      "opp_name": "Elite Composite Bowman",
@@ -2841,8 +2893,8 @@
       "n_subject": 17,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 54.4,
-      "delta": -54.4,
+      "opp_hp": 57.4,
+      "delta": -57.4,
       "wr": 0,
       "outcome": "loss"
      },
@@ -2867,8 +2919,8 @@
       "n_subject": 18,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 61.8,
-      "delta": -61.8,
+      "opp_hp": 58.9,
+      "delta": -58.9,
       "wr": 0,
       "outcome": "loss"
      },
@@ -2884,32 +2936,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Wei",
-     "opp_slug": "xianbei_raider_wei",
-     "opp_name": "Xianbei Raider",
-     "opp_class": "ranged",
-     "category": "unexpected_loss",
-     "v2": {
-      "n_subject": 17,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 62.4,
-      "delta": -62.4,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 25,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 34.8,
-      "delta": -34.8,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Cumans",
      "opp_slug": "elite_kipchak_cumans",
      "opp_name": "Elite Kipchak",
@@ -2919,8 +2945,8 @@
       "n_subject": 18,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 63.1,
-      "delta": -63.1,
+      "opp_hp": 62.1,
+      "delta": -62.1,
       "wr": 0,
       "outcome": "loss"
      },
@@ -2936,32 +2962,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Tupi",
-     "opp_slug": "elite_blackwood_archer_tupi",
-     "opp_name": "Elite Blackwood Archer",
-     "opp_class": "ranged",
-     "category": "unexpected_loss",
-     "v2": {
-      "n_subject": 8,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 67.5,
-      "delta": -67.5,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 22,
-      "n_opp": 30,
-      "subject_hp": 70.1,
-      "opp_hp": 0.0,
-      "delta": 70.1,
-      "outcome": "win",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Bohemians",
      "opp_slug": "elite_hussite_wagon_bohemians",
      "opp_name": "Elite Hussite Wagon",
@@ -2971,8 +2971,8 @@
       "n_subject": 21,
       "n_opp": 12,
       "subject_hp": 0,
-      "opp_hp": 68.4,
-      "delta": -68.4,
+      "opp_hp": 65.2,
+      "delta": -65.2,
       "wr": 0,
       "outcome": "loss"
      },
@@ -2988,6 +2988,32 @@
      "ingame": null
     },
     {
+     "opp_civ": "Tupi",
+     "opp_slug": "elite_blackwood_archer_tupi",
+     "opp_name": "Elite Blackwood Archer",
+     "opp_class": "ranged",
+     "category": "unexpected_loss",
+     "v2": {
+      "n_subject": 8,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 65.9,
+      "delta": -65.9,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 22,
+      "n_opp": 30,
+      "subject_hp": 70.1,
+      "opp_hp": 0.0,
+      "delta": 70.1,
+      "outcome": "win",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Franks",
      "opp_slug": "elite_throwing_axeman_franks",
      "opp_name": "Elite Throwing Axeman",
@@ -2997,8 +3023,8 @@
       "n_subject": 15,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 68.5,
-      "delta": -68.5,
+      "opp_hp": 70.1,
+      "delta": -70.1,
       "wr": 0,
       "outcome": "loss"
      },
@@ -3023,8 +3049,8 @@
       "n_subject": 21,
       "n_opp": 19,
       "subject_hp": 0,
-      "opp_hp": 73.4,
-      "delta": -73.4,
+      "opp_hp": 74,
+      "delta": -74,
       "wr": 0,
       "outcome": "loss"
      },
@@ -3049,8 +3075,8 @@
       "n_subject": 15,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 97.8,
-      "delta": -97.8,
+      "opp_hp": 98.1,
+      "delta": -98.1,
       "wr": 0,
       "outcome": "loss"
      },
@@ -3066,58 +3092,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Cumans",
-     "opp_slug": "elite_steppe",
-     "opp_name": "Elite Steppe Lancer",
-     "opp_class": "cavalry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 20,
-      "subject_hp": 0,
-      "opp_hp": 19.9,
-      "delta": -19.9,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 28,
-      "n_opp": 27,
-      "subject_hp": 44.0,
-      "opp_hp": 0.0,
-      "delta": 44.0,
-      "outcome": "win",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Bengalis",
-     "opp_slug": "elite_ratha_(melee)_bengalis",
-     "opp_name": "Elite Ratha (Melee)",
-     "opp_class": "cavalry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 17,
-      "subject_hp": 0.7,
-      "opp_hp": 23.3,
-      "delta": -22.6,
-      "wr": 0.13333333333333333,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 28,
-      "n_opp": 25,
-      "subject_hp": 0.9,
-      "opp_hp": 27.5,
-      "delta": -26.6,
-      "outcome": "loss",
-      "runs": 24
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Jurchens",
      "opp_slug": "elite_iron_pagoda_jurchens",
      "opp_name": "Elite Iron Pagoda",
@@ -3127,8 +3101,8 @@
       "n_subject": 21,
       "n_opp": 16,
       "subject_hp": 0,
-      "opp_hp": 23.5,
-      "delta": -23.5,
+      "opp_hp": 26,
+      "delta": -26,
       "wr": 0,
       "outcome": "loss"
      },
@@ -3144,28 +3118,54 @@
      "ingame": null
     },
     {
-     "opp_civ": "Ethiopians",
-     "opp_slug": "elite_shotel_warrior_ethiopians",
-     "opp_name": "Elite Shotel Warrior",
-     "opp_class": "infantry",
+     "opp_civ": "Bengalis",
+     "opp_slug": "elite_ratha_(melee)_bengalis",
+     "opp_name": "Elite Ratha (Melee)",
+     "opp_class": "cavalry",
      "category": "expected_loss",
      "v2": {
-      "n_subject": 15,
-      "n_opp": 21,
-      "subject_hp": 0.5,
-      "opp_hp": 27.9,
-      "delta": -27.4,
-      "wr": 0.06666666666666667,
+      "n_subject": 21,
+      "n_opp": 17,
+      "subject_hp": 0,
+      "opp_hp": 27.1,
+      "delta": -27.1,
+      "wr": 0,
       "outcome": "loss"
      },
      "db": {
-      "n_subject": 22,
+      "n_subject": 28,
+      "n_opp": 25,
+      "subject_hp": 0.9,
+      "opp_hp": 27.5,
+      "delta": -26.6,
+      "outcome": "loss",
+      "runs": 24
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Poles",
+     "opp_slug": "elite_obuch_poles",
+     "opp_name": "Elite Obuch",
+     "opp_class": "infantry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 14,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 28.9,
+      "delta": -28.9,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 21,
       "n_opp": 30,
-      "subject_hp": 37.1,
-      "opp_hp": 0.0,
-      "delta": 37.1,
-      "outcome": "win",
-      "runs": 8
+      "subject_hp": 0.0,
+      "opp_hp": 31.3,
+      "delta": -31.3,
+      "outcome": "loss",
+      "runs": 16
      },
      "ingame": null
     },
@@ -3196,54 +3196,28 @@
      "ingame": null
     },
     {
-     "opp_civ": "Poles",
-     "opp_slug": "elite_obuch_poles",
-     "opp_name": "Elite Obuch",
+     "opp_civ": "Ethiopians",
+     "opp_slug": "elite_shotel_warrior_ethiopians",
+     "opp_name": "Elite Shotel Warrior",
      "opp_class": "infantry",
      "category": "expected_loss",
      "v2": {
-      "n_subject": 14,
+      "n_subject": 15,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 31.4,
-      "delta": -31.4,
+      "opp_hp": 34.5,
+      "delta": -34.5,
       "wr": 0,
       "outcome": "loss"
      },
      "db": {
-      "n_subject": 21,
+      "n_subject": 22,
       "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 31.3,
-      "delta": -31.3,
-      "outcome": "loss",
-      "runs": 16
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Celts",
-     "opp_slug": "elite_woad_raider_celts",
-     "opp_name": "Elite Woad Raider",
-     "opp_class": "infantry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 18,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 38.5,
-      "delta": -38.5,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 27,
-      "n_opp": 30,
-      "subject_hp": 2.5,
-      "opp_hp": 10.2,
-      "delta": -7.6,
-      "outcome": "loss",
-      "runs": 16
+      "subject_hp": 37.1,
+      "opp_hp": 0.0,
+      "delta": 37.1,
+      "outcome": "win",
+      "runs": 8
      },
      "ingame": null
     },
@@ -3257,8 +3231,8 @@
       "n_subject": 16,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 44.2,
-      "delta": -44.2,
+      "opp_hp": 35.9,
+      "delta": -35.9,
       "wr": 0,
       "outcome": "loss"
      },
@@ -3274,6 +3248,110 @@
      "ingame": null
     },
     {
+     "opp_civ": "Celts",
+     "opp_slug": "elite_woad_raider_celts",
+     "opp_name": "Elite Woad Raider",
+     "opp_class": "infantry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 18,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 38.2,
+      "delta": -38.2,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 27,
+      "n_opp": 30,
+      "subject_hp": 2.5,
+      "opp_hp": 10.2,
+      "delta": -7.6,
+      "outcome": "loss",
+      "runs": 16
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Huns",
+     "opp_slug": "paladin",
+     "opp_name": "Paladin",
+     "opp_class": "cavalry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 15,
+      "subject_hp": 0,
+      "opp_hp": 38.4,
+      "delta": -38.4,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 28,
+      "n_opp": 22,
+      "subject_hp": 0.0,
+      "opp_hp": 36.0,
+      "delta": -36.0,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Burgundians",
+     "opp_slug": "elite_coustillier_burgundians",
+     "opp_name": "Elite Coustillier",
+     "opp_class": "cavalry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 19,
+      "subject_hp": 0,
+      "opp_hp": 40.7,
+      "delta": -40.7,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 28,
+      "n_opp": 27,
+      "subject_hp": 0.0,
+      "opp_hp": 52.7,
+      "delta": -52.7,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Aztecs",
+     "opp_slug": "elite_eagle",
+     "opp_name": "Elite Eagle Warrior",
+     "opp_class": "infantry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 15,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 44.9,
+      "delta": -44.9,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 20,
+      "n_opp": 30,
+      "subject_hp": 4.4,
+      "opp_hp": 8.8,
+      "delta": -4.4,
+      "outcome": "loss",
+      "runs": 16
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Armenians",
      "opp_slug": "warrior_priest_armenians",
      "opp_name": "Warrior Priest",
@@ -3283,8 +3361,8 @@
       "n_subject": 19,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 44.3,
-      "delta": -44.3,
+      "opp_hp": 44.9,
+      "delta": -44.9,
       "wr": 0,
       "outcome": "loss"
      },
@@ -3309,8 +3387,8 @@
       "n_subject": 17,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 44.8,
-      "delta": -44.8,
+      "opp_hp": 45.1,
+      "delta": -45.1,
       "wr": 0,
       "outcome": "loss"
      },
@@ -3326,110 +3404,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Burgundians",
-     "opp_slug": "elite_coustillier_burgundians",
-     "opp_name": "Elite Coustillier",
-     "opp_class": "cavalry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 19,
-      "subject_hp": 0,
-      "opp_hp": 45.1,
-      "delta": -45.1,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 28,
-      "n_opp": 27,
-      "subject_hp": 0.0,
-      "opp_hp": 52.7,
-      "delta": -52.7,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Berbers",
-     "opp_slug": "champion",
-     "opp_name": "Champion",
-     "opp_class": "infantry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 13,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 47.3,
-      "delta": -47.3,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 20,
-      "n_opp": 30,
-      "subject_hp": 3.0,
-      "opp_hp": 13.1,
-      "delta": -10.1,
-      "outcome": "loss",
-      "runs": 16
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Aztecs",
-     "opp_slug": "elite_eagle",
-     "opp_name": "Elite Eagle Warrior",
-     "opp_class": "infantry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 15,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 47.7,
-      "delta": -47.7,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 20,
-      "n_opp": 30,
-      "subject_hp": 4.4,
-      "opp_hp": 8.8,
-      "delta": -4.4,
-      "outcome": "loss",
-      "runs": 16
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Tatars",
-     "opp_slug": "elite_keshik_tatars",
-     "opp_name": "Elite Keshik",
-     "opp_class": "cavalry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 20,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 48.2,
-      "delta": -48.2,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 28,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 52.7,
-      "delta": -52.7,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Lithuanians",
      "opp_slug": "elite_leitis_lithuanians",
      "opp_name": "Elite Leitis",
@@ -3439,8 +3413,8 @@
       "n_subject": 21,
       "n_opp": 18,
       "subject_hp": 0,
-      "opp_hp": 49.9,
-      "delta": -49.9,
+      "opp_hp": 45.1,
+      "delta": -45.1,
       "wr": 0,
       "outcome": "loss"
      },
@@ -3456,28 +3430,28 @@
      "ingame": null
     },
     {
-     "opp_civ": "Huns",
-     "opp_slug": "paladin",
-     "opp_name": "Paladin",
-     "opp_class": "cavalry",
+     "opp_civ": "Berbers",
+     "opp_slug": "champion",
+     "opp_name": "Champion",
+     "opp_class": "infantry",
      "category": "expected_loss",
      "v2": {
-      "n_subject": 21,
-      "n_opp": 15,
+      "n_subject": 13,
+      "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 50.5,
-      "delta": -50.5,
+      "opp_hp": 46.2,
+      "delta": -46.2,
       "wr": 0,
       "outcome": "loss"
      },
      "db": {
-      "n_subject": 28,
-      "n_opp": 22,
-      "subject_hp": 0.0,
-      "opp_hp": 36.0,
-      "delta": -36.0,
+      "n_subject": 20,
+      "n_opp": 30,
+      "subject_hp": 3.0,
+      "opp_hp": 13.1,
+      "delta": -10.1,
       "outcome": "loss",
-      "runs": 8
+      "runs": 16
      },
      "ingame": null
     },
@@ -3491,8 +3465,8 @@
       "n_subject": 20,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 52.5,
-      "delta": -52.5,
+      "opp_hp": 46.6,
+      "delta": -46.6,
       "wr": 0,
       "outcome": "loss"
      },
@@ -3508,26 +3482,26 @@
      "ingame": null
     },
     {
-     "opp_civ": "Georgians",
-     "opp_slug": "elite_monaspa_georgians",
-     "opp_name": "Elite Monaspa",
+     "opp_civ": "Tatars",
+     "opp_slug": "elite_keshik_tatars",
+     "opp_name": "Elite Keshik",
      "opp_class": "cavalry",
      "category": "expected_loss",
      "v2": {
-      "n_subject": 21,
-      "n_opp": 20,
+      "n_subject": 20,
+      "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 55.1,
-      "delta": -55.1,
+      "opp_hp": 48.8,
+      "delta": -48.8,
       "wr": 0,
       "outcome": "loss"
      },
      "db": {
       "n_subject": 28,
-      "n_opp": 28,
+      "n_opp": 30,
       "subject_hp": 0.0,
-      "opp_hp": 71.6,
-      "delta": -71.6,
+      "opp_hp": 52.7,
+      "delta": -52.7,
       "outcome": "loss",
       "runs": 8
      },
@@ -3543,8 +3517,8 @@
       "n_subject": 21,
       "n_opp": 19,
       "subject_hp": 0,
-      "opp_hp": 55.9,
-      "delta": -55.9,
+      "opp_hp": 53.5,
+      "delta": -53.5,
       "wr": 0,
       "outcome": "loss"
      },
@@ -3560,78 +3534,26 @@
      "ingame": null
     },
     {
-     "opp_civ": "Tupi",
-     "opp_slug": "elite_ibirapema_warrior_tupi",
-     "opp_name": "Elite Ibirapema Warrior",
-     "opp_class": "infantry",
+     "opp_civ": "Georgians",
+     "opp_slug": "elite_monaspa_georgians",
+     "opp_name": "Elite Monaspa",
+     "opp_class": "cavalry",
      "category": "expected_loss",
      "v2": {
-      "n_subject": 20,
-      "n_opp": 21,
+      "n_subject": 21,
+      "n_opp": 20,
       "subject_hp": 0,
-      "opp_hp": 58.4,
-      "delta": -58.4,
+      "opp_hp": 54,
+      "delta": -54,
       "wr": 0,
       "outcome": "loss"
      },
      "db": {
-      "n_subject": 25,
-      "n_opp": 30,
-      "subject_hp": 29.5,
-      "opp_hp": 0.0,
-      "delta": 29.5,
-      "outcome": "win",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Aztecs",
-     "opp_slug": "elite_jaguar_warrior_aztecs",
-     "opp_name": "Elite Jaguar Warrior",
-     "opp_class": "infantry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 17,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 59.6,
-      "delta": -59.6,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 25,
-      "n_opp": 30,
+      "n_subject": 28,
+      "n_opp": 28,
       "subject_hp": 0.0,
-      "opp_hp": 50.9,
-      "delta": -50.9,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Malay",
-     "opp_slug": "elite_karambit_warrior_malay",
-     "opp_name": "Elite Karambit Warrior",
-     "opp_class": "infantry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 7,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 61.4,
-      "delta": -61.4,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 11,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 30.9,
-      "delta": -30.9,
+      "opp_hp": 71.6,
+      "delta": -71.6,
       "outcome": "loss",
       "runs": 8
      },
@@ -3647,8 +3569,8 @@
       "n_subject": 13,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 62.5,
-      "delta": -62.5,
+      "opp_hp": 56.6,
+      "delta": -56.6,
       "wr": 0,
       "outcome": "loss"
      },
@@ -3664,17 +3586,17 @@
      "ingame": null
     },
     {
-     "opp_civ": "Slavs",
-     "opp_slug": "elite_boyar_slavs",
-     "opp_name": "Elite Boyar",
+     "opp_civ": "Bulgarians",
+     "opp_slug": "elite_konnik_bulgarians",
+     "opp_name": "Elite Konnik",
      "opp_class": "cavalry",
      "category": "expected_loss",
      "v2": {
       "n_subject": 21,
       "n_opp": 15,
       "subject_hp": 0,
-      "opp_hp": 62.7,
-      "delta": -62.7,
+      "opp_hp": 57.8,
+      "delta": -57.8,
       "wr": 0,
       "outcome": "loss"
      },
@@ -3682,86 +3604,34 @@
       "n_subject": 28,
       "n_opp": 23,
       "subject_hp": 0.0,
-      "opp_hp": 71.7,
-      "delta": -71.7,
+      "opp_hp": 54.5,
+      "delta": -54.5,
       "outcome": "loss",
       "runs": 8
      },
      "ingame": null
     },
     {
-     "opp_civ": "Shu",
-     "opp_slug": "elite_white_feather_guard_shu",
-     "opp_name": "Elite White Feather Guard",
+     "opp_civ": "Tupi",
+     "opp_slug": "elite_ibirapema_warrior_tupi",
+     "opp_name": "Elite Ibirapema Warrior",
      "opp_class": "infantry",
      "category": "expected_loss",
      "v2": {
-      "n_subject": 13,
+      "n_subject": 20,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 63.7,
-      "delta": -63.7,
+      "opp_hp": 58.3,
+      "delta": -58.3,
       "wr": 0,
       "outcome": "loss"
      },
      "db": {
-      "n_subject": 21,
+      "n_subject": 25,
       "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 52.0,
-      "delta": -52.0,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Khitans",
-     "opp_slug": "elite_liao_dao_khitans",
-     "opp_name": "Elite Liao Dao",
-     "opp_class": "infantry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 16,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 63.7,
-      "delta": -63.7,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 22,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 54.1,
-      "delta": -54.1,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Dravidians",
-     "opp_slug": "elite_urumi_swordsman_dravidians",
-     "opp_name": "Elite Urumi Swordsman",
-     "opp_class": "infantry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 15,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 63.7,
-      "delta": -63.7,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 24,
-      "n_opp": 30,
-      "subject_hp": 34.2,
+      "subject_hp": 29.5,
       "opp_hp": 0.0,
-      "delta": 34.2,
+      "delta": 29.5,
       "outcome": "win",
       "runs": 8
      },
@@ -3777,8 +3647,8 @@
       "n_subject": 21,
       "n_opp": 12,
       "subject_hp": 0,
-      "opp_hp": 64.4,
-      "delta": -64.4,
+      "opp_hp": 58.3,
+      "delta": -58.3,
       "wr": 0,
       "outcome": "loss"
      },
@@ -3803,8 +3673,8 @@
       "n_subject": 21,
       "n_opp": 18,
       "subject_hp": 0,
-      "opp_hp": 64.5,
-      "delta": -64.5,
+      "opp_hp": 60.6,
+      "delta": -60.6,
       "wr": 0,
       "outcome": "loss"
      },
@@ -3820,17 +3690,17 @@
      "ingame": null
     },
     {
-     "opp_civ": "Bulgarians",
-     "opp_slug": "elite_konnik_bulgarians",
-     "opp_name": "Elite Konnik",
+     "opp_civ": "Slavs",
+     "opp_slug": "elite_boyar_slavs",
+     "opp_name": "Elite Boyar",
      "opp_class": "cavalry",
      "category": "expected_loss",
      "v2": {
       "n_subject": 21,
       "n_opp": 15,
       "subject_hp": 0,
-      "opp_hp": 67.1,
-      "delta": -67.1,
+      "opp_hp": 61,
+      "delta": -61,
       "wr": 0,
       "outcome": "loss"
      },
@@ -3838,8 +3708,164 @@
       "n_subject": 28,
       "n_opp": 23,
       "subject_hp": 0.0,
-      "opp_hp": 54.5,
-      "delta": -54.5,
+      "opp_hp": 71.7,
+      "delta": -71.7,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Aztecs",
+     "opp_slug": "elite_jaguar_warrior_aztecs",
+     "opp_name": "Elite Jaguar Warrior",
+     "opp_class": "infantry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 17,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 61.2,
+      "delta": -61.2,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 25,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 50.9,
+      "delta": -50.9,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Malay",
+     "opp_slug": "elite_karambit_warrior_malay",
+     "opp_name": "Elite Karambit Warrior",
+     "opp_class": "infantry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 7,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 61.5,
+      "delta": -61.5,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 11,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 30.9,
+      "delta": -30.9,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Shu",
+     "opp_slug": "elite_white_feather_guard_shu",
+     "opp_name": "Elite White Feather Guard",
+     "opp_class": "infantry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 13,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 62.8,
+      "delta": -62.8,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 21,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 52.0,
+      "delta": -52.0,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Dravidians",
+     "opp_slug": "elite_urumi_swordsman_dravidians",
+     "opp_name": "Elite Urumi Swordsman",
+     "opp_class": "infantry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 15,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 64,
+      "delta": -64,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 24,
+      "n_opp": 30,
+      "subject_hp": 34.2,
+      "opp_hp": 0.0,
+      "delta": 34.2,
+      "outcome": "win",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Khitans",
+     "opp_slug": "elite_liao_dao_khitans",
+     "opp_name": "Elite Liao Dao",
+     "opp_class": "infantry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 16,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 66.2,
+      "delta": -66.2,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 22,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 54.1,
+      "delta": -54.1,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Saracens",
+     "opp_slug": "elite_mameluke_saracens",
+     "opp_name": "Elite Mameluke",
+     "opp_class": "ranged",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 14,
+      "subject_hp": 0,
+      "opp_hp": 66.6,
+      "delta": -66.6,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 28,
+      "n_opp": 21,
+      "subject_hp": 0.0,
+      "opp_hp": 67.5,
+      "delta": -67.5,
       "outcome": "loss",
       "runs": 8
      },
@@ -3855,8 +3881,8 @@
       "n_subject": 15,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 68.1,
-      "delta": -68.1,
+      "opp_hp": 66.7,
+      "delta": -66.7,
       "wr": 0,
       "outcome": "loss"
      },
@@ -3866,6 +3892,58 @@
       "subject_hp": 0.0,
       "opp_hp": 61.2,
       "delta": -61.2,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Incas",
+     "opp_slug": "elite_kamayuk_incas",
+     "opp_name": "Elite Kamayuk",
+     "opp_class": "infantry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 15,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 66.9,
+      "delta": -66.9,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 22,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 29.5,
+      "delta": -29.5,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Vikings",
+     "opp_slug": "elite_berserk_vikings",
+     "opp_name": "Elite Berserk",
+     "opp_class": "infantry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 15,
+      "n_opp": 21,
+      "subject_hp": 0,
+      "opp_hp": 67.8,
+      "delta": -67.8,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 24,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 52.5,
+      "delta": -52.5,
       "outcome": "loss",
       "runs": 8
      },
@@ -3907,8 +3985,8 @@
       "n_subject": 15,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 69.6,
-      "delta": -69.6,
+      "opp_hp": 70.6,
+      "delta": -70.6,
       "wr": 0,
       "outcome": "loss"
      },
@@ -3924,84 +4002,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Saracens",
-     "opp_slug": "elite_mameluke_saracens",
-     "opp_name": "Elite Mameluke",
-     "opp_class": "ranged",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 14,
-      "subject_hp": 0,
-      "opp_hp": 71.5,
-      "delta": -71.5,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 28,
-      "n_opp": 21,
-      "subject_hp": 0.0,
-      "opp_hp": 67.5,
-      "delta": -67.5,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Incas",
-     "opp_slug": "elite_kamayuk_incas",
-     "opp_name": "Elite Kamayuk",
-     "opp_class": "infantry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 15,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 72.2,
-      "delta": -72.2,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 22,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 29.5,
-      "delta": -29.5,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Vikings",
-     "opp_slug": "elite_berserk_vikings",
-     "opp_name": "Elite Berserk",
-     "opp_class": "infantry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 15,
-      "n_opp": 21,
-      "subject_hp": 0,
-      "opp_hp": 73.8,
-      "delta": -73.8,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 24,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 52.5,
-      "delta": -52.5,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Armenians",
      "opp_slug": "halberdier",
      "opp_name": "Halberdier",
@@ -4011,8 +4011,8 @@
       "n_subject": 10,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 76.2,
-      "delta": -76.2,
+      "opp_hp": 75.5,
+      "delta": -75.5,
       "wr": 0,
       "outcome": "loss"
      },
@@ -4037,8 +4037,8 @@
       "n_subject": 17,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 81.4,
-      "delta": -81.4,
+      "opp_hp": 78.8,
+      "delta": -78.8,
       "wr": 0,
       "outcome": "loss"
      },
@@ -4063,8 +4063,8 @@
       "n_subject": 21,
       "n_opp": 20,
       "subject_hp": 0,
-      "opp_hp": 87.3,
-      "delta": -87.3,
+      "opp_hp": 88.8,
+      "delta": -88.8,
       "wr": 0,
       "outcome": "loss"
      },
@@ -4211,9 +4211,9 @@
      "v2": {
       "n_subject": 19,
       "n_opp": 21,
-      "subject_hp": 54.6,
+      "subject_hp": 53.4,
       "opp_hp": 0,
-      "delta": 54.6,
+      "delta": 53.4,
       "wr": 1,
       "outcome": "win"
      },
@@ -4309,9 +4309,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 12,
-      "subject_hp": 94,
+      "subject_hp": 94.8,
       "opp_hp": 0,
-      "delta": 94,
+      "delta": 94.8,
       "wr": 1,
       "outcome": "win"
      },
@@ -4335,9 +4335,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 17,
-      "subject_hp": 89.8,
+      "subject_hp": 89.3,
       "opp_hp": 0,
-      "delta": 89.8,
+      "delta": 89.3,
       "wr": 1,
       "outcome": "win"
      },
@@ -4361,9 +4361,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 8,
-      "subject_hp": 85,
+      "subject_hp": 84,
       "opp_hp": 0,
-      "delta": 85,
+      "delta": 84,
       "wr": 1,
       "outcome": "win"
      },
@@ -4379,6 +4379,32 @@
      "ingame": null
     },
     {
+     "opp_civ": "Muisca",
+     "opp_slug": "elite_temple_guard_muisca",
+     "opp_name": "Elite Temple Guard",
+     "opp_class": "infantry",
+     "category": "expected_win",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 7,
+      "subject_hp": 81.3,
+      "opp_hp": 0,
+      "delta": 81.3,
+      "wr": 1,
+      "outcome": "win"
+     },
+     "db": {
+      "n_subject": 30,
+      "n_opp": 20,
+      "subject_hp": 0.0,
+      "opp_hp": 28.1,
+      "delta": -28.1,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Ethiopians",
      "opp_slug": "elite_shotel_warrior_ethiopians",
      "opp_name": "Elite Shotel Warrior",
@@ -4387,9 +4413,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 11,
-      "subject_hp": 83.8,
+      "subject_hp": 81.1,
       "opp_hp": 0,
-      "delta": 83.8,
+      "delta": 81.1,
       "wr": 1,
       "outcome": "win"
      },
@@ -4413,9 +4439,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 13,
-      "subject_hp": 80.2,
+      "subject_hp": 79,
       "opp_hp": 0,
-      "delta": 80.2,
+      "delta": 79,
       "wr": 1,
       "outcome": "win"
      },
@@ -4431,6 +4457,32 @@
      "ingame": null
     },
     {
+     "opp_civ": "Celts",
+     "opp_slug": "elite_woad_raider_celts",
+     "opp_name": "Elite Woad Raider",
+     "opp_class": "infantry",
+     "category": "expected_win",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 10,
+      "subject_hp": 78.2,
+      "opp_hp": 0,
+      "delta": 78.2,
+      "wr": 1,
+      "outcome": "win"
+     },
+     "db": {
+      "n_subject": 30,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 59.2,
+      "delta": -59.2,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Armenians",
      "opp_slug": "warrior_priest_armenians",
      "opp_name": "Warrior Priest",
@@ -4439,9 +4491,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 9,
-      "subject_hp": 78.3,
+      "subject_hp": 77.3,
       "opp_hp": 0,
-      "delta": 78.3,
+      "delta": 77.3,
       "wr": 1,
       "outcome": "win"
      },
@@ -4457,32 +4509,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Muisca",
-     "opp_slug": "elite_temple_guard_muisca",
-     "opp_name": "Elite Temple Guard",
-     "opp_class": "infantry",
-     "category": "expected_win",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 7,
-      "subject_hp": 77.9,
-      "opp_hp": 0,
-      "delta": 77.9,
-      "wr": 1,
-      "outcome": "win"
-     },
-     "db": {
-      "n_subject": 30,
-      "n_opp": 20,
-      "subject_hp": 0.0,
-      "opp_hp": 28.1,
-      "delta": -28.1,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Khitans",
      "opp_slug": "elite_liao_dao_khitans",
      "opp_name": "Elite Liao Dao",
@@ -4491,9 +4517,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 10,
-      "subject_hp": 76.2,
+      "subject_hp": 75.9,
       "opp_hp": 0,
-      "delta": 76.2,
+      "delta": 75.9,
       "wr": 1,
       "outcome": "win"
      },
@@ -4505,32 +4531,6 @@
       "delta": -7.1,
       "outcome": "loss",
       "runs": 24
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Celts",
-     "opp_slug": "elite_woad_raider_celts",
-     "opp_name": "Elite Woad Raider",
-     "opp_class": "infantry",
-     "category": "expected_win",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 10,
-      "subject_hp": 75.5,
-      "opp_hp": 0,
-      "delta": 75.5,
-      "wr": 1,
-      "outcome": "win"
-     },
-     "db": {
-      "n_subject": 30,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 59.2,
-      "delta": -59.2,
-      "outcome": "loss",
-      "runs": 8
      },
      "ingame": null
     },
@@ -4561,32 +4561,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Vikings",
-     "opp_slug": "elite_berserk_vikings",
-     "opp_name": "Elite Berserk",
-     "opp_class": "infantry",
-     "category": "expected_win",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 11,
-      "subject_hp": 72.8,
-      "opp_hp": 0,
-      "delta": 72.8,
-      "wr": 1,
-      "outcome": "win"
-     },
-     "db": {
-      "n_subject": 30,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 60.0,
-      "delta": -60.0,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Berbers",
      "opp_slug": "hand_cannoneer",
      "opp_name": "Hand Cannoneer",
@@ -4613,6 +4587,32 @@
      "ingame": null
     },
     {
+     "opp_civ": "Vikings",
+     "opp_slug": "elite_berserk_vikings",
+     "opp_name": "Elite Berserk",
+     "opp_class": "infantry",
+     "category": "expected_win",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 11,
+      "subject_hp": 69.9,
+      "opp_hp": 0,
+      "delta": 69.9,
+      "wr": 1,
+      "outcome": "win"
+     },
+     "db": {
+      "n_subject": 30,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 60.0,
+      "delta": -60.0,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Italians",
      "opp_slug": "condottiero",
      "opp_name": "Condottiero",
@@ -4621,9 +4621,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 10,
-      "subject_hp": 69.8,
+      "subject_hp": 69.7,
       "opp_hp": 0,
-      "delta": 69.8,
+      "delta": 69.7,
       "wr": 1,
       "outcome": "win"
      },
@@ -4659,6 +4659,32 @@
       "subject_hp": 0.0,
       "opp_hp": 41.7,
       "delta": -41.7,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Aztecs",
+     "opp_slug": "elite_jaguar_warrior_aztecs",
+     "opp_name": "Elite Jaguar Warrior",
+     "opp_class": "infantry",
+     "category": "expected_win",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 10,
+      "subject_hp": 63.9,
+      "opp_hp": 0,
+      "delta": 63.9,
+      "wr": 1,
+      "outcome": "win"
+     },
+     "db": {
+      "n_subject": 30,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 40.4,
+      "delta": -40.4,
       "outcome": "loss",
       "runs": 8
      },
@@ -4763,32 +4789,6 @@
       "subject_hp": 0.0,
       "opp_hp": 56.6,
       "delta": -56.6,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Aztecs",
-     "opp_slug": "elite_jaguar_warrior_aztecs",
-     "opp_name": "Elite Jaguar Warrior",
-     "opp_class": "infantry",
-     "category": "expected_win",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 10,
-      "subject_hp": 56.3,
-      "opp_hp": 0,
-      "delta": 56.3,
-      "wr": 1,
-      "outcome": "win"
-     },
-     "db": {
-      "n_subject": 30,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 40.4,
-      "delta": -40.4,
       "outcome": "loss",
       "runs": 8
      },
@@ -4977,6 +4977,32 @@
      "ingame": null
     },
     {
+     "opp_civ": "Aztecs",
+     "opp_slug": "elite_eagle",
+     "opp_name": "Elite Eagle Warrior",
+     "opp_class": "infantry",
+     "category": "expected_win",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 11,
+      "subject_hp": 26.8,
+      "opp_hp": 3.1,
+      "delta": 23.7,
+      "wr": 1,
+      "outcome": "win"
+     },
+     "db": {
+      "n_subject": 30,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 75.7,
+      "delta": -75.7,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Britons",
      "opp_slug": "elite_longbowman_britons",
      "opp_name": "Elite Longbowman",
@@ -4997,32 +5023,6 @@
       "subject_hp": 0.0,
       "opp_hp": 79.0,
       "delta": -79.0,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Aztecs",
-     "opp_slug": "elite_eagle",
-     "opp_name": "Elite Eagle Warrior",
-     "opp_class": "infantry",
-     "category": "expected_win",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 11,
-      "subject_hp": 26.6,
-      "opp_hp": 3.4,
-      "delta": 23.2,
-      "wr": 0.9333333333333333,
-      "outcome": "win"
-     },
-     "db": {
-      "n_subject": 30,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 75.7,
-      "delta": -75.7,
       "outcome": "loss",
       "runs": 8
      },
@@ -5063,9 +5063,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 11,
-      "subject_hp": 29.4,
-      "opp_hp": 17.7,
-      "delta": 11.7,
+      "subject_hp": 27.9,
+      "opp_hp": 21.5,
+      "delta": 6.4,
       "wr": 0.8,
       "outcome": "win"
      },
@@ -5089,9 +5089,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 5,
-      "subject_hp": 86.5,
+      "subject_hp": 85.8,
       "opp_hp": 0,
-      "delta": 86.5,
+      "delta": 85.8,
       "wr": 1,
       "outcome": "win"
      },
@@ -5143,32 +5143,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Japanese",
-     "opp_slug": "elite_samurai_japanese",
-     "opp_name": "Elite Samurai",
-     "opp_class": "infantry",
-     "category": "unexpected_win",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 11,
-      "subject_hp": 67.6,
-      "opp_hp": 0,
-      "delta": 67.6,
-      "wr": 1,
-      "outcome": "win"
-     },
-     "db": {
-      "n_subject": 30,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 29.1,
-      "delta": -29.1,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Wu",
      "opp_slug": "jian_swordsman_wu",
      "opp_name": "Jian Swordsman",
@@ -5177,9 +5151,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 8,
-      "subject_hp": 64.5,
+      "subject_hp": 67.4,
       "opp_hp": 0,
-      "delta": 64.5,
+      "delta": 67.4,
       "wr": 1,
       "outcome": "win"
      },
@@ -5221,6 +5195,32 @@
      "ingame": null
     },
     {
+     "opp_civ": "Japanese",
+     "opp_slug": "elite_samurai_japanese",
+     "opp_name": "Elite Samurai",
+     "opp_class": "infantry",
+     "category": "unexpected_win",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 11,
+      "subject_hp": 62.9,
+      "opp_hp": 0,
+      "delta": 62.9,
+      "wr": 1,
+      "outcome": "win"
+     },
+     "db": {
+      "n_subject": 30,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 29.1,
+      "delta": -29.1,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Lithuanians",
      "opp_slug": "elite_leitis_lithuanians",
      "opp_name": "Elite Leitis",
@@ -5229,9 +5229,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 7,
-      "subject_hp": 62.6,
+      "subject_hp": 62.2,
       "opp_hp": 0,
-      "delta": 62.6,
+      "delta": 62.2,
       "wr": 1,
       "outcome": "win"
      },
@@ -5255,9 +5255,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 8,
-      "subject_hp": 61.7,
+      "subject_hp": 60.6,
       "opp_hp": 0,
-      "delta": 61.7,
+      "delta": 60.6,
       "wr": 1,
       "outcome": "win"
      },
@@ -5267,6 +5267,32 @@
       "subject_hp": 0.0,
       "opp_hp": 70.1,
       "delta": -70.1,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Georgians",
+     "opp_slug": "elite_monaspa_georgians",
+     "opp_name": "Elite Monaspa",
+     "opp_class": "cavalry",
+     "category": "unexpected_win",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 8,
+      "subject_hp": 54.9,
+      "opp_hp": 0,
+      "delta": 54.9,
+      "wr": 1,
+      "outcome": "win"
+     },
+     "db": {
+      "n_subject": 30,
+      "n_opp": 22,
+      "subject_hp": 0.0,
+      "opp_hp": 74.8,
+      "delta": -74.8,
       "outcome": "loss",
       "runs": 8
      },
@@ -5299,32 +5325,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Georgians",
-     "opp_slug": "elite_monaspa_georgians",
-     "opp_name": "Elite Monaspa",
-     "opp_class": "cavalry",
-     "category": "unexpected_win",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 8,
-      "subject_hp": 42.6,
-      "opp_hp": 0,
-      "delta": 42.6,
-      "wr": 1,
-      "outcome": "win"
-     },
-     "db": {
-      "n_subject": 30,
-      "n_opp": 22,
-      "subject_hp": 0.0,
-      "opp_hp": 74.8,
-      "delta": -74.8,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Burgundians",
      "opp_slug": "elite_coustillier_burgundians",
      "opp_name": "Elite Coustillier",
@@ -5333,9 +5333,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 7,
-      "subject_hp": 34.1,
-      "opp_hp": 0.4,
-      "delta": 33.7,
+      "subject_hp": 42,
+      "opp_hp": 0.2,
+      "delta": 41.8,
       "wr": 1,
       "outcome": "win"
      },
@@ -5359,9 +5359,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 11,
-      "subject_hp": 32.5,
-      "opp_hp": 0,
-      "delta": 32.5,
+      "subject_hp": 28.8,
+      "opp_hp": 0.5,
+      "delta": 28.3,
       "wr": 1,
       "outcome": "win"
      },
@@ -5385,10 +5385,10 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 10,
-      "subject_hp": 22.4,
-      "opp_hp": 1.5,
-      "delta": 20.9,
-      "wr": 0.9333333333333333,
+      "subject_hp": 21.5,
+      "opp_hp": 2.3,
+      "delta": 19.2,
+      "wr": 0.8,
       "outcome": "win"
      },
      "db": {
@@ -5411,10 +5411,10 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 11,
-      "subject_hp": 27.8,
-      "opp_hp": 7.1,
-      "delta": 20.7,
-      "wr": 0.8666666666666667,
+      "subject_hp": 22,
+      "opp_hp": 11,
+      "delta": 11,
+      "wr": 0.8,
       "outcome": "win"
      },
      "db": {
@@ -5437,10 +5437,10 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 5,
-      "subject_hp": 22.1,
-      "opp_hp": 18.5,
-      "delta": 3.6,
-      "wr": 0.4666666666666667,
+      "subject_hp": 23,
+      "opp_hp": 20.2,
+      "delta": 2.8,
+      "wr": 0.5333333333333333,
       "outcome": "coinflip"
      },
      "db": {
@@ -5473,10 +5473,10 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 6,
-      "subject_hp": 22,
-      "opp_hp": 21.9,
-      "delta": 0.1,
-      "wr": 0.6,
+      "subject_hp": 20.1,
+      "opp_hp": 22.9,
+      "delta": -2.8,
+      "wr": 0.4666666666666667,
       "outcome": "coinflip"
      },
      "db": {
@@ -5561,10 +5561,10 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 5,
-      "subject_hp": 20.9,
-      "opp_hp": 19.1,
-      "delta": 1.8,
-      "wr": 0.6666666666666666,
+      "subject_hp": 21.7,
+      "opp_hp": 21.3,
+      "delta": 0.4,
+      "wr": 0.5333333333333333,
       "outcome": "coinflip"
      },
      "db": {
@@ -5587,10 +5587,10 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 13,
-      "subject_hp": 30,
-      "opp_hp": 50.6,
-      "delta": -20.6,
-      "wr": 0.06666666666666667,
+      "subject_hp": 23.1,
+      "opp_hp": 56.2,
+      "delta": -33.1,
+      "wr": 0.2,
       "outcome": "loss"
      },
      "db": {
@@ -5649,9 +5649,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 3,
-      "subject_hp": 89.9,
-      "opp_hp": 42.3,
-      "delta": 47.6,
+      "subject_hp": 90.7,
+      "opp_hp": 42.2,
+      "delta": 48.5,
       "wr": 1,
       "outcome": "loss"
      },
@@ -5775,32 +5775,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Jurchens",
-     "opp_slug": "elite_iron_pagoda_jurchens",
-     "opp_name": "Elite Iron Pagoda",
-     "opp_class": "cavalry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 6,
-      "subject_hp": 16,
-      "opp_hp": 24.8,
-      "delta": -8.8,
-      "wr": 0.2,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 30,
-      "n_opp": 17,
-      "subject_hp": 0.0,
-      "opp_hp": 85.7,
-      "delta": -85.7,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Bulgarians",
      "opp_slug": "hussar",
      "opp_name": "Hussar",
@@ -5835,10 +5809,10 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 7,
-      "subject_hp": 10.4,
-      "opp_hp": 30.1,
-      "delta": -19.7,
-      "wr": 0.13333333333333333,
+      "subject_hp": 12.9,
+      "opp_hp": 28.8,
+      "delta": -15.9,
+      "wr": 0.06666666666666667,
       "outcome": "loss"
      },
      "db": {
@@ -5847,6 +5821,32 @@
       "subject_hp": 0.0,
       "opp_hp": 83.8,
       "delta": -83.8,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Jurchens",
+     "opp_slug": "elite_iron_pagoda_jurchens",
+     "opp_name": "Elite Iron Pagoda",
+     "opp_class": "cavalry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 6,
+      "subject_hp": 10.3,
+      "opp_hp": 30.8,
+      "delta": -20.5,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 30,
+      "n_opp": 17,
+      "subject_hp": 0.0,
+      "opp_hp": 85.7,
+      "delta": -85.7,
       "outcome": "loss",
       "runs": 8
      },
@@ -5887,9 +5887,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 7,
-      "subject_hp": 13,
-      "opp_hp": 37.9,
-      "delta": -24.9,
+      "subject_hp": 11.9,
+      "opp_hp": 39.1,
+      "delta": -27.2,
       "wr": 0,
       "outcome": "loss"
      },
@@ -5899,6 +5899,32 @@
       "subject_hp": 0.0,
       "opp_hp": 86.4,
       "delta": -86.4,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Tatars",
+     "opp_slug": "elite_keshik_tatars",
+     "opp_name": "Elite Keshik",
+     "opp_class": "cavalry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 8,
+      "subject_hp": 7.5,
+      "opp_hp": 44.8,
+      "delta": -37.3,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 30,
+      "n_opp": 24,
+      "subject_hp": 0.0,
+      "opp_hp": 87.9,
+      "delta": -87.9,
       "outcome": "loss",
       "runs": 8
      },
@@ -5977,32 +6003,6 @@
       "subject_hp": 0.0,
       "opp_hp": 81.3,
       "delta": -81.3,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Tatars",
-     "opp_slug": "elite_keshik_tatars",
-     "opp_name": "Elite Keshik",
-     "opp_class": "cavalry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 8,
-      "subject_hp": 3.6,
-      "opp_hp": 47,
-      "delta": -43.4,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 30,
-      "n_opp": 24,
-      "subject_hp": 0.0,
-      "opp_hp": 87.9,
-      "delta": -87.9,
       "outcome": "loss",
       "runs": 8
      },
@@ -6188,9 +6188,9 @@
      "v2": {
       "n_subject": 19,
       "n_opp": 21,
-      "subject_hp": 83.5,
-      "opp_hp": 0,
-      "delta": 83.5,
+      "subject_hp": 86.8,
+      "opp_hp": 0.1,
+      "delta": 86.7,
       "wr": 1,
       "outcome": "win"
      },
@@ -6610,32 +6610,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Poles",
-     "opp_slug": "elite_obuch_poles",
-     "opp_name": "Elite Obuch",
-     "opp_class": "infantry",
-     "category": "expected_win",
-     "v2": {
-      "n_subject": 12,
-      "n_opp": 21,
-      "subject_hp": 67.4,
-      "opp_hp": 27.2,
-      "delta": 40.2,
-      "wr": 0.8666666666666667,
-      "outcome": "win"
-     },
-     "db": {
-      "n_subject": 20,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 27.7,
-      "delta": -27.7,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Turks",
      "opp_slug": "elite_janissary_turks",
      "opp_name": "Elite Janissary",
@@ -6657,6 +6631,32 @@
       "opp_hp": 0.0,
       "delta": 17.2,
       "outcome": "win",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Poles",
+     "opp_slug": "elite_obuch_poles",
+     "opp_name": "Elite Obuch",
+     "opp_class": "infantry",
+     "category": "expected_win",
+     "v2": {
+      "n_subject": 12,
+      "n_opp": 21,
+      "subject_hp": 64.8,
+      "opp_hp": 27,
+      "delta": 37.8,
+      "wr": 1,
+      "outcome": "win"
+     },
+     "db": {
+      "n_subject": 20,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 27.7,
+      "delta": -27.7,
+      "outcome": "loss",
       "runs": 8
      },
      "ingame": null
@@ -6766,58 +6766,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Muisca",
-     "opp_slug": "elite_temple_guard_muisca",
-     "opp_name": "Elite Temple Guard",
-     "opp_class": "infantry",
-     "category": "expected_win",
-     "v2": {
-      "n_subject": 20,
-      "n_opp": 21,
-      "subject_hp": 37.3,
-      "opp_hp": 10.4,
-      "delta": 26.9,
-      "wr": 0.9333333333333333,
-      "outcome": "win"
-     },
-     "db": {
-      "n_subject": 27,
-      "n_opp": 26,
-      "subject_hp": 43.5,
-      "opp_hp": 0.0,
-      "delta": 43.5,
-      "outcome": "win",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Tupi",
-     "opp_slug": "elite_ibirapema_warrior_tupi",
-     "opp_name": "Elite Ibirapema Warrior",
-     "opp_class": "infantry",
-     "category": "expected_win",
-     "v2": {
-      "n_subject": 18,
-      "n_opp": 21,
-      "subject_hp": 29.3,
-      "opp_hp": 8.2,
-      "delta": 21.1,
-      "wr": 0.8666666666666667,
-      "outcome": "win"
-     },
-     "db": {
-      "n_subject": 24,
-      "n_opp": 30,
-      "subject_hp": 68.5,
-      "opp_hp": 0.0,
-      "delta": 68.5,
-      "outcome": "win",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Ethiopians",
      "opp_slug": "elite_shotel_warrior_ethiopians",
      "opp_name": "Elite Shotel Warrior",
@@ -6826,9 +6774,9 @@
      "v2": {
       "n_subject": 14,
       "n_opp": 21,
-      "subject_hp": 26,
-      "opp_hp": 7.1,
-      "delta": 18.9,
+      "subject_hp": 25.8,
+      "opp_hp": 7.6,
+      "delta": 18.2,
       "wr": 0.8,
       "outcome": "win"
      },
@@ -6844,6 +6792,58 @@
      "ingame": null
     },
     {
+     "opp_civ": "Tupi",
+     "opp_slug": "elite_ibirapema_warrior_tupi",
+     "opp_name": "Elite Ibirapema Warrior",
+     "opp_class": "infantry",
+     "category": "expected_win",
+     "v2": {
+      "n_subject": 18,
+      "n_opp": 21,
+      "subject_hp": 25.4,
+      "opp_hp": 9.5,
+      "delta": 15.9,
+      "wr": 0.8666666666666667,
+      "outcome": "win"
+     },
+     "db": {
+      "n_subject": 24,
+      "n_opp": 30,
+      "subject_hp": 68.5,
+      "opp_hp": 0.0,
+      "delta": 68.5,
+      "outcome": "win",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Muisca",
+     "opp_slug": "elite_temple_guard_muisca",
+     "opp_name": "Elite Temple Guard",
+     "opp_class": "infantry",
+     "category": "expected_win",
+     "v2": {
+      "n_subject": 20,
+      "n_opp": 21,
+      "subject_hp": 29.8,
+      "opp_hp": 16.1,
+      "delta": 13.7,
+      "wr": 0.8,
+      "outcome": "win"
+     },
+     "db": {
+      "n_subject": 27,
+      "n_opp": 26,
+      "subject_hp": 43.5,
+      "opp_hp": 0.0,
+      "delta": 43.5,
+      "outcome": "win",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Armenians",
      "opp_slug": "halberdier",
      "opp_name": "Halberdier",
@@ -6852,10 +6852,10 @@
      "v2": {
       "n_subject": 9,
       "n_opp": 21,
-      "subject_hp": 22.6,
-      "opp_hp": 14,
-      "delta": 8.6,
-      "wr": 0.6666666666666666,
+      "subject_hp": 22.9,
+      "opp_hp": 13.9,
+      "delta": 9.0,
+      "wr": 0.6,
       "outcome": "coinflip"
      },
      "db": {
@@ -6870,6 +6870,58 @@
      "ingame": null
     },
     {
+     "opp_civ": "Dravidians",
+     "opp_slug": "elite_urumi_swordsman_dravidians",
+     "opp_name": "Elite Urumi Swordsman",
+     "opp_class": "infantry",
+     "category": "coin_flip",
+     "v2": {
+      "n_subject": 14,
+      "n_opp": 21,
+      "subject_hp": 18,
+      "opp_hp": 15.5,
+      "delta": 2.5,
+      "wr": 0.6,
+      "outcome": "coinflip"
+     },
+     "db": {
+      "n_subject": 23,
+      "n_opp": 30,
+      "subject_hp": 57.8,
+      "opp_hp": 0.0,
+      "delta": 57.8,
+      "outcome": "win",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Berbers",
+     "opp_slug": "champion",
+     "opp_name": "Champion",
+     "opp_class": "infantry",
+     "category": "coin_flip",
+     "v2": {
+      "n_subject": 12,
+      "n_opp": 21,
+      "subject_hp": 18.9,
+      "opp_hp": 21.2,
+      "delta": -2.3,
+      "wr": 0.5333333333333333,
+      "outcome": "coinflip"
+     },
+     "db": {
+      "n_subject": 19,
+      "n_opp": 30,
+      "subject_hp": 47.8,
+      "opp_hp": 0.0,
+      "delta": 47.8,
+      "outcome": "win",
+      "runs": 16
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Celts",
      "opp_slug": "elite_woad_raider_celts",
      "opp_name": "Elite Woad Raider",
@@ -6878,9 +6930,9 @@
      "v2": {
       "n_subject": 16,
       "n_opp": 21,
-      "subject_hp": 17.4,
-      "opp_hp": 16.6,
-      "delta": 0.8,
+      "subject_hp": 14.6,
+      "opp_hp": 19.4,
+      "delta": -4.8,
       "wr": 0.5333333333333333,
       "outcome": "coinflip"
      },
@@ -6896,54 +6948,28 @@
      "ingame": null
     },
     {
-     "opp_civ": "Berbers",
-     "opp_slug": "champion",
-     "opp_name": "Champion",
+     "opp_civ": "Armenians",
+     "opp_slug": "warrior_priest_armenians",
+     "opp_name": "Warrior Priest",
      "opp_class": "infantry",
      "category": "coin_flip",
      "v2": {
-      "n_subject": 12,
+      "n_subject": 17,
       "n_opp": 21,
-      "subject_hp": 19.4,
-      "opp_hp": 20.8,
-      "delta": -1.4,
+      "subject_hp": 24.4,
+      "opp_hp": 30.4,
+      "delta": -6.0,
       "wr": 0.3333333333333333,
       "outcome": "coinflip"
      },
      "db": {
-      "n_subject": 19,
+      "n_subject": 24,
       "n_opp": 30,
-      "subject_hp": 47.8,
-      "opp_hp": 0.0,
-      "delta": 47.8,
-      "outcome": "win",
-      "runs": 16
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Dravidians",
-     "opp_slug": "elite_urumi_swordsman_dravidians",
-     "opp_name": "Elite Urumi Swordsman",
-     "opp_class": "infantry",
-     "category": "coin_flip",
-     "v2": {
-      "n_subject": 14,
-      "n_opp": 21,
-      "subject_hp": 12.2,
-      "opp_hp": 18.4,
-      "delta": -6.2,
-      "wr": 0.3333333333333333,
-      "outcome": "coinflip"
-     },
-     "db": {
-      "n_subject": 23,
-      "n_opp": 30,
-      "subject_hp": 57.8,
-      "opp_hp": 0.0,
-      "delta": 57.8,
-      "outcome": "win",
-      "runs": 8
+      "subject_hp": 14.7,
+      "opp_hp": 6.9,
+      "delta": 7.8,
+      "outcome": "loss",
+      "runs": 40
      },
      "ingame": null
     },
@@ -6974,66 +7000,30 @@
      "ingame": null
     },
     {
-     "opp_civ": "Armenians",
-     "opp_slug": "warrior_priest_armenians",
-     "opp_name": "Warrior Priest",
+     "opp_civ": "Khitans",
+     "opp_slug": "elite_liao_dao_khitans",
+     "opp_name": "Elite Liao Dao",
      "opp_class": "infantry",
      "category": "coin_flip",
      "v2": {
-      "n_subject": 17,
+      "n_subject": 15,
       "n_opp": 21,
-      "subject_hp": 22,
-      "opp_hp": 29.2,
-      "delta": -7.2,
+      "subject_hp": 16.1,
+      "opp_hp": 25.6,
+      "delta": -9.5,
       "wr": 0.26666666666666666,
       "outcome": "coinflip"
      },
      "db": {
-      "n_subject": 24,
+      "n_subject": 21,
       "n_opp": 30,
-      "subject_hp": 14.7,
-      "opp_hp": 6.9,
-      "delta": 7.8,
+      "subject_hp": 2.8,
+      "opp_hp": 17.5,
+      "delta": -14.7,
       "outcome": "loss",
-      "runs": 40
+      "runs": 24
      },
      "ingame": null
-    },
-    {
-     "opp_civ": "Aztecs",
-     "opp_slug": "elite_eagle",
-     "opp_name": "Elite Eagle Warrior",
-     "opp_class": "infantry",
-     "category": "unexpected_loss",
-     "v2": {
-      "n_subject": 14,
-      "n_opp": 21,
-      "subject_hp": 12.6,
-      "opp_hp": 41.8,
-      "delta": -29.2,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 19,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 57.7,
-      "delta": -57.7,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": {
-      "n_subject": 15,
-      "n_opp": 21,
-      "n_subject_end": 0,
-      "n_opp_end": 20,
-      "subject_hp": 0.0,
-      "opp_hp": 86.3,
-      "delta": -86.3,
-      "outcome": "loss",
-      "file": "unexpected_counter_3_elite_eagle.hp.json"
-     }
     },
     {
      "opp_civ": "Armenians",
@@ -7072,6 +7062,42 @@
      }
     },
     {
+     "opp_civ": "Aztecs",
+     "opp_slug": "elite_eagle",
+     "opp_name": "Elite Eagle Warrior",
+     "opp_class": "infantry",
+     "category": "unexpected_loss",
+     "v2": {
+      "n_subject": 14,
+      "n_opp": 21,
+      "subject_hp": 4.3,
+      "opp_hp": 48.3,
+      "delta": -44.0,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 19,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 57.7,
+      "delta": -57.7,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": {
+      "n_subject": 15,
+      "n_opp": 21,
+      "n_subject_end": 0,
+      "n_opp_end": 20,
+      "subject_hp": 0.0,
+      "opp_hp": 86.3,
+      "delta": -86.3,
+      "outcome": "loss",
+      "file": "unexpected_counter_3_elite_eagle.hp.json"
+     }
+    },
+    {
      "opp_civ": "Malay",
      "opp_slug": "elite_karambit_warrior_malay",
      "opp_name": "Elite Karambit Warrior",
@@ -7081,8 +7107,8 @@
       "n_subject": 7,
       "n_opp": 21,
       "subject_hp": 0,
-      "opp_hp": 54.6,
-      "delta": -54.6,
+      "opp_hp": 55.9,
+      "delta": -55.9,
       "wr": 0,
       "outcome": "loss"
      },
@@ -7116,9 +7142,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 19,
-      "subject_hp": 56.8,
+      "subject_hp": 51.2,
       "opp_hp": 0,
-      "delta": 56.8,
+      "delta": 51.2,
       "wr": 1,
       "outcome": "loss"
      },
@@ -7168,9 +7194,9 @@
      "v2": {
       "n_subject": 15,
       "n_opp": 21,
-      "subject_hp": 18.8,
-      "opp_hp": 27.1,
-      "delta": -8.3,
+      "subject_hp": 18.6,
+      "opp_hp": 28.1,
+      "delta": -9.5,
       "wr": 0.2,
       "outcome": "loss"
      },
@@ -7212,32 +7238,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Khitans",
-     "opp_slug": "elite_liao_dao_khitans",
-     "opp_name": "Elite Liao Dao",
-     "opp_class": "infantry",
-     "category": "unexpected_loss",
-     "v2": {
-      "n_subject": 15,
-      "n_opp": 21,
-      "subject_hp": 12.4,
-      "opp_hp": 29.2,
-      "delta": -16.8,
-      "wr": 0.06666666666666667,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 21,
-      "n_opp": 30,
-      "subject_hp": 2.8,
-      "opp_hp": 17.5,
-      "delta": -14.7,
-      "outcome": "loss",
-      "runs": 24
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Aztecs",
      "opp_slug": "elite_jaguar_warrior_aztecs",
      "opp_name": "Elite Jaguar Warrior",
@@ -7246,10 +7246,10 @@
      "v2": {
       "n_subject": 15,
       "n_opp": 21,
-      "subject_hp": 14.7,
-      "opp_hp": 31.7,
-      "delta": -17.0,
-      "wr": 0.2,
+      "subject_hp": 15.6,
+      "opp_hp": 32.4,
+      "delta": -16.8,
+      "wr": 0.13333333333333333,
       "outcome": "loss"
      },
      "db": {
@@ -7298,10 +7298,10 @@
      "v2": {
       "n_subject": 13,
       "n_opp": 21,
-      "subject_hp": 15.7,
-      "opp_hp": 45.6,
-      "delta": -29.9,
-      "wr": 0.13333333333333333,
+      "subject_hp": 18.7,
+      "opp_hp": 49.4,
+      "delta": -30.7,
+      "wr": 0,
       "outcome": "loss"
      },
      "db": {
@@ -7310,32 +7310,6 @@
       "subject_hp": 0.0,
       "opp_hp": 21.7,
       "delta": -21.7,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Shu",
-     "opp_slug": "elite_white_feather_guard_shu",
-     "opp_name": "Elite White Feather Guard",
-     "opp_class": "infantry",
-     "category": "unexpected_loss",
-     "v2": {
-      "n_subject": 12,
-      "n_opp": 21,
-      "subject_hp": 29.9,
-      "opp_hp": 68.5,
-      "delta": -38.6,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 20,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 45.9,
-      "delta": -45.9,
       "outcome": "loss",
       "runs": 8
      },
@@ -7376,9 +7350,9 @@
      "v2": {
       "n_subject": 14,
       "n_opp": 21,
-      "subject_hp": 13.6,
-      "opp_hp": 58.4,
-      "delta": -44.8,
+      "subject_hp": 21,
+      "opp_hp": 61.9,
+      "delta": -40.9,
       "wr": 0,
       "outcome": "loss"
      },
@@ -7390,6 +7364,32 @@
       "delta": 9.2,
       "outcome": "win",
       "runs": 32
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Shu",
+     "opp_slug": "elite_white_feather_guard_shu",
+     "opp_name": "Elite White Feather Guard",
+     "opp_class": "infantry",
+     "category": "unexpected_loss",
+     "v2": {
+      "n_subject": 12,
+      "n_opp": 21,
+      "subject_hp": 25,
+      "opp_hp": 68.2,
+      "delta": -43.2,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 20,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 45.9,
+      "delta": -45.9,
+      "outcome": "loss",
+      "runs": 8
      },
      "ingame": null
     },
@@ -7490,10 +7490,10 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 16,
-      "subject_hp": 36.4,
-      "opp_hp": 0.8,
-      "delta": 35.6,
-      "wr": 1,
+      "subject_hp": 34.3,
+      "opp_hp": 1.7,
+      "delta": 32.6,
+      "wr": 0.9333333333333333,
       "outcome": "loss"
      },
      "db": {
@@ -7526,10 +7526,10 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 14,
-      "subject_hp": 21.9,
-      "opp_hp": 19.9,
-      "delta": 2.0,
-      "wr": 0.6666666666666666,
+      "subject_hp": 18.1,
+      "opp_hp": 20.3,
+      "delta": -2.2,
+      "wr": 0.6,
       "outcome": "loss"
      },
      "db": {
@@ -7588,9 +7588,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 9,
-      "subject_hp": 81.6,
-      "opp_hp": 40.6,
-      "delta": 41.0,
+      "subject_hp": 78.7,
+      "opp_hp": 41.3,
+      "delta": 37.4,
       "wr": 1,
       "outcome": "loss"
      },
@@ -7640,10 +7640,10 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 17,
-      "subject_hp": 17,
-      "opp_hp": 22.3,
-      "delta": -5.3,
-      "wr": 0.4,
+      "subject_hp": 16.4,
+      "opp_hp": 23.9,
+      "delta": -7.5,
+      "wr": 0.3333333333333333,
       "outcome": "loss"
      },
      "db": {
@@ -7684,52 +7684,26 @@
      "ingame": null
     },
     {
-     "opp_civ": "Jurchens",
-     "opp_slug": "elite_iron_pagoda_jurchens",
-     "opp_name": "Elite Iron Pagoda",
+     "opp_civ": "Wei",
+     "opp_slug": "elite_tiger_cavalry_wei",
+     "opp_name": "Elite Tiger Cavalry",
      "opp_class": "cavalry",
      "category": "expected_loss",
      "v2": {
       "n_subject": 21,
-      "n_opp": 18,
-      "subject_hp": 14,
-      "opp_hp": 34.6,
-      "delta": -20.6,
-      "wr": 0.06666666666666667,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 27,
-      "n_opp": 22,
-      "subject_hp": 0.0,
-      "opp_hp": 59.3,
-      "delta": -59.3,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Mapuche",
-     "opp_slug": "elite_kona_mapuche",
-     "opp_name": "Elite Kona",
-     "opp_class": "cavalry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 18,
-      "n_opp": 21,
-      "subject_hp": 8.3,
-      "opp_hp": 31.1,
-      "delta": -22.8,
+      "n_opp": 16,
+      "subject_hp": 10.2,
+      "opp_hp": 31.5,
+      "delta": -21.3,
       "wr": 0,
       "outcome": "loss"
      },
      "db": {
       "n_subject": 27,
-      "n_opp": 28,
+      "n_opp": 21,
       "subject_hp": 0.0,
-      "opp_hp": 50.2,
-      "delta": -50.2,
+      "opp_hp": 68.0,
+      "delta": -68.0,
       "outcome": "loss",
       "runs": 8
      },
@@ -7744,10 +7718,10 @@
      "v2": {
       "n_subject": 13,
       "n_opp": 21,
-      "subject_hp": 14,
-      "opp_hp": 38.1,
-      "delta": -24.1,
-      "wr": 0.13333333333333333,
+      "subject_hp": 12,
+      "opp_hp": 35.3,
+      "delta": -23.3,
+      "wr": 0.2,
       "outcome": "loss"
      },
      "db": {
@@ -7756,6 +7730,32 @@
       "subject_hp": 0.0,
       "opp_hp": 19.6,
       "delta": -19.6,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Jurchens",
+     "opp_slug": "elite_iron_pagoda_jurchens",
+     "opp_name": "Elite Iron Pagoda",
+     "opp_class": "cavalry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 18,
+      "subject_hp": 12.5,
+      "opp_hp": 37.4,
+      "delta": -24.9,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 27,
+      "n_opp": 22,
+      "subject_hp": 0.0,
+      "opp_hp": 59.3,
+      "delta": -59.3,
       "outcome": "loss",
       "runs": 8
      },
@@ -7788,58 +7788,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Wei",
-     "opp_slug": "elite_tiger_cavalry_wei",
-     "opp_name": "Elite Tiger Cavalry",
-     "opp_class": "cavalry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 16,
-      "subject_hp": 7,
-      "opp_hp": 32.7,
-      "delta": -25.7,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 27,
-      "n_opp": 21,
-      "subject_hp": 0.0,
-      "opp_hp": 68.0,
-      "delta": -68.0,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Lithuanians",
-     "opp_slug": "elite_leitis_lithuanians",
-     "opp_name": "Elite Leitis",
-     "opp_class": "cavalry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 21,
-      "n_opp": 20,
-      "subject_hp": 3.7,
-      "opp_hp": 30.4,
-      "delta": -26.7,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 27,
-      "n_opp": 25,
-      "subject_hp": 0.0,
-      "opp_hp": 62.6,
-      "delta": -62.6,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Malians",
      "opp_slug": "elite_gbeto_malians",
      "opp_name": "Elite Gbeto",
@@ -7866,17 +7814,17 @@
      "ingame": null
     },
     {
-     "opp_civ": "Georgians",
-     "opp_slug": "elite_monaspa_georgians",
-     "opp_name": "Elite Monaspa",
+     "opp_civ": "Mapuche",
+     "opp_slug": "elite_kona_mapuche",
+     "opp_name": "Elite Kona",
      "opp_class": "cavalry",
      "category": "expected_loss",
      "v2": {
-      "n_subject": 19,
+      "n_subject": 18,
       "n_opp": 21,
-      "subject_hp": 6.9,
-      "opp_hp": 41.5,
-      "delta": -34.6,
+      "subject_hp": 5.5,
+      "opp_hp": 35.9,
+      "delta": -30.4,
       "wr": 0,
       "outcome": "loss"
      },
@@ -7884,8 +7832,34 @@
       "n_subject": 27,
       "n_opp": 28,
       "subject_hp": 0.0,
-      "opp_hp": 59.9,
-      "delta": -59.9,
+      "opp_hp": 50.2,
+      "delta": -50.2,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Lithuanians",
+     "opp_slug": "elite_leitis_lithuanians",
+     "opp_name": "Elite Leitis",
+     "opp_class": "cavalry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 21,
+      "n_opp": 20,
+      "subject_hp": 2.9,
+      "opp_hp": 33.6,
+      "delta": -30.7,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 27,
+      "n_opp": 25,
+      "subject_hp": 0.0,
+      "opp_hp": 62.6,
+      "delta": -62.6,
       "outcome": "loss",
       "runs": 8
      },
@@ -7918,6 +7892,32 @@
      "ingame": null
     },
     {
+     "opp_civ": "Georgians",
+     "opp_slug": "elite_monaspa_georgians",
+     "opp_name": "Elite Monaspa",
+     "opp_class": "cavalry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 19,
+      "n_opp": 21,
+      "subject_hp": 3.8,
+      "opp_hp": 40.8,
+      "delta": -37.0,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 27,
+      "n_opp": 28,
+      "subject_hp": 0.0,
+      "opp_hp": 59.9,
+      "delta": -59.9,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Huns",
      "opp_slug": "paladin",
      "opp_name": "Paladin",
@@ -7938,32 +7938,6 @@
       "subject_hp": 0.0,
       "opp_hp": 61.6,
       "delta": -61.6,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Burgundians",
-     "opp_slug": "elite_coustillier_burgundians",
-     "opp_name": "Elite Coustillier",
-     "opp_class": "cavalry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 20,
-      "n_opp": 21,
-      "subject_hp": 4.5,
-      "opp_hp": 43,
-      "delta": -38.5,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 27,
-      "n_opp": 27,
-      "subject_hp": 0.0,
-      "opp_hp": 59.6,
-      "delta": -59.6,
       "outcome": "loss",
       "runs": 8
      },
@@ -7996,58 +7970,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Wu",
-     "opp_slug": "jian_swordsman_wu",
-     "opp_name": "Jian Swordsman",
-     "opp_class": "infantry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 18,
-      "n_opp": 21,
-      "subject_hp": 19.1,
-      "opp_hp": 63.5,
-      "delta": -44.4,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 25,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 60.2,
-      "delta": -60.2,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
-     "opp_civ": "Magyars",
-     "opp_slug": "elite_magyar_huszar_magyars",
-     "opp_name": "Elite Magyar Huszar",
-     "opp_class": "cavalry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 15,
-      "n_opp": 21,
-      "subject_hp": 4,
-      "opp_hp": 48.6,
-      "delta": -44.6,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 21,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 66.5,
-      "delta": -66.5,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Huns",
      "opp_slug": "elite_tarkan_huns",
      "opp_name": "Elite Tarkan",
@@ -8056,9 +7978,9 @@
      "v2": {
       "n_subject": 21,
       "n_opp": 19,
-      "subject_hp": 7.8,
-      "opp_hp": 53.8,
-      "delta": -46.0,
+      "subject_hp": 10.3,
+      "opp_hp": 52.1,
+      "delta": -41.8,
       "wr": 0,
       "outcome": "loss"
      },
@@ -8074,6 +7996,84 @@
      "ingame": null
     },
     {
+     "opp_civ": "Wu",
+     "opp_slug": "jian_swordsman_wu",
+     "opp_name": "Jian Swordsman",
+     "opp_class": "infantry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 18,
+      "n_opp": 21,
+      "subject_hp": 23.1,
+      "opp_hp": 66,
+      "delta": -42.9,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 25,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 60.2,
+      "delta": -60.2,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Burgundians",
+     "opp_slug": "elite_coustillier_burgundians",
+     "opp_name": "Elite Coustillier",
+     "opp_class": "cavalry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 20,
+      "n_opp": 21,
+      "subject_hp": 1.8,
+      "opp_hp": 45.1,
+      "delta": -43.3,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 27,
+      "n_opp": 27,
+      "subject_hp": 0.0,
+      "opp_hp": 59.6,
+      "delta": -59.6,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Magyars",
+     "opp_slug": "elite_magyar_huszar_magyars",
+     "opp_name": "Elite Magyar Huszar",
+     "opp_class": "cavalry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 15,
+      "n_opp": 21,
+      "subject_hp": 0.9,
+      "opp_hp": 47.2,
+      "delta": -46.3,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 21,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 66.5,
+      "delta": -66.5,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
      "opp_civ": "Tatars",
      "opp_slug": "elite_keshik_tatars",
      "opp_name": "Elite Keshik",
@@ -8082,9 +8082,9 @@
      "v2": {
       "n_subject": 18,
       "n_opp": 21,
-      "subject_hp": 5.1,
-      "opp_hp": 57.2,
-      "delta": -52.1,
+      "subject_hp": 5,
+      "opp_hp": 60.3,
+      "delta": -55.3,
       "wr": 0,
       "outcome": "loss"
      },
@@ -8152,32 +8152,6 @@
      "ingame": null
     },
     {
-     "opp_civ": "Gurjaras",
-     "opp_slug": "elite_shrivamsha_rider_gurjaras",
-     "opp_name": "Elite Shrivamsha Rider",
-     "opp_class": "cavalry",
-     "category": "expected_loss",
-     "v2": {
-      "n_subject": 14,
-      "n_opp": 21,
-      "subject_hp": 2.7,
-      "opp_hp": 67.2,
-      "delta": -64.5,
-      "wr": 0,
-      "outcome": "loss"
-     },
-     "db": {
-      "n_subject": 22,
-      "n_opp": 30,
-      "subject_hp": 0.0,
-      "opp_hp": 67.3,
-      "delta": -67.3,
-      "outcome": "loss",
-      "runs": 8
-     },
-     "ingame": null
-    },
-    {
      "opp_civ": "Goths",
      "opp_slug": "elite_huskarl_goths",
      "opp_name": "Elite Huskarl",
@@ -8186,9 +8160,9 @@
      "v2": {
       "n_subject": 13,
       "n_opp": 21,
-      "subject_hp": 7.9,
-      "opp_hp": 76.7,
-      "delta": -68.8,
+      "subject_hp": 12.1,
+      "opp_hp": 75.5,
+      "delta": -63.4,
       "wr": 0,
       "outcome": "loss"
      },
@@ -8198,6 +8172,32 @@
       "subject_hp": 0.0,
       "opp_hp": 75.9,
       "delta": -75.9,
+      "outcome": "loss",
+      "runs": 8
+     },
+     "ingame": null
+    },
+    {
+     "opp_civ": "Gurjaras",
+     "opp_slug": "elite_shrivamsha_rider_gurjaras",
+     "opp_name": "Elite Shrivamsha Rider",
+     "opp_class": "cavalry",
+     "category": "expected_loss",
+     "v2": {
+      "n_subject": 14,
+      "n_opp": 21,
+      "subject_hp": 3.1,
+      "opp_hp": 70,
+      "delta": -66.9,
+      "wr": 0,
+      "outcome": "loss"
+     },
+     "db": {
+      "n_subject": 22,
+      "n_opp": 30,
+      "subject_hp": 0.0,
+      "opp_hp": 67.3,
+      "delta": -67.3,
       "outcome": "loss",
       "runs": 8
      },

@@ -301,6 +301,19 @@ if (CHURN > 0) {
     if (!simSrc.includes(C_OLD)) { console.error("!! performAttack cooldown line not found"); process.exit(2); }
     simSrc = simSrc.replace(C_OLD, C_NEW);
 }
+// TRAMPLE_K: packing compensation for the trample blast radius. simulate.js's
+// trample reach (attacker hull + trample_radius + enemy hull) is sized for the
+// GAME's tight melee packing; the V2 arena spawns looser (BSP=30 ~= 1 tile, about
+// 1.5x the game's ~0.6-tile melee spacing), so the 0.5-tile blast reaches fewer
+// neighbours than in-game and only ~1 unit/swing is trampled (game: several).
+// Scale the blast radius by TRAMPLE_K to restore game coverage. Validated on the
+// recorded ETG set: vs-elephant HP-margin MAE 9.5 -> 7.1 at K=1.5, no regressions.
+const TRAMPLE_K = parseFloat(process.env.TRAMPLE_K || "1");
+if (TRAMPLE_K !== 1) {
+    const TK_OLD = "this.radius + trampleInfo.radius + enemy.radius";
+    if (!simSrc.includes(TK_OLD)) { console.error("!! trample reach expr not found — aborting"); process.exit(2); }
+    simSrc = simSrc.replace(TK_OLD, `this.radius + trampleInfo.radius * ${TRAMPLE_K} + enemy.radius`);
+}
 const FLANK = parseFloat(process.env.FLANK || "0");
 if (FLANK > 0) {
     const OLD_AV = `        // If avoidance is strong (units very close), let it dominate

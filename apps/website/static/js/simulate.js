@@ -1859,6 +1859,13 @@ class BattleUnit {
                         this.team === 1
                             ? simulation.team2
                             : simulation.team1;
+                    // Trample = AoE2 blast damage. It emanates from the trampler's
+                    // BODY, not a point: a big-footprint unit (elephant, r~0.6 tile)
+                    // tramples every enemy whose body is within trample_radius of its
+                    // hull. Measuring from a point (attacker OR target center) drops
+                    // the elephant's own radius, so the packed ring around it sits just
+                    // out of reach and only ~1 unit/swing gets hit (game: ~4-6). Reach
+                    // = attacker.radius + trample_radius + enemy.radius (edge-to-edge).
                     for (const enemy of enemies) {
                         if (
                             enemy !== target &&
@@ -1867,7 +1874,7 @@ class BattleUnit {
                             const dist = this.distanceTo(enemy);
                             if (
                                 dist <=
-                                trampleInfo.radius + enemy.radius
+                                this.radius + trampleInfo.radius + enemy.radius
                             ) {
                                 enemy.takeDamage(trampleDmg, this);
                             }

@@ -38,6 +38,12 @@ process.env.RETARGET = "1.5";
 process.env.JITTER = "0.8";
 process.env.CHURN = "3.5";
 process.env.CROWDN = "6";
+//   TRAMPLE_K = 1.5   packing compensation for the trample blast radius: the V2
+//          arena packs ~1.5x looser than the game's melee blob, so the 0.5-tile
+//          blast is scaled up to reach the neighbours it hits in-game (else a
+//          big trampler lands on ~1 unit/swing, not several). Validated on the
+//          recorded ETG set: vs-elephant HP-margin MAE 9.5 -> 7.1, no regressions.
+process.env.TRAMPLE_K = "1.5";
 process.env.BLOCK = "1";
 process.env.GAP = "160";
 process.env.BSP = "30";

@@ -18,6 +18,7 @@ POOL = (BASE + io.open(r"apps\video\ai_experiments\ddkMicroV9.per", encoding="ut
 # contain ';' which breaks the comment-stripper). Each entry cites its proof.
 POOL += " up-find-player "   # Immortal: (up-find-player player_stance-enemy find-closest var380)
 POOL += " players-stance "   # Immortal: (players-stance player-2 diplomacy_stance-ally)
+POOL += " up-chat-data-to-player "   # AI (HD version).per: (up-chat-data-to-player my-player-number "Wood: %d" g: goal)
 EXP_CHANGED = set() if changed_csv == "-" or changed_csv.startswith("set") else {int(x) for x in changed_csv.split(",")}
 EXP_ADDED = int(added_s)
 

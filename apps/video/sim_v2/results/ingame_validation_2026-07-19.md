@@ -13,8 +13,14 @@ screenshots; no HP decode). ETG = P2 on ddkMatchupAI patrol except vs Guecha
 | Elite Guecha 21v20 | coin_flip, 27% ETG, S −6 | **Guecha 3–0**, keeping 50–100% of 20 (kites the slower ETG all game; one aborted extra run showed ETG cornering them mid-fight — the loss basin exists) | ❌ sim under-rated the kite → **KITE fix** (see below) → now expected_loss, S −52 ✅ |
 | Warrior Priest 17v21 | coin_flip, 73% ETG (both shredded) | **WP 2–0**, keeping ~15–16 of 21 | ❌ WP heal aura NOT in its combat dict (no heal/regen field) — unmodeled-mechanic pin `loss` added (WFG precedent) |
 
-Still to run: Condottiero (47%), Huskarl re-check (40%), Paladin / Battle Elephant /
-Champion anchors. Scenarios are deployed (`etg_*` in the game scenario folder).
+| Condottiero 15v21 | coin_flip, 47% ETG (both shredded, 5%/6% HP) | **ETG 4–1** (5 runs); every win thin on BOTH sides (ETG wins with 2–5 of 15, Condo win with ~4 of 21) | ✅ coin_flip confirmed (game leans ETG; within 5-run noise of 47%) |
+| Paladin 21v16 | 100% ETG, S +38 | ETG decisive, ~8 of 21 alive, all Paladins dead | ✅ anchor confirmed (also: no delayed-melee churn-bypass bias visible) |
+| Elite Battle Elephant 21v14 | 100% ETG, S +37 | ETG decisive, ~5–6 alive, all elephants dead | ✅ trample calibration holds |
+| Champion 12v21 | 0% ETG, S −48 | Champion decisive, ~14 of 21 standing | ✅ anchor confirmed |
+
+Not re-run: Huskarl (already the most-validated matchup — 20 decoded runs from the
+original calibration). All 8 deployed `etg_*` scenarios remain in the game scenario
+folder for future re-runs.
 
 ## KITE fix (the engine change this validated)
 

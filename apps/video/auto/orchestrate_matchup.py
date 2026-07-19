@@ -88,6 +88,8 @@ FP_TEST = (0.5004, 0.5757)               # "Test" row in the menu dialog
 FP_ROW1 = (0.1965, 0.3778)               # the single staged scenario row on the Load page
 FP_LOAD_BTN = (0.4961, 0.8576)           # "Load Scenario" button on the Load page
 FP_SAVE_NO = (0.5731, 0.5542)            # "No" on the 'save your changes?' prompt (1467,798)
+FP_SEARCH = (0.2680, 0.2270)             # the Load page's "Search" input (sticky filter)
+FP_ROW_FILTERED = (0.1965, 0.3090)       # FIRST list row — where the single filtered row sits
 
 
 # Game-free helpers moved to auto.pure; re-imported here for back-compat so callers
@@ -251,6 +253,28 @@ def navigate_to_test_menu(start_state, scenario_name, logfile, fast=True) -> boo
     return _navigate_ocr(start_state, scenario_name, logfile)
 
 
+def _set_search(query, logfile):
+    """Filter the Load page's scenario list to the staged row via the Search box.
+
+    Two failure modes this kills (both observed 2026-07-19, both recorded the WRONG
+    scenario until the gRPC count gate caught it):
+      * the Search filter PERSISTS across dialog opens — a leftover manual filter
+        ('etg_champion') hid the staged row entirely;
+      * the list is NOT modified-time sorted (built-in 'The Siege' first, then
+        alphabetical), so once the folder holds a dozen user scenarios, 'Matchup
+        Run' (m > e...) falls BELOW THE FOLD where the OCR row-find can't see it.
+    Searching the stage name makes the staged row the only visible row (and the
+    game auto-selects a single filtered row, so even the blind fallback is safe)."""
+    _click_frac(*FP_SEARCH, logfile=logfile, label="search box", settle=0.3)
+    platform_io.key("cmd+a")                 # mapped to ctrl+a on Windows
+    time.sleep(0.15)
+    platform_io.key("delete")                # mapped to backspace on Windows
+    time.sleep(0.2)
+    ui.type_text(query)
+    log(f"[nav] search filter set to {query!r}", logfile)
+    time.sleep(0.6)                          # list refresh
+
+
 def _navigate_fast(start_state, scenario_name, logfile) -> bool:
     """Fixed-coordinate navigation: editor -> Menu -> Load Scenario -> (save? No) -> row
     -> Load -> (save? No) -> editor -> Menu. OCR only as cheap per-gate verification."""
@@ -275,6 +299,7 @@ def _navigate_fast(start_state, scenario_name, logfile) -> bool:
         _dismiss_save_prompt(logfile, timeout=6.0)       # blind No may have missed a slow fade
         if not _reach_load_page(start_state, logfile):
             return False
+    _set_search(scenario_name.split()[0], logfile)
     # Select the staged row BY NAME, not by a blind top-row click: the user's scenario
     # folder holds other files (default1/default3/The Siege/…), so the staged "Matchup
     # Run" is NOT reliably the top row — a blind FP_ROW1 click silently test-played the
@@ -282,8 +307,9 @@ def _navigate_fast(start_state, scenario_name, logfile) -> bool:
     # matchup; the gRPC gate caught it). OCR-find the row; FP_ROW1 is only the fallback.
     if not find_and_click(scenario_name, R_LIST, logfile, f"row {scenario_name!r}"):
         if not find_and_click(scenario_name.split()[0], R_LIST, logfile, "row (first word)"):
-            log("[nav] scenario row not found by name — blind top-row fallback", logfile)
-            _click_frac(*FP_ROW1, logfile=logfile, label="row (blind)", settle=0.4)
+            log("[nav] scenario row not found by name — blind first-row fallback "
+                "(filter active, so the staged row is the only candidate)", logfile)
+            _click_frac(*FP_ROW_FILTERED, logfile=logfile, label="row (blind)", settle=0.4)
     _click_frac(*FP_LOAD_BTN, logfile=logfile, label="Load Scenario (button)", settle=0.3)
     # loading the file doesn't re-prompt (we already discarded), so no second save-poll.
     # the small scenario loads in ~2s; a fixed wait beats an OCR poll here (each editor
@@ -304,6 +330,7 @@ def _navigate_ocr(start_state, scenario_name, logfile) -> bool:
     if not _reach_load_page(start_state, logfile):
         return False
     time.sleep(1.0)
+    _set_search(scenario_name.split()[0], logfile)
     if not find_and_click(scenario_name, R_LIST, logfile, f"row {scenario_name!r}"):
         # the staged file is named "Matchup Run" — try the first word as a fallback
         if not find_and_click(scenario_name.split()[0], R_LIST, logfile, "row (first word)"):

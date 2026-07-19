@@ -15,6 +15,7 @@ Cards:
 from __future__ import annotations
 
 import base64
+import html
 import os
 import re
 import shutil
@@ -613,6 +614,112 @@ def render_results_panel(u1, u2, res, out_png, width=1280, height=720, scale=2) 
     """Render the end-of-matchup results card to a transparent, auto-cropped PNG for
     compositing over the post-battle hold."""
     return _autocrop(_screenshot(build_results_panel_html(u1, u2, res),
+                                 out_png, width, height, scale))
+
+
+def build_category_banner_html(title: str, index: int, total: int) -> str:
+    """Full-screen section divider: the category name + an `index/total`
+    progress marker (e.g. Expected Wins  ·  1/4)."""
+    P = PALETTE
+    t = html.escape(str(title))
+    prog = f"{index}/{total}"
+    override = f"""
+.wrap {{ padding:0; }}
+.cat {{ width:1200px; margin:0 auto; padding:44px 52px; border-radius:18px; text-align:center;
+  background:linear-gradient(165deg, rgba(42,31,20,0.92), rgba(18,13,7,0.94));
+  border:2px solid rgba(201,168,76,0.7);
+  box-shadow:0 8px 34px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(201,168,76,0.12); }}
+.cat .t {{ font-size:66px; letter-spacing:3px; color:{P['gold']}; text-transform:uppercase;
+  text-shadow:0 3px 12px #000; }}
+.cat .idx {{ font-size:30px; color:{P['text_muted']}; margin-top:14px; letter-spacing:3px;
+  font-weight:bold; }}
+"""
+    return f"""<!doctype html><html><head><meta charset="utf-8"><style>{_css()}
+{override}</style></head>
+<body><div class="wrap"><div class="cat"><div class="t">{t}</div>
+  <div class="idx">{prog}</div></div></div></body></html>"""
+
+
+def render_category_banner(out_png, title, index, total,
+                           width=1300, height=380, scale=2) -> Path:
+    """Render a category banner card to a transparent, auto-cropped PNG."""
+    return _autocrop(_screenshot(build_category_banner_html(title, index, total),
+                                 out_png, width, height, scale))
+
+
+def build_caption_pill_html(text: str, accent: str | None = None) -> str:
+    """A single rounded caption pill (the 'why' line for a fight). ALL text is
+    HTML-escaped so raw '<...>' fragments never render as markup."""
+    P = PALETTE
+    accent = accent or P["gold"]
+    txt = html.escape(str(text))
+    override = f"""
+.wrap {{ padding:0; }}
+.pill {{ display:inline-flex; align-items:center; gap:14px; padding:18px 32px; border-radius:999px;
+  background:rgba(0,0,0,0.55); border:2px solid {accent};
+  box-shadow:0 4px 18px rgba(0,0,0,0.5); }}
+.pill .dot {{ width:15px; height:15px; border-radius:50%; background:{accent}; flex:0 0 auto; }}
+.pill .txt {{ font-size:34px; color:{P['text']}; letter-spacing:1px; }}
+"""
+    return f"""<!doctype html><html><head><meta charset="utf-8"><style>{_css()}
+{override}</style></head>
+<body><div class="wrap"><div class="pill"><span class="dot"></span>
+  <span class="txt">{txt}</span></div></div></body></html>"""
+
+
+def render_caption_pill(out_png, text, accent=None,
+                        width=1200, height=160, scale=2) -> Path:
+    """Render a caption pill to a transparent, auto-cropped PNG."""
+    return _autocrop(_screenshot(build_caption_pill_html(text, accent),
+                                 out_png, width, height, scale))
+
+
+def build_ranked_list_html(title: str, rows: list) -> str:
+    """A full-ranking table for one category. rows = [{rank,name,civ,score,
+    picked}, ...], preserved in order; rows flagged `picked` (the ones recorded
+    as fights) get the CSS class `picked` so they can be highlighted."""
+    P = PALETTE
+
+    def row(r):
+        cls = "rrow picked" if r.get("picked") else "rrow"
+        rk = html.escape(str(r.get("rank", "")))
+        nm = html.escape(str(r.get("name", "")))
+        civ = html.escape(str(r.get("civ", "")))
+        score = r.get("score", "")
+        sc = html.escape(f"{score:.1f}" if isinstance(score, (int, float)) else str(score))
+        return (f'<div class="{cls}"><span class="rk">{rk}</span>'
+                f'<span class="rn">{nm}</span>'
+                f'<span class="rc">{civ}</span>'
+                f'<span class="rv">{sc}</span></div>')
+
+    body = "".join(row(r) for r in rows)
+    t = html.escape(str(title))
+    override = f"""
+.wrap {{ padding:0; }}
+.rank {{ width:1000px; margin:0 auto; padding:26px 30px; border-radius:16px;
+  background:linear-gradient(165deg, rgba(42,31,20,0.90), rgba(18,13,7,0.92));
+  border:2px solid rgba(201,168,76,0.7); }}
+.rank .h {{ font-size:38px; color:{P['gold']}; text-transform:uppercase; letter-spacing:2px;
+  text-align:center; margin-bottom:18px; text-shadow:0 2px 8px #000; }}
+.rrow {{ display:flex; align-items:center; gap:18px; padding:11px 10px;
+  border-bottom:1px dotted rgba(168,152,120,.3); font-size:27px; }}
+.rrow.picked {{ background:linear-gradient(90deg, rgba(201,168,76,.18), transparent);
+  border-bottom-color:rgba(201,168,76,.55); border-radius:8px; }}
+.rk {{ width:46px; font-size:30px; font-weight:bold; color:{P['gold_light']}; text-align:right; }}
+.rn {{ color:{P['text']}; font-weight:bold; }}
+.rrow.picked .rn {{ color:{P['gold_light']}; }}
+.rc {{ color:{P['text_muted']}; font-size:21px; }}
+.rv {{ margin-left:auto; color:{P['gold_light']}; font-weight:bold; }}
+"""
+    return f"""<!doctype html><html><head><meta charset="utf-8"><style>{_css()}
+{override}</style></head>
+<body><div class="wrap"><div class="rank"><div class="h">{t}</div>{body}</div></div></body></html>"""
+
+
+def render_ranked_list(out_png, title, rows,
+                       width=1100, height=1000, scale=2) -> Path:
+    """Render a ranked-list card to a transparent, auto-cropped PNG."""
+    return _autocrop(_screenshot(build_ranked_list_html(title, rows),
                                  out_png, width, height, scale))
 
 

@@ -40,8 +40,10 @@ sys.path.insert(0, str(SB))
 
 from auto import input_driver as ui, platform_io             # noqa: E402
 from auto.config import DEFAULT_COPY_TO                       # noqa: E402
+from auto.chapters import write_chapters, _civ_adj           # noqa: E402,F401
 from auto.orchestrate_matchup import (                       # noqa: E402
-    run_matchup, resolve_side, equal_resource_counts, RUN_DIR)
+    run_matchup, resolve_side, equal_resource_counts, return_to_editor, RUN_DIR)
+from auto.queue_runner import run_matchup_queue              # noqa: E402
 from auto.record_until_end import log                        # noqa: E402
 from build_run import TEMPLATE, unit_const                   # noqa: E402
 
@@ -56,32 +58,6 @@ def _parse_matchup(s: str) -> dict:
             f"matchup must be CIV1:slug1:CIV2:slug2:Name — got {s!r}")
     civ1, slug1, civ2, slug2, name = (p.strip() for p in parts)
     return dict(civ1=civ1, slug1=slug1, civ2=civ2, slug2=slug2, name=name)
-
-
-# civs whose adjective is NOT just "drop the trailing s"
-_CIV_ADJ_KEEP = {"Chinese", "Vietnamese", "Burmese", "Portuguese"}
-
-
-def _civ_adj(civ: str) -> str:
-    """'Armenians' -> 'Armenian', 'Aztecs' -> 'Aztec', 'Chinese' -> 'Chinese'."""
-    if civ in _CIV_ADJ_KEEP:
-        return civ
-    return civ[:-1] if civ.endswith("s") else civ
-
-
-def write_chapters(entries, out_txt) -> Path:
-    """Write YouTube chapter markers (cumulative start times) for the joined video.
-    entries = [(label, clip_duration_seconds), ...]."""
-    lines, t = [], 0.0
-    for label, dur in entries:
-        s = int(t)
-        h, rem = divmod(s, 3600)
-        m, sec = divmod(rem, 60)
-        ts = f"{h}:{m:02d}:{sec:02d}" if h else f"{m}:{sec:02d}"
-        lines.append(f"{ts} - {label}")
-        t += dur
-    Path(out_txt).write_text("\n".join(lines) + "\n")
-    return Path(out_txt)
 
 
 def _slice_1based(spec: str, n: int):
@@ -200,53 +176,63 @@ def main():
         log("--dry-run: validation passed; not running.", a.log)
         return
 
-    # ---- RUN -------------------------------------------------------------
+    # ---- RUN (manifest-driven queue) -------------------------------------
     # In --join mode the individual clips are NOT copied out — only the joined video
     # is the deliverable (kept in /tmp so we can concatenate them at the end).
     join_mode = bool(a.join)
     per_run_copy_to = None if join_mode else a.copy_to
-    results, clips, chapters = [], [], []
-    for i, m in enumerate(matchups, 1):
-        log(f"===== [{i}/{n}] {m['name']} =====", a.log)
-        try:
-            final = run_matchup(
-                m["civ1"], m["slug1"], m["civ2"], m["slug2"],
-                name=f"{m['name']}.mp4", copy_to=per_run_copy_to,
-                raw_copy_to=a.copy_to, cap=a.cap,    # archive the raw for EVERY run
-                mode=mode, unit_cap=a.unit_cap,
-                out_mov=str(Path(TMP) / f"auto_fight_{i}.mov"),
-                final=str(Path(TMP) / f"auto_matchup_{i}.mp4"),
-                dismiss_after=True, logfile=a.log)
-            log(f"[{i}/{n}] DONE -> {final}", a.log)
-            results.append((m["name"], "OK", str(final)))
-            clips.append(str(final))
-            # chapter label = the opponent unit (the varying side), e.g. "Aztec Jaguar Warrior"
-            label = f"{_civ_adj(m['civ2'])} {resolve_side(m['civ2'], m['slug2'])[2].replace('Elite ', '')}"
-            chapters.append((label, str(final)))
-        except Exception as e:
-            log(f"[{i}/{n}] FAILED: {e}", a.log)
-            results.append((m["name"], "FAILED", str(e)))
+    queue_out = Path(a.copy_to)                       # where manifest.json lives
+    # Each spec carries name/label/category so chapters read the manifest, not filenames.
+    # chapter label = the opponent unit (the varying side), e.g. "Aztec Jaguar Warrior"
+    specs = []
+    for m in matchups:
+        label = f"{_civ_adj(m['civ2'])} {resolve_side(m['civ2'], m['slug2'])[2].replace('Elite ', '')}"
+        specs.append(dict(m, label=label, category="matchup"))
+    fight_index = {s["name"]: i for i, s in enumerate(specs, 1)}
+
+    def run_one(spec, out_dir):
+        i = fight_index[spec["name"]]
+        log(f"===== [{i}/{n}] {spec['name']} =====", a.log)
+        final = run_matchup(
+            spec["civ1"], spec["slug1"], spec["civ2"], spec["slug2"],
+            name=f"{spec['name']}.mp4", copy_to=per_run_copy_to,
+            raw_copy_to=a.copy_to, cap=a.cap,        # archive the raw for EVERY run
+            mode=mode, unit_cap=a.unit_cap,
+            out_mov=str(Path(TMP) / f"auto_fight_{i}.mov"),
+            final=str(Path(TMP) / f"auto_matchup_{i}.mp4"),
+            dismiss_after=True, logfile=a.log)
+        log(f"[{i}/{n}] DONE -> {final}", a.log)
+        return Path(final)
+
+    res = run_matchup_queue(specs, queue_out, run_one=run_one,
+                            on_recover=lambda: return_to_editor(a.log))
 
     # ---- JOIN (one combined video) + CHAPTERS ---------------------------
-    if join_mode and clips:
+    # Read the manifest for the finished clips + their labels (in spec order) — no
+    # filename parsing. `path`/`label` were written by the queue runner per clip.
+    manifest = json.loads((queue_out / "manifest.json").read_text())
+    done_clips = [c for c in manifest["clips"] if c.get("status") == "done"]
+    if join_mode and done_clips:
         from overlay.compose import concat_videos, _duration
+        clips = [c["path"] for c in done_clips]
         log(f"[join] concatenating {len(clips)} clip(s) -> {a.join} ...", a.log)
         joined = concat_videos(clips, str(Path(TMP) / "joined_matchups.mp4"))
         Path(a.copy_to).mkdir(parents=True, exist_ok=True)
         dest = Path(a.copy_to) / a.join
         shutil.copy2(joined, dest)
         log(f"[join] -> {dest} ({Path(dest).stat().st_size // 1024} KB)", a.log)
-        # YouTube chapters .txt (cumulative start time per matchup)
-        ch_entries = [(lbl, _duration(clip)) for lbl, clip in chapters]
+        # YouTube chapters .txt (cumulative start time per matchup) — labels from manifest
+        ch_entries = [(c["label"], _duration(c["path"])) for c in done_clips]
         ch_path = write_chapters(ch_entries, Path(a.copy_to) / f"{Path(a.join).stem} chapters.txt")
         log(f"[chapters] -> {ch_path}", a.log)
 
     # ---- SUMMARY ---------------------------------------------------------
-    ok = sum(1 for _, s, _ in results if s == "OK")
+    ok = len(res.done) + len(res.skipped)
     log(f"=== BATCH COMPLETE — {ok}/{n} succeeded ===", a.log)
-    for name, status, detail in results:
-        log(f"  [{status}] {name}  ->  {detail}", a.log)
-    if join_mode and clips:
+    for c in manifest["clips"]:
+        detail = c.get("path") or c.get("error", "")
+        log(f"  [{c.get('status', '?').upper()}] {c['name']}  ->  {detail}", a.log)
+    if join_mode and done_clips:
         log(f"  JOINED -> {Path(a.copy_to) / a.join}", a.log)
     sys.exit(0 if ok == n else 1)
 

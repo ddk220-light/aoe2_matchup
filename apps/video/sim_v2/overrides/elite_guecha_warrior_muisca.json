@@ -1,0 +1,24 @@
+{
+  "_comment": "Per-subject curation for the Guecha Warrior (Muisca) unit-analysis video. ingame_outcome + showcase_override reflect the in-game (golden rig, gRPC) recordings.",
+  "ingame_outcome": {
+    "Persians/elite_war_elephant_persians": "loss",
+    "Bengalis/elite_elephant": "loss",
+    "Romans/elite_centurion_romans": "loss",
+    "Byzantines/elite_cataphract_byzantines": "loss",
+    "Slavs/elite_boyar_slavs": "loss",
+    "Bengalis/elite_ratha_(melee)_bengalis": "loss",
+    "Persians/heavy_camel": "loss",
+    "Cumans/elite_steppe": "loss",
+    "Khmer/elite_ballista_elephant_khmer": "loss"
+  },
+  "_ingame_note": "The V2 sim's whole unexpected_win category was WRONG: it says the Guecha (a heavy javelineer) BEATS cavalry/elephants, but in-game every cavalry closes and slaughters it — Centurion (Guecha 1u vs 11), Cataphract (1u vs 14/14 survive), Heavy Camel (1u vs 18/18) — the single-column sim overrates the Guecha's javelin DPS vs closing melee. War/Battle Elephant and the splash Ballista Elephant likewise grind it down. All 8 unexpected_wins + Ballista Elephant move to expected_loss (verified on 4 diverse cavalry/elephants; the pattern is uniform + decisive). The EXPECTED wins (vs archers/slow melee it kites or out-tanks) ARE reliable: Mameluke 16u, Teutonic Knight 13u, Mangudai 6u, Arbalester 11u — all wins.",
+  "showcase_override": {
+    "expected_win": [["Saracens", "elite_mameluke_saracens"], ["Teutons", "elite_teutonic_knight_teutons"], ["Mongols", "elite_mangudai_mongols"]],
+    "unexpected_win": [],
+    "coin_flip": [],
+    "unexpected_loss": [["Malay", "elite_karambit_warrior_malay"], ["Armenians", "imp_elite_skirm"], ["Aztecs", "elite_eagle"]],
+    "expected_loss": [["Romans", "elite_centurion_romans"], ["Byzantines", "elite_cataphract_byzantines"], ["Persians", "heavy_camel"]]
+  },
+  "_showcase_note": "Guecha's story: it beats archers + slow melee it can kite/out-tank (Expected Wins), but folds to anything that closes. Expected Counters = heavy cavalry that runs it down (dramatic: Guecha reduced to 1 unit). Unexpected Counters = fast infantry (Karambit, Eagle) + anti-archer skirms that beat it despite ranged countering them. No Unexpected Wins section (the sim's were all wrong).",
+  "exclude_showcase": []
+}

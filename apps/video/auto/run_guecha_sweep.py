@@ -24,7 +24,9 @@ SB = HERE.parent
 sys.path.insert(0, str(SB))
 
 from auto import input_driver as ui, platform_io          # noqa: E402
+from auto.chapters import write_chapters, _civ_adj         # noqa: E402
 from auto.orchestrate_matchup import run_matchup, return_to_editor, bring_game_to_front  # noqa: E402
+from auto.queue_runner import run_matchup_queue, _load_manifest  # noqa: E402
 from auto.record_until_end import log                     # noqa: E402
 
 from auto.config import GUECHA_OUT as OUT_DIR                       # noqa: E402
@@ -63,26 +65,42 @@ def opponents(include_naval=False):
     return out
 
 
-def stitch(out_dir: Path, clips: list[Path], logfile=None) -> Path | None:
+def _chapter_label(civ, opp_name) -> str:
+    """Chapter label for a matchup = '<civ adjective> <opponent unit>'."""
+    return f"{_civ_adj(civ)} {opp_name}"
+
+
+def stitch(out_dir: Path, expected: list[Path], logfile=None) -> Path | None:
     """Join the per-matchup clips into the compilation + write the matching YouTube
-    chapter markers (cumulative start time per matchup, labeled by the opponent)."""
-    clips = [c for c in clips if c and Path(c).exists()]
-    if not clips:
+    chapter markers (cumulative start time per matchup, labeled by the opponent).
+
+    Labels come from manifest.json (written per clip by the queue runner) — the clip
+    `label` and `path`, in manifest order. Falls back to filename parsing for any
+    manifest-less clip (e.g. a stitch-only run over a folder recorded elsewhere)."""
+    from overlay.compose import concat_videos, _duration
+    manifest = _load_manifest(out_dir)
+
+    pairs = []            # (label, clip_path) in order
+    if manifest["clips"]:
+        for c in manifest["clips"]:
+            if c.get("status") == "done" and c.get("path") and Path(c["path"]).exists():
+                label = c.get("label") or Path(c["path"]).stem
+                pairs.append((label, c["path"]))
+    else:
+        for c in expected:
+            if c and Path(c).exists():
+                m = re.match(r".+ vs (.+) \((.+) vs (.+)\)$", Path(c).stem)
+                label = f"{_civ_adj(m.group(3))} {m.group(1)}" if m else Path(c).stem
+                pairs.append((label, str(c)))
+
+    if not pairs:
         log("[stitch] no clips to join", logfile)
         return None
-    from overlay.compose import concat_videos, _duration
-    from auto.batch_matchups import write_chapters, _civ_adj
     dest = out_dir / COMPILATION
-    log(f"[stitch] joining {len(clips)} clips -> {dest}", logfile)
-    concat_videos([str(c) for c in clips], dest)
+    log(f"[stitch] joining {len(pairs)} clips -> {dest}", logfile)
+    concat_videos([p for _, p in pairs], dest)
     log(f"[stitch] DONE -> {dest} ({dest.stat().st_size // 1048576} MB)", logfile)
-    # chapter label = the OPPONENT in clip order; clip names are
-    # "<fixed> vs <opponent name> (<fixed civ> vs <opp civ>).mp4"
-    entries = []
-    for c in clips:
-        m = re.match(r".+ vs (.+) \((.+) vs (.+)\)$", Path(c).stem)
-        label = f"{_civ_adj(m.group(3))} {m.group(1)}" if m else Path(c).stem
-        entries.append((label, _duration(c)))
+    entries = [(lbl, _duration(p)) for lbl, p in pairs]
     ch = write_chapters(entries, out_dir / (Path(COMPILATION).stem + " chapters.txt"))
     log(f"[stitch] chapters -> {ch}", logfile)
     return dest
@@ -139,40 +157,55 @@ def main():
             "Editor (or its Load page), frontmost, and retry.", logf)
         sys.exit(2)
 
-    done, failed = [], []
-    t0 = time.time()
-    for i, (civ, slug, nm) in enumerate(opp):
-        name = matchup_name(civ, nm)
-        # record-only counts a matchup done when its RAW exists; normal mode, the clip
-        dest = (out_dir / "raw recordings" / (Path(name).stem + ".mov")
-                if a.record_only else out_dir / name)
-        tag = f"[{i+1}/{len(opp)}] {nm} ({civ})"
-        if dest.exists() and not a.force:
-            log(f"{tag}: already done -> skip", logf)
-            done.append(dest)
-            continue
-        log(f"{tag}: START  (elapsed {int(time.time()-t0)}s)", logf)
-        try:
-            final = run_matchup(
-                GUECHA[0], GUECHA[1], civ, slug,
-                name=name, copy_to=str(out_dir), raw_copy_to=str(out_dir),
-                cap=a.cap, mode=a.mode, unit_cap=a.unit_cap, live_overlay=True,
-                compose=not a.record_only, logfile=logf)
-            done.append(Path(final))
-            log(f"{tag}: OK -> {final}", logf)
-        except Exception as e:
-            failed.append((civ, nm, str(e)))
-            log(f"{tag}: FAILED -> {e}", logf)
-            try:
-                return_to_editor(logf)         # recover so the next matchup can start clean
-            except Exception:
-                pass
-            time.sleep(2.0)
+    # ---- BUILD THE QUEUE -------------------------------------------------
+    # Each spec carries name (stem)/label/category so the manifest — not filenames —
+    # drives stitch + chapters. matchup_name() keeps the ".mp4" for the on-disk clip;
+    # the queue runner's resume-skip checks out_dir/{name}.mp4, so name = the stem.
+    specs = []
+    for civ, slug, nm in opp:
+        stem = Path(matchup_name(civ, nm)).stem
+        specs.append(dict(civ1=GUECHA[0], slug1=GUECHA[1], civ2=civ, slug2=slug,
+                          name=stem, label=_chapter_label(civ, nm),
+                          category="matchup", opp_name=nm))
 
-    log(f"=== SWEEP COMPLETE: {len(done)} ok, {len(failed)} failed, "
-        f"{int(time.time()-t0)}s ===", logf)
-    for civ, nm, err in failed:
-        log(f"  FAILED {nm} ({civ}): {err}", logf)
+    # --force: drop prior done clips so they re-record (delete the mp4 the queue checks).
+    if a.force:
+        for s in specs:
+            clip = out_dir / f"{s['name']}.mp4"
+            if clip.exists():
+                clip.unlink()
+    # record-only resume: the queue skips on {name}.mp4, but record-only produces a raw
+    # .mov and no .mp4 — so pre-skip specs whose RAW already exists (mirrors the old
+    # per-mode skip target).
+    if a.record_only and not a.force:
+        keep = []
+        for s in specs:
+            raw = out_dir / "raw recordings" / f"{s['name']}.mov"
+            if raw.exists():
+                log(f"{s['label']}: raw already done -> skip", logf)
+            else:
+                keep.append(s)
+        specs = keep
+
+    t0 = time.time()
+
+    def run_one(spec, _out_dir):
+        log(f"{spec['label']}: START  (elapsed {int(time.time()-t0)}s)", logf)
+        final = run_matchup(
+            GUECHA[0], GUECHA[1], spec["civ2"], spec["slug2"],
+            name=f"{spec['name']}.mp4", copy_to=str(out_dir), raw_copy_to=str(out_dir),
+            cap=a.cap, mode=a.mode, unit_cap=a.unit_cap, live_overlay=True,
+            compose=not a.record_only, logfile=logf)
+        log(f"{spec['label']}: OK -> {final}", logf)
+        return Path(final)
+
+    res = run_matchup_queue(specs, out_dir, run_one=run_one,
+                            on_recover=lambda: (return_to_editor(logf), time.sleep(2.0)))
+
+    log(f"=== SWEEP COMPLETE: {len(res.done) + len(res.skipped)} ok, "
+        f"{len(res.failed)} failed, {int(time.time()-t0)}s ===", logf)
+    for s in res.failed:
+        log(f"  FAILED {s.get('opp_name', s['name'])} ({s['civ2']})", logf)
 
     if a.record_only:
         log(f"[record-only] raws archived. Render them with:\n"

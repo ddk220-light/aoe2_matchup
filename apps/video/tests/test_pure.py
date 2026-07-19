@@ -275,23 +275,19 @@ class TestEqualResourceCounts:
         self._patch(monkeypatch, 125.0, 105.0)         # n2 = min(30, 28) = 28
         assert equal_resource_counts("C1", "a", "C2", "b") == (23, 28)
 
-    def test_cost_weights_match_the_website(self):
-        # overlay_data mirrors webapp/simulation_real.py — fail loudly on drift
-        import re
-        from pathlib import Path
+    def test_cost_weights_are_the_video_scheme(self):
+        # Video-pipeline weights = community "gold +50%" (food = wood = 1.0, gold 1.5).
+        # These INTENTIONALLY diverge from production aoe2x/sim/simulation_real.py (still
+        # wood 0.7) — editing that file forces a 500k-matchup re-sim — so pin the video
+        # values here rather than parsing the production file. overlay_data and
+        # sim_v2/build_v2_categorization.weighted_cost must stay in lockstep on these.
         from overlay import overlay_data as od
-        src = (Path(__file__).resolve().parents[2]
-               / "webapp" / "simulation_real.py").read_text(encoding="utf-8")
-        for name, val in (("FOOD", od.COST_WEIGHT_FOOD), ("WOOD", od.COST_WEIGHT_WOOD),
-                          ("GOLD", od.COST_WEIGHT_GOLD)):
-            m = re.search(rf"COST_WEIGHT_{name}\s*=\s*([0-9.]+)", src)
-            assert m, f"COST_WEIGHT_{name} not found in simulation_real.py"
-            assert float(m.group(1)) == val, f"COST_WEIGHT_{name} drifted"
+        assert (od.COST_WEIGHT_FOOD, od.COST_WEIGHT_WOOD, od.COST_WEIGHT_GOLD) == (1.0, 1.0, 1.5)
 
 
 @pytest.mark.skipif(
     not __import__("pathlib").Path(__file__).resolve()
-        .parents[2].joinpath("webapp", "aoe2_reference.db").exists(),
+        .parents[3].joinpath("data", "golden", "aoe2_reference.db").exists(),
     reason="reference DB not built")
 class TestUnitCardCosts:
     def test_blackwood_archer_batch_of_two(self):
@@ -300,7 +296,7 @@ class TestUnitCardCosts:
         assert c["batch"] == 2
         assert c["wood"] == 17.5 and c["gold"] == 22.5      # 35w/45g buys TWO
         assert c["train"]["total"] == 80
-        assert c["weighted"] == round(17.5 * 0.7 + 22.5 * 1.5, 2)
+        assert c["weighted"] == round(17.5 * 1.0 + 22.5 * 1.5, 2)
 
     def test_mayan_plumed_discount_in_cost(self):
         from overlay.overlay_data import get_unit_card
@@ -503,3 +499,15 @@ class TestChoosePositions:
         from build_run import _choose_positions
         out = _choose_positions([(0, 0), (2, 0)], 5)
         assert len(out) == 5
+
+
+# --------------------------------------------------------------------------- #
+# repo-layout paths (centralized in auto.config)
+# --------------------------------------------------------------------------- #
+def test_overlay_data_paths_exist():
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path("apps/video")))
+    from overlay import overlay_data
+    assert Path(overlay_data.REF_DB).exists(), overlay_data.REF_DB
+    assert Path(overlay_data.ICON_DIR).exists(), overlay_data.ICON_DIR

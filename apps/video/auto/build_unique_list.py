@@ -22,10 +22,10 @@ SB = HERE.parent
 REPO = SB.parents[1]  # apps/video -> repo root
 sys.path.insert(0, str(SB))
 
+from auto.config import REF_DB                       # noqa: E402
 from auto.orchestrate_matchup import resolve_side   # noqa: E402
 from build_run import unit_const                     # noqa: E402
 
-REF_DB = REPO / "data" / "golden" / "aoe2_reference.db"
 OUT_JSON = HERE / "unique_units.json"
 
 # names that mark a NAVAL unique (can't fight in the land arena) — excluded

@@ -1,0 +1,18 @@
+{
+  "_comment": "Per-subject curation for the Blackwood Archer (Tupi) unit-analysis video. Cost is corrected data-drivenly (pop_space 0.5 -> batch 2 -> per-unit cost halved) in build_v2_categorization._batch. ingame_outcome + showcase_override reflect the in-game (golden rig, gRPC) recordings.",
+  "ingame_outcome": {
+    "Persians/elite_war_elephant_persians": "loss",
+    "Bengalis/elite_elephant": "loss",
+    "Chinese/elite_chu_ko_nu_chinese": "win"
+  },
+  "_ingame_note": "V2 said Blackwood BEATS both elephants (unexpected_win); in-game 3 War Elephants wiped 21 Blackwoods (all 3 survived, 728hp) and 4 Battle Elephants likewise (2 survived) — the trample + huge-HP blind spot, so they move to expected_loss. V2 said Blackwood LOSES to Chu Ko Nu (expected_loss); in-game 21 Blackwoods out-massed 12 Chu Ko Nu and won (9u left) — the single-column sim under-counts Blackwood's numbers, so it moves to expected_win. The generic-cavalry unexpected-wins all HELD (Centurion 8u, Cataphract 21u left; Konnik also won 7u but its dismounts trip the gRPC sanity gate into a slow OCR fallback, so the showcase uses Elite Boyar instead).",
+  "showcase_override": {
+    "expected_win": [["Shu", "war_chariot_shu"], ["Saracens", "elite_mameluke_saracens"], ["Burmese", "elite_arambai_burmese"], ["Chinese", "elite_chu_ko_nu_chinese"]],
+    "unexpected_win": [["Romans", "elite_centurion_romans"], ["Byzantines", "elite_cataphract_byzantines"], ["Slavs", "elite_boyar_slavs"]],
+    "coin_flip": [],
+    "unexpected_loss": [["Malay", "elite_karambit_warrior_malay"]],
+    "expected_loss": [["Armenians", "imp_elite_skirm"], ["Berbers", "elite_genitour"], ["Persians", "elite_war_elephant_persians"], ["Bengalis", "elite_elephant"]]
+  },
+  "_showcase_note": "Controlled showcase over the recorded set (12 gRPC-verified fights). Expected Wins: Blackwood's mass shreds ranged (+ out-masses Chu Ko Nu). Unexpected Wins: cheap archers swarm heavy cavalry. Expected Counters: anti-archer Skirmisher/Genitour + the two trampling elephants. Unexpected Counter: Karambit (fast infantry that reaches the line).",
+  "exclude_showcase": []
+}

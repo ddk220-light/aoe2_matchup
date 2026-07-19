@@ -1824,17 +1824,25 @@ class BattleUnit {
             this.hpGainedFromKills += heal;
         }
 
-        // Attack-speed ramp (Temple Guard): shorten reload toward the floor.
+        // Attack-speed ramp (Temple Guard): each hit adds a -attackSpeedRamp
+        // stack that EXPIRES 5s later, so reload = max(min, base - ramp*stacks)
+        // where stacks = hits landed in the last 5s. This is the real game
+        // mechanic (a decaying 5s window), not a monotonic accumulator — walking
+        // between targets or being unable to attack lets the ramp decay back.
         if (this.attackSpeedRamp > 0) {
             const baseReload =
                 this.attackSpeed > 0 ? 1.0 / this.attackSpeed : 2.0;
-            this.rampReduction = Math.min(
-                this.rampReduction + this.attackSpeedRamp,
-                Math.max(0, baseReload - this.attackSpeedMin),
-            );
+            const now =
+                typeof simulation !== "undefined" && simulation
+                    ? simulation.battleTime
+                    : 0;
+            if (!this.rampHits) this.rampHits = [];
+            const cutoff = now - 5.0;
+            this.rampHits = this.rampHits.filter((h) => h > cutoff);
+            this.rampHits.push(now);
             this.reloadTime = Math.max(
                 this.attackSpeedMin,
-                baseReload - this.rampReduction,
+                baseReload - this.attackSpeedRamp * this.rampHits.length,
             );
         }
 
@@ -1851,6 +1859,13 @@ class BattleUnit {
                         this.team === 1
                             ? simulation.team2
                             : simulation.team1;
+                    // Trample = AoE2 blast damage. It emanates from the trampler's
+                    // BODY, not a point: a big-footprint unit (elephant, r~0.6 tile)
+                    // tramples every enemy whose body is within trample_radius of its
+                    // hull. Measuring from a point (attacker OR target center) drops
+                    // the elephant's own radius, so the packed ring around it sits just
+                    // out of reach and only ~1 unit/swing gets hit (game: ~4-6). Reach
+                    // = attacker.radius + trample_radius + enemy.radius (edge-to-edge).
                     for (const enemy of enemies) {
                         if (
                             enemy !== target &&
@@ -1859,7 +1874,7 @@ class BattleUnit {
                             const dist = this.distanceTo(enemy);
                             if (
                                 dist <=
-                                trampleInfo.radius + enemy.radius
+                                this.radius + trampleInfo.radius + enemy.radius
                             ) {
                                 enemy.takeDamage(trampleDmg, this);
                             }

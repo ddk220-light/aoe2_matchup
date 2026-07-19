@@ -124,6 +124,10 @@ The Battle Sim page at `/` (legacy `/simulate` 301-redirects there; `apps/websit
 
 **How tests keep it honest.** `tests/test_frontend_projectile_miss.js` (run with `node tests/test_frontend_projectile_miss.js`) brace-matches and `eval`s the **live** `BattleUnit` class straight out of `simulate.js` under mocked browser globals, then asserts the accuracy/miss-graze model (7 tests): accuracy parsing, guaranteed hit/miss behavior, 0.5× default graze, Arambai full-damage graze, statistical ~50% hit rate, and `baseAccuracy` for extra projectiles. Because it extracts the shipped source rather than a copy, frontend refactors that break the contract fail CI-style. The backend mirror of the same model is `tests/test_position_sim_abilities.py`.
 
+### 3a. Headless "V2" harness — `apps/video/sim_v2/`
+
+A second, offline consumer of the same `simulate.js`. `apps/video/sim_v2/headless_sim.js` loads the live `simulate.js` (+ its sibling scripts) in a Node `vm` sandbox with stubbed DOM/canvas and a **seeded** `Math.random`, then drives `BattleSimulation.update()` at a fixed 1/60 s step — so combat/steering/flanking are byte-identical to the shipped page but deterministic and batchable. `sim_v2_model.js` layers a frozen **physics-fix package** on top (as text transforms via env knobs: game-true collision radius, melee arrival wind-up, retarget cooldown, crowd churn, compact-block spawn), calibrated against in-game decodes (see `docs/superpowers/specs/2026-07-06-etg-v2-sim-calibration.md`). It is **not a fork** — it patches the live source at load, so it tracks `simulate.js`. This "V2" model is the sim source for unit-analysis-video matchup categorization (`apps/video/sim_v2/README.md`); it does not feed the site or the matchup DB, and (like `simulate.js`) it does not affect `sim_version`.
+
 ## 4. Who uses which engine (verified by imports)
 
 | Consumer | Engine | Evidence |
@@ -160,7 +164,7 @@ The Battle Sim page at `/` (legacy `/simulate` 301-redirects there; `apps/websit
 | `simulation.py` constants (DT, caps, engage ramp) or targeting helpers | §1; rerun `compute_battle_scores.py` and regenerate `.golden/baseline.json` |
 | A new special ability / `ref_units` combat column | ability table in §1, §5 key counts (96/73); port to all three engines and both ability test files |
 | `simulation_real.py` or `aoe2x/dbgen/config_combat.py` | §2; `sim_version` changes ⇒ matchup rows re-sim on next batch (note in §4) |
-| `static/js/simulate.js` `BattleUnit` | §3; keep `tests/test_frontend_projectile_miss.js` passing |
+| `static/js/simulate.js` `BattleUnit` | §3; keep `tests/test_frontend_projectile_miss.js` passing; the headless V2 harness (§3a) re-runs against the new source — re-check its text-transform anchors in `apps/video/sim_v2/headless_sim.js` |
 | `sim_version.py` `DEFAULT_FILES` | §4 hashing note |
 | `BattleOutcome` fields or `signed_score` formula | §5; also `matchup_db` schema and both batch runners |
 | Seed strategy in `run_matchup_battles.py` / `rebuild_matchup_baseline.py` | §6 |

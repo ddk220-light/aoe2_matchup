@@ -90,38 +90,10 @@ FP_LOAD_BTN = (0.4961, 0.8576)           # "Load Scenario" button on the Load pa
 FP_SAVE_NO = (0.5731, 0.5542)            # "No" on the 'save your changes?' prompt (1467,798)
 
 
-def resolve_side(civ: str, slug: str):
-    """(civ, slug) -> (civ, unit_key, display_label) for build_run.
-
-    The scenario unit key is the slug minus its civ suffix (unique-unit slugs carry
-    one, e.g. 'elite_temple_guard_muisca' -> 'elite_temple_guard'); the label is the
-    unit's display name from the reference DB."""
-    from overlay.overlay_data import get_unit_card
-    suffix = "_" + civ.lower()
-    key = slug[: -len(suffix)] if slug.endswith(suffix) else slug
-    label = get_unit_card(civ, slug)["name"]
-    return (civ, key, label)
-
-
-RES_BUDGET = 3000.0   # the cheaper side's total WEIGHTED cost must stay <= this
-
-
-def equal_resource_counts(civ1, slug1, civ2, slug2, unit_cap=30):
-    """Counts for an equal-RESOURCE fight. Per-unit costs come from the unit card,
-    which already folds in civ cost bonuses (e.g. Mayan -30% archers), train
-    batches (Blackwood Archers come 2 per train), and the website's resource
-    weights (food 1.0 / wood 0.7 / gold 1.5 — webapp/simulation_real.py). The
-    cheaper unit takes `unit_cap`, shrunk so its army never exceeds RES_BUDGET;
-    the pricier unit's count is the largest that fits the same spend.
-    Returns (n1, n2)."""
-    from overlay.overlay_data import get_unit_card
-    c1 = get_unit_card(civ1, slug1)["cost"]["weighted"] or 1
-    c2 = get_unit_card(civ2, slug2)["cost"]["weighted"] or 1
-    if c1 <= c2:                                   # side 1 cheaper -> it gets the cap
-        n1 = max(1, min(unit_cap, int(RES_BUDGET // c1)))
-        return n1, max(1, int(n1 * c1 // c2))
-    n2 = max(1, min(unit_cap, int(RES_BUDGET // c2)))
-    return max(1, int(n2 * c2 // c1)), n2
+# Game-free helpers moved to auto.pure; re-imported here for back-compat so callers
+# that do `from auto.orchestrate_matchup import resolve_side, equal_resource_counts,
+# RES_BUDGET` keep working.
+from auto.pure import RES_BUDGET, resolve_side, equal_resource_counts  # noqa: E402,F401
 
 
 def stage_generated(src, scen_dir=SCEN_DIR, stage_name=STAGE_NAME, logfile=None) -> str:
@@ -413,6 +385,34 @@ def return_to_editor(logfile, retries=10) -> bool:
     return ok
 
 
+def _exit_load_page_to_editor(logfile, tries=6) -> str:
+    """Leave a (possibly STALE) Load Scenario page and return to the editor so the next
+    navigate() re-opens Load with a FRESHLY-READ folder listing.
+
+    Why this matters: the run scenario is staged (written to the game folder) and THEN we
+    navigate. If the game was already sitting on the Load page, that page shows a folder
+    listing captured when it was opened — it does NOT auto-refresh — so it predates the
+    staged file. Nav then can't find the row by name and the blind top-row fallback loads
+    the WRONG scenario (observed: filmed the old top-of-list scenario instead of the
+    matchup). Backing out to the editor forces navigate() to re-open Load and re-read the
+    folder, which now includes the staged 'Matchup Run'.
+
+    Presses ESC (the Load page's back-out) and confirms the editor tabs. Falls back to
+    returning 'load_dialog' unchanged if the editor never appears — nav then proceeds with
+    the stale list exactly as before, so this is strictly no worse than the old behavior."""
+    for _ in range(tries):
+        _focus_game()
+        if _in_editor():
+            log("[nav] backed out of stale Load page -> editor (list refreshes on re-open)",
+                logfile)
+            return "editor"
+        platform_io.key("esc")
+        time.sleep(1.0)
+    log("[nav] WARNING: couldn't confirm editor after leaving Load page; proceeding "
+        "(the list may be stale)", logfile)
+    return "load_dialog"
+
+
 def _flag_no_result(final_path, got_result: bool, logfile=None):
     """The watch loop hit the cap without seeing the 'WINS' banner — the recording is
     probably truncated mid-battle. Don't fail the run (the footage may still be usable);
@@ -435,7 +435,7 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
                 cap=240, mode="count", unit_cap=30, live_overlay=True, compose=True,
                 out_mov=os.path.join(TMP, "auto_fight.mov"),
                 final=os.path.join(TMP, "auto_matchup_FINAL.mp4"),
-                dismiss_after=True, logfile=None) -> Path:
+                dismiss_after=True, logfile=None, build_fn=build_run) -> Path:
     """One full matchup: build from template -> stage -> navigate -> record -> Test
     -> watch for end -> stop -> (dismiss to editor) -> compose recap -> copy.
 
@@ -458,7 +458,10 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
     from overlay.overlay_data import get_unit_card
     ranged = (bool(get_unit_card(civ1, slug1).get("is_ranged")),
               bool(get_unit_card(civ2, slug2).get("is_ranged")))
-    build_run(side1, side2, run_path, counts=counts, ranged=ranged)
+    # build_fn is swappable (default build_run = default3 template auto-fight; the
+    # unit-analysis pipeline passes a golden-template builder). All builders take the
+    # same (side1, side2, out_path, counts=, ranged=) calling convention.
+    build_fn(side1, side2, run_path, counts=counts, ranged=ranged)
     log(f"[build] {side1[2]} x{counts[0]} ({civ1}) vs {side2[2]} x{counts[1]} ({civ2}) "
         f"[{mode}] ranged={ranged} -> {run_path}", logfile)
 
@@ -471,6 +474,8 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
     if st in ("end_screen", "in_game", "unknown"):   # leftover test/banner -> editor first
         return_to_editor(logfile)
         st = bring_game_to_front(logfile)
+    if st == "load_dialog":                          # pre-opened Load page = STALE listing
+        st = _exit_load_page_to_editor(logfile)      # back to editor -> navigate re-reads folder
     log(f"[nav] starting screen: {st}", logfile)
     if st not in ("editor", "main_menu", "load_dialog"):
         raise RuntimeError(f"unexpected starting screen {st!r}")

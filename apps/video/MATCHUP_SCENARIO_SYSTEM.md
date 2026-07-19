@@ -11,9 +11,9 @@ PromiDE — harmless on a human slot).
 
 | Template | P2 | P3 |
 |---|---|---|
-| `golden_infvsinf`    | infantry ×36 on `ddkSquareV25` (TOP)  | infantry ×40 on **NoneAi** (BOTTOM) |
-| `golden_rangedvsinf` | ranged ×30 on `ddkSquareV25` (TOP)    | infantry ×34 on **NoneAi** (BOTTOM) |
-| `golden_cavvsranged` | cavalry ×29 on **NoneAi** (**EAST** ~13,7) | ranged ×28 on `ddkSquareV25` (BOTTOM) |
+| `golden_infvsinf`    | infantry ×36 on `ddkMatchupAI` (TOP)  | infantry ×40 on **NoneAi** (BOTTOM) |
+| `golden_rangedvsinf` | ranged ×30 on `ddkMatchupAI` (TOP)    | infantry ×34 on **NoneAi** (BOTTOM) |
+| `golden_cavvsranged` | cavalry ×29 on **NoneAi** (**EAST** ~13,7) | ranged ×28 on `ddkMatchupAI` (BOTTOM) |
 
 Cav-vs-ranged is the repositioned one: cavalry sits east, the ranged ball bottom, and the
 AI roles flip to P3.
@@ -24,9 +24,10 @@ AI roles flip to P3.
   the game on scenario load (native BugSplat, nothing logged). Use the editor's **"None"** AI:
   `ai_names='NoneAi'`, `ai_type=2`, embedded blob `(defconst the-maze 0)\r\n(defrule(true)=>(disable-self))`
   → pure engine default behavior (units auto-engage).
-- The patrol/kite side runs `ddkSquareV25.ai` (`ai_type=0`) — the clockwise square-patrol AI
-  (see `ai_experiments/SQUARE_PATROL_EXPERIMENTS.md`; prod alias `ddkCircleModel`, CCW twin
-  `ddkCircleModelCCW`, all deployed in `…\AoE2DE\resources\_common\ai\`).
+- The patrol/kite side runs **`ddkMatchupAI.ai`** (`ai_type=0`) — THE production name for the
+  clockwise square-patrol AI (= `ddkSquareV25`; see `ai_experiments/SQUARE_PATROL_EXPERIMENTS.md`;
+  earlier alias `ddkCircleModel`, anticlockwise twin `ddkCircleModelCCW`; all deployed in
+  `…\AoE2DE\resources\_common\ai\`, generator `tools/make_ddkmatchupai.py`).
 - **A scenario stores AI data in THREE places; all must be consistent** or DE crashes on load:
   (1) `PlayerDataTwo.ai_names/ai_type`, (2) `PlayerDataTwo.ai_files[slot].ai_per_file_text`
   (per-slot embedded script), (3) the trailing `Files` section (`ai_files_present` /

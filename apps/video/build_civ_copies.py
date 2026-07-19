@@ -3,9 +3,9 @@
 The golden templates (repo: apps/video/templates/golden_*.aoe2scenario, recorded 2026-07-18
 from the user's hand-fixed, in-game-confirmed works_* files) are the canonical per-engagement
 layouts:
-  golden_infvsinf     P2 inf  on ddkSquareV25 (top)    vs P3 inf    on NoneAi (bottom)
-  golden_rangedvsinf  P2 rng  on ddkSquareV25 (top)    vs P3 inf    on NoneAi (bottom)
-  golden_cavvsranged  P2 cav  on NoneAi      (east!)   vs P3 ranged on ddkSquareV25 (bottom)
+  golden_infvsinf     P2 inf  on ddkMatchupAI (top)    vs P3 inf    on NoneAi (bottom)
+  golden_rangedvsinf  P2 rng  on ddkMatchupAI (top)    vs P3 inf    on NoneAi (bottom)
+  golden_cavvsranged  P2 cav  on NoneAi      (east!)   vs P3 ranged on ddkMatchupAI (bottom)
 
 Key facts they encode (found the hard way):
   * The DE standard AI (PromiDE) does NOT work for infantry or ranged armies -> use the

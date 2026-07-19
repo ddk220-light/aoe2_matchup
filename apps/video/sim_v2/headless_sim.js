@@ -333,6 +333,81 @@ if (TRAMPLE_K !== 1) {
     if (!simSrc.includes(TK_OLD)) { console.error("!! trample reach expr not found — aborting"); process.exit(2); }
     simSrc = simSrc.replace(TK_OLD, `this.radius + trampleInfo.radius * ${TRAMPLE_K} + enemy.radius`);
 }
+// KITE: wall-slide kiting. moveAwayFromTarget retreats DIRECTLY away from the
+// chaser and clamps to the 900x600 canvas — so a kiting ranged unit runs into
+// the wall/corner within seconds and gets pinned, and a faster kiter can never
+// use its speed edge. The real 16x16 arena + ddkMatchupAI patrol loop lets a
+// faster kiter circle indefinitely (measured 2026-07-19: Guecha 20 vs ETG 21
+// in-game = 3/3 decisive Guecha wins keeping 50-100% of units, vs the sim's
+// 27/73 coin-flip at S -6). Fix: when the retreat step would leave the arena,
+// slide ALONG the boundary in whichever axis direction ends farthest from the
+// chaser — the box becomes a loop track. Speed-gating stays emergent: a kiter
+// slower than its chaser is still run down; corners still catch kiters whose
+// chaser cuts the diagonal (the in-game loss basin).
+const KITE = process.env.KITE === "1";
+if (KITE) {
+    const K_OLD = `        // Smooth velocity for kiting too
+        const smoothing = 0.3;
+        this.vx = this.vx * smoothing + dx * (1 - smoothing);
+        this.vy = this.vy * smoothing + dy * (1 - smoothing);
+        const vLen = Math.sqrt(
+            this.vx * this.vx + this.vy * this.vy,
+        );
+        if (vLen > 0) {
+            this.vx /= vLen;
+            this.vy /= vLen;
+        }
+        const moveAmount = this.moveSpeed * dt;
+        this.x += this.vx * moveAmount;
+        this.y += this.vy * moveAmount;
+        this.x = Math.max(
+            this.radius,
+            Math.min(CANVAS_WIDTH - this.radius, this.x),
+        );
+        this.y = Math.max(
+            this.radius,
+            Math.min(CANVAS_HEIGHT - this.radius, this.y),
+        );
+    }`;
+    const K_NEW = `        // Smooth velocity for kiting too
+        const smoothing = 0.3;
+        this.vx = this.vx * smoothing + dx * (1 - smoothing);
+        this.vy = this.vy * smoothing + dy * (1 - smoothing);
+        const vLen = Math.sqrt(
+            this.vx * this.vx + this.vy * this.vy,
+        );
+        if (vLen > 0) {
+            this.vx /= vLen;
+            this.vy /= vLen;
+        }
+        const moveAmount = this.moveSpeed * dt;
+        const loX = this.radius, hiX = CANVAS_WIDTH - this.radius;
+        const loY = this.radius, hiY = CANVAS_HEIGHT - this.radius;
+        let nx = this.x + this.vx * moveAmount;
+        let ny = this.y + this.vy * moveAmount;
+        if ((nx < loX || nx > hiX || ny < loY || ny > hiY) && this.target) {
+            // Pinned against the boundary: slide along the wall in whichever
+            // axis step ends farthest from the pursuer (loop-track escape).
+            let bestD = -1;
+            let bx = Math.max(loX, Math.min(hiX, nx));
+            let by = Math.max(loY, Math.min(hiY, ny));
+            for (const c of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+                const px = Math.max(loX, Math.min(hiX, this.x + c[0] * moveAmount));
+                const py = Math.max(loY, Math.min(hiY, this.y + c[1] * moveAmount));
+                if (px === this.x && py === this.y) continue;
+                const ddx = px - this.target.x, ddy = py - this.target.y;
+                const d = ddx * ddx + ddy * ddy;
+                if (d > bestD) { bestD = d; bx = px; by = py; this.vx = c[0]; this.vy = c[1]; }
+            }
+            this.x = bx; this.y = by;
+        } else {
+            this.x = Math.max(loX, Math.min(hiX, nx));
+            this.y = Math.max(loY, Math.min(hiY, ny));
+        }
+    }`;
+    if (!simSrc.includes(K_OLD)) { console.error("!! moveAwayFromTarget block not found — aborting"); process.exit(2); }
+    simSrc = simSrc.replace(K_OLD, K_NEW);
+}
 const FLANK = parseFloat(process.env.FLANK || "0");
 if (FLANK > 0) {
     const OLD_AV = `        // If avoidance is strong (units very close), let it dominate

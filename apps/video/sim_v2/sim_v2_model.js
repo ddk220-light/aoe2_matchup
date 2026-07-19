@@ -61,6 +61,19 @@ process.env.TRAMPLE_K = "1.5";
 //          2.25x density drop). Validated: ETG-vs-Arambai flips +16 -> -28 (in-game
 //          'loss'), recorded suite unchanged at 27/33, MAE 30.5 -> 30.0.
 process.env.GRAZE_K = "1.5";
+//   KITE = 1   wall-slide kiting (2026-07-19, in-game validated): the ship
+//          moveAwayFromTarget retreats straight away and clamps to the canvas,
+//          so kiters wall-pin in seconds and a FASTER ranged unit can never use
+//          its speed edge — but the real arena + patrol AI lets it loop forever
+//          (ETG-vs-Guecha in-game 3/3 decisive Guecha wins keeping 50-100%,
+//          sim said 27/73 coin-flip). With KITE the pinned kiter slides along
+//          the boundary toward whichever step ends farthest from its pursuer.
+//          Calibrated: Guecha 30%->0% ETG (S -48, Guecha keeps 54% — matches
+//          the tape), Genitour 40%->10%, slow-ranged rows stay losses, melee
+//          rows (Konnik/Huskarl) BIT-IDENTICAL (patch touches only the ranged
+//          retreat path). Slower kiters are still run down; corners still
+//          catch kiters whose chaser cuts the diagonal.
+process.env.KITE = "1";
 process.env.BLOCK = "1";
 process.env.GAP = "160";
 process.env.BSP = "30";

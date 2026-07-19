@@ -11,7 +11,7 @@ screenshots; no HP decode). ETG = P2 on ddkMatchupAI patrol except vs Guecha
 | Elite Konnik 21v17 | coin_flip, 67% ETG, bimodal | **ETG 3–2** (5 runs). ETG wins razor-thin (1–3 of 21 alive); Konnik wins decisive (up to ~14/17 incl. dismounts) | ✅ coin_flip confirmed, bimodal confirmed |
 | Elite Cataphract 21v15 | 0% ETG, S −62 | **Cataphract 1–0**: ~12–13 of 15 standing, ETG wiped | ✅ unexpected_loss confirmed |
 | Elite Guecha 21v20 | coin_flip, 27% ETG, S −6 | **Guecha 3–0**, keeping 50–100% of 20 (kites the slower ETG all game; one aborted extra run showed ETG cornering them mid-fight — the loss basin exists) | ❌ sim under-rated the kite → **KITE fix** (see below) → now expected_loss, S −52 ✅ |
-| Warrior Priest 17v21 | coin_flip, 73% ETG (both shredded) | **WP 2–0**, keeping ~15–16 of 21 | ❌ WP heal aura NOT in its combat dict (no heal/regen field) — unmodeled-mechanic pin `loss` added (WFG precedent) |
+| Warrior Priest 17v21 | coin_flip, 73% ETG (both shredded) | **WP 2–0**, keeping ~15–16 of 21 | ❌ pin `loss` added; mechanism unidentified (WP healing is out-of-combat per the user, so NOT a heal-aura gap — WP just over-performs its raw stats in the grind) |
 
 | Condottiero 15v21 | coin_flip, 47% ETG (both shredded, 5%/6% HP) | **ETG 4–1** (5 runs); every win thin on BOTH sides (ETG wins with 2–5 of 15, Condo win with ~4 of 21) | ✅ coin_flip confirmed (game leans ETG; within 5-run noise of 47%) |
 | Paladin 21v16 | 100% ETG, S +38 | ETG decisive, ~8 of 21 alive, all Paladins dead | ✅ anchor confirmed (also: no delayed-melee churn-bypass bias visible) |

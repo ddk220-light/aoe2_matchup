@@ -1,9 +1,9 @@
 {
   "_comment": "Per-subject curation for the ETG (Elite Temple Guard) unit-analysis video. The METHOD lives in code; this file holds only the ETG-specific choices, applied by build_v2_categorization.py.",
   "remove": ["Bengalis/elite_elephant"],
-  "_remove_note": "The generic Battle Elephant staple is modal-Bengalis; the video uses the beefier Vietnamese Elite Battle Elephant instead (see extra_results).",
+  "_remove_note": "The generic Battle Elephant staple is modal-Bengalis; the video uses the BURMESE Elite Battle Elephant instead (see extra_results) — user choice 2026-07-19, the Howdah-armored variant (320 HP, 6/9 armor, vs Vietnamese's 420 HP); same 100F/70G cost, re-simmed fresh with the current frozen model.",
   "extra_results": {
-    "Vietnamese/elite_elephant": {"name": "Elite Battle Elephant", "cat": "elephant", "ranged": false, "n_subject": 21, "n_opp": 14, "subject_winrate": 1.0, "mean_S": 37.1, "subject_hp": 37.1, "opp_hp": 0.0, "bimodal": false},
+    "Burmese/elite_elephant": {"name": "Elite Battle Elephant", "cat": "elephant", "ranged": false, "n_subject": 21, "n_opp": 14, "subject_winrate": 1.0, "mean_S": 20.3, "subject_hp": 20.3, "opp_hp": 0.0, "bimodal": false},
     "Incas/elite_champi_warrior": {"name": "Elite Champi Warrior", "cat": "infantry", "ranged": false, "n_subject": 11, "n_opp": 21, "subject_winrate": 0.0, "mean_S": -28.8, "subject_hp": 0.0, "opp_hp": 28.8, "bimodal": false}
   },
   "_extra_results_note": "These two were simmed separately (15 seeds, MAX_S=180) via a single-matchup V2 run rather than the batch. To re-sim them in the batch instead, move their keys into `add` and drop them here.",

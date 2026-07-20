@@ -206,3 +206,48 @@ def pick_showcase(rows, *, max_per_cat=5, exclude=()):
         cands.sort(key=lambda r: _cost_key(cat, r["cost"]))
         out[cat] = cands[:max_per_cat]
     return out
+
+
+def pick_filmed(rows, *, per_cat=3, exclude=()):
+    """Choose up to ``per_cat`` opponents per category to actually FILM, favoring
+    on-screen variety over pure cost-extremity.
+
+    Same cost ordering as ``pick_showcase`` (losses -> cheapest first, wins/coin-
+    flips -> most expensive first; see ``_cost_key``), same category iteration
+    (coin-flips never get a filmed pick), same ``exclude`` semantics (a set of
+    (civ, slug) pairs to drop from consideration).
+
+    Within a category:
+      #1 = the cost-extreme row.
+      #2 = the next row by the same cost ordering.
+      #3 = if #1 and #2 share the same broad ``class`` (cavalry/infantry/ranged),
+           the cost-extreme row among the REMAINING candidates whose class
+           differs from #1's (i.e. the earliest-by-cost row of a different
+           class) — so three fights in a row aren't all the same class. If no
+           other class exists in the category, or #1/#2 already differ, #3 is
+           just the next row by cost.
+      If the category has fewer than ``per_cat`` rows, every row is filmed.
+
+    Each row needs: category, cost, civ, slug, class.
+    """
+    exclude = {tuple(e) for e in exclude}
+    out = {}
+    for cat in CATEGORY_ORDER:
+        if cat == "coin_flip":
+            out[cat] = []
+            continue
+        cands = [r for r in rows
+                 if r["category"] == cat and (r["civ"], r["slug"]) not in exclude]
+        cands.sort(key=lambda r: _cost_key(cat, r["cost"]))
+        if len(cands) <= per_cat:
+            out[cat] = cands
+            continue
+        picks = [cands[0], cands[1]]
+        rest = cands[2:]
+        if picks[0]["class"] == picks[1]["class"]:
+            diverse = next((r for r in rest if r["class"] != picks[0]["class"]), None)
+            picks.append(diverse if diverse is not None else rest[0])
+        else:
+            picks.append(rest[0])
+        out[cat] = picks[:per_cat]
+    return out

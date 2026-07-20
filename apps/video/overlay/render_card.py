@@ -724,7 +724,10 @@ def render_ranked_list(out_png, title, rows,
 
 
 def _screenshot(html: str, out_png, width: int, height: int, scale: int = 2,
-                browser: str | None = None) -> Path:
+                browser: str | None = None, extra_args: list[str] | None = None) -> Path:
+    """extra_args: additional Chrome CLI flags inserted before --screenshot, e.g.
+    ["--virtual-time-budget=10000"] to let webfonts finish loading before the
+    shot is taken (network-dependent pages only — most callers don't need it)."""
     out_png = Path(out_png).resolve()
     out_png.parent.mkdir(parents=True, exist_ok=True)
     browser = browser or _find_browser()
@@ -734,8 +737,8 @@ def _screenshot(html: str, out_png, width: int, height: int, scale: int = 2,
         cmd = [browser, "--headless=new", "--disable-gpu", "--hide-scrollbars",
                "--no-sandbox", f"--force-device-scale-factor={scale}",
                "--default-background-color=00000000",
-               f"--window-size={width},{height}", f"--screenshot={out_png}",
-               html_path.as_uri()]
+               f"--window-size={width},{height}", *(extra_args or []),
+               f"--screenshot={out_png}", html_path.as_uri()]
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=90)
         if not out_png.exists():
             raise RuntimeError(f"Render failed (exit {proc.returncode}).\n{proc.stderr[-800:]}")

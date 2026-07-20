@@ -331,6 +331,15 @@ def stage_categorize(subject_civ, subject_slug, workdir, overrides, *,
         showcase = SR.pick_showcase(rows, max_per_cat=SHOWCASE_MAX, exclude=exclude)
     show_keys = {(r["civ"], r["slug"]) for cat in showcase for r in showcase[cat]}
 
+    # filmed = which fights actually get RECORDED (up to 3/category, diversity
+    # rule — see SR.pick_filmed). When a subject has an explicit showcase_override
+    # the human already hand-curated a small, diverse set for filming; reuse it
+    # as-is rather than re-deriving from the full row table.
+    if sc_override:
+        filmed = showcase
+    else:
+        filmed = SR.pick_filmed(rows, exclude=exclude)
+
     out = {
         "subject": {"civ": subject_civ, "slug": subject_slug, "name": subj_name},
         "params": {"win_rate": SR.WIN_RATE, "loss_rate": SR.LOSS_RATE,
@@ -341,11 +350,13 @@ def stage_categorize(subject_civ, subject_slug, workdir, overrides, *,
         "rows": rows,
         "showcase": {cat: [(r["civ"], r["slug"]) for r in showcase[cat]]
                      for cat in SR.CATEGORY_ORDER},
+        "filmed": {cat: [(r["civ"], r["slug"]) for r in filmed[cat]]
+                   for cat in SR.CATEGORY_ORDER},
     }
     (workdir / "categorized.json").write_text(json.dumps(out, indent=1))
     (workdir / "categorized.md").write_text(
         _render_md(subj_name, rows, showcase, show_keys, exclude), encoding="utf-8")
-    _write_storyboard(workdir, subject_civ, subject_slug, subj_name, rows, showcase)
+    _write_storyboard(workdir, subject_civ, subject_slug, subj_name, rows, showcase, filmed)
 
     dist = "  ".join(f"{cat}={out['counts'][cat]}" for cat in SR.CATEGORY_ORDER)
     print(f"[categorize] {subj_name}: {dist}")
@@ -434,7 +445,13 @@ def _why(r, subj):
     return f"{subj} vs the {r['name']} is a coin flip."
 
 
-def _write_storyboard(workdir, civ, slug, subj_name, rows, showcase):
+def _write_storyboard(workdir, civ, slug, subj_name, rows, showcase, filmed=None):
+    """``showcase`` still drives the ranked-list ``category_lists`` (and its
+    per-row ``picked`` flag); the recorded fight ``segments`` come from
+    ``filmed`` (the diversity-rule picks — see SR.pick_filmed), falling back to
+    ``showcase`` if the caller didn't compute one."""
+    if filmed is None:
+        filmed = showcase
     subject = {"civ": civ, "slug": slug, "name": subj_name}
     segments, order = [], 0
     category_lists = {v: [] for v in set(FILM_CATEGORY.values())}
@@ -446,7 +463,7 @@ def _write_storyboard(workdir, civ, slug, subj_name, rows, showcase):
                 "score": r["mean_S"], "sd": 0,
                 "picked": (r["civ"], r["slug"]) in
                           {(s["civ"], s["slug"]) for s in showcase.get(cat, [])}})
-        for rank, r in enumerate(showcase.get(cat, []), 1):
+        for rank, r in enumerate(filmed.get(cat, []), 1):
             order += 1
             segments.append({
                 "order": order, "category": film, "rank": rank,

@@ -34,5 +34,5 @@ def write_chapters(entries, out_txt) -> Path:
         ts = f"{h}:{m:02d}:{sec:02d}" if h else f"{m}:{sec:02d}"
         lines.append(f"{ts} - {label}")
         t += dur
-    Path(out_txt).write_text("\n".join(lines) + "\n")
+    Path(out_txt).write_text("\n".join(lines) + "\n", encoding="utf-8")
     return Path(out_txt)

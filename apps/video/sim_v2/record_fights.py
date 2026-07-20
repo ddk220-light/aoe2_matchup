@@ -32,7 +32,10 @@ def main(argv):
     out.mkdir(parents=True, exist_ok=True)
 
     from auto.orchestrate_matchup import run_matchup, return_to_editor
-    from build_golden_matchups import build_golden_from_sides
+    # 2026-07-19: records on the FINAL golden engagement templates (panda map,
+    # ddkMatchupAI patrol + NoneAi). The old build_golden_matchups adapter used
+    # the retired 2026-07-05 flat template — do not switch back.
+    from build_golden_v2 import build_v2_from_sides as build_golden_from_sides
 
     results = []
     for rank, spec in enumerate(opps, 1):

@@ -31,7 +31,7 @@ Counter triangle: infantry↩{cav,inf}, ranged↩{inf,ranged}, cav↩{ranged,cav
 
 | # | Opponent | Class | Cnt | subj hp% | opp hp% | S | wr | Sb Sc Ob Oc | Category |
 |--|---|---|--|--|--|--|--|--|---|
-| 1 | **Elite Battle Elephant (Vietnamese)** | cavalry | 21v14 | 37 | 0 | +37 | 100% | Y Y · · | EXPECTED WIN |
+| 1 | **Elite Battle Elephant (Burmese)** | cavalry | 21v14 | 20 | 0 | +20 | 100% | Y Y · · | EXPECTED WIN |
 | 2 | **Elite Centurion (Romans)** | cavalry | 21v14 | 62 | 0 | +62 | 100% | Y Y · · | EXPECTED WIN |
 | 3 | **Elite Tiger Cavalry (Wei)** | cavalry | 21v16 | 62 | 0 | +62 | 100% | Y Y · · | EXPECTED WIN |
 | 4 | **Elite Iron Pagoda (Jurchens)** | cavalry | 21v17 | 52 | 0 | +52 | 100% | Y Y · · | EXPECTED WIN |

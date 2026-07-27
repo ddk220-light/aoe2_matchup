@@ -13,7 +13,10 @@ const path = require("path");
 // levels up at apps/website/static/js. Derive the repo root from __dirname so
 // the harness is portable (no hard-coded absolute path).
 const REPO = path.resolve(__dirname, "..", "..", "..");
-const JSDIR = path.join(REPO, "apps", "website", "static", "js");
+// JSDIR override lets a deployed copy of this harness (simulation_v2/ on
+// staging) run against its own engine_base/ snapshot instead of the live
+// webapp files. Default: the sibling webapp's static JS, as always.
+const JSDIR = process.env.JSDIR || path.join(REPO, "apps", "website", "static", "js");
 
 const RAMP = process.env.RAMP || process.argv[2] || "ship";       // ship | window | off
 const N_SEEDS = parseInt(process.env.SEEDS || process.argv[3] || "8", 10);

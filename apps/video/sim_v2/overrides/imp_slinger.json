@@ -10,9 +10,21 @@
     "Berbers/champion": "win",
     "Chinese/elite_chu_ko_nu_chinese": "win",
     "Bohemians/elite_hussite_wagon_bohemians": "win",
-    "Armenians/imp_elite_skirm": "loss"
+    "Armenians/imp_elite_skirm": "loss",
+    "Mapuche/elite_kona_mapuche": "loss",
+    "Gurjaras/elite_shrivamsha_rider_gurjaras": "loss",
+    "Cumans/elite_steppe": "loss",
+    "Lithuanians/elite_leitis_lithuanians": "loss",
+    "Slavs/elite_boyar_slavs": "loss",
+    "Georgians/elite_monaspa_georgians": "loss",
+    "Bulgarians/elite_konnik_bulgarians": "loss",
+    "Jurchens/elite_iron_pagoda_jurchens": "loss",
+    "Romans/elite_centurion_romans": "loss",
+    "Burgundians/elite_coustillier_burgundians": "loss",
+    "Wei/elite_tiger_cavalry_wei": "loss",
+    "Byzantines/elite_cataphract_byzantines": "win"
   },
-  "_ingame_note": "STOPGAP PINS, 2026-07-27 — every one is a recorded tape from the golden rig, not a guess. The engine still overrates the Slinger against heavy melee even after the CATCH fix (see sim_v2_model.js): it had the Slinger BEATING both elephants and most knights. Tapes: 21 Slinger vs 4 War Elephant -> 0 Slingers, 4 elephants at 1844hp; vs 6 Battle Elephant -> 0 Slingers, 6 at 1354hp; vs 7 Paladin -> 0 Slingers, 7 at 798hp (x2 runs); vs 15 Hussar -> 0 Slingers, 13 at 833hp. Confirming the other direction: vs 9 Temple Guard -> 18 Slingers left; vs 9 Teutonic Knight -> 18 left; vs 15 Champion -> 18 left. The ~10 remaining knight rows the sim still calls Slinger wins are UNVERIFIED and probably wrong the same way — they are deliberately kept OFF camera. Retire these pins once the engine earns the result natively. || RANGED-vs-RANGED tapes (2026-07-27, newly filmable after the both-ranged template rule): 21 Slinger BEATS 13 Elite Chu Ko Nu (9 Slingers left, all CKN dead) and BEATS 5 Elite Hussite Wagon (9 left) — the sim called both expected losses. It LOSES to 21 Elite Skirmishers 0 v 17, which the sim got right: the Elite Skirmisher's 8 pierce armour drops the Slinger's 9 attack to minimum damage, while the Chu Ko Nu's ~1 armour does not. So the Slinger's real profile is anti-infantry AND anti-archer, walled off by pierce armour, cavalry and elephants.",
+  "_ingame_note": "STOPGAP PINS, 2026-07-27 — every one is a recorded tape from the golden rig, not a guess. The engine still overrates the Slinger against heavy melee even after the CATCH fix (see sim_v2_model.js): it had the Slinger BEATING both elephants and most knights. Tapes: 21 Slinger vs 4 War Elephant -> 0 Slingers, 4 elephants at 1844hp; vs 6 Battle Elephant -> 0 Slingers, 6 at 1354hp; vs 7 Paladin -> 0 Slingers, 7 at 798hp (x2 runs); vs 15 Hussar -> 0 Slingers, 13 at 833hp. Confirming the other direction: vs 9 Temple Guard -> 18 Slingers left; vs 9 Teutonic Knight -> 18 left; vs 15 Champion -> 18 left. The ~10 remaining knight rows the sim still calls Slinger wins are UNVERIFIED and probably wrong the same way — they are deliberately kept OFF camera. Retire these pins once the engine earns the result natively. || RANGED-vs-RANGED tapes (2026-07-27, newly filmable after the both-ranged template rule): 21 Slinger BEATS 13 Elite Chu Ko Nu (9 Slingers left, all CKN dead) and BEATS 5 Elite Hussite Wagon (9 left) — the sim called both expected losses. It LOSES to 21 Elite Skirmishers 0 v 17, which the sim got right: the Elite Skirmisher's 8 pierce armour drops the Slinger's 9 attack to minimum damage, while the Chu Ko Nu's ~1 armour does not. So the Slinger's real profile is anti-infantry AND anti-archer, walled off by pierce armour, cavalry and elephants. || CAVALRY SWEEP (2026-07-27): rather than leave the sim's unverified cavalry rows off camera, all 12 were filmed. The Slinger LOST 11 of 12 — Leitis, Boyar, Monaspa, Konnik, Iron Pagoda, Centurion, Coustillier, Tiger Cavalry, Kona, Shrivamsha, Steppe Lancer — every one a 0-unit wipe, while the sim called all 12 Slinger wins or coin-flips. The single genuine win is the Elite CATAPHRACT (16 of 21 Slingers left), which the sim also called: the Cataphract's very low pierce armour is the one cavalry unit the Slinger's 9 pierce attack actually hurts. That is the same armour mechanism as the Elite Skirmisher row, pointing the same way.",
   "showcase_override": {
     "expected_win": [
       [
@@ -30,22 +42,26 @@
     ],
     "expected_loss": [
       [
-        "Huns",
-        "paladin"
-      ],
-      [
-        "Bulgarians",
-        "hussar"
-      ],
-      [
         "Persians",
         "elite_war_elephant_persians"
+      ],
+      [
+        "Lithuanians",
+        "elite_leitis_lithuanians"
+      ],
+      [
+        "Huns",
+        "paladin"
       ]
     ],
     "unexpected_win": [
       [
         "Bohemians",
         "elite_hussite_wagon_bohemians"
+      ],
+      [
+        "Byzantines",
+        "elite_cataphract_byzantines"
       ],
       [
         "Chinese",
@@ -55,5 +71,5 @@
     "unexpected_loss": [],
     "coin_flip": []
   },
-  "_showcase_note": "Eight filmed fights, every one verified against its category. The both-ranged template rule (build_golden_v2) made archer/gunpowder opponents filmable for the first time, which is where the two unexpected wins come from. Still OFF camera on purpose: the ~10 knight rows the sim calls Slinger wins are unverified and, given the Paladin tape, probably wrong the same way the elephants were."
+  "_showcase_note": "Nothing is kept off camera any more: every cavalry row the sim called a Slinger win was filmed and pinned from the tape (11 losses, 1 win). The expected-loss card now shows the elephant, a top-tier knight and the Paladin; the unexpected-win card shows the three armour-poor targets it genuinely beats."
 }

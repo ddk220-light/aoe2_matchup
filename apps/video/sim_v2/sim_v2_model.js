@@ -131,6 +131,38 @@ process.env.BSP = "30";
 //          Blackwood, Champi, Paladin, Centurion, Jian, Huskarl all unchanged. Only
 //          Elite Konnik still misses, and it missed before this too (revive unit, bimodal).
 process.env.ENVELOP = "1";
+//   CATCH = 1   opportunistic melee swing (2026-07-27, in-game validated). ENVELOP's
+//          out-of-reach re-pick excluded RANGED targets, so a melee unit locked onto one
+//          fleeing archer walked through the rest of the archer line without swinging.
+//          Measured: 21 Slinger (0.96) vs 7 Paladin (1.35) — the Paladins DO close to
+//          0.6-0.8 tiles (adjacent) yet sit in state "moving", landing 7.1 hits per unit
+//          in 180s where ~90 are due; 6 Cataphracts landed 0.8 each and died. The sim had
+//          the Slingers WINNING 4/5 vs Paladins and 4/5 vs Hussars. IN GAME: 7 Paladins
+//          wiped all 21 Slingers in 48s losing ZERO units (7/7 alive, 798hp). Not a
+//          wall-slide artifact — KITE=0 barely moves it.
+//          Rule: if your target is out of reach, swing at any enemy ALREADY within attack
+//          range — with TWO deliberate limits, each one measured, not assumed:
+//            1. in-reach only (never a general findTarget re-pick): a blanket re-pick
+//               hands the chaser perfect target-switching and flipped ETG-vs-Genitour
+//               0/5 -> 5/5, ETG-vs-Arambai 0/5 -> 5/5, champi-vs-Blackwood 0/5 -> 5/5,
+//               all against tape.
+//            2. only at an enemy NO FASTER than you: a unit moving away faster than you
+//               can swing is gone before the blow lands. Without this the arena's corners
+//               let chasers tag genuinely uncatchable kiters (Genitour drifted 0/5 -> 3/5).
+//          CATCH_R = 0 (strict reach) is what ships. The full 14-anchor champi+ETG tape
+//          sweep is UNCHANGED at 14/14, and the taped cavalry rows flip to the right
+//          CATEGORY: Slinger-vs-Paladin 4/5 -> 1/5 (S +9.5 -> -6), Slinger-vs-Hussar
+//          4/5 -> 1/5 (S +23.4 -> -13). Anti-infantry rows are untouched (Champion 5/5
+//          slinger win, matching its own tape: 18 of 21 Slingers left, 0 Champions).
+//          HONEST LIMIT — do not mistake this for a finished fix: the MARGINS are still
+//          far too kind. Tape says 7 Paladins wipe 21 Slingers losing ~29% total HP
+//          (slinger 0% vs paladin ~71%); the sim says roughly even. Widening the grab
+//          radius does NOT converge — CATCH_R=1 made it worse (Paladin back to 4/5) and
+//          CATCH_R=2 broke the champi-vs-Blackwood anchor (loss -> 3/5 win). So the
+//          remaining error is NOT a radius-tuning problem and was deliberately left
+//          alone rather than fitted. Open for the next session.
+process.env.CATCH = "1";
+process.env.CATCH_R = "0";
 // Pin the sim time-cap and ramp so a caller passing positional argv (which
 // headless_sim reads as RAMP/SEEDS/MAXS fallbacks) can NEVER shorten the fight.
 // (Bug found 2026-07-06: sim_one_v2 passed the opponent count as argv[4], which

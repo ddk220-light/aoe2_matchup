@@ -80,6 +80,10 @@ _KEY_CONST_OVERRIDE = {
     # the project's Elite Skirmisher staple slug is "imp_elite_skirm" (its canonical
     # top-upgrade name is "Elite Skirmisher", modal-picked over Imperial Skirmisher).
     "imp_elite_skirm": int(UnitInfo.ELITE_SKIRMISHER.ID),
+    # the Slinger's project slug carries the "imp_" prefix of its Imperial-age
+    # availability; the dataset has the single unit "SLINGER" (there is no elite
+    # form). RHODIAN_SLINGER is an unrelated campaign unit — do not use it.
+    "imp_slinger": int(UnitInfo.SLINGER.ID),
 }
 
 

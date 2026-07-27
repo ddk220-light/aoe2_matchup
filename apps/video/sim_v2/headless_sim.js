@@ -291,6 +291,65 @@ if (ENVELOP) {
     if (!simSrc.includes(EU_OLD)) { console.error("!! ENVELOP: update target-acq block not found — aborting"); process.exit(2); }
     simSrc = simSrc.replace(E_OLD, E_NEW).replace(EU_OLD, EU_NEW);
 }
+// CATCH: a melee unit whose target has stepped out of reach re-picks the closest
+// enemy — INCLUDING when that target is ranged. ENVELOP added exactly this
+// re-pick but excluded ranged targets (`!this.target.isRanged()`), which left a
+// hole big enough to invert whole matchup tables: a melee unit locked onto one
+// fleeing archer walks through the rest of the archer line without swinging.
+// Measured (2026-07-27, 21 Slinger @0.96 vs 7 Paladin @1.35): the Paladins DO
+// close to 0.6-0.8 tiles — adjacent — yet sit in state "moving" and land 7.1
+// hits per unit in 180s (they should land ~90). 6 Cataphracts landed 0.8 each
+// and died. The kiters were never faster; the chasers simply never attacked
+// what was in front of them. Not a wall-slide artifact: KITE=0 changes it by
+// almost nothing. The re-pick is free of the RETARGET wind-up because the
+// switch is made while MARCHING (see the _marchSwitch exemption below).
+const CATCH = process.env.CATCH === "1";
+// CATCH_R: extra grab radius in TILES beyond strict attack reach. 0 = only an
+// enemy already inside your swing; larger values let a chaser turn on a body it
+// is nearly touching (the measured Paladins sat at 0.6-0.8 tiles, just outside
+// a ~0.4-tile melee reach, which is why a strict in-reach test barely fired).
+const CATCH_R = parseFloat(process.env.CATCH_R || "0") * 30;   // TILE_SIZE (px per tile)
+if (CATCH) {
+    const C_OLD = ENVELOP
+        ? `        } else if (!this.isRanged() && !this.target.isRanged() && !this.inRange()) {
+            this.findTarget(enemies);
+        }`
+        : `        if (!this.target || this.target.state === "dead") {
+            this.findTarget(enemies);
+        }`;
+    // Deliberately NOT a general re-pick: swing only at an enemy that is
+    // ALREADY within attack range this tick. A blanket findTarget() re-pick
+    // hands the chaser perfect target-switching and flips genuinely fast
+    // kiters into losses (measured: ETG-vs-Genitour 0/5 -> 5/5, ETG-vs-Arambai
+    // 0/5 -> 5/5, champi-vs-Blackwood 0/5 -> 5/5, all contradicting tape). A
+    // kiter you can never touch stays untouched; one standing on your toes
+    // does not.
+    const C_SWING = `            let _b = null, _bd = Infinity;
+            for (const _e of enemies) {
+                if (_e.state === "dead" || _e === this.target) continue;
+                // ...and only at an enemy no faster than you: a unit moving away
+                // faster than you can swing is gone before the blow lands (melee
+                // must stop, face and commit). Without this the arena's bounded
+                // corners let a chaser tag genuinely uncatchable kiters in
+                // passing — it drifted ETG-vs-Genitour 0/5 -> 3/5 against tape.
+                if ((_e.moveSpeed || 0) > this.moveSpeed) continue;
+                const _d = this.distanceTo(_e);
+                if (_d <= this.attackRange + this.radius + _e.radius + ${CATCH_R} && _d < _bd) { _b = _e; _bd = _d; }
+            }
+            if (_b) this.target = _b;`;
+    const C_NEW = ENVELOP
+        ? `        } else if (!this.isRanged() && !this.inRange()) {
+${C_SWING}
+            else if (!this.target.isRanged()) this.findTarget(enemies);
+        }`
+        : `        if (!this.target || this.target.state === "dead") {
+            this.findTarget(enemies);
+        } else if (!this.isRanged() && !this.inRange()) {
+${C_SWING}
+        }`;
+    if (!simSrc.includes(C_OLD)) { console.error("!! CATCH: target-acquisition block not found — aborting"); process.exit(2); }
+    simSrc = simSrc.replace(C_OLD, C_NEW);
+}
 // RETARGET = seconds of attack wind-up when switching to a NEW target (turn +
 // animation start; the real game loses ~this much per switch, which is why the
 // in-game ETG's early throughput matches a FLAT 2.0s reload — the ramp doesn't

@@ -223,45 +223,11 @@ def _why(subj_name, opp_name, verdict_kind):
 
 
 def _attack_gif_for(slug: str, name: str = "") -> Path | None:
-    """The unit's attack gif for the top band: local media first (full slug, then the
-    civ-suffix-stripped form), else fetched once from the public bucket mirror
-    (aoe2matchup.com/assets/gifs/<slug>.gif) and cached under the media root. The
-    bucket keys derive from DISPLAY names, so those are tried too (the project's
-    staple slug 'elite_elephant' lives in the bucket as 'elite_battle_elephant').
-    Returns None when nothing resolves — the caller falls back to the static icon."""
+    """Delegates to AssetResolver.resolve_attack_gif — the single gif-lookup
+    implementation shared with the long-form and vertical intro cards (local
+    media, slug/prefix/display-name spellings, then a one-time bucket fetch)."""
     from overlay.assets import AssetResolver
-    res = AssetResolver()
-    cands = [slug]
-    stripped = slug.rsplit("_", 1)[0]
-    if stripped != slug:
-        cands.append(stripped)
-    if name:
-        from_name = name.lower().replace(" ", "_").replace("-", "_")
-        if from_name not in cands:
-            cands.append(from_name)
-    for s in cands:
-        p = res.attack_gif(s)
-        if p is not None:
-            return p
-    if res.root is None:
-        return None
-    import urllib.request
-    for s in cands:
-        dest = res.root / "gifs" / f"{s}.gif"
-        if dest.exists():
-            return dest
-        try:
-            req = urllib.request.Request(f"https://aoe2matchup.com/assets/gifs/{s}.gif")
-            with urllib.request.urlopen(req, timeout=10) as r:
-                data = r.read()
-            if data[:4] == b"GIF8":                 # not an error page
-                dest.parent.mkdir(parents=True, exist_ok=True)
-                dest.write_bytes(data)
-                print(f"[gif] fetched {s}.gif from the bucket -> {dest}")
-                return dest
-        except Exception:
-            continue
-    return None
+    return AssetResolver().resolve_attack_gif(slug, name)
 
 
 def _find_raw(raws_dir: Path, opp_slug: str, opp_name: str) -> Path | None:

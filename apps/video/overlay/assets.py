@@ -35,6 +35,56 @@ class AssetResolver:
     def attack_gif(self, slug):
         return self._find(f"gifs/{slug}.gif", f"units/{slug}/attack.gif")
 
+    def resolve_attack_gif(self, slug, name=""):
+        """The unit's attack gif: local media first (full slug, then the
+        civ-suffix-stripped form, then availability prefixes, then the DISPLAY
+        name), else fetched once from the public bucket mirror
+        (aoe2matchup.com/assets/gifs/<slug>.gif) and cached under the media root.
+        Bucket keys derive from display names, so the project's staple slug
+        'elite_elephant' lives there as 'elite_battle_elephant' and 'imp_slinger'
+        as 'slinger'.
+
+        SINGLE SOURCE OF TRUTH for gif lookup — the long-form intro card, the
+        vertical reel intro and the reel's top band all go through this. Keeping
+        them separate is what shipped a Slinger intro with no animation: the gif
+        was sitting in gifs/slinger.gif while the intro card only ever looked at
+        units/imp_slinger/attack.gif."""
+        cands = [slug]
+        stripped = slug.rsplit("_", 1)[0]
+        if stripped != slug:
+            cands.append(stripped)
+        for pre in ("imp_", "elite_"):
+            if slug.startswith(pre) and slug[len(pre):] not in cands:
+                cands.append(slug[len(pre):])
+        if name:
+            from_name = name.lower().replace(" ", "_").replace("-", "_")
+            if from_name not in cands:
+                cands.append(from_name)
+        for s in cands:
+            p = self.attack_gif(s)
+            if p is not None:
+                return p
+        if self.root is None:
+            return None
+        import urllib.request
+        for s in cands:
+            dest = self.root / "gifs" / f"{s}.gif"
+            if dest.exists():
+                return dest
+            try:
+                req = urllib.request.Request(
+                    f"https://aoe2matchup.com/assets/gifs/{s}.gif")
+                with urllib.request.urlopen(req, timeout=10) as r:
+                    data = r.read()
+                if data[:4] == b"GIF8":               # not an error page
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    dest.write_bytes(data)
+                    print(f"[gif] fetched {s}.gif from the bucket -> {dest}")
+                    return dest
+            except Exception:
+                continue
+        return None
+
     def voice_lines(self, civ):
         """The civ's military attack barks (civs/voice_<civ>/attack_<n>.wav), ordered by
         <n>. These are the generic per-civ military lines — every melee unit of the civ

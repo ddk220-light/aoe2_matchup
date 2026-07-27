@@ -7,23 +7,53 @@
     "Bulgarians/hussar": "loss",
     "Muisca/elite_temple_guard_muisca": "win",
     "Teutons/elite_teutonic_knight_teutons": "win",
-    "Berbers/champion": "win"
+    "Berbers/champion": "win",
+    "Chinese/elite_chu_ko_nu_chinese": "win",
+    "Bohemians/elite_hussite_wagon_bohemians": "win",
+    "Armenians/imp_elite_skirm": "loss"
   },
-  "_ingame_note": "STOPGAP PINS, 2026-07-27 — every one is a recorded tape from the golden rig, not a guess. The engine still overrates the Slinger against heavy melee even after the CATCH fix (see sim_v2_model.js): it had the Slinger BEATING both elephants and most knights. Tapes: 21 Slinger vs 4 War Elephant -> 0 Slingers, 4 elephants at 1844hp; vs 6 Battle Elephant -> 0 Slingers, 6 at 1354hp; vs 7 Paladin -> 0 Slingers, 7 at 798hp (x2 runs); vs 15 Hussar -> 0 Slingers, 13 at 833hp. Confirming the other direction: vs 9 Temple Guard -> 18 Slingers left; vs 9 Teutonic Knight -> 18 left; vs 15 Champion -> 18 left. The ~10 remaining knight rows the sim still calls Slinger wins are UNVERIFIED and probably wrong the same way — they are deliberately kept OFF camera. Retire these pins once the engine earns the result natively.",
+  "_ingame_note": "STOPGAP PINS, 2026-07-27 — every one is a recorded tape from the golden rig, not a guess. The engine still overrates the Slinger against heavy melee even after the CATCH fix (see sim_v2_model.js): it had the Slinger BEATING both elephants and most knights. Tapes: 21 Slinger vs 4 War Elephant -> 0 Slingers, 4 elephants at 1844hp; vs 6 Battle Elephant -> 0 Slingers, 6 at 1354hp; vs 7 Paladin -> 0 Slingers, 7 at 798hp (x2 runs); vs 15 Hussar -> 0 Slingers, 13 at 833hp. Confirming the other direction: vs 9 Temple Guard -> 18 Slingers left; vs 9 Teutonic Knight -> 18 left; vs 15 Champion -> 18 left. The ~10 remaining knight rows the sim still calls Slinger wins are UNVERIFIED and probably wrong the same way — they are deliberately kept OFF camera. Retire these pins once the engine earns the result natively. || RANGED-vs-RANGED tapes (2026-07-27, newly filmable after the both-ranged template rule): 21 Slinger BEATS 13 Elite Chu Ko Nu (9 Slingers left, all CKN dead) and BEATS 5 Elite Hussite Wagon (9 left) — the sim called both expected losses. It LOSES to 21 Elite Skirmishers 0 v 17, which the sim got right: the Elite Skirmisher's 8 pierce armour drops the Slinger's 9 attack to minimum damage, while the Chu Ko Nu's ~1 armour does not. So the Slinger's real profile is anti-infantry AND anti-archer, walled off by pierce armour, cavalry and elephants.",
   "showcase_override": {
     "expected_win": [
-      ["Teutons", "elite_teutonic_knight_teutons"],
-      ["Muisca", "elite_temple_guard_muisca"],
-      ["Aztecs", "elite_jaguar_warrior_aztecs"]
+      [
+        "Teutons",
+        "elite_teutonic_knight_teutons"
+      ],
+      [
+        "Muisca",
+        "elite_temple_guard_muisca"
+      ],
+      [
+        "Aztecs",
+        "elite_jaguar_warrior_aztecs"
+      ]
     ],
     "expected_loss": [
-      ["Huns", "paladin"],
-      ["Bulgarians", "hussar"],
-      ["Persians", "elite_war_elephant_persians"]
+      [
+        "Huns",
+        "paladin"
+      ],
+      [
+        "Bulgarians",
+        "hussar"
+      ],
+      [
+        "Persians",
+        "elite_war_elephant_persians"
+      ]
     ],
-    "unexpected_win": [],
+    "unexpected_win": [
+      [
+        "Bohemians",
+        "elite_hussite_wagon_bohemians"
+      ],
+      [
+        "Chinese",
+        "elite_chu_ko_nu_chinese"
+      ]
+    ],
     "unexpected_loss": [],
     "coin_flip": []
   },
-  "_showcase_note": "Melee opponents only: the golden rig has no ranged-vs-ranged template ('both sides ranged: no validated golden template mapping'), so the Slinger cannot be filmed against archers, skirmishers, gunpowder or cav archers at all. That rules its whole expected-loss-to-archers story off camera and is the single biggest gap in this video."
+  "_showcase_note": "Eight filmed fights, every one verified against its category. The both-ranged template rule (build_golden_v2) made archer/gunpowder opponents filmable for the first time, which is where the two unexpected wins come from. Still OFF camera on purpose: the ~10 knight rows the sim calls Slinger wins are unverified and, given the Paladin tape, probably wrong the same way the elephants were."
 }

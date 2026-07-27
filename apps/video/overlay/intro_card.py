@@ -293,8 +293,19 @@ def _media_file(slug: str, name: str) -> Path | None:
     return None
 
 
-def _hero_gif(slug: str) -> Path | None:
-    return _media_file(slug, "attack.gif")
+def _hero_gif(slug: str, unit_name: str = "") -> Path | None:
+    """The looping hero animation. Goes through AssetResolver.resolve_attack_gif
+    so the bucket-mirror layout (gifs/<name>.gif), the civ-suffix / availability-
+    prefix / display-name spellings, and the one-time bucket download are all
+    honoured — not just units/<slug>/attack.gif."""
+    p = _media_file(slug, "attack.gif")
+    if p is not None:
+        return p
+    try:
+        from overlay.assets import AssetResolver
+        return AssetResolver().resolve_attack_gif(slug, unit_name)
+    except Exception:
+        return None
 
 
 def _hero_still(slug: str, unit_name: str = "") -> Path | None:
@@ -1053,7 +1064,7 @@ def make_unit_intro_video_vertical(civ: str, slug: str, out_mp4, *,
                         extra_args=["--virtual-time-budget=10000"])
             bases.append(Image.open(out_png).convert("RGBA"))
 
-    gif = _hero_gif(slug)
+    gif = _hero_gif(slug, d.get("name", ""))
     frames = _gif_frames(gif) if gif is not None else []
     still = None
     if not frames:

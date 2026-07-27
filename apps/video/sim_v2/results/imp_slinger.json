@@ -35,10 +35,10 @@
  },
  "counts": {
   "expected_win": 25,
-  "unexpected_win": 31,
+  "unexpected_win": 33,
   "coin_flip": 3,
   "unexpected_loss": 0,
-  "expected_loss": 17
+  "expected_loss": 15
  },
  "rows": [
   {
@@ -667,6 +667,31 @@
    "wc_pct": 12.7
   },
   {
+   "civ": "Bohemians",
+   "slug": "elite_hussite_wagon_bohemians",
+   "name": "Elite Hussite Wagon",
+   "cat": "gunpowder",
+   "class": "ranged",
+   "cost": 180.0,
+   "n_subject": 21,
+   "n_opp": 5,
+   "subject_hp": 0,
+   "opp_hp": 50.5,
+   "mean_S": -50.5,
+   "wr": 0,
+   "bimodal": false,
+   "outcome": "win",
+   "favored": "opponent",
+   "category": "unexpected_win",
+   "ingame": true,
+   "subject_bonus": true,
+   "subject_counter": false,
+   "opp_bonus": false,
+   "opp_counter": false,
+   "wc_line": "gunpowder",
+   "wc_pct": 100.0
+  },
+  {
    "civ": "Khmer",
    "slug": "elite_ballista_elephant_khmer",
    "name": "Elite Ballista Elephant",
@@ -675,9 +700,9 @@
    "cost": 180.0,
    "n_subject": 21,
    "n_opp": 5,
-   "subject_hp": 67.2,
+   "subject_hp": 75.5,
    "opp_hp": 0,
-   "mean_S": 67.2,
+   "mean_S": 75.5,
    "wr": 1,
    "bimodal": false,
    "outcome": "win",
@@ -1392,6 +1417,31 @@
    "wc_pct": 91.8
   },
   {
+   "civ": "Chinese",
+   "slug": "elite_chu_ko_nu_chinese",
+   "name": "Elite Chu Ko Nu",
+   "cat": "archer",
+   "class": "ranged",
+   "cost": 75.0,
+   "n_subject": 21,
+   "n_opp": 13,
+   "subject_hp": 0,
+   "opp_hp": 35.8,
+   "mean_S": -35.8,
+   "wr": 0,
+   "bimodal": false,
+   "outcome": "win",
+   "favored": "opponent",
+   "category": "unexpected_win",
+   "ingame": true,
+   "subject_bonus": false,
+   "subject_counter": false,
+   "opp_bonus": false,
+   "opp_counter": false,
+   "wc_line": "archer",
+   "wc_pct": 100.0
+  },
+  {
    "civ": "Armenians",
    "slug": "arbalester",
    "name": "Arbalester",
@@ -1533,7 +1583,7 @@
    "outcome": "loss",
    "favored": "opponent",
    "category": "expected_loss",
-   "ingame": false,
+   "ingame": true,
    "subject_bonus": false,
    "subject_counter": false,
    "opp_bonus": true,
@@ -1564,31 +1614,6 @@
    "opp_bonus": true,
    "opp_counter": false,
    "wc_line": "skirmisher",
-   "wc_pct": 100.0
-  },
-  {
-   "civ": "Chinese",
-   "slug": "elite_chu_ko_nu_chinese",
-   "name": "Elite Chu Ko Nu",
-   "cat": "archer",
-   "class": "ranged",
-   "cost": 75.0,
-   "n_subject": 21,
-   "n_opp": 13,
-   "subject_hp": 0,
-   "opp_hp": 35.8,
-   "mean_S": -35.8,
-   "wr": 0,
-   "bimodal": false,
-   "outcome": "loss",
-   "favored": "opponent",
-   "category": "expected_loss",
-   "ingame": false,
-   "subject_bonus": false,
-   "subject_counter": false,
-   "opp_bonus": false,
-   "opp_counter": false,
-   "wc_line": "archer",
    "wc_pct": 100.0
   },
   {
@@ -1892,31 +1917,6 @@
    "wc_pct": 50.0
   },
   {
-   "civ": "Bohemians",
-   "slug": "elite_hussite_wagon_bohemians",
-   "name": "Elite Hussite Wagon",
-   "cat": "gunpowder",
-   "class": "ranged",
-   "cost": 180.0,
-   "n_subject": 21,
-   "n_opp": 5,
-   "subject_hp": 0,
-   "opp_hp": 59.7,
-   "mean_S": -59.7,
-   "wr": 0,
-   "bimodal": false,
-   "outcome": "loss",
-   "favored": "opponent",
-   "category": "expected_loss",
-   "ingame": false,
-   "subject_bonus": true,
-   "subject_counter": false,
-   "opp_bonus": false,
-   "opp_counter": false,
-   "wc_line": "gunpowder",
-   "wc_pct": 100.0
-  },
-  {
    "civ": "Persians",
    "slug": "elite_war_elephant_persians",
    "name": "Elite War Elephant",
@@ -1957,7 +1957,16 @@
     "elite_jaguar_warrior_aztecs"
    ]
   ],
-  "unexpected_win": [],
+  "unexpected_win": [
+   [
+    "Bohemians",
+    "elite_hussite_wagon_bohemians"
+   ],
+   [
+    "Chinese",
+    "elite_chu_ko_nu_chinese"
+   ]
+  ],
   "coin_flip": [],
   "unexpected_loss": [],
   "expected_loss": [
@@ -1990,7 +1999,16 @@
     "elite_jaguar_warrior_aztecs"
    ]
   ],
-  "unexpected_win": [],
+  "unexpected_win": [
+   [
+    "Bohemians",
+    "elite_hussite_wagon_bohemians"
+   ],
+   [
+    "Chinese",
+    "elite_chu_ko_nu_chinese"
+   ]
+  ],
   "coin_flip": [],
   "unexpected_loss": [],
   "expected_loss": [

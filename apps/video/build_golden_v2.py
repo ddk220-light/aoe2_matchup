@@ -14,8 +14,14 @@ Template selection (the mapping build_etg_validation.py validated in-game):
                              opponent on P3 (NoneAi) — melee cavalry/elephant
                              opponents chase natively on NoneAi (validated:
                              paladin/cataphract/battle-elephant runs)
-(golden_cavvsranged exists for a CAV subject vs ranged; no ETG matchup needs it —
-raise rather than guess if both sides are ranged.)
+  both sides ranged      -> the kiter is the side that BOTH outranges AND outruns
+                             the other (user rule 2026-07-27); it goes on P2 with
+                             the other side treated as the melee chaser. If
+                             neither side has both edges, nobody can disengage:
+                             it is a stand-and-shoot brawl on golden_infvsinf.
+                             (Cav Archer vs Arbalest: Arbalest outranges, Cav
+                             Archer outruns -> brawl.)
+(golden_cavvsranged exists for a CAV subject vs ranged; no matchup needs it yet.)
 
 Transform = build_civ_copies' minimal load-safe set: retype armies (unit_const),
 trim counts, set civs (P1 follows P3). AI names/types/blobs/Files/positions are
@@ -45,6 +51,31 @@ MAX_COUNT = 25                      # positions per side in the golden templates
 def _strip_civ_suffix(civ, slug):
     suffix = "_" + civ.lower()
     return slug[: -len(suffix)] if slug.endswith(suffix) else slug
+
+
+def _range_speed(civ, slug):
+    """(attack_range, movement_speed) for a civ/slug from the reference DB."""
+    import sqlite3
+    # Derive the DB path from this file (apps/video/ -> repo root); the rig runs
+    # on the video venv, which does not have the repo root on sys.path.
+    ref_db = Path(__file__).resolve().parents[2] / "data" / "golden" / "aoe2_reference.db"
+    conn = sqlite3.connect(str(ref_db))
+    # The rig hands uniques their CIV-STRIPPED key (elite_chu_ko_nu) while the
+    # ref DB stores the suffixed slug (elite_chu_ko_nu_chinese) — try both.
+    try:
+        row = None
+        for cand in (slug, f"{slug}_{civ.lower()}"):
+            row = conn.execute(
+                "SELECT final_range, final_speed FROM ref_units "
+                "WHERE civ_name=? AND unit_slug=? AND age='Imperial'", (civ, cand)
+            ).fetchone()
+            if row is not None:
+                break
+    finally:
+        conn.close()
+    if row is None:
+        raise ValueError(f"no Imperial ref row for {civ}/{slug}")
+    return float(row[0] or 0), float(row[1] or 0)
 
 
 def _swap_army(um, pid, const, keep_n):
@@ -77,7 +108,23 @@ def build_v2_from_sides(side1, side2, out_path, counts=(21, 21),
     n1, n2 = counts
     r1, r2 = ranged
     if r1 and r2:
-        raise ValueError("both sides ranged: no validated golden template mapping")
+        # BOTH RANGED (user rule, 2026-07-27): one ranged unit can only kite
+        # another if it BOTH outranges AND outruns it — then it is the "ranged"
+        # side and the other is treated as the melee chaser. If either edge is
+        # missing neither can disengage, so it is a stand-and-shoot brawl and the
+        # melee-vs-melee template applies. (User's example: Cavalry Archer vs
+        # Arbalest — the Arbalest outranges, the Cav Archer outruns, so neither
+        # kites.) Replaces a hard raise that made ranged subjects unfilmable
+        # against every archer/skirm/gunpowder/cav-archer opponent.
+        rs1, rs2 = _range_speed(civ1, key1), _range_speed(civ2, key2)
+        if rs1[0] > rs2[0] and rs1[1] > rs2[1]:
+            r1, r2 = True, False
+        elif rs2[0] > rs1[0] and rs2[1] > rs1[1]:
+            r1, r2 = False, True
+        else:
+            r1 = r2 = False
+        print(f"[build_v2] both ranged -> {'side1 kites' if r1 else 'side2 kites' if r2 else 'brawl (melee-vs-melee)'} "
+              f"(range/speed {rs1} vs {rs2})", flush=True)
     if r2 and not r1:                 # opponent kites -> P2; subject chases P3
         template = T_RANGED_VS_INF
         p2, p3 = (civ2, key2, n2), (civ1, key1, n1)

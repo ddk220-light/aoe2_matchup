@@ -544,6 +544,13 @@ if (KITE) {
     if (!simSrc.includes(K_OLD)) { console.error("!! moveAwayFromTarget block not found — aborting"); process.exit(2); }
     simSrc = simSrc.replace(K_OLD, K_NEW);
 }
+// RANGED-vs-RANGED (user rule, 2026-07-27): the ship engine never lets a ranged
+// unit kite another ranged unit (shouldKite = !target.isRanged()). A unit that
+// BOTH outranges AND outruns its ranged target genuinely can disengage and kite
+// it, so __outclasses re-enables kiting for exactly that case. When either edge
+// is missing neither can break away and it stays a stand-and-shoot brawl (Cav
+// Archer vs Arbalest: Arbalest outranges, Cav Archer outruns -> no kiting).
+// Mirrors the recording rig's template choice in build_golden_v2.py.
 // KITE_CATCH: interception gate on the kite DECISION (see sim_v2_model.js).
 // The rig's ground truth is a patrol loop on a bounded arena: whether kiting
 // works is decided by the CHASER'S ABSOLUTE SPEED (can it cut the loop's
@@ -560,7 +567,10 @@ if (KITE_CATCH > 0) {
                 || (this.target.moveSpeed || 0) < ${KITE_CATCH} * TILE_SIZE
                 || this.getDamageAgainst(this.target)
                     > Math.max(3, 0.05 * this.target.maxHp);
-            const shouldKite = !this.target.isRanged() && __canKite;
+            const __outclasses = this.target.isRanged()
+                && this.attackRange > this.target.attackRange
+                && this.moveSpeed > (this.target.moveSpeed || 0);
+            const shouldKite = (!this.target.isRanged() || __outclasses) && __canKite;
             if (this.tooClose() && __canKite) {`;
     if (!simSrc.includes(KR_OLD)) { console.error("!! kite-catch anchor not found — aborting"); process.exit(2); }
     simSrc = simSrc.replace(KR_OLD, KR_NEW);

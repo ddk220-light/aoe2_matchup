@@ -223,6 +223,71 @@ if (SLOT > 0) {
     if (!simSrc.includes(U_OLD)) { console.error("!! update target-acq block not found — aborting"); process.exit(2); }
     simSrc = simSrc.replace(F_OLD, F_NEW).replace(U_OLD, U_NEW);
 }
+// ENVELOP: SLOT done with the RIGHT geometry (2026-07-24). Same idea — a saturated
+// target is unreachable, so overflow attackers spill around it to the flanks and rear
+// and encirclement emerges — but fixing the two things that made flat SLOT a lateral
+// move (it repaired the Warrior Priest + White Feather Guard pins and broke the Battle
+// Elephant and Guecha rows, 12/15 either way):
+//
+//   1. CAPACITY IS SIZE-AWARE. How many attackers physically fit around a target is
+//      n = floor(pi / asin(ra / (rt + ra))): 6 for equal bodies, ~9 around a body twice
+//      your radius, fewer around something smaller. Flat SLOT=6 counted occupancy in a
+//      ring that GREW with the target's radius while keeping the cap at 6, so a Battle
+//      Elephant read as "full" when it can host far more — ETG attackers then refused
+//      the elephant they were standing next to and wandered off (100% win -> 75% flip).
+//   2. RANGED TARGETS ARE EXEMPT. You cannot saturate something that is running away,
+//      and re-picking a chase target every tick let the ETG always switch to whichever
+//      kiter was nearest instead of committing — which un-did the in-game-validated
+//      KITE loss vs the Guecha (0% -> 38%). Melee-vs-melee only.
+const ENVELOP = process.env.ENVELOP === "1";
+if (ENVELOP) {
+    const E_OLD = `            const dist = this.distanceTo(enemy);
+            // Prefer targets not in blockedTargets
+            if (!this.blockedTargets.has(enemy)) {
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closest = enemy;
+                }
+            }`;
+    const E_NEW = `            const dist = this.distanceTo(enemy);
+            let _open = !this.blockedTargets.has(enemy);
+            const _ring = enemy.radius + this.radius + this.attackRange + 4;
+            if (_open && !this.isRanged() && !enemy.isRanged() && dist > _ring) {
+                const _s = Math.min(0.999, this.radius / (enemy.radius + this.radius));
+                const _cap = Math.max(3, Math.floor(Math.PI / Math.asin(_s)));
+                const _mates = this.team === 1 ? simulation.team1 : simulation.team2;
+                let _load = 0;
+                for (const _m of _mates) {
+                    if (_m === this || _m.state === "dead") continue;
+                    const _dx = _m.x - enemy.x, _dy = _m.y - enemy.y;
+                    if (_dx * _dx + _dy * _dy <= _ring * _ring) { if (++_load >= _cap) { _open = false; break; } }
+                }
+            }
+            if (_open) {
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closest = enemy;
+                }
+            }`;
+    const EU_OLD = `        if (!this.target || this.target.state === "dead") {
+            this.findTarget(enemies);
+        }
+        if (!this.target) {`;
+    // Re-target ONLY when the current target is genuinely saturated — that is the whole
+    // envelopment trigger. Re-picking every tick (what flat SLOT did) pays the RETARGET
+    // switch wind-up over and over as the nearest body jostles, which quietly halved the
+    // ETG's output against a packed elephant line (100% win -> 75% flip) even though the
+    // capacity cap itself never bound there.
+    const EU_NEW = `        if (!this.target || this.target.state === "dead") {
+            this.findTarget(enemies);
+        } else if (!this.isRanged() && !this.target.isRanged() && !this.inRange()) {
+            this.findTarget(enemies);
+        }
+        if (!this.target) {`;
+    if (!simSrc.includes(E_OLD)) { console.error("!! ENVELOP: findTarget block not found — aborting"); process.exit(2); }
+    if (!simSrc.includes(EU_OLD)) { console.error("!! ENVELOP: update target-acq block not found — aborting"); process.exit(2); }
+    simSrc = simSrc.replace(E_OLD, E_NEW).replace(EU_OLD, EU_NEW);
+}
 // RETARGET = seconds of attack wind-up when switching to a NEW target (turn +
 // animation start; the real game loses ~this much per switch, which is why the
 // in-game ETG's early throughput matches a FLAT 2.0s reload — the ramp doesn't
@@ -239,7 +304,16 @@ if (RETARGET > 0 || JITTER > 0) {
     const T_NEW = `        // Use unblocked target if available, else fall back to closest
         const _newT = closest || fallback;
         if (_newT && _newT !== this.target) {
-            this.attackCooldown += ${RETARGET} + Math.random() * ${JITTER};
+            // The wind-up models "walk + re-face after your target dies", so it is charged
+            // on first acquisition and on any switch made while ENGAGED or after a death.
+            // Under ENVELOP a still-MARCHING unit re-picks its heading every tick as the
+            // contact rings fill; it has begun no swing, so charging it there compounds
+            // per tick and silently halves output (it cost the ETG the elephant row).
+            const _marchSwitch = ${ENVELOP ? "true" : "false"} && this.target
+                && this.target.state !== "dead" && !this.inRange();
+            if (!_marchSwitch) {
+                this.attackCooldown += ${RETARGET} + Math.random() * ${JITTER};
+            }
         }
         this.target = _newT;`;
     if (!simSrc.includes(T_OLD)) { console.error("!! findTarget assignment not found"); process.exit(2); }
@@ -408,6 +482,52 @@ if (KITE) {
     if (!simSrc.includes(K_OLD)) { console.error("!! moveAwayFromTarget block not found — aborting"); process.exit(2); }
     simSrc = simSrc.replace(K_OLD, K_NEW);
 }
+// KITE_CATCH: interception gate on the kite DECISION (see sim_v2_model.js).
+// The rig's ground truth is a patrol loop on a bounded arena: whether kiting
+// works is decided by the CHASER'S ABSOLUTE SPEED (can it cut the loop's
+// chords?), not the speed ratio — Guecha 1.15 kites ETG 1.05 to a 3/3 win
+// (ratio only 1.10), while Xianbei 1.54 is caught by champi 1.21 in 5/5 tapes
+// (ratio 1.27). A kiter flees only chasers slower than KITE_CATCH; against a
+// faster chaser it stands and fires (what the tape shows once cornered).
+// Ranged-vs-ranged (target.isRanged()) never fled via shouldKite — unaffected.
+const KITE_CATCH = parseFloat(process.env.KITE_CATCH || "0");
+if (KITE_CATCH > 0) {
+    const KR_OLD = `            const shouldKite = !this.target.isRanged();
+            if (this.tooClose()) {`;
+    const KR_NEW = `            const __canKite = this.moveSpeed <= (this.target.moveSpeed || 0)
+                || (this.target.moveSpeed || 0) < ${KITE_CATCH} * TILE_SIZE
+                || this.getDamageAgainst(this.target)
+                    > Math.max(3, 0.05 * this.target.maxHp);
+            const shouldKite = !this.target.isRanged() && __canKite;
+            if (this.tooClose() && __canKite) {`;
+    if (!simSrc.includes(KR_OLD)) { console.error("!! kite-catch anchor not found — aborting"); process.exit(2); }
+    simSrc = simSrc.replace(KR_OLD, KR_NEW);
+}
+// TRAMPLE_CONE: angular gate for CONICAL blast (dat blast_attack_level=162,
+// "100% damage in a conical shape"). The ref schema has no blast-shape column,
+// so config_combat models these units as omnidirectional trample — harmless in
+// the position-less sims, but catastrophically wrong here: under ENVELOP the
+// swarm surrounds the trampler and a 360-degree blast hits ~6 units where the
+// real cone hits the 1-2 in FRONT (champi-vs-Ibirapema: sim wiped the champi
+// in 18s; the tape is a 4/5 champi win). Splash only lands on enemies within
+// TRAMPLE_CONE degrees (full width) of the attacker->target facing, for the
+// slugs in CONE_SLUGS. Elephants keep their genuine 360-degree trample.
+const TRAMPLE_CONE = parseFloat(process.env.TRAMPLE_CONE || "0");
+const CONE_SLUGS = new Set(["ibirapema_warrior_tupi", "elite_ibirapema_warrior_tupi"]);
+if (TRAMPLE_CONE > 0) {
+    const TC_OLD = `                                enemy.takeDamage(trampleDmg, this);`;
+    const TC_NEW = `                                let __coneOk = true;
+                                if (this.trampleConeCos !== undefined && target) {
+                                    const __fx = target.x - this.x, __fy = target.y - this.y;
+                                    const __ex = enemy.x - this.x, __ey = enemy.y - this.y;
+                                    const __fl = Math.hypot(__fx, __fy) || 1;
+                                    const __el = Math.hypot(__ex, __ey) || 1;
+                                    __coneOk = (__fx * __ex + __fy * __ey) / (__fl * __el) >= this.trampleConeCos;
+                                }
+                                if (__coneOk) enemy.takeDamage(trampleDmg, this);`;
+    if (!simSrc.includes(TC_OLD)) { console.error("!! trample-cone anchor not found — aborting"); process.exit(2); }
+    simSrc = simSrc.replace(TC_OLD, TC_NEW);
+}
 const FLANK = parseFloat(process.env.FLANK || "0");
 if (FLANK > 0) {
     const OLD_AV = `        // If avoidance is strong (units very close), let it dominate
@@ -484,6 +604,13 @@ async function runFight(cd1, slug1, civ1, n1, cd2, slug2, civ2, n2, seed) {
     await sim.setupTeam(1, slug1, civ1, n1, "Imperial", {});
     await sim.setupTeam(2, slug2, civ2, n2, "Imperial", {});
     sandbox.fetch = defaultFetch;
+    if (TRAMPLE_CONE > 0) {
+        // conical-blast units splash only inside the front arc (see the
+        // TRAMPLE_CONE transform above); cos of the HALF-angle
+        const coneCos = Math.cos((TRAMPLE_CONE / 2) * Math.PI / 180);
+        if (CONE_SLUGS.has(slug1)) for (const u of sim.team1) u.trampleConeCos = coneCos;
+        if (CONE_SLUGS.has(slug2)) for (const u of sim.team2) u.trampleConeCos = coneCos;
+    }
     // Optional compact-block spawn (matches the real 16x16 arena clusters). A
     // full-height line-vs-line prevents envelopment; compact blocks let the
     // larger army wrap the smaller. gap = center separation; sp = unit spacing.

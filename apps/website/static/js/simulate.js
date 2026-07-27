@@ -1037,18 +1037,25 @@ class BattleUnit {
 
     getDamageAgainst(target, detailed = false) {
         const isRanged = this.isRanged();
-        const baseAttackClass = isRanged ? "3" : "4";
+        // The ATTACK'S damage class decides which armor resists it — not the
+        // delivery range. Thrown-melee units (Gbeto, Mameluke, Throwing Axeman)
+        // carry a class-4 melee attack and no class-3 entry: their hits are
+        // resisted by MELEE armor. (Bug found 2026-07-26: resolving them vs
+        // pierce armor roughly halved their damage into high-PA infantry —
+        // in-game 21 Champi lose 0/5 to 12 Gbeto; the sim had them winning.)
+        const baseAttackClass = isRanged && this.attacks["3"] ? "3" : "4";
+        const usesPierce = baseAttackClass === "3";
         const baseAttack =
             (this.attacks[baseAttackClass] ||
                 this.attacks["4"] ||
                 this.attack) + this.auraAttackBonus;
         let targetBaseArmor;
-        if (isRanged && this.ignoresPierceArmor) {
+        if (usesPierce && this.ignoresPierceArmor) {
             targetBaseArmor = 0;
-        } else if (!isRanged && this.ignoresMeleeArmor) {
+        } else if (!usesPierce && this.ignoresMeleeArmor) {
             targetBaseArmor = 0;
         } else {
-            targetBaseArmor = isRanged
+            targetBaseArmor = usesPierce
                 ? target.armors["3"] || target.pierceArmor || 0
                 : target.armors["4"] || target.meleeArmor || 0;
         }
@@ -1059,7 +1066,7 @@ class BattleUnit {
         const baseDmg = Math.max(0, baseAttack - targetBaseArmor);
         breakdown.push({
             classId: baseAttackClass,
-            className: isRanged ? "Base Pierce" : "Base Melee",
+            className: usesPierce ? "Base Pierce" : "Base Melee",
             attack: baseAttack,
             armor: targetBaseArmor,
             damage: baseDmg,
@@ -2881,11 +2888,15 @@ class BattleSimulation {
             defStats,
         ) => {
             const isRanged = attacker.isRanged();
-            const baseClass = isRanged ? "3" : "4";
+            // Same class rule as getDamageAgainst: thrown-melee units
+            // (class-4 attack, no class-3) are resisted by MELEE armor.
+            const baseClass =
+                isRanged && attacker.attacks["3"] ? "3" : "4";
+            const usesPierce = baseClass === "3";
             const baseAtk =
                 attacker.attacks[baseClass] || atkStats.attack;
-            const defArmorClass = isRanged ? "3" : "4";
-            const defArmor = isRanged
+            const defArmorClass = usesPierce ? "3" : "4";
+            const defArmor = usesPierce
                 ? (defender.armors["3"] ??
                   defender.pierceArmor ??
                   0)
@@ -2896,7 +2907,7 @@ class BattleSimulation {
             let html = "";
 
             // === ATTACK SECTION ===
-            html += `<div class="formula-section"><div class="formula-label">Total Attack (${isRanged ? "Pierce" : "Melee"}):</div>`;
+            html += `<div class="formula-section"><div class="formula-label">Total Attack (${usesPierce ? "Pierce" : "Melee"}):</div>`;
             html += `<div class="formula-value"><span class="attack-val">${baseAtk}</span></div>`;
             // Show attack upgrade chain
             const atkChain = buildUpgradeChain(

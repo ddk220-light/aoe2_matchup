@@ -13,8 +13,8 @@ Counter triangle: infantry↩{cav,inf}, ranged↩{inf,ranged}, cav↩{ranged,cav
 |---|--|---|
 | **EXPECTED WIN** | 3 | Jian Swordsman (95), Elite Eagle Warrior (70), Halberdier (60) |
 | **UNEXPECTED WIN** | 9 | Elite Temple Guard (115), Heavy Camel Rider (115), Warrior Priest (90), Elite Shrivamsha Rider (82), Elite Shotel Warrior (80) |
-| **COIN FLIP** | 3 | *(no showcase — see odds below)* |
-| **UNEXPECTED LOSS** | 6 | Elite Skirmisher (60), Elite Genitour (75), Elite Magyar Huszar (80), Hussar (80), Elite Fire Archer (90) |
+| **COIN FLIP** | 4 | *(no showcase — see odds below)* |
+| **UNEXPECTED LOSS** | 5 | Elite Genitour (75), Elite Magyar Huszar (80), Hussar (80), Elite Fire Archer (90), Elite Arambai (135) |
 | **EXPECTED LOSS** | 54 | Elite Blackwood Archer (40), Champion (70), Arbalester (70), Elite Longbowman (75), Elite Chu Ko Nu (75) |
 
 ### Coin-flip matchups — odds (subject win% : opp win%), listed at the end
@@ -22,6 +22,7 @@ Counter triangle: infantry↩{cav,inf}, ranged↩{inf,ranged}, cav↩{ranged,cav
 | Matchup | subject : opp | S |
 |---|--|--|
 | Elite Woad Raider (Celts) | **53% : 47%** | +4 |
+| Elite Skirmisher (Armenians) | **40% : 60%** | -6 |
 | Elite Karambit Warrior (Malay) | **40% : 60%** | +1 |
 | Elite Steppe Lancer (Cumans) | **33% : 67%** | -5 |
 
@@ -45,27 +46,27 @@ Counter triangle: infantry↩{cav,inf}, ranged↩{inf,ranged}, cav↩{ranged,cav
 | 12 | Elite White Feather Guard (Shu) | infantry | 14v21 | 56 | 0 | +56 | 100% | · · · · | UNEXPECTED WIN |
 | 13 | Elite Steppe Lancer (Cumans) | cavalry | 21v19 | 2 | 8 | -5 | 33% | · · · · | COIN FLIP |
 | 14 | Elite Woad Raider (Celts) | infantry | 18v21 | 6 | 2 | +4 | 53% | · · · · | COIN FLIP |
-| 15 | Elite Karambit Warrior (Malay) | infantry | 8v21 | 6 | 5 | +1 | 40% | · · · · | COIN FLIP |
-| 16 | **Elite Skirmisher (Armenians)** | ranged | 10v21 | 8 | 50 | -42 | 0% | · · · · | UNEXPECTED LOSS |
+| 15 | Elite Skirmisher (Armenians) | ranged | 10v21 | 22 | 27 | -6 | 40% | · · · · | COIN FLIP |
+| 16 | Elite Karambit Warrior (Malay) | infantry | 8v21 | 6 | 5 | +1 | 40% | · · · · | COIN FLIP |
 | 17 | **Elite Genitour (Berbers)** | ranged | 13v21 | 0 | 71 | -71 | 0% | · · · Y | UNEXPECTED LOSS |
 | 18 | **Elite Magyar Huszar (Magyars)** | cavalry | 17v21 | 0 | 43 | -43 | 0% | · · · · | UNEXPECTED LOSS |
 | 19 | **Hussar (Bulgarians)** | cavalry | 14v21 | 0 | 48 | -48 | 0% | · · · · | UNEXPECTED LOSS |
-| 20 | **Elite Fire Archer (Wu)** | ranged | 19v21 | 0 | 85 | -85 | 0% | · · · Y | UNEXPECTED LOSS |
-| 21 | Elite Arambai (Burmese) | ranged | 21v15 | 4 | 53 | -49 | 0% | · · · Y | UNEXPECTED LOSS |
-| 22 | **Elite Blackwood Archer (Tupi)** | ranged | 8v21 | 0 | 90 | -90 | 0% | · · · Y | EXPECTED LOSS |
+| 20 | **Elite Fire Archer (Wu)** | ranged | 19v21 | 0 | 77 | -77 | 0% | · · · Y | UNEXPECTED LOSS |
+| 21 | **Elite Arambai (Burmese)** | ranged | 21v15 | 4 | 53 | -49 | 0% | · · · Y | UNEXPECTED LOSS |
+| 22 | **Elite Blackwood Archer (Tupi)** | ranged | 8v21 | 0 | 85 | -85 | 0% | · · · Y | EXPECTED LOSS |
 | 23 | **Champion (Berbers)** | infantry | 14v21 | 0 | 17 | -17 | 0% | · · · · | EXPECTED LOSS |
-| 24 | **Arbalester (Armenians)** | ranged | 16v21 | 0 | 86 | -86 | 0% | · · · Y | EXPECTED LOSS |
-| 25 | **Elite Longbowman (Britons)** | ranged | 16v21 | 0 | 82 | -82 | 0% | · · · Y | EXPECTED LOSS |
+| 24 | **Arbalester (Armenians)** | ranged | 16v21 | 0 | 68 | -68 | 0% | · · · Y | EXPECTED LOSS |
+| 25 | **Elite Longbowman (Britons)** | ranged | 16v21 | 0 | 72 | -72 | 0% | · · · Y | EXPECTED LOSS |
 | 26 | **Elite Chu Ko Nu (Chinese)** | ranged | 16v21 | 0 | 100 | -100 | 0% | · · · Y | EXPECTED LOSS |
 | 27 | Elite Samurai (Japanese) | infantry | 15v21 | 0 | 51 | -51 | 0% | · · Y · | EXPECTED LOSS |
 | 28 | Elite Obuch (Poles) | infantry | 14v21 | 0 | 34 | -34 | 0% | · · · · | EXPECTED LOSS |
 | 29 | Elite Chakram Thrower (Gurjaras) | ranged | 16v21 | 0 | 80 | -80 | 0% | · · · Y | EXPECTED LOSS |
-| 30 | Elite Composite Bowman (Armenians) | ranged | 17v21 | 0 | 92 | -92 | 0% | · · · Y | EXPECTED LOSS |
-| 31 | Elite Throwing Axeman (Franks) | ranged | 16v21 | 0 | 91 | -91 | 0% | · · · Y | EXPECTED LOSS |
+| 30 | Elite Composite Bowman (Armenians) | ranged | 17v21 | 0 | 78 | -78 | 0% | · · · Y | EXPECTED LOSS |
+| 31 | Elite Throwing Axeman (Franks) | ranged | 16v21 | 0 | 81 | -81 | 0% | · · · Y | EXPECTED LOSS |
 | 32 | Elite Liao Dao (Khitans) | infantry | 17v21 | 0 | 43 | -43 | 0% | · · · · | EXPECTED LOSS |
 | 33 | Elite Serjeant (Sicilians) | infantry | 16v21 | 0 | 46 | -46 | 0% | · · · · | EXPECTED LOSS |
 | 34 | Elite Urumi Swordsman (Dravidians) | infantry | 16v21 | 0 | 40 | -40 | 0% | · · · · | EXPECTED LOSS |
-| 35 | Elite Genoese Crossbowman (Italians) | ranged | 18v21 | 0 | 83 | -83 | 0% | · · · Y | EXPECTED LOSS |
+| 35 | Elite Genoese Crossbowman (Italians) | ranged | 18v21 | 0 | 73 | -73 | 0% | · · · Y | EXPECTED LOSS |
 | 36 | Condottiero (Italians) | infantry | 17v21 | 3 | 6 | -3 | 20% | · · · · | EXPECTED LOSS |
 | 37 | Elite Berserk (Vikings) | infantry | 16v21 | 0 | 36 | -36 | 0% | · · · · | EXPECTED LOSS |
 | 38 | Elite Plumed Archer (Mayans) | ranged | 18v21 | 0 | 92 | -92 | 0% | · · Y Y | EXPECTED LOSS |
@@ -74,8 +75,8 @@ Counter triangle: infantry↩{cav,inf}, ranged↩{inf,ranged}, cav↩{ranged,cav
 | 41 | Xianbei Raider (Wei) | ranged | 17v21 | 0 | 94 | -94 | 0% | · · · Y | EXPECTED LOSS |
 | 42 | Elite Kipchak (Cumans) | ranged | 19v21 | 0 | 89 | -89 | 0% | · · · Y | EXPECTED LOSS |
 | 43 | Elite Bolas Rider (Mapuche) | ranged | 21v21 | 0 | 81 | -81 | 0% | · · · Y | EXPECTED LOSS |
-| 44 | Elite Rattan Archer (Vietnamese) | ranged | 20v21 | 0 | 76 | -76 | 0% | · · · Y | EXPECTED LOSS |
-| 45 | Hand Cannoneer (Berbers) | ranged | 21v21 | 0 | 90 | -90 | 0% | · · Y Y | EXPECTED LOSS |
+| 44 | Elite Rattan Archer (Vietnamese) | ranged | 20v21 | 0 | 67 | -67 | 0% | · · · Y | EXPECTED LOSS |
+| 45 | Hand Cannoneer (Berbers) | ranged | 21v21 | 0 | 83 | -83 | 0% | · · Y Y | EXPECTED LOSS |
 | 46 | Grenadier (Jurchens) | ranged | 21v19 | 0 | 100 | -100 | 0% | · · Y Y | EXPECTED LOSS |
 | 47 | Elite Keshik (Tatars) | cavalry | 21v21 | 0 | 52 | -52 | 0% | · · · · | EXPECTED LOSS |
 | 48 | Heavy Cavalry Archer (Berbers) | ranged | 21v19 | 0 | 75 | -75 | 0% | · · · Y | EXPECTED LOSS |
@@ -85,7 +86,7 @@ Counter triangle: infantry↩{cav,inf}, ranged↩{inf,ranged}, cav↩{ranged,cav
 | 52 | Elite Coustillier (Burgundians) | cavalry | 21v18 | 0 | 52 | -52 | 0% | · · · · | EXPECTED LOSS |
 | 53 | Elite Guecha Warrior (Muisca) | ranged | 21v18 | 0 | 66 | -66 | 0% | · · · Y | EXPECTED LOSS |
 | 54 | Elite Teutonic Knight (Teutons) | infantry | 21v19 | 0 | 89 | -89 | 0% | · · · · | EXPECTED LOSS |
-| 55 | Elite Janissary (Turks) | ranged | 21v17 | 0 | 76 | -76 | 0% | · · · Y | EXPECTED LOSS |
+| 55 | Elite Janissary (Turks) | ranged | 21v17 | 0 | 51 | -51 | 0% | · · · Y | EXPECTED LOSS |
 | 56 | Elite Ratha (Melee) (Bengalis) | cavalry | 21v16 | 0 | 53 | -53 | 0% | · · · · | EXPECTED LOSS |
 | 57 | Elite Tarkan (Huns) | cavalry | 21v16 | 0 | 28 | -28 | 0% | · · · · | EXPECTED LOSS |
 | 58 | Elite Leitis (Lithuanians) | cavalry | 21v17 | 0 | 63 | -63 | 0% | · · · · | EXPECTED LOSS |
@@ -95,14 +96,14 @@ Counter triangle: infantry↩{cav,inf}, ranged↩{inf,ranged}, cav↩{ranged,cav
 | 62 | Elite Conquistador (Spanish) | ranged | 21v15 | 0 | 73 | -73 | 0% | · · · Y | EXPECTED LOSS |
 | 63 | Elite Iron Pagoda (Jurchens) | cavalry | 21v15 | 0 | 41 | -41 | 0% | · · · · | EXPECTED LOSS |
 | 64 | Paladin (Huns) | cavalry | 21v14 | 0 | 58 | -58 | 0% | · · · · | EXPECTED LOSS |
-| 65 | Elite Organ Gun (Portuguese) | ranged | 21v15 | 0 | 96 | -96 | 0% | · · Y Y | EXPECTED LOSS |
+| 65 | Elite Organ Gun (Portuguese) | ranged | 21v15 | 0 | 97 | -97 | 0% | · · Y Y | EXPECTED LOSS |
 | 66 | Elite Mameluke (Saracens) | ranged | 21v13 | 0 | 83 | -83 | 0% | · · · Y | EXPECTED LOSS |
 | 67 | Elite Tiger Cavalry (Wei) | cavalry | 21v14 | 0 | 44 | -44 | 0% | · · · · | EXPECTED LOSS |
 | 68 | Elite Cataphract (Byzantines) | cavalry | 21v13 | 0 | 69 | -69 | 0% | · · Y · | EXPECTED LOSS |
-| 69 | War Chariot (Shu) | ranged | 21v12 | 0 | 66 | -66 | 0% | · · Y Y | EXPECTED LOSS |
+| 69 | War Chariot (Shu) | ranged | 21v12 | 0 | 62 | -62 | 0% | · · Y Y | EXPECTED LOSS |
 | 70 | Elite War Wagon (Koreans) | ranged | 21v13 | 0 | 64 | -64 | 0% | · · · Y | EXPECTED LOSS |
 | 71 | Elite Centurion (Romans) | cavalry | 21v12 | 0 | 31 | -31 | 0% | · · · · | EXPECTED LOSS |
 | 72 | Elite Battle Elephant (Bengalis) | cavalry | 21v12 | 0 | 74 | -74 | 0% | · · · · | EXPECTED LOSS |
-| 73 | Elite Hussite Wagon (Bohemians) | ranged | 21v11 | 0 | 89 | -89 | 0% | · · · Y | EXPECTED LOSS |
-| 74 | Elite Ballista Elephant (Khmer) | ranged | 21v11 | 0 | 74 | -74 | 0% | · · · Y | EXPECTED LOSS |
+| 73 | Elite Hussite Wagon (Bohemians) | ranged | 21v11 | 0 | 88 | -88 | 0% | · · · Y | EXPECTED LOSS |
+| 74 | Elite Ballista Elephant (Khmer) | ranged | 21v11 | 0 | 59 | -59 | 0% | · · · Y | EXPECTED LOSS |
 | 75 | Elite War Elephant (Persians) | cavalry | 21v8 | 0 | 82 | -82 | 0% | · · · · | EXPECTED LOSS |

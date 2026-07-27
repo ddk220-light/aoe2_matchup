@@ -1,13 +1,14 @@
 # Simulation V2 — change list & full-rerun protocol
 
-**Status: 2026-07-26.** This document is the single source of truth for every
+**Status: 2026-07-27.** This document is the single source of truth for every
 deliberate divergence between the **V2 simulation engine** (this package) and
 the engines that produced ALL data currently served by the site. Nothing in
 this package is consumed by the webapp; the production engines and every
 committed DB stay exactly as they are until the full re-run described in §7.
 
 Provenance: the engine files here are a verbatim snapshot of the
-`aoe2_ai_for_simulation` branch at `e716414` (2026-07-26). That branch is the
+`aoe2_ai_for_simulation` branch at `3d40397` (2026-07-27), verified
+bit-identical to the branch engine on seeded tape-anchored fights. That branch is the
 canonical development home; this package exists so a build machine can pull
 `staging` and run the new engine without touching production code paths.
 
@@ -113,6 +114,58 @@ a false win — cone vs true-360 are different regimes).
 
 ---
 
+## 2b. Fixes added 2026-07-27 (after the first snapshot)
+
+### CATCH=1, CATCH_R=0 — melee swings at what is in reach
+ENVELOP's out-of-reach re-pick excluded RANGED targets, so a melee unit locked
+onto one fleeing archer walked through the rest of the archer line without
+swinging. Measured: 7 Paladins closed to 0.6-0.8 tiles of 21 Slingers (adjacent),
+stayed in state "moving", and landed 7.1 hits/unit in 180s where ~90 are due; 6
+Cataphracts landed 0.8 each and died. Two deliberate limits, each measured, not
+assumed: in-reach only (a blanket re-pick flipped ETG-vs-Genitour/Arambai and
+champi-vs-Blackwood 0/5 -> 5/5 against tape) and only at enemies no faster than
+you. **14/14 champi+ETG tape anchors unchanged.** Do NOT tune CATCH_R — 1 makes
+the Paladin row worse, 2 breaks the Blackwood anchor.
+
+### Ranged-vs-ranged kiting (user rule)
+The ship engine never lets a ranged unit kite another ranged unit. A unit that
+BOTH outranges AND outruns its ranged target genuinely can disengage, so kiting
+is re-enabled for exactly that case (`__outclasses` in headless_sim). When either
+edge is missing neither can break away and it stays a stand-and-shoot brawl —
+Cavalry Archer vs Arbalest: the Arbalest outranges, the Cav Archer outruns, so
+nobody kites. The recording rig applies the same rule when picking a golden
+template (`apps/video/build_golden_v2.py`), which is what made ranged-vs-ranged
+matchups filmable at all.
+
+### STILL WRONG after both fixes — the open defect for this rerun
+The engine systematically **overrates cheap ranged units against heavy melee**.
+Evidence is 12 fresh golden-rig tapes plus 5 earlier ones, all one-sided:
+
+| Matchup (equal resources) | Sim said | Tape |
+|---|---|---|
+| 21 Slinger vs 7 Paladin | Slinger win | 0 Slingers, 7 Paladins @798hp (x2 runs) |
+| 21 Slinger vs 15 Hussar | Slinger win | 0 Slingers, 13 Hussars @833hp |
+| 21 Slinger vs 4 War Elephant | Slinger win | 0 Slingers, 4 elephants @1844hp |
+| 21 Slinger vs 6 Battle Elephant | Slinger win | 0 Slingers, 6 @1354hp |
+| 21 Slinger vs Leitis/Boyar/Monaspa/Konnik/Iron Pagoda/Centurion/Coustillier/Tiger Cav/Kona/Shrivamsha/Steppe Lancer | Slinger win or coin-flip (11 rows) | **0 Slingers in all 11** |
+| 21 Slinger vs 6 Cataphract | Slinger win | Slinger win, 16 of 21 left ✓ |
+| 10 Ibirapema vs 21 Elite Skirmisher | Ibirapema loss | **Ibirapema win, 8 of 10 left** |
+
+The discriminator is **armour, not rank**: the Slinger's 9 pierce attack beats
+the Cataphract's and Chu Ko Nu's thin pierce armour and bounces off the Elite
+Skirmisher's 8 PA. The residual error was deliberately NOT fitted to these tapes
+— after CATCH the honest next step is a root-cause diagnosis, not another knob.
+Per-subject `ingame_outcome` pins currently paper over these rows (§4).
+
+### The percentile axis is a generation behind the engine
+`data/golden/pool_scores.db` was last rebuilt **2026-06-14**; every V2 fix landed
+2026-07-07 or later, including one commit titled *"revive the Arambai miss-graze
+(blob-graze was dead)"*. The win-conditions categorization therefore grades
+NEW-engine fight outcomes against OLD-engine ranking percentiles — the Arambai's
+14.8th percentile is a direct artifact of a bug already fixed in V2. Regenerating
+`pool_scores.db` (step 5 below) is what makes declared thresholds mean what they
+say; until then every threshold is read on a stale ruler.
+
 ## 3. Data-layer gaps to close at productionization
 
 1. **No blast-shape column.** The ref schema / `ability_registry.py` cannot
@@ -190,6 +243,11 @@ After the full rerun, **every pin must be re-derived and ideally deleted**
 
 Ordered; each step's own checklist is in `docs/architecture/runbooks.md`.
 
+0. **Refresh this package first** if the dev branch has moved: the engine here
+   is a snapshot, not a symlink. Copy `apps/video/sim_v2/{headless_sim.js,
+   sim_v2_model.js,run_pool_v2.js}` and `apps/website/static/js/simulate.js`
+   from `aoe2_ai_for_simulation`, then confirm parity by running the same
+   seeded fight through both copies — they must be bit-identical.
 1. **Decide Mayans patch** (open task) — if accepted, refresh
    `data/inputs/` extraction + regen reference/main DBs first so everything
    below runs on one game build.

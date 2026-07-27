@@ -27,7 +27,7 @@ from pathlib import Path
 from overlay.render_card import (render_category_banner,
                                  _screenshot, _img_data_uri, _css, _res_iconic,
                                  PALETTE)
-from overlay.compose import (_card_segment, _card_segment_gif, concat_videos,
+from overlay.compose import (_card_segment, _card_segment_gif, voice_track, concat_videos,
                              _duration)
 from overlay.assets import AssetResolver
 from auto.chapters import write_chapters
@@ -231,19 +231,26 @@ def stitch_analysis_video(plan, storyboard, clips_dir, out_path, *,
     missing: list[str] = []
     seg_i = 0
 
-    def card_seg(png, seconds, frac):
+    def card_seg(png, seconds, frac, audio=None):
         nonlocal seg_i
         out = tmp / f"seg_{seg_i:03d}.mp4"
         seg_i += 1
-        return _card_segment(Path(png), seconds, out, size, card_width_frac=frac)
+        return _card_segment(Path(png), seconds, out, size, card_width_frac=frac,
+                             audio=audio)
 
-    def gif_seg(gif, seconds, frac):
+    def gif_seg(gif, seconds, frac, audio=None):
         nonlocal seg_i
         out = tmp / f"seg_{seg_i:03d}.mp4"
         seg_i += 1
-        return _card_segment_gif(Path(gif), seconds, out, size, card_width_frac=frac)
+        return _card_segment_gif(Path(gif), seconds, out, size, card_width_frac=frac,
+                                 audio=audio)
 
     # ---- INTRO: subject hero card (+ hi-res sprite) then the attack-gif showcase --
+    # The civ's military attack barks play over the (otherwise silent) intro cards,
+    # chained across both so each line is heard once: the stat card takes as many as
+    # fit, the gif showcase picks up from there.
+    voices = assets.voice_lines(subj["civ"])
+    voice_used = 0
     intro_segs: list[Path] = []
     try:
         u = get_unit_card(subj["civ"], subj["slug"])
@@ -252,16 +259,20 @@ def stitch_analysis_video(plan, storyboard, clips_dir, out_path, *,
         subtitle = (f"{n_matchups} matchups ranked — everything it beats, "
                     f"and everything that beats it")
         hero_png = render_subject_intro(u, hires, tmp / "intro_hero.png", subtitle)
-        intro_segs.append(card_seg(hero_png, INTRO_HERO_S, frac=0.94))
-        _log(f"intro hero card ok (hi-res={'yes' if hires else 'no'})")
+        track, voice_used = voice_track(voices, INTRO_HERO_S, tmp / "intro_voice_hero.wav")
+        intro_segs.append(card_seg(hero_png, INTRO_HERO_S, frac=0.94, audio=track))
+        _log(f"intro hero card ok (hi-res={'yes' if hires else 'no'}, "
+             f"voice lines={voice_used}/{len(voices)})")
     except Exception as e:
         _log(f"intro hero card FAILED: {type(e).__name__}: {e}")
         traceback.print_exc()
     try:
         gif = assets.attack_gif(subj["slug"])
         if gif:
-            intro_segs.append(gif_seg(gif, INTRO_GIF_S, frac=0.42))
-            _log("intro attack-gif showcase ok")
+            track, n = voice_track(voices[voice_used:], INTRO_GIF_S,
+                                   tmp / "intro_voice_gif.wav", lead=0.25, gap=0.45)
+            intro_segs.append(gif_seg(gif, INTRO_GIF_S, frac=0.42, audio=track))
+            _log(f"intro attack-gif showcase ok (voice lines={n})")
     except Exception as e:
         _log(f"intro attack-gif FAILED: {type(e).__name__}: {e}")
     if intro_segs:

@@ -107,16 +107,50 @@ def make_placeholder_clip(out, seconds, size=(1280, 720)) -> Path:
     return out
 
 
+def voice_track(wavs, seconds: float, out: Path, *,
+                lead=0.6, gap=0.6, gain=1.0) -> tuple:
+    """Lay voice lines end to end over `seconds` of silence, so an otherwise-silent
+    card can carry the unit's own barks. Returns (path_or_None, n_used) — lines that
+    would run past the card are left for the next card, so a caller can chain several
+    segments through one list and hear each line exactly once.
+    """
+    placed, t = [], lead
+    for w in wavs:
+        d = _duration(w)
+        if not d or t + d > seconds - 0.15:
+            break
+        placed.append((w, t))
+        t += d + gap
+    if not placed:
+        return None, 0
+    cmd, parts, labels = [_ffmpeg(), "-y"], [], []
+    for i, (w, t0) in enumerate(placed):
+        cmd += ["-i", str(w)]
+        ms = int(round(t0 * 1000))
+        parts.append(f"[{i}:a]aformat=sample_fmts=fltp:sample_rates=48000:"
+                     f"channel_layouts=stereo,volume={gain},adelay={ms}|{ms}[a{i}]")
+        labels.append(f"[a{i}]")
+    # non-overlapping, so amix is just a merge — normalize=0 keeps each line's level
+    mix = (f"{''.join(labels)}amix=inputs={len(placed)}:normalize=0[m];"
+           if len(placed) > 1 else f"{labels[0]}anull[m];")
+    _run(cmd + ["-filter_complex",
+                ";".join(parts) + ";" + mix + f"[m]apad,atrim=0:{seconds}[o]",
+                "-map", "[o]", "-ar", "48000", "-ac", "2", str(out)])
+    return out, len(placed)
+
+
 def _card_segment(card_png: Path, seconds: float, out: Path, size, *,
-                  card_width_frac: float, bg="0x12100b") -> Path:
-    """A standalone clip: card fades in/out, centered over a dark background."""
+                  card_width_frac: float, bg="0x12100b", audio=None) -> Path:
+    """A standalone clip: card fades in/out, centered over a dark background.
+    `audio` (a file already trimmed to `seconds`) replaces the silent track."""
     w, h = size
     target_w = int(w * card_width_frac)
     fade = 0.4
     _run([_ffmpeg(), "-y",
           "-f", "lavfi", "-i", f"color=c={bg}:s={w}x{h}:d={seconds}:r=30",
           "-loop", "1", "-t", f"{seconds}", "-i", str(card_png),
-          "-f", "lavfi", "-t", f"{seconds}", "-i", _ANULLSRC,  # silent audio track
+          *(["-i", str(audio)] if audio
+            else ["-f", "lavfi", "-t", f"{seconds}", "-i", _ANULLSRC]),
           "-filter_complex",
           f"[1:v]scale={target_w}:-1,format=rgba,"
           f"fade=t=in:st=0:d={fade}:alpha=1,"
@@ -127,7 +161,7 @@ def _card_segment(card_png: Path, seconds: float, out: Path, size, *,
 
 
 def _card_segment_gif(gif_path: Path, seconds: float, out: Path, size, *,
-                      card_width_frac: float, bg="0x12100b", fade=0.4) -> Path:
+                      card_width_frac: float, bg="0x12100b", fade=0.4, audio=None) -> Path:
     """Like _card_segment but the centered card is an animated GIF, looped to
     fill `seconds` (-ignore_loop 0). Codec-identical to _card_segment so the
     result stream-copy-concats with the rest via concat_videos."""
@@ -136,7 +170,8 @@ def _card_segment_gif(gif_path: Path, seconds: float, out: Path, size, *,
     _run([_ffmpeg(), "-y",
           "-f", "lavfi", "-i", f"color=c={bg}:s={w}x{h}:d={seconds}:r={OUT_FPS}",
           "-ignore_loop", "0", "-t", f"{seconds}", "-i", str(gif_path),  # loop gif
-          "-f", "lavfi", "-t", f"{seconds}", "-i", _ANULLSRC,  # silent audio track
+          *(["-i", str(audio)] if audio
+            else ["-f", "lavfi", "-t", f"{seconds}", "-i", _ANULLSRC]),
           "-filter_complex",
           f"[1:v]scale={target_w}:-1:flags=lanczos,format=rgba,"
           f"fade=t=in:st=0:d={fade}:alpha=1,"

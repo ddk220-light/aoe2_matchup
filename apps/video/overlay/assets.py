@@ -34,3 +34,21 @@ class AssetResolver:
 
     def attack_gif(self, slug):
         return self._find(f"gifs/{slug}.gif", f"units/{slug}/attack.gif")
+
+    def voice_lines(self, civ):
+        """The civ's military attack barks (civs/voice_<civ>/attack_<n>.wav), ordered by
+        <n>. These are the generic per-civ military lines — every melee unit of the civ
+        shares them — so they key off the civ, not the unit slug."""
+        if not self.root or not civ:
+            return []
+        d = self.root / "civs" / f"voice_{civ.lower()}"
+        if not d.is_dir():
+            return []
+
+        def n(p):
+            try:
+                return int(p.stem.rsplit("_", 1)[1])
+            except (IndexError, ValueError):
+                return 0
+
+        return sorted(d.glob("attack_*.wav"), key=n)

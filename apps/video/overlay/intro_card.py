@@ -53,6 +53,7 @@ from __future__ import annotations
 
 import html
 import json
+import math
 import sqlite3
 import statistics
 import subprocess
@@ -586,10 +587,10 @@ def _chip_label(name: str) -> str:
     return name.title()
 
 
-def _card_html(civ: str, slug: str, d: dict, a: dict, pcts: dict) -> str:
-    """The full static card (parchment ground, header, stage decorations minus
-    the hero image itself, stats plate, verdict band) as a standalone HTML
-    document. All dynamic text is `html.escape`d."""
+def _card_parts(civ: str, slug: str, d: dict, a: dict, pcts: dict) -> dict:
+    """Escaped header strings + the stat-row / bonus-chip / weakness-chip HTML
+    fragments — shared by the landscape card and the vertical (reel) card so the
+    two layouts cannot drift."""
     names = a["names"]
     unit_name = d.get("unit_name") or d.get("name") or slug.replace("_", " ").title()
     unit_name_esc = html.escape(unit_name)
@@ -622,7 +623,20 @@ def _card_html(civ: str, slug: str, d: dict, a: dict, pcts: dict) -> str:
                           'rgba(138,69,52,.5);color:#6e3325;font-weight:700;font-size:20px;'
                           'padding:6px 14px;">Carries no bonus-target armor classes</div>')
 
-    verdict = html.escape(a["summary"])
+    return dict(unit_name_esc=unit_name_esc, civ_esc=civ_esc, type_esc=type_esc,
+                stat_html=stat_html, bonus_chips=bonus_chips,
+                weakness_chips=weakness_chips, verdict=html.escape(a["summary"]))
+
+
+def _card_html(civ: str, slug: str, d: dict, a: dict, pcts: dict) -> str:
+    """The full static card (parchment ground, header, stage decorations minus
+    the hero image itself, stats plate, verdict band) as a standalone HTML
+    document. All dynamic text is `html.escape`d."""
+    p = _card_parts(civ, slug, d, a, pcts)
+    unit_name_esc, civ_esc, type_esc = p["unit_name_esc"], p["civ_esc"], p["type_esc"]
+    stat_html = p["stat_html"]
+    bonus_chips, weakness_chips = p["bonus_chips"], p["weakness_chips"]
+    verdict = p["verdict"]
 
     return f"""<!doctype html><html><head><meta charset="utf-8">
 {_GOOGLE_FONTS_LINK}
@@ -877,6 +891,205 @@ def make_unit_intro_video(civ: str, slug: str, out_mp4, *, duration_s: float = 3
 
     return _encode_gif_loop_video(base, frames, HERO_BOX, out_mp4, duration_s=duration_s,
                                   fps=fps, max_h=HERO_MAX_H, bottom_margin=HERO_BOTTOM_MARGIN)
+
+
+# ---------------------------------------------------------------------------
+# Vertical (9:16) intro card — the SAME "Unit Spotlight — Parchment" design,
+# re-laid for the 1080x1920 short: header on top, hero stage in the middle,
+# stats plate below. Fonts, ground, borders, chips and stat rows all come from
+# the same helpers as the landscape card, so the two cannot drift.
+# ---------------------------------------------------------------------------
+CARD_W_V, CARD_H_V = 1080, 1920
+HERO_BOX_V = (140, 340, 800, 600)     # (x, y, w, h) — the design's unit stage
+HERO_MAX_H_V = 480
+HERO_BOTTOM_MARGIN_V = 60
+BOB_PX_V = 12                          # the design's `floaty` bob amplitude
+BOB_PERIOD_V = 5.0                     # ...and period (seconds)
+BAR_GROW_S = 1.2                       # the design's bar-growth transition
+
+
+def _card_html_vertical(civ: str, slug: str, d: dict, a: dict, pcts: dict,
+                        bar_scale: float = 1.0) -> str:
+    """The design project's 'Shorts — Unit Spotlight' screen (claude.ai/design
+    593f0d30). `bar_scale` in [0,1] scales every stat bar's width — the caller
+    renders a few bases at eased scales to reproduce the design's 1.2s growth."""
+    p = _card_parts(civ, slug, d, a, pcts)
+    W, H = CARD_W_V, CARD_H_V
+    corners = "".join(
+        f'<div style="position:absolute;top:{t}px;left:{l}px;width:16px;height:16px;'
+        f'background:#6b4a1e;transform:rotate(45deg);"></div>'
+        for t, l in [(12, 12), (12, W - 24), (H - 24, 12), (H - 24, W - 24)])
+    stat_rows = "".join(f"""
+      <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="display:flex;width:28px;height:28px;color:#6b4a1e;">{_svg_icon(s['icon'])}</span>
+            <span style="font-size:32px;font-weight:600;color:#5c4326;">{html.escape(s['label'])}</span>
+          </div>
+          <span style="font-size:34px;font-weight:700;color:#3d2a16;">{html.escape(str(s['value']))}</span>
+        </div>
+        <div style="height:13px;background:rgba(107,74,30,.12);border:1px solid rgba(94,66,30,.4);">
+          <div style="height:100%;width:{s['width'] * bar_scale * 100:.1f}%;
+            background:linear-gradient(90deg,#8a6428,#6b4a1e);"></div>
+        </div>
+      </div>""" for s in _stat_rows_for(d, a, pcts))
+    return f"""<!doctype html><html><head><meta charset="utf-8">
+{_GOOGLE_FONTS_LINK}
+<style>
+body{{margin:0;background:#cbb28a;}}
+@keyframes glowpulse{{0%,100%{{opacity:.4}}50%{{opacity:.65}}}}
+</style></head><body>
+<div style="position:relative;width:{W}px;height:{H}px;overflow:hidden;
+  font-family:'EB Garamond',serif;
+  background:radial-gradient(1100px 1400px at 50% 40%, #ecdfc2 0%, #e2d1ac 60%, #cdb489 100%);
+  color:#4a3220;">
+  <div style="position:absolute;inset:0;background:
+    radial-gradient(360px 300px at 10% 92%, rgba(122,90,42,.14), transparent 70%),
+    radial-gradient(320px 280px at 92% 8%, rgba(122,90,42,.12), transparent 70%),
+    radial-gradient(260px 240px at 75% 60%, rgba(122,90,42,.1), transparent 70%);"></div>
+  <div style="position:absolute;inset:0;box-shadow:inset 0 0 180px rgba(94,66,30,.45);"></div>
+  <div style="position:absolute;inset:20px;border:3px double rgba(94,66,30,.55);"></div>
+  <div style="position:absolute;inset:31px;border:1px solid rgba(94,66,30,.3);"></div>
+  {corners}
+
+  <div style="position:absolute;left:60px;right:60px;top:70px;display:flex;
+    flex-direction:column;align-items:center;gap:14px;text-align:center;">
+    <div style="border:1.5px solid #6b4a1e;color:#6b4a1e;font-family:'IM Fell English SC',serif;
+      letter-spacing:6px;font-size:30px;padding:5px 26px;white-space:nowrap;">Unit Spotlight</div>
+    <div id="unit-title" style="font-family:'IM Fell English',serif;font-weight:400;font-size:96px;
+      line-height:1;white-space:nowrap;color:#3d2a16;
+      text-shadow:0 2px 0 rgba(236,223,194,.8), 0 3px 4px rgba(94,66,30,.35);">{p['unit_name_esc']}</div>
+    <div style="display:flex;align-items:center;gap:14px;font-family:'IM Fell English SC',serif;
+      font-size:30px;letter-spacing:4px;color:#5c4326;">
+      <span>{p['civ_esc']}</span>
+      <span style="width:8px;height:8px;background:#6b4a1e;transform:rotate(45deg);"></span>
+      <span>{p['type_esc']}</span>
+    </div>
+  </div>
+  <script>
+    (function(){{
+      var t = document.getElementById('unit-title');
+      var maxWidth = 940;
+      var size = 96;
+      while (t.scrollWidth > maxWidth && size > 34) {{
+        size -= 2;
+        t.style.fontSize = size + 'px';
+      }}
+    }})();
+  </script>
+
+  <div style="position:absolute;left:{HERO_BOX_V[0]}px;top:{HERO_BOX_V[1]}px;
+    width:{HERO_BOX_V[2]}px;height:{HERO_BOX_V[3]}px;">
+    <div style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);width:460px;
+      height:120px;border-radius:50%;background:radial-gradient(closest-side, rgba(122,90,42,.3),
+      transparent 70%);animation:glowpulse 3.5s ease-in-out infinite;"></div>
+    <div style="position:absolute;bottom:80px;left:50%;transform:translateX(-50%) rotate(45deg);
+      width:330px;height:330px;border:1.5px solid rgba(94,66,30,.4);"></div>
+    <div style="position:absolute;bottom:100px;left:50%;transform:translateX(-50%) rotate(45deg);
+      width:278px;height:278px;border:1px solid rgba(94,66,30,.25);"></div>
+  </div>
+
+  <div style="position:absolute;left:44px;right:44px;top:960px;bottom:46px;
+    background:rgba(236,223,194,.78);border:2px solid #6b4a1e;
+    box-shadow:0 0 0 5px rgba(107,74,30,.12), 0 14px 34px rgba(94,66,30,.28);
+    padding:26px 34px 26px;">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+      <div style="width:11px;height:11px;background:#6b4a1e;transform:rotate(45deg);"></div>
+      <div style="font-family:'IM Fell English SC',serif;font-size:38px;letter-spacing:3px;
+        color:#4a3220;">Core Stats</div>
+      <div style="height:1px;flex:1;background:linear-gradient(90deg,rgba(94,66,30,.55),transparent);"></div>
+    </div>
+    {stat_rows}
+    <div style="display:flex;align-items:center;gap:14px;margin:20px 0 12px;">
+      <div style="width:11px;height:11px;background:#5c6b3c;transform:rotate(45deg);"></div>
+      <div style="font-family:'IM Fell English SC',serif;font-size:32px;letter-spacing:3px;
+        color:#51602f;">Bonus Damage</div>
+      <div style="height:1px;flex:1;background:linear-gradient(90deg,rgba(92,107,60,.6),transparent);"></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;">{p['bonus_chips']}</div>
+    <div style="display:flex;align-items:center;gap:14px;margin:20px 0 12px;">
+      <div style="width:11px;height:11px;background:#8a4534;transform:rotate(45deg);"></div>
+      <div style="font-family:'IM Fell English SC',serif;font-size:32px;letter-spacing:3px;
+        color:#7a3a2a;">Armor Categories</div>
+      <div style="height:1px;flex:1;background:linear-gradient(90deg,rgba(138,69,52,.6),transparent);"></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;">{p['weakness_chips']}</div>
+  </div>
+</div>
+</body></html>"""
+
+
+def make_unit_intro_video_vertical(civ: str, slug: str, out_mp4, *,
+                                   duration_s: float = 5.0, fps: int = 30,
+                                   json_path: Path = COMBAT_DICTS_JSON) -> Path:
+    """The 1080x1920 animated Unit Spotlight: stat bars grow over the first 1.2s
+    (a handful of bases at eased widths, per the design's transition) while the
+    unit's attack.gif loops on the stage with the design's `floaty` bob."""
+    d = load_combat_dict(civ, slug, json_path)
+    a = analyze_unit(d)
+    pcts, _broad, _n = stat_percentiles(civ, slug, d)
+
+    def ease(t):                        # ~cubic-bezier(.2,.8,.2,1)
+        return 1.0 - (1.0 - t) ** 3
+
+    n_bases = 10
+    bases = []
+    with tempfile.TemporaryDirectory(prefix="intro_card_v_") as td:
+        for j in range(n_bases + 1):
+            scale = ease(j / n_bases)
+            out_png = Path(td) / f"base{j}.png"
+            _screenshot(_card_html_vertical(civ, slug, d, a, pcts, bar_scale=scale),
+                        out_png, CARD_W_V, CARD_H_V, scale=1,
+                        extra_args=["--virtual-time-budget=10000"])
+            bases.append(Image.open(out_png).convert("RGBA"))
+
+    gif = _hero_gif(slug)
+    frames = _gif_frames(gif) if gif is not None else []
+    still = None
+    if not frames:
+        sp = _hero_still(slug, d.get("unit_name") or "")
+        if sp is not None:
+            still = Image.open(sp).convert("RGBA")
+
+    starts, t_acc = [], 0
+    for _, dur in frames:
+        starts.append(t_acc)
+        t_acc += dur
+    loop_ms = t_acc or 1
+
+    def frame_at(ms):
+        m = ms % loop_ms
+        j = 0
+        for i2, s0 in enumerate(starts):
+            if s0 <= m:
+                j = i2
+            else:
+                break
+        return frames[j][0]
+
+    out_mp4 = Path(out_mp4)
+    ffmpeg = find_ffmpeg()
+    if not ffmpeg:
+        raise RuntimeError("ffmpeg not found (PATH or WinGet install)")
+    n_out = max(1, int(round(duration_s * fps)))
+    with tempfile.TemporaryDirectory(prefix="intro_v_frames_") as td:
+        for i in range(n_out):
+            t = i / fps
+            base_j = min(n_bases, int(round(ease(min(1.0, t / BAR_GROW_S)) * n_bases)))
+            frame = bases[base_j].copy()
+            bob = int(round(BOB_PX_V * math.sin(2 * math.pi * t / BOB_PERIOD_V)))
+            hero = frame_at(t * 1000.0) if frames else still
+            if hero is not None:
+                _composite_hero(frame, hero, HERO_BOX_V, max_h=HERO_MAX_H_V,
+                                bottom_margin=HERO_BOTTOM_MARGIN_V + bob)
+            frame.convert("RGB").save(Path(td) / f"f{i:04d}.png")
+        out_mp4.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            [ffmpeg, "-y", "-framerate", str(fps), "-i", str(Path(td) / "f%04d.png"),
+             "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18",
+             "-movflags", "+faststart", str(out_mp4)],
+            check=True, capture_output=True)
+    return out_mp4
 
 
 # ---------------------------------------------------------------------------

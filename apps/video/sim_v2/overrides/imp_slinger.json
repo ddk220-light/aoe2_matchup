@@ -1,0 +1,29 @@
+{
+  "_comment": "Per-subject curation for the Slinger unit-analysis video. The METHOD lives in code; this file holds only Slinger-specific choices.",
+  "ingame_outcome": {
+    "Persians/elite_war_elephant_persians": "loss",
+    "Bengalis/elite_elephant": "loss",
+    "Huns/paladin": "loss",
+    "Bulgarians/hussar": "loss",
+    "Muisca/elite_temple_guard_muisca": "win",
+    "Teutons/elite_teutonic_knight_teutons": "win",
+    "Berbers/champion": "win"
+  },
+  "_ingame_note": "STOPGAP PINS, 2026-07-27 — every one is a recorded tape from the golden rig, not a guess. The engine still overrates the Slinger against heavy melee even after the CATCH fix (see sim_v2_model.js): it had the Slinger BEATING both elephants and most knights. Tapes: 21 Slinger vs 4 War Elephant -> 0 Slingers, 4 elephants at 1844hp; vs 6 Battle Elephant -> 0 Slingers, 6 at 1354hp; vs 7 Paladin -> 0 Slingers, 7 at 798hp (x2 runs); vs 15 Hussar -> 0 Slingers, 13 at 833hp. Confirming the other direction: vs 9 Temple Guard -> 18 Slingers left; vs 9 Teutonic Knight -> 18 left; vs 15 Champion -> 18 left. The ~10 remaining knight rows the sim still calls Slinger wins are UNVERIFIED and probably wrong the same way — they are deliberately kept OFF camera. Retire these pins once the engine earns the result natively.",
+  "showcase_override": {
+    "expected_win": [
+      ["Teutons", "elite_teutonic_knight_teutons"],
+      ["Muisca", "elite_temple_guard_muisca"],
+      ["Aztecs", "elite_jaguar_warrior_aztecs"]
+    ],
+    "expected_loss": [
+      ["Huns", "paladin"],
+      ["Bulgarians", "hussar"],
+      ["Persians", "elite_war_elephant_persians"]
+    ],
+    "unexpected_win": [],
+    "unexpected_loss": [],
+    "coin_flip": []
+  },
+  "_showcase_note": "Melee opponents only: the golden rig has no ranged-vs-ranged template ('both sides ranged: no validated golden template mapping'), so the Slinger cannot be filmed against archers, skirmishers, gunpowder or cav archers at all. That rules its whole expected-loss-to-archers story off camera and is the single biggest gap in this video."
+}

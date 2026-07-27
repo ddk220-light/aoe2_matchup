@@ -1,0 +1,68 @@
+{
+  "_comment": "Per-subject curation for the Elite Ibirapema Warrior unit-analysis video. The METHOD lives in code; this file holds only Ibirapema-specific choices.",
+  "ingame_outcome": {
+    "Armenians/warrior_priest_armenians": "loss",
+    "Armenians/imp_elite_skirm": "win"
+  },
+  "_ingame_note": "TWO pins, 2026-07-27, both from recorded tapes. (1) 20 Ibirapema vs 21 Warrior Priest -> 0 Ibirapema, 5 Warrior Priests at 382hp: the sim called it an Ibirapema win (wr 0.8) — the same unexplained Warrior Priest gap that has bitten the ETG before. (2) 10 Ibirapema vs 21 Elite Skirmisher -> Ibirapema WINS with 8 of 10 alive (528hp) and all 21 skirmishers dead: the sim calls this a loss (S -42 before the CATCH fix, still -11 after), so the engine remains wrong about a melee unit running down a SLOWER kiter (skirmisher 0.96 vs Ibirapema 1.1). This is the user's original objection and it is correct — the CATCH fix narrowed the gap without closing it. Everything else is the engine's own answer; 10 of 12 filmed fights matched on the first take.",
+  "_coinflip_note": "Bulgarians/hussar is filmed OUT: two tapes split (14v21 -> Ibirapema 0u vs 3 Hussars at 125hp; a second run -> Ibirapema 4u/78hp vs 0 Hussars). Genuinely bimodal, so it is a bad showcase fight. Left unpinned — the sim's loss call sits inside the coin-flip band.",
+  "showcase_override": {
+    "expected_win": [
+      [
+        "Wu",
+        "jian_swordsman_wu"
+      ],
+      [
+        "Aztecs",
+        "elite_eagle"
+      ],
+      [
+        "Armenians",
+        "halberdier"
+      ],
+      [
+        "Armenians",
+        "imp_elite_skirm"
+      ]
+    ],
+    "unexpected_win": [
+      [
+        "Muisca",
+        "elite_temple_guard_muisca"
+      ],
+      [
+        "Persians",
+        "heavy_camel"
+      ],
+      [
+        "Shu",
+        "elite_white_feather_guard_shu"
+      ]
+    ],
+    "unexpected_loss": [
+      [
+        "Berbers",
+        "elite_genitour"
+      ],
+      [
+        "Magyars",
+        "elite_magyar_huszar_magyars"
+      ]
+    ],
+    "expected_loss": [
+      [
+        "Tupi",
+        "elite_blackwood_archer_tupi"
+      ],
+      [
+        "Berbers",
+        "champion"
+      ],
+      [
+        "Armenians",
+        "arbalester"
+      ]
+    ],
+    "coin_flip": []
+  }
+}

@@ -35,10 +35,10 @@
  },
  "counts": {
   "expected_win": 25,
-  "unexpected_win": 33,
+  "unexpected_win": 31,
   "coin_flip": 3,
   "unexpected_loss": 0,
-  "expected_loss": 15
+  "expected_loss": 17
  },
  "rows": [
   {
@@ -83,7 +83,7 @@
    "outcome": "win",
    "favored": "subject",
    "category": "expected_win",
-   "ingame": false,
+   "ingame": true,
    "subject_bonus": true,
    "subject_counter": true,
    "opp_bonus": false,
@@ -108,7 +108,7 @@
    "outcome": "win",
    "favored": "subject",
    "category": "expected_win",
-   "ingame": false,
+   "ingame": true,
    "subject_bonus": true,
    "subject_counter": true,
    "opp_bonus": false,
@@ -583,7 +583,7 @@
    "outcome": "win",
    "favored": "subject",
    "category": "expected_win",
-   "ingame": false,
+   "ingame": true,
    "subject_bonus": true,
    "subject_counter": true,
    "opp_bonus": false,
@@ -667,31 +667,6 @@
    "wc_pct": 12.7
   },
   {
-   "civ": "Persians",
-   "slug": "elite_war_elephant_persians",
-   "name": "Elite War Elephant",
-   "cat": "elephant",
-   "class": "cavalry",
-   "cost": 255.0,
-   "n_subject": 21,
-   "n_opp": 4,
-   "subject_hp": 100,
-   "opp_hp": 38.6,
-   "mean_S": 61.4,
-   "wr": 1,
-   "bimodal": false,
-   "outcome": "win",
-   "favored": "opponent",
-   "category": "unexpected_win",
-   "ingame": false,
-   "subject_bonus": false,
-   "subject_counter": false,
-   "opp_bonus": false,
-   "opp_counter": false,
-   "wc_line": "elephant",
-   "wc_pct": 100.0
-  },
-  {
    "civ": "Khmer",
    "slug": "elite_ballista_elephant_khmer",
    "name": "Elite Ballista Elephant",
@@ -715,31 +690,6 @@
    "opp_counter": false,
    "wc_line": "scorpion",
    "wc_pct": 100.0
-  },
-  {
-   "civ": "Bengalis",
-   "slug": "elite_elephant",
-   "name": "Elite Battle Elephant",
-   "cat": "elephant",
-   "class": "cavalry",
-   "cost": 170.0,
-   "n_subject": 21,
-   "n_opp": 6,
-   "subject_hp": 73.8,
-   "opp_hp": 22,
-   "mean_S": 51.8,
-   "wr": 1,
-   "bimodal": false,
-   "outcome": "win",
-   "favored": "opponent",
-   "category": "unexpected_win",
-   "ingame": false,
-   "subject_bonus": false,
-   "subject_counter": false,
-   "opp_bonus": true,
-   "opp_counter": false,
-   "wc_line": "elephant",
-   "wc_pct": 50.0
   },
   {
    "civ": "Romans",
@@ -1658,7 +1608,7 @@
    "outcome": "loss",
    "favored": "opponent",
    "category": "expected_loss",
-   "ingame": false,
+   "ingame": true,
    "subject_bonus": false,
    "subject_counter": false,
    "opp_bonus": false,
@@ -1858,7 +1808,7 @@
    "outcome": "loss",
    "favored": "opponent",
    "category": "expected_loss",
-   "ingame": false,
+   "ingame": true,
    "subject_bonus": false,
    "subject_counter": false,
    "opp_bonus": false,
@@ -1917,6 +1867,31 @@
    "wc_pct": 96.3
   },
   {
+   "civ": "Bengalis",
+   "slug": "elite_elephant",
+   "name": "Elite Battle Elephant",
+   "cat": "elephant",
+   "class": "cavalry",
+   "cost": 170.0,
+   "n_subject": 21,
+   "n_opp": 6,
+   "subject_hp": 73.8,
+   "opp_hp": 22,
+   "mean_S": 51.8,
+   "wr": 1,
+   "bimodal": false,
+   "outcome": "loss",
+   "favored": "opponent",
+   "category": "expected_loss",
+   "ingame": true,
+   "subject_bonus": false,
+   "subject_counter": false,
+   "opp_bonus": true,
+   "opp_counter": false,
+   "wc_line": "elephant",
+   "wc_pct": 50.0
+  },
+  {
    "civ": "Bohemians",
    "slug": "elite_hussite_wagon_bohemians",
    "name": "Elite Hussite Wagon",
@@ -1940,121 +1915,96 @@
    "opp_counter": false,
    "wc_line": "gunpowder",
    "wc_pct": 100.0
+  },
+  {
+   "civ": "Persians",
+   "slug": "elite_war_elephant_persians",
+   "name": "Elite War Elephant",
+   "cat": "elephant",
+   "class": "cavalry",
+   "cost": 255.0,
+   "n_subject": 21,
+   "n_opp": 4,
+   "subject_hp": 100,
+   "opp_hp": 38.6,
+   "mean_S": 61.4,
+   "wr": 1,
+   "bimodal": false,
+   "outcome": "loss",
+   "favored": "opponent",
+   "category": "expected_loss",
+   "ingame": true,
+   "subject_bonus": false,
+   "subject_counter": false,
+   "opp_bonus": false,
+   "opp_counter": false,
+   "wc_line": "elephant",
+   "wc_pct": 100.0
   }
  ],
  "showcase": {
   "expected_win": [
    [
-    "Burmese",
-    "elite_arambai_burmese"
+    "Teutons",
+    "elite_teutonic_knight_teutons"
    ],
    [
     "Muisca",
     "elite_temple_guard_muisca"
    ],
    [
-    "Teutons",
-    "elite_teutonic_knight_teutons"
-   ],
-   [
-    "Cumans",
-    "elite_steppe"
-   ],
-   [
-    "Celts",
-    "elite_woad_raider_celts"
+    "Aztecs",
+    "elite_jaguar_warrior_aztecs"
    ]
   ],
-  "unexpected_win": [
-   [
-    "Persians",
-    "elite_war_elephant_persians"
-   ],
-   [
-    "Khmer",
-    "elite_ballista_elephant_khmer"
-   ],
-   [
-    "Bengalis",
-    "elite_elephant"
-   ],
-   [
-    "Romans",
-    "elite_centurion_romans"
-   ],
-   [
-    "Shu",
-    "war_chariot_shu"
-   ]
-  ],
+  "unexpected_win": [],
   "coin_flip": [],
   "unexpected_loss": [],
   "expected_loss": [
    [
-    "Armenians",
-    "imp_elite_skirm"
-   ],
-   [
-    "Berbers",
-    "elite_genitour"
-   ],
-   [
-    "Chinese",
-    "elite_chu_ko_nu_chinese"
+    "Huns",
+    "paladin"
    ],
    [
     "Bulgarians",
     "hussar"
    ],
    [
-    "Mayans",
-    "elite_plumed_archer_mayans"
+    "Persians",
+    "elite_war_elephant_persians"
    ]
   ]
  },
  "filmed": {
   "expected_win": [
    [
-    "Burmese",
-    "elite_arambai_burmese"
+    "Teutons",
+    "elite_teutonic_knight_teutons"
    ],
    [
     "Muisca",
     "elite_temple_guard_muisca"
    ],
    [
-    "Teutons",
-    "elite_teutonic_knight_teutons"
+    "Aztecs",
+    "elite_jaguar_warrior_aztecs"
    ]
   ],
-  "unexpected_win": [
-   [
-    "Persians",
-    "elite_war_elephant_persians"
-   ],
-   [
-    "Khmer",
-    "elite_ballista_elephant_khmer"
-   ],
-   [
-    "Bengalis",
-    "elite_elephant"
-   ]
-  ],
+  "unexpected_win": [],
   "coin_flip": [],
   "unexpected_loss": [],
   "expected_loss": [
    [
-    "Armenians",
-    "imp_elite_skirm"
-   ],
-   [
-    "Berbers",
-    "elite_genitour"
+    "Huns",
+    "paladin"
    ],
    [
     "Bulgarians",
     "hussar"
+   ],
+   [
+    "Persians",
+    "elite_war_elephant_persians"
    ]
   ]
  }

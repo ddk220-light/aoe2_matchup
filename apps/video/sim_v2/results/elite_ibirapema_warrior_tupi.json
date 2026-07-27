@@ -34,11 +34,11 @@
   }
  },
  "counts": {
-  "expected_win": 3,
-  "unexpected_win": 9,
-  "coin_flip": 4,
+  "expected_win": 4,
+  "unexpected_win": 8,
+  "coin_flip": 3,
   "unexpected_loss": 5,
-  "expected_loss": 54
+  "expected_loss": 55
  },
  "rows": [
   {
@@ -117,6 +117,31 @@
    "wc_pct": 78.8
   },
   {
+   "civ": "Armenians",
+   "slug": "imp_elite_skirm",
+   "name": "Elite Skirmisher",
+   "cat": "skirm",
+   "class": "ranged",
+   "cost": 60.0,
+   "n_subject": 10,
+   "n_opp": 21,
+   "subject_hp": 21.9,
+   "opp_hp": 27.4,
+   "mean_S": -5.6,
+   "wr": 0.4,
+   "bimodal": true,
+   "outcome": "win",
+   "favored": "subject",
+   "category": "expected_win",
+   "ingame": true,
+   "subject_bonus": false,
+   "subject_counter": false,
+   "opp_bonus": false,
+   "opp_counter": false,
+   "wc_line": "skirmisher",
+   "wc_pct": 50.9
+  },
+  {
    "civ": "Muisca",
    "slug": "elite_temple_guard_muisca",
    "name": "Elite Temple Guard",
@@ -165,31 +190,6 @@
    "opp_counter": false,
    "wc_line": "camel",
    "wc_pct": 50.0
-  },
-  {
-   "civ": "Armenians",
-   "slug": "warrior_priest_armenians",
-   "name": "Warrior Priest",
-   "cat": "infantry",
-   "class": "infantry",
-   "cost": 90.0,
-   "n_subject": 20,
-   "n_opp": 21,
-   "subject_hp": 9.2,
-   "opp_hp": 1.4,
-   "mean_S": 7.8,
-   "wr": 0.8,
-   "bimodal": true,
-   "outcome": "win",
-   "favored": "opponent",
-   "category": "unexpected_win",
-   "ingame": false,
-   "subject_bonus": false,
-   "subject_counter": false,
-   "opp_bonus": false,
-   "opp_counter": false,
-   "wc_line": "militia",
-   "wc_pct": 88.7
   },
   {
    "civ": "Gurjaras",
@@ -390,31 +390,6 @@
    "opp_counter": false,
    "wc_line": "militia",
    "wc_pct": 91.5
-  },
-  {
-   "civ": "Armenians",
-   "slug": "imp_elite_skirm",
-   "name": "Elite Skirmisher",
-   "cat": "skirm",
-   "class": "ranged",
-   "cost": 60.0,
-   "n_subject": 10,
-   "n_opp": 21,
-   "subject_hp": 21.9,
-   "opp_hp": 27.4,
-   "mean_S": -5.6,
-   "wr": 0.4,
-   "bimodal": true,
-   "outcome": "coinflip",
-   "favored": "subject",
-   "category": "coin_flip",
-   "ingame": false,
-   "subject_bonus": false,
-   "subject_counter": false,
-   "opp_bonus": false,
-   "opp_counter": false,
-   "wc_line": "skirmisher",
-   "wc_pct": 50.9
   },
   {
    "civ": "Malay",
@@ -990,6 +965,31 @@
    "opp_counter": true,
    "wc_line": "archer",
    "wc_pct": 93.4
+  },
+  {
+   "civ": "Armenians",
+   "slug": "warrior_priest_armenians",
+   "name": "Warrior Priest",
+   "cat": "infantry",
+   "class": "infantry",
+   "cost": 90.0,
+   "n_subject": 20,
+   "n_opp": 21,
+   "subject_hp": 9.2,
+   "opp_hp": 1.4,
+   "mean_S": 7.8,
+   "wr": 0.8,
+   "bimodal": true,
+   "outcome": "loss",
+   "favored": "opponent",
+   "category": "expected_loss",
+   "ingame": true,
+   "subject_bonus": false,
+   "subject_counter": false,
+   "opp_bonus": false,
+   "opp_counter": false,
+   "wc_line": "militia",
+   "wc_pct": 88.7
   },
   {
    "civ": "Aztecs",
@@ -1930,6 +1930,10 @@
    [
     "Armenians",
     "halberdier"
+   ],
+   [
+    "Armenians",
+    "imp_elite_skirm"
    ]
   ],
   "unexpected_win": [
@@ -1942,16 +1946,8 @@
     "heavy_camel"
    ],
    [
-    "Armenians",
-    "warrior_priest_armenians"
-   ],
-   [
-    "Gurjaras",
-    "elite_shrivamsha_rider_gurjaras"
-   ],
-   [
-    "Ethiopians",
-    "elite_shotel_warrior_ethiopians"
+    "Shu",
+    "elite_white_feather_guard_shu"
    ]
   ],
   "coin_flip": [],
@@ -1963,18 +1959,6 @@
    [
     "Magyars",
     "elite_magyar_huszar_magyars"
-   ],
-   [
-    "Bulgarians",
-    "hussar"
-   ],
-   [
-    "Wu",
-    "elite_fire_archer_wu"
-   ],
-   [
-    "Burmese",
-    "elite_arambai_burmese"
    ]
   ],
   "expected_loss": [
@@ -1989,14 +1973,6 @@
    [
     "Armenians",
     "arbalester"
-   ],
-   [
-    "Britons",
-    "elite_longbowman_britons"
-   ],
-   [
-    "Chinese",
-    "elite_chu_ko_nu_chinese"
    ]
   ]
  },
@@ -2013,6 +1989,10 @@
    [
     "Armenians",
     "halberdier"
+   ],
+   [
+    "Armenians",
+    "imp_elite_skirm"
    ]
   ],
   "unexpected_win": [
@@ -2025,8 +2005,8 @@
     "heavy_camel"
    ],
    [
-    "Armenians",
-    "warrior_priest_armenians"
+    "Shu",
+    "elite_white_feather_guard_shu"
    ]
   ],
   "coin_flip": [],
@@ -2038,10 +2018,6 @@
    [
     "Magyars",
     "elite_magyar_huszar_magyars"
-   ],
-   [
-    "Bulgarians",
-    "hussar"
    ]
   ],
   "expected_loss": [

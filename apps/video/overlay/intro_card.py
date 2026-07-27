@@ -161,9 +161,19 @@ def load_combat_dict(civ: str, slug: str, json_path: Path = COMBAT_DICTS_JSON) -
     with open(json_path, encoding="utf-8") as f:
         all_dicts = json.load(f)
     key = f"{civ}/{slug}"
-    if key not in all_dicts:
-        raise KeyError(f"{key!r} not found in {json_path}")
-    return all_dicts[key]
+    if key in all_dicts:
+        return all_dicts[key]
+    # The default file is ONE subject's opponent pool, so it only carries the
+    # units in that pool. Another subject (the Slinger is not an ETG opponent)
+    # lives in its own sim workdir — search the siblings before giving up.
+    for other in sorted(json_path.parent.parent.glob("*/combat_dicts_all.json")):
+        if other == json_path:
+            continue
+        with open(other, encoding="utf-8") as f:
+            d = json.load(f)
+        if key in d:
+            return d[key]
+    raise KeyError(f"{key!r} not found in {json_path} or any sibling sim workdir")
 
 
 # ---------------------------------------------------------------------------

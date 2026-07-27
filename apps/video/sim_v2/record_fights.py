@@ -53,7 +53,9 @@ def main(argv):
         except Exception as e:
             print(f"[record] FAILED {name}: {e!r}", flush=True)
             try:
-                return_to_editor()
+                # return_to_editor REQUIRES a logfile path; calling it bare raises
+                # TypeError and silently skips recovery (2026-07-20 overnight stall).
+                return_to_editor(str(out / "recover.log"))
             except Exception:
                 pass
             results.append((name, None))

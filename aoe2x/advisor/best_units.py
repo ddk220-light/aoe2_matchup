@@ -70,9 +70,13 @@ def _line_imperial_slugs(line_def):
         out.add(line_def["imperial_slug"])
     for s in line_def.get("extra_imperial_slugs") or []:
         out.add(s)
-    for civ, pair in (line_def.get("unique_units") or {}).items():
-        if pair and len(pair) > 1 and pair[1]:
-            out.add(pair[1])
+    for civ, val in (line_def.get("unique_units") or {}).items():
+        # val is a (castle, imperial) pair, or a list of pairs for civs with
+        # two uniques on one line (e.g. Incas: Kamayuk + Champi Warrior)
+        pairs = val if isinstance(val, list) else [val]
+        for pair in pairs:
+            if pair and len(pair) > 1 and pair[1]:
+                out.add(pair[1])
     return {s for s in out if s}
 
 

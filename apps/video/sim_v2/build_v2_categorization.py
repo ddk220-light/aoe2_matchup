@@ -126,6 +126,36 @@ def load_overrides(path):
     return json.loads(Path(path).read_text())
 
 
+def load_win_conditions(path):
+    """Load a win-conditions file ({"thresholds": {line: pct}, "manual": {...}})
+    and return (wc_dict, lookup) where lookup(civ, slug) -> (line, pct) using the
+    rankings-page pool percentiles. Lines are the fine unit lines (militia, spear,
+    knight, ...) — the same grouping the /rankings page ranks within."""
+    if not path:
+        return None, None
+    wc = json.loads(Path(path).read_text())
+    thresholds = wc["thresholds"]
+    from aoe2x.advisor.best_units import (_load_pool_score_percentiles,
+                                          _line_imperial_slugs)
+    from aoe2x.sim.unit_lines import UNIT_LINES
+    pct = _load_pool_score_percentiles()
+    slug_lines = {}
+    for line in thresholds:
+        for s in _line_imperial_slugs(UNIT_LINES[line]):
+            slug_lines.setdefault(s, []).append(line)
+
+    def lookup(civ, slug):
+        # a slug can sit in two lines (tarkan: knight + light_cav); the line the
+        # pool actually ranked it in wins
+        for line in slug_lines.get(slug, []):
+            p = pct.get((line, civ, slug))
+            if p is not None:
+                return line, p
+        return None, None
+
+    return wc, lookup
+
+
 def _key(civ, slug):
     return f"{civ}/{slug}"
 
@@ -254,8 +284,9 @@ def _sim_get(row, *names):
 
 
 def stage_categorize(subject_civ, subject_slug, workdir, overrides, *,
-                     melee_only=True):
+                     melee_only=True, win_conditions=None):
     workdir = Path(workdir)
+    wc, wc_lookup = load_win_conditions(win_conditions)
     combat = json.loads((workdir / "combat_dicts_all.json").read_text())
     subj_key = _key(subject_civ, subject_slug)
     cdS = combat[subj_key]
@@ -266,6 +297,14 @@ def stage_categorize(subject_civ, subject_slug, workdir, overrides, *,
     subject = SR.make_subject(subj_pack["cat"], subj_pack["ranged"],
                               cdS["movement_speed"], cdS["attacks_json"], cdS["armors_json"])
     subj_name = cdS.get("name", subject_slug)
+
+    def wcost(cd, slug):
+        """Resource-weighted PER-UNIT cost (gold x1.5, /batch) from a combat dict —
+        the favored() tiebreak arbiter; same weighting that sizes the armies."""
+        return ((cd.get("cost_food") or 0) + (cd.get("cost_wood") or 0)
+                + 1.5 * (cd.get("cost_gold") or 0)) / TRAIN_BATCH.get(slug, 1)
+
+    subj_wc = wcost(cdS, subject_slug)
 
     # gather sim rows (batch slices + spliced extra_results)
     sim = {}
@@ -280,6 +319,13 @@ def stage_categorize(subject_civ, subject_slug, workdir, overrides, *,
         sim.pop((civ, slug), None)
 
     ingame = overrides.get("ingame_outcome", {})
+    # ingame_wr / ingame_hp: display-only win-rate and end-of-fight army-HP%
+    # ({"subject_hp": x, "opp_hp": y}) from multi-run in-game recordings, for
+    # matchups whose outcome is ingame_outcome-pinned (the coin-flip odds and
+    # ranking cards would otherwise show the sim's discredited numbers).
+    # Never fed to classify.
+    ingame_wr = overrides.get("ingame_wr", {})
+    ingame_hp = overrides.get("ingame_hp", {})
     exclude = [tuple(k.split("/", 1)) for k in overrides.get("exclude_showcase", [])]
 
     rows = []
@@ -292,17 +338,37 @@ def stage_categorize(subject_civ, subject_slug, workdir, overrides, *,
             subject, cat=r["cat"], ranged=r["ranged"], speed=u["movement_speed"],
             attacks=u["attacks_json"], armors=u["armors_json"],
             subject_winrate=wr, subject_hp=shp, opp_hp=ohp,
-            ingame_outcome=ingame.get(_key(civ, slug)), melee_only=melee_only)
+            ingame_outcome=ingame.get(_key(civ, slug)), melee_only=melee_only,
+            subject_cost=subj_wc, opp_cost=wcost(u, slug))
+        wc_line = wc_pct = None
+        if wc is not None:
+            # win-conditions rule replaces the favored() cascade: expectation
+            # comes from the user's per-line percentile thresholds
+            wc_line, wc_pct = wc_lookup(civ, slug)
+            if wc_line is None:
+                manual = (wc.get("manual") or {}).get(_key(civ, slug))
+                if manual not in ("win", "loss"):
+                    raise SystemExit(
+                        f"[categorize] {civ}/{slug} has no pool percentile and no "
+                        f'"manual" entry in {win_conditions} — add one ("win"/"loss")')
+                c["favored"] = "subject" if manual == "win" else "opponent"
+            else:
+                c["favored"] = SR.win_condition_favored(wc_line, wc_pct, wc["thresholds"])
+            c["category"] = SR.category_for(c["outcome"], c["favored"])
         rows.append({
             "civ": civ, "slug": slug, "name": r.get("name") or u.get("name"),
             "cat": r["cat"], "class": c["class"], "cost": u["total_cost"],
             "n_subject": _sim_get(r, "n_subject", "n_etg"),
-            "n_opp": r["n_opp"], "subject_hp": shp, "opp_hp": ohp,
-            "mean_S": r["mean_S"], "wr": wr, "bimodal": r.get("bimodal", False),
+            "n_opp": r["n_opp"],
+            "subject_hp": ingame_hp.get(_key(civ, slug), {}).get("subject_hp", shp),
+            "opp_hp": ingame_hp.get(_key(civ, slug), {}).get("opp_hp", ohp),
+            "mean_S": r["mean_S"], "wr": ingame_wr.get(_key(civ, slug), wr),
+            "bimodal": r.get("bimodal", False),
             "outcome": c["outcome"], "favored": c["favored"], "category": c["category"],
             "ingame": _key(civ, slug) in ingame,
             "subject_bonus": c["subject_bonus"], "subject_counter": c["subject_counter"],
             "opp_bonus": c["opp_bonus"], "opp_counter": c["opp_counter"],
+            "wc_line": wc_line, "wc_pct": wc_pct,
         })
 
     rows = SR.sort_rows(rows)
@@ -344,7 +410,10 @@ def stage_categorize(subject_civ, subject_slug, workdir, overrides, *,
         "subject": {"civ": subject_civ, "slug": subject_slug, "name": subj_name},
         "params": {"win_rate": SR.WIN_RATE, "loss_rate": SR.LOSS_RATE,
                    "win_hp_min": SR.WIN_HP_MIN, "bonus_min": SR.BONUS_MIN,
-                   "melee_only": melee_only, "showcase_max": SHOWCASE_MAX},
+                   "melee_only": melee_only, "showcase_max": SHOWCASE_MAX,
+                   "rule": "win_conditions" if wc else "favored_cascade",
+                   "win_conditions": (dict(wc, file=str(win_conditions))
+                                      if wc else None)},
         "counts": {cat: sum(1 for r in rows if r["category"] == cat)
                    for cat in SR.CATEGORY_ORDER},
         "rows": rows,
@@ -496,6 +565,9 @@ def main(argv=None):
     ap.add_argument("--jobs", type=int, default=1, help="parallel Node sim processes")
     ap.add_argument("--no-melee-gate", action="store_true",
                     help="count subject bonuses even vs ranged/kiting opponents")
+    ap.add_argument("--win-conditions",
+                    help="per-line percentile thresholds JSON (win_conditions/"
+                         "<slug>.json); replaces the favored() cascade")
     args = ap.parse_args(argv)
 
     workdir = Path(args.workdir) if args.workdir else HERE / "_work" / args.slug
@@ -507,7 +579,8 @@ def main(argv=None):
     if args.stage in ("simulate", "all"):
         stage_simulate(args.civ, args.slug, workdir, jobs=args.jobs)
     if args.stage in ("categorize", "all"):
-        stage_categorize(args.civ, args.slug, workdir, overrides, melee_only=melee_only)
+        stage_categorize(args.civ, args.slug, workdir, overrides, melee_only=melee_only,
+                         win_conditions=args.win_conditions)
 
 
 if __name__ == "__main__":

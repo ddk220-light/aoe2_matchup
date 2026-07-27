@@ -30,9 +30,10 @@ WIN_CATS = {"expected_win", "unexpected_win"}
 LOSS_CATS = {"expected_counter", "unexpected_counter", "expected_loss", "unexpected_loss"}
 EITHER_CATS = {"even", "coin_flip"}
 
-# film-category prefix (as run_unit_analysis_video names the clips) -> category
+# film-category prefix (as run_unit_analysis_video / record_fights name the clips)
 FILECAT = ("expected_win", "unexpected_win", "expected_counter",
-           "unexpected_counter", "even")
+           "unexpected_counter", "expected_loss", "unexpected_loss",
+           "coin_flip", "even")
 
 
 def _cat_from_name(path):

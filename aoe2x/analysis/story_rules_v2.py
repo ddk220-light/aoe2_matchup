@@ -99,33 +99,62 @@ def outcome(subject_winrate, subject_hp, opp_hp):
     return "coinflip"
 
 
-def favored(subject_bonus, opp_bonus, subject_counter, opp_counter):
-    """Who the fight favors, by the bonus-first cascade. -> subject / opponent /
-    both / neither."""
-    if subject_bonus and opp_bonus:
-        return "both"
-    if subject_bonus:
+def favored(subject_bonus, opp_bonus, subject_counter, opp_counter,
+            subject_cost=0.0, opp_cost=0.0):
+    """Who the fight favors -> subject / opponent / neither.
+
+    The cascade (user-approved 2026-07-24, replacing the counter triangle):
+      1. only one side has a usable damage bonus            -> that side
+      2. only one side is the ranged counter to the other's
+         melee infantry (`*_counter`, see classify)         -> that side
+      3. otherwise the DEARER unit per unit                 -> that side
+
+    Cost is the arbiter of last resort because a cheaper unit arrives in bigger
+    numbers: you are supposed to beat something cheaper than you, so losing to it
+    is the surprise. "neither" is returned only on an exact cost tie, and maps to
+    coin_flip — with no bonus, no counter and equal price there is no prior.
+    """
+    if subject_bonus and not opp_bonus:
         return "subject"
-    if opp_bonus:
+    if opp_bonus and not subject_bonus:
         return "opponent"
-    if subject_counter and opp_counter:
-        return "neither"       # mutual counter (e.g. inf vs inf) — a fair fight
-    if subject_counter:
+    if opp_counter and not subject_counter:
+        return "opponent"
+    if subject_counter and not opp_counter:
         return "subject"
-    if opp_counter:
+    if subject_cost > opp_cost:
+        return "subject"
+    if opp_cost > subject_cost:
         return "opponent"
     return "neither"
 
 
 def category_for(out, fav):
-    """Map (outcome, favored) onto exactly one of the five categories."""
-    if out == "coinflip":
+    """Map (outcome, favored) onto exactly one of the five categories. The favored
+    side winning is expected; the favored side losing is the surprise."""
+    if out == "coinflip" or fav == "neither":
         return "coin_flip"
-    if fav == "both":
-        return "unexpected_win" if out == "win" else "unexpected_loss"
     if out == "win":
-        return "expected_win" if fav in ("subject", "neither") else "unexpected_win"
-    return "expected_loss" if fav in ("opponent", "neither") else "unexpected_loss"
+        return "expected_win" if fav == "subject" else "unexpected_win"
+    return "unexpected_loss" if fav == "subject" else "expected_loss"
+
+
+def win_condition_favored(line, pct, thresholds):
+    """Favored side under the WIN-CONDITIONS rule (user 2026-07-26, champi pilot).
+
+    The subject's owner declares, per opponent UNIT LINE, the pool percentile
+    below which the subject is expected to win ("the champi beats any knight-line
+    unit below the 50th percentile"). ``pct`` is the opponent's rankings-page
+    percentile within its own line (aoe2x.advisor.best_units pool percentiles).
+
+    Semantics: strictly-below wins, EXCEPT a threshold of 100 which is inclusive
+    ("beats 100% of the line" must include the line's best unit, whose percentile
+    is exactly 100.0). A threshold of 0 means the subject beats none of the line.
+    Replaces the favored() cascade when the driver is given a win-conditions file;
+    never returns "neither" — the declared expectation always picks a side.
+    """
+    thr = thresholds[line]
+    return "subject" if (thr >= 100.0 or pct < thr) else "opponent"
 
 
 def make_subject(cat, is_ranged, speed, attacks, armors):
@@ -140,23 +169,36 @@ def make_subject(cat, is_ranged, speed, attacks, armors):
 
 def classify(subject, *, cat, ranged, speed, attacks, armors,
              subject_winrate, subject_hp, opp_hp,
-             ingame_outcome=None, melee_only=True):
+             ingame_outcome=None, melee_only=True,
+             subject_cost=0.0, opp_cost=0.0):
     """Classify one opponent against a make_subject() descriptor.
 
     Returns a dict with the resolved class / outcome / favored / category and the
     four advantage flags (subject_bonus, subject_counter, opp_bonus, opp_counter).
     ``ingame_outcome`` (one of "win"/"loss"/"coinflip") overrides the V2-derived
     outcome for matchups the V2 model is known to get wrong (validated in-game).
+    ``subject_cost`` / ``opp_cost`` are resource-weighted PER-UNIT costs (gold x1.5,
+    the same weighting that sizes the equal-resource armies) and break the tie when
+    neither a bonus nor the ranged-counter clause decides — see ``favored``.
     """
     ocls = broad_class(cat, ranged)
-    subject_counter = ocls in COUNTERS[subject["broad"]]
-    opp_counter = subject["broad"] in COUNTERS[ocls]
-    # Skirmisher/spearman override, speed-gated: a non-kiting skirm/spear is weak
-    # vs infantry (countered by it, does not counter it); a mounted skirmisher
-    # faster than the subject kites and behaves like a normal ranged unit.
-    kites = ranged and speed > subject["speed"]
-    if cat in ("skirm", "spear") and not kites:
-        subject_counter, opp_counter = True, False
+
+    def _ranged_counter(is_ranged, ucat, uspeed, other_cls, other_ranged, other_speed):
+        """The ONE class generalization kept (user 2026-07-24): a ranged unit is the
+        expected counter to MELEE INFANTRY. Deliberately not to melee cavalry — in the
+        real game cavalry runs archers down, not the reverse. Skirmishers and spearmen
+        are the standing exception: anti-archer / anti-cav trash that infantry beats, so
+        they never count — unless mounted and quick enough to actually kite."""
+        if not is_ranged or other_ranged or other_cls != "infantry":
+            return False
+        if ucat in ("skirm", "spear") and uspeed <= other_speed:
+            return False
+        return True
+
+    opp_counter = _ranged_counter(ranged, cat, speed,
+                                 subject["broad"], subject["ranged"], subject["speed"])
+    subject_counter = _ranged_counter(subject["ranged"], subject["cat"], subject["speed"],
+                                      ocls, ranged, speed)
     # Damage bonuses (> 1). Melee gating: a melee subject's bonus is ignored vs a
     # ranged opponent it can never catch.
     subject_bonus_raw = bool(subject["bonus"] & armor_classes(armors))
@@ -166,7 +208,8 @@ def classify(subject, *, cat, ranged, speed, attacks, armors,
     else:
         subject_bonus = subject_bonus_raw
     out = ingame_outcome or outcome(subject_winrate, subject_hp, opp_hp)
-    fav = favored(subject_bonus, opp_bonus, subject_counter, opp_counter)
+    fav = favored(subject_bonus, opp_bonus, subject_counter, opp_counter,
+                  subject_cost, opp_cost)
     return {
         "class": ocls, "outcome": out, "favored": fav,
         "category": category_for(out, fav),

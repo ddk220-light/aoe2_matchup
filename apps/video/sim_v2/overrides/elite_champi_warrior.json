@@ -1,0 +1,10 @@
+{
+  "_comment": "Pins RETIRED 2026-07-26: the two validated sim gaps (Ibirapema sim-0%/game-4W1L, Xianbei sim-0%/game-5W0L dominant) are fixed IN THE ENGINE (sim_v2_model.js TRAMPLE_CONE=60 + KITE_CATCH damage-aware gate + the simulate.js class-4-thrower armor fix), and the sim reproduces all tapes natively. Chu Ko Nu 5-run tested: sim RIGHT (champi 0/5). Diag raws: champi_ibira_diag/ + champi_ckn_xianbei_diag/ + champi_gbeto_mameluke_diag/.",
+  "_comment_showcase": "User-curated filmed set (2026-07-26): UW = 4 fights for on-screen variety (War Wagon -> Centurion -> Tiger Cavalry -> Iron Pagoda; Ballista Elephant dropped - same 'big ranged siege' read as the War Wagon). Other categories keep the automatic cost-rule picks, frozen here because showcase_override replaces ALL categories.",
+  "showcase_override": {
+    "expected_win": [["Persians", "heavy_camel"], ["Cumans", "elite_steppe"], ["Wu", "jian_swordsman_wu"]],
+    "unexpected_win": [["Koreans", "elite_war_wagon_koreans"], ["Romans", "elite_centurion_romans"], ["Wei", "elite_tiger_cavalry_wei"], ["Jurchens", "elite_iron_pagoda_jurchens"]],
+    "unexpected_loss": [["Tupi", "elite_blackwood_archer_tupi"], ["Berbers", "champion"]],
+    "expected_loss": [["Chinese", "elite_chu_ko_nu_chinese"], ["Japanese", "elite_samurai_japanese"], ["Poles", "elite_obuch_poles"]]
+  }
+}

@@ -612,6 +612,8 @@ def test_registry_covers_all_writer_columns(ref_columns):
         "final_cost_gold", "final_attacks_json", "final_armors_json",
         "base_train_time", "final_train_time",
         "upgrade_cost_food", "upgrade_cost_wood", "upgrade_cost_gold",
+        # upgrade-PATH research (line upgrades + Ballistics) — economy, not an ability
+        "path_cost_food", "path_cost_wood", "path_cost_gold",
         # projectile/geometry base data (not abilities)
         "total_projectiles", "outline_size_x", "applied_bonuses_summary",
     }

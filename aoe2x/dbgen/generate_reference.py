@@ -41,6 +41,12 @@ from .config import (
     UNIT_STAT_OVERRIDES,
     _tech_age_name,
 )
+from .investment_cost import (
+    BALLISTICS_TECH_ID,
+    line_path_techs,
+    path_cost,
+    unique_path_techs,
+)
 from .unit_analyzer import UnitAnalyzer
 
 
@@ -489,8 +495,24 @@ def generate_reference_database(analyzer):
             upgrade_cost_food INTEGER DEFAULT 0,
             upgrade_cost_wood INTEGER DEFAULT 0,
             upgrade_cost_gold INTEGER DEFAULT 0,
+            -- Upgrade-PATH research: the line-upgrade techs (Crossbowman, Arbalester,
+            -- Elite <UU>, ...) plus Ballistics. Disjoint from upgrade_cost_* above,
+            -- which only sums techs that changed a stat. See investment_cost.py.
+            path_cost_food INTEGER DEFAULT 0,
+            path_cost_wood INTEGER DEFAULT 0,
+            path_cost_gold INTEGER DEFAULT 0,
             -- Ability columns (generated from analysis/ability_registry.py)
             {_ability_ddl_fragment()}
+        );
+        CREATE TABLE ref_path_techs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ref_unit_id INTEGER NOT NULL,
+            tech_id INTEGER,
+            tech_name TEXT NOT NULL,
+            cost_food INTEGER DEFAULT 0,
+            cost_wood INTEGER DEFAULT 0,
+            cost_gold INTEGER DEFAULT 0,
+            FOREIGN KEY (ref_unit_id) REFERENCES ref_units(id)
         );
         CREATE TABLE ref_techs_applied (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -649,8 +671,13 @@ def generate_reference_database(analyzer):
         max_age,
         unit_data,
         excluded_tech_ids=None,
+        invest_techs=None,
     ):
         """Process one unit with full audit trail. Returns ref_unit_id or None.
+
+        ``invest_techs`` = the tech ids that ENABLE this unit (line upgrades / Elite UU);
+        they never appear in the stat chain, so the caller — which has the unit config in
+        scope — passes them in. See investment_cost.py.
 
         unit_class can be an int or tuple of ints (for dual-class units).
         The primary class (first element) is stored in DB; the full value
@@ -1064,6 +1091,28 @@ def generate_reference_database(analyzer):
             (total_food, total_wood, total_gold, ref_unit_id),
         )
 
+        # Upgrade-PATH research: the line-upgrade / Elite-UU techs that ENABLE this unit
+        # (they restat nothing, so the stat chain above never sees them) plus Ballistics,
+        # which changes no stat at all but is not optional for a projectile unit.
+        path_ids = list(invest_techs or ())
+        if (final_snap.get("range") or 0) > 0:
+            path_ids.append(BALLISTICS_TECH_ID)
+        p_food, p_wood, p_gold, path_rows = path_cost(
+            analyzer, civ_name, path_ids,
+            exclude_tech_ids={tc[0] for tc in tech_costs},
+        )
+        cursor.execute(
+            """UPDATE ref_units SET path_cost_food=?, path_cost_wood=?, path_cost_gold=?
+               WHERE id=?""",
+            (p_food, p_wood, p_gold, ref_unit_id),
+        )
+        cursor.executemany(
+            """INSERT INTO ref_path_techs
+               (ref_unit_id, tech_id, tech_name, cost_food, cost_wood, cost_gold)
+               VALUES (?,?,?,?,?,?)""",
+            [(ref_unit_id, *r) for r in path_rows],
+        )
+
         # Special effects (combat properties)
         combat_props = get_combat_properties(
             unit_slug, civ_name=civ_name, unit_id=unit_id, units_data=analyzer.units
@@ -1270,6 +1319,7 @@ def generate_reference_database(analyzer):
                 "Imperial",
                 IMPERIAL_AGE,
                 unit_data,
+                invest_techs=line_path_techs(config),
             )
 
         # Unique units (Imperial only: elite version, or base with Imp techs)
@@ -1310,6 +1360,7 @@ def generate_reference_database(analyzer):
                             IMPERIAL_AGE,
                             elite_data,
                             excluded_tech_ids=excluded,
+                            invest_techs=unique_path_techs(uu_config, elite=True),
                         )
                 elif unit_data:
                     # No elite version — show base unit in Imperial with Imp techs
@@ -1324,6 +1375,7 @@ def generate_reference_database(analyzer):
                         IMPERIAL_AGE,
                         unit_data,
                         excluded_tech_ids=excluded,
+                        invest_techs=unique_path_techs(uu_config, elite=False),
                     )
 
         # =================================================================
@@ -1353,6 +1405,7 @@ def generate_reference_database(analyzer):
                 "Imperial",
                 IMPERIAL_AGE,
                 unit_data,
+                invest_techs=line_path_techs(config),
             )
 
         # =================================================================
@@ -1398,6 +1451,7 @@ def generate_reference_database(analyzer):
                             "Imperial",
                             IMPERIAL_AGE,
                             elite_data,
+                            invest_techs=unique_path_techs(nu_config, elite=True),
                         )
                 else:
                     # No elite — show base unit with Imperial-age techs
@@ -1411,6 +1465,7 @@ def generate_reference_database(analyzer):
                         "Imperial",
                         IMPERIAL_AGE,
                         unit_data,
+                        invest_techs=unique_path_techs(nu_config, elite=False),
                     )
 
     conn.commit()

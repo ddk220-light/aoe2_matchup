@@ -274,7 +274,6 @@
 	(up-modify-goal gStrafeBase c:= 200)
 	(up-modify-goal gStepPct c:= 390)
 	(up-modify-goal gEnemyPly c:= 3)
-	(chat-to-player 1 "ddkModelAI up")
 )
 ;--- Rule 1 -- TIME (Immortal #3592 @49196-49210 verbatim idiom) ---
 (defrule
@@ -419,7 +418,6 @@
 	(up-modify-goal gTagged c:= 1)
 	(up-target-point 0 action-none formation-ignore stance-stand-ground)
 	(up-target-point 0 action-stop formation-ignore stance-ignore)
-	(chat-to-player 1 "TAGGED")
 )
 ;--- Rule 12 -- SM find by CLASS (#2624 @40817-21 + dedupe #2626) ---
 (defrule
@@ -1085,7 +1083,6 @@
 	(up-compare-goal gDiag1 c:== 0)
 	=>
 	(up-modify-goal gDiag1 c:= 1)
-	(chat-to-player 1 "D1 SM ALIVE - tag stuck, ball found")
 )
 ;--- Rule 79 -- tag did NOT stick (tagged but SM finds nothing) ---
 (defrule
@@ -1094,7 +1091,6 @@
 	(up-compare-goal gDiag2 c:== 0)
 	=>
 	(up-modify-goal gDiag2 c:= 1)
-	(chat-to-player 1 "D2 SM EMPTY - tag did not stick")
 )
 ;--- Rule 80 -- enemy scan found something ---
 (defrule
@@ -1102,7 +1098,6 @@
 	(up-compare-goal gDiag3 c:== 0)
 	=>
 	(up-modify-goal gDiag3 c:= 1)
-	(chat-to-player 1 "D3 ENEMY SEEN")
 )
 ;--- Rule 81 -- position reads broken? (ball median near map origin = garbage) ---
 (defrule
@@ -1112,7 +1107,6 @@
 	(up-compare-goal gDiag4 c:== 0)
 	=>
 	(up-modify-goal gDiag4 c:= 1)
-	(chat-to-player 1 "D4 MED NEAR ZERO - reads broken")
 )
 ;--- Rule 82 -- state 18 reached ---
 (defrule
@@ -1120,7 +1114,6 @@
 	(up-compare-goal gDiag5 c:== 0)
 	=>
 	(up-modify-goal gDiag5 c:= 1)
-	(chat-to-player 1 "D5 STATE18")
 )
 ;--- Rule 83 -- state 22 reached ---
 (defrule
@@ -1128,7 +1121,6 @@
 	(up-compare-goal gDiag6 c:== 0)
 	=>
 	(up-modify-goal gDiag6 c:= 1)
-	(chat-to-player 1 "D6 STATE22")
 )
 ;--- Rule 84 -- enemy scan ran but empty while tagged (scan/filter/reads issue) ---
 (defrule
@@ -1138,7 +1130,6 @@
 	(up-compare-goal gDiag7 c:== 0)
 	=>
 	(up-modify-goal gDiag7 c:= 1)
-	(chat-to-player 1 "D7 ENEMY SCAN EMPTY")
 )
 
 ;=== ddkModelAI PARAMETERIZATION APPENDIX (rules 78+; runs END of pass, values
@@ -1197,7 +1188,6 @@
 	(up-modify-goal gStateT g:= gTimeMilli)
 	(up-modify-goal gStateAge c:= 0)
 	(up-modify-goal gJustChanged c:= 1)
-	(chat-to-player 1 "HOLD")
 )
 ;--- melee fallback: no ranged ball ever formed (pure-melee army) -> restore the
 ;    engine's auto-fight AFTER Rule 76 zeroed it, so melee-vs-melee is normal ---
@@ -1445,7 +1435,6 @@
 	(up-compare-goal gWset c:== 1)
 	=>
 	(up-modify-goal gWset c:= 2)
-	(chat-to-player 1 "WFIRE SET")
 )
 ;=== DYNAMIC ENEMY PLAYER (2026-07-05 v3 -- DIPLOMACY STANCE) =====================
 ;   History: hardcoded 3 broke AI-on-P3 (hunted itself); up-find-player was a dud;
@@ -1473,14 +1462,12 @@
 	(up-compare-goal gDiagE c:!= 2)
 	=>
 	(up-modify-goal gDiagE c:= 2)
-	(chat-to-player 1 "ENEMY = P2")
 )
 (defrule
 	(up-compare-goal gEnemyPly c:== 3)
 	(up-compare-goal gDiagE c:!= 3)
 	=>
 	(up-modify-goal gDiagE c:= 3)
-	(chat-to-player 1 "ENEMY = P3")
 )
 ;=== ddkMatchupAI = continuous clockwise perimeter loop.  goals 202-213. ===
 
@@ -1564,7 +1551,6 @@
 	(up-modify-goal gPacked g:= vecSquare_x)
 	(up-modify-goal gPacked c:* 10000)
 	(up-modify-goal gPacked g:+ vecSquare_y)
-	(up-chat-data-to-player 1 "xy=%d" g: gPacked)
 )
 ;--- PROBE: P=tag/state, E=gE, D=dist, M=vecMed, S=vecSquare, C=gCorner ---
 (defrule
@@ -1576,16 +1562,10 @@
 	(up-modify-goal gProbe g:= gTagged)
 	(up-modify-goal gProbe c:* 100)
 	(up-modify-goal gProbe g:+ gState)
-	(up-chat-data-to-player 1 "P=%d" g: gProbe)
-	(up-chat-data-to-player 1 "E=%d" g: gE)
-	(up-chat-data-to-player 1 "D=%d" g: gDistToTgt)
 	(up-modify-goal gProbe g:= vecMed_x)
 	(up-modify-goal gProbe c:* 10000)
 	(up-modify-goal gProbe g:+ vecMed_y)
-	(up-chat-data-to-player 1 "M=%d" g: gProbe)
 	(up-modify-goal gProbe g:= vecSquare_x)
 	(up-modify-goal gProbe c:* 10000)
 	(up-modify-goal gProbe g:+ vecSquare_y)
-	(up-chat-data-to-player 1 "S=%d" g: gProbe)
-	(up-chat-data-to-player 1 "C=%d" g: gCorner)
 )

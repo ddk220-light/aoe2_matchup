@@ -77,6 +77,7 @@ data/golden/aoe2_units.db          │                            │
 | [operations.md](operations.md) | Railway deployment, git/data-shipping workflow, tests + golden baseline, scenario builder, graphics, reference corpus |
 | [runbooks.md](runbooks.md) | **When X changes, update Y** — step-by-step checklists with exact commands |
 | [data-model-review.md](data-model-review.md) | Deep critique of the stage 1–3 data model: derive-vs-store verdicts, availability resolver, ability registry, multi-form tech gap, migration plan |
+| [../../simulation_v2/CHANGELIST.md](../../simulation_v2/CHANGELIST.md) | **Staged, not live:** the V2 engine — every fix/model change vs the engines that produced current data, affected units, and the full-rerun protocol |
 
 Procedure deep-dives that predate this set and remain canonical:
 [../patch-workflow.md](../patch-workflow.md) (end-to-end patch procedure) and

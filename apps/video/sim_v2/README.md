@@ -198,3 +198,19 @@ gRPC HP overlay, compose, chapters).
 23 expected win · 0 unexpected win · 7 coin-flip · 2 unexpected loss · 44 expected loss.
 Showcase picks and the full 76-opponent table:
 [`results/elite_temple_guard_muisca.md`](results/elite_temple_guard_muisca.md).
+
+
+## Update 2026-07-26 (champi run — the golden workflow)
+
+- **Categorization rule**: user-declared WIN CONDITIONS (per-line pool-percentile
+  thresholds, `win_conditions/<slug>.json` + `--win-conditions`) replace the
+  favored() cascade as the standard. See `../UNIT_VIDEO_WALKTHROUGH.md` Phase 1.
+- **Physics knobs added to the frozen model** (`sim_v2_model.js`, tape-validated):
+  `TRAMPLE_CONE=60` (conical blast, front arc only, CONE_SLUGS in headless_sim) and
+  `KITE_CATCH=1.15` (three-condition flee gate: kiter faster AND chaser >=1.15
+  tiles/s absolute AND kiter can't hurt the chaser). Full rationale in the model file.
+- **Shipped-engine fix inherited at load**: simulate.js getDamageAgainst now resists
+  an attack with the armor of the ATTACK'S class (thrown-melee units vs melee armor).
+- **Pins retired**: `ingame_outcome`/`ingame_wr`/`ingame_hp` overrides are stopgaps;
+  the champi run ended with zero pins — the engine earns every taped result natively.
+- `--workdir` must be ABSOLUTE when running `--stage simulate` (node cwd is sim_v2/).

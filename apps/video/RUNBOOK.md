@@ -1,5 +1,8 @@
 # Matchup-video sweep RUNBOOK
 
+> Operational detail for the recording phase. The end-to-end
+> workflow (gates, categorization, assembly) is `UNIT_VIDEO_WALKTHROUGH.md`.
+
 How to run a recording sweep smoothly, end to end, with everything we learned the
 hard way baked in. The system is **self-sufficient**: the gRPC capture stack lives in
 `aoe2x/grpc/` (recorder + live fight-end tailer, offline redecoder, fixed

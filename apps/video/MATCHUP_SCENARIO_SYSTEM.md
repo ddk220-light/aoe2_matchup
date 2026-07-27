@@ -1,5 +1,9 @@
 # Matchup Scenario System — FINAL (2026-07-18)
 
+> Template internals. Entry point for the whole video workflow:
+> `UNIT_VIDEO_WALKTHROUGH.md`. 2026-07-26: all embedded AI text is CHAT-FREE
+> (repo .per + deployed + all 3 scenario AI slots) — keep it that way.
+
 Golden battle-scenario templates per engagement kind + a generator that retargets them to any
 civ/unit matchup. All three engagement kinds **confirmed working in-game** (2026-07-18).
 

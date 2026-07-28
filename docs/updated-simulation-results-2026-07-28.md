@@ -4,13 +4,30 @@ Fidelity work on **`aoe2x/sim/simulation_real.py`**, the position-based engine
 that produces every matchup number the site serves. Written as a resume point:
 everything needed to pick this up cold is here.
 
-- **Branch:** `updated-simulation-results-2026-07-28` (8 commits, off `staging`)
-- **Engine state:** `sim_version b9be1ba0a03b8395`
-- **Agreement with in-game recordings: 33/38 (87%)** at recorded counts,
-  32/38 (84%) at equal counts — up from a **31/38 (82%)** baseline
+- **Branch:** `updated-simulation-results-2026-07-28`
+- **Engine state:** `sim_version dd3d17dfc94147c2`
+- **Agreement with in-game recordings: 36/38 (95%)** at recorded counts,
+  34/38 (89%) at equal counts — up from a **31/38 (82%)** baseline
 - **Tests:** 350 passed, 13 skipped
-- **Nothing has been re-simulated yet.** All committed DBs still hold
-  pre-change data. Nothing the site serves has moved.
+- **Nothing the site serves has moved.** All committed DBs still hold
+  pre-change data.
+
+> **PAUSED — do not run any simulation.** Standing instruction (2026-07-28):
+> no re-sim until the outstanding engine issues are closed. The blocking one is
+> §6.1: `KITE_STOP_TIME` is back in the engine as a crude stand-in for a real
+> constraint, and it has to be replaced by physics that lets an elephant
+> legitimately run a skirmisher down. See §6.1 for the candidate mechanisms.
+
+**Two baselines exist on disk. Neither is current.**
+
+| file | rows | `sim_version` | status |
+|---|---|---|---|
+| `D:/AI/matchup_baseline_180059.db` | 540,920 | `b9be1ba0` | built 2026-07-28, now stale |
+| `D:/AI/archive/matchup_baseline_177723.db` | 521,658 | `e221c8a3` | the previous baseline, also in both Railway buckets |
+
+The `180059` in that filename is **not a game build** — `patches.db` says 177723
+is current and there is no 180059. It was an invented label; rename on the next
+rebuild.
 
 ---
 
@@ -104,6 +121,51 @@ Applied to **both** melee attack paths. The JS engine patches only
 `perform_attack`, so its crowd interference silently never applies to any unit
 with `attack_delay > 0` — which is the entire cavalry roster. This port does not
 inherit that.
+
+### Session 2 (2026-07-28 afternoon)
+
+| Commit | Change | Effect |
+|---|---|---|
+| `9b55513` | Batch: skip stat-identical pairs, not same-named ones | +36,116 rows |
+| `51e3df8` | Carry-forward design (runbooks §2a) + §6.1 correction | docs |
+| `1af83e2` | Ranged units kite ranged units they can outrun | **36/38** tape |
+
+**The full baseline ran and was verified** — 114,236 groups → 504,804 rows in
+6h13m, then a 7,216-group top-up for the same-slug fix, 540,920 rows total,
+`groups_failed = 0`, 100% `eliminated`, mean fight 46.4s. It is now stale
+(`sim_version` moved), but it is kept as the comparison point and as the
+carry-forward source.
+
+**What the full table revealed that the corpus could not.** §6.2 predicted this:
+the armour damage-class fix touches 23 units, none of which are in the corpus.
+Measured against the old baseline over 493,584 shared matchups — 3.58% of
+winners flipped, mean signed-score delta **+0.00** (redistribution, not
+inflation) — the movers separate cleanly by cause:
+
+- **armour damage-class**: Chakram Thrower **+35.8**, Throwing Axeman +17.1,
+  Gbeto +12.8, Mameluke +11.1 — verified to be exactly the class-4-no-class-3 set
+- **true collision radii** (bodies 0.47 → 0.20 tiles, so AoE catches more):
+  Ibirapema +23.9, Urumi +14.3, Grenadier +11.6
+- **crowd interference**: Konnik −9.3, Kona −7.9, Temple Guard −7.6 (the unit
+  the fix was built for), Iron Pagoda −7.2, Keshik −7.1
+
+**Elephant trample was provably dead before the trample fix.** Old reach 0.97
+tiles against a minimum possible separation of 1.20 — shorter than the closest
+an enemy can physically stand, so a War Elephant's trample hit *nothing, ever*.
+Now 1.30 vs 0.80, with ~15 neighbours geometrically reachable. Yet outcomes moved
+only +1.1, and crowd interference is not the reason (elephants pay only −0.4 to
+−1.1 for it, versus ~−7 for infantry, because big bodies cannot pack six
+neighbours into a 2-tile radius). A mechanic going from 0 to 15 targets and
+moving outcomes by one point is the first real evidence for the `TRAMPLE_K` /
+`GRAZE_K` packing factors in §6.3.
+
+**Same-name is not same-unit** (`9b55513`). The enumeration skipped every
+`my_slug == opp_slug` pair, discarding 9,780 genuine cross-civ matchups to avoid
+522 real mirrors. Wu Halberdier (60hp/10atk) beats Gurjaras Halberdier
+(45hp/5atk) 30-to-0 with 96% health; 22.5% of cross-civ same-slug pairs are
+blowouts, against 0% for true mirrors. Now keyed on the **fingerprint**, so
+stat-identical pairs are still skipped — they record a *fake winner* from spawn
+side (the 318 true mirrors split 238/80), not a draw.
 
 ### Deliberately not shipped
 
@@ -232,17 +294,88 @@ roster: Janissary (delay 0.00) never freezes and kites at its full 0.96; Heavy
 Cav Archer (0.58 / 2.00) is frozen 29% of its cycle and kites like a 1.09 unit
 despite 1.54 paper speed; Arbalester (0.33 / 2.00) kites at 0.80.
 
-What actually remains is narrower than "redesign the kiting model":
+### Item 2 is DONE (`1af83e2`) — item 1 is the open blocker
 
-1. **`KITE_STOP_TIME = 60`** — an unphysical global cutoff that switches kiting
-   off mid-fight. It is what currently guarantees fights resolve. Replace it with
-   a *decided-fight* exit (one side taking no damage while dealing steady damage)
-   rather than a timer, and watch the guard rails in §7. Blast radius: below the
-   cutoff no code path differs, but see runbooks §2a — `game_time_s` is a mean
-   over seeds and cannot prove a per-seed claim.
-2. **`should_kite = not self.target.is_ranged()`** — a ranged unit never kites
-   from another ranged unit. This is what the three remaining ranged-vs-ranged
-   failures (Chu Ko Nu ×2, Hussite Wagon) point at.
+**Shipped: a ranged unit now kites another ranged unit it can genuinely outrun.**
+
+```python
+effective_kite_speed = movement_speed * (1 - attack_delay / reload_time)
+kite a ranged target iff  effective_speed > theirs  AND  attack_range > theirs
+```
+
+Derived from `attack_speed`, not `self.reload_time` — the latter is rewritten in
+place by `attack_speed_ramp` and would make eligibility flicker mid-fight.
+
+| | before | after |
+|---|---|---|
+| tape | 33/38 | **36/38 (95%)** — FIXED 3, BROKE 0 |
+| equal_count | 32/38 | **34/38 (89%)** — FIXED 2, BROKE 0 |
+
+All three fixed rows are the long-standing ranged-vs-ranged cluster: Slinger vs
+Hussite Wagon, Slinger vs Chu Ko Nu, Blackwood Archer vs Chu Ko Nu.
+
+**Not shipped: removing `KITE_STOP_TIME`. It was tried and it measured worse.**
+Deleting the cutoff took tape agreement to **31/38**, breaking four elephant
+rows, and cost 45% more simulated time. With no time limit a Slinger out-kites a
+War Elephant *forever*, because the elephant closes at only `0.88 − 0.85 = 0.03`
+tiles/s of effective speed. The recordings say the elephant wins.
+
+The lesson is worth keeping: the cutoff is a **bad model of a real constraint**,
+not a fiction. Perfect kiting does not happen in game — formations bunch,
+terrain clips, micro fails, maps have edges. Deleting it replaced a bad model
+with *no* model, which is worse. So it stays, under protest, until something
+physical replaces it.
+
+### 6.1a The open blocker — make an elephant able to catch a skirmisher
+
+**Standing instruction (2026-07-28): no re-sim until this is closed.** A 60s
+wall-clock switch is not acceptable as the permanent answer; the engine has to
+produce the catch on its own.
+
+Why it currently cannot: a chaser runs in a straight line, while a kiter is only
+penalised for the windup it spends standing still. That is the *only* cost
+kiting pays today. Candidate mechanisms, most promising first:
+
+1. **Turn rate.** A kiter reverses direction twice per attack cycle — turn away,
+   run, turn back, fire. A chaser never turns. AoE2 units have a real rotation
+   speed and it is *not* currently modelled: `ref_units` has no turn column, but
+   `aoe2x/extract/extract_effects.py:40` maps effect 6 to `rotation_speed`, so
+   the dat carries it and we simply do not extract it. This is the one candidate
+   that is both physical and asymmetric in exactly the right direction.
+2. **Retreat crowding.** A mass of units backing away collides with itself; the
+   back rank blocks the front. Only the leading edge retreats at full speed.
+   Analogous to the `CHURN` interference already applied to melee swings, and
+   the geometry to do it already exists.
+3. **Map edge.** Kiting room is a real limit and 60×20 may simply be too wide.
+   Note the 16×16 experiment was already measured and **rejected** (§5) — do not
+   simply re-run it; the finding was that copying the recording rig's dimension
+   without its patrol dynamics makes fidelity worse.
+
+Sequence: extract turn rate → model turn cost → re-measure on the corpus →
+only then try removing `KITE_STOP_TIME` again and confirm the four elephant rows
+hold. The rig makes this cheap: ~90 seconds per attempt.
+
+### 6.1b The decided-fight exit is inert, and that is recorded on purpose
+
+`_decide_kited_fight` exists and never fires. Sampled 70 fights: only 5 reached
+the 120s decision point, and the kiting side had lost a **median 87%** of its
+army by then. No threshold up to 70% fires even once.
+
+The reason is structural and worth not rediscovering: **a kite that works ends
+by elimination long before 120s; only a failing kite is still running at 120s.**
+The test is simultaneously too late to catch a successful kite and unnecessary
+for one.
+
+Extrapolating the final HP instead of simulating it was also tried, because the
+tail of a decided fight is expensive. Best model found (`M6`) was
+`winner_hp − 0.5 × loss_rate × min(time_to_loser_zero, 120)` with the loser set
+to 0 — **3.03 mean absolute error**, beating naive truncation's 5.13, and
+unbiased. It was still rejected: only 12% of fights run past 120s, so cutting
+all of them saves **9%** of simulated seconds, and the error lands on slow
+grinding matchups that sit near the `BAND = 10` tossup boundary. Eighteen
+minutes is not worth blurring those rows. The harness is in the scratchpad if a
+fast mode is ever needed; the honest use for M6 is as the `time_cap` resolution
+rule, replacing the current arbitrary raw-HP comparison.
 
 ### 6.2 Re-check what the corpus cannot see
 
@@ -296,8 +429,30 @@ SELECT COUNT(*) FROM groups_done WHERE n = 0;    -- must be 0
 promotion.
 
 **One re-sim window.** `simulation_real.py` is byte-hashed into `sim_version`,
-so *any* edit — even a comment — stales all 504,804 rows. Decide whether the
-kiting work (§6.1) lands before the run, or accept a second ~8-hour run.
+so *any* edit — even a comment — stales every row. This is what carry-forward
+(runbooks §2a) exists to soften.
+
+**When the block in §6.1a clears, the run is small.** The kiting change alone has
+a narrow, provable blast radius — everything else is byte-identical to
+`matchup_baseline_180059.db` and can be carried forward:
+
+| set | groups |
+|---|---|
+| ranged-v-ranged where one side out-speeds AND out-ranges | 3,728 |
+| any group whose fights approach the 120s decision point (>90s mean) | 4,708 |
+| **union → re-sim** | **8,392** (6.9%) |
+| **carry forward** | **113,060** (93.1%) |
+
+~27 minutes rather than 6.6 hours. This is the narrow case runbooks §2a was
+written for, and a far better debut for carry-forward than the 75%-of-table
+version considered earlier. Whatever fixes §6.1a will widen this — recompute the
+blast radius against the *actual* change, do not reuse these numbers.
+
+Non-negotiables from §2a when that run happens: write to a **new DB file** (never
+overwrite, or the diff that would catch a bad carry-forward is destroyed), stamp
+copied rows with the new `sim_version` plus a `simmed_at_version` provenance
+column, and draw the **verification sample from the 40–50s band** — a uniform
+sample would mostly draw from the safe bulk and prove nothing.
 
 ---
 
@@ -322,3 +477,22 @@ kiting work (§6.1) lands before the run, or accept a second ~8-hour run.
 - **Verify the integrity check on every exit path.** The first version of the
   silent-hole fix was bypassed by the early return taken when nothing is
   pending — exactly the case it existed for.
+- **Read the units before believing the number.** `team*_hp_pct` is a fraction,
+  not a percentage, so a "0.36 gap" is 36 points of HP. Misreading it produced a
+  confident, wrong claim that cross-civ same-slug fights were all draws when
+  22.5% are blowouts.
+- **A stored column is a mean over 8–40 seeds.** `game_time_s` reading 45s does
+  not mean no seed ran 70s. Measured: rows in the 40–50s band have a 5.7–8.6%
+  chance of containing a seed past 60s. Never scope a carry-forward from an
+  averaged field (runbooks §2a).
+- **Look in the archive before declaring something missing.** The previous
+  baseline was reported absent because the glob was `/d/AI/*.db`; it was in
+  `D:/AI/archive/`, which `data/inputs/MANIFEST.md:57` documents as the canonical
+  location — and in both Railway buckets besides.
+- **Deleting a crude model is not the same as fixing it.** `KITE_STOP_TIME` reads
+  as an unphysical hack, and removing it cost four tape rows. A bad model of a
+  real constraint still beats no model. Replace, then delete — never the reverse.
+- **A plausible mechanism that never fires is worthless.** Attacker capacity: 0
+  saturations in 23,278 checks. The decided-fight exit: 0 firings in 70 fights at
+  any threshold up to 70%. Instrument whether a new mechanism actually triggers
+  before tuning its constants.

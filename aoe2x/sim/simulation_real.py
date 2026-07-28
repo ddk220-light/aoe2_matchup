@@ -161,6 +161,25 @@ def collision_radius(outline_size):
 STUCK_PROGRESS_RATE = 0.5   # tiles/second
 STUCK_TIMER_LIMIT = 0.8     # seconds
 
+# Crowd interference for MELEE swings. In a packed mêlée units shove, turn, and
+# lose the target they were winding up on, so a swing cycle runs longer than the
+# unit's nominal reload. Without it a melee unit in a scrum attacks at its full
+# paper rate, which most distorts units whose kit COMPOUNDS with attack speed:
+# the Elite Temple Guard's ramp reaches its 1.0s floor and stays there, where
+# the recorded fights show its throughput matching a flat 2.0s reload because
+# the ramp never gets to build.
+#
+# Scaled by local crowding, so it vanishes in a thinned-out mop-up and the
+# winning side finishes efficiently.
+#
+# CHURN_MAX is INHERITED from the JS engine's calibration (ETG vs Huskarl and
+# vs Konnik) and has NOT been re-fitted for this engine's geometry, which
+# differs (60x20 map, different spawn, true radii). Treat it as provisional --
+# see the recalibration task before trusting any number that depends on it.
+CHURN_MAX = 2.25            # seconds, uniform [0, CHURN_MAX)
+CHURN_RADIUS = 2.0          # tiles: neighbours this close count as crowding
+CHURN_SATURATION = 6.0      # neighbour count at which interference maxes out
+
 # Spatial-grid cell size (tiles).  Must be >= the max relevant interaction
 # distance (avoidance ~3 tiles, collision ~2 tiles) so that a unit's cell + 8
 # adjacent cells cover everything that could matter.  3.5 tiles is comfortable
@@ -658,6 +677,34 @@ class BattleUnit:
 
     # ---- Targeting --------------------------------------------------------
 
+    def melee_cooldown(self, sim):
+        """Reload for a melee swing, lengthened by local crowding.
+
+        Ranged units are unaffected — they are not shoving anyone. Applies to
+        BOTH melee attack paths: units with attack_delay == 0 resolve through
+        perform_attack, everything with a wind-up (which is the whole cavalry
+        roster) resolves through committed_attack. The JS engine patches only
+        the first, so its crowd interference silently never applies to cavalry.
+        """
+        if CHURN_MAX <= 0 or self.is_ranged():
+            return self.reload_time
+        r2 = CHURN_RADIUS * CHURN_RADIUS
+        n = 0
+        for team in (sim.team1, sim.team2):
+            for u in team:
+                if u is self or u.state == "dead":
+                    continue
+                dx = u.x - self.x
+                dy = u.y - self.y
+                if dx * dx + dy * dy < r2:
+                    n += 1
+                    if n >= CHURN_SATURATION:
+                        break
+            if n >= CHURN_SATURATION:
+                break
+        crowding = min(1.0, n / CHURN_SATURATION)
+        return self.reload_time + random.random() * CHURN_MAX * crowding
+
     def find_target(self, enemies):
         closest = None
         closest_dist = float("inf")
@@ -905,7 +952,7 @@ class BattleUnit:
                     if target.state != "dead":
                         self.perform_attack_on(target, sim)
                     self.committed_attack = None
-                    self.attack_cooldown = self.reload_time
+                    self.attack_cooldown = self.melee_cooldown(sim)
                     self.combat_timer = COMBAT_WINDOW_S
                     self.was_moving = False
             elif self.in_range():
@@ -1071,7 +1118,9 @@ class BattleUnit:
                     self.fire_projectile(tgt, sim, is_extra=is_extra)
             else:
                 self.perform_attack_on(self.target, sim)
-        self.attack_cooldown = self.reload_time
+        # melee_cooldown() returns the plain reload for ranged units, so this is
+        # safe on the shared attack path.
+        self.attack_cooldown = self.melee_cooldown(sim)
         self.combat_timer = COMBAT_WINDOW_S
 
     def fire_projectile(self, target, sim, attacks_override=None, is_extra=False):

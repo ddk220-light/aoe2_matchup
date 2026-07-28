@@ -172,11 +172,24 @@ STUCK_TIMER_LIMIT = 0.8     # seconds
 # Scaled by local crowding, so it vanishes in a thinned-out mop-up and the
 # winning side finishes efficiently.
 #
-# CHURN_MAX is INHERITED from the JS engine's calibration (ETG vs Huskarl and
-# vs Konnik) and has NOT been re-fitted for this engine's geometry, which
-# differs (60x20 map, different spawn, true radii). Treat it as provisional --
-# see the recalibration task before trusting any number that depends on it.
-CHURN_MAX = 2.25            # seconds, uniform [0, CHURN_MAX)
+# CHURN_MAX was RE-FITTED for this engine against the 38-row tape corpus
+# (2026-07-28), not inherited. The JS engine's 2.25 was calibrated on different
+# geometry (30x20 canvas, block spawns, sprite-sized radii) and measurably costs
+# a row here. Sweep at 5 seeds, scored on tape + equal-count agreement:
+#
+#     0.00  32/38 + 32/38 = 64      (churn off — the ETG rows regress)
+#     1.00  33/38 + 32/38 = 65
+#     1.25  33/38 + 32/38 = 65      <- chosen: middle of the plateau
+#     1.50  33/38 + 32/38 = 65
+#     2.25  33/38 + 31/38 = 64      (the inherited value)
+#     3.00  33/38 + 31/38 = 64
+#     4.00  32/38 + 30/38 = 62
+#
+# Tape agreement peaks across 1.0-3.0 while equal-count agreement falls
+# monotonically as churn rises, so the optimum is the 1.0-1.5 plateau; 1.25 is
+# taken as the midpoint rather than an edge. Re-fit this whenever the geometry
+# changes again — it is a property of the arena, not of the units.
+CHURN_MAX = 1.25            # seconds, uniform [0, CHURN_MAX)
 CHURN_RADIUS = 2.0          # tiles: neighbours this close count as crowding
 CHURN_SATURATION = 6.0      # neighbour count at which interference maxes out
 

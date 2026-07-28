@@ -138,7 +138,9 @@ Steps:
 4. If `simulation.py` behavior changed intentionally: `python .golden/capture_baseline.py`,
    re-run `pytest tests/test_simulations.py`, commit `.golden/baseline.json`.
 5. If `simulation_real.py` changed: full baseline rebuild (runbook 1, step 5) — do **not** mix
-   engine versions in one matchup DB ("patchwork" gotcha in `docs/patch-workflow.md`) — then
+   engine versions in one matchup DB ("patchwork" gotcha in `docs/patch-workflow.md`). For a
+   narrow change, §2a below covers re-simulating only the rows the change can reach, and the
+   proof obligations that come with it. Then
    re-derive rankings, pool scores, and civ power units at the **current** build number.
    The derive CLIs enforce this: rows at a non-current `sim_version` abort the run unless
    `--allow-stale` is passed (and a <40-civ source DB aborts unless `--allow-small-db`).
@@ -146,6 +148,72 @@ Steps:
    `app.py` loader were deleted — `/api/ref/unit-line` scores come solely from
    `derived_data.db` (plus the empty reference-DB fallback). Do not run
    `compute_battle_scores.py`.
+
+### 2a. Carry-forward — re-simulating only what a change can touch
+
+Step 5 above mandates a full rebuild for *any* `simulation_real.py` edit. That is
+deliberately blunt: `sim_version` is a hash of the whole file, so a one-line change
+stales all ~540k rows and costs ~6.5 h. Most fixes are narrow (the 2026-07 armour
+damage-class fix touched 23 units; a trample fix touches the dozen units with an
+AoE radius), so the rebuild is mostly re-deriving rows that cannot have changed.
+
+Carry-forward copies the untouched rows into the new `sim_version` and re-sims only
+the rest. **The whole risk is scoping.** A row copied forward under a version that
+did not actually produce it is silent corruption, and it looks complete — strictly
+worse than a slow rebuild. So a row may be carried forward only when the change
+*provably* cannot alter its outcome, established one of three ways:
+
+| Basis | Strength | Example |
+|---|---|---|
+| **Structural gate** | Proof | A kiting change cannot affect melee-vs-melee: the whole block sits behind `if self.is_ranged():`, so the branch never executes. |
+| **Recorded branch-touch flag** | Proof, if recorded | The run records, per dedup group, which changed-behaviour branches any seed actually entered. Change branch X → re-sim exactly the groups whose X flag is set. |
+| **Inference from stored aggregates** | **Not a proof — see below** | "This row's fight was short, so the 60 s cutoff never applied." |
+
+**The averaging trap.** Never scope from a stored per-row field. Every numeric
+column in `matchup_battles` is a *mean over 8–40 seeds* (`average_outcomes()`), so
+a row whose `game_time_s` reads 45 s can still contain a seed that ran 70 s and hit
+a 60 s cutoff. Averages cannot prove a per-seed claim. Anything scoped this way must
+be treated as unproven and re-simmed, or promoted to a recorded flag.
+
+**Branch-touch flags are the general mechanism** and the one worth building. Rather
+than inferring blast radius from unit properties, have the engine set a bit whenever
+it takes a branch whose behaviour a future change might alter, OR the bits across
+every seed in a group, and store the mask beside `sim_version`. Blast radius then
+becomes a lookup instead of an argument. The flags must already have been recorded
+by the *previous* run to be usable, so add them before the next full rebuild — they
+are what make every later narrow fix cheap.
+
+**Required regardless of basis:**
+
+1. Store provenance per row — a `simmed_at_version` alongside `sim_version`, so a
+   copied row is always distinguishable from a simulated one. Without it, a later
+   audit cannot tell which rows a given engine build actually produced.
+2. **Verification sample.** After copying, re-sim a random sample (~300 groups) drawn
+   from the *carried-forward* set under the new engine and assert the means are
+   identical. Any mismatch means the scope was wrong → abort before writing. This
+   costs about a minute and is the only thing standing between a wrong predicate and
+   a corrupt baseline. It is not optional.
+3. Re-run the completeness queries from runbook 1 (`groups_failed`, `groups_done
+   WHERE n=0`) plus a count check: copied + re-simmed must equal the expected total.
+
+**Worked example — removing `KITE_STOP_TIME`.** Below the cutoff no code path
+differs, so the change looks tiny. Measured against the 540,920-row baseline:
+
+| set | rows | share | status |
+|---|---|---|---|
+| melee-only (kite block unreachable) | 135,908 | 25.1% | **provably safe** — structural gate |
+| ranged, mean fight < 60 s | 296,674 | 54.8% | *unproven* — mean, not max |
+| ranged, mean fight ≥ 60 s | 108,338 | 20.0% | must re-sim |
+
+Only the first band can be carried forward today. The 31,674 rows averaging 55–60 s
+almost certainly contain seeds past the cutoff. Recording a `hit_kite_stop` flag
+would move most of the middle band into the provable column — but only from the run
+that records it onward.
+
+**Rule of thumb:** carry-forward pays when the change is narrow. A kiting change
+touches 74.9% of rows and saves ~2 h of 6.6 h — not worth debuting the mechanism on.
+A single-ability or single-unit fix is 95%+ copyable and turns the rebuild into
+minutes. Build it for the narrow case; do not let it debut on the widest one.
 
 ---
 

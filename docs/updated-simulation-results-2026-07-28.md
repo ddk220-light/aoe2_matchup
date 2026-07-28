@@ -208,29 +208,41 @@ and two Guecha (vs Ratha-melee, vs Heavy Camel). The Guecha rows are
 ranged-subject fights where crowd interference slows the melee chaser but not
 the kiter.
 
-The kite gate keys off **damage-per-hit**, which provably cannot work:
-**Blackwood does 1 dmg/hit and wins; Xianbei does 1 dmg/hit and loses.** Same
-number, opposite outcomes.
+**Correction (2026-07-28): an earlier draft of this section claimed the kite gate
+keys off damage-per-hit. That is the JS engine. This engine has no damage gate**
+— the finding was carried over without re-reading the Python source. The whole
+gate is two lines in `unit_step`:
 
-The replacement derived from the JS-side investigation is the end-to-end cycle
-race:
+```python
+should_kite = not self.target.is_ranged()
+can_kite    = sim.battle_time < KITE_STOP_TIME
+```
+
+**The effective-speed model is already implemented here, as physics rather than
+formula.** When `attack_delay > 0` the unit sets `committed_attack`, enters
+`windup`, and the next tick returns *before any movement* — it is genuinely
+frozen while winding up. So
 
 ```
 effective retreat speed = movement_speed × (1 − attack_delay / reload_time)
 ```
 
-A unit that must stand still to fire is slower than its paper speed. This
-already predicts rows nothing else did — the **War Elephant at 0.88 catches the
-Slinger** because the Slinger's *effective* speed is 0.85, despite the elephant
-being slower on paper. Xianbei stands still 38% of its cycle and kites like a
-0.95 unit despite 1.54 speed; Mangudai and Janissary have ~0 attack delay and
-are excellent kiters.
+emerges from the simulation instead of being computed. Measured on the current
+roster: Janissary (delay 0.00) never freezes and kites at its full 0.96; Heavy
+Cav Archer (0.58 / 2.00) is frozen 29% of its cycle and kites like a 1.09 unit
+despite 1.54 paper speed; Arbalester (0.33 / 2.00) kites at 0.80.
 
-Note `KITE_STOP_TIME = 60` still exists in the Python engine — an unphysical
-global cutoff that switches kiting off mid-fight. It is what currently
-guarantees fights resolve. If it is removed, replace it with a *decided-fight*
-exit (one side taking no damage while dealing steady damage) rather than a
-timer, and watch the guard rails in §7.
+What actually remains is narrower than "redesign the kiting model":
+
+1. **`KITE_STOP_TIME = 60`** — an unphysical global cutoff that switches kiting
+   off mid-fight. It is what currently guarantees fights resolve. Replace it with
+   a *decided-fight* exit (one side taking no damage while dealing steady damage)
+   rather than a timer, and watch the guard rails in §7. Blast radius: below the
+   cutoff no code path differs, but see runbooks §2a — `game_time_s` is a mean
+   over seeds and cannot prove a per-seed claim.
+2. **`should_kite = not self.target.is_ranged()`** — a ranged unit never kites
+   from another ranged unit. This is what the three remaining ranged-vs-ranged
+   failures (Chu Ko Nu ×2, Hussite Wagon) point at.
 
 ### 6.2 Re-check what the corpus cannot see
 

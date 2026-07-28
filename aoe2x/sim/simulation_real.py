@@ -427,7 +427,7 @@ class Projectile:
 
 class BattleUnit:
     __slots__ = (
-        "id", "team", "stats",
+        "id", "spawn_ord", "team", "stats",
         "cost_food", "cost_wood", "cost_gold",
         "max_hp", "current_hp", "attack",
         "raw_attack_range", "attack_range",
@@ -486,6 +486,13 @@ class BattleUnit:
 
     def __init__(self, uid, team, stats):
         self.id = uid
+        # Stable spawn ordinal. Pair-wise collision resolution needs a total
+        # order over units so each overlapping pair is separated exactly once.
+        # It used to use id(), which is the MEMORY ADDRESS: the winner of
+        # `id(b) <= id(a)` therefore depended on the allocator, so the order in
+        # which overlaps resolved changed from run to run and the same seed
+        # produced different fights. This is set in setup_team().
+        self.spawn_ord = 0
         self.team = team
         self.stats = stats
 
@@ -1656,6 +1663,7 @@ class BattleSimulation:
 
         for i in range(count):
             unit = BattleUnit(f"{team_num}-{i}", team_num, stats)
+            unit.spawn_ord = team_num * 1000000 + i
             # Tiny deterministic-ish jitter (no RNG: keep sim mostly deterministic).
             unit.x = start_x
             unit.y = start_y + i * spacing
@@ -1802,9 +1810,9 @@ class BattleSimulation:
         for _ in range(2):
             for a in alive:
                 ax, ay, ar = a.x, a.y, a.radius
-                a_id = id(a)
+                a_ord = a.spawn_ord
                 for b in self.grid.neighbors(a):
-                    if b is a or b.state == "dead" or id(b) <= a_id:
+                    if b is a or b.state == "dead" or b.spawn_ord <= a_ord:
                         continue
                     dx = b.x - ax
                     dy = b.y - ay

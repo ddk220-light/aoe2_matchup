@@ -8,7 +8,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "webapp"))
 
-from aoe2x.sim.simulation_real import BattleUnit  # noqa: E402
+from aoe2x.sim.simulation_real import BattleUnit, RAMP_WINDOW_S  # noqa: E402
 
 
 def _base(**kw):
@@ -94,6 +94,32 @@ def test_attack_speed_ramp():
     assert abs(a.reload_time - 1.8) < 1e-6
 
 
+def test_attack_speed_ramp_decays_after_window():
+    """The ramp is a DECAYING 5s window, not a monotonic accumulator.
+
+    Three hits in quick succession stack to 2.0 - 3*0.2 = 1.4. After a gap
+    longer than RAMP_WINDOW_S every stack has expired, so the next hit starts
+    the ramp over at 2.0 - 0.2 = 1.8. Under the old accumulator the reload
+    only ever fell (1.2 here) and never recovered, which let a Temple Guard
+    keep a ramp it earned minutes earlier while walking between targets.
+    """
+    sim, a, d = _melee_pair(_base(attack_speed_ramp=0.2, attack_speed_min=1.0))
+    for t in (0.0, 1.0, 2.0):
+        sim.battle_time = t
+        a.perform_attack_on(d, sim)
+    assert abs(a.reload_time - 1.4) < 1e-6
+
+    sim.battle_time = 2.0 + RAMP_WINDOW_S + 1.0        # every stack expired
+    a.perform_attack_on(d, sim)
+    assert abs(a.reload_time - 1.8) < 1e-6
+
+    # ...and the floor still binds when hits do stack up.
+    for t in range(20):
+        sim.battle_time = 20.0 + t * 0.1
+        a.perform_attack_on(d, sim)
+    assert a.reload_time == 1.0
+
+
 def test_transform_swaps_stats():
     a = _mk(_base(hp_transform_threshold=0.5, transform_hp=70, transform_attack=11,
                   transform_attacks_json='{"4":11}'))
@@ -148,6 +174,31 @@ def test_urumi_trample_gated_to_charged_strike():
     a.perform_attack_on(t, sim)            # recharging -> no trample
     uncharged = hb - b.current_hp
     assert charged > 0 and uncharged == 0
+
+
+def test_trample_reach_measured_from_the_attacker_hull():
+    """Blast is edge-to-edge: reach = attacker.radius + trample_radius + enemy.radius.
+
+    Measuring from the attacker's CENTRE drops its own radius, so a packed ring
+    around a big-footprint unit sits just outside the blast and only the single
+    contact target gets hit. With default outline (radius 0.4667) and a 0.5-tile
+    blast, correct reach is ~1.433 tiles; the old point-based test stopped at
+    ~0.967. A neighbour parked at 1.2 tiles is inside the real blast and outside
+    the buggy one, so this asserts the difference directly.
+    """
+    sim = _Sim()
+    a = _mk(_base(trample_percent=0.5, trample_radius=0.5))
+    t = _mk(_base(), 2, "t")
+    b = _mk(_base(), 2, "b")
+    sim.team1 = [a]
+    sim.team2 = [t, b]
+    a.x = a.y = 0.0
+    t.x, t.y = 0.4, 0.0                    # the struck target
+    b.x, b.y = 1.2, 0.0                    # neighbour: inside hull-based reach only
+    assert a.radius + 0.5 + b.radius > 1.2 > 0.5 + b.radius   # the test is discriminating
+    hb = b.current_hp
+    a.perform_attack_on(t, sim)
+    assert hb - b.current_hp > 0, "neighbour inside the hull-based blast was not trampled"
 
 
 def test_ranged_charge_replaces_normal_when_every_attack():

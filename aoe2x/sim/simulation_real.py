@@ -121,6 +121,11 @@ DEFAULT_MAX_WALLCLOCK_SECONDS = 180.0
 # "in combat" for hp_regen purposes.  Matches AoE2 convention (~5 seconds).
 COMBAT_WINDOW_S = 5.0
 
+# Attack-speed ramp (Temple Guard) decay window: a hit's reload reduction
+# expires this many seconds after it lands, so the ramp reflects hits landed
+# recently rather than accumulating for the whole battle.
+RAMP_WINDOW_S = 5.0
+
 # Movement smoothing factor (matches JS: 0.3 means blend 30% old + 70% new).
 MOVE_SMOOTHING = 0.3
 
@@ -364,7 +369,7 @@ class BattleUnit:
         "charge_attack_melee", "charge_recharge_time", "charge_timer",
         "charge_slow_percent", "charge_slow_duration",
         "execute_damage_per_step", "execute_hp_step",
-        "attack_speed_ramp", "attack_speed_min", "ramp_reduction",
+        "attack_speed_ramp", "attack_speed_min", "ramp_hits",
         "hp_per_kill", "hp_per_kill_max", "hp_gained_from_kills",
         "miss_damage_percent", "armor_strip_per_hit",
         "attack_bonus_nearby", "nearby_bonus_count", "aura_attack_bonus",
@@ -480,7 +485,8 @@ class BattleUnit:
         self.execute_hp_step = float(stats.get("execute_hp_step") or 0)
         self.attack_speed_ramp = float(stats.get("attack_speed_ramp") or 0)
         self.attack_speed_min = float(stats.get("attack_speed_min") or 0)
-        self.ramp_reduction = 0.0
+        # Timestamps of hits inside the ramp window (see RAMP_WINDOW_S).
+        self.ramp_hits = []
         self.hp_per_kill = float(stats.get("hp_per_kill") or 0)
         self.hp_per_kill_max = float(stats.get("hp_per_kill_max") or 0)
         self.hp_gained_from_kills = 0.0
@@ -576,18 +582,27 @@ class BattleUnit:
                            ignores_armor_override=None):
         is_ranged = self.is_ranged()
         attacks = attacks_override if attacks_override is not None else self.attacks
-        base_class = "3" if is_ranged else "4"
+        # The ATTACK'S damage class decides which armor resists it — not how the
+        # blow is delivered.  A ranged unit whose base attack is class 4 (melee)
+        # with no class-3 entry is resisted by MELEE armor: thrown-melee units
+        # (Gbeto, Mameluke, Throwing Axeman, Chakram), the mangonel/onager line,
+        # bombards, trebuchets and most warships — 19 units in the current dat.
+        # Resolving them against PIERCE armor roughly halved their damage into
+        # high-pierce-armor targets (in-game 12 Gbeto beat 21 Champi 5/5 while
+        # the sim had the Champi winning).
+        base_class = "3" if (is_ranged and attacks.get("3")) else "4"
+        uses_pierce = base_class == "3"
         base_attack = attacks.get(base_class, attacks.get("4", self.attack)) + self.aura_attack_bonus
 
         if ignores_armor_override is not None:
             ignore = ignores_armor_override
         else:
-            ignore = (is_ranged and self.ignores_pierce_armor) or \
-                     (not is_ranged and self.ignores_melee_armor)
+            ignore = (uses_pierce and self.ignores_pierce_armor) or \
+                     (not uses_pierce and self.ignores_melee_armor)
 
         if ignore:
             target_base_armor = 0.0
-        elif is_ranged:
+        elif uses_pierce:
             target_base_armor = target.armors.get("3", target.pierce_armor)
         else:
             target_base_armor = target.armors.get("4", target.melee_armor)
@@ -710,9 +725,11 @@ class BattleUnit:
             self.charge_timer = max(0.0, self.charge_timer - dt)
 
         # --- attack-speed ramp decay (Temple Guard): reset out of combat ---
-        if (self.attack_speed_ramp > 0 and self.ramp_reduction > 0
+        # The window in perform_attack_on() already expires stale hits; this
+        # clears the whole stack once the unit leaves combat entirely.
+        if (self.attack_speed_ramp > 0 and self.ramp_hits
                 and self.combat_timer <= 0):
-            self.ramp_reduction = 0.0
+            self.ramp_hits = []
             self.reload_time = 1.0 / self.attack_speed if self.attack_speed > 0 else 2.0
 
         # --- charge-slow expiry: restore movement speed ---
@@ -1222,14 +1239,20 @@ class BattleUnit:
             self.current_hp = min(self.max_hp, self.current_hp + heal)
             self.hp_gained_from_kills += heal
 
-        # Attack-speed ramp (Temple Guard): each hit shortens reload toward the
-        # floor; reset out of combat by update().  Mutating reload_time here makes
-        # every cooldown=reload_time assignment use the ramped value.
+        # Attack-speed ramp (Temple Guard).  Each hit adds a stack that EXPIRES
+        # RAMP_WINDOW_S later, so reload = max(floor, base - ramp * hits_in_window).
+        # The game uses a decaying window, NOT a monotonic accumulator: walking
+        # between targets, or simply being unable to attack, lets the ramp fall
+        # back.  Mutating reload_time here makes every cooldown=reload_time
+        # assignment use the ramped value.
         if self.attack_speed_ramp > 0:
             base_reload = (1.0 / self.attack_speed) if self.attack_speed > 0 else 2.0
-            self.ramp_reduction = min(self.ramp_reduction + self.attack_speed_ramp,
-                                      max(0.0, base_reload - self.attack_speed_min))
-            self.reload_time = max(self.attack_speed_min, base_reload - self.ramp_reduction)
+            cutoff = sim.battle_time - RAMP_WINDOW_S
+            self.ramp_hits = [h for h in self.ramp_hits if h > cutoff]
+            self.ramp_hits.append(sim.battle_time)
+            self.reload_time = max(
+                self.attack_speed_min,
+                base_reload - self.attack_speed_ramp * len(self.ramp_hits))
 
         if (target_was_alive and target.state == "dead"
                 and (self.food_per_kill > 0 or self.wood_per_kill > 0
@@ -1253,7 +1276,14 @@ class BattleUnit:
                     for enemy in enemies:
                         if enemy is target or enemy.state == "dead":
                             continue
-                        if self.distance_to(enemy) <= self.trample_radius + enemy.radius:
+                        # Blast emanates from the trampler's BODY, not a point:
+                        # reach is edge-to-edge, so the attacker's own radius
+                        # counts.  Omitting it leaves a packed ring around a
+                        # big-footprint unit (elephant, r~0.6 tile) just out of
+                        # reach — ~1 unit trampled per swing where the game
+                        # lands 4-6.
+                        reach = self.radius + self.trample_radius + enemy.radius
+                        if self.distance_to(enemy) <= reach:
                             enemy.take_damage(trample_dmg, self)
 
         if self.splash_on_hit_radius > 0:

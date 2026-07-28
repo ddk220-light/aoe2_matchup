@@ -54,7 +54,33 @@ CREATE TABLE IF NOT EXISTS matchup_means (
   PRIMARY KEY (my_civ, my_slug, opp_civ, opp_slug, scale)
 );
 CREATE TABLE IF NOT EXISTS groups_done (dg TEXT PRIMARY KEY, scale TEXT, n INTEGER);
+-- Groups whose worker raised. Deliberately NOT in groups_done, so a resume
+-- retries them instead of leaving a silent hole in a complete-looking baseline.
+CREATE TABLE IF NOT EXISTS groups_failed (dg TEXT PRIMARY KEY, scale TEXT);
 """
+
+
+def report_integrity(out, sim_version):
+    """Say plainly whether the baseline has holes. Must run on EVERY exit path.
+
+    A resume that finds nothing to do still has to answer this: groups recorded
+    as done with n=0 (how older builds handled a worker error) are invisible
+    gaps in a table that otherwise looks finished.
+    """
+    outstanding = out.execute("SELECT COUNT(*) FROM groups_failed").fetchone()[0]
+    stale = out.execute("SELECT COUNT(*) FROM groups_done WHERE n=0").fetchone()[0]
+    if not outstanding and not stale:
+        print(f"No failed groups. Baseline is complete at sim_version "
+              f"{sim_version}.", flush=True)
+        return True
+    print(f"\n*** INCOMPLETE: {outstanding} group(s) failed and are still "
+          f"PENDING; {stale} group(s) carry n=0 from an older build.", flush=True)
+    print("    Re-run the same command to retry — completed groups are skipped, "
+          "so a resume is cheap.", flush=True)
+    if stale:
+        print("    Clear legacy holes first so they get re-simmed: "
+              "DELETE FROM groups_done WHERE n=0;", flush=True)
+    return False
 
 
 def verdict_of(mean, sd):
@@ -177,22 +203,32 @@ def main():
           flush=True)
     if not tasks:
         print("Nothing to do.", flush=True)
+        report_integrity(out, sim_version)
         out.close()
         return
 
     t0 = time.perf_counter()
-    n_done = n_rows = 0
+    n_done = n_rows = n_failed = 0
     seed_hist = defaultdict(int)
     with mp.Pool(processes=args.workers) as pool:
         for key, avg, n, sd, mean in pool.imap_unordered(_worker, tasks):
             scale_label = key[1]
             if avg is None:                 # worker hit an error on this matchup
-                out.execute("INSERT OR REPLACE INTO groups_done (dg, scale, n) "
-                            "VALUES (?,?,?)", (_short_hash(key), scale_label, 0))
-                n_done += 1
-                print(f"  [skip] group {_short_hash(key)} sim error -> marked done(n=0)",
-                      flush=True)
+                # Do NOT mark it done. Recording an errored group in groups_done
+                # makes a resume skip it forever, so one transient worker fault
+                # leaves a permanent hole in a baseline that still looks
+                # complete — silent data loss across an unattended run. Log it
+                # instead; it stays pending and the next run retries it, and the
+                # summary below refuses to call the run clean while any remain.
+                out.execute("INSERT OR REPLACE INTO groups_failed (dg, scale) "
+                            "VALUES (?,?)", (_short_hash(key), scale_label))
+                n_failed += 1
+                print(f"  [FAIL] group {_short_hash(key)} ({scale_label}) sim error "
+                      f"-> left PENDING for retry", flush=True)
                 continue
+            # A group that failed on an earlier run and has now succeeded is no
+            # longer outstanding.
+            out.execute("DELETE FROM groups_failed WHERE dg=?", (_short_hash(key),))
             members = groups[key]
             rep_my_fp = representatives[key][2]
             dg = _short_hash(key)
@@ -226,6 +262,9 @@ def main():
                       f"seeds={dict(sorted(seed_hist.items()))}", flush=True)
     print(f"\nDone. {n_done} groups, {n_rows} matchup rows in "
           f"{time.perf_counter()-t0:.0f}s.", flush=True)
+
+    # An unattended run must not be able to look clean while carrying holes.
+    report_integrity(out, sim_version)
     out.close()
 
 

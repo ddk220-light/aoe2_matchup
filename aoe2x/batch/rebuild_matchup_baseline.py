@@ -2,8 +2,11 @@
 
 Why: the live matchup_db was sampled at 1-or-3 seeds, so contested matchups
 (high per-seed variance) flip win/loss between seeds -> inconsistent results.
-This re-sims every DIFFERENT-unit matchup (skips same-unit mirrors like
-halb-vs-halb) with an ESCALATING sampler: few seeds on decisive fights, many
+This re-sims every matchup between units that actually differ (skipping only
+stat-identical pairs, whose winner would be spawn-side noise — that covers
+same-civ mirrors and civs whose generic unit is identical, but NOT same-name
+units that differ by civ, e.g. Wu vs Gurjaras Halberdier) with an ESCALATING
+sampler: few seeds on decisive fights, many
 on contested ones, stopping when the standard error of the mean is tight. The
 output is the solid baseline for build 177723 and for future patch diffs.
 
@@ -119,7 +122,7 @@ def _worker(task):
 
 def _build_groups(workers_print=True):
     """Enumerate eligible units, build fingerprint-dedup groups, EXCLUDING
-    same-unit mirrors (my_slug == opp_slug). Returns (groups, representatives)."""
+    stat-identical pairs (my_fp == opp_fp). Returns (groups, representatives)."""
     ref = sqlite3.connect(REF_DB_PATH)
     ref.row_factory = sqlite3.Row
     slug_to_line = _build_slug_to_line()
@@ -146,7 +149,16 @@ def _build_groups(workers_print=True):
             if j < i:                                    # mirror symmetry A/B == B/A
                 continue
             opp_civ, opp_slug, opp_cu, opp_fp = all_units[j]
-            if my_slug == opp_slug:                      # skip same-unit mirrors (halb v halb)
+            if my_fp == opp_fp:
+                # Identical stat profiles fight a coin flip, so the recorded
+                # winner is spawn-side noise rather than a result: the 318
+                # true mirrors in the old baseline averaged |score| 11.7 with a
+                # 238/80 winner split and not one blowout. Keying this on the
+                # FINGERPRINT rather than the slug skips same-civ mirrors and
+                # civs whose generic unit is stat-identical, while keeping
+                # same-slug pairs that genuinely differ — Wu Halberdier
+                # (60 hp / 10 atk) beats Gurjaras Halberdier (45 / 5) 30-to-0
+                # with 96% health, and 22.5% of such pairs are blowouts.
                 continue
             for scale_label, fixed_count, resources in SCALES:
                 fp_key = tuple(sorted((my_fp, opp_fp)))

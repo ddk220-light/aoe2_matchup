@@ -72,14 +72,48 @@ DEFAULT_PROJECTILE_SPEED = 7.0  # tiles/s
 # get reliably grazed.
 MISS_SPREAD_RADIUS = 2.0  # tiles
 
-# After this many game-seconds, ranged units stop kiting and just attack.
-# Models real-game reality: an infinite kite is impossible — units hit
-# walls, micro fails, the player shifts focus.  Lets battles actually
-# resolve so we get meaningful HP-remaining data on melee units.
-# Units with min_attack_range > 0 (Onager/Mangonel/Scorpion/Trebuchet)
-# still need their target to be outside the dead zone after kite-stop —
-# they will switch targets if possible, else go idle.
-KITE_STOP_TIME = 60.0  # game-seconds
+# --- Kiting -----------------------------------------------------------------
+#
+# A ranged unit ALWAYS tries to kite. Whether kiting actually works is left to
+# the physics: a unit with attack_delay > 0 is frozen in `windup` and cannot
+# move, so its real retreat speed is
+#
+#     effective_speed = movement_speed * (1 - attack_delay / reload_time)
+#
+# which emerges from the tick loop rather than being computed. A Janissary
+# (delay 0.00) keeps its full 0.96; a Heavy Cav Archer (0.58 / 2.00) is frozen
+# 29% of every cycle and retreats like a 1.09 unit despite 1.54 on paper.
+#
+# Kiting another RANGED unit only makes sense when you can both stay away from
+# it and out-shoot it, so it requires strictly greater effective speed AND
+# strictly greater range. Otherwise both sides stand and trade.
+#
+# This replaces KITE_STOP_TIME, a flat 60s cutoff that switched kiting off
+# mid-fight to force resolution. A timer is not physics: it made the tick
+# clock decide outcomes. Fights now end on a DECIDED-FIGHT test instead —
+# evaluated once past KITE_DECISION_TIME:
+#
+#   kiter healthy AND target badly hurt  -> kiter wins   (end_reason="kite_win")
+#   kiter healthy AND target unhurt      -> neither side can win ("stalemate"):
+#                                           one is too slow to catch, the other
+#                                           too weak to kill.
+#   otherwise                            -> keep fighting to elimination
+#
+# A stalemate is NOT a draw and NOT a tossup — a tossup could go either way,
+# a stalemate cannot go anywhere at all. It carries its own end_reason so the
+# ranking layer can exclude it rather than score it as an even matchup.
+# Measured 2026-07-28: removing the cutoff entirely costs 4 tape rows. With no
+# time limit a Slinger out-kites a War Elephant forever, because the elephant
+# closes at only 0.88 - 0.85 = 0.03 tiles/s of effective speed; the recordings
+# say the elephant wins. The cutoff is a crude model of a real constraint --
+# perfect kiting does not happen, because formations bunch, terrain clips, micro
+# fails and maps have edges. Deleting it replaced a bad model of a real limit
+# with no model at all, so it stays until something better is fitted.
+KITE_STOP_TIME = 60.0         # game-seconds after which kiting stops
+
+KITE_DECISION_TIME = 120.0    # game-seconds before the decided-fight test runs
+KITE_WIN_MAX_SELF_LOSS = 0.11   # kiter must retain >= 89% of its army HP
+KITE_WIN_MIN_OPP_LOSS = 0.33    # target must have lost > 33% of its army HP
 
 # Weighted resource cost: gold is the scarcest economic resource, wood the
 # most abundant.  Used everywhere we collapse (food, wood, gold) into a
@@ -739,6 +773,31 @@ class BattleUnit:
         self.last_dist_to_target = self.distance_to(self.target) if self.target else float("inf")
         return self.target
 
+    def effective_kite_speed(self):
+        """Retreat speed after paying the windup tax, in tiles/sec.
+
+        A unit with attack_delay > 0 is frozen in `windup` and cannot move, so
+        it covers ground only for the remainder of its cycle. Deliberately
+        derived from attack_speed rather than self.reload_time: reload_time is
+        rewritten in place by attack_speed_ramp, which would make a unit's kite
+        eligibility flicker on and off mid-fight. Eligibility must be a fixed
+        property of the matchup, so it uses the BASE reload.
+        """
+        base_reload = (1.0 / self.attack_speed) if self.attack_speed > 0 else 2.0
+        if base_reload <= 0:
+            return self.move_speed
+        return self.move_speed * max(0.0, 1.0 - self.attack_delay / base_reload)
+
+    def can_out_kite(self, other):
+        """True when self can hold another RANGED unit at arm's length.
+
+        Needs both: strictly faster after the windup tax (else it cannot keep
+        the gap) and strictly longer ranged (else it cannot shoot from outside
+        the opponent's reach). Either one alone is not enough.
+        """
+        return (self.effective_kite_speed() > other.effective_kite_speed()
+                and self.attack_range > other.attack_range)
+
     def find_target_outside_dead_zone(self, enemies):
         """For min_range > 0 ranged units after kite-stop: prefer the
         closest enemy that's at or beyond min_attack_range.  If none
@@ -854,10 +913,15 @@ class BattleUnit:
 
         was_moving = self.was_moving
         if self.is_ranged():
-            should_kite = not self.target.is_ranged()
-            # After KITE_STOP_TIME, ranged units stop kiting and just attack
-            # (model real-world micro failure / map-edge hit).
-            can_kite = sim.battle_time < KITE_STOP_TIME
+            # Always kite a melee target. Kite a RANGED target only when this
+            # unit can both keep the gap and out-shoot it (see can_out_kite).
+            # No time gate: the decided-fight test in Simulation.step ends the
+            # battle, so the tick clock no longer decides outcomes.
+            should_kite = (sim.battle_time < KITE_STOP_TIME
+                           and (not self.target.is_ranged()
+                                or self.can_out_kite(self.target)))
+            if should_kite:
+                sim.kiting_team = self.team
 
             # Committed shot: locked in windup animation, can't move.
             # Mirrors the melee branch's committed_attack pattern.  After
@@ -887,14 +951,11 @@ class BattleUnit:
             if self.too_close():
                 # Target is inside the dead zone (only happens for units
                 # with min_attack_range > 0 — Onager, Mangonel, etc.).
-                if can_kite:
-                    self.state = "kiting"
-                    self.move_away_from_target(dt, grid)
-                    self.was_moving = True
-                else:
-                    # Past kite-stop: try to switch to a target outside
-                    # the dead zone; if none, go idle (the unit is
-                    # surrounded and can't shoot).
+                # Always back off; if the retreat is blocked the unit makes no
+                # progress and switches to a target it can actually shoot.
+                if sim.battle_time >= KITE_STOP_TIME:
+                    # Past the cutoff: no more backing off. Find something this
+                    # unit can actually shoot, else stand idle.
                     new_target = self.find_target_outside_dead_zone(enemies)
                     if new_target is None:
                         self.state = "idle"
@@ -902,14 +963,17 @@ class BattleUnit:
                     self.target = new_target
                     self.was_moving = False
                     # Fall through to handle as an in-range/out-of-range case
-            elif cooldown > 0 and should_kite and can_kite:
-                # Reloading vs melee target: free to kite away.
+                else:
+                    self.state = "kiting"
+                    self.move_away_from_target(dt, grid)
+                    self.was_moving = True
+            elif cooldown > 0 and should_kite:
+                # Reloading and able to kite this target: back away.
                 self.state = "kiting"
                 self.move_away_from_target(dt, grid)
             elif cooldown > 0:
-                # Reloading vs ranged target OR post-kite-stop. Hold if
-                # target is in range; otherwise close the distance — the
-                # kite-stop bans running AWAY, not pursuing.
+                # Reloading against a target it cannot out-kite. Hold if the
+                # target is in range; otherwise close the distance.
                 if self.in_range():
                     self.state = "attacking"
                 else:
@@ -1564,6 +1628,10 @@ class BattleSimulation:
         self.team2_food_gained = 0.0
         self.team2_wood_gained = 0.0
         self.team2_gold_gained = 0.0
+        # Which team last chose to kite. The decided-fight test needs to know
+        # who is running and who is chasing; only one side can qualify, since
+        # can_out_kite demands strictly greater speed AND range.
+        self.kiting_team = 0
 
     def setup_team(self, team_num, stats, count):
         team = []
@@ -1801,6 +1869,38 @@ class BattleSimulation:
         elif a1 == 0 and a2 == 0:
             self.winner = 0
             self.end_reason = "eliminated"
+        elif self.battle_time >= KITE_DECISION_TIME and self.kiting_team:
+            self._decide_kited_fight()
+
+    def _decide_kited_fight(self):
+        """End a fight that a kiter has already settled, or that neither side
+        can settle. Runs once the clock passes KITE_DECISION_TIME.
+
+        Replaces the old flat kite-stop timer. The timer forced units to stop
+        retreating so *someone* would die; this instead reads the state the
+        retreating actually produced:
+
+          kiter nearly untouched, target badly hurt -> the kite worked, and
+            grinding on to elimination only adds noise. end_reason="kite_win".
+          kiter nearly untouched, target also fine  -> neither can resolve it.
+            One is too slow to catch, the other too weak to kill. That is a
+            STALEMATE, not a draw and not a tossup: a tossup could go either
+            way, this cannot go anywhere. Own end_reason so the ranking layer
+            can drop it rather than score it as an even matchup.
+          anything else -> the kite is failing; let the fight run normally.
+        """
+        kt = self.kiting_team
+        ot = 2 if kt == 1 else 1
+        self_loss = 1.0 - (self.total_hp(kt) / max(1.0, self.total_max_hp(kt)))
+        opp_loss = 1.0 - (self.total_hp(ot) / max(1.0, self.total_max_hp(ot)))
+        if self_loss >= KITE_WIN_MAX_SELF_LOSS:
+            return                      # taking real damage: not a clean kite
+        if opp_loss > KITE_WIN_MIN_OPP_LOSS:
+            self.winner = kt
+            self.end_reason = "kite_win"
+        else:
+            self.winner = 0
+            self.end_reason = "stalemate"
 
     def run(self, max_seconds=MAX_BATTLE_SECONDS,
             max_wallclock=DEFAULT_MAX_WALLCLOCK_SECONDS):

@@ -129,9 +129,37 @@ RAMP_WINDOW_S = 5.0
 # Movement smoothing factor (matches JS: 0.3 means blend 30% old + 70% new).
 MOVE_SMOOTHING = 0.3
 
-# Stuck detection threshold (matches JS: 0.5 px in pixel-space → 0.5/30 tiles)
-STUCK_PROGRESS_THRESHOLD = 0.5 / 30.0
-STUCK_TIMER_LIMIT = 0.8  # seconds
+# Floor on a unit's collision radius, in tiles (the JS engine floors at 4 px).
+MIN_COLLISION_RADIUS = 4.0 / 30.0
+
+
+def collision_radius(outline_size):
+    """A unit's TRUE body radius in tiles.
+
+    `outline_size` from the dat IS the collision footprint. The formula this
+    replaces — (10 + outline*20) / 30 — is the SPRITE size the browser canvas
+    uses to choose a circle to draw, and it is roughly 2.3x too wide for
+    infantry (0.467 vs 0.200 tiles). That rendering number was feeding the
+    physics: fattened bodies jam melee contact, hold attackers out of reach of
+    the unit they are targeting, and inflate every distance-based mechanic
+    (trample coverage, projectile grazes, formation spacing) along with it.
+    """
+    return max(MIN_COLLISION_RADIUS, float(outline_size or 0.2))
+
+# Stuck detection: a chaser closing SLOWER than this is treated as making no
+# progress, and after STUCK_TIMER_LIMIT it blacklists its target and re-picks.
+#
+# This is a RATE (tiles per second), not a per-tick step. The JS engine spends
+# it as "0.5 px per frame", which silently makes the threshold depend on frame
+# rate: the same constant demands 1.0 tiles/s at 60 fps but only 0.5 tiles/s at
+# this engine's 30 Hz. Tick rate must not be physics — changing DT should change
+# resolution, not who wins. 0.5 tiles/s preserves this engine's existing
+# behaviour exactly at DT=1/30; whether that value is itself right is a separate
+# question (a Paladin chasing a Slinger closes at only 0.53 tiles/s, so it sits
+# barely above the bar, and slower chases are declared stuck while genuinely
+# closing).
+STUCK_PROGRESS_RATE = 0.5   # tiles/second
+STUCK_TIMER_LIMIT = 0.8     # seconds
 
 # Spatial-grid cell size (tiles).  Must be >= the max relevant interaction
 # distance (avoidance ~3 tiles, collision ~2 tiles) so that a unit's cell + 8
@@ -529,10 +557,7 @@ class BattleUnit:
 
         self.x = 0.0
         self.y = 0.0
-        # Outline-size scaling matches JS: 0.2->14 px, 0.5->20 px, 1.0->30 px.
-        # Convert to tiles by dividing by TILE_SIZE=30.
-        outline = float(stats.get("outline_size") or 0.2)
-        self.radius = (10.0 + min(outline, 1.0) * 20.0) / 30.0
+        self.radius = collision_radius(stats.get("outline_size"))
 
         self.target = None
         self.state = "idle"
@@ -1412,7 +1437,7 @@ class BattleUnit:
         self.y = max(self.radius, min(MAP_H - self.radius, self.y))
 
         new_dist = self.distance_to(self.target)
-        if new_dist >= self.last_dist_to_target - STUCK_PROGRESS_THRESHOLD:
+        if new_dist >= self.last_dist_to_target - STUCK_PROGRESS_RATE * dt:
             self.stuck_timer += dt
         else:
             self.stuck_timer = max(0, self.stuck_timer - dt * 2)
@@ -1482,8 +1507,7 @@ class BattleSimulation:
         team = []
         # Place units in a vertical line on the appropriate side.
         # Match JS layout but in tile coordinates.
-        outline = float(stats.get("outline_size") or 0.2)
-        radius = (10.0 + min(outline, 1.0) * 20.0) / 30.0
+        radius = collision_radius(stats.get("outline_size"))
         # Anchor each team TEAM_OFFSET_FROM_CENTER tiles from map center, leaving
         # the rest of the map width as free kiting space behind each army.
         center_x = MAP_W / 2.0

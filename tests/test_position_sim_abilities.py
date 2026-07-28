@@ -181,10 +181,12 @@ def test_trample_reach_measured_from_the_attacker_hull():
 
     Measuring from the attacker's CENTRE drops its own radius, so a packed ring
     around a big-footprint unit sits just outside the blast and only the single
-    contact target gets hit. With default outline (radius 0.4667) and a 0.5-tile
-    blast, correct reach is ~1.433 tiles; the old point-based test stopped at
-    ~0.967. A neighbour parked at 1.2 tiles is inside the real blast and outside
-    the buggy one, so this asserts the difference directly.
+    contact target gets hit.
+
+    The neighbour is placed midway between the two reaches, derived from the
+    live radii rather than hardcoded — otherwise the test silently stops
+    discriminating whenever the radius model changes (it caught exactly that
+    when collision radii moved from the sprite formula to true outline size).
     """
     sim = _Sim()
     a = _mk(_base(trample_percent=0.5, trample_radius=0.5))
@@ -194,8 +196,12 @@ def test_trample_reach_measured_from_the_attacker_hull():
     sim.team2 = [t, b]
     a.x = a.y = 0.0
     t.x, t.y = 0.4, 0.0                    # the struck target
-    b.x, b.y = 1.2, 0.0                    # neighbour: inside hull-based reach only
-    assert a.radius + 0.5 + b.radius > 1.2 > 0.5 + b.radius   # the test is discriminating
+
+    point_reach = 0.5 + b.radius                    # buggy: attacker is a point
+    hull_reach = a.radius + 0.5 + b.radius          # correct: edge-to-edge
+    assert hull_reach > point_reach, "radii make this test non-discriminating"
+    b.x, b.y = (point_reach + hull_reach) / 2.0, 0.0
+
     hb = b.current_hp
     a.perform_attack_on(t, sim)
     assert hb - b.current_hp > 0, "neighbour inside the hull-based blast was not trampled"
@@ -304,3 +310,37 @@ def test_guecha_ally_death_heal():
         sim.step(0.1)
     assert victim.state == "dead"
     assert abs(guecha.current_hp - 45.0) < 0.01   # +5 HP healed over 3s
+
+
+def test_stuck_detection_is_frame_rate_independent():
+    """Tick rate must change resolution, not physics.
+
+    The stuck threshold is a RATE (tiles/second). Spending it as a fixed
+    per-frame step — which is what the JS engine does — makes the same constant
+    demand 1.0 tiles/s at 60 fps but 0.5 tiles/s at 30 Hz, so simply changing DT
+    silently decides who wins a chase. A chaser closing faster than the rate must
+    never be called stuck, and one closing slower always must, at ANY dt.
+    """
+    from aoe2x.sim.simulation_real import STUCK_PROGRESS_RATE, SpatialGrid
+
+    def closing_run(speed, dt, seconds=1.0):
+        a = _mk(_base(movement_speed=speed))
+        d = _mk(_base(), 2, "d")
+        a.x, a.y = 0.0, 0.0
+        d.x, d.y = 30.0, 0.0            # far apart: no avoidance interference
+        a.target = d
+        a.last_dist_to_target = a.distance_to(d)
+        grid = SpatialGrid()
+        for _ in range(int(seconds / dt)):
+            grid.rebuild([a, d])
+            a.move_toward_target(dt, grid)
+        # Once the timer passes STUCK_TIMER_LIMIT the unit blacklists its target
+        # and zeroes the timer, so the blacklist — not the timer — is the
+        # observable that survives.
+        return d in a.blocked_targets
+
+    faster = STUCK_PROGRESS_RATE + 0.2
+    slower = STUCK_PROGRESS_RATE - 0.2
+    for dt in (1.0 / 30.0, 1.0 / 60.0, 1.0 / 15.0):
+        assert not closing_run(faster, dt), f"real progress called stuck at dt={dt}"
+        assert closing_run(slower, dt), f"no progress not called stuck at dt={dt}"

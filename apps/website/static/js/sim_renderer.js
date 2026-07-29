@@ -585,8 +585,13 @@ export class SimRenderer {
     }
 
     // Pre-battle frame: background + grid, no units — what the legacy render()
-    // drew while both teams were still empty.
+    // drew while both teams were still empty. Dropping the cached sim is part of
+    // that: legacy reset() emptied the team arrays on the object the renderer
+    // held, so the repaint after the reset->pick-phase resize drew a bare field.
+    // Keeping the finished battle here would redraw it (winner banner and all)
+    // behind the pickers.
     renderEmpty() {
+        this._sim = null;
         this._paintBackdrop();
     }
 

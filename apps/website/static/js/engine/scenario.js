@@ -8,7 +8,7 @@
 //     relic transform can never mutate the caller's object (the legacy code got
 //     this for free: every request parsed a fresh payload);
 //   * the three sprite-assignment lines (2456-2458) are gone — sprites belong to
-//     the renderer (Task 6);
+//     the renderer (`static/js/sim_renderer.js`);
 //   * the unseeded jitter draw became `sim.rng.next()` — seeded and replayable.
 // The relic-delta transform, the radius/spacing/start-position math, the
 // construction order and the startKills clamp are byte-identical to the legacy.

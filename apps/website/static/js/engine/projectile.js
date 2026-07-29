@@ -1,9 +1,10 @@
-// Role: engine — projectile flight (logic only; rendering stays in simulate.js).
+// Role: engine — projectile flight (logic only; rendering lives in the renderer).
 //
 // classifyProjectile + the Projectile constructor/update are copied verbatim out
 // of simulate.js (lines 561-580 and 582-631); the only edits are the `import`
 // line below and the `export` keywords. The render methods (_renderBall, render)
-// deliberately stay behind in simulate.js and move to the renderer in Task 6.
+// did not come along — they are `static/js/sim_renderer.js` drawProjectileBall /
+// drawProjectile.
 
 import { TILE_SIZE } from "./constants.js";
 

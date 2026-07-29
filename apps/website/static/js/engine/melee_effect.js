@@ -1,8 +1,8 @@
-// Role: engine — melee/splash hit effect timing (logic only; render stays put).
+// Role: engine — melee/splash hit effect timing (logic only; render elsewhere).
 //
 // The MeleeEffect constructor/update are copied verbatim out of simulate.js
-// (lines 778-792); the only edit is the `export` keyword. The render method
-// deliberately stays behind in simulate.js and moves to the renderer in Task 6.
+// (lines 778-792); the only edit is the `export` keyword. The render method did
+// not come along — it is `static/js/sim_renderer.js` drawEffect.
 
 export class MeleeEffect {
     constructor(x, y, team, splashRadius) {

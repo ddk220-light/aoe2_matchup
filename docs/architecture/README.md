@@ -73,7 +73,7 @@ data/golden/aoe2_units.db          │                            │
 | `apps/website/static/js/sim_renderer.js` | Browser-only `SimRenderer` — every canvas draw call, sprite/asset ownership, HP bars. The engine never touches the DOM; the renderer never mutates sim state (one documented exception: `unit.faceRight`). |
 | `apps/website/static/js/simulate.js` | Battle Sim **page shell** only — civ/unit pickers, count modes, deep-link autorun, stats/debug panels, `PageSim` wrapper around the engine. No engine classes live here. |
 | `apps/website/static/lab/sim_harness.html` + `.js` + `sim_worker.js` | Standalone diagnostic harness at `/static/lab/sim_harness.html` — presets, three count modes, seed control + single-step, path/target overlays, multi-seed worker scoreboard. Not linked from the site nav. |
-| `tools/simjs/` | Engine tooling: `golden/` (205-fight parity panel + `panel.meta.json` provenance), `parity_check.mjs` (**the gate** — bit-exact replay, exit 0/1/2), `headless.mjs` (node engine runner), `parity_capture.mjs` + `legacy_harness.cjs` (one-off pre-extraction capture), `audit_panel.mjs`, `ability_coverage.py`. |
+| `tools/simjs/` | Engine tooling: `golden/` (205-fight parity panel + `panel.meta.json` provenance), `parity_check.mjs` (**the gate** — bit-exact replay, exit 0/1/2), `headless.mjs` (node engine runner), `parity_capture.mjs` + `legacy_harness.cjs` (one-off pre-extraction capture), `audit_panel.mjs`, `ability_coverage.py`, `dump_combat_dicts.py` (dumps the ref-DB combat dicts the runners feed the engine). |
 | `tests/js/engine/*.test.mjs` | 17 node unit tests — `node --test tests/js/engine/`. |
 
 **Standing rule:** any edit under `engine/` must re-run `node tools/simjs/parity_check.mjs`.

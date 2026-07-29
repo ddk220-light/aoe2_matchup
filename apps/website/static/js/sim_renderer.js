@@ -12,8 +12,8 @@
  * hashes). See the comment block at that assignment for the full rationale.
  *
  * Provenance — every drawing body below was lifted out of simulate.js, which
- * keeps its own copy until the Task 8 cutover (change one, change the other
- * until then):
+ * keeps no copy of any of it (it is the page shell now); this module is the
+ * single source for all the drawing:
  *
  *   simulate.js 21-53      -> CANVAS_PAL + refreshCanvasPalette + MutationObserver
  *   simulate.js 636-654    -> drawProjectileBall   (was Projectile._renderBall)

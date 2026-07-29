@@ -3,7 +3,7 @@
 // Copied verbatim out of simulate.js (lines 834-2173 plus the class-closing brace
 // at 2314). Exactly five mechanical edits were applied:
 //   1. the render(ctx) method (simulate.js:2175-2313) did NOT move -- it belongs to
-//      the renderer (Task 6); the cut text is kept verbatim beside the plan;
+//      the renderer (`static/js/sim_renderer.js` drawUnit);
 //   2. the imports below + the `export` keywords;
 //   3. the constructor takes a `sim` back-reference and stores it as its first act;
 //   4. every page-global `simulation` singleton reference became `this.sim` (or
@@ -12,8 +12,9 @@
 //   5. the three unseeded random draws became `sim.rng.next()` -- seeded, replayable.
 // The page-global `armorClassNames` lookup is now a module-level map fed by
 // setArmorClassNames(). Everything else -- every formula, constant, comment and
-// statement order -- is byte-identical to simulate.js, which keeps its own copy
-// until the Task 8 cutover; change one, change the other until then.
+// statement order -- carried over byte-identical. This module is the single
+// source: simulate.js is only the page shell and keeps no copy. Any edit here
+// changes sim behavior -- re-run `node tools/simjs/parity_check.mjs`.
 
 import {
     TILE_SIZE,

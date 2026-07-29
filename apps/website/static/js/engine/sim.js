@@ -8,13 +8,15 @@
 //   * `this.updateStats();`      (the live stat readout)
 //   * `updateBattleWinner(1|2|0)` x3 (the page-global banner)
 // The winner assignment and `this.running = false` STAY — those are engine
-// state. Everything else (formulas, comments, statement order) is byte-identical
-// to simulate.js, which keeps its own copy until the Task 8 cutover; change one,
-// change the other until then.
+// state. Everything else (formulas, comments, statement order) carried over
+// byte-identical. This module is the single source: simulate.js is only the page
+// shell and keeps no copy. Any edit here changes sim behavior — re-run
+// `node tools/simjs/parity_check.mjs`.
 //
 // The class deliberately owns no canvas, no timers and no page state: `loop()`,
 // `render()`, `start()`/`pause()`/`reset()` and the debug panel all stay behind
-// in simulate.js / the Task 6 renderer. A host drives this with step()/runToEnd().
+// in simulate.js / `static/js/sim_renderer.js`. A host drives this with
+// step()/runToEnd().
 
 import { TILE_SIZE, CANVAS_WIDTH, CANVAS_HEIGHT } from "./constants.js";
 

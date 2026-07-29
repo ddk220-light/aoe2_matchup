@@ -1,0 +1,24 @@
+{
+  "note": "Task-11 cross-engine comparison roster. One entry per unit-type class from the task brief. 'brief_slug' is the slug the brief asked for; 'slug' is what actually exists in data/golden/aoe2_reference.db under age='Imperial' (the data model is Imperial-only). Every slug below was validated with: select civ_name, unit_slug from ref_units where unit_slug like '%X%' and age='Imperial'. No unit class was dropped.",
+  "count_per_side": 10,
+  "seeds": [1, 2, 3, 4, 5],
+  "max_seconds": 600,
+  "units": [
+    {"key": "champion",                      "civ": "Vikings",    "slug": "champion",                      "brief_slug": "champion",                      "name": "Champion",              "class": "infantry (militia line)",     "corrected": false},
+    {"key": "halberdier",                    "civ": "Goths",      "slug": "halberdier",                    "brief_slug": "halberdier",                    "name": "Halberdier",            "class": "anti-cav infantry (spear)",   "corrected": false},
+    {"key": "arbalester",                    "civ": "Britons",    "slug": "arbalester",                    "brief_slug": "arbalester",                    "name": "Arbalester",            "class": "foot archer",                 "corrected": false},
+    {"key": "imp_elite_skirm",               "civ": "Aztecs",     "slug": "imp_elite_skirm",               "brief_slug": "elite_skirmisher",              "name": "Elite Skirmisher",      "class": "anti-archer skirmisher",      "corrected": true},
+    {"key": "paladin",                       "civ": "Franks",     "slug": "paladin",                       "brief_slug": "paladin",                       "name": "Paladin",               "class": "heavy cavalry (knight line)", "corrected": false},
+    {"key": "hussar",                        "civ": "Huns",       "slug": "hussar",                        "brief_slug": "hussar",                        "name": "Hussar",                "class": "light cavalry",               "corrected": false},
+    {"key": "heavy_camel",                   "civ": "Saracens",   "slug": "heavy_camel",                   "brief_slug": "heavy_camel_rider",             "name": "Heavy Camel Rider",     "class": "anti-cav cavalry (camel)",    "corrected": true},
+    {"key": "heavy_cav_archer",              "civ": "Mongols",    "slug": "heavy_cav_archer",              "brief_slug": "heavy_cavalry_archer",          "name": "Heavy Cavalry Archer",  "class": "cavalry archer",              "corrected": true},
+    {"key": "elite_elephant",                "civ": "Bengalis",   "slug": "elite_elephant",                "brief_slug": "elite_battle_elephant",         "name": "Elite Battle Elephant", "class": "battle elephant",             "corrected": true},
+    {"key": "siege_onager",                  "civ": "Celts",      "slug": "siege_onager",                  "brief_slug": "onager",                        "name": "Siege Onager",          "class": "siege (mangonel line)",       "corrected": true},
+    {"key": "heavy_scorpion",                "civ": "Celts",      "slug": "heavy_scorpion",                "brief_slug": "heavy_scorpion",                "name": "Heavy Scorpion",        "class": "siege (scorpion line)",       "corrected": false},
+    {"key": "hand_cannoneer",                "civ": "Turks",      "slug": "hand_cannoneer",                "brief_slug": "hand_cannoneer",                "name": "Hand Cannoneer",        "class": "gunpowder",                   "corrected": false},
+    {"key": "elite_huskarl_goths",           "civ": "Goths",      "slug": "elite_huskarl_goths",           "brief_slug": "elite_huskarl_goths",           "name": "Elite Huskarl",         "class": "unique — anti-archer inf",    "corrected": false},
+    {"key": "elite_cataphract_byzantines",   "civ": "Byzantines", "slug": "elite_cataphract_byzantines",   "brief_slug": "elite_cataphract_byzantines",   "name": "Elite Cataphract",      "class": "unique — heavy cav",          "corrected": false},
+    {"key": "elite_teutonic_knight_teutons", "civ": "Teutons",    "slug": "elite_teutonic_knight_teutons", "brief_slug": "elite_teutonic_knight_teutons", "name": "Elite Teutonic Knight", "class": "unique — heavy infantry",     "corrected": false},
+    {"key": "elite_mangudai_mongols",        "civ": "Mongols",    "slug": "elite_mangudai_mongols",        "brief_slug": "elite_mangudai_mongols",        "name": "Elite Mangudai",        "class": "unique — cavalry archer",     "corrected": false}
+  ]
+}

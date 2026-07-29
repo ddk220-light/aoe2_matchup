@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<!--
+  Role: lab — the standalone battle-sim diagnostic harness.
+
+  Deliberately NOT a Flask template and deliberately without site chrome: this is
+  an instrument, not a page. It is served straight out of the static folder
+  (/static/lab/sim_harness.html), so it has no navbar, no analytics and no
+  dependency on base.html — the only thing it shares with the product is the
+  engine itself (/static/js/engine/) and the renderer (/static/js/sim_renderer.js),
+  which is the whole point: what you watch here is bit-for-bit what the Battle Sim
+  page and the batch runs execute.
+
+  app.py binds 0.0.0.0, so this is reachable from a phone/tablet on the tailnet at
+  http://<tailnet-ip>:5002/static/lab/sim_harness.html.
+
+  Script order matters: constants.js and unit_sprites.js are CLASSIC scripts (they
+  publish ENABLED_CIVS / spriteFor / sheetFor / UNIT_SPRITES as globals) and must
+  run before the module. Note that `const ENABLED_CIVS` in a classic script is a
+  global LEXICAL binding, not a window property — sim_harness.js reads it as a
+  bare identifier, never as window.ENABLED_CIVS.
+-->
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Sim Harness — AoE2 battle engine lab</title>
+<style>
+/* The renderer reads these design tokens off :root (getComputedStyle) for the
+   canvas palette. Without them it silently falls back to its built-in defaults;
+   defining them here keeps the battlefield looking like the product's. */
+:root {
+    --canvas-bg: #1a2114;
+    --text: #e8e2d4;
+    --gold: #cdac50;
+    --strong: #6fb15e;
+    --weak: #cf9a4a;
+    --poor: #cf6a5e;
+    --team1: #4a9fd4;
+    --team2: #cf5a4b;
+
+    --bg: #14161a;
+    --panel: #1c2027;
+    --panel2: #232832;
+    --line: #333a46;
+    --muted: #8d97a8;
+}
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 13px/1.45 ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+}
+h1 { font-size: 15px; margin: 0; letter-spacing: .04em; text-transform: uppercase; color: var(--gold); }
+h2 { font-size: 11px; margin: 0 0 6px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+header {
+    display: flex; align-items: baseline; gap: 12px;
+    padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--panel);
+}
+header .sub { color: var(--muted); font-size: 11px; }
+
+.wrap { display: flex; gap: 12px; padding: 12px; align-items: flex-start; flex-wrap: wrap; }
+.rail { width: 290px; flex: 0 0 290px; display: flex; flex-direction: column; gap: 10px; }
+.stage { flex: 1 1 620px; min-width: 320px; display: flex; flex-direction: column; gap: 10px; }
+.results { flex: 1 1 340px; min-width: 300px; display: flex; flex-direction: column; gap: 10px; }
+
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; }
+.card.tight { padding: 8px 10px; }
+
+label { display: block; font-size: 11px; color: var(--muted); margin: 6px 0 2px; }
+select, input[type="number"], input[type="text"] {
+    width: 100%; background: var(--panel2); color: var(--text);
+    border: 1px solid var(--line); border-radius: 4px; padding: 4px 6px; font: inherit;
+}
+input[type="number"] { -moz-appearance: textfield; }
+button {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 4px; padding: 5px 10px; font: inherit; cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button.primary { background: var(--gold); border-color: var(--gold); color: #1a1a1a; font-weight: 700; }
+button.primary:hover:not(:disabled) { color: #1a1a1a; filter: brightness(1.1); }
+
+.row { display: flex; gap: 6px; align-items: center; }
+.row > * { flex: 1; }
+.row.auto > * { flex: 0 0 auto; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+fieldset { border: 1px solid var(--line); border-radius: 5px; padding: 6px 8px 8px; margin: 0; }
+legend { font-size: 11px; color: var(--muted); padding: 0 4px; letter-spacing: .06em; text-transform: uppercase; }
+.t1 legend { color: var(--team1); }
+.t2 legend { color: var(--team2); }
+
+.checks label, .modes label {
+    display: flex; align-items: center; gap: 6px; margin: 3px 0;
+    color: var(--text); font-size: 12px; cursor: pointer;
+}
+.checks input, .modes input { width: auto; flex: 0 0 auto; }
+.hint { color: var(--muted); font-size: 10.5px; margin-top: 4px; line-height: 1.35; }
+
+canvas {
+    width: 100%; max-width: 900px; aspect-ratio: 3 / 2; display: block;
+    border: 1px solid var(--line); border-radius: 6px; background: var(--canvas-bg);
+}
+
+.clock { font-variant-numeric: tabular-nums; font-size: 20px; color: var(--gold); font-weight: 700; }
+.statusline { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.statusline .seedecho { color: var(--muted); font-size: 11px; }
+
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 11.5px; }
+th, td { padding: 2px 3px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--muted); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+tfoot td { color: var(--gold); font-weight: 700; border-bottom: none; border-top: 1px solid var(--line); }
+.win1 { color: var(--team1); } .win2 { color: var(--team2); }
+.wind { color: var(--muted); }
+.scroll { max-height: 300px; overflow: auto; }
+
+.live { display: grid; grid-template-columns: auto 1fr 1fr; gap: 1px 10px; font-variant-numeric: tabular-nums; }
+.live .k { color: var(--muted); font-size: 11px; }
+.live .h1 { color: var(--team1); font-weight: 700; }
+.live .h2 { color: var(--team2); font-weight: 700; }
+.live .v { text-align: right; }
+
+.err { color: var(--poor); font-size: 11.5px; margin-top: 6px; min-height: 14px; }
+.legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 10.5px; color: var(--muted); margin-top: 6px; }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 3px; vertical-align: -1px; }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>Sim Harness</h1>
+    <span class="sub">shared engine &middot; <code>/static/js/engine/</code> &middot; same code the Battle Sim page and the batch runs execute</span>
+</header>
+
+<div class="wrap">
+
+    <!-- ===== LEFT RAIL: what to fight, how many, with which seed ===== -->
+    <div class="rail">
+        <div class="card">
+            <h2>Preset</h2>
+            <select id="preset"><option value="">— custom —</option></select>
+            <div class="hint" id="presetHint">The six documented problem fights from the migration write-up.</div>
+        </div>
+
+        <div class="card">
+            <fieldset class="t1">
+                <legend>Team 1</legend>
+                <label for="civ1">Civilization</label>
+                <select id="civ1"></select>
+                <label for="unit1">Unit (Imperial)</label>
+                <select id="unit1"><option value="">— pick a civ —</option></select>
+                <label for="count1">Count</label>
+                <input type="number" id="count1" min="1" max="200" value="21">
+            </fieldset>
+
+            <div style="height:8px"></div>
+
+            <fieldset class="t2">
+                <legend>Team 2</legend>
+                <label for="civ2">Civilization</label>
+                <select id="civ2"></select>
+                <label for="unit2">Unit (Imperial)</label>
+                <select id="unit2"><option value="">— pick a civ —</option></select>
+                <label for="count2">Count</label>
+                <input type="number" id="count2" min="1" max="200" value="6">
+            </fieldset>
+        </div>
+
+        <div class="card">
+            <h2>Army size</h2>
+            <div class="modes">
+                <label><input type="radio" name="countMode" value="explicit" checked> explicit — use the numbers above</label>
+                <label><input type="radio" name="countMode" value="ui-rule"> ui-rule — Battle Sim page rule</label>
+                <label><input type="radio" name="countMode" value="corpus-rule"> corpus-rule — tape/corpus rule</label>
+            </div>
+            <label for="budget">Budget (resources)</label>
+            <input type="number" id="budget" min="100" step="100" value="3000">
+            <div class="hint">
+                ui-rule: <code>max(1, floor(budget / (wood+food+gold)))</code>, no cap.<br>
+                corpus-rule: weighted <code>food + wood + 1.5&times;gold</code> (&divide; train batch),
+                cheaper side capped at 21, pricier side scaled to equal spend.
+                Derived counts are written back into the Count boxes on Run.
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Seed</h2>
+            <div class="row auto">
+                <input type="number" id="seed" min="0" step="1" value="1" style="flex:1 1 auto">
+                <button id="randomSeed" title="Random 32-bit seed">&#127922;</button>
+            </div>
+            <div class="hint">Same seed + same teams &rarr; bit-identical battle, here, on the page and in the batch runs.</div>
+        </div>
+    </div>
+
+    <!-- ===== CENTER: the battlefield ===== -->
+    <div class="stage">
+        <div class="card tight">
+            <div class="statusline">
+                <button id="run" class="primary">Run</button>
+                <button id="pause" disabled>Pause</button>
+                <button id="step" disabled>Step</button>
+                <select id="speed" style="flex:0 0 80px">
+                    <option value="0.25">0.25&times;</option>
+                    <option value="0.5">0.5&times;</option>
+                    <option value="1" selected>1&times;</option>
+                    <option value="2">2&times;</option>
+                    <option value="4">4&times;</option>
+                    <option value="8">8&times;</option>
+                </select>
+                <span class="clock" id="clock">0.0s</span>
+                <span class="seedecho" id="seedEcho"></span>
+            </div>
+            <div class="err" id="err"></div>
+        </div>
+
+        <canvas id="canvas" width="900" height="600"></canvas>
+
+        <div class="card tight">
+            <h2>Overlays</h2>
+            <div class="checks" style="display:flex;gap:16px;flex-wrap:wrap">
+                <label><input type="checkbox" id="ovState" checked> state ring</label>
+                <label><input type="checkbox" id="ovTarget" checked> target lines</label>
+                <label><input type="checkbox" id="ovRange" checked> range rings</label>
+            </div>
+            <div class="legend">
+                <span><i style="background:#888"></i>idle</span>
+                <span><i style="background:#4aa3ff"></i>moving</span>
+                <span><i style="background:#ff4a4a"></i>attacking</span>
+                <span><i style="background:#ffd14a"></i>kiting</span>
+                <span><i style="background:#ff9900"></i>committed</span>
+                <span><i style="background:#333"></i>dead</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== RIGHT: live diagnostics + multi-seed scoreboard ===== -->
+    <div class="results">
+        <div class="card">
+            <h2>Live</h2>
+            <div class="live" id="live">
+                <span class="k"></span><span class="h1 v" id="liveName1">Team 1</span><span class="h2 v" id="liveName2">Team 2</span>
+                <span class="k">alive</span><span class="v" id="alive1">—</span><span class="v" id="alive2">—</span>
+                <span class="k">hp</span><span class="v" id="hp1">—</span><span class="v" id="hp2">—</span>
+                <span class="k">swings</span><span class="v" id="sw1">—</span><span class="v" id="sw2">—</span>
+                <span class="k">hits</span><span class="v" id="hits1">—</span><span class="v" id="hits2">—</span>
+                <span class="k">dmg dealt</span><span class="v" id="dmg1">—</span><span class="v" id="dmg2">—</span>
+                <span class="k">dps (5s)</span><span class="v" id="dps1">—</span><span class="v" id="dps2">—</span>
+                <span class="k">1st dmg</span><span class="v" id="first1">—</span><span class="v" id="first2">—</span>
+            </div>
+            <div class="hint" id="freefire">Free-fire: —</div>
+        </div>
+
+        <div class="card">
+            <h2>Multi-seed scoreboard</h2>
+            <div class="row auto" style="margin-bottom:6px">
+                <label for="nSeeds" style="margin:0;flex:0 0 auto">seeds</label>
+                <input type="number" id="nSeeds" min="1" max="200" value="10" style="flex:0 0 70px">
+                <button id="runN" style="flex:0 0 auto">Run N</button>
+                <button id="cancelN" style="flex:0 0 auto" disabled>Cancel</button>
+                <span class="hint" id="boardStatus" style="margin:0;flex:1 1 auto"></span>
+            </div>
+            <div class="scroll">
+                <table id="board">
+                    <thead><tr>
+                        <th>seed</th><th>winner</th><th>time</th>
+                        <th>alive1</th><th>hp1%</th><th>alive2</th><th>hp2%</th>
+                    </tr></thead>
+                    <tbody></tbody>
+                    <tfoot></tfoot>
+                </table>
+            </div>
+            <div class="hint">
+                Seeds run <code>seed</code> … <code>seed+N-1</code> in a Worker (600 s cap) so the page stays interactive.
+                Rows are fixed <code>1/60</code> ticks; the watched fight above is wall-clock stepped exactly like the
+                Battle Sim page, so its last sub-step each frame is a partial tick and the outcome for the same seed can
+                differ. Use <b>Step</b> for a tick-exact replay.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/constants.js"></script>
+<script src="/static/js/unit_sprites.js"></script>
+<script type="module" src="/static/lab/sim_harness.js"></script>
+</body>
+</html>

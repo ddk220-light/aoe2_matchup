@@ -71,6 +71,17 @@ export class Simulation {
         this.winner = null;
         this.projectiles = [];
         this.effects = [];
+        // Diagnostic bookkeeping, per team. Pure counters: nothing in the engine
+        // ever READS them, they draw no randomness and they are deliberately
+        // absent from stateHash() — so they cannot influence a battle and the
+        // parity gate stays bit-exact. The lab harness
+        // (static/lab/sim_harness.js) reads them for its live DPS / hit-rate
+        // readout. Written in BattleUnit.performAttackOn / fireProjectile
+        // (swings) and BattleUnit.takeDamage (hitsLanded + damageDealt).
+        this.combatStats = {
+            1: { swings: 0, hitsLanded: 0, damageDealt: 0 },
+            2: { swings: 0, hitsLanded: 0, damageDealt: 0 },
+        };
     }
 
     update(dt) {

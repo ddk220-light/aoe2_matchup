@@ -710,6 +710,13 @@ export class BattleUnit {
     }
 
     fireProjectile(target, isExtra = false) {
+        // Diagnostic counter (see Simulation.combatStats): one swing per
+        // projectile launched, so a multi-arrow volley (Chu Ko Nu, Organ Gun)
+        // counts once per arrow — that is what makes hitsLanded/swings read as
+        // a per-projectile accuracy rate. Nothing here is read back by the
+        // engine and no rng is drawn, so behaviour is untouched.
+        if (this.sim && this.sim.combatStats)
+            this.sim.combatStats[this.team].swings++;
         const damage =
             this.getDamageAgainst(target) +
             Math.floor(this.killBonusAttack);
@@ -964,6 +971,15 @@ export class BattleUnit {
 
     performAttackOn(target) {
         if (!target || target.state === "dead") return;
+        // Diagnostic counter (see Simulation.combatStats): one swing per melee
+        // strike that actually happens. Placed AFTER the dead-target guard so a
+        // no-op call is not counted as a swing (in practice both call sites
+        // already check, so this guard rarely fires). Charge projectiles
+        // (fireChargeProjectile) are NOT counted as swings — they are a bonus
+        // volley on top of the normal attack; their damage still lands in
+        // hitsLanded/damageDealt via takeDamage.
+        if (this.sim && this.sim.combatStats)
+            this.sim.combatStats[this.team].swings++;
         let damage =
             this.getDamageAgainst(target) +
             Math.floor(this.killBonusAttack);
@@ -1198,6 +1214,7 @@ export class BattleUnit {
                 attacker.target = null;
             }
         }
+        const hpBeforeHit = this.currentHp;
         this.currentHp -= amount;
         // Floating per-hit damage numbers were removed — at 30v30 they spawn
         // dozens/sec and just clutter the field; live damage is read from the
@@ -1207,6 +1224,20 @@ export class BattleUnit {
             this.currentHp = 0;
             this.state = "dead";
             this.target = null;
+        }
+        // Diagnostic counters (see Simulation.combatStats). Recorded here, past
+        // the DODGE/BLOCK early-returns, so a hit only counts once it actually
+        // reached HP; `damageDealt` is the HP the victim REALLY lost (the clamp
+        // at 0 above means overkill is not credited). `attacker` is absent on
+        // some paths (bleed ticks, execute damage) and BattleUnit may be built
+        // without a sim in tests, hence the guards. Read-only for the engine —
+        // no rng, no ordering change, not in stateHash().
+        if (attacker && attacker.sim && attacker.sim.combatStats) {
+            const cs = attacker.sim.combatStats[attacker.team];
+            if (cs) {
+                cs.hitsLanded++;
+                cs.damageDealt += hpBeforeHit - this.currentHp;
+            }
         }
     }
 

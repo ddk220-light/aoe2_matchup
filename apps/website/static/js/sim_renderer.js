@@ -7,6 +7,10 @@
  * sprite assets, and reads engine state through the public surface only
  * (sim.team1/team2/projectiles/effects/battleTime/winner/W/H + unit fields).
  *
+ * The one exception to "reads only": drawUnit writes `unit.faceRight`, which is
+ * render-only state the engine initializes and never reads back (and never
+ * hashes). See the comment block at that assignment for the full rationale.
+ *
  * Provenance — every drawing body below was lifted out of simulate.js, which
  * keeps its own copy until the Task 8 cutover (change one, change the other
  * until then):
@@ -315,6 +319,20 @@ function drawUnit(ctx, unit, assets, sim, pal) {
         if (atk > 0) s *= 1 + 0.1 * atk;
         const dw = sw * s;
         const dh = sh * s;
+        // ---------------------------------------------------------------
+        // THE ONE DELIBERATE WRITE TO ENGINE-OWNED STATE IN THIS MODULE.
+        // Everywhere else the renderer only reads. The two `unit.faceRight =`
+        // assignments below are inherited byte-faithfully from legacy
+        // BattleUnit.render (simulate.js:2230/2232) and stay here on purpose:
+        //   * faceRight is render-only state. The engine initializes it once
+        //     (engine/battle_unit.js:218, faceRight = team === 1) and never
+        //     reads it again — no update/attack/movement path touches it — and
+        //     Simulation.stateHash() does not hash it, so this write cannot
+        //     affect determinism, parity or the golden baseline.
+        //   * Facing is recomputed per RENDER FRAME, not per tick. Moving it
+        //     into the engine's update() would re-time it to the tick rate and
+        //     change the visual cadence of turning, so it is not relocated.
+        // ---------------------------------------------------------------
         // Face toward what the unit is fighting: its target if engaged (so it
         // faces where it attacks even after maneuvering past the enemy), else
         // its movement direction. A deadzone avoids flicker on near-vertical

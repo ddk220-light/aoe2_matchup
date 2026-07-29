@@ -15,8 +15,22 @@
  * pure bookkeeping counters added for exactly this readout.
  *
  * Layering rules this file obeys:
- *   * it never mutates engine state (the one exception is `unit.attackSheet`,
- *     render-only animation timing, set the same way simulate.js sets it);
+ *   * it never mutates engine COMBAT state. Across the whole render stack there
+ *     are exactly TWO deliberate writes to engine-owned cosmetic state, and this
+ *     file performs the second of them:
+ *       (a) sim_renderer.js writes `unit.faceRight` — see the rationale block at
+ *           that assignment;
+ *       (b) EVERY host that renders animated fights stamps `unit.attackSheet`
+ *           after createSimulation — production simulate.js does it at 1263-1264
+ *           and onRun() below does it identically. It is required host wiring,
+ *           not a layering violation: the engine's triggerAttackAnim() sizes
+ *           `animHold` from the sheet's frame count (0.4s without one), so a host
+ *           that owns artwork has to hand it over. (The engine reads the sheet
+ *           for that one duration and nothing else; the renderer gets its own
+ *           copy through setTeamAssets.)
+ *     Both fields are excluded from stateHash() and are never read by combat
+ *     logic, so neither can affect parity or determinism — verified by the
+ *     205-fight bit-exact gate.
  *   * overlays are drawn AFTER renderer.render(sim) onto the same context, in
  *     the renderer's logical 900x600 space (its DPR transform is re-applied
  *     here rather than assumed, so a resize mid-fight cannot skew them);
@@ -557,9 +571,11 @@ async function onRun() {
             team2Civ: teamState[2].civ,
             team2Unit: teamState[2].name,
         });
-        // The one piece of artwork the engine still touches: triggerAttackAnim()
-        // sizes its post-swing hold from the sheet's frame count (0.4s without
-        // one). Render-only state — never read back, never hashed.
+        // Required host wiring, identical to production simulate.js:1263-1264 —
+        // see write (b) in the header. triggerAttackAnim() sizes its post-swing
+        // hold from the sheet's frame count (0.4s without one), so a host that
+        // owns artwork must hand it to the units as well as to the renderer.
+        // Cosmetic state: never read by combat logic, never hashed.
         const sheets = { 1: assets[1] && assets[1].sheet, 2: assets[2] && assets[2].sheet };
         for (const u of harness.sim.team1) u.attackSheet = sheets[1] || null;
         for (const u of harness.sim.team2) u.attackSheet = sheets[2] || null;

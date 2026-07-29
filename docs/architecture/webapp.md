@@ -116,7 +116,10 @@ Known issue: `base.html` references `/static/img/favicon.png` and `/static/img/o
 |---|---|---|
 | `static/js/constants.js` | 360 | Central registries (see above) + `getIconUrl()`, `escapeHtml()`, building maps |
 | `static/js/api_client.js` | 101 | `apiGet`/`apiPost`/`apiRequest` fetch wrappers with 10s timeout and `ApiError` |
-| `static/js/simulate.js` | 2,643 | Battle Sim page: civ/unit pickers, deep-link autorun, and the full **canvas battle simulation** (`BattleUnit`, `BattleSimulation`, `Projectile`, `MeleeEffect` classes). This JS engine mirrors but is separate from the Python engines — see [simulation-engines.md](simulation-engines.md) |
+| `static/js/simulate.js` | 1,339 | Battle Sim **page shell** only (loaded as `<script type="module">`): civ/unit pickers, count modes, deep-link autorun, stats/debug panels, the `PageSim` wrapper. Since the 2026-07-28 extraction it holds **no engine classes** |
+| `static/js/engine/` | 1,944 (8 files) | **The** frontend battle engine: pure ESM, DOM-free, seeded — `rng.js`, `constants.js`, `projectile.js`, `melee_effect.js`, `battle_unit.js` (`BattleUnit`), `sim.js` (`Simulation`), `scenario.js`, `index.js`. Mirrors but is separate from the Python engines — see [simulation-engines.md](simulation-engines.md) |
+| `static/js/sim_renderer.js` | 625 | Browser-only `SimRenderer`: every canvas draw call, sprite/asset ownership, HP bars, overlays. The engine never touches the DOM |
+| `static/lab/sim_harness.html` + `.js` + `sim_worker.js` | — | Standalone diagnostic harness over the same engine (presets, seed control + single-step, overlays, multi-seed worker scoreboard). Not linked from the site nav |
 | `static/js/sim_params.js` | 21 | Pure deep-link query-param parser (`readSimParams`), shared with tests via CommonJS export |
 | `static/js/rankings.js` | 2,013 | Rankings tables for `/units`, fetches `/api/ref/unit-line` and `/api/ref/stat-chain` |
 | `static/js/matchup.js` | 320 | Civilization overview grid + power-unit cards (`/api/civ-power-units`) |
@@ -164,13 +167,13 @@ The six sync rules in `CLAUDE.md` were written before several consolidations. Cu
 | `NAME_TO_ICON` in 4 templates | **Retired** — single source `static/js/constants.js`. New unit still needs both the dict entry and a PNG in `static/img/units/` |
 | `UNIQUE_BUILDING` in 2 templates | **Retired** — single source `static/js/constants.js` |
 | `ENABLED_CIVS` in 2 templates matching `ORIGINAL_13_CIVS` | **Changed** — one copy in `constants.js`; must match the civ set in `aoe2_reference.db` (the server validates against the DB, not any Python list). The dead `ORIGINAL_13_CIVS` copy in `app.py` was deleted |
-| New `unit_stats` column touches 4 files | **Changed** — new combat property now flows `ref_units` column (analysis stage) → `aoe2x/sim/combat_unit_loader.py` `build_combat_dict_from_ref()` → `simulation.py` `prepare_combat_unit()` (and `simulation_real.py`) → `simulate.js` `BattleUnit` if the canvas sim needs it. `unit_stats` is out of the loop |
+| New `unit_stats` column touches 4 files | **Changed** — new combat property now flows `ref_units` column (analysis stage) → `aoe2x/sim/combat_unit_loader.py` `build_combat_dict_from_ref()` → `simulation.py` `prepare_combat_unit()` (and `simulation_real.py`) → `static/js/engine/battle_unit.js` `BattleUnit` if the canvas sim needs it (**not** `simulate.js` — that is only the page shell now; re-run the parity gate `node tools/simjs/parity_check.mjs` after any `engine/` edit). `unit_stats` is out of the loop |
 | Battle scores stale after sim changes | **Still true, different artifacts** — regenerate `derived_data.db`, `pool_scores.db`, `civ_power_units/` via the patch pipeline ([derived-data.md](derived-data.md)); `battle_scores.json` no longer exists |
 
 Sync rules that are live today:
 
 1. **Deep-link contract**: `battle_sim_deep_link()` in `app.py` builds `?civ1=&unit1=&civ2=&unit2=&age1=&age2=&mode=&count1=&count2=&resources=&autorun=1`; `static/js/sim_params.js` `readSimParams()` parses the same keys. Change one → change the other.
-2. **JS sim parity**: behavior changes in the Python engines usually need a mirrored change in `simulate.js`'s canvas classes ([simulation-engines.md](simulation-engines.md)).
+2. **JS sim parity**: behavior changes in the Python engines usually need a mirrored change in the JS engine at `static/js/engine/` ([simulation-engines.md](simulation-engines.md)) — then re-run `node tools/simjs/parity_check.mjs`, which will fail on the intentional change and needs a documented golden re-capture.
 3. **New unique unit**: `UNIT_LINES` entry (`unit_lines.py`) + `NAME_TO_ICON` entry + icon PNG + `UNIQUE_BUILDING` if not Castle-trained.
 4. **New civ**: appears automatically server-side once in the DBs, but needs `ENABLED_CIVS` in `constants.js` to be selectable.
 5. **`*_LINE_SLUGS` drift** between `app.py` and `compute_battle_scores.py` — touch role-scoring categories in both places until they are consolidated.

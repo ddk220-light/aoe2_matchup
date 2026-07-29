@@ -123,7 +123,9 @@ Config is `pytest.ini`: `testpaths = tests`, `python_files = test_*.py`. `tests/
 
 Not collected by pytest; run manually with Node (v20 available locally):
 
-- `node tests/test_frontend_projectile_miss.js` — brace-matches the **live** `BattleUnit` class out of `apps/website/static/js/simulate.js` (no hand-copied snapshot) and exercises `fireProjectile` under mocked browser globals, asserting the frontend canvas sim mirrors the backend miss/graze model in `aoe2x/sim/simulation_real.py`.
+- `node tests/test_frontend_projectile_miss.js` — dynamically `import()`s the **live** `BattleUnit` and `makeRng` out of `apps/website/static/js/engine/` (7 tests). Since the 2026-07-28 engine extraction these are real ES modules, so the test imports them directly — no brace-matching, no `eval`, no hand-copied snapshot, and randomness is stubbed through `sim.rng` instead of `Math.random`. Asserts the frontend engine mirrors the backend miss/graze model in `aoe2x/sim/simulation_real.py`.
+- `node --test tests/js/engine/` — 17 unit tests over the engine modules (RNG stream, projectile flight, `BattleUnit`, `Simulation`, DOM-purity).
+- `node tools/simjs/parity_check.mjs` — **the parity gate.** Replays the 205-fight golden panel in `tools/simjs/golden/` against the engine and demands bit-exact state hashes (exit 0 = OK, 1 = divergence, 2 = harness/meta error). Mandatory after any edit under `apps/website/static/js/engine/`; a deliberate behavior change is *supposed* to fail it, which calls for a re-captured golden panel and a note in the commit. See [simulation-engines.md](simulation-engines.md) §3.
 - `node tests/test_sim_params.js` — URL-parameter parsing in `apps/website/static/js/sim_params.js` (deep-link autorun).
 
 ## 4. `apps/video/` — validating the sim against the real game

@@ -40,6 +40,34 @@ const golden = JSON.parse(
 );
 const dicts = loadDicts();
 
+// ---- the gate must not be silently weakenable ---------------------------------
+// Without this, a truncated or re-captured-smaller panel.json still prints
+// "PARITY OK — 5 fights bit-exact" and exits 0: fewer fights compared, same green
+// verdict. panel.meta.json is the capture's own provenance record, so cross-check
+// the panel against it before comparing anything. Failures exit 2 (a broken gate),
+// never 1 (a genuine divergence) — the two must stay distinguishable in CI.
+const meta = JSON.parse(
+    readFileSync(path.join(HERE, "golden/panel.meta.json"), "utf8"),
+);
+const fail = (msg) => {
+    console.error(`GATE BROKEN: ${msg}`);
+    console.error("  the golden is the immutable baseline — do not edit it to make this pass");
+    process.exit(2);
+};
+if (MAX_SECONDS !== meta.maxSeconds) {
+    fail(
+        `time cap mismatch — headless.mjs runs ${MAX_SECONDS}s, the golden was ` +
+        `captured at ${meta.maxSeconds}s`,
+    );
+}
+// Skipped when a filter is active: --id/--seed deliberately compare a subset.
+if (onlyId == null && onlySeed == null && golden.length !== meta.fightCount) {
+    fail(
+        `panel.json holds ${golden.length} fights, panel.meta.json says the capture ` +
+        `wrote ${meta.fightCount} — the golden is truncated or stale`,
+    );
+}
+
 // Pinpoint where two fights first differ. Returns a printable multi-line report.
 function describeDivergence(g, r) {
     const out = [];

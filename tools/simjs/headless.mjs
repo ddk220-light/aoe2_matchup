@@ -21,11 +21,19 @@
 //     off that cadence;
 //   * unit tuple [team, idx, x, y, hp, state], every team-1 unit in array order
 //     then every team-2 unit, dead units included so indices stay stable;
-//   * an INTEGER TICK BUDGET (round(maxSeconds * 60)), never a float comparison
-//     against sim.battleTime. battleTime is an accumulated sum of 1/60 and drifts
-//     (599.999999999783 at tick 36000), so `battleTime < maxSeconds` would stop a
-//     capped fight one tick late. The engine's own runToEnd() uses the float form
-//     and is therefore NOT usable here;
+//   * an INTEGER TICK BUDGET (round(maxSeconds * 60)) — because THE CAPTURE USED
+//     ONE. That is the whole reason; it needs no other.
+//     To be precise about what this is NOT: at 600 s the integer budget and the
+//     engine's float form in runToEnd() (`battleTime < maxSeconds - 1e-9`) AGREE.
+//     battleTime accumulates to 599.999999999783 after 36000 ticks, which is
+//     already >= 600 - 1e-9 (= 599.999999999), so runToEnd(600) also stops at
+//     exactly 36000 ticks. Swapping this loop for runToEnd would not change a
+//     single panel row today.
+//     The float form is nonetheless fragile: the accumulated drift grows with the
+//     budget and eventually crosses the 1e-9 epsilon — the first budget at which
+//     the two forms disagree is maxSeconds = 1462, and 628 of the integer budgets
+//     in 1..3000 disagree. So the integer budget is the form that stays correct if
+//     the cap ever moves, and it is the form the golden was recorded with;
 //   * final.winner is sim.winner RAW: 1 | 2 | 0 (mutual annihilation) | null (the
 //     cap was hit with both sides alive). Never coerce the null;
 //   * final.hp1/hp2 sum currentHp over LIVING units only;

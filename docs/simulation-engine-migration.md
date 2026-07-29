@@ -7,6 +7,14 @@
 > `simulate.js` is the page shell and `sim_renderer.js` the drawing layer. The parity
 > gate (`tools/simjs/parity_check.mjs`) proves the extracted engine bit-exact against the
 > pre-extraction engine over 205 fights.
+>
+> **Results + findings:** [docs/js-engine-extraction-results-2026-07-29.md](js-engine-extraction-results-2026-07-29.md).
+> Headline of the 2026-07-29 cross-engine comparison (`lab/cross_engine/REPORT.md`,
+> 16-unit round-robin, 10v10, 5 seeds): the JS and Python engines agree on **109/120
+> pairs (90.8%)**; melee-only pairs agree 35/36, while 10 of the 11 disagreements
+> involve a ranged unit — the divergence sits exactly on the kiting/geometry axis
+> documented in §6 below. JS fights run 1.39× longer and hit the 600 s cap 7/600
+> times (the residue-kiter gap, §7.2); the Python's fitted kite-stop never does.
 
 **Date:** 2026-07-28 · **Branch:** `improved-simulation` · **Status:** findings recorded,
 migration plan not yet written.

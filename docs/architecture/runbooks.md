@@ -121,7 +121,7 @@ Three engines exist; decide which ones the change applies to (details:
 |---|---|---|
 | Abstract tick sim | `aoe2x/sim/simulation.py` | `best_units.get_matchup_sims` (default `sim_func`) → the live `/api/matchup-sims` advisor endpoint; `aoe2x/rank/compute_battle_scores.py`; the golden baseline |
 | Position-based sim | `aoe2x/sim/simulation_real.py` | `aoe2x/batch/run_matchup_battles.py`, `aoe2x/batch/rebuild_matchup_baseline.py`, `aoe2x/batch/patch_resim.py`, `aoe2x/batch/verify_flips.py` → matchup DB → all derive scripts |
-| Frontend canvas sim | `apps/website/static/js/simulate.js` (`BattleUnit`, line ~345) | the Battle Sim page at `/` only (legacy `/simulate` 301-redirects there); fetches stats from `/api/ref/combat-unit/<civ>/<slug>` |
+| Frontend canvas sim | `apps/website/static/js/engine/` (`battle_unit.js`, `sim.js`) — `simulate.js` is now just the page shell, `sim_renderer.js` the drawing layer | the Battle Sim page at `/` (legacy `/simulate` 301-redirects there), the lab harness `/static/lab/sim_harness.html`, and headless node runs (`tools/simjs/headless.mjs`); fetches stats from `/api/ref/combat-unit/<civ>/<slug>` |
 
 *Condensed from [simulation-engines.md](simulation-engines.md) §4 — update both together.*
 
@@ -238,10 +238,20 @@ chain is GENERATED from the ability registry — the old 6-file hand-sync is gon
    (Skip if the value is dat-extracted — then extend `combat_properties.py` instead.)
 3. **One handler per engine that models it** — `aoe2x/sim/simulation.py` (also add the key to its
    `_PREPARE_SCALAR_KEYS` pin in the same file: the abstract engine consumes a deliberate
-   subset of the registry), `aoe2x/sim/simulation_real.py`, `apps/website/static/js/simulate.js`
-   `BattleUnit`. Declare non-implementing engines honestly in the registry `engines` tuple and
+   subset of the registry), `aoe2x/sim/simulation_real.py`, and
+   `apps/website/static/js/engine/battle_unit.js` `BattleUnit` (**not** `simulate.js` — that is
+   only the page shell now; `tests/test_ability_registry.py` scans the engine modules plus the
+   page shell as its "js" source, so a key read only in the page — e.g. `pop_space` — still
+   counts). Declare non-implementing engines honestly in the registry `engines` tuple and
    `tests/test_ability_registry.py::KNOWN_ENGINE_GAPS` — the presence-parity test fails on
    undeclared gaps.
+   - **JS parity gate (mandatory after any `engine/` edit).** Run
+     `node tools/simjs/parity_check.mjs` — it replays the 205-fight golden panel in
+     `tools/simjs/golden/` and demands bit-exact state hashes (exit 0 = OK, 1 = divergence,
+     2 = harness/meta error). A new ability that changes existing fights *will* fail it: that
+     is the intended signal — re-capture the golden panel and record why in the commit
+     message. Also run the engine unit tests: `node --test tests/js/engine/` (17 tests) and
+     `node tests/test_frontend_projectile_miss.js`.
 4. **Legacy `aoe2x/dbgen/generate_main_db.py`** (only if you care about `aoe2_units.db` — no app
    route reads it): its `unit_stats` `CREATE TABLE` + INSERT + bespoke
    `build_combat_dict_from_ref` still need hand edits;

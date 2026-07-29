@@ -57,13 +57,27 @@ data/golden/aoe2_units.db          │                            │
                               │                  (committed, build-versioned)
                               ▼
             templates/*.html + static/js/*.js + static/css/*.css
-            (interactive battle sim runs CLIENT-SIDE in static/js/simulate.js)
+            (interactive battle sim runs CLIENT-SIDE in static/js/engine/)
 
   Side systems:
   • patches.db ← patch_pipeline.py (per-patch stat diffs, ranking deltas, matchup swings)
   • /replay/* ← replay_core.py blueprint (mgz parsing, isometric playback SPA, WebM clips)
   • apps/video/ (validates sims against the real game), graphics/ (sprites + FLUX.2 art)
 ```
+
+### Frontend battle-sim engine (client-side, extracted 2026-07-28)
+
+| Path | One-liner |
+|---|---|
+| `apps/website/static/js/engine/` | **The** frontend engine: pure ESM, DOM-free, deterministic — `rng.js` (seeded mulberry32), `constants.js`, `projectile.js`, `melee_effect.js`, `battle_unit.js`, `sim.js` (`Simulation` + `stateHash` + combat counters), `scenario.js` (`createSimulation`), `index.js` (public API). Runs unchanged in the browser and under node. |
+| `apps/website/static/js/sim_renderer.js` | Browser-only `SimRenderer` — every canvas draw call, sprite/asset ownership, HP bars. The engine never touches the DOM; the renderer never mutates sim state (one documented exception: `unit.faceRight`). |
+| `apps/website/static/js/simulate.js` | Battle Sim **page shell** only — civ/unit pickers, count modes, deep-link autorun, stats/debug panels, `PageSim` wrapper around the engine. No engine classes live here. |
+| `apps/website/static/lab/sim_harness.html` + `.js` + `sim_worker.js` | Standalone diagnostic harness at `/static/lab/sim_harness.html` — presets, three count modes, seed control + single-step, path/target overlays, multi-seed worker scoreboard. Not linked from the site nav. |
+| `tools/simjs/` | Engine tooling: `golden/` (205-fight parity panel + `panel.meta.json` provenance), `parity_check.mjs` (**the gate** — bit-exact replay, exit 0/1/2), `headless.mjs` (node engine runner), `parity_capture.mjs` + `legacy_harness.cjs` (one-off pre-extraction capture), `audit_panel.mjs`, `ability_coverage.py`. |
+| `tests/js/engine/*.test.mjs` | 17 node unit tests — `node --test tests/js/engine/`. |
+
+**Standing rule:** any edit under `engine/` must re-run `node tools/simjs/parity_check.mjs`.
+A behavior change is *supposed* to fail it — re-capture the golden panel and say why.
 
 ## Document index
 
@@ -117,13 +131,15 @@ Where to look (and what to edit) for each kind of fact:
    `/api/ref/combat-unit/<civ>/<slug>` reads `ref_units` through
    `combat_unit_loader.build_combat_dict_from_ref()`. No route queries `unit_stats`.
 2. **The interactive battle sim is client-side.** The page at `/` fetches combat
-   dicts as JSON and runs the fight in `static/js/simulate.js` (`BattleUnit`).
-   The Python engines never run during page sims.
+   dicts as JSON and runs the fight in `static/js/engine/` (`BattleUnit`), drawn by
+   `sim_renderer.js`. The Python engines never run during page sims.
 3. **Three engines, three jobs.** `simulation.py` (abstract tick) backs
    `/api/matchup-sims`; `simulation_real.py` (position-based) backs all batch
-   matchup data; `simulate.js` backs the interactive page. A mechanic change is
+   matchup data; the JS engine in `static/js/engine/` backs the interactive page,
+   the lab harness, and headless node runs. A mechanic change is
    incomplete until all three (plus `.golden/baseline.json`) agree — see
-   [runbooks.md](runbooks.md) §2.
+   [runbooks.md](runbooks.md) §2. Editing the JS engine additionally requires the
+   parity gate (`node tools/simjs/parity_check.mjs`).
 4. **`sim_version` self-heals the matchup data.** Any edit to `simulation_real.py`
    or `aoe2x/dbgen/config_combat.py` changes the hash; stale rows are re-simmed on
    the next batch run.

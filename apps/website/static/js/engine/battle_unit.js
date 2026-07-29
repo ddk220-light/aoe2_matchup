@@ -221,8 +221,8 @@ export class BattleUnit {
         this.lastDistToTarget = Infinity;
         this.blockedTargets = new Set();
 
-        // Sprite image ref (set externally)
-        this.spriteImg = null;
+        // Attack sprite-sheet ref, stamped by the page/harness for animation timing
+        // only (triggerAttackAnim). The renderer owns all other draw assets.
         this.attackSheet = null;
     }
 

@@ -1,8 +1,8 @@
 // Role: engine — shared numeric/lookup constants for the battle sim.
 //
-// Copied verbatim out of simulate.js (lines 17-19, 54, 70-82); the only edit is
-// the added `export` keyword. simulate.js keeps its own copies until the Task 8
-// cutover, so any change here must be mirrored there (and vice versa) until then.
+// This module is the single source of these values: simulate.js (the page shell)
+// and the lab harness import them from here — no duplicate copies exist.
+// Any edit here changes sim behavior: re-run `node tools/simjs/parity_check.mjs`.
 
 // ===== CONSTANTS =====
 export const CANVAS_WIDTH = 900;

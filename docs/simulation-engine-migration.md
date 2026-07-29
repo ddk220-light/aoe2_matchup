@@ -1,5 +1,13 @@
 # Simulation engine — findings and the decision to migrate to JavaScript
 
+> **Sub-project 1 (engine extraction + harness) implemented** — see
+> [docs/superpowers/specs/2026-07-28-js-engine-extraction-design.md](superpowers/specs/2026-07-28-js-engine-extraction-design.md)
+> and [docs/superpowers/plans/2026-07-28-js-engine-extraction.md](superpowers/plans/2026-07-28-js-engine-extraction.md).
+> The engine now lives in `apps/website/static/js/engine/` (pure ESM, DOM-free);
+> `simulate.js` is the page shell and `sim_renderer.js` the drawing layer. The parity
+> gate (`tools/simjs/parity_check.mjs`) proves the extracted engine bit-exact against the
+> pre-extraction engine over 205 fights.
+
 **Date:** 2026-07-28 · **Branch:** `improved-simulation` · **Status:** findings recorded,
 migration plan not yet written.
 

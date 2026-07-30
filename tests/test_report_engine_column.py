@@ -1,3 +1,4 @@
+import pytest
 import sqlite3
 import subprocess
 import sys
@@ -23,7 +24,7 @@ def test_diff_warns_across_engines_or_caps():
         tags.setdefault((engine, max_s), tag)
     pairs = list(tags.values())
     if len(pairs) < 2:
-        return  # nothing to compare yet
+        pytest.skip("need >=2 runs differing in engine/max_seconds to exercise the guard")
     out = subprocess.run(
         [sys.executable, "-m", "aoe2x.validation.report", "--diff", pairs[0], pairs[-1]],
         cwd=str(REPO), check=True, capture_output=True).stdout.decode(errors='replace')

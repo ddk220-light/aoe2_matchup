@@ -472,6 +472,33 @@ export class BattleUnit {
         );
     }
 
+    // ---- kite futility gate (E10b) -------------------------------------------
+    // True when running away from the threat side would gain this unit nothing,
+    // because that side is FASTER than it by a margin worth committing to. Such
+    // a unit should stand and shoot: it cannot open the gap, and every tick it
+    // spends moving costs it the E9 quantised fire cycle (a Hand Cannoneer
+    // fleeing camels re-fires every 4.00 s instead of 3.45 -- a sixth of its
+    // damage output surrendered for distance it provably never gains, at
+    // 0.96 t/s against 1.60).
+    //
+    // The margin is PURSUIT_MIN_ADVANTAGE, reused rather than duplicated: it is
+    // already defined as the speed edge below which a chase is a stalemate not
+    // worth committing to, and this is the same question asked from the prey's
+    // side. That reuse is load-bearing for two canaries, both of which sit
+    // INSIDE the margin and so keep kiting exactly as before:
+    //
+    //   heavy_cav_archer 1.54 vs heavy_camel 1.60  -> 1.8 px/s  (tape: camels 6/6)
+    //   arbalester       0.96 vs elite_elephant 0.99 -> 0.9 px/s (tape: eleph 3/3)
+    //
+    // Speed is compared against the enemy side's MEDIAN, the same statistic
+    // kiteSteering's gate uses -- robust to one odd unit, deterministic (a plain
+    // numeric sort over a fixed-order array), no RNG, no new constant.
+    kiteIsFutile(enemies) {
+        const theirSpeed = medianLiving(enemies, null, pickSpeed);
+        if (theirSpeed === null) return false;
+        return theirSpeed - this.moveSpeed >= PURSUIT_MIN_ADVANTAGE;
+    }
+
     // Windup for the shot being started now: attack_delay, plus the stop/turn
     // overhead when this unit had to halt for it.
     rangedWindup() {
@@ -741,7 +768,11 @@ export class BattleUnit {
                     this.kiteSteering(allUnits, enemies),
                 );
                 this.wasMoving = true;
-            } else if (this.attackCooldown > 0 && shouldKite) {
+            } else if (
+                this.attackCooldown > 0 &&
+                shouldKite &&
+                !this.kiteIsFutile(enemies)
+            ) {
                 this.state = "kiting";
                 this.markRangedMovement();
                 this.moveAwayFromTarget(

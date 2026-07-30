@@ -564,28 +564,71 @@ export class BattleUnit {
 
         if (this.isRanged()) {
             const shouldKite = !this.target.isRanged();
+
+            // Committed shot: locked in the windup animation, can't move.
+            // Mirrors the melee branch's committedAttack pattern and
+            // simulation_real.py:938-956. The windup is paid INSIDE the reload
+            // period, not on top of it: when it elapses the projectile flies
+            // and only the REMAINDER of the reload becomes the post-fire
+            // cooldown, so hit-to-hit stays == reloadTime.
+            //
+            // Checked BEFORE tooClose() on purpose (python does the same): a
+            // shot already committed still completes even if the target slips
+            // into the min-range dead zone mid-windup.
+            if (this.committedAttack) {
+                this.committedAttack.timeLeft -= dt;
+                // "attacking" (not "committed") keeps the draw-the-bow
+                // animation the renderer keys off state — the same thing the
+                // pre-fix code displayed while winding up.
+                this.state = "attacking";
+                if (this.committedAttack.timeLeft <= 0) {
+                    const target = this.committedAttack.target;
+                    if (target && target.state !== "dead") {
+                        // performAttack reads this.target; restore it in case
+                        // the primary target changed during the windup.
+                        const prevTarget = this.target;
+                        this.target = target;
+                        this.performAttack();
+                        this.target =
+                            prevTarget && prevTarget.state !== "dead"
+                                ? prevTarget
+                                : target;
+                    }
+                    this.committedAttack = null;
+                    // performAttack (every path, charge volley included) leaves
+                    // cooldown = reloadTime; subtract the windup already spent.
+                    this.attackCooldown = Math.max(
+                        0,
+                        this.reloadTime - this.attackDelay,
+                    );
+                    this.wasMoving = false;
+                }
+                return;
+            }
+
             if (this.tooClose()) {
                 this.state = "kiting";
                 this.moveAwayFromTarget(dt, allUnits);
                 this.wasMoving = true;
-            } else if (
-                !this.wasMoving &&
-                this.attackCooldown <= 0
-            ) {
-                this.state = "attacking";
-                this.performAttack();
-                this.wasMoving = true;
-            } else if (!this.wasMoving) {
-                this.state = "attacking";
             } else if (this.attackCooldown > 0 && shouldKite) {
                 this.state = "kiting";
                 this.moveAwayFromTarget(dt, allUnits);
             } else if (this.attackCooldown > 0) {
                 this.state = "attacking";
             } else if (this.inRange()) {
-                this.attackCooldown = this.attackDelay;
-                this.wasMoving = false;
-                this.state = "attacking";
+                // Cooldown done, in range — start the windup for the next shot.
+                if (this.attackDelay > 0) {
+                    this.committedAttack = {
+                        target: this.target,
+                        timeLeft: this.attackDelay,
+                    };
+                    this.state = "attacking";
+                    this.wasMoving = false;
+                } else {
+                    this.state = "attacking";
+                    this.performAttack();
+                    this.wasMoving = false;
+                }
             } else {
                 this.state = "moving";
                 this.moveTowardTarget(dt, allUnits);
@@ -631,7 +674,14 @@ export class BattleUnit {
                         this.performAttackOn(target);
                     }
                     this.committedAttack = null;
-                    this.attackCooldown = this.reloadTime;
+                    // The windup is spent INSIDE the reload period, not added
+                    // to it: only the remainder becomes the post-swing
+                    // cooldown, so hit-to-hit stays == reloadTime. (Delay-0
+                    // melee never reaches here — it fires via performAttack.)
+                    this.attackCooldown = Math.max(
+                        0,
+                        this.reloadTime - this.attackDelay,
+                    );
                     this.wasMoving = false;
                 }
             } else if (this.inRange()) {

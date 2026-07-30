@@ -84,6 +84,18 @@ export class Simulation {
             1: { swings: 0, hitsLanded: 0, damageDealt: 0 },
             2: { swings: 0, hitsLanded: 0, damageDealt: 0 },
         };
+        // Event recorder for cross-engine calibration (Task 3 of the combat-
+        // calibration project): null by default, exactly like combatStats above
+        // it — nothing in the engine ever reads this back, it draws no
+        // randomness, and it is deliberately absent from stateHash(), so it
+        // cannot influence a battle and the parity gate stays bit-exact. A
+        // caller opts in by setting `sim.eventLog = { damage: [], missiles: [] }`
+        // before stepping; BattleUnit.takeDamage / fireProjectile / the charge
+        // projectile paths append tape-shaped records when it is non-null. The
+        // projectile-id counter lives ONLY on the log object (see the missile
+        // hooks in battle_unit.js) so it cannot exist -- and cannot affect
+        // determinism -- while recording is off.
+        this.eventLog = null;
     }
 
     update(dt) {

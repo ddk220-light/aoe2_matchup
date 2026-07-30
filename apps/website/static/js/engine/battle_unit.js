@@ -710,6 +710,25 @@ export class BattleUnit {
         this.attackCooldown = this.reloadTime;
     }
 
+    // Event recorder for cross-engine calibration (see Simulation.eventLog in
+    // sim.js): called once per projectile actually created, from both
+    // fireProjectile and fireChargeProjectile, so every arrow/bolt/charge
+    // volley gets exactly one missile record with a distinct id. The id
+    // counter lives ONLY on the log object -- never on `sim` -- so it cannot
+    // exist (and cannot affect determinism) while recording is off. Read-only
+    // otherwise: no rng draw, no ordering change, not in stateHash().
+    recordMissile() {
+        const log = this.sim && this.sim.eventLog;
+        if (!log) return;
+        log._nextMissileId = (log._nextMissileId || 0) + 1;
+        log.missiles.push({
+            t: this.sim.battleTime,
+            id: log._nextMissileId,
+            fired_from: this.id,
+            owner: this.team,
+        });
+    }
+
     fireProjectile(target, isExtra = false) {
         // Diagnostic counter (see Simulation.combatStats): one swing per
         // projectile launched, so a multi-arrow volley (Chu Ko Nu, Organ Gun)
@@ -919,6 +938,7 @@ export class BattleUnit {
                 }
             },
         );
+        this.recordMissile();
         this.sim.projectiles.push(proj);
         this.attackAnimTimer = 0.15;
         this.triggerAttackAnim();
@@ -965,6 +985,7 @@ export class BattleUnit {
                 }
             },
         );
+        this.recordMissile();
         this.sim.projectiles.push(proj);
         this.attackAnimTimer = 0.3;
         this.triggerAttackAnim();
@@ -1239,6 +1260,26 @@ export class BattleUnit {
                 cs.hitsLanded++;
                 cs.damageDealt += hpBeforeHit - this.currentHp;
             }
+        }
+        // Event recorder for cross-engine calibration (see Simulation.eventLog
+        // in sim.js): one damage record per application, covering direct hits,
+        // splash, trample, pass-through and charge damage -- everything that
+        // flows through this single funnel. (The continuous per-tick bleed
+        // drain applied directly to currentHp in update() does not call
+        // takeDamage and so is not recorded here.) Same guard pattern as the
+        // combatStats block above: read-only, no rng draw, no ordering change,
+        // absent from stateHash(), so it cannot affect determinism.
+        if (this.sim && this.sim.eventLog && attacker) {
+            this.sim.eventLog.damage.push({
+                t: this.sim.battleTime,
+                attacker: attacker.id,
+                victim: this.id,
+                damage: hpBeforeHit - this.currentHp,
+                victim_hp_after: this.currentHp,
+                kill: hpBeforeHit > 0 && this.currentHp === 0,
+                attacker_owner: attacker.team,
+                victim_owner: this.team,
+            });
         }
     }
 

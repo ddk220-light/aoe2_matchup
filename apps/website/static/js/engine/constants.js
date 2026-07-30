@@ -106,6 +106,67 @@ export const KITE_COHESION_WEIGHT = 2.0;
 // sitting on the centroid still gets a full-magnitude arbitrary-direction kick.
 export const KITE_COHESION_RAMP_TILES = 2.0;
 
+// ===== COMBAT-PACK COMPRESSION (E8) =====
+// The recorded tapes pack BOTH sides far tighter than this engine can. Measured
+// same-side nearest-neighbour distance, mid-fight, over the six
+// paladin__vs__elite_steppe recordings: 0.60-0.87 tiles, and COMPRESSING toward
+// the end. The engine sits at 1.27-1.46 tiles because resolveCollisions' hard
+// floor is `a.radius + b.radius + 1` (two 18 px cavalry => 37 px = 1.233 tiles)
+// and calculateAvoidance's soft floor is 2 px wider still. 90.3% of tape
+// same-side neighbour pairs sit BELOW the engine's own hard floor.
+//
+// That gap is not cosmetic -- it decides which units can fight at all. A melee
+// unit with attack_range >= 1.0 tile (Elite Steppe Lancer, Fire Lancer) reaches
+// 1.0*30 + MELEE_RANGE_BUFFER + both radii = 71 px past its own centre, so a
+// SECOND RANK standing behind the contact line still reaches the enemy. The
+// arithmetic:
+//
+//   front-rank lancer sits at the cross-team floor           37 px from a paladin
+//   a collinear second-rank lancer needs                     <= 71 px total
+//   => same-side spacing must be                             <= 34 px (1.13 tiles)
+//   but the engine's same-side floor is                      37 px (1.23 tiles)
+//
+// The second rank is therefore impossible BY CONSTRUCTION, missing by 3 px --
+// no amount of steering tuning can produce it. At the tape's 0.6-tile spacing
+// (18 px) it works, and a THIRD rank (73 px) still does not: exactly the two
+// engaged ranks the tapes show. A 0-range melee unit (Paladin, reach 41 px)
+// would need 4 px of same-side spacing for a second rank, so it gains nothing
+// from any realistic compression -- the asymmetry is intrinsic to reach, which
+// is exactly the Steppe Lancer's real-game edge. Concurrent distinct attackers
+// per 2.5 s window, tape vs sim (paladin__vs__elite_steppe family):
+//
+//                       tape mean    sim mean
+//     Elite Steppe (21)     11.4         9.1
+//     Paladin (15)           5.4         6.5
+//     ratio steppe:paladin   2.13        1.39
+//
+// So: when BOTH units of a SAME-TEAM pair are engaged in a fight at contact
+// range, their pairwise minimum separation is multiplied by COMBAT_PACK_FACTOR
+// in BOTH resolveCollisions (hard) and calculateAvoidance (soft). Cross-team
+// pairs and out-of-combat spacing are untouched -- the contact line itself, and
+// every approach march, keeps today's geometry.
+
+// Fraction of the normal same-team minimum separation that an engaged pair is
+// allowed to compress to. 0.6 * 37 px = 22.2 px = 0.74 tiles, inside the tape's
+// 0.57-0.87 tile band and comfortably under the 34 px a second rank of
+// 1.0-tile-reach melee needs. Lower than ~0.45 and units start visually
+// occupying the same tile; higher than ~0.92 and the second rank never forms.
+export const COMBAT_PACK_FACTOR = 0.6;
+
+// How far PAST its own effective reach (in tiles) a unit may be from its living
+// target and still count as "in the fight" for packing. Load-bearing: the rank
+// this fix exists to create is BY DEFINITION out of reach of everything, so a
+// strict in-reach predicate would exclude precisely the units that need to
+// compress. 1.5 tiles is one full body-plus-gap behind the contact line.
+export const COMBAT_PACK_SLACK_TILES = 1.5;
+
+// Whether ranged units may pack too. The tapes pack universally, but the
+// engine's ranged formations are already fitted by the group-kite constants
+// above (KITE_COHESION_WEIGHT was tuned against today's floor), so this gate
+// exists to measure the global-vs-melee-only trade. `false` = only melee
+// attackers compress; ranged units keep today's spacing exactly.
+export const COMBAT_PACK_RANGED = true;
+
 // ===== ADJUSTABLE PRE-BATTLE CONDITIONS =====
 // Lithuanian relic bonus: the reference DB bakes in all 4 relics (+1 base
 // melee attack each) for these units. The rail picker lets the user dial

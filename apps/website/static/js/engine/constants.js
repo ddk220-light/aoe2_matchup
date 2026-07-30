@@ -90,6 +90,23 @@ export const PURSUIT_MIN_ADVANTAGE = 7.5;
 // halberdier family halb 120/120 = 1.00. Below 0.8 the halberdiers collapse
 // (they have to catch the ball, and they win by damage once they do); above it
 // the champions catch it too and the tape's 8-of-9 flips.
+//
+// E12 RE-MEASURED THIS ON THE CORRECTED SCENARIO AND LEFT IT ALONE. Everything
+// above was fitted with both armies in single-file columns 28 tiles apart; the
+// recordings start them as blocks 8 tiles apart inside a walled 13.6-tile box
+// (see engine/arena.js's TapeBox). Swept over the full 155-fight corpus, 20
+// seeds, in tapebox mode -- winners matched / mean per-seed agreement:
+//
+//     weight        0.0      0.3      0.5      0.8      1.5
+//     corpus     116/155  116/155  116/155  116/155  116/155
+//     agreement   0.7465   0.7465   0.7465   0.7465   0.7465
+//
+// Not "roughly equal" -- BIT-IDENTICAL on every KPI, including all seven canary
+// families. The per-tick vector is genuinely live (kiteSteering returns non-null
+// on 100% of calls, mean magnitude 0.95 against a flee basis of 1.0), so this is
+// not a dead code path; the weight simply does not decide any outcome once the
+// fight starts at the tapes' real range. What does decide them is measured in
+// KITE_COHESION_WEIGHT's E12 note below.
 export const KITE_TANGENTIAL_WEIGHT = 0.8;
 
 // Cohesion weight -- pull toward the side's own living centroid. Balances
@@ -123,6 +140,36 @@ export const KITE_TANGENTIAL_WEIGHT = 0.8;
 // 2.0 costs the halberdier canary a tenth and 4.0 buys nothing. It stays well
 // clear of "units pile into the collision floor" -- resolveCollisions' hard
 // floor is unchanged and E8's packing already sets the equilibrium spacing.
+//
+// E12 RE-MEASURED THIS ON THE CORRECTED SCENARIO AND LEFT IT ALONE. Same sweep
+// as KITE_TANGENTIAL_WEIGHT's note above (full corpus, 20 seeds, tapebox), at
+// tangential 0.8 -- winners matched / mean per-seed agreement:
+//
+//     weight        0.0      0.5      1.0      2.0      3.0
+//     corpus     116/155  117/155  110/155  110/155  116/155
+//     agreement   0.7497   0.7561   0.7103   0.7077   0.7465
+//
+// The response is NON-MONOTONIC with a 7-fight swing between adjacent points,
+// and the best value is +1 fight (+0.010 agreement) over the incumbent. Not one
+// canary family moves anywhere in the sweep. That is a noise landscape, not an
+// optimum, so nothing was changed: re-fitting on it would be over-fitting.
+//
+// WHY THE KNOB CANNOT REACH THESE FIGHTS. The corrected geometry made the real
+// cause measurable. Over the corpus, the tape's own median swing interval for a
+// MELEE side, divided by the engine's:
+//
+//     melee vs melee              n=76    median 1.001   mean 1.018
+//     melee chasing a RANGED foe  n=102   median 1.289   mean 1.493  p90 2.11
+//
+// A melee unit standing in a melee line swings at exactly the cadence the engine
+// gives it. A melee unit CHASING a kiter swings ~29% slower on tape than in the
+// engine -- it keeps losing and re-winning contact, and the engine models none
+// of that. Worked example, champion__vs__heavy_cav_archer_r2: champion swing
+// interval tape 2.846 s vs sim 2.017 s, so the champions land 84 hits where the
+// tape gives them 42, and the Heavy Cav Archers are wiped instead of winning
+// with 9 survivors. No steering weight can fix a chaser that swings twice as
+// often as the real one; this is the melee analogue of E9's stand-and-shoot law
+// and it is the next round's target.
 export const KITE_COHESION_WEIGHT = 3.0;
 
 // Distance (tiles) at which the cohesion pull reaches full strength; inside it

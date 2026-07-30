@@ -118,15 +118,19 @@ export function runCalibFight({ dicts, fight, seed, maxSeconds = MAX_SECONDS }) 
         // (mutual annihilation) | null (hit the tick cap with both sides
         // alive). Kept for provenance; not consumed by extract_card.
         winner: sim.winner,
-        // winner_owner: the SAME outcome translated through `ownerOf`, so a
+        // winner_owner: the SAME outcome translated through the SAME
+        // `ownerOf` table used above for event remapping (not a second,
+        // independently-hardcoded map that could drift from it), so a
         // consumer can safely do `sides[String(winner_owner)]` to get the
-        // winning side. null for a draw/timeout (winner 0 or null) -- a
+        // winning side. `ownerOf` only has keys 1 and 2, so a draw
+        // (winner 0) or timeout (winner null) both miss the table and
+        // `?? null` turns that lookup miss into an explicit null -- a
         // consumer indexing `sides[String(winner)]` instead would silently
         // read the WRONG side whenever winner (team number) collides with
         // the other side's owner number (e.g. winner===2 meaning "team 2
         // won" while owner 2 is side1 -- exactly today's corpus, where
         // side1.owner is always 2).
-        winner_owner: sim.winner === 1 ? s1.owner : sim.winner === 2 ? s2.owner : null,
+        winner_owner: ownerOf[sim.winner] ?? null,
         sides: {
             [String(s1.owner)]: sideSummary(sim.team1, s1),
             [String(s2.owner)]: sideSummary(sim.team2, s2),

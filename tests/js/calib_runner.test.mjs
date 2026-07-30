@@ -141,6 +141,24 @@ test("winner_owner mirrors winner through the owner mapping, null on draw/timeou
     }
 });
 
+// Fix round 2 (re-review): winner_owner must be a TABLE LOOKUP through the
+// same `ownerOf` map used for events (`ownerOf[sim.winner] ?? null`), not a
+// second, independently-hardcoded ternary that could drift from it. Force
+// the actual timeout/draw branch (rather than only asserting it
+// conditionally, if it happens to occur) with maxSeconds: 0 --
+// Math.round(0 * 60) === 0, so the tick loop never runs and sim.winner
+// stays at its constructor default of `null` (see sim.js:73/230): a
+// deterministic "hit the cap with both sides alive" case with zero
+// simulation needed. `ownerOf` only has keys "1"/"2", so looking it up with
+// `null` misses the table and `?? null` must turn that miss into an
+// explicit null -- proving the table has no stray 0/null key that could
+// accidentally resolve to a real owner.
+test("winner_owner is null for an actual timeout/draw (table lookup, not a hardcoded branch)", () => {
+    const r = runCalibFight({ dicts, fight, seed: 1, maxSeconds: 0 });
+    assert.equal(r.winner, null, "zero ticks must leave sim.winner at its null default");
+    assert.equal(r.winner_owner, null);
+});
+
 test("a same-owner manifest entry raises rather than silently collapsing sides", () => {
     const brokenFight = {
         run_id: "broken_same_owner", tag: "broken_same_owner", matchup: "broken_same_owner",

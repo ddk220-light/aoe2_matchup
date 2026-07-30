@@ -1640,10 +1640,35 @@ export class BattleUnit {
             dx += avoidance.x;
             dy += avoidance.y;
         }
-        const len = Math.sqrt(dx * dx + dy * dy);
+        let len = Math.sqrt(dx * dx + dy * dy);
         if (len > 0) {
             dx /= len;
             dy /= len;
+        }
+        // Golden arena only (this.sim.arena is null on every other path, so it
+        // costs one null test on the plain rectangle): push out of the central
+        // tree cluster and slide around it, so a chaser rounds the trees instead
+        // of grinding into them. Applied to the ALREADY-NORMALISED heading, so
+        // the slide term's "how hard is this unit driving into the trees" dot
+        // product means the same thing however crowded the unit is.
+        // See engine/arena.js.
+        if (this.sim.arena) {
+            const o = this.sim.arena.obstacleSteer(
+                this.x,
+                this.y,
+                this.radius,
+                dx,
+                dy,
+            );
+            if (o) {
+                dx += o.x;
+                dy += o.y;
+                len = Math.sqrt(dx * dx + dy * dy);
+                if (len > 0) {
+                    dx /= len;
+                    dy /= len;
+                }
+            }
         }
 
         // Smooth velocity -- blend desired direction with previous velocity
@@ -1661,14 +1686,24 @@ export class BattleUnit {
         const moveAmount = this.moveSpeed * dt;
         this.x += this.vx * moveAmount;
         this.y += this.vy * moveAmount;
-        this.x = Math.max(
-            this.radius,
-            Math.min(CANVAS_WIDTH - this.radius, this.x),
-        );
-        this.y = Math.max(
-            this.radius,
-            Math.min(CANVAS_HEIGHT - this.radius, this.y),
-        );
+        // The golden arena's diamond + tree cluster REPLACE the rectangle clamp
+        // (see engine/arena.js); with no arena this is the historical clamp,
+        // unchanged. Note this runs BEFORE the stuck check below on purpose:
+        // a unit walking into the trees really has made no progress, and should
+        // be allowed to blacklist an unreachable target exactly as it would
+        // behind a wall of allies.
+        if (this.sim.arena) {
+            this.sim.arena.constrain(this);
+        } else {
+            this.x = Math.max(
+                this.radius,
+                Math.min(CANVAS_WIDTH - this.radius, this.x),
+            );
+            this.y = Math.max(
+                this.radius,
+                Math.min(CANVAS_HEIGHT - this.radius, this.y),
+            );
+        }
 
         // Stuck detection: if not making progress, mark target as blocked.
         // The bar is a RATE (px/s), not a bare per-substep constant -- see
@@ -1906,10 +1941,32 @@ export class BattleUnit {
         const avoidance = this.calculateAvoidance(allUnits);
         dx += avoidance.x;
         dy += avoidance.y;
-        const len = Math.sqrt(dx * dx + dy * dy);
+        let len = Math.sqrt(dx * dx + dy * dy);
         if (len > 0) {
             dx /= len;
             dy /= len;
+        }
+        // Golden arena only — same treatment as moveTowardTarget's, so a kiting
+        // ball orbits the tree cluster rather than backing into it. Combined
+        // with the clockwise tangential term above, that is what makes the lap
+        // around the cluster the natural retreat path. See engine/arena.js.
+        if (this.sim.arena) {
+            const o = this.sim.arena.obstacleSteer(
+                this.x,
+                this.y,
+                this.radius,
+                dx,
+                dy,
+            );
+            if (o) {
+                dx += o.x;
+                dy += o.y;
+                len = Math.sqrt(dx * dx + dy * dy);
+                if (len > 0) {
+                    dx /= len;
+                    dy /= len;
+                }
+            }
         }
         // Smooth velocity for kiting too
         const smoothing = 0.3;
@@ -1925,14 +1982,18 @@ export class BattleUnit {
         const moveAmount = this.moveSpeed * dt;
         this.x += this.vx * moveAmount;
         this.y += this.vy * moveAmount;
-        this.x = Math.max(
-            this.radius,
-            Math.min(CANVAS_WIDTH - this.radius, this.x),
-        );
-        this.y = Math.max(
-            this.radius,
-            Math.min(CANVAS_HEIGHT - this.radius, this.y),
-        );
+        if (this.sim.arena) {
+            this.sim.arena.constrain(this);
+        } else {
+            this.x = Math.max(
+                this.radius,
+                Math.min(CANVAS_WIDTH - this.radius, this.x),
+            );
+            this.y = Math.max(
+                this.radius,
+                Math.min(CANVAS_HEIGHT - this.radius, this.y),
+            );
+        }
     }
 
     // ---- combat-pack predicate (E8) ------------------------------------------

@@ -113,3 +113,66 @@ def test_trample_multi_victim_detection():
     assert s["swing_count"] == 1, "same attacker within SWING_EPS is ONE swing"
     assert s["trample_multi_rate"] == 1.0
     assert s["trample_victims_max"] == 2
+
+
+def test_same_timestamp_tie_break_picks_the_killing_event():
+    """Regression test for a real bug found (and fixed) this task:
+    `_side_outcome` originally picked a victim's "last" event with
+    `max(events, key=lambda r: r["t"])`, which breaks ties by keeping the
+    FIRST event with the max timestamp — not the true chronologically-last
+    one. Two attackers can land hits on the same victim at the identical
+    recorded `t` (common in a rounded ~60 Hz stream); if the non-killing
+    event happens to come first in event order, the buggy code treated the
+    victim as a "seen survivor" with nonzero hp_remaining, even though a
+    kill=True event for that exact same victim existed in the same batch.
+
+    Both sides get one victim with two same-`t` events, the second of
+    which kills it. Under the bug, `hp_remaining` would be the FIRST
+    event's victim_hp_after (nonzero) for both sides; under the fix
+    (`sorted(events, key=lambda r: r["t"])[-1]`), the kill event wins the
+    tie and hp_remaining is correctly 0.0.
+    """
+    from aoe2x.calibration.extract import extract_card
+
+    dmg = [
+        # side2's unit (victim id=100) dies to side3's attacker.
+        {"t": 5.0, "attacker": 1, "victim": 100, "damage": 5.0, "victim_hp_after": 5.0,
+         "kill": False, "attacker_owner": 3, "victim_owner": 2},
+        {"t": 5.0, "attacker": 1, "victim": 100, "damage": 5.0, "victim_hp_after": 0.0,
+         "kill": True, "attacker_owner": 3, "victim_owner": 2},
+        # side3's unit (victim id=200) dies to side2's attacker.
+        {"t": 7.0, "attacker": 2, "victim": 200, "damage": 3.0, "victim_hp_after": 3.0,
+         "kill": False, "attacker_owner": 2, "victim_owner": 3},
+        {"t": 7.0, "attacker": 2, "victim": 200, "damage": 3.0, "victim_hp_after": 0.0,
+         "kill": True, "attacker_owner": 2, "victim_owner": 3},
+    ]
+    card = extract_card(dmg, [], {"side2": {"unit_name": "A", "count": 1},
+                                  "side3": {"unit_name": "B", "count": 1}})
+
+    assert card["sides"]["side2"]["survivors"] == 0
+    assert card["sides"]["side2"]["hp_remaining"] == 0.0
+    assert card["sides"]["side3"]["survivors"] == 0
+    assert card["sides"]["side3"]["hp_remaining"] == 0.0
+
+
+def test_hand_cannoneer_vs_elite_elephant_survivors_and_hp_remaining():
+    """Pins the real-tape path for survivors/hp_remaining (recorded
+    ground-truth values from the tape's own summary.json), complementing
+    the synthetic tie-break regression test above.
+    """
+    from aoe2x.calibration.extract import extract_card
+
+    damage, missiles = _load_tape("hand_cannoneer__vs__elite_elephant")
+    composition = {
+        "side2": {"unit_name": "Hand Cannoneer", "count": 21},
+        "side3": {"unit_name": "Elite Battle Elephant", "count": 12},
+    }
+    card = extract_card(damage, missiles, composition)
+
+    hc = card["sides"]["side2"]
+    assert hc["survivors"] == 0
+    assert hc["hp_remaining"] == 0.0
+
+    elephant = card["sides"]["side3"]
+    assert elephant["survivors"] == 5
+    assert elephant["hp_remaining"] == 928.0

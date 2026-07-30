@@ -54,7 +54,8 @@ def _scales(db, run_tag):
 
 def cmd_list(db):
     q = ("SELECT run_tag, run_label, started_utc, python_impl, sim_version,"
-         " git_branch, git_dirty, seeds, scales, n_fights, wall_s"
+         " git_branch, git_dirty, seeds, scales, n_fights, wall_s,"
+         " engine, max_seconds"
          " FROM tape_runs ORDER BY started_utc")
     rows = list(db.execute(q))
     if not rows:
@@ -64,6 +65,7 @@ def cmd_list(db):
         dirty = " *dirty" if r[6] else ""
         print(f"{r[0]}")
         print(f"    {r[2][:19]}  {r[3]}  sv={r[4][:12]}  {r[5]}{dirty}")
+        print(f"    engine={r[11]}  max_s={r[12]}")
         print(f"    seeds={r[7]} scales={r[8]} fights={r[9]} wall={r[10]}s")
 
 
@@ -81,6 +83,21 @@ def cmd_run(db, run_tag):
 
 
 def cmd_diff(db, before, after):
+    meta = {}
+    for tag in (before, after):
+        row = db.execute(
+            "SELECT engine, max_seconds, seeds FROM tape_runs WHERE run_tag=?",
+            (tag,)).fetchone()
+        if row is None:
+            print(f"WARNING: no tape_runs row for {tag}")
+            row = ("?", None, None)
+        meta[tag] = row
+    b_meta, a_meta = meta[before], meta[after]
+    for i, what in enumerate(("engine", "max_seconds", "seeds")):
+        if b_meta[i] != a_meta[i]:
+            print(f"WARNING: {what} differs — {before}={b_meta[i]!r}"
+                  f" vs {after}={a_meta[i]!r}. Fight-length and agreement"
+                  f" comparisons across this difference are not like-for-like.")
     any_scale = False
     for scale in _scales(db, before):
         if scale not in _scales(db, after):

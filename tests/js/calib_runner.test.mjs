@@ -100,3 +100,55 @@ test("seed 1 and seed 20 differ", () => {
     const b = runCalibFight({ dicts, fight, seed: 20, maxSeconds: 120 });
     assert.notDeepEqual(a.damage, b.damage);
 });
+
+// Fix round 1 (code review): `winner` alone is a landmine -- it's the raw
+// engine team number (1|2), NOT the real owner, and in today's corpus
+// side1.owner is always 2. A consumer naively doing
+// `sides[String(winner)]` when engine team 2 (side2) wins looks up
+// sides["2"], which is side1 -- the LOSER -- with no error. This fixture
+// makes team 2 (side2, real owner 3) the overwhelming, deterministic
+// winner so the trap and its fix can both be demonstrated concretely.
+const lopsidedFight = {
+    run_id: "lopsided_fight", tag: "lopsided_fight", matchup: "lopsided_fight",
+    side1: { owner: 2, unit_name: "Archer", civ: "Britons", slug: "archer", count: 2 },
+    side2: { owner: 3, unit_name: "Melee", civ: "Franks", slug: "melee_unit", count: 10 },
+};
+
+test("winner_owner is in recording-owner space and correctly identifies the winner", () => {
+    const r = runCalibFight({ dicts, fight: lopsidedFight, seed: 1, maxSeconds: 120 });
+
+    assert.equal(r.winner, 2, "fixture must be lopsided enough for engine team 2 to win");
+    assert.equal(r.winner_owner, 3, "winner_owner must be side2's real owner (3), not the raw team number (2)");
+
+    // The exact trap the reviewer flagged: naively indexing `sides` with the
+    // raw `winner` value returns the WRONG (losing) side here, because
+    // side1's real owner happens to equal team 2's raw number.
+    const trapSide = r.sides[String(r.winner)];
+    const correctSide = r.sides[String(r.winner_owner)];
+    assert.notEqual(trapSide, correctSide, "raw winner must NOT safely index sides");
+    assert.equal(trapSide.civ, "Britons", "the trap silently returns the LOSING side");
+    assert.equal(correctSide.civ, "Franks");
+    assert.equal(correctSide.slug, "melee_unit");
+    assert.ok(correctSide.survivors > 0, "winner_owner's side must have survivors");
+});
+
+test("winner_owner mirrors winner through the owner mapping, null on draw/timeout", () => {
+    for (const seed of [1, 2, 3, 4, 5]) {
+        const r = runCalibFight({ dicts, fight, seed, maxSeconds: 120 });
+        if (r.winner === 1) assert.equal(r.winner_owner, fight.side1.owner);
+        else if (r.winner === 2) assert.equal(r.winner_owner, fight.side2.owner);
+        else assert.equal(r.winner_owner, null, `winner ${r.winner} (draw/timeout) must map to null`);
+    }
+});
+
+test("a same-owner manifest entry raises rather than silently collapsing sides", () => {
+    const brokenFight = {
+        run_id: "broken_same_owner", tag: "broken_same_owner", matchup: "broken_same_owner",
+        side1: { owner: 2, unit_name: "Archer", civ: "Britons", slug: "archer", count: 5 },
+        side2: { owner: 2, unit_name: "Melee", civ: "Franks", slug: "melee_unit", count: 5 },
+    };
+    assert.throws(
+        () => runCalibFight({ dicts, fight: brokenFight, seed: 1, maxSeconds: 120 }),
+        /owner/i,
+    );
+});

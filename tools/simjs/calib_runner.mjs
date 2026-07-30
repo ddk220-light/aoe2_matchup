@@ -67,6 +67,16 @@ function sideSummary(team, side) {
 // sides (keyed by REAL owner number), damage, missiles}.
 export function runCalibFight({ dicts, fight, seed, maxSeconds = MAX_SECONDS }) {
     const s1 = fight.side1, s2 = fight.side2;
+    // Guard against a same-owner manifest entry: if s1.owner === s2.owner,
+    // `sides` would silently collapse to one key and BOTH teams' events
+    // would remap to that one owner -- total, silent corruption. Fail loudly
+    // with both values instead of ever writing a corrupted file.
+    if (s1.owner === s2.owner) {
+        throw new Error(
+            `runCalibFight: fight "${fight.run_id}" has side1.owner === side2.owner ` +
+            `(both ${s1.owner}) -- cannot distinguish sides, refusing to run`,
+        );
+    }
     const row = {
         civ1: s1.civ, slug1: s1.slug, n1: s1.count,
         civ2: s2.civ, slug2: s2.slug, n2: s2.count,
@@ -101,12 +111,22 @@ export function runCalibFight({ dicts, fight, seed, maxSeconds = MAX_SECONDS }) 
         matchup: fight.matchup,
         seed,
         duration_s: sim.battleTime,
-        // Raw engine value, never coerced (same discipline as headless.mjs's
-        // final.winner): 1 | 2 (structural team slot) | 0 (mutual
-        // annihilation) | null (hit the tick cap with both sides alive).
-        // Not consumed by extract_card -- it's bookkeeping for whoever scores
-        // fight outcomes downstream, not a metric the extractor computes.
+        // `winner` is in ENGINE TEAM space, `winner_owner` is in RECORDING
+        // OWNER space -- these are NOT interchangeable, do not mix them up.
+        // winner: raw engine value, never coerced (same discipline as
+        // headless.mjs's final.winner): 1 | 2 (structural team slot) | 0
+        // (mutual annihilation) | null (hit the tick cap with both sides
+        // alive). Kept for provenance; not consumed by extract_card.
         winner: sim.winner,
+        // winner_owner: the SAME outcome translated through `ownerOf`, so a
+        // consumer can safely do `sides[String(winner_owner)]` to get the
+        // winning side. null for a draw/timeout (winner 0 or null) -- a
+        // consumer indexing `sides[String(winner)]` instead would silently
+        // read the WRONG side whenever winner (team number) collides with
+        // the other side's owner number (e.g. winner===2 meaning "team 2
+        // won" while owner 2 is side1 -- exactly today's corpus, where
+        // side1.owner is always 2).
+        winner_owner: sim.winner === 1 ? s1.owner : sim.winner === 2 ? s2.owner : null,
         sides: {
             [String(s1.owner)]: sideSummary(sim.team1, s1),
             [String(s2.owner)]: sideSummary(sim.team2, s2),

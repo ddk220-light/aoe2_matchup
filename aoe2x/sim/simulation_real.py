@@ -506,6 +506,8 @@ class BattleUnit:
 
         # Range: JS adds MELEE_RANGE_BUFFER even for ranged units.
         self.raw_attack_range = float(stats.get("attack_range") or 0.0)
+        _irf = stats.get("is_ranged")
+        self._is_ranged_flag = None if _irf is None else bool(_irf)
         self.attack_range = self.raw_attack_range + MELEE_RANGE_BUFFER
 
         self.attack_speed = float(stats.get("attack_speed") or 0.5)
@@ -650,6 +652,10 @@ class BattleUnit:
     # ---- Predicates -------------------------------------------------------
 
     def is_ranged(self):
+        # Explicit dict flag wins (1.0-reach melee like the Steppe Lancer
+        # defeats the range heuristic); fall back for legacy dicts.
+        if self._is_ranged_flag is not None:
+            return self._is_ranged_flag
         return self.raw_attack_range >= 1.0
 
     def is_dead(self):

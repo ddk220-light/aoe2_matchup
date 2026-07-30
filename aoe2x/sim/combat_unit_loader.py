@@ -65,7 +65,13 @@ def build_combat_dict_from_ref(row):
         "unit_name": row["unit_name"],
         "hp": row["final_hp"],
         "attack": row["final_attack"],
-        "attack_range": row["final_range"] if row["is_ranged"] else 0,
+        # final_range is real for melee too: the Steppe Lancer line, Kamayuk
+        # and Hulk carry 1.0 tile of melee reach (attack over the front rank).
+        # Zeroing it for is_ranged=0 units erased that trait from every engine.
+        # is_ranged must travel explicitly: consumers used to infer ranged-ness
+        # from attack_range >= 1, which a 1.0-reach melee unit now defeats.
+        "attack_range": row["final_range"] or 0,
+        "is_ranged": row["is_ranged"],
         "attack_speed": attack_speed,
         "attack_delay": row["final_attack_delay"] or 0,
         "melee_armor": row["final_melee_armor"],

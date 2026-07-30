@@ -79,6 +79,10 @@ export class BattleUnit {
         this.currentHp = stats.hp;
         this.attack = stats.attack;
         this.rawAttackRange = stats.attack_range || 0;
+        this.isRangedFlag =
+            stats.is_ranged === undefined || stats.is_ranged === null
+                ? null
+                : Boolean(stats.is_ranged);
         this.attackRange =
             this.rawAttackRange * TILE_SIZE + MELEE_RANGE_BUFFER;
         this.attackSpeed = stats.attack_speed || 0.5;
@@ -256,6 +260,9 @@ export class BattleUnit {
     }
 
     isRanged() {
+        // Explicit flag from the combat dict wins: a Steppe Lancer/Kamayuk has
+        // 1.0 tile of MELEE reach, which defeats the old >= 1.0 inference.
+        if (this.isRangedFlag !== null) return this.isRangedFlag;
         return this.rawAttackRange >= 1.0;
     }
 

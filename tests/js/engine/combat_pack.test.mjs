@@ -8,12 +8,24 @@
 // geometry exactly.
 //
 // The reason the mechanism exists, and the reason the CROSS-TEAM floor must NOT
-// move, is the reach arithmetic (see constants.js): a 1.0-tile-reach melee unit
-// reaches 71 px past its own centre, a front-rank ally sits at the untouched
-// 37 px cross-team floor, so a second rank only ever fights if the same-team
-// floor drops below 34 px. Compressing cross-team instead would pull the ENEMY
-// line tighter and hand the extra attackers to the SHORT-reach side -- measured,
-// it flips paladin__vs__elite_steppe from 5/20 steppe wins back to 0/20.
+// move, is the reach arithmetic (see constants.js). Compressing cross-team
+// instead would pull the ENEMY line tighter and hand the extra attackers to the
+// SHORT-reach side -- measured, it flips paladin__vs__elite_steppe from 5/20
+// steppe wins back to 0/20.
+//
+// E11 RE-BASED THE ARITHMETIC. Every px figure in this file used to come from
+// the old inflated radius formula (`round(10 + outline*20)` -> 18 px for a
+// mounted unit). The physics radius is now the .dat's collision_size_x, which
+// is 0.25 tiles = 7.5 px for everything mounted, so:
+//
+//                       pre-E11        E11
+//     mounted radius      18 px       7.5 px
+//     same-team floor     37 px        16 px    (rA + rB + 1)
+//     1.0-reach reach     71 px        50 px    (30 + 5 + rA + rB)
+//     0-reach   reach     41 px        20 px
+//
+// The tests below are written against the radius the engine reports rather
+// than a hardcoded px count wherever that is possible.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -33,13 +45,20 @@ function simStub(seed = 1) {
     };
 }
 
-function stats(name, { range = 0, size = 0.4 } = {}) {
+// `size` is the SELECTION circle (outline_size); `collision` is the physics
+// radius. Default 0.4/0.25 = a mounted unit, matching the .dat.
+function stats(name, { range = 0, size = 0.4, collision = null } = {}) {
     return {
         hp: 100, attack: 10, attack_range: range, attack_speed: 0.5,
         movement_speed: 1.4, melee_armor: 0, pierce_armor: 0,
-        outline_size: size, accuracy: 100, unit_name: name,
+        outline_size: size,
+        collision_size: collision != null ? collision : Math.min(size, 0.25),
+        accuracy: 100, unit_name: name,
     };
 }
+
+// The mounted physics radius every distance in this file is built from.
+const R = 0.25 * TILE_SIZE; // 7.5 px
 
 let nextId = 0;
 function mk(sim, team, opts, x, y) {
@@ -79,13 +98,14 @@ test("computeCombatPack is false with no target, a dead target, or a dead self",
 });
 
 test("computeCombatPack admits the rank BEHIND the contact line but not the field", () => {
-    // A 1.0-tile-reach unit with an 18 px radius reaches
-    // 1.0*30 + 5 + 18 + 18 = 71 px, and the slack adds 1.5 tiles = 45 px, so
-    // the predicate is true out to 116 px and false past it.
+    // A 1.0-tile-reach mounted unit reaches 1.0*30 + 5 + 7.5 + 7.5 = 50 px,
+    // and the slack adds 1.5 tiles = 45 px, so the predicate is true out to
+    // 95 px and false past it.
     const { sim, a, e } = pair({ range: 1.0 });
     a.target = e;
     const reach = a.attackRange + a.radius + e.radius;
-    assert.equal(reach, 71, "reach arithmetic pinned");
+    assert.equal(reach, 1.0 * TILE_SIZE + 5 + 2 * R, "reach arithmetic pinned");
+    assert.equal(reach, 50);
     const limit = reach + COMBAT_PACK_SLACK_TILES * TILE_SIZE;
 
     e.x = a.x - (reach - 1); // comfortably in reach -> front rank
@@ -100,10 +120,10 @@ test("computeCombatPack admits the rank BEHIND the contact line but not the fiel
 
 test("a 0-range melee unit gets a much smaller pack radius than a 1.0-range one", () => {
     // The asymmetry is the whole point: reach, not the pack rule, decides who
-    // benefits. 0-range reach is 5 + 18 + 18 = 41 px vs the lancer's 71 px.
+    // benefits. 0-range reach is 5 + 7.5 + 7.5 = 20 px vs the lancer's 50 px.
     const { a, e } = pair({ range: 0 });
     a.target = e;
-    assert.equal(a.attackRange + a.radius + e.radius, 41);
+    assert.equal(a.attackRange + a.radius + e.radius, 20);
     e.x = a.x - 100;
     assert.equal(a.computeCombatPack(), false, "100 px > 41 + 45");
 });
@@ -121,8 +141,13 @@ function realSim(units1, units2) {
 
 function xGapAfterCollisions(aPacked, bPacked, sameTeam) {
     const sim = simStub();
+    // 4 px apart: inside even the COMPRESSED floor (16 * COMBAT_PACK_FACTOR),
+    // so resolveCollisions always pushes and the resulting gap is the floor
+    // itself. It used to be 10 px, which was inside the old 37 px floor but is
+    // NOT inside today's compressed 16 px one -- at 10 px the packed pair would
+    // simply not be touched and the test would read 10 instead of the floor.
     const a = mk(sim, 1, { name: "A" }, 100, 100);
-    const b = mk(sim, sameTeam ? 1 : 2, { name: "B" }, 110, 100);
+    const b = mk(sim, sameTeam ? 1 : 2, { name: "B" }, 104, 100);
     a.inCombatPack = aPacked;
     b.inCombatPack = bPacked;
     const s = sameTeam ? realSim([a, b], []) : realSim([a], [b]);
@@ -131,7 +156,7 @@ function xGapAfterCollisions(aPacked, bPacked, sameTeam) {
 }
 
 test("resolveCollisions compresses a same-team pair only when BOTH are packed", () => {
-    const normal = 18 + 18 + 1; // a.radius + b.radius + 1
+    const normal = R + R + 1; // a.radius + b.radius + 1 = 16
     assert.equal(xGapAfterCollisions(false, false, true).toFixed(6), normal.toFixed(6));
     assert.equal(xGapAfterCollisions(true, false, true).toFixed(6), normal.toFixed(6));
     assert.equal(xGapAfterCollisions(false, true, true).toFixed(6), normal.toFixed(6));
@@ -142,7 +167,7 @@ test("resolveCollisions compresses a same-team pair only when BOTH are packed", 
 });
 
 test("resolveCollisions leaves the CROSS-TEAM floor untouched even when both are packed", () => {
-    const normal = 18 + 18 + 1;
+    const normal = R + R + 1;
     for (const [ap, bp] of [[false, false], [true, false], [false, true], [true, true]]) {
         assert.equal(
             xGapAfterCollisions(ap, bp, false).toFixed(6),
@@ -152,15 +177,48 @@ test("resolveCollisions leaves the CROSS-TEAM floor untouched even when both are
     }
 });
 
-test("the compressed floor is tight enough for a second rank of 1.0-reach melee", () => {
-    // front rank at the untouched cross-team floor + compressed same-team gap
-    // must land inside the lancer's 71 px reach; a THIRD rank must not.
-    const crossFloor = 37;
-    const packedGap = 37 * COMBAT_PACK_FACTOR;
-    assert.ok(crossFloor + packedGap <= 71, "second rank reaches");
-    assert.ok(crossFloor + 2 * packedGap > 71, "third rank does not");
-    // and the UNCOMPRESSED gap does not -- the bug this fixes
-    assert.ok(crossFloor + 37 > 71, "pre-E8 second rank could never reach");
+test("the floor is tight enough for a second rank of 1.0-reach melee, and the reach asymmetry holds", () => {
+    // Front rank at the untouched cross-team floor + the same-team gap must
+    // land inside the 1.0-reach unit's reach.
+    const crossFloor = R + R + 1;               // 16 px
+    const packedGap = crossFloor * COMBAT_PACK_FACTOR;
+    const lancerReach = 1.0 * TILE_SIZE + 5 + 2 * R;   // 50 px
+    const paladinReach = 5 + 2 * R;                    // 20 px
+
+    assert.ok(crossFloor + packedGap <= lancerReach, "second rank reaches");
+
+    // E11 NOTE -- this used to also assert "a THIRD rank does NOT reach".
+    // That was never a fact about the game; it was a consequence of the
+    // inflated 18 px radius (37 px floors). With the .dat's true 7.5 px the
+    // ranks sit physically closer together, so how many of them fight is now
+    // purely a function of COMBAT_PACK_FACTOR:
+    //
+    //     factor 1.0  -> 3 ranks   (16 + 2*16   = 48 <= 50)
+    //     factor 0.8  -> 3 ranks   (16 + 2*12.8 = 41.6)
+    //     factor 0.6  -> 4 ranks   (16 + 3*9.6  = 44.8)
+    //
+    // The tapes put the truth at the 2-3 rank boundary: over the
+    // paladin__vs__elite_steppe recordings the steppe side's median same-team
+    // nearest-neighbour distance is 0.595 tiles (17.9 px) and its cross-team
+    // floor is 0.479 tiles (14.4 px), so rank 3 sits at 14.4 + 2*17.9 =
+    // 50.2 px against a 50 px reach -- right on the line, rank 4 well past it.
+    // So this asserts the BOUND (no more than three ranks), which is what
+    // rules the over-tight factors out, rather than an exact count.
+    const ranks = 1 + Math.floor((lancerReach - crossFloor) / packedGap);
+    assert.ok(ranks >= 2, `1.0-reach melee must field a second rank, got ${ranks}`);
+    assert.ok(
+        ranks <= 3,
+        `no more than three ranks may fight; COMBAT_PACK_FACTOR=` +
+        `${COMBAT_PACK_FACTOR} gives ${ranks}`,
+    );
+
+    // The asymmetry that makes 1.0-tile reach worth having is what actually
+    // matters, and it survives at every factor: a 0-reach unit's second rank
+    // cannot fight no matter how tightly its side packs.
+    assert.ok(
+        crossFloor + packedGap > paladinReach,
+        "a 0-reach unit gains no second rank from packing",
+    );
 });
 
 // ---- soft floor: BattleUnit.calculateAvoidance ----------------------------
@@ -177,10 +235,25 @@ function avoidMag(d, aPacked, bPacked, sameTeam) {
 }
 
 test("calculateAvoidance relaxes the soft floor for a packed same-team pair", () => {
-    // 30 px is inside the normal soft minDist (18+18+2 = 38) but outside the
-    // compressed one (38 * 0.6 = 22.8), so the packed pair should feel only the
-    // weak out-of-band 0.5 force while the unpacked pair feels the strong one.
-    const d = 30;
+    // The soft floor is rA + rB + 2 = 17 px (it was 38 px at the old inflated
+    // radius, which is where the hardcoded 30 px probe distance came from).
+    // Probe midway between the compressed floor and the normal one: the
+    // unpacked pair is overlapping and feels the strong force, the packed pair
+    // is outside its own floor and feels only the weak 0.5 band force.
+    const soft = R + R + 2;                       // 17 px
+    const compressed = soft * COMBAT_PACK_FACTOR;
+    if (COMBAT_PACK_FACTOR >= 1) {
+        // Compression is switched off -- the mechanism is a documented no-op
+        // and there is no band to separate. Assert exactly that.
+        const d = soft - 1;
+        assert.equal(
+            avoidMag(d, true, true, true).toFixed(6),
+            avoidMag(d, false, false, true).toFixed(6),
+            "at factor 1.0 packing must change nothing",
+        );
+        return;
+    }
+    const d = (compressed + soft) / 2;
     const unpacked = avoidMag(d, false, false, true);
     const packed = avoidMag(d, true, true, true);
     assert.ok(unpacked > 3, `unpacked pair overlaps hard, got ${unpacked}`);

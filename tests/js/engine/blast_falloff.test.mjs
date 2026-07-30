@@ -28,17 +28,20 @@ import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
 // Aztec Siege Onager's real combat dict (data/calibration/combat_dicts.json).
 const ONAGER_STATS = {
     hp: 70, attack: 76, attack_range: 9, attack_speed: 1 / 6,
-    movement_speed: 0.6, melee_armor: 0, pierce_armor: 8, outline_size: 0.5,
+    movement_speed: 0.6, melee_armor: 0, pierce_armor: 8,
+    outline_size: 0.5, collision_size: 0.5,
     accuracy: 100, base_accuracy: 100, unit_name: "Siege Onager",
     splash_radius: 1.5, projectile_speed: 3.5, min_attack_range: 3,
     is_siege_projectile: 1,
     attacks_json: JSON.stringify({ 4: 76 }),
 };
 
-// Chinese Champion: outline_size 0.2 -> radius 14px, melee armor 4.
+// Chinese Champion: collision_size 0.2 -> physics radius 6px (E11: the .dat's
+// collision_size_x, not the old `round(10 + outline*20)` = 14px), melee armor 4.
 const CHAMPION_STATS = {
     hp: 70, attack: 18, attack_range: 0, attack_speed: 0.5,
-    movement_speed: 1.06, melee_armor: 4, pierce_armor: 5, outline_size: 0.2,
+    movement_speed: 1.06, melee_armor: 4, pierce_armor: 5,
+    outline_size: 0.2, collision_size: 0.2,
     accuracy: 100, base_accuracy: 100, unit_name: "Champion",
     armors_json: JSON.stringify({ 4: 4, 3: 5 }),
 };
@@ -76,10 +79,10 @@ test("splash falls off linearly to ZERO one radius beyond the victim's edge", ()
     // Victims at 0.75 and 1.39 tiles from the impact point (the tape rows above).
     const near = new BattleUnit("2-1", 2, CHAMPION_STATS, "champion", "Chinese", sim);
     const far = new BattleUnit("2-2", 2, CHAMPION_STATS, "champion", "Chinese", sim);
-    // Well outside splashR + radius = 45 + 14 = 59px: must be untouched.
+    // Well outside splashR + radius = 45 + 6 = 51px: must be untouched.
     const outside = new BattleUnit("2-3", 2, CHAMPION_STATS, "champion", "Chinese", sim);
 
-    assert.equal(near.radius, 14);
+    assert.equal(near.radius, 6);
 
     onager.x = -300; onager.y = 0;
     primary.x = 0; primary.y = 0;
@@ -102,7 +105,7 @@ test("splash falls off linearly to ZERO one radius beyond the victim's edge", ()
             1,
             Math.round(
                 netDamage *
-                    (1 - Math.min(1, Math.max(0, distPx - 14) / 45)),
+                    (1 - Math.min(1, Math.max(0, distPx - 6) / 45)),
             ),
         );
 
@@ -124,8 +127,8 @@ test("a victim at the very edge of the blast takes the 1-damage floor, not 25% o
 
     onager.x = -300; onager.y = 0;
     primary.x = 0; primary.y = 0;
-    // Just inside splashR + radius (59px) -- edgeDist 44 of 45, so ~0 falloff.
-    edge.x = 58; edge.y = 0;
+    // Just inside splashR + radius (51px) -- edgeDist 44 of 45, so ~0 falloff.
+    edge.x = 50; edge.y = 0;
 
     sim.team1.push(onager);
     sim.team2.push(primary, edge);

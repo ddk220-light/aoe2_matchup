@@ -22,8 +22,6 @@ import {
     CANVAS_WIDTH,
     CANVAS_HEIGHT,
     STUCK_PROGRESS_RATE,
-    PURSUIT_FRACTION,
-    RECEDE_EPS,
 } from "./constants.js";
 import { Projectile, classifyProjectile } from "./projectile.js";
 import { MeleeEffect } from "./melee_effect.js";
@@ -224,14 +222,6 @@ export class BattleUnit {
         this.stuckTimer = 0;
         this.lastDistToTarget = Infinity;
         this.blockedTargets = new Set();
-        // Target-thrash pursuit exemption (design doc §2-3): the target's own
-        // position last time we looked, for the `receding` radial-recession
-        // check in moveTowardTarget. Reset whenever a new target is acquired
-        // (findTarget). Absent from stateHash() by construction, like
-        // stuckTimer/vx/vy already are.
-        this._prevTgt = null;
-        this._prevTgtX = 0;
-        this._prevTgtY = 0;
 
         // Attack sprite-sheet ref, stamped by the page/harness for animation timing
         // only (triggerAttackAnim). The renderer owns all other draw assets.
@@ -378,12 +368,6 @@ export class BattleUnit {
         this.lastDistToTarget = this.target
             ? this.distanceTo(this.target)
             : Infinity;
-        // Reset the pursuit-exemption baseline too -- a freshly-acquired
-        // target has no observed history yet, so `receding` must read false
-        // (not falsely true/false off a stale, unrelated target's position).
-        this._prevTgt = this.target;
-        this._prevTgtX = this.target ? this.target.x : 0;
-        this._prevTgtY = this.target ? this.target.y : 0;
         return this.target;
     }
 
@@ -1399,14 +1383,6 @@ export class BattleUnit {
         if (dist < 1) return;
         dx /= dist;
         dy /= dist;
-        // Snapshot the pre-avoidance unit vector toward the target and the
-        // pre-move position -- dx/dy are `let` and get overwritten in place
-        // by the avoidance blend just below, but the pursuit exemption needs
-        // the ORIGINAL intended direction, not the blended one (design doc
-        // §2: this is the exact distinction that makes `pursuing` provably
-        // unspoofable by turn-lag -- see the constants.js comment).
-        const toTgtX = dx, toTgtY = dy;
-        const entryX = this.x, entryY = this.y;
         const avoidance = this.calculateAvoidance(allUnits);
         const avoidMag = Math.sqrt(
             avoidance.x * avoidance.x + avoidance.y * avoidance.y,
@@ -1455,45 +1431,12 @@ export class BattleUnit {
         // this is exactly the historical `- 0.5` literal, pinned by
         // tests/js/engine/pursuit.test.mjs.
         const newDist = this.distanceTo(this.target);
-        const stalled =
-            newDist >= this.lastDistToTarget - STUCK_PROGRESS_RATE * dt;
-
-        // Pursuit exemption (design doc §2): do NOT gate on "wedged" -- that
-        // was measured deleting 89-99.8% of melee-scrum blacklist events, a
-        // fan-out removal, not a misfire fix. Instead exempt only the
-        // provably legitimate case: this unit is walking AT its target
-        // (`pursuing`) and the target is genuinely running away (`receding`).
-        //
-        // `pursuing` uses the POST-CLAMP ACTUAL displacement (this.x/y minus
-        // the pre-move entryX/entryY), not the intended step -- a unit
-        // pinned against the map edge must read (near) zero progress here,
-        // not "full progress".
-        const intentProgress =
-            (this.x - entryX) * toTgtX + (this.y - entryY) * toTgtY;
-        const pursuing = intentProgress >= PURSUIT_FRACTION * moveAmount;
-
-        // `receding`: the target's OWN radial displacement since we last
-        // looked, projected onto the same pre-avoidance toTgt direction --
-        // positive means the target moved further away from us, i.e. it is
-        // genuinely fleeing rather than merely jostling/orbiting.
-        // this._prevTgt guards against comparing across a target swap.
-        let receding = false;
-        if (this._prevTgt === this.target) {
-            const tgtDx = this.target.x - this._prevTgtX;
-            const tgtDy = this.target.y - this._prevTgtY;
-            receding =
-                tgtDx * toTgtX + tgtDy * toTgtY > RECEDE_EPS * moveAmount;
-        }
-
-        if (stalled && !(pursuing && receding)) {
+        if (newDist >= this.lastDistToTarget - STUCK_PROGRESS_RATE * dt) {
             this.stuckTimer += dt;
         } else {
             this.stuckTimer = Math.max(0, this.stuckTimer - dt * 2);
         }
         this.lastDistToTarget = newDist;
-        this._prevTgt = this.target;
-        this._prevTgtX = this.target.x;
-        this._prevTgtY = this.target.y;
         if (this.stuckTimer > 0.8) {
             this.blockedTargets.add(this.target);
             this.target = null; // force re-target next frame

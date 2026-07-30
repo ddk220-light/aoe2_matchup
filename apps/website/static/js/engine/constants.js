@@ -21,16 +21,6 @@ export const MELEE_RANGE_BUFFER = 5;
 // docs/superpowers/specs/2026-07-29-target-thrash-design.md §2.
 export const STUCK_PROGRESS_RATE = 30;
 
-// Target-thrash pursuit exemption (design doc §2-3): a chasing unit that is
-// genuinely walking at its target (PURSUIT_FRACTION of its own step) while
-// the target is genuinely fleeing (RECEDE_EPS-gated radial recession) is
-// exempted from the stuck-progress bar above. Frozen choices, not fits --
-// measured outcome-identical across PURSUIT_FRACTION 0.2/0.35/0.5 and
-// STUCK_PROGRESS_RATE 7.5/15/30 in the prototype; RECEDE_EPS is a
-// float-noise guard on the radial-recession test, not a behavior knob.
-export const PURSUIT_FRACTION = 0.35;
-export const RECEDE_EPS = 0.05;
-
 // ===== ADJUSTABLE PRE-BATTLE CONDITIONS =====
 // Lithuanian relic bonus: the reference DB bakes in all 4 relics (+1 base
 // melee attack each) for these units. The rail picker lets the user dial

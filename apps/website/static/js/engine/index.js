@@ -15,7 +15,15 @@ export { BattleUnit, setArmorClassNames } from "./battle_unit.js";
 export { Projectile, classifyProjectile } from "./projectile.js";
 export { MeleeEffect } from "./melee_effect.js";
 export { makeRng } from "./rng.js";
-// Opt-in battlefield geometry — pass `arena: "golden"` to createSimulation.
-// Nothing here runs unless a caller asks for it; see engine/arena.js.
-export { Arena, makeArena } from "./arena.js";
+// Opt-in battlefield geometry — pass `arena: "golden"` (the diamond lab visual)
+// or `arena: "tapebox"` (the recordings' walled box, for teams that carry their
+// own tape spawn `positions`) to createSimulation. Nothing here runs unless a
+// caller asks for it; see engine/arena.js.
+export {
+    Arena,
+    TapeBox,
+    makeArena,
+    TAPEBOX_MIN_TILE,
+    TAPEBOX_MAX_TILE,
+} from "./arena.js";
 export * from "./constants.js";

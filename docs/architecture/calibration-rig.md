@@ -1,6 +1,6 @@
 # Combat Calibration Rig
 
-*Last verified: 2026-07-30 · branch `improved-simulation` · corpus: 75 fights / 69 matchups*
+*Last verified: 2026-07-30 · branch `improved-simulation` · corpus: 155 fights / 92 matchups*
 
 Fits the JS battle engine (`apps/website/static/js/engine/`) to REAL Age of Empires II
 fights recorded at ~60 Hz, by scoring the engine's own emitted combat events against the
@@ -20,7 +20,8 @@ tape streams ─────┐
                    ├──extract_card──> data/calibration/truth/<run_id>.json
 engine ──eventLog──┘   (Task 2's ONE metric implementation)
 
-data/calibration/combat_dicts.json ──> tools/simjs/calib_runner.mjs
+data/calibration/combat_dicts.json ─┐
+data/calibration/spawns.json ───────┴─> tools/simjs/calib_runner.mjs
                                         (20 seeds/fight, tape-shaped events)
                                         ──> D:/AI/aoe2_golden/simruns/<run_id>/seed-<n>.json
 
@@ -35,7 +36,7 @@ Five independently-testable stages, each its own module:
 | Ingest a drop, resolve civs, build the manifest | `aoe2x/calibration/ingest.py` | 1 |
 | The shared metric extractor | `aoe2x/calibration/extract.py` | 2 |
 | Engine event recorder (opt-in `sim.eventLog`) | `apps/website/static/js/engine/{sim,battle_unit}.js` | 3 |
-| 20-seed sim runner over the manifest | `tools/simjs/calib_runner.mjs` (+ `dump_calib_dicts.py`) | 4 |
+| 20-seed sim runner over the manifest | `tools/simjs/calib_runner.mjs` (+ `dump_calib_dicts.py`, `dump_calib_spawns.py`) | 4 |
 | **Scorer + BASELINE scoreboard** | `aoe2x/calibration/score.py` | **5 (this doc)** |
 
 **The one load-bearing property:** `aoe2x.calibration.extract.extract_card(damage_events,
@@ -54,8 +55,9 @@ python -m aoe2x.calibration.ingest <path/to/drop.zip>
 # 2. Refresh combat dicts + truth cards + sim runs whenever the manifest grows
 #    (e.g. new recordings landed since the last sim run).
 python tools/simjs/dump_calib_dicts.py          # ~instant
+python tools/simjs/dump_calib_spawns.py         # ~30s -- tape first-frame spawn positions
 python -m aoe2x.calibration.extract --all       # ~1s for 75 fights
-node tools/simjs/calib_runner.mjs --seeds 20    # ~35s for 75 fights x 20 seeds
+node tools/simjs/calib_runner.mjs --seeds 20    # ~90s for 155 fights x 20 seeds
 
 # 3. Score the whole corpus and write a labeled scoreboard.
 python -m aoe2x.calibration.score --all --label baseline
@@ -64,6 +66,36 @@ python -m aoe2x.calibration.score --all --label baseline
 
 `score.py` also accepts `--run-id <run_id>` (repeatable) to score a subset, and `--seeds N`
 to read fewer than 20 seed files.
+
+### 2.1 Scenario geometry — `--arena` (E12)
+
+`calib_runner.mjs` defaults to **`--arena tapebox`**: each army spawns at its own
+recording's first-frame unit positions (`data/calibration/spawns.json`) inside the walled
+13.6-tile box the tapes are actually fought in. Before E12 it used a synthesised scenario
+that shared nothing with the recordings:
+
+| | engine (pre-E12) | tape corpus (measured, 155 tapes) |
+|---|---|---|
+| play area | 30 x 20 tiles, open | 13.6 x 13.6 tiles, walled (x,y in [1.2, 14.8]) |
+| army shape | single-file column | 2-D block, ~6 wide x 3-4 deep |
+| start separation | 28 tiles | centroids 7.63 / 8.12 / 9.84 (min/median/max) |
+| nearest enemy pair | ~20 tiles | 4.00-6.08 tiles |
+
+Flags:
+
+- `tapebox` — the scoring configuration (default).
+- `plain-legacy` — the pre-E12 scenario, bit-identical to every scoreboard through E11.
+  Kept so those runs stay reproducible, **not** as a fallback.
+- `golden` — the diamond arena with the tree cluster (`engine/arena.js`'s `Arena`). A lab
+  visual; its central obstruction is deliberately not part of scoring.
+
+**Scoreboards written before and after E12 are not comparable.** The re-baseline is
+deliberate: the pre-E12 numbers measured the engine on the wrong initial condition.
+
+The tapebox models the tapes' walls and spawns only — **not** the real map's central tree
+cluster. That cluster sits ~5 tiles off the spawn-to-spawn line, so no melee approach
+touches it; making a ranged side kite *around* it needs pathfinding this engine does not
+have. Documented infidelity, deferred to the ranged round.
 
 ## 3. Metric definitions (verified against the drop's own `GROUND_TRUTH.md`)
 
@@ -128,9 +160,16 @@ sim seed shows `trample_multi_rate > 0`; a unit that never demonstrably tramples
 world has nothing to compare.
 
 **Reported only** (never gate): `first_blood`, `duration_s` (fight-level, not per-side).
-The JS engine fights in an open 30x20 box; the tape's arena is 16x16 with ~39% solid tiles
-— a deliberate, accepted geometry mismatch (design spec §7), so movement-dependent metrics
-are informational only.
+
+Historically this was justified by a geometry mismatch — the engine fought in an open
+30x20 box while the tape's arena is 16x16 and ~39% solid (design spec §7). **E12 removed
+most of that excuse** (see §2.1): the box and the spawns are now the tapes' own, so what
+`duration_s` measures is combat pacing rather than approach distance. It stays ungated,
+because the remaining infidelity it exposes is large and real: over the 15 basic-melee
+recordings the sim runs at **0.58x** the tape's duration (median 0.55x), and the matching
+cause is measurable — mean fraction of the fight a basic-melee unit spends swinging is
+**0.28 on tape vs 0.52 in the engine**. The engine's units engage far too continuously
+once contact is made. That is the next round's target, not a tolerance to widen.
 
 ## 5. Tolerance choices, and why
 

@@ -5,8 +5,16 @@
 // aoe2x/calibration/extract.py (the SAME extractor tape events go through)
 // to score.
 //
-//     python tools/simjs/dump_calib_dicts.py     # (re)build combat dicts first
+//     python tools/simjs/dump_calib_dicts.py      # (re)build combat dicts first
+//     python tools/simjs/dump_calib_spawns.py     # (re)build tape spawn positions
 //     node tools/simjs/calib_runner.mjs --seeds 20
+//
+// SCENARIO GEOMETRY (E12): the default is `--arena tapebox` -- each army spawns
+// at its recording's own first-frame positions inside the walled 13.6-tile box
+// the tapes are fought in. `--arena plain-legacy` reproduces the pre-E12
+// scenario (no arena, single-file columns 28 tiles apart) bit for bit, and is
+// how every scoreboard through E11 was produced. See the --arena block in the
+// CLI below for the full list and the re-baseline warning.
 //
 // Deliberate constraints (mirroring tape_runner.mjs / headless.mjs):
 //   * imports buildFight (NOT runFight) -- runFight's `final` shape is frozen
@@ -49,6 +57,46 @@ export function loadCalibDicts() {
         path.join(REPO, "data/calibration/combat_dicts.json"), "utf8"));
 }
 
+// Tape first-frame spawn positions, keyed by tag then by the recording's OWNER
+// number: { tag: { "2": [[tileX, tileY], ...], "3": [...] } }. Written by
+// tools/simjs/dump_calib_spawns.py straight off the .units.jsonl.gz streams.
+export function loadCalibSpawns() {
+    return JSON.parse(readFileSync(
+        path.join(REPO, "data/calibration/spawns.json"), "utf8"));
+}
+
+// Turn one fight's spawn entry into buildFight's `{1: [...], 2: [...]}` — i.e.
+// out of RECORDING OWNER space and into ENGINE TEAM space, the same remap
+// runCalibFight applies to events, in the same place and in the same
+// direction. Owner keys are looked up off side1/side2's own `owner` field
+// because the side labels do NOT follow the tag's word order.
+function spawnsForFight(spawns, fight) {
+    const entry = spawns[fight.tag];
+    if (!entry) {
+        throw new Error(
+            `no spawn entry for tag "${fight.tag}" — re-run ` +
+            "tools/simjs/dump_calib_spawns.py",
+        );
+    }
+    const pick = (side) => {
+        const pts = entry[String(side.owner)];
+        if (!pts) {
+            throw new Error(
+                `fight "${fight.run_id}": spawns.json has no owner ` +
+                `${side.owner} (has ${Object.keys(entry).join(", ")})`,
+            );
+        }
+        if (pts.length !== side.count) {
+            throw new Error(
+                `fight "${fight.run_id}" owner ${side.owner}: manifest says ` +
+                `${side.count} units, spawns.json has ${pts.length}`,
+            );
+        }
+        return pts;
+    };
+    return { 1: pick(fight.side1), 2: pick(fight.side2) };
+}
+
 function sideSummary(team, side) {
     const alive = team.filter((u) => u.state !== "dead");
     return {
@@ -65,17 +113,18 @@ function sideSummary(team, side) {
 // Run one manifest fight at one seed. Returns the tape-shaped record the
 // extractor and Task 5's scorer need: {run_id, seed, duration_s, winner,
 // sides (keyed by REAL owner number), damage, missiles}.
-// `arena` is createSimulation's opt-in battlefield field and DEFAULTS TO NULL —
-// the plain rectangle every recorded corpus run has ever used. Passing
-// "golden" is an A/B measurement tool, never the scoring configuration: the
-// manifest's expected outcomes were all scored on the rectangle, so a run with
-// an arena is not comparable to them.
+//
+// `arena` is createSimulation's opt-in battlefield field; `positions` is the
+// per-team tape spawn list. The CLI below pairs them ("tapebox" + positions,
+// or plain-legacy + none) — this function itself just forwards whatever it is
+// handed, so a caller can build any combination it can defend.
 export function runCalibFight({
     dicts,
     fight,
     seed,
     maxSeconds = MAX_SECONDS,
     arena = null,
+    positions = null,
 }) {
     const s1 = fight.side1, s2 = fight.side2;
     // Guard against a same-owner manifest entry: if s1.owner === s2.owner,
@@ -92,7 +141,7 @@ export function runCalibFight({
         civ1: s1.civ, slug1: s1.slug, n1: s1.count,
         civ2: s2.civ, slug2: s2.slug, n2: s2.count,
     };
-    const sim = buildFight({ dicts, row, seed, arena });
+    const sim = buildFight({ dicts, row, seed, arena, positions });
     sim.eventLog = { damage: [], missiles: [] };
 
     const maxTicks = Math.round(maxSeconds * 60);
@@ -161,12 +210,35 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const nSeeds = Number(flag("--seeds", "20"));
     const maxSeconds = Number(flag("--max-seconds", String(MAX_SECONDS)));
     const outDir = flag("--out-dir", DEFAULT_OUT_DIR);
-    // --arena golden runs the corpus on the recording arena instead of the
-    // plain rectangle. MEASUREMENT ONLY, and never the default: the manifest's
-    // expected outcomes were scored on the rectangle, so an arena run tells you
-    // how the battlefield shifts results, not whether the engine is right.
-    const arenaArg = flag("--arena", "");
-    const arena = arenaArg === "golden" ? "golden" : null;
+    // --arena picks the scenario geometry:
+    //
+    //   tapebox      (DEFAULT, E12) the tapes' own initial conditions -- the
+    //                walled 13.6-tile box and each army spawned at the
+    //                recording's first-frame positions. This is the scoring
+    //                configuration.
+    //   plain-legacy the pre-E12 scenario: no arena at all, both armies in
+    //                single-file columns 28 tiles apart on the open canvas.
+    //                Bit-identical to every scoreboard through E11 -- kept so
+    //                those runs stay reproducible, NOT as a fallback.
+    //   golden       the diamond arena with the tree cluster (engine/arena.js).
+    //                A lab visual; its obstruction is deliberately not part of
+    //                scoring.
+    //
+    // NOTE FOR ANYONE COMPARING SCOREBOARDS: tapebox is a RE-BASELINE. A
+    // tapebox run and a pre-E12 run are not comparable numbers -- the fights
+    // start 8 tiles apart instead of 28, inside walls, in blocks. Any table
+    // that puts them in adjacent rows has to say so.
+    const arenaArg = flag("--arena", "tapebox");
+    const ARENAS = { tapebox: "tapebox", golden: "golden", "plain-legacy": null };
+    if (!(arenaArg in ARENAS)) {
+        console.error(
+            `unknown --arena "${arenaArg}" (want one of: ` +
+            `${Object.keys(ARENAS).join(", ")})`,
+        );
+        process.exit(2);
+    }
+    const arena = ARENAS[arenaArg];
+    const spawns = arenaArg === "tapebox" ? loadCalibSpawns() : null;
 
     const dicts = loadCalibDicts();
     const fights = loadManifest();
@@ -176,9 +248,12 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     for (const fight of fights) {
         const dir = path.join(outDir, fight.run_id);
         mkdirSync(dir, { recursive: true });
+        const positions = spawns ? spawnsForFight(spawns, fight) : null;
         const fightT0 = process.hrtime.bigint();
         for (let seed = 1; seed <= nSeeds; seed++) {
-            const record = runCalibFight({ dicts, fight, seed, maxSeconds, arena });
+            const record = runCalibFight({
+                dicts, fight, seed, maxSeconds, arena, positions,
+            });
             nDamage += record.damage.length;
             nMissiles += record.missiles.length;
             writeFileSync(path.join(dir, `seed-${seed}.json`), JSON.stringify(record));
@@ -188,7 +263,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
         console.log(`  ${fight.run_id} (${nSeeds} seeds, ${fightWallS.toFixed(1)}s)`);
     }
     const wallS = Number(process.hrtime.bigint() - t0) / 1e9;
-    console.log(`arena: ${arena || "plain (default)"}`);
+    console.log(`arena: ${arenaArg}${spawns ? " (tape first-frame spawns)" : ""}`);
     console.log(`wrote ${nFiles} files (${fights.length} fights x ${nSeeds} seeds) -> ${outDir}`);
     console.log(`damage events: ${nDamage}, missile events: ${nMissiles}`);
     console.log(`wall time: ${wallS.toFixed(1)}s`);

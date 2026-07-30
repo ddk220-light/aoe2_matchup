@@ -829,11 +829,7 @@ export class BattleUnit {
         // Volley units (Rocket Cart: every projectile blasts) keep their true
         // per-projectile radius — the upscale only compensates single stones.
         const splashR =
-            attacker.splashRadius > 0
-                ? attacker.extraProjectiles > 0
-                    ? attacker.splashRadius
-                    : Math.max(attacker.splashRadius, 2.5 * TILE_SIZE)
-                : 0;
+            attacker.splashRadius > 0 ? attacker.splashRadius : 0;
         const impactX = target.x;
         const impactY = target.y;
         const proj = new Projectile(
@@ -913,12 +909,18 @@ export class BattleUnit {
                         const dy = enemy.y - impactY;
                         const dist = Math.sqrt(dx * dx + dy * dy);
                         if (dist <= splashR + enemy.radius) {
-                            // Damage falls off linearly from 100% at center to 25% at edge
+                            // Damage falls off linearly from 100% (the unit's
+                            // body overlaps the impact point) to 0% one full
+                            // blast radius beyond the unit's edge.
+                            const edgeDist = Math.max(
+                                0,
+                                dist - enemy.radius,
+                            );
                             const distRatio = Math.min(
                                 1,
-                                dist / splashR,
+                                edgeDist / splashR,
                             );
-                            const falloff = 1.0 - 0.75 * distRatio;
+                            const falloff = 1.0 - distRatio;
                             const splashDmg = Math.max(
                                 1,
                                 Math.round(damage * falloff),

@@ -22,6 +22,8 @@ import {
     CANVAS_WIDTH,
     CANVAS_HEIGHT,
     STUCK_PROGRESS_RATE,
+    PURSUIT_BAR_FRACTION,
+    PURSUIT_MIN_ADVANTAGE,
 } from "./constants.js";
 import { Projectile, classifyProjectile } from "./projectile.js";
 import { MeleeEffect } from "./melee_effect.js";
@@ -825,15 +827,12 @@ export class BattleUnit {
                 ? this.projectileSpeed
                 : 7 * TILE_SIZE;
         const attacker = this;
-        // Siege splash: scale up radius so mangonel/onager can hit clusters.
-        // Volley units (Rocket Cart: every projectile blasts) keep their true
-        // per-projectile radius — the upscale only compensates single stones.
+        // Siege splash: every unit blasts at its TRUE splash_radius. This used
+        // to inflate single stones to a 2.5-tile minimum "so mangonel/onager
+        // can hit clusters"; the tapes say otherwise (see the blast-falloff
+        // commit and tests/js/engine/blast_falloff.test.mjs).
         const splashR =
-            attacker.splashRadius > 0
-                ? attacker.extraProjectiles > 0
-                    ? attacker.splashRadius
-                    : Math.max(attacker.splashRadius, 2.5 * TILE_SIZE)
-                : 0;
+            attacker.splashRadius > 0 ? attacker.splashRadius : 0;
         const impactX = target.x;
         const impactY = target.y;
         const proj = new Projectile(
@@ -913,12 +912,18 @@ export class BattleUnit {
                         const dy = enemy.y - impactY;
                         const dist = Math.sqrt(dx * dx + dy * dy);
                         if (dist <= splashR + enemy.radius) {
-                            // Damage falls off linearly from 100% at center to 25% at edge
+                            // Damage falls off linearly from 100% (the unit's
+                            // body overlaps the impact point) to 0% one full
+                            // blast radius beyond the unit's edge.
+                            const edgeDist = Math.max(
+                                0,
+                                dist - enemy.radius,
+                            );
                             const distRatio = Math.min(
                                 1,
-                                dist / splashR,
+                                edgeDist / splashR,
                             );
-                            const falloff = 1.0 - 0.75 * distRatio;
+                            const falloff = 1.0 - distRatio;
                             const splashDmg = Math.max(
                                 1,
                                 Math.round(damage * falloff),
@@ -1530,7 +1535,27 @@ export class BattleUnit {
         // this is exactly the historical `- 0.5` literal, pinned by
         // tests/js/engine/pursuit.test.mjs.
         const newDist = this.distanceTo(this.target);
-        if (newDist >= this.lastDistToTarget - STUCK_PROGRESS_RATE * dt) {
+        // The bar can never exceed what this unit could PHYSICALLY close.
+        // Chasing a target that is itself running away closes the gap at the
+        // SPEED DIFFERENCE, so the flat bar brands honest, physically-maximal
+        // pursuit as "stuck": a Champion (1.06 t/s) chasing a Siege Onager
+        // (0.6 t/s) closes at 0.46 t/s, never clears 1.0 t/s, and blacklists
+        // every onager every 0.8 s -- melee literally cannot engage siege.
+        // Only an actively KITING target relaxes the bar, and only to
+        // PURSUIT_BAR_FRACTION of the achievable rate. A chaser slower than
+        // its fleeing target yields max(0, ...) === 0 and still blacklists,
+        // preserving re-targeting off uncatchable kiters.
+        let progressBar = STUCK_PROGRESS_RATE;
+        if (this.target.state === "kiting") {
+            const advantage = this.moveSpeed - this.target.moveSpeed;
+            if (advantage >= PURSUIT_MIN_ADVANTAGE) {
+                progressBar = Math.min(
+                    progressBar,
+                    advantage * PURSUIT_BAR_FRACTION,
+                );
+            }
+        }
+        if (newDist >= this.lastDistToTarget - progressBar * dt) {
             this.stuckTimer += dt;
         } else {
             this.stuckTimer = Math.max(0, this.stuckTimer - dt * 2);

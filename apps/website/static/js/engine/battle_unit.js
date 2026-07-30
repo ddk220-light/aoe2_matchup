@@ -827,9 +827,10 @@ export class BattleUnit {
                 ? this.projectileSpeed
                 : 7 * TILE_SIZE;
         const attacker = this;
-        // Siege splash: scale up radius so mangonel/onager can hit clusters.
-        // Volley units (Rocket Cart: every projectile blasts) keep their true
-        // per-projectile radius — the upscale only compensates single stones.
+        // Siege splash: every unit blasts at its TRUE splash_radius. This used
+        // to inflate single stones to a 2.5-tile minimum "so mangonel/onager
+        // can hit clusters"; the tapes say otherwise (see the blast-falloff
+        // commit and tests/js/engine/blast_falloff.test.mjs).
         const splashR =
             attacker.splashRadius > 0 ? attacker.splashRadius : 0;
         const impactX = target.x;

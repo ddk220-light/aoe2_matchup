@@ -671,6 +671,14 @@ def main() -> None:
     ap.add_argument("--run-id", action="append", dest="run_ids", help="Score a single run_id (repeatable).")
     ap.add_argument("--label", default="baseline", help="Label embedded in the output filename.")
     ap.add_argument("--seeds", type=int, default=20, help="Number of seeds to read (1..N).")
+    ap.add_argument(
+        "--sim-runs-dir", type=Path, default=SIMRUNS_DIR,
+        help=(
+            "Directory holding the sim tapes to score, one <run_id>/ subdir per "
+            f"fight (default: {SIMRUNS_DIR}). Point this at calib_runner.mjs's "
+            "--out-dir when scoring an experiment's run instead of the default."
+        ),
+    )
     args = ap.parse_args()
 
     if not args.all and not args.run_ids:
@@ -679,12 +687,12 @@ def main() -> None:
     seeds = list(range(1, args.seeds + 1))
 
     if args.all:
-        results, failures = score_all(seeds=seeds)
+        results, failures = score_all(seeds=seeds, sim_runs_dir=args.sim_runs_dir)
     else:
         results, failures = [], []
         for run_id in args.run_ids:
             try:
-                results.append(score_fight(run_id, seeds=seeds))
+                results.append(score_fight(run_id, seeds=seeds, sim_runs_dir=args.sim_runs_dir))
             except Exception as exc:  # noqa: BLE001
                 failures.append({"run_id": run_id, "error": str(exc)})
 
@@ -704,6 +712,7 @@ def main() -> None:
     payload = {
         "label": args.label,
         "generated_utc": stamp,
+        "sim_runs_dir": str(args.sim_runs_dir),
         "n_fights": len(results),
         "n_failures": len(failures),
         "verdict_counts": dict(verdict_counts),

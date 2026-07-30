@@ -591,10 +591,18 @@ export class BattleUnit {
                 this.moveTowardTarget(dt, allUnits);
             }
         } else {
-            // Charge projectile attack (Fire Lancer): fire at range before melee
+            // Charge projectile attack (Fire Lancer): fire at range before melee.
+            // Recharges if the unit has a charge_recharge_time; otherwise it is
+            // a one-shot (legacy fallback for units whose recharge data isn't
+            // populated). Mirrors simulation_real.py's charge_ready gate.
+            const chargeReady =
+                this.chargeRechargeTime > 0
+                    ? this.chargeTimer <= 0
+                    : !this.hasUsedCharge;
             if (
                 this.chargeProjectileCount > 0 &&
-                !this.hasUsedCharge &&
+                chargeReady &&
+                this.attackCooldown <= 0 &&
                 this.target
             ) {
                 const distToTarget = this.distanceTo(this.target);
@@ -604,16 +612,30 @@ export class BattleUnit {
                     this.target.radius;
                 if (distToTarget <= chargeRange) {
                     // In charge range -- fire charge projectiles
-                    this.hasUsedCharge = true;
+                    if (this.chargeRechargeTime > 0) {
+                        this.chargeTimer = this.chargeRechargeTime;
+                    } else {
+                        this.hasUsedCharge = true;
+                    }
                     this.state = "attacking";
                     this.attackAnimTimer = 0.3;
                     this.triggerAttackAnim();
+                    // The volley is a spray, not a focused burst: the tapes cap
+                    // a single volley's same-instant victim count at exactly
+                    // chargeProjectileCount with a mean near 2, i.e. the three
+                    // projectiles land on up to three DIFFERENT enemies. Spread
+                    // them over the nearest distinct living foes inside charge
+                    // range; if fewer exist, the surplus re-hits the ones we
+                    // picked (a lone target still eats the whole volley).
+                    const volleyTargets = this.pickChargeVolleyTargets();
                     for (
                         let cp = 0;
                         cp < this.chargeProjectileCount;
                         cp++
                     ) {
-                        this.fireChargeProjectile(this.target);
+                        this.fireChargeProjectile(
+                            volleyTargets[cp % volleyTargets.length],
+                        );
                     }
                     this.attackCooldown = this.reloadTime;
                 } else {
@@ -943,6 +965,33 @@ export class BattleUnit {
         this.sim.projectiles.push(proj);
         this.attackAnimTimer = 0.15;
         this.triggerAttackAnim();
+    }
+
+    // Pick the distinct enemies a single charge volley sprays over. The primary
+    // target leads (it is the one the caller already range-checked), then the
+    // remaining living foes whose edge-to-edge distance is inside charge range,
+    // nearest first. Ties break on the enemy's position in its team array, so
+    // the choice is fully deterministic -- no RNG draw is taken here, which
+    // keeps every other consumer of sim.rng bit-identical.
+    pickChargeVolleyTargets() {
+        const picked = [this.target];
+        if (this.chargeProjectileCount <= 1) return picked;
+        const foes = this.team === 1 ? this.sim.team2 : this.sim.team1;
+        const candidates = [];
+        for (let i = 0; i < foes.length; i++) {
+            const foe = foes[i];
+            if (foe === this.target || foe.state === "dead") continue;
+            const dist = this.distanceTo(foe);
+            if (dist <= this.chargeAttackRange + this.radius + foe.radius) {
+                candidates.push({ foe, dist, i });
+            }
+        }
+        candidates.sort((a, b) => a.dist - b.dist || a.i - b.i);
+        for (const c of candidates) {
+            if (picked.length >= this.chargeProjectileCount) break;
+            picked.push(c.foe);
+        }
+        return picked;
     }
 
     fireChargeProjectile(target) {

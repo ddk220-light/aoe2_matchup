@@ -443,6 +443,113 @@ function drawGrid(ctx, w, h) {
     }
 }
 
+// ===== GOLDEN ARENA =====
+// Draws the opt-in battlefield geometry from engine/arena.js: the diamond play
+// area (the recording map's 16x16 tile square, presented rotated the way the
+// game presents it), its isometric tile grid, and the central tree cluster the
+// units path around. `arena` is null on every plain-rectangle sim, in which case
+// nothing here is ever called.
+//
+// Pure chrome: it reads the arena's geometry helpers and paints. It knows
+// nothing about units and never writes to the arena.
+function drawArena(ctx, arena, w, h) {
+    const poly = arena.boundaryPath();
+    const trace = () => {
+        ctx.beginPath();
+        ctx.moveTo(poly[0].x, poly[0].y);
+        for (let i = 1; i < poly.length; i++) ctx.lineTo(poly[i].x, poly[i].y);
+        ctx.closePath();
+    };
+
+    // 1. Everything outside the play area recedes. One even-odd path (canvas
+    //    rect + diamond) fills the complement in a single pass.
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, w, h);
+    ctx.moveTo(poly[0].x, poly[0].y);
+    for (let i = poly.length - 1; i >= 1; i--) ctx.lineTo(poly[i].x, poly[i].y);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(0,0,0,0.42)";
+    ctx.fill("evenodd");
+    ctx.restore();
+
+    // 2. The ground itself — a touch lighter and warmer than the page backdrop
+    //    so the playable area reads as a distinct field.
+    ctx.save();
+    trace();
+    ctx.fillStyle = "rgba(126,152,86,0.20)";
+    ctx.fill();
+    ctx.clip();
+
+    // 3. Isometric tile grid, clipped to the field.
+    ctx.strokeStyle = "rgba(255,255,255,0.055)";
+    ctx.lineWidth = 1;
+    for (const [a, b] of arena.gridLines(1)) {
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+    }
+    ctx.restore();
+
+    // 4. Rim.
+    trace();
+    ctx.strokeStyle = "rgba(205,172,80,0.45)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 5. The tree cluster. Each blocked tile gets a shadow, a canopy and a
+    //    lighter crown; drawn in three whole passes so the canopies read as one
+    //    thicket instead of twelve stacked discs.
+    const shapes = arena.obstructionShapes();
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.28)";
+    for (const s of shapes) {
+        ctx.beginPath();
+        ctx.ellipse(s.x, s.y + 7, 15, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.fillStyle = "#2c4526";
+    for (const s of shapes) {
+        ctx.beginPath();
+        ctx.arc(s.x, s.y - 3, 15, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.fillStyle = "#3d5c33";
+    for (const s of shapes) {
+        ctx.beginPath();
+        ctx.arc(s.x - 3, s.y - 7, 10, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.restore();
+
+    // 6. The Panda Rock at the cluster's centroid — the one landmark the
+    //    scenario names, and the reason the cluster sits where it does.
+    const rock = arena.rockShape();
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.30)";
+    ctx.beginPath();
+    ctx.ellipse(rock.x, rock.y + 5, rock.r * 1.05, rock.r * 0.45, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#6e6a63";
+    ctx.beginPath();
+    ctx.ellipse(rock.x, rock.y, rock.r, rock.r * 0.78, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.16)";
+    ctx.beginPath();
+    ctx.ellipse(
+        rock.x - rock.r * 0.28,
+        rock.y - rock.r * 0.26,
+        rock.r * 0.42,
+        rock.r * 0.28,
+        0,
+        0,
+        Math.PI * 2,
+    );
+    ctx.fill();
+    ctx.restore();
+}
+
 function drawWinner(ctx, sim, labels, w, h) {
     ctx.fillStyle = "rgba(0,0,0,0.7)";
     ctx.fillRect(0, 0, w, h);
@@ -512,6 +619,11 @@ export class SimRenderer {
         this.labels = NO_LABELS;
         // Last sim handed to render(), so a resize can repaint the current frame.
         this._sim = null;
+        // Golden-arena geometry for the PRE-BATTLE frame only. render(sim)
+        // reads sim.arena directly (the arena belongs to the sim); this field
+        // exists so a host that lets the user pick an arena before pressing Run
+        // can show the field they picked. null => the plain rectangle.
+        this.arena = null;
         this.resizeBackingStore();
         // Re-fit the backing store whenever the canvas's displayed size changes
         // (window resize, the pick->battle arena transition, mobile stacking) and
@@ -539,6 +651,12 @@ export class SimRenderer {
     // (simulate.js 3348); these are the same four strings, pushed in instead.
     setLabels({ team1Civ = "", team1Unit = "", team2Civ = "", team2Unit = "" } = {}) {
         this.labels = { team1Civ, team1Unit, team2Civ, team2Unit };
+    }
+
+    // Arena to paint on the pre-battle frame (see the field's comment). Pass
+    // null to go back to the plain rectangle.
+    setArena(arena) {
+        this.arena = arena || null;
     }
 
     // Match the backing store to the on-screen size * devicePixelRatio. Setting
@@ -572,7 +690,7 @@ export class SimRenderer {
     // Set the transform and lay down the battlefield: the bg+grid half of the
     // legacy render body (simulate.js 2657-2665), shared by render() and
     // renderEmpty() so the verbatim copy exists exactly once.
-    _paintBackdrop() {
+    _paintBackdrop(arena = null) {
         const ctx = this.ctx;
         // Draw in logical (W x H) space; the transform scales it up to the HiDPI
         // backing store. High-quality smoothing keeps the downscaled sprites sharp.
@@ -582,6 +700,10 @@ export class SimRenderer {
         ctx.fillStyle = CANVAS_PAL.bg;
         ctx.fillRect(0, 0, this.W, this.H);
         drawGrid(ctx, this.W, this.H);
+        // The golden arena lays its field, grid and tree cluster over the plain
+        // backdrop, under every unit. Null on the plain rectangle, where this
+        // whole call disappears.
+        if (arena) drawArena(ctx, arena, this.W, this.H);
     }
 
     // Pre-battle frame: background + grid, no units — what the legacy render()
@@ -592,7 +714,7 @@ export class SimRenderer {
     // behind the pickers.
     renderEmpty() {
         this._sim = null;
-        this._paintBackdrop();
+        this._paintBackdrop(this.arena);
     }
 
     render(sim) {
@@ -607,7 +729,9 @@ export class SimRenderer {
         }
         this._sim = sim;
         const ctx = this.ctx;
-        this._paintBackdrop();
+        // The arena belongs to the sim, so a running battle always paints its
+        // OWN field regardless of what the host last previewed.
+        this._paintBackdrop(sim.arena || null);
 
         const allUnits = [...sim.team1, ...sim.team2];
         const dead = allUnits.filter((u) => u.state === "dead");

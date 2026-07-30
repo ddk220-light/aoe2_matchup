@@ -42,6 +42,7 @@
 
 import {
     createSimulation,
+    makeArena,
     CANVAS_WIDTH,
     CANVAS_HEIGHT,
 } from "/static/js/engine/index.js";
@@ -331,13 +332,16 @@ class Harness {
         this.firstDamage = { 1: null, 2: null };
     }
 
-    setup({ teams, seed }) {
+    setup({ teams, seed, arena = null }) {
         this.sim = createSimulation({
             mapW: CANVAS_WIDTH,
             mapH: CANVAS_HEIGHT,
             teams,
             seed,
+            arena,
         });
+        // Keep the pre-battle frame showing the same field the fight will use.
+        this.renderer.setArena(this.sim.arena);
         this.running = false;
         this.paused = false;
         this.ticks = 0;
@@ -589,6 +593,12 @@ function currentMode() {
 function currentSeed() {
     return (parseInt($("seed").value, 10) || 0) >>> 0;
 }
+// "golden" -> the recording arena, anything else -> null, which is the plain
+// rectangle the engine has always used and the ONLY thing the batch runners and
+// the calibration corpus ever see.
+function currentArena() {
+    return $("arena") && $("arena").value === "golden" ? "golden" : null;
+}
 
 // One fetch per team, exactly like the Battle Sim page: the SAME dict object
 // decides the army size and is handed to the engine (which deep-copies it), so
@@ -644,7 +654,7 @@ async function onRun() {
     try {
         const teams = await buildTeams();
         const seed = currentSeed();
-        harness.setup({ teams, seed });
+        harness.setup({ teams, seed, arena: currentArena() });
 
         // Artwork goes to the RENDERER, not onto the units — sprites are a
         // rendering concern since the Task 6 split.
@@ -854,7 +864,9 @@ async function onRunN() {
             setError(`worker: ${e.message || "failed"}`);
             stopWorker();
         };
-        worker.postMessage({ teams, seeds });
+        // Same arena as the watched fight, or the scoreboard would be scoring a
+        // different battlefield from the one on screen.
+        worker.postMessage({ teams, seeds, arena: currentArena() });
     } catch (e) {
         setError(e.message || String(e));
         stopWorker();
@@ -865,10 +877,20 @@ async function onRunN() {
 function init() {
     const canvas = $("canvas");
     harness = new Harness(canvas);
+    // Show the picked battlefield before the first Run, not a bare rectangle.
+    harness.renderer.setArena(makeArena(currentArena()));
     harness.render();
 
     fillCivSelects();
     fillPresetSelect();
+
+    $("arena").addEventListener("change", () => {
+        // Only the PRE-battle preview follows the picker live; a fight already
+        // on screen keeps the arena it was built with (sim.arena wins in
+        // SimRenderer.render), so the picture never disagrees with the physics.
+        harness.renderer.setArena(makeArena(currentArena()));
+        harness.render();
+    });
 
     $("preset").addEventListener("change", (e) => {
         if (e.target.value) applyPreset(e.target.value);

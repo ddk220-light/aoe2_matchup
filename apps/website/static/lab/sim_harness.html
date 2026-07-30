@@ -188,6 +188,21 @@ tfoot td { color: var(--gold); font-weight: 700; border-bottom: none; border-top
         </div>
 
         <div class="card">
+            <h2>Arena</h2>
+            <select id="arena">
+                <option value="golden" selected>golden &mdash; recording arena</option>
+                <option value="plain">plain &mdash; 900&times;600 rectangle</option>
+            </select>
+            <div class="hint">
+                <b>golden</b> reproduces the recording map: a diamond play area (the 16&times;16 tile
+                square, drawn the way the game draws it), the central tree cluster + Panda Rock the
+                tapes show units walking around, and two adjacent-corner spawn blobs 8.2 tiles
+                apart. <b>plain</b> is the historical rectangle with full-height spawn lines &mdash;
+                what every batch run and calibration seed uses.
+            </div>
+        </div>
+
+        <div class="card">
             <h2>Seed</h2>
             <div class="row auto">
                 <input type="number" id="seed" min="0" step="1" value="1" style="flex:1 1 auto">

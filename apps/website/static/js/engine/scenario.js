@@ -19,7 +19,12 @@
 // The golden panel (tools/simjs/golden/panel.json) was captured with exactly that
 // order — reordering the loops would silently shift every spawn position.
 
-import { RELIC_MAX, RELIC_BONUS_UNITS } from "./constants.js";
+import {
+    RELIC_MAX,
+    RELIC_BONUS_UNITS,
+    CANVAS_WIDTH,
+    CANVAS_HEIGHT,
+} from "./constants.js";
 import { BattleUnit, physicsRadiusPx } from "./battle_unit.js";
 import { makeRng } from "./rng.js";
 import { Simulation } from "./sim.js";
@@ -118,7 +123,7 @@ function setupTeam(sim, teamNum, spec) {
 
 // The engine's single public entry point: build a seeded Simulation with both
 // teams spawned. `teams` is [team1Spec, team2Spec] (see setupTeam above).
-export function createSimulation({ mapW = 900, mapH = 600, teams, seed }) {
+export function createSimulation({ mapW = CANVAS_WIDTH, mapH = CANVAS_HEIGHT, teams, seed }) {
     if (!Array.isArray(teams) || teams.length !== 2) {
         throw new Error("createSimulation needs exactly two team specs");
     }

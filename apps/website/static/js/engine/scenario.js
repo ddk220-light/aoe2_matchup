@@ -24,15 +24,21 @@ import {
     RELIC_BONUS_UNITS,
     CANVAS_WIDTH,
     CANVAS_HEIGHT,
+    TILE_SIZE,
 } from "./constants.js";
 import { BattleUnit, physicsRadiusPx } from "./battle_unit.js";
 import { makeRng } from "./rng.js";
 import { Simulation } from "./sim.js";
+import { makeArena } from "./arena.js";
 
 // One team's worth of spawning. `spec` is { combatDict, slug, civ, count,
 // relics?, startKills? } — the headless equivalent of setupTeam's
 // (unitSlug, civName, count, opts) arguments.
-function setupTeam(sim, teamNum, spec) {
+//
+// `anchorSide` is the golden arena's spawn corner for this team (0 = the
+// diamond's left corner, 1 = its bottom corner), or null when there is no
+// arena — in which case every line below runs exactly as it always has.
+function setupTeam(sim, teamNum, spec, anchorSide = null) {
     const unitSlug = spec.slug;
     const civName = spec.civ;
     const count = spec.count;
@@ -90,6 +96,19 @@ function setupTeam(sim, teamNum, spec) {
               )
             : sim.H / 2;
 
+    // Golden arena: a tape-shaped blob in one corner wedge instead of the
+    // full-height line above. Spacing is one tile (the recordings' rank
+    // spacing) but never tighter than the collision floor, or the whole blob
+    // would spend its first second exploding apart.
+    const layout =
+        anchorSide === null
+            ? null
+            : sim.arena.spawnLayout(
+                  anchorSide,
+                  count,
+                  Math.max(TILE_SIZE, minSpacing),
+              );
+
     for (let i = 0; i < count; i++) {
         const unit = new BattleUnit(
             `${teamNum}-${i}`,
@@ -99,8 +118,28 @@ function setupTeam(sim, teamNum, spec) {
             civName,
             sim,
         );
-        unit.x = startX + (sim.rng.next() - 0.5) * 10;
-        unit.y = startY + i * spacing;
+        // ONE rng draw per unit, here, in index order — with or without an
+        // arena. That is the whole reason the jitter is drawn before the branch
+        // rather than inside it: the golden panel and every calibration seed
+        // depend on the exact draw stream (see the DRAW ORDER note above), and
+        // an arena must not be able to shift it.
+        const jitter = (sim.rng.next() - 0.5) * 10;
+        if (layout) {
+            const p = layout[i];
+            // Ride the jitter along the blob's WIDTH axis, so it ruffles each
+            // rank instead of smearing the ranks into each other.
+            unit.x = p.x + jitter * p.wx;
+            unit.y = p.y + jitter * p.wy;
+            // Seed the facing toward the enemy corner. Without this every unit
+            // starts at rest and the 0.3 velocity smoothing spends the first
+            // half-second turning the whole army around.
+            unit.vx = p.fx;
+            unit.vy = p.fy;
+            sim.arena.constrain(unit);
+        } else {
+            unit.x = startX + jitter;
+            unit.y = startY + i * spacing;
+        }
         // Starting-kills picker: pre-load the per-kill snowball counter
         // (capped at attackBonusPerKill, same as kills earned in-battle).
         if (spec.startKills > 0 && unit.attackBonusPerKill > 0) {
@@ -121,15 +160,42 @@ function setupTeam(sim, teamNum, spec) {
     }
 }
 
+// Which of a fight's two sides should hold the diamond's LEFT corner. The
+// longer-ranged side does, because it is the one that will kite: retreating
+// from a threat on its lower-right sends it up the top-left edge and around the
+// tree cluster CLOCKWISE, which is the sense the recording AI's square patrol
+// runs and the sense BattleUnit.kiteSteering's tangential term already uses.
+// Ties (and any missing stat) leave team 1 on the left — deterministic either
+// way, and never a function of the rng.
+function pickLeftCorner(teams) {
+    const r1 = Number(teams[0].combatDict?.attack_range) || 0;
+    const r2 = Number(teams[1].combatDict?.attack_range) || 0;
+    return r2 > r1 ? 1 : 0;
+}
+
 // The engine's single public entry point: build a seeded Simulation with both
 // teams spawned. `teams` is [team1Spec, team2Spec] (see setupTeam above).
-export function createSimulation({ mapW = CANVAS_WIDTH, mapH = CANVAS_HEIGHT, teams, seed }) {
+//
+// `arena` is OPT-IN and defaults to nothing: "golden" builds the recording
+// arena (engine/arena.js) — a diamond play area with a central tree cluster and
+// two adjacent-corner spawn blobs. Any other value, including the default,
+// leaves sim.arena null and every unit on the historical full-height line
+// inside the plain CANVAS_WIDTH x CANVAS_HEIGHT rectangle, bit for bit.
+export function createSimulation({
+    mapW = CANVAS_WIDTH,
+    mapH = CANVAS_HEIGHT,
+    teams,
+    seed,
+    arena = null,
+}) {
     if (!Array.isArray(teams) || teams.length !== 2) {
         throw new Error("createSimulation needs exactly two team specs");
     }
     const sim = new Simulation(mapW, mapH, makeRng(seed));
+    sim.arena = makeArena(arena, { mapW, mapH });
+    const leftTeam = sim.arena ? pickLeftCorner(teams) : null;
     // Order matters — see the DRAW ORDER note at the top of this file.
-    setupTeam(sim, 1, teams[0]);
-    setupTeam(sim, 2, teams[1]);
+    setupTeam(sim, 1, teams[0], sim.arena ? (leftTeam === 0 ? 0 : 1) : null);
+    setupTeam(sim, 2, teams[1], sim.arena ? (leftTeam === 0 ? 1 : 0) : null);
     return sim;
 }

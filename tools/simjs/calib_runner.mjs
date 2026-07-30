@@ -65,7 +65,18 @@ function sideSummary(team, side) {
 // Run one manifest fight at one seed. Returns the tape-shaped record the
 // extractor and Task 5's scorer need: {run_id, seed, duration_s, winner,
 // sides (keyed by REAL owner number), damage, missiles}.
-export function runCalibFight({ dicts, fight, seed, maxSeconds = MAX_SECONDS }) {
+// `arena` is createSimulation's opt-in battlefield field and DEFAULTS TO NULL —
+// the plain rectangle every recorded corpus run has ever used. Passing
+// "golden" is an A/B measurement tool, never the scoring configuration: the
+// manifest's expected outcomes were all scored on the rectangle, so a run with
+// an arena is not comparable to them.
+export function runCalibFight({
+    dicts,
+    fight,
+    seed,
+    maxSeconds = MAX_SECONDS,
+    arena = null,
+}) {
     const s1 = fight.side1, s2 = fight.side2;
     // Guard against a same-owner manifest entry: if s1.owner === s2.owner,
     // `sides` would silently collapse to one key and BOTH teams' events
@@ -81,7 +92,7 @@ export function runCalibFight({ dicts, fight, seed, maxSeconds = MAX_SECONDS }) 
         civ1: s1.civ, slug1: s1.slug, n1: s1.count,
         civ2: s2.civ, slug2: s2.slug, n2: s2.count,
     };
-    const sim = buildFight({ dicts, row, seed });
+    const sim = buildFight({ dicts, row, seed, arena });
     sim.eventLog = { damage: [], missiles: [] };
 
     const maxTicks = Math.round(maxSeconds * 60);
@@ -150,6 +161,12 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const nSeeds = Number(flag("--seeds", "20"));
     const maxSeconds = Number(flag("--max-seconds", String(MAX_SECONDS)));
     const outDir = flag("--out-dir", DEFAULT_OUT_DIR);
+    // --arena golden runs the corpus on the recording arena instead of the
+    // plain rectangle. MEASUREMENT ONLY, and never the default: the manifest's
+    // expected outcomes were scored on the rectangle, so an arena run tells you
+    // how the battlefield shifts results, not whether the engine is right.
+    const arenaArg = flag("--arena", "");
+    const arena = arenaArg === "golden" ? "golden" : null;
 
     const dicts = loadCalibDicts();
     const fights = loadManifest();
@@ -161,7 +178,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
         mkdirSync(dir, { recursive: true });
         const fightT0 = process.hrtime.bigint();
         for (let seed = 1; seed <= nSeeds; seed++) {
-            const record = runCalibFight({ dicts, fight, seed, maxSeconds });
+            const record = runCalibFight({ dicts, fight, seed, maxSeconds, arena });
             nDamage += record.damage.length;
             nMissiles += record.missiles.length;
             writeFileSync(path.join(dir, `seed-${seed}.json`), JSON.stringify(record));
@@ -171,6 +188,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
         console.log(`  ${fight.run_id} (${nSeeds} seeds, ${fightWallS.toFixed(1)}s)`);
     }
     const wallS = Number(process.hrtime.bigint() - t0) / 1e9;
+    console.log(`arena: ${arena || "plain (default)"}`);
     console.log(`wrote ${nFiles} files (${fights.length} fights x ${nSeeds} seeds) -> ${outDir}`);
     console.log(`damage events: ${nDamage}, missile events: ${nMissiles}`);
     console.log(`wall time: ${wallS.toFixed(1)}s`);

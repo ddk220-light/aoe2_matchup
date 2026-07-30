@@ -101,6 +101,15 @@ export class Simulation {
         // hooks in battle_unit.js) so it cannot exist -- and cannot affect
         // determinism -- while recording is off.
         this.eventLog = null;
+        // Golden-arena overlay (engine/arena.js), or null for the plain
+        // rectangle this engine has always fought on. Set by createSimulation
+        // when a caller passes `arena: "golden"`; NEVER set by default. Every
+        // arena hook in this file and in battle_unit.js is guarded on this
+        // being null, so the no-arena path is bit-identical to the pre-arena
+        // engine -- which is what keeps the 155-fight calibration corpus and
+        // tools/simjs/parity_check.mjs valid. Deliberately absent from
+        // stateHash(): it is fixed geometry, not mutable state.
+        this.arena = null;
     }
 
     update(dt) {
@@ -234,7 +243,18 @@ export class Simulation {
         // not this.W/this.H — so a sim built on a non-900x600 map would spawn by
         // W/H but be clamped to 900x600. Legacy asymmetry, preserved deliberately:
         // "fixing" it would change unit positions and break golden parity.
+        //
+        // With the golden arena on, the diamond + tree cluster replace the
+        // rectangle entirely: this is the LAST word on position each tick, so a
+        // pair pushed apart above can never end up parked inside the trees or
+        // outside the map. Hoisted out of the loop so the arena-less path below
+        // is untouched.
+        const arena = this.arena;
         for (const u of alive) {
+            if (arena) {
+                arena.constrain(u);
+                continue;
+            }
             u.x = Math.max(
                 u.radius,
                 Math.min(CANVAS_WIDTH - u.radius, u.x),

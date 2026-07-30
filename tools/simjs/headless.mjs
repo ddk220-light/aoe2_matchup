@@ -65,7 +65,12 @@ function snapshot(sim, tick) {
 
 // Build the spawned-but-unstepped simulation for one panel row + seed. Split out of
 // runFight so a debugging session can drive the ticks itself (see bisect() below).
-export function buildFight({ dicts, row, seed }) {
+// `arena` is createSimulation's opt-in battlefield field. It DEFAULTS TO NULL,
+// which is the plain rectangle the golden panel was captured on — runFight()
+// below never passes anything else, so parity_check.mjs is untouched by its
+// existence. Only an explicit A/B caller (calib_runner.mjs --arena golden) can
+// turn it on.
+export function buildFight({ dicts, row, seed, arena = null }) {
     const dictFor = (civ, slug) => {
         const cd = dicts[`${civ}|${slug}`];
         if (!cd) {
@@ -93,6 +98,7 @@ export function buildFight({ dicts, row, seed }) {
             },
         ],
         seed,
+        arena,
     });
 }
 

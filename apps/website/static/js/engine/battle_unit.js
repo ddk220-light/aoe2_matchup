@@ -21,6 +21,7 @@ import {
     MELEE_RANGE_BUFFER,
     CANVAS_WIDTH,
     CANVAS_HEIGHT,
+    STUCK_PROGRESS_RATE,
 } from "./constants.js";
 import { Projectile, classifyProjectile } from "./projectile.js";
 import { MeleeEffect } from "./melee_effect.js";
@@ -1424,9 +1425,13 @@ export class BattleUnit {
             Math.min(CANVAS_HEIGHT - this.radius, this.y),
         );
 
-        // Stuck detection: if not making progress, mark target as blocked
+        // Stuck detection: if not making progress, mark target as blocked.
+        // The bar is a RATE (px/s), not a bare per-substep constant -- see
+        // STUCK_PROGRESS_RATE's own comment in constants.js. At dt = 1/60
+        // this is exactly the historical `- 0.5` literal, pinned by
+        // tests/js/engine/pursuit.test.mjs.
         const newDist = this.distanceTo(this.target);
-        if (newDist >= this.lastDistToTarget - 0.5) {
+        if (newDist >= this.lastDistToTarget - STUCK_PROGRESS_RATE * dt) {
             this.stuckTimer += dt;
         } else {
             this.stuckTimer = Math.max(0, this.stuckTimer - dt * 2);

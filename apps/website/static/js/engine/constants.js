@@ -11,6 +11,16 @@ export const TILE_SIZE = 30;
 
 export const MELEE_RANGE_BUFFER = 5;
 
+// Stuck-detection progress bar (moveTowardTarget), expressed as a RATE
+// (px/s) rather than a bare per-substep constant. 30 px/s = 1.0 tile/s.
+// At dt = 1/60 this is EXACTLY today's historical `- 0.5` literal
+// (30 * (1/60) === 0.5 in IEEE-754, pinned by a test) -- a provable no-op
+// at the current tick rate. Load-bearing only if dt ever changes: the old
+// bare literal meant 1.0 tile/s at 60fps but 0.5 tile/s at 30Hz, silently
+// coupling "stuck" semantics to the tick rate. See
+// docs/superpowers/specs/2026-07-29-target-thrash-design.md §2.
+export const STUCK_PROGRESS_RATE = 30;
+
 // ===== ADJUSTABLE PRE-BATTLE CONDITIONS =====
 // Lithuanian relic bonus: the reference DB bakes in all 4 relics (+1 base
 // melee attack each) for these units. The rail picker lets the user dial

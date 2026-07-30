@@ -40,6 +40,72 @@ export const PURSUIT_BAR_FRACTION = 0.5;
 // Siege Onager cases this exists for sit far above it (0.39-1.00 t/s).
 export const PURSUIT_MIN_ADVANTAGE = 7.5;
 
+// ===== GROUP-KITE STEERING (E5a) =====
+// The recorded tapes' ranged sides are driven by ddkSquareV25, which -- ONLY
+// while `gKiteOK` (its own range out-ranges the enemy MEDIAN) -- walks the whole
+// army around a clockwise square patrol as ONE ball, with stop-and-volley
+// pauses. The engine's kiters instead flee radially and individually, so the
+// ball disperses, chasers lose contact, and fights run ~20% long.
+// BattleUnit.kiteSteering() adds two boids-style terms on top of the existing
+// radial flee + separation, ONLY for units whose side passes that same
+// out-ranges gate (see kiteSteering for the exact predicate, including the
+// min-range/siege exclusion that keeps every siege fight bit-identical).
+//
+// These three numbers are the only tuning knobs. They are weights in the same
+// (unnormalised) space as calculateAvoidance's separation force, which is 0.5
+// per neighbour in the 1.0-1.5x-minDist band and 3..8 per neighbour once
+// overlapping -- so a weight near 1-2 is "comparable to separation", not
+// "negligible" (the radial flee term is only 1.0 and is already swamped when
+// crowded; that is the dispersal bug).
+
+// Tangential (orbit) weight, BEFORE kiteSteering's speed-margin scaling. The
+// flee direction is rotated off pure-radial by atan(weight): 1.0 -> 45 deg,
+// 1.5 -> 56 deg, 2.0 -> 63 deg. Higher = more circling, less distance gained,
+// so chasers keep contact longer.
+//
+// Pinned by the champion__vs__heavy_cav_archer REPEAT FAMILY -- the one place
+// this weight's effect is observable against the game's own run-to-run noise.
+// That matchup was recorded four times and the TAPE ITSELF disagrees: the Heavy
+// Cav Archers sweep in r2/r3/r4 (9, 7 and 9 of 12 surviving) but LOSE the base
+// recording (0 of 12; the champions end with 4). Ground truth is therefore "HCA
+// favoured roughly 3:1", not "HCA always win". The sim's share of seeds the HCA
+// take slides smoothly with this weight:
+//
+//     weight    1.0    1.25   1.5    1.75
+//     HCA seeds 100%    95%    65%    30%      (tape family: 75%)
+//
+// 1.5 is the value whose SEED DISTRIBUTION lands nearest the tape's own split.
+// 1.0/1.25 win the median winner in 3 of the 4 repeats but at ~100% confidence
+// the tape does not support; 1.75 tips the family the other way and loses three
+// winners outright. 1.5 is also the best on aggregate error over the 20-fight
+// cav-archer subset (gated mismatches 125 -> 93, against 99 at 1.25 and 103 at
+// 1.75). Do NOT re-tune this by minimising mismatches on the base recording
+// alone: that fight is the 1-of-4 outlier, and fitting it (this experiment's
+// first pass did) picks 2.5 and breaks the other three repeats.
+export const KITE_TANGENTIAL_WEIGHT = 1.5;
+
+// Cohesion weight -- pull toward the side's own living centroid. Balances
+// against separation to set the formation's equilibrium spacing: too low and
+// the ball disperses (today's behaviour), too high and units pile into the
+// collision floor. Note the engine CANNOT reach the tape's 0.6-tile
+// nearest-neighbour spacing: two 14 px-radius archers bottom out at
+// radius+radius+1 = 29 px = 0.97 tiles in resolveCollisions.
+//
+// This term is nearly invisible to the 20-seed scorer (subset gated
+// mismatches: 0.0 -> 49, 1.0 -> 50, 2.0 -> 49, 3.0 -> 48) but it is decisive
+// for the tape signature the scorer cannot see. heavy_cav_archer__vs__
+// elite_elephant seed 1, same tangential weight: with cohesion the ball holds
+// (nearest-neighbour 1.32 -> 1.26 tiles, COMPRESSING as the tape does) and the
+// fight ends at 59.7 s; without it the last survivors scatter to opposite
+// corners (nearest-neighbour blows out past 20 tiles) and the fight grinds on
+// to 555.6 s. Kept at 2.0 on that evidence, not on the scoreboard.
+export const KITE_COHESION_WEIGHT = 2.0;
+
+// Distance (tiles) at which the cohesion pull reaches full strength; inside it
+// the pull ramps down linearly to zero at the centroid. Without the ramp a unit
+// sitting on the centroid still gets a full-magnitude arbitrary-direction kick.
+export const KITE_COHESION_RAMP_TILES = 2.0;
+
 // ===== ADJUSTABLE PRE-BATTLE CONDITIONS =====
 // Lithuanian relic bonus: the reference DB bakes in all 4 relics (+1 base
 // melee attack each) for these units. The rail picker lets the user dial

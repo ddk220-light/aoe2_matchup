@@ -24,6 +24,9 @@ import {
     STUCK_PROGRESS_RATE,
     PURSUIT_BAR_FRACTION,
     PURSUIT_MIN_ADVANTAGE,
+    KITE_TANGENTIAL_WEIGHT,
+    KITE_COHESION_WEIGHT,
+    KITE_COHESION_RAMP_TILES,
 } from "./constants.js";
 import { Projectile, classifyProjectile } from "./projectile.js";
 import { MeleeEffect } from "./melee_effect.js";
@@ -37,6 +40,28 @@ let armorClassNames = {};
 export function setArmorClassNames(map) {
     armorClassNames = map || {};
 }
+
+// Median of `pick(unit)` over the LIVING units of `units`, optionally restricted
+// to one team. Returns null when nobody is left. Median, not max, on purpose: it
+// is the statistic ddkSquareV25's own `gKiteOK` uses ("our range out-ranges the
+// enemy median" -- docs/simulation-engine-migration.md §5.2), it is robust to a
+// single odd unit, and it is deterministic (a plain numeric sort over a
+// fixed-order array).
+export function medianLiving(units, team, pick) {
+    const vals = [];
+    for (const u of units) {
+        if (u.state === "dead") continue;
+        if (team !== null && u.team !== team) continue;
+        vals.push(pick(u));
+    }
+    if (vals.length === 0) return null;
+    vals.sort((a, b) => a - b);
+    const mid = vals.length >> 1;
+    return vals.length % 2 ? vals[mid] : (vals[mid - 1] + vals[mid]) / 2;
+}
+
+const pickRange = (u) => u.rawAttackRange;
+const pickSpeed = (u) => u.moveSpeed;
 
 // ===== BATTLE UNIT CLASS =====
 export class BattleUnit {
@@ -610,11 +635,19 @@ export class BattleUnit {
 
             if (this.tooClose()) {
                 this.state = "kiting";
-                this.moveAwayFromTarget(dt, allUnits);
+                this.moveAwayFromTarget(
+                    dt,
+                    allUnits,
+                    this.kiteSteering(allUnits, enemies),
+                );
                 this.wasMoving = true;
             } else if (this.attackCooldown > 0 && shouldKite) {
                 this.state = "kiting";
-                this.moveAwayFromTarget(dt, allUnits);
+                this.moveAwayFromTarget(
+                    dt,
+                    allUnits,
+                    this.kiteSteering(allUnits, enemies),
+                );
             } else if (this.attackCooldown > 0) {
                 this.state = "attacking";
             } else if (this.inRange()) {
@@ -1568,7 +1601,133 @@ export class BattleUnit {
         }
     }
 
-    moveAwayFromTarget(dt, allUnits) {
+    // ---- group-kite steering (E5a) -------------------------------------------
+    // Returns null when this unit is NOT in group-kite mode -- and null means
+    // "change nothing", so every gated-out fight stays bit-identical to the
+    // pre-E5a engine (the caller skips the vector add entirely rather than
+    // adding a zero). Otherwise returns the extra steering vector to blend into
+    // the radial flee: a tangential (orbit) term plus a cohesion term.
+    //
+    // GATE -- all five must hold:
+    //   1. the unit is ranged (melee never reaches moveAwayFromTarget anyway);
+    //   2. it has NO minimum-range dead zone. minAttackRange > 0 is exactly the
+    //      siege weapons (Siege Onager 3.0, Heavy Scorpion 2.0) and nothing
+    //      else in the corpus. Siege does not run a kite circuit -- it is far
+    //      too slow to -- and it already owns a competing repositioning path
+    //      (tooClose()), so an orbit term there would fight it. This clause is
+    //      what keeps every siege-attacker fight byte-identical to baseline;
+    //   3. both sides still have living units;
+    //   4. this side's MEDIAN attack range strictly out-ranges the enemy's --
+    //      the same predicate as the recording AI's `gKiteOK`. Melee-vs-melee
+    //      is 0 > 0 = false, so those fights are untouched too;
+    //   5. this side has a MEDIAN SPEED MARGIN over the enemy side. Circling
+    //      costs radial recession (a unit deflected by angle t only backs away
+    //      at cos(t) of its speed), so it is a maneuver only a kiter with speed
+    //      to spare can afford. Below the margin the orbit term ramps to zero
+    //      and this returns null, leaving the fight bit-identical to baseline.
+    //
+    //      HONESTY NOTE: clause 5 is NOT a model of ddkSquareV25 -- that script
+    //      kites on a RANGE test alone and never checks speed. It compensates
+    //      for an arena mismatch this engine has no other answer to: the tapes
+    //      are a 16x16 map that is 39% solid trees (a donut), so the AI's
+    //      clockwise circuit repeatedly drives its own ball into the central
+    //      cluster and the chasers catch it. This engine's arena is an EMPTY
+    //      30x20 rectangle, where an unconditional orbit lets any kiter circle
+    //      out of reach forever. Measured on the tuning subset: an ungated
+    //      orbit fixes the cav-archer fights and simultaneously breaks the
+    //      arbalester/hand-cannoneer fights the engine already got right, at
+    //      every weight tried (0.5/1.0/1.5/2.0). The speed margin is the
+    //      property that separates the two families -- Heavy Cav Archer at
+    //      46.2 px/s outruns every melee chaser in the corpus, while every foot
+    //      archer sits at 28.8 px/s and outruns none of them.
+    //
+    // The ramp scale is PURSUIT_MIN_ADVANTAGE, reused rather than duplicated:
+    // it is already defined as the speed margin below which a pursuit is a
+    // stalemate not worth committing to, which is exactly the threshold that
+    // decides whether a kiter can afford to trade speed for angle.
+    //
+    // Everything below is a deterministic function of the current tick's
+    // positions: fixed-order sums, a numeric sort, no RNG, no wall clock.
+    kiteSteering(allUnits, enemies) {
+        if (!this.isRanged() || this.minAttackRange > 0) return null;
+        const mine = medianLiving(allUnits, this.team, pickRange);
+        const theirs = medianLiving(enemies, null, pickRange);
+        if (mine === null || theirs === null || mine <= theirs) return null;
+
+        const ourSpeed = medianLiving(allUnits, this.team, pickSpeed);
+        const theirSpeed = medianLiving(enemies, null, pickSpeed);
+        const margin = ourSpeed - theirSpeed;
+        if (!(margin > 0)) return null;
+        const orbit =
+            KITE_TANGENTIAL_WEIGHT *
+            Math.min(1, margin / PURSUIT_MIN_ADVANTAGE);
+
+        // Enemy centroid -- the point the whole side orbits.
+        let ex = 0,
+            ey = 0,
+            en = 0;
+        for (const e of enemies) {
+            if (e.state === "dead") continue;
+            ex += e.x;
+            ey += e.y;
+            en++;
+        }
+        if (en === 0) return null;
+        ex /= en;
+        ey /= en;
+
+        // Own living centroid -- the point cohesion pulls toward. `this` is
+        // alive and present in allUnits, so an >= 1.
+        let ax = 0,
+            ay = 0,
+            an = 0;
+        for (const u of allUnits) {
+            if (u.state === "dead" || u.team !== this.team) continue;
+            ax += u.x;
+            ay += u.y;
+            an++;
+        }
+        ax /= an;
+        ay /= an;
+
+        // Tangential: rotate the enemy-centroid-to-self radial by +90 deg. In
+        // screen coordinates (y down) that is (x, y) -> (-y, x), i.e. a
+        // CLOCKWISE circuit -- the same sense for every unit on the side and
+        // for every seed, which is what turns individual flight into one
+        // rotating ball. Sign matches the tape script's clockwise patrol; the
+        // orbit's rotation rate/period is emergent, never fitted.
+        let rx = this.x - ex,
+            ry = this.y - ey;
+        const rlen = Math.sqrt(rx * rx + ry * ry);
+        let tx = 0,
+            ty = 0;
+        if (rlen > 0) {
+            tx = -ry / rlen;
+            ty = rx / rlen;
+        }
+
+        // Cohesion: toward own centroid, ramping linearly from 0 at the
+        // centroid to full strength at KITE_COHESION_RAMP_TILES.
+        let cx = ax - this.x,
+            cy = ay - this.y;
+        const clen = Math.sqrt(cx * cx + cy * cy);
+        const ramp = KITE_COHESION_RAMP_TILES * TILE_SIZE;
+        if (clen > 0 && ramp > 0) {
+            const scale = Math.min(1, clen / ramp) / clen;
+            cx *= scale;
+            cy *= scale;
+        } else {
+            cx = 0;
+            cy = 0;
+        }
+
+        return {
+            x: orbit * tx + KITE_COHESION_WEIGHT * cx,
+            y: orbit * ty + KITE_COHESION_WEIGHT * cy,
+        };
+    }
+
+    moveAwayFromTarget(dt, allUnits, steering = null) {
         if (!this.target) return;
         let dx = this.x - this.target.x;
         let dy = this.y - this.target.y;
@@ -1579,6 +1738,11 @@ export class BattleUnit {
         } else {
             dx /= dist;
             dy /= dist;
+        }
+        // Group-kite steering (null => untouched pre-E5a behaviour).
+        if (steering) {
+            dx += steering.x;
+            dy += steering.y;
         }
         const avoidance = this.calculateAvoidance(allUnits);
         dx += avoidance.x;

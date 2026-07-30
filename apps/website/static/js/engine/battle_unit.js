@@ -30,6 +30,10 @@ import {
     COMBAT_PACK_FACTOR,
     COMBAT_PACK_SLACK_TILES,
     COMBAT_PACK_RANGED,
+    FIRE_CYCLE_QUANTUM,
+    RANGED_STOP_OVERHEAD,
+    RANGED_POST_FIRE_RECOVERY,
+    RANGED_POST_FIRE_RECOVERY_BY_SLUG,
 } from "./constants.js";
 import { Projectile, classifyProjectile } from "./projectile.js";
 import { MeleeEffect } from "./melee_effect.js";
@@ -243,6 +247,20 @@ export class BattleUnit {
         this.wasMoving = true;
         this.committedAttack = null;
         this.attackAnimTimer = 0;
+
+        // --- ranged stand-and-shoot cost (E9; see constants.js for the tapes) ---
+        // Seconds of post-fire recovery still owed: while > 0 the unit is frozen
+        // and may not kite, chase or back out of its min-range dead zone.
+        this.fireRecovery = 0;
+        // Per-slug recovery, defaulting to the shared constant.
+        this.postFireRecovery =
+            RANGED_POST_FIRE_RECOVERY_BY_SLUG.get(slug) ??
+            RANGED_POST_FIRE_RECOVERY;
+        // Did this unit move at any point since its last shot? Decides whether
+        // the current cycle is a bare reload (stood still) or a quantised
+        // stand-and-shoot cycle. Starts true: a unit walks into range before its
+        // opening shot, which is exactly the "had to stop" case.
+        this.movedSinceShot = true;
         // Seconds the attack sprite-sheet keeps playing after a swing/shot fires,
         // independent of state — so the animation completes even once the unit
         // starts moving/kiting away (set to one full sheet cycle on each attack).
@@ -435,10 +453,58 @@ export class BattleUnit {
         return this.distanceTo(this.target) < this.minAttackRange;
     }
 
+    // ===== RANGED STAND-AND-SHOOT COST (E9) =====
+    // Tape derivation, per-unit numbers and the rejected additive model all live
+    // in constants.js next to FIRE_CYCLE_QUANTUM. In one line: a ranged unit that
+    // stood still all cycle re-fires at a bare reloadTime; one that moved has to
+    // stop, aim and recover, and its shot lands on the next quantum boundary.
+
+    // Launch-to-launch cycle for a shot the unit had to STOP to take. Derived
+    // live rather than cached at construction because reloadTime is mutable at
+    // runtime (Temple Guard attack-speed ramp, transform, dismount).
+    fireCycleLength() {
+        // The -1e-9 keeps a reload that already sits exactly on the grid
+        // (siege_onager: 6.0 === 9 * 2/3) from being bumped a whole extra slot
+        // by float residue in the division.
+        return (
+            Math.ceil(this.reloadTime / FIRE_CYCLE_QUANTUM - 1e-9) *
+            FIRE_CYCLE_QUANTUM
+        );
+    }
+
+    // Windup for the shot being started now: attack_delay, plus the stop/turn
+    // overhead when this unit had to halt for it.
+    rangedWindup() {
+        return (
+            this.attackDelay +
+            (this.movedSinceShot ? RANGED_STOP_OVERHEAD : 0)
+        );
+    }
+
+    // Called the first time a ranged unit moves after firing. The cooldown set
+    // at launch carries the STOOD budget (reloadTime - attackDelay); moving
+    // converts this cycle to the quantised one, which costs the difference
+    // between the two cycle lengths less the extra windup the stop now buys.
+    // Net launch-to-launch: (fireCycle - windup) + windup === fireCycle.
+    // Latched by movedSinceShot, so it is paid once per cycle however many
+    // ticks the unit spends moving.
+    markRangedMovement() {
+        if (this.movedSinceShot) return;
+        this.movedSinceShot = true;
+        this.attackCooldown = Math.max(
+            0,
+            this.attackCooldown +
+                (this.fireCycleLength() -
+                    this.reloadTime -
+                    RANGED_STOP_OVERHEAD),
+        );
+    }
+
     update(dt, allUnits, enemies) {
         if (this.state === "dead") return;
 
         this.attackCooldown = Math.max(0, this.attackCooldown - dt);
+        this.fireRecovery = Math.max(0, this.fireRecovery - dt);
         this.attackAnimTimer = Math.max(
             0,
             this.attackAnimTimer - dt,
@@ -639,17 +705,36 @@ export class BattleUnit {
                     this.committedAttack = null;
                     // performAttack (every path, charge volley included) leaves
                     // cooldown = reloadTime; subtract the windup already spent.
+                    // This is the STOOD-STILL budget (cycle == reloadTime); if
+                    // the unit moves before its next shot markRangedMovement()
+                    // tops it up to the quantised stand-and-shoot cycle.
                     this.attackCooldown = Math.max(
                         0,
                         this.reloadTime - this.attackDelay,
                     );
+                    // Frozen while the shot recovers (E9). Runs CONCURRENTLY
+                    // with the cooldown above -- it blocks movement, not
+                    // reloading -- which is why the tape's cadence is the
+                    // quantum alone and not reload + recovery.
+                    this.fireRecovery = this.postFireRecovery;
+                    this.movedSinceShot = false;
                     this.wasMoving = false;
                 }
                 return;
             }
 
+            // Post-fire recovery: immobilised, and deliberately checked before
+            // tooClose() so the unit cannot even back out of its min-range dead
+            // zone until the shot has recovered.
+            if (this.fireRecovery > 0) {
+                this.state = "attacking";
+                this.wasMoving = false;
+                return;
+            }
+
             if (this.tooClose()) {
                 this.state = "kiting";
+                this.markRangedMovement();
                 this.moveAwayFromTarget(
                     dt,
                     allUnits,
@@ -658,6 +743,7 @@ export class BattleUnit {
                 this.wasMoving = true;
             } else if (this.attackCooldown > 0 && shouldKite) {
                 this.state = "kiting";
+                this.markRangedMovement();
                 this.moveAwayFromTarget(
                     dt,
                     allUnits,
@@ -667,20 +753,27 @@ export class BattleUnit {
                 this.state = "attacking";
             } else if (this.inRange()) {
                 // Cooldown done, in range — start the windup for the next shot.
-                if (this.attackDelay > 0) {
+                // The windup carries the stop/turn overhead when this unit had
+                // to halt to take the shot, so a delay-0 shooter that was
+                // moving (siege_onager) still pays one.
+                const windup = this.rangedWindup();
+                if (windup > 0) {
                     this.committedAttack = {
                         target: this.target,
-                        timeLeft: this.attackDelay,
+                        timeLeft: windup,
                     };
                     this.state = "attacking";
                     this.wasMoving = false;
                 } else {
                     this.state = "attacking";
                     this.performAttack();
+                    this.fireRecovery = this.postFireRecovery;
+                    this.movedSinceShot = false;
                     this.wasMoving = false;
                 }
             } else {
                 this.state = "moving";
+                this.markRangedMovement();
                 this.moveTowardTarget(dt, allUnits);
             }
         } else {

@@ -1189,6 +1189,29 @@ export class BattleUnit {
         return null;
     }
 
+    // Event recorder for cross-engine calibration (see Simulation.eventLog in
+    // sim.js): appends one damage record, shared by every site in takeDamage
+    // that applies real HP loss (the main hit below AND the damage-reflect
+    // bounce), so the record shape cannot drift between the two. `srcUnit` is
+    // the damage's source, `dstUnit` is whoever lost the HP -- for the reflect
+    // bounce these are reversed relative to the call's own `this`/`attacker`,
+    // since the original victim becomes the source and the original attacker
+    // becomes the one taking damage. Read-only: no rng draw, no ordering
+    // change, not in stateHash().
+    recordDamageEvent(srcUnit, dstUnit, damage, hpAfter, kill) {
+        if (!(this.sim && this.sim.eventLog)) return;
+        this.sim.eventLog.damage.push({
+            t: this.sim.battleTime,
+            attacker: srcUnit.id,
+            victim: dstUnit.id,
+            damage,
+            victim_hp_after: hpAfter,
+            kill,
+            attacker_owner: srcUnit.team,
+            victim_owner: dstUnit.team,
+        });
+    }
+
     takeDamage(amount, attacker) {
         if (
             this.dodgeShieldMax > 0 &&
@@ -1229,12 +1252,28 @@ export class BattleUnit {
             !attacker.isRanged() &&
             attacker.state !== "dead"
         ) {
+            const reflectHpBefore = attacker.currentHp;
             attacker.currentHp -= amount * this.damageReflectPercent;
+            let reflectKilled = false;
             if (attacker.currentHp <= 0) {
                 attacker.currentHp = 0;
                 attacker.state = "dead";
                 attacker.target = null;
+                reflectKilled = true;
             }
+            // This bounce is itself a real HP loss with no separate call into
+            // attacker.takeDamage (deliberately -- a second reflect off the
+            // reflect would be wrong), so it needs its own event: roles
+            // reversed from the main hit below, since `this` (the unit that
+            // was hit) is the source of the bounce and `attacker` is who takes
+            // it.
+            this.recordDamageEvent(
+                this,
+                attacker,
+                reflectHpBefore - attacker.currentHp,
+                attacker.currentHp,
+                reflectKilled,
+            );
         }
         const hpBeforeHit = this.currentHp;
         this.currentHp -= amount;
@@ -1264,22 +1303,26 @@ export class BattleUnit {
         // Event recorder for cross-engine calibration (see Simulation.eventLog
         // in sim.js): one damage record per application, covering direct hits,
         // splash, trample, pass-through and charge damage -- everything that
-        // flows through this single funnel. (The continuous per-tick bleed
-        // drain applied directly to currentHp in update() does not call
-        // takeDamage and so is not recorded here.) Same guard pattern as the
-        // combatStats block above: read-only, no rng draw, no ordering change,
-        // absent from stateHash(), so it cannot affect determinism.
-        if (this.sim && this.sim.eventLog && attacker) {
-            this.sim.eventLog.damage.push({
-                t: this.sim.battleTime,
-                attacker: attacker.id,
-                victim: this.id,
-                damage: hpBeforeHit - this.currentHp,
-                victim_hp_after: this.currentHp,
-                kill: hpBeforeHit > 0 && this.currentHp === 0,
-                attacker_owner: attacker.team,
-                victim_owner: this.team,
-            });
+        // flows through this single funnel, PLUS the damage-reflect bounce
+        // recorded separately above.
+        //
+        // Known remaining bypass, NOT recorded anywhere: the continuous
+        // per-tick bleed drain applied directly to currentHp in update()
+        // (~line 425) never calls takeDamage, so it emits no damage event at
+        // all. As of this writing the only units with bleed_dps > 0 are
+        // Khitans' Liao Dao / Elite Liao Dao (config_combat.py's base
+        // COMBAT_PROPERTIES) and Tupi's arbalester / elite blackwood archer
+        // (Tupi Curare, civ-specific) -- none of which are in today's
+        // standard-unit recording corpus, so this is out of scope for now but
+        // MUST be revisited before any bleed-capable unique unit is recorded.
+        if (attacker) {
+            this.recordDamageEvent(
+                attacker,
+                this,
+                hpBeforeHit - this.currentHp,
+                this.currentHp,
+                hpBeforeHit > 0 && this.currentHp === 0,
+            );
         }
     }
 

@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createSimulation } from "../../../apps/website/static/js/engine/index.js";
+import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.js";
+import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
 
 const ARCHER = { hp: 40, attack: 6, attack_range: 5, attack_speed: 0.5, attack_delay: 0.2,
     movement_speed: 0.96, melee_armor: 0, pierce_armor: 0, outline_size: 0.2, accuracy: 100,
@@ -54,4 +56,59 @@ test("every projectile gets a distinct id", () => {
     assert.ok(r.log.missiles.length > 0);
     const ids = new Set(r.log.missiles.map((m) => m.id));
     assert.equal(ids.size, r.log.missiles.length, "projectile ids must be unique");
+});
+
+// Damage reflect (Khitan Lamellar Armor, damage_reflect_percent on the combat
+// dict) mutates the ATTACKER's currentHp directly inside takeDamage, with no
+// recursive call into attacker.takeDamage. A prior version of the recorder
+// missed this: a reflect kill produced a real unit death with zero damage
+// events. Exercised directly against BattleUnit (no full sim/rng needed --
+// takeDamage draws no randomness) so the reflect math is exact and
+// deterministic.
+test("a damage-reflect kill still produces a role-reversed damage event", () => {
+    const sim = {
+        team1: [], team2: [], projectiles: [], effects: [], battleTime: 42,
+        rng: makeRng(1), eventLog: { damage: [], missiles: [] },
+    };
+    const attacker = new BattleUnit("1-0", 1, {
+        hp: 10, attack: 20, attack_range: 0, attack_speed: 1, attack_delay: 0,
+        movement_speed: 1, melee_armor: 0, pierce_armor: 0, outline_size: 0.3,
+        accuracy: 100, unit_name: "Attacker",
+    }, "melee_attacker", "Franks", sim);
+    const reflector = new BattleUnit("2-0", 2, {
+        hp: 100, attack: 5, attack_range: 0, attack_speed: 1, attack_delay: 0,
+        movement_speed: 1, melee_armor: 0, pierce_armor: 0, outline_size: 0.3,
+        accuracy: 100, unit_name: "Reflector", damage_reflect_percent: 1.0,
+    }, "liao_dao", "Khitans", sim);
+    sim.team1.push(attacker);
+    sim.team2.push(reflector);
+
+    // 15 dmg to the reflector (hp 100 -> 85, survives) bounces 15*1.0 = 15
+    // back onto the attacker (hp 10 -> clamped to 0, dies).
+    reflector.takeDamage(15, attacker);
+
+    assert.equal(attacker.currentHp, 0);
+    assert.equal(attacker.state, "dead");
+    assert.equal(reflector.currentHp, 85);
+    assert.notEqual(reflector.state, "dead");
+
+    assert.equal(sim.eventLog.damage.length, 2, "reflect bounce + main hit");
+    const [reflectEvt, mainEvt] = sim.eventLog.damage;
+
+    // Reflect event: roles reversed -- the reflector is the source, the
+    // original attacker is the one who took damage and died.
+    assert.equal(reflectEvt.attacker, reflector.id);
+    assert.equal(reflectEvt.victim, attacker.id);
+    assert.equal(reflectEvt.damage, 10); // 10 hp actually applied (clamped at 0), not the raw 15
+    assert.equal(reflectEvt.victim_hp_after, 0);
+    assert.equal(reflectEvt.kill, true);
+    assert.equal(reflectEvt.attacker_owner, reflector.team);
+    assert.equal(reflectEvt.victim_owner, attacker.team);
+
+    // Main hit: unchanged roles, the reflector took the original 15 damage.
+    assert.equal(mainEvt.attacker, attacker.id);
+    assert.equal(mainEvt.victim, reflector.id);
+    assert.equal(mainEvt.damage, 15);
+    assert.equal(mainEvt.victim_hp_after, 85);
+    assert.equal(mainEvt.kill, false);
 });

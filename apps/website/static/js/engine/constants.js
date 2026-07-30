@@ -106,6 +106,93 @@ export const KITE_COHESION_WEIGHT = 2.0;
 // sitting on the centroid still gets a full-magnitude arbitrary-direction kick.
 export const KITE_COHESION_RAMP_TILES = 2.0;
 
+// ===== RANGED STAND-AND-SHOOT COST (E9) =====
+// Measured over every tape in D:/AI/aoe2_golden/tapes (140 recordings, 21,296
+// missile-launch-to-missile-launch gaps, six ranged units). Launches come from
+// the ~60 Hz missile stream (first row of each projectile flight, ids split on
+// a >3 s gap because the game recycles them); stationarity comes from the 10 Hz
+// unit position stream.
+//
+// THE LAW (one rule, no per-unit tuning, no siege exception):
+//
+//   A ranged unit that STOOD STILL for a whole fire cycle re-fires at exactly
+//   its reload time. A unit that MOVED at any point during the cycle pays a
+//   stand-and-shoot cost: its shot lands on the next FIRE_CYCLE_QUANTUM
+//   boundary, i.e. cycle = ceil(reload / Q) * Q.
+//
+// Per-shot split of all 21,296 gaps by "did this unit move during the cycle":
+//
+//   unit               reload  pred ceil(r/Q)*Q | stood n   median | moved n  median
+//   arbalester          1.70        2.000       |   614     1.718  |  6816    2.000
+//   heavy_cav_archer    1.80        2.000       |   509     1.820  |  6650    2.008
+//   hand_cannoneer      3.45        4.000       |   132     3.468  |  4961    3.998
+//   imp_elite_skirm     3.00        3.333       |   341     3.018  |  1705    3.334
+//   heavy_scorpion      3.60        4.000       |   409     3.616  |    85    4.020
+//   siege_onager        6.00        6.000       |    68     6.026  |    30    6.028
+//
+// Every "stood" median is reload + one tape tick; every "moved" median is the
+// quantised prediction, to within 0.02 s. This is what discriminates the two
+// candidate cadence models: the cost is NOT additive (additive predicts
+// hand_cannoneer 3.45 + recovery 0.33 = 3.78, but the tape says 4.00, and
+// predicts heavy_cav_archer 2.23 against a tape 2.006). Reload runs
+// CONCURRENTLY with the post-fire recovery; the whole cadence residual is the
+// quantum, so cycle = max(ceil(reload/Q)*Q, windup + recovery).
+//
+// Note the corollary for siege: heavy_scorpion looked exempt when its gaps were
+// pooled (3.616 == reload flat) purely because it stands still for 83% of its
+// shots. On the 85 shots where it DID move it quantises to 4.020 like everything
+// else, so siege needs no special-casing -- the movement gate handles it.
+export const FIRE_CYCLE_QUANTUM = 2 / 3;
+
+// Stop/turn overhead paid BEFORE the shot, on top of attack_delay, whenever the
+// unit had to halt to fire. Measured as (time the unit was already stationary
+// when the missile launched) - attack_delay, debiased by +0.05 s for the 10 Hz
+// sampling grid (an observed window is uniformly truncated over one 0.1 s bin):
+//
+//   arbalester +0.044 | hand_cannoneer +0.141 | heavy_cav_archer +0.173 |
+//   imp_elite_skirm +0.238                                  mean +0.149
+//
+// One shared value covers all four to within 0.11 s, and this constant is the
+// LOW-STAKES one: because the cadence is pinned by the quantum above, moving
+// the overhead only shifts WHERE in the cycle the unit is frozen, never how
+// often it shoots.
+export const RANGED_STOP_OVERHEAD = 0.15;
+
+// Post-fire recovery: after the missile leaves, the unit cannot move for this
+// long. Measured as the time from launch to the unit's next position change,
+// over kiting cycles only, same +0.05 s debias:
+//
+//   imp_elite_skirm 0.201 (n=1659) | arbalester 0.326 (n=6761) |
+//   hand_cannoneer  0.331 (n=4882) | heavy_cav_archer 0.427 (n=6370)
+//
+// Unlike the two constants above this one does NOT collapse to a single value:
+// the spread is better than 2x and every distribution is tight and unimodal
+// (heavy_cav_archer is 0.30/0.35/0.40 = 563/2965/2519 samples, imp_elite_skirm
+// is 0.05/0.10/0.15 = 605/653/166). So the default below carries the two units
+// that genuinely share it and the other two are named overrides. This is the
+// constant that sets a kiter's effective speed, which is the whole point of the
+// experiment -- forcing heavy_cav_archer onto a shared 0.33 would hand it back
+// 0.10 s of movement per 2.0 s cycle it does not have on tape.
+//
+// The per-slug heavy_cav_archer value was also checked ON THE SCOREBOARD, not
+// just against the tape, because that unit's two families are the campaign's
+// judged targets. Sweeping only this number (10 seeds x the two families):
+//
+//   HCA recovery      0.33     0.43 (tape)   0.55
+//   halberdier win   60/60      60/60       60/60    (tape 6/6 -- unaffected)
+//   champion HCA win  0/90       9/90        0/90    (tape 8/9)
+//
+// The response is non-monotonic and the tape-measured 0.43 is also the best of
+// the three: freezing the HCA LESS makes it lose harder, because a more mobile
+// kiter in this engine disperses out of its own ball and trades its DPS uptime
+// for distance it does not need. So this constant is not the champion family's
+// problem and cannot be its fix -- see the experiment report.
+export const RANGED_POST_FIRE_RECOVERY = 0.33;
+export const RANGED_POST_FIRE_RECOVERY_BY_SLUG = new Map([
+    ["heavy_cav_archer", 0.43],
+    ["imp_elite_skirm", 0.20],
+]);
+
 // ===== ADJUSTABLE PRE-BATTLE CONDITIONS =====
 // Lithuanian relic bonus: the reference DB bakes in all 4 relics (+1 base
 // melee attack each) for these units. The rail picker lets the user dial

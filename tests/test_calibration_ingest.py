@@ -50,6 +50,41 @@ def test_hp_cross_validation_rejects_wrong_civ():
         pass
 
 
+def test_attack_floor_clamps_to_minimum_one_damage():
+    """AoE2 always deals >=1 damage per hit, even when armor >= attack (both
+    engines this repo runs enforce this: battle_unit.js:334-337's
+    `Math.max(1, ...)`, simulation_real.py:730's `max(1, ...)`). Without a
+    matching floor, `_expected_hit_damage` predicts <=0 for two REAL fights
+    from aoe2_golden_batch91_partial_053.zip and validate_unit hard-fails
+    even though the tape's modal_hit_damage of 1.0 is exactly the real
+    game's damage floor firing — the data was right, the validator was
+    wrong. Constructed so it fails without the `max(1.0, ...)` clamp.
+    """
+    from aoe2x.calibration.ingest import _expected_hit_damage, validate_unit
+
+    # Chinese Elite Skirmisher's class-3 (Pierce) attack is 7; Burmese Elite
+    # Battle Elephant's class-3 armor is 9 -> raw sum 7-9=-2.
+    skirm_attacks = {"final_attacks_json": '{"27": 4, "15": 4, "3": 7, "28": 2, "35": 2, "21": 0, "17": 0}'}
+    elephant_armors = {"final_armors_json": '{"5": 0, "4": 6, "8": 0, "3": 9, "31": 0}'}
+    assert _expected_hit_damage(skirm_attacks, elephant_armors) == 1.0
+
+    # Same skirmisher vs Spanish Paladin's class-3 armor of 7 -> raw sum 7-7=0.
+    paladin_armors = {"final_armors_json": '{"4": 5, "8": 0, "3": 7, "31": 0}'}
+    assert _expected_hit_damage(skirm_attacks, paladin_armors) == 1.0
+
+    # End-to-end: both real fights must VALIDATE against modal_hit_damage=1.0.
+    validate_unit(
+        "Chinese", "imp_elite_skirm", observed_hp=35.0,
+        opponent_civ="Burmese", opponent_slug="elite_elephant",
+        modal_hit_damage=1.0,
+    )
+    validate_unit(
+        "Chinese", "imp_elite_skirm", observed_hp=35.0,
+        opponent_civ="Spanish", opponent_slug="paladin",
+        modal_hit_damage=1.0,
+    )
+
+
 def _isolate_calibration_storage(monkeypatch, tmp_path):
     """Redirect ingest.py's manifest/tape/drop storage under tmp_path so a
     test can exercise ingest_zip repeatedly without touching the real

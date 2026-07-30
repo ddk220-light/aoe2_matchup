@@ -251,13 +251,22 @@ def _expected_hit_damage(attacker_row: dict[str, Any], target_row: dict[str, Any
     Arbalester, Cumans Elite Steppe Lancer): this formula reproduces the
     tape's modal hit damage exactly for all four, including the trampling
     Elephant.
+
+    AoE2 has a hard floor of 1 damage per landed hit — when armor >= attack
+    the game still deals 1, it never deals 0 or negative. Both engines this
+    repo runs enforce that floor (`Math.max(1, baseDmg + bonusDamage +
+    executeBonus)` in `apps/website/static/js/engine/battle_unit.js:334-337`;
+    `max(1, base_dmg + bonus_damage + execute_bonus)` in
+    `aoe2x/sim/simulation_real.py:730`), so the expected value returned here
+    must be clamped the same way before comparison — DO NOT remove this
+    clamp, it is not an approximation, it is the actual rule.
     """
     attacks = _class_amount_map(attacker_row.get("final_attacks_json"))
     armors = _class_amount_map(target_row.get("final_armors_json"))
     shared = set(attacks) & set(armors)
     if not shared:
         return None
-    return sum(attacks[c] - armors[c] for c in shared)
+    return max(1.0, sum(attacks[c] - armors[c] for c in shared))
 
 
 def _has_complicating_attack_properties(row: dict[str, Any]) -> bool:

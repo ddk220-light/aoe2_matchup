@@ -128,3 +128,88 @@ test("melee steady-state: hit-to-hit == reloadTime, delay paid once up front", (
         assert.ok(gap < a.reloadTime + a.attackDelay / 2, "delay re-paid per swing");
     }
 });
+
+// ---- absorption is UNIVERSAL, not per-unit (experiment E1b, 2026-07-30) -------
+//
+// E1b hypothesised that some units -- gunpowder and/or big-windup archers --
+// do NOT absorb the windup, so their cycle would be reload + attack_delay (the
+// pre-E1 behaviour). The 105-fight tape corpus falsifies that outright.
+//
+// The argument is a bound, not a correlation. Engagement overhead (kiting,
+// chasing, re-acquiring) can only ever ADD to an observed swing interval, never
+// subtract. So a unit's LOWEST tape swing_interval_median across every context
+// it was recorded in is a hard UPPER BOUND on its true attack cycle. For all
+// eleven corpus units with attack_delay > 0 that bound lands on reload_time
+// + 0.012..0.029s (uniform tape quantisation) and strictly BELOW reload +
+// delay -- which mathematically excludes the additive model for every one of
+// them, including the two E1b singled out:
+//
+//   unit               reload  delay   reload+delay   min tape median (context)
+//   arbalester          1.700  0.333      2.033        1.722  vs heavy_scorpion
+//   hand_cannoneer      3.450  0.250      3.700        3.466  vs imp_elite_skirm
+//   heavy_cav_archer    1.800  0.767      2.567        1.829  vs imp_elite_skirm
+//   imp_elite_skirm     3.000  0.317      3.317        3.022  vs heavy_scorpion
+//   heavy_camel         2.000  0.333      2.333        2.012  vs elite_fire_lancer
+//   paladin             1.900  0.217      2.117        1.914  vs elite_fire_lancer
+//
+// The elevated 1.99 / 4.00 medians that motivated E1b come only from fights
+// where the shooter OUT-RANGES its target and kites; that residual is an
+// engagement cost (it is largest for the SLOWEST shooter and smallest for the
+// one with the BIGGEST windup, the exact opposite of a frame-delay signature).
+// It belongs to the engagement round, not to attack scheduling.
+//
+// These cases pin the falsification shut: real corpus stats, both classes,
+// asserting the cycle sits on reload AND under the tape's empirical ceiling.
+const CORPUS_CYCLE_CASES = [
+    // slug,             reload, delay, ranged, min tape swing_interval_median
+    ["arbalester",         1.7,   0.333, true,  1.722],
+    ["hand_cannoneer",     3.45,  0.25,  true,  3.466],
+    ["heavy_cav_archer",   1.8,   0.767, true,  1.829],
+    ["imp_elite_skirm",    3.0,   0.317, true,  3.022],
+    ["heavy_camel",        2.0,   0.333, false, 2.012],
+    ["paladin",            1.9,   0.217, false, 1.914],
+];
+
+for (const [slug, reload, delay, ranged, tapeCeiling] of CORPUS_CYCLE_CASES) {
+    test(`corpus steady-state: ${slug} cycle == reload (${reload}s), not reload+delay`, () => {
+        const sim = simStub(23);
+        const stats = {
+            ...STATS,
+            attack_speed: 1 / reload,
+            attack_delay: delay,
+            attack_range: ranged ? 7 : 0,
+        };
+        const a = new BattleUnit("1-0", 1, stats, slug, "Franks", sim);
+        // Ranged punching bag: the attacker has nothing to kite away from, so
+        // this measures the bare attack cycle with zero engagement overhead --
+        // the same condition the un-micro'd tape fights were selected for.
+        const b = new BattleUnit("2-0", 2, { ...STATS, hp: 1e9 }, "b", "Goths", sim);
+        a.x = 0; a.y = 0; b.x = 60; b.y = 0;
+        sim.team1.push(a); sim.team2.push(b);
+        assert.equal(a.isRanged(), ranged);
+
+        const probe = ranged ? () => sim.projectiles.length : () => b.currentHp;
+        // Long enough for >= 4 gaps even at the hand cannoneer's 3.45s reload.
+        const times = attackTimes(a, b, probe, Math.ceil(60 * (reload * 6 + 2)));
+        assert.ok(times.length >= 5, `${slug}: expected >=5 attacks, got ${times.length}`);
+
+        for (let i = 1; i < times.length; i++) {
+            const gap = times[i] - times[i - 1];
+            assert.ok(
+                Math.abs(gap - reload) <= DT * 2.5,
+                `${slug}: gap ${i} was ${gap}, expected ~${reload}`,
+            );
+            // The load-bearing assertion: under the tape's own ceiling, which
+            // sits below reload + delay. An additive-windup regression fails
+            // here even if someone widens the tolerance above.
+            assert.ok(
+                gap <= tapeCeiling + DT * 2.5,
+                `${slug}: gap ${i} was ${gap}, above the tape ceiling ${tapeCeiling}`,
+            );
+            assert.ok(
+                gap < reload + delay - 1e-9,
+                `${slug}: gap ${i} was ${gap} -- additive windup (${reload + delay}s) is back`,
+            );
+        }
+    });
+}

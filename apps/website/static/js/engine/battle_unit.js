@@ -1100,9 +1100,20 @@ export class BattleUnit {
                             enemy.state !== "dead"
                         ) {
                             const dist = this.distanceTo(enemy);
+                            // Blast emanates from the trampler's BODY, not a
+                            // point: reach is edge-to-edge, so the attacker's
+                            // own radius counts (parity with
+                            // simulation_real.py's identical reach formula).
+                            // Omitting it leaves a packed ring around a
+                            // big-footprint unit (elephant, r~0.6 tile) just
+                            // out of reach -- ~0 units trampled per swing
+                            // where the tape shows the elephant landing
+                            // splash hits on 3+ victims routinely.
                             if (
                                 dist <=
-                                trampleInfo.radius + enemy.radius
+                                this.radius +
+                                    trampleInfo.radius +
+                                    enemy.radius
                             ) {
                                 enemy.takeDamage(trampleDmg, this);
                             }

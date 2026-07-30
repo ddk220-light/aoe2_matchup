@@ -232,6 +232,12 @@ export class BattleUnit {
         this._prevTgt = null;
         this._prevTgtX = 0;
         this._prevTgtY = 0;
+        // When lastDistToTarget was last stamped (this.sim.battleTime),
+        // so moveTowardTarget can tell a stale, multi-tick-old baseline
+        // (unit spent time in kiting/attacking, which never touch it) from
+        // a fresh, consecutive-tick one and re-baseline instead of judging
+        // `stalled` across an unknown-length gap.
+        this.lastDistStampTime = null;
 
         // Attack sprite-sheet ref, stamped by the page/harness for animation timing
         // only (triggerAttackAnim). The renderer owns all other draw assets.
@@ -384,6 +390,7 @@ export class BattleUnit {
         this._prevTgt = this.target;
         this._prevTgtX = this.target ? this.target.x : 0;
         this._prevTgtY = this.target ? this.target.y : 0;
+        this.lastDistStampTime = this.sim ? this.sim.battleTime : null;
         return this.target;
     }
 
@@ -1455,6 +1462,17 @@ export class BattleUnit {
         // this is exactly the historical `- 0.5` literal, pinned by
         // tests/js/engine/pursuit.test.mjs.
         const newDist = this.distanceTo(this.target);
+
+        // Re-baseline lastDistToTarget if this branch did not run on the
+        // immediately-preceding tick (this unit was kiting/attacking
+        // instead, and those branches never touch lastDistToTarget) --
+        // otherwise `stalled` below compares a stale, multi-tick-old
+        // distance against a bar sized for exactly one tick.
+        const gapped =
+            this.lastDistStampTime === null ||
+            this.sim.battleTime - this.lastDistStampTime > dt * 1.5;
+        if (gapped) this.lastDistToTarget = dist; // this tick's own pre-move distance
+
         const stalled =
             newDist >= this.lastDistToTarget - STUCK_PROGRESS_RATE * dt;
 
@@ -1491,6 +1509,7 @@ export class BattleUnit {
             this.stuckTimer = Math.max(0, this.stuckTimer - dt * 2);
         }
         this.lastDistToTarget = newDist;
+        this.lastDistStampTime = this.sim.battleTime;
         this._prevTgt = this.target;
         this._prevTgtX = this.target.x;
         this._prevTgtY = this.target.y;

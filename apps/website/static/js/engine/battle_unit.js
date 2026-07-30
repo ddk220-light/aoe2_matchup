@@ -30,6 +30,10 @@ import {
     COMBAT_PACK_FACTOR,
     COMBAT_PACK_SLACK_TILES,
     COMBAT_PACK_RANGED,
+    FIRE_CYCLE_QUANTUM,
+    RANGED_STOP_OVERHEAD,
+    RANGED_POST_FIRE_RECOVERY,
+    RANGED_POST_FIRE_RECOVERY_BY_SLUG,
 } from "./constants.js";
 import { Projectile, classifyProjectile } from "./projectile.js";
 import { MeleeEffect } from "./melee_effect.js";
@@ -243,6 +247,20 @@ export class BattleUnit {
         this.wasMoving = true;
         this.committedAttack = null;
         this.attackAnimTimer = 0;
+
+        // --- ranged stand-and-shoot cost (E9; see constants.js for the tapes) ---
+        // Seconds of post-fire recovery still owed: while > 0 the unit is frozen
+        // and may not kite, chase or back out of its min-range dead zone.
+        this.fireRecovery = 0;
+        // Per-slug recovery, defaulting to the shared constant.
+        this.postFireRecovery =
+            RANGED_POST_FIRE_RECOVERY_BY_SLUG.get(slug) ??
+            RANGED_POST_FIRE_RECOVERY;
+        // Did this unit move at any point since its last shot? Decides whether
+        // the current cycle is a bare reload (stood still) or a quantised
+        // stand-and-shoot cycle. Starts true: a unit walks into range before its
+        // opening shot, which is exactly the "had to stop" case.
+        this.movedSinceShot = true;
         // Seconds the attack sprite-sheet keeps playing after a swing/shot fires,
         // independent of state — so the animation completes even once the unit
         // starts moving/kiting away (set to one full sheet cycle on each attack).
@@ -435,10 +453,58 @@ export class BattleUnit {
         return this.distanceTo(this.target) < this.minAttackRange;
     }
 
+    // ===== RANGED STAND-AND-SHOOT COST (E9) =====
+    // Tape derivation, per-unit numbers and the rejected additive model all live
+    // in constants.js next to FIRE_CYCLE_QUANTUM. In one line: a ranged unit that
+    // stood still all cycle re-fires at a bare reloadTime; one that moved has to
+    // stop, aim and recover, and its shot lands on the next quantum boundary.
+
+    // Launch-to-launch cycle for a shot the unit had to STOP to take. Derived
+    // live rather than cached at construction because reloadTime is mutable at
+    // runtime (Temple Guard attack-speed ramp, transform, dismount).
+    fireCycleLength() {
+        // The -1e-9 keeps a reload that already sits exactly on the grid
+        // (siege_onager: 6.0 === 9 * 2/3) from being bumped a whole extra slot
+        // by float residue in the division.
+        return (
+            Math.ceil(this.reloadTime / FIRE_CYCLE_QUANTUM - 1e-9) *
+            FIRE_CYCLE_QUANTUM
+        );
+    }
+
+    // Windup for the shot being started now: attack_delay, plus the stop/turn
+    // overhead when this unit had to halt for it.
+    rangedWindup() {
+        return (
+            this.attackDelay +
+            (this.movedSinceShot ? RANGED_STOP_OVERHEAD : 0)
+        );
+    }
+
+    // Called the first time a ranged unit moves after firing. The cooldown set
+    // at launch carries the STOOD budget (reloadTime - attackDelay); moving
+    // converts this cycle to the quantised one, which costs the difference
+    // between the two cycle lengths less the extra windup the stop now buys.
+    // Net launch-to-launch: (fireCycle - windup) + windup === fireCycle.
+    // Latched by movedSinceShot, so it is paid once per cycle however many
+    // ticks the unit spends moving.
+    markRangedMovement() {
+        if (this.movedSinceShot) return;
+        this.movedSinceShot = true;
+        this.attackCooldown = Math.max(
+            0,
+            this.attackCooldown +
+                (this.fireCycleLength() -
+                    this.reloadTime -
+                    RANGED_STOP_OVERHEAD),
+        );
+    }
+
     update(dt, allUnits, enemies) {
         if (this.state === "dead") return;
 
         this.attackCooldown = Math.max(0, this.attackCooldown - dt);
+        this.fireRecovery = Math.max(0, this.fireRecovery - dt);
         this.attackAnimTimer = Math.max(
             0,
             this.attackAnimTimer - dt,
@@ -639,17 +705,36 @@ export class BattleUnit {
                     this.committedAttack = null;
                     // performAttack (every path, charge volley included) leaves
                     // cooldown = reloadTime; subtract the windup already spent.
+                    // This is the STOOD-STILL budget (cycle == reloadTime); if
+                    // the unit moves before its next shot markRangedMovement()
+                    // tops it up to the quantised stand-and-shoot cycle.
                     this.attackCooldown = Math.max(
                         0,
                         this.reloadTime - this.attackDelay,
                     );
+                    // Frozen while the shot recovers (E9). Runs CONCURRENTLY
+                    // with the cooldown above -- it blocks movement, not
+                    // reloading -- which is why the tape's cadence is the
+                    // quantum alone and not reload + recovery.
+                    this.fireRecovery = this.postFireRecovery;
+                    this.movedSinceShot = false;
                     this.wasMoving = false;
                 }
                 return;
             }
 
+            // Post-fire recovery: immobilised, and deliberately checked before
+            // tooClose() so the unit cannot even back out of its min-range dead
+            // zone until the shot has recovered.
+            if (this.fireRecovery > 0) {
+                this.state = "attacking";
+                this.wasMoving = false;
+                return;
+            }
+
             if (this.tooClose()) {
                 this.state = "kiting";
+                this.markRangedMovement();
                 this.moveAwayFromTarget(
                     dt,
                     allUnits,
@@ -658,6 +743,7 @@ export class BattleUnit {
                 this.wasMoving = true;
             } else if (this.attackCooldown > 0 && shouldKite) {
                 this.state = "kiting";
+                this.markRangedMovement();
                 this.moveAwayFromTarget(
                     dt,
                     allUnits,
@@ -667,20 +753,27 @@ export class BattleUnit {
                 this.state = "attacking";
             } else if (this.inRange()) {
                 // Cooldown done, in range — start the windup for the next shot.
-                if (this.attackDelay > 0) {
+                // The windup carries the stop/turn overhead when this unit had
+                // to halt to take the shot, so a delay-0 shooter that was
+                // moving (siege_onager) still pays one.
+                const windup = this.rangedWindup();
+                if (windup > 0) {
                     this.committedAttack = {
                         target: this.target,
-                        timeLeft: this.attackDelay,
+                        timeLeft: windup,
                     };
                     this.state = "attacking";
                     this.wasMoving = false;
                 } else {
                     this.state = "attacking";
                     this.performAttack();
+                    this.fireRecovery = this.postFireRecovery;
+                    this.movedSinceShot = false;
                     this.wasMoving = false;
                 }
             } else {
                 this.state = "moving";
+                this.markRangedMovement();
                 this.moveTowardTarget(dt, allUnits);
             }
         } else {
@@ -1635,11 +1728,10 @@ export class BattleUnit {
     //   4. this side's MEDIAN attack range strictly out-ranges the enemy's --
     //      the same predicate as the recording AI's `gKiteOK`. Melee-vs-melee
     //      is 0 > 0 = false, so those fights are untouched too;
-    //   5. this side has a MEDIAN SPEED MARGIN over the enemy side. Circling
-    //      costs radial recession (a unit deflected by angle t only backs away
-    //      at cos(t) of its speed), so it is a maneuver only a kiter with speed
-    //      to spare can afford. Below the margin the orbit term ramps to zero
-    //      and this returns null, leaving the fight bit-identical to baseline.
+    //   5. (E10: NO LONGER A GATE -- see below.) The median speed margin now
+    //      scales the ORBIT TERM ONLY, ramping it to zero for a side with no
+    //      speed to spare. Cohesion and the shared retreat basis apply to every
+    //      group-kiting side regardless of speed.
     //
     //      HONESTY NOTE: clause 5 is NOT a model of ddkSquareV25 -- that script
     //      kites on a RANGE test alone and never checks speed. It compensates
@@ -1656,6 +1748,39 @@ export class BattleUnit {
     //      46.2 px/s outruns every melee chaser in the corpus, while every foot
     //      archer sits at 28.8 px/s and outruns none of them.
     //
+    // E10 -- SHARED RETREAT BASIS, and why clause 5 stopped being a hard gate.
+    // Forensics on the two broken families (champion__vs__heavy_cav_archer
+    // seed 1, hand_cannoneer__vs__heavy_camel seed 1; 5 s bins, mid-fight):
+    //
+    //   heading coherence of the kiting ball   0.28-0.69   (1.0 = one direction)
+    //   angle between "flee from MY target"
+    //     and "flee from the enemy CENTROID"   mean 44-74 deg, max 98-179 deg
+    //
+    // The ball was never DISPERSING -- E8's packing already holds its
+    // nearest-neighbour spacing at the tape's 0.6-0.9 tiles. It was MILLING:
+    // twelve Heavy Cav Archers each fleeing their OWN target ran twelve
+    // different ways, the group's centroid stopped receding (radius of gyration
+    // collapsed to 0.8 tiles while 4-8 champions stayed in contact from t=15 s
+    // to the end), and the melee side simply enveloped a stationary blob.
+    //
+    // So a group-kiting unit now backs away from the ENEMY CENTROID, not from
+    // its own target. One shared threat direction per side per tick turns
+    // twelve individual flights into one translating ball -- which is what the
+    // tape's ddkSquareV25 patrol produces for free, because it steers the whole
+    // army with one order. Costs nothing and needs no constant: it is a change
+    // of BASIS, not an added force. `moveAwayFromTarget` falls back to the
+    // per-target radial whenever this returns null, so every gated-out fight
+    // (siege, melee, non-out-ranging sides) is untouched.
+    //
+    // Clause 5 stopped being a hard gate for the same reason: it was returning
+    // null for exactly the sides that need cohesion most -- every FOOT archer,
+    // which by construction never out-runs its chaser (hand_cannoneer 28.8 px/s
+    // vs heavy_camel 48.0). Those sides got no cohesion and no shared retreat at
+    // all. The orbit term still ramps to zero for them, so the arena-mismatch
+    // argument above is preserved exactly; only the two group-forming terms
+    // (which cannot manufacture distance, and so cannot let a kiter circle out
+    // of reach forever) now apply.
+    //
     // The ramp scale is PURSUIT_MIN_ADVANTAGE, reused rather than duplicated:
     // it is already defined as the speed margin below which a pursuit is a
     // stalemate not worth committing to, which is exactly the threshold that
@@ -1671,8 +1796,10 @@ export class BattleUnit {
 
         const ourSpeed = medianLiving(allUnits, this.team, pickSpeed);
         const theirSpeed = medianLiving(enemies, null, pickSpeed);
-        const margin = ourSpeed - theirSpeed;
-        if (!(margin > 0)) return null;
+        // Clamped at 0 rather than returning null (E10): a side with no speed
+        // margin gets no orbit, but still gets cohesion and the shared retreat
+        // basis below.
+        const margin = Math.max(0, ourSpeed - theirSpeed);
         const orbit =
             KITE_TANGENTIAL_WEIGHT *
             Math.min(1, margin / PURSUIT_MIN_ADVANTAGE);
@@ -1739,20 +1866,37 @@ export class BattleUnit {
         return {
             x: orbit * tx + KITE_COHESION_WEIGHT * cx,
             y: orbit * ty + KITE_COHESION_WEIGHT * cy,
+            // Shared retreat basis (E10): the unit vector from the enemy
+            // centroid to this unit -- identical in SOURCE for every unit on the
+            // side, so the whole ball backs away along one bearing instead of
+            // twelve. `rlen === 0` (this unit sits exactly on the enemy
+            // centroid) leaves it zero and moveAwayFromTarget falls back to the
+            // per-target radial.
+            rx: rlen > 0 ? rx / rlen : 0,
+            ry: rlen > 0 ? ry / rlen : 0,
         };
     }
 
     moveAwayFromTarget(dt, allUnits, steering = null) {
         if (!this.target) return;
-        let dx = this.x - this.target.x;
-        let dy = this.y - this.target.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 1) {
-            dx = this.team === 1 ? -1 : 1;
-            dy = 0;
+        let dx, dy;
+        // Group kiters back away from the SHARED threat direction (the enemy
+        // centroid) rather than from their own target -- see kiteSteering's
+        // E10 note. Everyone else keeps the per-target radial exactly.
+        if (steering && (steering.rx !== 0 || steering.ry !== 0)) {
+            dx = steering.rx;
+            dy = steering.ry;
         } else {
-            dx /= dist;
-            dy /= dist;
+            dx = this.x - this.target.x;
+            dy = this.y - this.target.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 1) {
+                dx = this.team === 1 ? -1 : 1;
+                dy = 0;
+            } else {
+                dx /= dist;
+                dy /= dist;
+            }
         }
         // Group-kite steering (null => untouched pre-E5a behaviour).
         if (steering) {

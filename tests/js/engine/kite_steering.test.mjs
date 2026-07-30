@@ -131,17 +131,88 @@ test("a siege weapon (min-range dead zone) never steers, however far it out-rang
     );
 });
 
-test("a kiter with no speed margin never steers (the foot-archer canaries)", () => {
+test("a kiter with no speed margin gets ZERO orbit but keeps cohesion (E10)", () => {
     // Arbalester 0.96 t/s fleeing a Champion 1.06 t/s: the kiter is SLOWER.
+    // Pre-E10 this returned null outright. The orbit is still gated to nothing
+    // -- circling costs radial recession, and ungated it broke
+    // champion__vs__arbalester / champion__vs__hand_cannoneer, which baseline
+    // already got right -- but the two GROUP-FORMING terms now apply, because
+    // neither can manufacture distance and both are what stops a foot-archer
+    // ball from milling in place (see kiteSteering's E10 note).
     const { t1, t2, all } = scene({
+        n: 3,
         ranged: { range: 8, speed: 0.96 },
         melee: { range: 0, speed: 1.06 },
     });
-    assert.equal(
-        t1[0].kiteSteering(all, t2), null,
-        "circling costs radial recession, so it is only affordable with speed " +
-        "to spare; ungated it broke champion__vs__arbalester and " +
-        "champion__vs__hand_cannoneer, which baseline already got right",
+    const s = t1[0].kiteSteering(all, t2);
+    assert.ok(s, "the slower side still steers as a group");
+
+    // Isolate the orbit: the cohesion term points exactly at the own centroid,
+    // and t1 is a vertical column at x=200 so that direction is +y for t1[0].
+    // Any orbit would put a component along the clockwise perpendicular of the
+    // radial (the radial is -x here, so the perpendicular is along y too) --
+    // instead assert the vector IS the pure cohesion pull.
+    const cx = t1.reduce((a, u) => a + u.x, 0) / t1.length - t1[0].x;
+    const cy = t1.reduce((a, u) => a + u.y, 0) / t1.length - t1[0].y;
+    const clen = Math.hypot(cx, cy);
+    const want = KITE_COHESION_WEIGHT * Math.min(1, clen / (2 * TILE_SIZE));
+    assert.ok(
+        Math.abs(s.x - (want * cx) / clen) < 1e-12 &&
+        Math.abs(s.y - (want * cy) / clen) < 1e-12,
+        "with margin <= 0 the steering vector is cohesion ONLY -- no orbit",
+    );
+
+    // And the shared retreat basis is there: away from the enemy centroid,
+    // which sits to the RIGHT of the column, so the retreat is -x.
+    assert.ok(Math.abs(Math.hypot(s.rx, s.ry) - 1) < 1e-12, "retreat is a unit vector");
+    assert.ok(s.rx < 0, "the shared retreat bearing points away from the enemy");
+});
+
+test("the shared retreat basis is one bearing per side, not one per target (E10)", () => {
+    // The milling bug in one assertion: three archers each targeting a
+    // DIFFERENT melee unit used to flee three different ways. Now every unit's
+    // retreat basis is measured from the same enemy centroid, so a ball whose
+    // members sit near each other retreats along near-identical bearings.
+    // A tight archer ball on the left; the melee side spread over an arc on the
+    // right, each archer locked onto a DIFFERENT one of them. The enemy
+    // centroid is straight to the right of the ball.
+    const sim = simStub(1);
+    const t1 = [
+        mk(sim, 1, { range: 8, speed: 0.96 }, 200, 290),
+        mk(sim, 1, { range: 8, speed: 0.96 }, 200, 300),
+        mk(sim, 1, { range: 8, speed: 0.96 }, 200, 310),
+    ];
+    const t2 = [
+        mk(sim, 2, { range: 0, speed: 1.6 }, 500, 100),
+        mk(sim, 2, { range: 0, speed: 1.6 }, 500, 300),
+        mk(sim, 2, { range: 0, speed: 1.6 }, 500, 500),
+    ];
+    sim.team1 = t1;
+    sim.team2 = t2;
+    const all = [...t1, ...t2];
+    t1.forEach((u, i) => { u.target = t2[i]; });
+
+    const shared = t1.map((u) => u.kiteSteering(all, t2));
+    // Pairwise bearing spread of the SHARED basis.
+    let worstShared = 0, worstPerTarget = 0;
+    for (let i = 0; i < t1.length; i++) {
+        for (let j = i + 1; j < t1.length; j++) {
+            const cs = shared[i].rx * shared[j].rx + shared[i].ry * shared[j].ry;
+            worstShared = Math.max(worstShared, Math.acos(Math.min(1, cs)));
+            // The pre-E10 per-target basis, computed the same way.
+            const p = (u) => {
+                const dx = u.x - u.target.x, dy = u.y - u.target.y;
+                const d = Math.hypot(dx, dy);
+                return [dx / d, dy / d];
+            };
+            const [ax, ay] = p(t1[i]), [bx, by] = p(t1[j]);
+            worstPerTarget = Math.max(worstPerTarget, Math.acos(Math.min(1, ax * bx + ay * by)));
+        }
+    }
+    assert.ok(
+        worstShared < worstPerTarget,
+        `shared basis must be tighter than per-target (got ${worstShared.toFixed(3)} ` +
+        `rad vs ${worstPerTarget.toFixed(3)} rad)`,
     );
 });
 
@@ -168,13 +239,29 @@ test("the speed-margin ramp is continuous and saturates at PURSUIT_MIN_ADVANTAGE
         "halving the margin must actually halve the orbit, not be a no-op",
     );
 
-    // A vanishing margin returns null rather than a zero vector, so the caller
-    // skips the add and the fight stays bit-identical.
+    // A vanishing margin clamps the ORBIT to exactly zero (E10) -- it no longer
+    // returns null, because cohesion and the shared retreat basis survive it.
+    // A single-unit side has no cohesion pull either, so the whole steering
+    // vector is (0, 0) there and only the retreat basis remains.
     const none = scene({
+        n: 1, m: 1,
         ranged: { range: 8, speed: 1.0 },
         melee: { range: 0, speed: 1.0 },
     });
-    assert.equal(none.t1[0].kiteSteering(none.all, none.t2), null);
+    const s = none.t1[0].kiteSteering(none.all, none.t2);
+    assert.ok(s, "no margin no longer bails out entirely");
+    assert.equal(s.x, 0, "zero margin => zero orbit");
+    assert.equal(s.y, 0, "zero margin => zero orbit");
+
+    // Negative margin clamps to zero too, it does not flip the orbit's sense.
+    const slower = scene({
+        n: 1, m: 1,
+        ranged: { range: 8, speed: 0.5 },
+        melee: { range: 0, speed: 2.0 },
+    });
+    const sSlow = slower.t1[0].kiteSteering(slower.all, slower.t2);
+    assert.equal(sSlow.x, 0);
+    assert.equal(sSlow.y, 0);
 });
 
 // ---- the steering vector itself -------------------------------------------

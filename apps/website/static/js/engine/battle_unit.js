@@ -611,7 +611,7 @@ export class BattleUnit {
                 this.state = "attacking";
             } else {
                 this.state = "moving";
-                this.moveTowardTarget(dt, allUnits);
+                this.moveTowardTarget(dt, allUnits, enemies);
             }
         } else {
             // Charge projectile attack (Fire Lancer): fire at range before melee
@@ -642,7 +642,7 @@ export class BattleUnit {
                 } else {
                     // Move toward target to get in charge range
                     this.state = "moving";
-                    this.moveTowardTarget(dt, allUnits);
+                    this.moveTowardTarget(dt, allUnits, enemies);
                     this.wasMoving = true;
                 }
             } else if (this.committedAttack) {
@@ -675,7 +675,7 @@ export class BattleUnit {
                 }
             } else {
                 this.state = "moving";
-                this.moveTowardTarget(dt, allUnits);
+                this.moveTowardTarget(dt, allUnits, enemies);
                 this.wasMoving = true;
             }
         }
@@ -1398,7 +1398,7 @@ export class BattleUnit {
         this.deathHealTriggered = false;
     }
 
-    moveTowardTarget(dt, allUnits) {
+    moveTowardTarget(dt, allUnits, enemies) {
         if (!this.target) return;
         let dx = this.target.x - this.x;
         let dy = this.target.y - this.y;
@@ -1476,6 +1476,28 @@ export class BattleUnit {
         const stalled =
             newDist >= this.lastDistToTarget - STUCK_PROGRESS_RATE * dt;
 
+        // Reachability swap (design doc §3b): commitment without an escape
+        // strands units -- a prototype measured 4/10 Siege Rams idle for an
+        // entire fight with inRange() true on ZERO ticks (boxed out by their
+        // own allies), while two others stood within reach of a DIFFERENT
+        // enemy the whole time and never swung. Fires whenever stalled,
+        // independent of stuckTimer/pursuing/receding: no blacklist
+        // involvement, no new constant -- this is what today's detector
+        // accidentally provided and what a player would do.
+        if (stalled) {
+            const reachable = this._findReachableEnemy(enemies);
+            if (reachable) {
+                this.target = reachable;
+                this.stuckTimer = 0;
+                this.lastDistToTarget = this.distanceTo(reachable);
+                this.lastDistStampTime = this.sim.battleTime;
+                this._prevTgt = reachable;
+                this._prevTgtX = reachable.x;
+                this._prevTgtY = reachable.y;
+                return;
+            }
+        }
+
         // Pursuit exemption (design doc §2): do NOT gate on "wedged" -- that
         // was measured deleting 89-99.8% of melee-scrum blacklist events, a
         // fan-out removal, not a misfire fix. Instead exempt only the
@@ -1518,6 +1540,24 @@ export class BattleUnit {
             this.target = null; // force re-target next frame
             this.stuckTimer = 0;
         }
+    }
+
+    // Reachability swap helper (design doc §3b): the first living enemy
+    // (other than the current target) already within this unit's attack
+    // reach, respecting minAttackRange so a siege unit can't swap onto
+    // something too close to actually hit. Mirrors inRange()'s own reach
+    // formula (attackRange + this.radius + enemy.radius) -- no new constant.
+    _findReachableEnemy(enemies) {
+        if (!enemies) return null;
+        for (const enemy of enemies) {
+            if (enemy.state === "dead" || enemy === this.target) continue;
+            const d = this.distanceTo(enemy);
+            const reach = this.attackRange + this.radius + enemy.radius;
+            if (d > reach) continue;
+            if (this.minAttackRange > 0 && d < this.minAttackRange) continue;
+            return enemy;
+        }
+        return null;
     }
 
     moveAwayFromTarget(dt, allUnits) {

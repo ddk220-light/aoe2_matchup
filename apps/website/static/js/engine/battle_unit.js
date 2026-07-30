@@ -22,6 +22,8 @@ import {
     CANVAS_WIDTH,
     CANVAS_HEIGHT,
     STUCK_PROGRESS_RATE,
+    PURSUIT_BAR_FRACTION,
+    PURSUIT_MIN_ADVANTAGE,
 } from "./constants.js";
 import { Projectile, classifyProjectile } from "./projectile.js";
 import { MeleeEffect } from "./melee_effect.js";
@@ -1532,7 +1534,27 @@ export class BattleUnit {
         // this is exactly the historical `- 0.5` literal, pinned by
         // tests/js/engine/pursuit.test.mjs.
         const newDist = this.distanceTo(this.target);
-        if (newDist >= this.lastDistToTarget - STUCK_PROGRESS_RATE * dt) {
+        // The bar can never exceed what this unit could PHYSICALLY close.
+        // Chasing a target that is itself running away closes the gap at the
+        // SPEED DIFFERENCE, so the flat bar brands honest, physically-maximal
+        // pursuit as "stuck": a Champion (1.06 t/s) chasing a Siege Onager
+        // (0.6 t/s) closes at 0.46 t/s, never clears 1.0 t/s, and blacklists
+        // every onager every 0.8 s -- melee literally cannot engage siege.
+        // Only an actively KITING target relaxes the bar, and only to
+        // PURSUIT_BAR_FRACTION of the achievable rate. A chaser slower than
+        // its fleeing target yields max(0, ...) === 0 and still blacklists,
+        // preserving re-targeting off uncatchable kiters.
+        let progressBar = STUCK_PROGRESS_RATE;
+        if (this.target.state === "kiting") {
+            const advantage = this.moveSpeed - this.target.moveSpeed;
+            if (advantage >= PURSUIT_MIN_ADVANTAGE) {
+                progressBar = Math.min(
+                    progressBar,
+                    advantage * PURSUIT_BAR_FRACTION,
+                );
+            }
+        }
+        if (newDist >= this.lastDistToTarget - progressBar * dt) {
             this.stuckTimer += dt;
         } else {
             this.stuckTimer = Math.max(0, this.stuckTimer - dt * 2);

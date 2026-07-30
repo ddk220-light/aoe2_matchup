@@ -22,7 +22,13 @@ function simStub(seed = 1) {
 test("derived stats match the legacy formulas", () => {
     const u = new BattleUnit("1-0", 1, STATS, "test", "Franks", simStub());
     assert.equal(u.attackRange, 5 * 30 + 5);      // tiles*TILE_SIZE + MELEE_RANGE_BUFFER
-    assert.equal(u.radius, 14);                   // round(10 + 0.2*20)
+    // E11 ground truth: the PHYSICS radius is the .dat's collision_size_x in
+    // tiles x TILE_SIZE, not the old `round(10 + outline*20)` pedestal (which
+    // gave this archer 14 px, 2.3x its true 6 px). This fixture carries no
+    // collision_size, so the identity fallback on outline applies: 0.2 * 30.
+    assert.equal(u.radius, 6);
+    // The SELECTION-CIRCLE size the renderer draws is unchanged.
+    assert.equal(u.drawRadius, 14);               // round(10 + 0.2*20)
     assert.equal(u.reloadTime, 2.0);              // 1/attack_speed
     assert.equal(u.moveSpeed, 0.96 * 30);
     assert.equal(u.accuracy, 0.9);
@@ -121,8 +127,12 @@ test("melee steady-state: hit-to-hit == reloadTime, delay paid once up front", (
     };
     const a = new BattleUnit("1-0", 1, swinger, "a", "Franks", sim);
     const b = new BattleUnit("2-0", 2, { ...STATS, hp: 100000 }, "b", "Goths", sim);
-    // 30px apart: inside attackRange(5) + both radii(14+14) = 33.
-    a.x = 0; a.y = 0; b.x = 30; b.y = 0;
+    // 15px apart: inside attackRange(5) + both radii(6+6) = 17. This used to
+    // be 30px, which fit the old inflated 14px radius (5+14+14 = 33) -- with
+    // E11's true 6px collision radii that start is OUT of reach, so the unit
+    // would spend its first tenths of a second walking in and the cadence
+    // measurement below would be reading the approach, not the swing.
+    a.x = 0; a.y = 0; b.x = 15; b.y = 0;
     sim.team1.push(a); sim.team2.push(b);
     assert.ok(!a.isRanged());
 
@@ -403,7 +413,9 @@ test("melee path pays no stand-and-shoot cost", () => {
         "champion", "Chinese", sim,
     );
     const b = new BattleUnit("2-0", 2, { ...STATS, hp: 1e9, attack_range: 0 }, "b", "Goths", sim);
-    a.x = 0; a.y = 0; b.x = 30; b.y = 0;
+    // 15px, not 30px -- see the E11 note in "melee steady-state" above: reach
+    // is attackRange(5) + both true collision radii (6+6) = 17px.
+    a.x = 0; a.y = 0; b.x = 15; b.y = 0;
     sim.team1.push(a); sim.team2.push(b);
     assert.ok(!a.isRanged());
 

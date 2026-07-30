@@ -19,8 +19,13 @@
 // The golden panel (tools/simjs/golden/panel.json) was captured with exactly that
 // order — reordering the loops would silently shift every spawn position.
 
-import { RELIC_MAX, RELIC_BONUS_UNITS } from "./constants.js";
-import { BattleUnit } from "./battle_unit.js";
+import {
+    RELIC_MAX,
+    RELIC_BONUS_UNITS,
+    CANVAS_WIDTH,
+    CANVAS_HEIGHT,
+} from "./constants.js";
+import { BattleUnit, physicsRadiusPx } from "./battle_unit.js";
 import { makeRng } from "./rng.js";
 import { Simulation } from "./sim.js";
 
@@ -56,10 +61,15 @@ function setupTeam(sim, teamNum, spec) {
     }
 
     const team = [];
-    const outlineSize = stats.outline_size || 0.2;
-    const unitRadius = Math.round(
-        10 + Math.min(outlineSize, 1.0) * 20,
-    );
+    // E11: the spawn column is laid out on the PHYSICS radius (the .dat's
+    // collision_size), the same number BattleUnit uses -- it used to be the
+    // old inflated outline radius, which had a visible consequence: 21 hussars
+    // got minSpacing = 18 px * 2.2 = 39.6 px, a 792 px column on a 600 px map,
+    // so a third of the army spawned off-map and was clamped into a pile on
+    // the bottom edge. At the true 7.5 px the natural spacing (~29 px, i.e.
+    // ~1 tile -- exactly the 1-tile grid the recordings start on) wins and the
+    // column fits.
+    const unitRadius = physicsRadiusPx(stats);
     const startX =
         teamNum === 1
             ? 30 + unitRadius
@@ -113,7 +123,7 @@ function setupTeam(sim, teamNum, spec) {
 
 // The engine's single public entry point: build a seeded Simulation with both
 // teams spawned. `teams` is [team1Spec, team2Spec] (see setupTeam above).
-export function createSimulation({ mapW = 900, mapH = 600, teams, seed }) {
+export function createSimulation({ mapW = CANVAS_WIDTH, mapH = CANVAS_HEIGHT, teams, seed }) {
     if (!Array.isArray(teams) || teams.length !== 2) {
         throw new Error("createSimulation needs exactly two team specs");
     }

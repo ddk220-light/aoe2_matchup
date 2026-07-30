@@ -171,11 +171,31 @@ export const KITE_COHESION_RAMP_TILES = 2.0;
 // every approach march, keeps today's geometry.
 
 // Fraction of the normal same-team minimum separation that an engaged pair is
-// allowed to compress to. 0.6 * 37 px = 22.2 px = 0.74 tiles, inside the tape's
-// 0.57-0.87 tile band and comfortably under the 34 px a second rank of
-// 1.0-tile-reach melee needs. Lower than ~0.45 and units start visually
-// occupying the same tile; higher than ~0.92 and the second rank never forms.
-export const COMBAT_PACK_FACTOR = 0.6;
+// allowed to compress to.
+//
+// E11 TURNED THIS OFF (0.6 -> 1.0). Everything the block above describes was
+// true, but the diagnosis was one level too shallow: the engine's floor was
+// 37 px because its radius came from `outline_size` via a formula with a 10 px
+// pedestal, and the .dat's real collision_size makes a mounted unit 7.5 px, not
+// 18 px. The uncompressed floor is now 7.5 + 7.5 + 1 = 16 px = 0.53 tiles,
+// which is already INSIDE the tape's measured 0.57-0.87 tile band -- so the
+// compression this constant applied was pure double-counting, and at 0.6 it
+// squeezed engaged pairs to 0.32 tiles, well below anything the tapes show.
+//
+// Measured over the full 155-fight corpus at the true radii (winners matched /
+// mean per-seed agreement / mean |HP-remaining delta| in points):
+//
+//     factor          0.6            0.8            1.0
+//     whole corpus   124/155 .825   134/155 .852   135/155 .864
+//     basic melee     14/15  .930    14/15  .933    14/15  .930
+//     basic mean|d|    5.65           4.81           4.16
+//     all melee        7.88           7.43           6.37
+//     canaries       2 flipped      all held       all held
+//
+// 1.0 wins on every axis. The E8 machinery is left in place and wired up (the
+// predicate, both floors and their tests still work) so a future experiment can
+// re-open it cheaply -- but at 1.0 it is a documented no-op.
+export const COMBAT_PACK_FACTOR = 1.0;
 
 // How far PAST its own effective reach (in tiles) a unit may be from its living
 // target and still count as "in the fight" for packing. Load-bearing: the rank

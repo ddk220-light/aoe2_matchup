@@ -48,6 +48,51 @@ export function setArmorClassNames(map) {
     armorClassNames = map || {};
 }
 
+// ===== UNIT RADII (E11) =====
+// Two different radii, deliberately. They used to be one number and that was
+// the bug:
+//
+//   PHYSICS radius (`unit.radius`) -- the .dat's `collision_size_x`, in tiles.
+//     Decides packing, contact distance and melee reach. Nearly uniform across
+//     the roster: 0.20 tiles on foot, 0.25 tiles for ANYTHING mounted (paladin,
+//     hussar, camel, steppe lancer, cavalry archer AND the battle elephant),
+//     0.50 for the mangonel/scorpion lines.
+//   DRAW radius (`unit.drawRadius`) -- the .dat's `outline_size_x`, i.e. the
+//     selection circle. Only the renderer reads it, so an elephant still LOOKS
+//     like an elephant.
+//
+// The old formula, `Math.round(10 + min(outline, 1) * 20)`, was neither: a
+// 10 px pedestal on top of a 20 px/tile scale gave infantry 14 px (2.3x their
+// true 6 px), cavalry 18 px (1.5x their true 7.5 px) and elephants 20 px
+// (2.7x) -- inflating everyone AND flattening the class differences into
+// 14:18:20 where the truth is 6:7.5:7.5. The tapes' own p10 same-owner
+// nearest-neighbour distance (all 155 recordings) is 0.394-0.400 tiles for
+// foot units, 0.43-0.50 for every mounted unit including the elephant, and
+// exactly 1.000 for scorpions/onagers -- 2 x collision_size, in every class.
+//
+// `collision_size` arrives on the combat dict from
+// aoe2x/sim/combat_unit_loader.py (which owns the .dat readout and the
+// class-based derivation), so every real unit -- API, lab harness, headless,
+// calibration -- has it. The fallback is only reachable for hand-built test
+// fixtures, and it is deliberately the IDENTITY on outline rather than a
+// clamp: identity is right for everything on foot and for the whole
+// mangonel/scorpion line, and merely too generous for mounted units, whereas
+// clamping at 0.25 would halve a scorpion.
+const MIN_PHYSICS_RADIUS_PX = 5;
+
+export function physicsRadiusPx(stats) {
+    const tiles = stats.collision_size != null
+        ? stats.collision_size
+        : (stats.outline_size || 0.2);
+    return Math.max(MIN_PHYSICS_RADIUS_PX, tiles * TILE_SIZE);
+}
+
+export function drawRadiusPx(stats) {
+    // Unchanged from the pre-E11 formula on purpose: this is what the canvas
+    // has always drawn, and shrinking the sprites was never the point.
+    return Math.round(10 + Math.min(stats.outline_size || 0.2, 1.0) * 20);
+}
+
 // Median of `pick(unit)` over the LIVING units of `units`, optionally restricted
 // to one team. Returns null when nobody is left. Median, not max, on purpose: it
 // is the statistic ddkSquareV25's own `gKiteOK` uses ("our range out-ranges the
@@ -230,12 +275,11 @@ export class BattleUnit {
 
         this.x = 0;
         this.y = 0;
-        // Scale radius based on unit outline_size
-        // infantry(0.2)->14, cavalry(0.4)->18, paladin(0.5)->20, mangonel(0.5)->20, ram(0.8)->26, treb(1.0)->30
-        const outlineSize = stats.outline_size || 0.2;
-        this.radius = Math.round(
-            10 + Math.min(outlineSize, 1.0) * 20,
-        );
+        // Physics radius = the .dat's true collision_size; draw radius = the
+        // selection circle. See the physicsRadiusPx/drawRadiusPx block above.
+        // infantry 6 px, anything mounted 7.5 px, mangonel/scorpion line 15 px.
+        this.radius = physicsRadiusPx(stats);
+        this.drawRadius = drawRadiusPx(stats);
         this.target = null;
         this.state = "idle";
         // Combat-pack flag (E8) -- refreshed once per tick by
@@ -1481,7 +1525,7 @@ export class BattleUnit {
             this.damageNumbers.push({
                 value: "DODGE",
                 x: this.x,
-                y: this.y - this.radius - 5,
+                y: this.y - this.drawRadius - 5,
                 alpha: 1.0,
             });
             return;
@@ -1496,7 +1540,7 @@ export class BattleUnit {
             this.damageNumbers.push({
                 value: "BLOCK",
                 x: this.x,
-                y: this.y - this.radius - 5,
+                y: this.y - this.drawRadius - 5,
                 alpha: 1.0,
             });
             return;

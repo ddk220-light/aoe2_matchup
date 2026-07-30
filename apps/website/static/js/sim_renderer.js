@@ -273,6 +273,13 @@ function drawEffect(ctx, e) {
 function drawUnit(ctx, unit, assets, sim, pal) {
     if (unit.state === "dead") ctx.globalAlpha = 0.3;
 
+    // VISUAL radius, not the physics one (E11). `unit.radius` is the .dat's
+    // true collision_size -- 6 px on foot, 7.5 px mounted -- which is correct
+    // for packing and reach but far too small to draw a sprite at. The unit's
+    // selection-circle size lives on `drawRadius`, so an elephant still looks
+    // like an elephant while colliding like a horse.
+    const drawR = unit.drawRadius != null ? unit.drawRadius : unit.radius;
+
     const img = assets.img;
     const imgReady =
         img && img.complete && img.naturalWidth > 0;
@@ -283,7 +290,7 @@ function drawUnit(ctx, unit, assets, sim, pal) {
         // 2.8*radius (a bit bigger than the unit footprint for readability),
         // scaling by the LARGER sprite dimension so wide/tall off-shapes stay
         // fully contained and never explode in one axis.
-        const box = unit.radius * 2.8;
+        const box = drawR * 2.8;
         // Attack tell: a warm glow + slight lunge that pulses out over the
         // attack timer, so a swing/shot is unmistakable. atk goes 1 -> 0.
         const atk =
@@ -361,7 +368,7 @@ function drawUnit(ctx, unit, assets, sim, pal) {
     } else {
         // Legacy ring + circular portrait (fallback units / image not loaded yet)
         ctx.beginPath();
-        ctx.arc(unit.x, unit.y, unit.radius + 2, 0, Math.PI * 2);
+        ctx.arc(unit.x, unit.y, drawR + 2, 0, Math.PI * 2);
         let ringColor = unit.team === 1 ? "#3498db" : "#e74c3c";
         if (unit.attackAnimTimer > 0) ringColor = "#ffffff";
         else if (unit.state === "kiting")
@@ -372,19 +379,19 @@ function drawUnit(ctx, unit, assets, sim, pal) {
         if (imgReady) {
             ctx.save();
             ctx.beginPath();
-            ctx.arc(unit.x, unit.y, unit.radius, 0, Math.PI * 2);
+            ctx.arc(unit.x, unit.y, drawR, 0, Math.PI * 2);
             ctx.clip();
             ctx.drawImage(
                 img,
-                unit.x - unit.radius,
-                unit.y - unit.radius,
-                unit.radius * 2,
-                unit.radius * 2,
+                unit.x - drawR,
+                unit.y - drawR,
+                drawR * 2,
+                drawR * 2,
             );
             ctx.restore();
         } else {
             ctx.beginPath();
-            ctx.arc(unit.x, unit.y, unit.radius, 0, Math.PI * 2);
+            ctx.arc(unit.x, unit.y, drawR, 0, Math.PI * 2);
             ctx.fillStyle = unit.team === 1 ? "#2980b9" : "#c0392b";
             ctx.fill();
         }
@@ -394,10 +401,10 @@ function drawUnit(ctx, unit, assets, sim, pal) {
 
     // HP bar
     if (unit.state !== "dead") {
-        const barWidth = unit.radius * 2;
+        const barWidth = drawR * 2;
         const barHeight = 4;
-        const barX = unit.x - unit.radius;
-        const barY = unit.y - unit.radius - 10;
+        const barX = unit.x - drawR;
+        const barY = unit.y - drawR - 10;
         ctx.fillStyle = "rgba(0,0,0,0.45)";
         ctx.fillRect(barX, barY, barWidth, barHeight);
         const hpPercent = unit.currentHp / unit.maxHp;

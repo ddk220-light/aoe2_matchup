@@ -1728,11 +1728,10 @@ export class BattleUnit {
     //   4. this side's MEDIAN attack range strictly out-ranges the enemy's --
     //      the same predicate as the recording AI's `gKiteOK`. Melee-vs-melee
     //      is 0 > 0 = false, so those fights are untouched too;
-    //   5. this side has a MEDIAN SPEED MARGIN over the enemy side. Circling
-    //      costs radial recession (a unit deflected by angle t only backs away
-    //      at cos(t) of its speed), so it is a maneuver only a kiter with speed
-    //      to spare can afford. Below the margin the orbit term ramps to zero
-    //      and this returns null, leaving the fight bit-identical to baseline.
+    //   5. (E10: NO LONGER A GATE -- see below.) The median speed margin now
+    //      scales the ORBIT TERM ONLY, ramping it to zero for a side with no
+    //      speed to spare. Cohesion and the shared retreat basis apply to every
+    //      group-kiting side regardless of speed.
     //
     //      HONESTY NOTE: clause 5 is NOT a model of ddkSquareV25 -- that script
     //      kites on a RANGE test alone and never checks speed. It compensates
@@ -1749,6 +1748,39 @@ export class BattleUnit {
     //      46.2 px/s outruns every melee chaser in the corpus, while every foot
     //      archer sits at 28.8 px/s and outruns none of them.
     //
+    // E10 -- SHARED RETREAT BASIS, and why clause 5 stopped being a hard gate.
+    // Forensics on the two broken families (champion__vs__heavy_cav_archer
+    // seed 1, hand_cannoneer__vs__heavy_camel seed 1; 5 s bins, mid-fight):
+    //
+    //   heading coherence of the kiting ball   0.28-0.69   (1.0 = one direction)
+    //   angle between "flee from MY target"
+    //     and "flee from the enemy CENTROID"   mean 44-74 deg, max 98-179 deg
+    //
+    // The ball was never DISPERSING -- E8's packing already holds its
+    // nearest-neighbour spacing at the tape's 0.6-0.9 tiles. It was MILLING:
+    // twelve Heavy Cav Archers each fleeing their OWN target ran twelve
+    // different ways, the group's centroid stopped receding (radius of gyration
+    // collapsed to 0.8 tiles while 4-8 champions stayed in contact from t=15 s
+    // to the end), and the melee side simply enveloped a stationary blob.
+    //
+    // So a group-kiting unit now backs away from the ENEMY CENTROID, not from
+    // its own target. One shared threat direction per side per tick turns
+    // twelve individual flights into one translating ball -- which is what the
+    // tape's ddkSquareV25 patrol produces for free, because it steers the whole
+    // army with one order. Costs nothing and needs no constant: it is a change
+    // of BASIS, not an added force. `moveAwayFromTarget` falls back to the
+    // per-target radial whenever this returns null, so every gated-out fight
+    // (siege, melee, non-out-ranging sides) is untouched.
+    //
+    // Clause 5 stopped being a hard gate for the same reason: it was returning
+    // null for exactly the sides that need cohesion most -- every FOOT archer,
+    // which by construction never out-runs its chaser (hand_cannoneer 28.8 px/s
+    // vs heavy_camel 48.0). Those sides got no cohesion and no shared retreat at
+    // all. The orbit term still ramps to zero for them, so the arena-mismatch
+    // argument above is preserved exactly; only the two group-forming terms
+    // (which cannot manufacture distance, and so cannot let a kiter circle out
+    // of reach forever) now apply.
+    //
     // The ramp scale is PURSUIT_MIN_ADVANTAGE, reused rather than duplicated:
     // it is already defined as the speed margin below which a pursuit is a
     // stalemate not worth committing to, which is exactly the threshold that
@@ -1764,8 +1796,10 @@ export class BattleUnit {
 
         const ourSpeed = medianLiving(allUnits, this.team, pickSpeed);
         const theirSpeed = medianLiving(enemies, null, pickSpeed);
-        const margin = ourSpeed - theirSpeed;
-        if (!(margin > 0)) return null;
+        // Clamped at 0 rather than returning null (E10): a side with no speed
+        // margin gets no orbit, but still gets cohesion and the shared retreat
+        // basis below.
+        const margin = Math.max(0, ourSpeed - theirSpeed);
         const orbit =
             KITE_TANGENTIAL_WEIGHT *
             Math.min(1, margin / PURSUIT_MIN_ADVANTAGE);
@@ -1832,20 +1866,37 @@ export class BattleUnit {
         return {
             x: orbit * tx + KITE_COHESION_WEIGHT * cx,
             y: orbit * ty + KITE_COHESION_WEIGHT * cy,
+            // Shared retreat basis (E10): the unit vector from the enemy
+            // centroid to this unit -- identical in SOURCE for every unit on the
+            // side, so the whole ball backs away along one bearing instead of
+            // twelve. `rlen === 0` (this unit sits exactly on the enemy
+            // centroid) leaves it zero and moveAwayFromTarget falls back to the
+            // per-target radial.
+            rx: rlen > 0 ? rx / rlen : 0,
+            ry: rlen > 0 ? ry / rlen : 0,
         };
     }
 
     moveAwayFromTarget(dt, allUnits, steering = null) {
         if (!this.target) return;
-        let dx = this.x - this.target.x;
-        let dy = this.y - this.target.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 1) {
-            dx = this.team === 1 ? -1 : 1;
-            dy = 0;
+        let dx, dy;
+        // Group kiters back away from the SHARED threat direction (the enemy
+        // centroid) rather than from their own target -- see kiteSteering's
+        // E10 note. Everyone else keeps the per-target radial exactly.
+        if (steering && (steering.rx !== 0 || steering.ry !== 0)) {
+            dx = steering.rx;
+            dy = steering.ry;
         } else {
-            dx /= dist;
-            dy /= dist;
+            dx = this.x - this.target.x;
+            dy = this.y - this.target.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 1) {
+                dx = this.team === 1 ? -1 : 1;
+                dy = 0;
+            } else {
+                dx /= dist;
+                dy /= dist;
+            }
         }
         // Group-kite steering (null => untouched pre-E5a behaviour).
         if (steering) {

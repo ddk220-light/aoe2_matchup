@@ -63,26 +63,34 @@ export const PURSUIT_MIN_ADVANTAGE = 7.5;
 // 1.5 -> 56 deg, 2.0 -> 63 deg. Higher = more circling, less distance gained,
 // so chasers keep contact longer.
 //
-// Pinned by the champion__vs__heavy_cav_archer REPEAT FAMILY -- the one place
-// this weight's effect is observable against the game's own run-to-run noise.
-// That matchup was recorded four times and the TAPE ITSELF disagrees: the Heavy
-// Cav Archers sweep in r2/r3/r4 (9, 7 and 9 of 12 surviving) but LOSE the base
-// recording (0 of 12; the champions end with 4). Ground truth is therefore "HCA
-// favoured roughly 3:1", not "HCA always win". The sim's share of seeds the HCA
-// take slides smoothly with this weight:
+// Pinned by the champion__vs__heavy_cav_archer REPEAT FAMILY (E5a tuned it on
+// 4 recordings; the corpus now has 9, and the tape gives the Heavy Cav Archers
+// 8 of them) held against the halberdier__vs__heavy_cav_archer family (6
+// recordings, halberdiers 6 of 6). Those two straddle this knob and nothing else
+// does: the chasers are near-identical in speed (champion 1.06, halberdier
+// 1.10 t/s), so what has to separate the outcomes is the halberdier's
+// anti-cavalry bonus, not the steering.
 //
-//     weight    1.0    1.25   1.5    1.75
-//     HCA seeds 100%    95%    65%    30%      (tape family: 75%)
+// RE-TUNED 1.5 -> 0.8 IN E10, because the E10 shared retreat basis (see
+// kiteSteering) changed what this weight DOES. Pre-E10 each kiter orbited a
+// shared centroid while fleeing its own target, so the two terms fought each
+// other and a big weight was needed to get any group rotation at all. With one
+// shared retreat bearing the orbit is no longer fighting anything, and 1.5
+// over-rotates: the ball trades so much radial recession for angle that the
+// chasers close on it. Measured, 10 seeds x both families, at
+// KITE_COHESION_WEIGHT 3.0 (share of seeds the TAPE's winner takes):
 //
-// 1.5 is the value whose SEED DISTRIBUTION lands nearest the tape's own split.
-// 1.0/1.25 win the median winner in 3 of the 4 repeats but at ~100% confidence
-// the tape does not support; 1.75 tips the family the other way and loses three
-// winners outright. 1.5 is also the best on aggregate error over the 20-fight
-// cav-archer subset (gated mismatches 125 -> 93, against 99 at 1.25 and 103 at
-// 1.75). Do NOT re-tune this by minimising mismatches on the base recording
-// alone: that fight is the 1-of-4 outlier, and fitting it (this experiment's
-// first pass did) picks 2.5 and breaks the other three repeats.
-export const KITE_TANGENTIAL_WEIGHT = 1.5;
+//     weight            0.5   0.75   0.8    1.0    1.25   1.5    2.0
+//     champ family HCA  0.83  0.67   0.80   0.33   0.00   0.00   0.00  (tape 0.89)
+//     halb family halb  0.50  0.83   1.00   1.00   1.00   1.00   1.00  (tape 1.00)
+//
+// 0.8 is the only value that satisfies BOTH: the largest weight the champion
+// family survives and the smallest at which the halberdier family is still
+// perfect. Confirmed at 20 seeds -- champion family HCA 162/180 = 0.90,
+// halberdier family halb 120/120 = 1.00. Below 0.8 the halberdiers collapse
+// (they have to catch the ball, and they win by damage once they do); above it
+// the champions catch it too and the tape's 8-of-9 flips.
+export const KITE_TANGENTIAL_WEIGHT = 0.8;
 
 // Cohesion weight -- pull toward the side's own living centroid. Balances
 // against separation to set the formation's equilibrium spacing: too low and
@@ -91,15 +99,31 @@ export const KITE_TANGENTIAL_WEIGHT = 1.5;
 // nearest-neighbour spacing: two 14 px-radius archers bottom out at
 // radius+radius+1 = 29 px = 0.97 tiles in resolveCollisions.
 //
-// This term is nearly invisible to the 20-seed scorer (subset gated
-// mismatches: 0.0 -> 49, 1.0 -> 50, 2.0 -> 49, 3.0 -> 48) but it is decisive
-// for the tape signature the scorer cannot see. heavy_cav_archer__vs__
-// elite_elephant seed 1, same tangential weight: with cohesion the ball holds
-// (nearest-neighbour 1.32 -> 1.26 tiles, COMPRESSING as the tape does) and the
-// fight ends at 59.7 s; without it the last survivors scatter to opposite
-// corners (nearest-neighbour blows out past 20 tiles) and the fight grinds on
-// to 555.6 s. Kept at 2.0 on that evidence, not on the scoreboard.
-export const KITE_COHESION_WEIGHT = 2.0;
+// This term used to be nearly invisible to the 20-seed scorer (subset gated
+// mismatches: 0.0 -> 49, 1.0 -> 50, 2.0 -> 49, 3.0 -> 48) and was kept at 2.0
+// on a tape-signature argument instead: heavy_cav_archer__vs__elite_elephant
+// seed 1, with cohesion the ball holds (nearest-neighbour 1.32 -> 1.26 tiles,
+// COMPRESSING as the tape does) and the fight ends at 59.7 s; without it the
+// last survivors scatter to opposite corners and it grinds to 555.6 s.
+//
+// RE-TUNED 2.0 -> 3.0 IN E10. It stopped being invisible the moment the gate
+// widened: pre-E10 the whole steering vector was nulled for any side without a
+// speed margin, so every FOOT-archer ball -- the ones that mill worst, because
+// they cannot outrun anything -- got no cohesion at all. Now that they do, this
+// weight is what decides whether the ball holds together while it backs away.
+// Measured, 10 seeds x three families, at KITE_TANGENTIAL_WEIGHT 0.8 (share of
+// seeds the TAPE's winner takes):
+//
+//     weight             1.0    1.5    2.0    3.0    4.0
+//     champ-vs-HCA       0.10   0.40   0.80   0.80   0.80   (tape 0.89)
+//     halb-vs-HCA        1.00   0.80   0.90   1.00   1.00   (tape 1.00)
+//     HC-vs-camel        0.30   1.00   1.00   1.00   1.00   (tape 1.00)
+//
+// 3.0 is the smallest weight where all three are simultaneously at their best;
+// 2.0 costs the halberdier canary a tenth and 4.0 buys nothing. It stays well
+// clear of "units pile into the collision floor" -- resolveCollisions' hard
+// floor is unchanged and E8's packing already sets the equilibrium spacing.
+export const KITE_COHESION_WEIGHT = 3.0;
 
 // Distance (tiles) at which the cohesion pull reaches full strength; inside it
 // the pull ramps down linearly to zero at the centroid. Without the ramp a unit

@@ -22,20 +22,29 @@ Two things about how drops actually arrive, learned from real batches:
    fight's own *content* (a hash over its raw `damage`/`units`/`missiles`
    bytes), never on the zip's hash — otherwise every cumulative drop would
    re-ingest every earlier fight as "new".
-2. **The recorder already gives repeat recordings distinct identities.**
-   When the operator re-runs a matchup because a result looked odd, the
-   repeat gets an explicit `_r2`/`_r3`/`_rN` tag suffix (e.g.
-   `champion__vs__arbalester` and `champion__vs__arbalester_r3` are two
-   separate recordings of the same matchup). So the tag itself — suffix
-   included — IS the unique recording identity; no synthetic numbering is
-   needed. Each fight's manifest entry stores both `run_id` (the tag
-   exactly as recorded) and `matchup` (the tag with any trailing `_rN`
-   stripped), so downstream scoring can group repeat runs of one matchup —
-   that grouping is the only measurement of the real game's own
-   run-to-run variance, so repeats are always additive, never merged or
-   overwritten. If the same `run_id` ever shows up with DIFFERENT content
-   (a recorder bug, not the cumulative-redelivery case), ingestion refuses
-   to overwrite the existing entry and reports the conflict loudly instead.
+2. **The recorder USUALLY gives repeat recordings distinct identities, but
+   not always.** When the operator re-runs a matchup because a result
+   looked odd, the repeat normally gets an explicit `_r2`/`_r3`/`_rN` tag
+   suffix (e.g. `champion__vs__arbalester` and `champion__vs__arbalester_r3`
+   are two separate recordings of the same matchup) — the tag itself,
+   suffix included, IS the unique recording identity, no synthetic
+   numbering needed. Each fight's manifest entry stores both `run_id` (the
+   tag exactly as recorded, or reassigned — see below) and `matchup` (the
+   tag with any trailing `_rN` stripped), so downstream scoring can group
+   repeat runs of one matchup — that grouping is the only measurement of
+   the real game's own run-to-run variance, so repeats are always
+   additive, never merged or overwritten. Sometimes, though, the recorder
+   reuses an existing tag for a genuine new recording instead of suffixing
+   it (observed in practice: `hand_cannoneer__vs__elite_elephant` recorded
+   twice, 152.31s and 129.79s, same tag both times). When a `run_id`
+   already in the manifest shows up again with DIFFERENT content,
+   `ingest_zip` checks whether the two recordings are of the same matchup
+   (same two unit names) — if so, it's a genuine repeat with a reused tag,
+   and it gets auto-assigned the next free `<matchup>_rN` slot rather than
+   being overwritten or discarded (every recording is a variance sample we
+   want to keep). If the composition ALSO differs, that's an actual tag
+   collision between two unrelated fights, not a repeat — ingestion
+   refuses to guess and reports the conflict loudly instead.
 
 Do not import this module's callers into ``aoe2x/sim/simulation_real.py`` or
 ``aoe2x/dbgen/config_combat.py`` territory: those files are byte-hashed into
@@ -99,6 +108,9 @@ _REF_UNIT_COLUMNS = [
     "pass_through_percent",
     "splash_radius",
     "is_siege_projectile",
+    "trample_percent",
+    "trample_radius",
+    "trample_flat_damage",
 ]
 
 _COMPLICATING_ATTACK_FIELDS = (
@@ -112,17 +124,29 @@ _COMPLICATING_ATTACK_FIELDS = (
     "execute_damage_per_step",
     "dodge_shield_max",
     "pass_through_percent",
-    # NOTE: splash_on_hit_radius/trample_percent are deliberately NOT here —
-    # both were empirically verified (Burmese Elite Battle Elephant) to
-    # leave the PRIMARY target's hit damage matching the simple formula; the
-    # tape's modal damage naturally picks out that primary-hit value.
-    # splash_radius is different: it's a genuine area-of-effect projectile
-    # blast (siege units), where even the "closest" recorded hit is a
-    # distance-falloff value the additive class formula can't approximate
-    # (observed on Aztecs Siege Onager: formula predicts ~72-73, tape modal
-    # is 1 — most recorded hits are blast-edge splash onto bystanders).
+    # splash_radius: a genuine area-of-effect projectile blast (siege
+    # units), where even the "closest" recorded hit is a distance-falloff
+    # value the additive class formula can't approximate (observed on
+    # Aztecs Siege Onager: formula predicts ~72-73, tape modal is 1 — most
+    # recorded hits are blast-edge splash onto bystanders).
     "splash_radius",
     "is_siege_projectile",
+    # trample_percent/trample_radius/trample_flat_damage: whether the tape's
+    # modal hit damage lands on the primary-hit value or the trample-splash
+    # value is a function of formation density, not something derivable
+    # here — it depends on how packed the victims are when the trampler
+    # swings. Elite Battle Elephant vs a spread-out Hand Cannoneer line
+    # (spike fight) happened to have the primary hit as the mode; Elite
+    # Battle Elephant vs a packed Heavy Camel Rider formation
+    # (heavy_camel__vs__elite_elephant) had the SPLASH fraction as the mode
+    # (observed modal=3.75 == 0.25 * final_attack=15, i.e. trample_percent).
+    # Comparing that splash value against the primary-hit formula is
+    # apples-to-oranges, so any non-zero trample field skips the check
+    # entirely rather than risk trusting a coincidence that doesn't
+    # generalize.
+    "trample_percent",
+    "trample_radius",
+    "trample_flat_damage",
 )
 
 
@@ -146,7 +170,9 @@ class IngestFailures(RuntimeError):
         super().__init__(message)
         self.successes = successes  # run_ids that succeeded (or were already-ingested no-ops)
         self.failures = failures  # (tag, error message) for fights that raised during processing
-        self.conflicts = conflicts or []  # (run_id, message) for same-run_id/different-content clashes
+        self.conflicts = conflicts or []  # (run_id, message) for true tag collisions (composition also differs) —
+        # a same-run_id/different-content/SAME-composition case is a reused-tag repeat, not a conflict: it gets
+        # auto-assigned a new <matchup>_rN run_id and ingested normally instead of landing here.
 
 
 # --------------------------------------------------------------------------
@@ -174,6 +200,58 @@ def _matchup_for_tag(tag: str) -> str:
     `_r2`/`_r3`/`_rN` repeat-recording suffix stripped. A tag with no such
     suffix IS its own matchup (first/only recording so far)."""
     return _RUN_SUFFIX_RE.sub("", tag)
+
+
+def _same_matchup_composition(existing_entry: dict[str, Any], new_composition: dict[str, dict[str, int]]) -> bool:
+    """True if `new_composition` (a fresh meta.json's `composition`) names
+    the same two units as `existing_entry`'s `side1`/`side2`, ignoring
+    owner numbers and counts. Used to tell a genuine repeat recording
+    (recorder reused a tag instead of adding its own `_rN` suffix) apart
+    from an actual mix-up (same tag string, a completely different fight —
+    which must never be auto-merged)."""
+    existing_names = {existing_entry["side1"]["unit_name"], existing_entry["side2"]["unit_name"]}
+    new_names = {name for side_units in new_composition.values() for name in side_units}
+    return existing_names == new_names
+
+
+def _find_by_content_in_matchup(
+    matchup: str, content_hash: str, fights_by_run_id: dict[str, dict[str, Any]]
+) -> dict[str, Any] | None:
+    """An existing entry anywhere in `matchup`'s family (base tag or any
+    `_rN` repeat) whose content_hash already matches, if any.
+
+    Needed because a reused-tag repeat gets stored under a REASSIGNED
+    run_id (not the raw tag) — so a later redelivery of that exact content
+    (e.g. the same drop ingested twice) must be recognized as a no-op by
+    searching the whole matchup family, not just the literal `run_id ==
+    tag` slot (which still holds the OLDER recording and would otherwise
+    look like yet another new repeat every time, minting an unbounded
+    string of identical `_rN` duplicates).
+    """
+    for f in fights_by_run_id.values():
+        if f.get("matchup") == matchup and f.get("content_hash") == content_hash:
+            return f
+    return None
+
+
+def _next_available_run_id(matchup: str, fights_by_run_id: dict[str, dict[str, Any]]) -> str:
+    """The next free `<matchup>` / `<matchup>_rN` slot, given the entries
+    already recorded for this matchup. Used when the recorder reuses an
+    existing tag for a genuine new recording instead of suffixing it
+    itself — see ingest_zip's reused-tag handling."""
+    numbers = set()
+    suffix_re = re.compile(rf"^{re.escape(matchup)}_r(\d+)$")
+    for f in fights_by_run_id.values():
+        if f.get("matchup") != matchup:
+            continue
+        if f["run_id"] == matchup:
+            numbers.add(1)
+        else:
+            m = suffix_re.match(f["run_id"])
+            if m:
+                numbers.add(int(m.group(1)))
+    next_n = max(numbers, default=0) + 1
+    return matchup if next_n == 1 else f"{matchup}_r{next_n}"
 
 
 def _fight_content_hash(decoded_dir: Path, tag: str) -> str:
@@ -464,17 +542,23 @@ def _process_fight(
     content_hash: str,
     zip_sha256: str,
     zip_path: Path,
+    run_id: str | None = None,
 ) -> dict[str, Any]:
     """Resolve, cross-validate, and stage tape files for a single fight.
 
-    `run_id` is the tag itself (the recorder already gives each recording,
-    including repeats, a unique tag — `_r2`/`_r3`/... suffix included). This
-    function raises on any failure; it only touches the filesystem (tape
-    copy) after both sides have fully validated, so a failing fight never
-    leaves a half-copied tape directory behind (and never leaves a manifest
-    entry).
+    `run_id` defaults to the tag itself — the recorder normally gives each
+    recording, including repeats, a unique tag (`_r2`/`_r3`/... suffix
+    included). It is passed explicitly (and differs from `tag`) only when
+    the recorder reused an existing tag for a genuine new recording and
+    `ingest_zip` had to assign a fresh `<matchup>_rN` slot itself (see the
+    "reused tag" handling there) — `matchup` is still always derived from
+    the raw `tag`, so the reassigned run still groups under the right
+    matchup. This function raises on any failure; it only touches the
+    filesystem (tape copy) after both sides have fully validated, so a
+    failing fight never leaves a half-copied tape directory behind (and
+    never leaves a manifest entry).
     """
-    run_id = tag
+    run_id = run_id if run_id is not None else tag
     meta = json.loads((decoded_dir / f"{tag}.meta.json").read_text(encoding="utf-8"))
     units_rows = _read_jsonl_gz(decoded_dir / f"{tag}.units.jsonl.gz")
     damage_path = decoded_dir / f"{tag}.damage.jsonl.gz"
@@ -533,9 +617,9 @@ def _process_fight(
         raise
 
     return {
-        "tag": tag,
+        "tag": run_id,  # kept identical to run_id (see module docstring); NOT necessarily the raw recorded tag
         "run_id": run_id,
-        "matchup": _matchup_for_tag(tag),
+        "matchup": _matchup_for_tag(tag),  # derived from the RAW tag, so a reassigned run_id still groups correctly
         "content_hash": content_hash,
         "zip_sha256": zip_sha256,
         "drop": str(DROPS_DIR / zip_path.name),
@@ -566,10 +650,14 @@ def ingest_zip(zip_path: str) -> list[str]:
     damage/units/missiles bytes), not the zip's hash: later drops are
     cumulative snapshots that re-deliver earlier fights byte-identically
     inside a new archive, and that redelivery must be a silent no-op. If a
-    `run_id` already in the manifest shows up again with DIFFERENT content
-    (a genuine recorder conflict, not cumulative redelivery), the existing
-    entry is left untouched and the conflict is reported loudly afterward
-    via `IngestFailures.conflicts` — never silently discarded or overwritten.
+    `run_id` already in the manifest shows up again with DIFFERENT content,
+    that's either (a) the recorder reusing a tag for a genuine new
+    recording — detected by the two sides' unit names still matching the
+    existing entry — in which case the new recording is assigned the next
+    free `<matchup>_rN` slot and ingested normally (never discarded, never
+    overwriting the earlier one), or (b) the composition ALSO differs, a
+    real tag collision between two unrelated fights, which is reported
+    loudly afterward via `IngestFailures.conflicts` and never guessed at.
 
     Each fight is processed independently (per-fight isolation): one fight
     failing to resolve/validate does not block the others in the same
@@ -616,20 +704,62 @@ def ingest_zip(zip_path: str) -> list[str]:
             )
 
         for tag in tags:
-            run_id = tag  # the recorder's tag IS the unique recording identity
+            run_id = tag  # the recorder's tag is normally the unique recording identity
             content_hash = _fight_content_hash(decoded_dir, tag)
             existing = fights_by_run_id.get(run_id)
+            matchup = _matchup_for_tag(tag)
+
+            if existing is not None and existing.get("content_hash") == content_hash:
+                # Cumulative redelivery of an already-ingested fight — no-op.
+                run_ids.append(run_id)
+                continue
+
+            already_ingested = _find_by_content_in_matchup(matchup, content_hash, fights_by_run_id)
+            if already_ingested is not None:
+                # This exact content is already in the manifest under a
+                # REASSIGNED run_id from an earlier reused-tag repeat (the
+                # literal run_id==tag slot holds a different, older
+                # recording) — redelivery of it must still be a no-op.
+                run_ids.append(already_ingested["run_id"])
+                continue
 
             if existing is not None:
-                if existing.get("content_hash") == content_hash:
-                    # Cumulative redelivery of an already-ingested fight — no-op.
-                    run_ids.append(run_id)
+                # Same run_id, different content. Two possibilities: (a) the
+                # recorder re-ran this matchup but reused the tag instead of
+                # suffixing its own repeat (composition — the two unit names
+                # — still matches: a genuine variance sample we must keep,
+                # not discard), or (b) an actual conflict (same tag string,
+                # different fight entirely) that must never be auto-merged.
+                new_meta = json.loads((decoded_dir / f"{tag}.meta.json").read_text(encoding="utf-8"))
+                if _same_matchup_composition(existing, new_meta["composition"]):
+                    reassigned_run_id = _next_available_run_id(matchup, fights_by_run_id)
+                    logger.warning(
+                        "ingest_zip: run_id=%r reused for a new recording of the same matchup "
+                        "(composition matches, content_hash differs) — recorder didn't suffix "
+                        "its own repeat; assigning run_id=%r instead of overwriting the existing "
+                        "entry or discarding this one",
+                        run_id, reassigned_run_id,
+                    )
+                    try:
+                        entry = _process_fight(
+                            tag, decoded_dir, matchups, content_hash, zip_sha256, zip_path,
+                            run_id=reassigned_run_id,
+                        )
+                    except Exception as exc:  # noqa: BLE001 - isolate one bad fight
+                        logger.error("ingest_zip: fight tag=%r run_id=%r FAILED: %s", tag, reassigned_run_id, exc)
+                        failures.append((tag, str(exc)))
+                        continue
+                    fights_by_run_id[reassigned_run_id] = entry
+                    run_ids.append(reassigned_run_id)
                 else:
                     msg = (
                         f"run_id={run_id!r} already in manifest with content_hash="
-                        f"{existing.get('content_hash')!r}, but this drop's content_hash="
-                        f"{content_hash!r} differs — refusing to overwrite (never seen this "
-                        f"recorder produce a genuine same-run_id content change)"
+                        f"{existing.get('content_hash')!r}, and this drop's content_hash="
+                        f"{content_hash!r} differs too — but the composition ALSO differs "
+                        f"(existing: {existing['side1']['unit_name']!r}/{existing['side2']['unit_name']!r}, "
+                        f"new: {sorted({n for su in new_meta['composition'].values() for n in su})}) — "
+                        f"this looks like a genuine tag collision between two different fights, "
+                        f"not a repeat recording; refusing to guess, not ingesting"
                     )
                     logger.error("ingest_zip: CONFLICT %s", msg)
                     conflicts.append((run_id, msg))

@@ -34,6 +34,11 @@ import {
     RANGED_STOP_OVERHEAD,
     RANGED_POST_FIRE_RECOVERY,
     RANGED_POST_FIRE_RECOVERY_BY_SLUG,
+    MELEE_CHURN_PER_SWING,
+    MELEE_KILL_REACQUIRE_FUMBLE,
+    MELEE_CHURN_CROWD_GAIN,
+    MELEE_CHURN_MAX,
+    MELEE_CHURN_GAP_SECONDS,
 } from "./constants.js";
 import { Projectile, classifyProjectile } from "./projectile.js";
 import { MeleeEffect } from "./melee_effect.js";
@@ -497,6 +502,69 @@ export class BattleUnit {
         return this.distanceTo(this.target) < this.minAttackRange;
     }
 
+    // ===== MELEE CONTACT CHURN (E13) =====
+    // Called immediately after a MELEE swing resolves, with the unit that
+    // swing was aimed at. Two measured effects, one code path:
+    //
+    //   victim SURVIVED -> MELEE_CHURN_PER_SWING: the unit is shoved out of
+    //     the line / re-paths / picks a different foe. Engine breaks contact
+    //     with a living foe on 0.36% of its swings, a real one on 3.83%.
+    //   victim DIED     -> MELEE_KILL_REACQUIRE_FUMBLE: the unit fumbles the
+    //     hand-off to its next target. 34.3% of tape kills are followed by a
+    //     slow re-acquisition, 8-12% of the engine's are.
+    //
+    // Both constants and the measurements behind them live in constants.js.
+    // The two are exclusive per swing (a swing either killed or it did not)
+    // and share one gap length, because the tape gives them the same one.
+    //
+    // Called from BOTH melee swing paths (the committedAttack resolution for
+    // attack_delay > 0 and the direct performAttack for delay 0) AFTER each
+    // has set its own cooldown, so the assignment below is what the unit's
+    // next hit-to-hit gap actually becomes.
+
+    // Same-team units currently swinging at the same victim. The crowd term's
+    // whole point is that this is a LOCAL quantity -- it is what makes a
+    // 21-strong champion line churn harder than the nine paladins it is
+    // surrounding, with no per-unit constants anywhere.
+    contestingAllies(victim) {
+        const allies = this.team === 1 ? this.sim.team1 : this.sim.team2;
+        let n = 0;
+        for (const a of allies) {
+            if (a.state === "dead") continue;
+            if (a.target === victim) n++;
+        }
+        return n;
+    }
+
+    maybeMeleeChurn(victim) {
+        if (this.isRanged()) return;
+        if (!victim) return;
+        let p;
+        if (victim.state === "dead") {
+            p = MELEE_KILL_REACQUIRE_FUMBLE;
+        } else {
+            p = MELEE_CHURN_PER_SWING;
+            if (p > 0 && MELEE_CHURN_CROWD_GAIN > 0) {
+                p *= 1 + MELEE_CHURN_CROWD_GAIN *
+                    Math.max(0, this.contestingAllies(victim) - 1);
+            }
+            if (p > MELEE_CHURN_MAX) p = MELEE_CHURN_MAX;
+        }
+        // Both rates at 0 skips the draw entirely -- that is the documented
+        // "mechanism off" path and it is bit-identical to the pre-E13 engine
+        // (verified: a full 155-fight run at 0 reproduces the E12 scoreboard
+        // number for number). Otherwise exactly one draw per melee swing,
+        // taken whatever the crowd term evaluates to, so a crowd-gain sweep
+        // changes only the threshold and not the random sequence itself.
+        if (p <= 0) return;
+        if (this.sim.rng.next() >= p) return;
+        // Broken off: drop the target (the next tick's findTarget re-acquires,
+        // which is what produces the tape's LOST_SAME / SWITCH_LIVE mix on its
+        // own) and pay the measured gap in place of the reload.
+        this.target = null;
+        this.attackCooldown = MELEE_CHURN_GAP_SECONDS;
+    }
+
     // ===== RANGED STAND-AND-SHOOT COST (E9) =====
     // Tape derivation, per-unit numbers and the rejected additive model all live
     // in constants.js next to FIRE_CYCLE_QUANTUM. In one line: a ranged unit that
@@ -892,6 +960,11 @@ export class BattleUnit {
                         this.reloadTime - this.attackDelay,
                     );
                     this.wasMoving = false;
+                    // `target` is the unit this swing was aimed at, which is
+                    // what decides which of the two churn terms applies -- NOT
+                    // this.target, which performAttackOn may already have left
+                    // pointing at a corpse or (for trample) somewhere else.
+                    this.maybeMeleeChurn(target);
                 }
             } else if (this.inRange()) {
                 if (this.attackCooldown <= 0) {
@@ -904,7 +977,9 @@ export class BattleUnit {
                         this.wasMoving = false;
                     } else {
                         this.state = "attacking";
+                        const meleeVictim = this.target;
                         this.performAttack();
+                        this.maybeMeleeChurn(meleeVictim);
                     }
                 } else {
                     this.state = "attacking";

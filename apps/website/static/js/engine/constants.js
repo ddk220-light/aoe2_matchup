@@ -345,6 +345,120 @@ export const RANGED_POST_FIRE_RECOVERY_BY_SLUG = new Map([
     ["imp_elite_skirm", 0.20],
 ]);
 
+// ===== MELEE CONTACT CHURN (E13) =====
+// A melee unit in this engine, once it reaches a living target, NEVER stops
+// hitting it. On tape it does, constantly. Measured over the 31 pure-melee
+// recordings (both sides, 7,840 tape swings vs 8,051 engine swings, seed 1),
+// by classifying every point where an attacker's next landed hit came more
+// than reload+0.5 s after the previous one:
+//
+//   bout-end cause              tape          engine
+//   KILL_SELF   (its own kill)   182  22.2%      69  24.1%
+//   KILL_OTHER  (victim died)    339  41.3%     188  65.7%
+//   LOST_SAME   (victim ALIVE,
+//                resumes on it)  130  15.8%       8   2.8%
+//   SWITCH_LIVE (victim ALIVE,
+//                resumes else)   170  20.7%      21   7.3%
+//   ------------------------------------------------------
+//   breaks against a LIVING foe  300            29
+//   per swing                    0.0383         0.0036
+//
+// A ten-fold gap, and it is the ONLY structural term the engine is missing:
+// attackers-per-victim is distribution-identical (median 2, p90 3, max 4 on
+// both), per-swing cadence against an engaged foe is identical (gap median
+// 2.016 s tape vs 2.017 s engine), and neither stream shows any final-blow
+// overkill at all (both clamp damage to HP actually removed). What the tape
+// has and the engine does not is CHURN: shoving, being shoved, re-pathing
+// around a body, and picking a different foe when one wanders off.
+//
+// Per-slug tape rates (live breaks / swings), which is where the ordering
+// argument for the crowd term below comes from:
+//
+//   champion 0.056 | halberdier 0.055 | hussar 0.050 | paladin 0.038
+//   heavy_camel 0.033 | elite_elephant 0.030 | elite_steppe 0.028
+//
+// Foot units and light cavalry -- the ones fielded 21-strong, packed
+// shoulder to shoulder -- churn twice as much as the Elite Steppe Lancer,
+// which has a full tile of reach and therefore never has to be in the shoving
+// line at all. That is a crowding law, not a unit-identity law, so it is
+// modelled as one (see MELEE_CHURN_CROWD_GAIN) rather than as a per-slug table.
+
+// Base probability that a melee unit loses contact after a swing that did NOT
+// kill its target. Kill-driven re-acquisition is already modelled (the engine
+// nulls a dead target and re-runs findTarget), so this covers only the
+// LOST_SAME + SWITCH_LIVE population above. 0 disables the whole mechanism.
+// Swept over the 62-side melee gate (6 seeds, sides within 10 HP-points /
+// mean |error|): 0.0 -> 33/10.61, 0.045 -> 41/8.69, 0.06 -> 47/6.95,
+// 0.075 -> 45/8.04, 0.10 -> 46/7.93. The applied rate sits above the tape's
+// measured 0.038 because the measurement is an UNDERCOUNT on both streams: a
+// unit that breaks off a foe its allies then finish is scored KILL_OTHER, not
+// LOST_SAME. At 0.06 applied, the engine's own measured live-break rate comes
+// out at 0.028 against the tape's 0.038 -- i.e. still slightly under, which is
+// the honest way to read this number.
+export const MELEE_CHURN_PER_SWING = 0.06;
+
+// Extra break probability per same-team unit contesting the same victim,
+// beyond the first. `p = base * (1 + gain * (contesting - 1))`, capped at
+// MELEE_CHURN_MAX. This is what turns one global rate into the measured
+// per-slug spread without naming a single unit: a 21-champion side stacks
+// several attackers on each of nine paladins and churns hard, while nine
+// paladins swinging into a wall of champions each have the target to
+// themselves and churn much less.
+//
+// MEASURED HARMFUL AND LEFT OFF (E13). Over the melee gate, 6 seeds, sides
+// within 10 HP-points / mean |error|, against the flat 0.06 / 5.8 s point's
+// 47 / 6.54:
+//
+//   gain 0.15 (base 0.055)   41 / 8.91
+//   gain 0.25 (base 0.04 )   40 / 8.90
+//
+// Both are worse than flat on every block of the gate. The per-slug ordering
+// the term was built to explain is real, but concentrating the churn on the
+// crowded side is not how the tape produces it. The machinery is left wired
+// up and tested so a future round can re-open it cheaply.
+export const MELEE_CHURN_CROWD_GAIN = 0.0;
+export const MELEE_CHURN_MAX = 0.25;
+
+// Chance that a melee unit FUMBLES its re-acquisition after landing a killing
+// blow -- the separately-measured half of the same story. The engine drops a
+// dead target and picks the next one on the very next tick, always; a real
+// unit often has to turn, walk and re-path first. Fraction of killing blows
+// followed by a gap longer than reload + 0.5 s, over the same 31 pure-melee
+// recordings:
+//
+//                          n     slow    fraction   median   p90
+//   tape                  531     182      0.343     2.02   6.11
+//   engine (pre-E13)      592      69      0.117     2.02   3.02
+//   engine (churn only)   556      45      0.081     2.02   3.02
+//
+// The MEDIAN is identical on all three (a killer usually does have another
+// foe already in reach), so this is a tail, not a flat delay -- which is why
+// it is modelled as a probability rather than as an added cost on every kill.
+// The churn term alone actually LOWERS the engine's rate (a unit that churned
+// off is no longer the one landing the kill), so the two terms are genuinely
+// independent and both are needed.
+//
+// 0.28 was picked by MEASUREMENT, not by scoreboard: it is the applied rate at
+// which the engine's own slow-re-acquisition fraction lands on the tape's.
+// Both candidates score within noise of each other on the melee gate (20
+// seeds, sides within 10 HP-points / mean |error| / corpus winners):
+//
+//   applied  achieved   gate            corpus
+//   0.28      0.342     46 / 5.77       126/155, agreement 0.800
+//   0.40      0.412     47 / 5.55       126/155, agreement 0.807
+//
+// so the tie is broken by the one that reproduces the tape (0.342 vs a tape
+// 0.343) rather than by the one a fifth of a point ahead on a noisy metric.
+export const MELEE_KILL_REACQUIRE_FUMBLE = 0.28;
+
+// Hit-to-hit gap a broken-off unit pays, in seconds -- it replaces the reload
+// outright rather than adding to it, so this number IS the resulting gap.
+// Shared by both terms above, because the tape gives them the same length:
+// live-break gaps median 4.50 s / mean 5.79 s / p10 2.69 / p90 10.73 (n=300),
+// post-kill slow gaps p90 6.11 s. Swept at 3.0 / 4.5 / 5.8 / 7.0 (see the
+// experiment report); 3.0 and 7.0 both cost ~5 sides of the melee gate.
+export const MELEE_CHURN_GAP_SECONDS = 5.8;
+
 // ===== ADJUSTABLE PRE-BATTLE CONDITIONS =====
 // Lithuanian relic bonus: the reference DB bakes in all 4 relics (+1 base
 // melee attack each) for these units. The rail picker lets the user dial

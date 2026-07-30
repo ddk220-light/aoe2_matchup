@@ -21,6 +21,9 @@ import {
     MELEE_RANGE_BUFFER,
     CANVAS_WIDTH,
     CANVAS_HEIGHT,
+    CHURN_MAX,
+    CHURN_RADIUS,
+    CHURN_SATURATION,
 } from "./constants.js";
 import { Projectile, classifyProjectile } from "./projectile.js";
 import { MeleeEffect } from "./melee_effect.js";
@@ -630,7 +633,7 @@ export class BattleUnit {
                         this.performAttackOn(target);
                     }
                     this.committedAttack = null;
-                    this.attackCooldown = this.reloadTime;
+                    this.attackCooldown = this.churnCooldown();
                     this.wasMoving = false;
                 }
             } else if (this.inRange()) {
@@ -655,6 +658,34 @@ export class BattleUnit {
                 this.wasMoving = true;
             }
         }
+    }
+
+    // Crowd churn (Task 6): the reload a swing/shot actually pays, lengthened
+    // by how many bodies (either side) are packed within CHURN_RADIUS right
+    // now. Mirrors simulation_real.py's melee_cooldown() shape -- same
+    // radius/saturation counting, same uniform-random draw scaled by
+    // crowding -- except that reference early-returns the plain reload for
+    // ranged units ("not shoving anyone"); this engine's tape fit found
+    // ranged churn too (Hand Cannoneer), so it is not special-cased out
+    // here. See constants.js for the fitted CHURN_MAX and why it differs
+    // from simulation_real.py's.
+    churnCooldown() {
+        if (CHURN_MAX <= 0) return this.reloadTime;
+        const r2 = CHURN_RADIUS * CHURN_RADIUS;
+        let n = 0;
+        crowd: for (const team of [this.sim.team1, this.sim.team2]) {
+            for (const u of team) {
+                if (u === this || u.state === "dead") continue;
+                const dx = u.x - this.x;
+                const dy = u.y - this.y;
+                if (dx * dx + dy * dy < r2) {
+                    n++;
+                    if (n >= CHURN_SATURATION) break crowd;
+                }
+            }
+        }
+        const crowding = Math.min(1.0, n / CHURN_SATURATION);
+        return this.reloadTime + this.sim.rng.next() * CHURN_MAX * crowding;
     }
 
     performAttack() {
@@ -707,7 +738,7 @@ export class BattleUnit {
                 }
             }
         }
-        this.attackCooldown = this.reloadTime;
+        this.attackCooldown = this.churnCooldown();
     }
 
     // Event recorder for cross-engine calibration (see Simulation.eventLog in

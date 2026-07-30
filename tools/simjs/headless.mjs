@@ -68,9 +68,13 @@ function snapshot(sim, tick) {
 // `arena` is createSimulation's opt-in battlefield field. It DEFAULTS TO NULL,
 // which is the plain rectangle the golden panel was captured on — runFight()
 // below never passes anything else, so parity_check.mjs is untouched by its
-// existence. Only an explicit A/B caller (calib_runner.mjs --arena golden) can
-// turn it on.
-export function buildFight({ dicts, row, seed, arena = null }) {
+// existence. Only an explicit caller (calib_runner.mjs) can turn it on.
+//
+// `positions` is the same story one level up: `{ 1: [[tx,ty],...], 2: [...] }`
+// of tape first-frame spawn positions in tile coordinates (E12 tapebox mode),
+// or null for the synthesised column/blob layouts. Both default to null, so
+// every existing caller builds exactly the fight it always did.
+export function buildFight({ dicts, row, seed, arena = null, positions = null }) {
     const dictFor = (civ, slug) => {
         const cd = dicts[`${civ}|${slug}`];
         if (!cd) {
@@ -89,12 +93,14 @@ export function buildFight({ dicts, row, seed, arena = null }) {
                 slug: row.slug1,
                 civ: row.civ1,
                 count: row.n1,
+                positions: positions ? positions[1] : undefined,
             },
             {
                 combatDict: dictFor(row.civ2, row.slug2),
                 slug: row.slug2,
                 civ: row.civ2,
                 count: row.n2,
+                positions: positions ? positions[2] : undefined,
             },
         ],
         seed,

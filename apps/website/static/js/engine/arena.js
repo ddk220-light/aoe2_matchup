@@ -1,6 +1,13 @@
-// Role: engine — the "golden arena": the battlefield geometry of the recording
-// scenario, as an OPT-IN overlay on the plain rectangle the engine has always
-// fought on.
+// Role: engine — battlefield geometry, as an OPT-IN overlay on the plain
+// rectangle the engine has always fought on. Two specs live here:
+//
+//   * `Arena` ("golden")  — the recording scenario rendered the way the game
+//     presents it: a rotated diamond play area with the central tree cluster
+//     and two corner spawn wedges. A LAB VISUAL.
+//   * `TapeBox` ("tapebox") — the recording scenario's PHYSICS, with nothing
+//     added: an axis-aligned walled box at the tapes' own measured position
+//     bounds, no obstruction, and spawns supplied verbatim from the tape's
+//     first frame. THE CALIBRATION SCORING GEOMETRY (see its own header).
 //
 // NOTHING IN HERE RUNS UNLESS A CALLER ASKS FOR IT. `createSimulation` leaves
 // `sim.arena === null` by default, and every hook in sim.js / battle_unit.js /
@@ -153,6 +160,14 @@ export const SPAWN_BLOB_ASPECT = 1.4;
 // ---- the arena --------------------------------------------------------------
 
 export class Arena {
+    // The golden arena places its armies with spawnLayout() off two corner
+    // anchors. TapeBox does not (its spawns are tape data), and scenario.js
+    // branches on this rather than on `instanceof`, so a future third spec only
+    // has to answer the question, not be recognised.
+    get usesSpawnAnchors() {
+        return true;
+    }
+
     constructor({
         mapW = CANVAS_WIDTH,
         mapH = CANVAS_HEIGHT,
@@ -452,11 +467,190 @@ export class Arena {
     }
 }
 
+// =============================================================================
+// TapeBox — the calibration corpus's ACTUAL initial conditions
+// =============================================================================
+//
+// WHY THIS EXISTS
+// ---------------
+// Through E11 the calibration corpus was scored on a scenario that shares
+// nothing with the recordings it is compared against:
+//
+//                        engine (pre-E12)          tape corpus
+//   play area            30 x 20 tiles, open       13.6 x 13.6 tiles, walled
+//   army shape           single-file column        2-D block, ~6 wide x 3-4 deep
+//   start separation     28 tiles                  8.1 tiles (centroids)
+//   nearest enemy pair   ~20 tiles                 4.0 tiles
+//
+// Every combat constant fitted on that scenario was fitted against the wrong
+// initial condition. E11 made the cost visible: at true collision radii the
+// chasers converge into one tight ball and envelop a ranged side that the
+// tapes show holding a ~2.1-tile standoff, and the corpus fell 144 -> 135/155.
+//
+// GROUND TRUTH (measured, not assumed)
+// ------------------------------------
+// Every unit-position sample in all 155 recordings under D:/AI/aoe2_golden/tapes
+// (tools/simjs/dump_calib_spawns.py reads the same stream):
+//
+//     x in [1.2, 14.8]      y in [1.2, 14.8]        (tiles, unit CENTRES)
+//
+// Both axes, over the whole corpus — a 13.6-tile square. That is the box below.
+// First-frame geometry from the same scan: centroid separation min 7.63 /
+// median 8.12 / max 9.84 tiles, nearest cross-army pair 4.00-6.08 tiles.
+//
+// WHAT IS DELIBERATELY *NOT* MODELLED
+// -----------------------------------
+// The real map also carries the central tree cluster the golden `Arena` above
+// draws. It is left out here, knowingly:
+//
+//   * it sits ~5 tiles off the spawn-to-spawn line, so no melee approach ever
+//     touches it — modelling it would change nothing this round measures;
+//   * making a ranged side kite AROUND it needs pathfinding this engine does
+//     not have, so an obstruction would produce grinding, not orbiting.
+//
+// So `TapeBox` is walls and spawns only. The diamond + cluster stay a lab
+// visual, and this omission is a documented infidelity, not an oversight.
+//
+// COORDINATES
+// -----------
+// Axis-aligned and unrotated: world = (tile - 8) * TILE_SIZE + canvas centre,
+// i.e. the recording's 16x16 tile map centred on whatever canvas the sim was
+// built with. At the engine's default 900x600 the 16-tile map is 480 px and
+// the walled box is 408 x 408 px — both fit, so no canvas constant moves.
+//
+// The bounds above are measured in unit-CENTRE space, so `constrain` clamps
+// CENTRES to them with NO radius padding. Padding by the body radius would
+// shrink the reachable area below what the tapes actually show, which is the
+// exact class of error this module exists to remove.
+
+// The tapes' measured position bounds, in tiles. Unit centres, both axes.
+export const TAPEBOX_MIN_TILE = 1.2;
+export const TAPEBOX_MAX_TILE = 14.8;
+
+export class TapeBox {
+    // Spawns come from the tape (scenario.js's `spec.positions`), never from a
+    // corner anchor — see Arena.usesSpawnAnchors.
+    get usesSpawnAnchors() {
+        return false;
+    }
+
+    constructor({
+        mapW = CANVAS_WIDTH,
+        mapH = CANVAS_HEIGHT,
+        minTile = TAPEBOX_MIN_TILE,
+        maxTile = TAPEBOX_MAX_TILE,
+    } = {}) {
+        this.cx = mapW / 2;
+        this.cy = mapH / 2;
+        this.minTile = minTile;
+        this.maxTile = maxTile;
+        const lo = this.tileToWorld(minTile, minTile);
+        const hi = this.tileToWorld(maxTile, maxTile);
+        this.x0 = lo.x;
+        this.y0 = lo.y;
+        this.x1 = hi.x;
+        this.y1 = hi.y;
+    }
+
+    // ---- coordinate transform ------------------------------------------------
+
+    // Tile coordinates -> engine world pixels. The recording map is 16x16, so
+    // tile 8 is its centre and lands on the canvas centre.
+    tileToWorld(tx, ty) {
+        return {
+            x: this.cx + (tx - MAP_CENTRE_TILE.x) * TILE_SIZE,
+            y: this.cy + (ty - MAP_CENTRE_TILE.y) * TILE_SIZE,
+        };
+    }
+
+    worldToTile(x, y) {
+        return {
+            tx: (x - this.cx) / TILE_SIZE + MAP_CENTRE_TILE.x,
+            ty: (y - this.cy) / TILE_SIZE + MAP_CENTRE_TILE.y,
+        };
+    }
+
+    // ---- boundary ------------------------------------------------------------
+
+    isInside(x, y, pad = 0) {
+        return (
+            x >= this.x0 + pad &&
+            x <= this.x1 - pad &&
+            y >= this.y0 + pad &&
+            y <= this.y1 - pad
+        );
+    }
+
+    clampToArena(x, y, pad = 0) {
+        // `pad` is honoured for callers that want clearance, but `constrain`
+        // below passes 0 on purpose (see the header): the wall bounds are
+        // measured in unit-centre space already.
+        const cx = Math.min(this.x1 - pad, Math.max(this.x0 + pad, x));
+        const cy = Math.min(this.y1 - pad, Math.max(this.y0 + pad, y));
+        return { x: cx, y: cy };
+    }
+
+    // ---- obstruction (there is none) -----------------------------------------
+
+    blocks() {
+        return false;
+    }
+
+    // Same signature as Arena.obstacleSteer; always null, so battle_unit.js's
+    // `if (o)` guard skips the whole branch and steering is untouched.
+    obstacleSteer() {
+        return null;
+    }
+
+    // ---- hard constraint -----------------------------------------------------
+
+    constrain(unit) {
+        const c = this.clampToArena(unit.x, unit.y, 0);
+        unit.x = c.x;
+        unit.y = c.y;
+    }
+
+    // ---- render helpers ------------------------------------------------------
+    // Same surface as Arena's so sim_renderer.drawArena can paint a TapeBox
+    // without a special case. There is no cluster and no rock: the shapes list
+    // is empty and the rock has zero radius (the renderer draws nothing).
+
+    boundaryPath() {
+        return [
+            { x: this.x0, y: this.y0 },
+            { x: this.x1, y: this.y0 },
+            { x: this.x1, y: this.y1 },
+            { x: this.x0, y: this.y1 },
+        ];
+    }
+
+    obstructionShapes() {
+        return [];
+    }
+
+    rockShape() {
+        return { x: this.cx, y: this.cy, r: 0 };
+    }
+
+    gridLines(stepTiles = 1) {
+        const step = stepTiles * TILE_SIZE;
+        const lines = [];
+        for (let x = this.x0; x <= this.x1 + 1e-6; x += step) {
+            lines.push([{ x, y: this.y0 }, { x, y: this.y1 }]);
+        }
+        for (let y = this.y0; y <= this.y1 + 1e-6; y += step) {
+            lines.push([{ x: this.x0, y }, { x: this.x1, y }]);
+        }
+        return lines;
+    }
+}
+
 // Factory used by createSimulation. Anything other than the strings below —
 // including undefined, null and "plain" — yields no arena at all, which is the
 // engine's historical rectangle behaviour, bit for bit.
 export function makeArena(kind, { mapW, mapH } = {}) {
     if (kind === "golden" || kind === true) return new Arena({ mapW, mapH });
-    if (kind instanceof Arena) return kind;
+    if (kind === "tapebox") return new TapeBox({ mapW, mapH });
+    if (kind instanceof Arena || kind instanceof TapeBox) return kind;
     return null;
 }

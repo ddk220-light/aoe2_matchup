@@ -32,8 +32,14 @@ import { Simulation } from "./sim.js";
 import { makeArena } from "./arena.js";
 
 // One team's worth of spawning. `spec` is { combatDict, slug, civ, count,
-// relics?, startKills? } — the headless equivalent of setupTeam's
+// relics?, startKills?, positions? } — the headless equivalent of setupTeam's
 // (unitSlug, civName, count, opts) arguments.
+//
+// `spec.positions`, when present, is an array of `count` [tileX, tileY] pairs
+// (E12's "tapebox" mode): the recording's own first-frame unit positions, in
+// the tape's tile coordinates. It requires an arena that can map tiles to
+// world pixels (engine/arena.js's TapeBox) and takes precedence over both
+// layouts below — those synthesise a formation, this one copies one.
 //
 // `anchorSide` is the golden arena's spawn corner for this team (0 = the
 // diamond's left corner, 1 = its bottom corner), or null when there is no
@@ -67,6 +73,27 @@ function setupTeam(sim, teamNum, spec, anchorSide = null) {
     }
 
     const team = [];
+    // E12 tapebox: exact tape positions, or nothing. Validated up front so a
+    // short/long list fails here with both numbers rather than silently
+    // spawning a partial army (or throwing deep inside the loop with an
+    // undefined index).
+    const positions = spec.positions || null;
+    if (positions) {
+        if (positions.length !== count) {
+            throw new Error(
+                `setupTeam: team ${teamNum} has ${count} units but ` +
+                `${positions.length} spawn positions`,
+            );
+        }
+        if (!sim.arena || typeof sim.arena.tileToWorld !== "function") {
+            throw new Error(
+                "setupTeam: spec.positions needs an arena with tileToWorld() " +
+                "(engine/arena.js's TapeBox) — got " +
+                (sim.arena ? sim.arena.constructor.name : "no arena"),
+            );
+        }
+    }
+
     // E11: the spawn column is laid out on the PHYSICS radius (the .dat's
     // collision_size), the same number BattleUnit uses -- it used to be the
     // old inflated outline radius, which had a visible consequence: 21 hussars
@@ -124,7 +151,25 @@ function setupTeam(sim, teamNum, spec, anchorSide = null) {
         // depend on the exact draw stream (see the DRAW ORDER note above), and
         // an arena must not be able to shift it.
         const jitter = (sim.rng.next() - 0.5) * 10;
-        if (layout) {
+        if (positions) {
+            // Tape positions are DATA: they are copied verbatim, and the
+            // jitter drawn above is deliberately NOT applied to them. The draw
+            // itself stays (unconditional, one per unit, in index order) so
+            // this branch cannot shift the rng stream relative to any other —
+            // see the DRAW ORDER note at the top of this file. The consequence
+            // is that a fight with no accuracy rolls in it (pure melee) is
+            // identical across seeds, which is correct: the recording's
+            // initial condition is exact, not a sample.
+            //
+            // No facing is seeded either. A unit at rest reaches its full
+            // desired heading on its FIRST tick (moveTowardTarget normalises
+            // the smoothed velocity), so starting from rest — as the game
+            // does — costs nothing.
+            const p = sim.arena.tileToWorld(positions[i][0], positions[i][1]);
+            unit.x = p.x;
+            unit.y = p.y;
+            sim.arena.constrain(unit);
+        } else if (layout) {
             const p = layout[i];
             // Ride the jitter along the blob's WIDTH axis, so it ruffles each
             // rank instead of smearing the ranks into each other.
@@ -176,11 +221,14 @@ function pickLeftCorner(teams) {
 // The engine's single public entry point: build a seeded Simulation with both
 // teams spawned. `teams` is [team1Spec, team2Spec] (see setupTeam above).
 //
-// `arena` is OPT-IN and defaults to nothing: "golden" builds the recording
-// arena (engine/arena.js) — a diamond play area with a central tree cluster and
-// two adjacent-corner spawn blobs. Any other value, including the default,
-// leaves sim.arena null and every unit on the historical full-height line
-// inside the plain CANVAS_WIDTH x CANVAS_HEIGHT rectangle, bit for bit.
+// `arena` is OPT-IN and defaults to nothing:
+//   * "golden"  — the recording arena (engine/arena.js): a diamond play area
+//     with a central tree cluster and two adjacent-corner spawn blobs;
+//   * "tapebox" — the recording's walled 13.6-tile box with no obstruction,
+//     for teams that carry their own `positions` (E12 calibration scoring).
+// Any other value, including the default, leaves sim.arena null and every unit
+// on the historical full-height line inside the plain CANVAS_WIDTH x
+// CANVAS_HEIGHT rectangle, bit for bit.
 export function createSimulation({
     mapW = CANVAS_WIDTH,
     mapH = CANVAS_HEIGHT,
@@ -193,9 +241,13 @@ export function createSimulation({
     }
     const sim = new Simulation(mapW, mapH, makeRng(seed));
     sim.arena = makeArena(arena, { mapW, mapH });
-    const leftTeam = sim.arena ? pickLeftCorner(teams) : null;
+    // Corner anchors are the GOLDEN arena's spawn mechanism. A TapeBox answers
+    // false and its teams bring their own positions, so pickLeftCorner (which
+    // reads combat dicts) never runs for it.
+    const anchored = !!(sim.arena && sim.arena.usesSpawnAnchors);
+    const leftTeam = anchored ? pickLeftCorner(teams) : null;
     // Order matters — see the DRAW ORDER note at the top of this file.
-    setupTeam(sim, 1, teams[0], sim.arena ? (leftTeam === 0 ? 0 : 1) : null);
-    setupTeam(sim, 2, teams[1], sim.arena ? (leftTeam === 0 ? 1 : 0) : null);
+    setupTeam(sim, 1, teams[0], anchored ? (leftTeam === 0 ? 0 : 1) : null);
+    setupTeam(sim, 2, teams[1], anchored ? (leftTeam === 0 ? 1 : 0) : null);
     return sim;
 }

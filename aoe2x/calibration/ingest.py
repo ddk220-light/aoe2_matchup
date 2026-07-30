@@ -611,7 +611,17 @@ def _process_fight(
     run_dir.mkdir(parents=True, exist_ok=True)
     try:
         for src in decoded_dir.glob(f"{tag}.*"):
-            shutil.copy2(src, run_dir / src.name)
+            # Rename-on-copy when the run_id was REASSIGNED away from the raw
+            # recorded tag (the reused-tag repeat path above). The decoded
+            # files are named "<tag>.<stream>", but every downstream reader
+            # (extract.build_truth_card, tests/test_calibration_extract.py)
+            # addresses them as "<run_id>.<stream>". Copying them under the
+            # raw tag name into a `<run_id>/` dir left the streams
+            # unreachable, and extract silently emitted an all-zero card
+            # instead of failing -- exactly what happened to
+            # hand_cannoneer__vs__elite_elephant_r2.
+            dest_name = f"{run_id}{src.name[len(tag):]}"
+            shutil.copy2(src, run_dir / dest_name)
     except Exception:
         shutil.rmtree(run_dir, ignore_errors=True)
         raise

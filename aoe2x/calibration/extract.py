@@ -67,7 +67,19 @@ from typing import Any
 
 from aoe2x.paths import GOLDEN_DIR, REPO_ROOT
 
-SWING_EPS = 0.15
+# Consecutive damage events from the SAME attacker within this many seconds
+# are one swing. Raised 0.15 -> 0.60 (2026-07-30) because 0.15 was a defect
+# in our own rig, not a property of the game: a slow projectile (siege
+# onager, heavy scorpion, elite fire lancer) delivers one shot's multi-victim
+# damage spread over well more than 0.15s of flight time, so the old value
+# shredded ONE shot into several "swings" and manufactured churn that the
+# engine was then blamed for. Measured counterfactual over the 105-fight
+# corpus: gated MISMATCH 756 -> 726, with all 11 other units' cards
+# bit-identical. The Elite Battle Elephant's real trample is unaffected --
+# all 402 of its multi-victim swings span <= 0.15s. Applied to tape and sim
+# alike (one extractor, one constant) -- see docs/architecture/
+# calibration-gap-analysis.md §3.3.
+SWING_EPS = 0.60
 
 CALIBRATION_DIR = REPO_ROOT / "data" / "calibration"
 MANIFEST_PATH = CALIBRATION_DIR / "manifest.json"
@@ -411,7 +423,25 @@ def build_truth_card(fight: dict[str, Any]) -> dict[str, Any]:
     damage_path = run_dir / f"{run_id}.damage.jsonl.gz"
     missiles_path = run_dir / f"{run_id}.missiles.jsonl.gz"
 
-    damage_events = _read_jsonl_gz(damage_path) if damage_path.exists() else []
+    if not damage_path.exists():
+        # NEVER substitute [] here. A missing damage stream produces a
+        # perfectly plausible-looking all-zero card (0 hits, 0 swings, empty
+        # histogram, everyone survives at full hp) that silently poisons
+        # every scoreboard downstream. This exact silent failure shipped
+        # once, for hand_cannoneer__vs__elite_elephant_r2, whose tape files
+        # had been staged under the raw recorded tag instead of the
+        # reassigned run_id (fixed in ingest._process_fight).
+        staged = sorted(p.name for p in run_dir.glob("*")) if run_dir.exists() else []
+        raise FileNotFoundError(
+            f"build_truth_card({run_id!r}): no damage tape at {damage_path} — "
+            f"refusing to emit an all-zero card. Files present in {run_dir}: "
+            f"{staged or '<dir does not exist>'}"
+        )
+
+    damage_events = _read_jsonl_gz(damage_path)
+    # The missile stream is legitimately absent for an all-melee fight, so
+    # (unlike damage) an empty substitution here is correct, not a silent
+    # data loss: extract_card reads it only for projectiles_fired.
     missile_events = _read_jsonl_gz(missiles_path) if missiles_path.exists() else []
     composition = _composition_for_fight(fight)
 

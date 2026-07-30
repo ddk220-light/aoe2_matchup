@@ -71,8 +71,15 @@ Owned by `extract.py`, restated here for reference — see that module's docstri
 full derivation:
 
 - **Swing grouping**: a side's damage events grouped by `attacker` (unit instance, not
-  owner); consecutive events from the same attacker within `SWING_EPS = 0.15s` are ONE
+  owner); consecutive events from the same attacker within `SWING_EPS = 0.60s` are ONE
   swing (lets one trampling hit that damages several victims still count as one swing).
+  Raised from `0.15s` on 2026-07-30: a slow projectile (siege onager, heavy scorpion,
+  elite fire lancer) spreads one shot's multi-victim damage over more than 0.15s of
+  flight, so the old value split a single shot into several "swings" and manufactured
+  churn — a defect in the rig, not in the engine. Corpus effect: gated MISMATCH
+  756 → 726, all other units' cards bit-identical (the Elite Battle Elephant's 402
+  multi-victim swings all span ≤ 0.15s, so real trample is untouched). See
+  `calibration-gap-analysis.md` §3.3.
 - **`swing_interval_median`**: per attacking unit, the median gap between its own
   consecutive swings; then the median of THOSE per-unit medians across the side.
 - **`swing_interval_fastest`**: the minimum gap pooled over ALL units — NOT the minimum of

@@ -82,6 +82,20 @@ Two further hard requirements (from the design's "hard-won facts"):
   individually by ``run_id`` -- ``score_fight`` takes a ``run_id``, and the
   CLI's per-fight rows each carry both ``run_id`` and ``matchup`` so a reader
   can see repeats of one matchup side by side.
+
+Winner agreement (the campaign's primary KPI, added 2026-07-30)
+---------------------------------------------------------------
+
+``verdict`` above is a conjunction over ~40 gated metric rows, so almost
+every fight in a 105-fight corpus reads MISMATCH and the number barely
+moves between experiments -- useless as a steering signal. Each fight
+therefore also carries a ``winner`` block (``winner_match``,
+``winner_agreement``; see ``_winner_block``) and the run carries a
+``winner_summary`` rollup listing the flipped fights by name.
+
+This is **measurement only**: it does not gate, does not feed ``verdict``,
+and no tolerance or gating rule changed when it was added, so scoreboards
+written before and after remain directly comparable.
 """
 from __future__ import annotations
 
@@ -211,6 +225,33 @@ def _worst_verdict(verdicts: list[str]) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _outcome_rank(side: dict) -> tuple[float, float, float]:
+    """The one outcome ordering used everywhere: (survivors, hp_remaining,
+    kills). Shared by `_roles` (tolerance selection) and `_winner_side`
+    (the winner-agreement KPI) so the two can never drift apart.
+    """
+    return (side.get("survivors") or 0, side.get("hp_remaining") or 0.0, side.get("kills") or 0)
+
+
+def _winner_side(sides: dict[str, dict]) -> str | None:
+    """The winning side key by `_outcome_rank`, or None when the two sides
+    are exactly tied (mutual annihilation) or the fight isn't 2-sided.
+
+    Deliberately derived from the SAME per-side card fields for tape and
+    sim, rather than reading the sim runner's own `winner_owner`: the point
+    of the KPI is that both outcomes are judged by one rule (the
+    one-extractor discipline applied to the outcome, not just the metrics).
+    """
+    keys = list(sides.keys())
+    if len(keys) != 2:
+        return None
+    a, b = keys
+    ra, rb = _outcome_rank(sides[a]), _outcome_rank(sides[b])
+    if ra == rb:
+        return None
+    return a if ra > rb else b
+
+
 def _roles(tape_sides: dict[str, dict]) -> dict[str, str]:
     """'winner'/'loser' per side key, from THIS fight's own tape outcome
     (ranked by (survivors, hp_remaining, kills)). See module docstring point
@@ -222,18 +263,62 @@ def _roles(tape_sides: dict[str, dict]) -> dict[str, str]:
     if len(keys) != 2:
         return {k: "loser" for k in keys}
 
-    def rank(k: str) -> tuple[float, float, float]:
-        s = tape_sides[k]
-        return (s.get("survivors") or 0, s.get("hp_remaining") or 0.0, s.get("kills") or 0)
-
-    a, b = keys
-    ra, rb = rank(a), rank(b)
-    if ra == rb:
+    winner = _winner_side(tape_sides)
+    if winner is None:
         # No clear winner signal (e.g. mutual annihilation) -- be
         # conservative and give both the wider "loser" tolerance.
-        return {a: "loser", b: "loser"}
-    winner = a if ra > rb else b
+        return {k: "loser" for k in keys}
     return {k: ("winner" if k == winner else "loser") for k in keys}
+
+
+def _winner_block(tape_sides: dict[str, dict], sim_cards: list[dict]) -> dict[str, Any]:
+    """The campaign's primary KPI: does the engine pick the same side to win?
+
+    Two numbers, because they answer different questions:
+
+    - ``winner_match`` compares the tape's winner against the winner implied
+      by the sim's MEDIAN outcome (per-side median survivors / hp_remaining /
+      kills across the seeds). This is the headline yes/no.
+    - ``winner_agreement`` is the fraction of individual seeds whose own
+      winner equals the tape's. A fight sitting at 0.55 is a coin flip the
+      engine happens to be winning, not a fight the engine understands --
+      the median-based bool alone would hide that.
+
+    ``winner_match`` is None when either side of the comparison has no
+    winner (a tie, or no sim cards at all) -- never silently False.
+    """
+    tape_winner = _winner_side(tape_sides)
+
+    seed_winners = [_winner_side(c.get("sides") or {}) for c in sim_cards]
+    n_seeds = len(seed_winners)
+
+    sim_median_sides: dict[str, dict[str, Any]] = {}
+    for side_key in tape_sides:
+        present = [c["sides"][side_key] for c in sim_cards if side_key in c.get("sides", {})]
+        if not present:
+            continue
+        sim_median_sides[side_key] = {
+            name: statistics.median([s.get(name) or 0 for s in present])
+            for name in ("survivors", "hp_remaining", "kills")
+        }
+    sim_winner = _winner_side(sim_median_sides)
+
+    if tape_winner is None or sim_winner is None:
+        match = None
+    else:
+        match = tape_winner == sim_winner
+
+    agreement = None
+    if n_seeds and tape_winner is not None:
+        agreement = round(sum(1 for w in seed_winners if w == tape_winner) / n_seeds, 4)
+
+    return {
+        "tape_winner": tape_winner,
+        "sim_median_winner": sim_winner,
+        "winner_match": match,
+        "winner_agreement": agreement,
+        "n_seeds": n_seeds,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -251,6 +336,7 @@ def _score_scalar(tape_value: float, sim_values: list[Any], tolerance: float) ->
         return {
             "sim_median": None, "sim_p10": None, "sim_p90": None, "sim_n": 0,
             "delta": None, "tolerance": round(tolerance, 4), "verdict": "MISMATCH",
+            "tol_z": None, "degenerate_band": None,
             "note": "sim produced no value for this metric across any seed",
         }
     inside = dist["p10"] <= tape_value <= dist["p90"]
@@ -261,6 +347,18 @@ def _score_scalar(tape_value: float, sim_values: list[Any], tolerance: float) ->
         "sim_p90": round(dist["p90"], 4), "sim_n": dist["n"],
         "delta": round(tape_value - dist["median"], 4), "tolerance": round(tolerance, 4),
         "verdict": verdict,
+        # --- diagnostics (measurement only — neither field feeds the verdict) ---
+        # tol_z: how many tolerances away from the sim median the tape sits.
+        # <=1 is "would pass on tolerance alone"; 8.0 and 1.05 are both bare
+        # "MISMATCH" without it, and only one of them is worth chasing.
+        "tol_z": (round(abs(tape_value - dist["median"]) / tolerance, 3) if tolerance else None),
+        # degenerate_band: the 20-seed [p10, p90] band collapsed to a single
+        # point, so the "inside the band" arm of the verdict is doing no work
+        # and the whole call rests on the tolerance arm. Common for integer
+        # counts (survivors, kills) in lopsided fights; worth seeing, because
+        # a zero-width band means the sim is deterministic on that metric and
+        # ANY tape value off that point mismatches.
+        "degenerate_band": (dist["p90"] - dist["p10"]) == 0,
     }
 
 
@@ -447,12 +545,20 @@ def score_card(tape_card: dict, sim_cards: list[dict], sim_durations: list[float
         for r in all_rows if r.get("gated") and r["verdict"] == "INCONCLUSIVE"
     ]
 
+    winner = _winner_block(tape_sides, sim_cards)
+
     return {
         "tag": tape_card.get("tag"),
         "run_id": tape_card.get("run_id"),
         "matchup": tape_card.get("matchup"),
         "metrics": all_rows,
         "verdict": overall,
+        # Primary KPI, NOT gated: `verdict` above deliberately stays exactly
+        # what it was so this run stays comparable to earlier scoreboards.
+        # See `_winner_block`.
+        "winner": winner,
+        "winner_match": winner["winner_match"],
+        "winner_agreement": winner["winner_agreement"],
         "rerolls": rerolls,
     }
 
@@ -519,6 +625,42 @@ def score_all(
     return results, failures
 
 
+def _winner_summary(results: list[dict]) -> dict[str, Any]:
+    """Roll the per-fight winner block up into the run's headline KPI.
+
+    `n_comparable` excludes fights where either side of the comparison had
+    no winner at all (a tie) — those are listed separately under
+    `undecidable` rather than being counted as agreements or flips.
+    """
+    comparable = [r for r in results if r.get("winner", {}).get("winner_match") is not None]
+    flipped = [r for r in comparable if r["winner"]["winner_match"] is False]
+    undecidable = [
+        r["run_id"] for r in results if r.get("winner", {}).get("winner_match") is None
+    ]
+    agreements = [
+        r["winner"]["winner_agreement"] for r in results
+        if r.get("winner", {}).get("winner_agreement") is not None
+    ]
+    return {
+        "n_comparable": len(comparable),
+        "n_winner_match": len(comparable) - len(flipped),
+        "n_winner_flipped": len(flipped),
+        "winner_match_rate": round((len(comparable) - len(flipped)) / len(comparable), 4) if comparable else None,
+        "mean_seed_agreement": round(statistics.mean(agreements), 4) if agreements else None,
+        "flipped": [
+            {
+                "run_id": r["run_id"],
+                "matchup": r.get("matchup"),
+                "tape_winner": r["winner"]["tape_winner"],
+                "sim_median_winner": r["winner"]["sim_median_winner"],
+                "winner_agreement": r["winner"]["winner_agreement"],
+            }
+            for r in flipped
+        ],
+        "undecidable": undecidable,
+    }
+
+
 def _stamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
@@ -554,6 +696,8 @@ def main() -> None:
             if m.get("gated") and m["verdict"] == "MISMATCH":
                 mismatch_ranking[m["name"]] += 1
 
+    winner_summary = _winner_summary(results)
+
     stamp = _stamp()
     RUNS_DIR.mkdir(parents=True, exist_ok=True)
     out_path = RUNS_DIR / f"{stamp}-{args.label}.json"
@@ -563,6 +707,7 @@ def main() -> None:
         "n_fights": len(results),
         "n_failures": len(failures),
         "verdict_counts": dict(verdict_counts),
+        "winner_summary": winner_summary,
         "mismatch_ranking": mismatch_ranking.most_common(),
         "failures": failures,
         "fights": results,
@@ -571,6 +716,23 @@ def main() -> None:
 
     print(f"scored {len(results)} fights ({len(failures)} load/score failures)")
     print(f"verdicts: {dict(verdict_counts)}")
+    print(
+        f"winner agreement: {winner_summary['n_winner_match']}/{winner_summary['n_comparable']} "
+        f"fights pick the same winner as the tape "
+        f"(mean per-seed agreement {winner_summary['mean_seed_agreement']})"
+    )
+    if winner_summary["flipped"]:
+        print(f"flipped fights ({len(winner_summary['flipped'])}) — sim picks the OTHER side:")
+        for f in winner_summary["flipped"]:
+            print(
+                f"  {f['run_id']:44s} tape={f['tape_winner']} sim={f['sim_median_winner']} "
+                f"seed_agreement={f['winner_agreement']}"
+            )
+    if winner_summary["undecidable"]:
+        print(
+            f"winner undecidable (tie on one side) for {len(winner_summary['undecidable'])}: "
+            + ", ".join(winner_summary["undecidable"])
+        )
     if mismatch_ranking:
         print("top mismatched gated metrics (fight count):")
         for name, cnt in mismatch_ranking.most_common(15):

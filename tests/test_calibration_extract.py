@@ -100,19 +100,55 @@ def test_extractor_is_source_agnostic():
     assert card["sides"]["side2"]["hits_landed"] == 2
 
 
-def test_trample_multi_victim_detection():
+def _multi_victim_swing(span: float) -> dict:
+    """One attacker hitting two victims `span` seconds apart, extracted."""
     from aoe2x.calibration.extract import extract_card
 
     dmg = [{"t": 5.0, "attacker": 1, "victim": 9, "damage": 18.0, "victim_hp_after": 1.0,
             "kill": False, "attacker_owner": 3, "victim_owner": 2},
-           {"t": 5.02, "attacker": 1, "victim": 10, "damage": 4.5, "victim_hp_after": 1.0,
+           {"t": 5.0 + span, "attacker": 1, "victim": 10, "damage": 4.5, "victim_hp_after": 1.0,
             "kill": False, "attacker_owner": 3, "victim_owner": 2}]
     card = extract_card(dmg, [], {"side3": {"unit_name": "E", "count": 1},
                                   "side2": {"unit_name": "H", "count": 2}})
-    s = card["sides"]["side3"]
+    return card["sides"]["side3"]
+
+
+def test_trample_multi_victim_detection():
+    s = _multi_victim_swing(0.02)
     assert s["swing_count"] == 1, "same attacker within SWING_EPS is ONE swing"
     assert s["trample_multi_rate"] == 1.0
     assert s["trample_victims_max"] == 2
+
+
+def test_swing_eps_covers_slow_projectile_spread():
+    """SWING_EPS is 0.60s, not 0.15s — and this test pins that.
+
+    A slow projectile (siege onager, heavy scorpion, elite fire lancer)
+    delivers ONE shot's multi-victim damage spread over well more than
+    0.15s of flight time. Under the old 0.15s value the extractor split
+    that single shot into several "swings", manufacturing churn the engine
+    was then blamed for (see docs/architecture/calibration-gap-analysis.md
+    §3.3). A 0.40s spread must group as one multi-victim swing.
+    """
+    from aoe2x.calibration.extract import SWING_EPS
+
+    assert SWING_EPS == 0.60
+
+    s = _multi_victim_swing(0.40)
+    assert s["swing_count"] == 1, "a 0.40s slow-projectile spread is ONE swing at 0.60s eps"
+    assert s["trample_multi_rate"] == 1.0
+    assert s["trample_victims_max"] == 2
+
+
+def test_swing_eps_still_separates_genuinely_distinct_swings():
+    """The widened eps must not swallow real reload cycles: two hits more
+    than SWING_EPS apart are still two separate swings on one victim each,
+    so nothing gets miscounted as trample.
+    """
+    s = _multi_victim_swing(0.80)
+    assert s["swing_count"] == 2, "a 0.80s gap exceeds SWING_EPS — two swings"
+    assert s["trample_multi_rate"] == 0.0
+    assert s["trample_victims_max"] == 0
 
 
 def test_same_timestamp_tie_break_picks_the_killing_event():

@@ -324,7 +324,23 @@ def test_reused_tag_repeat_gets_reassigned_run_id_not_discarded(tmp_path, monkey
 
     # Both recordings' tape directories must exist on disk — nothing discarded.
     assert (tmp_path / "golden" / "tapes" / "hand_cannoneer__vs__elite_elephant").is_dir()
-    assert (tmp_path / "golden" / "tapes" / "hand_cannoneer__vs__elite_elephant_r2").is_dir()
+    repeat_dir = tmp_path / "golden" / "tapes" / "hand_cannoneer__vs__elite_elephant_r2"
+    assert repeat_dir.is_dir()
+
+    # ...and the staged files inside must carry the REASSIGNED run_id, not
+    # the raw recorded tag. Asserting only that the dir exists is what let
+    # the original bug ship: the decoded streams were copied in keeping
+    # their `<tag>.*` names, so extract.build_truth_card's
+    # `<run_id>.damage.jsonl.gz` lookup missed and it emitted a silent
+    # all-zero truth card for this exact fight.
+    staged = sorted(p.name for p in repeat_dir.iterdir())
+    assert staged, "repeat run's tape dir is empty"
+    for name in staged:
+        assert name.startswith("hand_cannoneer__vs__elite_elephant_r2."), (
+            f"staged tape file {name!r} does not carry the reassigned run_id — "
+            f"extract would not find it"
+        )
+    assert "hand_cannoneer__vs__elite_elephant_r2.damage.jsonl.gz" in staged
 
     # Re-ingesting the SAME reused-tag-repeat zip again must stay a no-op:
     # the literal run_id==tag slot still holds the OLDER (original)

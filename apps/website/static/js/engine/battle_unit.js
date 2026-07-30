@@ -27,6 +27,9 @@ import {
     KITE_TANGENTIAL_WEIGHT,
     KITE_COHESION_WEIGHT,
     KITE_COHESION_RAMP_TILES,
+    COMBAT_PACK_FACTOR,
+    COMBAT_PACK_SLACK_TILES,
+    COMBAT_PACK_RANGED,
 } from "./constants.js";
 import { Projectile, classifyProjectile } from "./projectile.js";
 import { MeleeEffect } from "./melee_effect.js";
@@ -231,6 +234,11 @@ export class BattleUnit {
         );
         this.target = null;
         this.state = "idle";
+        // Combat-pack flag (E8) -- refreshed once per tick by
+        // Simulation.update() before any unit moves, so both members of a pair
+        // read the SAME tick's value in calculateAvoidance and again in
+        // resolveCollisions. Never true before the first update().
+        this.inCombatPack = false;
         this.attackCooldown = 0;
         this.wasMoving = true;
         this.committedAttack = null;
@@ -1783,6 +1791,26 @@ export class BattleUnit {
         );
     }
 
+    // ---- combat-pack predicate (E8) ------------------------------------------
+    // True when this unit is committed to a fight at contact range: alive, with
+    // a living target no further than its own effective reach plus
+    // COMBAT_PACK_SLACK_TILES. The slack is what admits the rank BEHIND the
+    // contact line, which by definition has nothing in reach yet -- see the
+    // reach arithmetic in constants.js. Recomputed once per tick by
+    // Simulation.update() and cached as `this.inCombatPack`; nothing here draws
+    // randomness and nothing here mutates the unit.
+    computeCombatPack() {
+        if (this.state === "dead") return false;
+        if (!COMBAT_PACK_RANGED && this.isRanged()) return false;
+        const t = this.target;
+        if (!t || t.state === "dead") return false;
+        const reach = this.attackRange + this.radius + t.radius;
+        return (
+            this.distanceTo(t) <=
+            reach + COMBAT_PACK_SLACK_TILES * TILE_SIZE
+        );
+    }
+
     calculateAvoidance(allUnits) {
         let avoidX = 0,
             avoidY = 0;
@@ -1791,7 +1819,19 @@ export class BattleUnit {
             const dx = this.x - other.x;
             const dy = this.y - other.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
-            const minDist = this.radius + other.radius + 2;
+            // Same-team pairs that are BOTH engaged compress (E8): the soft
+            // floor shrinks by the same factor as the hard one in
+            // resolveCollisions, otherwise this separation force would just
+            // push the pair straight back out of the compressed band. Cross-
+            // team pairs and any pair with an unengaged member are untouched.
+            let minDist = this.radius + other.radius + 2;
+            if (
+                this.team === other.team &&
+                this.inCombatPack &&
+                other.inCombatPack
+            ) {
+                minDist *= COMBAT_PACK_FACTOR;
+            }
             if (dist < minDist * 1.5 && dist > 0) {
                 const overlap =
                     Math.max(0, minDist - dist) / minDist;

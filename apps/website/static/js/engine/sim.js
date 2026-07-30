@@ -18,7 +18,12 @@
 // in simulate.js / `static/js/sim_renderer.js`. A host drives this with
 // step()/runToEnd().
 
-import { TILE_SIZE, CANVAS_WIDTH, CANVAS_HEIGHT } from "./constants.js";
+import {
+    TILE_SIZE,
+    CANVAS_WIDTH,
+    CANVAS_HEIGHT,
+    COMBAT_PACK_FACTOR,
+} from "./constants.js";
 
 // ---- deterministic state hash ------------------------------------------------
 // FNV-1a (32-bit) over the full mutable sim state, in a fixed order. Used by the
@@ -101,6 +106,13 @@ export class Simulation {
     update(dt) {
         this.battleTime += dt;
         const allUnits = [...this.team1, ...this.team2];
+        // Combat-pack flags (E8), refreshed ONCE per tick off the positions
+        // every unit can still see -- before anybody moves. Computing it here
+        // rather than inside the O(3n^2) collision passes is both cheaper and
+        // the only way both members of a pair agree: a flag recomputed mid-pass
+        // would depend on the pair iteration order. See constants.js.
+        for (const unit of allUnits)
+            unit.inCombatPack = unit.computeCombatPack();
         for (const unit of this.team1)
             unit.update(dt, allUnits, this.team2);
         for (const unit of this.team2)
@@ -185,7 +197,22 @@ export class Simulation {
                     const dx = b.x - a.x;
                     const dy = b.y - a.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    const minDist = a.radius + b.radius + 1;
+                    // E8: a SAME-TEAM pair whose members are both engaged in a
+                    // fight at contact range is allowed to compress to
+                    // COMBAT_PACK_FACTOR of the normal floor -- that is what
+                    // lets a second rank of >= 1.0-tile-reach melee fight over
+                    // the front rank, as the tapes show. Cross-team pairs keep
+                    // the untouched floor, so the contact line itself does not
+                    // move. The flags were computed once at the top of
+                    // update(), so all three passes see the same values.
+                    let minDist = a.radius + b.radius + 1;
+                    if (
+                        a.team === b.team &&
+                        a.inCombatPack &&
+                        b.inCombatPack
+                    ) {
+                        minDist *= COMBAT_PACK_FACTOR;
+                    }
                     if (dist < minDist && dist > 0.01) {
                         const overlap = (minDist - dist) / 2;
                         const nx = dx / dist;

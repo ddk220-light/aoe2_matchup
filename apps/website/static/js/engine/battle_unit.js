@@ -343,6 +343,12 @@ export class BattleUnit {
         // x/y are assigned by the scenario AFTER construction, so the first
         // refresh only seeds the baseline and reports zero velocity.
         this.velSeeded = false;
+
+        // D4 approach hysteresis: true once this unit has closed to within a
+        // body diameter inside reach, false again the moment its target
+        // leaves reach. Starts false -- everything opens the fight by
+        // approaching.
+        this.rangedClosed = false;
         // Horizontal facing: sprites are authored facing LEFT, so faceRight=true
         // means mirror. At spawn, team 1 (left) faces its enemies on the right and
         // team 2 (right) faces left; during battle it tracks the target/movement
@@ -878,6 +884,133 @@ export class BattleUnit {
         return { x: ax, y: ay };
     }
 
+    // ===== D4 APPROACH MARGIN + HYSTERESIS =====
+    // Pre-R5b a ranged unit approached until inRange() flipped and then
+    // stopped dead on the reach lip: the forensics measured its launch-range
+    // distribution DEGENERATE at its own reach (median == reach to two
+    // digits, p90 == median) against a tape median 0.9-1.4 tiles closer with
+    // a broad spread. Stopping on the lip is also unstable -- a hair of
+    // target movement puts the target back out of reach -- which is how
+    // heavy_cav_archer__vs__hand_cannoneer ends up HOLDING at 8.06 tiles
+    // against a 7.62 reach while the tape's two armies close to 4.84 and sit
+    // at ~6.4 with 96-100% of both sides in reach.
+    //
+    // The margin is physical, not fitted: a unit closes until its target is
+    // one of its OWN BODY DIAMETERS inside reach, and only re-approaches once
+    // the target has actually left reach. The band between those two
+    // distances is the hysteresis, and it is the same quantity -- there is no
+    // second number to choose. Clamped so it can never walk a unit into its
+    // own minimum-range dead zone.
+    //
+    // Approach/hold only. Kiting and retreat (E10a) are untouched.
+    rangedShouldApproach() {
+        if (!R5B.approachMargin) return !this.inRange();
+        const dist = this.distanceTo(this.target);
+        const reach =
+            this.attackRange + this.radius + this.target.radius;
+        const inner = Math.max(this.minAttackRange, reach - 2 * this.radius);
+        if (dist > reach) {
+            this.rangedClosed = false;      // target has left reach entirely
+        } else if (dist <= inner) {
+            this.rangedClosed = true;       // settled inside the margin
+        }
+        return !this.rangedClosed;
+    }
+
+    // ===== D3 IN-FLIGHT DAMAGE ACCOUNTING =====
+    // The engine's single largest shot-outcome error was overkill in the air:
+    // it wasted 13.6-37.7% of its shots on units that died before the arrow
+    // landed, where the tape's hand cannoneer -- in all three of its
+    // recordings -- wastes exactly 0.0%. Tape HCs also spread over 3.0-5.0
+    // distinct victims per reload window against the engine's 1.98-3.95: the
+    // same fact seen from the other side. They are not all shooting the same
+    // dying unit.
+    //
+    // The rule carries no constant and no randomness: a shooter counts the
+    // damage already on its way to a candidate, and if that is enough to kill
+    // it, shoots something else instead.
+
+    // Damage of this team's projectiles already in flight toward `unit` that
+    // will LAND BEFORE a shot fired now would.
+    //
+    // The arrival-order qualifier is not a softening knob, it is what makes
+    // the test mean what it says. "The target is already dead" is only true
+    // from this shot's point of view if that damage gets there first; a
+    // projectile that lands after mine does not make mine wasted, because
+    // mine lands while the target is still alive and contributes to killing
+    // it. Counting every projectile regardless of arrival time made a nearby
+    // shooter defer to a distant one whose arrow was still seconds away,
+    // which drove in-flight waste to ~0 on sides where the tape measures
+    // 13-33% (imp_elite_skirm) and 8-21% (heavy_cav_archer).
+    inboundDamageOn(unit, myFlightTime = Infinity) {
+        let total = 0;
+        for (const p of this.sim.projectiles) {
+            if (p.done) continue;
+            if (p.team !== this.team) continue;
+            if (p.targetUnit !== unit) continue;
+            if (p.speed > 0) {
+                const rx = p.targetX - p.x;
+                const ry = p.targetY - p.y;
+                const eta = Math.sqrt(rx * rx + ry * ry) / p.speed;
+                if (eta >= myFlightTime) continue;
+            }
+            total += p.plannedDamage;
+        }
+        return total;
+    }
+
+    /** Flight time of a shot fired at `enemy` right now, in seconds. */
+    flightTimeTo(enemy) {
+        const speed =
+            this.projectileSpeed > 0 ? this.projectileSpeed : 7 * TILE_SIZE;
+        return this.distanceTo(enemy) / speed;
+    }
+
+    /** Same reach test as inRange(), for an enemy other than this.target. */
+    canReach(enemy) {
+        const dist = this.distanceTo(enemy);
+        if (dist > this.attackRange + this.radius + enemy.radius) return false;
+        if (this.minAttackRange > 0 && dist < this.minAttackRange) return false;
+        return true;
+    }
+
+    // Who this particular shot should go to. Returns `primary` unchanged
+    // unless it is already dead on arrival, in which case the next reachable
+    // enemy is taken in the SAME nearest-first order findTarget() acquires in
+    // -- this re-picks one shot, it does not re-target the unit.
+    pickShotTarget(primary) {
+        if (!R5B.inflightAccounting) return primary;
+        if (!primary || primary.state === "dead") return primary;
+        if (
+            this.inboundDamageOn(primary, this.flightTimeTo(primary)) <
+            primary.currentHp
+        ) {
+            return primary;
+        }
+
+        const foes = this.team === 1 ? this.sim.team2 : this.sim.team1;
+        let best = null;
+        let bestDist = Infinity;
+        for (const foe of foes) {
+            if (foe === primary || foe.state === "dead") continue;
+            if (!this.canReach(foe)) continue;
+            if (
+                this.inboundDamageOn(foe, this.flightTimeTo(foe)) >=
+                foe.currentHp
+            ) {
+                continue;
+            }
+            const d = this.distanceTo(foe);
+            if (d < bestDist) {
+                bestDist = d;
+                best = foe;
+            }
+        }
+        // Nothing reachable is still worth shooting: take the shot anyway,
+        // rather than inventing a hold-fire behaviour the tape does not show.
+        return best || primary;
+    }
+
     // The launch itself, factored out of update()'s ranged branch so the
     // D1 fast path and the legacy path cannot drift. Starts the windup when
     // there is one, otherwise fires on the spot.
@@ -1221,16 +1354,18 @@ export class BattleUnit {
                     this.kiteSteering(allUnits, enemies),
                 );
             } else if (R5B.stopToFire) {
-                if (this.inRange()) {
-                    // In reach, still reloading: hold and keep the target.
-                    this.state = "attacking";
-                    this.wasMoving = false;
-                } else {
-                    // Out of reach -- CLOSE, whether or not the reload is done.
+                if (this.rangedShouldApproach()) {
+                    // Not closed yet -- CLOSE, whether or not the reload is
+                    // done. With D4 this keeps going past the reach lip until
+                    // the target is a body diameter inside it.
                     this.state = "moving";
                     this.markRangedMovement();
                     this.moveTowardTarget(dt, allUnits);
                     this.wasMoving = true;
+                } else {
+                    // Settled: hold position and keep the target.
+                    this.state = "attacking";
+                    this.wasMoving = false;
                 }
             } else if (this.attackCooldown > 0) {
                 this.state = "attacking";
@@ -1412,18 +1547,25 @@ export class BattleUnit {
                 (e) => e.state !== "dead" && e !== this.target,
             );
         }
+        // D3: pick this SHOT's victim. Unchanged from this.target unless the
+        // primary is already covered by friendly damage in the air, in which
+        // case the shot goes to the next reachable enemy instead of being
+        // spent on a corpse-to-be. Does not re-target the unit itself.
+        const primary = this.isRanged()
+            ? this.pickShotTarget(this.target)
+            : this.target;
         let scatI = 0;
         for (let p = 0; p < numProjectiles; p++) {
-            if (this.target && this.target.state !== "dead") {
+            if (primary && primary.state !== "dead") {
                 if (this.isRanged()) {
-                    let tgt = this.target;
+                    let tgt = primary;
                     if (p > 0 && scatter && scatter.length > 0) {
                         tgt = scatter[scatI % scatter.length];
                         scatI++;
                     }
                     this.fireProjectile(tgt, p > 0);
                 } else {
-                    this.performAttackOn(this.target);
+                    this.performAttackOn(primary);
                 }
             }
         }
@@ -1764,6 +1906,13 @@ export class BattleUnit {
                 }
             },
         );
+        // D3 bookkeeping: who this shot is for and how much it will do if it
+        // lands, so the next shooter can see the damage already in the air.
+        // Read-only labels -- the projectile's own flight ignores them, and
+        // they are set on every path so the legacy engine carries them too
+        // (inert there, because nothing reads them with the flag off).
+        proj.targetUnit = target;
+        proj.plannedDamage = damage;
         this.recordMissile();
         this.sim.projectiles.push(proj);
         this.attackAnimTimer = 0.15;

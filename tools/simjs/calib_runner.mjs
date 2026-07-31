@@ -538,9 +538,21 @@ if (isMainThread && process.argv[1]
     // Subset filters -- see the SUBSETS note at the top of this file. These
     // are the same three filters `python -m aoe2x.calibration.score` takes,
     // reading the same data/calibration/fight_sets.json.
+    // `--tags-file` reads the same comma/whitespace-separated list from a file.
+    // The C2 ranged-vs-melee corpus is 86 tags, which is past what a shell will
+    // pass through comfortably; c1_chase_probe.mjs already takes its list this
+    // way, so the two tools can be handed the identical file.
     const tagsArg = flag("--tags", null);
+    const tagsFile = flag("--tags-file", null);
+    if (tagsArg && tagsFile) {
+        console.error("--tags and --tags-file are mutually exclusive");
+        process.exit(2);
+    }
+    const rawTags = tagsFile ? readFileSync(tagsFile, "utf8") : tagsArg;
     const filterOpts = {
-        tags: tagsArg ? tagsArg.split(",").filter(Boolean) : null,
+        tags: rawTags
+            ? rawTags.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean)
+            : null,
         match: flag("--match", null),
         meleeOnly: argv.includes("--melee-only"),
         rangedOnly: argv.includes("--ranged-only"),

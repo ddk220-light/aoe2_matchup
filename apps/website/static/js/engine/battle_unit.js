@@ -40,6 +40,7 @@ import {
     MELEE_SWING_RECOVERY_S,
     MELEE_LANE_REACQUIRE,
     MELEE_LANE_CANDIDATE_CAP,
+    R5B,
 } from "./constants.js";
 import { Projectile, classifyProjectile } from "./projectile.js";
 import { MeleeEffect } from "./melee_effect.js";
@@ -776,11 +777,37 @@ export class BattleUnit {
 
     // Windup for the shot being started now: attack_delay, plus the stop/turn
     // overhead when this unit had to halt for it.
+    //
+    // D1 changes only WHICH movement fact is asked. E9 asked the latched
+    // "did this unit move at any point since its last shot" (movedSinceShot);
+    // R5b asks the instantaneous "was it moving on the tick the cooldown came
+    // up" (wasMoving), because that is the thing the pre-shot delay physically
+    // pays for -- coming to a halt. A unit that repositioned early and then
+    // stood waiting out the rest of its reload is already stopped when the
+    // cooldown expires and owes nothing, which is §1b's measurement.
     rangedWindup() {
-        return (
-            this.attackDelay +
-            (this.movedSinceShot ? RANGED_STOP_OVERHEAD : 0)
-        );
+        const hadToStop = R5B.stopToFire
+            ? this.wasMoving
+            : this.movedSinceShot;
+        return this.attackDelay + (hadToStop ? RANGED_STOP_OVERHEAD : 0);
+    }
+
+    // The launch itself, factored out of update()'s ranged branch so the
+    // D1 fast path and the legacy path cannot drift. Starts the windup when
+    // there is one, otherwise fires on the spot.
+    startRangedShot() {
+        const windup = this.rangedWindup();
+        if (windup > 0) {
+            this.committedAttack = { target: this.target, timeLeft: windup };
+            this.state = "attacking";
+            this.wasMoving = false;
+        } else {
+            this.state = "attacking";
+            this.performAttack();
+            this.fireRecovery = this.postFireRecovery;
+            this.movedSinceShot = false;
+            this.wasMoving = false;
+        }
     }
 
     // Called the first time a ranged unit moves after firing. The cooldown set
@@ -793,6 +820,20 @@ export class BattleUnit {
     markRangedMovement() {
         if (this.movedSinceShot) return;
         this.movedSinceShot = true;
+        // D1 REMOVES the quantised-cycle top-up. E9 charged a unit that moved
+        // at any point in a cycle the difference up to ceil(reload/Q)*Q; the
+        // forensics re-tested that trigger on this corpus (§1b) and found it
+        // over-charges -- on ranged-vs-ranged tape a cycle with a little
+        // movement in it costs arbalester, imp_elite_skirm and hand_cannoneer
+        // NOTHING. The engine was charging it twice over: the quantum, and
+        // then the walk-in on top. What remains is the pre-shot delay, paid
+        // only by a unit that is actually still moving when its cooldown
+        // expires, so the quantum emerges for a continuous runner instead of
+        // being imposed on everyone who took a step.
+        //
+        // movedSinceShot itself is kept: it is what the legacy (flag-off) path
+        // reads, and it is still the honest record of "moved this cycle".
+        if (R5B.stopToFire) return;
         this.attackCooldown = Math.max(
             0,
             this.attackCooldown +
@@ -1041,7 +1082,41 @@ export class BattleUnit {
                 return;
             }
 
-            if (this.tooClose()) {
+            // ===== D1 STOP-TO-FIRE (R5B) =====
+            // The launch test is now the FIRST thing the ranged branch asks,
+            // every tick: "cooldown expired and something in reach?" Before
+            // R5b it was the fourth branch of an if/else chain whose third arm
+            // was `attackCooldown > 0 -> stand`, so a reloading ranged unit
+            // parked itself wherever it happened to be -- including well
+            // outside its own reach -- and only began to approach once the
+            // reload had already elapsed. That single ordering is what the
+            // forensics measured as "the engine is idle even when it has a
+            // target" (engine in-reach 73.8% vs the tape's 91.6%), as the
+            // moving-cadence overshoot (launch-to-launch = reload + the whole
+            // walk-in, e.g. heavy_cav_archer 3.90 s against a 2.00 s quantum),
+            // and as heavy_cav_archer__vs__hand_cannoneer's refusal to close
+            // (held at 8.06 tiles, ABOVE the 7.62 reach).
+            //
+            // The rule, in one line: a ranged unit fires the instant its
+            // cooldown expires if a target is in reach, and it approaches
+            // whenever the target is not -- reloading or not. Whether it had
+            // to STOP for the shot is now an instantaneous fact (was it moving
+            // on the tick the cooldown came up?), not the latched
+            // "moved at any point this cycle" of E9's trigger.
+            //
+            // The quantised cycle is no longer imposed; it EMERGES. A unit
+            // that is genuinely running at every expiry pays the measured
+            // pre-shot delay on every cycle (reload + 0.15), while one that
+            // finished repositioning before the cooldown came up pays nothing
+            // and re-fires at a bare reload -- which is exactly what §1b of
+            // the forensics measures on ranged-vs-ranged tape (arbalester,
+            // imp_elite_skirm and hand_cannoneer all sit at bare reload
+            // through the mv<60% buckets; only heavy_cav_archer is graded).
+            const canFireNow =
+                R5B.stopToFire && this.attackCooldown <= 0 && this.inRange();
+            if (canFireNow) {
+                this.startRangedShot();
+            } else if (this.tooClose()) {
                 this.state = "kiting";
                 this.markRangedMovement();
                 this.moveAwayFromTarget(
@@ -1051,6 +1126,7 @@ export class BattleUnit {
                 );
                 this.wasMoving = true;
             } else if (this.attackCooldown > 0 && shouldKite) {
+                // Kiting a MELEE foe is E10a's business and is untouched here.
                 this.state = "kiting";
                 this.markRangedMovement();
                 this.moveAwayFromTarget(
@@ -1058,6 +1134,18 @@ export class BattleUnit {
                     allUnits,
                     this.kiteSteering(allUnits, enemies),
                 );
+            } else if (R5B.stopToFire) {
+                if (this.inRange()) {
+                    // In reach, still reloading: hold and keep the target.
+                    this.state = "attacking";
+                    this.wasMoving = false;
+                } else {
+                    // Out of reach -- CLOSE, whether or not the reload is done.
+                    this.state = "moving";
+                    this.markRangedMovement();
+                    this.moveTowardTarget(dt, allUnits);
+                    this.wasMoving = true;
+                }
             } else if (this.attackCooldown > 0) {
                 this.state = "attacking";
             } else if (this.inRange()) {

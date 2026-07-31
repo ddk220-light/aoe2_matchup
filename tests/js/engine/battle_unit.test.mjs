@@ -7,7 +7,21 @@ import {
     RANGED_STOP_OVERHEAD,
     RANGED_POST_FIRE_RECOVERY,
     RANGED_POST_FIRE_RECOVERY_BY_SLUG,
+    R5B,
+    setR5B,
 } from "../../../apps/website/static/js/engine/constants.js";
+
+// Run `fn` with an R5B override, restoring the previous flags afterwards even
+// if it throws, so one test's rule selection can never leak into another's.
+function withR5B(overrides, fn) {
+    const saved = { ...R5B };
+    setR5B(overrides);
+    try {
+        fn();
+    } finally {
+        setR5B(saved);
+    }
+}
 
 const STATS = {
     hp: 60, attack: 9, attack_range: 5, attack_speed: 0.5, attack_delay: 0.2,
@@ -296,8 +310,18 @@ const MOVING_CYCLE_CASES = [
     ["imp_elite_skirm", 3.0, 0.317, 10 / 3], // tape moving median 3.334
 ];
 
+// NOTE (R5b/D1): these three pin the LEGACY (pre-R5b) quantised cadence and
+// therefore run with `stopToFire` off. D1 deliberately supersedes E9's binary
+// "moved at any point -> quantise" trigger -- the R5 forensics re-tested it on
+// the ranged-vs-ranged corpus (§1b) and found it over-charges, because the
+// synthetic hook these tests use (`markRangedMovement()` on a unit that is in
+// fact standing still) is exactly the case the tape says costs nothing. The
+// D1 replacement law is pinned by the `stop-to-fire` tests below; keeping
+// these green under the flag-off path is what proves the off-switch really
+// restores the old engine.
 for (const [slug, reload, delay, cycle] of MOVING_CYCLE_CASES) {
-    test(`moving shooter: ${slug} launch-to-launch == ${cycle.toFixed(3)}s, not reload`, () => {
+    test(`[legacy E9] moving shooter: ${slug} launch-to-launch == ${cycle.toFixed(3)}s, not reload`, () => {
+      withR5B({ stopToFire: false }, () => {
         const sim = simStub(13);
         // Ranged punching bag so the position stays put and the ONLY thing under
         // test is the cadence arithmetic; markRangedMovement() stands in for
@@ -349,8 +373,238 @@ for (const [slug, reload, delay, cycle] of MOVING_CYCLE_CASES) {
                 );
             }
         }
+      });
     });
 }
+
+// ---- D1 STOP-TO-FIRE (Round 5b) ---------------------------------------------
+//
+// The law: a ranged unit fires the instant its cooldown expires IF a target is
+// in reach AND it is stationary. Mid-move at expiry -> it halts and pays the
+// measured pre-shot delay (RANGED_STOP_OVERHEAD). Finished repositioning
+// before expiry -> it pays nothing and re-fires at a bare reload. The quantum
+// is no longer imposed; it emerges for a unit that is running at every expiry.
+//
+// Fixtures below use a RANGED bag (shouldKite false) so the E10a kite path is
+// out of the picture and the only thing under test is the launch timing.
+
+// A shooter parked in reach of a stationary ranged bag never moves, so every
+// cycle is a bare reload -- including the FIRST, which under E9 paid the
+// quantum because movedSinceShot starts true.
+for (const [slug, reload, delay] of MOVING_CYCLE_CASES) {
+    test(`[D1] stationary shooter: ${slug} re-fires at a bare reload (${reload}s)`, () => {
+        const sim = simStub(13);
+        const a = new BattleUnit(
+            "1-0", 1,
+            { ...STATS, attack_speed: 1 / reload, attack_delay: delay, attack_range: 7 },
+            slug, "Chinese", sim,
+        );
+        const b = new BattleUnit(
+            "2-0", 2, { ...STATS, hp: 1e9, attack_range: 7 }, "bag", "Goths", sim);
+        a.x = 0; a.y = 0; b.x = 60; b.y = 0;   // 2 tiles apart: well inside reach
+        sim.team1.push(a); sim.team2.push(b);
+
+        const times = [];
+        let prev = 0, t = 0;
+        for (let i = 0; i < Math.ceil(60 * (reload * 5 + 2)); i++) {
+            a.update(DT, [a, b], [b]);
+            t += DT;
+            if (sim.projectiles.length !== prev) {
+                times.push(t);
+                prev = sim.projectiles.length;
+            }
+        }
+        assert.ok(times.length >= 4, `${slug}: expected >=4 shots, got ${times.length}`);
+        for (let i = 1; i < times.length; i++) {
+            const gap = times[i] - times[i - 1];
+            assert.ok(
+                Math.abs(gap - reload) <= DT * 2.5,
+                `${slug}: gap ${i} was ${gap}, expected the bare reload ${reload}`,
+            );
+        }
+    });
+}
+
+test("[D1] a shooter that finished repositioning before expiry pays NOTHING", () => {
+    // The §1b case: the unit moves early in the cycle, stops well before the
+    // cooldown comes up, and is therefore already stationary at expiry. E9
+    // charged it the quantum for having moved at all; D1 charges it nothing.
+    const sim = simStub(21);
+    const reload = 1.7, delay = 0.333;
+    const a = new BattleUnit(
+        "1-0", 1,
+        { ...STATS, attack_speed: 1 / reload, attack_delay: delay, attack_range: 7 },
+        "arbalester", "Chinese", sim,
+    );
+    const b = new BattleUnit(
+        "2-0", 2, { ...STATS, hp: 1e9, attack_range: 7 }, "bag", "Goths", sim);
+    a.x = 0; a.y = 0; b.x = 60; b.y = 0;
+    sim.team1.push(a); sim.team2.push(b);
+
+    const times = [];
+    let prev = 0, t = 0;
+    for (let i = 0; i < Math.ceil(60 * (reload * 5 + 2)); i++) {
+        a.update(DT, [a, b], [b]);
+        t += DT;
+        if (sim.projectiles.length !== prev) {
+            times.push(t);
+            prev = sim.projectiles.length;
+            // Right after each launch, declare that the unit repositioned --
+            // the LATCHED "moved this cycle" fact E9 keyed off. It then stands
+            // still for the rest of the cycle, so at expiry wasMoving is false.
+            a.markRangedMovement();
+        }
+    }
+    assert.ok(times.length >= 4, `expected >=4 shots, got ${times.length}`);
+    for (let i = 1; i < times.length; i++) {
+        const gap = times[i] - times[i - 1];
+        assert.ok(
+            Math.abs(gap - reload) <= DT * 2.5,
+            `gap ${i} was ${gap}: an early-stopping shooter must pay the bare `
+            + `reload ${reload}, not the quantised ${(2.0).toFixed(3)}`,
+        );
+    }
+});
+
+test("[D1] the pre-shot delay is charged on the INSTANTANEOUS movement state", () => {
+    // The rule itself, isolated from any scenario: what a shot costs depends
+    // on whether the unit is moving AT EXPIRY (wasMoving), not on whether it
+    // moved at some point during the cycle (movedSinceShot, E9's latch).
+    const sim = simStub(29);
+    const delay = 0.333;
+    const u = new BattleUnit(
+        "1-0", 1,
+        { ...STATS, attack_speed: 1 / 1.7, attack_delay: delay, attack_range: 7 },
+        "arbalester", "Chinese", sim,
+    );
+
+    // Mid-move at expiry -> halts, so it owes the pre-shot delay ...
+    u.wasMoving = true; u.movedSinceShot = false;
+    assert.ok(Math.abs(u.rangedWindup() - (delay + RANGED_STOP_OVERHEAD)) < 1e-9);
+    // ... and already stopped -> owes nothing extra, even though the LATCH
+    // says it moved earlier in the cycle (this is the §1b case).
+    u.wasMoving = false; u.movedSinceShot = true;
+    assert.ok(Math.abs(u.rangedWindup() - delay) < 1e-9);
+
+    // The legacy path reads the opposite fact, which is what makes the two
+    // models distinguishable at all.
+    withR5B({ stopToFire: false }, () => {
+        u.wasMoving = false; u.movedSinceShot = true;
+        assert.ok(Math.abs(u.rangedWindup() - (delay + RANGED_STOP_OVERHEAD)) < 1e-9);
+    });
+});
+
+test("[D1] a running shooter's cycle is reload + pre-shot, and the quantum emerges", () => {
+    // Continuous runner: the shooter arrives in reach only momentarily, so it
+    // is mid-move whenever its cooldown comes up and pays the pre-shot delay
+    // on every cycle. arbalester 1.70 + 0.15 = 1.85 -- inside the tape's own
+    // ranged-corpus moving band (mvgap 1.71-1.94) and just under the 2.00
+    // quantum E9 used to impose. The point of the test is that nothing
+    // imposes it: the cost is one halt, and the cadence follows.
+    const sim = simStub(31);
+    const reload = 1.7, delay = 0.333;
+    const a = new BattleUnit(
+        "1-0", 1,
+        {
+            ...STATS, attack_speed: 1 / reload, attack_delay: delay,
+            attack_range: 7, movement_speed: 0.96,
+        },
+        "arbalester", "Chinese", sim,
+    );
+    const b = new BattleUnit(
+        "2-0", 2, { ...STATS, hp: 1e9, attack_range: 7 }, "bag", "Goths", sim);
+    a.x = 0; a.y = 0; b.y = 0;
+    sim.team1.push(a); sim.team2.push(b);
+
+    const reach = a.attackRange + a.radius + b.radius;
+    const times = [];
+    let prev = 0, t = 0;
+    for (let i = 0; i < Math.ceil(60 * (reload * 8 + 4)); i++) {
+        // While the shooter is reloading the bag keeps just out of reach, so
+        // the shooter is chasing (never parked) for the whole cycle. The
+        // instant the cooldown expires the bag stops running, so the shooter
+        // closes the last fraction of a pixel and launches WHILE MOVING --
+        // the stop-to-fire case. Holding it exactly on the lip instead would
+        // put it permanently in reach, and the shooter would correctly stand
+        // and pay a bare reload (which is the previous test).
+        if (a.attackCooldown > 0) b.x = a.x + reach + 0.2;
+        a.update(DT, [a, b], [b]);
+        t += DT;
+        if (sim.projectiles.length !== prev) {
+            times.push(t);
+            prev = sim.projectiles.length;
+        }
+    }
+    assert.ok(times.length >= 4, `expected >=4 shots, got ${times.length}`);
+    const expected = reload + RANGED_STOP_OVERHEAD;
+    // 3.5 ticks: reload + pre-shot, plus the one or two ticks the shooter
+    // spends covering the last 0.2 px into reach (tick granularity, not slack
+    // in the rule).
+    for (let i = 1; i < times.length; i++) {
+        const gap = times[i] - times[i - 1];
+        assert.ok(
+            Math.abs(gap - expected) <= DT * 3.5,
+            `gap ${i} was ${gap}, expected reload+pre-shot ${expected}`,
+        );
+        assert.ok(
+            gap > reload + DT,
+            `gap ${i} was ${gap}: a running shooter must pay the pre-shot delay`,
+        );
+    }
+});
+
+test("[D1] a reloading ranged unit APPROACHES instead of standing out of reach", () => {
+    // The ordering bug D1 fixes: pre-R5b the branch `attackCooldown > 0 ->
+    // stand` was tested BEFORE the out-of-range approach, so a ranged unit
+    // that had just fired parked itself wherever it was -- even well outside
+    // its own reach -- for the whole reload. Against a target that keeps
+    // walking away, legacy therefore loses ground every cycle and fires less
+    // and less; D1 keeps contact. This is the measured cause of the engine's
+    // 73.8% in-reach share (tape 91.6%) and of
+    // heavy_cav_archer__vs__hand_cannoneer holding 8.06 tiles against a 7.62
+    // reach instead of closing to the tape's 5.3-6.4.
+    const run = () => {
+        const sim = simStub(37);
+        const a = new BattleUnit(
+            "1-0", 1,
+            {
+                ...STATS, attack_speed: 1 / 1.7, attack_delay: 0.333,
+                attack_range: 7, movement_speed: 0.96,
+            },
+            "arbalester", "Chinese", sim,
+        );
+        // RANGED bag, so shouldKite is false and the E10a kite path (which D1
+        // does not touch) can play no part in the result.
+        const b = new BattleUnit(
+            "2-0", 2, { ...STATS, hp: 1e9, attack_range: 7 }, "bag", "Goths", sim);
+        a.x = 0; a.y = 0; b.x = 210; b.y = 0;   // 7 tiles: just about in reach
+        sim.team1.push(a); sim.team2.push(b);
+        // Bag walks away at half the shooter's speed: a shooter that chases
+        // while reloading keeps up, one that only chases on a spent cooldown
+        // does not.
+        const bagSpeed = 0.48 * 30;
+        for (let i = 0; i < 60 * 20; i++) {
+            b.x += bagSpeed * DT;
+            a.update(DT, [a, b], [b]);
+        }
+        return { shots: sim.projectiles.length, gap: b.x - a.x };
+    };
+
+    const d1 = run();
+    let legacy;
+    withR5B({ stopToFire: false }, () => { legacy = run(); });
+
+    assert.ok(
+        d1.shots > legacy.shots,
+        `D1 should out-shoot legacy against a retreating target: `
+        + `D1 ${d1.shots} vs legacy ${legacy.shots}`,
+    );
+    assert.ok(
+        d1.gap < legacy.gap,
+        `D1 should hold a closer standoff: D1 ${d1.gap.toFixed(1)} px `
+        + `vs legacy ${legacy.gap.toFixed(1)} px`,
+    );
+});
 
 test("post-fire recovery immobilises the shooter, then releases it", () => {
     const sim = simStub(17);

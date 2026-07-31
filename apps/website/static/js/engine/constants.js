@@ -4,6 +4,45 @@
 // and the lab harness import them from here — no duplicate copies exist.
 // Any edit here changes sim behavior: re-run `node tools/simjs/parity_check.mjs`.
 
+// ===== ROUND 5b — RANGED FIRE MODEL (master off-switches) =====
+// Four independent rules, derived in docs/calibration/r5_ranged_forensics.md
+// and specified in the Round-5b brief. Each is a MECHANISM, not a tuning
+// constant: none of them introduces a fitted number (D1 reuses E9's measured
+// pre-shot/recovery constants, D2 reuses the existing dat accuracy roll, D3
+// and D4 carry no constant at all).
+//
+// Setting all four to false restores pre-R5b behaviour BIT-IDENTICALLY --
+// that identity is asserted by tests/js/engine/r5b_offswitch.test.mjs and was
+// verified against the base commit with a 3-seed hash of the ranged subset.
+//
+// Mutable rather than `const` booleans so a harness can A/B the marginal
+// contributions without editing source between runs (calib_runner.mjs
+// --r5b <spec>). The engine itself never reads an env var or a clock; the
+// object is set once, before any fight is built, and is not touched again.
+export const R5B = {
+    // D1  stop-to-fire: the launch check runs every tick and the APPROACH is
+    //     no longer gated behind the reload.
+    stopToFire: true,
+    // D2  ballistic lead + arrival resolution: aim ahead of a moving target,
+    //     resolve the hit at arrival against where the target actually is.
+    ballisticLead: true,
+    // D3  in-flight damage accounting: don't launch at a target already
+    //     covered by friendly projectiles in flight.
+    inflightAccounting: true,
+    // D4  approach margin + hysteresis: close to reach minus one body
+    //     diameter instead of stopping on the reach lip.
+    approachMargin: true,
+};
+
+/** Apply a partial override to {@link R5B}. Harness-only entry point. */
+export function setR5B(overrides) {
+    for (const k of Object.keys(overrides)) {
+        if (!(k in R5B)) throw new Error(`setR5B: unknown flag ${k}`);
+        R5B[k] = Boolean(overrides[k]);
+    }
+    return R5B;
+}
+
 // ===== CONSTANTS =====
 export const CANVAS_WIDTH = 900;
 export const CANVAS_HEIGHT = 600;

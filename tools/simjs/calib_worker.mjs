@@ -21,6 +21,7 @@
 import { parentPort, workerData } from "node:worker_threads";
 
 import {
+    applyR5BSpec,
     loadCalibDicts,
     loadCalibSpawns,
     loadManifest,
@@ -28,7 +29,12 @@ import {
     spawnsForFight,
 } from "./calib_runner.mjs";
 
-const { arenaArg, maxSeconds, outDir } = workerData;
+const { arenaArg, maxSeconds, outDir, r5bSpec } = workerData;
+
+// Round-5b rule flags. Applied BEFORE any fight is built, from the same spec
+// string the parent parsed, so every worker configures the engine identically
+// and a parallel run stays byte-identical to `--workers 1`.
+applyR5BSpec(r5bSpec ?? null);
 
 // Same arena table as the CLI. Duplicated as a two-line lookup rather than
 // exported-and-imported because it is the CLI's own argument vocabulary; the

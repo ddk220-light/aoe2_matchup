@@ -259,16 +259,28 @@ def load_engine(sim_dir: Path, fm, seed: int) -> Fight | None:
     for m in raw["missiles"]:
         if "ax" not in m:
             continue
+        # D2-S1: a pass-through bolt's track runs launch -> END OF FLIGHT, not
+        # launch -> aim point, and its damage events are spread along it instead
+        # of piled on the impact tick. When the dump carries `ex/ey` (i.e. the
+        # engine attached a corridor to this projectile) the shot is modelled
+        # exactly the way a TAPE bolt already is, which is what keeps the two
+        # columns of every table below commensurable. Without those keys every
+        # value this file prints is byte-identical to what it printed before D2.
+        has_end = "ex" in m
+        ix, iy = (m["ex"], m["ey"]) if has_end else (m["ax"], m["ay"])
+        end_t = m["end_t"] if has_end else m["impact_t"]
+        flight = (m["end_flight_tiles"] if has_end
+                  else m.get("flight_tiles", m["dist_tiles"]))
         shots.append({
             "t": m["t"], "owner": m["owner"], "shooter": m["fired_from"],
-            "sx": m["sx"], "sy": m["sy"], "ix": m["ax"], "iy": m["ay"],
-            "impact_t": m["impact_t"], "end_t": m["impact_t"],
-            "flight_tiles": m.get("flight_tiles", m["dist_tiles"]),
+            "sx": m["sx"], "sy": m["sy"], "ix": ix, "iy": iy,
+            "impact_t": m["impact_t"], "end_t": end_t,
+            "flight_tiles": flight,
             "censored": False,
-            "track": [(m["t"], m["sx"], m["sy"]),
-                      (m["impact_t"], m["ax"], m["ay"])],
+            "track": [(m["t"], m["sx"], m["sy"]), (end_t, ix, iy)],
             "master": None, "events": [], "target": m.get("target"),
             "planned": m.get("planned"), "launch_dist": m["dist_tiles"],
+            "swept": has_end,
         })
     shots.sort(key=lambda s: s["t"])
     sides = {}
@@ -369,7 +381,35 @@ def attribute_engine(f: Fight):
     for s in f.shots_all:
         by_shooter[s["shooter"]].append(s)
     f.unattributed = []
+    # A shooter whose bolts SWEEP (D2-S1) spreads one shot's consequences over
+    # the whole flight, exactly as the tape's do, so the impact-tick pairing
+    # below is structurally unable to see them -- it would read the engine as
+    # having FEWER victims per bolt the moment the corridor is switched on.
+    # Those shooters get the tape's own geometric attribution; every other
+    # shooter keeps the original branch verbatim, so a pre-D2 dump reproduces
+    # the pre-D2 numbers to the digit.
+    swept_shooters = {s["shooter"] for s in f.shots_all if s.get("swept")}
     for e in f.damage_all:
+        if e["attacker"] in swept_shooters:
+            cands = [
+                s for s in by_shooter.get(e["attacker"], [])
+                if s["t"] - WINDOW_PAD_S <= e["t"] <= s["end_t"] + WINDOW_PAD_S
+            ]
+            if not cands:
+                e["shot"] = None
+                f.unattributed.append(e)
+                continue
+            vp = f.pos(e["victim"], e["t"])
+            best, bestd = None, None
+            for s in cands:
+                bx, by = _track_pos(s, e["t"])
+                d = (math.hypot(vp[0] - bx, vp[1] - by) if vp else 0.0)
+                if bestd is None or d < bestd:
+                    best, bestd = s, d
+            e["shot"] = best
+            e["resid"] = bestd
+            best["events"].append(e)
+            continue
         cands = [s for s in by_shooter.get(e["attacker"], [])
                  if abs(e["t"] - s["impact_t"]) <= ENGINE_PAIR_TOL]
         if not cands:

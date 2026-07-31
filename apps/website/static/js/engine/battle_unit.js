@@ -45,6 +45,7 @@ import {
     R5D,
     B2,
     R5F,
+    C2A,
     SILENCE_ADVANCE_CYCLES,
     PROJECTILE_RADIUS_TILES,
     ACCURACY_DISPERSION_BY_SLUG,
@@ -390,6 +391,19 @@ export class BattleUnit {
         // leaves reach. Starts false -- everything opens the fight by
         // approaching.
         this.rangedClosed = false;
+
+        // --- C2-a: the contact break (see constants.js C2A) ---------------
+        // The MELEE unit that last landed a hit on this (ranged, non-siege)
+        // unit, or null. Holding the unit itself rather than a boolean or a
+        // timer is what makes the break's end condition physical: the latch is
+        // consulted against that specific body's position every tick and drops
+        // itself the moment the body dies or is escaped. Nothing decays it.
+        //
+        // Set UNCONDITIONALLY of C2A.breakPriority (that flag decides what the
+        // break outranks, not whether it is recorded) but behind
+        // C2A.contactBreak, so the flag-off path allocates and writes nothing
+        // and stays bit-identical.
+        this.contactBreakFrom = null;
 
         // --- R5f A1: the silence clock (see constants.js R5F.silenceAdvance) ---
         // Sim clock instant at which a projectile fired by THIS unit last put
@@ -1725,8 +1739,36 @@ export class BattleUnit {
             // the forensics measures on ranged-vs-ranged tape (arbalester,
             // imp_elite_skirm and hand_cannoneer all sit at bare reload
             // through the mv<60% buckets; only heavy_cav_archer is graded).
+            // ===== C2-a2: THE BREAK OUTRANKS STOP-TO-FIRE =====
+            // Evaluated BEFORE canFireNow because that is the entire content of
+            // the rule. C1 M2 measured the tape's kiter leaving reach a median
+            // 0.08 s after a melee hit -- one 10 Hz sample, i.e. as fast as the
+            // recorder can resolve -- against this engine's 0.42 s. The engine's
+            // delay is not a reaction time it is paying somewhere; it is this
+            // if/else chain choosing something else to do. On the tick after a
+            // hit a kiter with its cooldown up either PARKS to take a shot
+            // (canFireNow, the modal case) or, if the foe has stepped out of
+            // reach, WALKS AT IT (the rangedShouldApproach arm) -- and C1
+            // measured the consequence exactly: 0.05 tiles of radial separation
+            // per reload window against the tape's 1.03.
+            //
+            // So the break does not add a movement mode. It removes the two
+            // choices that outrank retreating, and the unit then kites through
+            // the same arm, the same steering and the same moveAwayFromTarget it
+            // already used -- with the break's own bearing (C-a1).
+            //
+            // NOT overridden, deliberately: the committedAttack windup and E9's
+            // fireRecovery, both of which return above this point. Those are
+            // measured commitments of an animation already in flight and are
+            // shared with the ranged-vs-ranged round; the residual post-hit
+            // latency they impose is measured and reported, not legislated away.
+            const breaking =
+                C2A.breakPriority && this.contactBreakHitter() !== null;
             const canFireNow =
-                R5B.stopToFire && this.attackCooldown <= 0 && this.inRange();
+                !breaking &&
+                R5B.stopToFire &&
+                this.attackCooldown <= 0 &&
+                this.inRange();
             if (canFireNow) {
                 this.startRangedShot();
             } else if (this.tooClose()) {
@@ -1738,8 +1780,12 @@ export class BattleUnit {
                     this.kiteSteering(allUnits, enemies),
                 );
                 this.wasMoving = true;
-            } else if (this.attackCooldown > 0 && shouldKite) {
+            } else if (breaking || (this.attackCooldown > 0 && shouldKite)) {
                 // Kiting a MELEE foe is E10a's business and is untouched here.
+                // C-a2 joins this arm rather than adding its own: a unit
+                // breaking contact runs the ordinary kite step, so the group
+                // terms, the arena steering and the movement bookkeeping are
+                // identical to every other retreat the engine performs.
                 this.state = "kiting";
                 this.markRangedMovement();
                 this.moveAwayFromTarget(
@@ -2860,6 +2906,39 @@ export class BattleUnit {
             this.state = "dead";
             this.target = null;
         }
+        // ===== C2-a1: LATCH THE CONTACT BREAK =====
+        // The whole trigger, in one place: a MELEE unit just put damage on a
+        // ranged body. Every gate here is a scope statement, not a condition on
+        // the mechanism:
+        //   * `amount > 0` -- a hit is damage that arrived. A 0-damage
+        //     application (fully armored, a DODGE/BLOCK path already returned
+        //     above) is not the contact the tape shows a kiter answering.
+        //   * `attacker && !attacker.isRanged()` -- THE trigger. This single
+        //     clause is why ranged-vs-ranged cannot move: those fights contain
+        //     no melee attacker, so the latch is never written.
+        //   * `this.isRanged()` -- the break is a KITER's reaction. Melee
+        //     victims are the sibling region's business and are untouched here,
+        //     which is why melee-vs-melee cannot move either.
+        //   * `this.minAttackRange <= 0` -- siege out, the same clause and the
+        //     same reason as kiteSteering's gate 2 (Siege Onager / Heavy
+        //     Scorpion run tooClose(), not a kite circuit).
+        //   * `this.state !== "dead"` -- checked after the HP application above,
+        //     so a killing blow latches nothing on a corpse.
+        // Placed in takeDamage because that is the engine's single damage
+        // funnel: direct hits, splash, trample, pass-through and charge damage
+        // all arrive here, so "was hit by a melee unit" cannot mean different
+        // things on different damage paths.
+        if (
+            C2A.contactBreak &&
+            amount > 0 &&
+            attacker &&
+            !attacker.isRanged() &&
+            this.state !== "dead" &&
+            this.isRanged() &&
+            this.minAttackRange <= 0
+        ) {
+            this.contactBreakFrom = attacker;
+        }
         // Diagnostic counters (see Simulation.combatStats). Recorded here, past
         // the DODGE/BLOCK early-returns, so a hit only counts once it actually
         // reached HP; `damageDealt` is the HP the victim REALLY lost (the clamp
@@ -3077,6 +3156,44 @@ export class BattleUnit {
         }
     }
 
+    // ---- C2-a: the contact break (see constants.js C2A) ----------------------
+    // Returns the melee unit this kiter is currently breaking contact WITH, or
+    // null when no break is live -- and null means "change nothing", so every
+    // gated-out unit and every flag-off run keeps the pre-C2 behaviour exactly.
+    //
+    // Self-clearing rather than decaying: the latch is dropped here, on the
+    // tick the physical condition stops holding, so there is no expiry sweep
+    // and no lifetime to choose. Both exits are facts about the hitter, not
+    // about time:
+    //   1. the hitter is dead -- there is nothing left to break contact with;
+    //   2. the hitter is further off than ITS OWN REACH plus THIS BODY'S OWN
+    //      DIAMETER. The first term is inRange()'s arithmetic for the pair
+    //      (attackRange + both radii), i.e. the exact distance at which that
+    //      unit can hit this one; the second is 2 * this.radius. Together:
+    //      "I have cleared what it can hit by a whole body's width." That is
+    //      the criterion C1 M2's escape describes, and it carries no constant
+    //      because both quantities are already on the units.
+    //
+    // Deterministic and read-only apart from the latch drop: no rng draw, no
+    // ordering dependence, no wall clock. Callers may invoke it more than once
+    // per tick -- the drop is idempotent.
+    contactBreakHitter() {
+        if (!C2A.contactBreak) return null;
+        const h = this.contactBreakFrom;
+        if (!h) return null;
+        if (h.state === "dead") {
+            this.contactBreakFrom = null;
+            return null;
+        }
+        const escape =
+            h.attackRange + h.radius + this.radius + 2 * this.radius;
+        if (this.distanceTo(h) > escape) {
+            this.contactBreakFrom = null;
+            return null;
+        }
+        return h;
+    }
+
     // ---- group-kite steering (E5a) -------------------------------------------
     // Returns null when this unit is NOT in group-kite mode -- and null means
     // "change nothing", so every gated-out fight stays bit-identical to the
@@ -3248,10 +3365,43 @@ export class BattleUnit {
     moveAwayFromTarget(dt, allUnits, steering = null) {
         if (!this.target) return;
         let dx, dy;
-        // Group kiters back away from the SHARED threat direction (the enemy
-        // centroid) rather than from their own target -- see kiteSteering's
-        // E10 note. Everyone else keeps the per-target radial exactly.
-        if (steering && (steering.rx !== 0 || steering.ry !== 0)) {
+        // ===== C2-a1: THE BREAK'S BEARING, and why it comes FIRST =====
+        // A live contact break SUPERSEDES E10a's shared centroid basis for as
+        // long as it lasts. Not blended with it, not weighted against it --
+        // replaced. C1 M2 measured the tape's just-hit kiter running at cos
+        // 0.88 to "away from the unit that hit me" while this engine ran at
+        // 0.61, and measured that the centroid basis is not merely a worse
+        // proxy for it (cos to the centroid is 0.78 tape vs 0.67 engine, so the
+        // engine's heading is less aligned with BOTH). A weight chosen to land
+        // the realised cosine on 0.88 would be a fitted constant; the pure
+        // radial carries none, and the realised cosine is then EMERGENT -- the
+        // orbit, cohesion, avoidance and velocity-smoothing terms below all
+        // still act, and they are what pull the heading off the pure bearing.
+        //
+        // E10a is not weakened: the moment the break ends -- which is a
+        // distance, on the very next tick -- the shared basis is back, and
+        // every unit that never took a melee hit never leaves it. Cohesion and
+        // the orbit term are added on top here exactly as before, so the ball
+        // still translates as a ball while its touched members peel away from
+        // what touched them.
+        const hitter = this.contactBreakHitter();
+        if (hitter) {
+            dx = this.x - hitter.x;
+            dy = this.y - hitter.y;
+            const hdist = Math.sqrt(dx * dx + dy * dy);
+            if (hdist < 1) {
+                // Same degenerate fallback the per-target radial uses below --
+                // two bodies at the same point have no bearing between them.
+                dx = this.team === 1 ? -1 : 1;
+                dy = 0;
+            } else {
+                dx /= hdist;
+                dy /= hdist;
+            }
+            // Group kiters back away from the SHARED threat direction (the enemy
+            // centroid) rather than from their own target -- see kiteSteering's
+            // E10 note. Everyone else keeps the per-target radial exactly.
+        } else if (steering && (steering.rx !== 0 || steering.ry !== 0)) {
             dx = steering.rx;
             dy = steering.ry;
         } else {

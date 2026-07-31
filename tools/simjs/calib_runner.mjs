@@ -66,6 +66,7 @@ import { Worker, isMainThread } from "node:worker_threads";
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import {
     R5B, setR5B, R5D1, setR5D1, R5D, setR5D, B2, setB2, R5F, setR5F,
+    C2A, setC2A,
 } from "../../apps/website/static/js/engine/constants.js";
 
 // ---- Round-5b rule flags --------------------------------------------------
@@ -190,6 +191,30 @@ export function applyR5FSpec(spec) {
     }
     const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
     setR5F(cfg);
+    return cfg;
+}
+
+// ---- Phase-C2a rule flags --------------------------------------------------
+// Identical grammar again, over the SEPARATE C2A object (contactBreak,
+// breakPriority). `--c2a off` is the pre-C2 engine (0e2dbc5) and must be
+// byte-identical to it:
+//
+//   --c2a off                 both off == pre-C2 engine, bit-identical
+//   --c2a contactBreak        the break's BEARING only, no priority over fire
+//   (flag absent)             engine defaults
+export function applyC2ASpec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(C2A);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--c2a: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setC2A(cfg);
     return cfg;
 }
 
@@ -553,6 +578,12 @@ if (isMainThread && process.argv[1]
         const on = Object.entries(r5fCfg).filter(([, v]) => v).map(([k]) => k);
         console.log(`r5f rules: ${on.length ? on.join(", ") : "(none -- pre-R5f engine)"}`);
     }
+    const c2aSpec = flag("--c2a", null);
+    const c2aCfg = applyC2ASpec(c2aSpec);
+    if (c2aCfg) {
+        const on = Object.entries(c2aCfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`c2a rules: ${on.length ? on.join(", ") : "(none -- pre-C2 engine)"}`);
+    }
 
     const dicts = loadCalibDicts();
     const allFights = loadManifest();
@@ -649,7 +680,7 @@ if (isMainThread && process.argv[1]
                 const worker = new Worker(workerPath, {
                     workerData: {
                         arenaArg, maxSeconds, outDir,
-                        r5bSpec, r5d1Spec, r5dSpec, b2Spec, r5fSpec,
+                        r5bSpec, r5d1Spec, r5dSpec, b2Spec, r5fSpec, c2aSpec,
                     },
                 });
                 const pump = () => {

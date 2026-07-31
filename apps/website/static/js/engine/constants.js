@@ -400,6 +400,110 @@ export function setR5F(overrides) {
 // scoreboard rather than to the tape.
 export const SILENCE_ADVANCE_CYCLES = 2;
 
+// ===== PHASE C2-a — THE KITER'S CONTACT BREAK (master off-switches) =====
+// Two rules, from docs/calibration/c1_chaser_cadence.md M2. Like R5B/R5D/B2/R5F
+// these are MECHANISMS, and this pair is unusually strict about it: NEITHER
+// rule introduces a number at all. The break's bearing is a basis, not a
+// weight; the break's end is a distance the engine already computes for other
+// reasons (an attacker's own reach, plus the fleeing body's own diameter).
+//
+// WHAT C1 MEASURED. E12's headline was that a melee unit chasing a RANGED one
+// swings 1.29x slower on tape than in this engine; C1 confirmed it (T/E median
+// 1.22 over 29 melee-swing families) and decomposed it. The chaser is NOT
+// reload-limited on tape, it is CONTACT-limited: it is inside its own reach for
+// 0.66 s of each cycle against this engine's 1.81 s, and 97.2% of its cycles
+// lose contact against this engine's 54.1%.
+//
+// C1 M2 then located the cause on the KITER, not the chaser, and it is not a
+// duty-cycle or phase-race defect (2b refutes both: the tape's chaser lands
+// 9.9% of its blows on a STOPPED victim, this engine's 55.2%). After taking a
+// melee hit the tape's kiter:
+//   (a) starts moving in a median 0.08 s -- ONE 10 Hz sample, i.e. as fast as
+//       the recorder can see. This engine's takes 0.42 s.
+//   (b) runs along the vector away from THE UNIT THAT HIT IT, cos 0.88 pooled
+//       over the 29 families (0.69-0.96, 28 of 29 at or above 0.79). This
+//       engine's runs at cos 0.61 -- and cos to the enemy CENTROID is no better
+//       (0.78 tape vs 0.67 engine), so it is not "flees the centroid instead":
+//       the flee vector is less aligned with BOTH bases.
+//   (c) converts that into 1.03 tiles of RADIAL separation inside one chaser
+//       reload, against this engine's 0.05, and is out of reach after 0.08 s
+//       against this engine's 0.42.
+//
+// WHY THE ENGINE'S BEARING IS WRONG, precisely. E10a gave every group-kiting
+// side a SHARED retreat basis -- back away from the enemy CENTROID, one bearing
+// per side per tick -- to stop twelve archers milling in twelve directions.
+// That fixed dispersal and is not being undone here. But a centroid is an
+// average over an entire enemy army, and the unit that just put a blade in you
+// is one member of it: at the moment of contact the shared basis is exactly the
+// wrong resolution. C-a does not weaken E10a's basis; it says the basis is
+// SUPERSEDED, for as long as a specific melee unit is in touching distance, by
+// the one threat the tape shows the kiter actually answers.
+//
+// NO WEIGHT, DELIBERATELY. A blend `w * awayFromHitter + (1-w) * awayFromCentroid`
+// tuned until cos lands on 0.88 would be a fitted constant wearing a
+// measurement's clothes. The break REPLACES the radial basis outright (w = 1)
+// and the measured cos is then an EMERGENT number, not a target: the orbit,
+// cohesion, avoidance and velocity-smoothing terms that already act on a kiting
+// unit are what pull the realised heading off the pure radial. Whether that
+// lands near the tape's 0.88 is a prediction this rule can FAIL, and the C2
+// report states what it actually came out at.
+export const C2A = {
+    // C-a1 CONTACT BREAK. A melee hit on a non-siege ranged unit latches the
+    //      HITTER. While that hitter is within escape distance (below), the
+    //      kiter's retreat basis is "straight away from the hitter" instead of
+    //      E10a's shared centroid basis; group cohesion and the orbit term are
+    //      untouched and still added on top.
+    //
+    //      The trigger is a MELEE hit, so ranged-vs-ranged is unreachable BY
+    //      CONSTRUCTION (no melee attacker exists in those fights) and
+    //      melee-vs-melee is unreachable by the victim-side isRanged() gate.
+    //      Siege is excluded by minAttackRange > 0 -- the same clause
+    //      kiteSteering uses, and for the same reason: Siege Onager (3.0) and
+    //      Heavy Scorpion (2.0) own a competing repositioning path (tooClose)
+    //      and do not run a kite circuit at all.
+    //
+    //      THE END CONDITION IS PHYSICAL, NOT A TIMER. The break ends when the
+    //      hitter is further away than `its own reach + the kiter's body
+    //      diameter` -- i.e. when the kiter has put a whole body's width of
+    //      daylight between itself and the edge of what that unit can hit. Both
+    //      terms are quantities the engine already computes (inRange()'s own
+    //      arithmetic, and the radius every unit carries); there is no time
+    //      constant and no decay. Read against the corpus this lands at
+    //      0.62 + 2*0.23 ~ 1.07 tiles for a champion chasing a Heavy Cav
+    //      Archer, which is the same order as the 1.03 tiles of radial
+    //      separation C1 measured the tape's kiter opening per reload -- a
+    //      consistency check on the criterion, not its derivation.
+    contactBreak: true,
+    // C-a2 THE BREAK OUTRANKS STOP-TO-FIRE. While the break is live the kiter
+    //      does not stop to shoot: R5B-D1's `cooldown expired and something in
+    //      reach -> fire` test, and the settled/approach arm below it, are both
+    //      skipped in favour of the retreat. This is what produces (a) -- the
+    //      departure inside one tick -- because the engine's kiter otherwise
+    //      spends its post-hit ticks either parked taking a shot or walking
+    //      TOWARD the foe that just hit it.
+    //
+    //      What it does NOT override: the committed-shot windup and E9's
+    //      post-fire recovery. Those are measured physical commitments of an
+    //      animation already in progress, they are shared with the ranged
+    //      round, and overriding them would be a different claim than the one
+    //      C1 M2 measured. The residual post-hit latency they impose is
+    //      reported honestly in the C2 round report rather than legislated away.
+    //
+    //      Meaningless on its own -- with C-a1 off nothing is ever latched, so
+    //      the break is never live -- so this is a WIDENING of C-a1, not a
+    //      second mechanism.
+    breakPriority: true,
+};
+
+/** Apply a partial override to {@link C2A}. Harness-only entry point. */
+export function setC2A(overrides) {
+    for (const k of Object.keys(overrides)) {
+        if (!(k in C2A)) throw new Error(`setC2A: unknown flag ${k}`);
+        C2A[k] = Boolean(overrides[k]);
+    }
+    return C2A;
+}
+
 // ===== CONSTANTS =====
 export const CANVAS_WIDTH = 900;
 export const CANVAS_HEIGHT = 600;

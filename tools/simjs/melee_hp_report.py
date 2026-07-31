@@ -9,7 +9,9 @@ max HP (count x per-unit max HP). "Within 10 pts" is the pass line.
 Corpus history: 31 fights x 2 sides = the original 62-side gate; the
 2026-07-30 v2 melee re-recording grew it to 89 fights, then quarantining the
 six bad-capture paladin_vs_steppe originals settled it at 83 fights x 2
-sides = 166. (The count is pinned deliberately in
+sides = 166; the 2026-07-31 v3 ingest added 12 live-position
+paladin_vs_steppe rounds (manifest r19-r30) for 95 fights x 2 sides = 190.
+(The count is pinned deliberately in
 tests/test_calibration_filters.py::test_melee_only_is_the_round4_gate.)
 
 Why percent-of-army-max and not raw HP: a 21-champion side has 1470 max HP

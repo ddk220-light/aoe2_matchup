@@ -73,8 +73,9 @@ def test_melee_only_is_the_round4_gate(fights):
     History: 31 (original corpus) -> 89 with the 2026-07-30 v2 melee
     re-recording (67 fights, of which 58 are both-sides-melee; fire-lancer
     fights are excluded by the slug set) -> 83 after quarantining the six
-    bad-capture paladin_vs_steppe originals."""
-    assert len(F.filter_fights(fights, melee_only=True)) == 83
+    bad-capture paladin_vs_steppe originals -> 95 with the 2026-07-31 v3
+    ingest (+12 paladin_vs_steppe live-position rounds, manifest r19-r30)."""
+    assert len(F.filter_fights(fights, melee_only=True)) == 95
 
 
 def test_quarantined_fights_are_never_scored(fights):

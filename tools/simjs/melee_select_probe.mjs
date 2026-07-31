@@ -8,7 +8,7 @@
 //
 //   INITIAL   -- the unit had never had a target (first frame of the fight).
 //   DEAD      -- its target had just died; update()'s dead-target branch.
-//   CHURN     -- E13's maybeMeleeChurn nulled the target after a swing.
+//   BUMP      -- E14 rule 2 moved it onto an enemy it was touching.
 //   BLOCKED   -- the stuck bar (battle_unit.js:1859) blacklisted the target
 //                and nulled it. THIS is the one that can move a unit OFF a
 //                living, reachable victim onto a different one.
@@ -49,19 +49,22 @@ export function probe(fight, dicts, spawns, seed = 1) {
     };
     const sim = buildFight({ dicts, row, seed, arena: "tapebox", positions });
 
-    // cause tagging: the ONLY writers of `target = null` outside findTarget are
-    // maybeMeleeChurn and the stuck bar, so we shadow both and leave a marker.
+    // Cause tagging. Since E14 the stuck bar is the ONLY writer of
+    // `target = null` outside findTarget (E13's maybeMeleeChurn is gone), so an
+    // un-marked findTarget on a living previous target is a BLOCKED. Bump
+    // retargets never null the target, so they are counted separately by
+    // shadowing meleeBumpRetarget rather than through findTarget at all.
     const orig = BattleUnit.prototype.findTarget;
-    const origChurn = BattleUnit.prototype.maybeMeleeChurn;
+    const origBump = BattleUnit.prototype.meleeBumpRetarget;
     const counts = { 1: {}, 2: {} };
     const bump = (u, k) => {
         const c = counts[u.team];
         c[k] = (c[k] || 0) + 1;
     };
-    BattleUnit.prototype.maybeMeleeChurn = function (victim) {
+    BattleUnit.prototype.meleeBumpRetarget = function (enemies) {
         const before = this.target;
-        origChurn.call(this, victim);
-        if (before && this.target === null) this._e14cause = "CHURN";
+        origBump.call(this, enemies);
+        if (before && this.target !== before) bump(this, "BUMP-switch");
     };
     const blockDist = { 1: [], 2: [] };
     BattleUnit.prototype.findTarget = function (enemies) {
@@ -127,7 +130,7 @@ export function probe(fight, dicts, spawns, seed = 1) {
         }
     }
     BattleUnit.prototype.findTarget = orig;
-    BattleUnit.prototype.maybeMeleeChurn = origChurn;
+    BattleUnit.prototype.meleeBumpRetarget = origBump;
 
     const mean = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
     return {

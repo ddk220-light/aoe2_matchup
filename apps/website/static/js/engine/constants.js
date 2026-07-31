@@ -345,14 +345,13 @@ export const RANGED_POST_FIRE_RECOVERY_BY_SLUG = new Map([
     ["imp_elite_skirm", 0.20],
 ]);
 
-// ===== MELEE CONTACT CHURN (E13) =====
-// A melee unit in this engine, once it reaches a living target, NEVER stops
-// hitting it. On tape it does, constantly. Measured over the 31 pure-melee
-// recordings (both sides, 7,840 tape swings vs 8,051 engine swings, seed 1),
-// by classifying every point where an attacker's next landed hit came more
-// than reload+0.5 s after the previous one:
+// ===== MELEE CONTACT LOSS (E13 measurement, E14 mechanism) =====
+// THE MEASUREMENT, which stands and is now a VALIDATION TARGET rather than a
+// tuning target. Over the 31 pure-melee recordings (both sides, ~7,840 tape
+// swings), classifying every point where an attacker's next landed hit came
+// more than reload + 0.5 s after the previous one:
 //
-//   bout-end cause              tape          engine
+//   bout-end cause              tape          engine (pre-E13)
 //   KILL_SELF   (its own kill)   182  22.2%      69  24.1%
 //   KILL_OTHER  (victim died)    339  41.3%     188  65.7%
 //   LOST_SAME   (victim ALIVE,
@@ -363,170 +362,62 @@ export const RANGED_POST_FIRE_RECOVERY_BY_SLUG = new Map([
 //   breaks against a LIVING foe  300            29
 //   per swing                    0.0383         0.0036
 //
-// A ten-fold gap, and it is the ONLY structural term the engine is missing:
-// attackers-per-victim is distribution-identical (median 2, p90 3, max 4 on
-// both), per-swing cadence against an engaged foe is identical (gap median
-// 2.016 s tape vs 2.017 s engine), and neither stream shows any final-blow
-// overkill at all (both clamp damage to HP actually removed). What the tape
-// has and the engine does not is CHURN: shoving, being shoved, re-pathing
-// around a body, and picking a different foe when one wanders off.
+// plus: 34.3% of tape killing blows are followed by a re-acquisition slower
+// than reload + 0.5 s, against 11.7% of the engine's; the live-break gap runs
+// median 4.50 s / mean 5.79 s.
 //
-// Per-slug tape rates (live breaks / swings), which is where the ordering
-// argument for the crowd term below comes from:
+// WHAT E13 DID AND WHY IT WAS REMOVED. E13 injected those numbers directly:
+// MELEE_CHURN_PER_SWING (0.06), MELEE_KILL_REACQUIRE_FUMBLE (0.28) and
+// MELEE_CHURN_GAP_SECONDS (5.8), drawn against the rng after every melee
+// swing. It scored well (melee-62 within-10 33 -> 46) and it is still the
+// wrong model. A unit does not fight less because of a probability; it fights
+// less because it is MOVING -- shoved out of the line, walking round a body,
+// arriving at a foe that is already surrounded. A rate fitted to 21 champions
+// against 9 paladins is not the rate for 5 against 40, and there is no honest
+// way to write one number per unit per army size. All three constants and the
+// maybeMeleeChurn hook are DELETED.
 //
-//   champion 0.056 | halberdier 0.055 | hussar 0.050 | paladin 0.038
-//   heavy_camel 0.033 | elite_elephant 0.030 | elite_steppe 0.028
-//
-// Foot units and light cavalry -- the ones fielded 21-strong, packed
-// shoulder to shoulder -- churn twice as much as the Elite Steppe Lancer,
-// which has a full tile of reach and therefore never has to be in the shoving
-// line at all. That is a crowding law, not a unit-identity law, so it is
-// modelled as one (see MELEE_CHURN_CROWD_GAIN) rather than as a per-slug table.
+// WHAT REPLACED IT: two physical rules in battle_unit.js, neither carrying a
+// fitted rate, with the numbers above kept only to check what EMERGES.
+// See meleeTargetLock() / meleeBumpRetarget() for the full derivation.
 
-// Base probability that a melee unit loses contact after a swing that did NOT
-// kill its target. Kill-driven re-acquisition is already modelled (the engine
-// nulls a dead target and re-runs findTarget), so this covers only the
-// LOST_SAME + SWITCH_LIVE population above. 0 disables the whole mechanism.
-// Swept over the 62-side melee gate (6 seeds, sides within 10 HP-points /
-// mean |error|): 0.0 -> 33/10.61, 0.045 -> 41/8.69, 0.06 -> 47/6.95,
-// 0.075 -> 45/8.04, 0.10 -> 46/7.93. The applied rate sits above the tape's
-// measured 0.038 because the measurement is an UNDERCOUNT on both streams: a
-// unit that breaks off a foe its allies then finish is scored KILL_OTHER, not
-// LOST_SAME. At 0.06 applied, the engine's own measured live-break rate comes
-// out at 0.028 against the tape's 0.038 -- i.e. still slightly under, which is
-// the honest way to read this number.
-export const MELEE_CHURN_PER_SWING = 0.06;
+// Rule 1 -- TARGET LOCK. The stuck bar may not blacklist a living MELEE target
+// for a MELEE unit. Measured cause (tools/simjs/melee_select_probe.mjs, over
+// the same 31 recordings, against the E13 engine): 2654 of 6727 melee target
+// re-acquisitions -- 39.5%, more than the 31.1% caused by the target dying --
+// were the bar firing on a unit standing a median 0.61 tiles past its own
+// reach, i.e. queueing behind the front rank rather than stuck. Pursuits
+// (ranged unit, or a ranged target) keep the bar unchanged. false restores the
+// pre-E14 blacklist exactly.
+export const MELEE_TARGET_LOCK = true;
 
-// Extra break probability per same-team unit contesting the same victim,
-// beyond the first. `p = base * (1 + gain * (contesting - 1))`, capped at
-// MELEE_CHURN_MAX. This is what turns one global rate into the measured
-// per-slug spread without naming a single unit: a 21-champion side stacks
-// several attackers on each of nine paladins and churns hard, while nine
-// paladins swinging into a wall of champions each have the target to
-// themselves and churn much less.
+// The one number rule 1 carries, and it is a MEASURED CEILING rather than a
+// tuned rate: how many attackers a single victim can have in reach at once
+// before a further unit locked on it is standing behind a full ring rather
+// than queueing for a slot. The tape's attackers-per-victim distribution over
+// all 31 pure-melee recordings is median 2 / p90 3 / MAX 4, on both streams
+// (E13 measured this and the engine already reproduced 2/3/4 exactly) -- so 4
+// is the recordings' own ceiling, not a knob that was turned until the
+// scoreboard moved. Above the cap the stuck bar keeps its pre-E14 job.
 //
-// MEASURED HARMFUL AND LEFT OFF (E13). Over the melee gate, 6 seeds, sides
-// within 10 HP-points / mean |error|, against the flat 0.06 / 5.8 s point's
-// 47 / 6.54:
-//
-//   gain 0.15 (base 0.055)   41 / 8.91
-//   gain 0.25 (base 0.04 )   40 / 8.90
-//
-// Both are worse than flat on every block of the gate. The per-slug ordering
-// the term was built to explain is real, but concentrating the churn on the
-// crowded side is not how the tape produces it. The machinery is left wired
-// up and tested so a future round can re-open it cheaply.
-export const MELEE_CHURN_CROWD_GAIN = 0.0;
-export const MELEE_CHURN_MAX = 0.25;
+// It is a COUNT, not a distance: occupancy is evaluated with each ally's own
+// reach test, so no tolerance constant exists anywhere in the rule. Swept for
+// honesty at 2 / 3 / 4 / 5 / 6 -- see the experiment report.
+export const MELEE_CONTACT_SLOTS = 4;
 
-// Chance that a melee unit FUMBLES its re-acquisition after landing a killing
-// blow -- the separately-measured half of the same story. The engine drops a
-// dead target and picks the next one on the very next tick, always; a real
-// unit often has to turn, walk and re-path first. Fraction of killing blows
-// followed by a gap longer than reload + 0.5 s, over the same 31 pure-melee
-// recordings:
+// Rule 2 -- BUMP RETARGET. A melee unit that cannot reach its current target
+// and is in body contact with a different living enemy switches to the one it
+// is touching. This is a documented AoE2:DE behaviour, not a modelling choice:
+// update 81058 (12 Apr 2023) shipped "Units will now retarget to a unit of the
+// same type if they bump into them and cannot reach the current target", and
+// players describe the same mechanic in the broader form (bump any enemy that
+// is not your target and you switch to it). Every fight in this corpus fields
+// one unit type per side, so the corpus cannot separate the two readings.
 //
-//                          n     slow    fraction   median   p90
-//   tape                  531     182      0.343     2.02   6.11
-//   engine (pre-E13)      592      69      0.117     2.02   3.02
-//   engine (churn only)   556      45      0.081     2.02   3.02
-//
-// The MEDIAN is identical on all three (a killer usually does have another
-// foe already in reach), so this is a tail, not a flat delay -- which is why
-// it is modelled as a probability rather than as an added cost on every kill.
-// The churn term alone actually LOWERS the engine's rate (a unit that churned
-// off is no longer the one landing the kill), so the two terms are genuinely
-// independent and both are needed.
-//
-// 0.28 was picked by MEASUREMENT, not by scoreboard: it is the applied rate at
-// which the engine's own slow-re-acquisition fraction lands on the tape's.
-// Both candidates score within noise of each other on the melee gate (20
-// seeds, sides within 10 HP-points / mean |error| / corpus winners):
-//
-//   applied  achieved   gate            corpus
-//   0.28      0.342     46 / 5.77       126/155, agreement 0.800
-//   0.40      0.412     47 / 5.55       126/155, agreement 0.807
-//
-// so the tie is broken by the one that reproduces the tape (0.342 vs a tape
-// 0.343) rather than by the one a fifth of a point ahead on a noisy metric.
-export const MELEE_KILL_REACQUIRE_FUMBLE = 0.28;
-
-// Hit-to-hit gap a broken-off unit pays, in seconds -- it replaces the reload
-// outright rather than adding to it, so this number IS the resulting gap.
-// Shared by both terms above, because the tape gives them the same length:
-// live-break gaps median 4.50 s / mean 5.79 s / p10 2.69 / p90 10.73 (n=300),
-// post-kill slow gaps p90 6.11 s. Swept at 3.0 / 4.5 / 5.8 / 7.0 (see the
-// experiment report); 3.0 and 7.0 both cost ~5 sides of the melee gate.
-export const MELEE_CHURN_GAP_SECONDS = 5.8;
-
-// ===== MELEE QUEUEING (E14) =====
-// The stuck bar above (STUCK_PROGRESS_RATE) exists to stop a chaser trailing
-// something it can never catch. In a melee SCRUM it does something else
-// entirely, and that second job is a bug: a second-rank unit standing right
-// behind the ally who currently has the contact slot makes no forward progress
-// either, so after 0.8 s the bar blacklists the victim its own front rank is
-// killing and sends it off to a DIFFERENT enemy. It is an anti-pile-on rule.
-//
-// Measured over the 31 pure-melee recordings (tools/simjs/melee_select_probe.mjs
-// against the shipped E13 engine): 2654 of 6727 target re-acquisitions -- 39.5%,
-// more than the 31.1% caused by the target actually dying -- are the stuck bar
-// moving a melee unit OFF a living victim. The champion side of
-// champion__vs__paladin alone pays 130 of them across 21 units. It fires at a
-// median 0.61 tiles beyond the unit's own reach: exactly one unit-diameter
-// back, i.e. the unit is queueing, not stuck.
-//
-// The consequence is a TIME smear, invisible to any whole-fight concentration
-// metric (HHI, effective-victim count and Gini all match the tape to within
-// 2%): the same total damage is delivered to the same victims, just more
-// thinly spread over time, so victims die later and keep swinging longer.
-// Time-to-kill from first touch, in the attacker's own reload periods, over
-// the champion__vs__paladin family: tape 4.06-9.52, engine 12.62 (flat, every
-// recording). Attackers per victim on that side: tape mean 2.08-3.09, engine
-// 1.63.
-//
-// The fix is to say what the game says: a melee unit does not abandon a living
-// melee foe it is already standing at. It waits for a slot. It only walks away
-// when the crowd around that foe is already full -- which is what keeps the
-// pile-on inside the tape's own measured cap instead of stacking the whole
-// army onto one victim.
-//
-// MELEE_QUEUE_TILES -- how far beyond its own reach a unit may stand and still
-// count as "at the fight" rather than "chasing". Fitted to the tape's contact
-// crowd depth: over all 31 melee recordings, at the moment a victim is hit its
-// nearest enemy sits at a median 0.54 tiles and its FOURTH nearest at 1.15 --
-// a crowd 0.61 tiles deep behind the front rank. 0 disables the whole
-// mechanism and is bit-identical to E13 (no rng draw is involved, so identity
-// is structural, not statistical).
-export const MELEE_QUEUE_TILES = 0.2;
-
-// How many allies may already be queued on one victim before a further unit is
-// sent elsewhere by the stuck bar as before. The tape's attackers-per-victim
-// distribution (E13, same 31 recordings) is median 2 / p90 3 / max 4, and the
-// ring above holds a median of 4 enemies at the moment of a hit -- so 4 is the
-// tape's own ceiling, and the cap is what stops this mechanism from raising
-// instantaneous attackers-per-victim above it.
-export const MELEE_QUEUE_CAP = 4;
-
-// Distance discount (tiles) a melee foe gets in findTarget when allies are
-// already fighting it and its scrum is not yet at MELEE_QUEUE_CAP. The queue
-// rule above stops a unit LEAVING a fight; this one decides which fight it
-// JOINS when it has genuinely lost its target (kill, churn, or a blacklist
-// that survived the queue test).
-//
-// Fitted to the retarget transition matrix over the 31 pure-melee recordings
-// (tools/simjs/melee_target_forensics.py), specifically the share of all
-// consecutive-hit pairs in which an attacker leaves a LIVING victim and its
-// next landed blow is on a foe an ally hit inside the trailing reload window:
-//
-//   SWITCH_LIVE/ALLY     tape 0.1662   E13 0.1233   E14 queue-only 0.1345
-//
-// i.e. after the queue rule the engine still under-joins by ~20%. A DISCOUNT
-// rather than an override is deliberate: it can only decide a close call, so
-// a foe two tiles further away stays two tiles further away and the "walk to
-// the nearest body" behaviour survives everywhere the scrum is not right
-// there. 0 disables it and, together with the null return in scrumCounts(),
-// is bit-identical to the queue-only engine.
-export const MELEE_PILE_ON_TILES = 0.0;
+// There is no tolerance constant: "in contact" reuses resolveCollisions' own
+// hard floor, radius + radius + 1 px, so the trigger fires on exactly the
+// pairs the collision pass pushed apart this tick. false disables the rule.
+export const MELEE_BUMP_RETARGET = true;
 
 // ===== ADJUSTABLE PRE-BATTLE CONDITIONS =====
 // Lithuanian relic bonus: the reference DB bakes in all 4 relics (+1 base

@@ -39,7 +39,9 @@ import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.j
 import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
 
 const DT = 1 / 60;
-const ALL_OFF = { resolverContactBump: false };
+const ALL_OFF = { resolverContactBump: false, stuckGatedBump: false };
+// B2a alone -- the fix before B2b narrowed it. Used to pin what each half does.
+const A_ONLY = { resolverContactBump: true, stuckGatedBump: false };
 
 function withB2(overrides, fn) {
     const saved = { ...B2 };
@@ -76,9 +78,10 @@ function newSim(seed = 1) {
 
 // ---- shipped configuration -------------------------------------------------
 
-test("[B2] the rule ships ON and carries exactly one flag", () => {
+test("[B2] both halves ship ON", () => {
     assert.equal(B2.resolverContactBump, true);
-    assert.equal(Object.keys(B2).length, 1);
+    assert.equal(B2.stuckGatedBump, true);
+    assert.equal(Object.keys(B2).length, 2);
 });
 
 test("[B2] setB2 rejects an unknown flag rather than silently ignoring it", () => {
@@ -173,6 +176,11 @@ function frozenScene(gap = 0) {
     far.x = 300 + 5 * TILE_SIZE; far.y = 300;
     touching.x = 300 + a.radius + touching.radius + 1 + gap; touching.y = 300;
     a.target = far;
+    // B2b: the freeze is a unit whose stuck bar has ALREADY tripped on `far`
+    // and been re-armed by E14's lock -- that is what "cannot reach the current
+    // target" means here. Set directly rather than by driving 0.8 s of ticks,
+    // so the fixture states the precondition instead of hiding it.
+    a.meleeStuckOn = far;
     return { sim, a, far, touching };
 }
 
@@ -220,14 +228,17 @@ test("[B2] a real overlap still bumps -- through the hard pass's contact event",
 
 test("[B2] the valve stays open across settled ticks -- the freeze cannot re-form", () => {
     // A pair at the soft floor is pushed by nothing and moves not at all. If
-    // eligibility depended on a push having just happened, the fix would work
-    // for one tick and then relapse; it must hold every tick.
+    // CONTACT depended on a push having just happened, the fix would work for
+    // one tick and then relapse; it must hold every tick. The stuck latch is
+    // re-armed each round because the bump consumes it by design (see B2b) --
+    // this test is about the contact half staying true, not the gate.
     const { sim, a, far, touching } = frozenScene(0.9);
     for (let tick = 0; tick < 3; tick++) {
         sim.resolveCollisions([a, far, touching]);
         a.target = far;
+        a.meleeStuckOn = far;
         a.meleeBumpRetarget(sim.team2);
-        assert.equal(a.target, touching, `tick ${tick}: valve still open`);
+        assert.equal(a.target, touching, `tick ${tick}: contact still detected`);
     }
 });
 
@@ -248,6 +259,73 @@ test("[B2] a contact recorded last tick expires once the bodies separate", () =>
     a.target = far;
     a.meleeBumpRetarget(sim.team2);
     assert.equal(a.target, far, "no phantom bump off a stale contact");
+});
+
+// ---- 2b. "...and cannot reach the current target" ---------------------------
+
+test("[B2b] a unit that is merely NOT in reach does not bump -- it must be STUCK", () => {
+    // The over-fire B2a alone produces: a unit walking normally at a distant
+    // foe is `!inRange()` on every tick of the walk, so the unmodified E14
+    // condition treats an entire approach as "cannot reach the target".
+    const { sim, a, far, touching } = frozenScene(0.9);
+    a.meleeStuckOn = null;                       // never tripped the bar
+    a.meleeBumpRetarget(sim.team2);
+    assert.equal(a.target, far, "an honest walk is not an unreachable target");
+
+    // B2a alone would have taken the bump -- that is the difference the
+    // narrowing makes, pinned so it cannot be silently lost.
+    withB2(A_ONLY, () => {
+        a.meleeBumpRetarget(sim.team2);
+        assert.equal(a.target, touching, "B2a alone fires here; B2b is why it must not");
+    });
+});
+
+test("[B2b] the latch names the TARGET, so it does not carry to a new one", () => {
+    const { sim, a, far, touching } = frozenScene(0.9);
+    const other = mk(sim, 2);
+    other.x = 300 + 6 * TILE_SIZE; other.y = 300;
+    a.target = other;                            // re-picked somebody else
+    a.meleeBumpRetarget(sim.team2);
+    assert.equal(a.target, other, "being stuck on `far` says nothing about `other`");
+    assert.ok(touching);
+});
+
+test("[B2b] the latch is dropped once the unit reaches its target", () => {
+    const { sim, a, far, touching } = frozenScene(0.9);
+    far.x = 300; far.y = 300 + a.radius + far.radius + 2;   // now in reach
+    a.meleeBumpRetarget(sim.team2);
+    assert.equal(a.meleeStuckOn, null, "reaching it settles the question");
+    // ...and with the latch gone the unit does not bump on a later tick either.
+    far.x = 300 + 5 * TILE_SIZE; far.y = 300;
+    a.meleeBumpRetarget(sim.team2);
+    assert.equal(a.target, far);
+    assert.ok(touching);
+});
+
+test("[B2b] a successful bump clears the latch -- one release per stuck episode", () => {
+    const { sim, a, touching } = frozenScene(0.9);
+    a.meleeBumpRetarget(sim.team2);
+    assert.equal(a.target, touching);
+    assert.equal(a.meleeStuckOn, null,
+        "the new foe has to defeat the pathing on its own merits");
+});
+
+test("[B2b] the stuck bar sets the latch when E14's lock re-arms it", () => {
+    // End to end through the real bar rather than by assignment: two melee
+    // units a fixed distance apart, the chaser making no progress because the
+    // fixture holds it still. After 0.8 s of no progress the lock re-arms the
+    // bar and must name the foe it re-armed against.
+    const sim = newSim();
+    const a = mk(sim, 1);
+    const v = mk(sim, 2);
+    a.x = 300; a.y = 300;
+    v.x = 300 + 5 * TILE_SIZE; v.y = 300;
+    a.target = v;
+    a.moveSpeed = 0;                       // pathing defeated: no progress ever
+    a.lastDistToTarget = a.distanceTo(v);
+    for (let i = 0; i < 60 * 2; i++) a.update(DT, [a, v], [v]);
+    assert.equal(a.meleeStuckOn, v, "the bar names the foe it could not reach");
+    assert.equal(a.target, v, "and E14 rule 1 still forbids leaving it");
 });
 
 // ---- 3. every other E14 gate is untouched ----------------------------------
@@ -330,6 +408,7 @@ test("[B2] the rule consumes no randomness", () => {
     far.x = 300 + 5 * TILE_SIZE; far.y = 300;
     touching.x = 300 + a.radius + touching.radius + 1.9; touching.y = 300;
     a.target = far;
+    a.meleeStuckOn = far;
     sim.resolveCollisions([a, far, touching]);
     a.meleeBumpRetarget(sim.team2);
     assert.equal(a.target, touching, "fixture: the bump really did fire");

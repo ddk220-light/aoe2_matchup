@@ -175,6 +175,13 @@ function bumpScene() {
     far.x = 5 * TILE_SIZE; far.y = 0;          // locked on, out of reach
     touching.x = a.radius + touching.radius; touching.y = 0;  // body contact
     a.target = far;
+    // Phase B2 (B2.stuckGatedBump) added the second half of update 81058's
+    // condition -- "...and CANNOT REACH the current target", read as the stuck
+    // bar having tripped on that target rather than as "is not in reach right
+    // now". This fixture's unit is the frozen one, so it states that
+    // precondition. See tests/js/engine/b2_bump_contact.test.mjs for the
+    // narrowing itself and for what happens without it.
+    a.meleeStuckOn = far;
     return { sim, a, far, touching };
 }
 

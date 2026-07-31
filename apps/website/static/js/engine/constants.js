@@ -201,10 +201,39 @@ export function setR5D(overrides) {
 // tests/js/engine/b2_bump_contact.test.mjs and hash-verified over the ranged
 // subset x 3 seeds.
 export const B2 = {
-    // B2  reachable bump contact: "bumped" is the soft body floor the engine
-    //     actually holds cross-team pairs at, plus the hard pass's own contact
-    //     event -- not a re-measurement against a floor nothing ever reaches.
+    // B2a  reachable bump contact: "bumped" is the soft body floor the engine
+    //      actually holds cross-team pairs at, plus the hard pass's own contact
+    //      event -- not a re-measurement against a floor nothing ever reaches.
     resolverContactBump: true,
+    // B2b  "...AND CANNOT REACH THE CURRENT TARGET". The other half of update
+    //      81058's sentence, which E14 rendered as `!inRange()` -- "is not
+    //      swinging at it right now". Those are different claims: a unit
+    //      walking at a foe five tiles away and closing normally is not in
+    //      reach, but it can reach, and the tape does not show it abandoning
+    //      the walk because a body brushed past.
+    //
+    //      Measured: with B2a alone the valve is reachable and the freeze is
+    //      gone (outnumbered WASTED share of alive 0.075 -> 0.009, worst lock
+    //      episode 35.6 s -> 2.2 s, halberdier__vs__paladin swinging share
+    //      0.31x -> 1.06x of tape), but it fires on units that were never
+    //      stuck and the healthy majority OVERSHOOTS: pooled old-corpus
+    //      outnumbered share 0.98x -> 1.11x, superior 1.01x -> 1.18x,
+    //      halberdier__vs__hussar 1.54x -> 2.00x, corpus winners 194 -> 190.
+    //      With B2b the same collapse fix survives intact while the majority
+    //      comes back: 1.05x / 1.03x, hussar exactly 1.54x, winners 194.
+    //
+    //      So "cannot reach" is read as the engine's own existing
+    //      unreachability verdict: the stuck bar (moveTowardTarget) reached
+    //      0.8 s of no progress against this target and E14's lock re-armed it
+    //      instead of releasing. That is precisely the 21 080 stuck-bar trips
+    //      B1 counted. The latch is the TARGET it tripped on
+    //      (`meleeStuckOn`), so it clears itself the instant the unit picks a
+    //      different foe, and it is dropped the moment the unit is in reach.
+    //      No new constant: the 0.8 s bar and the lock are both pre-existing.
+    //
+    //      Meaningless on its own -- with B2a off the trigger is unreachable
+    //      whatever gates it -- so it is a NARROWING of B2a, not a fifth rule.
+    stuckGatedBump: true,
 };
 
 /** Apply a partial override to {@link B2}. Harness-only entry point. */

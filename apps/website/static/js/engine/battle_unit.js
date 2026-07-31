@@ -313,6 +313,14 @@ export class BattleUnit {
         // many passes touched it. Empty until the first resolveCollisions has
         // run, which is correct: nothing has bumped anything yet.
         this.bumpContacts = new Set();
+        // B2b: the target this unit's stuck bar last TRIPPED on -- i.e. the foe
+        // it made no progress against for 0.8 s while E14's lock forbade it
+        // from leaving. That is the engine's own "cannot reach this one"
+        // verdict, and it is what gates the bump. Holding the target itself
+        // rather than a boolean means the latch clears itself the instant the
+        // unit picks somebody else; moveTowardTarget sets it, meleeBumpRetarget
+        // reads it and drops it once the unit is in reach.
+        this.meleeStuckOn = null;
         this.attackCooldown = 0;
         this.wasMoving = true;
         this.committedAttack = null;
@@ -702,8 +710,19 @@ export class BattleUnit {
         // champion__vs__arbalester canary from 6/6 to 0/6 and the corpus from
         // 126 to 114. Pursuit belongs to the ranged round.
         if (t.isRanged()) return;
-        if (this.inRange()) return;
+        if (this.inRange()) {
+            // Reaching the target settles the question: whatever the bar once
+            // said, this foe is reachable now.
+            this.meleeStuckOn = null;
+            return;
+        }
         const useEvent = B2.resolverContactBump;
+        // B2b -- the documented rule's second clause, "...and cannot reach the
+        // current target". Not "is not in reach this instant" (E14's reading,
+        // which a unit walking normally at a distant foe satisfies every tick)
+        // but the engine's own unreachability verdict: the stuck bar tripped
+        // on THIS target and the lock re-armed it. See B2.stuckGatedBump.
+        if (useEvent && B2.stuckGatedBump && this.meleeStuckOn !== t) return;
         let best = null;
         let bestDist = Infinity;
         for (const enemy of enemies) {
@@ -753,6 +772,10 @@ export class BattleUnit {
         this.target = best;
         // A bump is a fresh engagement: re-arm the stuck bar against the new
         // foe rather than carrying the old chase's progress history over.
+        // B2b's latch names the OLD target, so it is already stale the moment
+        // the assignment above lands; cleared explicitly so nothing has to
+        // reason about that.
+        this.meleeStuckOn = null;
         this.stuckTimer = 0;
         this.lastDistToTarget = bestDist;
     }
@@ -2868,6 +2891,11 @@ export class BattleUnit {
             // rule 2's bump. A pursuit (ranged unit, or a RANGED target) is
             // untouched: that is what the bar was built for.
             if (this.meleeTargetLock()) {
+                // B2b: record WHICH foe defeated this unit's pathing. The bar
+                // tripping while the lock holds is the engine's own verdict
+                // that this target cannot be reached, and it is the second
+                // half of update 81058's condition -- see B2.stuckGatedBump.
+                if (B2.stuckGatedBump) this.meleeStuckOn = this.target;
                 this.stuckTimer = 0;
             } else {
                 this.blockedTargets.add(this.target);

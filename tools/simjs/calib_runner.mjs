@@ -338,13 +338,34 @@ if (isMainThread && process.argv[1]
     const arena = ARENAS[arenaArg];
     const spawns = arenaArg === "tapebox" ? loadCalibSpawns() : null;
 
-    // --workers N: size of the (fight, seed) worker pool. Default is
-    // cores - 2, NOT cores: this machine routinely has another sim run or
-    // two going in a parallel session, and pinning every logical CPU makes
-    // the whole box (including this run) slower, not faster. `--workers 1`
-    // takes the original single-process loop verbatim -- the A/B reference.
-    const nWorkers = Math.max(1, Number(flag(
-        "--workers", String(Math.max(1, os.cpus().length - 2)))));
+    // --workers N: size of the (fight, seed) worker pool.
+    //
+    // The default is deliberately NOT "logical CPUs minus a couple". Measured
+    // on the 12-core / 24-thread 9900X this corpus is actually run on, full
+    // corpus x 10 seeds, wall seconds and the SUM of per-task wall times:
+    //
+    //     workers   wall    summed task time   speedup
+    //        1      42.5s        41.9s           1.0x
+    //        4      11.3s        44.1s           3.8x
+    //        6       8.7s        51.1s           4.9x
+    //        8       7.9s        61.9s           5.4x   <- default
+    //       12       7.7s        90.8s           5.5x   (wall optimum)
+    //       16       8.4s       132.0s           5.1x
+    //       22       9.1s       193.1s           4.7x   ("cores - 2")
+    //
+    // The engine's hot loop is a neighbour scan over unit arrays -- memory
+    // bound, not ALU bound -- so past a handful of workers they fight over L3
+    // and memory bandwidth rather than adding throughput. Per-task time
+    // inflates 4.6x at 22 workers, and the wall-clock curve does not just
+    // flatten, it INVERTS: 22 workers is 15% slower than 8 while burning
+    // three times the machine. 8 sits within 3% of the wall optimum for two
+    // thirds of the cost, which also leaves real headroom for the concurrent
+    // sim runs this box usually has going in other sessions.
+    //
+    // `--workers 1` takes the original single-process loop verbatim -- the
+    // A/B reference that proves parallel output is byte-identical.
+    const DEFAULT_WORKERS = Math.max(1, Math.min(8, os.cpus().length - 2));
+    const nWorkers = Math.max(1, Number(flag("--workers", String(DEFAULT_WORKERS))));
 
     // Subset filters -- see the SUBSETS note at the top of this file. These
     // are the same three filters `python -m aoe2x.calibration.score` takes,

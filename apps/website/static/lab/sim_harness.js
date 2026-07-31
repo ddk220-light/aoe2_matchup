@@ -52,98 +52,89 @@ const $ = (id) => document.getElementById(id);
 const STEP = 1 / 60; // the engine's fixed sub-step; everything is a multiple of it
 
 // ===== PRESETS =====
-// FIRST GROUP: the calibration campaign's worst offenders at FAMILY level — the
-// 10 matchup families with the lowest winner agreement on the LANDED engine
-// (run 20260730T200117Z-e10-cohesion: E8 density + E9 quantized fire cycle +
-// E10a shared-threat kiting; 144/155 winners, agr 0.90), worst first. Armies
-// are the tape's exact civ/slug/count from data/calibration/manifest.json.
-// Every disputed family has 5-9 recordings, so "tape" below is a win-share.
-// agr = mean fraction of 20 seeds picking the tape's winner, averaged over the
-// family's recordings. The old WORST 1/2 (halb-vs-HCA, HCA-vs-camel) and the
-// HC-vs-camel texture row are FIXED by E9+E10a and have left the list.
+// FIRST GROUP: the MELEE ROUND's open items — melee-vs-melee fights ranked by
+// HP-remaining error on the CURRENT engine (run 20260731T010344Z-e14-mech2:
+// tapebox scoring + E11 true radii + E14 target lock/bump retarget; churn
+// deleted). Armies are the tape's exact civ/slug/count from
+// data/calibration/manifest.json. tape%/sim% = each side's HP remaining as %
+// of its army max. E15b (swing-recovery plant + lane-gated re-acquisition) is
+// in flight and targets MELEE 1-4 specifically. Ranged fights are out of
+// scope this round and have left the list.
 //
 // SECOND GROUP: the six migration-write-up fights (simulation-engine-migration.md
 // §4-§7), kept as historical instruments; their count-MODE caveats still apply.
 const PRESETS = [
     {
-        id: "calib-steppe-arb",
-        label: "WORST 1 · Arbalester 21 v Elite Steppe 14 — outlier recording (agr 0.00)",
-        mode: "explicit",
-        t1: { civ: "Chinese", slug: "arbalester", name: "Arbalester", count: 21 },
-        t2: { civ: "Cumans", slug: "elite_steppe", name: "Elite Steppe Lancer", count: 14 },
-        note: "This recording is the 1-in-7 where arbs won; the other 6 recordings (mirror family) all go steppe. Sim picks steppe every seed — likely correct; scored wrong only because this single tape is the outlier. Rerun to retire.",
-    },
-    {
-        id: "calib-paladin-steppe",
-        label: "WORST 2 · Paladin 15 v Elite Steppe 21 — tape: steppe 5/6 · sim: paladins (agr 0.33)",
+        id: "melee-paladin-steppe",
+        label: "MELEE 1 · Paladin 15 v Elite Steppe 21 — WRONG 4/6: sim kills the steppe",
         mode: "explicit",
         t1: { civ: "Spanish", slug: "paladin", name: "Paladin", count: 15 },
         t2: { civ: "Cumans", slug: "elite_steppe", name: "Elite Steppe Lancer", count: 21 },
-        note: "THE open family — untouched by E9/E10 (melee-only). Reach fix + density got the lancers to 2 fighting ranks but paladins still win 0.75 of seeds. Tape lancers land 270/270 swings with zero overkill; sim wastes ~15% and sim paladins swing 31% of the time vs tape 22%. Watch lancer ranks and paladin idle time.",
+        note: "Tape: steppe wins 5/6 with 13-38% HP left; sim paladins wipe them (steppe 0%, paladins ~6%). E13's churn carried this family; deleting it re-broke it. E15b's lane-gating + swing plant is expected to restore it mechanistically — the marquee fight to watch.",
     },
     {
-        id: "calib-steppe-eleph",
-        label: "WORST 3 · Elite Steppe 21 v Elite Elephant 13 — right side, coin flip (agr 0.55)",
+        id: "melee-paladin-hussar",
+        label: "MELEE 2 · Paladin 9 v Hussar 21 — winner OK, paladins too healthy (34% vs 5%)",
         mode: "explicit",
-        t1: { civ: "Cumans", slug: "elite_steppe", name: "Elite Steppe Lancer", count: 21 },
-        t2: { civ: "Burmese", slug: "elite_elephant", name: "Elite Battle Elephant", count: 13 },
-        note: "Single recording: elephants win on tape; sim agrees but only 11/20 seeds (dur 74s vs tape 65s). Melee-scrum near-tie — same overkill/duty-cycle levers as WORST 2. Rerun candidate before tuning.",
-    },
-    {
-        id: "calib-champ-hca",
-        label: "WORST 4 · HCA 12 v Champion 21 — tape: HCA 8/9 · sim: HCA (agr 0.66)",
-        mode: "explicit",
-        t1: { civ: "Saracens", slug: "heavy_cav_archer", name: "Heavy Cavalry Archer", count: 12 },
-        t2: { civ: "Chinese", slug: "champion", name: "Champion", count: 21 },
-        note: "E10a's fight: the HCA ball now backs away from the champion CENTROID as one body instead of milling (0.15 -> 0.66). 8/9 recordings match at 0.70; the lone champ-win recording is the family minority. Watch ball coherence while kiting.",
-    },
-    {
-        id: "calib-hc-hussar",
-        label: "WORST 5 · HC 14 v Hussar 21 — tape bimodal 4/6 · sim: hussars every seed",
-        mode: "explicit",
-        t1: { civ: "Japanese", slug: "hand_cannoneer", name: "Hand Cannoneer", count: 14 },
+        t1: { civ: "Spanish", slug: "paladin", name: "Paladin", count: 9 },
         t2: { civ: "Persians", slug: "hussar", name: "Hussar", count: 21 },
-        note: "Sim picks hussars 1.00 but the tape family is genuinely bimodal (hussars 4/6, gunners 2/6) — and sim resolves in ~45s vs tape 93s with clean sweeps where tape wins are bloody (4-7 of 21 left). The pacing/texture gap, distilled.",
+        note: "Paladins should barely survive (tape 5% army HP); sim keeps 34%. The hussar swarm isn't bleeding them enough — watch how many hussars actually cycle contact onto each paladin vs stand queued.",
     },
     {
-        id: "calib-champ-paladin",
-        label: "WORST 6 · Champion 21 v Paladin 9 — tape: champs 5/6 · sim: champs (agr 0.67)",
+        id: "melee-camel-steppe",
+        label: "MELEE 3 · Heavy Camel 18 v Elite Steppe 21 — winner OK, camels too healthy (44% vs 22%)",
         mode: "explicit",
-        t1: { civ: "Chinese", slug: "champion", name: "Champion", count: 21 },
-        t2: { civ: "Spanish", slug: "paladin", name: "Paladin", count: 9 },
-        note: "Density fix moved this from wrong (0.35) to right (0.75 per matching recording; family 0.67 incl. the one paladin-win tape). Close-fight texture: tape r4 ends with one 115hp paladin standing. Watch pack tightness in the melee scrum.",
+        t1: { civ: "Persians", slug: "heavy_camel", name: "Heavy Camel Rider", count: 18 },
+        t2: { civ: "Cumans", slug: "elite_steppe", name: "Elite Steppe Lancer", count: 21 },
+        note: "Camels win both streams but sim wins twice as cleanly. Steppe's 1-tile reach should let the second rank punish the camel line harder — watch whether rank 2 gets uninterrupted swings.",
     },
     {
-        id: "calib-hussar-steppe",
-        label: "WORST 7 · Hussar 21 v Elite Steppe 12 — right side, shaky (agr 0.70)",
+        id: "melee-hussar-steppe",
+        label: "MELEE 4 · Hussar 21 v Elite Steppe 12 — WRONG: sim flips it to steppe",
         mode: "explicit",
         t1: { civ: "Persians", slug: "hussar", name: "Hussar", count: 21 },
         t2: { civ: "Cumans", slug: "elite_steppe", name: "Elite Steppe Lancer", count: 12 },
-        note: "Single recording: hussars win on tape, sim agrees at 0.70 (dur 51s vs tape 63s). Light-cav-vs-lancer scrum; shares the WORST 2 levers. Rerun candidate.",
+        note: "Tape: hussars grind it out with 11% left. Sim: steppe wins with 22%. Single recording, genuinely close — but the direction flipped when churn was deleted, so E15b should pull it back.",
     },
     {
-        id: "calib-hc-paladin",
-        label: "WORST 8 · HC 21 v Paladin 14 — tape: paladins 5/6 · sim: paladins (agr 0.70)",
+        id: "melee-champ-paladin",
+        label: "MELEE 5 · Champion 21 v Paladin 9 — margins: champs 22% vs tape 28-42%",
         mode: "explicit",
-        t1: { civ: "Japanese", slug: "hand_cannoneer", name: "Hand Cannoneer", count: 21 },
-        t2: { civ: "Spanish", slug: "paladin", name: "Paladin", count: 14 },
-        note: "Sim matches 5/6 recordings at 0.80. E10a cost a little here (0.83 -> 0.70 family mean): the cohesive gunner ball now survives longer against 7-pierce-armor cavalry — a structural near-tie, not a tuning artifact. Duration improved: 64s vs tape 90s (was ~50s).",
+        t1: { civ: "Chinese", slug: "champion", name: "Champion", count: 21 },
+        t2: { civ: "Spanish", slug: "paladin", name: "Paladin", count: 9 },
+        note: "Winner right 5/6; E14 fixed the margin from 12% to 22% (tape family median 29%). The remaining miss is r4 — the one tape where the paladins won — which sits at the deterministic-engine ceiling. Watch champion walk-time between kills.",
     },
     {
-        id: "calib-hca-paladin",
-        label: "WORST 9 · HCA 21 v Paladin 15 — tape: paladins (1 rec) · sim: paladins (agr 0.75)",
+        id: "melee-halb-paladin",
+        label: "MELEE 6 · Halberdier 21 v Paladin 7 — halbs too healthy (87% vs 70%)",
         mode: "explicit",
-        t1: { civ: "Saracens", slug: "heavy_cav_archer", name: "Heavy Cavalry Archer", count: 21 },
-        t2: { civ: "Spanish", slug: "paladin", name: "Paladin", count: 15 },
-        note: "E9's stand cost restored the paladin win (0.15 -> 0.95); E10a's cohesive ball gave a bit back (0.75). Single recording about to arbitrate a real prediction — the top rerun candidate.",
+        t1: { civ: "Chinese", slug: "halberdier", name: "Halberdier", count: 21 },
+        t2: { civ: "Spanish", slug: "paladin", name: "Paladin", count: 7 },
+        note: "Right winner, but 7 paladins should take a third of the halb army's HP with them; sim lets them take 13%. Paladin trample + who reaches the paladins first — watch the opening collapse.",
     },
     {
-        id: "calib-champ-hc",
-        label: "WORST 10 · HC 14 v Champion 21 — tape: gunners · sim agrees (agr 0.90)",
+        id: "melee-halb-eleph",
+        label: "MELEE 7 · Halberdier 21 v Elite Elephant 6 — halbs too healthy (91% vs 76%)",
         mode: "explicit",
-        t1: { civ: "Japanese", slug: "hand_cannoneer", name: "Hand Cannoneer", count: 14 },
-        t2: { civ: "Chinese", slug: "champion", name: "Champion", count: 21 },
-        note: "Nearly solved (single recording, dur 57s vs tape 50s) — kept as the contrast piece to WORST 5: same gunners, different cavalry speed, and here the kite ball holds.",
+        t1: { civ: "Chinese", slug: "halberdier", name: "Halberdier", count: 21 },
+        t2: { civ: "Burmese", slug: "elite_elephant", name: "Elite Battle Elephant", count: 6 },
+        note: "Six elephants with trample should hurt more than 9% of the halb army. Watch how many halbs stack per elephant and whether trample splash lands on the pack.",
+    },
+    {
+        id: "melee-champ-halb",
+        label: "MELEE 8 · Champion 15 v Halberdier 21 — champs too healthy (82% vs 67%)",
+        mode: "explicit",
+        t1: { civ: "Chinese", slug: "champion", name: "Champion", count: 15 },
+        t2: { civ: "Chinese", slug: "halberdier", name: "Halberdier", count: 21 },
+        note: "Infantry mirror-ish; sim champs win too cleanly. Same 15-pt too-healthy signature as MELEE 6/8 — the winning side isn't paying the tape's attrition tax.",
+    },
+    {
+        id: "melee-hussar-camel",
+        label: "MELEE 9 · Hussar 21 v Heavy Camel 11 — camels too healthy (74% vs 62%)",
+        mode: "explicit",
+        t1: { civ: "Persians", slug: "hussar", name: "Hussar", count: 21 },
+        t2: { civ: "Persians", slug: "heavy_camel", name: "Heavy Camel Rider", count: 11 },
+        note: "Smallest open gap in the list (12 pts). Camels' anti-cavalry bonus makes short work either way; the question is whether 21 hussars land enough contact before dying.",
     },
     {
         id: "slinger-elephant",

@@ -52,7 +52,7 @@ import { BattleUnit } from "../../apps/website/static/js/engine/battle_unit.js";
 import { TILE_SIZE } from "../../apps/website/static/js/engine/constants.js";
 import {
     applyR5BSpec, applyR5D1Spec, applyR5DSpec, applyR5FSpec, applyB2Spec,
-    applyC2ASpec, applyC2BSpec,
+    applyC2ASpec, applyC2BSpec, applyC2CSpec,
     loadManifest, loadCalibDicts, loadCalibSpawns, spawnsForFight,
 } from "./calib_runner.mjs";
 
@@ -374,6 +374,7 @@ applyR5FSpec(flag("--r5f", null));
 applyB2Spec(flag("--b2", null));
 applyC2ASpec(flag("--c2a", null));
 applyC2BSpec(flag("--c2b", null));
+applyC2CSpec(flag("--c2c", null));
 
 const dicts = loadCalibDicts();
 const spawns = loadCalibSpawns();

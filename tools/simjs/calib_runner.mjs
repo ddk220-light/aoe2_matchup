@@ -66,7 +66,7 @@ import { Worker, isMainThread } from "node:worker_threads";
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import {
     R5B, setR5B, R5D1, setR5D1, R5D, setR5D, B2, setB2, R5F, setR5F,
-    C2A, setC2A, C2B, setC2B,
+    C2A, setC2A, C2B, setC2B, C2C, setC2C,
 } from "../../apps/website/static/js/engine/constants.js";
 
 // ---- Round-5b rule flags --------------------------------------------------
@@ -239,6 +239,32 @@ export function applyC2BSpec(spec) {
     }
     const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
     setC2B(cfg);
+    return cfg;
+}
+
+// ---- Phase-C2-C rule flags -------------------------------------------------
+// Identical grammar again, over the SEPARATE C2C object (pureFlight -- the
+// composition of the retreat while a C2A contact break is live). Meaningless
+// without `--c2a contactBreak`: with no break ever latched the flag can never
+// fire, so the intended combined gate is
+// `--c2a contactBreak,breakPriority --c2c pureFlight`.
+//
+//   --c2c off                 the pre-C2C engine, bit-identical
+//   --c2c pureFlight          break bearing + collision avoidance only
+//   (flag absent)             engine defaults
+export function applyC2CSpec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(C2C);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--c2c: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setC2C(cfg);
     return cfg;
 }
 
@@ -626,6 +652,12 @@ if (isMainThread && process.argv[1]
         const on = Object.entries(c2bCfg).filter(([, v]) => v).map(([k]) => k);
         console.log(`c2b rules: ${on.length ? on.join(", ") : "(none -- pre-C2 engine)"}`);
     }
+    const c2cSpec = flag("--c2c", null);
+    const c2cCfg = applyC2CSpec(c2cSpec);
+    if (c2cCfg) {
+        const on = Object.entries(c2cCfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`c2c rules: ${on.length ? on.join(", ") : "(none -- pre-C2C engine)"}`);
+    }
 
     const dicts = loadCalibDicts();
     const allFights = loadManifest();
@@ -723,7 +755,7 @@ if (isMainThread && process.argv[1]
                     workerData: {
                         arenaArg, maxSeconds, outDir,
                         r5bSpec, r5d1Spec, r5dSpec, b2Spec, r5fSpec, c2aSpec,
-                        c2bSpec,
+                        c2bSpec, c2cSpec,
                     },
                 });
                 const pump = () => {

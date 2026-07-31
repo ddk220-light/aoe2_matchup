@@ -47,6 +47,7 @@ import {
     R5F,
     C2A,
     C2B,
+    C2C,
     SILENCE_ADVANCE_CYCLES,
     PROJECTILE_RADIUS_TILES,
     ACCURACY_DISPERSION_BY_SLUG,
@@ -3514,12 +3515,31 @@ export class BattleUnit {
                 dy /= dist;
             }
         }
+        // ===== C2-c: PURE FLIGHT, and what it selects =====
+        // While a break is live this unit is not manoeuvring with its ball, it
+        // is running from a body in contact with it, so the two FORMATION
+        // terms below are not applied to it: kiteSteering's orbit + cohesion
+        // contribution is skipped entirely, and calculateAvoidance is asked
+        // only for imminent overlaps rather than for social spacing.
+        //
+        // This is a selection between expressions that already exist -- see
+        // constants.js C2C for why each is a formation force and not a
+        // physical one, and for the probe magnitudes that motivated it
+        // (|basis| 1.000 against |orbit+cohesion| 1.249 + |avoidance| 2.221).
+        // No weight is changed: every dropped term still applies in full to
+        // every unit not in a break, and to this unit on the tick its break
+        // ends.
+        //
+        // `hitter` is C2A's own latch, so with C2A.contactBreak off this is
+        // always false and the composition below is the pre-C2C one, term for
+        // term, in the same order.
+        const pureFlight = C2C.pureFlight && hitter !== null;
         // Group-kite steering (null => untouched pre-E5a behaviour).
-        if (steering) {
+        if (steering && !pureFlight) {
             dx += steering.x;
             dy += steering.y;
         }
-        const avoidance = this.calculateAvoidance(allUnits);
+        const avoidance = this.calculateAvoidance(allUnits, pureFlight);
         dx += avoidance.x;
         dy += avoidance.y;
         let len = Math.sqrt(dx * dx + dy * dy);
@@ -3597,7 +3617,27 @@ export class BattleUnit {
         );
     }
 
-    calculateAvoidance(allUnits) {
+    // `overlapOnly` (C2-c) narrows this to what it physically is: the
+    // separation force between bodies that are ACTUALLY interpenetrating.
+    //
+    // The loop below is two forces wearing one name. Inside `minDist` the pair
+    // overlaps and the force is 3..8 -- that is collision resolution, the soft
+    // counterpart of resolveCollisions' hard pass. Between 1.0x and 1.5x
+    // `minDist` nothing overlaps and the force is a flat 0.5 per neighbour --
+    // that is SOCIAL spacing, a different thing with a different justification.
+    //
+    // HOW BIG IS THE SOCIAL HALF, measured rather than assumed: on a C2A break
+    // tick, 8.5% of the magnitude (1.875 full band vs 1.716 overlap-only, 86
+    // chase fights x 5 seeds). A unit in contact is inside a scrum, so almost
+    // every neighbour within 1.5x minDist of it is ALREADY overlapping. The
+    // narrowing below is therefore nearly a no-op in exactly the situation it
+    // was written for -- see docs/calibration/c2c_pure_flight.md §2.
+    //
+    // Callers pass true only while a contact break is live. The default is
+    // false, so moveTowardTarget and every flag-off path evaluate the exact
+    // same expression they always did -- this parameter adds one `continue` to
+    // a branch nothing else takes.
+    calculateAvoidance(allUnits, overlapOnly = false) {
         let avoidX = 0,
             avoidY = 0;
         for (const other of allUnits) {
@@ -3621,6 +3661,10 @@ export class BattleUnit {
             if (dist < minDist * 1.5 && dist > 0) {
                 const overlap =
                     Math.max(0, minDist - dist) / minDist;
+                // C2-c: the social band is exactly `overlap === 0` here, so
+                // "imminent overlap only" is the band this function already
+                // distinguishes -- no distance is introduced or edited.
+                if (overlapOnly && overlap <= 0) continue;
                 // Strong force when overlapping, moderate when close
                 const force = overlap > 0 ? 3 + overlap * 5 : 0.5;
                 avoidX += (dx / dist) * force;

@@ -397,6 +397,10 @@ export class BattleUnit {
         // 35.8 tape vs 33.3 engine -- already in agreement, so there is nothing
         // to change there). Set in fireProjectile, never cleared.
         this.hasFiredRangedShot = false;
+        // The other candidate clock (R5F.silenceClockOnLaunch): the instant
+        // this unit last LAUNCHED. Written alongside hasFiredRangedShot, again
+        // unconditionally, so both definitions are always observable.
+        this.lastLaunchTime = 0;
 
         // --- R5f A2: shot-level victim persistence (R5F.persistVictim) ---
         // The victim of this unit's PREVIOUS volley, i.e. what `persist` in
@@ -1077,28 +1081,28 @@ export class BattleUnit {
     // breakpoint, with something still alive to shoot at? See constants.js
     // (R5F.silenceAdvance and SILENCE_ADVANCE_CYCLES) for the measurement.
     //
-    // "Quiet" is LANDED, not launched: the clock resets when a projectile this
-    // unit fired actually put damage on a body, so a unit whose shots keep
-    // grounding is silent even though it is still pulling the trigger.
-    //
-    // NOTE, recorded because it is the one place this rule's definition and its
-    // evidence differ: r5e_pick_forensics.md §4b bins the tape by LAUNCH gap
-    // ("how long since that unit last fired"), and the R5f brief specifies the
-    // rule on LANDED hits. The brief is what is implemented here. The two
-    // differ by one flight time plus every shot that delivers nothing, so the
-    // engine's landed-gap occupancy is a superset of its launch-gap occupancy;
-    // both are reported in the round's write-up. Swapping the clock to launch
-    // time is a one-line change behind this same flag.
+    // "Quiet" has two candidate definitions and the engine carries both, one
+    // live at a time (R5F.silenceClockOnLaunch):
+    //   LANDED (default, the R5f brief's wording) -- the clock resets when a
+    //     projectile this unit fired actually put damage on a body, so a unit
+    //     whose shots keep grounding is silent even while pulling the trigger.
+    //   LAUNCHED -- the clock resets at the launch itself, which is the
+    //     statistic r5e_pick_forensics.md §4b bins the tape by ("how long
+    //     since that unit last fired") and therefore the definition under
+    //     which the tape's 2.0 / 52.2 / 62.2% closing shares were measured.
+    // They differ by one flight time plus every shot that delivers nothing, so
+    // the landed-gap silent set is a strict superset of the launch-gap one.
+    // Both were measured over the six ranged fights; see the round report.
     silentBeyondCycles() {
         if (!this.isRanged()) return false;
         if (!this.hasFiredRangedShot) return false;
         const tgt = this.target;
         if (!tgt || tgt.state === "dead") return false;
         const now = this.sim ? this.sim.battleTime : 0;
-        return (
-            now - this.lastLandedHitTime >
-            SILENCE_ADVANCE_CYCLES * this.reloadTime
-        );
+        const since = R5F.silenceClockOnLaunch
+            ? this.lastLaunchTime
+            : this.lastLandedHitTime;
+        return now - since > SILENCE_ADVANCE_CYCLES * this.reloadTime;
     }
 
     rangedShouldApproach() {
@@ -2009,6 +2013,7 @@ export class BattleUnit {
         // R5f-A1: this unit has now pulled the trigger, so it leaves the
         // tape's "never fired" bin and the silence rule can apply to it.
         this.hasFiredRangedShot = true;
+        this.lastLaunchTime = this.sim.battleTime;
         const proj = new Projectile(
             this.x,
             this.y,

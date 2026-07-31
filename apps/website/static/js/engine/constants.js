@@ -176,6 +176,19 @@ export const R5F = {
     //     separate "never fired" bin is the opening walk, and the engine
     //     already reproduces it (35.8% tape vs 33.3% engine).
     silenceAdvance: true,
+    // A1b WHICH CLOCK A1 READS. Not a tuning knob -- a choice between two
+    //     definitions of the same word, both of which have a claim:
+    //       false (default) = LANDED. The R5f brief's wording: the clock
+    //           resets when a projectile this unit fired actually put damage
+    //           on a body, so a unit whose shots keep grounding stays silent.
+    //       true            = LAUNCHED. The statistic r5e_pick_forensics.md
+    //           §4b actually bins by ("how long since that unit last fired"),
+    //           i.e. the definition under which the tape's 2.0% / 52.2% /
+    //           62.2% closing shares were measured in the first place.
+    //     Exactly one is used; the flag has no effect with silenceAdvance off.
+    //     Measured both ways over the six ranged fights -- see the round
+    //     report; the default is the brief's.
+    silenceClockOnLaunch: false,
     // A2  persist -> nearest-uncovered selection: a ranged unit KEEPS the
     //     victim of its previous shot while that victim is alive, in reach and
     //     not lethally covered; when any of those fails it re-picks the nearest

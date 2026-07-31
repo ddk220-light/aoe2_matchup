@@ -27,8 +27,14 @@ const STATS = {
     accuracy: 100, unit_name: "Test Archer",
 };
 const ALL_OFF = {
-    silenceAdvance: false, persistVictim: false, failedRollPlannedDamage: false,
+    silenceAdvance: false, silenceClockOnLaunch: false,
+    persistVictim: false, failedRollPlannedDamage: false,
 };
+// silenceClockOnLaunch is a MODIFIER of A1, not a fourth rule: it selects
+// which of two clocks A1 reads and does nothing at all while A1 is off. It is
+// therefore excluded from the "each rule is load-bearing alone" sweep and
+// pinned by its own two tests instead.
+const RULES = Object.keys(ALL_OFF).filter((k) => k !== "silenceClockOnLaunch");
 
 function withR5F(overrides, fn) {
     const saved = { ...R5F };
@@ -473,18 +479,18 @@ const JITTER = [0, 13, -7, 21, -18, 5, -11, 17, -3, 9, 24, -22];
 // Ragged lines: a unit's standing target stops being its nearest reachable
 // enemy, which is what A2 changes, and units lose and regain victims, which is
 // what A1 needs.
-function spreadFight(seed, n = 8, over = {}) {
+function spreadFight(seed, n = 8, over = {}, slug = "arbalester") {
     const sim = new Simulation(900, 600, makeRng(seed));
     for (let i = 0; i < n; i++) {
         const u = new BattleUnit(
-            `1-${i}`, 1, { ...DUEL, ...over }, "arbalester", "Chinese", sim);
+            `1-${i}`, 1, { ...DUEL, ...over }, slug, "Chinese", sim);
         u.x = 180 + JITTER[i % 12];
         u.y = 120 + i * 30 + JITTER[(i + 3) % 12];
         sim.team1.push(u);
     }
     for (let i = 0; i < n; i++) {
         const u = new BattleUnit(
-            `2-${i}`, 2, { ...DUEL, ...over }, "arbalester", "Goths", sim);
+            `2-${i}`, 2, { ...DUEL, ...over }, slug, "Goths", sim);
         u.x = 430 + JITTER[(i + 5) % 12];
         u.y = 130 + i * 30 + JITTER[(i + 7) % 12];
         sim.team2.push(u);
@@ -498,6 +504,13 @@ function spreadFight(seed, n = 8, over = {}) {
 // failed roll advertises 10 and a full one 20, so the advertised value is
 // exactly what decides whether a victim reads as lethally covered.
 const missFight = (seed) => spreadFight(seed, 8, { accuracy: 50, hp: 20 });
+
+// Units that WHIFF: an unknown slug has no dat accuracy_dispersion, so a failed
+// roll keeps the legacy 2-tile scatter and mostly grounds. That is the only
+// state in which the two A1 clocks disagree -- the unit is firing on cadence
+// (launch clock: not silent) and landing nothing (landed clock: silent).
+const whiffFight = (seed) =>
+    spreadFight(seed, 8, { accuracy: 15, hp: 20 }, "whiffer");
 
 function meleeFight(seed) {
     const sim = new Simulation(900, 600, makeRng(seed));
@@ -543,7 +556,7 @@ test("[R5f] each rule is independently switchable and independently load-bearing
     // So it is asked under P1 ON, which is the only config in which it has
     // anything to say. That is a documented property of the rule, asserted
     // below, not an accommodation.
-    for (const rule of Object.keys(R5F)) {
+    for (const rule of RULES) {
         const p1 = rule === "failedRollPlannedDamage";
         const moved = [spreadFight, missFight].some((build) => withR5D1(
             { reducedDamageHits: p1 },
@@ -574,7 +587,54 @@ test("[R5f] A3 is provably inert while P1 is off", () => withR5D1(
     },
 ));
 
-test("[R5f] melee-vs-melee is untouched by all three rules", () => {
+test("[A1b] the launch clock is inert while A1 is off, and live while it is on", () => {
+    // Inert: with silenceAdvance off, flipping the clock cannot move a fight.
+    for (const build of [spreadFight, missFight, whiffFight]) {
+        const a = withR5F({ ...ALL_OFF, silenceClockOnLaunch: false },
+            () => runHash(build, 8, 40));
+        const b = withR5F({ ...ALL_OFF, silenceClockOnLaunch: true },
+            () => runHash(build, 8, 40));
+        assert.equal(a, b, "a clock nobody reads cannot change anything");
+    }
+    // Live: with A1 on, the two clocks are genuinely different rules.
+    const landed = withR5F(
+        { ...ALL_OFF, silenceAdvance: true, silenceClockOnLaunch: false },
+        () => runHash(whiffFight, 8, 40));
+    const launched = withR5F(
+        { ...ALL_OFF, silenceAdvance: true, silenceClockOnLaunch: true },
+        () => runHash(whiffFight, 8, 40));
+    assert.notEqual(
+        landed, launched,
+        "a unit that fires and misses is silent under one clock and not the other",
+    );
+});
+
+test("[A1b] the launch clock reads the launch instant, not the arrival", () => {
+    const sim = bareSim(47);
+    const shooter = archer(sim, "1-0", 1);
+    const foe = bag(sim, "2-0", 2, { hp: 1000 });
+    shooter.x = 0; shooter.y = 0;
+    foe.x = 2 * TILE_SIZE; foe.y = 0;
+    sim.team1.push(shooter); sim.team2.push(foe);
+    shooter.target = foe;
+
+    sim.battleTime = 30.0;
+    shooter.fireProjectile(foe);
+    assert.equal(shooter.lastLaunchTime, 30.0);
+    assert.equal(shooter.lastLandedHitTime, 0, "nothing has arrived yet");
+
+    // 2.5 s later: 1.25 cycles since the launch, but 30+ s since anything
+    // landed. The two clocks disagree, and each flag reads its own.
+    sim.battleTime = 32.5;
+    withR5F({ silenceAdvance: true, silenceClockOnLaunch: true }, () => {
+        assert.equal(shooter.silentBeyondCycles(), false, "it just fired");
+    });
+    withR5F({ silenceAdvance: true, silenceClockOnLaunch: false }, () => {
+        assert.equal(shooter.silentBeyondCycles(), true, "but it has landed nothing");
+    });
+});
+
+test("[R5f] melee-vs-melee is untouched by all four flags", () => {
     // A1 lives behind isRanged() and the ranged branch of update(); A2 behind
     // pickShotTarget, which only ranged units call; A3 inside fireProjectile.
     // A melee fight must be bit-identical with the flags on and off.
@@ -585,5 +645,5 @@ test("[R5f] melee-vs-melee is untouched by all three rules", () => {
 
 test("[R5f] setR5F rejects an unknown flag rather than silently ignoring it", () => {
     assert.throws(() => setR5F({ notARule: true }), /unknown flag/);
-    assert.equal(Object.keys(R5F).length, 3);
+    assert.equal(Object.keys(R5F).length, 4);
 });

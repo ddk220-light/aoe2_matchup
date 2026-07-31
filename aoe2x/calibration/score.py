@@ -120,6 +120,7 @@ written before and after remain directly comparable.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import statistics
@@ -701,6 +702,29 @@ def _stamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
+# Longest filter fragment allowed inside a scoreboard FILENAME. Windows caps a
+# full path at 260 characters by default; the runs directory plus stamp and
+# label already spend ~120 of those, so a filter fragment past this is what
+# turns "board written" into a FileNotFoundError.
+FILTER_LABEL_MAX = 60
+
+
+def _filename_filter(filter_label: str) -> str:
+    """`filter_label`, shortened to something a filesystem will accept.
+
+    Short filters (``melee-only``, ``match=hussar.*``) pass through untouched.
+    A long one -- in practice an explicit ``--tags`` list -- keeps its head for
+    readability and gains an 8-hex digest of the WHOLE label, so two different
+    long filters can never collide on one filename. The complete filter is
+    still written to the payload's ``subset.filter``.
+    """
+    if len(filter_label) <= FILTER_LABEL_MAX:
+        return filter_label
+    digest = hashlib.sha256(filter_label.encode("utf-8")).hexdigest()[:8]
+    head = filter_label[: FILTER_LABEL_MAX - len(digest) - 5].rstrip(",-")
+    return f"{head}...{digest}"
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--all", action="store_true", help="Score every fight in the manifest.")
@@ -768,7 +792,17 @@ def main() -> None:
     # The filter rides in the FILENAME, not just the payload: a partial board
     # sitting next to full-corpus boards in data/calibration/runs/ has to
     # announce itself in the one field anyone reads at a glance.
-    label = f"{args.label}-{filter_label}" if any_filter else args.label
+    #
+    # ...but only up to a point. An explicit `--tags a,b,c,...` list is
+    # unbounded, and a 67-tag melee subset produced a 2 000-character filename
+    # that blew past the filesystem's path limit and threw away a scoreboard
+    # that had already been computed. The name is now capped: past
+    # FILTER_LABEL_MAX characters the filter is elided to its head plus a short
+    # digest of the whole string, which stays unique per distinct filter and
+    # still says at a glance what kind of subset this is. The FULL filter is
+    # never lost -- it is written verbatim to `subset.filter` in the payload
+    # below, which is the field anything programmatic should read.
+    label = f"{args.label}-{_filename_filter(filter_label)}" if any_filter else args.label
     out_path = RUNS_DIR / f"{stamp}-{label}.json"
     payload = {
         "label": label,

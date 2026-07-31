@@ -142,7 +142,10 @@ function bothSidesIn(fight, slugs) {
 // The exact counterpart of filters.py's `filter_fights`: same three filters,
 // AND-combined, manifest order preserved. A typo'd --tags value throws rather
 // than silently shrinking the run into a plausible-looking small subset.
-export function filterFights(fights, { tags = null, match = null, meleeOnly = false } = {}) {
+export function filterFights(
+    fights,
+    { tags = null, match = null, meleeOnly = false, rangedOnly = false } = {},
+) {
     let out = fights;
     if (tags && tags.length) {
         const wanted = new Set(tags);
@@ -161,12 +164,19 @@ export function filterFights(fights, { tags = null, match = null, meleeOnly = fa
         const melee = loadFightSets().melee;
         out = out.filter((f) => bothSidesIn(f, melee));
     }
+    if (rangedOnly) {
+        const ranged = loadFightSets().ranged;
+        out = out.filter((f) => bothSidesIn(f, ranged));
+    }
     return out;
 }
 
-export function describeFilter({ tags = null, match = null, meleeOnly = false } = {}) {
+export function describeFilter({
+    tags = null, match = null, meleeOnly = false, rangedOnly = false,
+} = {}) {
     const parts = [];
     if (meleeOnly) parts.push("melee-only");
+    if (rangedOnly) parts.push("ranged-only");
     if (tags && tags.length) parts.push(`tags=${tags.join(",")}`);
     if (match) parts.push(`match=${match}`);
     return parts.length ? parts.join("+") : null;
@@ -375,6 +385,7 @@ if (isMainThread && process.argv[1]
         tags: tagsArg ? tagsArg.split(",").filter(Boolean) : null,
         match: flag("--match", null),
         meleeOnly: argv.includes("--melee-only"),
+        rangedOnly: argv.includes("--ranged-only"),
     };
 
     const dicts = loadCalibDicts();

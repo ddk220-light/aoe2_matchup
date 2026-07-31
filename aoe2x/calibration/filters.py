@@ -9,6 +9,7 @@ filters, and this module is the Python half of that pair:
 - ``--tags a,b,c``   -- exact match on a fight's ``tag``
 - ``--match <re>``   -- ``re.search`` against a fight's ``run_id``
 - ``--melee-only``   -- both sides' slugs in the ``melee`` set
+- ``--ranged-only``  -- both sides' slugs in the ``ranged`` set
 
 The named sets live in ``data/calibration/fight_sets.json``, which the JS
 runner reads too, so the two languages cannot drift. They are defined by unit
@@ -56,6 +57,8 @@ def slug_set(name: str) -> frozenset[str]:
 MELEE_SLUGS = slug_set("melee")
 #: The five vanilla trash/knight-line units; a subset of ``MELEE_SLUGS``.
 BASIC_MELEE_SLUGS = slug_set("basic_melee")
+#: Both-sides-ranged slug set -- the Round-5 ranged-vs-ranged gate's definition.
+RANGED_SLUGS = slug_set("ranged")
 
 
 def both_sides_in(fight: dict[str, Any], slugs: Iterable[str]) -> bool:
@@ -70,6 +73,7 @@ def filter_fights(
     tags: Sequence[str] | None = None,
     match: str | None = None,
     melee_only: bool = False,
+    ranged_only: bool = False,
 ) -> list[dict[str, Any]]:
     """Apply the shared subset filters (AND-combined) in manifest order.
 
@@ -92,6 +96,8 @@ def filter_fights(
         out = [f for f in out if rx.search(f["run_id"])]
     if melee_only:
         out = [f for f in out if both_sides_in(f, MELEE_SLUGS)]
+    if ranged_only:
+        out = [f for f in out if both_sides_in(f, RANGED_SLUGS)]
     return out
 
 
@@ -100,11 +106,14 @@ def describe_filter(
     tags: Sequence[str] | None = None,
     match: str | None = None,
     melee_only: bool = False,
+    ranged_only: bool = False,
 ) -> str | None:
     """Short label for a subset run, or None when nothing was filtered."""
     parts: list[str] = []
     if melee_only:
         parts.append("melee-only")
+    if ranged_only:
+        parts.append("ranged-only")
     if tags:
         parts.append("tags=" + ",".join(tags))
     if match:
@@ -130,6 +139,13 @@ def add_filter_args(ap: argparse.ArgumentParser) -> None:
             f"of {FIGHT_SETS_PATH.name} ({', '.join(sorted(MELEE_SLUGS))})."
         ),
     )
+    g.add_argument(
+        "--ranged-only", action="store_true",
+        help=(
+            "Keep only fights where BOTH sides' slugs are in the 'ranged' set "
+            f"of {FIGHT_SETS_PATH.name} ({', '.join(sorted(RANGED_SLUGS))})."
+        ),
+    )
 
 
 def filter_kwargs_from_args(args: argparse.Namespace) -> dict[str, Any]:
@@ -138,4 +154,5 @@ def filter_kwargs_from_args(args: argparse.Namespace) -> dict[str, Any]:
         "tags": [t for t in args.tags.split(",") if t] if args.tags else None,
         "match": args.match,
         "melee_only": bool(args.melee_only),
+        "ranged_only": bool(getattr(args, "ranged_only", False)),
     }

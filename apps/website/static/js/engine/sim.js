@@ -23,6 +23,7 @@ import {
     CANVAS_WIDTH,
     CANVAS_HEIGHT,
     COMBAT_PACK_FACTOR,
+    B2,
 } from "./constants.js";
 
 // ---- deterministic state hash ------------------------------------------------
@@ -238,6 +239,26 @@ export class Simulation {
     resolveCollisions(allUnits) {
         const alive = allUnits.filter((u) => u.state !== "dead");
         const n = alive.length;
+        // ---- B2: the bump-contact event ------------------------------------
+        // E14's bump-retarget rule needs to know "which enemies was I in body
+        // contact with". This pass is the only thing in the engine that KNOWS
+        // that -- it is the thing that decides it -- so it is the thing that
+        // records it. B1 measured what happens when the rule re-derives the
+        // answer from a distance a tick later instead: it is wrong on 99.8% of
+        // the ticks it was written for, because THIS pass has already pushed
+        // the pair to the floor and cascading pushes carry them 1-2 px beyond
+        // it (docs/calibration/b1_engagement_forensics.md §2b).
+        //
+        // Recorded, consumed and cleared entirely within one tick boundary:
+        // cleared here (before the passes), written by the passes below, read
+        // by every unit's update() on the FOLLOWING tick -- which is the tick
+        // on which those bodies were in fact touching. Deliberately absent
+        // from stateHash(): it is a derived index of this pass's own work, not
+        // independent state, and nothing but meleeBumpRetarget ever reads it.
+        const recordBump = B2.resolverContactBump;
+        if (recordBump) {
+            for (const u of alive) u.bumpContacts.clear();
+        }
         // Run multiple passes to resolve cascading overlaps
         for (let pass = 0; pass < 3; pass++) {
             for (let i = 0; i < n; i++) {
@@ -262,6 +283,18 @@ export class Simulation {
                         b.inCombatPack
                     ) {
                         minDist *= COMBAT_PACK_FACTOR;
+                    }
+                    // B2: a CROSS-TEAM pair at or inside the floor is in body
+                    // contact by this pass's own definition. `<=` rather than
+                    // `<` so a pair parked exactly on the floor -- the steady
+                    // state this pass drives every scrum towards -- still
+                    // counts as touching; it is the same comparison the push
+                    // below makes, only inclusive of its own fixed point.
+                    // Set-valued, so the three passes cannot double-record and
+                    // the consumer's answer cannot depend on pass count.
+                    if (recordBump && a.team !== b.team && dist <= minDist) {
+                        a.bumpContacts.add(b);
+                        b.bumpContacts.add(a);
                     }
                     if (dist < minDist && dist > 0.01) {
                         const overlap = (minDist - dist) / 2;

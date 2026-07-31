@@ -43,6 +43,7 @@ import {
     R5B,
     R5D1,
     R5D,
+    B2,
     PROJECTILE_RADIUS_TILES,
     ACCURACY_DISPERSION_BY_SLUG,
     LEAD_WINDOW_SECONDS,
@@ -304,6 +305,22 @@ export class BattleUnit {
         // read the SAME tick's value in calculateAvoidance and again in
         // resolveCollisions. Never true before the first update().
         this.inCombatPack = false;
+        // B2: the CROSS-TEAM bodies Simulation.resolveCollisions found this
+        // unit in contact with on the most recent tick -- written by that pass,
+        // read by meleeBumpRetarget on the next one, cleared by that pass at
+        // the start of every tick. A Set so three resolver passes over the same
+        // pair record it once and the consumer's answer cannot depend on how
+        // many passes touched it. Empty until the first resolveCollisions has
+        // run, which is correct: nothing has bumped anything yet.
+        this.bumpContacts = new Set();
+        // B2b: the target this unit's stuck bar last TRIPPED on -- i.e. the foe
+        // it made no progress against for 0.8 s while E14's lock forbade it
+        // from leaving. That is the engine's own "cannot reach this one"
+        // verdict, and it is what gates the bump. Holding the target itself
+        // rather than a boolean means the latch clears itself the instant the
+        // unit picks somebody else; moveTowardTarget sets it, meleeBumpRetarget
+        // reads it and drops it once the unit is in reach.
+        this.meleeStuckOn = null;
         this.attackCooldown = 0;
         this.wasMoving = true;
         this.committedAttack = null;
@@ -693,16 +710,60 @@ export class BattleUnit {
         // champion__vs__arbalester canary from 6/6 to 0/6 and the corpus from
         // 126 to 114. Pursuit belongs to the ranged round.
         if (t.isRanged()) return;
-        if (this.inRange()) return;
+        if (this.inRange()) {
+            // Reaching the target settles the question: whatever the bar once
+            // said, this foe is reachable now.
+            this.meleeStuckOn = null;
+            return;
+        }
+        const useEvent = B2.resolverContactBump;
+        // B2b -- the documented rule's second clause, "...and cannot reach the
+        // current target". Not "is not in reach this instant" (E14's reading,
+        // which a unit walking normally at a distant foe satisfies every tick)
+        // but the engine's own unreachability verdict: the stuck bar tripped
+        // on THIS target and the lock re-armed it. See B2.stuckGatedBump.
+        if (useEvent && B2.stuckGatedBump && this.meleeStuckOn !== t) return;
         let best = null;
         let bestDist = Infinity;
         for (const enemy of enemies) {
             if (enemy === t || enemy.state === "dead" || enemy.isRanged())
                 continue;
             const dist = this.distanceTo(enemy);
-            // resolveCollisions' own hard floor: at or inside it the two bodies
-            // are in contact and were pushed apart this tick.
-            if (dist <= this.radius + enemy.radius + 1 && dist < bestDist) {
+            // "In contact" asks the engine's OWN body physics, and the engine
+            // separates bodies in two places. Both are asked, because B2
+            // measured that only the second one is ever reachable:
+            //
+            //  * the HARD pass (Simulation.resolveCollisions, floor
+            //    `radius + radius + 1`) -- consulted as its own recorded
+            //    contact EVENT rather than re-derived from a distance a tick
+            //    later, since by the time this runs the pair has already been
+            //    pushed to the floor and cascading pushes carry it past.
+            //  * the SOFT pass (calculateAvoidance, floor
+            //    `radius + radius + 2`) -- the steering repulsion every unit
+            //    applies to every body within one more pixel than the hard
+            //    floor.
+            //
+            // THE SOFT FLOOR IS THE ONE THAT HOLDS A CROSS-TEAM PAIR, and that
+            // is why E14's trigger could not fire. The soft floor is 1 px
+            // WIDER than the hard one, so two enemies pressed together settle
+            // at the soft floor and the hard pass never sees them: measured
+            // over the three collapse/near-collapse fights x 2 seeds, on a
+            // frozen tick with a hittable non-target foe present, the hard
+            // floor is satisfied on 0.001 of ticks and its contact event on
+            // 0.002 -- against 0.321 for the soft floor. B1 named the hard
+            // floor as the culprit (forensics §2b); the arithmetic is one
+            // pixel off, and the one pixel is the whole rule.
+            //
+            // Neither term is a new number: both floors already existed, for
+            // this exact purpose, and `radius + radius + 2` is quoted from
+            // calculateAvoidance rather than chosen. `<= hard` implies
+            // `< soft`, so the soft term SUBSUMES the pre-B2 trigger and the
+            // B2 rule is a strict superset: nothing that used to bump stops.
+            const contact = useEvent
+                ? (dist < this.radius + enemy.radius + 2 ||
+                    this.bumpContacts.has(enemy))
+                : dist <= this.radius + enemy.radius + 1;
+            if (contact && dist < bestDist) {
                 bestDist = dist;
                 best = enemy;
             }
@@ -711,6 +772,10 @@ export class BattleUnit {
         this.target = best;
         // A bump is a fresh engagement: re-arm the stuck bar against the new
         // foe rather than carrying the old chase's progress history over.
+        // B2b's latch names the OLD target, so it is already stale the moment
+        // the assignment above lands; cleared explicitly so nothing has to
+        // reason about that.
+        this.meleeStuckOn = null;
         this.stuckTimer = 0;
         this.lastDistToTarget = bestDist;
     }
@@ -2826,6 +2891,11 @@ export class BattleUnit {
             // rule 2's bump. A pursuit (ranged unit, or a RANGED target) is
             // untouched: that is what the bar was built for.
             if (this.meleeTargetLock()) {
+                // B2b: record WHICH foe defeated this unit's pathing. The bar
+                // tripping while the lock holds is the engine's own verdict
+                // that this target cannot be reached, and it is the second
+                // half of update 81058's condition -- see B2.stuckGatedBump.
+                if (B2.stuckGatedBump) this.meleeStuckOn = this.target;
                 this.stuckTimer = 0;
             } else {
                 this.blockedTargets.add(this.target);

@@ -24,6 +24,7 @@ import {
     applyR5BSpec,
     applyR5D1Spec,
     applyR5DSpec,
+    applyB2Spec,
     loadCalibDicts,
     loadCalibSpawns,
     loadManifest,
@@ -31,14 +32,16 @@ import {
     spawnsForFight,
 } from "./calib_runner.mjs";
 
-const { arenaArg, maxSeconds, outDir, r5bSpec, r5d1Spec, r5dSpec } = workerData;
+const { arenaArg, maxSeconds, outDir, r5bSpec, r5d1Spec, r5dSpec, b2Spec } = workerData;
 
-// Round-5b / Round-5d rule flags. Applied BEFORE any fight is built, from the
+// Round-5b / Round-5d / Phase-B2 rule flags. Applied BEFORE any fight is built,
+// from the
 // same spec strings the parent parsed, so every worker configures the engine
 // identically and a parallel run stays byte-identical to `--workers 1`.
 applyR5BSpec(r5bSpec ?? null);
 applyR5D1Spec(r5d1Spec ?? null);
 applyR5DSpec(r5dSpec ?? null);
+applyB2Spec(b2Spec ?? null);
 
 // Same arena table as the CLI. Duplicated as a two-line lookup rather than
 // exported-and-imported because it is the CLI's own argument vocabulary; the

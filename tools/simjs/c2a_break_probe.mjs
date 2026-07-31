@@ -29,11 +29,11 @@ import { readFileSync } from "node:fs";
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import {
     applyR5BSpec, applyR5D1Spec, applyR5DSpec, applyR5FSpec, applyB2Spec,
-    applyC2ASpec,
+    applyC2ASpec, applyC2CSpec,
     loadManifest, loadCalibDicts, loadCalibSpawns, spawnsForFight,
 } from "./calib_runner.mjs";
 import { BattleUnit } from "../../apps/website/static/js/engine/battle_unit.js";
-import { TILE_SIZE } from "../../apps/website/static/js/engine/constants.js";
+import { TILE_SIZE, C2C } from "../../apps/website/static/js/engine/constants.js";
 
 const argv = process.argv.slice(2);
 const flag = (n, d) => {
@@ -58,10 +58,13 @@ applyR5DSpec(flag("--r5d", null));
 applyR5FSpec(flag("--r5f", null));
 applyB2Spec(flag("--b2", null));
 applyC2ASpec(flag("--c2a", null));
+applyC2CSpec(flag("--c2c", null));
 
 const acc = {
     ticks: 0, breakTicks: 0,
     basis: 0, steer: 0, avoid: 0,       // summed magnitudes on BREAK ticks
+    avoidFull: 0,                        // |avoidance| INCLUDING the social band
+    steerDropped: 0,                     // |orbit+cohesion| that C2C dropped
     breakBasis: 0,                       // |basis| on break ticks (always 1)
     cosStep: 0, cosStepN: 0,             // cos(actual per-tick step, break bearing)
     cosPre: 0, cosPreN: 0,               // cos(pre-smoothing direction, bearing)
@@ -75,18 +78,30 @@ function installed(dt, allUnits, steering = null) {
 
     // Reproduce the term magnitudes WITHOUT changing anything: the same
     // expressions the method is about to evaluate, evaluated here first.
+    //
+    // C2-c changes WHICH of those expressions the method evaluates, so the
+    // reproduction has to branch the same way or the reported cos would
+    // describe a composition the engine no longer uses. `pure` mirrors
+    // moveAwayFromTarget's own `pureFlight` exactly; the full-avoidance and
+    // dropped-steering magnitudes are still recorded on both paths so the
+    // before/after is one run, not two.
+    const pure = C2C.pureFlight;
     let bx = this.x - hitter.x, by = this.y - hitter.y;
     const bl = Math.hypot(bx, by) || 1;
     bx /= bl; by /= bl;
-    const av = this.calculateAvoidance(allUnits);
-    const sx = steering ? steering.x : 0, sy = steering ? steering.y : 0;
+    const avFull = this.calculateAvoidance(allUnits);
+    const av = pure ? this.calculateAvoidance(allUnits, true) : avFull;
+    const sxRaw = steering ? steering.x : 0, syRaw = steering ? steering.y : 0;
+    const sx = pure ? 0 : sxRaw, sy = pure ? 0 : syRaw;
     let px = bx + sx + av.x, py = by + sy + av.y;
     const pl = Math.hypot(px, py) || 1;
 
     acc.breakTicks++;
     acc.basis += 1;
     acc.steer += Math.hypot(sx, sy);
+    acc.steerDropped += Math.hypot(sxRaw, syRaw);
     acc.avoid += Math.hypot(av.x, av.y);
+    acc.avoidFull += Math.hypot(avFull.x, avFull.y);
     acc.cosPre += (px / pl) * bx + (py / pl) * by;
     acc.cosPreN++;
 
@@ -169,8 +184,8 @@ console.log(`break episodes            ${acc.episodes.length}  median ${med(acc.
 console.log("");
 console.log("term magnitudes on a BREAK tick (mean, before normalisation):");
 console.log(`  |radial basis|          ${(acc.basis / n).toFixed(3)}   (1.0 by construction)`);
-console.log(`  |orbit + cohesion|      ${(acc.steer / n).toFixed(3)}`);
-console.log(`  |avoidance|             ${(acc.avoid / n).toFixed(3)}`);
+console.log(`  |orbit + cohesion|      ${(acc.steer / n).toFixed(3)}${C2C.pureFlight ? `   (C2C dropped ${(acc.steerDropped / n).toFixed(3)})` : ""}`);
+console.log(`  |avoidance|             ${(acc.avoid / n).toFixed(3)}${C2C.pureFlight ? `   (overlap band only; full band ${(acc.avoidFull / n).toFixed(3)})` : ""}`);
 console.log("");
 console.log(`cos(pre-smoothing dir, break bearing)   ${(acc.cosPre / Math.max(1, acc.cosPreN)).toFixed(3)}`);
 console.log(`cos(actual tick step,  break bearing)   ${(acc.cosStep / Math.max(1, acc.cosStepN)).toFixed(3)}`);

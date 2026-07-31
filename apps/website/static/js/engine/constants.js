@@ -673,6 +673,106 @@ export function setC2B(overrides) {
     return C2B;
 }
 
+// ===== PHASE C2-C — PURE FLIGHT DURING A CONTACT BREAK =====
+// One rule, one flag, and NOT a new mechanism: it changes what
+// moveAwayFromTarget SUMS while C2A's contact break is live. Nothing here
+// introduces a number, a weight or a threshold -- every term it selects or
+// drops already exists, and the rule is a state-conditioned choice between
+// them.
+//
+// WHY, and it is a measurement rather than an intuition. C2A built the break
+// (latch the melee unit that hit this kiter; flee away from it with priority
+// over stop-to-fire until a physical escape criterion) and it FAILED in
+// isolation. tools/simjs/c2a_break_probe.mjs says why in three lines --
+// magnitudes of the terms moveAwayFromTarget adds, on ticks where a break is
+// live, over 86 chase fights x 5 seeds:
+//
+//   |radial basis|      1.000   <- the break's bearing, unit by construction
+//   |orbit + cohesion|  1.249
+//   |avoidance|         2.221
+//   cos(actual tick step, break bearing)  0.276   (tape 0.88)
+//
+// The break's own bearing is 22% of a 4.47-magnitude sum. C2A's report draws
+// the correct conclusion and closes the obvious door: "the realised heading is
+// not basis-limited... do not rebuild this as a different basis; it will move
+// the cosine by ~0.02 again." So C-c does not touch the basis. It asks what
+// the OTHER 78% is doing there, and the answer is that both terms are
+// FORMATION behaviours applied to a unit that is not in formation:
+//
+//  * ORBIT + COHESION (kiteSteering's tangential and cohesion contributions,
+//    E5a/E10) exist to turn twelve individually-fleeing archers into one
+//    translating ball. That is a group-manoeuvre force. A unit with a blade in
+//    it is not manoeuvring with the group; C1 M2 measured the tape's just-hit
+//    kiter beelining away from its toucher at cos 0.88 -- and note that on
+//    tape the two bases are near-collinear (0.88 to the hitter AND 0.78 to the
+//    enemy centroid at once), so a tape kiter in flight is not trading one for
+//    the other. It is simply running.
+//
+//  * AVOIDANCE is two different forces sharing one loop (calculateAvoidance).
+//    Below `minDist` it is a body-overlap resolution -- physics, "I cannot walk
+//    through you" -- with force 3..8. Between 1.0x and 1.5x `minDist` it is a
+//    SOCIAL band with a flat force 0.5 per neighbour, which is spacing, not
+//    physics. In a melee scrum the social band alone sums over every nearby
+//    body of both teams and is what carries |avoidance| to 2.221. A fleeing
+//    unit must still not walk through bodies; it has no reason to keep polite
+//    spacing from them.
+//
+// WHAT SURVIVES A BREAK, therefore: the break bearing, actual imminent-overlap
+// avoidance, the arena's obstacle steer (also physics -- a unit cannot flee
+// through a tree), the velocity smoothing, and every commitment C2A already
+// declined to override (the committed shot windup, E9's fireRecovery). What
+// does not: the two group-formation terms and the social spacing band.
+//
+// NO CONSTANT, CHECKED TWICE. The orbit/cohesion drop is a term selection --
+// KITE_TANGENTIAL_WEIGHT and KITE_COHESION_WEIGHT keep their values and keep
+// applying to every unit not in a break, and to every tick of every unit once
+// its break ends. The avoidance narrowing is a BAND selection between two
+// bands the function already computes and already distinguishes (`overlap > 0`
+// is the existing test); no distance, force or weight is edited. Setting the
+// flag false restores the pre-C2C engine bit-identically -- structurally, not
+// merely by test, because the flag gates only which of two existing
+// expressions is evaluated.
+//
+// SCOPE IS INHERITED, NOT RE-DECLARED. The rule is reachable only on a tick
+// where `contactBreakHitter()` is non-null, which requires C2A.contactBreak on
+// AND a melee hit on a non-siege ranged body. So ranged-vs-ranged (no melee
+// attacker exists), melee-vs-melee (the victim-side isRanged() gate) and siege
+// (minAttackRange > 0) are unreachable by exactly the construction C2A already
+// proved byte-identical over the full corpus.
+export const C2C = {
+    // C-c PURE FLIGHT. While a contact break is live, this unit's movement is
+    //     composed of the break bearing plus COLLISION avoidance only:
+    //       1. kiteSteering's orbit + cohesion contribution (`steering.x/y`) is
+    //          not added. The retreat BASIS is unaffected -- C2A already
+    //          replaced it with the hitter radial for the duration of the
+    //          break, so `steering` is simply unread while pure flight holds;
+    //       2. calculateAvoidance is evaluated over imminent-overlap pairs
+    //          only (`dist < minDist`, the band it already scores with
+    //          `overlap > 0`), dropping the 1.0-1.5x social band's flat 0.5.
+    //
+    //     Both revert on the tick the break ends -- which is a distance, not a
+    //     timer -- so a kiting ball is a ball again the moment its touched
+    //     member is clear, and a unit that never takes a melee hit never sees
+    //     this rule at all.
+    //
+    //     MEANINGLESS WITHOUT C2A.contactBreak: with that off, no break is
+    //     ever live and this flag can never fire. It is a modifier of C2A's
+    //     state, not a third mechanism.
+    //
+    //     SHIPPED OFF pending the combined C2A+C2C gate -- see
+    //     docs/calibration/c2c_pure_flight.md for the measured result.
+    pureFlight: false,
+};
+
+/** Apply a partial override to {@link C2C}. Harness-only entry point. */
+export function setC2C(overrides) {
+    for (const k of Object.keys(overrides)) {
+        if (!(k in C2C)) throw new Error(`setC2C: unknown flag ${k}`);
+        C2C[k] = Boolean(overrides[k]);
+    }
+    return C2C;
+}
+
 // ===== CONSTANTS =====
 export const CANVAS_WIDTH = 900;
 export const CANVAS_HEIGHT = 600;

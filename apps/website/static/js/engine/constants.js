@@ -400,6 +400,179 @@ export function setR5F(overrides) {
 // scoreboard rather than to the tape.
 export const SILENCE_ADVANCE_CYCLES = 2;
 
+// ===== PHASE C2-a — THE KITER'S CONTACT BREAK (master off-switches) =====
+// Two rules, from docs/calibration/c1_chaser_cadence.md M2. Like R5B/R5D/B2/R5F
+// these are MECHANISMS, and this pair is unusually strict about it: NEITHER
+// rule introduces a number at all. The break's bearing is a basis, not a
+// weight; the break's end is a distance the engine already computes for other
+// reasons (an attacker's own reach, plus the fleeing body's own diameter).
+//
+// WHAT C1 MEASURED. E12's headline was that a melee unit chasing a RANGED one
+// swings 1.29x slower on tape than in this engine; C1 confirmed it (T/E median
+// 1.22 over 29 melee-swing families) and decomposed it. The chaser is NOT
+// reload-limited on tape, it is CONTACT-limited: it is inside its own reach for
+// 0.66 s of each cycle against this engine's 1.81 s, and 97.2% of its cycles
+// lose contact against this engine's 54.1%.
+//
+// C1 M2 then located the cause on the KITER, not the chaser, and it is not a
+// duty-cycle or phase-race defect (2b refutes both: the tape's chaser lands
+// 9.9% of its blows on a STOPPED victim, this engine's 55.2%). After taking a
+// melee hit the tape's kiter:
+//   (a) starts moving in a median 0.08 s -- ONE 10 Hz sample, i.e. as fast as
+//       the recorder can see. This engine's takes 0.42 s.
+//   (b) runs along the vector away from THE UNIT THAT HIT IT, cos 0.88 pooled
+//       over the 29 families (0.69-0.96, 28 of 29 at or above 0.79). This
+//       engine's runs at cos 0.61 -- and cos to the enemy CENTROID is no better
+//       (0.78 tape vs 0.67 engine), so it is not "flees the centroid instead":
+//       the flee vector is less aligned with BOTH bases.
+//   (c) converts that into 1.03 tiles of RADIAL separation inside one chaser
+//       reload, against this engine's 0.05, and is out of reach after 0.08 s
+//       against this engine's 0.42.
+//
+// WHY THE ENGINE'S BEARING IS WRONG, precisely. E10a gave every group-kiting
+// side a SHARED retreat basis -- back away from the enemy CENTROID, one bearing
+// per side per tick -- to stop twelve archers milling in twelve directions.
+// That fixed dispersal and is not being undone here. But a centroid is an
+// average over an entire enemy army, and the unit that just put a blade in you
+// is one member of it: at the moment of contact the shared basis is exactly the
+// wrong resolution. C-a does not weaken E10a's basis; it says the basis is
+// SUPERSEDED, for as long as a specific melee unit is in touching distance, by
+// the one threat the tape shows the kiter actually answers.
+//
+// NO WEIGHT, DELIBERATELY. A blend `w * awayFromHitter + (1-w) * awayFromCentroid`
+// tuned until cos lands on 0.88 would be a fitted constant wearing a
+// measurement's clothes. The break REPLACES the radial basis outright (w = 1)
+// and the measured cos is then an EMERGENT number, not a target: the orbit,
+// cohesion, avoidance and velocity-smoothing terms that already act on a kiting
+// unit are what pull the realised heading off the pure radial. Whether that
+// lands near the tape's 0.88 is a prediction this rule can FAIL, and the C2
+// report states what it actually came out at.
+//
+// ===== SHIPPED STATE: BOTH OFF. THE PREDICTION FAILED, AND MEASURABLY SO. =====
+// Both rules are wired, tested and A/B-able (`--c2a contactBreak,breakPriority`),
+// and both ship OFF, so this file is byte-identical to 0e2dbc5 on the whole
+// corpus. The numbers, from docs/calibration/c2a_contact_break.md:
+//
+//   full corpus, 216 fights x 20 seeds     base 194/216   C-a 187/216
+//     ranged-v-ranged  6/6 -> 6/6   melee 67/83 -> 67/83   siege 24/25 -> 24/25
+//     (those three are BYTE-identical, as designed)
+//     ranged-v-melee  97/102 -> 90/102,  +4.50 HP-pts
+//   every one of the seven lost winners is champion__vs__heavy_cav_archer,
+//   8/9 -> 1/9 -- the one family that gates P2, and it flips the same way P2
+//   and R5f-A2 flip it.
+//
+// WHY, measured rather than guessed (tools/simjs/c2a_break_probe.mjs). The
+// mechanism is LIVE -- a break occupies 18.2% of kiter unit-ticks and lasts a
+// median 2.73 s -- and it moves several quantities toward the tape (post-hit
+// seconds-to-leave-reach 0.42 -> 0.29 against a tape 0.08; chaser hits landed
+// on a STOPPED victim 55.2% -> 42.4% against a tape 9.9%). What it does NOT
+// move is the thing it was built to move:
+//
+//   cos(flee, away-from-the-hitter)   tape 0.88   base 0.61   C-a 0.63
+//   victim radial displacement/reload tape 1.03   base 0.05   C-a 0.09 tiles
+//
+// The probe says why in one line: on a break tick the radial basis is a
+// MINORITY of the vector moveAwayFromTarget sums.
+//
+//   |radial basis|      1.000  (unit, by construction)
+//   |orbit + cohesion|  1.213
+//   |avoidance|         2.259
+//   cos(pre-smoothing heading, break bearing)  0.415
+//   cos(actual tick step,      break bearing)  0.235
+//
+// The realised heading is decided by KITE_COHESION_WEIGHT (3.0) and by
+// calculateAvoidance's unbounded body-repulsion sum, not by which unit vector
+// the basis is. No CHOICE of basis can reach cos 0.88 here; only a re-weighting
+// could, and that would be a fitted constant that also undoes E10a.
+//
+// And the cost has a name. Swapping E10a's shared basis for a per-hitter one
+// partially reinstates the exact defect E10a was built to remove -- the ball
+// MILLS: cos to the enemy centroid goes 0.67 -> 0.39 (tape 0.78) while cos to
+// the hitter buys +0.02. On tape the two bases are nearly collinear (0.88 and
+// 0.78); in this engine they are not, and forcing one costs the other. The
+// bearing rule ALONE (contactBreak, breakPriority off) already costs the full
+// seven winners, so the loss is the basis change, not the shot suppression.
+//
+// WHAT WOULD MAKE IT TESTABLE AGAIN -- stated as a prediction, not a hope. C1
+// M3 measured that the tape's chaser is stationary at 100% of its landed hits
+// (`cStep` 0.000 in every one of the 29 families) and is in reach 0.66 s per
+// cycle against this engine's 1.81 s. This engine's chaser walks back into
+// contact inside the same reload, so a break that ends at "reach + one body
+// diameter" is re-entered immediately and the kiter pays the retreat without
+// ever collecting the separation. The counterpart rule is the chaser's
+// stop-to-swing commitment, not anything on the kiter. Re-gate C-a WITH that,
+// and only then against P1/P2.
+export const C2A = {
+    // C-a1 CONTACT BREAK. A melee hit on a non-siege ranged unit latches the
+    //      HITTER. While that hitter is within escape distance (below), the
+    //      kiter's retreat basis is "straight away from the hitter" instead of
+    //      E10a's shared centroid basis; group cohesion and the orbit term are
+    //      untouched and still added on top.
+    //
+    //      The trigger is a MELEE hit, so ranged-vs-ranged is unreachable BY
+    //      CONSTRUCTION (no melee attacker exists in those fights) and
+    //      melee-vs-melee is unreachable by the victim-side isRanged() gate.
+    //      Siege is excluded by minAttackRange > 0 -- the same clause
+    //      kiteSteering uses, and for the same reason: Siege Onager (3.0) and
+    //      Heavy Scorpion (2.0) own a competing repositioning path (tooClose)
+    //      and do not run a kite circuit at all.
+    //
+    //      THE END CONDITION IS PHYSICAL, NOT A TIMER. The break ends when the
+    //      hitter is further away than `its own reach + the kiter's body
+    //      diameter` -- i.e. when the kiter has put a whole body's width of
+    //      daylight between itself and the edge of what that unit can hit. Both
+    //      terms are quantities the engine already computes (inRange()'s own
+    //      arithmetic, and the radius every unit carries); there is no time
+    //      constant and no decay. Read against the corpus this lands at
+    //      0.62 + 2*0.23 ~ 1.07 tiles for a champion chasing a Heavy Cav
+    //      Archer, which is the same order as the 1.03 tiles of radial
+    //      separation C1 measured the tape's kiter opening per reload -- a
+    //      consistency check on the criterion, not its derivation.
+    //
+    //      SHIPPED OFF -- see the measured verdict above. ALONE it costs the
+    //      same seven winners the pair costs (champion__vs__heavy_cav_archer
+    //      8/9 -> 1/9, +2.03 HP-pts corpus), because the basis swap trades
+    //      E10a's centroid alignment (0.67 -> 0.39, tape 0.78) for +0.02 of
+    //      hitter alignment (0.61 -> 0.63, tape 0.88).
+    contactBreak: false,
+    // C-a2 THE BREAK OUTRANKS STOP-TO-FIRE. While the break is live the kiter
+    //      does not stop to shoot: R5B-D1's `cooldown expired and something in
+    //      reach -> fire` test, and the settled/approach arm below it, are both
+    //      skipped in favour of the retreat. This is what produces (a) -- the
+    //      departure inside one tick -- because the engine's kiter otherwise
+    //      spends its post-hit ticks either parked taking a shot or walking
+    //      TOWARD the foe that just hit it.
+    //
+    //      What it does NOT override: the committed-shot windup and E9's
+    //      post-fire recovery. Those are measured physical commitments of an
+    //      animation already in progress, they are shared with the ranged
+    //      round, and overriding them would be a different claim than the one
+    //      C1 M2 measured. The residual post-hit latency they impose is
+    //      reported honestly in the C2 round report rather than legislated away.
+    //
+    //      Meaningless on its own -- with C-a1 off nothing is ever latched, so
+    //      the break is never live -- so this is a WIDENING of C-a1, not a
+    //      second mechanism.
+    //
+    //      SHIPPED OFF with C-a1. It costs no ADDITIONAL winners on top of the
+    //      bearing rule (187/216 either way), and it is the half that does the
+    //      most measurable good: it is what takes post-hit seconds-to-leave-
+    //      reach 0.42 -> 0.29 and stopped-victim hits 55.2% -> 42.4%. It also
+    //      costs the kiter 41% of its shots in champion__vs__heavy_cav_archer
+    //      (46 980 -> 27 720 launches over 180 runs) for 0.04 tiles of extra
+    //      separation -- a bad trade only because the separation never arrives.
+    breakPriority: false,
+};
+
+/** Apply a partial override to {@link C2A}. Harness-only entry point. */
+export function setC2A(overrides) {
+    for (const k of Object.keys(overrides)) {
+        if (!(k in C2A)) throw new Error(`setC2A: unknown flag ${k}`);
+        C2A[k] = Boolean(overrides[k]);
+    }
+    return C2A;
+}
+
 // ===== CONSTANTS =====
 export const CANVAS_WIDTH = 900;
 export const CANVAS_HEIGHT = 600;

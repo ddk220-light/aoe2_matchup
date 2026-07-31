@@ -712,10 +712,11 @@ export function setC2B(overrides) {
 //    Below `minDist` it is a body-overlap resolution -- physics, "I cannot walk
 //    through you" -- with force 3..8. Between 1.0x and 1.5x `minDist` it is a
 //    SOCIAL band with a flat force 0.5 per neighbour, which is spacing, not
-//    physics. In a melee scrum the social band alone sums over every nearby
-//    body of both teams and is what carries |avoidance| to 2.221. A fleeing
-//    unit must still not walk through bodies; it has no reason to keep polite
-//    spacing from them.
+//    physics. A fleeing unit must still not walk through bodies; it has no
+//    reason to keep polite spacing from them.
+//    (The spec expected the social band to be most of the 2.221. IT IS NOT --
+//    measured at 8.5%. See the shipped-state note on `pureFlight` below; the
+//    expectation was wrong and the rule is nearly a no-op on this term.)
 //
 // WHAT SURVIVES A BREAK, therefore: the break bearing, actual imminent-overlap
 // avoidance, the arena's obstacle steer (also physics -- a unit cannot flee

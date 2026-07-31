@@ -3624,8 +3624,14 @@ export class BattleUnit {
     // overlaps and the force is 3..8 -- that is collision resolution, the soft
     // counterpart of resolveCollisions' hard pass. Between 1.0x and 1.5x
     // `minDist` nothing overlaps and the force is a flat 0.5 per neighbour --
-    // that is SOCIAL spacing, and in a crowd it is the term that dominates the
-    // sum, because it counts every nearby body of both teams at full strength.
+    // that is SOCIAL spacing, a different thing with a different justification.
+    //
+    // HOW BIG IS THE SOCIAL HALF, measured rather than assumed: on a C2A break
+    // tick, 8.5% of the magnitude (1.875 full band vs 1.716 overlap-only, 86
+    // chase fights x 5 seeds). A unit in contact is inside a scrum, so almost
+    // every neighbour within 1.5x minDist of it is ALREADY overlapping. The
+    // narrowing below is therefore nearly a no-op in exactly the situation it
+    // was written for -- see docs/calibration/c2c_pure_flight.md §2.
     //
     // Callers pass true only while a contact break is live. The default is
     // false, so moveTowardTarget and every flag-off path evaluate the exact

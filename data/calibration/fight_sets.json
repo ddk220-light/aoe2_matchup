@@ -1,0 +1,39 @@
+{
+  "_doc": [
+    "Named subsets of the calibration corpus, defined by UNIT SLUG rather than",
+    "by a frozen list of fight tags: a set is 'both sides' slugs are in this",
+    "list', evaluated against data/calibration/manifest.json's side1/side2, so",
+    "the membership recomputes itself when the corpus grows.",
+    "",
+    "THE SINGLE SOURCE OF TRUTH for these sets. Three tools read this file and",
+    "none of them keeps its own copy:",
+    "  * tools/simjs/calib_runner.mjs   (--melee-only: which fights to SIM)",
+    "  * aoe2x/calibration/filters.py   (--melee-only: which fights to SCORE)",
+    "  * tools/simjs/melee_hp_report.py (the Round-4 pure-melee HP gate)",
+    "",
+    "melee: every fight where BOTH armies are melee. elite_fire_lancer is",
+    "deliberately absent (it has a ranged volley); scorpion / onager / archer /",
+    "skirmisher / hand-cannoneer lines obviously so.",
+    "",
+    "basic_melee: the five vanilla trash/knight-line units. A subset of melee.",
+    "The steppe-lancer and battle-elephant fights are melee too, but carry",
+    "their own quirks (1-tile reach, trample), so the HP report breaks them out",
+    "as a separate block."
+  ],
+  "melee": [
+    "champion",
+    "halberdier",
+    "paladin",
+    "heavy_camel",
+    "hussar",
+    "elite_steppe",
+    "elite_elephant"
+  ],
+  "basic_melee": [
+    "champion",
+    "halberdier",
+    "paladin",
+    "heavy_camel",
+    "hussar"
+  ]
+}

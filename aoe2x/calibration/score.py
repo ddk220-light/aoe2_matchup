@@ -21,6 +21,26 @@ CLI:
 
 writes ``data/calibration/runs/<stamp>-<label>.json``.
 
+Subset runs
+-----------
+
+``--melee-only`` / ``--tags a,b`` / ``--match <regex>`` score only part of
+the corpus -- the SAME three filters ``tools/simjs/calib_runner.mjs`` takes,
+off the same ``data/calibration/fight_sets.json`` (see
+``aoe2x.calibration.filters``), so a subset sim run and its scoreboard
+always agree on which fights are in play. Without them, scoring a
+melee-only sim directory with ``--all`` produces 124 "no sim run files
+found" failures that bury the 31 real rows::
+
+    node tools/simjs/calib_runner.mjs --melee-only --seeds 20 --out-dir <dir>
+    python -m aoe2x.calibration.score --melee-only --sim-runs-dir <dir>
+
+A filtered board is stamped as one so it can never be read as a full-corpus
+board: the filter is appended to the output filename's label, the payload
+carries a ``subset`` block (``is_subset``, ``filter``, ``n_selected``,
+``n_manifest``), and the console prints ``SUBSET: 31/155 fights scored,
+filter: melee-only`` both before and after the numbers.
+
 Verdicts (per the design spec, ``docs/superpowers/specs/2026-07-30-combat-
 calibration-design.md`` §3.6):
 
@@ -109,6 +129,12 @@ from pathlib import Path
 from typing import Any
 
 from aoe2x.calibration.extract import _composition_for_fight, extract_card
+from aoe2x.calibration.filters import (
+    add_filter_args,
+    describe_filter,
+    filter_fights,
+    filter_kwargs_from_args,
+)
 from aoe2x.paths import REPO_ROOT
 
 CALIBRATION_DIR = REPO_ROOT / "data" / "calibration"
@@ -609,14 +635,24 @@ def score_fight(run_id: str, *, seeds: list[int] = DEFAULT_SEEDS, sim_runs_dir: 
 
 
 def score_all(
-    *, seeds: list[int] = DEFAULT_SEEDS, sim_runs_dir: Path = SIMRUNS_DIR,
+    *,
+    seeds: list[int] = DEFAULT_SEEDS,
+    sim_runs_dir: Path = SIMRUNS_DIR,
+    filters: dict[str, Any] | None = None,
 ) -> tuple[list[dict], list[dict]]:
-    """Score every fight in the manifest. Per-fight isolation (matching
-    ingest.py's own convention): one fight's failure is recorded and
-    skipped, never aborts the whole batch.
+    """Score every fight in the manifest, or the subset ``filters`` selects.
+
+    Per-fight isolation (matching ingest.py's own convention): one fight's
+    failure is recorded and skipped, never aborts the whole batch. ``filters``
+    is ``filter_fights``' kwargs -- passing the subset here rather than
+    letting the un-run fights fail is the point: a melee-only sim directory
+    would otherwise contribute 124 FileNotFoundError rows.
     """
+    fights = _load_manifest()["fights"]
+    if filters:
+        fights = filter_fights(fights, **filters)
     results, failures = [], []
-    for fight in _load_manifest()["fights"]:
+    for fight in fights:
         run_id = fight["run_id"]
         try:
             results.append(score_fight(run_id, seeds=seeds, sim_runs_dir=sim_runs_dir))
@@ -679,15 +715,36 @@ def main() -> None:
             "--out-dir to score that run without clobbering the default."
         ),
     )
+    add_filter_args(ap)
     args = ap.parse_args()
 
-    if not args.all and not args.run_ids:
-        ap.error("nothing to do: pass --all or one or more --run-id")
+    filters = filter_kwargs_from_args(args)
+    filter_label = describe_filter(**filters)
+    any_filter = filter_label is not None
+
+    # A filter is itself a selection, so it implies --all over that subset.
+    # Combining a filter with explicit --run-id would give two competing
+    # answers to "which fights?" -- refuse rather than silently pick one.
+    if args.run_ids and any_filter:
+        ap.error("--run-id cannot be combined with --tags/--match/--melee-only")
+    if not args.all and not args.run_ids and not any_filter:
+        ap.error(
+            "nothing to do: pass --all, one or more --run-id, "
+            "or a subset filter (--melee-only/--tags/--match)"
+        )
 
     seeds = list(range(1, args.seeds + 1))
+    n_manifest = len(_load_manifest()["fights"])
 
-    if args.all:
-        results, failures = score_all(seeds=seeds, sim_runs_dir=args.sim_runs_dir)
+    if args.all or any_filter:
+        results, failures = score_all(
+            seeds=seeds, sim_runs_dir=args.sim_runs_dir, filters=filters,
+        )
+        if any_filter:
+            print(
+                f"SUBSET: {len(results) + len(failures)}/{n_manifest} fights selected, "
+                f"filter: {filter_label}"
+            )
     else:
         results, failures = [], []
         for run_id in args.run_ids:
@@ -708,11 +765,21 @@ def main() -> None:
 
     stamp = _stamp()
     RUNS_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = RUNS_DIR / f"{stamp}-{args.label}.json"
+    # The filter rides in the FILENAME, not just the payload: a partial board
+    # sitting next to full-corpus boards in data/calibration/runs/ has to
+    # announce itself in the one field anyone reads at a glance.
+    label = f"{args.label}-{filter_label}" if any_filter else args.label
+    out_path = RUNS_DIR / f"{stamp}-{label}.json"
     payload = {
-        "label": args.label,
+        "label": label,
         "generated_utc": stamp,
         "sim_runs_dir": str(args.sim_runs_dir),
+        "subset": {
+            "is_subset": any_filter,
+            "filter": filter_label,
+            "n_selected": len(results) + len(failures),
+            "n_manifest": n_manifest,
+        },
         "n_fights": len(results),
         "n_failures": len(failures),
         "verdict_counts": dict(verdict_counts),
@@ -723,6 +790,11 @@ def main() -> None:
     }
     out_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
+    if any_filter:
+        print(
+            f"SUBSET: {len(results)}/{n_manifest} fights scored, "
+            f"filter: {filter_label} — NOT a full-corpus board"
+        )
     print(f"scored {len(results)} fights ({len(failures)} load/score failures)")
     print(f"verdicts: {dict(verdict_counts)}")
     print(

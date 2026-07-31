@@ -22,28 +22,38 @@ Reads the SAME inputs as aoe2x.calibration.score (manifest + truth cards +
 <run_id>/seed-<n>.json), and takes hp_remaining straight off each side
 summary rather than re-deriving it from the damage stream, so it cannot
 disagree with the scorer about what survived.
+
+A subset run directory is fine to point --sim-runs-dir at: fights with no
+seed files under it are skipped, so
+``calib_runner.mjs --melee-only --out-dir <dir>`` followed by
+``melee_hp_report.py --sim-runs-dir <dir>`` covers the whole 31-fight gate
+with nothing missing and nothing to filter.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import statistics
+import sys
 from pathlib import Path
 
-from aoe2x.paths import REPO_ROOT
+# `python tools/simjs/melee_hp_report.py` puts tools/simjs on sys.path, not the
+# repo root, so the aoe2x imports below only resolved if the caller happened to
+# have PYTHONPATH set. Make the invocation this module's own docstring
+# advertises work on its own.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from aoe2x.calibration.filters import BASIC_MELEE_SLUGS as BASIC_SLUGS  # noqa: E402
+from aoe2x.calibration.filters import MELEE_SLUGS, both_sides_in  # noqa: E402
+from aoe2x.paths import REPO_ROOT  # noqa: E402
 
 CALIB = REPO_ROOT / "data" / "calibration"
 
-# Melee = fights the Round-4 gate covers. elite_fire_lancer is deliberately
-# NOT here (it has a ranged volley); scorpion/onager/archers obviously not.
-MELEE_SLUGS = {
-    "champion", "halberdier", "paladin", "heavy_camel", "hussar",
-    "elite_steppe", "elite_elephant",
-}
-# "Basic melee" = the five vanilla-trash/knight-line units the user named
-# first; the steppe/elephant fights are melee too but carry their own quirks
-# (1-tile reach, trample) so they are reported as a separate block.
-BASIC_SLUGS = {"champion", "halberdier", "paladin", "heavy_camel", "hussar"}
+# MELEE_SLUGS / BASIC_SLUGS are imported, not redeclared: they now live in
+# data/calibration/fight_sets.json, which the JS sim runner reads too (see
+# aoe2x/calibration/filters.py). That is what makes
+# `calib_runner --melee-only` and this report provably the same 31 fights
+# instead of two lists someone has to remember to edit together.
 
 
 def load_manifest():
@@ -56,10 +66,7 @@ def load_dicts():
 
 def melee_fights(fights, *, basic_only=False):
     want = BASIC_SLUGS if basic_only else MELEE_SLUGS
-    return [
-        f for f in fights
-        if f["side1"]["slug"] in want and f["side2"]["slug"] in want
-    ]
+    return [f for f in fights if both_sides_in(f, want)]
 
 
 def _outcome_rank(side):

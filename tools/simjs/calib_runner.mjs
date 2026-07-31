@@ -9,6 +9,26 @@
 //     python tools/simjs/dump_calib_spawns.py     # (re)build tape spawn positions
 //     node tools/simjs/calib_runner.mjs --seeds 20
 //
+// PARALLELISM (--workers, default cores-2). Every (fight, seed) is an
+// independent, fully deterministic unit of work -- the engine draws only from
+// a mulberry32 rng constructed fresh from that fight-seed's own seed
+// (scenario.js `new Simulation(..., makeRng(seed))`), never Math.random, never
+// a clock; and scenario.js deep-copies each team's combat dict
+// (`JSON.parse(JSON.stringify(spec.combatDict))`) before a unit can touch it,
+// so the shared `dicts` object is read-only in practice. There is therefore no
+// cross-fight and no cross-seed state, and a worker pool produces
+// BYTE-IDENTICAL files to the sequential loop. `--workers 1` keeps the
+// original single-process loop verbatim, so the two are always A/B-able.
+//
+// SUBSETS (--melee-only / --tags / --match). A melee experiment has no
+// business waiting on the 124 fights it cannot affect. The named slug sets
+// come from data/calibration/fight_sets.json, which aoe2x/calibration/
+// filters.py reads too, so the runner and the scorer can never disagree about
+// what "melee-only" means:
+//
+//     node tools/simjs/calib_runner.mjs --melee-only --seeds 20 --out-dir <dir>
+//     python -m aoe2x.calibration.score --melee-only --sim-runs-dir <dir>
+//
 // SCENARIO GEOMETRY (E12): the default is `--arena tapebox` -- each army spawns
 // at its recording's own first-frame positions inside the walled 13.6-tile box
 // the tapes are fought in. `--arena plain-legacy` reproduces the pre-E12
@@ -38,8 +58,10 @@
 // "side<owner>") score sim events exactly like tape events, without the
 // scorer having to know about engine-internal team numbering at all.
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { Worker, isMainThread } from "node:worker_threads";
 
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 
@@ -70,7 +92,7 @@ export function loadCalibSpawns() {
 // runCalibFight applies to events, in the same place and in the same
 // direction. Owner keys are looked up off side1/side2's own `owner` field
 // because the side labels do NOT follow the tag's word order.
-function spawnsForFight(spawns, fight) {
+export function spawnsForFight(spawns, fight) {
     const entry = spawns[fight.tag];
     if (!entry) {
         throw new Error(
@@ -95,6 +117,59 @@ function spawnsForFight(spawns, fight) {
         return pts;
     };
     return { 1: pick(fight.side1), 2: pick(fight.side2) };
+}
+
+// ---- corpus subsets -------------------------------------------------------
+// The named slug sets (melee, basic_melee) live in ONE file that Python reads
+// too -- see the SUBSETS note at the top and aoe2x/calibration/filters.py.
+export function loadFightSets() {
+    const raw = JSON.parse(readFileSync(
+        path.join(REPO, "data/calibration/fight_sets.json"), "utf8"));
+    const out = {};
+    for (const [k, v] of Object.entries(raw)) {
+        if (!k.startsWith("_")) out[k] = new Set(v);
+    }
+    return out;
+}
+
+// Both-sides-in-the-set membership, evaluated against each fight's OWN
+// side1/side2 slugs -- never a frozen list of tags, so a newly ingested
+// recording of a melee matchup joins the set automatically.
+function bothSidesIn(fight, slugs) {
+    return slugs.has(fight.side1.slug) && slugs.has(fight.side2.slug);
+}
+
+// The exact counterpart of filters.py's `filter_fights`: same three filters,
+// AND-combined, manifest order preserved. A typo'd --tags value throws rather
+// than silently shrinking the run into a plausible-looking small subset.
+export function filterFights(fights, { tags = null, match = null, meleeOnly = false } = {}) {
+    let out = fights;
+    if (tags && tags.length) {
+        const wanted = new Set(tags);
+        const have = new Set(fights.map((f) => f.tag));
+        const unknown = [...wanted].filter((t) => !have.has(t)).sort();
+        if (unknown.length) {
+            throw new Error(`--tags: no manifest fight with tag(s): ${unknown.join(", ")}`);
+        }
+        out = out.filter((f) => wanted.has(f.tag));
+    }
+    if (match) {
+        const rx = new RegExp(match);
+        out = out.filter((f) => rx.test(f.run_id));
+    }
+    if (meleeOnly) {
+        const melee = loadFightSets().melee;
+        out = out.filter((f) => bothSidesIn(f, melee));
+    }
+    return out;
+}
+
+export function describeFilter({ tags = null, match = null, meleeOnly = false } = {}) {
+    const parts = [];
+    if (meleeOnly) parts.push("melee-only");
+    if (tags && tags.length) parts.push(`tags=${tags.join(",")}`);
+    if (match) parts.push(`match=${match}`);
+    return parts.length ? parts.join("+") : null;
 }
 
 function sideSummary(team, side) {
@@ -200,8 +275,31 @@ export function runCalibFight({
     };
 }
 
+// Run one (fight, seed) and write its file. THE ONLY PLACE a seed-<n>.json is
+// produced -- the sequential loop and every pool worker call this same
+// function with the same arguments, so "parallel output is byte-identical to
+// sequential output" is a property of there being one writer, not of two
+// code paths being kept in step by hand. The directory must already exist
+// (the caller mkdirs it once per fight, before any worker is dispatched, so
+// workers never race on mkdir).
+export function runAndWriteFightSeed({
+    dicts, fight, seed, maxSeconds, arena, positions, outDir,
+}) {
+    const record = runCalibFight({ dicts, fight, seed, maxSeconds, arena, positions });
+    writeFileSync(
+        path.join(outDir, fight.run_id, `seed-${seed}.json`),
+        JSON.stringify(record),
+    );
+    return { nDamage: record.damage.length, nMissiles: record.missiles.length };
+}
+
 // ---- CLI: run every manifest fight x N seeds, writing files to disk -------
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// `isMainThread` is load-bearing, not belt-and-braces: calib_worker.mjs
+// IMPORTS this module, and a worker thread inherits the parent's process.argv
+// tail. Without the guard, every worker would re-enter this block and spawn a
+// pool of its own — a fork bomb, not a test failure.
+if (isMainThread && process.argv[1]
+    && import.meta.url === pathToFileURL(process.argv[1]).href) {
     const argv = process.argv.slice(2);
     const flag = (name, dflt) => {
         const i = argv.indexOf(name);
@@ -240,31 +338,176 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const arena = ARENAS[arenaArg];
     const spawns = arenaArg === "tapebox" ? loadCalibSpawns() : null;
 
+    // --workers N: size of the (fight, seed) worker pool.
+    //
+    // The default is deliberately NOT "logical CPUs minus a couple". Measured
+    // on the 12-core / 24-thread 9900X this corpus is actually run on, full
+    // corpus x 10 seeds, wall seconds and the SUM of per-task wall times:
+    //
+    //     workers   wall    summed task time   speedup
+    //        1      42.5s        41.9s           1.0x
+    //        4      11.3s        44.1s           3.8x
+    //        6       8.7s        51.1s           4.9x
+    //        8       7.9s        61.9s           5.4x   <- default
+    //       12       7.7s        90.8s           5.5x   (wall optimum)
+    //       16       8.4s       132.0s           5.1x
+    //       22       9.1s       193.1s           4.7x   ("cores - 2")
+    //
+    // The engine's hot loop is a neighbour scan over unit arrays -- memory
+    // bound, not ALU bound -- so past a handful of workers they fight over L3
+    // and memory bandwidth rather than adding throughput. Per-task time
+    // inflates 4.6x at 22 workers, and the wall-clock curve does not just
+    // flatten, it INVERTS: 22 workers is 15% slower than 8 while burning
+    // three times the machine. 8 sits within 3% of the wall optimum for two
+    // thirds of the cost, which also leaves real headroom for the concurrent
+    // sim runs this box usually has going in other sessions.
+    //
+    // `--workers 1` takes the original single-process loop verbatim -- the
+    // A/B reference that proves parallel output is byte-identical.
+    const DEFAULT_WORKERS = Math.max(1, Math.min(8, os.cpus().length - 2));
+    const nWorkers = Math.max(1, Number(flag("--workers", String(DEFAULT_WORKERS))));
+
+    // Subset filters -- see the SUBSETS note at the top of this file. These
+    // are the same three filters `python -m aoe2x.calibration.score` takes,
+    // reading the same data/calibration/fight_sets.json.
+    const tagsArg = flag("--tags", null);
+    const filterOpts = {
+        tags: tagsArg ? tagsArg.split(",").filter(Boolean) : null,
+        match: flag("--match", null),
+        meleeOnly: argv.includes("--melee-only"),
+    };
+
     const dicts = loadCalibDicts();
-    const fights = loadManifest();
+    const allFights = loadManifest();
+    let fights;
+    try {
+        fights = filterFights(allFights, filterOpts);
+    } catch (err) {
+        console.error(String(err.message || err));
+        process.exit(2);
+    }
+    const filterLabel = describeFilter(filterOpts);
+    if (filterLabel) {
+        console.log(
+            `SUBSET RUN: ${fights.length}/${allFights.length} fights, ` +
+            `filter: ${filterLabel}`,
+        );
+        if (!fights.length) {
+            console.error("filter selected zero fights — nothing to do");
+            process.exit(2);
+        }
+    }
+
+    // Create every output directory up front, in the parent, before any work
+    // is dispatched: workers then only ever write files, never mkdir, so
+    // there is no directory-creation race to reason about.
+    for (const fight of fights) {
+        mkdirSync(path.join(outDir, fight.run_id), { recursive: true });
+    }
 
     const t0 = process.hrtime.bigint();
     let nFiles = 0, nDamage = 0, nMissiles = 0;
-    for (const fight of fights) {
-        const dir = path.join(outDir, fight.run_id);
-        mkdirSync(dir, { recursive: true });
-        const positions = spawns ? spawnsForFight(spawns, fight) : null;
-        const fightT0 = process.hrtime.bigint();
-        for (let seed = 1; seed <= nSeeds; seed++) {
-            const record = runCalibFight({
-                dicts, fight, seed, maxSeconds, arena, positions,
-            });
-            nDamage += record.damage.length;
-            nMissiles += record.missiles.length;
-            writeFileSync(path.join(dir, `seed-${seed}.json`), JSON.stringify(record));
-            nFiles++;
+
+    if (nWorkers <= 1) {
+        // ---- sequential: the original loop, untouched --------------------
+        for (const fight of fights) {
+            const positions = spawns ? spawnsForFight(spawns, fight) : null;
+            const fightT0 = process.hrtime.bigint();
+            for (let seed = 1; seed <= nSeeds; seed++) {
+                const r = runAndWriteFightSeed({
+                    dicts, fight, seed, maxSeconds, arena, positions, outDir,
+                });
+                nDamage += r.nDamage;
+                nMissiles += r.nMissiles;
+                nFiles++;
+            }
+            const fightWallS = Number(process.hrtime.bigint() - fightT0) / 1e9;
+            console.log(`  ${fight.run_id} (${nSeeds} seeds, ${fightWallS.toFixed(1)}s)`);
         }
-        const fightWallS = Number(process.hrtime.bigint() - fightT0) / 1e9;
-        console.log(`  ${fight.run_id} (${nSeeds} seeds, ${fightWallS.toFixed(1)}s)`);
+    } else {
+        // ---- parallel: a (fight, seed) work queue over worker_threads ----
+        //
+        // Granularity is ONE (fight, seed), not one fight: per-fight cost in
+        // this corpus spans two orders of magnitude (a 3k-tick rout vs. a
+        // fight that rides the 36000-tick cap), so whole-fight chunks would
+        // leave the pool idling on a long tail. Workers pull the next index
+        // when they finish one, which is self-balancing and needs no
+        // estimate of how long anything takes.
+        //
+        // Messages carry a run_id, never a fight object: each worker loads
+        // the manifest / dicts / spawns itself through the very same loaders
+        // this file uses, so there is no serialise-and-hope step that could
+        // hand a worker subtly different inputs.
+        const tasks = [];
+        for (const fight of fights) {
+            for (let seed = 1; seed <= nSeeds; seed++) tasks.push({ runId: fight.run_id, seed });
+        }
+        const poolSize = Math.min(nWorkers, tasks.length);
+        console.log(
+            `parallel: ${poolSize} workers over ${tasks.length} (fight, seed) tasks ` +
+            `(${os.cpus().length} logical CPUs)`,
+        );
+
+        // Per-fight completion bookkeeping so progress can still be printed
+        // in MANIFEST ORDER, exactly like the sequential run: a fight's line
+        // is held back until every fight before it has also finished. Only
+        // the ordering of console lines is affected; files are written the
+        // moment their task completes.
+        const order = new Map(fights.map((f, i) => [f.run_id, i]));
+        const done = fights.map(() => ({ left: nSeeds, cpuMs: 0 }));
+        let nextToPrint = 0;
+        const flushPrints = () => {
+            while (nextToPrint < fights.length && done[nextToPrint].left === 0) {
+                const secs = (done[nextToPrint].cpuMs / 1000).toFixed(1);
+                console.log(`  ${fights[nextToPrint].run_id} (${nSeeds} seeds, ${secs}s cpu)`);
+                nextToPrint++;
+            }
+        };
+
+        let next = 0;
+        await new Promise((resolve, reject) => {
+            let live = poolSize;
+            const workerPath = path.join(HERE, "calib_worker.mjs");
+            for (let w = 0; w < poolSize; w++) {
+                const worker = new Worker(workerPath, {
+                    workerData: { arenaArg, maxSeconds, outDir },
+                });
+                const pump = () => {
+                    if (next < tasks.length) worker.postMessage(tasks[next++]);
+                    else worker.postMessage({ done: true });
+                };
+                worker.on("message", (msg) => {
+                    if (msg.ready) { pump(); return; }
+                    if (msg.error) {
+                        reject(new Error(
+                            `worker failed on ${msg.runId} seed ${msg.seed}: ${msg.error}`));
+                        return;
+                    }
+                    nDamage += msg.nDamage;
+                    nMissiles += msg.nMissiles;
+                    nFiles++;
+                    const idx = order.get(msg.runId);
+                    done[idx].left--;
+                    done[idx].cpuMs += msg.elapsedMs;
+                    flushPrints();
+                    pump();
+                });
+                worker.on("error", reject);
+                worker.on("exit", (code) => {
+                    if (code !== 0) reject(new Error(`worker exited with code ${code}`));
+                    else if (--live === 0) resolve();
+                });
+            }
+        });
+        flushPrints();
     }
+
     const wallS = Number(process.hrtime.bigint() - t0) / 1e9;
     console.log(`arena: ${arenaArg}${spawns ? " (tape first-frame spawns)" : ""}`);
+    if (filterLabel) {
+        console.log(`SUBSET: ${fights.length}/${allFights.length} fights, filter: ${filterLabel}`);
+    }
     console.log(`wrote ${nFiles} files (${fights.length} fights x ${nSeeds} seeds) -> ${outDir}`);
     console.log(`damage events: ${nDamage}, missile events: ${nMissiles}`);
-    console.log(`wall time: ${wallS.toFixed(1)}s`);
+    console.log(`wall time: ${wallS.toFixed(1)}s (workers: ${nWorkers})`);
 }

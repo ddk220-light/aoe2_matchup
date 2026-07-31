@@ -16,6 +16,8 @@ import {
     ACCURACY_DISPERSION_BY_SLUG,
     R5B,
     setR5B,
+    R5D1,
+    setR5D1,
 } from "../../../apps/website/static/js/engine/constants.js";
 
 const DT = 1 / 60;
@@ -42,9 +44,26 @@ function withR5B(overrides, fn) {
     }
 }
 
+// R5d-1's P2 replaced the velocity D2's intercept reads (one tick -> a 0.3 s
+// trailing window) and P1 replaced what a failed accuracy roll applies. The
+// D2 tests below that pin the OLD source/consequence are scoped to their own
+// rule with this, so they keep testing R5b's contribution rather than
+// silently re-asserting a superseded one. The replacements live in
+// r5d1_projectile.test.mjs.
+function withR5D1(overrides, fn) {
+    const saved = { ...R5D1 };
+    setR5D1(overrides);
+    try {
+        return fn();
+    } finally {
+        setR5D1(saved);
+    }
+}
+
 // ---- D2: lead ---------------------------------------------------------------
 
 test("[D2] the aim point leads a moving target by velocity x flight time", () => {
+  withR5D1({ trailingWindowLead: false }, () => {
     const sim = simStub(5);
     const a = new BattleUnit(
         "1-0", 1, { ...STATS, attack_range: 7, projectile_speed: 7 },
@@ -75,6 +94,7 @@ test("[D2] the aim point leads a moving target by velocity x flight time", () =>
     const still = a.aimPointFor(b);
     assert.equal(still.x, b.x);
     assert.equal(still.y, b.y);
+  });
 });
 
 test("[D2] with the flag off the aim point is the target's launch position", () => {

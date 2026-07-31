@@ -64,7 +64,9 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { Worker, isMainThread } from "node:worker_threads";
 
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
-import { R5B, setR5B } from "../../apps/website/static/js/engine/constants.js";
+import {
+    R5B, setR5B, R5D1, setR5D1,
+} from "../../apps/website/static/js/engine/constants.js";
 
 // ---- Round-5b rule flags --------------------------------------------------
 // `--r5b <spec>` A/B's the four R5b ranged rules without editing engine source
@@ -92,6 +94,30 @@ export function applyR5BSpec(spec) {
     }
     const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
     setR5B(cfg);
+    return cfg;
+}
+
+// `--r5d1 <spec>` does the same for the Round-5d-1 projectile/aim rules
+// (reducedDamageHits, trailingWindowLead). Same grammar, same
+// parent-parses-and-forwards plumbing:
+//
+//   --r5d1 off                          both off == the R5b engine (71cd4a9)
+//   --r5d1 reducedDamageHits            ONLY P1
+//   --r5d1 trailingWindowLead           ONLY P2
+//   (flag absent)                       engine defaults, i.e. both on
+export function applyR5D1Spec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(R5D1);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--r5d1: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setR5D1(cfg);
     return cfg;
 }
 
@@ -426,6 +452,12 @@ if (isMainThread && process.argv[1]
         const on = Object.entries(r5bCfg).filter(([, v]) => v).map(([k]) => k);
         console.log(`r5b rules: ${on.length ? on.join(", ") : "(none -- pre-R5b engine)"}`);
     }
+    const r5d1Spec = flag("--r5d1", null);
+    const r5d1Cfg = applyR5D1Spec(r5d1Spec);
+    if (r5d1Cfg) {
+        const on = Object.entries(r5d1Cfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`r5d1 rules: ${on.length ? on.join(", ") : "(none -- the R5b engine)"}`);
+    }
 
     const dicts = loadCalibDicts();
     const allFights = loadManifest();
@@ -520,7 +552,7 @@ if (isMainThread && process.argv[1]
             const workerPath = path.join(HERE, "calib_worker.mjs");
             for (let w = 0; w < poolSize; w++) {
                 const worker = new Worker(workerPath, {
-                    workerData: { arenaArg, maxSeconds, outDir, r5bSpec },
+                    workerData: { arenaArg, maxSeconds, outDir, r5bSpec, r5d1Spec },
                 });
                 const pump = () => {
                     if (next < tasks.length) worker.postMessage(tasks[next++]);

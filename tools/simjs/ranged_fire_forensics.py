@@ -453,6 +453,15 @@ def load_engine(sim_dir: Path, fight_meta, seed: int) -> Fight | None:
             # minus launch-time target position -- is observable on every
             # shot, not only on the ones that connected.
             "launch_tx": m["tx"], "launch_ty": m["ty"],
+            # R5e (absent in dumps written before it; every consumer uses
+            # .get so an older dump reproduces exactly as before).
+            #   aimx/aimy  the UNDISPLACED aim point. `ax != aimx` is an exact
+            #              readout of "the accuracy roll failed" -- see
+            #              ranged_shot_dump.mjs.
+            #   covered    the engine's own coveredDamageOn(victim) at launch;
+            #              covered >= target_hp is T1's all-covered fallback.
+            "aimx": m.get("aimx"), "aimy": m.get("aimy"),
+            "covered": m.get("covered"), "target_hp": m.get("target_hp"),
         })
     shots.sort(key=lambda s: s["t"])
     sides = {}

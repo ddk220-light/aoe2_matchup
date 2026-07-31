@@ -52,6 +52,13 @@ export class Projectile {
         this.kind = typeof kind === "string" ? kind : (kind ? "stone" : "arrow");
         this.onHit = onHit; // callback when projectile arrives
         this.done = false;
+        // D3 in-flight damage accounting (Round 5b). Labels set by the firing
+        // unit right after construction: who this shot is for, and the damage
+        // it will apply if it lands. Default to "counts for nothing" so any
+        // projectile path that does not set them (charge volleys) can never
+        // contribute phantom damage to another shooter's overkill check.
+        this.targetUnit = null;
+        this.plannedDamage = 0;
         this.prevX = startX;
         this.prevY = startY;
         // Constant flight heading (straight line start->target), used to orient

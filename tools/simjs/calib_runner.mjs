@@ -64,6 +64,36 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { Worker, isMainThread } from "node:worker_threads";
 
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
+import { R5B, setR5B } from "../../apps/website/static/js/engine/constants.js";
+
+// ---- Round-5b rule flags --------------------------------------------------
+// `--r5b <spec>` A/B's the four R5b ranged rules without editing engine source
+// between runs, which is what makes the marginal table (base / D1 / D1+D2 /
+// ... / all) a single scripted sweep. Spec grammar:
+//
+//   --r5b off                 every rule off  == pre-R5b engine, bit-identical
+//   --r5b stopToFire          ONLY that rule on, the other three off
+//   --r5b stopToFire,ballisticLead     ... those two on
+//   (flag absent)             engine defaults, i.e. all four on
+//
+// Parsed in the parent and forwarded verbatim to every worker through
+// workerData, so a parallel run and a `--workers 1` run configure the engine
+// identically.
+export function applyR5BSpec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(R5B);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--r5b: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setR5B(cfg);
+    return cfg;
+}
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, "../..");
@@ -142,7 +172,10 @@ function bothSidesIn(fight, slugs) {
 // The exact counterpart of filters.py's `filter_fights`: same three filters,
 // AND-combined, manifest order preserved. A typo'd --tags value throws rather
 // than silently shrinking the run into a plausible-looking small subset.
-export function filterFights(fights, { tags = null, match = null, meleeOnly = false } = {}) {
+export function filterFights(
+    fights,
+    { tags = null, match = null, meleeOnly = false, rangedOnly = false } = {},
+) {
     let out = fights;
     if (tags && tags.length) {
         const wanted = new Set(tags);
@@ -161,12 +194,19 @@ export function filterFights(fights, { tags = null, match = null, meleeOnly = fa
         const melee = loadFightSets().melee;
         out = out.filter((f) => bothSidesIn(f, melee));
     }
+    if (rangedOnly) {
+        const ranged = loadFightSets().ranged;
+        out = out.filter((f) => bothSidesIn(f, ranged));
+    }
     return out;
 }
 
-export function describeFilter({ tags = null, match = null, meleeOnly = false } = {}) {
+export function describeFilter({
+    tags = null, match = null, meleeOnly = false, rangedOnly = false,
+} = {}) {
     const parts = [];
     if (meleeOnly) parts.push("melee-only");
+    if (rangedOnly) parts.push("ranged-only");
     if (tags && tags.length) parts.push(`tags=${tags.join(",")}`);
     if (match) parts.push(`match=${match}`);
     return parts.length ? parts.join("+") : null;
@@ -375,7 +415,17 @@ if (isMainThread && process.argv[1]
         tags: tagsArg ? tagsArg.split(",").filter(Boolean) : null,
         match: flag("--match", null),
         meleeOnly: argv.includes("--melee-only"),
+        rangedOnly: argv.includes("--ranged-only"),
     };
+
+    // Round-5b rule selection (see applyR5BSpec above). Applied in the parent
+    // for the sequential path and forwarded to workers for the parallel one.
+    const r5bSpec = flag("--r5b", null);
+    const r5bCfg = applyR5BSpec(r5bSpec);
+    if (r5bCfg) {
+        const on = Object.entries(r5bCfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`r5b rules: ${on.length ? on.join(", ") : "(none -- pre-R5b engine)"}`);
+    }
 
     const dicts = loadCalibDicts();
     const allFights = loadManifest();
@@ -470,7 +520,7 @@ if (isMainThread && process.argv[1]
             const workerPath = path.join(HERE, "calib_worker.mjs");
             for (let w = 0; w < poolSize; w++) {
                 const worker = new Worker(workerPath, {
-                    workerData: { arenaArg, maxSeconds, outDir },
+                    workerData: { arenaArg, maxSeconds, outDir, r5bSpec },
                 });
                 const pump = () => {
                     if (next < tasks.length) worker.postMessage(tasks[next++]);

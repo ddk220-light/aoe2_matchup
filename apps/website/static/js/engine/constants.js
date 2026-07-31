@@ -4,6 +4,45 @@
 // and the lab harness import them from here — no duplicate copies exist.
 // Any edit here changes sim behavior: re-run `node tools/simjs/parity_check.mjs`.
 
+// ===== ROUND 5b — RANGED FIRE MODEL (master off-switches) =====
+// Four independent rules, derived in docs/calibration/r5_ranged_forensics.md
+// and specified in the Round-5b brief. Each is a MECHANISM, not a tuning
+// constant: none of them introduces a fitted number (D1 reuses E9's measured
+// pre-shot/recovery constants, D2 reuses the existing dat accuracy roll, D3
+// and D4 carry no constant at all).
+//
+// Setting all four to false restores pre-R5b behaviour BIT-IDENTICALLY --
+// that identity is asserted by tests/js/engine/r5b_offswitch.test.mjs and was
+// verified against the base commit with a 3-seed hash of the ranged subset.
+//
+// Mutable rather than `const` booleans so a harness can A/B the marginal
+// contributions without editing source between runs (calib_runner.mjs
+// --r5b <spec>). The engine itself never reads an env var or a clock; the
+// object is set once, before any fight is built, and is not touched again.
+export const R5B = {
+    // D1  stop-to-fire: the launch check runs every tick and the APPROACH is
+    //     no longer gated behind the reload.
+    stopToFire: true,
+    // D2  ballistic lead + arrival resolution: aim ahead of a moving target,
+    //     resolve the hit at arrival against where the target actually is.
+    ballisticLead: true,
+    // D3  in-flight damage accounting: don't launch at a target already
+    //     covered by friendly projectiles in flight.
+    inflightAccounting: true,
+    // D4  approach margin + hysteresis: close to reach minus one body
+    //     diameter instead of stopping on the reach lip.
+    approachMargin: true,
+};
+
+/** Apply a partial override to {@link R5B}. Harness-only entry point. */
+export function setR5B(overrides) {
+    for (const k of Object.keys(overrides)) {
+        if (!(k in R5B)) throw new Error(`setR5B: unknown flag ${k}`);
+        R5B[k] = Boolean(overrides[k]);
+    }
+    return R5B;
+}
+
 // ===== CONSTANTS =====
 export const CANVAS_WIDTH = 900;
 export const CANVAS_HEIGHT = 600;
@@ -343,6 +382,61 @@ export const RANGED_POST_FIRE_RECOVERY = 0.33;
 export const RANGED_POST_FIRE_RECOVERY_BY_SLUG = new Map([
     ["heavy_cav_archer", 0.43],
     ["imp_elite_skirm", 0.20],
+]);
+
+// ===== BALLISTIC LEAD + ARRIVAL RESOLUTION (D2, Round 5b) =====
+// All three numbers below are READ OUT OF THE .dat, not fitted. Source:
+// D:\SteamLibrary\steamapps\common\AoE2DE\resources\_common\dat\
+// empires2_x2_p1.dat (11,076,546 bytes, 2026-06-02), parsed with
+// genieutils-py the same way aoe2x/extract/extract_units.py does.
+//
+// PROJECTILE RADIUS. The projectile units these four fire -- 507 (arbalester),
+// 380 (hand cannoneer), 478 (heavy cavalry archer), 366 (skirmisher) -- all
+// carry collision_size_x = collision_size_y = 0.1 tiles. A shot therefore
+// connects when its arrival point comes within (target collision radius + 0.1)
+// tiles of the target's ACTUAL position. Sanity check against the tape: landed
+// shots arrive a median 0.282 tiles from their victim (p99 0.421) for bodies of
+// 0.2-0.25 tiles, i.e. right at 0.2 + 0.1 = 0.3, which is what the forensics'
+// ON_TARGET_TILES = 0.45 screen was calibrated above.
+export const PROJECTILE_RADIUS_TILES = 0.1;
+
+// ACCURACY DISPERSION -- `Type50.accuracy_dispersion`, in tiles. This is the
+// field the extraction pipeline DROPS (extract_units.py keeps only
+// accuracy_percent), so it cannot come through the combat dict yet and is
+// pinned here by slug until it does. Dat values:
+//
+//   arbalester (492)        accuracy 90  dispersion 0.33
+//   heavy_cav_archer (474)  accuracy 80  dispersion 0.33
+//   imp_elite_skirm (6)     accuracy 90  dispersion 0.33
+//   hand_cannoneer (5)      accuracy 75  dispersion 0.50
+//
+// (Corpus-wide the field is far from arbitrary: 90 of the 243 units with a
+// real projectile sit at exactly 0.33 -- the whole archer/skirm/cav-archer
+// bulk -- 13 at 0.50, 14 at 0.75, 100 at 0.0.)
+//
+// What it does: an accuracy-roll FAILURE no longer teleports the shot to a
+// random point up to MISS_SPREAD_RADIUS (2.0 tiles) away, it displaces the AIM
+// POINT by up to the dispersion radius. The shot then flies and is resolved on
+// arrival like any other, so a "missed" shot that still lands on the target's
+// body connects. That composition is what reproduces the tape without a fitted
+// number: the hand cannoneer fails its roll 25% of the time, and a uniform
+// displacement in [0, 0.5] tiles clears a 0.2 + 0.1 = 0.3 tile body only 40% of
+// the time, predicting 0.25 x 0.40 = 10% on-target failure against the tape's
+// measured 4.3 / 7.7 / 11.6%.
+//
+// FALLBACK, deliberately conservative: a unit with no entry here keeps the
+// legacy MISS_SPREAD behaviour (flat 2.0-tile scatter) rather than getting a
+// guessed dispersion. These four are the units whose dat values were actually
+// read; inventing a radius for the rest of the roster would be exactly the
+// fitted constant this round is not allowed to add. The real fix is to carry
+// accuracy_dispersion through extraction -> ref_units -> the combat dict, at
+// which point ACCURACY_DISPERSION_BY_SLUG can be deleted in favour of the
+// dict field (battle_unit.js already prefers the dict when it is present).
+export const ACCURACY_DISPERSION_BY_SLUG = new Map([
+    ["arbalester", 0.33],
+    ["heavy_cav_archer", 0.33],
+    ["imp_elite_skirm", 0.33],
+    ["hand_cannoneer", 0.50],
 ]);
 
 // ===== MELEE CONTACT LOSS (E13 measurement, E14 mechanism) =====

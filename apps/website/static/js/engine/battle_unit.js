@@ -39,6 +39,9 @@ import {
     MELEE_CHURN_CROWD_GAIN,
     MELEE_CHURN_MAX,
     MELEE_CHURN_GAP_SECONDS,
+    MELEE_QUEUE_TILES,
+    MELEE_QUEUE_CAP,
+    MELEE_PILE_ON_TILES,
 } from "./constants.js";
 import { Projectile, classifyProjectile } from "./projectile.js";
 import { MeleeEffect } from "./melee_effect.js";
@@ -449,14 +452,50 @@ export class BattleUnit {
         return totalDamage;
     }
 
+    // Allies-per-victim tally used by the E14 pile-on bias, built in ONE pass
+    // over this unit's own team: {victim -> number of living allies that are
+    // both committed to it and standing inside its scrum ring}. Returns null
+    // when the bias is off or this unit is ranged, and findTarget then skips
+    // the lookup entirely -- that is what makes MELEE_PILE_ON_TILES = 0
+    // bit-identical rather than merely equivalent.
+    scrumCounts() {
+        if (MELEE_PILE_ON_TILES <= 0 || MELEE_QUEUE_TILES <= 0) return null;
+        if (this.isRanged()) return null;
+        const ring = MELEE_QUEUE_TILES * TILE_SIZE;
+        const allies = this.team === 1 ? this.sim.team1 : this.sim.team2;
+        const counts = new Map();
+        for (const a of allies) {
+            if (a === this || a.state === "dead") continue;
+            const t = a.target;
+            if (!t || t.state === "dead" || t.isRanged()) continue;
+            if (a.distanceTo(t) > a.attackRange + a.radius + t.radius + ring)
+                continue;
+            counts.set(t, (counts.get(t) || 0) + 1);
+        }
+        return counts;
+    }
+
     findTarget(enemies) {
         let closest = null;
         let closestDist = Infinity;
         let fallback = null;
         let fallbackDist = Infinity;
+        // E14 pile-on bias: a melee unit re-acquiring joins a fight its allies
+        // already have going rather than walking to the geometrically nearest
+        // body. Expressed as a distance DISCOUNT so it can only ever change
+        // which foe wins a close call -- a foe two tiles further away is still
+        // two tiles further away. Only foes whose scrum is not already at
+        // MELEE_QUEUE_CAP get it, so the bias cannot push instantaneous
+        // attackers-per-victim past the tape's measured ceiling.
+        const scrum = this.scrumCounts();
+        const bonus = scrum ? MELEE_PILE_ON_TILES * TILE_SIZE : 0;
         for (const enemy of enemies) {
             if (enemy.state === "dead") continue;
-            const dist = this.distanceTo(enemy);
+            let dist = this.distanceTo(enemy);
+            if (scrum && !enemy.isRanged()) {
+                const n = scrum.get(enemy) || 0;
+                if (n >= 1 && n < MELEE_QUEUE_CAP) dist -= bonus;
+            }
             // Prefer targets not in blockedTargets
             if (!this.blockedTargets.has(enemy)) {
                 if (dist < closestDist) {
@@ -534,6 +573,44 @@ export class BattleUnit {
             if (a.target === victim) n++;
         }
         return n;
+    }
+
+    // ===== MELEE QUEUEING (E14) =====
+    // "Am I waiting for a contact slot on a foe I am already standing at?"
+    //
+    // Answered ONLY from the stuck bar (moveTowardTarget), and only to decide
+    // whether the bar may blacklist the target. Everything else about
+    // targeting is unchanged: this never picks a target, never changes one,
+    // and never touches the rng -- so MELEE_QUEUE_TILES = 0 makes it return
+    // false on the first line and the engine is bit-identical to E13.
+    //
+    // Scope is melee-vs-melee on BOTH ends. A ranged unit never brawls, and a
+    // RANGED target is a chase, not a queue -- excluding it keeps every
+    // melee-chasing-archer fight (the ranged round's business, and three of
+    // the six canaries) structurally untouched rather than merely unaffected
+    // in practice.
+    meleeQueueing() {
+        if (MELEE_QUEUE_TILES <= 0) return false;
+        if (this.isRanged()) return false;
+        const t = this.target;
+        if (!t || t.state === "dead" || t.isRanged()) return false;
+        const ring = MELEE_QUEUE_TILES * TILE_SIZE;
+        if (this.distanceTo(t) > this.attackRange + this.radius + t.radius + ring)
+            return false;
+        // Slots already taken: allies committed to this same victim AND close
+        // enough to be part of its scrum. Counted on the same ring the caller
+        // just passed, so "who is queueing here" means one thing in this
+        // method, not two.
+        let n = 0;
+        const allies = this.team === 1 ? this.sim.team1 : this.sim.team2;
+        for (const a of allies) {
+            if (a === this || a.state === "dead" || a.target !== t) continue;
+            if (a.distanceTo(t) <= a.attackRange + a.radius + t.radius + ring) {
+                n++;
+                if (n >= MELEE_QUEUE_CAP) return false;
+            }
+        }
+        return true;
     }
 
     maybeMeleeChurn(victim) {
@@ -1857,9 +1934,18 @@ export class BattleUnit {
         }
         this.lastDistToTarget = newDist;
         if (this.stuckTimer > 0.8) {
-            this.blockedTargets.add(this.target);
-            this.target = null; // force re-target next frame
-            this.stuckTimer = 0;
+            // E14: a melee unit standing in the scrum around a living melee
+            // foe is not stuck, it is QUEUEING -- do not blacklist the foe its
+            // own front rank is killing. It keeps the target and re-arms the
+            // bar, so if it later drifts out of the ring (or the crowd fills)
+            // the very next 0.8 s window blacklists exactly as before.
+            if (this.meleeQueueing()) {
+                this.stuckTimer = 0;
+            } else {
+                this.blockedTargets.add(this.target);
+                this.target = null; // force re-target next frame
+                this.stuckTimer = 0;
+            }
         }
     }
 

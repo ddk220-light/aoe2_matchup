@@ -459,6 +459,75 @@ export const MELEE_KILL_REACQUIRE_FUMBLE = 0.28;
 // experiment report); 3.0 and 7.0 both cost ~5 sides of the melee gate.
 export const MELEE_CHURN_GAP_SECONDS = 5.8;
 
+// ===== MELEE QUEUEING (E14) =====
+// The stuck bar above (STUCK_PROGRESS_RATE) exists to stop a chaser trailing
+// something it can never catch. In a melee SCRUM it does something else
+// entirely, and that second job is a bug: a second-rank unit standing right
+// behind the ally who currently has the contact slot makes no forward progress
+// either, so after 0.8 s the bar blacklists the victim its own front rank is
+// killing and sends it off to a DIFFERENT enemy. It is an anti-pile-on rule.
+//
+// Measured over the 31 pure-melee recordings (tools/simjs/melee_select_probe.mjs
+// against the shipped E13 engine): 2654 of 6727 target re-acquisitions -- 39.5%,
+// more than the 31.1% caused by the target actually dying -- are the stuck bar
+// moving a melee unit OFF a living victim. The champion side of
+// champion__vs__paladin alone pays 130 of them across 21 units. It fires at a
+// median 0.61 tiles beyond the unit's own reach: exactly one unit-diameter
+// back, i.e. the unit is queueing, not stuck.
+//
+// The consequence is a TIME smear, invisible to any whole-fight concentration
+// metric (HHI, effective-victim count and Gini all match the tape to within
+// 2%): the same total damage is delivered to the same victims, just more
+// thinly spread over time, so victims die later and keep swinging longer.
+// Time-to-kill from first touch, in the attacker's own reload periods, over
+// the champion__vs__paladin family: tape 4.06-9.52, engine 12.62 (flat, every
+// recording). Attackers per victim on that side: tape mean 2.08-3.09, engine
+// 1.63.
+//
+// The fix is to say what the game says: a melee unit does not abandon a living
+// melee foe it is already standing at. It waits for a slot. It only walks away
+// when the crowd around that foe is already full -- which is what keeps the
+// pile-on inside the tape's own measured cap instead of stacking the whole
+// army onto one victim.
+//
+// MELEE_QUEUE_TILES -- how far beyond its own reach a unit may stand and still
+// count as "at the fight" rather than "chasing". Fitted to the tape's contact
+// crowd depth: over all 31 melee recordings, at the moment a victim is hit its
+// nearest enemy sits at a median 0.54 tiles and its FOURTH nearest at 1.15 --
+// a crowd 0.61 tiles deep behind the front rank. 0 disables the whole
+// mechanism and is bit-identical to E13 (no rng draw is involved, so identity
+// is structural, not statistical).
+export const MELEE_QUEUE_TILES = 0.2;
+
+// How many allies may already be queued on one victim before a further unit is
+// sent elsewhere by the stuck bar as before. The tape's attackers-per-victim
+// distribution (E13, same 31 recordings) is median 2 / p90 3 / max 4, and the
+// ring above holds a median of 4 enemies at the moment of a hit -- so 4 is the
+// tape's own ceiling, and the cap is what stops this mechanism from raising
+// instantaneous attackers-per-victim above it.
+export const MELEE_QUEUE_CAP = 4;
+
+// Distance discount (tiles) a melee foe gets in findTarget when allies are
+// already fighting it and its scrum is not yet at MELEE_QUEUE_CAP. The queue
+// rule above stops a unit LEAVING a fight; this one decides which fight it
+// JOINS when it has genuinely lost its target (kill, churn, or a blacklist
+// that survived the queue test).
+//
+// Fitted to the retarget transition matrix over the 31 pure-melee recordings
+// (tools/simjs/melee_target_forensics.py), specifically the share of all
+// consecutive-hit pairs in which an attacker leaves a LIVING victim and its
+// next landed blow is on a foe an ally hit inside the trailing reload window:
+//
+//   SWITCH_LIVE/ALLY     tape 0.1662   E13 0.1233   E14 queue-only 0.1345
+//
+// i.e. after the queue rule the engine still under-joins by ~20%. A DISCOUNT
+// rather than an override is deliberate: it can only decide a close call, so
+// a foe two tiles further away stays two tiles further away and the "walk to
+// the nearest body" behaviour survives everywhere the scrum is not right
+// there. 0 disables it and, together with the null return in scrumCounts(),
+// is bit-identical to the queue-only engine.
+export const MELEE_PILE_ON_TILES = 0.0;
+
 // ===== ADJUSTABLE PRE-BATTLE CONDITIONS =====
 // Lithuanian relic bonus: the reference DB bakes in all 4 relics (+1 base
 // melee attack each) for these units. The rail picker lets the user dial

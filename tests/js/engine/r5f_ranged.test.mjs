@@ -35,6 +35,12 @@ const ALL_OFF = {
 // therefore excluded from the "each rule is load-bearing alone" sweep and
 // pinned by its own two tests instead.
 const RULES = Object.keys(ALL_OFF).filter((k) => k !== "silenceClockOnLaunch");
+// A1 and A2 SHIP OFF (refuted -- see constants.js), so every test that
+// exercises them names them explicitly rather than relying on the defaults.
+const ALL_ON = {
+    silenceAdvance: true, silenceClockOnLaunch: false,
+    persistVictim: true, failedRollPlannedDamage: true,
+};
 
 function withR5F(overrides, fn) {
     const saved = { ...R5F };
@@ -209,7 +215,7 @@ test("[A1] a MELEE unit is never silence-advancing", () => {
     );
 });
 
-test("[A1] a silent unit approaches from inside the R5b margin, and holds when it is not", () => {
+test("[A1] a silent unit approaches from inside the R5b margin, and holds when it is not", () => withR5F({ silenceAdvance: true }, () => {
     const sim = bareSim(13);
     const shooter = archer(sim, "1-0", 1);
     const foe = bag(sim, "2-0", 2, { hp: 1000 });
@@ -250,9 +256,9 @@ test("[A1] a silent unit approaches from inside the R5b margin, and holds when i
         shooter.rangedShouldApproach(), false,
         "the clock reset ends the advance",
     );
-});
+}));
 
-test("[A1] the minimum-range dead zone still binds", () => {
+test("[A1] the minimum-range dead zone still binds", () => withR5F({ silenceAdvance: true }, () => {
     const sim = bareSim(17);
     const skirm = new BattleUnit(
         "1-0", 1,
@@ -272,11 +278,11 @@ test("[A1] the minimum-range dead zone still binds", () => {
         skirm.rangedShouldApproach(), false,
         "A1 overrides the margin HOLD, never the physical dead zone",
     );
-});
+}));
 
 // ---- A2: persist -> nearest-uncovered ----------------------------------------
 
-test("[A2] the previous victim is kept while alive, in reach and uncovered", () => {
+test("[A2] the previous victim is kept while alive, in reach and uncovered", () => withR5F({ persistVictim: true }, () => {
     const sim = bareSim(19);
     const shooter = archer(sim, "1-0", 1);
     const near = bag(sim, "2-0", 2);
@@ -298,9 +304,9 @@ test("[A2] the previous victim is kept while alive, in reach and uncovered", () 
             "with A2 off T1's every-shot nearest re-pick is back, unchanged",
         );
     });
-});
+}));
 
-test("[A2] each of the three failure modes re-picks the nearest uncovered enemy", () => {
+test("[A2] each of the three failure modes re-picks the nearest uncovered enemy", () => withR5F({ persistVictim: true }, () => {
     const build = () => {
         const sim = bareSim(23);
         const shooter = archer(sim, "1-0", 1, { attack: 100 });
@@ -344,9 +350,9 @@ test("[A2] each of the three failure modes re-picks the nearest uncovered enemy"
             "already dead on arrival -> re-pick, exactly as T1 would",
         );
     }
-});
+}));
 
-test("[A2] the re-pick fallback is T1's, all-covered branch included", () => {
+test("[A2] the re-pick fallback is T1's, all-covered branch included", () => withR5F({ persistVictim: true }, () => {
     const sim = bareSim(29);
     const shooter = archer(sim, "1-0", 1, { attack: 100 });
     const a = bag(sim, "2-0", 2);
@@ -370,7 +376,7 @@ test("[A2] the re-pick fallback is T1's, all-covered branch included", () => {
         sim.combatStats[1].allCovered, before + 1,
         "and the all-covered fallback is still counted",
     );
-});
+}));
 
 test("[A2] the volley's victim is remembered once, never the scatter target", () => {
     const sim = bareSim(31);
@@ -543,11 +549,23 @@ test("[R5f] every rule off is deterministic and differs from the shipped engine"
     const offA = withR5F(ALL_OFF, () => runHash(spreadFight, 42));
     const offB = withR5F(ALL_OFF, () => runHash(spreadFight, 42));
     assert.equal(offA, offB, "the off path must be deterministic");
-    const on = runHash(spreadFight, 42);
+    const on = withR5F(ALL_ON, () => runHash(spreadFight, 42));
     assert.notEqual(
         on, offA,
         "the rules must actually change something, or this test proves nothing",
     );
+});
+
+test("[R5f] the SHIPPED defaults are bit-identical to the pre-R5f engine", () => {
+    // A1 and A2 ship off (refuted) and A3 is a proven no-op while
+    // R5D1.reducedDamageHits is off, so the R5f engine as shipped must not
+    // move a single float. This is the same claim the 216-fight x 20-seed
+    // corpus run makes; asserted here so it cannot rot silently.
+    for (const build of [spreadFight, missFight, whiffFight, meleeFight]) {
+        const shipped = runHash(build, 8, 40);
+        const off = withR5F(ALL_OFF, () => runHash(build, 8, 40));
+        assert.equal(shipped, off, "shipped R5f == 716a522");
+    }
 });
 
 test("[R5f] each rule is independently switchable and independently load-bearing", () => {
@@ -638,7 +656,7 @@ test("[R5f] melee-vs-melee is untouched by all four flags", () => {
     // A1 lives behind isRanged() and the ranged branch of update(); A2 behind
     // pickShotTarget, which only ranged units call; A3 inside fireProjectile.
     // A melee fight must be bit-identical with the flags on and off.
-    const on = runHash(meleeFight, 77, 40);
+    const on = withR5F(ALL_ON, () => runHash(meleeFight, 77, 40));
     const off = withR5F(ALL_OFF, () => runHash(meleeFight, 77, 40));
     assert.equal(on, off, "a melee fight must not move by so much as a float");
 });

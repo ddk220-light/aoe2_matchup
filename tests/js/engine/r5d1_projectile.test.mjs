@@ -307,7 +307,7 @@ function walk(unit, vxPxPerSec, vyPxPerSec, seconds) {
     unit.refreshVelocity(DT);
 }
 
-test("[P2] the lead is the intercept of the target's WINDOWED motion", () => {
+test("[P2] the lead is the intercept of the target's WINDOWED motion", () => withR5D1({ trailingWindowLead: true }, () => {
     const sim = simStub(5);
     const a = new BattleUnit(
         "1-0", 1, { ...STATS, attack_range: 7, projectile_speed: 7 },
@@ -331,9 +331,9 @@ test("[P2] the lead is the intercept of the target's WINDOWED motion", () => {
         `aim.y ${aim.y} must be the converged intercept ${b.y + wv.vy * flight}`,
     );
     assert.equal(aim.x, b.x, "no lead along x -- no measured x motion");
-});
+}));
 
-test("[P2] a target that JUST stopped is still led -- the whole point", () => {
+test("[P2] a target that JUST stopped is still led -- the whole point", () => withR5D1({ trailingWindowLead: true }, () => {
     // This is the R5c Q2d failure verbatim: D1 stops a unit to fire and D4
     // parks it at the margin, so its instantaneous velocity on the launch tick
     // is exactly zero even though it has been walking. The one-tick reading
@@ -361,7 +361,7 @@ test("[P2] a target that JUST stopped is still led -- the whole point", () => {
         const flat = a.aimPointFor(b);
         assert.equal(flat.y, b.y, "R5b's one-tick reading has no lead at all here");
     });
-});
+}));
 
 test("[P2] a target stopped for longer than the window is aimed at directly", () => {
     // The window is a measurement of RECENT motion: once the walk has scrolled
@@ -431,7 +431,7 @@ test("[P2] warm-up: fewer samples than the window measure the span they have", (
     );
 });
 
-test("[P2] the intercept converges rather than stopping at two passes", () => {
+test("[P2] the intercept converges rather than stopping at two passes", () => withR5D1({ trailingWindowLead: true }, () => {
     // A target running along the line of fire is the case two passes leave
     // short: each pass pushes the aim point further out, which lengthens the
     // flight, which pushes it further again.
@@ -447,7 +447,7 @@ test("[P2] the intercept converges rather than stopping at two passes", () => {
     const flight = Math.hypot(aim.x - a.x, aim.y - a.y) / (7 * TILE_SIZE);
     const residual = Math.abs(aim.x - (b.x + b.windowVelocity().vx * flight));
     assert.ok(residual < 1e-6, `intercept residual ${residual} px is not converged`);
-});
+}));
 
 // ---- off-switch and melee identity ------------------------------------------
 

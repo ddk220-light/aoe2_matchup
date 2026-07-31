@@ -70,7 +70,17 @@ export const R5D1 = {
     //     displacement over the last LEAD_WINDOW_SECONDS, not from its
     //     instantaneous velocity on the launch tick (which R5c measured to be
     //     zero on 91-100% of shots, so the lead never fired at all).
-    trailingWindowLead: true,
+    //
+    //     SHIPPED OFF FOR NOW -- same compensating-error shape as P1. The
+    //     lead is tape-true (full intercept, ratio ~1.0), but the engine does
+    //     not yet model the tape's melee-chaser cadence loss vs kiters
+    //     (chasers swing 1.29x slower on tape; ours chase at full cadence).
+    //     With T1+T2 on, arming the kiters' lead flips the
+    //     champion__vs__heavy_cav_archer family 8/9 -> 1/9 against tape and
+    //     costs 8 corpus winners (145 -> 137) AND 0.65 HP-pts. Flip on and
+    //     re-gate when the chaser-cadence mechanic lands (ranged-vs-melee
+    //     round). Mechanism stays wired + tested under explicit override.
+    trailingWindowLead: false,
 };
 
 /** Apply a partial override to {@link R5D1}. Harness-only entry point. */

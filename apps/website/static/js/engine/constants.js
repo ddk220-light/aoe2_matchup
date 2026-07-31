@@ -43,6 +43,37 @@ export function setR5B(overrides) {
     return R5B;
 }
 
+// ===== ROUND 5d-1 — PROJECTILE / AIM CORRECTIONS (master off-switches) =====
+// Two corrections to the R5b fire model, both measured in
+// docs/calibration/r5c_targeting_forensics.md (Q0 and Q2). Kept in their OWN
+// flag object rather than bolted onto R5B so the two are independently
+// A/B-able and so R5B stays exactly the four rules its own tests count.
+//
+// Setting both to false restores 71cd4a9 (R5b as merged) BIT-IDENTICALLY --
+// asserted by tests/js/engine/r5d1_projectile.test.mjs.
+export const R5D1 = {
+    // P1  reduced-damage displaced hits: a shot whose accuracy roll FAILED is
+    //     displaced by the dat dispersion and, if its LANDING POINT still
+    //     overlaps a body, applies exactly half the final post-armor damage,
+    //     unrounded. Tape: 6.5 / 4.5 / 5.5 against fulls of 13 / 9 / 11, and
+    //     26 of 27 land on the unit the shot was aimed at.
+    reducedDamageHits: true,
+    // P2  trailing-window lead: the intercept is computed from the target's
+    //     displacement over the last LEAD_WINDOW_SECONDS, not from its
+    //     instantaneous velocity on the launch tick (which R5c measured to be
+    //     zero on 91-100% of shots, so the lead never fired at all).
+    trailingWindowLead: true,
+};
+
+/** Apply a partial override to {@link R5D1}. Harness-only entry point. */
+export function setR5D1(overrides) {
+    for (const k of Object.keys(overrides)) {
+        if (!(k in R5D1)) throw new Error(`setR5D1: unknown flag ${k}`);
+        R5D1[k] = Boolean(overrides[k]);
+    }
+    return R5D1;
+}
+
 // ===== CONSTANTS =====
 export const CANVAS_WIDTH = 900;
 export const CANVAS_HEIGHT = 600;
@@ -438,6 +469,34 @@ export const ACCURACY_DISPERSION_BY_SLUG = new Map([
     ["imp_elite_skirm", 0.33],
     ["hand_cannoneer", 0.50],
 ]);
+
+// ===== LEAD WINDOW (P2, Round 5d-1) =====
+// The trailing window over which a target's motion is MEASURED before the
+// intercept is solved. This is not a behaviour constant to be tuned -- it is
+// the length of the ruler, and it is set to the length of the ruler the
+// forensics themselves use.
+//
+// Why a window at all: R5b read `target.velX/velY`, the ground covered in the
+// single previous tick. R5c Q2d measured what that produces -- ANY lead on
+// 0.0-9.0% of shots on the nine accuracy-100 sides, median lead 0.000 tiles,
+// four sides at exactly 0.0% -- because D1 stops a unit to fire and D4 parks
+// it at the approach margin, so the instantaneous velocity of a unit being
+// shot at is almost always exactly zero on the launch tick even when that
+// unit has been walking for the last second and will keep walking through the
+// whole ~1.1 s flight. A one-tick sample cannot see motion that is paused on
+// the sampled tick; a trailing window can.
+//
+// Why 0.3 s: the tapes are 10 Hz position streams and the forensics'
+// reconstruction (`ranged_fire_forensics.Fight`) interpolates between those
+// frames, so 0.3 s is three recorded frames -- the shortest window over which
+// the recordings themselves can state a direction, and the same window the Q2a
+// model column `lead@0.3s` is evaluated at. Picking it matches the measurement
+// to its instrument rather than fitting the engine to an outcome. (Q2a's
+// verdict is that NO trailing-window length beats the oracle, because a
+// sampled velocity is noisier than the exact one the game used -- 0.11 s,
+// 0.3 s and 0.5 s all leave residuals at or above it. There is no best window
+// to find, so there is nothing to tune: take the instrument's own.)
+export const LEAD_WINDOW_SECONDS = 0.3;
 
 // ===== MELEE CONTACT LOSS (E13 measurement, E14 mechanism) =====
 // THE MEASUREMENT, which stands and is now a VALIDATION TARGET rather than a

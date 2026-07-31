@@ -41,8 +41,10 @@ import {
     MELEE_LANE_REACQUIRE,
     MELEE_LANE_CANDIDATE_CAP,
     R5B,
+    R5D1,
     PROJECTILE_RADIUS_TILES,
     ACCURACY_DISPERSION_BY_SLUG,
+    LEAD_WINDOW_SECONDS,
 } from "./constants.js";
 import { Projectile, classifyProjectile } from "./projectile.js";
 import { MeleeEffect } from "./melee_effect.js";
@@ -343,6 +345,25 @@ export class BattleUnit {
         // x/y are assigned by the scenario AFTER construction, so the first
         // refresh only seeds the baseline and reports zero velocity.
         this.velSeeded = false;
+
+        // --- trailing position history, for the P2 lead window ---
+        // A fixed-capacity ring buffer of this unit's position at the START of
+        // each of the last LEAD_WINDOW_SECONDS worth of ticks, written once per
+        // tick by refreshVelocity() alongside velX/velY. AIM infrastructure: it
+        // exists so a SHOOTER can measure how this unit has actually been
+        // moving, and nothing else in the engine reads it.
+        //
+        // Capacity is sized from the real dt on the first refresh rather than
+        // hardcoded to 18 (= 0.3 s at 60 Hz), so the window stays 0.3 s of
+        // WALL CLOCK if the tick rate ever changes -- the same lesson as the
+        // stuck bar's px/s rate in constants.js. Allocated lazily: a unit that
+        // is never ticked (most unit tests) never pays for it.
+        this.histX = null;
+        this.histY = null;
+        this.histT = null;
+        this.histHead = 0;    // index the NEXT sample is written to
+        this.histCount = 0;   // samples written, capped at capacity
+        this.histClock = 0;   // this unit's own accumulated tick time, seconds
 
         // D4 approach hysteresis: true once this unit has closed to within a
         // body diameter inside reach, false again the moment its target
@@ -837,6 +858,60 @@ export class BattleUnit {
         this.prevTickX = this.x;
         this.prevTickY = this.y;
         this.velSeeded = true;
+        this.recordPositionSample(dt);
+    }
+
+    // Push this tick's pre-move position into the trailing history ring (P2).
+    // Costs one write and no allocation after the first tick; the buffer is
+    // pure measurement -- it feeds windowVelocity() and nothing else, takes no
+    // rng draw, and is deliberately absent from Simulation.stateHash() for the
+    // same reason the event log is: it cannot influence a battle except
+    // through the aim point, which is hashed via the positions it produces.
+    recordPositionSample(dt) {
+        if (!(dt > 0)) return;
+        if (this.histX === null) {
+            // +1 because the window is measured BETWEEN the oldest and the
+            // newest sample: N intervals of dt need N+1 samples.
+            const cap = Math.max(2, Math.round(LEAD_WINDOW_SECONDS / dt) + 1);
+            this.histX = new Float64Array(cap);
+            this.histY = new Float64Array(cap);
+            this.histT = new Float64Array(cap);
+        }
+        this.histClock += dt;
+        const cap = this.histX.length;
+        this.histX[this.histHead] = this.x;
+        this.histY[this.histHead] = this.y;
+        this.histT[this.histHead] = this.histClock;
+        this.histHead = (this.histHead + 1) % cap;
+        if (this.histCount < cap) this.histCount++;
+    }
+
+    // The velocity a shooter should lead this unit by: its displacement over
+    // the trailing window, divided by that window's own length. A MEASUREMENT of recent
+    // motion, not a behaviour constant -- see LEAD_WINDOW_SECONDS.
+    //
+    // Read entirely out of the ring buffer (oldest sample -> newest sample),
+    // never off the live x/y, so every shooter on a tick measures every target
+    // off the same snapshot whatever order the teams update in. That is the
+    // same invariant Simulation.update() preserves by refreshing all
+    // velocities before anyone moves.
+    //
+    // Warm-up (fewer samples than the window) uses whatever span exists, which
+    // is honest: it is still "displacement over the interval it was measured
+    // over". With one sample or a zero span there is nothing to measure and it
+    // reports zero.
+    windowVelocity() {
+        const n = this.histCount;
+        if (n < 2) return { vx: 0, vy: 0 };
+        const cap = this.histX.length;
+        const newest = (this.histHead - 1 + cap) % cap;
+        const oldest = (this.histHead - n + cap) % cap;
+        const span = this.histT[newest] - this.histT[oldest];
+        if (!(span > 0)) return { vx: 0, vy: 0 };
+        return {
+            vx: (this.histX[newest] - this.histX[oldest]) / span,
+            vy: (this.histY[newest] - this.histY[oldest]) / span,
+        };
     }
 
     // Accuracy dispersion in PIXELS: the radius an accuracy-roll failure may
@@ -868,18 +943,54 @@ export class BattleUnit {
     // the flight time. Two passes converge to well under a pixel at these
     // speeds and, unlike the closed form, cannot produce a complex root when
     // the target outruns the projectile.
+    // P2 (Round 5d-1) changes WHICH velocity goes into the intercept and how
+    // hard it is solved. R5b used `target.velX/velY` -- the ground covered in
+    // the ONE previous tick -- and R5c Q2d measured the consequence: on the
+    // nine accuracy-100 sides the engine applied any lead at all on 0.0-9.0%
+    // of shots, median 0.000 tiles, because D1 stops units to fire and D4
+    // parks them at the approach margin, so a target that has been walking for
+    // a second is standing still on the launch tick. The tape, meanwhile, aims
+    // a FULL intercept of the target's real motion (lead ratio ~0.9-1.2 on
+    // displaced targets) and lands 0.118-0.226 tiles from where the victim
+    // actually is at impact -- the position-noise floor.
+    //
+    // The fix is to measure the target's motion over a trailing 0.3 s window
+    // instead of one tick (windowVelocity), and to iterate the fixed point to
+    // convergence rather than stopping at two passes. Both are gated on
+    // R5D1.trailingWindowLead; with it off this is R5b's function verbatim.
     aimPointFor(target) {
         if (!R5B.ballisticLead) return { x: target.x, y: target.y };
         const speed =
             this.projectileSpeed > 0 ? this.projectileSpeed : 7 * TILE_SIZE;
+        let vx = target.velX;
+        let vy = target.velY;
+        let passes = 2;
+        if (R5D1.trailingWindowLead) {
+            const wv = target.windowVelocity();
+            vx = wv.vx;
+            vy = wv.vy;
+            // Iterate to convergence instead of two fixed passes. The map is a
+            // contraction whenever the target is slower than the projectile
+            // (every case in this corpus), so this settles in 3-6 passes; the
+            // cap is what keeps a hypothetical faster-than-the-arrow target
+            // from spinning, and degrades to "the best aim point we had",
+            // exactly as the two-pass version already did.
+            passes = 24;
+        }
         let ax = target.x;
         let ay = target.y;
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < passes; i++) {
             const dx = ax - this.x;
             const dy = ay - this.y;
             const flight = Math.sqrt(dx * dx + dy * dy) / speed;
-            ax = target.x + target.velX * flight;
-            ay = target.y + target.velY * flight;
+            const nx = target.x + vx * flight;
+            const ny = target.y + vy * flight;
+            const moved = Math.abs(nx - ax) + Math.abs(ny - ay);
+            ax = nx;
+            ay = ny;
+            // Converged well inside a pixel -- four orders of magnitude below
+            // the ~9-10 px overlap radius that decides a hit.
+            if (R5D1.trailingWindowLead && moved < 1e-9) break;
         }
         return { x: ax, y: ay };
     }
@@ -1688,13 +1799,104 @@ export class BattleUnit {
                     // is the mechanism behind the tape's dodge rate and behind
                     // hand cannoneer flights that reach 9.3 tiles on a 7-tile
                     // unit (the aim was thrown ahead of a runner).
-                    if (targetWasAlive) {
+                    // Under P1 a failed roll can never be a FULL hit, however
+                    // close its displaced landing point came down to the
+                    // primary -- that case is the measured half hit, handled
+                    // below. `didHit` therefore stays false for it, and with
+                    // it every downstream consequence of a clean hit (splash,
+                    // pass-through, bleed, kill bonus).
+                    const rollFailedUnderP1 =
+                        R5D1.reducedDamageHits && !willHit;
+                    if (targetWasAlive && !rollFailedUnderP1) {
                         const dx = target.x - impactX;
                         const dy = target.y - impactY;
                         const reach = target.radius + projRadiusPx;
                         didHit = dx * dx + dy * dy <= reach * reach;
                     }
-                    if (didHit) {
+                    if (rollFailedUnderP1) {
+                        // ===== P1: REDUCED-DAMAGE DISPLACED HIT =====
+                        // The accuracy roll failed, so this shot was thrown off
+                        // its aim point by the dat dispersion at launch. What
+                        // it does now is decided ENTIRELY at its landing point:
+                        // whoever's body that point is inside takes exactly
+                        // HALF the final post-armor damage, unrounded, and if
+                        // it is inside nobody's the shot grounds. It does NOT
+                        // matter whose bodies the flight crossed on the way --
+                        // there is no swept collision here and the tape agrees
+                        // there should not be: one confirmed stray in the whole
+                        // corpus, over flights that cross whole formations.
+                        //
+                        // R5c Q0 measured all three parts:
+                        //  * the value is half of the FINAL damage, not half
+                        //    the raw attack then armor (6.5 / 4.5 / 5.5 against
+                        //    fulls of 13 / 9 / 11, with the .5 recorded), and
+                        //    is NOT floored;
+                        //  * the intended target is the usual victim, not an
+                        //    excluded one -- 26 of 27 reduced hits landed on
+                        //    the unit the shot was aimed at, because a 0.25-
+                        //    0.30 tile median displacement rarely clears a
+                        //    0.2 + 0.1 tile body;
+                        //  * the window is the landing point against body plus
+                        //    projectile radius, the same overlap test a
+                        //    successful shot uses -- not the enemy's centre
+                        //    inside its own radius.
+                        // R5b's branch got all three wrong at once (excluded
+                        // the target, centre-only window, floored) and fired
+                        // ZERO times in 120 seed-runs; the same failed roll
+                        // that still landed on the primary was paid as a FULL
+                        // hit, which is the other half of the correction.
+                        let victim = null;
+                        let bestD2 = Infinity;
+                        const foes =
+                            attacker.team === 1
+                                ? attacker.sim.team2
+                                : attacker.sim.team1;
+                        for (const enemy of foes) {
+                            if (enemy.state === "dead") continue;
+                            const ex = enemy.x - impactX;
+                            const ey = enemy.y - impactY;
+                            const d2 = ex * ex + ey * ey;
+                            const reach = enemy.radius + projRadiusPx;
+                            if (d2 > reach * reach) continue;
+                            // The body the shot came down ON is the nearest
+                            // overlapping one. Deterministic and independent of
+                            // team-array order, which the old first-match loop
+                            // was not.
+                            if (d2 < bestD2) {
+                                bestD2 = d2;
+                                victim = enemy;
+                            }
+                        }
+                        if (victim) {
+                            // `damage` is already the final post-armor value
+                            // for `target`; a displaced hit on somebody else
+                            // has to be re-costed against THAT body's armor,
+                            // which is what "final post-armor damage" means.
+                            // Identical to `damage` in the 26/27 case.
+                            const full =
+                                victim === target
+                                    ? damage
+                                    : attacker.getDamageAgainst(victim) +
+                                      Math.floor(attacker.killBonusAttack);
+                            // Arambai (missDamagePercent = 1.0) is the one unit
+                            // the config says pays FULL on a displaced hit; the
+                            // measured rule for everyone else is exactly half,
+                            // unrounded.
+                            const frac =
+                                attacker.missDamagePercent > 0
+                                    ? attacker.missDamagePercent
+                                    : 0.5;
+                            victim.takeDamage(full * frac, attacker);
+                        }
+                        // Otherwise: it hit the ground.
+                        //
+                        // A reduced hit deliberately does NOT set `didHit`, so
+                        // it triggers no splash, pass-through or bleed. Those
+                        // are the consequences of a shot landing where it was
+                        // aimed; nothing in this corpus measures what a
+                        // displaced siege shell does, and inventing it here
+                        // would change siege behaviour on a guess.
+                    } else if (didHit) {
                         target.takeDamage(damage, attacker);
                     } else if (targetWasAlive && !willHit) {
                         // The shot went wide AND the accuracy roll had failed:

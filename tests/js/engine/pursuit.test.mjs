@@ -152,8 +152,15 @@ test("a chase that makes no progress at all still blacklists", () => {
     const sim = simStub(1);
     const chaser = new BattleUnit(
         "1-0", 1, pursuitStats("Champion", CHAMPION_SPEED), "champion", "Chinese", sim);
+    // The kiter is flagged RANGED here, unlike the other fixtures in this file:
+    // a fleeing Siege Onager is a ranged unit, and E14's melee target lock is
+    // scoped to melee-vs-MELEE precisely so that it cannot touch a pursuit. A
+    // melee-flagged "kiter" would now (correctly) be locked on and never
+    // blacklisted, which would test the opposite of what this test is about.
     const kiter = new BattleUnit(
-        "2-0", 2, pursuitStats("Siege Onager", ONAGER_SPEED), "siege_onager", "Aztecs", sim);
+        "2-0", 2,
+        { ...pursuitStats("Siege Onager", ONAGER_SPEED), attack_range: 9, is_ranged: true },
+        "siege_onager", "Aztecs", sim);
     sim.team1.push(chaser);
     sim.team2.push(kiter);
 

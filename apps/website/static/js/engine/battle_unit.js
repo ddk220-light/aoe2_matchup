@@ -34,11 +34,9 @@ import {
     RANGED_STOP_OVERHEAD,
     RANGED_POST_FIRE_RECOVERY,
     RANGED_POST_FIRE_RECOVERY_BY_SLUG,
-    MELEE_CHURN_PER_SWING,
-    MELEE_KILL_REACQUIRE_FUMBLE,
-    MELEE_CHURN_CROWD_GAIN,
-    MELEE_CHURN_MAX,
-    MELEE_CHURN_GAP_SECONDS,
+    MELEE_TARGET_LOCK,
+    MELEE_CONTACT_SLOTS,
+    MELEE_BUMP_RETARGET,
 } from "./constants.js";
 import { Projectile, classifyProjectile } from "./projectile.js";
 import { MeleeEffect } from "./melee_effect.js";
@@ -449,6 +447,13 @@ export class BattleUnit {
         return totalDamage;
     }
 
+    // Nearest living enemy, minus anything the stuck bar has blacklisted. This
+    // is the game's own acquisition rule and E14 deliberately left it alone: a
+    // fitted "prefer the foe my allies are already on" discount was built,
+    // swept and measured monotonically HARMFUL (melee-62 within-10 50 -> 48 ->
+    // 45 -> 42 -> 41 at a 0 / 0.25 / 0.5 / 1.0 / 2.0-tile bonus), and removed.
+    // Which fight a freed unit joins is decided by where its body can get to,
+    // not by a preference weight.
     findTarget(enemies) {
         let closest = null;
         let closestDist = Infinity;
@@ -502,30 +507,45 @@ export class BattleUnit {
         return this.distanceTo(this.target) < this.minAttackRange;
     }
 
-    // ===== MELEE CONTACT CHURN (E13) =====
-    // Called immediately after a MELEE swing resolves, with the unit that
-    // swing was aimed at. Two measured effects, one code path:
+    // ===== MELEE TARGET LOCK + BUMP RETARGET (E14) =====
+    // What replaced E13's stochastic churn. E13 injected two probabilities
+    // (break-off-per-swing, fumble-after-kill) and a fixed 5.8 s gap, fitted to
+    // the corpus's own unit types and army sizes. Those numbers cannot
+    // generalise -- a different unit at a different count would need a
+    // different number, which is the definition of a curve fit rather than a
+    // mechanism. They are gone. What is here instead is the behaviour the GAME
+    // documents, and the contact loss E13 injected now has to EMERGE from
+    // geometry.
     //
-    //   victim SURVIVED -> MELEE_CHURN_PER_SWING: the unit is shoved out of
-    //     the line / re-paths / picks a different foe. Engine breaks contact
-    //     with a living foe on 0.36% of its swings, a real one on 3.83%.
-    //   victim DIED     -> MELEE_KILL_REACQUIRE_FUMBLE: the unit fumbles the
-    //     hand-off to its next target. 34.3% of tape kills are followed by a
-    //     slow re-acquisition, 8-12% of the engine's are.
+    // Two rules, both physical, neither carrying a fitted rate:
     //
-    // Both constants and the measurements behind them live in constants.js.
-    // The two are exclusive per swing (a swing either killed or it did not)
-    // and share one gap length, because the tape gives them the same one.
+    // 1. TARGET LOCK. A melee unit does not voluntarily leave a living melee
+    //    foe. It presses, it waits, it gets shoved -- it does not re-pick on a
+    //    timer. Concretely the stuck bar (moveTowardTarget) may no longer
+    //    blacklist a melee target for a melee unit. Measured cause: the bar was
+    //    responsible for 39.5% of all melee re-acquisitions -- MORE than the
+    //    31.1% caused by the target dying -- firing at a median 0.61 tiles past
+    //    the unit's own reach, i.e. on second-rank units that were queueing
+    //    rather than stuck (tools/simjs/melee_select_probe.mjs).
     //
-    // Called from BOTH melee swing paths (the committedAttack resolution for
-    // attack_delay > 0 and the direct performAttack for delay 0) AFTER each
-    // has set its own cooldown, so the assignment below is what the unit's
-    // next hit-to-hit gap actually becomes.
+    // 2. BUMP RETARGET. The release valve is the one the game actually ships.
+    //    AoE2:DE update 81058 (12 Apr 2023): "Units will now retarget to a unit
+    //    of the same type if they bump into them and cannot reach the current
+    //    target." The same behaviour is described by players from earlier DE
+    //    builds in a broader form -- a melee unit that bumps an enemy other
+    //    than its target switches to the one it bumped. Both readings agree on
+    //    every fight in this corpus (single-unit-type armies), so the corpus
+    //    cannot distinguish them; the broader one is implemented because it is
+    //    the one described as the in-game feel, and the narrow one is a subset.
+    //
+    // The trigger is a body contact, not a probability: the test below reuses
+    // resolveCollisions' own floor (radius + radius + 1 px), so "bumped" here
+    // and "pushed apart" there are the same event by construction. Nothing in
+    // either rule reads the rng, scales with army size, or names a unit.
 
-    // Same-team units currently swinging at the same victim. The crowd term's
-    // whole point is that this is a LOCAL quantity -- it is what makes a
-    // 21-strong champion line churn harder than the nine paladins it is
-    // surrounding, with no per-unit constants anywhere.
+    // Same-team units currently swinging at the same victim. Kept from E13 --
+    // no longer used by any shipped mechanism, but it is the cheapest honest
+    // way for a probe or a test to ask "how crowded is this victim".
     contestingAllies(victim) {
         const allies = this.team === 1 ? this.sim.team1 : this.sim.team2;
         let n = 0;
@@ -536,33 +556,76 @@ export class BattleUnit {
         return n;
     }
 
-    maybeMeleeChurn(victim) {
-        if (this.isRanged()) return;
-        if (!victim) return;
-        let p;
-        if (victim.state === "dead") {
-            p = MELEE_KILL_REACQUIRE_FUMBLE;
-        } else {
-            p = MELEE_CHURN_PER_SWING;
-            if (p > 0 && MELEE_CHURN_CROWD_GAIN > 0) {
-                p *= 1 + MELEE_CHURN_CROWD_GAIN *
-                    Math.max(0, this.contestingAllies(victim) - 1);
+    // Rule 1's predicate: is this a melee unit holding a living melee foe? Used
+    // only by the stuck bar, to decide whether it may blacklist. A RANGED unit,
+    // or a melee unit chasing a RANGED one, is unchanged -- that is a pursuit,
+    // which is what the stuck bar was built for and still does.
+    meleeTargetLock() {
+        if (!MELEE_TARGET_LOCK) return false;
+        if (this.isRanged()) return false;
+        const t = this.target;
+        if (!t || t.state === "dead" || t.isRanged()) return false;
+        // ...unless the victim's contact slots are already full. A body can
+        // only be surrounded by so many attackers, and the tape says how many:
+        // attackers-per-victim runs median 2 / p90 3 / max 4 over all 31
+        // pure-melee recordings, and the engine reproduces 2/3/4 exactly. A
+        // unit locked on a foe that already has MELEE_CONTACT_SLOTS attackers
+        // IN REACH of it is not queueing for a slot that will open, it is
+        // standing behind a full ring -- so the stuck bar keeps its old job and
+        // sends it somewhere it can actually fight.
+        //
+        // "In reach" is each ally's own reach test, not a tuned radius: the
+        // count is exactly the number of allies that could swing at this victim
+        // right now. There is no distance constant anywhere in this rule.
+        let n = 0;
+        const allies = this.team === 1 ? this.sim.team1 : this.sim.team2;
+        for (const a of allies) {
+            if (a === this || a.state === "dead" || a.target !== t) continue;
+            if (a.distanceTo(t) <= a.attackRange + a.radius + t.radius) {
+                n++;
+                if (n >= MELEE_CONTACT_SLOTS) return false;
             }
-            if (p > MELEE_CHURN_MAX) p = MELEE_CHURN_MAX;
         }
-        // Both rates at 0 skips the draw entirely -- that is the documented
-        // "mechanism off" path and it is bit-identical to the pre-E13 engine
-        // (verified: a full 155-fight run at 0 reproduces the E12 scoreboard
-        // number for number). Otherwise exactly one draw per melee swing,
-        // taken whatever the crowd term evaluates to, so a crowd-gain sweep
-        // changes only the threshold and not the random sequence itself.
-        if (p <= 0) return;
-        if (this.sim.rng.next() >= p) return;
-        // Broken off: drop the target (the next tick's findTarget re-acquires,
-        // which is what produces the tape's LOST_SAME / SWITCH_LIVE mix on its
-        // own) and pay the measured gap in place of the reload.
-        this.target = null;
-        this.attackCooldown = MELEE_CHURN_GAP_SECONDS;
+        return true;
+    }
+
+    // Rule 2. Called once per tick from update(), before the target is used.
+    // Fires only when BOTH halves of the documented condition hold: the unit
+    // cannot reach its current target, and its body is touching a different
+    // living enemy. The nearest such enemy wins, so the outcome cannot depend
+    // on array order.
+    meleeBumpRetarget(enemies) {
+        if (!MELEE_BUMP_RETARGET) return;
+        if (this.isRanged()) return;
+        const t = this.target;
+        if (!t || t.state === "dead") return;
+        // MELEE-VS-MELEE ONLY, on both ends -- the same scope as rule 1, and
+        // for a measured reason. Left unscoped, this rule fires on every melee
+        // unit CHASING archers (it bumps them constantly and re-picks the
+        // nearest), which is a pursuit and not a brawl: it took the
+        // champion__vs__arbalester canary from 6/6 to 0/6 and the corpus from
+        // 126 to 114. Pursuit belongs to the ranged round.
+        if (t.isRanged()) return;
+        if (this.inRange()) return;
+        let best = null;
+        let bestDist = Infinity;
+        for (const enemy of enemies) {
+            if (enemy === t || enemy.state === "dead" || enemy.isRanged())
+                continue;
+            const dist = this.distanceTo(enemy);
+            // resolveCollisions' own hard floor: at or inside it the two bodies
+            // are in contact and were pushed apart this tick.
+            if (dist <= this.radius + enemy.radius + 1 && dist < bestDist) {
+                bestDist = dist;
+                best = enemy;
+            }
+        }
+        if (!best) return;
+        this.target = best;
+        // A bump is a fresh engagement: re-arm the stuck bar against the new
+        // foe rather than carrying the old chase's progress history over.
+        this.stuckTimer = 0;
+        this.lastDistToTarget = bestDist;
     }
 
     // ===== RANGED STAND-AND-SHOOT COST (E9) =====
@@ -782,6 +845,13 @@ export class BattleUnit {
             return;
         }
 
+        // E14 rule 2 (BUMP RETARGET). Checked here, after the target is known
+        // to be alive and BEFORE anything acts on it, so a unit that spent the
+        // tick shoulder to shoulder with the wrong enemy swings at the one it
+        // is actually touching. Costs nothing for a unit that can reach its own
+        // target (the inRange() early-out) or for any ranged unit.
+        this.meleeBumpRetarget(enemies);
+
         if (this.isRanged()) {
             const shouldKite = !this.target.isRanged();
 
@@ -960,11 +1030,6 @@ export class BattleUnit {
                         this.reloadTime - this.attackDelay,
                     );
                     this.wasMoving = false;
-                    // `target` is the unit this swing was aimed at, which is
-                    // what decides which of the two churn terms applies -- NOT
-                    // this.target, which performAttackOn may already have left
-                    // pointing at a corpse or (for trample) somewhere else.
-                    this.maybeMeleeChurn(target);
                 }
             } else if (this.inRange()) {
                 if (this.attackCooldown <= 0) {
@@ -977,9 +1042,7 @@ export class BattleUnit {
                         this.wasMoving = false;
                     } else {
                         this.state = "attacking";
-                        const meleeVictim = this.target;
                         this.performAttack();
-                        this.maybeMeleeChurn(meleeVictim);
                     }
                 } else {
                     this.state = "attacking";
@@ -1857,9 +1920,20 @@ export class BattleUnit {
         }
         this.lastDistToTarget = newDist;
         if (this.stuckTimer > 0.8) {
-            this.blockedTargets.add(this.target);
-            this.target = null; // force re-target next frame
-            this.stuckTimer = 0;
+            // E14 rule 1 (TARGET LOCK): a melee unit does not abandon a living
+            // melee foe because it failed to make forward progress -- in a
+            // scrum "no progress" means the front rank has the contact slot,
+            // not that the foe is unreachable. It re-arms the bar and keeps
+            // pressing; the only thing that moves it off is the foe dying or
+            // rule 2's bump. A pursuit (ranged unit, or a RANGED target) is
+            // untouched: that is what the bar was built for.
+            if (this.meleeTargetLock()) {
+                this.stuckTimer = 0;
+            } else {
+                this.blockedTargets.add(this.target);
+                this.target = null; // force re-target next frame
+                this.stuckTimer = 0;
+            }
         }
     }
 

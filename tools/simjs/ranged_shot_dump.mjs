@@ -74,9 +74,30 @@ function installShotProbe() {
         const out = ORIGINAL_FIRE.call(this, target, isExtra);
         if (log && snap && log.missiles.length > before) {
             const m = log.missiles[log.missiles.length - 1];
+            // WHERE THE SHOT IS ACTUALLY GOING. `tx, ty` above is the target's
+            // position at launch, which is what the PRE-R5b engine aimed at.
+            // Since R5b/D2 the aim point is the ballistic intercept, displaced
+            // again if the accuracy roll failed, so the launch-time target
+            // position is neither the impact point nor the right flight
+            // length -- deriving impact_t from it mis-times every shot at a
+            // mover by the lead, which is exactly the population the R5c
+            // questions are about. The projectile the original just pushed
+            // carries the real one, so read it off instead of recomputing it.
+            const proj = this.sim.projectiles[this.sim.projectiles.length - 1];
+            if (proj) {
+                snap.ax = proj.targetX / TILE_SIZE;   // true impact point
+                snap.ay = proj.targetY / TILE_SIZE;
+                snap.planned = proj.plannedDamage;
+                snap.flight_tiles = Math.hypot(snap.ax - snap.sx,
+                                               snap.ay - snap.sy);
+                snap.impact_t = m.t + snap.flight_tiles
+                    / (proj.speed / TILE_SIZE);
+            }
             const dx = snap.tx - snap.sx, dy = snap.ty - snap.sy;
             snap.dist_tiles = Math.hypot(dx, dy);
-            snap.impact_t = m.t + snap.dist_tiles / snap.speed_tiles;
+            if (snap.impact_t === undefined) {
+                snap.impact_t = m.t + snap.dist_tiles / snap.speed_tiles;
+            }
             Object.assign(m, snap);
         }
         return out;

@@ -432,11 +432,27 @@ def load_engine(sim_dir: Path, fight_meta, seed: int) -> Fight | None:
     for m in raw["missiles"]:
         if "tx" not in m:      # a shot with no target snapshot: unusable
             continue
+        # LANDING POINT. `tx, ty` is the target's position at launch -- the
+        # point the PRE-R5b engine froze its impact at, which is why it was
+        # the right field when this module was written. Since R5b the shot
+        # flies to a ballistic intercept, displaced again on a failed accuracy
+        # roll, and ranged_shot_dump.mjs now reads that true endpoint off the
+        # projectile as `ax, ay` (with the flight time to match). Prefer it
+        # when the dump carries it; a dump written before that change has no
+        # `ax`, so those files reproduce exactly as before.
+        ix, iy = (m["ax"], m["ay"]) if "ax" in m else (m["tx"], m["ty"])
         shots.append({
             "t": m["t"], "owner": m["owner"], "shooter": m["fired_from"],
-            "sx": m["sx"], "sy": m["sy"], "ix": m["tx"], "iy": m["ty"],
-            "impact_t": m["impact_t"], "dist": m["dist_tiles"],
+            "sx": m["sx"], "sy": m["sy"], "ix": ix, "iy": iy,
+            "impact_t": m["impact_t"],
+            "dist": m.get("flight_tiles", m["dist_tiles"]),
             "censored": False, "true_target": m.get("target"),
+            "planned": m.get("planned"),
+            # The target's position at launch, kept alongside the landing
+            # point so the LEAD the engine actually applied -- landing point
+            # minus launch-time target position -- is observable on every
+            # shot, not only on the ones that connected.
+            "launch_tx": m["tx"], "launch_ty": m["ty"],
         })
     shots.sort(key=lambda s: s["t"])
     sides = {}

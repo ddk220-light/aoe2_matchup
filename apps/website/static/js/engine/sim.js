@@ -85,10 +85,37 @@ export class Simulation {
         // (static/lab/sim_harness.js) reads them for its live DPS / hit-rate
         // readout. Written in BattleUnit.performAttackOn / fireProjectile
         // (swings) and BattleUnit.takeDamage (hitsLanded + damageDealt).
+        // `shotPicks` / `allCovered` are R5d-T1's own diagnostics: how many
+        // ranged shots went through the per-shot selection, and how many of
+        // those found EVERY reachable enemy already covered and fell back to
+        // the nearest. Same contract as the three counters above -- never read
+        // by the engine, no rng, absent from stateHash().
         this.combatStats = {
-            1: { swings: 0, hitsLanded: 0, damageDealt: 0 },
-            2: { swings: 0, hitsLanded: 0, damageDealt: 0 },
+            1: { swings: 0, hitsLanded: 0, damageDealt: 0, shotPicks: 0, allCovered: 0 },
+            2: { swings: 0, hitsLanded: 0, damageDealt: 0, shotPicks: 0, allCovered: 0 },
         };
+        // ===== R5d-T2: SAME-TICK CLAIM LEDGER =====
+        // Two shooters that launch in the same 1/60 s tick are invisible to
+        // each other's in-flight accounting: the second one's arrival-order
+        // test (inboundDamageOn) discards the first one's projectile whenever
+        // it will land later, even though both were fired from the same frozen
+        // positions and neither could have reacted to the other. The forensics
+        // attribute 27-43% of the engine hand cannoneer's residual in-flight
+        // waste to exactly that pair (r5c_targeting_forensics.md Q1d).
+        //
+        // The ledger is the missing "I have already committed a shot to this
+        // unit this tick" fact, and nothing more: `tickClaims` totals the
+        // planned post-armor damage per victim, and `tickClaimShots` names the
+        // projectiles it came from so inboundDamageOn can drop them and avoid
+        // double-counting the same arrow twice. Both are cleared at the top of
+        // every update(), so no state survives a tick and unit update order --
+        // which is fixed -- is the only thing that decides who sees whom.
+        //
+        // Written by BattleUnit.fireProjectile (behind R5D.sameTickClaims),
+        // read by BattleUnit.coveredDamageOn. Absent from stateHash() because
+        // it is derived, per-tick, and empty at every tick boundary.
+        this.tickClaims = new Map();
+        this.tickClaimShots = new Set();
         // Event recorder for cross-engine calibration (Task 3 of the combat-
         // calibration project): null by default, exactly like combatStats above
         // it — nothing in the engine ever reads this back, it draws no
@@ -114,6 +141,11 @@ export class Simulation {
 
     update(dt) {
         this.battleTime += dt;
+        // R5d-T2: the claim ledger is per-TICK by definition. Cleared here,
+        // before anything can read or write it, so a claim can never leak from
+        // one tick into the next (that is what the projectile list is for).
+        this.tickClaims.clear();
+        this.tickClaimShots.clear();
         const allUnits = [...this.team1, ...this.team2];
         // Combat-pack flags (E8), refreshed ONCE per tick off the positions
         // every unit can still see -- before anybody moves. Computing it here

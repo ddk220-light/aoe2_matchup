@@ -82,6 +82,55 @@ export function setR5D1(overrides) {
     return R5D1;
 }
 
+// ===== ROUND 5d — RANGED TARGETING / APPROACH (master off-switches) =====
+// Three rules measured in docs/calibration/r5c_targeting_forensics.md (Q1) and
+// docs/calibration/r5c_depth_forensics.md. Like R5B these are MECHANISMS, not
+// tuning constants: not one of them introduces a fitted number. T1 and T2 only
+// change WHICH enemy an already-committed shot is given to; T3 deletes a piece
+// of state (a latch) and carries no new quantity at all -- it reuses R5B's own
+// `reach - one body diameter` margin as a continuous condition.
+//
+// Setting all three to false restores post-R5b / pre-R5d behaviour
+// BIT-IDENTICALLY; that identity is asserted by
+// tests/js/engine/r5d_targeting.test.mjs and was hash-verified against
+// 71cd4a9 over the six ranged fights x 3 seeds.
+//
+// Deliberately a SEPARATE object from R5B rather than three more keys in it:
+// `--r5b off` must keep meaning "the pre-R5b engine" and nothing else, and a
+// sweep over R5B's four rules must not silently drag these along.
+export const R5D = {
+    // T1  per-shot re-selection: at every shot, pick the nearest enemy in
+    //     reach whose death is not already covered by committed friendly
+    //     damage -- not the unit's standing target, and not sticky.
+    perShotSelect: true,
+    // T2  same-tick claim ledger: a shot committed earlier in THIS tick counts
+    //     as covering its victim for every later shooter in the same tick,
+    //     regardless of arrival order (they were fired from the same frozen
+    //     positions and cannot see each other's flight times).
+    sameTickClaims: true,
+    // T3  continuous re-approach: no `rangedClosed` latch -- a ranged unit
+    //     approaches whenever its target is outside the R5B margin and holds
+    //     inside it, with no memory of having once been closed.
+    //
+    //     SHIPPED OFF -- REFUTED by its own target fight: the R5B margin
+    //     binds, not the latch's memory. T3-alone moves the HCA_vs_HC
+    //     standoff p90 not at all (0.87 -> 0.87 vs the tape's 4.78), is worth
+    //     0.07 HP-pts and zero winners on the full corpus, and costs a winner
+    //     in combination with T1+T2. The tape's formation elongation has a
+    //     different, still-unidentified mechanism. Code kept for the
+    //     off-switch identity and future A/Bs.
+    reapproach: false,
+};
+
+/** Apply a partial override to {@link R5D}. Harness-only entry point. */
+export function setR5D(overrides) {
+    for (const k of Object.keys(overrides)) {
+        if (!(k in R5D)) throw new Error(`setR5D: unknown flag ${k}`);
+        R5D[k] = Boolean(overrides[k]);
+    }
+    return R5D;
+}
+
 // ===== CONSTANTS =====
 export const CANVAS_WIDTH = 900;
 export const CANVAS_HEIGHT = 600;

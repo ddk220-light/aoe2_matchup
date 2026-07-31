@@ -42,7 +42,7 @@ import path from "node:path";
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import { BattleUnit } from "../../apps/website/static/js/engine/battle_unit.js";
 import { TILE_SIZE } from "../../apps/website/static/js/engine/constants.js";
-import { applyR5BSpec, applyR5D1Spec } from "./calib_runner.mjs";
+import { applyR5BSpec, applyR5D1Spec, applyR5DSpec } from "./calib_runner.mjs";
 import {
     loadManifest, loadCalibDicts, loadCalibSpawns, spawnsForFight,
 } from "./calib_runner.mjs";
@@ -192,6 +192,8 @@ applyR5BSpec(flag("--r5b", null));
 // Round-5d-1 projectile/aim rules, same grammar (`--r5d1 off` == the R5b
 // engine 71cd4a9, which is the engine column the R5c report measured).
 applyR5D1Spec(flag("--r5d1", null));
+// Same for the Round-5d targeting/approach rules (--r5d off == pre-R5d).
+applyR5DSpec(flag("--r5d", null));
 
 const dicts = loadCalibDicts();
 const spawns = loadCalibSpawns();

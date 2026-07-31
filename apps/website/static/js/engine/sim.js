@@ -120,8 +120,17 @@ export class Simulation {
         // rather than inside the O(3n^2) collision passes is both cheaper and
         // the only way both members of a pair agree: a flag recomputed mid-pass
         // would depend on the pair iteration order. See constants.js.
-        for (const unit of allUnits)
+        for (const unit of allUnits) {
             unit.inCombatPack = unit.computeCombatPack();
+            // D2 ballistic lead needs each unit's ACTUAL velocity (the engine's
+            // vx/vy is a normalised heading, not a speed, and never returns to
+            // zero when a unit stops). Refreshed here for the same reason the
+            // combat-pack flag is: once per tick, off the positions everybody
+            // can still see, before anyone has moved -- so two units that fire
+            // at each other on the same tick lead each other off the same
+            // snapshot, whatever order the teams update in.
+            unit.refreshVelocity(dt);
+        }
         for (const unit of this.team1)
             unit.update(dt, allUnits, this.team2);
         for (const unit of this.team2)

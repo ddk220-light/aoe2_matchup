@@ -41,6 +41,8 @@ import {
     MELEE_LANE_REACQUIRE,
     MELEE_LANE_CANDIDATE_CAP,
     R5B,
+    PROJECTILE_RADIUS_TILES,
+    ACCURACY_DISPERSION_BY_SLUG,
 } from "./constants.js";
 import { Projectile, classifyProjectile } from "./projectile.js";
 import { MeleeEffect } from "./melee_effect.js";
@@ -179,6 +181,11 @@ export class BattleUnit {
         // (Thumb Ring only boosts the primary), matching the backend.
         this.accuracy = (stats.accuracy || 100) / 100;
         this.baseAccuracy = (stats.base_accuracy || 100) / 100;
+        // D2: the dat's Type50.accuracy_dispersion, in TILES -- the radius an
+        // accuracy-roll failure throws the aim point by. Not yet carried by
+        // the extraction pipeline, so this is normally 0 here and the per-slug
+        // dat table in constants.js supplies it; see accuracyDispersionPx().
+        this.accuracyDispersion = stats.accuracy_dispersion || 0;
 
         // Unique mechanics
         this.extraProjectiles = stats.extra_projectiles || 0;
@@ -318,9 +325,24 @@ export class BattleUnit {
         this.animHold = 0;
         this.damageNumbers = [];
 
-        // Movement smoothing -- prevents vibration
+        // Movement smoothing -- prevents vibration. NOTE: vx/vy is a normalised
+        // HEADING, not a velocity (it is multiplied by moveAmount at the point
+        // of use, and is never reset when the unit stops). D2's lead needs a
+        // real velocity, which is velX/velY below.
         this.vx = 0;
         this.vy = 0;
+
+        // --- true per-tick velocity, px/s (D2 ballistic lead) ---
+        // Derived from the distance actually covered over the previous tick,
+        // so it includes collision shoves and is exactly zero for a unit that
+        // stood still. Refreshed once per tick by Simulation.update().
+        this.velX = 0;
+        this.velY = 0;
+        this.prevTickX = 0;
+        this.prevTickY = 0;
+        // x/y are assigned by the scenario AFTER construction, so the first
+        // refresh only seeds the baseline and reports zero velocity.
+        this.velSeeded = false;
         // Horizontal facing: sprites are authored facing LEFT, so faceRight=true
         // means mirror. At spawn, team 1 (left) faces its enemies on the right and
         // team 2 (right) faces left; during battle it tracks the target/movement
@@ -790,6 +812,70 @@ export class BattleUnit {
             ? this.wasMoving
             : this.movedSinceShot;
         return this.attackDelay + (hadToStop ? RANGED_STOP_OVERHEAD : 0);
+    }
+
+    // ===== D2 BALLISTIC LEAD + ARRIVAL RESOLUTION =====
+
+    // Per-tick velocity in px/s, from the ground actually covered last tick.
+    // Called once per unit per tick by Simulation.update(), before anyone
+    // moves. The first call only seeds the baseline (the scenario assigns x/y
+    // after construction), so nothing is ever launched at a phantom velocity.
+    refreshVelocity(dt) {
+        if (this.velSeeded && dt > 0) {
+            this.velX = (this.x - this.prevTickX) / dt;
+            this.velY = (this.y - this.prevTickY) / dt;
+        } else {
+            this.velX = 0;
+            this.velY = 0;
+        }
+        this.prevTickX = this.x;
+        this.prevTickY = this.y;
+        this.velSeeded = true;
+    }
+
+    // Accuracy dispersion in PIXELS: the radius an accuracy-roll failure may
+    // throw the aim point by. Prefers a dict field (so the day extraction
+    // starts carrying accuracy_dispersion this lookup silently becomes dead
+    // code), then the dat-read per-slug table, and returns 0 for a unit we
+    // have no dat value for -- which fireProjectile reads as "use the legacy
+    // MISS_SPREAD scatter". See constants.js for the values and the reasoning.
+    accuracyDispersionPx() {
+        const fromDict = this.accuracyDispersion;
+        if (fromDict > 0) return fromDict * TILE_SIZE;
+        const bySlug = ACCURACY_DISPERSION_BY_SLUG.get(this.slug);
+        return bySlug > 0 ? bySlug * TILE_SIZE : 0;
+    }
+
+    // Where to throw the shot so it meets a moving target: the intercept of
+    // the target's current velocity with the projectile's flight time.
+    //
+    // The tape says this is what the game does. Over 1,501 reconstructed tape
+    // flights the largest perpendicular deviation from a track's own
+    // launch->impact chord is 0.00122 tiles -- the arrow does NOT home -- yet
+    // for victims that moved, the landing point sits 0.50-0.88 tiles from
+    // where the victim was at LAUNCH and only 0.22-0.38 tiles from where it
+    // was at IMPACT. It is aimed at where the target will be. (The dat agrees
+    // that nothing homes: smart_mode = 0 on all four of these projectiles.)
+    //
+    // Solved by two fixed-point iterations rather than the quadratic: the
+    // flight time depends on the distance to the aim point, which depends on
+    // the flight time. Two passes converge to well under a pixel at these
+    // speeds and, unlike the closed form, cannot produce a complex root when
+    // the target outruns the projectile.
+    aimPointFor(target) {
+        if (!R5B.ballisticLead) return { x: target.x, y: target.y };
+        const speed =
+            this.projectileSpeed > 0 ? this.projectileSpeed : 7 * TILE_SIZE;
+        let ax = target.x;
+        let ay = target.y;
+        for (let i = 0; i < 2; i++) {
+            const dx = ax - this.x;
+            const dy = ay - this.y;
+            const flight = Math.sqrt(dx * dx + dy * dy) / speed;
+            ax = target.x + target.velX * flight;
+            ay = target.y + target.velY * flight;
+        }
+        return { x: ax, y: ay };
     }
 
     // The launch itself, factored out of update()'s ranged branch so the
@@ -1386,25 +1472,122 @@ export class BattleUnit {
                 ? this.projectileSpeed
                 : 7 * TILE_SIZE;
         const attacker = this;
+
+        // ===== D2: WHERE THE SHOT IS THROWN =====
+        // Pre-R5b the aim point was `target.x, target.y` at LAUNCH and the hit
+        // was decided by the accuracy roll alone -- the projectile's flight was
+        // decorative, so a shot could not miss a target that walked away, and a
+        // dat-100%-accuracy unit could not miss at all. The tape says both are
+        // wrong: 100%-accuracy units miss 6-27% of their shots against movers
+        // (and ~0% against stationary targets), and the hand cannoneer's
+        // on-target failure is 4-12%, not the flat 25% its dat accuracy implies.
+        //
+        // The replacement has three parts and no new constant:
+        //   1. aim at the INTERCEPT (aimPointFor), so a mover is led;
+        //   2. an accuracy-roll failure DISPLACES that aim point by up to the
+        //      dat's accuracy_dispersion instead of teleporting the shot 2
+        //      tiles away -- so a near miss can still connect;
+        //   3. the hit is resolved ON ARRIVAL against where the target actually
+        //      is by then (see the onHit closure), not predetermined here.
+        const aim = this.aimPointFor(target);
+        let impactX = aim.x;
+        let impactY = aim.y;
+        const dispersionPx = this.accuracyDispersionPx();
+        // Legacy scatter is kept for any unit whose dat dispersion we have not
+        // read (dispersionPx === 0): those keep the flat 2-tile miss throw, so
+        // D2 cannot silently invent accuracy for the rest of the roster.
+        const scatterPx = dispersionPx > 0 ? dispersionPx : MISS_SPREAD;
+        if (R5B.ballisticLead && !willHit) {
+            // Same two rng draws, in the same order and from the same stream,
+            // as the legacy miss throw -- this is the EXISTING accuracy roll's
+            // consequence relocated from impact time to launch time, not a new
+            // random source. It MUST stay behind the flag: the legacy path
+            // still draws these two at arrival, and drawing them twice would
+            // desync the rng and break the off-switch's bit-identity.
+            const missAngle = this.sim.rng.next() * 2 * Math.PI;
+            const missDist = this.sim.rng.next() * scatterPx;
+            impactX += missDist * Math.cos(missAngle);
+            impactY += missDist * Math.sin(missAngle);
+        }
+        // A shot connects when it arrives within the target's body plus the
+        // projectile's own body (both dat collision radii).
+        const projRadiusPx = PROJECTILE_RADIUS_TILES * TILE_SIZE;
         // Siege splash: every unit blasts at its TRUE splash_radius. This used
         // to inflate single stones to a 2.5-tile minimum "so mangonel/onager
         // can hit clusters"; the tapes say otherwise (see the blast-falloff
         // commit and tests/js/engine/blast_falloff.test.mjs).
         const splashR =
             attacker.splashRadius > 0 ? attacker.splashRadius : 0;
-        const impactX = target.x;
-        const impactY = target.y;
+        if (!R5B.ballisticLead) {
+            // Legacy aim: freeze the impact at the target's launch position.
+            impactX = target.x;
+            impactY = target.y;
+        }
+        // `didHit` is filled in by the closure below and read afterwards by the
+        // splash / pass-through / kill-bonus blocks, all of which used to key
+        // off the launch-time `willHit`.
+        let didHit = false;
         const proj = new Projectile(
             this.x,
             this.y,
-            target.x,
-            target.y,
+            impactX,
+            impactY,
             speed,
             this.team,
             this.projectileKind,
             () => {
                 const targetWasAlive = target.state !== "dead";
-                if (target.state !== "dead" && willHit) {
+                if (R5B.ballisticLead) {
+                    // ===== D2: ARRIVAL RESOLUTION =====
+                    // The shot has landed at (impactX, impactY). Whether it
+                    // connects is decided HERE, against where the target
+                    // actually is now -- not by a flag set when it was fired.
+                    // A target that stepped off the aim point is missed, which
+                    // is the mechanism behind the tape's dodge rate and behind
+                    // hand cannoneer flights that reach 9.3 tiles on a 7-tile
+                    // unit (the aim was thrown ahead of a runner).
+                    if (targetWasAlive) {
+                        const dx = target.x - impactX;
+                        const dy = target.y - impactY;
+                        const reach = target.radius + projRadiusPx;
+                        didHit = dx * dx + dy * dy <= reach * reach;
+                    }
+                    if (didHit) {
+                        target.takeDamage(damage, attacker);
+                    } else if (targetWasAlive && !willHit) {
+                        // The shot went wide AND the accuracy roll had failed:
+                        // it may still graze whoever's body it came down on.
+                        // Unchanged in kind from the legacy graze -- only the
+                        // landing point is now the real one, so no extra rng is
+                        // drawn here (the scatter was rolled at launch).
+                        const foes =
+                            attacker.team === 1
+                                ? attacker.sim.team2
+                                : attacker.sim.team1;
+                        for (const enemy of foes) {
+                            if (enemy === target || enemy.state === "dead")
+                                continue;
+                            const ex = enemy.x - impactX;
+                            const ey = enemy.y - impactY;
+                            if (
+                                ex * ex + ey * ey <=
+                                enemy.radius * enemy.radius
+                            ) {
+                                const frac =
+                                    attacker.missDamagePercent > 0
+                                        ? attacker.missDamagePercent
+                                        : 0.5;
+                                enemy.takeDamage(
+                                    Math.max(1, Math.floor(damage * frac)),
+                                    attacker,
+                                );
+                                break;
+                            }
+                        }
+                    }
+                    // Otherwise: it hit the ground. No pass-through, no graze.
+                } else if (target.state !== "dead" && willHit) {
+                    didHit = true;
                     target.takeDamage(damage, attacker);
                 } else if (target.state !== "dead" && !willHit) {
                     // Missed: the arrow lands at a random point within
@@ -1455,8 +1638,14 @@ export class BattleUnit {
                     );
                 }
 
+                // Did the shot actually connect? Under D2 that is the arrival
+                // test; on the legacy path it is the launch-time roll, kept
+                // verbatim (including its quirk that a shot at a target which
+                // died mid-flight still splashes).
+                const landed = R5B.ballisticLead ? didHit : willHit;
+
                 // Siege area splash damage with distance falloff
-                if (splashR > 0 && willHit) {
+                if (splashR > 0 && landed) {
                     const enemies =
                         attacker.team === 1
                             ? attacker.sim.team2
@@ -1505,7 +1694,7 @@ export class BattleUnit {
                 if (
                     attacker.splashOnHitRadius > 0 &&
                     splashR === 0 &&
-                    willHit
+                    landed
                 ) {
                     const enemies =
                         attacker.team === 1
@@ -1533,7 +1722,7 @@ export class BattleUnit {
                 }
 
                 // Pass-through: 1 unit behind target takes fraction of damage
-                if (attacker.passThroughPercent > 0 && willHit) {
+                if (attacker.passThroughPercent > 0 && landed) {
                     const ptDmg = Math.max(
                         1,
                         Math.floor(
@@ -1567,7 +1756,7 @@ export class BattleUnit {
                 }
 
                 // Bleed
-                if (attacker.bleedDps > 0 && targetWasAlive && willHit) {
+                if (attacker.bleedDps > 0 && targetWasAlive && landed) {
                     target.bleedEffect = {
                         dps: attacker.bleedDps,
                         timeRemaining: attacker.bleedDuration,

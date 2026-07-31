@@ -987,6 +987,68 @@ export const E1_ORBIT_TANRAD = 1.77;
 // existing radial retreat for the tick. From the E1 brief, not fitted.
 export const E1_ORBIT_MIN_RADIUS_TILES = 0.5;
 
+// ===== C3 — POST-SWING PLANT (the melee chaser's halt after a landed blow) ====
+// One mechanism, from docs/calibration/c3_chaser_pursuit_forensics.md
+// (measurements in data/calibration/analysis/c3_chaser_pursuit.json). Over the
+// six chaser families (five distinct melee chaser classes) the tape's melee
+// chaser, after every LANDED swing on a ranged kiter, stands planted for a
+// median 0.64–0.74 s — with ZERO halts under 0.2 s in any family (n = 29–301
+// windows per family). The E1-on engine's chasers halt 0.0 s (65–84 % of
+// windows under 0.2 s): they swing and keep walking. That halt is, measured,
+// ~100 % of the kiter's per-reload escape (+0.50…+0.78 tiles of the +1.03
+// accrue while the chaser stands; §Q3 split), and inserting it into
+// `interval ≈ max(reload, halt + re-close)` reproduces the tape's measured
+// swing cycle in 5/6 families — including the halberdier control, whose 3.0 s
+// reload swallows halt + re-close entirely, which is why the engine already
+// matches the tape there and why this rule must not change such fights.
+//
+// The rule: when a MELEE unit LANDS a swing on a RANGED victim, it may not
+// MOVE for POST_SWING_PLANT_S seconds. Movement ONLY — implemented as a stamp
+// on the E15b `moveLockUntil` field, read by the same meleeMoveLocked()
+// predicate, so a planted unit still turns, re-targets, reloads, is shoved by
+// resolveCollisions, and (the halberdier invariant) still SWINGS on schedule:
+// update()'s in-reach attack branch is tested BEFORE the plant branch, so a
+// victim still in reach when the cooldown expires is hit at bare reloadTime.
+// The plant does not delay a committed windup or its damage either — it is
+// stamped at hit RESOLUTION (performAttackOn), after the blow has landed.
+//
+// SCOPE: melee attacker, RANGED victim only (the victim's own is_ranged flag,
+// the same scoping the pursuit-bar and MELEE_TARGET_LOCK rules use). C2B
+// refuted a melee-vs-melee plant — the tape's melee-scrum moving-share is a
+// monotone ramp across the reload cycle, not a step (e15_walk_forensics §6,
+// MELEE_SWING_RECOVERY_S rationale above) — so a melee victim never stamps
+// the lock and melee-vs-melee is bit-identical with the flag on. Ranged
+// attackers never reach the stamp (they fire projectiles, not
+// performAttackOn) and meleeMoveLocked() excludes them besides.
+//
+// SHIPPED OFF until the C3 iteration round's boards land: flipping it changes
+// every melee-chases-ranged fight in the corpus, so it ships through the same
+// A/B gate discipline as E1.orbitKite (whose knife edge — the unmodeled
+// chaser-cadence loss — this rule is the measured mechanism FOR).
+export const C3 = {
+    // The 0.7 s post-landing movement lock on melee-vs-ranged (above).
+    postSwingPlant: false,
+};
+
+/** Apply a partial override to {@link C3}. Harness-only entry point. */
+export function setC3(overrides) {
+    for (const k of Object.keys(overrides)) {
+        if (!(k in C3)) throw new Error(`setC3: unknown flag ${k}`);
+        C3[k] = Boolean(overrides[k]);
+    }
+    return C3;
+}
+
+// The plant's duration, in seconds. A MEASURED TAPE QUANTITY, same category as
+// E9's recovery constants: the tape's post-landing halt median is 0.64–0.74 s
+// across all six chaser families / five chaser classes (c3_chaser_pursuit.json
+// §Q3 — champion 0.74, halberdier 0.72, heavy_camel 0.71, paladin 0.64,
+// hussar 0.71), reading as a fixed swing-commit + recovery interval, not a
+// speed- or class-dependent one. 0.7 is the centre of that measured band; any
+// adjustment must stay inside 0.64–0.74 and record its reason here. NOT tuned
+// against the scoreboard.
+export const POST_SWING_PLANT_S = 0.7;
+
 // ---- D2 measured / dat quantities -------------------------------------------
 
 // TOTAL BOLT FLIGHT, in tiles from the muzzle. A MEASURED TAPE CONSTANT, in the

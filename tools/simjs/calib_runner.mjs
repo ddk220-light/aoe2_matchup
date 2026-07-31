@@ -66,7 +66,7 @@ import { Worker, isMainThread } from "node:worker_threads";
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import {
     R5B, setR5B, R5D1, setR5D1, R5D, setR5D, B2, setB2, R5F, setR5F,
-    C2A, setC2A, C2B, setC2B, C2C, setC2C, D2, setD2, E1, setE1,
+    C2A, setC2A, C2B, setC2B, C2C, setC2C, C3, setC3, D2, setD2, E1, setE1,
 } from "../../apps/website/static/js/engine/constants.js";
 
 // ---- Round-5b rule flags --------------------------------------------------
@@ -291,6 +291,35 @@ export function applyD2Spec(spec) {
     }
     const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
     setD2(cfg);
+    return cfg;
+}
+
+// ---- C3 post-swing-plant rule flag -------------------------------------------
+// Identical grammar again, over the SEPARATE C3 object (postSwingPlant -- the
+// melee chaser's measured 0.7 s movement lock after a landed swing on a RANGED
+// victim). `--c3 off` is the pre-C3 engine and must be bit-identical to it
+// (structural: the stamp is behind `if (C3.postSwingPlant ...)` and the shared
+// meleeMoveLocked() predicate short-circuits with the flag off while
+// MELEE_SWING_RECOVERY_S is 0). The intended pairing for the C3 iteration
+// round is `--e1 orbitKite --c3 postSwingPlant`; `--c3 postSwingPlant` alone
+// measures the plant without the orbit.
+//
+//   --c3 off                  the rule off == pre-C3 engine, bit-identical
+//   --c3 postSwingPlant       explicitly on
+//   (flag absent)             engine default, i.e. off
+export function applyC3Spec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(C3);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--c3: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setC3(cfg);
     return cfg;
 }
 
@@ -710,6 +739,12 @@ if (isMainThread && process.argv[1]
         const on = Object.entries(c2cCfg).filter(([, v]) => v).map(([k]) => k);
         console.log(`c2c rules: ${on.length ? on.join(", ") : "(none -- pre-C2C engine)"}`);
     }
+    const c3Spec = flag("--c3", null);
+    const c3Cfg = applyC3Spec(c3Spec);
+    if (c3Cfg) {
+        const on = Object.entries(c3Cfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`c3 rules: ${on.length ? on.join(", ") : "(none -- pre-C3 engine)"}`);
+    }
     const d2Spec = flag("--d2", null);
     const d2Cfg = applyD2Spec(d2Spec);
     if (d2Cfg) {
@@ -819,7 +854,7 @@ if (isMainThread && process.argv[1]
                     workerData: {
                         arenaArg, maxSeconds, outDir,
                         r5bSpec, r5d1Spec, r5dSpec, b2Spec, r5fSpec, c2aSpec,
-                        c2bSpec, c2cSpec, d2Spec, e1Spec,
+                        c2bSpec, c2cSpec, c3Spec, d2Spec, e1Spec,
                     },
                 });
                 const pump = () => {

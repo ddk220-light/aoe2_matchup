@@ -48,6 +48,8 @@ import {
     C2A,
     C2B,
     C2C,
+    C3,
+    POST_SWING_PLANT_S,
     D2,
     E1,
     E1_ORBIT_TANRAD,
@@ -986,14 +988,19 @@ export class BattleUnit {
         return null;
     }
 
-    // ===== E15b RULE 1: SWING-RECOVERY PLANT =====
+    // ===== E15b RULE 1: SWING-RECOVERY PLANT / C3: POST-SWING PLANT =====
     // Derivation (the tape's swing-phase ramp) is in constants.js next to
-    // MELEE_SWING_RECOVERY_S. This predicate is read ONLY by the melee
-    // locomotion branches of update(): a unit inside its recovery window still
-    // turns, still re-targets, still bump-retargets, still reloads, still gets
-    // shoved by resolveCollisions -- it just may not walk.
+    // MELEE_SWING_RECOVERY_S; the C3 melee-vs-ranged plant (the tape's
+    // 0.64-0.74 s post-landing halt) is next to C3/POST_SWING_PLANT_S. Both
+    // mechanisms share the one `moveLockUntil` stamp and this one predicate,
+    // which is read ONLY by the melee locomotion branches of update(): a unit
+    // inside its lock window still turns, still re-targets, still
+    // bump-retargets, still reloads, still gets shoved by resolveCollisions --
+    // it just may not walk. With MELEE_SWING_RECOVERY_S at 0 AND
+    // C3.postSwingPlant off this short-circuits before ever reading the stamp,
+    // which is what keeps both off-switches no-ops by construction.
     meleeMoveLocked() {
-        if (MELEE_SWING_RECOVERY_S <= 0) return false;
+        if (MELEE_SWING_RECOVERY_S <= 0 && !C3.postSwingPlant) return false;
         if (this.isRanged()) return false;
         return this.sim.battleTime < this.moveLockUntil;
     }
@@ -2946,6 +2953,27 @@ export class BattleUnit {
         if (MELEE_SWING_RECOVERY_S > 0 && !this.isRanged()) {
             this.moveLockUntil =
                 this.sim.battleTime + MELEE_SWING_RECOVERY_S;
+        }
+        // C3 rule (POST-SWING PLANT). The measured melee-chaser halt after a
+        // landed blow on a RANGED victim -- 0.64-0.74 s median across all six
+        // tape chaser families, zero halts under 0.2 s (constants.js C3 block,
+        // docs/calibration/c3_chaser_pursuit_forensics.md §Q3). Same stamp
+        // field and same landing-paths coverage as the E15b stamp above
+        // (delay-0 performAttack, committed windup completion, killing blows),
+        // and gated on the VICTIM being ranged: C2B refuted a melee-vs-melee
+        // plant (the tape scrum's moving-share is a ramp, not a step), so a
+        // melee victim must never write this -- that is what keeps
+        // melee-vs-melee bit-identical with the flag on. Math.max so neither
+        // this nor a nonzero MELEE_SWING_RECOVERY_S can SHORTEN a lock the
+        // other already stamped. Movement only: the in-reach attack branch of
+        // update() outruns the meleeMoveLocked() branch, so a victim still in
+        // reach at reload expiry is swung at on schedule (the halberdier
+        // control's invariant).
+        if (C3.postSwingPlant && !this.isRanged() && target.isRanged()) {
+            this.moveLockUntil = Math.max(
+                this.moveLockUntil,
+                this.sim.battleTime + POST_SWING_PLANT_S,
+            );
         }
         let damage =
             this.getDamageAgainst(target) +

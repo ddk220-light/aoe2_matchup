@@ -25,6 +25,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import {
+    applyC3Spec,
     applyE1Spec,
     loadCalibDicts,
     loadCalibSpawns,
@@ -124,7 +125,7 @@ if (process.argv[1]
     const maxSeconds = Number(flag("--max-seconds", String(MAX_SECONDS)));
     const outDir = flag("--out-dir", null);
     if (!outDir) {
-        console.error("usage: node tools/simjs/dump_kite_tracks.mjs --out-dir <dir> [--seeds 3] [--e1 <spec>] [--tags a,b]");
+        console.error("usage: node tools/simjs/dump_kite_tracks.mjs --out-dir <dir> [--seeds 3] [--e1 <spec>] [--c3 <spec>] [--tags a,b]");
         process.exit(2);
     }
     // E1 rule flags — same spec grammar and the same applyE1Spec as
@@ -134,6 +135,14 @@ if (process.argv[1]
     if (e1Cfg) {
         const on = Object.entries(e1Cfg).filter(([, v]) => v).map(([k]) => k);
         console.log(`e1 rules: ${on.length ? on.join(", ") : "(none -- pre-E1 engine)"}`);
+    }
+    // C3 rule flag — same spec grammar and the same applyC3Spec as
+    // calib_runner.mjs, so the C3 geometry re-run (--e1 orbitKite --c3
+    // postSwingPlant) configures the engine exactly like the scoreboard run.
+    const c3Cfg = applyC3Spec(flag("--c3", null));
+    if (c3Cfg) {
+        const on = Object.entries(c3Cfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`c3 rules: ${on.length ? on.join(", ") : "(none -- pre-C3 engine)"}`);
     }
     // Optional tag subset (dev-loop economy: don't run 78 fights to iterate on 5).
     const tagsArg = flag("--tags", null);

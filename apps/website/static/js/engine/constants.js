@@ -419,6 +419,108 @@ export const MELEE_CONTACT_SLOTS = 4;
 // pairs the collision pass pushed apart this tick. false disables the rule.
 export const MELEE_BUMP_RETARGET = true;
 
+// ===== E15b: SWING RECOVERY + LANE-GATED RE-ACQUISITION =====
+// E15's walk forensics (docs/calibration/e15_walk_forensics.md) corrected the
+// premise E14 handed forward. With the engine's OWN reach formula
+// (attack_range*TILE + MELEE_RANGE_BUFFER + both radii) instead of the
+// too-small one every earlier probe used, the engine is NOT under-walking:
+// moving-share is tape 39.21% vs engine 40.90%. What is wrong is WHERE the
+// walking goes. Two measured signals survived that correction, and these two
+// rules are their mechanisms. Neither reads the rng; neither scales with army
+// size; neither names a unit.
+
+// Rule 1 -- SWING RECOVERY PLANT (attack-animation completion).
+//
+// THE MEASUREMENT (report §6). Bin every melee sample by its position inside
+// the reload cycle, measured from that unit's own last LANDED hit, and ask
+// what share of them the unit spent moving:
+//
+//     phase   0-.1  .1-.2  .2-.3  .3-.4  .4-.5  .5-.6  .6-.7  .7-.8  .8-.9  .9-1
+//     tape    0.90% 3.22%  4.85%  7.57% 11.69% 13.92% 14.16% 14.36% 14.26% 14.40%
+//     engine  6.41% 5.15%  4.36%  4.25%  3.91%  4.00%  3.79%  3.60%  3.88%  6.19%
+//
+// The tape ramps monotonically 16x across the cycle and SATURATES by mid-cycle
+// (bins .5-1.0 are flat at 13.9-14.4%). The engine has no swing-phase structure
+// whatsoever -- flat, with symmetric bumps at both ends. A tape melee unit is
+// immobilised by its own swing and released as the animation completes; it is
+// NOT "planted whenever a foe is in reach", which is the step-function the
+// engine currently implements.
+//
+// THE CONSTANT. 0.5 s is the attack animation's completion time, read off the
+// ramp and nothing else: moving-share is 0.9% in phase 0-0.1 and reaches half
+// its saturated value around phase 0.3-0.4. Over this corpus's melee reload
+// times (~1.6-2.4 s in the units that dominate the sample) that half-point
+// lands at ~0.5-0.9 s and the near-total plant in the first tenth at ~0.2 s;
+// 0.5 s is the physical animation length those two brackets imply. It is a
+// DURATION, not a fraction of reload -- an animation does not get longer
+// because the unit reloads slower. It is NOT fitted to the scoreboard.
+//
+// SCOPE, exactly. It gates LOCOMOTION only, from the instant a melee swing
+// LANDS (killing blows included -- the animation still has to finish):
+//   * it does NOT delay the next swing -- reload timing is untouched;
+//   * it does NOT apply to ranged units, which already own E9's
+//     postFireRecovery, the same law in its stand-and-shoot form;
+//   * it does NOT prevent turning, target selection, bump-retarget or being
+//     shoved by resolveCollisions.
+// It EXTENDS rather than double-counts the plant the engine already had: an
+// in-reach melee unit with a cooldown running is already planted by
+// battle_unit.js's `else { this.state = "attacking" }` branch, but that plant
+// is gated on DISTANCE and evaporates the moment the victim dies or steps out
+// of reach -- which is precisely when phase 0-0.1 of the tape's cycle says the
+// unit must still be standing there finishing its swing. 0 disables the rule.
+export const MELEE_SWING_RECOVERY_S = 0.5;
+
+// Rule 2 -- LANE-GATED RE-ACQUISITION.
+//
+// THE MEASUREMENT (report §5). Over 2062 mid-fight lock births, which enemy
+// does a freed melee unit actually take?
+//
+//                                        tape     engine
+//     rank 1 (the nearest body)         25.27%    48.65%
+//     rank > 3                          30.12%     4.50%
+//     excess tiles over nearest, median  0.337     0.004
+//     excess tiles over nearest, p90     1.836     0.594
+//     path walked / straight line, med   1.278     1.036
+//
+// The engine's findTarget takes the strictly nearest living enemy, so inside a
+// scrum the new victim is whichever body the collision floor parked against it
+// -- always already in reach, never requiring a walk. The game walks a third of
+// a tile past the closest enemy half the time and nearly two tiles past it a
+// tenth of the time, and it ARCS there (1.278 path ratio).
+//
+// Saturation-avoidance, facing and uniform-radius were all measured and all
+// REFUTED (§5). The one hypothesis the corpus supports is REACHABILITY: at
+// those 2062 lock births the victim actually chosen had a blocked approach lane
+// 25.0% of the time against 31.8% for the closer victims walked past. So the
+// rule is: iterate living enemies nearest-first and take the first one you can
+// actually walk to in a straight line.
+//
+// NO FREE CONSTANT. The corridor's half-width is the ATTACKER'S OWN COLLISION
+// RADIUS -- the width of the body that has to fit through the gap. A candidate
+// is unreachable when some other body (ally or enemy) would be inside that
+// corridor, i.e. its centre lies within `other.radius + self.radius` of the
+// segment from the attacker to the candidate. That is a geometric statement
+// about whether this unit fits, not a tuned scalar.
+//
+// SCOPE, exactly. RE-ACQUISITION ONLY -- a unit's FIRST target of the fight is
+// still the plain nearest enemy. This exemption is mandatory and was paid for:
+// the unscoped variant (report §7) reads every front-rank unit's lane as
+// blocked by the ally beside it at t=0, cross-assigns the line across the
+// field, and took champion__vs__paladin margins from 21.9% to 6.7%. It applies
+// to MELEE attackers only; ranged acquisition is unchanged. false restores the
+// pre-E15b nearest-enemy rule exactly.
+export const MELEE_LANE_REACQUIRE = true;
+
+// Cost cap for rule 2, and ONLY a cost cap. The lane test is O(n) per
+// candidate, so testing every enemy at every re-acquisition would be O(n^2)
+// per event; beyond the nearest dozen bodies the candidate is so far away that
+// the walk dominates any lane consideration anyway. If all 12 nearest are
+// blocked the rule falls back to the plain nearest enemy, which is exactly the
+// pre-E15b behaviour -- so the cap can only ever make the rule LESS active,
+// never differently active. The corpus's largest army is 40 units, so this
+// binds on roughly the nearest third of a big scrum.
+export const MELEE_LANE_CANDIDATE_CAP = 12;
+
 // ===== ADJUSTABLE PRE-BATTLE CONDITIONS =====
 // Lithuanian relic bonus: the reference DB bakes in all 4 relics (+1 base
 // melee attack each) for these units. The rail picker lets the user dial

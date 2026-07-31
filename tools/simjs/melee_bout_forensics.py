@@ -67,6 +67,46 @@ BASIC_SLUGS = {"champion", "halberdier", "paladin", "heavy_camel", "hussar"}
 BOUT_SLACK = 0.5
 BOUT_SLACK_ALT = 0.25
 
+# --- reach (E15 fix) -------------------------------------------------------
+# The engine's OWN inRange(): `attack_range * TILE + MELEE_RANGE_BUFFER +
+# radiusA + radiusB`, with each radius = max(MIN_PHYSICS_RADIUS_PX,
+# collision_size * TILE). Every position-based forensic before E15 used the
+# bare `attack_range + collision_a + collision_b` in tiles instead, which is
+# 5 px + both radius clamps SHORT. For a 0-range melee unit that is not a
+# rounding error: the true reach (0.617 tiles for two infantry) sits ABOVE
+# resolveCollisions' hard floor while the old one (0.40) sits below it, so
+# "a foe is inside my reach" was UNSATISFIABLE and melee_lock_forensics
+# silently dropped 51 of its 62 sides -- every measurement it printed for
+# "moving WITH a foe in reach" came from the 11 elite_steppe (range-1) sides
+# alone.
+#
+# The formula is not taken on the engine's word. Measured over all 31
+# pure-melee recordings, the attacker-victim distance at the instant of a
+# landed hit has a median within 0.02 tiles of this formula for every one of
+# the 42 (attacker, defender) class pairs in the corpus (0.56 tape / 0.567
+# formula for champion-vs-halberdier, 1.22 / 1.667 for the range-1 lancer,
+# and so on). The long upper tail on tape -- p99 up to 2.2 tiles -- is
+# attack-delay: a melee swing that was launched in contact still lands after
+# the victim has walked off, which is a damage-application rule and not a
+# reach.
+TILE = 30.0
+MELEE_RANGE_BUFFER_PX = 5.0
+MIN_PHYSICS_RADIUS_PX = 5.0
+
+
+def physics_radius_px(unit_dict) -> float:
+    tiles = unit_dict.get("collision_size")
+    if tiles is None:
+        tiles = unit_dict.get("outline_size") or 0.2
+    return max(MIN_PHYSICS_RADIUS_PX, tiles * TILE)
+
+
+def engine_reach(attacker_dict, defender_dict) -> float:
+    """Reach in TILES, identical to BattleUnit.inRange()."""
+    return (attacker_dict["attack_range"] * TILE + MELEE_RANGE_BUFFER_PX
+            + physics_radius_px(attacker_dict)
+            + physics_radius_px(defender_dict)) / TILE
+
 
 # ---------------------------------------------------------------------------
 # loading

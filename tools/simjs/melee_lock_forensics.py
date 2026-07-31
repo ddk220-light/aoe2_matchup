@@ -44,6 +44,7 @@ from pathlib import Path
 
 from melee_bout_forensics import (
     load_manifest, load_dicts, tape_damage, sim_damage, pick_fights, TAPES,
+    engine_reach,
 )
 
 
@@ -263,7 +264,11 @@ def main():
             if args.positions:
                 a = dicts[f"{side['civ']}|{side['slug']}"]
                 b = dicts[f"{foe['civ']}|{foe['slug']}"]
-                reach = a["attack_range"] + a["collision_size"] + b["collision_size"]
+                # E15: the engine's own inRange, not the short tile-space
+                # approximation this file used through E14 -- see
+                # melee_bout_forensics.engine_reach for why that one dropped
+                # 51 of the 62 melee sides on the floor.
+                reach = engine_reach(a, b)
                 f1, r1 = nearest_vs_locked(tev, side["owner"], tfr, foe["owner"])
                 if f1 is not None:
                     tape_nn.append(f1)

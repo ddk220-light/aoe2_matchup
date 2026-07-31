@@ -43,6 +43,8 @@ import {
     R5B,
     R5D1,
     R5D,
+    R5F,
+    SILENCE_ADVANCE_CYCLES,
     PROJECTILE_RADIUS_TILES,
     ACCURACY_DISPERSION_BY_SLUG,
     LEAD_WINDOW_SECONDS,
@@ -371,6 +373,38 @@ export class BattleUnit {
         // leaves reach. Starts false -- everything opens the fight by
         // approaching.
         this.rangedClosed = false;
+
+        // --- R5f A1: the silence clock (see constants.js R5F.silenceAdvance) ---
+        // Sim clock instant at which a projectile fired by THIS unit last put
+        // damage on an enemy body -- a full hit, a P1 reduced hit or a graze
+        // alike, on the intended victim or on whoever the shot came down on.
+        // Stamped in fireProjectile's arrival closure and read only by
+        // silentBeyondCycles().
+        //
+        // Written UNCONDITIONALLY, not behind R5F.silenceAdvance: with the flag
+        // off nothing reads it, so the off path stays bit-identical, and a
+        // forensics probe can still measure the engine's silence occupancy at
+        // base (which is the honest way to check whether A1 is inert).
+        //
+        // Initialised to 0 rather than -Infinity, and paired with the
+        // hasFiredRangedShot gate below: a unit that has fired and never landed
+        // anything has genuinely been silent since the fight started, which is
+        // exactly what the rule is about. Before its first shot the opening
+        // approach already governs and the gate keeps A1 out of it.
+        this.lastLandedHitTime = 0;
+        // Has this unit ever launched a projectile? A1 is scoped to units that
+        // HAVE fired, matching the tape's separate "never fired" bin (close%
+        // 35.8 tape vs 33.3 engine -- already in agreement, so there is nothing
+        // to change there). Set in fireProjectile, never cleared.
+        this.hasFiredRangedShot = false;
+
+        // --- R5f A2: shot-level victim persistence (R5F.persistVictim) ---
+        // The victim of this unit's PREVIOUS volley, i.e. what `persist` in
+        // `persist -> nearest-uncovered` persists on. Written in performAttack
+        // once per volley (never per extra arrow), unconditionally for the same
+        // reason as the clock above. Null until the first shot.
+        this.lastShotVictim = null;
+
         // Horizontal facing: sprites are authored facing LEFT, so faceRight=true
         // means mirror. At spawn, team 1 (left) faces its enemies on the right and
         // team 2 (right) faces left; during battle it tracks the target/movement
@@ -1038,19 +1072,62 @@ export class BattleUnit {
     // in; it is simply outside the margin, so the unit keeps walking. Army
     // elongation is NOT modelled here and no formation logic is added: if it
     // appears it has to emerge from units re-approaching different targets.
+    // ===== R5f-A1: ADVANCE ON SILENCE =====
+    // Has this ranged unit gone quiet for longer than the tape's measured
+    // breakpoint, with something still alive to shoot at? See constants.js
+    // (R5F.silenceAdvance and SILENCE_ADVANCE_CYCLES) for the measurement.
+    //
+    // "Quiet" is LANDED, not launched: the clock resets when a projectile this
+    // unit fired actually put damage on a body, so a unit whose shots keep
+    // grounding is silent even though it is still pulling the trigger.
+    //
+    // NOTE, recorded because it is the one place this rule's definition and its
+    // evidence differ: r5e_pick_forensics.md §4b bins the tape by LAUNCH gap
+    // ("how long since that unit last fired"), and the R5f brief specifies the
+    // rule on LANDED hits. The brief is what is implemented here. The two
+    // differ by one flight time plus every shot that delivers nothing, so the
+    // engine's landed-gap occupancy is a superset of its launch-gap occupancy;
+    // both are reported in the round's write-up. Swapping the clock to launch
+    // time is a one-line change behind this same flag.
+    silentBeyondCycles() {
+        if (!this.isRanged()) return false;
+        if (!this.hasFiredRangedShot) return false;
+        const tgt = this.target;
+        if (!tgt || tgt.state === "dead") return false;
+        const now = this.sim ? this.sim.battleTime : 0;
+        return (
+            now - this.lastLandedHitTime >
+            SILENCE_ADVANCE_CYCLES * this.reloadTime
+        );
+    }
+
     rangedShouldApproach() {
         if (!R5B.approachMargin) return !this.inRange();
         const dist = this.distanceTo(this.target);
         const reach =
             this.attackRange + this.radius + this.target.radius;
         const inner = Math.max(this.minAttackRange, reach - 2 * this.radius);
-        if (R5D.reapproach) return dist > inner;
+        // R5f-A1. The ONLY thing the silence rule does is force this predicate
+        // true: the unit then walks through the same moveTowardTarget() every
+        // other approach uses. It overrides the margin HOLD and the latch's
+        // memory, and nothing else -- the minimum-range clamp is a physical
+        // dead zone, not a hold, so it still binds (a unit that walked inside
+        // its own min range would be bounced straight back out by tooClose()
+        // on the next tick, which is an oscillation, not a ride-in).
+        const advance =
+            R5F.silenceAdvance &&
+            dist > this.minAttackRange &&
+            this.silentBeyondCycles();
+        if (R5D.reapproach) return advance || dist > inner;
+        // The latch bookkeeping runs FIRST and unconditionally, so a silent
+        // unit's latch state still evolves exactly as it would have; A1
+        // overrides the ANSWER, it does not skip the state machine.
         if (dist > reach) {
             this.rangedClosed = false;      // target has left reach entirely
         } else if (dist <= inner) {
             this.rangedClosed = true;       // settled inside the margin
         }
-        return !this.rangedClosed;
+        return advance || !this.rangedClosed;
     }
 
     // ===== D3 IN-FLIGHT DAMAGE ACCOUNTING =====
@@ -1195,8 +1272,41 @@ export class BattleUnit {
     // every reachable enemy is covered, the nearest one is shot anyway: no
     // hold-fire, which the tape does not show either. No constant, no rng;
     // ties break on team-array order exactly as findTarget's do.
+    //
+    // ===== R5f-A2: PERSIST -> NEAREST-UNCOVERED =====
+    // T1's every-shot re-pick is measurably the wrong half of the family. R5e
+    // M2 splits the tape's shots by the state of the previous victim and finds
+    // one large, clean gap: in the OPEN regime -- previous victim alive, in
+    // reach, uncovered, 34.6% of tape shots and 34.9% of engine shots -- the
+    // tape re-picks that victim 52.0% of the time and takes the strict nearest
+    // 49.0%, while the engine re-picks 76.4% and takes the nearest 96.5%. M5
+    // scores the rules: `persist->nearest` leads on per-pick accuracy (55.9%
+    // pooled, best on 7 of 12 sides) ahead of plain nearest (53.4%) and shipped
+    // T1 (53.0%), and is distributionally closer than either.
+    //
+    // So the rule keeps ONE more fact than T1 did -- who this unit shot last --
+    // and asks the same three questions of it that T1 asks of every candidate:
+    // alive, reachable, not already lethally covered. Coverage is R5d's, byte
+    // for byte (inbound-arriving-first + this tick's claims); when persistence
+    // fails, the fallback IS T1, including its plain-nearest all-covered
+    // branch. No constant, no rng, no new state beyond the one reference.
     selectShotTarget(primary) {
         const foes = this.team === 1 ? this.sim.team2 : this.sim.team1;
+        if (R5F.persistVictim) {
+            const held = this.lastShotVictim;
+            if (
+                held &&
+                held.state !== "dead" &&
+                this.canReach(held) &&
+                this.coveredDamageOn(held) < held.currentHp
+            ) {
+                const s = this.sim && this.sim.combatStats
+                    ? this.sim.combatStats[this.team]
+                    : null;
+                if (s) s.shotPicks++;
+                return held;
+            }
+        }
         let best = null;
         let bestDist = Infinity;
         let nearest = null;
@@ -1769,6 +1879,13 @@ export class BattleUnit {
         const primary = this.isRanged()
             ? this.pickShotTarget(this.target)
             : this.target;
+        // R5f-A2 write side: remember this VOLLEY's victim (never an extra
+        // arrow's scatter target) so the next shot can persist on it. Written
+        // unconditionally -- with the flag off nothing reads it, so the off
+        // path is bit-identical -- and only when a shot is actually going out.
+        if (this.isRanged() && primary && primary.state !== "dead") {
+            this.lastShotVictim = primary;
+        }
         let scatI = 0;
         for (let p = 0; p < numProjectiles; p++) {
             if (primary && primary.state !== "dead") {
@@ -1884,6 +2001,14 @@ export class BattleUnit {
         // splash / pass-through / kill-bonus blocks, all of which used to key
         // off the launch-time `willHit`.
         let didHit = false;
+        // R5f-A1 write side: did this projectile put damage on ANY body --
+        // full hit, P1 reduced hit or graze, intended victim or not? Set at
+        // every damage-applying branch of the closure below and read once at
+        // the end to stamp the shooter's silence clock.
+        let delivered = false;
+        // R5f-A1: this unit has now pulled the trigger, so it leaves the
+        // tape's "never fired" bin and the silence rule can apply to it.
+        this.hasFiredRangedShot = true;
         const proj = new Projectile(
             this.x,
             this.y,
@@ -1991,6 +2116,7 @@ export class BattleUnit {
                                     ? attacker.missDamagePercent
                                     : 0.5;
                             victim.takeDamage(full * frac, attacker);
+                            delivered = true;   // R5f-A1
                         }
                         // Otherwise: it hit the ground.
                         //
@@ -2002,6 +2128,7 @@ export class BattleUnit {
                         // would change siege behaviour on a guess.
                     } else if (didHit) {
                         target.takeDamage(damage, attacker);
+                        delivered = true;   // R5f-A1
                     } else if (targetWasAlive && !willHit) {
                         // The shot went wide AND the accuracy roll had failed:
                         // it may still graze whoever's body it came down on.
@@ -2029,6 +2156,7 @@ export class BattleUnit {
                                     Math.max(1, Math.floor(damage * frac)),
                                     attacker,
                                 );
+                                delivered = true;   // R5f-A1
                                 break;
                             }
                         }
@@ -2037,6 +2165,7 @@ export class BattleUnit {
                 } else if (target.state !== "dead" && willHit) {
                     didHit = true;
                     target.takeDamage(damage, attacker);
+                    delivered = true;   // R5f-A1
                 } else if (target.state !== "dead" && !willHit) {
                     // Missed: the arrow lands at a random point within
                     // MISS_SPREAD of the intended impact. If a (different) unit
@@ -2068,10 +2197,19 @@ export class BattleUnit {
                                 Math.max(1, Math.floor(damage * frac)),
                                 attacker,
                             );
+                            delivered = true;   // R5f-A1
                             break;
                         }
                     }
                 }
+
+                // ===== R5f-A1: STAMP THE SILENCE CLOCK =====
+                // Any damage this shot actually put on a body resets its
+                // shooter's clock; a shot that grounds does not. Read-only
+                // with R5F.silenceAdvance off (nothing consults the field),
+                // which is what keeps the off path bit-identical while still
+                // letting a probe measure base silence occupancy.
+                if (delivered) attacker.lastLandedHitTime = attacker.sim.battleTime;
 
                 if (
                     attacker.attackBonusPerKill > 0 &&
@@ -2218,11 +2356,40 @@ export class BattleUnit {
         // they are set on every path so the legacy engine carries them too
         // (inert there, because nothing reads them with the flag off).
         proj.targetUnit = target;
-        proj.plannedDamage = damage;
+        // ===== R5f-A3: WHAT THE SHOT ADVERTISES =====
+        // The coverage machinery asks "how much damage is already committed to
+        // this body". Before R5f every projectile answered with its FULL
+        // post-armor damage, including one whose accuracy roll had already
+        // failed at launch. R5e M6 identified that population exactly (fail%
+        // 25.7-26.4 on the three hand-cannoneer sides, 0.0 on all nine
+        // accuracy-100 sides -- so this rule cannot move those nine at all) and
+        // measured what over-counting it costs: between a fifth and a half of
+        // every redirect the hand cannoneer makes is a redirect away from a
+        // target that only LOOKS covered.
+        //
+        // The value advertised is what the shot will actually do under the
+        // config it is fired in:
+        //   * R5D1.reducedDamageHits ON  -> a failed roll can never be a full
+        //     hit; it pays exactly half the post-armor damage if its displaced
+        //     landing point overlaps a body. Advertise half.
+        //   * R5D1.reducedDamageHits OFF (shipped) -> a failed roll is only
+        //     displaced by the dat dispersion and is then resolved on arrival
+        //     like any other shot, so it still pays FULL when it connects.
+        //     Advertise full -- i.e. this rule is a no-op in the shipped
+        //     config, by construction and not by accident.
+        // The expected value is deliberately NOT discounted by the probability
+        // that the displaced shot clears the body: that probability is not a
+        // measured quantity here, and inventing it would be a fitted constant.
+        const advertised =
+            R5F.failedRollPlannedDamage && !willHit && R5D1.reducedDamageHits
+                ? damage * 0.5
+                : damage;
+        proj.plannedDamage = advertised;
         // R5d-T2: and register the same fact in this tick's claim ledger, so a
         // shooter that has not updated yet this tick sees the commitment even
-        // though the arrival-order test would discard the arrow.
-        this.claimShot(proj, target, damage);
+        // though the arrival-order test would discard the arrow. Same value:
+        // one ledger, one number.
+        this.claimShot(proj, target, advertised);
         this.recordMissile();
         this.sim.projectiles.push(proj);
         this.attackAnimTimer = 0.15;

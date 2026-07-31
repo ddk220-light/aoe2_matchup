@@ -65,7 +65,7 @@ import { Worker, isMainThread } from "node:worker_threads";
 
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import {
-    R5B, setR5B, R5D1, setR5D1, R5D, setR5D,
+    R5B, setR5B, R5D1, setR5D1, R5D, setR5D, R5F, setR5F,
 } from "../../apps/website/static/js/engine/constants.js";
 
 // ---- Round-5b rule flags --------------------------------------------------
@@ -143,6 +143,29 @@ export function applyR5DSpec(spec) {
     }
     const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
     setR5D(cfg);
+    return cfg;
+}
+
+// ---- Round-5f rule flags --------------------------------------------------
+// Identical grammar again, over the SEPARATE R5F object (silenceAdvance,
+// persistVictim, failedRollPlannedDamage).
+//
+//   --r5f off                 all three off == the R5d engine (716a522)
+//   --r5f persistVictim       ONLY that rule on
+//   (flag absent)             engine defaults
+export function applyR5FSpec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(R5F);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--r5f: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setR5F(cfg);
     return cfg;
 }
 
@@ -494,6 +517,12 @@ if (isMainThread && process.argv[1]
         const on = Object.entries(r5dCfg).filter(([, v]) => v).map(([k]) => k);
         console.log(`r5d rules: ${on.length ? on.join(", ") : "(none -- pre-R5d engine)"}`);
     }
+    const r5fSpec = flag("--r5f", null);
+    const r5fCfg = applyR5FSpec(r5fSpec);
+    if (r5fCfg) {
+        const on = Object.entries(r5fCfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`r5f rules: ${on.length ? on.join(", ") : "(none -- pre-R5f engine)"}`);
+    }
 
     const dicts = loadCalibDicts();
     const allFights = loadManifest();
@@ -588,7 +617,10 @@ if (isMainThread && process.argv[1]
             const workerPath = path.join(HERE, "calib_worker.mjs");
             for (let w = 0; w < poolSize; w++) {
                 const worker = new Worker(workerPath, {
-                    workerData: { arenaArg, maxSeconds, outDir, r5bSpec, r5d1Spec, r5dSpec },
+                    workerData: {
+                        arenaArg, maxSeconds, outDir,
+                        r5bSpec, r5d1Spec, r5dSpec, r5fSpec,
+                    },
                 });
                 const pump = () => {
                     if (next < tasks.length) worker.postMessage(tasks[next++]);

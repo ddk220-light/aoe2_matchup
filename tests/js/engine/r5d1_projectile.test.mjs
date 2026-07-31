@@ -81,10 +81,12 @@ function forcedMissHC(sim, opts = {}) {
 
 // ---- P1: the arithmetic -----------------------------------------------------
 
-test("[P1] a displaced hit applies exactly half the FINAL damage, unrounded", () => {
+test("[P1] a displaced hit applies exactly half the FINAL damage, unrounded", () => withR5D1({ reducedDamageHits: true }, () => {
     // The tape's own case: hand cannoneer attack 17 into pierce armor 4 is a
     // full hit of 13.0 and a reduced hit of 6.5 -- not floor(6.5) = 6, and not
     // half-the-raw-attack-then-armor (8.5 - 4 = 4.5).
+    // (P1 ships OFF until the land-rate side closes -- see constants.js; the
+    // mechanism itself is pinned here under an explicit override.)
     const sim = simStub(3);
     const a = forcedMissHC(sim);
     const b = new BattleUnit(
@@ -114,9 +116,9 @@ test("[P1] a displaced hit applies exactly half the FINAL damage, unrounded", ()
         (hp0 - b.currentHp) % 6.5, 0,
         "every application in this run is a half hit",
     );
-});
+}));
 
-test("[P1] the half is computed against the body actually struck", () => {
+test("[P1] the half is computed against the body actually struck", () => withR5D1({ reducedDamageHits: true }, () => {
     // A neighbour with different pierce armor takes half of ITS OWN final
     // damage, not half of the primary's -- "half the final post-armor damage"
     // is a statement about the unit that is hit.
@@ -147,7 +149,7 @@ test("[P1] the half is computed against the body actually struck", () => {
     }
     assert.ok(reduced > 0);
     assert.equal(target.currentHp, target.maxHp, "the primary was never near the landing point");
-});
+}));
 
 // ---- P1: the geometry -------------------------------------------------------
 
@@ -175,7 +177,7 @@ test("[P1] the INTENDED target is the usual victim -- it is not excluded", () =>
     assert.ok(hits < 350, `and the big throws must still miss it; got ${hits}/400`);
 });
 
-test("[P1] the window is landing point vs body + projectile radius", () => {
+test("[P1] the window is landing point vs body + projectile radius", () => withR5D1({ reducedDamageHits: true }, () => {
     // Not the old centre-within-0.2-tiles test. Place a body so its CENTRE is
     // outside the landing point's radius but its EDGE is inside, and it must
     // still be struck.
@@ -203,7 +205,7 @@ test("[P1] the window is landing point vs body + projectile radius", () => {
     const before = b.currentHp;
     land(sim);
     assert.equal(before - b.currentHp, 6.5, "an edge overlap is a reduced hit");
-});
+}));
 
 test("[P1] a displaced shot that overlaps nobody grounds harmlessly", () => {
     const sim = simStub(1);
@@ -250,7 +252,7 @@ test("[P1] the flight path is NOT swept -- only the landing point resolves", () 
     );
 });
 
-test("[P1] a failed roll can never be a FULL hit, even on the primary", () => {
+test("[P1] a failed roll can never be a FULL hit, even on the primary", () => withR5D1({ reducedDamageHits: true }, () => {
     // R5b resolved a failed roll that still landed on the primary as full
     // damage. Under P1 that is precisely the half hit.
     const sim = simStub(5);
@@ -267,7 +269,7 @@ test("[P1] a failed roll can never be a FULL hit, even on the primary", () => {
         const dealt = before - b.currentHp;
         assert.ok(dealt === 0 || dealt === 6.5, `unexpected application ${dealt}`);
     }
-});
+}));
 
 test("[P1] an accuracy-100 unit is untouched -- it never fails a roll", () => {
     // Zero reduced-damage events on any accuracy-100 side, across all six

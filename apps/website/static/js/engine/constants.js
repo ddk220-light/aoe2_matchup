@@ -57,7 +57,15 @@ export const R5D1 = {
     //     overlaps a body, applies exactly half the final post-armor damage,
     //     unrounded. Tape: 6.5 / 4.5 / 5.5 against fulls of 13 / 9 / 11, and
     //     26 of 27 land on the unit the shot was aimed at.
-    reducedDamageHits: true,
+    //
+    //     SHIPPED OFF FOR NOW -- correct in kind, net-negative in isolation.
+    //     The engine's HC still LANDS fewer shots than the tape (72-83% vs
+    //     78-81%), and the old failed-roll-pays-full bug was silently
+    //     compensating for that shortfall; enabling P1 before the land rate
+    //     closes flips hand_cannoneer__vs__heavy_camel (all six recordings).
+    //     Flip to true and re-gate once the R5d-2 targeting/approach work
+    //     raises the land rate. The mechanic itself is tape-exact and tested.
+    reducedDamageHits: false,
     // P2  trailing-window lead: the intercept is computed from the target's
     //     displacement over the last LEAD_WINDOW_SECONDS, not from its
     //     instantaneous velocity on the launch tick (which R5c measured to be

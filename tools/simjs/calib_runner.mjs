@@ -64,7 +64,9 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { Worker, isMainThread } from "node:worker_threads";
 
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
-import { R5B, setR5B } from "../../apps/website/static/js/engine/constants.js";
+import {
+    R5B, setR5B, R5D, setR5D,
+} from "../../apps/website/static/js/engine/constants.js";
 
 // ---- Round-5b rule flags --------------------------------------------------
 // `--r5b <spec>` A/B's the four R5b ranged rules without editing engine source
@@ -92,6 +94,31 @@ export function applyR5BSpec(spec) {
     }
     const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
     setR5B(cfg);
+    return cfg;
+}
+
+// ---- Round-5d rule flags --------------------------------------------------
+// Identical grammar to --r5b, over the SEPARATE R5D object (perShotSelect,
+// sameTickClaims, reapproach). Kept separate for the same reason the flag
+// objects are: `--r5b off` has to keep meaning "the pre-R5b engine" exactly,
+// so an R5d A/B must not be expressible through it.
+//
+//   --r5d off                 all three off == the post-R5b / pre-R5d engine
+//   --r5d perShotSelect       ONLY that rule on
+//   (flag absent)             engine defaults, i.e. all three on
+export function applyR5DSpec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(R5D);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--r5d: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setR5D(cfg);
     return cfg;
 }
 
@@ -426,6 +453,12 @@ if (isMainThread && process.argv[1]
         const on = Object.entries(r5bCfg).filter(([, v]) => v).map(([k]) => k);
         console.log(`r5b rules: ${on.length ? on.join(", ") : "(none -- pre-R5b engine)"}`);
     }
+    const r5dSpec = flag("--r5d", null);
+    const r5dCfg = applyR5DSpec(r5dSpec);
+    if (r5dCfg) {
+        const on = Object.entries(r5dCfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`r5d rules: ${on.length ? on.join(", ") : "(none -- pre-R5d engine)"}`);
+    }
 
     const dicts = loadCalibDicts();
     const allFights = loadManifest();
@@ -520,7 +553,7 @@ if (isMainThread && process.argv[1]
             const workerPath = path.join(HERE, "calib_worker.mjs");
             for (let w = 0; w < poolSize; w++) {
                 const worker = new Worker(workerPath, {
-                    workerData: { arenaArg, maxSeconds, outDir, r5bSpec },
+                    workerData: { arenaArg, maxSeconds, outDir, r5bSpec, r5dSpec },
                 });
                 const pump = () => {
                     if (next < tasks.length) worker.postMessage(tasks[next++]);

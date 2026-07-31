@@ -41,6 +41,7 @@ import {
     MELEE_LANE_REACQUIRE,
     MELEE_LANE_CANDIDATE_CAP,
     R5B,
+    R5D,
     PROJECTILE_RADIUS_TILES,
     ACCURACY_DISPERSION_BY_SLUG,
 } from "./constants.js";
@@ -903,12 +904,36 @@ export class BattleUnit {
     // own minimum-range dead zone.
     //
     // Approach/hold only. Kiting and retreat (E10a) are untouched.
+    // ===== R5d-T3: THE LATCH IS GONE =====
+    // The hysteresis above was measured, and what it actually produces is a
+    // one-shot approach. `rangedClosed` is set the first time a unit reaches
+    // `reach - 2r` and is cleared ONLY when the target leaves reach entirely,
+    // so a unit that has once closed never approaches again while its target
+    // survives anywhere inside reach -- including at the lip, 2r further out
+    // than the margin it is supposed to hold. The consequence is measured in
+    // r5c_depth_forensics.md §6a: in heavy_cav_archer__vs__hand_cannoneer the
+    // tape's archers close continuously for the whole 41 s (radial speed
+    // positive in 20 of 30 buckets, +3.06 tiles cumulative, separation
+    // 9.03 -> 4.84) while the engine's close for 5 s and then stop dead
+    // (radial +-0.00 in eight post-t=5 buckets, nearest-enemy distance pinned
+    // at 6.55 for 14 s and then RECEDING to 7.21). That fight's HP error is
+    // 18.7 points and its army is a 1.62-tile-deep line against the tape's
+    // 6.25-tile column.
+    //
+    // T3 replaces the latch with the same margin as a CONTINUOUS condition:
+    // approach whenever the target is outside `reach - 2r`, hold inside it, no
+    // memory. It introduces no constant -- it deletes state. The band between
+    // `inner` and `reach` is no longer a hold zone that a unit can be trapped
+    // in; it is simply outside the margin, so the unit keeps walking. Army
+    // elongation is NOT modelled here and no formation logic is added: if it
+    // appears it has to emerge from units re-approaching different targets.
     rangedShouldApproach() {
         if (!R5B.approachMargin) return !this.inRange();
         const dist = this.distanceTo(this.target);
         const reach =
             this.attackRange + this.radius + this.target.radius;
         const inner = Math.max(this.minAttackRange, reach - 2 * this.radius);
+        if (R5D.reapproach) return dist > inner;
         if (dist > reach) {
             this.rangedClosed = false;      // target has left reach entirely
         } else if (dist <= inner) {
@@ -943,11 +968,19 @@ export class BattleUnit {
     // which drove in-flight waste to ~0 on sides where the tape measures
     // 13-33% (imp_elite_skirm) and 8-21% (heavy_cav_archer).
     inboundDamageOn(unit, myFlightTime = Infinity) {
+        // R5d-T2: shots committed earlier in THIS tick are accounted by the
+        // claim ledger instead (coveredDamageOn), unconditionally rather than
+        // by arrival order. Skipping them here is what stops the same arrow
+        // being counted twice when it happens to also pass the eta test.
+        const claimed = R5D.sameTickClaims && this.sim && this.sim.tickClaimShots
+            ? this.sim.tickClaimShots
+            : null;
         let total = 0;
         for (const p of this.sim.projectiles) {
             if (p.done) continue;
             if (p.team !== this.team) continue;
             if (p.targetUnit !== unit) continue;
+            if (claimed && claimed.has(p)) continue;
             if (p.speed > 0) {
                 const rx = p.targetX - p.x;
                 const ry = p.targetY - p.y;
@@ -957,6 +990,32 @@ export class BattleUnit {
             total += p.plannedDamage;
         }
         return total;
+    }
+
+    // All friendly damage already COMMITTED to `unit` that a shot fired at it
+    // right now would duplicate: the in-flight damage that arrives first (R5b
+    // D3, above) plus this tick's claims (R5d T2). One function so every
+    // coverage question in the engine -- the legacy D3 redirect and T1's
+    // per-shot selection alike -- asks it the same way.
+    coveredDamageOn(unit) {
+        let total = this.inboundDamageOn(unit, this.flightTimeTo(unit));
+        if (R5D.sameTickClaims && this.sim && this.sim.tickClaims) {
+            total += this.sim.tickClaims.get(unit) || 0;
+        }
+        return total;
+    }
+
+    // R5d-T2 write side: record that this shot is committed to `victim` for
+    // the rest of THIS tick. Called from fireProjectile once the projectile
+    // and its damage exist; the projectile itself is remembered so
+    // inboundDamageOn can exclude it. Behind the flag, and tolerant of a sim
+    // stub with no ledger, so nothing on the off path is touched.
+    claimShot(proj, victim, damage) {
+        if (!R5D.sameTickClaims) return;
+        const sim = this.sim;
+        if (!sim || !sim.tickClaims || !victim) return;
+        sim.tickClaimShots.add(proj);
+        sim.tickClaims.set(victim, (sim.tickClaims.get(victim) || 0) + damage);
     }
 
     /** Flight time of a shot fired at `enemy` right now, in seconds. */
@@ -981,10 +1040,8 @@ export class BattleUnit {
     pickShotTarget(primary) {
         if (!R5B.inflightAccounting) return primary;
         if (!primary || primary.state === "dead") return primary;
-        if (
-            this.inboundDamageOn(primary, this.flightTimeTo(primary)) <
-            primary.currentHp
-        ) {
+        if (R5D.perShotSelect) return this.selectShotTarget(primary);
+        if (this.coveredDamageOn(primary) < primary.currentHp) {
             return primary;
         }
 
@@ -994,12 +1051,7 @@ export class BattleUnit {
         for (const foe of foes) {
             if (foe === primary || foe.state === "dead") continue;
             if (!this.canReach(foe)) continue;
-            if (
-                this.inboundDamageOn(foe, this.flightTimeTo(foe)) >=
-                foe.currentHp
-            ) {
-                continue;
-            }
+            if (this.coveredDamageOn(foe) >= foe.currentHp) continue;
             const d = this.distanceTo(foe);
             if (d < bestDist) {
                 bestDist = d;
@@ -1009,6 +1061,58 @@ export class BattleUnit {
         // Nothing reachable is still worth shooting: take the shot anyway,
         // rather than inventing a hold-fire behaviour the tape does not show.
         return best || primary;
+    }
+
+    // ===== R5d-T1: PER-SHOT RE-SELECTION =====
+    // R5b's redirect only ran when the STANDING target was already covered;
+    // otherwise the unit's acquisition target got the shot however stale that
+    // pick was. That is measurably not how the tape behaves. Its ranged units
+    // re-pick every shot: they fire at their nearest reachable enemy on only
+    // 34-65% of launches (engine 56-83%), their chosen victim's rank in the
+    // nearest-first ordering is 1.5-3.5 (engine 1.1-2.0), and they re-pick the
+    // SAME victim on only 6-26% of consecutive shots (engine up to 66%).
+    // r5c_targeting_forensics.md Q1a. And the tape's hand cannoneer never
+    // fires at a victim whose death is already covered -- cov% 0.000 on all
+    // three of its recordings, and all 23 occasions where its nearest enemy
+    // was lethally covered resolved as shoot-something-else, 0 stubborn (Q1c).
+    //
+    // The rule, whole: at EVERY shot, take the nearest enemy in reach whose
+    // remaining hp is not already covered by committed friendly damage
+    // (in-flight arriving first + this tick's claims). It is not sticky -- the
+    // unit's own `this.target` gets no privilege beyond being one candidate
+    // among the reachable ones, and nothing is remembered between shots. If
+    // every reachable enemy is covered, the nearest one is shot anyway: no
+    // hold-fire, which the tape does not show either. No constant, no rng;
+    // ties break on team-array order exactly as findTarget's do.
+    selectShotTarget(primary) {
+        const foes = this.team === 1 ? this.sim.team2 : this.sim.team1;
+        let best = null;
+        let bestDist = Infinity;
+        let nearest = null;
+        let nearestDist = Infinity;
+        for (const foe of foes) {
+            if (foe.state === "dead") continue;
+            if (!this.canReach(foe)) continue;
+            const d = this.distanceTo(foe);
+            if (d < nearestDist) {
+                nearestDist = d;
+                nearest = foe;
+            }
+            if (this.coveredDamageOn(foe) >= foe.currentHp) continue;
+            if (d < bestDist) {
+                bestDist = d;
+                best = foe;
+            }
+        }
+        const stats = this.sim && this.sim.combatStats
+            ? this.sim.combatStats[this.team]
+            : null;
+        if (stats) stats.shotPicks++;
+        if (best) return best;
+        // Every reachable enemy is already dead on arrival. Diagnostic only --
+        // the forensics predict this becomes rare once the choice set widens.
+        if (stats) stats.allCovered++;
+        return nearest || primary;
     }
 
     // The launch itself, factored out of update()'s ranged branch so the
@@ -1913,6 +2017,10 @@ export class BattleUnit {
         // (inert there, because nothing reads them with the flag off).
         proj.targetUnit = target;
         proj.plannedDamage = damage;
+        // R5d-T2: and register the same fact in this tick's claim ledger, so a
+        // shooter that has not updated yet this tick sees the commitment even
+        // though the arrival-order test would discard the arrow.
+        this.claimShot(proj, target, damage);
         this.recordMissile();
         this.sim.projectiles.push(proj);
         this.attackAnimTimer = 0.15;

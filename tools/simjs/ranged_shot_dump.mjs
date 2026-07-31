@@ -42,7 +42,7 @@ import path from "node:path";
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import { BattleUnit } from "../../apps/website/static/js/engine/battle_unit.js";
 import { TILE_SIZE } from "../../apps/website/static/js/engine/constants.js";
-import { applyR5BSpec } from "./calib_runner.mjs";
+import { applyR5BSpec, applyR5DSpec } from "./calib_runner.mjs";
 import {
     loadManifest, loadCalibDicts, loadCalibSpawns, spawnsForFight,
 } from "./calib_runner.mjs";
@@ -189,6 +189,8 @@ if (!tags.size) {
 // emergence suite can be measured on any stage of the marginal sweep (and on
 // `off`, i.e. the pre-R5b engine the forensics report itself measured).
 applyR5BSpec(flag("--r5b", null));
+// Same for the Round-5d targeting/approach rules (--r5d off == pre-R5d).
+applyR5DSpec(flag("--r5d", null));
 
 const dicts = loadCalibDicts();
 const spawns = loadCalibSpawns();

@@ -16,6 +16,8 @@ import {
     ACCURACY_DISPERSION_BY_SLUG,
     R5B,
     setR5B,
+    R5D,
+    setR5D,
 } from "../../../apps/website/static/js/engine/constants.js";
 
 const DT = 1 / 60;
@@ -39,6 +41,16 @@ function withR5B(overrides, fn) {
         return fn();
     } finally {
         setR5B(saved);
+    }
+}
+
+function withR5D(overrides, fn) {
+    const saved = { ...R5D };
+    setR5D(overrides);
+    try {
+        return fn();
+    } finally {
+        setR5D(saved);
     }
 }
 
@@ -304,37 +316,44 @@ test("[D4] a ranged unit closes to reach minus its own body diameter", () => {
     );
 });
 
+// R5d-T3 DELETES this latch (see r5d_targeting.test.mjs, which pins the
+// replacement). The rule is still here, still reachable and still tested --
+// scoped to R5D.reapproach = false, which is exactly what the R5d off-switch
+// restores. Without the scope this test would be asserting the behaviour of a
+// code path the shipped engine no longer takes.
 test("[D4] hysteresis: it holds inside the band and only re-closes past reach", () => {
-    const sim = simStub(19);
-    const a = new BattleUnit(
-        "1-0", 1,
-        { ...STATS, attack_range: 7, projectile_speed: 7, movement_speed: 0.96 },
-        "arbalester", "Chinese", sim);
-    const b = new BattleUnit(
-        "2-0", 2, { ...STATS, hp: 1e9, attack_range: 7 }, "bag", "Goths", sim);
-    a.x = 0; a.y = 0; b.x = 400; b.y = 0;
-    sim.team1.push(a); sim.team2.push(b);
-    a.target = b;
+    withR5D({ reapproach: false }, () => {
+        const sim = simStub(19);
+        const a = new BattleUnit(
+            "1-0", 1,
+            { ...STATS, attack_range: 7, projectile_speed: 7, movement_speed: 0.96 },
+            "arbalester", "Chinese", sim);
+        const b = new BattleUnit(
+            "2-0", 2, { ...STATS, hp: 1e9, attack_range: 7 }, "bag", "Goths", sim);
+        a.x = 0; a.y = 0; b.x = 400; b.y = 0;
+        sim.team1.push(a); sim.team2.push(b);
+        a.target = b;
 
-    for (let i = 0; i < 60 * 30; i++) a.update(DT, [a, b], [b]);
-    assert.equal(a.rangedClosed, true, "should have settled");
+        for (let i = 0; i < 60 * 30; i++) a.update(DT, [a, b], [b]);
+        assert.equal(a.rangedClosed, true, "should have settled");
 
-    const reach = a.attackRange + a.radius + b.radius;
-    const inner = reach - 2 * a.radius;
+        const reach = a.attackRange + a.radius + b.radius;
+        const inner = reach - 2 * a.radius;
 
-    // Inside the band (between inner and reach): still settled, no approach.
-    b.x = a.x + (inner + reach) / 2;
-    assert.equal(a.rangedShouldApproach(), false, "must not chase inside the band");
+        // Inside the band (between inner and reach): still settled, no approach.
+        b.x = a.x + (inner + reach) / 2;
+        assert.equal(a.rangedShouldApproach(), false, "must not chase inside the band");
 
-    // Past reach: the hysteresis releases and it closes again.
-    b.x = a.x + reach + 1;
-    assert.equal(a.rangedShouldApproach(), true, "must re-approach once out of reach");
-    // ... and stays committed until it is back inside the inner margin.
-    b.x = a.x + (inner + reach) / 2;
-    assert.equal(
-        a.rangedShouldApproach(), true,
-        "still closing: the band only holds a unit that already settled",
-    );
+        // Past reach: the hysteresis releases and it closes again.
+        b.x = a.x + reach + 1;
+        assert.equal(a.rangedShouldApproach(), true, "must re-approach once out of reach");
+        // ... and stays committed until it is back inside the inner margin.
+        b.x = a.x + (inner + reach) / 2;
+        assert.equal(
+            a.rangedShouldApproach(), true,
+            "still closing: the band only holds a unit that already settled",
+        );
+    });
 });
 
 test("[D4] the margin never walks a unit into its own minimum-range dead zone", () => {

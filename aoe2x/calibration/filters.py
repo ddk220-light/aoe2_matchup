@@ -82,7 +82,11 @@ def filter_fights(
     ``calib_runner --melee-only`` and ``score --melee-only`` always agree on
     which fights they are talking about.
     """
-    out = list(fights)
+    # Quarantined recordings (manifest `quarantined` field: known-bad truth,
+    # e.g. the 2026-07-30 paladin_vs_steppe capture flaw) are never scored --
+    # they stay in the manifest for provenance only. Unconditional: a fight
+    # whose ground truth is known-wrong has no legitimate scoring use.
+    out = [f for f in fights if not f.get("quarantined")]
     if tags:
         wanted = set(tags)
         unknown = wanted - {f["tag"] for f in fights}
@@ -90,6 +94,13 @@ def filter_fights(
             # Loud, not silent: a typo'd tag would otherwise just shrink the
             # board and look like a legitimately small subset.
             raise KeyError(f"--tags: no manifest fight with tag(s): {', '.join(sorted(unknown))}")
+        blocked = wanted - {f["tag"] for f in out}
+        if blocked:
+            # Explicitly requesting a quarantined tag is an error, not a
+            # silent shrink -- say why it is unavailable.
+            raise KeyError(
+                f"--tags: quarantined (known-bad truth), refusing to score: "
+                f"{', '.join(sorted(blocked))}")
         out = [f for f in out if f["tag"] in wanted]
     if match:
         rx = re.compile(match)

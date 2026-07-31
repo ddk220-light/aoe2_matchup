@@ -652,6 +652,10 @@ def score_all(
     fights = _load_manifest()["fights"]
     if filters:
         fights = filter_fights(fights, **filters)
+    else:
+        # No subset filters: still drop quarantined recordings (known-bad
+        # truth; see filters.filter_fights) so `--all` never scores them.
+        fights = [f for f in fights if not f.get("quarantined")]
     results, failures = [], []
     for fight in fights:
         run_id = fight["run_id"]

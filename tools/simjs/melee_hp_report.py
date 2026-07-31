@@ -4,8 +4,13 @@ The campaign's headline number since Round 4 is not winner-agreement but
 *HP-remaining similarity* on pure-melee fights: for every side of every fight
 where BOTH armies are melee units, how far is the sim's median surviving HP
 from the tape's, expressed in **HP-points** = percent of that side's own army
-max HP (count x per-unit max HP). "Within 10 pts" is the pass line; the
-62-side corpus is 31 fights x 2 sides.
+max HP (count x per-unit max HP). "Within 10 pts" is the pass line.
+
+Corpus history: 31 fights x 2 sides = the original 62-side gate; the
+2026-07-30 v2 melee re-recording grew it to 89 fights, then quarantining the
+six bad-capture paladin_vs_steppe originals settled it at 83 fights x 2
+sides = 166. (The count is pinned deliberately in
+tests/test_calibration_filters.py::test_melee_only_is_the_round4_gate.)
 
 Why percent-of-army-max and not raw HP: a 21-champion side has 1470 max HP
 and a 7-paladin side has 1260 - a flat raw-HP tolerance would mean two very

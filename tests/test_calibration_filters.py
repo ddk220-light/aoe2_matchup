@@ -41,7 +41,10 @@ def test_elite_fire_lancer_is_not_melee():
 
 
 def test_no_filters_selects_everything(fights):
-    assert F.filter_fights(fights) == list(fights)
+    # "Everything" = everything scoreable: quarantined recordings (known-bad
+    # truth) are dropped unconditionally, filters or no filters.
+    scoreable = [f for f in fights if not f.get("quarantined")]
+    assert F.filter_fights(fights) == scoreable
     assert F.describe_filter() is None
 
 
@@ -52,8 +55,9 @@ def test_melee_only_is_both_sides(fights):
     for f in sel:
         assert f["side1"]["slug"] in F.MELEE_SLUGS
         assert f["side2"]["slug"] in F.MELEE_SLUGS
-    # ...and nothing melee was dropped: a fight is in iff BOTH sides are.
-    excluded = [f for f in fights if f not in sel]
+    # ...and nothing melee was dropped: a SCOREABLE fight is in iff BOTH
+    # sides are (quarantined entries are dropped regardless of composition).
+    excluded = [f for f in fights if f not in sel and not f.get("quarantined")]
     for f in excluded:
         assert not (
             f["side1"]["slug"] in F.MELEE_SLUGS and f["side2"]["slug"] in F.MELEE_SLUGS
@@ -61,11 +65,33 @@ def test_melee_only_is_both_sides(fights):
 
 
 def test_melee_only_is_the_round4_gate(fights):
-    """31 fights x 2 sides = the 62-side pure-melee gate the campaign's KPI
-    is defined over (tools/simjs/melee_hp_report.py's docstring). If the
-    corpus grows this number legitimately moves -- but it should move
-    deliberately, with the report's docstring updated in the same commit."""
-    assert len(F.filter_fights(fights, melee_only=True)) == 31
+    """The pure-melee gate the campaign's KPI is defined over
+    (tools/simjs/melee_hp_report.py's docstring). If the corpus grows this
+    number legitimately moves -- but it should move deliberately, with the
+    report's docstring updated in the same commit.
+
+    History: 31 (original corpus) -> 89 with the 2026-07-30 v2 melee
+    re-recording (67 fights, of which 58 are both-sides-melee; fire-lancer
+    fights are excluded by the slug set) -> 83 after quarantining the six
+    bad-capture paladin_vs_steppe originals."""
+    assert len(F.filter_fights(fights, melee_only=True)) == 83
+
+
+def test_quarantined_fights_are_never_scored(fights):
+    """The six 2026-07-30 paladin_vs_steppe captures carry `quarantined` in
+    the manifest (opposite winner vs the v2 x12 re-recording + the user's
+    live reproduction). They must be dropped from EVERY selection, and an
+    explicit --tags request for one must fail loudly, not shrink silently."""
+    selected = F.filter_fights(fights)
+    assert all(not f.get("quarantined") for f in selected)
+    assert any(f.get("quarantined") for f in fights), "fixture: manifest has them"
+    quarantined_tag = next(f["tag"] for f in fights if f.get("quarantined"))
+    try:
+        F.filter_fights(fights, tags=[quarantined_tag])
+    except KeyError as exc:
+        assert "quarantined" in str(exc)
+    else:  # pragma: no cover
+        raise AssertionError("explicit quarantined tag must raise")
 
 
 def test_filters_preserve_manifest_order(fights):

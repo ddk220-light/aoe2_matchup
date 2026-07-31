@@ -151,8 +151,13 @@ const REPO = path.resolve(HERE, "../..");
 const DEFAULT_OUT_DIR = "D:/AI/aoe2_golden/simruns";
 
 export function loadManifest() {
+    // Quarantined recordings (manifest `quarantined`: known-bad truth, e.g.
+    // the 2026-07-30 paladin_vs_steppe capture flaw) are never simmed or
+    // scored -- kept in the file for provenance only. Mirrors the same
+    // unconditional drop in aoe2x/calibration/filters.py.
     return JSON.parse(readFileSync(
-        path.join(REPO, "data/calibration/manifest.json"), "utf8")).fights;
+        path.join(REPO, "data/calibration/manifest.json"), "utf8"))
+        .fights.filter((f) => !f.quarantined);
 }
 
 export function loadCalibDicts() {

@@ -573,6 +573,106 @@ export function setC2A(overrides) {
     return C2A;
 }
 
+// ===== PHASE C2-B — THE MELEE SWING: WHEN IT MAY BEGIN, WHEN IT LANDS =====
+// Two rules read straight off docs/calibration/c1_chaser_cadence.md §M3 and
+// docs/calibration/e15c_contact_forensics.md §2. Neither carries a constant of
+// any kind: C-b costs the engine's own tick and C-c moves an existing test,
+// nothing is fitted and nothing is timed.
+//
+// SCOPE. Units whose attack is MELEE and which are not siege -- concretely, the
+// `else` arm of update()'s isRanged() split, minus the charge-projectile
+// (Fire Lancer) sub-branch that fires before melee reach is ever tested. Ranged
+// units never enter the code either rule touches, so ranged-vs-ranged is
+// bit-identical with both flags on (asserted by c2b_melee_swing.test.mjs).
+//
+// A SEPARATE object from R5B / R5D / R5D1 / B2 / R5F, for the reason all of
+// those are separate from each other: `--b2 off` has to keep meaning "the
+// pre-B2 engine" exactly, and a C2 sweep must not silently drag anything else
+// along.
+//
+// Setting both to false restores 0e2dbc5 BIT-IDENTICALLY. That is structural,
+// not merely tested: with the flags off the only new statement that executes is
+// the bookkeeping write to `meleeWasMoving`, a field nothing else reads.
+export const C2B = {
+    // C-b  STOP-TO-SWING. A melee swing may not BEGIN on a tick the unit spent
+    //      walking: the unit halts, and the swing starts from the stop.
+    //      This is R5b's stop-to-fire for the other half of the army, and it is
+    //      asked the same way -- the instantaneous "was I stepping on the tick
+    //      my cooldown came up", not a latched "did I move this cycle".
+    //
+    //      C1 M3, over 29 melee-chases-ranged families: a hit landed while BOTH
+    //      parties were moving is 0.0000 per chaser-second on tape in EVERY
+    //      SINGLE FAMILY (the tape chaser's own displacement at the instant its
+    //      blow lands is 0.000 tiles, everywhere), against 19.8% of the
+    //      engine's hits at a median 0.046 tiles of step -- 0.13-0.24 in the
+    //      champion families, which at 10 Hz is a walking unit, not collision
+    //      jitter.
+    //
+    //      THE HALT COSTS THE ENGINE'S OWN TICK AND NOTHING ELSE. No stop
+    //      overhead is charged (RANGED_STOP_OVERHEAD is a ranged-tape number
+    //      and stays there), no reload is touched: hit-to-hit is still
+    //      reloadTime plus however many ticks the unit spent arriving. A unit
+    //      that closed early and stood waiting out its reload -- which is every
+    //      unit in a melee scrum, E15c measuring them planted at p90 0.0 tiles
+    //      of displacement -- pays nothing at all, because it was not stepping
+    //      when the cooldown expired.
+    //
+    //      The movement fact is the unit's OWN locomotion decision
+    //      (`meleeWasMoving`, set only by update()'s melee move branches), NOT
+    //      its measured displacement: a planted unit shoved by
+    //      resolveCollisions has not decided to walk and is not gated.
+    stopToSwing: false,
+    // C-c  WINDUP-COMMIT: reach is tested once, at swing START, and the blow
+    //      lands on schedule even if the victim has drifted out of reach by the
+    //      time it resolves (the victim must still be ALIVE).
+    //
+    //      C1 M3: the engine applies damage exactly at its own inRange()
+    //      boundary and never past it -- `dHit` equals `reach` to two digits in
+    //      all 29 families, 0.99x. The tape lands at 1.43x reach (median 0.91
+    //      tiles against a champion's 0.62-tile reach, p90 1.52). E15c §2 saw
+    //      the same thing from the other side inside melee scrums: 7.46% of
+    //      tape samples are a unit SUSTAINING -- already landing hits on -- a
+    //      victim it is standing 0-0.5 tiles OUTSIDE reach of, against 0.31% in
+    //      the engine, i.e. "the engine has no state in which a unit fights
+    //      from a hair outside the reach line".
+    //
+    //      HALF OF THIS RULE IS ALREADY THE ENGINE'S BEHAVIOUR and the flag
+    //      does not touch it: a melee unit with frame_delay > 0 (paladin 0.433,
+    //      heavy_camel 0.333, elite_elephant 0.167, hussar 0.167, elite_steppe
+    //      0.217) commits in update()'s committedAttack branch, which checks
+    //      only `state !== "dead"` at the landing. Pinned by test so a later
+    //      round cannot delete it by accident.
+    //
+    //      WHAT THE FLAG CHANGES is the frame_delay-0 case -- champion and
+    //      halberdier, the two heaviest chasers in the corpus -- where the
+    //      swing resolves in the same tick it is decided, so there is no
+    //      interval for a victim to drift in. The swing is given the engine's
+    //      SMALLEST RESOLVABLE INTERVAL, one tick, and no more: the reach test
+    //      moves to the tick the swing begins and the blow lands at the end of
+    //      it. That is a tick-granularity fact, not a duration -- see the
+    //      honest limit below.
+    //
+    //      HONEST LIMIT, stated because the number matters. One tick at 60 Hz
+    //      is 0.0167 s, in which a 1.54 t/s heavy cavalry archer covers 0.026
+    //      tiles: this rule can carry a champion's resolution reach from 0.99x
+    //      to roughly 1.03x, NOT to the tape's 1.43x. Reproducing 1.43x needs
+    //      the damage frame of a frame_delay-0 swing to lag its start by
+    //      ~0.2 s, and NOTHING in the data supports that: `attack_delay` IS the
+    //      dat's own damage frame (extract_units.py:471, `frame_delay / 60`)
+    //      and it is 0 for both units. A 0.2 s melee lag would be a fitted
+    //      constant, so it is not here. The gap is reported, not closed.
+    committedSwingLands: false,
+};
+
+/** Apply a partial override to {@link C2B}. Harness-only entry point. */
+export function setC2B(overrides) {
+    for (const k of Object.keys(overrides)) {
+        if (!(k in C2B)) throw new Error(`setC2B: unknown flag ${k}`);
+        C2B[k] = Boolean(overrides[k]);
+    }
+    return C2B;
+}
+
 // ===== CONSTANTS =====
 export const CANVAS_WIDTH = 900;
 export const CANVAS_HEIGHT = 600;

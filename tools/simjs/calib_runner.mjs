@@ -66,7 +66,7 @@ import { Worker, isMainThread } from "node:worker_threads";
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import {
     R5B, setR5B, R5D1, setR5D1, R5D, setR5D, B2, setB2, R5F, setR5F,
-    C2A, setC2A,
+    C2A, setC2A, C2B, setC2B,
 } from "../../apps/website/static/js/engine/constants.js";
 
 // ---- Round-5b rule flags --------------------------------------------------
@@ -215,6 +215,30 @@ export function applyC2ASpec(spec) {
     }
     const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
     setC2A(cfg);
+    return cfg;
+}
+
+// ---- Phase-C2-B rule flags -------------------------------------------------
+// Identical grammar again, over the SEPARATE C2B object (stopToSwing,
+// committedSwingLands -- the melee swing's gate and its landing rule).
+//
+//   --c2b off                                the pre-C2 engine (0e2dbc5)
+//   --c2b stopToSwing                        ONLY C-b
+//   --c2b stopToSwing,committedSwingLands    both
+//   (flag absent)                            engine defaults
+export function applyC2BSpec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(C2B);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--c2b: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setC2B(cfg);
     return cfg;
 }
 
@@ -596,6 +620,12 @@ if (isMainThread && process.argv[1]
         const on = Object.entries(c2aCfg).filter(([, v]) => v).map(([k]) => k);
         console.log(`c2a rules: ${on.length ? on.join(", ") : "(none -- pre-C2 engine)"}`);
     }
+    const c2bSpec = flag("--c2b", null);
+    const c2bCfg = applyC2BSpec(c2bSpec);
+    if (c2bCfg) {
+        const on = Object.entries(c2bCfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`c2b rules: ${on.length ? on.join(", ") : "(none -- pre-C2 engine)"}`);
+    }
 
     const dicts = loadCalibDicts();
     const allFights = loadManifest();
@@ -693,6 +723,7 @@ if (isMainThread && process.argv[1]
                     workerData: {
                         arenaArg, maxSeconds, outDir,
                         r5bSpec, r5d1Spec, r5dSpec, b2Spec, r5fSpec, c2aSpec,
+                        c2bSpec,
                     },
                 });
                 const pump = () => {

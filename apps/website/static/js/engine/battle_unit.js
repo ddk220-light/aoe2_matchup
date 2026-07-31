@@ -46,6 +46,7 @@ import {
     B2,
     R5F,
     C2A,
+    C2B,
     SILENCE_ADVANCE_CYCLES,
     PROJECTILE_RADIUS_TILES,
     ACCURACY_DISPERSION_BY_SLUG,
@@ -328,6 +329,21 @@ export class BattleUnit {
         this.wasMoving = true;
         this.committedAttack = null;
         this.attackAnimTimer = 0;
+        // --- C2-B rule C-b: did this MELEE unit choose to step last tick? ---
+        // The melee twin of `wasMoving`, kept as its own field for two reasons.
+        // (1) `wasMoving` is not maintained on every melee branch (the in-reach
+        // stand and the delay-0 swing both leave it stale), so a unit that
+        // walked in while reloading and then stood for a second would still
+        // read as "moving" -- exactly the over-charge R5b removed from the
+        // ranged side. (2) With C2B.stopToSwing off NOTHING reads this field,
+        // which is what makes the off-switch bit-identical by construction
+        // rather than by test.
+        //
+        // It records the unit's own LOCOMOTION DECISION, not its displacement:
+        // a planted unit shoved by resolveCollisions did not decide to walk and
+        // is not gated. Starts false -- a unit that has never ticked has not
+        // stepped -- and is written by every melee arm of update().
+        this.meleeWasMoving = false;
 
         // --- ranged stand-and-shoot cost (E9; see constants.js for the tapes) ---
         // Seconds of post-fire recovery still owed: while > 0 the unit is frozen
@@ -1637,6 +1653,9 @@ export class BattleUnit {
         }
         if (!this.target) {
             this.state = "idle";
+            // C-b bookkeeping: a unit with nothing to fight is not stepping, so
+            // it must not carry a stale "I was walking" into its next swing.
+            this.meleeWasMoving = false;
             return;
         }
 
@@ -1882,25 +1901,61 @@ export class BattleUnit {
                         );
                     }
                     this.attackCooldown = this.reloadTime;
+                    this.meleeWasMoving = false;
                 } else if (this.meleeMoveLocked()) {
                     // E15b rule 1: still finishing a melee swing animation, so
                     // it cannot close on its charge target either. Same plant
                     // the main melee branch below uses.
                     this.state = "attacking";
                     this.wasMoving = false;
+                    this.meleeWasMoving = false;
                 } else {
                     // Move toward target to get in charge range
                     this.state = "moving";
                     this.moveTowardTarget(dt, allUnits);
                     this.wasMoving = true;
+                    this.meleeWasMoving = true;
                 }
             } else if (this.committedAttack) {
                 this.committedAttack.timeLeft -= dt;
                 this.state = "committed";
+                this.meleeWasMoving = false;
                 if (this.committedAttack.timeLeft <= 0) {
                     const target = this.committedAttack.target;
+                    // ===== C2-B RULE C-c (WINDUP-COMMIT), LANDING HALF =====
+                    // NOTE, because it is the single most important fact about
+                    // this rule: THERE IS NO REACH TEST HERE, and there never
+                    // was. A melee swing that has been committed lands on a
+                    // LIVING victim however far it has drifted -- the engine
+                    // has done this for every frame_delay > 0 melee unit since
+                    // the committedAttack branch was written, and C1 M3's
+                    // 0.99x-reach measurement is not this line's fault, it is
+                    // the engine's kiter opening 0.05 tiles per reload where
+                    // the tape's opens 1.03. C2B.committedSwingLands does not
+                    // relax anything here; it only routes the frame_delay-0
+                    // units through this branch so they get the same treatment.
+                    // Pinned by c2b_melee_swing.test.mjs so a later round
+                    // cannot delete the property by accident.
                     if (target.state !== "dead") {
-                        this.performAttackOn(target);
+                        if (this.committedAttack.zeroDelay) {
+                            // C-c, frame_delay-0 arm. Resolve through
+                            // performAttack() and not performAttackOn(), so a
+                            // melee unit with extra_projectiles or a
+                            // first-attack bonus keeps every strike it has
+                            // today: the ONLY thing this rule changes for such
+                            // a unit is WHICH TICK the identical call happens
+                            // on. performAttack reads this.target, so lend it
+                            // the committed victim and put the live one back.
+                            const prevTarget = this.target;
+                            this.target = target;
+                            this.performAttack();
+                            this.target =
+                                prevTarget && prevTarget.state !== "dead"
+                                    ? prevTarget
+                                    : target;
+                        } else {
+                            this.performAttackOn(target);
+                        }
                     }
                     this.committedAttack = null;
                     // The windup is spent INSIDE the reload period, not added
@@ -1915,19 +1970,60 @@ export class BattleUnit {
                 }
             } else if (this.inRange()) {
                 if (this.attackCooldown <= 0) {
-                    if (this.attackDelay > 0) {
+                    if (C2B.stopToSwing && this.meleeWasMoving) {
+                        // ===== C2-B RULE C-b: STOP-TO-SWING =====
+                        // This unit was WALKING on the tick its cooldown came
+                        // up. It does not get to swing out of the step: it
+                        // halts here, and the swing begins next tick from a
+                        // stop. Nothing is charged for the halt beyond the tick
+                        // itself -- no overhead constant, no reload change --
+                        // and a unit that was already standing (every unit in a
+                        // scrum) never reaches this arm at all.
+                        //
+                        // The consequence the tape asks for is not the delay,
+                        // it is the RE-TEST: on the next tick inRange() is
+                        // asked again, so a victim that used the halt to leave
+                        // has actually escaped this swing and the chaser goes
+                        // back to closing. That is the contact-limited cycle
+                        // C1 M1 measured (tape 0.66 s in reach per cycle
+                        // against the engine's 1.81), approached from the
+                        // chaser's side.
+                        this.state = "attacking";
+                        this.wasMoving = false;
+                        this.meleeWasMoving = false;
+                    } else if (this.attackDelay > 0) {
                         this.committedAttack = {
                             target: this.target,
                             timeLeft: this.attackDelay,
                         };
                         this.state = "committed";
                         this.wasMoving = false;
+                        this.meleeWasMoving = false;
+                    } else if (C2B.committedSwingLands) {
+                        // ===== C2-B RULE C-c: WINDUP-COMMIT, frame_delay 0 ===
+                        // Reach has just been tested. The swing now OWNS the
+                        // engine's smallest resolvable interval -- one tick,
+                        // `timeLeft: 0` resolving on the next update -- and the
+                        // landing above asks only whether the victim is alive.
+                        // There is no constant here: the interval is the tick
+                        // rate, and the reload is untouched (the landing sets
+                        // reloadTime - attackDelay == reloadTime).
+                        this.committedAttack = {
+                            target: this.target,
+                            timeLeft: 0,
+                            zeroDelay: true,
+                        };
+                        this.state = "committed";
+                        this.wasMoving = false;
+                        this.meleeWasMoving = false;
                     } else {
                         this.state = "attacking";
                         this.performAttack();
+                        this.meleeWasMoving = false;
                     }
                 } else {
                     this.state = "attacking";
+                    this.meleeWasMoving = false;
                 }
             } else if (this.meleeMoveLocked()) {
                 // E15b rule 1 (SWING RECOVERY PLANT). This is the branch the
@@ -1944,10 +2040,12 @@ export class BattleUnit {
                 // of a living foe never reaches here at all.
                 this.state = "attacking";
                 this.wasMoving = false;
+                this.meleeWasMoving = false;
             } else {
                 this.state = "moving";
                 this.moveTowardTarget(dt, allUnits);
                 this.wasMoving = true;
+                this.meleeWasMoving = true;
             }
         }
     }

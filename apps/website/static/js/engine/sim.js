@@ -138,6 +138,14 @@ export class Simulation {
         // tools/simjs/parity_check.mjs valid. Deliberately absent from
         // stateHash(): it is fixed geometry, not mutable state.
         this.arena = null;
+        // E1 fight centre: midpoint of the two sides' unit centroids at spawn,
+        // set once by createSimulation after both teams are placed (scenario.js)
+        // and never updated — the tape boards' own fixed reference point C.
+        // Read ONLY behind E1.orbitKite in BattleUnit.moveAwayFromTarget; null
+        // (hand-built sims that never call createSimulation) falls back to the
+        // radial retreat there. Like `arena` it is fixed geometry, deliberately
+        // absent from stateHash().
+        this.fightCenter = null;
     }
 
     update(dt) {

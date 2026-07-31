@@ -66,7 +66,7 @@ import { Worker, isMainThread } from "node:worker_threads";
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import {
     R5B, setR5B, R5D1, setR5D1, R5D, setR5D, B2, setB2, R5F, setR5F,
-    C2A, setC2A, C2B, setC2B, C2C, setC2C, D2, setD2,
+    C2A, setC2A, C2B, setC2B, C2C, setC2C, D2, setD2, E1, setE1,
 } from "../../apps/website/static/js/engine/constants.js";
 
 // ---- Round-5b rule flags --------------------------------------------------
@@ -291,6 +291,32 @@ export function applyD2Spec(spec) {
     }
     const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
     setD2(cfg);
+    return cfg;
+}
+
+// ---- E1 orbit-kite rule flags ------------------------------------------------
+// Identical grammar again, over the SEPARATE E1 object (orbitKite, orbitBlend —
+// the kiter's clockwise-arc retreat basis). `--e1 off` is the pre-E1 engine and
+// must be byte-identical to it (structural: every E1 statement in
+// battle_unit.js is behind `if (E1.orbitKite ...)`):
+//
+//   --e1 off                       both off == pre-E1 engine, bit-identical
+//   --e1 orbitKite                 the pure-tangent arc basis
+//   --e1 orbitKite,orbitBlend      arc basis blended 1.77:1 with the radial
+//   (flag absent)                  engine defaults
+export function applyE1Spec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(E1);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--e1: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setE1(cfg);
     return cfg;
 }
 
@@ -690,6 +716,12 @@ if (isMainThread && process.argv[1]
         const on = Object.entries(d2Cfg).filter(([, v]) => v).map(([k]) => k);
         console.log(`d2 rules: ${on.length ? on.join(", ") : "(none -- pre-D2 engine)"}`);
     }
+    const e1Spec = flag("--e1", null);
+    const e1Cfg = applyE1Spec(e1Spec);
+    if (e1Cfg) {
+        const on = Object.entries(e1Cfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`e1 rules: ${on.length ? on.join(", ") : "(none -- pre-E1 engine)"}`);
+    }
 
     const dicts = loadCalibDicts();
     const allFights = loadManifest();
@@ -787,7 +819,7 @@ if (isMainThread && process.argv[1]
                     workerData: {
                         arenaArg, maxSeconds, outDir,
                         r5bSpec, r5d1Spec, r5dSpec, b2Spec, r5fSpec, c2aSpec,
-                        c2bSpec, c2cSpec, d2Spec,
+                        c2bSpec, c2cSpec, d2Spec, e1Spec,
                     },
                 });
                 const pump = () => {

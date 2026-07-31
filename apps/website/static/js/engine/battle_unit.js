@@ -49,6 +49,9 @@ import {
     C2B,
     C2C,
     D2,
+    E1,
+    E1_ORBIT_TANRAD,
+    E1_ORBIT_MIN_RADIUS_TILES,
     SILENCE_ADVANCE_CYCLES,
     PROJECTILE_RADIUS_TILES,
     ACCURACY_DISPERSION_BY_SLUG,
@@ -3747,6 +3750,68 @@ export class BattleUnit {
             } else {
                 dx /= dist;
                 dy /= dist;
+            }
+        }
+        // ===== E1: ORBIT KITE — the retreat bearing becomes a clockwise arc =====
+        // 78/78 kite tapes orbit the fight centre clockwise-on-screen (median
+        // +1.13 revolutions, radius held) where this engine's kiter flees
+        // radially into the wall in 78/78 fights — see the E1 block in
+        // constants.js for the full measurement. With orbitKite on, a
+        // GROUP-KITING unit's retreat waypoint is the point advanced clockwise
+        // along its own circle about the fight centre C by the EXISTING kite
+        // step distance s = moveSpeed × dt: waypoint = C + rotate(d, s/r),
+        // rotate(d, +φ) = (dx·cosφ − dy·sinφ, dx·sinφ + dy·cosφ) — the
+        // atan2-increasing sense, which the tape boards define as clockwise on
+        // screen (worldToTile has no axis flip; tested in e1_orbit_kite.test.mjs).
+        //
+        // ONLY THE BASIS dx/dy CHANGES, and only here:
+        //   * gated on `steering` non-null — kiteSteering's own "this unit is
+        //     group-kiting" predicate — so siege backing out of its dead zone,
+        //     melee, and non-out-ranging sides keep the radial bearing
+        //     byte-identically;
+        //   * a live C2A contact break (the `hitter` branch above) already
+        //     returned a bearing and is NOT overridden — the break's own
+        //     measured basis supersedes, exactly as it supersedes E10a's;
+        //   * everything downstream — kiteSteering's orbit/cohesion add,
+        //     avoidance, smoothing, arena constrain — runs unchanged (the C2
+        //     rounds refuted touching any of it);
+        //   * no fight centre on the sim (hand-built harness sims), or radius
+        //     under E1_ORBIT_MIN_RADIUS_TILES: fall back to the radial basis
+        //     already in dx/dy.
+        //
+        // orbitBlend (the brief's one permitted knob) blends the clockwise
+        // tangent chord with the radial basis at the tape-measured
+        // E1_ORBIT_TANRAD : 1 instead of replacing it.
+        if (E1.orbitKite && !hitter && steering && this.sim.fightCenter) {
+            const C = this.sim.fightCenter;
+            const px = this.x - C.x;
+            const py = this.y - C.y;
+            const r = Math.sqrt(px * px + py * py);
+            if (r >= E1_ORBIT_MIN_RADIUS_TILES * TILE_SIZE) {
+                const phi = (this.moveSpeed * dt) / r;
+                const cosP = Math.cos(phi);
+                const sinP = Math.sin(phi);
+                // waypoint − pos = rotate(d, φ) − d, normalised: the chord
+                // direction toward the arc waypoint.
+                let ox = (px * cosP - py * sinP) - px;
+                let oy = (px * sinP + py * cosP) - py;
+                const olen = Math.sqrt(ox * ox + oy * oy);
+                if (olen > 0) {
+                    ox /= olen;
+                    oy /= olen;
+                    if (E1.orbitBlend) {
+                        let bx = E1_ORBIT_TANRAD * ox + dx;
+                        let by = E1_ORBIT_TANRAD * oy + dy;
+                        const blen = Math.sqrt(bx * bx + by * by);
+                        if (blen > 0) {
+                            dx = bx / blen;
+                            dy = by / blen;
+                        }
+                    } else {
+                        dx = ox;
+                        dy = oy;
+                    }
+                }
             }
         }
         // ===== C2-c: PURE FLIGHT, and what it selects =====

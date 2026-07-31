@@ -249,5 +249,22 @@ export function createSimulation({
     // Order matters — see the DRAW ORDER note at the top of this file.
     setupTeam(sim, 1, teams[0], anchored ? (leftTeam === 0 ? 0 : 1) : null);
     setupTeam(sim, 2, teams[1], anchored ? (leftTeam === 0 ? 1 : 0) : null);
+    // E1 fight centre C: midpoint of the two sides' unit centroids at spawn —
+    // the same reference point the E1 tape/engine kite-orbit boards use
+    // (docs/calibration/e1_kite_orbit_tapes.md, "Conventions"). Computed ONCE
+    // here, after both teams are placed and before any tick; pure arithmetic
+    // over final spawn positions (no rng), read only behind E1.orbitKite, and
+    // absent from stateHash() — so with the flag off nothing observes it.
+    const centroid = (team) => {
+        let x = 0, y = 0;
+        for (const u of team) {
+            x += u.x;
+            y += u.y;
+        }
+        return { x: x / team.length, y: y / team.length };
+    };
+    const c1 = centroid(sim.team1);
+    const c2 = centroid(sim.team2);
+    sim.fightCenter = { x: (c1.x + c2.x) / 2, y: (c1.y + c2.y) / 2 };
     return sim;
 }

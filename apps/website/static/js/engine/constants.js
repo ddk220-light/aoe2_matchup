@@ -894,6 +894,99 @@ export function setD2(overrides) {
     return D2;
 }
 
+// ===== E1 — ORBIT KITE (the kiter's retreat bearing) =====
+// One mechanism, from the paired measurement docs
+// docs/calibration/e1_kite_orbit_tapes.md / e1_kite_orbit_engine.md (metrics in
+// data/calibration/analysis/e1_kite_orbit_*.json). Over the 78 ranged-vs-melee
+// kite tapes the kiting side ORBITS the fight centre clockwise-on-screen in
+// 78/78 recordings (median +1.13 revolutions, sign consistency 0.94, not one
+// counterclockwise tape), holds its radius (r-slope −0.030 tiles/s) and moves
+// tangential-first (tan/rad 1.77) — straight through ground the enemy held
+// earlier (reuse 0.54). The engine at the same spawns instead flees RADIALLY:
+// r-slope +0.146 t/s outward in 78/78 fights, hits the wall band in a median
+// 5 s, ends 90% of final-quarter frames pinned, and 86% of its kiter deaths
+// happen within 2 tiles of a wall. The tapes have no wall-pinning failure mode
+// at all.
+//
+// The rule: with orbitKite on, a group-kiting unit's retreat BEARING stops
+// being "away from the threat" and becomes "along the clockwise arc about the
+// fight centre C at my current radius" — the waypoint is C + rotate(d, s/r)
+// where d = pos − C and s is the EXISTING per-tick kite step distance
+// (moveSpeed × dt; no new magnitude constant). C is computed ONCE per battle
+// (scenario.js: midpoint of the two sides' spawn centroids — the tape boards'
+// own reference point). ONLY THE BASIS CHANGES: the orbit/cohesion steering
+// terms, avoidance, velocity smoothing, arena constraint, and every trigger
+// for entering/leaving the kite state are byte-for-byte untouched (the C2
+// rounds adversarially refuted touching any of them). A live C2A contact
+// break still supersedes the basis exactly as it does the radial one.
+//
+// SIGN CONVENTION (tested in tests/js/engine/e1_orbit_kite.test.mjs): the
+// tape boards define positive Δθ = increasing atan2 in game tile coordinates
+// = CLOCKWISE on screen under the iso mapping sx = x − y, sy = (x + y)/2.
+// TapeBox.worldToTile is a positive uniform scale (no axis flip), so
+// increasing atan2 in engine world coordinates is the same rotation sense:
+// rotate(d, +φ) = (dx·cosφ − dy·sinφ, dx·sinφ + dy·cosφ).
+//
+// orbitBlend is the ONE knob the E1 brief permits, at a MEASURED value only:
+// instead of the pure tangent, blend tangent : existing-away-basis at
+// E1_ORBIT_TANRAD : 1 — the tape corpus's own tangential:radial displacement
+// ratio (1.77, e1_kite_orbit_tapes.json aggregate). Meaningless without
+// orbitKite.
+//
+// MEASURED VERDICT (E1 round, docs/calibration/e1_orbit_kite.md). Pure
+// tangent is the better variant on every geometry axis (dev subset, 3 seeds:
+// median sweep +0.57 rev vs blend +0.38; r-slope +0.041 vs +0.159; the blend
+// re-adds the radial push the avoidance sum already supplies and balloons
+// the radius). With orbitKite on, the full 78-fight kite corpus goes from
+// +0.10 to +0.54 median revolutions, sign consistency 0.68 → 0.97 (78/78
+// clockwise), cornering 0.90 → 0.60, wall-death fraction 0.86 → 0.28 — the
+// tapes' geometry, directionally, on every metric.
+//
+// SHIPPED OFF, deliberately, and here is the honest reason: the outcome
+// board pays for the faithful geometry. A kiter that orbits at held radius
+// stays reachable by a chaser that the engine still lets swing at FULL
+// cadence — the tape's melee-chasing-a-kiter cadence loss (1.29x slower,
+// E12/C1) is unmodeled — so the champion families catch the orbiting ball:
+// full corpus 194/216 → 181/216, all 13 net losses in champion__vs__
+// arbalester (6, a canary) and champion__vs__heavy_cav_archer repeats (8−1).
+// This is the SAME knife edge that already holds P1/P2/C2a off. Melee,
+// siege and ranged-vs-ranged are bit-identical with the flag on (the
+// kiteSteering gate). Flip orbitKite when the chaser-cadence mechanism
+// lands, and re-gate P1+P2 in the same round — E1-on moves both of their
+// blocked ledgers the right way (champion dmg/run 145 → 720 vs ledger ~603;
+// camel dmg/run 591 → 540 vs ledger ~273 with HC land rate held 85.3 →
+// 84.1%).
+//
+// Both flags ship OFF until then — the defaults test pins that, and
+// calib_runner's --e1 spec is the A/B entry point.
+export const E1 = {
+    // The orbit basis itself (mechanism above).
+    orbitKite: false,
+    // Tangent:radial blend at the measured 1.77:1 instead of pure tangent.
+    orbitBlend: false,
+};
+
+/** Apply a partial override to {@link E1}. Harness-only entry point. */
+export function setE1(overrides) {
+    for (const k of Object.keys(overrides)) {
+        if (!(k in E1)) throw new Error(`setE1: unknown flag ${k}`);
+        E1[k] = Boolean(overrides[k]);
+    }
+    return E1;
+}
+
+// The tape corpus's tangential:radial displacement ratio — the ONLY value
+// orbitBlend is allowed to blend at (data/calibration/analysis/
+// e1_kite_orbit_tapes.json, aggregate over all 78 tapes; per-kiter means run
+// 1.67–1.81). A MEASURED tape quantity, same category as E9's recovery
+// constants — never tuned against the scoreboard.
+export const E1_ORBIT_TANRAD = 1.77;
+
+// Degenerate-centre guard, in tiles: inside this radius of C the arc has no
+// usable tangent (and φ = s/r blows up), so the unit falls back to the
+// existing radial retreat for the tick. From the E1 brief, not fitted.
+export const E1_ORBIT_MIN_RADIUS_TILES = 0.5;
+
 // ---- D2 measured / dat quantities -------------------------------------------
 
 // TOTAL BOLT FLIGHT, in tiles from the muzzle. A MEASURED TAPE CONSTANT, in the

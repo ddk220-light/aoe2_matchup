@@ -468,7 +468,18 @@ export const MELEE_BUMP_RETARGET = true;
 // is gated on DISTANCE and evaporates the moment the victim dies or steps out
 // of reach -- which is precisely when phase 0-0.1 of the tape's cycle says the
 // unit must still be standing there finishing its swing. 0 disables the rule.
-export const MELEE_SWING_RECOVERY_S = 0.5;
+//
+// SHIPPED AT 0 -- REFUTED AS DESIGNED (E15b marginal-effect runs). A single
+// fixed-length plant is a step function; the tape's ramp is monotone across
+// the whole reload cycle (0.9% -> 14.4%), so any one release point matches at
+// most one bin: 0.5s over-corrected bins 0-0.2 (0.21% vs 0.90%), spiked at
+// release (8.1% vs 4.9%) and then DECAYED where the tape keeps rising. Alone
+// it cost 7 melee-gate sides; combined with lane re-acquisition it suppressed
+// exactly the walking that rule induces (paladin_vs_steppe 5/6 -> 1/6). The
+// ramp's late half is accumulated CONTACT LOSS, a mechanism still unbuilt --
+// when that mechanism exists, revisit whether a short animation plant is
+// needed at all. The code stays wired for the off-switch identity proof.
+export const MELEE_SWING_RECOVERY_S = 0;
 
 // Rule 2 -- LANE-GATED RE-ACQUISITION.
 //

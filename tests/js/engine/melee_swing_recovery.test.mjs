@@ -73,13 +73,15 @@ function mk(sim, team, opts = {}) {
 
 // ---- shipped configuration -------------------------------------------------
 
-test("E15b ships both rules on, with the animation length read off the ramp", () => {
-    // 0.5 s = attack-animation completion. The tape's moving-share is 0.90% in
-    // phase 0.0-0.1 of the reload cycle and reaches half its saturated 14.4% at
-    // phase 0.3-0.4; over this corpus's melee reloads that half-point is
-    // ~0.5-0.9 s. A DURATION, not a fraction of reload, and not fitted to any
-    // scoreboard.
-    assert.equal(MELEE_SWING_RECOVERY_S, 0.5);
+test("E15b ships lane re-acquisition ON and the swing plant OFF", () => {
+    // The marginal-effect runs refuted the fixed-length plant: a step function
+    // cannot match the tape's monotone swing-phase ramp, it cost 7 gate sides
+    // alone, and it suppressed exactly the walking the lane rule induces
+    // (paladin_vs_steppe 5/6 -> 1/6 with both on). See the rationale block at
+    // MELEE_SWING_RECOVERY_S in constants.js. The mechanism stays wired (and
+    // covered below via manual stamps) for when a contact-loss model makes an
+    // animation plant worth revisiting.
+    assert.equal(MELEE_SWING_RECOVERY_S, 0);
     assert.equal(MELEE_LANE_REACQUIRE, true);
     // Cost cap only: beyond the nearest dozen bodies the walk dominates, and
     // exhausting the cap falls back to the pre-E15b nearest.
@@ -95,7 +97,7 @@ test("a melee unit that has never swung is free to walk", () => {
     assert.equal(a.meleeMoveLocked(), false);
 });
 
-test("landing a swing plants the attacker for exactly the animation length", () => {
+test("with the plant shipped OFF, landing a swing does not lock locomotion", () => {
     const sim = simStub();
     const a = mk(sim, 1);
     const v = mk(sim, 2, { hp: 1e6 });
@@ -104,25 +106,28 @@ test("landing a swing plants the attacker for exactly the animation length", () 
     sim.battleTime = 12.25;
 
     a.performAttackOn(v);
-    assert.equal(a.moveLockUntil, 12.25 + MELEE_SWING_RECOVERY_S);
-    assert.equal(a.meleeMoveLocked(), true);
-
-    sim.battleTime = 12.25 + MELEE_SWING_RECOVERY_S - 1e-9;
-    assert.equal(a.meleeMoveLocked(), true, "still inside the animation");
-    sim.battleTime = 12.25 + MELEE_SWING_RECOVERY_S;
-    assert.equal(a.meleeMoveLocked(), false, "animation complete, free to walk");
+    assert.equal(a.moveLockUntil, -Infinity,
+        "no stamp is written while the rule is off");
+    assert.equal(a.meleeMoveLocked(), false, "recovery 0 = free immediately");
 });
 
-test("a KILLING blow plants the attacker too -- the animation does not abort", () => {
+test("the lock predicate is inert while the rule is off, even with a stamp", () => {
+    // MELEE_SWING_RECOVERY_S <= 0 short-circuits the predicate entirely, so a
+    // stray stamp (this cannot happen in production; belt-and-braces) cannot
+    // freeze a unit. The nonzero-recovery behavior is pinned by the manual-
+    // stamp locomotion test below.
     const sim = simStub();
     const a = mk(sim, 1, { attack: 1000 });
     const v = mk(sim, 2, { hp: 5 });
     a.x = 0; a.y = 0;
     v.x = a.radius + v.radius; v.y = 0;
+    sim.battleTime = 12.25;
 
     a.performAttackOn(v);
     assert.equal(v.state, "dead", "fixture: the blow really killed");
-    assert.equal(a.meleeMoveLocked(), true);
+    a.moveLockUntil = 12.25 + 0.5;
+    assert.equal(a.meleeMoveLocked(), false,
+        "constant-gated off: the stamp is ignored");
 });
 
 test("a RANGED unit is exempt even with a stamp on it", () => {
@@ -135,11 +140,11 @@ test("a RANGED unit is exempt even with a stamp on it", () => {
         "ranged immobility is E9's postFireRecovery, not this rule");
 });
 
-test("the plant stops LOCOMOTION and nothing else", () => {
-    // A melee unit whose victim just died, with the next foe out of reach: the
-    // pre-E15b engine walked on the very next tick (phase 0.0-0.1 of the cycle,
-    // where the tape moves 0.90% of the time). Now it stands still until the
-    // animation completes, then closes.
+test("with the plant off, a freed unit re-targets and closes immediately", () => {
+    // The pre-E15b (and shipped) behavior: victim dies, the unit picks its
+    // next foe and starts walking on the very next ticks -- no plant. This is
+    // the baseline any future nonzero-recovery change would deliberately
+    // alter.
     const sim = simStub();
     const a = mk(sim, 1, { attack: 1000 });
     const v = mk(sim, 2, { hp: 5 });
@@ -150,25 +155,16 @@ test("the plant stops LOCOMOTION and nothing else", () => {
 
     a.target = v;
     a.hasAcquiredTarget = true;
-    a.performAttackOn(v);           // kills v, stamps the lock
+    a.performAttackOn(v);           // kills v; no stamp while the rule is off
     a.attackCooldown = a.reloadTime;
 
     const dt = 1 / 60;
     const x0 = a.x;
-    // Half the animation: the unit must not have moved a pixel.
-    for (let i = 0; i < 15; i++) {
-        sim.battleTime += dt;
-        a.update(dt, [a, v, next], sim.team2);
-    }
-    assert.equal(a.target, next, "it still RE-TARGETS while planted");
-    assert.equal(a.x, x0, "but it has not walked");
-    assert.equal(a.state, "attacking");
-
-    // Past the animation it closes on the new foe.
     for (let i = 0; i < 30; i++) {
         sim.battleTime += dt;
         a.update(dt, [a, v, next], sim.team2);
     }
+    assert.equal(a.target, next, "re-targeted onto the surviving foe");
     assert.ok(a.x > x0 + 1, `expected the unit to close, x ${x0} -> ${a.x}`);
     assert.equal(a.state, "moving");
 });

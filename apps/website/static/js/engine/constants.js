@@ -141,6 +141,81 @@ export function setR5D(overrides) {
     return R5D;
 }
 
+// ===== PHASE B2 — THE MELEE BUMP VALVE, MADE REACHABLE (master off-switch) ==
+// One rule, and it deletes a bug rather than adding a model. Derived from
+// docs/calibration/b1_engagement_forensics.md §2b / §8.2 and the correction to
+// it recorded in docs/calibration/b2_bump_contact.md. It introduces NO new
+// constant -- it asks an existing engine floor instead of the wrong one.
+//
+// THE DEFECT B1 MEASURED. E14's rule 2 (MELEE_BUMP_RETARGET, below) asks "am I
+// in body contact with an enemy that is not my target" with
+// `dist <= this.radius + enemy.radius + 1`, which is byte-for-byte the
+// `minDist` Simulation.resolveCollisions enforces as the MINIMUM cross-team
+// separation. Measured over 40 asymmetric melee fights x 20 seeds: the valve
+// was eligible on 0.2% of frozen ticks and fired 900 times against 21 080
+// stuck-bar trips, while units froze on victims a median 0.37 tiles past reach
+// for up to 35.6 s. The rule was wired, tested, documented -- and unreachable.
+//
+// WHY -- AND B1 IS ONE PIXEL OFF. B1 read the failure as a timing artifact:
+// the resolver pushes a pair to the floor at the END of a tick, so the rule's
+// `<=` re-measurement on the NEXT tick lands just outside. It is not a timing
+// artifact, and rewiring the rule to consume the resolver's own contact event
+// does not fix it (measured: 0.002 eligible, against 0.001 for the old test --
+// see the B2 report). The engine separates bodies in TWO passes, and the pair
+// never reaches the hard one:
+//
+//     resolveCollisions   hard floor   radius + radius + 1   (end of tick)
+//     calculateAvoidance  soft floor   radius + radius + 2   (during movement)
+//
+// The soft floor is ONE PIXEL WIDER. Two enemies pressed together therefore
+// settle against the SOFT floor, one pixel outside the hard one, and the hard
+// pass never touches them at all -- which is exactly B1's measured "nearest
+// hittable foe sits a median 1.0-1.7 px past the bump floor". The cross-team
+// standoff is held by the soft pass; the bump asked the hard pass; the two
+// differ by 1 px, and that pixel is the whole rule.
+//
+// THE FIX. Ask both passes, which between them are the engine's entire
+// definition of a body:
+//   * the SOFT floor as a live test, `dist < radius + radius + 2` -- quoted
+//     from calculateAvoidance, not chosen. This is the term that fires:
+//     eligibility on a frozen tick goes 0.001 -> 0.321.
+//   * the HARD pass's own recorded contact EVENT (resolveCollisions ->
+//     BattleUnit.bumpContacts), for the rarer case where bodies really do
+//     overlap. Consulted as an event rather than re-derived from a distance,
+//     because by the time the rule runs the pair HAS been pushed.
+// `<= hard floor` implies `< soft floor`, so the soft term subsumes the pre-B2
+// trigger and the new rule is a strict superset of the old one: nothing that
+// used to bump can stop bumping.
+//
+// Every other gate on E14 rule 2 is UNCHANGED: melee unit, living melee
+// target, target out of reach, candidate alive and melee and not the current
+// target, nearest candidate wins. The lock rule (rule 1) is untouched.
+//
+// No fitted constant is admitted anywhere. `+3 px` would cover 0.788 of frozen
+// ticks and `+5 px` 1.000 -- both were measured and both were REJECTED: the
+// first is a number chosen for its coverage, and the second is not a contact
+// test at all (for 0-range melee, radius+radius+5 IS reach, so it would silently
+// rewrite the rule as "retarget to anything you can hit").
+//
+// Setting the flag to false restores 716a522 BIT-IDENTICALLY -- asserted by
+// tests/js/engine/b2_bump_contact.test.mjs and hash-verified over the ranged
+// subset x 3 seeds.
+export const B2 = {
+    // B2  reachable bump contact: "bumped" is the soft body floor the engine
+    //     actually holds cross-team pairs at, plus the hard pass's own contact
+    //     event -- not a re-measurement against a floor nothing ever reaches.
+    resolverContactBump: true,
+};
+
+/** Apply a partial override to {@link B2}. Harness-only entry point. */
+export function setB2(overrides) {
+    for (const k of Object.keys(overrides)) {
+        if (!(k in B2)) throw new Error(`setB2: unknown flag ${k}`);
+        B2[k] = Boolean(overrides[k]);
+    }
+    return B2;
+}
+
 // ===== CONSTANTS =====
 export const CANVAS_WIDTH = 900;
 export const CANVAS_HEIGHT = 600;
@@ -637,6 +712,14 @@ export const MELEE_CONTACT_SLOTS = 4;
 // There is no tolerance constant: "in contact" reuses resolveCollisions' own
 // hard floor, radius + radius + 1 px, so the trigger fires on exactly the
 // pairs the collision pass pushed apart this tick. false disables the rule.
+//
+// PHASE B2 CORRECTION: that last sentence was the INTENT and it was not what
+// the code did. resolveCollisions' floor is 1 px NARROWER than the soft floor
+// calculateAvoidance holds cross-team pairs at, so the hard pass never sees a
+// pressed-together pair and the trigger fired on 0.2% of the ticks it was
+// written for. Contact is now the soft floor plus the hard pass's own contact
+// event (see the B2 flag object at the top of this file); this flag still
+// ships true and still disables the whole rule when false.
 export const MELEE_BUMP_RETARGET = true;
 
 // ===== E15b: SWING RECOVERY + LANE-GATED RE-ACQUISITION =====

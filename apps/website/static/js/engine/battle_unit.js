@@ -43,6 +43,7 @@ import {
     R5B,
     R5D1,
     R5D,
+    B2,
     PROJECTILE_RADIUS_TILES,
     ACCURACY_DISPERSION_BY_SLUG,
     LEAD_WINDOW_SECONDS,
@@ -304,6 +305,14 @@ export class BattleUnit {
         // read the SAME tick's value in calculateAvoidance and again in
         // resolveCollisions. Never true before the first update().
         this.inCombatPack = false;
+        // B2: the CROSS-TEAM bodies Simulation.resolveCollisions found this
+        // unit in contact with on the most recent tick -- written by that pass,
+        // read by meleeBumpRetarget on the next one, cleared by that pass at
+        // the start of every tick. A Set so three resolver passes over the same
+        // pair record it once and the consumer's answer cannot depend on how
+        // many passes touched it. Empty until the first resolveCollisions has
+        // run, which is correct: nothing has bumped anything yet.
+        this.bumpContacts = new Set();
         this.attackCooldown = 0;
         this.wasMoving = true;
         this.committedAttack = null;
@@ -694,15 +703,48 @@ export class BattleUnit {
         // 126 to 114. Pursuit belongs to the ranged round.
         if (t.isRanged()) return;
         if (this.inRange()) return;
+        const useEvent = B2.resolverContactBump;
         let best = null;
         let bestDist = Infinity;
         for (const enemy of enemies) {
             if (enemy === t || enemy.state === "dead" || enemy.isRanged())
                 continue;
             const dist = this.distanceTo(enemy);
-            // resolveCollisions' own hard floor: at or inside it the two bodies
-            // are in contact and were pushed apart this tick.
-            if (dist <= this.radius + enemy.radius + 1 && dist < bestDist) {
+            // "In contact" asks the engine's OWN body physics, and the engine
+            // separates bodies in two places. Both are asked, because B2
+            // measured that only the second one is ever reachable:
+            //
+            //  * the HARD pass (Simulation.resolveCollisions, floor
+            //    `radius + radius + 1`) -- consulted as its own recorded
+            //    contact EVENT rather than re-derived from a distance a tick
+            //    later, since by the time this runs the pair has already been
+            //    pushed to the floor and cascading pushes carry it past.
+            //  * the SOFT pass (calculateAvoidance, floor
+            //    `radius + radius + 2`) -- the steering repulsion every unit
+            //    applies to every body within one more pixel than the hard
+            //    floor.
+            //
+            // THE SOFT FLOOR IS THE ONE THAT HOLDS A CROSS-TEAM PAIR, and that
+            // is why E14's trigger could not fire. The soft floor is 1 px
+            // WIDER than the hard one, so two enemies pressed together settle
+            // at the soft floor and the hard pass never sees them: measured
+            // over the three collapse/near-collapse fights x 2 seeds, on a
+            // frozen tick with a hittable non-target foe present, the hard
+            // floor is satisfied on 0.001 of ticks and its contact event on
+            // 0.002 -- against 0.321 for the soft floor. B1 named the hard
+            // floor as the culprit (forensics §2b); the arithmetic is one
+            // pixel off, and the one pixel is the whole rule.
+            //
+            // Neither term is a new number: both floors already existed, for
+            // this exact purpose, and `radius + radius + 2` is quoted from
+            // calculateAvoidance rather than chosen. `<= hard` implies
+            // `< soft`, so the soft term SUBSUMES the pre-B2 trigger and the
+            // B2 rule is a strict superset: nothing that used to bump stops.
+            const contact = useEvent
+                ? (dist < this.radius + enemy.radius + 2 ||
+                    this.bumpContacts.has(enemy))
+                : dist <= this.radius + enemy.radius + 1;
+            if (contact && dist < bestDist) {
                 bestDist = dist;
                 best = enemy;
             }

@@ -65,7 +65,7 @@ import { Worker, isMainThread } from "node:worker_threads";
 
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import {
-    R5B, setR5B, R5D1, setR5D1, R5D, setR5D,
+    R5B, setR5B, R5D1, setR5D1, R5D, setR5D, B2, setB2,
 } from "../../apps/website/static/js/engine/constants.js";
 
 // ---- Round-5b rule flags --------------------------------------------------
@@ -143,6 +143,30 @@ export function applyR5DSpec(spec) {
     }
     const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
     setR5D(cfg);
+    return cfg;
+}
+
+// ---- Phase-B2 rule flag ----------------------------------------------------
+// Identical grammar again, over the SEPARATE B2 object (one rule:
+// resolverContactBump). `--b2 off` is the pre-B2 engine (716a522) and must be
+// byte-identical to it -- which is the whole point of having the switch:
+//
+//   --b2 off                  the rule off == pre-B2 engine, bit-identical
+//   --b2 resolverContactBump  explicitly on (the engine default)
+//   (flag absent)             engine default, i.e. on
+export function applyB2Spec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(B2);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--b2: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setB2(cfg);
     return cfg;
 }
 
@@ -494,6 +518,12 @@ if (isMainThread && process.argv[1]
         const on = Object.entries(r5dCfg).filter(([, v]) => v).map(([k]) => k);
         console.log(`r5d rules: ${on.length ? on.join(", ") : "(none -- pre-R5d engine)"}`);
     }
+    const b2Spec = flag("--b2", null);
+    const b2Cfg = applyB2Spec(b2Spec);
+    if (b2Cfg) {
+        const on = Object.entries(b2Cfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`b2 rules: ${on.length ? on.join(", ") : "(none -- pre-B2 engine)"}`);
+    }
 
     const dicts = loadCalibDicts();
     const allFights = loadManifest();
@@ -588,7 +618,7 @@ if (isMainThread && process.argv[1]
             const workerPath = path.join(HERE, "calib_worker.mjs");
             for (let w = 0; w < poolSize; w++) {
                 const worker = new Worker(workerPath, {
-                    workerData: { arenaArg, maxSeconds, outDir, r5bSpec, r5d1Spec, r5dSpec },
+                    workerData: { arenaArg, maxSeconds, outDir, r5bSpec, r5d1Spec, r5dSpec, b2Spec },
                 });
                 const pump = () => {
                     if (next < tasks.length) worker.postMessage(tasks[next++]);

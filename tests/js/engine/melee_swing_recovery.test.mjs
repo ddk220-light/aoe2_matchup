@@ -301,6 +301,27 @@ test("a dead body does not block a lane", () => {
     assert.equal(a.laneClear(near), true);
 });
 
+test("the lane test is melee-vs-melee: a RANGED candidate is taken as-is", () => {
+    // Same scope as E14's bump retarget, and paid for the same way: applied to
+    // a melee unit re-picking among a kiting archer ball it took the
+    // champion__vs__arbalester canary from 6/6 to 0/6.
+    const sim = simStub();
+    const a = mk(sim, 1);
+    a.x = 0; a.y = 0;
+    const nearArcher = mk(sim, 2, { range: 4, isRanged: true });
+    nearArcher.x = 3 * TILE_SIZE; nearArcher.y = 0;
+    const farArcher = mk(sim, 2, { range: 4, isRanged: true });
+    farArcher.x = 0; farArcher.y = 5 * TILE_SIZE;
+    const wall = mk(sim, 1);
+    wall.x = 1.5 * TILE_SIZE; wall.y = 0;
+    assert.equal(a.laneClear(nearArcher), false, "fixture: the lane IS blocked");
+
+    a.hasAcquiredTarget = true;
+    a.findTarget(sim.team2);
+    assert.equal(a.target, nearArcher, "pursuit is the ranged round's business");
+    assert.ok(farArcher);
+});
+
 test("a RANGED unit re-acquires by plain distance, lane or no lane", () => {
     const { sim, a: _melee, near, far } = laneScene();
     const archer = mk(sim, 1, { range: 4, isRanged: true });

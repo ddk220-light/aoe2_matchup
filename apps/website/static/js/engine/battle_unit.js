@@ -725,7 +725,20 @@ export class BattleUnit {
         pool.sort((a, b) => a.d - b.d);
         const cap = Math.min(pool.length, MELEE_LANE_CANDIDATE_CAP);
         for (let i = 0; i < cap; i++) {
-            if (this.laneClear(pool[i].e)) return pool[i].e;
+            const e = pool[i].e;
+            // MELEE-VS-MELEE ONLY, exactly as E14's bump retarget is scoped,
+            // and for the same measured reason. The 2062 lock births this rule
+            // is derived from are all from PURE-MELEE recordings: chasing
+            // archers is a pursuit, not a brawl, and there is no tape evidence
+            // that a chaser threads the scrum to pick a further archer. Left
+            // unscoped it fires on every champion re-picking among a kiting
+            // ball and took the champion__vs__arbalester canary from 6/6 to
+            // 0/6 (measured, this experiment) -- the identical failure E14
+            // recorded for the same over-application. A ranged candidate is
+            // therefore taken as-is, which for a single-unit-type army means
+            // the whole rule reduces to the pre-E15b nearest.
+            if (e.isRanged()) return e;
+            if (this.laneClear(e)) return e;
         }
         return null;
     }

@@ -42,7 +42,9 @@ import path from "node:path";
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import { BattleUnit } from "../../apps/website/static/js/engine/battle_unit.js";
 import { TILE_SIZE } from "../../apps/website/static/js/engine/constants.js";
-import { applyR5BSpec, applyR5D1Spec, applyR5DSpec } from "./calib_runner.mjs";
+import {
+    applyR5BSpec, applyR5D1Spec, applyR5DSpec, applyR5FSpec,
+} from "./calib_runner.mjs";
 import {
     loadManifest, loadCalibDicts, loadCalibSpawns, spawnsForFight,
 } from "./calib_runner.mjs";
@@ -69,6 +71,35 @@ function installShotProbe() {
                 is_extra: isExtra ? 1 : 0,
                 speed_tiles: (this.projectileSpeed > 0
                     ? this.projectileSpeed : 7 * TILE_SIZE) / TILE_SIZE,
+                // R5e additions, both read-only and both taken BEFORE the
+                // original runs, because the original mutates the state each
+                // one depends on.
+                //
+                // `aimx/aimy` is the UNDISPLACED aim point. fireProjectile
+                // computes exactly this and then, if and only if the accuracy
+                // roll FAILED, throws it by up to the dat dispersion; the
+                // projectile's own `targetX/targetY` (recorded as ax/ay below)
+                // is the post-throw point. So `ax != aimx` is an exact,
+                // rng-free readout of "this shot's accuracy roll failed" --
+                // which is the population R5e's plannedDamage question is
+                // about, and which is otherwise unobservable from outside
+                // (`willHit` is a local). aimPointFor() draws no rng, mutates
+                // nothing and is already called by the original with the same
+                // arguments, so calling it here is a pure duplicate read.
+                //
+                // `covered` is the engine's OWN coverage arithmetic for the
+                // victim this shot is going to, at the instant of the launch:
+                // coveredDamageOn() = in-flight-arriving-first (D3) + this
+                // tick's claims (T2). It has to be read before the original
+                // because the original's claimShot() adds THIS shot to the
+                // ledger. covered >= target_hp is the exact signature of T1's
+                // `best || primary` all-covered fallback, since selectShotTarget
+                // returns a covered victim only when every reachable enemy is
+                // covered. Also a pure read: it iterates sim.projectiles and
+                // reads sim.tickClaims, and writes neither.
+                aimx: this.aimPointFor(target).x / TILE_SIZE,
+                aimy: this.aimPointFor(target).y / TILE_SIZE,
+                covered: this.coveredDamageOn(target),
             }
             : null;
         const out = ORIGINAL_FIRE.call(this, target, isExtra);
@@ -194,6 +225,8 @@ applyR5BSpec(flag("--r5b", null));
 applyR5D1Spec(flag("--r5d1", null));
 // Same for the Round-5d targeting/approach rules (--r5d off == pre-R5d).
 applyR5DSpec(flag("--r5d", null));
+// Same for the Round-5f selection/silence rules (--r5f off == pre-R5f).
+applyR5FSpec(flag("--r5f", null));
 
 const dicts = loadCalibDicts();
 const spawns = loadCalibSpawns();

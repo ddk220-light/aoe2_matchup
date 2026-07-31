@@ -245,6 +245,161 @@ export function setB2(overrides) {
     return B2;
 }
 
+// ===== ROUND 5f — RANGED SELECTION + SILENCE ADVANCE (master off-switches) =====
+// Three rules from docs/calibration/r5e_pick_forensics.md. Like R5B/R5D these
+// are MECHANISMS: A2 and A3 carry no constant at all, and A1's single number
+// (SILENCE_ADVANCE_CYCLES, below) is a MEASURED TAPE BREAKPOINT read off the
+// M4b bucket table, not a value tuned against the scoreboard.
+//
+// Setting them all to false restores 716a522 (the R5d/R5d-1 engine)
+// BIT-IDENTICALLY -- asserted by tests/js/engine/r5f_ranged.test.mjs and
+// hash-verified against the base commit over the ranged and melee subsets.
+//
+// SHIPPED STATE: A1 off, A2 off, A3 on (and A3 is a proven no-op while
+// R5D1.reducedDamageHits is off), i.e. the R5f engine is bit-identical to
+// 716a522 on the whole corpus. Each flag's own note below carries the numbers
+// that decided it. Nothing here was tuned: the flags are on/off and the one
+// constant, SILENCE_ADVANCE_CYCLES, is a measured tape bucket edge.
+//
+// A SEPARATE object from R5B / R5D / R5D1, for the same reason those three are
+// separate from each other: `--r5d off` has to keep meaning "the pre-R5d
+// engine" exactly, and a sweep over R5d's rules must not silently drag these
+// along.
+export const R5F = {
+    // A1  advance-on-silence: a ranged unit that has not LANDED a hit for more
+    //     than SILENCE_ADVANCE_CYCLES of its own reload cycles, and still has a
+    //     live target, ignores the R5b margin hold and closes. No new steering
+    //     and no new movement machinery -- it flips one boolean in
+    //     rangedShouldApproach(), so the unit walks the way it already walks.
+    //
+    //     R5e M4/M4b: the tape's archers close on 2.0% of the unit-steps in
+    //     which they are trading on cooldown at a live victim, on 52.2% of the
+    //     steps in which they have been silent for >2 cycles with a dead
+    //     victim (median radial 0.200 t/s) and on 62.2% of the steps in which
+    //     they are silent with a LIVE one (median radial 0.845 t/s = 55% of
+    //     walk speed). The engine has the same amount of idle time (907.6
+    //     unit-steps against the tape's 763) and closes on 20.9% of it at a
+    //     median radial of exactly 0.000. The ride-in is a SILENCE behaviour,
+    //     not a targeting one.
+    //
+    //     Scoped to units that have already fired at least once: the tape's
+    //     separate "never fired" bin is the opening walk, and the engine
+    //     already reproduces it (35.8% tape vs 33.3% engine).
+    //
+    //     SHIPPED OFF -- the mechanism is REAL and MEASURABLY LIVE, and it
+    //     still costs. Over the six ranged fights, 20 seeds, A1 alone:
+    //       * silence occupancy (its own predicate) 9.5% -> 8.1% of ranged
+    //         unit-steps, and the share of those steps spent CLOSING goes
+    //         26.3% -> 46.2% (tape 52.2-62.2). It is not inert.
+    //       * HCA_vs_HC standoff p90 0.97 -> 1.15 tiles (tape 4.78) and the
+    //         hand-cannoneer side 0.67 -> 1.29 (tape 4.85).
+    //       * but the ranged board's mean per-side HP error goes 2.33 -> 2.91
+    //         pts and HCA_vs_HC 13.92 -> 16.42 (sum of both sides), i.e. the
+    //         archers survive with MORE hp, not less. On the full 216-fight
+    //         corpus it is a wash: 194/216 winners either way, +0.03 HP-pts.
+    //     And M4b says where the extra closing lands: with the LANDED clock
+    //     the "<=1 cycle / victim alive" bucket -- the modal state of the
+    //     fight, which the tape closes on 2.0% of -- goes 3.5% -> 8.4%. The
+    //     rule produces closing, in partly the wrong state. Kept wired and
+    //     tested; the tape's elongation needs something this is not.
+    silenceAdvance: false,
+    // A1b WHICH CLOCK A1 READS. Not a tuning knob -- a choice between two
+    //     definitions of the same word, both of which have a claim:
+    //       false (default) = LANDED. The R5f brief's wording: the clock
+    //           resets when a projectile this unit fired actually put damage
+    //           on a body, so a unit whose shots keep grounding stays silent.
+    //       true            = LAUNCHED. The statistic r5e_pick_forensics.md
+    //           §4b actually bins by ("how long since that unit last fired"),
+    //           i.e. the definition under which the tape's 2.0% / 52.2% /
+    //           62.2% closing shares were measured in the first place.
+    //     Exactly one is used; the flag has no effect with silenceAdvance off.
+    //     Measured both ways over the six ranged fights -- see the round
+    //     report; the default is the brief's.
+    silenceClockOnLaunch: false,
+    // A2  persist -> nearest-uncovered selection: a ranged unit KEEPS the
+    //     victim of its previous shot while that victim is alive, in reach and
+    //     not lethally covered; when any of those fails it re-picks the nearest
+    //     reachable uncovered enemy (T1's rule, unchanged, including its plain-
+    //     nearest all-covered fallback). Replaces T1's every-shot re-pick.
+    //
+    //     R5e M5: `persist->nearest` is the per-pick accuracy leader over the
+    //     twelve tape sides (55.9%, above plain nearest's 53.4% and shipped
+    //     T1's 53.0%) and is distributionally closer than either (delta near%
+    //     +24.8 against nearest's +46.6 and T1's +34.3). R5e M2: in the open
+    //     regime -- previous victim alive, in reach, uncovered -- the tape
+    //     re-picks the same victim 52.0% of the time and the engine 76.4%,
+    //     while the engine picks the strict nearest on 96.5% of those shots
+    //     against the tape's 49.0%. T1's non-stickiness is not what was
+    //     missing; T1 is not even the best member of the nearest family.
+    //
+    //     SHIPPED OFF -- REFUTED, and by a single, clean cause. A2 moves the
+    //     pick distribution toward the tape exactly as M1/M2/M5 predict (mean
+    //     dist.pct over the twelve sides 0.140 -> 0.179 against a tape 0.234;
+    //     open-regime near% on HCA_vs_HC 2:HCA 94.7 -> 74.0 against a tape
+    //     50.0; ex p90 0.12 -> 0.45 against 1.54) and it costs SEVEN corpus
+    //     winners doing it: 194/216 -> 187/216, +1.30 HP-pts. Every one of
+    //     those seven is the same fight: the nine-recording
+    //     champion__vs__heavy_cav_archer family goes 8/9 -> 1/9, i.e. A2
+    //     exactly undoes what R5d shipped T1 to fix. Melee is untouched
+    //     (bit-identical) and pure ranged-vs-ranged holds 6/6 winners; the
+    //     whole loss is ranged-vs-melee (77/82 -> 70/82, +3.18 HP-pts).
+    //
+    //     Read honestly, that is the scope of the evidence catching up with
+    //     the rule: R5e measured persistence on SIX ranged-vs-ranged
+    //     recordings, and this engine applies it to every ranged unit in the
+    //     corpus, including 82 fights against melee where nothing was
+    //     measured. Scoping the rule by what its target is would be inventing
+    //     a mechanism the tape has not shown, so it ships off whole.
+    persistVictim: false,
+    // A3  plannedDamage correctness: a projectile whose accuracy roll FAILED
+    //     advertises to the coverage machinery what it will actually deliver --
+    //     half the post-armor damage when R5D1.reducedDamageHits is ON, the
+    //     full value when it is OFF (a failed roll is then displaced by the dat
+    //     dispersion and resolved on arrival, so it still pays full when it
+    //     connects). One expression at fireProjectile time.
+    //
+    //     R5e M6 identified the failed-roll population exactly (25.7-26.4% on
+    //     the three hand-cannoneer sides, 0.0% on all nine accuracy-100 sides)
+    //     and measured that discounting it moves the corpus fallback rate 12.9%
+    //     -> 11.8%. NOTE, honestly: that 11.8% is M6's ZERO weighting. With
+    //     R5D1.reducedDamageHits shipped OFF this rule is a mathematical no-op
+    //     (advertised === damage on every path), so it can only move anything
+    //     once P1 is flipped on; the half weighting M6 measured for that case
+    //     is 21.6->21.1 / 19.9->15.4 / 8.5->7.7 on the three HC sides.
+    //
+    //     SHIPPED ON, and PROVABLY FREE: with R5D1.reducedDamageHits off, a
+    //     full 216-fight x 20-seed corpus run with this rule alone is
+    //     BYTE-IDENTICAL to base. It ships on so that the correction is
+    //     already in place the day P1 is flipped on, not because it bought
+    //     anything today.
+    failedRollPlannedDamage: true,
+};
+
+/** Apply a partial override to {@link R5F}. Harness-only entry point. */
+export function setR5F(overrides) {
+    for (const k of Object.keys(overrides)) {
+        if (!(k in R5F)) throw new Error(`setR5F: unknown flag ${k}`);
+        R5F[k] = Boolean(overrides[k]);
+    }
+    return R5F;
+}
+
+// A1's threshold, in units of the shooter's OWN reload time. This is a
+// MEASURED TAPE BREAKPOINT, in the same sense as the E9 cadence constants: it
+// is the bucket edge at which the tape's own closing behaviour changes state,
+// read off r5e_pick_forensics.md §4b and nothing else.
+//
+//   2:HCA, tape, close% by launch gap      <=1 cycle   1-2 cycles   >2 cycles
+//     victim alive                            2.0         26.7         62.2
+//     victim dead                            11.1         14.3         52.2
+//
+// The step is between the 1-2 and >2 bins and it is a 26x change against the
+// modal state of the fight (n = 1,863 unit-steps on cooldown at a live
+// victim). It was NOT swept: the forensics binned in whole cycles, so 2 is the
+// only edge the measurement can support, and moving it would be fitting to the
+// scoreboard rather than to the tape.
+export const SILENCE_ADVANCE_CYCLES = 2;
+
 // ===== CONSTANTS =====
 export const CANVAS_WIDTH = 900;
 export const CANVAS_HEIGHT = 600;

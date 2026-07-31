@@ -37,6 +37,9 @@ import {
     MELEE_TARGET_LOCK,
     MELEE_CONTACT_SLOTS,
     MELEE_BUMP_RETARGET,
+    MELEE_SWING_RECOVERY_S,
+    MELEE_LANE_REACQUIRE,
+    MELEE_LANE_CANDIDATE_CAP,
 } from "./constants.js";
 import { Projectile, classifyProjectile } from "./projectile.js";
 import { MeleeEffect } from "./melee_effect.js";
@@ -327,6 +330,19 @@ export class BattleUnit {
         this.lastDistToTarget = Infinity;
         this.blockedTargets = new Set();
 
+        // --- E15b rule 1: swing-recovery plant (see constants.js) ---
+        // Sim clock instant before which this unit may not WALK, because its
+        // own attack animation has not finished. Stamped in performAttackOn
+        // (i.e. when a melee swing LANDS, killing blows included) and read only
+        // by the melee locomotion branches of update(). -Infinity, not 0, so a
+        // unit that has never swung is unlocked at battleTime 0 too.
+        this.moveLockUntil = -Infinity;
+        // --- E15b rule 2: lane-gated re-acquisition (see constants.js) ---
+        // Has this unit ever picked a target? The lane rule is scoped to
+        // RE-acquisition, so the opening pick has to be distinguishable from
+        // every later one. Set by findTarget, never cleared.
+        this.hasAcquiredTarget = false;
+
         // Attack sprite-sheet ref, stamped by the page/harness for animation timing
         // only (triggerAttackAnim). The renderer owns all other draw assets.
         this.attackSheet = null;
@@ -475,8 +491,28 @@ export class BattleUnit {
                 fallback = enemy;
             }
         }
+        // E15b rule 2 (LANE-GATED RE-ACQUISITION). Only ever narrows the choice
+        // among the SAME unblocked candidates the loop above ranked, and only on
+        // a RE-acquisition: `hasAcquiredTarget` is still false on the opening
+        // pick, which is why the fight's first targets keep the plain
+        // nearest-enemy rule. `closest` is the pre-E15b answer and is also the
+        // fallback when every candidate in the cap is walled in, so the rule can
+        // only move the pick to a REACHABLE enemy, never to no enemy at all.
+        let chosen = closest;
+        if (
+            closest &&
+            MELEE_LANE_REACQUIRE &&
+            this.hasAcquiredTarget &&
+            !this.isRanged()
+        ) {
+            chosen = this.laneAcquire(enemies) || closest;
+        }
         // Use unblocked target if available, else fall back to closest
-        this.target = closest || fallback;
+        this.target = chosen || fallback;
+        // Only a pick that actually produced a foe counts as "this unit has
+        // opened its fight" -- a findTarget that found nothing alive leaves the
+        // opening exemption intact.
+        if (this.target) this.hasAcquiredTarget = true;
         // Reset stuck tracking for new target
         this.stuckTimer = 0;
         this.lastDistToTarget = this.target
@@ -626,6 +662,84 @@ export class BattleUnit {
         // foe rather than carrying the old chase's progress history over.
         this.stuckTimer = 0;
         this.lastDistToTarget = bestDist;
+    }
+
+    // ===== E15b RULE 2: LANE-GATED RE-ACQUISITION =====
+    // Full derivation, the 2062-lock-birth measurement and the mandatory
+    // fight-opening exemption are in constants.js next to MELEE_LANE_REACQUIRE.
+    // In one line: a freed melee unit takes the nearest enemy it can actually
+    // WALK to, not the nearest body, because inside a scrum the nearest body is
+    // whichever one the collision floor happened to park against it.
+
+    // Is the straight approach from this unit's centre to `candidate`'s centre
+    // wide enough for this unit's body to pass? The corridor is the segment
+    // swept by a disc of the ATTACKER'S OWN RADIUS -- no tolerance constant
+    // exists here -- so another body blocks it exactly when its centre lies
+    // within `other.radius + this.radius` of the segment. Distance is measured
+    // to the SEGMENT (the projection is clamped to [0,1]), so a body standing
+    // behind the attacker or beyond the candidate does not block: it is not on
+    // the way.
+    laneClear(candidate) {
+        const dx = candidate.x - this.x;
+        const dy = candidate.y - this.y;
+        const segLen2 = dx * dx + dy * dy;
+        // Degenerate lane (bodies coincident): nothing can be "in between".
+        if (segLen2 <= 0) return true;
+        if (this._laneBlockedBy(this.sim.team1, candidate, dx, dy, segLen2))
+            return false;
+        if (this._laneBlockedBy(this.sim.team2, candidate, dx, dy, segLen2))
+            return false;
+        return true;
+    }
+
+    // Both teams are scanned -- an enemy body in the way is exactly as solid as
+    // an allied one, and the collision pass treats them identically.
+    _laneBlockedBy(units, candidate, dx, dy, segLen2) {
+        for (const o of units) {
+            if (o === this || o === candidate || o.state === "dead") continue;
+            const px = o.x - this.x;
+            const py = o.y - this.y;
+            let t = (px * dx + py * dy) / segLen2;
+            if (t < 0) t = 0;
+            else if (t > 1) t = 1;
+            const cx = px - t * dx;
+            const cy = py - t * dy;
+            const clear = o.radius + this.radius;
+            if (cx * cx + cy * cy < clear * clear) return true;
+        }
+        return false;
+    }
+
+    // The nearest living, non-blacklisted enemy whose lane is clear, or null if
+    // every candidate inside the cost cap is walled in (the caller then keeps
+    // the plain nearest, i.e. the pre-E15b answer). Candidates are ranked by the
+    // same distance the caller used and the sort is stable, so equal distances
+    // keep enemy-array order exactly as the nearest-only loop did.
+    laneAcquire(enemies) {
+        const pool = [];
+        for (const enemy of enemies) {
+            if (enemy.state === "dead") continue;
+            if (this.blockedTargets.has(enemy)) continue;
+            pool.push({ e: enemy, d: this.distanceTo(enemy) });
+        }
+        pool.sort((a, b) => a.d - b.d);
+        const cap = Math.min(pool.length, MELEE_LANE_CANDIDATE_CAP);
+        for (let i = 0; i < cap; i++) {
+            if (this.laneClear(pool[i].e)) return pool[i].e;
+        }
+        return null;
+    }
+
+    // ===== E15b RULE 1: SWING-RECOVERY PLANT =====
+    // Derivation (the tape's swing-phase ramp) is in constants.js next to
+    // MELEE_SWING_RECOVERY_S. This predicate is read ONLY by the melee
+    // locomotion branches of update(): a unit inside its recovery window still
+    // turns, still re-targets, still bump-retargets, still reloads, still gets
+    // shoved by resolveCollisions -- it just may not walk.
+    meleeMoveLocked() {
+        if (MELEE_SWING_RECOVERY_S <= 0) return false;
+        if (this.isRanged()) return false;
+        return this.sim.battleTime < this.moveLockUntil;
     }
 
     // ===== RANGED STAND-AND-SHOOT COST (E9) =====
@@ -1006,6 +1120,12 @@ export class BattleUnit {
                         );
                     }
                     this.attackCooldown = this.reloadTime;
+                } else if (this.meleeMoveLocked()) {
+                    // E15b rule 1: still finishing a melee swing animation, so
+                    // it cannot close on its charge target either. Same plant
+                    // the main melee branch below uses.
+                    this.state = "attacking";
+                    this.wasMoving = false;
                 } else {
                     // Move toward target to get in charge range
                     this.state = "moving";
@@ -1047,6 +1167,21 @@ export class BattleUnit {
                 } else {
                     this.state = "attacking";
                 }
+            } else if (this.meleeMoveLocked()) {
+                // E15b rule 1 (SWING RECOVERY PLANT). This is the branch the
+                // tape's swing-phase ramp indicts. Pre-E15b the ONLY thing that
+                // planted a melee unit was `inRange()` being true, so the moment
+                // its victim died or stepped out of reach it walked on the very
+                // next tick -- phase 0.0-0.1 of the reload cycle, where the tape
+                // says it is moving 0.90% of the time. Now it stands and
+                // finishes the swing first.
+                //
+                // NOT double-counting the in-range plant above: that one is
+                // gated on distance and has no duration, this one is gated on
+                // time-since-landing and has no distance. A unit still in reach
+                // of a living foe never reaches here at all.
+                this.state = "attacking";
+                this.wasMoving = false;
             } else {
                 this.state = "moving";
                 this.moveTowardTarget(dt, allUnits);
@@ -1430,6 +1565,20 @@ export class BattleUnit {
         // hitsLanded/damageDealt via takeDamage.
         if (this.sim && this.sim.combatStats)
             this.sim.combatStats[this.team].swings++;
+        // E15b rule 1 (SWING RECOVERY PLANT). The swing has LANDED, so the
+        // attack animation is now running and this unit may not walk until it
+        // finishes. Stamped here rather than at the call sites so every melee
+        // landing path -- delay-0 performAttack, the committedAttack windup's
+        // completion, and a killing blow -- pays it identically; the victim's
+        // survival is deliberately not consulted, because the animation does not
+        // abort when the target dies. See meleeMoveLocked() for what it gates
+        // (locomotion, nothing else) and constants.js for the tape ramp it is
+        // read off. Ranged units never reach this method (they fire projectiles)
+        // and meleeMoveLocked() excludes them anyway.
+        if (MELEE_SWING_RECOVERY_S > 0 && !this.isRanged()) {
+            this.moveLockUntil =
+                this.sim.battleTime + MELEE_SWING_RECOVERY_S;
+        }
         let damage =
             this.getDamageAgainst(target) +
             Math.floor(this.killBonusAttack);

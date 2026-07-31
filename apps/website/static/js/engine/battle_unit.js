@@ -48,10 +48,22 @@ import {
     C2A,
     C2B,
     C2C,
+    D2,
     SILENCE_ADVANCE_CYCLES,
     PROJECTILE_RADIUS_TILES,
     ACCURACY_DISPERSION_BY_SLUG,
     LEAD_WINDOW_SECONDS,
+    BOLT_TOTAL_FLIGHT_TILES,
+    PASS_THROUGH_FRACTION,
+    BLAST_FALLOFF_ZERO_TILES,
+    BLAST_DEBRIS_COUNT,
+    BLAST_DEBRIS_SCATTER_TILES,
+    BLAST_DEBRIS_DAMAGE,
+    PROJECTILE_ARC_BY_SLUG,
+    VANISH_MODE_BY_SLUG,
+    BLAST_ATTACK_LEVEL_BY_SLUG,
+    SECONDARY_PROJECTILE_COUNT_BY_SLUG,
+    arcFlightFactor,
 } from "./constants.js";
 import { Projectile, classifyProjectile } from "./projectile.js";
 import { MeleeEffect } from "./melee_effect.js";
@@ -212,6 +224,49 @@ export class BattleUnit {
             stats.hp_transform_threshold || 0;
         this.hpRegen = stats.hp_regen || 0;
         this.passThroughPercent = stats.pass_through_percent || 0;
+
+        // ===== D2-S3: THE SIX DROPPED DAT FIELDS =====
+        // docs/calibration/d1_siege_forensics.md §6 audited what the extraction
+        // -> ref_units -> combat_dict chain carries for the two siege lines and
+        // found eight fields dropped, of which these six are the ones S1/S2 need.
+        // Each reads the DICT FIRST and falls back to the per-slug dat table in
+        // constants.js, so the day the registry carries a column the table can be
+        // deleted with no other edit -- the same contract accuracyDispersionPx()
+        // already uses. Written unconditionally (they are inert data, no rule
+        // reads them with the D2 flags off), and all six are absent from
+        // stateHash(), so none of this can move a battle by itself.
+        //
+        //   projectile_arc        flight-time multiplier for a lobbed shot (S2b)
+        //   vanish_mode           Genie's "this projectile passes through
+        //                         units" boolean -- 1 on the scorpion bolt, 0 on
+        //                         the onager stone -- and the dat's own witness
+        //                         that S1 belongs to exactly one of the two
+        //   hit_mode              1 = stops on an obstacle (buildings; no
+        //                         obstacle exists in the tapebox arena, so this
+        //                         is carried for completeness, not consulted)
+        //   blast_attack_level    the SHAPE of the effect (3 = pass-through line,
+        //                         2 = trample, 1 = the onager disc). Carried and
+        //                         reported; the engine still gates on
+        //                         passThroughPercent / splashRadius, because
+        //                         changing the classifier is a registry change
+        //                         and not a D2 rule -- see the round report.
+        //   secondary_projectile_count   the 9 debris fragments (S2c)
+        //   projectile_collision  the bolt's own half-width (S1's corridor)
+        this.projectileArc =
+            stats.projectile_arc ?? PROJECTILE_ARC_BY_SLUG.get(slug) ?? 0;
+        this.vanishMode =
+            stats.vanish_mode ?? VANISH_MODE_BY_SLUG.get(slug) ?? 0;
+        this.hitMode = stats.hit_mode ?? 0;
+        this.blastAttackLevel =
+            stats.blast_attack_level ?? BLAST_ATTACK_LEVEL_BY_SLUG.get(slug) ?? 0;
+        this.secondaryProjectileCount =
+            stats.secondary_projectile_count ??
+            SECONDARY_PROJECTILE_COUNT_BY_SLUG.get(slug) ??
+            0;
+        // In TILES, like the dat's collision_x. Defaults to the same 0.1 the
+        // arrival test already uses for every projectile in the game.
+        this.projectileCollision =
+            stats.projectile_collision ?? PROJECTILE_RADIUS_TILES;
 
         // Charge projectiles (Fire Lancer)
         this.chargeProjectileCount =
@@ -2155,10 +2210,24 @@ export class BattleUnit {
         const accuracy = isExtra ? this.baseAccuracy : this.accuracy;
         const willHit = accuracy >= 1.0 ? true : this.sim.rng.next() < accuracy;
         const MISS_SPREAD = 2.0 * TILE_SIZE; // tiles, matches MISS_SPREAD_RADIUS
-        const speed =
+        let speed =
             this.projectileSpeed > 0
                 ? this.projectileSpeed
                 : 7 * TILE_SIZE;
+        // ===== D2-S2b: THE STONE IS LOBBED =====
+        // The dat's projectile_arc is the apex of the parabola the shot flies,
+        // as a fraction of the shot's span; the dat's `speed` is speed along
+        // that path. A straight-line projectile at the same speed therefore
+        // arrives arcFlightFactor(arc) times too EARLY -- 1.3338x at the stone's
+        // arc 0.4 -- which is the sign and roughly the size of D1 §3.4's
+        // residual. Dividing the straight-line speed by the path-length ratio
+        // reproduces the time of flight without touching the flight path itself
+        // (the stone still lands where it landed; it just takes as long as the
+        // real one to get there). Exactly 1.0, hence a no-op, for arc 0 -- which
+        // is every non-siege projectile in the corpus AND the scorpion bolt.
+        if (D2.projectileArc && this.projectileArc > 0) {
+            speed = speed / arcFlightFactor(this.projectileArc);
+        }
         const attacker = this;
 
         // ===== D2: WHERE THE SHOT IS THROWN =====
@@ -2211,6 +2280,16 @@ export class BattleUnit {
             impactX = target.x;
             impactY = target.y;
         }
+        // ===== D2-S1: IS THIS A BOLT? =====
+        // The gate is the unit's own pass-through column -- the same field the
+        // block it replaces gates on -- so exactly the units that had the old
+        // 1-victim graze get the corridor and nobody else. The dat's own
+        // vanish_mode is 1 on projectile 627 (Heavy Scorpion) and 0 on the
+        // onager stone, which independently says the scorpion line is where this
+        // belongs; it is carried and reported rather than used as the gate,
+        // because swapping the classifier is a registry change (D1 §6) and not a
+        // D2 rule.
+        const boltCorridor = D2.boltCorridor && this.passThroughPercent > 0;
         // `didHit` is filled in by the closure below and read afterwards by the
         // splash / pass-through / kill-bonus blocks, all of which used to key
         // off the launch-time `willHit`.
@@ -2447,6 +2526,20 @@ export class BattleUnit {
 
                 // Siege area splash damage with distance falloff
                 if (splashR > 0 && landed) {
+                    // ===== D2-S2a: WHERE THE FALLOFF REACHES ZERO =====
+                    // E4 read the zero crossing off the dat's blast radius; D1
+                    // §3.2 regressed it off 470 tape events and got 1.667 tiles
+                    // past the body edge, not 1.500. The SHAPE (linear from full
+                    // at the edge, floored at 1) is unchanged and confirmed --
+                    // only the length of the ramp moves, and with it the reach
+                    // test, because a disc whose falloff is not yet zero at
+                    // 1.5 tiles cannot stop paying at 1.5 tiles. The tape has 37
+                    // events past 1.75 tiles from the stone (furthest 2.05, still
+                    // doing 2.6-8.6 damage) which the shipped rule cannot
+                    // produce at all.
+                    const zeroPx = D2.blastZeroPoint
+                        ? BLAST_FALLOFF_ZERO_TILES * TILE_SIZE
+                        : splashR;
                     const enemies =
                         attacker.team === 1
                             ? attacker.sim.team2
@@ -2460,7 +2553,7 @@ export class BattleUnit {
                         const dx = enemy.x - impactX;
                         const dy = enemy.y - impactY;
                         const dist = Math.sqrt(dx * dx + dy * dy);
-                        if (dist <= splashR + enemy.radius) {
+                        if (dist <= zeroPx + enemy.radius) {
                             // Damage falls off linearly from 100% (the unit's
                             // body overlaps the impact point) to 0% one full
                             // blast radius beyond the unit's edge.
@@ -2470,7 +2563,7 @@ export class BattleUnit {
                             );
                             const distRatio = Math.min(
                                 1,
-                                edgeDist / splashR,
+                                edgeDist / zeroPx,
                             );
                             const falloff = 1.0 - distRatio;
                             const splashDmg = Math.max(
@@ -2480,6 +2573,17 @@ export class BattleUnit {
                             enemy.takeDamage(splashDmg, attacker);
                         }
                     }
+                    // ===== D2-S2c: THE OTHER NINE PROJECTILES =====
+                    // A stone is one master 656 plus nine master 369s. The
+                    // fragments carry no attack table of their own, so each one
+                    // that comes down on a body deals exactly the
+                    // minimum-damage floor: 1. Placed as an equal-area 9-point
+                    // sample of the measured scatter disc, oriented by the
+                    // shot's own heading -- deterministic, and specifically
+                    // WITHOUT an rng draw, so turning this rule on perturbs no
+                    // other consumer of sim.rng and the A/B stays clean.
+                    if (D2.blastDebris && attacker.secondaryProjectileCount > 0)
+                        attacker.scatterBlastDebris(impactX, impactY, enemies);
                     // Visual: add a splash effect
                     attacker.sim.effects.push(
                         new MeleeEffect(
@@ -2522,8 +2626,23 @@ export class BattleUnit {
                     }
                 }
 
-                // Pass-through: 1 unit behind target takes fraction of damage
-                if (attacker.passThroughPercent > 0 && landed) {
+                // Pass-through: 1 unit behind target takes fraction of damage.
+                //
+                // D2-S1 REPLACES this block wholesale. What it got wrong, on
+                // all three axes at once (D1 §2.2/§2.4): the victim is picked as
+                // the nearest living enemy TO THE TARGET in any direction
+                // despite the comment saying "behind target", so only 20.6% of
+                // its victims are inside the tape's corridor and one was 6.77
+                // tiles off the line; it is capped at exactly one extra body
+                // where the tape's bolts thread up to ten; and it pays
+                // floor(dmg x 0.4286) = 0.333x where the tape pays a flat,
+                // unfloored 0.5x. The corridor sweep attached below is the
+                // replacement, so this arm is skipped when it is live.
+                if (
+                    attacker.passThroughPercent > 0 &&
+                    landed &&
+                    !boltCorridor
+                ) {
                     const ptDmg = Math.max(
                         1,
                         Math.floor(
@@ -2565,6 +2684,67 @@ export class BattleUnit {
                 }
             },
         );
+        // ===== D2-S1: ATTACH THE CORRIDOR =====
+        // Everything above is untouched: the bolt still aims where it aimed and
+        // still resolves its primary on arrival at the aim point. What this adds
+        // is the rest of the flight -- the bolt does not stop there, it carries
+        // on to BOLT_TOTAL_FLIGHT_TILES from the muzzle and pays half damage to
+        // every enemy body it threads, in front of the target and behind it.
+        if (boltCorridor) {
+            const originX = this.x;
+            const originY = this.y;
+            const hitAtDist = Math.hypot(impactX - originX, impactY - originY);
+            const attackerRef = this;
+            proj.sweep = {
+                originX,
+                originY,
+                totalDist: Math.max(
+                    hitAtDist,
+                    BOLT_TOTAL_FLIGHT_TILES * TILE_SIZE,
+                ),
+                hitAtDist,
+                // Half-width of the corridor, on top of the victim's own body.
+                // This is the projectile's dat collision_x (0.1 tiles), the same
+                // radius the ordinary arrival test already gives every shot in
+                // the game. D1 §2.2 measured the tape's corridor at victim
+                // radius + ~0.2 and attributed the extra ~0.1 to 10 Hz position-
+                // sampling slack in the recording -- the bolt's true half-width
+                // is the dat's, and using the dat's is what keeps this a carried
+                // field rather than a fitted one.
+                halfWidthPx: attackerRef.projectileCollision * TILE_SIZE,
+                // Enemy-only. The tapes are two-sided so friendly pass-through
+                // is untested by construction -- there is no recording in which
+                // a scorpion bolt could have crossed a friendly body and been
+                // observed doing (or not doing) anything. The dat is not silent
+                // but it is not decisive either: HWBAL carries
+                // friendly_fire_damage = 1.0, while blast_attack_level 3 is a
+                // TARGET-CLASS filter (compared against each body's blast
+                // defense level), not an ownership one. Enemy-only is the
+                // conservative reading and is recorded as a deliberate absence.
+                foes: () =>
+                    attackerRef.team === 1
+                        ? attackerRef.sim.team2
+                        : attackerRef.sim.team1,
+                // The aim target is paid 1.00x by the arrival callback and must
+                // not also be paid 0.50x by the corridor it is standing in.
+                skip: target,
+                hit: new Set(),
+                traveled: 0,
+                hitFired: false,
+                onPass: (foe) => {
+                    // Half of THAT body's own final post-armor damage, unrounded
+                    // -- re-costed against the body actually hit, exactly as the
+                    // R5d-1 displaced-hit path does, because "half the final
+                    // damage" means half of what a full hit on this victim would
+                    // have been and not half of what a full hit on the aim
+                    // target would have been.
+                    const full =
+                        attackerRef.getDamageAgainst(foe) +
+                        Math.floor(attackerRef.killBonusAttack);
+                    foe.takeDamage(full * PASS_THROUGH_FRACTION, attackerRef);
+                },
+            };
+        }
         // D3 bookkeeping: who this shot is for and how much it will do if it
         // lands, so the next shooter can see the damage already in the air.
         // Read-only labels -- the projectile's own flight ignores them, and
@@ -2609,6 +2789,60 @@ export class BattleUnit {
         this.sim.projectiles.push(proj);
         this.attackAnimTimer = 0.15;
         this.triggerAttackAnim();
+    }
+
+    // ===== D2-S2c: BLAST DEBRIS =====
+    // Nine secondary projectiles land around the stone; each one that comes down
+    // on a body deals exactly 1 damage (BLAST_DEBRIS_DAMAGE), because master 369
+    // has an EMPTY attack table and every hit therefore bottoms out on the
+    // minimum-damage floor. D1 §3.1 measured 0.37-3.2 such chip events per stone
+    // depending on how packed the crowd is.
+    //
+    // GEOMETRY, and why there is no rng draw. The tape's fragments scatter
+    // isotropically about the stone (forward median +0.039, lateral median
+    // -0.010, radial median 0.628 / p90 0.954). Nine points on a golden-angle
+    // spiral at r_k = R x sqrt((k + 0.5)/9) ARE an equal-area sample of that
+    // disc -- median radius 0.707 R, p90 0.949 R, which is the measurement to
+    // within its own noise -- and they are computed, not drawn. Drawing them
+    // from sim.rng would have made this rule perturb every other consumer of the
+    // stream and turned its own A/B into a comparison of two different battles.
+    // The spiral is oriented by the shot's own heading so it is not a fixed
+    // rosette pinned to the world axes.
+    //
+    // The damage itself is one disc centred on the PRIMARY stone (D1 §3.1 proves
+    // the curve is monotone in distance to the stone and not to the nearest
+    // fragment), which is why this runs alongside the blast above and not
+    // instead of it: the fragments are chip damage, not a second blast.
+    scatterBlastDebris(impactX, impactY, enemies) {
+        const n = this.secondaryProjectileCount || BLAST_DEBRIS_COUNT;
+        const scatterPx = BLAST_DEBRIS_SCATTER_TILES * TILE_SIZE;
+        const projRadiusPx = this.projectileCollision * TILE_SIZE;
+        const base = Math.atan2(impactY - this.y, impactX - this.x);
+        const GOLDEN = Math.PI * (3 - Math.sqrt(5)); // 2.39996... rad
+        for (let k = 0; k < n; k++) {
+            const r = scatterPx * Math.sqrt((k + 0.5) / n);
+            const a = base + k * GOLDEN;
+            const lx = impactX + r * Math.cos(a);
+            const ly = impactY + r * Math.sin(a);
+            // A fragment is a projectile: it hits the one body it comes down on,
+            // the nearest overlapping one. Deterministic and independent of team
+            // array order.
+            let victim = null;
+            let bestD2 = Infinity;
+            for (const enemy of enemies) {
+                if (enemy.state === "dead") continue;
+                const ex = enemy.x - lx;
+                const ey = enemy.y - ly;
+                const d2 = ex * ex + ey * ey;
+                const reach = enemy.radius + projRadiusPx;
+                if (d2 > reach * reach) continue;
+                if (d2 < bestD2) {
+                    bestD2 = d2;
+                    victim = enemy;
+                }
+            }
+            if (victim) victim.takeDamage(BLAST_DEBRIS_DAMAGE, this);
+        }
     }
 
     // Pick the distinct enemies a single charge volley sprays over. The primary

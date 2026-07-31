@@ -36,14 +36,14 @@
 //     node tools/simjs/ranged_shot_dump.mjs --tags <t1,t2,...> --seeds 20 \
 //         --out-dir D:/AI/aoe2_golden/simruns_r5_ranged
 //     node tools/simjs/ranged_shot_dump.mjs --tags <...> --seeds 3 --verify-identity
-import { writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import { BattleUnit } from "../../apps/website/static/js/engine/battle_unit.js";
 import { TILE_SIZE } from "../../apps/website/static/js/engine/constants.js";
 import {
-    applyR5BSpec, applyR5D1Spec, applyR5DSpec, applyR5FSpec,
+    applyR5BSpec, applyR5D1Spec, applyR5DSpec, applyR5FSpec, applyD2Spec,
 } from "./calib_runner.mjs";
 import {
     loadManifest, loadCalibDicts, loadCalibSpawns, spawnsForFight,
@@ -123,6 +123,29 @@ function installShotProbe() {
                                                snap.ay - snap.sy);
                 snap.impact_t = m.t + snap.flight_tiles
                     / (proj.speed / TILE_SIZE);
+                // ===== D2-S1: A BOLT DOES NOT END AT ITS AIM POINT =====
+                // A pass-through bolt keeps flying past the aim point and keeps
+                // damaging bodies the whole way, so `ax/ay` (the aim point) is
+                // the impact of its PRIMARY and not the end of its flight. The
+                // forensics reconstructs a bolt as a launch->end track and
+                // attributes each damage event to the missile that was AT that
+                // body when the body took damage -- that is already how it reads
+                // the tape, whose bolts have exactly this shape -- so it needs
+                // the real end point and the real end time, or every overshoot
+                // event lands in the unattributed bin and the engine column
+                // reads LOWER than the engine actually is. Written only when the
+                // engine attached a corridor: a plain projectile records exactly
+                // what it always recorded, and every pre-D2 dump is unchanged.
+                if (proj.sweep) {
+                    const sw = proj.sweep;
+                    const ux = Math.cos(proj.angle);
+                    const uy = Math.sin(proj.angle);
+                    snap.ex = (sw.originX + ux * sw.totalDist) / TILE_SIZE;
+                    snap.ey = (sw.originY + uy * sw.totalDist) / TILE_SIZE;
+                    snap.end_flight_tiles = sw.totalDist / TILE_SIZE;
+                    snap.end_t = m.t + snap.end_flight_tiles
+                        / (proj.speed / TILE_SIZE);
+                }
             }
             const dx = snap.tx - snap.sx, dy = snap.ty - snap.sy;
             snap.dist_tiles = Math.hypot(dx, dy);
@@ -210,9 +233,17 @@ const has = (n) => argv.includes(n);
 
 const outDir = flag("--out-dir", "D:/AI/aoe2_golden/simruns_r5_ranged");
 const nSeeds = Number(flag("--seeds", "20"));
-const tags = new Set(String(flag("--tags", "")).split(",").filter(Boolean));
+// --tags-file reads the same comma/whitespace-separated list from a file, the
+// way calib_runner.mjs and c1_chase_probe.mjs already do. The D2 siege subset
+// is 25 tags, which is past what is comfortable to retype per A/B run.
+const tagsFileArg = flag("--tags-file", null);
+const rawTags = tagsFileArg
+    ? readFileSync(tagsFileArg, "utf8")
+    : flag("--tags", "");
+const tags = new Set(
+    String(rawTags).split(/[,\s]+/).map((s) => s.trim()).filter(Boolean));
 if (!tags.size) {
-    console.error("--tags is required (comma-separated manifest tags)");
+    console.error("--tags or --tags-file is required (manifest tags)");
     process.exit(2);
 }
 
@@ -227,6 +258,9 @@ applyR5D1Spec(flag("--r5d1", null));
 applyR5DSpec(flag("--r5d", null));
 // Same for the Round-5f selection/silence rules (--r5f off == pre-R5f).
 applyR5FSpec(flag("--r5f", null));
+// Same for the Phase-D2 siege projectile/blast rules (--d2 off == pre-D2,
+// bb2e6fa, which is the engine column the D1 report itself measured).
+applyD2Spec(flag("--d2", null));
 
 const dicts = loadCalibDicts();
 const spawns = loadCalibSpawns();

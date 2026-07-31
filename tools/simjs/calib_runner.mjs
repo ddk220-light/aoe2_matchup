@@ -66,7 +66,7 @@ import { Worker, isMainThread } from "node:worker_threads";
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import {
     R5B, setR5B, R5D1, setR5D1, R5D, setR5D, B2, setB2, R5F, setR5F,
-    C2A, setC2A, C2B, setC2B, C2C, setC2C,
+    C2A, setC2A, C2B, setC2B, C2C, setC2C, D2, setD2,
 } from "../../apps/website/static/js/engine/constants.js";
 
 // ---- Round-5b rule flags --------------------------------------------------
@@ -265,6 +265,32 @@ export function applyC2CSpec(spec) {
     }
     const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
     setC2C(cfg);
+    return cfg;
+}
+
+// ---- Phase-D2 rule flags ---------------------------------------------------
+// Identical grammar again, over the SEPARATE D2 object (boltCorridor,
+// blastZeroPoint, projectileArc, blastDebris -- the siege projectile and blast
+// mechanics). `--d2 off` is the pre-D2 engine (bb2e6fa) and must be
+// byte-identical to it:
+//
+//   --d2 off                                 both families off == pre-D2 engine
+//   --d2 boltCorridor                        ONLY the scorpion line rule
+//   --d2 blastZeroPoint,projectileArc        ONLY the onager rules
+//   (flag absent)                            engine defaults
+export function applyD2Spec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(D2);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--d2: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setD2(cfg);
     return cfg;
 }
 
@@ -658,6 +684,12 @@ if (isMainThread && process.argv[1]
         const on = Object.entries(c2cCfg).filter(([, v]) => v).map(([k]) => k);
         console.log(`c2c rules: ${on.length ? on.join(", ") : "(none -- pre-C2C engine)"}`);
     }
+    const d2Spec = flag("--d2", null);
+    const d2Cfg = applyD2Spec(d2Spec);
+    if (d2Cfg) {
+        const on = Object.entries(d2Cfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`d2 rules: ${on.length ? on.join(", ") : "(none -- pre-D2 engine)"}`);
+    }
 
     const dicts = loadCalibDicts();
     const allFights = loadManifest();
@@ -755,7 +787,7 @@ if (isMainThread && process.argv[1]
                     workerData: {
                         arenaArg, maxSeconds, outDir,
                         r5bSpec, r5d1Spec, r5dSpec, b2Spec, r5fSpec, c2aSpec,
-                        c2bSpec, c2cSpec,
+                        c2bSpec, c2cSpec, d2Spec,
                     },
                 });
                 const pump = () => {

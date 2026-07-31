@@ -808,6 +808,236 @@ export function setC2C(overrides) {
     return C2C;
 }
 
+// ===== PHASE D2 — SIEGE PROJECTILE / BLAST MECHANICS =====
+// Four rules read off docs/calibration/d1_siege_forensics.md §2 (the scorpion
+// bolt) and §3 (the onager stone). Kept in their OWN object for the same reason
+// C2A is separate from C2B: `--d2 off` has to keep meaning "the pre-D2 engine"
+// exactly, and a D2 sweep must not drag a melee flag along.
+//
+// Setting all four to false restores bb2e6fa BIT-IDENTICALLY, and that is
+// STRUCTURAL, not merely tested: with the flags off, every statement D2 adds is
+// either inside an `if (D2.x)` or a write to a field nothing else reads, no D2
+// path draws from sim.rng, and Projectile.update's new branch is unreachable
+// because nothing ever attaches a `sweep` descriptor. Asserted by
+// tests/js/engine/d2_siege.test.mjs.
+//
+// SCOPE. boltCorridor touches only units with pass_through_percent > 0 (in this
+// corpus: the scorpion line). blastZeroPoint / projectileArc / blastDebris touch
+// only units with splash_radius > 0 (the onager line). A fight with neither
+// cannot reach any D2 statement, which is what makes the melee and ranged
+// subsets byte-identical with every flag ON.
+export const D2 = {
+    // S1  BOLT CORRIDOR. A pass-through bolt stops being "primary + one nearby
+    //     body" and becomes a LINE that keeps flying. It pays 1.00x to its aim
+    //     target on arrival (unchanged) and exactly 0.50x of its own post-armor
+    //     damage, unrounded, to every OTHER enemy body whose centre comes within
+    //     (that body's radius + the projectile's radius) of the swept path --
+    //     once per bolt, no cap on victims, and including bodies BEHIND the aim
+    //     point, because the bolt flies BOLT_TOTAL_FLIGHT_TILES and not merely
+    //     to the target.
+    //
+    //     D1 §2.1: 1041 of 1510 attributed tape events sit at EXACTLY 0.500x of
+    //     that fight's full hit and 403 at 1.000x, with nothing in between (the
+    //     66 stragglers are all HP-clamped killing blows) and no bolt in the
+    //     corpus has more than one full-damage victim. §2.2: 2.56 victims per
+    //     landed bolt (max 10) against the engine's hard ceiling of 2, and the
+    //     victims are COLLINEAR -- perpendicular distance to the bolt's own line
+    //     is p99 0.373 / 0.458-0.665 / 0.837 for victim collision_size 0.20 /
+    //     0.25 / 0.50, i.e. it is a line test against the body, not a radius
+    //     around a point. §2.5: (victims x fraction) accounts for the scorpion's
+    //     entire 24% damage-per-shot deficit with nothing left over.
+    //
+    //     The dat agrees this is the right unit to do it to: projectile 627
+    //     (Heavy Scorpion) carries vanish_mode = 1, which is Genie's own boolean
+    //     for "this projectile passes through units", against 0 on the onager
+    //     stone 656; and HWBAL's blast_attack_level is 3, the level this repo's
+    //     own ability_registry.py already classifies as pass_through.
+    boltCorridor: false,
+    // S2a BLAST ZERO POINT. E4's linear-from-full-at-the-body-edge falloff keeps
+    //     its SHAPE and moves its zero crossing from splash_radius (1.5 tiles)
+    //     to BLAST_FALLOFF_ZERO_TILES (1.667). D1 §3.2 regressed the tape's
+    //     non-kill blast events (n=470): frac = 1.0728 - 0.6436 x edge, i.e.
+    //     clamped-full out to edge 0.113 and ZERO at edge 1.667, against E4's
+    //     zero at 1.500. The shipped rule therefore under-pays every off-centre
+    //     victim by a mean +0.095 of full damage (6-11 pp across the 0.2-1.4
+    //     tile bands), which is where the onager's shot_x = 0.91 comes from.
+    blastZeroPoint: false,
+    // S2b PROJECTILE ARC. The stone is lobbed, not thrown flat: its dat
+    //     projectile_arc = 0.4 sets the apex of a parabola whose span is the
+    //     shot, so the path it actually flies is longer than the straight line
+    //     the engine flies it along, at the same dat speed. See
+    //     arcFlightFactor() below for the derivation -- no fitted constant, the
+    //     multiplier falls out of arc = 0.4 analytically.
+    projectileArc: false,
+    // S2c BLAST DEBRIS. One onager shot is TEN projectiles: 1 x master 656
+    //     (Projectile Mangonel (Primary), the unit's own projectile_unit_id) and
+    //     9 x master 369 (Secondary), a ratio D1 §3.1 measured as exactly 9.000
+    //     in every recording. Each fragment that lands on a body deals exactly
+    //     1.00 damage (master 369's type_50.attacks is empty, so every hit
+    //     bottoms out on the minimum-damage floor). Numerically small by
+    //     construction -- see the measured verdict in the D2 round report.
+    //
+    //     SHIPPED ON -- the one D2 rule the board endorses (-0.52 opponent-side
+    //     HP error, -1.03 onager-side, no row worse by >0.2) and a dat fact,
+    //     not a hypothesis. Its golden-panel / matchup re-sim obligations fold
+    //     into the campaign-end recapture already queued (parity_check has been
+    //     deliberately red since the campaign's first behavior change).
+    blastDebris: true,
+};
+
+/** Apply a partial override to {@link D2}. Harness-only entry point. */
+export function setD2(overrides) {
+    for (const k of Object.keys(overrides)) {
+        if (!(k in D2)) throw new Error(`setD2: unknown flag ${k}`);
+        D2[k] = Boolean(overrides[k]);
+    }
+    return D2;
+}
+
+// ---- D2 measured / dat quantities -------------------------------------------
+
+// TOTAL BOLT FLIGHT, in tiles from the muzzle. A MEASURED TAPE CONSTANT, in the
+// same category as E9's post-fire recovery, and labelled as one because the dat
+// does NOT contain it: `tools/simjs/d1_dat_audit.py` reads projectile 627's own
+// `max_range` as 0.0 (the fire-graphic variants 628/1114 carry 20.0, the stone
+// 656 carries 25.0 -- neither is 10.6), so there is no field to derive it from.
+//
+// What the tape says (D1 §2.3, n=647 bolts): the bolt flies a NEAR-CONSTANT
+// 10.6 tiles regardless of how far its target is -- median 10.56, p10 9.45,
+// p90 10.66, and 271 of 647 land in the single 10.6 bin, truncated below only
+// where the arena wall cuts the flight short. The unit's own range is 8, so the
+// bolt overruns its maximum range by ~2.6 tiles and keeps damaging bodies the
+// whole way (median 5.07 tiles past the body it paid full damage to, against the
+// engine's 0.00).
+//
+// HONEST LIMIT ON THE PARAMETRISATION. A one-range corpus cannot separate
+// "range + 2.6" from "range x 1.32": every scorpion in these 13 recordings is a
+// fully-upgraded Heavy Scorpion at range 8. The AoE2 wiki's pass-through page
+// says range upgrades "also increase the extra range that the projectile
+// travels", which favours the multiplicative reading, but that is a sentence and
+// not a measurement. The flat measured total is used because it is what was
+// actually observed; a recording of a non-upgraded Scorpion (range 7) would
+// settle it in one fight.
+export const BOLT_TOTAL_FLIGHT_TILES = 10.6;
+
+// PASS-THROUGH FRACTION. Not a fitted number and deliberately NOT the dict's
+// `pass_through_percent`: that column is a PIPELINE-DERIVED quantity (projectile
+// 627's own attack 6 / the unit's attack 14 = 0.4286) which the engine then
+// floors, giving 0.333x of full against a Persian Hussar. The tape pays exactly
+// 0.500x, unfloored -- 1041 of 1510 events, flat across every distance bucket
+// from 0 to 12 tiles flown (D1 §2.1) -- and the AoE2 wiki states the same rule
+// in words: only the targeted unit takes full damage, every other unit hit takes
+// half. Applied to each victim's OWN post-armor damage, which is algebraically
+// the same as the community's "half attack against half armour" phrasing
+// ((A-D)/2 === A/2 - D/2) everywhere short of the minimum-damage clamp, which no
+// event in this corpus reaches.
+export const PASS_THROUGH_FRACTION = 0.5;
+
+// BLAST FALLOFF ZERO POINT, in tiles beyond the victim's own body edge. The
+// measured zero crossing of D1 §3.2's regression (n=470 non-kill blast events):
+// frac = 1.0728 - 0.6436 x edge crosses zero at edge = 1.667. Re-expressed as
+// `frac = 1 - edge / 1.667` -- the same straight line through the same zero, with
+// the intercept clamped at 1.0 rather than carrying the fit's 1.0728 (a unit
+// cannot take more than full damage, and the 1.07 is the regression absorbing
+// the near-band's HP-clamped kills).
+//
+// WHY A TILE COUNT AND NOT A RATIO OF splash_radius. The measurement exists for
+// exactly one blast radius -- the Siege Onager's 1.5 -- so "1.667 tiles" and
+// "1.111 x splash_radius" fit the data identically and nothing in this corpus
+// separates them. The absolute form is used because it does not silently
+// legislate a shape for the Mangonel (blast 1.0), the Onager (1.25) or the
+// Bombard Cannon, none of which appear in any recording. The consequence is
+// deliberate and stated: with S2a on, EVERY blast unit's zero point moves to
+// 1.667 tiles past the body edge. That is a claim about the blast law, not about
+// the Siege Onager, and it is the claim the tape supports.
+export const BLAST_FALLOFF_ZERO_TILES = 1.667;
+
+// BLAST DEBRIS: how many secondary projectiles a blast shot throws, and how far
+// they scatter. The count is the dat's (`secondary_projectile_unit` 369 on the
+// Siege Onager) and the tape's, which agree exactly: D1 §3.1 counted 6 primary /
+// 54 secondary and 19 / 171, ratio 9.000 in every recording.
+//
+// The scatter radius is measured: fragment offsets from the primary stone's
+// landing point run median 0.628, p90 0.954, max 2.033 tiles, forward component
+// median +0.039 and lateral median -0.010 -- i.e. isotropic about the stone. An
+// equal-area sample of a disc of radius 1.0 has median radius 0.707 and p90
+// 0.949, which is the measured distribution to within its own noise.
+export const BLAST_DEBRIS_COUNT = 9;
+export const BLAST_DEBRIS_SCATTER_TILES = 1.0;
+export const BLAST_DEBRIS_DAMAGE = 1;
+
+// PER-SLUG DAT FALLBACKS for the six fields D1 §6 found the pipeline drops
+// (`blast_attack_level`, `projectile_arc`, `vanish_mode`, `hit_mode`, the
+// secondary-projectile count, and the projectile's own `collision_x`). Same
+// contract as ACCURACY_DISPERSION_BY_SLUG above and for the same reason: the
+// values are read out of the live dat by tools/simjs/d1_dat_audit.py, the combat
+// dict has no column for them yet, and the engine PREFERS the dict field
+// whenever one shows up (battle_unit.js reads `stats.<field> ?? the map`). When
+// the ref-DB registry carries them these maps get deleted, not edited.
+//
+// Dat values (empires2_x2_p1.dat, via d1_dat_audit.py):
+//
+//   HWBAL 542 (heavy_scorpion)  blast_attack_level 3  proj 627  arc 0.0
+//                               vanish_mode 1  hit_mode 1  collision_x 0.1
+//   SNAGR 588 (siege_onager)    blast_attack_level 1  proj 656  arc 0.4
+//                               vanish_mode 0  hit_mode 0  collision_x 0.1
+//                               secondary_projectile_unit 369 x 9
+//
+// Only these two slugs are pinned. A unit with no entry gets no D2 behaviour it
+// would not already have had: arc defaults to 0 (no flight-time change),
+// secondary count to 0 (no debris). Inventing values for the rest of the roster
+// is exactly the fitted constant this round is not allowed to add.
+export const PROJECTILE_ARC_BY_SLUG = new Map([
+    ["heavy_scorpion", 0.0],
+    ["siege_onager", 0.4],
+]);
+export const VANISH_MODE_BY_SLUG = new Map([
+    ["heavy_scorpion", 1],
+    ["siege_onager", 0],
+]);
+export const BLAST_ATTACK_LEVEL_BY_SLUG = new Map([
+    ["heavy_scorpion", 3],
+    ["siege_onager", 1],
+]);
+export const SECONDARY_PROJECTILE_COUNT_BY_SLUG = new Map([
+    ["heavy_scorpion", 0],
+    ["siege_onager", 9],
+]);
+
+// ARC -> FLIGHT-TIME MULTIPLIER. Derived, not fitted.
+//
+// The dat's Projectile Arc (attribute 69) is documented as "controls the maximum
+// height of the fired projectile", as a fraction of the shot's span: arc 0.4
+// means the stone peaks 0.4 x (muzzle-to-impact distance) above the line. The
+// projectile's dat `speed` is its speed ALONG THAT PATH, so a lobbed stone
+// covering the same ground takes longer than a flat one -- which is exactly the
+// sign of D1 §3.4's residual (engine stone 1.16 s against the tape's 1.88 s in
+// the close-range fights, even though the engine's median range is slightly
+// SHORTER, so distance cannot explain it; scorpion projectile 627 has arc 0.0
+// and its tape flight times already match a straight 6.0 tiles/s).
+//
+// For a symmetric parabola of span D and apex h = arc x D, write k = 4 x arc.
+// Then y = 4h(x/D)(1 - x/D), dy/dx = k(1 - 2x/D), and the path length is
+//
+//   L = integral_0^D sqrt(1 + k^2 (1 - 2x/D)^2) dx
+//     = D x [ sqrt(1 + k^2)/2 + asinh(k)/(2k) ]
+//
+// so time-of-flight = (L / D) x the straight-line time. The bracket is what this
+// function returns. It is 1.0 at arc 0 (the limit, and the value the code
+// short-circuits to), and 1.3338 at the stone's arc = 0.4 -- i.e. the D1 gap is
+// predicted to close by a third, NOT to vanish. That is stated up front as the
+// rule's own honest limit: it lands squarely on the hussar recording's 1.28x
+// residual and leaves roughly half of the camel recording's 1.62x on the table.
+//
+// The alternative reading -- that Genie gives the stone a constant HORIZONTAL
+// speed and solves a ballistic vertical -- predicts flight time D/speed exactly,
+// i.e. no change at all from today's engine, which the measurement rules out.
+export function arcFlightFactor(arc) {
+    if (!(arc > 0)) return 1;
+    const k = 4 * arc;
+    return Math.sqrt(1 + k * k) / 2 + Math.asinh(k) / (2 * k);
+}
+
 // ===== CONSTANTS =====
 export const CANVAS_WIDTH = 900;
 export const CANVAS_HEIGHT = 600;

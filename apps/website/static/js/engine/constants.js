@@ -759,8 +759,42 @@ export const C2C = {
     //     ever live and this flag can never fire. It is a modifier of C2A's
     //     state, not a third mechanism.
     //
-    //     SHIPPED OFF pending the combined C2A+C2C gate -- see
-    //     docs/calibration/c2c_pure_flight.md for the measured result.
+    //     ===== SHIPPED OFF. THE PREDICTION FAILED, AND SO DID THE PREMISE. ==
+    //     Full numbers: docs/calibration/c2c_pure_flight.md. The rule is LIVE
+    //     and does exactly what it says -- |orbit+cohesion| 1.379 -> 0.000,
+    //     |avoidance| 1.875 -> 1.716, basis share of the summed magnitudes
+    //     22% -> 37% -- and the realised heading does not move:
+    //
+    //       cos(actual tick step, break bearing)   C-a 0.276   C-a+C-c 0.276
+    //       cos(flee, away-from-the-hitter)        C-a 0.63    C-a+C-c 0.64
+    //       victim radial displ / reload (tiles)   C-a 0.087   C-a+C-c 0.046
+    //
+    //     TWO THINGS THIS ROUND ESTABLISHED, both worth more than the rule.
+    //
+    //     (1) THE SOCIAL BAND WAS NEVER THE PROBLEM. C2A read
+    //     calculateAvoidance's 2.221 as a social force; narrowing to genuine
+    //     overlap removes 8.5% of it (1.875 -> 1.716). A unit with a break
+    //     live is inside a scrum, so nearly every body within 1.5x minDist of
+    //     it is ALREADY overlapping at force 3..8. That sum is collision
+    //     physics and there is nothing social left to take out of it.
+    //
+    //     (2) THE HEADING IS NOT REACHABLE BY TERM SELECTION. C2A showed no
+    //     CHOICE of basis moves the realised cosine; this shows no SELECTION
+    //     of terms does either -- 37% of the sum still yields 0.276. The
+    //     kiter cannot beeline because it is physically boxed in by bodies,
+    //     not because it is badly steered. Do not write a third rule in this
+    //     region; measure the packing (COMBAT_PACK_FACTOR, minDist,
+    //     resolveCollisions) instead, which is where the 0.05-tiles-per-reload
+    //     cap on radial displacement actually lives.
+    //
+    //     COST: corpus 194 -> 187 (C-a) -> 181 (C-a+C-c).
+    //     champion__vs__heavy_cav_archer stays 1/9 -- so the Phase-C chain's
+    //     own falsifiable test ("if the kiter LEAVES, the chaser's output
+    //     falls") came back NEGATIVE: champion damage per run 943 -> 960
+    //     against a required ~603. A second canary breaks on top,
+    //     hand_cannoneer__vs__heavy_camel 6/6 -> 0/6 (camel damage per run
+    //     591 -> 768, tape 273) -- the same shape, the kiter paying retreat
+    //     time for separation that never arrives.
     pureFlight: false,
 };
 

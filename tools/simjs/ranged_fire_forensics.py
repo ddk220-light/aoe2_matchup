@@ -353,7 +353,13 @@ def _classify(fight):
     fight.inference = (inf_ok, inf_n)
 
 
-def load_tape(fight_meta) -> Fight:
+def load_tape(fight_meta, classify: bool = True) -> Fight:
+    """`classify=False` skips _classify (aim-target inference + outcome
+    stamping), which is O(shots x units) and is the dominant cost of loading a
+    fight. Every consumer that reads `s["outcome"]` / `s["aim"]` needs it; the
+    position/damage-only measurements (tools/simjs/c1_chaser_cadence.py
+    sections 1-4) do not, and over 1,720 engine runs the difference is minutes.
+    Default True, so every existing caller is unchanged."""
     tag = fight_meta["tag"]
     frames = {}
     for r in _tape_rows(tag, "units"):
@@ -417,11 +423,13 @@ def load_tape(fight_meta) -> Fight:
     f = Fight("tape", tag, stream_end, frames, damage, shots, sides,
               end_t=wipe_t if wipe_t is not None else stream_end)
     f.residuals, f.unpaired = _pair_shots(shots, damage)
-    _classify(f)
+    if classify:
+        _classify(f)
     return f
 
 
-def load_engine(sim_dir: Path, fight_meta, seed: int) -> Fight | None:
+def load_engine(sim_dir: Path, fight_meta, seed: int,
+                classify: bool = True) -> Fight | None:
     p = sim_dir / fight_meta["run_id"] / f"seed-{seed}.shots.json"
     if not p.exists():
         return None
@@ -473,7 +481,8 @@ def load_engine(sim_dir: Path, fight_meta, seed: int) -> Fight | None:
     f = Fight("engine", fight_meta["tag"], raw["duration_s"],
               frames, raw["damage"], shots, sides)
     f.residuals, f.unpaired = _pair_shots(shots, raw["damage"])
-    _classify(f)
+    if classify:
+        _classify(f)
     return f
 
 

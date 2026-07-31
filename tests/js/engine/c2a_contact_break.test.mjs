@@ -113,9 +113,21 @@ function escapeDist(kiter, hitter) {
 
 // ---- shipped configuration -------------------------------------------------
 
-test("[C2a] both rules ship ON, and the object is exactly two rules", () => {
-    assert.equal(C2A.contactBreak, true);
-    assert.equal(C2A.breakPriority, true);
+// SHIPPED OFF -- the prediction failed (see constants.js and
+// docs/calibration/c2a_contact_break.md). The mechanism stays wired and tested
+// under explicit override, exactly as R5D.reapproach / R5F.silenceAdvance /
+// R5F.persistVictim do, so every test below drives it through withC2A().
+const BOTH_ON = { contactBreak: true, breakPriority: true };
+
+// The rules ship OFF, so every BEHAVIOURAL test has to arm them explicitly.
+// `ctest` is `test` with both flags on for the duration of the body; the
+// nested withC2A(ALL_OFF) calls inside individual tests still work, because
+// withC2A saves and restores whatever it found.
+const ctest = (name, fn) => test(name, () => withC2A(BOTH_ON, fn));
+
+test("[C2a] both rules ship OFF, and the object is exactly two rules", () => {
+    assert.equal(C2A.contactBreak, false);
+    assert.equal(C2A.breakPriority, false);
     assert.equal(Object.keys(C2A).length, 2);
 });
 
@@ -125,7 +137,7 @@ test("[C2a] setC2A rejects an unknown flag rather than silently ignoring it", ()
 
 // ---- 1. the trigger --------------------------------------------------------
 
-test("[C2a] a MELEE hit on a ranged body latches that hitter", () => {
+ctest("[C2a] a MELEE hit on a ranged body latches that hitter", () => {
     const { kiter, hitter } = scene();
     assert.equal(kiter.contactBreakFrom, null, "nothing latched before the hit");
     kiter.takeDamage(5, hitter);
@@ -133,7 +145,7 @@ test("[C2a] a MELEE hit on a ranged body latches that hitter", () => {
     assert.equal(kiter.contactBreakHitter(), hitter, "and the break is live");
 });
 
-test("[C2a] a RANGED attacker never latches a break -- this is why r-v-r cannot move", () => {
+ctest("[C2a] a RANGED attacker never latches a break -- this is why r-v-r cannot move", () => {
     // The single clause that makes ranged-vs-ranged unreachable BY
     // CONSTRUCTION: those fights contain no melee attacker at all, so there is
     // no scope check to get wrong.
@@ -144,7 +156,7 @@ test("[C2a] a RANGED attacker never latches a break -- this is why r-v-r cannot 
     assert.equal(kiter.contactBreakFrom, null);
 });
 
-test("[C2a] a MELEE victim never latches a break -- melee-vs-melee cannot move", () => {
+ctest("[C2a] a MELEE victim never latches a break -- melee-vs-melee cannot move", () => {
     const sim = newSim();
     const victim = mk(sim, 1, MELEE, "champion");
     const hitter = mk(sim, 2, MELEE, "champion");
@@ -154,7 +166,7 @@ test("[C2a] a MELEE victim never latches a break -- melee-vs-melee cannot move",
     assert.equal(victim.contactBreakFrom, null);
 });
 
-test("[C2a] a SIEGE victim never latches a break -- min-range units are excluded", () => {
+ctest("[C2a] a SIEGE victim never latches a break -- min-range units are excluded", () => {
     // Same clause and same reason as kiteSteering's gate 2: Siege Onager (3.0)
     // and Heavy Scorpion (2.0) run tooClose(), not a kite circuit.
     const { kiter, hitter } = scene({ kiterStats: SIEGE });
@@ -163,20 +175,20 @@ test("[C2a] a SIEGE victim never latches a break -- min-range units are excluded
     assert.equal(kiter.contactBreakFrom, null);
 });
 
-test("[C2a] a 0-damage application is not a hit", () => {
+ctest("[C2a] a 0-damage application is not a hit", () => {
     const { kiter, hitter } = scene();
     kiter.takeDamage(0, hitter);
     assert.equal(kiter.contactBreakFrom, null);
 });
 
-test("[C2a] a killing blow latches nothing on the corpse", () => {
+ctest("[C2a] a killing blow latches nothing on the corpse", () => {
     const { kiter, hitter } = scene();
     kiter.takeDamage(kiter.currentHp + 10, hitter);
     assert.equal(kiter.state, "dead", "fixture: the blow really killed it");
     assert.equal(kiter.contactBreakFrom, null);
 });
 
-test("[C2a] a later hitter supersedes the earlier one", () => {
+ctest("[C2a] a later hitter supersedes the earlier one", () => {
     // The tape's kiter answers the unit that just hit it, present tense. No
     // queue and no priority between hitters -- the latest contact is the one
     // being broken.
@@ -188,7 +200,7 @@ test("[C2a] a later hitter supersedes the earlier one", () => {
     assert.equal(kiter.contactBreakFrom, second);
 });
 
-test("[C2a] with contactBreak off nothing is ever recorded", () => {
+ctest("[C2a] with contactBreak off nothing is ever recorded", () => {
     withC2A(ALL_OFF, () => {
         const { kiter, hitter } = scene();
         kiter.takeDamage(5, hitter);
@@ -199,7 +211,7 @@ test("[C2a] with contactBreak off nothing is ever recorded", () => {
 
 // ---- 2. the bearing --------------------------------------------------------
 
-test("[C2a] THE BEARING: the kiter runs away from the HITTER, not from its target", () => {
+ctest("[C2a] THE BEARING: the kiter runs away from the HITTER, not from its target", () => {
     // The defect's exact shape. The kiter's own target sits to the NORTH while
     // the unit that hit it stands to the EAST: pre-C2 the retreat basis is the
     // per-target radial (or E10a's centroid), so the kiter runs north and opens
@@ -242,7 +254,7 @@ test("[C2a] THE BEARING: the kiter runs away from the HITTER, not from its targe
     });
 });
 
-test("[C2a] the break's bearing supersedes E10a's shared centroid basis", () => {
+ctest("[C2a] the break's bearing supersedes E10a's shared centroid basis", () => {
     // `steering.rx/ry` is E10a's one-bearing-per-side retreat basis. Hand it a
     // basis pointing NORTH while the hitter stands EAST: the break wins.
     const { kiter, hitter, sim } = scene({ hitterAt: 20 });
@@ -262,7 +274,7 @@ test("[C2a] the break's bearing supersedes E10a's shared centroid basis", () => 
     assert.ok(Math.abs(kiter.x - x1) < Math.abs(kiter.y - y1));
 });
 
-test("[C2a] cohesion and orbit are still added on top of the break's bearing", () => {
+ctest("[C2a] cohesion and orbit are still added on top of the break's bearing", () => {
     // The break replaces the RADIAL BASIS only. If it also swallowed
     // steering.x/y the kiting ball would stop being a ball for as long as any
     // of its members were in contact, which is not what M2 measured.
@@ -296,7 +308,7 @@ function stopToFireScene() {
     return { sim, kiter, hitter };
 }
 
-test("[C2a] pre-C2 a kiter in this scene STOPS TO FIRE -- or the test proves nothing", () => {
+ctest("[C2a] pre-C2 a kiter in this scene STOPS TO FIRE -- or the test proves nothing", () => {
     withC2A(ALL_OFF, () => {
         const { sim, kiter, hitter } = stopToFireScene();
         assert.ok(kiter.inRange(), "fixture: the chaser is inside the kiter's reach");
@@ -307,7 +319,7 @@ test("[C2a] pre-C2 a kiter in this scene STOPS TO FIRE -- or the test proves not
     });
 });
 
-test("[C2a] THE PRIORITY: a live break beats stop-to-fire, and the unit leaves at once", () => {
+ctest("[C2a] THE PRIORITY: a live break beats stop-to-fire, and the unit leaves at once", () => {
     const { sim, kiter, hitter } = stopToFireScene();
     kiter.takeDamage(5, hitter);
     const x0 = kiter.x;
@@ -317,7 +329,7 @@ test("[C2a] THE PRIORITY: a live break beats stop-to-fire, and the unit leaves a
     assert.equal(kiter.committedAttack, null, "no windup was started");
 });
 
-test("[C2a] breakPriority alone is what does that -- C-a1 without it still fires", () => {
+ctest("[C2a] breakPriority alone is what does that -- C-a1 without it still fires", () => {
     withC2A(BEARING_ONLY, () => {
         const { sim, kiter, hitter } = stopToFireScene();
         kiter.takeDamage(5, hitter);
@@ -328,7 +340,7 @@ test("[C2a] breakPriority alone is what does that -- C-a1 without it still fires
     });
 });
 
-test("[C2a] the break also beats the RE-APPROACH arm -- it never walks at its hitter", () => {
+ctest("[C2a] the break also beats the RE-APPROACH arm -- it never walks at its hitter", () => {
     // Cooldown up, chaser just outside reach: pre-C2 the unit walks TOWARD it
     // (rangedShouldApproach). That is the other half of the 0.42 s latency.
     const sim = newSim();
@@ -350,7 +362,7 @@ test("[C2a] the break also beats the RE-APPROACH arm -- it never walks at its hi
     assert.ok(kiter.x < x0, "it retreats instead of closing on the distant target");
 });
 
-test("[C2a] the priority does not override a committed windup or the fire recovery", () => {
+ctest("[C2a] the priority does not override a committed windup or the fire recovery", () => {
     // Stated as a limit, not an omission: those two are E9-measured commitments
     // of an animation already in flight and are shared with the ranged round.
     const { sim, kiter, hitter } = stopToFireScene();
@@ -364,7 +376,7 @@ test("[C2a] the priority does not override a committed windup or the fire recove
 
 // ---- 4. the end condition --------------------------------------------------
 
-test("[C2a] THE ESCAPE: the break holds up to reach + one body diameter, then ends", () => {
+ctest("[C2a] THE ESCAPE: the break holds up to reach + one body diameter, then ends", () => {
     const { kiter, hitter } = scene();
     kiter.takeDamage(5, hitter);
     const d = escapeDist(kiter, hitter);
@@ -377,7 +389,7 @@ test("[C2a] THE ESCAPE: the break holds up to reach + one body diameter, then en
     assert.equal(kiter.contactBreakFrom, null, "and the latch drops itself");
 });
 
-test("[C2a] the escape distance is the HITTER's reach, not the kiter's", () => {
+ctest("[C2a] the escape distance is the HITTER's reach, not the kiter's", () => {
     // A kiter with 7 tiles of range escaping a 0-range champion must not have
     // to travel its OWN reach to do it. The criterion is what the hitter can
     // touch, plus the fleeing body's own width.
@@ -389,7 +401,7 @@ test("[C2a] the escape distance is the HITTER's reach, not the kiter's", () => {
         "and it is strictly outside what the hitter can reach");
 });
 
-test("[C2a] the break is not a timer -- it survives arbitrarily many ticks in contact", () => {
+ctest("[C2a] the break is not a timer -- it survives arbitrarily many ticks in contact", () => {
     const { sim, kiter, hitter } = scene();
     kiter.takeDamage(5, hitter);
     for (let i = 0; i < 600; i++) {
@@ -402,7 +414,7 @@ test("[C2a] the break is not a timer -- it survives arbitrarily many ticks in co
     assert.ok(sim);
 });
 
-test("[C2a] the break dies with its cause when the hitter dies", () => {
+ctest("[C2a] the break dies with its cause when the hitter dies", () => {
     const { kiter, hitter } = scene();
     kiter.takeDamage(5, hitter);
     hitter.state = "dead";
@@ -410,7 +422,7 @@ test("[C2a] the break dies with its cause when the hitter dies", () => {
     assert.equal(kiter.contactBreakFrom, null);
 });
 
-test("[C2a] a re-hit after an escape re-arms the break", () => {
+ctest("[C2a] a re-hit after an escape re-arms the break", () => {
     const { kiter, hitter } = scene();
     kiter.takeDamage(5, hitter);
     hitter.x = kiter.x + 400;
@@ -503,7 +515,7 @@ function runHash(build, seed, seconds = 30) {
     return sim.stateHash();
 }
 
-test("[C2a] off is deterministic and DIFFERS from the shipped engine on a chase", () => {
+ctest("[C2a] off is deterministic and DIFFERS from the armed engine on a chase", () => {
     const offA = withC2A(ALL_OFF, () => runHash(chaseFight, 42));
     const offB = withC2A(ALL_OFF, () => runHash(chaseFight, 42));
     assert.equal(offA, offB, "the off path must be deterministic");
@@ -514,12 +526,12 @@ test("[C2a] off is deterministic and DIFFERS from the shipped engine on a chase"
     );
 });
 
-test("[C2a] on is deterministic across repeated runs", () => {
+ctest("[C2a] on is deterministic across repeated runs", () => {
     assert.equal(runHash(chaseFight, 7), runHash(chaseFight, 7));
     assert.equal(runHash(chaseFight, 8, 45), runHash(chaseFight, 8, 45));
 });
 
-test("[C2a] a RANGED-vs-RANGED fight is bit-identical with the flags on and off", () => {
+ctest("[C2a] a RANGED-vs-RANGED fight is bit-identical with the flags on and off", () => {
     // BY CONSTRUCTION, not by a scope test: the trigger is a melee hit and
     // these fights contain no melee unit. This is the unit-level counterpart of
     // the hash check over the six ranged corpus fights.
@@ -530,7 +542,7 @@ test("[C2a] a RANGED-vs-RANGED fight is bit-identical with the flags on and off"
     }
 });
 
-test("[C2a] a MELEE-vs-MELEE fight is bit-identical with the flags on and off", () => {
+ctest("[C2a] a MELEE-vs-MELEE fight is bit-identical with the flags on and off", () => {
     // The rule lives on a ranged unit's reaction; a melee victim never latches.
     for (const seed of [5, 13, 31]) {
         const on = runHash(meleeFight, seed, 30);
@@ -539,7 +551,7 @@ test("[C2a] a MELEE-vs-MELEE fight is bit-identical with the flags on and off", 
     }
 });
 
-test("[C2a] a SIEGE-vs-melee fight is bit-identical with the flags on and off", () => {
+ctest("[C2a] a SIEGE-vs-melee fight is bit-identical with the flags on and off", () => {
     for (const seed of [2, 17]) {
         const on = runHash(siegeFight, seed, 30);
         const off = withC2A(ALL_OFF, () => runHash(siegeFight, seed, 30));
@@ -547,7 +559,7 @@ test("[C2a] a SIEGE-vs-melee fight is bit-identical with the flags on and off", 
     }
 });
 
-test("[C2a] the rule consumes no randomness", () => {
+ctest("[C2a] the rule consumes no randomness", () => {
     let draws = 0;
     const inner = makeRng(1);
     const rng = {
@@ -567,7 +579,7 @@ test("[C2a] the rule consumes no randomness", () => {
     assert.equal(draws, 0, "contact break is geometry, never a draw");
 });
 
-test("[C2a] contactBreakHitter is idempotent -- calling it twice changes nothing", () => {
+ctest("[C2a] contactBreakHitter is idempotent -- calling it twice changes nothing", () => {
     const { kiter, hitter } = scene();
     kiter.takeDamage(5, hitter);
     assert.equal(kiter.contactBreakHitter(), hitter);

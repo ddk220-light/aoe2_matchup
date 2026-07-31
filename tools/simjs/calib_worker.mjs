@@ -30,6 +30,7 @@ import {
     applyC2BSpec,
     applyC2CSpec,
     applyC3Spec,
+    applyC4Spec,
     applyD2Spec,
     applyE1Spec,
     loadCalibDicts,
@@ -41,7 +42,7 @@ import {
 
 const {
     arenaArg, maxSeconds, outDir, r5bSpec, r5d1Spec, r5dSpec, b2Spec, r5fSpec,
-    c2aSpec, c2bSpec, c2cSpec, c3Spec, d2Spec, e1Spec,
+    c2aSpec, c2bSpec, c2cSpec, c3Spec, c4Spec, d2Spec, e1Spec,
 } = workerData;
 
 // Round-5b / Round-5d / Phase-B2 rule flags. Applied BEFORE any fight is built,
@@ -57,6 +58,7 @@ applyC2ASpec(c2aSpec ?? null);
 applyC2BSpec(c2bSpec ?? null);
 applyC2CSpec(c2cSpec ?? null);
 applyC3Spec(c3Spec ?? null);
+applyC4Spec(c4Spec ?? null);
 applyD2Spec(d2Spec ?? null);
 applyE1Spec(e1Spec ?? null);
 

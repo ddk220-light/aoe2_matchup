@@ -1,0 +1,784 @@
+{
+ "_meta": {
+  "date": "2026-07-31",
+  "task": "paladin__vs__elite_steppe live-round forensics (r19-r30, position-valid v3 tapes)",
+  "engine_snapshot": "968886a (improved-simulation HEAD, clean engine tree; scratch mirror byte-verified against repo on the 36 default seed files)",
+  "sim_config": "tapebox arena, tape first-frame spawns, seeds 1-3, calib_runner.mjs / scratch melee_tracks.mjs (10 Hz frames)",
+  "conventions": "owner 2 = paladin (Spanish, 15), owner 3 = elite_steppe (Cumans, 21); concurrency window 2.5 s (matches v2_melee_rebaseline 6c); reach: steppe 1.5 tiles (1.0 + 2x0.25 radius), paladin threshold 0.7; moving = >0.05 tiles per 0.1 s sample; kill-curve marks = 10s steps from first blood; all cross-round aggregates are medians",
+  "scratchpad": "C:/Users/ddk22/AppData/Local/Temp/claude/D--AI-aoe2-matchup/a9df76fd-3235-4257-bba6-2fabfe9e152e/scratchpad"
+ },
+ "engine_default_determinism": {
+  "distinct (winner, steppe_survivors, steppe_hp) across 36 seeds": [
+   [
+    "steppe",
+    3,
+    135
+   ]
+  ]
+ },
+ "per_round": {
+  "paladin__vs__elite_steppe_r19": {
+   "truth": {
+    "winner": "steppe",
+    "pal_surv": 0,
+    "st_surv": 6,
+    "pal_hp": 0.0,
+    "st_hp": 375.0
+   },
+   "engine_default": {
+    "winners": [
+     "steppe",
+     "steppe",
+     "steppe"
+    ],
+    "st_surv": [
+     3,
+     3,
+     3
+    ],
+    "st_hp": [
+     135,
+     135,
+     135
+    ],
+    "dur": [
+     55.1,
+     55.1,
+     55.1
+    ]
+   }
+  },
+  "paladin__vs__elite_steppe_r20": {
+   "truth": {
+    "winner": "paladin",
+    "pal_surv": 6,
+    "st_surv": 0,
+    "pal_hp": 680.0,
+    "st_hp": 0.0
+   },
+   "engine_default": {
+    "winners": [
+     "steppe",
+     "steppe",
+     "steppe"
+    ],
+    "st_surv": [
+     3,
+     3,
+     3
+    ],
+    "st_hp": [
+     135,
+     135,
+     135
+    ],
+    "dur": [
+     55.1,
+     55.1,
+     55.1
+    ]
+   }
+  },
+  "paladin__vs__elite_steppe_r21": {
+   "truth": {
+    "winner": "paladin",
+    "pal_surv": 6,
+    "st_surv": 0,
+    "pal_hp": 530.0,
+    "st_hp": 0.0
+   },
+   "engine_default": {
+    "winners": [
+     "steppe",
+     "steppe",
+     "steppe"
+    ],
+    "st_surv": [
+     3,
+     3,
+     3
+    ],
+    "st_hp": [
+     135,
+     135,
+     135
+    ],
+    "dur": [
+     55.1,
+     55.1,
+     55.1
+    ]
+   }
+  },
+  "paladin__vs__elite_steppe_r22": {
+   "truth": {
+    "winner": "paladin",
+    "pal_surv": 5,
+    "st_surv": 0,
+    "pal_hp": 570.0,
+    "st_hp": 0.0
+   },
+   "engine_default": {
+    "winners": [
+     "steppe",
+     "steppe",
+     "steppe"
+    ],
+    "st_surv": [
+     3,
+     3,
+     3
+    ],
+    "st_hp": [
+     135,
+     135,
+     135
+    ],
+    "dur": [
+     55.1,
+     55.1,
+     55.1
+    ]
+   }
+  },
+  "paladin__vs__elite_steppe_r23": {
+   "truth": {
+    "winner": "paladin",
+    "pal_surv": 4,
+    "st_surv": 0,
+    "pal_hp": 370.0,
+    "st_hp": 0.0
+   },
+   "engine_default": {
+    "winners": [
+     "steppe",
+     "steppe",
+     "steppe"
+    ],
+    "st_surv": [
+     3,
+     3,
+     3
+    ],
+    "st_hp": [
+     135,
+     135,
+     135
+    ],
+    "dur": [
+     55.1,
+     55.1,
+     55.1
+    ]
+   }
+  },
+  "paladin__vs__elite_steppe_r24": {
+   "truth": {
+    "winner": "paladin",
+    "pal_surv": 6,
+    "st_surv": 0,
+    "pal_hp": 640.0,
+    "st_hp": 0.0
+   },
+   "engine_default": {
+    "winners": [
+     "steppe",
+     "steppe",
+     "steppe"
+    ],
+    "st_surv": [
+     3,
+     3,
+     3
+    ],
+    "st_hp": [
+     135,
+     135,
+     135
+    ],
+    "dur": [
+     55.1,
+     55.1,
+     55.1
+    ]
+   }
+  },
+  "paladin__vs__elite_steppe_r25": {
+   "truth": {
+    "winner": "paladin",
+    "pal_surv": 2,
+    "st_surv": 0,
+    "pal_hp": 230.0,
+    "st_hp": 0.0
+   },
+   "engine_default": {
+    "winners": [
+     "steppe",
+     "steppe",
+     "steppe"
+    ],
+    "st_surv": [
+     3,
+     3,
+     3
+    ],
+    "st_hp": [
+     135,
+     135,
+     135
+    ],
+    "dur": [
+     55.1,
+     55.1,
+     55.1
+    ]
+   }
+  },
+  "paladin__vs__elite_steppe_r26": {
+   "truth": {
+    "winner": "paladin",
+    "pal_surv": 5,
+    "st_surv": 0,
+    "pal_hp": 440.0,
+    "st_hp": 0.0
+   },
+   "engine_default": {
+    "winners": [
+     "steppe",
+     "steppe",
+     "steppe"
+    ],
+    "st_surv": [
+     3,
+     3,
+     3
+    ],
+    "st_hp": [
+     135,
+     135,
+     135
+    ],
+    "dur": [
+     55.1,
+     55.1,
+     55.1
+    ]
+   }
+  },
+  "paladin__vs__elite_steppe_r27": {
+   "truth": {
+    "winner": "paladin",
+    "pal_surv": 4,
+    "st_surv": 0,
+    "pal_hp": 290.0,
+    "st_hp": 0.0
+   },
+   "engine_default": {
+    "winners": [
+     "steppe",
+     "steppe",
+     "steppe"
+    ],
+    "st_surv": [
+     3,
+     3,
+     3
+    ],
+    "st_hp": [
+     135,
+     135,
+     135
+    ],
+    "dur": [
+     55.1,
+     55.1,
+     55.1
+    ]
+   }
+  },
+  "paladin__vs__elite_steppe_r28": {
+   "truth": {
+    "winner": "paladin",
+    "pal_surv": 2,
+    "st_surv": 0,
+    "pal_hp": 330.0,
+    "st_hp": 0.0
+   },
+   "engine_default": {
+    "winners": [
+     "steppe",
+     "steppe",
+     "steppe"
+    ],
+    "st_surv": [
+     3,
+     3,
+     3
+    ],
+    "st_hp": [
+     135,
+     135,
+     135
+    ],
+    "dur": [
+     55.1,
+     55.1,
+     55.1
+    ]
+   }
+  },
+  "paladin__vs__elite_steppe_r29": {
+   "truth": {
+    "winner": "paladin",
+    "pal_surv": 8,
+    "st_surv": 0,
+    "pal_hp": 780.0,
+    "st_hp": 0.0
+   },
+   "engine_default": {
+    "winners": [
+     "steppe",
+     "steppe",
+     "steppe"
+    ],
+    "st_surv": [
+     3,
+     3,
+     3
+    ],
+    "st_hp": [
+     135,
+     135,
+     135
+    ],
+    "dur": [
+     55.1,
+     55.1,
+     55.1
+    ]
+   }
+  },
+  "paladin__vs__elite_steppe_r30": {
+   "truth": {
+    "winner": "paladin",
+    "pal_surv": 7,
+    "st_surv": 0,
+    "pal_hp": 850.0,
+    "st_hp": 0.0
+   },
+   "engine_default": {
+    "winners": [
+     "steppe",
+     "steppe",
+     "steppe"
+    ],
+    "st_surv": [
+     3,
+     3,
+     3
+    ],
+    "st_hp": [
+     135,
+     135,
+     135
+    ],
+    "dur": [
+     55.1,
+     55.1,
+     55.1
+    ]
+   }
+  }
+ },
+ "anatomy_aggregate": {
+  "last_blow_s": {
+   "tape": 46.24,
+   "engine": 55.15
+  },
+  "hits_landed.2": {
+   "tape": 147.0,
+   "engine": 137.0
+  },
+  "hits_landed.3": {
+   "tape": 221.5,
+   "engine": 270.0
+  },
+  "kills.2": {
+   "tape": 21.0,
+   "engine": 18.0
+  },
+  "kills.3": {
+   "tape": 10.0,
+   "engine": 15.0
+  },
+  "concurrency.paladin.first10s": {
+   "tape": 8.025,
+   "engine": 7.15
+  },
+  "concurrency.paladin.steady": {
+   "tape": 6.185,
+   "engine": 4.244
+  },
+  "concurrency.steppe.first10s": {
+   "tape": 15.5,
+   "engine": 16.6
+  },
+  "concurrency.steppe.steady": {
+   "tape": 8.174,
+   "engine": 8.033
+  },
+  "concurrency.steppe.peak": {
+   "tape": 18.5,
+   "engine": 21.0
+  },
+  "concurrency.paladin.peak": {
+   "tape": 10.5,
+   "engine": 9.0
+  },
+  "hit_rate_per_s.paladin.steady": {
+   "tape": 2.994,
+   "engine": 2.142
+  },
+  "hit_rate_per_s.steppe.steady": {
+   "tape": 3.966,
+   "engine": 3.893
+  },
+  "attackers_per_victim.steppe_on_paladin.med": {
+   "tape": 2.0,
+   "engine": 2.0
+  },
+  "attackers_per_victim.steppe_on_paladin.p90": {
+   "tape": 4.0,
+   "engine": 4.0
+  },
+  "attackers_per_victim.steppe_on_paladin.max": {
+   "tape": 6.0,
+   "engine": 6.0
+  },
+  "attackers_per_victim.paladin_on_steppe.med": {
+   "tape": 1.0,
+   "engine": 1.0
+  },
+  "attackers_per_victim.paladin_on_steppe.p90": {
+   "tape": 2.0,
+   "engine": 2.0
+  },
+  "attackers_per_victim.paladin_on_steppe.max": {
+   "tape": 4.0,
+   "engine": 3.0
+  },
+  "distinct_victims_per_attacker.paladin": {
+   "tape": 3.0,
+   "engine": 2.0
+  },
+  "distinct_victims_per_attacker.steppe": {
+   "tape": 3.0,
+   "engine": 2.0
+  },
+  "hits_per_kill.paladin": {
+   "tape": 7.0,
+   "engine": 7.61
+  },
+  "hits_per_kill.steppe": {
+   "tape": 22.175,
+   "engine": 18.0
+  },
+  "steppe_in_reach_of_paladin.mean": {
+   "tape": 2.983,
+   "engine": 2.849
+  },
+  "steppe_in_reach_of_paladin.p90": {
+   "tape": 6.0,
+   "engine": 5.0
+  },
+  "steppe_in_reach_of_paladin.max": {
+   "tape": 9.0,
+   "engine": 6.0
+  },
+  "paladins_in_reach_of_steppe.mean": {
+   "tape": 0.512,
+   "engine": 0.411
+  },
+  "nn_dist_at_contact.paladin": {
+   "tape": 0.758,
+   "engine": 1.0
+  },
+  "nn_dist_at_contact.steppe": {
+   "tape": 0.686,
+   "engine": 0.577
+  },
+  "moving_share.paladin": {
+   "tape": 0.298,
+   "engine": 0.094
+  },
+  "moving_share.steppe": {
+   "tape": 0.144,
+   "engine": 0.034
+  },
+  "steppe_contact_exits_per_unit": {
+   "tape": 0.715,
+   "engine": 0.48
+  },
+  "centroid_sep.first10s": {
+   "tape": 1.667,
+   "engine": 1.628
+  },
+  "centroid_sep.mid": {
+   "tape": 1.002,
+   "engine": 1.074
+  },
+  "centroid_sep.late": {
+   "tape": 0.94,
+   "engine": 1.149
+  }
+ },
+ "state_decomposition": {
+  "paladin": {
+   "swinging": {
+    "tape": 0.655,
+    "engine": 0.633
+   },
+   "moving": {
+    "tape": 0.228,
+    "engine": 0.057
+   },
+   "idle_in_reach": {
+    "tape": 0.042,
+    "engine": 0.023
+   },
+   "idle_out_of_reach": {
+    "tape": 0.068,
+    "engine": 0.288
+   }
+  },
+  "steppe": {
+   "swinging": {
+    "tape": 0.861,
+    "engine": 0.875
+   },
+   "moving": {
+    "tape": 0.101,
+    "engine": 0.013
+   },
+   "idle_in_reach": {
+    "tape": 0.025,
+    "engine": 0.014
+   },
+   "idle_out_of_reach": {
+    "tape": 0.018,
+    "engine": 0.099
+   }
+  }
+ },
+ "kill_curves_10s_marks": {
+  "paladin": {
+   "tape": [
+    3.0,
+    8.5,
+    14.0,
+    18.5,
+    21.0,
+    21.0
+   ],
+   "engine": [
+    0.0,
+    8.0,
+    12.0,
+    16.0,
+    18.0,
+    18.0
+   ]
+  },
+  "steppe": {
+   "tape": [
+    1.0,
+    5.5,
+    8.0,
+    9.5,
+    10.0,
+    10.0
+   ],
+   "engine": [
+    1.0,
+    7.0,
+    10.0,
+    12.0,
+    13.0,
+    15.0
+   ]
+  }
+ },
+ "time_to_nth_death": {
+  "paladin": {
+   "3": {
+    "tape": null,
+    "engine": null
+   },
+   "5": {
+    "tape": null,
+    "engine": null
+   },
+   "8": {
+    "tape": null,
+    "engine": null
+   },
+   "10": {
+    "tape": null,
+    "engine": null
+   },
+   "15": {
+    "tape": null,
+    "engine": null
+   },
+   "21": {
+    "tape": null,
+    "engine": null
+   }
+  },
+  "steppe": {
+   "3": {
+    "tape": null,
+    "engine": null
+   },
+   "5": {
+    "tape": null,
+    "engine": null
+   },
+   "8": {
+    "tape": null,
+    "engine": null
+   },
+   "10": {
+    "tape": null,
+    "engine": null
+   },
+   "15": {
+    "tape": null,
+    "engine": null
+   },
+   "21": {
+    "tape": null,
+    "engine": null
+   }
+  }
+ },
+ "config_board": {
+  "default": {
+   "desc": "shipped defaults (mirror == repo, byte-verified)",
+   "pal_round_wins": 0,
+   "seed_pal_wins": "0/36",
+   "median_pal_surv": 0.0,
+   "median_st_surv": 3.0,
+   "winner_match_rounds": 1
+  },
+  "b2_off": {
+   "desc": "--b2 off (resolverContactBump off = pre-B2 bump contact)",
+   "pal_round_wins": 0,
+   "seed_pal_wins": "0/36",
+   "median_pal_surv": 0.0,
+   "median_st_surv": 3.0,
+   "winner_match_rounds": 1
+  },
+  "c2b_off": {
+   "desc": "--c2b off (stopToSwing+committedSwingLands off)",
+   "pal_round_wins": 0,
+   "seed_pal_wins": "0/36",
+   "median_pal_surv": 0.0,
+   "median_st_surv": 3.0,
+   "winner_match_rounds": 1
+  },
+  "c2b_stopOnly": {
+   "desc": "--c2b stopToSwing only",
+   "pal_round_wins": 0,
+   "seed_pal_wins": "0/36",
+   "median_pal_surv": 0.0,
+   "median_st_surv": 5.0,
+   "winner_match_rounds": 1
+  },
+  "c2b_landsOnly": {
+   "desc": "--c2b committedSwingLands only",
+   "pal_round_wins": 0,
+   "seed_pal_wins": "0/36",
+   "median_pal_surv": 0.0,
+   "median_st_surv": 3.0,
+   "winner_match_rounds": 1
+  },
+  "c3_on": {
+   "desc": "--c3 postSwingPlant (default-off rule turned ON)",
+   "pal_round_wins": 0,
+   "seed_pal_wins": "0/36",
+   "median_pal_surv": 0.0,
+   "median_st_surv": 3.0,
+   "winner_match_rounds": 1
+  },
+  "lane_off": {
+   "desc": "mirror flip: MELEE_LANE_REACQUIRE=false (no CLI flag)",
+   "pal_round_wins": 0,
+   "seed_pal_wins": "0/36",
+   "median_pal_surv": 0.0,
+   "median_st_surv": 5.0,
+   "winner_match_rounds": 1
+  },
+  "lock_off": {
+   "desc": "mirror flip: MELEE_TARGET_LOCK=false (no CLI flag)",
+   "pal_round_wins": 0,
+   "seed_pal_wins": "0/36",
+   "median_pal_surv": 0.0,
+   "median_st_surv": 2.0,
+   "winner_match_rounds": 1
+  },
+  "bump_off": {
+   "desc": "mirror flip: MELEE_BUMP_RETARGET=false (no CLI flag)",
+   "pal_round_wins": 0,
+   "seed_pal_wins": "0/36",
+   "median_pal_surv": 0.0,
+   "median_st_surv": 3.0,
+   "winner_match_rounds": 1
+  },
+  "lane_lock_off": {
+   "desc": "mirror flip: lane + target-lock both false",
+   "pal_round_wins": 0,
+   "seed_pal_wins": "0/36",
+   "median_pal_surv": 0.0,
+   "median_st_surv": 6.0,
+   "winner_match_rounds": 1
+  },
+  "all_melee_off": {
+   "desc": "mirror flips lane/lock/bump false + --b2 off --c2b off",
+   "pal_round_wins": 0,
+   "seed_pal_wins": "0/36",
+   "median_pal_surv": 0.0,
+   "median_st_surv": 6.0,
+   "winner_match_rounds": 1
+  },
+  "slots2": {
+   "desc": "mirror flip: MELEE_CONTACT_SLOTS 4 -> 2",
+   "pal_round_wins": 0,
+   "seed_pal_wins": "0/36",
+   "median_pal_surv": 0.0,
+   "median_st_surv": 2.0,
+   "winner_match_rounds": 1
+  }
+ },
+ "config_board_st_hp": {
+  "default": 135.0,
+  "b2_off": 135.0,
+  "c2b_off": 135.0,
+  "c2b_stopOnly": 260.0,
+  "c2b_landsOnly": 135.0,
+  "c3_on": 135.0,
+  "lane_off": 395.0,
+  "lock_off": 125.0,
+  "bump_off": 135.0,
+  "lane_lock_off": 405.0,
+  "all_melee_off": 405.0,
+  "slots2": 125.0
+ },
+ "inert_probes_byte_identical_to_default": [
+  "b2_off",
+  "c2b_off (C2B ships off already)",
+  "c2b_landsOnly",
+  "c3_on (no ranged victims)",
+  "bump_off (MELEE_BUMP_RETARGET never fires here)"
+ ]
+}

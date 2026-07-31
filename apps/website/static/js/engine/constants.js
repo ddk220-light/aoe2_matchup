@@ -1012,14 +1012,22 @@ export const E1_ORBIT_MIN_RADIUS_TILES = 0.5;
 // The plant does not delay a committed windup or its damage either — it is
 // stamped at hit RESOLUTION (performAttackOn), after the blow has landed.
 //
-// SCOPE: melee attacker, RANGED victim only (the victim's own is_ranged flag,
-// the same scoping the pursuit-bar and MELEE_TARGET_LOCK rules use). C2B
-// refuted a melee-vs-melee plant — the tape's melee-scrum moving-share is a
-// monotone ramp across the reload cycle, not a step (e15_walk_forensics §6,
-// MELEE_SWING_RECOVERY_S rationale above) — so a melee victim never stamps
-// the lock and melee-vs-melee is bit-identical with the flag on. Ranged
-// attackers never reach the stamp (they fire projectiles, not
-// performAttackOn) and meleeMoveLocked() excludes them besides.
+// SCOPE: melee attacker, RANGED NON-SIEGE victim only (the victim's own
+// is_ranged flag, the same scoping the pursuit-bar and MELEE_TARGET_LOCK
+// rules use). C2B refuted a melee-vs-melee plant — the tape's melee-scrum
+// moving-share is a monotone ramp across the reload cycle, not a step
+// (e15_walk_forensics §6, MELEE_SWING_RECOVERY_S rationale above) — so a
+// melee victim never stamps the lock and melee-vs-melee is bit-identical
+// with the flag on. Ranged attackers never reach the stamp (they fire
+// projectiles, not performAttackOn) and meleeMoveLocked() excludes them
+// besides. SIEGE victims never stamp either (C4-round refinement): the
+// plant was measured on chasers pursuing ranged KITERS, siege carries
+// is_ranged = 1 in the combat dicts, and the C4 full gate traced the
+// siege-attacker HP-pts regressions to champions/halberdiers planting
+// against onagers/scorpions. The victim test excludes the dat's Siege
+// Weapons armor class (20) — not minAttackRange, whose 1.0 on the Imperial
+// Elite Skirmisher would wrongly exclude a foot kiter. Re-measure when the
+// new onager tape lands.
 //
 // SHIPPED OFF until the C3 iteration round's boards land: flipping it changes
 // every melee-chases-ranged fight in the corpus, so it ships through the same
@@ -1048,6 +1056,89 @@ export function setC3(overrides) {
 // adjustment must stay inside 0.64–0.74 and record its reason here. NOT tuned
 // against the scoreboard.
 export const POST_SWING_PLANT_S = 0.7;
+
+// ===== C4 — FLEE DURING RELOAD (the hunted kiter's run-commitment) ===========
+// One mechanism, from docs/calibration/c1_chaser_cadence.md M2 (Table 2b) and
+// the composed-cycle residual the C3 round measured
+// (docs/calibration/c3_post_swing_plant.md §"What moved"). The tape cycle for
+// a ranged kiter hunted by melee is FIRE -> RUN THE WHOLE RELOAD WINDOW ->
+// HALT (stop-to-fire) -> FIRE. C1 Table 2b measures the run: the tape's foot
+// shooters move in 2.7-3.4 s CONTINUOUS stretches (hand_cannoneer moveMed
+// 3.35 s, imp_elite_skirm 2.71 s, ~one full reload window each) with ONE stop
+// of ~0.62 s per cycle (stops/min 16-18 at reload 3.0-3.45) -- the fire halt
+// and nothing else. The engine's same units move in 0.3-0.4 s dribbles at
+// ~2x the tape's stopped duty cycle (stopFrac 0.36-0.46 vs 0.18-0.20).
+//
+// Where the engine's extra standing lives, measured at the state level (C4
+// round probe): mid-reload the hunted kiter is already IN the kite arm most
+// of the window -- the standing that is a DECISION rather than physics is
+//   (1) E9's post-fire recovery freeze (0.20-0.43 s per cycle, 11-42 % of
+//       reload ticks depending on unit), and
+//   (2) the R5B reloading park (the settle arm), reachable mid-reload when
+//       the unit's own target is not melee.
+// E9's recovery was measured on the RANGED corpus ("over kiting cycles",
+// ranged-vs-ranged): an un-hunted shooter really does stand 0.33 s after the
+// launch. The C1 ranged-vs-melee tapes show the opposite for a HUNTED one:
+// its single 0.62 s halt per cycle is the pre-shot windup alone
+// (hand_cannoneer attack_delay 0.43 + 0.15 stop overhead = 0.58), i.e. it is
+// running again the moment the missile leaves. Both are tape facts; the
+// hunted/un-hunted split is what reconciles them.
+//
+// The rule: with fleeDuringReload on, a FOOT ranged unit that is (a)
+// MID-RELOAD (attackCooldown > 0, cannot fire yet) and (b) currently the
+// TARGET of at least one living MELEE enemy (the engine's own target
+// bookkeeping -- no distance constant, no timer constant) KEEPS MOVING
+// through the reload window along the EXISTING kite-retreat basis (the same
+// moveAwayFromTarget + kiteSteering call the kite arm already makes: E1's
+// orbit waypoint when E1.orbitKite is on, today's radial basis otherwise).
+// Concretely the two parks above stop holding it: the post-fire recovery no
+// longer freezes a hunted kiter (it still blocks the un-hunted), and the
+// settle arm is outranked by the kite arm while a hunter is on it.
+//
+// WHAT IT DOES NOT TOUCH. Firing is never delayed: the predicate requires
+// attackCooldown > 0, so at reload expiry the stop-to-fire law (R5B-D1),
+// the windup and its halt cost run exactly as today (`wasMoving` is written
+// by the same arms that always wrote it). The committed-shot windup still
+// freezes (an animation in flight, same as C2A's refusal). E1's waypoint
+// math, C2A's break and C3's plant are untouched and orthogonal. Scope is
+// the C1 corpus's own: non-siege ranged victims only (minAttackRange > 0 --
+// Siege Onager 3.0, Heavy Scorpion 2.0 -- is excluded by the same clause
+// kiteSteering and C2A use; siege owns a competing repositioning path and
+// was excluded from the C1 measurement by construction). Ranged-vs-ranged
+// fights have no melee hunter, so they are unreachable by construction;
+// melee units never read any of this.
+//
+// FOOT SHOOTERS ONLY (refinement, this round's gate). C1 M2's class split
+// is explicit: the run-commitment is measured on the 0.96 t/s FOOT shooters
+// (stopped duty ~2x too high in-engine, runs 8x too short), while the
+// mounted heavy_cav_archer's duty cycle is "already right" (0.688 engine vs
+// 0.659 tape) and its tape stopMed 1.26 s equals its own windup + post-fire
+// recovery -- the tape's mounted archer pays its recovery even while
+// hunted. Arming it was out-of-evidence and measurably wrong (C4-alone
+// flipped the halberdier__vs__heavy_cav_archer control 6/6 -> 0/6, and the
+// HCA-as-kiter families paid +2.4..+3.8 HP-pts on the first C4 full gate).
+// A hunted unit carrying the dat's Cavalry (8) or Cavalry Archer (28)
+// armor class is therefore NOT armed -- a class fact, not a fitted speed
+// threshold.
+//
+// SHIPPED OFF until the C4 iteration boards land -- same A/B gate discipline
+// as E1.orbitKite / C3.postSwingPlant, whose composed cycle this rule is the
+// third leg of. `--c4 fleeDuringReload` on calib_runner.mjs (and
+// dump_kite_tracks.mjs) is the entry point; the intended pairing is
+// `--e1 orbitKite --c3 postSwingPlant --c4 fleeDuringReload`.
+export const C4 = {
+    // The hunted kiter's run-commitment through the reload window (above).
+    fleeDuringReload: false,
+};
+
+/** Apply a partial override to {@link C4}. Harness-only entry point. */
+export function setC4(overrides) {
+    for (const k of Object.keys(overrides)) {
+        if (!(k in C4)) throw new Error(`setC4: unknown flag ${k}`);
+        C4[k] = Boolean(overrides[k]);
+    }
+    return C4;
+}
 
 // ---- D2 measured / dat quantities -------------------------------------------
 

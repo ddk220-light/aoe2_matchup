@@ -156,6 +156,12 @@ to go.
 combat dicts, so a champion landing on a scorpion/onager will plant with the
 flag on — re-check D2's champion-vs-siege families on the full-corpus gate,
 as the forensics' candidate-1 scope note asked.
+**[Resolved, C4 round 2026-07-31]** The C4 full gate confirmed the concern
+(siege-attacker HP-pts regressions +2.1…+11.0, winners held) and the stamp
+is now scoped to ranged NON-SIEGE victims via the dat's Siege Weapons armor
+class 20 (not minAttackRange — the imp skirmisher's 1.0 would wrongly
+exclude a foot kiter). Re-measure when the new onager tape lands. See
+docs/calibration/c4_flee_during_reload.md §Refinement.
 
 ## Files
 

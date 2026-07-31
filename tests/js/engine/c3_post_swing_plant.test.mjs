@@ -61,12 +61,15 @@ function simStub(rng) {
     };
 }
 
-function stats({ range = 0, isRanged = false, hp = 100, attack = 10 } = {}) {
+function stats({
+    range = 0, isRanged = false, hp = 100, attack = 10, armors = null,
+} = {}) {
     return {
         hp, attack, attack_range: range, attack_speed: 0.5,
         movement_speed: 1.4, melee_armor: 0, pierce_armor: 0,
         outline_size: 0.4, collision_size: 0.25, accuracy: 100,
         unit_name: "U", is_ranged: isRanged,
+        armors_json: armors ? JSON.stringify(armors) : null,
     };
 }
 
@@ -224,6 +227,32 @@ test("[C3] a MELEE victim never stamps the lock", () => {
         a.performAttackOn(v);
         assert.equal(a.moveLockUntil, -Infinity,
             "melee victim: no stamp, ever");
+        assert.equal(a.meleeMoveLocked(), false);
+    });
+});
+
+test("[C3] a SIEGE victim (armor class 20) never stamps the lock", () => {
+    // C4-round refinement: the plant was measured on chasers pursuing ranged
+    // KITERS; siege carries is_ranged = 1 in the combat dicts, and the C4
+    // full gate traced the siege-attacker HP-pts regressions to melee units
+    // planting against onagers/scorpions. The dat's Siege Weapons armor
+    // class (20) is the exclusion -- NOT minAttackRange, whose 1.0 on the
+    // imp skirmisher would wrongly exclude a foot kiter. Re-measure when
+    // the new onager tape lands.
+    withC3(C3_ON, () => {
+        const sim = simStub();
+        const a = mk(sim, 1);
+        const v = mk(sim, 2, {
+            range: 8, isRanged: true, hp: 1e6,
+            armors: { 3: 0, 4: 0, 20: 0, 31: 0 }, // the onager/scorpion set
+        });
+        a.x = 0; a.y = 0;
+        v.x = a.radius + v.radius; v.y = 0;
+        sim.battleTime = 8.5;
+
+        a.performAttackOn(v);
+        assert.equal(a.moveLockUntil, -Infinity,
+            "siege victim: no stamp, ever");
         assert.equal(a.meleeMoveLocked(), false);
     });
 });

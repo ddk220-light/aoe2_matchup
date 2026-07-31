@@ -50,6 +50,7 @@ import {
     C2C,
     C3,
     POST_SWING_PLANT_S,
+    C4,
     D2,
     E1,
     E1_ORBIT_TANRAD,
@@ -543,6 +544,16 @@ export class BattleUnit {
         // Attack sprite-sheet ref, stamped by the page/harness for animation timing
         // only (triggerAttackAnim). The renderer owns all other draw assets.
         this.attackSheet = null;
+    }
+
+    // Membership test against the .dat's own armor-class table (this.armors,
+    // parsed from armors_json; a class is carried iff the key exists — the
+    // VALUE is the armor amount and is legitimately 0 on most of them).
+    // Used for the two scope gates that need a CLASS, not a stat threshold:
+    // C3's siege-victim exclusion (class 20, Siege Weapons) and C4's
+    // mounted-archer exclusion (8 Cavalry / 28 Cavalry Archer).
+    hasArmorClass(cls) {
+        return cls in this.armors;
     }
 
     isRanged() {
@@ -1552,6 +1563,51 @@ export class BattleUnit {
         );
     }
 
+    // ===== C4: FLEE DURING RELOAD (the hunted kiter's run-commitment) =====
+    // True on a tick this unit's reload window must be SPENT RUNNING: the
+    // unit is ranged and non-siege, it is mid-reload (cannot fire yet), and
+    // at least one living MELEE enemy currently has it as its target. See
+    // the C4 block in constants.js for the C1 Table-2b measurement (tape
+    // foot shooters run 2.7-3.4 s continuously, one ~0.62 s fire halt per
+    // cycle; the engine's stand ~2x that) and the hunted/un-hunted split
+    // that reconciles E9's measured post-fire recovery with it.
+    //
+    // The hunter test is the engine's own target bookkeeping and nothing
+    // else -- no distance constant, no timer constant: `e.target === this`
+    // for a living melee enemy. The siege exclusion (minAttackRange > 0) is
+    // the same clause kiteSteering and C2A use, and matches the C1 corpus's
+    // own construction (siege was excluded from the measurement).
+    //
+    // FOOT SHOOTERS ONLY (C4-round refinement). C1 M2 split the kiters by
+    // class and the run-commitment is a FOOT-shooter fact: the 0.96 t/s
+    // shooters run 2.7-3.4 s continuously on tape, but the mounted
+    // heavy_cav_archer's stop/move duty cycle is ALREADY right in this
+    // engine (0.688 vs tape 0.659) and its tape stopMed of 1.26 s equals
+    // its own windup + post-fire recovery -- the tape's mounted archer PAYS
+    // its recovery even while hunted (it can afford to; it outruns every
+    // chaser in the corpus). Arming it was out-of-evidence and measurably
+    // wrong: C4-alone flipped the halberdier__vs__heavy_cav_archer control
+    // 6/6 -> 0/6. The class test is the dat's own armor classes -- 8
+    // (Cavalry) / 28 (Cavalry Archer), either of which marks a mounted
+    // ranged unit (the corpus's HCA carries both; 28 alone also covers
+    // elephant archers, which lack 8) -- NOT an invented speed threshold.
+    //
+    // With the flag off this returns false before reading anything, so every
+    // caller composes exactly the pre-C4 expression -- the off-switch is
+    // structural, same as C2A/C3/E1. Reads state only, draws no rng.
+    c4FleeDuringReload(enemies) {
+        if (!C4.fleeDuringReload) return false;
+        if (this.attackCooldown <= 0) return false; // reload expired: the
+        // stop-to-fire law owns the tick (firing is never delayed).
+        if (!this.isRanged() || this.minAttackRange > 0) return false;
+        if (this.hasArmorClass(8) || this.hasArmorClass(28)) return false;
+        for (const e of enemies) {
+            if (e.state === "dead" || e.isRanged()) continue;
+            if (e.target === this) return true;
+        }
+        return false;
+    }
+
     update(dt, allUnits, enemies) {
         if (this.state === "dead") return;
 
@@ -1785,10 +1841,29 @@ export class BattleUnit {
                 return;
             }
 
+            // ===== C4: THE HUNTED KITER'S RELOAD WINDOW IS RUN, NOT STOOD ===
+            // Computed once per tick, before the recovery freeze, because the
+            // freeze is the first of the two parks it outranks. With the flag
+            // off (or the unit un-hunted / siege / reload expired) this is
+            // false and every branch below composes its pre-C4 expression.
+            const c4Flee = this.c4FleeDuringReload(enemies);
+
             // Post-fire recovery: immobilised, and deliberately checked before
             // tooClose() so the unit cannot even back out of its min-range dead
             // zone until the shot has recovered.
-            if (this.fireRecovery > 0) {
+            //
+            // C4 exception: a HUNTED kiter starts running the moment the
+            // missile leaves. C1 Table 2b: the tape's hunted foot shooter
+            // stops ONCE per cycle for ~0.62 s -- the pre-shot windup alone
+            // (attack_delay + stop overhead) -- so its post-launch recovery is
+            // not visible on tape; E9's 0.20-0.43 s recovery was measured on
+            // UN-HUNTED (ranged-vs-ranged) kiting cycles and still binds
+            // there. The timer itself keeps ticking down either way (it is
+            // decremented unconditionally at the top of update()), so nothing
+            // downstream sees a stale recovery; and c4Flee requires
+            // attackCooldown > 0, so the freeze still rules any tick on which
+            // the unit could otherwise fire.
+            if (this.fireRecovery > 0 && !c4Flee) {
                 this.state = "attacking";
                 this.wasMoving = false;
                 return;
@@ -1865,12 +1940,25 @@ export class BattleUnit {
                     this.kiteSteering(allUnits, enemies),
                 );
                 this.wasMoving = true;
-            } else if (breaking || (this.attackCooldown > 0 && shouldKite)) {
+            } else if (
+                breaking ||
+                (this.attackCooldown > 0 && shouldKite) ||
+                c4Flee
+            ) {
                 // Kiting a MELEE foe is E10a's business and is untouched here.
                 // C-a2 joins this arm rather than adding its own: a unit
                 // breaking contact runs the ordinary kite step, so the group
                 // terms, the arena steering and the movement bookkeeping are
                 // identical to every other retreat the engine performs.
+                //
+                // C4 joins the same arm for the same reason: a hunted
+                // mid-reload unit runs THIS kite step -- same steering, same
+                // basis (E1's orbit waypoint when on, the radial otherwise),
+                // same bookkeeping -- rather than the settle park below. In a
+                // pure ranged-vs-melee fight `shouldKite` already covers it
+                // (its target is the melee side), so c4Flee's marginal reach
+                // here is the mixed case where this unit's own target is
+                // ranged while a melee hunter bears down on it.
                 this.state = "kiting";
                 this.markRangedMovement();
                 this.moveAwayFromTarget(
@@ -2969,7 +3057,24 @@ export class BattleUnit {
         // update() outruns the meleeMoveLocked() branch, so a victim still in
         // reach at reload expiry is swung at on schedule (the halberdier
         // control's invariant).
-        if (C3.postSwingPlant && !this.isRanged() && target.isRanged()) {
+        // SIEGE VICTIMS DO NOT STAMP (C4-round refinement). The plant was
+        // measured on melee units pursuing ranged KITERS (six chaser
+        // families, all archer/gunpowder victims); siege carries
+        // is_ranged = 1 in the combat dicts, so without this clause a
+        // champion landing on a scorpion/onager planted too — the C4 full
+        // gate traced the siege-attacker HP-pts regressions (+2.1…+11.0,
+        // winners held) to exactly that out-of-evidence stamp. The class
+        // test is the dat's own armor class 20 (Siege Weapons: onager +
+        // scorpion in this corpus) rather than minAttackRange > 0, because
+        // the Imperial Elite Skirmisher's 1.0-tile min range would wrongly
+        // exclude a FOOT kiter the plant evidence covers. Re-measure when
+        // the new onager tape arrives.
+        if (
+            C3.postSwingPlant &&
+            !this.isRanged() &&
+            target.isRanged() &&
+            !target.hasArmorClass(20)
+        ) {
             this.moveLockUntil = Math.max(
                 this.moveLockUntil,
                 this.sim.battleTime + POST_SWING_PLANT_S,

@@ -66,7 +66,8 @@ import { Worker, isMainThread } from "node:worker_threads";
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import {
     R5B, setR5B, R5D1, setR5D1, R5D, setR5D, B2, setB2, R5F, setR5F,
-    C2A, setC2A, C2B, setC2B, C2C, setC2C, C3, setC3, D2, setD2, E1, setE1,
+    C2A, setC2A, C2B, setC2B, C2C, setC2C, C3, setC3, C4, setC4,
+    D2, setD2, E1, setE1,
 } from "../../apps/website/static/js/engine/constants.js";
 
 // ---- Round-5b rule flags --------------------------------------------------
@@ -320,6 +321,36 @@ export function applyC3Spec(spec) {
     }
     const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
     setC3(cfg);
+    return cfg;
+}
+
+// ---- C4 flee-during-reload rule flag -----------------------------------------
+// Identical grammar again, over the SEPARATE C4 object (fleeDuringReload --
+// the hunted kiter's run-commitment through its reload window). `--c4 off` is
+// the pre-C4 engine and must be bit-identical to it (structural: the
+// c4FleeDuringReload predicate returns false before reading anything with the
+// flag off, so every branch composes its pre-C4 expression). The intended
+// pairing for the C4 iteration round is
+// `--e1 orbitKite --c3 postSwingPlant --c4 fleeDuringReload`;
+// `--c4 fleeDuringReload` alone measures the run-commitment without the
+// orbit or the chaser plant.
+//
+//   --c4 off                  the rule off == pre-C4 engine, bit-identical
+//   --c4 fleeDuringReload     explicitly on
+//   (flag absent)             engine default, i.e. off
+export function applyC4Spec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(C4);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--c4: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setC4(cfg);
     return cfg;
 }
 
@@ -745,6 +776,12 @@ if (isMainThread && process.argv[1]
         const on = Object.entries(c3Cfg).filter(([, v]) => v).map(([k]) => k);
         console.log(`c3 rules: ${on.length ? on.join(", ") : "(none -- pre-C3 engine)"}`);
     }
+    const c4Spec = flag("--c4", null);
+    const c4Cfg = applyC4Spec(c4Spec);
+    if (c4Cfg) {
+        const on = Object.entries(c4Cfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`c4 rules: ${on.length ? on.join(", ") : "(none -- pre-C4 engine)"}`);
+    }
     const d2Spec = flag("--d2", null);
     const d2Cfg = applyD2Spec(d2Spec);
     if (d2Cfg) {
@@ -854,7 +891,7 @@ if (isMainThread && process.argv[1]
                     workerData: {
                         arenaArg, maxSeconds, outDir,
                         r5bSpec, r5d1Spec, r5dSpec, b2Spec, r5fSpec, c2aSpec,
-                        c2bSpec, c2cSpec, c3Spec, d2Spec, e1Spec,
+                        c2bSpec, c2cSpec, c3Spec, c4Spec, d2Spec, e1Spec,
                     },
                 });
                 const pump = () => {

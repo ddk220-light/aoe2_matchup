@@ -52,7 +52,8 @@ function withC3(cfg, fn) {
     }
 }
 
-const C3_ON = { postSwingPlant: true };
+const C3_ON = { postSwingPlant: true, postSwingRecovery: false };
+const C3_RECOVERY = { postSwingPlant: false, postSwingRecovery: true };
 
 function simStub(rng) {
     return {
@@ -90,6 +91,7 @@ test("[C3] ships OFF, at the measured duration", () => {
     // melee-chases-ranged fight, so it goes through the same A/B gate
     // discipline as E1.orbitKite (whose knife edge it is the mechanism for).
     assert.equal(C3.postSwingPlant, false);
+    assert.equal(C3.postSwingRecovery, false);
     // The duration is the centre of the tape's measured 0.64-0.74 s halt
     // band (five chaser classes) -- a tape quantity, never scoreboard-tuned.
     assert.equal(POST_SWING_PLANT_S, 0.7);
@@ -210,6 +212,50 @@ test("[C3] the plant does NOT delay the next swing when the victim stays in reac
         for (const g of gaps) {
             assert.ok(Math.abs(g - a.reloadTime) <= 1 / 60 + 1e-9,
                 `hit-to-hit ${g} should be reloadTime ${a.reloadTime}`);
+        }
+    });
+});
+
+test("[C3 recovery] the measured backswing is additive to melee-vs-ranged cadence", () => {
+    withC3(C3_RECOVERY, () => {
+        const sim = simStub(makeRng(3));
+        const a = mk(sim, 1);
+        const v = mk(sim, 2, { range: 4, isRanged: true, hp: 1e6 });
+        a.x = 0; a.y = 0;
+        v.x = a.radius + v.radius; v.y = 0;
+
+        const dt = 1 / 60;
+        const swings = [];
+        let last = v.currentHp;
+        for (let i = 0; i < 60 * 60; i++) {
+            sim.battleTime += dt;
+            a.update(dt, [a, v], [v]);
+            if (v.currentHp < last) { swings.push(sim.battleTime); last = v.currentHp; }
+        }
+        const expected = a.reloadTime + POST_SWING_PLANT_S;
+        const gaps = swings.slice(1).map((x, i) => x - swings[i]);
+        assert.ok(gaps.length > 10);
+        for (const g of gaps) {
+            assert.ok(Math.abs(g - expected) <= 1 / 60 + 1e-9,
+                `hit-to-hit ${g} should be reload + recovery ${expected}`);
+        }
+    });
+});
+
+test("[C3 recovery] melee and siege victims keep bare reload cadence", () => {
+    withC3(C3_RECOVERY, () => {
+        for (const victimOpts of [
+            { hp: 1e6 },
+            { range: 4, isRanged: true, hp: 1e6, armors: { 20: 0 } },
+        ]) {
+            const sim = simStub(makeRng(4));
+            const a = mk(sim, 1);
+            const v = mk(sim, 2, victimOpts);
+            a.x = 0; a.y = 0;
+            v.x = a.radius + v.radius; v.y = 0;
+            a.update(1 / 60, [a, v], [v]);
+            assert.equal(a.attackCooldown, a.reloadTime,
+                "excluded victim does not add post-swing recovery");
         }
     });
 });

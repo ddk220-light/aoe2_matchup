@@ -2266,6 +2266,14 @@ export class BattleUnit {
                         0,
                         this.reloadTime - this.attackDelay,
                     );
+                    if (
+                        C3.postSwingRecovery &&
+                        !this.isRanged() &&
+                        target.isRanged() &&
+                        !target.hasArmorClass(20)
+                    ) {
+                        this.attackCooldown += POST_SWING_PLANT_S;
+                    }
                     this.wasMoving = false;
                 }
             } else if (this.inRange()) {
@@ -2318,7 +2326,15 @@ export class BattleUnit {
                         this.meleeWasMoving = false;
                     } else {
                         this.state = "attacking";
+                        const recoveryTarget = this.target;
                         this.performAttack();
+                        if (
+                            C3.postSwingRecovery &&
+                            recoveryTarget.isRanged() &&
+                            !recoveryTarget.hasArmorClass(20)
+                        ) {
+                            this.attackCooldown += POST_SWING_PLANT_S;
+                        }
                         this.meleeWasMoving = false;
                     }
                 } else {

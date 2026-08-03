@@ -295,19 +295,21 @@ export function applyD2Spec(spec) {
     return cfg;
 }
 
-// ---- C3 post-swing-plant rule flag -------------------------------------------
+// ---- C3 post-swing rules ------------------------------------------------------
 // Identical grammar again, over the SEPARATE C3 object (postSwingPlant -- the
-// melee chaser's measured 0.7 s movement lock after a landed swing on a RANGED
-// victim). `--c3 off` is the pre-C3 engine and must be bit-identical to it
+// measured 0.7 s movement lock; postSwingRecovery -- the same measured
+// backswing added before the next reload against a RANGED victim).
+// `--c3 off` is the pre-C3 engine and must be bit-identical to it
 // (structural: the stamp is behind `if (C3.postSwingPlant ...)` and the shared
 // meleeMoveLocked() predicate short-circuits with the flag off while
 // MELEE_SWING_RECOVERY_S is 0). The intended pairing for the C3 iteration
 // round is `--e1 orbitKite --c3 postSwingPlant`; `--c3 postSwingPlant` alone
 // measures the plant without the orbit.
 //
-//   --c3 off                  the rule off == pre-C3 engine, bit-identical
-//   --c3 postSwingPlant       explicitly on
-//   (flag absent)             engine default, i.e. off
+//   --c3 off                  both rules off == pre-C3 engine, bit-identical
+//   --c3 postSwingPlant       movement lock only
+//   --c3 postSwingRecovery    additive attack recovery only
+//   (flag absent)             engine defaults, i.e. both off
 export function applyC3Spec(spec) {
     if (spec == null) return null;
     const all = Object.keys(C3);

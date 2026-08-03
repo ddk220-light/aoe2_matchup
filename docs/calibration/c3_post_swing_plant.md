@@ -176,3 +176,59 @@ docs/calibration/c4_flee_during_reload.md §Refinement.
 - Boards/geometry produced in the session scratchpad (`c3_board.py`,
   `c3_kite_geom.py`, run dirs `runs_{a,b,c,d,b74}`, `kite_e1{,c3}`) —
   throwaway, reproducible from the commands above.
+
+## Champion ranged continuation — additive backswing recovery (2026-08-03)
+
+The authoritative STANDARD_UNITS Champion/projectile set has 30 fights across
+Arbalester, Hand Cannoneer, Heavy Cavalry Archer, and Imperial Elite
+Skirmisher. Shipped defaults already put all 16 non-HCA fights inside ±25%
+winner HP. The 14-fight HCA block had the correct repeat-family winner but only
+17 HP left against tape HCA-winner HP 71–592 (median 434).
+
+The decisive timing measurement is additive, not movement-only:
+
+- Champion dat reload: 2.0 s
+- tape post-hit stationary backswing: 0.64–0.74 s
+- tape Champion hit interval vs HCA: 2.77–2.85 s
+- movement-only `postSwingPlant`: engine remains phase-locked at 2.017 s
+
+`C3.postSwingRecovery` therefore uses the existing measured
+`POST_SWING_PLANT_S = 0.7` as attack recovery: after a melee hit on a ranged,
+non-siege victim, the next reload begins after the backswing. It is separately
+gated from `postSwingPlant`, introduces no new duration, and remains default
+OFF pending a full-corpus gate.
+
+20-seed authoritative result (`data/calibration/runs/20260803T025837Z-...json`):
+
+| family | tape median winner HP | sim median | ratio |
+|---|---:|---:|---:|
+| Champion / Arbalester (8) | 595 | 590 | 99.2% |
+| Champion / Hand Cannoneer (4) | 422 | 423 | 100.2% |
+| Champion / HCA, HCA-winner repeats (13) | 434 | 503 | 115.9% |
+| Champion / Elite Skirmisher (4) | 571 | 604 | 105.8% |
+
+Winner agreement is 29/30. The miss is the single tape Champion upset in the
+HCA family; the deterministic sim selects the family's modal HCA winner. All
+four family medians are inside ±25%. Individual HCA repeats cannot all share a
+±25% band because identical starts produce tape winner HP from 71 to 592; the
+campaign rule is therefore to judge that deterministic family against the
+repeat median.
+
+Rejected in this continuation: E2 setpoint orbit (flipped foot families and
+HCA winners), C2A contact break, movement-only C3 composition, mounted C4,
+opening stagger in mixed fights, removing duplicate overlap steering, and
+collision-area mass weighting. Each either starved HCA offense or flipped the
+HCA repeat family. `C2B.stopToSwing` was useful but incomplete: it preserved
+13/14 winners and made HCA offense exactly 252 hits / 1470 damage, yet left only
+138 HCA HP because Champion cadence stayed at 2.017 s.
+
+Path forward:
+
+1. Run `postSwingRecovery` over the full 284-fight corpus and the eventual
+   authoritative 326-fight replacement before enabling it.
+2. Recheck every melee-chases-ranged family, especially halberdier/HCA and fast
+   cavalry versus foot shooters; keep siege and melee-vs-melee byte-identical.
+3. Compare movement-only plant, additive recovery, and their composition on
+   tape cadence/geometry. Do not enable both merely because both share 0.7 s.
+4. Keep E1/E2 parked: the outcome target is closed without orbit tuning, while
+   orbit geometry remains a separate full-corpus research problem.

@@ -1012,6 +1012,15 @@ export const E1_ORBIT_MIN_RADIUS_TILES = 0.5;
 // The plant does not delay a committed windup or its damage either — it is
 // stamped at hit RESOLUTION (performAttackOn), after the blow has landed.
 //
+// Champion/HCA continuation (2026-08-03): movement-only plant leaves the
+// continuously engaged Champion at a degenerate 2.017 s cadence, while the
+// authoritative tapes measure 2.77–2.85 s. The measured decomposition is the
+// dat reload (2.0 s) followed by this same 0.64–0.74 s backswing. The separate
+// postSwingRecovery rule therefore starts the next reload AFTER the plant;
+// it does not invent another duration. On the 13 authoritative HCA-winner
+// tapes it moves deterministic winner HP 17 -> 503 against median 434 while
+// preserving HCA offense; foot-ranged family medians remain within 0.2–5.8%.
+//
 // SCOPE: melee attacker, RANGED NON-SIEGE victim only (the victim's own
 // is_ranged flag, the same scoping the pursuit-bar and MELEE_TARGET_LOCK
 // rules use). C2B refuted a melee-vs-melee plant — the tape's melee-scrum
@@ -1036,6 +1045,10 @@ export const E1_ORBIT_MIN_RADIUS_TILES = 0.5;
 export const C3 = {
     // The 0.7 s post-landing movement lock on melee-vs-ranged (above).
     postSwingPlant: false,
+    // The same measured backswing as attack recovery: the next reload begins
+    // after the plant instead of concurrently with it. Kept independently
+    // gateable from the movement lock for calibration.
+    postSwingRecovery: false,
 };
 
 /** Apply a partial override to {@link C3}. Harness-only entry point. */

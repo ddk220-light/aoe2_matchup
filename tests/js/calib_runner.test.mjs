@@ -1,5 +1,5 @@
 // tools/simjs/calib_runner.mjs drives the engine over every recorded
-// calibration fight (data/calibration/manifest.json), 20 seeds per fight,
+// calibration fight (calibration/fixtures/manifest.json), 20 seeds per fight,
 // with sim.eventLog turned on, remapping the engine's own team numbers
 // (1|2) to the REAL in-game owner numbers the manifest/tapes use (2|3 in
 // today's corpus) so aoe2x/calibration/extract.py can score sim events
@@ -7,7 +7,7 @@
 //
 // These tests use tiny inline combat dicts (same fixture shape as
 // tests/js/engine/event_log.test.mjs) rather than the DB-derived
-// data/calibration/combat_dicts.json, so they do not depend on
+// calibration/fixtures/combat_dicts.json, so they do not depend on
 // dump_calib_dicts.py having been run yet.
 import { test } from "node:test";
 import assert from "node:assert/strict";

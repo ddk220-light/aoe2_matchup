@@ -1,7 +1,7 @@
 // Drives the JS battle engine over every recorded calibration fight
-// (data/calibration/manifest.json), 20 seeds per fight, with sim.eventLog
+// (calibration/fixtures/manifest.json), 20 seeds per fight, with sim.eventLog
 // turned on, and writes one tape-shaped event file per (fight, seed) to
-// D:/AI/aoe2_golden/simruns/<run_id>/seed-<n>.json for
+// calibration/runs/<run_id>/seed-<n>.json for
 // aoe2x/calibration/extract.py (the SAME extractor tape events go through)
 // to score.
 //
@@ -22,7 +22,7 @@
 //
 // SUBSETS (--melee-only / --tags / --match). A melee experiment has no
 // business waiting on the 124 fights it cannot affect. The named slug sets
-// come from data/calibration/fight_sets.json, which aoe2x/calibration/
+// come from calibration/fixtures/fight_sets.json, which aoe2x/calibration/
 // filters.py reads too, so the runner and the scorer can never disagree about
 // what "melee-only" means:
 //
@@ -64,6 +64,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { Worker, isMainThread } from "node:worker_threads";
 
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
+import { calibrationPaths } from "./calibration_paths.mjs";
 import {
     R5B, setR5B, R5D1, setR5D1, R5D, setR5D, B2, setB2, R5F, setR5F,
     C2A, setC2A, C2B, setC2B, C2C, setC2C, C3, setC3, C4, setC4,
@@ -441,29 +442,27 @@ export function applyE1Spec(spec) {
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, "../..");
-const DEFAULT_OUT_DIR = "D:/AI/aoe2_golden/simruns";
+const CALIBRATION = calibrationPaths(REPO);
+const DEFAULT_OUT_DIR = CALIBRATION.runs;
 
 export function loadManifest() {
     // Quarantined recordings (manifest `quarantined`: known-bad truth, e.g.
     // the 2026-07-30 paladin_vs_steppe capture flaw) are never simmed or
     // scored -- kept in the file for provenance only. Mirrors the same
     // unconditional drop in aoe2x/calibration/filters.py.
-    return JSON.parse(readFileSync(
-        path.join(REPO, "data/calibration/manifest.json"), "utf8"))
+    return JSON.parse(readFileSync(CALIBRATION.manifest, "utf8"))
         .fights.filter((f) => !f.quarantined);
 }
 
 export function loadCalibDicts() {
-    return JSON.parse(readFileSync(
-        path.join(REPO, "data/calibration/combat_dicts.json"), "utf8"));
+    return JSON.parse(readFileSync(CALIBRATION.combatDicts, "utf8"));
 }
 
 // Tape first-frame spawn positions, keyed by tag then by the recording's OWNER
 // number: { tag: { "2": [[tileX, tileY], ...], "3": [...] } }. Written by
 // tools/simjs/dump_calib_spawns.py straight off the .units.jsonl.gz streams.
 export function loadCalibSpawns() {
-    return JSON.parse(readFileSync(
-        path.join(REPO, "data/calibration/spawns.json"), "utf8"));
+    return JSON.parse(readFileSync(CALIBRATION.spawns, "utf8"));
 }
 
 // Turn one fight's spawn entry into buildFight's `{1: [...], 2: [...]}` — i.e.
@@ -502,8 +501,7 @@ export function spawnsForFight(spawns, fight) {
 // The named slug sets (melee, basic_melee) live in ONE file that Python reads
 // too -- see the SUBSETS note at the top and aoe2x/calibration/filters.py.
 export function loadFightSets() {
-    const raw = JSON.parse(readFileSync(
-        path.join(REPO, "data/calibration/fight_sets.json"), "utf8"));
+    const raw = JSON.parse(readFileSync(CALIBRATION.fightSets, "utf8"));
     const out = {};
     for (const [k, v] of Object.entries(raw)) {
         if (!k.startsWith("_")) out[k] = new Set(v);
@@ -758,7 +756,7 @@ if (isMainThread && process.argv[1]
 
     // Subset filters -- see the SUBSETS note at the top of this file. These
     // are the same three filters `python -m aoe2x.calibration.score` takes,
-    // reading the same data/calibration/fight_sets.json.
+    // reading the same calibration/fixtures/fight_sets.json.
     // `--tags-file` reads the same comma/whitespace-separated list from a file.
     // The C2 ranged-vs-melee corpus is 86 tags, which is past what a shell will
     // pass through comfortably; c1_chase_probe.mjs already takes its list this

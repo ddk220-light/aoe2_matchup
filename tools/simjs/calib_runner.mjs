@@ -67,7 +67,7 @@ import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import {
     R5B, setR5B, R5D1, setR5D1, R5D, setR5D, B2, setB2, R5F, setR5F,
     C2A, setC2A, C2B, setC2B, C2C, setC2C, C3, setC3, C4, setC4,
-    D2, setD2, E1, setE1,
+    D2, setD2, E1, setE1, W1, setW1, W2, setW2,
 } from "../../apps/website/static/js/engine/constants.js";
 
 // ---- Round-5b rule flags --------------------------------------------------
@@ -351,6 +351,63 @@ export function applyC4Spec(spec) {
     }
     const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
     setC4(cfg);
+    return cfg;
+}
+
+// ---- W1 scrum-walk rule flag ---------------------------------------------------
+// Identical grammar again, over the SEPARATE W1 object (scrumWalk -- the
+// blocked melee attacker's tangential drift around the scrum face, from
+// docs/calibration/ps_live_forensics.md). `--w1 off` is the pre-W1 engine and
+// must be bit-identical to it (structural: w1ScrumBlocked() short-circuits on
+// the flag before reading anything, and the basis swap in moveTowardTarget is
+// behind `if (W1.scrumWalk)`). Melee-vs-melee scoped: ranged units and melee
+// pursuing ranged never reach the predicate, so ranged/siege families are
+// byte-identical with the flag ON too.
+//
+//   --w1 off                  the rule off == pre-W1 engine, bit-identical
+//   --w1 scrumWalk            explicitly on
+//   (flag absent)             engine default, i.e. off
+export function applyW1Spec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(W1);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--w1: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setW1(cfg);
+    return cfg;
+}
+
+// ---- W2 reaction-window rule flag ----------------------------------------------
+// Identical grammar again, over the SEPARATE W2 object (reactionWindow -- the
+// melee opening's per-unit aggro stagger, measured 1.2–2.0 s first-move
+// window; see constants.js W2). `--w2 off` is the pre-W2 engine and must be
+// bit-identical to it (structural: w2ReactionHold() short-circuits on the
+// flag before reading anything, and the hold branch in update() is behind
+// that predicate). All-melee scoped: fights with any ranged unit never reach
+// the hold, so ranged/siege families are byte-identical with the flag ON too.
+//
+//   --w2 off                  the rule off == pre-W2 engine, bit-identical
+//   --w2 reactionWindow       explicitly on
+//   (flag absent)             engine default, i.e. off
+export function applyW2Spec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(W2);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--w2: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setW2(cfg);
     return cfg;
 }
 
@@ -794,6 +851,18 @@ if (isMainThread && process.argv[1]
         const on = Object.entries(e1Cfg).filter(([, v]) => v).map(([k]) => k);
         console.log(`e1 rules: ${on.length ? on.join(", ") : "(none -- pre-E1 engine)"}`);
     }
+    const w1Spec = flag("--w1", null);
+    const w1Cfg = applyW1Spec(w1Spec);
+    if (w1Cfg) {
+        const on = Object.entries(w1Cfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`w1 rules: ${on.length ? on.join(", ") : "(none -- pre-W1 engine)"}`);
+    }
+    const w2Spec = flag("--w2", null);
+    const w2Cfg = applyW2Spec(w2Spec);
+    if (w2Cfg) {
+        const on = Object.entries(w2Cfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`w2 rules: ${on.length ? on.join(", ") : "(none -- pre-W2 engine)"}`);
+    }
 
     const dicts = loadCalibDicts();
     const allFights = loadManifest();
@@ -892,6 +961,7 @@ if (isMainThread && process.argv[1]
                         arenaArg, maxSeconds, outDir,
                         r5bSpec, r5d1Spec, r5dSpec, b2Spec, r5fSpec, c2aSpec,
                         c2bSpec, c2cSpec, c3Spec, c4Spec, d2Spec, e1Spec,
+                        w1Spec, w2Spec,
                     },
                 });
                 const pump = () => {

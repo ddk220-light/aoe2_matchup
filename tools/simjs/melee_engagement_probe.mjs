@@ -101,6 +101,7 @@ import {
 } from "../../apps/website/static/js/engine/constants.js";
 import {
     loadManifest, loadCalibDicts, loadCalibSpawns, spawnsForFight,
+    applyW1Spec, applyW2Spec,
 } from "./calib_runner.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -559,6 +560,10 @@ const nSeeds = Number(flag("--seeds", "20"));
 const posSeeds = Number(flag("--pos-seeds", "5"));
 const verifyDir = flag("--verify", null);
 const tagsArg = flag("--tags", null);
+// Same flag grammar as calib_runner.mjs (`--w1 scrumWalk` / `--w1 off`);
+// applied in-process before any fight is built.
+applyW1Spec(flag("--w1", null));
+applyW2Spec(flag("--w2", null));
 
 const dicts = loadCalibDicts();
 const spawns = loadCalibSpawns();

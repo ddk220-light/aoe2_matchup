@@ -53,6 +53,10 @@ import {
     C4,
     D2,
     E1,
+    W1,
+    W2,
+    W2_REACTION_MIN_S,
+    W2_REACTION_MAX_S,
     E1_ORBIT_TANRAD,
     E1_ORBIT_MIN_RADIUS_TILES,
     SILENCE_ADVANCE_CYCLES,
@@ -999,6 +1003,136 @@ export class BattleUnit {
         return null;
     }
 
+    // ===== W1: SCRUM WALK (see constants.js W1 for the full derivation) =====
+    // The blocked melee attacker's tangential drift. Three pieces, all
+    // read-only apart from the basis swap in moveTowardTarget:
+    //
+    //   w1ScrumBlocked()   — the gate. Melee attacker, living MELEE lock
+    //                        (the established melee-vs-melee scope), out of
+    //                        reach, straight lane blocked by a body. The
+    //                        blocked verdict is E15b's own laneClear()
+    //                        corridor test, re-asked every tick — no timer,
+    //                        no latch, so the radial approach resumes the
+    //                        exact tick the corridor clears.
+    //   w1ScrumWaypoint(dt)— the drift target. The unit's offset-from-lock
+    //                        rotated about the lock by φ = moveSpeed·dt / r
+    //                        (E1's rotate math; arc step = what this unit
+    //                        could walk this tick — no magnitude constant),
+    //                        in whichever sense is less obstructed.
+    //   _w1BlockerProximity— the direction comparison: Σ 1/d² from the
+    //                        candidate waypoint to every living body except
+    //                        this unit and the lock. A comparison between
+    //                        two existing geometric quantities — no
+    //                        threshold. Ties take the atan2-increasing
+    //                        sense (E1's clockwise-on-screen convention).
+    //
+    // With W1.scrumWalk off, w1ScrumBlocked() short-circuits before reading
+    // anything — off is a no-op by construction (pinned by
+    // w1_scrum_walk.test.mjs and parity_check.mjs).
+    w1ScrumBlocked() {
+        if (!W1.scrumWalk) return false;
+        if (this.isRanged()) return false;
+        const t = this.target;
+        if (!t || t.state === "dead" || t.isRanged()) return false;
+        if (this.inRange()) return false;
+        // NO-PROGRESS FIRST -- the stuck bar's own two signals, read before
+        // this tick's move updates them; neither is a new timer:
+        //   * the LATCH (meleeStuckOn === t): the bar TRIPPED on this lock
+        //     while the melee target lock held -- B2b's own "the engine has
+        //     judged this target unreachable" verdict, cleared the tick the
+        //     unit reaches it. Sustained drift comes from here: collision
+        //     shoves fake enough per-tick "progress" to keep decaying the
+        //     accumulator, and a drift that pauses on every shove re-parks
+        //     (measured this round: accumulator-only left steady
+        //     concurrency at 5.0 of the tape's 6.19 and the fight at 54 s).
+        //   * the ACCUMULATOR (stuckTimer > 0): the last tick closed
+        //     nothing. This is what lets a freshly-stalled unit drift
+        //     before the 0.8 s bar has tripped.
+        // A unit with neither -- e.g. one whose lane is merely OCCUPIED by a
+        // moving queue while the whole column closes -- keeps pressing
+        // radially: that press is what builds the tape-exact opening ring
+        // (first-10s concurrency 8.0, steppe-in-reach 2.98, the 2/4/6
+        // ceiling). Measured this iteration: gating on the lane test alone
+        // makes the whole approach column orbit and the opening collapses
+        // (first10s 7.15 -> 6.0, ring density 2.85 -> 1.17, ceiling 2/4/6 ->
+        // 1/3/4). While drifting, rotation holds r constant, so the
+        // accumulator keeps rising and the 0.8 s bar still trips -- lock
+        // re-arm and the full-ring blacklist both keep working.
+        //
+        // The gate is latch OR accumulator: the latch alone leaves a freshly
+        // stalled unit parked for the 0.8 s the bar needs to trip (the
+        // V3A probe), the accumulator alone re-parks on every collision
+        // shove (above); either signal opens the drift, neither opens it
+        // for a progressing unit.
+        if (this.meleeStuckOn !== t && this.stuckTimer <= 0) return false;
+        return !this.laneClear(t);
+    }
+
+    w1ScrumWaypoint(dt) {
+        if (!this.w1ScrumBlocked()) return null;
+        const t = this.target;
+        const px = this.x - t.x;
+        const py = this.y - t.y;
+        const r = Math.sqrt(px * px + py * py);
+        // Coincident bodies have no tangent (and moveTowardTarget's own
+        // dist < 1 early-out fires first anyway): fall back to the radial.
+        if (r <= 0) return null;
+        const phi = (this.moveSpeed * dt) / r;
+        const cosP = Math.cos(phi);
+        const sinP = Math.sin(phi);
+        // rotate(offset, +φ) — the atan2-increasing sense E1 defines — and
+        // its mirror rotate(offset, −φ) (cos even, sin odd).
+        const plus = {
+            x: t.x + (px * cosP - py * sinP),
+            y: t.y + (px * sinP + py * cosP),
+        };
+        const minus = {
+            x: t.x + (px * cosP + py * sinP),
+            y: t.y + (-px * sinP + py * cosP),
+        };
+        const obstruction = this._w1BlockerProximity(minus, t) <
+            this._w1BlockerProximity(plus, t);
+        return obstruction ? minus : plus;
+    }
+
+    _w1BlockerProximity(wp, lock) {
+        let sum = 0;
+        for (const team of [this.sim.team1, this.sim.team2]) {
+            for (const o of team) {
+                if (o === this || o === lock || o.state === "dead") continue;
+                const ddx = o.x - wp.x;
+                const ddy = o.y - wp.y;
+                const d2 = ddx * ddx + ddy * ddy;
+                if (d2 <= 0) return Infinity;
+                sum += 1 / d2;
+            }
+        }
+        return sum;
+    }
+
+    // ===== W2: REACTION WINDOW (see constants.js W2 for the full derivation) ==
+    // The melee opening's aggro stagger. Both armies all-melee => each unit
+    // stands until its deterministic slot in the measured 1.2–2.0 s tape
+    // window; the all-melee verdict and the per-unit slot are each computed
+    // once and cached; off short-circuits before reading anything; no rng.
+    w2ReactionHold() {
+        if (!W2.reactionWindow) return false;
+        if (this.sim._w2AllMelee === undefined) {
+            this.sim._w2AllMelee = [...this.sim.team1, ...this.sim.team2]
+                .every((u) => !u.isRanged());
+        }
+        if (!this.sim._w2AllMelee) return false;
+        if (this._w2ReactionUntil === undefined) {
+            const team = this.team === 1 ? this.sim.team1 : this.sim.team2;
+            const n = team.length;
+            const slot = team.indexOf(this);
+            this._w2ReactionUntil = W2_REACTION_MIN_S +
+                (n > 1 ? slot / (n - 1) : 0) *
+                (W2_REACTION_MAX_S - W2_REACTION_MIN_S);
+        }
+        return this.sim.battleTime < this._w2ReactionUntil;
+    }
+
     // ===== E15b RULE 1: SWING-RECOVERY PLANT / C3: POST-SWING PLANT =====
     // Derivation (the tape's swing-phase ramp) is in constants.js next to
     // MELEE_SWING_RECOVERY_S; the C3 melee-vs-ranged plant (the tape's
@@ -1768,6 +1902,18 @@ export class BattleUnit {
                 enemies.filter((e) => e.state !== "dead").length
         ) {
             this.blockedTargets.clear();
+        }
+
+        // ===== W2: REACTION WINDOW — the opening's only branch. Stands the
+        // unit (no acquisition, no movement, no swing) until its own slot
+        // in the measured 1.2–2.0 s aggro window; everything above this
+        // line (cooldowns, regen, auras) runs unchanged, and with the flag
+        // off the predicate short-circuits before reading anything.
+        if (this.w2ReactionHold()) {
+            this.state = "idle";
+            this.wasMoving = false;
+            this.meleeWasMoving = false;
+            return;
         }
 
         if (!this.target || this.target.state === "dead") {
@@ -3164,9 +3310,10 @@ export class BattleUnit {
         if (!this.isRanged() && (this.chargeAttackMelee <= 0 || charged)) {
             const trampleInfo = this.getTrampleInfo();
             if (trampleInfo) {
+                // AoE retains fractional blast damage: the tapes record the
+                // elephant's 14-damage primary hit as 3.5 trample damage.
                 const trampleDmg =
-                    Math.floor(damage * trampleInfo.percent) +
-                    trampleInfo.flat;
+                    damage * trampleInfo.percent + trampleInfo.flat;
                 if (trampleDmg > 0) {
                     const enemies =
                         this.team === 1
@@ -3178,20 +3325,16 @@ export class BattleUnit {
                             enemy.state !== "dead"
                         ) {
                             const dist = this.distanceTo(enemy);
-                            // Blast emanates from the trampler's BODY, not a
-                            // point: reach is edge-to-edge, so the attacker's
-                            // own radius counts (parity with
-                            // simulation_real.py's identical reach formula).
-                            // Omitting it leaves a packed ring around a
-                            // big-footprint unit (elephant, r~0.6 tile) just
-                            // out of reach -- ~0 units trampled per swing
-                            // where the tape shows the elephant landing
-                            // splash hits on 3+ victims routinely.
+                            // The dat's blast width is measured from the
+                            // attacker's centre. The victim radius counts
+                            // because its body can overlap the blast disc; the
+                            // attacker's radius does not enlarge that disc.
+                            // The final two pixels are the movement resolver's
+                            // existing contact tolerance, not another unit-size
+                            // term.
                             if (
                                 dist <=
-                                this.radius +
-                                    trampleInfo.radius +
-                                    enemy.radius
+                                trampleInfo.radius + enemy.radius + 2
                             ) {
                                 enemy.takeDamage(trampleDmg, this);
                             }
@@ -3493,6 +3636,25 @@ export class BattleUnit {
         if (dist < 1) return;
         dx /= dist;
         dy /= dist;
+        // ===== W1: SCRUM WALK — only the approach BASIS changes, and only
+        // while the gate holds (melee lock alive, out of reach, lane
+        // blocked). The chord toward the tangential waypoint replaces the
+        // radial bearing; avoidance, smoothing, the step, the clamp and the
+        // stuck bar below all run unchanged, exactly as E1 swaps only the
+        // retreat basis in moveAwayFromTarget. Flag off => wp is null before
+        // anything is read.
+        if (W1.scrumWalk) {
+            const wp = this.w1ScrumWaypoint(dt);
+            if (wp) {
+                let ox = wp.x - this.x;
+                let oy = wp.y - this.y;
+                const olen = Math.sqrt(ox * ox + oy * oy);
+                if (olen > 0) {
+                    dx = ox / olen;
+                    dy = oy / olen;
+                }
+            }
+        }
         const avoidance = this.calculateAvoidance(allUnits);
         const avoidMag = Math.sqrt(
             avoidance.x * avoidance.x + avoidance.y * avoidance.y,
@@ -3615,7 +3777,15 @@ export class BattleUnit {
                 // tripping while the lock holds is the engine's own verdict
                 // that this target cannot be reached, and it is the second
                 // half of update 81058's condition -- see B2.stuckGatedBump.
-                if (B2.stuckGatedBump) this.meleeStuckOn = this.target;
+                // W1 reads the same latch as its sustained-drift signal, so
+                // it is also written when scrumWalk is on: a `--w1` A/B must
+                // not silently depend on the `--b2` spec. Readers stay
+                // gated by their own flags, so with both off this line is
+                // unreachable and with only one on the other's behaviour is
+                // untouched.
+                if (B2.stuckGatedBump || W1.scrumWalk) {
+                    this.meleeStuckOn = this.target;
+                }
                 this.stuckTimer = 0;
             } else {
                 this.blockedTargets.add(this.target);
@@ -4093,10 +4263,17 @@ export class BattleUnit {
             if (dist < minDist * 1.5 && dist > 0) {
                 const overlap =
                     Math.max(0, minDist - dist) / minDist;
-                // C2-c: the social band is exactly `overlap === 0` here, so
-                // "imminent overlap only" is the band this function already
-                // distinguishes -- no distance is introduced or edited.
-                if (overlapOnly && overlap <= 0) continue;
+                // W1's active scrum walk must be able to close an ally ring to
+                // the dat collision floor. Keeping the outer social band here
+                // counter-steers that walk before bodies overlap, especially
+                // around a large target. The overlap force remains unchanged.
+                const w1EngagedAllies =
+                    W1.scrumWalk &&
+                    this.team === other.team &&
+                    this.inCombatPack &&
+                    other.inCombatPack;
+                // C2-c uses the same existing overlap boundary for fleeing.
+                if ((overlapOnly || w1EngagedAllies) && overlap <= 0) continue;
                 // Strong force when overlapping, moderate when close
                 const force = overlap > 0 ? 3 + overlap * 5 : 0.5;
                 avoidX += (dx / dist) * force;

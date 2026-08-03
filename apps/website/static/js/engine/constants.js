@@ -1140,6 +1140,144 @@ export function setC4(overrides) {
     return C4;
 }
 
+// ===== W1 — SCRUM WALK (the blocked melee attacker's tangential drift) ========
+// One mechanism, from docs/calibration/ps_live_forensics.md (measurements in
+// data/calibration/analysis/ps_live_forensics.json — the 12 position-valid
+// paladin__vs__elite_steppe live rounds, r19–r30).
+//
+// THE DEFECT. The opening of that fight is EXACT in-engine — contact timing,
+// first-10s concurrency, ring density, attackers-per-victim (med 2 / p90 4 /
+// max 6, identical to tape), swing cadence, even the paladin death schedule.
+// What diverges, inside the first 10 s and never recovered, is RE-ENGAGEMENT:
+// an engine melee unit whose locked victim is out of reach and whose straight
+// lane is blocked by bodies PARKS — it pushes radially into the scrum,
+// avoidance cancels the push, and it stands. Measured: idle-out-of-reach
+// 28.8% of living-paladin frames vs the tape's 6.8%; walking 5.7% vs 22.8%;
+// steady-state paladin concurrency 4.24 vs 6.19 (0.69x). The fight stretches
+// 55 s vs 46 s and the steppe side — whose per-second output the engine
+// reproduces EXACTLY — banks ~48 extra hits ≈ the 485 HP of paladins that
+// should survive. Tape says the blocked attacker WALKS around the blockers
+// (arc ratio 1.278, e15 walk forensics) — tangential drift along the scrum
+// face, not a radial stand. The forensics' flag-attribution board (12 configs
+// x 36 seeds) proves no existing rule causes or fixes this: the lane rule is
+// exonerated twice, the bump valve never fires here, and turning the melee
+// stack OFF loses harder. The residual lives below the target-selection
+// layer, in the movement basis itself.
+//
+// THE RULE. With scrumWalk on, a MELEE unit whose CURRENT LOCK is alive,
+// MELEE (the established melee-vs-melee scope: MELEE_TARGET_LOCK, bump
+// retarget and the lane rule all stop at t.isRanged()), OUT OF REACH,
+// currently making NO PROGRESS (the stuck bar's own accumulator,
+// stuckTimer > 0 — the engine's existing no-progress verdict, not a new
+// timer; a unit in a moving queue decays the bar at 2x and keeps pressing,
+// which is what preserves the tape-exact opening ring — measured this
+// round: without this clause the approach column orbits and the opening
+// collapses, first10s 7.15 -> 6.0, ceiling 2/4/6 -> 1/3/4), and
+// whose direct approach is BLOCKED — the E15b laneClear() corridor test, the
+// engine's own blocked-by-body verdict, re-asked every tick so there is no
+// timer and no latch — swaps its approach BASIS from the radial bearing to
+// the chord toward a TANGENTIAL waypoint: its offset-from-lock rotated about
+// the lock by the arc step φ = moveSpeed·dt / r (E1's own rotate math, arc
+// length = the distance this unit could walk this tick — no new magnitude
+// constant). Of the two rotation senses, it takes the one whose waypoint has
+// the LOWER summed blocker proximity (Σ 1/d² over every living body except
+// itself and the lock — a comparison between two existing geometric
+// quantities, not a threshold; ties go to the atan2-increasing sense, the
+// convention E1's tape boards define as clockwise-on-screen). Everything
+// downstream of the basis — avoidance, velocity smoothing, the step, the
+// arena clamp, the stuck bar and its bookkeeping — runs unchanged, exactly
+// as E1 changes only the retreat basis. The unit KEEPS ITS LOCK while
+// drifting; the radial approach resumes the very tick laneClear() passes or
+// the lock comes in reach (update()'s in-reach branches outrank movement).
+//
+// WHAT IT DOES NOT TOUCH. Ranged units never reach it (predicate excludes
+// them; their moveTowardTarget calls are byte-identical). Melee chasing a
+// RANGED target is a pursuit, not a brawl — same exclusion, same measured
+// reason as E14/E15b. An attacker in reach never reads it. The stuck bar
+// still trips on a drifting unit (rotation holds r constant), so
+// MELEE_CONTACT_SLOTS still routes a unit locked on a FULL ring to an open
+// face — the forensics' explicit must-not-break (the 2/4/6 attackers-
+// per-victim ceiling is already exact and this rule must not deepen it).
+//
+// SHIPPED OFF until the W1 iteration boards land — same A/B gate discipline
+// as E1/C3/C4. `--w1 scrumWalk` on calib_runner.mjs is the entry point.
+export const W1 = {
+    // The blocked melee attacker's tangential drift around the scrum (above).
+    scrumWalk: false,
+};
+
+/** Apply a partial override to {@link W1}. Harness-only entry point. */
+export function setW1(overrides) {
+    for (const k of Object.keys(overrides)) {
+        if (!(k in W1)) throw new Error(`setW1: unknown flag ${k}`);
+        W1[k] = Boolean(overrides[k]);
+    }
+    return W1;
+}
+
+// ===== W2 — REACTION WINDOW (the melee opening's aggro stagger) =============
+// One mechanism, measured 2026-08-02 on the STANDARD_UNITS champion subset
+// (docs/calibration/w1_scrum_walk_champion_round.md §residuals; forensics in
+// .scratch/standard_units/).
+//
+// THE DEFECT. In every melee-vs-melee tape the armies do not charge at
+// t = 0: each unit STANDS for 1.2–2.0 s before its first movement
+// (first-move times across 6 fights, 2 recorder templates — the 07-30
+// batch91 melee rigs and the 07-31 v3 paladin__vs__elite_steppe rounds:
+// min 1.2–1.4 s, med 1.4–1.8 s, p90 1.8–2.0 s; ~66–75 units per fight).
+// First damage lands at 2.42–2.64 s, staggered unit by unit, and swing
+// phases stay decorrelated for the whole fight (per-side swing-phase
+// histograms are uniform). The engine moves every unit on the SAME tick
+// (first-move 0.12 s, first damage 0.53 s — 32 ticks, 6 champions landing
+// simultaneously on one fight) and, its reload cycles being tick-exact,
+// the whole front fights on ONE SHARED PHASE forever: victims die in
+// synchronized clusters (5–7 clustered death pairs per fight vs the
+// tape's 1–4), and the losing side banks ~15–25% fewer swings before
+// dying (hussar 112 vs 143, halberdier 38 vs 51) — i.e. the melee
+// winner's "too much HP left" residual.
+//
+// THE RULE. With W2.reactionWindow on, in a fight where BOTH armies are
+// all-melee (the NoneAi melee template the window was measured on;
+// ranged/mixed fights acquire instantly in the tapes — first blood
+// 0.97 s — and are excluded), each unit stands — no acquisition, no
+// movement, no swing — until its own reaction time:
+//
+//   reactionUntil = W2_REACTION_MIN_S
+//                 + slot/(N-1) · (W2_REACTION_MAX_S − W2_REACTION_MIN_S)
+//
+// slot = the unit's index in its team array, N = team size. The spacing
+// is DETERMINISTIC — even slots across the measured window, no rng draw
+// (melee keeps its no-rng property; a flag-on run is as reproducible as a
+// flag-off one). The endpoints are the tape's measured first-move window
+// (breakpoint constants, documented here per the campaign's iron rule —
+// the same kind of measured anchor as E1's clockwise orbit).
+//
+// WHAT IT DOES NOT TOUCH. Ranged or mixed fights (the all-melee check
+// excludes them byte-for-byte). Being a victim: a standing unit takes
+// damage normally (contact before 1.7 s does not happen in the melee
+// tapes anyway). Cooldowns, regen, auras and every other housekeeping
+// line in update() run unchanged; the hold only skips target
+// acquisition and everything downstream of it. Mid-fight it is inert:
+// battleTime passes the window once and the predicate is false forever.
+//
+// SHIPPED OFF until the W2 iteration boards land — same A/B gate
+// discipline as W1/E1/C3/C4. `--w2 reactionWindow` on calib_runner.mjs.
+export const W2_REACTION_MIN_S = 1.2; // tape first-move window lower edge
+export const W2_REACTION_MAX_S = 2.0; // tape first-move window upper edge
+export const W2 = {
+    // The melee opening's per-unit aggro stagger (above).
+    reactionWindow: false,
+};
+
+/** Apply a partial override to {@link W2}. Harness-only entry point. */
+export function setW2(overrides) {
+    for (const k of Object.keys(overrides)) {
+        if (!(k in W2)) throw new Error(`setW2: unknown flag ${k}`);
+        W2[k] = Boolean(overrides[k]);
+    }
+    return W2;
+}
+
 // ---- D2 measured / dat quantities -------------------------------------------
 
 // TOTAL BOLT FLIGHT, in tiles from the muzzle. A MEASURED TAPE CONSTANT, in the
@@ -1521,7 +1659,7 @@ export const KITE_COHESION_RAMP_TILES = 2.0;
 //
 // 1.0 wins on every axis. The E8 machinery is left in place and wired up (the
 // predicate, both floors and their tests still work) so a future experiment can
-// re-open it cheaply -- but at 1.0 it is a documented no-op.
+// re-open it cheaply -- but at 1.0 it does not scale either physical floor.
 export const COMBAT_PACK_FACTOR = 1.0;
 
 // How far PAST its own effective reach (in tiles) a unit may be from its living

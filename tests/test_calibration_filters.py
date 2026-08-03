@@ -74,8 +74,12 @@ def test_melee_only_is_the_round4_gate(fights):
     re-recording (67 fights, of which 58 are both-sides-melee; fire-lancer
     fights are excluded by the slug set) -> 83 after quarantining the six
     bad-capture paladin_vs_steppe originals -> 95 with the 2026-07-31 v3
-    ingest (+12 paladin_vs_steppe live-position rounds, manifest r19-r30)."""
-    assert len(F.filter_fights(fights, melee_only=True)) == 95
+    ingest (+12 paladin_vs_steppe live-position rounds, manifest r19-r30)
+    -> 123 with the 2026-08-02 STANDARD_UNITS champion-subset ingest
+    (+28 champion-pair melee fights from the corrected consolidated drop;
+    16 of that drop's 63 champion fights were content-collisions reassigned
+    to fresh _rN run_ids, the rest new)."""
+    assert len(F.filter_fights(fights, melee_only=True)) == 123
 
 
 def test_quarantined_fights_are_never_scored(fights):

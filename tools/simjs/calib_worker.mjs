@@ -33,6 +33,8 @@ import {
     applyC4Spec,
     applyD2Spec,
     applyE1Spec,
+    applyW1Spec,
+    applyW2Spec,
     loadCalibDicts,
     loadCalibSpawns,
     loadManifest,
@@ -42,7 +44,7 @@ import {
 
 const {
     arenaArg, maxSeconds, outDir, r5bSpec, r5d1Spec, r5dSpec, b2Spec, r5fSpec,
-    c2aSpec, c2bSpec, c2cSpec, c3Spec, c4Spec, d2Spec, e1Spec,
+    c2aSpec, c2bSpec, c2cSpec, c3Spec, c4Spec, d2Spec, e1Spec, w1Spec, w2Spec,
 } = workerData;
 
 // Round-5b / Round-5d / Phase-B2 rule flags. Applied BEFORE any fight is built,
@@ -61,6 +63,8 @@ applyC3Spec(c3Spec ?? null);
 applyC4Spec(c4Spec ?? null);
 applyD2Spec(d2Spec ?? null);
 applyE1Spec(e1Spec ?? null);
+applyW1Spec(w1Spec ?? null);
+applyW2Spec(w2Spec ?? null);
 
 // Same arena table as the CLI. Duplicated as a two-line lookup rather than
 // exported-and-imported because it is the CLI's own argument vocabulary; the

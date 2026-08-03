@@ -10,7 +10,9 @@ Corpus history: 31 fights x 2 sides = the original 62-side gate; the
 2026-07-30 v2 melee re-recording grew it to 89 fights, then quarantining the
 six bad-capture paladin_vs_steppe originals settled it at 83 fights x 2
 sides = 166; the 2026-07-31 v3 ingest added 12 live-position
-paladin_vs_steppe rounds (manifest r19-r30) for 95 fights x 2 sides = 190.
+paladin_vs_steppe rounds (manifest r19-r30) for 95 fights x 2 sides = 190;
+the 2026-08-02 STANDARD_UNITS champion-subset ingest added 28 champion-pair
+melee fights for 123 fights x 2 sides = 246.
 (The count is pinned deliberately in
 tests/test_calibration_filters.py::test_melee_only_is_the_round4_gate.)
 

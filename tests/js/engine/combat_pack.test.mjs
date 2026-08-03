@@ -33,6 +33,7 @@ import {
     COMBAT_PACK_FACTOR,
     COMBAT_PACK_SLACK_TILES,
     COMBAT_PACK_RANGED,
+    setW1,
 } from "../../../apps/website/static/js/engine/constants.js";
 import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.js";
 import { Simulation } from "../../../apps/website/static/js/engine/sim.js";
@@ -234,31 +235,23 @@ function avoidMag(d, aPacked, bPacked, sameTeam) {
     return Math.hypot(v.x, v.y);
 }
 
-test("calculateAvoidance relaxes the soft floor for a packed same-team pair", () => {
-    // The soft floor is rA + rB + 2 = 17 px (it was 38 px at the old inflated
-    // radius, which is where the hardcoded 30 px probe distance came from).
-    // Probe midway between the compressed floor and the normal one: the
-    // unpacked pair is overlapping and feels the strong force, the packed pair
-    // is outside its own floor and feels only the weak 0.5 band force.
-    const soft = R + R + 2;                       // 17 px
-    const compressed = soft * COMBAT_PACK_FACTOR;
-    if (COMBAT_PACK_FACTOR >= 1) {
-        // Compression is switched off -- the mechanism is a documented no-op
-        // and there is no band to separate. Assert exactly that.
-        const d = soft - 1;
-        assert.equal(
-            avoidMag(d, true, true, true).toFixed(6),
-            avoidMag(d, false, false, true).toFixed(6),
-            "at factor 1.0 packing must change nothing",
+test("W1 removes the social band only for engaged allies", () => {
+    const soft = R + R + 2; // 17px
+    const d = soft * 1.25;  // inside the 1.5x social band, outside overlap
+    setW1({ scrumWalk: true });
+    try {
+        assert.equal(avoidMag(d, false, false, true), 0.5, "approaching allies repel");
+        assert.equal(avoidMag(d, true, false, true), 0.5, "half-engaged pair repels");
+        assert.equal(avoidMag(d, true, true, true), 0, "engaged allies may close");
+
+        const overlapping = soft - 1;
+        assert.ok(
+            avoidMag(overlapping, true, true, true) > 3,
+            "actual overlap still receives the full separation force",
         );
-        return;
+    } finally {
+        setW1({ scrumWalk: false });
     }
-    const d = (compressed + soft) / 2;
-    const unpacked = avoidMag(d, false, false, true);
-    const packed = avoidMag(d, true, true, true);
-    assert.ok(unpacked > 3, `unpacked pair overlaps hard, got ${unpacked}`);
-    assert.equal(packed.toFixed(6), (0.5).toFixed(6), "packed pair: weak band force only");
-    assert.ok(packed < unpacked);
 });
 
 test("calculateAvoidance does not relax a cross-team pair or a half-packed pair", () => {

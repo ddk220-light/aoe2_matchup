@@ -35,7 +35,7 @@ the "old" corpus, which is what the ``OLD vs NEW`` section diffs.
 
 Usage::
 
-    python tools/simjs/v2_family_board.py --sim-runs-dir D:/AI/aoe2_golden/simruns_v2melee
+    python tools/simjs/v2_family_board.py --sim-runs-dir calibration/runs/v2-melee
     python tools/simjs/v2_family_board.py --sim-runs-dir <dir> --json board.json
 """
 from __future__ import annotations
@@ -44,12 +44,17 @@ import argparse
 import gzip
 import json
 import statistics
+import sys
 from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-CALIB = ROOT / "data" / "calibration"
-TAPES = Path("D:/AI/aoe2_golden/tapes")
+sys.path.insert(0, str(ROOT))
+from aoe2x.calibration.paths import workspace_paths  # noqa: E402
+
+PATHS = workspace_paths()
+CALIB = PATHS.fixtures_dir
+TAPES = PATHS.tapes_dir
 
 
 def load_manifest():
@@ -324,7 +329,7 @@ def print_old_vs_new(rows):
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--sim-runs-dir", type=Path, default=Path("D:/AI/aoe2_golden/simruns"))
+    ap.add_argument("--sim-runs-dir", type=Path, default=PATHS.runs_dir / "v2-melee")
     ap.add_argument("--seeds", type=int, default=20)
     ap.add_argument("--drop-substr", default="melee_v2",
                     help="manifest `drop` substring identifying the NEW corpus")

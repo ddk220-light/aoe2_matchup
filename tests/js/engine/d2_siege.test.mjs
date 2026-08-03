@@ -38,7 +38,7 @@ import {
 } from "../../../apps/website/static/js/engine/constants.js";
 import { createSimulation } from "../../../apps/website/static/js/engine/scenario.js";
 
-// ---- real combat dicts (data/calibration/combat_dicts.json) -----------------
+// ---- representative siege combat dictionaries -----------------------------
 const SCORPION_STATS = {
     hp: 60, attack: 15, attack_range: 8, attack_speed: 1 / 3.6,
     movement_speed: 0.65, melee_armor: 1, pierce_armor: 8,

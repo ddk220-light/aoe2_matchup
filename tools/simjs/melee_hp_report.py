@@ -6,15 +6,11 @@ where BOTH armies are melee units, how far is the sim's median surviving HP
 from the tape's, expressed in **HP-points** = percent of that side's own army
 max HP (count x per-unit max HP). "Within 10 pts" is the pass line.
 
-Corpus history: 31 fights x 2 sides = the original 62-side gate; the
-2026-07-30 v2 melee re-recording grew it to 89 fights, then quarantining the
-six bad-capture paladin_vs_steppe originals settled it at 83 fights x 2
-sides = 166; the 2026-07-31 v3 ingest added 12 live-position
-paladin_vs_steppe rounds (manifest r19-r30) for 95 fights x 2 sides = 190;
-the 2026-08-02 STANDARD_UNITS champion-subset ingest added 28 champion-pair
-melee fights for 123 fights x 2 sides = 246.
-(The count is pinned deliberately in
-tests/test_calibration_filters.py::test_melee_only_is_the_round4_gate.)
+The FINAL-only corpus has 78 broadly classified melee recordings. This pure-
+melee gate excludes seven Elite Fire Lancer recordings because that unit has a
+ranged volley, leaving 71 fights x 2 sides = 142. The count is pinned in
+tests/test_calibration_filters.py::test_melee_only_is_the_final_gate and may
+move only if the user replaces the FINAL archive itself.
 
 Why percent-of-army-max and not raw HP: a 21-champion side has 1470 max HP
 and a 7-paladin side has 1260 - a flat raw-HP tolerance would mean two very
@@ -24,7 +20,7 @@ comparable.
 
 Usage:
 
-    python tools/simjs/melee_hp_report.py --sim-runs-dir D:/AI/aoe2_golden/simruns_e12_tapebox
+    python tools/simjs/melee_hp_report.py --sim-runs-dir calibration/runs/melee
     python tools/simjs/melee_hp_report.py --sim-runs-dir <dir> --json out.json
 
 Reads the SAME inputs as aoe2x.calibration.score (manifest + truth cards +
@@ -35,7 +31,7 @@ disagree with the scorer about what survived.
 A subset run directory is fine to point --sim-runs-dir at: fights with no
 seed files under it are skipped, so
 ``calib_runner.mjs --melee-only --out-dir <dir>`` followed by
-``melee_hp_report.py --sim-runs-dir <dir>`` covers the whole 31-fight gate
+``melee_hp_report.py --sim-runs-dir <dir>`` covers the whole 71-fight gate
 with nothing missing and nothing to filter.
 """
 from __future__ import annotations
@@ -59,9 +55,9 @@ from aoe2x.paths import REPO_ROOT  # noqa: E402
 CALIB = REPO_ROOT / "data" / "calibration"
 
 # MELEE_SLUGS / BASIC_SLUGS are imported, not redeclared: they now live in
-# data/calibration/fight_sets.json, which the JS sim runner reads too (see
+# calibration/fixtures/fight_sets.json, which the JS sim runner reads too (see
 # aoe2x/calibration/filters.py). That is what makes
-# `calib_runner --melee-only` and this report provably the same 31 fights
+# `calib_runner --melee-only` and this report provably the same 71 fights
 # instead of two lists someone has to remember to edit together.
 
 

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.js";
 import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
 
-// Burmese Elite Battle Elephant's real combat dict (data/calibration/combat_dicts.json):
+// Burmese Elite Battle Elephant combat dictionary:
 // trample_percent=0.25, trample_radius=0.4 (tiles), trample_flat_damage=0,
 // attack=18, melee_armor 0 target -> 18*0.25=4.5 damage per victim.
 // TILE_SIZE=30, so trample_radius=12px.

@@ -20,7 +20,7 @@
 //
 // OFF-SWITCH. `MELEE_SWING_RECOVERY_S = 0` + `MELEE_LANE_REACQUIRE = false` must
 // reproduce the E14 board bit for bit. That was verified end to end with
-// `node tools/simjs/e14_identity.mjs D:/AI/aoe2_golden/simruns_e15b_baseref 3`
+// `node tools/simjs/e14_identity.mjs <reference-run-dir> 3`
 // -> identical 465/465. The tests at the bottom of this file pin the two
 // structural facts that make it true, so a future edit cannot break the
 // off-switch without turning one of them red.

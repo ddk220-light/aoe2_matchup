@@ -14,6 +14,7 @@ import path from "node:path";
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import { TILE_SIZE } from "../../apps/website/static/js/engine/constants.js";
 import { loadManifest, loadCalibDicts, loadCalibSpawns } from "./calib_runner.mjs";
+import { calibrationPaths } from "./calibration_paths.mjs";
 
 const MELEE = new Set([
     "champion", "halberdier", "paladin", "heavy_camel", "hussar",
@@ -25,7 +26,7 @@ const flag = (n, d) => {
     const i = argv.indexOf(n);
     return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d;
 };
-const outDir = flag("--out-dir", "D:/AI/aoe2_golden/simruns");
+const outDir = flag("--out-dir", path.join(calibrationPaths(process.cwd()).runs, "sim-units"));
 const nSeeds = Number(flag("--seeds", "1"));
 
 const dicts = loadCalibDicts();

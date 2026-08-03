@@ -34,13 +34,13 @@ not assumed -- `--section pair` reports the residual (tiles off the bolt line)
 for every matched event and the count that no missile can explain.
 
 Engine runs are reconstructed by the same functions from
-tools/simjs/ranged_shot_dump.mjs output (`--out-dir D:/AI/aoe2_golden/shots_d1_siege`),
+tools/simjs/ranged_shot_dump.mjs output (`--out-dir calibration/runs/d1-siege-shots`),
 where a shot is a launch point, a landing point and an impact time, so its
 "track" is that segment. A tape number and an engine number in every table
 below are the same statistic computed by the same code.
 
     D:/miniconda3/python.exe tools/simjs/d1_siege_forensics.py \
-        --sim-runs-dir D:/AI/aoe2_golden/shots_d1_siege --section all
+        --sim-runs-dir calibration/runs/d1-siege-shots --section all
     ... --section board|pair|passthrough|blast|friendly|minrange|opponent|duration
     ... --tags heavy_scorpion__vs__hussar
     ... --seeds 20        engine seeds to pool (default 20)
@@ -54,13 +54,17 @@ import gzip
 import json
 import math
 import statistics
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-CALIB = ROOT / "data" / "calibration"
-TAPES = Path("D:/AI/aoe2_golden/tapes")
-DEFAULT_SIMRUNS = Path("D:/AI/aoe2_golden/shots_d1_siege")
+sys.path.insert(0, str(ROOT))
+from aoe2x.calibration.paths import workspace_paths  # noqa: E402
+PATHS = workspace_paths()
+CALIB = PATHS.fixtures_dir
+TAPES = PATHS.tapes_dir
+DEFAULT_SIMRUNS = PATHS.runs_dir / "d1-siege-shots"
 
 SIEGE_SLUGS = {"heavy_scorpion", "siege_onager"}
 
@@ -1358,7 +1362,7 @@ def main():
     ap.add_argument("--tags")
     ap.add_argument("--section", default="all")
     ap.add_argument("--json")
-    ap.add_argument("--dat-json", default="D:/AI/aoe2_golden/d1_dat_audit.json")
+    ap.add_argument("--dat-json", default=str(PATHS.runs_dir / "d1-dat-audit.json"))
     args = ap.parse_args()
 
     sim_dir = Path(args.sim_runs_dir)

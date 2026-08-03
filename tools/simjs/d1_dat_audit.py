@@ -7,7 +7,7 @@ AoE2:DE install. genieutils-py lives in the conda python, so:
 
     D:/miniconda3/python.exe tools/simjs/d1_dat_audit.py \
         --dat "D:/SteamLibrary/steamapps/common/AoE2DE/resources/_common/dat/empires2_x2_p1.dat" \
-        --json D:/AI/aoe2_golden/d1_dat_audit.json
+        --json calibration/runs/d1-dat-audit.json
 
 What it prints, per unit:
   * type_50 combat block: max/min range, reload, frame_delay, accuracy_percent,

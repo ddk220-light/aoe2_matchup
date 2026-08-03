@@ -36,7 +36,7 @@
 // how every scoreboard through E11 was produced. See the --arena block in the
 // CLI below for the full list and the re-baseline warning.
 //
-// Deliberate constraints (mirroring tape_runner.mjs / headless.mjs):
+// Deliberate constraints (mirroring the headless runner):
 //   * imports buildFight (NOT runFight) -- runFight's `final` shape is frozen
 //     for parity_check.mjs; this file drives its own tick loop with
 //     sim.eventLog enabled instead. headless.mjs itself is never modified;

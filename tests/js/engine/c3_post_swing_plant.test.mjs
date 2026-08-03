@@ -1,5 +1,5 @@
 // C3 -- POST-SWING PLANT (docs/calibration/c3_chaser_pursuit_forensics.md §Q3,
-// data/calibration/analysis/c3_chaser_pursuit.json).
+// the post-swing plant regression analysis).
 //
 // THE MEASUREMENT. The tape's melee chaser, after every LANDED swing on a
 // ranged kiter, stands planted for a median 0.64-0.74 s -- five distinct

@@ -55,7 +55,7 @@ Each shot then classifies into exactly one outcome:
     CENSORED   still airborne when the recording stopped
 
     PYTHONPATH=. python tools/simjs/ranged_fire_forensics.py \
-        --sim-runs-dir D:/AI/aoe2_golden/simruns_r5_ranged
+        --sim-runs-dir calibration/runs/ranged
     ... --section cadence|e9|accuracy|geometry|focus|attrition|timeline|ledger|all
     ... --tags arbalester__vs__heavy_cav_archer
     ... --seeds 20          engine seeds to pool (default 20)
@@ -69,14 +69,18 @@ import gzip
 import json
 import math
 import statistics
+import sys
 from collections import defaultdict, Counter
 from pathlib import Path
 
-from aoe2x.paths import REPO_ROOT
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+from aoe2x.calibration.paths import workspace_paths  # noqa: E402
 
-CALIB = REPO_ROOT / "data" / "calibration"
-TAPES = Path("D:/AI/aoe2_golden/tapes")
-DEFAULT_SIMRUNS = Path("D:/AI/aoe2_golden/simruns_r5_ranged")
+PATHS = workspace_paths()
+CALIB = PATHS.fixtures_dir
+TAPES = PATHS.tapes_dir
+DEFAULT_SIMRUNS = PATHS.runs_dir / "ranged"
 
 R5_TAGS = [
     "arbalester__vs__hand_cannoneer",

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.js";
 import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
 
-// Chinese Elite Fire Lancer's real combat dict (data/calibration/combat_dicts.json):
+// Chinese Elite Fire Lancer combat dictionary:
 // charge_projectile_count=3, charge_attack_range=4 (tiles -> 120px),
 // charge_recharge_time=30, charge_ignores_armor=1,
 // charge_projectile_attacks={"3":3,"17":2,...} -> 5 armour-ignoring damage/hit.
@@ -175,7 +175,7 @@ test("a charge unit with no charge_recharge_time stays one-shot (legacy fallback
 // heavy_scorpion) against 63-93 in every non-siege fight, i.e. the real charge
 // volley never targets siege. Gating the volley on !target.isSiege() was built
 // and measured over the whole corpus
-// (data/calibration/runs/20260730T151710Z-e2-fire-lancer-siegegate.json): it
+// This regression case pins the intended charge-volley behavior: it
 // removes 9 gated mismatches but COSTS a winner
 // (elite_fire_lancer__vs__heavy_scorpion goes 0.6 agreement -> 0.15 and flips),
 // because the volley damage is currently papering over a separate deficit in

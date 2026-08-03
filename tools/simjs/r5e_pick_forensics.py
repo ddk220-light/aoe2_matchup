@@ -27,9 +27,9 @@ nearest), and the ride-in is the consequence of the assignment rather than its
 cause.
 
     node tools/simjs/ranged_shot_dump.mjs --tags <the six> --seeds 20 \
-        --out-dir D:/AI/aoe2_golden/shots_r5e
+        --out-dir calibration/runs/r5e-shots
     PYTHONPATH=. python tools/simjs/r5e_pick_forensics.py \
-        --sim-runs-dir D:/AI/aoe2_golden/shots_r5e --seeds 20 --section all
+        --sim-runs-dir calibration/runs/r5e-shots --seeds 20 --section all
     ... --section m1|m2|m3|m4|m5|m6|all
 
 Findings: docs/calibration/r5e_pick_forensics.md.
@@ -1008,7 +1008,7 @@ def prep(fight, owner):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--sim-runs-dir", default="D:/AI/aoe2_golden/shots_r5e")
+    ap.add_argument("--sim-runs-dir", default=str(rff.PATHS.runs_dir / "r5e-shots"))
     ap.add_argument("--tags", default=",".join(R5_TAGS))
     ap.add_argument("--seeds", type=int, default=20)
     ap.add_argument("--m5-seeds", type=int, default=5,

@@ -75,7 +75,7 @@ army depth  (max - min) of own-army projections onto the unit vector from own
           centroid to enemy centroid, tiles.
 
     PYTHONPATH=. python tools/simjs/ranged_depth_forensics.py \
-        --sim-runs-dir D:/AI/aoe2_golden/shots_r5c --seeds 20 --section all
+        --sim-runs-dir calibration/runs/r5c-shots --seeds 20 --section all
     ... --section recon|standoff|predicate|rank|motion|retarget|timeline|choice
     ... --certain-only     tape shots restricted to paired hits
     ... --json out.json
@@ -93,6 +93,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import ranged_fire_forensics as rff          # noqa: E402
 from ranged_fire_forensics import (          # noqa: E402
     CALIB, R5_TAGS, SHORT, TILE, MELEE_RANGE_BUFFER_PX,
     load_tape, load_engine, physics_radius_px,
@@ -354,7 +355,7 @@ def cell(b, key="depth"):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--sim-runs-dir", default="D:/AI/aoe2_golden/shots_r5c")
+    ap.add_argument("--sim-runs-dir", default=str(rff.PATHS.runs_dir / "r5c-shots"))
     ap.add_argument("--tags", default=",".join(R5_TAGS))
     ap.add_argument("--seeds", type=int, default=20)
     ap.add_argument("--section", default="all")

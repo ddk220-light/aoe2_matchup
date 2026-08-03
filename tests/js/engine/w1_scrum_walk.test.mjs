@@ -1,5 +1,5 @@
 // W1 -- SCRUM WALK (docs/calibration/ps_live_forensics.md, measurements in
-// data/calibration/analysis/ps_live_forensics.json).
+// the scrum-walk regression analysis).
 //
 // THE DEFECT. On the 12 position-valid paladin__vs__elite_steppe live rounds
 // the engine's opening is exact (concurrency, ring density, the 2/4/6

@@ -48,9 +48,9 @@ same statistic is also reported over the subset whose victim the damage
 pairing NAMES, so the reader can see whether the inference is carrying it.
 
     node tools/simjs/ranged_shot_dump.mjs --tags <the six> --seeds 20 \
-        --out-dir D:/AI/aoe2_golden/shots_r5c
+        --out-dir calibration/runs/r5c-shots
     PYTHONPATH=. python tools/simjs/r5c_targeting_forensics.py \
-        --sim-runs-dir D:/AI/aoe2_golden/shots_r5c
+        --sim-runs-dir calibration/runs/r5c-shots
     ... --section q0|q1a|q1b|q1c|q1d|q2a|q2b|q2c|q2d|pool|all
     ... --seeds 20 --json out.json
 
@@ -936,7 +936,7 @@ def avg(rows, k, nd=2):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--sim-runs-dir", default="D:/AI/aoe2_golden/shots_r5c_b")
+    ap.add_argument("--sim-runs-dir", default=str(rff.PATHS.runs_dir / "r5c-shots"))
     ap.add_argument("--tags", default=",".join(R5_TAGS))
     ap.add_argument("--seeds", type=int, default=20)
     ap.add_argument("--section", default="all")

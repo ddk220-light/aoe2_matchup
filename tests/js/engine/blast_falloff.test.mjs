@@ -1,6 +1,6 @@
 // Siege blast falloff, fitted to the recorded tapes (calibration experiment E4).
 //
-// Ground truth, from D:/AI/aoe2_golden/tapes/champion__vs__siege_onager (a
+// Representative champion-versus-siege-onager regression case (a
 // 4-Siege-Onager vs 21-Champion fight) and .../siege_onager__vs__hussar. Each
 // stone's damage.jsonl impact group, with every victim's position taken from
 // the 10 Hz units stream and the impact point from the missile track's last
@@ -25,7 +25,7 @@ import assert from "node:assert/strict";
 import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.js";
 import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
 
-// Aztec Siege Onager's real combat dict (data/calibration/combat_dicts.json).
+// Aztec Siege Onager combat dictionary.
 const ONAGER_STATS = {
     hp: 70, attack: 76, attack_range: 9, attack_speed: 1 / 6,
     movement_speed: 0.6, melee_armor: 0, pierce_armor: 8,

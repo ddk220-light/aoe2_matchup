@@ -45,11 +45,11 @@ engine run, from the streams both sources expose identically:
 Inputs
 ------
     node tools/simjs/c1_chase_probe.mjs --tags-file <86 chaser tags> \
-         --seeds 20 --out-dir D:/AI/aoe2_golden/simruns_c1
+         --seeds 20 --out-dir calibration/runs/c1
     node tools/simjs/c1_chase_probe.mjs --tags-file <champion x9> --seeds 20 \
-         --r5d1 trailingWindowLead --out-dir D:/AI/aoe2_golden/simruns_c1_p2
+         --r5d1 trailingWindowLead --out-dir calibration/runs/c1-p2
     node tools/simjs/c1_chase_probe.mjs --tags-file <hand cannoneer x29> \
-         --seeds 20 --r5d1 reducedDamageHits --out-dir D:/AI/aoe2_golden/simruns_c1_p1
+         --seeds 20 --r5d1 reducedDamageHits --out-dir calibration/runs/c1-p1
 
     PYTHONPATH=. python tools/simjs/c1_chaser_cadence.py --section all
     ... --section anatomy|contact|excess|retarget|p2|hc
@@ -77,12 +77,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import tools.simjs.ranged_fire_forensics as rff  # noqa: E402
-from aoe2x.paths import REPO_ROOT  # noqa: E402
+from aoe2x.calibration.paths import workspace_paths  # noqa: E402
 
-CALIB = REPO_ROOT / "data" / "calibration"
-DEFAULT_RUNS = Path("D:/AI/aoe2_golden/simruns_c1")
-DEFAULT_P2_RUNS = Path("D:/AI/aoe2_golden/simruns_c1_p2")
-DEFAULT_P1_RUNS = Path("D:/AI/aoe2_golden/simruns_c1_p1")
+PATHS = workspace_paths()
+CALIB = PATHS.fixtures_dir
+DEFAULT_RUNS = PATHS.runs_dir / "c1"
+DEFAULT_P2_RUNS = PATHS.runs_dir / "c1-p2"
+DEFAULT_P1_RUNS = PATHS.runs_dir / "c1-p1"
 
 # The chaser corpus. RANGED excludes the two siege weapons deliberately: they
 # have a minimum-range dead zone, their own repositioning path (tooClose) and

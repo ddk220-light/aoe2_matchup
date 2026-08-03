@@ -103,9 +103,10 @@ import {
     loadManifest, loadCalibDicts, loadCalibSpawns, spawnsForFight,
     applyW1Spec, applyW2Spec,
 } from "./calib_runner.mjs";
+import { calibrationPaths } from "./calibration_paths.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-void HERE;
+const REPO = path.resolve(HERE, "../..");
 
 // ---------------------------------------------------------------------------
 // accumulators
@@ -555,7 +556,8 @@ const flag = (n, d) => {
     const i = argv.indexOf(n);
     return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d;
 };
-const outDir = flag("--out-dir", "D:/AI/aoe2_golden/simruns_b1_probe");
+const outDir = flag(
+    "--out-dir", path.join(calibrationPaths(REPO).runs, "melee-engagement-probe"));
 const nSeeds = Number(flag("--seeds", "20"));
 const posSeeds = Number(flag("--pos-seeds", "5"));
 const verifyDir = flag("--verify", null);

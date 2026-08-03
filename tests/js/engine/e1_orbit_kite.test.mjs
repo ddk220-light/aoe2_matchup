@@ -123,7 +123,7 @@ test("[E1] setE1 rejects an unknown flag rather than silently ignoring it", () =
 });
 
 test("[E1] the blend ratio is the tape's measured 1.77, not a tuned number", () => {
-    // data/calibration/analysis/e1_kite_orbit_tapes.json, all-corpus tan/rad.
+    // the orbit-kite regression analysis.
     assert.equal(E1_ORBIT_TANRAD, 1.77);
     assert.equal(E1_ORBIT_MIN_RADIUS_TILES, 0.5);
 });

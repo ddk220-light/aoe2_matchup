@@ -34,10 +34,11 @@
 // keys off the owner number.
 //
 //     node tools/simjs/ranged_shot_dump.mjs --tags <t1,t2,...> --seeds 20 \
-//         --out-dir D:/AI/aoe2_golden/simruns_r5_ranged
+//         --out-dir calibration/runs/ranged-shot-dump
 //     node tools/simjs/ranged_shot_dump.mjs --tags <...> --seeds 3 --verify-identity
 import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import { BattleUnit } from "../../apps/website/static/js/engine/battle_unit.js";
@@ -45,6 +46,7 @@ import { TILE_SIZE } from "../../apps/website/static/js/engine/constants.js";
 import {
     applyR5BSpec, applyR5D1Spec, applyR5DSpec, applyR5FSpec, applyD2Spec,
 } from "./calib_runner.mjs";
+import { calibrationPaths } from "./calibration_paths.mjs";
 import {
     loadManifest, loadCalibDicts, loadCalibSpawns, spawnsForFight,
 } from "./calib_runner.mjs";
@@ -231,7 +233,9 @@ const flag = (n, d) => {
 };
 const has = (n) => argv.includes(n);
 
-const outDir = flag("--out-dir", "D:/AI/aoe2_golden/simruns_r5_ranged");
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const outDir = flag(
+    "--out-dir", path.join(calibrationPaths(REPO).runs, "ranged-shot-dump"));
 const nSeeds = Number(flag("--seeds", "20"));
 // --tags-file reads the same comma/whitespace-separated list from a file, the
 // way calib_runner.mjs and c1_chase_probe.mjs already do. The D2 siege subset

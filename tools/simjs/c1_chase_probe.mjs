@@ -37,7 +37,7 @@
 // and diffs the damage stream and duration.
 //
 //     node tools/simjs/c1_chase_probe.mjs --tags <t1,t2,...> --seeds 20 \
-//          --out-dir D:/AI/aoe2_golden/simruns_c1
+//          --out-dir calibration/runs/c1-chase
 //     node tools/simjs/c1_chase_probe.mjs --tags <...> --seeds 3 --verify-identity
 //     node tools/simjs/c1_chase_probe.mjs --tags <...> --r5d1 trailingWindowLead ...
 //
@@ -46,10 +46,12 @@
 // chaser population; pass `--all-melee` to log every melee unit instead.
 import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
 import { BattleUnit } from "../../apps/website/static/js/engine/battle_unit.js";
 import { TILE_SIZE } from "../../apps/website/static/js/engine/constants.js";
+import { calibrationPaths } from "./calibration_paths.mjs";
 import {
     applyR5BSpec, applyR5D1Spec, applyR5DSpec, applyR5FSpec, applyB2Spec,
     applyC2ASpec, applyC2BSpec, applyC2CSpec,
@@ -351,7 +353,8 @@ const flag = (n, d) => {
 };
 const has = (n) => argv.includes(n);
 
-const outDir = flag("--out-dir", "D:/AI/aoe2_golden/simruns_c1");
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const outDir = flag("--out-dir", path.join(calibrationPaths(REPO).runs, "c1-chase"));
 const nSeeds = Number(flag("--seeds", "20"));
 // `--tags` is a comma-separated list; `--tags-file` reads the same list from a
 // file (the chaser corpus is 86 tags, which is past what a shell will pass

@@ -57,7 +57,7 @@ THE FIVE CAUSES (step 1 of the E15 brief)
                 the tape's break rate.
 
     PYTHONPATH=. python tools/simjs/melee_walk_forensics.py \
-        --sim-runs-dir D:/AI/aoe2_golden/simruns_e15_base
+        --sim-runs-dir calibration/runs/melee-walk
     ... --by-slug          per unit-class decomposition
     ... --fights paladin__vs__elite_steppe
 """

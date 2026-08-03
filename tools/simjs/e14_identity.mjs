@@ -9,7 +9,10 @@ import {
     runCalibFight, loadManifest, loadCalibDicts, loadCalibSpawns,
 } from "./calib_runner.mjs";
 
-const REF = process.argv[2] || "D:/AI/aoe2_golden/simruns_e13_F028";
+if (!process.argv[2]) {
+    throw new Error("usage: node tools/simjs/e14_identity.mjs <reference-run-dir> [nSeeds]");
+}
+const REF = process.argv[2];
 const NSEEDS = Number(process.argv[3] || 3);
 const dicts = loadCalibDicts();
 const spawns = loadCalibSpawns();

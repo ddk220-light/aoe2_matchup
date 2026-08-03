@@ -65,7 +65,8 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
-from aoe2x.paths import GOLDEN_DIR, REPO_ROOT
+from aoe2x.calibration.paths import CalibrationPaths, workspace_paths
+from aoe2x.paths import GOLDEN_DIR
 
 # Consecutive damage events from the SAME attacker within this many seconds
 # are one swing. Raised 0.15 -> 0.60 (2026-07-30) because 0.15 was a defect
@@ -81,11 +82,6 @@ from aoe2x.paths import GOLDEN_DIR, REPO_ROOT
 # calibration-gap-analysis.md §3.3.
 SWING_EPS = 0.60
 
-CALIBRATION_DIR = REPO_ROOT / "data" / "calibration"
-MANIFEST_PATH = CALIBRATION_DIR / "manifest.json"
-TRUTH_DIR = CALIBRATION_DIR / "truth"
-
-TAPES_DIR = Path("D:/AI/aoe2_golden/tapes")
 REFERENCE_DB_PATH = GOLDEN_DIR / "aoe2_reference.db"
 
 _SIDE_KEY_RE = re.compile(r"^side(\d+)$")
@@ -371,7 +367,7 @@ def extract_card(
 
 
 # --------------------------------------------------------------------------
-# CLI: read the manifest + tape streams, write data/calibration/truth/<run_id>.json
+# CLI: read local fixtures and tapes, then write local truth cards.
 # --------------------------------------------------------------------------
 
 
@@ -380,8 +376,9 @@ def _read_jsonl_gz(path: Path) -> list[dict[str, Any]]:
         return [json.loads(line) for line in f if line.strip()]
 
 
-def _load_manifest() -> dict[str, Any]:
-    return json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+def _load_manifest(paths: CalibrationPaths | None = None) -> dict[str, Any]:
+    resolved = paths or workspace_paths()
+    return json.loads(resolved.manifest.read_text(encoding="utf-8"))
 
 
 def _fetch_max_hp(civ: str | None, slug: str | None) -> float | None:
@@ -413,13 +410,18 @@ def _composition_for_fight(fight: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return composition
 
 
-def build_truth_card(fight: dict[str, Any]) -> dict[str, Any]:
+def build_truth_card(
+    fight: dict[str, Any],
+    *,
+    paths: CalibrationPaths | None = None,
+) -> dict[str, Any]:
     """Build the full on-disk card shape (tag/run_id/matchup/duration_s +
     extract_card's per-side "sides") for one manifest fight entry, reading
-    its tape streams from D:/AI/aoe2_golden/tapes/<run_id>/.
+    its tape streams from ``calibration/tapes/<run_id>/``.
     """
+    resolved = paths or workspace_paths()
     run_id = fight["run_id"]
-    run_dir = TAPES_DIR / run_id
+    run_dir = resolved.tapes_dir / run_id
     damage_path = run_dir / f"{run_id}.damage.jsonl.gz"
     missiles_path = run_dir / f"{run_id}.missiles.jsonl.gz"
 
@@ -455,22 +457,27 @@ def build_truth_card(fight: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def write_truth_cards(run_ids: list[str] | None = None) -> list[str]:
+def write_truth_cards(
+    run_ids: list[str] | None = None,
+    *,
+    paths: CalibrationPaths | None = None,
+) -> list[str]:
     """Build and write truth cards for the given run_ids (or every fight in
-    the manifest if None) to data/calibration/truth/<run_id>.json. Returns
+    the manifest if None) to ``calibration/fixtures/truth/<run_id>.json``. Returns
     the list of run_ids written.
     """
-    manifest = _load_manifest()
+    resolved = paths or workspace_paths()
+    manifest = _load_manifest(resolved)
     fights = manifest["fights"]
     if run_ids is not None:
         wanted = set(run_ids)
         fights = [f for f in fights if f["run_id"] in wanted]
 
-    TRUTH_DIR.mkdir(parents=True, exist_ok=True)
+    resolved.truth_dir.mkdir(parents=True, exist_ok=True)
     written = []
     for fight in fights:
-        card = build_truth_card(fight)
-        out_path = TRUTH_DIR / f"{fight['run_id']}.json"
+        card = build_truth_card(fight, paths=resolved)
+        out_path = resolved.truth_dir / f"{fight['run_id']}.json"
         out_path.write_text(json.dumps(card, indent=2) + "\n", encoding="utf-8")
         written.append(fight["run_id"])
     return written
@@ -486,8 +493,9 @@ def main() -> None:
         parser.error("nothing to do: pass --all or one or more --run-id")
 
     run_ids = None if args.all else args.run_ids
-    written = write_truth_cards(run_ids)
-    print(f"Wrote {len(written)} truth card(s) to {TRUTH_DIR}")
+    paths = workspace_paths()
+    written = write_truth_cards(run_ids, paths=paths)
+    print(f"Wrote {len(written)} truth card(s) to {paths.truth_dir}")
 
 
 if __name__ == "__main__":

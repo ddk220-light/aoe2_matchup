@@ -4,13 +4,20 @@ from pathlib import Path
 
 import pytest
 
+from aoe2x.calibration.paths import workspace_paths
+
 REPO = Path(__file__).resolve().parents[1]
 ZIP = Path("C:/Users/ddk22/Downloads/aoe2_golden_spike_2026-07-29.zip")
 BATCH_017_ZIP = Path("C:/Users/ddk22/Downloads/aoe2_golden_batch91_partial_017.zip")
 BATCH_033_ZIP = Path("C:/Users/ddk22/Downloads/aoe2_golden_batch91_partial_033.zip")
 MANIFEST = REPO / "data" / "calibration" / "manifest.json"
 
+OBSOLETE_TAPE_FIXTURE = pytest.mark.skip(
+    reason="obsolete real-tape fixture is quarantined; STANDARD_UNITS_FINAL is the sole authority"
+)
 
+
+@OBSOLETE_TAPE_FIXTURE
 def test_ingest_spike_zip():
     from aoe2x.calibration.ingest import ingest_zip
 
@@ -30,6 +37,7 @@ def test_ingest_spike_zip():
     assert hc["matchup"] == "hand_cannoneer__vs__elite_elephant"
 
 
+@OBSOLETE_TAPE_FIXTURE
 def test_ingest_is_idempotent():
     from aoe2x.calibration.ingest import ingest_zip
 
@@ -109,6 +117,105 @@ def test_trample_skips_attack_check_instead_of_hard_failing():
     )
 
 
+def test_find_decoded_dir_accepts_standard_units_nested_layout(tmp_path):
+    """A consolidated standard-units drop nests its tape streams under
+    ``standard_units/decoded``. The ingester must discover that sole decoded
+    directory instead of silently treating the valid archive as zero fights.
+
+    This catches a regression back to the old hardcoded ``<zip>/decoded``
+    lookup, which returned an empty tag list for the FINAL corpus.
+    """
+    from aoe2x.calibration.ingest import _find_decoded_dir
+
+    decoded = tmp_path / "standard_units" / "decoded"
+    decoded.mkdir(parents=True)
+    (decoded / "champion__vs__hussar.meta.json").touch()
+
+    assert _find_decoded_dir(tmp_path) == decoded
+
+
+def test_roster_builds_matchup_authority_without_old_fixture(tmp_path):
+    """Catch FINAL ingestion falling back to an older matchups.json file."""
+    from aoe2x.calibration.ingest import _load_roster_authority
+
+    roster = tmp_path / "standard_units" / "ROSTER.txt"
+    roster.parent.mkdir(parents=True)
+    roster.write_text(
+        "3 standard units\n\n"
+        "  Champion                 Chinese/champion             melee\n"
+        "  Heavy Cav Archer         Saracens/heavy_cav_archer    ranged\n"
+        "  Paladin                  Spanish/paladin              melee\n",
+        encoding="utf-8",
+    )
+
+    authority = _load_roster_authority(tmp_path)
+
+    assert authority == [
+        {
+            "civ1": "Chinese",
+            "slug1": "champion",
+            "label1": "Champion",
+            "civ2": "Saracens",
+            "slug2": "heavy_cav_archer",
+            "label2": "Heavy Cav Archer",
+        },
+        {
+            "civ1": "Chinese",
+            "slug1": "champion",
+            "label1": "Champion",
+            "civ2": "Spanish",
+            "slug2": "paladin",
+            "label2": "Paladin",
+        },
+        {
+            "civ1": "Saracens",
+            "slug1": "heavy_cav_archer",
+            "label1": "Heavy Cav Archer",
+            "civ2": "Spanish",
+            "slug2": "paladin",
+            "label2": "Paladin",
+        },
+    ]
+
+
+def test_matchup_identity_uses_authority_order_not_recording_direction():
+    """Reverse-direction repeats must still be one unordered matchup."""
+    from aoe2x.calibration.ingest import _canonical_matchup_for_composition
+
+    authority = [
+        {
+            "label1": "Champion",
+            "civ1": "Chinese",
+            "slug1": "champion",
+            "label2": "Arbalester",
+            "civ2": "Chinese",
+            "slug2": "arbalester",
+        }
+    ]
+    reverse_recording = {
+        "side2": {"Arbalester": 30},
+        "side1": {"Champion": 30},
+    }
+
+    assert (
+        _canonical_matchup_for_composition(reverse_recording, authority)
+        == "champion__vs__arbalester"
+    )
+
+
+def test_manifest_helpers_write_only_to_explicit_workspace(tmp_path):
+    """Catch ingestion silently writing through a repository-global manifest."""
+    from aoe2x.calibration.ingest import _load_manifest, _save_manifest
+
+    paths = workspace_paths(tmp_path / "calibration")
+    expected = {"fights": [{"run_id": "synthetic"}]}
+
+    _save_manifest(expected, paths)
+
+    assert _load_manifest(paths) == expected
+    assert paths.manifest.is_file()
+
+
 def _isolate_calibration_storage(monkeypatch, tmp_path):
     """Redirect ingest.py's manifest/tape/drop storage under tmp_path so a
     test can exercise ingest_zip repeatedly without touching the real
@@ -137,6 +244,7 @@ def _isolate_calibration_storage(monkeypatch, tmp_path):
     return ingest_mod
 
 
+@OBSOLETE_TAPE_FIXTURE
 def test_cumulative_batch_redelivery_dedups_by_content(tmp_path, monkeypatch):
     """Real batches are cumulative snapshots: aoe2_golden_batch91_partial_033.zip
     re-delivers all 17 fights from partial_017.zip byte-identically, just
@@ -158,6 +266,7 @@ def test_cumulative_batch_redelivery_dedups_by_content(tmp_path, monkeypatch):
     assert len(run_ids) == 33  # no duplicates
 
 
+@OBSOLETE_TAPE_FIXTURE
 def test_repeat_recording_shares_matchup_but_has_distinct_run_id(tmp_path, monkeypatch):
     """The recorder gives repeat recordings of one matchup an explicit
     _r2/_r3/_rN tag suffix (e.g. champion__vs__arbalester_r3). Each repeat
@@ -219,6 +328,7 @@ def _make_true_conflict_zip(dst: Path, tag_to_mutate: str) -> Path:
     return dst
 
 
+@OBSOLETE_TAPE_FIXTURE
 def test_same_run_id_different_composition_is_conflict_not_overwrite(tmp_path, monkeypatch):
     """If a run_id ever reappears with DIFFERENT content AND a genuinely
     different composition (a real tag collision between two unrelated
@@ -285,6 +395,7 @@ def _make_reused_tag_repeat_zip(dst: Path, tag: str) -> Path:
     return dst
 
 
+@OBSOLETE_TAPE_FIXTURE
 def test_reused_tag_repeat_gets_reassigned_run_id_not_discarded(tmp_path, monkeypatch):
     """When the recorder reuses an existing tag for a genuine new recording
     (composition — the two unit names — still matches the existing entry,

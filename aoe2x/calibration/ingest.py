@@ -1,54 +1,14 @@
-"""Ingest recorded-fight "drop" zips into the calibration manifest.
+"""Ingest the locked FINAL standard-unit archive into the local workspace.
 
-A drop contains one or more decoded fight tapes (10 Hz unit positions, damage
-events, ~60 Hz missile positions, in-game commands) plus a `matchups_91.json`
-civ authority. This module unpacks a drop, resolves which civilization each
-side actually was (tapes only carry unit *names*, not civs), cross-validates
-that resolution against the tape's observed spawn HP (and, when derivable,
-the tape's observed hit damage), and records everything in
-`data/calibration/manifest.json` so downstream calibration stages
-(truth-card extraction, engine replay, scoring) never have to re-derive it.
+The archive supplies decoded fight streams and ``ROSTER.txt``. This module
+resolves each unit to its civilization and slug, validates observed spawn HP
+and derivable hit damage, stages streams under ``calibration/tapes``, and
+writes project-local fixtures under ``calibration/fixtures``.
 
-Large decoded tapes and raw drop archives live OUTSIDE the repo under
-``D:/AI/aoe2_golden/`` — only the manifest and the `matchups.json` civ
-authority are committed.
-
-Two things about how drops actually arrive, learned from real batches:
-
-1. **Drops are cumulative snapshots, not deltas.** A later batch zip
-   re-delivers every fight from earlier batches byte-identically (same
-   `damage`/`units`/`missiles` streams), packaged under a new `zip_sha256`
-   just because the archive grew. Idempotency therefore keys on each
-   fight's own *content* (a hash over its raw `damage`/`units`/`missiles`
-   bytes), never on the zip's hash — otherwise every cumulative drop would
-   re-ingest every earlier fight as "new".
-2. **The recorder USUALLY gives repeat recordings distinct identities, but
-   not always.** When the operator re-runs a matchup because a result
-   looked odd, the repeat normally gets an explicit `_r2`/`_r3`/`_rN` tag
-   suffix (e.g. `champion__vs__arbalester` and `champion__vs__arbalester_r3`
-   are two separate recordings of the same matchup) — the tag itself,
-   suffix included, IS the unique recording identity, no synthetic
-   numbering needed. Each fight's manifest entry stores both `run_id` (the
-   tag exactly as recorded, or reassigned — see below) and `matchup` (the
-   tag with any trailing `_rN` stripped), so downstream scoring can group
-   repeat runs of one matchup — that grouping is the only measurement of
-   the real game's own run-to-run variance, so repeats are always
-   additive, never merged or overwritten. Sometimes, though, the recorder
-   reuses an existing tag for a genuine new recording instead of suffixing
-   it (observed in practice: `hand_cannoneer__vs__elite_elephant` recorded
-   twice, 152.31s and 129.79s, same tag both times). When a `run_id`
-   already in the manifest shows up again with DIFFERENT content,
-   `ingest_zip` checks whether the two recordings are of the same matchup
-   (same two unit names) — if so, it's a genuine repeat with a reused tag,
-   and it gets auto-assigned the next free `<matchup>_rN` slot rather than
-   being overwritten or discarded (every recording is a variance sample we
-   want to keep). If the composition ALSO differs, that's an actual tag
-   collision between two unrelated fights, not a repeat — ingestion
-   refuses to guess and reports the conflict loudly instead.
-
-Do not import this module's callers into ``aoe2x/sim/simulation_real.py`` or
-``aoe2x/dbgen/config_combat.py`` territory: those files are byte-hashed into
-the matchup-row cache key and this pipeline must never touch them.
+Recording IDs remain distinct, while ``matchup`` uses the roster authority's
+side order so reverse-direction recordings group into one unordered matchup.
+Content hashes make re-ingestion idempotent. No production simulator module
+imports this calibration-only pipeline.
 """
 from __future__ import annotations
 
@@ -64,22 +24,14 @@ import tempfile
 import zipfile
 from collections import Counter
 from datetime import datetime, timezone
+from itertools import combinations
 from pathlib import Path
 from typing import Any
 
-from aoe2x.paths import GOLDEN_DIR, REPO_ROOT
+from aoe2x.calibration.paths import CalibrationPaths, workspace_paths
+from aoe2x.paths import GOLDEN_DIR
 
 logger = logging.getLogger(__name__)
-
-# Large decoded tapes + raw drop archives live outside the repo (never committed).
-EXTERNAL_ROOT = Path("D:/AI/aoe2_golden")
-TAPES_DIR = EXTERNAL_ROOT / "tapes"
-DROPS_DIR = EXTERNAL_ROOT / "drops"
-
-# Committed calibration artifacts.
-CALIBRATION_DIR = REPO_ROOT / "data" / "calibration"
-MANIFEST_PATH = CALIBRATION_DIR / "manifest.json"
-MATCHUPS_PATH = CALIBRATION_DIR / "matchups.json"
 
 REFERENCE_DB_PATH = GOLDEN_DIR / "aoe2_reference.db"
 
@@ -190,6 +142,63 @@ def _sha256_file(path: Path) -> str:
 
 def _load_matchups(matchups_path: Path) -> list[dict[str, Any]]:
     return json.loads(matchups_path.read_text(encoding="utf-8"))
+
+
+def _load_roster_authority(extracted_root: Path) -> list[dict[str, Any]]:
+    """Build the 91-pair civ/slug authority from FINAL's own ROSTER.txt."""
+    roster_files = sorted(extracted_root.rglob("ROSTER.txt"))
+    if len(roster_files) != 1:
+        raise ValueError(
+            f"expected exactly one ROSTER.txt, found {len(roster_files)}: "
+            f"{[str(path) for path in roster_files]}"
+        )
+    units: list[dict[str, str]] = []
+    pattern = re.compile(
+        r"^\s{2}(.+?)\s{2,}([^/\s]+)/([^\s]+)\s{2,}(?:melee|ranged|siege)\s*$"
+    )
+    for line in roster_files[0].read_text(encoding="utf-8").splitlines():
+        match = pattern.match(line)
+        if match:
+            label, civ, slug = match.groups()
+            units.append({"label": label.strip(), "civ": civ, "slug": slug})
+    if len(units) < 2:
+        raise ValueError(f"ROSTER.txt contained only {len(units)} parseable units")
+    if len({unit["label"] for unit in units}) != len(units):
+        raise ValueError("ROSTER.txt contains duplicate unit labels")
+    if len({unit["slug"] for unit in units}) != len(units):
+        raise ValueError("ROSTER.txt contains duplicate unit slugs")
+    return [
+        {
+            "civ1": first["civ"],
+            "slug1": first["slug"],
+            "label1": first["label"],
+            "civ2": second["civ"],
+            "slug2": second["slug"],
+            "label2": second["label"],
+        }
+        for first, second in combinations(units, 2)
+    ]
+
+
+def _find_decoded_dir(extracted_root: Path) -> Path:
+    """Return the sole decoded-tape directory in an extracted drop.
+
+    Early drops stored it directly at ``decoded/``; consolidated drops use
+    ``standard_units/decoded/``. Requiring metadata prevents an unrelated
+    empty directory from being selected and turns an unsupported archive
+    layout into a hard failure instead of a silent zero-fight ingest.
+    """
+    candidates = sorted(
+        path
+        for path in extracted_root.rglob("decoded")
+        if path.is_dir() and any(path.glob("*.meta.json"))
+    )
+    if len(candidates) != 1:
+        raise ValueError(
+            f"ingest_zip: expected exactly one decoded directory containing "
+            f"*.meta.json under {extracted_root}, found {len(candidates)}"
+        )
+    return candidates[0]
 
 
 _RUN_SUFFIX_RE = re.compile(r"_r\d+$")
@@ -388,15 +397,23 @@ def _slugs_for_unit_name(unit_name: str) -> list[str]:
         conn.close()
 
 
-def _load_manifest() -> dict[str, Any]:
-    if MANIFEST_PATH.exists():
-        return json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+def _load_manifest(paths: CalibrationPaths | None = None) -> dict[str, Any]:
+    resolved = paths or workspace_paths()
+    if resolved.manifest.exists():
+        return json.loads(resolved.manifest.read_text(encoding="utf-8"))
     return {"fights": []}
 
 
-def _save_manifest(manifest: dict[str, Any]) -> None:
-    MANIFEST_PATH.parent.mkdir(parents=True, exist_ok=True)
-    MANIFEST_PATH.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+def _save_manifest(
+    manifest: dict[str, Any],
+    paths: CalibrationPaths | None = None,
+) -> None:
+    resolved = paths or workspace_paths()
+    resolved.manifest.parent.mkdir(parents=True, exist_ok=True)
+    resolved.manifest.write_text(
+        json.dumps(manifest, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
 # --------------------------------------------------------------------------
@@ -450,6 +467,30 @@ def resolve_civ(unit_name: str, matchups: list[dict[str, Any]]) -> tuple[str, st
             f"(civ, slug) pairs: {sorted(found)}"
         )
     return next(iter(found))
+
+
+def _canonical_matchup_for_composition(
+    composition: dict[str, dict[str, int]],
+    matchups: list[dict[str, Any]],
+) -> str:
+    """Return the authority-ordered identity for an unordered unit pair."""
+    unit_names = [name for side in composition.values() for name in side]
+    if len(unit_names) != 2:
+        raise ValueError(
+            "ingest_zip: expected exactly two unit types while resolving matchup "
+            f"identity, got {unit_names!r}"
+        )
+    slugs = {resolve_civ(name, matchups)[1] for name in unit_names}
+    candidates = [
+        row for row in matchups if {row["slug1"], row["slug2"]} == slugs
+    ]
+    if len(candidates) != 1:
+        raise ValueError(
+            "ingest_zip: expected exactly one authority row for unordered slugs "
+            f"{sorted(slugs)!r}, found {len(candidates)}"
+        )
+    row = candidates[0]
+    return f"{row['slug1']}__vs__{row['slug2']}"
 
 
 def validate_unit(
@@ -542,6 +583,8 @@ def _process_fight(
     content_hash: str,
     zip_sha256: str,
     zip_path: Path,
+    paths: CalibrationPaths,
+    matchup: str,
     run_id: str | None = None,
 ) -> dict[str, Any]:
     """Resolve, cross-validate, and stage tape files for a single fight.
@@ -551,9 +594,9 @@ def _process_fight(
     included). It is passed explicitly (and differs from `tag`) only when
     the recorder reused an existing tag for a genuine new recording and
     `ingest_zip` had to assign a fresh `<matchup>_rN` slot itself (see the
-    "reused tag" handling there) — `matchup` is still always derived from
-    the raw `tag`, so the reassigned run still groups under the right
-    matchup. This function raises on any failure; it only touches the
+    "reused tag" handling there). ``matchup`` is the roster-authority
+    identity for the unordered pair, so reverse-direction recordings group
+    together. This function raises on any failure; it only touches the
     filesystem (tape copy) after both sides have fully validated, so a
     failing fight never leaves a half-copied tape directory behind (and
     never leaves a manifest entry).
@@ -607,7 +650,7 @@ def _process_fight(
 
     # All validations passed for both sides — now (and only now) stage tape
     # files, so a failed fight never leaves an orphaned/partial tape dir.
-    run_dir = TAPES_DIR / run_id
+    run_dir = paths.tapes_dir / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
     try:
         for src in decoded_dir.glob(f"{tag}.*"):
@@ -629,10 +672,10 @@ def _process_fight(
     return {
         "tag": run_id,  # kept identical to run_id (see module docstring); NOT necessarily the raw recorded tag
         "run_id": run_id,
-        "matchup": _matchup_for_tag(tag),  # derived from the RAW tag, so a reassigned run_id still groups correctly
+        "matchup": matchup,
         "content_hash": content_hash,
-        "zip_sha256": zip_sha256,
-        "drop": str(DROPS_DIR / zip_path.name),
+        "zip_sha256": zip_sha256.upper(),
+        "source_archive": zip_path.name,
         "side1": {k: v for k, v in resolved[0].items() if k != "observed_hp"},
         "side2": {k: v for k, v in resolved[1].items() if k != "observed_hp"},
         "duration_s": meta["duration_s"],
@@ -641,20 +684,21 @@ def _process_fight(
     }
 
 
-def ingest_zip(zip_path: str) -> list[str]:
+def ingest_zip(
+    zip_path: str | Path,
+    *,
+    paths: CalibrationPaths | None = None,
+) -> list[str]:
     """Unpack a recorded-fight drop zip and register it in the calibration manifest.
 
     Extracts the zip to a temp dir, resolves + cross-validates both sides of
     each fight, copies each fight's decoded tape files to
-    ``D:/AI/aoe2_golden/tapes/<run_id>/``, archives the raw zip under
-    ``D:/AI/aoe2_golden/drops/``, and copies the drop's `matchups_91.json`
-    civ authority into the repo as `data/calibration/matchups.json`. Appends
-    one manifest entry per successfully-validated fight to
-    `data/calibration/manifest.json`, keyed by `run_id` (the tag exactly as
+    ``calibration/tapes/<run_id>/`` and writes the derived roster authority
+    and manifest under ``calibration/fixtures``. Adds one manifest entry per
+    successfully validated fight, keyed by `run_id` (the tag exactly as
     recorded — the recorder already suffixes repeat recordings `_r2`,
-    `_r3`, ...). Each entry also carries `matchup` (the tag with any
-    trailing `_rN` stripped), so callers can group repeat runs of one
-    matchup — see the module docstring for why that grouping matters.
+    `_r3`, ...). Each entry also carries the roster-authority ``matchup``
+    identity so callers can group every direction and repeat of one pair.
 
     Idempotency keys on each fight's own CONTENT hash (over its raw
     damage/units/missiles bytes), not the zip's hash: later drops are
@@ -680,9 +724,10 @@ def ingest_zip(zip_path: str) -> list[str]:
     present with matching content — a cumulative-redelivery no-op).
     """
     zip_path = Path(zip_path)
-    zip_sha256 = _sha256_file(zip_path)
+    resolved_paths = paths or workspace_paths()
+    zip_sha256 = _sha256_file(zip_path).upper()
 
-    manifest = _load_manifest()
+    manifest = _load_manifest(resolved_paths)
     fights_by_run_id: dict[str, dict[str, Any]] = {f["run_id"]: f for f in manifest["fights"]}
 
     run_ids: list[str] = []
@@ -694,30 +739,36 @@ def ingest_zip(zip_path: str) -> list[str]:
         tmp_path = Path(tmp)
         zf.extractall(tmp_path)
 
-        decoded_dir = tmp_path / "decoded"
+        decoded_dir = _find_decoded_dir(tmp_path)
         meta_files = sorted(decoded_dir.glob("*.meta.json"))
         tags = [p.name[: -len(".meta.json")] for p in meta_files]
 
-        # Only the first ("spike") drop actually carries matchups_91.json —
-        # it's a static civ authority, not something that changes per batch.
-        # Later cumulative drops fall back to the already-committed copy.
-        matchups_src = tmp_path / "matchups_91.json"
-        if matchups_src.exists():
+        # FINAL carries ROSTER.txt. Supporting an embedded matchups_91.json
+        # keeps this parser usable for a structurally equivalent archive,
+        # without falling back to any previously generated fixture.
+        matchup_files = sorted(tmp_path.rglob("matchups_91.json"))
+        if len(matchup_files) == 1:
+            matchups_src = matchup_files[0]
             matchups = _load_matchups(matchups_src)
-        elif MATCHUPS_PATH.exists():
-            matchups = _load_matchups(MATCHUPS_PATH)
-            matchups_src = None  # nothing fresh in this drop to copy back
+        elif not matchup_files:
+            matchups_src = None
+            matchups = _load_roster_authority(tmp_path)
+            resolved_paths.fixtures_dir.mkdir(parents=True, exist_ok=True)
+            resolved_paths.matchups.write_text(
+                json.dumps(matchups, indent=2) + "\n",
+                encoding="utf-8",
+            )
         else:
             raise ValueError(
-                f"ingest_zip: {zip_path.name} has no matchups_91.json and no prior "
-                f"{MATCHUPS_PATH} exists to fall back to — cannot resolve civs for any fight in this drop"
+                f"ingest_zip: found multiple matchups_91.json files: {matchup_files}"
             )
 
         for tag in tags:
             run_id = tag  # the recorder's tag is normally the unique recording identity
             content_hash = _fight_content_hash(decoded_dir, tag)
             existing = fights_by_run_id.get(run_id)
-            matchup = _matchup_for_tag(tag)
+            new_meta = json.loads((decoded_dir / f"{tag}.meta.json").read_text(encoding="utf-8"))
+            matchup = _canonical_matchup_for_composition(new_meta["composition"], matchups)
 
             if existing is not None and existing.get("content_hash") == content_hash:
                 # Cumulative redelivery of an already-ingested fight — no-op.
@@ -740,7 +791,6 @@ def ingest_zip(zip_path: str) -> list[str]:
                 # — still matches: a genuine variance sample we must keep,
                 # not discard), or (b) an actual conflict (same tag string,
                 # different fight entirely) that must never be auto-merged.
-                new_meta = json.loads((decoded_dir / f"{tag}.meta.json").read_text(encoding="utf-8"))
                 if _same_matchup_composition(existing, new_meta["composition"]):
                     reassigned_run_id = _next_available_run_id(matchup, fights_by_run_id)
                     logger.warning(
@@ -753,6 +803,7 @@ def ingest_zip(zip_path: str) -> list[str]:
                     try:
                         entry = _process_fight(
                             tag, decoded_dir, matchups, content_hash, zip_sha256, zip_path,
+                            resolved_paths, matchup,
                             run_id=reassigned_run_id,
                         )
                     except Exception as exc:  # noqa: BLE001 - isolate one bad fight
@@ -776,7 +827,16 @@ def ingest_zip(zip_path: str) -> list[str]:
                 continue
 
             try:
-                entry = _process_fight(tag, decoded_dir, matchups, content_hash, zip_sha256, zip_path)
+                entry = _process_fight(
+                    tag,
+                    decoded_dir,
+                    matchups,
+                    content_hash,
+                    zip_sha256,
+                    zip_path,
+                    resolved_paths,
+                    matchup,
+                )
             except Exception as exc:  # noqa: BLE001 - deliberately broad: isolate one bad fight
                 logger.error("ingest_zip: fight tag=%r run_id=%r FAILED: %s", tag, run_id, exc)
                 failures.append((tag, str(exc)))
@@ -788,15 +848,12 @@ def ingest_zip(zip_path: str) -> list[str]:
         # Archive the raw drop and the civ authority alongside the manifest
         # regardless of per-fight failures — the fights that DID succeed are
         # still worth keeping, and the drop itself is unmodified evidence.
-        DROPS_DIR.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(zip_path, DROPS_DIR / zip_path.name)
-
         if matchups_src is not None:
-            CALIBRATION_DIR.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(matchups_src, MATCHUPS_PATH)
+            resolved_paths.fixtures_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(matchups_src, resolved_paths.matchups)
 
     manifest["fights"] = list(fights_by_run_id.values())
-    _save_manifest(manifest)
+    _save_manifest(manifest, resolved_paths)
 
     if failures or conflicts:
         parts = []

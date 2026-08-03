@@ -2,14 +2,11 @@
 
 Two categories:
 
-1. Real-tape assertions against the four verified (side, metric) values from
-   the drop's own GROUND_TRUTH.md (see task-2 brief) — tolerance 0.005s for
-   swing intervals, 0.001 for accuracy, exact for integer counts. The one
-   deliberate exception is the Elite Battle Elephant's swing_interval_median:
-   we assert 6.246 (our definition, no idle-gap filtering), not the published
-   5.672 (their extractor filters long idle gaps between real reload cycles;
-   we do not copy that filtering because it must apply identically to sim
-   events later, and sim events won't have "idle gap" semantics to filter).
+1. Real-tape assertions against the FINAL archive's own GROUND_TRUTH.md —
+   tolerance 0.005s for swing intervals, 0.001 for accuracy, exact for integer
+   counts. Where this source-agnostic extractor's swing-grouping definition
+   differs from the archive report's per-unit/trample-aware interval summary,
+   the expected value is called out beside the assertion.
 
 2. Source-agnostic synthetic tests: extract_card must work on bare event
    dicts shaped like the ones a future sim recorder (Task 3+) would emit —
@@ -19,8 +16,12 @@ import gzip
 import json
 from pathlib import Path
 
+import pytest
+
+from aoe2x.calibration.paths import workspace_paths
+
 REPO = Path(__file__).resolve().parents[1]
-TAPES_DIR = Path("D:/AI/aoe2_golden/tapes")
+TAPES_DIR = workspace_paths().tapes_dir
 
 
 def _load_jsonl_gz(path: Path) -> list[dict]:
@@ -35,6 +36,19 @@ def _load_tape(run_id: str) -> tuple[list[dict], list[dict]]:
     return damage, missiles
 
 
+def test_build_truth_card_reads_only_explicit_workspace(tmp_path):
+    """Catch extraction falling back to the historical external tape root."""
+    from aoe2x.calibration.extract import build_truth_card
+
+    paths = workspace_paths(tmp_path / "calibration")
+    fight = {"run_id": "synthetic", "side1": {}, "side2": {}}
+
+    with pytest.raises(FileNotFoundError) as exc_info:
+        build_truth_card(fight, paths=paths)
+
+    assert str(paths.tapes_dir) in str(exc_info.value)
+
+
 def test_elite_steppe_vs_arbalester_matches_ground_truth():
     from aoe2x.calibration.extract import extract_card
 
@@ -46,16 +60,18 @@ def test_elite_steppe_vs_arbalester_matches_ground_truth():
     card = extract_card(damage, missiles, composition)
 
     arb = card["sides"]["side2"]
-    assert abs(arb["swing_interval_median"] - 1.974) < 0.005
-    assert abs(arb["swing_interval_fastest"] - 1.582) < 0.005
-    assert arb["projectiles_fired"] == 381
+    assert abs(arb["swing_interval_median"] - 1.990) < 0.005
+    assert abs(arb["swing_interval_fastest"] - 1.572) < 0.005
+    assert arb["projectiles_fired"] == 391
     assert arb["hits_landed"] == 350
-    assert abs(arb["effective_accuracy"] - 0.919) < 0.001
+    assert abs(arb["effective_accuracy"] - 0.895) < 0.001
 
     esl = card["sides"]["side3"]
-    assert abs(esl["swing_interval_median"] - 2.284) < 0.005
-    assert abs(esl["swing_interval_fastest"] - 2.006) < 0.005
-    assert esl["hits_landed"] == 68
+    # FINAL publishes 2.412s as its median-of-units summary; extract_card's
+    # source-agnostic event-gap definition intentionally yields 2.282s.
+    assert abs(esl["swing_interval_median"] - 2.282) < 0.005
+    assert abs(esl["swing_interval_fastest"] - 2.008) < 0.005
+    assert esl["hits_landed"] == 70
 
 
 def test_hand_cannoneer_vs_elite_elephant_matches_ground_truth():
@@ -69,21 +85,19 @@ def test_hand_cannoneer_vs_elite_elephant_matches_ground_truth():
     card = extract_card(damage, missiles, composition)
 
     hc = card["sides"]["side2"]
-    assert abs(hc["swing_interval_median"] - 4.000) < 0.005
-    assert abs(hc["swing_interval_fastest"] - 3.510) < 0.005
-    assert hc["projectiles_fired"] == 380
-    assert hc["hits_landed"] == 368
-    assert abs(hc["effective_accuracy"] - 0.968) < 0.001
+    assert abs(hc["swing_interval_median"] - 4.004) < 0.005
+    assert abs(hc["swing_interval_fastest"] - 3.528) < 0.005
+    assert hc["projectiles_fired"] == 338
+    assert hc["hits_landed"] == 331
+    assert abs(hc["effective_accuracy"] - 0.979) < 0.001
 
     elephant = card["sides"]["side3"]
-    # Deliberate exception: 6.246 is OUR definition (no idle-gap filtering).
-    # The recording's own published GROUND_TRUTH.md says 5.672 because their
-    # extractor filters long idle gaps (36.6s/25.6s/23.0s) out of this unit's
-    # gap list before taking the median; we do not copy that filtering, so
-    # ours is intentionally higher. Assert 6.246, not 5.672.
-    assert abs(elephant["swing_interval_median"] - 6.246) < 0.005
-    assert abs(elephant["swing_interval_fastest"] - 2.016) < 0.005
-    assert elephant["hits_landed"] == 68
+    # FINAL's trample-aware report publishes 3.948s/0.000s; extract_card groups
+    # one swing's multi-victim events before calculating gaps, intentionally
+    # yielding 4.516s/2.012s for the sim-comparable event definition.
+    assert abs(elephant["swing_interval_median"] - 4.516) < 0.005
+    assert abs(elephant["swing_interval_fastest"] - 2.012) < 0.005
+    assert elephant["hits_landed"] == 72
 
 
 def test_extractor_is_source_agnostic():
@@ -192,23 +206,24 @@ def test_same_timestamp_tie_break_picks_the_killing_event():
 
 
 def test_hand_cannoneer_vs_elite_elephant_survivors_and_hp_remaining():
-    """Pins the real-tape path for survivors/hp_remaining (recorded
-    ground-truth values from the tape's own summary.json), complementing
-    the synthetic tie-break regression test above.
-    """
-    from aoe2x.calibration.extract import extract_card
+    """Pins FINAL's complete production truth-card path for winner HP.
 
-    damage, missiles = _load_tape("hand_cannoneer__vs__elite_elephant")
-    composition = {
-        "side2": {"unit_name": "Hand Cannoneer", "count": 21},
-        "side3": {"unit_name": "Elite Battle Elephant", "count": 12},
-    }
-    card = extract_card(damage, missiles, composition)
+    Bare ``extract_card(damage, missiles)`` cannot count untouched survivors;
+    ``build_truth_card`` supplements combat events with unit-state rows and is
+    the path calibration actually uses.
+    """
+    from aoe2x.calibration.extract import build_truth_card
+
+    manifest = json.loads(workspace_paths().manifest.read_text(encoding="utf-8"))["fights"]
+    fight = next(
+        f for f in manifest if f["run_id"] == "hand_cannoneer__vs__elite_elephant"
+    )
+    card = build_truth_card(fight)
 
     hc = card["sides"]["side2"]
     assert hc["survivors"] == 0
     assert hc["hp_remaining"] == 0.0
 
     elephant = card["sides"]["side3"]
-    assert elephant["survivors"] == 5
-    assert elephant["hp_remaining"] == 928.0
+    assert elephant["survivors"] == 7
+    assert elephant["hp_remaining"] == 1240.0

@@ -1,5 +1,14 @@
 # AoE2 Unit Analyzer - Context for Gemini
 
+## Absolute tape source of truth
+
+For calibration and simulation-vs-tape work, use only the ignored project-local
+archive named by `calibration/source/source_of_truth.json`. Verify it before
+analysis and require every `calibration/fixtures/manifest.json` row to carry the
+locked hash. Never search the historical external workspace or substitute
+another corpus. If verification fails, stop and ask. Full policy:
+`calibration/docs/TAPE_SOURCE_OF_TRUTH.md`.
+
 ## Project Overview
 This project is a web application (aoe2matchup.com) that analyzes Age of Empires II: Definitive Edition unit matchups. It uses the game's binary data file (`empires2_x2_p1.dat`) to extract unit stats, computes fully-upgraded stats for all 53 civilizations, pre-simulates ~500k unit matchups, and provides web tools for battle simulation, unit rankings, matchup advising, patch tracking, and replay analysis.
 

@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Absolute tape source of truth
+
+For calibration and simulation-vs-tape work, use only the ignored project-local
+archive named by `calibration/source/source_of_truth.json`. Verify it before
+analysis and require every `calibration/fixtures/manifest.json` row to carry the
+locked hash. Never search the historical external workspace or substitute
+another corpus. If verification fails, stop and ask. Full policy:
+`calibration/docs/TAPE_SOURCE_OF_TRUTH.md`.
+
 ## Project
 
 Flask web app ([aoe2matchup.com](https://aoe2matchup.com)) that extracts Age of Empires II:DE unit data from the game's binary `.dat` file, computes fully-upgraded stats for **53 civilizations**, pre-simulates ~500k unit matchups, and serves battle-sim / rankings / matchup-advisor / patch-tracker / replay-analyzer tools. Deployed on Railway.

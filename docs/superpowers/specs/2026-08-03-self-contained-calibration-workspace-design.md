@@ -9,8 +9,8 @@
 Contain all future standard-unit tape calibration work inside
 `D:/AI/aoe2_matchup` without moving or changing either production simulation
 engine. Make the active calibration corpus reproducible from one ignored local
-archive and prevent older recordings, reports, counts, or scale assumptions
-from entering any result.
+archive and prevent older recordings, reports, counts, or tape-measurement
+assumptions from entering any result.
 
 ## Sole tape authority
 
@@ -113,15 +113,17 @@ Derivation never appends to existing fixtures. It builds into a clean temporary
 directory and replaces the active set only after all provenance and completeness
 checks pass. This prevents removed or renamed recordings from lingering.
 
-## Scale simplification
+## Tape-measurement reset
 
-The standard-unit tape calibration runner uses only the recorded tape
-composition, named `tape`. The legacy calibration-only `equal_count` scale is
-removed from defaults, plans, report code, and calibration tests. A requested
-unknown scale is an error.
+“Old scale” means the old way tape outcomes were measured and the values
+derived from superseded recordings. It does not mean a simulation count mode.
+This migration therefore does not add, remove, rename, or reinterpret
+`equal_count`, `tape`, `30v30`, `3k`, or any other scale.
 
-This change does not affect the production matchup application's `30v30`, `3k`,
-or any other product-facing scale. Those belong to a separate pipeline.
+All active tape measurements—including winner, surviving HP percentage, fight
+duration, hit counts, survivor counts, and derived medians—must be regenerated
+from FINAL. No previously computed value may be carried forward merely because
+its matchup tag still exists in the new corpus.
 
 ## Documentation cleanup
 
@@ -152,8 +154,9 @@ The migration is accepted only when all of these pass:
    extraction, scoring, or reporting.
 5. **Path isolation:** active calibration code contains no reference to
    `D:/AI/aoe2_golden`, Downloads, or `data/calibration`.
-6. **Scale isolation:** calibration supports only `tape`; product scale tests
-   remain unchanged.
+6. **Measurement isolation:** current winners, HP percentages, durations, hit
+   counts, survivors, and medians are reproduced from FINAL; scale behavior is
+   unchanged by the migration.
 7. **Synthetic unit tests:** tests needing database/report shapes construct
    temporary fixtures instead of relying on historical tape artifacts.
 8. **Engine immutability:** no diff exists under `apps/website/static/js/engine/`
@@ -187,11 +190,10 @@ ZIP must never be staged accidentally.
 5. Move active fixtures and current FINAL-based documentation.
 6. Update non-production calibration readers and writers to use the central
    paths.
-7. Remove the legacy `equal_count` calibration scale.
-8. Remove stale calibration documents and old path/value references from the
+7. Remove stale calibration documents and old path/value references from the
    active tree.
-9. Run path, provenance, focused calibration, and broader regression checks.
-10. Leave `D:/AI/aoe2_golden` unchanged; do not delete or archive anything else
+8. Run path, provenance, focused calibration, and broader regression checks.
+9. Leave `D:/AI/aoe2_golden` unchanged; do not delete or archive anything else
     during this migration.
 
 ## Success criteria

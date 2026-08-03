@@ -1,4 +1,4 @@
-"""Extract every calibration tape's FIRST-FRAME unit positions -> data/calibration/spawns.json.
+"""Extract FINAL tape first-frame positions into local calibration fixtures.
 
 Why this exists
 ---------------
@@ -25,7 +25,7 @@ Discipline
 * Positions are copied, never synthesised: no jitter, no rounding, no
   re-centring.  The engine does the tile -> pixel mapping (one shared constant,
   TILE_SIZE), so this file stays a pure transcription of the tape.
-* Counts are checked against `data/calibration/manifest.json` -- against
+* Counts are checked against `calibration/fixtures/manifest.json` -- against
   `side1`/`side2`'s own `owner` field, NOT against side ORDER, because the
   side labels do not follow the tag's word order (a tag reading
   ``a__vs__b`` may well have `side1` = b).  A tag whose per-owner count
@@ -50,14 +50,15 @@ from __future__ import annotations
 import argparse
 import gzip
 import json
+import sys
 from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 
-TAPES_DIR = Path("D:/AI/aoe2_golden/tapes")
-MANIFEST_PATH = ROOT / "data" / "calibration" / "manifest.json"
-OUT_PATH = ROOT / "data" / "calibration" / "spawns.json"
+from aoe2x.calibration.paths import CalibrationPaths, workspace_paths
+from aoe2x.calibration.source import verify_source_archive
 
 # How much tape time past the first sample we are willing to keep scanning for
 # a unit the manifest says exists but the first frame did not carry. One second
@@ -99,7 +100,15 @@ def first_frame_positions(tape_path: Path, expected: dict[int, int], settle_s: f
     return {owner: sorted(rows) for owner, rows in by_owner.items()}
 
 
-def build(manifest_path: Path = MANIFEST_PATH, tapes_dir: Path = TAPES_DIR):
+def build(
+    *,
+    paths: CalibrationPaths | None = None,
+    manifest_path: Path | None = None,
+    tapes_dir: Path | None = None,
+):
+    resolved = paths or workspace_paths()
+    manifest_path = manifest_path or resolved.manifest
+    tapes_dir = tapes_dir or resolved.tapes_dir
     fights = json.loads(manifest_path.read_text(encoding="utf-8"))["fights"]
     spawns: dict[str, dict[str, list[list[float]]]] = {}
     problems: list[str] = []
@@ -169,12 +178,14 @@ def _stats(spawns: dict[str, dict[str, list[list[float]]]]) -> None:
 
 
 def main() -> None:
+    paths = workspace_paths()
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--check", action="store_true", help="validate only; write nothing")
-    ap.add_argument("--out", type=Path, default=OUT_PATH)
+    ap.add_argument("--out", type=Path, default=paths.spawns)
     args = ap.parse_args()
+    verify_source_archive(paths)
 
-    spawns, problems, bounds = build()
+    spawns, problems, bounds = build(paths=paths)
     print(f"extracted spawns for {len(spawns)} tapes")
     print(
         f"first-frame tile bounds: x [{bounds[0]}, {bounds[2]}]  y [{bounds[1]}, {bounds[3]}]"

@@ -64,6 +64,12 @@ def rebuild_final(
         from .extract import write_truth_cards
         from .ingest import ingest_zip
 
+        # Fight-set membership is project policy, not a tape-derived measure.
+        # Carry it into the otherwise clean fixture publication.
+        if resolved.fight_sets.exists():
+            staged.fixtures_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(resolved.fight_sets, staged.fight_sets)
+
         run_ids = ingest_zip(resolved.source_zip, paths=staged)
         written = write_truth_cards(paths=staged)
         manifest = json.loads(staged.manifest.read_text(encoding="utf-8"))["fights"]

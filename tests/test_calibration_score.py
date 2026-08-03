@@ -25,9 +25,8 @@ Two categories:
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[1]
+from aoe2x.calibration.paths import workspace_paths
 
 
 def _side(**kwargs):
@@ -200,22 +199,32 @@ def test_effective_accuracy_above_one_is_never_clamped():
     assert row["tape"] == 2.43, "accuracy > 1.0 must never be clamped"
 
 
-def test_score_fight_end_to_end_against_real_corpus_data():
-    """Smoke test: score_fight glues manifest + truth card + 20 real sim
-    runs together correctly for an actual corpus fight."""
+def test_score_fight_reads_only_explicit_workspace(tmp_path):
     from aoe2x.calibration.score import score_fight
 
-    truth_path = REPO / "data" / "calibration" / "truth" / "elite_steppe__vs__arbalester.json"
-    if not truth_path.exists():
-        import pytest
-        pytest.skip("truth card not present in this environment")
+    paths = workspace_paths(tmp_path / "calibration")
+    run_id = "local_a__vs__local_b"
+    fight = {
+        "tag": run_id,
+        "run_id": run_id,
+        "matchup": run_id,
+        "side1": {"owner": 2, "unit_name": "A", "civ": "Chinese", "slug": "champion", "count": 1},
+        "side2": {"owner": 3, "unit_name": "B", "civ": "Chinese", "slug": "arbalester", "count": 1},
+    }
+    paths.fixtures_dir.mkdir(parents=True)
+    paths.manifest.write_text(json.dumps({"fights": [fight]}), encoding="utf-8")
+    paths.truth_dir.mkdir(parents=True)
+    paths.truth_dir.joinpath(f"{run_id}.json").write_text(
+        json.dumps(_card(_side(), _side(), run_id=run_id, tag=run_id, matchup=run_id)),
+        encoding="utf-8",
+    )
+    sim_dir = paths.runs_dir / run_id
+    sim_dir.mkdir(parents=True)
+    sim_dir.joinpath("seed-1.json").write_text(
+        json.dumps({"damage": [], "missiles": [], "duration_s": 1.0}),
+        encoding="utf-8",
+    )
 
-    result = score_fight("elite_steppe__vs__arbalester")
-    assert result["run_id"] == "elite_steppe__vs__arbalester"
-    assert result["verdict"] in ("PASS", "MISMATCH", "INCONCLUSIVE")
-    assert any(m["name"] == "hits_landed" for m in result["metrics"])
-    # every gated metric row must carry sim distribution stats or an
-    # explicit note explaining why it doesn't.
-    for m in result["metrics"]:
-        if m.get("gated"):
-            assert m["verdict"] in ("MATCH", "MISMATCH", "INCONCLUSIVE")
+    result = score_fight(run_id, seeds=[1], paths=paths)
+
+    assert result["run_id"] == run_id

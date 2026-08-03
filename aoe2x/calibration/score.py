@@ -8,9 +8,9 @@ streams -- never a second metric implementation), it returns one verdict row
 per metric x side plus an overall fight verdict and a reroll list.
 
 ``score_fight(run_id) -> dict`` is the disk-facing wrapper: it loads
-``data/calibration/manifest.json`` (for composition), the tape's truth card
-from ``data/calibration/truth/<run_id>.json``, and every
-``D:/AI/aoe2_golden/simruns/<run_id>/seed-<n>.json`` file, runs each sim
+``calibration/fixtures/manifest.json`` (for composition), the tape's truth card
+from ``calibration/fixtures/truth/<run_id>.json``, and every
+``calibration/runs/<run_id>/seed-<n>.json`` file, runs each sim
 seed's raw event stream through ``extract_card`` itself, and calls
 ``score_card``.
 
@@ -19,14 +19,14 @@ CLI:
     python -m aoe2x.calibration.score --all --label baseline
     python -m aoe2x.calibration.score --run-id elite_steppe__vs__arbalester
 
-writes ``data/calibration/runs/<stamp>-<label>.json``.
+writes ``calibration/reports/<stamp>-<label>.json``.
 
 Subset runs
 -----------
 
 ``--melee-only`` / ``--tags a,b`` / ``--match <regex>`` score only part of
 the corpus -- the SAME three filters ``tools/simjs/calib_runner.mjs`` takes,
-off the same ``data/calibration/fight_sets.json`` (see
+off the same ``calibration/fixtures/fight_sets.json`` (see
 ``aoe2x.calibration.filters``), so a subset sim run and its scoreboard
 always agree on which fights are in play. Without them, scoring a
 melee-only sim directory with ``--all`` produces 124 "no sim run files
@@ -136,13 +136,8 @@ from aoe2x.calibration.filters import (
     filter_fights,
     filter_kwargs_from_args,
 )
-from aoe2x.paths import REPO_ROOT
-
-CALIBRATION_DIR = REPO_ROOT / "data" / "calibration"
-MANIFEST_PATH = CALIBRATION_DIR / "manifest.json"
-TRUTH_DIR = CALIBRATION_DIR / "truth"
-RUNS_DIR = CALIBRATION_DIR / "runs"
-SIMRUNS_DIR = Path("D:/AI/aoe2_golden/simruns")
+from aoe2x.calibration.paths import CalibrationPaths, workspace_paths
+from aoe2x.calibration.source import verify_source_archive
 
 DEFAULT_SEEDS = list(range(1, 21))
 Z95 = 1.96  # two-sided 95% normal-approx binomial CI
@@ -595,19 +590,23 @@ def score_card(tape_card: dict, sim_cards: list[dict], sim_durations: list[float
 # ---------------------------------------------------------------------------
 
 
-def _load_manifest() -> dict[str, Any]:
-    return json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+def _load_manifest(paths: CalibrationPaths | None = None) -> dict[str, Any]:
+    resolved = paths or workspace_paths()
+    return json.loads(resolved.manifest.read_text(encoding="utf-8"))
 
 
-def _load_manifest_fight(run_id: str) -> dict[str, Any]:
-    for f in _load_manifest()["fights"]:
+def _load_manifest_fight(
+    run_id: str,
+    paths: CalibrationPaths | None = None,
+) -> dict[str, Any]:
+    for f in _load_manifest(paths)["fights"]:
         if f["run_id"] == run_id:
             return f
     raise KeyError(f"no manifest entry for run_id={run_id!r}")
 
 
 def _load_sim_cards(
-    fight: dict[str, Any], seeds: list[int] = DEFAULT_SEEDS, sim_runs_dir: Path = SIMRUNS_DIR,
+    fight: dict[str, Any], seeds: list[int], sim_runs_dir: Path,
 ) -> tuple[list[dict], list[float]]:
     """Run every available seed file's raw damage/missile streams through
     extract_card (the SAME function the tape went through) and return the
@@ -628,18 +627,29 @@ def _load_sim_cards(
     return cards, durations
 
 
-def score_fight(run_id: str, *, seeds: list[int] = DEFAULT_SEEDS, sim_runs_dir: Path = SIMRUNS_DIR) -> dict:
-    fight = _load_manifest_fight(run_id)
-    tape_card = json.loads((TRUTH_DIR / f"{run_id}.json").read_text(encoding="utf-8"))
-    sim_cards, sim_durations = _load_sim_cards(fight, seeds, sim_runs_dir)
+def score_fight(
+    run_id: str,
+    *,
+    seeds: list[int] = DEFAULT_SEEDS,
+    sim_runs_dir: Path | None = None,
+    paths: CalibrationPaths | None = None,
+) -> dict:
+    resolved = paths or workspace_paths()
+    resolved_sim_runs = sim_runs_dir or resolved.runs_dir
+    fight = _load_manifest_fight(run_id, resolved)
+    tape_card = json.loads(
+        (resolved.truth_dir / f"{run_id}.json").read_text(encoding="utf-8")
+    )
+    sim_cards, sim_durations = _load_sim_cards(fight, seeds, resolved_sim_runs)
     return score_card(tape_card, sim_cards, sim_durations)
 
 
 def score_all(
     *,
     seeds: list[int] = DEFAULT_SEEDS,
-    sim_runs_dir: Path = SIMRUNS_DIR,
+    sim_runs_dir: Path | None = None,
     filters: dict[str, Any] | None = None,
+    paths: CalibrationPaths | None = None,
 ) -> tuple[list[dict], list[dict]]:
     """Score every fight in the manifest, or the subset ``filters`` selects.
 
@@ -649,9 +659,11 @@ def score_all(
     letting the un-run fights fail is the point: a melee-only sim directory
     would otherwise contribute 124 FileNotFoundError rows.
     """
-    fights = _load_manifest()["fights"]
+    resolved = paths or workspace_paths()
+    resolved_sim_runs = sim_runs_dir or resolved.runs_dir
+    fights = _load_manifest(resolved)["fights"]
     if filters:
-        fights = filter_fights(fights, **filters)
+        fights = filter_fights(fights, paths=resolved, **filters)
     else:
         # No subset filters: still drop quarantined recordings (known-bad
         # truth; see filters.filter_fights) so `--all` never scores them.
@@ -660,7 +672,14 @@ def score_all(
     for fight in fights:
         run_id = fight["run_id"]
         try:
-            results.append(score_fight(run_id, seeds=seeds, sim_runs_dir=sim_runs_dir))
+            results.append(
+                score_fight(
+                    run_id,
+                    seeds=seeds,
+                    sim_runs_dir=resolved_sim_runs,
+                    paths=resolved,
+                )
+            )
         except Exception as exc:  # noqa: BLE001 - deliberately broad, isolated per fight
             failures.append({"run_id": run_id, "error": str(exc)})
     return results, failures
@@ -730,21 +749,23 @@ def _filename_filter(filter_label: str) -> str:
 
 
 def main() -> None:
+    paths = workspace_paths()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--all", action="store_true", help="Score every fight in the manifest.")
     ap.add_argument("--run-id", action="append", dest="run_ids", help="Score a single run_id (repeatable).")
     ap.add_argument("--label", default="baseline", help="Label embedded in the output filename.")
     ap.add_argument("--seeds", type=int, default=20, help="Number of seeds to read (1..N).")
     ap.add_argument(
-        "--sim-runs-dir", type=Path, default=SIMRUNS_DIR,
+        "--sim-runs-dir", type=Path, default=paths.runs_dir,
         help=(
             "Directory holding <run_id>/seed-<n>.json sim runs "
-            f"(default: {SIMRUNS_DIR}). Point this at an experiment's "
+            f"(default: {paths.runs_dir}). Point this at an experiment's "
             "--out-dir to score that run without clobbering the default."
         ),
     )
     add_filter_args(ap)
     args = ap.parse_args()
+    verify_source_archive(paths)
 
     filters = filter_kwargs_from_args(args)
     filter_label = describe_filter(**filters)
@@ -762,11 +783,14 @@ def main() -> None:
         )
 
     seeds = list(range(1, args.seeds + 1))
-    n_manifest = len(_load_manifest()["fights"])
+    n_manifest = len(_load_manifest(paths)["fights"])
 
     if args.all or any_filter:
         results, failures = score_all(
-            seeds=seeds, sim_runs_dir=args.sim_runs_dir, filters=filters,
+            seeds=seeds,
+            sim_runs_dir=args.sim_runs_dir,
+            filters=filters,
+            paths=paths,
         )
         if any_filter:
             print(
@@ -777,7 +801,14 @@ def main() -> None:
         results, failures = [], []
         for run_id in args.run_ids:
             try:
-                results.append(score_fight(run_id, seeds=seeds, sim_runs_dir=args.sim_runs_dir))
+                results.append(
+                    score_fight(
+                        run_id,
+                        seeds=seeds,
+                        sim_runs_dir=args.sim_runs_dir,
+                        paths=paths,
+                    )
+                )
             except Exception as exc:  # noqa: BLE001
                 failures.append({"run_id": run_id, "error": str(exc)})
 
@@ -792,9 +823,9 @@ def main() -> None:
     winner_summary = _winner_summary(results)
 
     stamp = _stamp()
-    RUNS_DIR.mkdir(parents=True, exist_ok=True)
+    paths.reports_dir.mkdir(parents=True, exist_ok=True)
     # The filter rides in the FILENAME, not just the payload: a partial board
-    # sitting next to full-corpus boards in data/calibration/runs/ has to
+    # sitting next to full-corpus boards in calibration/reports/ has to
     # announce itself in the one field anyone reads at a glance.
     #
     # ...but only up to a point. An explicit `--tags a,b,c,...` list is
@@ -807,7 +838,7 @@ def main() -> None:
     # never lost -- it is written verbatim to `subset.filter` in the payload
     # below, which is the field anything programmatic should read.
     label = f"{args.label}-{_filename_filter(filter_label)}" if any_filter else args.label
-    out_path = RUNS_DIR / f"{stamp}-{label}.json"
+    out_path = paths.reports_dir / f"{stamp}-{label}.json"
     payload = {
         "label": label,
         "generated_utc": stamp,

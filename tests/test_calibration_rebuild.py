@@ -83,6 +83,9 @@ def test_rebuild_final_publishes_complete_final_corpus(tmp_path):
     shutil.copy2(LOCAL_LOCK, paths.source_lock)
     paths.truth_dir.mkdir(parents=True)
     (paths.truth_dir / "stale_old_tape.json").write_text("{}", encoding="utf-8")
+    paths.fight_sets.write_text(
+        json.dumps({"melee": ["project_policy"]}), encoding="utf-8"
+    )
 
     summary = rebuild_final(paths)
 
@@ -95,6 +98,9 @@ def test_rebuild_final_publishes_complete_final_corpus(tmp_path):
     assert len(manifest) == 339
     assert len(list(paths.truth_dir.glob("*.json"))) == 339
     assert not (paths.truth_dir / "stale_old_tape.json").exists()
+    assert json.loads(paths.fight_sets.read_text(encoding="utf-8")) == {
+        "melee": ["project_policy"]
+    }
     assert {row["zip_sha256"].upper() for row in manifest} == {FINAL_SHA256}
     assert {row["source_archive"] for row in manifest} == {paths.source_zip.name}
     assert len({row["matchup"] for row in manifest}) == 91

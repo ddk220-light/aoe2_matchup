@@ -11,7 +11,7 @@ filters, and this module is the Python half of that pair:
 - ``--melee-only``   -- both sides' slugs in the ``melee`` set
 - ``--ranged-only``  -- both sides' slugs in the ``ranged`` set
 
-The named sets live in ``data/calibration/fight_sets.json``, which the JS
+The named sets live in ``calibration/fixtures/fight_sets.json``, which the JS
 runner reads too, so the two languages cannot drift. They are defined by unit
 SLUG, never by a frozen list of fight tags -- membership is recomputed from
 each manifest fight's own ``side1``/``side2``, so a new recording of a melee
@@ -28,27 +28,31 @@ import argparse
 import json
 import re
 from functools import lru_cache
+from pathlib import Path
 from typing import Any, Iterable, Sequence
 
-from aoe2x.paths import REPO_ROOT
-
-FIGHT_SETS_PATH = REPO_ROOT / "data" / "calibration" / "fight_sets.json"
+from aoe2x.calibration.paths import CalibrationPaths, workspace_paths
 
 
-@lru_cache(maxsize=1)
-def _fight_sets() -> dict[str, frozenset[str]]:
-    raw = json.loads(FIGHT_SETS_PATH.read_text(encoding="utf-8"))
+@lru_cache(maxsize=None)
+def _fight_sets(path: str) -> dict[str, frozenset[str]]:
+    raw = json.loads(Path(path).read_text(encoding="utf-8"))
     return {k: frozenset(v) for k, v in raw.items() if not k.startswith("_")}
 
 
-def slug_set(name: str) -> frozenset[str]:
-    """One named slug set out of ``data/calibration/fight_sets.json``."""
-    sets = _fight_sets()
+def slug_set(
+    name: str,
+    *,
+    paths: CalibrationPaths | None = None,
+) -> frozenset[str]:
+    """One named slug set from the selected local calibration workspace."""
+    fight_sets_path = (paths or workspace_paths()).fight_sets
+    sets = _fight_sets(str(fight_sets_path.resolve()))
     try:
         return sets[name]
     except KeyError:
         raise KeyError(
-            f"no fight set {name!r} in {FIGHT_SETS_PATH} "
+            f"no fight set {name!r} in {fight_sets_path} "
             f"(have: {', '.join(sorted(sets))})"
         ) from None
 
@@ -74,6 +78,7 @@ def filter_fights(
     match: str | None = None,
     melee_only: bool = False,
     ranged_only: bool = False,
+    paths: CalibrationPaths | None = None,
 ) -> list[dict[str, Any]]:
     """Apply the shared subset filters (AND-combined) in manifest order.
 
@@ -106,9 +111,9 @@ def filter_fights(
         rx = re.compile(match)
         out = [f for f in out if rx.search(f["run_id"])]
     if melee_only:
-        out = [f for f in out if both_sides_in(f, MELEE_SLUGS)]
+        out = [f for f in out if both_sides_in(f, slug_set("melee", paths=paths))]
     if ranged_only:
-        out = [f for f in out if both_sides_in(f, RANGED_SLUGS)]
+        out = [f for f in out if both_sides_in(f, slug_set("ranged", paths=paths))]
     return out
 
 
@@ -147,14 +152,16 @@ def add_filter_args(ap: argparse.ArgumentParser) -> None:
         "--melee-only", action="store_true",
         help=(
             "Keep only fights where BOTH sides' slugs are in the 'melee' set "
-            f"of {FIGHT_SETS_PATH.name} ({', '.join(sorted(MELEE_SLUGS))})."
+            "of fight_sets.json "
+            f"({', '.join(sorted(MELEE_SLUGS))})."
         ),
     )
     g.add_argument(
         "--ranged-only", action="store_true",
         help=(
             "Keep only fights where BOTH sides' slugs are in the 'ranged' set "
-            f"of {FIGHT_SETS_PATH.name} ({', '.join(sorted(RANGED_SLUGS))})."
+            "of fight_sets.json "
+            f"({', '.join(sorted(RANGED_SLUGS))})."
         ),
     )
 

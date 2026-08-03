@@ -3,7 +3,7 @@
 The load-bearing property is CROSS-LANGUAGE agreement: `calib_runner.mjs
 --melee-only` picks which fights to SIM and `score --melee-only` picks which
 to SCORE, and if those two ever disagree a scoreboard silently loses (or
-invents) fights. Both read data/calibration/fight_sets.json, so these tests
+invents) fights. Both read calibration/fixtures/fight_sets.json, so these tests
 pin the Python half against that file and against the real manifest; the JS
 half is pinned by `test_fight_sets_json_is_the_only_definition` below, which
 fails if anyone re-hardcodes a slug list in either language.
@@ -15,9 +15,11 @@ import json
 import pytest
 
 from aoe2x.calibration import filters as F
+from aoe2x.calibration.paths import workspace_paths
 from aoe2x.paths import REPO_ROOT
 
-MANIFEST = REPO_ROOT / "data" / "calibration" / "manifest.json"
+MANIFEST = workspace_paths().manifest
+SOURCE_LOCK = workspace_paths().source_lock
 
 
 @pytest.fixture(scope="module")
@@ -25,8 +27,21 @@ def fights():
     return json.loads(MANIFEST.read_text(encoding="utf-8"))["fights"]
 
 
+def test_manifest_uses_only_the_final_tape_source(fights):
+    lock = json.loads(SOURCE_LOCK.read_text(encoding="utf-8"))
+    expected_hash = lock["sha256"]
+
+    assert len(fights) == lock["recordings"] == 339
+    assert len({f["run_id"] for f in fights}) == 339
+    assert {f["zip_sha256"].upper() for f in fights} == {expected_hash}
+    assert {f["source_archive"] for f in fights} == {
+        "aoe2_golden_STANDARD_UNITS_FINAL.zip"
+    }
+    assert all(not f.get("quarantined") for f in fights)
+
+
 def test_melee_set_matches_fight_sets_json():
-    raw = json.loads(F.FIGHT_SETS_PATH.read_text(encoding="utf-8"))
+    raw = json.loads(workspace_paths().fight_sets.read_text(encoding="utf-8"))
     assert F.MELEE_SLUGS == frozenset(raw["melee"])
     assert F.BASIC_MELEE_SLUGS == frozenset(raw["basic_melee"])
     # basic_melee is documented as a subset of melee; the HP report splits
@@ -64,39 +79,30 @@ def test_melee_only_is_both_sides(fights):
         )
 
 
-def test_melee_only_is_the_round4_gate(fights):
-    """The pure-melee gate the campaign's KPI is defined over
-    (tools/simjs/melee_hp_report.py's docstring). If the corpus grows this
-    number legitimately moves -- but it should move deliberately, with the
-    report's docstring updated in the same commit.
-
-    History: 31 (original corpus) -> 89 with the 2026-07-30 v2 melee
-    re-recording (67 fights, of which 58 are both-sides-melee; fire-lancer
-    fights are excluded by the slug set) -> 83 after quarantining the six
-    bad-capture paladin_vs_steppe originals -> 95 with the 2026-07-31 v3
-    ingest (+12 paladin_vs_steppe live-position rounds, manifest r19-r30)
-    -> 123 with the 2026-08-02 STANDARD_UNITS champion-subset ingest
-    (+28 champion-pair melee fights from the corrected consolidated drop;
-    16 of that drop's 63 champion fights were content-collisions reassigned
-    to fresh _rN run_ids, the rest new)."""
-    assert len(F.filter_fights(fights, melee_only=True)) == 123
+def test_melee_only_is_the_final_gate(fights):
+    """FINAL is the sole corpus: 78 recordings carry the archive's broad
+    ``melee`` class, while this project's stricter pure-melee filter excludes
+    seven Elite Fire Lancer recordings because that unit has a ranged volley.
+    The resulting 71-fight gate is pinned deliberately and must move only when
+    the user replaces FINAL itself."""
+    assert len(F.filter_fights(fights, melee_only=True)) == 71
 
 
 def test_quarantined_fights_are_never_scored(fights):
-    """The six 2026-07-30 paladin_vs_steppe captures carry `quarantined` in
-    the manifest (opposite winner vs the v2 x12 re-recording + the user's
-    live reproduction). They must be dropped from EVERY selection, and an
-    explicit --tags request for one must fail loudly, not shrink silently."""
-    selected = F.filter_fights(fights)
-    assert all(not f.get("quarantined") for f in selected)
-    assert any(f.get("quarantined") for f in fights), "fixture: manifest has them"
-    quarantined_tag = next(f["tag"] for f in fights if f.get("quarantined"))
-    try:
-        F.filter_fights(fights, tags=[quarantined_tag])
-    except KeyError as exc:
-        assert "quarantined" in str(exc)
-    else:  # pragma: no cover
-        raise AssertionError("explicit quarantined tag must raise")
+    """FINAL contains no quarantined recordings, so exercise the filter with
+    a synthetic quarantine marker rather than depending on an obsolete tape."""
+    scoreable = fights[0]
+    quarantined = {
+        **fights[1],
+        "tag": "synthetic_quarantined_tape",
+        "run_id": "synthetic_quarantined_tape",
+        "quarantined": True,
+    }
+    sample = [scoreable, quarantined]
+
+    assert F.filter_fights(sample) == [scoreable]
+    with pytest.raises(KeyError, match="quarantined"):
+        F.filter_fights(sample, tags=[quarantined["tag"]])
 
 
 def test_filters_preserve_manifest_order(fights):
@@ -144,6 +150,16 @@ def test_slug_set_rejects_unknown_name():
         F.slug_set("nope")
 
 
+def test_slug_set_reads_an_explicit_local_workspace(tmp_path):
+    paths = workspace_paths(tmp_path / "calibration")
+    paths.fixtures_dir.mkdir(parents=True)
+    paths.fight_sets.write_text(
+        json.dumps({"melee": ["local_only"]}), encoding="utf-8"
+    )
+
+    assert F.slug_set("melee", paths=paths) == frozenset({"local_only"})
+
+
 def test_fight_sets_json_is_the_only_definition():
     """No tool may keep a private copy of the melee slug list.
 
@@ -165,5 +181,5 @@ def test_fight_sets_json_is_the_only_definition():
         present = {s for s in roster if f'"{s}"' in text or f"'{s}'" in text}
         assert present != roster, (
             f"{path.name} looks like it re-hardcodes the melee slug roster; "
-            "it must read data/calibration/fight_sets.json instead"
+            "it must read calibration/fixtures/fight_sets.json instead"
         )

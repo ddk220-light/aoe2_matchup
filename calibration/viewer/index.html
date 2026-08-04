@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>HC Field Lab</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root {
+  --ink:#e7e2cf; --muted:#918f83; --line:#37382f; --panel:#1b1d18;
+  --panel2:#22251e; --ground:#151710; --acid:#d9ff43; --ember:#ff6b35;
+  --blue:#62b8ff; --red:#ff6961; --good:#8ad66d; --canvas-bg:#1a2114;
+  --text:var(--ink); --gold:var(--acid); --strong:#76c96b; --weak:#d8b84f;
+  --poor:#df665d; --team1:var(--blue); --team2:var(--red);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--ground);color:var(--ink)}
+body{font-family:"IBM Plex Mono",monospace;background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);background-size:24px 24px}
+button,select,input{font:inherit}
+.shell{max-width:1460px;margin:auto;padding:18px clamp(12px,2.4vw,34px) 42px}
+.mast{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:end;border-top:7px solid var(--acid);border-bottom:1px solid var(--line);padding:16px 0 15px}
+.kicker{color:var(--acid);font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+h1{font-family:"Archivo Black",sans-serif;font-size:clamp(34px,7vw,82px);line-height:.88;letter-spacing:-.055em;margin:6px 0 0;text-transform:uppercase}
+.lock{text-align:right;font-size:10px;color:var(--muted);max-width:330px}.lock b{display:block;color:var(--good);font-size:12px;margin-bottom:4px}
+.workbench{display:grid;grid-template-columns:minmax(250px,320px) minmax(480px,1fr) minmax(270px,340px);gap:12px;margin-top:12px;align-items:start}
+.panel{background:rgba(27,29,24,.96);border:1px solid var(--line);box-shadow:0 12px 34px rgba(0,0,0,.22)}
+.panel-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding:9px 11px;color:var(--muted);font-size:10px;letter-spacing:.12em;text-transform:uppercase}.panel-head b{color:var(--acid)}
+.controls{padding:11px}.field{margin-bottom:11px}.field label{display:block;color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+select,input{width:100%;background:var(--panel2);border:1px solid #42453a;color:var(--ink);border-radius:0;padding:9px 10px;min-height:40px}
+select:focus,input:focus,button:focus-visible{outline:2px solid var(--acid);outline-offset:2px}
+.variant-card{border-left:4px solid var(--ember);background:#25231c;padding:10px;margin:2px 0 12px}.variant-code{font-family:"Archivo Black",sans-serif;color:var(--ember);font-size:25px;line-height:1}.variant-card p{font-size:11px;color:#bbb6a4;margin:6px 0 0;line-height:1.45}
+.button-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}.button-row.triple{grid-template-columns:1fr 1fr 1fr;margin-top:6px}
+button{border:1px solid #494c40;background:#292c25;color:var(--ink);padding:9px 10px;cursor:pointer;text-transform:uppercase;font-size:11px;letter-spacing:.06em}button:hover{border-color:var(--acid);color:var(--acid)}button.primary{background:var(--acid);border-color:var(--acid);color:#15170f;font-weight:700}button:disabled{opacity:.4;cursor:not-allowed}
+.stage{padding:8px}.canvas-wrap{position:relative;background:#0d100a;border:1px solid #34372c;overflow:hidden}.canvas-wrap:before{content:"LIVE MODEL";position:absolute;z-index:2;left:8px;top:7px;color:var(--acid);font-size:9px;letter-spacing:.16em;background:#10120dbf;padding:3px 5px;pointer-events:none}
+canvas{display:block;width:100%;aspect-ratio:3/2;background:var(--canvas-bg)}
+.transport{display:grid;grid-template-columns:auto auto auto 1fr auto;gap:6px;align-items:center;padding:8px 0 0}.clock{font-family:"Archivo Black",sans-serif;color:var(--acid);font-size:24px;text-align:right}.seed-echo{font-size:10px;color:var(--muted)}
+.metrics{display:grid;grid-template-columns:1fr 1fr;margin-top:8px;border:1px solid var(--line)}.team{padding:8px 10px}.team:first-child{border-right:1px solid var(--line)}.team h3{font-size:11px;margin:0 0 7px;color:var(--blue)}.team.t2 h3{color:var(--red)}
+.metric-row{display:grid;grid-template-columns:1fr auto;gap:10px;border-top:1px dotted #3b3d34;padding:3px 0;font-size:10px}.metric-row span:first-child{color:var(--muted)}
+.truth-stack{padding:10px;display:grid;gap:8px}.truth-card{padding:10px;border:1px solid var(--line);background:#20221c}.truth-card.tape{border-top:4px solid var(--good)}.truth-card.base{border-top:4px solid var(--ember)}.truth-card.live{border-top:4px solid var(--acid)}
+.truth-card h3{margin:0 0 8px;font-size:10px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}.big{font-family:"Archivo Black",sans-serif;font-size:23px;line-height:1.05}.big small{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted)}.subline{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.45}.danger{color:var(--red)}.good{color:var(--good)}
+.scoreboard{padding:0 10px 10px}.scoreboard table{width:100%;border-collapse:collapse;font-size:9px}.scoreboard th,.scoreboard td{padding:5px 3px;border-bottom:1px solid var(--line);text-align:right}.scoreboard th:first-child,.scoreboard td:first-child{text-align:left}.scoreboard th{color:var(--muted);font-weight:400}.board-status{min-height:17px;color:var(--muted);font-size:10px;margin-top:7px}
+.footnote{margin-top:12px;border-left:3px solid var(--line);padding-left:10px;color:var(--muted);font-size:10px;line-height:1.5}.err{color:var(--red);min-height:18px;font-size:10px;margin-top:7px;white-space:pre-wrap}
+@media(max-width:1050px){.workbench{grid-template-columns:280px 1fr}.results-panel{grid-column:1/-1}.truth-stack{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:720px){.shell{padding:10px 8px 28px}.mast{grid-template-columns:1fr}.lock{text-align:left}.workbench{display:flex;flex-direction:column}.workbench>.panel{width:100%}.stage-panel{order:-1}.truth-stack{grid-template-columns:1fr}.transport{grid-template-columns:1fr 1fr 1fr}.transport .seed-echo{grid-column:1/3}.clock{grid-column:3}.metrics{font-size:9px}.button-row.triple{grid-template-columns:1fr 1fr}.button-row.triple button:last-child{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<main class="shell">
+  <header class="mast">
+    <div><div class="kicker">AoE2X calibration instrument / HC mixed-fight diagnosis</div><h1>HC FIELD LAB</h1></div>
+    <div class="lock"><b>● LOCKED FINAL TAPE</b><span id="archive">loading…</span><br><span id="hash"></span></div>
+  </header>
+
+  <section class="workbench">
+    <aside class="panel controls-panel">
+      <div class="panel-head"><span>01 / experiment</span><b>controlled</b></div>
+      <div class="controls">
+        <div class="field"><label for="matchup">Problem family</label><select id="matchup"></select></div>
+        <div class="field"><label for="recording">FINAL tape repeat</label><select id="recording"></select></div>
+        <div class="field"><label for="variant">Engine arm</label><select id="variant"></select></div>
+        <div class="variant-card"><div class="variant-code" id="variantCode">BASE</div><p id="variantNote"></p></div>
+        <div class="field"><label for="seed">Simulation seed</label><input id="seed" type="number" min="1" step="1" value="1"></div>
+        <div class="field"><label for="speed">Playback speed</label><select id="speed"><option value="0.5">0.5×</option><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option><option value="8">8×</option></select></div>
+        <div class="button-row"><button class="primary" id="run">Run</button><button id="pause" disabled>Pause</button></div>
+        <div class="button-row triple"><button id="step" disabled>+ 1 tick</button><button id="reset">Reset</button><button id="runFive">Run 5 seeds</button></div>
+        <div class="err" id="error"></div>
+        <div class="footnote">H1/H2/H3 use their exact evidence-commit mechanics. The Recovery arm is shown separately because it is the common prerequisite used by all three original tests.</div>
+      </div>
+    </aside>
+
+    <section class="panel stage-panel">
+      <div class="panel-head"><span>02 / exact-spawn battlefield</span><b id="activeTag">—</b></div>
+      <div class="stage">
+        <div class="canvas-wrap"><canvas id="battle" width="900" height="600"></canvas></div>
+        <div class="transport"><button id="rewind">↺</button><button id="play">▶</button><button id="single">▸|</button><div class="seed-echo" id="seedEcho">seed 1</div><div class="clock" id="clock">0.0s</div></div>
+        <div class="metrics">
+          <div class="team"><h3 id="team1Name">TEAM 1</h3><div id="team1Metrics"></div></div>
+          <div class="team t2"><h3 id="team2Name">TEAM 2</h3><div id="team2Metrics"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel results-panel">
+      <div class="panel-head"><span>03 / truth & outcome</span><b>HP remaining</b></div>
+      <div class="truth-stack">
+        <div class="truth-card tape"><h3>FINAL tape family median</h3><div class="big" id="tapeTruth">—</div><div class="subline" id="tapeMeta"></div></div>
+        <div class="truth-card base"><h3>Current base / five-seed matrix</h3><div class="big" id="baseTruth">—</div><div class="subline" id="baseMeta"></div></div>
+        <div class="truth-card live"><h3>Active watched run</h3><div class="big" id="liveTruth">not run</div><div class="subline" id="liveMeta">Choose an arm and press Run.</div></div>
+      </div>
+      <div class="scoreboard">
+        <div class="button-row"><button id="boardRun">Run 5</button><button id="boardClear">Clear</button></div>
+        <table><thead><tr><th>seed</th><th>winner</th><th>time</th><th>HP%</th></tr></thead><tbody id="boardBody"></tbody></table>
+        <div class="board-status" id="boardStatus"></div>
+      </div>
+    </aside>
+  </section>
+</main>
+<script type="module" src="/app.js"></script>
+</body>
+</html>

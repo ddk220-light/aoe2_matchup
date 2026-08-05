@@ -120,7 +120,9 @@ test("unit state is an immutable, idle Champion with integer action timers", asy
     attackTargetId: null,
     avoidance: null,
     action: "idle",
-    actionTimers: { windup: 0, reload: 0, swing: 0, acquire: 78 },
+    // A lone unit sits at the midpoint of the measured reaction range:
+    // 0.952 + 1/2 * (1.708 - 0.952) = 1.330 s -> 80 ticks.
+    actionTimers: { windup: 0, reload: 0, swing: 0, acquire: 80 },
   });
   assert.ok(Object.isFrozen(unit));
   assert.ok(Object.isFrozen(unit.actionTimers));
@@ -274,4 +276,24 @@ test("raw clean-room truth derives canonical starts from its first recorded run"
     scenario.units.map(({ referenceId, x, y }) => [referenceId, x, y]),
     CANONICAL_START_POSITIONS["2v3"],
   );
+});
+
+
+// A fight ends when the LAST unit finishes, so collapsing the engine's
+// reaction lag to one shared value biased every recorded fight early. The
+// per-unit delays are the order statistics of the measured range.
+test("acquisition lag is staggered across the roster, not shared", async () => {
+  const { createChampionScenario } = await loadScenarioModules();
+  const { formation, canonicalTruth: truth, mechanics } = await loadInputs();
+
+  const scenario = createChampionScenario({
+    ratio: "6v3", formation, truth, mechanics,
+  });
+  const acquire = scenario.units.map((unit) => unit.actionTimers.acquire);
+
+  assert.equal(acquire.length, 9);
+  assert.equal(new Set(acquire).size, 9, "every unit reacts at its own time");
+  assert.deepEqual([...acquire].sort((a, b) => a - b), acquire);
+  // min + i/(n+1) * (max - min) for i = 1..9 of Uniform[0.952, 1.708]
+  assert.deepEqual(acquire, [62, 66, 71, 75, 80, 84, 89, 93, 98]);
 });

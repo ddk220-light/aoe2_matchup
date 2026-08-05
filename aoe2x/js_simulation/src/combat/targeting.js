@@ -58,20 +58,40 @@ export function chebyshevGap(a, b) {
 }
 
 
-// Units do not act on the frame their order is issued: across the 15 authorized
-// recordings (n = 81 unit acquisitions) the first target is acquired 0.952 s to
-// 1.706 s after the start command, pooled median 1.308 s. The spread is
-// statistically indistinguishable from Uniform[0.952, 1.706] (observed mean
-// 1.318 / stdev 0.221 against 1.329 / 0.218) and shows no correlation with unit
-// reference, owner, spawn order, or distance -- it is engine randomness, and a
-// deterministic simulator cannot reproduce which unit wins the race.
+// Units do not act on the frame their order is issued. Pooled over the Champion
+// and Paladin recordings (n = 162 acquisitions) the first target is acquired
+// 0.952 s to 1.708 s after the start command, and the two units agree on the
+// endpoints to within 4 ms (Champion 0.952/1.706, Paladin 0.956/1.708; stdev
+// 0.221 vs 0.216). That makes this an ENGINE reaction lag, not a unit stat.
+export const ACQUISITION_DELAY_SECONDS = Object.freeze({ min: 0.952, max: 1.708 });
+
+
+// Within one fight the per-unit delays are the ORDER STATISTICS of that range,
+// not one shared value: a 9-unit fight spans 0.968-1.684 s. Modelling every
+// unit at the median collapsed a ~0.7 s stagger to zero, and because a fight
+// ends when the LAST unit finishes, that biased every recorded fight early --
+// 0.10-0.32 s in uncrowded ratios, up to 1.24 s in crowded ones, early in 9 of
+// 9 Champion-vs-Paladin ratios and never late.
 //
-// The DELAY is a real, measured mechanic and is modelled here at its median.
-// The JITTER is deliberately NOT modelled: inventing per-unit noise to
-// reproduce tape winner variation is exactly the fitting this engine forbids.
-// Consequence to keep in mind when reading results: in an even fight the jitter
-// is what decides the winner, so 1v1 outcome parity is not achievable.
-export const INITIAL_ACQUISITION_DELAY_SECONDS = 1.308;
+// The expected i-th of n uniforms is min + i/(n+1) * (max - min). There are NO
+// free parameters here: the endpoints are measured and the rest is counting
+// units. Checked against 53 real acquisitions across both pairs, mean error
+// +0.032 s, mean absolute error 0.058 s.
+//
+// This is deterministic, and is NOT the per-unit random jitter rejected
+// earlier. The one convention is WHICH unit takes which rank: the engine rolls
+// for that and a deterministic simulator cannot reproduce the roll, so rank
+// follows reference ID. The stagger is measured; the assignment is a choice.
+export function acquisitionDelaySeconds(rank, count) {
+  if (!Number.isSafeInteger(count) || count < 1) {
+    throw new RangeError("acquisition count must be a positive safe integer");
+  }
+  if (!Number.isSafeInteger(rank) || rank < 0 || rank >= count) {
+    throw new RangeError("acquisition rank must be within the roster");
+  }
+  const { min, max } = ACQUISITION_DELAY_SECONDS;
+  return min + ((rank + 1) / (count + 1)) * (max - min);
+}
 
 
 // Melee units swing from slightly outside box contact. Measured across the

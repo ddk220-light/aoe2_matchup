@@ -36,9 +36,11 @@ const out = [];
 for (const tag of TAGS) {
   let row;
   try {
-    const units = spawn(tag).map((u) => createUnitState({
+    const roster = spawn(tag);
+    const units = roster.map((u, i) => createUnitState({
       referenceId: u.id, owner: u.owner, x: u.x, y: u.y, facing: 0,
       mechanics: MECH[u.master],
+      acquisitionRank: i, acquisitionCount: roster.length,
     }));
     const result = runWorld(createWorld({ ratio: tag.split("_")[0], units }));
     const living = result.world.units.filter((u) => u.alive);

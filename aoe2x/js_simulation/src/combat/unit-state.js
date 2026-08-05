@@ -1,5 +1,5 @@
 import { secondsToTicksNearest } from "../simulation-clock.js";
-import { INITIAL_ACQUISITION_DELAY_SECONDS } from "./targeting.js";
+import { acquisitionDelaySeconds } from "./targeting.js";
 
 
 // Mechanics fixtures must be machine-generated from the Genie .dat and the
@@ -42,6 +42,8 @@ export function createUnitState({
   facing,
   mechanics,
   actionTimers = null,
+  acquisitionRank = 0,
+  acquisitionCount = 1,
 } = {}) {
   requireSafeInteger(referenceId, "reference ID");
   requireSafeInteger(owner, "owner");
@@ -66,7 +68,9 @@ export function createUnitState({
     windup: 0,
     reload: 0,
     swing: 0,
-    acquire: secondsToTicksNearest(INITIAL_ACQUISITION_DELAY_SECONDS),
+    acquire: secondsToTicksNearest(
+      acquisitionDelaySeconds(acquisitionRank, acquisitionCount),
+    ),
   };
   return Object.freeze({
     referenceId,

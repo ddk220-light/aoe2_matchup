@@ -37,13 +37,14 @@ for (const tag of TAGS) {
   const spawn = startPositions(tag);
   let result, error = null;
   try {
-    const units = spawn.map((u) => createUnitState({
+    const units = spawn.map((u, i) => createUnitState({
       referenceId: u.id,
       owner: u.owner,
       x: u.x,
       y: u.y,
       facing: 0,
       mechanics,
+      acquisitionRank: i, acquisitionCount: spawn.length,
     }));
     const world = createWorld({ ratio: tag.split("_")[0], units });
     result = runWorld(world);

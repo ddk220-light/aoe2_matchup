@@ -60,7 +60,7 @@ function canonicalStartPositions(truth, ratio) {
 }
 
 
-function createScenarioUnit(start, formationUnits, mechanics, references) {
+function createScenarioUnit(start, formationUnits, mechanics, references, rank, count) {
   if (!Array.isArray(start) || start.length !== 3) {
     throw new TypeError("canonical start position must be [referenceId, x, y]");
   }
@@ -85,6 +85,10 @@ function createScenarioUnit(start, formationUnits, mechanics, references) {
     y,
     facing: placement.rotation,
     mechanics,
+    // Engine reaction lag is staggered across the roster, not shared; see
+    // acquisitionDelaySeconds in combat/targeting.js.
+    acquisitionRank: rank,
+    acquisitionCount: count,
   });
 }
 
@@ -119,7 +123,9 @@ export function createChampionScenario({ ratio, formation, truth, mechanics } = 
 
   const formationUnits = formationByReference(formation);
   const references = new Set();
-  const units = starts.map((start) => createScenarioUnit(start, formationUnits, mechanics, references));
+  const units = starts.map((start, index) => createScenarioUnit(
+    start, formationUnits, mechanics, references, index, starts.length,
+  ));
   validateLockedRoster(ratio, units);
 
   return Object.freeze({

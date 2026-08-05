@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { createChampionPlaybackData } from "./src/champion-comparison.js";
 import { TICKS_PER_SECOND } from "./src/simulation-clock.js";
 import { runChampionRatio } from "./tests/support/champion-ratio.mjs";
+import { matchupNames, matchupPlayback, matchupRatios, matchupTruth } from "./src/matchup-playback.js";
 
 
 const CONTENT_TYPES = new Map([
@@ -157,6 +158,63 @@ function championPlayback(ratio) {
 }
 
 
+
+async function handleMatchupApi({ request, response, root, url }) {
+  if (!url.pathname.startsWith("/api/matchup/")) return false;
+  if (request.method !== "GET") {
+    sendJson(response, 405, { error: "Matchup diagnostics are read-only" });
+    return true;
+  }
+  const rootUrl = pathToFileURL(path.join(root, "/"));
+  if (url.pathname === "/api/matchup/list") {
+    const names = matchupNames();
+    const listed = [];
+    for (const name of names) {
+      listed.push({ name, ratios: await matchupRatios(rootUrl, name) });
+    }
+    sendJson(response, 200, { schemaVersion: 1, matchups: listed });
+    return true;
+  }
+  if (url.pathname === "/api/matchup/result") {
+    const name = url.searchParams.get("matchup");
+    const ratio = url.searchParams.get("ratio");
+    const repeatText = url.searchParams.get("repeat") ?? "1";
+    if (!name || !matchupNames().includes(name) || !ratio || !/^[1-3]$/.test(repeatText)) {
+      sendJson(response, 400, {
+        error: `matchup must be one of ${matchupNames().join(", ")}, ratio must exist, repeat 1-3`,
+      });
+      return true;
+    }
+    let truth;
+    try {
+      truth = await matchupTruth(rootUrl, name);
+    } catch {
+      sendJson(response, 404, { error: "matchup fixture not found" });
+      return true;
+    }
+    const ratioTruth = truth.ratios?.[ratio];
+    if (!ratioTruth) {
+      sendJson(response, 400, { error: `unknown ratio ${ratio}` });
+      return true;
+    }
+    const repeat = Number(repeatText);
+    const run = ratioTruth.runs[repeat - 1];
+    sendJson(response, 200, {
+      schemaVersion: 1,
+      matchup: name,
+      ratio,
+      repeat,
+      deterministic: true,
+      tapeDiagnostic: run,
+      playback: await matchupPlayback(rootUrl, name, ratio),
+    });
+    return true;
+  }
+  sendJson(response, 404, { error: "not found" });
+  return true;
+}
+
+
 async function handleChampionApi({ request, response, root, url }) {
   if (!url.pathname.startsWith("/api/champion/")) return false;
   if (request.method !== "GET") {
@@ -201,6 +259,7 @@ export function createMapServer({ root }) {
   return createServer(async (request, response) => {
     const url = new URL(request.url, "http://localhost");
     try {
+      if (await handleMatchupApi({ request, response, root: resolvedRoot, url })) return;
       if (await handleChampionApi({ request, response, root: resolvedRoot, url })) return;
     } catch (error) {
       console.error(error);

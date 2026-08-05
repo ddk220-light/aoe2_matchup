@@ -237,11 +237,13 @@ async function start() {
     for (const control of ["playPause", "resetPlayback", "stepTick", "nextEvent"]) {
       byId(control).disabled = true;
     }
-    const response = await fetch(
-      `api/champion/result?ratio=${encodeURIComponent(selected.ratio)}&repeat=${selected.repeat}`,
-      { cache: "no-store" },
-    );
-    if (!response.ok) throw new Error(`Champion result API returned ${response.status}`);
+    const matchup = selected.matchup ?? "champion";
+    const endpoint = matchup === "champion"
+      ? `api/champion/result?ratio=${encodeURIComponent(selected.ratio)}&repeat=${selected.repeat}`
+      : `api/matchup/result?matchup=${encodeURIComponent(matchup)}`
+        + `&ratio=${encodeURIComponent(selected.ratio)}&repeat=${selected.repeat}`;
+    const response = await fetch(endpoint, { cache: "no-store" });
+    if (!response.ok) throw new Error(`Result API returned ${response.status}`);
     const result = deepFreeze(await response.json());
     if (serial !== requestSerial) return;
     activeResult = result;
@@ -271,9 +273,47 @@ async function start() {
   }
   byId("resetView").addEventListener("click", () => renderer.resetView());
 
+  const CHAMPION_RATIO_OPTIONS = ["1v1", "2v1", "2v3", "5v3", "6v3"];
+  let matchupRatioOptions = null;
+
+  async function ratiosFor(matchup) {
+    if (matchup === "champion") return CHAMPION_RATIO_OPTIONS;
+    if (!matchupRatioOptions) {
+      const listed = await (await fetch("api/matchup/list", { cache: "no-store" })).json();
+      matchupRatioOptions = new Map(listed.matchups.map((m) => [m.name, m.ratios]));
+    }
+    return matchupRatioOptions.get(matchup) ?? CHAMPION_RATIO_OPTIONS;
+  }
+
+  async function repopulateRatios(matchup) {
+    const ratios = await ratiosFor(matchup);
+    const select = byId("ratioSelect");
+    const previous = select.value;
+    select.replaceChildren(...ratios.map((ratio) => {
+      const option = document.createElement("option");
+      option.value = ratio;
+      option.textContent = ratio.replace("v", " vs ");
+      return option;
+    }));
+    select.value = ratios.includes(previous) ? previous : ratios[0];
+    return select.value;
+  }
+
+  byId("matchupSelect").addEventListener("change", () => {
+    const matchup = byId("matchupSelect").value;
+    repopulateRatios(matchup)
+      .then((ratio) => loadSimulation({
+        matchup,
+        ratio,
+        repeat: Number(byId("repeatSelect").value),
+      }))
+      .catch(showError);
+  });
+
   for (const id of ["ratioSelect", "repeatSelect"]) {
     byId(id).addEventListener("change", () => {
       loadSimulation({
+        matchup: byId("matchupSelect").value,
         ratio: byId("ratioSelect").value,
         repeat: Number(byId("repeatSelect").value),
       }).catch(showError);

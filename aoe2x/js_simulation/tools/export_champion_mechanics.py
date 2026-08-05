@@ -32,6 +32,7 @@ def _read_reference_row(reference_db: Path) -> dict[str, Any]:
         rows = connection.execute(
             """
             SELECT
+                id,
                 civ_name,
                 age,
                 final_hp,
@@ -47,12 +48,35 @@ def _read_reference_row(reference_db: Path) -> dict[str, Any]:
             """,
             ("champion", CHINESE_CIV, IMPERIAL_AGE),
         ).fetchall()
-    if len(rows) != 1:
+        if len(rows) != 1:
+            raise ValueError(
+                "reference DB must contain exactly one Chinese Imperial champion row; "
+                f"found {len(rows)}"
+            )
+        row = dict(rows[0])
+        # ref_units.final_speed is rounded to 2 decimals by the DB generator, which
+        # turns the Squires-modified 0.96 x 1.1 into 1.06 and makes every unit run
+        # 0.38% fast. ref_stat_chain keeps the unrounded value, and the authorized
+        # tapes measure exactly 1.056 tiles/s, so take the chain's last step.
+        chain = connection.execute(
+            """
+            SELECT speed
+            FROM ref_stat_chain
+            WHERE ref_unit_id = ?
+            ORDER BY step_order DESC
+            LIMIT 1
+            """,
+            (row["id"],),
+        ).fetchone()
+    if chain is None:
+        raise ValueError("reference DB has no stat chain for the Chinese Champion")
+    row["exact_speed"] = float(chain["speed"])
+    if abs(row["exact_speed"] - float(row["final_speed"])) > 0.05:
         raise ValueError(
-            "reference DB must contain exactly one Chinese Imperial champion row; "
-            f"found {len(rows)}"
+            "stat-chain speed disagrees with ref_units.final_speed beyond rounding: "
+            f"{row['exact_speed']} vs {row['final_speed']}"
         )
-    return dict(rows[0])
+    return row
 
 
 def _parse_classes(raw: str) -> dict[str, int | float]:
@@ -105,7 +129,24 @@ def _raw_chinese_champion(dat_path: Path):
     unit = chinese[0].units[CHAMPION_MASTER]
     if unit is None or unit.id != CHAMPION_MASTER:
         raise ValueError("Genie .dat does not contain Chinese Champion master 567")
-    return unit
+    return data, unit
+
+
+def _animation_seconds(data, graphic_id: int, label: str) -> dict[str, Any]:
+    """Duration of a Genie animation = frame_count x frame_duration."""
+    if graphic_id is None or graphic_id < 0:
+        raise ValueError(f"{label} graphic is absent")
+    graphic = data.graphics[graphic_id]
+    frames = int(graphic.frame_count)
+    duration = float(graphic.frame_duration)
+    if frames <= 0 or not math.isfinite(duration) or duration <= 0:
+        raise ValueError(f"{label} graphic {graphic_id} has no usable frame timing")
+    return {
+        "graphic": graphic_id,
+        "frames": frames,
+        "frame_duration_seconds": duration,
+        "seconds": frames * duration,
+    }
 
 
 def export_champion_mechanics(reference_db: Path, dat_path: Path) -> dict:
@@ -113,19 +154,60 @@ def export_champion_mechanics(reference_db: Path, dat_path: Path) -> dict:
     reference_db = Path(reference_db)
     dat_path = Path(dat_path)
     reference = _read_reference_row(reference_db)
-    unit = _raw_chinese_champion(dat_path)
+    data, unit = _raw_chinese_champion(dat_path)
     attack_classes = _parse_classes(reference["final_attacks_json"])
     armor_classes = _parse_classes(reference["final_armors_json"])
+
+    attack_animation = _animation_seconds(
+        data, int(unit.type_50.attack_graphic), "attack")
+    idle_animation = _animation_seconds(
+        data, int(unit.standing_graphic[0]), "idle")
+    walk_animation = _animation_seconds(
+        data, int(unit.dead_fish.walking_graphic), "walk")
+
+    # Genie melee hit timing. Documented rule (AoE2 wiki "Attack delay", sourced to
+    # Icewind's frame-delay research, and philistine's frame-by-frame study):
+    #   ranged: attack_delay = animation_duration * frame_delay / frames_per_angle
+    #   melee : attack_delay = animation_duration / 2
+    # A melee unit's frame_delay of 0 means "no projectile frame", NOT "instant
+    # damage" -- the hit lands at the halfway point of the attack animation.
+    # ref_units.final_attack_delay carries the raw 0 and must not be used directly.
+    frame_delay = int(unit.type_50.frame_delay)
+    is_melee = float(reference["final_range"]) <= 0 and frame_delay == 0
+    if is_melee:
+        attack_delay_seconds = attack_animation["seconds"] / 2
+        attack_delay_source = (
+            "melee rule: attack animation seconds / 2"
+            " (Genie frame_delay=0 means no projectile frame)"
+        )
+    else:
+        frames_per_angle = attack_animation["frames"]
+        attack_delay_seconds = (
+            attack_animation["seconds"] * frame_delay / frames_per_angle
+        )
+        attack_delay_source = (
+            "ranged rule: attack animation seconds * frame_delay / frames"
+        )
 
     fields = {
         "unit_master": "unit.id",
         "civilization": "ref_units.civ_name",
         "age": "ref_units.age",
         "hp": "ref_units.final_hp",
-        "speed_tiles_per_second": "ref_units.final_speed",
+        "speed_tiles_per_second": (
+            "ref_stat_chain.speed (final step; ref_units.final_speed is rounded)"
+        ),
         "attack_range_tiles": "ref_units.final_range",
         "reload_seconds": "ref_units.final_reload_time",
-        "attack_delay_seconds": "ref_units.final_attack_delay",
+        "attack_delay_seconds": attack_delay_source,
+        "attack_animation.graphic": "unit.type_50.attack_graphic",
+        "attack_animation.frames": "graphics[attack_graphic].frame_count",
+        "attack_animation.frame_duration_seconds": (
+            "graphics[attack_graphic].frame_duration"
+        ),
+        "attack_animation.seconds": "frames * frame_duration",
+        "idle_animation": "graphics[unit.standing_graphic[0]]",
+        "walk_animation": "graphics[unit.dead_fish.walking_graphic]",
         "line_of_sight_tiles": "ref_units.final_los",
         "attack_classes": "ref_units.final_attacks_json",
         "armor_classes": "ref_units.final_armors_json",
@@ -155,10 +237,13 @@ def export_champion_mechanics(reference_db: Path, dat_path: Path) -> dict:
         "civilization": reference["civ_name"],
         "age": reference["age"],
         "hp": int(reference["final_hp"]),
-        "speed_tiles_per_second": float(reference["final_speed"]),
+        "speed_tiles_per_second": float(reference["exact_speed"]),
         "attack_range_tiles": float(reference["final_range"]),
         "reload_seconds": float(reference["final_reload_time"]),
-        "attack_delay_seconds": float(reference["final_attack_delay"]),
+        "attack_delay_seconds": attack_delay_seconds,
+        "attack_animation": attack_animation,
+        "idle_animation": idle_animation,
+        "walk_animation": walk_animation,
         "line_of_sight_tiles": float(reference["final_los"]),
         "attack_classes": attack_classes,
         "armor_classes": armor_classes,

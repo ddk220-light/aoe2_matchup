@@ -30,6 +30,41 @@ export function surfaceGap(a, b) {
 }
 
 
+// Genie obstruction is an axis-aligned box, not a circle. The authorized tapes
+// confirm it directly: across all 15 recordings enemy Champions never close
+// below a Chebyshev separation of 0.4000 tiles (= 0.2 + 0.2 half-extents), and
+// they reach that separation on whichever axis they approach from, which a
+// Euclidean radius cannot produce.
+export function chebyshevGap(a, b) {
+  const dx = Math.abs(requireFinite(b?.x, "target x") - requireFinite(a?.x, "unit x"));
+  const dy = Math.abs(requireFinite(b?.y, "target y") - requireFinite(a?.y, "unit y"));
+  return Math.max(dx, dy) - collisionRadius(a) - collisionRadius(b);
+}
+
+
+// Units do not act on the frame their order is issued: across the 15 authorized
+// recordings (n = 81 unit acquisitions) the first target is acquired 0.952 s to
+// 1.706 s after the start command, pooled median 1.308 s. The spread is
+// statistically indistinguishable from Uniform[0.952, 1.706] (observed mean
+// 1.318 / stdev 0.221 against 1.329 / 0.218) and shows no correlation with unit
+// reference, owner, spawn order, or distance -- it is engine randomness, and a
+// deterministic simulator cannot reproduce which unit wins the race.
+//
+// The DELAY is a real, measured mechanic and is modelled here at its median.
+// The JITTER is deliberately NOT modelled: inventing per-unit noise to
+// reproduce tape winner variation is exactly the fitting this engine forbids.
+// Consequence to keep in mind when reading results: in an even fight the jitter
+// is what decides the winner, so 1v1 outcome parity is not achievable.
+export const INITIAL_ACQUISITION_DELAY_SECONDS = 1.308;
+
+
+// Melee units swing from slightly outside box contact. Measured across the
+// authorized tapes: the attack envelope tops out at a Chebyshev separation of
+// 0.4999 tiles against a 0.4000 box contact, i.e. 0.1 tiles of reach beyond
+// touching. This is MEASURED, not sourced to a Genie field.
+export const MELEE_CONTACT_TOLERANCE_TILES = 0.1;
+
+
 function isLive(unit) {
   return unit?.alive !== false;
 }
@@ -82,45 +117,55 @@ export function selectPursuitTarget(unit, snapshot) {
 }
 
 
+export function attackReach(unit) {
+  const range = requireFinite(unit?.mechanics?.attack_range_tiles, "attack range");
+  if (range < 0) throw new RangeError("attack range must be nonnegative");
+  return range + MELEE_CONTACT_TOLERANCE_TILES;
+}
+
+
+export function isWithinReach(unit, target) {
+  return chebyshevGap(unit, target) <= attackReach(unit) + 1e-12;
+}
+
+
+// A unit engages whatever enemy is inside its attack envelope, not whatever
+// enemy its body happens to collide with: the tapes show units stopping and
+// swinging from ~0.1 tiles outside box contact, so physical overlap is never
+// required and usually never happens. Where the sweep solver did produce a
+// contact for a pair it is preserved for ordering and reporting.
 export function selectEngagementTarget(unit, snapshot, contacts) {
   if (!Array.isArray(snapshot)) throw new TypeError("snapshot must be an array");
   if (!Array.isArray(contacts)) throw new TypeError("contacts must be an array");
   if (!isLive(unit)) return Object.freeze({ target: null, contact: null });
   const byReference = new Map(snapshot.map((candidate) => [candidate.referenceId, candidate]));
+  const contactFor = (targetId) => contacts.find(({ leftId, rightId }) => (
+    (leftId === unit.referenceId && rightId === targetId)
+    || (rightId === unit.referenceId && leftId === targetId)
+  )) ?? null;
+
   if (unit.engagedTargetId !== null && unit.engagedTargetId !== undefined) {
     const engaged = byReference.get(unit.engagedTargetId);
-    const range = requireFinite(unit?.mechanics?.attack_range_tiles, "attack range");
-    if (range < 0) throw new RangeError("attack range must be nonnegative");
-    if (
-      engaged
-      && isLive(engaged)
-      && isEnemy(unit, engaged)
-      && surfaceGap(unit, engaged) <= range + 1e-12
-    ) {
-      const contact = contacts.find(({ leftId, rightId }) => (
-        (leftId === unit.referenceId && rightId === engaged.referenceId)
-        || (rightId === unit.referenceId && leftId === engaged.referenceId)
-      )) ?? null;
-      return Object.freeze({ target: engaged, contact });
+    if (engaged && isLive(engaged) && isEnemy(unit, engaged) && isWithinReach(unit, engaged)) {
+      return Object.freeze({ target: engaged, contact: contactFor(engaged.referenceId) });
     }
   }
 
-  const candidates = contacts
-    .map((contact) => {
-      let targetId = null;
-      if (contact.leftId === unit.referenceId) targetId = contact.rightId;
-      if (contact.rightId === unit.referenceId) targetId = contact.leftId;
-      if (targetId === null) return null;
-      const target = byReference.get(targetId);
-      if (!target || !isLive(target) || !isEnemy(unit, target)) return null;
-      return { target, contact };
-    })
-    .filter((candidate) => candidate !== null)
+  const candidates = snapshot
+    .filter((candidate) => (
+      isLive(candidate) && isEnemy(unit, candidate) && isWithinReach(unit, candidate)
+    ))
+    .map((target) => ({
+      target,
+      contact: contactFor(target.referenceId),
+      gap: chebyshevGap(unit, target),
+    }))
     .sort((left, right) => (
-      left.contact.sweptToi - right.contact.sweptToi
-      || left.contact.finalSurfaceGap - right.contact.finalSurfaceGap
+      (left.contact?.sweptToi ?? Infinity) - (right.contact?.sweptToi ?? Infinity)
+      || left.gap - right.gap
       || left.target.referenceId - right.target.referenceId
     ));
   if (candidates.length === 0) return Object.freeze({ target: null, contact: null });
-  return Object.freeze(candidates[0]);
+  const { target, contact } = candidates[0];
+  return Object.freeze({ target, contact });
 }

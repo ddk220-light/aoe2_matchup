@@ -84,6 +84,8 @@ function normalizeBodies(snapshot, proposals) {
       x: requireFinite(unit.x, "unit x"),
       y: requireFinite(unit.y, "unit y"),
       radius: collisionRadius(unit),
+      owner: unit.owner,
+      stationary: proposed.dx === 0 && proposed.dy === 0,
       dx: proposed.dx,
       dy: proposed.dy,
     };
@@ -132,9 +134,10 @@ function validateStartingGeometry(bodies, obstacles, bounds) {
   }
   for (let i = 0; i < bodies.length; i += 1) {
     for (let j = i + 1; j < bodies.length; j += 1) {
-      const distance = Math.hypot(
-        bodies[j].x - bodies[i].x,
-        bodies[j].y - bodies[i].y,
+      if (bodies[i].owner === bodies[j].owner) continue;
+      const distance = Math.max(
+        Math.abs(bodies[j].x - bodies[i].x),
+        Math.abs(bodies[j].y - bodies[i].y),
       );
       if (distance >= bodies[i].radius + bodies[j].radius - EPSILON) continue;
       const kind = distance === 0 ? "exact overlap" : "starting overlap";
@@ -234,19 +237,36 @@ function distributeEqualMassRemoval(excess, available) {
 }
 
 
+// Genie unit obstruction is an axis-aligned box, not a disc: two units are clear
+// of each other as soon as EITHER axis separates them by the summed half-extents.
+// The authorized tapes show this directly -- enemy Champions bottom out at a
+// Chebyshev separation of exactly 0.4000 tiles (0.2 + 0.2) whichever axis they
+// meet on, which a Euclidean radius cannot produce. Resolution is the standard
+// minimum-translation push along the axis that is closest to clearing.
 function constrainPair(left, right) {
+  // Ally separation only binds when BOTH units are trying to move. A unit that
+  // has stopped -- because it reached attack range, or because its swing has it
+  // rooted for the animation -- offers no resistance, so an ally walking into it
+  // settles inside its box and stays there. Measured across all 15 tapes: ally
+  // pairs breach the 0.4000-tile box in 1.9% of frames where both are moving,
+  // 6.8% where one walks into a stopped ally (the deepest overlaps, down to
+  // 0.2352), and 15.3% where both have stopped and nothing separates them again.
+  // Enemy pairs breach it in none.
+  if (left.owner === right.owner && (left.stationary || right.stationary)) return 0;
+  const extent = left.radius + right.radius;
   const centerX = right.x - left.x;
   const centerY = right.y - left.y;
-  if (sweptDistanceFromOrigin(
-    centerX,
-    centerY,
-    centerX + right.dx - left.dx,
-    centerY + right.dy - left.dy,
-  ) >= left.radius + right.radius - EPSILON) return 0;
-  const distance = Math.hypot(centerX, centerY);
-  const gap = distance - left.radius - right.radius;
-  const nx = centerX / distance;
-  const ny = centerY / distance;
+  if (Math.max(
+    Math.abs(centerX + right.dx - left.dx),
+    Math.abs(centerY + right.dy - left.dy),
+  ) >= extent - EPSILON) return 0;
+
+  const alongX = Math.abs(centerX) >= Math.abs(centerY);
+  const axisCenter = alongX ? centerX : centerY;
+  const sign = axisCenter < 0 ? -1 : 1;
+  const nx = alongX ? sign : 0;
+  const ny = alongX ? 0 : sign;
+  const gap = Math.abs(axisCenter) - extent;
   const leftNormal = left.dx * nx + left.dy * ny;
   const rightNormal = right.dx * nx + right.dy * ny;
   const closure = leftNormal - rightNormal;
@@ -295,6 +315,12 @@ function resolveConstraints(bodies, obstacles, bounds) {
     finalCorrection = largestCorrection;
   }
 
+  // Ally separation is a soft constraint: a crowd can stay mutually unsatisfied
+  // for as long as it likes, exactly as the tapes show. Spending the whole sweep
+  // budget is therefore not an error provided the hard invariants -- enemy
+  // separation, map bounds and static obstacles -- all hold.
+  if (finalGeometryIsValid(bodies, obstacles, bounds)) return;
+
   throw new Error(
     `collision constraints did not converge after ${MAX_CONSTRAINT_SWEEPS} sweeps `
     + `(last correction ${finalCorrection}; `
@@ -323,9 +349,16 @@ function finalGeometryViolation(bodies, obstacles, bounds) {
   }
   for (let i = 0; i < bodies.length; i += 1) {
     for (let j = i + 1; j < bodies.length; j += 1) {
-      const gap = Math.hypot(
-        bodies[j].x + bodies[j].dx - bodies[i].x - bodies[i].dx,
-        bodies[j].y + bodies[j].dy - bodies[i].y - bodies[i].dy,
+      // Enemy separation is a hard invariant; ally separation is best effort.
+      // Measured over all 15 tapes: enemy Champions never breach 0.4000 tiles of
+      // Chebyshev separation, while ally pairs sit below it in 1.9% of frames
+      // where both are moving, 6.8% where one is moving into a stopped ally, and
+      // 15.3% where both have stopped -- crowding squeezes allies together and
+      // nothing pushes them back apart once they stand still.
+      if (bodies[i].owner === bodies[j].owner) continue;
+      const gap = Math.max(
+        Math.abs(bodies[j].x + bodies[j].dx - bodies[i].x - bodies[i].dx),
+        Math.abs(bodies[j].y + bodies[j].dy - bodies[i].y - bodies[i].dy),
       ) - bodies[i].radius - bodies[j].radius;
       if (gap < -EPSILON) {
         return `references ${bodies[i].referenceId} and ${bodies[j].referenceId} `

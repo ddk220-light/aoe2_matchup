@@ -6,6 +6,12 @@
     "31": 0,
     "4": 4
   },
+  "attack_animation": {
+    "frame_duration_seconds": 0.03333333507180214,
+    "frames": 45,
+    "graphic": 2896,
+    "seconds": 1.5000000782310963
+  },
   "attack_classes": {
     "15": 0,
     "21": 6,
@@ -14,7 +20,7 @@
     "4": 18,
     "8": 0
   },
-  "attack_delay_seconds": 0.0,
+  "attack_delay_seconds": 0.7500000391155481,
   "attack_graphic": 2896,
   "attack_range_tiles": 0.0,
   "civilization": "Chinese",
@@ -32,6 +38,12 @@
   },
   "frame_delay": 0,
   "hp": 70,
+  "idle_animation": {
+    "frame_duration_seconds": 0.02500000037252903,
+    "frames": 60,
+    "graphic": 2902,
+    "seconds": 1.5000000223517418
+  },
   "line_of_sight_tiles": 5.0,
   "movement_blocks": {
     "fly_mode": 0,
@@ -53,8 +65,12 @@
     "fields": {
       "age": "ref_units.age",
       "armor_classes": "ref_units.final_armors_json",
+      "attack_animation.frame_duration_seconds": "graphics[attack_graphic].frame_duration",
+      "attack_animation.frames": "graphics[attack_graphic].frame_count",
+      "attack_animation.graphic": "unit.type_50.attack_graphic",
+      "attack_animation.seconds": "frames * frame_duration",
       "attack_classes": "ref_units.final_attacks_json",
-      "attack_delay_seconds": "ref_units.final_attack_delay",
+      "attack_delay_seconds": "melee rule: attack animation seconds / 2 (Genie frame_delay=0 means no projectile frame)",
       "attack_graphic": "unit.type_50.attack_graphic",
       "attack_range_tiles": "ref_units.final_range",
       "civilization": "ref_units.civ_name",
@@ -66,6 +82,7 @@
       "derived.damage_vs_self": "AoE class rule(ref_units.final_attacks_json, ref_units.final_armors_json)",
       "frame_delay": "unit.type_50.frame_delay",
       "hp": "ref_units.final_hp",
+      "idle_animation": "graphics[unit.standing_graphic[0]]",
       "line_of_sight_tiles": "ref_units.final_los",
       "movement_blocks.fly_mode": "unit.fly_mode",
       "movement_blocks.hill_mode": "unit.hill_mode",
@@ -76,13 +93,20 @@
       "outline_size_tiles.y": "unit.outline_size_y",
       "outline_size_tiles.z": "unit.outline_size_z",
       "reload_seconds": "ref_units.final_reload_time",
-      "speed_tiles_per_second": "ref_units.final_speed",
-      "unit_master": "unit.id"
+      "speed_tiles_per_second": "ref_stat_chain.speed (final step; ref_units.final_speed is rounded)",
+      "unit_master": "unit.id",
+      "walk_animation": "graphics[unit.dead_fish.walking_graphic]"
     },
     "reference_db_sha256": "51D602640E4C1A75F35286AA499821338B0EEE5DBA97E12A12D39E058CB11087",
     "reference_selector": "ref_units WHERE unit_slug='champion' AND civ_name='Chinese' AND age='Imperial'"
   },
   "reload_seconds": 2.0,
-  "speed_tiles_per_second": 1.06,
-  "unit_master": 567
+  "speed_tiles_per_second": 1.0560000228881836,
+  "unit_master": 567,
+  "walk_animation": {
+    "frame_duration_seconds": 0.028333334252238274,
+    "frames": 30,
+    "graphic": 2906,
+    "seconds": 0.8500000275671482
+  }
 }

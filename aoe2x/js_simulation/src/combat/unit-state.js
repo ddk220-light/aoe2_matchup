@@ -1,3 +1,7 @@
+import { secondsToTicksNearest } from "../simulation-clock.js";
+import { INITIAL_ACQUISITION_DELAY_SECONDS } from "./targeting.js";
+
+
 const CHAMPION_MASTER = 567;
 const CHAMPION_HP = 70;
 
@@ -33,7 +37,7 @@ export function createUnitState({
   y,
   facing,
   mechanics,
-  actionTimers = { windup: 0, reload: 0 },
+  actionTimers = null,
 } = {}) {
   requireSafeInteger(referenceId, "reference ID");
   requireSafeInteger(owner, "owner");
@@ -54,6 +58,12 @@ export function createUnitState({
     throw new RangeError(`Champion mechanics must use ${CHAMPION_HP} HP`);
   }
 
+  const timers = actionTimers ?? {
+    windup: 0,
+    reload: 0,
+    swing: 0,
+    acquire: secondsToTicksNearest(INITIAL_ACQUISITION_DELAY_SECONDS),
+  };
   return Object.freeze({
     referenceId,
     owner,
@@ -69,6 +79,6 @@ export function createUnitState({
     attackTargetId: null,
     avoidance: null,
     action: "idle",
-    actionTimers: freezeTimers(actionTimers),
+    actionTimers: freezeTimers(timers),
   });
 }

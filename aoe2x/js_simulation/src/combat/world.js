@@ -7,6 +7,7 @@ import { proposeMovement } from "./movement.js";
 import { selectEngagementTarget, selectPursuitTarget } from "./targeting.js";
 import { TICKS_PER_SECOND } from "../simulation-clock.js";
 import {
+  attackAnimationTicks,
   attackDelayTicks,
   calculateDamage,
   createAttackCanceledEvent,
@@ -173,7 +174,7 @@ function validatePursuitTargets(units, tick, events) {
       unit.attackTargetId = null;
       unit.avoidance = null;
       unit.action = "dead";
-      unit.actionTimers = { windup: 0, reload: 0 };
+      unit.actionTimers = { windup: 0, reload: 0, swing: 0, acquire: 0 };
       continue;
     }
     if (unit.pursuitTargetId === null || unit.pursuitTargetId === undefined) continue;
@@ -211,15 +212,24 @@ function validateAttackTargets(units, tick, events) {
     if (!Number.isSafeInteger(invalidTargetId)) {
       throw new Error(`attacking unit ${unit.referenceId} has no captured attack target`);
     }
+    // A swing that has already released its hit runs to the end of its animation
+    // even though the target is gone -- that is what makes a killer slower to
+    // pick a new target than the bystanders swinging at the same corpse. Only an
+    // unreleased swing is abandoned on the spot.
+    if (unit.actionTimers.swing >= attackDelayTicks(unit.mechanics)) continue;
     events.push(createAttackCanceledEvent({
       tick,
       actorId: unit.referenceId,
       targetId: invalidTargetId,
-      readyTick: tick + Math.max(0, unit.actionTimers.windup - 1),
+      readyTick: tick + Math.max(
+        0,
+        attackDelayTicks(unit.mechanics) - unit.actionTimers.swing,
+      ),
       reason: !target?.alive ? "target-dead" : "target-invalidated",
     }));
     unit.attackTargetId = null;
     unit.actionTimers.windup = 0;
+    unit.actionTimers.swing = 0;
     unit.action = unit.actionTimers.reload > 0 ? "reload" : "idle";
   }
 }
@@ -228,7 +238,14 @@ function validateAttackTargets(units, tick, events) {
 function acquirePursuitTargets(units, tick, events) {
   const snapshot = Object.freeze(units.map(freezeUnit));
   for (const unit of units) {
-    if (!unit.alive || unit.pursuitTargetId !== null) continue;
+    if (!unit.alive) continue;
+    // Initial target-acquisition delay. Only the first acquisition waits; once a
+    // unit has been in combat, re-acquisition is governed by its swing state.
+    if (unit.actionTimers.acquire > 0) {
+      unit.actionTimers.acquire -= 1;
+      continue;
+    }
+    if (unit.pursuitTargetId !== null) continue;
     const candidate = snapshot.find(({ referenceId }) => referenceId === unit.referenceId);
     const target = selectPursuitTarget(candidate, snapshot);
     if (target === null) continue;
@@ -313,22 +330,34 @@ function updateEngagements(units, contacts, tick, events) {
     if (nextTargetId === null) continue;
     unit.avoidance = null;
     events.push(event(tick, "engagement-started", unit.referenceId, nextTargetId, {
-      sweptToi: selection.contact.sweptToi,
-      finalSurfaceGap: selection.contact.finalSurfaceGap,
+      sweptToi: selection.contact?.sweptToi ?? null,
+      finalSurfaceGap: selection.contact?.finalSurfaceGap ?? null,
     }));
   }
 }
 
 
+// One attack cycle, matching the lifecycle the authorized tapes expose:
+//
+//   swing start ---- attackDelayTicks ----> hit ---- rest of animation ---->
+//   animation end ---- remainder of the reload ----> next swing start
+//
+// The unit is committed for the whole animation (it neither moves nor retargets
+// while `action === "attacking"`), the hit lands halfway through it, and the
+// reload runs swing-start to swing-start so the cadence is exactly reload_seconds.
 function progressAttacks(units, tick, events) {
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
   const ready = [];
   for (const unit of units) {
     if (!unit.alive) continue;
+    if (unit.actionTimers.reload > 0) unit.actionTimers.reload -= 1;
+
     if (unit.action === "attacking") {
-      const target = byReference.get(unit.attackTargetId);
-      if (unit.actionTimers.windup > 0) unit.actionTimers.windup -= 1;
-      if (unit.actionTimers.windup === 0) {
+      const delay = attackDelayTicks(unit.mechanics);
+      const animation = attackAnimationTicks(unit.mechanics);
+      unit.actionTimers.swing += 1;
+      if (unit.actionTimers.swing === delay) {
+        const target = byReference.get(unit.attackTargetId);
         ready.push({
           type: "attack-ready",
           readyTick: tick,
@@ -337,12 +366,20 @@ function progressAttacks(units, tick, events) {
           amount: target ? calculateDamage(unit, target) : 0,
         });
       }
+      if (unit.actionTimers.swing >= animation) {
+        // Animation finished: the unit is free to retarget again. A unit whose
+        // target died mid-recovery only becomes available here, which is why the
+        // tapes show killers retargeting ~half an animation after the kill while
+        // bystanders (still winding up) retarget on the very next tick.
+        unit.action = unit.actionTimers.reload > 0 ? "reload" : "idle";
+        unit.attackTargetId = null;
+        unit.actionTimers.swing = 0;
+      }
       continue;
     }
 
-    if (unit.actionTimers.reload > 0) {
-      unit.actionTimers.reload -= 1;
-      unit.action = unit.actionTimers.reload > 0 ? "reload" : "idle";
+    if (unit.actionTimers.reload === 0 && unit.action === "reload") {
+      unit.action = "idle";
     }
     const target = byReference.get(unit.engagedTargetId);
     if (
@@ -361,7 +398,9 @@ function progressAttacks(units, tick, events) {
     }));
     unit.action = "attacking";
     unit.attackTargetId = target.referenceId;
+    unit.actionTimers.swing = 0;
     unit.actionTimers.windup = delay;
+    unit.actionTimers.reload = reloadTicks(unit.mechanics);
     if (delay === 0) {
       ready.push({
         type: "attack-ready",
@@ -412,9 +451,8 @@ function commitReadyAttacks(units, ready, tick, events) {
     const hpBefore = target.hp;
     const hpAfter = Math.max(0, hpBefore - attack.amount);
     target.hp = hpAfter;
-    actor.action = "reload";
-    actor.attackTargetId = null;
-    actor.actionTimers = { windup: 0, reload: reloadTicks(actor.mechanics) };
+    // The hit lands mid-animation; the actor stays committed to the rest of its
+    // swing. Its reload was started at swing start, so the cadence is unaffected.
     events.push(createDamageEvent({
       tick,
       actorId: attack.actorId,
@@ -432,7 +470,7 @@ function commitReadyAttacks(units, ready, tick, events) {
     target.attackTargetId = null;
     target.avoidance = null;
     target.action = "dead";
-    target.actionTimers = { windup: 0, reload: 0 };
+    target.actionTimers = { windup: 0, reload: 0, swing: 0, acquire: 0 };
     events.push(createDeathEvent({
       tick,
       actorId: attack.actorId,

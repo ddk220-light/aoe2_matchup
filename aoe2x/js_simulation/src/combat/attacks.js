@@ -1,5 +1,5 @@
-import { secondsToTicksCeil } from "../simulation-clock.js";
-import { surfaceGap } from "./targeting.js";
+import { secondsToTicksCeil, secondsToTicksNearest } from "../simulation-clock.js";
+import { MELEE_CONTACT_TOLERANCE_TILES, chebyshevGap } from "./targeting.js";
 
 
 function compareText(left, right) {
@@ -56,9 +56,27 @@ function createEvent(type, details) {
 
 
 export function attackDelayTicks(mechanics) {
-  return secondsToTicksCeil(
+  return secondsToTicksNearest(
     requireFinite(mechanics?.attack_delay_seconds, "attack delay seconds"),
   );
+}
+
+
+// Full attack animation: the unit is committed to its swing for this long, and
+// the hit lands partway through it (attackDelayTicks). Sourced from the Genie
+// attack graphic's frame_count x frame_duration.
+export function attackAnimationTicks(mechanics) {
+  const seconds = requireFinite(
+    mechanics?.attack_animation?.seconds,
+    "attack animation seconds",
+  );
+  if (seconds <= 0) throw new RangeError("attack animation must be positive");
+  const ticks = secondsToTicksNearest(seconds);
+  const delay = attackDelayTicks(mechanics);
+  if (delay > ticks) {
+    throw new RangeError("attack delay must not exceed the attack animation");
+  }
+  return ticks;
 }
 
 
@@ -72,7 +90,7 @@ export function reloadTicks(mechanics) {
 export function isInAttackRange(actor, target) {
   const range = requireFinite(actor?.mechanics?.attack_range_tiles, "attack range");
   if (range < 0) throw new RangeError("attack range must be nonnegative");
-  return surfaceGap(actor, target) <= range + 1e-12;
+  return chebyshevGap(actor, target) <= range + MELEE_CONTACT_TOLERANCE_TILES + 1e-12;
 }
 
 

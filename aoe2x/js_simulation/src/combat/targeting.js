@@ -143,6 +143,16 @@ export function selectPursuitTarget(unit, snapshot) {
     if (
       best === null ||
       gap < bestGap ||
+      // Ties are effectively unreachable and this branch is near-dead code:
+      // units acquire on a stagger, so by the time any unit picks a target the
+      // others have been moving for a while and exact ties have dissolved.
+      // Measured in champion_vs_paladin 6v3: spawn positions put champions 1628
+      // and 1633 at an EXACT tie from paladin 1701 (2.2361 Euclidean, 2.0000
+      // Chebyshev), but at 1701's actual acquisition moment the tape separates
+      // them 2.236 vs 2.019 and the sim 1.560 vs 1.957. Flipping this to
+      // highest-ID changed nothing anywhere, in either direction.
+      //
+      // What decides the target is ACQUISITION ORDER, not this tie-break.
       (gap === bestGap && candidate.referenceId < best.referenceId)
     ) {
       best = candidate;

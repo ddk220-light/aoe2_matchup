@@ -498,13 +498,31 @@ function targetReferencesAndLifecycleAreValid(result) {
         if (!target) return false;
         if (field === "engagedTargetId" && (!unit.alive || !target.alive)) return false;
         if ((field === "pursuitTargetId" || field === "attackTargetId") && !target.alive) {
-          if (deathTicks.get(targetId) !== snapshot.tick || !unit.alive) return false;
+          if (!unit.alive) return false;
+          // A killer still finishing its swing keeps the corpse as its attack
+          // target for the rest of the animation, so the reference can outlive
+          // the death tick by many ticks. Every other stale reference must be
+          // gone by the tick after the death.
+          const stillSwinging = field === "attackTargetId" && unit.action === "attacking";
+          if (!stillSwinging) {
+            if (deathTicks.get(targetId) !== snapshot.tick) return false;
+          } else if (!deathTicks.has(targetId)) {
+            return false;
+          }
           const nextSnapshot = snapshots[snapshotIndex + 1];
           if (nextSnapshot) {
             const nextUnit = nextSnapshot.units.find(
               ({ referenceId }) => referenceId === unit.referenceId,
             );
-            if (!nextUnit || nextUnit[field] === targetId) return false;
+            if (!nextUnit) return false;
+            // A killer keeps its captured target through the rest of the swing
+            // animation rather than dropping it the instant the target dies --
+            // the tapes show the blow playing out on the corpse. Only a unit
+            // that has finished attacking is required to have let go by now.
+            if (nextUnit[field] === targetId) {
+              if (field === "attackTargetId" && nextUnit.action === "attacking") continue;
+              return false;
+            }
             const requiredType = field === "pursuitTargetId"
               ? "pursuit-invalidated"
               : "attack-canceled";

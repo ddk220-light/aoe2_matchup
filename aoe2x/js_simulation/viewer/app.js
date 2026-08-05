@@ -7,6 +7,7 @@ import { createMapRenderer } from "./map-renderer.js";
 import {
   createPlaybackCursor,
   createReviewFeedback,
+  downloadJsonDocument,
   parseReviewSelection,
   selectionUrl,
 } from "./simulation-review.js";
@@ -315,13 +316,10 @@ async function start() {
     displayFeedback();
   });
   byId("exportFeedback").addEventListener("click", () => {
-    const body = JSON.stringify(feedback.exportJson(), null, 2);
-    const href = URL.createObjectURL(new Blob([`${body}\n`], { type: "application/json" }));
-    const link = document.createElement("a");
-    link.href = href;
-    link.download = "champion-simulation-review.json";
-    link.click();
-    URL.revokeObjectURL(href);
+    downloadJsonDocument({
+      value: feedback.exportJson(),
+      filename: "champion-simulation-review.json",
+    });
   });
 
   document.addEventListener("keydown", (event) => {

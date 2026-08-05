@@ -159,3 +159,25 @@ export function selectionUrl(urlValue, value) {
   url.searchParams.set("repeat", String(valid.repeat));
   return url.href;
 }
+
+
+export function downloadJsonDocument({
+  value,
+  filename,
+  documentRef = document,
+  urlApi = URL,
+  BlobCtor = Blob,
+  schedule = setTimeout,
+}) {
+  if (!filename || typeof filename !== "string") throw new TypeError("download requires a filename");
+  const body = `${JSON.stringify(value, null, 2)}\n`;
+  const href = urlApi.createObjectURL(new BlobCtor([body], { type: "application/json" }));
+  const link = documentRef.createElement("a");
+  link.href = href;
+  link.download = filename;
+  link.hidden = true;
+  documentRef.body.append(link);
+  link.click();
+  link.remove();
+  schedule(() => urlApi.revokeObjectURL(href), 0);
+}

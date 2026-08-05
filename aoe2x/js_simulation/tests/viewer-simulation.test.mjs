@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   createPlaybackCursor,
   createReviewFeedback,
+  downloadJsonDocument,
   parseReviewSelection,
   selectionUrl,
 } from "../viewer/simulation-review.js";
@@ -95,4 +96,67 @@ test("ratio and tape repeat are parsed from and written to shareable URLs", () =
     selectionUrl("https://example.test/golden-map?old=1#inspect", { ratio: "6v3", repeat: 2 }),
     "https://example.test/golden-map?old=1&ratio=6v3&repeat=2#inspect",
   );
+});
+
+
+test("JSON review export keeps its object URL alive through a mounted-anchor click", () => {
+  const events = [];
+  const link = {
+    hidden: false,
+    click() { events.push("click"); },
+    remove() { events.push("remove"); },
+  };
+  const documentRef = {
+    body: {
+      append(candidate) {
+        assert.equal(candidate, link);
+        events.push("append");
+      },
+    },
+    createElement(tagName) {
+      assert.equal(tagName, "a");
+      events.push("create");
+      return link;
+    },
+  };
+  const urlApi = {
+    createObjectURL(blob) {
+      assert.deepEqual(blob.parts, ['{\n  "schemaVersion": 1\n}\n']);
+      assert.deepEqual(blob.options, { type: "application/json" });
+      events.push("object-url");
+      return "blob:review";
+    },
+    revokeObjectURL(href) {
+      assert.equal(href, "blob:review");
+      events.push("revoke");
+    },
+  };
+  class FakeBlob {
+    constructor(parts, options) {
+      this.parts = parts;
+      this.options = options;
+    }
+  }
+  const scheduled = [];
+
+  downloadJsonDocument({
+    value: { schemaVersion: 1 },
+    filename: "champion-review.json",
+    documentRef,
+    urlApi,
+    BlobCtor: FakeBlob,
+    schedule(callback) {
+      events.push("schedule");
+      scheduled.push(callback);
+    },
+  });
+
+  assert.equal(link.href, "blob:review");
+  assert.equal(link.download, "champion-review.json");
+  assert.equal(link.hidden, true);
+  assert.deepEqual(events, ["object-url", "create", "append", "click", "remove", "schedule"]);
+  scheduled[0]();
+  assert.deepEqual(events, [
+    "object-url", "create", "append", "click", "remove", "schedule", "revoke",
+  ]);
 });

@@ -4,17 +4,22 @@
 
 - Repository: `D:\AI\aoe2_matchup`
 - Feature branch: `codex/cleanroom-champion-sim`
-- Implementation worktree used during development:
-  `D:\AI\aoe2_matchup\.worktrees\cleanroom-champion-sim`
-- This handoff was written immediately before the branch-wide commit and push.
+- Pushed implementation checkpoint: `320a440f` (`feat(sim): complete clean-room Champion simulator`)
+- Current clean validation worktree:
+  `D:\AI\aoe2_matchup\.worktrees\cleanroom-champion-validation`
+- The original implementation worktree is no longer registered with Git. A
+  plain residual directory with that name remains because Windows denied
+  removal of `.pytest-tmp-task12-review`; it must not be used as a worktree.
 - Production was not changed. Do not merge or push to `main` without a new,
   explicit user approval.
 
 The clean-room engine, all five Champion ratio gates, the reproducible
-comparison report, and the browser viewer are implemented. The browser has not
-yet received the final visual/manual validation pass and the Tailnet viewer has
-not yet been restarted against this branch. Those are the next steps after the
-checkpoint commit.
+comparison report, and the browser viewer are implemented and pushed. Desktop
+browser validation has covered loading, selection/URL persistence, playback,
+stepping, next-event navigation, and feedback persistence. A JSON-download
+race found during that pass was repaired with a mounted temporary anchor and
+deferred object-URL cleanup. Final mobile, console, all-ratio, download, and
+Tailnet checks remain before the final milestone.
 
 ## Absolute evidence boundary
 
@@ -131,6 +136,8 @@ The existing golden-map viewer now also provides:
 - separate pursuit, engagement, and captured-swing target lines;
 - local suspicious-run flag and note per ratio/repeat;
 - local feedback clear and JSON export;
+- mounted-anchor JSON export with deferred object-URL cleanup so the browser
+  cannot cancel the download before consuming the blob URL;
 - mobile-responsive field-instrument/chronograph styling;
 - no seed control and no browser-side simulation stepping.
 
@@ -152,9 +159,9 @@ gates additionally require per-snapshot non-overlap; 6v3 requires every
 visible living attacker to have explainable progress/state rather than idle
 overflow.
 
-## Verification completed before checkpoint
+## Verification completed
 
-- Complete JavaScript suite after viewer implementation: **136/136 passed**.
+- Complete JavaScript suite after the JSON export repair: **137/137 passed**.
 - Task 13 focused server/renderer/viewer suite: **18/18 passed**.
 - Task 12 focused Python provenance/reproducibility suite: **20/20 passed**.
 - Modified JavaScript syntax checks passed.
@@ -165,7 +172,33 @@ overflow.
   - Markdown: `A27CF71CD6A079C71D96461E81BB112D75FCBA84EC0F2B1F848739D57BC40BCC`
 
 Review loops were completed for Tasks 1–12. Task 13 passed automated tests and
-self-review, but still needs the manual browser pass below.
+self-review. Its manual browser pass is partially complete as recorded below.
+
+## Browser validation state
+
+Validated in the in-app browser at the local server:
+
+- rendered desktop layout and exact golden-map scene;
+- ratio switching (`1v1` to `6v3`) and repeat switching (`1` to `3`);
+- URL selection persistence across reload;
+- play/pause, one-tick, and next-event advancement;
+- local flag and note persistence across reload;
+- exact `6v3` simulation total of 336 winner HP.
+
+The original JSON export click exposed a real browser race: it revoked its blob
+URL immediately after clicking an unattached anchor. The repaired helper now
+mounts the hidden anchor, clicks and removes it, then schedules URL revocation.
+`tests/viewer-simulation.test.mjs` locks this operation order. The browser must
+be restarted against the current validation worktree and the actual download
+event rechecked before declaring the viewer complete.
+
+The local server previously listening on port 5011 was launched from the
+unregistered residual implementation directory and therefore serves the
+checkpoint, not this follow-up. Resolve the exact owning process for port 5011,
+stop only that process, and relaunch from the validation worktree. The existing
+Tailscale mount is expected to remain:
+
+`https://dragonstar.tail82a190.ts.net/golden-map`
 
 ## Important rejected approaches
 
@@ -184,10 +217,13 @@ Do not reintroduce any of these:
 
 ## Next actions
 
-1. Check out/pull `codex/cleanroom-champion-sim` in a clean working directory.
-2. Confirm the ignored authorized ZIP is present and verify its SHA-256.
-3. Start the local server from `aoe2x/js_simulation` on port 5011.
-4. Use the in-app browser to inspect the actual rendered page at the local URL:
+1. Confirm `codex/cleanroom-champion-sim` is clean and synchronized with its
+   remote tracking branch.
+2. Confirm the ignored authorized ZIP in the validation worktree and verify its
+   SHA-256.
+3. Replace the exact port-5011 server process with one started from
+   `aoe2x/js_simulation` in the validation worktree.
+4. Continue the in-app browser pass on the actual rendered page:
    - all five ratios;
    - repeats 1–3;
    - play/pause/reset/+1/next-event;
@@ -200,8 +236,9 @@ Do not reintroduce any of these:
    provide the phone-accessible Tailnet URL.
 6. Run a fresh reviewer pass over Task 13 plus any visual fixes.
 7. Re-run the complete JS suite after visual fixes.
-8. Create the final milestone doc/commit. Push only the feature branch unless
-   the user separately approves a production/main action.
+8. Update this handoff with final evidence and create the final milestone
+   commit. Push only the feature branch unless the user separately approves a
+   production/main action.
 
 Suggested local checks:
 
@@ -212,5 +249,5 @@ node --test tests
 node server.mjs --host 127.0.0.1 --port 5011
 ```
 
-The final browser/Tailnet check is intentionally pending at this checkpoint;
-do not describe it as already visually validated.
+The remaining browser/Tailnet checks are intentionally pending at this resume
+point; do not describe the viewer as fully visually validated until they pass.

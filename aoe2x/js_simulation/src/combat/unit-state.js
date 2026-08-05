@@ -1,3 +1,7 @@
+const CHAMPION_MASTER = 567;
+const CHAMPION_HP = 70;
+
+
 function freezeTimers(timers) {
   const result = {};
   for (const [name, value] of Object.entries(timers)) {
@@ -41,8 +45,14 @@ export function createUnitState({
   }
 
   const unitMaster = requireSafeInteger(mechanics.unit_master, "Champion mechanics unit master");
+  if (unitMaster !== CHAMPION_MASTER) {
+    throw new RangeError(`Champion mechanics must use master ${CHAMPION_MASTER}`);
+  }
   const hp = requireFinite(mechanics.hp, "Champion mechanics hp");
   if (hp <= 0) throw new RangeError("Champion mechanics hp must be positive");
+  if (hp !== CHAMPION_HP) {
+    throw new RangeError(`Champion mechanics must use ${CHAMPION_HP} HP`);
+  }
 
   return Object.freeze({
     referenceId,

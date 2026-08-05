@@ -124,6 +124,36 @@ test("unit state is an immutable, idle Champion with integer action timers", asy
 });
 
 
+test("direct unit state rejects master 568", async () => {
+  const { createUnitState } = await loadScenarioModules();
+  const { mechanics } = await loadInputs();
+
+  assert.throws(() => createUnitState({
+    referenceId: 1628,
+    owner: 2,
+    x: 3.5,
+    y: 6.5,
+    facing: 1.1780972480773926,
+    mechanics: { ...mechanics, unit_master: 568 },
+  }), /Champion mechanics must use master 567/);
+});
+
+
+test("direct unit state rejects HP 69", async () => {
+  const { createUnitState } = await loadScenarioModules();
+  const { mechanics } = await loadInputs();
+
+  assert.throws(() => createUnitState({
+    referenceId: 1628,
+    owner: 2,
+    x: 3.5,
+    y: 6.5,
+    facing: 1.1780972480773926,
+    mechanics: { ...mechanics, hp: 69 },
+  }), /Champion mechanics must use 70 HP/);
+});
+
+
 test("scenario validation rejects unknown ratios, duplicate IDs, nonfinite positions, and recorded conflicts", async () => {
   const { createChampionScenario } = await loadScenarioModules();
   const { formation, canonicalTruth: truth, mechanics } = await loadInputs();

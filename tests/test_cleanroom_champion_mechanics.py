@@ -215,6 +215,31 @@ def test_exporter_maps_controlled_sources_reproducibly(monkeypatch, tmp_path):
 
 
 @pytest.mark.parametrize(
+    ("armor_classes", "expected_damage"),
+    [
+        ({"4": 4, "21": 2}, 18),
+        ({"4": 4, "1": 0}, 14),
+    ],
+)
+def test_exporter_adds_only_matching_non_base_bonus_damage(
+    monkeypatch, tmp_path, armor_classes, expected_damage
+):
+    """Catches dropping matched bonuses or applying bonuses without target armor."""
+    reference_db = make_reference_db(
+        tmp_path,
+        {"4": 18, "21": 6},
+        armor_classes,
+    )
+    dat_path = tmp_path / "controlled.dat"
+    dat_path.write_bytes(b"controlled complete raw Genie object")
+    install_controlled_dat(monkeypatch)
+
+    exported = export_champion_mechanics(reference_db, dat_path)
+
+    assert exported["derived"]["damage_vs_self"] == expected_damage
+
+
+@pytest.mark.parametrize(
     ("attack_classes", "armor_classes", "message"),
     [
         ({"3": 18}, {"4": 4}, "missing required attack class 4"),

@@ -84,7 +84,12 @@ def _damage_against_self(
             raise ValueError(f"{label} class 4 must be numeric")
     if attack_classes["4"] <= 0:
         raise ValueError("attack class 4 must be positive")
-    return max(1, attack_classes["4"] - armor_classes["4"])
+    damage = max(1, attack_classes["4"] - armor_classes["4"])
+    for class_id, attack in attack_classes.items():
+        if class_id in {"3", "4"} or attack <= 0 or class_id not in armor_classes:
+            continue
+        damage += max(0, attack - armor_classes[class_id])
+    return damage
 
 
 def _raw_chinese_champion(dat_path: Path):

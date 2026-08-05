@@ -8,19 +8,133 @@ import { TICKS_PER_SECOND } from "../../src/simulation-clock.js";
 
 
 const formationUrl = new URL("../../fixtures/golden_formation_21v21.json", import.meta.url);
+const sourceArchiveUrl = new URL(
+  "../../calibration/source/aoe2_golden_basics_championvschampion_2026-08-04.zip",
+  import.meta.url,
+);
+const sourceOfTruthUrl = new URL("../../calibration/source/source_of_truth.json", import.meta.url);
 const truthUrl = new URL("../../calibration/fixtures/champion_basics.json", import.meta.url);
+const manifestUrl = new URL("../../calibration/fixtures/manifest.json", import.meta.url);
 const mechanicsUrl = new URL("../../fixtures/unit_stats/champion_chinese_imperial.json", import.meta.url);
 
-const [formationData, truth, mechanics] = await Promise.all([
+const AUTHORIZED_ARCHIVE = "aoe2_golden_basics_championvschampion_2026-08-04.zip";
+const AUTHORIZED_SHA256 = "33F4051CB1BE014CDF1D3813E7AB74EF619B468CB6196B5E92E7482508AA1BDE";
+const AUTHORIZED_RATIOS = Object.freeze({
+  "1v1": 3,
+  "2v1": 3,
+  "2v3": 3,
+  "5v3": 3,
+  "6v3": 3,
+});
+const FIRST_MOVE_SAMPLING_NOTE = (
+  "Simulation first move is one 60 Hz tick; tape first move is the first changed " +
+  "10 Hz sample. Absolute positions, times, and directions are reported; displacement " +
+  "vectors are not compared."
+);
+
+const archiveBytes = await readFile(sourceArchiveUrl);
+if (createHash("sha256").update(archiveBytes).digest("hex").toUpperCase() !== AUTHORIZED_SHA256) {
+  throw new Error("invalid clean-room source: project-local archive SHA-256 does not match");
+}
+const [sourceOfTruth, manifest, formationData, truth, mechanics] = await Promise.all([
+  readFile(sourceOfTruthUrl, "utf8").then(JSON.parse),
+  readFile(manifestUrl, "utf8").then(JSON.parse),
   readFile(formationUrl, "utf8").then(JSON.parse),
   readFile(truthUrl, "utf8").then(JSON.parse),
   readFile(mechanicsUrl, "utf8").then(JSON.parse),
 ]);
+const sourceVerification = verifyCleanroomSource({
+  archiveBytes,
+  sourceOfTruth,
+  truth,
+  manifest,
+});
 const formation = validateFormationFixture(formationData);
 
 
-function hashJson(value) {
-  return createHash("sha256").update(JSON.stringify(value)).digest("hex");
+function invalidSource(reason) {
+  throw new Error(`invalid clean-room source: ${reason}`);
+}
+
+
+export function verifyCleanroomSource({ archiveBytes: bytes, sourceOfTruth: lock, truth: fixture, manifest: index } = {}) {
+  if (!bytes) invalidSource("project-local archive is required");
+  const archiveHash = createHash("sha256").update(bytes).digest("hex").toUpperCase();
+  if (archiveHash !== AUTHORIZED_SHA256) invalidSource("archive SHA-256 does not match");
+  if (
+    lock?.archive !== AUTHORIZED_ARCHIVE ||
+    lock?.sha256 !== AUTHORIZED_SHA256 ||
+    lock?.recordings !== 15
+  ) invalidSource("source_of_truth.json does not match the authorization lock");
+
+  const ratioNames = Object.keys(lock.ratios ?? {}).sort();
+  const authorizedRatioNames = Object.keys(AUTHORIZED_RATIOS).sort();
+  if (
+    ratioNames.length !== authorizedRatioNames.length ||
+    ratioNames.some((ratio, index) => (
+      ratio !== authorizedRatioNames[index] || lock.ratios[ratio] !== AUTHORIZED_RATIOS[ratio]
+    ))
+  ) invalidSource("source_of_truth.json ratio inventory does not match");
+  if (fixture?.archive !== AUTHORIZED_ARCHIVE || fixture?.zip_sha256 !== AUTHORIZED_SHA256) {
+    invalidSource("Champion fixture does not name the authorized archive");
+  }
+  if (index?.archive !== AUTHORIZED_ARCHIVE || index?.zip_sha256 !== AUTHORIZED_SHA256) {
+    invalidSource("manifest does not name the authorized archive");
+  }
+  if (!Array.isArray(index.runs) || index.runs.length !== lock.recordings) {
+    invalidSource("manifest entry count does not match source_of_truth.json");
+  }
+  if (index.runs.some(({ zip_sha256: hash }) => hash !== AUTHORIZED_SHA256)) {
+    invalidSource("manifest entry SHA-256 does not match");
+  }
+  for (const [ratio, repeatCount] of Object.entries(AUTHORIZED_RATIOS)) {
+    if (fixture.ratios?.[ratio]?.runs?.length !== repeatCount) {
+      invalidSource(`Champion fixture ratio ${ratio} does not match the authorized inventory`);
+    }
+  }
+
+  return Object.freeze({
+    archive: AUTHORIZED_ARCHIVE,
+    zipSha256: AUTHORIZED_SHA256,
+    recordings: lock.recordings,
+    manifestEntries: index.runs.length,
+  });
+}
+
+
+function canonicalJson(value, ancestors = new Set()) {
+  if (value === null || typeof value === "string" || typeof value === "boolean") {
+    return JSON.stringify(value);
+  }
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) throw new TypeError("canonical JSON requires a finite number");
+    return JSON.stringify(value);
+  }
+  if (!value || typeof value !== "object") {
+    throw new TypeError(`canonical JSON does not support ${typeof value}`);
+  }
+  if (ancestors.has(value)) throw new TypeError("canonical JSON does not support cycles");
+
+  ancestors.add(value);
+  let serialized;
+  if (Array.isArray(value)) {
+    serialized = `[${value.map((child) => canonicalJson(child, ancestors)).join(",")}]`;
+  } else {
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null) {
+      throw new TypeError("canonical JSON requires plain objects");
+    }
+    serialized = `{${Object.keys(value).sort().map((key) => (
+      `${JSON.stringify(key)}:${canonicalJson(value[key], ancestors)}`
+    )).join(",")}}`;
+  }
+  ancestors.delete(value);
+  return serialized;
+}
+
+
+export function hashCanonicalJson(value) {
+  return createHash("sha256").update(canonicalJson(value)).digest("hex");
 }
 
 
@@ -31,6 +145,28 @@ function round(value) {
 
 function difference(left, right) {
   return Number.isFinite(left) && Number.isFinite(right) ? round(left - right) : null;
+}
+
+
+export function compareSameAttackerIntervals(simulationRows, tapeRows) {
+  const simulationById = new Map(simulationRows.map((row) => [row.id, row.seconds]));
+  const tapeById = new Map(tapeRows.map((row) => [row.id, row.seconds]));
+  const attackerIds = [...new Set([
+    ...simulationById.keys(),
+    ...tapeById.keys(),
+  ])].sort((left, right) => left - right);
+  return attackerIds.map((id) => {
+    const simulation = simulationById.get(id) ?? [];
+    const tape = tapeById.get(id) ?? [];
+    const length = Math.max(simulation.length, tape.length);
+    return {
+      id,
+      seconds: Array.from(
+        { length },
+        (_, index) => difference(simulation[index], tape[index]),
+      ),
+    };
+  });
 }
 
 
@@ -47,9 +183,15 @@ function simulationTrace(result, damageEvents) {
     x: unit.x,
     y: unit.y,
   }));
+  const firstMoveById = new Map();
+  for (const event of result.events) {
+    if (event.type === "move" && !firstMoveById.has(event.actorId)) {
+      firstMoveById.set(event.actorId, event);
+    }
+  }
   const firstMoves = starts.map(({ id }) => {
-    const move = result.events.find((event) => event.type === "move" && event.actorId === id);
-    if (!move) return { id, tick: null, seconds: null, x: null, y: null, dx: null, dy: null };
+    const move = firstMoveById.get(id);
+    if (!move) return { id, tick: null, seconds: null, x: null, y: null };
     const unit = result.snapshots[move.tick].units.find(({ referenceId }) => referenceId === id);
     return {
       id,
@@ -57,16 +199,15 @@ function simulationTrace(result, damageEvents) {
       seconds: round(move.tick / TICKS_PER_SECOND),
       x: unit.x,
       y: unit.y,
-      dx: move.dx,
-      dy: move.dy,
     };
   });
-  const movementDirections = firstMoves.map(({ id, dx, dy }) => ({
-    id,
-    ...(Number.isFinite(dx) && Number.isFinite(dy)
-      ? movementDirection(dx, dy)
-      : { x: null, y: null }),
-  }));
+  const movementDirections = starts.map(({ id }) => {
+    const move = firstMoveById.get(id);
+    return {
+      id,
+      ...(move ? movementDirection(move.dx, move.dy) : { x: null, y: null }),
+    };
+  });
 
   const contactEvent = result.events.find(({ type }) => type === "contact");
   let surfaceContact = null;
@@ -115,6 +256,7 @@ function simulationTrace(result, damageEvents) {
     seconds: round(killEvent.tick / TICKS_PER_SECOND),
     actorId: killEvent.actorId,
     targetId: killEvent.targetId,
+    amount: killEvent.amount,
   } : null;
   const ownerById = new Map(starts.map(({ id, owner }) => [id, owner]));
   const hitsPerOwner = {};
@@ -194,8 +336,6 @@ function tapeTrace(run) {
         elapsedSeconds: null,
         x: null,
         y: null,
-        dx: null,
-        dy: null,
       };
     }
     return {
@@ -204,16 +344,18 @@ function tapeTrace(run) {
       elapsedSeconds: tapeElapsedSeconds(run, sample.t),
       x: sample.x,
       y: sample.y,
-      dx: sample.x - start.x,
-      dy: sample.y - start.y,
     };
   });
-  const movementDirections = firstMoves.map(({ id, dx, dy }) => ({
-    id,
-    ...(Number.isFinite(dx) && Number.isFinite(dy)
-      ? movementDirection(dx, dy)
-      : { x: null, y: null }),
-  }));
+  const startsById = new Map(starts.map((row) => [row.id, row]));
+  const movementDirections = firstMoves.map(({ id, x, y }) => {
+    const start = startsById.get(id);
+    return {
+      id,
+      ...(Number.isFinite(x) && Number.isFinite(y)
+        ? movementDirection(x - start.x, y - start.y)
+        : { x: null, y: null }),
+    };
+  });
   const firstDamageEvent = run.damage_events[0];
   const firstDamage = firstDamageEvent ? {
     t: firstDamageEvent.t,
@@ -242,6 +384,7 @@ function tapeTrace(run) {
     provisionalTick: Math.round(tapeElapsedSeconds(run, killEvent.t) * TICKS_PER_SECOND),
     actorId: killEvent.attacker,
     targetId: killEvent.victim,
+    amount: killEvent.damage,
   } : null;
   const hitsPerOwner = {};
   for (const event of run.damage_events) {
@@ -265,7 +408,6 @@ function compareTrace(simulation, tape) {
   const startsById = new Map(tape.starts.map((row) => [row.id, row]));
   const firstMovesById = new Map(tape.firstMoves.map((row) => [row.id, row]));
   const directionsById = new Map(tape.movementDirections.map((row) => [row.id, row]));
-  const intervalsById = new Map(tape.sameAttackerIntervals.map((row) => [row.id, row]));
   return {
     starts: simulation.starts.map((row) => {
       const expected = startsById.get(row.id);
@@ -282,10 +424,6 @@ function compareTrace(simulation, tape) {
       return {
         id: row.id,
         seconds: difference(row.seconds, expected?.elapsedSeconds),
-        x: difference(row.x, expected?.x),
-        y: difference(row.y, expected?.y),
-        dx: difference(row.dx, expected?.dx),
-        dy: difference(row.dy, expected?.dy),
       };
     }),
     movementDirections: simulation.movementDirections.map((row) => {
@@ -328,22 +466,16 @@ function compareTrace(simulation, tape) {
       amount: difference(simulation.firstDamage?.amount, tape.firstDamage?.amount),
       hpAfter: difference(simulation.firstDamage?.hpAfter, tape.firstDamage?.hpAfter),
     },
-    sameAttackerIntervals: simulation.sameAttackerIntervals.map((row) => {
-      const expected = intervalsById.get(row.id)?.seconds ?? [];
-      const length = Math.max(row.seconds.length, expected.length);
-      return {
-        id: row.id,
-        seconds: Array.from(
-          { length },
-          (_, index) => difference(row.seconds[index], expected[index]),
-        ),
-      };
-    }),
+    sameAttackerIntervals: compareSameAttackerIntervals(
+      simulation.sameAttackerIntervals,
+      tape.sameAttackerIntervals,
+    ),
     kill: {
       seconds: difference(simulation.kill?.seconds, tape.kill?.elapsedSeconds),
       ticks: difference(simulation.kill?.tick, tape.kill?.provisionalTick),
       actorMatches: tape.kill ? simulation.kill?.actorId === tape.kill.actorId : null,
       targetMatches: tape.kill ? simulation.kill?.targetId === tape.kill.targetId : null,
+      amount: difference(simulation.kill?.amount, tape.kill?.amount),
     },
     hitsPerOwner: Object.fromEntries(
       [...new Set([
@@ -388,9 +520,13 @@ export function runChampionRatio(ratio, { reverseUnits = false } = {}) {
   return Object.freeze({
     ...result,
     damageEvents,
-    diagnostics: Object.freeze({ tapeComparisons: Object.freeze(tapeComparisons) }),
-    eventLogHash: hashJson(result.events),
-    finalStateHash: hashJson(finalState),
+    diagnostics: Object.freeze({
+      source: sourceVerification,
+      firstMoveSamplingNote: FIRST_MOVE_SAMPLING_NOTE,
+      tapeComparisons: Object.freeze(tapeComparisons),
+    }),
+    eventLogHash: hashCanonicalJson(result.events),
+    finalStateHash: hashCanonicalJson(finalState),
     livingUnits: Object.freeze(livingUnits),
     winner: livingUnits[0],
     loser: deadUnits[0],

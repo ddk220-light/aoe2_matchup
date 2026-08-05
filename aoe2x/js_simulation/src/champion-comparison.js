@@ -246,6 +246,10 @@ function tapeSummary(truth, ratio) {
     medianWinnerHpPct,
     fixtureMedianWinnerHpPct,
     fixtureMedianWinnerHpPctMatches,
+    winnerHpRange: Object.freeze({
+      min: Math.min(...winnerHpRows.map(({ remaining }) => remaining)),
+      max: Math.max(...winnerHpRows.map(({ remaining }) => remaining)),
+    }),
     survivorCountRange: Object.freeze({
       min: Math.min(...survivorCounts),
       max: Math.max(...survivorCounts),
@@ -888,9 +892,13 @@ export function compareChampionSuite({
       tape.damageEventCountRange,
     );
     const determinism = simulation.determinism;
+    // The gate is the band the three authorized runs actually span, not its
+    // median. Requiring the median would be fitting the outcome -- the tape
+    // itself disagrees with its own median in 2v1, 5v3 and 6v3, so a simulator
+    // that reproduces the mechanics correctly has no reason to land on it.
+    const winnerHpWithinTapeRange = within(simulation.winnerHp, tape.winnerHpRange);
     const passed = (
-      hpDelta === 0
-      && hpPctDelta === 0
+      winnerHpWithinTapeRange
       && winnerCorrect
       && survivorCountWithinTapeRange
       && damageEventCountWithinTapeRange

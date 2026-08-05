@@ -243,7 +243,9 @@ function acquirePursuitTargets(units, tick, events) {
     // unit has been in combat, re-acquisition is governed by its swing state.
     if (unit.actionTimers.acquire > 0) {
       unit.actionTimers.acquire -= 1;
-      continue;
+      // Acquire on the very tick the delay expires, so no unit is ever briefly
+      // idle with an expired timer and no target.
+      if (unit.actionTimers.acquire > 0) continue;
     }
     if (unit.pursuitTargetId !== null) continue;
     const candidate = snapshot.find(({ referenceId }) => referenceId === unit.referenceId);
@@ -356,6 +358,7 @@ function progressAttacks(units, tick, events) {
       const delay = attackDelayTicks(unit.mechanics);
       const animation = attackAnimationTicks(unit.mechanics);
       unit.actionTimers.swing += 1;
+      unit.actionTimers.windup = Math.max(0, delay - unit.actionTimers.swing);
       if (unit.actionTimers.swing === delay) {
         const target = byReference.get(unit.attackTargetId);
         ready.push({

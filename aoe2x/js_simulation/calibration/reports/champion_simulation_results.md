@@ -1,6 +1,6 @@
 # Champion clean-room simulation results
 
-Overall gate: **PASS**
+Overall gate: **FAIL**
 
 ## Source and clock
 
@@ -8,7 +8,7 @@ Overall gate: **PASS**
 - SHA-256: `33F4051CB1BE014CDF1D3813E7AB74EF619B468CB6196B5E92E7482508AA1BDE`
 - Authorized recordings: 15 (runner-verified)
 - Truth fixture SHA-256: `5D40A39DB397EBF191D4CA7C8A900E2026601123DA7064E33B046FEA45BA831E` (byte-exact runtime lock)
-- Mechanics fixture SHA-256: `06CDE4E98AD95E8D387CEDA58217F3B1CFB90E7A57ADD9536EB82B090AD86595` (byte-exact runtime lock)
+- Mechanics fixture SHA-256: `20F5F9C1422502459986C44474FD9DC278AB9D359070B964BD7E7549DC97B5A6` (byte-exact runtime lock)
 - Mechanics reproducibility scope: controlled exporter sources; this report did not re-extract the installed Genie data.
 - Simulation clock: 60 Hz; status `provisional_not_published`
 - Clock basis: 60 Hz is a provisional simulation hypothesis; it is not selected from HP, winner, or outcome accuracy.
@@ -19,11 +19,11 @@ Tape HP percentages below are recomputed from median remaining HP divided by med
 
 | Ratio | Tape winner | Tape median HP | Tape HP % | Sim winner | Sim HP | Sim HP % | HP delta | HP % delta | Survivors (tape) | Damage events (tape) | Deterministic | Runtime validity | Gate |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |
-| 1v1 | 2 or 3 | 14/70 | 20% | 2 | 14/70 | 20% | +0 | +0 pp | 1 (1) | 9 (9) | yes | PASS | PASS |
-| 2v1 | 2 | 112/140 | 80% | 2 | 112/140 | 80% | +0 | +0 pp | 2 (2) | 7 (7-8) | yes | PASS | PASS |
-| 2v3 | 3 | 126/210 | 60% | 3 | 126/210 | 60% | +0 | +0 pp | 2 (2) | 16 (16) | yes | PASS | PASS |
-| 5v3 | 2 | 252/350 | 72% | 2 | 252/350 | 72% | +0 | +0 pp | 4 (4-5) | 22 (22-25) | yes | PASS | PASS |
-| 6v3 | 2 | 336/420 | 80% | 2 | 336/420 | 80% | +0 | +0 pp | 6 (5-6) | 21 (21-23) | yes | PASS | PASS |
+| 1v1 | 2 or 3 | 14/70 | 20% | 2 | 14/70 | 20% | +0 | +0 pp | 1 (1) | 9 (9) | yes | FAIL | FAIL |
+| 2v1 | 2 | 112/140 | 80% | 2 | 98/140 | 70% | -14 | -10 pp | 2 (2) | 8 (7-8) | yes | FAIL | FAIL |
+| 2v3 | 3 | 126/210 | 60% | 3 | 126/210 | 60% | +0 | +0 pp | 2 (2) | 16 (16) | yes | FAIL | FAIL |
+| 5v3 | 2 | 252/350 | 72% | 2 | 252/350 | 72% | +0 | +0 pp | 5 (4-5) | 22 (22-25) | yes | FAIL | FAIL |
+| 6v3 | 2 | 336/420 | 80% | 2 | 322/420 | 76.66666666666667% | -14 | -3.3333333333333286 pp | 6 (5-6) | 22 (21-23) | yes | FAIL | FAIL |
 
 ## Diagnostic traces
 
@@ -31,11 +31,11 @@ Timing and trajectory diagnostics are reported for inspection; they are not cali
 
 | Ratio | First move | First damage | Final kill | Distance traveled | Blocked ticks | Death-canceled attacks |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1v1 | tick 1 (0.016667s) | tick 69 (1.15s) | tick 549 (9.15s) | 2.428428 tiles | 2 | 1 |
-| 2v1 | tick 1 (0.016667s) | tick 69 (1.15s) | tick 309 (5.15s) | 5.300149 tiles | 165 | 1 |
-| 2v3 | tick 1 (0.016667s) | tick 52 (0.866667s) | tick 491 (8.183333s) | 11.362857 tiles | 333 | 0 |
-| 5v3 | tick 1 (0.016667s) | tick 52 (0.866667s) | tick 473 (7.883333s) | 22.535491 tiles | 1103 | 1 |
-| 6v3 | tick 1 (0.016667s) | tick 52 (0.866667s) | tick 447 (7.45s) | 30.043307 tiles | 1306 | 0 |
+| 1v1 | tick 78 (1.3s) | tick 183 (3.05s) | tick 663 (11.05s) | 2.1472 tiles | 0 | 1 |
+| 2v1 | tick 78 (1.3s) | tick 183 (3.05s) | tick 426 (7.1s) | 5.069398 tiles | 164 | 0 |
+| 2v3 | tick 78 (1.3s) | tick 170 (2.833333s) | tick 690 (11.5s) | 10.693144 tiles | 343 | 1 |
+| 5v3 | tick 78 (1.3s) | tick 170 (2.833333s) | tick 530 (8.833333s) | 19.041323 tiles | 626 | 2 |
+| 6v3 | tick 78 (1.3s) | tick 170 (2.833333s) | tick 510 (8.5s) | 23.480461 tiles | 904 | 1 |
 
 ## Tape-repeat diagnostics and playback
 
@@ -45,15 +45,15 @@ The report stays lean and does not duplicate full traces. The browser viewer mus
 
 ## Determinism hashes
 
-- 1v1: final `d207783befedf1f54d80ee74af854dcb92255e959556173505e1f82307095afe`; events `b2af1db03f2991849fef5413f79f1d5aa23a1db86a507df2219342fc34411fa8`
-- 2v1: final `c3cb6125e41c35c1d1528ef315a22ea70dacba51a8785f5eb1345c8c337979b2`; events `1848cec0ae09d0884bf768180507a7a33931b49e73073e369db70fe761bedc2a`
-- 2v3: final `2d60c6215279ad6bc2056f2a51af64605a726d7829cf16425cd018d93a10459a`; events `1a13e87a2e0578451d789ed6a3c76617458a9d645663f18a5e7392d5cb9f57f8`
-- 5v3: final `b8cb121f56543a9ecab87c0043dbec710022f324e805442b7b87cfae17bcfcec`; events `1ab75b8ef40978ccbcbc2e5a51bbb765bf7519e669309bb515042c28fb7cab2c`
-- 6v3: final `aec628da3b56154fa83ffbf8f038274c01977c0fa715931e775e3635ac8a6752`; events `8edc23d209e98884dd4c925db6214c5332960bd1246b12ca44d33b4ccbba72c4`
+- 1v1: final `1dbd8e65670096884c50f6a89b76a0cf17e3949247b59bf38ba44ee708cdc17d`; events `645cda1510c6952c493640c3dc73ea8cd0840bdb82dae19c9e0acdd3b8c20508`
+- 2v1: final `c6d50887e5be851132aed274307dadb682961905b916c16b35a5a1a3dfa0c80e`; events `3a3878083313b7b11131af1b9b4caa7810176d0ccf611e3a8ba39ddab1e74044`
+- 2v3: final `a9cb2098e7c41b03acb9f2e9c66784e15412091f59ade8f12cf7d2a795d33d09`; events `4be996bb43e1025b96e04a95b019066e3ed9263d8b49067c1a3e204128a3811b`
+- 5v3: final `988b2d3eaba000d60f0dbf45a347317f36b696f364df0929fbb9dd8e3e5687b4`; events `e9c202122982e4485240d214cde986260dfa0b6c82a52eff0564d6830f48fd1e`
+- 6v3: final `6ac6457e8fd8e7b276969a8bde195dec1071891402c78844ea43527aa2228d0c`; events `6f527eb51d90c528feca93d9fda8cc64efcda4b58d04a8efff5db698f14b10ec`
 
 ## Mechanics audit
 
-Champion 567 (Chinese): 70 HP, 1.06 tiles/s, 0.2-tile collision radius, 0-tile range, 2s reload, 0s attack delay, 14 damage versus self.
+Champion 567 (Chinese): 70 HP, 1.0560000228881836 tiles/s, 0.2-tile collision radius, 0-tile range, 2s reload, 0.7500000391155481s attack delay, 14 damage versus self.
 
 - Genie data SHA-256: `CE3530DF36CF0B333A9751CB0FF94460FE904F811FEECEC8AE9794701622B4CF`
 - Reference DB SHA-256: `51D602640E4C1A75F35286AA499821338B0EEE5DBA97E12A12D39E058CB11087`

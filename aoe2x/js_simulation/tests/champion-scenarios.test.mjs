@@ -120,7 +120,7 @@ test("unit state is an immutable, idle Champion with integer action timers", asy
     attackTargetId: null,
     avoidance: null,
     action: "idle",
-    actionTimers: { windup: 0, reload: 0 },
+    actionTimers: { windup: 0, reload: 0, swing: 0, acquire: 78 },
   });
   assert.ok(Object.isFrozen(unit));
   assert.ok(Object.isFrozen(unit.actionTimers));

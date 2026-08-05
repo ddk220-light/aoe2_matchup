@@ -32,6 +32,7 @@ TRUTH_FIXTURE = (
     / "fixtures"
     / "champion_basics.json"
 )
+MANIFEST_FIXTURE = TRUTH_FIXTURE.with_name("manifest.json")
 
 
 def test_source_authority_names_only_the_champion_basics_archive():
@@ -60,6 +61,12 @@ def test_importer_finds_three_repeats_for_every_ratio():
 def test_generated_fixture_matches_checked_in_fixture():
     _, regenerated = import_archive(ARCHIVE)
     checked_in = json.loads(TRUTH_FIXTURE.read_text(encoding="utf-8"))
+    assert regenerated == checked_in
+
+
+def test_generated_manifest_matches_checked_in_manifest():
+    regenerated, _ = import_archive(ARCHIVE)
+    checked_in = json.loads(MANIFEST_FIXTURE.read_text(encoding="utf-8"))
     assert regenerated == checked_in
 
 

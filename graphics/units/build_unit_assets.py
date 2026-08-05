@@ -23,8 +23,8 @@ Player color (player 2 = RED) is applied to both:
 
 Usage
 -----
-  C:/Users/ddk22/miniconda3/python.exe graphics/units/build_unit_assets.py
-  C:/Users/ddk22/miniconda3/python.exe graphics/units/build_unit_assets.py --slugs kona
+  D:/miniconda3/python.exe graphics/units/build_unit_assets.py
+  D:/miniconda3/python.exe graphics/units/build_unit_assets.py --slugs kona
 """
 import os, sys, argparse, shutil, struct, math
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))

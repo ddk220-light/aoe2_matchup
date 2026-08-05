@@ -12,7 +12,7 @@ so the pose is consistent. Single-pass 4x is used for every unit — reliable an
 memory-safe on large mounted/elephant sprites (supersample OOMs at 16x).
 
 Run in visomaster env (torch + spandrel + scipy):
-  C:/Users/ddk22/miniconda3/envs/visomaster/python.exe graphics/units/build_idle_refs.py
+  D:/miniconda3/envs/visomaster/python.exe graphics/units/build_idle_refs.py
   ... --slugs knight archer        # subset
 """
 import os, sys, json, argparse, time, traceback

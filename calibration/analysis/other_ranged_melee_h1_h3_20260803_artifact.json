@@ -1,0 +1,743 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "H1+H3 outside Hand Cannoneer",
+    "generatedAt": "2026-08-04T01:33:51.240Z",
+    "cards": [],
+    "charts": [
+      {
+        "id": "gap_change",
+        "title": "Absolute-gap change by matchup",
+        "subtitle": "Base absolute gap minus H1+H3 absolute gap; positive means closer to FINAL tape",
+        "type": "horizontalBar",
+        "dataset": "matchup_results",
+        "sourceId": "sweep_results",
+      "encodings": {
+        "x": {
+          "field": "matchup_label",
+          "type": "nominal",
+          "label": "Matchup"
+        },
+        "y": {
+          "field": "improvement_pp",
+          "type": "quantitative",
+          "label": "Improvement",
+          "unit": "pp"
+        },
+          "tooltip": [
+            {
+              "field": "tape_signed_hp_pp",
+              "type": "quantitative",
+              "label": "FINAL signed HP",
+              "unit": "pp"
+            },
+            {
+              "field": "base_signed_hp_pp",
+              "type": "quantitative",
+              "label": "Base signed HP",
+              "unit": "pp"
+            },
+            {
+              "field": "h1_h3_signed_hp_pp",
+              "type": "quantitative",
+              "label": "H1+H3 signed HP",
+              "unit": "pp"
+            },
+            {
+              "field": "recordings",
+              "type": "quantitative",
+              "label": "FINAL recordings"
+            }
+          ]
+        },
+      "xAxisTitle": "Matchup",
+      "yAxisTitle": "Closeness improvement (percentage points)",
+        "valueFormat": "number",
+        "unit": "pp",
+        "layout": "full"
+      }
+    ],
+    "tables": [
+      {
+        "id": "line_summary",
+        "title": "Results by ranged unit line",
+        "subtitle": "Seven melee opponents per line; gaps are absolute percentage points",
+        "dataset": "line_summary",
+        "sourceId": "sweep_results",
+        "density": "spacious",
+        "defaultSort": {
+          "field": "h1_h3_mean_gap_pp",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "ranged_line",
+            "label": "Ranged line"
+          },
+          {
+            "field": "recordings",
+            "label": "Recordings",
+            "type": "number",
+            "align": "right"
+          },
+          {
+            "field": "base_mean_gap_pp",
+            "label": "Base mean gap",
+            "type": "number",
+            "unit": "pp",
+            "align": "right"
+          },
+          {
+            "field": "h1_h3_mean_gap_pp",
+            "label": "H1+H3 mean gap",
+            "type": "number",
+            "unit": "pp",
+            "align": "right"
+          },
+          {
+            "field": "base_within_25",
+            "label": "Base ≤25"
+          },
+          {
+            "field": "h1_h3_within_25",
+            "label": "H1+H3 ≤25"
+          },
+          {
+            "field": "base_winner_correct",
+            "label": "Base winners"
+          },
+          {
+            "field": "h1_h3_winner_correct",
+            "label": "H1+H3 winners"
+          }
+        ]
+      },
+      {
+        "id": "matchup_detail",
+        "title": "All 21 matchup families",
+        "subtitle": "Signed HP is from the ranged unit’s perspective; negative means the ranged unit lost",
+        "dataset": "matchup_results",
+        "sourceId": "sweep_results",
+        "density": "compact",
+        "defaultSort": {
+          "field": "improvement_pp",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "matchup_label",
+            "label": "Matchup"
+          },
+          {
+            "field": "recordings",
+            "label": "Tapes",
+            "type": "number",
+            "align": "right"
+          },
+          {
+            "field": "tape_signed_hp_pp",
+            "label": "FINAL signed HP",
+            "type": "number",
+            "unit": "pp",
+            "align": "right"
+          },
+          {
+            "field": "base_signed_hp_pp",
+            "label": "Base signed HP",
+            "type": "number",
+            "unit": "pp",
+            "align": "right"
+          },
+          {
+            "field": "h1_h3_signed_hp_pp",
+            "label": "H1+H3 signed HP",
+            "type": "number",
+            "unit": "pp",
+            "align": "right"
+          },
+          {
+            "field": "base_abs_gap_pp",
+            "label": "Base gap",
+            "type": "number",
+            "unit": "pp",
+            "align": "right"
+          },
+          {
+            "field": "h1_h3_abs_gap_pp",
+            "label": "H1+H3 gap",
+            "type": "number",
+            "unit": "pp",
+            "align": "right"
+          },
+          {
+            "field": "improvement_pp",
+            "label": "Improvement",
+            "type": "number",
+            "unit": "pp",
+            "align": "right",
+            "movement": true
+          },
+          {
+            "field": "h1_h3_winner_correct",
+            "label": "H1+H3 winner"
+          },
+          {
+            "field": "h1_h3_within_25",
+            "label": "H1+H3 ≤25"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "sweep_results",
+        "label": "Paired ranged-vs-melee sweep results",
+        "path": "calibration/analysis/other_ranged_melee_h1_h3_20260803_results.json",
+        "query": {"engine":"duckdb","language":"sql","sql":"SELECT unnest(matchups, recursive := true)\nFROM read_json_auto('calibration/analysis/other_ranged_melee_h1_h3_20260803_results.json');","description":"Reads the saved paired sweep result and expands the 21 reviewed matchup rows used by this report.","executed_at":"2026-08-04T01:33:51.240Z","tables_used":["calibration/analysis/other_ranged_melee_h1_h3_20260803_results.json"],"filters":["FINAL archive SHA-256 31A31FE39C025DDD88EB1F502FD62E0EC48464F4CBB72C1693D5C4FEED0713C9","Ranged units exclude Hand Cannoneer","Opponents are the seven standard melee slugs","Five deterministic seeds per FINAL recording"],"metric_definitions":["Signed winner HP% = winner remaining HP divided by winner starting total HP; positive when the focal ranged line wins and negative when it loses.","Family gap = absolute difference between simulated median signed winner HP% and FINAL median signed winner HP%.","Within target = family gap is at most 25 percentage points and the winner sign matches FINAL."]}
+      },
+      {
+        "id": "final_tape",
+        "label": "FINAL standard-unit golden tape",
+        "path": "calibration/source/aoe2_golden_STANDARD_UNITS_FINAL.zip"
+      },
+      {
+        "id": "sweep_runner",
+        "label": "Calibration variant smoke runner",
+        "path": "calibration/viewer/hc_variant_smoke.mjs"
+      }
+    ],
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# H1+H3 outside Hand Cannoneer"
+      },
+      {
+        "id": "executive_summary",
+        "type": "markdown",
+        "sourceId": "sweep_results",
+        "body": "## Executive Summary\n\n- **Do not promote H1+H3 globally to every ranged-vs-melee fight.** The median absolute gap improves from **8.65 pp to 7.14 pp**, but the target pass count falls from **18/21 to 16/21** and correct winners fall from **20/21 to 17/21**.\n- **Arbalester clearly benefits.** All seven families land within 25 pp, with mean absolute gap improving from **14.55 pp to 8.13 pp** and no winner regressions.\n- **Heavy Cavalry Archer is mixed.** Mean gap worsens slightly from **13.27 pp to 14.60 pp**, and Halberdier changes from the correct melee winner to the wrong ranged winner.\n- **Imperial Elite Skirmisher breaks.** Mean gap rises from **16.63 pp to 47.24 pp**; Champion reverses to the wrong winner, and every Paladin run reaches the 600-second cap."
+      },
+      {
+        "id": "definitions",
+        "type": "markdown",
+        "body": "## What was measured\n\nThe population is every FINAL recording for Arbalester, Heavy Cavalry Archer, and Imperial Elite Skirmisher against the seven standard melee units: **133 recordings in 21 families**. Each arm uses the exact tape spawn for **five deterministic seeds per recording**—665 simulations per arm and 1,330 total. Signed winner HP is positive when the ranged line wins and negative when it loses. Success means the simulated median is within **25 percentage points** of the FINAL family median and has the same winner."
+      },
+      {
+        "id": "broad_pattern",
+        "type": "markdown",
+        "sourceId": "sweep_results",
+        "body": "## The center improves, but the tail gets much worse\n\nH1+H3 improves 11 families, regresses nine, and leaves one unchanged. That nudges the median gap down, yet three severe failures lift the mean gap from **14.81 pp to 23.32 pp**. The chart shows the effect family by family; positive bars mean the change moved closer to tape."
+      },
+      {
+        "id": "gap_chart",
+        "type": "chart",
+        "chartId": "gap_change"
+      },
+      {
+        "id": "line_readout",
+        "type": "markdown",
+        "sourceId": "sweep_results",
+        "body": "## Arbalester is the reusable part; the other lines need scoping\n\nArbalester improves in six of seven families and gains two threshold passes: Hussar moves from 26.72 pp off to 13.98 pp off, while Paladin improves from 21.67 pp to just 0.76 pp. Heavy Cavalry Archer gains substantially against Champion but loses the tape winner against Halberdier. Elite Skirmisher has two modest improvements, but the large Champion and Paladin failures dominate the line."
+      },
+      {
+        "id": "line_table",
+        "type": "table",
+        "tableId": "line_summary"
+      },
+      {
+        "id": "failure_modes",
+        "type": "markdown",
+        "sourceId": "sweep_results",
+        "body": "## Three outcome failures block a global rollout\n\n- **Champion vs Imperial Elite Skirmisher:** FINAL and base both have Champion winning near 54% HP; H1+H3 instead gives the skirmisher the win at 71.43% HP in all 20 runs.\n- **Paladin vs Imperial Elite Skirmisher:** FINAL is Paladin +87.46% and base is Paladin +90.24%; all 20 H1+H3 runs hit the 600-second cap.\n- **Halberdier vs Heavy Cavalry Archer:** FINAL is Halberdier +16.27% and base is Halberdier +24.92%; H1+H3 flips all 50 runs to Heavy Cavalry Archer +30.69%.\n\nThese are deterministic family-wide changes in this sweep, not isolated seed noise."
+      },
+      {
+        "id": "detail_table",
+        "type": "table",
+        "tableId": "matchup_detail"
+      },
+      {
+        "id": "next_steps",
+        "type": "markdown",
+        "body": "## Recommended next steps\n\n1. Keep H1+H3 enabled for Hand Cannoneer while it remains experimental.\n2. Test a line-scoped Arbalester version; its seven-family result is strong enough to justify an isolated gate.\n3. Do not enable H3 obstacle steering for Imperial Elite Skirmisher until its low-speed escape behavior and Paladin cap are understood.\n4. Diagnose the Heavy Cavalry Archer–Halberdier reversal before considering that line."
+      },
+      {
+        "id": "questions",
+        "type": "markdown",
+        "body": "## Further questions\n\n- Is the reusable mechanism the H1 post-swing plant, the H3 clockwise obstacle steering, or their interaction?\n- Should H3 require a minimum ranged-unit speed or a Hand Cannoneer/Arbalester-specific behavior state?\n- Does the Imperial Elite Skirmisher cap come from a stable orbit that Paladins cannot close, or from target/path deadlock?"
+      },
+      {
+        "id": "caveats",
+        "type": "markdown",
+        "body": "## Caveats and assumptions\n\nOnly the locked FINAL archive was used (SHA-256 `31A31FE39C025DDD88EB1F502FD62E0EC48464F4CBB72C1693D5C4FEED0713C9`). Family medians combine every FINAL recording and five simulation seeds per recording. Fight duration is not an optimization target; it is mentioned only where a run never resolves, because a capped run has no valid winner-HP outcome. H1+H3 remains an isolated calibration branch, not production behavior."
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-08-04T01:33:51.240Z",
+    "status": "ready",
+    "datasets": {
+      "overall_summary": [
+        {
+          "families": 21,
+          "recordings": 133,
+          "runs_per_arm": 665,
+          "total_runs": 1330,
+          "median_h1_h3_gap_pp": 7.14,
+          "median_base_gap_pp": 8.65,
+          "median_gap_change_pp": -1.51,
+          "h1_h3_within_25": 16,
+          "base_within_25": 18,
+          "within_25_change": -2,
+          "h1_h3_winner_correct": 17,
+          "base_winner_correct": 20,
+          "winner_correct_change": -3,
+          "mean_h1_h3_gap_pp": 23.32,
+          "mean_base_gap_pp": 14.81
+        }
+      ],
+      "line_summary": [
+        {
+          "ranged_line": "Arbalester",
+          "families": 7,
+          "recordings": 50,
+          "base_median_gap_pp": 15.71,
+          "h1_h3_median_gap_pp": 7.14,
+          "base_mean_gap_pp": 14.55,
+          "h1_h3_mean_gap_pp": 8.13,
+          "base_within_25": "6/7",
+          "h1_h3_within_25": "7/7",
+          "base_winner_correct": "7/7",
+          "h1_h3_winner_correct": "7/7"
+        },
+        {
+          "ranged_line": "Heavy Cavalry Archer",
+          "families": 7,
+          "recordings": 63,
+          "base_median_gap_pp": 9.63,
+          "h1_h3_median_gap_pp": 6.41,
+          "base_mean_gap_pp": 13.27,
+          "h1_h3_mean_gap_pp": 14.6,
+          "base_within_25": "6/7",
+          "h1_h3_within_25": "6/7",
+          "base_winner_correct": "7/7",
+          "h1_h3_winner_correct": "6/7"
+        },
+        {
+          "ranged_line": "Imperial Elite Skirmisher",
+          "families": 7,
+          "recordings": 20,
+          "base_median_gap_pp": 3.81,
+          "h1_h3_median_gap_pp": 27.62,
+          "base_mean_gap_pp": 16.63,
+          "h1_h3_mean_gap_pp": 47.24,
+          "base_within_25": "6/7",
+          "h1_h3_within_25": "3/7",
+          "base_winner_correct": "6/7",
+          "h1_h3_winner_correct": "4/7"
+        }
+      ],
+      "matchup_results": [
+        {
+          "matchup": "arbalester__vs__elite_elephant",
+          "matchup_label": "Arbalester vs Elite Battle Elephant",
+          "ranged_line": "Arbalester",
+          "focal_slug": "arbalester",
+          "recordings": 7,
+          "runs_per_arm": 35,
+          "tape_signed_hp_pp": -80.07,
+          "base_signed_hp_pp": -86.7,
+          "h1_h3_signed_hp_pp": -84.41,
+          "base_abs_gap_pp": 6.63,
+          "h1_h3_abs_gap_pp": 4.34,
+          "improvement_pp": 2.29,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "Yes",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "Yes"
+        },
+        {
+          "matchup": "arbalester__vs__elite_steppe",
+          "matchup_label": "Arbalester vs Elite Steppe Lancer",
+          "ranged_line": "Arbalester",
+          "focal_slug": "arbalester",
+          "recordings": 10,
+          "runs_per_arm": 50,
+          "tape_signed_hp_pp": -16,
+          "base_signed_hp_pp": -40.29,
+          "h1_h3_signed_hp_pp": -32.86,
+          "base_abs_gap_pp": 24.29,
+          "h1_h3_abs_gap_pp": 16.86,
+          "improvement_pp": 7.43,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "Yes",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "Yes"
+        },
+        {
+          "matchup": "arbalester__vs__heavy_camel",
+          "matchup_label": "Arbalester vs Heavy Camel",
+          "ranged_line": "Arbalester",
+          "focal_slug": "arbalester",
+          "recordings": 2,
+          "runs_per_arm": 10,
+          "tape_signed_hp_pp": 62.38,
+          "base_signed_hp_pp": 46.67,
+          "h1_h3_signed_hp_pp": 69.52,
+          "base_abs_gap_pp": 15.71,
+          "h1_h3_abs_gap_pp": 7.14,
+          "improvement_pp": 8.57,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "Yes",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "Yes"
+        },
+        {
+          "matchup": "arbalester__vs__hussar",
+          "matchup_label": "Arbalester vs Hussar",
+          "ranged_line": "Arbalester",
+          "focal_slug": "arbalester",
+          "recordings": 5,
+          "runs_per_arm": 25,
+          "tape_signed_hp_pp": -29.17,
+          "base_signed_hp_pp": -55.89,
+          "h1_h3_signed_hp_pp": -43.16,
+          "base_abs_gap_pp": 26.72,
+          "h1_h3_abs_gap_pp": 13.98,
+          "improvement_pp": 12.73,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "Yes",
+          "base_within_25": "No",
+          "h1_h3_within_25": "Yes"
+        },
+        {
+          "matchup": "arbalester__vs__paladin",
+          "matchup_label": "Arbalester vs Paladin",
+          "ranged_line": "Arbalester",
+          "focal_slug": "arbalester",
+          "recordings": 14,
+          "runs_per_arm": 70,
+          "tape_signed_hp_pp": -42.12,
+          "base_signed_hp_pp": -63.79,
+          "h1_h3_signed_hp_pp": -42.88,
+          "base_abs_gap_pp": 21.67,
+          "h1_h3_abs_gap_pp": 0.76,
+          "improvement_pp": 20.91,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "Yes",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "Yes"
+        },
+        {
+          "matchup": "champion__vs__arbalester",
+          "matchup_label": "Champion vs Arbalester",
+          "ranged_line": "Arbalester",
+          "focal_slug": "arbalester",
+          "recordings": 8,
+          "runs_per_arm": 40,
+          "tape_signed_hp_pp": 82.64,
+          "base_signed_hp_pp": 79.86,
+          "h1_h3_signed_hp_pp": 71.53,
+          "base_abs_gap_pp": 2.78,
+          "h1_h3_abs_gap_pp": 11.11,
+          "improvement_pp": -8.33,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "Yes",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "Yes"
+        },
+        {
+          "matchup": "champion__vs__heavy_cav_archer",
+          "matchup_label": "Champion vs Heavy Cavalry Archer",
+          "ranged_line": "Heavy Cavalry Archer",
+          "focal_slug": "heavy_cav_archer",
+          "recordings": 14,
+          "runs_per_arm": 70,
+          "tape_signed_hp_pp": 41.72,
+          "base_signed_hp_pp": 1.77,
+          "h1_h3_signed_hp_pp": 48.13,
+          "base_abs_gap_pp": 39.95,
+          "h1_h3_abs_gap_pp": 6.41,
+          "improvement_pp": 33.54,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "Yes",
+          "base_within_25": "No",
+          "h1_h3_within_25": "Yes"
+        },
+        {
+          "matchup": "champion__vs__imp_elite_skirm",
+          "matchup_label": "Champion vs Imperial Elite Skirmisher",
+          "ranged_line": "Imperial Elite Skirmisher",
+          "focal_slug": "imp_elite_skirm",
+          "recordings": 4,
+          "runs_per_arm": 20,
+          "tape_signed_hp_pp": -54.38,
+          "base_signed_hp_pp": -53.9,
+          "h1_h3_signed_hp_pp": 71.43,
+          "base_abs_gap_pp": 0.48,
+          "h1_h3_abs_gap_pp": 125.81,
+          "improvement_pp": -125.33,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "No",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "No"
+        },
+        {
+          "matchup": "halberdier__vs__arbalester",
+          "matchup_label": "Halberdier vs Arbalester",
+          "ranged_line": "Arbalester",
+          "focal_slug": "arbalester",
+          "recordings": 4,
+          "runs_per_arm": 20,
+          "tape_signed_hp_pp": 93.27,
+          "base_signed_hp_pp": 89.23,
+          "h1_h3_signed_hp_pp": 90.58,
+          "base_abs_gap_pp": 4.04,
+          "h1_h3_abs_gap_pp": 2.69,
+          "improvement_pp": 1.35,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "Yes",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "Yes"
+        },
+        {
+          "matchup": "halberdier__vs__heavy_cav_archer",
+          "matchup_label": "Halberdier vs Heavy Cavalry Archer",
+          "ranged_line": "Heavy Cavalry Archer",
+          "focal_slug": "heavy_cav_archer",
+          "recordings": 10,
+          "runs_per_arm": 50,
+          "tape_signed_hp_pp": -16.27,
+          "base_signed_hp_pp": -24.92,
+          "h1_h3_signed_hp_pp": 30.69,
+          "base_abs_gap_pp": 8.65,
+          "h1_h3_abs_gap_pp": 46.96,
+          "improvement_pp": -38.31,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "No",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "No"
+        },
+        {
+          "matchup": "halberdier__vs__imp_elite_skirm",
+          "matchup_label": "Halberdier vs Imperial Elite Skirmisher",
+          "ranged_line": "Imperial Elite Skirmisher",
+          "focal_slug": "imp_elite_skirm",
+          "recordings": 1,
+          "runs_per_arm": 5,
+          "tape_signed_hp_pp": 60,
+          "base_signed_hp_pp": 56.19,
+          "h1_h3_signed_hp_pp": 87.62,
+          "base_abs_gap_pp": 3.81,
+          "h1_h3_abs_gap_pp": 27.62,
+          "improvement_pp": -23.81,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "Yes",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "No"
+        },
+        {
+          "matchup": "heavy_cav_archer__vs__elite_elephant",
+          "matchup_label": "Heavy Cavalry Archer vs Elite Battle Elephant",
+          "ranged_line": "Heavy Cavalry Archer",
+          "focal_slug": "heavy_cav_archer",
+          "recordings": 3,
+          "runs_per_arm": 15,
+          "tape_signed_hp_pp": -73.08,
+          "base_signed_hp_pp": -76.87,
+          "h1_h3_signed_hp_pp": -75.29,
+          "base_abs_gap_pp": 3.8,
+          "h1_h3_abs_gap_pp": 2.21,
+          "improvement_pp": 1.59,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "Yes",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "Yes"
+        },
+        {
+          "matchup": "heavy_cav_archer__vs__elite_steppe",
+          "matchup_label": "Heavy Cavalry Archer vs Elite Steppe Lancer",
+          "ranged_line": "Heavy Cavalry Archer",
+          "focal_slug": "heavy_cav_archer",
+          "recordings": 10,
+          "runs_per_arm": 50,
+          "tape_signed_hp_pp": -28.1,
+          "base_signed_hp_pp": -38.33,
+          "h1_h3_signed_hp_pp": -5.24,
+          "base_abs_gap_pp": 10.24,
+          "h1_h3_abs_gap_pp": 22.86,
+          "improvement_pp": -12.62,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "Yes",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "Yes"
+        },
+        {
+          "matchup": "heavy_cav_archer__vs__heavy_camel",
+          "matchup_label": "Heavy Cavalry Archer vs Heavy Camel",
+          "ranged_line": "Heavy Cavalry Archer",
+          "focal_slug": "heavy_cav_archer",
+          "recordings": 10,
+          "runs_per_arm": 50,
+          "tape_signed_hp_pp": -36.81,
+          "base_signed_hp_pp": -41.11,
+          "h1_h3_signed_hp_pp": -41.39,
+          "base_abs_gap_pp": 4.31,
+          "h1_h3_abs_gap_pp": 4.58,
+          "improvement_pp": -0.28,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "Yes",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "Yes"
+        },
+        {
+          "matchup": "heavy_cav_archer__vs__hussar",
+          "matchup_label": "Heavy Cavalry Archer vs Hussar",
+          "ranged_line": "Heavy Cavalry Archer",
+          "focal_slug": "heavy_cav_archer",
+          "recordings": 5,
+          "runs_per_arm": 25,
+          "tape_signed_hp_pp": -31.83,
+          "base_signed_hp_pp": -48.12,
+          "h1_h3_signed_hp_pp": -35.59,
+          "base_abs_gap_pp": 16.29,
+          "h1_h3_abs_gap_pp": 3.76,
+          "improvement_pp": 12.53,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "Yes",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "Yes"
+        },
+        {
+          "matchup": "heavy_cav_archer__vs__paladin",
+          "matchup_label": "Heavy Cavalry Archer vs Paladin",
+          "ranged_line": "Heavy Cavalry Archer",
+          "focal_slug": "heavy_cav_archer",
+          "recordings": 11,
+          "runs_per_arm": 55,
+          "tape_signed_hp_pp": -33.63,
+          "base_signed_hp_pp": -43.26,
+          "h1_h3_signed_hp_pp": -18.22,
+          "base_abs_gap_pp": 9.63,
+          "h1_h3_abs_gap_pp": 15.41,
+          "improvement_pp": -5.78,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "Yes",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "Yes"
+        },
+        {
+          "matchup": "imp_elite_skirm__vs__elite_elephant",
+          "matchup_label": "Imperial Elite Skirmisher vs Elite Battle Elephant",
+          "ranged_line": "Imperial Elite Skirmisher",
+          "focal_slug": "imp_elite_skirm",
+          "recordings": 4,
+          "runs_per_arm": 20,
+          "tape_signed_hp_pp": -84.61,
+          "base_signed_hp_pp": 0,
+          "h1_h3_signed_hp_pp": 0,
+          "base_abs_gap_pp": 84.61,
+          "h1_h3_abs_gap_pp": 84.61,
+          "improvement_pp": 0,
+          "base_winner_correct": "No",
+          "h1_h3_winner_correct": "No",
+          "base_within_25": "No",
+          "h1_h3_within_25": "No"
+        },
+        {
+          "matchup": "imp_elite_skirm__vs__elite_steppe",
+          "matchup_label": "Imperial Elite Skirmisher vs Elite Steppe Lancer",
+          "ranged_line": "Imperial Elite Skirmisher",
+          "focal_slug": "imp_elite_skirm",
+          "recordings": 3,
+          "runs_per_arm": 15,
+          "tape_signed_hp_pp": -86.22,
+          "base_signed_hp_pp": -87.67,
+          "h1_h3_signed_hp_pp": -88.78,
+          "base_abs_gap_pp": 1.44,
+          "h1_h3_abs_gap_pp": 2.56,
+          "improvement_pp": -1.11,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "Yes",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "Yes"
+        },
+        {
+          "matchup": "imp_elite_skirm__vs__heavy_camel",
+          "matchup_label": "Imperial Elite Skirmisher vs Heavy Camel",
+          "ranged_line": "Imperial Elite Skirmisher",
+          "focal_slug": "imp_elite_skirm",
+          "recordings": 1,
+          "runs_per_arm": 5,
+          "tape_signed_hp_pp": -39.82,
+          "base_signed_hp_pp": -56.7,
+          "h1_h3_signed_hp_pp": -37.41,
+          "base_abs_gap_pp": 16.88,
+          "h1_h3_abs_gap_pp": 2.41,
+          "improvement_pp": 14.46,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "Yes",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "Yes"
+        },
+        {
+          "matchup": "imp_elite_skirm__vs__hussar",
+          "matchup_label": "Imperial Elite Skirmisher vs Hussar",
+          "ranged_line": "Imperial Elite Skirmisher",
+          "focal_slug": "imp_elite_skirm",
+          "recordings": 3,
+          "runs_per_arm": 15,
+          "tape_signed_hp_pp": -85.26,
+          "base_signed_hp_pp": -91.65,
+          "h1_h3_signed_hp_pp": -85.05,
+          "base_abs_gap_pp": 6.39,
+          "h1_h3_abs_gap_pp": 0.21,
+          "improvement_pp": 6.18,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "Yes",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "Yes"
+        },
+        {
+          "matchup": "imp_elite_skirm__vs__paladin",
+          "matchup_label": "Imperial Elite Skirmisher vs Paladin",
+          "ranged_line": "Imperial Elite Skirmisher",
+          "focal_slug": "imp_elite_skirm",
+          "recordings": 4,
+          "runs_per_arm": 20,
+          "tape_signed_hp_pp": -87.46,
+          "base_signed_hp_pp": -90.24,
+          "h1_h3_signed_hp_pp": 0,
+          "base_abs_gap_pp": 2.78,
+          "h1_h3_abs_gap_pp": 87.46,
+          "improvement_pp": -84.68,
+          "base_winner_correct": "Yes",
+          "h1_h3_winner_correct": "No",
+          "base_within_25": "Yes",
+          "h1_h3_within_25": "No"
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "sweep_results",
+      "label": "Paired ranged-vs-melee sweep results",
+      "path": "calibration/analysis/other_ranged_melee_h1_h3_20260803_results.json",
+      "query": {"engine":"duckdb","language":"sql","sql":"SELECT unnest(matchups, recursive := true)\nFROM read_json_auto('calibration/analysis/other_ranged_melee_h1_h3_20260803_results.json');","description":"Reads the saved paired sweep result and expands the 21 reviewed matchup rows used by this report.","executed_at":"2026-08-04T01:33:51.240Z","tables_used":["calibration/analysis/other_ranged_melee_h1_h3_20260803_results.json"],"filters":["FINAL archive SHA-256 31A31FE39C025DDD88EB1F502FD62E0EC48464F4CBB72C1693D5C4FEED0713C9","Ranged units exclude Hand Cannoneer","Opponents are the seven standard melee slugs","Five deterministic seeds per FINAL recording"],"metric_definitions":["Signed winner HP% = winner remaining HP divided by winner starting total HP; positive when the focal ranged line wins and negative when it loses.","Family gap = absolute difference between simulated median signed winner HP% and FINAL median signed winner HP%.","Within target = family gap is at most 25 percentage points and the winner sign matches FINAL."]}
+    },
+    {
+      "id": "final_tape",
+      "label": "FINAL standard-unit golden tape",
+      "path": "calibration/source/aoe2_golden_STANDARD_UNITS_FINAL.zip"
+    },
+    {
+      "id": "sweep_runner",
+      "label": "Calibration variant smoke runner",
+      "path": "calibration/viewer/hc_variant_smoke.mjs"
+    }
+  ]
+}

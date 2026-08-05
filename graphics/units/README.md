@@ -33,7 +33,7 @@ graphics/units/<slug>/
 3. **Run the finalizer** (visomaster env — torch + spandrel + scipy; upscale models in
    `.scratch/tools/models/`):
    ```bash
-   C:/Users/ddk22/miniconda3/envs/visomaster/python.exe graphics/units/finalize_units.py --slugs <slug>
+   D:/miniconda3/envs/visomaster/python.exe graphics/units/finalize_units.py --slugs <slug>
    ```
    It produces all 6 files and deletes everything else, skipping work already done (existing
    idle refs, an already-transparent attack GIF) — safe to re-run. Foot units finish in a

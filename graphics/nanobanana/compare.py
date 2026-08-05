@@ -2,7 +2,7 @@
 
 Usage
 -----
-  C:/Users/ddk22/miniconda3/python.exe graphics/nanobanana/compare.py leitis woad_raider mangudai
+  D:/miniconda3/python.exe graphics/nanobanana/compare.py leitis woad_raider mangudai
 
 Reads the FLUX render from graphics/art/flux2_hybrid/<slug>_idle_dir05_bg.png and the Nano
 Banana render from graphics/nanobanana/renders/batch_nb/<slug>.png. Output panels land in

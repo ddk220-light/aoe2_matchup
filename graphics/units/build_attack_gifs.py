@@ -11,7 +11,7 @@ the AoE2:DE drs/graphics dir.
 
 Idempotent: a unit whose attack GIF already exists (and is transparent) is skipped.
 Run in visomaster env (torch + spandrel):
-  C:/Users/ddk22/miniconda3/envs/visomaster/python.exe graphics/units/build_attack_gifs.py
+  D:/miniconda3/envs/visomaster/python.exe graphics/units/build_attack_gifs.py
   ... --slugs knight archer
 """
 import os, sys, re, json, argparse, time, traceback

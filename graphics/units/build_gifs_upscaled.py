@@ -14,7 +14,7 @@ Note: each frame is upscaled independently, so the model can introduce mild temp
 flicker on textured regions. For these sprites it is usually acceptable.
 
 Environment: torch + spandrel + CUDA -> visomaster env.
-  C:/Users/ddk22/miniconda3/envs/visomaster/python.exe graphics/units/build_gifs_upscaled.py \
+  D:/miniconda3/envs/visomaster/python.exe graphics/units/build_gifs_upscaled.py \
       [--slugs kona] [--models ultrasharp4x dat4x] [--matte 48,50,54]
 """
 import os, sys, argparse, time

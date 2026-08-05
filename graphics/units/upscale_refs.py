@@ -12,7 +12,7 @@ run the model on opaque RGB, upscale the ORIGINAL alpha with Lanczos, recombine.
 Environment
 -----------
 Needs torch + spandrel + CUDA — run under the visomaster env:
-  C:/Users/ddk22/miniconda3/envs/visomaster/python.exe graphics/units/upscale_refs.py [--slugs kona]
+  D:/miniconda3/envs/visomaster/python.exe graphics/units/upscale_refs.py [--slugs kona]
 
 Models (downloaded from OpenModelDB/HuggingFace, ~67–155 MB each):
   .scratch/tools/models/4x-UltraSharp.pth

@@ -12,7 +12,7 @@ The idle/attack/death frame-dump subfolders and any other files (incl. death GIF
 Idle pose PNGs stay supersampled (static, quality matters); the GIF uses a single pass (faster).
 
 Run under the visomaster env (torch + spandrel + scipy):
-  C:/Users/ddk22/miniconda3/envs/visomaster/python.exe graphics/units/finalize_units.py [--slugs kona]
+  D:/miniconda3/envs/visomaster/python.exe graphics/units/finalize_units.py [--slugs kona]
 """
 import os, sys, argparse, shutil, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

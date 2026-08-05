@@ -17,9 +17,9 @@ Existing curated folders are LEFT UNTOUCHED: any slug in SKIP_SLUGS is skipped s
 its finalized asset set is never overwritten.
 
 Run with the conda base python (has genieutils + numpy + Pillow):
-  C:/Users/ddk22/miniconda3/python.exe graphics/units/build_icons.py
-  C:/Users/ddk22/miniconda3/python.exe graphics/units/build_icons.py --slugs archer knight
-  C:/Users/ddk22/miniconda3/python.exe graphics/units/build_icons.py --list   # dry run
+  D:/miniconda3/python.exe graphics/units/build_icons.py
+  D:/miniconda3/python.exe graphics/units/build_icons.py --slugs archer knight
+  D:/miniconda3/python.exe graphics/units/build_icons.py --list   # dry run
 """
 import os, sys, re, argparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

@@ -8,7 +8,7 @@ against the local FLUX.2-dev pipeline on the same units.
 Usage
 -----
     set GEMINI_API_KEY=...   (or pass --api-key)
-    C:/Users/ddk22/miniconda3/python.exe graphics/nanobanana/generate.py --out renders/batch_nb
+    D:/miniconda3/python.exe graphics/nanobanana/generate.py --out renders/batch_nb
 
 Outputs land in graphics/nanobanana/renders/<batch>/<slug>.png
 

@@ -10,7 +10,7 @@ edges (GIF has only 1-bit transparency).
 
 Usage
 -----
-  C:/Users/ddk22/miniconda3/python.exe graphics/units/build_gifs.py [--slugs kona] [--matte 48,50,54]
+  D:/miniconda3/python.exe graphics/units/build_gifs.py [--slugs kona] [--matte 48,50,54]
 """
 import os, sys, argparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

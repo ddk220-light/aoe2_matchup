@@ -6,7 +6,7 @@ black bg + continuous >=100px pure-black pocket removal) and save RGBA.
 
 Idempotent: skips folders that already have icon_transparent.png unless --force.
 Run with conda base python (numpy + Pillow + scipy):
-  C:/Users/ddk22/miniconda3/python.exe graphics/units/build_transparent_icons.py
+  D:/miniconda3/python.exe graphics/units/build_transparent_icons.py
 """
 import os, sys, argparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

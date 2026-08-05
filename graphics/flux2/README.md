@@ -30,7 +30,7 @@ Outputs live in:
 
 ```bash
 # Download the model if not cached
-C:/Users/ddk22/miniconda3/envs/visomaster/python.exe graphics/flux2/download_model.py
+D:/miniconda3/envs/visomaster/python.exe graphics/flux2/download_model.py
 ```
 
 ### 2. Research the units
@@ -61,14 +61,14 @@ UNITS = [
 
 ```bash
 # Must use the diffusion env (torch + diffusers + bitsandbytes)
-C:/Users/ddk22/miniconda3/envs/visomaster/python.exe graphics/flux2/generate.py --out renders/batch13
+D:/miniconda3/envs/visomaster/python.exe graphics/flux2/generate.py --out renders/batch13
 ```
 
 ### 5. Review (critique panel)
 
 ```bash
 # Base conda env is fine for this
-C:/Users/ddk22/miniconda3/python.exe graphics/flux2/critique_panel.py \
+D:/miniconda3/python.exe graphics/flux2/critique_panel.py \
     boyar u_cav_boyar_elite_idleA_x2.sld Elite_Boyar.png graphics/flux2/renders/batch13/boyar.png
 ```
 
@@ -82,7 +82,7 @@ Cap at ~3 iterations.
 
 ```bash
 # Base conda env (has rembg)
-C:/Users/ddk22/miniconda3/python.exe graphics/flux2/cut_renders.py \
+D:/miniconda3/python.exe graphics/flux2/cut_renders.py \
     --src graphics/flux2/renders/batch13 --slugs boyar cataphract
 ```
 
@@ -129,7 +129,7 @@ see `graphics/game_raw_files/` which is gitignored.
 
 | Task | Python |
 |---|---|
-| generate (FLUX.2) | `C:/Users/ddk22/miniconda3/envs/visomaster/python.exe` — has torch 2.8 cu129, diffusers 0.38, bitsandbytes 0.49 |
-| cut (rembg) | `C:/Users/ddk22/miniconda3/python.exe` — base conda, has rembg |
+| generate (FLUX.2) | `D:/miniconda3/envs/visomaster/python.exe` — has torch 2.8 cu129, diffusers 0.38, bitsandbytes 0.49 |
+| cut (rembg) | `D:/miniconda3/python.exe` — base conda, has rembg |
 | critique panel | either env |
 | make_icons | either env |

@@ -235,6 +235,8 @@ const dicts = readJson(path.join(FIXTURES, "combat_dicts.json"));
 const spawns = readJson(path.join(FIXTURES, "spawns.json"));
 const fightSets = readJson(path.join(FIXTURES, "fight_sets.json"));
 const melee = new Set(fightSets.melee);
+const otherRanged = new Set(fightSets.ranged.filter((slug) => slug !== "hand_cannoneer"));
+const fullRecordingScope = scope === "hc-melee" || scope === "other-ranged-melee";
 let matchups = scope === "hc-melee"
   ? [...new Set(manifest
     .filter((fight) => {
@@ -242,7 +244,14 @@ let matchups = scope === "hc-melee"
       return slugs.includes("hand_cannoneer") && slugs.some((slug) => melee.has(slug));
     })
     .map((fight) => fight.matchup))].sort()
-  : TOP_GAP_MATCHUPS;
+  : scope === "other-ranged-melee"
+    ? [...new Set(manifest
+      .filter((fight) => {
+        const slugs = [fight.side1.slug, fight.side2.slug];
+        return slugs.some((slug) => otherRanged.has(slug)) && slugs.some((slug) => melee.has(slug));
+      })
+      .map((fight) => fight.matchup))].sort()
+    : TOP_GAP_MATCHUPS;
 if (matchupFilter) matchups = matchups.filter((matchup) => matchup === matchupFilter);
 if (scope === "hc-melee" && !matchupFilter) {
   const opponents = [...new Set(manifest
@@ -257,12 +266,16 @@ if (scope === "hc-melee" && !matchupFilter) {
 const results = [];
 for (const matchup of matchups) {
   const matchupFights = manifest.filter((candidate) => candidate.matchup === matchup);
-  const fights = scope === "hc-melee"
+  const fights = fullRecordingScope
     ? matchupFights
     : [representativeFight(matchup, manifest, dicts)];
+  const matchupSlugs = [fights[0].side1.slug, fights[0].side2.slug];
+  const focalSlug = scope === "other-ranged-melee"
+    ? matchupSlugs.find((slug) => otherRanged.has(slug))
+    : "hand_cannoneer";
   const tapeRuns = matchupFights
     .map((candidate) => tapeOutcome(readJson(path.join(FIXTURES, "truth", `${candidate.tag}.json`)), dicts));
-  const tapeSignedHp = median(tapeRuns.map((outcome) => signedOutcome(outcome, "hand_cannoneer")));
+  const tapeSignedHp = median(tapeRuns.map((outcome) => signedOutcome(outcome, focalSlug)));
   const runs = [];
   for (const fight of fights) {
     for (let seed = 1; seed <= seeds; seed++) {
@@ -279,14 +292,15 @@ for (const matchup of matchups) {
     }
   }
   const simSignedHp = median(runs.map((run) =>
-    run.winner === "hand_cannoneer" ? run.hp_pct : -run.hp_pct));
+    run.winner === focalSlug ? run.hp_pct : -run.hp_pct));
   const modalWinner = simSignedHp >= 0
-    ? "hand_cannoneer"
-    : fights[0].side1.slug === "hand_cannoneer"
+    ? focalSlug
+    : fights[0].side1.slug === focalSlug
       ? fights[0].side2.slug
       : fights[0].side1.slug;
   const result = {
     matchup,
+    focal_slug: focalSlug,
     representative_tag: scope === "hc-melee" ? `all:${fights.length}` : fights[0].tag,
     winner: modalWinner,
     winner_hp_pct: Math.abs(simSignedHp),

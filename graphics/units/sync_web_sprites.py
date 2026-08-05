@@ -14,7 +14,7 @@ Also writes the manifest the frontend reads:
   old portrait until promoted (just flip their cat / the frontend gate).
 
 Run with conda base python (numpy + Pillow):
-  C:/Users/ddk22/miniconda3/python.exe graphics/units/sync_web_sprites.py
+  D:/miniconda3/python.exe graphics/units/sync_web_sprites.py
 """
 import os, sys, json, argparse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

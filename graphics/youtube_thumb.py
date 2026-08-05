@@ -8,7 +8,7 @@ Concept — "lone champion vs the shadow horde":
 
 Output: 1280x720 PNG (YouTube's standard thumbnail size, 16:9).
 
-    C:/Users/ddk22/miniconda3/python.exe graphics/youtube_thumb.py --slug kona --name Kona
+    D:/miniconda3/python.exe graphics/youtube_thumb.py --slug kona --name Kona
 """
 import os, sys, math, random, argparse, glob
 import numpy as np
@@ -167,6 +167,9 @@ def main():
     ap.add_argument('--slug', default='kona')
     ap.add_argument('--name', default='Kona')
     ap.add_argument('--hero', default=None, help='pre-cut hero PNG (else rembg the flux_hd)')
+    ap.add_argument('--subtitle', default=None,
+                    help='replace the "VS ALL UNIQUE UNITS" block with this cream strapline '
+                         '(e.g. "Unit Matchup Guide"); words are balanced over two lines')
     ap.add_argument('--seed', type=int, default=7)
     ap.add_argument('--out', default=None)
     args = ap.parse_args()
@@ -187,13 +190,15 @@ def main():
     hero = hero.resize((int(hero.width * sc), int(hero.height * sc)), Image.LANCZOS)
     hx = W - hero.width - 26
     hy = H - hero.height - 4
-    # warm rim halo (pop) + soft drop shadow (ground)
-    halo = Image.new('RGBA', hero.size, (0, 0, 0, 0))
-    halo.paste(GLOW + (255,), (0, 0), hero)
-    canvas.alpha_composite(halo.filter(ImageFilter.GaussianBlur(26)), (hx, hy))
-    shadow = Image.new('RGBA', hero.size, (0, 0, 0, 0))
-    shadow.paste((0, 0, 0, 165), (0, 0), hero)
-    canvas.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(16)), (hx + 14, hy + 16))
+    # warm rim halo (pop) + soft drop shadow (ground). Both are built full-canvas:
+    # blurring a layer cropped to the hero's bbox clips the falloff into a visible
+    # rectangle around tall/narrow heroes.
+    halo = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    halo.paste(GLOW + (255,), (hx, hy), hero)
+    canvas.alpha_composite(halo.filter(ImageFilter.GaussianBlur(26)))
+    shadow = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    shadow.paste((0, 0, 0, 165), (hx + 14, hy + 16), hero)
+    canvas.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(16)))
     canvas.alpha_composite(hero, (hx, hy))
 
     canvas = vignette(canvas, strength=0.38)
@@ -229,16 +234,29 @@ def main():
         y += int(nsize * 0.84)
     y += 8
 
-    # VS (red) + ALL UNIQUE / UNITS (cream) stacked beside it
-    fvs = ImageFont.truetype(F_BIG, 104)
-    vs_layer = text_block('VS', fvs, (255, 150, 140), RED, CREAM, 8)
-    canvas.alpha_composite(vs_layer, (M - 8, y))
-    vx = M - 8 + vs_layer.width - 18
-    avail = max(190, text_right - vx - 10)
-    fa = fit_font('ALL UNIQUE', F_BIG, avail, 84)
-    canvas.alpha_composite(text_block('ALL UNIQUE', fa, CREAM, (210, 198, 178), DARK, 7), (vx, y - 2))
-    canvas.alpha_composite(text_block('UNITS', fa, CREAM, (210, 198, 178), DARK, 7),
-                           (vx, y - 2 + int(fa.size * 0.86)))
+    if args.subtitle:
+        # cream strapline filling the column the VS block would have used
+        swords = args.subtitle.upper().split()
+        mid = (len(swords) + 1) // 2
+        slines = [' '.join(swords)] if len(swords) <= 2 else \
+                 [' '.join(swords[:mid]), ' '.join(swords[mid:])]
+        avail = max(190, text_right - (M - 8) - 10)
+        sf = fit_font(max(slines, key=len), F_BIG, avail, 96)
+        sy = y - 2
+        for l in slines:
+            canvas.alpha_composite(text_block(l, sf, CREAM, (210, 198, 178), DARK, 7), (M - 8, sy))
+            sy += int(sf.size * 0.86)
+    else:
+        # VS (red) + ALL UNIQUE / UNITS (cream) stacked beside it
+        fvs = ImageFont.truetype(F_BIG, 104)
+        vs_layer = text_block('VS', fvs, (255, 150, 140), RED, CREAM, 8)
+        canvas.alpha_composite(vs_layer, (M - 8, y))
+        vx = M - 8 + vs_layer.width - 18
+        avail = max(190, text_right - vx - 10)
+        fa = fit_font('ALL UNIQUE', F_BIG, avail, 84)
+        canvas.alpha_composite(text_block('ALL UNIQUE', fa, CREAM, (210, 198, 178), DARK, 7), (vx, y - 2))
+        canvas.alpha_composite(text_block('UNITS', fa, CREAM, (210, 198, 178), DARK, 7),
+                               (vx, y - 2 + int(fa.size * 0.86)))
 
     out = args.out or os.path.join(SCRATCH, f'{args.slug}_youtube_thumb.png')
     canvas.convert('RGB').save(out, quality=95)

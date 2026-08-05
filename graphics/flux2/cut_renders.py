@@ -18,7 +18,7 @@ Usage
 
 Environment
 -----------
-Uses base conda env (C:/Users/ddk22/miniconda3/python.exe) which has rembg installed.
+Uses base conda env (D:/miniconda3/python.exe) which has rembg installed.
 Do NOT run under the visomaster diffusion env (different rembg/onnx version).
 """
 import os, sys, argparse

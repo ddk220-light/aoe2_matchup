@@ -203,3 +203,35 @@ def test_h1_h3_gate_runs_five_seeds_for_every_final_hc_melee_recording():
 
     archive = ROOT / "calibration" / "source" / "aoe2_golden_STANDARD_UNITS_FINAL.zip"
     assert payload["source_sha256"] == hashlib.sha256(archive.read_bytes()).hexdigest().upper()
+
+
+def test_variant_smoke_runner_can_measure_another_ranged_unit_against_melee():
+    runner = ROOT / "calibration" / "viewer" / "hc_variant_smoke.mjs"
+    completed = subprocess.run(
+        [
+            "node",
+            str(runner),
+            "--variant",
+            "base",
+            "--scope",
+            "other-ranged-melee",
+            "--matchup",
+            "champion__vs__arbalester",
+            "--seeds",
+            "1",
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    payload = json.loads(completed.stdout)
+    assert payload["scope"] == "other-ranged-melee"
+    assert payload["gate_passed"] is None
+    assert len(payload["results"]) == 1
+
+    result = payload["results"][0]
+    assert result["matchup"] == "champion__vs__arbalester"
+    assert result["focal_slug"] == "arbalester"
+    assert result["recordings"] == 8
+    assert result["runs"] == 8

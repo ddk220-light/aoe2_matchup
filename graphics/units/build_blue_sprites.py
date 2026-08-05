@@ -6,7 +6,7 @@ variant is produced (that is the one used as the in-app icon); the red set alrea
 covers native + ultrasharp.
 
 Run in visomaster env (torch + spandrel):
-  C:/Users/ddk22/miniconda3/envs/visomaster/python.exe graphics/units/build_blue_sprites.py
+  D:/miniconda3/envs/visomaster/python.exe graphics/units/build_blue_sprites.py
   ... --slugs knight archer        # subset / tint test
 """
 import os, sys, json, argparse, time, traceback

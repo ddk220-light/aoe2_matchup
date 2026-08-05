@@ -11,7 +11,7 @@ Usage
 Environment
 -----------
 - Must use the diffusion conda env:
-    C:/Users/ddk22/miniconda3/envs/visomaster/python.exe
+    D:/miniconda3/envs/visomaster/python.exe
   (has torch 2.8 cu129, diffusers 0.38, bitsandbytes 0.49)
 - Model: diffusers/FLUX.2-dev-bnb-4bit (download once via download_model.py)
 - ~110-230 s/render on RTX 5090

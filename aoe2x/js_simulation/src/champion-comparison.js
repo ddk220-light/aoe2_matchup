@@ -369,6 +369,17 @@ function everyDamageExactly14(result) {
 }
 
 
+// Genie obstruction is an axis-aligned BOX, so separation is Chebyshev, not
+// Euclidean. Confirmed on two body sizes: enemy pairs never close below the sum
+// of their half-extents (0.400 for Champions, 0.500 for Paladins) on any
+// approach axis, and the only undershoot is one render frame of travel. A
+// Euclidean test with the same radii would accept diagonal overlap the game
+// never allows, and reject legal diagonal contact.
+//
+// Allies are NOT a hard constraint and are deliberately not asserted here: in
+// the tapes they rest inside the full box in 6-7% of samples, and a moving unit
+// can push through a stationary friendly well past any multiplier-derived
+// floor. Only exact coincidence is treated as a defect.
 function liveBodiesDoNotOverlap(result) {
   if (!Array.isArray(result.snapshots) || result.snapshots.length === 0) return false;
   for (const snapshot of result.snapshots) {
@@ -377,14 +388,18 @@ function liveBodiesDoNotOverlap(result) {
       for (let rightIndex = leftIndex + 1; rightIndex < live.length; rightIndex += 1) {
         const left = live[leftIndex];
         const right = live[rightIndex];
-        const leftRadius = left.mechanics?.collision_size_tiles?.x;
-        const rightRadius = right.mechanics?.collision_size_tiles?.x;
-        if (
-          !Number.isFinite(leftRadius)
-          || !Number.isFinite(rightRadius)
-          || Math.hypot(right.x - left.x, right.y - left.y)
-            < leftRadius + rightRadius - 1e-12
-        ) return false;
+        const leftHalf = left.mechanics?.collision_size_tiles?.x;
+        const rightHalf = right.mechanics?.collision_size_tiles?.x;
+        if (!Number.isFinite(leftHalf) || !Number.isFinite(rightHalf)) return false;
+        const separation = Math.max(
+          Math.abs(right.x - left.x),
+          Math.abs(right.y - left.y),
+        );
+        if (left.owner === right.owner) {
+          if (separation <= 0) return false;
+          continue;
+        }
+        if (separation < leftHalf + rightHalf - 1e-12) return false;
       }
     }
   }
@@ -523,6 +538,11 @@ function targetReferencesAndLifecycleAreValid(result) {
               if (field === "attackTargetId" && nextUnit.action === "attacking") continue;
               return false;
             }
+            // A swing that runs to completion on a corpse releases it with no
+            // event, because nothing was cancelled -- the attack finished. Only
+            // a reference dropped BEFORE the animation ends is a cancellation
+            // and has to be explained by one.
+            if (stillSwinging) continue;
             const requiredType = field === "pursuitTargetId"
               ? "pursuit-invalidated"
               : "attack-canceled";

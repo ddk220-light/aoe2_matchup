@@ -13,12 +13,20 @@ const sourceArchiveUrl = new URL(
 const sourceOfTruthUrl = new URL("../calibration/source/source_of_truth.json", import.meta.url);
 const truthUrl = new URL("../calibration/fixtures/champion_basics.json", import.meta.url);
 const manifestUrl = new URL("../calibration/fixtures/manifest.json", import.meta.url);
+const mechanicsUrl = new URL(
+  "../fixtures/unit_stats/champion_chinese_imperial.json",
+  import.meta.url,
+);
 
 const AUTHORIZED_SOURCE = {
   archive: "aoe2_golden_basics_championvschampion_2026-08-04.zip",
   zipSha256: "33F4051CB1BE014CDF1D3813E7AB74EF619B468CB6196B5E92E7482508AA1BDE",
   recordings: 15,
   manifestEntries: 15,
+  truthFixtureSha256: "5D40A39DB397EBF191D4CA7C8A900E2026601123DA7064E33B046FEA45BA831E",
+  mechanicsFixtureSha256: "06CDE4E98AD95E8D387CEDA58217F3B1CFB90E7A57ADD9536EB82B090AD86595",
+  datSha256: "CE3530DF36CF0B333A9751CB0FF94460FE904F811FEECEC8AE9794701622B4CF",
+  referenceDbSha256: "51D602640E4C1A75F35286AA499821338B0EEE5DBA97E12A12D39E058CB11087",
 };
 
 
@@ -29,13 +37,22 @@ async function loadRunner() {
 
 
 async function loadSourceChain() {
-  const [archiveBytes, sourceOfTruth, truth, manifest] = await Promise.all([
+  const [archiveBytes, sourceOfTruth, truthBytes, manifest, mechanicsBytes] = await Promise.all([
     readFile(sourceArchiveUrl),
     readFile(sourceOfTruthUrl, "utf8").then(JSON.parse),
-    readFile(truthUrl, "utf8").then(JSON.parse),
+    readFile(truthUrl),
     readFile(manifestUrl, "utf8").then(JSON.parse),
+    readFile(mechanicsUrl),
   ]);
-  return { archiveBytes, sourceOfTruth, truth, manifest };
+  return {
+    archiveBytes,
+    sourceOfTruth,
+    truthBytes,
+    truth: JSON.parse(truthBytes.toString("utf8")),
+    manifest,
+    mechanicsBytes,
+    mechanics: JSON.parse(mechanicsBytes.toString("utf8")),
+  };
 }
 
 
@@ -82,6 +99,20 @@ test("Champion diagnostics reject any unauthorized clean-room source link", asyn
       },
     }),
     /clean-room source/,
+  );
+  assert.throws(
+    () => verifyCleanroomSource({
+      ...source,
+      truthBytes: Buffer.from(JSON.stringify({ ...source.truth, edited: true })),
+    }),
+    /truth fixture SHA-256/,
+  );
+  assert.throws(
+    () => verifyCleanroomSource({
+      ...source,
+      mechanicsBytes: Buffer.from(JSON.stringify({ ...source.mechanics, hp: 71 })),
+    }),
+    /mechanics fixture SHA-256/,
   );
 });
 

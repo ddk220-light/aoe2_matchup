@@ -1,7 +1,10 @@
-import { resolveMovementProposals } from "./collision.js";
+import {
+  queryEnemyContactManifold,
+  resolveMovementProposals,
+} from "./collision.js";
 import { planLocalAvoidance } from "./local-avoidance.js";
 import { proposeMovement } from "./movement.js";
-import { selectTarget } from "./targeting.js";
+import { selectEngagementTarget, selectPursuitTarget } from "./targeting.js";
 import { TICKS_PER_SECOND } from "../simulation-clock.js";
 import {
   attackDelayTicks,
@@ -70,6 +73,14 @@ function canonicalUnits(units, { cloneMechanics = false } = {}) {
     if (references.has(unit.referenceId)) {
       throw new Error(`duplicate unit reference ${unit.referenceId}`);
     }
+    if (Object.hasOwn(unit, "targetId")) {
+      throw new Error("legacy targetId is ambiguous; use explicit target state");
+    }
+    for (const name of ["pursuitTargetId", "engagedTargetId", "attackTargetId"]) {
+      if (unit[name] !== null && !Number.isSafeInteger(unit[name])) {
+        throw new TypeError(`${name} must be null or a safe integer`);
+      }
+    }
     references.add(unit.referenceId);
     return freezeUnit({
       ...unit,
@@ -99,11 +110,45 @@ function createSnapshot(tick, units, events) {
 }
 
 
+function validateInitialAttackState(units) {
+  const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
+  for (const unit of units) {
+    if (unit.action !== "attacking") {
+      if (unit.attackTargetId !== null) {
+        throw new Error(
+          `${unit.action} unit ${unit.referenceId} must not retain attackTargetId`,
+        );
+      }
+      continue;
+    }
+    const target = byReference.get(unit.attackTargetId);
+    if (!target?.alive || target.owner === unit.owner) {
+      throw new Error(
+        `attacking unit ${unit.referenceId} attackTargetId must reference a live enemy`,
+      );
+    }
+    const windup = unit.actionTimers.windup;
+    const maximumWindup = attackDelayTicks(unit.mechanics);
+    if (
+      !Number.isSafeInteger(windup)
+      || windup <= 0
+      || windup > maximumWindup
+      || unit.actionTimers.reload !== 0
+    ) {
+      throw new Error(
+        `attacking unit ${unit.referenceId} must have a coherent windup and zero reload`,
+      );
+    }
+  }
+}
+
+
 export function createWorld(scenario) {
   if (!scenario || typeof scenario !== "object") {
     throw new TypeError("scenario is required");
   }
   const units = canonicalUnits(scenario.units, { cloneMechanics: true });
+  validateInitialAttackState(units);
   const events = Object.freeze([]);
   const snapshot = createSnapshot(0, units, events);
   return Object.freeze({
@@ -119,54 +164,76 @@ export function createWorld(scenario) {
 }
 
 
-function validateTargets(units, tick, events) {
+function validatePursuitTargets(units, tick, events) {
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
   for (const unit of units) {
     if (!unit.alive) {
-      unit.targetId = null;
+      unit.pursuitTargetId = null;
+      unit.engagedTargetId = null;
+      unit.attackTargetId = null;
       unit.avoidance = null;
       unit.action = "dead";
       unit.actionTimers = { windup: 0, reload: 0 };
       continue;
     }
-    if (unit.targetId === null || unit.targetId === undefined) continue;
-    const target = byReference.get(unit.targetId);
-    if (target?.alive && target.owner !== unit.owner) continue;
+    if (unit.pursuitTargetId === null || unit.pursuitTargetId === undefined) continue;
+    const target = byReference.get(unit.pursuitTargetId);
+    if (target?.alive) {
+      if (target.owner === unit.owner) {
+        throw new Error(
+          `unit ${unit.referenceId} has friendly pursuit target ${target.referenceId}`,
+        );
+      }
+      continue;
+    }
 
-    const invalidTargetId = unit.targetId;
+    const invalidTargetId = unit.pursuitTargetId;
     events.push(event(
       tick,
-      "target-invalidated",
+      "pursuit-invalidated",
       unit.referenceId,
       invalidTargetId,
-      { reason: target?.alive ? "friendly-target" : "target-dead" },
+      { reason: "target-dead" },
     ));
-    if (unit.action === "attacking") {
-      events.push(createAttackCanceledEvent({
-        tick,
-        actorId: unit.referenceId,
-        targetId: invalidTargetId,
-        readyTick: tick + Math.max(0, unit.actionTimers.windup - 1),
-        reason: "target-invalidated",
-      }));
-    }
-    unit.targetId = null;
+    unit.pursuitTargetId = null;
     unit.avoidance = null;
+  }
+}
+
+
+function validateAttackTargets(units, tick, events) {
+  const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
+  for (const unit of units) {
+    if (!unit.alive || unit.action !== "attacking") continue;
+    const target = byReference.get(unit.attackTargetId);
+    if (target?.alive && target.owner !== unit.owner) continue;
+    const invalidTargetId = unit.attackTargetId;
+    if (!Number.isSafeInteger(invalidTargetId)) {
+      throw new Error(`attacking unit ${unit.referenceId} has no captured attack target`);
+    }
+    events.push(createAttackCanceledEvent({
+      tick,
+      actorId: unit.referenceId,
+      targetId: invalidTargetId,
+      readyTick: tick + Math.max(0, unit.actionTimers.windup - 1),
+      reason: !target?.alive ? "target-dead" : "target-invalidated",
+    }));
+    unit.attackTargetId = null;
     unit.actionTimers.windup = 0;
     unit.action = unit.actionTimers.reload > 0 ? "reload" : "idle";
   }
 }
 
 
-function acquireTargets(units, tick, events) {
+function acquirePursuitTargets(units, tick, events) {
   const snapshot = Object.freeze(units.map(freezeUnit));
   for (const unit of units) {
-    if (!unit.alive || unit.targetId !== null) continue;
+    if (!unit.alive || unit.pursuitTargetId !== null) continue;
     const candidate = snapshot.find(({ referenceId }) => referenceId === unit.referenceId);
-    const target = selectTarget(candidate, snapshot);
+    const target = selectPursuitTarget(candidate, snapshot);
     if (target === null) continue;
-    events.push(event(tick, "target-acquired", unit.referenceId, target.referenceId));
-    unit.targetId = target.referenceId;
+    events.push(event(tick, "pursuit-acquired", unit.referenceId, target.referenceId));
+    unit.pursuitTargetId = target.referenceId;
   }
 }
 
@@ -175,7 +242,7 @@ function moveUnits(units, map, tick, events) {
   const live = units.filter(({ alive }) => alive).map(freezeUnit);
   const byReference = new Map(live.map((unit) => [unit.referenceId, unit]));
   const proposals = live.map((unit) => {
-    const target = byReference.get(unit.targetId);
+    const target = byReference.get(unit.pursuitTargetId);
     return target && unit.action !== "attacking" && !isInAttackRange(unit, target)
       ? proposeMovement(unit, target, TICKS_PER_SECOND)
       : Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
@@ -197,11 +264,17 @@ function moveUnits(units, map, tick, events) {
     unit.avoidance = result.avoidance;
     if (dx !== 0 || dy !== 0) {
       unit.facing = Math.atan2(dy, dx);
-      moveEvents.push(event(tick, "move", unit.referenceId, unit.targetId, { dx, dy }));
+      moveEvents.push(event(
+        tick,
+        "move",
+        unit.referenceId,
+        unit.pursuitTargetId,
+        { dx, dy },
+      ));
     }
     const proposal = proposalByReference.get(unit.referenceId);
     if (Math.abs(dx - proposal.dx) > 1e-12 || Math.abs(dy - proposal.dy) > 1e-12) {
-      blockedEvents.push(event(tick, "blocked", unit.referenceId, unit.targetId, {
+      blockedEvents.push(event(tick, "blocked", unit.referenceId, unit.pursuitTargetId, {
         proposedDx: proposal.dx,
         proposedDy: proposal.dy,
         actualDx: dx,
@@ -210,16 +283,39 @@ function moveUnits(units, map, tick, events) {
     }
   }
   events.push(...moveEvents, ...blockedEvents);
+  return queryEnemyContactManifold(live, units.filter(({ alive }) => alive).map(freezeUnit));
+}
 
-  const currentByReference = new Map(units.map((unit) => [unit.referenceId, unit]));
+
+function updateEngagements(units, contacts, tick, events) {
+  const snapshot = Object.freeze(units.map(freezeUnit));
   for (const unit of units) {
-    if (!unit.alive || unit.targetId === null) continue;
-    const target = currentByReference.get(unit.targetId);
-    if (!target?.alive || !isInAttackRange(unit, target)) continue;
-    unit.avoidance = null;
-    if (unit.action === "idle" || unit.action === "moving") {
-      events.push(event(tick, "contact", unit.referenceId, target.referenceId));
+    if (!unit.alive) {
+      unit.engagedTargetId = null;
+      continue;
     }
+    const previousTargetId = unit.engagedTargetId;
+    const selection = selectEngagementTarget(
+      snapshot.find(({ referenceId }) => referenceId === unit.referenceId),
+      snapshot,
+      contacts,
+    );
+    const nextTargetId = selection.target?.referenceId ?? null;
+    if (nextTargetId === previousTargetId) continue;
+    if (previousTargetId !== null && previousTargetId !== undefined) {
+      events.push(event(tick, "engagement-ended", unit.referenceId, previousTargetId, {
+        reason: snapshot.find(({ referenceId }) => referenceId === previousTargetId)?.alive
+          ? "contact-lost"
+          : "target-dead",
+      }));
+    }
+    unit.engagedTargetId = nextTargetId;
+    if (nextTargetId === null) continue;
+    unit.avoidance = null;
+    events.push(event(tick, "engagement-started", unit.referenceId, nextTargetId, {
+      sweptToi: selection.contact.sweptToi,
+      finalSurfaceGap: selection.contact.finalSurfaceGap,
+    }));
   }
 }
 
@@ -229,15 +325,15 @@ function progressAttacks(units, tick, events) {
   const ready = [];
   for (const unit of units) {
     if (!unit.alive) continue;
-    const target = byReference.get(unit.targetId);
     if (unit.action === "attacking") {
+      const target = byReference.get(unit.attackTargetId);
       if (unit.actionTimers.windup > 0) unit.actionTimers.windup -= 1;
       if (unit.actionTimers.windup === 0) {
         ready.push({
           type: "attack-ready",
           readyTick: tick,
           actorId: unit.referenceId,
-          targetId: unit.targetId,
+          targetId: unit.attackTargetId,
           amount: target ? calculateDamage(unit, target) : 0,
         });
       }
@@ -248,11 +344,11 @@ function progressAttacks(units, tick, events) {
       unit.actionTimers.reload -= 1;
       unit.action = unit.actionTimers.reload > 0 ? "reload" : "idle";
     }
+    const target = byReference.get(unit.engagedTargetId);
     if (
       unit.actionTimers.reload !== 0 ||
       !target?.alive ||
-      target.owner === unit.owner ||
-      !isInAttackRange(unit, target)
+      target.owner === unit.owner
     ) continue;
 
     const delay = attackDelayTicks(unit.mechanics);
@@ -264,6 +360,7 @@ function progressAttacks(units, tick, events) {
       readyTick,
     }));
     unit.action = "attacking";
+    unit.attackTargetId = target.referenceId;
     unit.actionTimers.windup = delay;
     if (delay === 0) {
       ready.push({
@@ -294,8 +391,13 @@ function commitReadyAttacks(units, ready, tick, events) {
       }));
       continue;
     }
-    if (!target?.alive || target.owner === actor.owner || actor.targetId !== target.referenceId) {
+    if (
+      !target?.alive
+      || target.owner === actor.owner
+      || actor.attackTargetId !== target.referenceId
+    ) {
       actor.action = actor.actionTimers.reload > 0 ? "reload" : "idle";
+      actor.attackTargetId = null;
       actor.actionTimers.windup = 0;
       events.push(createAttackCanceledEvent({
         tick,
@@ -311,6 +413,7 @@ function commitReadyAttacks(units, ready, tick, events) {
     const hpAfter = Math.max(0, hpBefore - attack.amount);
     target.hp = hpAfter;
     actor.action = "reload";
+    actor.attackTargetId = null;
     actor.actionTimers = { windup: 0, reload: reloadTicks(actor.mechanics) };
     events.push(createDamageEvent({
       tick,
@@ -324,7 +427,9 @@ function commitReadyAttacks(units, ready, tick, events) {
     if (hpAfter > 0) continue;
 
     target.alive = false;
-    target.targetId = null;
+    target.pursuitTargetId = null;
+    target.engagedTargetId = null;
+    target.attackTargetId = null;
     target.avoidance = null;
     target.action = "dead";
     target.actionTimers = { windup: 0, reload: 0 };
@@ -334,6 +439,17 @@ function commitReadyAttacks(units, ready, tick, events) {
       targetId: attack.targetId,
       readyTick: attack.readyTick,
     }));
+    for (const engaged of units) {
+      if (!engaged.alive || engaged.engagedTargetId !== target.referenceId) continue;
+      engaged.engagedTargetId = null;
+      events.push(event(
+        tick,
+        "engagement-ended",
+        engaged.referenceId,
+        target.referenceId,
+        { reason: "target-dead" },
+      ));
+    }
   }
 }
 
@@ -345,9 +461,11 @@ export function stepWorld(world) {
 
   const snapshot = Object.freeze([...world.units]);
   const units = snapshot.map(mutableUnit);
-  validateTargets(units, tick, events);
-  acquireTargets(units, tick, events);
-  moveUnits(units, world.map, tick, events);
+  validatePursuitTargets(units, tick, events);
+  validateAttackTargets(units, tick, events);
+  acquirePursuitTargets(units, tick, events);
+  const contacts = moveUnits(units, world.map, tick, events);
+  updateEngagements(units, contacts, tick, events);
   const ready = progressAttacks(units, tick, events);
   commitReadyAttacks(units, ready, tick, events);
 

@@ -196,7 +196,7 @@ function constrainObstacle(body, obstacle) {
   const centerX = obstacle.x - body.x;
   const centerY = obstacle.y - body.y;
   const distance = Math.hypot(centerX, centerY);
-  const gap = Math.max(0, distance - body.radius - obstacle.radius);
+  const gap = distance - body.radius - obstacle.radius;
   const nx = centerX / distance;
   const ny = centerY / distance;
   const inward = body.dx * nx + body.dy * ny;
@@ -244,7 +244,7 @@ function constrainPair(left, right) {
     centerY + right.dy - left.dy,
   ) >= left.radius + right.radius - EPSILON) return 0;
   const distance = Math.hypot(centerX, centerY);
-  const gap = Math.max(0, distance - left.radius - right.radius);
+  const gap = distance - left.radius - right.radius;
   const nx = centerX / distance;
   const ny = centerY / distance;
   const leftNormal = left.dx * nx + left.dy * ny;
@@ -268,6 +268,7 @@ function constrainPair(left, right) {
 
 
 function resolveConstraints(bodies, obstacles, bounds) {
+  let finalCorrection = Infinity;
   for (let sweep = 0; sweep < MAX_CONSTRAINT_SWEEPS; sweep += 1) {
     let largestCorrection = 0;
     for (const body of bodies) {
@@ -287,14 +288,22 @@ function resolveConstraints(bodies, obstacles, bounds) {
         );
       }
     }
-    if (largestCorrection <= EPSILON) return;
+    if (
+      largestCorrection <= EPSILON
+      && finalGeometryIsValid(bodies, obstacles, bounds)
+    ) return;
+    finalCorrection = largestCorrection;
   }
 
-  throw new Error(`collision constraints did not converge after ${MAX_CONSTRAINT_SWEEPS} sweeps`);
+  throw new Error(
+    `collision constraints did not converge after ${MAX_CONSTRAINT_SWEEPS} sweeps `
+    + `(last correction ${finalCorrection}; `
+    + `${finalGeometryViolation(bodies, obstacles, bounds) ?? "geometry valid"})`,
+  );
 }
 
 
-function finalGeometryIsValid(bodies, obstacles, bounds) {
+function finalGeometryViolation(bodies, obstacles, bounds) {
   for (const body of bodies) {
     const x = body.x + body.dx;
     const y = body.y + body.dy;
@@ -303,25 +312,121 @@ function finalGeometryIsValid(bodies, obstacles, bounds) {
       x > bounds.width - body.radius + EPSILON ||
       y < body.radius - EPSILON ||
       y > bounds.height - body.radius + EPSILON
-    ) return false;
+    ) return `reference ${body.referenceId} outside bounds`;
     for (const obstacle of obstacles) {
-      if (
-        Math.hypot(obstacle.x - x, obstacle.y - y) <
-        body.radius + obstacle.radius - EPSILON
-      ) return false;
+      const gap = Math.hypot(obstacle.x - x, obstacle.y - y)
+        - body.radius - obstacle.radius;
+      if (gap < -EPSILON) {
+        return `reference ${body.referenceId} overlaps obstacle ${obstacle.label} by ${-gap}`;
+      }
     }
   }
   for (let i = 0; i < bodies.length; i += 1) {
     for (let j = i + 1; j < bodies.length; j += 1) {
-      if (
-        Math.hypot(
-          bodies[j].x + bodies[j].dx - bodies[i].x - bodies[i].dx,
-          bodies[j].y + bodies[j].dy - bodies[i].y - bodies[i].dy,
-        ) < bodies[i].radius + bodies[j].radius - EPSILON
-      ) return false;
+      const gap = Math.hypot(
+        bodies[j].x + bodies[j].dx - bodies[i].x - bodies[i].dx,
+        bodies[j].y + bodies[j].dy - bodies[i].y - bodies[i].dy,
+      ) - bodies[i].radius - bodies[j].radius;
+      if (gap < -EPSILON) {
+        return `references ${bodies[i].referenceId} and ${bodies[j].referenceId} `
+          + `overlap by ${-gap}`;
+      }
     }
   }
-  return true;
+  return null;
+}
+
+
+function finalGeometryIsValid(bodies, obstacles, bounds) {
+  return finalGeometryViolation(bodies, obstacles, bounds) === null;
+}
+
+
+function sweptContactFraction(leftBefore, rightBefore, leftAfter, rightAfter) {
+  const startX = rightBefore.x - leftBefore.x;
+  const startY = rightBefore.y - leftBefore.y;
+  const relativeX = (rightAfter.x - rightBefore.x) - (leftAfter.x - leftBefore.x);
+  const relativeY = (rightAfter.y - rightBefore.y) - (leftAfter.y - leftBefore.y);
+  const radius = collisionRadius(leftBefore) + collisionRadius(rightBefore);
+  const c = startX * startX + startY * startY - radius * radius;
+  const finalGap = Math.hypot(
+    rightAfter.x - leftAfter.x,
+    rightAfter.y - leftAfter.y,
+  ) - radius;
+  if (c <= EPSILON) return finalGap <= EPSILON ? 0 : null;
+  const a = relativeX * relativeX + relativeY * relativeY;
+  if (a === 0) return null;
+  const b = 2 * (startX * relativeX + startY * relativeY);
+  const discriminant = b * b - 4 * a * c;
+  if (discriminant < -EPSILON) return null;
+  const root = Math.sqrt(Math.max(0, discriminant));
+  const entering = (-b - root) / (2 * a);
+  return entering >= -EPSILON && entering <= 1 + EPSILON
+    ? Math.max(0, Math.min(1, entering))
+    : null;
+}
+
+
+export function queryEnemyContactManifold(beforeSnapshot, afterSnapshot) {
+  if (!Array.isArray(beforeSnapshot) || !Array.isArray(afterSnapshot)) {
+    throw new TypeError("contact snapshots must be arrays");
+  }
+  const before = [...beforeSnapshot].sort(pairKey);
+  const afterByReference = new Map();
+  for (const unit of afterSnapshot) {
+    requireReferenceId(unit?.referenceId);
+    if (afterByReference.has(unit.referenceId)) {
+      throw new Error(`duplicate unit reference ${unit.referenceId}`);
+    }
+    afterByReference.set(unit.referenceId, unit);
+  }
+  if (afterByReference.size !== before.length) {
+    throw new Error("contact snapshots must contain the same units");
+  }
+
+  const contacts = [];
+  for (let leftIndex = 0; leftIndex < before.length; leftIndex += 1) {
+    const leftBefore = before[leftIndex];
+    const leftAfter = afterByReference.get(leftBefore.referenceId);
+    if (!leftAfter) throw new Error(`missing final unit ${leftBefore.referenceId}`);
+    for (let rightIndex = leftIndex + 1; rightIndex < before.length; rightIndex += 1) {
+      const rightBefore = before[rightIndex];
+      const rightAfter = afterByReference.get(rightBefore.referenceId);
+      if (!rightAfter) throw new Error(`missing final unit ${rightBefore.referenceId}`);
+      if (
+        leftBefore.alive === false
+        || rightBefore.alive === false
+        || leftAfter.alive === false
+        || rightAfter.alive === false
+        || leftBefore.owner === rightBefore.owner
+      ) continue;
+      const finalSurfaceGap = Math.hypot(
+        rightAfter.x - leftAfter.x,
+        rightAfter.y - leftAfter.y,
+      ) - collisionRadius(leftAfter) - collisionRadius(rightAfter);
+      let sweptToi = sweptContactFraction(
+        leftBefore,
+        rightBefore,
+        leftAfter,
+        rightAfter,
+      );
+      if (sweptToi === null && finalSurfaceGap <= EPSILON) sweptToi = 1;
+      if (sweptToi === null) continue;
+      contacts.push(Object.freeze({
+        leftId: leftBefore.referenceId,
+        rightId: rightBefore.referenceId,
+        sweptToi,
+        finalSurfaceGap,
+      }));
+    }
+  }
+  contacts.sort((left, right) => (
+    left.sweptToi - right.sweptToi
+    || left.finalSurfaceGap - right.finalSurfaceGap
+    || left.leftId - right.leftId
+    || left.rightId - right.rightId
+  ));
+  return Object.freeze(contacts);
 }
 
 

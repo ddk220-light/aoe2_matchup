@@ -6,6 +6,7 @@ import { validateMapFixture } from "../src/map-model.js";
 import {
   buildFormationScene,
   buildRenderScene,
+  createSimulationPresenter,
   pickFormationUnit,
 } from "../viewer/map-renderer.js";
 
@@ -110,4 +111,54 @@ test("formation picking returns the nearest source unit", () => {
 
   assert.equal(pickFormationUnit(units, 4.25, 4.05, 0.3).reference_id, 2);
   assert.equal(pickFormationUnit(units, 8, 8, 0.3), null);
+});
+
+
+test("simulation presenter displays the supplied immutable tick without advancing the world", () => {
+  let stepWorldCalls = 0;
+  const displayed = [];
+  const presenter = createSimulationPresenter({
+    present(snapshot) {
+      displayed.push(snapshot);
+    },
+    stepWorld() {
+      stepWorldCalls += 1;
+    },
+  });
+  const snapshotAtTick42 = Object.freeze({
+    tick: 42,
+    units: Object.freeze([
+      Object.freeze({ referenceId: 1628, owner: 2, x: 4, y: 6, hp: 56, alive: true }),
+    ]),
+    events: Object.freeze([]),
+  });
+
+  presenter.setSimulationSnapshot(snapshotAtTick42);
+
+  assert.equal(presenter.getDisplayedTick(), 42);
+  assert.equal(presenter.getSimulationSnapshot(), snapshotAtTick42);
+  assert.equal(displayed.at(-1), snapshotAtTick42);
+  assert.equal(stepWorldCalls, 0);
+});
+
+
+test("simulation presenter rejects mutable or malformed snapshots", () => {
+  const presenter = createSimulationPresenter({ present() {} });
+
+  assert.throws(
+    () => presenter.setSimulationSnapshot({ tick: 2, units: [], events: [] }),
+    /immutable simulation snapshot/i,
+  );
+  assert.throws(
+    () => presenter.setSimulationSnapshot(Object.freeze({ tick: -1, units: Object.freeze([]) })),
+    /immutable simulation snapshot/i,
+  );
+  assert.throws(
+    () => presenter.setSimulationSnapshot(Object.freeze({
+      tick: 2,
+      units: Object.freeze([{ referenceId: 1628 }]),
+      events: Object.freeze([]),
+    })),
+    /immutable simulation snapshot/i,
+  );
 });

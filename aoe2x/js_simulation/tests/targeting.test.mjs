@@ -19,7 +19,7 @@ function unit({
   x = 0,
   y = 0,
   alive = true,
-  targetId = null,
+  pursuitTargetId = null,
   unitMechanics = mechanics,
 } = {}) {
   return Object.freeze({
@@ -28,7 +28,7 @@ function unit({
     x,
     y,
     alive,
-    targetId,
+    pursuitTargetId,
     mechanics: unitMechanics,
   });
 }
@@ -54,63 +54,63 @@ test("surface gap uses raw collision size rather than outline size", async () =>
 
 
 test("a targetless unit chooses the nearest visible enemy by surface gap", async () => {
-  const { selectTarget } = await loadTargeting();
+  const { selectPursuitTarget } = await loadTargeting();
   const attacker = unit({ referenceId: 1628, x: 3.5, y: 6.5 });
   const nearest = unit({ referenceId: 1700, owner: 3, x: 4.5, y: 6.5 });
   const farther = unit({ referenceId: 1699, owner: 3, x: 5.5, y: 6.5 });
   const snapshot = Object.freeze([attacker, farther, nearest]);
 
-  assert.equal(selectTarget(attacker, snapshot).referenceId, nearest.referenceId);
+  assert.equal(selectPursuitTarget(attacker, snapshot).referenceId, nearest.referenceId);
 });
 
 
 test("an exact distance tie is broken by reference ID and not owner or array order", async () => {
-  const { selectTarget } = await loadTargeting();
+  const { selectPursuitTarget } = await loadTargeting();
   const attacker = unit({ referenceId: 1628, x: 4, y: 4 });
   const lowerReference = unit({ referenceId: 1699, owner: 4, x: 3, y: 4 });
   const higherReference = unit({ referenceId: 1700, owner: 3, x: 5, y: 4 });
   const snapshot = [attacker, higherReference, lowerReference];
 
-  assert.equal(selectTarget(attacker, snapshot).referenceId, 1699);
-  assert.equal(selectTarget(attacker, [...snapshot].reverse()).referenceId, 1699);
+  assert.equal(selectPursuitTarget(attacker, snapshot).referenceId, 1699);
+  assert.equal(selectPursuitTarget(attacker, [...snapshot].reverse()).referenceId, 1699);
 });
 
 
 test("acquisition filters dead, friendly, and out-of-sight units", async () => {
-  const { selectTarget } = await loadTargeting();
+  const { selectPursuitTarget } = await loadTargeting();
   const attacker = unit({ referenceId: 1628, x: 0, y: 0 });
   const friendly = unit({ referenceId: 1629, x: 1, y: 0 });
   const deadEnemy = unit({ referenceId: 1699, owner: 3, x: 2, y: 0, alive: false });
   const unseenEnemy = unit({ referenceId: 1700, owner: 3, x: 5.01, y: 0 });
 
   assert.equal(
-    selectTarget(attacker, [unseenEnemy, friendly, attacker, deadEnemy]),
+    selectPursuitTarget(attacker, [unseenEnemy, friendly, attacker, deadEnemy]),
     null,
   );
 });
 
 
 test("a live locked target is retained without switching", async () => {
-  const { selectTarget } = await loadTargeting();
-  const attacker = unit({ referenceId: 1628, x: 0, targetId: 1700 });
+  const { selectPursuitTarget } = await loadTargeting();
+  const attacker = unit({ referenceId: 1628, x: 0, pursuitTargetId: 1700 });
   const lockedOutsideLos = unit({ referenceId: 1700, owner: 3, x: 8 });
   const nearer = unit({ referenceId: 1699, owner: 3, x: 1 });
   const snapshot = [attacker, nearer, lockedOutsideLos];
   const before = JSON.stringify(snapshot);
 
-  assert.equal(selectTarget(attacker, snapshot), lockedOutsideLos);
+  assert.equal(selectPursuitTarget(attacker, snapshot), lockedOutsideLos);
   assert.equal(JSON.stringify(snapshot), before);
 });
 
 
 test("a dead lock is released for normal acquisition", async () => {
-  const { selectTarget } = await loadTargeting();
-  const attacker = unit({ referenceId: 1628, x: 0, targetId: 1700 });
+  const { selectPursuitTarget } = await loadTargeting();
+  const attacker = unit({ referenceId: 1628, x: 0, pursuitTargetId: 1700 });
   const deadLock = unit({ referenceId: 1700, owner: 3, x: 1, alive: false });
   const replacement = unit({ referenceId: 1699, owner: 3, x: 2 });
 
   assert.equal(
-    selectTarget(attacker, [attacker, deadLock, replacement]),
+    selectPursuitTarget(attacker, [attacker, deadLock, replacement]),
     replacement,
   );
 });

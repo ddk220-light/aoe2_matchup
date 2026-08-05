@@ -361,18 +361,22 @@ git commit -m "feat(sim): build champion ratio scenarios"
 - Create: `aoe2x/js_simulation/tests/movement-collision.test.mjs`
 
 **Interfaces:**
-- Produces: `surfaceGap(a, b)`, `selectTarget(unit, snapshot)`, `proposeMovement(unit, target, ticksPerSecond)`, and `resolveMovementProposals(snapshot, proposals, map)`.
+- Produces: `surfaceGap(a, b)`, `selectPursuitTarget(unit, snapshot)`,
+  `selectEngagementTarget(unit, snapshot, contacts)`,
+  `proposeMovement(unit, target, ticksPerSecond)`,
+  `resolveMovementProposals(snapshot, proposals, map)`, and
+  `queryEnemyContactManifold(before, after)`.
 
 - [ ] **Step 1: Write failing target-ranking tests**
 
 ```javascript
 test("a targetless unit chooses the nearest visible enemy by surface gap", () => {
-  assert.equal(selectTarget(attacker, snapshot).referenceId, nearest.referenceId);
+  assert.equal(selectPursuitTarget(attacker, snapshot).referenceId, nearest.referenceId);
 });
 
 test("an exact distance tie is broken by reference ID and not owner or array order", () => {
-  assert.equal(selectTarget(attacker, snapshot).referenceId, 1699);
-  assert.equal(selectTarget(attacker, [...snapshot].reverse()).referenceId, 1699);
+  assert.equal(selectPursuitTarget(attacker, snapshot).referenceId, 1699);
+  assert.equal(selectPursuitTarget(attacker, [...snapshot].reverse()).referenceId, 1699);
 });
 ```
 
@@ -448,17 +452,19 @@ test("same-tick attacks use reference IDs rather than owner or input order", () 
 
 - [ ] **Step 3: Implement the world tick pipeline**
 
-Implement snapshot, target validation, acquisition, movement proposal,
-collision/contact resolution, attack progression, sequential damage commit,
-and immutable event publication in the approved order.
+Implement snapshot, pursuit validation/acquisition, movement proposal,
+collision/contact resolution, engagement selection, swing-target capture,
+attack progression, sequential damage commit, and immutable event publication
+in the approved order.
 
 - [ ] **Step 4: Implement attack readiness and class-derived damage**
 
 Use integer ticks converted from extracted attack delay and reload. Use the
 body-surface range test. At commit time, cancel an attack when its actor or
-target was killed earlier in the tick. Emit `target-acquired`, `move`,
-`blocked`, `contact`, `attack-start`, `damage`, `death`, `target-invalidated`,
-and `attack-canceled` events with reference IDs.
+target was killed earlier in the tick. Emit `pursuit-acquired`,
+`pursuit-invalidated`, `move`, `blocked`, `engagement-started`,
+`engagement-ended`, `attack-start`, `damage`, `death`, and `attack-canceled`
+events with reference IDs.
 
 - [ ] **Step 5: Add invariant and safety tests**
 
@@ -595,11 +601,13 @@ test("Champion 2v3 matches the exact repeated tape outcome", () => {
 });
 ```
 
-- [ ] **Step 2: Write target lifecycle tests**
+- [ ] **Step 2: Write pursuit and attack lifecycle tests**
 
-For every target change, require a preceding `death` and
-`target-invalidated` event for the old target. Prohibit block-triggered
-retargeting and attacks committed against dead targets.
+For every `pursuitTargetId` change, require a preceding `death` and
+`pursuit-invalidated` event for the old pursuit target. Prohibit
+block-triggered pursuit changes and attacks committed against dead targets.
+Task 10 later separates physical `engagedTargetId` transitions and immutable
+per-swing `attackTargetId` from this death-only pursuit lifecycle.
 
 - [ ] **Step 3: Run the cumulative gate**
 
@@ -616,11 +624,17 @@ git commit -m "feat(sim): pass champion two-versus-three gate"
 
 **Files:**
 - Create: `aoe2x/js_simulation/tests/champion-5v3.test.mjs`
-- Modify: `aoe2x/js_simulation/src/combat/movement.js`
+- Create: `aoe2x/js_simulation/tests/target-state.test.mjs`
 - Modify: `aoe2x/js_simulation/src/combat/collision.js`
+- Modify: `aoe2x/js_simulation/src/combat/local-avoidance.js`
+- Modify: `aoe2x/js_simulation/src/combat/targeting.js`
+- Modify: `aoe2x/js_simulation/src/combat/unit-state.js`
+- Modify: `aoe2x/js_simulation/src/combat/world.js`
 
 **Interfaces:**
-- Exercises the existing normal/tangential collision response under multiple ranks; adds no formation or ratio rule.
+- Splits pursuit, physical engagement, and immutable swing targets; exposes a
+  pure resolved-contact manifold; exercises the existing normal/tangential
+  response under multiple ranks; adds no formation or ratio rule.
 
 - [ ] **Step 1: Write the strict 5v3 test**
 

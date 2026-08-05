@@ -470,6 +470,7 @@ function constraintsFor(mover, target, units, map) {
       unit.alive !== false
       && unit.referenceId !== mover.referenceId
       && unit.referenceId !== target.referenceId
+      && unit.owner === mover.owner
     ))
     .map((unit) => ({
       kind: "unit",
@@ -523,7 +524,7 @@ export function planLocalAvoidance(snapshot, proposals, map) {
     const original = proposalByReference.get(mover.referenceId)
       ?? Object.freeze({ referenceId: mover.referenceId, dx: 0, dy: 0 });
     const originalBudget = Math.hypot(original.dx, original.dy);
-    const target = byReference.get(mover.targetId);
+    const target = byReference.get(mover.pursuitTargetId);
     const goal = target?.alive === false || !target ? null : contactGoal(mover, target);
     let avoidance = mover.avoidance;
     let selected = null;

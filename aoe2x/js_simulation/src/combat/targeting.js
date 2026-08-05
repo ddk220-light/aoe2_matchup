@@ -40,12 +40,14 @@ function isEnemy(unit, candidate) {
 }
 
 
-export function selectTarget(unit, snapshot) {
+export function selectPursuitTarget(unit, snapshot) {
   if (!Array.isArray(snapshot)) throw new TypeError("snapshot must be an array");
   if (!isLive(unit)) return null;
 
-  if (unit.targetId !== null && unit.targetId !== undefined) {
-    const locked = snapshot.find(({ referenceId }) => referenceId === unit.targetId);
+  if (unit.pursuitTargetId !== null && unit.pursuitTargetId !== undefined) {
+    const locked = snapshot.find(({ referenceId }) => (
+      referenceId === unit.pursuitTargetId
+    ));
     if (locked && isLive(locked)) {
       if (!isEnemy(unit, locked)) {
         throw new Error(`unit ${unit.referenceId} has a live friendly target`);
@@ -77,4 +79,48 @@ export function selectTarget(unit, snapshot) {
     }
   }
   return best;
+}
+
+
+export function selectEngagementTarget(unit, snapshot, contacts) {
+  if (!Array.isArray(snapshot)) throw new TypeError("snapshot must be an array");
+  if (!Array.isArray(contacts)) throw new TypeError("contacts must be an array");
+  if (!isLive(unit)) return Object.freeze({ target: null, contact: null });
+  const byReference = new Map(snapshot.map((candidate) => [candidate.referenceId, candidate]));
+  if (unit.engagedTargetId !== null && unit.engagedTargetId !== undefined) {
+    const engaged = byReference.get(unit.engagedTargetId);
+    const range = requireFinite(unit?.mechanics?.attack_range_tiles, "attack range");
+    if (range < 0) throw new RangeError("attack range must be nonnegative");
+    if (
+      engaged
+      && isLive(engaged)
+      && isEnemy(unit, engaged)
+      && surfaceGap(unit, engaged) <= range + 1e-12
+    ) {
+      const contact = contacts.find(({ leftId, rightId }) => (
+        (leftId === unit.referenceId && rightId === engaged.referenceId)
+        || (rightId === unit.referenceId && leftId === engaged.referenceId)
+      )) ?? null;
+      return Object.freeze({ target: engaged, contact });
+    }
+  }
+
+  const candidates = contacts
+    .map((contact) => {
+      let targetId = null;
+      if (contact.leftId === unit.referenceId) targetId = contact.rightId;
+      if (contact.rightId === unit.referenceId) targetId = contact.leftId;
+      if (targetId === null) return null;
+      const target = byReference.get(targetId);
+      if (!target || !isLive(target) || !isEnemy(unit, target)) return null;
+      return { target, contact };
+    })
+    .filter((candidate) => candidate !== null)
+    .sort((left, right) => (
+      left.contact.sweptToi - right.contact.sweptToi
+      || left.contact.finalSurfaceGap - right.contact.finalSurfaceGap
+      || left.target.referenceId - right.target.referenceId
+    ));
+  if (candidates.length === 0) return Object.freeze({ target: null, contact: null });
+  return Object.freeze(candidates[0]);
 }

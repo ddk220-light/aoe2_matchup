@@ -5,6 +5,10 @@ import { createChampionScenario } from "../../src/champion-scenarios.js";
 import { createWorld, runWorld } from "../../src/combat/world.js";
 import { validateFormationFixture } from "../../src/formation-model.js";
 import { TICKS_PER_SECOND } from "../../src/simulation-clock.js";
+import { hashCanonicalJson } from "../../src/canonical-json.js";
+
+
+export { hashCanonicalJson };
 
 
 const formationUrl = new URL("../../fixtures/golden_formation_21v21.json", import.meta.url);
@@ -19,6 +23,10 @@ const mechanicsUrl = new URL("../../fixtures/unit_stats/champion_chinese_imperia
 
 const AUTHORIZED_ARCHIVE = "aoe2_golden_basics_championvschampion_2026-08-04.zip";
 const AUTHORIZED_SHA256 = "33F4051CB1BE014CDF1D3813E7AB74EF619B468CB6196B5E92E7482508AA1BDE";
+const AUTHORIZED_TRUTH_FIXTURE_SHA256 = "5D40A39DB397EBF191D4CA7C8A900E2026601123DA7064E33B046FEA45BA831E";
+const AUTHORIZED_MECHANICS_FIXTURE_SHA256 = "06CDE4E98AD95E8D387CEDA58217F3B1CFB90E7A57ADD9536EB82B090AD86595";
+const AUTHORIZED_DAT_SHA256 = "CE3530DF36CF0B333A9751CB0FF94460FE904F811FEECEC8AE9794701622B4CF";
+const AUTHORIZED_REFERENCE_DB_SHA256 = "51D602640E4C1A75F35286AA499821338B0EEE5DBA97E12A12D39E058CB11087";
 const AUTHORIZED_RATIOS = Object.freeze({
   "1v1": 3,
   "2v1": 3,
@@ -36,18 +44,23 @@ const archiveBytes = await readFile(sourceArchiveUrl);
 if (createHash("sha256").update(archiveBytes).digest("hex").toUpperCase() !== AUTHORIZED_SHA256) {
   throw new Error("invalid clean-room source: project-local archive SHA-256 does not match");
 }
-const [sourceOfTruth, manifest, formationData, truth, mechanics] = await Promise.all([
+const [sourceOfTruth, manifest, formationData, truthBytes, mechanicsBytes] = await Promise.all([
   readFile(sourceOfTruthUrl, "utf8").then(JSON.parse),
   readFile(manifestUrl, "utf8").then(JSON.parse),
   readFile(formationUrl, "utf8").then(JSON.parse),
-  readFile(truthUrl, "utf8").then(JSON.parse),
-  readFile(mechanicsUrl, "utf8").then(JSON.parse),
+  readFile(truthUrl),
+  readFile(mechanicsUrl),
 ]);
+const truth = JSON.parse(truthBytes.toString("utf8"));
+const mechanics = JSON.parse(mechanicsBytes.toString("utf8"));
 const sourceVerification = verifyCleanroomSource({
   archiveBytes,
   sourceOfTruth,
+  truthBytes,
   truth,
   manifest,
+  mechanicsBytes,
+  mechanics,
 });
 const formation = validateFormationFixture(formationData);
 
@@ -57,10 +70,48 @@ function invalidSource(reason) {
 }
 
 
-export function verifyCleanroomSource({ archiveBytes: bytes, sourceOfTruth: lock, truth: fixture, manifest: index } = {}) {
+export function verifyCleanroomSource({
+  archiveBytes: bytes,
+  sourceOfTruth: lock,
+  truthBytes: fixtureBytes,
+  truth: fixture,
+  manifest: index,
+  mechanicsBytes: statsBytes,
+  mechanics: stats,
+} = {}) {
   if (!bytes) invalidSource("project-local archive is required");
   const archiveHash = createHash("sha256").update(bytes).digest("hex").toUpperCase();
   if (archiveHash !== AUTHORIZED_SHA256) invalidSource("archive SHA-256 does not match");
+  if (!fixtureBytes) invalidSource("truth fixture bytes are required");
+  const truthFixtureHash = createHash("sha256")
+    .update(fixtureBytes)
+    .digest("hex")
+    .toUpperCase();
+  if (truthFixtureHash !== AUTHORIZED_TRUTH_FIXTURE_SHA256) {
+    invalidSource("truth fixture SHA-256 does not match");
+  }
+  if (!statsBytes) invalidSource("mechanics fixture bytes are required");
+  const mechanicsFixtureHash = createHash("sha256")
+    .update(statsBytes)
+    .digest("hex")
+    .toUpperCase();
+  if (mechanicsFixtureHash !== AUTHORIZED_MECHANICS_FIXTURE_SHA256) {
+    invalidSource("mechanics fixture SHA-256 does not match");
+  }
+  let decodedTruth;
+  let decodedMechanics;
+  try {
+    decodedTruth = JSON.parse(fixtureBytes.toString("utf8"));
+    decodedMechanics = JSON.parse(statsBytes.toString("utf8"));
+  } catch {
+    invalidSource("locked fixture bytes must decode as JSON");
+  }
+  if (JSON.stringify(decodedTruth) !== JSON.stringify(fixture)) {
+    invalidSource("truth object does not match locked fixture bytes");
+  }
+  if (JSON.stringify(decodedMechanics) !== JSON.stringify(stats)) {
+    invalidSource("mechanics object does not match locked fixture bytes");
+  }
   if (
     lock?.archive !== AUTHORIZED_ARCHIVE ||
     lock?.sha256 !== AUTHORIZED_SHA256 ||
@@ -92,49 +143,23 @@ export function verifyCleanroomSource({ archiveBytes: bytes, sourceOfTruth: lock
       invalidSource(`Champion fixture ratio ${ratio} does not match the authorized inventory`);
     }
   }
+  if (
+    stats?.provenance?.dat_sha256 !== AUTHORIZED_DAT_SHA256
+    || stats?.provenance?.reference_db_sha256 !== AUTHORIZED_REFERENCE_DB_SHA256
+  ) {
+    invalidSource("mechanics fixture raw-source hashes do not match");
+  }
 
   return Object.freeze({
     archive: AUTHORIZED_ARCHIVE,
     zipSha256: AUTHORIZED_SHA256,
     recordings: lock.recordings,
     manifestEntries: index.runs.length,
+    truthFixtureSha256: truthFixtureHash,
+    mechanicsFixtureSha256: mechanicsFixtureHash,
+    datSha256: AUTHORIZED_DAT_SHA256,
+    referenceDbSha256: AUTHORIZED_REFERENCE_DB_SHA256,
   });
-}
-
-
-function canonicalJson(value, ancestors = new Set()) {
-  if (value === null || typeof value === "string" || typeof value === "boolean") {
-    return JSON.stringify(value);
-  }
-  if (typeof value === "number") {
-    if (!Number.isFinite(value)) throw new TypeError("canonical JSON requires a finite number");
-    return JSON.stringify(value);
-  }
-  if (!value || typeof value !== "object") {
-    throw new TypeError(`canonical JSON does not support ${typeof value}`);
-  }
-  if (ancestors.has(value)) throw new TypeError("canonical JSON does not support cycles");
-
-  ancestors.add(value);
-  let serialized;
-  if (Array.isArray(value)) {
-    serialized = `[${value.map((child) => canonicalJson(child, ancestors)).join(",")}]`;
-  } else {
-    const prototype = Object.getPrototypeOf(value);
-    if (prototype !== Object.prototype && prototype !== null) {
-      throw new TypeError("canonical JSON requires plain objects");
-    }
-    serialized = `{${Object.keys(value).sort().map((key) => (
-      `${JSON.stringify(key)}:${canonicalJson(value[key], ancestors)}`
-    )).join(",")}}`;
-  }
-  ancestors.delete(value);
-  return serialized;
-}
-
-
-export function hashCanonicalJson(value) {
-  return createHash("sha256").update(canonicalJson(value)).digest("hex");
 }
 
 
@@ -209,7 +234,7 @@ function simulationTrace(result, damageEvents) {
     };
   });
 
-  const contactEvent = result.events.find(({ type }) => type === "contact");
+  const contactEvent = result.events.find(({ type }) => type === "engagement-started");
   let surfaceContact = null;
   if (contactEvent) {
     const snapshot = result.snapshots[contactEvent.tick];

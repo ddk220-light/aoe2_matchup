@@ -21,8 +21,10 @@ function unit({
   y,
   hp = mechanics.hp,
   alive = true,
-  targetId = null,
+  pursuitTargetId = null,
   action = "idle",
+  engagedTargetId = action === "attacking" ? pursuitTargetId : null,
+  attackTargetId = action === "attacking" ? pursuitTargetId : null,
   windup = 0,
   reload = 0,
   facing = 0,
@@ -39,7 +41,9 @@ function unit({
     unitMaster: unitMechanics.unit_master,
     hp,
     alive,
-    targetId,
+    pursuitTargetId,
+    engagedTargetId,
+    attackTargetId,
     avoidance,
     action,
     actionTimers: { windup, reload },
@@ -93,15 +97,17 @@ test("both sides decide from the same start-of-tick snapshot", async () => {
 
   assert.deepEqual(normalizeWorld(forward), normalizeWorld(reversed));
   assert.deepEqual(
-    forward.units.map(({ referenceId, targetId }) => [referenceId, targetId]),
+    forward.units.map(({ referenceId, pursuitTargetId }) => (
+      [referenceId, pursuitTargetId]
+    )),
     [[1628, 1699], [1699, 1628]],
   );
   assert.ok(Math.abs(forward.units[0].x + forward.units[1].x - 9) < 1e-12);
   assert.deepEqual(
     forward.events.map(({ type, actorId }) => [type, actorId]),
     [
-      ["target-acquired", 1628],
-      ["target-acquired", 1699],
+      ["pursuit-acquired", 1628],
+      ["pursuit-acquired", 1699],
       ["move", 1628],
       ["move", 1699],
     ],
@@ -138,7 +144,7 @@ test("avoidance clears only after resolved contact and survives a target moving 
     x: 4.7403479276431675,
     y: 7.235735058903908,
     facing: 1.186626617179682,
-    targetId: 3,
+    pursuitTargetId: 3,
     avoidance,
     unitMechanics: fastMechanics,
   });
@@ -154,14 +160,14 @@ test("avoidance clears only after resolved contact and survives a target moving 
     owner: 3,
     x: 4.641421,
     y: 7.641421,
-    targetId: 1,
+    pursuitTargetId: 1,
     unitMechanics: stoppedMechanics,
   });
 
   const contacted = stepWorld(createWorld(scenario([mover, blocker, stationaryTarget])));
   assert.equal(contacted.units.find(({ referenceId }) => referenceId === 1).avoidance, null);
   assert.ok(contacted.events.some(({ type, actorId, targetId }) => (
-    type === "contact" && actorId === 1 && targetId === 3
+    type === "engagement-started" && actorId === 1 && targetId === 3
   )));
 
   const retreatPoint = unit({
@@ -176,7 +182,7 @@ test("avoidance clears only after resolved contact and survives a target moving 
     owner: 3,
     x: 4.641421,
     y: 7.641421,
-    targetId: 4,
+    pursuitTargetId: 4,
   });
   const separated = stepWorld(createWorld(scenario([
     mover,
@@ -189,7 +195,7 @@ test("avoidance clears only after resolved contact and survives a target moving 
     avoidance,
   );
   assert.equal(separated.events.some(({ type, actorId, targetId }) => (
-    type === "contact" && actorId === 1 && targetId === 3
+    type === "engagement-started" && actorId === 1 && targetId === 3
   )), false);
 });
 
@@ -335,14 +341,14 @@ test("movement contact and zero-delay attacks publish in phase order", async () 
   assert.ok(Math.abs(next.units[0].x - 4.01) < 1e-12);
   assert.ok(Math.abs(next.units[1].x - 4.41) < 1e-12);
   assert.deepEqual(next.events.map(({ type, actorId }) => [type, actorId]), [
-    ["target-acquired", 1628],
-    ["target-acquired", 1699],
+    ["pursuit-acquired", 1628],
+    ["pursuit-acquired", 1699],
     ["move", 1628],
     ["move", 1699],
     ["blocked", 1628],
     ["blocked", 1699],
-    ["contact", 1628],
-    ["contact", 1699],
+    ["engagement-started", 1628],
+    ["engagement-started", 1699],
     ["attack-start", 1628],
     ["attack-start", 1699],
     ["damage", 1628],
@@ -421,6 +427,10 @@ test("a lower-reference lethal attack cancels a ready attacker killed earlier", 
     [1628, 14, true],
     [1699, 0, false],
   ]);
+  assert.equal(
+    next.units.find(({ referenceId }) => referenceId === 1628).engagedTargetId,
+    null,
+  );
   assert.deepEqual(
     next.events
       .filter(({ type }) => ["damage", "death", "attack-canceled"].includes(type))
@@ -431,6 +441,11 @@ test("a lower-reference lethal attack cancels a ready attacker killed earlier", 
       ["attack-canceled", 1699, 1628, "actor-dead"],
     ],
   );
+  const deathIndex = next.events.findIndex(({ type }) => type === "death");
+  const engagementEndIndex = next.events.findIndex(({ type, actorId, targetId }) => (
+    type === "engagement-ended" && actorId === 1628 && targetId === 1699
+  ));
+  assert.ok(engagementEndIndex > deathIndex);
   assert.equal(next.events.some(({ type, actorId }) => type === "damage" && actorId === 1699), false);
 });
 
@@ -458,8 +473,12 @@ test("later ready attacks do not damage a target that is already dead", async ()
 
 test("death-tick publication preserves a non-ready attack on the new corpse", async () => {
   const { createWorld, stepWorld } = await loadWorld();
+  const delayedMechanics = {
+    ...mechanics,
+    attack_delay_seconds: 3 / 60,
+  };
   const deathTick = stepWorld(createWorld(scenario([
-    unit({ referenceId: 1629, owner: 2, x: 5, y: 4.6, hp: 14, targetId: 1699, action: "attacking", windup: 3 }),
+    unit({ referenceId: 1629, owner: 2, x: 5, y: 4.6, hp: 14, pursuitTargetId: 1699, action: "attacking", windup: 3, unitMechanics: delayedMechanics }),
     unit({ referenceId: 1699, owner: 3, x: 5, y: 5, hp: 14 }),
     unit({ referenceId: 1628, owner: 2, x: 4.6, y: 5, hp: 14 }),
   ])));
@@ -467,25 +486,47 @@ test("death-tick publication preserves a non-ready attack on the new corpse", as
 
   assert.deepEqual(
     {
-      targetId: windingUp.targetId,
+      pursuitTargetId: windingUp.pursuitTargetId,
+      engagedTargetId: windingUp.engagedTargetId,
+      attackTargetId: windingUp.attackTargetId,
       action: windingUp.action,
       windup: windingUp.actionTimers.windup,
     },
-    { targetId: 1699, action: "attacking", windup: 2 },
+    {
+      pursuitTargetId: 1699,
+      engagedTargetId: null,
+      attackTargetId: 1699,
+      action: "attacking",
+      windup: 2,
+    },
   );
   assert.equal(
     deathTick.events.some(({ actorId, type }) => (
-      actorId === 1629 && ["target-invalidated", "attack-canceled"].includes(type)
+      actorId === 1629 && ["pursuit-invalidated", "attack-canceled"].includes(type)
     )),
     false,
   );
+  const deathIndex = deathTick.events.findIndex(({ type, targetId }) => (
+    type === "death" && targetId === 1699
+  ));
+  const ended = deathTick.events
+    .map((event, index) => ({ event, index }))
+    .filter(({ event: { type, targetId } }) => (
+      type === "engagement-ended" && targetId === 1699
+    ));
+  assert.deepEqual(ended.map(({ event: { actorId } }) => actorId), [1628, 1629]);
+  assert.equal(ended.every(({ index }) => index > deathIndex), true);
 });
 
 
 test("the next validation tick invalidates and cancels a preserved windup", async () => {
   const { createWorld, stepWorld } = await loadWorld();
+  const delayedMechanics = {
+    ...mechanics,
+    attack_delay_seconds: 3 / 60,
+  };
   const deathTick = stepWorld(createWorld(scenario([
-    unit({ referenceId: 1629, owner: 2, x: 5, y: 4.6, hp: 14, targetId: 1699, action: "attacking", windup: 3 }),
+    unit({ referenceId: 1629, owner: 2, x: 5, y: 4.6, hp: 14, pursuitTargetId: 1699, action: "attacking", windup: 3, unitMechanics: delayedMechanics }),
     unit({ referenceId: 1699, owner: 3, x: 5, y: 5, hp: 14 }),
     unit({ referenceId: 1628, owner: 2, x: 4.6, y: 5, hp: 14 }),
   ])));
@@ -495,68 +536,103 @@ test("the next validation tick invalidates and cancels a preserved windup", asyn
 
   assert.deepEqual(
     validationTick.events
-      .filter(({ actorId }) => actorId === 1629)
+      .filter(({ actorId, type }) => (
+        actorId === 1629
+        && ["pursuit-invalidated", "attack-canceled"].includes(type)
+      ))
       .map(({ type, targetId, readyTick, reason }) => (
         [type, targetId, readyTick, reason]
       )),
     [
-      ["target-invalidated", 1699, undefined, "target-dead"],
-      ["attack-canceled", 1699, 3, "target-invalidated"],
+      ["pursuit-invalidated", 1699, undefined, "target-dead"],
+      ["attack-canceled", 1699, 3, "target-dead"],
     ],
   );
   assert.deepEqual(
     {
-      targetId: canceled.targetId,
+      pursuitTargetId: canceled.pursuitTargetId,
+      engagedTargetId: canceled.engagedTargetId,
+      attackTargetId: canceled.attackTargetId,
       action: canceled.action,
       timers: canceled.actionTimers,
     },
-    { targetId: null, action: "idle", timers: { windup: 0, reload: 0 } },
+    {
+      pursuitTargetId: null,
+      engagedTargetId: null,
+      attackTargetId: null,
+      action: "idle",
+      timers: { windup: 0, reload: 0 },
+    },
   );
 });
 
 
 test("validation cancellation projects the scheduled readiness from windup", async () => {
   const { createWorld, stepWorld } = await loadWorld();
-  const next = stepWorld(createWorld(scenario([
+  const delayedMechanics = {
+    ...mechanics,
+    attack_delay_seconds: 2 / 60,
+  };
+  const deathTick = stepWorld(createWorld(scenario([
     unit({
-      referenceId: 1628,
+      referenceId: 1629,
       owner: 2,
-      x: 4,
-      y: 4,
-      targetId: 1699,
+      x: 5,
+      y: 4.6,
+      pursuitTargetId: 1699,
       action: "attacking",
       windup: 2,
+      unitMechanics: delayedMechanics,
     }),
-    unit({ referenceId: 1699, owner: 3, x: 4.4, y: 4, hp: 0, alive: false }),
+    unit({ referenceId: 1699, owner: 3, x: 5, y: 5, hp: 14 }),
+    unit({ referenceId: 1628, owner: 2, x: 4.6, y: 5, hp: 14 }),
   ])));
+  const next = stepWorld(deathTick);
 
-  const canceled = next.events.find(({ type }) => type === "attack-canceled");
-  assert.equal(next.tick, 1);
+  const canceled = next.events.find(({ type, actorId }) => (
+    type === "attack-canceled" && actorId === 1629
+  ));
+  assert.equal(deathTick.units.find(({ referenceId }) => referenceId === 1629).attackTargetId, 1699);
+  assert.equal(next.tick, 2);
   assert.equal(canceled.readyTick, 2);
 });
 
 
-test("friendly and dead locks invalidate before same-tick reacquisition", async () => {
+test("a friendly pursuit lock is rejected as invalid world state", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const world = createWorld(scenario([
+    unit({ referenceId: 1628, owner: 2, x: 4, y: 4, pursuitTargetId: 1629 }),
+    unit({ referenceId: 1629, owner: 2, x: 7, y: 7 }),
+    unit({ referenceId: 1699, owner: 3, x: 5, y: 4 }),
+  ]));
+
+  assert.throws(() => stepWorld(world), /friendly pursuit target/i);
+});
+
+
+test("a dead pursuit invalidates before same-tick reacquisition", async () => {
   const { createWorld, stepWorld } = await loadWorld();
   const next = stepWorld(createWorld(scenario([
-    unit({ referenceId: 1628, owner: 2, x: 4, y: 4, targetId: 1629 }),
+    unit({ referenceId: 1628, owner: 2, x: 4, y: 4, pursuitTargetId: 1700 }),
     unit({ referenceId: 1629, owner: 2, x: 7, y: 7 }),
     unit({ referenceId: 1699, owner: 3, x: 5, y: 4 }),
     unit({ referenceId: 1700, owner: 3, x: 6, y: 6, hp: 0, alive: false }),
   ])));
   const actor = next.units.find(({ referenceId }) => referenceId === 1628);
 
-  assert.equal(actor.targetId, 1699);
+  assert.equal(actor.pursuitTargetId, 1699);
   assert.deepEqual(
     next.events
       .filter(({ actorId }) => actorId === 1628)
       .slice(0, 2)
       .map(({ type, targetId }) => [type, targetId]),
-    [["target-invalidated", 1629], ["target-acquired", 1699]],
+    [["pursuit-invalidated", 1700], ["pursuit-acquired", 1699]],
   );
   assert.equal(next.units.some((entry) => {
-    if (!entry.alive || entry.targetId === null) return false;
-    const target = next.units.find(({ referenceId }) => referenceId === entry.targetId);
+    if (!entry.alive || entry.pursuitTargetId === null) return false;
+    const target = next.units.find(({ referenceId }) => (
+      referenceId === entry.pursuitTargetId
+    ));
     return !target?.alive || target.owner === entry.owner;
   }), false);
 });
@@ -616,8 +692,10 @@ test("runWorld preserves snapshots without friendly live locks", async () => {
   assert.equal(result.winner, 2);
   assert.equal(result.snapshots.length, result.ticks + 1);
   assert.equal(result.snapshots.some((snapshot) => snapshot.units.some((entry) => {
-    if (!entry.alive || entry.targetId === null) return false;
-    const target = snapshot.units.find(({ referenceId }) => referenceId === entry.targetId);
+    if (!entry.alive || entry.pursuitTargetId === null) return false;
+    const target = snapshot.units.find(({ referenceId }) => (
+      referenceId === entry.pursuitTargetId
+    ));
     return target?.owner === entry.owner;
   })), false);
 });

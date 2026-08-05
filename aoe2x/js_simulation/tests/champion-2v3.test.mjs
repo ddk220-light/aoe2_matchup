@@ -14,7 +14,7 @@ test("Champion 2v3 matches the exact repeated tape outcome", () => {
 });
 
 
-test("Champion 2v3 retargets only after next-tick dead-target invalidation", () => {
+test("Champion 2v3 changes pursuit only after next-tick dead-target invalidation", () => {
   const result = runChampionRatio("2v3");
   const deathsByTarget = new Map(
     result.events
@@ -31,34 +31,37 @@ test("Champion 2v3 retargets only after next-tick dead-target invalidation", () 
 
     for (const unit of current.units) {
       const before = previousById.get(unit.referenceId);
-      if (before.targetId === unit.targetId) continue;
+      if (before.pursuitTargetId === unit.pursuitTargetId) continue;
 
       const matchingEvents = current.events.filter(({ actorId }) => actorId === unit.referenceId);
-      if (before.targetId === null) {
+      if (before.pursuitTargetId === null) {
         assert.deepEqual(
           matchingEvents
-            .filter(({ type }) => type === "target-acquired")
+            .filter(({ type }) => type === "pursuit-acquired")
             .map(({ targetId }) => targetId),
-          [unit.targetId],
+          [unit.pursuitTargetId],
         );
       } else if (!unit.alive) {
         assert.ok(current.events.some(({ type, targetId }) => (
           type === "death" && targetId === unit.referenceId
         )));
-        assert.equal(unit.targetId, null);
+        assert.equal(unit.pursuitTargetId, null);
       } else {
-        const death = deathsByTarget.get(before.targetId);
+        const death = deathsByTarget.get(before.pursuitTargetId);
         const invalidationIndex = current.events.findIndex((event) => (
-          event.type === "target-invalidated"
+          event.type === "pursuit-invalidated"
           && event.actorId === unit.referenceId
-          && event.targetId === before.targetId
+          && event.targetId === before.pursuitTargetId
         ));
         const acquisitionIndex = current.events.findIndex((event) => (
-          event.type === "target-acquired"
+          event.type === "pursuit-acquired"
           && event.actorId === unit.referenceId
-          && event.targetId === unit.targetId
+          && event.targetId === unit.pursuitTargetId
         ));
-        assert.ok(death, `target ${before.targetId} changed without a preceding death`);
+        assert.ok(
+          death,
+          `pursuit target ${before.pursuitTargetId} changed without a preceding death`,
+        );
         assert.equal(current.tick, death.tick + 1);
         assert.ok(invalidationIndex >= 0, `actor ${unit.referenceId} changed without invalidation`);
         assert.ok(acquisitionIndex > invalidationIndex, "acquisition must follow invalidation");
@@ -70,13 +73,13 @@ test("Champion 2v3 retargets only after next-tick dead-target invalidation", () 
     for (const blocked of current.events.filter(({ type }) => type === "blocked")) {
       const actorBefore = previousById.get(blocked.actorId);
       const actorAfter = currentById.get(blocked.actorId);
-      const targetBefore = previousById.get(actorBefore.targetId);
-      const targetAfter = currentById.get(actorBefore.targetId);
+      const targetBefore = previousById.get(actorBefore.pursuitTargetId);
+      const targetAfter = currentById.get(actorBefore.pursuitTargetId);
       if (actorBefore.alive && actorAfter.alive && targetBefore?.alive && targetAfter?.alive) {
         assert.equal(
-          actorAfter.targetId,
-          actorBefore.targetId,
-          `blocked actor ${blocked.actorId} released a live target`,
+          actorAfter.pursuitTargetId,
+          actorBefore.pursuitTargetId,
+          `blocked actor ${blocked.actorId} released a live pursuit target`,
         );
       }
     }

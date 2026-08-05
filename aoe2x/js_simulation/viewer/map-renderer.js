@@ -78,6 +78,71 @@ export function pickFormationUnit(units, x, y, radius = 0.42) {
 }
 
 
+export function buildSimulationScene(snapshot, {
+  mapWidth = 16,
+  orientation = VIEW_ORIENTATION,
+} = {}) {
+  if (!immutableSimulationSnapshot(snapshot)) {
+    throw new TypeError("simulation scene requires an immutable simulation snapshot");
+  }
+  return Object.freeze(snapshot.units
+    .map((unit) => Object.freeze({
+      ...unit,
+      reference_id: unit.referenceId,
+      player_id: unit.owner,
+      unit_const: unit.unitMaster,
+      name: "CHAMPION",
+      position: Object.freeze({ x: unit.x, y: unit.y }),
+      rotation: unit.facing,
+      team: unit.owner === 2 ? "p2" : "p3",
+      maxHp: unit.mechanics.hp,
+    }))
+    .sort((a, b) => compareMapDepth(
+      { x: a.position.x, y: a.position.y },
+      { x: b.position.x, y: b.position.y },
+      { mapWidth, orientation },
+    )));
+}
+
+
+function deeplyFrozen(value, visited = new Set()) {
+  if (!value || typeof value !== "object" || visited.has(value)) return true;
+  if (!Object.isFrozen(value)) return false;
+  visited.add(value);
+  return Object.values(value).every((child) => deeplyFrozen(child, visited));
+}
+
+
+function immutableSimulationSnapshot(snapshot) {
+  return (
+    deeplyFrozen(snapshot)
+    && Number.isInteger(snapshot.tick)
+    && snapshot.tick >= 0
+    && Array.isArray(snapshot.units)
+    && Object.isFrozen(snapshot.units)
+    && Array.isArray(snapshot.events)
+    && Object.isFrozen(snapshot.events)
+  );
+}
+
+
+export function createSimulationPresenter({ present }) {
+  if (typeof present !== "function") throw new TypeError("present must be a function");
+  let snapshot = null;
+  return Object.freeze({
+    setSimulationSnapshot(value) {
+      if (!immutableSimulationSnapshot(value)) {
+        throw new TypeError("renderer requires an immutable simulation snapshot");
+      }
+      snapshot = value;
+      present(value);
+    },
+    getSimulationSnapshot() { return snapshot; },
+    getDisplayedTick() { return snapshot?.tick ?? null; },
+  });
+}
+
+
 function seeded(referenceId, salt = 0) {
   const value = Math.sin(referenceId * 91.733 + salt * 17.117) * 43758.5453;
   return value - Math.floor(value);
@@ -245,7 +310,10 @@ export function createMapRenderer(canvas, map) {
     selected: null,
     selectedUnit: null,
     hovered: null,
+    formationUnits: Object.freeze([]),
     units: Object.freeze([]),
+    simulationSnapshot: null,
+    mode: "formation",
     options: {
       grid: false,
       objects: true,
@@ -253,6 +321,20 @@ export function createMapRenderer(canvas, map) {
       labels: false,
     },
   };
+
+  const simulationPresenter = createSimulationPresenter({
+    present(snapshot) {
+      state.simulationSnapshot = snapshot;
+      state.mode = "simulation";
+      state.units = buildSimulationScene(snapshot, { mapWidth: map.width });
+      if (state.selectedUnit) {
+        state.selectedUnit = state.units.find(
+          ({ reference_id: id }) => id === state.selectedUnit.reference_id,
+        ) ?? null;
+      }
+      draw();
+    },
+  });
 
   function worldToCanvas(point) {
     return {
@@ -340,6 +422,85 @@ export function createMapRenderer(canvas, map) {
     ctx.stroke();
   }
 
+  function unitBase(unit) {
+    const { x, y, z = 0 } = unit.position;
+    return worldToCanvas(projection.tileToScreen(x, y, z));
+  }
+
+  function drawWorldCircle(unit, radius, color, dash = []) {
+    if (!(radius > 0)) return;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.15;
+    ctx.setLineDash(dash);
+    ctx.beginPath();
+    for (let index = 0; index <= 40; index += 1) {
+      const angle = index / 40 * Math.PI * 2;
+      const projected = worldToCanvas(projection.tileToScreen(
+        unit.position.x + Math.cos(angle) * radius,
+        unit.position.y + Math.sin(angle) * radius,
+        0,
+      ));
+      if (index === 0) ctx.moveTo(projected.x, projected.y);
+      else ctx.lineTo(projected.x, projected.y);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawTargetLine(unit, target, color, dash, width) {
+    if (!target) return;
+    const start = unitBase(unit);
+    const finish = unitBase(target);
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.setLineDash(dash);
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y - 5 * state.zoom);
+    ctx.lineTo(finish.x, finish.y - 5 * state.zoom);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawSimulationOverlays() {
+    if (!state.simulationSnapshot) return;
+    const byReference = new Map(state.units.map((unit) => [unit.reference_id, unit]));
+    for (const unit of state.units) {
+      if (!unit.alive) continue;
+      const radius = unit.mechanics.collision_size_tiles.x;
+      const targetRadius = radius;
+      drawWorldCircle(unit, radius, "rgba(241, 226, 178, .54)");
+      drawWorldCircle(
+        unit,
+        radius + targetRadius + unit.mechanics.attack_range_tiles,
+        "rgba(241, 226, 178, .22)",
+        [3, 4],
+      );
+      drawTargetLine(
+        unit,
+        byReference.get(unit.pursuitTargetId),
+        "rgba(229, 179, 73, .44)",
+        [6, 6],
+        1,
+      );
+      drawTargetLine(
+        unit,
+        byReference.get(unit.engagedTargetId),
+        "rgba(103, 209, 192, .72)",
+        [2, 3],
+        1.5,
+      );
+      drawTargetLine(
+        unit,
+        byReference.get(unit.attackTargetId),
+        "rgba(240, 102, 78, .88)",
+        [],
+        2.2,
+      );
+    }
+  }
+
   function drawUnit(unit) {
     const { x, y, z = 0 } = unit.position;
     const base = worldToCanvas(projection.tileToScreen(x, y, z));
@@ -349,6 +510,7 @@ export function createMapRenderer(canvas, map) {
       : { fill: "#4b9b72", rim: "#9ed5a8", dark: "#214b39" };
 
     ctx.save();
+    if (unit.alive === false) ctx.globalAlpha = 0.36;
     ctx.fillStyle = "rgba(8, 14, 10, .42)";
     ctx.beginPath();
     ctx.ellipse(base.x + size * 0.18, base.y + size * 0.3, size * 0.85, size * 0.35, 0, 0, Math.PI * 2);
@@ -365,6 +527,32 @@ export function createMapRenderer(canvas, map) {
     ctx.strokeStyle = palette.rim;
     ctx.lineWidth = Math.max(1.2, state.zoom * 2);
     ctx.stroke();
+
+    if (unit.alive === false) {
+      ctx.strokeStyle = "#d9cba6";
+      ctx.lineWidth = Math.max(1.2, state.zoom * 2);
+      ctx.beginPath();
+      ctx.moveTo(base.x - size * 0.55, base.y - size * 0.85);
+      ctx.lineTo(base.x + size * 0.55, base.y + size * 0.15);
+      ctx.moveTo(base.x + size * 0.55, base.y - size * 0.85);
+      ctx.lineTo(base.x - size * 0.55, base.y + size * 0.15);
+      ctx.stroke();
+    }
+
+    if (Number.isFinite(unit.hp) && Number.isFinite(unit.maxHp)) {
+      const barWidth = Math.max(18, 28 * state.zoom);
+      const barY = base.y - size * 1.55;
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "rgba(8, 12, 10, .9)";
+      ctx.fillRect(base.x - barWidth / 2, barY, barWidth, Math.max(2, 3 * state.zoom));
+      ctx.fillStyle = unit.hp / unit.maxHp > 0.4 ? "#b8d56e" : "#ee8b5c";
+      ctx.fillRect(
+        base.x - barWidth / 2,
+        barY,
+        barWidth * Math.max(0, unit.hp / unit.maxHp),
+        Math.max(2, 3 * state.zoom),
+      );
+    }
 
     const facingWorld = projection.tileToScreen(
       x + Math.cos(unit.rotation) * 0.45,
@@ -385,6 +573,18 @@ export function createMapRenderer(canvas, map) {
       ctx.beginPath();
       ctx.arc(base.x, base.y - size * 0.35, size * 1.05, 0, Math.PI * 2);
       ctx.stroke();
+    }
+
+    if (state.options.labels && state.simulationSnapshot && state.zoom >= 0.5) {
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#f3e7c1";
+      ctx.font = `${Math.max(8, 9 * state.zoom)}px Consolas, monospace`;
+      ctx.textAlign = "center";
+      ctx.fillText(
+        `${unit.reference_id} · ${unit.action}`,
+        base.x,
+        base.y + size * 1.25,
+      );
     }
     ctx.restore();
   }
@@ -428,6 +628,7 @@ export function createMapRenderer(canvas, map) {
     if (state.options.objects) {
       for (const object of scene.objects) drawObject(object);
     }
+    drawSimulationOverlays();
     for (const unit of state.units) drawUnit(unit);
     drawMarker(state.hovered, "rgba(239, 205, 112, .75)");
     drawMarker(state.selected, "#f3c55a");
@@ -491,7 +692,26 @@ export function createMapRenderer(canvas, map) {
       };
     },
     setUnits(units) {
-      state.units = buildFormationScene(units, { mapWidth: map.width });
+      state.formationUnits = buildFormationScene(units, { mapWidth: map.width });
+      state.units = state.formationUnits;
+      state.simulationSnapshot = null;
+      state.mode = "formation";
+      draw();
+    },
+    setSimulationSnapshot(snapshot) {
+      simulationPresenter.setSimulationSnapshot(snapshot);
+    },
+    getSimulationSnapshot() {
+      return simulationPresenter.getSimulationSnapshot();
+    },
+    getDisplayedTick() {
+      return simulationPresenter.getDisplayedTick();
+    },
+    showFormation() {
+      state.simulationSnapshot = null;
+      state.mode = "formation";
+      state.units = state.formationUnits;
+      state.selectedUnit = null;
       draw();
     },
     setSelectedUnit(unit) {

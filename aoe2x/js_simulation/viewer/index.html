@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#17211c">
-    <title>Golden Arena · Formation Inspector</title>
+    <meta name="theme-color" content="#121a16">
+    <title>Golden Arena · Champion Combat Chronograph</title>
     <script>
       (() => {
         const mountBase = document.createElement("base");
@@ -20,24 +20,62 @@
     <div class="page-shell">
       <header class="masthead">
         <div class="title-block">
-          <p class="eyebrow">AoE2 mechanics laboratory · stage 1</p>
-          <h1>Golden Arena</h1>
-          <p class="subtitle">Scenario-exact 21 × 21 formation inspector</p>
+          <p class="eyebrow">AoE2 clean-room mechanics laboratory · champion phase</p>
+          <h1>Combat Chronograph</h1>
+          <p class="subtitle">The locked Golden Arena, observed one deterministic tick at a time</p>
         </div>
         <div class="source-seal" id="sourceBadge" aria-live="polite">
           <span class="seal-dot"></span>
           <span>
             <strong>Loading source</strong>
-            <small>Verifying scenario fixture…</small>
+            <small>Verifying scenario and simulation fixtures…</small>
           </span>
         </div>
       </header>
 
+      <section class="chronograph" aria-label="Simulation playback controls">
+        <div class="run-selector">
+          <label>
+            <span>Engagement ratio</span>
+            <select id="ratioSelect" aria-label="Champion matchup ratio">
+              <option value="1v1">1 vs 1</option>
+              <option value="2v1">2 vs 1</option>
+              <option value="2v3">2 vs 3</option>
+              <option value="5v3">5 vs 3</option>
+              <option value="6v3">6 vs 3</option>
+            </select>
+          </label>
+          <label>
+            <span>Tape diagnostic</span>
+            <select id="repeatSelect" aria-label="Golden tape repeat">
+              <option value="1">Repeat 01</option>
+              <option value="2">Repeat 02</option>
+              <option value="3">Repeat 03</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="transport" role="group" aria-label="Playback transport">
+          <button id="playPause" class="transport-primary" type="button" aria-keyshortcuts="Space">Play</button>
+          <button id="resetPlayback" type="button" aria-keyshortcuts="Home">Reset</button>
+          <button id="stepTick" type="button" aria-keyshortcuts="ArrowRight">+1 tick</button>
+          <button id="nextEvent" type="button" aria-keyshortcuts="Shift+ArrowRight">Next event</button>
+          <button id="returnFormation" type="button" aria-keyshortcuts="F">21v21 formation</button>
+        </div>
+
+        <div class="time-dial" aria-live="polite">
+          <div class="dial-rule"></div>
+          <div><small>Tick</small><strong id="tickReadout">0000</strong></div>
+          <div><small>Seconds</small><strong id="secondsReadout">0.000</strong></div>
+          <span id="playbackMode">loading</span>
+        </div>
+      </section>
+
       <main class="workspace">
         <section class="map-frame" aria-label="Golden scenario map">
-          <div class="map-status">
+          <div class="map-status" id="mapStatus" aria-live="polite">
             <span class="status-light"></span>
-            21 vs 21 placement · no simulation loaded
+            Locked 21 vs 21 formation · loading simulation
           </div>
 
           <div class="tool-rail" aria-label="Map overlays">
@@ -60,7 +98,14 @@
             <button id="resetView" class="reset-button" type="button">Reset view</button>
           </div>
 
-          <canvas id="mapCanvas" aria-label="Isometric rendering of the golden recording arena"></canvas>
+          <canvas id="mapCanvas" aria-label="Isometric Champion simulation on the Golden Arena"></canvas>
+
+          <div class="overlay-key" aria-label="Simulation overlay legend">
+            <span class="key-pursuit">Pursuit</span>
+            <span class="key-engaged">Engaged</span>
+            <span class="key-attack">Swing</span>
+            <span class="key-body">Body / reach</span>
+          </div>
 
           <div class="coordinate-strip">
             <span id="cursorReadout">Tile —, —</span>
@@ -68,29 +113,62 @@
           </div>
         </section>
 
-        <aside class="ledger" aria-label="Scenario source details">
+        <aside class="ledger" aria-label="Combat diagnostic ledger">
           <div class="ledger-heading">
-            <span>Placement ledger</span>
-            <b>01</b>
+            <span>Run ledger</span>
+            <b id="ledgerNumber">SIM–01</b>
           </div>
 
-          <section class="fact-grid" aria-label="Map facts">
-            <div><small>Map</small><strong id="mapSize">—</strong></div>
-            <div><small>Terrain tiles</small><strong id="tileCount">—</strong></div>
-            <div><small>Player 2</small><strong id="player2Count">—</strong></div>
-            <div><small>Player 3</small><strong id="player3Count">—</strong></div>
+          <section class="result-strip" aria-label="Simulation outcome">
+            <div><small>Sim winner</small><strong id="simWinner">—</strong></div>
+            <div><small>Winner HP</small><strong id="simWinnerHp">—</strong></div>
+            <div><small>Tape winner</small><strong id="tapeWinner">—</strong></div>
+            <div><small>Tape HP</small><strong id="tapeWinnerHp">—</strong></div>
           </section>
 
-          <section class="formation-panel" aria-label="Formation sides">
+          <section class="unit-panel">
+            <div class="panel-title-row">
+              <p class="panel-kicker">Live unit telemetry</p>
+              <span id="unitCount">—</span>
+            </div>
+            <div id="unitTelemetry" class="unit-telemetry" aria-live="polite"></div>
+          </section>
+
+          <section class="timeline-panel">
+            <div class="panel-title-row">
+              <p class="panel-kicker">Event tape</p>
+              <span id="eventCount">—</span>
+            </div>
+            <ol id="eventTimeline" class="event-timeline" aria-live="polite"></ol>
+          </section>
+
+          <section class="review-panel">
+            <div class="panel-title-row">
+              <p class="panel-kicker">Reviewer mark</p>
+              <span>local only</span>
+            </div>
+            <label class="flag-control">
+              <input id="runFlagged" type="checkbox">
+              <span>Flag this ratio / repeat</span>
+            </label>
+            <label class="note-control" for="reviewNote">What looked wrong?</label>
+            <textarea id="reviewNote" maxlength="2000" rows="3" placeholder="Example: unit 1629 switches contact too early"></textarea>
+            <div class="review-actions">
+              <button id="clearFeedback" type="button">Clear all</button>
+              <button id="exportFeedback" type="button">Download JSON</button>
+            </div>
+          </section>
+
+          <section class="formation-panel" aria-label="Locked formation source">
             <div class="side-row side-p2">
               <span class="side-swatch"></span>
-              <span><b id="player2Name">Player 2</b><small>Golden retained formation</small></span>
-              <strong>21</strong>
+              <span><b id="player2Name">Player 2</b><small>Locked source formation</small></span>
+              <strong id="player2Count">—</strong>
             </div>
             <div class="side-row side-p3">
               <span class="side-swatch"></span>
-              <span><b id="player3Name">Player 3</b><small>Golden retained formation</small></span>
-              <strong>21</strong>
+              <span><b id="player3Name">Player 3</b><small>Locked source formation</small></span>
+              <strong id="player3Count">—</strong>
             </div>
             <div class="placement-audit"><span>✓</span> 42 source positions · 0 blocked cells</div>
           </section>
@@ -98,7 +176,7 @@
           <section class="inspection-panel">
             <p class="panel-kicker">Selected scenario record</p>
             <div id="selectionEmpty" class="empty-selection">
-              Tap an infantry marker, tree, bush, or rock to inspect its source record.
+              Tap a Champion, tree, bush, or rock to inspect its source record.
             </div>
             <dl id="selectionDetails" class="selection-details" hidden>
               <div><dt>Type</dt><dd id="selectedName"></dd></div>
@@ -110,18 +188,22 @@
             </dl>
           </section>
 
-          <section class="inventory-panel">
-            <p class="panel-kicker">Object inventory</p>
-            <div id="objectInventory" class="object-inventory"></div>
-            <div class="gaia-total"><span>Gaia records</span><b id="objectCount">—</b></div>
-          </section>
-
-          <footer class="provenance">
-            <span>Source scenario</span>
-            <strong id="sourceFile">—</strong>
-            <code id="sourceHash">—</code>
-            <small id="sourceVersion">—</small>
-          </footer>
+          <details class="source-details">
+            <summary>Locked map & mechanics provenance</summary>
+            <div class="fact-grid">
+              <div><small>Map</small><strong id="mapSize">—</strong></div>
+              <div><small>Terrain</small><strong id="tileCount">—</strong></div>
+              <div><small>Gaia</small><strong id="objectCount">—</strong></div>
+              <div><small>Clock</small><strong id="clockRate">—</strong></div>
+            </div>
+            <div id="objectInventory" class="object-inventory" hidden></div>
+            <footer class="provenance">
+              <span>Source scenario</span>
+              <strong id="sourceFile">—</strong>
+              <code id="sourceHash">—</code>
+              <small id="sourceVersion">—</small>
+            </footer>
+          </details>
         </aside>
       </main>
     </div>

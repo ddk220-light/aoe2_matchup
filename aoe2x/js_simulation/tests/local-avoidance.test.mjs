@@ -21,7 +21,7 @@ function unit({
   x,
   y,
   facing = 0,
-  targetId = null,
+  pursuitTargetId = null,
   avoidance = null,
   alive = true,
 } = {}) {
@@ -31,7 +31,7 @@ function unit({
     x,
     y,
     facing,
-    targetId,
+    pursuitTargetId,
     avoidance,
     alive,
     mechanics,
@@ -72,7 +72,7 @@ function pointToSegmentDistance(point, start, end) {
 
 
 test("a direct path creates no avoidance state", () => {
-  const mover = unit({ referenceId: 1, owner: 2, x: 2, y: 5, targetId: 3 });
+  const mover = unit({ referenceId: 1, owner: 2, x: 2, y: 5, pursuitTargetId: 3 });
   const offPath = unit({ referenceId: 2, owner: 3, x: 4, y: 6 });
   const target = unit({ referenceId: 3, owner: 3, x: 6, y: 5 });
   const direct = proposal(1, STEP, 0);
@@ -86,7 +86,7 @@ test("a direct path creates no avoidance state", () => {
 
 
 test("true route symmetry uses sourced facing and mirrors without a global turn", () => {
-  const blocker = unit({ referenceId: 2, owner: 3, x: 4, y: 5 });
+  const blocker = unit({ referenceId: 2, owner: 2, x: 4, y: 5 });
   const target = unit({ referenceId: 3, owner: 3, x: 6, y: 5 });
   const upper = unit({
     referenceId: 1,
@@ -94,7 +94,7 @@ test("true route symmetry uses sourced facing and mirrors without a global turn"
     x: 2,
     y: 5,
     facing: Math.PI / 2,
-    targetId: 3,
+    pursuitTargetId: 3,
   });
   const lower = unit({
     referenceId: 4,
@@ -102,7 +102,7 @@ test("true route symmetry uses sourced facing and mirrors without a global turn"
     x: 2,
     y: 5,
     facing: -Math.PI / 2,
-    targetId: 3,
+    pursuitTargetId: 3,
   });
 
   const upperResult = planLocalAvoidance(
@@ -129,14 +129,14 @@ test("true route symmetry uses sourced facing and mirrors without a global turn"
 });
 
 
-test("every live non-target body can be an occluding blocker", () => {
+test("an enemy body remains a collision contact instead of an avoidance blocker", () => {
   const mover = unit({
     referenceId: 1,
     owner: 2,
     x: 2,
     y: 5,
     facing: Math.PI / 2,
-    targetId: 3,
+    pursuitTargetId: 3,
   });
   const enemyBlocker = unit({ referenceId: 2, owner: 3, x: 4, y: 5 });
   const target = unit({ referenceId: 3, owner: 3, x: 6, y: 5 });
@@ -147,9 +147,12 @@ test("every live non-target body can be an occluding blocker", () => {
   );
 
   assert.equal(
-    result.units.find(({ referenceId }) => referenceId === 1)
-      .avoidance.blockerReferenceId,
-    2,
+    result.units.find(({ referenceId }) => referenceId === 1).avoidance,
+    null,
+  );
+  assert.deepEqual(
+    result.proposals.find(({ referenceId }) => referenceId === 1),
+    proposal(1, STEP, 0),
   );
 });
 
@@ -164,7 +167,7 @@ test("route state persists and clears only from geometry or target lifecycle", (
     x: 2,
     y: 5,
     facing: -Math.PI / 2,
-    targetId: 3,
+    pursuitTargetId: 3,
     avoidance: state,
   });
   const persisted = planLocalAvoidance(
@@ -178,12 +181,12 @@ test("route state persists and clears only from geometry or target lifecycle", (
 
   const cases = [
     [
-      unit({ ...mover, referenceId: 1, owner: 2, x: 2, y: 5, targetId: 3, avoidance: state }),
+      unit({ ...mover, referenceId: 1, owner: 2, x: 2, y: 5, pursuitTargetId: 3, avoidance: state }),
       unit({ referenceId: 2, owner: 2, x: 4, y: 6 }),
       target,
     ],
     [
-      unit({ referenceId: 1, owner: 2, x: 2, y: 5, targetId: 4, avoidance: state }),
+      unit({ referenceId: 1, owner: 2, x: 2, y: 5, pursuitTargetId: 4, avoidance: state }),
       blocker,
       target,
     ],
@@ -193,7 +196,7 @@ test("route state persists and clears only from geometry or target lifecycle", (
       unit({ referenceId: 3, owner: 3, x: 6, y: 5, alive: false }),
     ],
     [
-      unit({ referenceId: 1, owner: 2, x: 5.6, y: 5, targetId: 3, avoidance: state }),
+      unit({ referenceId: 1, owner: 2, x: 5.6, y: 5, pursuitTargetId: 3, avoidance: state }),
       blocker,
       target,
     ],
@@ -215,7 +218,7 @@ test("a removed or dead saved blocker clears without dereferencing stale state",
     owner: 2,
     x: 2,
     y: 5,
-    targetId: 3,
+    pursuitTargetId: 3,
     avoidance: state,
   });
   const target = unit({ referenceId: 3, owner: 3, x: 6, y: 5 });
@@ -240,7 +243,7 @@ test("an active detour uses sourced full speed instead of the direct proposal cl
     x: 2,
     y: 5,
     facing: Math.PI / 2,
-    targetId: 3,
+    pursuitTargetId: 3,
   });
   const blocker = unit({ referenceId: 2, owner: 2, x: 4, y: 5 });
   const target = unit({ referenceId: 3, owner: 3, x: 6, y: 5 });
@@ -264,10 +267,10 @@ test("route selection rejects paths swept through a second body or map obstacle"
     x: 2,
     y: 5,
     facing: Math.PI / 2,
-    targetId: 4,
+    pursuitTargetId: 4,
   });
   const directBlocker = unit({ referenceId: 2, owner: 2, x: 4, y: 5 });
-  const upperBlocker = unit({ referenceId: 3, owner: 3, x: 3.5, y: 5.5 });
+  const upperBlocker = unit({ referenceId: 3, owner: 2, x: 3.5, y: 5.5 });
   const target = unit({ referenceId: 4, owner: 3, x: 6, y: 5 });
   const direct = proposal(1, STEP, 0);
 
@@ -310,7 +313,7 @@ test("route selection rejects paths swept through a second body or map obstacle"
       facing: actualDx === 0 && actualDy === 0
         ? current.facing
         : Math.atan2(actualDy, actualDx),
-      targetId: 4,
+      pursuitTargetId: 4,
       avoidance: result.units.find(({ referenceId }) => referenceId === 1).avoidance,
     });
     assert.ok(Math.hypot(actualDx, actualDy) <= STEP + 1e-12);
@@ -375,7 +378,7 @@ test("overlapping blocker and goal discs terminate at legal first contact withou
     x: 3.509,
     y: 6.181,
     facing: -3 * Math.PI / 8,
-    targetId: 3,
+    pursuitTargetId: 3,
   });
   let previousRemaining = Number.POSITIVE_INFINITY;
   let firstRemaining = null;
@@ -399,7 +402,7 @@ test("overlapping blocker and goal discs terminate at legal first contact withou
       owner: 2,
       x: mover.x + move.dx,
       y: mover.y + move.dy,
-      targetId: 3,
+      pursuitTargetId: 3,
       avoidance: result.units.find(({ referenceId }) => referenceId === 1).avoidance,
     });
     assert.ok(pointToSegmentDistance(blocker, start, mover) >= 2 * RADIUS - 1e-12);
@@ -423,7 +426,7 @@ test("overlapping blocker and goal discs terminate at legal first contact withou
 
 test("planning is invariant to snapshot and proposal reversal", () => {
   const snapshot = [
-    unit({ referenceId: 1, owner: 2, x: 2, y: 5, facing: Math.PI / 2, targetId: 3 }),
+    unit({ referenceId: 1, owner: 2, x: 2, y: 5, facing: Math.PI / 2, pursuitTargetId: 3 }),
     unit({ referenceId: 2, owner: 2, x: 4, y: 5 }),
     unit({ referenceId: 3, owner: 3, x: 6, y: 5 }),
   ];

@@ -281,6 +281,27 @@ test("multi-body contact remains nonpenetrating without a turn preference", asyn
 });
 
 
+test("a legal near-contact deficit cannot accumulate across a tiny inward step", async () => {
+  const { resolveMovementProposals } = await loadCollision();
+  const left = unit({ referenceId: 1, x: 4, y: 4 });
+  const right = unit({
+    referenceId: 2,
+    owner: 3,
+    x: 4.4 - 0.75e-12,
+    y: 4,
+  });
+
+  const next = resolveMovementProposals(
+    [left, right],
+    [proposal(1, 0.5e-12, 0), proposal(2, 0, 0)],
+    openMap,
+  );
+
+  assertNonpenetrating(next);
+  assert.equal(next[0].x, left.x);
+});
+
+
 test("map bounds remove only the outward normal component", async () => {
   const { resolveMovementProposals } = await loadCollision();
   const mover = unit({ referenceId: 1, x: 9.79, y: 4 });
@@ -314,6 +335,26 @@ test("a circular static obstacle keeps collision-free tangential movement", asyn
   assert.ok(Math.abs(next[0].x - 4.3) < 1e-12);
   assert.equal(next[0].y, 5.01);
   assert.ok(Math.hypot(next[0].x - 5, next[0].y - 5) >= 0.7 - 1e-12);
+});
+
+
+test("a legal static-obstacle near-contact deficit cannot accumulate", async () => {
+  const { resolveMovementProposals } = await loadCollision();
+  const mover = unit({ referenceId: 1, x: 4.3 + 0.75e-12, y: 5 });
+  const map = {
+    width: 10,
+    height: 10,
+    obstacles: [{ referenceId: 9000, x: 5, y: 5, radius: 0.5 }],
+  };
+
+  const [next] = resolveMovementProposals(
+    [mover],
+    [proposal(1, 0.5e-12, 0)],
+    map,
+  );
+
+  assert.ok(Math.hypot(next.x - 5, next.y - 5) >= 0.7 - 1e-15);
+  assert.ok(next.x < mover.x);
 });
 
 

@@ -19,7 +19,7 @@ test("Champion 2v1 preserves shared targeting, legal contact, and reversal", () 
   const reversed = runChampionRatio("2v1", { reverseUnits: true });
   const acquisitions = forward.events
     .filter(({ type, actorId, targetId }) => (
-      type === "target-acquired" && [1628, 1629].includes(actorId) && targetId === 1699
+      type === "pursuit-acquired" && [1628, 1629].includes(actorId) && targetId === 1699
     ))
     .map(({ actorId }) => actorId)
     .sort((left, right) => left - right);
@@ -27,7 +27,7 @@ test("Champion 2v1 preserves shared targeting, legal contact, and reversal", () 
 
   assert.deepEqual(acquisitions, [1628, 1629]);
   assert.ok(forward.events.some(({ type, actorId, targetId }) => (
-    type === "contact" && actorId === 1629 && targetId === 1699
+    type === "engagement-started" && actorId === 1629 && targetId === 1699
   )));
   assert.equal(rearDamage.length, 2);
   for (const snapshot of forward.snapshots) {

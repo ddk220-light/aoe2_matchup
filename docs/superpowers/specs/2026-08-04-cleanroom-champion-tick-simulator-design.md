@@ -128,22 +128,30 @@ input errors; the simulator must not replace them with guessed defaults.
 
 ## Tick pipeline
 
-Each tick processes the world in eight phases:
+Each tick processes the world in nine phases:
 
 1. **Snapshot:** freeze all live unit state at the start of the tick.
-2. **Target validation:** release dead targets; preserve live locked targets.
-3. **Target acquisition:** units without a target choose the reachable enemy
+2. **Pursuit and swing validation:** release dead pursuit targets and cancel a
+   pending swing only when its captured actor or target is no longer valid.
+3. **Pursuit acquisition:** units without a pursuit target choose the reachable enemy
    with the smallest surface distance, breaking exact ties by reference ID.
 4. **Movement proposal:** pursuing units propose displacement toward their
-   locked target using extracted speed and the fixed tick duration.
+   pursuit target using extracted speed and the fixed tick duration. Local
+   avoidance routes around allied bodies and map obstacles; enemy bodies remain
+   physical collision contacts.
 5. **Collision/contact resolution:** resolve all proposals from the same
-   snapshot, prevent prohibited overlap, and retain valid tangential movement.
-6. **Attack progression:** start windup when the target is in reach; advance
-   windup and reload counters from extracted mechanics.
-7. **Damage commit:** sort ready attacks by the deterministic event key, recheck
+   snapshot, prevent prohibited overlap, retain valid tangential movement, and
+   publish a pure immutable enemy-contact manifold from the resolved paths.
+6. **Engagement selection:** retain a live contact already engaged; otherwise
+   rank physical contacts by earliest swept time of impact, final surface gap,
+   and enemy reference ID. This phase never recomputes movement.
+7. **Attack progression:** start windup against the engaged target, capture that
+   unit as the immutable swing target, and advance windup/reload counters from
+   extracted mechanics.
+8. **Damage commit:** sort ready attacks by the deterministic event key, recheck
    that actor and target are alive, apply class-derived damage, and cancel
    pending actions from units killed earlier in the same tick.
-8. **Event publication:** publish an immutable tick snapshot and event records.
+9. **Event publication:** publish an immutable tick snapshot and event records.
 
 Frozen proposals prevent owner update-order advantages. Sequential damage
 commit prevents a same-tick fifth exchange from incorrectly producing a double
@@ -172,15 +180,27 @@ For a proposed movement that would penetrate another body:
 Static Gaia obstruction uses the locked map fixture. No recorded ratio requires
 a hand-authored route around the central rock.
 
-## Target locking and retargeting
+## Pursuit, engagement, and swing targets
 
 Every unit begins under a scenario-level seek-and-destroy engagement order.
 This order allows acquisition but does not name an enemy.
 
-A unit retains its target while the target is alive. Blocking by an allied body
-does not by itself cause retargeting. A dead target is invalidated during the
-next tick's validation phase, after which the normal acquisition rule selects a
-new target.
+A single `targetId` cannot represent the three independent target lifecycles
+observed in the small-group tapes. Unit state therefore uses:
+
+- `pursuitTargetId`: the seek-and-destroy movement target. It is retained while
+  alive and changes only after next-tick death invalidation and reacquisition.
+- `engagedTargetId`: the enemy body selected from resolved physical contact. It
+  persists only while that enemy is alive and remains in contact/reach.
+- `attackTargetId`: the target captured when a swing starts. It does not change
+  during windup and is cleared only on release or cancellation.
+
+Blocking by an allied body does not change pursuit. Contact with a non-pursuit
+enemy may start an engagement and swing against that enemy, but it never changes
+the pursuit target or causes same-tick movement recomputation. This explicitly
+revises the earlier overloaded interpretation of the Task 9 target invariant:
+death-only change applies to pursuit, not to physically justified engagement
+transitions.
 
 The 1v1 stage validates only unambiguous acquisition. The 2v1 and 2v3 stages are
 the first evidence for shared targeting, tie-breaking, collision, death, and

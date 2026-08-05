@@ -1,4 +1,8 @@
-"""Export source-backed Chinese Imperial Champion mechanics for the JS simulator."""
+"""Export source-backed Imperial unit mechanics for the JS simulator.
+
+    python export_unit_mechanics.py --unit-slug champion --civ Chinese \
+        --master 567 --reference-db ... --dat ... --output ...
+"""
 
 from __future__ import annotations
 
@@ -11,8 +15,6 @@ from pathlib import Path
 from typing import Any
 
 
-CHAMPION_MASTER = 567
-CHINESE_CIV = "Chinese"
 IMPERIAL_AGE = "Imperial"
 
 
@@ -24,7 +26,7 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest().upper()
 
 
-def _read_reference_row(reference_db: Path) -> dict[str, Any]:
+def _read_reference_row(reference_db: Path, unit_slug: str, civ: str) -> dict[str, Any]:
     reference_db = reference_db.resolve()
     uri = f"{reference_db.as_uri()}?mode=ro"
     with sqlite3.connect(uri, uri=True) as connection:
@@ -46,12 +48,12 @@ def _read_reference_row(reference_db: Path) -> dict[str, Any]:
             FROM ref_units
             WHERE unit_slug = ? AND civ_name = ? AND age = ?
             """,
-            ("champion", CHINESE_CIV, IMPERIAL_AGE),
+            (unit_slug, civ, IMPERIAL_AGE),
         ).fetchall()
         if len(rows) != 1:
             raise ValueError(
-                "reference DB must contain exactly one Chinese Imperial champion row; "
-                f"found {len(rows)}"
+                f"reference DB must contain exactly one {civ} Imperial {unit_slug} "
+                f"row; found {len(rows)}"
             )
         row = dict(rows[0])
         # ref_units.final_speed is rounded to 2 decimals by the DB generator, which
@@ -69,7 +71,7 @@ def _read_reference_row(reference_db: Path) -> dict[str, Any]:
             (row["id"],),
         ).fetchone()
     if chain is None:
-        raise ValueError("reference DB has no stat chain for the Chinese Champion")
+        raise ValueError(f"reference DB has no stat chain for the {civ} {unit_slug}")
     row["exact_speed"] = float(chain["speed"])
     if abs(row["exact_speed"] - float(row["final_speed"])) > 0.05:
         raise ValueError(
@@ -116,19 +118,19 @@ def _damage_against_self(
     return max(1, damage)
 
 
-def _raw_chinese_champion(dat_path: Path):
+def _raw_unit(dat_path: Path, civ: str, master: int):
     from genieutils.datfile import DatFile
 
     data = DatFile.parse(dat_path)
-    chinese = [civilization for civilization in data.civs if civilization.name == CHINESE_CIV]
-    if len(chinese) != 1:
+    matches = [civilization for civilization in data.civs if civilization.name == civ]
+    if len(matches) != 1:
         raise ValueError(
-            "Genie .dat must contain exactly one Chinese civilization; "
-            f"found {len(chinese)}"
+            f"Genie .dat must contain exactly one {civ} civilization; "
+            f"found {len(matches)}"
         )
-    unit = chinese[0].units[CHAMPION_MASTER]
-    if unit is None or unit.id != CHAMPION_MASTER:
-        raise ValueError("Genie .dat does not contain Chinese Champion master 567")
+    unit = matches[0].units[master]
+    if unit is None or unit.id != master:
+        raise ValueError(f"Genie .dat does not contain {civ} master {master}")
     return data, unit
 
 
@@ -149,12 +151,14 @@ def _animation_seconds(data, graphic_id: int, label: str) -> dict[str, Any]:
     }
 
 
-def export_champion_mechanics(reference_db: Path, dat_path: Path) -> dict:
-    """Return the clean-room Chinese Imperial Champion mechanics fixture."""
+def export_unit_mechanics(
+    reference_db: Path, dat_path: Path, unit_slug: str, civ: str, master: int
+) -> dict:
+    """Return the clean-room Imperial mechanics fixture for one unit x civ."""
     reference_db = Path(reference_db)
     dat_path = Path(dat_path)
-    reference = _read_reference_row(reference_db)
-    data, unit = _raw_chinese_champion(dat_path)
+    reference = _read_reference_row(reference_db, unit_slug, civ)
+    data, unit = _raw_unit(dat_path, civ, master)
     attack_classes = _parse_classes(reference["final_attacks_json"])
     armor_classes = _parse_classes(reference["final_armors_json"])
 
@@ -165,28 +169,34 @@ def export_champion_mechanics(reference_db: Path, dat_path: Path) -> dict:
     walk_animation = _animation_seconds(
         data, int(unit.dead_fish.walking_graphic), "walk")
 
-    # Genie melee hit timing. Documented rule (AoE2 wiki "Attack delay", sourced to
-    # Icewind's frame-delay research, and philistine's frame-by-frame study):
-    #   ranged: attack_delay = animation_duration * frame_delay / frames_per_angle
-    #   melee : attack_delay = animation_duration / 2
-    # A melee unit's frame_delay of 0 means "no projectile frame", NOT "instant
-    # damage" -- the hit lands at the halfway point of the attack animation.
-    # ref_units.final_attack_delay carries the raw 0 and must not be used directly.
+    # Genie hit timing. The hit lands on animation frame `frame_delay`, so
+    #   attack_delay = animation_seconds * frame_delay / frame_count
+    # `frame_delay == 0` is an UNSET sentinel, not "instant damage": the engine
+    # then falls back to the animation midpoint. The split is on frame_delay,
+    # NOT on melee-vs-ranged -- the Paladin is melee with frame_delay 13.
+    #
+    # Both branches are confirmed against the authorized tapes, which is why
+    # this is a sourced rule and not a fitted one:
+    #   Champion (frame_delay 0,  1.500 s anim) -> 0.750 s, tape floor 0.750
+    #   Paladin  (frame_delay 13, 1.550 s anim) -> 0.672 s, tape floor 0.672
+    # In both tapes the measured spread is one render frame wide (~17 ms) and
+    # sits ABOVE the computed value, exactly as sampling lag predicts.
+    #
+    # ref_units.final_attack_delay must NOT be used: it stores frame_delay/60
+    # (0.217 s for the Paladin), which the tape rules out by a factor of three.
     frame_delay = int(unit.type_50.frame_delay)
-    is_melee = float(reference["final_range"]) <= 0 and frame_delay == 0
-    if is_melee:
+    if frame_delay == 0:
         attack_delay_seconds = attack_animation["seconds"] / 2
         attack_delay_source = (
-            "melee rule: attack animation seconds / 2"
-            " (Genie frame_delay=0 means no projectile frame)"
+            "frame_delay unset (0): hit at the attack-animation midpoint"
         )
     else:
-        frames_per_angle = attack_animation["frames"]
         attack_delay_seconds = (
-            attack_animation["seconds"] * frame_delay / frames_per_angle
+            attack_animation["seconds"] * frame_delay / attack_animation["frames"]
         )
         attack_delay_source = (
-            "ranged rule: attack animation seconds * frame_delay / frames"
+            "hit on animation frame frame_delay:"
+            " attack animation seconds * frame_delay / frames"
         )
 
     fields = {
@@ -280,10 +290,10 @@ def export_champion_mechanics(reference_db: Path, dat_path: Path) -> dict:
             "reference_db_sha256": _sha256(reference_db),
             "dat_sha256": _sha256(dat_path),
             "reference_selector": (
-                "ref_units WHERE unit_slug='champion' AND civ_name='Chinese' "
+                f"ref_units WHERE unit_slug='{unit_slug}' AND civ_name='{civ}' "
                 "AND age='Imperial'"
             ),
-            "dat_selector": "dat.civs[name='Chinese'].units[567]",
+            "dat_selector": f"dat.civs[name='{civ}'].units[{master}]",
             "fields": fields,
         },
     }
@@ -294,6 +304,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--reference-db", type=Path, required=True)
     parser.add_argument("--dat", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--unit-slug", default="champion")
+    parser.add_argument("--civ", default="Chinese")
+    parser.add_argument("--master", type=int, default=567)
     return parser
 
 
@@ -301,7 +314,9 @@ def main() -> int:
     parser = _parser()
     args = parser.parse_args()
     try:
-        fixture = export_champion_mechanics(args.reference_db, args.dat)
+        fixture = export_unit_mechanics(
+            args.reference_db, args.dat, args.unit_slug, args.civ, args.master
+        )
     except Exception as exc:
         parser.error(f"failed to parse Genie .dat or read reference DB: {exc}")
     args.output.parent.mkdir(parents=True, exist_ok=True)

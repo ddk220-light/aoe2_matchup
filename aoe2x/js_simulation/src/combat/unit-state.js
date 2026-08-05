@@ -2,8 +2,12 @@ import { secondsToTicksNearest } from "../simulation-clock.js";
 import { INITIAL_ACQUISITION_DELAY_SECONDS } from "./targeting.js";
 
 
-const CHAMPION_MASTER = 567;
-const CHAMPION_HP = 70;
+// Mechanics fixtures must be machine-generated from the Genie .dat and the
+// reference DB (tools/export_unit_mechanics.py), never hand-written. The guard
+// is on PROVENANCE, not on which unit it is: pinning this to the Champion's
+// master/HP was what stopped the engine from running any second unit, and the
+// Paladin tapes confirm every sourced field generalizes unchanged.
+const REQUIRED_PROVENANCE = ["dat_sha256", "reference_db_sha256", "fields"];
 
 
 function freezeTimers(timers) {
@@ -45,18 +49,18 @@ export function createUnitState({
   requireFinite(y, "y");
   requireFinite(facing, "facing");
   if (!mechanics || typeof mechanics !== "object") {
-    throw new TypeError("Champion mechanics are required");
+    throw new TypeError("unit mechanics are required");
+  }
+  for (const field of REQUIRED_PROVENANCE) {
+    if (mechanics.provenance?.[field] === undefined) {
+      throw new TypeError(`unit mechanics must carry provenance.${field}`);
+    }
   }
 
-  const unitMaster = requireSafeInteger(mechanics.unit_master, "Champion mechanics unit master");
-  if (unitMaster !== CHAMPION_MASTER) {
-    throw new RangeError(`Champion mechanics must use master ${CHAMPION_MASTER}`);
-  }
-  const hp = requireFinite(mechanics.hp, "Champion mechanics hp");
-  if (hp <= 0) throw new RangeError("Champion mechanics hp must be positive");
-  if (hp !== CHAMPION_HP) {
-    throw new RangeError(`Champion mechanics must use ${CHAMPION_HP} HP`);
-  }
+  const unitMaster = requireSafeInteger(mechanics.unit_master, "unit mechanics unit master");
+  if (unitMaster <= 0) throw new RangeError("unit mechanics master must be positive");
+  const hp = requireFinite(mechanics.hp, "unit mechanics hp");
+  if (hp <= 0) throw new RangeError("unit mechanics hp must be positive");
 
   const timers = actionTimers ?? {
     windup: 0,

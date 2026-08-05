@@ -203,7 +203,7 @@ test("the report preserves source, clock, mechanics, and per-ratio trace diagnos
     },
     mechanicsFixture: {
       path: "aoe2x/js_simulation/fixtures/unit_stats/champion_chinese_imperial.json",
-      sha256: "20F5F9C1422502459986C44474FD9DC278AB9D359070B964BD7E7549DC97B5A6",
+      sha256: "4D4FE28BBBD2C5BDAC76AC7C2594C8FE569B877A75F230BB47B965848455D0F0",
       verification: "byte_exact_runtime_lock",
       reproducibilityTest: "tests/test_cleanroom_champion_mechanics.py::test_exporter_maps_controlled_sources_reproducibly",
       reproducibilityScope: "controlled exporter sources; this report did not re-extract the installed Genie data",

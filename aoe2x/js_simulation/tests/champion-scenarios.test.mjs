@@ -127,33 +127,50 @@ test("unit state is an immutable, idle Champion with integer action timers", asy
 });
 
 
-test("direct unit state rejects master 568", async () => {
+// The engine used to pin createUnitState to master 567 / 70 HP. That lock was
+// what stopped any second unit from running at all, and the Paladin tapes
+// showed every sourced field generalizes with no retuning, so the guard is now
+// on PROVENANCE: mechanics must come from tools/export_unit_mechanics.py.
+test("direct unit state rejects mechanics without generator provenance", async () => {
   const { createUnitState } = await loadScenarioModules();
   const { mechanics } = await loadInputs();
-
-  assert.throws(() => createUnitState({
+  const spawn = (overrides) => () => createUnitState({
     referenceId: 1628,
     owner: 2,
     x: 3.5,
     y: 6.5,
     facing: 1.1780972480773926,
-    mechanics: { ...mechanics, unit_master: 568 },
-  }), /Champion mechanics must use master 567/);
+    mechanics: { ...mechanics, ...overrides },
+  });
+
+  assert.throws(spawn({ provenance: undefined }),
+    /must carry provenance\.dat_sha256/);
+  assert.throws(
+    spawn({ provenance: { ...mechanics.provenance, reference_db_sha256: undefined } }),
+    /must carry provenance\.reference_db_sha256/,
+  );
 });
 
 
-test("direct unit state rejects HP 69", async () => {
+test("direct unit state rejects nonpositive master and HP but accepts other units", async () => {
   const { createUnitState } = await loadScenarioModules();
   const { mechanics } = await loadInputs();
-
-  assert.throws(() => createUnitState({
+  const spawn = (overrides) => () => createUnitState({
     referenceId: 1628,
     owner: 2,
     x: 3.5,
     y: 6.5,
     facing: 1.1780972480773926,
-    mechanics: { ...mechanics, hp: 69 },
-  }), /Champion mechanics must use 70 HP/);
+    mechanics: { ...mechanics, ...overrides },
+  });
+
+  assert.throws(spawn({ unit_master: 0 }), /master must be positive/);
+  assert.throws(spawn({ hp: 0 }), /hp must be positive/);
+  // A different unit is no longer an error: the Spanish Paladin is master 569
+  // with 180 HP and runs on the same engine.
+  const paladin = spawn({ unit_master: 569, hp: 180 })();
+  assert.equal(paladin.unitMaster, 569);
+  assert.equal(paladin.hp, 180);
 });
 
 

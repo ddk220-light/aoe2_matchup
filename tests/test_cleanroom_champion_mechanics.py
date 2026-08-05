@@ -219,6 +219,8 @@ def test_exporter_maps_controlled_sources_reproducibly(monkeypatch, tmp_path):
     [
         ({"4": 4, "21": 2}, 18),
         ({"4": 4, "1": 0}, 14),
+        ({"4": 18, "21": 2}, 4),
+        ({"4": 18, "1": 0}, 1),
     ],
 )
 def test_exporter_adds_only_matching_non_base_bonus_damage(

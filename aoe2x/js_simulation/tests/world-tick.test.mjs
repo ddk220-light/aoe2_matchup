@@ -354,6 +354,86 @@ test("later ready attacks do not damage a target that is already dead", async ()
 });
 
 
+test("death-tick publication preserves a non-ready attack on the new corpse", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const deathTick = stepWorld(createWorld(scenario([
+    unit({ referenceId: 1629, owner: 2, x: 5, y: 4.6, hp: 14, targetId: 1699, action: "attacking", windup: 3 }),
+    unit({ referenceId: 1699, owner: 3, x: 5, y: 5, hp: 14 }),
+    unit({ referenceId: 1628, owner: 2, x: 4.6, y: 5, hp: 14 }),
+  ])));
+  const windingUp = deathTick.units.find(({ referenceId }) => referenceId === 1629);
+
+  assert.deepEqual(
+    {
+      targetId: windingUp.targetId,
+      action: windingUp.action,
+      windup: windingUp.actionTimers.windup,
+    },
+    { targetId: 1699, action: "attacking", windup: 2 },
+  );
+  assert.equal(
+    deathTick.events.some(({ actorId, type }) => (
+      actorId === 1629 && ["target-invalidated", "attack-canceled"].includes(type)
+    )),
+    false,
+  );
+});
+
+
+test("the next validation tick invalidates and cancels a preserved windup", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const deathTick = stepWorld(createWorld(scenario([
+    unit({ referenceId: 1629, owner: 2, x: 5, y: 4.6, hp: 14, targetId: 1699, action: "attacking", windup: 3 }),
+    unit({ referenceId: 1699, owner: 3, x: 5, y: 5, hp: 14 }),
+    unit({ referenceId: 1628, owner: 2, x: 4.6, y: 5, hp: 14 }),
+  ])));
+
+  const validationTick = stepWorld(deathTick);
+  const canceled = validationTick.units.find(({ referenceId }) => referenceId === 1629);
+
+  assert.deepEqual(
+    validationTick.events
+      .filter(({ actorId }) => actorId === 1629)
+      .map(({ type, targetId, readyTick, reason }) => (
+        [type, targetId, readyTick, reason]
+      )),
+    [
+      ["target-invalidated", 1699, undefined, "target-dead"],
+      ["attack-canceled", 1699, 3, "target-invalidated"],
+    ],
+  );
+  assert.deepEqual(
+    {
+      targetId: canceled.targetId,
+      action: canceled.action,
+      timers: canceled.actionTimers,
+    },
+    { targetId: null, action: "idle", timers: { windup: 0, reload: 0 } },
+  );
+});
+
+
+test("validation cancellation projects the scheduled readiness from windup", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const next = stepWorld(createWorld(scenario([
+    unit({
+      referenceId: 1628,
+      owner: 2,
+      x: 4,
+      y: 4,
+      targetId: 1699,
+      action: "attacking",
+      windup: 2,
+    }),
+    unit({ referenceId: 1699, owner: 3, x: 4.4, y: 4, hp: 0, alive: false }),
+  ])));
+
+  const canceled = next.events.find(({ type }) => type === "attack-canceled");
+  assert.equal(next.tick, 1);
+  assert.equal(canceled.readyTick, 2);
+});
+
+
 test("friendly and dead locks invalidate before same-tick reacquisition", async () => {
   const { createWorld, stepWorld } = await loadWorld();
   const next = stepWorld(createWorld(scenario([
@@ -394,7 +474,35 @@ test("the runner fails rather than returning a timeout outcome", async () => {
 });
 
 
-test("runWorld preserves snapshots without friendly or dead live locks", async () => {
+test("the runner rejects an all-dead world as an invalid terminal", async () => {
+  const { createWorld, runWorld } = await loadWorld();
+  const allDead = createWorld(scenario([
+    unit({ referenceId: 1628, owner: 2, x: 4, y: 4, hp: 0, alive: false }),
+    unit({ referenceId: 1699, owner: 3, x: 5, y: 5, hp: 0, alive: false }),
+  ]));
+
+  assert.throws(
+    () => runWorld(allDead, { maxTicks: 1 }),
+    /invalid terminal.*no live owners/i,
+  );
+});
+
+
+test("the runner rejects safety ceilings above 3600 ticks", async () => {
+  const { createWorld, runWorld } = await loadWorld();
+  const stalemate = createWorld(scenario([
+    unit({ referenceId: 1628, owner: 2, x: 1, y: 1 }),
+    unit({ referenceId: 1699, owner: 3, x: 9, y: 9 }),
+  ]));
+
+  assert.throws(
+    () => runWorld(stalemate, { maxTicks: 3601 }),
+    /max ticks must not exceed 3600/i,
+  );
+});
+
+
+test("runWorld preserves snapshots without friendly live locks", async () => {
   const { createWorld, runWorld } = await loadWorld();
   const result = runWorld(createWorld(scenario([
     unit({ referenceId: 1629, owner: 2, x: 5, y: 4.6 }),
@@ -408,7 +516,7 @@ test("runWorld preserves snapshots without friendly or dead live locks", async (
   assert.equal(result.snapshots.some((snapshot) => snapshot.units.some((entry) => {
     if (!entry.alive || entry.targetId === null) return false;
     const target = snapshot.units.find(({ referenceId }) => referenceId === entry.targetId);
-    return !target?.alive || target.owner === entry.owner;
+    return target?.owner === entry.owner;
   })), false);
 });
 

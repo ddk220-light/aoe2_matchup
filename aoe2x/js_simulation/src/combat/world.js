@@ -20,6 +20,7 @@ const DEFAULT_MAP = Object.freeze({
   height: 16,
   obstacles: Object.freeze([]),
 });
+const MAX_WORLD_TICKS = 3600;
 
 
 function freezeUnit(unit) {
@@ -139,7 +140,7 @@ function validateTargets(units, tick, events) {
         tick,
         actorId: unit.referenceId,
         targetId: invalidTargetId,
-        readyTick: tick,
+        readyTick: tick + Math.max(0, unit.actionTimers.windup - 1),
         reason: "target-invalidated",
       }));
     }
@@ -267,23 +268,6 @@ function progressAttacks(units, tick, events) {
 }
 
 
-function invalidateDeadTarget(units, targetId, tick, events) {
-  for (const unit of units) {
-    if (!unit.alive || unit.targetId !== targetId) continue;
-    unit.targetId = null;
-    unit.actionTimers.windup = 0;
-    if (unit.action !== "reload") unit.action = "idle";
-    events.push(event(
-      tick,
-      "target-invalidated",
-      unit.referenceId,
-      targetId,
-      { reason: "target-dead" },
-    ));
-  }
-}
-
-
 function commitReadyAttacks(units, ready, tick, events) {
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
   for (const attack of orderReadyAttacks(ready)) {
@@ -338,7 +322,6 @@ function commitReadyAttacks(units, ready, tick, events) {
       targetId: attack.targetId,
       readyTick: attack.readyTick,
     }));
-    invalidateDeadTarget(units, target.referenceId, tick, events);
   }
 }
 
@@ -378,10 +361,13 @@ function outcome(world) {
   const liveOwners = new Set(
     world.units.filter(({ alive }) => alive).map(({ owner }) => owner),
   );
+  if (liveOwners.size === 0) {
+    throw new Error(`invalid terminal world at tick ${world.tick}: no live owners`);
+  }
   if (liveOwners.size > 1) return null;
-  const winner = liveOwners.size === 1 ? [...liveOwners][0] : null;
+  const [winner] = liveOwners;
   return Object.freeze({
-    outcome: winner === null ? "draw" : "win",
+    outcome: "win",
     winner,
     ticks: world.tick,
     world,
@@ -391,9 +377,12 @@ function outcome(world) {
 }
 
 
-export function runWorld(world, { maxTicks = 3600 } = {}) {
+export function runWorld(world, { maxTicks = MAX_WORLD_TICKS } = {}) {
   if (!Number.isSafeInteger(maxTicks) || maxTicks < 0) {
     throw new RangeError("max ticks must be a nonnegative safe integer");
+  }
+  if (maxTicks > MAX_WORLD_TICKS) {
+    throw new RangeError(`max ticks must not exceed ${MAX_WORLD_TICKS}`);
   }
   let current = world;
   const initialOutcome = outcome(current);

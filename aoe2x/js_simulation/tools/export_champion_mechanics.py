@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -54,9 +55,9 @@ def _read_reference_row(reference_db: Path) -> dict[str, Any]:
     return dict(rows[0])
 
 
-def _parse_classes(raw: str) -> dict[str, int]:
+def _parse_classes(raw: str) -> dict[str, int | float]:
     return {
-        str(class_id): int(amount)
+        str(class_id): amount
         for class_id, amount in sorted(
             json.loads(raw).items(), key=lambda item: int(item[0])
         )
@@ -64,19 +65,26 @@ def _parse_classes(raw: str) -> dict[str, int]:
 
 
 def _damage_against_self(
-    attack_classes: dict[str, int], armor_classes: dict[str, int]
-) -> int:
+    attack_classes: dict[str, int | float],
+    armor_classes: dict[str, int | float],
+) -> int | float:
     """Apply the AoE class rule to the unit's own attack and armor maps."""
-    base_class = "4" if attack_classes.get("4", 0) > 0 else "3"
-    damage = max(
-        0,
-        attack_classes.get(base_class, 0) - armor_classes.get(base_class, 0),
-    )
-    for class_id, attack in attack_classes.items():
-        if class_id in {"3", "4"} or attack <= 0 or class_id not in armor_classes:
-            continue
-        damage += max(0, attack - armor_classes[class_id])
-    return max(1, damage)
+    for label, classes in (
+        ("attack", attack_classes),
+        ("armor", armor_classes),
+    ):
+        if "4" not in classes:
+            raise ValueError(f"missing required {label} class 4")
+        value = classes["4"]
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+        ):
+            raise ValueError(f"{label} class 4 must be numeric")
+    if attack_classes["4"] <= 0:
+        raise ValueError("attack class 4 must be positive")
+    return max(1, attack_classes["4"] - armor_classes["4"])
 
 
 def _raw_chinese_champion(dat_path: Path):

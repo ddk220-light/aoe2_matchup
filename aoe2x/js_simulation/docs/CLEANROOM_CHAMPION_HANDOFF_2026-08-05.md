@@ -6,8 +6,11 @@
 - Feature branch: `codex/cleanroom-champion-sim`
 - Pushed implementation checkpoint: `320a440f` (`feat(sim): complete clean-room Champion simulator`)
 - Pushed viewer/export checkpoint: `548bff92` (`fix(viewer): make review export reliable`)
-- Current clean validation worktree:
-  `D:\AI\aoe2_matchup\.worktrees\cleanroom-champion-validation`
+- Pushed final QA checkpoint: `fac5c0c9` (`fix(viewer): harden phone layout`)
+- Current primary checkout: `D:\AI\aoe2_matchup`
+- Checked-out branch: `codex/cleanroom-champion-sim`
+- The clean validation worktree was removed after final QA. No clean-room
+  Champion Git worktree remains.
 - The original implementation worktree is no longer registered with Git. A
   plain residual directory with that name remains because Windows denied
   removal of `.pytest-tmp-task12-review`; it must not be used as a worktree.
@@ -206,7 +209,7 @@ through 391–480px widths. The compact two-column transport/tool layout now
 activates through 480px, with a server-level regression test. This is a viewer-
 only change and does not alter simulation behavior.
 
-The server on port 5011 now runs directly from the clean validation worktree.
+The server on port 5011 now runs directly from the primary checkout.
 The existing Tailscale mount was confirmed as:
 
 `https://dragonstar.tail82a190.ts.net/golden-map`
@@ -236,8 +239,8 @@ Do not reintroduce any of these:
    The current phase intentionally implements deterministic mechanics first.
 4. Expand beyond these Champion ratios only after a new observation plan and
    authorized tape are agreed. Preserve the clean-room source boundary.
-5. Remove the validation worktree only after the live review is finished. The
-   main checkout contains unrelated user changes and must not be disturbed.
+5. Continue this phase directly in the primary checkout. Do not create another
+   clean-room Champion worktree unless the user explicitly changes direction.
 6. Push only the feature branch unless the user separately approves a
    production/main action.
 

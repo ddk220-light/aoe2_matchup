@@ -202,3 +202,17 @@ test("viewer page exposes the complete Champion review instrument without a seed
     assert.match(reviewModule.headers.get("content-type"), /javascript/);
   });
 });
+
+
+test("phone layout collapses transport and map tools before their labels overflow", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/viewer/styles.css`);
+    assert.equal(response.status, 200);
+    const body = await response.text();
+    const compactPhoneRules = body.match(/@media \(max-width: 480px\) \{([\s\S]*?)\n\}/)?.[1];
+
+    assert.ok(compactPhoneRules, "expected a compact-phone breakpoint through 480px");
+    assert.match(compactPhoneRules, /\.transport\s*\{\s*grid-template-columns:\s*1fr 1fr;/);
+    assert.match(compactPhoneRules, /\.tool-rail\s*\{\s*grid-template-columns:\s*1fr 1fr;/);
+  });
+});

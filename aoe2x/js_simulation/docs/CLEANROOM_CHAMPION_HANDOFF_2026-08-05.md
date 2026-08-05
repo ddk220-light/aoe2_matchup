@@ -5,6 +5,7 @@
 - Repository: `D:\AI\aoe2_matchup`
 - Feature branch: `codex/cleanroom-champion-sim`
 - Pushed implementation checkpoint: `320a440f` (`feat(sim): complete clean-room Champion simulator`)
+- Pushed viewer/export checkpoint: `548bff92` (`fix(viewer): make review export reliable`)
 - Current clean validation worktree:
   `D:\AI\aoe2_matchup\.worktrees\cleanroom-champion-validation`
 - The original implementation worktree is no longer registered with Git. A
@@ -18,8 +19,9 @@ comparison report, and the browser viewer are implemented and pushed. Desktop
 browser validation has covered loading, selection/URL persistence, playback,
 stepping, next-event navigation, and feedback persistence. A JSON-download
 race found during that pass was repaired with a mounted temporary anchor and
-deferred object-URL cleanup. Final mobile, console, all-ratio, download, and
-Tailnet checks remain before the final milestone.
+deferred object-URL cleanup. All 15 ratio/repeat selections, the real download,
+the compact mobile layout, console output, and the Tailnet route were then
+validated successfully.
 
 ## Absolute evidence boundary
 
@@ -161,8 +163,9 @@ overflow.
 
 ## Verification completed
 
-- Complete JavaScript suite after the JSON export repair: **137/137 passed**.
-- Task 13 focused server/renderer/viewer suite: **18/18 passed**.
+- Complete JavaScript suite after the JSON export and mobile repairs:
+  **138/138 passed**.
+- Task 13 focused server/renderer/viewer suite: **20/20 passed**.
 - Task 12 focused Python provenance/reproducibility suite: **20/20 passed**.
 - Modified JavaScript syntax checks passed.
 - `git diff --check` passed except expected Windows line-ending/global-ignore
@@ -171,32 +174,40 @@ overflow.
   - JSON: `DA510EC1064FA48E8AA0D1138CD2E53754FD618EDDCB8BFE7B9C4FBCD5872C4C`
   - Markdown: `A27CF71CD6A079C71D96461E81BB112D75FCBA84EC0F2B1F848739D57BC40BCC`
 
-Review loops were completed for Tasks 1–12. Task 13 passed automated tests and
-self-review. Its manual browser pass is partially complete as recorded below.
+Review loops were completed for Tasks 1–12. Task 13 passed automated tests,
+self-review, and the manual browser pass recorded below.
 
 ## Browser validation state
 
-Validated in the in-app browser at the local server:
+Validated in the in-app browser at the local server and the Tailnet route:
 
 - rendered desktop layout and exact golden-map scene;
-- ratio switching (`1v1` to `6v3`) and repeat switching (`1` to `3`);
+- all 15 ratio/repeat selections (`1v1`, `2v1`, `2v3`, `5v3`, `6v3`, each
+  against repeats 1–3), including their displayed sim/tape winner and HP;
 - URL selection persistence across reload;
 - play/pause, one-tick, and next-event advancement;
 - local flag and note persistence across reload;
-- exact `6v3` simulation total of 336 winner HP.
+- return to the locked 21v21 source formation;
+- exact `6v3` simulation total of 336 winner HP;
+- JSON feedback download and the downloaded file's schema, flag, and note;
+- 390x844 mobile controls, map tools, and lower review/formation ledger;
+- zero browser warnings or errors;
+- Tailnet load at the URL below with the exact 336-HP `6v3` result.
 
 The original JSON export click exposed a real browser race: it revoked its blob
 URL immediately after clicking an unattached anchor. The repaired helper now
 mounts the hidden anchor, clicks and removes it, then schedules URL revocation.
-`tests/viewer-simulation.test.mjs` locks this operation order. The browser must
-be restarted against the current validation worktree and the actual download
-event rechecked before declaring the viewer complete.
+`tests/viewer-simulation.test.mjs` locks this operation order. The repaired
+browser download created `champion-simulation-review (1).json` with the expected
+schema and persisted `6v3` repeat-3 reviewer record.
 
-The local server previously listening on port 5011 was launched from the
-unregistered residual implementation directory and therefore serves the
-checkpoint, not this follow-up. Resolve the exact owning process for port 5011,
-stop only that process, and relaunch from the validation worktree. The existing
-Tailscale mount is expected to remain:
+Mobile review exposed horizontal overflow from keeping four transport columns
+through 391–480px widths. The compact two-column transport/tool layout now
+activates through 480px, with a server-level regression test. This is a viewer-
+only change and does not alter simulation behavior.
+
+The server on port 5011 now runs directly from the clean validation worktree.
+The existing Tailscale mount was confirmed as:
 
 `https://dragonstar.tail82a190.ts.net/golden-map`
 
@@ -217,27 +228,17 @@ Do not reintroduce any of these:
 
 ## Next actions
 
-1. Confirm `codex/cleanroom-champion-sim` is clean and synchronized with its
-   remote tracking branch.
-2. Confirm the ignored authorized ZIP in the validation worktree and verify its
-   SHA-256.
-3. Replace the exact port-5011 server process with one started from
-   `aoe2x/js_simulation` in the validation worktree.
-4. Continue the in-app browser pass on the actual rendered page:
-   - all five ratios;
-   - repeats 1–3;
-   - play/pause/reset/+1/next-event;
-   - target lines, body/reach rings, HP/actions, timeline;
-   - formation return, pan/zoom, golden map/Gaia/Panda Rock;
-   - URL state across refresh;
-   - local flag/note persistence and JSON feedback download;
-   - mobile viewport and zero console errors.
-5. Confirm or repair the existing Tailscale serve route for the local port and
-   provide the phone-accessible Tailnet URL.
-6. Run a fresh reviewer pass over Task 13 plus any visual fixes.
-7. Re-run the complete JS suite after visual fixes.
-8. Update this handoff with final evidence and create the final milestone
-   commit. Push only the feature branch unless the user separately approves a
+1. Confirm the final mobile/handoff follow-up is committed and the feature
+   branch is synchronized with its remote tracking branch.
+2. Leave the Tailnet viewer open for the user's visual review and consume any
+   exported flags/notes as qualitative evidence.
+3. Do not add RNG or calibrate new constants from the three observed repeats.
+   The current phase intentionally implements deterministic mechanics first.
+4. Expand beyond these Champion ratios only after a new observation plan and
+   authorized tape are agreed. Preserve the clean-room source boundary.
+5. Remove the validation worktree only after the live review is finished. The
+   main checkout contains unrelated user changes and must not be disturbed.
+6. Push only the feature branch unless the user separately approves a
    production/main action.
 
 Suggested local checks:
@@ -249,5 +250,6 @@ node --test tests
 node server.mjs --host 127.0.0.1 --port 5011
 ```
 
-The remaining browser/Tailnet checks are intentionally pending at this resume
-point; do not describe the viewer as fully visually validated until they pass.
+The clean-room Champion implementation and viewer validation are complete at
+this milestone. The remaining work is user visual review and the separately
+scoped expansion to later mechanics or units.

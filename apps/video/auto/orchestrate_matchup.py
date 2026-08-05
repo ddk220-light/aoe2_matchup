@@ -71,11 +71,19 @@ PATROL_LEAD_WALLCLOCK = 3.5    # FALLBACK clip-start offset after the WALL-CLOCK
 R_MENU_BTN = (0.85, 0.0, 1.0, 0.10)      # top-right "Menu"
 R_DIALOG = (0.33, 0.38, 0.67, 0.78)      # menu-dialog buttons (Load/Test/...)
 R_SAVE = (0.30, 0.50, 0.70, 0.66)        # "No" on the save prompt
-R_LIST = (0.12, 0.33, 0.60, 0.76)        # scenario list rows
+R_LIST = (0.12, 0.28, 0.60, 0.76)        # scenario list rows
+#   Top edge is 0.28, NOT 0.33 (2026-07-29): the Search box is a STICKY filter, so the
+#   list often shows a SINGLE row — and that row sits at y~0.309 (FP_ROW_FILTERED), which
+#   a 0.33 top edge crops out entirely. OCR then reported "row not found" on a list that
+#   was plainly on screen, the nav fell through to its blind first-row fallback, and the
+#   run died at the next checkpoint. 0.28 covers both the filtered row and the unfiltered
+#   first row while still excluding the column header band.
 R_LOAD_BTN = (0.38, 0.78, 0.62, 0.90)    # bottom "Load Scenario" button
 R_CONTINUE = (0.30, 0.56, 0.70, 0.76)    # "Continue" on the (legacy) defeat banner
 R_GAME_MENU = (0.28, 0.24, 0.72, 0.74)   # quit/return option in the in-game F10 menu
 R_CONFIRM = (0.28, 0.48, 0.72, 0.62)     # Yes/No confirm dialog
+R_MODAL = (0.25, 0.20, 0.75, 0.80)       # centre modal text ("save your changes?")
+R_LOAD_FOOTER = (0.0, 0.78, 1.0, 0.95)   # Load page footer ("Return to Editor" etc.)
 
 # Fixed click points (fraction of screen). The editor/menu UI is DETERMINISTIC at a given
 # resolution, so the fast nav clicks these directly and only falls back to OCR if a cheap
@@ -88,40 +96,14 @@ FP_TEST = (0.5004, 0.5757)               # "Test" row in the menu dialog
 FP_ROW1 = (0.1965, 0.3778)               # the single staged scenario row on the Load page
 FP_LOAD_BTN = (0.4961, 0.8576)           # "Load Scenario" button on the Load page
 FP_SAVE_NO = (0.5731, 0.5542)            # "No" on the 'save your changes?' prompt (1467,798)
+FP_SEARCH = (0.2680, 0.2270)             # the Load page's "Search" input (sticky filter)
+FP_ROW_FILTERED = (0.1965, 0.3090)       # FIRST list row — where the single filtered row sits
 
 
-def resolve_side(civ: str, slug: str):
-    """(civ, slug) -> (civ, unit_key, display_label) for build_run.
-
-    The scenario unit key is the slug minus its civ suffix (unique-unit slugs carry
-    one, e.g. 'elite_temple_guard_muisca' -> 'elite_temple_guard'); the label is the
-    unit's display name from the reference DB."""
-    from overlay.overlay_data import get_unit_card
-    suffix = "_" + civ.lower()
-    key = slug[: -len(suffix)] if slug.endswith(suffix) else slug
-    label = get_unit_card(civ, slug)["name"]
-    return (civ, key, label)
-
-
-RES_BUDGET = 3000.0   # the cheaper side's total WEIGHTED cost must stay <= this
-
-
-def equal_resource_counts(civ1, slug1, civ2, slug2, unit_cap=30):
-    """Counts for an equal-RESOURCE fight. Per-unit costs come from the unit card,
-    which already folds in civ cost bonuses (e.g. Mayan -30% archers), train
-    batches (Blackwood Archers come 2 per train), and the website's resource
-    weights (food 1.0 / wood 0.7 / gold 1.5 — webapp/simulation_real.py). The
-    cheaper unit takes `unit_cap`, shrunk so its army never exceeds RES_BUDGET;
-    the pricier unit's count is the largest that fits the same spend.
-    Returns (n1, n2)."""
-    from overlay.overlay_data import get_unit_card
-    c1 = get_unit_card(civ1, slug1)["cost"]["weighted"] or 1
-    c2 = get_unit_card(civ2, slug2)["cost"]["weighted"] or 1
-    if c1 <= c2:                                   # side 1 cheaper -> it gets the cap
-        n1 = max(1, min(unit_cap, int(RES_BUDGET // c1)))
-        return n1, max(1, int(n1 * c1 // c2))
-    n2 = max(1, min(unit_cap, int(RES_BUDGET // c2)))
-    return max(1, int(n2 * c2 // c1)), n2
+# Game-free helpers moved to auto.pure; re-imported here for back-compat so callers
+# that do `from auto.orchestrate_matchup import resolve_side, equal_resource_counts,
+# RES_BUDGET` keep working.
+from auto.pure import RES_BUDGET, resolve_side, equal_resource_counts  # noqa: E402,F401
 
 
 def stage_generated(src, scen_dir=SCEN_DIR, stage_name=STAGE_NAME, logfile=None) -> str:
@@ -279,6 +261,28 @@ def navigate_to_test_menu(start_state, scenario_name, logfile, fast=True) -> boo
     return _navigate_ocr(start_state, scenario_name, logfile)
 
 
+def _set_search(query, logfile):
+    """Filter the Load page's scenario list to the staged row via the Search box.
+
+    Two failure modes this kills (both observed 2026-07-19, both recorded the WRONG
+    scenario until the gRPC count gate caught it):
+      * the Search filter PERSISTS across dialog opens — a leftover manual filter
+        ('etg_champion') hid the staged row entirely;
+      * the list is NOT modified-time sorted (built-in 'The Siege' first, then
+        alphabetical), so once the folder holds a dozen user scenarios, 'Matchup
+        Run' (m > e...) falls BELOW THE FOLD where the OCR row-find can't see it.
+    Searching the stage name makes the staged row the only visible row (and the
+    game auto-selects a single filtered row, so even the blind fallback is safe)."""
+    _click_frac(*FP_SEARCH, logfile=logfile, label="search box", settle=0.3)
+    platform_io.key("cmd+a")                 # mapped to ctrl+a on Windows
+    time.sleep(0.15)
+    platform_io.key("delete")                # mapped to backspace on Windows
+    time.sleep(0.2)
+    ui.type_text(query)
+    log(f"[nav] search filter set to {query!r}", logfile)
+    time.sleep(0.6)                          # list refresh
+
+
 def _navigate_fast(start_state, scenario_name, logfile) -> bool:
     """Fixed-coordinate navigation: editor -> Menu -> Load Scenario -> (save? No) -> row
     -> Load -> (save? No) -> editor -> Menu. OCR only as cheap per-gate verification."""
@@ -303,6 +307,7 @@ def _navigate_fast(start_state, scenario_name, logfile) -> bool:
         _dismiss_save_prompt(logfile, timeout=6.0)       # blind No may have missed a slow fade
         if not _reach_load_page(start_state, logfile):
             return False
+    _set_search(scenario_name.split()[0], logfile)
     # Select the staged row BY NAME, not by a blind top-row click: the user's scenario
     # folder holds other files (default1/default3/The Siege/…), so the staged "Matchup
     # Run" is NOT reliably the top row — a blind FP_ROW1 click silently test-played the
@@ -310,8 +315,9 @@ def _navigate_fast(start_state, scenario_name, logfile) -> bool:
     # matchup; the gRPC gate caught it). OCR-find the row; FP_ROW1 is only the fallback.
     if not find_and_click(scenario_name, R_LIST, logfile, f"row {scenario_name!r}"):
         if not find_and_click(scenario_name.split()[0], R_LIST, logfile, "row (first word)"):
-            log("[nav] scenario row not found by name — blind top-row fallback", logfile)
-            _click_frac(*FP_ROW1, logfile=logfile, label="row (blind)", settle=0.4)
+            log("[nav] scenario row not found by name — blind first-row fallback "
+                "(filter active, so the staged row is the only candidate)", logfile)
+            _click_frac(*FP_ROW_FILTERED, logfile=logfile, label="row (blind)", settle=0.4)
     _click_frac(*FP_LOAD_BTN, logfile=logfile, label="Load Scenario (button)", settle=0.3)
     # loading the file doesn't re-prompt (we already discarded), so no second save-poll.
     # the small scenario loads in ~2s; a fixed wait beats an OCR poll here (each editor
@@ -332,6 +338,7 @@ def _navigate_ocr(start_state, scenario_name, logfile) -> bool:
     if not _reach_load_page(start_state, logfile):
         return False
     time.sleep(1.0)
+    _set_search(scenario_name.split()[0], logfile)
     if not find_and_click(scenario_name, R_LIST, logfile, f"row {scenario_name!r}"):
         # the staged file is named "Matchup Run" — try the first word as a fallback
         if not find_and_click(scenario_name.split()[0], R_LIST, logfile, "row (first word)"):
@@ -387,6 +394,25 @@ def return_to_editor(logfile, retries=10) -> bool:
         if _in_editor(img):
             log("[end] back in the Scenario Editor — clean for the next run", logfile)
             return True
+        # A run interrupted mid-navigation leaves a MODAL or the Load page on screen, and
+        # F10 does nothing to either — the old loop just pressed it ten times and gave up
+        # with "editor not confirmed". On 2026-07-31 that left the rig stuck on the save
+        # prompt for seven hours and failed 65 consecutive fights, so both screens are
+        # handled explicitly here, ahead of the F10 fallback.
+        if "save your changes" in vision.ocr_text(img, R_MODAL):
+            n = vision.find_text(img, "No", region=R_SAVE)
+            if n:
+                ui.click(n)
+                log("[end] discarded the 'save your changes?' prompt", logfile)
+                time.sleep(1.5)
+                continue
+        # The Load page ignores ESC; its footer button is the only way back.
+        r = vision.find_text(img, "Return to Editor", region=R_LOAD_FOOTER)
+        if r:
+            ui.click(r)
+            log("[end] left the Load page via 'Return to Editor'", logfile)
+            time.sleep(1.5)
+            continue
         # in-game menu open -> quit back to the editor -> Yes
         q = (vision.find_text(img, "Quit Current Game", region=R_GAME_MENU)
              or vision.find_text(img, "Quit", region=R_GAME_MENU))
@@ -413,6 +439,73 @@ def return_to_editor(logfile, retries=10) -> bool:
     return ok
 
 
+def restart_current_test(logfile, retries=8) -> bool:
+    """Re-run the scenario that is ALREADY loaded, from the in-game menu (F10 -> Restart).
+
+    The normal path between two runs is quit -> editor -> stage -> Load Scenario -> Test:
+    roughly a minute of navigation to set up a fight that lasts thirty-odd seconds. When
+    the NEXT fight is the same matchup (a repeat), none of that work changes anything —
+    'Restart' re-runs the loaded scenario in place, so a repeat costs only the reload.
+
+    The caller owns the precondition: only use this when the loaded scenario IS the
+    matchup you want. Returns False (rather than guessing) if we're in the editor with
+    nothing loaded, or if 'Restart' never appears — the caller can fall back to a full
+    navigate.
+    """
+    for _ in range(retries):
+        _focus_game()
+        img = vision.grab()
+        if _in_editor(img):
+            log("[restart] in the editor — nothing loaded to restart", logfile)
+            return False
+        r = (vision.find_text(img, "Restart Scenario", region=R_GAME_MENU)
+             or vision.find_text(img, "Restart", region=R_GAME_MENU))
+        if r:
+            ui.click(r)
+            time.sleep(1.0)
+            # a confirm step is not guaranteed here; click Yes only if one is up
+            y = vision.find_text(vision.grab(), "Yes", region=R_CONFIRM)
+            if y:
+                ui.click(y)
+            log(f"[restart] Restart{' -> Yes' if y else ''} — reusing the loaded scenario",
+                logfile)
+            return True
+        # F10 TOGGLES the menu, so a failed OCR pass closes it and the next pass reopens
+        # it. That converges (same pattern as return_to_editor) and costs a beat per miss.
+        platform_io.key("f10")
+        time.sleep(1.0)
+    log("[restart] WARNING: 'Restart' not found in the in-game menu", logfile)
+    return False
+
+
+def _exit_load_page_to_editor(logfile, tries=6) -> str:
+    """Leave a (possibly STALE) Load Scenario page and return to the editor so the next
+    navigate() re-opens Load with a FRESHLY-READ folder listing.
+
+    Why this matters: the run scenario is staged (written to the game folder) and THEN we
+    navigate. If the game was already sitting on the Load page, that page shows a folder
+    listing captured when it was opened — it does NOT auto-refresh — so it predates the
+    staged file. Nav then can't find the row by name and the blind top-row fallback loads
+    the WRONG scenario (observed: filmed the old top-of-list scenario instead of the
+    matchup). Backing out to the editor forces navigate() to re-open Load and re-read the
+    folder, which now includes the staged 'Matchup Run'.
+
+    Presses ESC (the Load page's back-out) and confirms the editor tabs. Falls back to
+    returning 'load_dialog' unchanged if the editor never appears — nav then proceeds with
+    the stale list exactly as before, so this is strictly no worse than the old behavior."""
+    for _ in range(tries):
+        _focus_game()
+        if _in_editor():
+            log("[nav] backed out of stale Load page -> editor (list refreshes on re-open)",
+                logfile)
+            return "editor"
+        platform_io.key("esc")
+        time.sleep(1.0)
+    log("[nav] WARNING: couldn't confirm editor after leaving Load page; proceeding "
+        "(the list may be stale)", logfile)
+    return "load_dialog"
+
+
 def _flag_no_result(final_path, got_result: bool, logfile=None):
     """The watch loop hit the cap without seeing the 'WINS' banner — the recording is
     probably truncated mid-battle. Don't fail the run (the footage may still be usable);
@@ -435,22 +528,34 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
                 cap=240, mode="count", unit_cap=30, live_overlay=True, compose=True,
                 out_mov=os.path.join(TMP, "auto_fight.mov"),
                 final=os.path.join(TMP, "auto_matchup_FINAL.mp4"),
-                dismiss_after=True, logfile=None) -> Path:
+                dismiss_after=True, logfile=None, build_fn=build_run,
+                restart=False, fixed_counts=None) -> Path:
     """One full matchup: build from template -> stage -> navigate -> record -> Test
     -> watch for end -> stop -> (dismiss to editor) -> compose recap -> copy.
 
     mode="count"     -> unit_cap vs unit_cap (equal-count, default 30v30)
     mode="resources" -> equal total resources, cheaper unit capped at unit_cap
+    fixed_counts=(n1, n2) -> use these exact counts, bypassing mode entirely. For
+                        controlled-ratio benchmarks (1v1, 2v3, ...) where neither
+                        equal-count nor equal-resource applies.
     compose=False    -> RECORD-ONLY: archive the raw + sidecar and skip the (CPU-bound)
                         compose entirely; re-render later with auto.recompose_from_raws
                         (parallel, no game needed). Returns the archived raw Path.
+    restart=True     -> FAST REPEAT of the matchup already loaded in the game: skip
+                        build/stage/navigate and re-run it via the in-game menu. The
+                        gRPC logger and recorder are re-armed BEFORE Restart is clicked,
+                        so the new fight is captured from its first frame. Pair it with
+                        dismiss_after=False on the run before, or there is nothing loaded
+                        left to restart.
 
     Returns the final video Path. Designed to be called repeatedly for a batch."""
     vision.warmup()                          # load the OCR model now (cached for the batch)
     # 1. BUILD the run scenario from the golden template (swap units/civs, no tech)
     side1 = resolve_side(civ1, slug1)
     side2 = resolve_side(civ2, slug2)
-    if mode == "resources":
+    if fixed_counts is not None:
+        counts = fixed_counts
+    elif mode == "resources":
         counts = equal_resource_counts(civ1, slug1, civ2, slug2, unit_cap)
     else:
         counts = (unit_cap, unit_cap)
@@ -458,24 +563,37 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
     from overlay.overlay_data import get_unit_card
     ranged = (bool(get_unit_card(civ1, slug1).get("is_ranged")),
               bool(get_unit_card(civ2, slug2).get("is_ranged")))
-    build_run(side1, side2, run_path, counts=counts, ranged=ranged)
-    log(f"[build] {side1[2]} x{counts[0]} ({civ1}) vs {side2[2]} x{counts[1]} ({civ2}) "
-        f"[{mode}] ranged={ranged} -> {run_path}", logfile)
+    # build_fn is swappable (default build_run = default3 template auto-fight; the
+    # unit-analysis pipeline passes a golden-template builder). All builders take the
+    # same (side1, side2, out_path, counts=, ranged=) calling convention.
+    if restart:
+        # steps 1-3 (build / stage / navigate) all produce the scenario that is ALREADY
+        # loaded, so a repeat skips straight to re-arming the capture below. side1/side2/
+        # counts are still resolved above: they are pure lookups, and the log line and
+        # compose both want them.
+        log(f"[restart] repeat: {side1[2]} x{counts[0]} ({civ1}) vs "
+            f"{side2[2]} x{counts[1]} ({civ2}) [{mode}] — no rebuild, no navigate", logfile)
+    else:
+        build_fn(side1, side2, run_path, counts=counts, ranged=ranged)
+        log(f"[build] {side1[2]} x{counts[0]} ({civ1}) vs {side2[2]} x{counts[1]} ({civ2}) "
+            f"[{mode}] ranged={ranged} -> {run_path}", logfile)
 
-    # 2. STAGE it as the sole scenario in the game folder
-    scen_name = stage_generated(run_path, logfile=logfile)
+        # 2. STAGE it as the sole scenario in the game folder
+        scen_name = stage_generated(run_path, logfile=logfile)
 
-    # 3. bring AoE2 to the front; if a previous fight left an end banner up, clear it
-    log("[nav] bringing AoE2:DE to the front...", logfile)
-    st = bring_game_to_front(logfile)
-    if st in ("end_screen", "in_game", "unknown"):   # leftover test/banner -> editor first
-        return_to_editor(logfile)
+        # 3. bring AoE2 to the front; if a previous fight left an end banner up, clear it
+        log("[nav] bringing AoE2:DE to the front...", logfile)
         st = bring_game_to_front(logfile)
-    log(f"[nav] starting screen: {st}", logfile)
-    if st not in ("editor", "main_menu", "load_dialog"):
-        raise RuntimeError(f"unexpected starting screen {st!r}")
-    if not navigate_to_test_menu(st, scen_name, logfile):
-        raise RuntimeError("navigation failed")
+        if st in ("end_screen", "in_game", "unknown"):   # leftover test/banner -> editor first
+            return_to_editor(logfile)
+            st = bring_game_to_front(logfile)
+        if st == "load_dialog":                          # pre-opened Load page = STALE listing
+            st = _exit_load_page_to_editor(logfile)      # back to editor -> navigate re-reads folder
+        log(f"[nav] starting screen: {st}", logfile)
+        if st not in ("editor", "main_menu", "load_dialog"):
+            raise RuntimeError(f"unexpected starting screen {st!r}")
+        if not navigate_to_test_menu(st, scen_name, logfile):
+            raise RuntimeError("navigation failed")
 
     # 4-7. start the gRPC HP logger (separate process), RECORD -> Test -> wait for the
     # EXACT battle-end (gRPC army-count -> 0, OCR fallback). Whatever happens, ALWAYS stop
@@ -487,7 +605,10 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
     t_gs = None
     got_result = False
     try:
-        if not find_and_click("Test", R_DIALOG, logfile, "Test"):
+        if restart:
+            if not restart_current_test(logfile):
+                raise RuntimeError("could not restart the loaded scenario")
+        elif not find_and_click("Test", R_DIALOG, logfile, "Test"):
             raise RuntimeError("could not click Test")
         t_test = time.time()
         _park_cursor(logfile)                                 # cursor out of the captured frame

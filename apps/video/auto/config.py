@@ -15,6 +15,13 @@ def _env_path(name: str, default) -> Path:
     return Path(v) if v else Path(default)
 
 
+# apps/video/auto/config.py -> parents[3] == repo root
+REPO_ROOT = Path(__file__).resolve().parents[3]
+GOLDEN_DIR = REPO_ROOT / "data" / "golden"
+REF_DB = GOLDEN_DIR / "aoe2_reference.db"
+UNITS_DB = GOLDEN_DIR / "aoe2_units.db"
+ICON_DIR = REPO_ROOT / "apps" / "website" / "static" / "img" / "units"
+
 # Where finished matchup videos (and their "raw recordings/" archive) land.
 VIDEOS_DIR = _env_path("AOE2_VIDEOS_DIR", Path.home() / "Videos" / "aoe2_matchups")
 DEFAULT_COPY_TO = _env_path("AOE2_COPY_TO", VIDEOS_DIR)

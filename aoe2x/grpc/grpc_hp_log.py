@@ -99,7 +99,14 @@ class LiveEnd:
                 _, self.world_id = D.seed_from_snapshot(tmp, self.doc, es)
                 self.es = es
                 a = self._derive_army()
-                self.army = a if min(len(a[2]), len(a[3])) >= 2 else None
+                # >= 1: armies of exactly 1 unit are real (the basics_* fixed-ratio
+                # benchmarks seed 1v1 and 2v1 on purpose). Requiring 2 used to silently
+                # disable this whole detector for those fights -- they fell through to
+                # the OCR banner fallback, which had never actually been exercised (every
+                # golden-set fight before this had >=3 per side) and it never caught the
+                # banner either, so every 1v1/2v1 fight ran the full 240s cap even though
+                # the real duel was decided in ~5-10s (2026-08-04).
+                self.army = a if min(len(a[2]), len(a[3])) >= 1 else None
                 self.zero_streak = 0
                 if self.army:
                     print(f"[live] armies seeded {len(a[2])} vs {len(a[3])} "

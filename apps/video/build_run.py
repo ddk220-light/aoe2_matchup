@@ -66,6 +66,27 @@ _KEY_CONST_OVERRIDE = {
     # the Shu War Chariot is a mode-switch unit (Focus Fire / Barrage); place its
     # default Focus Fire form
     "war_chariot": int(UnitInfo.WAR_CHARIOT_FOCUS_FIRE.ID),
+    # the project slug for the fully-upgraded camel drops the "_rider" the dataset keeps
+    "heavy_camel": int(UnitInfo.HEAVY_CAMEL_RIDER.ID),
+    # same abbreviation for the cavalry-archer line's top upgrade
+    "heavy_cav_archer": int(UnitInfo.HEAVY_CAVALRY_ARCHER.ID),
+    # the project's steppe-lancer staple slug drops the "_lancer"
+    "elite_steppe": int(UnitInfo.ELITE_STEPPE_LANCER.ID),
+    # the project's generic Battle Elephant staple slug is "elite_elephant"; the
+    # dataset spells it out (ELITE_ELEPHANT would resolve to the Elephant Archer line).
+    "elite_elephant": int(UnitInfo.ELITE_BATTLE_ELEPHANT.ID),
+    # the project's Eagle staple slug is "elite_eagle"; the dataset keeps "_warrior".
+    "elite_eagle": int(UnitInfo.ELITE_EAGLE_WARRIOR.ID),
+    # the project abbreviates the Elephant Archer line's top upgrade to "elite_ele_archer"
+    # (ELITE_ELE_ARCHER is not a dataset name, so the plain lookup raises KeyError).
+    "elite_ele_archer": int(UnitInfo.ELITE_ELEPHANT_ARCHER.ID),
+    # the project's Elite Skirmisher staple slug is "imp_elite_skirm" (its canonical
+    # top-upgrade name is "Elite Skirmisher", modal-picked over Imperial Skirmisher).
+    "imp_elite_skirm": int(UnitInfo.ELITE_SKIRMISHER.ID),
+    # the Slinger's project slug carries the "imp_" prefix of its Imperial-age
+    # availability; the dataset has the single unit "SLINGER" (there is no elite
+    # form). RHODIAN_SLINGER is an unrelated campaign unit — do not use it.
+    "imp_slinger": int(UnitInfo.SLINGER.ID),
 }
 
 

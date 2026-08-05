@@ -178,7 +178,35 @@ def _win_key(chord):
 
 
 def _win_type(text):
-    _win_input().typewrite(text, interval=0.02)
+    # LAYOUT-INDEPENDENT text entry via SendInput KEYEVENTF_UNICODE. pydirectinput's
+    # typewrite sends QWERTY SCAN CODES, which the OS remaps through the active
+    # keyboard layout — this machine runs DVORAK, so "Matchup" arrived as "ayjdgl"
+    # (t->y, c->j, h->d, u->g, p->l; observed 2026-07-19 in the Load-page search
+    # box). Unicode injection delivers the actual characters on any layout; the
+    # game's UI text fields consume the resulting WM_CHARs fine.
+    import ctypes
+    import ctypes.wintypes as wt
+
+    ULONG_PTR = ctypes.c_size_t
+    class _KEYBDINPUT(ctypes.Structure):
+        _fields_ = [("wVk", wt.WORD), ("wScan", wt.WORD), ("dwFlags", wt.DWORD),
+                    ("time", wt.DWORD), ("dwExtraInfo", ULONG_PTR)]
+    class _MOUSEINPUT(ctypes.Structure):        # only to size the union correctly
+        _fields_ = [("dx", wt.LONG), ("dy", wt.LONG), ("mouseData", wt.DWORD),
+                    ("dwFlags", wt.DWORD), ("time", wt.DWORD), ("dwExtraInfo", ULONG_PTR)]
+    class _INPUTUNION(ctypes.Union):
+        _fields_ = [("mi", _MOUSEINPUT), ("ki", _KEYBDINPUT)]
+    class _INPUT(ctypes.Structure):
+        _fields_ = [("type", wt.DWORD), ("u", _INPUTUNION)]
+
+    INPUT_KEYBOARD, KEYEVENTF_UNICODE, KEYEVENTF_KEYUP = 1, 0x0004, 0x0002
+    send = ctypes.windll.user32.SendInput
+    for ch in text:
+        for flags in (KEYEVENTF_UNICODE, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP):
+            ki = _KEYBDINPUT(0, ord(ch), flags, 0, 0)
+            inp = _INPUT(INPUT_KEYBOARD, _INPUTUNION(ki=ki))
+            send(1, ctypes.byref(inp), ctypes.sizeof(_INPUT))
+        time.sleep(0.04)
 
 
 def _win_activate():

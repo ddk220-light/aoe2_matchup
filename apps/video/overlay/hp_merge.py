@@ -39,10 +39,16 @@ def grpc_sane(d: dict, counts) -> bool:
     c0 = (int(rows[0]["side1"]["count"]), int(rows[0]["side2"]["count"]))
     if tuple(counts) != c0:
         return False
+    # small transient count RISES happen when a projectile entity (a Guecha javelin, a
+    # Mameluke thrown sword, a ballista bolt) is briefly miscounted as an army unit, or a
+    # decode frame drops+regains a unit. Only a LARGE upward jump (>2) signals a real
+    # flickering/desynced decode (the dropout-recovery failure mode recovers by +3/+4/+5);
+    # ignore the ≤2 blips so projectile-throwing units still pass the gate. A dying +
+    # dismounting Konnik also rises by 1-2 and must pass.
     dips = 0
     for side in ("side1", "side2"):
         seq = [int(r[side]["count"]) for r in rows]
-        dips += sum(1 for a, b in zip(seq, seq[1:]) if b > a)
+        dips += sum(1 for a, b in zip(seq, seq[1:]) if b - a > 2)
     if dips > 2:
         return False
     last = rows[-1]

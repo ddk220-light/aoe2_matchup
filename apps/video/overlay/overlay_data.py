@@ -16,23 +16,29 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+import sys
 from pathlib import Path
 
-# repo-root-relative paths
+# repo-layout paths live in one place — auto.config
 _HERE = Path(__file__).resolve()
-_REPO = _HERE.parents[2]  # scenario_builder/overlay/ -> repo root
-REF_DB = _REPO / "data" / "golden" / "aoe2_reference.db"
-ICON_DIR = _REPO / "webapp" / "static" / "img" / "units"
+_SB = _HERE.parents[1]  # apps/video/overlay/ -> apps/video
+if str(_SB) not in sys.path:
+    sys.path.insert(0, str(_SB))
+
+from auto.config import REF_DB, ICON_DIR  # noqa: E402
 
 # class ids that represent the *base* attack, not a bonus
 _BASE_ATTACK_CLASSES = {3, 4}  # Base Pierce, Base Melee
 
-# Resource weights for collapsing (food, wood, gold) into one scalar — MUST match
-# webapp/simulation_real.py COST_WEIGHT_* (the website's position-aware sim is the
-# reference for what "equal resources" means). tests/test_pure.py parses that file
-# and fails if these drift.
+# Resource weights for collapsing (food, wood, gold) into one scalar. Community-
+# standard "gold +50%" scheme: food = wood = 1.0, gold = 1.5 (wood no longer
+# discounted below food — 2026-07-07). tests/test_pure.py pins these exact values.
+# NOTE: this INTENTIONALLY diverges from production aoe2x/sim/simulation_real.py
+# (still wood 0.7): editing that file bumps sim_version and forces a 500k-matchup
+# re-sim, so propagating the new weights there is a separate, heavier decision.
+# Kept in lockstep with sim_v2/build_v2_categorization.py weighted_cost instead.
 COST_WEIGHT_FOOD = 1.0
-COST_WEIGHT_WOOD = 0.7
+COST_WEIGHT_WOOD = 1.0
 COST_WEIGHT_GOLD = 1.5
 
 # Units the game trains in BATCHES — the dat's listed cost buys `batch` units, so
@@ -176,8 +182,13 @@ def get_unit_card(civ: str, slug: str, age: str = "Imperial",
 
         is_ranged = bool(g("is_ranged"))
         f, w, gd = g("final_cost_food"), g("final_cost_wood"), g("final_cost_gold")
-        # the dat's cost buys `batch` units for batch-trained lines; the card's cost
-        # dict is PER-UNIT so count*cost totals stay correct everywhere downstream
+        # the dat's cost buys `batch` units for batch-trained lines (the Blackwood
+        # Archer trains 2 per order, so its listed 35W/45G is a per-PAIR price); the
+        # card's cost dict is PER-UNIT so count*cost totals stay correct downstream.
+        # batch comes ONLY from the explicit TRAIN_BATCH allowlist — NOT from pop_space.
+        # Half-population is a SEPARATE mechanic: the Karambit Warrior is also 0.5-pop
+        # but trains one at a time, so its listed 25F/15G is already per-unit and must
+        # NOT be divided. Kept in lockstep with sim_v2/build_v2_categorization.py _batch().
         batch = TRAIN_BATCH.get(slug, 1)
         fu, wu, gu = (f or 0) / batch, (w or 0) / batch, (gd or 0) / batch
         cost = {

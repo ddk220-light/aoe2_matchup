@@ -180,7 +180,7 @@ function moveUnits(units, map, tick, events) {
       ? proposeMovement(unit, target, TICKS_PER_SECOND)
       : Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
   });
-  const planned = planLocalAvoidance(live, proposals);
+  const planned = planLocalAvoidance(live, proposals, map);
   const moved = resolveMovementProposals(planned.units, planned.proposals, map);
   const movedByReference = new Map(moved.map((unit) => [unit.referenceId, unit]));
   const proposalByReference = new Map(proposals.map((proposal) => [proposal.referenceId, proposal]));
@@ -216,6 +216,7 @@ function moveUnits(units, map, tick, events) {
     if (!unit.alive || unit.targetId === null) continue;
     const target = currentByReference.get(unit.targetId);
     if (!target?.alive || !isInAttackRange(unit, target)) continue;
+    unit.avoidance = null;
     if (unit.action === "idle" || unit.action === "moving") {
       events.push(event(tick, "contact", unit.referenceId, target.referenceId));
     }

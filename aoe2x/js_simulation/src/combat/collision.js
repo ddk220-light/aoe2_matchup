@@ -172,7 +172,27 @@ function constrainBounds(body, bounds) {
 }
 
 
+function sweptDistanceFromOrigin(startX, startY, endX, endY) {
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared === 0) return Math.hypot(startX, startY);
+  const projection = Math.max(0, Math.min(1, -(
+    startX * dx + startY * dy
+  ) / lengthSquared));
+  return Math.hypot(startX + projection * dx, startY + projection * dy);
+}
+
+
 function constrainObstacle(body, obstacle) {
+  const startX = body.x - obstacle.x;
+  const startY = body.y - obstacle.y;
+  if (sweptDistanceFromOrigin(
+    startX,
+    startY,
+    startX + body.dx,
+    startY + body.dy,
+  ) >= body.radius + obstacle.radius - EPSILON) return 0;
   const centerX = obstacle.x - body.x;
   const centerY = obstacle.y - body.y;
   const distance = Math.hypot(centerX, centerY);
@@ -217,6 +237,12 @@ function distributeEqualMassRemoval(excess, available) {
 function constrainPair(left, right) {
   const centerX = right.x - left.x;
   const centerY = right.y - left.y;
+  if (sweptDistanceFromOrigin(
+    centerX,
+    centerY,
+    centerX + right.dx - left.dx,
+    centerY + right.dy - left.dy,
+  ) >= left.radius + right.radius - EPSILON) return 0;
   const distance = Math.hypot(centerX, centerY);
   const gap = Math.max(0, distance - left.radius - right.radius);
   const nx = centerX / distance;

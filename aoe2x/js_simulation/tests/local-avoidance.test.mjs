@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+import { resolveMovementProposals } from "../src/combat/collision.js";
 import { planLocalAvoidance } from "../src/combat/local-avoidance.js";
 
 
@@ -11,6 +12,7 @@ const mechanics = JSON.parse(await readFile(
 ));
 const STEP = mechanics.speed_tiles_per_second / 60;
 const RADIUS = mechanics.collision_size_tiles.x;
+const OPEN_MAP = Object.freeze({ width: 10, height: 10, obstacles: Object.freeze([]) });
 
 
 function unit({
@@ -51,6 +53,21 @@ function normalized(result) {
       avoidance: row.avoidance,
       proposal: proposals.get(row.referenceId),
     }));
+}
+
+
+function pointToSegmentDistance(point, start, end) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared === 0) return Math.hypot(point.x - start.x, point.y - start.y);
+  const projection = Math.max(0, Math.min(1, (
+    (point.x - start.x) * dx + (point.y - start.y) * dy
+  ) / lengthSquared));
+  return Math.hypot(
+    point.x - start.x - projection * dx,
+    point.y - start.y - projection * dy,
+  );
 }
 
 
@@ -191,6 +208,164 @@ test("route state persists and clears only from geometry or target lifecycle", (
 });
 
 
+test("a removed or dead saved blocker clears without dereferencing stale state", () => {
+  const state = { blockerReferenceId: 2, targetReferenceId: 3, side: 1 };
+  const mover = unit({
+    referenceId: 1,
+    owner: 2,
+    x: 2,
+    y: 5,
+    targetId: 3,
+    avoidance: state,
+  });
+  const target = unit({ referenceId: 3, owner: 3, x: 6, y: 5 });
+
+  for (const snapshot of [
+    [mover, target],
+    [mover, unit({ referenceId: 2, owner: 2, x: 4, y: 5, alive: false }), target],
+  ]) {
+    const result = planLocalAvoidance(snapshot, [proposal(1, STEP, 0)], OPEN_MAP);
+    assert.equal(
+      result.units.find(({ referenceId }) => referenceId === 1).avoidance,
+      null,
+    );
+  }
+});
+
+
+test("an active detour uses sourced full speed instead of the direct proposal clamp", () => {
+  const mover = unit({
+    referenceId: 1,
+    owner: 2,
+    x: 2,
+    y: 5,
+    facing: Math.PI / 2,
+    targetId: 3,
+  });
+  const blocker = unit({ referenceId: 2, owner: 2, x: 4, y: 5 });
+  const target = unit({ referenceId: 3, owner: 3, x: 6, y: 5 });
+
+  const result = planLocalAvoidance(
+    [mover, blocker, target],
+    [proposal(1, STEP / 4, 0)],
+    OPEN_MAP,
+  );
+  const move = result.proposals.find(({ referenceId }) => referenceId === 1);
+
+  assert.ok(result.routes[0].remainingPathLength > STEP);
+  assert.ok(Math.abs(Math.hypot(move.dx, move.dy) - STEP) < 1e-12);
+});
+
+
+test("route selection rejects paths swept through a second body or map obstacle", () => {
+  const mover = unit({
+    referenceId: 1,
+    owner: 2,
+    x: 2,
+    y: 5,
+    facing: Math.PI / 2,
+    targetId: 4,
+  });
+  const directBlocker = unit({ referenceId: 2, owner: 2, x: 4, y: 5 });
+  const upperBlocker = unit({ referenceId: 3, owner: 3, x: 3.5, y: 5.5 });
+  const target = unit({ referenceId: 4, owner: 3, x: 6, y: 5 });
+  const direct = proposal(1, STEP, 0);
+
+  const bodyResult = planLocalAvoidance(
+    [mover, directBlocker, upperBlocker, target],
+    [direct],
+    OPEN_MAP,
+  );
+  const bodyMove = bodyResult.proposals.find(({ referenceId }) => referenceId === 1);
+  assert.ok(bodyMove.dy < 0);
+  assert.ok(pointToSegmentDistance(
+    upperBlocker,
+    mover,
+    { x: mover.x + bodyMove.dx, y: mover.y + bodyMove.dy },
+  ) >= 2 * RADIUS - 1e-12);
+
+  let current = mover;
+  let reachedContact = false;
+  for (let tick = 0; tick < 300; tick += 1) {
+    const dx = target.x - current.x;
+    const dy = target.y - current.y;
+    const distance = Math.hypot(dx, dy);
+    const gap = distance - 2 * RADIUS;
+    const magnitude = Math.min(STEP, Math.max(0, gap));
+    const result = planLocalAvoidance(
+      [current, directBlocker, upperBlocker, target],
+      [proposal(1, dx / distance * magnitude, dy / distance * magnitude)],
+      OPEN_MAP,
+    );
+    const move = result.proposals.find(({ referenceId }) => referenceId === 1);
+    const resolved = resolveMovementProposals(result.units, result.proposals, OPEN_MAP);
+    const actual = resolved.find(({ referenceId }) => referenceId === 1);
+    const actualDx = actual.x - current.x;
+    const actualDy = actual.y - current.y;
+    const next = unit({
+      referenceId: 1,
+      owner: 2,
+      x: actual.x,
+      y: actual.y,
+      facing: actualDx === 0 && actualDy === 0
+        ? current.facing
+        : Math.atan2(actualDy, actualDx),
+      targetId: 4,
+      avoidance: result.units.find(({ referenceId }) => referenceId === 1).avoidance,
+    });
+    assert.ok(Math.hypot(actualDx, actualDy) <= STEP + 1e-12);
+    for (const blocker of [directBlocker, upperBlocker]) {
+      assert.ok(
+        pointToSegmentDistance(blocker, current, next) >= 2 * RADIUS - 1e-12,
+        `tick ${tick} swept through blocker ${blocker.referenceId}`,
+      );
+    }
+    current = next;
+    if (Math.hypot(target.x - current.x, target.y - current.y) <= 2 * RADIUS + 1e-12) {
+      reachedContact = true;
+      break;
+    }
+  }
+  assert.equal(reachedContact, true);
+
+  const obstacleMap = Object.freeze({
+    width: 10,
+    height: 10,
+    obstacles: Object.freeze([
+      Object.freeze({ referenceId: 9000, x: 3.5, y: 5.5, radius: RADIUS }),
+    ]),
+  });
+  const mapResult = planLocalAvoidance(
+    [mover, directBlocker, target],
+    [direct],
+    obstacleMap,
+  );
+  const mapMove = mapResult.proposals.find(({ referenceId }) => referenceId === 1);
+  assert.ok(mapMove.dy < 0);
+  assert.ok(pointToSegmentDistance(
+    obstacleMap.obstacles[0],
+    mover,
+    { x: mover.x + mapMove.dx, y: mover.y + mapMove.dy },
+  ) >= 2 * RADIUS - 1e-12);
+
+  const directMapResult = planLocalAvoidance(
+    [mover, target],
+    [direct],
+    Object.freeze({
+      width: 10,
+      height: 10,
+      obstacles: Object.freeze([
+        Object.freeze({ referenceId: 9001, x: 4, y: 5, radius: RADIUS }),
+      ]),
+    }),
+  );
+  assert.deepEqual(
+    directMapResult.units.find(({ referenceId }) => referenceId === 1).avoidance,
+    { blockerObstacleIndex: 0, targetReferenceId: 4, side: -1 },
+  );
+});
+
+
 test("overlapping blocker and goal discs terminate at legal first contact without creep", () => {
   const blocker = unit({ referenceId: 2, owner: 2, x: 4.358579, y: 7.358579 });
   const target = unit({ referenceId: 3, owner: 3, x: 4.641421, y: 7.641421 });
@@ -217,6 +392,7 @@ test("overlapping blocker and goal discs terminate at legal first contact withou
     if (firstRemaining === null) firstRemaining = remaining;
     assert.ok(remaining < previousRemaining - 1e-12 || remaining === 0);
     assert.ok(Math.hypot(move.dx, move.dy) <= STEP + 1e-12);
+    const start = mover;
     mover = unit({
       ...mover,
       referenceId: 1,
@@ -226,9 +402,18 @@ test("overlapping blocker and goal discs terminate at legal first contact withou
       targetId: 3,
       avoidance: result.units.find(({ referenceId }) => referenceId === 1).avoidance,
     });
+    assert.ok(pointToSegmentDistance(blocker, start, mover) >= 2 * RADIUS - 1e-12);
     assert.ok(Math.hypot(mover.x - blocker.x, mover.y - blocker.y) >= 2 * RADIUS - 1e-12);
     assert.ok(Math.hypot(mover.x - target.x, mover.y - target.y) >= 2 * RADIUS - 1e-12);
-    if (remaining === 0) break;
+    if (remaining === 0) {
+      if (route) {
+        assert.notEqual(
+          result.units.find(({ referenceId }) => referenceId === 1).avoidance,
+          null,
+        );
+      }
+      break;
+    }
     assert.ok(stepIndex <= Math.ceil(firstRemaining / STEP) + 1);
   }
 

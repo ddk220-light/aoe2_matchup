@@ -181,6 +181,28 @@ test("contact removes only the inward normal and keeps collision-free tangent", 
 });
 
 
+test("a swept tangent from outside contact is not clipped by linear projection", async () => {
+  const { resolveMovementProposals } = await loadCollision();
+  const mover = unit({
+    referenceId: 1,
+    x: 4.7403479276431675,
+    y: 7.235735058903908,
+  });
+  const blocker = unit({ referenceId: 2, x: 4.35856, y: 7.358579 });
+  const tangent = proposal(1, 0.004701209638722499, 0.0193425586453437);
+
+  const next = resolveMovementProposals(
+    [mover, blocker],
+    [tangent, proposal(2, 0, 0)],
+    openMap,
+  );
+
+  assert.ok(Math.abs(next[0].x - mover.x - tangent.dx) < 1e-12);
+  assert.ok(Math.abs(next[0].y - mover.y - tangent.dy) < 1e-12);
+  assertNonpenetrating(next);
+});
+
+
 test("frozen pair constraints are invariant to snapshot and proposal order", async () => {
   const { resolveMovementProposals } = await loadCollision();
   const snapshot = [

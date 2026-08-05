@@ -127,6 +127,73 @@ test("world publication preserves blocker-aware local route state", async () => 
 });
 
 
+test("avoidance clears only after resolved contact and survives a target moving away", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const stoppedMechanics = Object.freeze({ ...mechanics, speed_tiles_per_second: 0 });
+  const fastMechanics = Object.freeze({ ...mechanics, speed_tiles_per_second: 2 });
+  const avoidance = { blockerReferenceId: 2, targetReferenceId: 3, side: 1 };
+  const mover = unit({
+    referenceId: 1,
+    owner: 2,
+    x: 4.7403479276431675,
+    y: 7.235735058903908,
+    facing: 1.186626617179682,
+    targetId: 3,
+    avoidance,
+    unitMechanics: fastMechanics,
+  });
+  const blocker = unit({
+    referenceId: 2,
+    owner: 2,
+    x: 4.35856,
+    y: 7.358579,
+    unitMechanics: stoppedMechanics,
+  });
+  const stationaryTarget = unit({
+    referenceId: 3,
+    owner: 3,
+    x: 4.641421,
+    y: 7.641421,
+    targetId: 1,
+    unitMechanics: stoppedMechanics,
+  });
+
+  const contacted = stepWorld(createWorld(scenario([mover, blocker, stationaryTarget])));
+  assert.equal(contacted.units.find(({ referenceId }) => referenceId === 1).avoidance, null);
+  assert.ok(contacted.events.some(({ type, actorId, targetId }) => (
+    type === "contact" && actorId === 1 && targetId === 3
+  )));
+
+  const retreatPoint = unit({
+    referenceId: 4,
+    owner: 2,
+    x: 4,
+    y: 9.5,
+    unitMechanics: stoppedMechanics,
+  });
+  const movingTarget = unit({
+    referenceId: 3,
+    owner: 3,
+    x: 4.641421,
+    y: 7.641421,
+    targetId: 4,
+  });
+  const separated = stepWorld(createWorld(scenario([
+    mover,
+    blocker,
+    movingTarget,
+    retreatPoint,
+  ])));
+  assert.deepEqual(
+    separated.units.find(({ referenceId }) => referenceId === 1).avoidance,
+    avoidance,
+  );
+  assert.equal(separated.events.some(({ type, actorId, targetId }) => (
+    type === "contact" && actorId === 1 && targetId === 3
+  )), false);
+});
+
+
 test("resolved movement updates facing for later symmetric route choices", async () => {
   const { createWorld, stepWorld } = await loadWorld();
   const start = scenario([

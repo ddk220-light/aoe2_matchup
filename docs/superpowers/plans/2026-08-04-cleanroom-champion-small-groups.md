@@ -750,8 +750,9 @@ git commit -m "test(sim): gate all champion small-group ratios"
 - Create: `aoe2x/js_simulation/tests/viewer-simulation.test.mjs`
 
 **Interfaces:**
-- Server adds read-only `/api/champion/truth`, `/api/champion/mechanics`, and `/api/champion/result?ratio=<ratio>` endpoints.
+- Server adds read-only `/api/champion/truth`, `/api/champion/mechanics`, and `/api/champion/result?ratio=<ratio>&repeat=<repeat>` endpoints.
 - Renderer consumes simulation snapshots but never calls `stepWorld`.
+- Viewer URLs preserve `ratio` and `repeat`; suspicious-run flags and notes are stored locally and export as JSON without modifying truth or simulation results.
 
 - [ ] **Step 1: Write failing endpoint tests**
 
@@ -766,13 +767,24 @@ test("the viewer renders the supplied tick without advancing the world", () => {
   assert.equal(renderer.getDisplayedTick(), 42);
   assert.equal(stepWorldCalls, 0);
 });
+
+test("review flags round-trip without changing simulation state", () => {
+  const before = renderer.getSimulationSnapshot();
+  feedback.flag({ ratio: "2v3", repeat: 2, note: "target switch looks late" });
+  assert.deepEqual(renderer.getSimulationSnapshot(), before);
+  assert.deepEqual(feedback.exportJson().runs[0], {
+    ratio: "2v3", repeat: 2, flagged: true, note: "target switch looks late",
+  });
+});
 ```
 
 - [ ] **Step 3: Add simulation controls**
 
 Add ratio selection, play, pause, reset, single tick, next event, tape repeat
 selection, tick/seconds readout, HP, action state, target lines, collision
-circles, attack reach, and an event timeline. Do not add seed controls.
+circles, attack reach, and an event timeline. Keep ratio and repeat in the URL.
+Add a suspicious-run checkbox, note field, clear-feedback action, and JSON
+feedback export backed by browser-local storage. Do not add seed controls.
 
 - [ ] **Step 4: Preserve map rendering invariants**
 
@@ -789,7 +801,9 @@ Run: `node --test aoe2x/js_simulation/tests/server.test.mjs aoe2x/js_simulation/
 Run: `node aoe2x/js_simulation/server.mjs --host 127.0.0.1 --port 5011`
 
 Verify the local and existing Tailnet route load, every ratio animates, single
-tick and next event are exact, and the browser console has zero errors.
+tick and next event are exact, refresh preserves URL selection and local review
+flags, feedback export downloads valid JSON, and the browser console has zero
+errors.
 
 - [ ] **Step 7: Commit viewer playback**
 

@@ -289,10 +289,14 @@ The existing approved map remains unchanged. The viewer adds:
 - target lines, collision circles, attack reach, HP, and action state;
 - simulation event timeline;
 - selection among the three tape traces for diagnostic comparison;
+- shareable `ratio` and `repeat` URL state for every reviewed run;
+- a local suspicious-run flag with an optional note and JSON feedback export;
 - simulation-only playback with no random seed control in this milestone.
 
 The viewer advances the world by requesting integer steps. Browser frame rate
-changes only how quickly stored snapshots are presented.
+changes only how quickly stored snapshots are presented. Review flags are
+browser-local annotations and never enter the engine, truth fixtures, or
+acceptance calculations.
 
 ## Error handling and invariants
 

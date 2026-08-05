@@ -528,13 +528,21 @@ function targetReferencesAndLifecycleAreValid(result) {
         }
       }
 
+      // "attacking" spans the whole attack animation, not just the run-up to
+      // the hit. The tapes put the hit at animation frame `frame_delay` (or the
+      // midpoint when it is unset), so a unit that has already landed its blow
+      // is still attacking with windup 0, and its reload is already counting
+      // down from the swing start. Requiring windup > 0 and reload === 0 here
+      // encoded the old instant-damage model and rejected every real run.
       const windup = unit.actionTimers?.windup;
+      const reload = unit.actionTimers?.reload;
       if (unit.action === "attacking") {
         if (
           unit.attackTargetId === null
           || !Number.isSafeInteger(windup)
-          || windup <= 0
-          || unit.actionTimers?.reload !== 0
+          || windup < 0
+          || !Number.isSafeInteger(reload)
+          || reload < 0
         ) return false;
       } else if (unit.attackTargetId !== null) {
         return false;

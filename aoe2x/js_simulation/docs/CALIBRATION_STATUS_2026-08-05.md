@@ -17,7 +17,11 @@ are each independently exonerated.
 |---|---|---|
 | `championvschampion` (calibration/source) | 15 | original calibration set |
 | `paladinvspaladin` (~/Downloads) | 15 | second unit, holdout |
-| `championvspaladin_..._complete` (~/Downloads) | 27 | asymmetric holdout, 9 ratios |
+| `championvspaladin_..._complete (1)` (~/Downloads) | 62 | asymmetric holdout, 16 ratios |
+
+The champion-vs-paladin fixture now carries all 62 fights across 16 ratios
+(sha256 `F3665CA0…C3026`): the original 9 ratios at 3 repeats plus 8v4, 9v4,
+10v5, 11v4, 15v8, 15v10 and 21v10 at 5 repeats each. Largest fight is 31 units.
 
 No camel recordings exist. The recorded pairs are champion, paladin, elephant,
 firelancer and steppe (Steppe Lancer).
@@ -61,22 +65,81 @@ unit can push through a stationary friendly. NOTE a 2018 richg42 dev blog says
 units use circular obstructions — the tapes contradict that for AoE2:DE melee
 units. Do not "correct" this back from the blog.
 
+## The game stops reproducing itself above ~8 units
+
+Every repeat of a ratio starts from byte-identical positions, so the spread
+across repeats is the GAME's own nondeterminism. It is not constant — it
+switches on with crowding:
+
+| ratio | repeats | winner-HP spread | winning side |
+|---|---|---|---|
+| 1v1 … 3v2 | 3 | **0.0%** | fixed |
+| 3v5 / 3v6 | 3 | 2.6-3.2% | fixed |
+| 5v3 | 3 | 10.0% | fixed |
+| 6v3 | 3 | 50.0% | fixed |
+| 9v4 / 11v4 / 15v10 | 5 | 19-42% | fixed |
+| 15v8 | 5 | 60.7% | fixed |
+| 8v4 / 10v5 / 21v10 | 5 | **75-94%** | **FLIPS** |
+
+Below six units the game is bit-deterministic and a single run is a valid
+target. Above it, three ratios cannot even agree on who wins from identical
+starts. **On those, comparing one sim run to one tape number is meaningless** —
+the sim has to match a distribution, which needs sampled acquisition orders.
+
 ## Scorecard
 
 Champion mirror ratio gates: 18 pass / 0 fail. Suite: 112 pass / 27 fail.
 
-champion_vs_paladin, 22/36 checks inside the tape band, winner side 9/9:
+champion_vs_paladin, one deterministic sim run per ratio scored against the
+per-ratio tape band: **36/48 checks inside, winner side 15/16.**
 
-| ratio | winner HP tape → sim | verdict |
+The two defects worth chasing, both outside any RNG excuse:
+
+- **3v2 — off by exactly one champion swing.** The tape returns 178 HP and 29
+  hits in all three repeats, zero variance; the sim returns 191 and 28. Five
+  units, fully deterministic on both sides. The cleanest target in the set.
+- **15v8 — the only wrong winner,** and the tape is 5/5 on it. Paladins win
+  with 265-675 HP; the sim hands champions a 56 HP win. Champions kill all 8
+  paladins in the sim against 4.2-6.5 in the game.
+
+Decomposing damage by side (champion HP lost = how hard paladins hit, and
+vice versa) isolates the direction — deltas are HP outside the band, 0 = inside:
+
+| ratio | champions over-hit by | paladins under-hit by |
 |---|---|---|
-| 1v1 / 1v2 / 2v1 / 2v3 | exact | inside |
-| 3v5 / 3v6 | inside band | inside |
-| 3v2 | 178 → 191 | mildly off |
-| 5v3 | 217-241 → 215 | 2 HP outside |
-| 6v3 | 14-28 → 112 | the outlier |
+| 6v3 | 0 | **-84** |
+| 9v4 | 0 | **-42** |
+| 15v8 | **+265** | **-56** |
+| 15v10 | **+191** | 0 |
+| 8v4 / 10v5 / 11v4 / 21v10 | 0 | 0 |
 
-Last death is early in all nine, by 0.05-0.31 s outside 6v3 — a uniform
-residual not yet chased.
+No ratio errs the other way: champions never under-hit and paladins never
+over-hit. The bias is one-directional.
+
+Contact share explains the two 15-champion fights. Counting, per frame with
+both sides alive, the fraction of LIVE champions inside swing reach:
+
+| ratio | tape | sim |
+|---|---|---|
+| 9v4 | 63.5% | 71.4% |
+| 15v8 | 70.7% | **82.9%** |
+| 15v10 | 63.7% | **80.5%** |
+| 10v5 | 79.2% | 77.8% |
+| 21v10 | 60.9% | 56.9% |
+
+The game keeps roughly one champion in three out of contact in a big fight;
+our engine keeps only one in five. Exactly the three ratios where the sim lets
+a larger share engage (9v4, 15v8, 15v10) are the three where champions
+over-hit, and the ratios whose shares match score inside band. That is
+correlation across six ratios with one sim run each, not proof — but it names a
+concrete mechanism (surround capacity / screening) and a concrete test.
+
+6v3 is NOT this mechanism: its sim contact share is *lower* than the tape
+(78.0% vs 85.2%), and it was already isolated to acquisition order below.
+
+Last death is early in the small ratios by 0.05-0.31 s — a uniform residual not
+yet chased. In the big fights the sim instead runs long (15v8 45.8 s against a
+25.0-34.4 s band; 15v10 34.7 s against 20.7-24.5 s).
 
 ## The 6v3 outlier — isolated, twice
 
@@ -107,11 +170,19 @@ correct wherever geometry decides it).
 
 ## Open
 
-- **Acquisition order.** Does it have structure, or is it uniform per unit? More
-  recordings of this matchup are being made to answer exactly this. If it is
-  random, no deterministic ordering is correct and a single fight on this
-  formation is not a meaningful target — the draw alone moves the result ~100
-  HP. Score against the band, or sample several orders per scenario.
+- **Screening / surround capacity** — the lead from the 62-fight set. The game
+  holds ~1 champion in 3 out of contact in big fights, we hold ~1 in 5, and the
+  three ratios where that gap is widest are exactly the three where champions
+  over-hit. Next step is to measure the game's actual per-target surround
+  limit rather than infer it from the aggregate share.
+- **3v2, off by one champion swing.** Deterministic on both sides, five units.
+  Should be debuggable to a single tick.
+- **Distributional scoring.** Acquisition order has no structure (checked on the
+  interim set: rank spreads match random expectation), so no deterministic
+  ordering is correct. Above ~8 units the game's own spread reaches 75-94% and
+  the winning side flips, so the sim must be sampled over several acquisition
+  orders and compared as a distribution. The band gates are the right shape;
+  single runs against them are a smoke test, not a gate.
 - **The uniform ~0.2 s early bias** on last-death across all nine ratios.
 - **27 failing tests.** Mostly the same stale-model class already found in the
   validator: they assert circular geometry and instant damage, both refuted.

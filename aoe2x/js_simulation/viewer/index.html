@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#17211c">
+    <title>Golden Arena · Formation Inspector</title>
+    <script>
+      (() => {
+        const mountBase = document.createElement("base");
+        mountBase.href = location.pathname.endsWith("/")
+          ? location.pathname
+          : `${location.pathname}/`;
+        document.head.append(mountBase);
+      })();
+    </script>
+    <link rel="stylesheet" href="viewer/styles.css">
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="masthead">
+        <div class="title-block">
+          <p class="eyebrow">AoE2 mechanics laboratory · stage 1</p>
+          <h1>Golden Arena</h1>
+          <p class="subtitle">Scenario-exact 21 × 21 formation inspector</p>
+        </div>
+        <div class="source-seal" id="sourceBadge" aria-live="polite">
+          <span class="seal-dot"></span>
+          <span>
+            <strong>Loading source</strong>
+            <small>Verifying scenario fixture…</small>
+          </span>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="map-frame" aria-label="Golden scenario map">
+          <div class="map-status">
+            <span class="status-light"></span>
+            21 vs 21 placement · no simulation loaded
+          </div>
+
+          <div class="tool-rail" aria-label="Map overlays">
+            <label class="toggle">
+              <input id="gridToggle" type="checkbox">
+              <span>Tile grid</span>
+            </label>
+            <label class="toggle">
+              <input id="objectsToggle" type="checkbox" checked>
+              <span>Gaia objects</span>
+            </label>
+            <label class="toggle">
+              <input id="footprintsToggle" type="checkbox">
+              <span>Object cells</span>
+            </label>
+            <label class="toggle">
+              <input id="labelsToggle" type="checkbox">
+              <span>Labels</span>
+            </label>
+            <button id="resetView" class="reset-button" type="button">Reset view</button>
+          </div>
+
+          <canvas id="mapCanvas" aria-label="Isometric rendering of the golden recording arena"></canvas>
+
+          <div class="coordinate-strip">
+            <span id="cursorReadout">Tile —, —</span>
+            <span>Drag to pan · wheel or pinch to zoom · tap a unit to inspect</span>
+          </div>
+        </section>
+
+        <aside class="ledger" aria-label="Scenario source details">
+          <div class="ledger-heading">
+            <span>Placement ledger</span>
+            <b>01</b>
+          </div>
+
+          <section class="fact-grid" aria-label="Map facts">
+            <div><small>Map</small><strong id="mapSize">—</strong></div>
+            <div><small>Terrain tiles</small><strong id="tileCount">—</strong></div>
+            <div><small>Player 2</small><strong id="player2Count">—</strong></div>
+            <div><small>Player 3</small><strong id="player3Count">—</strong></div>
+          </section>
+
+          <section class="formation-panel" aria-label="Formation sides">
+            <div class="side-row side-p2">
+              <span class="side-swatch"></span>
+              <span><b id="player2Name">Player 2</b><small>Golden retained formation</small></span>
+              <strong>21</strong>
+            </div>
+            <div class="side-row side-p3">
+              <span class="side-swatch"></span>
+              <span><b id="player3Name">Player 3</b><small>Golden retained formation</small></span>
+              <strong>21</strong>
+            </div>
+            <div class="placement-audit"><span>✓</span> 42 source positions · 0 blocked cells</div>
+          </section>
+
+          <section class="inspection-panel">
+            <p class="panel-kicker">Selected scenario record</p>
+            <div id="selectionEmpty" class="empty-selection">
+              Tap an infantry marker, tree, bush, or rock to inspect its source record.
+            </div>
+            <dl id="selectionDetails" class="selection-details" hidden>
+              <div><dt>Type</dt><dd id="selectedName"></dd></div>
+              <div><dt>Player</dt><dd id="selectedPlayer"></dd></div>
+              <div><dt>Object ID</dt><dd id="selectedId"></dd></div>
+              <div><dt>Reference</dt><dd id="selectedReference"></dd></div>
+              <div><dt>Position</dt><dd id="selectedPosition"></dd></div>
+              <div><dt>Rotation</dt><dd id="selectedRotation"></dd></div>
+            </dl>
+          </section>
+
+          <section class="inventory-panel">
+            <p class="panel-kicker">Object inventory</p>
+            <div id="objectInventory" class="object-inventory"></div>
+            <div class="gaia-total"><span>Gaia records</span><b id="objectCount">—</b></div>
+          </section>
+
+          <footer class="provenance">
+            <span>Source scenario</span>
+            <strong id="sourceFile">—</strong>
+            <code id="sourceHash">—</code>
+            <small id="sourceVersion">—</small>
+          </footer>
+        </aside>
+      </main>
+    </div>
+
+    <div id="errorPanel" class="error-panel" hidden role="alert"></div>
+    <script type="module" src="viewer/app.js"></script>
+  </body>
+</html>

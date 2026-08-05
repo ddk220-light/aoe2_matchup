@@ -1,24 +1,47 @@
 # Project Agent Instructions
 
-## Absolute tape source of truth
+## Absolute clean-room tape source of truth
 
-For every calibration, tape-forensics, or simulation-vs-tape task, the **only**
-permitted tape archive is the ignored project-local file named by
-`calibration/source/source_of_truth.json`.
+The JavaScript simulation is being rebuilt from scratch. For every new
+calibration, tape-forensics, or simulation-vs-tape task, the **only** permitted
+tape archive is:
+
+`aoe2x/js_simulation/calibration/source/aoe2_golden_basics_championvschampion_2026-08-04.zip`
 
 Required SHA-256:
-`31A31FE39C025DDD88EB1F502FD62E0EC48464F4CBB72C1693D5C4FEED0713C9`
 
-This rule is non-negotiable:
+`33F4051CB1BE014CDF1D3813E7AB74EF619B468CB6196B5E92E7482508AA1BDE`
+
+### Initial intake authorization
+
+The archive may initially be copied only from:
+
+`C:\Users\ddk22\Downloads\aoe2_golden_basics_championvschampion_2026-08-04.zip`
+
+Before copying, verify that the external file has the required SHA-256. Copy it
+byte-for-byte into the project-local path above and verify the copied file has
+the same SHA-256. After intake, use only the project-local copy.
+
+### Non-negotiable rules
 
 - Never inspect, extract, ingest, score, compare against, cite, or otherwise use
   any other tape archive or tape-derived truth corpus.
-- Never search the historical external workspace for replacement tapes.
-- Only material regenerated through the verified project-local workflow is
-  current evidence.
-- Before tape analysis, verify the allowed archive's SHA-256 and confirm every
-  active `calibration/fixtures/manifest.json` entry has that same `zip_sha256`.
-- If the allowed file is missing or its hash differs, stop and ask the user. Do
-  not substitute another tape.
+- The former standard-units archive and everything derived from it are legacy
+  evidence and must not be used for this clean-room JavaScript simulation.
+- Existing material under the old `calibration/` workflow must not be treated as
+  evidence for the clean-room rebuild.
+- All new extracted tapes, fixtures, manifests, reports, and simulation
+  comparisons must live under `aoe2x/js_simulation/calibration/`.
+- Before tape analysis, verify the project-local archive SHA-256.
+- Every active clean-room manifest entry must record the required SHA-256 as
+  `zip_sha256`.
+- If no clean-room manifest exists yet, it may be bootstrapped only from the
+  verified project-local archive.
+- If the archive is missing or its hash differs, stop and ask the user. Never
+  substitute another tape.
+- Derived fixtures must be reproducible from the verified archive and must not
+  be manually edited to fit simulation results.
 
-Canonical details: `calibration/docs/TAPE_SOURCE_OF_TRUTH.md`.
+This Champion-versus-Champion basics archive is the starting ground truth for
+the clean-room simulator rebuild. Begin with the 1v1 matchup and expand only
+after its mechanics and outcome distribution are understood.

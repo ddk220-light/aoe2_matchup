@@ -93,14 +93,16 @@ Champion mirror ratio gates: 18 pass / 0 fail. Suite: 112 pass / 27 fail.
 champion_vs_paladin, one deterministic sim run per ratio scored against the
 per-ratio tape band: **36/48 checks inside, winner side 15/16.**
 
-The two defects worth chasing, both outside any RNG excuse:
+**3v2 is the one defect outside any RNG excuse — off by exactly one champion
+swing.** The tape returns 178 HP and 29 hits in all three repeats, zero
+variance; the sim returns 191 and 28. Five units, fully deterministic on both
+sides. The cleanest target in the set.
 
-- **3v2 — off by exactly one champion swing.** The tape returns 178 HP and 29
-  hits in all three repeats, zero variance; the sim returns 191 and 28. Five
-  units, fully deterministic on both sides. The cleanest target in the set.
-- **15v8 — the only wrong winner,** and the tape is 5/5 on it. Paladins win
-  with 265-675 HP; the sim hands champions a 56 HP win. Champions kill all 8
-  paladins in the sim against 4.2-6.5 in the game.
+**15v8 is NOT a systematic defect** — corrected below under sampling. Scored as
+a single run it looks like the only wrong winner, but sampling acquisition
+orders shows champions win it in just 3% of orders and the sim's median margin
+sits inside the tape band. Ranking acquisition by reference id simply drew an
+atypical order. The same correction applies to the earlier 21v10 reading.
 
 Decomposing damage by side (champion HP lost = how hard paladins hit, and
 vice versa) isolates the direction — deltas are HP outside the band, 0 = inside:
@@ -140,6 +142,77 @@ concrete mechanism (surround capacity / screening) and a concrete test.
 Last death is early in the small ratios by 0.05-0.31 s — a uniform residual not
 yet chased. In the big fights the sim instead runs long (15v8 45.8 s against a
 25.0-34.4 s band; 15v10 34.7 s against 20.7-24.5 s).
+
+## Break-even sits at 2.00:1, and that is where the game stops agreeing with itself
+
+Margin (winner HP as a share of the winner's own starting pool) collapses
+monotonically as the champion:paladin ratio climbs toward 2.00 and rises again
+past it. All three ratios whose winning side FLIPS between repeats sit at
+2.00-2.10, and the two non-flipping 2.00 ratios are razor thin (2v1 paladins by
+13.3%, 6v3 champions by 3.3-6.7%). Near the knife edge whoever lands the first
+concentrated engagement compounds it, exactly the Lanchester picture.
+
+That gives a one-number statement of the residual bias: **the game's break-even
+is 2.00:1, ours is nearer 1.85:1.** Below 1.5:1 the sim is exact on five ratios
+(1v1, 1v2, 2v3, 3v5, 3v6, plus 2v1 at 2.00). From 1.5:1 up it favours champions
+on every ratio but 3v2.
+
+## What varies between repeats: the opening target assignment
+
+Starts are byte-identical, so the whole delta is WHO acquires first and WHOM
+they pick. In 8v4 the paladins' opening concentration alone predicts the flip:
+
+| repeats | paladins double up on | result |
+|---|---|---|
+| r1, r2, r5 | 2 champions | paladins win by 19.0-26.2% |
+| r3, r4 | 1 champion | paladins by 1.5%, then champions by 15.0% |
+
+Concentration is not the whole story: 10v5 r3 and r4 have identical paladin
+opening maps and still diverge, because the CHAMPION assignment differs (r3
+piles 6 of 10 onto one paladin, r4 spreads 4/2/1/3). Both sides' opening maps
+matter.
+
+## Sampling acquisition orders
+
+`tools/sample_acquisition_orders.mjs --ratio 8v4 --samples 200` permutes the
+acquisition rank, which permutes who moves first, hence who is nearest when the
+next unit acquires, hence the opening targets. Seeded and reproducible; sample 0
+is always the identity order, i.e. today's deterministic answer.
+
+Three sampled orders on one 8v4 start bracket the tape's five repeats, and one
+lands on `8v4_r3` exactly (paladins by 1.5%, 11 HP):
+
+| | opening | result |
+|---|---|---|
+| sim run 1 | paladins double up once | paladins by 18.8% |
+| sim run 2 | paladins double up twice | paladins by 1.5%, 11 HP |
+| sim run 3 | as run 2, champions on 3 paladins | champions by 17.5% |
+| tape | five repeats | -26.2, -19.3, -19.0, -1.5, +15.0 |
+
+Scored as distributions (60 orders, 40 for the big ratios), the DISPERSION is
+broadly right and the CENTRE is what is biased:
+
+| ratio | sim median | tape range | median in band | orders in band |
+|---|---|---|---|---|
+| 3v2 | -53.1 | -49.4 | no, paladin-side | 18% |
+| 5v3 | -37.4 | -44.6 … -40.2 | no, champion-side | 15% |
+| 6v3 | +13.3 | +3.3 … +6.7 | no, champion-side | 5% |
+| 8v4 | +7.5 | -26.3 … +15.0 | **yes** | 78% |
+| 9v4 | +33.3 | +15.6 … +26.7 | no, champion-side | 18% |
+| 10v5 | +6.0 | -25.3 … +8.0 | **yes** | 52% |
+| 11v4 | +52.7 | +41.8 … +54.5 | **yes** | 72% |
+| 15v8 | -24.7 | -46.9 … -18.4 | **yes** | 73% |
+| 15v10 | -47.6 | -66.1 … -53.3 | no, champion-side | 18% |
+| 21v10 | -21.2 | -36.8 … +13.3 | **yes** | 93% |
+
+Five of ten medians land inside the tape band. The residual champion bias is
+real and one-directional in 5v3, 6v3, 9v4 and 15v10; 3v2 is the lone opposite
+case and is the one-swing bug.
+
+**21v10: 11 of 40 orders never resolve inside the engine's 3600-tick (60 s)
+guard.** The game settles every recorded 21v10 in 30.7-45.2 s. Runaway fights on
+particular opening assignments are a defect in their own right; the tool counts
+and excludes them rather than raising the cap.
 
 ## The 6v3 outlier — isolated, twice
 

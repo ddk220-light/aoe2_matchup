@@ -109,6 +109,43 @@ test("head-on Champions split the available gap without penetrating", async () =
 });
 
 
+test("unequal head-on proposals receive an equal-mass normal correction", async () => {
+  const { resolveMovementProposals } = await loadCollision();
+  const left = unit({ referenceId: 10, x: 4, y: 4 });
+  const right = unit({ referenceId: 20, owner: 3, x: 4.42, y: 4 });
+  const proposals = [proposal(10, 0.03, 0), proposal(20, -0.01, 0)];
+
+  const forward = resolveMovementProposals([left, right], proposals, openMap);
+  const reversed = resolveMovementProposals(
+    [right, left],
+    [...proposals].reverse(),
+    openMap,
+  );
+
+  assert.ok(Math.abs(forward[0].x - 4.02) < 1e-12);
+  assert.equal(forward[1].x, 4.42);
+  assert.deepEqual(byReference(forward), byReference(reversed));
+  assertNonpenetrating(forward);
+});
+
+
+test("equal-mass projection redistributes correction after one contributor caps", async () => {
+  const { resolveMovementProposals } = await loadCollision();
+  const left = unit({ referenceId: 10, x: 4, y: 4 });
+  const right = unit({ referenceId: 20, owner: 3, x: 4.41, y: 4 });
+
+  const next = resolveMovementProposals(
+    [left, right],
+    [proposal(10, 0.04, 0), proposal(20, -0.005, 0)],
+    openMap,
+  );
+
+  assert.ok(Math.abs(next[0].x - 4.01) < 1e-12);
+  assert.equal(next[1].x, 4.41);
+  assertNonpenetrating(next);
+});
+
+
 test("a moving Champion uses the available gap without moving a stationary body", async () => {
   const { resolveMovementProposals } = await loadCollision();
   const mover = unit({ referenceId: 1, x: 4, y: 4 });

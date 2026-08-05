@@ -188,6 +188,32 @@ function constrainObstacle(body, obstacle) {
 }
 
 
+function distributeEqualMassRemoval(excess, available) {
+  const removed = available.map(() => 0);
+  let remaining = excess;
+  let contributors = available
+    .map((amount, index) => ({ amount, index }))
+    .filter(({ amount }) => amount > 0)
+    .map(({ index }) => index);
+
+  while (remaining > EPSILON && contributors.length > 0) {
+    const equalShare = remaining / contributors.length;
+    let removedThisPass = 0;
+    const uncapped = [];
+    for (const index of contributors) {
+      const capacity = available[index] - removed[index];
+      const amount = Math.min(equalShare, capacity);
+      removed[index] += amount;
+      removedThisPass += amount;
+      if (capacity - amount > EPSILON) uncapped.push(index);
+    }
+    remaining -= removedThisPass;
+    contributors = uncapped;
+  }
+  return removed;
+}
+
+
 function constrainPair(left, right) {
   const centerX = right.x - left.x;
   const centerY = right.y - left.y;
@@ -203,9 +229,10 @@ function constrainPair(left, right) {
   const excess = closure - gap;
   const leftInward = Math.max(0, leftNormal);
   const rightInward = Math.max(0, -rightNormal);
-  const totalInward = leftInward + rightInward;
-  const removeLeft = excess * leftInward / totalInward;
-  const removeRight = excess * rightInward / totalInward;
+  const [removeLeft, removeRight] = distributeEqualMassRemoval(
+    excess,
+    [leftInward, rightInward],
+  );
   left.dx -= nx * removeLeft;
   left.dy -= ny * removeLeft;
   right.dx += nx * removeRight;

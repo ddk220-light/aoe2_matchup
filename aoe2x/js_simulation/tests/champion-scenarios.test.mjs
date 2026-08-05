@@ -116,6 +116,7 @@ test("unit state is an immutable, idle Champion with integer action timers", asy
     hp: 70,
     alive: true,
     targetId: null,
+    avoidance: null,
     action: "idle",
     actionTimers: { windup: 0, reload: 0 },
   });

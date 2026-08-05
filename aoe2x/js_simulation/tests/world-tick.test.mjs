@@ -25,6 +25,8 @@ function unit({
   action = "idle",
   windup = 0,
   reload = 0,
+  facing = 0,
+  avoidance = null,
   unitMechanics = mechanics,
 } = {}) {
   return {
@@ -32,12 +34,13 @@ function unit({
     owner,
     x,
     y,
-    facing: 0,
+    facing,
     mechanics: unitMechanics,
     unitMaster: unitMechanics.unit_master,
     hp,
     alive,
     targetId,
+    avoidance,
     action,
     actionTimers: { windup, reload },
   };
@@ -103,6 +106,38 @@ test("both sides decide from the same start-of-tick snapshot", async () => {
       ["move", 1699],
     ],
   );
+});
+
+
+test("world publication preserves blocker-aware local route state", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const start = scenario([
+    unit({ referenceId: 1, owner: 2, x: 2.5, y: 5.5, facing: -3 * Math.PI / 8 }),
+    unit({ referenceId: 2, owner: 2, x: 3.5, y: 6.5 }),
+    unit({ referenceId: 3, owner: 3, x: 5.5, y: 8.5 }),
+  ]);
+
+  const next = stepWorld(createWorld(start));
+
+  assert.deepEqual(next.units.find(({ referenceId }) => referenceId === 1).avoidance, {
+    blockerReferenceId: 2,
+    targetReferenceId: 3,
+    side: 1,
+  });
+});
+
+
+test("resolved movement updates facing for later symmetric route choices", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const start = scenario([
+    unit({ referenceId: 1, owner: 2, x: 4, y: 4, facing: 0 }),
+    unit({ referenceId: 2, owner: 3, x: 5, y: 5, facing: 0 }),
+  ]);
+
+  const next = stepWorld(createWorld(start));
+
+  assert.ok(Math.abs(next.units[0].facing - Math.PI / 4) < 1e-12);
+  assert.ok(Math.abs(next.units[1].facing - -3 * Math.PI / 4) < 1e-12);
 });
 
 

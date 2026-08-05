@@ -499,6 +499,7 @@ export function runChampionRatio(ratio, { reverseUnits = false } = {}) {
   const result = runWorld(createWorld(orderedScenario));
   const livingUnits = result.world.units.filter(({ alive }) => alive);
   const deadUnits = result.world.units.filter(({ alive }) => !alive);
+  const winnerHp = livingUnits.reduce((total, unit) => total + unit.hp, 0);
   const damageEvents = Object.freeze(result.events.filter(({ type }) => type === "damage"));
   const trace = simulationTrace(result, damageEvents);
   const tapeComparisons = truth.ratios[ratio].runs.map((run) => {
@@ -528,6 +529,8 @@ export function runChampionRatio(ratio, { reverseUnits = false } = {}) {
     eventLogHash: hashCanonicalJson(result.events),
     finalStateHash: hashCanonicalJson(finalState),
     livingUnits: Object.freeze(livingUnits),
+    winnerOwner: result.winner,
+    winnerHp,
     winner: livingUnits[0],
     loser: deadUnits[0],
   });

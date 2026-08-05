@@ -264,10 +264,7 @@ function resolveConstraints(bodies, obstacles, bounds) {
     if (largestCorrection <= EPSILON) return;
   }
 
-  for (const body of bodies) {
-    body.dx = 0;
-    body.dy = 0;
-  }
+  throw new Error(`collision constraints did not converge after ${MAX_CONSTRAINT_SWEEPS} sweeps`);
 }
 
 
@@ -309,10 +306,7 @@ export function resolveMovementProposals(snapshot, proposals, map) {
   validateStartingGeometry(bodies, obstacles, bounds);
   resolveConstraints(bodies, obstacles, bounds);
   if (!finalGeometryIsValid(bodies, obstacles, bounds)) {
-    for (const body of bodies) {
-      body.dx = 0;
-      body.dy = 0;
-    }
+    throw new Error("collision constraints produced invalid final geometry");
   }
 
   const nextByIndex = new Array(snapshot.length);

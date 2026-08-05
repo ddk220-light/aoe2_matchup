@@ -65,6 +65,7 @@ export function createUnitState({
     hp,
     alive: true,
     targetId: null,
+    avoidance: null,
     action: "idle",
     actionTimers: freezeTimers(actionTimers),
   });

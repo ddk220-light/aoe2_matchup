@@ -1,4 +1,5 @@
 import { resolveMovementProposals } from "./collision.js";
+import { planLocalAvoidance } from "./local-avoidance.js";
 import { proposeMovement } from "./movement.js";
 import { selectTarget } from "./targeting.js";
 import { TICKS_PER_SECOND } from "../simulation-clock.js";
@@ -26,6 +27,9 @@ const MAX_WORLD_TICKS = 3600;
 function freezeUnit(unit) {
   return Object.freeze({
     ...unit,
+    avoidance: unit.avoidance === null || unit.avoidance === undefined
+      ? null
+      : Object.freeze({ ...unit.avoidance }),
     actionTimers: Object.freeze({ ...unit.actionTimers }),
   });
 }
@@ -79,6 +83,7 @@ function canonicalUnits(units, { cloneMechanics = false } = {}) {
 function mutableUnit(unit) {
   return {
     ...unit,
+    avoidance: unit.avoidance === null ? null : { ...unit.avoidance },
     actionTimers: { ...unit.actionTimers },
   };
 }
@@ -119,6 +124,7 @@ function validateTargets(units, tick, events) {
   for (const unit of units) {
     if (!unit.alive) {
       unit.targetId = null;
+      unit.avoidance = null;
       unit.action = "dead";
       unit.actionTimers = { windup: 0, reload: 0 };
       continue;
@@ -145,6 +151,7 @@ function validateTargets(units, tick, events) {
       }));
     }
     unit.targetId = null;
+    unit.avoidance = null;
     unit.actionTimers.windup = 0;
     unit.action = unit.actionTimers.reload > 0 ? "reload" : "idle";
   }
@@ -173,7 +180,8 @@ function moveUnits(units, map, tick, events) {
       ? proposeMovement(unit, target, TICKS_PER_SECOND)
       : Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
   });
-  const moved = resolveMovementProposals(live, proposals, map);
+  const planned = planLocalAvoidance(live, proposals);
+  const moved = resolveMovementProposals(planned.units, planned.proposals, map);
   const movedByReference = new Map(moved.map((unit) => [unit.referenceId, unit]));
   const proposalByReference = new Map(proposals.map((proposal) => [proposal.referenceId, proposal]));
   const moveEvents = [];
@@ -186,7 +194,9 @@ function moveUnits(units, map, tick, events) {
     const dy = result.y - before.y;
     unit.x = result.x;
     unit.y = result.y;
+    unit.avoidance = result.avoidance;
     if (dx !== 0 || dy !== 0) {
+      unit.facing = Math.atan2(dy, dx);
       moveEvents.push(event(tick, "move", unit.referenceId, unit.targetId, { dx, dy }));
     }
     const proposal = proposalByReference.get(unit.referenceId);
@@ -314,6 +324,7 @@ function commitReadyAttacks(units, ready, tick, events) {
 
     target.alive = false;
     target.targetId = null;
+    target.avoidance = null;
     target.action = "dead";
     target.actionTimers = { windup: 0, reload: 0 };
     events.push(createDeathEvent({

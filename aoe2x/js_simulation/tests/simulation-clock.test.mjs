@@ -26,6 +26,12 @@ test("fractional readiness always advances to a real tick", async () => {
   assert.equal(secondsToTicksCeil(2.001), 121);
 });
 
+test("readiness rejects seconds that cannot produce a safe integer tick", async () => {
+  const { secondsToTicksCeil } = await loadClock();
+
+  assert.throws(() => secondsToTicksCeil(Number.MAX_VALUE), RangeError);
+});
+
 test("clock conversions reject invalid seconds and non-integer ticks", async () => {
   const { secondsToTicksCeil, ticksToSeconds } = await loadClock();
 

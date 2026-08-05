@@ -2,7 +2,11 @@ export const TICKS_PER_SECOND = 60;
 
 export function secondsToTicksCeil(seconds) {
   assertFiniteNonnegative(seconds, "seconds");
-  return Math.ceil(seconds * TICKS_PER_SECOND);
+  const ticks = Math.ceil(seconds * TICKS_PER_SECOND);
+  if (!Number.isSafeInteger(ticks)) {
+    throw new RangeError("seconds must convert to a safe integer tick count");
+  }
+  return ticks;
 }
 
 export function ticksToSeconds(ticks) {

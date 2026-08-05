@@ -15,18 +15,28 @@ TICK_CANDIDATES_HZ = (50, 60)
 
 
 def analyze_clock(truth: dict) -> dict:
-    """Return read-only 1v1 timestamp evidence and an explicit 60-Hz hypothesis.
+    """Return complete timestamp evidence and an explicit 60-Hz hypothesis.
 
     The evidence identifies recorder cadence and evaluates both integer-tick
     candidates.  It intentionally does not inspect combat outcomes or HP.
     """
-    runs = truth["ratios"]["1v1"]["runs"]
+    ratios_analyzed = list(truth["ratios"])
+    run_inventory = {
+        ratio: [run["tag"] for run in truth["ratios"][ratio]["runs"]]
+        for ratio in ratios_analyzed
+    }
+    runs = [
+        run
+        for ratio in ratios_analyzed
+        for run in truth["ratios"][ratio]["runs"]
+    ]
     intervals = _same_attacker_intervals(runs)
     return {
         "archive": truth["archive"],
         "zip_sha256": truth["zip_sha256"],
-        "ratio": "1v1",
-        "run_tags": [run["tag"] for run in runs],
+        "ratios_analyzed": ratios_analyzed,
+        "run_inventory": run_inventory,
+        "runs_analyzed": len(runs),
         "recorder_stream_hz": _observed_rates(runs, "stream_hz"),
         "position_sample_hz": _observed_rates(runs, "position_sample_hz"),
         "same_attacker_intervals_s": _interval_summary(intervals),
@@ -62,7 +72,7 @@ def _same_attacker_intervals(runs: list[dict]) -> list[float]:
 
 def _interval_summary(intervals: list[float]) -> dict:
     if not intervals:
-        raise ValueError("1v1 clock analysis requires same-attacker damage intervals")
+        raise ValueError("clock analysis requires same-attacker damage intervals")
     return {
         "count": len(intervals),
         "values": intervals,

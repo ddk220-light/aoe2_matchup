@@ -30,6 +30,22 @@ export function surfaceGap(a, b) {
 }
 
 
+// AoE2:DE lets a unit shrink its own obstruction when it bumps a FRIENDLY unit,
+// so a crowd can close up instead of deadlocking. The shrink factor is a real
+// per-unit dat field (DeadFish.min_collision_size_multiplier = 0.8 here), and
+// the tapes show its three plateaus exactly: ally pairs pile up at 0.40 tiles
+// (0.20 + 0.20, neither shrunk, n=9954), then 0.36 (0.16 + 0.20, one shrunk,
+// n=2057), then 0.32 (0.16 + 0.16, both shrunk, n=195). Only 0.1% of samples
+// fall below 0.32. Enemies never shrink -- they hold 0.40 without exception.
+export function allyCollisionRadius(unit) {
+  const multiplier = unit?.mechanics?.min_collision_size_multiplier;
+  if (!Number.isFinite(multiplier) || multiplier <= 0 || multiplier > 1) {
+    throw new RangeError("min collision size multiplier must be within (0, 1]");
+  }
+  return collisionRadius(unit) * multiplier;
+}
+
+
 // Genie obstruction is an axis-aligned box, not a circle. The authorized tapes
 // confirm it directly: across all 15 recordings enemy Champions never close
 // below a Chebyshev separation of 0.4000 tiles (= 0.2 + 0.2 half-extents), and

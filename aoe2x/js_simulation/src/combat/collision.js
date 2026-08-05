@@ -1,4 +1,4 @@
-import { collisionRadius } from "./targeting.js";
+import { allyCollisionRadius, collisionRadius } from "./targeting.js";
 
 
 const EPSILON = 1e-12;
@@ -85,6 +85,7 @@ function normalizeBodies(snapshot, proposals) {
       y: requireFinite(unit.y, "unit y"),
       radius: collisionRadius(unit),
       owner: unit.owner,
+      allyRadius: allyCollisionRadius(unit),
       stationary: proposed.dx === 0 && proposed.dy === 0,
       dx: proposed.dx,
       dy: proposed.dy,
@@ -244,16 +245,15 @@ function distributeEqualMassRemoval(excess, available) {
 // meet on, which a Euclidean radius cannot produce. Resolution is the standard
 // minimum-translation push along the axis that is closest to clearing.
 function constrainPair(left, right) {
-  // Ally separation only binds when BOTH units are trying to move. A unit that
-  // has stopped -- because it reached attack range, or because its swing has it
-  // rooted for the animation -- offers no resistance, so an ally walking into it
-  // settles inside its box and stays there. Measured across all 15 tapes: ally
-  // pairs breach the 0.4000-tile box in 1.9% of frames where both are moving,
-  // 6.8% where one walks into a stopped ally (the deepest overlaps, down to
-  // 0.2352), and 15.3% where both have stopped and nothing separates them again.
-  // Enemy pairs breach it in none.
-  if (left.owner === right.owner && (left.stationary || right.stationary)) return 0;
-  const extent = left.radius + right.radius;
+  // Allies obstruct each other just as enemies do, but a MOVING unit shrinks its
+  // own obstruction against a friendly (DeadFish.min_collision_size_multiplier)
+  // so the crowd closes up instead of deadlocking. A stopped unit is not trying
+  // to go anywhere and keeps its full box.
+  const allied = left.owner === right.owner;
+  const extent = allied
+    ? (left.stationary ? left.radius : left.allyRadius)
+      + (right.stationary ? right.radius : right.allyRadius)
+    : left.radius + right.radius;
   const centerX = right.x - left.x;
   const centerY = right.y - left.y;
   if (Math.max(

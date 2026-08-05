@@ -224,6 +224,7 @@ def export_champion_mechanics(reference_db: Path, dat_path: Path) -> dict:
         "movement_blocks.terrain_restriction": "unit.terrain_restriction",
         "movement_blocks.fly_mode": "unit.fly_mode",
         "movement_blocks.hill_mode": "unit.hill_mode",
+        "min_collision_size_multiplier": "unit.dead_fish.min_collision_size_multiplier",
         "attack_graphic": "unit.type_50.attack_graphic",
         "frame_delay": "unit.type_50.frame_delay",
         "derived.damage_vs_self": (
@@ -270,6 +271,8 @@ def export_champion_mechanics(reference_db: Path, dat_path: Path) -> dict:
             "fly_mode": int(unit.fly_mode),
             "hill_mode": int(unit.hill_mode),
         },
+        "min_collision_size_multiplier": float(
+            unit.dead_fish.min_collision_size_multiplier),
         "attack_graphic": int(unit.type_50.attack_graphic),
         "frame_delay": int(unit.type_50.frame_delay),
         "derived": {"damage_vs_self": _damage_against_self(attack_classes, armor_classes)},

@@ -291,15 +291,30 @@ function drawRock(ctx, x, y, scale) {
 export function createMapRenderer(canvas, map) {
   const ctx = canvas.getContext("2d");
   const scene = buildRenderScene(map, { orientation: VIEW_ORIENTATION });
-  const projection = createProjection({
-    mapWidth: map.width,
-    mapHeight: map.height,
-    tileWidth: TILE_WIDTH,
-    tileHeight: TILE_HEIGHT,
-    originX: 0,
-    originY: 0,
-    orientation: VIEW_ORIENTATION,
-  });
+  function buildProjection(mode) {
+    return createProjection({
+      mapWidth: map.width,
+      mapHeight: map.height,
+      tileWidth: TILE_WIDTH,
+      tileHeight: TILE_HEIGHT,
+      originX: 0,
+      originY: 0,
+      orientation: VIEW_ORIENTATION,
+      projection: mode,
+    });
+  }
+  let projectionMode = "isometric";
+  let projection = buildProjection(projectionMode);
+
+  // Centre of the projected map, in world units. The isometric footprint is a
+  // diamond centred on x = 0; the top-down footprint is a square whose centre
+  // is half the map span on both axes.
+  function mapCentreWorld() {
+    if (projectionMode === "orthographic") {
+      return { x: map.width * TILE_WIDTH / 4, y: map.height * TILE_WIDTH / 4 };
+    }
+    return MAP_CENTRE_WORLD;
+  }
   const state = {
     width: 1,
     height: 1,
@@ -338,15 +353,15 @@ export function createMapRenderer(canvas, map) {
 
   function worldToCanvas(point) {
     return {
-      x: state.width / 2 + state.panX + (point.x - MAP_CENTRE_WORLD.x) * state.zoom,
-      y: state.height / 2 + state.panY + (point.y - MAP_CENTRE_WORLD.y) * state.zoom,
+      x: state.width / 2 + state.panX + (point.x - mapCentreWorld().x) * state.zoom,
+      y: state.height / 2 + state.panY + (point.y - mapCentreWorld().y) * state.zoom,
     };
   }
 
   function canvasToWorld(x, y) {
     return {
-      x: (x - state.width / 2 - state.panX) / state.zoom + MAP_CENTRE_WORLD.x,
-      y: (y - state.height / 2 - state.panY) / state.zoom + MAP_CENTRE_WORLD.y,
+      x: (x - state.width / 2 - state.panX) / state.zoom + mapCentreWorld().x,
+      y: (y - state.height / 2 - state.panY) / state.zoom + mapCentreWorld().y,
     };
   }
 
@@ -641,10 +656,15 @@ export function createMapRenderer(canvas, map) {
     state.height = Math.max(1, rectangle.height);
     canvas.width = Math.round(state.width * pixelRatio);
     canvas.height = Math.round(state.height * pixelRatio);
-    state.fitZoom = Math.min(
-      (state.width - 48) / (map.width * TILE_WIDTH),
-      (state.height - 48) / (map.height * TILE_HEIGHT),
-    );
+    // Top-down uses square cells of TILE_WIDTH / 2, so the map is far taller
+    // on screen than the 2:1 isometric footprint and needs its own fit.
+    const spanX = projectionMode === "orthographic"
+      ? map.width * TILE_WIDTH / 2
+      : map.width * TILE_WIDTH;
+    const spanY = projectionMode === "orthographic"
+      ? map.height * TILE_WIDTH / 2
+      : map.height * TILE_HEIGHT;
+    state.fitZoom = Math.min((state.width - 48) / spanX, (state.height - 48) / spanY);
     if (!Number.isFinite(state.zoom) || state.zoom === 1) state.zoom = state.fitZoom;
     draw();
   }
@@ -657,6 +677,19 @@ export function createMapRenderer(canvas, map) {
   return Object.freeze({
     resize,
     draw,
+    setProjection(mode) {
+      if (!["isometric", "orthographic"].includes(mode)) {
+        throw new RangeError(`unknown projection ${mode}`);
+      }
+      if (mode === projectionMode) return;
+      projectionMode = mode;
+      projection = buildProjection(mode);
+      state.zoom = 1;
+      state.panX = 0;
+      state.panY = 0;
+      resize();
+    },
+    getProjection() { return projectionMode; },
     resetView() {
       state.zoom = state.fitZoom;
       state.panX = 0;

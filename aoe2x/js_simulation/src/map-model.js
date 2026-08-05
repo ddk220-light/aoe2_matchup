@@ -50,6 +50,12 @@ export function createProjection({
   originY,
   elevationHeight = tileHeight / 2,
   orientation = "default",
+  // "isometric" is the game's own 2:1 dimetric view. "orthographic" is a
+  // straight top-down view with equal scale on both axes, which is the only way
+  // to read overlap and obstruction honestly: in the isometric view two bodies
+  // that merely look adjacent can be a tile apart, and axis-aligned collision
+  // boxes render as diamonds rather than squares.
+  projection = "isometric",
 }) {
   for (const [name, value] of Object.entries({
     mapWidth,
@@ -68,6 +74,11 @@ export function createProjection({
   if (!['default', 'counterclockwise'].includes(orientation)) {
     throw new RangeError(`unknown map orientation: ${orientation}`);
   }
+  if (!["isometric", "orthographic"].includes(projection)) {
+    throw new RangeError(`unknown map projection: ${projection}`);
+  }
+  // Square cells in top-down, sized so the map covers a similar area.
+  const orthoScale = tileWidth / 2;
 
   function orient(x, y) {
     if (orientation === "counterclockwise") return { x: y, y: mapWidth - x };
@@ -88,9 +99,16 @@ export function createProjection({
     originY,
     elevationHeight,
     orientation,
+    projection,
 
     tileToScreen(x, y, elevation = 0) {
       const viewed = orient(x, y);
+      if (projection === "orthographic") {
+        return {
+          x: originX + viewed.x * orthoScale,
+          y: originY + viewed.y * orthoScale - elevation * elevationHeight,
+        };
+      }
       return {
         x: originX + (viewed.x - viewed.y) * tileWidth / 2,
         y: originY + (viewed.x + viewed.y) * tileHeight / 2 - elevation * elevationHeight,
@@ -100,6 +118,9 @@ export function createProjection({
     screenToTile(screenX, screenY) {
       const dx = screenX - originX;
       const dy = screenY - originY;
+      if (projection === "orthographic") {
+        return restore(dx / orthoScale, dy / orthoScale);
+      }
       const viewed = {
         x: dx / tileWidth + dy / tileHeight,
         y: dy / tileHeight - dx / tileWidth,

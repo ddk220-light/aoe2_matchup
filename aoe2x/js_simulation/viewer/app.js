@@ -271,6 +271,12 @@ async function start() {
       renderer.setOption(option, event.currentTarget.checked);
     });
   }
+  // Top-down removes the 2:1 isometric squash so overlap and obstruction can be
+  // read directly: collision boxes are axis-aligned squares in world space and
+  // only look like squares here.
+  byId("topDownToggle").addEventListener("change", (event) => {
+    renderer.setProjection(event.currentTarget.checked ? "orthographic" : "isometric");
+  });
   byId("resetView").addEventListener("click", () => renderer.resetView());
 
   const CHAMPION_RATIO_OPTIONS = ["1v1", "2v1", "2v3", "5v3", "6v3"];

@@ -115,12 +115,16 @@ data and the tapes are:
 | final melee armor, melee class | 4 | damage input |
 | derived self-damage | 14 | `max(1, 18 - 4)` |
 | final speed | 1.06 tiles/second | movement proposal |
+| final attack range | 0.0 tiles | additional reach beyond body contact |
 | reload time | 2.0 seconds | attack readiness |
+| attack delay | 0.0 seconds | no data-defined delay after melee release |
+| line of sight | 5.0 tiles | acquisition candidate boundary |
+| outline size X | 0.2 tiles | visual/body-field provenance, not assumed collision by itself |
 
-Attack reach, line of sight, collision radius, outline radius, attack graphic,
-frame delay, and animation timing must be exported from Genie/game data before
-combat code consumes them. Missing required mechanics are fatal input errors;
-the simulator must not replace them with guessed defaults.
+Collision size, clearance size, obstruction fields, attack graphic, frame delay,
+and animation timing must be freshly exported from the installed Genie game
+data before combat code consumes them. Missing required mechanics are fatal
+input errors; the simulator must not replace them with guessed defaults.
 
 ## Tick pipeline
 
@@ -150,9 +154,9 @@ death.
 Positions remain in scenario tile coordinates. At each tick, a pursuing unit's
 unobstructed displacement magnitude is `speed / 60`.
 
-The range check uses surface distance:
+The range check uses the gap between body surfaces:
 
-`max(0, center_distance - target_collision_radius) <= attacker_attack_reach`
+`max(0, center_distance - attacker_collision_radius - target_collision_radius) <= attack_range`
 
 Dynamic bodies never use viewer marker size. Collision radii come from the
 Champion mechanics fixture.

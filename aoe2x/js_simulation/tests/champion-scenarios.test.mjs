@@ -137,6 +137,15 @@ test("scenario validation rejects unknown ratios, duplicate IDs, nonfinite posit
 
   assert.throws(() => create({ ratio: "3v3" }), /unknown ratio/);
   assert.throws(() => create({
+    mechanics: { ...mechanics, hp: 69 },
+  }), /Champion mechanics must use 70 HP/);
+  assert.throws(() => create({
+    formation: {
+      ...formation,
+      source: { ...formation.source, sha256: "0".repeat(64) },
+    },
+  }), /source hash does not match/);
+  assert.throws(() => create({
     truth: {
       ...truth,
       ratios: {
@@ -154,6 +163,49 @@ test("scenario validation rejects unknown ratios, duplicate IDs, nonfinite posit
       },
     },
   }), /position for scenario reference 1628 must be finite/);
+  assert.throws(() => create({
+    ratio: "1v1",
+    truth: {
+      ...truth,
+      ratios: {
+        ...truth.ratios,
+        "1v1": { canonical_start_positions: [[1628, 3.5, 6.5]] },
+      },
+    },
+  }), /must contain 1 owner 2 and 1 owner 3/);
+  assert.throws(() => create({
+    ratio: "2v1",
+    truth: {
+      ...truth,
+      ratios: {
+        ...truth.ratios,
+        "2v1": {
+          canonical_start_positions: [[1628, 3.5, 6.5], [1630, 5.5, 4.5], [1699, 5.5, 8.5]],
+        },
+      },
+    },
+  }), /locked references/);
+  assert.throws(() => create({
+    truth: {
+      ...truth,
+      ratios: {
+        ...truth.ratios,
+        "1v1": { canonical_start_positions: [[1699, 3.5, 6.5], [1628, 5.5, 8.5]] },
+      },
+    },
+  }), /locked references/);
+  assert.throws(() => create({
+    ratio: "2v1",
+    truth: {
+      ...truth,
+      ratios: {
+        ...truth.ratios,
+        "2v1": {
+          canonical_start_positions: [[1628, 3.5, 6.5], [1629, 2.5, 5.5], [1699, 5.5, 8.5], [1700, 6.5, 8.5]],
+        },
+      },
+    },
+  }), /must contain 2 owner 2 and 1 owner 3/);
   assert.throws(() => create({
     formation: {
       ...formation,

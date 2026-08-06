@@ -8,13 +8,14 @@ or measured on tape — none fitted. It loads no production engine code.
 ## Current status
 
 **[Calibration status 2026-08-06](docs/CALIBRATION_STATUS_2026-08-06.md):
-26 matchups, 130 tape ratios, 0 wrong winners.** Coverage: melee
+28 matchups, 140 tape ratios, 0 wrong winners.** Coverage: melee
 (champion/paladin/steppe/elephant), Fire Lancer charge attacks, projectile
-combat with ballistics lead, scorpion pass-through bolts, minimum range,
-and both sides of the scripted-kiting AI (arbalester / elite skirmisher /
-heavy cavalry archer versus champion / paladin / elite steppe lancer /
-elite battle elephant). Per-mechanic measurement docs live in `docs/`;
-start with the status file and
+combat with ballistics lead, scorpion pass-through bolts, mangonel blast,
+projectile accuracy, minimum range, and both sides of the scripted-kiting
+AI (arbalester / elite skirmisher / heavy cavalry archer versus champion /
+paladin / elite steppe lancer / elite battle elephant / elite fire
+lancer). Per-mechanic measurement docs live in `docs/`; start with the
+status file and
 [the kiting order layer](docs/KITING_AI_ORDER_LAYER_2026-08-06.md).
 
 Calibration circuit metric: signed winner-HP% (winner's remaining HP as a

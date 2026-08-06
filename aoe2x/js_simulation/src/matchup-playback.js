@@ -187,6 +187,20 @@ const MATCHUPS = Object.freeze({
       1134: "fixtures/unit_stats/elite_battle_elephant_burmese_imperial.json",
     }),
   }),
+  eliteskirm_vs_elephant_kiting: Object.freeze({
+    truth: "calibration/fixtures/eliteskirm_vs_elephant_kiting_basics.json",
+    mechanics: Object.freeze({
+      6: "fixtures/unit_stats/elite_skirmisher_chinese_imperial.json",
+      1134: "fixtures/unit_stats/elite_battle_elephant_burmese_imperial.json",
+    }),
+  }),
+  arbalester_vs_firelancer_kiting: Object.freeze({
+    truth: "calibration/fixtures/arbalester_vs_firelancer_kiting_basics.json",
+    mechanics: Object.freeze({
+      492: "fixtures/unit_stats/arbalester_chinese_imperial.json",
+      1903: "fixtures/unit_stats/elite_fire_lancer_chinese_imperial.json",
+    }),
+  }),
 });
 
 

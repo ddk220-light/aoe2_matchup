@@ -10,7 +10,7 @@ pin), plus the steppe-chaser kiting column (three archives, same day).
 
 ## Headline
 
-**The whole corpus — 26 matchups, 130 tape ratios, ~650 sampled circuit
+**The whole corpus — 28 matchups, 140 tape ratios, ~700 sampled circuit
 runs — calls every winner correctly.** Every matchup's median winner-HP%
 sits inside or within a few points of the tape's own five-repeat envelope.
 The engine now covers melee, charge attacks, projectile combat,
@@ -52,6 +52,8 @@ compose with zero new mechanics.
 | kiting | hcavarcher_vs_steppe | 4.04 | 0 |
 | kiting | arbalester_vs_elephant | 1.98 | 0 |
 | kiting | hcavarcher_vs_elephant | 2.86 | 0 |
+| kiting | eliteskirm_vs_elephant | **0.14** | 0 |
+| kiting | arbalester_vs_firelancer | 4.36 | 0 |
 
 Melee + Fire Lancer families are hash-verified bit-identical across every
 engine change of the day. Test suite constant at 131/157 (the 26 failures
@@ -122,14 +124,18 @@ are the documented pre-existing set).
   arbalestervssteppe `3F4D8F0B69AE…`, eliteskirmvssteppe `9500E4703ACB…`,
   hcavarchervssteppe `74D83F2EBE0D…`. The chaser reuses the existing
   Elite Steppe Lancer fixture (Cumans master 1372, dat-locked).
-- Two elephant-column truth fixtures (50 fights), zip SHA-256
+- Three elephant-column truth fixtures (75 fights), zip SHA-256
   arbalestervselephant `25B5C474F573…`, hcavarchervselephant
-  `CB7D0D448D35…`; the chaser reuses the Elite Battle Elephant fixture
-  (Burmese master 1134). Both tapes obey every established rule (kiter
-  beat clocks, 0 off-lattice waypoints, wave coverage exact, per-shot
-  damage 1/2 vs its armor) and the elephant wins all ten ratios at
-  74-98% HP. Both matchups converged out of the box (1.98 / 2.86, no
-  engine change).
+  `CB7D0D448D35…`, eliteskirmvselephant `12984A63F05B…`; the chaser
+  reuses the Elite Battle Elephant fixture (Burmese master 1134). All
+  tapes obey every established rule and the elephant dominates (74-99%
+  HP). All three converged out of the box (1.98 / 2.86 / 0.14).
+- One Fire Lancer-chaser fixture (25 fights), zip SHA-256
+  arbalestervsfirelancer `2993135C74E0…` — the first CHARGE unit as a
+  kited-world chaser. The tape splits the column (arbs win 10v5, 20v15,
+  20v20; lancers win 5v10 and 15v20) and the sim reproduces every
+  winner out of the box (mean 4.36): the charge-volley model composes
+  with the kiting order layer unchanged.
 - The exporter assumes Ballistics researched (fully-teched Imperial
   model); add civ tech-tree gating before exporting an archer fixture for
   a civ without it.

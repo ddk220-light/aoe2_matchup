@@ -141,3 +141,41 @@ pocket collapse).
 - The four arrow matchups (avs/sva/svc/svp) change behavior by design
   (smart_mode 1 fixtures) and were re-validated by circuit — see the
   full-circuit table in the commit message.
+
+## Five-archive extension (same day, second commit)
+
+The controller generalized to the full {arbalester, elite skirmisher, heavy
+cav archer} x {champion, paladin} kiting grid (five new archives, 125
+fights) with three additions, each measured:
+
+1. **Per-kiter cycle profiles** (`kiteProfile` in the truth fixture): the
+   script runs a 0.667 s order clock; arbalesters beat every 3 slots
+   (2.00 s, move +0.67), elite skirmishers every 5 (3.33 s — reload 3.0 —
+   moves +0.67 and +2.00, cycle move pairs share one waypoint), heavy cav
+   archers every 3 with first beat at ~0.57 s, finishing top-ups +0.67 and
+   move +1.33. Wave coverage (all but the four lowest ids; <=5 gets one
+   platoon order) verified EXACT on every multi-champion fight of all six
+   archives.
+2. **Reach-gated bookkeeping**: shooters are only assigned to targets they
+   can legally hit (reach + minimum range) — 613/613 recorded beat-targets
+   land ~100% of assigned damage, and without the gate a chaser grinding a
+   straggler soaked whole volleys out of range. Pressure split: when even
+   the full pool cannot kill the first target, pools >= 12 split ~75/25
+   over the first two targets (mains 14-16 of 20, ~11 of 15; rosters of 10
+   or fewer stack all-on-one in every archive; hcc's mains are exactly
+   ceil(70/6)+1 = 13, disambiguating bookkeeping from the split).
+3. **Minimum-range pin** (dat type_50.min_range, the esc/kac discriminator):
+   a chaser inside its target's own minimum range cannot be shot by it —
+   dwell accumulates through reach flickers while pinned (the skirmisher
+   tapes' steady grind: 0.37 hit rate inside 0.5 s of contact) while
+   min-range-0 kiters never pin and reset every walk cycle (the arbalester
+   tapes' 0.09-0.17). Symmetrically, a PINNED ranged unit holds fire and
+   min-range-retreats without freelancing onto another target — which also
+   replaced scorpion_vs_champion's residual with its best-ever fit
+   (12.24 -> 2.90 after the point-blank hole and the freelance fallback
+   were both closed).
+
+Final circuit (25 orders each, whole corpus): **21 matchups, 105 ratios, 0
+wrong winners.** Kiting: kac 3.88 / avp 2.84 / esc 2.36 / esp 0.00 /
+hcc 0.66 / hcp 0.54. Ranged: avs 1.70 / sva 0.68 / svc 2.90 / svp 1.38.
+Melee + Fire Lancer bit-identical throughout.

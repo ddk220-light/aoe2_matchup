@@ -27,6 +27,7 @@
 
 import { TICKS_PER_SECOND } from "../simulation-clock.js";
 import { calculateDamage } from "./attacks.js";
+import { isWithinReach } from "./targeting.js";
 
 export const ORDERS_ENABLED = process.env.AOE2X_EXP_ORDERS === "1";
 // AOE2X_EXP_NO_RESCUE=1 disables the mid-fight idle rescue (probe flag: the
@@ -270,12 +271,50 @@ const KITE_RING_HALF_TILES = 3.0;
 const KITE_RING_STEP_TILES = 1.5;
 const KITE_WAYPOINT_LEAD_TILES = 4.0;
 const KITE_MAP_MARGIN = 1.5;
+// Pressure-split share, measured on the skirmisher and heavy-cav-archer
+// archives: when even the whole roster cannot kill the first target this
+// beat, a LARGE roster does not stack everyone on it — main groups run
+// 14-16 of 20 and ~11 of 15 (esc/esp/hcp) with the remainder on the second
+// target. Rosters of 10 or fewer stay all-on-one in every archive (kac,
+// esc 10v5, hcp 10v5, the 5v10s). The hcc archive disambiguates the split
+// from bookkeeping: with per-shot damage 6 its mains are exactly
+// ceil(70/6)+1 = 13, not 15.
+const KITE_PRESSURE_SHARE = 0.75;
+const KITE_PRESSURE_MIN_ROSTER = 12;
+
+// Script cycle profile. Every recorded archive runs the same 0.667 s order
+// clock; the per-kiter cycle differs and is recorded in the truth fixture
+// as `kiteProfile` (a property of the recorded scenario, like kiteOwner):
+//   arbalester (kac/avp): beat 2.00 s, move +0.67 s, pre-fight move ~1.3 s;
+//   elite skirm (esc/esp): beat 3.33 s (reload 3.0), moves +0.67 and
+//     +2.00 s, pre-fight moves ~1.3/2.6 s;
+//   heavy cav archer (hcc/hcp): first beat ~0.57 s (they open firing),
+//     beat 2.00 s, finishing TOP-UP designations +0.67 s, move +1.33 s.
+// The default is the arbalester profile (backwards compatible with kac).
+const DEFAULT_KITE_PROFILE = Object.freeze({
+  beatTicks: KITE_BEAT_TICKS,
+  firstBeatTick: KITE_BEAT_TICKS,
+  moveOffsetTicks: Object.freeze([KITE_MOVE_OFFSET_TICKS]),
+  topupOffsetTicks: Object.freeze([]),
+  preMoveTicks: Object.freeze([KITE_FIRST_MOVE_TICK]),
+});
 
 
-export function createKiteState(kiteOwner) {
+export function createKiteState(kiteOwner, kiteProfile = null) {
+  const profile = kiteProfile
+    ? {
+      beatTicks: kiteProfile.beatTicks,
+      firstBeatTick: kiteProfile.firstBeatTick,
+      moveOffsetTicks: [...kiteProfile.moveOffsetTicks],
+      topupOffsetTicks: [...(kiteProfile.topupOffsetTicks ?? [])],
+      preMoveTicks: [...(kiteProfile.preMoveTicks ?? [])],
+    }
+    : DEFAULT_KITE_PROFILE;
   return {
     owner: kiteOwner,
-    nextBeat: KITE_BEAT_TICKS,
+    profile,
+    nextBeat: profile.firstBeatTick,
+    lastBeatTick: null,
     meleeAssigned: false,
     meleeActive: null,      // ids of melee units that ever received an order
     lastTargetIds: [],
@@ -371,25 +410,53 @@ function kiteAttackBeat(state, kiters, enemies, tick, events, makeEvent) {
   });
   ordered.push(...fresh);
 
+  // Only shooters that can actually deliver are assigned: 613/613 recorded
+  // beat-targets land ~100% of their assigned damage, so the script never
+  // spends shooters on a target beyond their reach (or inside their minimum
+  // range). Without this gate a chaser grinding a straggler behind the
+  // group soaks the whole volley out of range and survives 20-second
+  // killing sprees no tape shows.
   const assigned = [];
   let lastTarget = null;
-  let cursor = 0;
+  let pool = roster;
+  let firstAssignment = true;
+  let pressure = false;
   for (const target of ordered) {
-    if (cursor >= roster.length) break;
-    const perShot = Math.max(1, calculateDamage(roster[cursor], target));
-    const wanted = Math.floor(target.hp / perShot) + 1;
-    const count = Math.min(roster.length - cursor, wanted);
-    for (const unit of roster.slice(cursor, cursor + count)) {
+    if (pool.length === 0) break;
+    const eligible = [];
+    const rest = [];
+    for (const unit of pool) {
+      (isWithinReach(unit, target) ? eligible : rest).push(unit);
+    }
+    if (eligible.length === 0) continue;
+    const perShot = Math.max(1, calculateDamage(eligible[0], target));
+    let wanted = Math.floor(target.hp / perShot) + 1;
+    if (firstAssignment) {
+      // Pressure split (see KITE_PRESSURE_SHARE): when even the full pool
+      // cannot kill the first shootable target, a large pool splits ~75/25
+      // across the first two targets instead of stacking.
+      pressure = wanted > pool.length
+        && pool.length >= KITE_PRESSURE_MIN_ROSTER
+        && ordered.length >= 2;
+      firstAssignment = false;
+      if (pressure) wanted = Math.ceil(pool.length * KITE_PRESSURE_SHARE);
+    } else if (pressure) {
+      wanted = pool.length;
+    }
+    const count = Math.min(eligible.length, wanted);
+    for (const unit of eligible.slice(0, count)) {
       delete unit.moveOrder;
       applyOrder(unit, target, tick, events, makeEvent);
     }
     assigned.push(target.referenceId);
     lastTarget = target;
-    cursor += count;
+    pool = eligible.slice(count).concat(rest);
   }
-  // Leftover shooters pile onto the last designated target.
+  // Leftover shooters pile onto the last designated target when they can
+  // reach it; the rest keep their move order and stay with the formation.
   if (lastTarget !== null) {
-    for (const unit of roster.slice(cursor)) {
+    for (const unit of pool) {
+      if (!isWithinReach(unit, lastTarget)) continue;
       delete unit.moveOrder;
       applyOrder(unit, lastTarget, tick, events, makeEvent);
     }
@@ -550,14 +617,29 @@ export function issueKiteOrders(state, units, map, tick, events, makeEvent) {
     }
   }
 
+  const { profile } = state;
   if (tick === state.nextBeat) {
     kiteAttackBeat(state, kiters, enemies, tick, events, makeEvent);
-    state.nextBeat = tick + KITE_BEAT_TICKS;
+    state.lastBeatTick = tick;
+    state.nextBeat = tick + profile.beatTicks;
     return;
   }
-  const moveTick = state.nextBeat - KITE_BEAT_TICKS + KITE_MOVE_OFFSET_TICKS;
-  if (tick === KITE_FIRST_MOVE_TICK
-      || (tick === moveTick && tick > KITE_BEAT_TICKS)) {
+  if (state.lastBeatTick === null) {
+    if (profile.preMoveTicks.includes(tick)) {
+      kiteMoveOrder(state, kiters, enemies, map, tick, events, makeEvent);
+    }
+    return;
+  }
+  const offset = tick - state.lastBeatTick;
+  if (profile.topupOffsetTicks.includes(offset)) {
+    // Finishing top-up: re-run the bookkeeping designation against current
+    // hit points. Units already reloading keep their cycle; only shooters
+    // that have not fired yet (still closing) change aim — the recorded
+    // top-ups are 1-2 unit finishing commands.
+    kiteAttackBeat(state, kiters, enemies, tick, events, makeEvent);
+    return;
+  }
+  if (profile.moveOffsetTicks.includes(offset)) {
     kiteMoveOrder(state, kiters, enemies, map, tick, events, makeEvent);
   }
 }

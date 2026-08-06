@@ -196,7 +196,7 @@ export function createWorld(scenario) {
     // the scenario names a kiting owner, so every other world keeps its
     // exact published shape.
     ...(Number.isSafeInteger(scenario.kiteOwner)
-      ? { kiteState: createKiteState(scenario.kiteOwner) }
+      ? { kiteState: createKiteState(scenario.kiteOwner, scenario.kiteProfile ?? null) }
       : {}),
     ...(anyCharge ? { projectiles: Object.freeze([]) } : {}),
     tick: 0,
@@ -492,6 +492,7 @@ function moveUnits(units, map, tick, events, kiteState = null) {
 // recorded contrast. Engagement, once started, persists while the target
 // stays in reach, so reload-paced multi-hit catches still occur.
 const KITE_CHASE_DWELL_TICKS = Math.round(1.0 * TICKS_PER_SECOND);
+const KITE_DWELL_HOLD_RADIUS_TILES = 1.0;
 
 
 function updateEngagements(units, contacts, tick, events, blockedIds, kiteState = null) {
@@ -530,21 +531,34 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
       const pursued = unit.pursuitTargetId === null || unit.pursuitTargetId === undefined
         ? null
         : snapshot.find(({ referenceId }) => referenceId === unit.pursuitTargetId);
-      const inReach = pursued && pursued.alive && pursued.owner !== unit.owner
+      // Dwell counts continuous in-reach ticks on the current pursuit
+      // target — EXCEPT that a chaser parked inside its target's own
+      // MINIMUM RANGE keeps accumulating through reach flickers: the target
+      // cannot shoot its pinner (dat type_50.min_range) and backpedals at
+      // near-zero relative speed, which is the skirmisher tapes' steady
+      // grind (hits within the first second of contact 37% of the time).
+      // Against a min-range-0 kiter no pin exists, the chaser loses reach
+      // for a full walk phase every cycle and resets — the arbalester
+      // tapes' 0.09-0.17 conversion. Swing START still requires reach.
+      const gap = pursued && pursued.alive && pursued.owner !== unit.owner
+        ? Math.hypot(pursued.x - unit.x, pursued.y - unit.y)
+        : Infinity;
+      const inReach = gap <= KITE_DWELL_HOLD_RADIUS_TILES + 1e-12
         && isWithinReach(unit, pursued);
-      // Continuous in-reach dwell on the CURRENT pursuit target; leaving
-      // reach or retargeting resets it.
-      const dwell = kiteState.reachDwell.get(unit.referenceId);
-      const ticksInReach = inReach
-        && dwell && dwell.targetId === pursued.referenceId ? dwell.ticks + 1 : (inReach ? 1 : 0);
-      if (inReach) {
+      const pinned = gap < (pursued?.mechanics?.ranged?.min_range_tiles ?? 0) - 1e-12;
+      const previous = kiteState.reachDwell.get(unit.referenceId);
+      const carried = previous && previous.targetId === pursued?.referenceId
+        ? previous.ticks
+        : 0;
+      const accumulating = inReach || pinned;
+      if (accumulating) {
         kiteState.reachDwell.set(unit.referenceId,
-          { targetId: pursued.referenceId, ticks: ticksInReach });
+          { targetId: pursued.referenceId, ticks: carried + 1 });
       } else {
         kiteState.reachDwell.delete(unit.referenceId);
       }
       const nextTargetId = inReach
-        && (ticksInReach >= KITE_CHASE_DWELL_TICKS
+        && (carried + 1 >= KITE_CHASE_DWELL_TICKS
           || previousTargetId === pursued.referenceId)
         ? pursued.referenceId
         : null;
@@ -607,9 +621,24 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
     // swing paladin_vs_elephant 5v3 from band error 0.4 to 10.7; blocked units
     // farther out fight through selectEngagementTarget's outline fallback
     // instead, which is what the steppe back line actually exercises.
-    const nextTargetId = pursued && pursued.alive && isWithinStopRange(self, pursued)
+    // The pursuit target must also be legally attackable: isWithinReach
+    // carries the minimum-range gate (dat type_50.min_range; scorpion fire
+    // distances bottom out at 2.19 vs its 2.0, and the skirmisher tapes
+    // deliver less than half their theoretical beat output because chasers
+    // glued inside 1.0 cannot be shot). For melee actors stop range implies
+    // reach (collision gap >= outline gap), so this adds nothing there. A
+    // ranged unit PINNED this way (pursuit target closed inside its minimum
+    // range) does not freelance onto another target either — it holds fire
+    // and min-range-retreats, target lock intact: letting it fall through
+    // to selectEngagementTarget kept every pinned scorpion firing full
+    // pass-through bolts at the rest of the pack and flipped svc 15v20 to a
+    // scorpion win the tape refutes.
+    const pursuedClosed = pursued && pursued.alive && isWithinStopRange(self, pursued);
+    const nextTargetId = pursuedClosed && isWithinReach(self, pursued)
       ? pursued.referenceId
-      : selection.target?.referenceId ?? null;
+      : (pursuedClosed && unit.mechanics?.ranged
+        ? null
+        : selection.target?.referenceId ?? null);
     if (nextTargetId === previousTargetId) continue;
     if (previousTargetId !== null && previousTargetId !== undefined) {
       events.push(event(tick, "engagement-ended", unit.referenceId, previousTargetId, {

@@ -117,6 +117,41 @@ const MATCHUPS = Object.freeze({
       567: "fixtures/unit_stats/champion_chinese_imperial.json",
     }),
   }),
+  arbalester_vs_paladin_kiting: Object.freeze({
+    truth: "calibration/fixtures/arbalester_vs_paladin_kiting_basics.json",
+    mechanics: Object.freeze({
+      492: "fixtures/unit_stats/arbalester_chinese_imperial.json",
+      569: "fixtures/unit_stats/paladin_spanish_imperial.json",
+    }),
+  }),
+  eliteskirm_vs_champion_kiting: Object.freeze({
+    truth: "calibration/fixtures/eliteskirm_vs_champion_kiting_basics.json",
+    mechanics: Object.freeze({
+      6: "fixtures/unit_stats/elite_skirmisher_chinese_imperial.json",
+      567: "fixtures/unit_stats/champion_chinese_imperial.json",
+    }),
+  }),
+  eliteskirm_vs_paladin_kiting: Object.freeze({
+    truth: "calibration/fixtures/eliteskirm_vs_paladin_kiting_basics.json",
+    mechanics: Object.freeze({
+      6: "fixtures/unit_stats/elite_skirmisher_chinese_imperial.json",
+      569: "fixtures/unit_stats/paladin_spanish_imperial.json",
+    }),
+  }),
+  hcavarcher_vs_champion_kiting: Object.freeze({
+    truth: "calibration/fixtures/hcavarcher_vs_champion_kiting_basics.json",
+    mechanics: Object.freeze({
+      474: "fixtures/unit_stats/heavy_cav_archer_saracens_imperial.json",
+      567: "fixtures/unit_stats/champion_chinese_imperial.json",
+    }),
+  }),
+  hcavarcher_vs_paladin_kiting: Object.freeze({
+    truth: "calibration/fixtures/hcavarcher_vs_paladin_kiting_basics.json",
+    mechanics: Object.freeze({
+      474: "fixtures/unit_stats/heavy_cav_archer_saracens_imperial.json",
+      569: "fixtures/unit_stats/paladin_spanish_imperial.json",
+    }),
+  }),
 });
 
 
@@ -237,6 +272,7 @@ function runRoster({ name, ratio, roster, mechanics, truth, synthetic }) {
     ratio,
     units,
     ...(Number.isSafeInteger(truth.kiteOwner) ? { kiteOwner: truth.kiteOwner } : {}),
+    ...(truth.kiteProfile ? { kiteProfile: truth.kiteProfile } : {}),
   }), { maxTicks: 9000 });
   const live = result.world.units.filter(({ alive }) => alive);
   return Object.freeze({

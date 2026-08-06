@@ -318,10 +318,44 @@ function holdsForChargeVolley(unit, target) {
 }
 
 
+// Minimum-range retreat (scorpion family), measured on the svc tapes: a
+// ranged unit with an enemy inside its dat min_range backs directly AWAY
+// from the nearest such enemy in short bursts between shots — 545 recorded
+// bursts trigger at nearest-champion p25 1.0 / p75 2.36 around the 2.0 min
+// range, move-direction alignment with away-from-threat reaches 0.97 at p75,
+// and the tape AI issues only ~2 orders per fight, so this is unit
+// behaviour, not player micro. The chase still closes (champion 1.056 vs
+// scorpion 0.65 tiles/s), which is what the recorded fights show.
+function minRangeRetreat(unit, live) {
+  const spec = unit.mechanics?.ranged;
+  if (!spec || !(spec.min_range_tiles > 0)) return null;
+  if (unit.action === "attacking") return null;
+  let nearest = null;
+  let nearestDistance = Infinity;
+  for (const other of live) {
+    if (other.owner === unit.owner) continue;
+    const distance = Math.hypot(other.x - unit.x, other.y - unit.y);
+    if (distance < spec.min_range_tiles - 1e-9 && distance < nearestDistance) {
+      nearest = other;
+      nearestDistance = distance;
+    }
+  }
+  if (!nearest || nearestDistance <= 1e-9) return null;
+  const step = unit.mechanics.speed_tiles_per_second / TICKS_PER_SECOND;
+  return Object.freeze({
+    referenceId: unit.referenceId,
+    dx: ((unit.x - nearest.x) / nearestDistance) * step,
+    dy: ((unit.y - nearest.y) / nearestDistance) * step,
+  });
+}
+
+
 function moveUnits(units, map, tick, events) {
   const live = units.filter(({ alive }) => alive).map(freezeUnit);
   const byReference = new Map(live.map((unit) => [unit.referenceId, unit]));
   const proposals = live.map((unit) => {
+    const retreat = minRangeRetreat(unit, live);
+    if (retreat) return retreat;
     const target = byReference.get(unit.pursuitTargetId);
     return target && unit.action !== "attacking" && !isWithinStopRange(unit, target)
       && !holdsForChargeVolley(unit, target)

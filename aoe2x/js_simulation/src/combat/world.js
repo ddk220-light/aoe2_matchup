@@ -15,11 +15,13 @@ import {
   selectEngagementTarget,
   selectPursuitTarget,
 } from "./targeting.js";
-import { TICKS_PER_SECOND } from "../simulation-clock.js";
+import { TICKS_PER_SECOND, secondsToTicksCeil } from "../simulation-clock.js";
 import {
   attackAnimationTicks,
   attackDelayTicks,
   calculateDamage,
+  chargeProjectileDamage,
+  chargeSpec,
   createAttackCanceledEvent,
   createAttackStartEvent,
   createDamageEvent,
@@ -164,11 +166,16 @@ export function createWorld(scenario) {
   validateInitialAttackState(units);
   const events = Object.freeze([]);
   const snapshot = createSnapshot(0, units, events);
+  // Charge-projectile flight queue, present only when the roster can fire one
+  // (Fire Lancer family) so worlds without charge units keep their exact
+  // published shape.
+  const anyCharge = units.some((unit) => chargeSpec(unit.mechanics) !== null);
   return Object.freeze({
     // Experiment-only mutable AI-player state; absent in baseline so world
     // shape and hashes are unchanged (the object is frozen but Maps inside
     // stay mutable across ticks by design).
     ...(ORDERS_ENABLED ? { orderState: createOrderState(units) } : {}),
+    ...(anyCharge ? { projectiles: Object.freeze([]) } : {}),
     tick: 0,
     ratio: scenario.ratio,
     mapHash: scenario.mapHash,
@@ -190,6 +197,7 @@ function validatePursuitTargets(units, tick, events) {
       unit.attackTargetId = null;
       unit.avoidance = null;
       unit.action = "dead";
+      delete unit.attackKind;
       unit.actionTimers = { windup: 0, reload: 0, swing: 0, acquire: 0 };
       continue;
     }
@@ -231,19 +239,21 @@ function validateAttackTargets(units, tick, events) {
     // A swing that has already released its hit runs to the end of its animation
     // even though the target is gone -- that is what makes a killer slower to
     // pick a new target than the bystanders swinging at the same corpse. Only an
-    // unreleased swing is abandoned on the spot.
-    if (unit.actionTimers.swing >= attackDelayTicks(unit.mechanics)) continue;
+    // unreleased swing is abandoned on the spot. A charge cycle releases on its
+    // own (later) frame; an abandoned unreleased charge keeps its charge.
+    const releaseTicks = unit.attackKind === "charge"
+      ? chargeSpec(unit.mechanics).windupTicks
+      : attackDelayTicks(unit.mechanics);
+    if (unit.actionTimers.swing >= releaseTicks) continue;
     events.push(createAttackCanceledEvent({
       tick,
       actorId: unit.referenceId,
       targetId: invalidTargetId,
-      readyTick: tick + Math.max(
-        0,
-        attackDelayTicks(unit.mechanics) - unit.actionTimers.swing,
-      ),
+      readyTick: tick + Math.max(0, releaseTicks - unit.actionTimers.swing),
       reason: !target?.alive ? "target-dead" : "target-invalidated",
     }));
     unit.attackTargetId = null;
+    delete unit.attackKind;
     unit.actionTimers.windup = 0;
     unit.actionTimers.swing = 0;
     unit.action = unit.actionTimers.reload > 0 ? "reload" : "idle";
@@ -281,12 +291,29 @@ function acquirePursuitTargets(units, tick, events) {
 }
 
 
+// A unit holding a FULL charge does not close on its target: all 265 tape
+// volleys are fired from a standstill at the acquisition target, 1.5-5.2
+// tiles out (line of sight is the bound), with the unit's first movement only
+// after the charge animation completes. The charge cycle it is about to start
+// (progressAttacks below) then pins it via `action === "attacking"`; once the
+// charge is spent this returns false and normal pursuit resumes.
+function holdsForChargeVolley(unit, target) {
+  const spec = chargeSpec(unit.mechanics);
+  if (!spec || !target) return false;
+  if ((unit.charge ?? 0) + 1e-9 < spec.maxCharge) return false;
+  if (unit.actionTimers.reload > 0) return false;
+  const distance = Math.hypot(target.x - unit.x, target.y - unit.y);
+  return distance <= unit.mechanics.line_of_sight_tiles;
+}
+
+
 function moveUnits(units, map, tick, events) {
   const live = units.filter(({ alive }) => alive).map(freezeUnit);
   const byReference = new Map(live.map((unit) => [unit.referenceId, unit]));
   const proposals = live.map((unit) => {
     const target = byReference.get(unit.pursuitTargetId);
     return target && unit.action !== "attacking" && !isWithinStopRange(unit, target)
+      && !holdsForChargeVolley(unit, target)
       ? proposeMovement(unit, target, TICKS_PER_SECOND)
       : Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
   });
@@ -443,27 +470,73 @@ function updateEngagements(units, contacts, tick, events, blockedIds) {
 // (blocked, or already parked). The steppe tapes show approaching lancers
 // never swinging mid-walk — they close to collision gap <= 1.0 first — while
 // blocked back-line lancers swing from the wider outline envelope.
-function progressAttacks(units, tick, events, movedIds) {
+function releaseChargeVolley(unit, target, spec, tick, events, projectiles) {
+  // The volley leaves the unit whether or not anything is left to aim at; an
+  // unreleased cycle abandoned earlier (validateAttackTargets) keeps its
+  // charge instead.
+  unit.charge = 0;
+  if (!target?.alive || target.owner === unit.owner) return;
+  const distance = Math.hypot(target.x - unit.x, target.y - unit.y);
+  const flight = Math.max(1, secondsToTicksCeil(distance / spec.projectileSpeed));
+  const amount = chargeProjectileDamage(spec, target);
+  for (let index = 0; index < spec.projectileCount; index += 1) {
+    projectiles.push({
+      actorId: unit.referenceId,
+      targetId: target.referenceId,
+      firedTick: tick,
+      arrivalTick: tick + flight,
+      index,
+      amount,
+    });
+  }
+  events.push(event(tick, "charge-volley", unit.referenceId, target.referenceId, {
+    projectiles: spec.projectileCount,
+    arrivalTick: tick + flight,
+    amount,
+  }));
+}
+
+
+function progressAttacks(units, tick, events, movedIds, projectiles) {
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
   const ready = [];
   for (const unit of units) {
     if (!unit.alive) continue;
     if (unit.actionTimers.reload > 0) unit.actionTimers.reload -= 1;
+    // Charge regeneration (dat recharge_rate per second). At the Fire
+    // Lancer's 1/30 s no recorded fight lasts long enough for a refire, but
+    // the rate is sourced and runs regardless.
+    if (unit.charge !== undefined) {
+      const spec = chargeSpec(unit.mechanics);
+      unit.charge = Math.min(
+        spec.maxCharge,
+        unit.charge + spec.rechargeRate / TICKS_PER_SECOND,
+      );
+    }
 
     if (unit.action === "attacking") {
-      const delay = attackDelayTicks(unit.mechanics);
-      const animation = attackAnimationTicks(unit.mechanics);
+      // A charge cycle runs on the dat special_graphic animation with its own
+      // (later) release frame; a melee cycle keeps the attack graphic timing.
+      const charge = unit.attackKind === "charge" ? chargeSpec(unit.mechanics) : null;
+      const delay = charge ? charge.windupTicks : attackDelayTicks(unit.mechanics);
+      const animation = charge
+        ? charge.animationTicks
+        : attackAnimationTicks(unit.mechanics);
       unit.actionTimers.swing += 1;
       unit.actionTimers.windup = Math.max(0, delay - unit.actionTimers.swing);
       if (unit.actionTimers.swing === delay) {
         const target = byReference.get(unit.attackTargetId);
-        ready.push({
-          type: "attack-ready",
-          readyTick: tick,
-          actorId: unit.referenceId,
-          targetId: unit.attackTargetId,
-          amount: target ? calculateDamage(unit, target) : 0,
-        });
+        if (charge) {
+          releaseChargeVolley(unit, target, charge, tick, events, projectiles);
+        } else {
+          ready.push({
+            type: "attack-ready",
+            readyTick: tick,
+            actorId: unit.referenceId,
+            targetId: unit.attackTargetId,
+            amount: target ? calculateDamage(unit, target) : 0,
+          });
+        }
       }
       if (unit.actionTimers.swing >= animation) {
         // Animation finished: the unit is free to retarget again. A unit whose
@@ -472,6 +545,18 @@ function progressAttacks(units, tick, events, movedIds) {
         // bystanders (still winding up) retarget on the very next tick.
         unit.action = unit.actionTimers.reload > 0 ? "reload" : "idle";
         unit.attackTargetId = null;
+        if (charge) {
+          // Completing the CHARGE cycle re-enters combat through the engine's
+          // acquisition reaction lag (the unit's own measured draw): across
+          // byte-identical tape repeats the first post-charge melee swing
+          // varies by 1.3 s (cvf 1v1: 5.56/5.87/6.85 s) — the acquisition-roll
+          // signature, not any deterministic cycle rule. The unit still WALKS
+          // toward its pursuit target during the lag (fvs/fve tapes), it just
+          // does not engage; without this the sim swings at the earliest edge
+          // of every tape band and each lancer gains a full melee hit.
+          unit.actionTimers.acquire = unit.acquireDelayTicks ?? 0;
+        }
+        delete unit.attackKind;
         unit.actionTimers.swing = 0;
       }
       continue;
@@ -480,6 +565,42 @@ function progressAttacks(units, tick, events, movedIds) {
     if (unit.actionTimers.reload === 0 && unit.action === "reload") {
       unit.action = "idle";
     }
+
+    // Charge volley: the unit's FIRST attack cycle whenever its charge is
+    // full. It fires at the acquisition (or engaged) target from wherever it
+    // stands -- 1.5-5.2 tiles out in the tapes, line of sight bounding -- with
+    // no reach or standstill gate: holdsForChargeVolley pinned the unit this
+    // tick, and every recorded volley leaves a standing unit.
+    const spec = unit.charge !== undefined ? chargeSpec(unit.mechanics) : null;
+    if (
+      spec
+      && unit.action === "idle"
+      && unit.actionTimers.reload === 0
+      && unit.charge + 1e-9 >= spec.maxCharge
+    ) {
+      const chargeTarget = byReference.get(unit.engagedTargetId)
+        ?? byReference.get(unit.pursuitTargetId);
+      if (chargeTarget?.alive && chargeTarget.owner !== unit.owner) {
+        const distance = Math.hypot(chargeTarget.x - unit.x, chargeTarget.y - unit.y);
+        if (distance <= unit.mechanics.line_of_sight_tiles) {
+          events.push(createAttackStartEvent({
+            tick,
+            actorId: unit.referenceId,
+            targetId: chargeTarget.referenceId,
+            readyTick: tick + spec.windupTicks,
+            kind: "charge",
+          }));
+          unit.action = "attacking";
+          unit.attackKind = "charge";
+          unit.attackTargetId = chargeTarget.referenceId;
+          unit.actionTimers.swing = 0;
+          unit.actionTimers.windup = spec.windupTicks;
+          unit.actionTimers.reload = reloadTicks(unit.mechanics);
+          continue;
+        }
+      }
+    }
+
     const target = byReference.get(unit.engagedTargetId);
     if (
       unit.actionTimers.reload !== 0 ||
@@ -576,6 +697,40 @@ function commitReadyAttacks(units, ready, tick, events) {
 }
 
 
+// Charge projectiles in flight land on their volley's target when their
+// arrival tick comes up, after this tick's melee commits. A projectile whose
+// target died mid-flight vanishes (the two no-damage tape volleys); the
+// firer's own later death does not recall a projectile already in the air.
+// The tapes' residual in-flight scatter (2.58 of 3 land on average, 88% on
+// the target) is not resolvable at the recorder's 10 Hz missile sampling and
+// is accepted as a documented overshoot, not modelled.
+function processChargeProjectiles(units, projectiles, tick, events) {
+  const remaining = [];
+  const arrivals = [];
+  for (const projectile of projectiles) {
+    if (projectile.arrivalTick > tick) {
+      remaining.push(projectile);
+    } else {
+      arrivals.push(projectile);
+    }
+  }
+  arrivals.sort((left, right) => (
+    left.actorId - right.actorId
+    || left.targetId - right.targetId
+    || left.index - right.index
+  ));
+  const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
+  for (const projectile of arrivals) {
+    const target = byReference.get(projectile.targetId);
+    if (!target?.alive) continue;
+    applyCommittedDamage(units, projectile.actorId, target, projectile.amount,
+      projectile.arrivalTick, tick, events,
+      { kind: "charge-projectile", projectileIndex: projectile.index });
+  }
+  return remaining;
+}
+
+
 function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, events, extra) {
   const hpBefore = target.hp;
   const hpAfter = Math.max(0, hpBefore - amount);
@@ -632,8 +787,12 @@ export function stepWorld(world) {
   issueOrders(world.orderState, units, tick, events, event);
   const { contacts, movedIds, blockedIds } = moveUnits(units, world.map, tick, events);
   updateEngagements(units, contacts, tick, events, blockedIds);
-  const ready = progressAttacks(units, tick, events, movedIds);
+  const projectiles = world.projectiles ? [...world.projectiles] : null;
+  const ready = progressAttacks(units, tick, events, movedIds, projectiles);
   commitReadyAttacks(units, ready, tick, events);
+  const remainingProjectiles = projectiles
+    ? processChargeProjectiles(units, projectiles, tick, events)
+    : null;
 
   const publishedUnits = canonicalUnits(units);
   const publishedEvents = Object.freeze(events);
@@ -644,6 +803,9 @@ export function stepWorld(world) {
   ]);
   return Object.freeze({
     ...world,
+    ...(remainingProjectiles !== null
+      ? { projectiles: Object.freeze(remainingProjectiles.map((p) => Object.freeze({ ...p }))) }
+      : {}),
     tick,
     units: publishedUnits,
     events: publishedEvents,

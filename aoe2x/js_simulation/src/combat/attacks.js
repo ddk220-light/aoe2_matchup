@@ -41,7 +41,12 @@ function createEvent(type, details) {
   const actorId = requireReference(details?.actorId, "actor reference ID");
   const targetId = requireReference(details?.targetId, "target reference ID");
   const readyTick = requireTick(details?.readyTick, "ready tick");
-  const id = `${tick}:${type}:${actorId}:${targetId}`;
+  // A charge volley can land several projectiles on one victim in the same
+  // tick; the index keeps their event ids distinct.
+  const suffix = details?.projectileIndex !== undefined
+    ? `:${details.projectileIndex}`
+    : "";
+  const id = `${tick}:${type}:${actorId}:${targetId}${suffix}`;
   return Object.freeze({
     id,
     eventId: id,
@@ -149,6 +154,88 @@ export function trampleSpec(mechanics) {
     return null;
   }
   return { widthTiles: width, damageFraction: fraction };
+}
+
+
+// Charge volley (Fire Lancer family), sourced from the Genie dat and measured
+// on the four authorized firelancer archives (108 fights, 265 volleys):
+//   - charge_type 6 fires `projectile_count` charge projectiles as the unit's
+//     FIRST attack cycle. Units spawn with full charge; every tape volley is
+//     the firer's opening attack and no unit ever refired (recharge takes 30 s
+//     and no recorded fight leaves a unit in combat that long after firing).
+//   - The charge cycle runs on the dat `special_graphic` animation (2.000 s
+//     for the Elite Fire Lancer) with the volley released on animation frame
+//     `frame_delay`: 10/30 -> 0.6667 s, tape floor 0.668 across 265 volleys.
+//     The unit stands for the WHOLE animation (first post-volley movement at
+//     anim end + the recorder's detection lag), and its regular reload runs
+//     from the same swing start, so the next melee swing follows one reload
+//     after the charge swing (tape minimum gap 2.016 s).
+//   - It is fired from a standstill at the acquisition target, 1.5-5.2 tiles
+//     out in the tapes, without closing first; line of sight is the bound.
+//   - Each projectile deals the class-matched attack total with the victim's
+//     armor VALUES ignored: champions (PA 5), paladins (PA 7), steppe lancers
+//     (PA 6) and elephants (PA 9) all take exactly 3.0 -- 684/684 events.
+//   - 88% of tape hits land on the volley's target and 2.58 of 3 projectiles
+//     land on average, victim-size independent; the residual in-game scatter
+//     is not resolvable at the recorder's 10 Hz missile sampling, so the
+//     engine flies all three at the target and accepts the ~1 damage/volley
+//     overshoot (documented in docs/FIRE_LANCER_CHARGE_2026-08-06.md).
+export function chargeSpec(mechanics) {
+  const charge = mechanics?.charge;
+  if (!charge) return null;
+  if (charge.charge_type !== 6) {
+    throw new RangeError(`unsupported charge_type ${charge.charge_type}`);
+  }
+  const maxCharge = requireFinite(charge.max_charge, "max charge");
+  const rechargeRate = requireFinite(charge.recharge_rate, "recharge rate");
+  const projectileCount = charge.projectile_count;
+  if (!Number.isSafeInteger(projectileCount) || projectileCount < 1) {
+    throw new RangeError("charge projectile count must be a positive integer");
+  }
+  const speed = requireFinite(
+    charge.projectile_speed_tiles_per_second, "charge projectile speed");
+  if (maxCharge <= 0 || speed <= 0) {
+    throw new RangeError("charge and projectile speed must be positive");
+  }
+  const windupTicks = secondsToTicksNearest(
+    requireFinite(charge.windup_seconds, "charge windup seconds"));
+  const animationTicks = secondsToTicksNearest(
+    requireFinite(charge.charge_animation?.seconds, "charge animation seconds"));
+  if (windupTicks <= 0 || windupTicks > animationTicks) {
+    throw new RangeError("charge windup must sit inside the charge animation");
+  }
+  const attacks = charge.projectile_attacks;
+  if (!attacks || typeof attacks !== "object" || !Object.keys(attacks).length) {
+    throw new TypeError("charge projectile attacks are required");
+  }
+  return {
+    maxCharge,
+    rechargeRate,
+    projectileCount,
+    projectileSpeed: speed,
+    projectileAttacks: attacks,
+    windupTicks,
+    animationTicks,
+  };
+}
+
+
+// Charge projectile damage: standard armor-class matching, armor value IGNORED.
+// The victim takes the projectile's attack amount for every bonus class it
+// carries (min 1 like any hit). All four recorded victim types measure exactly
+// the projectile's class-3 pierce amount, through pierce armor 5-9.
+export function chargeProjectileDamage(spec, target) {
+  const armors = target?.mechanics?.armor_classes;
+  if (!armors || typeof armors !== "object") {
+    throw new TypeError("target armor classes are required");
+  }
+  let damage = 0;
+  for (const [classId, attack] of Object.entries(spec.projectileAttacks)) {
+    if (attack <= 0) continue;
+    if (classValue(armors, classId, "armor") === undefined) continue;
+    damage += requireFinite(attack, `charge attack class ${classId}`);
+  }
+  return Math.max(1, damage);
 }
 
 

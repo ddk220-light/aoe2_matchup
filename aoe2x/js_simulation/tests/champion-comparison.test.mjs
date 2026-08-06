@@ -95,6 +95,22 @@ const AUDIT_OPTIONS = {
       reason: "source-backed matching armor-class bonuses are accumulated before the AoE minimum-damage rule",
     },
     {
+      file: "src/combat/attacks.js",
+      category: "HP/damage modifier",
+      token: "damage = 0",
+      context: "let damage = 0;",
+      expectedCount: 1,
+      reason: "charge-projectile accumulator starts at zero before the dat-sourced class amounts are summed",
+    },
+    {
+      file: "src/combat/attacks.js",
+      category: "HP/damage modifier",
+      token: "damage +=",
+      context: "damage += requireFinite(attack, `charge attack class ${classId}`);",
+      expectedCount: 1,
+      reason: "charge projectiles deal the dat attack amount per matched class with armor values ignored (684/684 tape events measure exactly the class-3 amount through pierce armor 5-9)",
+    },
+    {
       file: "tests/support/champion-ratio.mjs",
       category: "ratio-specific branch",
       token: "if (fixture.ratios?.[ratio]?.runs?.length !== repeatCount) {",

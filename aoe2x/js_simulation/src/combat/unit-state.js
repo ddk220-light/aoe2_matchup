@@ -1,4 +1,5 @@
 import { secondsToTicksNearest } from "../simulation-clock.js";
+import { chargeSpec } from "./attacks.js";
 import { acquisitionDelaySeconds } from "./targeting.js";
 
 
@@ -72,6 +73,11 @@ export function createUnitState({
       acquisitionDelaySeconds(acquisitionRank, acquisitionCount),
     ),
   };
+  // Charge-capable units (Fire Lancer family) carry their charge level in
+  // unit state; every tape unit opens its first fight with a full charge.
+  // Gated on the mechanics block so non-charge fixtures keep their exact
+  // canonical unit shape (and therefore their golden state hashes).
+  const charge = chargeSpec(mechanics);
   return Object.freeze({
     referenceId,
     owner,
@@ -81,6 +87,12 @@ export function createUnitState({
     mechanics,
     unitMaster,
     hp,
+    // Charge units also remember their own reaction-lag draw: completing the
+    // charge cycle re-enters combat through the same acquisition gate (see
+    // progressAttacks), and the tapes' post-charge first-melee-swing spread
+    // (1.3 s across byte-identical repeats) carries the acquisition-roll
+    // signature rather than any deterministic cycle rule.
+    ...(charge ? { charge: charge.maxCharge, acquireDelayTicks: timers.acquire } : {}),
     alive: true,
     pursuitTargetId: null,
     engagedTargetId: null,

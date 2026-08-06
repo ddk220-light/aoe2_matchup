@@ -54,6 +54,34 @@ const MATCHUPS = Object.freeze({
       1134: "fixtures/unit_stats/elite_battle_elephant_burmese_imperial.json",
     }),
   }),
+  champion_vs_firelancer: Object.freeze({
+    truth: "calibration/fixtures/champion_vs_firelancer_basics.json",
+    mechanics: Object.freeze({
+      567: "fixtures/unit_stats/champion_chinese_imperial.json",
+      1903: "fixtures/unit_stats/elite_fire_lancer_chinese_imperial.json",
+    }),
+  }),
+  paladin_vs_firelancer: Object.freeze({
+    truth: "calibration/fixtures/paladin_vs_firelancer_basics.json",
+    mechanics: Object.freeze({
+      569: "fixtures/unit_stats/paladin_spanish_imperial.json",
+      1903: "fixtures/unit_stats/elite_fire_lancer_chinese_imperial.json",
+    }),
+  }),
+  firelancer_vs_steppe: Object.freeze({
+    truth: "calibration/fixtures/firelancer_vs_steppe_basics.json",
+    mechanics: Object.freeze({
+      1903: "fixtures/unit_stats/elite_fire_lancer_chinese_imperial.json",
+      1372: "fixtures/unit_stats/elite_steppe_lancer_cumans_imperial.json",
+    }),
+  }),
+  firelancer_vs_elephant: Object.freeze({
+    truth: "calibration/fixtures/firelancer_vs_elephant_basics.json",
+    mechanics: Object.freeze({
+      1903: "fixtures/unit_stats/elite_fire_lancer_chinese_imperial.json",
+      1134: "fixtures/unit_stats/elite_battle_elephant_burmese_imperial.json",
+    }),
+  }),
 });
 
 

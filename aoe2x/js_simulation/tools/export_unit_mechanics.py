@@ -248,6 +248,85 @@ def export_unit_mechanics(
         ),
     }
 
+    # Charge ability (Fire Lancer family). Raw dat values, exported whenever
+    # charge_type is nonzero. Semantics measured from the four authorized
+    # firelancer archives (108 fights, 265 volleys, 684 charge damage events):
+    #   - charge_type 6 fires `max_total_projectiles` charge projectiles as the
+    #     unit's FIRST attack cycle (units spawn with full charge; every volley
+    #     in the tapes is the firer's opening attack; zero refires -- at
+    #     recharge_rate 1/30 s no tape fight lasts long enough to test one).
+    #   - The charge cycle uses `special_graphic` (charge_event 5 selects it):
+    #     2.000 s animation; the volley spawns on frame `frame_delay` (10/30 ->
+    #     0.6667 s, tape floor 0.668 across 265 volleys, one render frame wide).
+    #     The unit stands for the whole animation: first post-volley movement
+    #     at +1.408 s p50 (= anim end 1.333 s + the 0.05-tile detection lag).
+    #   - Fired from standstill at the acquisition target, distance 1.5-5.2
+    #     tiles (LOS-bounded), no closing beforehand.
+    #   - Each projectile flies at the projectile unit's speed and deals the
+    #     standard class-matched attack total with the victim's armor VALUES
+    #     ignored (treated as 0): champions (PA 5), paladins (PA 7), steppe
+    #     lancers (PA 6) and elephants (PA 9) all take exactly 3.0 per hit --
+    #     684/684 events, which is the projectile's class-3 pierce amount
+    #     alone (no victim here carries its class-17 bonus class).
+    #   - 88% of hits land on the volley's target and 2.58 of 3 projectiles
+    #     land on average (victim-size independent; the in-game scatter is not
+    #     resolvable at the recorder's 10 Hz missile sampling). The JS engine
+    #     models all three projectiles on the target and documents the
+    #     ~1 damage/volley overshoot as an accepted residual.
+    charge = None
+    charge_type = int(getattr(unit.creatable, "charge_type", 0) or 0)
+    if charge_type:
+        proj_id = int(unit.creatable.charge_projectile_unit)
+        proj = data.civs[0].units[proj_id] if proj_id >= 0 else None
+        if proj is None:
+            raise ValueError(f"charge_type {charge_type} without projectile unit")
+        special_graphic = int(unit.creatable.special_graphic)
+        charge_animation = _animation_seconds(data, special_graphic, "charge")
+        if frame_delay <= 0:
+            raise ValueError("charge windup needs a nonzero frame_delay")
+        proj_attacks = {
+            str(a.class_): a.amount
+            for a in proj.type_50.attacks
+            if a.amount > 0
+        }
+        charge = {
+            "max_charge": float(unit.creatable.max_charge),
+            "recharge_rate": float(unit.creatable.recharge_rate),
+            "charge_type": charge_type,
+            "charge_event": int(unit.creatable.charge_event),
+            "projectile_unit": proj_id,
+            "projectile_count": int(unit.creatable.max_total_projectiles),
+            "projectile_speed_tiles_per_second": float(proj.speed),
+            "projectile_attacks": proj_attacks,
+            "charge_animation": charge_animation,
+            "windup_seconds": (
+                charge_animation["seconds"] * frame_delay
+                / charge_animation["frames"]
+            ),
+        }
+        fields.update({
+            "charge.max_charge": "unit.creatable.max_charge",
+            "charge.recharge_rate": "unit.creatable.recharge_rate",
+            "charge.charge_type": "unit.creatable.charge_type",
+            "charge.charge_event": "unit.creatable.charge_event",
+            "charge.projectile_unit": "unit.creatable.charge_projectile_unit",
+            "charge.projectile_count": "unit.creatable.max_total_projectiles",
+            "charge.projectile_speed_tiles_per_second": (
+                f"dat.civs[0].units[{proj_id}].speed"
+            ),
+            "charge.projectile_attacks": (
+                f"positive dat.civs[0].units[{proj_id}].type_50.attacks; the"
+                " engine applies class matching with armor values IGNORED"
+                " (all four victim types measure exactly the class-3 amount)"
+            ),
+            "charge.charge_animation": (
+                "graphics[unit.creatable.special_graphic]"
+            ),
+            "charge.windup_seconds": (
+                "charge animation seconds * frame_delay / frames"
+            ),
+        })
+
     # Melee blast ("trample"). Raw dat values, exported for every unit; the
     # engine gates on attack_level == 2 and 0 < damage_fraction < 1 (the
     # Champion's blast_damage is a -5.0 "no trample" sentinel with width 0).
@@ -270,6 +349,7 @@ def export_unit_mechanics(
         "civilization": reference["civ_name"],
         "age": reference["age"],
         "blast": blast,
+        "charge": charge,
         "hp": int(reference["final_hp"]),
         "speed_tiles_per_second": float(reference["exact_speed"]),
         "attack_range_tiles": float(reference["final_range"]),

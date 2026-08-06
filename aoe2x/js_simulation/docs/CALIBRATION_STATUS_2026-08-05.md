@@ -214,6 +214,63 @@ Five of ten medians land inside the tape band. The residual champion bias is
 real and one-directional in 5v3, 6v3, 9v4 and 15v10; 3v2 is the lone opposite
 case and is the one-swing bug.
 
+## ROOT CAUSE: our units never voluntarily change target
+
+Chased on the lopsided ratios, where one side clearly wins and there is no RNG
+to hide behind, so any delta must be mechanical.
+
+On those ratios the losing side is wiped in both tape and sim, so the whole
+delta is how much damage the losers landed before dying, and that factors as
+`time alive x damage per second alive`. Our losing champions do NOT live too
+long — they live 5-40% LESS. They deal 28-46% more damage per second alive.
+
+The time budget over each champion's own lifetime says where that comes from:
+
+| ratio | attacking (tape → sim) | moving (tape → sim) |
+|---|---|---|
+| 10v10 | 48.8% → 74.3% | 39.8% → **14.5%** |
+| 20v18 | 43.7% → 58.7% | 46.3% → **22.6%** |
+| 20v15 | 44.3% → 59.5% | 46.1% → **19.4%** |
+| 15v10 | 47.1% → 70.2% | 43.5% → **20.6%** |
+| 20v20 | 45.6% → 56.6% | 45.9% → **23.8%** |
+
+**The game's units spend 40-46% of a fight walking. Ours spend 14-24%.** The
+deficit is -22 to -27 points on every large ratio and it converts almost
+one-for-one into attacking time. Paladins show the same gap (tape 35-54%
+moving, sim 28-34%), measured over the fight window — measuring it over a
+survivor's full trace instead is an artifact, since the recording keeps running
+after the fight and the idle tail swamps everything.
+
+Why they walk: **the game switches targets while the old target is still
+alive.** Splitting every switch by whether the abandoned target was still
+alive:
+
+| ratio | tape voluntary | sim voluntary |
+|---|---|---|
+| 10v10 | 43.5% | **0.0%** |
+| 20v18 | 37.3% | 4.8% |
+| 20v15 | 30.9% | 2.1% |
+| 15v10 | 43.5% | 8.9% |
+| 20v20 | 30.9% | 2.5% |
+
+31-44% of the game's target switches are voluntary; ours are 0-9% and only on
+the small ratios. The cause is explicit in `selectPursuitTarget`
+(`src/combat/targeting.js`): once `pursuitTargetId` is set it is returned
+unconditionally while the target lives, so our units re-evaluate only on a
+kill. They lock on, plant, and grind.
+
+**What the switch rule is NOT.** Tested on 217 voluntary switches: not nearest
+(60% move to a FARTHER target, median +0.25 tiles), not focus-fire (median
+target-HP change 0), not crowd relief (31% pick a less crowded target, 32% more
+crowded), not retaliation (14% pick a unit attacking them against a 12% control
+for the target they just left). No measurable preference on any axis.
+
+**What it IS: a rate.** Voluntary switches per unit-second engaged, pooled over
+eight ratios — champion **0.064/s**, paladin **0.061/s**, agreeing to 5%. Like
+the acquisition lag this is an ENGINE property rather than a unit stat: one
+voluntary retarget per ~16 s of engaged time. Since the choice shows no
+measurable bias, calibration only needs the rate.
+
 ## Error by ratio band — the sim is worst exactly where the game is
 
 Winner HP remaining as a share of that side's own starting pool, sim median
@@ -272,11 +329,20 @@ correct wherever geometry decides it).
 
 ## Open
 
-- **Screening / surround capacity** — the lead from the 62-fight set. The game
-  holds ~1 champion in 3 out of contact in big fights, we hold ~1 in 5, and the
-  three ratios where that gap is widest are exactly the three where champions
-  over-hit. Next step is to measure the game's actual per-target surround
-  limit rather than infer it from the aggregate share.
+- **Implement voluntary retargeting** — the fix for the root cause above, and
+  the only change that plausibly closes the whole >4 pt band at once. Design:
+  re-evaluate a live pursuit target at ~0.062/s per engaged unit and reselect
+  among reachable enemies. Two decisions needed first. (1) The choice is
+  unbiased on every axis measured, so it needs an RNG draw, which makes the
+  engine stochastic — it should share the seeded sampling already used by
+  `tools/sample_acquisition_orders.mjs` rather than introduce a second source.
+  (2) It changes every calibration number and requires re-capturing the golden
+  baseline. NOT started; needs sign-off.
+- **Screening / surround capacity** — earlier lead from the 62-fight set: the
+  game holds ~1 champion in 3 out of contact in big fights, we hold ~1 in 5.
+  Now believed to be a SYMPTOM of the missing voluntary retargeting rather than
+  an independent mechanism — units that never leave a target never vacate a
+  slot. Re-test after the retargeting fix before chasing it separately.
 - **3v2, off by one champion swing.** Deterministic on both sides, five units.
   Should be debuggable to a single tick.
 - **Distributional scoring.** Acquisition order has no structure (checked on the

@@ -10,15 +10,18 @@ pin), plus the steppe-chaser kiting column (three archives, same day).
 
 ## Headline
 
-**The whole corpus — 24 matchups, 120 tape ratios, ~600 sampled circuit
+**The whole corpus — 25 matchups, 125 tape ratios, ~625 sampled circuit
 runs — calls every winner correctly.** Every matchup's median winner-HP%
 sits inside or within a few points of the tape's own five-repeat envelope.
 The engine now covers melee, charge attacks, projectile combat,
 pass-through bolts, ballistics lead, minimum range, and both sides of the
-scripted-kiting AI against slow (champion), fast (paladin), and
-faster-than-the-kiter reach-fighter (Elite Steppe Lancer) chasers — with
-every constant either dat-sourced or measured on the authorized tapes,
-none fitted.
+scripted-kiting AI against slow (champion), fast (paladin),
+faster-than-the-kiter reach-fighter (Elite Steppe Lancer), and trampling
+tank (Elite Battle Elephant) chasers — with every constant either
+dat-sourced or measured on the authorized tapes, none fitted. The
+elephant column converged OUT OF THE BOX (mean 1.98, no engine change):
+the trample model, the kiting order layer, and the corrected wave rule
+compose with zero new mechanics.
 
 ## Corpus scorecard (mean band error over 5-9 ratios each, 25 sampled orders)
 
@@ -47,6 +50,7 @@ none fitted.
 | kiting | arbalester_vs_steppe | 12.68 | 0 |
 | kiting | eliteskirm_vs_steppe | 0.78 | 0 |
 | kiting | hcavarcher_vs_steppe | 4.04 | 0 |
+| kiting | arbalester_vs_elephant | 1.98 | 0 |
 
 Melee + Fire Lancer families are hash-verified bit-identical across every
 engine change of the day. Test suite constant at 131/157 (the 26 failures
@@ -117,6 +121,12 @@ are the documented pre-existing set).
   arbalestervssteppe `3F4D8F0B69AE…`, eliteskirmvssteppe `9500E4703ACB…`,
   hcavarchervssteppe `74D83F2EBE0D…`. The chaser reuses the existing
   Elite Steppe Lancer fixture (Cumans master 1372, dat-locked).
+- One elephant-column truth fixture (25 fights), zip SHA-256
+  arbalestervselephant `25B5C474F573…`; the chaser reuses the Elite
+  Battle Elephant fixture (Burmese master 1134). Its tapes obey every
+  established rule (arb beat 2.00 s, 0 off-lattice waypoints, wave
+  coverage exact, kiter shots floored at 1 damage vs its armor) and the
+  elephant wins all five ratios at 85-98% HP.
 - The exporter assumes Ballistics researched (fully-teched Imperial
   model); add civ tech-tree gating before exporting an archer fixture for
   a civ without it.

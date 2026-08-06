@@ -173,6 +173,13 @@ const MATCHUPS = Object.freeze({
       1372: "fixtures/unit_stats/elite_steppe_lancer_cumans_imperial.json",
     }),
   }),
+  arbalester_vs_elephant_kiting: Object.freeze({
+    truth: "calibration/fixtures/arbalester_vs_elephant_kiting_basics.json",
+    mechanics: Object.freeze({
+      492: "fixtures/unit_stats/arbalester_chinese_imperial.json",
+      1134: "fixtures/unit_stats/elite_battle_elephant_burmese_imperial.json",
+    }),
+  }),
 });
 
 

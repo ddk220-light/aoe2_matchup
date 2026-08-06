@@ -8,7 +8,7 @@ or measured on tape — none fitted. It loads no production engine code.
 ## Current status
 
 **[Calibration status 2026-08-06](docs/CALIBRATION_STATUS_2026-08-06.md):
-25 matchups, 125 tape ratios, 0 wrong winners.** Coverage: melee
+26 matchups, 130 tape ratios, 0 wrong winners.** Coverage: melee
 (champion/paladin/steppe/elephant), Fire Lancer charge attacks, projectile
 combat with ballistics lead, scorpion pass-through bolts, minimum range,
 and both sides of the scripted-kiting AI (arbalester / elite skirmisher /

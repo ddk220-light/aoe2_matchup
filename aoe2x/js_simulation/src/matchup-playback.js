@@ -180,6 +180,13 @@ const MATCHUPS = Object.freeze({
       1134: "fixtures/unit_stats/elite_battle_elephant_burmese_imperial.json",
     }),
   }),
+  hcavarcher_vs_elephant_kiting: Object.freeze({
+    truth: "calibration/fixtures/hcavarcher_vs_elephant_kiting_basics.json",
+    mechanics: Object.freeze({
+      474: "fixtures/unit_stats/heavy_cav_archer_saracens_imperial.json",
+      1134: "fixtures/unit_stats/elite_battle_elephant_burmese_imperial.json",
+    }),
+  }),
 });
 
 

@@ -10,7 +10,7 @@ pin), plus the steppe-chaser kiting column (three archives, same day).
 
 ## Headline
 
-**The whole corpus — 25 matchups, 125 tape ratios, ~625 sampled circuit
+**The whole corpus — 26 matchups, 130 tape ratios, ~650 sampled circuit
 runs — calls every winner correctly.** Every matchup's median winner-HP%
 sits inside or within a few points of the tape's own five-repeat envelope.
 The engine now covers melee, charge attacks, projectile combat,
@@ -51,6 +51,7 @@ compose with zero new mechanics.
 | kiting | eliteskirm_vs_steppe | 0.78 | 0 |
 | kiting | hcavarcher_vs_steppe | 4.04 | 0 |
 | kiting | arbalester_vs_elephant | 1.98 | 0 |
+| kiting | hcavarcher_vs_elephant | 2.86 | 0 |
 
 Melee + Fire Lancer families are hash-verified bit-identical across every
 engine change of the day. Test suite constant at 131/157 (the 26 failures
@@ -121,12 +122,14 @@ are the documented pre-existing set).
   arbalestervssteppe `3F4D8F0B69AE…`, eliteskirmvssteppe `9500E4703ACB…`,
   hcavarchervssteppe `74D83F2EBE0D…`. The chaser reuses the existing
   Elite Steppe Lancer fixture (Cumans master 1372, dat-locked).
-- One elephant-column truth fixture (25 fights), zip SHA-256
-  arbalestervselephant `25B5C474F573…`; the chaser reuses the Elite
-  Battle Elephant fixture (Burmese master 1134). Its tapes obey every
-  established rule (arb beat 2.00 s, 0 off-lattice waypoints, wave
-  coverage exact, kiter shots floored at 1 damage vs its armor) and the
-  elephant wins all five ratios at 85-98% HP.
+- Two elephant-column truth fixtures (50 fights), zip SHA-256
+  arbalestervselephant `25B5C474F573…`, hcavarchervselephant
+  `CB7D0D448D35…`; the chaser reuses the Elite Battle Elephant fixture
+  (Burmese master 1134). Both tapes obey every established rule (kiter
+  beat clocks, 0 off-lattice waypoints, wave coverage exact, per-shot
+  damage 1/2 vs its armor) and the elephant wins all ten ratios at
+  74-98% HP. Both matchups converged out of the box (1.98 / 2.86, no
+  engine change).
 - The exporter assumes Ballistics researched (fully-teched Imperial
   model); add civ tech-tree gating before exporting an archer fixture for
   a civ without it.

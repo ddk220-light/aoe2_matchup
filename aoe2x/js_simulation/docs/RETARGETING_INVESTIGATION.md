@@ -108,7 +108,7 @@ Implemented in `src/combat/ai-orders.js`, enabled with
 `AOE2X_EXP_ENGAGEMENT=pursuit AOE2X_EXP_ORDERS=1`; baseline is untouched
 (suite 112/27, 6v3 still 112 HP). Two refinements over the plan, both
 measured: designation is computed against positions frozen at sweep START
-(rank<=2 54.7% vs 41.9% at order time — the AI plans once while the world
+(rank<=2 54.7% vs 41.9% at order time -- the AI plans once while the world
 moves), and mid-fight rescue is rate-limited to one order per side per 1.2 s
 (the tape's re-order cadence; without it every idle unit recycles into an
 attacker within a second and the attacking share overshoots again).
@@ -120,7 +120,7 @@ improved, 6 worsened, 7 already exact stayed exact. Notable:
 
 | ratio | baseline | with orders | note |
 |---|---|---|---|
-| 3v2 | +3.6 | **0.0 — exact** | the deterministic one-swing bug, gone |
+| 3v2 | +3.6 | **0.0 -- exact** | the deterministic one-swing bug, gone |
 | 20v15 | -4.6 | **+0.3** | |
 | 5v3 | -7.2 | -2.4 | |
 | 11v4 | +5.5 | +3.6 | |
@@ -131,7 +131,7 @@ improved, 6 worsened, 7 already exact stayed exact. Notable:
 
 Open: the 21v10/10v5 regressions, and the attacking-share residual (the tape
 keeps ~45% of a big fight walking; the sim with orders reaches ~25%, because
-greedy designation still picks nearer enemies than the tape's — rank 5+ in 47%
+greedy designation still picks nearer enemies than the tape's -- rank 5+ in 47%
 of real designations means much longer cross-melee walks).
 
 

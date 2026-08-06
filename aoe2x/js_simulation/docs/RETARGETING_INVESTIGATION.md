@@ -129,10 +129,46 @@ improved, 6 worsened, 7 already exact stayed exact. Notable:
 | 21v10 | +9.3 | **+15.8** | main regression; runaway fights 11/40 -> 2/40 |
 | 10v5 | -4.4 | -7.2 | regression |
 
-Open: the 21v10/10v5 regressions, and the attacking-share residual (the tape
-keeps ~45% of a big fight walking; the sim with orders reaches ~25%, because
-greedy designation still picks nearer enemies than the tape's -- rank 5+ in 47%
-of real designations means much longer cross-melee walks).
+## 9. Designation rule resolved: ascending enemy id
+
+Tested against all 645 sweep designations. Candidate-sequence rules, all
+evaluated among not-yet-designated enemies at sweep-start positions:
+
+| rule | rank-1 hit |
+|---|---|
+| **lowest enemy id** | **37.8%** (13.3% rank 2, 9.0% rank 3 -- steep decay) |
+| nearest to recipient | 28.8% |
+| west-most first | 28.4% |
+| same-x line-opposite | 24.2% |
+| nearest to previous designation | 21.2% |
+
+Also killed: "nearest uncovered enemy" -- 72% of designations go to enemies
+that ALREADY have allies on them (coverage measured 300 ms before the order,
+named units excluded), so the AI is not spreading to unfought enemies.
+
+The sweep walks the ENEMY roster in ascending id -- the mirror of the
+descending-id recipient walk, geometry-blind, exactly the cheap iteration an
+engine does. It also explains the far designations: median recipient-to-pick
+distance 4.00 tiles where the nearest unassigned enemy sits at 3.00.
+
+Result over all 26 ratios (sampled acquisition orders, vs tape medians): mean
+|median error| **3.94 -> 3.78** (baseline 4.34). 15v10 -9.6 -> -3.9, 20v18
+-7.1 -> -3.2, 15v4 +6.7 -> +1.3, 11v4 +3.6 -> -1.8, 20v15 +0.3 -> -0.2,
+10v2 exact. Small regressions on 2v3 (+2.4, was exact -- the sweep now
+perturbs a 5-unit fight the real AI barely orders), 15v15, 20v20, 10v10.
+
+**21v10 did NOT recover (+15.8 -> +19.6), and the diagnosis moved.** The
+identity-order run is fine: paladins win with 421 HP against tape paladin-wins
+of 271/332, champion damage 1379 within the tape's 1138-1800, duration 44.4 s
+within 30.7-45.2. The miss is in the SAMPLED ensemble: the game's five repeats
+are all nail-biters (2.7-18.4% margin of pool) while our 40 uniform acquisition
+permutations spread to a 32.9% median -- the sampler injects more variance than
+the game's own RNG at this scale. On flip-prone knife-edge ratios that is a
+scoring-methodology mismatch, not an order-layer defect.
+
+Remaining residual: blocked cross-melee walkers park as idle (+15-19 pt idle
+vs tape) because local avoidance gives up where the game's pathfinder routes
+around the crowd -- a movement-engine limitation, now the largest known gap.
 
 
 Why this file exists: the remaining calibration error is concentrated in how

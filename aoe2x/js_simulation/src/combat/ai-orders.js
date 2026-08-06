@@ -71,8 +71,8 @@ function liveUnits(units, owner, same) {
 }
 
 
-// Greedy nearest-unassigned designation; falls back to nearest when the whole
-// enemy roster is already designated (the tape shows 4.8% repeats).
+// Nearest designation -- used by the mid-fight idle rescue, where the tape
+// does not resolve the rule beyond "a live enemy".
 function designate(recipient, enemies, designated) {
   const fresh = enemies.filter(({ referenceId }) => !designated.has(referenceId));
   const pool = fresh.length > 0 ? fresh : enemies;
@@ -86,6 +86,23 @@ function designate(recipient, enemies, designated) {
     }
   }
   return best;
+}
+
+
+// Sweep designation walks the ENEMY roster in ascending reference id, skipping
+// enemies already designated -- the mirror of the descending-id recipient
+// sweep, and the best single predictor of the tape's designations: rank-1 by
+// id-ascending explains 37.8% of the 645 sweep orders with a steeply decaying
+// tail (13.3% rank 2, 9.0% rank 3), against 28.8% for nearest-to-recipient.
+// Geometry-blind id order is also what produces the tape's long cross-melee
+// walks: median recipient-to-designation distance is 4.00 tiles where the
+// nearest unassigned enemy sits at 3.00.
+function designateSweep(enemies, designated) {
+  const fresh = enemies.filter(({ referenceId }) => !designated.has(referenceId));
+  const pool = fresh.length > 0 ? fresh : enemies;
+  return pool.reduce((lowest, enemy) => (
+    lowest === null || enemy.referenceId < lowest.referenceId ? enemy : lowest
+  ), null);
 }
 
 
@@ -130,15 +147,9 @@ function sweepOrder(state, units, owner, tick, events, makeEvent) {
     side.sweepDone = true;
     return;
   }
-  const anchor = state.sweepPositions.get(recipient.referenceId) ?? recipient;
-  const planned = enemies.map((enemy) => ({
-    referenceId: enemy.referenceId,
-    x: (state.sweepPositions.get(enemy.referenceId) ?? enemy).x,
-    y: (state.sweepPositions.get(enemy.referenceId) ?? enemy).y,
-  }));
-  const chosen = designate(anchor, planned, side.designated);
-  if (!chosen) return;
-  const target = enemies.find(({ referenceId }) => referenceId === chosen.referenceId);
+  // Id-order designation is geometry-blind, so the frozen sweep-start
+  // positions are no longer consulted here; they remain recorded for tooling.
+  const target = designateSweep(enemies, side.designated);
   if (!target) return;
   // Group: unordered allies adjacent to the recipient (the tape groups 2-4
   // consecutive-id units, which spawn adjacent), all onto the SAME enemy.

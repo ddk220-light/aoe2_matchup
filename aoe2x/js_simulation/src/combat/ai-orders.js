@@ -28,6 +28,9 @@
 import { TICKS_PER_SECOND } from "../simulation-clock.js";
 
 export const ORDERS_ENABLED = process.env.AOE2X_EXP_ORDERS === "1";
+// AOE2X_EXP_NO_RESCUE=1 disables the mid-fight idle rescue (probe flag: the
+// tape issues ~1 late order per fight where the rescue loop issues dozens).
+const RESCUE_DISABLED = process.env.AOE2X_EXP_NO_RESCUE === "1";
 
 const SWEEP_START_TICK = Math.round(2.72 * TICKS_PER_SECOND);
 const SWEEP_ORDER_INTERVAL = Math.round(0.2 * TICKS_PER_SECOND);
@@ -209,6 +212,7 @@ export function issueOrders(state, units, tick, events, makeEvent) {
   if (!ORDERS_ENABLED || !state) return;
   const owners = [...state.perOwner.keys()];
   for (const owner of owners) sweepOrder(state, units, owner, tick, events, makeEvent);
+  if (RESCUE_DISABLED) return;
   const allSwept = owners.every((owner) => state.perOwner.get(owner).sweepDone);
   if (allSwept || tick > SWEEP_START_TICK + 20 * TICKS_PER_SECOND) {
     idleRescue(state, units, tick, events, makeEvent);

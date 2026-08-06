@@ -166,9 +166,41 @@ permutations spread to a 32.9% median -- the sampler injects more variance than
 the game's own RNG at this scale. On flip-prone knife-edge ratios that is a
 scoring-methodology mismatch, not an order-layer defect.
 
-Remaining residual: blocked cross-melee walkers park as idle (+15-19 pt idle
-vs tape) because local avoidance gives up where the game's pathfinder routes
-around the crowd -- a movement-engine limitation, now the largest known gap.
+## 10. The 21v10 bug: strict engagement-follows-pursuit starved blocked units
+
+Probing 21v10 under the orders config exposed it: paladins won ALL 25 sampled
+runs (tape: champions win 2 of 5), and the layer issued 65.8 orders per fight
+against the tape's 15, 38 of them after 15 s against the tape's 1. An ordered
+champion blocked short of its designation stood IDLE even with an enemy in
+swing range, waiting up to ~12 s for its rate-limited rescue turn -- and 21v10,
+with 11 surplus champions on cross-melee walks, starved hardest.
+
+Fix: engagement-follows-pursuit is a PRIORITY, not an exclusivity. A unit
+whose pursuit target is in reach engages it over anything else; a unit blocked
+short of it fights whatever enemy is in reach. Aggressive-stance unit AI never
+sleeps next to an enemy.
+
+Result (orders config, all three matchups):
+
+| ratio | strict | with fallback |
+|---|---|---|
+| 21v10 | +19.6 | **+7.8** (baseline was +9.3; champion flips reappear with tape-like margins) |
+| 2v3 / 15v15 | +2.4 / +2.4 | **exact** |
+| 20v20 | +4.4 | +0.4 |
+| cvc 5v3 | -8.0 | **exact** |
+| mean over 26 cvp ratios | 3.78 | **3.60** (baseline 4.34) |
+| worst single ratio | 19.6 | 10.1 |
+
+Give-back: the ratios the strict rule helped most retreat partway (15v10
+-3.9 -> -10.1, 20v18 -3.2 -> -8.3, 15v8 +3.2 -> -6.2) because the fallback
+re-allows en-route capture. Net across everything it is the best configuration
+yet, and the mirrors sit at baseline quality (cvc 0/0/0/0/-3.3,
+pvp 0/0/0/-2.7/-1.2).
+
+A probe flag AOE2X_EXP_NO_RESCUE=1 disables the mid-fight rescue: that config
+reproduces the tape's ORDER COUNT almost exactly (13.0 vs 15, zero late) but
+loses the champion flips at 21v10 entirely -- the rescue trades order-count
+realism for outcome realism and currently wins.
 
 
 Why this file exists: the remaining calibration error is concentrated in how

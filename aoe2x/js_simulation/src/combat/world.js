@@ -343,12 +343,21 @@ function updateEngagements(units, contacts, tick, events) {
     const self = snapshot.find(({ referenceId }) => referenceId === unit.referenceId);
     const selection = selectEngagementTarget(self, snapshot, contacts);
     // Experiment harness: engagement follows pursuit. Off by default.
+    //
+    // Priority, not exclusivity: a unit whose pursuit target is in reach
+    // engages it over anything else, but a unit BLOCKED short of its pursuit
+    // target fights whatever enemy is in reach instead of standing idle.
+    // Aggressive-stance unit AI never sleeps next to an enemy; the strict
+    // version of this rule starved crowded fights -- in 21v10 the surplus
+    // champions parked idle waiting for rate-limited rescue orders (65.8
+    // orders/fight vs the tape's 15, 38 after 15 s vs the tape's 1) and the
+    // paladins won all 25 sampled runs where the tape flips.
     const pursued = ENGAGEMENT_FOLLOWS_PURSUIT
       && unit.pursuitTargetId !== null && unit.pursuitTargetId !== undefined
       ? snapshot.find(({ referenceId }) => referenceId === unit.pursuitTargetId)
       : null;
-    const nextTargetId = pursued && pursued.alive
-      ? (isInAttackRange(self, pursued) ? pursued.referenceId : null)
+    const nextTargetId = pursued && pursued.alive && isInAttackRange(self, pursued)
+      ? pursued.referenceId
       : selection.target?.referenceId ?? null;
     if (nextTargetId === previousTargetId) continue;
     if (previousTargetId !== null && previousTargetId !== undefined) {

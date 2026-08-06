@@ -208,11 +208,17 @@ export function rangedSpec(mechanics) {
   if (passThrough && halfWidth <= 0) {
     throw new RangeError("pass-through bolts need a positive projectile width");
   }
+  // Dat attribute 19 bitfield on the projectile unit: bit 1 = ballistics
+  // lead on moving targets (set by the Ballistics tech on its projectile
+  // list), bit 2 = full damage on unintended targets. Absent on fixtures
+  // exported before the attribute was sourced; those fly unled.
+  const smartMode = requireFinite(ranged.smart_mode ?? 0, "ranged smart mode");
   return {
     projectileSpeed: speed,
     minRangeTiles: minRange,
     passThrough,
     projectileHalfWidth: halfWidth,
+    smartMode,
   };
 }
 

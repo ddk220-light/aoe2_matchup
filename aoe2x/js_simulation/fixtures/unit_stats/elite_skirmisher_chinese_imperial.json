@@ -115,6 +115,7 @@
       "ranged.projectile_half_width_tiles": "dat.civs[0].units[366].collision_size_x",
       "ranged.projectile_speed_tiles_per_second": "dat.civs[0].units[366].speed",
       "ranged.projectile_unit": "unit.type_50.projectile_unit_id",
+      "ranged.smart_mode": "dat.civs[0].units[366].projectile.smart_mode | 1 when dat tech 93 (Ballistics) sets attribute 19 on projectile 366 (Imperial fully-teched model)",
       "reload_seconds": "ref_units.final_reload_time",
       "speed_tiles_per_second": "ref_stat_chain.speed (final step; ref_units.final_speed is rounded)",
       "unit_master": "unit.id",
@@ -129,7 +130,8 @@
     "pass_through": false,
     "projectile_half_width_tiles": 0.1,
     "projectile_speed_tiles_per_second": 7.0,
-    "projectile_unit": 366
+    "projectile_unit": 366,
+    "smart_mode": 1
   },
   "reload_seconds": 3.0,
   "speed_tiles_per_second": 0.96,

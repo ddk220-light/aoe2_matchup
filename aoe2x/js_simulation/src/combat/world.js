@@ -363,9 +363,35 @@ function minRangeRetreat(unit, live) {
 }
 
 
-function moveUnits(units, map, tick, events) {
+// Kited-world chase repath (measured, kac archives): the recorded chasers do
+// not track their target's live position — their headings re-aim on a ~0.4-
+// 0.5 s cadence and their realized speed is p50 0.89 of the 1.056 dat speed
+// (path inefficiency), and their in-reach windows against a walking target
+// last only ~0.7-1.4 s where frictionless per-tick tracking holds reach
+// indefinitely (the sim glued tail produced 6-16 s windows the tape never
+// shows). Chasers therefore walk toward their pursuit target's position as
+// SAMPLED every repath interval, per-unit phased; the stop rule still tests
+// the live target, so a chaser that genuinely closes still halts and swings.
+const KITE_CHASE_REPATH_TICKS = Math.round(0.5 * TICKS_PER_SECOND);
+
+
+function moveUnits(units, map, tick, events, kiteState = null) {
   const live = units.filter(({ alive }) => alive).map(freezeUnit);
   const byReference = new Map(live.map((unit) => [unit.referenceId, unit]));
+  if (kiteState && !kiteState.chaseWaypoints) kiteState.chaseWaypoints = new Map();
+  const chaseAim = (unit, target) => {
+    if (!kiteState || unit.owner === kiteState.owner) return target;
+    const waypoints = kiteState.chaseWaypoints;
+    let waypoint = waypoints.get(unit.referenceId);
+    if (!waypoint || waypoint.targetId !== target.referenceId
+        || tick % KITE_CHASE_REPATH_TICKS
+          === ((unit.referenceId % KITE_CHASE_REPATH_TICKS) + KITE_CHASE_REPATH_TICKS)
+            % KITE_CHASE_REPATH_TICKS) {
+      waypoint = { targetId: target.referenceId, x: target.x, y: target.y };
+      waypoints.set(unit.referenceId, waypoint);
+    }
+    return { ...target, x: waypoint.x, y: waypoint.y };
+  };
   const proposals = live.map((unit) => {
     // A kite move order overrides everything: the tape's move-ordered units
     // walk their waypoint and do not fight until the next attack beat.
@@ -388,7 +414,7 @@ function moveUnits(units, map, tick, events) {
     const target = byReference.get(unit.pursuitTargetId);
     return target && unit.action !== "attacking" && !isWithinStopRange(unit, target)
       && !holdsForChargeVolley(unit, target)
-      ? proposeMovement(unit, target, TICKS_PER_SECOND)
+      ? proposeMovement(unit, chaseAim(unit, target), TICKS_PER_SECOND)
       : Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
   });
   const planned = planLocalAvoidance(live, proposals, map);
@@ -399,12 +425,16 @@ function moveUnits(units, map, tick, events) {
   const blockedEvents = [];
   const movedIds = new Set();
   const blockedIds = new Set();
+  // Per-tick displacement of every live unit, for ballistics lead (smart_mode
+  // bit 1). Transient — never stamped on a unit, so it can't reach any hash.
+  const velocities = new Map();
   for (const unit of units) {
     const before = byReference.get(unit.referenceId);
     if (!before) continue;
     const result = movedByReference.get(unit.referenceId);
     const dx = result.x - before.x;
     const dy = result.y - before.y;
+    velocities.set(unit.referenceId, { dx, dy });
     unit.x = result.x;
     unit.y = result.y;
     unit.avoidance = result.avoidance;
@@ -445,11 +475,28 @@ function moveUnits(units, map, tick, events) {
     contacts: queryEnemyContactManifold(live, units.filter(({ alive }) => alive).map(freezeUnit)),
     movedIds,
     blockedIds,
+    velocities,
   };
 }
 
 
-function updateEngagements(units, contacts, tick, events, blockedIds) {
+// Kited-world swing-start dwell (measured, kac archives): a chaser adjacent
+// to its own caught target does NOT swing immediately — 64% of sustained
+// (>=0.5 s) adjacency windows produce no hit, and the window hit rate only
+// crosses ~50% at ~1.75-2.0 s (0.17 at 0.5 s / 0.25 at 1.0 s / 0.46 at
+// 1.5 s / 0.51 at 2.0 s, attribution-inflated upper bounds). With the 0.75 s
+// windup inside those windows, the swing START needs ~1.0 s of continuous
+// in-reach dwell on the pursuit target. A kiting target that stands only
+// 0.67 s per beat therefore escapes most catches, while a blocked or
+// cornered one (the 5v10 chain kills) is hit repeatedly — exactly the
+// recorded contrast. Engagement, once started, persists while the target
+// stays in reach, so reload-paced multi-hit catches still occur.
+const KITE_CHASE_DWELL_TICKS = Math.round(1.0 * TICKS_PER_SECOND);
+
+
+function updateEngagements(units, contacts, tick, events, blockedIds, kiteState = null) {
+  const kiteOwner = kiteState ? kiteState.owner : null;
+  if (kiteState && !kiteState.reachDwell) kiteState.reachDwell = new Map();
   const snapshot = Object.freeze(units.map(freezeUnit));
   for (const unit of units) {
     if (!unit.alive) {
@@ -472,6 +519,52 @@ function updateEngagements(units, contacts, tick, events, blockedIds) {
       continue;
     }
     const previousTargetId = unit.engagedTargetId;
+    // Kited-world chase discipline (measured, kac archives): a chaser engages
+    // ONLY its sticky pursuit target. 64% of its sustained (>=0.5 s)
+    // adjacency windows with OTHER enemies produce no swing at all, while its
+    // own caught target is hit within the first second 63-80% of the time
+    // (svc contrast). Hits land at up to 1.91 tiles center distance at the
+    // damage frame, so release stays unconditional (commitReadyAttacks has no
+    // distance check) — the discipline is entirely in the swing START.
+    if (kiteOwner !== null && unit.owner !== kiteOwner) {
+      const pursued = unit.pursuitTargetId === null || unit.pursuitTargetId === undefined
+        ? null
+        : snapshot.find(({ referenceId }) => referenceId === unit.pursuitTargetId);
+      const inReach = pursued && pursued.alive && pursued.owner !== unit.owner
+        && isWithinReach(unit, pursued);
+      // Continuous in-reach dwell on the CURRENT pursuit target; leaving
+      // reach or retargeting resets it.
+      const dwell = kiteState.reachDwell.get(unit.referenceId);
+      const ticksInReach = inReach
+        && dwell && dwell.targetId === pursued.referenceId ? dwell.ticks + 1 : (inReach ? 1 : 0);
+      if (inReach) {
+        kiteState.reachDwell.set(unit.referenceId,
+          { targetId: pursued.referenceId, ticks: ticksInReach });
+      } else {
+        kiteState.reachDwell.delete(unit.referenceId);
+      }
+      const nextTargetId = inReach
+        && (ticksInReach >= KITE_CHASE_DWELL_TICKS
+          || previousTargetId === pursued.referenceId)
+        ? pursued.referenceId
+        : null;
+      if (nextTargetId === previousTargetId) continue;
+      if (previousTargetId !== null && previousTargetId !== undefined) {
+        events.push(event(tick, "engagement-ended", unit.referenceId, previousTargetId, {
+          reason: snapshot.find(({ referenceId }) => referenceId === previousTargetId)?.alive
+            ? "contact-lost"
+            : "target-dead",
+        }));
+      }
+      unit.engagedTargetId = nextTargetId;
+      if (nextTargetId === null) continue;
+      unit.avoidance = null;
+      events.push(event(tick, "engagement-started", unit.referenceId, nextTargetId, {
+        sweptToi: null,
+        finalSurfaceGap: null,
+      }));
+      continue;
+    }
     // Attack-action persistence (measured, three archives): a unit shoved out
     // of reach that TRIES to close and is fully blocked keeps its attack
     // cycle on its live target — a pve 5v3 paladin swings from collision gap
@@ -585,9 +678,38 @@ function releaseChargeVolley(unit, target, spec, tick, events, projectiles) {
 // and expires at its aim point if the target left its box (walked-away misses
 // start at displacement 0.23) or died mid-flight. Damage is the ordinary
 // class rule, captured at fire.
-function releaseRangedShot(unit, target, spec, tick, events, projectiles) {
+// Ballistics lead (dat attribute 19 bit 1, set by tech 93 on its projectile
+// list): the shot is aimed at the target's PREDICTED position — current
+// position plus its current per-tick displacement times the flight time to
+// the led point (two-pass fixed point). Measured on the kiting archives:
+// every one of 3270 beat-assigned shots lands on champions running
+// tangentially at 1.056 tiles/s (probe C, damage landed p50 = 100% of
+// assigned), which aim-at-fire-position cannot produce; targets that CHANGE
+// direction mid-flight still escape, which is what the avs walked-away
+// residue shows for unled straight-line semantics.
+function leadAimPoint(unit, target, spec, velocities) {
+  const velocity = velocities?.get(target.referenceId);
+  if (!velocity || (velocity.dx === 0 && velocity.dy === 0)) {
+    return { x: target.x, y: target.y };
+  }
+  const stepLength = spec.projectileSpeed / TICKS_PER_SECOND;
+  let aimX = target.x;
+  let aimY = target.y;
+  for (let pass = 0; pass < 2; pass += 1) {
+    const flightTicks = Math.hypot(aimX - unit.x, aimY - unit.y) / stepLength;
+    aimX = target.x + velocity.dx * flightTicks;
+    aimY = target.y + velocity.dy * flightTicks;
+  }
+  return { x: aimX, y: aimY };
+}
+
+
+function releaseRangedShot(unit, target, spec, tick, events, projectiles, velocities) {
   if (!target?.alive || target.owner === unit.owner) return;
-  const distance = Math.hypot(target.x - unit.x, target.y - unit.y);
+  const aim = (spec.smartMode & 1) === 1
+    ? leadAimPoint(unit, target, spec, velocities)
+    : { x: target.x, y: target.y };
+  const distance = Math.hypot(aim.x - unit.x, aim.y - unit.y);
   if (distance <= 1e-9) return;
   const stepLength = spec.projectileSpeed / TICKS_PER_SECOND;
   if (spec.passThrough) {
@@ -604,8 +726,8 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles) {
       targetId: target.referenceId,
       x: unit.x,
       y: unit.y,
-      stepX: ((target.x - unit.x) / distance) * stepLength,
-      stepY: ((target.y - unit.y) / distance) * stepLength,
+      stepX: ((aim.x - unit.x) / distance) * stepLength,
+      stepY: ((aim.y - unit.y) / distance) * stepLength,
       stepLength,
       traveled: 0,
       totalDistance: total,
@@ -623,8 +745,8 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles) {
     targetId: target.referenceId,
     x: unit.x,
     y: unit.y,
-    stepX: ((target.x - unit.x) / distance) * stepLength,
-    stepY: ((target.y - unit.y) / distance) * stepLength,
+    stepX: ((aim.x - unit.x) / distance) * stepLength,
+    stepY: ((aim.y - unit.y) / distance) * stepLength,
     stepLength,
     traveled: 0,
     totalDistance: distance,
@@ -638,7 +760,7 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles) {
 }
 
 
-function progressAttacks(units, tick, events, movedIds, projectiles) {
+function progressAttacks(units, tick, events, movedIds, projectiles, velocities) {
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
   const ready = [];
   for (const unit of units) {
@@ -671,7 +793,7 @@ function progressAttacks(units, tick, events, movedIds, projectiles) {
         if (charge) {
           releaseChargeVolley(unit, target, charge, tick, events, projectiles);
         } else if (ranged) {
-          releaseRangedShot(unit, target, ranged, tick, events, projectiles);
+          releaseRangedShot(unit, target, ranged, tick, events, projectiles, velocities);
         } else {
           ready.push({
             type: "attack-ready",
@@ -992,8 +1114,9 @@ export function stepWorld(world) {
   if (!world.kiteState) {
     issueOrders(world.orderState, units, tick, events, event);
   }
-  const { contacts, movedIds, blockedIds } = moveUnits(units, world.map, tick, events);
-  updateEngagements(units, contacts, tick, events, blockedIds);
+  const { contacts, movedIds, blockedIds, velocities } = moveUnits(
+    units, world.map, tick, events, world.kiteState ?? null);
+  updateEngagements(units, contacts, tick, events, blockedIds, world.kiteState ?? null);
   // Clone flight state: published projectiles are frozen, ranged shots
   // advance their position every tick, and a bolt's hit list must not alias
   // the previous tick's published array.
@@ -1003,7 +1126,7 @@ export function stepWorld(world) {
       ...(projectile.hitIds ? { hitIds: [...projectile.hitIds] } : {}),
     }))
     : null;
-  const ready = progressAttacks(units, tick, events, movedIds, projectiles);
+  const ready = progressAttacks(units, tick, events, movedIds, projectiles, velocities);
   commitReadyAttacks(units, ready, tick, events);
   const remainingProjectiles = projectiles
     ? processChargeProjectiles(units, projectiles, tick, events)

@@ -380,6 +380,25 @@ def export_unit_mechanics(
         proj = data.civs[0].units[projectile_id]
         pass_through = bool(getattr(proj.projectile, "vanish_mode", 0)) \
             if proj.projectile is not None else False
+        # Projectile smart mode (dat attribute 19, a bitfield: 1 = ballistics
+        # lead on moving targets, 2 = full damage on unintended targets). The
+        # raw projectile record carries the pre-Ballistics value; the
+        # Ballistics tech (dat tech 93) SETS attribute 19 to 1 on an explicit
+        # list of projectile units. This project's data model is
+        # fully-upgraded Imperial, so Ballistics counts as researched whenever
+        # the projectile is in that list. NOTE: revisit with civ tech-tree
+        # gating before exporting an archer fixture for a civ that lacks
+        # Ballistics.
+        smart_mode = int(getattr(proj.projectile, "smart_mode", 0)) \
+            if proj.projectile is not None else 0
+        ballistics = data.effects[int(data.techs[93].effect_id)]
+        ballistics_ids = {
+            int(command.a)
+            for command in ballistics.effect_commands
+            if command.type == 0 and int(command.c) == 19
+        }
+        if projectile_id in ballistics_ids:
+            smart_mode |= 1
         ranged = {
             "projectile_unit": projectile_id,
             "projectile_speed_tiles_per_second": float(proj.speed),
@@ -387,6 +406,7 @@ def export_unit_mechanics(
             "accuracy_percent": float(reference["final_accuracy"]),
             "pass_through": pass_through,
             "projectile_half_width_tiles": round(float(proj.collision_size_x), 6),
+            "smart_mode": smart_mode,
         }
         fields.update({
             "ranged.projectile_unit": "unit.type_50.projectile_unit_id",
@@ -403,6 +423,11 @@ def export_unit_mechanics(
             ),
             "ranged.projectile_half_width_tiles": (
                 f"dat.civs[0].units[{projectile_id}].collision_size_x"
+            ),
+            "ranged.smart_mode": (
+                f"dat.civs[0].units[{projectile_id}].projectile.smart_mode"
+                " | 1 when dat tech 93 (Ballistics) sets attribute 19 on"
+                f" projectile {projectile_id} (Imperial fully-teched model)"
             ),
         })
 

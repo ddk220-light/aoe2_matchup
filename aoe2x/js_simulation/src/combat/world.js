@@ -2,6 +2,11 @@ import {
   queryEnemyContactManifold,
   resolveMovementProposals,
 } from "./collision.js";
+import {
+  ANY_EXPERIMENT,
+  ENGAGEMENT_FOLLOWS_PURSUIT,
+  shouldReevaluatePursuit,
+} from "./experiments.js";
 import { planLocalAvoidance } from "./local-avoidance.js";
 import { proposeMovement } from "./movement.js";
 import { selectEngagementTarget, selectPursuitTarget } from "./targeting.js";
@@ -247,10 +252,18 @@ function acquirePursuitTargets(units, tick, events) {
       // idle with an expired timer and no target.
       if (unit.actionTimers.acquire > 0) continue;
     }
-    if (unit.pursuitTargetId !== null) continue;
-    const candidate = snapshot.find(({ referenceId }) => referenceId === unit.referenceId);
+    // Experiment harness (docs/RETARGETING_INVESTIGATION.md). Off by default:
+    // shouldReevaluatePursuit is false unless AOE2X_EXP_PURSUIT is set, so this
+    // reduces to the original `if (pursuitTargetId !== null) continue`.
+    const reevaluate = unit.pursuitTargetId !== null && shouldReevaluatePursuit(unit);
+    if (unit.pursuitTargetId !== null && !reevaluate) continue;
+    const found = snapshot.find(({ referenceId }) => referenceId === unit.referenceId);
+    // selectPursuitTarget short-circuits on a live locked target, so a
+    // re-evaluation has to present the unit as unlocked to force a fresh scan.
+    const candidate = reevaluate ? { ...found, pursuitTargetId: null } : found;
     const target = selectPursuitTarget(candidate, snapshot);
     if (target === null) continue;
+    if (target.referenceId === unit.pursuitTargetId) continue;
     events.push(event(tick, "pursuit-acquired", unit.referenceId, target.referenceId));
     unit.pursuitTargetId = target.referenceId;
   }
@@ -292,7 +305,15 @@ function moveUnits(units, map, tick, events) {
       ));
     }
     const proposal = proposalByReference.get(unit.referenceId);
-    if (Math.abs(dx - proposal.dx) > 1e-12 || Math.abs(dy - proposal.dy) > 1e-12) {
+    const isBlocked = Math.abs(dx - proposal.dx) > 1e-12 || Math.abs(dy - proposal.dy) > 1e-12;
+    // Only stamp experiment state when an experiment is running: the canonical
+    // unit record feeds finalStateHash, so an always-present field would change
+    // every golden hash for no reason.
+    if (ANY_EXPERIMENT) {
+      unit.experimentBlocked = isBlocked
+        && (proposal.dx !== 0 || proposal.dy !== 0);
+    }
+    if (isBlocked) {
       blockedEvents.push(event(tick, "blocked", unit.referenceId, unit.pursuitTargetId, {
         proposedDx: proposal.dx,
         proposedDy: proposal.dy,
@@ -314,12 +335,16 @@ function updateEngagements(units, contacts, tick, events) {
       continue;
     }
     const previousTargetId = unit.engagedTargetId;
-    const selection = selectEngagementTarget(
-      snapshot.find(({ referenceId }) => referenceId === unit.referenceId),
-      snapshot,
-      contacts,
-    );
-    const nextTargetId = selection.target?.referenceId ?? null;
+    const self = snapshot.find(({ referenceId }) => referenceId === unit.referenceId);
+    const selection = selectEngagementTarget(self, snapshot, contacts);
+    // Experiment harness: engagement follows pursuit. Off by default.
+    const pursued = ENGAGEMENT_FOLLOWS_PURSUIT
+      && unit.pursuitTargetId !== null && unit.pursuitTargetId !== undefined
+      ? snapshot.find(({ referenceId }) => referenceId === unit.pursuitTargetId)
+      : null;
+    const nextTargetId = pursued && pursued.alive
+      ? (isInAttackRange(self, pursued) ? pursued.referenceId : null)
+      : selection.target?.referenceId ?? null;
     if (nextTargetId === previousTargetId) continue;
     if (previousTargetId !== null && previousTargetId !== undefined) {
       events.push(event(tick, "engagement-ended", unit.referenceId, previousTargetId, {

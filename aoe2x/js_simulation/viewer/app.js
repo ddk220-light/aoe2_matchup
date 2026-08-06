@@ -175,7 +175,14 @@ async function start() {
   byId("sourceVersion").textContent = `Scenario ${fixture.source.scenario_version} · ${fixture.source.parser} ${fixture.source.parser_version}`;
   renderInventory(fixture.object_counts);
 
-  const initial = parseReviewSelection(location.href);
+  // Boot always starts on the champion mirror, which is locked to its five
+  // recorded ratios; a URL carrying any other well-formed NvM (e.g. shared
+  // from a matchup view) must degrade to 1v1 instead of a boot error.
+  const CHAMPION_RATIO_OPTIONS = ["1v1", "2v1", "2v3", "5v3", "6v3"];
+  const parsed = parseReviewSelection(location.href);
+  const initial = CHAMPION_RATIO_OPTIONS.includes(parsed.ratio)
+    ? parsed
+    : { ...parsed, ratio: "1v1" };
   byId("ratioSelect").value = initial.ratio;
   byId("repeatSelect").value = String(initial.repeat);
   history.replaceState(null, "", selectionUrl(location.href, initial));
@@ -288,7 +295,6 @@ async function start() {
   });
   byId("resetView").addEventListener("click", () => renderer.resetView());
 
-  const CHAMPION_RATIO_OPTIONS = ["1v1", "2v1", "2v3", "5v3", "6v3"];
   let matchupRatioOptions = null;
 
   async function matchupList() {

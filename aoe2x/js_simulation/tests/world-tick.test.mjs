@@ -268,14 +268,15 @@ test("Champion attack timing is converted once to integer ticks", async () => {
 });
 
 
-test("melee range compares body surfaces rather than centers", async () => {
-  const { isInAttackRange } = await loadAttacks();
+test("movement stop range compares collision surfaces with max(range, 0.1)", async () => {
+  const { isWithinStopRange } = await loadAttacks();
   const attacker = unit({ referenceId: 1628, owner: 2, x: 4, y: 4 });
-  const touching = unit({ referenceId: 1699, owner: 3, x: 4.4, y: 4 });
-  const separated = unit({ referenceId: 1700, owner: 3, x: 4.400001, y: 4 });
+  // Champions: collision 0.2 + 0.2, range 0 -> stop at gap <= 0.1.
+  const atTolerance = unit({ referenceId: 1699, owner: 3, x: 4.5, y: 4 });
+  const beyond = unit({ referenceId: 1700, owner: 3, x: 4.52, y: 4 });
 
-  assert.equal(isInAttackRange(attacker, touching), true);
-  assert.equal(isInAttackRange(attacker, separated), false);
+  assert.equal(isWithinStopRange(attacker, atTolerance), true);
+  assert.equal(isWithinStopRange(attacker, beyond), false);
 });
 
 

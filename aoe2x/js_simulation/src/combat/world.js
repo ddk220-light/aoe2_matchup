@@ -10,7 +10,11 @@ import {
 } from "./experiments.js";
 import { planLocalAvoidance } from "./local-avoidance.js";
 import { proposeMovement } from "./movement.js";
-import { selectEngagementTarget, selectPursuitTarget } from "./targeting.js";
+import {
+  isWithinReach,
+  selectEngagementTarget,
+  selectPursuitTarget,
+} from "./targeting.js";
 import { TICKS_PER_SECOND } from "../simulation-clock.js";
 import {
   attackAnimationTicks,
@@ -20,7 +24,7 @@ import {
   createAttackStartEvent,
   createDamageEvent,
   createDeathEvent,
-  isInAttackRange,
+  isWithinStopRange,
   orderReadyAttacks,
   reloadTicks,
   trampleSpec,
@@ -282,7 +286,7 @@ function moveUnits(units, map, tick, events) {
   const byReference = new Map(live.map((unit) => [unit.referenceId, unit]));
   const proposals = live.map((unit) => {
     const target = byReference.get(unit.pursuitTargetId);
-    return target && unit.action !== "attacking" && !isInAttackRange(unit, target)
+    return target && unit.action !== "attacking" && !isWithinStopRange(unit, target)
       ? proposeMovement(unit, target, TICKS_PER_SECOND)
       : Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
   });
@@ -292,6 +296,8 @@ function moveUnits(units, map, tick, events) {
   const proposalByReference = new Map(proposals.map((proposal) => [proposal.referenceId, proposal]));
   const moveEvents = [];
   const blockedEvents = [];
+  const movedIds = new Set();
+  const blockedIds = new Set();
   for (const unit of units) {
     const before = byReference.get(unit.referenceId);
     if (!before) continue;
@@ -302,6 +308,7 @@ function moveUnits(units, map, tick, events) {
     unit.y = result.y;
     unit.avoidance = result.avoidance;
     if (dx !== 0 || dy !== 0) {
+      movedIds.add(unit.referenceId);
       unit.facing = Math.atan2(dy, dx);
       moveEvents.push(event(
         tick,
@@ -321,6 +328,9 @@ function moveUnits(units, map, tick, events) {
         && (proposal.dx !== 0 || proposal.dy !== 0);
     }
     if (isBlocked) {
+      if (proposal.dx !== 0 || proposal.dy !== 0) {
+        blockedIds.add(unit.referenceId);
+      }
       blockedEvents.push(event(tick, "blocked", unit.referenceId, unit.pursuitTargetId, {
         proposedDx: proposal.dx,
         proposedDy: proposal.dy,
@@ -330,18 +340,50 @@ function moveUnits(units, map, tick, events) {
     }
   }
   events.push(...moveEvents, ...blockedEvents);
-  return queryEnemyContactManifold(live, units.filter(({ alive }) => alive).map(freezeUnit));
+  return {
+    contacts: queryEnemyContactManifold(live, units.filter(({ alive }) => alive).map(freezeUnit)),
+    movedIds,
+    blockedIds,
+  };
 }
 
 
-function updateEngagements(units, contacts, tick, events) {
+function updateEngagements(units, contacts, tick, events, blockedIds) {
   const snapshot = Object.freeze(units.map(freezeUnit));
   for (const unit of units) {
     if (!unit.alive) {
       unit.engagedTargetId = null;
       continue;
     }
+    // No engagement before first acquisition: the outline reach can span the
+    // spawn bands (steppe-vs-elephant 1v1 spawns sit at exactly outline gap
+    // 1.1), yet the tapes show no unit swinging before its acquisition delay
+    // has run. Collision-based reach never spanned a spawn gap, so this gate
+    // changes nothing for the recorded range-0 fixtures.
+    if (unit.actionTimers.acquire > 0) {
+      unit.engagedTargetId = null;
+      continue;
+    }
     const previousTargetId = unit.engagedTargetId;
+    // Attack-action persistence (measured, three archives): a unit shoved out
+    // of reach that TRIES to close and is fully blocked keeps its attack
+    // cycle on its live target — a pve 5v3 paladin swings from collision gap
+    // 0.523-0.575 for 25 straight seconds after the scrum separates the pair,
+    // and steppe lancers land tail hits lagging their reach by exactly one
+    // reload. A unit that CAN move chases instead (engagement drops below),
+    // which is what keeps fleeing-target pursuit intact. Line of sight is the
+    // outer sanity bound (dat-sourced); no swing was ever observed beyond
+    // outline gap +0.24, all from deep scrums.
+    if (
+      previousTargetId !== null && previousTargetId !== undefined
+      && blockedIds.has(unit.referenceId)
+    ) {
+      const engaged = snapshot.find(({ referenceId }) => referenceId === previousTargetId);
+      if (engaged && engaged.alive && engaged.owner !== unit.owner) {
+        const distance = Math.hypot(engaged.x - unit.x, engaged.y - unit.y);
+        if (distance <= unit.mechanics.line_of_sight_tiles) continue;
+      }
+    }
     const self = snapshot.find(({ referenceId }) => referenceId === unit.referenceId);
     const selection = selectEngagementTarget(self, snapshot, contacts);
     // Experiment harness: engagement follows pursuit. Off by default.
@@ -358,7 +400,14 @@ function updateEngagements(units, contacts, tick, events) {
       && unit.pursuitTargetId !== null && unit.pursuitTargetId !== undefined
       ? snapshot.find(({ referenceId }) => referenceId === unit.pursuitTargetId)
       : null;
-    const nextTargetId = pursued && pursued.alive && isInAttackRange(self, pursued)
+    // The pursuit target takes priority only once the unit has CLOSED to its
+    // movement stop range — the same distance at which the old collision-based
+    // engine applied this rule for range-0 units, kept range-aware here.
+    // Widening the priority to the outline envelope re-focused fire enough to
+    // swing paladin_vs_elephant 5v3 from band error 0.4 to 10.7; blocked units
+    // farther out fight through selectEngagementTarget's outline fallback
+    // instead, which is what the steppe back line actually exercises.
+    const nextTargetId = pursued && pursued.alive && isWithinStopRange(self, pursued)
       ? pursued.referenceId
       : selection.target?.referenceId ?? null;
     if (nextTargetId === previousTargetId) continue;
@@ -388,7 +437,13 @@ function updateEngagements(units, contacts, tick, events) {
 // The unit is committed for the whole animation (it neither moves nor retargets
 // while `action === "attacking"`), the hit lands halfway through it, and the
 // reload runs swing-start to swing-start so the cadence is exactly reload_seconds.
-function progressAttacks(units, tick, events) {
+//
+// A swing only STARTS from a standstill: either the movement stop rule is
+// satisfied against the engaged target, or the unit did not move this tick
+// (blocked, or already parked). The steppe tapes show approaching lancers
+// never swinging mid-walk — they close to collision gap <= 1.0 first — while
+// blocked back-line lancers swing from the wider outline envelope.
+function progressAttacks(units, tick, events, movedIds) {
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
   const ready = [];
   for (const unit of units) {
@@ -431,6 +486,7 @@ function progressAttacks(units, tick, events) {
       !target?.alive ||
       target.owner === unit.owner
     ) continue;
+    if (!isWithinStopRange(unit, target) && movedIds.has(unit.referenceId)) continue;
 
     const delay = attackDelayTicks(unit.mechanics);
     const readyTick = tick + delay;
@@ -574,9 +630,9 @@ export function stepWorld(world) {
   validateAttackTargets(units, tick, events);
   acquirePursuitTargets(units, tick, events);
   issueOrders(world.orderState, units, tick, events, event);
-  const contacts = moveUnits(units, world.map, tick, events);
-  updateEngagements(units, contacts, tick, events);
-  const ready = progressAttacks(units, tick, events);
+  const { contacts, movedIds, blockedIds } = moveUnits(units, world.map, tick, events);
+  updateEngagements(units, contacts, tick, events, blockedIds);
+  const ready = progressAttacks(units, tick, events, movedIds);
   commitReadyAttacks(units, ready, tick, events);
 
   const publishedUnits = canonicalUnits(units);

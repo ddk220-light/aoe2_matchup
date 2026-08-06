@@ -87,10 +87,19 @@ export function reloadTicks(mechanics) {
 }
 
 
-export function isInAttackRange(actor, target) {
+// Movement STOP rule: a unit pursues until its COLLISION-box Chebyshev gap to
+// the target is at most max(range, 0.1). Measured on the steppe tapes: the
+// range-1 lancer's approach stops are victim-invariant only in collision
+// terms and pile up in [0.95, 1.00) against every victim type (p50 0.95,
+// p90 0.995, nothing between 1.0 and 1.1), while range-0 units keep the
+// long-established 0.1 stop. Units therefore walk INSIDE their outline
+// attack envelope (isWithinReach) before stopping; eligibility and stopping
+// are different rules with different boxes.
+export function isWithinStopRange(actor, target) {
   const range = requireFinite(actor?.mechanics?.attack_range_tiles, "attack range");
   if (range < 0) throw new RangeError("attack range must be nonnegative");
-  return chebyshevGap(actor, target) <= range + MELEE_CONTACT_TOLERANCE_TILES + 1e-12;
+  const stop = Math.max(range, MELEE_CONTACT_TOLERANCE_TILES);
+  return chebyshevGap(actor, target) <= stop + 1e-12;
 }
 
 

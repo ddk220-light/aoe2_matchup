@@ -101,6 +101,38 @@ export function acquisitionDelaySeconds(rank, count) {
 export const MELEE_CONTACT_TOLERANCE_TILES = 0.1;
 
 
+// Attack REACH is measured over the Genie OUTLINE box, not the collision box.
+// The two coincide for the Champion (0.2/0.2) but not for the Paladin
+// (0.25 collision / 0.4 outline), the Battle Elephant (0.25/0.5), or the
+// Steppe Lancer (0.25/0.4), and the steppe tapes separate the two directly:
+// stationary units land swings from collision-box gaps far beyond
+// range + 0.1 (lancers at 1.33, an elephant at 0.48), yet across all 2158
+// stationary swings in the three steppe archives the OUTLINE-box Chebyshev
+// gap never exceeds range + 0.1 (envelope tops: 1.0850 of 1.1 for the
+// range-1 lancer, -0.05 of 0.1 for the Champion). Euclidean is refuted by
+// 30 diagonal-contact swings whose outline Euclidean gap exceeds the
+// threshold while the Chebyshev gap is inside it.
+export function outlineRadius(unit) {
+  const outlineSize = unit?.mechanics?.outline_size_tiles;
+  const x = requireFinite(outlineSize?.x, "outline size x");
+  const y = requireFinite(outlineSize?.y, "outline size y");
+  if (x <= 0 || y <= 0) {
+    throw new RangeError("outline size must be positive");
+  }
+  if (x !== y) {
+    throw new RangeError("deterministic reach requires equal outline x and y sizes");
+  }
+  return x;
+}
+
+
+export function outlineChebyshevGap(a, b) {
+  const dx = Math.abs(requireFinite(b?.x, "target x") - requireFinite(a?.x, "unit x"));
+  const dy = Math.abs(requireFinite(b?.y, "target y") - requireFinite(a?.y, "unit y"));
+  return Math.max(dx, dy) - outlineRadius(a) - outlineRadius(b);
+}
+
+
 function isLive(unit) {
   return unit?.alive !== false;
 }
@@ -170,8 +202,14 @@ export function attackReach(unit) {
 }
 
 
+// Attack ELIGIBILITY: outline boxes, range + 0.1 (see outlineRadius). This is
+// deliberately wider than the movement stop rule (collision boxes,
+// max(range, 0.1) — isWithinStopRange in attacks.js): the tapes show units
+// walking well inside their own attack envelope before they stop, and only
+// blocked or already-stopped units swinging from the outer envelope. That
+// split is what lets back-line Steppe Lancers fight over their front line.
 export function isWithinReach(unit, target) {
-  return chebyshevGap(unit, target) <= attackReach(unit) + 1e-12;
+  return outlineChebyshevGap(unit, target) <= attackReach(unit) + 1e-12;
 }
 
 

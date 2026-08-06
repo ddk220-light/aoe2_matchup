@@ -202,6 +202,17 @@ reproduces the tape's ORDER COUNT almost exactly (13.0 vs 15, zero late) but
 loses the champion flips at 21v10 entirely -- the rescue trades order-count
 realism for outcome realism and currently wins.
 
+**Tried and rejected: capture-on-blocked-only.** The natural middle rule
+between strict (never capture en route) and the shipped fallback (capture
+whenever in reach): keep walking past enemies while progress is possible, fall
+back only when blocked this tick. Empirically it does nothing -- in a dense
+fight walkers are blocked most ticks, so the rule collapses to always-capture
+on 15v10 (-9.9 vs -10.1) and 20v18 (-8.3, unchanged), while 9v4 worsens to
++13.3 and 21v10 re-starves (champion flips 2/25 -> 0/25, two runs hit the tick
+guard). Reverted same day. The strict rule's gains on 15v10/20v18 come from
+something subtler than walk-past-passersby; closing them likely needs real
+path-around-the-crowd movement, which is out of scope for this round.
+
 
 Why this file exists: the remaining calibration error is concentrated in how
 units change target mid-fight, and the search has been long enough that the

@@ -110,6 +110,13 @@ const MATCHUPS = Object.freeze({
       569: "fixtures/unit_stats/paladin_spanish_imperial.json",
     }),
   }),
+  arbalester_vs_champion_kiting: Object.freeze({
+    truth: "calibration/fixtures/arbalester_vs_champion_kiting_basics.json",
+    mechanics: Object.freeze({
+      492: "fixtures/unit_stats/arbalester_chinese_imperial.json",
+      567: "fixtures/unit_stats/champion_chinese_imperial.json",
+    }),
+  }),
 });
 
 
@@ -224,8 +231,13 @@ function runRoster({ name, ratio, roster, mechanics, truth, synthetic }) {
 
   // Ranged endgames legitimately outlast the 60 s default guard (the tape's
   // own arbalester 20v15 runs 59.8 s); melee fights never get near it, so the
-  // higher ceiling changes nothing for them.
-  const result = runWorld(createWorld({ ratio, units }), { maxTicks: 9000 });
+  // higher ceiling changes nothing for them. Kiting archives name the kited
+  // side in the truth fixture, which enables the beat controller.
+  const result = runWorld(createWorld({
+    ratio,
+    units,
+    ...(Number.isSafeInteger(truth.kiteOwner) ? { kiteOwner: truth.kiteOwner } : {}),
+  }), { maxTicks: 9000 });
   const live = result.world.units.filter(({ alive }) => alive);
   return Object.freeze({
     schemaVersion: 1,

@@ -2,7 +2,13 @@ import {
   queryEnemyContactManifold,
   resolveMovementProposals,
 } from "./collision.js";
-import { createOrderState, issueOrders, ORDERS_ENABLED } from "./ai-orders.js";
+import {
+  createKiteState,
+  createOrderState,
+  issueKiteOrders,
+  issueOrders,
+  ORDERS_ENABLED,
+} from "./ai-orders.js";
 import {
   ANY_EXPERIMENT,
   ENGAGEMENT_FOLLOWS_PURSUIT,
@@ -186,6 +192,12 @@ export function createWorld(scenario) {
     // shape and hashes are unchanged (the object is frozen but Maps inside
     // stay mutable across ticks by design).
     ...(ORDERS_ENABLED ? { orderState: createOrderState(units) } : {}),
+    // Kiting-side beat controller (see issueKiteOrders): present only when
+    // the scenario names a kiting owner, so every other world keeps its
+    // exact published shape.
+    ...(Number.isSafeInteger(scenario.kiteOwner)
+      ? { kiteState: createKiteState(scenario.kiteOwner) }
+      : {}),
     ...(anyCharge ? { projectiles: Object.freeze([]) } : {}),
     tick: 0,
     ratio: scenario.ratio,
@@ -209,6 +221,7 @@ function validatePursuitTargets(units, tick, events) {
       unit.avoidance = null;
       unit.action = "dead";
       delete unit.attackKind;
+      delete unit.moveOrder;
       unit.actionTimers = { windup: 0, reload: 0, swing: 0, acquire: 0 };
       continue;
     }
@@ -354,6 +367,22 @@ function moveUnits(units, map, tick, events) {
   const live = units.filter(({ alive }) => alive).map(freezeUnit);
   const byReference = new Map(live.map((unit) => [unit.referenceId, unit]));
   const proposals = live.map((unit) => {
+    // A kite move order overrides everything: the tape's move-ordered units
+    // walk their waypoint and do not fight until the next attack beat.
+    if (unit.moveOrder && unit.action !== "attacking") {
+      const dx = unit.moveOrder.x - unit.x;
+      const dy = unit.moveOrder.y - unit.y;
+      const distance = Math.hypot(dx, dy);
+      const step = unit.mechanics.speed_tiles_per_second / TICKS_PER_SECOND;
+      if (distance > step) {
+        return Object.freeze({
+          referenceId: unit.referenceId,
+          dx: (dx / distance) * step,
+          dy: (dy / distance) * step,
+        });
+      }
+      return Object.freeze({ referenceId: unit.referenceId, dx, dy });
+    }
     const retreat = minRangeRetreat(unit, live);
     if (retreat) return retreat;
     const target = byReference.get(unit.pursuitTargetId);
@@ -433,6 +462,12 @@ function updateEngagements(units, contacts, tick, events, blockedIds) {
     // has run. Collision-based reach never spanned a spawn gap, so this gate
     // changes nothing for the recorded range-0 fixtures.
     if (unit.actionTimers.acquire > 0) {
+      unit.engagedTargetId = null;
+      continue;
+    }
+    // A kite move order suppresses engagement until the next attack beat
+    // re-designates (the tape wraps each move in a no-attack stance toggle).
+    if (unit.moveOrder) {
       unit.engagedTargetId = null;
       continue;
     }
@@ -949,7 +984,14 @@ export function stepWorld(world) {
   validatePursuitTargets(units, tick, events);
   validateAttackTargets(units, tick, events);
   acquirePursuitTargets(units, tick, events);
-  issueOrders(world.orderState, units, tick, events, event);
+  issueKiteOrders(world.kiteState, units, world.map, tick, events, event);
+  // Kiting tapes carry a SINGLE attack order for the melee side all fight —
+  // none of the cvp-style sweep/rescue storm — so the ordinary order layer
+  // stands down entirely when a beat controller is running; the melee side
+  // fights on unit AI alone, exactly as recorded.
+  if (!world.kiteState) {
+    issueOrders(world.orderState, units, tick, events, event);
+  }
   const { contacts, movedIds, blockedIds } = moveUnits(units, world.map, tick, events);
   updateEngagements(units, contacts, tick, events, blockedIds);
   // Clone flight state: published projectiles are frozen, ranged shots

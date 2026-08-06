@@ -667,7 +667,11 @@ test("the runner rejects an all-dead world as an invalid terminal", async () => 
 });
 
 
-test("the runner rejects safety ceilings above 3600 ticks", async () => {
+test("the runner rejects safety ceilings above 9000 ticks", async () => {
+  // The ceiling was 3600 until the ranged tapes: the arbalester 20v15
+  // recordings themselves run 56.5-59.8 s, so max-range attrition endgames
+  // legitimately need more clock than one minute. 9000 (150 s) stays a
+  // runaway backstop, not a fight length.
   const { createWorld, runWorld } = await loadWorld();
   const stalemate = createWorld(scenario([
     unit({ referenceId: 1628, owner: 2, x: 1, y: 1 }),
@@ -675,8 +679,8 @@ test("the runner rejects safety ceilings above 3600 ticks", async () => {
   ]));
 
   assert.throws(
-    () => runWorld(stalemate, { maxTicks: 3601 }),
-    /max ticks must not exceed 3600/i,
+    () => runWorld(stalemate, { maxTicks: 9001 }),
+    /max ticks must not exceed 9000/i,
   );
 });
 

@@ -178,9 +178,16 @@ function idleRescue(state, units, tick, events, makeEvent) {
       state.idleSince.delete(unit.referenceId);
       continue;
     }
+    // Idle = blocked mid-walk, OR standing with no pursuit at all. The second
+    // arm is what un-sticks ranged endgames: survivors can end up beyond
+    // line of sight (LOS 10 vs a 40-unit spawn footprint), acquire nothing,
+    // and stand blind — the tape AI orders them across the map anyway (its
+    // designations are roster-wide, never LOS-gated). Pre-acquisition units
+    // are excluded: their reaction lag has not run yet.
     const idle = unit.action !== "attacking"
       && unit.engagedTargetId === null
-      && unit.experimentBlocked === true;
+      && (unit.experimentBlocked === true
+        || (unit.pursuitTargetId === null && unit.actionTimers.acquire === 0));
     if (!idle) {
       state.idleSince.delete(unit.referenceId);
       continue;

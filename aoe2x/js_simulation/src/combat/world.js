@@ -28,6 +28,7 @@ import {
   createDeathEvent,
   isWithinStopRange,
   orderReadyAttacks,
+  rangedSpec,
   reloadTicks,
   trampleSpec,
 } from "./attacks.js";
@@ -39,7 +40,13 @@ const DEFAULT_MAP = Object.freeze({
   height: 16,
   obstacles: Object.freeze([]),
 });
-const MAX_WORLD_TICKS = 3600;
+// Default runaway guard for a single fight, and the hard ceiling a caller may
+// raise it to. 60 s covers every recorded melee fight with margin, but the
+// ranged tapes' own 20v15 fights run 56.5-59.8 s and the sim legitimately
+// needs more clock for max-range attrition endgames — callers pass maxTicks
+// up to the ceiling for those.
+const DEFAULT_WORLD_TICKS = 3600;
+const MAX_WORLD_TICKS = 9000;
 
 
 function freezeUnit(unit) {
@@ -169,7 +176,9 @@ export function createWorld(scenario) {
   // Charge-projectile flight queue, present only when the roster can fire one
   // (Fire Lancer family) so worlds without charge units keep their exact
   // published shape.
-  const anyCharge = units.some((unit) => chargeSpec(unit.mechanics) !== null);
+  const anyCharge = units.some((unit) => (
+    chargeSpec(unit.mechanics) !== null || rangedSpec(unit.mechanics) !== null
+  ));
   return Object.freeze({
     // Experiment-only mutable AI-player state; absent in baseline so world
     // shape and hashes are unchanged (the object is frozen but Maps inside
@@ -497,6 +506,40 @@ function releaseChargeVolley(unit, target, spec, tick, events, projectiles) {
 }
 
 
+// A ranged shot leaves the unit on its damage frame, aimed at the target's
+// CURRENT position (smart_mode 0 in the dat: no leading). The projectile is a
+// physical point flying the line at the projectile unit's dat speed: it hits
+// the moment it meets the target's collision box (an APPROACHING target walks
+// into it early — tape hits show displacement up to 1.04 toward the shooter),
+// and expires at its aim point if the target left its box (walked-away misses
+// start at displacement 0.23) or died mid-flight. Damage is the ordinary
+// class rule, captured at fire.
+function releaseRangedShot(unit, target, spec, tick, events, projectiles) {
+  if (!target?.alive || target.owner === unit.owner) return;
+  const distance = Math.hypot(target.x - unit.x, target.y - unit.y);
+  if (distance <= 1e-9) return;
+  const stepLength = spec.projectileSpeed / TICKS_PER_SECOND;
+  projectiles.push({
+    kind: "ranged",
+    actorId: unit.referenceId,
+    targetId: target.referenceId,
+    x: unit.x,
+    y: unit.y,
+    stepX: ((target.x - unit.x) / distance) * stepLength,
+    stepY: ((target.y - unit.y) / distance) * stepLength,
+    stepLength,
+    traveled: 0,
+    totalDistance: distance,
+    firedTick: tick,
+    // The stepping loop below is the authority; arrivalTick is a cap so a
+    // projectile can never outlive its aim distance.
+    arrivalTick: tick + Math.max(1, secondsToTicksCeil(distance / spec.projectileSpeed)),
+    index: 0,
+    amount: calculateDamage(unit, target),
+  });
+}
+
+
 function progressAttacks(units, tick, events, movedIds, projectiles) {
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
   const ready = [];
@@ -526,8 +569,11 @@ function progressAttacks(units, tick, events, movedIds, projectiles) {
       unit.actionTimers.windup = Math.max(0, delay - unit.actionTimers.swing);
       if (unit.actionTimers.swing === delay) {
         const target = byReference.get(unit.attackTargetId);
+        const ranged = rangedSpec(unit.mechanics);
         if (charge) {
           releaseChargeVolley(unit, target, charge, tick, events, projectiles);
+        } else if (ranged) {
+          releaseRangedShot(unit, target, ranged, tick, events, projectiles);
         } else {
           ready.push({
             type: "attack-ready",
@@ -706,26 +752,54 @@ function commitReadyAttacks(units, ready, tick, events) {
 // is accepted as a documented overshoot, not modelled.
 function processChargeProjectiles(units, projectiles, tick, events) {
   const remaining = [];
-  const arrivals = [];
-  for (const projectile of projectiles) {
-    if (projectile.arrivalTick > tick) {
-      remaining.push(projectile);
-    } else {
-      arrivals.push(projectile);
-    }
-  }
-  arrivals.sort((left, right) => (
+  const resolved = [];
+  const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
+  const ordered = [...projectiles].sort((left, right) => (
     left.actorId - right.actorId
     || left.targetId - right.targetId
+    || left.firedTick - right.firedTick
     || left.index - right.index
   ));
-  const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
-  for (const projectile of arrivals) {
+  for (const projectile of ordered) {
+    if (projectile.kind === "ranged") {
+      // Physical point flight: advance one step along the line, hit the
+      // moment the target's collision box contains the point. Steps (7/60 =
+      // 0.117 tiles) are smaller than any collision box, so nothing tunnels.
+      projectile.x += projectile.stepX;
+      projectile.y += projectile.stepY;
+      projectile.traveled += projectile.stepLength;
+      const target = byReference.get(projectile.targetId);
+      if (target?.alive) {
+        const dx = Math.abs(target.x - projectile.x);
+        const dy = Math.abs(target.y - projectile.y);
+        if (Math.max(dx, dy) <= collisionRadius(target) + 1e-9) {
+          resolved.push(projectile);
+          continue;
+        }
+      }
+      // Expire at the aim point: the target died or left its box.
+      if (projectile.traveled < projectile.totalDistance - 1e-9
+          && tick < projectile.arrivalTick + 2) {
+        remaining.push(projectile);
+      }
+      continue;
+    }
+    if (projectile.arrivalTick > tick) {
+      remaining.push(projectile);
+      continue;
+    }
+    const target = byReference.get(projectile.targetId);
+    if (!target?.alive) continue;
+    resolved.push(projectile);
+  }
+  for (const projectile of resolved) {
     const target = byReference.get(projectile.targetId);
     if (!target?.alive) continue;
     applyCommittedDamage(units, projectile.actorId, target, projectile.amount,
-      projectile.arrivalTick, tick, events,
-      { kind: "charge-projectile", projectileIndex: projectile.index });
+      tick, tick, events, {
+        kind: projectile.kind === "ranged" ? "ranged-projectile" : "charge-projectile",
+        projectileIndex: projectile.index,
+      });
   }
   return remaining;
 }
@@ -787,7 +861,11 @@ export function stepWorld(world) {
   issueOrders(world.orderState, units, tick, events, event);
   const { contacts, movedIds, blockedIds } = moveUnits(units, world.map, tick, events);
   updateEngagements(units, contacts, tick, events, blockedIds);
-  const projectiles = world.projectiles ? [...world.projectiles] : null;
+  // Clone flight state: published projectiles are frozen, and ranged shots
+  // advance their position every tick.
+  const projectiles = world.projectiles
+    ? world.projectiles.map((projectile) => ({ ...projectile }))
+    : null;
   const ready = progressAttacks(units, tick, events, movedIds, projectiles);
   commitReadyAttacks(units, ready, tick, events);
   const remainingProjectiles = projectiles
@@ -835,7 +913,7 @@ function outcome(world) {
 }
 
 
-export function runWorld(world, { maxTicks = MAX_WORLD_TICKS } = {}) {
+export function runWorld(world, { maxTicks = DEFAULT_WORLD_TICKS } = {}) {
   if (!Number.isSafeInteger(maxTicks) || maxTicks < 0) {
     throw new RangeError("max ticks must be a nonnegative safe integer");
   }

@@ -1,5 +1,9 @@
 import { secondsToTicksCeil, secondsToTicksNearest } from "../simulation-clock.js";
-import { MELEE_CONTACT_TOLERANCE_TILES, chebyshevGap } from "./targeting.js";
+import {
+  MELEE_CONTACT_TOLERANCE_TILES,
+  chebyshevGap,
+  surfaceGap as euclideanCollisionGap,
+} from "./targeting.js";
 
 
 function compareText(left, right) {
@@ -104,6 +108,12 @@ export function isWithinStopRange(actor, target) {
   const range = requireFinite(actor?.mechanics?.attack_range_tiles, "attack range");
   if (range < 0) throw new RangeError("attack range must be nonnegative");
   const stop = Math.max(range, MELEE_CONTACT_TOLERANCE_TILES);
+  // Projectile units stop inside their Euclidean range circle (the same
+  // metric as their reach — see isWithinReach); melee units keep the
+  // Chebyshev collision-box rule measured on the steppe tapes.
+  if (actor?.mechanics?.ranged) {
+    return euclideanCollisionGap(actor, target) <= stop + 1e-12;
+  }
   return chebyshevGap(actor, target) <= stop + 1e-12;
 }
 
@@ -118,14 +128,27 @@ export function calculateDamage(actor, target) {
     throw new TypeError("target armor classes are required");
   }
 
+  // Melee units carry their base attack in class 4, ranged units in class 3
+  // (archers have no class-4 attack at all); both resolve through the one
+  // shared armor-class rule, then any matching bonus classes stack on top.
   const baseAttack = classValue(attacks, "4", "attack");
   const baseArmor = classValue(armors, "4", "armor");
-  if (baseAttack === undefined || baseArmor === undefined) {
-    throw new TypeError("attack and armor class 4 are required");
+  const pierceAttack = classValue(attacks, "3", "attack");
+  const pierceArmor = classValue(armors, "3", "armor");
+  if (
+    (baseAttack === undefined || baseArmor === undefined)
+    && (pierceAttack === undefined || pierceArmor === undefined)
+  ) {
+    throw new TypeError("attack and armor must share class 4 or class 3");
   }
-  let damage = Math.max(0, baseAttack - baseArmor);
+  const term = (attackValue, armorValue) => (
+    attackValue === undefined || armorValue === undefined
+      ? 0
+      : Math.max(0, attackValue - armorValue)
+  );
+  let damage = term(baseAttack, baseArmor) + term(pierceAttack, pierceArmor);
   for (const [classId, attack] of Object.entries(attacks)) {
-    if (classId === "4" || attack <= 0) continue;
+    if (classId === "4" || classId === "3" || attack <= 0) continue;
     const armor = classValue(armors, classId, "armor");
     if (armor === undefined) continue;
     damage += Math.max(0, requireFinite(attack, `attack class ${classId}`) - armor);
@@ -154,6 +177,32 @@ export function trampleSpec(mechanics) {
     return null;
   }
   return { widthTiles: width, damageFraction: fraction };
+}
+
+
+// Ranged attack (projectile-armed units), measured on the authorized
+// arbalester-vs-eliteskirm archive (25 fights, 6312 shots):
+//   - the attack CYCLE is the ordinary cycle: same outline-box reach at
+//     range + 0.1 (max observed fire distance 8.56 = 8 + 0.1 + two 0.2
+//     outlines), same collision-box stop rule, same windup frame and reload
+//     cadence — only the damage delivery differs;
+//   - the shot flies at the projectile unit's dat speed to the target's
+//     position at FIRE time (smart_mode 0: no leading), and on arrival hits
+//     iff the target is alive and still within its own collision box of that
+//     aim point. 5141/6312 tape shots hit; 1068 found a corpse (died
+//     mid-flight), 23 found the target walked away (displacement >= 0.23 at
+//     arrival while hits sit at p90 0.0), and 80 (1.27%) missed a live
+//     stationary target — the accuracy-roll residue, which the deterministic
+//     engine does not simulate (documented overshoot).
+export function rangedSpec(mechanics) {
+  const ranged = mechanics?.ranged;
+  if (!ranged) return null;
+  const speed = requireFinite(
+    ranged.projectile_speed_tiles_per_second, "ranged projectile speed");
+  if (speed <= 0) throw new RangeError("ranged projectile speed must be positive");
+  const minRange = requireFinite(ranged.min_range_tiles ?? 0, "ranged min range");
+  if (minRange < 0) throw new RangeError("ranged min range must be nonnegative");
+  return { projectileSpeed: speed, minRangeTiles: minRange };
 }
 
 

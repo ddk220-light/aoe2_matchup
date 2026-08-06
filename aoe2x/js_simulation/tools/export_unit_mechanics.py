@@ -42,6 +42,7 @@ def _read_reference_row(reference_db: Path, unit_slug: str, civ: str) -> dict[st
                 final_range,
                 final_reload_time,
                 final_attack_delay,
+                final_accuracy,
                 final_los,
                 final_attacks_json,
                 final_armors_json
@@ -94,23 +95,33 @@ def _damage_against_self(
     attack_classes: dict[str, int | float],
     armor_classes: dict[str, int | float],
 ) -> int | float:
-    """Apply the AoE class rule to the unit's own attack and armor maps."""
-    for label, classes in (
-        ("attack", attack_classes),
-        ("armor", armor_classes),
-    ):
-        if "4" not in classes:
-            raise ValueError(f"missing required {label} class 4")
-        value = classes["4"]
+    """Apply the AoE class rule to the unit's own attack and armor maps.
+
+    Melee units carry their base attack in class 4, ranged units in class 3
+    (archers have no class-4 attack at all); both are ordinary armor classes
+    under the one shared rule, followed by any matching bonus classes.
+    """
+    def numeric(classes, class_id, label):
+        value = classes[class_id]
         if (
             isinstance(value, bool)
             or not isinstance(value, (int, float))
             or not math.isfinite(value)
         ):
-            raise ValueError(f"{label} class 4 must be numeric")
-    if attack_classes["4"] <= 0:
-        raise ValueError("attack class 4 must be positive")
-    damage = max(0, attack_classes["4"] - armor_classes["4"])
+            raise ValueError(f"{label} class {class_id} must be numeric")
+        return value
+
+    if not any(
+        class_id in attack_classes and numeric(attack_classes, class_id, "attack") > 0
+        for class_id in ("4", "3")
+    ):
+        raise ValueError("attack must carry a positive class 4 or class 3 value")
+    damage = 0
+    for class_id in ("4", "3"):
+        if class_id not in attack_classes or class_id not in armor_classes:
+            continue
+        damage += max(0, numeric(attack_classes, class_id, "attack")
+                      - numeric(armor_classes, class_id, "armor"))
     for class_id, attack in attack_classes.items():
         if class_id in {"3", "4"} or attack <= 0 or class_id not in armor_classes:
             continue
@@ -327,6 +338,46 @@ def export_unit_mechanics(
             ),
         })
 
+    # Ranged attack projectile. Exported whenever the unit fires a projectile
+    # (type_50.projectile_unit_id >= 0 with a positive range). Semantics
+    # measured on the arbalester-vs-eliteskirm archive (25 fights, 6312 shots):
+    #   - the attack cycle is the MELEE cycle (same reach rule over outline
+    #     boxes at range + 0.1 -- max observed fire distance 8.56 = 8 + 0.1 +
+    #     both 0.2 outlines -- same stop rule, same windup frame), except the
+    #     damage is delivered by a projectile flying at the projectile unit's
+    #     dat speed to the target's position at fire time;
+    #   - on arrival the shot hits iff the target is alive and still within
+    #     its own collision box of the aim point: 5141/6312 shots hit, 1068
+    #     find a corpse (dead mid-flight), 23 find the target walked away
+    #     (displacement 0.23-1.03 at arrival; hits show p90 displacement 0.0),
+    #     and only 80 (1.27%) miss a live stationary target -- the accuracy
+    #     roll residue, accepted as a documented deterministic-engine
+    #     overshoot;
+    #   - min_range is exported for completeness (the skirmisher's 1.0 is
+    #     never exercised in a recorded fight; scorpion tapes will measure
+    #     its semantics before the engine enforces it).
+    ranged = None
+    projectile_id = int(unit.type_50.projectile_unit_id)
+    if projectile_id >= 0 and float(reference["final_range"]) > 0:
+        proj = data.civs[0].units[projectile_id]
+        ranged = {
+            "projectile_unit": projectile_id,
+            "projectile_speed_tiles_per_second": float(proj.speed),
+            "min_range_tiles": float(unit.type_50.min_range),
+            "accuracy_percent": float(reference["final_accuracy"]),
+        }
+        fields.update({
+            "ranged.projectile_unit": "unit.type_50.projectile_unit_id",
+            "ranged.projectile_speed_tiles_per_second": (
+                f"dat.civs[0].units[{projectile_id}].speed"
+            ),
+            "ranged.min_range_tiles": "unit.type_50.min_range",
+            "ranged.accuracy_percent": (
+                "ref_units.final_accuracy (not simulated: 98.7% of tape shots"
+                " resolve deterministically; see measurement note)"
+            ),
+        })
+
     # Melee blast ("trample"). Raw dat values, exported for every unit; the
     # engine gates on attack_level == 2 and 0 < damage_fraction < 1 (the
     # Champion's blast_damage is a -5.0 "no trample" sentinel with width 0).
@@ -350,6 +401,7 @@ def export_unit_mechanics(
         "age": reference["age"],
         "blast": blast,
         "charge": charge,
+        "ranged": ranged,
         "hp": int(reference["final_hp"]),
         "speed_tiles_per_second": float(reference["exact_speed"]),
         "attack_range_tiles": float(reference["final_range"]),

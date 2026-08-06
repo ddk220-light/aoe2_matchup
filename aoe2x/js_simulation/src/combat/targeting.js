@@ -208,7 +208,21 @@ export function attackReach(unit) {
 // walking well inside their own attack envelope before they stop, and only
 // blocked or already-stopped units swinging from the outer envelope. That
 // split is what lets back-line Steppe Lancers fight over their front line.
+//
+// The distance METRIC splits on attack type. MELEE reach (range 0-1) is
+// Chebyshev over the outline boxes — 30 diagonal-contact steppe swings sit at
+// outline-Euclidean 1.235 > 1.1 while Chebyshev is inside. PROJECTILE reach
+// is a Euclidean circle: across 6312 arbalester/skirmisher shots the maximum
+// fire distance is 8.56 = range 8 + 0.1 + both 0.2 outlines with formations
+// full of diagonal geometry — a Chebyshev rule at range 8 would show fire
+// distances beyond 11, and none exist. (Box adjacency for arms' reach, a
+// range circle for shots.)
 export function isWithinReach(unit, target) {
+  if (unit?.mechanics?.ranged) {
+    const gap = centerDistance(unit, target)
+      - outlineRadius(unit) - outlineRadius(target);
+    return gap <= attackReach(unit) + 1e-12;
+  }
   return outlineChebyshevGap(unit, target) <= attackReach(unit) + 1e-12;
 }
 

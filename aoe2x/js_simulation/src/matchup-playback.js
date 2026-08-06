@@ -82,6 +82,13 @@ const MATCHUPS = Object.freeze({
       1134: "fixtures/unit_stats/elite_battle_elephant_burmese_imperial.json",
     }),
   }),
+  arbalester_vs_eliteskirm: Object.freeze({
+    truth: "calibration/fixtures/arbalester_vs_eliteskirm_basics.json",
+    mechanics: Object.freeze({
+      492: "fixtures/unit_stats/arbalester_chinese_imperial.json",
+      6: "fixtures/unit_stats/elite_skirmisher_chinese_imperial.json",
+    }),
+  }),
 });
 
 
@@ -194,7 +201,10 @@ function runRoster({ name, ratio, roster, mechanics, truth, synthetic }) {
     });
   });
 
-  const result = runWorld(createWorld({ ratio, units }));
+  // Ranged endgames legitimately outlast the 60 s default guard (the tape's
+  // own arbalester 20v15 runs 59.8 s); melee fights never get near it, so the
+  // higher ceiling changes nothing for them.
+  const result = runWorld(createWorld({ ratio, units }), { maxTicks: 9000 });
   const live = result.world.units.filter(({ alive }) => alive);
   return Object.freeze({
     schemaVersion: 1,

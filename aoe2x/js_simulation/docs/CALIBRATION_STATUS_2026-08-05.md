@@ -265,11 +265,57 @@ target-HP change 0), not crowd relief (31% pick a less crowded target, 32% more
 crowded), not retaliation (14% pick a unit attacking them against a 12% control
 for the target they just left). No measurable preference on any axis.
 
-**What it IS: a rate.** Voluntary switches per unit-second engaged, pooled over
-eight ratios — champion **0.064/s**, paladin **0.061/s**, agreeing to 5%. Like
-the acquisition lag this is an ENGINE property rather than a unit stat: one
-voluntary retarget per ~16 s of engaged time. Since the choice shows no
-measurable bias, calibration only needs the rate.
+**It is NOT a rate.** An earlier version of this section modelled it as one
+voluntary retarget per ~16 s of engaged time. That was an artifact of a
+large-fight-heavy sample. Measured across all 122 recorded fights the rate
+scales with DENSITY — per-fight correlation with unit count **+0.83**:
+
+| units | fights | switches | per unit-sec | 1 per |
+|---|---|---|---|---|
+| 2-4 | 21 | **0** | 0.0000 | never |
+| 5-9 | 36 | 62 | 0.0204 | 49.0 s |
+| 10-15 | 23 | 152 | 0.0306 | 32.7 s |
+| 16-25 | 19 | 386 | 0.0560 | 17.9 s |
+| 26-40 | 23 | 885 | 0.0631 | 15.9 s |
+
+Small fights never voluntarily retarget at all, so no timer is involved.
+Re-evaluation is CONTINUOUS: hold-time before a switch is a smooth unimodal
+distribution peaking at 1.25-1.50 s with no periodicity (a Rayleigh sweep over
+0.2-4.0 s finds only the trivial monotonic artifact), which is what a
+continuously-evaluated condition on a churning melee produces.
+
+Two more facts constrain the rule. Switches happen at **96.8% of maximum move
+speed** — the same as the baseline moving frame, so units are NOT stuck when
+they switch. And 54% of switches abandon a target the unit never once reached
+(median hold 1.43 s, median closest approach 0.56 tiles against a 0.1 contact
+threshold), while the other 46% happen a median of **0.02 s** after a swing
+lands. All of this replicates in the champion and paladin MIRROR archives.
+
+**The choice rule is still unknown.** Tested on 1485 switches across 122
+fights, every candidate fails:
+
+| candidate rule | result |
+|---|---|
+| nearest by straight line | 40% |
+| nearest by PATH (grid A* around bodies) | 45% |
+| old target unreachable | 6% |
+| path-detour threshold | old 1.19 vs new 1.19 — identical |
+| nearest with a free slot (any K) | flat 33% |
+| focus the wounded | median target-HP change 0 |
+| retaliation (new target attacking me) | 14% vs a 12% control |
+| copy a nearby ally's target | 0.98x chance |
+| fixed timer | no periodicity; zero switches in small fights |
+
+**A second, independent blocker.** Even granting continuous re-evaluation, our
+engine cannot reproduce the walking: `moveUnits` refuses to move any unit whose
+action is `attacking`, and `selectEngagementTarget` retains `engagedTargetId`
+while that target is alive and in reach. An engaged unit is therefore pinned
+regardless of its pursuit target, where the tape shows units walking away
+0.02 s after a swing. Experiment: removing only the pursuit lock (re-evaluate
+nearest every tick, no new constants) halved the 10v10 attacking-share error
+(+25.5 → +11.6 pt) but left the big fights near 22% moving against the tape's
+46%, and outcome deltas were a wash — four ratios better, four worse. Reverted;
+engagement pinning has to be addressed too.
 
 ## Error by ratio band — the sim is worst exactly where the game is
 

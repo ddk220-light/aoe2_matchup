@@ -201,6 +201,11 @@ def export_unit_mechanics(
 
     fields = {
         "unit_master": "unit.id",
+        "blast.width_tiles": "unit.type_50.blast_width",
+        "blast.damage_fraction": "unit.type_50.blast_damage",
+        "blast.attack_level": "unit.type_50.blast_attack_level",
+        "blast.defense_level": "unit.blast_defense_level",
+        "blast.friendly_fire_damage": "unit.type_50.friendly_fire_damage",
         "civilization": "ref_units.civ_name",
         "age": "ref_units.age",
         "hp": "ref_units.final_hp",
@@ -243,10 +248,28 @@ def export_unit_mechanics(
         ),
     }
 
+    # Melee blast ("trample"). Raw dat values, exported for every unit; the
+    # engine gates on attack_level == 2 and 0 < damage_fraction < 1 (the
+    # Champion's blast_damage is a -5.0 "no trample" sentinel with width 0).
+    # Semantics measured from the authorized elephant tapes (54 fights, 1694
+    # bystander samples, 0 misclassifications): the blast is a circle of radius
+    # width_tiles centred on the ATTACKER, it reaches every ENEMY unit whose
+    # collision box intersects the circle (allies are never hit despite the
+    # level-2/friendly-fire dat flags), the main target is excluded, and each
+    # victim takes damage_fraction x the post-armor damage against THAT victim.
+    blast = {
+        "width_tiles": float(unit.type_50.blast_width),
+        "damage_fraction": float(unit.type_50.blast_damage),
+        "attack_level": int(unit.type_50.blast_attack_level),
+        "defense_level": int(unit.blast_defense_level),
+        "friendly_fire_damage": float(unit.type_50.friendly_fire_damage),
+    }
+
     return {
         "unit_master": unit.id,
         "civilization": reference["civ_name"],
         "age": reference["age"],
+        "blast": blast,
         "hp": int(reference["final_hp"]),
         "speed_tiles_per_second": float(reference["exact_speed"]),
         "attack_range_tiles": float(reference["final_range"]),

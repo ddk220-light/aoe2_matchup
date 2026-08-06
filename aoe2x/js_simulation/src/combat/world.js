@@ -23,7 +23,9 @@ import {
   isInAttackRange,
   orderReadyAttacks,
   reloadTicks,
+  trampleSpec,
 } from "./attacks.js";
+import { collisionRadius } from "./targeting.js";
 
 
 const DEFAULT_MAP = Object.freeze({
@@ -490,46 +492,73 @@ function commitReadyAttacks(units, ready, tick, events) {
       continue;
     }
 
-    const hpBefore = target.hp;
-    const hpAfter = Math.max(0, hpBefore - attack.amount);
-    target.hp = hpAfter;
     // The hit lands mid-animation; the actor stays committed to the rest of its
     // swing. Its reload was started at swing start, so the cadence is unaffected.
-    events.push(createDamageEvent({
-      tick,
-      actorId: attack.actorId,
-      targetId: attack.targetId,
-      readyTick: attack.readyTick,
-      amount: attack.amount,
-      hpBefore,
-      hpAfter,
-    }));
-    if (hpAfter > 0) continue;
+    applyCommittedDamage(units, attack.actorId, target, attack.amount,
+      attack.readyTick, tick, events, null);
 
-    target.alive = false;
-    target.pursuitTargetId = null;
-    target.engagedTargetId = null;
-    target.attackTargetId = null;
-    target.avoidance = null;
-    target.action = "dead";
-    target.actionTimers = { windup: 0, reload: 0, swing: 0, acquire: 0 };
-    events.push(createDeathEvent({
-      tick,
-      actorId: attack.actorId,
-      targetId: attack.targetId,
-      readyTick: attack.readyTick,
-    }));
-    for (const engaged of units) {
-      if (!engaged.alive || engaged.engagedTargetId !== target.referenceId) continue;
-      engaged.engagedTargetId = null;
-      events.push(event(
-        tick,
-        "engagement-ended",
-        engaged.referenceId,
-        target.referenceId,
-        { reason: "target-dead" },
-      ));
+    // Trample: the committed hit also blasts every enemy whose collision box
+    // intersects the attacker's blast circle (see trampleSpec for the sourced
+    // rule). Victims are struck in unit order at this same instant, each for
+    // its own post-armor fraction; a killing trample clamps at 0 like any hit.
+    const blast = trampleSpec(actor.mechanics);
+    if (blast) {
+      for (const victim of units) {
+        if (!victim.alive || victim.owner === actor.owner) continue;
+        if (victim.referenceId === target.referenceId) continue;
+        const reach = Math.hypot(
+          Math.max(0, Math.abs(victim.x - actor.x) - collisionRadius(victim)),
+          Math.max(0, Math.abs(victim.y - actor.y) - collisionRadius(victim)),
+        );
+        if (reach > blast.widthTiles + 1e-12) continue;
+        applyCommittedDamage(units, attack.actorId, victim,
+          blast.damageFraction * calculateDamage(actor, victim),
+          attack.readyTick, tick, events, { kind: "trample" });
+      }
     }
+  }
+}
+
+
+function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, events, extra) {
+  const hpBefore = target.hp;
+  const hpAfter = Math.max(0, hpBefore - amount);
+  target.hp = hpAfter;
+  events.push(createDamageEvent({
+    tick,
+    actorId,
+    targetId: target.referenceId,
+    readyTick,
+    amount,
+    hpBefore,
+    hpAfter,
+    ...(extra ?? {}),
+  }));
+  if (hpAfter > 0) return;
+
+  target.alive = false;
+  target.pursuitTargetId = null;
+  target.engagedTargetId = null;
+  target.attackTargetId = null;
+  target.avoidance = null;
+  target.action = "dead";
+  target.actionTimers = { windup: 0, reload: 0, swing: 0, acquire: 0 };
+  events.push(createDeathEvent({
+    tick,
+    actorId,
+    targetId: target.referenceId,
+    readyTick,
+  }));
+  for (const engaged of units) {
+    if (!engaged.alive || engaged.engagedTargetId !== target.referenceId) continue;
+    engaged.engagedTargetId = null;
+    events.push(event(
+      tick,
+      "engagement-ended",
+      engaged.referenceId,
+      target.referenceId,
+      { reason: "target-dead" },
+    ));
   }
 }
 

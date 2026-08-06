@@ -120,6 +120,29 @@ export function calculateDamage(actor, target) {
 }
 
 
+// Melee blast ("trample"), sourced from the Genie dat and measured on the
+// authorized elephant tapes (54 fights): the blast is a circle of radius
+// blast.width_tiles centred on the ATTACKER at the instant its hit lands, and
+// it reaches every ENEMY unit whose collision box intersects the circle —
+// 1694/1694 tape bystander samples separate cleanly on that rule (hits reach
+// box-distance 0.396, misses start at 0.402, dat width 0.4). Each victim takes
+// blast.damage_fraction x the post-armor damage against ITSELF (14 -> 3.5 on
+// Champions, 13 -> 3.25 on Paladins). Allies are never hit despite the dat's
+// level-2/friendly-fire flags, and the main target takes only the main hit.
+// Gate mirrors the Python ability registry: blast_attack_level == 2 with a
+// true fraction (the Champion carries width 0 / damage -5.0 sentinels).
+export function trampleSpec(mechanics) {
+  const blast = mechanics?.blast;
+  if (!blast) return null;
+  const width = requireFinite(blast.width_tiles, "blast width");
+  const fraction = requireFinite(blast.damage_fraction, "blast damage fraction");
+  if (blast.attack_level !== 2 || width <= 0 || fraction <= 0 || fraction >= 1) {
+    return null;
+  }
+  return { widthTiles: width, damageFraction: fraction };
+}
+
+
 export function createAttackStartEvent(details) {
   return createEvent("attack-start", details);
 }

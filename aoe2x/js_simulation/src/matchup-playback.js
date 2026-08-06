@@ -19,6 +19,20 @@ const MATCHUPS = Object.freeze({
       569: "fixtures/unit_stats/paladin_spanish_imperial.json",
     }),
   }),
+  champion_vs_elephant: Object.freeze({
+    truth: "calibration/fixtures/champion_vs_elephant_basics.json",
+    mechanics: Object.freeze({
+      567: "fixtures/unit_stats/champion_chinese_imperial.json",
+      1134: "fixtures/unit_stats/elite_battle_elephant_burmese_imperial.json",
+    }),
+  }),
+  paladin_vs_elephant: Object.freeze({
+    truth: "calibration/fixtures/paladin_vs_elephant_basics.json",
+    mechanics: Object.freeze({
+      569: "fixtures/unit_stats/paladin_spanish_imperial.json",
+      1134: "fixtures/unit_stats/elite_battle_elephant_burmese_imperial.json",
+    }),
+  }),
 });
 
 

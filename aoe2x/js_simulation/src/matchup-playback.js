@@ -103,6 +103,13 @@ const MATCHUPS = Object.freeze({
       567: "fixtures/unit_stats/champion_chinese_imperial.json",
     }),
   }),
+  scorpion_vs_paladin: Object.freeze({
+    truth: "calibration/fixtures/scorpion_vs_paladin_basics.json",
+    mechanics: Object.freeze({
+      542: "fixtures/unit_stats/heavy_scorpion_japanese_imperial.json",
+      569: "fixtures/unit_stats/paladin_spanish_imperial.json",
+    }),
+  }),
 });
 
 

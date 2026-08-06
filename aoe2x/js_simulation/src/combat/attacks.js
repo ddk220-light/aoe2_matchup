@@ -213,14 +213,43 @@ export function rangedSpec(mechanics) {
   // list), bit 2 = full damage on unintended targets. Absent on fixtures
   // exported before the attribute was sourced; those fly unled.
   const smartMode = requireFinite(ranged.smart_mode ?? 0, "ranged smart mode");
+  // Accuracy (dat accuracy_percent < 100 gates the whole mechanic; every
+  // converged-corpus archer is 100): an aim-true roll per shot; a missed
+  // shot scatters within the dat dispersion half-radius and deals HALF
+  // damage to whatever it hits (measured on the standard-units tapes:
+  // hand-cannoneer quanta 22/11, 11/5.5 and 8/4 across four defender
+  // armors are exact full/half pairs).
+  const accuracy = requireFinite(ranged.accuracy_percent ?? 100, "ranged accuracy");
+  const dispersion = requireFinite(
+    ranged.accuracy_dispersion_tiles ?? 0, "ranged dispersion");
+  // Mangonel-family blast: the FIRING unit's blast width is the area radius
+  // at the primary projectile's impact point. Secondaries are visual-only
+  // dat units with EMPTY attack lists — each lands scattered over the
+  // spawning area for the floor 1 damage (the tapes' ubiquitous 1.0 hits).
+  const blastRadius = ranged.pass_through
+    ? 0
+    : requireFinite(mechanics?.blast?.width_tiles ?? 0, "blast width");
+  const secondaryCount = requireFinite(
+    ranged.secondary_projectile_count ?? 0, "secondary projectile count");
+  const spawnArea = Array.isArray(ranged.projectile_spawning_area)
+    ? ranged.projectile_spawning_area
+    : [0, 0];
   return {
     projectileSpeed: speed,
     minRangeTiles: minRange,
     passThrough,
     projectileHalfWidth: halfWidth,
     smartMode,
+    accuracyPercent: accuracy,
+    dispersionTiles: dispersion,
+    blastRadius,
+    secondaryCount,
+    spawnArea,
   };
 }
+
+
+export const MISS_DAMAGE_FRACTION = 0.5;
 
 
 // Pass-through bolt constants, measured on the scorpion archives (50 fights):

@@ -100,12 +100,15 @@
       "outline_size_tiles.x": "unit.outline_size_x",
       "outline_size_tiles.y": "unit.outline_size_y",
       "outline_size_tiles.z": "unit.outline_size_z",
+      "ranged.accuracy_dispersion_tiles": "unit.type_50.accuracy_dispersion",
       "ranged.accuracy_percent": "ref_units.final_accuracy (not simulated: 98.7% of tape shots resolve deterministically; see measurement note)",
       "ranged.min_range_tiles": "unit.type_50.min_range",
       "ranged.pass_through": "dat.civs[0].units[656].projectile.vanish_mode",
       "ranged.projectile_half_width_tiles": "dat.civs[0].units[656].collision_size_x",
+      "ranged.projectile_spawning_area": "unit.creatable.projectile_spawning_area[0:2]",
       "ranged.projectile_speed_tiles_per_second": "dat.civs[0].units[656].speed",
       "ranged.projectile_unit": "unit.type_50.projectile_unit_id",
+      "ranged.secondary_projectile_count": "unit.creatable.total_projectiles - 1",
       "ranged.smart_mode": "dat.civs[0].units[656].projectile.smart_mode | 1 when dat tech 93 (Ballistics) sets attribute 19 on projectile 656 (Imperial fully-teched model)",
       "reload_seconds": "ref_units.final_reload_time",
       "speed_tiles_per_second": "ref_stat_chain.speed (final step; ref_units.final_speed is rounded)",
@@ -116,12 +119,18 @@
     "reference_selector": "ref_units WHERE unit_slug='siege_onager' AND civ_name='Slavs' AND age='Imperial'"
   },
   "ranged": {
+    "accuracy_dispersion_tiles": 0.0,
     "accuracy_percent": 100.0,
     "min_range_tiles": 3.0,
     "pass_through": false,
     "projectile_half_width_tiles": 0.1,
+    "projectile_spawning_area": [
+      1.5,
+      1.5
+    ],
     "projectile_speed_tiles_per_second": 3.5,
     "projectile_unit": 656,
+    "secondary_projectile_count": 9,
     "smart_mode": 0
   },
   "reload_seconds": 6.0,

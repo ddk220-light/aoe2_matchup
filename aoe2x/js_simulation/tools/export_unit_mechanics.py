@@ -407,6 +407,18 @@ def export_unit_mechanics(
             "pass_through": pass_through,
             "projectile_half_width_tiles": round(float(proj.collision_size_x), 6),
             "smart_mode": smart_mode,
+            # Miss scatter half-radius (dat accuracy_dispersion); only
+            # consulted when accuracy_percent < 100.
+            "accuracy_dispersion_tiles": float(unit.type_50.accuracy_dispersion),
+            # Extra visual projectiles (mangonel line): total - 1 secondaries
+            # with EMPTY attack lists — each lands scattered over the
+            # spawning area and deals only the floor 1 damage.
+            "secondary_projectile_count": max(
+                0, int(unit.creatable.total_projectiles) - 1),
+            "projectile_spawning_area": [
+                float(unit.creatable.projectile_spawning_area[0]),
+                float(unit.creatable.projectile_spawning_area[1]),
+            ],
         }
         fields.update({
             "ranged.projectile_unit": "unit.type_50.projectile_unit_id",
@@ -429,6 +441,9 @@ def export_unit_mechanics(
                 " | 1 when dat tech 93 (Ballistics) sets attribute 19 on"
                 f" projectile {projectile_id} (Imperial fully-teched model)"
             ),
+            "ranged.accuracy_dispersion_tiles": "unit.type_50.accuracy_dispersion",
+            "ranged.secondary_projectile_count": "unit.creatable.total_projectiles - 1",
+            "ranged.projectile_spawning_area": "unit.creatable.projectile_spawning_area[0:2]",
         })
 
     # Melee blast ("trample"). Raw dat values, exported for every unit; the

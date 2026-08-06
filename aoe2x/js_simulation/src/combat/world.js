@@ -24,6 +24,7 @@ import {
 import { TICKS_PER_SECOND, secondsToTicksCeil } from "../simulation-clock.js";
 import {
   BOLT_OVERSHOOT_TILES,
+  MISS_DAMAGE_FRACTION,
   PASS_THROUGH_DAMAGE_FRACTION,
   attackAnimationTicks,
   attackDelayTicks,
@@ -199,6 +200,15 @@ export function createWorld(scenario) {
       ? { kiteState: createKiteState(scenario.kiteOwner, scenario.kiteProfile ?? null) }
       : {}),
     ...(anyCharge ? { projectiles: Object.freeze([]) } : {}),
+    // Deterministic per-shot RNG, present only when a unit can miss or blast
+    // (dat accuracy < 100 or blast width > 0 — nothing in the converged
+    // corpus). Seeded with the golden constant; state lives OUTSIDE units so
+    // no hash can move. Mutable by design across ticks, like kiteState.
+    ...(units.some((unit) => {
+      const spec = rangedSpec(unit.mechanics);
+      return spec && (spec.accuracyPercent < 100
+        || spec.blastRadius > 0 || spec.secondaryCount > 0);
+    }) ? { shotRng: { state: 20260411 >>> 0 } } : {}),
     tick: 0,
     ratio: scenario.ratio,
     mapHash: scenario.mapHash,
@@ -745,14 +755,95 @@ function leadAimPoint(unit, target, spec, velocities) {
 }
 
 
-function releaseRangedShot(unit, target, spec, tick, events, projectiles, velocities) {
+// Deterministic per-shot RNG (mulberry32 step over world.shotRng.state),
+// consumed in the deterministic unit-loop order. Present only in worlds
+// where a unit can miss or blast.
+function nextShotRoll(shotRng) {
+  const a = (shotRng.state + 0x6d2b79f5) >>> 0;
+  shotRng.state = a;
+  let t = Math.imul(a ^ (a >>> 15), 1 | a);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+
+
+function releaseRangedShot(unit, target, spec, tick, events, projectiles, velocities, shotRng) {
   if (!target?.alive || target.owner === unit.owner) return;
-  const aim = (spec.smartMode & 1) === 1
+  let aim = (spec.smartMode & 1) === 1
     ? leadAimPoint(unit, target, spec, velocities)
     : { x: target.x, y: target.y };
-  const distance = Math.hypot(aim.x - unit.x, aim.y - unit.y);
+  let distance = Math.hypot(aim.x - unit.x, aim.y - unit.y);
   if (distance <= 1e-9) return;
   const stepLength = spec.projectileSpeed / TICKS_PER_SECOND;
+  // Mangonel-family shell: flies OVER intervening units to the aim point and
+  // explodes there — blast radius = the firing unit's dat blast width, full
+  // damage where the impact point is inside a victim's box, linear taper to
+  // the edge (wiki/tape-corroborated), friendly fire on (dat 1.0). The 9
+  // visual secondaries land scattered over the dat spawning area for the
+  // floor 1 damage each (their dat attack lists are EMPTY — the tapes'
+  // repeated 1.0 quanta).
+  if (spec.blastRadius > 0) {
+    const flight = Math.max(1, secondsToTicksCeil(distance / spec.projectileSpeed));
+    projectiles.push({
+      kind: "shell",
+      actorId: unit.referenceId,
+      actorOwner: unit.owner,
+      actorMechanics: unit.mechanics,
+      targetId: target.referenceId,
+      aimX: aim.x,
+      aimY: aim.y,
+      blastRadius: spec.blastRadius,
+      firedTick: tick,
+      arrivalTick: tick + flight,
+      index: 0,
+    });
+    for (let s = 0; s < spec.secondaryCount; s += 1) {
+      const sx = (nextShotRoll(shotRng) - 0.5) * spec.spawnArea[0];
+      const sy = (nextShotRoll(shotRng) - 0.5) * spec.spawnArea[1];
+      projectiles.push({
+        kind: "pebble",
+        actorId: unit.referenceId,
+        actorOwner: unit.owner,
+        targetId: target.referenceId,
+        aimX: aim.x + sx,
+        aimY: aim.y + sy,
+        firedTick: tick,
+        arrivalTick: tick + flight,
+        index: s + 1,
+      });
+    }
+    return;
+  }
+  // Accuracy roll (dat accuracy_percent < 100 only — the hand cannoneer's
+  // 75): a missed shot scatters uniformly within the dat dispersion
+  // half-radius and becomes a STRAY that hits the first enemy whose box it
+  // meets for HALF damage (tape full/half quanta pairs 22/11, 11/5.5, 8/4).
+  if (spec.accuracyPercent < 100
+      && nextShotRoll(shotRng) * 100 >= spec.accuracyPercent) {
+    const radius = spec.dispersionTiles * Math.sqrt(nextShotRoll(shotRng));
+    const angle = nextShotRoll(shotRng) * 2 * Math.PI;
+    aim = { x: aim.x + radius * Math.cos(angle), y: aim.y + radius * Math.sin(angle) };
+    distance = Math.hypot(aim.x - unit.x, aim.y - unit.y);
+    if (distance <= 1e-9) return;
+    projectiles.push({
+      kind: "stray",
+      actorId: unit.referenceId,
+      actorOwner: unit.owner,
+      actorMechanics: unit.mechanics,
+      targetId: target.referenceId,
+      x: unit.x,
+      y: unit.y,
+      stepX: ((aim.x - unit.x) / distance) * stepLength,
+      stepY: ((aim.y - unit.y) / distance) * stepLength,
+      stepLength,
+      traveled: 0,
+      totalDistance: distance,
+      firedTick: tick,
+      arrivalTick: tick + Math.max(1, secondsToTicksCeil(distance / spec.projectileSpeed)),
+      index: 0,
+    });
+    return;
+  }
   if (spec.passThrough) {
     // Scorpion-family bolt: flies the line and damages every enemy whose
     // collision box crosses its width; the action target takes full damage,
@@ -801,7 +892,7 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
 }
 
 
-function progressAttacks(units, tick, events, movedIds, projectiles, velocities) {
+function progressAttacks(units, tick, events, movedIds, projectiles, velocities, shotRng) {
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
   const ready = [];
   for (const unit of units) {
@@ -834,7 +925,8 @@ function progressAttacks(units, tick, events, movedIds, projectiles, velocities)
         if (charge) {
           releaseChargeVolley(unit, target, charge, tick, events, projectiles);
         } else if (ranged) {
-          releaseRangedShot(unit, target, ranged, tick, events, projectiles, velocities);
+          releaseRangedShot(unit, target, ranged, tick, events, projectiles,
+            velocities, shotRng);
         } else {
           ready.push({
             type: "attack-ready",
@@ -1073,6 +1165,78 @@ function processChargeProjectiles(units, projectiles, tick, events) {
       }
       continue;
     }
+    if (projectile.kind === "stray") {
+      // Missed-accuracy shot: flies its scattered line and hits the FIRST
+      // enemy whose collision box contains the point — for HALF the
+      // per-victim class damage. Expires at the scattered aim point.
+      projectile.x += projectile.stepX;
+      projectile.y += projectile.stepY;
+      projectile.traveled += projectile.stepLength;
+      let struck = false;
+      for (const victim of units) {
+        if (!victim.alive || victim.owner === projectile.actorOwner) continue;
+        const dx = Math.abs(victim.x - projectile.x);
+        const dy = Math.abs(victim.y - projectile.y);
+        if (Math.max(dx, dy) > collisionRadius(victim) + 1e-9) continue;
+        const full = calculateDamage({ mechanics: projectile.actorMechanics }, victim);
+        applyCommittedDamage(units, projectile.actorId, victim,
+          Math.max(1, MISS_DAMAGE_FRACTION * full), tick, tick, events,
+          { kind: "stray-projectile", projectileIndex: 0 });
+        struck = true;
+        break;
+      }
+      if (!struck && projectile.traveled < projectile.totalDistance - 1e-9
+          && tick < projectile.arrivalTick + 2) {
+        remaining.push(projectile);
+      }
+      continue;
+    }
+    if (projectile.kind === "shell") {
+      // Mangonel-family primary: arcs to the aim point and explodes on
+      // arrival. Everything (BOTH owners — dat friendly_fire 1.0) inside the
+      // blast radius takes the per-victim class damage, full when the impact
+      // point is inside the victim's box, linearly tapered to the edge
+      // otherwise, floored at 1.
+      if (projectile.arrivalTick > tick) {
+        remaining.push(projectile);
+        continue;
+      }
+      for (const victim of units) {
+        if (!victim.alive || victim.referenceId === projectile.actorId) continue;
+        const dx = Math.abs(victim.x - projectile.aimX);
+        const dy = Math.abs(victim.y - projectile.aimY);
+        const inBox = Math.max(dx, dy) <= collisionRadius(victim) + 1e-9;
+        const centerDistance = Math.hypot(dx, dy);
+        if (!inBox && centerDistance > projectile.blastRadius + 1e-9) continue;
+        const fraction = inBox
+          ? 1
+          : Math.max(0, 1 - centerDistance / projectile.blastRadius);
+        const full = calculateDamage({ mechanics: projectile.actorMechanics }, victim);
+        applyCommittedDamage(units, projectile.actorId, victim,
+          Math.max(1, fraction * full), tick, tick, events,
+          { kind: "shell-projectile", projectileIndex: 0 });
+      }
+      continue;
+    }
+    if (projectile.kind === "pebble") {
+      // Visual secondary (empty dat attack list): lands scattered over the
+      // spawning area; anything whose box contains the landing point takes
+      // the floor 1 damage.
+      if (projectile.arrivalTick > tick) {
+        remaining.push(projectile);
+        continue;
+      }
+      for (const victim of units) {
+        if (!victim.alive || victim.referenceId === projectile.actorId) continue;
+        const dx = Math.abs(victim.x - projectile.aimX);
+        const dy = Math.abs(victim.y - projectile.aimY);
+        if (Math.max(dx, dy) > collisionRadius(victim) + 1e-9) continue;
+        applyCommittedDamage(units, projectile.actorId, victim, 1,
+          tick, tick, events,
+          { kind: "pebble-projectile", projectileIndex: projectile.index });
+      }
+      continue;
+    }
     if (projectile.arrivalTick > tick) {
       remaining.push(projectile);
       continue;
@@ -1167,7 +1331,8 @@ export function stepWorld(world) {
       ...(projectile.hitIds ? { hitIds: [...projectile.hitIds] } : {}),
     }))
     : null;
-  const ready = progressAttacks(units, tick, events, movedIds, projectiles, velocities);
+  const ready = progressAttacks(units, tick, events, movedIds, projectiles,
+    velocities, world.shotRng ?? null);
   commitReadyAttacks(units, ready, tick, events);
   const remainingProjectiles = projectiles
     ? processChargeProjectiles(units, projectiles, tick, events)

@@ -89,3 +89,39 @@ distance is concentrated in three named mechanics: the ranged-vs-ranged
 duel script, siege-onager blast + evasion behavior, and gunpowder
 accuracy — all measurable from this archive's raw recordings when we
 choose to close them.
+
+## Addendum — blast + accuracy landed (same day)
+
+Two of the three named gaps were closed with dat-sourced, tape-measured
+mechanics (see the commit for details):
+
+1. **Mangonel-family blast**: the primary projectile arcs to the aim
+   point and explodes — per-victim class damage, full where the impact
+   point is inside the victim's box, linear taper to the dat blast-width
+   edge (1.5), friendly fire on (dat 1.0), floor 1. The 9 dat secondary
+   projectiles have EMPTY attack lists and land scattered over the dat
+   1.5×1.5 spawning area for the floor 1 damage each — exactly the
+   tapes' ubiquitous 1.0-damage quanta.
+2. **Projectile accuracy** (dat accuracy_percent < 100; only the hand
+   cannoneer's 75 in this corpus): a deterministic seeded per-shot roll;
+   a missed shot scatters within the dat 0.5 dispersion half-radius and
+   deals HALF damage to the first unit it meets (the tapes' exact
+   full/half quanta pairs: 22/11, 11/5.5, 8/4). No ballistics on either
+   unit (dat smart_mode 0).
+
+Re-run of the full archive (identical protocol):
+
+| | correct winners | mean band | median band |
+|---|---|---|---|
+| before | 113/122 | 14.8 | 6.6 |
+| **after** | **117/122 (95.9%)** | **11.9** | 6.6 |
+
+All four siege-onager wrong winners were corrected (band errors 89-135
+collapsed to 5-59); the SO/HC bucket went 24/28 → 28/28 correct with
+mean band 34.9 → 22.3. Every non-SO/HC matchup was bit-identical, the
+calibration corpus hash diff is 0 changed rows, and the suite holds at
+131/157 (known set). Remaining wrong winners (5): the two
+arbalester-vs-heavy-cav-archer duel mirrors (unmodeled rvr script), the
+single-repeat heavy_cav_archer_vs_champion and
+imp_elite_skirm_vs_heavy_camel kite fights, and champion_vs_paladin at
+the uncalibrated 21v9 ratio.

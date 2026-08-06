@@ -22,6 +22,12 @@ Calibration circuit metric: signed winner-HP% (winner's remaining HP as a
 percent of its own starting pool) with the sim's 25-sampled-order median
 scored against the tape's five-repeat band per ratio.
 
+Held-out check on the standard-units archive (101 distinct matchups, 14
+units, nothing in it used to set a constant): winner correct in 96/101,
+mean winner-HP% delta 14.7 — **[full table per matchup, with the
+independently derived purchase and the tape's own numbers, in the standard
+units summary](docs/STANDARD_UNITS_SUMMARY_2026-08-06.md)**.
+
 ## Locked milestone
 
 [Milestone 01: Golden melee arena locked](docs/MILESTONE_01_GOLDEN_MELEE_ARENA.md)

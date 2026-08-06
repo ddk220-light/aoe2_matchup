@@ -156,3 +156,31 @@ are the documented pre-existing set).
 - `paladinvspaladin_2026-08-04.zip` remains the one tape on disk not wired
   into the circuit (superseded-era basics archive; the mirror baseline is
   the champion mirror).
+
+## Held-out check: the standard-units archive
+
+The 28 matchups above are the *calibration* corpus — the tapes the engine
+was measured against. The standard-units archive is the held-out set: 339
+recorded fights, 101 distinct matchups, 14 units, none of it used to set a
+constant. Full results in
+[`STANDARD_UNITS_SUMMARY_2026-08-06.md`](STANDARD_UNITS_SUMMARY_2026-08-06.md)
+(mean winner-HP% delta per matchup) and
+[`STANDARD_UNITS_GAP_REPORT_2026-08-06.md`](STANDARD_UNITS_GAP_REPORT_2026-08-06.md)
+(the earlier blind median-vs-band scoring). Headline: the purchase rule
+reproduces **122/122** starting rosters, the order taxonomy **119/122**
+command signatures, and the sim agrees with the tape on the winner in
+**96/101** matchups (**77/80** excluding the ranged-vs-ranged group, whose
+duel script is still undecoded), mean |delta| 14.7 / median 9.4.
+
+Two per-unit biases dominate the residual and are the obvious next tape
+requests: **Hand Cannoneer** (-33.5 in kite matchups, +2.3 in
+ranged-vs-ranged — so it is the *constructed* kite beat, not the accuracy
+model, that is wrong) and **Siege Onager** (-12.3 overall, two-signed
+across opponents — the blast model fixed the winners without fixing the
+magnitudes).
+
+**Do not run this comparison without
+`AOE2X_EXP_ENGAGEMENT=pursuit AOE2X_EXP_ORDERS=1`.** Without those flags
+melee never walks to its designated target and the whole table silently
+inverts (scorpions beating 21 champions, and so on) while still looking
+like plausible output.

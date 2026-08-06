@@ -6,7 +6,13 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { createChampionPlaybackData } from "./src/champion-comparison.js";
 import { TICKS_PER_SECOND } from "./src/simulation-clock.js";
 import { runChampionRatio } from "./tests/support/champion-ratio.mjs";
-import { matchupNames, matchupPlayback, matchupRatios, matchupTruth } from "./src/matchup-playback.js";
+import {
+  matchupNames,
+  matchupPlayback,
+  matchupRatios,
+  matchupTruth,
+  syntheticMatchupPlayback,
+} from "./src/matchup-playback.js";
 
 
 const CONTENT_TYPES = new Map([
@@ -193,11 +199,29 @@ async function handleMatchupApi({ request, response, root, url }) {
       return true;
     }
     const ratioTruth = truth.ratios?.[ratio];
+    const repeat = Number(repeatText);
     if (!ratioTruth) {
-      sendJson(response, 400, { error: `unknown ratio ${ratio}` });
+      // Free-form NvM ratio: no tape truth, synthesize the formation and run
+      // the same deterministic engine. tapeDiagnostic is null by design.
+      let playback;
+      try {
+        playback = await syntheticMatchupPlayback(rootUrl, name, ratio);
+      } catch (error) {
+        sendJson(response, 400, { error: String(error?.message ?? error) });
+        return true;
+      }
+      sendJson(response, 200, {
+        schemaVersion: 1,
+        matchup: name,
+        ratio,
+        repeat,
+        deterministic: true,
+        synthetic: true,
+        tapeDiagnostic: null,
+        playback,
+      });
       return true;
     }
-    const repeat = Number(repeatText);
     const run = ratioTruth.runs[repeat - 1];
     sendJson(response, 200, {
       schemaVersion: 1,
@@ -205,6 +229,7 @@ async function handleMatchupApi({ request, response, root, url }) {
       ratio,
       repeat,
       deterministic: true,
+      synthetic: false,
       tapeDiagnostic: run,
       playback: await matchupPlayback(rootUrl, name, ratio),
     });

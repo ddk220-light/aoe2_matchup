@@ -1,10 +1,22 @@
 export const CHAMPION_RATIOS = Object.freeze(["1v1", "2v1", "2v3", "5v3", "6v3"]);
+// Any NvM engagement ratio. Matchup fixtures go beyond the five champion
+// ratios, and free-form ratios synthesize a formation server-side, so the
+// review selection validates SHAPE, not membership in a fixed list.
+export const RATIO_PATTERN = /^[1-9]\d?v[1-9]\d?$/;
 const STORAGE_KEY = "aoe2.cleanroom.champion.review.v1";
 const MAX_NOTE_LENGTH = 2000;
 
 
+function ratioRank(ratio) {
+  const [left, right] = ratio.split("v").map(Number);
+  return left * 100 + right;
+}
+
+
 function selection({ ratio, repeat }) {
-  if (!CHAMPION_RATIOS.includes(ratio)) throw new TypeError("unknown Champion ratio");
+  if (typeof ratio !== "string" || !RATIO_PATTERN.test(ratio)) {
+    throw new TypeError("ratio must look like 6v3");
+  }
   if (!Number.isInteger(repeat) || repeat < 1 || repeat > 3) {
     throw new TypeError("tape repeat must be 1, 2, or 3");
   }
@@ -69,7 +81,8 @@ function readRuns(storage) {
     const parsed = JSON.parse(storage.getItem(STORAGE_KEY) ?? "[]");
     if (!Array.isArray(parsed)) return [];
     return parsed.filter((row) => (
-      CHAMPION_RATIOS.includes(row?.ratio)
+      typeof row?.ratio === "string"
+      && RATIO_PATTERN.test(row.ratio)
       && Number.isInteger(row?.repeat)
       && row.repeat >= 1
       && row.repeat <= 3
@@ -85,7 +98,7 @@ function readRuns(storage) {
 
 function sortRuns(runs) {
   return [...runs].sort((left, right) => (
-    CHAMPION_RATIOS.indexOf(left.ratio) - CHAMPION_RATIOS.indexOf(right.ratio)
+    ratioRank(left.ratio) - ratioRank(right.ratio)
     || left.repeat - right.repeat
   ));
 }
@@ -146,7 +159,8 @@ export function parseReviewSelection(urlValue) {
   const url = new URL(urlValue);
   const ratio = url.searchParams.get("ratio");
   const repeat = Number(url.searchParams.get("repeat"));
-  return CHAMPION_RATIOS.includes(ratio) && Number.isInteger(repeat) && repeat >= 1 && repeat <= 3
+  return typeof ratio === "string" && RATIO_PATTERN.test(ratio)
+    && Number.isInteger(repeat) && repeat >= 1 && repeat <= 3
     ? { ratio, repeat }
     : { ratio: "1v1", repeat: 1 };
 }

@@ -44,13 +44,23 @@
           </label>
           <label>
             <span>Engagement ratio</span>
-            <select id="ratioSelect" aria-label="Champion matchup ratio">
-              <option value="1v1">1 vs 1</option>
-              <option value="2v1">2 vs 1</option>
-              <option value="2v3">2 vs 3</option>
-              <option value="5v3">5 vs 3</option>
-              <option value="6v3">6 vs 3</option>
-            </select>
+            <input
+              id="ratioSelect"
+              list="ratioOptions"
+              value="1v1"
+              autocomplete="off"
+              spellcheck="false"
+              inputmode="numeric"
+              pattern="[1-9][0-9]?v[1-9][0-9]?"
+              aria-label="Engagement ratio (pick a recorded one or type any NvM)"
+            />
+            <datalist id="ratioOptions">
+              <option value="1v1"></option>
+              <option value="2v1"></option>
+              <option value="2v3"></option>
+              <option value="5v3"></option>
+              <option value="6v3"></option>
+            </datalist>
           </label>
           <label>
             <span>Tape diagnostic</span>

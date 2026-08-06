@@ -74,7 +74,11 @@ test("review flags round-trip without changing the supplied simulation state", (
 test("review feedback validates ratio, repeat, and note length", () => {
   const feedback = createReviewFeedback({ storage: memoryStorage() });
 
-  assert.throws(() => feedback.flag({ ratio: "7v7", repeat: 1, note: "" }), /ratio/i);
+  // Any well-formed NvM ratio is reviewable (free-form ratios synthesize a
+  // formation server-side); only malformed shapes are rejected.
+  assert.equal(feedback.flag({ ratio: "7v7", repeat: 1, note: "" }).ratio, "7v7");
+  assert.throws(() => feedback.flag({ ratio: "7x7", repeat: 1, note: "" }), /ratio/i);
+  assert.throws(() => feedback.flag({ ratio: "0v3", repeat: 1, note: "" }), /ratio/i);
   assert.throws(() => feedback.flag({ ratio: "1v1", repeat: 0, note: "" }), /repeat/i);
   assert.throws(
     () => feedback.flag({ ratio: "1v1", repeat: 1, note: "x".repeat(2001) }),

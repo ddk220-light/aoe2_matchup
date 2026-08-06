@@ -5,6 +5,7 @@ import {
 } from "../src/formation-model.js";
 import { createMapRenderer } from "./map-renderer.js";
 import {
+  RATIO_PATTERN,
   createPlaybackCursor,
   createReviewFeedback,
   downloadJsonDocument,
@@ -205,7 +206,9 @@ async function start() {
     byId("secondsReadout").textContent = (snapshot.tick / TICKS_PER_SECOND).toFixed(3);
     renderUnitTelemetry(snapshot);
     renderTimeline(activeResult.playback.events, snapshot.tick);
-    byId("mapStatus").innerHTML = `<span class="status-light"></span>${selected.ratio} Champion simulation · tape repeat ${selected.repeat} diagnostic`;
+    byId("mapStatus").innerHTML = activeResult?.tapeDiagnostic
+      ? `<span class="status-light"></span>${selected.ratio} simulation · tape repeat ${selected.repeat} diagnostic`
+      : `<span class="status-light"></span>${selected.ratio} simulation · synthetic formation (no tape)`;
     if (cursor?.atEnd()) setPlaying(false);
   }
 
@@ -243,15 +246,21 @@ async function start() {
       : `api/matchup/result?matchup=${encodeURIComponent(matchup)}`
         + `&ratio=${encodeURIComponent(selected.ratio)}&repeat=${selected.repeat}`;
     const response = await fetch(endpoint, { cache: "no-store" });
-    if (!response.ok) throw new Error(`Result API returned ${response.status}`);
+    if (!response.ok) {
+      const detail = await response.json().catch(() => null);
+      throw new Error(detail?.error ?? `Result API returned ${response.status}`);
+    }
     const result = deepFreeze(await response.json());
     if (serial !== requestSerial) return;
     activeResult = result;
     cursor = createPlaybackCursor({ snapshots: result.playback.snapshots, onSnapshot: present });
     byId("simWinner").textContent = `Player ${result.playback.winnerOwner}`;
     byId("simWinnerHp").textContent = `${result.playback.winnerHp} HP`;
-    byId("tapeWinner").textContent = `Player ${result.tapeDiagnostic.winnerOwner}`;
-    byId("tapeWinnerHp").textContent = `${result.tapeDiagnostic.winnerHp} HP`;
+    // Free-form ratios have no recorded tape run to diagnose against.
+    byId("tapeWinner").textContent = result.tapeDiagnostic
+      ? `Player ${result.tapeDiagnostic.winnerOwner}` : "—";
+    byId("tapeWinnerHp").textContent = result.tapeDiagnostic
+      ? `${result.tapeDiagnostic.winnerHp} HP` : "synthetic ratio (no tape)";
     byId("ledgerNumber").textContent = `${selected.ratio.toUpperCase()}–0${selected.repeat}`;
     byId("playPause").textContent = "Play";
     byId("playbackMode").textContent = "paused";
@@ -282,27 +291,53 @@ async function start() {
   const CHAMPION_RATIO_OPTIONS = ["1v1", "2v1", "2v3", "5v3", "6v3"];
   let matchupRatioOptions = null;
 
-  async function ratiosFor(matchup) {
-    if (matchup === "champion") return CHAMPION_RATIO_OPTIONS;
+  async function matchupList() {
     if (!matchupRatioOptions) {
       const listed = await (await fetch("api/matchup/list", { cache: "no-store" })).json();
       matchupRatioOptions = new Map(listed.matchups.map((m) => [m.name, m.ratios]));
     }
-    return matchupRatioOptions.get(matchup) ?? CHAMPION_RATIO_OPTIONS;
+    return matchupRatioOptions;
+  }
+
+  // The matchup dropdown carries the locked champion mirror plus every matchup
+  // the server serves — new fixtures appear here without touching the viewer.
+  async function populateMatchups() {
+    const select = byId("matchupSelect");
+    const known = new Set([...select.options].map((option) => option.value));
+    for (const name of (await matchupList()).keys()) {
+      if (known.has(name)) continue;
+      const option = document.createElement("option");
+      option.value = name;
+      option.textContent = name.split("_").map((word) => (
+        word === "vs" ? "vs" : word.charAt(0).toUpperCase() + word.slice(1)
+      )).join(" ");
+      select.append(option);
+    }
+  }
+
+  async function ratiosFor(matchup) {
+    if (matchup === "champion") return CHAMPION_RATIO_OPTIONS;
+    return (await matchupList()).get(matchup) ?? CHAMPION_RATIO_OPTIONS;
+  }
+
+  function ratioAllowed(matchup, ratio, recorded) {
+    // The champion mirror path is SHA-locked to its five recorded ratios; the
+    // matchup paths accept any NvM (unknown ones synthesize server-side).
+    if (matchup === "champion") return recorded.includes(ratio);
+    return RATIO_PATTERN.test(ratio);
   }
 
   async function repopulateRatios(matchup) {
     const ratios = await ratiosFor(matchup);
-    const select = byId("ratioSelect");
-    const previous = select.value;
-    select.replaceChildren(...ratios.map((ratio) => {
+    const input = byId("ratioSelect");
+    const previous = input.value.trim().toLowerCase();
+    byId("ratioOptions").replaceChildren(...ratios.map((ratio) => {
       const option = document.createElement("option");
       option.value = ratio;
-      option.textContent = ratio.replace("v", " vs ");
       return option;
     }));
-    select.value = ratios.includes(previous) ? previous : ratios[0];
-    return select.value;
+    input.value = ratioAllowed(matchup, previous, ratios) ? previous : ratios[0];
+    return input.value;
   }
 
   byId("matchupSelect").addEventListener("change", () => {
@@ -316,15 +351,35 @@ async function start() {
       .catch(showError);
   });
 
-  for (const id of ["ratioSelect", "repeatSelect"]) {
-    byId(id).addEventListener("change", () => {
-      loadSimulation({
-        matchup: byId("matchupSelect").value,
-        ratio: byId("ratioSelect").value,
-        repeat: Number(byId("repeatSelect").value),
-      }).catch(showError);
+  async function loadFromControls() {
+    const matchup = byId("matchupSelect").value;
+    const input = byId("ratioSelect");
+    const ratio = input.value.trim().toLowerCase();
+    input.value = ratio;
+    const recorded = await ratiosFor(matchup);
+    if (!ratioAllowed(matchup, ratio, recorded)) {
+      byId("mapStatus").innerHTML = matchup === "champion"
+        ? `<span class="status-light"></span>Champion mirror is locked to ${recorded.join(", ")}`
+        : '<span class="status-light"></span>Ratio must look like 6v3 (each side 1–40)';
+      return;
+    }
+    await loadSimulation({
+      matchup,
+      ratio,
+      repeat: Number(byId("repeatSelect").value),
     });
   }
+  for (const id of ["ratioSelect", "repeatSelect"]) {
+    byId(id).addEventListener("change", () => {
+      loadFromControls().catch(showError);
+    });
+  }
+  byId("ratioSelect").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      loadFromControls().catch(showError);
+    }
+  });
   byId("playPause").addEventListener("click", () => {
     if (cursor?.atEnd()) cursor.reset();
     setPlaying(!playing);
@@ -466,6 +521,7 @@ async function start() {
   const observer = new ResizeObserver(() => renderer.resize());
   observer.observe(canvas);
   renderer.resize();
+  await populateMatchups().catch(() => {});
   await loadSimulation(initial);
 }
 

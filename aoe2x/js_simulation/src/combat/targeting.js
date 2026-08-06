@@ -219,8 +219,15 @@ export function attackReach(unit) {
 // range circle for shots.)
 export function isWithinReach(unit, target) {
   if (unit?.mechanics?.ranged) {
-    const gap = centerDistance(unit, target)
-      - outlineRadius(unit) - outlineRadius(target);
+    const distance = centerDistance(unit, target);
+    // Minimum range (dat type_50.min_range): the scorpion tapes bottom out
+    // at fire distance 2.19 against its 2.0 -- center-to-center metric. A
+    // target inside it cannot be attacked (and is not an engagement
+    // candidate), which is what pushes the unit to prefer targets it can
+    // actually shoot.
+    const minRange = unit.mechanics.ranged.min_range_tiles ?? 0;
+    if (minRange > 0 && distance < minRange - 1e-12) return false;
+    const gap = distance - outlineRadius(unit) - outlineRadius(target);
     return gap <= attackReach(unit) + 1e-12;
   }
   return outlineChebyshevGap(unit, target) <= attackReach(unit) + 1e-12;

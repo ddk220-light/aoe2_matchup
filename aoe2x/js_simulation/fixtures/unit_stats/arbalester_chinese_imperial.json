@@ -108,6 +108,8 @@
       "outline_size_tiles.z": "unit.outline_size_z",
       "ranged.accuracy_percent": "ref_units.final_accuracy (not simulated: 98.7% of tape shots resolve deterministically; see measurement note)",
       "ranged.min_range_tiles": "unit.type_50.min_range",
+      "ranged.pass_through": "dat.civs[0].units[507].projectile.vanish_mode",
+      "ranged.projectile_half_width_tiles": "dat.civs[0].units[507].collision_size_x",
       "ranged.projectile_speed_tiles_per_second": "dat.civs[0].units[507].speed",
       "ranged.projectile_unit": "unit.type_50.projectile_unit_id",
       "reload_seconds": "ref_units.final_reload_time",
@@ -121,6 +123,8 @@
   "ranged": {
     "accuracy_percent": 100.0,
     "min_range_tiles": 0.0,
+    "pass_through": false,
+    "projectile_half_width_tiles": 0.1,
     "projectile_speed_tiles_per_second": 7.0,
     "projectile_unit": 507
   },

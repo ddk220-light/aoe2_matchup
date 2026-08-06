@@ -202,8 +202,30 @@ export function rangedSpec(mechanics) {
   if (speed <= 0) throw new RangeError("ranged projectile speed must be positive");
   const minRange = requireFinite(ranged.min_range_tiles ?? 0, "ranged min range");
   if (minRange < 0) throw new RangeError("ranged min range must be nonnegative");
-  return { projectileSpeed: speed, minRangeTiles: minRange };
+  const passThrough = ranged.pass_through === true;
+  const halfWidth = requireFinite(
+    ranged.projectile_half_width_tiles ?? 0, "projectile half width");
+  if (passThrough && halfWidth <= 0) {
+    throw new RangeError("pass-through bolts need a positive projectile width");
+  }
+  return {
+    projectileSpeed: speed,
+    minRangeTiles: minRange,
+    passThrough,
+    projectileHalfWidth: halfWidth,
+  };
 }
+
+
+// Pass-through bolt constants, measured on the scorpion archives (50 fights):
+//   - every pass victim takes exactly HALF its own post-armor damage
+//     (5407/5407 events: 5.5 on 11-damage arbalesters, 6.0 on 12-damage
+//     champions; the firer's action target takes full damage, 577/577);
+//   - the bolt expires ~3.0 tiles past its aim point (victim overshoot p95
+//     plateaus at 2.97-3.00 across target distances 3-5 where the arena
+//     leaves room, softening only where the map clips the line).
+export const PASS_THROUGH_DAMAGE_FRACTION = 0.5;
+export const BOLT_OVERSHOOT_TILES = 3.0;
 
 
 // Charge volley (Fire Lancer family), sourced from the Genie dat and measured

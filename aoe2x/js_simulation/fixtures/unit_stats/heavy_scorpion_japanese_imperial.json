@@ -1,29 +1,27 @@
 {
   "age": "Imperial",
   "armor_classes": {
-    "15": 0,
+    "20": 0,
     "3": 8,
     "31": 0,
-    "38": 0,
-    "4": 3
+    "4": 1
   },
   "attack_animation": {
     "frame_duration_seconds": 0.02666666731238365,
-    "frames": 45,
-    "graphic": 875,
-    "seconds": 1.2000000290572643
+    "frames": 30,
+    "graphic": 2771,
+    "seconds": 0.8000000193715096
   },
   "attack_classes": {
-    "15": 4,
-    "17": 0,
-    "21": 0,
-    "27": 4,
-    "28": 2,
-    "3": 7,
-    "35": 2
+    "1": 2,
+    "11": 7,
+    "17": 2,
+    "3": 15,
+    "4": 0,
+    "5": 10
   },
-  "attack_delay_seconds": 0.5066666789352894,
-  "attack_graphic": 875,
+  "attack_delay_seconds": 0.1600000038743019,
+  "attack_graphic": 2771,
   "attack_range_tiles": 8.0,
   "blast": {
     "attack_level": 3,
@@ -33,45 +31,40 @@
     "width_tiles": 0.0
   },
   "charge": null,
-  "civilization": "Chinese",
+  "civilization": "Japanese",
   "clearance_size_tiles": {
-    "x": 0.2,
-    "y": 0.2
+    "x": 0.5,
+    "y": 0.5
   },
   "collision_size_tiles": {
-    "x": 0.2,
-    "y": 0.2,
+    "x": 0.5,
+    "y": 0.5,
     "z": 2.0
   },
   "derived": {
-    "damage_vs_self": 4
+    "damage_vs_self": 7
   },
-  "frame_delay": 19,
-  "hp": 35,
-  "idle_animation": {
-    "frame_duration_seconds": 0.05000000074505806,
-    "frames": 60,
-    "graphic": 881,
-    "seconds": 3.0000000447034836
-  },
+  "frame_delay": 6,
+  "hp": 60,
+  "idle_animation": null,
   "line_of_sight_tiles": 10.0,
   "min_collision_size_multiplier": 1.0,
   "movement_blocks": {
     "fly_mode": 0,
     "hill_mode": 0,
-    "terrain_restriction": 7
+    "terrain_restriction": 20
   },
   "obstruction": {
     "class": 2,
     "type": 5
   },
   "outline_size_tiles": {
-    "x": 0.2,
-    "y": 0.2,
+    "x": 0.5,
+    "y": 0.5,
     "z": 2.0
   },
   "provenance": {
-    "dat_selector": "dat.civs[name='Chinese'].units[6]",
+    "dat_selector": "dat.civs[name='Japanese'].units[542]",
     "dat_sha256": "CE3530DF36CF0B333A9751CB0FF94460FE904F811FEECEC8AE9794701622B4CF",
     "fields": {
       "age": "ref_units.age",
@@ -111,9 +104,9 @@
       "outline_size_tiles.z": "unit.outline_size_z",
       "ranged.accuracy_percent": "ref_units.final_accuracy (not simulated: 98.7% of tape shots resolve deterministically; see measurement note)",
       "ranged.min_range_tiles": "unit.type_50.min_range",
-      "ranged.pass_through": "dat.civs[0].units[366].projectile.vanish_mode",
-      "ranged.projectile_half_width_tiles": "dat.civs[0].units[366].collision_size_x",
-      "ranged.projectile_speed_tiles_per_second": "dat.civs[0].units[366].speed",
+      "ranged.pass_through": "dat.civs[0].units[627].projectile.vanish_mode",
+      "ranged.projectile_half_width_tiles": "dat.civs[0].units[627].collision_size_x",
+      "ranged.projectile_speed_tiles_per_second": "dat.civs[0].units[627].speed",
       "ranged.projectile_unit": "unit.type_50.projectile_unit_id",
       "reload_seconds": "ref_units.final_reload_time",
       "speed_tiles_per_second": "ref_stat_chain.speed (final step; ref_units.final_speed is rounded)",
@@ -121,23 +114,23 @@
       "walk_animation": "graphics[unit.dead_fish.walking_graphic]"
     },
     "reference_db_sha256": "51D602640E4C1A75F35286AA499821338B0EEE5DBA97E12A12D39E058CB11087",
-    "reference_selector": "ref_units WHERE unit_slug='imp_elite_skirm' AND civ_name='Chinese' AND age='Imperial'"
+    "reference_selector": "ref_units WHERE unit_slug='heavy_scorpion' AND civ_name='Japanese' AND age='Imperial'"
   },
   "ranged": {
     "accuracy_percent": 100.0,
-    "min_range_tiles": 1.0,
-    "pass_through": false,
+    "min_range_tiles": 2.0,
+    "pass_through": true,
     "projectile_half_width_tiles": 0.1,
-    "projectile_speed_tiles_per_second": 7.0,
-    "projectile_unit": 366
+    "projectile_speed_tiles_per_second": 6.0,
+    "projectile_unit": 627
   },
-  "reload_seconds": 3.0,
-  "speed_tiles_per_second": 0.96,
-  "unit_master": 6,
+  "reload_seconds": 3.6,
+  "speed_tiles_per_second": 0.65,
+  "unit_master": 542,
   "walk_animation": {
     "frame_duration_seconds": 0.023250002413988113,
     "frames": 30,
-    "graphic": 885,
+    "graphic": 2781,
     "seconds": 0.6975000724196434
   }
 }

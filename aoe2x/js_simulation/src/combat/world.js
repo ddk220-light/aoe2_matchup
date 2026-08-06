@@ -17,6 +17,8 @@ import {
 } from "./targeting.js";
 import { TICKS_PER_SECOND, secondsToTicksCeil } from "../simulation-clock.js";
 import {
+  BOLT_OVERSHOOT_TILES,
+  PASS_THROUGH_DAMAGE_FRACTION,
   attackAnimationTicks,
   attackDelayTicks,
   calculateDamage,
@@ -519,6 +521,33 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles) {
   const distance = Math.hypot(target.x - unit.x, target.y - unit.y);
   if (distance <= 1e-9) return;
   const stepLength = spec.projectileSpeed / TICKS_PER_SECOND;
+  if (spec.passThrough) {
+    // Scorpion-family bolt: flies the line and damages every enemy whose
+    // collision box crosses its width; the action target takes full damage,
+    // everyone else half (see PASS_THROUGH_DAMAGE_FRACTION). Damage is
+    // per-victim class rule, resolved at crossing time.
+    const total = distance + BOLT_OVERSHOOT_TILES;
+    projectiles.push({
+      kind: "bolt",
+      actorId: unit.referenceId,
+      actorOwner: unit.owner,
+      actorMechanics: unit.mechanics,
+      targetId: target.referenceId,
+      x: unit.x,
+      y: unit.y,
+      stepX: ((target.x - unit.x) / distance) * stepLength,
+      stepY: ((target.y - unit.y) / distance) * stepLength,
+      stepLength,
+      traveled: 0,
+      totalDistance: total,
+      halfWidth: spec.projectileHalfWidth,
+      firedTick: tick,
+      arrivalTick: tick + Math.max(1, secondsToTicksCeil(total / spec.projectileSpeed)),
+      index: 0,
+      hitIds: [],
+    });
+    return;
+  }
   projectiles.push({
     kind: "ranged",
     actorId: unit.referenceId,
@@ -761,6 +790,34 @@ function processChargeProjectiles(units, projectiles, tick, events) {
     || left.index - right.index
   ));
   for (const projectile of ordered) {
+    if (projectile.kind === "bolt") {
+      // Pass-through flight: advance one step, damage every enemy whose
+      // collision box (expanded by the bolt's half width) contains the
+      // point, once per victim, never despawning on impact.
+      projectile.x += projectile.stepX;
+      projectile.y += projectile.stepY;
+      projectile.traveled += projectile.stepLength;
+      for (const victim of units) {
+        if (!victim.alive || victim.owner === projectile.actorOwner) continue;
+        if (projectile.hitIds.includes(victim.referenceId)) continue;
+        const dx = Math.abs(victim.x - projectile.x);
+        const dy = Math.abs(victim.y - projectile.y);
+        const reach = collisionRadius(victim) + projectile.halfWidth;
+        if (Math.max(dx, dy) > reach + 1e-9) continue;
+        projectile.hitIds.push(victim.referenceId);
+        const full = calculateDamage({ mechanics: projectile.actorMechanics }, victim);
+        const amount = victim.referenceId === projectile.targetId
+          ? full
+          : PASS_THROUGH_DAMAGE_FRACTION * full;
+        applyCommittedDamage(units, projectile.actorId, victim, amount,
+          tick, tick, events,
+          { kind: "bolt-projectile", projectileIndex: projectile.hitIds.length - 1 });
+      }
+      if (projectile.traveled < projectile.totalDistance - 1e-9) {
+        remaining.push(projectile);
+      }
+      continue;
+    }
     if (projectile.kind === "ranged") {
       // Physical point flight: advance one step along the line, hit the
       // moment the target's collision box contains the point. Steps (7/60 =
@@ -861,10 +918,14 @@ export function stepWorld(world) {
   issueOrders(world.orderState, units, tick, events, event);
   const { contacts, movedIds, blockedIds } = moveUnits(units, world.map, tick, events);
   updateEngagements(units, contacts, tick, events, blockedIds);
-  // Clone flight state: published projectiles are frozen, and ranged shots
-  // advance their position every tick.
+  // Clone flight state: published projectiles are frozen, ranged shots
+  // advance their position every tick, and a bolt's hit list must not alias
+  // the previous tick's published array.
   const projectiles = world.projectiles
-    ? world.projectiles.map((projectile) => ({ ...projectile }))
+    ? world.projectiles.map((projectile) => ({
+      ...projectile,
+      ...(projectile.hitIds ? { hitIds: [...projectile.hitIds] } : {}),
+    }))
     : null;
   const ready = progressAttacks(units, tick, events, movedIds, projectiles);
   commitReadyAttacks(units, ready, tick, events);

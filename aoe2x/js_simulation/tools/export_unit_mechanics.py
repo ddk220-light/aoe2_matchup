@@ -175,10 +175,18 @@ def export_unit_mechanics(
 
     attack_animation = _animation_seconds(
         data, int(unit.type_50.attack_graphic), "attack")
-    idle_animation = _animation_seconds(
-        data, int(unit.standing_graphic[0]), "idle")
-    walk_animation = _animation_seconds(
-        data, int(unit.dead_fish.walking_graphic), "walk")
+    # Idle/walk animations are informational (nothing in the engine reads
+    # them); siege sprites can be static frames with no usable timing.
+    try:
+        idle_animation = _animation_seconds(
+            data, int(unit.standing_graphic[0]), "idle")
+    except ValueError:
+        idle_animation = None
+    try:
+        walk_animation = _animation_seconds(
+            data, int(unit.dead_fish.walking_graphic), "walk")
+    except ValueError:
+        walk_animation = None
 
     # Genie hit timing. The hit lands on animation frame `frame_delay`, so
     #   attack_delay = animation_seconds * frame_delay / frame_count
@@ -356,15 +364,29 @@ def export_unit_mechanics(
     #   - min_range is exported for completeness (the skirmisher's 1.0 is
     #     never exercised in a recorded fight; scorpion tapes will measure
     #     its semantics before the engine enforces it).
+    # Pass-through bolts (scorpion family): the dat marks the projectile with
+    # vanish_mode 1 (continue after impact). Measured on the two authorized
+    # scorpion archives (50 fights, 5407 pass hits): the bolt damages EVERY
+    # enemy whose collision box crosses its 0.1-half-width line (the
+    # projectile unit's own dat collision size), the firer's action target
+    # takes full class-rule damage (577/577 full hits are the target, zero
+    # exceptions), every other victim -- before or beyond the target -- takes
+    # exactly HALF its own post-armor damage (fractional HP like trample),
+    # each victim once per bolt, and the bolt expires ~3.0 tiles past its aim
+    # point (overshoot p95 plateaus at 2.97-3.00 across target distances).
     ranged = None
     projectile_id = int(unit.type_50.projectile_unit_id)
     if projectile_id >= 0 and float(reference["final_range"]) > 0:
         proj = data.civs[0].units[projectile_id]
+        pass_through = bool(getattr(proj.projectile, "vanish_mode", 0)) \
+            if proj.projectile is not None else False
         ranged = {
             "projectile_unit": projectile_id,
             "projectile_speed_tiles_per_second": float(proj.speed),
             "min_range_tiles": float(unit.type_50.min_range),
             "accuracy_percent": float(reference["final_accuracy"]),
+            "pass_through": pass_through,
+            "projectile_half_width_tiles": round(float(proj.collision_size_x), 6),
         }
         fields.update({
             "ranged.projectile_unit": "unit.type_50.projectile_unit_id",
@@ -375,6 +397,12 @@ def export_unit_mechanics(
             "ranged.accuracy_percent": (
                 "ref_units.final_accuracy (not simulated: 98.7% of tape shots"
                 " resolve deterministically; see measurement note)"
+            ),
+            "ranged.pass_through": (
+                f"dat.civs[0].units[{projectile_id}].projectile.vanish_mode"
+            ),
+            "ranged.projectile_half_width_tiles": (
+                f"dat.civs[0].units[{projectile_id}].collision_size_x"
             ),
         })
 

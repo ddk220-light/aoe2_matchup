@@ -306,16 +306,58 @@ fights, every candidate fails:
 | copy a nearby ally's target | 0.98x chance |
 | fixed timer | no periodicity; zero switches in small fights |
 
-**A second, independent blocker.** Even granting continuous re-evaluation, our
-engine cannot reproduce the walking: `moveUnits` refuses to move any unit whose
-action is `attacking`, and `selectEngagementTarget` retains `engagedTargetId`
-while that target is alive and in reach. An engaged unit is therefore pinned
-regardless of its pursuit target, where the tape shows units walking away
-0.02 s after a swing. Experiment: removing only the pursuit lock (re-evaluate
-nearest every tick, no new constants) halved the 10v10 attacking-share error
-(+25.5 → +11.6 pt) but left the big fights near 22% moving against the tape's
-46%, and outcome deltas were a wash — four ratios better, four worse. Reverted;
-engagement pinning has to be addressed too.
+**A second, independent blocker — and the throughput half is now PROVEN.**
+`moveUnits` refuses to move any unit whose action is `attacking`, and
+`selectEngagementTarget` retains `engagedTargetId` while that target is alive
+and in reach. An engaged unit is therefore pinned regardless of its pursuit
+target, where the tape shows units walking away 0.02 s after a swing.
+
+Two experiments, both reverted, both informative:
+
+1. *Remove the pursuit lock only* (re-evaluate nearest every tick, no new
+   constants). Halved the 10v10 attacking-share error (+25.5 → +11.6 pt) but
+   left big fights near 22% moving against the tape's 46%; outcomes a wash.
+2. *Unpin engagement* — a unit engages the target it is PURSUING and nothing
+   else, so it is no longer captured by the first body it brushes past. This
+   nearly nailed damage throughput on the biggest fights:
+
+   | ratio | attacking share Δ | damage/sec alive (tape → sim) |
+   |---|---|---|
+   | 20v18 | +15.0 → **-1.3 pt** | 2.84 → **2.76** |
+   | 20v15 | +15.1 → **-0.5 pt** | 2.88 → **2.85** |
+   | 20v20 | +10.9 → **-1.1 pt** | 2.97 → **2.89** |
+
+   But the freed time became **idle** (+11.8 to +20.1 pt), not moving: units
+   stand pressed against the crowd pursuing something they cannot reach. It
+   also broke the locked champion-mirror gates (5v3 and 6v3 medians, 112 → 109
+   pass), so it was reverted.
+
+That converts a diffuse error into one observable. **Our idle-blocked units are
+exactly the population the game retargets.** Engagement-follows-pursuit is
+right, but it is only safe once the retarget rule exists to give those units
+somewhere to go.
+
+**Two real signals on the choice rule** — the first non-null results after a
+long run of eliminations. Both are geometric and neither is a distance rule:
+
+| test | result |
+|---|---|
+| axis anisotropy, distance-CONTROLLED | E 1.41, W 1.52 vs N 0.77, S 0.43 |
+| target ahead of current heading | 1.15 (ahead) → 1.01 → 0.83 → 0.63 (behind) |
+
+The heading gradient is monotonic over four bins. The axis effect survives
+restricting the candidate pool to enemies within ±25% of the chosen target's
+distance, so it is not a distance artifact.
+
+Further eliminations this round: least-targeted enemy is ANTI-correlated
+(0.77x — not load balancing); least-targeted tie-broken by nearest reaches
+2.30x but no better than nearest alone; a stale/round-robin scan is out (hit
+rate peaks at lag 0 and decays monotonically to 3 s); and no distance metric
+wins — Chebyshev 34.9%, Euclidean 33.0%, octile 32.8%, Manhattan 31.5%, single
+axis ~20%.
+
+Next step is to FIT a scoring function over distance + heading + axis rather
+than keep testing single rules, since no single rule exceeds 35%.
 
 ## Error by ratio band — the sim is worst exactly where the game is
 

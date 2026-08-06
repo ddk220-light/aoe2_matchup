@@ -17,11 +17,13 @@ are each independently exonerated.
 |---|---|---|
 | `championvschampion` (calibration/source) | 15 | original calibration set |
 | `paladinvspaladin` (~/Downloads) | 15 | second unit, holdout |
-| `championvspaladin_..._complete (1)` (~/Downloads) | 62 | asymmetric holdout, 16 ratios |
+| `championvspaladin_..._complete (2)` (~/Downloads) | 92 | asymmetric holdout, 26 ratios |
 
-The champion-vs-paladin fixture now carries all 62 fights across 16 ratios
-(sha256 `F3665CA0…C3026`): the original 9 ratios at 3 repeats plus 8v4, 9v4,
-10v5, 11v4, 15v8, 15v10 and 21v10 at 5 repeats each. Largest fight is 31 units.
+The champion-vs-paladin fixture carries all 92 fights across 26 ratios
+(sha256 `90F8588D…1DCAC`), spanning 0.50:1 to 5.00:1 and 2 to 40 units. The ten
+ratios added by this archive deliberately probe far from break-even (15v4 at
+3.75:1, 20v5 at 4.00:1, 10v2 at 5.00:1) and large near-even fights (10v10,
+15v15, 20v20, 20v18, 20v15, 15v20, 10v20).
 
 No camel recordings exist. The recorded pairs are champion, paladin, elephant,
 firelancer and steppe (Steppe Lancer).
@@ -65,26 +67,29 @@ unit can push through a stationary friendly. NOTE a 2018 richg42 dev blog says
 units use circular obstructions — the tapes contradict that for AoE2:DE melee
 units. Do not "correct" this back from the blog.
 
-## The game stops reproducing itself above ~8 units
+## The game stops reproducing itself NEAR BREAK-EVEN, not at scale
 
 Every repeat of a ratio starts from byte-identical positions, so the spread
-across repeats is the GAME's own nondeterminism. It is not constant — it
-switches on with crowding:
+across repeats is the GAME's own nondeterminism. An earlier version of this
+document blamed fight SIZE. The 92-fight archive refutes that outright:
 
-| ratio | repeats | winner-HP spread | winning side |
-|---|---|---|---|
-| 1v1 … 3v2 | 3 | **0.0%** | fixed |
-| 3v5 / 3v6 | 3 | 2.6-3.2% | fixed |
-| 5v3 | 3 | 10.0% | fixed |
-| 6v3 | 3 | 50.0% | fixed |
-| 9v4 / 11v4 / 15v10 | 5 | 19-42% | fixed |
-| 15v8 | 5 | 60.7% | fixed |
-| 8v4 / 10v5 / 21v10 | 5 | **75-94%** | **FLIPS** |
+| ratio | units | C:P | winner-HP spread | side |
+|---|---|---|---|---|
+| 8v4 | 12 | 2.00 | **94.2%** | **FLIPS** |
+| 10v5 | 15 | 2.00 | 75.4% | **FLIPS** |
+| 21v10 | 31 | 2.10 | 92.7% | **FLIPS** |
+| 20v15 | 35 | 1.33 | 12.0% | fixed |
+| 15v15 | 30 | 1.00 | 8.6% | fixed |
+| 20v18 | 38 | 1.11 | 10.7% | fixed |
+| 20v20 | **40** | 1.00 | **14.1%** | fixed |
 
-Below six units the game is bit-deterministic and a single run is a valid
-target. Above it, three ratios cannot even agree on who wins from identical
-starts. **On those, comparing one sim run to one tape number is meaningless** —
-the sim has to match a distribution, which needs sampled acquisition orders.
+40 units at 1.00:1 is six times more reproducible than 12 units at 2.00:1. The
+driver is proximity to break-even (2.00:1), where the first concentrated
+engagement compounds and decides the fight. Away from it the game is nearly
+deterministic at any size — 15v4, 20v5 and 10v2 spread only 2.0-4.9%.
+
+**Near 2:1, comparing one sim run to one tape number is meaningless.** The sim
+has to match a distribution; see the sampler below.
 
 ## Scorecard
 
@@ -208,6 +213,30 @@ broadly right and the CENTRE is what is biased:
 Five of ten medians land inside the tape band. The residual champion bias is
 real and one-directional in 5v3, 6v3, 9v4 and 15v10; 3v2 is the lone opposite
 case and is the one-swing bug.
+
+## Error by ratio band — the sim is worst exactly where the game is
+
+Winner HP remaining as a share of that side's own starting pool, sim median
+(sampled orders) against tape median, over all 26 ratios:
+
+| band | ratios | mean abs error | worst |
+|---|---|---|---|
+| paladin-dominant ≤1.00:1 | 10 | **1.3 pts** | 15v20, 4.8 |
+| contested 1.11-1.50:1 | 4 | 6.9 pts | 15v10, 10.4 |
+| knife edge 1.67-2.25:1 | 8 | **7.1 pts** | 9v4, 13.3 |
+| champion-dominant ≥2.75:1 | 4 | 3.8 pts | 15v4, 6.7 |
+
+Error tracks contestedness, not size. Six ratios are exact to the decimal and
+all are decided by raw stats before geometry can matter; 10v2 (5.00:1, 12
+units) is exact too. The error concentrates in the band where the game's own
+repeats disagree most.
+
+The ten ratios added by this archive average 3.7 pts against 4.8 for the
+sixteen analysed before — better, because they were chosen away from the knife
+edge, which is the prediction that motivated recording them. But the effect is
+not uniform: 10v2 lands exact and 20v5 within 3.0, while 15v4 is off by 6.7 and
+20v18 by 9.1. Being far from break-even helps; it does not by itself make a
+ratio accurate.
 
 **21v10: 11 of 40 orders never resolve inside the engine's 3600-tick (60 s)
 guard.** The game settles every recorded 21v10 in 30.7-45.2 s. Runaway fights on

@@ -2,6 +2,7 @@ import {
   queryEnemyContactManifold,
   resolveMovementProposals,
 } from "./collision.js";
+import { createOrderState, issueOrders, ORDERS_ENABLED } from "./ai-orders.js";
 import {
   ANY_EXPERIMENT,
   ENGAGEMENT_FOLLOWS_PURSUIT,
@@ -158,6 +159,10 @@ export function createWorld(scenario) {
   const events = Object.freeze([]);
   const snapshot = createSnapshot(0, units, events);
   return Object.freeze({
+    // Experiment-only mutable AI-player state; absent in baseline so world
+    // shape and hashes are unchanged (the object is frozen but Maps inside
+    // stay mutable across ticks by design).
+    ...(ORDERS_ENABLED ? { orderState: createOrderState(units) } : {}),
     tick: 0,
     ratio: scenario.ratio,
     mapHash: scenario.mapHash,
@@ -530,6 +535,7 @@ export function stepWorld(world) {
   validatePursuitTargets(units, tick, events);
   validateAttackTargets(units, tick, events);
   acquirePursuitTargets(units, tick, events);
+  issueOrders(world.orderState, units, tick, events, event);
   const contacts = moveUnits(units, world.map, tick, events);
   updateEngagements(units, contacts, tick, events);
   const ready = progressAttacks(units, tick, events);

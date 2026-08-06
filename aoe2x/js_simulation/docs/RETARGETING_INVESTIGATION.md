@@ -36,10 +36,103 @@
 > voluntarily retarget" is now the wrong framing: the game's units may not
 > voluntarily retarget much either.
 >
-> Decide before building anything further: re-record with the units left alone
-> after one initial order, or accept the tapes and model the order layer.
+> Decision (2026-08-05, with the user): every non-human player always has an AI
+> issuing these orders, so the order layer is part of the game being modelled.
+> The sim gets one.
 >
 > Tools: `tools/read_ai_orders.py`, `tools/measure_order_match.py`.
+
+---
+
+## 6. The order policy, reverse-engineered
+
+All 859 orders across the 92-fight set. Uniform envelope: `orderType 700`,
+`priority 100`, `issuer 0`, `immediate true`, `range 0`, `targetOwner` = the
+opponent; both players symmetric (431 vs 428).
+
+**What an order IS.** `loc` sits exactly on a live enemy unit's position in
+99% of orders (median miss 0.004 tiles): each order designates a SPECIFIC
+enemy. It is not a generic attack-move: the named units' next combat target is
+the enemy AT loc in **99%** of cases and the enemy nearest themselves in only
+6%. Application is instant — median 0.00 s from order to target switch, and
+81% of named units switch within 60 ms (vs 3.8% of unnamed units, 21x).
+
+**Order shapes.** 611 single-unit orders (`recipient` only, empty `unitIds`)
+and 248 group orders (2-4 units, `recipient` = first of `unitIds`). A group
+order designates ONE enemy for the whole group — this is the concentration
+mechanism: the 8v4 repeats the paladins won by 19-26% are exactly the ones
+where pairs were group-ordered onto single champions.
+
+**Opening sweep.** First order at median 2.72 s (range 2.51-3.14). Each AI
+walks its OWN units in descending reference-id order, groups of 2-4 first
+(group size loosely scaling with roster), then singles; median inter-order gap
+0.20 s (p25 0.07, p75 0.60), widening as the sweep proceeds. Median coverage
+60% of the roster. Recipients are strongly biased toward units NOT already
+fighting: 13% of recipients were in attack state at the order vs 35% of other
+own units. Each sweep order designates a DISTINCT enemy (median distinct
+fraction 1.00; only 4.8% repeats) — the sweep SPREADS the army across the
+enemy roster. The exact designation rule is imperfectly resolved: nearest
+not-yet-assigned enemy explains 28.8% at rank 1 (vs 18.1% unconditioned), best
+evaluated with sweep-start positions (rank<=2: 54.7%).
+
+**Mid-fight orders (t >= 8 s).** Sporadic singles, sometimes short descending
+re-sweeps. The trigger is REPAIR: recipients spent 26.7% of the preceding
+second idle vs 7.1% for other live allies (~4x). The rare kill-triggered ones
+arrive median 0.41 s after the target died.
+
+**Why the unit-level search failed, retrospectively.** The unit AI really is
+lock-until-death — our engine's pursuit lock is CORRECT. Initial acquisition
+(0.952-1.708 s, unit-level) happens before the first order at ~2.7 s; every
+"voluntary" switch after that is the AI player. The density scaling was the
+AI's order rate, the "distinct targets" spreading was the sweep, the
+concentration was group orders, and the idle-rescue explains why unpinning
+engagement (E2) stranded units the game does not strand.
+
+## 7. Sim implementation plan
+
+Layer an AI-player order issuer over the engine, gated by the experiment
+harness until validated:
+
+1. **t ≈ 2.7 s: opening sweep** per side — own units descending by reference
+   id, skipping units already engaged; groups first (2-4 adjacent ids), then
+   singles; one order per ~0.2 s; each order designates a distinct enemy
+   (greedy nearest-unassigned at sweep start); effect = set pursuit target
+   immediately.
+2. **Mid-fight: idle rescue** — a unit idle (no engagement, no progress) for
+   ~1 s becomes eligible; orders re-designate it to a live enemy.
+3. Combine with experiment E2 (engagement follows pursuit), which is what
+   makes an ordered unit actually walk to its designated target through a
+   crowd.
+
+Implemented in `src/combat/ai-orders.js`, enabled with
+`AOE2X_EXP_ENGAGEMENT=pursuit AOE2X_EXP_ORDERS=1`; baseline is untouched
+(suite 112/27, 6v3 still 112 HP). Two refinements over the plan, both
+measured: designation is computed against positions frozen at sweep START
+(rank<=2 54.7% vs 41.9% at order time � the AI plans once while the world
+moves), and mid-fight rescue is rate-limited to one order per side per 1.2 s
+(the tape's re-order cadence; without it every idle unit recycles into an
+attacker within a second and the attacking share overshoots again).
+
+## 8. First results of the order layer (vs tape medians, sampled orders)
+
+Mean |median error| over all 26 ratios: **4.34 -> 3.94 pts**. 13 ratios
+improved, 6 worsened, 7 already exact stayed exact. Notable:
+
+| ratio | baseline | with orders | note |
+|---|---|---|---|
+| 3v2 | +3.6 | **0.0 � exact** | the deterministic one-swing bug, gone |
+| 20v15 | -4.6 | **+0.3** | |
+| 5v3 | -7.2 | -2.4 | |
+| 11v4 | +5.5 | +3.6 | |
+| 20v18 | -9.1 | -7.1 | |
+| 9v4 | +13.3 | +11.1 | still the worst knife-edge miss |
+| 21v10 | +9.3 | **+15.8** | main regression; runaway fights 11/40 -> 2/40 |
+| 10v5 | -4.4 | -7.2 | regression |
+
+Open: the 21v10/10v5 regressions, and the attacking-share residual (the tape
+keeps ~45% of a big fight walking; the sim with orders reaches ~25%, because
+greedy designation still picks nearer enemies than the tape's � rank 5+ in 47%
+of real designations means much longer cross-melee walks).
 
 
 Why this file exists: the remaining calibration error is concentrated in how

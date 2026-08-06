@@ -21,6 +21,7 @@
 
 const engagement = process.env.AOE2X_EXP_ENGAGEMENT ?? "";
 const pursuit = process.env.AOE2X_EXP_PURSUIT ?? "";
+const orders = process.env.AOE2X_EXP_ORDERS ?? "";
 
 const VALID_ENGAGEMENT = new Set(["", "pursuit"]);
 const VALID_PURSUIT = new Set(["", "tick", "blocked", "swing", "blocked+swing"]);
@@ -38,7 +39,9 @@ export const ENGAGEMENT_FOLLOWS_PURSUIT = engagement === "pursuit";
 export const REEVALUATE_EVERY_TICK = pursuit === "tick";
 export const REEVALUATE_ON_BLOCKED = pursuit === "blocked" || pursuit === "blocked+swing";
 export const REEVALUATE_ON_SWING = pursuit === "swing" || pursuit === "blocked+swing";
-export const ANY_EXPERIMENT = Boolean(engagement || pursuit);
+// AOE2X_EXP_ORDERS=1 enables the AI-player order layer (src/combat/ai-orders.js).
+// It counts as an experiment so the blocked flag gets stamped for idle rescue.
+export const ANY_EXPERIMENT = Boolean(engagement || pursuit || orders === "1");
 
 
 // True when this unit should drop a still-living pursuit target this tick.

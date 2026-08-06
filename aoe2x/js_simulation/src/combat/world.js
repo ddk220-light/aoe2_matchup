@@ -543,7 +543,19 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
       const gap = pursued && pursued.alive && pursued.owner !== unit.owner
         ? Math.hypot(pursued.x - unit.x, pursued.y - unit.y)
         : Infinity;
-      const inReach = gap <= KITE_DWELL_HOLD_RADIUS_TILES + 1e-12
+      // A REACH fighter (nonzero melee attack range: the Elite Steppe
+      // Lancer's 1.0) converts on reach entry with no dwell at all — across
+      // 3508 attributed kills in the three steppe kiting archives the median
+      // continuous pre-swing dwell is 0.0 s at every radius up to 1.75 and
+      // the median swing-start gap is 1.5 tiles, its exact outline reach.
+      // The dwell gate and its contact hold radius are range-0 chaser
+      // behavior (the champion/paladin conversion friction above).
+      const reachTiles = unit.mechanics?.ranged
+        ? 0
+        : (unit.mechanics?.attack_range_tiles ?? 0);
+      const reachFighter = reachTiles >= 1 - 1e-12;
+      const inReach = Number.isFinite(gap)
+        && (reachFighter || gap <= KITE_DWELL_HOLD_RADIUS_TILES + 1e-12)
         && isWithinReach(unit, pursued);
       const pinned = gap < (pursued?.mechanics?.ranged?.min_range_tiles ?? 0) - 1e-12;
       const previous = kiteState.reachDwell.get(unit.referenceId);
@@ -558,7 +570,7 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
         kiteState.reachDwell.delete(unit.referenceId);
       }
       const nextTargetId = inReach
-        && (carried + 1 >= KITE_CHASE_DWELL_TICKS
+        && (carried + 1 >= (reachFighter ? 1 : KITE_CHASE_DWELL_TICKS)
           || previousTargetId === pursued.referenceId)
         ? pursued.referenceId
         : null;

@@ -179,3 +179,61 @@ Final circuit (25 orders each, whole corpus): **21 matchups, 105 ratios, 0
 wrong winners.** Kiting: kac 3.88 / avp 2.84 / esc 2.36 / esp 0.00 /
 hcc 0.66 / hcp 0.54. Ranged: avs 1.70 / sva 0.68 / svc 2.90 / svp 1.38.
 Melee + Fire Lancer bit-identical throughout.
+
+## Steppe-chaser extension (2026-08-06, third column of the grid)
+
+Three new archives complete the kiting grid's chaser axis: {arbalester,
+elite skirmisher, heavy cav archer} vs the **Elite Steppe Lancer** (Cumans
+master 1372, dat speed 1.679 — faster than every kiter — attack range 1.0,
+75 fights, SHA-locked). The kiter script is IDENTICAL across chasers
+(beat clocks, 0 off-lattice waypoints in 75 fights, per-shot quanta 4/1/5
+vs the lancer's 6 pierce armor, wave coverage exact), so all changes are
+on the chase side. Two measured rules and one bug fix:
+
+1. **Reach fighters swing on reach entry — no dwell.** Across 3508
+   attributed kills in the three archives, the median continuous pre-swing
+   dwell is 0.0 s at every radius up to 1.75 and the median swing-start
+   gap is 1.5 tiles — the lancer's exact outline reach (1.0 range +
+   collision extents). The ~1.0 s dwell gate and its 1.0-tile hold radius
+   are range-0 chaser behavior (champion/paladin conversion friction);
+   applying them to the lancer made it unable to swing at anything that
+   fled (its stop range keeps it outside the 1.0 hold radius) and produced
+   4 wrong winners. Discriminator: the unit's own dat `attack_range_tiles`
+   (0 vs 1.0 — nothing in the corpus sits between).
+2. **The melee wave is `slice(4)` at EVERY roster size.** The old reading
+   ("a side of <= 5 gets one platoon order covering everyone") was wrong:
+   the command streams record, in every 10v5 of every archive including
+   the champion one, exactly ONE aiOrder — recipient 1609, the single
+   highest id, i.e. the same all-but-four-lowest rule — with location =
+   the kiter-group centroid, and the recipient's first pursuit is the
+   kiter nearest that centroid (1273 in every recorded 10v5). The other
+   FOUR are native LOS pickets: the steppe tapes show 1605/1608 frozen at
+   spawn for 20+ s until the kiting lap enters their line of sight, while
+   kac's pickets acquired within ~2 s by spawn geometry — which is what
+   the covers-everyone reading had mistaken for order coverage. Fixing the
+   wave rule alone took avst 10v5 from a wrong +27 to a correct -24/-25,
+   esc 10v5 from band error 8.5 to 0, and hcc to a perfect 0.00 mean.
+3. **Kite-move marchers take no avoidance route** (bug fix): a marcher
+   with a live pursuit target was being goal-routed toward CONTACT with
+   its beat target whenever allies blocked that line, overriding the
+   scripted slot march. Marchers now keep their slot proposal and remain
+   obstacles for everyone else.
+
+Tried and REJECTED by A/B: exempting kiter-kiter pairs from mutual
+obstruction during the formation march (tape neighbor spacing does
+compress below the 0.4 collision extent, but the exemption bought the
+steppe column nothing measurable — means moved <= 0.06 — and cost
+arbalester_vs_champion 20v20 a 9.4 -> 15.7 band error).
+
+Steppe-column circuit (25 orders, 0 wrong winners everywhere):
+avst 12.68 (10v5 err 14, 20v15 21.6, 20v20 17 — the corpus's largest
+correct-winner residuals: the sim steppe still over-converts against the
+arbalester group in wave fights; the tape's chains break after 1-2 hits
+on the flowing formation where the sim's re-close succeeds more often),
+esst 0.78 (total wipe reproduced), hcst 4.04 (the tape's split column —
+HCA takes 10v5 and 20v15, the lancer the rest — called correctly on all
+five ratios). Existing corpus: kac EXACTLY 3.88, hcp 0.54, svc/svp and
+all melee/Fire Lancer/ranged rows bit-identical (hash diff: 11 changed
+rows, all kiting, all explained by the wave rule + marcher fix); hcc
+improved to 0.00, esc unchanged at 2.54, avp 2.90 / esp 0.22 (10v5-row
+shifts only).

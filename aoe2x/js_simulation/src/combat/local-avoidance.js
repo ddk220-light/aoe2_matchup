@@ -524,7 +524,12 @@ export function planLocalAvoidance(snapshot, proposals, map) {
     const original = proposalByReference.get(mover.referenceId)
       ?? Object.freeze({ referenceId: mover.referenceId, dx: 0, dy: 0 });
     const originalBudget = Math.hypot(original.dx, original.dy);
-    const target = byReference.get(mover.pursuitTargetId);
+    // A kite-move marcher walks its formation slot, not toward contact with
+    // its beat target — routing it around blockers toward that target would
+    // override the scripted march (and did: the recorded formation flows at
+    // 0.40-0.52 tiles/s median while goal-routed marchers crawled at 0.22).
+    // It still stands as an obstacle in every other mover's constraint set.
+    const target = mover.moveOrder ? null : byReference.get(mover.pursuitTargetId);
     const goal = target?.alive === false || !target ? null : contactGoal(mover, target);
     let avoidance = mover.avoidance;
     let selected = null;

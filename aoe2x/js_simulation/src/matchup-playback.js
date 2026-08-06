@@ -152,6 +152,27 @@ const MATCHUPS = Object.freeze({
       569: "fixtures/unit_stats/paladin_spanish_imperial.json",
     }),
   }),
+  arbalester_vs_steppe_kiting: Object.freeze({
+    truth: "calibration/fixtures/arbalester_vs_steppe_kiting_basics.json",
+    mechanics: Object.freeze({
+      492: "fixtures/unit_stats/arbalester_chinese_imperial.json",
+      1372: "fixtures/unit_stats/elite_steppe_lancer_cumans_imperial.json",
+    }),
+  }),
+  eliteskirm_vs_steppe_kiting: Object.freeze({
+    truth: "calibration/fixtures/eliteskirm_vs_steppe_kiting_basics.json",
+    mechanics: Object.freeze({
+      6: "fixtures/unit_stats/elite_skirmisher_chinese_imperial.json",
+      1372: "fixtures/unit_stats/elite_steppe_lancer_cumans_imperial.json",
+    }),
+  }),
+  hcavarcher_vs_steppe_kiting: Object.freeze({
+    truth: "calibration/fixtures/hcavarcher_vs_steppe_kiting_basics.json",
+    mechanics: Object.freeze({
+      474: "fixtures/unit_stats/heavy_cav_archer_saracens_imperial.json",
+      1372: "fixtures/unit_stats/elite_steppe_lancer_cumans_imperial.json",
+    }),
+  }),
 });
 
 

@@ -6,17 +6,19 @@ Lancer charge), `a31e721c` (ranged combat v1), `ff00a99e` (scorpion
 pass-through + minimum range), `38f54df3` (min-range retreat), `86d0137d`
 (scorpion_vs_paladin), `ce4e2cdd` (kiting WIP), `4ea8dcec` (kiting order
 layer v2 + ballistics), `2b969455` (five-archive kiting grid + min-range
-pin).
+pin), plus the steppe-chaser kiting column (three archives, same day).
 
 ## Headline
 
-**The whole corpus — 21 matchups, 105 tape ratios, ~525 sampled circuit
+**The whole corpus — 24 matchups, 120 tape ratios, ~600 sampled circuit
 runs — calls every winner correctly.** Every matchup's median winner-HP%
 sits inside or within a few points of the tape's own five-repeat envelope.
 The engine now covers melee, charge attacks, projectile combat,
 pass-through bolts, ballistics lead, minimum range, and both sides of the
-scripted-kiting AI — with every constant either dat-sourced or measured on
-the authorized tapes, none fitted.
+scripted-kiting AI against slow (champion), fast (paladin), and
+faster-than-the-kiter reach-fighter (Elite Steppe Lancer) chasers — with
+every constant either dat-sourced or measured on the authorized tapes,
+none fitted.
 
 ## Corpus scorecard (mean band error over 5-9 ratios each, 25 sampled orders)
 
@@ -37,11 +39,14 @@ the authorized tapes, none fitted.
 | ranged | scorpion_vs_champion | **2.90** (was 6.32) | 0 |
 | ranged | scorpion_vs_paladin | **1.38** (was 1.98) | 0 |
 | kiting | arbalester_vs_champion | 3.88 | 0 |
-| kiting | arbalester_vs_paladin | 2.84 | 0 |
-| kiting | eliteskirm_vs_champion | 2.36 | 0 |
-| kiting | eliteskirm_vs_paladin | **0.00** | 0 |
-| kiting | hcavarcher_vs_champion | 0.66 | 0 |
+| kiting | arbalester_vs_paladin | 2.90 | 0 |
+| kiting | eliteskirm_vs_champion | 2.54 | 0 |
+| kiting | eliteskirm_vs_paladin | 0.22 | 0 |
+| kiting | hcavarcher_vs_champion | **0.00** | 0 |
 | kiting | hcavarcher_vs_paladin | 0.54 | 0 |
+| kiting | arbalester_vs_steppe | 12.68 | 0 |
+| kiting | eliteskirm_vs_steppe | 0.78 | 0 |
+| kiting | hcavarcher_vs_steppe | 4.04 | 0 |
 
 Melee + Fire Lancer families are hash-verified bit-identical across every
 engine change of the day. Test suite constant at 131/157 (the 26 failures
@@ -73,7 +78,7 @@ are the documented pre-existing set).
    platoon at <=5), spawn pickets, sticky LOS-blind pursuit with 0.5 s
    repath staleness, strict target discipline, unconditional release, and
    the ~1.0 s swing-start dwell.
-6. **The minimum-range pin** (the day's closing discovery): a chaser inside
+6. **The minimum-range pin**: a chaser inside
    its target's dat min_range cannot be shot by its own victim — dwell
    accumulates through reach flickers while pinned, which is the
    skirmisher tapes' steady grind; min-range-0 kiters never pin, which is
@@ -82,6 +87,22 @@ are the documented pre-existing set).
    target. One rule, three payoffs: eliminated the corpus's last wrong
    winner (eliteskirm_vs_champion 10v5) and took both scorpion-vs-melee
    matchups to their best-ever fits.
+7. **Reach fighters swing on reach entry — no dwell** (steppe column, same
+   doc): 3508 attributed Elite Steppe Lancer kills show median pre-swing
+   dwell 0.0 s and median swing-start gap 1.5 tiles — its exact outline
+   reach. The dwell gate is range-0 chaser behavior; the discriminator is
+   the unit's own dat `attack_range_tiles`.
+8. **The melee wave is `slice(4)` at every roster size** (the day's closing
+   correction): a 5-melee side gets ONE aiOrder to the single highest id —
+   recorded verbatim (recipient 1609, location = kiter centroid) in every
+   10v5 of every archive including the champion one — and the other four
+   are native LOS pickets (the steppe tapes show them frozen at spawn for
+   20+ s; kac's pickets acquired in ~2 s by geometry, which the old
+   "platoon covers everyone" reading had mistaken for order coverage).
+   Fixing this alone repaired avst 10v5's wrong winner, zeroed esc 10v5,
+   and took hcavarcher_vs_champion to a perfect 0.00 mean. Plus one bug
+   fix: kite-move marchers no longer get goal-routed off their slot march
+   by local avoidance.
 
 ## Provenance notes
 
@@ -92,14 +113,22 @@ are the documented pre-existing set).
 - Five new SHA-locked truth fixtures (125 fights) + the Heavy Cavalry
   Archer fixture (Saracens master 474, dat-locked: speed 1.54, delay
   0.897, reload 1.8, projectile 478 smart_mode 1).
+- Three steppe-column truth fixtures (75 fights), zip SHA-256:
+  arbalestervssteppe `3F4D8F0B69AE…`, eliteskirmvssteppe `9500E4703ACB…`,
+  hcavarchervssteppe `74D83F2EBE0D…`. The chaser reuses the existing
+  Elite Steppe Lancer fixture (Cumans master 1372, dat-locked).
 - The exporter assumes Ballistics researched (fully-teched Imperial
   model); add civ tech-tree gating before exporting an archer fixture for
   a civ without it.
 
 ## Known residuals and cautions
 
-- Largest per-ratio residuals (all correct-winner): kac 20v20 (9.4) and
-  5v10 (10), esc 20v15 (9.9), svp 10v5/20v15 (~9.5), firelancer_vs_steppe
+- Largest per-ratio residuals (all correct-winner): arbalester_vs_steppe
+  20v15 (21.6), 20v20 (17) and 10v5 (14) — the sim lancer over-converts
+  against the arbalester group in wave fights; the tape's hit chains break
+  after 1-2 hits on the flowing formation where the sim's re-close
+  succeeds more often. Then kac 20v20 (9.4) and 5v10 (10), esc 20v15
+  (9.9), hcst 20v15 (9.4), svp 10v5/20v15 (~9.5), firelancer_vs_steppe
   3v5/3v6 (13/10.3), paladin_vs_steppe 2v3 (13.8).
 - **The dwell seesaw**: the arbalester and skirmisher kiting archives pull
   the swing-dwell model in opposite directions; any change to dwell,

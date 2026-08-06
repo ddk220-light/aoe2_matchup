@@ -581,25 +581,49 @@ export function issueKiteOrders(state, units, map, tick, events, makeEvent) {
   }
 
   // Melee-side order wave at ~0.6 s. Coverage is measured and EXACT across
-  // the four multi-champion fights: the wave orders all but the FOUR
-  // lowest-id units (10 champions -> 6 ordered, 15 -> 11, 20 -> 16, the
-  // unordered always being the lowest 4 ids), while a side of <= 5 gets one
-  // platoon order covering everyone (10v5: a single recipient-only aiOrder,
-  // all 5 move by 2.2 s). Unordered units are spawn pickets: they stand
-  // until an enemy walks into their line of sight (engine acquisition), which
-  // is what collapses the recorded 5v10 — two pickets first move at 15.0 s
-  // and 19.1 s, exactly when the kiting lap reaches their corner.
-  // Ordered chasers whose target has died re-designate the nearest live
-  // kiter immediately and LOS-blind (chasers idle >= 1 s only 233 short
-  // times across 25 fights).
+  // all six archives: the wave orders all but the FOUR lowest-id units
+  // (10 champions -> 6 ordered, 15 -> 11, 20 -> 16, the unordered always
+  // being the lowest 4 ids) — and a side of exactly 5 gets ONE aiOrder to
+  // the single HIGHEST id, i.e. the same slice(4): the command streams
+  // record recipient 1609, orderType 700, location = the kiter-group
+  // centroid, in every 10v5 of every archive. The other four are spawn
+  // pickets: they stand until an enemy walks into their line of sight
+  // (engine acquisition) — the steppe 10v5 tapes show 1605/1608 frozen at
+  // spawn for 20+ s while the lap stays clear (kac's pickets acquired
+  // within ~2 s by spawn geometry, which is what the old covers-everyone
+  // reading mistook for order coverage), and the recorded 5v10 collapses
+  // when two pickets first move at 15.0 s and 19.1 s, exactly as the
+  // kiting lap reaches their corner. A single-recipient wave aims at the
+  // order's location — the kiter nearest the group centroid (1273 in
+  // every recorded 10v5, matching designate's fresh pick); a multi-unit
+  // wave keeps the measured deterministic spread. Ordered chasers whose
+  // target has died re-designate the nearest live kiter immediately and
+  // LOS-blind (chasers idle >= 1 s only 233 short times across 25 fights).
   if (!state.meleeAssigned) {
     if (tick === KITE_MELEE_ORDER_TICK) {
       const melee = [...enemies].sort((a, b) => a.referenceId - b.referenceId);
-      const wave = melee.length > 5 ? melee.slice(4) : melee;
+      const wave = melee.slice(4);
       const spread = [...kiters].sort((a, b) => a.referenceId - b.referenceId);
-      wave.forEach((unit, index) => {
-        applyOrder(unit, spread[index % spread.length], tick, events, makeEvent);
-      });
+      if (wave.length === 1) {
+        // The recorded single order carries location = the kiter-group
+        // centroid; the recipient's first pursuit is the kiter nearest it.
+        const anchor = centroid(kiters);
+        let target = null;
+        let bestGap = Infinity;
+        for (const kiter of kiters) {
+          const gap = Math.hypot(kiter.x - anchor.x, kiter.y - anchor.y);
+          if (gap < bestGap
+            || (gap === bestGap && kiter.referenceId < target.referenceId)) {
+            target = kiter;
+            bestGap = gap;
+          }
+        }
+        if (target) applyOrder(wave[0], target, tick, events, makeEvent);
+      } else {
+        wave.forEach((unit, index) => {
+          applyOrder(unit, spread[index % spread.length], tick, events, makeEvent);
+        });
+      }
       state.meleeActive = new Set(wave.map(({ referenceId }) => referenceId));
       state.meleeAssigned = true;
     }

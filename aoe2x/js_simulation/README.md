@@ -8,13 +8,13 @@ or measured on tape — none fitted. It loads no production engine code.
 ## Current status
 
 **[Calibration status 2026-08-06](docs/CALIBRATION_STATUS_2026-08-06.md):
-21 matchups, 105 tape ratios, 0 wrong winners.** Coverage: melee
+24 matchups, 120 tape ratios, 0 wrong winners.** Coverage: melee
 (champion/paladin/steppe/elephant), Fire Lancer charge attacks, projectile
 combat with ballistics lead, scorpion pass-through bolts, minimum range,
 and both sides of the scripted-kiting AI (arbalester / elite skirmisher /
-heavy cavalry archer versus champion / paladin). Per-mechanic measurement
-docs live in `docs/`; start with the status file and
-[the kiting order layer](docs/KITING_AI_ORDER_LAYER_2026-08-06.md).
+heavy cavalry archer versus champion / paladin / elite steppe lancer).
+Per-mechanic measurement docs live in `docs/`; start with the status file
+and [the kiting order layer](docs/KITING_AI_ORDER_LAYER_2026-08-06.md).
 
 Calibration circuit metric: signed winner-HP% (winner's remaining HP as a
 percent of its own starting pool) with the sim's 25-sampled-order median

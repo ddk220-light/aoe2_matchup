@@ -405,7 +405,25 @@ function moveUnits(units, map, tick, events, kiteState = null) {
   const proposals = live.map((unit) => {
     // A kite move order overrides everything: the tape's move-ordered units
     // walk their waypoint and do not fight until the next attack beat.
-    if (unit.moveOrder && unit.action !== "attacking") {
+    //
+    // A RELEASED swing does not hold the unit any more. The rest of the attack
+    // animation is recovery, and the tape walks through it: of 4175 recorded
+    // Elite Skirmisher shots, 39% leave the bow while the shooter is ALREADY
+    // moving, the median release-to-movement gap is 0.05 s, and 89% are moving
+    // within 0.25 s -- against the 0.693 s of leftover animation this engine
+    // used to freeze them for (1.2 s animation, arrow away at 0.507 s). That
+    // freeze was eating ~a third of every 3.335 s kite beat, which is what
+    // starved the formation's flow.
+    //
+    // Recovery still governs RETARGETING (progressAttacks only frees the unit
+    // at the end of the animation, which is the measured "killers retarget
+    // half an animation after the kill" rule) -- this is movement only, and
+    // only for a unit already holding a move order, so no melee fight in the
+    // corpus can reach it. windup === 0 is exactly "the swing has been
+    // released"; an unreleased swing was already cancelled when the order was
+    // issued, and a unit holding a move order never starts a new attack.
+    if (unit.moveOrder
+        && (unit.action !== "attacking" || unit.actionTimers.windup === 0)) {
       const dx = unit.moveOrder.x - unit.x;
       const dy = unit.moveOrder.y - unit.y;
       const distance = Math.hypot(dx, dy);
@@ -887,6 +905,7 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
     // projectile can never outlive its aim distance.
     arrivalTick: tick + Math.max(1, secondsToTicksCeil(distance / spec.projectileSpeed)),
     index: 0,
+    halfWidth: spec.projectileHalfWidth,
     amount: calculateDamage(unit, target),
   });
 }
@@ -1153,7 +1172,16 @@ function processChargeProjectiles(units, projectiles, tick, events) {
       if (target?.alive) {
         const dx = Math.abs(target.x - projectile.x);
         const dy = Math.abs(target.y - projectile.y);
-        if (Math.max(dx, dy) <= collisionRadius(target) + 1e-9) {
+        // The arrow is a body too: it lands when its own dat half width
+        // (projectile unit collision_size_x, 0.1 for every archer projectile in
+        // the corpus) meets the victim's collision box -- the same rule the
+        // scorpion bolt already used. Measured on impact geometry: recorded
+        // arrows are last seen at a Chebyshev separation from the victim's
+        // centre whose p97 is 0.310 against champions (collision 0.20 -> 0.30)
+        // and 0.347 against heavy camels (collision 0.25 -> 0.35). The camel is
+        // the first victim in the corpus whose collision box differs from its
+        // outline, which is why a bare-collision rule survived this long.
+        if (Math.max(dx, dy) <= collisionRadius(target) + projectile.halfWidth + 1e-9) {
           resolved.push(projectile);
           continue;
         }

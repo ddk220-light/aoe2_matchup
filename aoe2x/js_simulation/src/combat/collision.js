@@ -86,6 +86,9 @@ function normalizeBodies(snapshot, proposals) {
       radius: collisionRadius(unit),
       owner: unit.owner,
       allyRadius: allyCollisionRadius(unit),
+      // Under a formation move order (the tape's formFormation 2 groups) the
+      // group reforms THROUGH itself -- see constrainPair.
+      formation: unit.moveOrder !== undefined && unit.moveOrder !== null,
       stationary: proposed.dx === 0 && proposed.dy === 0,
       dx: proposed.dx,
       dy: proposed.dy,
@@ -250,6 +253,22 @@ function constrainPair(left, right) {
   // so the crowd closes up instead of deadlocking. A stopped unit is not trying
   // to go anywhere and keeps its full box.
   const allied = left.owner === right.owner;
+  // Two allies that are BOTH under a formation move order do not obstruct each
+  // other at all. Measured on the tapes: while the kite formation marches, an
+  // ally sitting 0.42 tiles directly ahead costs a skirmisher almost nothing
+  // (stalled 19.7% of frames vs 14.4% with a clear path, median step still a
+  // full walk), and the block's own nearest-neighbour pairs sit INSIDE the
+  // 0.400 separation 58.6% of the time, bottoming out at 0.000 -- the group
+  // reforms straight through itself. Enforcing the box here instead gridlocks
+  // it: 38.7% of our marching kiter-ticks stalled, 73% of them behind an ally.
+  // Scope matters. Chasers under aiOrder attack waves are NOT exempt: the same
+  // measurement on tape camels (19.5% vs 18.5%) is nearly free, but kac
+  // champions do pay (13.2% vs 5.6%), and a blanket ally exemption was
+  // A/B-rejected earlier for wrecking kac 20v20. Having a move order is the
+  // discriminator, not being in motion -- a unit that has ARRIVED at its slot
+  // keeps its order until the next beat, and gating on motion instead leaves
+  // those arrived units standing as walls for the rest of the group.
+  if (allied && left.formation && right.formation) return 0;
   const extent = allied
     ? (left.stationary ? left.radius : left.allyRadius)
       + (right.stationary ? right.radius : right.allyRadius)

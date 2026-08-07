@@ -390,6 +390,17 @@ function signedArcDelta(a, b, perimeter) {
 
 
 function kiteAttackBeat(state, kiters, enemies, tick, events, makeEvent) {
+  // NOT MODELLED YET: minimum range suppresses the SHOOTER, not just the one
+  // target it was aimed at. The tape's AI names every shooter here (439
+  // assignments in the skirm-vs-camel fight) but only 233 arrows leave, and the
+  // split is the shooter's own min_range: firers had their nearest chaser at
+  // p50 2.2 tiles, holders at p50 1.0. Confirmed on esc 20v20 measured at
+  // windup start (4.0% of launches begin with an enemy inside 1.0 vs 18.2% of
+  // the alive population) with the arbalester column, min_range 0.0, as a
+  // control that shows no depletion at all. Implementing it costs esc dearly
+  // (band error 2.5 -> 13.5) because our formation packs tighter than the
+  // tape's, so the same chaser suppresses more of our shooters -- the slot
+  // geometry has to come first. See docs/KITER_FLOW_2026-08-06.md.
   const roster = [...kiters].sort((a, b) => a.referenceId - b.referenceId);
   const own = centroid(roster);
   // Assignment order: carried targets (previous beat's order) first, then

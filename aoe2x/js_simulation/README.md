@@ -23,10 +23,10 @@ percent of its own starting pool) with the sim's 25-sampled-order median
 scored against the tape's five-repeat band per ratio.
 
 Held-out check on the standard-units archive (101 distinct matchups, 14
-units, nothing in it used to set a constant): winner correct in 96/101,
+units, nothing in it used to set a constant): winner correct in 97/101,
 mean winner-HP% delta 14.7 — **[full table per matchup, with the
 independently derived purchase and the tape's own numbers, in the standard
-units summary](docs/STANDARD_UNITS_SUMMARY_2026-08-06.md)**.
+units summary](docs/STANDARD_UNITS_SUMMARY_2026-08-07.md)**.
 
 ## Locked milestone
 

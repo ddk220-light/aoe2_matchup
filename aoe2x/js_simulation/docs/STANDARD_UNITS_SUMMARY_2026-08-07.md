@@ -1,8 +1,4 @@
-# Standard units — full matchup summary (2026-08-06)
-
-> **SUPERSEDED by [`STANDARD_UNITS_SUMMARY_2026-08-07.md`](STANDARD_UNITS_SUMMARY_2026-08-07.md)**, which re-runs the same sweep on the
-> engine after `e4730558` and `31df43ae`. The numbers below are the engine as of
-> `fd16ec3e` and are kept for the before/after comparison.
+# Standard units — full matchup summary (2026-08-07)
 
 Every standard-unit matchup in the authorized archive, run on the current
 engine. Three things are derived **independently of the tape** and only then
@@ -14,6 +10,17 @@ are the same scenario written both ways round (`A vs B` and `B vs A` have
 byte-identical rosters and positions). Merged on the roster, that is
 **101 distinct matchups**; each one's repeats are pooled. The sim's 25 samples
 come out bit-identical for every merged pair, which is also a determinism check.
+
+## What changed since 2026-08-06
+
+Two engine commits land between that run and this one, and the corpus was
+re-swept for both: `e4730558` (kite formation flow — formation-mates do not
+obstruct each other, a released swing does not freeze a marcher, an arrow
+carries its own half width) and `31df43ae` (contact capture). Isolated by
+re-running this whole sweep at each commit, contact capture moves **exactly one
+matchup** — Elite Skirmisher vs Heavy Camel Rider, -9.4 -> +26.7 — and leaves
+the other 100 bit-identical. Corpus totals: winner agreement 96/101 -> 97/101,
+mean |delta| 14.95 -> 14.59.
 
 ## Metric
 
@@ -48,11 +55,11 @@ mulberry32 seed so the run reproduces exactly.
 
 | | matchups | mean \|delta\| | median \|delta\| | winner agrees |
 |---|---:|---:|---:|---:|
-| **All** | 101 | 14.7 | 9.4 | 96/101 |
-| **Modeled only** (excl. ranged-vs-ranged) | 80 | 14.3 | 9.2 | 77/80 |
-| Kite (mobile ranged vs melee) | 32 | 19.1 | 12.3 | 30/32 |
+| **All** | 101 | 14.6 | 9.5 | 97/101 |
+| **Modeled only** (excl. ranged-vs-ranged) | 80 | 14.2 | 9.0 | 78/80 |
+| Kite (mobile ranged vs melee) | 32 | 18.8 | 12.2 | 31/32 |
 | Native waves (melee/siege vs melee) | 48 | 11.1 | 7.3 | 47/48 |
-| Ranged vs ranged (order script UNMODELED) | 21 | 16.3 | 9.7 | 19/21 |
+| Ranged vs ranged (order script UNMODELED) | 21 | 16.1 | 11.1 | 19/21 |
 
 **Purchase solution: 101/101 exact.** Derived from dat base costs with
 `c = food + wood + 1.5 x gold`; the cheaper side buys `min(21, floor(3000/c))`,
@@ -67,38 +74,38 @@ them natively and the deltas there measure a missing feature, not a wrong one.
 
 | matchup | side 2 buys | side 3 buys | weighted spend<br><sub>side 2 / side 3</sub> | kiter | tape mean (n) | sim mean (n) | delta |
 |---|---|---|---:|---|---:|---:|---:|
-| Elite Skirmisher vs Paladin | 21x Elite Skirmisher | 7x Paladin | 1260 / 1208 | side 2 <br><sub>measured</sub> | +87.4 (4) <br><sub>+85.6..+89.0</sub> | +86.9 (25) <br><sub>sd 1.3</sub> | **-0.5** |
-| Hand Cannoneer vs Elite Fire Lancer | 19x Hand Cannoneer | 21x Elite Fire Lancer | 2280 / 2362 | side 2 <br><sub>constructed</sub> | -60.9 (1) | -62.1 (25) <br><sub>sd 3.4</sub> | **-1.2** |
-| Elite Skirmisher vs Elite Steppe Lancer | 21x Elite Skirmisher | 9x Elite Steppe Lancer | 1260 / 1170 | side 2 <br><sub>measured</sub> | +85.9 (3) <br><sub>+84.6..+86.8</sub> | +87.9 (25) <br><sub>sd 0.6</sub> | **+2.1** |
-| Arbalester vs Halberdier | 13x Arbalester | 21x Halberdier | 1202 / 1260 | side 2 <br><sub>measured</sub> | -92.9 (4) <br><sub>-96.0..-89.2</sub> | -95.4 (25) <br><sub>sd 2.0</sub> | **-2.5** |
-| Arbalester vs Elite Fire Lancer | 21x Arbalester | 17x Elite Fire Lancer | 1942 / 1912 | side 2 <br><sub>measured</sub> | -72.4 (2) <br><sub>-72.6..-72.3</sub> | -69.6 (25) <br><sub>sd 4.0</sub> | **+2.8** |
-| Elite Skirmisher vs Elite Fire Lancer | 21x Elite Skirmisher | 11x Elite Fire Lancer | 1260 / 1238 | side 2 <br><sub>measured</sub> | +59.0 (1) | +62.9 (25) <br><sub>sd 3.2</sub> | **+3.9** |
-| Elite Skirmisher vs Hussar | 21x Elite Skirmisher | 15x Hussar | 1260 / 1200 | side 2 <br><sub>measured</sub> | +85.4 (3) <br><sub>+84.7..+86.3</sub> | +89.9 (25) <br><sub>sd 0.8</sub> | **+4.4** |
-| Heavy Cav Archer vs Paladin | 21x Heavy Cav Archer | 15x Paladin | 2730 / 2588 | side 2 <br><sub>measured</sub> | +36.9 (11) <br><sub>+27.7..+50.2</sub> | +30.0 (24) <br><sub>sd 12.9</sub> | **-6.9** |
-| Elite Skirmisher vs Elite Battle Elephant | 21x Elite Skirmisher | 6x Elite Battle Elephant | 1260 / 1230 | side 2 <br><sub>measured</sub> | +84.5 (4) <br><sub>+83.1..+85.9</sub> | +92.6 (25) <br><sub>sd 0.5</sub> | **+8.0** |
-| Heavy Cav Archer vs Heavy Camel Rider | 21x Heavy Cav Archer | 18x Heavy Camel Rider | 2730 / 2610 | side 2 <br><sub>measured</sub> | +36.3 (10) <br><sub>+30.0..+41.4</sub> | +27.7 (25) <br><sub>sd 16.4</sub> | **-8.6** |
-| Arbalester vs Paladin | 21x Arbalester | 11x Paladin | 1942 / 1898 | side 2 <br><sub>measured</sub> | +41.8 (14) <br><sub>+33.2..+58.0</sub> | +50.9 (25) <br><sub>sd 4.1</sub> | **+9.1** |
-| Heavy Cav Archer vs Elite Steppe Lancer | 21x Heavy Cav Archer | 21x Elite Steppe Lancer | 2730 / 2730 | side 2 <br><sub>measured</sub> | +28.0 (10) <br><sub>+15.5..+38.1</sub> | +37.4 (25) <br><sub>sd 7.1</sub> | **+9.4** |
-| Hand Cannoneer vs Halberdier | 10x Hand Cannoneer | 21x Halberdier | 1200 / 1260 | side 2 <br><sub>constructed</sub> | -76.5 (1) | -66.6 (25) <br><sub>sd 11.4</sub> | **+9.9** |
-| Arbalester vs Elite Battle Elephant | 21x Arbalester | 9x Elite Battle Elephant | 1942 / 1845 | side 2 <br><sub>measured</sub> | +79.8 (7) <br><sub>+75.8..+81.9</sub> | +90.3 (25) <br><sub>sd 1.0</sub> | **+10.6** |
-| Heavy Cav Archer vs Elite Battle Elephant | 21x Heavy Cav Archer | 13x Elite Battle Elephant | 2730 / 2665 | side 2 <br><sub>measured</sub> | +74.4 (3) <br><sub>+71.7..+78.3</sub> | +85.3 (25) <br><sub>sd 1.5</sub> | **+10.9** |
-| Hand Cannoneer vs Champion | 14x Hand Cannoneer | 21x Champion | 1680 / 1680 | side 2 <br><sub>constructed</sub> | -76.6 (4) <br><sub>-82.5..-73.2</sub> | -64.6 (25) <br><sub>sd 10.2</sub> | **+12.0** |
-| Heavy Cav Archer vs Halberdier | 9x Heavy Cav Archer | 21x Halberdier | 1170 / 1260 | side 2 <br><sub>measured</sub> | +18.0 (10) <br><sub>-6.8..+34.0</sub> | +30.5 (25) <br><sub>sd 25.4</sub> | **+12.5** |
-| Arbalester vs Heavy Camel Rider | 21x Arbalester | 13x Heavy Camel Rider | 1942 / 1885 | side 2 <br><sub>measured</sub> | -62.3 (2) <br><sub>-67.6..-57.1</sub> | -75.2 (25) <br><sub>sd 3.9</sub> | **-12.9** |
-| Elite Skirmisher vs Halberdier | 21x Elite Skirmisher | 21x Halberdier | 1260 / 1260 | side 2 <br><sub>measured</sub> | -60.0 (1) | -73.6 (25) <br><sub>sd 2.5</sub> | **-13.6** |
-| Heavy Cav Archer vs Hussar | 12x Heavy Cav Archer | 21x Hussar | 1560 / 1680 | side 2 <br><sub>measured</sub> | +35.3 (5) <br><sub>+29.8..+44.1</sub> | +51.4 (25) <br><sub>sd 5.6</sub> | **+16.1** |
-| Arbalester vs Champion | 18x Arbalester | 21x Champion | 1665 / 1680 | side 2 <br><sub>measured</sub> | -81.8 (8) <br><sub>-84.7..-75.7</sub> | -65.1 (25) <br><sub>sd 12.0</sub> | **+16.7** |
-| Heavy Cav Archer vs Elite Fire Lancer | 18x Heavy Cav Archer | 21x Elite Fire Lancer | 2340 / 2362 | side 2 <br><sub>measured</sub> | +31.9 (5) <br><sub>+24.7..+45.1</sub> | +15.1 (25) <br><sub>sd 19.4</sub> | **-16.8** |
-| Elite Skirmisher vs Champion | 21x Elite Skirmisher | 15x Champion | 1260 / 1200 | side 2 <br><sub>measured</sub> | +54.2 (4) <br><sub>+47.4..+60.8</sub> | +72.6 (25) <br><sub>sd 4.4</sub> | **+18.4** |
-| Hand Cannoneer vs Heavy Camel Rider | 21x Hand Cannoneer | 17x Heavy Camel Rider | 2520 / 2465 | side 2 <br><sub>constructed</sub> | -67.5 (6) <br><sub>-73.6..-61.3</sub> | -42.8 (25) <br><sub>sd 9.8</sub> | **+24.7** |
-| Arbalester vs Hussar | 18x Arbalester | 21x Hussar | 1665 / 1680 | side 2 <br><sub>measured</sub> | +29.7 (5) <br><sub>+26.4..+35.2</sub> | +55.6 (25) <br><sub>sd 5.4</sub> | **+25.9** |
-| Arbalester vs Elite Steppe Lancer | 21x Arbalester | 14x Elite Steppe Lancer | 1942 / 1820 | side 2 <br><sub>measured</sub> | +9.2 (10) <br><sub>-27.1..+24.0</sub> | +42.4 (25) <br><sub>sd 3.7</sub> | **+33.2** |
-| Hand Cannoneer vs Paladin | 21x Hand Cannoneer | 14x Paladin | 2520 / 2415 | side 2 <br><sub>constructed</sub> | +15.4 (10) <br><sub>-9.0..+32.1</sub> | +53.2 (25) <br><sub>sd 5.2</sub> | **+37.8** |
-| Elite Skirmisher vs Heavy Camel Rider | 21x Elite Skirmisher | 8x Heavy Camel Rider | 1260 / 1160 | side 2 <br><sub>measured</sub> | +39.8 (1) | -2.0 (23) <br><sub>sd 22.4</sub> | **-41.8** ! |
-| Heavy Cav Archer vs Champion | 12x Heavy Cav Archer | 21x Champion | 1560 / 1680 | side 2 <br><sub>measured</sub> | -36.5 (14) <br><sub>-68.9..+8.8</sub> | +15.8 (25) <br><sub>sd 21.3</sub> | **+52.2** ! |
-| Hand Cannoneer vs Elite Steppe Lancer | 21x Hand Cannoneer | 19x Elite Steppe Lancer | 2520 / 2470 | side 2 <br><sub>constructed</sub> | +8.0 (1) | +61.3 (25) <br><sub>sd 2.4</sub> | **+53.3** |
-| Hand Cannoneer vs Hussar | 14x Hand Cannoneer | 21x Hussar | 1680 / 1680 | side 2 <br><sub>constructed</sub> | +5.6 (6) <br><sub>-18.8..+17.9</sub> | +59.4 (25) <br><sub>sd 8.0</sub> | **+53.8** |
-| Hand Cannoneer vs Elite Battle Elephant | 21x Hand Cannoneer | 12x Elite Battle Elephant | 2520 / 2460 | side 2 <br><sub>constructed</sub> | +2.4 (5) <br><sub>-38.3..+32.3</sub> | +80.0 (25) <br><sub>sd 2.5</sub> | **+77.6** |
+| Elite Skirmisher vs Elite Fire Lancer | 21x Elite Skirmisher | 11x Elite Fire Lancer | 1260 / 1238 | side 2 <br><sub>measured</sub> | +59.0 (1) | +58.5 (25) <br><sub>sd 7.3</sub> | **-0.5** |
+| Heavy Cav Archer vs Heavy Camel Rider | 21x Heavy Cav Archer | 18x Heavy Camel Rider | 2730 / 2610 | side 2 <br><sub>measured</sub> | +36.3 (10) <br><sub>+30.0..+41.4</sub> | +35.3 (25) <br><sub>sd 12.2</sub> | **-1.0** |
+| Elite Skirmisher vs Hussar | 21x Elite Skirmisher | 15x Hussar | 1260 / 1200 | side 2 <br><sub>measured</sub> | +85.4 (3) <br><sub>+84.7..+86.3</sub> | +87.6 (25) <br><sub>sd 1.4</sub> | **+2.2** |
+| Elite Skirmisher vs Elite Steppe Lancer | 21x Elite Skirmisher | 9x Elite Steppe Lancer | 1260 / 1170 | side 2 <br><sub>measured</sub> | +85.9 (3) <br><sub>+84.6..+86.8</sub> | +88.5 (25) <br><sub>sd 0.5</sub> | **+2.7** |
+| Hand Cannoneer vs Elite Fire Lancer | 19x Hand Cannoneer | 21x Elite Fire Lancer | 2280 / 2362 | side 2 <br><sub>constructed</sub> | -60.9 (1) | -57.9 (25) <br><sub>sd 4.9</sub> | **+3.0** |
+| Elite Skirmisher vs Paladin | 21x Elite Skirmisher | 7x Paladin | 1260 / 1208 | side 2 <br><sub>measured</sub> | +87.4 (4) <br><sub>+85.6..+89.0</sub> | +84.3 (25) <br><sub>sd 1.2</sub> | **-3.1** |
+| Arbalester vs Halberdier | 13x Arbalester | 21x Halberdier | 1202 / 1260 | side 2 <br><sub>measured</sub> | -92.9 (4) <br><sub>-96.0..-89.2</sub> | -97.5 (25) <br><sub>sd 1.9</sub> | **-4.6** |
+| Arbalester vs Elite Fire Lancer | 21x Arbalester | 17x Elite Fire Lancer | 1942 / 1912 | side 2 <br><sub>measured</sub> | -72.4 (2) <br><sub>-72.6..-72.3</sub> | -67.5 (25) <br><sub>sd 5.4</sub> | **+5.0** |
+| Elite Skirmisher vs Elite Battle Elephant | 21x Elite Skirmisher | 6x Elite Battle Elephant | 1260 / 1230 | side 2 <br><sub>measured</sub> | +84.5 (4) <br><sub>+83.1..+85.9</sub> | +90.4 (25) <br><sub>sd 1.3</sub> | **+5.9** |
+| Hand Cannoneer vs Halberdier | 10x Hand Cannoneer | 21x Halberdier | 1200 / 1260 | side 2 <br><sub>constructed</sub> | -76.5 (1) | -83.1 (25) <br><sub>sd 6.3</sub> | **-6.6** |
+| Heavy Cav Archer vs Paladin | 21x Heavy Cav Archer | 15x Paladin | 2730 / 2588 | side 2 <br><sub>measured</sub> | +36.9 (11) <br><sub>+27.7..+50.2</sub> | +29.0 (25) <br><sub>sd 9.0</sub> | **-8.0** |
+| Hand Cannoneer vs Champion | 14x Hand Cannoneer | 21x Champion | 1680 / 1680 | side 2 <br><sub>constructed</sub> | -76.6 (4) <br><sub>-82.5..-73.2</sub> | -67.5 (25) <br><sub>sd 19.2</sub> | **+9.1** |
+| Elite Skirmisher vs Halberdier | 21x Elite Skirmisher | 21x Halberdier | 1260 / 1260 | side 2 <br><sub>measured</sub> | -60.0 (1) | -69.8 (25) <br><sub>sd 3.9</sub> | **-9.8** |
+| Arbalester vs Elite Battle Elephant | 21x Arbalester | 9x Elite Battle Elephant | 1942 / 1845 | side 2 <br><sub>measured</sub> | +79.8 (7) <br><sub>+75.8..+81.9</sub> | +90.1 (25) <br><sub>sd 0.9</sub> | **+10.4** |
+| Arbalester vs Heavy Camel Rider | 21x Arbalester | 13x Heavy Camel Rider | 1942 / 1885 | side 2 <br><sub>measured</sub> | -62.3 (2) <br><sub>-67.6..-57.1</sub> | -74.2 (25) <br><sub>sd 3.2</sub> | **-11.8** |
+| Arbalester vs Paladin | 21x Arbalester | 11x Paladin | 1942 / 1898 | side 2 <br><sub>measured</sub> | +41.8 (14) <br><sub>+33.2..+58.0</sub> | +54.0 (25) <br><sub>sd 5.2</sub> | **+12.2** |
+| Heavy Cav Archer vs Hussar | 12x Heavy Cav Archer | 21x Hussar | 1560 / 1680 | side 2 <br><sub>measured</sub> | +35.3 (5) <br><sub>+29.8..+44.1</sub> | +47.5 (25) <br><sub>sd 9.4</sub> | **+12.3** |
+| Elite Skirmisher vs Heavy Camel Rider | 21x Elite Skirmisher | 8x Heavy Camel Rider | 1260 / 1160 | side 2 <br><sub>measured</sub> | +39.8 (1) | +26.7 (25) <br><sub>sd 17.0</sub> | **-13.1** |
+| Heavy Cav Archer vs Halberdier | 9x Heavy Cav Archer | 21x Halberdier | 1170 / 1260 | side 2 <br><sub>measured</sub> | +18.0 (10) <br><sub>-6.8..+34.0</sub> | +31.2 (25) <br><sub>sd 15.8</sub> | **+13.2** |
+| Elite Skirmisher vs Champion | 21x Elite Skirmisher | 15x Champion | 1260 / 1200 | side 2 <br><sub>measured</sub> | +54.2 (4) <br><sub>+47.4..+60.8</sub> | +68.3 (25) <br><sub>sd 3.1</sub> | **+14.0** |
+| Heavy Cav Archer vs Elite Battle Elephant | 21x Heavy Cav Archer | 13x Elite Battle Elephant | 2730 / 2665 | side 2 <br><sub>measured</sub> | +74.4 (3) <br><sub>+71.7..+78.3</sub> | +88.5 (25) <br><sub>sd 1.1</sub> | **+14.1** |
+| Heavy Cav Archer vs Elite Steppe Lancer | 21x Heavy Cav Archer | 21x Elite Steppe Lancer | 2730 / 2730 | side 2 <br><sub>measured</sub> | +28.0 (10) <br><sub>+15.5..+38.1</sub> | +44.7 (25) <br><sub>sd 3.5</sub> | **+16.8** |
+| Arbalester vs Champion | 18x Arbalester | 21x Champion | 1665 / 1680 | side 2 <br><sub>measured</sub> | -81.8 (8) <br><sub>-84.7..-75.7</sub> | -64.7 (25) <br><sub>sd 11.5</sub> | **+17.0** |
+| Arbalester vs Hussar | 18x Arbalester | 21x Hussar | 1665 / 1680 | side 2 <br><sub>measured</sub> | +29.7 (5) <br><sub>+26.4..+35.2</sub> | +52.9 (25) <br><sub>sd 5.8</sub> | **+23.2** |
+| Heavy Cav Archer vs Elite Fire Lancer | 18x Heavy Cav Archer | 21x Elite Fire Lancer | 2340 / 2362 | side 2 <br><sub>measured</sub> | +31.9 (5) <br><sub>+24.7..+45.1</sub> | +6.3 (25) <br><sub>sd 22.3</sub> | **-25.6** |
+| Arbalester vs Elite Steppe Lancer | 21x Arbalester | 14x Elite Steppe Lancer | 1942 / 1820 | side 2 <br><sub>measured</sub> | +9.2 (10) <br><sub>-27.1..+24.0</sub> | +42.6 (25) <br><sub>sd 2.9</sub> | **+33.4** |
+| Hand Cannoneer vs Paladin | 21x Hand Cannoneer | 14x Paladin | 2520 / 2415 | side 2 <br><sub>constructed</sub> | +15.4 (10) <br><sub>-9.0..+32.1</sub> | +50.2 (25) <br><sub>sd 8.1</sub> | **+34.8** |
+| Hand Cannoneer vs Heavy Camel Rider | 21x Hand Cannoneer | 17x Heavy Camel Rider | 2520 / 2465 | side 2 <br><sub>constructed</sub> | -67.5 (6) <br><sub>-73.6..-61.3</sub> | -19.4 (25) <br><sub>sd 22.4</sub> | **+48.2** |
+| Hand Cannoneer vs Elite Steppe Lancer | 21x Hand Cannoneer | 19x Elite Steppe Lancer | 2520 / 2470 | side 2 <br><sub>constructed</sub> | +8.0 (1) | +62.2 (25) <br><sub>sd 2.5</sub> | **+54.2** |
+| Hand Cannoneer vs Hussar | 14x Hand Cannoneer | 21x Hussar | 1680 / 1680 | side 2 <br><sub>constructed</sub> | +5.6 (6) <br><sub>-18.8..+17.9</sub> | +62.6 (25) <br><sub>sd 5.9</sub> | **+57.0** |
+| Heavy Cav Archer vs Champion | 12x Heavy Cav Archer | 21x Champion | 1560 / 1680 | side 2 <br><sub>measured</sub> | -36.5 (14) <br><sub>-68.9..+8.8</sub> | +24.5 (25) <br><sub>sd 16.1</sub> | **+60.9** ! |
+| Hand Cannoneer vs Elite Battle Elephant | 21x Hand Cannoneer | 12x Elite Battle Elephant | 2520 / 2460 | side 2 <br><sub>constructed</sub> | +2.4 (5) <br><sub>-38.3..+32.3</sub> | +71.1 (25) <br><sub>sd 4.4</sub> | **+68.8** |
 
 ## Native waves (melee/siege vs melee) — 48 matchups
 
@@ -157,57 +164,56 @@ them natively and the deltas there measure a missing feature, not a wrong one.
 
 | matchup | side 2 buys | side 3 buys | weighted spend<br><sub>side 2 / side 3</sub> | tape mean (n) | sim mean (n) | delta |
 |---|---|---|---:|---:|---:|---:|
-| Elite Skirmisher vs Hand Cannoneer | 21x Elite Skirmisher | 10x Hand Cannoneer | 1260 / 1200 | -76.7 (1) | -76.2 (25) <br><sub>sd 3.0</sub> | **+0.5** |
-| Elite Skirmisher vs Arbalester | 21x Elite Skirmisher | 13x Arbalester | 1260 / 1202 | -73.3 (1) | -74.0 (25) <br><sub>sd 1.5</sub> | **-0.7** |
-| Arbalester vs Elite Skirmisher | 13x Arbalester | 21x Elite Skirmisher | 1202 / 1260 | +76.5 (1) | +77.8 (25) <br><sub>sd 2.0</sub> | **+1.3** |
-| Arbalester vs Hand Cannoneer | 21x Arbalester | 16x Hand Cannoneer | 1942 / 1920 | -59.8 (1) | -62.0 (25) <br><sub>sd 2.8</sub> | **-2.2** |
-| Elite Skirmisher vs Heavy Cav Archer | 21x Elite Skirmisher | 9x Heavy Cav Archer | 1260 / 1170 | -77.5 (2) <br><sub>-77.6..-77.4</sub> | -80.4 (25) <br><sub>sd 0.7</sub> | **-2.9** |
-| Arbalester vs Siege Onager | 21x Arbalester | 5x Siege Onager | 1942 / 1812 | +22.3 (1) | +17.0 (25) <br><sub>sd 6.8</sub> | **-5.3** |
-| Heavy Cav Archer vs Siege Onager | 21x Heavy Cav Archer | 7x Siege Onager | 2730 / 2538 | +57.3 (1) | +51.9 (25) <br><sub>sd 5.8</sub> | **-5.4** |
-| Hand Cannoneer vs Heavy Cav Archer | 21x Hand Cannoneer | 19x Heavy Cav Archer | 2520 / 2470 | +56.7 (4) <br><sub>+51.8..+66.1</sub> | +48.1 (25) <br><sub>sd 3.1</sub> | **-8.6** |
-| Heavy Scorpion vs Arbalester | 10x Heavy Scorpion | 21x Arbalester | 1875 / 1942 | +16.1 (4) <br><sub>+6.6..+25.0</sub> | +25.5 (25) <br><sub>sd 2.6</sub> | **+9.4** |
-| Heavy Cav Archer vs Heavy Scorpion | 21x Heavy Cav Archer | 14x Heavy Scorpion | 2730 / 2625 | -12.0 (5) <br><sub>-23.4..+25.7</sub> | -2.4 (25) <br><sub>sd 11.0</sub> | **+9.6** |
-| Heavy Scorpion vs Heavy Cav Archer | 14x Heavy Scorpion | 21x Heavy Cav Archer | 2625 / 2730 | +30.5 (4) <br><sub>+26.0..+35.0</sub> | +40.2 (25) <br><sub>sd 2.0</sub> | **+9.7** |
-| Heavy Cav Archer vs Hand Cannoneer | 19x Heavy Cav Archer | 21x Hand Cannoneer | 2470 / 2520 | -32.2 (1) | -43.2 (25) <br><sub>sd 3.6</sub> | **-11.0** |
-| Hand Cannoneer vs Heavy Scorpion | 21x Hand Cannoneer | 13x Heavy Scorpion | 2520 / 2438 | +44.7 (5) <br><sub>+37.3..+52.7</sub> | +33.4 (25) <br><sub>sd 9.8</sub> | **-11.3** |
-| Hand Cannoneer vs Arbalester | 16x Hand Cannoneer | 21x Arbalester | 1920 / 1942 | +47.2 (1) | +62.5 (25) <br><sub>sd 2.9</sub> | **+15.3** |
-| Hand Cannoneer vs Siege Onager | 21x Hand Cannoneer | 6x Siege Onager | 2520 / 2175 | +30.1 (2) <br><sub>+29.0..+31.2</sub> | +5.9 (25) <br><sub>sd 20.8</sub> | **-24.2** |
-| Arbalester vs Heavy Scorpion | 21x Arbalester | 10x Heavy Scorpion | 1942 / 1875 | +44.4 (2) <br><sub>+38.0..+50.7</sub> | +19.3 (25) <br><sub>sd 5.6</sub> | **-25.0** |
-| Heavy Cav Archer vs Arbalester | 14x Heavy Cav Archer | 21x Arbalester | 1820 / 1942 | +26.0 (4) <br><sub>+15.7..+33.3</sub> | -0.8 (25) <br><sub>sd 15.1</sub> | **-26.9** ! |
+| Elite Skirmisher vs Arbalester | 21x Elite Skirmisher | 13x Arbalester | 1260 / 1202 | -73.3 (1) | -73.7 (25) <br><sub>sd 1.5</sub> | **-0.4** |
+| Elite Skirmisher vs Hand Cannoneer | 21x Elite Skirmisher | 10x Hand Cannoneer | 1260 / 1200 | -76.7 (1) | -76.3 (25) <br><sub>sd 3.0</sub> | **+0.4** |
+| Arbalester vs Elite Skirmisher | 13x Arbalester | 21x Elite Skirmisher | 1202 / 1260 | +76.5 (1) | +77.7 (25) <br><sub>sd 2.0</sub> | **+1.2** |
+| Arbalester vs Hand Cannoneer | 21x Arbalester | 16x Hand Cannoneer | 1942 / 1920 | -59.8 (1) | -61.5 (25) <br><sub>sd 3.0</sub> | **-1.7** |
+| Elite Skirmisher vs Heavy Cav Archer | 21x Elite Skirmisher | 9x Heavy Cav Archer | 1260 / 1170 | -77.5 (2) <br><sub>-77.6..-77.4</sub> | -80.3 (25) <br><sub>sd 0.9</sub> | **-2.8** |
+| Heavy Cav Archer vs Siege Onager | 21x Heavy Cav Archer | 7x Siege Onager | 2730 / 2538 | +57.3 (1) | +54.1 (25) <br><sub>sd 5.0</sub> | **-3.2** |
+| Arbalester vs Siege Onager | 21x Arbalester | 5x Siege Onager | 1942 / 1812 | +22.3 (1) | +16.5 (25) <br><sub>sd 6.1</sub> | **-5.8** |
+| Hand Cannoneer vs Heavy Cav Archer | 21x Hand Cannoneer | 19x Heavy Cav Archer | 2520 / 2470 | +56.7 (4) <br><sub>+51.8..+66.1</sub> | +48.2 (25) <br><sub>sd 2.4</sub> | **-8.4** |
+| Heavy Scorpion vs Arbalester | 10x Heavy Scorpion | 21x Arbalester | 1875 / 1942 | +16.1 (4) <br><sub>+6.6..+25.0</sub> | +25.7 (25) <br><sub>sd 2.7</sub> | **+9.6** |
+| Heavy Scorpion vs Heavy Cav Archer | 14x Heavy Scorpion | 21x Heavy Cav Archer | 2625 / 2730 | +30.5 (4) <br><sub>+26.0..+35.0</sub> | +40.4 (25) <br><sub>sd 2.0</sub> | **+9.9** |
+| Heavy Cav Archer vs Hand Cannoneer | 19x Heavy Cav Archer | 21x Hand Cannoneer | 2470 / 2520 | -32.2 (1) | -43.3 (25) <br><sub>sd 2.9</sub> | **-11.1** |
+| Heavy Cav Archer vs Heavy Scorpion | 21x Heavy Cav Archer | 14x Heavy Scorpion | 2730 / 2625 | -12.0 (5) <br><sub>-23.4..+25.7</sub> | -0.7 (25) <br><sub>sd 8.9</sub> | **+11.3** |
+| Hand Cannoneer vs Heavy Scorpion | 21x Hand Cannoneer | 13x Heavy Scorpion | 2520 / 2438 | +44.7 (5) <br><sub>+37.3..+52.7</sub> | +32.8 (25) <br><sub>sd 11.3</sub> | **-11.9** |
+| Hand Cannoneer vs Arbalester | 16x Hand Cannoneer | 21x Arbalester | 1920 / 1942 | +47.2 (1) | +62.0 (25) <br><sub>sd 2.8</sub> | **+14.8** |
+| Hand Cannoneer vs Siege Onager | 21x Hand Cannoneer | 6x Siege Onager | 2520 / 2175 | +30.1 (2) <br><sub>+29.0..+31.2</sub> | +9.4 (25) <br><sub>sd 18.9</sub> | **-20.7** |
+| Arbalester vs Heavy Scorpion | 21x Arbalester | 10x Heavy Scorpion | 1942 / 1875 | +44.4 (2) <br><sub>+38.0..+50.7</sub> | +18.5 (25) <br><sub>sd 5.1</sub> | **-25.8** |
+| Heavy Cav Archer vs Arbalester | 14x Heavy Cav Archer | 21x Arbalester | 1820 / 1942 | +26.0 (4) <br><sub>+15.7..+33.3</sub> | -0.9 (25) <br><sub>sd 15.9</sub> | **-27.0** ! |
 | Heavy Scorpion vs Siege Onager | 16x Heavy Scorpion | 8x Siege Onager | 3000 / 2900 | +53.8 (1) | +22.5 (25) <br><sub>sd 3.8</sub> | **-31.3** |
-| Elite Skirmisher vs Heavy Scorpion | 21x Elite Skirmisher | 6x Heavy Scorpion | 1260 / 1125 | +69.8 (2) <br><sub>+68.9..+70.8</sub> | +32.0 (25) <br><sub>sd 4.9</sub> | **-37.9** |
-| Arbalester vs Heavy Cav Archer | 21x Arbalester | 14x Heavy Cav Archer | 1942 / 1820 | +19.7 (5) <br><sub>+11.8..+31.1</sub> | -24.8 (25) <br><sub>sd 5.3</sub> | **-44.5** ! |
-| Elite Skirmisher vs Siege Onager | 21x Elite Skirmisher | 3x Siege Onager | 1260 / 1088 | +78.3 (3) <br><sub>+77.6..+78.6</sub> | +19.7 (25) <br><sub>sd 1.5</sub> | **-58.6** |
+| Elite Skirmisher vs Heavy Scorpion | 21x Elite Skirmisher | 6x Heavy Scorpion | 1260 / 1125 | +69.8 (2) <br><sub>+68.9..+70.8</sub> | +31.6 (25) <br><sub>sd 4.6</sub> | **-38.2** |
+| Arbalester vs Heavy Cav Archer | 21x Arbalester | 14x Heavy Cav Archer | 1942 / 1820 | +19.7 (5) <br><sub>+11.8..+31.1</sub> | -24.0 (25) <br><sub>sd 4.4</sub> | **-43.7** ! |
+| Elite Skirmisher vs Siege Onager | 21x Elite Skirmisher | 3x Siege Onager | 1260 / 1088 | +78.3 (3) <br><sub>+77.6..+78.6</sub> | +19.5 (25) <br><sub>sd 1.5</sub> | **-58.8** |
 
 ## Winner disagreements
 
 | matchup | category | purchase | tape mean | sim mean | sim side-3 win rate | tape side-3 win rate |
 |---|---|---|---:|---:|---:|---:|
-| Heavy Cav Archer vs Champion | kite | 12v21 | -36.5 | +15.8 | 76% | 7% |
-| Arbalester vs Heavy Cav Archer | rvr* | 21v14 | +19.7 | -24.8 | 0% | 100% |
-| Elite Skirmisher vs Heavy Camel Rider | kite | 21v8 | +39.8 | -2.0 | 57% | 100% |
-| Heavy Cav Archer vs Arbalester | rvr* | 14v21 | +26.0 | -0.8 | 44% | 100% |
+| Heavy Cav Archer vs Champion | kite | 12v21 | -36.5 | +24.5 | 88% | 7% |
+| Arbalester vs Heavy Cav Archer | rvr* | 21v14 | +19.7 | -24.0 | 0% | 100% |
+| Heavy Cav Archer vs Arbalester | rvr* | 14v21 | +26.0 | -0.9 | 40% | 100% |
 | Paladin vs Champion | waves | 9v21 | -0.2 | +15.7 | 84% | 50% |
 
 ## Largest deltas with the winner correct
 
 | matchup | category | purchase | tape mean | sim mean | delta |
 |---|---|---|---:|---:|---:|
-| Hand Cannoneer vs Elite Battle Elephant | kite | 21v12 | +2.4 | +80.0 | +77.6 |
-| Elite Skirmisher vs Siege Onager | rvr* | 21v3 | +78.3 | +19.7 | -58.6 |
-| Hand Cannoneer vs Hussar | kite | 14v21 | +5.6 | +59.4 | +53.8 |
-| Hand Cannoneer vs Elite Steppe Lancer | kite | 21v19 | +8.0 | +61.3 | +53.3 |
+| Hand Cannoneer vs Elite Battle Elephant | kite | 21v12 | +2.4 | +71.1 | +68.8 |
+| Elite Skirmisher vs Siege Onager | rvr* | 21v3 | +78.3 | +19.5 | -58.8 |
+| Hand Cannoneer vs Hussar | kite | 14v21 | +5.6 | +62.6 | +57.0 |
+| Hand Cannoneer vs Elite Steppe Lancer | kite | 21v19 | +8.0 | +62.2 | +54.2 |
 | Siege Onager vs Elite Battle Elephant | waves | 7v14 | +14.7 | +67.7 | +53.0 |
+| Hand Cannoneer vs Heavy Camel Rider | kite | 21v17 | -67.5 | -19.4 | +48.2 |
 | Siege Onager vs Paladin | waves | 8v17 | +33.7 | +75.0 | +41.3 |
-| Elite Skirmisher vs Heavy Scorpion | rvr* | 21v6 | +69.8 | +32.0 | -37.9 |
-| Hand Cannoneer vs Paladin | kite | 21v14 | +15.4 | +53.2 | +37.8 |
-| Arbalester vs Elite Steppe Lancer | kite | 21v14 | +9.2 | +42.4 | +33.2 |
+| Elite Skirmisher vs Heavy Scorpion | rvr* | 21v6 | +69.8 | +31.6 | -38.2 |
+| Hand Cannoneer vs Paladin | kite | 21v14 | +15.4 | +50.2 | +34.8 |
+| Arbalester vs Elite Steppe Lancer | kite | 21v14 | +9.2 | +42.6 | +33.4 |
 | Heavy Scorpion vs Siege Onager | rvr* | 16v8 | +53.8 | +22.5 | -31.3 |
 | Siege Onager vs Halberdier | waves | 3v21 | +78.3 | +48.5 | -29.8 |
 | Siege Onager vs Elite Steppe Lancer | waves | 7v21 | +63.0 | +33.7 | -29.3 |
 | Champion vs Paladin | waves | 21v9 | -28.5 | -1.6 | +26.9 |
-| Arbalester vs Hussar | kite | 18v21 | +29.7 | +55.6 | +25.9 |
-| Siege Onager vs Champion | waves | 4v21 | +36.8 | +61.9 | +25.1 |
+| Arbalester vs Heavy Scorpion | rvr* | 21v10 | +44.4 | +18.5 | -25.8 |
 
 ## Per-unit bias
 
@@ -217,20 +223,20 @@ mixes its own model with its opponents', so read it as a pointer, not a verdict.
 
 | unit | matchups | mean bias | median bias |
 |---|---:|---:|---:|
-| Hussar | 13 | +14.1 | +9.9 |
-| Elite Battle Elephant | 15 | +10.1 | +4.3 |
-| Elite Skirmisher | 14 | +8.6 | +0.6 |
-| Champion | 15 | +7.4 | +7.2 |
-| Paladin | 16 | +7.0 | +3.1 |
+| Hussar | 13 | +13.7 | +9.9 |
+| Elite Battle Elephant | 15 | +9.6 | +4.3 |
+| Champion | 15 | +7.5 | +7.2 |
+| Elite Skirmisher | 14 | +7.3 | +0.8 |
+| Paladin | 16 | +6.8 | +3.1 |
 | Heavy Scorpion | 15 | +0.2 | +5.4 |
-| Elite Steppe Lancer | 14 | -0.4 | -5.2 |
-| Arbalester | 17 | -0.6 | -0.7 |
-| Halberdier | 13 | -2.8 | -2.5 |
-| Heavy Camel Rider | 13 | -4.7 | -3.3 |
-| Heavy Cav Archer | 16 | -5.1 | -5.8 |
-| Elite Fire Lancer | 13 | -5.7 | -6.7 |
-| Siege Onager | 13 | -12.3 | -19.1 |
-| Hand Cannoneer | 15 | -16.8 | -11.0 |
+| Elite Steppe Lancer | 14 | +0.2 | -5.2 |
+| Heavy Camel Rider | 13 | -0.0 | -1.0 |
+| Arbalester | 17 | -0.7 | -0.4 |
+| Halberdier | 13 | -3.9 | -3.4 |
+| Heavy Cav Archer | 16 | -6.1 | -5.6 |
+| Elite Fire Lancer | 13 | -6.2 | -6.7 |
+| Siege Onager | 13 | -11.9 | -19.1 |
+| Hand Cannoneer | 15 | -17.0 | -9.1 |
 
 ## What the residuals point at
 
@@ -251,9 +257,13 @@ mixes its own model with its opponents', so read it as a pointer, not a verdict.
    ranged-vs-ranged rows, which have no order script at all. Both need a siege
    tape column; today's blast model was measured against mangonel-class evidence
    only, and it fixed the winners without fixing the magnitudes.
-3. **Elite Skirmisher vs Heavy Camel Rider** remains the one matchup whose winner
-   is wrong for a known, measured reason (the kiter flow deficit) — see the
-   diagnosis recorded with the camel work; it is the open item.
+3. **Elite Skirmisher vs Heavy Camel Rider is now correct** (delta -13.1, camels
+   winning 22 of 25 sampled orders against the tape's +39.8). It was the corpus's
+   one measured-cause wrong winner until contact capture landed — a chaser that
+   touches a body in its path switches to it, read off the tapes' full-rate
+   action state; see `CONTACT_CAPTURE_2026-08-07.md`. The residual undershoot is
+   the skirmisher side still over-delivering (9.4 hp/s against the tape's 7.7),
+   which is the unlanded min-range suppression.
 4. **Heavy Cav Archer vs Champion** is calibrated separately in its own tape
    column and is left as-is here.
 5. **Paladin vs Champion** is a genuine knife's edge: the tape itself splits 50/50
@@ -262,18 +272,12 @@ mixes its own model with its opponents', so read it as a pointer, not a verdict.
 
 ## Runs that did not resolve
 
-A run is unresolved when neither side is wiped within the 9000-tick cap
-(600 s). Those runs are dropped from the mean rather than scored as a draw.
-
-| matchup | resolved | unresolved |
-|---|---:|---:|
-| Elite Skirmisher vs Heavy Camel Rider | 23 | 2 |
-| Heavy Cav Archer vs Paladin | 24 | 1 |
+None — every sampled run of every matchup ended with one side wiped out.
 
 ## Reproducing
 
 Per-matchup data, including all 25 raw sim samples and every tape repeat, is in
-[`data/standard_units_2026-08-06.json`](data/standard_units_2026-08-06.json).
+[`data/standard_units_2026-08-07.json`](data/standard_units_2026-08-07.json).
 
 The run is: derive counts and orders from the rules above -> build each roster
 from the recorded start positions -> 25 runs per matchup under

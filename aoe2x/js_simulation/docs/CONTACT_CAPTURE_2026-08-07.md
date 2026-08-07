@@ -65,12 +65,17 @@ used a 1-tile radius; capture needs actual box contact, a strictly smaller
 trigger, so both hold.
 
 **Scope:** engine-universal rule, enabled per scenario (`chaseCapture` in the
-truth fixture, carried like `kiteProfile`). ON where the sim's contact rate
-matches the tape's switch rate — svcam (47 vs 64), esc, esp, avp. OFF where
-the sim still manufactures contacts the tape's geometry prevents — kac (sim 45
-vs tape 9) and hcc (kiter at 1.4 outruns the chaser; tape contacts ≈ never) —
-pending the block-escape pathing work. Elephant / fire-lancer chase archives
-have not had their action decode measured yet: OFF until measured.
+truth fixture, carried like `kiteProfile`). Measured capture rates, sim against
+tape: svcam 47/64, esc 40/46, esp 25/43, avp 20/38, **kac 43/9**, hcc 22/17.
+
+ON for svcam, esc, esp, avp — the sim fires the rule at or below the tape's
+rate. OFF for kac, the one gross over-generator (4.8x), pending the
+block-escape pathing work. hcc is a **weaker** case for OFF than kac: its rate
+looks close, but only about half of its 17 tape switches sit in the contact
+band (p25 0.51, p75 6.27 — the rest are aiOrders), so it is held off until that
+subset is counted properly, not because the rate is wrong. Elephant /
+fire-lancer chase archives have not had their action decode measured yet: OFF
+until measured.
 
 ## Result
 
@@ -104,12 +109,21 @@ Tests unchanged at 131/157 (all 26 failures pre-exist).
 1. The margin undershoot is the suppression story: at tape exposure (22.9%)
    the measured min-range shooter suppression would take skirm output from
    9.42 to ~7.6. Exposure is down from 60.3% (HEAD) to 45.7% but not there.
-2. kac/hcc keep capture off only because our block still jams into chasers the
-   tape says it should outrun; fixing block escape (the `STEP=steer` line of
-   work) would let the flag come off.
-3. Re-run the standard-units sweep so the summary reflects the fix — the
-   svcam row of `STANDARD_UNITS_SUMMARY_2026-08-06.md` is stale as of this
-   change.
+2. kac keeps capture off because our block still jams into chasers the tape
+   says it should outrun; fixing block escape (the `STEP=steer` line of work)
+   would let the flag come off. hcc needs its contact-band switch subset
+   counted before its flag can be decided either way.
+3. ~~Re-run the standard-units sweep~~ — done, in
+   `STANDARD_UNITS_SUMMARY_2026-08-07.md`. Isolated against this commit's
+   parent by re-running the whole sweep there, contact capture moves exactly
+   one of the 101 matchups (svcam, -9.4 -> +26.7) and leaves the other 100
+   bit-identical; corpus winner agreement 96/101 -> 97/101, mean |delta|
+   14.95 -> 14.59.
+4. `arbalester_vs_paladin_kiting` is the one column the rule costs (3.06 ->
+   3.54, four of five ratios slightly worse). Its capture rate is the weakest
+   match of the flagged set (20 against 38), so it is the first to revisit — but
+   it stays ON because the tape signature is there, and switching it off on the
+   strength of the score would be fitting to the outcome.
 
 ## Reproducing
 

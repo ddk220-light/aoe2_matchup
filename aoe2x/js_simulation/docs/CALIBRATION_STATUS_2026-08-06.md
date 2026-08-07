@@ -163,14 +163,14 @@ The 28 matchups above are the *calibration* corpus — the tapes the engine
 was measured against. The standard-units archive is the held-out set: 339
 recorded fights, 101 distinct matchups, 14 units, none of it used to set a
 constant. Full results in
-[`STANDARD_UNITS_SUMMARY_2026-08-06.md`](STANDARD_UNITS_SUMMARY_2026-08-06.md)
+[`STANDARD_UNITS_SUMMARY_2026-08-07.md`](STANDARD_UNITS_SUMMARY_2026-08-07.md)
 (mean winner-HP% delta per matchup) and
 [`STANDARD_UNITS_GAP_REPORT_2026-08-06.md`](STANDARD_UNITS_GAP_REPORT_2026-08-06.md)
 (the earlier blind median-vs-band scoring). Headline: the purchase rule
 reproduces **122/122** starting rosters, the order taxonomy **119/122**
 command signatures, and the sim agrees with the tape on the winner in
-**96/101** matchups (**77/80** excluding the ranged-vs-ranged group, whose
-duel script is still undecoded), mean |delta| 14.7 / median 9.4.
+**97/101** matchups (**77/80** excluding the ranged-vs-ranged group, whose
+duel script is still undecoded), mean |delta| 14.6 / median 9.4.
 
 Two per-unit biases dominate the residual and are the obvious next tape
 requests: **Hand Cannoneer** (-33.5 in kite matchups, +2.3 in

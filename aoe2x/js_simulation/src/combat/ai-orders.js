@@ -301,7 +301,7 @@ const DEFAULT_KITE_PROFILE = Object.freeze({
 });
 
 
-export function createKiteState(kiteOwner, kiteProfile = null) {
+export function createKiteState(kiteOwner, kiteProfile = null, chaseCapture = false) {
   const profile = kiteProfile
     ? {
       beatTicks: kiteProfile.beatTicks,
@@ -314,6 +314,13 @@ export function createKiteState(kiteOwner, kiteProfile = null) {
   return {
     owner: kiteOwner,
     profile,
+    // Contact capture (see the block in world.updateEngagements) — a MEASURED
+    // per-scenario property, like the profile: the rule itself shows in every
+    // full-rate action decode, but it only stays truthful where the sim's
+    // contact rate matches the tape's switch rate. Recorded ON for the
+    // skirmisher and paladin chase archives; OFF where the sim still
+    // manufactures contacts the tape's geometry prevents (kac, hcc).
+    chaseCapture: chaseCapture === true,
     nextBeat: profile.firstBeatTick,
     lastBeatTick: null,
     meleeAssigned: false,

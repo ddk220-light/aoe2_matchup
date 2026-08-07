@@ -20,6 +20,7 @@ import {
 import { planLocalAvoidance } from "./local-avoidance.js";
 import { proposeMovement } from "./movement.js";
 import {
+  chebyshevGap,
   isWithinReach,
   selectEngagementTarget,
   selectPursuitTarget,
@@ -200,7 +201,13 @@ export function createWorld(scenario) {
     // the scenario names a kiting owner, so every other world keeps its
     // exact published shape.
     ...(Number.isSafeInteger(scenario.kiteOwner)
-      ? { kiteState: createKiteState(scenario.kiteOwner, scenario.kiteProfile ?? null) }
+      ? {
+        kiteState: createKiteState(
+          scenario.kiteOwner,
+          scenario.kiteProfile ?? null,
+          scenario.chaseCapture === true,
+        ),
+      }
       : {}),
     ...(anyCharge ? { projectiles: Object.freeze([]) } : {}),
     // Deterministic per-shot RNG, present only when a unit can miss or blast
@@ -673,6 +680,12 @@ function moveUnits(units, map, tick, events, kiteState = null) {
 // stays in reach, so reload-paced multi-hit catches still occur.
 const KITE_CHASE_DWELL_TICKS = Math.round(1.0 * TICKS_PER_SECOND);
 const KITE_DWELL_HOLD_RADIUS_TILES = 1.0;
+// Body contact for contact capture: collision-box touch plus a float
+// tolerance. The solver holds enemy pairs at exactly the summed half-extents
+// when they press, so anything within 0.02 of the box IS a touch, and the
+// recorded switch distances sit exactly on the contact band (see the capture
+// comment in updateEngagements). A tolerance, not a physical constant.
+const CONTACT_CAPTURE_EPSILON = 0.02;
 
 
 function updateEngagements(units, contacts, tick, events, blockedIds, kiteState = null) {
@@ -708,6 +721,72 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
     // damage frame, so release stays unconditional (commitReadyAttacks has no
     // distance check) — the discipline is entirely in the swing START.
     if (kiteOwner !== null && unit.owner !== kiteOwner) {
+      // CONTACT CAPTURE (measured on the full-rate action decode, five
+      // archives): a walking chaser that comes into BODY CONTACT with a live
+      // enemy switches its pursuit to that enemy, old target dead or alive.
+      // svcam camels: 64 alive-switches, distance to the NEW target at the
+      // switch p25 0.49 / p50 0.54 / p75 0.59 — exactly the collision-contact
+      // band (Chebyshev 0.45 spans Euclidean 0.45-0.64) — at full walking
+      // speed (11% stopped), not under attack (1/64), no recent hp loss
+      // (13/64). Same signature: esc champions (46, p50 0.50), avp paladins
+      // (38, p50 0.58), esp paladins (43, p50 0.54), avst steppe (6, p50
+      // 0.51). kac champions show only 9 alive-switches, 7/9 under attack at
+      // p50 1.68 — those are the sparse mid-fight AI orders, and the rule
+      // correctly almost never fires there because kac chasers rarely touch a
+      // non-target body. This is what keeps chasers at the formation's EDGE:
+      // the first body a chaser touches captures it, so it fights the
+      // surface instead of wading in (tape victim rank r1 = 71-79%).
+      //
+      // The 64%-no-swing adjacency measurement that built the sticky
+      // discipline used a 1-tile adjacency radius; contact capture needs
+      // actual box contact, a strictly smaller trigger, so both hold.
+      // The capture is FRONTAL: at the recorded switches the new target sits
+      // in the chaser's direction of motion (cos p50 +0.76..+0.91; cos > 0 in
+      // 81-92% across svcam/esc/avp/esp). A body pressed against the flank in
+      // a chasing scrum does not capture — which is why kac, whose champions
+      // touch arbs almost only laterally, records just 9 alive-switches. The
+      // front is taken as the direction toward the current pursuit target
+      // (what a walking chaser's motion approximates), so a unit with no
+      // pursuit yet cannot be captured.
+      // Capture is an EVENT, not a per-tick state: it fires while the chaser
+      // is still WALKING toward a target beyond its reach (the recorded old
+      // target sits p25 0.88 / p50 1.12 away at the switch), and once it
+      // fires the new pursuit target is the body in contact, so the rule goes
+      // quiet until the chaser is walking at something distant again. Without
+      // the beyond-reach condition a chaser pressed against two bodies
+      // ping-pongs between them every tick and its dwell never completes.
+      const capturePursued = unit.pursuitTargetId === null || unit.pursuitTargetId === undefined
+        ? null
+        : snapshot.find(({ referenceId }) => referenceId === unit.pursuitTargetId);
+      if (kiteState.chaseCapture === true
+        && unit.action !== "attacking" && unit.engagedTargetId === null
+        && capturePursued && capturePursued.alive
+        && !isWithinReach(unit, capturePursued)) {
+        const frontX = capturePursued.x - unit.x;
+        const frontY = capturePursued.y - unit.y;
+        let touched = null;
+        let touchedGap = Infinity;
+        for (const candidate of snapshot) {
+          if (!candidate.alive || candidate.owner === unit.owner) continue;
+          if (candidate.referenceId === unit.pursuitTargetId) continue;
+          if (chebyshevGap(unit, candidate) > CONTACT_CAPTURE_EPSILON) continue;
+          const towardX = candidate.x - unit.x;
+          const towardY = candidate.y - unit.y;
+          if (frontX * towardX + frontY * towardY <= 0) continue;
+          const euclid = Math.hypot(towardX, towardY);
+          if (euclid < touchedGap - 1e-12
+            || (euclid < touchedGap + 1e-12
+              && (touched === null || candidate.referenceId < touched.referenceId))) {
+            touched = candidate;
+            touchedGap = euclid;
+          }
+        }
+        if (touched) {
+          unit.pursuitTargetId = touched.referenceId;
+          unit.avoidance = null;
+          events.push(event(tick, "contact-capture", unit.referenceId, touched.referenceId));
+        }
+      }
       const pursued = unit.pursuitTargetId === null || unit.pursuitTargetId === undefined
         ? null
         : snapshot.find(({ referenceId }) => referenceId === unit.pursuitTargetId);

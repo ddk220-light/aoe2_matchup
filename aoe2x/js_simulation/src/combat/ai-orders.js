@@ -398,9 +398,11 @@ function kiteAttackBeat(state, kiters, enemies, tick, events, makeEvent) {
   // windup start (4.0% of launches begin with an enemy inside 1.0 vs 18.2% of
   // the alive population) with the arbalester column, min_range 0.0, as a
   // control that shows no depletion at all. Implementing it costs esc dearly
-  // (band error 2.5 -> 13.5) because our formation packs tighter than the
-  // tape's, so the same chaser suppresses more of our shooters -- the slot
-  // geometry has to come first. See docs/KITER_FLOW_2026-08-06.md.
+  // (band error 2.5 -> 13.5) because the rule's cost scales with how long a
+  // chaser sits inside min_range of our shooters, and ours sit there 57.3% of
+  // shooter-frames against the tape's 22.9%: blocked chasers grind at partial
+  // speed instead of routing around, so the block engulfs them. Chaser
+  // mobility has to come first. See docs/CAMEL_CHASER_GEOMETRY_2026-08-06.md.
   const roster = [...kiters].sort((a, b) => a.referenceId - b.referenceId);
   const own = centroid(roster);
   // Assignment order: carried targets (previous beat's order) first, then

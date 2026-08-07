@@ -105,13 +105,19 @@ launch distribution equals its population distribution at every cutoff.
 
 Implemented directly, this lands the camel fight's winner — camels win **25/25**
 — but overshoots the margin (+75.8 vs +39.8) and costs
-`eliteskirm_vs_champion_kiting` its convergence (2.54 → **13.50**). The reason
-is geometric: our block packs tighter than the tape's (nearest-neighbour p50
-0.28 against the tape's 0.37), so a single chaser suppresses more of our
-shooters than it does in the game. The suppression rule is right; it cannot land
-until the formation's slot geometry matches. That is the next step, and it is a
-measurement, not a tuning knob: the tape's settled block is 2.01 × 2.23 tiles
-for 21 units with nearest-neighbour spacing p50 0.371.
+`eliteskirm_vs_champion_kiting` its convergence (2.54 → **13.50**).
+
+> **SUPERSEDED — see `CAMEL_CHASER_GEOMETRY_2026-08-06.md`.** This section
+> originally blamed the formation's slot spacing (sim NN p50 0.28 vs a tape
+> 0.37) and named "calibrate the slot geometry to 2.01 × 2.23 tiles for 21
+> units" as the next step. That comparison was mismatched — tape settled frames
+> against whole-fight sim frames. Measured the same way on both sides the slot
+> geometry is close (tape NN p50 0.296, sim 0.238) and is not what decides this
+> fight. The real cause is chaser mobility: our blocked units grind along bodies
+> at partial speed (25.2% of frames against the tape's 0.6%), get engulfed by
+> the block, and eat point-blank fire from 3.36 shooters each against the tape's
+> 0.69. Suppression's cost scales with exactly that exposure, which is why it
+> overshot by ~2.5×.
 
 ## Reproducing
 

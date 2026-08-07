@@ -19,12 +19,44 @@
 //       movement differed from the proposal) -- a physics trigger, not a
 //       tuned constant.
 
+//   AOE2X_EXP_AVOID = "all"
+//       Local avoidance routes around EVERY live body, not only allies. The
+//       tapes show chasers keeping full speed around the enemy formation
+//       (camel speed is bimodal: 46.1% stopped, 52.9% at the dat 1.595, 0.6%
+//       in between), which an ally-only constraint set cannot produce.
+//
+//   AOE2X_EXP_STEP = "bimodal" | "steer"
+//       "bimodal": a step the collision solver had to shorten becomes no step
+//       at all. Genie units never grind along a body -- see the histogram
+//       above and docs/CAMEL_CHASER_GEOMETRY_2026-08-06.md.
+//       "steer": the same, plus a blocked unit first looks for a clear
+//       full-speed heading near the one it wanted, so it walks AROUND the
+//       body instead of stopping dead in front of it. Cancelling without
+//       steering strands the kite formation (duty cycle 0.18 against the
+//       tape's 0.79).
+
 const engagement = process.env.AOE2X_EXP_ENGAGEMENT ?? "";
 const pursuit = process.env.AOE2X_EXP_PURSUIT ?? "";
 const orders = process.env.AOE2X_EXP_ORDERS ?? "";
+const avoid = process.env.AOE2X_EXP_AVOID ?? "";
+const step = process.env.AOE2X_EXP_STEP ?? "";
+// AOE2X_EXP_MINRANGE=shooter -- minimum range holds the SHOOTER, not just the
+// one target it aimed at: a kiter with any enemy inside min_range is not given
+// a shot this beat. Measured on the camel tape (439 named shooters, 233 arrows
+// away, 225 of them hits; firers' nearest chaser p50 2.2 tiles against holders'
+// 1.0) with the min_range-0 arbalester column as a null control.
+const minRange = process.env.AOE2X_EXP_MINRANGE ?? "";
+// AOE2X_EXP_KITE_ENGAGE=blocker -- a kited-world chaser that is physically
+// blocked engages whatever enemy is stopping it, instead of holding out for
+// its sticky pursuit target.
+const kiteEngage = process.env.AOE2X_EXP_KITE_ENGAGE ?? "";
 
 const VALID_ENGAGEMENT = new Set(["", "pursuit"]);
 const VALID_PURSUIT = new Set(["", "tick", "blocked", "swing", "blocked+swing"]);
+const VALID_AVOID = new Set(["", "all"]);
+const VALID_STEP = new Set(["", "bimodal", "steer"]);
+const VALID_MIN_RANGE = new Set(["", "shooter"]);
+const VALID_KITE_ENGAGE = new Set(["", "blocker"]);
 
 if (!VALID_ENGAGEMENT.has(engagement)) {
   throw new RangeError(`AOE2X_EXP_ENGAGEMENT must be one of "", "pursuit"`);
@@ -34,6 +66,18 @@ if (!VALID_PURSUIT.has(pursuit)) {
     `AOE2X_EXP_PURSUIT must be one of "", "tick", "blocked", "swing", "blocked+swing"`,
   );
 }
+if (!VALID_AVOID.has(avoid)) {
+  throw new RangeError(`AOE2X_EXP_AVOID must be one of "", "all"`);
+}
+if (!VALID_STEP.has(step)) {
+  throw new RangeError(`AOE2X_EXP_STEP must be one of "", "bimodal", "steer"`);
+}
+if (!VALID_MIN_RANGE.has(minRange)) {
+  throw new RangeError(`AOE2X_EXP_MINRANGE must be one of "", "shooter"`);
+}
+if (!VALID_KITE_ENGAGE.has(kiteEngage)) {
+  throw new RangeError(`AOE2X_EXP_KITE_ENGAGE must be one of "", "blocker"`);
+}
 
 export const ENGAGEMENT_FOLLOWS_PURSUIT = engagement === "pursuit";
 export const REEVALUATE_EVERY_TICK = pursuit === "tick";
@@ -41,7 +85,14 @@ export const REEVALUATE_ON_BLOCKED = pursuit === "blocked" || pursuit === "block
 export const REEVALUATE_ON_SWING = pursuit === "swing" || pursuit === "blocked+swing";
 // AOE2X_EXP_ORDERS=1 enables the AI-player order layer (src/combat/ai-orders.js).
 // It counts as an experiment so the blocked flag gets stamped for idle rescue.
-export const ANY_EXPERIMENT = Boolean(engagement || pursuit || orders === "1");
+export const AVOID_ALL_BODIES = avoid === "all";
+export const BIMODAL_STEP = step === "bimodal" || step === "steer";
+export const STEER_AROUND_BODIES = step === "steer";
+export const MIN_RANGE_SUPPRESSES_SHOOTER = minRange === "shooter";
+export const KITE_ENGAGE_BLOCKER = kiteEngage === "blocker";
+export const ANY_EXPERIMENT = Boolean(
+  engagement || pursuit || orders === "1" || avoid || step || minRange || kiteEngage,
+);
 
 
 // True when this unit should drop a still-living pursuit target this tick.

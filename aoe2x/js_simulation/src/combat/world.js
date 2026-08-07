@@ -11,7 +11,10 @@ import {
 } from "./ai-orders.js";
 import {
   ANY_EXPERIMENT,
+  BIMODAL_STEP,
   ENGAGEMENT_FOLLOWS_PURSUIT,
+  KITE_ENGAGE_BLOCKER,
+  STEER_AROUND_BODIES,
   shouldReevaluatePursuit,
 } from "./experiments.js";
 import { planLocalAvoidance } from "./local-avoidance.js";
@@ -41,7 +44,7 @@ import {
   reloadTicks,
   trampleSpec,
 } from "./attacks.js";
-import { collisionRadius } from "./targeting.js";
+import { allyCollisionRadius, collisionRadius } from "./targeting.js";
 
 
 const DEFAULT_MAP = Object.freeze({
@@ -385,6 +388,133 @@ function minRangeRetreat(unit, live) {
 const KITE_CHASE_REPATH_TICKS = Math.round(0.5 * TICKS_PER_SECOND);
 
 
+// Genie movement is bimodal: a unit walks at its full dat speed or it stands
+// still. Across the kiting tapes the heavy camel's per-frame speed is 46.1% at
+// zero, 52.9% between 1.50 and 1.70 against a dat 1.595, and 0.6% anywhere in
+// between -- there is no population that grinds along a body. The constraint
+// solver manufactures one, because it resolves a blocked step by removing only
+// its inward component and letting the remainder slide.
+//
+// A step the solver had to shorten is therefore taken as no step at all. It
+// cannot be cancelled after the fact -- the solve is simultaneous, so a
+// neighbour may have moved into the space this unit was going to vacate -- so
+// the cancelled units are fed back in as stationary and the whole tick is
+// re-solved until the set stops growing. Each pass only ever adds to that set,
+// so it terminates, and the final pass is a normal solve with every invariant
+// intact. See docs/CAMEL_CHASER_GEOMETRY_2026-08-06.md.
+const MAX_BIMODAL_PASSES = 8;
+// Floating-point tolerances only; no physical value is adjusted.
+const STEP_EPSILON = 1e-9;
+const ZERO_STEP_EPSILON = 1e-12;
+
+// A blocked unit does not stop dead in front of the body: it walks around it,
+// at full speed. Cancelling without this strands the kite formation the moment
+// a chaser stands in its lane (duty cycle 0.18 against the tape's 0.79), and
+// the tape shows no such stranding.
+//
+// The search is a discretization, not a physical constant: rotate the wanted
+// heading in fixed increments and take the smallest turn whose full-speed step
+// is clear, preferring the left-hand turn on a tie so the result stays
+// deterministic. A unit that cannot clear its own body width within a quarter
+// turn is genuinely walled in and stands, which is the tape's other mode.
+const STEER_INCREMENT_RADIANS = Math.PI / 12;
+const STEER_MAX_TURNS = 6;
+
+
+function stepClearsBodies(mover, dx, dy, live, proposalByReference, bounds) {
+  const x = mover.x + dx;
+  const y = mover.y + dy;
+  const radius = collisionRadius(mover);
+  if (x < radius - STEP_EPSILON || x > bounds.width - radius + STEP_EPSILON
+    || y < radius - STEP_EPSILON || y > bounds.height - radius + STEP_EPSILON) return false;
+  const moverProposal = proposalByReference.get(mover.referenceId);
+  const moverMoving = moverProposal !== undefined
+    && (moverProposal.dx !== 0 || moverProposal.dy !== 0);
+  for (const other of live) {
+    if (other.referenceId === mover.referenceId) continue;
+    const allied = other.owner === mover.owner;
+    // Same three rules the constraint solver applies (see collision.js):
+    // formation-mates ignore each other, a moving unit shrinks against a
+    // friendly, enemies always hold the full box.
+    if (allied && mover.moveOrder && other.moveOrder) continue;
+    const otherProposal = proposalByReference.get(other.referenceId);
+    const otherMoving = otherProposal !== undefined
+      && (otherProposal.dx !== 0 || otherProposal.dy !== 0);
+    const extent = allied
+      ? (moverMoving ? allyCollisionRadius(mover) : radius)
+        + (otherMoving ? allyCollisionRadius(other) : collisionRadius(other))
+      : radius + collisionRadius(other);
+    if (Math.max(Math.abs(x - other.x), Math.abs(y - other.y)) < extent - STEP_EPSILON) {
+      return false;
+    }
+  }
+  return true;
+}
+
+
+function steerProposals(planned, map) {
+  if (!STEER_AROUND_BODIES) return planned.proposals;
+  const bounds = { width: map.width, height: map.height };
+  const byReference = new Map(planned.units.map((unit) => [unit.referenceId, unit]));
+  const proposalByReference = new Map(
+    planned.proposals.map((proposal) => [proposal.referenceId, proposal]),
+  );
+  return planned.proposals.map((proposal) => {
+    const distance = Math.hypot(proposal.dx, proposal.dy);
+    if (distance <= ZERO_STEP_EPSILON) return proposal;
+    const mover = byReference.get(proposal.referenceId);
+    if (!mover) return proposal;
+    if (stepClearsBodies(mover, proposal.dx, proposal.dy, planned.units,
+      proposalByReference, bounds)) return proposal;
+    const heading = Math.atan2(proposal.dy, proposal.dx);
+    for (let turn = 1; turn <= STEER_MAX_TURNS; turn += 1) {
+      for (const side of [1, -1]) {
+        const angle = heading + side * turn * STEER_INCREMENT_RADIANS;
+        const dx = Math.cos(angle) * distance;
+        const dy = Math.sin(angle) * distance;
+        if (stepClearsBodies(mover, dx, dy, planned.units, proposalByReference, bounds)) {
+          return Object.freeze({ referenceId: proposal.referenceId, dx, dy });
+        }
+      }
+    }
+    return Object.freeze({ referenceId: proposal.referenceId, dx: 0, dy: 0 });
+  });
+}
+
+
+function resolveMovement(planned, byReference, map) {
+  const wantedProposals = steerProposals(planned, map);
+  let moved = resolveMovementProposals(planned.units, wantedProposals, map);
+  if (!BIMODAL_STEP) return moved;
+  const held = new Set();
+  for (let pass = 0; pass < MAX_BIMODAL_PASSES; pass += 1) {
+    const movedByReference = new Map(moved.map((unit) => [unit.referenceId, unit]));
+    let grew = false;
+    for (const proposal of wantedProposals) {
+      if (held.has(proposal.referenceId)) continue;
+      const wanted = Math.hypot(proposal.dx, proposal.dy);
+      if (wanted <= ZERO_STEP_EPSILON) continue;
+      const before = byReference.get(proposal.referenceId);
+      const after = movedByReference.get(proposal.referenceId);
+      if (!before || !after) continue;
+      if (Math.hypot(after.x - before.x, after.y - before.y) < wanted - STEP_EPSILON) {
+        held.add(proposal.referenceId);
+        grew = true;
+      }
+    }
+    if (!grew) return moved;
+    moved = resolveMovementProposals(
+      planned.units,
+      wantedProposals.map((proposal) => (held.has(proposal.referenceId)
+        ? Object.freeze({ referenceId: proposal.referenceId, dx: 0, dy: 0 })
+        : proposal)),
+      map,
+    );
+  }
+  return moved;
+}
+
+
 function moveUnits(units, map, tick, events, kiteState = null) {
   const live = units.filter(({ alive }) => alive).map(freezeUnit);
   const byReference = new Map(live.map((unit) => [unit.referenceId, unit]));
@@ -446,7 +576,7 @@ function moveUnits(units, map, tick, events, kiteState = null) {
       : Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
   });
   const planned = planLocalAvoidance(live, proposals, map);
-  const moved = resolveMovementProposals(planned.units, planned.proposals, map);
+  const moved = resolveMovement(planned, byReference, map);
   const movedByReference = new Map(moved.map((unit) => [unit.referenceId, unit]));
   const proposalByReference = new Map(proposals.map((proposal) => [proposal.referenceId, proposal]));
   const moveEvents = [];
@@ -485,6 +615,28 @@ function moveUnits(units, map, tick, events, kiteState = null) {
     if (ANY_EXPERIMENT) {
       unit.experimentBlocked = isBlocked
         && (proposal.dx !== 0 || proposal.dy !== 0);
+      // Which body stopped it, if any: the enemy the unconstrained step would
+      // have walked into. An ally block is a different situation entirely --
+      // the unit is queued behind its own side, not stopped by the enemy in
+      // front of it -- and conflating the two is what made the first version
+      // of KITE_ENGAGE=blocker fire all over the kac corpus.
+      unit.experimentBlockedByEnemyId = null;
+      if (unit.experimentBlocked) {
+        let nearest = null;
+        let nearestGap = Infinity;
+        const wantX = before.x + proposal.dx;
+        const wantY = before.y + proposal.dy;
+        for (const other of live) {
+          if (other.owner === unit.owner || other.referenceId === unit.referenceId) continue;
+          const extent = collisionRadius(before) + collisionRadius(other);
+          const gap = Math.max(Math.abs(wantX - other.x), Math.abs(wantY - other.y));
+          if (gap < extent - STEP_EPSILON && gap < nearestGap) {
+            nearest = other.referenceId;
+            nearestGap = gap;
+          }
+        }
+        unit.experimentBlockedByEnemyId = nearest;
+      }
     }
     if (isBlocked) {
       if (proposal.dx !== 0 || proposal.dy !== 0) {
@@ -597,11 +749,27 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
       } else {
         kiteState.reachDwell.delete(unit.referenceId);
       }
-      const nextTargetId = inReach
+      let nextTargetId = inReach
         && (carried + 1 >= (reachFighter ? 1 : KITE_CHASE_DWELL_TICKS)
           || previousTargetId === pursued.referenceId)
         ? pursued.referenceId
         : null;
+      // A chaser that is physically BLOCKED cannot brush past anything -- it is
+      // stopped against a body. The measured discipline (64% of sustained
+      // adjacency windows with other enemies produce no swing) is about units
+      // walking THROUGH a formation, and a blocked unit is not walking. Under
+      // AOE2X_EXP_KITE_ENGAGE=blocker it fights whatever is stopping it, which
+      // is what would hold a chaser at the formation's edge instead of letting
+      // it wade into the middle.
+      if (nextTargetId === null && KITE_ENGAGE_BLOCKER
+        && unit.experimentBlockedByEnemyId !== null
+        && unit.experimentBlockedByEnemyId !== undefined) {
+        const blocker = snapshot.find(({ referenceId }) => (
+          referenceId === unit.experimentBlockedByEnemyId));
+        if (blocker && blocker.alive && isWithinReach(unit, blocker)) {
+          nextTargetId = blocker.referenceId;
+        }
+      }
       if (nextTargetId === previousTargetId) continue;
       if (previousTargetId !== null && previousTargetId !== undefined) {
         events.push(event(tick, "engagement-ended", unit.referenceId, previousTargetId, {

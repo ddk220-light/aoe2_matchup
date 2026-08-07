@@ -1,4 +1,5 @@
 import { TICKS_PER_SECOND } from "../simulation-clock.js";
+import { AVOID_ALL_BODIES } from "./experiments.js";
 import { collisionRadius } from "./targeting.js";
 
 
@@ -470,7 +471,13 @@ function constraintsFor(mover, target, units, map) {
       unit.alive !== false
       && unit.referenceId !== mover.referenceId
       && unit.referenceId !== target.referenceId
-      && unit.owner === mover.owner
+      // Enemy bodies obstruct exactly as ally bodies do -- 99.76% of
+      // camel-to-skirmisher pairs across the kiting tapes hold the full
+      // 0.45 Chebyshev separation -- so a chaser has to route around the
+      // formation standing between it and its target. Ally-only routing
+      // leaves it walking into the block and grinding along bodies at
+      // partial speed, which no tape shows. See AOE2X_EXP_AVOID.
+      && (AVOID_ALL_BODIES || unit.owner === mover.owner)
     ))
     .map((unit) => ({
       kind: "unit",

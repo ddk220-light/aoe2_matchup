@@ -27,6 +27,7 @@
 
 import { TICKS_PER_SECOND } from "../simulation-clock.js";
 import { calculateDamage } from "./attacks.js";
+import { MIN_RANGE_SUPPRESSES_SHOOTER } from "./experiments.js";
 import { isWithinReach } from "./targeting.js";
 
 export const ORDERS_ENABLED = process.env.AOE2X_EXP_ORDERS === "1";
@@ -403,7 +404,15 @@ function kiteAttackBeat(state, kiters, enemies, tick, events, makeEvent) {
   // shooter-frames against the tape's 22.9%: blocked chasers grind at partial
   // speed instead of routing around, so the block engulfs them. Chaser
   // mobility has to come first. See docs/CAMEL_CHASER_GEOMETRY_2026-08-06.md.
-  const roster = [...kiters].sort((a, b) => a.referenceId - b.referenceId);
+  const shooters = MIN_RANGE_SUPPRESSES_SHOOTER
+    ? kiters.filter((unit) => {
+      const range = unit.mechanics?.ranged?.min_range_tiles ?? 0;
+      if (!(range > 0)) return true;
+      return !enemies.some((enemy) => Math.hypot(enemy.x - unit.x, enemy.y - unit.y) < range);
+    })
+    : kiters;
+  const roster = [...shooters].sort((a, b) => a.referenceId - b.referenceId);
+  if (roster.length === 0) return;
   const own = centroid(roster);
   // Assignment order: carried targets (previous beat's order) first, then
   // fresh targets nearest the group centroid.

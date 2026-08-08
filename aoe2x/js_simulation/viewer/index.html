@@ -124,11 +124,12 @@
             <b id="ledgerNumber">SIM–01</b>
           </div>
 
+          <!-- No tape tiles: a freely selected fight has no recorded
+               counterpart to compare against, so tapeReference was dropped from
+               the payload and the two permanently-blank tiles went with it. -->
           <section class="result-strip" aria-label="Simulation outcome">
             <div><small>Sim winner</small><strong id="simWinner">—</strong></div>
             <div><small>Winner HP</small><strong id="simWinnerHp">—</strong></div>
-            <div><small>Tape winner</small><strong id="tapeWinner">—</strong></div>
-            <div><small>Tape HP</small><strong id="tapeWinnerHp">—</strong></div>
           </section>
 
           <section class="unit-panel">
@@ -175,7 +176,9 @@
               <span><b id="player3Name">Player 3</b><small>Generated formation</small></span>
               <strong id="player3Count">—</strong>
             </div>
-            <div class="placement-audit"><span>✓</span> 42 source positions · 0 blocked cells</div>
+            <!-- Filled in from the fight that actually ran; the old literal
+                 "42 source positions" was only ever true of a 21v21. -->
+            <div class="placement-audit"><span>✓</span> <span id="placementAudit">—</span></div>
           </section>
 
           <section class="inspection-panel">

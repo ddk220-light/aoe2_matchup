@@ -3,10 +3,13 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { PLACEMENT_PROVENANCE, PLACEMENT_TABLE } from "../src/placement-table.js";
-import { placeArmy, resolveFamily, sideCapacity } from "../src/placement.js";
+import { FAMILIES, placeArmy, resolveFamily, sideCapacity } from "../src/placement.js";
+import { UNIT_REGISTRY } from "../src/unit-registry.js";
 
 const spawns = JSON.parse(await readFile(
   new URL("../../../calibration/fixtures/spawns.json", import.meta.url), "utf8"));
+const derivePlacementSource = await readFile(
+  new URL("../tools/derive_placement.py", import.meta.url), "utf8");
 
 const SIEGE = new Set(["heavy_scorpion", "siege_onager"]);
 const MOBILE = new Set(["arbalester", "hand_cannoneer", "heavy_cav_archer", "imp_elite_skirm"]);
@@ -43,6 +46,45 @@ test("the derivation left no residue", () => {
   assert.equal(PLACEMENT_PROVENANCE.residue, 0);
   assert.equal(PLACEMENT_PROVENANCE.exact, 678);
   assert.equal(PLACEMENT_PROVENANCE.sideLayouts, 678);
+});
+
+// The generated table was derived by classifying the recorded labels in
+// tools/derive_placement.py; /api/fight classifies the SAME units from
+// unit-registry.js. If the two ever disagree -- a 15th unit added to the
+// registry but not to the tool, say -- the 678-layout gate above stays green
+// (it only replays labels the tool already knew) while a live fight picks a
+// different block. So the two classifications are pinned to each other here.
+test("the registry's classes are the ones derive_placement.py classified with", () => {
+  const pythonSet = (name) => {
+    const match = new RegExp(`^${name} = \\{([^}]*)\\}`, "m").exec(derivePlacementSource);
+    assert.ok(match, `derive_placement.py no longer defines ${name}`);
+    return new Set([...match[1].matchAll(/"([a-z0-9_]+)"/g)].map(([, slug]) => slug));
+  };
+  const fromPython = { siege_ranged: pythonSet("SIEGE"), mobile_ranged: pythonSet("MOBILE") };
+
+  // Same three restatements the gate above and the engine both rely on.
+  assert.deepEqual([...fromPython.siege_ranged].sort(), [...SIEGE].sort());
+  assert.deepEqual([...fromPython.mobile_ranged].sort(), [...MOBILE].sort());
+
+  for (const { slug, class: unitClass } of UNIT_REGISTRY) {
+    const inSiege = fromPython.siege_ranged.has(slug);
+    const inMobile = fromPython.mobile_ranged.has(slug);
+    const pythonClass = inSiege ? "siege_ranged" : inMobile ? "mobile_ranged" : "melee";
+    assert.equal(unitClass, pythonClass,
+      `${slug} is ${unitClass} in the registry but ${pythonClass} to derive_placement.py`);
+  }
+  // ...and nothing the tool classifies is missing from the registry.
+  const registered = new Set(UNIT_REGISTRY.map(({ slug }) => slug));
+  for (const slug of [...fromPython.siege_ranged, ...fromPython.mobile_ranged]) {
+    assert.ok(registered.has(slug), `derive_placement.py knows ${slug}, the registry does not`);
+  }
+});
+
+test("FAMILIES is exported so nothing has to hand-mirror it", () => {
+  assert.deepEqual([...FAMILIES], ["rvr", "kite", "siege", "waves"]);
+  for (const family of FAMILIES) {
+    assert.ok(PLACEMENT_TABLE[`2@${family}`], `FAMILIES names ${family} with no table entry`);
+  }
 });
 
 test("families are decided by combat class", () => {

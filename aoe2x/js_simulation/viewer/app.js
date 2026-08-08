@@ -98,6 +98,16 @@ function renderUnitTelemetry(snapshot, index) {
 }
 
 
+// The status line carries server text (rejection messages among it), so it is
+// built from nodes and textContent -- never an innerHTML template a `<` in an
+// error string could break out of.
+function setMapStatus(text, { loading = false } = {}) {
+  const light = document.createElement("span");
+  light.className = loading ? "status-light is-loading" : "status-light";
+  byId("mapStatus").replaceChildren(light, document.createTextNode(text));
+}
+
+
 function eventLabel(event) {
   const subject = event.targetId === undefined
     ? `${event.actorId}`
@@ -279,9 +289,8 @@ async function start() {
     byId("secondsReadout").textContent = (snapshot.tick / TICKS_PER_SECOND).toFixed(3);
     renderUnitTelemetry(snapshot, activeResult.unitIndex);
     renderTimeline(eventLog, snapshot.tick);
-    byId("mapStatus").innerHTML = `<span class="status-light"></span>`
-      + `${activeResult.side2.label} ${activeResult.side2.count}`
-      + ` vs ${activeResult.side3.label} ${activeResult.side3.count}`;
+    setMapStatus(`${activeResult.side2.label} ${activeResult.side2.count}`
+      + ` vs ${activeResult.side3.label} ${activeResult.side3.count}`);
     if (cursor?.atEnd()) setPlaying(false);
   }
 
@@ -312,8 +321,7 @@ async function start() {
     // n2/n3 are absent while a derived-count request is in flight (every unit
     // change, and the very first boot request) -- fall back to a placeholder
     // rather than printing the literal word "undefined".
-    byId("mapStatus").innerHTML = `<span class="status-light is-loading"></span>`
-      + `Running ${selected.n2 ?? "…"}v${selected.n3 ?? "…"}…`;
+    setMapStatus(`Running ${selected.n2 ?? "…"}v${selected.n3 ?? "…"}…`, { loading: true });
     for (const control of ["playPause", "resetPlayback", "stepTick", "nextEvent"]) {
       byId(control).disabled = true;
     }
@@ -348,12 +356,17 @@ async function start() {
     byId("simWinner").textContent = result.winnerOwner === null
       ? "—" : `Player ${result.winnerOwner}`;
     byId("simWinnerHp").textContent = `${result.winnerHp} HP`;
-    byId("tapeWinner").textContent = "—";
-    byId("tapeWinnerHp").textContent = "generated formation";
     byId("player2Name").textContent = result.side2.label;
     byId("player3Name").textContent = result.side3.label;
     byId("player2Count").textContent = String(result.side2.count);
     byId("player3Count").textContent = String(result.side3.count);
+    // Computed from the fight that ran, not a fixed 21v21 literal. The
+    // orientation note is the one place the viewer says out loud that an
+    // asymmetric pair was run in the archive's measured orientation rather
+    // than the order the dropdowns were left in.
+    byId("placementAudit").textContent =
+      `${result.side2.count + result.side3.count} spawn cells · ${result.family} block`
+      + (result.orientationNormalised ? " · measured orientation" : "");
     byId("ledgerNumber").textContent = `${result.side2.count}V${result.side3.count}`;
     byId("playPause").textContent = "Play";
     byId("playbackMode").textContent = "paused";
@@ -423,7 +436,7 @@ async function start() {
   byId("returnFormation").addEventListener("click", () => {
     setPlaying(false);
     renderer.showFormation();
-    byId("mapStatus").innerHTML = '<span class="status-light"></span>Locked 21 vs 21 melee formation';
+    setMapStatus("Locked 21 vs 21 melee formation");
     byId("playbackMode").textContent = "formation";
   });
 
@@ -572,7 +585,7 @@ async function start() {
 // never the full-screen modal, and always leaves the transport controls (and
 // whatever fight was already loaded) usable.
 function rejectFight(message) {
-  byId("mapStatus").innerHTML = `<span class="status-light"></span>Rejected: ${message}`;
+  setMapStatus(`Rejected: ${message}`);
   byId("playbackMode").textContent = "paused";
   for (const control of ["playPause", "resetPlayback", "stepTick", "nextEvent"]) {
     byId(control).disabled = false;

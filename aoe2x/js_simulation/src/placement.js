@@ -7,7 +7,11 @@
 import { PLACEMENT_TABLE } from "./placement-table.js";
 
 
-const FAMILIES = Object.freeze(["rvr", "kite", "siege", "waves"]);
+// The four spawn blocks the archive records. Exported because capacity is per
+// (owner, family): anything that needs to enumerate the families -- the units
+// endpoint's capacityByFamily, for one -- must read them from here rather than
+// keep a hand-mirrored copy that can drift.
+export const FAMILIES = Object.freeze(["rvr", "kite", "siege", "waves"]);
 const RANGED = new Set(["mobile_ranged", "siege_ranged"]);
 
 

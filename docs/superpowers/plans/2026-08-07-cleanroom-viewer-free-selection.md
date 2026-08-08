@@ -1129,10 +1129,9 @@ Composes registry + placement + purchase + engine into one request path that rea
   ticks, winnerOwner, winnerHp,
   finalStateHash, eventLogHash,
   unitIndex: { "<referenceId>": { owner, slug, label, maxHp } },
-  snapshots: [{ tick, units: [[referenceId, x, y, hp, alive, action,
+  snapshots: [{ tick, units: [[referenceId, x, y, facing, hp, alive, action,
                                pursuitTargetId, engagedTargetId, attackTargetId], ...],
-                events: [...] }],
-  events: [...]   // full log, unchanged from the engine
+                events: [...] }]   // movement filtered out
 }
 ```
 
@@ -1759,7 +1758,7 @@ In `aoe2x/js_simulation/viewer/app.js`:
 
 ```javascript
 function renderUnitTelemetry(snapshot, index) {
-  const rows = snapshot.units.map(([referenceId, , , hp, alive, action,
+  const rows = snapshot.units.map(([referenceId, , , , hp, alive, action,
     pursuitTargetId, engagedTargetId, attackTargetId]) => {
     const meta = index[referenceId];
     const row = document.createElement("div");
@@ -1786,29 +1785,51 @@ function renderUnitTelemetry(snapshot, index) {
 
 **4f.** `present(snapshot)` (lines 210–220) passes the snapshot to the renderer and to telemetry. The renderer needs the old shape, so rehydrate there and pass the index to telemetry:
 
+The per-tick record is a 10-element tuple in this exact order — `[referenceId, x, y, facing, hp, alive, action, pursuitTargetId, engagedTargetId, attackTargetId]` — where `alive` is `1` or `0`, not a boolean. `unitIndex[referenceId]` carries `{ owner, slug, label, maxHp, master, collisionRadius, attackRange }`.
+
+`map-renderer.js` reads `unit.facing`, `unit.unitMaster`, `unit.mechanics.collision_size_tiles.x` and `unit.mechanics.attack_range_tiles`, and tests `unit.alive === false` strictly — so `0` must become `false`, not stay `0`, or corpses render as live bodies. Rehydrate all of it here and nowhere else:
+
 ```javascript
   function present(snapshot) {
-    // map-renderer requires DEEPLY frozen objects with the legacy unit shape,
-    // so the slim positional records are rehydrated here and nowhere else.
+    // map-renderer requires DEEPLY frozen objects in the legacy unit shape, so
+    // the slim positional records are rehydrated here and nowhere else. Note
+    // alive is 1|0 on the wire and the renderer tests `=== false`.
     renderer.setSimulationSnapshot(Object.freeze({
       tick: snapshot.tick,
       units: Object.freeze(snapshot.units.map(
-        ([referenceId, x, y, hp, alive, action]) => Object.freeze({
-          referenceId, x, y, hp, alive: Boolean(alive), action,
-          owner: activeResult.unitIndex[referenceId].owner,
-          mechanics: Object.freeze({ hp: activeResult.unitIndex[referenceId].maxHp }),
-        }))),
+        ([referenceId, x, y, facing, hp, alive, action]) => {
+          const meta = activeResult.unitIndex[referenceId];
+          return Object.freeze({
+            referenceId, x, y, facing, hp, action,
+            alive: alive === 1,
+            owner: meta.owner,
+            unitMaster: meta.master,
+            mechanics: Object.freeze({
+              hp: meta.maxHp,
+              attack_range_tiles: meta.attackRange,
+              collision_size_tiles: Object.freeze({ x: meta.collisionRadius }),
+            }),
+          });
+        })),
       events: snapshot.events,
     }));
     byId("tickReadout").textContent = String(snapshot.tick).padStart(4, "0");
     byId("secondsReadout").textContent = (snapshot.tick / TICKS_PER_SECOND).toFixed(3);
     renderUnitTelemetry(snapshot, activeResult.unitIndex);
-    renderTimeline(activeResult.events, snapshot.tick);
+    renderTimeline(eventLog, snapshot.tick);
     byId("mapStatus").innerHTML = `<span class="status-light"></span>`
       + `${activeResult.side2.label} ${activeResult.side2.count}`
       + ` vs ${activeResult.side3.label} ${activeResult.side3.count}`;
     if (cursor?.atEnd()) setPlaying(false);
   }
+```
+
+`renderTimeline` needs one flat list of events with their ticks, but the payload no longer carries a top-level `events` array — it was dropped because duplicating it doubled the wire size. Build the flat list once per fight instead. Declare `let eventLog = [];` beside `activeResult`, and in `loadSimulation`, right after `activeResult = result;`, add:
+
+```javascript
+    // The wire carries events per snapshot (movement filtered out); the
+    // timeline wants one flat list, so flatten it once rather than per frame.
+    eventLog = result.snapshots.flatMap(({ events }) => events);
 ```
 
 **4g.** Replace the matchup/ratio/repeat event wiring (lines 298–388) with the four controls plus the even-fight button:

@@ -249,19 +249,18 @@ part of this change — is to re-run the 101-matchup sweep with generated roster
 and generated counts, and see how far the corpus moves. That number is the real
 verdict on whether the product path is faithful.
 
-## Risks
+## Known limits of the input data
 
-- **Placement derivation may not reach 100%.** The nesting evidence is strong
-  but the exact cell ordering is not yet derived. Gate 1 exists to catch this
-  early. If a residue remains, the options are to characterise it as a recorder
-  artefact or to widen the family rule — not to hardcode exceptions.
-- **Hand Cannoneer is not calibrated like the other kiters.** Its kite beat is
-  constructed from its reload rather than measured; the summary names it as the
-  likely cause of four large deltas. It will run; its numbers carry less weight.
-- **Ranged vs ranged has no order model.** Those 21 matchups run natively in the
-  corpus and are reported as unmodelled. Picking two ranged units in the viewer
-  will produce a fight, but not a validated one.
-- **Fixture regeneration touches calibrated inputs.** Gate 4 is the guard.
+Neither of these is caused by this change; both affect how a result should be
+read once the viewer can produce it.
+
+- **Hand Cannoneer's kite beat is constructed, not measured.** It comes from the
+  unit's reload rather than from a tape column, and the standard-units summary
+  names it as the likely cause of its four large deltas. Its fights run; their
+  numbers carry less weight than the other three kiters'.
+- **Ranged vs ranged has no order model.** Those 21 corpus matchups run natively
+  and are reported as unmodelled. Two ranged units selected in the viewer will
+  produce a fight, but not a validated one.
 
 ## What this does not move
 

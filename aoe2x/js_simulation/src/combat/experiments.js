@@ -30,7 +30,7 @@
 //       (camel speed is bimodal: 46.1% stopped, 52.9% at the dat 1.595, 0.6%
 //       in between), which an ally-only constraint set cannot produce.
 //
-//   AOE2X_EXP_STEP = "bimodal" | "steer"
+//   AOE2X_EXP_STEP = "bimodal" | "steer" | "chaser"
 //       "bimodal": a step the collision solver had to shorten becomes no step
 //       at all. Genie units never grind along a body -- see the histogram
 //       above and docs/CAMEL_CHASER_GEOMETRY_2026-08-06.md.
@@ -39,6 +39,16 @@
 //       body instead of stopping dead in front of it. Cancelling without
 //       steering strands the kite formation (duty cycle 0.18 against the
 //       tape's 0.79).
+//       "chaser": bimodal cancellation applied ONLY to the chasing side of a
+//       kited scenario (world.kiteState present, unit not on the kiting
+//       side). The blanket modes above each fail for a measured reason --
+//       bimodal strands the kite block, steer lets it escape forever, and
+//       both perturb every melee fight. The 12v21 hcc forensics
+//       (STANDARD_UNITS_SUMMARY_2026-08-07) show the defect only DECIDES
+//       kited chases: sim chasers grind along the ball at partial speed
+//       (7.5-15.4% of approach-band frames vs the tape's 0.6-0.8%), pinning
+//       the median chaser-to-kiter gap at 0.75 tiles vs the tape's 1.6.
+//       Scoping to kited chasers leaves every non-kited fight bit-identical.
 
 import { ENGINE_CONFIG } from "../engine-config.js";
 
@@ -61,7 +71,7 @@ const kiteEngage = ENGINE_CONFIG.kiteEngage;
 const VALID_ENGAGEMENT = new Set(["", "pursuit"]);
 const VALID_PURSUIT = new Set(["", "tick", "blocked", "swing", "blocked+swing"]);
 const VALID_AVOID = new Set(["", "all"]);
-const VALID_STEP = new Set(["", "bimodal", "steer"]);
+const VALID_STEP = new Set(["", "bimodal", "steer", "chaser"]);
 const VALID_MIN_RANGE = new Set(["", "shooter"]);
 const VALID_KITE_ENGAGE = new Set(["", "blocker"]);
 
@@ -77,7 +87,7 @@ if (!VALID_AVOID.has(avoid)) {
   throw new RangeError(`AOE2X_EXP_AVOID must be one of "", "all"`);
 }
 if (!VALID_STEP.has(step)) {
-  throw new RangeError(`AOE2X_EXP_STEP must be one of "", "bimodal", "steer"`);
+  throw new RangeError(`AOE2X_EXP_STEP must be one of "", "bimodal", "steer", "chaser"`);
 }
 if (!VALID_MIN_RANGE.has(minRange)) {
   throw new RangeError(`AOE2X_EXP_MINRANGE must be one of "", "shooter"`);
@@ -95,6 +105,7 @@ export const REEVALUATE_ON_SWING = pursuit === "swing" || pursuit === "blocked+s
 export const AVOID_ALL_BODIES = avoid === "all";
 export const BIMODAL_STEP = step === "bimodal" || step === "steer";
 export const STEER_AROUND_BODIES = step === "steer";
+export const CHASER_BIMODAL_STEP = step === "chaser";
 export const MIN_RANGE_SUPPRESSES_SHOOTER = minRange === "shooter";
 export const KITE_ENGAGE_BLOCKER = kiteEngage === "blocker";
 export const ANY_EXPERIMENT = Boolean(

@@ -12,6 +12,7 @@ import {
 import {
   ANY_EXPERIMENT,
   BIMODAL_STEP,
+  CHASER_BIMODAL_STEP,
   ENGAGEMENT_FOLLOWS_PURSUIT,
   KITE_ENGAGE_BLOCKER,
   STEER_AROUND_BODIES,
@@ -459,8 +460,32 @@ function stepClearsBodies(mover, dx, dy, live, proposalByReference, bounds) {
 }
 
 
-function steerProposals(planned, map) {
-  if (!STEER_AROUND_BODIES) return planned.proposals;
+// Does the wanted step hit at least one ENEMY body? Ally-only blocks are a
+// different regime: KITER_FLOW measured real chaser-on-chaser stalls in the
+// tape (kac champions 13.2% vs 5.6% baseline stall rate), while the camel
+// forensics show a chaser blocked by the ENEMY formation routing around it at
+// full speed. The chaser steer therefore fires only on enemy contact.
+function stepHitsEnemyBody(mover, dx, dy, live, proposalByReference) {
+  const x = mover.x + dx;
+  const y = mover.y + dy;
+  const radius = collisionRadius(mover);
+  const moverProposal = proposalByReference.get(mover.referenceId);
+  const moverMoving = moverProposal !== undefined
+    && (moverProposal.dx !== 0 || moverProposal.dy !== 0);
+  for (const other of live) {
+    if (other.referenceId === mover.referenceId) continue;
+    if (other.owner === mover.owner) continue;
+    const extent = radius + collisionRadius(other);
+    if (Math.max(Math.abs(x - other.x), Math.abs(y - other.y)) < extent - STEP_EPSILON) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+function steerProposals(planned, map, chaserScopeOwner = null) {
+  if (!STEER_AROUND_BODIES && chaserScopeOwner === null) return planned.proposals;
   const bounds = { width: map.width, height: map.height };
   const byReference = new Map(planned.units.map((unit) => [unit.referenceId, unit]));
   const proposalByReference = new Map(
@@ -471,6 +496,15 @@ function steerProposals(planned, map) {
     if (distance <= ZERO_STEP_EPSILON) return proposal;
     const mover = byReference.get(proposal.referenceId);
     if (!mover) return proposal;
+    // "chaser" scope: only the chasing side of a kited scenario steers; the
+    // kiting side (and every non-kited fight) keeps the baseline solver.
+    // And only around ENEMY bodies -- ally-blocked chasers keep the baseline
+    // solver, which is the regime the tape shows stalling.
+    if (!STEER_AROUND_BODIES) {
+      if (mover.owner === chaserScopeOwner) return proposal;
+      if (!stepHitsEnemyBody(mover, proposal.dx, proposal.dy, planned.units,
+        proposalByReference)) return proposal;
+    }
     if (stepClearsBodies(mover, proposal.dx, proposal.dy, planned.units,
       proposalByReference, bounds)) return proposal;
     const heading = Math.atan2(proposal.dy, proposal.dx);
@@ -489,16 +523,26 @@ function steerProposals(planned, map) {
 }
 
 
-function resolveMovement(planned, byReference, map) {
-  const wantedProposals = steerProposals(planned, map);
+function resolveMovement(planned, byReference, map, kiteState = null) {
+  // "chaser" scope: steer-then-stop for the chasing side of a kited scenario
+  // only. Without a kiteState (or for the kiting side) the solver is
+  // untouched, so every non-kited fight stays bit-identical to baseline.
+  const chaserScopeOwner = CHASER_BIMODAL_STEP && kiteState ? kiteState.owner : null;
+  const wantedProposals = steerProposals(planned, map, chaserScopeOwner);
   let moved = resolveMovementProposals(planned.units, wantedProposals, map);
-  if (!BIMODAL_STEP) return moved;
+  if (!BIMODAL_STEP && chaserScopeOwner === null) return moved;
+  const eligible = (referenceId) => {
+    if (BIMODAL_STEP) return true;
+    const unit = byReference.get(referenceId);
+    return unit !== undefined && unit.owner !== chaserScopeOwner;
+  };
   const held = new Set();
   for (let pass = 0; pass < MAX_BIMODAL_PASSES; pass += 1) {
     const movedByReference = new Map(moved.map((unit) => [unit.referenceId, unit]));
     let grew = false;
     for (const proposal of wantedProposals) {
       if (held.has(proposal.referenceId)) continue;
+      if (!eligible(proposal.referenceId)) continue;
       const wanted = Math.hypot(proposal.dx, proposal.dy);
       if (wanted <= ZERO_STEP_EPSILON) continue;
       const before = byReference.get(proposal.referenceId);
@@ -583,7 +627,7 @@ function moveUnits(units, map, tick, events, kiteState = null) {
       : Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
   });
   const planned = planLocalAvoidance(live, proposals, map);
-  const moved = resolveMovement(planned, byReference, map);
+  const moved = resolveMovement(planned, byReference, map, kiteState);
   const movedByReference = new Map(moved.map((unit) => [unit.referenceId, unit]));
   const proposalByReference = new Map(proposals.map((proposal) => [proposal.referenceId, proposal]));
   const moveEvents = [];

@@ -67,6 +67,16 @@ const minRange = ENGINE_CONFIG.minRange;
 // blocked engages whatever enemy is stopping it, instead of holding out for
 // its sticky pursuit target.
 const kiteEngage = ENGINE_CONFIG.kiteEngage;
+// AOE2X_EXP_CHASE_PATH=grid -- per-unit obstacle-aware pursuit pathing
+// (src/combat/chase-path.js): each kited-world chaser plans a coarse A* route
+// to its own target around the actual unit bodies before walking. This is the
+// plan step the 12v21 forensics called for -- the tape's chasers hold a
+// 1.4-2.1 tile median gap at full speed, which no local per-step rule
+// reproduces without stranding a catching column (the measured ladder in
+// docs/HCC_CHASER_MOBILITY_2026-08-07.md). A tangent-disc variant ("ball")
+// was measured and rejected: it flips hcavarcher_vs_paladin 20v15 (corpus
+// 576.3 / 3 wrong winners vs grid's 522.7 / 1).
+const chasePath = ENGINE_CONFIG.chasePath;
 
 const VALID_ENGAGEMENT = new Set(["", "pursuit"]);
 const VALID_PURSUIT = new Set(["", "tick", "blocked", "swing", "blocked+swing"]);
@@ -74,6 +84,7 @@ const VALID_AVOID = new Set(["", "all"]);
 const VALID_STEP = new Set(["", "bimodal", "steer", "chaser"]);
 const VALID_MIN_RANGE = new Set(["", "shooter"]);
 const VALID_KITE_ENGAGE = new Set(["", "blocker"]);
+const VALID_CHASE_PATH = new Set(["", "grid"]);
 
 if (!VALID_ENGAGEMENT.has(engagement)) {
   throw new RangeError(`AOE2X_EXP_ENGAGEMENT must be one of "", "pursuit"`);
@@ -95,6 +106,9 @@ if (!VALID_MIN_RANGE.has(minRange)) {
 if (!VALID_KITE_ENGAGE.has(kiteEngage)) {
   throw new RangeError(`AOE2X_EXP_KITE_ENGAGE must be one of "", "blocker"`);
 }
+if (!VALID_CHASE_PATH.has(chasePath)) {
+  throw new RangeError(`AOE2X_EXP_CHASE_PATH must be one of "", "grid"`);
+}
 
 export const ENGAGEMENT_FOLLOWS_PURSUIT = engagement === "pursuit";
 export const REEVALUATE_EVERY_TICK = pursuit === "tick";
@@ -108,8 +122,10 @@ export const STEER_AROUND_BODIES = step === "steer";
 export const CHASER_BIMODAL_STEP = step === "chaser";
 export const MIN_RANGE_SUPPRESSES_SHOOTER = minRange === "shooter";
 export const KITE_ENGAGE_BLOCKER = kiteEngage === "blocker";
+export const CHASE_PATH_GRID = chasePath === "grid";
 export const ANY_EXPERIMENT = Boolean(
-  engagement || pursuit || orders === "1" || avoid || step || minRange || kiteEngage,
+  engagement || pursuit || orders === "1" || avoid || step || minRange || kiteEngage
+  || chasePath,
 );
 
 

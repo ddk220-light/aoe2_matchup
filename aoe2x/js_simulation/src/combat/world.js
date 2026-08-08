@@ -12,12 +12,14 @@ import {
 import {
   ANY_EXPERIMENT,
   BIMODAL_STEP,
+  CHASE_PATH_GRID,
   CHASER_BIMODAL_STEP,
   ENGAGEMENT_FOLLOWS_PURSUIT,
   KITE_ENGAGE_BLOCKER,
   STEER_AROUND_BODIES,
   shouldReevaluatePursuit,
 } from "./experiments.js";
+import { planChaseAim } from "./chase-path.js";
 import { planLocalAvoidance } from "./local-avoidance.js";
 import { proposeMovement } from "./movement.js";
 import {
@@ -605,6 +607,23 @@ function moveUnits(units, map, tick, events, kiteState = null) {
             % KITE_CHASE_REPATH_TICKS) {
       waypoint = { targetId: target.referenceId, x: target.x, y: target.y };
       waypoints.set(unit.referenceId, waypoint);
+    }
+    if (CHASE_PATH_GRID) {
+      // Plan on the repath cadence: the waypoint object is recreated by the
+      // repath above, so a missing plan means this cycle has not planned yet.
+      if (waypoint.plan === undefined) {
+        const obstacles = live.filter((other) => other.referenceId !== unit.referenceId
+          && other.referenceId !== target.referenceId
+          && other.referenceId !== unit.pursuitTargetId
+          && other.referenceId !== unit.engagedTargetId
+          && other.referenceId !== unit.attackTargetId);
+        waypoint.plan = planChaseAim(unit, target, obstacles, map);
+      }
+      const plan = waypoint.plan;
+      if (plan !== null) {
+        if (plan.stand === true) return { ...target, x: unit.x, y: unit.y };
+        return { ...target, x: plan.x, y: plan.y };
+      }
     }
     return { ...target, x: waypoint.x, y: waypoint.y };
   };

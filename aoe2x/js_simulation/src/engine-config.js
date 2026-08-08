@@ -30,6 +30,7 @@ const DEFAULTS = Object.freeze({
   step: "chaser",
   minRange: "",
   kiteEngage: "",
+  chasePath: "",
 });
 
 
@@ -59,4 +60,5 @@ export const ENGINE_CONFIG = Object.freeze({
   step: rawStep === "none" ? "" : rawStep,
   minRange: envString("AOE2X_EXP_MINRANGE", DEFAULTS.minRange),
   kiteEngage: envString("AOE2X_EXP_KITE_ENGAGE", DEFAULTS.kiteEngage),
+  chasePath: envString("AOE2X_EXP_CHASE_PATH", DEFAULTS.chasePath),
 });

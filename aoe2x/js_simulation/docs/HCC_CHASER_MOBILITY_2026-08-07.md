@@ -1,5 +1,31 @@
 # HCA vs Champion 12v21 — chaser mobility forensics (2026-08-07)
 
+> **2026-08-08, round 2 — per-unit pathing exists: `AOE2X_EXP_CHASE_PATH=grid`
+> (default OFF, candidate for the next pin).** The "next real lever" below is
+> built: `src/combat/chase-path.js` plans a coarse per-unit A\* route (0.25-tile
+> cells, 8-connected, deterministic ties, best-effort on unreachable targets)
+> from each kited-world chaser to its own target around the ACTUAL unit bodies,
+> on the existing 0.5 s repath cadence; straight-line-clear falls through to
+> live tracking, unreachable-with-no-progress stands still. Corpus, one
+> playback per recorded ratio:
+>
+> | config | sum band err | wrong winners |
+> |---|---:|---:|
+> | pinned default (`step=chaser`) | 423.0 | 2 (cvp 6v3, avf 15v20) |
+> | + tangent-disc router (`ball`) | 576.3 | 3 — REJECTED, deleted |
+> | + per-unit grid A\* (`grid`) | 522.7 | **1 (cvp 6v3 only)** |
+>
+> `grid` is the first configuration with **zero kited wrong winners** — it
+> fixes arbalester_vs_firelancer 15v20, wrong under every prior engine — and
+> every one of its band-error regressions (concentrated in 10v5/5v10/15v20
+> catching ratios, worst +30) keeps the tape's winner. hcc 12v21 improves to
+> 3/6 HCA (band −69..+9, samples −26..+44) but is not solidly fixed: the
+> residual own-target contact (2970 frames vs tape 671) happens AFTER arrival
+> — per-tick tracking through the catch — not in routing. Not pinned yet:
+> the winner gate improves but the band gate regresses, and the pin decision
+> should follow a fresh look at the post-arrival glue. All non-kited ratios
+> bit-identical under the flag; default config and test-failure set unchanged.
+
 > **2026-08-08 recalibration round — `chaser` is now the committed default.**
 > The scoped rule below (steer around NON-target enemy bodies, else stop;
 > ally blocks and the mover's own target keep the baseline solver) landed in

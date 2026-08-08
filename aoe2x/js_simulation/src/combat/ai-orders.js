@@ -294,8 +294,14 @@ const KITE_PRESSURE_MIN_ROSTER = 12;
 //     +2.00 s, pre-fight moves ~1.3/2.6 s;
 //   heavy cav archer (hcc/hcp): first beat ~0.57 s (they open firing),
 //     beat 2.00 s, finishing TOP-UP designations +0.67 s, move +1.33 s.
-// The default is the arbalester profile (backwards compatible with kac).
-const DEFAULT_KITE_PROFILE = Object.freeze({
+// The default is the arbalester profile (backwards compatible with kac, the
+// one recorded kiting scenario whose fixture carries no explicit profile).
+// Exported so the generated kite-profiles.js table can be pinned to it: its
+// arbalester row and this must stay identical, which is what makes "that
+// fixture ran on the default" a checkable claim rather than an assumption.
+// Callers with a real kiter should pass its profile -- falling back to this
+// runs three of the four kiters on a cadence that is not theirs.
+export const DEFAULT_KITE_PROFILE = Object.freeze({
   beatTicks: KITE_BEAT_TICKS,
   firstBeatTick: KITE_BEAT_TICKS,
   moveOffsetTicks: Object.freeze([KITE_MOVE_OFFSET_TICKS]),

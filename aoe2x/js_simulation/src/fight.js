@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import { hashCanonicalJson } from "./canonical-json.js";
 import { createUnitState } from "./combat/unit-state.js";
 import { createWorld, runWorld } from "./combat/world.js";
+import { KITE_PROFILES } from "./kite-profiles.js";
 import { placeArmy, resolveFamily, sideCapacity } from "./placement.js";
 import { deriveCounts } from "./purchase.js";
 import { unitBySlug } from "./unit-registry.js";
@@ -56,11 +57,15 @@ function requireUnit(slug) {
 // so the global FIGHT_SIDE_CAP alone is not a valid bound for either side --
 // deriveCounts can otherwise hand a side more units than its own placement
 // block can seat, and an explicit n2/n3 can ask for the same thing directly.
-function validateCount(count, capacity, family, owner) {
+//
+// `owner` here is the INTERNAL owner the unit runs as, which for the two
+// role-asymmetric families is not necessarily the dropdown the user picked it
+// in -- so the offending unit is named too, or the message is unactionable.
+function validateCount(count, capacity, family, owner, slug) {
   if (!Number.isSafeInteger(count) || count < 1 || count > capacity) {
     throw new RangeError(
       `count must be an integer 1-${capacity} for owner ${owner}'s ${family} `
-      + `formation, got ${count}`);
+      + `formation, got ${count} (${slug} runs as owner ${owner} in a ${family} fight)`);
   }
 }
 
@@ -73,6 +78,46 @@ function kiteOwnerFor(side2, side3) {
   const three = side3.class === "mobile_ranged";
   if (two === three) return null;
   return two ? 2 : 3;
+}
+
+
+// Two of the four spawn families are ROLE blocks, not side blocks: in the
+// archive the kiter is owner 2 in 32 of 32 kiting matchups and the siege unit
+// is owner 2 in 16 of 16 siege-vs-melee matchups, so `2@kite` and `2@siege`
+// are the kiter's and the siege unit's own recorded footprints. Running the
+// fight in dropdown order therefore puts, say, archers into the chasers'
+// geometry the moment the user picks them second, and the fight changes
+// materially (measured: 18 arbalesters vs 21 champions ran 2548 ticks / 430 HP
+// one way and 2782 / 355 the other). Every asymmetric fight is run with the
+// role unit as owner 2 -- the measured orientation -- and relabelled on the
+// way out. `rvr` and `waves` have no role asymmetry and are left alone.
+const ROLE_CLASS_BY_FAMILY = Object.freeze({
+  kite: "mobile_ranged",
+  siege: "siege_ranged",
+});
+
+
+// resolveFamily guarantees exactly one side carries the role class in these
+// two families (two mobile-ranged or two siege-ranged sides both resolve to
+// `rvr` instead), so "is the role unit the user's side 3?" is well defined.
+function orientationNormalisedFor(family, side2, side3) {
+  const roleClass = ROLE_CLASS_BY_FAMILY[family];
+  if (roleClass === undefined) return false;
+  return side3.class === roleClass;
+}
+
+
+// The kiting unit's own measured script cycle. It is a property of the KITER,
+// not of the pairing (src/kite-profiles.js is generated from the tapes by
+// tools/derive_kite_profiles.py), so a free-selection fight can look it up by
+// slug. Without this every kite fight ran on DEFAULT_KITE_PROFILE, which is
+// the arbalester's -- wrong for three of the four kiters.
+function kiteProfileFor(unit) {
+  const profile = KITE_PROFILES[unit.slug];
+  if (!profile) {
+    throw new RangeError(`no kite profile for ${unit.slug}; regenerate src/kite-profiles.js`);
+  }
+  return profile;
 }
 
 
@@ -126,27 +171,39 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3 }) {
   // before deriveCounts runs, and its capacities are fed into deriveCounts
   // as the ceiling on what the purchase rule may hand out.
   const family = resolveFamily({ side2Class: side2.class, side3Class: side3.class });
+
+  // INTERNAL orientation. `inner2`/`inner3` are what the engine runs; `side2`
+  // and `side3` stay the user's picks and are what the response reports.
+  const orientationNormalised = orientationNormalisedFor(family, side2, side3);
+  const inner2 = orientationNormalised ? side3 : side2;
+  const inner3 = orientationNormalised ? side2 : side3;
   const capacity2 = sideCapacity(2, family);
   const capacity3 = sideCapacity(3, family);
 
+  // Both the purchase rule and the capacity ceilings are applied in the
+  // internal orientation, so the same pairing at the same counts derives the
+  // same armies and passes (or fails) the same capacity check whichever
+  // dropdown each unit was picked in.
   const derived = derivedCounts
-    ? deriveCounts(side2Slug, side3Slug, { capacityA: capacity2, capacityB: capacity3 })
+    ? deriveCounts(inner2.slug, inner3.slug, { capacityA: capacity2, capacityB: capacity3 })
     : null;
-  const count2 = derived ? derived.countA : n2;
-  const count3 = derived ? derived.countB : n3;
-  validateCount(count2, capacity2, family, 2);
-  validateCount(count3, capacity3, family, 3);
+  const innerCount2 = derived ? derived.countA : (orientationNormalised ? n3 : n2);
+  const innerCount3 = derived ? derived.countB : (orientationNormalised ? n2 : n3);
+  validateCount(innerCount2, capacity2, family, 2, inner2.slug);
+  validateCount(innerCount3, capacity3, family, 3, inner3.slug);
+  const count2 = orientationNormalised ? innerCount3 : innerCount2;
+  const count3 = orientationNormalised ? innerCount2 : innerCount3;
 
   const [mechanics2, mechanics3] = await Promise.all([
-    loadMechanics(root, side2),
-    loadMechanics(root, side3),
+    loadMechanics(root, inner2),
+    loadMechanics(root, inner3),
   ]);
 
   const roster = [
-    ...placeArmy({ owner: 2, count: count2, family })
-      .map((cell, index) => ({ owner: 2, cell, index, unit: side2, mechanics: mechanics2 })),
-    ...placeArmy({ owner: 3, count: count3, family })
-      .map((cell, index) => ({ owner: 3, cell, index, unit: side3, mechanics: mechanics3 })),
+    ...placeArmy({ owner: 2, count: innerCount2, family })
+      .map((cell, index) => ({ owner: 2, cell, index, unit: inner2, mechanics: mechanics2 })),
+    ...placeArmy({ owner: 3, count: innerCount3, family })
+      .map((cell, index) => ({ owner: 3, cell, index, unit: inner3, mechanics: mechanics3 })),
   ];
 
   const units = roster.map(({ owner, cell, index, mechanics }, rank) => createUnitState({
@@ -160,18 +217,36 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3 }) {
     acquisitionCount: roster.length,
   }));
 
-  const kiteOwner = kiteOwnerFor(side2, side3);
+  // Internally the kiter is owner 2 in every kite fight (that is what
+  // normalising buys); `kiteOwner` below is the same fact stated in the
+  // user's orientation, and the two agree because the response relabels
+  // owners rather than renumbering units.
+  const innerKiteOwner = kiteOwnerFor(inner2, inner3);
+  const kiter = innerKiteOwner === 2 ? inner2 : inner3;
   const result = runWorld(createWorld({
-    ratio: `${count2}v${count3}`,
+    ratio: `${innerCount2}v${innerCount3}`,
     units,
-    ...(kiteOwner === null ? {} : { kiteOwner }),
+    ...(innerKiteOwner === null
+      ? {}
+      : { kiteOwner: innerKiteOwner, kiteProfile: kiteProfileFor(kiter) }),
   }), { maxTicks: MAX_TICKS });
+
+  // Owner relabelling. Reference ids stay exactly as the engine allocated
+  // them -- the payload never promises an id block belongs to a side, and the
+  // viewer resolves every id through unitIndex -- so a normalised fight is
+  // reported by swapping the OWNER on each unitIndex row (and on winnerOwner
+  // and kiteOwner) and nothing else. finalStateHash / eventLogHash are left on
+  // the canonical internal run, which is what makes them equal for the two
+  // dropdown orders of the same fight.
+  const reportedOwner = orientationNormalised
+    ? (owner) => (owner === 2 ? 3 : 2)
+    : (owner) => owner;
 
   const live = result.world.units.filter(({ alive }) => alive);
   const unitIndex = {};
   for (const { owner, index, unit, mechanics } of roster) {
     unitIndex[REFERENCE_BASE[owner] + index] = Object.freeze({
-      owner,
+      owner: reportedOwner(owner),
       slug: unit.slug,
       label: unit.label,
       maxHp: mechanics.hp,
@@ -189,12 +264,18 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3 }) {
       slug: side3.slug, label: side3.label, civ: side3.civ, count: count3, class: side3.class }),
     family,
     derivedCounts,
-    kiteOwner,
+    // True when the pair was run in the archive's measured orientation rather
+    // than the user's pick order (the role unit always fights as owner 2).
+    orientationNormalised,
+    kiteOwner: innerKiteOwner === null ? null : reportedOwner(innerKiteOwner),
     ticks: result.ticks,
-    winnerOwner: live.length ? live[0].owner : null,
+    winnerOwner: live.length ? reportedOwner(live[0].owner) : null,
     winnerHp: live.reduce((total, unit) => total + unit.hp, 0),
     finalStateHash: hashCanonicalJson({
-      tick: result.world.tick, ratio: `${count2}v${count3}`, units: result.world.units }),
+      tick: result.world.tick,
+      ratio: `${innerCount2}v${innerCount3}`,
+      units: result.world.units,
+    }),
     // Hashes the full, unfiltered engine event log -- not the wire-slimmed
     // per-snapshot events below -- so dropping move/blocked from the payload
     // can never mask a change in what the engine actually did.

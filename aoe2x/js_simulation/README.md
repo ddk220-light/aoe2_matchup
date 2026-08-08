@@ -94,6 +94,24 @@ The exporter preserves all 256 terrain tiles and all 101 Gaia objects. Unknown
 terrain or object IDs are retained with an `UNKNOWN_<id>` name rather than
 being discarded.
 
+### Generated tables
+
+No fixture is read on the `/api/fight` request path. Everything a free-form
+fight needs from the tapes is read ONCE by a tool that emits a committed,
+generated module; each one prints what it found and refuses to emit if the
+archive stops agreeing with it.
+
+```powershell
+python aoe2x/js_simulation/tools/derive_placement.py      # -> src/placement-table.js
+python aoe2x/js_simulation/tools/derive_kite_profiles.py  # -> src/kite-profiles.js
+python aoe2x/js_simulation/tools/export_unit_costs.py     # prints the registry's baseCost column
+```
+
+`src/kite-profiles.js` carries `KITE_PROFILE_PROVENANCE`, which names the
+source fixture(s) behind every row and flags the one row (Hand Cannoneer)
+that is *constructed* from its dat reload because no kiting tape column for
+it exists.
+
 ## Tests
 
 ```powershell

@@ -5,12 +5,9 @@ import {
 } from "../src/formation-model.js";
 import { createMapRenderer } from "./map-renderer.js";
 import {
-  RATIO_PATTERN,
   createPlaybackCursor,
   createReviewFeedback,
   downloadJsonDocument,
-  parseReviewSelection,
-  selectionUrl,
 } from "./simulation-review.js";
 
 
@@ -75,25 +72,28 @@ function targetLabel(unit) {
 }
 
 
-function renderUnitTelemetry(snapshot) {
-  const rows = snapshot.units.map((unit) => {
+function renderUnitTelemetry(snapshot, index) {
+  const rows = snapshot.units.map(([referenceId, , , , hp, alive, action,
+    pursuitTargetId, engagedTargetId, attackTargetId]) => {
+    const meta = index[referenceId];
     const row = document.createElement("div");
-    row.className = `telemetry-row owner-${unit.owner}${unit.alive ? "" : " is-dead"}`;
+    row.className = `telemetry-row owner-${meta.owner}${alive ? "" : " is-dead"}`;
     const identity = document.createElement("span");
     identity.className = "telemetry-identity";
-    identity.textContent = `P${unit.owner} · ${unit.referenceId}`;
-    const hp = document.createElement("span");
-    hp.className = "telemetry-hp";
-    hp.textContent = `${unit.hp}/${unit.mechanics.hp} HP`;
+    identity.textContent = `P${meta.owner} · ${referenceId}`;
+    const hpText = document.createElement("span");
+    hpText.className = "telemetry-hp";
+    hpText.textContent = `${hp}/${meta.maxHp} HP`;
     const meter = document.createElement("i");
-    meter.style.setProperty("--hp", `${Math.max(0, unit.hp / unit.mechanics.hp * 100)}%`);
+    meter.style.setProperty("--hp", `${Math.max(0, hp / meta.maxHp * 100)}%`);
     const state = document.createElement("small");
-    state.textContent = `${unit.alive ? unit.action : "dead"} · ${targetLabel(unit)}`;
-    row.append(identity, hp, meter, state);
+    state.textContent = `${alive ? action : "dead"} · ${targetLabel(
+      { pursuitTargetId, engagedTargetId, attackTargetId })}`;
+    row.append(identity, hpText, meter, state);
     return row;
   });
   byId("unitTelemetry").replaceChildren(...rows);
-  const live = snapshot.units.filter(({ alive }) => alive).length;
+  const live = snapshot.units.filter(([, , , , , alive]) => alive).length;
   byId("unitCount").textContent = `${live}/${snapshot.units.length} alive`;
 }
 
@@ -133,25 +133,22 @@ function renderTimeline(events, tick) {
 
 
 async function start() {
-  const [mapResponse, formationResponse, truthResponse, mechanicsResponse] = await Promise.all([
+  const [mapResponse, formationResponse, unitsResponse] = await Promise.all([
     fetch("api/map", { cache: "no-store" }),
     fetch("api/formation", { cache: "no-store" }),
-    fetch("api/champion/truth", { cache: "no-store" }),
-    fetch("api/champion/mechanics", { cache: "no-store" }),
+    fetch("api/units", { cache: "no-store" }),
   ]);
   for (const [label, response] of [
     ["Map", mapResponse],
     ["Formation", formationResponse],
-    ["Champion truth", truthResponse],
-    ["Champion mechanics", mechanicsResponse],
+    ["Units", unitsResponse],
   ]) {
     if (!response.ok) throw new Error(`${label} API returned ${response.status}`);
   }
+  const catalogue = deepFreeze(await unitsResponse.json());
 
   const fixture = validateMapFixture(await mapResponse.json());
   const formation = validateFormationFixture(await formationResponse.json());
-  const truth = deepFreeze(await truthResponse.json());
-  const mechanics = deepFreeze(await mechanicsResponse.json());
   const formationRoster = formationUnits(formation);
   const canvas = byId("mapCanvas");
   const renderer = createMapRenderer(canvas, fixture.map);
@@ -160,8 +157,9 @@ async function start() {
 
   byId("sourceBadge").innerHTML = `
     <span class="seal-dot"></span>
-    <span><strong>Clean-room source verified</strong><small>${truth.archive.recordings} tapes · ${fixture.source.filename}</small></span>
+    <span><strong>Clean-room engine</strong><small>${catalogue.units.length} measured units · ${fixture.source.filename}</small></span>
   `;
+  byId("clockRate").textContent = `${TICKS_PER_SECOND} Hz`;
   byId("mapSize").textContent = `${fixture.map.width} × ${fixture.map.height}`;
   byId("tileCount").textContent = fixture.map.tiles.length.toLocaleString();
   byId("objectCount").textContent = fixture.map.gaia_objects.length.toLocaleString();
@@ -169,26 +167,42 @@ async function start() {
   byId("player3Count").textContent = formation.sides["3"].length.toLocaleString();
   byId("player2Name").textContent = prettyName(formation.sides["2"][0].name);
   byId("player3Name").textContent = prettyName(formation.sides["3"][0].name);
-  byId("clockRate").textContent = `${mechanics.clockTicksPerSecond} Hz`;
   byId("sourceFile").textContent = fixture.source.filename;
   byId("sourceHash").textContent = fixture.source.sha256;
   byId("sourceVersion").textContent = `Scenario ${fixture.source.scenario_version} · ${fixture.source.parser} ${fixture.source.parser_version}`;
   renderInventory(fixture.object_counts);
 
-  // Boot always starts on the champion mirror, which is locked to its five
-  // recorded ratios; a URL carrying any other well-formed NvM (e.g. shared
-  // from a matchup view) must degrade to 1v1 instead of a boot error.
-  const CHAMPION_RATIO_OPTIONS = ["1v1", "2v1", "2v3", "5v3", "6v3"];
-  const parsed = parseReviewSelection(location.href);
-  const initial = CHAMPION_RATIO_OPTIONS.includes(parsed.ratio)
-    ? parsed
-    : { ...parsed, ratio: "1v1" };
-  byId("ratioSelect").value = initial.ratio;
-  byId("repeatSelect").value = String(initial.repeat);
-  history.replaceState(null, "", selectionUrl(location.href, initial));
+  function populateUnitSelects() {
+    for (const [id, fallback] of [["side2Select", "champion"], ["side3Select", "paladin"]]) {
+      const select = byId(id);
+      select.replaceChildren(...catalogue.units.map(({ slug, label, civ }) => {
+        const option = document.createElement("option");
+        option.value = slug;
+        option.textContent = `${label} (${civ})`;
+        return option;
+      }));
+      select.value = fallback;
+    }
+  }
+  populateUnitSelects();
 
-  let selected = initial;
+  function currentSelection() {
+    return {
+      side2Slug: byId("side2Select").value,
+      n2: Number(byId("n2Input").value),
+      side3Slug: byId("side3Select").value,
+      n3: Number(byId("n3Input").value),
+    };
+  }
+
+  // Boot with no counts: the server derives the even-fight purchase and the
+  // inputs are filled in from what it chose.
+  let selected = {
+    side2Slug: byId("side2Select").value,
+    side3Slug: byId("side3Select").value,
+  };
   let activeResult = null;
+  let eventLog = [];
   let cursor = null;
   let playing = false;
   let animationFrame = null;
@@ -208,14 +222,39 @@ async function start() {
   }
 
   function present(snapshot) {
-    renderer.setSimulationSnapshot(snapshot);
+    // map-renderer requires DEEPLY frozen objects in the legacy unit shape, so
+    // the slim positional records are rehydrated here and nowhere else. Note
+    // alive is 1|0 on the wire and the renderer tests `=== false`. The three
+    // target ids are rehydrated too -- the map overlay's pursuit/engaged/attack
+    // lines read them straight off each unit.
+    renderer.setSimulationSnapshot(Object.freeze({
+      tick: snapshot.tick,
+      units: Object.freeze(snapshot.units.map(
+        ([referenceId, x, y, facing, hp, alive, action,
+          pursuitTargetId, engagedTargetId, attackTargetId]) => {
+          const meta = activeResult.unitIndex[referenceId];
+          return Object.freeze({
+            referenceId, x, y, facing, hp, action,
+            pursuitTargetId, engagedTargetId, attackTargetId,
+            alive: alive === 1,
+            owner: meta.owner,
+            unitMaster: meta.master,
+            mechanics: Object.freeze({
+              hp: meta.maxHp,
+              attack_range_tiles: meta.attackRange,
+              collision_size_tiles: Object.freeze({ x: meta.collisionRadius }),
+            }),
+          });
+        })),
+      events: snapshot.events,
+    }));
     byId("tickReadout").textContent = String(snapshot.tick).padStart(4, "0");
     byId("secondsReadout").textContent = (snapshot.tick / TICKS_PER_SECOND).toFixed(3);
-    renderUnitTelemetry(snapshot);
-    renderTimeline(activeResult.playback.events, snapshot.tick);
-    byId("mapStatus").innerHTML = activeResult?.tapeDiagnostic
-      ? `<span class="status-light"></span>${selected.ratio} simulation · tape repeat ${selected.repeat} diagnostic`
-      : `<span class="status-light"></span>${selected.ratio} simulation · synthetic formation (no tape)`;
+    renderUnitTelemetry(snapshot, activeResult.unitIndex);
+    renderTimeline(eventLog, snapshot.tick);
+    byId("mapStatus").innerHTML = `<span class="status-light"></span>`
+      + `${activeResult.side2.label} ${activeResult.side2.count}`
+      + ` vs ${activeResult.side3.label} ${activeResult.side3.count}`;
     if (cursor?.atEnd()) setPlaying(false);
   }
 
@@ -232,7 +271,7 @@ async function start() {
   }
 
   function displayFeedback() {
-    const row = feedback.get(selected);
+    const row = feedback.get(feedbackKey());
     byId("runFlagged").checked = row.flagged;
     byId("reviewNote").value = row.note;
   }
@@ -241,34 +280,44 @@ async function start() {
     const serial = requestSerial += 1;
     setPlaying(false);
     selected = nextSelection;
-    history.replaceState(null, "", selectionUrl(location.href, selected));
     byId("playbackMode").textContent = "loading trace";
-    byId("mapStatus").innerHTML = `<span class="status-light is-loading"></span>Loading ${selected.ratio} verified playback…`;
+    byId("mapStatus").innerHTML =
+      `<span class="status-light is-loading"></span>Running ${selected.n2}v${selected.n3}…`;
     for (const control of ["playPause", "resetPlayback", "stepTick", "nextEvent"]) {
       byId(control).disabled = true;
     }
-    const matchup = selected.matchup ?? "champion";
-    const endpoint = matchup === "champion"
-      ? `api/champion/result?ratio=${encodeURIComponent(selected.ratio)}&repeat=${selected.repeat}`
-      : `api/matchup/result?matchup=${encodeURIComponent(matchup)}`
-        + `&ratio=${encodeURIComponent(selected.ratio)}&repeat=${selected.repeat}`;
+    // Counts are omitted entirely when the caller wants the derived purchase;
+    // the server sends back what it chose and the inputs are synced from it.
+    const counts = selected.n2 === undefined || selected.n3 === undefined
+      ? "" : `&n2=${selected.n2}&n3=${selected.n3}`;
+    const endpoint = `api/fight?side2=${encodeURIComponent(selected.side2Slug)}`
+      + `&side3=${encodeURIComponent(selected.side3Slug)}${counts}`;
     const response = await fetch(endpoint, { cache: "no-store" });
     if (!response.ok) {
       const detail = await response.json().catch(() => null);
-      throw new Error(detail?.error ?? `Result API returned ${response.status}`);
+      throw new Error(detail?.error ?? `Fight API returned ${response.status}`);
     }
     const result = deepFreeze(await response.json());
     if (serial !== requestSerial) return;
     activeResult = result;
-    cursor = createPlaybackCursor({ snapshots: result.playback.snapshots, onSnapshot: present });
-    byId("simWinner").textContent = `Player ${result.playback.winnerOwner}`;
-    byId("simWinnerHp").textContent = `${result.playback.winnerHp} HP`;
-    // Free-form ratios have no recorded tape run to diagnose against.
-    byId("tapeWinner").textContent = result.tapeDiagnostic
-      ? `Player ${result.tapeDiagnostic.winnerOwner}` : "—";
-    byId("tapeWinnerHp").textContent = result.tapeDiagnostic
-      ? `${result.tapeDiagnostic.winnerHp} HP` : "synthetic ratio (no tape)";
-    byId("ledgerNumber").textContent = `${selected.ratio.toUpperCase()}–0${selected.repeat}`;
+    // The wire carries events per snapshot (movement filtered out); the
+    // timeline wants one flat list, so flatten it once rather than per frame.
+    eventLog = result.snapshots.flatMap(({ events }) => events);
+    // Whatever the server ran is what the inputs show, derived or not.
+    selected = { ...selected, n2: result.side2.count, n3: result.side3.count };
+    byId("n2Input").value = String(result.side2.count);
+    byId("n3Input").value = String(result.side3.count);
+    cursor = createPlaybackCursor({ snapshots: result.snapshots, onSnapshot: present });
+    byId("simWinner").textContent = result.winnerOwner === null
+      ? "—" : `Player ${result.winnerOwner}`;
+    byId("simWinnerHp").textContent = `${result.winnerHp} HP`;
+    byId("tapeWinner").textContent = "—";
+    byId("tapeWinnerHp").textContent = "generated formation";
+    byId("player2Name").textContent = result.side2.label;
+    byId("player3Name").textContent = result.side3.label;
+    byId("player2Count").textContent = String(result.side2.count);
+    byId("player3Count").textContent = String(result.side3.count);
+    byId("ledgerNumber").textContent = `${result.side2.count}V${result.side3.count}`;
     byId("playPause").textContent = "Play";
     byId("playbackMode").textContent = "paused";
     for (const control of ["playPause", "resetPlayback", "stepTick", "nextEvent"]) {
@@ -295,97 +344,26 @@ async function start() {
   });
   byId("resetView").addEventListener("click", () => renderer.resetView());
 
-  let matchupRatioOptions = null;
-
-  async function matchupList() {
-    if (!matchupRatioOptions) {
-      const listed = await (await fetch("api/matchup/list", { cache: "no-store" })).json();
-      matchupRatioOptions = new Map(listed.matchups.map((m) => [m.name, m.ratios]));
-    }
-    return matchupRatioOptions;
-  }
-
-  // The matchup dropdown carries the locked champion mirror plus every matchup
-  // the server serves — new fixtures appear here without touching the viewer.
-  async function populateMatchups() {
-    const select = byId("matchupSelect");
-    const known = new Set([...select.options].map((option) => option.value));
-    for (const name of (await matchupList()).keys()) {
-      if (known.has(name)) continue;
-      const option = document.createElement("option");
-      option.value = name;
-      option.textContent = name.split("_").map((word) => (
-        word === "vs" ? "vs" : word.charAt(0).toUpperCase() + word.slice(1)
-      )).join(" ");
-      select.append(option);
-    }
-  }
-
-  async function ratiosFor(matchup) {
-    if (matchup === "champion") return CHAMPION_RATIO_OPTIONS;
-    return (await matchupList()).get(matchup) ?? CHAMPION_RATIO_OPTIONS;
-  }
-
-  function ratioAllowed(matchup, ratio, recorded) {
-    // The champion mirror path is SHA-locked to its five recorded ratios; the
-    // matchup paths accept any NvM (unknown ones synthesize server-side).
-    if (matchup === "champion") return recorded.includes(ratio);
-    return RATIO_PATTERN.test(ratio);
-  }
-
-  async function repopulateRatios(matchup) {
-    const ratios = await ratiosFor(matchup);
-    const input = byId("ratioSelect");
-    const previous = input.value.trim().toLowerCase();
-    byId("ratioOptions").replaceChildren(...ratios.map((ratio) => {
-      const option = document.createElement("option");
-      option.value = ratio;
-      return option;
-    }));
-    input.value = ratioAllowed(matchup, previous, ratios) ? previous : ratios[0];
-    return input.value;
-  }
-
-  byId("matchupSelect").addEventListener("change", () => {
-    const matchup = byId("matchupSelect").value;
-    repopulateRatios(matchup)
-      .then((ratio) => loadSimulation({
-        matchup,
-        ratio,
-        repeat: Number(byId("repeatSelect").value),
-      }))
-      .catch(showError);
-  });
-
-  async function loadFromControls() {
-    const matchup = byId("matchupSelect").value;
-    const input = byId("ratioSelect");
-    const ratio = input.value.trim().toLowerCase();
-    input.value = ratio;
-    const recorded = await ratiosFor(matchup);
-    if (!ratioAllowed(matchup, ratio, recorded)) {
-      byId("mapStatus").innerHTML = matchup === "champion"
-        ? `<span class="status-light"></span>Champion mirror is locked to ${recorded.join(", ")}`
-        : '<span class="status-light"></span>Ratio must look like 6v3 (each side 1–40)';
-      return;
-    }
-    await loadSimulation({
-      matchup,
-      ratio,
-      repeat: Number(byId("repeatSelect").value),
+  // Changing a unit re-derives the counts -- a new pair gets the even-fight
+  // purchase, which is what the recorded fights were bought at. Typing a count
+  // sends both counts explicitly. Either way the server decides and the inputs
+  // are synced from its answer, so the purchase rule lives only in purchase.js.
+  function loadDerived() {
+    return loadSimulation({
+      side2Slug: byId("side2Select").value,
+      side3Slug: byId("side3Select").value,
     });
   }
-  for (const id of ["ratioSelect", "repeatSelect"]) {
+  for (const id of ["side2Select", "side3Select"]) {
+    byId(id).addEventListener("change", () => { loadDerived().catch(showError); });
+  }
+  for (const id of ["n2Input", "n3Input"]) {
     byId(id).addEventListener("change", () => {
-      loadFromControls().catch(showError);
+      loadSimulation(currentSelection()).catch(showError);
     });
   }
-  byId("ratioSelect").addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      loadFromControls().catch(showError);
-    }
-  });
+  byId("resetCounts").addEventListener("click", () => { loadDerived().catch(showError); });
+
   byId("playPause").addEventListener("click", () => {
     if (cursor?.atEnd()) cursor.reset();
     setPlaying(!playing);
@@ -409,9 +387,17 @@ async function start() {
     byId("playbackMode").textContent = "formation";
   });
 
+  function feedbackKey() {
+    return {
+      pair: `${selected.side2Slug}-vs-${selected.side3Slug}`,
+      ratio: `${selected.n2}v${selected.n3}`,
+      repeat: 1,
+    };
+  }
+
   function saveFeedback() {
     feedback.set({
-      ...selected,
+      ...feedbackKey(),
       flagged: byId("runFlagged").checked,
       note: byId("reviewNote").value,
     });
@@ -527,8 +513,7 @@ async function start() {
   const observer = new ResizeObserver(() => renderer.resize());
   observer.observe(canvas);
   renderer.resize();
-  await populateMatchups().catch(() => {});
-  await loadSimulation(initial);
+  await loadSimulation(selected);
 }
 
 

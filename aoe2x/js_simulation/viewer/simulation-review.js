@@ -3,6 +3,10 @@ export const CHAMPION_RATIOS = Object.freeze(["1v1", "2v1", "2v3", "5v3", "6v3"]
 // ratios, and free-form ratios synthesize a formation server-side, so the
 // review selection validates SHAPE, not membership in a fixed list.
 export const RATIO_PATTERN = /^[1-9]\d?v[1-9]\d?$/;
+// Optional matchup identity for a review row. Rows written before free unit
+// selection have no pair; omitting the field entirely keeps them readable and
+// keeps the stored shape unchanged for them.
+export const PAIR_PATTERN = /^[a-z_]+-vs-[a-z_]+$/;
 const STORAGE_KEY = "aoe2.cleanroom.champion.review.v1";
 const MAX_NOTE_LENGTH = 2000;
 
@@ -13,14 +17,18 @@ function ratioRank(ratio) {
 }
 
 
-function selection({ ratio, repeat }) {
+function selection({ ratio, repeat, pair }) {
   if (typeof ratio !== "string" || !RATIO_PATTERN.test(ratio)) {
     throw new TypeError("ratio must look like 6v3");
   }
   if (!Number.isInteger(repeat) || repeat < 1 || repeat > 3) {
     throw new TypeError("tape repeat must be 1, 2, or 3");
   }
-  return { ratio, repeat };
+  if (pair === undefined) return { ratio, repeat };
+  if (typeof pair !== "string" || !PAIR_PATTERN.test(pair)) {
+    throw new TypeError("pair must look like champion-vs-paladin");
+  }
+  return { pair, ratio, repeat };
 }
 
 
@@ -114,8 +122,8 @@ export function createReviewFeedback({ storage, now = () => new Date().toISOStri
     storage.setItem(STORAGE_KEY, JSON.stringify(sortRuns(runs)));
   }
 
-  function set({ ratio, repeat, flagged, note = "" }) {
-    const key = selection({ ratio, repeat });
+  function set({ ratio, repeat, pair, flagged, note = "" }) {
+    const key = selection({ ratio, repeat, pair });
     if (typeof flagged !== "boolean") throw new TypeError("flagged must be a boolean");
     if (typeof note !== "string" || note.length > MAX_NOTE_LENGTH) {
       throw new TypeError(`note must be at most ${MAX_NOTE_LENGTH} characters`);
@@ -123,6 +131,7 @@ export function createReviewFeedback({ storage, now = () => new Date().toISOStri
     const row = { ...key, flagged, note };
     runs = runs.filter((candidate) => (
       candidate.ratio !== ratio || candidate.repeat !== repeat
+      || (candidate.pair ?? undefined) !== pair
     ));
     if (flagged || note.trim()) runs.push(row);
     save();
@@ -131,13 +140,14 @@ export function createReviewFeedback({ storage, now = () => new Date().toISOStri
 
   return Object.freeze({
     set,
-    flag({ ratio, repeat, note = "" }) {
-      return set({ ratio, repeat, flagged: true, note });
+    flag({ ratio, repeat, pair, note = "" }) {
+      return set({ ratio, repeat, pair, flagged: true, note });
     },
     get(key) {
       const valid = selection(key);
       return runs.find((row) => (
         row.ratio === valid.ratio && row.repeat === valid.repeat
+        && (row.pair ?? undefined) === valid.pair
       )) ?? { ...valid, flagged: false, note: "" };
     },
     clear() {

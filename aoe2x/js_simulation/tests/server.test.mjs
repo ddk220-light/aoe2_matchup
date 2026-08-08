@@ -177,8 +177,11 @@ test("viewer page exposes the complete Champion review instrument without a seed
     const body = await response.text();
 
     for (const id of [
-      "ratioSelect",
-      "repeatSelect",
+      "side2Select",
+      "n2Input",
+      "side3Select",
+      "n3Input",
+      "resetCounts",
       "playPause",
       "resetPlayback",
       "stepTick",

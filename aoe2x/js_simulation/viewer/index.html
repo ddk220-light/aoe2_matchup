@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#121a16">
-    <title>Golden Arena · Champion Combat Chronograph</title>
+    <title>Golden Arena · Combat Chronograph</title>
     <script>
       (() => {
         const mountBase = document.createElement("base");
@@ -36,40 +36,24 @@
       <section class="chronograph" aria-label="Simulation playback controls">
         <div class="run-selector">
           <label>
-            <span>Matchup</span>
-            <select id="matchupSelect" aria-label="Unit matchup">
-              <option value="champion">Champion vs Champion</option>
-              <option value="champion_vs_paladin">Champion vs Paladin</option>
-            </select>
+            <span>Side 2</span>
+            <select id="side2Select" aria-label="Side 2 unit"></select>
           </label>
           <label>
-            <span>Engagement ratio</span>
-            <input
-              id="ratioSelect"
-              list="ratioOptions"
-              value="1v1"
-              autocomplete="off"
-              spellcheck="false"
-              inputmode="numeric"
-              pattern="[1-9][0-9]?v[1-9][0-9]?"
-              aria-label="Engagement ratio (pick a recorded one or type any NvM)"
-            />
-            <datalist id="ratioOptions">
-              <option value="1v1"></option>
-              <option value="2v1"></option>
-              <option value="2v3"></option>
-              <option value="5v3"></option>
-              <option value="6v3"></option>
-            </datalist>
+            <span>Count</span>
+            <input id="n2Input" type="number" min="1" max="21" step="1" value="21"
+                   inputmode="numeric" aria-label="Side 2 unit count">
           </label>
           <label>
-            <span>Tape diagnostic</span>
-            <select id="repeatSelect" aria-label="Golden tape repeat">
-              <option value="1">Repeat 01</option>
-              <option value="2">Repeat 02</option>
-              <option value="3">Repeat 03</option>
-            </select>
+            <span>Side 3</span>
+            <select id="side3Select" aria-label="Side 3 unit"></select>
           </label>
+          <label>
+            <span>Count</span>
+            <input id="n3Input" type="number" min="1" max="21" step="1" value="21"
+                   inputmode="numeric" aria-label="Side 3 unit count">
+          </label>
+          <button id="resetCounts" type="button" title="Reset both counts to the derived even-fight purchase">Even fight</button>
         </div>
 
         <div class="transport" role="group" aria-label="Playback transport">

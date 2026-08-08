@@ -81,7 +81,7 @@ const chasePath = ENGINE_CONFIG.chasePath;
 const VALID_ENGAGEMENT = new Set(["", "pursuit"]);
 const VALID_PURSUIT = new Set(["", "tick", "blocked", "swing", "blocked+swing"]);
 const VALID_AVOID = new Set(["", "all"]);
-const VALID_STEP = new Set(["", "bimodal", "steer", "chaser"]);
+const VALID_STEP = new Set(["", "bimodal", "steer", "chaser", "kited"]);
 const VALID_MIN_RANGE = new Set(["", "shooter"]);
 const VALID_KITE_ENGAGE = new Set(["", "blocker"]);
 const VALID_CHASE_PATH = new Set(["", "grid"]);
@@ -98,7 +98,9 @@ if (!VALID_AVOID.has(avoid)) {
   throw new RangeError(`AOE2X_EXP_AVOID must be one of "", "all"`);
 }
 if (!VALID_STEP.has(step)) {
-  throw new RangeError(`AOE2X_EXP_STEP must be one of "", "bimodal", "steer", "chaser"`);
+  throw new RangeError(
+    `AOE2X_EXP_STEP must be one of "", "bimodal", "steer", "chaser", "kited"`,
+  );
 }
 if (!VALID_MIN_RANGE.has(minRange)) {
   throw new RangeError(`AOE2X_EXP_MINRANGE must be one of "", "shooter"`);
@@ -119,7 +121,13 @@ export const REEVALUATE_ON_SWING = pursuit === "swing" || pursuit === "blocked+s
 export const AVOID_ALL_BODIES = avoid === "all";
 export const BIMODAL_STEP = step === "bimodal" || step === "steer";
 export const STEER_AROUND_BODIES = step === "steer";
-export const CHASER_BIMODAL_STEP = step === "chaser";
+export const CHASER_BIMODAL_STEP = step === "chaser" || step === "kited";
+// "kited" extends the chaser rule to the KITING side's move-ordered units:
+// the 12v21 victim forensics show the caught kiter executing its scripted
+// ball move THROUGH attacker contact at the ball's own pace (victim 1 s
+// displacement 0.50-0.67 vs ball-mates 0.55-0.66), where the sim's kiter
+// grinds on the pressing champion's body (0.13-0.39, below even its mates).
+export const KITED_SIDE_STEER = step === "kited";
 export const MIN_RANGE_SUPPRESSES_SHOOTER = minRange === "shooter";
 export const KITE_ENGAGE_BLOCKER = kiteEngage === "blocker";
 export const CHASE_PATH_GRID = chasePath === "grid";

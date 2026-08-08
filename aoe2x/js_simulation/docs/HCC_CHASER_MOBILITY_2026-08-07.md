@@ -1,5 +1,36 @@
 # HCA vs Champion 12v21 — chaser mobility forensics (2026-08-07)
 
+> **2026-08-08, round 3 — the victim side, measured: `AOE2X_EXP_STEP=kited`
+> (default OFF).** With routing in place, the next mirrored measurement moved
+> from the chaser to the CAUGHT KITER. Post-swing forensics: the attacker's
+> hold is already exact (move-delay after swing start p50 tape 1.54 s / sim
+> 1.52 s) — the difference is that the tape's victim ESCAPES during that hold
+> (gap to attacker 0.55 → 1.0–1.3 within a second) while the sim's victim
+> stays pressed (0.55 → 0.6). And the escape is not a flee mechanic: the tape
+> victim moves exactly WITH its ball (1 s displacement 0.50–0.67 vs ball-mates
+> 0.55–0.66) — it executes the scripted move THROUGH attacker contact, where
+> the sim's kiter grinds on the pressing body (0.13–0.39, below even its own
+> mates). `STEP=kited` extends the chaser steer to the kiting side's
+> move-ordered units (no target exclusion — a kiter's target is who it
+> shoots, often the very champion pressing it).
+>
+> Results: `kited`+`grid` takes 12v21 to **5/6 HCA wins, mean −33.6 vs the
+> tape's −36.5** (the tape itself has 1 champion win in 14) with every
+> mechanism metric moving toward tape (swings 89→47 vs 61, duty 0.29 vs 0.26,
+> own-target contact −30%). But the corpus pays: 695.7 / 4 wrong winners —
+> the free escape re-flips kac 5v10 (whose tape shows the AMBUSHED arbs
+> failing exactly this escape), esc 10v5 and hcp 20v15. A directional gate
+> (steer only away from the nearest enemy) was measured and rejected: 12v21
+> falls to 2/6 and hcc 5v10 + avf 15v20 flip (551.5 / 3).
+>
+> So the victim mechanism is REAL and demonstrated sufficient to close 12v21;
+> what is missing is the discriminator the game gets from actual clearance
+> pathing — an escape must fail exactly when the tape's ambushes make it fail.
+> Candidates for the next round: clearance margin on the kiter steer (a body
+> cannot slip a gap narrower than its own box plus margin), or extending the
+> grid planner to the kiting side's move execution. The flag stays OFF;
+> default and `grid` behavior are bit-identical with it unset.
+
 > **2026-08-08, round 2 — per-unit pathing exists: `AOE2X_EXP_CHASE_PATH=grid`
 > (default OFF, candidate for the next pin).** The "next real lever" below is
 > built: `src/combat/chase-path.js` plans a coarse per-unit A\* route (0.25-tile

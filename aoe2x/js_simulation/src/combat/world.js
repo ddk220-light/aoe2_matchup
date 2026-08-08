@@ -16,6 +16,7 @@ import {
   CHASER_BIMODAL_STEP,
   ENGAGEMENT_FOLLOWS_PURSUIT,
   KITE_ENGAGE_BLOCKER,
+  KITED_SIDE_STEER,
   STEER_AROUND_BODIES,
   shouldReevaluatePursuit,
 } from "./experiments.js";
@@ -473,6 +474,22 @@ function stepClearsBodies(mover, dx, dy, live, proposalByReference, bounds) {
 //     esc 10v5, hcp 20v15, hcst 20v20 all lose their tape winner);
 //   * a NON-target enemy body is the ball surface, which the camel forensics
 //     show the chaser routing around at full speed.
+function stepHitsAnyEnemyBody(mover, dx, dy, live) {
+  const x = mover.x + dx;
+  const y = mover.y + dy;
+  const radius = collisionRadius(mover);
+  for (const other of live) {
+    if (other.referenceId === mover.referenceId) continue;
+    if (other.owner === mover.owner) continue;
+    const extent = radius + collisionRadius(other);
+    if (Math.max(Math.abs(x - other.x), Math.abs(y - other.y)) < extent - STEP_EPSILON) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
 function stepHitsOtherEnemyBody(mover, dx, dy, live) {
   const x = mover.x + dx;
   const y = mover.y + dy;
@@ -515,14 +532,28 @@ function steerProposals(planned, map, chaserScopeOwner = null) {
     // target-blocked chasers keep the baseline solver (the tape's stall and
     // catch regimes respectively).
     if (!STEER_AROUND_BODIES) {
-      if (mover.owner === chaserScopeOwner) return proposal;
-      // Steer only when the wanted step runs into a NON-TARGET enemy body
-      // (the ball surface). Ally blocks keep the baseline solver (the
-      // tape's chaser-on-chaser stalls are real), and the mover's own
-      // target is the catch. Wider triggers were measured and rejected --
-      // see the ally-queue ladder in HCC_CHASER_MOBILITY_2026-08-07.md.
-      if (!stepHitsOtherEnemyBody(mover, proposal.dx, proposal.dy, planned.units)) {
-        return proposal;
+      if (mover.owner === chaserScopeOwner) {
+        // "kited": the kiting side's MOVE-ORDERED units steer around enemy
+        // bodies too -- the tape's caught victim executes the scripted ball
+        // move through attacker contact at the ball's own pace, where the
+        // baseline solver grinds it on the pressing chaser's body. Units
+        // without a move order (standing to shoot) keep the baseline. NO
+        // target exclusion here: a kiter's target is who it SHOOTS -- most
+        // often the very champion pressing it -- never a body it wants to
+        // walk into.
+        if (!KITED_SIDE_STEER || !mover.moveOrder) return proposal;
+        if (!stepHitsAnyEnemyBody(mover, proposal.dx, proposal.dy, planned.units)) {
+          return proposal;
+        }
+      } else {
+        // Steer only when the wanted step runs into a NON-TARGET enemy body
+        // (the ball surface). Ally blocks keep the baseline solver (the
+        // tape's chaser-on-chaser stalls are real), and the mover's own
+        // target is the catch. Wider triggers were measured and rejected --
+        // see the ally-queue ladder in HCC_CHASER_MOBILITY_2026-08-07.md.
+        if (!stepHitsOtherEnemyBody(mover, proposal.dx, proposal.dy, planned.units)) {
+          return proposal;
+        }
       }
     }
     if (stepClearsBodies(mover, proposal.dx, proposal.dy, planned.units,
@@ -555,12 +586,12 @@ function resolveMovement(planned, byReference, map, kiteState = null) {
   if (!BIMODAL_STEP && chaserScopeOwner === null) return moved;
   const eligible = (referenceId) => {
     if (BIMODAL_STEP) return true;
-    // Chaser scope: cancellation applies only to steps the steer touched --
-    // blocked by a NON-target enemy body with no clear full-speed heading
-    // nearby. Steps shortened by the mover's own target or by allies keep
-    // the baseline partial resolve (the catch slide-in and the crowd).
-    const unit = byReference.get(referenceId);
-    if (unit === undefined || unit.owner === chaserScopeOwner) return false;
+    // Scoped modes: cancellation applies only to steps the steer touched --
+    // blocked by a (non-target) enemy body with no clear full-speed heading
+    // nearby. The steered set only ever contains in-scope movers (chasers,
+    // and under "kited" the move-ordered kiters too), so membership is the
+    // whole test. Steps shortened by the mover's own target or by allies
+    // keep the baseline partial resolve.
     return steered !== null && steered.has(referenceId);
   };
   const held = new Set();

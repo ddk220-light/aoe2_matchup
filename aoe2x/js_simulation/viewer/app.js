@@ -186,6 +186,32 @@ async function start() {
   }
   populateUnitSelects();
 
+  // Mirrors placement.js's resolveFamily so the picker can size its own count
+  // inputs -- kept as the one place that reads the four conditions, rather
+  // than duplicating them at each call site.
+  const classBySlug = new Map(catalogue.units.map(({ slug, class: unitClass }) => [slug, unitClass]));
+  const RANGED_CLASSES = new Set(["mobile_ranged", "siege_ranged"]);
+  function familyFor(side2Class, side3Class) {
+    if (RANGED_CLASSES.has(side2Class) && RANGED_CLASSES.has(side3Class)) return "rvr";
+    if (side2Class === "mobile_ranged" || side3Class === "mobile_ranged") return "kite";
+    if (side2Class === "siege_ranged" || side3Class === "siege_ranged") return "siege";
+    return "waves";
+  }
+
+  // Capacity is per (owner, family) -- e.g. a side-2 siege formation holds 16,
+  // not 21 -- so the count inputs' ceilings have to track whichever pair is
+  // currently selected instead of the flat max="21" they boot with.
+  function syncCountCaps() {
+    const family = familyFor(
+      classBySlug.get(byId("side2Select").value),
+      classBySlug.get(byId("side3Select").value),
+    );
+    const capacity = catalogue.capacityByFamily[family];
+    byId("n2Input").max = String(capacity.side2);
+    byId("n3Input").max = String(capacity.side3);
+  }
+  syncCountCaps();
+
   function currentSelection() {
     return {
       side2Slug: byId("side2Select").value,
@@ -238,6 +264,7 @@ async function start() {
             pursuitTargetId, engagedTargetId, attackTargetId,
             alive: alive === 1,
             owner: meta.owner,
+            label: meta.label,
             unitMaster: meta.master,
             mechanics: Object.freeze({
               hp: meta.maxHp,
@@ -271,7 +298,8 @@ async function start() {
   }
 
   function displayFeedback() {
-    const row = feedback.get(feedbackKey());
+    const key = feedbackKey();
+    const row = key ? feedback.get(key) : { flagged: false, note: "" };
     byId("runFlagged").checked = row.flagged;
     byId("reviewNote").value = row.note;
   }
@@ -281,8 +309,11 @@ async function start() {
     setPlaying(false);
     selected = nextSelection;
     byId("playbackMode").textContent = "loading trace";
-    byId("mapStatus").innerHTML =
-      `<span class="status-light is-loading"></span>Running ${selected.n2}v${selected.n3}…`;
+    // n2/n3 are absent while a derived-count request is in flight (every unit
+    // change, and the very first boot request) -- fall back to a placeholder
+    // rather than printing the literal word "undefined".
+    byId("mapStatus").innerHTML = `<span class="status-light is-loading"></span>`
+      + `Running ${selected.n2 ?? "…"}v${selected.n3 ?? "…"}…`;
     for (const control of ["playPause", "resetPlayback", "stepTick", "nextEvent"]) {
       byId(control).disabled = true;
     }
@@ -293,9 +324,15 @@ async function start() {
     const endpoint = `api/fight?side2=${encodeURIComponent(selected.side2Slug)}`
       + `&side3=${encodeURIComponent(selected.side3Slug)}${counts}`;
     const response = await fetch(endpoint, { cache: "no-store" });
+    // Checked immediately on the freshest signal available (before spending
+    // time on response.ok or parsing a body) so a superseded request never
+    // touches the UI, whichever way it resolved.
+    if (serial !== requestSerial) return;
     if (!response.ok) {
       const detail = await response.json().catch(() => null);
-      throw new Error(detail?.error ?? `Fight API returned ${response.status}`);
+      if (serial !== requestSerial) return;
+      rejectFight(detail?.error ?? `Fight API returned ${response.status}`);
+      return;
     }
     const result = deepFreeze(await response.json());
     if (serial !== requestSerial) return;
@@ -355,7 +392,10 @@ async function start() {
     });
   }
   for (const id of ["side2Select", "side3Select"]) {
-    byId(id).addEventListener("change", () => { loadDerived().catch(showError); });
+    byId(id).addEventListener("change", () => {
+      syncCountCaps();
+      loadDerived().catch(showError);
+    });
   }
   for (const id of ["n2Input", "n3Input"]) {
     byId(id).addEventListener("change", () => {
@@ -387,17 +427,26 @@ async function start() {
     byId("playbackMode").textContent = "formation";
   });
 
+  // Keyed on activeResult, not `selected`: a rejected request updates
+  // `selected` to the attempted (failed) pick but leaves whatever fight was
+  // last loaded on screen, and the review panel must describe what is
+  // actually visible, not a fight that never ran. null in the boot window
+  // before the first fight has resolved, and after a rejection with nothing
+  // loaded yet -- either way, there is nothing to key a review row on.
   function feedbackKey() {
+    if (!activeResult) return null;
     return {
-      pair: `${selected.side2Slug}-vs-${selected.side3Slug}`,
-      ratio: `${selected.n2}v${selected.n3}`,
+      pair: `${activeResult.side2.slug}-vs-${activeResult.side3.slug}`,
+      ratio: `${activeResult.side2.count}v${activeResult.side3.count}`,
       repeat: 1,
     };
   }
 
   function saveFeedback() {
+    const key = feedbackKey();
+    if (!key) return;
     feedback.set({
-      ...feedbackKey(),
+      ...key,
       flagged: byId("runFlagged").checked,
       note: byId("reviewNote").value,
     });
@@ -517,6 +566,22 @@ async function start() {
 }
 
 
+// A rejected fight (an impossible pick, an engine-tick ceiling, a formation
+// over capacity) is a routine, recoverable outcome of free selection, not a
+// boot failure -- so it goes to the status line the user is already reading,
+// never the full-screen modal, and always leaves the transport controls (and
+// whatever fight was already loaded) usable.
+function rejectFight(message) {
+  byId("mapStatus").innerHTML = `<span class="status-light"></span>Rejected: ${message}`;
+  byId("playbackMode").textContent = "paused";
+  for (const control of ["playPause", "resetPlayback", "stepTick", "nextEvent"]) {
+    byId(control).disabled = false;
+  }
+}
+
+
+// The modal is reserved for genuine boot failures -- map/formation/units
+// fetch failing -- which leave nothing usable on screen to fall back to.
 function showError(error) {
   const panel = byId("errorPanel");
   panel.hidden = false;

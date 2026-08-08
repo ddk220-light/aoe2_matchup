@@ -55,3 +55,29 @@ test("a malformed pair is rejected", () => {
     () => feedback.flag({ pair: "Champion vs Paladin", ratio: "5v3", repeat: 1, note: "" }),
     /pair/i);
 });
+
+test("a note with a pair survives a reload -- a fresh instance over the same storage", () => {
+  const storage = memoryStorage();
+  const feedback = createReviewFeedback({ storage });
+  feedback.flag({ pair: "champion-vs-paladin", ratio: "5v3", repeat: 1, note: "reload me" });
+
+  // A page reload is exactly this: a brand-new createReviewFeedback reading
+  // whatever readRuns() pulls back out of the same storage object.
+  const reloaded = createReviewFeedback({ storage });
+  assert.equal(reloaded.get({ pair: "champion-vs-paladin", ratio: "5v3", repeat: 1 }).note, "reload me");
+  // And it must not have also collided with (or duplicated over) a different
+  // pair at the same ratio/repeat.
+  assert.equal(reloaded.get({ pair: "arbalester-vs-champion", ratio: "5v3", repeat: 1 }).note, "");
+});
+
+test("a legacy row written before pair existed still loads after a reload", () => {
+  const storage = memoryStorage();
+  storage.setItem("aoe2.cleanroom.champion.review.v1", JSON.stringify([
+    { ratio: "2v3", repeat: 2, flagged: true, note: "pre-existing note, no pair" },
+  ]));
+
+  const feedback = createReviewFeedback({ storage });
+  assert.deepEqual(feedback.get({ ratio: "2v3", repeat: 2 }), {
+    ratio: "2v3", repeat: 2, flagged: true, note: "pre-existing note, no pair",
+  });
+});

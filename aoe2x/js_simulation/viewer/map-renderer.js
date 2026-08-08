@@ -91,7 +91,7 @@ export function buildSimulationScene(snapshot, {
       reference_id: unit.referenceId,
       player_id: unit.owner,
       unit_const: unit.unitMaster,
-      name: "CHAMPION",
+      name: unit.label,
       position: Object.freeze({ x: unit.x, y: unit.y }),
       rotation: unit.facing,
       team: unit.owner === 2 ? "p2" : "p3",

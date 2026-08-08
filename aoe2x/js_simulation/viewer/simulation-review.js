@@ -97,7 +97,13 @@ function readRuns(storage) {
       && typeof row.flagged === "boolean"
       && typeof row.note === "string"
       && row.note.length <= MAX_NOTE_LENGTH
-    )).map(({ ratio, repeat, flagged, note }) => ({ ratio, repeat, flagged, note }));
+      // pair is optional -- rows written before it existed have none, and
+      // those must keep loading unchanged -- but if present it must validate,
+      // the same as every other field here.
+      && (row.pair === undefined || (typeof row.pair === "string" && PAIR_PATTERN.test(row.pair)))
+    )).map(({ ratio, repeat, pair, flagged, note }) => (
+      pair === undefined ? { ratio, repeat, flagged, note } : { pair, ratio, repeat, flagged, note }
+    ));
   } catch {
     return [];
   }

@@ -30,7 +30,13 @@ const DEFAULTS = Object.freeze({
   step: "chaser",
   minRange: "",
   kiteEngage: "",
-  chasePath: "",
+  // "grid": per-unit obstacle-aware pursuit pathing (combat/chase-path.js).
+  // Landed 2026-08-08: the first configuration with zero kited wrong winners
+  // (corpus 522.7 / 1, the survivor being the champion_vs_paladin 6v3
+  // knife-edge; fixes arbalester_vs_firelancer 15v20). Band-error cost over
+  // the chaser-only solver is margin-side only. AOE2X_EXP_CHASE_PATH=none
+  // restores goal-blind pursuit.
+  chasePath: "grid",
 });
 
 
@@ -51,6 +57,7 @@ const rawEngagement = envString("AOE2X_EXP_ENGAGEMENT", DEFAULTS.engagement);
 // "step" has a non-empty default, the baseline solver needs a reachable
 // explicit sentinel. AOE2X_EXP_STEP=none maps to "".
 const rawStep = envString("AOE2X_EXP_STEP", DEFAULTS.step);
+const rawChasePath = envString("AOE2X_EXP_CHASE_PATH", DEFAULTS.chasePath);
 
 export const ENGINE_CONFIG = Object.freeze({
   engagement: rawEngagement === "free" ? "" : rawEngagement,
@@ -60,5 +67,5 @@ export const ENGINE_CONFIG = Object.freeze({
   step: rawStep === "none" ? "" : rawStep,
   minRange: envString("AOE2X_EXP_MINRANGE", DEFAULTS.minRange),
   kiteEngage: envString("AOE2X_EXP_KITE_ENGAGE", DEFAULTS.kiteEngage),
-  chasePath: envString("AOE2X_EXP_CHASE_PATH", DEFAULTS.chasePath),
+  chasePath: rawChasePath === "none" ? "" : rawChasePath,
 });

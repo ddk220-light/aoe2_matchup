@@ -1,5 +1,23 @@
 # HCA vs Champion 12v21 — chaser mobility forensics (2026-08-07)
 
+> **2026-08-08, round 4 — PINNED: grid pathing is the committed default,
+> and hcavarcher_vs_champion runs the kited escape per scenario.**
+> `engine-config.js` now ships `chasePath: "grid"` (`AOE2X_EXP_CHASE_PATH=none`
+> restores goal-blind pursuit), and `kitedEscape` is a per-scenario truth-
+> fixture property carried like `chaseCapture` — ON only for
+> `hcavarcher_vs_champion`, the one matchup whose tapes show the caught kiter
+> escaping through contact, OFF everywhere the tape shows the escape failing.
+> This is a deliberate hard exception, recorded here so that future matchup
+> rounds can generalize it: the expectation is that running the grid planner
+> for the kited side's move execution will eventually subsume the flag.
+>
+> Gates at the pinned defaults: hcc 12v21 **5/6 HCA, mean −33.6 vs tape
+> −36.5** (tape: 13/14); corpus **531.0 / 1 wrong winner** (the
+> champion_vs_paladin 6v3 knife-edge, accepted); the scenario flag moves
+> exactly the four hcavarcher_vs_champion column ratios and no others, all
+> keeping the tape's winner (worst 15v20, band err 2.2 → 9.8);
+> test-failure set identical; config_baseline.json re-captured.
+
 > **2026-08-08, round 3 — the victim side, measured: `AOE2X_EXP_STEP=kited`
 > (default OFF).** With routing in place, the next mirrored measurement moved
 > from the chaser to the CAUGHT KITER. Post-swing forensics: the attacker's

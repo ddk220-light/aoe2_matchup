@@ -326,6 +326,9 @@ function runRoster({ name, ratio, roster, mechanics, truth, synthetic }) {
     // per-scenario settings); this was measured through the sweep harness and
     // had never been wired into playback.
     ...(truth.chaseCapture === true ? { chaseCapture: true } : {}),
+    // Per-scenario kited-side escape steer (HCC_CHASER_MOBILITY, round 3):
+    // ON only where the tape shows the caught kiter escaping through contact.
+    ...(truth.kitedEscape === true ? { kitedEscape: true } : {}),
   }), { maxTicks: 9000 });
   const live = result.world.units.filter(({ alive }) => alive);
   return Object.freeze({

@@ -210,6 +210,7 @@ export function createWorld(scenario) {
           scenario.kiteOwner,
           scenario.kiteProfile ?? null,
           scenario.chaseCapture === true,
+          scenario.kitedEscape === true,
         ),
       }
       : {}),
@@ -511,10 +512,11 @@ function stepHitsOtherEnemyBody(mover, dx, dy, live) {
 
 
 
-function steerProposals(planned, map, chaserScopeOwner = null) {
+function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = false) {
   if (!STEER_AROUND_BODIES && chaserScopeOwner === null) {
     return { proposals: planned.proposals, steered: null };
   }
+  const escapeActive = KITED_SIDE_STEER || kitedEscape;
   const bounds = { width: map.width, height: map.height };
   const byReference = new Map(planned.units.map((unit) => [unit.referenceId, unit]));
   const proposalByReference = new Map(
@@ -541,7 +543,7 @@ function steerProposals(planned, map, chaserScopeOwner = null) {
         // target exclusion here: a kiter's target is who it SHOOTS -- most
         // often the very champion pressing it -- never a body it wants to
         // walk into.
-        if (!KITED_SIDE_STEER || !mover.moveOrder) return proposal;
+        if (!escapeActive || !mover.moveOrder) return proposal;
         if (!stepHitsAnyEnemyBody(mover, proposal.dx, proposal.dy, planned.units)) {
           return proposal;
         }
@@ -581,7 +583,9 @@ function resolveMovement(planned, byReference, map, kiteState = null) {
   // only. Without a kiteState (or for the kiting side) the solver is
   // untouched, so every non-kited fight stays bit-identical to baseline.
   const chaserScopeOwner = CHASER_BIMODAL_STEP && kiteState ? kiteState.owner : null;
-  const { proposals: wantedProposals, steered } = steerProposals(planned, map, chaserScopeOwner);
+  const { proposals: wantedProposals, steered } = steerProposals(
+    planned, map, chaserScopeOwner, kiteState?.kitedEscape === true,
+  );
   let moved = resolveMovementProposals(planned.units, wantedProposals, map);
   if (!BIMODAL_STEP && chaserScopeOwner === null) return moved;
   const eligible = (referenceId) => {

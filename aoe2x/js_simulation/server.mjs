@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { createChampionPlaybackData } from "./src/champion-comparison.js";
 import { FIGHT_SIDE_CAP, runFight } from "./src/fight.js";
+import { sideCapacity } from "./src/placement.js";
 import { TICKS_PER_SECOND } from "./src/simulation-clock.js";
 import { runChampionRatio } from "./tests/support/champion-ratio.mjs";
 import {
@@ -26,6 +27,10 @@ const CONTENT_TYPES = new Map([
 ]);
 
 const CHAMPION_RATIOS = Object.freeze(["1v1", "2v1", "2v3", "5v3", "6v3"]);
+// Mirrors the family keys placement.js resolves a pairing to (its own FAMILIES
+// list is private); capacity is per (owner, family), not a single scalar, so
+// a picker built on sideCap alone can construct a request that 400s.
+const FIGHT_FAMILIES = Object.freeze(["rvr", "kite", "siege", "waves"]);
 const championDataByRoot = new Map();
 const championPlaybackByRatio = new Map();
 
@@ -189,7 +194,14 @@ async function handleFightApi({ request, response, root, url }) {
   if (url.pathname === "/api/units") {
     sendJson(response, 200, {
       schemaVersion: 1,
+      // The maximum across every (owner, family) block, kept for backward
+      // compatibility; capacityByFamily below is the real, per-side ceiling
+      // a picker needs (a side-2 siege block holds only 16, not 21).
       sideCap: FIGHT_SIDE_CAP,
+      capacityByFamily: Object.fromEntries(FIGHT_FAMILIES.map((family) => [
+        family,
+        { side2: sideCapacity(2, family), side3: sideCapacity(3, family) },
+      ])),
       units: UNIT_REGISTRY.map(({ slug, label, civ, class: unitClass, baseCost }) => ({
         slug, label, civ, class: unitClass, baseCost,
       })),

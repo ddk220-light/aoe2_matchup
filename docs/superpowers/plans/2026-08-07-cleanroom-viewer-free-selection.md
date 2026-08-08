@@ -1030,7 +1030,7 @@ Composes registry + placement + purchase + engine into one request path that rea
 
 **Interfaces:**
 - Consumes: `placeArmy`, `resolveBands`, `PLACEMENT_CAP` (Task 2); `unitBySlug`, `UNIT_REGISTRY` (Task 3); `deriveCounts` (Task 4).
-- Produces: `src/fight.js` exporting `runFight(root, { side2Slug, n2, side3Slug, n3 })` → frozen slim playback; `FIGHT_SIDE_CAP` (40). Slim playback shape:
+- Produces: `src/fight.js` exporting `runFight(root, { side2Slug, n2, side3Slug, n3 })` → frozen slim playback; `FIGHT_SIDE_CAP` (40). **`n2` and `n3` are optional**: when either is omitted, both come from `deriveCounts(side2Slug, side3Slug)` and the chosen values are reported back in `side2.count` / `side3.count`, with `derivedCounts: true`. This keeps the purchase rule in `src/purchase.js` alone — the viewer never recomputes it. Slim playback shape:
 
 ```javascript
 {
@@ -1038,6 +1038,7 @@ Composes registry + placement + purchase + engine into one request path that rea
   side2: { slug, label, civ, count, class },
   side3: { slug, label, civ, count, class },
   bands: { side2Edge, side3Edge },
+  derivedCounts: boolean,
   kiteOwner: 2 | 3 | null,
   ticks, winnerOwner, winnerHp,
   finalStateHash, eventLogHash,
@@ -1147,6 +1148,20 @@ test("a 20v20 fight serialises under 10 MB", async () => {
   assert.ok(bytes < 10 * 1024 * 1024, `20v20 serialised to ${(bytes / 1048576).toFixed(1)} MB`);
 });
 
+test("omitting both counts derives them from the purchase rule", async () => {
+  const fight = await runFight(root, { side2Slug: "champion", side3Slug: "siege_onager" });
+  assert.equal(fight.derivedCounts, true);
+  assert.equal(fight.side2.count, 21);
+  assert.equal(fight.side3.count, 8);
+
+  const explicit = await runFight(root, {
+    side2Slug: "champion", n2: 21, side3Slug: "siege_onager", n3: 8,
+  });
+  assert.equal(explicit.derivedCounts, false);
+  assert.equal(explicit.finalStateHash, fight.finalStateHash,
+    "deriving the counts must produce the same fight as passing them");
+});
+
 test("bad input is rejected", async () => {
   await assert.rejects(
     () => runFight(root, { side2Slug: "trebuchet", n2: 5, side3Slug: "champion", n3: 5 }),
@@ -1181,6 +1196,7 @@ import { hashCanonicalJson } from "./canonical-json.js";
 import { createUnitState } from "./combat/unit-state.js";
 import { createWorld, runWorld } from "./combat/world.js";
 import { PLACEMENT_CAP, placeArmy, resolveBands } from "./placement.js";
+import { deriveCounts } from "./purchase.js";
 import { unitBySlug } from "./unit-registry.js";
 
 
@@ -1245,8 +1261,15 @@ function slimSnapshot(snapshot) {
 
 
 export async function runFight(root, { side2Slug, n2, side3Slug, n3 }) {
-  const side2 = resolveUnit(side2Slug, n2);
-  const side3 = resolveUnit(side3Slug, n3);
+  // Counts are optional: omit either and both come from the purchase rule, so
+  // the formula lives in purchase.js and nowhere else.
+  const derivedCounts = n2 === undefined || n3 === undefined;
+  const derived = derivedCounts ? deriveCounts(side2Slug, side3Slug) : null;
+  const count2 = derived ? derived.countA : n2;
+  const count3 = derived ? derived.countB : n3;
+
+  const side2 = resolveUnit(side2Slug, count2);
+  const side3 = resolveUnit(side3Slug, count3);
   const [mechanics2, mechanics3] = await Promise.all([
     loadMechanics(root, side2),
     loadMechanics(root, side3),
@@ -1254,9 +1277,9 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3 }) {
 
   const bands = resolveBands({ side2Class: side2.class, side3Class: side3.class });
   const roster = [
-    ...placeArmy({ owner: 2, count: n2, bandEdge: bands.side2Edge })
+    ...placeArmy({ owner: 2, count: count2, bandEdge: bands.side2Edge })
       .map((cell, index) => ({ owner: 2, cell, index, unit: side2, mechanics: mechanics2 })),
-    ...placeArmy({ owner: 3, count: n3, bandEdge: bands.side3Edge })
+    ...placeArmy({ owner: 3, count: count3, bandEdge: bands.side3Edge })
       .map((cell, index) => ({ owner: 3, cell, index, unit: side3, mechanics: mechanics3 })),
   ];
 
@@ -1273,7 +1296,7 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3 }) {
 
   const kiteOwner = kiteOwnerFor(side2, side3);
   const result = runWorld(createWorld({
-    ratio: `${n2}v${n3}`,
+    ratio: `${count2}v${count3}`,
     units,
     ...(kiteOwner === null ? {} : { kiteOwner }),
   }), { maxTicks: MAX_TICKS });
@@ -1289,16 +1312,17 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3 }) {
   return Object.freeze({
     schemaVersion: 1,
     side2: Object.freeze({
-      slug: side2.slug, label: side2.label, civ: side2.civ, count: n2, class: side2.class }),
+      slug: side2.slug, label: side2.label, civ: side2.civ, count: count2, class: side2.class }),
     side3: Object.freeze({
-      slug: side3.slug, label: side3.label, civ: side3.civ, count: n3, class: side3.class }),
+      slug: side3.slug, label: side3.label, civ: side3.civ, count: count3, class: side3.class }),
     bands: Object.freeze(bands),
+    derivedCounts,
     kiteOwner,
     ticks: result.ticks,
     winnerOwner: live.length ? live[0].owner : null,
     winnerHp: live.reduce((total, unit) => total + unit.hp, 0),
     finalStateHash: hashCanonicalJson({
-      tick: result.world.tick, ratio: `${n2}v${n3}`, units: result.world.units }),
+      tick: result.world.tick, ratio: `${count2}v${count3}`, units: result.world.units }),
     eventLogHash: hashCanonicalJson(result.events),
     unitIndex: Object.freeze(unitIndex),
     snapshots: Object.freeze(result.snapshots.map(slimSnapshot)),
@@ -1332,9 +1356,11 @@ function fightSelection(url) {
   const slug3 = url.searchParams.get("side3");
   const raw2 = url.searchParams.get("n2");
   const raw3 = url.searchParams.get("n3");
-  if (!slug2 || !slug3 || !/^\d{1,2}$/.test(raw2 ?? "") || !/^\d{1,2}$/.test(raw3 ?? "")) {
-    return null;
-  }
+  if (!slug2 || !slug3) return null;
+  // Both counts omitted -> derive them from the purchase rule. One without the
+  // other is a malformed request, not a half-derived fight.
+  if (raw2 === null && raw3 === null) return { side2Slug: slug2, side3Slug: slug3 };
+  if (!/^\d{1,2}$/.test(raw2 ?? "") || !/^\d{1,2}$/.test(raw3 ?? "")) return null;
   return { side2Slug: slug2, n2: Number(raw2), side3Slug: slug3, n3: Number(raw3) };
 }
 
@@ -1358,7 +1384,8 @@ async function handleFightApi({ request, response, root, url }) {
   const selection = fightSelection(url);
   if (!selection) {
     sendJson(response, 400, {
-      error: `side2 and side3 must be unit slugs, n2 and n3 integers 1-${FIGHT_SIDE_CAP}`,
+      error: "side2 and side3 must be unit slugs; give both n2 and n3 as integers "
+        + `1-${FIGHT_SIDE_CAP}, or neither to derive them`,
     });
     return true;
   }
@@ -1582,7 +1609,12 @@ In `aoe2x/js_simulation/viewer/app.js`:
     };
   }
 
-  let selected = currentSelection();
+  // Boot with no counts: the server derives the even-fight purchase and the
+  // inputs are filled in from what it chose.
+  let selected = {
+    side2Slug: byId("side2Select").value,
+    side3Slug: byId("side3Select").value,
+  };
 ```
 
 **4d.** Replace the body of `loadSimulation` (lines 240–278). The endpoint, the ledger fields and the snapshot source all change; the transport-button enable/disable and the feedback call stay:
@@ -1598,9 +1630,12 @@ In `aoe2x/js_simulation/viewer/app.js`:
     for (const control of ["playPause", "resetPlayback", "stepTick", "nextEvent"]) {
       byId(control).disabled = true;
     }
+    // Counts are omitted entirely when the caller wants the derived purchase;
+    // the server sends back what it chose and the inputs are synced from it.
+    const counts = selected.n2 === undefined || selected.n3 === undefined
+      ? "" : `&n2=${selected.n2}&n3=${selected.n3}`;
     const endpoint = `api/fight?side2=${encodeURIComponent(selected.side2Slug)}`
-      + `&n2=${selected.n2}`
-      + `&side3=${encodeURIComponent(selected.side3Slug)}&n3=${selected.n3}`;
+      + `&side3=${encodeURIComponent(selected.side3Slug)}${counts}`;
     const response = await fetch(endpoint, { cache: "no-store" });
     if (!response.ok) {
       const detail = await response.json().catch(() => null);
@@ -1609,6 +1644,10 @@ In `aoe2x/js_simulation/viewer/app.js`:
     const result = deepFreeze(await response.json());
     if (serial !== requestSerial) return;
     activeResult = result;
+    // Whatever the server ran is what the inputs show, derived or not.
+    selected = { ...selected, n2: result.side2.count, n3: result.side3.count };
+    byId("n2Input").value = String(result.side2.count);
+    byId("n3Input").value = String(result.side3.count);
     cursor = createPlaybackCursor({ snapshots: result.snapshots, onSnapshot: present });
     byId("simWinner").textContent = result.winnerOwner === null
       ? "—" : `Player ${result.winnerOwner}`;
@@ -1688,28 +1727,25 @@ function renderUnitTelemetry(snapshot, index) {
 **4g.** Replace the matchup/ratio/repeat event wiring (lines 298–388) with the four controls plus the even-fight button:
 
 ```javascript
-  function loadFromControls() {
-    return loadSimulation(currentSelection());
+  // Changing a unit re-derives the counts -- a new pair gets the even-fight
+  // purchase, which is what the recorded fights were bought at. Typing a count
+  // sends both counts explicitly. Either way the server decides and the inputs
+  // are synced from its answer, so the purchase rule lives only in purchase.js.
+  function loadDerived() {
+    return loadSimulation({
+      side2Slug: byId("side2Select").value,
+      side3Slug: byId("side3Select").value,
+    });
   }
-  for (const id of ["side2Select", "side3Select", "n2Input", "n3Input"]) {
-    byId(id).addEventListener("change", () => { loadFromControls().catch(showError); });
+  for (const id of ["side2Select", "side3Select"]) {
+    byId(id).addEventListener("change", () => { loadDerived().catch(showError); });
   }
-  byId("resetCounts").addEventListener("click", () => {
-    const { side2Slug, side3Slug } = currentSelection();
-    const cost = (slug) => {
-      const { food, wood, gold } = catalogue.units.find((u) => u.slug === slug).baseCost;
-      return food + wood + 1.5 * gold;
-    };
-    const costs = [cost(side2Slug), cost(side3Slug)];
-    const cheap = Math.min(...costs);
-    const dear = Math.max(...costs);
-    const cheapCount = Math.min(21, Math.floor(3000 / cheap));
-    const dearCount = Math.max(1, Math.floor(cheapCount * cheap / dear));
-    const [n2, n3] = costs[0] <= costs[1] ? [cheapCount, dearCount] : [dearCount, cheapCount];
-    byId("n2Input").value = String(n2);
-    byId("n3Input").value = String(n3);
-    loadFromControls().catch(showError);
-  });
+  for (const id of ["n2Input", "n3Input"]) {
+    byId(id).addEventListener("change", () => {
+      loadSimulation(currentSelection()).catch(showError);
+    });
+  }
+  byId("resetCounts").addEventListener("click", () => { loadDerived().catch(showError); });
 ```
 
 **4h.** Delete the now-unused `matchupList`, `populateMatchups`, `ratiosFor`, `ratioAllowed`, `repopulateRatios` functions and the `CHAMPION_RATIO_OPTIONS` constant, and both `history.replaceState` calls. The import block from `./simulation-review.js` (lines 8–14) drops `RATIO_PATTERN`, `parseReviewSelection` and `selectionUrl` — all three were only used by the deleted ratio validation — leaving:
@@ -1839,12 +1875,13 @@ cd /d/AI/aoe2_matchup && node aoe2x/js_simulation/server.mjs --port 5011 &
 
 Open `http://127.0.0.1:5011/` and confirm, in order:
 
-1. Both unit dropdowns list 14 units with civ names; boot runs Champion 21 vs Paladin 21.
-2. Changing Side 3 to `Arbalester (Chinese)` re-runs and the two armies visibly start further apart.
-3. Setting the counts to 20 and 20 completes and plays without the tab stalling.
-4. Pressing "Even fight" for Champion vs Siege Onager sets 21 and 8.
-5. `+1 tick`, `Next event`, `Reset`, the top-down toggle and the event tape all still work.
-6. The browser console shows no errors.
+1. Both unit dropdowns list 14 units with civ names; boot runs Champion vs Paladin with the count inputs filled in from the derived purchase (21 and 13).
+2. Changing Side 3 to `Arbalester (Chinese)` re-runs, the counts re-derive, and the two armies visibly start further apart.
+3. Typing 20 into both count inputs completes and plays without the tab stalling.
+4. Pressing "Even fight" after that restores the derived counts.
+5. Selecting Champion vs Siege Onager derives 21 and 8.
+6. `+1 tick`, `Next event`, `Reset`, the top-down toggle and the event tape all still work.
+7. The browser console shows no errors.
 
 Stop the server.
 

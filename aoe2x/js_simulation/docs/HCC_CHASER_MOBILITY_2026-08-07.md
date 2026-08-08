@@ -30,6 +30,14 @@
 > cannot slip a gap narrower than its own box plus margin), or extending the
 > grid planner to the kiting side's move execution. The flag stays OFF;
 > default and `grid` behavior are bit-identical with it unset.
+>
+> The clearance-margin candidate was probed at 0.25 tiles (one body
+> half-width) and rejected: it overshoots the other way -- fleeing kiters
+> wall in, 12v21 drops to 1/6 and kac 15v20 / avf 20v20 flip TOWARD the
+> chasers (638.4 / 3). With pad 0 the escape is too free, with 0.25 too
+> hard; threading a pad between two wrong-winner cliffs would be fitting to
+> the outcome, so the remaining honest lever is the grid planner executing
+> the kited side's moves (clearance emerges from the plan, not a constant).
 
 > **2026-08-08, round 2 — per-unit pathing exists: `AOE2X_EXP_CHASE_PATH=grid`
 > (default OFF, candidate for the next pin).** The "next real lever" below is

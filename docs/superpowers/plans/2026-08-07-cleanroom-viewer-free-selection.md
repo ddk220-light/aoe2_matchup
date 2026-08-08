@@ -17,7 +17,7 @@
 - Tests run with `node --test aoe2x/js_simulation/tests`. Every task leaves this green.
 - Calibrated engine configuration is `engagement: "pursuit"`, `orders: true`. After Task 1 these are the committed defaults.
 - Purchase cost weights are exactly `food + wood + 1.5 * gold`, over `ref_units.base_cost_*` (NOT `final_cost_*`).
-- Army size cap per side is 21 for derived counts; the viewer permits 1–40 manually.
+- Army size cap per side is 21, which is what the archive recorded. A side-2 siege block caps at 16 (`sideCapacity(2, "siege")`). Counts beyond a family's capacity are a clean error, never extrapolated geometry.
 - Existing endpoints `/api/matchup/*` and `/api/champion/*` keep their current behaviour and response shape. They are regression surface; the viewer stops calling them.
 - Commit on the current branch (`codex/cleanroom-champion-sim`). Do not check out or push `staging` or `main`.
 
@@ -32,7 +32,7 @@
 | `aoe2x/js_simulation/src/engine-config.js` | *create* — the one place calibrated defaults live |
 | `aoe2x/js_simulation/tools/derive_placement.py` | *create* — one-time analysis of `spawns.json` → generated table |
 | `aoe2x/js_simulation/src/placement-table.js` | *create, generated* — ordered cell sequence per family |
-| `aoe2x/js_simulation/src/placement.js` | *create* — `placeArmy`, `resolveBands` |
+| `aoe2x/js_simulation/src/placement.js` | *create* — `placeArmy`, `resolveFamily`, `sideCapacity` |
 | `aoe2x/js_simulation/src/unit-registry.js` | *create* — 14 units: slug, label, civ, master, fixture, class, baseCost |
 | `aoe2x/js_simulation/src/purchase.js` | *create* — `weightedCost`, `deriveCounts` |
 | `aoe2x/js_simulation/src/fight.js` | *create* — compose registry + placement + engine → slim playback |
@@ -286,9 +286,22 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ### Task 2: Placement module derived from the recorded spawns
 
-`calibration/fixtures/spawns.json` holds 339 recorded layouts (678 side-layouts). Analysis established that within a family keyed by (owner, band edge) an N-unit layout is the first N cells of a larger same-family layout in 60 of 61 cases. This task turns that into an exact ordered sequence per family, and gates it on regenerating every recorded layout.
+`calibration/fixtures/spawns.json` holds 339 recorded layouts (678 side-layouts). This task turns them into an exact ordered cell sequence per family, and gates it on regenerating every recorded layout.
 
-Band edge is `max(y)` for owner 2 (it fills upward) and `min(y)` for owner 3 (it fills downward).
+**The key is `(owner, family)` and nothing else.** This was measured, not guessed: with that key, all 678 recorded side-layouts regenerate exactly. Two earlier keyings do NOT work and must not be reintroduced — keying on the band edge collides (kite and rvr both put side 3 at edge 10.5 with different blocks; melee-vs-melee and siege-vs-melee both put side 2 at edge 6.5 with different blocks), and the corpus's own three-way category collides too (it lumps siege-vs-melee in with melee-vs-melee). The band edge is an *output* of the fill order — it varies with army size inside a single family — so it is not a parameter of anything.
+
+The four families, decided from the two units' combat classes:
+
+| family | condition | meaning |
+|---|---|---|
+| `rvr` | both sides ranged (`mobile_ranged` or `siege_ranged`) | ranged vs ranged |
+| `kite` | exactly one side `mobile_ranged`, the other melee | the kiting archive |
+| `siege` | exactly one side `siege_ranged`, the other melee | siege vs melee |
+| `waves` | both sides melee | the melee archive |
+
+Order matters: test `rvr` first, then `kite`, then `siege`, then `waves`.
+
+Owner 2 fills from the front of its own half, owner 3 from the front of the other; the derivation recovers the order from the data rather than assuming a shape.
 
 **Files:**
 - Create: `aoe2x/js_simulation/tools/derive_placement.py`
@@ -299,8 +312,8 @@ Band edge is `max(y)` for owner 2 (it fills upward) and `min(y)` for owner 3 (it
 **Interfaces:**
 - Consumes: nothing from earlier tasks.
 - Produces:
-  - `src/placement-table.js` exporting `PLACEMENT_TABLE` — a frozen object keyed `"<owner>@<bandEdge>"` (e.g. `"2@6.5"`), each value a frozen array of `[x, y]` pairs in fill order, and `PLACEMENT_PROVENANCE` — a frozen object `{ source, layouts, sideLayouts, exact, residue }`.
-  - `src/placement.js` exporting `placeArmy({ owner, count, bandEdge })` → frozen array of `{ x, y }`; `resolveBands({ side2Class, side3Class })` → `{ side2Edge, side3Edge }`; `PLACEMENT_CAP` (number, 40).
+  - `src/placement-table.js` exporting `PLACEMENT_TABLE` — a frozen object keyed `"<owner>@<family>"` (e.g. `"2@kite"`), each value a frozen array of `[x, y]` pairs in fill order; and `PLACEMENT_PROVENANCE` — frozen `{ source, layouts, sideLayouts, exact, residue }`.
+  - `src/placement.js` exporting `placeArmy({ owner, count, family })` → frozen array of `{ x, y }`; `resolveFamily({ side2Class, side3Class })` → one of `"rvr" | "kite" | "siege" | "waves"`; `sideCapacity(owner, family)` → integer, the number of derived cells available.
 
 - [ ] **Step 1: Write the derivation tool**
 
@@ -309,7 +322,7 @@ Create `aoe2x/js_simulation/tools/derive_placement.py`:
 ```python
 """Derive the tapes' spawn fill order and emit src/placement-table.js.
 
-The recorded layouts nest: within a family keyed by (owner, band edge), the
+Within a family keyed by (owner, family), the recorded layouts nest: the
 N-unit layout is the first N cells of a larger layout in the same family. So
 the fill order is recoverable exactly -- walk the family's layouts smallest
 first and append whatever each one adds.
@@ -320,6 +333,7 @@ first and append whatever each one adds.
 from __future__ import annotations
 
 import json
+import re
 from collections import defaultdict
 from pathlib import Path
 
@@ -327,10 +341,25 @@ ROOT = Path(__file__).resolve().parents[3]
 SPAWNS = ROOT / "calibration" / "fixtures" / "spawns.json"
 OUTPUT = ROOT / "aoe2x" / "js_simulation" / "src" / "placement-table.js"
 
+SIEGE = {"heavy_scorpion", "siege_onager"}
+MOBILE = {"arbalester", "hand_cannoneer", "heavy_cav_archer", "imp_elite_skirm"}
 
-def band_edge(owner: str, points: list[tuple[float, float]]) -> float:
-    ys = [p[1] for p in points]
-    return max(ys) if owner == "2" else min(ys)
+
+def family(label: str) -> str:
+    """Which spawn family a recorded matchup label belongs to.
+
+    Mirrors resolveFamily in src/placement.js exactly; the test asserts the two
+    agree on every recorded label.
+    """
+    left, right = re.sub(r"_r\d+$", "", label).split("__vs__")
+    ranged = {unit for unit in (left, right) if unit in SIEGE or unit in MOBILE}
+    if len(ranged) == 2 or (len(ranged) == 1 and left == right):
+        return "rvr"
+    if left in MOBILE or right in MOBILE:
+        return "kite"
+    if left in SIEGE or right in SIEGE:
+        return "siege"
+    return "waves"
 
 
 def sort_key(owner: str, cell: tuple[float, float]) -> tuple[float, float]:
@@ -339,28 +368,28 @@ def sort_key(owner: str, cell: tuple[float, float]) -> tuple[float, float]:
     Cells added together are interchangeable for reproducing the recorded
     layouts -- any order within one increment yields the same set at every
     recorded size. The order only becomes observable at counts that fall
-    between two recorded sizes, so it is fixed here: nearest the band edge
-    first, then left to right.
+    between two recorded sizes, so it is fixed here: front rank first, then
+    left to right.
     """
     x, y = cell
-    depth = -y if owner == "2" else y
-    return (depth, x)
+    return (-y if owner == "2" else y, x)
 
 
 def main() -> None:
     spawns = json.loads(SPAWNS.read_text())
-    families: dict[tuple[str, float], list[frozenset]] = defaultdict(list)
+    families: dict[tuple[str, str], list[frozenset]] = defaultdict(list)
     side_layouts = 0
-    for sides in spawns.values():
+    for label, sides in spawns.items():
+        group = family(label)
         for owner in ("2", "3"):
-            points = [tuple(p) for p in sides[owner]]
-            families[(owner, band_edge(owner, points))].append(frozenset(points))
+            points = frozenset(tuple(point) for point in sides[owner])
+            families[(owner, group)].append(points)
             side_layouts += 1
 
     table: dict[str, list[list[float]]] = {}
     exact = 0
     residue: list[dict] = []
-    for (owner, edge), layouts in sorted(families.items(), key=lambda kv: str(kv[0])):
+    for (owner, group), layouts in sorted(families.items()):
         order: list[tuple[float, float]] = []
         seen: set[tuple[float, float]] = set()
         for layout in sorted(layouts, key=len):
@@ -368,22 +397,23 @@ def main() -> None:
             order.extend(added)
             seen.update(added)
         for layout in layouts:
-            n = len(layout)
-            if set(order[:n]) == set(layout):
+            if set(order[: len(layout)]) == set(layout):
                 exact += 1
             else:
                 residue.append({
                     "owner": owner,
-                    "bandEdge": edge,
-                    "count": n,
-                    "missing": sorted(map(list, set(layout) - set(order[:n]))),
-                    "extra": sorted(map(list, set(order[:n]) - set(layout))),
+                    "family": group,
+                    "count": len(layout),
+                    "missing": sorted(map(list, set(layout) - set(order[: len(layout)]))),
+                    "extra": sorted(map(list, set(order[: len(layout)]) - set(layout))),
                 })
-        table[f"{owner}@{edge}"] = [list(c) for c in order]
+        table[f"{owner}@{group}"] = [list(cell) for cell in order]
 
     print(f"side-layouts {side_layouts}  exact {exact}  residue {len(residue)}")
     for row in residue:
         print("  RESIDUE", row)
+    for key, cells in sorted(table.items()):
+        print(f"  {key}: {len(cells)} cells")
 
     body = json.dumps(table, indent=2, sort_keys=True)
     provenance = json.dumps({
@@ -396,9 +426,9 @@ def main() -> None:
     OUTPUT.write_text(
         "// GENERATED by tools/derive_placement.py -- do not edit by hand.\n"
         "//\n"
-        "// Ordered spawn cells per family, keyed \"<owner>@<bandEdge>\". Owner 2\n"
-        "// fills upward from its band edge, owner 3 downward. Take the first N\n"
-        "// cells for an N-unit army.\n"
+        "// Ordered spawn cells per family, keyed \"<owner>@<family>\". Take the\n"
+        "// first N cells for an N-unit army. The key is (owner, family) and\n"
+        "// nothing else: band edge is an output of the fill order, not an input.\n"
         f"export const PLACEMENT_TABLE = Object.freeze({body});\n"
         "\n"
         f"export const PLACEMENT_PROVENANCE = Object.freeze({provenance});\n",
@@ -410,17 +440,15 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 2: Run the derivation and read the residue count**
+- [ ] **Step 2: Run the derivation and confirm zero residue**
 
 ```bash
 cd /d/AI/aoe2_matchup && python aoe2x/js_simulation/tools/derive_placement.py
 ```
 
-Expected: prints `side-layouts 678  exact <N>  residue <R>`. Every residue row is printed with its owner, band edge, count, and the exact cells that differ.
+Expected, exactly: `side-layouts 678  exact 678  residue 0`, then eight family lines. Seven of them read `21 cells`; `2@siege` reads `16 cells`.
 
-If `residue` is 0, continue to Step 3.
-
-If `residue` is non-zero, the family key is incomplete — two scenarios with the same (owner, band edge) used different blocks. Widen the key with the layout's `min(x)` (the left anchor) and re-run: change `band_edge` usage so the family key becomes `(owner, edge, min(x for x, y in points))` and the table key becomes `f"{owner}@{edge}@{left}"`. Re-run and read the new residue count. Do not proceed past Step 3 with a non-zero residue, and do not add per-layout exceptions to the table.
+If the residue is not 0, stop and report BLOCKED with the printed residue rows. Do not add per-layout exceptions, do not special-case a matchup, and do not relax the test — the key has been measured to work, so a residue means something else is wrong and needs diagnosing, not patching.
 
 - [ ] **Step 3: Write the failing placement test**
 
@@ -431,32 +459,36 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { PLACEMENT_PROVENANCE } from "../src/placement-table.js";
-import { placeArmy, resolveBands } from "../src/placement.js";
+import { PLACEMENT_PROVENANCE, PLACEMENT_TABLE } from "../src/placement-table.js";
+import { placeArmy, resolveFamily, sideCapacity } from "../src/placement.js";
 
 const spawns = JSON.parse(await readFile(
   new URL("../../../calibration/fixtures/spawns.json", import.meta.url), "utf8"));
 
-const bandEdge = (owner, points) => {
-  const ys = points.map(([, y]) => y);
-  return owner === "2" ? Math.max(...ys) : Math.min(...ys);
-};
+const SIEGE = new Set(["heavy_scorpion", "siege_onager"]);
+const MOBILE = new Set(["arbalester", "hand_cannoneer", "heavy_cav_archer", "imp_elite_skirm"]);
+const classOf = (unit) => (
+  SIEGE.has(unit) ? "siege_ranged" : MOBILE.has(unit) ? "mobile_ranged" : "melee");
 const key = (points) => points.map(([x, y]) => `${x},${y}`).sort().join(" ");
+
+// The recorded label names both units, so resolveFamily can be driven from the
+// archive itself rather than from a second hand-written classification.
+function familyOfLabel(label) {
+  const [left, right] = label.replace(/_r\d+$/, "").split("__vs__");
+  return resolveFamily({ side2Class: classOf(left), side3Class: classOf(right) });
+}
 
 test("placeArmy regenerates every recorded side-layout exactly", () => {
   let checked = 0;
   for (const [label, sides] of Object.entries(spawns)) {
-    for (const owner of ["2", "3"]) {
-      const points = sides[owner];
-      const produced = placeArmy({
-        owner: Number(owner),
-        count: points.length,
-        bandEdge: bandEdge(owner, points),
-      });
+    const family = familyOfLabel(label);
+    for (const owner of [2, 3]) {
+      const points = sides[String(owner)];
+      const produced = placeArmy({ owner, count: points.length, family });
       assert.equal(
         key(produced.map(({ x, y }) => [x, y])),
         key(points),
-        `${label} side ${owner} (${points.length} units)`,
+        `${label} side ${owner} (${points.length} units, family ${family})`,
       );
       checked += 1;
     }
@@ -466,31 +498,57 @@ test("placeArmy regenerates every recorded side-layout exactly", () => {
 
 test("the derivation left no residue", () => {
   assert.equal(PLACEMENT_PROVENANCE.residue, 0);
+  assert.equal(PLACEMENT_PROVENANCE.exact, 678);
   assert.equal(PLACEMENT_PROVENANCE.sideLayouts, 678);
 });
 
-test("bands follow the three-family rule", () => {
-  assert.deepEqual(
-    resolveBands({ side2Class: "melee", side3Class: "melee" }),
-    { side2Edge: 6.5, side3Edge: 8.5 });
-  assert.deepEqual(
-    resolveBands({ side2Class: "melee", side3Class: "siege_ranged" }),
-    { side2Edge: 6.5, side3Edge: 8.5 });
-  assert.deepEqual(
-    resolveBands({ side2Class: "mobile_ranged", side3Class: "melee" }),
-    { side2Edge: 6.5, side3Edge: 10.5 });
-  assert.deepEqual(
-    resolveBands({ side2Class: "mobile_ranged", side3Class: "mobile_ranged" }),
-    { side2Edge: 5.5, side3Edge: 10.5 });
-  assert.deepEqual(
-    resolveBands({ side2Class: "siege_ranged", side3Class: "mobile_ranged" }),
-    { side2Edge: 5.5, side3Edge: 10.5 });
+test("families are decided by combat class", () => {
+  assert.equal(resolveFamily({ side2Class: "melee", side3Class: "melee" }), "waves");
+  assert.equal(resolveFamily({ side2Class: "siege_ranged", side3Class: "melee" }), "siege");
+  assert.equal(resolveFamily({ side2Class: "melee", side3Class: "siege_ranged" }), "siege");
+  assert.equal(resolveFamily({ side2Class: "mobile_ranged", side3Class: "melee" }), "kite");
+  assert.equal(resolveFamily({ side2Class: "melee", side3Class: "mobile_ranged" }), "kite");
+  assert.equal(resolveFamily({ side2Class: "mobile_ranged", side3Class: "mobile_ranged" }), "rvr");
+  assert.equal(resolveFamily({ side2Class: "mobile_ranged", side3Class: "siege_ranged" }), "rvr");
+  assert.equal(resolveFamily({ side2Class: "siege_ranged", side3Class: "siege_ranged" }), "rvr");
+});
+
+test("every family has a derived sequence and the recorded capacities", () => {
+  for (const owner of [2, 3]) {
+    for (const family of ["rvr", "kite", "siege", "waves"]) {
+      assert.ok(PLACEMENT_TABLE[`${owner}@${family}`], `missing ${owner}@${family}`);
+    }
+  }
+  // Side 2's siege block is the one the archive never grew past 16.
+  assert.equal(sideCapacity(2, "siege"), 16);
+  assert.equal(sideCapacity(3, "siege"), 21);
+  assert.equal(sideCapacity(2, "waves"), 21);
+  assert.equal(sideCapacity(3, "kite"), 21);
+});
+
+test("positions within one army are distinct", () => {
+  for (const owner of [2, 3]) {
+    for (const family of ["rvr", "kite", "siege", "waves"]) {
+      const cells = placeArmy({ owner, count: sideCapacity(owner, family), family });
+      const seen = new Set(cells.map(({ x, y }) => `${x},${y}`));
+      assert.equal(seen.size, cells.length, `${owner}@${family} has duplicate cells`);
+    }
+  }
 });
 
 test("a count beyond the derived sequence is rejected", () => {
   assert.throws(
-    () => placeArmy({ owner: 2, count: 999, bandEdge: 6.5 }),
-    /only \d+ cells/);
+    () => placeArmy({ owner: 2, count: 17, family: "siege" }),
+    /only 16 cells/);
+  assert.throws(
+    () => placeArmy({ owner: 3, count: 22, family: "waves" }),
+    /only 21 cells/);
+});
+
+test("bad arguments are rejected", () => {
+  assert.throws(() => placeArmy({ owner: 1, count: 5, family: "waves" }), /owner must be 2 or 3/);
+  assert.throws(() => placeArmy({ owner: 2, count: 0, family: "waves" }), /count must be/);
+  assert.throws(() => placeArmy({ owner: 2, count: 5, family: "nope" }), /unknown family nope/);
 });
 ```
 
@@ -510,47 +568,61 @@ Create `aoe2x/js_simulation/src/placement.js`:
 // Spawn placement, derived from the recorded tapes and verified against every
 // one of them (tests/placement.test.mjs). No fixture is read at runtime.
 //
-// Owner 2 fills upward from its band edge, owner 3 downward from its. Ranged
-// fights start two tiles further apart than melee fights -- that is what the
-// archive did, and resolveBands reproduces it from unit class alone.
+// The only thing that selects a block is (owner, family). Band edge is NOT a
+// key: the same family sits at different edges depending on army size, and two
+// different families share an edge -- keying on it collides.
 import { PLACEMENT_TABLE } from "./placement-table.js";
 
 
-export const PLACEMENT_CAP = 40;
-
+const FAMILIES = Object.freeze(["rvr", "kite", "siege", "waves"]);
 const RANGED = new Set(["mobile_ranged", "siege_ranged"]);
 
 
-export function resolveBands({ side2Class, side3Class }) {
-  const side2Ranged = RANGED.has(side2Class);
-  const side3Ranged = RANGED.has(side3Class);
-  if (side2Ranged && side3Ranged) return { side2Edge: 5.5, side3Edge: 10.5 };
-  if (side2Ranged || side3Ranged) return { side2Edge: 6.5, side3Edge: 10.5 };
-  return { side2Edge: 6.5, side3Edge: 8.5 };
+// Which spawn block a pairing uses, from the two units' combat classes. The
+// order of these tests is the archive's own: both-ranged wins over one-mobile,
+// which wins over one-siege.
+export function resolveFamily({ side2Class, side3Class }) {
+  const bothRanged = RANGED.has(side2Class) && RANGED.has(side3Class);
+  if (bothRanged) return "rvr";
+  if (side2Class === "mobile_ranged" || side3Class === "mobile_ranged") return "kite";
+  if (side2Class === "siege_ranged" || side3Class === "siege_ranged") return "siege";
+  return "waves";
 }
 
 
-export function placeArmy({ owner, count, bandEdge }) {
+function cellsFor(owner, family) {
   if (owner !== 2 && owner !== 3) {
     throw new RangeError(`owner must be 2 or 3, got ${owner}`);
   }
-  if (!Number.isSafeInteger(count) || count < 1 || count > PLACEMENT_CAP) {
-    throw new RangeError(`count must be an integer 1-${PLACEMENT_CAP}, got ${count}`);
+  if (!FAMILIES.includes(family)) {
+    throw new RangeError(`unknown family ${family}`);
   }
-  const cells = PLACEMENT_TABLE[`${owner}@${bandEdge}`];
-  if (!cells) {
-    throw new RangeError(`no derived placement for owner ${owner} at band edge ${bandEdge}`);
+  return PLACEMENT_TABLE[`${owner}@${family}`];
+}
+
+
+// How many units this side can field in this family. The archive never grew a
+// side-2 siege block past 16, so that is the honest ceiling: beyond it there is
+// no measured geometry, and inventing some would be exactly the fitting this
+// simulator exists to avoid.
+export function sideCapacity(owner, family) {
+  return cellsFor(owner, family).length;
+}
+
+
+export function placeArmy({ owner, count, family }) {
+  const cells = cellsFor(owner, family);
+  if (!Number.isSafeInteger(count) || count < 1) {
+    throw new RangeError(`count must be a positive integer, got ${count}`);
   }
   if (count > cells.length) {
     throw new RangeError(
-      `owner ${owner} band ${bandEdge} has only ${cells.length} cells, asked for ${count}`);
+      `owner ${owner} family ${family} has only ${cells.length} cells, asked for ${count}`);
   }
   return Object.freeze(cells.slice(0, count).map(
     ([x, y]) => Object.freeze({ x, y })));
 }
 ```
-
-Note: the `siege_ranged` cases in `resolveBands` follow the archive — a siege unit facing melee sits in the close-band `waves` family, while two ranged sides sit in the far-band `rvr` family. The test in Step 3 pins both.
 
 - [ ] **Step 6: Run it, verify it passes**
 
@@ -558,24 +630,38 @@ Note: the `siege_ranged` cases in `resolveBands` follow the archive — a siege 
 cd /d/AI/aoe2_matchup && node --test aoe2x/js_simulation/tests/placement.test.mjs
 ```
 
-Expected: PASS, four tests. The first one is the gate: 678 recorded side-layouts, all regenerated exactly.
+Expected: PASS, seven tests. The first is the gate: 678 recorded side-layouts, all regenerated exactly.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 7: Confirm no new suite failures**
+
+```bash
+cd /d/AI/aoe2_matchup && node --test aoe2x/js_simulation/tests 2>&1 | grep -E "^# (tests|pass|fail) "
+```
+
+Expected: `# fail 31` — unchanged from before this task. The test count rises by 7.
+
+- [ ] **Step 8: Commit**
 
 ```bash
 cd /d/AI/aoe2_matchup && git add aoe2x/js_simulation/tools/derive_placement.py aoe2x/js_simulation/src/placement-table.js aoe2x/js_simulation/src/placement.js aoe2x/js_simulation/tests/placement.test.mjs && git commit -m "feat(sim): programmatic spawn placement derived from the tapes
 
-The recorded layouts nest -- within a family keyed by (owner, band edge) an
-N-unit layout is the first N cells of a larger one -- so the fill order is
-recoverable exactly rather than fitted. derive_placement.py walks each family
-smallest-first and emits the ordered cell sequence; placeArmy takes the first N.
+Within a family the recorded layouts nest -- the N-unit layout is the first N
+cells of a larger one -- so the fill order is recoverable exactly rather than
+fitted. derive_placement.py walks each family smallest-first and emits the
+ordered cell sequence; placeArmy takes the first N.
 
-Gated on regenerating all 678 recorded side-layouts exactly. Band edges follow
-the archive's three families: melee 6.5/8.5, one ranged side 6.5/10.5, ranged
-vs ranged 5.5/10.5.
+The key is (owner, family) and nothing else, measured rather than assumed.
+Keying on band edge collides: kite and rvr share side-3 edge 10.5 with
+different blocks, and melee-vs-melee and siege-vs-melee share side-2 edge 6.5
+with different blocks. Band edge is an output of the fill order -- it moves with
+army size inside one family.
 
-Replaces nothing yet; matchup-playback still runs its own formation until the
-fight endpoint lands.
+Four families from the two units' combat classes: both ranged, one mobile
+ranged, one siege, both melee. Gated on regenerating all 678 recorded
+side-layouts exactly.
+
+Capacity is what the archive recorded: 21 a side, except a side-2 siege block
+which never grew past 16. Beyond that there is no measured geometry.
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
@@ -757,7 +843,7 @@ Create `aoe2x/js_simulation/src/unit-registry.js`:
 ```javascript
 // The units this simulator can run: one row per tape-measured mechanics
 // fixture. `class` drives two things -- which side kites, and how far apart the
-// two armies start (see placement.resolveBands).
+// two armies start (see placement.resolveFamily).
 //
 // baseCost is ref_units.base_cost_* from data/golden/aoe2_reference.db, the
 // same database the website serves. It is deliberately the BASE column, not
@@ -1029,7 +1115,7 @@ Composes registry + placement + purchase + engine into one request path that rea
 - Test: `aoe2x/js_simulation/tests/fight.test.mjs`
 
 **Interfaces:**
-- Consumes: `placeArmy`, `resolveBands`, `PLACEMENT_CAP` (Task 2); `unitBySlug`, `UNIT_REGISTRY` (Task 3); `deriveCounts` (Task 4).
+- Consumes: `placeArmy`, `resolveFamily`, `sideCapacity` (Task 2); `unitBySlug`, `UNIT_REGISTRY` (Task 3); `deriveCounts` (Task 4).
 - Produces: `src/fight.js` exporting `runFight(root, { side2Slug, n2, side3Slug, n3 })` → frozen slim playback; `FIGHT_SIDE_CAP` (40). **`n2` and `n3` are optional**: when either is omitted, both come from `deriveCounts(side2Slug, side3Slug)` and the chosen values are reported back in `side2.count` / `side3.count`, with `derivedCounts: true`. This keeps the purchase rule in `src/purchase.js` alone — the viewer never recomputes it. Slim playback shape:
 
 ```javascript
@@ -1037,7 +1123,7 @@ Composes registry + placement + purchase + engine into one request path that rea
   schemaVersion: 1,
   side2: { slug, label, civ, count, class },
   side3: { slug, label, civ, count, class },
-  bands: { side2Edge, side3Edge },
+  family: "rvr" | "kite" | "siege" | "waves",
   derivedCounts: boolean,
   kiteOwner: 2 | 3 | null,
   ticks, winnerOwner, winnerHp,
@@ -1083,7 +1169,7 @@ test("a melee fight resolves and reports both sides", async () => {
   assert.equal(fight.side3.count, 3);
   assert.equal(fight.side2.label, "Champion");
   assert.equal(fight.kiteOwner, null);
-  assert.deepEqual(fight.bands, { side2Edge: 6.5, side3Edge: 8.5 });
+  assert.equal(fight.family, "waves");
   assert.ok(fight.ticks > 0);
   assert.ok(fight.winnerOwner === 2 || fight.winnerOwner === 3);
 });
@@ -1093,13 +1179,13 @@ test("exactly one mobile-ranged side sets kiteOwner", async () => {
     side2Slug: "arbalester", n2: 6, side3Slug: "champion", n3: 6,
   });
   assert.equal(kiting.kiteOwner, 2);
-  assert.deepEqual(kiting.bands, { side2Edge: 6.5, side3Edge: 10.5 });
+  assert.equal(kiting.family, "kite");
 
   const both = await runFight(root, {
     side2Slug: "arbalester", n2: 6, side3Slug: "imp_elite_skirm", n3: 6,
   });
   assert.equal(both.kiteOwner, null);
-  assert.deepEqual(both.bands, { side2Edge: 5.5, side3Edge: 10.5 });
+  assert.equal(both.family, "rvr");
 });
 
 test("snapshots carry no mechanics blob but keep the viewer's contract", async () => {
@@ -1170,7 +1256,7 @@ test("bad input is rejected", async () => {
     () => runFight(root, { side2Slug: "champion", n2: 0, side3Slug: "champion", n3: 5 }),
     /count must be an integer/);
   await assert.rejects(
-    () => runFight(root, { side2Slug: "champion", n2: 41, side3Slug: "champion", n3: 5 }),
+    () => runFight(root, { side2Slug: "champion", n2: 22, side3Slug: "champion", n3: 5 }),
     /count must be an integer/);
 });
 ```
@@ -1195,12 +1281,13 @@ import { readFile } from "node:fs/promises";
 import { hashCanonicalJson } from "./canonical-json.js";
 import { createUnitState } from "./combat/unit-state.js";
 import { createWorld, runWorld } from "./combat/world.js";
-import { PLACEMENT_CAP, placeArmy, resolveBands } from "./placement.js";
+import { placeArmy, resolveFamily, sideCapacity } from "./placement.js";
 import { deriveCounts } from "./purchase.js";
 import { unitBySlug } from "./unit-registry.js";
 
 
-export const FIGHT_SIDE_CAP = PLACEMENT_CAP;
+// Capacity is per (owner, family); this is the largest any of them offers.
+export const FIGHT_SIDE_CAP = 21;
 
 const REFERENCE_BASE = { 2: 9000, 3: 9500 };
 const MAX_TICKS = 9000;
@@ -1275,11 +1362,11 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3 }) {
     loadMechanics(root, side3),
   ]);
 
-  const bands = resolveBands({ side2Class: side2.class, side3Class: side3.class });
+  const family = resolveFamily({ side2Class: side2.class, side3Class: side3.class });
   const roster = [
-    ...placeArmy({ owner: 2, count: count2, bandEdge: bands.side2Edge })
+    ...placeArmy({ owner: 2, count: count2, family })
       .map((cell, index) => ({ owner: 2, cell, index, unit: side2, mechanics: mechanics2 })),
-    ...placeArmy({ owner: 3, count: count3, bandEdge: bands.side3Edge })
+    ...placeArmy({ owner: 3, count: count3, family })
       .map((cell, index) => ({ owner: 3, cell, index, unit: side3, mechanics: mechanics3 })),
   ];
 
@@ -1315,7 +1402,7 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3 }) {
       slug: side2.slug, label: side2.label, civ: side2.civ, count: count2, class: side2.class }),
     side3: Object.freeze({
       slug: side3.slug, label: side3.label, civ: side3.civ, count: count3, class: side3.class }),
-    bands: Object.freeze(bands),
+    family,
     derivedCounts,
     kiteOwner,
     ticks: result.ticks,
@@ -1486,7 +1573,7 @@ In `aoe2x/js_simulation/viewer/index.html`, replace the entire `<div class="run-
           </label>
           <label>
             <span>Count</span>
-            <input id="n2Input" type="number" min="1" max="40" step="1" value="21"
+            <input id="n2Input" type="number" min="1" max="21" step="1" value="21"
                    inputmode="numeric" aria-label="Side 2 unit count">
           </label>
           <label>
@@ -1495,7 +1582,7 @@ In `aoe2x/js_simulation/viewer/index.html`, replace the entire `<div class="run-
           </label>
           <label>
             <span>Count</span>
-            <input id="n3Input" type="number" min="1" max="40" step="1" value="21"
+            <input id="n3Input" type="number" min="1" max="21" step="1" value="21"
                    inputmode="numeric" aria-label="Side 3 unit count">
           </label>
           <button id="resetCounts" type="button" title="Reset both counts to the derived even-fight purchase">Even fight</button>

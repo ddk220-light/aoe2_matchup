@@ -22,8 +22,10 @@
 //     mid-fight orders were idle 26.7% of the preceding second vs 7.1% for
 //     other allies).
 //
-// Orders apply instantly: pursuit target set, engagement cleared. Gated by the
-// experiment harness (AOE2X_EXP_ORDERS=1) until validated.
+// Orders apply instantly: pursuit target set, engagement cleared.
+// AOE2X_EXP_ORDERS is pinned on as the committed default (see
+// ../engine-config.js); set AOE2X_EXP_ORDERS=0 to get the pre-calibration
+// baseline engine back.
 
 import { ENGINE_CONFIG } from "../engine-config.js";
 import { TICKS_PER_SECOND } from "../simulation-clock.js";

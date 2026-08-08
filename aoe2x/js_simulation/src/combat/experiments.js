@@ -1,9 +1,14 @@
 // TEMPORARY experiment harness for the retargeting investigation.
 //
-// Everything here is OFF unless an environment variable sets it, so the default
-// engine behaviour -- and therefore every locked gate and golden baseline -- is
-// bit-identical to what it was before this file existed. Delete this module and
-// its two call sites in world.js once the retargeting rule is settled.
+// AOE2X_EXP_ENGAGEMENT and AOE2X_EXP_ORDERS are pinned to their calibrated
+// values ("pursuit" and on) as the committed default -- see
+// ../engine-config.js. Every locked gate and golden baseline measured under
+// that engine is what "default" now means. The other flags below remain OFF
+// by default. To get the pre-calibration baseline engine back, set
+// AOE2X_EXP_ENGAGEMENT=free (engine-config.js maps that sentinel to "", since
+// PowerShell's `$env:X = ""` deletes rather than sets) and
+// AOE2X_EXP_ORDERS=0. Delete this module and its two call sites in world.js
+// once the retargeting rule is settled.
 //
 // See docs/RETARGETING_INVESTIGATION.md for the matrix these flags implement.
 //

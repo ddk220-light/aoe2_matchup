@@ -68,7 +68,12 @@ node aoe2x/js_simulation/server.mjs --host 127.0.0.1 --port 5011
 
 The calibrated configuration (`engagement=pursuit`, `orders=1`) is now the
 committed default in `src/engine-config.js`; the `AOE2X_EXP_*` environment
-variables still override it for experiment sweeps.
+variables still override it for experiment sweeps. To get the
+pre-calibration baseline engine back, set `AOE2X_EXP_ENGAGEMENT=free` and
+`AOE2X_EXP_ORDERS=0` -- in PowerShell, `$env:AOE2X_EXP_ENGAGEMENT = ""`
+*deletes* the variable rather than setting it empty, so `free` is the only
+way to reach the baseline `engagement=""` arm from this project's documented
+shell.
 
 Open `http://127.0.0.1:5011/`.
 

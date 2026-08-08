@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { createChampionPlaybackData } from "./src/champion-comparison.js";
+import { FIGHT_SIDE_CAP, runFight } from "./src/fight.js";
 import { TICKS_PER_SECOND } from "./src/simulation-clock.js";
 import { runChampionRatio } from "./tests/support/champion-ratio.mjs";
 import {
@@ -13,6 +14,7 @@ import {
   matchupTruth,
   syntheticMatchupPlayback,
 } from "./src/matchup-playback.js";
+import { UNIT_REGISTRY } from "./src/unit-registry.js";
 
 
 const CONTENT_TYPES = new Map([
@@ -164,6 +166,52 @@ function championPlayback(ratio) {
 }
 
 
+function fightSelection(url) {
+  const slug2 = url.searchParams.get("side2");
+  const slug3 = url.searchParams.get("side3");
+  const raw2 = url.searchParams.get("n2");
+  const raw3 = url.searchParams.get("n3");
+  if (!slug2 || !slug3) return null;
+  // Both counts omitted -> derive them from the purchase rule. One without the
+  // other is a malformed request, not a half-derived fight.
+  if (raw2 === null && raw3 === null) return { side2Slug: slug2, side3Slug: slug3 };
+  if (!/^\d{1,2}$/.test(raw2 ?? "") || !/^\d{1,2}$/.test(raw3 ?? "")) return null;
+  return { side2Slug: slug2, n2: Number(raw2), side3Slug: slug3, n3: Number(raw3) };
+}
+
+
+async function handleFightApi({ request, response, root, url }) {
+  if (url.pathname !== "/api/units" && url.pathname !== "/api/fight") return false;
+  if (request.method !== "GET") {
+    sendJson(response, 405, { error: "Fight diagnostics are read-only" });
+    return true;
+  }
+  if (url.pathname === "/api/units") {
+    sendJson(response, 200, {
+      schemaVersion: 1,
+      sideCap: FIGHT_SIDE_CAP,
+      units: UNIT_REGISTRY.map(({ slug, label, civ, class: unitClass, baseCost }) => ({
+        slug, label, civ, class: unitClass, baseCost,
+      })),
+    });
+    return true;
+  }
+  const selection = fightSelection(url);
+  if (!selection) {
+    sendJson(response, 400, {
+      error: "side2 and side3 must be unit slugs; give both n2 and n3 as integers "
+        + `1-${FIGHT_SIDE_CAP}, or neither to derive them`,
+    });
+    return true;
+  }
+  try {
+    sendJson(response, 200, await runFight(pathToFileURL(path.join(root, "/")), selection));
+  } catch (error) {
+    sendJson(response, 400, { error: String(error?.message ?? error) });
+  }
+  return true;
+}
+
 
 async function handleMatchupApi({ request, response, root, url }) {
   if (!url.pathname.startsWith("/api/matchup/")) return false;
@@ -284,6 +332,7 @@ export function createMapServer({ root }) {
   return createServer(async (request, response) => {
     const url = new URL(request.url, "http://localhost");
     try {
+      if (await handleFightApi({ request, response, root: resolvedRoot, url })) return;
       if (await handleMatchupApi({ request, response, root: resolvedRoot, url })) return;
       if (await handleChampionApi({ request, response, root: resolvedRoot, url })) return;
     } catch (error) {

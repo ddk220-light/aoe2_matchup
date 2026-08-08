@@ -30,7 +30,7 @@
 //       (camel speed is bimodal: 46.1% stopped, 52.9% at the dat 1.595, 0.6%
 //       in between), which an ally-only constraint set cannot produce.
 //
-//   AOE2X_EXP_STEP = "bimodal" | "steer"
+//   AOE2X_EXP_STEP = "bimodal" | "steer" | "chaser"
 //       "bimodal": a step the collision solver had to shorten becomes no step
 //       at all. Genie units never grind along a body -- see the histogram
 //       above and docs/CAMEL_CHASER_GEOMETRY_2026-08-06.md.
@@ -39,6 +39,16 @@
 //       body instead of stopping dead in front of it. Cancelling without
 //       steering strands the kite formation (duty cycle 0.18 against the
 //       tape's 0.79).
+//       "chaser": bimodal cancellation applied ONLY to the chasing side of a
+//       kited scenario (world.kiteState present, unit not on the kiting
+//       side). The blanket modes above each fail for a measured reason --
+//       bimodal strands the kite block, steer lets it escape forever, and
+//       both perturb every melee fight. The 12v21 hcc forensics
+//       (STANDARD_UNITS_SUMMARY_2026-08-07) show the defect only DECIDES
+//       kited chases: sim chasers grind along the ball at partial speed
+//       (7.5-15.4% of approach-band frames vs the tape's 0.6-0.8%), pinning
+//       the median chaser-to-kiter gap at 0.75 tiles vs the tape's 1.6.
+//       Scoping to kited chasers leaves every non-kited fight bit-identical.
 
 import { ENGINE_CONFIG } from "../engine-config.js";
 
@@ -57,13 +67,24 @@ const minRange = ENGINE_CONFIG.minRange;
 // blocked engages whatever enemy is stopping it, instead of holding out for
 // its sticky pursuit target.
 const kiteEngage = ENGINE_CONFIG.kiteEngage;
+// AOE2X_EXP_CHASE_PATH=grid -- per-unit obstacle-aware pursuit pathing
+// (src/combat/chase-path.js): each kited-world chaser plans a coarse A* route
+// to its own target around the actual unit bodies before walking. This is the
+// plan step the 12v21 forensics called for -- the tape's chasers hold a
+// 1.4-2.1 tile median gap at full speed, which no local per-step rule
+// reproduces without stranding a catching column (the measured ladder in
+// docs/HCC_CHASER_MOBILITY_2026-08-07.md). A tangent-disc variant ("ball")
+// was measured and rejected: it flips hcavarcher_vs_paladin 20v15 (corpus
+// 576.3 / 3 wrong winners vs grid's 522.7 / 1).
+const chasePath = ENGINE_CONFIG.chasePath;
 
 const VALID_ENGAGEMENT = new Set(["", "pursuit"]);
 const VALID_PURSUIT = new Set(["", "tick", "blocked", "swing", "blocked+swing"]);
 const VALID_AVOID = new Set(["", "all"]);
-const VALID_STEP = new Set(["", "bimodal", "steer"]);
+const VALID_STEP = new Set(["", "bimodal", "steer", "chaser", "kited"]);
 const VALID_MIN_RANGE = new Set(["", "shooter"]);
 const VALID_KITE_ENGAGE = new Set(["", "blocker"]);
+const VALID_CHASE_PATH = new Set(["", "grid"]);
 
 if (!VALID_ENGAGEMENT.has(engagement)) {
   throw new RangeError(`AOE2X_EXP_ENGAGEMENT must be one of "", "pursuit"`);
@@ -77,13 +98,18 @@ if (!VALID_AVOID.has(avoid)) {
   throw new RangeError(`AOE2X_EXP_AVOID must be one of "", "all"`);
 }
 if (!VALID_STEP.has(step)) {
-  throw new RangeError(`AOE2X_EXP_STEP must be one of "", "bimodal", "steer"`);
+  throw new RangeError(
+    `AOE2X_EXP_STEP must be one of "", "bimodal", "steer", "chaser", "kited"`,
+  );
 }
 if (!VALID_MIN_RANGE.has(minRange)) {
   throw new RangeError(`AOE2X_EXP_MINRANGE must be one of "", "shooter"`);
 }
 if (!VALID_KITE_ENGAGE.has(kiteEngage)) {
   throw new RangeError(`AOE2X_EXP_KITE_ENGAGE must be one of "", "blocker"`);
+}
+if (!VALID_CHASE_PATH.has(chasePath)) {
+  throw new RangeError(`AOE2X_EXP_CHASE_PATH must be one of "", "grid"`);
 }
 
 export const ENGAGEMENT_FOLLOWS_PURSUIT = engagement === "pursuit";
@@ -95,10 +121,19 @@ export const REEVALUATE_ON_SWING = pursuit === "swing" || pursuit === "blocked+s
 export const AVOID_ALL_BODIES = avoid === "all";
 export const BIMODAL_STEP = step === "bimodal" || step === "steer";
 export const STEER_AROUND_BODIES = step === "steer";
+export const CHASER_BIMODAL_STEP = step === "chaser" || step === "kited";
+// "kited" extends the chaser rule to the KITING side's move-ordered units:
+// the 12v21 victim forensics show the caught kiter executing its scripted
+// ball move THROUGH attacker contact at the ball's own pace (victim 1 s
+// displacement 0.50-0.67 vs ball-mates 0.55-0.66), where the sim's kiter
+// grinds on the pressing champion's body (0.13-0.39, below even its mates).
+export const KITED_SIDE_STEER = step === "kited";
 export const MIN_RANGE_SUPPRESSES_SHOOTER = minRange === "shooter";
 export const KITE_ENGAGE_BLOCKER = kiteEngage === "blocker";
+export const CHASE_PATH_GRID = chasePath === "grid";
 export const ANY_EXPERIMENT = Boolean(
-  engagement || pursuit || orders === "1" || avoid || step || minRange || kiteEngage,
+  engagement || pursuit || orders === "1" || avoid || step || minRange || kiteEngage
+  || chasePath,
 );
 
 

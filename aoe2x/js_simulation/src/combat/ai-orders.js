@@ -310,7 +310,8 @@ export const DEFAULT_KITE_PROFILE = Object.freeze({
 });
 
 
-export function createKiteState(kiteOwner, kiteProfile = null, chaseCapture = false) {
+export function createKiteState(kiteOwner, kiteProfile = null, chaseCapture = false,
+  kitedEscape = false) {
   const profile = kiteProfile
     ? {
       beatTicks: kiteProfile.beatTicks,
@@ -330,6 +331,13 @@ export function createKiteState(kiteOwner, kiteProfile = null, chaseCapture = fa
     // skirmisher and paladin chase archives; OFF where the sim still
     // manufactures contacts the tape's geometry prevents (kac, hcc).
     chaseCapture: chaseCapture === true,
+    // Kited-side escape steer (see world.steerProposals) — per-scenario, like
+    // chaseCapture: the caught kiter executes its scripted move THROUGH
+    // attacker contact. ON where that closes the recorded matchup
+    // (hcavarcher_vs_champion, the 12v21 forensics); OFF where the tape shows
+    // the escape FAILING (kac 5v10's picket ambush, esc, hcp) until clearance
+    // pathing can discriminate. AOE2X_EXP_STEP=kited forces it everywhere.
+    kitedEscape: kitedEscape === true,
     nextBeat: profile.firstBeatTick,
     lastBeatTick: null,
     meleeAssigned: false,

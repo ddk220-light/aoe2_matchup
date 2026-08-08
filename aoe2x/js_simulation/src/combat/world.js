@@ -12,11 +12,15 @@ import {
 import {
   ANY_EXPERIMENT,
   BIMODAL_STEP,
+  CHASE_PATH_GRID,
+  CHASER_BIMODAL_STEP,
   ENGAGEMENT_FOLLOWS_PURSUIT,
   KITE_ENGAGE_BLOCKER,
+  KITED_SIDE_STEER,
   STEER_AROUND_BODIES,
   shouldReevaluatePursuit,
 } from "./experiments.js";
+import { planChaseAim } from "./chase-path.js";
 import { planLocalAvoidance } from "./local-avoidance.js";
 import { proposeMovement } from "./movement.js";
 import {
@@ -206,6 +210,7 @@ export function createWorld(scenario) {
           scenario.kiteOwner,
           scenario.kiteProfile ?? null,
           scenario.chaseCapture === true,
+          scenario.kitedEscape === true,
         ),
       }
       : {}),
@@ -459,20 +464,103 @@ function stepClearsBodies(mover, dx, dy, live, proposalByReference, bounds) {
 }
 
 
-function steerProposals(planned, map) {
-  if (!STEER_AROUND_BODIES) return planned.proposals;
+// Does the wanted step hit at least one NON-TARGET enemy body? The chaser
+// steer fires only then:
+//   * ally blocks are a different regime -- KITER_FLOW measured real
+//     chaser-on-chaser stalls in the tape (kac champions 13.2% stall rate);
+//   * the mover's OWN pursuit/engagement target is the catch, not an
+//     obstruction -- walking into it is how a chase ends, and deflecting
+//     around it turns every would-be catch into an orbit (measured: with the
+//     target counted as a blocker, every catching column flips -- kac 5v10,
+//     esc 10v5, hcp 20v15, hcst 20v20 all lose their tape winner);
+//   * a NON-target enemy body is the ball surface, which the camel forensics
+//     show the chaser routing around at full speed.
+function stepHitsAnyEnemyBody(mover, dx, dy, live) {
+  const x = mover.x + dx;
+  const y = mover.y + dy;
+  const radius = collisionRadius(mover);
+  for (const other of live) {
+    if (other.referenceId === mover.referenceId) continue;
+    if (other.owner === mover.owner) continue;
+    const extent = radius + collisionRadius(other);
+    if (Math.max(Math.abs(x - other.x), Math.abs(y - other.y)) < extent - STEP_EPSILON) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+function stepHitsOtherEnemyBody(mover, dx, dy, live) {
+  const x = mover.x + dx;
+  const y = mover.y + dy;
+  const radius = collisionRadius(mover);
+  for (const other of live) {
+    if (other.referenceId === mover.referenceId) continue;
+    if (other.owner === mover.owner) continue;
+    if (other.referenceId === mover.pursuitTargetId
+      || other.referenceId === mover.engagedTargetId
+      || other.referenceId === mover.attackTargetId) continue;
+    const extent = radius + collisionRadius(other);
+    if (Math.max(Math.abs(x - other.x), Math.abs(y - other.y)) < extent - STEP_EPSILON) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+
+
+function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = false) {
+  if (!STEER_AROUND_BODIES && chaserScopeOwner === null) {
+    return { proposals: planned.proposals, steered: null };
+  }
+  const escapeActive = KITED_SIDE_STEER || kitedEscape;
   const bounds = { width: map.width, height: map.height };
   const byReference = new Map(planned.units.map((unit) => [unit.referenceId, unit]));
   const proposalByReference = new Map(
     planned.proposals.map((proposal) => [proposal.referenceId, proposal]),
   );
-  return planned.proposals.map((proposal) => {
+  const steered = new Set();
+  const proposals = planned.proposals.map((proposal) => {
     const distance = Math.hypot(proposal.dx, proposal.dy);
     if (distance <= ZERO_STEP_EPSILON) return proposal;
     const mover = byReference.get(proposal.referenceId);
     if (!mover) return proposal;
+    // "chaser" scope: only the chasing side of a kited scenario steers; the
+    // kiting side (and every non-kited fight) keeps the baseline solver.
+    // And only around NON-TARGET enemy bodies -- ally-blocked and
+    // target-blocked chasers keep the baseline solver (the tape's stall and
+    // catch regimes respectively).
+    if (!STEER_AROUND_BODIES) {
+      if (mover.owner === chaserScopeOwner) {
+        // "kited": the kiting side's MOVE-ORDERED units steer around enemy
+        // bodies too -- the tape's caught victim executes the scripted ball
+        // move through attacker contact at the ball's own pace, where the
+        // baseline solver grinds it on the pressing chaser's body. Units
+        // without a move order (standing to shoot) keep the baseline. NO
+        // target exclusion here: a kiter's target is who it SHOOTS -- most
+        // often the very champion pressing it -- never a body it wants to
+        // walk into.
+        if (!escapeActive || !mover.moveOrder) return proposal;
+        if (!stepHitsAnyEnemyBody(mover, proposal.dx, proposal.dy, planned.units)) {
+          return proposal;
+        }
+      } else {
+        // Steer only when the wanted step runs into a NON-TARGET enemy body
+        // (the ball surface). Ally blocks keep the baseline solver (the
+        // tape's chaser-on-chaser stalls are real), and the mover's own
+        // target is the catch. Wider triggers were measured and rejected --
+        // see the ally-queue ladder in HCC_CHASER_MOBILITY_2026-08-07.md.
+        if (!stepHitsOtherEnemyBody(mover, proposal.dx, proposal.dy, planned.units)) {
+          return proposal;
+        }
+      }
+    }
     if (stepClearsBodies(mover, proposal.dx, proposal.dy, planned.units,
       proposalByReference, bounds)) return proposal;
+    steered.add(proposal.referenceId);
     const heading = Math.atan2(proposal.dy, proposal.dx);
     for (let turn = 1; turn <= STEER_MAX_TURNS; turn += 1) {
       for (const side of [1, -1]) {
@@ -486,19 +574,37 @@ function steerProposals(planned, map) {
     }
     return Object.freeze({ referenceId: proposal.referenceId, dx: 0, dy: 0 });
   });
+  return { proposals, steered };
 }
 
 
-function resolveMovement(planned, byReference, map) {
-  const wantedProposals = steerProposals(planned, map);
+function resolveMovement(planned, byReference, map, kiteState = null) {
+  // "chaser" scope: steer-then-stop for the chasing side of a kited scenario
+  // only. Without a kiteState (or for the kiting side) the solver is
+  // untouched, so every non-kited fight stays bit-identical to baseline.
+  const chaserScopeOwner = CHASER_BIMODAL_STEP && kiteState ? kiteState.owner : null;
+  const { proposals: wantedProposals, steered } = steerProposals(
+    planned, map, chaserScopeOwner, kiteState?.kitedEscape === true,
+  );
   let moved = resolveMovementProposals(planned.units, wantedProposals, map);
-  if (!BIMODAL_STEP) return moved;
+  if (!BIMODAL_STEP && chaserScopeOwner === null) return moved;
+  const eligible = (referenceId) => {
+    if (BIMODAL_STEP) return true;
+    // Scoped modes: cancellation applies only to steps the steer touched --
+    // blocked by a (non-target) enemy body with no clear full-speed heading
+    // nearby. The steered set only ever contains in-scope movers (chasers,
+    // and under "kited" the move-ordered kiters too), so membership is the
+    // whole test. Steps shortened by the mover's own target or by allies
+    // keep the baseline partial resolve.
+    return steered !== null && steered.has(referenceId);
+  };
   const held = new Set();
   for (let pass = 0; pass < MAX_BIMODAL_PASSES; pass += 1) {
     const movedByReference = new Map(moved.map((unit) => [unit.referenceId, unit]));
     let grew = false;
     for (const proposal of wantedProposals) {
       if (held.has(proposal.referenceId)) continue;
+      if (!eligible(proposal.referenceId)) continue;
       const wanted = Math.hypot(proposal.dx, proposal.dy);
       if (wanted <= ZERO_STEP_EPSILON) continue;
       const before = byReference.get(proposal.referenceId);
@@ -536,6 +642,23 @@ function moveUnits(units, map, tick, events, kiteState = null) {
             % KITE_CHASE_REPATH_TICKS) {
       waypoint = { targetId: target.referenceId, x: target.x, y: target.y };
       waypoints.set(unit.referenceId, waypoint);
+    }
+    if (CHASE_PATH_GRID) {
+      // Plan on the repath cadence: the waypoint object is recreated by the
+      // repath above, so a missing plan means this cycle has not planned yet.
+      if (waypoint.plan === undefined) {
+        const obstacles = live.filter((other) => other.referenceId !== unit.referenceId
+          && other.referenceId !== target.referenceId
+          && other.referenceId !== unit.pursuitTargetId
+          && other.referenceId !== unit.engagedTargetId
+          && other.referenceId !== unit.attackTargetId);
+        waypoint.plan = planChaseAim(unit, target, obstacles, map);
+      }
+      const plan = waypoint.plan;
+      if (plan !== null) {
+        if (plan.stand === true) return { ...target, x: unit.x, y: unit.y };
+        return { ...target, x: plan.x, y: plan.y };
+      }
     }
     return { ...target, x: waypoint.x, y: waypoint.y };
   };
@@ -583,7 +706,7 @@ function moveUnits(units, map, tick, events, kiteState = null) {
       : Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
   });
   const planned = planLocalAvoidance(live, proposals, map);
-  const moved = resolveMovement(planned, byReference, map);
+  const moved = resolveMovement(planned, byReference, map, kiteState);
   const movedByReference = new Map(moved.map((unit) => [unit.referenceId, unit]));
   const proposalByReference = new Map(proposals.map((proposal) => [proposal.referenceId, proposal]));
   const moveEvents = [];

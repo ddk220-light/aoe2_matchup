@@ -25,12 +25,13 @@
 // Orders apply instantly: pursuit target set, engagement cleared. Gated by the
 // experiment harness (AOE2X_EXP_ORDERS=1) until validated.
 
+import { ENGINE_CONFIG } from "../engine-config.js";
 import { TICKS_PER_SECOND } from "../simulation-clock.js";
 import { calculateDamage } from "./attacks.js";
 import { MIN_RANGE_SUPPRESSES_SHOOTER } from "./experiments.js";
 import { isWithinReach } from "./targeting.js";
 
-export const ORDERS_ENABLED = process.env.AOE2X_EXP_ORDERS === "1";
+export const ORDERS_ENABLED = ENGINE_CONFIG.orders;
 // AOE2X_EXP_NO_RESCUE=1 disables the mid-fight idle rescue (probe flag: the
 // tape issues ~1 late order per fight where the rescue loop issues dozens).
 const RESCUE_DISABLED = process.env.AOE2X_EXP_NO_RESCUE === "1";

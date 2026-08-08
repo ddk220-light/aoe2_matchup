@@ -35,21 +35,23 @@
 //       steering strands the kite formation (duty cycle 0.18 against the
 //       tape's 0.79).
 
-const engagement = process.env.AOE2X_EXP_ENGAGEMENT ?? "";
-const pursuit = process.env.AOE2X_EXP_PURSUIT ?? "";
-const orders = process.env.AOE2X_EXP_ORDERS ?? "";
-const avoid = process.env.AOE2X_EXP_AVOID ?? "";
-const step = process.env.AOE2X_EXP_STEP ?? "";
+import { ENGINE_CONFIG } from "../engine-config.js";
+
+const engagement = ENGINE_CONFIG.engagement;
+const pursuit = ENGINE_CONFIG.pursuit;
+const orders = ENGINE_CONFIG.orders ? "1" : "";
+const avoid = ENGINE_CONFIG.avoid;
+const step = ENGINE_CONFIG.step;
 // AOE2X_EXP_MINRANGE=shooter -- minimum range holds the SHOOTER, not just the
 // one target it aimed at: a kiter with any enemy inside min_range is not given
 // a shot this beat. Measured on the camel tape (439 named shooters, 233 arrows
 // away, 225 of them hits; firers' nearest chaser p50 2.2 tiles against holders'
 // 1.0) with the min_range-0 arbalester column as a null control.
-const minRange = process.env.AOE2X_EXP_MINRANGE ?? "";
+const minRange = ENGINE_CONFIG.minRange;
 // AOE2X_EXP_KITE_ENGAGE=blocker -- a kited-world chaser that is physically
 // blocked engages whatever enemy is stopping it, instead of holding out for
 // its sticky pursuit target.
-const kiteEngage = process.env.AOE2X_EXP_KITE_ENGAGE ?? "";
+const kiteEngage = ENGINE_CONFIG.kiteEngage;
 
 const VALID_ENGAGEMENT = new Set(["", "pursuit"]);
 const VALID_PURSUIT = new Set(["", "tick", "blocked", "swing", "blocked+swing"]);

@@ -66,6 +66,10 @@ From the repository root:
 node aoe2x/js_simulation/server.mjs --host 127.0.0.1 --port 5011
 ```
 
+The calibrated configuration (`engagement=pursuit`, `orders=1`) is now the
+committed default in `src/engine-config.js`; the `AOE2X_EXP_*` environment
+variables still override it for experiment sweeps.
+
 Open `http://127.0.0.1:5011/`.
 
 The default bind is local-only. Use an explicit host only when exposing it

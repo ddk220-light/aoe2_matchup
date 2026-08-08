@@ -1,5 +1,41 @@
 # HCA vs Champion 12v21 — chaser mobility forensics (2026-08-07)
 
+> **2026-08-08 recalibration round — `chaser` is now the committed default.**
+> The scoped rule below (steer around NON-target enemy bodies, else stop;
+> ally blocks and the mover's own target keep the baseline solver) landed in
+> `engine-config.js` as `step: "chaser"` after the full-corpus round:
+> scoreboard **444.0 → 423.0** summed band error, wrong winners unchanged
+> (both pre-existing: champion_vs_paladin 6v3, arbalester_vs_firelancer
+> 15v20 — the latter improves 58.3 → 38.4 but stays wrong), esc columns
+> improve (20v15 13.9 → 6.5, 10v5 4.6 → 0.0), kac intact, **all 131
+> non-kited recorded ratios bit-identical**, test-suite failure set
+> identical before/after. `AOE2X_EXP_STEP=none` restores the pre-round
+> solver (PowerShell-safe sentinel, like engagement's `free`).
+>
+> Also in this round: `matchup-playback` now passes `chaseCapture` from the
+> truth fixtures (it had only ever been wired into the sweep harness;
+> corpus effect +1.2 band error, no winner changes), capture rates were
+> re-measured under `chaser` (kac 30 and hcc 26 events/fight against the
+> tape's ~0 and ~8 genuine contacts — both stay OFF; esc 40 / esp 12 /
+> avp 22 against tape 46 / 43 / 38 — all stay ON), and
+> `AOE2X_EXP_MINRANGE=shooter` was re-tested (423.0 → 475.1, still
+> over-suppresses because chaser exposure remains above tape — stays OFF).
+>
+> **What did NOT land: the 12v21 wrong winner is still open.** Six rule
+> variants were measured (the ladder below, plus ally-queue forms: stop on
+> any ally block / on stationary allies / steer around stationary allies /
+> stop behind frustrated held allies). Every variant that restores the
+> tape's 12v21 queue lag (champion→own-target p50 1.8–2.85 tiles, own-target
+> contact 2–15% of frames) also strands a catching column (esc 10v5,
+> hcst 20v20, or kac 5v10 flip), and every variant that preserves the
+> catches collapses back to target-hugging at 12v21 (p50 ~1.0, contact
+> 25–50%). The tape's lag is produced by obstacle-aware pathing around the
+> ball with clearance margin — the pathfinding this engine deliberately
+> does not have (see arena.js "documented infidelity"). Local per-tick
+> collision rules cannot express both regimes at once; further variants
+> are curve-fitting. Next real lever: a coarse flow-field / clearance path
+> around the kiting ball for pursuers, then re-run this ladder.
+
 The standard-units corpus's one genuine measured-cause wrong winner
 (`STANDARD_UNITS_SUMMARY_2026-08-07.md`: tape −36.5 over 14 repeats, sim +24.5,
 champions winning 22/25 sampled orders) is root-caused here from the full-rate

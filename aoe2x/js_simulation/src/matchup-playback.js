@@ -322,6 +322,10 @@ function runRoster({ name, ratio, roster, mechanics, truth, synthetic }) {
     units,
     ...(Number.isSafeInteger(truth.kiteOwner) ? { kiteOwner: truth.kiteOwner } : {}),
     ...(truth.kiteProfile ? { kiteProfile: truth.kiteProfile } : {}),
+    // Carried like kiteProfile (CONTACT_CAPTURE_2026-08-07.md records the
+    // per-scenario settings); this was measured through the sweep harness and
+    // had never been wired into playback.
+    ...(truth.chaseCapture === true ? { chaseCapture: true } : {}),
   }), { maxTicks: 9000 });
   const live = result.world.units.filter(({ alive }) => alive);
   return Object.freeze({

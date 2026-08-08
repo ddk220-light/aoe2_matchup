@@ -460,21 +460,27 @@ function stepClearsBodies(mover, dx, dy, live, proposalByReference, bounds) {
 }
 
 
-// Does the wanted step hit at least one ENEMY body? Ally-only blocks are a
-// different regime: KITER_FLOW measured real chaser-on-chaser stalls in the
-// tape (kac champions 13.2% vs 5.6% baseline stall rate), while the camel
-// forensics show a chaser blocked by the ENEMY formation routing around it at
-// full speed. The chaser steer therefore fires only on enemy contact.
-function stepHitsEnemyBody(mover, dx, dy, live, proposalByReference) {
+// Does the wanted step hit at least one NON-TARGET enemy body? The chaser
+// steer fires only then:
+//   * ally blocks are a different regime -- KITER_FLOW measured real
+//     chaser-on-chaser stalls in the tape (kac champions 13.2% stall rate);
+//   * the mover's OWN pursuit/engagement target is the catch, not an
+//     obstruction -- walking into it is how a chase ends, and deflecting
+//     around it turns every would-be catch into an orbit (measured: with the
+//     target counted as a blocker, every catching column flips -- kac 5v10,
+//     esc 10v5, hcp 20v15, hcst 20v20 all lose their tape winner);
+//   * a NON-target enemy body is the ball surface, which the camel forensics
+//     show the chaser routing around at full speed.
+function stepHitsOtherEnemyBody(mover, dx, dy, live) {
   const x = mover.x + dx;
   const y = mover.y + dy;
   const radius = collisionRadius(mover);
-  const moverProposal = proposalByReference.get(mover.referenceId);
-  const moverMoving = moverProposal !== undefined
-    && (moverProposal.dx !== 0 || moverProposal.dy !== 0);
   for (const other of live) {
     if (other.referenceId === mover.referenceId) continue;
     if (other.owner === mover.owner) continue;
+    if (other.referenceId === mover.pursuitTargetId
+      || other.referenceId === mover.engagedTargetId
+      || other.referenceId === mover.attackTargetId) continue;
     const extent = radius + collisionRadius(other);
     if (Math.max(Math.abs(x - other.x), Math.abs(y - other.y)) < extent - STEP_EPSILON) {
       return true;
@@ -484,29 +490,42 @@ function stepHitsEnemyBody(mover, dx, dy, live, proposalByReference) {
 }
 
 
+
+
 function steerProposals(planned, map, chaserScopeOwner = null) {
-  if (!STEER_AROUND_BODIES && chaserScopeOwner === null) return planned.proposals;
+  if (!STEER_AROUND_BODIES && chaserScopeOwner === null) {
+    return { proposals: planned.proposals, steered: null };
+  }
   const bounds = { width: map.width, height: map.height };
   const byReference = new Map(planned.units.map((unit) => [unit.referenceId, unit]));
   const proposalByReference = new Map(
     planned.proposals.map((proposal) => [proposal.referenceId, proposal]),
   );
-  return planned.proposals.map((proposal) => {
+  const steered = new Set();
+  const proposals = planned.proposals.map((proposal) => {
     const distance = Math.hypot(proposal.dx, proposal.dy);
     if (distance <= ZERO_STEP_EPSILON) return proposal;
     const mover = byReference.get(proposal.referenceId);
     if (!mover) return proposal;
     // "chaser" scope: only the chasing side of a kited scenario steers; the
     // kiting side (and every non-kited fight) keeps the baseline solver.
-    // And only around ENEMY bodies -- ally-blocked chasers keep the baseline
-    // solver, which is the regime the tape shows stalling.
+    // And only around NON-TARGET enemy bodies -- ally-blocked and
+    // target-blocked chasers keep the baseline solver (the tape's stall and
+    // catch regimes respectively).
     if (!STEER_AROUND_BODIES) {
       if (mover.owner === chaserScopeOwner) return proposal;
-      if (!stepHitsEnemyBody(mover, proposal.dx, proposal.dy, planned.units,
-        proposalByReference)) return proposal;
+      // Steer only when the wanted step runs into a NON-TARGET enemy body
+      // (the ball surface). Ally blocks keep the baseline solver (the
+      // tape's chaser-on-chaser stalls are real), and the mover's own
+      // target is the catch. Wider triggers were measured and rejected --
+      // see the ally-queue ladder in HCC_CHASER_MOBILITY_2026-08-07.md.
+      if (!stepHitsOtherEnemyBody(mover, proposal.dx, proposal.dy, planned.units)) {
+        return proposal;
+      }
     }
     if (stepClearsBodies(mover, proposal.dx, proposal.dy, planned.units,
       proposalByReference, bounds)) return proposal;
+    steered.add(proposal.referenceId);
     const heading = Math.atan2(proposal.dy, proposal.dx);
     for (let turn = 1; turn <= STEER_MAX_TURNS; turn += 1) {
       for (const side of [1, -1]) {
@@ -520,6 +539,7 @@ function steerProposals(planned, map, chaserScopeOwner = null) {
     }
     return Object.freeze({ referenceId: proposal.referenceId, dx: 0, dy: 0 });
   });
+  return { proposals, steered };
 }
 
 
@@ -528,13 +548,18 @@ function resolveMovement(planned, byReference, map, kiteState = null) {
   // only. Without a kiteState (or for the kiting side) the solver is
   // untouched, so every non-kited fight stays bit-identical to baseline.
   const chaserScopeOwner = CHASER_BIMODAL_STEP && kiteState ? kiteState.owner : null;
-  const wantedProposals = steerProposals(planned, map, chaserScopeOwner);
+  const { proposals: wantedProposals, steered } = steerProposals(planned, map, chaserScopeOwner);
   let moved = resolveMovementProposals(planned.units, wantedProposals, map);
   if (!BIMODAL_STEP && chaserScopeOwner === null) return moved;
   const eligible = (referenceId) => {
     if (BIMODAL_STEP) return true;
+    // Chaser scope: cancellation applies only to steps the steer touched --
+    // blocked by a NON-target enemy body with no clear full-speed heading
+    // nearby. Steps shortened by the mover's own target or by allies keep
+    // the baseline partial resolve (the catch slide-in and the crowd).
     const unit = byReference.get(referenceId);
-    return unit !== undefined && unit.owner !== chaserScopeOwner;
+    if (unit === undefined || unit.owner === chaserScopeOwner) return false;
+    return steered !== null && steered.has(referenceId);
   };
   const held = new Set();
   for (let pass = 0; pass < MAX_BIMODAL_PASSES; pass += 1) {

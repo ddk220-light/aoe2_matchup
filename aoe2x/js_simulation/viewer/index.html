@@ -106,12 +106,18 @@
           <button class="dmg-toggle" id="dmgToggle" type="button" aria-expanded="false" hidden>Damage breakdown</button>
         </div>
         <div class="navigation-lab-controls" id="navigationLabControls" hidden>
-          <label for="navigationVariant">Navigation approach</label>
-          <select id="navigationVariant">
-            <option value="cohesive">Cohesive formation (recommended)</option>
-            <option value="per-unit-grid">Per-unit obstacle grid</option>
-            <option value="baseline">Baseline direct movement</option>
-          </select>
+          <div class="navigation-lab-field">
+            <label for="soloMovementUnit">Ranged unit</label>
+            <select id="soloMovementUnit" aria-label="Ranged unit to inspect"></select>
+          </div>
+          <div class="navigation-lab-field">
+            <label for="navigationVariant">Navigation approach</label>
+            <select id="navigationVariant">
+              <option value="cohesive">Cohesive formation (recommended)</option>
+              <option value="per-unit-grid">Per-unit obstacle grid</option>
+              <option value="baseline">Baseline direct movement</option>
+            </select>
+          </div>
         </div>
       </div>
       <p class="start-hint" id="startHint">Pick a calibrated civ &amp; unit for both teams to start</p>
@@ -155,6 +161,7 @@
             <div class="navigation-stats" id="navigationStats" hidden aria-live="polite">
               <strong id="navigationStatsTitle">Cohesive formation</strong>
               <dl>
+                <div><dt>Movement phase</dt><dd id="navPhase">—</dd></div>
                 <div><dt>Cohesion radius</dt><dd id="navCohesion">—</dd></div>
                 <div><dt>Max slot error</dt><dd id="navSlotError">—</dd></div>
                 <div><dt>Blocked this tick</dt><dd id="navBlocked">—</dd></div>

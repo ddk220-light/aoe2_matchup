@@ -523,6 +523,9 @@ export function createMapRenderer(canvas, map) {
     const route = point(navigation.routeWaypoint);
     const ai = point(navigation.aiWaypoint);
     const centre = point(navigation.centroid);
+    const firstFormation = navigation.firstFormationTarget
+      ? point(navigation.firstFormationTarget)
+      : null;
     ctx.save();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -576,6 +579,7 @@ export function createMapRenderer(canvas, map) {
       ctx.fillText(label, position.x + radius + 3, position.y - radius - 1);
     };
     marker(ai, "#f4ca5b", 6, "AI order");
+    if (firstFormation) marker(firstFormation, "#ff9b73", 6, "first formation");
     marker(route, "#69c9ff", 5, "route");
     marker(anchor, "#ffffff", 4, "anchor");
     marker(centre, "#85e2c2", 3, "group");

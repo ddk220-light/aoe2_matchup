@@ -9,10 +9,10 @@ import {
   requireSoloNavigationVariant,
   SOLO_NAVIGATION_VARIANTS,
 } from "./combat/solo-navigation.js";
-import { KITE_PROFILES } from "./kite-profiles.js";
+import { deriveKiteProfile, kitePolicyFor } from "./combat/kite-timing.js";
 import { placeArmy, resolveFamily, sideCapacity } from "./placement.js";
 import { deriveCounts, PURCHASE_BUDGET } from "./purchase.js";
-import { unitBySlug } from "./unit-registry.js";
+import { SOLO_MOVEMENT_UNIT_SLUGS, unitBySlug } from "./unit-registry.js";
 
 
 // Capacity is per (owner, family); this is the largest any of them offers.
@@ -112,17 +112,13 @@ function orientationNormalisedFor(family, side2, side3) {
 }
 
 
-// The kiting unit's own measured script cycle. It is a property of the KITER,
-// not of the pairing (src/kite-profiles.js is generated from the tapes by
-// tools/derive_kite_profiles.py), so a free-selection fight can look it up by
-// slug. Without this every kite fight ran on DEFAULT_KITE_PROFILE, which is
-// the arbalester's -- wrong for three of the four kiters.
-function kiteProfileFor(unit) {
-  const profile = KITE_PROFILES[unit.slug];
-  if (!profile) {
-    throw new RangeError(`no kite profile for ${unit.slug}; regenerate src/kite-profiles.js`);
-  }
-  return profile;
+// The recurring kiting cycle is mechanics, not a per-unit calibration row:
+// reload and projectile-release delay are snapped onto the recorded 40-tick
+// AI command grid. A small policy table retains only choices mechanics cannot
+// answer (opening phase, bookkeeping top-up, formation behavior). The
+// generated tape profiles remain regression oracles in tests.
+function kiteProfileFor(unit, mechanics) {
+  return deriveKiteProfile(mechanics, kitePolicyFor(unit.slug));
 }
 
 
@@ -263,7 +259,13 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3, budget, map
     ...(map ? { map } : {}),
     ...(innerKiteOwner === null
       ? {}
-      : { kiteOwner: innerKiteOwner, kiteProfile: kiteProfileFor(kiter) }),
+      : {
+        kiteOwner: innerKiteOwner,
+        kiteProfile: kiteProfileFor(
+          kiter,
+          innerKiteOwner === 2 ? mechanics2 : mechanics3,
+        ),
+      }),
   }), { maxTicks: MAX_TICKS });
 
   // Owner relabelling. Reference ids stay exactly as the engine allocated
@@ -322,12 +324,18 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3, budget, map
 }
 
 
-export async function runSoloHandCannoneerMovement(root, {
+export async function runSoloRangedMovement(root, {
   map,
   navigation = "cohesive",
+  unitSlug = "hand_cannoneer",
 } = {}) {
   requireSoloNavigationVariant(navigation);
-  const unit = requireUnit("hand_cannoneer");
+  if (!SOLO_MOVEMENT_UNIT_SLUGS.includes(unitSlug)) {
+    throw new RangeError(
+      `solo movement unit must be one of ${SOLO_MOVEMENT_UNIT_SLUGS.join(", ")}, got ${unitSlug}`,
+    );
+  }
+  const unit = requireUnit(unitSlug);
   const mechanics = await loadMechanics(root, unit);
   const count = 21;
   const owner = 2;
@@ -350,7 +358,7 @@ export async function runSoloHandCannoneerMovement(root, {
     units,
     ...(map ? { map } : {}),
     kiteOwner: owner,
-    kiteProfile: kiteProfileFor(unit),
+    kiteProfile: kiteProfileFor(unit, mechanics),
     soloMovement: true,
     soloNavigation: navigation,
   });
@@ -393,4 +401,11 @@ export async function runSoloHandCannoneerMovement(root, {
     unitIndex: Object.freeze(unitIndex),
     snapshots: Object.freeze(world.snapshots.map(slimSnapshot)),
   });
+}
+
+
+// Retain the module-level legacy entry point for callers that intentionally
+// request the original default lab without a unit selector.
+export async function runSoloHandCannoneerMovement(root, options = {}) {
+  return runSoloRangedMovement(root, { ...options, unitSlug: "hand_cannoneer" });
 }

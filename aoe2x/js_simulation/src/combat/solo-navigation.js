@@ -7,10 +7,12 @@ export const SOLO_NAVIGATION_VARIANTS = Object.freeze([
   "cohesive",
 ]);
 
-const SLOT_SPACING_TILES = 0.48;
-const GROUP_CLEARANCE_RADIUS_TILES = 1.18;
+const MIN_SLOT_SPACING_TILES = 0.48;
+const MIN_ROUTE_CLEARANCE_TILES = 1.25;
+const ROUTE_CLEARANCE_MARGIN_TILES = 0.07;
 const ANCHOR_LEASH_TILES = 0.62;
 const ANCHOR_REACHED_TILES = 0.18;
+const FIRST_ORDER_DELTA_TILES = 0.25;
 const STALL_REPLAN_TICKS = Math.round(1.25 * TICKS_PER_SECOND);
 const ROUTE_LOOKAHEAD_TILES = 0.75;
 
@@ -44,15 +46,23 @@ function orderCentroid(units, fallback) {
 }
 
 
-function compactSlots(count) {
+function maximumCollisionRadius(units) {
+  return units.reduce((maximum, unit) => Math.max(
+    maximum,
+    unit.mechanics?.collision_size_tiles?.x ?? 0,
+  ), 0);
+}
+
+
+function compactSlots(count, spacing) {
   const width = Math.ceil(Math.sqrt(count));
   const height = Math.ceil(count / width);
   const candidates = [];
   for (let row = 0; row < height; row += 1) {
     for (let column = 0; column < width; column += 1) {
       candidates.push({
-        x: (column - (width - 1) / 2) * SLOT_SPACING_TILES,
-        y: (row - (height - 1) / 2) * SLOT_SPACING_TILES,
+        x: (column - (width - 1) / 2) * spacing,
+        y: (row - (height - 1) / 2) * spacing,
       });
     }
   }
@@ -72,20 +82,15 @@ function assignStableSlots(units) {
   const ordered = [...units].sort((a, b) => (
     a.y !== b.y ? a.y - b.y : (a.x !== b.x ? a.x - b.x : a.referenceId - b.referenceId)
   ));
-  const slots = compactSlots(units.length);
+  // Formation orders are allowed to compress allied bodies: the movement
+  // solver deliberately exempts two allies that both hold formation orders,
+  // matching the recorded marching blocks. Keep the measured half-tile slot
+  // lattice for every ranged unit; using full Scorpion body diameter here
+  // makes a 21-unit square physically wider than the Arena corridor, even
+  // though the game formation can traverse it. Static-obstacle clearance is
+  // still based on the full body radius in centralObstacleEnvelope below.
+  const slots = compactSlots(units.length, MIN_SLOT_SPACING_TILES);
   return new Map(ordered.map((unit, index) => [unit.referenceId, slots[index]]));
-}
-
-
-function stagingAnchor(units, map) {
-  const own = centroid(units);
-  // The source formation begins immediately below-left of the central Arena
-  // obstruction. This nearby open point lets it compact before the anchor
-  // starts its lap; no unit is teleported and every walker keeps DAT speed.
-  return {
-    x: Math.min(map.width - 2, Math.max(2, own.x - 0.95)),
-    y: Math.min(map.height - 2, Math.max(2, own.y - 0.3)),
-  };
 }
 
 
@@ -133,14 +138,22 @@ function nominalRing(map) {
 }
 
 
-function centralObstacleEnvelope(map) {
+function centralObstacleEnvelope(map, slots, bodyRadius) {
   const nominal = nominalRing(map);
   const central = (map.obstacles ?? []).filter((body) => (
     body.x >= nominal.loX && body.x <= nominal.hiX
     && body.y >= nominal.loY && body.y <= nominal.hiY
   ));
   if (central.length === 0) return nominal;
-  const margin = GROUP_CLEARANCE_RADIUS_TILES + 0.07;
+  const slotReach = [...slots.values()].reduce((maximum, slot) => Math.max(
+    maximum,
+    Math.abs(slot.x),
+    Math.abs(slot.y),
+  ), 0);
+  const margin = Math.max(
+    MIN_ROUTE_CLEARANCE_TILES,
+    slotReach + bodyRadius + ROUTE_CLEARANCE_MARGIN_TILES,
+  );
   return {
     loX: Math.min(...central.map((body) => body.x - body.radius)) - margin,
     hiX: Math.max(...central.map((body) => body.x + body.radius)) + margin,
@@ -168,12 +181,23 @@ function mapAiWaypointToEnvelope(state) {
 
 function routeAnchor(state, units, map, tick) {
   const speed = units[0]?.mechanics?.speed_tiles_per_second ?? 0;
+  // At a corner, static bodies can temporarily push one unit away from its
+  // ideal slot. The formation must be elastic by at least one unit diameter
+  // or large siege bodies can hold the entire anchor forever while trying to
+  // occupy an obstructed slot. Ordinary ranged bodies retain the established
+  // 0.62-tile leash; Scorpions derive a one-tile leash from their mechanics.
+  const leash = Math.max(ANCHOR_LEASH_TILES, 2 * maximumCollisionRadius(units));
   const maximumError = units.reduce((maximum, unit) => {
     const slot = state.slots.get(unit.referenceId);
     if (!slot) return maximum;
     const goal = { x: state.anchor.x + slot.x, y: state.anchor.y + slot.y };
     return Math.max(maximum, Math.hypot(unit.x - goal.x, unit.y - goal.y));
   }, 0);
+  if (state.phase === "forming-first-order") {
+    if (maximumError > leash || speed <= 0) return maximumError;
+    state.phase = "routing";
+    state.lastAnchorMoveTick = tick;
+  }
   const reached = !state.routeWaypoint
     || Math.hypot(state.anchor.x - state.routeWaypoint.x,
       state.anchor.y - state.routeWaypoint.y) <= ANCHOR_REACHED_TILES;
@@ -195,7 +219,7 @@ function routeAnchor(state, units, map, tick) {
     state.routeWaypoint = ringPoint(state.routeBounds, state.routeArc);
   }
 
-  if (maximumError > ANCHOR_LEASH_TILES || speed <= 0) return maximumError;
+  if (maximumError > leash || speed <= 0) return maximumError;
   const dx = state.routeWaypoint.x - state.anchor.x;
   const dy = state.routeWaypoint.y - state.anchor.y;
   const distance = Math.hypot(dx, dy);
@@ -212,6 +236,12 @@ function routeAnchor(state, units, map, tick) {
 function destinationsFor(state, units) {
   const destinations = new Map();
   if (state.variant === "cohesive") {
+    if (state.phase === "awaiting-first-order") {
+      for (const unit of units) {
+        destinations.set(unit.referenceId, { x: unit.x, y: unit.y });
+      }
+      return destinations;
+    }
     for (const unit of units) {
       const slot = state.slots.get(unit.referenceId) ?? { x: 0, y: 0 };
       destinations.set(unit.referenceId, {
@@ -241,9 +271,13 @@ function buildDiagnostics(state, units, blockedCount = 0) {
   }, 0);
   return Object.freeze({
     variant: state.variant,
+    phase: state.phase,
     aiWaypoint: Object.freeze({ ...state.aiWaypoint }),
     anchor: Object.freeze({ ...state.anchor }),
     routeWaypoint: Object.freeze({ ...state.routeWaypoint }),
+    firstFormationTarget: state.firstFormationTarget === null
+      ? null
+      : Object.freeze({ ...state.firstFormationTarget }),
     unitDestinations: Object.freeze([...state.destinations.entries()].map(
       ([referenceId, point]) => Object.freeze({ referenceId, x: point.x, y: point.y }),
     )),
@@ -261,18 +295,26 @@ function buildDiagnostics(state, units, blockedCount = 0) {
 export function createSoloNavigationState(variant, units, map) {
   requireSoloNavigationVariant(variant);
   const own = centroid(units);
-  const anchor = variant === "cohesive" ? stagingAnchor(units, map) : own;
-  const routeBounds = centralObstacleEnvelope(map);
+  const anchor = { ...own };
+  const slots = assignStableSlots(units);
+  const routeBounds = centralObstacleEnvelope(
+    map,
+    slots,
+    maximumCollisionRadius(units),
+  );
   const state = {
     variant,
+    phase: variant === "cohesive" ? "awaiting-first-order" : "direct",
     anchor,
     aiWaypoint: { ...own },
+    initialAiWaypoint: { ...own },
+    firstFormationTarget: null,
     routeWaypoint: { ...anchor },
     nominalRing: nominalRing(map),
     routeBounds,
     routeArc: ringArc(routeBounds, anchor),
     targetRouteArc: null,
-    slots: assignStableSlots(units),
+    slots,
     destinations: new Map(),
     replans: 0,
     lastStallReplanTick: -STALL_REPLAN_TICKS,
@@ -290,7 +332,31 @@ export function createSoloNavigationState(variant, units, map) {
 export function planSoloNavigation(state, units, map, tick) {
   state.lastTick = tick;
   state.aiWaypoint = orderCentroid(units, state.aiWaypoint);
-  if (state.variant === "cohesive") routeAnchor(state, units, map, tick);
+  if (state.variant === "cohesive") {
+    if (state.phase === "awaiting-first-order"
+        && Math.hypot(
+          state.aiWaypoint.x - state.initialAiWaypoint.x,
+          state.aiWaypoint.y - state.initialAiWaypoint.y,
+        ) > FIRST_ORDER_DELTA_TILES) {
+      // The opening formation belongs to the first real AI right-click, not
+      // to an invented staging point near spawn. Project that order onto the
+      // body-aware obstacle envelope so every slot has a reachable, legal
+      // destination; units then form while travelling there. Only after the
+      // last stragglers enter the leash does the common anchor begin its lap.
+      // The first target is the nearest body-safe point to the literal AI
+      // order. Later orders use perimeter-progress mapping so their arc never
+      // regresses, but applying that proportional remap here would rotate the
+      // very first formation away from the right-click the user can see.
+      state.routeArc = ringArc(state.routeBounds, state.aiWaypoint);
+      state.targetRouteArc = state.routeArc;
+      state.firstFormationTarget = ringPoint(state.routeBounds, state.routeArc);
+      state.anchor = { ...state.firstFormationTarget };
+      state.routeWaypoint = { ...state.firstFormationTarget };
+      state.phase = "forming-first-order";
+      state.lastAnchorMoveTick = tick;
+    }
+    if (state.phase !== "awaiting-first-order") routeAnchor(state, units, map, tick);
+  }
   else state.anchor = centroid(units);
   if (state.variant !== "cohesive") state.routeWaypoint = { ...state.aiWaypoint };
   state.destinations = destinationsFor(state, units);

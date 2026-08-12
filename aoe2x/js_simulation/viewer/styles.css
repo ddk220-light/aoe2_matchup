@@ -122,6 +122,12 @@
   font-size: var(--fs-xs);
 }
 
+.navigation-lab-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .navigation-lab-controls select {
   max-width: min(360px, 72vw);
   padding: 6px 9px;
@@ -643,6 +649,12 @@
 
 @media (max-width: 720px) {
   .local-engine-pill { display: none; }
+  .solo-movement-mode .navigation-lab-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .navigation-lab-field { justify-content: space-between; }
+  .navigation-lab-field select { flex: 1 1 auto; min-width: 0; }
   .sim-stage {
     display: grid;
     grid-template-columns: 1fr;

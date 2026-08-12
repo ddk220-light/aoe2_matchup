@@ -216,13 +216,26 @@ async function start() {
   let requestSerial = 0;
   let page;
 
+  const unitsBySlug = new Map(units.units.map((unit) => [unit.slug, unit]));
+  const soloUnit = soloRequest ? unitsBySlug.get(soloRequest.unit) : null;
+
   if (soloRequest) {
+    if (!soloUnit || !units.soloMovementSlugs.includes(soloRequest.unit)) {
+      throw new Error(`Solo movement unit ${soloRequest.unit} is not available`);
+    }
     document.body.classList.add("solo-movement-mode");
-    document.querySelector(".page-header h1").textContent = "Hand Cannoneer Movement Lab";
+    document.querySelector(".page-header h1").textContent = `${soloUnit.label} Movement Lab`;
     document.querySelector(".page-header .subtitle").textContent =
-      "21 Bohemian Hand Cannoneers · engine team 2 · enemy-free AI-order loop";
+      `21 ${soloUnit.civ} ${soloUnit.label}s · engine team 2 · enemy-free AI-order loop`;
     byId("team1Rail").querySelector(".rail-title").textContent = "Engine Team 2";
-    byId("optionsCurrent").textContent = "21 Hand Cannoneers · solo movement";
+    byId("optionsCurrent").textContent = `21 ${soloUnit.label}s · solo movement`;
+    const unitSelect = byId("soloMovementUnit");
+    for (const slug of units.soloMovementSlugs) {
+      const unit = unitsBySlug.get(slug);
+      if (!unit) throw new Error(`Solo movement registry is missing ${slug}`);
+      unitSelect.append(new Option(`${unit.label} · ${unit.civ}`, slug));
+    }
+    unitSelect.value = soloRequest.unit;
     byId("navigationVariant").value = soloRequest.navigation;
   }
 
@@ -234,6 +247,13 @@ async function start() {
       cohesive: "Cohesive formation",
     };
     byId("navigationStatsTitle").textContent = names[navigation.variant] ?? navigation.variant;
+    const phaseNames = {
+      direct: "Direct orders",
+      "awaiting-first-order": "Holding for first AI order",
+      "forming-first-order": "Forming at first AI order",
+      routing: "Group kiting route",
+    };
+    byId("navPhase").textContent = phaseNames[navigation.phase] ?? navigation.phase ?? "—";
     byId("navCohesion").textContent = `${navigation.cohesionRadius.toFixed(2)} tiles`;
     byId("navSlotError").textContent = `${navigation.maxSlotError.toFixed(2)} tiles`;
     byId("navBlocked").textContent = String(navigation.blockedCount);
@@ -291,7 +311,7 @@ async function start() {
     liveSummary(snapshot);
     renderNavigationStats(snapshot.navigation);
     setMapStatus(activeResult.mode === "solo-movement"
-      ? "21 Hand Cannoneers · owner 2 AI kite movement · no enemies"
+      ? `21 ${activeResult.side2.label}s · owner 2 AI kite movement · no enemies`
       : `${activeResult.side2.label} ${activeResult.side2.count} vs ${activeResult.side3.label} ${activeResult.side3.count}`);
     if (cursor?.atEnd() && activeResult.mode !== "solo-movement") setPlaying(false);
   }
@@ -400,6 +420,11 @@ async function start() {
   if (soloRequest) {
     byId("resetBtn").hidden = true;
     byId("dmgToggle").hidden = true;
+    byId("soloMovementUnit").addEventListener("change", (event) => {
+      const next = new URL(window.location.href);
+      next.searchParams.set("unit", event.target.value);
+      window.location.assign(next.href);
+    });
     byId("navigationVariant").addEventListener("change", (event) => {
       const next = new URL(window.location.href);
       next.searchParams.set("navigation", event.target.value);

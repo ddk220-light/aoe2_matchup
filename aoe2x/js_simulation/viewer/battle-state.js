@@ -4,6 +4,14 @@ const ROLE_CLASS_BY_FAMILY = Object.freeze({
   siege: "siege_ranged",
 });
 
+const SOLO_MOVEMENT_UNITS = new Set([
+  "hand_cannoneer",
+  "arbalester",
+  "heavy_cav_archer",
+  "heavy_scorpion",
+  "imp_elite_skirm",
+]);
+
 
 export function soloMovementRequest(urlValue) {
   let url;
@@ -13,17 +21,21 @@ export function soloMovementRequest(urlValue) {
     return null;
   }
   const keys = [...url.searchParams.keys()];
-  if (keys.some((key) => key !== "mode" && key !== "navigation")) return null;
+  if (keys.some((key) => key !== "mode" && key !== "navigation" && key !== "unit")) return null;
   if (!keys.includes("mode") || url.searchParams.getAll("mode").length !== 1
-      || url.searchParams.getAll("navigation").length > 1) return null;
+      || url.searchParams.getAll("navigation").length > 1
+      || url.searchParams.getAll("unit").length > 1) return null;
   const values = url.searchParams.getAll("mode");
   if (values.length !== 1 || values[0] !== "hand-cannoneer-solo-movement") return null;
   const navigation = url.searchParams.get("navigation") ?? "cohesive";
   if (!["baseline", "per-unit-grid", "cohesive"].includes(navigation)) return null;
+  const unit = url.searchParams.get("unit") ?? "hand_cannoneer";
+  if (!SOLO_MOVEMENT_UNITS.has(unit)) return null;
   return Object.freeze({
     endpoint: "api/solo-hand-cannoneers",
+    unit,
     navigation,
-    query: `navigation=${navigation}`,
+    query: new URLSearchParams({ unit, navigation }).toString(),
   });
 }
 

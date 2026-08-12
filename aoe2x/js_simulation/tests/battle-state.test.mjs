@@ -129,25 +129,39 @@ test("the dedicated Hand Cannoneer movement link exposes three saved navigation 
     ),
     {
       endpoint: "api/solo-hand-cannoneers",
+      unit: "hand_cannoneer",
       navigation: "cohesive",
-      query: "navigation=cohesive",
+      query: "unit=hand_cannoneer&navigation=cohesive",
     },
   );
-  for (const navigation of ["baseline", "per-unit-grid", "cohesive"]) {
+  const units = [
+    "hand_cannoneer",
+    "arbalester",
+    "heavy_cav_archer",
+    "heavy_scorpion",
+    "imp_elite_skirm",
+  ];
+  for (const [unit, navigation] of units.map((unit, index) => [
+    unit,
+    ["baseline", "per-unit-grid", "cohesive"][index % 3],
+  ])) {
     assert.deepEqual(
       battleStateModule.soloMovementRequest(
-        `http://127.0.0.1:5011/?mode=hand-cannoneer-solo-movement&navigation=${navigation}`,
+        `http://127.0.0.1:5011/?mode=hand-cannoneer-solo-movement&unit=${unit}&navigation=${navigation}`,
       ),
       {
         endpoint: "api/solo-hand-cannoneers",
+        unit,
         navigation,
-        query: `navigation=${navigation}`,
+        query: `unit=${unit}&navigation=${navigation}`,
       },
     );
   }
   for (const url of [
     "http://127.0.0.1:5011/",
     "http://127.0.0.1:5011/?mode=hand-cannoneer-solo-movement&count=20",
+    "http://127.0.0.1:5011/?mode=hand-cannoneer-solo-movement&unit=champion",
+    "http://127.0.0.1:5011/?mode=hand-cannoneer-solo-movement&unit=arbalester&unit=heavy_cav_archer",
     "http://127.0.0.1:5011/?mode=hand-cannoneer-solo-movement&navigation=unknown",
     "http://127.0.0.1:5011/?mode=hand-cannoneer-solo-movement&navigation=cohesive&count=21",
     "http://127.0.0.1:5011/?mode=champion-solo-movement",

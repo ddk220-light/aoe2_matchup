@@ -8,7 +8,7 @@ import { buildArenaPhysicsMap } from "./src/arena-physics-map.js";
 import {
   FIGHT_SIDE_CAP,
   runFight,
-  runSoloHandCannoneerMovement,
+  runSoloRangedMovement,
 } from "./src/fight.js";
 import { FAMILIES, sideCapacity } from "./src/placement.js";
 import { TICKS_PER_SECOND } from "./src/simulation-clock.js";
@@ -20,7 +20,7 @@ import {
   matchupTruth,
   syntheticMatchupPlayback,
 } from "./src/matchup-playback.js";
-import { UNIT_REGISTRY } from "./src/unit-registry.js";
+import { SOLO_MOVEMENT_UNIT_SLUGS, UNIT_REGISTRY } from "./src/unit-registry.js";
 
 
 const CONTENT_TYPES = new Map([
@@ -292,6 +292,7 @@ async function handleFightApi({ request, response, root, url }) {
         family,
         { side2: sideCapacity(2, family), side3: sideCapacity(3, family) },
       ])),
+      soloMovementSlugs: SOLO_MOVEMENT_UNIT_SLUGS,
       units: UNIT_REGISTRY.map(({ slug, label, civ, class: unitClass, baseCost }) => ({
         slug, label, civ, class: unitClass, baseCost,
       })),
@@ -304,17 +305,19 @@ async function handleFightApi({ request, response, root, url }) {
   }
   if (url.pathname === "/api/solo-hand-cannoneers") {
     const keys = [...url.searchParams.keys()];
-    if (keys.some((key) => key !== "navigation")
-        || url.searchParams.getAll("navigation").length > 1) {
-      sendJson(response, 400, { error: "solo Hand Cannoneer movement accepts only navigation" });
+    if (keys.some((key) => key !== "navigation" && key !== "unit")
+        || url.searchParams.getAll("navigation").length > 1
+        || url.searchParams.getAll("unit").length > 1) {
+      sendJson(response, 400, { error: "solo ranged movement accepts only unit and navigation" });
       return true;
     }
     try {
       const map = await loadArenaPhysicsMap(root);
       const navigation = url.searchParams.get("navigation") ?? "cohesive";
-      sendJson(response, 200, await runSoloHandCannoneerMovement(
+      const unitSlug = url.searchParams.get("unit") ?? "hand_cannoneer";
+      sendJson(response, 200, await runSoloRangedMovement(
         pathToFileURL(path.join(root, "/")),
-        { map, navigation },
+        { map, navigation, unitSlug },
       ));
     } catch (error) {
       sendJson(response, 400, { error: String(error?.message ?? error) });

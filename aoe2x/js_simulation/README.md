@@ -86,14 +86,21 @@ either explicit army counts or an equal-resource budget. The centre stage
 uses the isometric Golden Arena renderer and exposes deterministic playback,
 damage, map-inspection, hash, and review-export tools.
 
-### Hand Cannoneer navigation lab
+### Ranged-unit navigation lab
 
-The dedicated enemy-free movement lab runs exactly 21 Bohemian Hand
-Cannoneers as engine owner 2 and keeps the tape-derived AI movement-order
-clock. Its default `cohesive` navigation uses a persistent formation anchor,
-stable compact slots, formation-inflated central-obstacle clearance, and
-deterministic stall recovery. `baseline` and `per-unit-grid` remain saved as
-viewer options for direct visual comparison.
+The dedicated enemy-free movement lab runs exactly 21 owner-2 units and can
+switch among Hand Cannoneer, Arbalester, Heavy Cavalry Archer, Heavy Scorpion,
+and Elite Skirmisher. Its default `cohesive` navigation uses a persistent
+formation anchor, collision-aware compact slots, formation-inflated central
+obstacle clearance, and deterministic stall recovery. `baseline` and
+`per-unit-grid` remain saved for direct visual comparison.
+
+The cohesive run holds the source spawn until the first real AI move order,
+forms the group at that order's body-safe destination, and then starts the
+shared route. Heavy Scorpion uses the same mechanics-derived clock (first move
+at tick 80) and an elastic leash derived from its larger collision body, so it
+now completes the kiting loop instead of freezing during an oversized staging
+formation.
 
 Local:
 
@@ -102,6 +109,14 @@ Local:
 Tailnet:
 
 `https://dragonstar.tail82a190.ts.net/golden-map/?mode=hand-cannoneer-solo-movement&navigation=cohesive`
+
+Share a selected unit with `unit=<slug>`; for example:
+
+`https://dragonstar.tail82a190.ts.net/golden-map/?mode=hand-cannoneer-solo-movement&unit=heavy_cav_archer&navigation=cohesive`
+
+Recurring kite timing is derived from reload and attack delay on the shared
+40-tick AI command grid. The existing tape timing profiles are regression
+targets, so new ranged units do not require hand-authored timing rows.
 
 The Tailnet URL requires a device connected to the same tailnet. Always include
 a verified Tailnet link when handing off a viewer page.

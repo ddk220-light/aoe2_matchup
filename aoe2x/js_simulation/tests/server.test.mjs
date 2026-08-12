@@ -227,6 +227,60 @@ test("solo movement endpoint runs only 21 owner-2 Hand Cannoneers under kite ord
 });
 
 
+test("solo movement endpoint runs each selectable ranged unit with its own mechanics", async () => {
+  await withServer(async (baseUrl) => {
+    const expected = {
+      hand_cannoneer: { label: "Hand Cannoneer", civ: "Bohemians", master: 5, radius: 0.2 },
+      arbalester: { label: "Arbalester", civ: "Chinese", master: 492, radius: 0.2 },
+      heavy_cav_archer: { label: "Heavy Cav Archer", civ: "Saracens", master: 474, radius: 0.25 },
+      heavy_scorpion: { label: "Heavy Scorpion", civ: "Japanese", master: 542, radius: 0.5 },
+      imp_elite_skirm: { label: "Elite Skirmisher", civ: "Chinese", master: 6, radius: 0.2 },
+    };
+
+    const unitsResponse = await fetch(`${baseUrl}/api/units`);
+    const units = await unitsResponse.json();
+    assert.deepEqual(units.soloMovementSlugs, Object.keys(expected));
+
+    for (const [slug, row] of Object.entries(expected)) {
+      const response = await fetch(
+        `${baseUrl}/api/solo-hand-cannoneers?unit=${slug}&navigation=cohesive`,
+      );
+      assert.equal(response.status, 200, slug);
+      const run = await response.json();
+      assert.deepEqual(run.side2, {
+        slug,
+        label: row.label,
+        civ: row.civ,
+        count: 21,
+        class: slug === "heavy_scorpion" ? "siege_ranged" : "mobile_ranged",
+      });
+      assert.equal(run.side3.count, 0);
+      assert.equal(run.kiteOwner, 2);
+      assert.equal(Object.keys(run.unitIndex).length, 21);
+      for (const meta of Object.values(run.unitIndex)) {
+        assert.equal(meta.owner, 2);
+        assert.equal(meta.slug, slug);
+        assert.equal(meta.master, row.master);
+        assert.equal(meta.collisionRadius, row.radius);
+      }
+    }
+
+    for (const query of [
+      "unit=champion",
+      "unit=unknown",
+      "unit=arbalester&unit=heavy_cav_archer",
+      "unit=arbalester&count=21",
+    ]) {
+      assert.equal(
+        (await fetch(`${baseUrl}/api/solo-hand-cannoneers?${query}`)).status,
+        400,
+        query,
+      );
+    }
+  });
+});
+
+
 test("solo movement endpoint saves baseline, per-unit-grid, and cohesive navigation runs", async () => {
   await withServer(async (baseUrl) => {
     for (const navigation of ["baseline", "per-unit-grid", "cohesive"]) {
@@ -275,10 +329,102 @@ test("cohesive solo navigation publishes formation-route diagnostics and preserv
     for (const snapshot of run.snapshots) {
       for (const unit of snapshot.units) {
         for (const obstacle of obstacles) {
-          const clearance = Math.max(
-            Math.abs(unit[1] - obstacle.x),
-            Math.abs(unit[2] - obstacle.y),
+          const clearance = Math.hypot(
+            unit[1] - obstacle.x,
+            unit[2] - obstacle.y,
           ) - 0.2 - obstacle.radius;
+          assert.ok(clearance >= -1e-9,
+            `tick ${snapshot.tick} unit ${unit[0]} overlapped obstacle ${obstacle.reference_id}`);
+        }
+      }
+    }
+  });
+});
+
+
+test("cohesive solo navigation clears obstacles with Heavy Scorpion collision bodies", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(
+      `${baseUrl}/api/solo-hand-cannoneers?unit=heavy_scorpion&navigation=cohesive`,
+    );
+    assert.equal(response.status, 200);
+    const run = await response.json();
+    const radius = Object.values(run.unitIndex)[0].collisionRadius;
+    assert.equal(radius, 0.5);
+
+    const moveOrderTicks = [...new Set(run.snapshots.flatMap(({ events }) => events
+      .filter(({ type }) => type === "kite-move")
+      .map(({ tick }) => tick)))];
+    assert.deepEqual(moveOrderTicks.slice(0, 5), [80, 160, 280, 360, 440]);
+
+    // No hidden pre-order staging: the opening formation is the first actual
+    // AI destination. The Scorpions should hold through tick 79, begin
+    // translating on the tick-80 right-click, and form at its safe projected
+    // group destination before the shared route anchor begins its lap.
+    const spawn = new Map(run.snapshots[0].units.map((unit) => [unit[0], unit]));
+    assert.equal(run.snapshots[0].navigation.phase, "awaiting-first-order");
+    for (const snapshot of run.snapshots.slice(0, 80)) {
+      assert.equal(snapshot.units.every((unit) => {
+        const initial = spawn.get(unit[0]);
+        return Math.hypot(unit[1] - initial[1], unit[2] - initial[2]) <= 1e-12;
+      }), true, `unit moved before the first AI order at tick ${snapshot.tick}`);
+    }
+    const firstOrder = run.snapshots[80];
+    assert.equal(firstOrder.navigation.phase, "forming-first-order");
+    assert.ok(Math.abs(
+      firstOrder.navigation.firstFormationTarget.x - firstOrder.navigation.aiWaypoint.x,
+    ) <= 1e-9);
+    assert.ok(firstOrder.navigation.firstFormationTarget.y
+      < firstOrder.navigation.aiWaypoint.y);
+    assert.equal(firstOrder.units.some((unit) => {
+      const initial = spawn.get(unit[0]);
+      return Math.hypot(unit[1] - initial[1], unit[2] - initial[2]) > 1e-6;
+    }), true);
+    const destinationCentroid = firstOrder.navigation.unitDestinations.reduce(
+      (point, destination) => ({
+        x: point.x + destination.x / firstOrder.navigation.unitDestinations.length,
+        y: point.y + destination.y / firstOrder.navigation.unitDestinations.length,
+      }),
+      { x: 0, y: 0 },
+    );
+    assert.ok(Math.hypot(
+      destinationCentroid.x - firstOrder.navigation.firstFormationTarget.x,
+      destinationCentroid.y - firstOrder.navigation.firstFormationTarget.y,
+    ) <= 1e-9);
+    assert.ok(run.snapshots.some(({ navigation }) => navigation.phase === "routing"));
+    assert.ok(run.navigationSummary.totalAnchorDistance > 20);
+
+    for (const snapshot of run.snapshots) {
+      const destinations = snapshot.navigation.unitDestinations;
+      for (let left = 0; left < destinations.length; left += 1) {
+        for (let right = left + 1; right < destinations.length; right += 1) {
+          const separation = Math.max(
+            Math.abs(destinations[left].x - destinations[right].x),
+            Math.abs(destinations[left].y - destinations[right].y),
+          );
+          // Formation movers use the engine's measured ally-overlap rule;
+          // Scorpion slots therefore keep the common half-tile lattice rather
+          // than expanding to the full one-tile collision diameter.
+          assert.ok(separation >= 0.48 - 1e-9,
+            `tick ${snapshot.tick} destinations ${destinations[left].referenceId} and `
+            + `${destinations[right].referenceId} are only ${separation} tiles apart`);
+        }
+      }
+    }
+
+    const mapResponse = await fetch(`${baseUrl}/api/map`);
+    const map = (await mapResponse.json()).map;
+    const obstacles = map.gaia_objects.map((obstacle) => ({
+      ...obstacle,
+      radius: obstacle.reference_id === 1604 ? 1.5 : 0.5,
+    }));
+    for (const snapshot of run.snapshots) {
+      for (const unit of snapshot.units) {
+        for (const obstacle of obstacles) {
+          const clearance = Math.hypot(
+            unit[1] - obstacle.x,
+            unit[2] - obstacle.y,
+          ) - radius - obstacle.radius;
           assert.ok(clearance >= -1e-9,
             `tick ${snapshot.tick} unit ${unit[0]} overlapped obstacle ${obstacle.reference_id}`);
         }
@@ -404,9 +550,11 @@ test("viewer page exposes battle controls and local calibration tools without a 
       "team1Selection",
       "team2Selection",
       "mapCanvas",
+      "soloMovementUnit",
       "navigationVariant",
       "navigationDebugToggle",
       "navigationStats",
+      "navPhase",
       "playPause",
       "resetPlayback",
       "stepTick",
@@ -426,6 +574,11 @@ test("viewer page exposes battle controls and local calibration tools without a 
     assert.match(body, /5,000 incl\. Upgrades/);
     assert.match(body, /value=["']resources_upgrades["'][^>]*disabled/);
     assert.match(body, /Calibration tools/);
+
+    const appModule = await fetch(`${baseUrl}/viewer/app.js`);
+    const appBody = await appModule.text();
+    assert.match(appBody, /soloMovementSlugs/);
+    assert.match(appBody, /searchParams\.set\("unit"/);
 
     const reviewModule = await fetch(`${baseUrl}/viewer/simulation-review.js`);
     assert.equal(reviewModule.status, 200);

@@ -68,6 +68,17 @@ export const UNIT_REGISTRY = Object.freeze(ROWS.map((row) => Object.freeze({
 
 export const UNIT_SLUGS = Object.freeze(UNIT_REGISTRY.map(({ slug }) => slug));
 
+// The enemy-free movement lab is intentionally curated: these rows have
+// clean-room mechanics and are the ranged units requested for navigation
+// review. Order is the viewer's picker order and is part of its URL contract.
+export const SOLO_MOVEMENT_UNIT_SLUGS = Object.freeze([
+  "hand_cannoneer",
+  "arbalester",
+  "heavy_cav_archer",
+  "heavy_scorpion",
+  "imp_elite_skirm",
+]);
+
 const BY_SLUG = new Map(UNIT_REGISTRY.map((row) => [row.slug, row]));
 
 export function unitBySlug(slug) {

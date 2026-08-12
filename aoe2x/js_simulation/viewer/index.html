@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#121a16">
-    <title>Golden Arena · Combat Chronograph</title>
+    <meta name="theme-color" content="#f4f1e8">
+    <title>AoE2 Battle Simulation · Local Clean-Room Engine</title>
     <script>
       (() => {
         const mountBase = document.createElement("base");
@@ -14,178 +14,243 @@
         document.head.append(mountBase);
       })();
     </script>
+    <link rel="stylesheet" href="static/css/base.css">
+    <link rel="stylesheet" href="static/css/simulate.css">
     <link rel="stylesheet" href="viewer/styles.css">
   </head>
-  <body>
-    <div class="page-shell">
-      <header class="masthead">
-        <div class="title-block">
-          <p class="eyebrow">AoE2 clean-room mechanics laboratory · champion phase</p>
-          <h1>Combat Chronograph</h1>
-          <p class="subtitle">The locked Golden Arena, observed one deterministic tick at a time</p>
-        </div>
-        <div class="source-seal" id="sourceBadge" aria-live="polite">
-          <span class="seal-dot"></span>
-          <span>
-            <strong>Loading source</strong>
-            <small>Verifying scenario and simulation fixtures…</small>
-          </span>
-        </div>
-      </header>
+  <body class="local-battle-page">
+    <nav class="site-nav" aria-label="Local preview navigation">
+      <a href="./" class="nav-brand">
+        <svg class="nav-brand-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path>
+        </svg>
+        AoE2 Matchup
+      </a>
+      <div class="nav-links">
+        <a href="./" class="nav-tab active">
+          <span class="nav-tab-icon">⚔</span>
+          <span class="nav-tab-label">Battle Sim</span>
+          <span class="nav-tab-desc">Clean-room local preview</span>
+        </a>
+      </div>
+      <div class="local-engine-pill" id="sourceBadge" aria-live="polite">
+        <span class="local-engine-dot"></span>
+        Loading clean-room engine
+      </div>
+    </nav>
 
-      <section class="chronograph" aria-label="Simulation playback controls">
-        <div class="run-selector">
-          <label>
-            <span>Side 2</span>
-            <select id="side2Select" aria-label="Side 2 unit"></select>
-          </label>
-          <label>
-            <span>Count</span>
-            <input id="n2Input" type="number" min="1" max="21" step="1" value="21"
-                   inputmode="numeric" aria-label="Side 2 unit count">
-          </label>
-          <label>
-            <span>Side 3</span>
-            <select id="side3Select" aria-label="Side 3 unit"></select>
-          </label>
-          <label>
-            <span>Count</span>
-            <input id="n3Input" type="number" min="1" max="21" step="1" value="21"
-                   inputmode="numeric" aria-label="Side 3 unit count">
-          </label>
-          <button id="resetCounts" type="button" title="Reset both counts to the derived even-fight purchase">Even fight</button>
-        </div>
+    <div class="page-header">
+      <h1>Battle Simulation</h1>
+      <p class="subtitle">Pick a unit for each side, then watch who wins</p>
+    </div>
 
-        <div class="transport" role="group" aria-label="Playback transport">
-          <button id="playPause" class="transport-primary" type="button" aria-keyshortcuts="Space">Play</button>
-          <button id="resetPlayback" type="button" aria-keyshortcuts="Home">Reset</button>
-          <button id="stepTick" type="button" aria-keyshortcuts="ArrowRight">+1 tick</button>
-          <button id="nextEvent" type="button" aria-keyshortcuts="Shift+ArrowRight">Next event</button>
-          <button id="returnFormation" type="button" aria-keyshortcuts="F">21v21 formation</button>
-        </div>
-
-        <div class="time-dial" aria-live="polite">
-          <div class="dial-rule"></div>
-          <div><small>Tick</small><strong id="tickReadout">0000</strong></div>
-          <div><small>Seconds</small><strong id="secondsReadout">0.000</strong></div>
-          <span id="playbackMode">loading</span>
-        </div>
-      </section>
-
-      <main class="workspace">
-        <section class="map-frame" aria-label="Golden scenario map">
-          <div class="map-status" id="mapStatus" aria-live="polite">
-            <span class="status-light"></span>
-            Locked 21 vs 21 formation · loading simulation
+    <div class="container-wide sim-page" id="simPage">
+      <div class="sim-topbar">
+        <details class="sim-options" id="simOptions">
+          <summary>
+            <span class="sim-options-toggle">Options</span>
+            <span class="sim-options-current" id="optionsCurrent">21 vs 21</span>
+          </summary>
+          <div class="army-config">
+            <div class="formula-note">
+              Tape-calibrated value = <strong>Food + Wood + 1.5 × Gold</strong>
+            </div>
+            <div class="mode-toggle">
+              <label class="mode-option">
+                <input type="radio" name="armyMode" value="count" checked>
+                <span>Equal Numbers</span>
+              </label>
+              <label class="mode-option">
+                <input type="radio" name="armyMode" value="resources">
+                <span>Equal Resources</span>
+              </label>
+              <label class="mode-option mode-unavailable" title="Upgrade-cost purchases have not been calibrated">
+                <input type="radio" name="armyMode" value="resources_upgrades" disabled>
+                <span>5,000 incl. Upgrades <small>Not calibrated</small></span>
+              </label>
+            </div>
+            <div class="count-inputs" id="countInputs">
+              <div>
+                <label for="team1Count">Team 1:</label>
+                <input type="number" id="team1Count" value="21" min="1" max="21" inputmode="numeric">
+                <small id="team1Limit">Maximum 21</small>
+              </div>
+              <div>
+                <label for="team2Count">Team 2:</label>
+                <input type="number" id="team2Count" value="21" min="1" max="21" inputmode="numeric">
+                <small id="team2Limit">Maximum 21</small>
+              </div>
+            </div>
+            <div class="resource-input" id="resourceInput" hidden>
+              <label for="totalResources">Resources per team:</label>
+              <input type="number" id="totalResources" value="3000" min="100" max="20000" step="100" inputmode="numeric">
+            </div>
           </div>
+        </details>
 
-          <div class="tool-rail" aria-label="Map overlays">
-            <label class="toggle">
-              <input id="topDownToggle" type="checkbox">
-              <span>Top-down 2D</span>
-            </label>
-            <label class="toggle">
-              <input id="gridToggle" type="checkbox">
-              <span>Tile grid</span>
-            </label>
-            <label class="toggle">
-              <input id="objectsToggle" type="checkbox" checked>
-              <span>Gaia objects</span>
-            </label>
-            <label class="toggle">
-              <input id="footprintsToggle" type="checkbox">
-              <span>Object cells</span>
-            </label>
-            <label class="toggle">
-              <input id="labelsToggle" type="checkbox">
-              <span>Labels</span>
-            </label>
-            <button id="resetView" class="reset-button" type="button">Reset view</button>
+        <div class="sim-topbar-center">
+          <button id="startBtn" type="button" disabled>Start Battle</button>
+          <div class="battle-timer" id="battleTimer" hidden>0.0s</div>
+          <div class="sim-controls" id="simControls" hidden>
+            <button id="pauseBtn" type="button">Pause</button>
+            <button id="resetBtn" type="button">New Battle</button>
+            <div class="speed-control">
+              <label for="speedSlider">Speed</label>
+              <input type="range" id="speedSlider" min="0.5" max="10" step="0.5" value="3">
+              <span id="speedLabel">3x</span>
+            </div>
           </div>
+        </div>
 
-          <canvas id="mapCanvas" aria-label="Isometric Champion simulation on the Golden Arena"></canvas>
+        <div class="sim-topbar-right">
+          <button class="dmg-toggle" id="dmgToggle" type="button" aria-expanded="false" hidden>Damage breakdown</button>
+        </div>
+        <div class="navigation-lab-controls" id="navigationLabControls" hidden>
+          <label for="navigationVariant">Navigation approach</label>
+          <select id="navigationVariant">
+            <option value="cohesive">Cohesive formation (recommended)</option>
+            <option value="per-unit-grid">Per-unit obstacle grid</option>
+            <option value="baseline">Baseline direct movement</option>
+          </select>
+        </div>
+      </div>
+      <p class="start-hint" id="startHint">Pick a calibrated civ &amp; unit for both teams to start</p>
 
-          <div class="overlay-key" aria-label="Simulation overlay legend">
-            <span class="key-pursuit">Pursuit</span>
-            <span class="key-engaged">Engaged</span>
-            <span class="key-attack">Swing</span>
-            <span class="key-body">Body / reach</span>
+      <div class="sim-stage" id="simStage">
+        <aside class="team-rail team1" id="team1Rail">
+          <div class="rail-head"><span class="rail-title">Team 1</span></div>
+          <div class="rail-search">
+            <input type="search" class="rail-search-input" id="team1Search"
+                   placeholder="Search civ or unit…" autocomplete="off" spellcheck="false"
+                   aria-label="Search Team 1 civilization or unit">
+            <div class="rail-search-results" id="team1SearchResults" hidden></div>
           </div>
-
-          <div class="coordinate-strip">
-            <span id="cursorReadout">Tile —, —</span>
-            <span>Drag to pan · wheel or pinch to zoom · tap a unit to inspect</span>
+          <div class="rail-picker" id="team1Selection" aria-live="polite"></div>
+          <div class="rail-live" id="team1Live" hidden>
+            <div class="progress-card team1">
+              <div class="progress-header team1"><span class="prog-name" id="prog1Name">Team 1</span></div>
+              <div class="progress-row"><span class="prog-label">Units</span><span class="prog-value" id="prog1Units">—</span></div>
+              <div class="progress-row"><span class="prog-label">HP</span><span class="prog-value" id="prog1Hp">—</span></div>
+              <div class="progress-row"><span class="prog-label">Resources</span><span class="prog-value" id="prog1Res">—</span></div>
+              <div class="progress-row"><span class="prog-label">Status</span><span class="prog-value" id="prog1Lost">—</span></div>
+            </div>
           </div>
-        </section>
+        </aside>
 
-        <aside class="ledger" aria-label="Combat diagnostic ledger">
-          <div class="ledger-heading">
-            <span>Run ledger</span>
-            <b id="ledgerNumber">SIM–01</b>
+        <div class="arena" id="arena">
+          <section class="map-frame" aria-label="Isometric Golden Arena">
+            <div class="map-status" id="mapStatus" aria-live="polite">
+              <span class="status-light is-loading"></span>
+              Loading Golden Arena…
+            </div>
+            <div class="map-tool-rail" aria-label="Map overlays">
+              <label><input id="topDownToggle" type="checkbox"> Top-down 2D</label>
+              <label><input id="gridToggle" type="checkbox"> Tile grid</label>
+              <label><input id="objectsToggle" type="checkbox" checked> Gaia objects</label>
+              <label><input id="footprintsToggle" type="checkbox"> Object cells</label>
+              <label><input id="labelsToggle" type="checkbox"> Labels</label>
+              <label class="navigation-debug-control"><input id="navigationDebugToggle" type="checkbox" checked> Navigation debug</label>
+              <button id="resetView" type="button">Reset view</button>
+            </div>
+            <div class="navigation-stats" id="navigationStats" hidden aria-live="polite">
+              <strong id="navigationStatsTitle">Cohesive formation</strong>
+              <dl>
+                <div><dt>Cohesion radius</dt><dd id="navCohesion">—</dd></div>
+                <div><dt>Max slot error</dt><dd id="navSlotError">—</dd></div>
+                <div><dt>Blocked this tick</dt><dd id="navBlocked">—</dd></div>
+                <div><dt>Route replans</dt><dd id="navReplans">—</dd></div>
+                <div><dt>Anchor travel</dt><dd id="navDistance">—</dd></div>
+                <div><dt>Anchor stall</dt><dd id="navStall">—</dd></div>
+              </dl>
+            </div>
+            <canvas id="mapCanvas" aria-label="Isometric clean-room battle simulation"></canvas>
+            <div class="overlay-key" aria-label="Simulation overlay legend">
+              <span class="key-pursuit">Pursuit</span>
+              <span class="key-engaged">Engaged</span>
+              <span class="key-attack">Attack</span>
+              <span class="key-body">Body / reach</span>
+              <span class="key-navigation">AI / route / slots</span>
+            </div>
+            <div class="coordinate-strip">
+              <span id="cursorReadout">Tile —, —</span>
+              <span>Drag to pan · wheel or pinch to zoom · tap a unit to inspect</span>
+            </div>
+          </section>
+        </div>
+
+        <aside class="team-rail team2" id="team2Rail">
+          <div class="rail-head"><span class="rail-title">Team 2</span></div>
+          <div class="rail-search">
+            <input type="search" class="rail-search-input" id="team2Search"
+                   placeholder="Search civ or unit…" autocomplete="off" spellcheck="false"
+                   aria-label="Search Team 2 civilization or unit">
+            <div class="rail-search-results" id="team2SearchResults" hidden></div>
           </div>
+          <div class="rail-picker" id="team2Selection" aria-live="polite"></div>
+          <div class="rail-live" id="team2Live" hidden>
+            <div class="progress-card team2">
+              <div class="progress-header team2"><span class="prog-name" id="prog2Name">Team 2</span></div>
+              <div class="progress-row"><span class="prog-label">Units</span><span class="prog-value" id="prog2Units">—</span></div>
+              <div class="progress-row"><span class="prog-label">HP</span><span class="prog-value" id="prog2Hp">—</span></div>
+              <div class="progress-row"><span class="prog-label">Resources</span><span class="prog-value" id="prog2Res">—</span></div>
+              <div class="progress-row"><span class="prog-label">Status</span><span class="prog-value" id="prog2Lost">—</span></div>
+            </div>
+          </div>
+        </aside>
+      </div>
 
-          <!-- No tape tiles: a freely selected fight has no recorded
-               counterpart to compare against, so tapeReference was dropped from
-               the payload and the two permanently-blank tiles went with it. -->
-          <section class="result-strip" aria-label="Simulation outcome">
-            <div><small>Sim winner</small><strong id="simWinner">—</strong></div>
-            <div><small>Winner HP</small><strong id="simWinnerHp">—</strong></div>
+      <div class="debug-panel" id="debugPanel" hidden>
+        <h3>Damage Breakdown</h3>
+        <div id="debugContent"><p>Start a battle to see event-derived damage totals.</p></div>
+      </div>
+
+      <details class="calibration-tools" id="calibrationTools">
+        <summary>
+          <span>Calibration tools</span>
+          <small>Local diagnostics, deterministic hashes, and reviewer notes</small>
+        </summary>
+        <div class="calibration-grid">
+          <section class="diagnostic-card result-card">
+            <div class="diagnostic-heading"><span>Run result</span><b id="ledgerNumber">—</b></div>
+            <div class="result-strip">
+              <div><small>Sim winner</small><strong id="simWinner">—</strong></div>
+              <div><small>Winner HP</small><strong id="simWinnerHp">—</strong></div>
+            </div>
+            <div class="hash-grid">
+              <label>Final state <code id="finalStateHash">—</code></label>
+              <label>Event log <code id="eventLogHash">—</code></label>
+            </div>
+            <div class="formation-panel">
+              <div class="side-row side-p2"><span class="side-swatch"></span><span><b id="player2Name">Team 1</b><small>Generated formation</small></span><strong id="player2Count">—</strong></div>
+              <div class="side-row side-p3"><span class="side-swatch"></span><span><b id="player3Name">Team 2</b><small>Generated formation</small></span><strong id="player3Count">—</strong></div>
+              <div class="placement-audit"><span>✓</span> <span id="placementAudit">—</span></div>
+            </div>
           </section>
 
-          <section class="unit-panel">
-            <div class="panel-title-row">
-              <p class="panel-kicker">Live unit telemetry</p>
-              <span id="unitCount">—</span>
-            </div>
+          <section class="diagnostic-card unit-panel">
+            <div class="panel-title-row"><p class="panel-kicker">Live unit telemetry</p><span id="unitCount">—</span></div>
             <div id="unitTelemetry" class="unit-telemetry" aria-live="polite"></div>
           </section>
 
-          <section class="timeline-panel">
-            <div class="panel-title-row">
-              <p class="panel-kicker">Event tape</p>
-              <span id="eventCount">—</span>
-            </div>
+          <section class="diagnostic-card timeline-panel">
+            <div class="panel-title-row"><p class="panel-kicker">Event timeline</p><span id="eventCount">—</span></div>
             <ol id="eventTimeline" class="event-timeline" aria-live="polite"></ol>
           </section>
 
-          <section class="review-panel">
-            <div class="panel-title-row">
-              <p class="panel-kicker">Reviewer mark</p>
-              <span>local only</span>
-            </div>
-            <label class="flag-control">
-              <input id="runFlagged" type="checkbox">
-              <span>Flag this matchup</span>
-            </label>
+          <section class="diagnostic-card review-panel">
+            <div class="panel-title-row"><p class="panel-kicker">Reviewer mark</p><span>local only</span></div>
+            <label class="flag-control"><input id="runFlagged" type="checkbox"> <span>Flag this matchup</span></label>
             <label class="note-control" for="reviewNote">What looked wrong?</label>
-            <textarea id="reviewNote" maxlength="2000" rows="3" placeholder="Example: unit 1629 switches contact too early"></textarea>
+            <textarea id="reviewNote" maxlength="2000" rows="4" placeholder="Example: the front line retargets too early"></textarea>
             <div class="review-actions">
               <button id="clearFeedback" type="button">Clear all</button>
               <button id="exportFeedback" type="button">Download JSON</button>
             </div>
           </section>
 
-          <section class="formation-panel" aria-label="Locked formation source">
-            <div class="side-row side-p2">
-              <span class="side-swatch"></span>
-              <span><b id="player2Name">Player 2</b><small>Generated formation</small></span>
-              <strong id="player2Count">—</strong>
-            </div>
-            <div class="side-row side-p3">
-              <span class="side-swatch"></span>
-              <span><b id="player3Name">Player 3</b><small>Generated formation</small></span>
-              <strong id="player3Count">—</strong>
-            </div>
-            <!-- Filled in from the fight that actually ran; the old literal
-                 "42 source positions" was only ever true of a 21v21. -->
-            <div class="placement-audit"><span>✓</span> <span id="placementAudit">—</span></div>
-          </section>
-
-          <section class="inspection-panel">
-            <p class="panel-kicker">Selected scenario record</p>
-            <div id="selectionEmpty" class="empty-selection">
-              Tap a Champion, tree, bush, or rock to inspect its source record.
-            </div>
+          <section class="diagnostic-card inspection-panel">
+            <p class="panel-kicker">Selected map record</p>
+            <div id="selectionEmpty" class="empty-selection">Tap a unit, tree, bush, or rock to inspect it.</div>
             <dl id="selectionDetails" class="selection-details" hidden>
               <div><dt>Type</dt><dd id="selectedName"></dd></div>
               <div><dt>Player</dt><dd id="selectedPlayer"></dd></div>
@@ -196,8 +261,8 @@
             </dl>
           </section>
 
-          <details class="source-details">
-            <summary>Locked map & mechanics provenance</summary>
+          <section class="diagnostic-card provenance-card">
+            <p class="panel-kicker">Locked map &amp; mechanics provenance</p>
             <div class="fact-grid">
               <div><small>Map</small><strong id="mapSize">—</strong></div>
               <div><small>Terrain</small><strong id="tileCount">—</strong></div>
@@ -205,18 +270,29 @@
               <div><small>Clock</small><strong id="clockRate">—</strong></div>
             </div>
             <div id="objectInventory" class="object-inventory" hidden></div>
-            <footer class="provenance">
-              <span>Source scenario</span>
-              <strong id="sourceFile">—</strong>
-              <code id="sourceHash">—</code>
-              <small id="sourceVersion">—</small>
-            </footer>
-          </details>
-        </aside>
-      </main>
+            <div class="provenance">
+              <span>Source scenario</span><strong id="sourceFile">—</strong>
+              <code id="sourceHash">—</code><small id="sourceVersion">—</small>
+            </div>
+          </section>
+        </div>
+
+        <div class="technical-transport" aria-label="Frame inspection controls">
+          <button id="playPause" type="button">Play</button>
+          <button id="resetPlayback" type="button">Reset playback</button>
+          <button id="stepTick" type="button">+1 tick</button>
+          <button id="nextEvent" type="button">Next event</button>
+          <button id="returnFormation" type="button">Show formation</button>
+          <span>Tick <strong id="tickReadout">0000</strong></span>
+          <span>Seconds <strong id="secondsReadout">0.000</strong></span>
+          <span id="playbackMode">loading</span>
+        </div>
+      </details>
     </div>
 
     <div id="errorPanel" class="error-panel" hidden role="alert"></div>
+    <script src="static/js/constants.js"></script>
+    <script src="static/js/unit_sprites.js"></script>
     <script type="module" src="viewer/app.js"></script>
   </body>
 </html>

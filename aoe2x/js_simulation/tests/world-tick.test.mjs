@@ -646,10 +646,15 @@ test("the runner fails rather than returning a timeout outcome", async () => {
     unit({ referenceId: 1699, owner: 3, x: 9, y: 9 }),
   ]));
 
-  assert.throws(
-    () => runWorld(stalemate, { maxTicks: 3600 }),
-    /exceeded 3600 ticks/,
-  );
+  let error;
+  try {
+    runWorld(stalemate, { maxTicks: 0 });
+  } catch (caught) {
+    error = caught;
+  }
+  assert.match(error?.message ?? "", /exceeded 0 ticks/);
+  assert.equal(error.world.tick, 0);
+  assert.equal(error.world.units.filter(({ alive }) => alive).length, 2);
 });
 
 
@@ -703,6 +708,25 @@ test("runWorld preserves snapshots without friendly live locks", async () => {
     ));
     return target?.owner === entry.owner;
   })), false);
+});
+
+
+test("compact runWorld keeps final combat and event order without tick snapshots", async () => {
+  const { createWorld, runWorld } = await loadWorld();
+  const input = scenario([
+    unit({ referenceId: 1629, owner: 2, x: 5, y: 4.6 }),
+    unit({ referenceId: 1699, owner: 3, x: 5, y: 5 }),
+    unit({ referenceId: 1628, owner: 2, x: 4.6, y: 5 }),
+  ]);
+
+  const full = runWorld(createWorld(input), { maxTicks: 1000 });
+  const compact = runWorld(createWorld(input), { maxTicks: 1000, retainSnapshots: false });
+
+  assert.equal(compact.winner, full.winner);
+  assert.equal(compact.ticks, full.ticks);
+  assert.deepEqual(compact.world.units, full.world.units);
+  assert.deepEqual(compact.events, full.events);
+  assert.deepEqual(compact.snapshots, []);
 });
 
 

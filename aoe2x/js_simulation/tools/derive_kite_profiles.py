@@ -29,6 +29,14 @@ FIXTURES = ROOT / "calibration" / "fixtures"
 REGISTRY = ROOT / "src" / "unit-registry.js"
 UNIT_STATS = ROOT / "fixtures" / "unit_stats"
 OUTPUT = ROOT / "src" / "kite-profiles.js"
+STANDARD_TRUTH = FIXTURES / "standard_units" / "standard_units_truth.json"
+HC_ACCEPTANCE_REPORT = (
+    ROOT / "calibration" / "reports"
+    / "hand_cannoneer_translated_persistent_measured_phase_results_2026-08-09.json"
+)
+STANDARD_ZIP_SHA256 = (
+    "38E07C38344F06E527C28CD9B235ADA59AD1E722CDB8EC171296B877E8C1956D"
+)
 
 TICKS_PER_SECOND = 60
 
@@ -45,9 +53,20 @@ PROFILE_KEYS = (
     "preMoveTicks",
 )
 
-# Hand Cannoneer has no kiting tape column. Its beat is CONSTRUCTED, and the
-# construction is recorded in the provenance rather than passed off as measured.
-CONSTRUCTED_SLUGS = ("hand_cannoneer",)
+# No profile remains constructed: Hand Cannoneer is measured from the
+# authorized standard-units command streams and accepted by the fixed 5/100
+# simulation-vs-tape gate below.
+CONSTRUCTED_SLUGS: tuple[str, ...] = ()
+
+HC_MEASURED_PROFILE = {
+    "beatTicks": 240,
+    "firstBeatTick": 12,
+    "moveOffsetTicks": [68, 148, 228],
+    "topupOffsetTicks": [],
+    "preMoveTicks": [],
+    "formationMotion": "translated_offsets",
+    "volleyPursuit": "close_to_fire",
+}
 
 
 def registry_rows() -> list[dict]:
@@ -218,6 +237,44 @@ def main() -> None:
             "the constructed-beat rule no longer reproduces the measured beats; "
             "do not emit a constructed row against a rule that does not hold")
 
+    standard_truth = json.loads(STANDARD_TRUTH.read_text(encoding="utf8"))
+    standard_hash = standard_truth.get("archive", {}).get("zip_sha256")
+    if standard_hash != STANDARD_ZIP_SHA256:
+        raise SystemExit(
+            "standard-units truth does not name the authorized archive hash")
+    acceptance = json.loads(HC_ACCEPTANCE_REPORT.read_text(encoding="utf8"))
+    if not acceptance.get("accepted"):
+        raise SystemExit("Hand Cannoneer profile acceptance report is not accepted")
+    if acceptance.get("source", {}).get("zip_sha256") != STANDARD_ZIP_SHA256:
+        raise SystemExit("Hand Cannoneer acceptance report uses the wrong archive")
+    hc_melee_masters = {359, 441, 567, 1903, 330, 569, 1134, 1372}
+    hc_rows = [row for row in standard_truth.get("rows", [])
+               if row.get("side2", {}).get("master") == 5
+               and row.get("side3", {}).get("master") in hc_melee_masters]
+    streams_measured = sum(len(row.get("runs", [])) for row in hc_rows)
+    if streams_measured != 34:
+        raise SystemExit(
+            f"expected 34 Hand Cannoneer melee streams, found {streams_measured}")
+    table["hand_cannoneer"] = dict(HC_MEASURED_PROFILE)
+    measured_provenance["hand_cannoneer"] = {
+        "source": "standard-units-tape",
+        "archive": standard_truth["archive"]["name"],
+        "zipSha256": STANDARD_ZIP_SHA256,
+        "streamsMeasured": streams_measured,
+        "acceptanceReport": (
+            "calibration/reports/"
+            "hand_cannoneer_translated_persistent_measured_phase_results_2026-08-09.json"
+        ),
+        "measurements": {
+            "openingOrderSeconds": 0.2,
+            "moveCadenceSeconds": 4 / 3,
+            "volleyCadenceSeconds": 4.0,
+            "formationMotion": "shared translation of existing unit offsets",
+        },
+    }
+    print("  hand_cannoneer: MEASURED from 34 authorized standard-unit streams; "
+          "first 12, moves [68, 148, 228], translated offsets, persistent pursuit")
+
     constructed_provenance: dict[str, dict] = {}
     for slug in CONSTRUCTED_SLUGS:
         if slug in table:
@@ -288,7 +345,7 @@ def main() -> None:
         "// runs the same cycle whichever melee unit it is pointed at.\n"
         "//\n"
         "// KITE_PROFILE_PROVENANCE names the source fixture(s) behind every row and\n"
-        "// flags the one row that is CONSTRUCTED rather than measured.\n"
+        "// records whether each row came from legacy or standard-unit tapes.\n"
         f"export const KITE_PROFILES = Object.freeze({body});\n"
         "\n"
         f"export const KITE_PROFILE_PROVENANCE = Object.freeze({prov});\n",

@@ -20,9 +20,16 @@ import {
   STEER_AROUND_BODIES,
   shouldReevaluatePursuit,
 } from "./experiments.js";
-import { planChaseAim } from "./chase-path.js";
+import { planChaseAim, planMoveAim } from "./chase-path.js";
+import { planCohortContactMotion } from "./cohort-motion.js";
 import { planLocalAvoidance } from "./local-avoidance.js";
 import { proposeMovement } from "./movement.js";
+import {
+  createSoloNavigationState,
+  finishSoloNavigationTick,
+  planSoloNavigation,
+  soloNavigationSnapshot,
+} from "./solo-navigation.js";
 import {
   chebyshevGap,
   isWithinReach,
@@ -144,8 +151,8 @@ function freezeMap(map) {
 }
 
 
-function createSnapshot(tick, units, events) {
-  return Object.freeze({ tick, units, events });
+function createSnapshot(tick, units, events, navigation = null) {
+  return Object.freeze({ tick, units, events, ...(navigation ? { navigation } : {}) });
 }
 
 
@@ -188,8 +195,24 @@ export function createWorld(scenario) {
   }
   const units = canonicalUnits(scenario.units, { cloneMechanics: true });
   validateInitialAttackState(units);
+  const map = scenario.map ? freezeMap(scenario.map) : DEFAULT_MAP;
   const events = Object.freeze([]);
-  const snapshot = createSnapshot(0, units, events);
+  const kiteState = Number.isSafeInteger(scenario.kiteOwner)
+    ? createKiteState(
+      scenario.kiteOwner,
+      scenario.kiteProfile ?? null,
+      scenario.chaseCapture === true,
+      scenario.kitedEscape === true,
+      scenario.soloMovement === true,
+    )
+    : null;
+  if (kiteState?.soloMovement === true) {
+    kiteState.soloNavigationState = createSoloNavigationState(
+      scenario.soloNavigation ?? "baseline", units, map,
+    );
+  }
+  const snapshot = createSnapshot(0, units, events,
+    soloNavigationSnapshot(kiteState?.soloNavigationState));
   // Charge-projectile flight queue, present only when the roster can fire one
   // (Fire Lancer family) so worlds without charge units keep their exact
   // published shape.
@@ -204,16 +227,7 @@ export function createWorld(scenario) {
     // Kiting-side beat controller (see issueKiteOrders): present only when
     // the scenario names a kiting owner, so every other world keeps its
     // exact published shape.
-    ...(Number.isSafeInteger(scenario.kiteOwner)
-      ? {
-        kiteState: createKiteState(
-          scenario.kiteOwner,
-          scenario.kiteProfile ?? null,
-          scenario.chaseCapture === true,
-          scenario.kitedEscape === true,
-        ),
-      }
-      : {}),
+    ...(kiteState ? { kiteState } : {}),
     ...(anyCharge ? { projectiles: Object.freeze([]) } : {}),
     // Deterministic per-shot RNG, present only when a unit can miss or blast
     // (dat accuracy < 100 or blast width > 0 — nothing in the converged
@@ -227,7 +241,7 @@ export function createWorld(scenario) {
     tick: 0,
     ratio: scenario.ratio,
     mapHash: scenario.mapHash,
-    map: scenario.map ? freezeMap(scenario.map) : DEFAULT_MAP,
+    map,
     units,
     events,
     eventLog: events,
@@ -631,7 +645,26 @@ function resolveMovement(planned, byReference, map, kiteState = null) {
 function moveUnits(units, map, tick, events, kiteState = null) {
   const live = units.filter(({ alive }) => alive).map(freezeUnit);
   const byReference = new Map(live.map((unit) => [unit.referenceId, unit]));
+  const soloDestinations = kiteState?.soloNavigationState
+    ? planSoloNavigation(
+      kiteState.soloNavigationState,
+      live.filter((unit) => unit.owner === kiteState.owner),
+      map,
+      tick,
+    )
+    : null;
   if (kiteState && !kiteState.chaseWaypoints) kiteState.chaseWaypoints = new Map();
+  const soloGridPath = kiteState?.soloNavigationState?.variant === "per-unit-grid"
+    || kiteState?.soloNavigationState?.variant === "cohesive";
+  if (kiteState?.profile?.kitedPath === "clearance_grid" || soloGridPath) {
+    if (!kiteState.kitedWaypoints) kiteState.kitedWaypoints = new Map();
+    for (const referenceId of kiteState.kitedWaypoints.keys()) {
+      const unit = byReference.get(referenceId);
+      if (!unit?.moveOrder || unit.owner !== kiteState.owner) {
+        kiteState.kitedWaypoints.delete(referenceId);
+      }
+    }
+  }
   const chaseAim = (unit, target) => {
     if (!kiteState || unit.owner === kiteState.owner) return target;
     const waypoints = kiteState.chaseWaypoints;
@@ -662,7 +695,40 @@ function moveUnits(units, map, tick, events, kiteState = null) {
     }
     return { ...target, x: waypoint.x, y: waypoint.y };
   };
-  const proposals = live.map((unit) => {
+  const kitedMoveAim = (unit) => {
+    const goal = soloDestinations?.get(unit.referenceId) ?? unit.moveOrder;
+    if (kiteState?.profile?.kitedPath !== "clearance_grid" && !soloGridPath
+        || unit.owner !== kiteState.owner) return goal;
+    const waypoints = kiteState.kitedWaypoints;
+    let waypoint = waypoints.get(unit.referenceId);
+    const repathTick = tick % KITE_CHASE_REPATH_TICKS
+      === ((unit.referenceId % KITE_CHASE_REPATH_TICKS) + KITE_CHASE_REPATH_TICKS)
+        % KITE_CHASE_REPATH_TICKS;
+    const cohesiveGoalMoved = kiteState?.soloNavigationState?.variant === "cohesive"
+      && waypoint
+      && Math.hypot(waypoint.orderX - goal.x, waypoint.orderY - goal.y) > 0.5;
+    if (!waypoint || cohesiveGoalMoved
+        || (kiteState?.soloNavigationState?.variant !== "cohesive"
+          && (waypoint.orderX !== goal.x || waypoint.orderY !== goal.y))
+        || repathTick) {
+      // The measured defect is enemy-contact capture. Friendly compression is
+      // already handled by the ordinary collision layer (including its DAT
+      // shrink rule), and treating allies as hard A* walls tears the kiting
+      // ball apart and suppresses its volley. Plan only around enemy bodies;
+      // execution still passes through the normal ally collision solver.
+      const obstacles = live.filter((other) => other.owner !== unit.owner);
+      waypoint = {
+        orderX: goal.x,
+        orderY: goal.y,
+        plan: planMoveAim(unit, goal, obstacles, map),
+      };
+      waypoints.set(unit.referenceId, waypoint);
+    }
+    if (waypoint.plan === null) return goal;
+    if (waypoint.plan.stand === true) return { x: unit.x, y: unit.y };
+    return waypoint.plan;
+  };
+  let proposals = live.map((unit) => {
     // A kite move order overrides everything: the tape's move-ordered units
     // walk their waypoint and do not fight until the next attack beat.
     //
@@ -684,8 +750,25 @@ function moveUnits(units, map, tick, events, kiteState = null) {
     // issued, and a unit holding a move order never starts a new attack.
     if (unit.moveOrder
         && (unit.action !== "attacking" || unit.actionTimers.windup === 0)) {
-      const dx = unit.moveOrder.x - unit.x;
-      const dy = unit.moveOrder.y - unit.y;
+      const moveAim = kitedMoveAim(unit);
+      const dx = moveAim.x - unit.x;
+      const dy = moveAim.y - unit.y;
+      const distance = Math.hypot(dx, dy);
+      const step = unit.mechanics.speed_tiles_per_second / TICKS_PER_SECOND;
+      if (distance > step) {
+        return Object.freeze({
+          referenceId: unit.referenceId,
+          dx: (dx / distance) * step,
+          dy: (dy / distance) * step,
+        });
+      }
+      return Object.freeze({ referenceId: unit.referenceId, dx, dy });
+    }
+    const approach = kiteState?.meleeApproach?.get(unit.referenceId);
+    if (approach && unit.owner !== kiteState.owner
+        && (unit.pursuitTargetId === null || unit.pursuitTargetId === undefined)) {
+      const dx = approach.x - unit.x;
+      const dy = approach.y - unit.y;
       const distance = Math.hypot(dx, dy);
       const step = unit.mechanics.speed_tiles_per_second / TICKS_PER_SECOND;
       if (distance > step) {
@@ -705,6 +788,31 @@ function moveUnits(units, map, tick, events, kiteState = null) {
       ? proposeMovement(unit, chaseAim(unit, target), TICKS_PER_SECOND)
       : Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
   });
+  if (kiteState?.profile?.cohortMotion === "contact_heading") {
+    const proposalByReference = new Map(
+      proposals.map((proposal) => [proposal.referenceId, proposal]),
+    );
+    const cohort = live.filter((unit) => (
+      unit.owner === kiteState.owner
+      && unit.moveOrder
+      && (unit.action !== "attacking" || unit.actionTimers.windup === 0)
+    ));
+    if (cohort.length >= 2) {
+      const plannedCohort = planCohortContactMotion({
+        units: cohort,
+        proposals: cohort.map((unit) => proposalByReference.get(unit.referenceId)),
+        enemies: live.filter((unit) => unit.owner !== kiteState.owner),
+        map,
+        preferredTurn: kiteState.ringDirection || 1,
+      });
+      const plannedByReference = new Map(
+        plannedCohort.map((proposal) => [proposal.referenceId, proposal]),
+      );
+      proposals = proposals.map((proposal) => (
+        plannedByReference.get(proposal.referenceId) ?? proposal
+      ));
+    }
+  }
   const planned = planLocalAvoidance(live, proposals, map);
   const moved = resolveMovement(planned, byReference, map, kiteState);
   const movedByReference = new Map(moved.map((unit) => [unit.referenceId, unit]));
@@ -781,6 +889,13 @@ function moveUnits(units, map, tick, events, kiteState = null) {
     }
   }
   events.push(...moveEvents, ...blockedEvents);
+  if (kiteState?.soloNavigationState) {
+    finishSoloNavigationTick(
+      kiteState.soloNavigationState,
+      units.filter((unit) => unit.alive && unit.owner === kiteState.owner),
+      blockedIds,
+    );
+  }
   return {
     contacts: queryEnemyContactManifold(live, units.filter(({ alive }) => alive).map(freezeUnit)),
     movedIds,
@@ -1741,7 +1856,8 @@ export function stepWorld(world) {
   const eventLog = Object.freeze([...world.eventLog, ...publishedEvents]);
   const snapshots = Object.freeze([
     ...world.snapshots,
-    createSnapshot(tick, publishedUnits, publishedEvents),
+    createSnapshot(tick, publishedUnits, publishedEvents,
+      soloNavigationSnapshot(world.kiteState?.soloNavigationState)),
   ]);
   return Object.freeze({
     ...world,
@@ -1777,20 +1893,66 @@ function outcome(world) {
 }
 
 
-export function runWorld(world, { maxTicks = DEFAULT_WORLD_TICKS } = {}) {
+export function runWorld(
+  world,
+  { maxTicks = DEFAULT_WORLD_TICKS, retainSnapshots = true } = {},
+) {
   if (!Number.isSafeInteger(maxTicks) || maxTicks < 0) {
     throw new RangeError("max ticks must be a nonnegative safe integer");
   }
   if (maxTicks > MAX_WORLD_TICKS) {
     throw new RangeError(`max ticks must not exceed ${MAX_WORLD_TICKS}`);
   }
+  if (typeof retainSnapshots !== "boolean") {
+    throw new TypeError("retainSnapshots must be a boolean");
+  }
+
+  if (retainSnapshots) {
+    let current = world;
+    const initialOutcome = outcome(current);
+    if (initialOutcome !== null) return initialOutcome;
+    for (let elapsed = 0; elapsed < maxTicks; elapsed += 1) {
+      current = stepWorld(current);
+      const result = outcome(current);
+      if (result !== null) return result;
+    }
+    const error = new Error(`world exceeded ${maxTicks} ticks`);
+    error.world = current;
+    throw error;
+  }
+
+  const collectedEvents = [...world.eventLog];
+  const emptySnapshots = Object.freeze([]);
+  const emptyEventLog = Object.freeze([]);
+  const compactWorld = (current, eventLog = emptyEventLog) => Object.freeze({
+    ...current,
+    eventLog,
+    snapshots: emptySnapshots,
+  });
+  const compactResult = (result, current) => {
+    const eventLog = Object.freeze([...collectedEvents]);
+    const publishedWorld = compactWorld(current, eventLog);
+    return Object.freeze({
+      ...result,
+      world: publishedWorld,
+      snapshots: emptySnapshots,
+      events: eventLog,
+    });
+  };
+
   let current = world;
   const initialOutcome = outcome(current);
-  if (initialOutcome !== null) return initialOutcome;
+  if (initialOutcome !== null) return compactResult(initialOutcome, current);
+  current = compactWorld(current);
   for (let elapsed = 0; elapsed < maxTicks; elapsed += 1) {
     current = stepWorld(current);
+    collectedEvents.push(...current.events);
     const result = outcome(current);
-    if (result !== null) return result;
+    if (result !== null) return compactResult(result, current);
+    current = compactWorld(current);
   }
-  throw new Error(`world exceeded ${maxTicks} ticks`);
+  const error = new Error(`world exceeded ${maxTicks} ticks`);
+  error.events = Object.freeze([...collectedEvents]);
+  error.world = compactWorld(current, error.events);
+  throw error;
 }

@@ -41,6 +41,7 @@ const ROWS = [
     fixture: "heavy_camel_berbers_imperial.json", class: "melee",
     baseCost: { food: 55, wood: 0, gold: 60 } },
   { slug: "heavy_cav_archer", label: "Heavy Cav Archer", civ: "Saracens", master: 474,
+    catalogueName: "Heavy Cavalry Archer",
     fixture: "heavy_cav_archer_saracens_imperial.json", class: "mobile_ranged",
     baseCost: { food: 0, wood: 40, gold: 60 } },
   { slug: "heavy_scorpion", label: "Heavy Scorpion", civ: "Japanese", master: 542,

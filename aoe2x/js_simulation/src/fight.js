@@ -4,10 +4,14 @@ import { readFile } from "node:fs/promises";
 
 import { hashCanonicalJson } from "./canonical-json.js";
 import { createUnitState } from "./combat/unit-state.js";
-import { createWorld, runWorld } from "./combat/world.js";
+import { createWorld, runWorld, stepWorld } from "./combat/world.js";
+import {
+  requireSoloNavigationVariant,
+  SOLO_NAVIGATION_VARIANTS,
+} from "./combat/solo-navigation.js";
 import { KITE_PROFILES } from "./kite-profiles.js";
 import { placeArmy, resolveFamily, sideCapacity } from "./placement.js";
-import { deriveCounts } from "./purchase.js";
+import { deriveCounts, PURCHASE_BUDGET } from "./purchase.js";
 import { unitBySlug } from "./unit-registry.js";
 
 
@@ -28,6 +32,7 @@ const WIRE_EVENT_TYPES_EXCLUDED = Object.freeze(new Set(["move", "blocked"]));
 
 const REFERENCE_BASE = { 2: 9000, 3: 9500 };
 const MAX_TICKS = 9000;
+const SOLO_MOVEMENT_TICKS = 3600;
 const mechanicsCache = new Map();
 
 
@@ -146,11 +151,30 @@ function slimSnapshot(snapshot) {
     events: Object.freeze(
       snapshot.events.filter((entry) => !WIRE_EVENT_TYPES_EXCLUDED.has(entry.type)),
     ),
+    ...(snapshot.navigation ? { navigation: snapshot.navigation } : {}),
   });
 }
 
 
-export async function runFight(root, { side2Slug, n2, side3Slug, n3 }) {
+function soloNavigationSummary(world, count) {
+  const diagnostics = world.snapshots
+    .map(({ navigation }) => navigation)
+    .filter(Boolean);
+  const final = diagnostics.at(-1);
+  return Object.freeze({
+    unitCount: count,
+    totalAnchorDistance: final?.totalAnchorDistance ?? 0,
+    maxReplans: diagnostics.reduce((maximum, row) => Math.max(maximum, row.replans), 0),
+    maxCohesionRadius: diagnostics.reduce(
+      (maximum, row) => Math.max(maximum, row.cohesionRadius), 0,
+    ),
+    maxSlotError: diagnostics.reduce((maximum, row) => Math.max(maximum, row.maxSlotError), 0),
+    maxBlockedCount: diagnostics.reduce((maximum, row) => Math.max(maximum, row.blockedCount), 0),
+  });
+}
+
+
+export async function runFight(root, { side2Slug, n2, side3Slug, n3, budget, map }) {
   // Counts are optional: omit BOTH and they come from the purchase rule, so
   // the formula lives in purchase.js and nowhere else. One given without the
   // other is a malformed request, not a half-derived fight -- the HTTP layer
@@ -161,7 +185,15 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3 }) {
   if (n2Given !== n3Given) {
     throw new RangeError("n2 and n3 must both be given, or both omitted to derive them");
   }
+  const budgetGiven = budget !== undefined;
+  if (budgetGiven && (!Number.isSafeInteger(budget) || budget < 100 || budget > 20000)) {
+    throw new RangeError(`budget must be an integer 100-20000, got ${budget}`);
+  }
+  if (budgetGiven && n2Given) {
+    throw new RangeError("budget cannot be combined with explicit counts");
+  }
   const derivedCounts = !n2Given;
+  const purchaseBudget = budgetGiven ? budget : PURCHASE_BUDGET;
 
   const side2 = requireUnit(side2Slug);
   const side3 = requireUnit(side3Slug);
@@ -185,7 +217,9 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3 }) {
   // same armies and passes (or fails) the same capacity check whichever
   // dropdown each unit was picked in.
   const derived = derivedCounts
-    ? deriveCounts(inner2.slug, inner3.slug, { capacityA: capacity2, capacityB: capacity3 })
+    ? deriveCounts(inner2.slug, inner3.slug, {
+      budget: purchaseBudget, capacityA: capacity2, capacityB: capacity3,
+    })
     : null;
   const innerCount2 = derived ? derived.countA : (orientationNormalised ? n3 : n2);
   const innerCount3 = derived ? derived.countB : (orientationNormalised ? n2 : n3);
@@ -226,6 +260,7 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3 }) {
   const result = runWorld(createWorld({
     ratio: `${innerCount2}v${innerCount3}`,
     units,
+    ...(map ? { map } : {}),
     ...(innerKiteOwner === null
       ? {}
       : { kiteOwner: innerKiteOwner, kiteProfile: kiteProfileFor(kiter) }),
@@ -264,6 +299,7 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3 }) {
       slug: side3.slug, label: side3.label, civ: side3.civ, count: count3, class: side3.class }),
     family,
     derivedCounts,
+    budget: derivedCounts ? purchaseBudget : null,
     // True when the pair was run in the archive's measured orientation rather
     // than the user's pick order (the role unit always fights as owner 2).
     orientationNormalised,
@@ -282,5 +318,79 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3 }) {
     eventLogHash: hashCanonicalJson(result.events),
     unitIndex: Object.freeze(unitIndex),
     snapshots: Object.freeze(result.snapshots.map(slimSnapshot)),
+  });
+}
+
+
+export async function runSoloHandCannoneerMovement(root, {
+  map,
+  navigation = "cohesive",
+} = {}) {
+  requireSoloNavigationVariant(navigation);
+  const unit = requireUnit("hand_cannoneer");
+  const mechanics = await loadMechanics(root, unit);
+  const count = 21;
+  const owner = 2;
+  const family = "kite";
+  const roster = placeArmy({ owner, count, family }).map((cell, index) => ({
+    owner, cell, index, unit, mechanics,
+  }));
+  const units = roster.map(({ cell, index }, rank) => createUnitState({
+    referenceId: REFERENCE_BASE[owner] + index,
+    owner,
+    x: cell.x,
+    y: cell.y,
+    facing: 0,
+    mechanics,
+    acquisitionRank: rank,
+    acquisitionCount: roster.length,
+  }));
+  let world = createWorld({
+    ratio: "21v0",
+    units,
+    ...(map ? { map } : {}),
+    kiteOwner: owner,
+    kiteProfile: kiteProfileFor(unit),
+    soloMovement: true,
+    soloNavigation: navigation,
+  });
+  for (let tick = 0; tick < SOLO_MOVEMENT_TICKS; tick += 1) {
+    world = stepWorld(world);
+  }
+
+  const unitIndex = {};
+  for (const { index } of roster) {
+    unitIndex[REFERENCE_BASE[owner] + index] = Object.freeze({
+      owner,
+      slug: unit.slug,
+      label: unit.label,
+      maxHp: mechanics.hp,
+      master: mechanics.unit_master,
+      collisionRadius: mechanics.collision_size_tiles.x,
+      attackRange: mechanics.attack_range_tiles,
+    });
+  }
+  return Object.freeze({
+    schemaVersion: 1,
+    mode: "solo-movement",
+    navigationVariant: navigation,
+    navigationOptions: SOLO_NAVIGATION_VARIANTS,
+    navigationSummary: soloNavigationSummary(world, count),
+    side2: Object.freeze({
+      slug: unit.slug, label: unit.label, civ: unit.civ, count, class: unit.class,
+    }),
+    side3: Object.freeze({ slug: null, label: "No enemies", civ: "", count: 0, class: null }),
+    family,
+    derivedCounts: false,
+    budget: null,
+    orientationNormalised: false,
+    kiteOwner: owner,
+    ticks: world.tick,
+    winnerOwner: null,
+    winnerHp: world.units.reduce((total, current) => total + current.hp, 0),
+    finalStateHash: hashCanonicalJson({ tick: world.tick, ratio: "21v0", units: world.units }),
+    eventLogHash: hashCanonicalJson(world.eventLog),
+    unitIndex: Object.freeze(unitIndex),
+    snapshots: Object.freeze(world.snapshots.map(slimSnapshot)),
   });
 }

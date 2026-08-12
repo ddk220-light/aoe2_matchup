@@ -115,15 +115,37 @@ test("every mobile-ranged unit in the registry has a profile", () => {
 });
 
 
-test("hand_cannoneer is marked CONSTRUCTED, not passed off as measured", () => {
+test("hand_cannoneer is sourced from the authorized standard-unit streams", () => {
   const row = KITE_PROFILE_PROVENANCE.profiles.hand_cannoneer;
-  assert.equal(row.source, "constructed");
-  assert.match(row.warning, /CONSTRUCTED, NOT MEASURED/);
-  assert.equal(row.reloadSeconds, 3.45);
+  assert.equal(row.source, "standard-units-tape");
+  assert.equal(row.zipSha256,
+    "38E07C38344F06E527C28CD9B235ADA59AD1E722CDB8EC171296B877E8C1956D");
+  assert.equal(row.streamsMeasured, 34);
+  assert.equal(row.acceptanceReport,
+    "calibration/reports/hand_cannoneer_translated_persistent_measured_phase_results_2026-08-09.json");
   assert.equal(KITE_PROFILES.hand_cannoneer.beatTicks, 240);
+  assert.equal(KITE_PROFILES.hand_cannoneer.firstBeatTick, 12);
+  assert.deepEqual([...KITE_PROFILES.hand_cannoneer.moveOffsetTicks], [68, 148, 228]);
+  assert.deepEqual([...KITE_PROFILES.hand_cannoneer.preMoveTicks], []);
+  assert.equal(KITE_PROFILES.hand_cannoneer.formationMotion, "translated_offsets");
+  assert.equal(KITE_PROFILES.hand_cannoneer.volleyPursuit, "close_to_fire");
+  assert.equal(KITE_PROFILES.hand_cannoneer.kitedEscape, undefined,
+    "the measured HCA-style control failed its acceptance gate and must stay disabled");
+  assert.equal(KITE_PROFILES.hand_cannoneer.kitedPath, undefined);
+  assert.equal(KITE_PROFILES.hand_cannoneer.cohortMotion, undefined,
+    "the cohort-motion screen failed and must stay off the product profile");
+  for (const [slug, profile] of Object.entries(KITE_PROFILES)) {
+    if (slug === "hand_cannoneer") continue;
+    assert.equal(profile.kitedEscape, undefined,
+      `${slug} must retain its existing profile-selected escape behavior`);
+    assert.equal(profile.kitedPath, undefined,
+      `${slug} must retain its existing movement path`);
+    assert.equal(profile.cohortMotion, undefined,
+      `${slug} must retain its existing cohort movement behavior`);
+  }
   assert.ok(!truths.some(({ truth }) => (
     slugByFixtureStem.get(truth.sides[String(truth.kiteOwner)]) === "hand_cannoneer")),
-  "a hand_cannoneer tape column now exists -- derive its profile instead of constructing it");
+  "the legacy fixture directory unexpectedly gained a duplicate HC tape column");
 });
 
 

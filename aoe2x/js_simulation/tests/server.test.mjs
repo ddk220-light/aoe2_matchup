@@ -22,15 +22,17 @@ async function withServer(run) {
 }
 
 
-test("server exposes the map-only viewer and literal fixture", async () => {
+test("server exposes the website-style Battle Simulation shell and literal map fixture", async () => {
   await withServer(async (baseUrl) => {
     const page = await fetch(`${baseUrl}/`);
     assert.equal(page.status, 200);
     assert.match(page.headers.get("content-type"), /text\/html/);
     const pageBody = await page.text();
-    assert.match(pageBody, /Golden Arena/);
+    assert.match(pageBody, /Battle Simulation/);
     assert.match(pageBody, /location\.pathname\.endsWith\("\/"\)/);
     assert.match(pageBody, /document\.head\.append\(mountBase\)/);
+    assert.match(pageBody, /href="static\/css\/base\.css"/);
+    assert.match(pageBody, /href="static\/css\/simulate\.css"/);
     assert.match(pageBody, /href="viewer\/styles\.css"/);
     assert.match(pageBody, /src="viewer\/app\.js"/);
 
@@ -69,6 +71,218 @@ test("server rejects paths outside its explicit public surface", async () => {
       const response = await fetch(`${baseUrl}${path}`);
       assert.equal(response.status, 404, path);
       assert.equal(response.headers.get("cache-control"), "no-store");
+    }
+  });
+});
+
+
+test("local shared assets expose presentation files but never the old simulator", async () => {
+  await withServer(async (baseUrl) => {
+    for (const asset of [
+      ["/static/css/base.css", /--gold/],
+      ["/static/css/simulate.css", /\.sim-stage/],
+      ["/static/js/constants.js", /function spriteFor/],
+      ["/static/js/unit_sprites.js", /UNIT_SPRITES/],
+    ]) {
+      const response = await fetch(`${baseUrl}${asset[0]}`);
+      assert.equal(response.status, 200, asset[0]);
+      assert.match(await response.text(), asset[1], asset[0]);
+    }
+    for (const forbidden of [
+      "/static/js/simulate.js",
+      "/static/js/engine/index.js",
+      "/static/lab/sim_harness.js",
+    ]) {
+      assert.equal((await fetch(`${baseUrl}${forbidden}`)).status, 404, forbidden);
+    }
+  });
+});
+
+
+test("catalogue keeps every website unit visible and enables exactly the registry rows", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/catalogue`);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("cache-control"), "no-store");
+    const catalogue = await response.json();
+
+    assert.equal(catalogue.schemaVersion, 1);
+    assert.equal(catalogue.civilizations.length, 53);
+    assert.equal(catalogue.civilizations.reduce(
+      (total, civilization) => total + civilization.units.length, 0), 972);
+    assert.equal(catalogue.enabled.length, 14);
+    assert.equal(new Set(catalogue.enabled.map(({ catalogueKey }) => catalogueKey)).size, 14);
+    assert.deepEqual(catalogue.enabled.find(({ engineSlug }) => engineSlug === "heavy_cav_archer"), {
+      catalogueKey: "saracens:heavy-cavalry-archer:1411",
+      engineSlug: "heavy_cav_archer",
+      civ: "Saracens",
+      name: "Heavy Cavalry Archer",
+      class: "mobile_ranged",
+      baseCost: { food: 0, wood: 40, gold: 60 },
+    });
+  });
+});
+
+
+test("fight endpoint accepts a derived resource budget and rejects mixed sizing", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(
+      `${baseUrl}/api/fight?side2=champion&side3=elite_elephant&budget=800`,
+    );
+    assert.equal(response.status, 200);
+    const fight = await response.json();
+    assert.equal(fight.derivedCounts, true);
+    assert.equal(fight.budget, 800);
+    assert.equal(fight.side2.count, 10);
+    assert.equal(fight.side3.count, 3);
+
+    for (const query of [
+      "side2=champion&side3=paladin&budget=0",
+      "side2=champion&side3=paladin&budget=800.5",
+      "side2=champion&side3=paladin&n2=5&n3=5&budget=800",
+    ]) {
+      const rejected = await fetch(`${baseUrl}/api/fight?${query}`);
+      assert.equal(rejected.status, 400, query);
+    }
+  });
+});
+
+
+test("fight endpoint keeps units outside every visible Golden Arena obstruction", async () => {
+  await withServer(async (baseUrl) => {
+    const [mapResponse, fightResponse] = await Promise.all([
+      fetch(`${baseUrl}/api/map`),
+      fetch(`${baseUrl}/api/fight?side2=hand_cannoneer&n2=5&side3=champion&n3=5`),
+    ]);
+    assert.equal(mapResponse.status, 200);
+    assert.equal(fightResponse.status, 200);
+    const fixture = await mapResponse.json();
+    const fight = await fightResponse.json();
+    const obstacles = fixture.map.gaia_objects;
+    const obstacleRadius = 0.5;
+    let nearestGap = Infinity;
+
+    for (const snapshot of fight.snapshots) {
+      for (const unit of snapshot.units) {
+        if (!unit[5]) continue;
+        const unitRadius = fight.unitIndex[unit[0]].collisionRadius;
+        for (const obstacle of obstacles) {
+          const gap = Math.hypot(unit[1] - obstacle.x, unit[2] - obstacle.y)
+            - unitRadius - obstacleRadius;
+          nearestGap = Math.min(nearestGap, gap);
+          assert.ok(
+            gap >= -1e-9,
+            `tick ${snapshot.tick} unit ${unit[0]} entered ${obstacle.name} ${obstacle.reference_id}`,
+          );
+        }
+      }
+    }
+    assert.ok(nearestGap < 0.02, "the regression fight must exercise obstacle contact");
+    assert.ok(fight.winnerOwner === 2 || fight.winnerOwner === 3, "the routed fight must finish");
+  });
+});
+
+
+test("solo movement endpoint runs only 21 owner-2 Hand Cannoneers under kite orders", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/solo-hand-cannoneers`);
+    assert.equal(response.status, 200);
+    const run = await response.json();
+
+    assert.equal(run.mode, "solo-movement");
+    assert.equal(run.navigationVariant, "cohesive");
+    assert.deepEqual(run.navigationOptions, ["baseline", "per-unit-grid", "cohesive"]);
+    assert.deepEqual(run.side2, {
+      slug: "hand_cannoneer",
+      label: "Hand Cannoneer",
+      civ: "Bohemians",
+      count: 21,
+      class: "mobile_ranged",
+    });
+    assert.equal(run.side3.count, 0);
+    assert.equal(run.kiteOwner, 2);
+    assert.equal(run.ticks, 3600);
+    assert.equal(run.snapshots.length, 3601);
+    assert.deepEqual([...new Set(Object.values(run.unitIndex).map(({ owner }) => owner))], [2]);
+    assert.equal(Object.keys(run.unitIndex).length, 21);
+
+    const moveOrderTicks = new Set(run.snapshots.flatMap(({ events }) => events
+      .filter(({ type }) => type === "kite-move")
+      .map(({ tick }) => tick)));
+    assert.ok(moveOrderTicks.size >= 40);
+
+    const initial = new Map(run.snapshots[0].units.map((unit) => [unit[0], unit]));
+    const maximumDisplacement = new Map([...initial.keys()].map((id) => [id, 0]));
+    for (const snapshot of run.snapshots) {
+      for (const unit of snapshot.units) {
+        const spawn = initial.get(unit[0]);
+        maximumDisplacement.set(unit[0], Math.max(
+          maximumDisplacement.get(unit[0]),
+          Math.hypot(unit[1] - spawn[1], unit[2] - spawn[2]),
+        ));
+      }
+    }
+    assert.equal([...maximumDisplacement.values()].every((distance) => distance > 1), true);
+  });
+});
+
+
+test("solo movement endpoint saves baseline, per-unit-grid, and cohesive navigation runs", async () => {
+  await withServer(async (baseUrl) => {
+    for (const navigation of ["baseline", "per-unit-grid", "cohesive"]) {
+      const response = await fetch(
+        `${baseUrl}/api/solo-hand-cannoneers?navigation=${navigation}`,
+      );
+      assert.equal(response.status, 200, navigation);
+      const run = await response.json();
+      assert.equal(run.navigationVariant, navigation);
+      assert.equal(run.snapshots[0].navigation.variant, navigation);
+      assert.equal(run.snapshots.at(-1).navigation.variant, navigation);
+    }
+
+    const invalid = await fetch(`${baseUrl}/api/solo-hand-cannoneers?navigation=unknown`);
+    assert.equal(invalid.status, 400);
+  });
+});
+
+
+test("cohesive solo navigation publishes formation-route diagnostics and preserves a compact group", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/solo-hand-cannoneers?navigation=cohesive`);
+    assert.equal(response.status, 200);
+    const run = await response.json();
+    assert.equal(run.navigationSummary.unitCount, 21);
+    assert.ok(run.navigationSummary.totalAnchorDistance > 8);
+    assert.ok(run.navigationSummary.maxReplans >= 0);
+
+    const active = run.snapshots.filter(({ tick }) => tick >= 900);
+    assert.ok(active.length > 2000);
+    assert.equal(active.every(({ navigation }) =>
+      navigation.unitDestinations.length === 21
+      && Number.isFinite(navigation.anchor.x)
+      && Number.isFinite(navigation.routeWaypoint.x)
+      && Number.isFinite(navigation.aiWaypoint.x)), true);
+    const compactRatio = active.filter(({ navigation }) =>
+      navigation.cohesionRadius <= 2.25).length / active.length;
+    assert.ok(compactRatio >= 0.95, `compact snapshot ratio ${compactRatio}`);
+
+    const mapResponse = await fetch(`${baseUrl}/api/map`);
+    const map = (await mapResponse.json()).map;
+    const obstacles = map.gaia_objects.map((obstacle) => ({
+      ...obstacle,
+      radius: obstacle.reference_id === 1604 ? 1.5 : 0.5,
+    }));
+    for (const snapshot of run.snapshots) {
+      for (const unit of snapshot.units) {
+        for (const obstacle of obstacles) {
+          const clearance = Math.max(
+            Math.abs(unit[1] - obstacle.x),
+            Math.abs(unit[2] - obstacle.y),
+          ) - 0.2 - obstacle.radius;
+          assert.ok(clearance >= -1e-9,
+            `tick ${snapshot.tick} unit ${unit[0]} overlapped obstacle ${obstacle.reference_id}`);
+        }
+      }
     }
   });
 });
@@ -171,17 +385,28 @@ test("server keeps source archives and raw calibration fixtures inaccessible", a
 });
 
 
-test("viewer page exposes the complete Champion review instrument without a seed control", async () => {
+test("viewer page exposes battle controls and local calibration tools without a seed control", async () => {
   await withServer(async (baseUrl) => {
     const response = await fetch(`${baseUrl}/?ratio=5v3&repeat=3`);
     const body = await response.text();
 
     for (const id of [
-      "side2Select",
-      "n2Input",
-      "side3Select",
-      "n3Input",
-      "resetCounts",
+      "simOptions",
+      "team1Count",
+      "team2Count",
+      "totalResources",
+      "startBtn",
+      "pauseBtn",
+      "resetBtn",
+      "speedSlider",
+      "team1Search",
+      "team2Search",
+      "team1Selection",
+      "team2Selection",
+      "mapCanvas",
+      "navigationVariant",
+      "navigationDebugToggle",
+      "navigationStats",
       "playPause",
       "resetPlayback",
       "stepTick",
@@ -198,7 +423,9 @@ test("viewer page exposes the complete Champion review instrument without a seed
       assert.match(body, new RegExp(`id=["']${id}["']`), id);
     }
     assert.doesNotMatch(body, /id=["'][^"']*seed/i);
-    assert.match(body, /aria-label=["']Simulation playback controls["']/);
+    assert.match(body, /5,000 incl\. Upgrades/);
+    assert.match(body, /value=["']resources_upgrades["'][^>]*disabled/);
+    assert.match(body, /Calibration tools/);
 
     const reviewModule = await fetch(`${baseUrl}/viewer/simulation-review.js`);
     assert.equal(reviewModule.status, 200);
@@ -207,15 +434,15 @@ test("viewer page exposes the complete Champion review instrument without a seed
 });
 
 
-test("phone layout collapses transport and map tools before their labels overflow", async () => {
+test("phone layout stacks the battle stage and keeps map tools reachable", async () => {
   await withServer(async (baseUrl) => {
     const response = await fetch(`${baseUrl}/viewer/styles.css`);
     assert.equal(response.status, 200);
     const body = await response.text();
-    const compactPhoneRules = body.match(/@media \(max-width: 480px\) \{([\s\S]*?)\n\}/)?.[1];
+    const compactPhoneRules = body.match(/@media \(max-width: 720px\) \{([\s\S]*?)\n\}/)?.[1];
 
     assert.ok(compactPhoneRules, "expected a compact-phone breakpoint through 480px");
-    assert.match(compactPhoneRules, /\.transport\s*\{\s*grid-template-columns:\s*1fr 1fr;/);
-    assert.match(compactPhoneRules, /\.tool-rail\s*\{\s*grid-template-columns:\s*1fr 1fr;/);
+    assert.match(compactPhoneRules, /\.sim-stage\s*\{[\s\S]*grid-template-columns:\s*1fr;/);
+    assert.match(compactPhoneRules, /\.map-tool-rail\s*\{[\s\S]*grid-template-columns:\s*repeat\(2, 1fr\);/);
   });
 });

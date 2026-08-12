@@ -77,6 +77,52 @@ shell.
 
 Open `http://127.0.0.1:5011/`.
 
+The local page mirrors the web app's civilization-first Battle Simulation
+picker while keeping the clean-room engine isolated from the production
+simulator. The full Imperial-age catalogue is visible; units without a
+clean-room mechanics profile remain disabled and are labelled **Not yet
+calibrated**. The 14 registry-backed civ/unit combinations can be run with
+either explicit army counts or an equal-resource budget. The centre stage
+uses the isometric Golden Arena renderer and exposes deterministic playback,
+damage, map-inspection, hash, and review-export tools.
+
+### Hand Cannoneer navigation lab
+
+The dedicated enemy-free movement lab runs exactly 21 Bohemian Hand
+Cannoneers as engine owner 2 and keeps the tape-derived AI movement-order
+clock. Its default `cohesive` navigation uses a persistent formation anchor,
+stable compact slots, formation-inflated central-obstacle clearance, and
+deterministic stall recovery. `baseline` and `per-unit-grid` remain saved as
+viewer options for direct visual comparison.
+
+Local:
+
+`http://127.0.0.1:5011/?mode=hand-cannoneer-solo-movement&navigation=cohesive`
+
+Tailnet:
+
+`https://dragonstar.tail82a190.ts.net/golden-map/?mode=hand-cannoneer-solo-movement&navigation=cohesive`
+
+The Tailnet URL requires a device connected to the same tailnet. Always include
+a verified Tailnet link when handing off a viewer page.
+
+The selector in the page changes among all three stable deep links. The map can
+show the AI waypoint, group anchor, active route waypoint, live centroid, and
+every unit's effective destination, alongside cohesion, slot-error, block,
+replan, travel, and stall statistics.
+
+See
+[Hand Cannoneer solo navigation lab — 2026-08-11](docs/HAND_CANNONEER_SOLO_NAVIGATION_2026-08-11.md)
+for the architecture, exact 60-second comparison, deterministic hashes, test
+commands, and scope boundaries.
+
+Regenerate the deterministic viewer catalogue after the reference database
+changes:
+
+```powershell
+python aoe2x/js_simulation/tools/export_viewer_catalogue.py
+```
+
 The default bind is local-only. Use an explicit host only when exposing it
 through the local Tailnet configuration.
 

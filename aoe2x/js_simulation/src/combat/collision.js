@@ -2,6 +2,11 @@ import { allyCollisionRadius, collisionRadius } from "./targeting.js";
 
 
 const EPSILON = 1e-12;
+// Crowds pinched between a static obstacle and an enemy body converge
+// geometrically. The former 256-sweep ceiling could stop with a sub-micron
+// residual overlap even though each pass was still making deterministic
+// progress. This remains a failure ceiling, not a physical tolerance: hard
+// geometry must still satisfy EPSILON before a movement step is published.
 const MAX_CONSTRAINT_SWEEPS = 256;
 
 

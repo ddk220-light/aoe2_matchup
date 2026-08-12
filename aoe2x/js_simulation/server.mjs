@@ -4,7 +4,12 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { createChampionPlaybackData } from "./src/champion-comparison.js";
-import { FIGHT_SIDE_CAP, runFight } from "./src/fight.js";
+import { buildArenaPhysicsMap } from "./src/arena-physics-map.js";
+import {
+  FIGHT_SIDE_CAP,
+  runFight,
+  runSoloHandCannoneerMovement,
+} from "./src/fight.js";
 import { FAMILIES, sideCapacity } from "./src/placement.js";
 import { TICKS_PER_SECOND } from "./src/simulation-clock.js";
 import { runChampionRatio } from "./tests/support/champion-ratio.mjs";
@@ -21,14 +26,22 @@ import { UNIT_REGISTRY } from "./src/unit-registry.js";
 const CONTENT_TYPES = new Map([
   [".css", "text/css; charset=utf-8"],
   [".html", "text/html; charset=utf-8"],
+  [".ico", "image/x-icon"],
   [".js", "text/javascript; charset=utf-8"],
+  [".jpg", "image/jpeg"],
+  [".jpeg", "image/jpeg"],
   [".mjs", "text/javascript; charset=utf-8"],
   [".json", "application/json; charset=utf-8"],
+  [".png", "image/png"],
+  [".svg", "image/svg+xml"],
+  [".webp", "image/webp"],
 ]);
 
 const CHAMPION_RATIOS = Object.freeze(["1v1", "2v1", "2v3", "5v3", "6v3"]);
 const championDataByRoot = new Map();
 const championPlaybackByRatio = new Map();
+const catalogueByRoot = new Map();
+const arenaMapByRoot = new Map();
 
 
 function publicFile(root, pathname) {
@@ -36,6 +49,32 @@ function publicFile(root, pathname) {
   if (pathname === "/api/map") return path.join(root, "fixtures", "golden_map.json");
   if (pathname === "/api/formation") {
     return path.join(root, "fixtures", "golden_formation_21v21.json");
+  }
+
+  // Presentation-only reuse of the website's current Battle Simulation
+  // treatment. The allowlist deliberately excludes simulate.js, its engine,
+  // and lab harnesses: this local page can share CSS/icons without importing
+  // any production simulation behavior.
+  const sharedFile = new Map([
+    ["/static/css/base.css", ["css", "base.css"]],
+    ["/static/css/simulate.css", ["css", "simulate.css"]],
+    ["/static/js/constants.js", ["js", "constants.js"]],
+    ["/static/js/unit_sprites.js", ["js", "unit_sprites.js"]],
+  ]).get(pathname);
+  const websiteStatic = path.resolve(root, "..", "..", "apps", "website", "static");
+  if (sharedFile) return path.join(websiteStatic, ...sharedFile);
+  const imageMatch = pathname.match(/^\/static\/img\/(.+)$/);
+  if (imageMatch) {
+    let relative;
+    try {
+      relative = decodeURIComponent(imageMatch[1]);
+    } catch {
+      return null;
+    }
+    if (!relative || relative.includes("\\") || relative.split("/").includes("..")) return null;
+    const imageRoot = path.join(websiteStatic, "img");
+    const candidate = path.resolve(imageRoot, relative);
+    return candidate.startsWith(`${imageRoot}${path.sep}`) ? candidate : null;
   }
 
   const match = pathname.match(/^\/(viewer|src)\/(.+)$/);
@@ -172,17 +211,73 @@ function fightSelection(url) {
   const slug3 = url.searchParams.get("side3");
   const raw2 = url.searchParams.get("n2");
   const raw3 = url.searchParams.get("n3");
+  const rawBudget = url.searchParams.get("budget");
   if (!slug2 || !slug3) return null;
   // Both counts omitted -> derive them from the purchase rule. One without the
   // other is a malformed request, not a half-derived fight.
-  if (raw2 === null && raw3 === null) return { side2Slug: slug2, side3Slug: slug3 };
+  if (raw2 === null && raw3 === null) {
+    if (rawBudget === null) return { side2Slug: slug2, side3Slug: slug3 };
+    if (!/^[1-9]\d{2,4}$/.test(rawBudget)) return null;
+    const budget = Number(rawBudget);
+    if (budget > 20000) return null;
+    return { side2Slug: slug2, side3Slug: slug3, budget };
+  }
+  if (rawBudget !== null) return null;
   if (!/^\d{1,2}$/.test(raw2 ?? "") || !/^\d{1,2}$/.test(raw3 ?? "")) return null;
   return { side2Slug: slug2, n2: Number(raw2), side3Slug: slug3, n3: Number(raw3) };
 }
 
 
+async function loadViewerCatalogue(root) {
+  if (!catalogueByRoot.has(root)) {
+    catalogueByRoot.set(root, readFile(
+      path.join(root, "fixtures", "viewer_unit_catalogue.json"), "utf8",
+    ).then((body) => {
+      const catalogue = JSON.parse(body);
+      const matches = new Map();
+      for (const civilization of catalogue.civilizations ?? []) {
+        for (const unit of civilization.units ?? []) {
+          const key = `${civilization.name}\u0000${unit.name}`;
+          if (matches.has(key)) throw new Error(`duplicate viewer catalogue row ${key}`);
+          matches.set(key, unit);
+        }
+      }
+      const enabled = UNIT_REGISTRY.map((unit) => {
+        const name = unit.catalogueName ?? unit.label;
+        const row = matches.get(`${unit.civ}\u0000${name}`);
+        if (!row) throw new Error(`viewer catalogue has no row for ${unit.civ} / ${name}`);
+        return Object.freeze({
+          catalogueKey: row.catalogueKey,
+          engineSlug: unit.slug,
+          civ: unit.civ,
+          name,
+          class: unit.class,
+          baseCost: unit.baseCost,
+        });
+      });
+      return Object.freeze({ ...catalogue, enabled: Object.freeze(enabled) });
+    }));
+  }
+  return catalogueByRoot.get(root);
+}
+
+
+async function loadArenaPhysicsMap(root) {
+  if (!arenaMapByRoot.has(root)) {
+    arenaMapByRoot.set(root, readFile(
+      path.join(root, "fixtures", "golden_map.json"), "utf8",
+    ).then((body) => {
+      const fixture = JSON.parse(body);
+      return buildArenaPhysicsMap(fixture);
+    }));
+  }
+  return arenaMapByRoot.get(root);
+}
+
+
 async function handleFightApi({ request, response, root, url }) {
-  if (url.pathname !== "/api/units" && url.pathname !== "/api/fight") return false;
+  if (!["/api/catalogue", "/api/units", "/api/fight", "/api/solo-hand-cannoneers"]
+    .includes(url.pathname)) return false;
   if (request.method !== "GET") {
     sendJson(response, 405, { error: "Fight diagnostics are read-only" });
     return true;
@@ -203,16 +298,43 @@ async function handleFightApi({ request, response, root, url }) {
     });
     return true;
   }
+  if (url.pathname === "/api/catalogue") {
+    sendJson(response, 200, await loadViewerCatalogue(root));
+    return true;
+  }
+  if (url.pathname === "/api/solo-hand-cannoneers") {
+    const keys = [...url.searchParams.keys()];
+    if (keys.some((key) => key !== "navigation")
+        || url.searchParams.getAll("navigation").length > 1) {
+      sendJson(response, 400, { error: "solo Hand Cannoneer movement accepts only navigation" });
+      return true;
+    }
+    try {
+      const map = await loadArenaPhysicsMap(root);
+      const navigation = url.searchParams.get("navigation") ?? "cohesive";
+      sendJson(response, 200, await runSoloHandCannoneerMovement(
+        pathToFileURL(path.join(root, "/")),
+        { map, navigation },
+      ));
+    } catch (error) {
+      sendJson(response, 400, { error: String(error?.message ?? error) });
+    }
+    return true;
+  }
   const selection = fightSelection(url);
   if (!selection) {
     sendJson(response, 400, {
       error: "side2 and side3 must be unit slugs; give both n2 and n3 as integers "
-        + `1-${FIGHT_SIDE_CAP}, or neither to derive them`,
+        + `1-${FIGHT_SIDE_CAP}, or neither to derive them with an optional budget 100-20000`,
     });
     return true;
   }
   try {
-    sendJson(response, 200, await runFight(pathToFileURL(path.join(root, "/")), selection));
+    const map = await loadArenaPhysicsMap(root);
+    sendJson(response, 200, await runFight(
+      pathToFileURL(path.join(root, "/")),
+      { ...selection, map },
+    ));
   } catch (error) {
     sendJson(response, 400, { error: String(error?.message ?? error) });
   }

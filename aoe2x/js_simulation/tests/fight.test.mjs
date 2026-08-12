@@ -175,6 +175,41 @@ test("omitting both counts derives them from the purchase rule", async () => {
     "deriving the counts must produce the same fight as passing them");
 });
 
+test("a resource budget derives a smaller fight without changing the default purchase", async () => {
+  const defaultFight = await runFight(root, {
+    side2Slug: "champion", side3Slug: "elite_elephant",
+  });
+  const budgetFight = await runFight(root, {
+    side2Slug: "champion", side3Slug: "elite_elephant", budget: 800,
+  });
+  const explicitFight = await runFight(root, {
+    side2Slug: "champion", n2: 10, side3Slug: "elite_elephant", n3: 3,
+  });
+
+  assert.equal(defaultFight.budget, 3000);
+  assert.equal(defaultFight.side2.count, 21);
+  assert.equal(defaultFight.side3.count, 8);
+  assert.equal(budgetFight.budget, 800);
+  assert.equal(budgetFight.side2.count, 10);
+  assert.equal(budgetFight.side3.count, 3);
+  assert.equal(budgetFight.finalStateHash, explicitFight.finalStateHash);
+});
+
+test("budget validation rejects invalid or mixed sizing inputs", async () => {
+  for (const budget of [0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+    await assert.rejects(
+      () => runFight(root, { side2Slug: "champion", side3Slug: "paladin", budget }),
+      /budget must be an integer/,
+    );
+  }
+  await assert.rejects(
+    () => runFight(root, {
+      side2Slug: "champion", n2: 5, side3Slug: "paladin", n3: 5, budget: 800,
+    }),
+    /budget cannot be combined with explicit counts/,
+  );
+});
+
 test("bad input is rejected", async () => {
   await assert.rejects(
     () => runFight(root, { side2Slug: "trebuchet", n2: 5, side3Slug: "champion", n3: 5 }),

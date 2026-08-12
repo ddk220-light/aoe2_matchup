@@ -1,8 +1,7 @@
 import { validateMapFixture } from "../src/map-model.js";
-import {
-  formationUnits,
-  validateFormationFixture,
-} from "../src/formation-model.js";
+import { formationUnits, validateFormationFixture } from "../src/formation-model.js";
+import { createBattlePage } from "./battle-page.js";
+import { soloMovementRequest } from "./battle-state.js";
 import { createMapRenderer } from "./map-renderer.js";
 import {
   createPlaybackCursor,
@@ -16,7 +15,8 @@ const TICKS_PER_SECOND = 60;
 
 
 function prettyName(value) {
-  return value.toLowerCase().replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+  return String(value ?? "Unknown").toLowerCase().replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 
@@ -32,41 +32,39 @@ function setSelection(record) {
   byId("selectionEmpty").hidden = Boolean(record);
   byId("selectionDetails").hidden = !record;
   if (!record) return;
-  const isUnit = Boolean(record.position);
-  const position = isUnit ? record.position : record;
-  byId("selectedName").textContent = prettyName(record.name);
-  byId("selectedPlayer").textContent = isUnit ? `Player ${record.player_id}` : "Gaia";
-  byId("selectedId").textContent = String(record.unit_const);
-  byId("selectedReference").textContent = String(record.reference_id);
-  byId("selectedPosition").textContent = `${position.x.toFixed(2)}, ${position.y.toFixed(2)}`;
-  byId("selectedRotation").textContent = `${record.rotation.toFixed(3)} rad`;
+  const position = record.position ?? { x: record.x, y: record.y };
+  const isUnit = record.owner !== undefined || record.player_id !== undefined;
+  byId("selectedName").textContent = prettyName(record.name ?? record.label);
+  byId("selectedPlayer").textContent = isUnit
+    ? `Player ${record.player_id ?? record.owner}` : "Gaia";
+  byId("selectedId").textContent = String(record.unit_const ?? record.unitMaster ?? "—");
+  byId("selectedReference").textContent = String(record.reference_id ?? record.referenceId ?? "—");
+  byId("selectedPosition").textContent = Number.isFinite(position?.x) && Number.isFinite(position?.y)
+    ? `${position.x.toFixed(2)}, ${position.y.toFixed(2)}` : "—";
+  const rotation = record.rotation ?? record.facing;
+  byId("selectedRotation").textContent = Number.isFinite(rotation)
+    ? `${rotation.toFixed(3)} rad` : "—";
 }
 
 
 function renderInventory(counts) {
-  const container = byId("objectInventory");
-  container.replaceChildren(...Object.entries(counts)
-    .sort(([, left], [, right]) => right - left)
-    .map(([key, count]) => {
-      const row = document.createElement("div");
-      row.className = "inventory-row";
-      const swatch = document.createElement("span");
-      swatch.className = "inventory-swatch";
-      const label = document.createElement("span");
-      label.textContent = prettyName(key.split(":")[1]);
-      const value = document.createElement("b");
-      value.textContent = String(count);
-      row.append(swatch, label, value);
-      return row;
-    }));
+  const rows = Object.entries(counts).sort(([, left], [, right]) => right - left).map(([key, count]) => {
+    const row = document.createElement("div");
+    row.className = "inventory-row";
+    const label = document.createElement("span");
+    label.textContent = prettyName(key.split(":")[1]);
+    const value = document.createElement("b");
+    value.textContent = String(count);
+    row.append(label, value);
+    return row;
+  });
+  byId("objectInventory").replaceChildren(...rows);
 }
 
 
-function targetLabel(unit) {
+function targetLabel({ pursuitTargetId, engagedTargetId, attackTargetId }) {
   const values = [
-    ["P", unit.pursuitTargetId],
-    ["E", unit.engagedTargetId],
-    ["A", unit.attackTargetId],
+    ["P", pursuitTargetId], ["E", engagedTargetId], ["A", attackTargetId],
   ].filter(([, target]) => target !== null);
   return values.length ? values.map(([kind, target]) => `${kind}:${target}`).join(" · ") : "no target";
 }
@@ -79,17 +77,15 @@ function renderUnitTelemetry(snapshot, index) {
     const row = document.createElement("div");
     row.className = `telemetry-row owner-${meta.owner}${alive ? "" : " is-dead"}`;
     const identity = document.createElement("span");
-    identity.className = "telemetry-identity";
-    identity.textContent = `P${meta.owner} · ${referenceId}`;
+    identity.textContent = `T${meta.owner - 1} · ${referenceId}`;
     const hpText = document.createElement("span");
-    hpText.className = "telemetry-hp";
     hpText.textContent = `${hp}/${meta.maxHp} HP`;
     const meter = document.createElement("i");
     meter.style.setProperty("--hp", `${Math.max(0, hp / meta.maxHp * 100)}%`);
-    const state = document.createElement("small");
-    state.textContent = `${alive ? action : "dead"} · ${targetLabel(
+    const detail = document.createElement("small");
+    detail.textContent = `${alive ? action : "dead"} · ${targetLabel(
       { pursuitTargetId, engagedTargetId, attackTargetId })}`;
-    row.append(identity, hpText, meter, state);
+    row.append(identity, hpText, meter, detail);
     return row;
   });
   byId("unitTelemetry").replaceChildren(...rows);
@@ -98,23 +94,18 @@ function renderUnitTelemetry(snapshot, index) {
 }
 
 
-// The status line carries server text (rejection messages among it), so it is
-// built from nodes and textContent -- never an innerHTML template a `<` in an
-// error string could break out of.
 function setMapStatus(text, { loading = false } = {}) {
   const light = document.createElement("span");
-  light.className = loading ? "status-light is-loading" : "status-light";
+  light.className = `status-light${loading ? " is-loading" : ""}`;
   byId("mapStatus").replaceChildren(light, document.createTextNode(text));
 }
 
 
 function eventLabel(event) {
   const subject = event.targetId === undefined
-    ? `${event.actorId}`
-    : `${event.actorId} → ${event.targetId}`;
+    ? `${event.actorId}` : `${event.actorId} → ${event.targetId}`;
   if (event.type === "damage") return `${subject} · −${event.amount} · ${event.hpAfter} HP`;
   if (event.type === "death") return `${subject} · eliminated`;
-  if (event.type === "move") return `${subject} · Δ ${event.dx.toFixed(3)}, ${event.dy.toFixed(3)}`;
   return subject;
 }
 
@@ -142,21 +133,53 @@ function renderTimeline(events, tick) {
 }
 
 
+function renderDamageBreakdown(result, events) {
+  const summary = new Map([[2, { damage: 0, hits: 0, kills: 0 }], [3, { damage: 0, hits: 0, kills: 0 }]]);
+  for (const event of events) {
+    const owner = result.unitIndex[event.actorId]?.owner;
+    if (!summary.has(owner)) continue;
+    if (event.type === "damage") {
+      summary.get(owner).damage += event.amount ?? 0;
+      summary.get(owner).hits += 1;
+    } else if (event.type === "death") {
+      const defeatedOwner = result.unitIndex[event.actorId]?.owner;
+      const winnerOwner = defeatedOwner === 2 ? 3 : 2;
+      summary.get(winnerOwner).kills += 1;
+    }
+  }
+  const cards = [result.side2, result.side3].map((side, index) => {
+    const owner = index + 2;
+    const values = summary.get(owner);
+    const card = document.createElement("section");
+    card.className = `debug-section team${index + 1}`;
+    const heading = document.createElement("h4");
+    heading.textContent = `${side.civ} ${side.label}`;
+    const body = document.createElement("p");
+    body.textContent = `${values.damage.toLocaleString()} damage · ${values.hits.toLocaleString()} hits · ${values.kills} kills`;
+    card.append(heading, body);
+    return card;
+  });
+  byId("debugContent").replaceChildren(...cards);
+}
+
+
 async function start() {
-  const [mapResponse, formationResponse, unitsResponse] = await Promise.all([
+  const soloRequest = soloMovementRequest(window.location.href);
+  const [mapResponse, formationResponse, unitsResponse, catalogueResponse] = await Promise.all([
     fetch("api/map", { cache: "no-store" }),
     fetch("api/formation", { cache: "no-store" }),
     fetch("api/units", { cache: "no-store" }),
+    fetch("api/catalogue", { cache: "no-store" }),
   ]);
   for (const [label, response] of [
-    ["Map", mapResponse],
-    ["Formation", formationResponse],
-    ["Units", unitsResponse],
+    ["Map", mapResponse], ["Formation", formationResponse], ["Units", unitsResponse],
+    ["Catalogue", catalogueResponse],
   ]) {
     if (!response.ok) throw new Error(`${label} API returned ${response.status}`);
   }
-  const catalogue = deepFreeze(await unitsResponse.json());
 
+  const units = deepFreeze(await unitsResponse.json());
+  const catalogue = deepFreeze(await catalogueResponse.json());
   const fixture = validateMapFixture(await mapResponse.json());
   const formation = validateFormationFixture(await formationResponse.json());
   const formationRoster = formationUnits(formation);
@@ -165,104 +188,79 @@ async function start() {
   renderer.setUnits(formationRoster);
   const feedback = createReviewFeedback({ storage: localStorage });
 
-  byId("sourceBadge").innerHTML = `
-    <span class="seal-dot"></span>
-    <span><strong>Clean-room engine</strong><small>${catalogue.units.length} measured units · ${fixture.source.filename}</small></span>
-  `;
+  byId("sourceBadge").replaceChildren();
+  const sourceDot = document.createElement("span");
+  sourceDot.className = "local-engine-dot";
+  byId("sourceBadge").append(sourceDot, document.createTextNode(
+    `${catalogue.enabled.length} calibrated combinations · local engine`,
+  ));
   byId("clockRate").textContent = `${TICKS_PER_SECOND} Hz`;
   byId("mapSize").textContent = `${fixture.map.width} × ${fixture.map.height}`;
   byId("tileCount").textContent = fixture.map.tiles.length.toLocaleString();
   byId("objectCount").textContent = fixture.map.gaia_objects.length.toLocaleString();
-  byId("player2Count").textContent = formation.sides["2"].length.toLocaleString();
-  byId("player3Count").textContent = formation.sides["3"].length.toLocaleString();
-  byId("player2Name").textContent = prettyName(formation.sides["2"][0].name);
-  byId("player3Name").textContent = prettyName(formation.sides["3"][0].name);
   byId("sourceFile").textContent = fixture.source.filename;
   byId("sourceHash").textContent = fixture.source.sha256;
   byId("sourceVersion").textContent = `Scenario ${fixture.source.scenario_version} · ${fixture.source.parser} ${fixture.source.parser_version}`;
   renderInventory(fixture.object_counts);
+  setMapStatus("Golden Arena ready · choose both armies");
 
-  function populateUnitSelects() {
-    for (const [id, fallback] of [["side2Select", "champion"], ["side3Select", "paladin"]]) {
-      const select = byId(id);
-      select.replaceChildren(...catalogue.units.map(({ slug, label, civ }) => {
-        const option = document.createElement("option");
-        option.value = slug;
-        option.textContent = `${label} (${civ})`;
-        return option;
-      }));
-      select.value = fallback;
-    }
-  }
-  populateUnitSelects();
-
-  // Mirrors placement.js's resolveFamily so the picker can size its own count
-  // inputs -- kept as the one place that reads the four conditions, rather
-  // than duplicating them at each call site.
-  const classBySlug = new Map(catalogue.units.map(({ slug, class: unitClass }) => [slug, unitClass]));
-  const RANGED_CLASSES = new Set(["mobile_ranged", "siege_ranged"]);
-  function familyFor(side2Class, side3Class) {
-    if (RANGED_CLASSES.has(side2Class) && RANGED_CLASSES.has(side3Class)) return "rvr";
-    if (side2Class === "mobile_ranged" || side3Class === "mobile_ranged") return "kite";
-    if (side2Class === "siege_ranged" || side3Class === "siege_ranged") return "siege";
-    return "waves";
-  }
-
-  // Capacity is per (owner, family) -- e.g. a side-2 siege formation holds 16,
-  // not 21 -- so the count inputs' ceilings have to track whichever pair is
-  // currently selected instead of the flat max="21" they boot with.
-  function syncCountCaps() {
-    const family = familyFor(
-      classBySlug.get(byId("side2Select").value),
-      classBySlug.get(byId("side3Select").value),
-    );
-    const capacity = catalogue.capacityByFamily[family];
-    byId("n2Input").max = String(capacity.side2);
-    byId("n3Input").max = String(capacity.side3);
-  }
-  syncCountCaps();
-
-  function currentSelection() {
-    return {
-      side2Slug: byId("side2Select").value,
-      n2: Number(byId("n2Input").value),
-      side3Slug: byId("side3Select").value,
-      n3: Number(byId("n3Input").value),
-    };
-  }
-
-  // Boot with no counts: the server derives the even-fight purchase and the
-  // inputs are filled in from what it chose.
-  let selected = {
-    side2Slug: byId("side2Select").value,
-    side3Slug: byId("side3Select").value,
-  };
   let activeResult = null;
+  let activeBattleState = null;
   let eventLog = [];
   let cursor = null;
   let playing = false;
   let animationFrame = null;
   let lastFrameAt = null;
   let tickAccumulator = 0;
+  let speedMultiplier = Number(byId("speedSlider").value);
   let requestSerial = 0;
+  let page;
 
-  function setPlaying(value) {
-    playing = Boolean(value) && Boolean(cursor) && !cursor.atEnd();
-    byId("playPause").textContent = playing ? "Pause" : cursor?.atEnd() ? "Replay" : "Play";
-    byId("playPause").setAttribute("aria-pressed", String(playing));
-    byId("playbackMode").textContent = playing ? "running · 60 Hz" : "paused";
-    lastFrameAt = null;
-    tickAccumulator = 0;
-    if (animationFrame !== null) cancelAnimationFrame(animationFrame);
-    animationFrame = playing ? requestAnimationFrame(animate) : null;
+  if (soloRequest) {
+    document.body.classList.add("solo-movement-mode");
+    document.querySelector(".page-header h1").textContent = "Hand Cannoneer Movement Lab";
+    document.querySelector(".page-header .subtitle").textContent =
+      "21 Bohemian Hand Cannoneers · engine team 2 · enemy-free AI-order loop";
+    byId("team1Rail").querySelector(".rail-title").textContent = "Engine Team 2";
+    byId("optionsCurrent").textContent = "21 Hand Cannoneers · solo movement";
+    byId("navigationVariant").value = soloRequest.navigation;
+  }
+
+  function renderNavigationStats(navigation) {
+    if (!soloRequest || !navigation) return;
+    const names = {
+      baseline: "Baseline direct movement",
+      "per-unit-grid": "Per-unit obstacle grid",
+      cohesive: "Cohesive formation",
+    };
+    byId("navigationStatsTitle").textContent = names[navigation.variant] ?? navigation.variant;
+    byId("navCohesion").textContent = `${navigation.cohesionRadius.toFixed(2)} tiles`;
+    byId("navSlotError").textContent = `${navigation.maxSlotError.toFixed(2)} tiles`;
+    byId("navBlocked").textContent = String(navigation.blockedCount);
+    byId("navReplans").textContent = String(navigation.replans);
+    byId("navDistance").textContent = `${navigation.totalAnchorDistance.toFixed(1)} tiles`;
+    byId("navStall").textContent = `${(navigation.stalledTicks / TICKS_PER_SECOND).toFixed(2)} s`;
+  }
+
+  function liveSummary(snapshot) {
+    const totals = { 2: 0, 3: 0 };
+    const alive = { 2: 0, 3: 0 };
+    const hp = { 2: 0, 3: 0 };
+    for (const [referenceId, , , , unitHp, unitAlive] of snapshot.units) {
+      const owner = activeResult.unitIndex[referenceId].owner;
+      totals[owner] += 1;
+      hp[owner] += unitHp;
+      if (unitAlive) alive[owner] += 1;
+    }
+    page.updateLive({
+      tick: snapshot.tick,
+      team1Alive: alive[2], team2Alive: alive[3],
+      team1Hp: hp[2], team2Hp: hp[3],
+      team1Total: totals[2], team2Total: totals[3],
+    });
   }
 
   function present(snapshot) {
-    // map-renderer requires DEEPLY frozen objects in the legacy unit shape, so
-    // the slim positional records are rehydrated here and nowhere else. Note
-    // alive is 1|0 on the wire and the renderer tests `=== false`. The three
-    // target ids are rehydrated too -- the map overlay's pursuit/engaged/attack
-    // lines read them straight off each unit.
     renderer.setSimulationSnapshot(Object.freeze({
       tick: snapshot.tick,
       units: Object.freeze(snapshot.units.map(
@@ -284,26 +282,54 @@ async function start() {
           });
         })),
       events: snapshot.events,
+      ...(snapshot.navigation ? { navigation: snapshot.navigation } : {}),
     }));
     byId("tickReadout").textContent = String(snapshot.tick).padStart(4, "0");
     byId("secondsReadout").textContent = (snapshot.tick / TICKS_PER_SECOND).toFixed(3);
     renderUnitTelemetry(snapshot, activeResult.unitIndex);
     renderTimeline(eventLog, snapshot.tick);
-    setMapStatus(`${activeResult.side2.label} ${activeResult.side2.count}`
-      + ` vs ${activeResult.side3.label} ${activeResult.side3.count}`);
-    if (cursor?.atEnd()) setPlaying(false);
+    liveSummary(snapshot);
+    renderNavigationStats(snapshot.navigation);
+    setMapStatus(activeResult.mode === "solo-movement"
+      ? "21 Hand Cannoneers · owner 2 AI kite movement · no enemies"
+      : `${activeResult.side2.label} ${activeResult.side2.count} vs ${activeResult.side3.label} ${activeResult.side3.count}`);
+    if (cursor?.atEnd() && activeResult.mode !== "solo-movement") setPlaying(false);
   }
 
   function animate(timestamp) {
     if (!playing) return;
     if (lastFrameAt === null) lastFrameAt = timestamp;
-    tickAccumulator += (timestamp - lastFrameAt) * TICKS_PER_SECOND / 1000;
+    tickAccumulator += (timestamp - lastFrameAt) * TICKS_PER_SECOND * speedMultiplier / 1000;
     lastFrameAt = timestamp;
-    const steps = Math.min(12, Math.floor(tickAccumulator));
+    const steps = Math.min(60, Math.floor(tickAccumulator));
     tickAccumulator -= steps;
     for (let index = 0; index < steps && !cursor.atEnd(); index += 1) cursor.step();
-    if (cursor.atEnd()) setPlaying(false);
-    else animationFrame = requestAnimationFrame(animate);
+    if (cursor.atEnd()) {
+      if (activeResult?.mode === "solo-movement") cursor.reset();
+      else setPlaying(false);
+    }
+    if (playing) animationFrame = requestAnimationFrame(animate);
+  }
+
+  function setPlaying(value) {
+    if (value && cursor?.atEnd()) cursor.reset();
+    playing = Boolean(value) && Boolean(cursor) && !cursor.atEnd();
+    if (animationFrame !== null) cancelAnimationFrame(animationFrame);
+    animationFrame = null;
+    lastFrameAt = null;
+    tickAccumulator = 0;
+    byId("playbackMode").textContent = playing ? `running · ${speedMultiplier}x` : "paused";
+    page?.setPlaybackState({ playing, atEnd: Boolean(cursor?.atEnd()) });
+    if (playing) animationFrame = requestAnimationFrame(animate);
+  }
+
+  function feedbackKey() {
+    if (!activeResult || activeResult.mode === "solo-movement") return null;
+    return {
+      pair: `${activeResult.side2.slug}-vs-${activeResult.side3.slug}`,
+      ratio: `${activeResult.side2.count}v${activeResult.side3.count}`,
+      repeat: 1,
+    };
   }
 
   function displayFeedback() {
@@ -313,114 +339,89 @@ async function start() {
     byId("reviewNote").value = row.note;
   }
 
-  async function loadSimulation(nextSelection) {
-    const serial = requestSerial += 1;
+  async function loadSimulation(query, battleState, endpoint = "api/fight") {
+    const serial = ++requestSerial;
     setPlaying(false);
-    selected = nextSelection;
-    byId("playbackMode").textContent = "loading trace";
-    // n2/n3 are absent while a derived-count request is in flight (every unit
-    // change, and the very first boot request) -- fall back to a placeholder
-    // rather than printing the literal word "undefined".
-    setMapStatus(`Running ${selected.n2 ?? "…"}v${selected.n3 ?? "…"}…`, { loading: true });
-    for (const control of ["playPause", "resetPlayback", "stepTick", "nextEvent"]) {
-      byId(control).disabled = true;
-    }
-    // Counts are omitted entirely when the caller wants the derived purchase;
-    // the server sends back what it chose and the inputs are synced from it.
-    const counts = selected.n2 === undefined || selected.n3 === undefined
-      ? "" : `&n2=${selected.n2}&n3=${selected.n3}`;
-    const endpoint = `api/fight?side2=${encodeURIComponent(selected.side2Slug)}`
-      + `&side3=${encodeURIComponent(selected.side3Slug)}${counts}`;
-    const response = await fetch(endpoint, { cache: "no-store" });
-    // Checked immediately on the freshest signal available (before spending
-    // time on response.ok or parsing a body) so a superseded request never
-    // touches the UI, whichever way it resolved.
+    setMapStatus("Running deterministic engine…", { loading: true });
+    const response = await fetch(`${endpoint}${query ? `?${query}` : ""}`, { cache: "no-store" });
     if (serial !== requestSerial) return;
     if (!response.ok) {
       const detail = await response.json().catch(() => null);
-      if (serial !== requestSerial) return;
-      rejectFight(detail?.error ?? `Fight API returned ${response.status}`);
-      return;
+      throw new Error(detail?.error ?? `Simulation API returned ${response.status}`);
     }
     const result = deepFreeze(await response.json());
     if (serial !== requestSerial) return;
     activeResult = result;
-    // The wire carries events per snapshot (movement filtered out); the
-    // timeline wants one flat list, so flatten it once rather than per frame.
+    activeBattleState = battleState;
     eventLog = result.snapshots.flatMap(({ events }) => events);
-    // Whatever the server ran is what the inputs show, derived or not.
-    selected = { ...selected, n2: result.side2.count, n3: result.side3.count };
-    byId("n2Input").value = String(result.side2.count);
-    byId("n3Input").value = String(result.side3.count);
-    cursor = createPlaybackCursor({ snapshots: result.snapshots, onSnapshot: present });
-    byId("simWinner").textContent = result.winnerOwner === null
-      ? "—" : `Player ${result.winnerOwner}`;
-    byId("simWinnerHp").textContent = `${result.winnerHp} HP`;
+    page.applyFightResult(result);
+    byId("simWinner").textContent = result.mode === "solo-movement"
+      ? "Movement loop" : (result.winnerOwner === null ? "Draw" : `Team ${result.winnerOwner - 1}`);
+    byId("simWinnerHp").textContent = `${result.winnerHp.toLocaleString()} HP`;
+    byId("finalStateHash").textContent = result.finalStateHash;
+    byId("eventLogHash").textContent = result.eventLogHash;
     byId("player2Name").textContent = result.side2.label;
     byId("player3Name").textContent = result.side3.label;
     byId("player2Count").textContent = String(result.side2.count);
     byId("player3Count").textContent = String(result.side3.count);
-    // Computed from the fight that ran, not a fixed 21v21 literal. The
-    // orientation note is the one place the viewer says out loud that an
-    // asymmetric pair was run in the archive's measured orientation rather
-    // than the order the dropdowns were left in.
-    byId("placementAudit").textContent =
-      `${result.side2.count + result.side3.count} spawn cells · ${result.family} block`
-      + (result.orientationNormalised ? " · measured orientation" : "");
-    byId("ledgerNumber").textContent = `${result.side2.count}V${result.side3.count}`;
-    byId("playPause").textContent = "Play";
-    byId("playbackMode").textContent = "paused";
-    for (const control of ["playPause", "resetPlayback", "stepTick", "nextEvent"]) {
-      byId(control).disabled = false;
-    }
+    byId("placementAudit").textContent = result.mode === "solo-movement"
+      ? "21 owner-2 kite spawn cells · AI move orders every 80 ticks · no enemy roster"
+      : `${result.side2.count + result.side3.count} spawn cells · ${result.family} block`
+        + (result.orientationNormalised ? " · measured orientation" : "");
+    byId("ledgerNumber").textContent = result.mode === "solo-movement"
+      ? "SOLO 21" : `${result.side2.count}V${result.side3.count}`;
+    renderDamageBreakdown(result, eventLog);
     displayFeedback();
+    cursor = createPlaybackCursor({ snapshots: result.snapshots, onSnapshot: present });
+    setPlaying(true);
+  }
+
+  function newBattle() {
+    requestSerial += 1;
+    setPlaying(false);
+    cursor = null;
+    renderer.showFormation();
+    setMapStatus("Golden Arena ready · adjust armies or start again");
+    byId("playbackMode").textContent = "formation";
+  }
+
+  page = createBattlePage({
+    catalogue,
+    units,
+    onStart: loadSimulation,
+    onPauseToggle: () => setPlaying(!playing),
+    onNewBattle: newBattle,
+    onSpeedChange: (value) => {
+      speedMultiplier = value;
+      byId("playbackMode").textContent = playing ? `running · ${speedMultiplier}x` : "paused";
+    },
+  });
+
+  if (soloRequest) {
+    byId("resetBtn").hidden = true;
+    byId("dmgToggle").hidden = true;
+    byId("navigationVariant").addEventListener("change", (event) => {
+      const next = new URL(window.location.href);
+      next.searchParams.set("navigation", event.target.value);
+      window.location.assign(next.href);
+    });
   }
 
   for (const [elementId, option] of [
-    ["gridToggle", "grid"],
-    ["objectsToggle", "objects"],
-    ["footprintsToggle", "footprints"],
-    ["labelsToggle", "labels"],
+    ["gridToggle", "grid"], ["objectsToggle", "objects"],
+    ["footprintsToggle", "footprints"], ["labelsToggle", "labels"],
+    ["navigationDebugToggle", "navigation"],
   ]) {
     byId(elementId).addEventListener("change", (event) => {
       renderer.setOption(option, event.currentTarget.checked);
     });
   }
-  // Top-down removes the 2:1 isometric squash so overlap and obstruction can be
-  // read directly: collision boxes are axis-aligned squares in world space and
-  // only look like squares here.
   byId("topDownToggle").addEventListener("change", (event) => {
     renderer.setProjection(event.currentTarget.checked ? "orthographic" : "isometric");
   });
   byId("resetView").addEventListener("click", () => renderer.resetView());
 
-  // Changing a unit re-derives the counts -- a new pair gets the even-fight
-  // purchase, which is what the recorded fights were bought at. Typing a count
-  // sends both counts explicitly. Either way the server decides and the inputs
-  // are synced from its answer, so the purchase rule lives only in purchase.js.
-  function loadDerived() {
-    return loadSimulation({
-      side2Slug: byId("side2Select").value,
-      side3Slug: byId("side3Select").value,
-    });
-  }
-  for (const id of ["side2Select", "side3Select"]) {
-    byId(id).addEventListener("change", () => {
-      syncCountCaps();
-      loadDerived().catch(showError);
-    });
-  }
-  for (const id of ["n2Input", "n3Input"]) {
-    byId(id).addEventListener("change", () => {
-      loadSimulation(currentSelection()).catch(showError);
-    });
-  }
-  byId("resetCounts").addEventListener("click", () => { loadDerived().catch(showError); });
-
-  byId("playPause").addEventListener("click", () => {
-    if (cursor?.atEnd()) cursor.reset();
-    setPlaying(!playing);
-  });
+  byId("playPause").addEventListener("click", () => setPlaying(!playing));
   byId("resetPlayback").addEventListener("click", () => {
     setPlaying(false);
     cursor?.reset();
@@ -436,24 +437,9 @@ async function start() {
   byId("returnFormation").addEventListener("click", () => {
     setPlaying(false);
     renderer.showFormation();
-    setMapStatus("Locked 21 vs 21 melee formation");
+    setMapStatus("Locked 21 vs 21 source formation");
     byId("playbackMode").textContent = "formation";
   });
-
-  // Keyed on activeResult, not `selected`: a rejected request updates
-  // `selected` to the attempted (failed) pick but leaves whatever fight was
-  // last loaded on screen, and the review panel must describe what is
-  // actually visible, not a fight that never ran. null in the boot window
-  // before the first fight has resolved, and after a rejection with nothing
-  // loaded yet -- either way, there is nothing to key a review row on.
-  function feedbackKey() {
-    if (!activeResult) return null;
-    return {
-      pair: `${activeResult.side2.slug}-vs-${activeResult.side3.slug}`,
-      ratio: `${activeResult.side2.count}v${activeResult.side3.count}`,
-      repeat: 1,
-    };
-  }
 
   function saveFeedback() {
     const key = feedbackKey();
@@ -471,17 +457,25 @@ async function start() {
     displayFeedback();
   });
   byId("exportFeedback").addEventListener("click", () => {
-    downloadJsonDocument({
-      value: feedback.exportJson(),
-      filename: "champion-simulation-review.json",
-    });
+    const value = feedback.exportJson();
+    value.visibleRun = activeResult ? {
+      pair: `${activeResult.side2.slug}-vs-${activeResult.side3.slug}`,
+      mode: activeBattleState?.mode ?? null,
+      budget: activeBattleState?.mode === "resources" ? activeBattleState.budget : null,
+      counts: { team1: activeResult.side2.count, team2: activeResult.side3.count },
+      winner: activeResult.winnerOwner === null ? null : activeResult.winnerOwner - 1,
+      winnerHp: activeResult.winnerHp,
+      finalStateHash: activeResult.finalStateHash,
+      eventLogHash: activeResult.eventLogHash,
+    } : null;
+    downloadJsonDocument({ value, filename: "cleanroom-battle-review.json" });
   });
 
   document.addEventListener("keydown", (event) => {
     if (event.target.matches("input, textarea, select, button")) return;
     if (event.code === "Space") {
       event.preventDefault();
-      byId("playPause").click();
+      setPlaying(!playing);
     } else if (event.key === "ArrowRight" && event.shiftKey) {
       event.preventDefault();
       byId("nextEvent").click();
@@ -491,8 +485,6 @@ async function start() {
     } else if (event.key === "Home") {
       event.preventDefault();
       byId("resetPlayback").click();
-    } else if (event.key.toLowerCase() === "f") {
-      byId("returnFormation").click();
     }
   });
 
@@ -508,13 +500,12 @@ async function start() {
       y: values.reduce((sum, point) => sum + point.y, 0) / values.length,
     };
   }
-
   function pointerDistance() {
     const values = [...pointers.values()];
-    if (values.length < 2) return null;
-    return Math.hypot(values[0].x - values[1].x, values[0].y - values[1].y);
+    return values.length < 2 ? null : Math.hypot(
+      values[0].x - values[1].x, values[0].y - values[1].y,
+    );
   }
-
   canvas.addEventListener("pointerdown", (event) => {
     canvas.setPointerCapture(event.pointerId);
     pointers.set(event.pointerId, { x: event.offsetX, y: event.offsetY });
@@ -522,19 +513,16 @@ async function start() {
     lastCentroid = pointerCentroid();
     lastDistance = pointerDistance();
   });
-
   canvas.addEventListener("pointermove", (event) => {
     const inspection = renderer.inspectAt(event.offsetX, event.offsetY);
-    const inMap = inspection.tile.x >= 0 && inspection.tile.x < 16 && inspection.tile.y >= 0 && inspection.tile.y < 16;
+    const inMap = inspection.tile.x >= 0 && inspection.tile.x < fixture.map.width
+      && inspection.tile.y >= 0 && inspection.tile.y < fixture.map.height;
     byId("cursorReadout").textContent = inMap
-      ? `Tile ${inspection.tile.x.toFixed(2)}, ${inspection.tile.y.toFixed(2)}`
-      : "Tile —, —";
-
+      ? `Tile ${inspection.tile.x.toFixed(2)}, ${inspection.tile.y.toFixed(2)}` : "Tile —, —";
     if (!pointers.has(event.pointerId)) {
       renderer.setHovered(inspection.object);
       return;
     }
-
     pointers.set(event.pointerId, { x: event.offsetX, y: event.offsetY });
     const centroid = pointerCentroid();
     const distance = pointerDistance();
@@ -549,21 +537,18 @@ async function start() {
     lastCentroid = centroid;
     lastDistance = distance;
   });
-
   function releasePointer(event) {
     if (!pointers.has(event.pointerId)) return;
     pointers.delete(event.pointerId);
     if (!moved && pointers.size === 0) {
       const inspection = renderer.inspectAt(event.offsetX, event.offsetY);
-      const selectedRecord = inspection.unit || inspection.object;
       renderer.setSelected(inspection.unit ? null : inspection.object);
       renderer.setSelectedUnit(inspection.unit);
-      setSelection(selectedRecord);
+      setSelection(inspection.unit || inspection.object);
     }
     lastCentroid = pointers.size ? pointerCentroid() : null;
     lastDistance = pointerDistance();
   }
-
   canvas.addEventListener("pointerup", releasePointer);
   canvas.addEventListener("pointercancel", releasePointer);
   canvas.addEventListener("pointerleave", () => renderer.setHovered(null));
@@ -575,30 +560,14 @@ async function start() {
   const observer = new ResizeObserver(() => renderer.resize());
   observer.observe(canvas);
   renderer.resize();
-  await loadSimulation(selected);
+  if (soloRequest) await loadSimulation(soloRequest.query, null, soloRequest.endpoint);
 }
 
 
-// A rejected fight (an impossible pick, an engine-tick ceiling, a formation
-// over capacity) is a routine, recoverable outcome of free selection, not a
-// boot failure -- so it goes to the status line the user is already reading,
-// never the full-screen modal, and always leaves the transport controls (and
-// whatever fight was already loaded) usable.
-function rejectFight(message) {
-  setMapStatus(`Rejected: ${message}`);
-  byId("playbackMode").textContent = "paused";
-  for (const control of ["playPause", "resetPlayback", "stepTick", "nextEvent"]) {
-    byId(control).disabled = false;
-  }
-}
-
-
-// The modal is reserved for genuine boot failures -- map/formation/units
-// fetch failing -- which leave nothing usable on screen to fall back to.
 function showError(error) {
   const panel = byId("errorPanel");
   panel.hidden = false;
-  panel.textContent = `The combat chronograph could not continue: ${error.message}`;
+  panel.textContent = `The local Battle Simulation could not continue: ${error.message}`;
   console.error(error);
 }
 

@@ -6,8 +6,9 @@
 // partial speed (the 12v21 forensics, docs/HCC_CHASER_MOBILITY_2026-08-07.md).
 // This module is the missing plan step, per unit, against the actual bodies:
 //
-//   * obstacles = every living unit's collision box EXCEPT the mover and its
-//     own pursuit target (walking into the target is the catch);
+//   * obstacles = the map's static obstruction cells plus every living unit's
+//     collision box EXCEPT the mover and its own pursuit target (walking into
+//     the target is the catch);
 //   * a coarse A* over 0.25-tile cells, 8-connected, octile heuristic,
 //     deterministic tie-breaks (cell index order);
 //   * straight line clear -> no plan, the caller keeps its live tracking;
@@ -41,6 +42,15 @@ function octile(ax, ay, bx, by) {
     : STRAIGHT_COST * (dy - dx) + DIAGONAL_COST * dx;
 }
 
+function obstacleRadius(body) {
+  const explicit = body?.radius ?? body?.collisionRadius ?? body?.collision_radius;
+  if (explicit === undefined) return collisionRadius(body);
+  if (!Number.isFinite(explicit) || explicit <= 0) {
+    throw new RangeError("path obstacle radius must be positive and finite");
+  }
+  return explicit;
+}
+
 // Blocked-cell grid for ONE mover: a cell is blocked when placing the mover's
 // centre there would overlap an obstacle body (Chebyshev, radius sum -- the
 // same test the collision solver applies).
@@ -48,7 +58,7 @@ function buildBlockedGrid(mover, obstacles, cols, rows) {
   const blocked = new Uint8Array(cols * rows);
   const moverRadius = collisionRadius(mover);
   for (const body of obstacles) {
-    const reach = moverRadius + collisionRadius(body);
+    const reach = moverRadius + obstacleRadius(body);
     const loX = Math.max(0, Math.floor((body.x - reach) / CELL_TILES - 0.5) + 1);
     const hiX = Math.min(cols - 1, Math.ceil((body.x + reach) / CELL_TILES - 0.5) - 1);
     const loY = Math.max(0, Math.floor((body.y - reach) / CELL_TILES - 0.5) + 1);
@@ -133,7 +143,7 @@ const NEIGHBORS = Object.freeze([
 //   null                     -- straight line is clear; keep live tracking
 //   { stand: true }          -- no reachable progress; stand still
 //   { x, y }                 -- next waypoint along the planned path (tiles)
-export function planChaseAim(mover, target, obstacles, map) {
+function planGridAim(mover, target, obstacles, map, enterBlockedGoal) {
   const cols = Math.max(1, Math.round(map.width / CELL_TILES));
   const rows = Math.max(1, Math.round(map.height / CELL_TILES));
   const blocked = buildBlockedGrid(mover, obstacles, cols, rows);
@@ -174,7 +184,7 @@ export function planChaseAim(mover, target, obstacles, map) {
       if (closed.has(nIndex)) continue;
       // The goal cell is enterable even when covered by clutter near the
       // target; every other blocked cell is not.
-      if (blocked[nIndex] && nIndex !== goalIndex) continue;
+      if (blocked[nIndex] && (!enterBlockedGoal || nIndex !== goalIndex)) continue;
       // No corner cutting between two blocked orthogonals.
       if (dx !== 0 && dy !== 0) {
         if (blocked[cellIndex(cx + dx, cy, cols)]
@@ -203,4 +213,16 @@ export function planChaseAim(mover, target, obstacles, map) {
   const wx = (waypointIndex % cols + 0.5) * CELL_TILES;
   const wy = (Math.floor(waypointIndex / cols) + 0.5) * CELL_TILES;
   return Object.freeze({ x: wx, y: wy });
+}
+
+
+// Plan toward an unoccupied move-order coordinate. Unlike pursuit, a blocked
+// goal cell is not enterable: the best reachable approach is used instead.
+export function planMoveAim(mover, goal, obstacles, map) {
+  return planGridAim(mover, goal, [...(map.obstacles ?? []), ...obstacles], map, false);
+}
+
+
+export function planChaseAim(mover, target, obstacles, map) {
+  return planGridAim(mover, target, [...(map.obstacles ?? []), ...obstacles], map, true);
 }

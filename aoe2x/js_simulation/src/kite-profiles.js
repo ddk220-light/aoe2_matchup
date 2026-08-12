@@ -6,7 +6,7 @@
 // runs the same cycle whichever melee unit it is pointed at.
 //
 // KITE_PROFILE_PROVENANCE names the source fixture(s) behind every row and
-// flags the one row that is CONSTRUCTED rather than measured.
+// records whether each row came from legacy or standard-unit tapes.
 export const KITE_PROFILES = Object.freeze({
   "arbalester": {
     "beatTicks": 120,
@@ -21,17 +21,16 @@ export const KITE_PROFILES = Object.freeze({
   },
   "hand_cannoneer": {
     "beatTicks": 240,
-    "firstBeatTick": 240,
+    "firstBeatTick": 12,
+    "formationMotion": "translated_offsets",
     "moveOffsetTicks": [
-      40,
-      120,
-      200
+      68,
+      148,
+      228
     ],
-    "preMoveTicks": [
-      80,
-      160
-    ],
-    "topupOffsetTicks": []
+    "preMoveTicks": [],
+    "topupOffsetTicks": [],
+    "volleyPursuit": "close_to_fire"
   },
   "heavy_cav_archer": {
     "beatTicks": 120,
@@ -103,13 +102,17 @@ export const KITE_PROFILE_PROVENANCE = Object.freeze({
       "source": "tape"
     },
     "hand_cannoneer": {
-      "beatRule": "ceil(reload / 0.667 s order clock) * 0.667 s -- reproduces all three measured beats exactly (arbalester 1.7->2.00 s, elite skirmisher 3.0->3.33 s, heavy cav archer 1.8->2.00 s)",
-      "reason": "no kiting tape column exists for this unit",
-      "reloadSeconds": 3.45,
-      "shapeRule": "firstBeatTick = beatTicks; moves at 40+80k and pre-fight moves at 80+80k, both up to the beat; no top-ups. Reproduces the arbalester and elite-skirmisher columns; does NOT reproduce the heavy cav archer, whose cycle is a different shape (opens firing, top-ups).",
-      "source": "constructed",
-      "transcribedFrom": "profile_for() in the standard-units sweep's std_build_run_input.py. That sweep ran from a session scratchpad and is NOT in the repo; this tool is where the rule now lives. The values it emits for hand_cannoneer match the sweep's own std_run_input.json exactly.",
-      "warning": "CONSTRUCTED, NOT MEASURED. The standard-units sweep names this as the likely cause of the four large hand-cannoneer kite deltas."
+      "acceptanceReport": "calibration/reports/hand_cannoneer_translated_persistent_measured_phase_results_2026-08-09.json",
+      "archive": "aoe2_golden_STANDARD_UNITS_WITH_TAPES.zip",
+      "measurements": {
+        "formationMotion": "shared translation of existing unit offsets",
+        "moveCadenceSeconds": 1.3333333333333333,
+        "openingOrderSeconds": 0.2,
+        "volleyCadenceSeconds": 4.0
+      },
+      "source": "standard-units-tape",
+      "streamsMeasured": 34,
+      "zipSha256": "38E07C38344F06E527C28CD9B235ADA59AD1E722CDB8EC171296B877E8C1956D"
     },
     "heavy_cav_archer": {
       "defaultedFixtures": [],

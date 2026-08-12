@@ -135,6 +135,24 @@ function applyOrder(unit, target, tick, events, makeEvent) {
 }
 
 
+function applyApproachOrder(unit, waypoint, tick, events, makeEvent) {
+  unit.pursuitTargetId = null;
+  unit.engagedTargetId = null;
+  unit.avoidance = null;
+  if (unit.action === "attacking") {
+    unit.attackTargetId = null;
+    delete unit.attackKind;
+    unit.actionTimers.windup = 0;
+    unit.actionTimers.swing = 0;
+    unit.action = unit.actionTimers.reload > 0 ? "reload" : "idle";
+  }
+  events.push(makeEvent(tick, "ai-location-order", unit.referenceId, null, {
+    x: waypoint.x,
+    y: waypoint.y,
+  }));
+}
+
+
 function sweepOrder(state, units, owner, tick, events, makeEvent) {
   const side = state.perOwner.get(owner);
   if (!side || side.sweepDone || tick < side.nextOrderTick) return;
@@ -311,7 +329,7 @@ export const DEFAULT_KITE_PROFILE = Object.freeze({
 
 
 export function createKiteState(kiteOwner, kiteProfile = null, chaseCapture = false,
-  kitedEscape = false) {
+  kitedEscape = false, soloMovement = false) {
   const profile = kiteProfile
     ? {
       beatTicks: kiteProfile.beatTicks,
@@ -319,6 +337,29 @@ export function createKiteState(kiteOwner, kiteProfile = null, chaseCapture = fa
       moveOffsetTicks: [...kiteProfile.moveOffsetTicks],
       topupOffsetTicks: [...(kiteProfile.topupOffsetTicks ?? [])],
       preMoveTicks: [...(kiteProfile.preMoveTicks ?? [])],
+      ...(kiteProfile.kitedPath === "clearance_grid" ? { kitedPath: "clearance_grid" } : {}),
+      ...(kiteProfile.cohortMotion === "contact_heading"
+        ? { cohortMotion: "contact_heading" }
+        : {}),
+      ...(Number.isFinite(kiteProfile.formationSpacingTiles)
+          && kiteProfile.formationSpacingTiles > 0
+        ? { formationSpacingTiles: kiteProfile.formationSpacingTiles }
+        : {}),
+      ...(kiteProfile.formationMotion === "translated_offsets"
+        ? { formationMotion: "translated_offsets" }
+        : {}),
+      ...(kiteProfile.openingVolley === "close_to_fire"
+        ? { openingVolley: "close_to_fire" }
+        : {}),
+      ...(kiteProfile.volleyPursuit === "close_to_fire"
+        ? { volleyPursuit: "close_to_fire" }
+        : {}),
+      ...(kiteProfile.meleeWave === "half_roster"
+        ? { meleeWave: "half_roster" }
+        : {}),
+      ...(kiteProfile.meleeWave === "location_approach"
+        ? { meleeWave: "location_approach" }
+        : {}),
     }
     : DEFAULT_KITE_PROFILE;
   return {
@@ -338,12 +379,18 @@ export function createKiteState(kiteOwner, kiteProfile = null, chaseCapture = fa
     // the escape FAILING (kac 5v10's picket ambush, esc, hcp) until clearance
     // pathing can discriminate. AOE2X_EXP_STEP=kited forces it everywhere.
     kitedEscape: kitedEscape === true,
+    ...(soloMovement === true ? { soloMovement: true } : {}),
     nextBeat: profile.firstBeatTick,
     lastBeatTick: null,
     meleeAssigned: false,
-    meleeActive: null,      // ids of melee units that ever received an order
+    meleeActive: null,      // ids of melee units that acquired a live target
+    ...(profile.meleeWave === "location_approach"
+      ? { meleeApproach: new Map() }
+      : {}),
     lastTargetIds: [],
-    ringDirection: 0,       // resolved once, at the first move order
+    // A real fight resolves direction away from its enemy. The enemy-free
+    // movement viewer uses the same order engine with a fixed clockwise lap.
+    ringDirection: soloMovement === true ? 1 : 0,
     lastWaypointArc: null,
   };
 }
@@ -463,6 +510,10 @@ function kiteAttackBeat(state, kiters, enemies, tick, events, makeEvent) {
   // group soaks the whole volley out of range and survives 20-second
   // killing sprees no tape shows.
   const assigned = [];
+  const directOpening = state.lastBeatTick === null
+    && (state.profile.openingVolley === "close_to_fire"
+      || state.profile.volleyPursuit === "close_to_fire");
+  const closingBeat = directOpening || state.profile.volleyPursuit === "close_to_fire";
   let lastTarget = null;
   let pool = roster;
   let firstAssignment = true;
@@ -472,7 +523,11 @@ function kiteAttackBeat(state, kiters, enemies, tick, events, makeEvent) {
     const eligible = [];
     const rest = [];
     for (const unit of pool) {
-      (isWithinReach(unit, target) ? eligible : rest).push(unit);
+      const withinSight = Math.hypot(target.x - unit.x, target.y - unit.y)
+        <= (unit.mechanics?.line_of_sight_tiles ?? 0) + 1e-12;
+      (isWithinReach(unit, target) || (closingBeat && withinSight)
+        ? eligible
+        : rest).push(unit);
     }
     if (eligible.length === 0) continue;
     const perShot = Math.max(1, calculateDamage(eligible[0], target));
@@ -492,6 +547,7 @@ function kiteAttackBeat(state, kiters, enemies, tick, events, makeEvent) {
     const count = Math.min(eligible.length, wanted);
     for (const unit of eligible.slice(0, count)) {
       delete unit.moveOrder;
+      if (directOpening) unit.actionTimers.acquire = 0;
       applyOrder(unit, target, tick, events, makeEvent);
     }
     assigned.push(target.referenceId);
@@ -515,9 +571,9 @@ function kiteMoveOrder(state, kiters, enemies, map, tick, events, makeEvent) {
   const bounds = ringBounds(map);
   const perimeter = ringPerimeter(bounds);
   const own = centroid(kiters);
-  const foe = centroid(enemies);
   const arc = ringArc(bounds, own.x, own.y);
   if (state.ringDirection === 0) {
+    const foe = centroid(enemies);
     // One-time direction choice: whichever way's first waypoint ends farther
     // from the chasing side. Every recorded fight runs a single consistent
     // direction picked at the start.
@@ -564,7 +620,7 @@ function kiteMoveOrder(state, kiters, enemies, map, tick, events, makeEvent) {
   const py = tx;
   const count = kiters.length;
   const columns = Math.max(1, Math.ceil(Math.sqrt(count)));
-  const spacing = 0.5;
+  const spacing = state.profile.formationSpacingTiles ?? 0.5;
   const slots = [];
   for (let index = 0; index < count; index += 1) {
     const column = index % columns;
@@ -589,9 +645,14 @@ function kiteMoveOrder(state, kiters, enemies, map, tick, events, makeEvent) {
     Math.max(KITE_MAP_MARGIN, value));
   orderedUnits.forEach(({ unit }, index) => {
     const slot = slots[index];
+    const translatedOffsets = state.profile.formationMotion === "translated_offsets";
     unit.moveOrder = Object.freeze({
-      x: clampX(waypoint.x + px * slot.perp + tx * slot.along),
-      y: clampY(waypoint.y + py * slot.perp + ty * slot.along),
+      x: clampX(translatedOffsets
+        ? unit.x + waypoint.x - own.x
+        : waypoint.x + px * slot.perp + tx * slot.along),
+      y: clampY(translatedOffsets
+        ? unit.y + waypoint.y - own.y
+        : waypoint.y + py * slot.perp + ty * slot.along),
     });
     unit.engagedTargetId = null;
     // Cancel only an unreleased swing (windup still pending); a released
@@ -615,7 +676,8 @@ export function issueKiteOrders(state, units, map, tick, events, makeEvent) {
   if (!state) return;
   const kiters = units.filter((unit) => unit.alive && unit.owner === state.owner);
   const enemies = units.filter((unit) => unit.alive && unit.owner !== state.owner);
-  if (kiters.length === 0 || enemies.length === 0) return;
+  const soloMovement = state.soloMovement === true && enemies.length === 0;
+  if (kiters.length === 0 || (enemies.length === 0 && !soloMovement)) return;
 
   // Pre-fight hold (the tape's stop + stand-ground at 0.2 s): anchor every
   // kiter to its spawn until the first move order so nobody drifts toward an
@@ -624,6 +686,28 @@ export function issueKiteOrders(state, units, map, tick, events, makeEvent) {
     for (const unit of kiters) {
       unit.moveOrder = Object.freeze({ x: unit.x, y: unit.y });
     }
+  }
+
+  // Enemy-free movement inspection: preserve the kiter's tape-derived order
+  // clock and formation movement, but skip attack and melee designation. For
+  // Hand Cannoneers this publishes a new movement order every 80 ticks.
+  if (soloMovement) {
+    const { profile } = state;
+    if (tick === state.nextBeat) {
+      state.lastBeatTick = tick;
+      state.nextBeat = tick + profile.beatTicks;
+      return;
+    }
+    if (state.lastBeatTick === null) {
+      if (profile.preMoveTicks.includes(tick)) {
+        kiteMoveOrder(state, kiters, enemies, map, tick, events, makeEvent);
+      }
+      return;
+    }
+    if (profile.moveOffsetTicks.includes(tick - state.lastBeatTick)) {
+      kiteMoveOrder(state, kiters, enemies, map, tick, events, makeEvent);
+    }
+    return;
   }
 
   // Melee-side order wave at ~0.6 s. Coverage is measured and EXACT across
@@ -648,9 +732,18 @@ export function issueKiteOrders(state, units, map, tick, events, makeEvent) {
   if (!state.meleeAssigned) {
     if (tick === KITE_MELEE_ORDER_TICK) {
       const melee = [...enemies].sort((a, b) => a.referenceId - b.referenceId);
-      const wave = melee.slice(4);
+      const wave = melee.slice(state.profile.meleeWave === "half_roster"
+        ? Math.ceil(melee.length / 2)
+        : 4);
       const spread = [...kiters].sort((a, b) => a.referenceId - b.referenceId);
-      if (wave.length === 1) {
+      if (state.profile.meleeWave === "location_approach") {
+        wave.forEach((unit, index) => {
+          const anchor = spread[index % spread.length];
+          const waypoint = { x: anchor.x, y: anchor.y };
+          state.meleeApproach.set(unit.referenceId, waypoint);
+          applyApproachOrder(unit, waypoint, tick, events, makeEvent);
+        });
+      } else if (wave.length === 1) {
         // The recorded single order carries location = the kiter-group
         // centroid; the recipient's first pursuit is the kiter nearest it.
         const anchor = centroid(kiters);
@@ -670,7 +763,9 @@ export function issueKiteOrders(state, units, map, tick, events, makeEvent) {
           applyOrder(unit, spread[index % spread.length], tick, events, makeEvent);
         });
       }
-      state.meleeActive = new Set(wave.map(({ referenceId }) => referenceId));
+      state.meleeActive = new Set(state.profile.meleeWave === "location_approach"
+        ? []
+        : wave.map(({ referenceId }) => referenceId));
       state.meleeAssigned = true;
     }
   } else {
@@ -678,9 +773,11 @@ export function issueKiteOrders(state, units, map, tick, events, makeEvent) {
       if (unit.pursuitTargetId !== null && unit.pursuitTargetId !== undefined) {
         // A picket that acquired through line of sight joins the active set
         // and re-designates like any chaser from then on.
+        state.meleeApproach?.delete(unit.referenceId);
         state.meleeActive.add(unit.referenceId);
         continue;
       }
+      if (state.meleeApproach?.has(unit.referenceId)) continue;
       if (!state.meleeActive.has(unit.referenceId)) continue;
       const target = designate(unit, kiters, new Set());
       if (target) applyOrder(unit, target, tick, events, makeEvent);

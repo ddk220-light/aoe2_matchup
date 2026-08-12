@@ -334,6 +334,7 @@ export function createMapRenderer(canvas, map) {
       objects: true,
       footprints: false,
       labels: false,
+      navigation: true,
     },
   };
 
@@ -514,6 +515,71 @@ export function createMapRenderer(canvas, map) {
         2.2,
       );
     }
+
+    const navigation = state.simulationSnapshot.navigation;
+    if (!state.options.navigation || !navigation) return;
+    const point = (value) => worldToCanvas(projection.tileToScreen(value.x, value.y, 0));
+    const anchor = point(navigation.anchor);
+    const route = point(navigation.routeWaypoint);
+    const ai = point(navigation.aiWaypoint);
+    const centre = point(navigation.centroid);
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    // Anchor -> route subgoal -> current tape-derived AI waypoint.
+    ctx.strokeStyle = "rgba(105, 201, 255, .92)";
+    ctx.lineWidth = 2.2;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(anchor.x, anchor.y);
+    ctx.lineTo(route.x, route.y);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(244, 202, 91, .78)";
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(route.x, route.y);
+    ctx.lineTo(ai.x, ai.y);
+    ctx.stroke();
+
+    // Each unit's effective formation slot. Thin lines make lag and crossing
+    // immediately visible while the circles show the actual target positions.
+    const byId = new Map(state.units.map((unit) => [unit.reference_id, unit]));
+    ctx.setLineDash([2, 4]);
+    ctx.lineWidth = 0.8;
+    for (const destination of navigation.unitDestinations) {
+      const unit = byId.get(destination.referenceId);
+      if (!unit) continue;
+      const start = unitBase(unit);
+      const finish = point(destination);
+      ctx.strokeStyle = "rgba(133, 226, 194, .32)";
+      ctx.beginPath();
+      ctx.moveTo(start.x, start.y);
+      ctx.lineTo(finish.x, finish.y);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(133, 226, 194, .9)";
+      ctx.beginPath();
+      ctx.arc(finish.x, finish.y, Math.max(2, 2.8 * state.zoom), 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    const marker = (position, color, radius, label) => {
+      ctx.setLineDash([]);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = color;
+      ctx.beginPath();
+      ctx.arc(position.x, position.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.font = `${Math.max(8, 9 * state.zoom)}px Consolas, monospace`;
+      ctx.textAlign = "left";
+      ctx.fillText(label, position.x + radius + 3, position.y - radius - 1);
+    };
+    marker(ai, "#f4ca5b", 6, "AI order");
+    marker(route, "#69c9ff", 5, "route");
+    marker(anchor, "#ffffff", 4, "anchor");
+    marker(centre, "#85e2c2", 3, "group");
+    ctx.restore();
   }
 
   function drawUnit(unit) {

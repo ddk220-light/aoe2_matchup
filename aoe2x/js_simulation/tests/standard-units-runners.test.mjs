@@ -27,24 +27,6 @@ test("schedule runs five samples for stable rows and 100 total for volatile rows
 });
 
 
-test("ranged-versus-melee selection contains exactly the 48 authorized tape ratios", () => {
-  assert.equal(typeof standardUnitsRunner.selectRangedVsMeleeRows, "function");
-  const rows = standardUnitsRunner.selectRangedVsMeleeRows(truth.rows);
-  const schedule = runSchedule({ rows, samples: 5, volatileSamples: 100 });
-
-  assert.equal(rows.length, 48);
-  assert.deepEqual([...new Set(rows.map(({ side2 }) => side2.master))].sort((a, b) => a - b), [
-    5, 6, 474, 492, 542, 588,
-  ]);
-  assert.deepEqual([...new Set(rows.map(({ side3 }) => side3.master))].sort((a, b) => a - b), [
-    330, 359, 441, 567, 569, 1134, 1372, 1903,
-  ]);
-  assert.equal(rows.filter((row) => row.runs.some(({ signed_score: score }) => score < 0)
-    && row.runs.some(({ signed_score: score }) => score > 0)).length, 6);
-  assert.equal(schedule.length, 810);
-});
-
-
 test("tape-conditioned runner preserves the approved schedule in its report", async () => {
   const row = truth.rows.find((candidate) => candidate.matchup === "Champion vs Paladin");
   const progress = [];

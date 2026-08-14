@@ -1,0 +1,60 @@
+# Recoverable dedicated-golden benchmark runner
+
+`tools/run_recoverable_dedicated_benchmark.mjs` is the required runner for
+future long dedicated-golden comparisons.
+
+## What it guarantees
+
+- Uses `os.availableParallelism()` and targets 80% of available CPU capacity.
+  Each matchup runs in an independent Node process, so the CPU-bound JavaScript
+  engine can use multiple cores. PyPy is not used because it cannot accelerate
+  the JavaScript simulation.
+- The checkpoint unit is one complete matchup: five ratios × five exact tape
+  repeats, or 25 attempts.
+- A completed matchup is flushed to a temporary file and atomically renamed to
+  `checkpoints/<matchup-id>.json` before it is counted complete.
+- Every checkpoint contains a run signature covering engine source, mechanics
+  fixtures, map data, the authorized archive manifest, and imported truth.
+- Resume validates the signature, matchup id, five rows, and 25 attempts. A
+  valid checkpoint is skipped; missing work alone is dispatched. Malformed or
+  stale checkpoints stop the run instead of being silently mixed.
+- Per-attempt engine exceptions are saved as unresolved result rows. A worker
+  process crash leaves already committed matchup checkpoints intact.
+- `progress.json` is updated atomically with completed, active, and pending
+  matchups plus elapsed time and ETA.
+- Final merge rejects duplicate or incomplete coverage and requires exactly 17
+  matchups, 85 rows, and 425 attempts.
+
+## Run and resume
+
+From the repository root:
+
+```powershell
+node aoe2x/js_simulation/tools/run_recoverable_dedicated_benchmark.mjs `
+  --output-dir aoe2x/js_simulation/calibration/reports/<run-name>
+```
+
+If it stops, run the exact same command again. The runner reuses every valid
+checkpoint and starts only missing matchups.
+
+The automatic worker count is `floor(availableParallelism × 0.8)`, capped by
+pending matchups. Override it only when memory pressure or interactive work
+requires a smaller limit:
+
+```powershell
+node aoe2x/js_simulation/tools/run_recoverable_dedicated_benchmark.mjs `
+  --output-dir aoe2x/js_simulation/calibration/reports/<run-name> `
+  --workers 8
+```
+
+`--seed-results <results.json>` may convert one already validated completed
+report into per-matchup checkpoints. This was used once to preserve the
+2026-08-14 four-shard result; a second invocation reused all 17 checkpoints
+and executed zero simulations.
+
+## Recovery test
+
+`tests/dedicated-benchmark-rig.test.mjs` simulates a process failure after two
+matchups, verifies those two atomic checkpoints remain readable, resumes the
+same run, and proves that only the missing matchup executes. It also rejects a
+malformed committed checkpoint and validates seed-and-merge coverage.

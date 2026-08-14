@@ -128,14 +128,13 @@ replan, travel, and stall statistics.
 
 ### Ranged-versus-melee kiting viewer
 
-The generalized combat viewer exposes every authorized standard-units tape
-pair with a ranged owner-2 side and melee owner-3 side: Hand Cannoneer, Elite
-Skirmisher, Heavy Cavalry Archer, Arbalester, Heavy Scorpion, and Siege Onager
-against Champion, Halberdier, Hussar, Heavy Camel Rider, Paladin, Elite Battle
-Elephant, Elite Steppe Lancer, or Elite Fire Lancer. With no manual counts in
-the URL, each selection loads the exact side order and unit counts recorded in
-the tape. Manual `n2`/`n3` values remain available for visual experiments but
-are never used by the tape benchmark.
+The generalized combat viewer exposes the registry-backed ranged and melee
+units for visual experimentation: Hand Cannoneer, Elite Skirmisher, Heavy
+Cavalry Archer, Arbalester, Heavy Scorpion, and Siege Onager against Champion,
+Halberdier, Hussar, Heavy Camel Rider, Paladin, Elite Battle Elephant, Elite
+Steppe Lancer, or Elite Fire Lancer. Manual `n2`/`n3` values remain available.
+Viewer availability is not evidence that a matchup has a dedicated golden
+tape; only the dedicated clean-room corpus below is used for tape comparison.
 
 Local:
 
@@ -145,8 +144,10 @@ Tailnet:
 
 `https://dragonstar.tail82a190.ts.net/golden-map/?mode=ranged-vs-melee-kiting&ranged=heavy_cav_archer&melee=champion&navigation=cohesive`
 
-The current exact-ratio outcome comparison is documented in
-[the 2026-08-13 ranged-versus-melee benchmark](docs/RANGED_VS_MELEE_BENCHMARK_2026-08-13.md).
+The current exact-repeat outcome comparison uses only the 17 separately named,
+SHA-256-manifested dedicated golden archives. See the
+[2026-08-14 dedicated golden benchmark](docs/DEDICATED_GOLDEN_RANGED_MELEE_2026-08-14.md)
+and the [recoverable benchmark runner](docs/RECOVERABLE_DEDICATED_BENCHMARKS.md).
 
 See
 [Hand Cannoneer solo navigation lab — 2026-08-11](docs/HAND_CANNONEER_SOLO_NAVIGATION_2026-08-11.md)

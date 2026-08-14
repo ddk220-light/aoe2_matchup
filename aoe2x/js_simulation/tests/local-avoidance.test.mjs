@@ -368,7 +368,10 @@ test("route selection rejects paths swept through a second body or map obstacle"
       );
     }
     current = next;
-    if (Math.hypot(target.x - current.x, target.y - current.y) <= 2 * RADIUS + 1e-12) {
+    if (Math.max(
+      Math.abs(target.x - current.x),
+      Math.abs(target.y - current.y),
+    ) <= 2 * RADIUS + 1e-12) {
       reachedContact = true;
       break;
     }

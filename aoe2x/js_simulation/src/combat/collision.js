@@ -8,7 +8,7 @@ const EPSILON = 1e-12;
 // residual overlap even though each pass was still making deterministic
 // progress. This remains a failure ceiling, not a physical tolerance: hard
 // geometry must still satisfy EPSILON before a movement step is published.
-const MAX_CONSTRAINT_SWEEPS = 256;
+const MAX_CONSTRAINT_SWEEPS = 4096;
 
 
 function requireFinite(value, name) {
@@ -205,7 +205,7 @@ function constrainObstacle(body, obstacle) {
     startY,
     startX + body.dx,
     startY + body.dy,
-  ) >= body.radius + obstacle.radius - EPSILON) return 0;
+  ) >= body.radius + obstacle.radius) return 0;
   const centerX = obstacle.x - body.x;
   const centerY = obstacle.y - body.y;
   const distance = Math.hypot(centerX, centerY);
@@ -213,7 +213,7 @@ function constrainObstacle(body, obstacle) {
   const nx = centerX / distance;
   const ny = centerY / distance;
   const inward = body.dx * nx + body.dy * ny;
-  if (inward <= gap + EPSILON) return 0;
+  if (inward <= gap) return 0;
   const correction = inward - gap;
   body.dx -= nx * correction;
   body.dy -= ny * correction;
@@ -292,10 +292,11 @@ function constrainPair(left, right, alliedTransitPairs) {
   const requiredSeparation = allied && currentSeparation < extent - EPSILON
     ? currentSeparation
     : extent;
+  const comparisonTolerance = allied ? EPSILON : 0;
   if (Math.max(
     Math.abs(centerX + right.dx - left.dx),
     Math.abs(centerY + right.dy - left.dy),
-  ) >= requiredSeparation - EPSILON) return 0;
+  ) >= requiredSeparation - comparisonTolerance) return 0;
 
   const alongX = Math.abs(centerX) >= Math.abs(centerY);
   const axisCenter = alongX ? centerX : centerY;
@@ -306,7 +307,7 @@ function constrainPair(left, right, alliedTransitPairs) {
   const leftNormal = left.dx * nx + left.dy * ny;
   const rightNormal = right.dx * nx + right.dy * ny;
   const closure = leftNormal - rightNormal;
-  if (closure <= gap + EPSILON) return 0;
+  if (closure <= gap + comparisonTolerance) return 0;
 
   const excess = closure - gap;
   const leftInward = Math.max(0, leftNormal);

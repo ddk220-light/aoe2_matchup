@@ -382,6 +382,18 @@ function routeCandidate(mover, target, blocker, side, constraints, mapInfo, budg
 }
 
 
+function safeStepCandidate(mover, target, blocker, side, constraints, mapInfo, budget) {
+  const route = routeToContact(mover, target, blocker, side);
+  if (route === null) return null;
+  route.entryStart = mover;
+  const movement = routeStep(mover, target, route, budget);
+  if (!stepClears(mover, movement, constraints, collisionRadius(mover), mapInfo.bounds)) {
+    return null;
+  }
+  return { route, movement };
+}
+
+
 function compareCandidates(left, right, mover) {
   if (left.route.pathLength < right.route.pathLength - EPSILON) return -1;
   if (right.route.pathLength < left.route.pathLength - EPSILON) return 1;
@@ -393,6 +405,14 @@ function compareCandidates(left, right, mover) {
     + facingY * right.route.entry.direction.y;
   if (leftAlignment > rightAlignment + EPSILON) return -1;
   if (rightAlignment > leftAlignment + EPSILON) return 1;
+  // A blocked direct path must never win merely because the two detours are
+  // geometrically identical. Reference parity is a stable per-unit tiebreaker
+  // that avoids sending an entire symmetric cohort around the same side.
+  const preferredSide = mover.referenceId % 2 === 0 ? 1 : -1;
+  if (left.route.side === preferredSide && right.route.side !== preferredSide) return -1;
+  if (right.route.side === preferredSide && left.route.side !== preferredSide) return 1;
+  const blockerOrder = left.route.blocker.key.localeCompare(right.route.blocker.key);
+  if (blockerOrder !== 0) return blockerOrder;
   return 0;
 }
 
@@ -417,7 +437,7 @@ function selectRoute(mover, target, goal, constraints, mapInfo, budget) {
       .filter(({ key }) => !directKeys.has(key))
       .sort((left, right) => left.key.localeCompare(right.key)),
   ];
-  const candidates = blockers.flatMap((blocker) => [-1, 1]
+  let candidates = blockers.flatMap((blocker) => [-1, 1]
     .map((side) => routeCandidate(
       mover,
       target,
@@ -428,12 +448,25 @@ function selectRoute(mover, target, goal, constraints, mapInfo, budget) {
       budget,
     ))
     .filter((candidate) => candidate !== null));
+  // A complete tangent route can be invalidated by another distant body even
+  // though its immediate step is safe. Take that certified local step and
+  // re-plan next tick instead of falling back to the blocked direct segment.
+  if (candidates.length === 0) {
+    candidates = blockers.flatMap((blocker) => [-1, 1]
+      .map((side) => safeStepCandidate(
+        mover,
+        target,
+        blocker,
+        side,
+        constraints,
+        mapInfo,
+        budget,
+      ))
+      .filter((candidate) => candidate !== null));
+  }
   if (candidates.length === 0) return null;
   const ranked = candidates.sort((left, right) => compareCandidates(left, right, mover));
-  return compareCandidates(ranked[0], ranked[1] ?? ranked[0], mover) === 0
-    && ranked.length > 1
-    ? null
-    : ranked[0];
+  return ranked[0];
 }
 
 
@@ -574,6 +607,17 @@ export function planLocalAvoidance(snapshot, proposals, map, options = {}) {
               mapInfo,
               budget,
             );
+            if (selected === null) {
+              selected = safeStepCandidate(
+                mover,
+                target,
+                blocker,
+                avoidance.side,
+                constraints,
+                mapInfo,
+                budget,
+              );
+            }
           }
         }
         if (!blocksDirect) {
@@ -593,7 +637,12 @@ export function planLocalAvoidance(snapshot, proposals, map, options = {}) {
     }
 
     let nextProposal = original;
-    if (selected !== null) {
+    if (goal?.reached) {
+      // Movement proposals are generated before contact is rechecked. Cancel a
+      // stale pursuit step here so a unit already at its attack goal cannot
+      // walk through the target or an overlapping blocker.
+      nextProposal = Object.freeze({ referenceId: mover.referenceId, dx: 0, dy: 0 });
+    } else if (selected !== null) {
       nextProposal = Object.freeze({
         referenceId: mover.referenceId,
         dx: selected.movement.dx,

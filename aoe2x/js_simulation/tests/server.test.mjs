@@ -182,6 +182,22 @@ test("manual 5 HCA versus 10 Champion setup preserves the tape's matchup order",
 });
 
 
+test("dense HCA versus Champion tape rosters converge without relaxing geometry", async () => {
+  await withServer(async (baseUrl) => {
+    for (const [n2, n3] of [[15, 20], [20, 20]]) {
+      const response = await fetch(
+        `${baseUrl}/api/ranged-vs-melee-kiting`
+          + `?ranged=heavy_cav_archer&melee=champion&navigation=cohesive&n2=${n2}&n3=${n3}`,
+      );
+      const run = await response.json();
+      assert.equal(response.status, 200, `${n2}v${n3}: ${run.error ?? "unknown error"}`);
+      assert.equal(run.side2.count, n2);
+      assert.equal(run.side3.count, n3);
+    }
+  });
+});
+
+
 test("local shared assets expose presentation files but never the old simulator", async () => {
   await withServer(async (baseUrl) => {
     for (const asset of [

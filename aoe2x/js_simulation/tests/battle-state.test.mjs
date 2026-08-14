@@ -249,6 +249,26 @@ test("the generalized kiting lab accepts only supported ranged-versus-melee pair
       query: "ranged=hand_cannoneer&melee=champion&navigation=cohesive",
     },
   );
+  for (const [ranged, n2, n3] of [
+    ["imp_elite_skirm", 21, 15],
+    ["siege_onager", 4, 21],
+  ]) {
+    assert.deepEqual(
+      battleStateModule.kitingFightRequest(
+        `http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&ranged=${ranged}`
+          + `&melee=champion&navigation=cohesive&n2=${n2}&n3=${n3}`,
+      ),
+      {
+        endpoint: "api/ranged-vs-melee-kiting",
+        ranged,
+        melee: "champion",
+        navigation: "cohesive",
+        n2,
+        n3,
+        query: `ranged=${ranged}&melee=champion&navigation=cohesive&n2=${n2}&n3=${n3}`,
+      },
+    );
+  }
   for (const url of [
     "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&ranged=champion&melee=paladin",
     "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&ranged=arbalester&melee=arbalester",
@@ -260,6 +280,7 @@ test("the generalized kiting lab accepts only supported ranged-versus-melee pair
     "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&n2=1.5&n3=10",
     "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&n2=21&n3=22",
     "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&ranged=heavy_scorpion&n2=17&n3=10",
+    "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&ranged=siege_onager&n2=17&n3=10",
     "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&n2=10&n2=11&n3=10",
   ]) {
     assert.equal(battleStateModule.kitingFightRequest(url), null);

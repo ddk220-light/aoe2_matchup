@@ -253,9 +253,11 @@ test("units endpoint publishes every authorized ranged-versus-melee tape roster"
   ));
   const rangedByMaster = new Map([
     [5, "hand_cannoneer"],
+    [6, "imp_elite_skirm"],
     [492, "arbalester"],
     [474, "heavy_cav_archer"],
     [542, "heavy_scorpion"],
+    [588, "siege_onager"],
   ]);
   const meleeByMaster = new Map([
     [567, "champion"],
@@ -282,7 +284,7 @@ test("units endpoint publishes every authorized ranged-versus-melee tape roster"
   }).sort((a, b) => `${a.rangedSlug}|${a.meleeSlug}`.localeCompare(
     `${b.rangedSlug}|${b.meleeSlug}`,
   ));
-  assert.equal(expected.length, 32);
+  assert.equal(expected.length, 48);
 
   await withServer(async (baseUrl) => {
     const response = await fetch(`${baseUrl}/api/units`);

@@ -34,6 +34,22 @@ const ROWS = [
   ["542-15_vs_330-20", "heavy_scorpion", 15, "heavy_camel", 20, 2],
   ["542-8_vs_441-21", "heavy_scorpion", 8, "hussar", 21, 4],
   ["542-15_vs_569-17", "heavy_scorpion", 15, "paladin", 17, 5],
+  ["6-21_vs_567-15", "imp_elite_skirm", 21, "champion", 15, 4],
+  ["6-21_vs_1134-6", "imp_elite_skirm", 21, "elite_elephant", 6, 4],
+  ["6-21_vs_1903-11", "imp_elite_skirm", 21, "elite_fire_lancer", 11, 1],
+  ["6-21_vs_1372-9", "imp_elite_skirm", 21, "elite_steppe", 9, 3],
+  ["6-21_vs_359-21", "imp_elite_skirm", 21, "halberdier", 21, 1],
+  ["6-21_vs_330-8", "imp_elite_skirm", 21, "heavy_camel", 8, 1],
+  ["6-21_vs_441-15", "imp_elite_skirm", 21, "hussar", 15, 3],
+  ["6-21_vs_569-7", "imp_elite_skirm", 21, "paladin", 7, 4],
+  ["588-4_vs_567-21", "siege_onager", 4, "champion", 21, 1],
+  ["588-7_vs_1134-14", "siege_onager", 7, "elite_elephant", 14, 1],
+  ["588-6_vs_1903-21", "siege_onager", 6, "elite_fire_lancer", 21, 1],
+  ["588-7_vs_1372-21", "siege_onager", 7, "elite_steppe", 21, 1],
+  ["588-3_vs_359-21", "siege_onager", 3, "halberdier", 21, 2],
+  ["588-8_vs_330-20", "siege_onager", 8, "heavy_camel", 20, 2],
+  ["588-4_vs_441-21", "siege_onager", 4, "hussar", 21, 2],
+  ["588-8_vs_569-17", "siege_onager", 8, "paladin", 17, 1],
 ];
 
 

@@ -90,7 +90,7 @@ damage, map-inspection, hash, and review-export tools.
 
 The dedicated enemy-free movement lab runs exactly 21 owner-2 units and can
 switch among Hand Cannoneer, Arbalester, Heavy Cavalry Archer, Heavy Scorpion,
-and Elite Skirmisher. Its default `cohesive` navigation uses a persistent
+Elite Skirmisher, and Siege Onager. Its default `cohesive` navigation uses a persistent
 formation anchor, collision-aware compact slots, formation-inflated central
 obstacle clearance, and deterministic stall recovery. `baseline` and
 `per-unit-grid` remain saved for direct visual comparison.
@@ -125,6 +125,28 @@ The selector in the page changes among all three stable deep links. The map can
 show the AI waypoint, group anchor, active route waypoint, live centroid, and
 every unit's effective destination, alongside cohesion, slot-error, block,
 replan, travel, and stall statistics.
+
+### Ranged-versus-melee kiting viewer
+
+The generalized combat viewer exposes every authorized standard-units tape
+pair with a ranged owner-2 side and melee owner-3 side: Hand Cannoneer, Elite
+Skirmisher, Heavy Cavalry Archer, Arbalester, Heavy Scorpion, and Siege Onager
+against Champion, Halberdier, Hussar, Heavy Camel Rider, Paladin, Elite Battle
+Elephant, Elite Steppe Lancer, or Elite Fire Lancer. With no manual counts in
+the URL, each selection loads the exact side order and unit counts recorded in
+the tape. Manual `n2`/`n3` values remain available for visual experiments but
+are never used by the tape benchmark.
+
+Local:
+
+`http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&ranged=heavy_cav_archer&melee=champion&navigation=cohesive`
+
+Tailnet:
+
+`https://dragonstar.tail82a190.ts.net/golden-map/?mode=ranged-vs-melee-kiting&ranged=heavy_cav_archer&melee=champion&navigation=cohesive`
+
+The current exact-ratio outcome comparison is documented in
+[the 2026-08-13 ranged-versus-melee benchmark](docs/RANGED_VS_MELEE_BENCHMARK_2026-08-13.md).
 
 See
 [Hand Cannoneer solo navigation lab — 2026-08-11](docs/HAND_CANNONEER_SOLO_NAVIGATION_2026-08-11.md)

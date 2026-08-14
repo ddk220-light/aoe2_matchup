@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import {
-  runSchedule,
-  runStandardUnitsSuite,
-} from "../tools/run_standard_units_suite.mjs";
+import * as standardUnitsRunner from "../tools/run_standard_units_suite.mjs";
 import { runStandardUnitsProductSuite } from "../tools/run_standard_units_product_suite.mjs";
+
+
+const { runSchedule, runStandardUnitsSuite } = standardUnitsRunner;
 
 
 const ROOT = new URL("../", import.meta.url);
@@ -27,14 +27,34 @@ test("schedule runs five samples for stable rows and 100 total for volatile rows
 });
 
 
+test("ranged-versus-melee selection contains exactly the 48 authorized tape ratios", () => {
+  assert.equal(typeof standardUnitsRunner.selectRangedVsMeleeRows, "function");
+  const rows = standardUnitsRunner.selectRangedVsMeleeRows(truth.rows);
+  const schedule = runSchedule({ rows, samples: 5, volatileSamples: 100 });
+
+  assert.equal(rows.length, 48);
+  assert.deepEqual([...new Set(rows.map(({ side2 }) => side2.master))].sort((a, b) => a - b), [
+    5, 6, 474, 492, 542, 588,
+  ]);
+  assert.deepEqual([...new Set(rows.map(({ side3 }) => side3.master))].sort((a, b) => a - b), [
+    330, 359, 441, 567, 569, 1134, 1372, 1903,
+  ]);
+  assert.equal(rows.filter((row) => row.runs.some(({ signed_score: score }) => score < 0)
+    && row.runs.some(({ signed_score: score }) => score > 0)).length, 6);
+  assert.equal(schedule.length, 810);
+});
+
+
 test("tape-conditioned runner preserves the approved schedule in its report", async () => {
   const row = truth.rows.find((candidate) => candidate.matchup === "Champion vs Paladin");
+  const progress = [];
   const report = await runStandardUnitsSuite({
     root: ROOT,
     truth: { ...truth, rows: [row] },
     samples: 1,
     volatileSamples: 1,
     seed: 20260411,
+    onProgress: (event) => progress.push(event),
   });
 
   assert.equal(report.lane, "tape_conditioned_canonical_start");
@@ -42,6 +62,9 @@ test("tape-conditioned runner preserves the approved schedule in its report", as
   assert.equal(report.schedule.totalRuns, 1);
   assert.equal(report.rows[0].samples.length, 1);
   assert.equal(typeof report.rows[0].comparison.bandError, "number");
+  assert.deepEqual(progress.map(({ completed, total, rowId }) => ({ completed, total, rowId })), [
+    { completed: 1, total: 1, rowId: row.id },
+  ]);
 });
 
 

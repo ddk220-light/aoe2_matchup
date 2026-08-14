@@ -10,12 +10,15 @@ const SOLO_MOVEMENT_UNITS = new Set([
   "heavy_cav_archer",
   "heavy_scorpion",
   "imp_elite_skirm",
+  "siege_onager",
 ]);
 const KITE_OBSERVATION_RANGED = new Set([
   "hand_cannoneer",
   "arbalester",
   "heavy_cav_archer",
   "heavy_scorpion",
+  "imp_elite_skirm",
+  "siege_onager",
 ]);
 const KITE_OBSERVATION_MELEE = new Set([
   "champion",
@@ -86,7 +89,8 @@ export function kitingFightRequest(urlValue) {
     if (hasManualCounts
         && (!/^(?:[1-9]|1\d|2[01])$/.test(raw2)
           || !/^(?:[1-9]|1\d|2[01])$/.test(raw3)
-          || (ranged === "heavy_scorpion" && Number(raw2) > 16))) return null;
+          || (["heavy_scorpion", "siege_onager"].includes(ranged)
+            && Number(raw2) > 16))) return null;
     const query = new URLSearchParams({ ranged, melee, navigation });
     if (hasManualCounts) {
       query.set("n2", raw2);

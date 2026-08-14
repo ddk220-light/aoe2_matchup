@@ -40,14 +40,29 @@ export function runSchedule({ rows, samples, volatileSamples }) {
 }
 
 
+export function selectRangedVsMeleeRows(rows) {
+  if (!Array.isArray(rows)) throw new TypeError("rows must be an array");
+  return rows.filter((row) => {
+    const side2 = unitByMaster.get(row.side2?.master);
+    const side3 = unitByMaster.get(row.side3?.master);
+    return ["mobile_ranged", "siege_ranged"].includes(side2?.class)
+      && side3?.class === "melee";
+  });
+}
+
+
 export async function runStandardUnitsSuite({
   root = ROOT_URL,
   truth = undefined,
   samples = 5,
   volatileSamples = 100,
   seed = DEFAULT_SEED,
+  onProgress = undefined,
 } = {}) {
   if (!Number.isSafeInteger(seed)) throw new RangeError(`seed must be a safe integer, got ${seed}`);
+  if (onProgress !== undefined && typeof onProgress !== "function") {
+    throw new TypeError("onProgress must be a function");
+  }
   const loadedTruth = truth ?? await loadStandardUnitsTruth(root);
   requireAuthorizedTruth(loadedTruth);
   const benchmarkRows = loadedTruth.rows.filter((row) => !(
@@ -56,13 +71,21 @@ export async function runStandardUnitsSuite({
   const schedule = runSchedule({ rows: benchmarkRows, samples, volatileSamples });
   const samplesByRow = new Map(benchmarkRows.map((row) => [row.id, []]));
 
-  for (const item of schedule) {
+  for (let index = 0; index < schedule.length; index += 1) {
+    const item = schedule[index];
     samplesByRow.get(item.row.id).push(await runTapeConditioned(
       root,
       item.row,
       item.sampleIndex,
       seed,
     ));
+    onProgress?.(Object.freeze({
+      completed: index + 1,
+      total: schedule.length,
+      rowId: item.row.id,
+      matchup: item.row.matchup,
+      sampleIndex: item.sampleIndex,
+    }));
   }
 
   const rows = benchmarkRows.map((row) => {

@@ -273,7 +273,14 @@ async function start() {
       `${rosterLabel} · ${rangedCount} vs ${meleeCount}`;
     byId("soloMovementUnit").closest(".navigation-lab-field").hidden = true;
     const rangedSelect = byId("kitingRangedUnit");
-    const rangedOrder = ["hand_cannoneer", "arbalester", "heavy_cav_archer", "heavy_scorpion"];
+    const rangedOrder = [
+      "hand_cannoneer",
+      "arbalester",
+      "heavy_cav_archer",
+      "imp_elite_skirm",
+      "heavy_scorpion",
+      "siege_onager",
+    ];
     for (const slug of rangedOrder) {
       if (!units.kitingObservationMatchups.some(({ rangedSlug }) => rangedSlug === slug)) continue;
       const unit = unitsBySlug.get(slug);

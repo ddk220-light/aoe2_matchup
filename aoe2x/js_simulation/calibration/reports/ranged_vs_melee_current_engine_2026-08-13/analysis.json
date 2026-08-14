@@ -1,0 +1,2008 @@
+{
+  "schemaVersion": 1,
+  "lane": "tape_conditioned_canonical_start",
+  "source": {
+    "name": "aoe2_golden_STANDARD_UNITS_WITH_TAPES.zip",
+    "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_STANDARD_UNITS_WITH_TAPES.zip",
+    "zip_sha256": "38E07C38344F06E527C28CD9B235ADA59AD1E722CDB8EC171296B877E8C1956D"
+  },
+  "config": {
+    "samples": 5,
+    "volatileSamples": 100,
+    "seed": 20260411,
+    "maxTicks": 9000
+  },
+  "schedule": {
+    "stableRows": 42,
+    "volatileRows": 6,
+    "totalRuns": 810
+  },
+  "scoreSemantics": {
+    "rangedWin": "negative",
+    "meleeWin": "positive",
+    "signedMeanDelta": "simulation mean minus tape mean; negative favors ranged relative to tape"
+  },
+  "summary": {
+    "rowCount": 48,
+    "totalRuns": 810,
+    "stableRows": 42,
+    "volatileRows": 6,
+    "rowsOver25PointDelta": 11,
+    "rowsInsideTapeBand": 11,
+    "wrongStableWinnerCount": 1,
+    "unresolvedRuns": 0,
+    "meanAbsoluteMeanDelta": 16.420232439092405,
+    "medianAbsoluteMeanDelta": 11.703151015651013,
+    "meanTapeBandError": 12.070621883069542
+  },
+  "rows": [
+    {
+      "id": "5-10_vs_359-21",
+      "matchup": "Hand Cannoneer vs Halberdier",
+      "category": "kite",
+      "ranged": {
+        "count": 10,
+        "master": 5,
+        "owner": 2,
+        "unit": "Hand Cannoneer"
+      },
+      "melee": {
+        "count": 21,
+        "master": 359,
+        "owner": 3,
+        "unit": "Halberdier"
+      },
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": -76.5,
+        "min": -76.5,
+        "max": -76.5,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": -81.5,
+        "min": -91,
+        "max": -74.5,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 0
+      },
+      "signedMeanDelta": -5,
+      "absoluteMeanDelta": 5,
+      "tapeBandError": 5,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "5-14_vs_441-21",
+      "matchup": "Hand Cannoneer vs Hussar",
+      "category": "kite",
+      "ranged": {
+        "count": 14,
+        "master": 5,
+        "owner": 2,
+        "unit": "Hand Cannoneer"
+      },
+      "melee": {
+        "count": 21,
+        "master": 441,
+        "owner": 3,
+        "unit": "Hussar"
+      },
+      "tape": {
+        "scoredRuns": 6,
+        "timeoutRuns": 0,
+        "mean": 5.626044277360067,
+        "min": -18.75,
+        "max": 17.894736842105264,
+        "side3WinRate": 0.6666666666666666,
+        "volatile": true
+      },
+      "simulation": {
+        "mean": 59.41102756892231,
+        "min": 45.41353383458647,
+        "max": 68.1203007518797,
+        "runs": 100,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 53.78498329156224,
+      "absoluteMeanDelta": 53.78498329156224,
+      "tapeBandError": 41.51629072681705,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0.33333333333333337,
+      "winnerAgreement": "volatile",
+      "failure": ""
+    },
+    {
+      "id": "5-14_vs_567-21",
+      "matchup": "Hand Cannoneer vs Champion",
+      "category": "kite",
+      "ranged": {
+        "count": 14,
+        "master": 5,
+        "owner": 2,
+        "unit": "Hand Cannoneer"
+      },
+      "melee": {
+        "count": 21,
+        "master": 567,
+        "owner": 3,
+        "unit": "Champion"
+      },
+      "tape": {
+        "scoredRuns": 4,
+        "timeoutRuns": 0,
+        "mean": -76.60714285714286,
+        "min": -82.5,
+        "max": -73.21428571428571,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": -77.71428571428571,
+        "min": -85,
+        "max": -70.71428571428571,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 0
+      },
+      "signedMeanDelta": -1.107142857142847,
+      "absoluteMeanDelta": 1.107142857142847,
+      "tapeBandError": 0,
+      "tapeBandCoverage": 0.4,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "5-19_vs_1903-21",
+      "matchup": "Hand Cannoneer vs Elite Fire Lancer",
+      "category": "kite",
+      "ranged": {
+        "count": 19,
+        "master": 5,
+        "owner": 2,
+        "unit": "Hand Cannoneer"
+      },
+      "melee": {
+        "count": 21,
+        "master": 1903,
+        "owner": 3,
+        "unit": "Elite Fire Lancer"
+      },
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": -60.921052631578945,
+        "min": -60.921052631578945,
+        "max": -60.921052631578945,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": -68.92105263157895,
+        "min": -76.3157894736842,
+        "max": -62.76315789473684,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 0
+      },
+      "signedMeanDelta": -8,
+      "absoluteMeanDelta": 8,
+      "tapeBandError": 8,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "5-21_vs_330-17",
+      "matchup": "Hand Cannoneer vs Heavy Camel Rider",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 5,
+        "owner": 2,
+        "unit": "Hand Cannoneer"
+      },
+      "melee": {
+        "count": 17,
+        "master": 330,
+        "owner": 3,
+        "unit": "Heavy Camel Rider"
+      },
+      "tape": {
+        "scoredRuns": 6,
+        "timeoutRuns": 0,
+        "mean": -67.51984126984127,
+        "min": -73.57142857142857,
+        "max": -61.30952380952381,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": -44.69047619047619,
+        "min": -49.404761904761905,
+        "max": -40.23809523809524,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 0
+      },
+      "signedMeanDelta": 22.829365079365076,
+      "absoluteMeanDelta": 22.829365079365076,
+      "tapeBandError": 16.61904761904762,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "5-21_vs_569-14",
+      "matchup": "Hand Cannoneer vs Paladin",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 5,
+        "owner": 2,
+        "unit": "Hand Cannoneer"
+      },
+      "melee": {
+        "count": 14,
+        "master": 569,
+        "owner": 3,
+        "unit": "Paladin"
+      },
+      "tape": {
+        "scoredRuns": 10,
+        "timeoutRuns": 0,
+        "mean": 15.444444444444446,
+        "min": -9.047619047619047,
+        "max": 32.142857142857146,
+        "side3WinRate": 0.9,
+        "volatile": true
+      },
+      "simulation": {
+        "mean": 52.40079365079367,
+        "min": 39.285714285714285,
+        "max": 64.28571428571429,
+        "runs": 100,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 36.95634920634923,
+      "absoluteMeanDelta": 36.95634920634923,
+      "tapeBandError": 20.257936507936527,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0.09999999999999998,
+      "winnerAgreement": "volatile",
+      "failure": ""
+    },
+    {
+      "id": "5-21_vs_1134-12",
+      "matchup": "Hand Cannoneer vs Elite Battle Elephant",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 5,
+        "owner": 2,
+        "unit": "Hand Cannoneer"
+      },
+      "melee": {
+        "count": 12,
+        "master": 1134,
+        "owner": 3,
+        "unit": "Elite Battle Elephant"
+      },
+      "tape": {
+        "scoredRuns": 5,
+        "timeoutRuns": 0,
+        "mean": 2.3839285714285707,
+        "min": -38.333333333333336,
+        "max": 32.291666666666664,
+        "side3WinRate": 0.6,
+        "volatile": true
+      },
+      "simulation": {
+        "mean": 72.34062499999996,
+        "min": 60,
+        "max": 81.25,
+        "runs": 100,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 69.95669642857139,
+      "absoluteMeanDelta": 69.95669642857139,
+      "tapeBandError": 40.048958333333296,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0.4,
+      "winnerAgreement": "volatile",
+      "failure": ""
+    },
+    {
+      "id": "5-21_vs_1372-19",
+      "matchup": "Hand Cannoneer vs Elite Steppe Lancer",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 5,
+        "owner": 2,
+        "unit": "Hand Cannoneer"
+      },
+      "melee": {
+        "count": 19,
+        "master": 1372,
+        "owner": 3,
+        "unit": "Elite Steppe Lancer"
+      },
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": 8.026315789473685,
+        "min": 8.026315789473685,
+        "max": 8.026315789473685,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 59.86842105263158,
+        "min": 58.81578947368421,
+        "max": 61.421052631578945,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 51.8421052631579,
+      "absoluteMeanDelta": 51.8421052631579,
+      "tapeBandError": 51.8421052631579,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "6-21_vs_330-8",
+      "matchup": "Elite Skirmisher vs Heavy Camel Rider",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 6,
+        "owner": 2,
+        "unit": "Elite Skirmisher"
+      },
+      "melee": {
+        "count": 8,
+        "master": 330,
+        "owner": 3,
+        "unit": "Heavy Camel Rider"
+      },
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": 39.82142857142857,
+        "min": 39.82142857142857,
+        "max": 39.82142857142857,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": -3.7967687074829923,
+        "min": -31.428571428571427,
+        "max": 26.517857142857142,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 0.4
+      },
+      "signedMeanDelta": -43.61819727891156,
+      "absoluteMeanDelta": 43.61819727891156,
+      "tapeBandError": 43.61819727891156,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0.6,
+      "winnerAgreement": "mismatch",
+      "failure": ""
+    },
+    {
+      "id": "6-21_vs_359-21",
+      "matchup": "Elite Skirmisher vs Halberdier",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 6,
+        "owner": 2,
+        "unit": "Elite Skirmisher"
+      },
+      "melee": {
+        "count": 21,
+        "master": 359,
+        "owner": 3,
+        "unit": "Halberdier"
+      },
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": -60,
+        "min": -60,
+        "max": -60,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": -74.28571428571428,
+        "min": -83.80952380952381,
+        "max": -68.57142857142857,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 0
+      },
+      "signedMeanDelta": -14.285714285714278,
+      "absoluteMeanDelta": 14.285714285714278,
+      "tapeBandError": 14.285714285714278,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "6-21_vs_441-15",
+      "matchup": "Elite Skirmisher vs Hussar",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 6,
+        "owner": 2,
+        "unit": "Elite Skirmisher"
+      },
+      "melee": {
+        "count": 15,
+        "master": 441,
+        "owner": 3,
+        "unit": "Hussar"
+      },
+      "tape": {
+        "scoredRuns": 3,
+        "timeoutRuns": 0,
+        "mean": 85.42690058479532,
+        "min": 84.70175438596492,
+        "max": 86.3157894736842,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 89.03859649122806,
+        "min": 87.43859649122807,
+        "max": 90.80701754385964,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 3.611695906432743,
+      "absoluteMeanDelta": 3.611695906432743,
+      "tapeBandError": 2.7228070175438575,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "6-21_vs_567-15",
+      "matchup": "Elite Skirmisher vs Champion",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 6,
+        "owner": 2,
+        "unit": "Elite Skirmisher"
+      },
+      "melee": {
+        "count": 15,
+        "master": 567,
+        "owner": 3,
+        "unit": "Champion"
+      },
+      "tape": {
+        "scoredRuns": 4,
+        "timeoutRuns": 0,
+        "mean": 54.23809523809524,
+        "min": 47.42857142857143,
+        "max": 60.76190476190476,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 70.32380952380953,
+        "min": 60.19047619047619,
+        "max": 76.19047619047619,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 16.08571428571429,
+      "absoluteMeanDelta": 16.08571428571429,
+      "tapeBandError": 9.56190476190477,
+      "tapeBandCoverage": 0.2,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "6-21_vs_569-7",
+      "matchup": "Elite Skirmisher vs Paladin",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 6,
+        "owner": 2,
+        "unit": "Elite Skirmisher"
+      },
+      "melee": {
+        "count": 7,
+        "master": 569,
+        "owner": 3,
+        "unit": "Paladin"
+      },
+      "tape": {
+        "scoredRuns": 4,
+        "timeoutRuns": 0,
+        "mean": 87.38095238095238,
+        "min": 85.63492063492063,
+        "max": 88.96825396825396,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 87.28571428571428,
+        "min": 83.80952380952381,
+        "max": 88.88888888888889,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": -0.095238095238102,
+      "absoluteMeanDelta": 0.095238095238102,
+      "tapeBandError": 0,
+      "tapeBandCoverage": 0.8,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "6-21_vs_1134-6",
+      "matchup": "Elite Skirmisher vs Elite Battle Elephant",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 6,
+        "owner": 2,
+        "unit": "Elite Skirmisher"
+      },
+      "melee": {
+        "count": 6,
+        "master": 1134,
+        "owner": 3,
+        "unit": "Elite Battle Elephant"
+      },
+      "tape": {
+        "scoredRuns": 4,
+        "timeoutRuns": 0,
+        "mean": 84.5703125,
+        "min": 83.125,
+        "max": 85.9375,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 90.35416666666666,
+        "min": 89.11458333333333,
+        "max": 91.19791666666667,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 5.783854166666657,
+      "absoluteMeanDelta": 5.783854166666657,
+      "tapeBandError": 4.416666666666657,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "6-21_vs_1372-9",
+      "matchup": "Elite Skirmisher vs Elite Steppe Lancer",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 6,
+        "owner": 2,
+        "unit": "Elite Skirmisher"
+      },
+      "melee": {
+        "count": 9,
+        "master": 1372,
+        "owner": 3,
+        "unit": "Elite Steppe Lancer"
+      },
+      "tape": {
+        "scoredRuns": 3,
+        "timeoutRuns": 0,
+        "mean": 85.85185185185185,
+        "min": 84.55555555555556,
+        "max": 86.77777777777777,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 88.91111111111111,
+        "min": 88.33333333333333,
+        "max": 90.44444444444444,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 3.059259259259264,
+      "absoluteMeanDelta": 3.059259259259264,
+      "tapeBandError": 2.13333333333334,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "6-21_vs_1903-11",
+      "matchup": "Elite Skirmisher vs Elite Fire Lancer",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 6,
+        "owner": 2,
+        "unit": "Elite Skirmisher"
+      },
+      "melee": {
+        "count": 11,
+        "master": 1903,
+        "owner": 3,
+        "unit": "Elite Fire Lancer"
+      },
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": 59.037433155080215,
+        "min": 59.037433155080215,
+        "max": 59.037433155080215,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 55.82887700534759,
+        "min": 50.37433155080214,
+        "max": 65.45454545454545,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": -3.2085561497326225,
+      "absoluteMeanDelta": 3.2085561497326225,
+      "tapeBandError": 3.2085561497326225,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "474-9_vs_359-21",
+      "matchup": "Heavy Cavalry Archer vs Halberdier",
+      "category": "kite",
+      "ranged": {
+        "count": 9,
+        "master": 474,
+        "owner": 2,
+        "unit": "Heavy Cavalry Archer"
+      },
+      "melee": {
+        "count": 21,
+        "master": 359,
+        "owner": 3,
+        "unit": "Halberdier"
+      },
+      "tape": {
+        "scoredRuns": 10,
+        "timeoutRuns": 0,
+        "mean": 17.970238095238095,
+        "min": -6.805555555555555,
+        "max": 33.96825396825397,
+        "side3WinRate": 0.9,
+        "volatile": true
+      },
+      "simulation": {
+        "mean": 25.668452380952377,
+        "min": -68.33333333333333,
+        "max": 57.77777777777778,
+        "runs": 100,
+        "unresolvedRuns": 0,
+        "side3WinRate": 0.87
+      },
+      "signedMeanDelta": 7.698214285714283,
+      "absoluteMeanDelta": 7.698214285714283,
+      "tapeBandError": 0,
+      "tapeBandCoverage": 0.53,
+      "side3WinRateError": 0.030000000000000027,
+      "winnerAgreement": "volatile",
+      "failure": ""
+    },
+    {
+      "id": "474-12_vs_441-21",
+      "matchup": "Heavy Cavalry Archer vs Hussar",
+      "category": "kite",
+      "ranged": {
+        "count": 12,
+        "master": 474,
+        "owner": 2,
+        "unit": "Heavy Cavalry Archer"
+      },
+      "melee": {
+        "count": 21,
+        "master": 441,
+        "owner": 3,
+        "unit": "Hussar"
+      },
+      "tape": {
+        "scoredRuns": 5,
+        "timeoutRuns": 0,
+        "mean": 35.288220551378444,
+        "min": 29.82456140350877,
+        "max": 44.11027568922306,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 51.8796992481203,
+        "min": 41.35338345864662,
+        "max": 56.64160401002506,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 16.59147869674186,
+      "absoluteMeanDelta": 16.59147869674186,
+      "tapeBandError": 7.769423558897245,
+      "tapeBandCoverage": 0.2,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "474-12_vs_567-21",
+      "matchup": "Heavy Cavalry Archer vs Champion",
+      "category": "kite",
+      "ranged": {
+        "count": 12,
+        "master": 474,
+        "owner": 2,
+        "unit": "Heavy Cavalry Archer"
+      },
+      "melee": {
+        "count": 21,
+        "master": 567,
+        "owner": 3,
+        "unit": "Champion"
+      },
+      "tape": {
+        "scoredRuns": 14,
+        "timeoutRuns": 0,
+        "mean": -36.444211613216716,
+        "min": -68.85416666666667,
+        "max": 8.843537414965986,
+        "side3WinRate": 0.07142857142857142,
+        "volatile": true
+      },
+      "simulation": {
+        "mean": -36.83152636054424,
+        "min": -67.5,
+        "max": 38.775510204081634,
+        "runs": 100,
+        "unresolvedRuns": 0,
+        "side3WinRate": 0.03
+      },
+      "signedMeanDelta": -0.38731474732752247,
+      "absoluteMeanDelta": 0.38731474732752247,
+      "tapeBandError": 0,
+      "tapeBandCoverage": 0.97,
+      "side3WinRateError": 0.041428571428571426,
+      "winnerAgreement": "volatile",
+      "failure": ""
+    },
+    {
+      "id": "474-18_vs_1903-21",
+      "matchup": "Heavy Cavalry Archer vs Elite Fire Lancer",
+      "category": "kite",
+      "ranged": {
+        "count": 18,
+        "master": 474,
+        "owner": 2,
+        "unit": "Heavy Cavalry Archer"
+      },
+      "melee": {
+        "count": 21,
+        "master": 1903,
+        "owner": 3,
+        "unit": "Elite Fire Lancer"
+      },
+      "tape": {
+        "scoredRuns": 5,
+        "timeoutRuns": 0,
+        "mean": 31.94397759103642,
+        "min": 24.705882352941178,
+        "max": 45.09803921568628,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 40.70588235294118,
+        "min": 27.563025210084035,
+        "max": 50.02801120448179,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 8.761904761904763,
+      "absoluteMeanDelta": 8.761904761904763,
+      "tapeBandError": 0,
+      "tapeBandCoverage": 0.6,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "474-21_vs_330-18",
+      "matchup": "Heavy Cavalry Archer vs Heavy Camel Rider",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 474,
+        "owner": 2,
+        "unit": "Heavy Cavalry Archer"
+      },
+      "melee": {
+        "count": 18,
+        "master": 330,
+        "owner": 3,
+        "unit": "Heavy Camel Rider"
+      },
+      "tape": {
+        "scoredRuns": 10,
+        "timeoutRuns": 0,
+        "mean": 36.30555555555556,
+        "min": 30,
+        "max": 41.388888888888886,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 41.33333333333333,
+        "min": 33.888888888888886,
+        "max": 53.05555555555556,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 5.0277777777777715,
+      "absoluteMeanDelta": 5.0277777777777715,
+      "tapeBandError": 0,
+      "tapeBandCoverage": 0.6,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "474-21_vs_569-15",
+      "matchup": "Heavy Cavalry Archer vs Paladin",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 474,
+        "owner": 2,
+        "unit": "Heavy Cavalry Archer"
+      },
+      "melee": {
+        "count": 15,
+        "master": 569,
+        "owner": 3,
+        "unit": "Paladin"
+      },
+      "tape": {
+        "scoredRuns": 11,
+        "timeoutRuns": 0,
+        "mean": 36.94276094276094,
+        "min": 27.703703703703702,
+        "max": 50.22222222222222,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 18.225132275132275,
+        "min": -30.05952380952381,
+        "max": 41.333333333333336,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 0.8
+      },
+      "signedMeanDelta": -18.717628667628667,
+      "absoluteMeanDelta": 18.717628667628667,
+      "tapeBandError": 9.478571428571428,
+      "tapeBandCoverage": 0.6,
+      "side3WinRateError": 0.19999999999999996,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "474-21_vs_1134-13",
+      "matchup": "Heavy Cavalry Archer vs Elite Battle Elephant",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 474,
+        "owner": 2,
+        "unit": "Heavy Cavalry Archer"
+      },
+      "melee": {
+        "count": 13,
+        "master": 1134,
+        "owner": 3,
+        "unit": "Elite Battle Elephant"
+      },
+      "tape": {
+        "scoredRuns": 3,
+        "timeoutRuns": 0,
+        "mean": 74.35897435897436,
+        "min": 71.73076923076923,
+        "max": 78.26923076923077,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 86.49038461538461,
+        "min": 82.64423076923077,
+        "max": 89.47115384615384,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 12.131410256410248,
+      "absoluteMeanDelta": 12.131410256410248,
+      "tapeBandError": 8.22115384615384,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "474-21_vs_1372-21",
+      "matchup": "Heavy Cavalry Archer vs Elite Steppe Lancer",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 474,
+        "owner": 2,
+        "unit": "Heavy Cavalry Archer"
+      },
+      "melee": {
+        "count": 21,
+        "master": 1372,
+        "owner": 3,
+        "unit": "Elite Steppe Lancer"
+      },
+      "tape": {
+        "scoredRuns": 10,
+        "timeoutRuns": 0,
+        "mean": 27.976190476190474,
+        "min": 15.476190476190476,
+        "max": 38.095238095238095,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 22.833333333333336,
+        "min": -12.5,
+        "max": 43.333333333333336,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 0.8
+      },
+      "signedMeanDelta": -5.142857142857139,
+      "absoluteMeanDelta": 5.142857142857139,
+      "tapeBandError": 0,
+      "tapeBandCoverage": 0.6,
+      "side3WinRateError": 0.19999999999999996,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "492-13_vs_359-21",
+      "matchup": "Arbalester vs Halberdier",
+      "category": "kite",
+      "ranged": {
+        "count": 13,
+        "master": 492,
+        "owner": 2,
+        "unit": "Arbalester"
+      },
+      "melee": {
+        "count": 21,
+        "master": 359,
+        "owner": 3,
+        "unit": "Halberdier"
+      },
+      "tape": {
+        "scoredRuns": 4,
+        "timeoutRuns": 0,
+        "mean": -92.93269230769232,
+        "min": -95.96153846153847,
+        "max": -89.23076923076923,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": -97.57692307692308,
+        "min": -98.65384615384616,
+        "max": -97.3076923076923,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 0
+      },
+      "signedMeanDelta": -4.644230769230759,
+      "absoluteMeanDelta": 4.644230769230759,
+      "tapeBandError": 1.6153846153846132,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "492-18_vs_441-21",
+      "matchup": "Arbalester vs Hussar",
+      "category": "kite",
+      "ranged": {
+        "count": 18,
+        "master": 492,
+        "owner": 2,
+        "unit": "Arbalester"
+      },
+      "melee": {
+        "count": 21,
+        "master": 441,
+        "owner": 3,
+        "unit": "Hussar"
+      },
+      "tape": {
+        "scoredRuns": 5,
+        "timeoutRuns": 0,
+        "mean": 29.744360902255643,
+        "min": 26.416040100250626,
+        "max": 35.23809523809524,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 56.130325814536334,
+        "min": 45.81453634085213,
+        "max": 65.6641604010025,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 26.38596491228069,
+      "absoluteMeanDelta": 26.38596491228069,
+      "tapeBandError": 20.892230576441094,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "492-18_vs_567-21",
+      "matchup": "Arbalester vs Champion",
+      "category": "kite",
+      "ranged": {
+        "count": 18,
+        "master": 492,
+        "owner": 2,
+        "unit": "Arbalester"
+      },
+      "melee": {
+        "count": 21,
+        "master": 567,
+        "owner": 3,
+        "unit": "Champion"
+      },
+      "tape": {
+        "scoredRuns": 8,
+        "timeoutRuns": 0,
+        "mean": -81.77083333333333,
+        "min": -84.72222222222223,
+        "max": -75.69444444444444,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": -77.77777777777779,
+        "min": -90.27777777777777,
+        "max": -51.388888888888886,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 0
+      },
+      "signedMeanDelta": 3.993055555555543,
+      "absoluteMeanDelta": 3.993055555555543,
+      "tapeBandError": 0,
+      "tapeBandCoverage": 0.4,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "492-21_vs_330-13",
+      "matchup": "Arbalester vs Heavy Camel Rider",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 492,
+        "owner": 2,
+        "unit": "Arbalester"
+      },
+      "melee": {
+        "count": 13,
+        "master": 330,
+        "owner": 3,
+        "unit": "Heavy Camel Rider"
+      },
+      "tape": {
+        "scoredRuns": 2,
+        "timeoutRuns": 0,
+        "mean": -62.38095238095238,
+        "min": -67.61904761904762,
+        "max": -57.142857142857146,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": -79.42857142857142,
+        "min": -82.85714285714286,
+        "max": -75.23809523809524,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 0
+      },
+      "signedMeanDelta": -17.047619047619037,
+      "absoluteMeanDelta": 17.047619047619037,
+      "tapeBandError": 11.809523809523796,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "492-21_vs_569-11",
+      "matchup": "Arbalester vs Paladin",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 492,
+        "owner": 2,
+        "unit": "Arbalester"
+      },
+      "melee": {
+        "count": 11,
+        "master": 569,
+        "owner": 3,
+        "unit": "Paladin"
+      },
+      "tape": {
+        "scoredRuns": 14,
+        "timeoutRuns": 0,
+        "mean": 41.785714285714285,
+        "min": 33.18181818181818,
+        "max": 58.03030303030303,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 53.06060606060606,
+        "min": 43.63636363636363,
+        "max": 63.18181818181818,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 11.274891774891778,
+      "absoluteMeanDelta": 11.274891774891778,
+      "tapeBandError": 0,
+      "tapeBandCoverage": 0.6,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "492-21_vs_1134-9",
+      "matchup": "Arbalester vs Elite Battle Elephant",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 492,
+        "owner": 2,
+        "unit": "Arbalester"
+      },
+      "melee": {
+        "count": 9,
+        "master": 1134,
+        "owner": 3,
+        "unit": "Elite Battle Elephant"
+      },
+      "tape": {
+        "scoredRuns": 7,
+        "timeoutRuns": 0,
+        "mean": 79.75694444444446,
+        "min": 75.83333333333333,
+        "max": 81.94444444444444,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 92.125,
+        "min": 90.76388888888889,
+        "max": 94.40972222222223,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 12.368055555555543,
+      "absoluteMeanDelta": 12.368055555555543,
+      "tapeBandError": 10.180555555555557,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "492-21_vs_1372-14",
+      "matchup": "Arbalester vs Elite Steppe Lancer",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 492,
+        "owner": 2,
+        "unit": "Arbalester"
+      },
+      "melee": {
+        "count": 14,
+        "master": 1372,
+        "owner": 3,
+        "unit": "Elite Steppe Lancer"
+      },
+      "tape": {
+        "scoredRuns": 10,
+        "timeoutRuns": 0,
+        "mean": 9.19047619047619,
+        "min": -27.142857142857142,
+        "max": 24,
+        "side3WinRate": 0.8,
+        "volatile": true
+      },
+      "simulation": {
+        "mean": 45.91142857142856,
+        "min": 30,
+        "max": 52.57142857142857,
+        "runs": 100,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 36.72095238095237,
+      "absoluteMeanDelta": 36.72095238095237,
+      "tapeBandError": 21.91142857142856,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0.19999999999999996,
+      "winnerAgreement": "volatile",
+      "failure": ""
+    },
+    {
+      "id": "492-21_vs_1903-17",
+      "matchup": "Arbalester vs Elite Fire Lancer",
+      "category": "kite",
+      "ranged": {
+        "count": 21,
+        "master": 492,
+        "owner": 2,
+        "unit": "Arbalester"
+      },
+      "melee": {
+        "count": 17,
+        "master": 1903,
+        "owner": 3,
+        "unit": "Elite Fire Lancer"
+      },
+      "tape": {
+        "scoredRuns": 2,
+        "timeoutRuns": 0,
+        "mean": -72.44047619047619,
+        "min": -72.61904761904762,
+        "max": -72.26190476190476,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": -72.02380952380952,
+        "min": -76.54761904761905,
+        "max": -66.78571428571429,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 0
+      },
+      "signedMeanDelta": 0.4166666666666714,
+      "absoluteMeanDelta": 0.4166666666666714,
+      "tapeBandError": 0.2380952380952408,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "542-6_vs_359-21",
+      "matchup": "Heavy Scorpion vs Halberdier",
+      "category": "siege",
+      "ranged": {
+        "count": 6,
+        "master": 542,
+        "owner": 2,
+        "unit": "Heavy Scorpion"
+      },
+      "melee": {
+        "count": 21,
+        "master": 359,
+        "owner": 3,
+        "unit": "Halberdier"
+      },
+      "tape": {
+        "scoredRuns": 2,
+        "timeoutRuns": 0,
+        "mean": 66.28968253968254,
+        "min": 63.76984126984127,
+        "max": 68.80952380952381,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 62.08730158730158,
+        "min": 57.857142857142854,
+        "max": 65.07936507936508,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": -4.202380952380963,
+      "absoluteMeanDelta": 4.202380952380963,
+      "tapeBandError": 1.6825396825396908,
+      "tapeBandCoverage": 0.6,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "542-8_vs_441-21",
+      "matchup": "Heavy Scorpion vs Hussar",
+      "category": "siege",
+      "ranged": {
+        "count": 8,
+        "master": 542,
+        "owner": 2,
+        "unit": "Heavy Scorpion"
+      },
+      "melee": {
+        "count": 21,
+        "master": 441,
+        "owner": 3,
+        "unit": "Hussar"
+      },
+      "tape": {
+        "scoredRuns": 4,
+        "timeoutRuns": 0,
+        "mean": 81.10902255639098,
+        "min": 75.18796992481202,
+        "max": 91.42857142857143,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 76.21553884711781,
+        "min": 73.38345864661655,
+        "max": 77.89473684210526,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": -4.89348370927317,
+      "absoluteMeanDelta": 4.89348370927317,
+      "tapeBandError": 0,
+      "tapeBandCoverage": 0.6,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "542-8_vs_567-21",
+      "matchup": "Heavy Scorpion vs Champion",
+      "category": "siege",
+      "ranged": {
+        "count": 8,
+        "master": 542,
+        "owner": 2,
+        "unit": "Heavy Scorpion"
+      },
+      "melee": {
+        "count": 21,
+        "master": 567,
+        "owner": 3,
+        "unit": "Champion"
+      },
+      "tape": {
+        "scoredRuns": 3,
+        "timeoutRuns": 0,
+        "mean": 73.56009070294785,
+        "min": 61.224489795918366,
+        "max": 87.48299319727892,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 59.70068027210884,
+        "min": 54.01360544217687,
+        "max": 63.265306122448976,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": -13.859410430839006,
+      "absoluteMeanDelta": 13.859410430839006,
+      "tapeBandError": 1.5238095238095255,
+      "tapeBandCoverage": 0.4,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "542-12_vs_1903-21",
+      "matchup": "Heavy Scorpion vs Elite Fire Lancer",
+      "category": "siege",
+      "ranged": {
+        "count": 12,
+        "master": 542,
+        "owner": 2,
+        "unit": "Heavy Scorpion"
+      },
+      "melee": {
+        "count": 21,
+        "master": 1903,
+        "owner": 3,
+        "unit": "Elite Fire Lancer"
+      },
+      "tape": {
+        "scoredRuns": 2,
+        "timeoutRuns": 0,
+        "mean": 61.5406162464986,
+        "min": 58.8235294117647,
+        "max": 64.25770308123249,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 58.37535014005603,
+        "min": 54.73389355742297,
+        "max": 62.52100840336134,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": -3.165266106442573,
+      "absoluteMeanDelta": 3.165266106442573,
+      "tapeBandError": 0.4481792717086748,
+      "tapeBandCoverage": 0.4,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "542-14_vs_1372-21",
+      "matchup": "Heavy Scorpion vs Elite Steppe Lancer",
+      "category": "siege",
+      "ranged": {
+        "count": 14,
+        "master": 542,
+        "owner": 2,
+        "unit": "Heavy Scorpion"
+      },
+      "melee": {
+        "count": 21,
+        "master": 1372,
+        "owner": 3,
+        "unit": "Elite Steppe Lancer"
+      },
+      "tape": {
+        "scoredRuns": 2,
+        "timeoutRuns": 0,
+        "mean": 69.28571428571429,
+        "min": 63.476190476190474,
+        "max": 75.0952380952381,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 60.766666666666666,
+        "min": 59.404761904761905,
+        "max": 62.61904761904762,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": -8.519047619047626,
+      "absoluteMeanDelta": 8.519047619047626,
+      "tapeBandError": 2.709523809523809,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "542-15_vs_330-20",
+      "matchup": "Heavy Scorpion vs Heavy Camel Rider",
+      "category": "siege",
+      "ranged": {
+        "count": 15,
+        "master": 542,
+        "owner": 2,
+        "unit": "Heavy Scorpion"
+      },
+      "melee": {
+        "count": 20,
+        "master": 330,
+        "owner": 3,
+        "unit": "Heavy Camel Rider"
+      },
+      "tape": {
+        "scoredRuns": 2,
+        "timeoutRuns": 0,
+        "mean": 56.61607142857143,
+        "min": 54.464285714285715,
+        "max": 58.767857142857146,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 63.328571428571436,
+        "min": 57.107142857142854,
+        "max": 67.32142857142857,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 6.712500000000006,
+      "absoluteMeanDelta": 6.712500000000006,
+      "tapeBandError": 4.56071428571429,
+      "tapeBandCoverage": 0.2,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "542-15_vs_569-17",
+      "matchup": "Heavy Scorpion vs Paladin",
+      "category": "siege",
+      "ranged": {
+        "count": 15,
+        "master": 542,
+        "owner": 2,
+        "unit": "Heavy Scorpion"
+      },
+      "melee": {
+        "count": 17,
+        "master": 569,
+        "owner": 3,
+        "unit": "Paladin"
+      },
+      "tape": {
+        "scoredRuns": 5,
+        "timeoutRuns": 0,
+        "mean": 79.00653594771242,
+        "min": 68.10457516339869,
+        "max": 87.05882352941177,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 79.47712418300652,
+        "min": 76.60130718954248,
+        "max": 81.43790849673202,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 0.47058823529410176,
+      "absoluteMeanDelta": 0.47058823529410176,
+      "tapeBandError": 0,
+      "tapeBandCoverage": 1,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "542-16_vs_1134-14",
+      "matchup": "Heavy Scorpion vs Elite Battle Elephant",
+      "category": "siege",
+      "ranged": {
+        "count": 16,
+        "master": 542,
+        "owner": 2,
+        "unit": "Heavy Scorpion"
+      },
+      "melee": {
+        "count": 14,
+        "master": 1134,
+        "owner": 3,
+        "unit": "Elite Battle Elephant"
+      },
+      "tape": {
+        "scoredRuns": 3,
+        "timeoutRuns": 0,
+        "mean": 63.154761904761905,
+        "min": 61.25,
+        "max": 64.10714285714286,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 61.03571428571428,
+        "min": 54.82142857142857,
+        "max": 66.78571428571429,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": -2.1190476190476275,
+      "absoluteMeanDelta": 2.1190476190476275,
+      "tapeBandError": 0.2142857142857224,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "588-3_vs_359-21",
+      "matchup": "Siege Onager vs Halberdier",
+      "category": "siege",
+      "ranged": {
+        "count": 3,
+        "master": 588,
+        "owner": 2,
+        "unit": "Siege Onager"
+      },
+      "melee": {
+        "count": 21,
+        "master": 359,
+        "owner": 3,
+        "unit": "Halberdier"
+      },
+      "tape": {
+        "scoredRuns": 2,
+        "timeoutRuns": 0,
+        "mean": 78.26984126984127,
+        "min": 76.68253968253968,
+        "max": 79.85714285714286,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 51.45509673138073,
+        "min": 36.91861452723411,
+        "max": 60.78030923440089,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": -26.814744538460538,
+      "absoluteMeanDelta": 26.814744538460538,
+      "tapeBandError": 25.227442951158956,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "588-4_vs_441-21",
+      "matchup": "Siege Onager vs Hussar",
+      "category": "siege",
+      "ranged": {
+        "count": 4,
+        "master": 588,
+        "owner": 2,
+        "unit": "Siege Onager"
+      },
+      "melee": {
+        "count": 21,
+        "master": 441,
+        "owner": 3,
+        "unit": "Hussar"
+      },
+      "tape": {
+        "scoredRuns": 2,
+        "timeoutRuns": 0,
+        "mean": 38.42355889724311,
+        "min": 36.55137844611529,
+        "max": 40.29573934837093,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 57.75687167418588,
+        "min": 51.34976809993257,
+        "max": 65.54827609777668,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 19.33331277694277,
+      "absoluteMeanDelta": 19.33331277694277,
+      "tapeBandError": 17.46113232581495,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "588-4_vs_567-21",
+      "matchup": "Siege Onager vs Champion",
+      "category": "siege",
+      "ranged": {
+        "count": 4,
+        "master": 588,
+        "owner": 2,
+        "unit": "Siege Onager"
+      },
+      "melee": {
+        "count": 21,
+        "master": 567,
+        "owner": 3,
+        "unit": "Champion"
+      },
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": 36.7687074829932,
+        "min": 36.7687074829932,
+        "max": 36.7687074829932,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 60.37502584298913,
+        "min": 53.594365434645404,
+        "max": 64.92871752798148,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 23.60631835999593,
+      "absoluteMeanDelta": 23.60631835999593,
+      "tapeBandError": 23.60631835999593,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "588-6_vs_1903-21",
+      "matchup": "Siege Onager vs Elite Fire Lancer",
+      "category": "siege",
+      "ranged": {
+        "count": 6,
+        "master": 588,
+        "owner": 2,
+        "unit": "Siege Onager"
+      },
+      "melee": {
+        "count": 21,
+        "master": 1903,
+        "owner": 3,
+        "unit": "Elite Fire Lancer"
+      },
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": 56.14565826330532,
+        "min": 56.14565826330532,
+        "max": 56.14565826330532,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 42.87238554833556,
+        "min": 25.341142823113454,
+        "max": 53.92130881884372,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": -13.273272714969764,
+      "absoluteMeanDelta": 13.273272714969764,
+      "tapeBandError": 13.273272714969764,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "588-7_vs_1134-14",
+      "matchup": "Siege Onager vs Elite Battle Elephant",
+      "category": "siege",
+      "ranged": {
+        "count": 7,
+        "master": 588,
+        "owner": 2,
+        "unit": "Siege Onager"
+      },
+      "melee": {
+        "count": 14,
+        "master": 1134,
+        "owner": 3,
+        "unit": "Elite Battle Elephant"
+      },
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": 14.727678571428571,
+        "min": 14.727678571428571,
+        "max": 14.727678571428571,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 72.47691937112714,
+        "min": 63.25572351023777,
+        "max": 78.27618417599766,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 57.74924079969857,
+      "absoluteMeanDelta": 57.74924079969857,
+      "tapeBandError": 57.74924079969857,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "588-7_vs_1372-21",
+      "matchup": "Siege Onager vs Elite Steppe Lancer",
+      "category": "siege",
+      "ranged": {
+        "count": 7,
+        "master": 588,
+        "owner": 2,
+        "unit": "Siege Onager"
+      },
+      "melee": {
+        "count": 21,
+        "master": 1372,
+        "owner": 3,
+        "unit": "Elite Steppe Lancer"
+      },
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": 62.99047619047619,
+        "min": 62.99047619047619,
+        "max": 62.99047619047619,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 31.110057190737773,
+        "min": 20.2217399149649,
+        "max": 40.017051525090906,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": -31.880418999738414,
+      "absoluteMeanDelta": 31.880418999738414,
+      "tapeBandError": 31.880418999738414,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "588-8_vs_330-20",
+      "matchup": "Siege Onager vs Heavy Camel Rider",
+      "category": "siege",
+      "ranged": {
+        "count": 8,
+        "master": 588,
+        "owner": 2,
+        "unit": "Siege Onager"
+      },
+      "melee": {
+        "count": 20,
+        "master": 330,
+        "owner": 3,
+        "unit": "Heavy Camel Rider"
+      },
+      "tape": {
+        "scoredRuns": 2,
+        "timeoutRuns": 0,
+        "mean": 62.807142857142864,
+        "min": 61.475,
+        "max": 64.13928571428572,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 32.232339900288096,
+        "min": 24.42611811140487,
+        "max": 43.8870549749551,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": -30.574802956854768,
+      "absoluteMeanDelta": 30.574802956854768,
+      "tapeBandError": 29.242660099711905,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    },
+    {
+      "id": "588-8_vs_569-17",
+      "matchup": "Siege Onager vs Paladin",
+      "category": "siege",
+      "ranged": {
+        "count": 8,
+        "master": 588,
+        "owner": 2,
+        "unit": "Siege Onager"
+      },
+      "melee": {
+        "count": 17,
+        "master": 569,
+        "owner": 3,
+        "unit": "Paladin"
+      },
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": 33.69607843137254,
+        "min": 33.69607843137254,
+        "max": 33.69607843137254,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "simulation": {
+        "mean": 48.15850513588954,
+        "min": 37.84657205490584,
+        "max": 68.50512727140853,
+        "runs": 5,
+        "unresolvedRuns": 0,
+        "side3WinRate": 1
+      },
+      "signedMeanDelta": 14.462426704517,
+      "absoluteMeanDelta": 14.462426704517,
+      "tapeBandError": 14.462426704517,
+      "tapeBandCoverage": 0,
+      "side3WinRateError": 0,
+      "winnerAgreement": "match",
+      "failure": ""
+    }
+  ]
+}

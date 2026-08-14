@@ -260,6 +260,50 @@ test("an active detour uses sourced full speed instead of the direct proposal cl
 });
 
 
+test("local avoidance ignores only a mover's reserved allied-transit partner", () => {
+  const mover = unit({
+    referenceId: 1,
+    owner: 2,
+    x: 2,
+    y: 5,
+    facing: Math.PI / 2,
+    pursuitTargetId: 4,
+  });
+  const partner = unit({ referenceId: 2, owner: 2, x: 4, y: 5 });
+  const third = unit({ referenceId: 3, owner: 2, x: 4.1, y: 5 });
+  const target = unit({ referenceId: 4, owner: 3, x: 6, y: 5 });
+  const direct = proposal(1, STEP, 0);
+  const options = { alliedTransitPairs: new Set(["1:2"]) };
+
+  const partnerOnly = planLocalAvoidance(
+    [mover, partner, target],
+    [direct],
+    OPEN_MAP,
+    options,
+  );
+  assert.equal(
+    partnerOnly.units.find(({ referenceId }) => referenceId === 1).avoidance,
+    null,
+  );
+  assert.deepEqual(
+    partnerOnly.proposals.find(({ referenceId }) => referenceId === 1),
+    direct,
+  );
+
+  const withThird = planLocalAvoidance(
+    [mover, partner, third, target],
+    [direct],
+    OPEN_MAP,
+    options,
+  );
+  assert.equal(
+    withThird.units.find(({ referenceId }) => referenceId === 1)
+      .avoidance.blockerReferenceId,
+    3,
+  );
+});
+
+
 test("route selection rejects paths swept through a second body or map obstacle", () => {
   const mover = unit({
     referenceId: 1,

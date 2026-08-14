@@ -1,0 +1,139 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { planPreventiveContactSteering } from "../src/combat/contact-graph-steering.js";
+
+
+const STEP = 0.9 / 60;
+const MAP = Object.freeze({ width: 10, height: 10, obstacles: Object.freeze([]) });
+const MECHANICS = Object.freeze({
+  collision_size_tiles: Object.freeze({ x: 0.2, y: 0.2 }),
+  min_collision_size_multiplier: 0.8,
+  speed_tiles_per_second: 0.9,
+});
+
+
+function unit({ referenceId, owner = 3, x, y, pursuitTargetId = 90, avoidance = null }) {
+  return Object.freeze({
+    referenceId,
+    owner,
+    x,
+    y,
+    alive: true,
+    pursuitTargetId,
+    engagedTargetId: null,
+    attackTargetId: null,
+    avoidance,
+    mechanics: MECHANICS,
+  });
+}
+
+
+function proposal(referenceId, dx = 0, dy = 0) {
+  return Object.freeze({ referenceId, dx, dy });
+}
+
+
+function byReference(result) {
+  return new Map(result.proposals.map((row) => [row.referenceId, row]));
+}
+
+
+test("a clear step and a single edge admission preserve the direct pursuit heading", () => {
+  const target = unit({ referenceId: 90, owner: 2, x: 8, y: 2, pursuitTargetId: null });
+  const mover = unit({ referenceId: 1, x: 2, y: 2 });
+  const oneFutureNeighbor = unit({ referenceId: 2, x: 2.7, y: 2, pursuitTargetId: null });
+  const direct = proposal(1, STEP, 0);
+
+  const clear = planPreventiveContactSteering(
+    [mover, target],
+    [direct, proposal(90)],
+    MAP,
+    { owner: 3 },
+  );
+  assert.deepEqual(byReference(clear).get(1), direct);
+  assert.deepEqual(clear.steered, []);
+
+  const edge = planPreventiveContactSteering(
+    [mover, oneFutureNeighbor, target],
+    [direct, proposal(2), proposal(90)],
+    MAP,
+    { owner: 3 },
+  );
+  assert.deepEqual(byReference(edge).get(1), direct);
+  assert.deepEqual(edge.steered, []);
+});
+
+
+test("an isolated arrival takes a full-speed tangent instead of closing an allied triangle", () => {
+  const target = unit({ referenceId: 90, owner: 2, x: 8, y: 2, pursuitTargetId: null });
+  const mover = unit({ referenceId: 1, x: 2, y: 2 });
+  const upper = unit({ referenceId: 2, x: 2.7, y: 1.85, pursuitTargetId: null });
+  const lower = unit({ referenceId: 3, x: 2.7, y: 2.15, pursuitTargetId: null });
+
+  const result = planPreventiveContactSteering(
+    [mover, upper, lower, target],
+    [proposal(1, STEP, 0), proposal(2), proposal(3), proposal(90)],
+    MAP,
+    { owner: 3 },
+  );
+  const movement = byReference(result).get(1);
+
+  assert.ok(Math.abs(movement.dy) > 1e-12);
+  assert.ok(movement.dx > 0);
+  assert.ok(Math.abs(Math.hypot(movement.dx, movement.dy) - STEP) < 1e-12);
+  assert.deepEqual(result.steered.map(({ referenceId, reason }) => ({ referenceId, reason })), [
+    { referenceId: 1, reason: "compact-contact" },
+  ]);
+});
+
+
+test("a direct four-unit compact admission is diverted without slowing the mover", () => {
+  const target = unit({ referenceId: 90, owner: 2, x: 8, y: 2, pursuitTargetId: null });
+  const mover = unit({ referenceId: 1, x: 2, y: 2 });
+  const compact = [
+    unit({ referenceId: 2, x: 2.7, y: 1.8, pursuitTargetId: null }),
+    unit({ referenceId: 3, x: 2.7, y: 2.0, pursuitTargetId: null }),
+    unit({ referenceId: 4, x: 2.7, y: 2.2, pursuitTargetId: null }),
+  ];
+  const direct = proposal(1, STEP, 0);
+
+  const result = planPreventiveContactSteering(
+    [mover, ...compact, target],
+    [direct, ...compact.map(({ referenceId }) => proposal(referenceId)), proposal(90)],
+    MAP,
+    { owner: 3 },
+  );
+  const movement = byReference(result).get(1);
+
+  assert.notDeepEqual(movement, direct);
+  assert.ok(Math.abs(Math.hypot(movement.dx, movement.dy) - STEP) < 1e-12);
+  assert.equal(result.steered[0].reason, "compact-contact");
+});
+
+
+test("planning is invariant to snapshot and proposal order", () => {
+  const snapshot = [
+    unit({ referenceId: 1, x: 2, y: 2 }),
+    unit({ referenceId: 2, x: 2.7, y: 1.85, pursuitTargetId: null }),
+    unit({ referenceId: 3, x: 2.7, y: 2.15, pursuitTargetId: null }),
+    unit({ referenceId: 90, owner: 2, x: 8, y: 2, pursuitTargetId: null }),
+  ];
+  const proposals = [
+    proposal(1, STEP, 0), proposal(2), proposal(3), proposal(90),
+  ];
+
+  const forward = planPreventiveContactSteering(snapshot, proposals, MAP, { owner: 3 });
+  const reversed = planPreventiveContactSteering(
+    [...snapshot].reverse(),
+    [...proposals].reverse(),
+    MAP,
+    { owner: 3 },
+  );
+  const normalize = (result) => ({
+    proposals: [...result.proposals].sort((a, b) => a.referenceId - b.referenceId),
+    steered: [...result.steered].sort((a, b) => a.referenceId - b.referenceId),
+  });
+
+  assert.deepEqual(normalize(forward), normalize(reversed));
+});

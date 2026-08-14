@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
 import { once } from "node:events";
+import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-import { createMapServer } from "../server.mjs";
+import * as serverModule from "../server.mjs";
+
+
+const { createMapServer } = serverModule;
 
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -76,6 +80,108 @@ test("server rejects paths outside its explicit public surface", async () => {
 });
 
 
+test("viewer shell exposes unit and count controls for the generalized kiting lab", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/`);
+    assert.equal(response.status, 200);
+    const body = await response.text();
+    assert.match(body, /id="kitingRangedUnit"/);
+    assert.match(body, /id="kitingMeleeUnit"/);
+    assert.match(body, /id="kitingRangedCount"/);
+    assert.match(body, /id="kitingMeleeCount"/);
+    assert.match(body, /aria-label="Kiting ranged unit"/);
+    assert.match(body, /aria-label="Chasing melee unit"/);
+    assert.match(body, /aria-label="Kiting unit count"/);
+    assert.match(body, /aria-label="Chasing unit count"/);
+  });
+});
+
+
+test("kiting viewer request selection validates manual counts without running a battle", () => {
+  assert.equal(typeof serverModule.kitingObservationSelection, "function");
+  assert.deepEqual(
+    serverModule.kitingObservationSelection(new URL(
+      "http://127.0.0.1/api/ranged-vs-melee-kiting"
+        + "?ranged=heavy_scorpion&melee=champion&navigation=cohesive&n2=16&n3=21",
+    )),
+    {
+      rangedSlug: "heavy_scorpion",
+      meleeSlug: "champion",
+      navigation: "cohesive",
+      n2: 16,
+      n3: 21,
+    },
+  );
+  assert.deepEqual(
+    serverModule.kitingObservationSelection(new URL(
+      "http://127.0.0.1/api/ranged-vs-melee-kiting",
+    )),
+    {
+      rangedSlug: "hand_cannoneer",
+      meleeSlug: "champion",
+      navigation: "cohesive",
+    },
+  );
+  for (const query of [
+    "n2=10",
+    "n2=0&n3=10",
+    "n2=10&n3=22",
+    "n2=1.5&n3=10",
+    "ranged=heavy_scorpion&n2=17&n3=10",
+    "n2=10&n2=11&n3=10",
+    "n2=10&n3=10&extra=true",
+  ]) {
+    assert.equal(serverModule.kitingObservationSelection(new URL(
+      `http://127.0.0.1/api/ranged-vs-melee-kiting?${query}`,
+    )), null, query);
+  }
+});
+
+
+test("manual 5 HCA versus 10 Champion setup preserves the tape's matchup order", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(
+      `${baseUrl}/api/ranged-vs-melee-kiting`
+        + "?ranged=heavy_cav_archer&melee=champion&navigation=cohesive&n2=5&n3=10",
+    );
+    const run = await response.json();
+    assert.equal(response.status, 200, run.error);
+    assert.equal(run.alliedTransitMode, "soft-allied");
+    assert.equal(run.contactSteeringMode, "preventive-contact-graph");
+    assert.ok(run.contactSteeringSummary.steeredSteps > 0);
+    assert.ok(run.contactSteeringSummary.steeredUnitCount > 0);
+    assert.ok(run.contactSteeringSummary.steeredUnitCount <= 10);
+    const opening = run.snapshots[0].units;
+    const positionsFor = (owner) => opening
+      .filter(([referenceId]) => run.unitIndex[referenceId].owner === owner)
+      .sort(([leftId], [rightId]) => leftId - rightId)
+      .map(([, x, y]) => [x, y]);
+
+    // Literal frames.bin creation order. A family-wide geometric sort picks
+    // a different five-cell HCA subset and changes first contact materially.
+    assert.deepEqual(positionsFor(2), [
+      [6.5, 4.5],
+      [10.5, 2.5],
+      [7.5, 3.5],
+      [9.5, 4.5],
+      [6.5, 5.5],
+    ]);
+    assert.deepEqual(positionsFor(3), [
+      [4.5, 12.5],
+      [5.5, 11.5],
+      [4.5, 10.5],
+      [2.5, 12.5],
+      [3.5, 12.5],
+      [5.5, 12.5],
+      [6.5, 11.5],
+      [3.5, 11.5],
+      [2.5, 11.5],
+      [3.5, 13.5],
+    ]);
+  });
+});
+
+
 test("local shared assets expose presentation files but never the old simulator", async () => {
   await withServer(async (baseUrl) => {
     for (const asset of [
@@ -120,6 +226,53 @@ test("catalogue keeps every website unit visible and enables exactly the registr
       class: "mobile_ranged",
       baseCost: { food: 0, wood: 40, gold: 60 },
     });
+  });
+});
+
+
+test("units endpoint publishes every authorized ranged-versus-melee tape roster", async () => {
+  const truth = JSON.parse(await readFile(
+    new URL("../calibration/fixtures/standard_units/standard_units_truth.json", import.meta.url),
+    "utf8",
+  ));
+  const rangedByMaster = new Map([
+    [5, "hand_cannoneer"],
+    [492, "arbalester"],
+    [474, "heavy_cav_archer"],
+    [542, "heavy_scorpion"],
+  ]);
+  const meleeByMaster = new Map([
+    [567, "champion"],
+    [1134, "elite_elephant"],
+    [1903, "elite_fire_lancer"],
+    [1372, "elite_steppe"],
+    [359, "halberdier"],
+    [330, "heavy_camel"],
+    [441, "hussar"],
+    [569, "paladin"],
+  ]);
+  const expected = truth.rows.flatMap((row) => {
+    const rangedSlug = rangedByMaster.get(row.side2.master);
+    const meleeSlug = meleeByMaster.get(row.side3.master);
+    if (!rangedSlug || !meleeSlug) return [];
+    return [{
+      id: row.id,
+      rangedSlug,
+      rangedCount: row.side2.count,
+      meleeSlug,
+      meleeCount: row.side3.count,
+      tapeRunCount: row.runs.length,
+    }];
+  }).sort((a, b) => `${a.rangedSlug}|${a.meleeSlug}`.localeCompare(
+    `${b.rangedSlug}|${b.meleeSlug}`,
+  ));
+  assert.equal(expected.length, 32);
+
+  await withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/units`);
+    assert.equal(response.status, 200);
+    const units = await response.json();
+    assert.deepEqual(units.kitingObservationMatchups, expected);
   });
 });
 
@@ -223,6 +376,204 @@ test("solo movement endpoint runs only 21 owner-2 Hand Cannoneers under kite ord
       }
     }
     assert.equal([...maximumDisplacement.values()].every((distance) => distance > 1), true);
+  });
+});
+
+
+test("Hand Cannoneer versus Champion observation uses the tape roster with a live chase", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(
+      `${baseUrl}/api/hand-cannoneer-vs-champion-kiting?navigation=cohesive`,
+    );
+    assert.equal(response.status, 200);
+    const run = await response.json();
+
+    assert.equal(run.mode, "kiting-observation");
+    assert.equal(run.navigationVariant, "cohesive");
+    assert.deepEqual(run.navigationOptions, ["baseline", "per-unit-grid", "cohesive"]);
+    assert.deepEqual(run.side2, {
+      slug: "hand_cannoneer",
+      label: "Hand Cannoneer",
+      civ: "Bohemians",
+      count: 14,
+      class: "mobile_ranged",
+    });
+    assert.deepEqual(run.side3, {
+      slug: "champion",
+      label: "Champion",
+      civ: "Chinese",
+      count: 21,
+      class: "melee",
+    });
+    assert.equal(run.family, "kite");
+    assert.equal(run.kiteOwner, 2);
+    // Viewer engagement physics intentionally changes battle outcomes as it
+    // is reviewed. This endpoint test owns roster/order/playback shape, not a
+    // calibrated winner that the user will validate separately against tape.
+    assert.ok(run.winnerOwner === 2 || run.winnerOwner === 3);
+    assert.ok(run.winnerHp > 0);
+    assert.equal(Object.keys(run.unitIndex).length, 35);
+    assert.deepEqual(
+      Object.values(run.unitIndex).reduce((counts, { owner }) => ({
+        ...counts,
+        [owner]: (counts[owner] ?? 0) + 1,
+      }), {}),
+      { 2: 14, 3: 21 },
+    );
+    assert.equal(run.snapshots[0].navigation.variant, "cohesive");
+    assert.equal(run.snapshots.some(({ navigation }) => navigation?.phase === "routing"), true);
+
+    const events = run.snapshots.flatMap(({ events: entries }) => entries);
+    assert.equal(events.some(({ type, actorId }) =>
+      type === "kite-move" && run.unitIndex[actorId]?.owner === 2), true);
+    assert.equal(events.some(({ type, actorId }) =>
+      type === "attack-start" && run.unitIndex[actorId]?.owner === 2), true);
+
+    const championIds = Object.entries(run.unitIndex)
+      .filter(([, { owner }]) => owner === 3)
+      .map(([referenceId]) => Number(referenceId))
+      .sort((a, b) => a - b);
+    const openingAttackMove = events.filter(({ type, tick, actorId }) => (
+      type === "ai-location-order"
+      && tick === 36
+      && run.unitIndex[actorId]?.owner === 3
+    ));
+    assert.equal(openingAttackMove.length, 21);
+    assert.deepEqual(
+      openingAttackMove.map(({ actorId }) => actorId).sort((a, b) => a - b),
+      championIds,
+    );
+    assert.equal(new Set(openingAttackMove.map(({ x, y }) => `${x},${y}`)).size, 1);
+
+    const preOrder = run.snapshots.find(({ tick }) => tick === 35);
+    const handCannoneers = preOrder.units.filter((unit) => run.unitIndex[unit[0]].owner === 2);
+    const handCannoneerCentroid = {
+      x: handCannoneers.reduce((sum, unit) => sum + unit[1], 0) / handCannoneers.length,
+      y: handCannoneers.reduce((sum, unit) => sum + unit[2], 0) / handCannoneers.length,
+    };
+    assert.ok(Math.abs(openingAttackMove[0].x - handCannoneerCentroid.x) < 1e-9);
+    assert.ok(Math.abs(openingAttackMove[0].y - handCannoneerCentroid.y) < 1e-9);
+
+    const first = new Map(run.snapshots[0].units.map((unit) => [unit[0], unit]));
+    const afterOpeningOrder = run.snapshots.find(({ tick }) => tick === 120);
+    for (const referenceId of championIds.slice(0, 4)) {
+      const start = first.get(referenceId);
+      const current = afterOpeningOrder.units.find((unit) => unit[0] === referenceId);
+      assert.ok(Math.hypot(current[1] - start[1], current[2] - start[2]) > 0.25,
+        `Champion ${referenceId} did not start moving after the group attack-move`);
+    }
+    assert.equal(run.snapshots.some(({ units }) => units.some((unit) => (
+      championIds.includes(unit[0])
+        && Math.hypot(unit[1] - first.get(unit[0])[1], unit[2] - first.get(unit[0])[2]) > 1
+    ))), true);
+    assert.equal(run.snapshots.some(({ units }) => units.some((unit) => (
+      championIds.includes(unit[0])
+        && (unit[7] !== null || unit[8] !== null || unit[9] !== null)
+    ))), true);
+
+    const map = await (await fetch(`${baseUrl}/api/map`)).json();
+    for (const snapshot of run.snapshots) {
+      for (const unit of snapshot.units) {
+        if (!unit[5]) continue;
+        const unitRadius = run.unitIndex[unit[0]].collisionRadius;
+        for (const obstacle of map.map.gaia_objects) {
+          const obstacleRadius = obstacle.reference_id === 1604 ? 1.5 : 0.5;
+          const clearance = Math.hypot(unit[1] - obstacle.x, unit[2] - obstacle.y)
+            - unitRadius - obstacleRadius;
+          assert.ok(clearance >= -1e-9,
+            `tick ${snapshot.tick} unit ${unit[0]} overlapped obstacle ${obstacle.reference_id}`);
+        }
+      }
+    }
+  });
+});
+
+
+test("generalized kiting endpoint gives the tape-roster Heavy Scorpions a live kite cycle", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(
+      `${baseUrl}/api/ranged-vs-melee-kiting`
+        + "?ranged=heavy_scorpion&melee=champion&navigation=cohesive",
+    );
+    assert.equal(response.status, 200);
+    const run = await response.json();
+
+    assert.equal(run.mode, "kiting-observation");
+    assert.equal(run.navigationVariant, "cohesive");
+    assert.deepEqual(run.side2, {
+      slug: "heavy_scorpion",
+      label: "Heavy Scorpion",
+      civ: "Japanese",
+      count: 8,
+      class: "siege_ranged",
+    });
+    assert.deepEqual(run.side3, {
+      slug: "champion",
+      label: "Champion",
+      civ: "Chinese",
+      count: 21,
+      class: "melee",
+    });
+    assert.equal(run.family, "siege");
+    assert.equal(run.kiteOwner, 2);
+
+    const scorpionIds = Object.entries(run.unitIndex)
+      .filter(([, { owner }]) => owner === 2)
+      .map(([referenceId]) => Number(referenceId));
+    const championIds = Object.entries(run.unitIndex)
+      .filter(([, { owner }]) => owner === 3)
+      .map(([referenceId]) => Number(referenceId));
+    const events = run.snapshots.flatMap(({ events: entries }) => entries);
+    assert.equal(events.some(({ type, actorId }) => (
+      type === "kite-move" && scorpionIds.includes(actorId)
+    )), true);
+    assert.equal(events.some(({ type, actorId }) => (
+      type === "attack-start" && scorpionIds.includes(actorId)
+    )), true);
+
+    const openingAttackMove = events.filter(({ type, tick, actorId }) => (
+      type === "ai-location-order" && tick === 36 && championIds.includes(actorId)
+    ));
+    assert.equal(openingAttackMove.length, 21);
+    assert.equal(new Set(openingAttackMove.map(({ x, y }) => `${x},${y}`)).size, 1);
+
+    const first = new Map(run.snapshots[0].units.map((unit) => [unit[0], unit]));
+    assert.equal(run.snapshots.some(({ units }) => units.some((unit) => (
+      scorpionIds.includes(unit[0])
+      && Math.hypot(unit[1] - first.get(unit[0])[1], unit[2] - first.get(unit[0])[2]) > 1
+    ))), true);
+  });
+});
+
+
+test("Heavy Scorpion versus Heavy Camel observation resolves after close contact", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(
+      `${baseUrl}/api/ranged-vs-melee-kiting`
+        + "?ranged=heavy_scorpion&melee=heavy_camel&navigation=cohesive",
+    );
+    assert.equal(response.status, 200);
+    const run = await response.json();
+    assert.equal(run.side2.count, 15);
+    assert.equal(run.side3.count, 20);
+    assert.ok(run.winnerOwner === 2 || run.winnerOwner === 3);
+    assert.ok(run.ticks < 9000);
+  });
+});
+
+
+test("generalized kiting endpoint rejects units outside the tape-roster matrix", async () => {
+  await withServer(async (baseUrl) => {
+    for (const query of [
+      "ranged=champion&melee=paladin&navigation=cohesive",
+      "ranged=arbalester&melee=arbalester&navigation=cohesive",
+      "ranged=heavy_scorpion&melee=unknown&navigation=cohesive",
+      "ranged=heavy_scorpion&melee=champion&navigation=unknown",
+      "ranged=heavy_scorpion&melee=champion&extra=1",
+    ]) {
+      const response = await fetch(`${baseUrl}/api/ranged-vs-melee-kiting?${query}`);
+      assert.equal(response.status, 400, query);
+    }
   });
 });
 
@@ -555,6 +906,8 @@ test("viewer page exposes battle controls and local calibration tools without a 
       "navigationDebugToggle",
       "navigationStats",
       "navPhase",
+      "navContactMode",
+      "navContactSteps",
       "playPause",
       "resetPlayback",
       "stepTick",

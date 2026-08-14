@@ -23,6 +23,11 @@ import {
 import { planChaseAim, planMoveAim } from "./chase-path.js";
 import { planCohortContactMotion } from "./cohort-motion.js";
 import { planLocalAvoidance } from "./local-avoidance.js";
+import { planPreventiveContactSteering } from "./contact-graph-steering.js";
+import {
+  alliedTransitPairKey,
+  updateAlliedTransit,
+} from "./allied-transit.js";
 import { proposeMovement } from "./movement.js";
 import {
   createSoloNavigationState,
@@ -206,10 +211,48 @@ export function createWorld(scenario) {
       scenario.soloMovement === true,
     )
     : null;
-  if (kiteState?.soloMovement === true) {
+  if (scenario.kiteChaseDwellTicks !== undefined) {
+    if (!kiteState) {
+      throw new RangeError("kite chase dwell requires a kiting owner");
+    }
+    if (!Number.isSafeInteger(scenario.kiteChaseDwellTicks)
+        || scenario.kiteChaseDwellTicks < 0) {
+      throw new RangeError("kite chase dwell must be a nonnegative integer");
+    }
+    kiteState.chaseDwellTicks = scenario.kiteChaseDwellTicks;
+  }
+  const navigationVariant = scenario.kiteNavigation
+    ?? (kiteState?.soloMovement === true ? scenario.soloNavigation ?? "baseline" : null);
+  if (kiteState && navigationVariant !== null) {
     kiteState.soloNavigationState = createSoloNavigationState(
-      scenario.soloNavigation ?? "baseline", units, map,
+      navigationVariant,
+      units.filter((unit) => unit.owner === kiteState.owner),
+      map,
     );
+  }
+  if (kiteState && scenario.kiteMeleeOpeningOrder === "attack-move-all") {
+    kiteState.meleeOpeningOrder = "attack-move-all";
+    kiteState.meleeApproach = new Map();
+  }
+  if (scenario.preventiveContactSteering === true) {
+    if (!kiteState || scenario.kiteMeleeOpeningOrder !== "attack-move-all") {
+      throw new RangeError(
+        "preventive contact steering requires a kiting attack-move scenario",
+      );
+    }
+    kiteState.preventiveContactSteering = true;
+    kiteState.preventiveContactSteeredSteps = 0;
+    kiteState.preventiveContactSteeredUnits = new Set();
+  }
+  if (scenario.pairwiseAlliedTransit === true) {
+    if (!kiteState || scenario.kiteMeleeOpeningOrder !== "attack-move-all") {
+      throw new RangeError("pairwise allied transit requires a kiting attack-move scenario");
+    }
+    kiteState.alliedTransit = {
+      cohort: new Set(),
+      reservations: new Map(),
+      pairKeys: new Set(),
+    };
   }
   const snapshot = createSnapshot(0, units, events,
     soloNavigationSnapshot(kiteState?.soloNavigationState));
@@ -324,7 +367,7 @@ function validateAttackTargets(units, tick, events) {
 }
 
 
-function acquirePursuitTargets(units, tick, events) {
+function acquirePursuitTargets(units, tick, events, kiteState = null) {
   const snapshot = Object.freeze(units.map(freezeUnit));
   for (const unit of units) {
     if (!unit.alive) continue;
@@ -339,7 +382,11 @@ function acquirePursuitTargets(units, tick, events) {
     // Experiment harness (docs/RETARGETING_INVESTIGATION.md). Off by default:
     // shouldReevaluatePursuit is false unless AOE2X_EXP_PURSUIT is set, so this
     // reduces to the original `if (pursuitTargetId !== null) continue`.
-    const reevaluate = unit.pursuitTargetId !== null && shouldReevaluatePursuit(unit);
+    const blockedAttackMover = kiteState?.meleeOpeningOrder === "attack-move-all"
+      && unit.owner !== kiteState.owner
+      && unit.experimentBlocked === true;
+    const reevaluate = unit.pursuitTargetId !== null
+      && (shouldReevaluatePursuit(unit) || blockedAttackMover);
     if (unit.pursuitTargetId !== null && !reevaluate) continue;
     const found = snapshot.find(({ referenceId }) => referenceId === unit.referenceId);
     // selectPursuitTarget short-circuits on a live locked target, so a
@@ -447,7 +494,8 @@ const STEER_INCREMENT_RADIANS = Math.PI / 12;
 const STEER_MAX_TURNS = 6;
 
 
-function stepClearsBodies(mover, dx, dy, live, proposalByReference, bounds) {
+function stepClearsBodies(mover, dx, dy, live, proposalByReference, bounds,
+  alliedTransitPairs) {
   const x = mover.x + dx;
   const y = mover.y + dy;
   const radius = collisionRadius(mover);
@@ -459,6 +507,9 @@ function stepClearsBodies(mover, dx, dy, live, proposalByReference, bounds) {
   for (const other of live) {
     if (other.referenceId === mover.referenceId) continue;
     const allied = other.owner === mover.owner;
+    if (allied && alliedTransitPairs.has(alliedTransitPairKey(
+      mover.referenceId, other.referenceId,
+    ))) continue;
     // Same three rules the constraint solver applies (see collision.js):
     // formation-mates ignore each other, a moving unit shrinks against a
     // friendly, enemies always hold the full box.
@@ -526,7 +577,8 @@ function stepHitsOtherEnemyBody(mover, dx, dy, live) {
 
 
 
-function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = false) {
+function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = false,
+  alliedTransitPairs = new Set()) {
   if (!STEER_AROUND_BODIES && chaserScopeOwner === null) {
     return { proposals: planned.proposals, steered: null };
   }
@@ -573,7 +625,7 @@ function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = fal
       }
     }
     if (stepClearsBodies(mover, proposal.dx, proposal.dy, planned.units,
-      proposalByReference, bounds)) return proposal;
+      proposalByReference, bounds, alliedTransitPairs)) return proposal;
     steered.add(proposal.referenceId);
     const heading = Math.atan2(proposal.dy, proposal.dx);
     for (let turn = 1; turn <= STEER_MAX_TURNS; turn += 1) {
@@ -581,7 +633,8 @@ function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = fal
         const angle = heading + side * turn * STEER_INCREMENT_RADIANS;
         const dx = Math.cos(angle) * distance;
         const dy = Math.sin(angle) * distance;
-        if (stepClearsBodies(mover, dx, dy, planned.units, proposalByReference, bounds)) {
+        if (stepClearsBodies(mover, dx, dy, planned.units, proposalByReference, bounds,
+          alliedTransitPairs)) {
           return Object.freeze({ referenceId: proposal.referenceId, dx, dy });
         }
       }
@@ -592,15 +645,19 @@ function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = fal
 }
 
 
-function resolveMovement(planned, byReference, map, kiteState = null) {
+function resolveMovement(planned, byReference, map, kiteState = null, movementOptions = {}) {
   // "chaser" scope: steer-then-stop for the chasing side of a kited scenario
   // only. Without a kiteState (or for the kiting side) the solver is
   // untouched, so every non-kited fight stays bit-identical to baseline.
   const chaserScopeOwner = CHASER_BIMODAL_STEP && kiteState ? kiteState.owner : null;
   const { proposals: wantedProposals, steered } = steerProposals(
-    planned, map, chaserScopeOwner, kiteState?.kitedEscape === true,
+    planned,
+    map,
+    chaserScopeOwner,
+    kiteState?.kitedEscape === true,
+    movementOptions.alliedTransitPairs,
   );
-  let moved = resolveMovementProposals(planned.units, wantedProposals, map);
+  let moved = resolveMovementProposals(planned.units, wantedProposals, map, movementOptions);
   if (!BIMODAL_STEP && chaserScopeOwner === null) return moved;
   const eligible = (referenceId) => {
     if (BIMODAL_STEP) return true;
@@ -636,6 +693,7 @@ function resolveMovement(planned, byReference, map, kiteState = null) {
         ? Object.freeze({ referenceId: proposal.referenceId, dx: 0, dy: 0 })
         : proposal)),
       map,
+      movementOptions,
     );
   }
   return moved;
@@ -782,6 +840,18 @@ function moveUnits(units, map, tick, events, kiteState = null) {
     }
     const retreat = minRangeRetreat(unit, live);
     if (retreat) return retreat;
+    // In a kiting fight, engagement means the chaser has completed its catch.
+    // Hold it for one stationary tick so an engagement in the wider outline
+    // reach envelope can begin the ordinary attack windup instead of being
+    // invalidated by another pursuit step. If the target leaves that envelope,
+    // this branch immediately releases and normal pursuit resumes below.
+    const engaged = byReference.get(unit.engagedTargetId);
+    if (kiteState?.meleeOpeningOrder === "attack-move-all"
+        && unit.owner !== kiteState.owner
+        && engaged?.alive && engaged.owner !== unit.owner
+        && isWithinReach(unit, engaged)) {
+      return Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
+    }
     const target = byReference.get(unit.pursuitTargetId);
     return target && unit.action !== "attacking" && !isWithinStopRange(unit, target)
       && !holdsForChargeVolley(unit, target)
@@ -813,8 +883,37 @@ function moveUnits(units, map, tick, events, kiteState = null) {
       ));
     }
   }
-  const planned = planLocalAvoidance(live, proposals, map);
-  const moved = resolveMovement(planned, byReference, map, kiteState);
+  let alliedTransitPairs = new Set();
+  if (kiteState?.alliedTransit) {
+    const updatedTransit = updateAlliedTransit(kiteState.alliedTransit, live, proposals);
+    kiteState.alliedTransit.reservations = updatedTransit.reservations;
+    kiteState.alliedTransit.pairKeys = updatedTransit.pairKeys;
+    alliedTransitPairs = updatedTransit.pairKeys;
+  }
+  const movementOptions = { alliedTransitPairs };
+  let planned = planLocalAvoidance(live, proposals, map, movementOptions);
+  if (kiteState?.preventiveContactSteering === true) {
+    let contactProposals = planned.proposals;
+    const chaserOwners = [...new Set(live
+      .filter((unit) => unit.owner !== kiteState.owner)
+      .map(({ owner }) => owner))]
+      .sort((left, right) => left - right);
+    for (const owner of chaserOwners) {
+      const contactPlan = planPreventiveContactSteering(
+        planned.units,
+        contactProposals,
+        map,
+        { owner },
+      );
+      contactProposals = contactPlan.proposals;
+      kiteState.preventiveContactSteeredSteps += contactPlan.steered.length;
+      for (const { referenceId } of contactPlan.steered) {
+        kiteState.preventiveContactSteeredUnits.add(referenceId);
+      }
+    }
+    planned = Object.freeze({ ...planned, proposals: contactProposals });
+  }
+  const moved = resolveMovement(planned, byReference, map, kiteState, movementOptions);
   const movedByReference = new Map(moved.map((unit) => [unit.referenceId, unit]));
   const proposalByReference = new Map(proposals.map((proposal) => [proposal.referenceId, proposal]));
   const moveEvents = [];
@@ -971,7 +1070,11 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
       // 0.51). kac champions show only 9 alive-switches, 7/9 under attack at
       // p50 1.68 — those are the sparse mid-fight AI orders, and the rule
       // correctly almost never fires there because kac chasers rarely touch a
-      // non-target body. This is what keeps chasers at the formation's EDGE:
+      // non-target body. The interactive attack-move viewer enables the same
+      // physical rule for every supported ranged roster so a Champion that
+      // reaches a different front-line body attacks it instead of continuing
+      // to press through toward an obsolete sticky target. This is what keeps
+      // chasers at the formation's EDGE:
       // the first body a chaser touches captures it, so it fights the
       // surface instead of wading in (tape victim rank r1 = 71-79%).
       //
@@ -1051,6 +1154,7 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
         ? 0
         : (unit.mechanics?.attack_range_tiles ?? 0);
       const reachFighter = reachTiles >= 1 - 1e-12;
+      const chaseDwellTicks = kiteState.chaseDwellTicks ?? KITE_CHASE_DWELL_TICKS;
       const inReach = Number.isFinite(gap)
         && (reachFighter || gap <= KITE_DWELL_HOLD_RADIUS_TILES + 1e-12)
         && isWithinReach(unit, pursued);
@@ -1067,7 +1171,7 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
         kiteState.reachDwell.delete(unit.referenceId);
       }
       let nextTargetId = inReach
-        && (carried + 1 >= (reachFighter ? 1 : KITE_CHASE_DWELL_TICKS)
+        && (carried + 1 >= (reachFighter ? 1 : chaseDwellTicks)
           || previousTargetId === pursued.referenceId)
         ? pursued.referenceId
         : null;
@@ -1823,7 +1927,7 @@ export function stepWorld(world) {
   const units = snapshot.map(mutableUnit);
   validatePursuitTargets(units, tick, events);
   validateAttackTargets(units, tick, events);
-  acquirePursuitTargets(units, tick, events);
+  acquirePursuitTargets(units, tick, events, world.kiteState ?? null);
   issueKiteOrders(world.kiteState, units, world.map, tick, events, event);
   // Kiting tapes carry a SINGLE attack order for the melee side all fight —
   // none of the cvp-style sweep/rescue storm — so the ordinary order layer

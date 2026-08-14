@@ -1,5 +1,6 @@
-// One fight, composed from the registry and the derived placement. Nothing
-// here reads a recorded roster: this is the path a product request takes.
+// One fight, composed from the registry and derived placement. Product fights
+// use the generated family table; the viewer may pass an explicit clean-room
+// tape placement without changing any combat mechanics.
 import { readFile } from "node:fs/promises";
 
 import { hashCanonicalJson } from "./canonical-json.js";
@@ -10,8 +11,10 @@ import {
   SOLO_NAVIGATION_VARIANTS,
 } from "./combat/solo-navigation.js";
 import { deriveKiteProfile, kitePolicyFor } from "./combat/kite-timing.js";
+import { kitingObservationPlacement } from "./kiting-observation-placement.js";
 import { placeArmy, resolveFamily, sideCapacity } from "./placement.js";
 import { deriveCounts, PURCHASE_BUDGET } from "./purchase.js";
+import { kitingObservationMatchup } from "./kiting-observation-matchups.js";
 import { SOLO_MOVEMENT_UNIT_SLUGS, unitBySlug } from "./unit-registry.js";
 
 
@@ -170,7 +173,26 @@ function soloNavigationSummary(world, count) {
 }
 
 
-export async function runFight(root, { side2Slug, n2, side3Slug, n3, budget, map }) {
+export async function runFight(root, {
+  side2Slug,
+  n2,
+  side3Slug,
+  n3,
+  budget,
+  map,
+  kiteNavigation,
+  kiteMeleeOpeningOrder,
+  kiteOwnerOverride,
+  kiteChaseCapture,
+  kiteChaseDwellTicks,
+  pairwiseAlliedTransit,
+  preventiveContactSteering,
+  placementByOwner,
+}) {
+  if (kiteNavigation !== undefined) requireSoloNavigationVariant(kiteNavigation);
+  if (kiteOwnerOverride !== undefined && kiteOwnerOverride !== 2 && kiteOwnerOverride !== 3) {
+    throw new RangeError("kite owner override must be owner 2 or 3");
+  }
   // Counts are optional: omit BOTH and they come from the purchase rule, so
   // the formula lives in purchase.js and nowhere else. One given without the
   // other is a malformed request, not a half-derived fight -- the HTTP layer
@@ -229,10 +251,15 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3, budget, map
     loadMechanics(root, inner3),
   ]);
 
+  const cells2 = placementByOwner?.[2] ?? placeArmy({ owner: 2, count: innerCount2, family });
+  const cells3 = placementByOwner?.[3] ?? placeArmy({ owner: 3, count: innerCount3, family });
+  if (cells2.length !== innerCount2 || cells3.length !== innerCount3) {
+    throw new RangeError("explicit placement counts must match the fight counts");
+  }
   const roster = [
-    ...placeArmy({ owner: 2, count: innerCount2, family })
+    ...cells2
       .map((cell, index) => ({ owner: 2, cell, index, unit: inner2, mechanics: mechanics2 })),
-    ...placeArmy({ owner: 3, count: innerCount3, family })
+    ...cells3
       .map((cell, index) => ({ owner: 3, cell, index, unit: inner3, mechanics: mechanics3 })),
   ];
 
@@ -251,7 +278,10 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3, budget, map
   // normalising buys); `kiteOwner` below is the same fact stated in the
   // user's orientation, and the two agree because the response relabels
   // owners rather than renumbering units.
-  const innerKiteOwner = kiteOwnerFor(inner2, inner3);
+  const innerKiteOwner = kiteOwnerOverride ?? kiteOwnerFor(inner2, inner3);
+  if (kiteNavigation !== undefined && innerKiteOwner === null) {
+    throw new RangeError("kite navigation requires one ranged kiting side");
+  }
   const kiter = innerKiteOwner === 2 ? inner2 : inner3;
   const result = runWorld(createWorld({
     ratio: `${innerCount2}v${innerCount3}`,
@@ -261,10 +291,16 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3, budget, map
       ? {}
       : {
         kiteOwner: innerKiteOwner,
+        ...(kiteChaseCapture === true ? { chaseCapture: true } : {}),
+        ...(kiteChaseDwellTicks === undefined ? {} : { kiteChaseDwellTicks }),
+        ...(pairwiseAlliedTransit === true ? { pairwiseAlliedTransit: true } : {}),
+        ...(preventiveContactSteering === true ? { preventiveContactSteering: true } : {}),
         kiteProfile: kiteProfileFor(
           kiter,
           innerKiteOwner === 2 ? mechanics2 : mechanics3,
         ),
+        ...(kiteNavigation === undefined ? {} : { kiteNavigation }),
+        ...(kiteMeleeOpeningOrder === undefined ? {} : { kiteMeleeOpeningOrder }),
       }),
   }), { maxTicks: MAX_TICKS });
 
@@ -295,6 +331,28 @@ export async function runFight(root, { side2Slug, n2, side3Slug, n3, budget, map
 
   return Object.freeze({
     schemaVersion: 1,
+    ...(kiteNavigation === undefined
+      ? {}
+      : {
+        mode: "kiting-observation",
+        navigationVariant: kiteNavigation,
+        navigationOptions: SOLO_NAVIGATION_VARIANTS,
+        navigationSummary: soloNavigationSummary(
+          result.world,
+          innerKiteOwner === 2 ? innerCount2 : innerCount3,
+        ),
+        alliedTransitMode: pairwiseAlliedTransit === true
+          ? "exclusive-pair"
+          : "soft-allied",
+        contactSteeringMode: preventiveContactSteering === true
+          ? "preventive-contact-graph"
+          : "off",
+        contactSteeringSummary: Object.freeze({
+          steeredSteps: result.world.kiteState?.preventiveContactSteeredSteps ?? 0,
+          steeredUnitCount:
+            result.world.kiteState?.preventiveContactSteeredUnits?.size ?? 0,
+        }),
+      }),
     side2: Object.freeze({
       slug: side2.slug, label: side2.label, civ: side2.civ, count: count2, class: side2.class }),
     side3: Object.freeze({
@@ -400,6 +458,70 @@ export async function runSoloRangedMovement(root, {
     eventLogHash: hashCanonicalJson(world.eventLog),
     unitIndex: Object.freeze(unitIndex),
     snapshots: Object.freeze(world.snapshots.map(slimSnapshot)),
+  });
+}
+
+
+export async function runKitingObservation(root, {
+  map,
+  navigation = "cohesive",
+  rangedSlug = "hand_cannoneer",
+  meleeSlug = "champion",
+  n2,
+  n3,
+} = {}) {
+  requireSoloNavigationVariant(navigation);
+  const matchup = kitingObservationMatchup(rangedSlug, meleeSlug);
+  if (!matchup) {
+    throw new RangeError(`unsupported kiting observation ${rangedSlug} vs ${meleeSlug}`);
+  }
+  if ((n2 === undefined) !== (n3 === undefined)) {
+    throw new RangeError("manual kiting counts must be provided for both sides");
+  }
+  const count2 = n2 ?? matchup.rangedCount;
+  const count3 = n3 ?? matchup.meleeCount;
+  const ranged = requireUnit(rangedSlug);
+  const melee = requireUnit(meleeSlug);
+  const family = resolveFamily({ side2Class: ranged.class, side3Class: melee.class });
+  const placementByOwner = await kitingObservationPlacement(root, {
+    matchup,
+    family,
+    count2,
+    count3,
+  });
+  return runFight(root, {
+    side2Slug: rangedSlug,
+    n2: count2,
+    side3Slug: meleeSlug,
+    n3: count3,
+    map,
+    placementByOwner,
+    kiteNavigation: navigation,
+    kiteMeleeOpeningOrder: "attack-move-all",
+    kiteOwnerOverride: 2,
+    // Viewer attack-move: once a chaser physically contacts a different
+    // front-line ranged body, make that body its pursuit target. This stays
+    // viewer-local; calibrated batch runs omit the flag unless explicitly
+    // requested by their scenario.
+    kiteChaseCapture: true,
+    // Interactive attack-move begins the real unit windup on the first legal
+    // range-entry tick. Recorded batch playbacks retain the calibrated
+    // one-second default because they do not pass this viewer-only override.
+    kiteChaseDwellTicks: 0,
+    // The exclusive-pair pass-through remains available to focused engine
+    // experiments, but it is not the viewer default: in 5 HCA vs 10 Champion
+    // it creates long-lived deep pairs and moves the result away from tape.
+    pairwiseAlliedTransit: false,
+    preventiveContactSteering: true,
+  });
+}
+
+
+export async function runHandCannoneerChampionKiting(root, options = {}) {
+  return runKitingObservation(root, {
+    ...options,
+    rangedSlug: "hand_cannoneer",
+    meleeSlug: "champion",
   });
 }
 

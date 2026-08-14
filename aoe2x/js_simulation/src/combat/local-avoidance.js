@@ -1,6 +1,7 @@
 import { TICKS_PER_SECOND } from "../simulation-clock.js";
 import { AVOID_ALL_BODIES } from "./experiments.js";
 import { collisionRadius } from "./targeting.js";
+import { alliedTransitPairKey } from "./allied-transit.js";
 
 
 // Floating-point comparison tolerance only; no physical value is adjusted.
@@ -463,7 +464,7 @@ function normalizeMap(map, moverRadius) {
 }
 
 
-function constraintsFor(mover, target, units, map) {
+function constraintsFor(mover, target, units, map, alliedTransitPairs) {
   const moverRadius = collisionRadius(mover);
   const mapInfo = normalizeMap(map, moverRadius);
   const bodies = units
@@ -471,6 +472,9 @@ function constraintsFor(mover, target, units, map) {
       unit.alive !== false
       && unit.referenceId !== mover.referenceId
       && unit.referenceId !== target.referenceId
+      && !(unit.owner === mover.owner && alliedTransitPairs.has(
+        alliedTransitPairKey(mover.referenceId, unit.referenceId),
+      ))
       // Enemy bodies obstruct exactly as ally bodies do -- 99.76% of
       // camel-to-skirmisher pairs across the kiting tapes hold the full
       // 0.45 Chebyshev separation -- so a chaser has to route around the
@@ -520,7 +524,9 @@ function normalizeInputs(snapshot, proposals) {
 }
 
 
-export function planLocalAvoidance(snapshot, proposals, map) {
+export function planLocalAvoidance(snapshot, proposals, map, options = {}) {
+  const alliedTransitPairs = options.alliedTransitPairs instanceof Set
+    ? options.alliedTransitPairs : new Set();
   const { units, proposalByReference } = normalizeInputs(snapshot, proposals);
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
   const nextUnits = [];
@@ -550,7 +556,9 @@ export function planLocalAvoidance(snapshot, proposals, map) {
       );
       if (speed < 0) throw new RangeError("movement speed must be nonnegative");
       const budget = speed / TICKS_PER_SECOND;
-      const { constraints, mapInfo } = constraintsFor(mover, target, units, map);
+      const { constraints, mapInfo } = constraintsFor(
+        mover, target, units, map, alliedTransitPairs,
+      );
       if (avoidance !== null && avoidance.targetReferenceId === target.referenceId) {
         const blocker = constraintForState(constraints, avoidance);
         const blocksDirect = blocker !== undefined

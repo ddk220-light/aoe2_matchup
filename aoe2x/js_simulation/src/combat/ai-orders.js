@@ -732,6 +732,24 @@ export function issueKiteOrders(state, units, map, tick, events, makeEvent) {
   if (!state.meleeAssigned) {
     if (tick === KITE_MELEE_ORDER_TICK) {
       const melee = [...enemies].sort((a, b) => a.referenceId - b.referenceId);
+      if (state.meleeOpeningOrder === "attack-move-all") {
+        const waypoint = centroid(kiters);
+        if (state.alliedTransit) {
+          state.alliedTransit.cohort = new Set(melee.map(({ referenceId }) => referenceId));
+        }
+        for (const unit of melee) {
+          state.meleeApproach.set(unit.referenceId, waypoint);
+          applyApproachOrder(unit, waypoint, tick, events, makeEvent);
+          // Attack-move scans while advancing. Arm acquisition now so a
+          // visible enemy interrupts the location order on the next tick;
+          // an out-of-sight unit keeps walking toward the waypoint and scans
+          // again every tick until something enters line of sight.
+          unit.actionTimers.acquire = 0;
+        }
+        state.meleeActive = new Set();
+        state.meleeAssigned = true;
+        return;
+      }
       const wave = melee.slice(state.profile.meleeWave === "half_roster"
         ? Math.ceil(melee.length / 2)
         : 4);

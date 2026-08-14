@@ -1,7 +1,7 @@
 import { validateMapFixture } from "../src/map-model.js";
 import { formationUnits, validateFormationFixture } from "../src/formation-model.js";
 import { createBattlePage } from "./battle-page.js";
-import { soloMovementRequest } from "./battle-state.js";
+import { kitingFightHref, kitingFightRequest, soloMovementRequest } from "./battle-state.js";
 import { createMapRenderer } from "./map-renderer.js";
 import {
   createPlaybackCursor,
@@ -165,6 +165,8 @@ function renderDamageBreakdown(result, events) {
 
 async function start() {
   const soloRequest = soloMovementRequest(window.location.href);
+  const kitingRequest = kitingFightRequest(window.location.href);
+  const navigationRequest = soloRequest ?? kitingRequest;
   const [mapResponse, formationResponse, unitsResponse, catalogueResponse] = await Promise.all([
     fetch("api/map", { cache: "no-store" }),
     fetch("api/formation", { cache: "no-store" }),
@@ -218,6 +220,13 @@ async function start() {
 
   const unitsBySlug = new Map(units.units.map((unit) => [unit.slug, unit]));
   const soloUnit = soloRequest ? unitsBySlug.get(soloRequest.unit) : null;
+  const kitingRangedSlug = kitingRequest?.ranged ?? "hand_cannoneer";
+  const kitingMeleeSlug = kitingRequest?.melee ?? "champion";
+  const kitingMatchup = kitingRequest
+    ? units.kitingObservationMatchups.find(({ rangedSlug, meleeSlug }) => (
+      rangedSlug === kitingRangedSlug && meleeSlug === kitingMeleeSlug
+    ))
+    : null;
 
   if (soloRequest) {
     if (!soloUnit || !units.soloMovementSlugs.includes(soloRequest.unit)) {
@@ -237,10 +246,64 @@ async function start() {
     }
     unitSelect.value = soloRequest.unit;
     byId("navigationVariant").value = soloRequest.navigation;
+  } else if (kitingRequest) {
+    const ranged = unitsBySlug.get(kitingRangedSlug);
+    const melee = unitsBySlug.get(kitingMeleeSlug);
+    if (!ranged || !melee || !kitingMatchup) {
+      throw new Error(`Kiting matchup ${kitingRangedSlug} vs ${kitingMeleeSlug} is unavailable`);
+    }
+    const family = ranged.class === "siege_ranged" ? "siege" : "kite";
+    const capacity = units.capacityByFamily[family];
+    const rangedCount = kitingRequest.n2 ?? kitingMatchup.rangedCount;
+    const meleeCount = kitingRequest.n3 ?? kitingMatchup.meleeCount;
+    const rosterLabel = kitingRequest.n2 === undefined ? "Tape roster" : "Custom roster";
+    document.body.classList.add("kiting-observation-mode");
+    document.querySelector(".page-header h1").textContent =
+      `${ranged.label} vs ${melee.label} Kiting Lab`;
+    document.querySelector(".page-header .subtitle").textContent =
+      `${rosterLabel}: ${rangedCount} ${ranged.civ} ${ranged.label}`
+        + `${rangedCount === 1 ? "" : "s"} group-kiting while `
+        + `${meleeCount} ${melee.civ} ${melee.label}`
+        + `${meleeCount === 1 ? "" : "s"} pursue`;
+    byId("team1Rail").querySelector(".rail-title").textContent =
+      `${ranged.label}${rangedCount === 1 ? "" : "s"} · Engine Team 2`;
+    byId("team2Rail").querySelector(".rail-title").textContent =
+      `${melee.label}${meleeCount === 1 ? "" : "s"} · Engine Team 3`;
+    byId("optionsCurrent").textContent =
+      `${rosterLabel} · ${rangedCount} vs ${meleeCount}`;
+    byId("soloMovementUnit").closest(".navigation-lab-field").hidden = true;
+    const rangedSelect = byId("kitingRangedUnit");
+    const rangedOrder = ["hand_cannoneer", "arbalester", "heavy_cav_archer", "heavy_scorpion"];
+    for (const slug of rangedOrder) {
+      if (!units.kitingObservationMatchups.some(({ rangedSlug }) => rangedSlug === slug)) continue;
+      const unit = unitsBySlug.get(slug);
+      rangedSelect.append(new Option(`${unit.label} · ${unit.civ}`, slug));
+    }
+    rangedSelect.value = kitingRangedSlug;
+    const meleeSelect = byId("kitingMeleeUnit");
+    for (const { meleeSlug } of units.kitingObservationMatchups.filter(
+      ({ rangedSlug }) => rangedSlug === kitingRangedSlug,
+    )) {
+      if ([...meleeSelect.options].some(({ value }) => value === meleeSlug)) continue;
+      const unit = unitsBySlug.get(meleeSlug);
+      meleeSelect.append(new Option(`${unit.label} · ${unit.civ}`, meleeSlug));
+    }
+    meleeSelect.value = kitingMeleeSlug;
+    const rangedCountInput = byId("kitingRangedCount");
+    rangedCountInput.max = String(capacity.side2);
+    rangedCountInput.value = String(rangedCount);
+    const meleeCountInput = byId("kitingMeleeCount");
+    meleeCountInput.max = String(capacity.side3);
+    meleeCountInput.value = String(meleeCount);
+    byId("kitingRangedField").hidden = false;
+    byId("kitingRangedCountField").hidden = false;
+    byId("kitingMeleeField").hidden = false;
+    byId("kitingMeleeCountField").hidden = false;
+    byId("navigationVariant").value = kitingRequest.navigation;
   }
 
   function renderNavigationStats(navigation) {
-    if (!soloRequest || !navigation) return;
+    if (!navigationRequest || !navigation) return;
     const names = {
       baseline: "Baseline direct movement",
       "per-unit-grid": "Per-unit obstacle grid",
@@ -260,6 +323,12 @@ async function start() {
     byId("navReplans").textContent = String(navigation.replans);
     byId("navDistance").textContent = `${navigation.totalAnchorDistance.toFixed(1)} tiles`;
     byId("navStall").textContent = `${(navigation.stalledTicks / TICKS_PER_SECOND).toFixed(2)} s`;
+    byId("navContactMode").textContent = activeResult.contactSteeringMode
+      === "preventive-contact-graph" ? "Prevent compact stacks" : "Standard collision";
+    const contactSummary = activeResult.contactSteeringSummary;
+    byId("navContactSteps").textContent = contactSummary
+      ? `${contactSummary.steeredSteps} (${contactSummary.steeredUnitCount} units)`
+      : "0";
   }
 
   function liveSummary(snapshot) {
@@ -417,14 +486,62 @@ async function start() {
     },
   });
 
-  if (soloRequest) {
+  if (navigationRequest) {
     byId("resetBtn").hidden = true;
-    byId("dmgToggle").hidden = true;
-    byId("soloMovementUnit").addEventListener("change", (event) => {
-      const next = new URL(window.location.href);
-      next.searchParams.set("unit", event.target.value);
-      window.location.assign(next.href);
-    });
+    if (soloRequest) {
+      byId("dmgToggle").hidden = true;
+      byId("soloMovementUnit").addEventListener("change", (event) => {
+        const next = new URL(window.location.href);
+        next.searchParams.set("unit", event.target.value);
+        window.location.assign(next.href);
+      });
+    } else if (kitingRequest) {
+      const navigateKitingUnits = () => {
+        const rangedSlug = byId("kitingRangedUnit").value;
+        const options = {
+          ranged: rangedSlug,
+          melee: byId("kitingMeleeUnit").value,
+        };
+        if (kitingRequest.n2 !== undefined) {
+          const rangedUnit = unitsBySlug.get(rangedSlug);
+          const family = rangedUnit.class === "siege_ranged" ? "siege" : "kite";
+          const capacity = units.capacityByFamily[family];
+          options.n2 = byId("kitingRangedCount").valueAsNumber;
+          options.n3 = byId("kitingMeleeCount").valueAsNumber;
+          options.max2 = capacity.side2;
+          options.max3 = capacity.side3;
+        }
+        window.location.assign(kitingFightHref(window.location.href, options));
+      };
+      const navigateKitingCounts = () => {
+        const rangedCount = byId("kitingRangedCount");
+        const meleeCount = byId("kitingMeleeCount");
+        if (!rangedCount.checkValidity()) {
+          rangedCount.reportValidity();
+          return;
+        }
+        if (!meleeCount.checkValidity()) {
+          meleeCount.reportValidity();
+          return;
+        }
+        const rangedSlug = byId("kitingRangedUnit").value;
+        const rangedUnit = unitsBySlug.get(rangedSlug);
+        const family = rangedUnit.class === "siege_ranged" ? "siege" : "kite";
+        const capacity = units.capacityByFamily[family];
+        window.location.assign(kitingFightHref(window.location.href, {
+          ranged: rangedSlug,
+          melee: byId("kitingMeleeUnit").value,
+          n2: rangedCount.valueAsNumber,
+          n3: meleeCount.valueAsNumber,
+          max2: capacity.side2,
+          max3: capacity.side3,
+        }));
+      };
+      byId("kitingRangedUnit").addEventListener("change", navigateKitingUnits);
+      byId("kitingMeleeUnit").addEventListener("change", navigateKitingUnits);
+      byId("kitingRangedCount").addEventListener("change", navigateKitingCounts);
+      byId("kitingMeleeCount").addEventListener("change", navigateKitingCounts);
+    }
     byId("navigationVariant").addEventListener("change", (event) => {
       const next = new URL(window.location.href);
       next.searchParams.set("navigation", event.target.value);
@@ -585,7 +702,9 @@ async function start() {
   const observer = new ResizeObserver(() => renderer.resize());
   observer.observe(canvas);
   renderer.resize();
-  if (soloRequest) await loadSimulation(soloRequest.query, null, soloRequest.endpoint);
+  if (navigationRequest) {
+    await loadSimulation(navigationRequest.query, null, navigationRequest.endpoint);
+  }
 }
 
 

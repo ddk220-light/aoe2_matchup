@@ -29,8 +29,29 @@ def orders(path):
                             'loc':[round(o.location.x,2),round(o.location.y,2)] if o.HasField('location') else None})
     return out,kinds
 
+def formation_orders(path):
+    out=[]
+    with open(path,'rb') as fh:
+        while True:
+            hdr=fh.read(4)
+            if len(hdr)<4: break
+            (ln,)=struct.unpack("<I",hdr)
+            buf=fh.read(ln)
+            if len(buf)<ln: break
+            sq=pb.FrameSequence(); sq.ParseFromString(buf)
+            for fr in sq.frame:
+                for cmd in fr.command:
+                    if cmd.HasField('formFormation'):
+                        o=cmd.formFormation
+                        out.append({'t':round(fr.time,3),
+                            'fields':{f.name:v for f,v in o.ListFields()}})
+    return out
+
 if __name__=='__main__':
     o,k=orders(sys.argv[1])
     print('command kinds seen:',dict(k))
     print(f'{len(o)} AiOrder records\n')
-    for r in o[:14]: print(' ',json.dumps(r))
+    for r in o: print(' ',json.dumps(r))
+    forms=formation_orders(sys.argv[1])
+    print(f'\n{len(forms)} formFormation records')
+    for r in forms[:12]: print(' ',r)

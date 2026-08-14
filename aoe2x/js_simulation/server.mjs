@@ -5,12 +5,15 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { createChampionPlaybackData } from "./src/champion-comparison.js";
 import { buildArenaPhysicsMap } from "./src/arena-physics-map.js";
+import { KITE_OBSERVATION_MATCHUPS } from "./src/kiting-observation-matchups.js";
 import {
   FIGHT_SIDE_CAP,
   runFight,
+  runHandCannoneerChampionKiting,
+  runKitingObservation,
   runSoloRangedMovement,
 } from "./src/fight.js";
-import { FAMILIES, sideCapacity } from "./src/placement.js";
+import { FAMILIES, resolveFamily, sideCapacity } from "./src/placement.js";
 import { TICKS_PER_SECOND } from "./src/simulation-clock.js";
 import { runChampionRatio } from "./tests/support/champion-ratio.mjs";
 import {
@@ -228,6 +231,37 @@ function fightSelection(url) {
 }
 
 
+export function kitingObservationSelection(url) {
+  const allowedKeys = new Set(["ranged", "melee", "navigation", "n2", "n3"]);
+  const keys = [...url.searchParams.keys()];
+  if (keys.some((key) => !allowedKeys.has(key))
+      || [...allowedKeys].some((key) => url.searchParams.getAll(key).length > 1)) return null;
+
+  const rangedSlug = url.searchParams.get("ranged") ?? "hand_cannoneer";
+  const meleeSlug = url.searchParams.get("melee") ?? "champion";
+  const navigation = url.searchParams.get("navigation") ?? "cohesive";
+  const matchup = KITE_OBSERVATION_MATCHUPS.find((row) => (
+    row.rangedSlug === rangedSlug && row.meleeSlug === meleeSlug
+  ));
+  if (!matchup || !["baseline", "per-unit-grid", "cohesive"].includes(navigation)) return null;
+
+  const raw2 = url.searchParams.get("n2");
+  const raw3 = url.searchParams.get("n3");
+  if (raw2 === null && raw3 === null) return { rangedSlug, meleeSlug, navigation };
+  if ((raw2 === null) !== (raw3 === null)
+      || !/^(?:[1-9]|1\d|2[01])$/.test(raw2)
+      || !/^(?:[1-9]|1\d|2[01])$/.test(raw3)) return null;
+
+  const ranged = UNIT_REGISTRY.find(({ slug }) => slug === rangedSlug);
+  const melee = UNIT_REGISTRY.find(({ slug }) => slug === meleeSlug);
+  const family = resolveFamily({ side2Class: ranged.class, side3Class: melee.class });
+  const n2 = Number(raw2);
+  const n3 = Number(raw3);
+  if (n2 > sideCapacity(2, family) || n3 > sideCapacity(3, family)) return null;
+  return { rangedSlug, meleeSlug, navigation, n2, n3 };
+}
+
+
 async function loadViewerCatalogue(root) {
   if (!catalogueByRoot.has(root)) {
     catalogueByRoot.set(root, readFile(
@@ -276,7 +310,8 @@ async function loadArenaPhysicsMap(root) {
 
 
 async function handleFightApi({ request, response, root, url }) {
-  if (!["/api/catalogue", "/api/units", "/api/fight", "/api/solo-hand-cannoneers"]
+  if (!["/api/catalogue", "/api/units", "/api/fight", "/api/solo-hand-cannoneers",
+    "/api/hand-cannoneer-vs-champion-kiting", "/api/ranged-vs-melee-kiting"]
     .includes(url.pathname)) return false;
   if (request.method !== "GET") {
     sendJson(response, 405, { error: "Fight diagnostics are read-only" });
@@ -293,6 +328,7 @@ async function handleFightApi({ request, response, root, url }) {
         { side2: sideCapacity(2, family), side3: sideCapacity(3, family) },
       ])),
       soloMovementSlugs: SOLO_MOVEMENT_UNIT_SLUGS,
+      kitingObservationMatchups: KITE_OBSERVATION_MATCHUPS,
       units: UNIT_REGISTRY.map(({ slug, label, civ, class: unitClass, baseCost }) => ({
         slug, label, civ, class: unitClass, baseCost,
       })),
@@ -301,6 +337,47 @@ async function handleFightApi({ request, response, root, url }) {
   }
   if (url.pathname === "/api/catalogue") {
     sendJson(response, 200, await loadViewerCatalogue(root));
+    return true;
+  }
+  if (url.pathname === "/api/hand-cannoneer-vs-champion-kiting") {
+    const keys = [...url.searchParams.keys()];
+    if (keys.some((key) => key !== "navigation")
+        || url.searchParams.getAll("navigation").length > 1) {
+      sendJson(response, 400, { error: "kiting observation accepts only navigation" });
+      return true;
+    }
+    try {
+      const map = await loadArenaPhysicsMap(root);
+      const navigation = url.searchParams.get("navigation") ?? "cohesive";
+      sendJson(response, 200, await runHandCannoneerChampionKiting(
+        pathToFileURL(path.join(root, "/")),
+        { map, navigation },
+      ));
+    } catch (error) {
+      sendJson(response, 400, { error: String(error?.message ?? error) });
+    }
+    return true;
+  }
+  if (url.pathname === "/api/ranged-vs-melee-kiting") {
+    const selection = kitingObservationSelection(url);
+    if (!selection) {
+      sendJson(response, 400, {
+        error: "invalid kiting observation setup",
+      });
+      return true;
+    }
+    try {
+      const map = await loadArenaPhysicsMap(root);
+      sendJson(response, 200, await runKitingObservation(
+        pathToFileURL(path.join(root, "/")),
+        {
+          map,
+          ...selection,
+        },
+      ));
+    } catch (error) {
+      sendJson(response, 400, { error: String(error?.message ?? error) });
+    }
     return true;
   }
   if (url.pathname === "/api/solo-hand-cannoneers") {

@@ -163,6 +163,49 @@ test("a moving Champion uses the available gap without moving a stationary body"
 });
 
 
+test("an allied-transit reservation lets one pair cross while a third ally still obstructs", async () => {
+  const { resolveMovementProposals } = await loadCollision();
+  const snapshot = [
+    unit({ referenceId: 1, x: 4, y: 4 }),
+    unit({ referenceId: 2, x: 4.38, y: 4 }),
+    unit({ referenceId: 3, x: 4.76, y: 4 }),
+  ];
+  const proposals = [
+    proposal(1, 0.04, 0),
+    proposal(2, -0.04, 0),
+    proposal(3, -0.12, 0),
+  ];
+
+  const ordinary = resolveMovementProposals(snapshot, proposals, openMap);
+  const transit = resolveMovementProposals(snapshot, proposals, openMap, {
+    alliedTransitPairs: new Set(["1:2"]),
+  });
+  const ordinaryById = new Map(ordinary.map((current) => [current.referenceId, current]));
+  const transitById = new Map(transit.map((current) => [current.referenceId, current]));
+
+  assert.ok(Math.abs(ordinaryById.get(2).x - ordinaryById.get(1).x) >= 0.32 - 1e-12);
+  assert.ok(Math.abs(transitById.get(2).x - transitById.get(1).x) < 0.32);
+  assert.ok(Math.abs(transitById.get(3).x - transitById.get(2).x) >= 0.32 - 1e-12);
+});
+
+
+test("allies that begin a tick overlapped may co-move without healing or deepening overlap", async () => {
+  const { resolveMovementProposals } = await loadCollision();
+  const left = unit({ referenceId: 1, x: 4, y: 4 });
+  const right = unit({ referenceId: 2, x: 4.15, y: 4 });
+
+  const next = resolveMovementProposals(
+    [left, right],
+    [proposal(1, 0.02, 0), proposal(2, 0.02, 0)],
+    openMap,
+  );
+
+  assert.ok(Math.abs(next[0].x - 4.02) < 1e-12);
+  assert.ok(Math.abs(next[1].x - 4.17) < 1e-12);
+  assert.ok(Math.abs(next[1].x - next[0].x - 0.15) < 1e-12);
+});
+
+
 test("contact removes only the inward normal and keeps collision-free tangent", async () => {
   const { resolveMovementProposals } = await loadCollision();
   const mover = unit({ referenceId: 1, x: 4, y: 4 });

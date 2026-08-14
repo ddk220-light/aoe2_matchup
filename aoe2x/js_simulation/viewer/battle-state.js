@@ -11,6 +11,22 @@ const SOLO_MOVEMENT_UNITS = new Set([
   "heavy_scorpion",
   "imp_elite_skirm",
 ]);
+const KITE_OBSERVATION_RANGED = new Set([
+  "hand_cannoneer",
+  "arbalester",
+  "heavy_cav_archer",
+  "heavy_scorpion",
+]);
+const KITE_OBSERVATION_MELEE = new Set([
+  "champion",
+  "elite_elephant",
+  "elite_fire_lancer",
+  "elite_steppe",
+  "halberdier",
+  "heavy_camel",
+  "hussar",
+  "paladin",
+]);
 
 
 export function soloMovementRequest(urlValue) {
@@ -37,6 +53,98 @@ export function soloMovementRequest(urlValue) {
     navigation,
     query: new URLSearchParams({ unit, navigation }).toString(),
   });
+}
+
+
+export function kitingFightRequest(urlValue) {
+  let url;
+  try {
+    url = new URL(urlValue, "http://127.0.0.1/");
+  } catch {
+    return null;
+  }
+  const mode = url.searchParams.get("mode");
+  if (url.searchParams.getAll("mode").length !== 1) return null;
+  const keys = [...url.searchParams.keys()];
+  if (mode === "ranged-vs-melee-kiting") {
+    if (keys.some((key) => !["mode", "navigation", "ranged", "melee", "n2", "n3"].includes(key))
+        || url.searchParams.getAll("navigation").length > 1
+        || url.searchParams.getAll("ranged").length > 1
+        || url.searchParams.getAll("melee").length > 1
+        || url.searchParams.getAll("n2").length > 1
+        || url.searchParams.getAll("n3").length > 1) return null;
+    const navigation = url.searchParams.get("navigation") ?? "cohesive";
+    const ranged = url.searchParams.get("ranged") ?? "hand_cannoneer";
+    const melee = url.searchParams.get("melee") ?? "champion";
+    if (!KITE_OBSERVATION_RANGED.has(ranged)
+        || !KITE_OBSERVATION_MELEE.has(melee)
+        || !["baseline", "per-unit-grid", "cohesive"].includes(navigation)) return null;
+    const raw2 = url.searchParams.get("n2");
+    const raw3 = url.searchParams.get("n3");
+    if ((raw2 === null) !== (raw3 === null)) return null;
+    const hasManualCounts = raw2 !== null;
+    if (hasManualCounts
+        && (!/^(?:[1-9]|1\d|2[01])$/.test(raw2)
+          || !/^(?:[1-9]|1\d|2[01])$/.test(raw3)
+          || (ranged === "heavy_scorpion" && Number(raw2) > 16))) return null;
+    const query = new URLSearchParams({ ranged, melee, navigation });
+    if (hasManualCounts) {
+      query.set("n2", raw2);
+      query.set("n3", raw3);
+    }
+    return Object.freeze({
+      endpoint: "api/ranged-vs-melee-kiting",
+      ranged,
+      melee,
+      navigation,
+      ...(hasManualCounts ? { n2: Number(raw2), n3: Number(raw3) } : {}),
+      query: query.toString(),
+    });
+  }
+  if (mode !== "hand-cannoneer-vs-champion-kiting") return null;
+  if (keys.some((key) => key !== "mode" && key !== "navigation")
+      || url.searchParams.getAll("navigation").length > 1) return null;
+  const navigation = url.searchParams.get("navigation") ?? "cohesive";
+  if (!["baseline", "per-unit-grid", "cohesive"].includes(navigation)) return null;
+  return Object.freeze({
+    endpoint: "api/hand-cannoneer-vs-champion-kiting",
+    navigation,
+    query: new URLSearchParams({ navigation }).toString(),
+  });
+}
+
+
+export function kitingFightHref(urlValue, {
+  ranged,
+  melee,
+  n2,
+  n3,
+  max2 = 21,
+  max3 = 21,
+}) {
+  if (!KITE_OBSERVATION_RANGED.has(ranged) || !KITE_OBSERVATION_MELEE.has(melee)) {
+    throw new RangeError(`unsupported kiting setup ${ranged} vs ${melee}`);
+  }
+  if (!Number.isSafeInteger(max2) || max2 < 1
+      || !Number.isSafeInteger(max3) || max3 < 1) {
+    throw new RangeError("kiting count limits must be positive integers");
+  }
+  const hasManualCounts = n2 !== undefined || n3 !== undefined;
+  if (hasManualCounts && (!Number.isSafeInteger(n2) || !Number.isSafeInteger(n3))) {
+    throw new RangeError("manual kiting counts must be integers for both sides");
+  }
+  const url = new URL(urlValue, "http://127.0.0.1/");
+  url.searchParams.set("mode", "ranged-vs-melee-kiting");
+  url.searchParams.set("ranged", ranged);
+  url.searchParams.set("melee", melee);
+  if (hasManualCounts) {
+    url.searchParams.set("n2", String(Math.max(1, Math.min(n2, max2))));
+    url.searchParams.set("n3", String(Math.max(1, Math.min(n3, max3))));
+  } else {
+    url.searchParams.delete("n2");
+    url.searchParams.delete("n3");
+  }
+  return url.href;
 }
 
 

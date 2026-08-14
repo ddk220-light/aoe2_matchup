@@ -86,25 +86,33 @@
 .solo-movement-mode .sim-topbar-right,
 .solo-movement-mode #startHint,
 .solo-movement-mode #team2Rail,
-.solo-movement-mode #resetBtn {
+.solo-movement-mode #resetBtn,
+.kiting-observation-mode .sim-options,
+.kiting-observation-mode #startHint,
+.kiting-observation-mode #resetBtn {
   display: none !important;
 }
 
 .solo-movement-mode .rail-search,
-.solo-movement-mode .rail-picker {
+.solo-movement-mode .rail-picker,
+.kiting-observation-mode .rail-search,
+.kiting-observation-mode .rail-picker {
   display: none !important;
 }
 
-.solo-movement-mode .rail-live {
+.solo-movement-mode .rail-live,
+.kiting-observation-mode .rail-live {
   display: block !important;
 }
 
-.solo-movement-mode .sim-topbar {
+.solo-movement-mode .sim-topbar,
+.kiting-observation-mode .sim-topbar {
   justify-content: center;
   flex-wrap: wrap;
 }
 
-.solo-movement-mode .sim-topbar-center {
+.solo-movement-mode .sim-topbar-center,
+.kiting-observation-mode .sim-topbar-center {
   margin-inline: auto;
 }
 
@@ -112,7 +120,8 @@
   display: none;
 }
 
-.solo-movement-mode .navigation-lab-controls {
+.solo-movement-mode .navigation-lab-controls,
+.kiting-observation-mode .navigation-lab-controls {
   display: flex !important;
   align-items: center;
   gap: 8px;
@@ -128,7 +137,10 @@
   gap: 8px;
 }
 
-.navigation-lab-controls select {
+.navigation-lab-field[hidden] { display: none !important; }
+
+.navigation-lab-controls select,
+.navigation-lab-controls input[type="number"] {
   max-width: min(360px, 72vw);
   padding: 6px 9px;
   border: 1px solid var(--border);
@@ -137,8 +149,15 @@
   color: var(--text);
 }
 
+.navigation-count-field input[type="number"] {
+  width: 66px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
 .navigation-debug-control { display: none !important; }
-.solo-movement-mode .navigation-debug-control { display: flex !important; }
+.solo-movement-mode .navigation-debug-control,
+.kiting-observation-mode .navigation-debug-control { display: flex !important; }
 
 .solo-movement-mode .sim-stage {
   gap: clamp(12px, 2vw, 24px);
@@ -350,7 +369,8 @@
   backdrop-filter: blur(8px);
 }
 
-.solo-movement-mode .navigation-stats { display: block !important; }
+.solo-movement-mode .navigation-stats,
+.kiting-observation-mode .navigation-stats { display: block !important; }
 .navigation-stats strong { display: block; margin-bottom: 6px; color: #69c9ff; }
 .navigation-stats dl { display: grid; gap: 3px; margin: 0; }
 .navigation-stats dl div { display: flex; justify-content: space-between; gap: 8px; }
@@ -649,12 +669,14 @@
 
 @media (max-width: 720px) {
   .local-engine-pill { display: none; }
-  .solo-movement-mode .navigation-lab-controls {
+  .solo-movement-mode .navigation-lab-controls,
+  .kiting-observation-mode .navigation-lab-controls {
     align-items: stretch;
     flex-direction: column;
   }
   .navigation-lab-field { justify-content: space-between; }
   .navigation-lab-field select { flex: 1 1 auto; min-width: 0; }
+  .navigation-count-field input[type="number"] { flex: 0 0 72px; }
   .sim-stage {
     display: grid;
     grid-template-columns: 1fr;

@@ -8,6 +8,10 @@ const mechanicsUrl = new URL(
   import.meta.url,
 );
 const mechanics = JSON.parse(await readFile(mechanicsUrl, "utf8"));
+const heavyCavArcherMechanics = JSON.parse(await readFile(new URL(
+  "../fixtures/unit_stats/heavy_cav_archer_saracens_imperial.json",
+  import.meta.url,
+), "utf8"));
 const stoppedMechanics = Object.freeze({ ...mechanics, speed_tiles_per_second: 0 });
 
 
@@ -24,6 +28,7 @@ function unit({
   action = "idle",
   windup = 0,
   reload = 0,
+  acquire = 0,
   unitMechanics = mechanics,
 } = {}) {
   return {
@@ -41,17 +46,18 @@ function unit({
     attackTargetId,
     avoidance: null,
     action,
-    actionTimers: { windup, reload },
+    actionTimers: { windup, reload, acquire },
   };
 }
 
 
-function scenario(units) {
+function scenario(units, options = {}) {
   return {
     ratio: "target-state-test",
     units,
     mapHash: "target-state-map",
     map: { width: 10, height: 10, obstacles: [] },
+    ...options,
   };
 }
 
@@ -294,6 +300,284 @@ test("engagement ends on separation and movement resumes toward pursuit", async 
   assert.equal(actor.engagedTargetId, null);
   assert.ok(next.events.some(({ type, actorId, targetId }) => (
     type === "engagement-ended" && actorId === 1 && targetId === 2
+  )));
+});
+
+
+test("a kiting-world chaser holds an outer-envelope engagement and starts its swing", async () => {
+  const { createWorld, stepWorld } = await import("../src/combat/world.js");
+  const next = stepWorld(createWorld(scenario([
+    unit({
+      referenceId: 1,
+      owner: 3,
+      x: 2,
+      y: 5,
+      pursuitTargetId: 2,
+      engagedTargetId: 2,
+    }),
+    unit({
+      referenceId: 2,
+      owner: 2,
+      x: 2.6,
+      y: 5,
+      pursuitTargetId: 1,
+      unitMechanics: heavyCavArcherMechanics,
+    }),
+  ], { kiteOwner: 2, kiteMeleeOpeningOrder: "attack-move-all" })));
+  const champion = next.units.find(({ referenceId }) => referenceId === 1);
+
+  assert.equal(champion.x, 2);
+  assert.equal(champion.engagedTargetId, 2);
+  assert.equal(champion.attackTargetId, 2);
+  assert.equal(champion.action, "attacking");
+  assert.ok(next.events.some(({ type, actorId, targetId }) => (
+    type === "attack-start" && actorId === 1 && targetId === 2
+  )));
+});
+
+
+test("a zero-dwell viewer chaser engages on its first legal range-entry tick", async () => {
+  const { createWorld, stepWorld } = await import("../src/combat/world.js");
+  const first = stepWorld(createWorld(scenario([
+    unit({
+      referenceId: 1,
+      owner: 3,
+      x: 2,
+      y: 5,
+      pursuitTargetId: 2,
+    }),
+    unit({
+      referenceId: 2,
+      owner: 2,
+      x: 2.6,
+      y: 5,
+      pursuitTargetId: 1,
+      unitMechanics: heavyCavArcherMechanics,
+    }),
+  ], {
+    kiteOwner: 2,
+    kiteMeleeOpeningOrder: "attack-move-all",
+    kiteChaseDwellTicks: 0,
+  })));
+  const firstChampion = first.units.find(({ referenceId }) => referenceId === 1);
+
+  assert.equal(firstChampion.engagedTargetId, 2);
+  assert.equal(firstChampion.attackTargetId, null);
+
+  const second = stepWorld(first);
+  const secondChampion = second.units.find(({ referenceId }) => referenceId === 1);
+  assert.equal(secondChampion.attackTargetId, 2);
+  assert.equal(secondChampion.action, "attacking");
+});
+
+
+test("an attack-moving chaser acquires a visible target before reaching its waypoint", async () => {
+  const { createWorld, stepWorld } = await import("../src/combat/world.js");
+  let world = createWorld(scenario([
+    unit({
+      referenceId: 1,
+      owner: 3,
+      x: 2,
+      y: 5,
+      acquire: 100,
+    }),
+    unit({
+      referenceId: 2,
+      owner: 2,
+      x: 6,
+      y: 5,
+      unitMechanics: heavyCavArcherMechanics,
+    }),
+  ], {
+    kiteOwner: 2,
+    kiteMeleeOpeningOrder: "attack-move-all",
+  }));
+
+  while (world.tick < 36) world = stepWorld(world);
+  const ordered = world.units.find(({ referenceId }) => referenceId === 1);
+  assert.equal(ordered.pursuitTargetId, null);
+  assert.ok(ordered.x > 2);
+  assert.ok(world.events.some(({ type, tick, actorId }) => (
+    type === "ai-location-order" && tick === 36 && actorId === 1
+  )));
+
+  world = stepWorld(world);
+  const acquired = world.units.find(({ referenceId }) => referenceId === 1);
+  assert.equal(acquired.pursuitTargetId, 2);
+  assert.ok(world.events.some(({ type, tick, actorId, targetId }) => (
+    type === "pursuit-acquired" && tick === 37 && actorId === 1 && targetId === 2
+  )));
+});
+
+
+test("an attack-move cohort creates only one allied-transit reservation per chaser", async () => {
+  const { createWorld, stepWorld } = await import("../src/combat/world.js");
+  let world = createWorld(scenario([
+    unit({ referenceId: 1, owner: 3, x: 2, y: 4.8, acquire: 100 }),
+    unit({ referenceId: 2, owner: 3, x: 2, y: 5.2, acquire: 100 }),
+    unit({ referenceId: 3, owner: 3, x: 2, y: 5.6, acquire: 100 }),
+    unit({
+      referenceId: 4,
+      owner: 2,
+      x: 6,
+      y: 5,
+      acquire: 100,
+      unitMechanics: heavyCavArcherMechanics,
+    }),
+  ], {
+    kiteOwner: 2,
+    kiteMeleeOpeningOrder: "attack-move-all",
+    pairwiseAlliedTransit: true,
+  }));
+
+  while (world.tick < 36) world = stepWorld(world);
+  const transit = world.kiteState.alliedTransit;
+  const reservations = [...transit.reservations.values()];
+  const reservedIds = reservations.flatMap(({ leftId, rightId }) => [leftId, rightId]);
+
+  assert.deepEqual([...transit.cohort].sort((left, right) => left - right), [1, 2, 3]);
+  assert.equal(reservations.length, 1);
+  assert.equal(new Set(reservedIds).size, reservedIds.length);
+  assert.equal(transit.pairKeys.size, 1);
+  assert.equal(reservedIds.every((referenceId) => [1, 2, 3].includes(referenceId)), true);
+});
+
+
+test("preventive contact steering is an explicit attack-move scenario state", async () => {
+  const { createWorld } = await import("../src/combat/world.js");
+  const units = [
+    unit({ referenceId: 1, owner: 3, x: 2, y: 5, pursuitTargetId: 2 }),
+    unit({
+      referenceId: 2,
+      owner: 2,
+      x: 6,
+      y: 5,
+      unitMechanics: heavyCavArcherMechanics,
+    }),
+  ];
+  const baseline = createWorld(scenario(units, {
+    kiteOwner: 2,
+    kiteMeleeOpeningOrder: "attack-move-all",
+  }));
+  const enabled = createWorld(scenario(units, {
+    kiteOwner: 2,
+    kiteMeleeOpeningOrder: "attack-move-all",
+    preventiveContactSteering: true,
+  }));
+
+  assert.equal(baseline.kiteState.preventiveContactSteering, undefined);
+  assert.equal(enabled.kiteState.preventiveContactSteering, true);
+  assert.equal(enabled.kiteState.preventiveContactSteeredSteps, 0);
+  assert.deepEqual([...enabled.kiteState.preventiveContactSteeredUnits], []);
+  assert.throws(() => createWorld(scenario(units, {
+    kiteOwner: 2,
+    preventiveContactSteering: true,
+  })), /preventive contact steering requires a kiting attack-move scenario/);
+});
+
+
+test("a blocked attack-moving chaser retargets to the nearest visible enemy", async () => {
+  const { createWorld, stepWorld } = await import("../src/combat/world.js");
+  const blockedChampion = unit({
+    referenceId: 1,
+    owner: 3,
+    x: 2,
+    y: 5,
+    pursuitTargetId: 2,
+  });
+  blockedChampion.experimentBlocked = true;
+  const next = stepWorld(createWorld(scenario([
+    blockedChampion,
+    unit({
+      referenceId: 2,
+      owner: 2,
+      x: 6,
+      y: 5,
+      unitMechanics: heavyCavArcherMechanics,
+    }),
+    unit({
+      referenceId: 3,
+      owner: 2,
+      x: 3,
+      y: 5,
+      unitMechanics: heavyCavArcherMechanics,
+    }),
+  ], {
+    kiteOwner: 2,
+    kiteMeleeOpeningOrder: "attack-move-all",
+  })));
+  const champion = next.units.find(({ referenceId }) => referenceId === 1);
+
+  assert.equal(champion.pursuitTargetId, 3);
+  assert.ok(next.events.some(({ type, actorId, targetId }) => (
+    type === "pursuit-acquired" && actorId === 1 && targetId === 3
+  )));
+});
+
+
+test("a kiting-world chaser resumes pursuit when its engagement leaves reach", async () => {
+  const { createWorld, stepWorld } = await import("../src/combat/world.js");
+  const next = stepWorld(createWorld(scenario([
+    unit({
+      referenceId: 1,
+      owner: 3,
+      x: 2,
+      y: 5,
+      pursuitTargetId: 2,
+      engagedTargetId: 2,
+      action: "reload",
+      reload: 10,
+    }),
+    unit({
+      referenceId: 2,
+      owner: 2,
+      x: 3,
+      y: 5,
+      pursuitTargetId: 1,
+      unitMechanics: heavyCavArcherMechanics,
+    }),
+  ], { kiteOwner: 2, kiteMeleeOpeningOrder: "attack-move-all" })));
+  const champion = next.units.find(({ referenceId }) => referenceId === 1);
+
+  assert.ok(champion.x > 2);
+  assert.equal(champion.pursuitTargetId, 2);
+  assert.equal(champion.engagedTargetId, null);
+  assert.ok(next.events.some(({ type, actorId, targetId }) => (
+    type === "engagement-ended" && actorId === 1 && targetId === 2
+  )));
+});
+
+
+test("an attack-moving chaser captures a different kiter at frontal body contact", async () => {
+  const { createWorld, stepWorld } = await import("../src/combat/world.js");
+  const next = stepWorld(createWorld(scenario([
+    unit({ referenceId: 1, owner: 3, x: 2, y: 5, pursuitTargetId: 2 }),
+    unit({
+      referenceId: 2,
+      owner: 2,
+      x: 4,
+      y: 5,
+      pursuitTargetId: 1,
+      unitMechanics: heavyCavArcherMechanics,
+    }),
+    unit({
+      referenceId: 3,
+      owner: 2,
+      x: 2.45,
+      y: 5,
+      pursuitTargetId: 1,
+      unitMechanics: heavyCavArcherMechanics,
+    }),
+  ], {
+    kiteOwner: 2,
+    chaseCapture: true,
+    kiteMeleeOpeningOrder: "attack-move-all",
+  })));
+  const champion = next.units.find(({ referenceId }) => referenceId === 1);
+
+  assert.equal(champion.pursuitTargetId, 3);
+  assert.ok(next.events.some(({ type, actorId, targetId }) => (
+    type === "contact-capture" && actorId === 1 && targetId === 3
   )));
 });
 

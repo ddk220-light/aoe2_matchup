@@ -110,6 +110,24 @@
             <label for="soloMovementUnit">Ranged unit</label>
             <select id="soloMovementUnit" aria-label="Ranged unit to inspect"></select>
           </div>
+          <div class="navigation-lab-field" id="kitingRangedField" hidden>
+            <label for="kitingRangedUnit">Kiting unit</label>
+            <select id="kitingRangedUnit" aria-label="Kiting ranged unit"></select>
+          </div>
+          <div class="navigation-lab-field navigation-count-field" id="kitingRangedCountField" hidden>
+            <label for="kitingRangedCount">Kiting units</label>
+            <input id="kitingRangedCount" type="number" inputmode="numeric"
+                   min="1" max="21" step="1" aria-label="Kiting unit count">
+          </div>
+          <div class="navigation-lab-field" id="kitingMeleeField" hidden>
+            <label for="kitingMeleeUnit">Chasing unit</label>
+            <select id="kitingMeleeUnit" aria-label="Chasing melee unit"></select>
+          </div>
+          <div class="navigation-lab-field navigation-count-field" id="kitingMeleeCountField" hidden>
+            <label for="kitingMeleeCount">Chasing units</label>
+            <input id="kitingMeleeCount" type="number" inputmode="numeric"
+                   min="1" max="21" step="1" aria-label="Chasing unit count">
+          </div>
           <div class="navigation-lab-field">
             <label for="navigationVariant">Navigation approach</label>
             <select id="navigationVariant">
@@ -168,6 +186,8 @@
                 <div><dt>Route replans</dt><dd id="navReplans">—</dd></div>
                 <div><dt>Anchor travel</dt><dd id="navDistance">—</dd></div>
                 <div><dt>Anchor stall</dt><dd id="navStall">—</dd></div>
+                <div><dt>Chaser spacing</dt><dd id="navContactMode">—</dd></div>
+                <div><dt>Preventive turns</dt><dd id="navContactSteps">—</dd></div>
               </dl>
             </div>
             <canvas id="mapCanvas" aria-label="Isometric clean-room battle simulation"></canvas>

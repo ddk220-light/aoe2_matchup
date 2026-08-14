@@ -1,0 +1,1766 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "name": "aoe2_golden_STANDARD_UNITS_WITH_TAPES.zip",
+    "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_STANDARD_UNITS_WITH_TAPES.zip",
+    "zip_sha256": "38E07C38344F06E527C28CD9B235ADA59AD1E722CDB8EC171296B877E8C1956D"
+  },
+  "candidate": {
+    "name": "translated_persistent_locations",
+    "label": "HC-only translated persistent volleys with tape-location melee approach",
+    "experiment": {
+      "formationMotion": "translated_offsets",
+      "firstBeatTick": 1,
+      "volleyPursuit": "close_to_fire",
+      "meleeWave": "location_approach"
+    }
+  },
+  "config": {
+    "screenSamples": 5,
+    "volatileSamples": 100,
+    "seed": 20260411,
+    "exactCanonicalStarts": true
+  },
+  "screen": {
+    "expandVolatile": false,
+    "baselineBandError": 185.81551535087723,
+    "candidateBandError": 226.97569966583126,
+    "improvement": -41.16018431495402,
+    "stableWinnerFailures": [],
+    "goodRowRegressions": [
+      "Hand Cannoneer vs Champion"
+    ],
+    "unresolvedRuns": 0,
+    "hcaIdentity": true,
+    "over25": [
+      {
+        "matchup": "Hand Cannoneer vs Hussar",
+        "delta": 47.86466165413535
+      },
+      {
+        "matchup": "Hand Cannoneer vs Paladin",
+        "delta": 32.1031746031746
+      },
+      {
+        "matchup": "Hand Cannoneer vs Elite Battle Elephant",
+        "delta": 44.22916666666668
+      },
+      {
+        "matchup": "Hand Cannoneer vs Elite Steppe Lancer",
+        "delta": 60.88947368421053
+      }
+    ]
+  },
+  "volatileExpansionRan": false,
+  "accepted": false,
+  "acceptance": {
+    "expandVolatile": false,
+    "baselineBandError": 185.81551535087723,
+    "candidateBandError": 226.97569966583126,
+    "improvement": -41.16018431495402,
+    "stableWinnerFailures": [],
+    "goodRowRegressions": [
+      "Hand Cannoneer vs Champion"
+    ],
+    "unresolvedRuns": 0,
+    "hcaIdentity": true,
+    "over25": [
+      {
+        "matchup": "Hand Cannoneer vs Hussar",
+        "delta": 47.86466165413535
+      },
+      {
+        "matchup": "Hand Cannoneer vs Paladin",
+        "delta": 32.1031746031746
+      },
+      {
+        "matchup": "Hand Cannoneer vs Elite Battle Elephant",
+        "delta": 44.22916666666668
+      },
+      {
+        "matchup": "Hand Cannoneer vs Elite Steppe Lancer",
+        "delta": 60.88947368421053
+      }
+    ]
+  },
+  "rows": [
+    {
+      "id": "5-10_vs_359-21",
+      "matchup": "Hand Cannoneer vs Halberdier",
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": -76.5,
+        "min": -76.5,
+        "max": -76.5,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "baseline": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": -89.5,
+        "min": -91,
+        "max": -83.5,
+        "side3WinRate": 0,
+        "side3WinRateError": 0,
+        "bandError": 13,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": false
+      },
+      "candidate": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": -70.3,
+        "min": -81,
+        "max": -58.5,
+        "side3WinRate": 0,
+        "side3WinRateError": 0,
+        "bandError": 6.200000000000003,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": false
+      },
+      "samples": [
+        {
+          "rowId": "5-10_vs_359-21",
+          "matchup": "Hand Cannoneer vs Halberdier",
+          "sampleIndex": 0,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 314,
+          "score": -78.5,
+          "ticks": 2184,
+          "finalStateHash": "d1060c88029ab46c3242a4eb84da1fe3641e184228916357310342ded0de1581",
+          "eventLogHash": "d1fd0e30cfe134699db9132c669cd007388243e95ff3bb1c16bec6703e73f148",
+          "diagnostics": {
+            "eventCount": 39313,
+            "damageEvents": 79,
+            "damageEventsByOwner": {
+              "2": 64,
+              "3": 15
+            },
+            "damageAmountByOwner": {
+              "2": 1452,
+              "3": 90
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 276
+            },
+            "blockedEvents": 8861,
+            "targetAcquisitions": 86,
+            "targetInvalidations": 66
+          }
+        },
+        {
+          "rowId": "5-10_vs_359-21",
+          "matchup": "Hand Cannoneer vs Halberdier",
+          "sampleIndex": 1,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 234,
+          "score": -58.5,
+          "ticks": 2185,
+          "finalStateHash": "ff0f56a48883c84d06f66a668b581bd45677a68071c951b07d2a4222076d0c92",
+          "eventLogHash": "4c809b3d1c3da6e80d058464aa67557b67d918bc5873d616e421a9192fda7e24",
+          "diagnostics": {
+            "eventCount": 34875,
+            "damageEvents": 93,
+            "damageEventsByOwner": {
+              "2": 64,
+              "3": 29
+            },
+            "damageAmountByOwner": {
+              "2": 1416,
+              "3": 174
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 276
+            },
+            "blockedEvents": 8073,
+            "targetAcquisitions": 104,
+            "targetInvalidations": 85
+          }
+        },
+        {
+          "rowId": "5-10_vs_359-21",
+          "matchup": "Hand Cannoneer vs Halberdier",
+          "sampleIndex": 2,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 274,
+          "score": -68.5,
+          "ticks": 2212,
+          "finalStateHash": "8c189fc7c649dd5135e677b86088cdc4d9b1047910663323795d738b1c6cbea9",
+          "eventLogHash": "5186c31aaeb2604732e738bb0a891008a1d3f7f5ee1dcf3947df1680f8aeb038",
+          "diagnostics": {
+            "eventCount": 37423,
+            "damageEvents": 86,
+            "damageEventsByOwner": {
+              "2": 64,
+              "3": 22
+            },
+            "damageAmountByOwner": {
+              "2": 1428,
+              "3": 132
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 276
+            },
+            "blockedEvents": 8081,
+            "targetAcquisitions": 101,
+            "targetInvalidations": 82
+          }
+        },
+        {
+          "rowId": "5-10_vs_359-21",
+          "matchup": "Hand Cannoneer vs Halberdier",
+          "sampleIndex": 3,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 260,
+          "score": -65,
+          "ticks": 2225,
+          "finalStateHash": "4b779f7a02dc842cf3be15923a8334deb88b3c655f46ecb53001a22ded5925da",
+          "eventLogHash": "7fb92bbe3cb839480e6c42912347b06a7b0bc28a2a22c079b93dffa54a52ee2f",
+          "diagnostics": {
+            "eventCount": 37906,
+            "damageEvents": 87,
+            "damageEventsByOwner": {
+              "2": 63,
+              "3": 24
+            },
+            "damageAmountByOwner": {
+              "2": 1416,
+              "3": 144
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 276
+            },
+            "blockedEvents": 8295,
+            "targetAcquisitions": 90,
+            "targetInvalidations": 70
+          }
+        },
+        {
+          "rowId": "5-10_vs_359-21",
+          "matchup": "Hand Cannoneer vs Halberdier",
+          "sampleIndex": 4,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 324,
+          "score": -81,
+          "ticks": 2184,
+          "finalStateHash": "8a10d5ff0dcba34e326e458283d9f49323b95a6ddfdda5717b3d41c25721342a",
+          "eventLogHash": "124f62a473a9c060c4eeef4712edcd9e4be43e42f5a9d94aca5afb2383ee4122",
+          "diagnostics": {
+            "eventCount": 41122,
+            "damageEvents": 76,
+            "damageEventsByOwner": {
+              "2": 63,
+              "3": 13
+            },
+            "damageAmountByOwner": {
+              "2": 1440,
+              "3": 78
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 302
+            },
+            "blockedEvents": 8608,
+            "targetAcquisitions": 80,
+            "targetInvalidations": 60
+          }
+        }
+      ]
+    },
+    {
+      "id": "5-14_vs_441-21",
+      "matchup": "Hand Cannoneer vs Hussar",
+      "tape": {
+        "scoredRuns": 6,
+        "timeoutRuns": 0,
+        "mean": 5.626044277360067,
+        "min": -18.75,
+        "max": 17.894736842105264,
+        "side3WinRate": 0.6666666666666666,
+        "volatile": true
+      },
+      "baseline": {
+        "simulationRuns": 100,
+        "unresolvedRuns": 0,
+        "mean": 59.37418546365916,
+        "min": 35.338345864661655,
+        "max": 69.77443609022556,
+        "side3WinRate": 1,
+        "side3WinRateError": 0.33333333333333337,
+        "bandError": 41.4794486215539,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": false
+      },
+      "candidate": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": 65.7593984962406,
+        "min": 63.909774436090224,
+        "max": 70.67669172932331,
+        "side3WinRate": 1,
+        "side3WinRateError": 0.33333333333333337,
+        "bandError": 47.86466165413535,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": false
+      },
+      "samples": [
+        {
+          "rowId": "5-14_vs_441-21",
+          "matchup": "Hand Cannoneer vs Hussar",
+          "sampleIndex": 0,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1275,
+          "score": 63.909774436090224,
+          "ticks": 2323,
+          "finalStateHash": "13e110dd7f2e12f08576960055494913aefaad8a011c3c375fbc5421d32289a2",
+          "eventLogHash": "1b3d11db5919609c9b645911f213d720e0897a1f5b1ad858e9654a2cb7d9a0be",
+          "diagnostics": {
+            "eventCount": 46258,
+            "damageEvents": 160,
+            "damageEventsByOwner": {
+              "2": 76,
+              "3": 84
+            },
+            "damageAmountByOwner": {
+              "2": 770,
+              "3": 588
+            },
+            "firstDamageTickByOwner": {
+              "2": 55,
+              "3": 225
+            },
+            "blockedEvents": 12239,
+            "targetAcquisitions": 166,
+            "targetInvalidations": 145
+          }
+        },
+        {
+          "rowId": "5-14_vs_441-21",
+          "matchup": "Hand Cannoneer vs Hussar",
+          "sampleIndex": 1,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1280.5,
+          "score": 64.18546365914787,
+          "ticks": 2894,
+          "finalStateHash": "184445fdcfa71790902ada06dd3214d59d1c8317e58fe5fef3ecd6dd16c8ca2a",
+          "eventLogHash": "98b492e08fcb25f470e280c2109b64fc041822b5718b9f379ce1d6bcef157a32",
+          "diagnostics": {
+            "eventCount": 58090,
+            "damageEvents": 160,
+            "damageEventsByOwner": {
+              "2": 76,
+              "3": 84
+            },
+            "damageAmountByOwner": {
+              "2": 759,
+              "3": 588
+            },
+            "firstDamageTickByOwner": {
+              "2": 55,
+              "3": 226
+            },
+            "blockedEvents": 16727,
+            "targetAcquisitions": 159,
+            "targetInvalidations": 138
+          }
+        },
+        {
+          "rowId": "5-14_vs_441-21",
+          "matchup": "Hand Cannoneer vs Hussar",
+          "sampleIndex": 2,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1286,
+          "score": 64.46115288220551,
+          "ticks": 2690,
+          "finalStateHash": "b50c66603230c0987567c1fe0bcd96c5bbe46ab6be6a955e255071b163a15db1",
+          "eventLogHash": "a4b9a9abadea813a8d0e9eb8f560f17a0e00975892f29c5d2c9ad13b5eeddc2b",
+          "diagnostics": {
+            "eventCount": 53167,
+            "damageEvents": 160,
+            "damageEventsByOwner": {
+              "2": 76,
+              "3": 84
+            },
+            "damageAmountByOwner": {
+              "2": 764.5,
+              "3": 588
+            },
+            "firstDamageTickByOwner": {
+              "2": 55,
+              "3": 226
+            },
+            "blockedEvents": 14656,
+            "targetAcquisitions": 176,
+            "targetInvalidations": 155
+          }
+        },
+        {
+          "rowId": "5-14_vs_441-21",
+          "matchup": "Hand Cannoneer vs Hussar",
+          "sampleIndex": 3,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1308,
+          "score": 65.56390977443608,
+          "ticks": 1768,
+          "finalStateHash": "9e70e0831dd35497f1c19960f3118bfc765359867bf4d41ec9e00ccf7c9dc51f",
+          "eventLogHash": "c81893c39f06699eb9d420b482fd62e98937c0868a9b07cb3a192ee70b48e175",
+          "diagnostics": {
+            "eventCount": 39536,
+            "damageEvents": 156,
+            "damageEventsByOwner": {
+              "2": 72,
+              "3": 84
+            },
+            "damageAmountByOwner": {
+              "2": 726,
+              "3": 588
+            },
+            "firstDamageTickByOwner": {
+              "2": 55,
+              "3": 226
+            },
+            "blockedEvents": 13030,
+            "targetAcquisitions": 122,
+            "targetInvalidations": 101
+          }
+        },
+        {
+          "rowId": "5-14_vs_441-21",
+          "matchup": "Hand Cannoneer vs Hussar",
+          "sampleIndex": 4,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1410,
+          "score": 70.67669172932331,
+          "ticks": 1646,
+          "finalStateHash": "1b7e7aa0a5564720b207b9512730ded97258e8ac47780da5eba6d3d73b4cbea0",
+          "eventLogHash": "349c42b9cce3c3584253f02ae8c8f859b4cb6127adebb2d69b2e799c6fedead7",
+          "diagnostics": {
+            "eventCount": 36567,
+            "damageEvents": 145,
+            "damageEventsByOwner": {
+              "2": 61,
+              "3": 84
+            },
+            "damageAmountByOwner": {
+              "2": 621.5,
+              "3": 588
+            },
+            "firstDamageTickByOwner": {
+              "2": 55,
+              "3": 226
+            },
+            "blockedEvents": 12104,
+            "targetAcquisitions": 118,
+            "targetInvalidations": 97
+          }
+        }
+      ]
+    },
+    {
+      "id": "5-14_vs_567-21",
+      "matchup": "Hand Cannoneer vs Champion",
+      "tape": {
+        "scoredRuns": 4,
+        "timeoutRuns": 0,
+        "mean": -76.60714285714286,
+        "min": -82.5,
+        "max": -73.21428571428571,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "baseline": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": -86.35714285714286,
+        "min": -92.85714285714286,
+        "max": -75.71428571428571,
+        "side3WinRate": 0,
+        "side3WinRateError": 0,
+        "bandError": 3.857142857142861,
+        "tapeBandCoverage": 0.2,
+        "wrongStableWinner": false
+      },
+      "candidate": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": -54.642857142857146,
+        "min": -78.57142857142857,
+        "max": -28.571428571428573,
+        "side3WinRate": 0,
+        "side3WinRateError": 0,
+        "bandError": 18.571428571428562,
+        "tapeBandCoverage": 0.4,
+        "wrongStableWinner": false
+      },
+      "samples": [
+        {
+          "rowId": "5-14_vs_567-21",
+          "matchup": "Hand Cannoneer vs Champion",
+          "sampleIndex": 0,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 412,
+          "score": -73.57142857142857,
+          "ticks": 1942,
+          "finalStateHash": "24850fb7772861173f8e22d6091ec81a623748171c601957e0cc3c5ec91dde35",
+          "eventLogHash": "3a90bbcd22d92814f414b0941c799c1c9cecc908a80adbbfa10accad4ac08522",
+          "diagnostics": {
+            "eventCount": 40960,
+            "damageEvents": 96,
+            "damageEventsByOwner": {
+              "2": 85,
+              "3": 11
+            },
+            "damageAmountByOwner": {
+              "2": 1738,
+              "3": 154
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 381
+            },
+            "blockedEvents": 7700,
+            "targetAcquisitions": 123,
+            "targetInvalidations": 102
+          }
+        },
+        {
+          "rowId": "5-14_vs_567-21",
+          "matchup": "Hand Cannoneer vs Champion",
+          "sampleIndex": 1,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 440,
+          "score": -78.57142857142857,
+          "ticks": 2183,
+          "finalStateHash": "c115c3fe9e25afec7f3f4b40d6227cae8fa272dd6e882b9fa6f968412ad19c31",
+          "eventLogHash": "f849ee0c12116b1d9dc3cad004f989b7db755cf6d11f9415636966465878bae9",
+          "diagnostics": {
+            "eventCount": 45561,
+            "damageEvents": 93,
+            "damageEventsByOwner": {
+              "2": 84,
+              "3": 9
+            },
+            "damageAmountByOwner": {
+              "2": 1738,
+              "3": 126
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 365
+            },
+            "blockedEvents": 9337,
+            "targetAcquisitions": 120,
+            "targetInvalidations": 99
+          }
+        },
+        {
+          "rowId": "5-14_vs_567-21",
+          "matchup": "Hand Cannoneer vs Champion",
+          "sampleIndex": 2,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 186,
+          "score": -33.214285714285715,
+          "ticks": 2903,
+          "finalStateHash": "c53a1c191055eda8f82da5976766ad632294935ee5e046f18855851e46571bc4",
+          "eventLogHash": "983ceda5f29ab9e6d8165597d675706e77504253020f9e0540825e2dacca9efe",
+          "diagnostics": {
+            "eventCount": 46580,
+            "damageEvents": 115,
+            "damageEventsByOwner": {
+              "2": 87,
+              "3": 28
+            },
+            "damageAmountByOwner": {
+              "2": 1771,
+              "3": 392
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 408
+            },
+            "blockedEvents": 11966,
+            "targetAcquisitions": 125,
+            "targetInvalidations": 109
+          }
+        },
+        {
+          "rowId": "5-14_vs_567-21",
+          "matchup": "Hand Cannoneer vs Champion",
+          "sampleIndex": 3,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 332,
+          "score": -59.285714285714285,
+          "ticks": 2183,
+          "finalStateHash": "31be17afe71a2471c8b1a03f2d2425c0bd274cf55c0f9fc7ba06da9ef8fa77ff",
+          "eventLogHash": "9749146b6cc83c0f83b7ff028fabbf1803f155f9031ffcffb3b753a8aadd53a0",
+          "diagnostics": {
+            "eventCount": 42682,
+            "damageEvents": 102,
+            "damageEventsByOwner": {
+              "2": 85,
+              "3": 17
+            },
+            "damageAmountByOwner": {
+              "2": 1738,
+              "3": 238
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 399
+            },
+            "blockedEvents": 9003,
+            "targetAcquisitions": 119,
+            "targetInvalidations": 98
+          }
+        },
+        {
+          "rowId": "5-14_vs_567-21",
+          "matchup": "Hand Cannoneer vs Champion",
+          "sampleIndex": 4,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 160,
+          "score": -28.571428571428573,
+          "ticks": 4137,
+          "finalStateHash": "fd0cc82769645dae735a8950c0f2e127e1c06b102a1a802cf4e405ff8cd337bb",
+          "eventLogHash": "65f030c7c25d24bda1a66aa9c51fd5cb2f0c718575e4599368cdea0406f013a6",
+          "diagnostics": {
+            "eventCount": 58319,
+            "damageEvents": 115,
+            "damageEventsByOwner": {
+              "2": 85,
+              "3": 30
+            },
+            "damageAmountByOwner": {
+              "2": 1738,
+              "3": 420
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 383
+            },
+            "blockedEvents": 15107,
+            "targetAcquisitions": 118,
+            "targetInvalidations": 97
+          }
+        }
+      ]
+    },
+    {
+      "id": "5-19_vs_1903-21",
+      "matchup": "Hand Cannoneer vs Elite Fire Lancer",
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": -60.921052631578945,
+        "min": -60.921052631578945,
+        "max": -60.921052631578945,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "baseline": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": -68.65789473684211,
+        "min": -69.86842105263158,
+        "max": -68.15789473684211,
+        "side3WinRate": 0,
+        "side3WinRateError": 0,
+        "bandError": 7.736842105263165,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": false
+      },
+      "candidate": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": -55.684210526315795,
+        "min": -69.86842105263158,
+        "max": -44.86842105263158,
+        "side3WinRate": 0,
+        "side3WinRateError": 0,
+        "bandError": 5.23684210526315,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": false
+      },
+      "samples": [
+        {
+          "rowId": "5-19_vs_1903-21",
+          "matchup": "Hand Cannoneer vs Elite Fire Lancer",
+          "sampleIndex": 0,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 341,
+          "score": -44.86842105263158,
+          "ticks": 1746,
+          "finalStateHash": "162cca9a4ef7ed399e57c61607ca802506922626a3d9682682c1375ab21aadad",
+          "eventLogHash": "cf7a6dded225bded81a486337f6be8adbf02aa9b497af7bc7da4ab0165235504",
+          "diagnostics": {
+            "eventCount": 36171,
+            "damageEvents": 164,
+            "damageEventsByOwner": {
+              "2": 93,
+              "3": 71
+            },
+            "damageAmountByOwner": {
+              "2": 1892,
+              "3": 430
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 152
+            },
+            "blockedEvents": 8829,
+            "targetAcquisitions": 144,
+            "targetInvalidations": 124
+          }
+        },
+        {
+          "rowId": "5-19_vs_1903-21",
+          "matchup": "Hand Cannoneer vs Elite Fire Lancer",
+          "sampleIndex": 1,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 531,
+          "score": -69.86842105263158,
+          "ticks": 1718,
+          "finalStateHash": "88aae1c10686e00a21f3d9801717b6c002e76c53406e62be861228e10dd8bf62",
+          "eventLogHash": "83c38f8fd4de4bf382bf0027b6d97c57ea9937aab1f595570712a88cecfa1382",
+          "diagnostics": {
+            "eventCount": 43823,
+            "damageEvents": 147,
+            "damageEventsByOwner": {
+              "2": 97,
+              "3": 50
+            },
+            "damageAmountByOwner": {
+              "2": 1947,
+              "3": 241
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 135
+            },
+            "blockedEvents": 9225,
+            "targetAcquisitions": 119,
+            "targetInvalidations": 99
+          }
+        },
+        {
+          "rowId": "5-19_vs_1903-21",
+          "matchup": "Hand Cannoneer vs Elite Fire Lancer",
+          "sampleIndex": 2,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 402,
+          "score": -52.89473684210526,
+          "ticks": 1973,
+          "finalStateHash": "e819618aeaa010472c7f73bde9eff8607561e19c89c85f218f48534051a5b39f",
+          "eventLogHash": "13613f2f5d0575ebe8cf5202ed1002800a9b7c6d8648c7ca62225cab8ca52298",
+          "diagnostics": {
+            "eventCount": 43664,
+            "damageEvents": 164,
+            "damageEventsByOwner": {
+              "2": 97,
+              "3": 67
+            },
+            "damageAmountByOwner": {
+              "2": 1925,
+              "3": 369
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 135
+            },
+            "blockedEvents": 9307,
+            "targetAcquisitions": 144,
+            "targetInvalidations": 125
+          }
+        },
+        {
+          "rowId": "5-19_vs_1903-21",
+          "matchup": "Hand Cannoneer vs Elite Fire Lancer",
+          "sampleIndex": 3,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 342,
+          "score": -45,
+          "ticks": 1961,
+          "finalStateHash": "6611b31ebb072b3c4002f262a439ab55bcd81fdf49204c716ca557273a322054",
+          "eventLogHash": "a7036e87f5bb2372c9a2f6cda2f90ba79aa16b70a7488c9ef802a85a6357bc92",
+          "diagnostics": {
+            "eventCount": 40494,
+            "damageEvents": 170,
+            "damageEventsByOwner": {
+              "2": 97,
+              "3": 73
+            },
+            "damageAmountByOwner": {
+              "2": 1936,
+              "3": 429
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 127
+            },
+            "blockedEvents": 9011,
+            "targetAcquisitions": 144,
+            "targetInvalidations": 124
+          }
+        },
+        {
+          "rowId": "5-19_vs_1903-21",
+          "matchup": "Hand Cannoneer vs Elite Fire Lancer",
+          "sampleIndex": 4,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 500,
+          "score": -65.78947368421052,
+          "ticks": 1943,
+          "finalStateHash": "e8d450d64593f79c36382930475b9b84764e933ed50da1b3598447f1bfeaf183",
+          "eventLogHash": "3b4674dacfa2129a7511bca86b8ca2316ba41bc57ae494ef8c41bfcfdfae799f",
+          "diagnostics": {
+            "eventCount": 47692,
+            "damageEvents": 153,
+            "damageEventsByOwner": {
+              "2": 97,
+              "3": 56
+            },
+            "damageAmountByOwner": {
+              "2": 1925,
+              "3": 280
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 132
+            },
+            "blockedEvents": 8780,
+            "targetAcquisitions": 131,
+            "targetInvalidations": 110
+          }
+        }
+      ]
+    },
+    {
+      "id": "5-21_vs_330-17",
+      "matchup": "Hand Cannoneer vs Heavy Camel Rider",
+      "tape": {
+        "scoredRuns": 6,
+        "timeoutRuns": 0,
+        "mean": -67.51984126984127,
+        "min": -73.57142857142857,
+        "max": -61.30952380952381,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "baseline": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": -57.54761904761905,
+        "min": -63.80952380952381,
+        "max": -51.666666666666664,
+        "side3WinRate": 0,
+        "side3WinRateError": 0,
+        "bandError": 3.761904761904759,
+        "tapeBandCoverage": 0.2,
+        "wrongStableWinner": false
+      },
+      "candidate": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": -49.42857142857143,
+        "min": -63.92857142857143,
+        "max": -12.619047619047619,
+        "side3WinRate": 0,
+        "side3WinRateError": 0,
+        "bandError": 11.88095238095238,
+        "tapeBandCoverage": 0.4,
+        "wrongStableWinner": false
+      },
+      "samples": [
+        {
+          "rowId": "5-21_vs_330-17",
+          "matchup": "Hand Cannoneer vs Heavy Camel Rider",
+          "sampleIndex": 0,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 523,
+          "score": -62.26190476190476,
+          "ticks": 3889,
+          "finalStateHash": "32fcf2baaba4d173c8f3adac75debac65eb192a4e2ab42d3afa79c33343ac198",
+          "eventLogHash": "12d55cb92f845f7800d8ccb49a3b68d6671ae33ddb47685577e5be980b67f636",
+          "diagnostics": {
+            "eventCount": 88667,
+            "damageEvents": 257,
+            "damageEventsByOwner": {
+              "2": 210,
+              "3": 47
+            },
+            "damageAmountByOwner": {
+              "2": 2483,
+              "3": 329
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 238
+            },
+            "blockedEvents": 14807,
+            "targetAcquisitions": 121,
+            "targetInvalidations": 104
+          }
+        },
+        {
+          "rowId": "5-21_vs_330-17",
+          "matchup": "Hand Cannoneer vs Heavy Camel Rider",
+          "sampleIndex": 1,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 490,
+          "score": -58.333333333333336,
+          "ticks": 3408,
+          "finalStateHash": "9af62107573ca6b644ff350d2de051f48cab1bc80a77178f9582775e5f9d17a1",
+          "eventLogHash": "41b84b57af7ee5067908132b2745d0cb72bf0e8d1dc340bf2cd4b15394e22de4",
+          "diagnostics": {
+            "eventCount": 77908,
+            "damageEvents": 259,
+            "damageEventsByOwner": {
+              "2": 207,
+              "3": 52
+            },
+            "damageAmountByOwner": {
+              "2": 2470,
+              "3": 364
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 269
+            },
+            "blockedEvents": 14787,
+            "targetAcquisitions": 96,
+            "targetInvalidations": 79
+          }
+        },
+        {
+          "rowId": "5-21_vs_330-17",
+          "matchup": "Hand Cannoneer vs Heavy Camel Rider",
+          "sampleIndex": 2,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 537,
+          "score": -63.92857142857143,
+          "ticks": 3412,
+          "finalStateHash": "0100f757ebf573cbe8a1d5b0f5e21d003c6fafde715ba69b61b305d7eba70722",
+          "eventLogHash": "b0ae242b5cae27d3245ae5bd40c4a22b9169e5a33205bd914064edf05d0f956b",
+          "diagnostics": {
+            "eventCount": 77942,
+            "damageEvents": 253,
+            "damageEventsByOwner": {
+              "2": 208,
+              "3": 45
+            },
+            "damageAmountByOwner": {
+              "2": 2483,
+              "3": 315
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 238
+            },
+            "blockedEvents": 12034,
+            "targetAcquisitions": 123,
+            "targetInvalidations": 106
+          }
+        },
+        {
+          "rowId": "5-21_vs_330-17",
+          "matchup": "Hand Cannoneer vs Heavy Camel Rider",
+          "sampleIndex": 3,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 106,
+          "score": -12.619047619047619,
+          "ticks": 7223,
+          "finalStateHash": "c5b08d6696be71f0e9d5a9e7872e81b091635870b71bfa08314ff75bc97f4599",
+          "eventLogHash": "3c443459bccb982329cb8ea951e88d84964f1d44b4b28f06c3258d16e66d836a",
+          "diagnostics": {
+            "eventCount": 92556,
+            "damageEvents": 321,
+            "damageEventsByOwner": {
+              "2": 211,
+              "3": 110
+            },
+            "damageAmountByOwner": {
+              "2": 2483,
+              "3": 770
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 244
+            },
+            "blockedEvents": 19988,
+            "targetAcquisitions": 121,
+            "targetInvalidations": 109
+          }
+        },
+        {
+          "rowId": "5-21_vs_330-17",
+          "matchup": "Hand Cannoneer vs Heavy Camel Rider",
+          "sampleIndex": 4,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 420,
+          "score": -50,
+          "ticks": 4127,
+          "finalStateHash": "e50f2c453bc7d80054df9702cc120b5e38ce29bc7fd8a2a6b334b71f13dd528e",
+          "eventLogHash": "0627d2b91db3fbd722362265b52e5f8134069bfabfa2d9f258c1a3fed0d678b3",
+          "diagnostics": {
+            "eventCount": 88523,
+            "damageEvents": 270,
+            "damageEventsByOwner": {
+              "2": 208,
+              "3": 62
+            },
+            "damageAmountByOwner": {
+              "2": 2444,
+              "3": 434
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 240
+            },
+            "blockedEvents": 15713,
+            "targetAcquisitions": 107,
+            "targetInvalidations": 90
+          }
+        }
+      ]
+    },
+    {
+      "id": "5-21_vs_569-14",
+      "matchup": "Hand Cannoneer vs Paladin",
+      "tape": {
+        "scoredRuns": 10,
+        "timeoutRuns": 0,
+        "mean": 15.444444444444446,
+        "min": -9.047619047619047,
+        "max": 32.142857142857146,
+        "side3WinRate": 0.9,
+        "volatile": true
+      },
+      "baseline": {
+        "simulationRuns": 100,
+        "unresolvedRuns": 0,
+        "mean": 47.52023809523807,
+        "min": -23.333333333333332,
+        "max": 66.07142857142857,
+        "side3WinRate": 0.97,
+        "side3WinRateError": 0.06999999999999995,
+        "bandError": 15.377380952380925,
+        "tapeBandCoverage": 0.05,
+        "wrongStableWinner": false
+      },
+      "candidate": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": 64.24603174603175,
+        "min": 60.51587301587302,
+        "max": 68.05555555555556,
+        "side3WinRate": 1,
+        "side3WinRateError": 0.09999999999999998,
+        "bandError": 32.1031746031746,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": false
+      },
+      "samples": [
+        {
+          "rowId": "5-21_vs_569-14",
+          "matchup": "Hand Cannoneer vs Paladin",
+          "sampleIndex": 0,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1715,
+          "score": 68.05555555555556,
+          "ticks": 2077,
+          "finalStateHash": "a27fdb4c60860aed6a30d0864625acb5a1e2878327577798263f15ec2a0fac8a",
+          "eventLogHash": "0976d53682d30dfb5453355388c35ef92fb128fea8cab86ccd03d0c3b3b3e959",
+          "diagnostics": {
+            "eventCount": 40923,
+            "damageEvents": 153,
+            "damageEventsByOwner": {
+              "2": 90,
+              "3": 63
+            },
+            "damageAmountByOwner": {
+              "2": 810,
+              "3": 882
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 303
+            },
+            "blockedEvents": 13688,
+            "targetAcquisitions": 129,
+            "targetInvalidations": 116
+          }
+        },
+        {
+          "rowId": "5-21_vs_569-14",
+          "matchup": "Hand Cannoneer vs Paladin",
+          "sampleIndex": 1,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1530,
+          "score": 60.714285714285715,
+          "ticks": 2618,
+          "finalStateHash": "76ce125ba379722e86a72983f621722df9048990ea60e4bdea11683a178d655c",
+          "eventLogHash": "f62854622b4a8265c4868786283ae958b8e9d3c3dd2e2a1594dcffc7bd00e800",
+          "diagnostics": {
+            "eventCount": 49984,
+            "damageEvents": 175,
+            "damageEventsByOwner": {
+              "2": 112,
+              "3": 63
+            },
+            "damageAmountByOwner": {
+              "2": 1010,
+              "3": 882
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 307
+            },
+            "blockedEvents": 12511,
+            "targetAcquisitions": 146,
+            "targetInvalidations": 139
+          }
+        },
+        {
+          "rowId": "5-21_vs_569-14",
+          "matchup": "Hand Cannoneer vs Paladin",
+          "sampleIndex": 2,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1660,
+          "score": 65.87301587301587,
+          "ticks": 2251,
+          "finalStateHash": "db95fc8fb89ea62b01884ac286bc124da3a5d6877f82be2bd364dae1dfd40a70",
+          "eventLogHash": "d13f0ddeeb02e3edce6cb99acbb0748b0807b640b7616cc95016b90718a5b65b",
+          "diagnostics": {
+            "eventCount": 42246,
+            "damageEvents": 157,
+            "damageEventsByOwner": {
+              "2": 94,
+              "3": 63
+            },
+            "damageAmountByOwner": {
+              "2": 860,
+              "3": 882
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 281
+            },
+            "blockedEvents": 11443,
+            "targetAcquisitions": 121,
+            "targetInvalidations": 116
+          }
+        },
+        {
+          "rowId": "5-21_vs_569-14",
+          "matchup": "Hand Cannoneer vs Paladin",
+          "sampleIndex": 3,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1525,
+          "score": 60.51587301587302,
+          "ticks": 3205,
+          "finalStateHash": "ba630b7f14038666c5913935f50db446341902b17e239e26737f244d33b2ea43",
+          "eventLogHash": "5bcb30a29d672c2aa0739853d38f6257dd0a5b262b000fe250e622eb99c2450f",
+          "diagnostics": {
+            "eventCount": 57311,
+            "damageEvents": 174,
+            "damageEventsByOwner": {
+              "2": 111,
+              "3": 63
+            },
+            "damageAmountByOwner": {
+              "2": 1005,
+              "3": 882
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 281
+            },
+            "blockedEvents": 14826,
+            "targetAcquisitions": 132,
+            "targetInvalidations": 129
+          }
+        },
+        {
+          "rowId": "5-21_vs_569-14",
+          "matchup": "Hand Cannoneer vs Paladin",
+          "sampleIndex": 4,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1665,
+          "score": 66.07142857142857,
+          "ticks": 2068,
+          "finalStateHash": "22a19c530ba72af8ce910bc78747010855a1917c5a167c4e3e8add97659df73e",
+          "eventLogHash": "0cd0ec22ae0f062a1e6b7e911cfe3ee5a3639c627df6981ac0accb4de3a41d6b",
+          "diagnostics": {
+            "eventCount": 40566,
+            "damageEvents": 157,
+            "damageEventsByOwner": {
+              "2": 94,
+              "3": 63
+            },
+            "damageAmountByOwner": {
+              "2": 860,
+              "3": 882
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 303
+            },
+            "blockedEvents": 12444,
+            "targetAcquisitions": 126,
+            "targetInvalidations": 122
+          }
+        }
+      ]
+    },
+    {
+      "id": "5-21_vs_1134-12",
+      "matchup": "Hand Cannoneer vs Elite Battle Elephant",
+      "tape": {
+        "scoredRuns": 5,
+        "timeoutRuns": 0,
+        "mean": 2.3839285714285707,
+        "min": -38.333333333333336,
+        "max": 32.291666666666664,
+        "side3WinRate": 0.6,
+        "volatile": true
+      },
+      "baseline": {
+        "simulationRuns": 100,
+        "unresolvedRuns": 0,
+        "mean": 77.52604166666669,
+        "min": 56.979166666666664,
+        "max": 84.79166666666667,
+        "side3WinRate": 1,
+        "side3WinRateError": 0.4,
+        "bandError": 45.23437500000002,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": false
+      },
+      "candidate": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": 76.52083333333334,
+        "min": 68.54166666666667,
+        "max": 84.6875,
+        "side3WinRate": 1,
+        "side3WinRateError": 0.4,
+        "bandError": 44.22916666666668,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": false
+      },
+      "samples": [
+        {
+          "rowId": "5-21_vs_1134-12",
+          "matchup": "Hand Cannoneer vs Elite Battle Elephant",
+          "sampleIndex": 0,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 2948,
+          "score": 76.77083333333333,
+          "ticks": 3693,
+          "finalStateHash": "e9b5257bbc1174a174f3387c1be250ce4bb7454861d4e2514e2c82dd96f4cb34",
+          "eventLogHash": "ddc6dfc6430d280e83e1d01fec6c86438704fbb36c8ee7892241e92e9c77246b",
+          "diagnostics": {
+            "eventCount": 81646,
+            "damageEvents": 200,
+            "damageEventsByOwner": {
+              "2": 125,
+              "3": 75
+            },
+            "damageAmountByOwner": {
+              "2": 900,
+              "3": 958.5
+            },
+            "firstDamageTickByOwner": {
+              "2": 52,
+              "3": 333
+            },
+            "blockedEvents": 23082,
+            "targetAcquisitions": 134,
+            "targetInvalidations": 119
+          }
+        },
+        {
+          "rowId": "5-21_vs_1134-12",
+          "matchup": "Hand Cannoneer vs Elite Battle Elephant",
+          "sampleIndex": 1,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 3036,
+          "score": 79.0625,
+          "ticks": 3701,
+          "finalStateHash": "7bdb739ba471a8e80f353903e565416797031056aa83a364cbe8d6a578275dda",
+          "eventLogHash": "31a668d1e506daef4d42d52c4202b4bac807d692dd05b7caefbc684039ac0c9d",
+          "diagnostics": {
+            "eventCount": 79817,
+            "damageEvents": 186,
+            "damageEventsByOwner": {
+              "2": 113,
+              "3": 73
+            },
+            "damageAmountByOwner": {
+              "2": 808,
+              "3": 990
+            },
+            "firstDamageTickByOwner": {
+              "2": 52,
+              "3": 336
+            },
+            "blockedEvents": 22223,
+            "targetAcquisitions": 125,
+            "targetInvalidations": 110
+          }
+        },
+        {
+          "rowId": "5-21_vs_1134-12",
+          "matchup": "Hand Cannoneer vs Elite Battle Elephant",
+          "sampleIndex": 2,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 2824,
+          "score": 73.54166666666667,
+          "ticks": 4858,
+          "finalStateHash": "91d04afb9c93d1a3605136156acc533f15577a9eb5cc6a6b3f512943cd6a536d",
+          "eventLogHash": "5eb28fce550e08a20d857166cd389420a7cd8e177bb9d60607ce31d2c1463df4",
+          "diagnostics": {
+            "eventCount": 103463,
+            "damageEvents": 217,
+            "damageEventsByOwner": {
+              "2": 142,
+              "3": 75
+            },
+            "damageAmountByOwner": {
+              "2": 1024,
+              "3": 972
+            },
+            "firstDamageTickByOwner": {
+              "2": 52,
+              "3": 334
+            },
+            "blockedEvents": 29526,
+            "targetAcquisitions": 116,
+            "targetInvalidations": 101
+          }
+        },
+        {
+          "rowId": "5-21_vs_1134-12",
+          "matchup": "Hand Cannoneer vs Elite Battle Elephant",
+          "sampleIndex": 3,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 2632,
+          "score": 68.54166666666667,
+          "ticks": 4181,
+          "finalStateHash": "c3f1e4d05dc1e557792b19cd86461d538683699d2d6618c9cf0932bf827811f6",
+          "eventLogHash": "e1d50de804313e9d56b43f4ac8fe869f4431d3489bf6713ad8aca84c1dfc9f87",
+          "diagnostics": {
+            "eventCount": 91374,
+            "damageEvents": 236,
+            "damageEventsByOwner": {
+              "2": 167,
+              "3": 69
+            },
+            "damageAmountByOwner": {
+              "2": 1212,
+              "3": 972
+            },
+            "firstDamageTickByOwner": {
+              "2": 52,
+              "3": 333
+            },
+            "blockedEvents": 22606,
+            "targetAcquisitions": 121,
+            "targetInvalidations": 106
+          }
+        },
+        {
+          "rowId": "5-21_vs_1134-12",
+          "matchup": "Hand Cannoneer vs Elite Battle Elephant",
+          "sampleIndex": 4,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 3252,
+          "score": 84.6875,
+          "ticks": 2036,
+          "finalStateHash": "649dbf4a6b9182244c1abf93f179a712bab542ce996c0ba84fb443058f57b9cc",
+          "eventLogHash": "7c961c55922b1f985aff21c493cfa94502ec76127a7643be6a06c18e9f6d6afe",
+          "diagnostics": {
+            "eventCount": 45765,
+            "damageEvents": 166,
+            "damageEventsByOwner": {
+              "2": 80,
+              "3": 86
+            },
+            "damageAmountByOwner": {
+              "2": 592,
+              "3": 981
+            },
+            "firstDamageTickByOwner": {
+              "2": 52,
+              "3": 334
+            },
+            "blockedEvents": 13123,
+            "targetAcquisitions": 88,
+            "targetInvalidations": 73
+          }
+        }
+      ]
+    },
+    {
+      "id": "5-21_vs_1372-19",
+      "matchup": "Hand Cannoneer vs Elite Steppe Lancer",
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": 8.026315789473685,
+        "min": 8.026315789473685,
+        "max": 8.026315789473685,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "baseline": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": 63.394736842105274,
+        "min": 61.421052631578945,
+        "max": 64.65789473684211,
+        "side3WinRate": 1,
+        "side3WinRateError": 0,
+        "bandError": 55.36842105263159,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": false
+      },
+      "candidate": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": 68.91578947368421,
+        "min": 67.26315789473684,
+        "max": 71.07894736842105,
+        "side3WinRate": 1,
+        "side3WinRateError": 0,
+        "bandError": 60.88947368421053,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": false
+      },
+      "samples": [
+        {
+          "rowId": "5-21_vs_1372-19",
+          "matchup": "Hand Cannoneer vs Elite Steppe Lancer",
+          "sampleIndex": 0,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1279,
+          "score": 67.3157894736842,
+          "ticks": 1206,
+          "finalStateHash": "5948c162870332158bf3cab7717589ce3567fbe714ca7dfd11a214fc1964081f",
+          "eventLogHash": "14ce61eba3f1ba673aebd6d2edc13cf7133676aafddfe25f1c228bdce4465f0a",
+          "diagnostics": {
+            "eventCount": 29187,
+            "damageEvents": 148,
+            "damageEventsByOwner": {
+              "2": 64,
+              "3": 84
+            },
+            "damageAmountByOwner": {
+              "2": 660,
+              "3": 924
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 140
+            },
+            "blockedEvents": 7633,
+            "targetAcquisitions": 181,
+            "targetInvalidations": 164
+          }
+        },
+        {
+          "rowId": "5-21_vs_1372-19",
+          "matchup": "Hand Cannoneer vs Elite Steppe Lancer",
+          "sampleIndex": 1,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1339.5,
+          "score": 70.5,
+          "ticks": 1210,
+          "finalStateHash": "8108318ff65cac52a1b0e8d6c75168185d9276caafb935c6f9d43499ae26e56b",
+          "eventLogHash": "e90af8e45d200264e733459d3dec0cf0fd83ac12aff44ec95434e304503650bb",
+          "diagnostics": {
+            "eventCount": 30855,
+            "damageEvents": 143,
+            "damageEventsByOwner": {
+              "2": 59,
+              "3": 84
+            },
+            "damageAmountByOwner": {
+              "2": 605,
+              "3": 924
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 140
+            },
+            "blockedEvents": 8920,
+            "targetAcquisitions": 199,
+            "targetInvalidations": 181
+          }
+        },
+        {
+          "rowId": "5-21_vs_1372-19",
+          "matchup": "Hand Cannoneer vs Elite Steppe Lancer",
+          "sampleIndex": 2,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1278,
+          "score": 67.26315789473684,
+          "ticks": 1390,
+          "finalStateHash": "272cbc64f3ad59724d31350fdee92f8b85233829ae8d826ee58ce33fea3edeb0",
+          "eventLogHash": "f137425ec7f77e21515f078ee53c79f1c379f329738cd0efdd30a5d428b4c46f",
+          "diagnostics": {
+            "eventCount": 33237,
+            "damageEvents": 149,
+            "damageEventsByOwner": {
+              "2": 65,
+              "3": 84
+            },
+            "damageAmountByOwner": {
+              "2": 671,
+              "3": 924
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 140
+            },
+            "blockedEvents": 9941,
+            "targetAcquisitions": 179,
+            "targetInvalidations": 160
+          }
+        },
+        {
+          "rowId": "5-21_vs_1372-19",
+          "matchup": "Hand Cannoneer vs Elite Steppe Lancer",
+          "sampleIndex": 3,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1350.5,
+          "score": 71.07894736842105,
+          "ticks": 1231,
+          "finalStateHash": "81699b78307e0af7dc868f8cb618e936c43d0426b2519cf670dcddc2a5e733c3",
+          "eventLogHash": "1e65d03fdc8ad21620a61839553b451d334e9930d6efa093bef2eebc1a78c2d7",
+          "diagnostics": {
+            "eventCount": 31227,
+            "damageEvents": 142,
+            "damageEventsByOwner": {
+              "2": 58,
+              "3": 84
+            },
+            "damageAmountByOwner": {
+              "2": 588.5,
+              "3": 924
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 140
+            },
+            "blockedEvents": 9024,
+            "targetAcquisitions": 194,
+            "targetInvalidations": 179
+          }
+        },
+        {
+          "rowId": "5-21_vs_1372-19",
+          "matchup": "Hand Cannoneer vs Elite Steppe Lancer",
+          "sampleIndex": 4,
+          "seed": 20260411,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1300,
+          "score": 68.42105263157895,
+          "ticks": 1228,
+          "finalStateHash": "a812c3c58f2cca0df23257da4ac6975d1669bbd275437067c68e2571b5ad227c",
+          "eventLogHash": "d1361958c4cadfbbb6aeb936efba0673a4468180a4b2fe8a6da711da4a8b4837",
+          "diagnostics": {
+            "eventCount": 30441,
+            "damageEvents": 147,
+            "damageEventsByOwner": {
+              "2": 63,
+              "3": 84
+            },
+            "damageAmountByOwner": {
+              "2": 643.5,
+              "3": 924
+            },
+            "firstDamageTickByOwner": {
+              "2": 49,
+              "3": 140
+            },
+            "blockedEvents": 8204,
+            "targetAcquisitions": 205,
+            "targetInvalidations": 190
+          }
+        }
+      ]
+    }
+  ],
+  "hcaGate": {
+    "matchup": "Heavy Cavalry Archer vs Champion",
+    "identical": true,
+    "samples": [
+      {
+        "sampleIndex": 0,
+        "scoreIdentical": true,
+        "finalStateHashIdentical": true,
+        "eventLogHashIdentical": true,
+        "before": {
+          "score": -57.604166666666664,
+          "finalStateHash": "fdba4c0bb540dea59a8a385c03fda0a3c599370bf946931d81241738848c9830",
+          "eventLogHash": "7194574b355104eaa07d7f02062739884d4862a8f4499eec26c1b899398c1289"
+        },
+        "current": {
+          "score": -57.604166666666664,
+          "finalStateHash": "fdba4c0bb540dea59a8a385c03fda0a3c599370bf946931d81241738848c9830",
+          "eventLogHash": "7194574b355104eaa07d7f02062739884d4862a8f4499eec26c1b899398c1289"
+        }
+      },
+      {
+        "sampleIndex": 1,
+        "scoreIdentical": true,
+        "finalStateHashIdentical": true,
+        "eventLogHashIdentical": true,
+        "before": {
+          "score": -33.75,
+          "finalStateHash": "59fa5edccc6028ef29938f0e8d0a623890f9057312accecee8ad2f302d0d0bf0",
+          "eventLogHash": "15b8e1a74ed037a41c17eb65b365ea2c6e90b2c7d0dba7de1c6d9d11d7bfb567"
+        },
+        "current": {
+          "score": -33.75,
+          "finalStateHash": "59fa5edccc6028ef29938f0e8d0a623890f9057312accecee8ad2f302d0d0bf0",
+          "eventLogHash": "15b8e1a74ed037a41c17eb65b365ea2c6e90b2c7d0dba7de1c6d9d11d7bfb567"
+        }
+      },
+      {
+        "sampleIndex": 2,
+        "scoreIdentical": true,
+        "finalStateHashIdentical": true,
+        "eventLogHashIdentical": true,
+        "before": {
+          "score": -68.85416666666667,
+          "finalStateHash": "392c46f809f9c239813db1a07db82dd27e7b0e01020e45f194000a79db8d7937",
+          "eventLogHash": "31ab00248b9f0557395c37a1ff31525274598f2c164dc6ab4c049735c14d0bbf"
+        },
+        "current": {
+          "score": -68.85416666666667,
+          "finalStateHash": "392c46f809f9c239813db1a07db82dd27e7b0e01020e45f194000a79db8d7937",
+          "eventLogHash": "31ab00248b9f0557395c37a1ff31525274598f2c164dc6ab4c049735c14d0bbf"
+        }
+      },
+      {
+        "sampleIndex": 3,
+        "scoreIdentical": true,
+        "finalStateHashIdentical": true,
+        "eventLogHashIdentical": true,
+        "before": {
+          "score": -57.8125,
+          "finalStateHash": "514118245a9c74d304699642b3ae0ecc9d502852e6ca5f9717e32c6a0ade67fc",
+          "eventLogHash": "b98826945aaafe4903aa11eadf2014919bc8bd5a466ae09b0de058af966d27fb"
+        },
+        "current": {
+          "score": -57.8125,
+          "finalStateHash": "514118245a9c74d304699642b3ae0ecc9d502852e6ca5f9717e32c6a0ade67fc",
+          "eventLogHash": "b98826945aaafe4903aa11eadf2014919bc8bd5a466ae09b0de058af966d27fb"
+        }
+      },
+      {
+        "sampleIndex": 4,
+        "scoreIdentical": true,
+        "finalStateHashIdentical": true,
+        "eventLogHashIdentical": true,
+        "before": {
+          "score": -46.5625,
+          "finalStateHash": "b7cef8c2b0b838b44ba941a2d4abb971c388a575f3bbbc0043594c210c6bad50",
+          "eventLogHash": "48a6df954cf6a5a082f2877c14f47e60575a876cb19603a4fbcccac8e5d003c9"
+        },
+        "current": {
+          "score": -46.5625,
+          "finalStateHash": "b7cef8c2b0b838b44ba941a2d4abb971c388a575f3bbbc0043594c210c6bad50",
+          "eventLogHash": "48a6df954cf6a5a082f2877c14f47e60575a876cb19603a4fbcccac8e5d003c9"
+        }
+      }
+    ]
+  }
+}

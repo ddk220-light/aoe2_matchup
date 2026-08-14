@@ -169,3 +169,124 @@ test("the dedicated Hand Cannoneer movement link exposes three saved navigation 
     assert.equal(battleStateModule.soloMovementRequest(url), null);
   }
 });
+
+
+test("the Hand Cannoneer versus Champion observation link is locked to cohesive combat", () => {
+  assert.equal(typeof battleStateModule.kitingFightRequest, "function");
+  assert.deepEqual(
+    battleStateModule.kitingFightRequest(
+      "http://127.0.0.1:5011/?mode=hand-cannoneer-vs-champion-kiting",
+    ),
+    {
+      endpoint: "api/hand-cannoneer-vs-champion-kiting",
+      navigation: "cohesive",
+      query: "navigation=cohesive",
+    },
+  );
+  assert.deepEqual(
+    battleStateModule.kitingFightRequest(
+      "https://dragonstar.tail82a190.ts.net/golden-map/"
+        + "?mode=hand-cannoneer-vs-champion-kiting&navigation=per-unit-grid",
+    ),
+    {
+      endpoint: "api/hand-cannoneer-vs-champion-kiting",
+      navigation: "per-unit-grid",
+      query: "navigation=per-unit-grid",
+    },
+  );
+  for (const url of [
+    "http://127.0.0.1:5011/",
+    "http://127.0.0.1:5011/?mode=hand-cannoneer-vs-champion-kiting&count=21",
+    "http://127.0.0.1:5011/?mode=hand-cannoneer-vs-champion-kiting&unit=arbalester",
+    "http://127.0.0.1:5011/?mode=hand-cannoneer-vs-champion-kiting&navigation=unknown",
+    "http://127.0.0.1:5011/?mode=hand-cannoneer-vs-champion-kiting&navigation=cohesive&navigation=baseline",
+  ]) {
+    assert.equal(battleStateModule.kitingFightRequest(url), null);
+  }
+});
+
+
+test("the generalized kiting lab accepts only supported ranged-versus-melee pairs", () => {
+  assert.deepEqual(
+    battleStateModule.kitingFightRequest(
+      "https://dragonstar.tail82a190.ts.net/golden-map/"
+        + "?mode=ranged-vs-melee-kiting&ranged=heavy_scorpion&melee=paladin"
+        + "&navigation=cohesive&n2=12&n3=17",
+    ),
+    {
+      endpoint: "api/ranged-vs-melee-kiting",
+      ranged: "heavy_scorpion",
+      melee: "paladin",
+      navigation: "cohesive",
+      n2: 12,
+      n3: 17,
+      query: "ranged=heavy_scorpion&melee=paladin&navigation=cohesive&n2=12&n3=17",
+    },
+  );
+  assert.deepEqual(
+    battleStateModule.kitingFightRequest(
+      "https://dragonstar.tail82a190.ts.net/golden-map/"
+        + "?mode=ranged-vs-melee-kiting&ranged=heavy_scorpion&melee=paladin"
+        + "&navigation=cohesive",
+    ),
+    {
+      endpoint: "api/ranged-vs-melee-kiting",
+      ranged: "heavy_scorpion",
+      melee: "paladin",
+      navigation: "cohesive",
+      query: "ranged=heavy_scorpion&melee=paladin&navigation=cohesive",
+    },
+  );
+  assert.deepEqual(
+    battleStateModule.kitingFightRequest(
+      "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting",
+    ),
+    {
+      endpoint: "api/ranged-vs-melee-kiting",
+      ranged: "hand_cannoneer",
+      melee: "champion",
+      navigation: "cohesive",
+      query: "ranged=hand_cannoneer&melee=champion&navigation=cohesive",
+    },
+  );
+  for (const url of [
+    "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&ranged=champion&melee=paladin",
+    "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&ranged=arbalester&melee=arbalester",
+    "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&ranged=arbalester&melee=unknown",
+    "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&ranged=arbalester&ranged=heavy_scorpion",
+    "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&navigation=unknown",
+    "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&n2=10",
+    "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&n2=0&n3=10",
+    "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&n2=1.5&n3=10",
+    "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&n2=21&n3=22",
+    "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&ranged=heavy_scorpion&n2=17&n3=10",
+    "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&n2=10&n2=11&n3=10",
+  ]) {
+    assert.equal(battleStateModule.kitingFightRequest(url), null);
+  }
+});
+
+
+test("kiting setup links preserve manual counts and clamp them to the selected formation", () => {
+  assert.equal(typeof battleStateModule.kitingFightHref, "function");
+  assert.equal(
+    battleStateModule.kitingFightHref(
+      "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&navigation=cohesive"
+        + "&ranged=hand_cannoneer&melee=champion&n2=21&n3=18",
+      { ranged: "heavy_scorpion", melee: "champion", n2: 21, n3: 18, max2: 16, max3: 21 },
+    ),
+    "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&navigation=cohesive"
+      + "&ranged=heavy_scorpion&melee=champion&n2=16&n3=18",
+  );
+  assert.equal(
+    battleStateModule.kitingFightHref(
+      "https://dragonstar.tail82a190.ts.net/golden-map/"
+        + "?mode=ranged-vs-melee-kiting&navigation=cohesive"
+        + "&ranged=heavy_scorpion&melee=champion&n2=8&n3=21",
+      { ranged: "arbalester", melee: "paladin" },
+    ),
+    "https://dragonstar.tail82a190.ts.net/golden-map/"
+      + "?mode=ranged-vs-melee-kiting&navigation=cohesive"
+      + "&ranged=arbalester&melee=paladin",
+  );
+});

@@ -6,9 +6,9 @@
 // partial speed (the 12v21 forensics, docs/HCC_CHASER_MOBILITY_2026-08-07.md).
 // This module is the missing plan step, per unit, against the actual bodies:
 //
-//   * obstacles = the map's static obstruction cells plus every living unit's
-//     collision box EXCEPT the mover and its own pursuit target (walking into
-//     the target is the catch);
+//   * obstacles = the map's static obstruction cells plus enemy collision
+//     boxes except the pursuit target (walking into the target is the catch);
+//     friendly crowd bodies stay dynamic in local avoidance/collision;
 //   * a coarse A* over 0.25-tile cells, 8-connected, octile heuristic,
 //     deterministic tie-breaks (cell index order);
 //   * straight line clear -> no plan, the caller keeps its live tracking;
@@ -152,9 +152,15 @@ function planGridAim(mover, target, obstacles, map, enterBlockedGoal) {
   const startY = toCell(mover.y, rows);
   const goalX = toCell(target.x, cols);
   const goalY = toCell(target.y, rows);
+  // Continuous collision has already established that the mover's exact
+  // position is legal. Its coarse cell centre can nevertheless fall inside
+  // inflated obstacle geometry, especially at obstacle corners. Never trap
+  // the mover inside that rasterization error.
+  const startIndex = cellIndex(startX, startY, cols);
+  const startCellWasBlocked = blocked[startIndex] === 1;
+  blocked[startIndex] = 0;
   if (lineClear(blocked, cols, startX, startY, goalX, goalY)) return null;
 
-  const startIndex = cellIndex(startX, startY, cols);
   const goalIndex = cellIndex(goalX, goalY, cols);
   const gScore = new Map([[startIndex, 0]]);
   const cameFrom = new Map();
@@ -200,7 +206,11 @@ function planGridAim(mover, target, obstacles, map, enterBlockedGoal) {
     }
   }
 
-  if (best.index === startIndex) return Object.freeze({ stand: true });
+  if (best.index === startIndex) {
+    return startCellWasBlocked && enterBlockedGoal
+      ? null
+      : Object.freeze({ stand: true });
+  }
 
   // Rebuild the path start -> best, then take the lookahead waypoint.
   const path = [];
@@ -224,5 +234,16 @@ export function planMoveAim(mover, goal, obstacles, map) {
 
 
 export function planChaseAim(mover, target, obstacles, map) {
-  return planGridAim(mover, target, [...(map.obstacles ?? []), ...obstacles], map, true);
+  const blocking = obstacles.filter((body) => (
+    body.owner === undefined || body.owner !== mover.owner
+  ));
+  const planned = planGridAim(
+    mover, target, [...(map.obstacles ?? []), ...blocking], map, true,
+  );
+  if (planned?.stand !== true || blocking.length === 0) return planned;
+  // Dynamic bodies can move on the very next tick. If only those bodies make
+  // A* declare the mover boxed in, continue live pursuit and let the local
+  // collision layers handle this tick. Static map geometry may still produce
+  // a genuine stand result.
+  return planGridAim(mover, target, map.obstacles ?? [], map, true);
 }

@@ -1,4 +1,5 @@
 import { allyCollisionRadius, collisionRadius } from "./targeting.js";
+import { alliedTransitPairKey } from "./allied-transit.js";
 
 
 const EPSILON = 1e-12;
@@ -252,12 +253,15 @@ function distributeEqualMassRemoval(excess, available) {
 // Chebyshev separation of exactly 0.4000 tiles (0.2 + 0.2) whichever axis they
 // meet on, which a Euclidean radius cannot produce. Resolution is the standard
 // minimum-translation push along the axis that is closest to clearing.
-function constrainPair(left, right) {
+function constrainPair(left, right, alliedTransitPairs) {
   // Allies obstruct each other just as enemies do, but a MOVING unit shrinks its
   // own obstruction against a friendly (DeadFish.min_collision_size_multiplier)
   // so the crowd closes up instead of deadlocking. A stopped unit is not trying
   // to go anywhere and keeps its full box.
   const allied = left.owner === right.owner;
+  if (allied && alliedTransitPairs.has(alliedTransitPairKey(
+    left.referenceId, right.referenceId,
+  ))) return 0;
   // Two allies that are BOTH under a formation move order do not obstruct each
   // other at all. Measured on the tapes: while the kite formation marches, an
   // ally sitting 0.42 tiles directly ahead costs a skirmisher almost nothing
@@ -280,17 +284,25 @@ function constrainPair(left, right) {
     : left.radius + right.radius;
   const centerX = right.x - left.x;
   const centerY = right.y - left.y;
+  // Allied overlap is a legal inherited crowd state. Once it exists, this
+  // tick may preserve or reduce it, but cannot make it deeper. Requiring the
+  // pair to heal all the way back to the ordinary extent in one step turns
+  // equal co-motion into a collision correction and can pin both movers.
+  const currentSeparation = Math.max(Math.abs(centerX), Math.abs(centerY));
+  const requiredSeparation = allied && currentSeparation < extent - EPSILON
+    ? currentSeparation
+    : extent;
   if (Math.max(
     Math.abs(centerX + right.dx - left.dx),
     Math.abs(centerY + right.dy - left.dy),
-  ) >= extent - EPSILON) return 0;
+  ) >= requiredSeparation - EPSILON) return 0;
 
   const alongX = Math.abs(centerX) >= Math.abs(centerY);
   const axisCenter = alongX ? centerX : centerY;
   const sign = axisCenter < 0 ? -1 : 1;
   const nx = alongX ? sign : 0;
   const ny = alongX ? 0 : sign;
-  const gap = Math.abs(axisCenter) - extent;
+  const gap = Math.abs(axisCenter) - requiredSeparation;
   const leftNormal = left.dx * nx + left.dy * ny;
   const rightNormal = right.dx * nx + right.dy * ny;
   const closure = leftNormal - rightNormal;
@@ -311,7 +323,7 @@ function constrainPair(left, right) {
 }
 
 
-function resolveConstraints(bodies, obstacles, bounds) {
+function resolveConstraints(bodies, obstacles, bounds, alliedTransitPairs) {
   let finalCorrection = Infinity;
   for (let sweep = 0; sweep < MAX_CONSTRAINT_SWEEPS; sweep += 1) {
     let largestCorrection = 0;
@@ -328,7 +340,7 @@ function resolveConstraints(bodies, obstacles, bounds) {
       for (let j = i + 1; j < bodies.length; j += 1) {
         largestCorrection = Math.max(
           largestCorrection,
-          constrainPair(bodies[i], bodies[j]),
+          constrainPair(bodies[i], bodies[j], alliedTransitPairs),
         );
       }
     }
@@ -487,12 +499,14 @@ export function queryEnemyContactManifold(beforeSnapshot, afterSnapshot) {
 }
 
 
-export function resolveMovementProposals(snapshot, proposals, map) {
+export function resolveMovementProposals(snapshot, proposals, map, options = {}) {
+  const alliedTransitPairs = options.alliedTransitPairs instanceof Set
+    ? options.alliedTransitPairs : new Set();
   const bodies = normalizeBodies(snapshot, proposals);
   const bounds = normalizeBounds(map, bodies);
   const obstacles = normalizeObstacles(map);
   validateStartingGeometry(bodies, obstacles, bounds);
-  resolveConstraints(bodies, obstacles, bounds);
+  resolveConstraints(bodies, obstacles, bounds, alliedTransitPairs);
   if (!finalGeometryIsValid(bodies, obstacles, bounds)) {
     throw new Error("collision constraints produced invalid final geometry");
   }

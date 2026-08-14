@@ -1,0 +1,279 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Preventing Champion Congestion Before It Forms",
+    "description": "A clean-room tape diagnostic of why the current 5 HCA versus 10 Champion simulation compacts into persistent blobs and which preventive navigation model best matches the tape.",
+    "generatedAt": "2026-08-14T01:44:34.6144061Z",
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# Preventing Champion Congestion Before It Forms"
+      },
+      {
+        "id": "technical-summary",
+        "type": "markdown",
+        "body": "## Technical summary\n\n**The tape does not avoid large contact groups; it avoids letting those groups fold into compact cliques.** In the 5 HCA versus 10 Champion tape, contact components can reach seven Champions, but mutually overlapping triples occur in only 1.05% of frames and no four-Champion clique appears. The current simulation reaches a nine-Champion component, spends 31.88% of frames in a compact triple, and does form four-Champion cliques.\n\n**The best next prototype is preventive contact-graph steering.** Before accepting a movement step, evaluate whether it would close a triangle or create a four-unit clique. If so, keep full movement speed but choose a persistent left or right tangent around the occupied approach lane. This acts before the blob exists and is derived from collision geometry, not battle outcomes or matchup-specific calibration.",
+        "sourceId": "analysis-source"
+      },
+      {
+        "id": "density-gap-heading",
+        "type": "markdown",
+        "body": "## The simulation forms compact groups far more often\n\nThe key defect is not merely overlap depth. The simulation repeatedly closes contact triangles inside an already connected group, so an edge-attached chain contracts into a blob. The tape permits brief pairwise pass-through and long contact chains while strongly suppressing this internal closure."
+      },
+      {
+        "id": "density-gap-chart-block",
+        "type": "chart",
+        "chartId": "density-gap-chart",
+        "layout": "full"
+      },
+      {
+        "id": "closure-control-heading",
+        "type": "markdown",
+        "body": "## Low triangle closure repeats across matchups\n\nThe same pattern appears in the 21-Champion versus 14 Hand Cannoneer control tapes from the authorized standard-units archive. Triangle-closing contacts remain near 3%–5% in both tape families, compared with 34.8% in the current 5v10 simulation. This makes the result broader than one HCA recording or one force ratio."
+      },
+      {
+        "id": "closure-control-chart-block",
+        "type": "chart",
+        "chartId": "closure-control-chart",
+        "layout": "full"
+      },
+      {
+        "id": "exact-measures-heading",
+        "type": "markdown",
+        "body": "## Exact measures separate chains from blobs\n\nA connected component may be a loose or elongated chain; a clique is compact because every member overlaps every other member. The table shows why component size alone misdiagnoses the problem."
+      },
+      {
+        "id": "exact-measures-table-block",
+        "type": "table",
+        "tableId": "exact-measures-table",
+        "layout": "full"
+      },
+      {
+        "id": "scope-definitions",
+        "type": "markdown",
+        "body": "## Scope and metric definitions\n\n- **Tape population:** 25 HCA-versus-Champion recordings covering five force ratios and five repeats per ratio, plus three 14 Hand Cannoneer versus 21 Champion controls.\n- **Current-engine comparison:** one deterministic exact-placement 5 HCA versus 10 Champion viewer run: 2,999 ticks, Champion win, 210 HP remaining.\n- **Contact:** Chebyshev center separation below 0.40 tiles, matching the units' axis-aligned allied contact envelope. **Deep contact** is below 0.32 tiles.\n- **Edge admission:** a previously isolated Champion first touches exactly one member of a pre-existing allied component. **Triangle closure:** a newly born contact edge also creates a three-unit mutual-contact clique.\n- **Occupied forward corridor:** before contact, another Champion lies within one collision width laterally and 0.8 tiles forward toward the nearest ranged unit.",
+        "sourceId": "analysis-source"
+      },
+      {
+        "id": "methodology",
+        "type": "markdown",
+        "body": "## Methodology\n\nEvery selected project-local archive was SHA-256 verified before analysis. Alive Champion and ranged-unit positions were grouped by decoded frame and truncated at the fixture's verified last-death time where available. Per-frame allied contact graphs were then reconstructed at 0.40 and 0.32 tiles. The analysis counted maximum cliques and components, component-entry geometry, newly born contact edges, triangle-closing edges, compact-clique episode duration, and forward-versus-lateral velocity when another ally occupied the approach corridor.\n\nThe 5v10 current simulation was produced in-process from the same viewer endpoint and analyzed with the same graph and motion definitions. The complete transformation is reproducible from the saved analysis script."
+      },
+      {
+        "id": "robustness",
+        "type": "markdown",
+        "body": "## Limitations and robustness\n\n**The finding is descriptive, not proof of AoE2's private implementation.** Frames expose positions and action states but not a reliable internal target id, so the analysis can identify contact-graph behavior and motion response, not prove the exact retargeting rule. The current simulation is a single deterministic run, while the tape side uses repeated recordings.\n\nThe main conclusion is robust to those limits: no four-Champion 0.40-tile clique occurs in any of the 28 tape recordings, deep 0.32-tile admissions are exclusively edge admissions, and both tape families keep triangle-closing contact births near 5% or below. The simulation differs by an order of magnitude in compact-clique persistence: its longest triple lasts 10.03 seconds versus 0.410 seconds in the 5v10 tapes."
+      },
+      {
+        "id": "official-corroboration",
+        "type": "markdown",
+        "body": "### Official behavior points in the same direction\n\nAge of Empires II's official update notes describe group chasing with less bumping, preventing collisions from stopping or reversing units, and retargeting to a same-type unit when a unit bumps and cannot reach its current target. Those notes corroborate a preventive group-flow and fallback-retarget model; they do not establish the precise private algorithm.",
+        "sourceId": "official-update-81058"
+      },
+      {
+        "id": "recommended-design",
+        "type": "markdown",
+        "body": "## Recommended first prototype: predictive contact-graph steering\n\nFor every pursuing Champion, generate the direct step plus left- and right-tangent candidates around the first allied body occupying its forward corridor. Evaluate each candidate's projected allied contact graph, then choose lexicographically:\n\n1. Never deepen inherited overlap or create a new four-unit clique.\n2. Prefer candidates that do not close a contact triangle inside an existing component.\n3. Prefer candidates that add at most one new allied contact, so newcomers attach at an edge.\n4. Among candidates in the best available class, maximize progress toward the target.\n5. Preserve the chosen tangent side until the blocker is cleared or the target changes, preventing left-right oscillation.\n\nThis is preventive: the unit chooses a viable side lane before the dense clique forms. It is also physics-based: activation and candidate validity come from collision extents, projected endpoints, unit velocity, and enemy engagement geometry. No damage, reload, attack-delay, seed variation, matchup flag, or desired winner enters the decision."
+      },
+      {
+        "id": "other-approaches",
+        "type": "markdown",
+        "body": "## Other approaches worth keeping as controlled options\n\n1. **Target-frontage slots.** Derive attack approach slots around each ranged target from the target and chaser obstruction extents. Reserve an angular slot before the Champion reaches the final collision diameter. This strongly prevents lane crossing, but it may look too regimented and requires careful reassignment as a kiting target moves.\n2. **Same-type retarget on blocked frontage.** When no non-triangle-closing lane exists to the current target, switch to another visible target of the same type with open frontage. This is explicitly consistent with official patch notes, but the tape does not expose true target ids, so it should be a secondary fallback rather than the first assumed cause.\n3. **Formation-lane retention.** Preserve each Champion's left/right order from the attack-move formation until engagement, then release it locally. This is simple and may reduce trajectory crossings, but it can become brittle when the ranged blob turns sharply.\n4. **Reciprocal velocity-obstacle steering.** Predict near-future allied collisions and minimally rotate both units' velocities. It is a strong general crowd solution, but it risks looking smoother and more modern than AoE2 and may erase the tape's intentional brief pairwise pass-through."
+      },
+      {
+        "id": "validation-plan",
+        "type": "markdown",
+        "body": "## How to judge the prototype without fitting the outcome\n\nUse the tape distributions as guardrails, not optimization targets: no new four-unit clique in the tested corpus; compact-triple frame share near the tape's 1%–2% range; triangle-closing contact births near 3%–5%; edge admissions near 99%; and compact-triple episodes measured in frames rather than seconds. Also require that occupied-corridor movement retain normal unit speed and that existing HCA firing-cycle timing remains unchanged. Only after those physics checks should battle duration, survivors, and remaining HP be inspected as downstream validation."
+      },
+      {
+        "id": "further-questions",
+        "type": "markdown",
+        "body": "## Further questions\n\n- Does a hard rejection of new four-unit cliques plus a soft preference against triangles reproduce the tape, or must even triple formation be explicitly time-bounded?\n- When frontage is full, does same-type retargeting improve flow beyond tangent steering, or merely change focus-fire behavior?\n- Does the same contact-graph rule remain stable for cavalry, elephants, and siege units with larger obstruction extents?"
+      }
+    ],
+    "charts": [
+      {
+        "id": "density-gap-chart",
+        "title": "Compact-contact formation in 5 HCA vs 10 Champions",
+        "subtitle": "Share of analyzed frames or newly born contact edges; five tape repeats versus one deterministic current simulation",
+        "showDescription": true,
+        "question": "How much more frequently does the current simulation form compact allied groups than the tape?",
+        "rationale": "Grouped horizontal bars compare the same rate definition across tape and simulation while keeping long metric labels readable.",
+        "intent": "comparison",
+        "type": "horizontalBar",
+        "dataset": "density_comparison",
+        "sourceId": "density-query",
+        "encodings": {
+          "x": { "field": "metric", "type": "nominal", "label": "Measure" },
+          "y": { "field": "rate", "type": "quantitative", "format": "percent", "label": "Share", "unit": "%" },
+          "color": { "field": "source", "type": "nominal", "label": "Source" },
+          "tooltip": [
+            { "field": "rate", "type": "quantitative", "format": "percent", "label": "Share" },
+            { "field": "frame_count", "type": "quantitative", "format": "number", "label": "Analyzed frames" },
+            { "field": "run_count", "type": "quantitative", "format": "number", "label": "Runs" }
+          ]
+        },
+        "valueFormat": "percent",
+        "layout": "full",
+        "maxRows": 6,
+        "surface": { "legend": "top", "valueLabels": true }
+      },
+      {
+        "id": "closure-control-chart",
+        "title": "New allied contacts that close a triangle",
+        "subtitle": "Contact-edge births at the 0.40-tile allied envelope; lower means the contact chain is less likely to fold into a blob",
+        "showDescription": true,
+        "question": "Does low triangle closure repeat in a different ranged-versus-Champion tape family?",
+        "rationale": "A single-series horizontal comparison shows the large current-simulation gap and preserves sample-count context in tooltips.",
+        "intent": "comparison",
+        "type": "horizontalBar",
+        "dataset": "closure_controls",
+        "sourceId": "closure-query",
+        "encodings": {
+          "x": { "field": "cohort", "type": "nominal", "label": "Cohort" },
+          "y": { "field": "triangle_closure_share", "type": "quantitative", "format": "percent", "label": "Triangle-closing share", "unit": "%" },
+          "tooltip": [
+            { "field": "triangle_closure_share", "type": "quantitative", "format": "percent", "label": "Triangle-closing share" },
+            { "field": "new_contact_edges", "type": "quantitative", "format": "number", "label": "New contact edges" },
+            { "field": "run_count", "type": "quantitative", "format": "number", "label": "Runs" }
+          ]
+        },
+        "valueFormat": "percent",
+        "layout": "full",
+        "maxRows": 3,
+        "surface": { "legend": "none", "valueLabels": true }
+      }
+    ],
+    "tables": [
+      {
+        "id": "exact-measures-table",
+        "title": "Contact-graph measures by cohort",
+        "subtitle": "Tape values pool all listed repeats; the current simulation is one deterministic exact-placement 5v10 run",
+        "showDescription": true,
+        "dataset": "exact_measures",
+        "sourceId": "exact-measures-query",
+        "defaultSort": { "field": "sort_order", "direction": "asc" },
+        "density": "spacious",
+        "layout": "full",
+        "columns": [
+          { "field": "sort_order", "label": "#", "format": "number", "role": "value" },
+          { "field": "metric", "label": "Measure", "type": "text" },
+          { "field": "tape_5v10", "label": "Tape 5v10", "type": "text" },
+          { "field": "current_sim_5v10", "label": "Current sim 5v10", "type": "text" },
+          { "field": "all_hca_tapes", "label": "All HCA tapes", "type": "text" },
+          { "field": "hand_cannon_controls", "label": "Hand Cannon controls", "type": "text" }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "analysis-source",
+        "label": "Clean-room congestion-prevention analysis",
+        "path": "aoe2x/js_simulation/calibration/analysis/congestion_prevention_2026-08-13.mjs"
+      },
+      {
+        "id": "density-query",
+        "label": "Reviewed 5v10 density comparison rows",
+        "path": "aoe2x/js_simulation/calibration/analysis/congestion_prevention_2026-08-13.mjs",
+        "query": {
+          "engine": "DuckDB",
+          "language": "SQL",
+          "description": "Reconstructs the exact reviewed rows used by the 5v10 density comparison chart after the JavaScript contact-graph analysis.",
+          "executed_at": "2026-08-14T01:44:34.6144061Z",
+          "tables_used": ["density_comparison reviewed output"],
+          "filters": ["5 HCA versus 10 Champions", "0.40-tile allied contact envelope"],
+          "metric_definitions": ["Rate is the applicable frame share or triangle-closing new-contact share"],
+          "sql": "SELECT * FROM (VALUES ('Frames with compact clique ≥3','Tape 5v10',0.0105185307,12169,5,'frames','5 HCA vs 10 Champions'), ('Frames with compact clique ≥3','Current sim',0.3187729243,2999,1,'frames','5 HCA vs 10 Champions'), ('Frames with contact component ≥4','Tape 5v10',0.0982003451,12169,5,'frames','5 HCA vs 10 Champions'), ('Frames with contact component ≥4','Current sim',0.5085028343,2999,1,'frames','5 HCA vs 10 Champions'), ('New contacts that close a triangle','Tape 5v10',0.0478309232,12169,5,'contact edges','5 HCA vs 10 Champions'), ('New contacts that close a triangle','Current sim',0.3483146067,2999,1,'contact edges','5 HCA vs 10 Champions')) AS t(metric, source, rate, frame_count, run_count, numerator_kind, comparison_scope)"
+        }
+      },
+      {
+        "id": "closure-query",
+        "label": "Reviewed triangle-closure control rows",
+        "path": "aoe2x/js_simulation/calibration/analysis/congestion_prevention_2026-08-13.mjs",
+        "query": {
+          "engine": "DuckDB",
+          "language": "SQL",
+          "description": "Reconstructs the exact reviewed cohort rows used by the triangle-closure control chart.",
+          "executed_at": "2026-08-14T01:44:34.6144061Z",
+          "tables_used": ["closure_controls reviewed output"],
+          "filters": ["0.40-tile allied contact envelope"],
+          "metric_definitions": ["Triangle-closing share is new contact edges that create a mutual-contact triple divided by all new contact edges"],
+          "sql": "SELECT * FROM (VALUES ('All HCA vs Champion tapes',0.0517306961,5258,25,'HCA golden',0.4), ('Hand Cannoneer controls',0.0343511450,786,3,'Standard units',0.4), ('Current 5v10 simulation',0.3483146067,89,1,'Current engine',0.4)) AS t(cohort, triangle_closure_share, new_contact_edges, run_count, archive, contact_threshold)"
+        }
+      },
+      {
+        "id": "exact-measures-query",
+        "label": "Reviewed contact-graph exact measures",
+        "path": "aoe2x/js_simulation/calibration/analysis/congestion_prevention_2026-08-13.mjs",
+        "query": {
+          "engine": "DuckDB",
+          "language": "SQL",
+          "description": "Reconstructs the exact reviewed lookup rows used by the contact-graph comparison table.",
+          "executed_at": "2026-08-14T01:44:34.6144061Z",
+          "tables_used": ["exact_measures reviewed output"],
+          "filters": ["Tape cohorts and current exact-placement 5v10 simulation"],
+          "metric_definitions": ["All shares use the definitions stated in the report's scope section"],
+          "sql": "SELECT * FROM (VALUES (1,'Maximum mutually overlapping clique','3','4','3','3'), (2,'Frames with compact clique ≥3','1.05%','31.88%','2.08%','1.40%'), (3,'Frames with contact component ≥4','9.82%','50.85%','13.67%','12.26%'), (4,'Edge admissions into an existing group','98.77%','100.00%','98.76%','99.70%'), (5,'New contacts that close a triangle','4.78%','34.83%','5.17%','3.44%'), (6,'Longest compact-triple episode','0.410 s','10.03 s','1.464 s','0.166 s')) AS t(sort_order, metric, tape_5v10, current_sim_5v10, all_hca_tapes, hand_cannon_controls)"
+        }
+      },
+      {
+        "id": "hca-archive",
+        "label": "Authorized HCA versus Champion golden archive",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip"
+      },
+      {
+        "id": "standard-archive",
+        "label": "Authorized standard-units golden archive",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_STANDARD_UNITS_WITH_TAPES.zip"
+      },
+      {
+        "id": "official-update-81058",
+        "label": "Age of Empires II: Definitive Edition Update 81058",
+        "href": "https://www.ageofempires.com/news/age-of-empires-ii-definitive-edition-update-81058/"
+      },
+      {
+        "id": "official-update-153015",
+        "label": "Age of Empires II: Definitive Edition Update 153015",
+        "href": "https://www.ageofempires.com/news/age-of-empires-ii-definitive-edition-update-153015/"
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-08-14T01:44:34.6144061Z",
+    "status": "ready",
+    "datasets": {
+      "density_comparison": [
+        { "metric": "Frames with compact clique ≥3", "source": "Tape 5v10", "rate": 0.0105185307, "frame_count": 12169, "run_count": 5, "numerator_kind": "frames", "comparison_scope": "5 HCA vs 10 Champions" },
+        { "metric": "Frames with compact clique ≥3", "source": "Current sim", "rate": 0.3187729243, "frame_count": 2999, "run_count": 1, "numerator_kind": "frames", "comparison_scope": "5 HCA vs 10 Champions" },
+        { "metric": "Frames with contact component ≥4", "source": "Tape 5v10", "rate": 0.0982003451, "frame_count": 12169, "run_count": 5, "numerator_kind": "frames", "comparison_scope": "5 HCA vs 10 Champions" },
+        { "metric": "Frames with contact component ≥4", "source": "Current sim", "rate": 0.5085028343, "frame_count": 2999, "run_count": 1, "numerator_kind": "frames", "comparison_scope": "5 HCA vs 10 Champions" },
+        { "metric": "New contacts that close a triangle", "source": "Tape 5v10", "rate": 0.0478309232, "frame_count": 12169, "run_count": 5, "numerator_kind": "contact edges", "comparison_scope": "5 HCA vs 10 Champions" },
+        { "metric": "New contacts that close a triangle", "source": "Current sim", "rate": 0.3483146067, "frame_count": 2999, "run_count": 1, "numerator_kind": "contact edges", "comparison_scope": "5 HCA vs 10 Champions" }
+      ],
+      "closure_controls": [
+        { "cohort": "All HCA vs Champion tapes", "triangle_closure_share": 0.0517306961, "new_contact_edges": 5258, "run_count": 25, "archive": "HCA golden", "contact_threshold": 0.4 },
+        { "cohort": "Hand Cannoneer controls", "triangle_closure_share": 0.0343511450, "new_contact_edges": 786, "run_count": 3, "archive": "Standard units", "contact_threshold": 0.4 },
+        { "cohort": "Current 5v10 simulation", "triangle_closure_share": 0.3483146067, "new_contact_edges": 89, "run_count": 1, "archive": "Current engine", "contact_threshold": 0.4 }
+      ],
+      "exact_measures": [
+        { "sort_order": 1, "metric": "Maximum mutually overlapping clique", "tape_5v10": "3", "current_sim_5v10": "4", "all_hca_tapes": "3", "hand_cannon_controls": "3" },
+        { "sort_order": 2, "metric": "Frames with compact clique ≥3", "tape_5v10": "1.05%", "current_sim_5v10": "31.88%", "all_hca_tapes": "2.08%", "hand_cannon_controls": "1.40%" },
+        { "sort_order": 3, "metric": "Frames with contact component ≥4", "tape_5v10": "9.82%", "current_sim_5v10": "50.85%", "all_hca_tapes": "13.67%", "hand_cannon_controls": "12.26%" },
+        { "sort_order": 4, "metric": "Edge admissions into an existing group", "tape_5v10": "98.77%", "current_sim_5v10": "100.00%", "all_hca_tapes": "98.76%", "hand_cannon_controls": "99.70%" },
+        { "sort_order": 5, "metric": "New contacts that close a triangle", "tape_5v10": "4.78%", "current_sim_5v10": "34.83%", "all_hca_tapes": "5.17%", "hand_cannon_controls": "3.44%" },
+        { "sort_order": 6, "metric": "Longest compact-triple episode", "tape_5v10": "0.410 s", "current_sim_5v10": "10.03 s", "all_hca_tapes": "1.464 s", "hand_cannon_controls": "0.166 s" }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "analysis-source",
+      "label": "Clean-room congestion-prevention analysis",
+      "path": "aoe2x/js_simulation/calibration/analysis/congestion_prevention_2026-08-13.mjs"
+    }
+  ]
+}

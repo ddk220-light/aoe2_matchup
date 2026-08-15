@@ -508,7 +508,7 @@ test("Hand Cannoneer versus Champion observation uses the tape roster with a liv
 });
 
 
-test("generalized kiting endpoint gives the tape-roster Heavy Scorpions a live kite cycle", async () => {
+test("generalized observation endpoint runs Heavy Scorpions with native siege AI", async () => {
   await withServer(async (baseUrl) => {
     const response = await fetch(
       `${baseUrl}/api/ranged-vs-melee-kiting`
@@ -534,7 +534,10 @@ test("generalized kiting endpoint gives the tape-roster Heavy Scorpions a live k
       class: "melee",
     });
     assert.equal(run.family, "siege");
-    assert.equal(run.kiteOwner, 2);
+    assert.equal(run.kiteOwner, null);
+    assert.equal(run.contactSteeringMode, "preventive-contact-graph");
+    assert.ok(run.contactSteeringSummary.steeredSteps > 0);
+    assert.ok(run.contactSteeringSummary.steeredUnitCount > 0);
 
     const scorpionIds = Object.entries(run.unitIndex)
       .filter(([, { owner }]) => owner === 2)
@@ -545,22 +548,52 @@ test("generalized kiting endpoint gives the tape-roster Heavy Scorpions a live k
     const events = run.snapshots.flatMap(({ events: entries }) => entries);
     assert.equal(events.some(({ type, actorId }) => (
       type === "kite-move" && scorpionIds.includes(actorId)
-    )), true);
+    )), false);
     assert.equal(events.some(({ type, actorId }) => (
       type === "attack-start" && scorpionIds.includes(actorId)
     )), true);
 
-    const openingAttackMove = events.filter(({ type, tick, actorId }) => (
+    const cohesiveOpeningAttackMove = events.filter(({ type, tick, actorId }) => (
       type === "ai-location-order" && tick === 36 && championIds.includes(actorId)
     ));
-    assert.equal(openingAttackMove.length, 21);
-    assert.equal(new Set(openingAttackMove.map(({ x, y }) => `${x},${y}`)).size, 1);
+    assert.equal(cohesiveOpeningAttackMove.length, 0);
+  });
+});
 
-    const first = new Map(run.snapshots[0].units.map((unit) => [unit[0], unit]));
-    assert.equal(run.snapshots.some(({ units }) => units.some((unit) => (
-      scorpionIds.includes(unit[0])
-      && Math.hypot(unit[1] - first.get(unit[0])[1], unit[2] - first.get(unit[0])[2]) > 1
-    ))), true);
+
+test("native Heavy Scorpion chase prevents four-Paladin compact stacks", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(
+      `${baseUrl}/api/ranged-vs-melee-kiting`
+        + "?ranged=heavy_scorpion&melee=paladin&navigation=cohesive&n2=15&n3=20",
+    );
+    assert.equal(response.status, 200);
+    const run = await response.json();
+    const paladinIds = Object.entries(run.unitIndex)
+      .filter(([, { owner }]) => owner === 3)
+      .map(([referenceId]) => Number(referenceId));
+    const contactExtent = run.unitIndex[paladinIds[0]].collisionRadius * 2;
+    let maximumClique = 0;
+    for (const snapshot of run.snapshots) {
+      const paladins = snapshot.units
+        .filter((unit) => paladinIds.includes(unit[0]) && unit[5])
+        .map((unit) => ({ x: unit[1], y: unit[2] }));
+      for (const xAnchor of paladins) {
+        for (const yAnchor of paladins) {
+          const clique = paladins.filter((unit) => (
+            unit.x >= xAnchor.x - 1e-9
+              && unit.x - xAnchor.x < contactExtent - 1e-9
+              && unit.y >= yAnchor.y - 1e-9
+              && unit.y - yAnchor.y < contactExtent - 1e-9
+          )).length;
+          maximumClique = Math.max(maximumClique, clique);
+        }
+      }
+    }
+
+    assert.equal(run.kiteOwner, null);
+    assert.equal(run.contactSteeringMode, "preventive-contact-graph");
+    assert.ok(maximumClique <= 3, `maximum compact Paladin clique was ${maximumClique}`);
   });
 });
 

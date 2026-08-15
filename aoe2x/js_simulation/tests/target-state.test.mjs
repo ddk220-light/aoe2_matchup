@@ -469,7 +469,7 @@ test("reach-melee wedge transit is an explicit attack-move scenario mode", async
 });
 
 
-test("preventive contact steering is an explicit attack-move scenario state", async () => {
+test("preventive contact steering has melee crowd state independent of kite state", async () => {
   const { createWorld } = await import("../src/combat/world.js");
   const units = [
     unit({ referenceId: 1, owner: 3, x: 2, y: 5, pursuitTargetId: 2 }),
@@ -488,22 +488,30 @@ test("preventive contact steering is an explicit attack-move scenario state", as
   const enabled = createWorld(scenario(units, {
     kiteOwner: 2,
     kiteMeleeOpeningOrder: "attack-move-all",
+    meleeCrowdOwner: 3,
+    preventiveContactSteering: true,
+    preventiveContactSteeringStrength: 0.5,
+  }));
+  const nativeSiege = createWorld(scenario(units, {
+    meleeCrowdOwner: 3,
     preventiveContactSteering: true,
     preventiveContactSteeringStrength: 0.5,
   }));
 
-  assert.equal(baseline.kiteState.preventiveContactSteering, undefined);
-  assert.equal(enabled.kiteState.preventiveContactSteering, true);
-  assert.equal(enabled.kiteState.preventiveContactSteeringStrength, 0.5);
-  assert.equal(enabled.kiteState.preventiveContactSteeredSteps, 0);
-  assert.deepEqual([...enabled.kiteState.preventiveContactSteeredUnits], []);
+  assert.equal(baseline.crowdState, undefined);
+  assert.equal(enabled.crowdState.owner, 3);
+  assert.equal(enabled.crowdState.preventiveContactSteering, true);
+  assert.equal(enabled.crowdState.preventiveContactSteeringStrength, 0.5);
+  assert.equal(enabled.crowdState.preventiveContactSteeredSteps, 0);
+  assert.deepEqual([...enabled.crowdState.preventiveContactSteeredUnits], []);
+  assert.equal(nativeSiege.kiteState, undefined);
+  assert.equal(nativeSiege.crowdState.owner, 3);
+  assert.equal(nativeSiege.crowdState.preventiveContactSteering, true);
   assert.throws(() => createWorld(scenario(units, {
-    kiteOwner: 2,
     preventiveContactSteering: true,
-  })), /preventive contact steering requires a kiting attack-move scenario/);
+  })), /preventive contact steering requires a melee crowd owner/);
   assert.throws(() => createWorld(scenario(units, {
-    kiteOwner: 2,
-    kiteMeleeOpeningOrder: "attack-move-all",
+    meleeCrowdOwner: 3,
     preventiveContactSteering: true,
     preventiveContactSteeringStrength: 1.01,
   })), /preventive contact steering strength must be between 0 and 1/);

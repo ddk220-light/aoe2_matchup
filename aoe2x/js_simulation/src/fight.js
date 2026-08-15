@@ -287,6 +287,9 @@ export async function runFight(root, {
   const chaserMechanics = innerKiteOwner === 2 ? mechanics3 : mechanics2;
   const innerReachMeleeWedgeTransit = reachMeleeWedgeTransit === true
     && (chaserMechanics?.attack_range_tiles ?? 0) >= 1;
+  const innerMeleeCrowdOwner = inner2.class === "melee"
+    ? 2
+    : (inner3.class === "melee" ? 3 : null);
   const result = runWorld(createWorld({
     ratio: `${innerCount2}v${innerCount3}`,
     units,
@@ -299,7 +302,6 @@ export async function runFight(root, {
         ...(kiteChaseDwellTicks === undefined ? {} : { kiteChaseDwellTicks }),
         ...(pairwiseAlliedTransit === true ? { pairwiseAlliedTransit: true } : {}),
         ...(innerReachMeleeWedgeTransit ? { reachMeleeWedgeTransit: true } : {}),
-        ...(preventiveContactSteering === true ? { preventiveContactSteering: true } : {}),
         kiteProfile: kiteProfileFor(
           kiter,
           innerKiteOwner === 2 ? mechanics2 : mechanics3,
@@ -307,6 +309,12 @@ export async function runFight(root, {
         ...(kiteNavigation === undefined ? {} : { kiteNavigation }),
         ...(kiteMeleeOpeningOrder === undefined ? {} : { kiteMeleeOpeningOrder }),
       }),
+    ...(preventiveContactSteering === true && innerMeleeCrowdOwner !== null
+      ? {
+        meleeCrowdOwner: innerMeleeCrowdOwner,
+        preventiveContactSteering: true,
+      }
+      : {}),
   }), { maxTicks: MAX_TICKS });
 
   // Owner relabelling. Reference ids stay exactly as the engine allocated
@@ -349,17 +357,19 @@ export async function runFight(root, {
         alliedTransitMode: innerReachMeleeWedgeTransit
           ? "reach-wedge-pair"
           : (pairwiseAlliedTransit === true ? "exclusive-pair" : "soft-allied"),
-        contactSteeringMode: preventiveContactSteering === true
-          ? "preventive-contact-graph"
-          : "off",
-        contactSteeringStrength:
-          result.world.kiteState?.preventiveContactSteeringStrength ?? 0,
-        contactSteeringSummary: Object.freeze({
-          steeredSteps: result.world.kiteState?.preventiveContactSteeredSteps ?? 0,
-          steeredUnitCount:
-            result.world.kiteState?.preventiveContactSteeredUnits?.size ?? 0,
-        }),
       }),
+    ...(preventiveContactSteering === true
+      ? {
+        contactSteeringMode: "preventive-contact-graph",
+        contactSteeringStrength:
+          result.world.crowdState?.preventiveContactSteeringStrength ?? 0,
+        contactSteeringSummary: Object.freeze({
+          steeredSteps: result.world.crowdState?.preventiveContactSteeredSteps ?? 0,
+          steeredUnitCount:
+            result.world.crowdState?.preventiveContactSteeredUnits?.size ?? 0,
+        }),
+      }
+      : (kiteNavigation === undefined ? {} : { contactSteeringMode: "off" })),
     side2: Object.freeze({
       slug: side2.slug, label: side2.label, civ: side2.civ, count: count2, class: side2.class }),
     side3: Object.freeze({
@@ -496,34 +506,64 @@ export async function runKitingObservation(root, {
     count2,
     count3,
   });
-  return runFight(root, {
+  const cohesiveKiting = ranged.class === "mobile_ranged";
+  const result = await runFight(root, {
     side2Slug: rangedSlug,
     n2: count2,
     side3Slug: meleeSlug,
     n3: count3,
     map,
     placementByOwner,
-    kiteNavigation: navigation,
-    kiteMeleeOpeningOrder: "attack-move-all",
-    kiteOwnerOverride: 2,
-    // Viewer attack-move: once a chaser physically contacts a different
-    // front-line ranged body, make that body its pursuit target. This stays
-    // viewer-local; calibrated batch runs omit the flag unless explicitly
-    // requested by their scenario.
-    kiteChaseCapture: true,
-    // Interactive attack-move begins the real unit windup on the first legal
-    // range-entry tick. Recorded batch playbacks retain the calibrated
-    // one-second default because they do not pass this viewer-only override.
-    kiteChaseDwellTicks: 0,
-    // The exclusive-pair pass-through remains available to focused engine
-    // experiments, but it is not the viewer default: in 5 HCA vs 10 Champion
-    // it creates long-lived deep pairs and moves the result away from tape.
-    pairwiseAlliedTransit: false,
-    // Reach melee may reserve one front-line ally while entering its sourced
-    // attack envelope. The reservation remains exclusive, so it permits a
-    // two-deep wedge without making the full chaser cohort transparent.
-    reachMeleeWedgeTransit: true,
     preventiveContactSteering: true,
+    ...(cohesiveKiting
+      ? {
+        kiteNavigation: navigation,
+        kiteMeleeOpeningOrder: "attack-move-all",
+        kiteOwnerOverride: 2,
+        // Viewer attack-move: once a chaser physically contacts a different
+        // front-line ranged body, make that body its pursuit target. This stays
+        // viewer-local; calibrated batch runs omit the flag unless explicitly
+        // requested by their scenario.
+        kiteChaseCapture: true,
+        // Interactive attack-move begins the real unit windup on the first legal
+        // range-entry tick. Recorded batch playbacks retain the calibrated
+        // one-second default because they do not pass this viewer-only override.
+        kiteChaseDwellTicks: 0,
+        // The exclusive-pair pass-through remains available to focused engine
+        // experiments, but it is not the viewer default: in 5 HCA vs 10 Champion
+        // it creates long-lived deep pairs and moves the result away from tape.
+        pairwiseAlliedTransit: false,
+        // Reach melee may reserve one front-line ally while entering its sourced
+        // attack envelope. The reservation remains exclusive, so it permits a
+        // two-deep wedge without making the full chaser cohort transparent.
+        reachMeleeWedgeTransit: true,
+      }
+      : {}),
+  });
+
+  if (cohesiveKiting) return result;
+  // Keep the dedicated viewer response contract while the siege fight itself
+  // runs through the ordinary engine. The selected navigation approach is UI
+  // metadata only here: no kite state, group destinations, or kite-move orders
+  // exist for Heavy Scorpion.
+  return Object.freeze({
+    ...result,
+    mode: "kiting-observation",
+    navigationVariant: navigation,
+    navigationOptions: SOLO_NAVIGATION_VARIANTS,
+    navigationSummary: Object.freeze({
+      unitCount: count2,
+      totalAnchorDistance: 0,
+      maxReplans: 0,
+      maxCohesionRadius: 0,
+      maxSlotError: 0,
+      maxBlockedCount: 0,
+    }),
+    alliedTransitMode: "soft-allied",
+    contactSteeringMode: "preventive-contact-graph",
+    contactSteeringStrength: result.contactSteeringStrength ?? 0,
+    contactSteeringSummary: result.contactSteeringSummary
+      ?? Object.freeze({ steeredSteps: 0, steeredUnitCount: 0 }),
   });
 }
 

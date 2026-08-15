@@ -17,6 +17,8 @@ const KNOWN_HASHES = new Map([
   ["aoe2_golden_kiting_eliteskirmvselephant_2026-08-06.zip", "12984A63F05BDCFB3242C46CD45144D2E6B8D304C7AF15C951CBB41652095EB6"],
   ["aoe2_golden_kiting_eliteskirmvspaladin_2026-08-06.zip", "631C21349C4ECE89A9DB997C2AD8873CA98B04EC4DB89EACF9BAC65EEE589E1F"],
   ["aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip", "9500E4703ACB48273C83D71CE4313820BA92391EE80CAF2882F92AF12B46414B"],
+  ["aoe2_golden_kiting_hcvschampion_2026-08-14.zip", "468AB6CDBAD27FAEED9690E47A6B8BE4865A555DDD1063CFDE8B2A2D8D5C3A99"],
+  ["aoe2_golden_kiting_hcvspaladin_2026-08-14.zip", "F472C648A06913B6E0DDAD1A7E2E9DAD17E70A7F62F113C5C2CD6A6F9AEC50F2"],
   ["aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip", "EB47F418B2D88BFB99D0083CF05DE153B329D531B0E179494DAE1A5CA3D921C5"],
   ["aoe2_golden_kiting_hcavarchervselephant_2026-08-06.zip", "CB7D0D448D35C09013C028FBC5A38E6267D8BBA09B3DB02125E9BD3E746A3F90"],
   ["aoe2_golden_kiting_hcavarchervspaladin_2026-08-06.zip", "8902DE64B120E6302860F8F9B35B572523B29B4C0F305C65A7DA6D0C286F7968"],
@@ -38,7 +40,7 @@ for (const [index, expected] of DEDICATED_GOLDEN_MATCHUPS.entries()) {
   const source = path.join(sourceDir, expected.archive);
   const destination = path.join(destinationDir, expected.archive);
   const sourceStats = await stat(source);
-  process.stdout.write(`[${index + 1}/17] hashing source ${expected.archive} (${gib(sourceStats.size)} GiB)\n`);
+  process.stdout.write(`[${index + 1}/${DEDICATED_GOLDEN_MATCHUPS.length}] hashing source ${expected.archive} (${gib(sourceStats.size)} GiB)\n`);
   const sourceHash = await sha256(source);
   const knownHash = KNOWN_HASHES.get(expected.archive);
   if (knownHash && sourceHash !== knownHash) {
@@ -53,12 +55,12 @@ for (const [index, expected] of DEDICATED_GOLDEN_MATCHUPS.entries()) {
     }
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
-    process.stdout.write(`[${index + 1}/17] copying ${expected.archive}\n`);
+    process.stdout.write(`[${index + 1}/${DEDICATED_GOLDEN_MATCHUPS.length}] copying ${expected.archive}\n`);
     await copyFile(source, destination, constants.COPYFILE_EXCL);
     copied = true;
   }
 
-  process.stdout.write(`[${index + 1}/17] verifying project-local copy${copied ? "" : " (already present)"}\n`);
+  process.stdout.write(`[${index + 1}/${DEDICATED_GOLDEN_MATCHUPS.length}] verifying project-local copy${copied ? "" : " (already present)"}\n`);
   const destinationHash = await sha256(destination);
   if (destinationHash !== sourceHash) {
     throw new Error(`copied SHA-256 mismatch: ${expected.archive}\nsource ${sourceHash}\ncopy   ${destinationHash}`);
@@ -70,10 +72,10 @@ for (const [index, expected] of DEDICATED_GOLDEN_MATCHUPS.entries()) {
     source_kind: "raw_frames_bin",
     authorized: true,
     authorized_source: source,
-    authorized_on: "2026-08-14",
+    authorized_on: expected.archive.includes("_hcvs") ? "2026-08-15" : "2026-08-14",
     bytes: sourceStats.size,
   });
-  process.stdout.write(`[${index + 1}/17] verified ${sourceHash}\n`);
+  process.stdout.write(`[${index + 1}/${DEDICATED_GOLDEN_MATCHUPS.length}] verified ${sourceHash}\n`);
 }
 
 const manifest = {

@@ -14,17 +14,21 @@ const mechanicsUrl = new URL(
   import.meta.url,
 );
 const mechanics = JSON.parse(await readFile(mechanicsUrl, "utf8"));
+const paladinMechanics = JSON.parse(await readFile(
+  new URL("../fixtures/unit_stats/paladin_spanish_imperial.json", import.meta.url),
+  "utf8",
+));
 const openMap = Object.freeze({ width: 10, height: 10, obstacles: Object.freeze([]) });
 
 
-function unit({ referenceId, x, y, owner = 2 } = {}) {
+function unit({ referenceId, x, y, owner = 2, unitMechanics = mechanics } = {}) {
   return Object.freeze({
     referenceId,
     owner,
     x,
     y,
     alive: true,
-    mechanics,
+    mechanics: unitMechanics,
   });
 }
 
@@ -186,6 +190,37 @@ test("an allied-transit reservation lets one pair cross while a third ally still
   assert.ok(Math.abs(ordinaryById.get(2).x - ordinaryById.get(1).x) >= 0.32 - 1e-12);
   assert.ok(Math.abs(transitById.get(2).x - transitById.get(1).x) < 0.32);
   assert.ok(Math.abs(transitById.get(3).x - transitById.get(2).x) >= 0.32 - 1e-12);
+});
+
+
+test("exclusive allied shrink gives a third cavalry unit one shallow edge, never a triangle", async () => {
+  const { resolveMovementProposals } = await loadCollision();
+  const snapshot = [
+    unit({ referenceId: 1, owner: 3, x: 4, y: 4, unitMechanics: paladinMechanics }),
+    unit({ referenceId: 2, owner: 3, x: 4.5, y: 4, unitMechanics: paladinMechanics }),
+    unit({ referenceId: 3, owner: 3, x: 4.75, y: 4.5, unitMechanics: paladinMechanics }),
+  ];
+  const next = resolveMovementProposals(
+    snapshot,
+    [proposal(1, 0.2, 0), proposal(2, -0.2, 0), proposal(3, 0, -0.2)],
+    openMap,
+    {
+      exclusiveAlliedShrinkOwners: new Set([3]),
+      alliedShrinkPairs: new Set(["1:2"]),
+      alliedShallowPairs: new Set(["2:3"]),
+      alliedShrinkReservedIds: new Set([1, 2]),
+    },
+  );
+  const byId = new Map(next.map((current) => [current.referenceId, current]));
+  const separation = (leftId, rightId) => Math.max(
+    Math.abs(byId.get(leftId).x - byId.get(rightId).x),
+    Math.abs(byId.get(leftId).y - byId.get(rightId).y),
+  );
+
+  assert.ok(Math.abs(separation(1, 2) - 0.25) < 1e-12);
+  assert.ok(separation(1, 3) >= 0.5 - 1e-12);
+  assert.ok(separation(2, 3) >= 0.375 - 1e-12);
+  assert.ok(separation(2, 3) < 0.5 - 1e-12);
 });
 
 

@@ -20,6 +20,10 @@ const steppeMechanics = JSON.parse(await readFile(
   new URL("../fixtures/unit_stats/elite_steppe_lancer_cumans_imperial.json", import.meta.url),
   "utf8",
 ));
+const scorpionMechanics = JSON.parse(await readFile(
+  new URL("../fixtures/unit_stats/heavy_scorpion_japanese_imperial.json", import.meta.url),
+  "utf8",
+));
 
 
 test("dedicated scenario uses the exact repeat placement and current viewer policy", () => {
@@ -85,6 +89,40 @@ test("dedicated scenario enables reach-wedge transit only for sourced reach mele
   });
 
   assert.equal(scenario.reachMeleeWedgeTransit, true);
+});
+
+
+test("dedicated Heavy Scorpion scenario uses native siege AI instead of cohesive kiting", () => {
+  const scenario = scenarioFromDedicatedRun({
+    row: {
+      id: "heavy_scorpion_vs_champion_8v21",
+      ratio: "8v21",
+      rangedSlug: "heavy_scorpion",
+      meleeSlug: "champion",
+    },
+    run: {
+      starting_units: [
+        { id: 100, owner: 2, master: 542, x: 6.5, y: 4.5, hp: 110 },
+        { id: 200, owner: 3, master: 567, x: 4.5, y: 12.5, hp: 70 },
+      ],
+    },
+    mechanicsByMaster: new Map([
+      [542, scorpionMechanics],
+      [567, championMechanics],
+    ]),
+    map: { id: "golden-map" },
+  });
+
+  assert.equal(scenario.kiteOwner, undefined);
+  assert.equal(scenario.kiteProfile, undefined);
+  assert.equal(scenario.kiteNavigation, undefined);
+  assert.equal(scenario.kiteMeleeOpeningOrder, undefined);
+  assert.equal(scenario.chaseCapture, undefined);
+  assert.equal(scenario.kiteChaseDwellTicks, undefined);
+  assert.equal(scenario.meleeCrowdOwner, 3);
+  assert.equal(scenario.preventiveContactSteering, true);
+  assert.equal(scenario.units[0].mechanics.ranged.min_range_tiles, 2,
+    "native Heavy Scorpion AI must retain its sourced individual minimum range");
 });
 
 

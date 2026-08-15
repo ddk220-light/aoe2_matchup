@@ -11,6 +11,7 @@ import gzip
 import hashlib
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Any
 from zipfile import ZipFile
@@ -42,6 +43,8 @@ EXPECTED = (
     ("imp_elite_skirm", "elite_fire_lancer", "aoe2_golden_kiting_eliteskirmvsfirelancer_2026-08-06.zip", 6, 1903, None),
     ("imp_elite_skirm", "paladin", "aoe2_golden_kiting_eliteskirmvspaladin_2026-08-06.zip", 6, 569, "eliteskirm_vs_paladin_kiting_basics.json"),
     ("imp_elite_skirm", "elite_steppe", "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip", 6, 1372, "eliteskirm_vs_steppe_kiting_basics.json"),
+    ("hand_cannoneer", "champion", "aoe2_golden_kiting_hcvschampion_2026-08-14.zip", 5, 567, None),
+    ("hand_cannoneer", "paladin", "aoe2_golden_kiting_hcvspaladin_2026-08-14.zip", 5, 569, None),
     ("heavy_cav_archer", "champion", "aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip", 474, 567, "hcavarcher_vs_champion_kiting_basics.json"),
     ("heavy_cav_archer", "elite_elephant", "aoe2_golden_kiting_hcavarchervselephant_2026-08-06.zip", 474, 1134, "hcavarcher_vs_elephant_kiting_basics.json"),
     ("heavy_cav_archer", "elite_fire_lancer", "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip", 474, 1903, None),
@@ -52,19 +55,42 @@ EXPECTED = (
 )
 
 
-def import_corpus() -> dict[str, Any]:
+def import_corpus(selected_archives: set[str] | None = None) -> dict[str, Any]:
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     locks = {entry["archive"]: entry for entry in manifest["archives"]}
     expected_names = {entry[2] for entry in EXPECTED}
     if set(locks) != expected_names:
         raise ValueError("dedicated manifest archive set differs from the authorized corpus")
+    if selected_archives is not None and not selected_archives <= expected_names:
+        unknown = sorted(selected_archives - expected_names)
+        raise ValueError(f"unknown selected archive(s): {', '.join(unknown)}")
+    existing_by_id: dict[str, dict[str, Any]] = {}
+    if selected_archives is not None and OUTPUT.exists():
+        existing = json.loads(OUTPUT.read_text(encoding="utf-8"))
+        existing_by_id = {matchup["id"]: matchup for matchup in existing["matchups"]}
 
     matchups = []
     for index, expected in enumerate(EXPECTED, start=1):
         ranged_slug, melee_slug, archive_name, ranged_master, melee_master, legacy = expected
         lock = locks[archive_name]
+        matchup_id = f"{ranged_slug}_vs_{melee_slug}"
+        if selected_archives is not None and archive_name not in selected_archives:
+            matchup = existing_by_id.get(matchup_id)
+            if matchup is None:
+                raise ValueError(f"existing truth is missing unselected matchup: {matchup_id}")
+            if (
+                matchup["archive"] != archive_name
+                or matchup["zip_sha256"] != lock["zip_sha256"]
+            ):
+                raise ValueError(f"existing truth provenance differs: {matchup_id}")
+            matchups.append(matchup)
+            print(
+                f"[{index}/{len(EXPECTED)}] retained verified truth for {archive_name}",
+                flush=True,
+            )
+            continue
         archive = SOURCE_DIR / archive_name
-        print(f"[{index}/17] verifying {archive_name}", flush=True)
+        print(f"[{index}/{len(EXPECTED)}] verifying {archive_name}", flush=True)
         actual_hash = _sha256(archive)
         if actual_hash != lock["zip_sha256"]:
             raise ValueError(f"project-local archive SHA-256 mismatch: {archive_name}")
@@ -79,7 +105,7 @@ def import_corpus() -> dict[str, Any]:
         if legacy:
             _validate_legacy_fixture(matchup, ROOT / "calibration" / "fixtures" / legacy)
         matchups.append(matchup)
-        print(f"[{index}/17] imported 5 ratios / 25 runs", flush=True)
+        print(f"[{index}/{len(EXPECTED)}] imported 5 ratios / 25 runs", flush=True)
 
     return {
         "schema_version": 1,
@@ -278,7 +304,8 @@ def _sha256(path: Path) -> str:
 
 
 def main() -> None:
-    truth = import_corpus()
+    selected_archives = set(sys.argv[1:]) or None
+    truth = import_corpus(selected_archives)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(truth, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"wrote {OUTPUT}", flush=True)

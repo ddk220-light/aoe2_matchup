@@ -12,6 +12,8 @@ const MATCHUPS = [
   ["imp_elite_skirm", "elite_fire_lancer", "eliteskirm_vs_firelancer_kiting_basics.json", "aoe2_golden_kiting_eliteskirmvsfirelancer_2026-08-06.zip"],
   ["imp_elite_skirm", "paladin", "eliteskirm_vs_paladin_kiting_basics.json", "aoe2_golden_kiting_eliteskirmvspaladin_2026-08-06.zip"],
   ["imp_elite_skirm", "elite_steppe", "eliteskirm_vs_steppe_kiting_basics.json", "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip"],
+  ["hand_cannoneer", "champion", null, "aoe2_golden_kiting_hcvschampion_2026-08-14.zip"],
+  ["hand_cannoneer", "paladin", null, "aoe2_golden_kiting_hcvspaladin_2026-08-14.zip"],
   ["heavy_cav_archer", "champion", "hcavarcher_vs_champion_kiting_basics.json", "aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip"],
   ["heavy_cav_archer", "elite_elephant", "hcavarcher_vs_elephant_kiting_basics.json", "aoe2_golden_kiting_hcavarchervselephant_2026-08-06.zip"],
   ["heavy_cav_archer", "elite_fire_lancer", "hcavarcher_vs_firelancer_kiting_basics.json", "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip"],

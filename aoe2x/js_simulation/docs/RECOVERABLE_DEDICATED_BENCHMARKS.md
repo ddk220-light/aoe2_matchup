@@ -22,8 +22,8 @@ future long dedicated-golden comparisons.
   process crash leaves already committed matchup checkpoints intact.
 - `progress.json` is updated atomically with completed, active, and pending
   matchups plus elapsed time and ETA.
-- Final merge rejects duplicate or incomplete coverage and requires exactly 17
-  matchups, 85 rows, and 425 attempts.
+- Final merge rejects duplicate or incomplete coverage and requires exactly 19
+  matchups, 95 rows, and 475 attempts for the current corpus.
 
 ## Run and resume
 
@@ -49,8 +49,9 @@ node aoe2x/js_simulation/tools/run_recoverable_dedicated_benchmark.mjs `
 
 `--seed-results <results.json>` may convert one already validated completed
 report into per-matchup checkpoints. This was used once to preserve the
-2026-08-14 four-shard result; a second invocation reused all 17 checkpoints
-and executed zero simulations.
+historical 2026-08-14 four-shard result; a second invocation reused all 17
+then-current checkpoints and executed zero simulations. That historical seed
+does not satisfy the current 19-matchup corpus or a different run signature.
 
 ## Selective mechanic reruns
 
@@ -68,8 +69,27 @@ node aoe2x/js_simulation/tools/run_recoverable_dedicated_rows.mjs `
 ```
 
 The one-range melee experiment used this form because only the three Steppe
-families can enter the new policy. It checkpointed 15 ratio rows and did not
-rerun the other 70 rows in the 17-matchup portfolio.
+families could enter that policy. It checkpointed 15 ratio rows and did not
+rerun the other 70 rows in the then-current 17-matchup portfolio. The same
+selective runner later checked both Hand Cannoneer families: 10 ratio rows and
+50 exact tape repeats.
+
+## Current Hand Cannoneer example
+
+```powershell
+node tools/run_recoverable_dedicated_rows.mjs `
+  --output-dir calibration/reports/hand_cannoneer_current_engine_2026-08-15 `
+  --workers 10 `
+  --matchup-ids hand_cannoneer_vs_champion,hand_cannoneer_vs_paladin
+```
+
+This run used 10 workers on a machine reporting 24 available CPUs and finished
+all 50 simulations in 277.8 seconds. See the
+[result summary](../calibration/reports/hand_cannoneer_current_engine_2026-08-15/README.md).
+
+For archive authorization, hash verification, exact-repeat import, scoring,
+and final arithmetic checks, use the
+[golden tape comparison workflow](GOLDEN_TAPE_COMPARISON_WORKFLOW.md).
 
 ## Recovery test
 

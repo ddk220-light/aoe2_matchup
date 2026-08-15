@@ -1,6 +1,15 @@
-# Dedicated golden ranged-versus-melee benchmark — 2026-08-14
+# Dedicated golden ranged-versus-melee benchmark — 2026-08-14 (historical)
 
-This is the active tape comparison for the JavaScript engine with generic
+> This report is the last full 17-archive portfolio run before the current
+> native-siege, minimum-range-retreat, exclusive allied-overlap, and Hand
+> Cannoneer corpus changes. The active corpus now contains 19 archives, 95
+> ratio rows, and 475 tape repeats. Use the
+> [current engine guide](CURRENT_ENGINE_2026-08-15.md),
+> [golden tape workflow](GOLDEN_TAPE_COMPARISON_WORKFLOW.md), and
+> [Hand Cannoneer current-engine result](../calibration/reports/hand_cannoneer_current_engine_2026-08-15/README.md)
+> for current-state claims.
+
+This is the historical tape comparison for the JavaScript engine with generic
 one-range melee reach-wedge transit. It uses only the 17 separately named
 dedicated golden archives recorded in
 `calibration/source/dedicated_ranged_melee_sources.json`.
@@ -71,3 +80,8 @@ bounded reruns, documented in
 [RECOVERABLE_DEDICATED_BENCHMARKS.md](RECOVERABLE_DEDICATED_BENCHMARKS.md).
 The older 48-row Standard Units report is retired because its rows are not the
 separately named dedicated golden kiting archives required for this comparison.
+
+The current corpus adds Hand Cannoneer versus Champion and Hand Cannoneer
+versus Paladin. Those 10 rows were run separately against the newer engine and
+are documented in the linked 2026-08-15 result. A full current 19-archive run
+has not yet replaced this historical portfolio report.

@@ -12,7 +12,7 @@ import {
 const ROOT = new URL("../", import.meta.url);
 
 
-test("dedicated suite schedules all 425 exact tape repeats", async () => {
+test("dedicated suite schedules all 475 exact tape repeats", async () => {
   const corpus = await loadDedicatedGoldenCorpus(ROOT);
   const progress = [];
   const report = await runDedicatedGoldenSuite({
@@ -30,14 +30,14 @@ test("dedicated suite schedules all 425 exact tape repeats", async () => {
     onProgress: (event) => progress.push(event),
   });
 
-  assert.equal(report.schedule.matchups, 17);
-  assert.equal(report.schedule.rows, 85);
-  assert.equal(report.schedule.totalRuns, 425);
-  assert.equal(report.rows.length, 85);
+  assert.equal(report.schedule.matchups, 19);
+  assert.equal(report.schedule.rows, 95);
+  assert.equal(report.schedule.totalRuns, 475);
+  assert.equal(report.rows.length, 95);
   assert.equal(report.summary.rowsOver25PointDelta, 0);
   assert.equal(report.summary.unresolvedRuns, 0);
   assert.equal(report.summary.meanAbsoluteMeanDelta, 0);
-  assert.equal(progress.at(-1).completed, 425);
+  assert.equal(progress.at(-1).completed, 475);
 });
 
 
@@ -62,7 +62,7 @@ test("dedicated suite records an engine exception and continues the corpus", asy
     },
   });
 
-  assert.equal(calls, 425);
+  assert.equal(calls, 475);
   assert.equal(report.summary.unresolvedRuns, 1);
   assert.equal(report.rows[0].samples[0].outcome, "error");
   assert.match(report.rows[0].samples[0].failure, /collision constraints/);
@@ -94,8 +94,8 @@ test("dedicated suite can run a deterministic four-way matchup shard", async () 
     "arbalester_vs_champion",
     "arbalester_vs_elite_steppe",
     "imp_elite_skirm_vs_paladin",
-    "heavy_cav_archer_vs_elite_fire_lancer",
-    "heavy_scorpion_vs_paladin",
+    "heavy_cav_archer_vs_champion",
+    "heavy_cav_archer_vs_elite_steppe",
   ]);
 });
 

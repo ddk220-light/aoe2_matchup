@@ -14,7 +14,7 @@ const unitBySlug = new Map(UNIT_REGISTRY.map((unit) => [unit.slug, unit]));
 
 export async function loadDedicatedComparisonContext(root) {
   const slugs = [
-    "arbalester", "imp_elite_skirm", "heavy_cav_archer", "heavy_scorpion",
+    "arbalester", "imp_elite_skirm", "hand_cannoneer", "heavy_cav_archer", "heavy_scorpion",
     "champion", "elite_elephant", "elite_fire_lancer", "paladin", "elite_steppe",
   ];
   const [mapFixture, mechanicsEntries] = await Promise.all([
@@ -56,18 +56,24 @@ export function scenarioFromDedicatedRun({ row, run, mechanicsByMaster, map }) {
   const reachMeleeWedgeTransit = units.some((unit) => (
     unit.owner === 3 && (unit.mechanics?.attack_range_tiles ?? 0) >= 1
   ));
+  const cohesiveKiting = ranged.class === "mobile_ranged";
   return Object.freeze({
     ratio: row.ratio,
     units: Object.freeze(units),
     map,
-    kiteOwner: 2,
-    kiteProfile: deriveKiteProfile(rangedMechanics, kitePolicyFor(ranged.slug)),
-    kiteNavigation: "cohesive",
-    kiteMeleeOpeningOrder: "attack-move-all",
-    chaseCapture: true,
-    kiteChaseDwellTicks: 0,
-    pairwiseAlliedTransit: false,
-    reachMeleeWedgeTransit,
+    ...(cohesiveKiting
+      ? {
+        kiteOwner: 2,
+        kiteProfile: deriveKiteProfile(rangedMechanics, kitePolicyFor(ranged.slug)),
+        kiteNavigation: "cohesive",
+        kiteMeleeOpeningOrder: "attack-move-all",
+        chaseCapture: true,
+        kiteChaseDwellTicks: 0,
+        pairwiseAlliedTransit: false,
+        reachMeleeWedgeTransit,
+      }
+      : {}),
+    meleeCrowdOwner: 3,
     preventiveContactSteering: true,
   });
 }

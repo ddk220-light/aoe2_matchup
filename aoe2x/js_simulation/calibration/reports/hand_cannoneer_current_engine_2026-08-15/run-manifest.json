@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "runSignature": "b03dd4e79e8a971187aae2a341e9dacf3a89cfd044f95c1f7f19090954327425",
+  "cpuUtilizationTarget": 0.8,
+  "availableParallelism": 24,
+  "workers": 10,
+  "matchupIds": [
+    "hand_cannoneer_vs_champion",
+    "hand_cannoneer_vs_paladin"
+  ],
+  "checkpointUnit": "one complete ratio row (5 exact tape repeats)",
+  "checkpointWrite": "temporary file, flush, atomic rename",
+  "resumePolicy": "validate signature and shape, skip completed row checkpoints"
+}

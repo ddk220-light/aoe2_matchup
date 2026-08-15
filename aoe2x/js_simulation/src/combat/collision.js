@@ -274,7 +274,8 @@ function distributeEqualMassRemoval(excess, available) {
 // Chebyshev separation of exactly 0.4000 tiles (0.2 + 0.2) whichever axis they
 // meet on, which a Euclidean radius cannot produce. Resolution is the standard
 // minimum-translation push along the axis that is closest to clearing.
-function constrainPair(left, right, alliedTransitPairs) {
+function constrainPair(left, right, alliedTransitPairs, alliedShrinkPairs, alliedShallowPairs,
+  alliedShrinkReservedIds, exclusiveAlliedShrinkOwners) {
   // Allies obstruct each other just as enemies do, but a MOVING unit shrinks its
   // own obstruction against a friendly (DeadFish.min_collision_size_multiplier)
   // so the crowd closes up instead of deadlocking. A stopped unit is not trying
@@ -298,10 +299,25 @@ function constrainPair(left, right, alliedTransitPairs) {
   // discriminator, not being in motion -- a unit that has ARRIVED at its slot
   // keeps its order until the next beat, and gating on motion instead leaves
   // those arrived units standing as walls for the rest of the group.
-  if (allied && left.formation && right.formation) return 0;
+  const exclusiveShrink = allied && exclusiveAlliedShrinkOwners.has(left.owner);
+  if (allied && left.formation && right.formation && !exclusiveShrink) return 0;
+  const pairKey = alliedTransitPairKey(left.referenceId, right.referenceId);
+  const shrinkPair = exclusiveShrink && alliedShrinkPairs.has(pairKey);
+  const shallowPair = exclusiveShrink && alliedShallowPairs.has(pairKey);
+  // An active deep pair is a single reserved passage. A nonpartner must see
+  // both members at their full allied extent; allowing the arriving unit to
+  // shrink one-sided creates a stable three-body pocket around every pair.
+  // Unreserved allies retain the ordinary moving-body shrink until a pair is
+  // selected, and the selected pair alone may use the minimum extent.
+  const leftReserved = alliedShrinkReservedIds.has(left.referenceId);
+  const rightReserved = alliedShrinkReservedIds.has(right.referenceId);
+  const leftCanShrink = !left.stationary && (!exclusiveShrink
+    || shrinkPair || (shallowPair && !leftReserved));
+  const rightCanShrink = !right.stationary && (!exclusiveShrink
+    || shrinkPair || (shallowPair && !rightReserved));
   const extent = allied
-    ? (left.stationary ? left.radius : left.allyRadius)
-      + (right.stationary ? right.radius : right.allyRadius)
+    ? (leftCanShrink ? left.allyRadius : left.radius)
+      + (rightCanShrink ? right.allyRadius : right.radius)
     : left.radius + right.radius;
   const centerX = right.x - left.x;
   const centerY = right.y - left.y;
@@ -357,7 +373,9 @@ function reportCollisionDiagnostics(callback, mode, sweeps, largestCorrection,
 }
 
 
-function resolveConstraints(bodies, obstacles, bounds, alliedTransitPairs,
+function resolveConstraints(bodies, obstacles, bounds, alliedTransitPairs, alliedShrinkPairs,
+  alliedShallowPairs,
+  alliedShrinkReservedIds, exclusiveAlliedShrinkOwners,
   onCollisionDiagnostics, allowEarlySlop, collisionRecoveryState) {
   let lastCorrection = Infinity;
   for (let sweep = 0; sweep < MAX_CONSTRAINT_SWEEPS; sweep += 1) {
@@ -375,7 +393,10 @@ function resolveConstraints(bodies, obstacles, bounds, alliedTransitPairs,
       for (let j = i + 1; j < bodies.length; j += 1) {
         largestCorrection = Math.max(
           largestCorrection,
-          constrainPair(bodies[i], bodies[j], alliedTransitPairs),
+          constrainPair(
+            bodies[i], bodies[j], alliedTransitPairs, alliedShrinkPairs, alliedShallowPairs,
+            alliedShrinkReservedIds, exclusiveAlliedShrinkOwners,
+          ),
         );
       }
     }
@@ -619,6 +640,14 @@ export function queryEnemyContactManifold(beforeSnapshot, afterSnapshot) {
 export function resolveMovementProposals(snapshot, proposals, map, options = {}) {
   const alliedTransitPairs = options.alliedTransitPairs instanceof Set
     ? options.alliedTransitPairs : new Set();
+  const alliedShrinkPairs = options.alliedShrinkPairs instanceof Set
+    ? options.alliedShrinkPairs : new Set();
+  const alliedShallowPairs = options.alliedShallowPairs instanceof Set
+    ? options.alliedShallowPairs : new Set();
+  const alliedShrinkReservedIds = options.alliedShrinkReservedIds instanceof Set
+    ? options.alliedShrinkReservedIds : new Set();
+  const exclusiveAlliedShrinkOwners = options.exclusiveAlliedShrinkOwners instanceof Set
+    ? options.exclusiveAlliedShrinkOwners : new Set();
   const onCollisionDiagnostics = options.onCollisionDiagnostics;
   if (onCollisionDiagnostics !== undefined && typeof onCollisionDiagnostics !== "function") {
     throw new TypeError("collision diagnostics callback must be a function");
@@ -633,7 +662,8 @@ export function resolveMovementProposals(snapshot, proposals, map, options = {})
   const obstacles = normalizeObstacles(map);
   const strictlyValidStart = validateStartingGeometry(bodies, obstacles, bounds);
   resolveConstraints(
-    bodies, obstacles, bounds, alliedTransitPairs, onCollisionDiagnostics,
+    bodies, obstacles, bounds, alliedTransitPairs, alliedShrinkPairs, alliedShallowPairs,
+    alliedShrinkReservedIds, exclusiveAlliedShrinkOwners, onCollisionDiagnostics,
     collisionRecoveryState?.active === true || !strictlyValidStart,
     collisionRecoveryState,
   );

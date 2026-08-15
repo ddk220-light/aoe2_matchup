@@ -31,6 +31,7 @@ import {
   alliedTransitPairKey,
   updateAlliedTransit,
 } from "./allied-transit.js";
+import { updateExclusiveAlliedOverlap } from "./allied-overlap.js";
 import { proposeMovement } from "./movement.js";
 import {
   createSoloNavigationState,
@@ -214,6 +215,16 @@ export function createWorld(scenario) {
       scenario.soloMovement === true,
     )
     : null;
+  const crowdState = Number.isSafeInteger(scenario.meleeCrowdOwner)
+    ? {
+      owner: scenario.meleeCrowdOwner,
+      preventiveContactSteering: false,
+      preventiveContactSteeringStrength: 0,
+      preventiveContactSteeredSteps: 0,
+      preventiveContactSteeredUnits: new Set(),
+      alliedOverlap: { reservations: new Map() },
+    }
+    : null;
   if (kiteState) kiteState.collisionRecoveryState = { active: false };
   if (scenario.kiteChaseDwellTicks !== undefined) {
     if (!kiteState) {
@@ -239,20 +250,16 @@ export function createWorld(scenario) {
     kiteState.meleeApproach = new Map();
   }
   if (scenario.preventiveContactSteering === true) {
-    if (!kiteState || scenario.kiteMeleeOpeningOrder !== "attack-move-all") {
-      throw new RangeError(
-        "preventive contact steering requires a kiting attack-move scenario",
-      );
+    if (!crowdState) {
+      throw new RangeError("preventive contact steering requires a melee crowd owner");
     }
     const strength = scenario.preventiveContactSteeringStrength
       ?? PREVENTIVE_CONTACT_STEERING_STRENGTH;
     if (!Number.isFinite(strength) || strength < 0 || strength > 1) {
       throw new RangeError("preventive contact steering strength must be between 0 and 1");
     }
-    kiteState.preventiveContactSteering = true;
-    kiteState.preventiveContactSteeringStrength = strength;
-    kiteState.preventiveContactSteeredSteps = 0;
-    kiteState.preventiveContactSteeredUnits = new Set();
+    crowdState.preventiveContactSteering = true;
+    crowdState.preventiveContactSteeringStrength = strength;
   }
   if (scenario.pairwiseAlliedTransit === true
       && scenario.reachMeleeWedgeTransit === true) {
@@ -291,6 +298,7 @@ export function createWorld(scenario) {
     // the scenario names a kiting owner, so every other world keeps its
     // exact published shape.
     ...(kiteState ? { kiteState } : {}),
+    ...(crowdState ? { crowdState } : {}),
     ...(anyCharge ? { projectiles: Object.freeze([]) } : {}),
     // Deterministic per-shot RNG, present only when a unit can miss or blast
     // (dat accuracy < 100 or blast width > 0 — nothing in the converged
@@ -465,6 +473,7 @@ function minRangeRetreat(unit, live) {
     referenceId: unit.referenceId,
     dx: ((unit.x - nearest.x) / nearestDistance) * step,
     dy: ((unit.y - nearest.y) / nearestDistance) * step,
+    movementIntent: "minimum-range-retreat",
   });
 }
 
@@ -599,7 +608,10 @@ function stepHitsOtherEnemyBody(mover, dx, dy, live) {
 
 function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = false,
   alliedTransitPairs = new Set()) {
-  if (!STEER_AROUND_BODIES && chaserScopeOwner === null) {
+  const hasMinimumRangeRetreat = planned.proposals.some(({ movementIntent }) => (
+    movementIntent === "minimum-range-retreat"
+  ));
+  if (!STEER_AROUND_BODIES && chaserScopeOwner === null && !hasMinimumRangeRetreat) {
     return { proposals: planned.proposals, steered: null };
   }
   const escapeActive = KITED_SIDE_STEER || kitedEscape;
@@ -614,12 +626,13 @@ function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = fal
     if (distance <= ZERO_STEP_EPSILON) return proposal;
     const mover = byReference.get(proposal.referenceId);
     if (!mover) return proposal;
+    const minimumRangeRetreat = proposal.movementIntent === "minimum-range-retreat";
     // "chaser" scope: only the chasing side of a kited scenario steers; the
     // kiting side (and every non-kited fight) keeps the baseline solver.
     // And only around NON-TARGET enemy bodies -- ally-blocked and
     // target-blocked chasers keep the baseline solver (the tape's stall and
     // catch regimes respectively).
-    if (!STEER_AROUND_BODIES) {
+    if (!minimumRangeRetreat && !STEER_AROUND_BODIES) {
       if (mover.owner === chaserScopeOwner) {
         // "kited": the kiting side's MOVE-ORDERED units steer around enemy
         // bodies too -- the tape's caught victim executes the scripted ball
@@ -648,18 +661,26 @@ function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = fal
       proposalByReference, bounds, alliedTransitPairs)) return proposal;
     steered.add(proposal.referenceId);
     const heading = Math.atan2(proposal.dy, proposal.dx);
+    // Retreaters keep a stable parity-selected side on symmetric choices.
+    // This is deterministic per unit and avoids steering an entire siege
+    // cohort into the same new queue. Recomputing around the current threat
+    // heading each tick lets the route follow a moving pinner without a
+    // calibrated turn timer.
+    const sides = minimumRangeRetreat && mover.referenceId % 2 !== 0
+      ? [-1, 1]
+      : [1, -1];
     for (let turn = 1; turn <= STEER_MAX_TURNS; turn += 1) {
-      for (const side of [1, -1]) {
+      for (const side of sides) {
         const angle = heading + side * turn * STEER_INCREMENT_RADIANS;
         const dx = Math.cos(angle) * distance;
         const dy = Math.sin(angle) * distance;
         if (stepClearsBodies(mover, dx, dy, planned.units, proposalByReference, bounds,
           alliedTransitPairs)) {
-          return Object.freeze({ referenceId: proposal.referenceId, dx, dy });
+          return Object.freeze({ ...proposal, dx, dy });
         }
       }
     }
-    return Object.freeze({ referenceId: proposal.referenceId, dx: 0, dy: 0 });
+    return Object.freeze({ ...proposal, dx: 0, dy: 0 });
   });
   return { proposals, steered };
 }
@@ -720,7 +741,7 @@ function resolveMovement(planned, byReference, map, kiteState = null, movementOp
 }
 
 
-function moveUnits(units, map, tick, events, kiteState = null) {
+function moveUnits(units, map, tick, events, kiteState = null, crowdState = null) {
   const live = units.filter(({ alive }) => alive).map(freezeUnit);
   const byReference = new Map(live.map((unit) => [unit.referenceId, unit]));
   const soloDestinations = kiteState?.soloNavigationState
@@ -910,31 +931,41 @@ function moveUnits(units, map, tick, events, kiteState = null) {
     kiteState.alliedTransit.pairKeys = updatedTransit.pairKeys;
     alliedTransitPairs = updatedTransit.pairKeys;
   }
-  const movementOptions = {
+  let movementOptions = {
     alliedTransitPairs,
     ...(kiteState ? { collisionRecoveryState: kiteState.collisionRecoveryState } : {}),
   };
   let planned = planLocalAvoidance(live, proposals, map, movementOptions);
-  if (kiteState?.preventiveContactSteering === true) {
+  if (crowdState?.preventiveContactSteering === true) {
     let contactProposals = planned.proposals;
-    const chaserOwners = [...new Set(live
-      .filter((unit) => unit.owner !== kiteState.owner)
-      .map(({ owner }) => owner))]
-      .sort((left, right) => left - right);
-    for (const owner of chaserOwners) {
-      const contactPlan = planPreventiveContactSteering(
-        planned.units,
-        contactProposals,
-        map,
-        { owner, strength: kiteState.preventiveContactSteeringStrength },
-      );
-      contactProposals = contactPlan.proposals;
-      kiteState.preventiveContactSteeredSteps += contactPlan.steered.length;
-      for (const { referenceId } of contactPlan.steered) {
-        kiteState.preventiveContactSteeredUnits.add(referenceId);
-      }
+    const contactPlan = planPreventiveContactSteering(
+      planned.units,
+      contactProposals,
+      map,
+      { owner: crowdState.owner, strength: crowdState.preventiveContactSteeringStrength },
+    );
+    contactProposals = contactPlan.proposals;
+    crowdState.preventiveContactSteeredSteps += contactPlan.steered.length;
+    for (const { referenceId } of contactPlan.steered) {
+      crowdState.preventiveContactSteeredUnits.add(referenceId);
     }
     planned = Object.freeze({ ...planned, proposals: contactProposals });
+  }
+  if (crowdState) {
+    const overlap = updateExclusiveAlliedOverlap(
+      crowdState.alliedOverlap,
+      planned.units,
+      planned.proposals,
+      crowdState.owner,
+    );
+    crowdState.alliedOverlap = { reservations: overlap.reservations };
+    movementOptions = {
+      ...movementOptions,
+      exclusiveAlliedShrinkOwners: new Set([crowdState.owner]),
+      alliedShrinkPairs: overlap.pairKeys,
+      alliedShallowPairs: overlap.shallowPairKeys,
+      alliedShrinkReservedIds: overlap.reservedIds,
+    };
   }
   const moved = resolveMovement(planned, byReference, map, kiteState, movementOptions);
   const movedByReference = new Map(moved.map((unit) => [unit.referenceId, unit]));
@@ -1960,7 +1991,7 @@ export function stepWorld(world) {
     issueOrders(world.orderState, units, tick, events, event);
   }
   const { contacts, movedIds, blockedIds, velocities } = moveUnits(
-    units, world.map, tick, events, world.kiteState ?? null);
+    units, world.map, tick, events, world.kiteState ?? null, world.crowdState ?? null);
   updateEngagements(units, contacts, tick, events, blockedIds, world.kiteState ?? null);
   // Clone flight state: published projectiles are frozen, ranged shots
   // advance their position every tick, and a bolt's hit list must not alias

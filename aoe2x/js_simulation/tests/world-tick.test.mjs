@@ -12,6 +12,10 @@ const mechanicsUrl = new URL(
   import.meta.url,
 );
 const mechanics = JSON.parse(await readFile(mechanicsUrl, "utf8"));
+const scorpionMechanics = JSON.parse(await readFile(new URL(
+  "../fixtures/unit_stats/heavy_scorpion_japanese_imperial.json",
+  import.meta.url,
+), "utf8"));
 
 
 function unit({
@@ -130,6 +134,44 @@ test("world publication preserves blocker-aware local route state", async () => 
     targetReferenceId: 3,
     side: 1,
   });
+});
+
+
+test("a minimum-range retreat routes sideways when an allied siege unit blocks directly away", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const stoppedChampion = Object.freeze({ ...mechanics, speed_tiles_per_second: 0 });
+  const retreating = unit({
+    referenceId: 1,
+    owner: 2,
+    x: 4,
+    y: 5,
+    pursuitTargetId: 3,
+    unitMechanics: scorpionMechanics,
+  });
+  const alliedBlocker = unit({
+    referenceId: 2,
+    owner: 2,
+    x: 5,
+    y: 5,
+    pursuitTargetId: 3,
+    unitMechanics: scorpionMechanics,
+  });
+  const threat = unit({
+    referenceId: 3,
+    owner: 3,
+    x: 3,
+    y: 5,
+    pursuitTargetId: 1,
+    unitMechanics: stoppedChampion,
+  });
+
+  const next = stepWorld(createWorld(scenario([retreating, alliedBlocker, threat])));
+  const moved = next.units.find(({ referenceId }) => referenceId === 1);
+
+  assert.ok(Math.abs(moved.y - retreating.y) > 1e-9);
+  assert.ok(Math.hypot(moved.x - threat.x, moved.y - threat.y)
+    >= Math.hypot(retreating.x - threat.x, retreating.y - threat.y) - 1e-12);
+  assert.ok(next.events.some(({ type, actorId }) => type === "move" && actorId === 1));
 });
 
 

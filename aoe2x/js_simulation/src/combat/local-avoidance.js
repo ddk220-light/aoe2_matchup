@@ -537,10 +537,15 @@ function normalizeInputs(snapshot, proposals) {
     if (proposalByReference.has(referenceId)) {
       throw new Error(`duplicate movement proposal for reference ${referenceId}`);
     }
+    const movementIntent = row.movementIntent ?? null;
+    if (movementIntent !== null && movementIntent !== "minimum-range-retreat") {
+      throw new RangeError(`unknown movement intent ${movementIntent}`);
+    }
     proposalByReference.set(referenceId, Object.freeze({
       referenceId,
       dx: requireFinite(row.dx, "proposal dx"),
       dy: requireFinite(row.dy, "proposal dy"),
+      ...(movementIntent === null ? {} : { movementIntent }),
     }));
   }
   const seen = new Set();
@@ -575,7 +580,13 @@ export function planLocalAvoidance(snapshot, proposals, map, options = {}) {
     // override the scripted march (and did: the recorded formation flows at
     // 0.40-0.52 tiles/s median while goal-routed marchers crawled at 0.22).
     // It still stands as an obstacle in every other mover's constraint set.
-    const target = mover.moveOrder ? null : byReference.get(mover.pursuitTargetId);
+    // A minimum-range retreat is deliberately moving AWAY from a pursuit
+    // target that is already inside the unit's maximum firing range. Treating
+    // it as an ordinary pursuit makes contactGoal report "reached" and
+    // cancels the retreat before collision resolution can see it.
+    const target = mover.moveOrder || original.movementIntent === "minimum-range-retreat"
+      ? null
+      : byReference.get(mover.pursuitTargetId);
     const goal = target?.alive === false || !target ? null : contactGoal(mover, target);
     let avoidance = mover.avoidance;
     let selected = null;

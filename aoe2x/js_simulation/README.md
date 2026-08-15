@@ -7,16 +7,35 @@ or measured on tape — none fitted. It loads no production engine code.
 
 ## Current status
 
-**[Calibration status 2026-08-06](docs/CALIBRATION_STATUS_2026-08-06.md):
-28 matchups, 140 tape ratios, 0 wrong winners.** Coverage: melee
-(champion/paladin/steppe/elephant), Fire Lancer charge attacks, projectile
-combat with ballistics lead, scorpion pass-through bolts, mangonel blast,
-projectile accuracy, minimum range, and both sides of the scripted-kiting
-AI (arbalester / elite skirmisher / heavy cavalry archer versus champion /
-paladin / elite steppe lancer / elite battle elephant / elite fire
-lancer). Per-mechanic measurement docs live in `docs/`; start with the
-status file and
-[the kiting order layer](docs/KITING_AI_ORDER_LAYER_2026-08-06.md).
+The registry currently contains 14 generated unit-mechanics fixtures. The
+active dedicated golden corpus contains 19 separately authorized matchup
+archives, 95 ratio rows, and 475 exact tape repeats. The newest current-engine
+acceptance slice covers Hand Cannoneer versus Champion and Paladin: 50/50
+resolved simulations, no wrong winners, no row above 25 points, and 3.67-point
+mean absolute row delta.
+
+The older 2026-08-06 calibration and 17-archive 2026-08-14 full-suite reports
+remain historical evidence. They predate the current native-siege,
+minimum-range-retreat, exclusive allied-overlap, and Hand Cannoneer corpus
+changes and must not be presented as a current full-portfolio result.
+
+## Documentation map
+
+- [Current engine and mechanics](docs/CURRENT_ENGINE_2026-08-15.md) — the
+  authoritative description of the active tick loop, targeting, attacks,
+  projectiles, kiting, navigation, collision, crowding, and limitations.
+- [Golden tape comparison workflow](docs/GOLDEN_TAPE_COMPARISON_WORKFLOW.md) —
+  authorization, hashing, archive intake, `frames.bin` import, exact-repeat
+  scenarios, parallel recovery, scoring, and verification.
+- [Recoverable benchmark runner](docs/RECOVERABLE_DEDICATED_BENCHMARKS.md) —
+  operational details for full and selective runs.
+- [Hand Cannoneer current-engine result](calibration/reports/hand_cannoneer_current_engine_2026-08-15/README.md) —
+  the newest 10-row/50-run comparison.
+- [Historical 17-archive report](docs/DEDICATED_GOLDEN_RANGED_MELEE_2026-08-14.md) —
+  the last full portfolio before the current changes.
+- [Kiting AI order layer](docs/KITING_AI_ORDER_LAYER_2026-08-06.md) and
+  [Hand Cannoneer navigation lab](docs/HAND_CANNONEER_SOLO_NAVIGATION_2026-08-11.md) —
+  detailed derivations behind two major subsystems.
 
 Calibration circuit metric: signed winner-HP% (winner's remaining HP as a
 percent of its own starting pool) with the sim's 25-sampled-order median
@@ -144,10 +163,19 @@ Tailnet:
 
 `https://dragonstar.tail82a190.ts.net/golden-map/?mode=ranged-vs-melee-kiting&ranged=heavy_cav_archer&melee=champion&navigation=cohesive`
 
-The current exact-repeat outcome comparison uses only the 17 separately named,
+The current exact-repeat corpus uses only 19 separately named,
 SHA-256-manifested dedicated golden archives. See the
-[2026-08-14 dedicated golden benchmark](docs/DEDICATED_GOLDEN_RANGED_MELEE_2026-08-14.md)
-and the [recoverable benchmark runner](docs/RECOVERABLE_DEDICATED_BENCHMARKS.md).
+[golden tape comparison workflow](docs/GOLDEN_TAPE_COMPARISON_WORKFLOW.md),
+the [recoverable benchmark runner](docs/RECOVERABLE_DEDICATED_BENCHMARKS.md),
+and the historical
+[2026-08-14 dedicated benchmark](docs/DEDICATED_GOLDEN_RANGED_MELEE_2026-08-14.md).
+
+Heavy Scorpion deliberately does not use the cohesive mobile-ranged kite
+controller. In combat observation and dedicated scenarios it uses native siege
+targeting, pass-through bolts, and individual minimum-range retreat. The melee
+opponent still uses preventive crowd steering and exclusive overlap
+reservations so it can surround the siege line without collapsing into an
+unbounded stack.
 
 One-range melee chasers now use the generic reach-wedge collision policy. Any
 melee unit whose sourced `attack_range_tiles` is at least one may form one
@@ -202,9 +230,10 @@ python aoe2x/js_simulation/tools/export_unit_costs.py     # prints the registry'
 ```
 
 `src/kite-profiles.js` carries `KITE_PROFILE_PROVENANCE`, which names the
-source fixture(s) behind every row and flags the one row (Hand Cannoneer)
-that is *constructed* from its dat reload because no kiting tape column for
-it exists.
+source fixture(s) behind every row. The Hand Cannoneer recurring clock is
+mechanics-derived from its sourced reload and attack delay; its formation and
+opening policy came from the authorized Standard Units streams and is now also
+checked end-to-end by the two dedicated Hand Cannoneer golden archives.
 
 ## Tests
 

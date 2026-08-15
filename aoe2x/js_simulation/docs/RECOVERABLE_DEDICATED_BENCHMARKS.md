@@ -52,6 +52,25 @@ report into per-matchup checkpoints. This was used once to preserve the
 2026-08-14 four-shard result; a second invocation reused all 17 checkpoints
 and executed zero simulations.
 
+## Selective mechanic reruns
+
+Use `tools/run_recoverable_dedicated_rows.mjs` when an engine change can affect
+only named matchup families. Its checkpoint unit is one ratio row: five exact
+tape repeats. The runner accepts a comma-separated `--matchup-ids` selection,
+validates every requested identifier against the dedicated corpus, and merges
+only the selected coverage. It retains the same engine-signature validation,
+atomic checkpoint writes, resume behavior, 80%-CPU target, and progress file.
+
+```powershell
+node aoe2x/js_simulation/tools/run_recoverable_dedicated_rows.mjs `
+  --output-dir aoe2x/js_simulation/calibration/reports/<run-name> `
+  --matchup-ids arbalester_vs_elite_steppe,imp_elite_skirm_vs_elite_steppe,heavy_cav_archer_vs_elite_steppe
+```
+
+The one-range melee experiment used this form because only the three Steppe
+families can enter the new policy. It checkpointed 15 ratio rows and did not
+rerun the other 70 rows in the 17-matchup portfolio.
+
 ## Recovery test
 
 `tests/dedicated-benchmark-rig.test.mjs` simulates a process failure after two

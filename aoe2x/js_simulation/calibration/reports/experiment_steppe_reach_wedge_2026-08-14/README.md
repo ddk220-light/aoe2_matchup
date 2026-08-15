@@ -1,5 +1,10 @@
 # Reach-melee wedge transit experiment
 
+> Superseded by the target-independent
+> [one-range melee reach-wedge report](../experiment_one_range_melee_wedge_2026-08-14/README.md).
+> This file preserves the earlier closure-per-reload-gated experiment and its
+> historical measurements.
+
 ## Decision
 
 Keep the experiment for visual review. It fixes the HCA-versus-Elite-Steppe

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "runSignature": "3b325692d12443b7a004fb42a034d9d4af4ecbc48fa7620caea02f6e30c10162",
+  "cpuUtilizationTarget": 0.8,
+  "availableParallelism": 24,
+  "workers": 15,
+  "matchupIds": [
+    "arbalester_vs_elite_steppe",
+    "imp_elite_skirm_vs_elite_steppe",
+    "heavy_cav_archer_vs_elite_steppe"
+  ],
+  "checkpointUnit": "one complete ratio row (5 exact tape repeats)",
+  "checkpointWrite": "temporary file, flush, atomic rename",
+  "resumePolicy": "validate signature and shape, skip completed row checkpoints"
+}

@@ -206,7 +206,7 @@ test("reach-wedge transit remains exclusive when two rear units approach one fro
 });
 
 
-test("reach-wedge transit stays off when sourced closure per reload exceeds extra reach", () => {
+test("reach-wedge transit applies to any one-range melee unit regardless of target speed", () => {
   const result = updateAlliedTransit(
     state([1, 2], new Map(), "reach-wedge"),
     [
@@ -221,5 +221,5 @@ test("reach-wedge transit stays off when sourced closure per reload exceeds extr
     [proposal(1, 0.02), proposal(2, 0), proposal(10, 0)],
   );
 
-  assert.deepEqual([...result.pairKeys], []);
+  assert.deepEqual([...result.pairKeys], ["1:2"]);
 });

@@ -37,9 +37,10 @@ const ENGINE_HASH_ROOTS = [
 
 
 export async function main(argv = process.argv.slice(2)) {
-  const options = parseArgs(argv);
+  const options = parseRecoverableRowArgs(argv);
   const corpus = await loadDedicatedGoldenCorpus(new URL("../", import.meta.url));
-  const rowIds = corpus.matchups.flatMap(({ ratios }) => ratios.map(({ id }) => id));
+  const selection = selectDedicatedRowIds(corpus, options.matchupIds);
+  const { matchupIds, rowIds } = selection;
   const runSignature = await hashRunInputs(ENGINE_HASH_ROOTS);
   const detectedParallelism = availableParallelism();
   const concurrency = options.workers ?? computeWorkerCount({
@@ -67,7 +68,11 @@ export async function main(argv = process.argv.slice(2)) {
       );
     },
   });
-  const merged = mergeDedicatedRowReports(queue.reports);
+  const merged = mergeDedicatedRowReports(queue.reports, {
+    expectedMatchups: matchupIds.length,
+    expectedRows: rowIds.length,
+    expectedRuns: rowIds.length * 5,
+  });
   await Promise.all([
     writeFile(
       resolve(options.outputDirectory, "results.json"),
@@ -87,6 +92,7 @@ export async function main(argv = process.argv.slice(2)) {
         cpuUtilizationTarget: 0.8,
         availableParallelism: detectedParallelism,
         workers: concurrency,
+        matchupIds,
         checkpointUnit: "one complete ratio row (5 exact tape repeats)",
         checkpointWrite: "temporary file, flush, atomic rename",
         resumePolicy: "validate signature and shape, skip completed row checkpoints",
@@ -159,14 +165,39 @@ async function listFiles(path) {
 }
 
 
-function parseArgs(argv) {
-  const options = { outputDirectory: DEFAULT_OUTPUT, workers: undefined };
+export function selectDedicatedRowIds(corpus, requestedMatchupIds = undefined) {
+  if (!Array.isArray(corpus?.matchups)) throw new TypeError("corpus matchups are required");
+  const requested = requestedMatchupIds === undefined
+    ? corpus.matchups.map(({ id }) => id)
+    : requestedMatchupIds;
+  if (!Array.isArray(requested) || !requested.length
+      || new Set(requested).size !== requested.length) {
+    throw new TypeError("matchup IDs must be a non-empty unique list");
+  }
+  const available = new Map(corpus.matchups.map((matchup) => [matchup.id, matchup]));
+  const missing = requested.filter((matchupId) => !available.has(matchupId));
+  if (missing.length) throw new RangeError(`unknown dedicated matchup: ${missing.join(", ")}`);
+  const selected = requested.map((matchupId) => available.get(matchupId));
+  return Object.freeze({
+    matchupIds: Object.freeze([...requested]),
+    rowIds: Object.freeze(selected.flatMap(({ ratios }) => ratios.map(({ id }) => id))),
+  });
+}
+
+
+export function parseRecoverableRowArgs(argv) {
+  const options = {
+    outputDirectory: DEFAULT_OUTPUT,
+    workers: undefined,
+    matchupIds: undefined,
+  };
   for (let index = 0; index < argv.length; index += 2) {
     const flag = argv[index];
     const value = argv[index + 1];
-    if (!value || !["--output-dir", "--workers"].includes(flag)) {
+    if (!value || !["--output-dir", "--workers", "--matchup-ids"].includes(flag)) {
       throw new Error(
-        "usage: run_recoverable_dedicated_rows.mjs [--output-dir DIR] [--workers N]",
+        "usage: run_recoverable_dedicated_rows.mjs [--output-dir DIR] "
+          + "[--workers N] [--matchup-ids ID,ID]",
       );
     }
     if (flag === "--output-dir") options.outputDirectory = resolve(value);
@@ -174,6 +205,13 @@ function parseArgs(argv) {
       options.workers = Number(value);
       if (!Number.isSafeInteger(options.workers) || options.workers < 1) {
         throw new RangeError("workers must be a positive integer");
+      }
+    }
+    if (flag === "--matchup-ids") {
+      options.matchupIds = value.split(",").map((entry) => entry.trim()).filter(Boolean);
+      if (!options.matchupIds.length
+          || new Set(options.matchupIds).size !== options.matchupIds.length) {
+        throw new TypeError("matchup IDs must be a non-empty unique list");
       }
     }
   }

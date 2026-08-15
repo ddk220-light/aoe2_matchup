@@ -1,5 +1,4 @@
 import { collisionRadius, isWithinReach } from "./targeting.js";
-import { hasLimitedClosurePerReload } from "./reach-melee.js";
 
 
 const EPSILON = 1e-12;
@@ -197,7 +196,6 @@ function reachWedgeCandidates(units, cohort, byReference, proposalByReference) {
   for (const mover of movers) {
     const target = pursuitTarget(mover, byReference);
     if (target === null || reachedPursuitTarget(mover, byReference)) continue;
-    if (!hasLimitedClosurePerReload(mover, target)) continue;
     if (!isNearReachEnvelope(mover, target)) continue;
     const moverProposal = proposalByReference.get(mover.referenceId);
     if (chebyshevDistance(mover, target, moverProposal)

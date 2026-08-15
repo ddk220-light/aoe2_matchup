@@ -3,6 +3,10 @@ import test from "node:test";
 
 import { loadDedicatedGoldenCorpus } from "../src/dedicated-golden-corpus.js";
 import { runDedicatedGoldenSuite } from "../tools/run_dedicated_ranged_melee_suite.mjs";
+import {
+  parseRecoverableRowArgs,
+  selectDedicatedRowIds,
+} from "../tools/run_recoverable_dedicated_rows.mjs";
 
 
 const ROOT = new URL("../", import.meta.url);
@@ -145,4 +149,32 @@ test("dedicated suite can isolate one named ratio row", async () => {
   assert.deepEqual(report.rows.map(({ id }) => id), [
     "heavy_cav_archer_vs_elite_steppe_20v20",
   ]);
+});
+
+
+test("recoverable row runner selects only requested matchup families", async () => {
+  const corpus = await loadDedicatedGoldenCorpus(ROOT);
+  const options = parseRecoverableRowArgs([
+    "--output-dir", "selected-output",
+    "--matchup-ids", "arbalester_vs_elite_steppe,heavy_cav_archer_vs_elite_steppe",
+  ]);
+
+  const selection = selectDedicatedRowIds(corpus, options.matchupIds);
+
+  assert.equal(selection.matchupIds.length, 2);
+  assert.equal(selection.rowIds.length, 10);
+  assert.ok(selection.rowIds.every((rowId) => (
+    rowId.startsWith("arbalester_vs_elite_steppe_")
+      || rowId.startsWith("heavy_cav_archer_vs_elite_steppe_")
+  )));
+});
+
+
+test("recoverable row runner rejects an unknown requested matchup", async () => {
+  const corpus = await loadDedicatedGoldenCorpus(ROOT);
+
+  assert.throws(
+    () => selectDedicatedRowIds(corpus, ["not_a_golden_matchup"]),
+    /unknown dedicated matchup/,
+  );
 });

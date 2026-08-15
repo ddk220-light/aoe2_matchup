@@ -149,6 +149,16 @@ SHA-256-manifested dedicated golden archives. See the
 [2026-08-14 dedicated golden benchmark](docs/DEDICATED_GOLDEN_RANGED_MELEE_2026-08-14.md)
 and the [recoverable benchmark runner](docs/RECOVERABLE_DEDICATED_BENCHMARKS.md).
 
+One-range melee chasers now use the generic reach-wedge collision policy. Any
+melee unit whose sourced `attack_range_tiles` is at least one may form one
+exclusive two-deep allied transit pair near its legal engagement envelope.
+The rule is target-independent and does not name Elite Steppe Lancer. It does
+not shrink collision bodies, admit a third overlapping ally, permit compact
+four-unit cliques, or alter zero-range melee units. The current dedicated
+corpus contains one eligible unit, Elite Steppe Lancer, so all 15 Steppe ratio
+rows were rerun for the active
+[one-range melee report](calibration/reports/experiment_one_range_melee_wedge_2026-08-14/README.md).
+
 See
 [Hand Cannoneer solo navigation lab — 2026-08-11](docs/HAND_CANNONEER_SOLO_NAVIGATION_2026-08-11.md)
 for the architecture, exact 60-second comparison, deterministic hashes, test

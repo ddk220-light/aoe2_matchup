@@ -209,7 +209,7 @@ test("reach melee still avoids forming a wedge while it is far from attack range
 });
 
 
-test("reach melee still steers when sourced closure per reload exceeds extra reach", () => {
+test("one-range melee may form a near-target wedge regardless of target speed", () => {
   const target = unit({
     referenceId: 90, owner: 2, x: 3.8, y: 2, pursuitTargetId: null, speed: 0.9,
   });
@@ -227,8 +227,8 @@ test("reach melee still steers when sourced closure per reload exceeds extra rea
     { owner: 3 },
   );
 
-  assert.notDeepEqual(byReference(result).get(1), direct);
-  assert.equal(result.steered[0].reason, "compact-contact");
+  assert.deepEqual(byReference(result).get(1), direct);
+  assert.deepEqual(result.steered, []);
 });
 
 

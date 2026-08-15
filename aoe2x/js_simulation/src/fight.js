@@ -186,6 +186,7 @@ export async function runFight(root, {
   kiteChaseCapture,
   kiteChaseDwellTicks,
   pairwiseAlliedTransit,
+  reachMeleeWedgeTransit,
   preventiveContactSteering,
   placementByOwner,
 }) {
@@ -283,6 +284,9 @@ export async function runFight(root, {
     throw new RangeError("kite navigation requires one ranged kiting side");
   }
   const kiter = innerKiteOwner === 2 ? inner2 : inner3;
+  const chaserMechanics = innerKiteOwner === 2 ? mechanics3 : mechanics2;
+  const innerReachMeleeWedgeTransit = reachMeleeWedgeTransit === true
+    && (chaserMechanics?.attack_range_tiles ?? 0) >= 1;
   const result = runWorld(createWorld({
     ratio: `${innerCount2}v${innerCount3}`,
     units,
@@ -294,6 +298,7 @@ export async function runFight(root, {
         ...(kiteChaseCapture === true ? { chaseCapture: true } : {}),
         ...(kiteChaseDwellTicks === undefined ? {} : { kiteChaseDwellTicks }),
         ...(pairwiseAlliedTransit === true ? { pairwiseAlliedTransit: true } : {}),
+        ...(innerReachMeleeWedgeTransit ? { reachMeleeWedgeTransit: true } : {}),
         ...(preventiveContactSteering === true ? { preventiveContactSteering: true } : {}),
         kiteProfile: kiteProfileFor(
           kiter,
@@ -341,9 +346,9 @@ export async function runFight(root, {
           result.world,
           innerKiteOwner === 2 ? innerCount2 : innerCount3,
         ),
-        alliedTransitMode: pairwiseAlliedTransit === true
-          ? "exclusive-pair"
-          : "soft-allied",
+        alliedTransitMode: innerReachMeleeWedgeTransit
+          ? "reach-wedge-pair"
+          : (pairwiseAlliedTransit === true ? "exclusive-pair" : "soft-allied"),
         contactSteeringMode: preventiveContactSteering === true
           ? "preventive-contact-graph"
           : "off",
@@ -514,6 +519,10 @@ export async function runKitingObservation(root, {
     // experiments, but it is not the viewer default: in 5 HCA vs 10 Champion
     // it creates long-lived deep pairs and moves the result away from tape.
     pairwiseAlliedTransit: false,
+    // Reach melee may reserve one front-line ally while entering its sourced
+    // attack envelope. The reservation remains exclusive, so it permits a
+    // two-deep wedge without making the full chaser cohort transparent.
+    reachMeleeWedgeTransit: true,
     preventiveContactSteering: true,
   });
 }

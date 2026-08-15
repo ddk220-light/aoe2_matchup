@@ -174,6 +174,7 @@ export async function runDedicatedGoldenSuite({
       chaseCapture: true,
       meleeEngagementDwellTicks: 0,
       pairwiseAlliedTransit: false,
+      reachMeleeWedgeTransit: true,
       preventiveContactSteering: true,
       kitingClock: "mechanics-derived",
       maxTicks: 9000,

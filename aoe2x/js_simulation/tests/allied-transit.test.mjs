@@ -7,18 +7,25 @@ import {
 } from "../src/combat/allied-transit.js";
 
 
-function unit(referenceId, x, y = 5, owner = 3) {
+function unit(referenceId, x, y = 5, owner = 3, {
+  attackRange = 0,
+  pursuitTargetId = null,
+  speed = 0.9,
+  reload = 2,
+} = {}) {
   return Object.freeze({
     referenceId,
     owner,
     x,
     y,
     alive: true,
-    pursuitTargetId: null,
+    pursuitTargetId,
     mechanics: Object.freeze({
-      attack_range_tiles: 0,
+      attack_range_tiles: attackRange,
       collision_size_tiles: Object.freeze({ x: 0.2, y: 0.2 }),
       outline_size_tiles: Object.freeze({ x: 0.2, y: 0.2 }),
+      speed_tiles_per_second: speed,
+      reload_seconds: reload,
     }),
   });
 }
@@ -29,8 +36,8 @@ function proposal(referenceId, dx, dy = 0) {
 }
 
 
-function state(cohort, reservations = new Map()) {
-  return { cohort: new Set(cohort), reservations };
+function state(cohort, reservations = new Map(), mode = "ordinary") {
+  return { cohort: new Set(cohort), reservations, mode };
 }
 
 
@@ -148,6 +155,70 @@ test("allied transit releases when either partner reaches its pursuit target", (
     state([1, 2], new Map([["1:2", reservation]])),
     [left, right, target],
     [proposal(1, 0.02), proposal(2, 0.01), proposal(10, 0)],
+  );
+
+  assert.deepEqual([...result.pairKeys], []);
+});
+
+
+test("reach-wedge transit lets a pursuing reach melee unit pass one stopped front-line ally", () => {
+  const rear = unit(1, 2, 5, 3, {
+    attackRange: 1, pursuitTargetId: 10, speed: 1.6,
+  });
+  const front = unit(2, 2.39, 5, 3, {
+    attackRange: 1, pursuitTargetId: 10, speed: 1.6,
+  });
+  const target = unit(10, 3.7, 5, 2, { speed: 1.5 });
+
+  const ordinary = updateAlliedTransit(
+    state([1, 2]),
+    [rear, front, target],
+    [proposal(1, 0.02), proposal(2, 0), proposal(10, 0)],
+  );
+  assert.deepEqual([...ordinary.pairKeys], []);
+
+  const wedge = updateAlliedTransit(
+    state([1, 2], new Map(), "reach-wedge"),
+    [rear, front, target],
+    [proposal(1, 0.02), proposal(2, 0), proposal(10, 0)],
+  );
+  assert.deepEqual([...wedge.pairKeys], ["1:2"]);
+  assert.equal(wedge.reservations.get("1:2").moverId, 1);
+  assert.equal(wedge.reservations.get("1:2").frontId, 2);
+});
+
+
+test("reach-wedge transit remains exclusive when two rear units approach one front ally", () => {
+  const target = unit(10, 3.7, 5, 2, { speed: 1.5 });
+  const result = updateAlliedTransit(
+    state([1, 2, 3], new Map(), "reach-wedge"),
+    [
+      unit(1, 2, 4.98, 3, { attackRange: 1, pursuitTargetId: 10, speed: 1.6 }),
+      unit(2, 2.39, 5, 3, { attackRange: 1, pursuitTargetId: 10, speed: 1.6 }),
+      unit(3, 2, 5.02, 3, { attackRange: 1, pursuitTargetId: 10, speed: 1.6 }),
+      target,
+    ],
+    [proposal(1, 0.02), proposal(2, 0), proposal(3, 0.02), proposal(10, 0)],
+  );
+
+  assert.equal(result.reservations.size, 1);
+  assert.deepEqual([...result.pairKeys], ["1:2"]);
+});
+
+
+test("reach-wedge transit stays off when sourced closure per reload exceeds extra reach", () => {
+  const result = updateAlliedTransit(
+    state([1, 2], new Map(), "reach-wedge"),
+    [
+      unit(1, 2, 5, 3, {
+        attackRange: 1, pursuitTargetId: 10, speed: 1.6, reload: 2,
+      }),
+      unit(2, 2.39, 5, 3, {
+        attackRange: 1, pursuitTargetId: 10, speed: 1.6, reload: 2,
+      }),
+      unit(10, 3.7, 5, 2, { speed: 0.9 }),
+    ],
+    [proposal(1, 0.02), proposal(2, 0), proposal(10, 0)],
   );
 
   assert.deepEqual([...result.pairKeys], []);

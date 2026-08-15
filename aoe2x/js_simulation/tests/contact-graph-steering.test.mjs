@@ -7,13 +7,24 @@ import { planPreventiveContactSteering } from "../src/combat/contact-graph-steer
 const STEP = 0.9 / 60;
 const MAP = Object.freeze({ width: 10, height: 10, obstacles: Object.freeze([]) });
 const MECHANICS = Object.freeze({
+  attack_range_tiles: 0,
   collision_size_tiles: Object.freeze({ x: 0.2, y: 0.2 }),
   min_collision_size_multiplier: 0.8,
   speed_tiles_per_second: 0.9,
 });
 
 
-function unit({ referenceId, owner = 3, x, y, pursuitTargetId = 90, avoidance = null }) {
+function unit({
+  referenceId,
+  owner = 3,
+  x,
+  y,
+  pursuitTargetId = 90,
+  avoidance = null,
+  attackRange = 0,
+  speed = MECHANICS.speed_tiles_per_second,
+  reload = 2,
+}) {
   return Object.freeze({
     referenceId,
     owner,
@@ -24,7 +35,13 @@ function unit({ referenceId, owner = 3, x, y, pursuitTargetId = 90, avoidance = 
     engagedTargetId: null,
     attackTargetId: null,
     avoidance,
-    mechanics: MECHANICS,
+    mechanics: attackRange === 0 && speed === MECHANICS.speed_tiles_per_second
+      ? MECHANICS : Object.freeze({
+      ...MECHANICS,
+      attack_range_tiles: attackRange,
+      speed_tiles_per_second: speed,
+      reload_seconds: reload,
+    }),
   });
 }
 
@@ -141,6 +158,76 @@ test("a direct four-unit compact admission is diverted without slowing the mover
 
   assert.notDeepEqual(movement, direct);
   assert.ok(Math.abs(Math.hypot(movement.dx, movement.dy) - STEP) < 1e-12);
+  assert.equal(result.steered[0].reason, "compact-contact");
+});
+
+
+test("reach melee near its target may form a two-deep wedge but not enter a three-ally stack", () => {
+  const target = unit({ referenceId: 90, owner: 2, x: 3.8, y: 2, pursuitTargetId: null });
+  const mover = unit({ referenceId: 1, x: 2, y: 2, attackRange: 1 });
+  const upper = unit({ referenceId: 2, x: 2.7, y: 1.85, pursuitTargetId: null });
+  const lower = unit({ referenceId: 3, x: 2.7, y: 2.15, pursuitTargetId: null });
+  const direct = proposal(1, STEP, 0);
+
+  const wedge = planPreventiveContactSteering(
+    [mover, upper, lower, target],
+    [direct, proposal(2), proposal(3), proposal(90)],
+    MAP,
+    { owner: 3 },
+  );
+  assert.deepEqual(byReference(wedge).get(1), direct);
+  assert.deepEqual(wedge.steered, []);
+
+  const middle = unit({ referenceId: 4, x: 2.7, y: 2, pursuitTargetId: null });
+  const crowded = planPreventiveContactSteering(
+    [mover, upper, middle, lower, target],
+    [direct, proposal(2), proposal(4), proposal(3), proposal(90)],
+    MAP,
+    { owner: 3 },
+  );
+  assert.notDeepEqual(byReference(crowded).get(1), direct);
+  assert.equal(crowded.steered[0].reason, "compact-contact");
+});
+
+
+test("reach melee still avoids forming a wedge while it is far from attack range", () => {
+  const target = unit({ referenceId: 90, owner: 2, x: 8, y: 2, pursuitTargetId: null });
+  const mover = unit({ referenceId: 1, x: 2, y: 2, attackRange: 1 });
+  const upper = unit({ referenceId: 2, x: 2.7, y: 1.85, pursuitTargetId: null });
+  const lower = unit({ referenceId: 3, x: 2.7, y: 2.15, pursuitTargetId: null });
+  const direct = proposal(1, STEP, 0);
+
+  const result = planPreventiveContactSteering(
+    [mover, upper, lower, target],
+    [direct, proposal(2), proposal(3), proposal(90)],
+    MAP,
+    { owner: 3 },
+  );
+
+  assert.notDeepEqual(byReference(result).get(1), direct);
+  assert.equal(result.steered[0].reason, "compact-contact");
+});
+
+
+test("reach melee still steers when sourced closure per reload exceeds extra reach", () => {
+  const target = unit({
+    referenceId: 90, owner: 2, x: 3.8, y: 2, pursuitTargetId: null, speed: 0.9,
+  });
+  const mover = unit({
+    referenceId: 1, x: 2, y: 2, attackRange: 1, speed: 1.6, reload: 2,
+  });
+  const upper = unit({ referenceId: 2, x: 2.7, y: 1.85, pursuitTargetId: null });
+  const lower = unit({ referenceId: 3, x: 2.7, y: 2.15, pursuitTargetId: null });
+  const direct = proposal(1, STEP, 0);
+
+  const result = planPreventiveContactSteering(
+    [mover, upper, lower, target],
+    [direct, proposal(2), proposal(3), proposal(90)],
+    MAP,
+    { owner: 3 },
+  );
+
+  assert.notDeepEqual(byReference(result).get(1), direct);
   assert.equal(result.steered[0].reason, "compact-contact");
 });
 

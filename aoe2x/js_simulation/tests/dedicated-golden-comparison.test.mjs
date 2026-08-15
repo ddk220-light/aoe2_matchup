@@ -16,6 +16,10 @@ const championMechanics = JSON.parse(await readFile(
   new URL("../fixtures/unit_stats/champion_chinese_imperial.json", import.meta.url),
   "utf8",
 ));
+const steppeMechanics = JSON.parse(await readFile(
+  new URL("../fixtures/unit_stats/elite_steppe_lancer_cumans_imperial.json", import.meta.url),
+  "utf8",
+));
 
 
 test("dedicated scenario uses the exact repeat placement and current viewer policy", () => {
@@ -53,8 +57,34 @@ test("dedicated scenario uses the exact repeat placement and current viewer poli
   assert.equal(scenario.chaseCapture, true);
   assert.equal(scenario.kiteChaseDwellTicks, 0);
   assert.equal(scenario.pairwiseAlliedTransit, false);
+  assert.equal(scenario.reachMeleeWedgeTransit, false);
   assert.equal(scenario.preventiveContactSteering, true);
   assert.equal(scenario.map.id, "golden-map");
+});
+
+
+test("dedicated scenario enables reach-wedge transit only for sourced reach melee", () => {
+  const scenario = scenarioFromDedicatedRun({
+    row: {
+      id: "heavy_cav_archer_vs_elite_steppe_5v10",
+      ratio: "5v10",
+      rangedSlug: "heavy_cav_archer",
+      meleeSlug: "elite_steppe",
+    },
+    run: {
+      starting_units: [
+        { id: 100, owner: 2, master: 474, x: 6.5, y: 4.5, hp: 80 },
+        { id: 200, owner: 3, master: 1372, x: 4.5, y: 12.5, hp: 100 },
+      ],
+    },
+    mechanicsByMaster: new Map([
+      [474, hcaMechanics],
+      [1372, steppeMechanics],
+    ]),
+    map: { id: "golden-map" },
+  });
+
+  assert.equal(scenario.reachMeleeWedgeTransit, true);
 });
 
 

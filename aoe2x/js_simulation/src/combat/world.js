@@ -254,11 +254,21 @@ export function createWorld(scenario) {
     kiteState.preventiveContactSteeredSteps = 0;
     kiteState.preventiveContactSteeredUnits = new Set();
   }
-  if (scenario.pairwiseAlliedTransit === true) {
+  if (scenario.pairwiseAlliedTransit === true
+      && scenario.reachMeleeWedgeTransit === true) {
+    throw new RangeError("allied transit modes are mutually exclusive");
+  }
+  const alliedTransitMode = scenario.reachMeleeWedgeTransit === true
+    ? "reach-wedge"
+    : (scenario.pairwiseAlliedTransit === true ? "ordinary" : null);
+  if (alliedTransitMode !== null) {
     if (!kiteState || scenario.kiteMeleeOpeningOrder !== "attack-move-all") {
-      throw new RangeError("pairwise allied transit requires a kiting attack-move scenario");
+      throw new RangeError(alliedTransitMode === "reach-wedge"
+        ? "reach-melee wedge transit requires a kiting attack-move scenario"
+        : "pairwise allied transit requires a kiting attack-move scenario");
     }
     kiteState.alliedTransit = {
+      mode: alliedTransitMode,
       cohort: new Set(),
       reservations: new Map(),
       pairKeys: new Set(),

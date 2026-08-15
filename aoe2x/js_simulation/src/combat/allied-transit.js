@@ -1,4 +1,5 @@
 import { collisionRadius, isWithinReach } from "./targeting.js";
+import { hasLimitedClosurePerReload } from "./reach-melee.js";
 
 
 const EPSILON = 1e-12;
@@ -83,7 +84,83 @@ function reservationFor(left, right) {
 }
 
 
+function attackRange(unit) {
+  return Number.isFinite(unit?.mechanics?.attack_range_tiles)
+    ? Math.max(0, unit.mechanics.attack_range_tiles) : 0;
+}
+
+
+function pursuitTarget(unit, byReference) {
+  const target = byReference.get(unit.pursuitTargetId);
+  return target?.alive !== false && target && target.owner !== unit.owner
+    ? target : null;
+}
+
+
+function chebyshevDistance(left, right, proposal = null) {
+  return Math.max(
+    Math.abs(right.x - left.x - (proposal?.dx ?? 0)),
+    Math.abs(right.y - left.y - (proposal?.dy ?? 0)),
+  );
+}
+
+
+function isNearReachEnvelope(unit, target) {
+  const range = attackRange(unit);
+  if (range < 1 - EPSILON) return false;
+  const remaining = Math.max(
+    0,
+    chebyshevDistance(unit, target) - collisionRadius(unit) - collisionRadius(target) - range,
+  );
+  return remaining <= range + EPSILON;
+}
+
+
+function reachWedgeReservationFor(mover, front) {
+  const reservation = reservationFor(mover, front);
+  return reservation === null ? null : Object.freeze({
+    ...reservation,
+    mode: "reach-wedge",
+    moverId: mover.referenceId,
+    frontId: front.referenceId,
+  });
+}
+
+
+function reachWedgeReservationRemainsActive(
+  reservation, byReference, proposalByReference, cohort,
+) {
+  const mover = byReference.get(reservation.moverId);
+  const front = byReference.get(reservation.frontId);
+  if (!mover?.alive || !front?.alive || mover.owner !== front.owner) return false;
+  if (!cohort.has(mover.referenceId) || !cohort.has(front.referenceId)) return false;
+  if (reachedPursuitTarget(mover, byReference)) return false;
+  const moverProposal = proposalByReference.get(mover.referenceId);
+  if (!isMoving(moverProposal)) return false;
+  const frontProposal = proposalByReference.get(front.referenceId)
+    ?? Object.freeze({ referenceId: front.referenceId, dx: 0, dy: 0 });
+  const ordinaryExtent = collisionRadius(mover) + collisionRadius(front);
+  const currentSeparation = chebyshevSeparation(mover, front);
+  if (currentSeparation >= ordinaryExtent - EPSILON) return false;
+  const relative = front[reservation.axis] - mover[reservation.axis];
+  if (Math.abs(relative) <= EPSILON
+      || (relative < 0 ? -1 : 1) !== reservation.sign) return false;
+  const projectedRelative = relative
+    + frontProposal[reservation.axis] - moverProposal[reservation.axis];
+  const crossesThisTick = Math.abs(projectedRelative) > EPSILON
+    && (projectedRelative < 0 ? -1 : 1) !== reservation.sign;
+  return crossesThisTick
+    || chebyshevSeparation(mover, front, moverProposal, frontProposal)
+      < currentSeparation - EPSILON;
+}
+
+
 function reservationRemainsActive(reservation, byReference, proposalByReference, cohort) {
+  if (reservation.mode === "reach-wedge") {
+    return reachWedgeReservationRemainsActive(
+      reservation, byReference, proposalByReference, cohort,
+    );
+  }
   const left = byReference.get(reservation.leftId);
   const right = byReference.get(reservation.rightId);
   if (!left?.alive || !right?.alive || left.owner !== right.owner) return false;
@@ -109,6 +186,56 @@ function reservationRemainsActive(reservation, byReference, proposalByReference,
 }
 
 
+function reachWedgeCandidates(units, cohort, byReference, proposalByReference) {
+  const candidates = [];
+  const movers = units.filter((unit) => (
+    unit.alive !== false
+      && cohort.has(unit.referenceId)
+      && attackRange(unit) >= 1 - EPSILON
+      && isMoving(proposalByReference.get(unit.referenceId))
+  )).sort((left, right) => left.referenceId - right.referenceId);
+  for (const mover of movers) {
+    const target = pursuitTarget(mover, byReference);
+    if (target === null || reachedPursuitTarget(mover, byReference)) continue;
+    if (!hasLimitedClosurePerReload(mover, target)) continue;
+    if (!isNearReachEnvelope(mover, target)) continue;
+    const moverProposal = proposalByReference.get(mover.referenceId);
+    if (chebyshevDistance(mover, target, moverProposal)
+        >= chebyshevDistance(mover, target) - EPSILON) continue;
+    for (const front of units) {
+      if (front.referenceId === mover.referenceId
+          || front.alive === false
+          || front.owner !== mover.owner
+          || !cohort.has(front.referenceId)
+          || attackRange(front) < 1 - EPSILON) continue;
+      if (chebyshevDistance(front, target)
+          >= chebyshevDistance(mover, target) - EPSILON) continue;
+      const frontProposal = proposalByReference.get(front.referenceId)
+        ?? Object.freeze({ referenceId: front.referenceId, dx: 0, dy: 0 });
+      const currentSeparation = chebyshevSeparation(mover, front);
+      const finalSeparation = chebyshevSeparation(
+        mover, front, moverProposal, frontProposal,
+      );
+      if (finalSeparation >= currentSeparation - EPSILON) continue;
+      const extent = collisionRadius(mover) + collisionRadius(front);
+      const entry = sweptEntryFraction(
+        mover, front, moverProposal, frontProposal, extent,
+      );
+      if (entry === null) continue;
+      const reservation = reachWedgeReservationFor(mover, front);
+      if (reservation === null) continue;
+      candidates.push({
+        entry,
+        finalSeparation,
+        key: alliedTransitPairKey(mover.referenceId, front.referenceId),
+        reservation,
+      });
+    }
+  }
+  return candidates;
+}
+
+
 export function updateAlliedTransit(state, units, proposals) {
   const cohort = state?.cohort instanceof Set ? state.cohort : new Set();
   const previous = state?.reservations instanceof Map ? state.reservations : new Map();
@@ -130,13 +257,16 @@ export function updateAlliedTransit(state, units, proposals) {
     reservedIds.add(reservation.rightId);
   }
 
-  const candidates = [];
+  const candidates = state?.mode === "reach-wedge"
+    ? reachWedgeCandidates(units, cohort, byReference, proposalByReference)
+    : [];
   const movers = units.filter((unit) => (
     unit.alive !== false
       && cohort.has(unit.referenceId)
       && isMoving(proposalByReference.get(unit.referenceId))
   )).sort((left, right) => left.referenceId - right.referenceId);
-  for (let leftIndex = 0; leftIndex < movers.length; leftIndex += 1) {
+  for (let leftIndex = 0; state?.mode !== "reach-wedge" && leftIndex < movers.length;
+    leftIndex += 1) {
     const left = movers[leftIndex];
     const leftProposal = proposalByReference.get(left.referenceId);
     for (let rightIndex = leftIndex + 1; rightIndex < movers.length; rightIndex += 1) {

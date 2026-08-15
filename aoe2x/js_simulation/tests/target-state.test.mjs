@@ -443,6 +443,32 @@ test("an attack-move cohort creates only one allied-transit reservation per chas
 });
 
 
+test("reach-melee wedge transit is an explicit attack-move scenario mode", async () => {
+  const { createWorld } = await import("../src/combat/world.js");
+  const units = [
+    unit({ referenceId: 1, owner: 3, x: 2, y: 5 }),
+    unit({
+      referenceId: 2,
+      owner: 2,
+      x: 6,
+      y: 5,
+      unitMechanics: heavyCavArcherMechanics,
+    }),
+  ];
+  const world = createWorld(scenario(units, {
+    kiteOwner: 2,
+    kiteMeleeOpeningOrder: "attack-move-all",
+    reachMeleeWedgeTransit: true,
+  }));
+
+  assert.equal(world.kiteState.alliedTransit.mode, "reach-wedge");
+  assert.throws(() => createWorld(scenario(units, {
+    kiteOwner: 2,
+    reachMeleeWedgeTransit: true,
+  })), /reach-melee wedge transit requires a kiting attack-move scenario/);
+});
+
+
 test("preventive contact steering is an explicit attack-move scenario state", async () => {
   const { createWorld } = await import("../src/combat/world.js");
   const units = [

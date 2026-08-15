@@ -1,4 +1,5 @@
 import { collisionRadius } from "./targeting.js";
+import { hasLimitedClosurePerReload } from "./reach-melee.js";
 
 
 const EPSILON = 1e-12;
@@ -212,6 +213,7 @@ function riskFor(mover, alliedUnits, currentGraph, projectedPoints) {
     triangles,
     internalClosures,
     multiAdmission: currentNeighbors.size === 0 && neighbors.length >= 2 ? 1 : 0,
+    neighborCount: neighbors.length,
     newContacts: newNeighbors.length,
   });
 }
@@ -243,6 +245,26 @@ function isCompactRisk(risk) {
     || risk.triangles > 0
     || risk.internalClosures > 0
     || risk.multiAdmission > 0;
+}
+
+
+function admitsReachMeleeWedge(mover, byReference, risk) {
+  const attackRange = Number.isFinite(mover?.mechanics?.attack_range_tiles)
+    ? Math.max(0, mover.mechanics.attack_range_tiles) : 0;
+  if (attackRange < 1 - EPSILON) return false;
+  if (risk.fourCliques > 0 || risk.neighborCount > 2) return false;
+  const target = byReference.get(mover.pursuitTargetId);
+  if (!target || target.alive === false || target.owner === mover.owner) return false;
+  if (!hasLimitedClosurePerReload(mover, target)) return false;
+  const centerDistance = Math.max(
+    Math.abs(target.x - mover.x),
+    Math.abs(target.y - mover.y),
+  );
+  const remaining = Math.max(
+    0,
+    centerDistance - contactExtent(mover, target) - attackRange,
+  );
+  return remaining <= attackRange + EPSILON;
 }
 
 
@@ -301,6 +323,7 @@ export function planPreventiveContactSteering(snapshot, proposals, map, {
     }));
     const directRisk = riskFor(mover, alliedUnits, currentGraph, projectedFor(direct));
     if (!isCompactRisk(directRisk)) continue;
+    if (admitsReachMeleeWedge(mover, byReference, directRisk)) continue;
 
     const preferredSide = mover.avoidance?.side === -1 || mover.avoidance?.side === 1
       ? mover.avoidance.side : 1;
